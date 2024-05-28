@@ -33,6 +33,7 @@ const { isDark } = useDark();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 const mixRef = ref();
+const doubleRef = ref();
 const verticalRef = ref();
 const horizontalRef = ref();
 
@@ -258,16 +259,25 @@ watch($storage, ({ layout }) => {
       toggleClass(true, "is-select", unref(verticalRef));
       debounce(setFalse([horizontalRef]), 50);
       debounce(setFalse([mixRef]), 50);
+      debounce(setFalse([doubleRef]), 50);
       break;
     case "horizontal":
       toggleClass(true, "is-select", unref(horizontalRef));
       debounce(setFalse([verticalRef]), 50);
       debounce(setFalse([mixRef]), 50);
+      debounce(setFalse([doubleRef]), 50);
       break;
     case "mix":
       toggleClass(true, "is-select", unref(mixRef));
       debounce(setFalse([verticalRef]), 50);
       debounce(setFalse([horizontalRef]), 50);
+      debounce(setFalse([doubleRef]), 50);
+      break;
+    case "double":
+      toggleClass(true, "is-select", unref(doubleRef));
+      debounce(setFalse([verticalRef]), 50);
+      debounce(setFalse([horizontalRef]), 50);
+      debounce(setFalse([mixRef]), 50);
       break;
   }
 });
@@ -389,6 +399,20 @@ onUnmounted(() => removeMatchMedia);
           :class="layoutTheme.layout === 'mix' ? 'is-select' : ''"
           @click="setLayoutModel('mix')"
         >
+          <div />
+          <div />
+        </li>
+        <li
+          v-if="device !== 'mobile'"
+          ref="doubleRef"
+          v-tippy="{
+            content: t('panel.pureDoubleTip'),
+            zIndex: 41000
+          }"
+          :class="layoutTheme.layout === 'double' ? 'is-select' : ''"
+          @click="setLayoutModel('double')"
+        >
+          <div />
           <div />
           <div />
         </li>
@@ -613,6 +637,36 @@ onUnmounted(() => removeMatchMedia);
           left: 0;
           width: 30%;
           height: 70%;
+          background: #fff;
+          box-shadow: 0 0 1px #888;
+        }
+      }
+    }
+
+    &:nth-child(4) {
+      div {
+        &:nth-child(1) {
+          width: 18%;
+          height: 100%;
+          background: #1b2a47;
+        }
+
+        &:nth-child(2) {
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 60%;
+          height: 30%;
+          background: #fff;
+          box-shadow: 0 0 1px #888;
+        }
+
+        &:nth-child(3) {
+          position: absolute;
+          top: 0;
+          left: 18%;
+          width: 22%;
+          height: 100%;
           background: #fff;
           box-shadow: 0 0 1px #888;
         }

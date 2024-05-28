@@ -25,6 +25,7 @@ export const useAppStore = defineStore({
         `${responsiveStorageNameSpace()}layout`
       )?.layout ?? getConfig().Layout,
     device: deviceDetection() ? "mobile" : "desktop",
+    isShowDouble: true,
     // 浏览器窗口的可视区域大小
     viewportSize: {
       width: document.documentElement.clientWidth,
@@ -76,6 +77,9 @@ export const useAppStore = defineStore({
     },
     setLayout(layout) {
       this.layout = layout;
+    },
+    showDouble(bool: boolean) {
+      this.isShowDouble = bool;
     },
     setViewportSize(size) {
       this.viewportSize = size;

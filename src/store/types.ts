@@ -19,6 +19,7 @@ export type appType = {
   };
   layout: string;
   device: string;
+  isShowDouble: boolean;
   viewportSize: { width: number; height: number };
   sortSwap: boolean;
 };

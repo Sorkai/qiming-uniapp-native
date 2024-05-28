@@ -43,6 +43,7 @@ panel:
   pureVerticalTip: The menu on the left is familiar and friendly
   pureHorizontalTip: Top menu, concise overview
   pureMixTip: Mixed menu, flexible
+  pureDoubleTip: Double menu, rapid positioning
   pureStretch: Stretch Page
   pureStretchFixed: Fixed
   pureStretchFixedTip: Compact pages make it easy to find the information you need

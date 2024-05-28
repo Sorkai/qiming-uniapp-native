@@ -48,7 +48,7 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
 
     <LayNavMix v-if="layout === 'mix'" />
 
-    <div v-if="layout === 'vertical'" class="vertical-header-right">
+    <div v-if="/vertical|double/.test(layout)" class="vertical-header-right">
       <!-- 菜单搜索 -->
       <LaySearch id="header-search" />
       <!-- 国际化 -->
