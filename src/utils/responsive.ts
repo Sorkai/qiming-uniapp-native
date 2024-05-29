@@ -14,7 +14,7 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
       },
       // layout模式以及主题
       layout: Storage.getData("layout", nameSpace) ?? {
-        layout: config.Layout ?? "vertical",
+        layout: config.Layout ?? "double",
         theme: config.Theme ?? "light",
         darkMode: config.DarkMode ?? false,
         sidebarStatus: config.SidebarStatus ?? true,

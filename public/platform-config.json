@@ -6,7 +6,7 @@
   "MultiTagsCache": false,
   "KeepAlive": true,
   "Locale": "zh",
-  "Layout": "vertical",
+  "Layout": "double",
   "Theme": "light",
   "DarkMode": false,
   "OverallStyle": "light",
@@ -22,7 +22,7 @@
   "MenuArrowIconNoTransition": false,
   "CachingAsyncRoutes": false,
   "TooltipEffect": "light",
-  "ResponsiveStorageNameSpace": "responsive-",
+  "ResponsiveStorageNameSpace": "responsivemax-",
   "MenuSearchHistory": 6,
   "MapConfigure": {
     "amapKey": "adc139d56406f3844c8f1cf1c6b65c41",
