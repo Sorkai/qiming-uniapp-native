@@ -2,6 +2,7 @@
   <el-config-provider :locale="currentLocale">
     <router-view />
     <ReDialog />
+    <ReFloatButton :floatBtns="floatBtns" />
   </el-config-provider>
 </template>
 
@@ -14,18 +15,46 @@ import en from "element-plus/es/locale/lang/en";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
+import ReFloatButton from "@/components/ReFloatButton";
+
+import Service from "@iconify-icons/ri/user-heart-line";
+import Book from "@iconify-icons/ri/book-open-line";
+import Max from "@iconify-icons/ri/vip-diamond-line";
 
 export default defineComponent({
   name: "app",
   components: {
     [ElConfigProvider.name]: ElConfigProvider,
-    ReDialog
+    ReDialog,
+    ReFloatButton
   },
   computed: {
     currentLocale() {
       return this.$storage.locale?.locale === "zh"
         ? { ...zhCn, ...plusZhCn }
         : { ...en, ...plusEn };
+    },
+    floatBtns() {
+      return [
+        {
+          tip: "优质服务",
+          icon: Service,
+          link: "https://pure-admin.github.io/pure-admin-doc/pages/service",
+          show: false
+        },
+        {
+          tip: "保姆级文档",
+          link: "https://pure-admin.github.io/pure-admin-doc",
+          icon: Book,
+          show: false
+        },
+        {
+          tip: "max版本",
+          link: "https://github.com/pure-admin/vue-pure-admin-max",
+          icon: Max,
+          show: false
+        }
+      ];
     }
   },
   beforeCreate() {

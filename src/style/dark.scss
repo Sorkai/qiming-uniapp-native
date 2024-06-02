@@ -248,6 +248,17 @@ html.dark {
     }
   }
 
+  /* ReFloatButton 组件 */
+  .pure-float-btn-group {
+    .pure-float-btn {
+      background: rgb(72 72 78);
+
+      &:hover {
+        background: var(--el-color-primary);
+      }
+    }
+  }
+
   /* 仿 el-scrollbar 滚动条样式 支持大多数浏览器，如Chrome、Edge、Firefox、Safari等 */
   .pure-scrollbar {
     scrollbar-color: rgb(63 64 66) transparent;
