@@ -1,6 +1,7 @@
 # 使用前须知
 
-[vue-pure-admin-max](https://github.com/xiaoxian521/vue-pure-admin-max) 仅供 `pureadmin vip` 服务群内成员使用且使用者不可售卖或公开源代码，违者追究法律责任、后续功能不再提供源代码或停止开发、踢出 `pureadmin vip` 服务群且不退入群费！
+[vue-pure-admin-max](https://github.com/xiaoxian521/vue-pure-admin-max) 仅供 `pureadmin vip` 服务群内成员使用且使用者不可售卖或公开源代码，违者追究法律责任、后续功能不再提供源代码或停止开发、踢出 `pureadmin vip` 服务群且不退入群费！  
+注：若服务群内成员在公司使用了 [vue-pure-admin-max](https://github.com/xiaoxian521/vue-pure-admin-max) 里的 [高级功能](#高级功能提交记录)，离职后，公司也不可售卖或公开源代码，违者追究其公司法律责任，最高面临`5万元`罚款！
 
 ## `vue-pure-admin-max` 与 `vue-pure-admin` 的区别是什么？
 
@@ -18,4 +19,4 @@
 
 ## 温馨提示
 
-目前作者较忙，手里还有正在开发的 [JS版本的vue-pure-admin](https://pure-admin.github.io/pure-admin-doc/pages/service/#js-%E7%89%88%E6%9C%AC%E7%9A%84-vue-pure-admin) 以及外包项目，剩余高级功能，会在闲时开发，[专属视频教程](https://pure-admin.github.io/pure-admin-doc/pages/service/#%E4%B8%93%E5%B1%9E%E8%A7%86%E9%A2%91%E6%95%99%E7%A8%8B%E5%A6%82%E4%B8%8B) 也会在闲时录制，这些价值远远超于入群价格且不会对非群内用户进行单独售卖，全职开源不易，请谅解。当然大概在 `2024` 年 `7` 月底，完成全部功能！
+目前作者较忙，剩余高级功能，会在闲时开发，[专属视频教程](https://pure-admin.github.io/pure-admin-doc/pages/service/#%E4%B8%93%E5%B1%9E%E8%A7%86%E9%A2%91%E6%95%99%E7%A8%8B%E5%A6%82%E4%B8%8B) 也会在闲时录制，这些价值远远超于入群价格且不会对非群内用户进行单独售卖，全职开源不易，请谅解。当然大概在 `2024` 年 `7` 月底，完成全部功能！
