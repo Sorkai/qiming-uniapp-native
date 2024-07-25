@@ -6,7 +6,10 @@ import { storageLocal, isObject } from "@pureadmin/utils";
 
 // element-plus国际化
 import enLocale from "element-plus/es/locale/lang/en";
+import jaLocale from "element-plus/es/locale/lang/ja";
+import koLocale from "element-plus/es/locale/lang/ko";
 import zhLocale from "element-plus/es/locale/lang/zh-cn";
+import twLocale from "element-plus/es/locale/lang/zh-tw";
 
 const siphonI18n = (function () {
   // 仅初始化一次国际化配置
@@ -31,6 +34,18 @@ export const localesConfigs = {
   en: {
     ...siphonI18n("en"),
     ...enLocale
+  },
+  tw: {
+    ...siphonI18n("zh-TW"),
+    ...twLocale
+  },
+  ja: {
+    ...siphonI18n("ja"),
+    ...jaLocale
+  },
+  ko: {
+    ...siphonI18n("ko"),
+    ...koLocale
   }
 };
 

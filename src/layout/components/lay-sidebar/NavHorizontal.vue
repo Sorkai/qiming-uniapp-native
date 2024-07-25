@@ -17,8 +17,16 @@ import Check from "@iconify-icons/ep/check";
 
 const menuRef = ref();
 
-const { t, route, locale, translationCh, translationEn } =
-  useTranslationLang(menuRef);
+const {
+  t,
+  route,
+  locale,
+  translationCh,
+  translationTw,
+  translationEn,
+  translationJa,
+  translationKo
+} = useTranslationLang(menuRef);
 const {
   title,
   logout,
@@ -80,20 +88,54 @@ nextTick(() => {
               :class="['dark:!text-white', getDropdownItemClass(locale, 'zh')]"
               @click="translationCh"
             >
-              <span v-show="locale === 'zh'" class="check-zh">
-                <IconifyIconOffline :icon="Check" />
-              </span>
+              <IconifyIconOffline
+                v-show="locale === 'zh'"
+                class="check-btn"
+                :icon="Check"
+              />
               简体中文
+            </el-dropdown-item>
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'tw')"
+              :class="['dark:!text-white', getDropdownItemClass(locale, 'tw')]"
+              @click="translationTw"
+            >
+              <IconifyIconOffline
+                v-show="locale === 'tw'"
+                class="check-btn"
+                :icon="Check"
+              />
+              繁體中文
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'en')"
               :class="['dark:!text-white', getDropdownItemClass(locale, 'en')]"
               @click="translationEn"
             >
-              <span v-show="locale === 'en'" class="check-en">
+              <span v-show="locale === 'en'" class="check-btn">
                 <IconifyIconOffline :icon="Check" />
               </span>
               English
+            </el-dropdown-item>
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'ja')"
+              :class="['dark:!text-white', getDropdownItemClass(locale, 'ja')]"
+              @click="translationJa"
+            >
+              <span v-show="locale === 'ja'" class="check-btn">
+                <IconifyIconOffline :icon="Check" />
+              </span>
+              日本語
+            </el-dropdown-item>
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'ko')"
+              :class="['dark:!text-white', getDropdownItemClass(locale, 'ko')]"
+              @click="translationKo"
+            >
+              <span v-show="locale === 'ko'" class="check-btn">
+                <IconifyIconOffline :icon="Check" />
+              </span>
+              한국어
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -110,18 +152,12 @@ nextTick(() => {
         </span>
         <template #dropdown>
           <el-dropdown-item @click="toAccountSettings">
-            <IconifyIconOffline
-              :icon="AccountSettingsIcon"
-              style="margin: 5px"
-            />
+            <IconifyIconOffline class="mr-[5px]" :icon="AccountSettingsIcon" />
             {{ t("buttons.pureAccountSettings") }}
           </el-dropdown-item>
-          <el-dropdown-menu class="logout">
+          <el-dropdown-menu>
             <el-dropdown-item @click="logout">
-              <IconifyIconOffline
-                :icon="LogoutCircleRLine"
-                style="margin: 5px"
-              />
+              <IconifyIconOffline class="mr-[5px]" :icon="LogoutCircleRLine" />
               {{ t("buttons.pureLoginOut") }}
             </el-dropdown-item>
           </el-dropdown-menu>
@@ -148,24 +184,9 @@ nextTick(() => {
     padding: 5px 40px;
   }
 
-  .check-zh {
+  .check-btn {
     position: absolute;
     left: 20px;
-  }
-
-  .check-en {
-    position: absolute;
-    left: 20px;
-  }
-}
-
-.logout {
-  width: 120px;
-
-  ::v-deep(.el-dropdown-menu__item) {
-    display: inline-flex;
-    flex-wrap: wrap;
-    min-width: 100%;
   }
 }
 </style>
