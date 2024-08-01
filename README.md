@@ -15,7 +15,7 @@
 | 新款菜单导航模式（左侧双栏菜单）   | 已完成   | [添加左侧双栏菜单](https://github.com/xiaoxian521/vue-pure-admin-max/commit/d7c3193fcd847f32d77ce96df3e6a8dd7e10adaa)                   |
 | 悬浮按钮功能                       | 已完成   | [添加悬浮按钮功能](https://github.com/xiaoxian521/vue-pure-admin-max/commit/1448871cba52044ca379ca1affe355231736b6ad)                   |
 | 新增繁體中文、日语、韩语的内置支持 | 已完成   | [新增繁體中文、日语、韩语的内置支持](https://github.com/xiaoxian521/vue-pure-admin-max/commit/c6eadaada65d774d9eb9f0d1108355d83a29c653) |
-| 字典管理                           | 开发中   |                                                                                                                                         |
+| 字典管理                           | 已完成   | [添加字典管理](https://github.com/xiaoxian521/vue-pure-admin-max/commit/d25cc87f5f959a5d7ab84ffd55b37104b4a26923)                       |
 | 多租户管理                         | 待开发   |                                                                                                                                         |
 
 ## 温馨提示
