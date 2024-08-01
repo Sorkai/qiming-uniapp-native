@@ -83,3 +83,13 @@ export const getRoleMenu = (data?: object) => {
 export const getRoleMenuIds = (data?: object) => {
   return http.request<Result>("post", "/role-menu-ids", { data });
 };
+
+/** 字典管理-左侧树 */
+export const getDictTree = () => {
+  return http.request<Result>("get", "/dict-tree");
+};
+
+/** 字典管理-根据字典 dictId 查字典详情 */
+export const getDictDetail = (data?: object) => {
+  return http.request<ResultTable>("post", "/dict-detail", { data });
+};

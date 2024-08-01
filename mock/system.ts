@@ -1271,6 +1271,147 @@ export default defineFakeRoute([
       };
     }
   },
+  // 字典管理-左侧树
+  {
+    url: "/dict-tree",
+    method: "get",
+    response: () => {
+      return {
+        success: true,
+        data: [
+          {
+            id: 100,
+            createTime: 1605456000000,
+            name: "通知类型",
+            code: "notice_type",
+            remark: "页面头部右上角小铃铛中的通知类型"
+          },
+          {
+            id: 200,
+            createTime: 1605456000000,
+            name: "状态",
+            code: "status",
+            remark: null
+          },
+          {
+            id: 300,
+            createTime: 1605456000000,
+            name: "性别",
+            code: "gender",
+            remark: null
+          },
+          {
+            id: 400,
+            createTime: 1605456000000,
+            name: "文字超出测试文字超出测试",
+            code: "test",
+            remark: null
+          }
+        ]
+      };
+    }
+  },
+  // 字典管理-根据字典 dictId 查字典详情
+  {
+    url: "/dict-detail",
+    method: "post",
+    response: ({ body }) => {
+      let list = [
+        {
+          id: 101,
+          label: "通知",
+          value: "1",
+          color: "#FF0000",
+          status: 1, // 状态 1 启用 0 停用
+          sort: 1,
+          remark: "平台通知",
+          createTime: 1722441600000,
+          dictId: 100
+        },
+        {
+          id: 102,
+          label: "消息",
+          value: "2",
+          color: "#007BFF",
+          status: 1,
+          sort: 2,
+          remark: "平台消息",
+          createTime: 1722441600000,
+          dictId: 100
+        },
+        {
+          id: 103,
+          label: "代办",
+          value: "3",
+          color: "#FFA500",
+          status: 1,
+          sort: 3,
+          remark: "平台代办",
+          createTime: 1722441600000,
+          dictId: 100
+        },
+        {
+          id: 201,
+          label: "已启用",
+          value: "1",
+          color: "#6abe39",
+          status: 1,
+          sort: 1,
+          remark: "暂无",
+          createTime: 1722441600000,
+          dictId: 200
+        },
+        {
+          id: 202,
+          label: "已停用",
+          value: "0",
+          color: "#e84749",
+          status: 1,
+          sort: 2,
+          remark: "暂无",
+          createTime: 1722441600000,
+          dictId: 200
+        },
+        {
+          id: 301,
+          label: "男",
+          value: "0",
+          color: "#9fceff",
+          status: 1,
+          sort: 1,
+          remark: "男性",
+          createTime: 1722441600000,
+          dictId: 300
+        },
+        {
+          id: 302,
+          label: "女",
+          value: "1",
+          color: "#fab6b6",
+          status: 1,
+          sort: 2,
+          remark: "女性",
+          createTime: 1722441600000,
+          dictId: 300
+        }
+      ];
+
+      const filteredList =
+        body.dictId && [100, 200, 300, 400].includes(body.dictId)
+          ? list.filter(v => v.dictId === body.dictId)
+          : [];
+
+      return {
+        success: true,
+        data: {
+          list: filteredList,
+          total: filteredList.length,
+          pageSize: 10,
+          currentPage: 1
+        }
+      };
+    }
+  },
   // 在线用户
   {
     url: "/online-logs",

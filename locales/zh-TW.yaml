@@ -72,6 +72,7 @@ menus:
   pureRole: 角色管理
   pureSystemMenu: 菜單管理
   pureDept: 部門管理
+  pureDict: 字典管理
   pureSysMonitor: 系統監控
   pureOnlineUser: 在線使用者
   pureLoginLog: 登入紀錄

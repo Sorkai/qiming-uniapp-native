@@ -45,6 +45,7 @@ const include = [
   "@amap/amap-jsapi-loader",
   "el-table-infinite-scroll",
   "vue-waterfall-plugin-next",
+  "@imengyu/vue3-context-menu",
   "@infectoone/vue-ganttastic",
   "@wangeditor/editor-for-vue",
   "vuedraggable/src/vuedraggable"

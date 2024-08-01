@@ -51,6 +51,16 @@ const systemManagementRouter = {
         title: "menus.pureDept",
         roles: ["admin"]
       }
+    },
+    {
+      path: "/system/dict/index",
+      name: "SystemDict",
+      meta: {
+        icon: "ri:book-2-line",
+        extraIcon: "IF-pure-iconfont-new svg",
+        title: "menus.pureDict",
+        roles: ["admin"]
+      }
     }
   ]
 };
