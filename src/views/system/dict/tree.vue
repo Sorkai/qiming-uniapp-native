@@ -21,11 +21,6 @@ interface Tree {
   children?: Tree[];
 }
 
-defineProps({
-  treeLoading: Boolean,
-  treeData: Array
-});
-
 const emit = defineEmits(["tree-select"]);
 
 const treeRef = ref();
@@ -38,7 +33,7 @@ const defaultProps = {
 
 const { isDark } = useDark();
 
-const { openDictDialog, getDictTreeData } = useDict();
+const { treeLoading, treeData, openDictDialog, getDictTreeData } = useDict();
 
 const filterNode = (value: string, data: Tree) => {
   if (!value) return true;

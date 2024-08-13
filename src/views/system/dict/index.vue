@@ -22,8 +22,6 @@ const {
   loading,
   columns,
   dataList,
-  treeData,
-  treeLoading,
   pagination,
   deviceDetection,
   onSearch,
@@ -40,8 +38,6 @@ const {
     <tree
       ref="treeRef"
       :class="['mr-2', deviceDetection() ? 'w-full' : 'min-w-[200px]']"
-      :treeData="treeData"
-      :treeLoading="treeLoading"
       @tree-select="onTreeSelect"
     />
     <div :class="[deviceDetection() ? ['w-full'] : 'w-[calc(100%-200px)]']">
