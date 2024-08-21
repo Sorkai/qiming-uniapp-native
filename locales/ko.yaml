@@ -127,6 +127,8 @@ menus:
   purePermission: 권한 관리
   purePermissionPage: 페이지 권한
   purePermissionButton: 버튼 권한
+  purePermissionButtonRouter: 경로 복귀 버튼 권한
+  purePermissionButtonLogin: 로그인 인터페이스 반환 버튼 권한
   pureTabs: 탭 조작
   pureGuide: 가이드 페이지
   pureAble: 기능

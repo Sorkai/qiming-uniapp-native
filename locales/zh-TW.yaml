@@ -127,6 +127,8 @@ menus:
   purePermission: 權限管理
   purePermissionPage: 頁面權限
   purePermissionButton: 按鈕權限
+  purePermissionButtonRouter: 路由返回按鈕權限
+  purePermissionButtonLogin: 登入接口返回按鈕權限
   pureTabs: 標籤頁操作
   pureGuide: 引導頁
   pureAble: 功能

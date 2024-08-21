@@ -127,6 +127,8 @@ menus:
   purePermission: 権限管理
   purePermissionPage: ページ権限
   purePermissionButton: ボタン権限
+  purePermissionButtonRouter: ルートリターンボタン権限
+  purePermissionButtonLogin: ログインインターフェースの戻るボタン権限
   pureTabs: タブ操作
   pureGuide: ガイドページ
   pureAble: 機能
