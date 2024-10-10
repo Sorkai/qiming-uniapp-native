@@ -252,6 +252,25 @@ export default defineFakeRoute([
             menuType: 3,
             title: "删除"
           },
+          // 租户管理
+          {
+            parentId: 0,
+            id: 600,
+            menuType: 0,
+            title: "menus.pureTenantManagement"
+          },
+          {
+            parentId: 600,
+            id: 701,
+            menuType: 0,
+            title: "menus.pureTenantList"
+          },
+          {
+            parentId: 600,
+            id: 702,
+            menuType: 0,
+            title: "menus.pureTenantPackage"
+          },
           // 系统管理
           {
             parentId: 0,
@@ -282,6 +301,12 @@ export default defineFakeRoute([
             id: 304,
             menuType: 0,
             title: "menus.pureDept"
+          },
+          {
+            parentId: 300,
+            id: 305,
+            menuType: 0,
+            title: "menus.pureDict"
           },
           // 系统监控
           {
@@ -353,8 +378,8 @@ export default defineFakeRoute([
           success: true,
           data: [
             100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 200, 201,
-            202, 203, 204, 205, 300, 301, 302, 303, 304, 400, 401, 402, 403,
-            404, 500, 501, 502, 503
+            202, 203, 204, 205, 300, 301, 302, 303, 304, 305, 400, 401, 402,
+            403, 404, 500, 501, 502, 503, 600, 701, 702
           ]
         };
       } else if (body.id == 2) {
@@ -906,6 +931,79 @@ export default defineFakeRoute([
             showLink: true,
             showParent: false
           },
+          // 租户管理
+          {
+            parentId: 0,
+            id: 600,
+            menuType: 0,
+            title: "menus.pureTenantManagement",
+            name: "PureTenant",
+            path: "/tenant",
+            component: "",
+            rank: 13,
+            redirect: "",
+            icon: "ri:home-gear-line",
+            extraIcon: "",
+            enterTransition: "",
+            leaveTransition: "",
+            activePath: "",
+            auths: "",
+            frameSrc: "",
+            frameLoading: true,
+            keepAlive: false,
+            hiddenTag: false,
+            fixedTag: false,
+            showLink: true,
+            showParent: false
+          },
+          {
+            parentId: 600,
+            id: 701,
+            menuType: 0,
+            title: "menus.pureTenantList",
+            name: "TenantList",
+            path: "/tenant/list/index",
+            component: "",
+            rank: null,
+            redirect: "",
+            icon: "ri:list-check",
+            extraIcon: "",
+            enterTransition: "",
+            leaveTransition: "",
+            activePath: "",
+            auths: "",
+            frameSrc: "",
+            frameLoading: true,
+            keepAlive: false,
+            hiddenTag: false,
+            fixedTag: false,
+            showLink: true,
+            showParent: false
+          },
+          {
+            parentId: 600,
+            id: 702,
+            menuType: 0,
+            title: "menus.pureTenantPackage",
+            name: "TenantPackage",
+            path: "/tenant/package/index",
+            component: "",
+            rank: null,
+            redirect: "",
+            icon: "ri:file-paper-line",
+            extraIcon: "",
+            enterTransition: "",
+            leaveTransition: "",
+            activePath: "",
+            auths: "",
+            frameSrc: "",
+            frameLoading: true,
+            keepAlive: false,
+            hiddenTag: false,
+            fixedTag: false,
+            showLink: true,
+            showParent: false
+          },
           // 系统管理
           {
             parentId: 0,
@@ -1015,6 +1113,30 @@ export default defineFakeRoute([
             redirect: "",
             icon: "ri:git-branch-line",
             extraIcon: "",
+            enterTransition: "",
+            leaveTransition: "",
+            activePath: "",
+            auths: "",
+            frameSrc: "",
+            frameLoading: true,
+            keepAlive: false,
+            hiddenTag: false,
+            fixedTag: false,
+            showLink: true,
+            showParent: false
+          },
+          {
+            parentId: 300,
+            id: 305,
+            menuType: 0,
+            title: "menus.pureDict",
+            name: "SystemDict",
+            path: "/system/dict/index",
+            component: "",
+            rank: null,
+            redirect: "",
+            icon: "ri:book-2-line",
+            extraIcon: "IF-pure-iconfont-new svg",
             enterTransition: "",
             leaveTransition: "",
             activePath: "",
@@ -1935,6 +2057,423 @@ export default defineFakeRoute([
           requestTime: new Date()
         };
       }
+    }
+  },
+  // 租户列表
+  {
+    url: "/tenant-list",
+    method: "post",
+    response: ({ body }) => {
+      let list = [
+        {
+          id: 1,
+          name: "pure-admin",
+          packageId: 101, // 套餐编号
+          packageName: "高级套餐", // 套餐名称
+          contactName: "pureadmin",
+          contactMobile: "18212349876",
+          accountCount: 9999,
+          expireTime: 2866329000000,
+          website: "https://pure-admin.github.io/vue-pure-admin",
+          status: 1, // 状态 1 启用 0 停用
+          remark: "https://github.com/pure-admin/vue-pure-admin",
+          createTime: 1635561000000
+        },
+        {
+          id: 2,
+          name: "boot-admin",
+          packageId: 102,
+          packageName: "普通套餐",
+          contactName: "hb0730",
+          contactMobile: "15888886789",
+          accountCount: 100,
+          expireTime: 1951093800000,
+          website: "https://boot-admin.hb0730.com",
+          status: 1,
+          remark: "https://github.com/hb0730/boot-admin-ui",
+          createTime: 1635561000000
+        },
+        {
+          id: 3,
+          name: "AgileBoot",
+          packageId: 102,
+          packageName: "普通套餐",
+          contactName: "valarchie",
+          contactMobile: "18233451123",
+          accountCount: 100,
+          expireTime: 1951093800000,
+          website: "http://www.agileboot.cc",
+          status: 1,
+          remark: "https://github.com/valarchie/AgileBoot-Front-End",
+          createTime: 1635561000000
+        },
+        {
+          id: 4,
+          name: "Halcyon-Admin",
+          packageId: 102,
+          packageName: "普通套餐",
+          contactName: "hhfb8848",
+          contactMobile: "15689765432",
+          accountCount: 100,
+          expireTime: 1951093800000,
+          website: "http://36.111.172.53:8848",
+          status: 1,
+          remark: "https://github.com/hhfb8848/halcyon-admin-ui",
+          createTime: 1635561000000
+        },
+        {
+          id: 5,
+          name: "go-admin",
+          packageId: 102,
+          packageName: "普通套餐",
+          contactName: "anerg2046",
+          contactMobile: "16012348765",
+          accountCount: 100,
+          expireTime: 1951093800000,
+          website: "https://admin.fabraze.com",
+          status: 1,
+          remark: "https://github.com/anerg2046/go-admin-front",
+          createTime: 1635561000000
+        },
+        {
+          id: 6,
+          name: "xadmin",
+          packageId: 102,
+          packageName: "普通套餐",
+          contactName: "nineaiyu",
+          contactMobile: "18098762345",
+          accountCount: 100,
+          expireTime: 1951093800000,
+          website: "https://xadmin.dvcloud.xin",
+          status: 1,
+          remark: "https://github.com/nineaiyu/xadmin-client",
+          createTime: 1635561000000
+        },
+        {
+          id: 7,
+          name: "PurestAdmin",
+          packageId: 102,
+          packageName: "普通套餐",
+          contactName: "dymproject",
+          contactMobile: "15487690123",
+          accountCount: 100,
+          expireTime: 1951093800000,
+          website: "http://www.purestadmin.com",
+          status: 1,
+          remark:
+            "https://gitee.com/dymproject/purest-admin/tree/main/client-vue",
+          createTime: 1635561000000
+        }
+      ];
+      list = list.filter(item => item.name.includes(body?.name));
+      list = list.filter(item =>
+        String(item.status).includes(String(body?.status))
+      );
+      if (body.contactName) {
+        list = list.filter(item => item.contactName === body.contactName);
+      }
+      if (body.contactMobile) {
+        list = list.filter(item => item.contactMobile === body.contactMobile);
+      }
+      return {
+        success: true,
+        data: {
+          list,
+          total: list.length, // 总条目数
+          pageSize: 10, // 每页显示条目个数
+          currentPage: 1 // 当前页数
+        }
+      };
+    }
+  },
+  // 租户套餐
+  {
+    url: "/tenant-package",
+    method: "post",
+    response: ({ body }) => {
+      let list = [
+        {
+          createTime: 1635474600000, // 时间戳（毫秒ms）
+          id: 101,
+          name: "高级套餐",
+          status: 1, // 状态 1 启用 0 停用
+          remark: "拥有全部菜单权限"
+        },
+        {
+          createTime: 1635474600000,
+          id: 102,
+          name: "普通套餐",
+          status: 1,
+          remark: "拥有部分菜单权限"
+        }
+      ];
+      list = list.filter(item => item.name.includes(body?.name));
+      list = list.filter(item =>
+        String(item.status).includes(String(body?.status))
+      );
+      return {
+        success: true,
+        data: {
+          list,
+          total: list.length, // 总条目数
+          pageSize: 10, // 每页显示条目个数
+          currentPage: 1 // 当前页数
+        }
+      };
+    }
+  },
+  // 租户套餐-权限-菜单权限
+  {
+    url: "/tenant-package-menu",
+    method: "post",
+    response: () => {
+      return {
+        success: true,
+        data: [
+          // 外部页面
+          {
+            parentId: 0,
+            id: 100,
+            menuType: 0, // 菜单类型（0代表菜单、1代表iframe、2代表外链、3代表按钮）
+            title: "menus.pureExternalPage"
+          },
+          {
+            parentId: 100,
+            id: 101,
+            menuType: 0,
+            title: "menus.pureExternalDoc"
+          },
+          {
+            parentId: 101,
+            id: 102,
+            menuType: 2,
+            title: "menus.pureExternalLink"
+          },
+          {
+            parentId: 101,
+            id: 103,
+            menuType: 2,
+            title: "menus.pureUtilsLink"
+          },
+          {
+            parentId: 100,
+            id: 104,
+            menuType: 1,
+            title: "menus.pureEmbeddedDoc"
+          },
+          {
+            parentId: 104,
+            id: 105,
+            menuType: 1,
+            title: "menus.pureEpDoc"
+          },
+          {
+            parentId: 104,
+            id: 106,
+            menuType: 1,
+            title: "menus.pureTailwindcssDoc"
+          },
+          {
+            parentId: 104,
+            id: 107,
+            menuType: 1,
+            title: "menus.pureVueDoc"
+          },
+          {
+            parentId: 104,
+            id: 108,
+            menuType: 1,
+            title: "menus.pureViteDoc"
+          },
+          {
+            parentId: 104,
+            id: 109,
+            menuType: 1,
+            title: "menus.purePiniaDoc"
+          },
+          {
+            parentId: 104,
+            id: 110,
+            menuType: 1,
+            title: "menus.pureRouterDoc"
+          },
+          // 权限管理
+          {
+            parentId: 0,
+            id: 200,
+            menuType: 0,
+            title: "menus.purePermission"
+          },
+          {
+            parentId: 200,
+            id: 201,
+            menuType: 0,
+            title: "menus.purePermissionPage"
+          },
+          {
+            parentId: 200,
+            id: 202,
+            menuType: 0,
+            title: "menus.purePermissionButton"
+          },
+          {
+            parentId: 202,
+            id: 203,
+            menuType: 3,
+            title: "添加"
+          },
+          {
+            parentId: 202,
+            id: 204,
+            menuType: 3,
+            title: "修改"
+          },
+          {
+            parentId: 202,
+            id: 205,
+            menuType: 3,
+            title: "删除"
+          },
+          // 系统管理
+          {
+            parentId: 0,
+            id: 300,
+            menuType: 0,
+            title: "menus.pureSysManagement"
+          },
+          {
+            parentId: 300,
+            id: 301,
+            menuType: 0,
+            title: "menus.pureUser"
+          },
+          {
+            parentId: 300,
+            id: 302,
+            menuType: 0,
+            title: "menus.pureRole"
+          },
+          {
+            parentId: 300,
+            id: 303,
+            menuType: 0,
+            title: "menus.pureSystemMenu"
+          },
+          {
+            parentId: 300,
+            id: 304,
+            menuType: 0,
+            title: "menus.pureDept"
+          },
+          {
+            parentId: 300,
+            id: 305,
+            menuType: 0,
+            title: "menus.pureDict"
+          },
+          // 系统监控
+          {
+            parentId: 0,
+            id: 400,
+            menuType: 0,
+            title: "menus.pureSysMonitor"
+          },
+          {
+            parentId: 400,
+            id: 401,
+            menuType: 0,
+            title: "menus.pureOnlineUser"
+          },
+          {
+            parentId: 400,
+            id: 402,
+            menuType: 0,
+            title: "menus.pureLoginLog"
+          },
+          {
+            parentId: 400,
+            id: 403,
+            menuType: 0,
+            title: "menus.pureOperationLog"
+          },
+          {
+            parentId: 400,
+            id: 404,
+            menuType: 0,
+            title: "menus.pureSystemLog"
+          },
+          // 标签页操作
+          {
+            parentId: 0,
+            id: 500,
+            menuType: 0,
+            title: "menus.pureTabs"
+          },
+          {
+            parentId: 500,
+            id: 501,
+            menuType: 0,
+            title: "menus.pureTabs"
+          },
+          {
+            parentId: 500,
+            id: 502,
+            menuType: 0,
+            title: "query传参模式"
+          },
+          {
+            parentId: 500,
+            id: 503,
+            menuType: 0,
+            title: "params传参模式"
+          }
+        ]
+      };
+    }
+  },
+  // 租户套餐-权限-菜单权限-根据角色 id 查对应菜单
+  {
+    url: "/tenant-package-menu-ids",
+    method: "post",
+    response: ({ body }) => {
+      if (body.id == 101) {
+        return {
+          success: true,
+          data: [
+            100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 200, 201,
+            202, 203, 204, 205, 300, 301, 302, 303, 304, 305, 400, 401, 402,
+            403, 404, 500, 501, 502, 503
+          ]
+        };
+      } else if (body.id == 102) {
+        return {
+          success: true,
+          data: [
+            100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 404, 500,
+            501, 502, 503
+          ]
+        };
+      }
+    }
+  },
+  // 租户套餐列表（简易）
+  {
+    url: "/tenant-package-simple",
+    method: "get",
+    response: () => {
+      return {
+        success: true,
+        data: [
+          {
+            id: 101,
+            name: "高级套餐"
+          },
+          {
+            id: 102,
+            name: "普通套餐"
+          }
+        ]
+      };
     }
   }
 ]);

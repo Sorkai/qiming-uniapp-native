@@ -67,6 +67,9 @@ menus:
   pureLogin: 登入
   pureEmpty: 無Layout頁
   pureTable: 表格
+  pureTenantManagement: 租戶管理
+  pureTenantList: 租戶列表
+  pureTenantPackage: 租戶套餐
   pureSysManagement: 系統管理
   pureUser: 使用者管理
   pureRole: 角色管理
@@ -195,6 +198,7 @@ status:
   pureNoNotify: 暫無通知
   pureNoTodo: 暫無待辦
 login:
+  pureTenant: 租戶名
   pureUsername: 帳號
   purePassword: 密碼
   pureVerifyCode: 驗證碼
@@ -225,6 +229,7 @@ login:
   purePrivacyPolicy: 《隱私政策》
   pureGetVerifyCode: 獲取驗證碼
   pureInfo: 秒後重新獲取
+  pureTenantReg: 請輸入租戶名
   pureUsernameReg: 請輸入帳號
   purePassWordReg: 請輸入密碼
   pureVerifyCodeReg: 請輸入驗證碼

@@ -67,6 +67,9 @@ menus:
   pureLogin: 로그인
   pureEmpty: 레이아웃 없음
   pureTable: 표
+  pureTenantManagement: 임차인 관리
+  pureTenantList: 임차인 목록
+  pureTenantPackage: 테넌트 패키지
   pureSysManagement: 시스팅 관리
   pureUser: 사용자 관리
   pureRole: 역할 관리
@@ -195,6 +198,7 @@ status:
     pureNoNotify: 통지 없음
     pureNoTodo: 할 일 없음
 login:
+  pureTenant: 테넌트 이름
   pureUsername: 계정
   purePassword: 비밀번호
   pureVerifyCode: 인증 코드
@@ -225,6 +229,7 @@ login:
   purePrivacyPolicy: 《개인정보 처리방침》
   pureGetVerifyCode: 인증 코드 받기
   pureInfo: 초 후에 다시 받기
+  pureTenantReg: 테넌트 이름을 입력하세요
   pureUsernameReg: 계정을 입력하세요
   purePassWordReg: 비밀번호를 입력하세요
   pureVerifyCodeReg: 인증 코드를 입력하세요

@@ -67,6 +67,9 @@ menus:
   pureLogin: 登录
   pureEmpty: 无Layout页
   pureTable: 表格
+  pureTenantManagement: 租户管理
+  pureTenantList: 租户列表
+  pureTenantPackage: 租户套餐
   pureSysManagement: 系统管理
   pureUser: 用户管理
   pureRole: 角色管理
@@ -195,6 +198,7 @@ status:
   pureNoNotify: 暂无通知
   pureNoTodo: 暂无待办
 login:
+  pureTenant: 租户名
   pureUsername: 账号
   purePassword: 密码
   pureVerifyCode: 验证码
@@ -225,6 +229,7 @@ login:
   purePrivacyPolicy: 《隐私政策》
   pureGetVerifyCode: 获取验证码
   pureInfo: 秒后重新获取
+  pureTenantReg: 请输入租户名
   pureUsernameReg: 请输入账号
   purePassWordReg: 请输入密码
   pureVerifyCodeReg: 请输入验证码

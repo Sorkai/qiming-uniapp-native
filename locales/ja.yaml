@@ -67,6 +67,9 @@ menus:
   pureLogin: ログイン
   pureEmpty: Layoutページなし
   pureTable: テーブル
+  pureTenantManagement: テナント管理
+  pureTenantList: テナント一覧
+  pureTenantPackage: テナントパッケージ
   pureSysManagement: システム管理
   pureUser: ユーザー管理
   pureRole: ロール管理
@@ -195,6 +198,7 @@ status:
   pureNoNotify: 通知はありません
   pureNoTodo: 未処理の事項はありません
 login:
+  pureTenant: テナント名
   pureUsername: アカウント
   purePassword: パスワード
   pureVerifyCode: 認証コード
@@ -225,6 +229,7 @@ login:
   purePrivacyPolicy: 《プライバシーポリシー》
   pureGetVerifyCode: 認証コードを取得
   pureInfo: 秒後に再取得
+  pureTenantReg: テナント名を入力してください
   pureUsernameReg: アカウントを入力してください
   purePassWordReg: パスワードを入力してください
   pureVerifyCodeReg: 認証コードを入力してください

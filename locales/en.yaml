@@ -67,6 +67,9 @@ menus:
   pureLogin: Login
   pureEmpty: Empty Page
   pureTable: Table
+  pureTenantManagement: Tenant Manage
+  pureTenantList: Tenant List
+  pureTenantPackage: Tenant Package
   pureSysManagement: System Manage
   pureUser: User Manage
   pureRole: Role Manage
@@ -195,6 +198,7 @@ status:
   pureNoNotify: No Notify
   pureNoTodo: No Todo
 login:
+  pureTenant: TenantName
   pureUsername: Username
   purePassword: Password
   pureVerifyCode: VerifyCode
@@ -225,6 +229,7 @@ login:
   purePrivacyPolicy: Privacy Policy
   pureGetVerifyCode: Get VerifyCode
   pureInfo: Seconds
+  pureTenantReg: Please enter tenant name
   pureUsernameReg: Please enter username
   purePassWordReg: Please enter password
   pureVerifyCodeReg: Please enter verify code

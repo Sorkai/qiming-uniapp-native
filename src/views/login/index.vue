@@ -32,6 +32,7 @@ import Lock from "@iconify-icons/ri/lock-fill";
 import Check from "@iconify-icons/ep/check";
 import User from "@iconify-icons/ri/user-3-fill";
 import Info from "@iconify-icons/ri/information-line";
+import Tenant from "@iconify-icons/ri/home-gear-line";
 
 defineOptions({
   name: "Login"
@@ -62,8 +63,10 @@ const {
   translationJa,
   translationKo
 } = useTranslationLang();
+const { VITE_ENABLE_TENANT } = import.meta.env;
 
 const ruleForm = reactive({
+  tenant: "pure-admin",
   username: "admin",
   password: "admin123",
   verifyCode: ""
@@ -222,6 +225,26 @@ watch(loginDay, value => {
             :rules="loginRules"
             size="large"
           >
+            <Motion v-if="VITE_ENABLE_TENANT === 'true'">
+              <el-form-item
+                :rules="[
+                  {
+                    required: true,
+                    message: transformI18n($t('login.pureTenantReg')),
+                    trigger: 'blur'
+                  }
+                ]"
+                prop="tenant"
+              >
+                <el-input
+                  v-model="ruleForm.tenant"
+                  clearable
+                  :placeholder="t('login.pureTenant')"
+                  :prefix-icon="useRenderIcon(Tenant)"
+                />
+              </el-form-item>
+            </Motion>
+
             <Motion :delay="100">
               <el-form-item
                 :rules="[

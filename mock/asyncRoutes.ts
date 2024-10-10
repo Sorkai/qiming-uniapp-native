@@ -1,12 +1,49 @@
 // 模拟后端动态生成路由
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
-import { system, monitor, permission, frame, tabs } from "@/router/enums";
+import {
+  tabs,
+  frame,
+  tenant,
+  system,
+  monitor,
+  permission
+} from "@/router/enums";
 
 /**
  * roles：页面级别权限，这里模拟二种 "admin"、"common"
  * admin：管理员角色
  * common：普通角色
  */
+
+const tenantManagementRouter = {
+  path: "/tenant",
+  meta: {
+    icon: "ri:home-gear-line",
+    title: "menus.pureTenantManagement",
+    rank: tenant,
+    extraIcon: "IF-pure-iconfont-new svg"
+  },
+  children: [
+    {
+      path: "/tenant/list/index",
+      name: "TenantList",
+      meta: {
+        icon: "ri:list-check",
+        title: "menus.pureTenantList",
+        roles: ["admin"]
+      }
+    },
+    {
+      path: "/tenant/package/index",
+      name: "TenantPackage",
+      meta: {
+        icon: "ri:file-paper-line",
+        title: "menus.pureTenantPackage",
+        roles: ["admin"]
+      }
+    }
+  ]
+};
 
 const systemManagementRouter = {
   path: "/system",
@@ -338,6 +375,7 @@ export default defineFakeRoute([
       return {
         success: true,
         data: [
+          tenantManagementRouter,
           systemManagementRouter,
           systemMonitorRouter,
           permissionRouter,
