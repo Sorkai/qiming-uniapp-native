@@ -1,7 +1,7 @@
 # 使用前须知
 
-[vue-pure-admin-max](https://github.com/xiaoxian521/vue-pure-admin-max) 仅供 `pureadmin vip` 服务群内成员使用且使用者不可售卖或公开源代码，违者追究法律责任、后续功能不再提供源代码或停止开发、踢出 `pureadmin vip` 服务群且不退入群费！  
-注：若服务群内成员在公司使用了 [vue-pure-admin-max](https://github.com/xiaoxian521/vue-pure-admin-max) 里的 [高级功能](#高级功能提交记录)，离职后，公司也不可售卖或公开源代码，违者追究其公司法律责任，最高面临`5万元`罚款！
+[vue-pure-admin-max](https://github.com/xiaoxian521/vue-pure-admin-max) 仅供购买者（个人、公司）使用且使用者不可售卖或公开源代码，违者追究法律责任、踢出此私有仓库且不退购买费！  
+注：若购买者在公司使用了 [vue-pure-admin-max](https://github.com/xiaoxian521/vue-pure-admin-max)，离职后，公司也不可售卖或公开源代码，违者追究其公司法律责任，最高面临`5万元`罚款！
 
 ## `vue-pure-admin-max` 与 `vue-pure-admin` 的区别是什么？
 
@@ -16,7 +16,7 @@
 | 悬浮按钮功能                       | 已完成   | [添加悬浮按钮功能](https://github.com/xiaoxian521/vue-pure-admin-max/commit/1448871cba52044ca379ca1affe355231736b6ad)                   |
 | 新增繁體中文、日语、韩语的内置支持 | 已完成   | [新增繁體中文、日语、韩语的内置支持](https://github.com/xiaoxian521/vue-pure-admin-max/commit/c6eadaada65d774d9eb9f0d1108355d83a29c653) |
 | 字典管理                           | 已完成   | [添加字典管理](https://github.com/xiaoxian521/vue-pure-admin-max/commit/d25cc87f5f959a5d7ab84ffd55b37104b4a26923)                       |
-| 多租户管理                         | 待开发   |                                                                                                                                         |
+| 多租户管理                         | 已完成   | [添加多租户管理](https://github.com/xiaoxian521/vue-pure-admin-max/commit/2098e330be672222ce4dd1cc0c769b56479cf550)                     |
 
 ## 高级功能 `bug` 修复记录
 
@@ -29,4 +29,4 @@
 
 ## 温馨提示
 
-目前作者较忙，剩余高级功能，会在闲时开发，[专属视频教程](https://pure-admin.github.io/pure-admin-doc/pages/service/#%E4%B8%93%E5%B1%9E%E8%A7%86%E9%A2%91%E6%95%99%E7%A8%8B%E5%A6%82%E4%B8%8B) 也会在闲时录制，这些价值远远超于入群价格，全职开源不易，请谅解。当然大概在 `2024` 年 `8` 月底，完成全部高级功能！
+当您看到类似 `This repository has been archived` 的提示时，请不要疑惑，这是我将该仓库进行了存档处理，防止大家误提交代码到该仓库。当有新功能或者需要维护时，我会取消存档将功能加上后重新进行存档 🙏
