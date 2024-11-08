@@ -47,6 +47,9 @@ const {
   setLayoutThemeColor
 } = useDataThemeChange();
 
+const darkMode = computed(() => $storage?.layout?.darkMode);
+const overallStyler = computed(() => $storage?.layout?.overallStyle);
+
 /* body添加layout属性，作用于src/style/sidebar.scss */
 if (unref(layoutTheme)) {
   const layout = unref(layoutTheme).layout;
@@ -291,13 +294,13 @@ const mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
 
 /** 根据操作系统主题设置平台整体风格 */
 function updateTheme() {
-  if (overallStyle.value !== "system") return;
+  if (overallStyler.value !== "system") return;
   if (mediaQueryList.matches) {
     dataTheme.value = true;
   } else {
     dataTheme.value = false;
   }
-  dataThemeChange(overallStyle.value);
+  dataThemeChange(overallStyler.value);
 }
 
 function removeMatchMedia() {
@@ -334,7 +337,7 @@ onUnmounted(() => removeMatchMedia);
       <Segmented
         resize
         class="select-none"
-        :modelValue="overallStyle === 'system' ? 2 : dataTheme ? 1 : 0"
+        :modelValue="overallStyler === 'system' ? 2 : darkMode ? 1 : 0"
         :options="themeOptions"
         @change="
           theme => {

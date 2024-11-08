@@ -36,7 +36,8 @@
   }
 
   .set-icon,
-  .fullscreen-icon {
+  .fullscreen-icon,
+  .overall-style-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -692,12 +693,16 @@
       .globalization,
       /* 全屏 */
       .fullscreen-icon,
+      /* 整体风格 */
+      .overall-style-icon,
       /* 消息通知 */
       .dropdown-badge,
       /* 用户名 */
       .el-dropdown-link,
       /* 设置 */
       .set-icon {
+        color: #262626;
+
         &:hover {
           background: $menuHover;
         }
@@ -877,12 +882,16 @@ body[layout="vertical"] {
   .globalization,
   /* 全屏 */
   .fullscreen-icon,
+  /* 整体风格 */
+  .overall-style-icon,
   /* 消息通知 */
   .dropdown-badge,
   /* 用户名 */
   .el-dropdown-link,
   /* 设置 */
   .set-icon {
+    color: #262626;
+
     &:hover {
       background: #f6f6f6;
     }
@@ -1031,12 +1040,16 @@ body[layout="double"] {
   .globalization,
   /* 全屏 */
   .fullscreen-icon,
+  /* 整体风格 */
+  .overall-style-icon,
   /* 消息通知 */
   .dropdown-badge,
   /* 用户名 */
   .el-dropdown-link,
   /* 设置 */
   .set-icon {
+    color: #262626;
+
     &:hover {
       background: #f6f6f6;
     }
