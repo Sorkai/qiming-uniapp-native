@@ -17,6 +17,7 @@
 | 新增繁體中文、日语、韩语的内置支持 | 已完成   | [新增繁體中文、日语、韩语的内置支持](https://github.com/xiaoxian521/vue-pure-admin-max/commit/c6eadaada65d774d9eb9f0d1108355d83a29c653) |
 | 字典管理                           | 已完成   | [添加字典管理](https://github.com/xiaoxian521/vue-pure-admin-max/commit/d25cc87f5f959a5d7ab84ffd55b37104b4a26923)                       |
 | 多租户管理                         | 已完成   | [添加多租户管理](https://github.com/xiaoxian521/vue-pure-admin-max/commit/2098e330be672222ce4dd1cc0c769b56479cf550)                     |
+| 页头添加整体风格快捷操作按钮       | 已完成   | [页头添加整体风格快捷操作按钮](https://github.com/xiaoxian521/vue-pure-admin-max/commit/a7ea87a1773295970a44726b4231bd3b607c8d01)       |
 
 ## 高级功能 `bug` 修复记录
 
