@@ -2,6 +2,7 @@
   <el-config-provider :locale="currentLocale">
     <router-view />
     <ReDialog />
+    <ReDrawer />
     <ReFloatButton :floatBtns="floatBtns" />
   </el-config-provider>
 </template>
@@ -11,6 +12,7 @@ import { defineComponent } from "vue";
 import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
 import { ReDialog } from "@/components/ReDialog";
+import { ReDrawer } from "@/components/ReDrawer";
 import en from "element-plus/es/locale/lang/en";
 import ja from "element-plus/es/locale/lang/ja";
 import ko from "element-plus/es/locale/lang/ko";
@@ -29,6 +31,7 @@ export default defineComponent({
   components: {
     [ElConfigProvider.name]: ElConfigProvider,
     ReDialog,
+    ReDrawer,
     ReFloatButton
   },
   computed: {
@@ -53,18 +56,18 @@ export default defineComponent({
         {
           tip: "优质服务",
           icon: Service,
-          link: "https://pure-admin.github.io/pure-admin-doc/pages/service",
+          link: "https://pure-admin.cn/pages/service/",
           show: false
         },
         {
           tip: "保姆级文档",
-          link: "https://pure-admin.github.io/pure-admin-doc",
+          link: "https://pure-admin.cn/",
           icon: Book,
           show: false
         },
         {
           tip: "max版本",
-          link: "https://github.com/pure-admin/vue-pure-admin-max",
+          link: "https://pure-admin.cn/pages/max/",
           icon: Max,
           show: false
         }

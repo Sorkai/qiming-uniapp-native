@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
     font-size: 18px;
     font-weight: 600;
-    color: $subMenuActiveText;
+    color: var(--pure-theme-sub-menu-active-text);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

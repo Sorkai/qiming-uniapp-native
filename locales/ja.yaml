@@ -88,6 +88,7 @@ menus:
   pureFive: "500"
   pureComponents: コンポーネント
   pureDialog: 関数型ポップアップ
+  pureDrawer: 関数型引き出し
   pureMessage: メッセージ通知
   pureVideo: ビデオ
   pureSegmented: セグメントコントローラー

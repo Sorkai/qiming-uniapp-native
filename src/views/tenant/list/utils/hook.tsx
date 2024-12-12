@@ -235,7 +235,7 @@ export function useTenantList() {
       fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
-      contentRenderer: () => h(editForm, { ref: formRef }),
+      contentRenderer: () => h(editForm, { ref: formRef, formInline: null }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;

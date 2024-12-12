@@ -88,6 +88,7 @@ menus:
   pureFive: "500"
   pureComponents: 組件
   pureDialog: 函數式彈窗
+  pureDrawer: 函數式抽屜
   pureMessage: 訊息提示
   pureVideo: 影片
   pureSegmented: 分段控制器

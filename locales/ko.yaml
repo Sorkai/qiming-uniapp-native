@@ -88,6 +88,7 @@ menus:
   pureFive: "500"
   pureComponents: 컴포넌트
   pureDialog: 함수형 팝업
+  pureDrawer: 함수형 서랍
   pureMessage: 메시지 팁
   pureVideo: 비디오
   pureSegmented: 세그먼트 컨트롤러
