@@ -189,12 +189,18 @@ watch(
         </span>
         <template #dropdown>
           <el-dropdown-item @click="toAccountSettings">
-            <IconifyIconOffline class="mr-[5px]" :icon="AccountSettingsIcon" />
+            <IconifyIconOffline
+              :icon="AccountSettingsIcon"
+              style="margin: 5px"
+            />
             {{ t("buttons.pureAccountSettings") }}
           </el-dropdown-item>
-          <el-dropdown-menu>
+          <el-dropdown-menu class="logout">
             <el-dropdown-item @click="logout">
-              <IconifyIconOffline class="mr-[5px]" :icon="LogoutCircleRLine" />
+              <IconifyIconOffline
+                :icon="LogoutCircleRLine"
+                style="margin: 5px"
+              />
               {{ t("buttons.pureLoginOut") }}
             </el-dropdown-item>
           </el-dropdown-menu>
@@ -224,6 +230,16 @@ watch(
   .check-btn {
     position: absolute;
     left: 20px;
+  }
+}
+
+.logout {
+  width: 120px;
+
+  ::v-deep(.el-dropdown-menu__item) {
+    display: inline-flex;
+    flex-wrap: wrap;
+    min-width: 100%;
   }
 }
 </style>
