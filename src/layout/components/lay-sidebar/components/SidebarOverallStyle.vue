@@ -1,13 +1,11 @@
 <script setup lang="ts">
+import { useGlobal } from "@pureadmin/utils";
 import { computed, watch, shallowRef } from "vue";
-import { useDark, useGlobal } from "@pureadmin/utils";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 
-import DayIcon from "@/assets/svg/day.svg?component";
-import DarkIcon from "@/assets/svg/dark.svg?component";
+import DayIcon from "@iconify-icons/ri/sun-fill";
+import DarkIcon from "@iconify-icons/ri/moon-fill";
 
-const { isDark } = useDark();
 const styleIcon = shallowRef();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { dataTheme, dataThemeChange } = useDataThemeChange();
@@ -36,8 +34,6 @@ watch(
 
 <template>
   <span class="overall-style-icon navbar-bg-hover" @click="onToggle">
-    <component
-      :is="useRenderIcon(styleIcon, { fill: isDark ? '#fff' : '#262626' })"
-    />
+    <IconifyIconOffline :icon="styleIcon" />
   </span>
 </template>
