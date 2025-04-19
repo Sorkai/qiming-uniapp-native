@@ -3,8 +3,8 @@ import { ref } from "vue";
 import type { floatBtnsType } from "./type";
 import { isUrl, openLink } from "@pureadmin/utils";
 
-import Open from "@iconify-icons/ri/open-arm-line";
-import Close from "@iconify-icons/ep/close";
+import Open from "~icons/ri/open-arm-line";
+import Close from "~icons/ep/close";
 
 defineOptions({
   name: "ReFloatButton"
@@ -73,6 +73,7 @@ function onShow(btn: floatBtnsType, index: number) {
     margin-top: 10px;
     cursor: pointer;
     background: #fff;
+    border: none;
     border-radius: 50%;
     box-shadow:
       0 6px 16px 0 rgb(0 0 0 / 8%),

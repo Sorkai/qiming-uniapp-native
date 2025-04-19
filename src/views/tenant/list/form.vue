@@ -55,7 +55,7 @@ defineExpose({ getRef });
         v-model="newFormInline.packageId"
         placeholder="请选择租户套餐"
         clearable
-        class="!w-full"
+        class="w-full!"
       >
         <el-option
           v-for="(option, index) in options"
@@ -103,7 +103,7 @@ defineExpose({ getRef });
     <el-form-item label="账号额度" prop="accountCount">
       <el-input-number
         v-model="newFormInline.accountCount"
-        class="!w-full"
+        class="w-full!"
         :min="0"
         :max="9999"
         controls-position="right"
@@ -114,7 +114,7 @@ defineExpose({ getRef });
       <el-date-picker
         v-model="newFormInline.expireTime"
         type="datetime"
-        class="!w-full"
+        class="w-full!"
         placeholder="请选择过期时间"
         format="YYYY-MM-DD HH:mm:ss"
         value-format="x"

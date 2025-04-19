@@ -81,6 +81,8 @@ menus:
   pureLoginLog: 로그인 로그
   pureOperationLog: 작업 로그
   pureSystemLog: 시스템 로그
+  pureCodeMirror: 코드 편집기
+  pureMarkdown: Markdown
   pureEditor: 편집기
   pureAbnormal: 예외 페이지
   pureFourZeroFour: "404"
@@ -97,6 +99,7 @@ menus:
   pureDraggable: 드래그
   pureSplitPane: 분할 패널
   pureText: 텍스트 줄임
+  pureSlider: 슬라이더
   pureElButton: 버튼
   pureCheckButton: 선택 버튼
   pureButton: 버튼 효과

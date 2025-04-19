@@ -6,9 +6,9 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
-import Delete from "@iconify-icons/ep/delete";
-import EditPen from "@iconify-icons/ep/edit-pen";
-import AddFill from "@iconify-icons/ri/add-circle-line";
+import Delete from "~icons/ep/delete";
+import EditPen from "~icons/ep/edit-pen";
+import AddFill from "~icons/ri/add-circle-line";
 
 defineOptions({
   name: "SystemDict"
@@ -42,7 +42,7 @@ const {
     />
     <div :class="[deviceDetection() ? ['w-full'] : 'w-[calc(100%-200px)]']">
       <PureTableBar
-        class="!mt-0"
+        class="mt-0!"
         title="字典管理（左侧字典树可通过右键单击进行修改和删除）"
         :columns="columns"
         @refresh="onSearch"

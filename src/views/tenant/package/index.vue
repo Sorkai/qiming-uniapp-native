@@ -10,13 +10,13 @@ import {
   useResizeObserver
 } from "@pureadmin/utils";
 
-import Delete from "@iconify-icons/ep/delete";
-import EditPen from "@iconify-icons/ep/edit-pen";
-import Refresh from "@iconify-icons/ep/refresh";
-import Menu from "@iconify-icons/ep/menu";
-import AddFill from "@iconify-icons/ri/add-circle-line";
-import Close from "@iconify-icons/ep/close";
-import Check from "@iconify-icons/ep/check";
+import Delete from "~icons/ep/delete";
+import EditPen from "~icons/ep/edit-pen";
+import Refresh from "~icons/ep/refresh";
+import Menu from "~icons/ep/menu";
+import AddFill from "~icons/ri/add-circle-line";
+import Close from "~icons/ep/close";
+import Check from "~icons/ep/check";
 
 defineOptions({
   name: "TenantPackage"
@@ -29,7 +29,7 @@ const iconClass = computed(() => {
     "flex",
     "justify-center",
     "items-center",
-    "outline-none",
+    "outline-hidden",
     "rounded-[4px]",
     "cursor-pointer",
     "transition-colors",
@@ -92,14 +92,14 @@ onMounted(() => {
       ref="formRef"
       :inline="true"
       :model="form"
-      class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
+      class="search-form bg-bg_color w-full pl-8 pt-[12px] overflow-auto"
     >
       <el-form-item label="套餐名称：" prop="name">
         <el-input
           v-model="form.name"
           placeholder="请输入套餐名称"
           clearable
-          class="!w-[180px]"
+          class="w-[180px]!"
         />
       </el-form-item>
       <el-form-item label="状态：" prop="status">
@@ -107,7 +107,7 @@ onMounted(() => {
           v-model="form.status"
           placeholder="请选择状态"
           clearable
-          class="!w-[180px]"
+          class="w-[180px]!"
         >
           <el-option label="已启用" value="1" />
           <el-option label="已停用" value="0" />
@@ -116,7 +116,7 @@ onMounted(() => {
       <el-form-item>
         <el-button
           type="primary"
-          :icon="useRenderIcon('ri:search-line')"
+          :icon="useRenderIcon('ri/search-line')"
           :loading="loading"
           @click="onSearch"
         >
@@ -133,7 +133,7 @@ onMounted(() => {
       :class="['flex', deviceDetection() ? 'flex-wrap' : '']"
     >
       <PureTableBar
-        :class="[isShow && !deviceDetection() ? '!w-[60vw]' : 'w-full']"
+        :class="[isShow && !deviceDetection() ? 'w-[60vw]!' : 'w-full']"
         style="transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1)"
         title="租户套餐（仅演示，操作后不生效）"
         :columns="columns"

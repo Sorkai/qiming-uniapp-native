@@ -22,9 +22,9 @@ import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import ReFloatButton from "@/components/ReFloatButton";
 
-import Service from "@iconify-icons/ri/user-heart-line";
-import Book from "@iconify-icons/ri/book-open-line";
-import Max from "@iconify-icons/ri/vip-diamond-line";
+import Service from "~icons/ri/user-heart-line";
+import Book from "~icons/ri/book-open-line";
+import Max from "~icons/ri/vip-diamond-line";
 
 export default defineComponent({
   name: "app",

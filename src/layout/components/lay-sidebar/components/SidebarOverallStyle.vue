@@ -3,8 +3,8 @@ import { useGlobal } from "@pureadmin/utils";
 import { computed, watch, shallowRef } from "vue";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 
-import DayIcon from "@iconify-icons/ri/sun-fill";
-import DarkIcon from "@iconify-icons/ri/moon-fill";
+import DayIcon from "~icons/ri/sun-fill";
+import DarkIcon from "~icons/ri/moon-fill";
 
 const styleIcon = shallowRef();
 const { $storage } = useGlobal<GlobalPropertiesApi>();

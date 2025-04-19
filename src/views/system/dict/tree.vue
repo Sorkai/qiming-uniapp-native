@@ -9,9 +9,9 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import "@imengyu/vue3-context-menu/lib/vue3-context-menu.css";
 import ContextMenu from "@imengyu/vue3-context-menu";
 
-import Delete from "@iconify-icons/ep/delete";
-import EditPen from "@iconify-icons/ep/edit-pen";
-import AddFill from "@iconify-icons/ri/add-circle-line";
+import Delete from "~icons/ep/delete";
+import EditPen from "~icons/ep/edit-pen";
+import AddFill from "~icons/ri/add-circle-line";
 
 interface Tree {
   id: number;
@@ -130,7 +130,7 @@ watch(searchValue, val => {
           <el-icon class="el-input__icon">
             <IconifyIconOffline
               v-show="searchValue.length === 0"
-              icon="ri:search-line"
+              icon="ri/search-line"
             />
           </el-icon>
         </template>
@@ -152,17 +152,17 @@ watch(searchValue, val => {
         <template #default="{ node, data }">
           <ReText
             :class="[
-              '!w-full',
-              '!p-1',
-              '!mt-2',
-              '!mr-2',
+              'w-full!',
+              'p-1!',
+              'mt-2!',
+              'mr-2!',
               'rounded',
               'select-none',
               'hover:text-primary',
               searchValue.trim().length > 0 &&
                 `${node.label}（${data.code}）`.includes(searchValue) &&
-                '!text-red-500',
-              highlightMap[node.id]?.highlight ? 'dark:!text-primary' : ''
+                'text-red-500!',
+              highlightMap[node.id]?.highlight ? 'dark:text-primary!' : ''
             ]"
             :style="{
               color: highlightMap[node.id]?.highlight

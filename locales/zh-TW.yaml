@@ -81,6 +81,8 @@ menus:
   pureLoginLog: 登入紀錄
   pureOperationLog: 操作紀錄
   pureSystemLog: 系統紀錄
+  pureCodeMirror: 程式碼編輯器
+  pureMarkdown: Markdown
   pureEditor: 編輯器
   pureAbnormal: 異常頁面
   pureFourZeroFour: "404"
@@ -97,6 +99,7 @@ menus:
   pureDraggable: 拖曳
   pureSplitPane: 切割面板
   pureText: 文本省略
+  pureSlider: 滑桿
   pureElButton: 按鈕
   pureCheckButton: 可選按鈕
   pureButton: 按鈕動效

@@ -81,6 +81,8 @@ menus:
   pureLoginLog: ログインログ
   pureOperationLog: 操作ログ
   pureSystemLog: システムログ
+  pureCodeMirror: コードエディタ
+  pureMarkdown: Markdown
   pureEditor: エディター
   pureAbnormal: 異常ページ
   pureFourZeroFour: "404"
@@ -97,6 +99,7 @@ menus:
   pureDraggable: ドラッグ可能
   pureSplitPane: 分割パネル
   pureText: テキスト省略
+  pureSlider: スライダー
   pureElButton: ボタン
   pureCheckButton: チェックボタン
   pureButton: ボタンアニメーション

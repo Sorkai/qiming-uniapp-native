@@ -1558,7 +1558,7 @@ export default defineFakeRoute([
     url: "/dict-detail",
     method: "post",
     response: ({ body }) => {
-      let list = [
+      const list = [
         {
           id: 101,
           label: "通知",

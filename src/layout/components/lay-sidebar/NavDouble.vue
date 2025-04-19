@@ -138,7 +138,7 @@ onBeforeUnmount(() => {
               :tippyProps="{
                 theme: tooltipEffect
               }"
-              class="!w-full !text-inherit !text-xs"
+              class="w-full! text-inherit! text-xs!"
             >
               {{ transformI18n(menu.meta.title) }}
             </ReText>
@@ -199,10 +199,10 @@ onBeforeUnmount(() => {
 
   .sidebar-title {
     overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 18px;
     font-weight: 600;
     color: var(--pure-theme-sub-menu-active-text);
-    text-overflow: ellipsis;
     white-space: nowrap;
   }
 }
