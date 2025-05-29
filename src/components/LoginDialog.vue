@@ -125,7 +125,7 @@
           登录
         </el-button>
 
-        <div class="other-login">
+        <!-- <div class="other-login">
           <div class="divider">
             <span>其他登录方式</span>
           </div>
@@ -137,7 +137,7 @@
               <Icon icon="mdi:qqchat" />
             </div>
           </div>
-        </div>
+        </div> -->
 
         <div class="register-link">
           还没有账号？<a href="javascript:;" @click="isRegister = true"
