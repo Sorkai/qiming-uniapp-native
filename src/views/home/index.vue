@@ -7,7 +7,31 @@
           <img src="@/assets/logo.png" alt="Logo" />
         </div>
         <div class="header-right">
+          <template v-if="userInfo">
+            <el-dropdown trigger="hover" @command="handleCommand">
+              <div class="user-info">
+                <el-avatar :size="32" :src="userInfo.avatar || defaultAvatar" />
+                <span class="nickname">{{
+                  userInfo.nickname || userInfo.username
+                }}</span>
+                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="space">
+                    <el-icon><User /></el-icon>
+                    进入空间
+                  </el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>
+                    <el-icon><SwitchButton /></el-icon>
+                    退出登录
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
           <el-button
+            v-else
             type="primary"
             class="login-btn"
             @click="showLoginDialog = true"
@@ -80,13 +104,21 @@ import {
   Monitor,
   Connection,
   Operation,
-  ArrowDown
+  ArrowDown,
+  User,
+  SwitchButton
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
+import { storageLocal } from "@pureadmin/utils";
+import { userKey, removeToken } from "@/utils/auth";
+import { ElMessage } from "element-plus";
+import type { DataInfo } from "@/utils/auth";
 
 const router = useRouter();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
+const defaultAvatar = "/src/assets/avatar.png"; // 默认头像路径
+const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
 // 监听滚动事件
 const handleScroll = () => {
@@ -133,9 +165,25 @@ const features = ref([
   }
 ]);
 
+// 处理下拉菜单命令
+const handleCommand = (command: string) => {
+  switch (command) {
+    case "space":
+      router.push("/dashboard");
+      break;
+    case "logout":
+      removeToken();
+      storageLocal().removeItem(userKey);
+      userInfo.value = null;
+      ElMessage.success("退出登录成功");
+      break;
+  }
+};
+
 // 登录成功处理
 const handleLoginSuccess = () => {
-  router.push("/dashboard");
+  userInfo.value = storageLocal().getItem(userKey);
+  showLoginDialog.value = false;
 };
 </script>
 
@@ -207,6 +255,36 @@ const handleLoginSuccess = () => {
 
       &:active {
         transform: translateY(0);
+      }
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      cursor: pointer;
+      border-radius: 18px;
+      transition: all 0.3s;
+
+      &:hover {
+        background: rgb(255 255 255 / 10%);
+
+        .el-icon--right {
+          transform: rotate(180deg);
+        }
+      }
+
+      .nickname {
+        margin: 0 8px;
+        font-size: 16px;
+        color: #fff;
+        text-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+      }
+
+      .el-icon--right {
+        font-size: 16px;
+        color: rgb(255 255 255 / 85%);
+        transition: transform 0.3s ease;
       }
     }
   }
