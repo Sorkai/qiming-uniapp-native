@@ -3,6 +3,16 @@ const Layout = () => import("@/layout/index.vue");
 
 export default [
   {
+    path: "/home",
+    name: "Home",
+    component: () => import("@/views/home/index.vue"),
+    meta: {
+      title: $t("menus.pureHome"),
+      showLink: false,
+      rank: 100
+    }
+  },
+  {
     path: "/login",
     name: "Login",
     component: () => import("@/views/login/index.vue"),
