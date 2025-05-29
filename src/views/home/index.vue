@@ -7,7 +7,10 @@
           <img src="" alt="Logo" />
         </div>
         <div class="header-right">
-          <el-button type="primary" class="login-btn" @click="handleLogin"
+          <el-button
+            type="primary"
+            class="login-btn"
+            @click="showLoginDialog = true"
             >登录</el-button
           >
         </div>
@@ -66,6 +69,12 @@
         </div>
       </div>
     </div>
+
+    <!-- 登录弹窗 -->
+    <login-dialog
+      v-model:visible="showLoginDialog"
+      @login-success="handleLoginSuccess"
+    />
   </div>
 </template>
 
@@ -78,9 +87,11 @@ import {
   Operation,
   ArrowDown
 } from "@element-plus/icons-vue";
+import LoginDialog from "@/components/LoginDialog.vue";
 
 const router = useRouter();
 const isScrolled = ref(false);
+const showLoginDialog = ref(false);
 
 // 监听滚动事件
 const handleScroll = () => {
@@ -133,9 +144,9 @@ const features = ref([
   }
 ]);
 
-// 登录按钮点击事件
-const handleLogin = () => {
-  router.push("/login");
+// 登录成功处理
+const handleLoginSuccess = () => {
+  router.push("/dashboard");
 };
 </script>
 
