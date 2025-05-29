@@ -1,7 +1,17 @@
 import { $t } from "@/plugins/i18n";
-const Layout = () => import("@/layout/index.vue");
+import Layout from "@/layout/index.vue";
 
 export default [
+  {
+    path: "/home",
+    name: "Home",
+    component: () => import("@/views/home/index.vue"),
+    meta: {
+      title: "首页",
+      showLink: false,
+      rank: 101
+    }
+  },
   {
     path: "/login",
     name: "Login",
@@ -9,7 +19,7 @@ export default [
     meta: {
       title: $t("menus.pureLogin"),
       showLink: false,
-      rank: 101
+      rank: 102
     }
   },
   {
@@ -18,7 +28,7 @@ export default [
     meta: {
       title: $t("status.pureLoad"),
       showLink: false,
-      rank: 102
+      rank: 103
     },
     children: [
       {
@@ -36,7 +46,7 @@ export default [
     meta: {
       title: $t("menus.pureEmpty"),
       showLink: false,
-      rank: 103
+      rank: 104
     }
   },
   {
@@ -46,7 +56,7 @@ export default [
     meta: {
       title: $t("buttons.pureAccountSettings"),
       showLink: false,
-      rank: 104
+      rank: 105
     }
   }
 ] satisfies Array<RouteConfigsTable>;
