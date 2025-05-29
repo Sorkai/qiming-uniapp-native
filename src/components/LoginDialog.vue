@@ -252,6 +252,9 @@ import { ref, reactive } from "vue";
 import type { PropType } from "vue";
 import { ElMessage } from "element-plus";
 import { Icon } from "@iconify/vue";
+import { useUserStoreHook } from "@/store/modules/user";
+import { message } from "@/utils/message";
+import { useI18n } from "vue-i18n";
 
 interface LoginForm {
   username: string;
@@ -296,6 +299,7 @@ const emit = defineEmits<{
   (e: "login-success"): void;
 }>();
 
+const { t } = useI18n();
 const activeTab = ref<"account" | "phone">("account");
 const loading = ref(false);
 const rememberMe = ref(false);
@@ -360,40 +364,37 @@ const sendCode = async () => {
 
 // 登录处理
 const handleLogin = async () => {
-  // 清除错误提示
-  Object.keys(errors).forEach(key => {
-    errors[key as keyof Errors] = "";
-  });
+  // 清除错误信息
+  errors.username = "";
+  errors.password = "";
 
-  if (activeTab.value === "account") {
-    if (!loginForm.username) {
-      errors.username = "请输入账号";
-      return;
-    }
-    if (!loginForm.password) {
-      errors.password = "请输入密码";
-      return;
-    }
-  } else {
-    if (!phoneForm.phone) {
-      errors.phone = "请输入手机号";
-      return;
-    }
-    if (!phoneForm.code) {
-      errors.code = "请输入验证码";
-      return;
-    }
+  // 表单验证
+  if (!loginForm.username) {
+    errors.username = "请输入用户名";
+    return;
+  }
+  if (!loginForm.password) {
+    errors.password = "请输入密码";
+    return;
   }
 
   loading.value = true;
   try {
-    // TODO: 实现登录逻辑
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    emit("login-success");
-    emit("update:visible", false);
-    ElMessage.success("登录成功");
+    const res = await useUserStoreHook().loginByUsername({
+      username: loginForm.username,
+      password: loginForm.password
+    });
+
+    if (res.success) {
+      message(t("login.pureLoginSuccess"), { type: "success" });
+      emit("login-success");
+      emit("update:visible", false);
+    } else {
+      message(t("login.pureLoginFail"), { type: "error" });
+    }
   } catch (error) {
-    ElMessage.error("登录失败");
+    console.error("Login error:", error);
+    message(t("login.pureLoginFail"), { type: "error" });
   } finally {
     loading.value = false;
   }
