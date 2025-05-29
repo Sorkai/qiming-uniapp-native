@@ -3,7 +3,7 @@ import Layout from "@/layout/index.vue";
 
 export default [
   {
-    path: "/home",
+    path: "/",
     name: "Home",
     component: () => import("@/views/home/index.vue"),
     meta: {
