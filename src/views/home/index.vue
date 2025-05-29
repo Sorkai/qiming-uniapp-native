@@ -4,7 +4,7 @@
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
         <div class="logo">
-          <img src="" alt="Logo" />
+          <img src="@/assets/logo.png" alt="Logo" />
         </div>
         <div class="header-right">
           <el-button
@@ -30,12 +30,7 @@
           <div
             class="carousel-content"
             :style="{ backgroundImage: `url(${item.background})` }"
-          >
-            <div class="carousel-text">
-              <h2>{{ item.title }}</h2>
-              <p>{{ item.subtitle }}</p>
-            </div>
-          </div>
+          />
         </el-carousel-item>
       </el-carousel>
 
@@ -109,19 +104,13 @@ onUnmounted(() => {
 // 轮播图数据
 const carouselItems = ref([
   {
-    title: "创新技术平台",
-    subtitle: "为企业提供全方位的技术支持",
-    background: "https://via.placeholder.com/1920x600"
+    background: "/src/assets/home/banner1.jpg"
   },
   {
-    title: "高效协同办公",
-    subtitle: "打造智能化的办公环境",
-    background: "https://via.placeholder.com/1920x600"
+    background: "/src/assets/home/banner2.jpg"
   },
   {
-    title: "数据驱动决策",
-    subtitle: "助力企业精准决策",
-    background: "https://via.placeholder.com/1920x600"
+    background: "/src/assets/home/banner3.jpg"
   }
 ]);
 
@@ -194,7 +183,6 @@ const handleLoginSuccess = () => {
 
       img {
         height: 100%;
-        filter: brightness(0) invert(1); // 未滚动时logo显示为白色
       }
     }
 

@@ -14,7 +14,7 @@
     <div class="login-container">
       <div class="login-header">
         <div class="login-logo">
-          <img src="@/assets/login/illustration.svg" alt="Logo" />
+          <img src="@/assets/logo.png" alt="Logo" />
         </div>
         <!-- <div class="login-title">账号登录</div> -->
       </div>
