@@ -220,7 +220,7 @@ const handleLoginSuccess = () => {
   right: 0;
   left: 0;
   z-index: 1000;
-  height: 64px;
+  height: 80px;
   background: transparent;
   transition: all 0.3s ease;
 
@@ -232,6 +232,13 @@ const handleLoginSuccess = () => {
       .logo {
         img {
           filter: none;
+        }
+      }
+
+      .user-info {
+        .nickname {
+          color: #333;
+          text-shadow: none;
         }
       }
     }
@@ -247,7 +254,7 @@ const handleLoginSuccess = () => {
     margin: 0 auto;
 
     .logo {
-      height: 40px;
+      height: 48px;
 
       img {
         height: 100%;
@@ -255,14 +262,14 @@ const handleLoginSuccess = () => {
     }
 
     .login-btn {
-      height: 36px;
-      padding: 0 24px;
-      font-size: 15px;
+      height: 40px;
+      padding: 0 28px;
+      font-size: 16px;
       font-weight: 500;
       color: #fff;
       background: var(--el-color-primary);
       border-color: var(--el-color-primary);
-      border-radius: 18px;
+      border-radius: 20px;
       transition: all 0.3s ease;
 
       &:hover {
@@ -297,13 +304,16 @@ const handleLoginSuccess = () => {
       .nickname {
         margin: 0 8px;
         font-size: 16px;
+        font-weight: 600;
         color: #fff;
         text-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+        transition: color 0.3s ease;
       }
 
       .el-icon--right {
-        font-size: 16px;
-        color: rgb(255 255 255 / 85%);
+        font-size: 18px;
+        font-weight: bold;
+        color: #666;
         transition: transform 0.3s ease;
       }
     }
@@ -385,11 +395,7 @@ const handleLoginSuccess = () => {
     height: 63px;
     margin-bottom: 60px;
     font-family:
-      Helvetica,
-      Arial,
-      sans-serif,
-      "Apple Color Emoji",
-      "Segoe UI Emoji",
+      Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
       "Segoe UI Symbol";
     font-size: 38px;
     font-weight: 500;

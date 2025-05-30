@@ -3,7 +3,7 @@
     :model-value="visible"
     :title="null"
     width="400px"
-    top="60px"
+    top="85px"
     :show-close="true"
     :close-on-click-modal="false"
     :lock-scroll="true"
