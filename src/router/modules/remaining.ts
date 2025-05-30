@@ -58,5 +58,15 @@ export default [
       showLink: false,
       rank: 104
     }
+  },
+  {
+    path: "/account",
+    name: "Account",
+    component: () => import("@/views/account/index.vue"),
+    meta: {
+      title: "账号管理",
+      showLink: false,
+      rank: 105
+    }
   }
 ] satisfies Array<RouteConfigsTable>;

@@ -3,7 +3,7 @@
     <!-- 顶部导航 -->
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
-        <div class="logo">
+        <div class="logo" @click="router.push('/home')">
           <img src="@/assets/logo.png" alt="Logo" />
         </div>
         <div class="header-right">
@@ -255,6 +255,7 @@ const handleLoginSuccess = () => {
 
     .logo {
       height: 48px;
+      cursor: pointer;
 
       img {
         height: 100%;
@@ -294,8 +295,6 @@ const handleLoginSuccess = () => {
       transition: all 0.3s;
 
       &:hover {
-        background: rgb(255 255 255 / 10%);
-
         .el-icon--right {
           transform: rotate(180deg);
         }
