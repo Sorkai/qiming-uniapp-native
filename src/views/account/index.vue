@@ -203,7 +203,12 @@
               </div>
             </div>
             <div class="course-grid">
-              <div v-for="i in 8" :key="i" class="course-item">
+              <div
+                v-for="i in 8"
+                :key="i"
+                class="course-item"
+                @click="router.push(`/course/${i}`)"
+              >
                 <div
                   class="course-cover"
                   :style="{ backgroundColor: getCoverColor(i) }"
@@ -388,6 +393,11 @@ const getCoverColor = (index: number) => {
     "#bae7ff" // 浅天蓝
   ];
   return colors[(index - 1) % colors.length];
+};
+
+// 修改课程点击处理函数
+const handleCourseClick = (courseId: number) => {
+  router.push(`/course/${courseId}`);
 };
 </script>
 
@@ -777,6 +787,7 @@ const getCoverColor = (index: number) => {
       max-width: 220px;
       margin: 0 auto;
       overflow: hidden;
+      cursor: pointer;
       background-color: #fff;
       border: 1px solid #ebeef5;
       border-radius: 3px;

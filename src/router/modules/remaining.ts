@@ -68,5 +68,15 @@ export default [
       showLink: false,
       rank: 105
     }
+  },
+  {
+    path: "/course/:id",
+    name: "CourseDetail",
+    component: () => import("@/views/account/course-detail.vue"),
+    meta: {
+      title: "课程学习",
+      showLink: false,
+      rank: 106
+    }
   }
 ] satisfies Array<RouteConfigsTable>;
