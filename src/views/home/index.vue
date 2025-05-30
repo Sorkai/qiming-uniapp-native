@@ -220,7 +220,7 @@ const handleLoginSuccess = () => {
   right: 0;
   left: 0;
   z-index: 1000;
-  height: 80px;
+  height: 60px;
   background: transparent;
   transition: all 0.3s ease;
 
