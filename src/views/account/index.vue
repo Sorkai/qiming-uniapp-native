@@ -45,9 +45,33 @@
       </div>
     </div>
 
-    <!-- 页面主体内容 -->
+    <!-- 账号管理内容 -->
     <div class="account-content">
-      <!-- 内容区域待添加 -->
+      <div class="account-sidebar">
+        <div class="user-info">
+          <el-avatar :size="80" :src="userInfo?.avatar || defaultAvatar" />
+          <h3>{{ userInfo?.nickname || userInfo?.username }}</h3>
+          <p>{{ userInfo?.username }}</p>
+        </div>
+        <el-menu
+          :default-active="activeMenu"
+          class="account-menu"
+          @select="handleMenuSelect"
+        >
+          <el-menu-item index="home">
+            <el-icon><HomeFilled /></el-icon>
+            <span>首页</span>
+          </el-menu-item>
+          <el-menu-item index="course">
+            <el-icon><Reading /></el-icon>
+            <span>课程</span>
+          </el-menu-item>
+        </el-menu>
+      </div>
+      <div class="account-main">
+        <div v-if="activeMenu === 'home'">首页</div>
+        <div v-else-if="activeMenu === 'course'">课程</div>
+      </div>
     </div>
 
     <!-- 登录弹窗 -->
@@ -59,13 +83,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import {
   User,
   SwitchButton,
   Setting,
-  ArrowDown
+  ArrowDown,
+  HomeFilled,
+  Reading
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
@@ -74,10 +100,19 @@ import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
 
 const router = useRouter();
+const route = useRoute();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const defaultAvatar = "/src/assets/avatar.png";
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
+
+// 当前激活的菜单项
+const activeMenu = ref("home");
+
+// 处理菜单选择
+const handleMenuSelect = (index: string) => {
+  activeMenu.value = index;
+};
 
 // 监听滚动事件
 const handleScroll = () => {
@@ -120,118 +155,180 @@ const handleLoginSuccess = () => {
 
 <style lang="scss" scoped>
 .account-container {
-  width: 100%;
   min-height: 100vh;
-  background-color: #fff;
-}
+  background-color: #f5f7fa;
 
-.header {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 1000;
-  height: 80px;
-  background: #6b46c1;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
-
-  &.header-scrolled {
-    background: rgb(255 255 255 / 98%);
+  .header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1000;
+    height: 80px;
+    background: #6b46c1;
     box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
 
+    &.header-scrolled {
+      background: rgb(255 255 255 / 98%);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+
+      .header-content {
+        .logo {
+          img {
+            filter: none;
+          }
+        }
+
+        .user-info {
+          .nickname {
+            color: #333;
+            text-shadow: none;
+          }
+        }
+      }
+    }
+
     .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+      padding: 0 120px;
+      margin: 0 auto;
+
       .logo {
+        height: 48px;
+        cursor: pointer;
+
         img {
+          height: 100%;
           filter: none;
         }
       }
 
+      .login-btn {
+        height: 40px;
+        padding: 0 28px;
+        font-size: 16px;
+        font-weight: 500;
+        color: #fff;
+        background: var(--el-color-primary);
+        border-color: var(--el-color-primary);
+        border-radius: 20px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: #fff;
+          background: var(--el-color-primary-light-3);
+          border-color: var(--el-color-primary-light-3);
+          box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+          transform: translateY(-2px);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
+
       .user-info {
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        cursor: pointer;
+        border-radius: 18px;
+        transition: all 0.3s;
+
+        &:hover {
+          .el-icon--right {
+            transform: rotate(180deg);
+          }
+        }
+
         .nickname {
-          color: #333;
-          text-shadow: none;
+          margin: 0 8px;
+          font-size: 16px;
+          font-weight: 600;
+          color: #fff;
+          text-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+        }
+
+        .el-icon--right {
+          font-size: 18px;
+          font-weight: bold;
+          color: #fff;
+          transition: transform 0.3s ease;
         }
       }
     }
   }
 
-  .header-content {
+  .account-content {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1200px;
-    height: 100%;
-    padding: 0 20px;
-    margin: 0 auto;
+    gap: 20px;
+    min-height: calc(100vh - 80px);
+    padding: 100px 20px 20px;
 
-    .logo {
-      height: 48px;
-      cursor: pointer;
+    .account-sidebar {
+      flex-shrink: 0;
+      width: 260px;
 
-      img {
-        height: 100%;
-        filter: none;
-      }
-    }
+      .user-info {
+        padding: 30px 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
 
-    .login-btn {
-      height: 40px;
-      padding: 0 28px;
-      font-size: 16px;
-      font-weight: 500;
-      color: #fff;
-      background: var(--el-color-primary);
-      border-color: var(--el-color-primary);
-      border-radius: 20px;
-      transition: all 0.3s ease;
+        h3 {
+          margin: 15px 0 5px;
+          font-size: 18px;
+          font-weight: 500;
+          color: #333;
+        }
 
-      &:hover {
-        color: #fff;
-        background: var(--el-color-primary-light-3);
-        border-color: var(--el-color-primary-light-3);
-        box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
-        transform: translateY(-2px);
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      padding: 0 8px;
-      cursor: pointer;
-      border-radius: 18px;
-      transition: all 0.3s;
-
-      &:hover {
-        .el-icon--right {
-          transform: rotate(180deg);
+        p {
+          margin: 0;
+          font-size: 14px;
+          color: #666;
         }
       }
 
-      .nickname {
-        margin: 0 8px;
-        font-size: 16px;
-        font-weight: 600;
-        color: #fff;
-        text-shadow: 0 2px 4px rgb(0 0 0 / 30%);
-      }
+      .account-menu {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
 
-      .el-icon--right {
-        font-size: 18px;
-        font-weight: bold;
-        color: #fff;
-        transition: transform 0.3s ease;
+        :deep(.el-menu-item) {
+          height: 50px;
+          line-height: 50px;
+
+          .el-icon {
+            margin-right: 10px;
+            font-size: 18px;
+          }
+        }
       }
+    }
+
+    .account-main {
+      flex: 1;
+      padding: 30px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
     }
   }
 }
 
-.account-content {
-  min-height: calc(100vh - 80px);
-  padding-top: 80px; // 为固定定位的 header 留出空间
+// 路由切换动画
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

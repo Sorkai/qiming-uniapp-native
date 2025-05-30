@@ -248,9 +248,8 @@ const handleLoginSuccess = () => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1200px;
     height: 100%;
-    padding: 0 20px;
+    padding: 0 120px;
     margin: 0 auto;
 
     .logo {
@@ -350,7 +349,6 @@ const handleLoginSuccess = () => {
 
   .carousel-text {
     position: relative;
-    max-width: 1200px;
     padding: 0 20px;
     margin: 0 auto;
     margin-top: -30px;
@@ -384,7 +382,7 @@ const handleLoginSuccess = () => {
   background-color: #f8f9fa;
 
   .section-container {
-    max-width: 1200px;
+    max-width: 1300px;
     padding: 0 20px;
     margin: 0 auto;
   }
@@ -420,7 +418,7 @@ const handleLoginSuccess = () => {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 60px;
-    width: 1200px;
+    width: 1300px;
     height: 280px;
     margin-top: 57px;
     overflow: hidden;
