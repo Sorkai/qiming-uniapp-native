@@ -22,6 +22,10 @@
                     <el-icon><User /></el-icon>
                     进入空间
                   </el-dropdown-item>
+                  <el-dropdown-item command="account">
+                    <el-icon><Setting /></el-icon>
+                    账号管理
+                  </el-dropdown-item>
                   <el-dropdown-item command="logout" divided>
                     <el-icon><SwitchButton /></el-icon>
                     退出登录
@@ -56,8 +60,8 @@
             :style="{ backgroundImage: `url(${item.background})` }"
           >
             <div class="carousel-text">
-              <h2>{{ item.title }}</h2>
-              <p>{{ item.subtitle }}</p>
+              <h2 class="main-title">{{ item.title }}</h2>
+              <p class="sub-title">{{ item.subtitle }}</p>
             </div>
           </div>
         </el-carousel-item>
@@ -75,20 +79,23 @@
     <!-- 平台介绍部分 -->
     <div class="platform-intro">
       <div class="section-container">
-        <h2 class="section-title">平台特色</h2>
+        <h2 class="section-title">平台特色<span /></h2>
         <div class="feature-list">
           <div
             v-for="(feature, index) in features"
             :key="index"
             class="feature-item"
           >
-            <div class="feature-icon">
-              <el-icon>
-                <component :is="feature.icon" />
-              </el-icon>
-            </div>
-            <h3>{{ feature.title }}</h3>
-            <p>{{ feature.description }}</p>
+            <a href="javascript:;">
+              <div class="feature-image">
+                <img
+                  :src="feature.image"
+                  :alt="feature.title"
+                  draggable="false"
+                />
+              </div>
+              <p>{{ feature.title }}</p>
+            </a>
           </div>
         </div>
       </div>
@@ -111,7 +118,8 @@ import {
   Operation,
   ArrowDown,
   User,
-  SwitchButton
+  SwitchButton,
+  Setting
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
@@ -142,12 +150,12 @@ onUnmounted(() => {
 const carouselItems = ref([
   {
     title: "创新技术平台",
-    subtitle: "为企业提供全方位的技术支持",
+    subtitle: "全方位技术支持",
     background: "/src/assets/home/banner1.jpg"
   },
   {
-    title: "创新技术平台",
-    subtitle: "为企业提供全方位的技术支持",
+    title: "智慧解决方案",
+    subtitle: "助力企业转型",
     background: "/src/assets/home/banner2.jpg"
   }
 ]);
@@ -157,17 +165,20 @@ const features = ref([
   {
     icon: "Monitor",
     title: "智能管理",
-    description: "提供智能化的管理工具，提升工作效率"
+    description: "提供智能化的管理工具，提升工作效率",
+    image: "/src/assets/home/card1.jpg"
   },
   {
     icon: "Connection",
     title: "协同办公",
-    description: "多部门协同工作，信息共享无障碍"
+    description: "多部门协同工作，信息共享无障碍",
+    image: "/src/assets/home/card2.jpg"
   },
   {
     icon: "Operation",
     title: "数据分析",
-    description: "强大的数据分析能力，助力决策制定"
+    description: "强大的数据分析能力，助力决策制定",
+    image: "/src/assets/home/card3.jpg"
   }
 ]);
 
@@ -176,6 +187,9 @@ const handleCommand = (command: string) => {
   switch (command) {
     case "space":
       router.push("/dashboard");
+      break;
+    case "account":
+      router.push("/account");
       break;
     case "logout":
       removeToken();
@@ -326,25 +340,32 @@ const handleLoginSuccess = () => {
   }
 
   .carousel-text {
-    position: relative; // 确保文字在遮罩层上方
+    position: relative;
     max-width: 1200px;
     padding: 0 20px;
     margin: 0 auto;
+    margin-top: -30px;
     color: #fff;
     text-shadow: 0 2px 4px rgb(0 0 0 / 30%);
     user-select: none;
 
-    h2 {
-      margin-bottom: 20px;
-      font-size: 56px;
-      font-weight: 600;
-      letter-spacing: 2px;
+    .main-title {
+      margin: 0;
+      font-size: 80px;
+      font-weight: bold;
+      line-height: 130px;
+      color: #fff;
+      letter-spacing: 8px;
     }
 
-    p {
-      font-size: 28px;
-      letter-spacing: 1px;
-      opacity: 0.9;
+    .sub-title {
+      padding-left: 420px;
+      margin: 0;
+      font-size: 80px;
+      font-weight: bold;
+      line-height: 130px;
+      color: #f4cb28;
+      letter-spacing: 8px;
     }
   }
 }
@@ -360,48 +381,94 @@ const handleLoginSuccess = () => {
   }
 
   .section-title {
+    position: relative;
+    height: 63px;
     margin-bottom: 60px;
-    font-size: 36px;
-    font-weight: 600;
-    color: #333;
+    font-family:
+      Helvetica,
+      Arial,
+      sans-serif,
+      "Apple Color Emoji",
+      "Segoe UI Emoji",
+      "Segoe UI Symbol";
+    font-size: 38px;
+    font-weight: 500;
+    line-height: 53px;
+    color: #0d1a26;
     text-align: center;
+
+    span {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      display: inline-block;
+      width: 64px;
+      height: 3px;
+      margin-left: -32px;
+      background: #dbe7f8;
+      border-radius: 10px;
+    }
   }
 
   .feature-list {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
+    gap: 60px;
+    width: 1200px;
+    height: 280px;
+    margin-top: 57px;
+    overflow: hidden;
   }
 
   .feature-item {
-    padding: 40px 20px;
-    text-align: center;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
-    transition: transform 0.3s ease;
+    position: relative;
+    display: inline-block;
+    width: 360px;
+    overflow: hidden;
+    cursor: default;
+    border-radius: 6px;
 
-    &:hover {
-      transform: translateY(-5px);
+    a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
     }
 
-    .feature-icon {
-      margin-bottom: 20px;
-      font-size: 48px;
-      color: var(--el-color-primary);
-    }
+    .feature-image {
+      width: 360px;
+      height: auto;
+      user-select: none;
+      transition: all 0.5s;
+      -webkit-user-drag: none;
 
-    h3 {
-      margin-bottom: 16px;
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
+      img {
+        width: 100%;
+        height: auto;
+        pointer-events: none;
+        object-fit: contain;
+      }
     }
 
     p {
-      font-size: 16px;
-      line-height: 1.6;
-      color: #666;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 70px;
+      margin-top: 30px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 18px;
+      line-height: 70px;
+      color: #fff;
+      text-align: center;
+      white-space: nowrap;
+      background: rgb(0 0 0 / 50%);
+    }
+
+    &:hover .feature-image {
+      transform: scale(1.2, 1.2);
     }
   }
 }
