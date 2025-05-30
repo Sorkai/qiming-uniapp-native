@@ -54,7 +54,12 @@
           <div
             class="carousel-content"
             :style="{ backgroundImage: `url(${item.background})` }"
-          />
+          >
+            <div class="carousel-text">
+              <h2>{{ item.title }}</h2>
+              <p>{{ item.subtitle }}</p>
+            </div>
+          </div>
         </el-carousel-item>
       </el-carousel>
 
@@ -136,13 +141,14 @@ onUnmounted(() => {
 // 轮播图数据
 const carouselItems = ref([
   {
+    title: "创新技术平台",
+    subtitle: "为企业提供全方位的技术支持",
     background: "/src/assets/home/banner1.jpg"
   },
   {
+    title: "创新技术平台",
+    subtitle: "为企业提供全方位的技术支持",
     background: "/src/assets/home/banner2.jpg"
-  },
-  {
-    background: "/src/assets/home/banner3.jpg"
   }
 ]);
 
