@@ -1,0 +1,165 @@
+.hover-box[data-v-1139a0f7] {
+    opacity: .2
+}
+
+.hover-box .side-name[data-v-1139a0f7] {
+    color: #666;
+    text-align: center;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .625vw;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal
+}
+
+.hover-box[data-v-1139a0f7]:hover {
+    opacity: .3
+}
+
+.hover-box.dark[data-v-1139a0f7] {
+    opacity: .4
+}
+
+.hover-box.dark.active .side-name[data-v-1139a0f7],
+.hover-box.dark .side-name[data-v-1139a0f7] {
+    color: #fff
+}
+
+.hover-box.dark[data-v-1139a0f7]:hover {
+    opacity: .6
+}
+
+.hover-box.active[data-v-1139a0f7],
+.hover-box.active[data-v-1139a0f7]:hover {
+    opacity: 1
+}
+
+.hover-box.active .side-name[data-v-1139a0f7] {
+    color: #604ffd
+}
+
+.layout-sidebar[data-v-8289e326] {
+    position: fixed;
+    top: 2.60417vw;
+    width: 3.75vw;
+    left: 1.5625vw;
+    padding: .78125vw 0;
+    border-radius: .83333vw;
+    box-shadow: 0 0 1.04167vw 0 rgba(0, 0, 0, .08);
+    backdrop-filter: blur(1.04167vw);
+    box-sizing: border-box;
+    text-align: center;
+    z-index: 10;
+    transition: all .3s ease
+}
+
+.layout-sidebar .line[data-v-8289e326] {
+    width: 1.66667vw;
+    margin: 0 1.04167vw;
+    height: 0;
+    border-top: 1px solid hsla(0, 0%, 100%, .2);
+    margin-bottom: 1.04167vw
+}
+
+.layout-sidebar .line[data-v-8289e326]:last-child {
+    display: none
+}
+
+.layout-sidebar .item[data-v-8289e326] {
+    position: relative;
+    margin-bottom: .78125vw;
+    cursor: pointer
+}
+
+.layout-sidebar .item img[data-v-8289e326] {
+    width: 2.08333vw
+}
+
+.layout-sidebar .item[data-v-8289e326]:after {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    content: "";
+    width: .20833vw;
+    height: 2.08333vw;
+    border-radius: .15625vw 0 0 .15625vw;
+    background-color: #604ffd
+}
+
+.layout-sidebar .item.active[data-v-8289e326]:after {
+    display: block
+}
+
+.layout-sidebar .item[data-v-8289e326]:last-child {
+    margin-bottom: 0
+}
+
+.layout-sidebar.light[data-v-8289e326] {
+    background: #fff
+}
+
+.layout-sidebar.light .line[data-v-8289e326] {
+    border-color: rgba(0, 0, 0, .2) !important
+}
+
+.layout-sidebar.dark[data-v-8289e326] {
+    background: hsla(0, 0%, 100%, .05)
+}
+
+.mypopper.el-tooltip__popper.is-dark {
+    background-color: #000
+}
+
+.el-tooltip__popper[x-placement^=right] .popper__arrow,
+.el-tooltip__popper[x-placement^=right] .popper__arrow:after {
+    border-right-color: #000 !important
+}
+
+.leftMypopper.el-tooltip__popper.is-dark {
+    padding: .20833vw .625vw;
+    border-radius: .41667vw;
+    background: hsla(0, 0%, 100%, .08);
+    line-height: 1.25vw;
+    font-size: .83333vw;
+    color: #fff;
+    z-index: 9999;
+    left: 6.25vw !important
+}
+
+.leftMypopper.el-tooltip__popper .popper__arrow {
+    left: -.3125vw !important;
+    top: .41667vw !important;
+    border-right-color: hsla(0, 0%, 100%, .08) !important;
+    &:after {
+        border-right-color: hsla(0, 0%, 100%, .08) !important
+    }
+}
+
+.layout-container .layout-inner-content[data-v-2cf49992],
+.layout-container[data-v-2cf49992] {
+    position: relative
+}
+
+.layout-container .layout-inner-content[data-v-2cf49992]:after {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    content: "";
+    background-image: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/97ad171d0b5f41bdb0976d3b586df581.png);
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    background-size: 100% auto;
+    filter: blur(1.5625vw);
+    z-index: -1;
+    background-attachment: fixed
+}
+
+.layout-container .layout-inner-content.isAtlas[data-v-2cf49992] {
+    background-image: radial-gradient(#1e1e31 .08073vw, #121226 0);
+    background-size: 1.09375vw 1.09375vw
+}

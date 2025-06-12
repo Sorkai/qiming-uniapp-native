@@ -70,6 +70,14 @@ export default defineConfig([
           endOfLine: "auto"
         }
       ]
+    },
+    settings: {
+      "import/resolver": {
+        alias: {
+          map: [["@", "./src"]],
+          extensions: [".js", ".jsx", ".ts", ".tsx", ".vue", ".svg"]
+        }
+      }
     }
   },
   ...tseslint.config({
@@ -85,7 +93,6 @@ export default defineConfig([
       "@typescript-eslint/no-unused-expressions": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
       "@typescript-eslint/no-import-type-side-effects": "error",
-      "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/consistent-type-imports": [
         "error",
         { disallowTypeAnnotations: false, fixStyle: "inline-type-imports" }

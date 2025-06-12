@@ -1,0 +1,138 @@
+[data-v-4f948fdc] .newAiPop {
+    padding: 1.25vw !important;
+    border-radius: .83333vw;
+    background: hsla(0, 0%, 100%, .1);
+    backdrop-filter: blur(5.20833vw);
+    .el-dialog__header {
+        padding: 0;
+        .el-dialog__title {
+            color: #fff
+        }
+        .el-dialog__headerbtn {
+            top: 0;
+            i {
+                background: hsla(0, 0%, 100%, .1);
+                top: .625vw;
+                right: 0
+            }
+        }
+    }
+    .el-dialog__footer {
+        padding: 0
+    }
+    .el-dialog__body {
+        .operate-dialog-1 {
+            padding-top: 1.77083vw
+        }
+    }
+}
+
+[data-v-4f948fdc] .el-dialog__body {
+    .operate-dialog-1 {
+        display: block;
+        padding-top: 1.5625vw;
+        img,
+        svg {
+            position: relative;
+            display: block;
+            width: 2.91667vw;
+            height: 2.91667vw;
+            left: 50%;
+            margin-left: -1.45833vw
+        }
+        p {
+            padding-top: .83333vw;
+            width: 100%;
+            text-align: center;
+            padding-bottom: 1.66667vw
+        }
+    }
+}
+
+::v-deep .newAiPop .v-modal {
+    z-index: 5000 !important
+}
+
+.wxtsPop {
+    z-index: 4000 !important
+}
+
+.wxtsPop .operate-dialog-1 {
+    display: block !important
+}
+
+.light .btn-list .btn {
+    background: rgba(96, 79, 253, .1) !important;
+    color: #604ffd !important
+}
+
+.light .btn-list .btn.primary {
+    background: #604ffd !important;
+    color: #fff !important
+}
+
+.light .newAiPop,
+.light .wxtsPop {
+    background: #fff !important;
+    color: #000 !important
+}
+
+.light .newAiPop .el-dialog__body .operate-dialog-1 p,
+.light .newAiPop .el-dialog__header .el-dialog__title {
+    color: #000 !important
+}
+
+.light .newAiPop .el-dialog__header i {
+    color: rgba(0, 0, 0, .3) !important;
+    background: #fff !important;
+    border-radius: 50%
+}
+
+.light .newAiPop .warn-content .warn-text-box p {
+    color: #000 !important
+}
+
+.light .newAiPop .warn-content .warn-text-box .text-li {
+    color: #000 !important;
+    background: rgba(0, 0, 0, .03) !important
+}
+
+.light .newAiPop .el-dialog__body .content-box p {
+    color: #000
+}
+
+.light .newAiPop .el-dialog__body .content-box .my-class .name,
+.light .newAiPop .el-dialog__body .content-box .my-class .title,
+.light .newAiPop .el-dialog__body .content-box .my-teacher .name,
+.light .newAiPop .el-dialog__body .content-box .my-teacher .title {
+    color: #000 !important
+}
+
+.light .newAiPop .el-dialog__body .content-box .my-class .name,
+.light .newAiPop .el-dialog__body .content-box .my-teacher .name {
+    background: #f5f6fb !important
+}
+
+.light .newAiPop .AchievementRules-div h1,
+.light .newAiPop .AchievementRuleslist .p1,
+.light .newAiPop .AchievementRuleslist .p2,
+.light .newAiPop .AchievementRuleslist h2,
+.light .newAiPop .studyExam-div .Examtime-p2,
+.light .newAiPop .studyExam-div .studytime-p2,
+.light .newAiPop .text-top {
+    color: rgba(13, 13, 13, .8) !important
+}
+
+.light .newAiPop .AchievementRulesbg-div,
+.light .newAiPop .studyExam-div {
+    background: rgba(13, 13, 13, .03) !important
+}
+
+.light .newAiPop .AchievementRulesbg-div .Examtime-p1,
+.light .newAiPop .AchievementRulesbg-div .studytime-p1,
+.light .newAiPop .AchievementRulesbg-div ul li,
+.light .newAiPop .studyExam-div .Examtime-p1,
+.light .newAiPop .studyExam-div .studytime-p1,
+.light .newAiPop .studyExam-div ul li {
+    color: #0d0d0d !important
+}

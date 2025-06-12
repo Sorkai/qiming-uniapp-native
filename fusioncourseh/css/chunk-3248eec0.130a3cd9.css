@@ -1,0 +1,1924 @@
+pre code.hljs {
+    display: block;
+    overflow-x: auto;
+    padding: 1em
+}
+
+code.hljs {
+    padding: .15625vw .26042vw
+}
+
+.hljs {
+    color: #abb2bf;
+    background: #282c34
+}
+
+.hljs-comment,
+.hljs-quote {
+    color: #5c6370;
+    font-style: italic
+}
+
+.hljs-doctag,
+.hljs-formula,
+.hljs-keyword {
+    color: #c678dd
+}
+
+.hljs-deletion,
+.hljs-name,
+.hljs-section,
+.hljs-selector-tag,
+.hljs-subst {
+    color: #e06c75
+}
+
+.hljs-literal {
+    color: #56b6c2
+}
+
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta .hljs-string,
+.hljs-regexp,
+.hljs-string {
+    color: #98c379
+}
+
+.hljs-attr,
+.hljs-number,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-pseudo,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable {
+    color: #d19a66
+}
+
+.hljs-bullet,
+.hljs-link,
+.hljs-meta,
+.hljs-selector-id,
+.hljs-symbol,
+.hljs-title {
+    color: #61aeee
+}
+
+.hljs-built_in,
+.hljs-class .hljs-title,
+.hljs-title.class_ {
+    color: #e6c07b
+}
+
+.hljs-emphasis {
+    font-style: italic
+}
+
+.hljs-strong {
+    font-weight: 700
+}
+
+.hljs-link {
+    text-decoration: underline
+}
+
+* {
+    padding: 0;
+    margin: 0
+}
+
+.icon-mode-box[data-v-0762fd62] {
+    position: fixed;
+    bottom: 7.55208vw;
+    right: 1.66667vw;
+    z-index: 1000
+}
+
+.icon-mode-box .expand-icon[data-v-0762fd62] {
+    width: 4.16667vw;
+    height: 5.98958vw
+}
+
+.icon-mode-box .ai-hide-icon[data-v-0762fd62] {
+    background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/d92ac05dff9b469e8a29fda207e6d44f.png) no-repeat;
+    width: 1.66667vw;
+    height: 5.57292vw;
+    background-size: 1.66667vw 5.57292vw;
+    position: absolute;
+    right: -1.97917vw;
+    bottom: 0;
+    cursor: pointer;
+    z-index: 9999 !important;
+    transition: transform .5s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center
+}
+
+.icon-mode-box .ai-hide-rot[data-v-0762fd62] {
+    width: 1.30208vw
+}
+
+.icon-mode-box .ai-hide-2c[data-v-0762fd62] {
+    width: .83333vw;
+    margin-top: .3125vw
+}
+
+.icon-mode-box .ai-show-icon[data-v-0762fd62] {
+    height: 5.3125vw;
+    background-size: 4.16667vw 4.16667vw;
+    cursor: pointer;
+    z-index: 9999 !important;
+    transition: transform .3s ease
+}
+
+.icon-mode-box .ai-show-icon .ai-text-icon[data-v-0762fd62],
+.icon-mode-box .ai-show-icon[data-v-0762fd62] {
+    width: 5.3125vw;
+    position: absolute;
+    right: 0;
+    bottom: 0
+}
+
+.icon-mode-box .ai-show-icon .ai-close-icon-text[data-v-0762fd62],
+.icon-mode-box .ai-show-icon .ai-close-icon[data-v-0762fd62] {
+    width: 5.3125vw;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: .625vw;
+    cursor: pointer
+}
+
+.icon-mode-box .ai-show-icon .ai-close-icon-text[data-v-0762fd62] {
+    font-size: .625vw;
+    color: #d9d9d9
+}
+
+.icon-mode-box .ai-icon-hidden[data-v-0762fd62] {
+    transform: translateX(7.8125vw)
+}
+
+.icon-mode-box .ai-icon-appear[data-v-0762fd62] {
+    transform: translateX(0)
+}
+
+.gif-ai-icon-mode[data-v-0762fd62] {
+    position: fixed;
+    bottom: 2.08333vw;
+    right: 2.08333vw;
+    z-index: 1000
+}
+
+.gif-ai-icon-mode .gif-robbot[data-v-0762fd62] {
+    width: 5.72917vw;
+    height: 5.72917vw;
+    position: relative;
+    overflow: hidden
+}
+
+.gif-ai-icon-mode .gif-robbot .clip-img[data-v-0762fd62] {
+    object-fit: cover;
+    transform: scale(4) translateY(.36458vw);
+    transition: transform .5s ease
+}
+
+.gif-ai-icon-mode .gif-robbot .gif-bg[data-v-0762fd62] {
+    width: 5.72917vw;
+    height: 5.72917vw
+}
+
+.gif-ai-icon-mode .gif-robbot .ai-robbot-icon[data-v-0762fd62] {
+    position: absolute;
+    top: 0;
+    left: .78125vw;
+    width: 4.16667vw
+}
+
+[data-v-0762fd62] .drawerAIHelperDialog {
+    background-color: transparent
+}
+
+.ai-helper-sections.light[data-v-0762fd62] .el-input__inner {
+    background: #fff;
+    border: 1px solid #e2e2e2 !important
+}
+
+.ai-helper-sections.light[data-v-0762fd62] .el-input__inner::-webkit-input-placeholder {
+    color: rgba(0, 0, 0, .2)
+}
+
+.ai-helper-sections.light[data-v-0762fd62] .el-input__inner::placeholder {
+    color: rgba(0, 0, 0, .2)
+}
+
+.ai-helper-sections.light .people-name[data-v-0762fd62] {
+    color: rgba(0, 0, 0, .45)
+}
+
+.ai-helper-sections.light .init-talk-cotent[data-v-0762fd62] {
+    background: #fff
+}
+
+.ai-helper-sections.light .ai-tips-box[data-v-0762fd62],
+.ai-helper-sections.light .ai-tips-box span[data-v-0762fd62] {
+    color: rgba(0, 0, 0, .4)
+}
+
+.ai-helper-sections.light .ai-draggable-dialog[data-v-0762fd62] {
+    background: #fff
+}
+
+.ai-helper-sections.light .ai-fill-bg[data-v-0762fd62] {
+    border: 1px solid rgba(0, 0, 0, .2) !important;
+    background-size: cover;
+    background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/ee71b065a13544359e7077f78f5054be.png) no-repeat 50%
+}
+
+.ai-helper-sections.light .header-tips-box .ai-heler-header-tips[data-v-0762fd62],
+.ai-helper-sections.light .header-tips-box .code-hello[data-v-0762fd62] {
+    color: #000
+}
+
+.ai-helper-sections.light .header-tips-box .ai-heler-header-tips[data-v-0762fd62] {
+    background: #fff
+}
+
+.ai-helper-sections.light .ai-talk-box .ai-chat-share-container_nVXTe .answer-content-box_2Pu7S[data-v-0762fd62] {
+    color: #000;
+    background: #fff
+}
+
+.ai-helper-sections.light .ai-talk-box .ai-want-question .question-one-question span[data-v-0762fd62] {
+    color: #604ffd
+}
+
+.ai-helper-sections.light .ai-talk-box .ai-want-question .three-questions .question-item[data-v-0762fd62] {
+    background: #fff
+}
+
+.ai-helper-sections.light .ai-talk-box .ai-want-question .three-questions .question-item .three-question-cotent[data-v-0762fd62] {
+    color: #000
+}
+
+.ai-helper-sections.light .ai-pro-content-edit-box[data-v-0762fd62],
+.ai-helper-sections.light .input-fill-box-new[data-v-0762fd62] {
+    background: #fff;
+    border-radius: .625vw
+}
+
+.ai-helper-sections.light .ai-pro-content-edit-box .el-textarea .el-textarea__inner[data-v-0762fd62],
+.ai-helper-sections.light .ai-pro-content-edit-box .el-textarea__inner[data-v-0762fd62],
+.ai-helper-sections.light .input-fill-box-new .el-textarea .el-textarea__inner[data-v-0762fd62],
+.ai-helper-sections.light .input-fill-box-new .el-textarea__inner[data-v-0762fd62] {
+    color: #000 !important
+}
+
+.ai-helper-sections.dark[data-v-0762fd62] .el-input__inner {
+    background: hsla(0, 0%, 100%, .15);
+    border: transparent !important
+}
+
+.ai-helper-sections.dark[data-v-0762fd62] .el-input__inner::-webkit-input-placeholder {
+    color: hsla(0, 0%, 100%, .65)
+}
+
+.ai-helper-sections.dark[data-v-0762fd62] .el-input__inner::placeholder {
+    color: hsla(0, 0%, 100%, .65)
+}
+
+.ai-helper-sections.dark .people-name[data-v-0762fd62] {
+    color: hsla(0, 0%, 100%, .45)
+}
+
+.ai-helper-sections.dark .init-talk-cotent[data-v-0762fd62] {
+    background: hsla(0, 0%, 100%, .15)
+}
+
+.ai-helper-sections.dark .ai-tips-box[data-v-0762fd62],
+.ai-helper-sections.dark .ai-tips-box span[data-v-0762fd62] {
+    color: hsla(0, 0%, 100%, .4)
+}
+
+.ai-helper-sections .out-ai-showbox-pro[data-v-0762fd62] {
+    position: relative
+}
+
+.ai-helper-sections .out-ai-showbox-pro .out-ai-pro-talk-box[data-v-0762fd62] {
+    position: relative;
+    backdrop-filter: blur(5.20833vw);
+    box-sizing: border-box
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-input[data-v-0762fd62] {
+    position: relative;
+    margin-top: 1.66667vw
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-input[data-v-0762fd62] .el-input {
+    width: calc(100% - 3.125vw)
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-input[data-v-0762fd62] .el-input__inner {
+    height: 2.29167vw;
+    line-height: 2.29167vw;
+    border-radius: .625vw;
+    box-shadow: none !important
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-input[data-v-0762fd62] .el-input__inner:focus {
+    border: transparent !important;
+    box-shadow: none !important
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-input .mock-send-btn[data-v-0762fd62] {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 2.29167vw;
+    height: 2.29167vw;
+    flex-shrink: 0;
+    border-radius: .625vw;
+    background: #604ffd;
+    display: flex;
+    justify-content: center;
+    align-items: center
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-input .mock-send-btn svg[data-v-0762fd62] {
+    width: 1.25vw;
+    height: 1.25vw
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-box[data-v-0762fd62] {
+    padding-left: 3.95833vw
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-box .people-name[data-v-0762fd62] {
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .72917vw;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal
+}
+
+.ai-helper-sections .out-ai-showbox-pro .ai-hepler-pro-box .init-talk-cotent[data-v-0762fd62] {
+    border-radius: .10417vw 1.25vw 1.25vw 1.25vw;
+    display: inline-flex;
+    padding: .625vw .83333vw;
+    box-sizing: border-box;
+    margin-top: .41667vw;
+    font-weight: 700;
+    font-size: .83333vw
+}
+
+.ai-helper-sections .out-ai-showbox-pro .photo[data-v-0762fd62] {
+    position: absolute;
+    top: 1.25vw;
+    left: 1.25vw
+}
+
+.ai-helper-sections .out-ai-showbox-pro .photo img[data-v-0762fd62] {
+    width: 3.125vw
+}
+
+.ai-helper-sections .ai-tips-box[data-v-0762fd62] {
+    text-align: center;
+    font-size: .72917vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    padding: 0 0 1.25vw 0
+}
+
+.ai-helper-sections .ai-tips-box .pad-bottom-8[data-v-0762fd62] {
+    padding-bottom: .41667vw
+}
+
+.ai-helper-sections .ai-tips-box span[data-v-0762fd62] {
+    text-align: center;
+    font-size: .72917vw;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal
+}
+
+.ai-helper-sections .ai-footer-btns[data-v-0762fd62] {
+    clear: both;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center
+}
+
+.ai-helper-sections .talk-input-box[data-v-0762fd62] {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: 100%;
+    border-radius: .78125vw;
+    min-height: 2.91667vw;
+    padding: 0 1.25vw
+}
+
+.ai-helper-sections .talk-input-box .tch-feedback[data-v-0762fd62] {
+    position: static;
+    border-radius: .625vw;
+    background: #454545;
+    display: flex;
+    padding: .41667vw .625vw;
+    justify-content: center;
+    align-items: center;
+    width: 5.625vw;
+    margin-bottom: .625vw;
+    cursor: pointer;
+    box-sizing: border-box
+}
+
+.ai-helper-sections .talk-input-box .tch-feedback span[data-v-0762fd62] {
+    color: #fff;
+    text-align: justify;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.25vw
+}
+
+.ai-helper-sections .talk-input-box .stop-connect[data-v-0762fd62] {
+    cursor: pointer;
+    margin: 0 auto 1.04167vw;
+    display: flex;
+    padding: .41667vw .625vw;
+    align-items: center;
+    border-radius: .625vw;
+    background: hsla(0, 0%, 100%, .08);
+    backdrop-filter: blur(2.08333vw);
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .72917vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 100%;
+    box-sizing: border-box
+}
+
+.ai-helper-sections .talk-input-box .stop-connect span[data-v-0762fd62] {
+    vertical-align: text-top;
+    margin-left: .20833vw
+}
+
+.ai-helper-sections .talk-input-box .stop-connect-tch[data-v-0762fd62] {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    margin-left: -2.60417vw
+}
+
+.ai-helper-sections .talk-input-box .input-box[data-v-0762fd62] {
+    position: relative;
+    padding-bottom: 1.04167vw
+}
+
+.ai-helper-sections .talk-input-box .input-box .input-fill-box[data-v-0762fd62] {
+    padding: .83333vw 3.125vw .83333vw 0;
+    box-sizing: border-box
+}
+
+.ai-helper-sections .talk-input-box .input-box .input-fill-box-new[data-v-0762fd62] {
+    box-sizing: border-box;
+    padding-right: 2.08333vw;
+    min-height: 2.91667vw
+}
+
+.ai-helper-sections .talk-input-box .input-box .content-edit[data-v-0762fd62] {
+    color: hsla(0, 0%, 100%, .65);
+    text-align: justify;
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    max-height: 8.22917vw;
+    line-height: 1.14583vw;
+    padding: 0 .83333vw
+}
+
+.ai-helper-sections .talk-input-box .input-box .content-edit[data-v-0762fd62]:focus {
+    outline: none;
+    border: none;
+    box-shadow: none
+}
+
+.ai-helper-sections .talk-input-box .input-box .limit-text[data-v-0762fd62] {
+    position: absolute;
+    right: 3.125vw;
+    bottom: .52083vw;
+    color: #afa7fe;
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal
+}
+
+.ai-helper-sections .talk-input-box .input-box .add-new-talk[data-v-0762fd62] {
+    position: absolute;
+    opacity: .65;
+    cursor: pointer;
+    display: flex;
+    top: 50%;
+    right: .625vw;
+    transform: translateY(-50%)
+}
+
+.ai-helper-sections .talk-input-box .input-box .add-new-talk svg[data-v-0762fd62] {
+    display: flex;
+    width: 1.45833vw;
+    height: 1.45833vw;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer
+}
+
+.ai-helper-sections .talk-input-box .input-box .not-allowed[data-v-0762fd62] {
+    cursor: not-allowed;
+    opacity: .2
+}
+
+.ai-helper-sections .talk-input-box .input-box .not-allowed svg[data-v-0762fd62] {
+    cursor: not-allowed
+}
+
+.ai-helper-sections .talk-input-box .send-btn[data-v-0762fd62] {
+    position: absolute;
+    bottom: 1.04167vw;
+    right: 0;
+    width: 2.91667vw;
+    height: 2.91667vw;
+    flex-shrink: 0;
+    border-radius: .625vw;
+    background: #604ffd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer
+}
+
+.ai-helper-sections .talk-input-box .send-btn svg[data-v-0762fd62] {
+    width: 1.25vw;
+    height: 1.25vw
+}
+
+.ai-helper-sections .talk-input-box .not-send-btn[data-v-0762fd62] {
+    position: absolute;
+    bottom: 1.04167vw;
+    right: 0;
+    width: 2.91667vw;
+    height: 2.91667vw;
+    flex-shrink: 0;
+    border-radius: .625vw;
+    background: #604ffd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: not-allowed;
+    opacity: .4
+}
+
+.ai-helper-sections .talk-input-box .not-send-btn svg[data-v-0762fd62] {
+    width: 1.25vw;
+    height: 1.25vw
+}
+
+.ai-helper-sections .talk-input-box .editable-div.placeholder-visible .placeholder-text[data-v-0762fd62] {
+    display: inline
+}
+
+.ai-helper-sections .talk-input-box .editable-div:focus .placeholder-text[data-v-0762fd62] {
+    display: none
+}
+
+.not-expand-icon[data-v-0762fd62] {
+    position: fixed;
+    right: 28.95833vw;
+    top: 4.16667vw;
+    cursor: pointer;
+    width: 2.08333vw;
+    height: 2.91667vw;
+    z-index: 1000;
+    display: inline-flex;
+    padding: .52083vw .625vw;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: .52083vw;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border-radius: .625vw;
+    border: 1px solid hsla(0, 0%, 100%, .15);
+    background: hsla(0, 0%, 100%, .08);
+    backdrop-filter: blur(1.04167vw);
+    z-index: 3500
+}
+
+.not-expand-icon img[data-v-0762fd62] {
+    width: 100%
+}
+
+.not-expand-icon svg[data-v-0762fd62] {
+    width: .83333vw
+}
+
+.ai-helper-dialog-animate[data-v-0762fd62] {
+    left: -100%;
+    transform: translateY(-50%)
+}
+
+.expand-type-2[data-v-0762fd62] {
+    right: 6.77083vw !important
+}
+
+.expand-type-4[data-v-0762fd62] {
+    position: absolute !important;
+    right: 29.16667vw !important;
+    top: 1.66667vw !important
+}
+
+.ai-draggable-dialog[data-v-0762fd62] {
+    position: fixed;
+    right: 1.5625vw;
+    bottom: 1.66667vw;
+    background-color: #211f1f;
+    border-radius: .9375vw;
+    height: calc(100% - 3.33333vw);
+    box-sizing: border-box;
+    display: flex;
+    width: 26.04167vw;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    border-radius: .83333vw;
+    border: 1px solid #604ffd;
+    z-index: 3500
+}
+
+.ai-fill-bg[data-v-0762fd62] {
+    background: linear-gradient(180deg, rgba(71, 255, 255, .4), rgba(96, 79, 253, .2) 19.76%, rgba(45, 45, 45, 0) 39.91%), hsla(0, 0%, 100%, .05);
+    backdrop-filter: blur(5.20833vw);
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    border-radius: .83333vw
+}
+
+.dialog-content[data-v-0762fd62] {
+    height: 100%;
+    box-sizing: border-box;
+    width: 100%;
+    position: relative;
+    padding: 0 1.25vw
+}
+
+.ai-toast-container[data-v-0762fd62] {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: .52083vw;
+    background-color: rgba(0, 0, 0, .7);
+    color: #fff;
+    border-radius: .20833vw;
+    z-index: 9999;
+    border-radius: .83333vw;
+    background: rgba(0, 0, 0, .8);
+    backdrop-filter: blur(1.04167vw)
+}
+
+.ai-toast-message[data-v-0762fd62] {
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal
+}
+
+.ai-talk-box-tch[data-v-0762fd62] {
+    height: calc(100% - 10.9375vw) !important
+}
+
+.ai-talk-box[data-v-0762fd62] {
+    height: calc(100% - 7.70833vw);
+    overflow: hidden;
+    box-sizing: border-box
+}
+
+.ai-talk-box .loading-model[data-v-0762fd62] {
+    text-align: left;
+    display: flex
+}
+
+.ai-talk-box .loading-model .loading-icon[data-v-0762fd62] {
+    vertical-align: middle
+}
+
+.ai-talk-box .loading-model .stage[data-v-0762fd62] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: .41667vw 0;
+    width: 1.5625vw;
+    overflow: hidden;
+    box-sizing: border-box
+}
+
+.ai-talk-box .loading-model .dot-flashing[data-v-0762fd62] {
+    position: relative;
+    width: .3125vw;
+    height: .3125vw;
+    border-radius: .15625vw;
+    background: #fff;
+    color: #fff;
+    animation: dotFlashing 1s linear infinite alternate;
+    animation-delay: .5s
+}
+
+.ai-talk-box .loading-model .dot-flashing[data-v-0762fd62]:before {
+    left: -.41667vw;
+    animation: dotFlashing 1s linear infinite alternate;
+    animation-delay: 0s
+}
+
+.ai-talk-box .loading-model .dot-flashing[data-v-0762fd62]:after {
+    left: .41667vw;
+    animation: dotFlashing 1s linear infinite alternate;
+    animation-delay: 1s
+}
+
+.ai-talk-box .loading-model .dot-flashing[data-v-0762fd62]:after,
+.ai-talk-box .loading-model .dot-flashing[data-v-0762fd62]:before {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    width: .3125vw;
+    height: .3125vw;
+    border-radius: .15625vw;
+    background: #fff;
+    color: #fff
+}
+
+.ai-talk-box .new-topic-split-box[data-v-0762fd62] {
+    height: 1.04167vw
+}
+
+.ai-talk-box .new-topic-split-box svg[data-v-0762fd62] {
+    width: calc(50% - 2.08333vw);
+    vertical-align: middle
+}
+
+.ai-talk-box .new-topic-split-box span[data-v-0762fd62] {
+    color: #fff;
+    text-align: center;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .72917vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    padding: 0 .20833vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe[data-v-0762fd62] {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    position: relative
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-ans_1oSN6[data-v-0762fd62] {
+    margin-top: .83333vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-common_3Wk2t[data-v-0762fd62] {
+    width: 100%;
+    -webkit-box-flex: 1;
+    -webkit-flex-grow: 1;
+    flex-grow: 1
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .margin-bottom-16[data-v-0762fd62] {
+    margin-bottom: .83333vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .answer-box-wrapper_1QYRS[data-v-0762fd62] {
+    max-width: 90%;
+    position: relative;
+    text-align: left
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .ai-create-tips[data-v-0762fd62] {
+    color: hsla(0, 0%, 100%, .4);
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400;
+    margin-top: .78125vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .answer-content-box_2Pu7S[data-v-0762fd62] {
+    font-size: .83333vw;
+    color: #fff;
+    text-align: justify;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: .83333vw;
+    border-radius: .10417vw 1.04167vw 1.04167vw 1.04167vw;
+    background-color: hsla(0, 0%, 100%, .08);
+    position: relative;
+    max-width: calc(100% - .32rem);
+    display: inline-block
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .min-280[data-v-0762fd62] {
+    min-width: 14.58333vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools[data-v-0762fd62] {
+    position: relative;
+    margin-top: .83333vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips[data-v-0762fd62] {
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: flex;
+    border-radius: .625vw;
+    background: hsla(0, 0%, 100%, .15);
+    padding: .41667vw;
+    cursor: pointer
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips .o-span[data-v-0762fd62] {
+    display: flex;
+    align-items: center
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips .svg-icon[data-v-0762fd62] {
+    width: .72917vw;
+    height: .72917vw;
+    border-radius: .72917vw;
+    border: 1px solid #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: .20833vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips .svg-icon svg[data-v-0762fd62] {
+    width: .72917vw;
+    height: .72917vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips span[data-v-0762fd62] {
+    color: #fff;
+    font-family: Poppins;
+    font-size: .72917vw;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 100%
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips .okey-btn[data-v-0762fd62] {
+    color: hsla(0, 0%, 100%, .4) !important
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips .okey-btn .svg-icon[data-v-0762fd62] {
+    border: 1px solid hsla(0, 0%, 100%, .4) !important
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips .okey-btn span[data-v-0762fd62] {
+    color: hsla(0, 0%, 100%, .4) !important
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-left[data-v-0762fd62] {
+    display: inline-block;
+    width: auto;
+    padding: 0 .20833vw 0 .20833vw;
+    flex-direction: column;
+    border-radius: .625vw;
+    background: hsla(0, 0%, 100%, .15);
+    box-sizing: border-box;
+    height: 1.66667vw;
+    padding: .46875vw 0
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .m-l-4[data-v-0762fd62] {
+    margin-right: .20833vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .margin-left-16[data-v-0762fd62] {
+    margin-left: .625vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .margin-left-8[data-v-0762fd62] {
+    margin: 0 .20833vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .m-left-8[data-v-0762fd62] {
+    margin: 0 .41667vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .margin-right-16[data-v-0762fd62] {
+    margin-right: .625vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .m-cai[data-v-0762fd62],
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .m-reset[data-v-0762fd62] {
+    margin: 0 .20833vw 0 .41667vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .line[data-v-0762fd62] {
+    width: 1px
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .line svg[data-v-0762fd62] {
+    vertical-align: middle
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .copy-clipbord[data-v-0762fd62] {
+    cursor: pointer;
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .72917vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 100%;
+    vertical-align: text-bottom
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .copy-clipbord svg[data-v-0762fd62] {
+    width: .83333vw;
+    height: .83333vw;
+    vertical-align: middle
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .chat-common_AKa0H[data-v-0762fd62] {
+    margin-top: .83333vw
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .question-container_2GfLA[data-v-0762fd62] {
+    position: relative;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-pack: end;
+    -webkit-justify-content: flex-end;
+    justify-content: flex-end;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    overflow: hidden;
+    word-wrap: break-word
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .question-container_2GfLA[data-v-0762fd62]:before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: -.41667vw;
+    left: -1.66667vw;
+    right: -1.66667vw;
+    bottom: -.41667vw;
+    -webkit-transition: all .16s ease-in-out;
+    transition: all .16s ease-in-out;
+    background: transparent
+}
+
+.ai-talk-box .ai-chat-share-container_nVXTe .question-content_1e1fE[data-v-0762fd62] {
+    white-space: pre-wrap;
+    display: inline-block;
+    max-width: 80%;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: .83333vw;
+    background-color: #604ffd;
+    position: relative;
+    font-size: .83333vw;
+    letter-spacing: .6px;
+    color: #fff;
+    text-align: left;
+    border-radius: 1.04167vw;
+    border-top-right-radius: .10417vw;
+    word-break: break-all
+}
+
+.ai-talk-box .header-tips-box[data-v-0762fd62] {
+    width: 100%;
+    padding-top: 2.5vw;
+    position: relative
+}
+
+.ai-talk-box .header-tips-box .robbot-icon[data-v-0762fd62] {
+    max-width: 5.72917vw;
+    height: 5.72917vw;
+    position: absolute;
+    top: 1.66667vw;
+    right: 2.08333vw
+}
+
+.ai-talk-box .header-tips-box .code-icon[data-v-0762fd62] {
+    width: 2.08333vw;
+    height: 2.08333vw
+}
+
+.ai-talk-box .header-tips-box .code-hello[data-v-0762fd62] {
+    padding-top: .625vw;
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: 1.04167vw;
+    font-style: normal;
+    font-weight: 900;
+    line-height: 1.5625vw;
+    text-align: left
+}
+
+.ai-talk-box .header-tips-box .ai-heler-header-tips[data-v-0762fd62] {
+    margin-top: .625vw;
+    display: flex;
+    padding: .83333vw 1.04167vw;
+    justify-content: center;
+    align-items: center;
+    gap: .52083vw;
+    align-self: stretch;
+    border-radius: .83333vw;
+    background: hsla(0, 0%, 100%, .08);
+    box-shadow: 0 0 2.08333vw 0 rgba(0, 0, 0, .03);
+    color: #fff;
+    text-align: justify;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5625vw
+}
+
+.ai-talk-box .header-tips-box img[data-v-0762fd62] {
+    display: block;
+    width: 100%;
+    height: 100%
+}
+
+.ai-talk-box .ai-want-question[data-v-0762fd62] {
+    box-sizing: border-box;
+    margin-top: 1.66667vw
+}
+
+.ai-talk-box .ai-want-question .show-hide-btns[data-v-0762fd62] {
+    cursor: pointer
+}
+
+.ai-talk-box .ai-want-question .question-one-question[data-v-0762fd62] {
+    height: 1.5625vw;
+    display: flex;
+    align-items: center
+}
+
+.ai-talk-box .ai-want-question .question-one-question .fllow-expand[data-v-0762fd62] {
+    margin-left: .20833vw;
+    cursor: pointer
+}
+
+.ai-talk-box .ai-want-question .question-one-question svg[data-v-0762fd62] {
+    width: 1.25vw;
+    height: 1.25vw;
+    margin-right: .625vw
+}
+
+.ai-talk-box .ai-want-question .question-one-question span[data-v-0762fd62] {
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .9375vw;
+    font-style: normal;
+    font-weight: 900;
+    line-height: 1.5625vw
+}
+
+.ai-talk-box .ai-want-question .three-questions .question-item[data-v-0762fd62] {
+    margin-top: .83333vw;
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    border-radius: .83333vw;
+    background: hsla(0, 0%, 100%, .08);
+    box-shadow: 0 0 2.08333vw 0 rgba(0, 0, 0, .03);
+    cursor: pointer;
+    padding: .83333vw 1.04167vw
+}
+
+.ai-talk-box .ai-want-question .three-questions .question-item .three-question-cotent[data-v-0762fd62] {
+    flex: 1;
+    margin-right: .52083vw;
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5625vw
+}
+
+.ai-talk-box .ai-want-question .three-questions .question-item .svg-icon[data-v-0762fd62] {
+    margin-left: auto;
+    width: 1.66667vw;
+    height: 1.66667vw;
+    border-radius: .83333vw;
+    background: hsla(0, 0%, 100%, .1);
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+.ai-talk-box .ai-want-question .three-questions .question-item .svg-icon svg[data-v-0762fd62] {
+    width: .72917vw;
+    height: .72917vw
+}
+
+.aiDarkThemToast {
+    z-index: 4002 !important;
+    background: #252525;
+    border-radius: .83333vw;
+    backdrop-filter: blur(1.04167vw);
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 700;
+    padding: .83333vw 1.25vw
+}
+
+.aiDarkThemToast .el-message__content {
+    color: #fff
+}
+
+.aiDarkThemToast .el-message__icon {
+    display: none !important
+}
+
+.ai-helper-sections .el-dialog__wrapper {
+    z-index: 4001 !important
+}
+
+html pre code .hljs {
+    display: block;
+    overflow-x: auto;
+    padding: 1em;
+    margin: .20833vw 0
+}
+
+html code .hljs {
+    padding: .15625vw .26042vw
+}
+
+html code .hljs::-webkit-scrollbar {
+    height: .20833vw
+}
+
+html .hljs {
+    color: #fff !important;
+    border-radius: .20833vw !important;
+    background: #252525 !important;
+    margin: .20833vw 0 !important
+}
+
+html .hljs-comment,
+html .hljs-quote {
+    color: #a0a1a7;
+    font-style: italic
+}
+
+html .hljs-doctag,
+html .hljs-formula,
+html .hljs-keyword {
+    color: #a626a4
+}
+
+html .hljs-deletion,
+html .hljs-name,
+html .hljs-section,
+html .hljs-selector-tag,
+html .hljs-subst {
+    color: #e45649
+}
+
+html .hljs-literal {
+    color: #0184bb
+}
+
+html .hljs-addition,
+html .hljs-attribute,
+html .hljs-meta .hljs-string,
+html .hljs-regexp,
+html .hljs-string {
+    color: #50a14f
+}
+
+html .hljs-attr,
+html .hljs-number,
+html .hljs-selector-attr,
+html .hljs-selector-class,
+html .hljs-selector-pseudo,
+html .hljs-template-variable,
+html .hljs-type,
+html .hljs-variable {
+    color: #986801
+}
+
+html .hljs-bullet,
+html .hljs-link,
+html .hljs-meta,
+html .hljs-selector-id,
+html .hljs-symbol,
+html .hljs-title {
+    color: #4078f2
+}
+
+html .hljs-built_in,
+html .hljs-class .hljs-title,
+html .hljs-title.class_ {
+    color: #c18401
+}
+
+html .hljs-emphasis {
+    font-style: italic
+}
+
+html .hljs-strong {
+    font-weight: 700
+}
+
+html .hljs-link {
+    text-decoration: underline
+}
+
+.markdown-body .code-block-wrapper {
+    position: relative;
+    padding-top: 1.25vw;
+    padding: .83333vw;
+    overflow: auto;
+    font-size: .72917vw;
+    line-height: .72917vw;
+    background-color: rgba(107, 106, 236, .1);
+    border-radius: .3125vw;
+    padding-top: 24px;
+    display: block
+}
+
+.markdown-body .code-block-header {
+    margin-bottom: .83333vw;
+    position: absolute;
+    top: .26042vw;
+    right: 0;
+    width: 100%;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    color: #b3b3b3
+}
+
+.markdown-body .code-block-header .code-block-header__copy {
+    cursor: pointer;
+    margin-left: .78125vw !important;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none
+}
+
+.markdown-body .code-block-header .code-block-header__copy:hover {
+    color: #65a665
+}
+
+.markdown-body code {
+    padding: .2em .4em;
+    margin: 0;
+    font-size: 85%;
+    white-space: break-spaces;
+    background-color: rgba(175, 184, 193, .2);
+    border-radius: .3125vw
+}
+
+.markdown-body .code-block-wrapper code {
+    padding: 0;
+    display: block;
+    overflow: auto !important;
+    background-color: transparent !important
+}
+
+.markdown-body li {
+    padding: .26042vw 0
+}
+
+.ai-pro-content-edit-box {
+    width: 82.5%;
+    border-radius: .625vw;
+    background: #444;
+    min-height: 2.91667vw;
+    position: relative;
+    box-sizing: border-box;
+    padding: 0 0;
+    border: 1px solid transparent
+}
+
+.ai-pro-content-edit-box .el-textarea {
+    display: flex;
+    align-items: center;
+    padding: .83333vw 0 !important;
+    box-sizing: border-box;
+    position: inherit !important
+}
+
+.ai-pro-content-edit-box .el-textarea .el-textarea__inner {
+    border: none !important;
+    border-radius: .625vw;
+    background: transparent !important
+}
+
+.ai-pro-content-edit-box .el-input__count {
+    bottom: .20833vw !important;
+    right: 2.91667vw !important;
+    color: #afa7fe;
+    text-align: right;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    background: transparent
+}
+
+.ai-pro-content-edit-box textarea::-webkit-scrollbar {
+    width: 0;
+    display: none
+}
+
+.ai-pro-content-edit-box textarea::-webkit-scrollbar-thumb {
+    background: hsla(0, 0%, 100%, .08);
+    border-radius: .52083vw
+}
+
+.ai-pro-content-edit-box textarea::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: .52083vw
+}
+
+.ai-pro-content-edit-box textarea::-webkit-scrollbar-thumb:active,
+.ai-pro-content-edit-box textarea::-webkit-scrollbar-thumb:hover {
+    background: hsla(0, 0%, 100%, .2)
+}
+
+.ai-pro-content-edit-box .el-textarea__inner {
+    color: #fff;
+    background: hsla(0, 0%, 100%, .03);
+    font-size: .83333vw;
+    resize: none;
+    border: 1px solid hsla(0, 0%, 100%, .03)
+}
+
+.ai-pro-content-edit-box .el-input__inner:focus,
+.ai-pro-content-edit-box .el-textarea__inner:focus {
+    border: 1px solid #604ffd;
+    box-shadow: none
+}
+
+.ai-active {
+    border: 1px solid #604ffd
+}
+
+.ai-helper-agreement-Dialog {
+    border-radius: 1.66667vw;
+    background: #1b1a24;
+    z-index: 5002
+}
+
+.ai-helper-agreement-Dialog .agreement-content {
+    font-size: .83333vw
+}
+
+.ai-helper-agreement-Dialog .agreement-content a {
+    color: #fff
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content ::v-deep .el-dialog__title {
+    text-align: center
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content a {
+    text-decoration: none
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .read-tips {
+    text-align: center;
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .ai-helper-agreement-text-box {
+    margin-top: 1.25vw;
+    border-radius: .83333vw;
+    background: hsla(0, 0%, 100%, .08);
+    padding: 1.25vw;
+    box-sizing: border-box;
+    color: #fff;
+    text-align: justify;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: 1.04167vw;
+    font-style: normal;
+    font-weight: 400;
+    height: 15.625vw
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .ai-helper-agreement-text-box .el-scrollbar .el-scrollbar__bar {
+    right: 0
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .p-text {
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    align-items: center;
+    font-size: 1.04167vw
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .checkAgreeBox {
+    margin: 1.25vw 0 0 0;
+    padding: .625vw 0;
+    display: flex;
+    height: 1.04167vw;
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    align-items: center;
+    font-size: .83333vw
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .checkAgreeBox svg {
+    margin-right: .625vw;
+    cursor: pointer
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .checkAgreeBox span {
+    cursor: pointer
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .checkAgreeBox .el-checkbox__input.is-checked+.el-checkbox__label {
+    color: #47ffff
+}
+
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .checkAgreeBox .el-checkbox__input.is-checked .el-checkbox__inner,
+.ai-helper-agreement-Dialog .ai-helper-agreement-content .checkAgreeBox .el-checkbox__input.is-indeterminate .el-checkbox__inner {
+    background-color: #47ffff;
+    border-color: #47ffff
+}
+
+.ai-helper-agreement-Dialog .el-dialog__footer {
+    padding: .625vw 0 2.08333vw 0
+}
+
+.ai-helper-agreement-Dialog .ai-agree-dialog-footer {
+    display: flex;
+    justify-content: center
+}
+
+.ai-helper-agreement-Dialog .ai-agree-dialog-footer .primary-btn {
+    padding: .41667vw 0;
+    background: #604ffd;
+    color: #fff;
+    cursor: pointer
+}
+
+.ai-helper-agreement-Dialog .ai-agree-dialog-footer .disable-btn,
+.ai-helper-agreement-Dialog .ai-agree-dialog-footer .primary-btn {
+    display: flex;
+    width: 7.86458vw;
+    height: 2.8125vw;
+    justify-content: center;
+    align-items: center;
+    border-radius: .83333vw;
+    box-sizing: border-box;
+    text-align: center;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .9375vw
+}
+
+.ai-helper-agreement-Dialog .ai-agree-dialog-footer .disable-btn {
+    padding: .41667vw 2.08333vw;
+    background: rgba(96, 79, 253, .4);
+    color: hsla(0, 0%, 100%, .4);
+    cursor: not-allowed
+}
+
+.ai-helper-agreement-Dialog .el-dialog__header {
+    padding: 2.08333vw 2.08333vw .83333vw 2.08333vw;
+    align-items: center;
+    justify-content: center
+}
+
+.ai-helper-agreement-Dialog .el-dialog__title {
+    color: #fff;
+    text-align: justify;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: 1.25vw;
+    font-style: normal;
+    font-weight: 900;
+    line-height: normal;
+    letter-spacing: .24px;
+    text-align: center
+}
+
+.ai-helper-agreement-Dialog .el-dialog__body {
+    padding: 0 2.08333vw 0 2.08333vw
+}
+
+.ai-helper-feedback-Dialog {
+    border-radius: 1.66667vw 1.66667vw 1.66667vw 1.66667vw;
+    background: #1b1a24;
+    backdrop-filter: blur(3.125vw);
+    position: relative
+}
+
+.ai-helper-feedback-Dialog .el-dialog__header {
+    height: 0 !important;
+    padding: 0 !important;
+    display: none
+}
+
+.ai-helper-feedback-Dialog .el-dialog__body {
+    padding: 0 !important
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-header {
+    border-radius: 1.66667vw 1.66667vw 0 0;
+    background: linear-gradient(9deg, rgba(96, 79, 253, .9), rgba(96, 79, 253, .5));
+    height: 4.0625vw;
+    position: relative
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-header .close-btn {
+    position: absolute;
+    top: 1.19792vw;
+    right: 2.08333vw;
+    width: 1.66667vw;
+    height: 1.66667vw;
+    cursor: pointer;
+    overflow: hidden
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-header .close-btn svg {
+    position: absolute;
+    top: -1.04167vw;
+    right: -1.04167vw;
+    width: 3.75vw;
+    height: 3.75vw
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-header .meet-to-question {
+    color: #f7f7f7;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: 1.25vw;
+    font-style: normal;
+    padding-left: 7.8125vw;
+    line-height: 4.0625vw;
+    font-weight: 1000
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-header .ai-robbot-photo {
+    position: absolute;
+    top: -1.77083vw;
+    left: 1.5625vw;
+    max-width: 5.72917vw;
+    height: 5.78125vw
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box {
+    padding: 1.66667vw
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-options {
+    clear: both;
+    overflow: hidden
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box {
+    margin-top: 1.66667vw
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box .el-input__count {
+    color: #afa7fe;
+    text-align: right;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    background: transparent
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box textarea::-webkit-scrollbar {
+    width: .52083vw
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box textarea::-webkit-scrollbar-thumb {
+    background: hsla(0, 0%, 100%, .2);
+    border-radius: .52083vw
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box textarea::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: .52083vw
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box textarea::-webkit-scrollbar-thumb:active,
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box textarea::-webkit-scrollbar-thumb:hover {
+    background: hsla(0, 0%, 100%, .2)
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box .el-textarea__inner {
+    color: #fff;
+    background: hsla(0, 0%, 100%, .03);
+    font-size: .83333vw;
+    resize: none;
+    border: 1px solid hsla(0, 0%, 100%, .03)
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box .el-input__inner:focus,
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box .el-textarea__inner:focus {
+    border: 1px solid #604ffd;
+    box-shadow: none
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-option-btn {
+    float: left;
+    box-sizing: border-box;
+    display: flex;
+    width: 8.64583vw;
+    height: 2.5vw;
+    padding: .625vw 1.25vw;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .83333vw;
+    font-style: normal;
+    font-weight: 700;
+    border-radius: .83333vw;
+    background: hsla(0, 0%, 100%, .08);
+    cursor: pointer
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .maginRight24 {
+    margin-right: 1.25vw
+}
+
+.ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .opts-active {
+    background-color: #604ffd !important
+}
+
+.ai-helper-feedback-Dialog .el-dialog__footer {
+    padding: 0 0 1.66667vw 0
+}
+
+.ai-helper-feedback-Dialog .ai-feedback-dialog-footer {
+    display: flex;
+    justify-content: center
+}
+
+.ai-helper-feedback-Dialog .ai-feedback-dialog-footer .primary-btn {
+    background: #604ffd;
+    color: #fff;
+    cursor: pointer
+}
+
+.ai-helper-feedback-Dialog .ai-feedback-dialog-footer .disable-btn,
+.ai-helper-feedback-Dialog .ai-feedback-dialog-footer .primary-btn {
+    display: flex;
+    width: 7.86458vw;
+    height: 2.8125vw;
+    padding: .41667vw 2.08333vw;
+    justify-content: center;
+    align-items: center;
+    border-radius: .83333vw;
+    box-sizing: border-box;
+    text-align: center;
+    font-family: "Alibaba PuHuiTi 3.0";
+    font-size: .9375vw
+}
+
+.ai-helper-feedback-Dialog .ai-feedback-dialog-footer .disable-btn {
+    background: rgba(96, 79, 253, .4);
+    color: hsla(0, 0%, 100%, .4);
+    cursor: not-allowed
+}
+
+.ai-helper-sections .el-scrollbar__bar.is-vertical {
+    right: -.52083vw !important
+}
+
+.ai-helper-sections .el-scrollbar__bar.is-horizontal {
+    height: 0
+}
+
+.ai-helper-sections .el-scrollbar__wrap {
+    overflow-x: hidden !important;
+    padding-right: 0 !important
+}
+
+.courseHomeClass .tch-feedback {
+    width: 6.25vw !important
+}
+
+.courseHomeClass .stop-connect-tch {
+    top: 0
+}
+
+.courseHomeClass .stop-connect {
+    padding: .41667vw .625vw
+}
+
+.courseHomeClass .stop-connect span {
+    vertical-align: text-top;
+    margin-left: .20833vw
+}
+
+.light .ai-helper-sections .talk-input-box .stop-connect,
+.light .ai-pro-content-edit-box .el-textarea__inner {
+    color: #000 !important
+}
+
+.light .not-expand-icon {
+    background: #fff
+}
+
+.light .ai-talk-box .ai-chat-share-container_nVXTe .ai-create-tips {
+    color: rgba(0, 0, 0, .4)
+}
+
+.light .ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .copy-clipbord,
+.light .ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips .okey-btn span,
+.light .ai-talk-box .ai-chat-share-container_nVXTe .chat-answer-content-box .ai-answer-tools .tools-tips span {
+    color: #604ffd !important
+}
+
+.light .ai-helper-feedback-Dialog {
+    background: #fff
+}
+
+.light .ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .opts-active {
+    color: #fff !important
+}
+
+.light .ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-input-box .el-textarea__inner,
+.light .ai-helper-feedback-Dialog .ai-helper-feedback-content .feedback-center-box .feedback-option-btn {
+    border-radius: .83333vw;
+    color: #000;
+    background: rgba(0, 0, 0, .03)
+}
+
+@keyframes dotFlashing {
+    0% {
+        background: #fff
+    }
+    50% {
+        background: hsla(0, 0%, 100%, .6)
+    }
+    to {
+        background: hsla(0, 0%, 100%, .2)
+    }
+}
+
+@keyframes rotate-glow {
+    0% {
+        transform: rotate(0deg)
+    }
+    to {
+        transform: rotate(1turn)
+    }
+}
+
+.light .glow-border {
+    color: #000;
+    background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/c1d43c58598b4f99877100932c6e43b1.png) no-repeat;
+    background-size: 100%
+}
+
+.dark .glow-border {
+    color: #fff;
+    background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202408/100d2533caaa4020b7f9013979c15173.png) no-repeat;
+    background-size: 100%
+}
+
+.glow-border {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: .83333vw
+}
+
+.inset-div {
+    position: absolute;
+    inset: .10417vw;
+    border-radius: .67708vw;
+    background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202408/91a0d27bb9ec44b9ab70d8ba087a66ba.png) no-repeat;
+    box-sizing: border-box;
+    z-index: 1;
+    padding: 1.25vw
+}
+
+.ai-helper-dialog-slide-enter-active {
+    animation: rightOpen .3s ease
+}
+
+.ai-helper-dialog-slide-leave-active {
+    animation: rightClose .3s ease
+}
+
+@keyframes rightOpen {
+    0% {
+        transform: translateX(500px)
+    }
+    to {
+        transform: translateX(0)
+    }
+}
+
+@keyframes rightClose {
+    0% {
+        transform: translateX(0)
+    }
+    to {
+        transform: translateX(500px)
+    }
+}
+
+.ai-helper-dialog-slide2-enter-active {
+    animation: rightOpen2 .3s ease
+}
+
+.ai-helper-dialog-slide2-leave-active {
+    animation: rightClose2 .3s ease
+}
+
+@keyframes rightOpen2 {
+    0% {
+        transform: translateX(650px)
+    }
+    to {
+        transform: translateX(0)
+    }
+}
+
+@keyframes rightClose2 {
+    0% {
+        transform: translateX(0)
+    }
+    to {
+        transform: translateX(650px)
+    }
+}
+
+.ai-helper-dialog-slide4-enter-active {
+    transition: width .3s ease
+}
+
+.ai-helper-dialog-slide4-leave-active {
+    width: 0 !important;
+    transition: width .3s ease
+}
+
+@keyframes rightOpen4 {
+    0% {
+        transform: translateX(1000%)
+    }
+    to {
+        transform: translateX(0)
+    }
+}
+
+@keyframes rightClose4 {
+    0% {
+        transform: translateX(0)
+    }
+    to {
+        transform: translateX(1000%)
+    }
+}
