@@ -13,15 +13,5 @@ export default {
     title: $t("menus.pureHome"),
     rank: home
   },
-  children: [
-    {
-      path: "/welcome",
-      name: "Welcome",
-      component: () => import("@/views/welcome/index.vue"),
-      meta: {
-        title: $t("menus.pureHome"),
-        showLink: VITE_HIDE_HOME === "true" ? false : true
-      }
-    }
-  ]
+  children: []
 } satisfies RouteConfigsTable;

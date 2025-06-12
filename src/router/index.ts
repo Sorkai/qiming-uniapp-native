@@ -203,7 +203,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
         next();
       } else {
         removeToken();
-        next({ path: "/login" });
+        next({ path: "/home" });
       }
     } else {
       next();

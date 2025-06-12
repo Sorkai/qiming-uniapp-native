@@ -333,7 +333,7 @@ onUnmounted(() => {
 const handleCommand = (command: string) => {
   switch (command) {
     case "space":
-      router.push("/dashboard");
+      router.push("/welcome/index");
       break;
     case "account":
       router.push("/account");
