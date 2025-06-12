@@ -1624,10 +1624,6 @@ import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 </script>
 
 <style>
-/* @import "@/../fusioncourseh/css/intro.fadd7ae2.css"; */
-/* @import "@/../fusioncourseh/css/chunk-cf3f3754.b30f9a98.css"; */
-/* @import "@/../fusioncourseh/css/chunk-b6ef9104.eb96b505.css"; */
-/* @import "@/../fusioncourseh/css/chunk-6164ad3e.96932453.css"; */
 @import "@/../fusioncourseh/css/chunk-b3e9f934.1c00050a.css";
 @import "@/../fusioncourseh/css/chunk-8cf7ce30.92e48af1.css";
 @import "@/../fusioncourseh/css/chunk-3cf64ec0.4f07a253.css";
