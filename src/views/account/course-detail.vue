@@ -111,9 +111,17 @@
                 <span data-v-3e66491d="" class="current-time"
                   >2025年06月10日</span
                 >
-                <div data-v-3e66491d="" class="theme-mode">
-                  <ThemeSunIcon data-v-3e66491d="" />
-                  <ThemeMoonIcon data-v-3e66491d="" />
+                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
+                  <ThemeSunIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                  />
+                  <ThemeMoonIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                  />
                 </div>
               </div>
               <div data-v-3e66491d="" class="item header-center">
@@ -1604,6 +1612,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import CourseLearnIcon from "@/assets/course-icons/course-learn.svg?component";
 import MasteryIcon from "@/assets/course-icons/mastery.svg?component";
 import CourseQaIcon from "@/assets/course-icons/course-qa.svg?component";
@@ -1621,6 +1630,21 @@ import AddNewTalkIcon from "@/assets/course-icons/add-new-talk-icon.svg?componen
 import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
 import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-icon.svg?component";
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
+
+const currentTheme = ref("light");
+
+function toggleTheme() {
+  const oldTheme = currentTheme.value;
+  const newTheme = oldTheme === "light" ? "dark" : "light";
+
+  const elements = document.querySelectorAll(`.${oldTheme}`);
+  elements.forEach(el => {
+    el.classList.remove(oldTheme);
+    el.classList.add(newTheme);
+  });
+
+  currentTheme.value = newTheme;
+}
 </script>
 
 <style>
@@ -1629,4 +1653,20 @@ import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 @import "@/../fusioncourseh/css/chunk-3cf64ec0.4f07a253.css";
 @import "@/../fusioncourseh/css/chunk-3248eec0.130a3cd9.css";
 @import "@/../fusioncourseh/css/app.a5f91bbb.css";
+</style>
+
+<style scoped>
+.header-back > i {
+  margin-left: -1.5vw;
+}
+.layout-header .header-content .item[data-v-3e66491d] {
+  padding: 0 2.5vw;
+}
+.el-menu--horizontal {
+  height: 2.29167vw !important;
+}
+.avatar-info {
+  display: flex;
+  align-items: center;
+}
 </style>
