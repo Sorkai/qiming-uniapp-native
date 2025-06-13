@@ -793,7 +793,11 @@
                                 >
                               </li>
                               <div class="inner-li">
-                                <li class="clearfix video activeNode">
+                                <li
+                                  class="clearfix video"
+                                  :class="{ activeNode: activeNode === '1.1' }"
+                                  @click="handleNodeClick('1.1')"
+                                >
                                   <span
                                     class="catalogue_title3 fl cataloguediv-l"
                                     ><b class="pl5 hour">1.1</b></span
@@ -860,7 +864,11 @@
                                 <!---->
                               </div>
                               <div class="inner-li">
-                                <li class="clearfix video">
+                                <li
+                                  class="clearfix video"
+                                  :class="{ activeNode: activeNode === '1.2' }"
+                                  @click="handleNodeClick('1.2')"
+                                >
                                   <span
                                     class="catalogue_title3 fl cataloguediv-l"
                                     ><b class="pl5 hour">1.2</b></span
@@ -929,6 +937,8 @@
                               <div class="inner-li">
                                 <li
                                   class="clearfix video last-child last-child-num"
+                                  :class="{ activeNode: activeNode === '1.3' }"
+                                  @click="handleNodeClick('1.3')"
                                 >
                                   <span
                                     class="catalogue_title3 fl cataloguediv-l"
@@ -1081,6 +1091,7 @@ const activeMenu = ref("course-learn");
 const isContentCollapsed = ref(false);
 const activeResourceTab = ref("required");
 const activeMode = ref("0");
+const activeNode = ref("1.1");
 
 const describeImgSrc = computed(() =>
   currentTheme.value === "dark"
@@ -1226,6 +1237,11 @@ function handleMenuClick(menuName: string) {
 function handleModeClick(mode: string) {
   activeMode.value = mode;
 }
+
+// 添加节点点击处理函数
+function handleNodeClick(nodeId: string) {
+  activeNode.value = nodeId;
+}
 </script>
 
 <style>
@@ -1285,5 +1301,15 @@ function handleModeClick(mode: string) {
 .kgDescribe-warp .label-list .lab-item.active {
   background-color: #604ffd !important;
   color: white !important;
+}
+
+/* 修改竖虚线位置 */
+:deep(.rightTreeWarp .chapterList-box .list li:after) {
+  left: 3.25vw !important;
+}
+
+/* 修改圆点位置 */
+:deep(.rightTreeWarp .chapterList-box .list li .Sectionmark-em) {
+  left: 3vw !important;
 }
 </style>
