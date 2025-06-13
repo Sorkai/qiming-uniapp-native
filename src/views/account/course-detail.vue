@@ -172,7 +172,9 @@
                     data-v-cebc91e2=""
                     data-v-3e66491d=""
                     data-name="0"
-                    class="mode-item active"
+                    class="mode-item"
+                    :class="{ active: activeMode === '0' }"
+                    @click="handleModeClick('0')"
                   >
                     章节模式
                   </div>
@@ -181,6 +183,8 @@
                     data-v-3e66491d=""
                     data-name="1"
                     class="mode-item"
+                    :class="{ active: activeMode === '1' }"
+                    @click="handleModeClick('1')"
                   >
                     图谱模式
                   </div>
@@ -1076,6 +1080,7 @@ const currentTheme = ref("light");
 const activeMenu = ref("course-learn");
 const isContentCollapsed = ref(false);
 const activeResourceTab = ref("required");
+const activeMode = ref("0");
 
 const describeImgSrc = computed(() =>
   currentTheme.value === "dark"
@@ -1215,6 +1220,11 @@ function handleMenuClick(menuName: string) {
       }
     }
   });
+}
+
+// 添加模式切换函数
+function handleModeClick(mode: string) {
+  activeMode.value = mode;
 }
 </script>
 
