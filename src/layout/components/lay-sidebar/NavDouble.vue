@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router, useRouter } from "@/router";
+import { router } from "@/router";
 import { useRoute } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import { ReText } from "@/components/ReText";
@@ -17,7 +17,6 @@ import LaySidebarLeftCollapse from "../lay-sidebar/components/SidebarLeftCollaps
 import LaySidebarCenterCollapse from "../lay-sidebar/components/SidebarCenterCollapse.vue";
 
 const route = useRoute();
-const router = useRouter();
 const isShow = ref(false);
 const showLogo = ref(
   storageLocal().getItem<StorageConfigs>(
@@ -115,7 +114,7 @@ onBeforeUnmount(() => {
         showLogo ? 'has-logo' : 'no-logo'
       ]"
     >
-      <div v-if="showLogo" class="double-logo" @click="router.push('/home')">
+      <div v-if="showLogo" class="double-logo" @click="backTopMenu">
         <img :src="getLogo()" alt="logo" />
       </div>
       <el-scrollbar wrap-class="scrollbar-wrapper">
