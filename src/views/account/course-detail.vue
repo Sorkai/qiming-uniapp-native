@@ -10,11 +10,17 @@
       >
         <div
           data-v-8289e326=""
-          class="el-tooltip item active"
-          aria-describedby="el-tooltip-3541"
+          class="el-tooltip item"
+          :class="{ active: activeMenu === 'course-learn' }"
           tabindex="0"
+          @click="handleMenuClick('course-learn')"
         >
-          <div data-v-1139a0f7="" data-v-8289e326="" class="hover-box active">
+          <div
+            data-v-1139a0f7=""
+            data-v-8289e326=""
+            class="hover-box"
+            :class="{ active: activeMenu === 'course-learn' }"
+          >
             <CourseLearnIcon data-v-1139a0f7="" />
             <div data-v-1139a0f7="" class="side-name">课程学习</div>
           </div>
@@ -22,10 +28,16 @@
         <div
           data-v-8289e326=""
           class="el-tooltip item"
-          aria-describedby="el-tooltip-4068"
+          :class="{ active: activeMenu === 'mastery' }"
           tabindex="0"
+          @click="handleMenuClick('mastery')"
         >
-          <div data-v-1139a0f7="" data-v-8289e326="" class="hover-box">
+          <div
+            data-v-1139a0f7=""
+            data-v-8289e326=""
+            class="hover-box"
+            :class="{ active: activeMenu === 'mastery' }"
+          >
             <MasteryIcon data-v-1139a0f7="" />
             <div data-v-1139a0f7="" class="side-name">掌握度</div>
           </div>
@@ -34,10 +46,16 @@
         <div
           data-v-8289e326=""
           class="el-tooltip item"
-          aria-describedby="el-tooltip-4782"
+          :class="{ active: activeMenu === 'course-qa' }"
           tabindex="0"
+          @click="handleMenuClick('course-qa')"
         >
-          <div data-v-1139a0f7="" data-v-8289e326="" class="hover-box">
+          <div
+            data-v-1139a0f7=""
+            data-v-8289e326=""
+            class="hover-box"
+            :class="{ active: activeMenu === 'course-qa' }"
+          >
             <CourseQaIcon data-v-1139a0f7="" />
             <div data-v-1139a0f7="" class="side-name">课程问答</div>
           </div>
@@ -45,10 +63,16 @@
         <div
           data-v-8289e326=""
           class="el-tooltip item"
-          aria-describedby="el-tooltip-8004"
+          :class="{ active: activeMenu === 'homework-exam' }"
           tabindex="0"
+          @click="handleMenuClick('homework-exam')"
         >
-          <div data-v-1139a0f7="" data-v-8289e326="" class="hover-box">
+          <div
+            data-v-1139a0f7=""
+            data-v-8289e326=""
+            class="hover-box"
+            :class="{ active: activeMenu === 'homework-exam' }"
+          >
             <HomeworkExamIcon data-v-1139a0f7="" />
             <div data-v-1139a0f7="" class="side-name">作业考试</div>
           </div>
@@ -56,10 +80,16 @@
         <div
           data-v-8289e326=""
           class="el-tooltip item"
-          aria-describedby="el-tooltip-7753"
+          :class="{ active: activeMenu === 'course-materials' }"
           tabindex="0"
+          @click="handleMenuClick('course-materials')"
         >
-          <div data-v-1139a0f7="" data-v-8289e326="" class="hover-box">
+          <div
+            data-v-1139a0f7=""
+            data-v-8289e326=""
+            class="hover-box"
+            :class="{ active: activeMenu === 'course-materials' }"
+          >
             <CourseMaterialsIcon data-v-1139a0f7="" />
             <div data-v-1139a0f7="" class="side-name">课程资料</div>
           </div>
@@ -67,10 +97,16 @@
         <div
           data-v-8289e326=""
           class="el-tooltip item"
-          aria-describedby="el-tooltip-9625"
+          :class="{ active: activeMenu === 'grades' }"
           tabindex="0"
+          @click="handleMenuClick('grades')"
         >
-          <div data-v-1139a0f7="" data-v-8289e326="" class="hover-box">
+          <div
+            data-v-1139a0f7=""
+            data-v-8289e326=""
+            class="hover-box"
+            :class="{ active: activeMenu === 'grades' }"
+          >
             <GradesIcon data-v-1139a0f7="" />
             <div data-v-1139a0f7="" class="side-name">成绩</div>
           </div>
@@ -79,10 +115,16 @@
         <div
           data-v-8289e326=""
           class="el-tooltip item"
-          aria-describedby="el-tooltip-1636"
+          :class="{ active: activeMenu === 'ai-doc-qa' }"
           tabindex="0"
+          @click="handleMenuClick('ai-doc-qa')"
         >
-          <div data-v-1139a0f7="" data-v-8289e326="" class="hover-box">
+          <div
+            data-v-1139a0f7=""
+            data-v-8289e326=""
+            class="hover-box"
+            :class="{ active: activeMenu === 'ai-doc-qa' }"
+          >
             <AiDocQaIcon data-v-1139a0f7="" />
             <div data-v-1139a0f7="" class="side-name">AI文档问答</div>
           </div>
@@ -1632,18 +1674,111 @@ import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-i
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 
 const currentTheme = ref("light");
+const activeMenu = ref("course-learn"); // 添加当前选中的菜单状态
 
 function toggleTheme() {
   const oldTheme = currentTheme.value;
   const newTheme = oldTheme === "light" ? "dark" : "light";
 
+  // 切换容器主题
   const elements = document.querySelectorAll(`.${oldTheme}`);
   elements.forEach(el => {
     el.classList.remove(oldTheme);
     el.classList.add(newTheme);
   });
 
+  // 切换 SVG 图标颜色
+  const svgPaths = document.querySelectorAll(".hover-box svg path");
+  svgPaths.forEach(path => {
+    const parentElement = path.closest(".hover-box");
+    if (parentElement?.classList.contains("active")) {
+      // 选中的菜单项
+      if (newTheme === "dark") {
+        path.setAttribute("fill", "white");
+      } else {
+        path.setAttribute("fill", "#604FFD");
+      }
+    } else {
+      // 未选中的菜单项
+      if (newTheme === "dark") {
+        path.setAttribute("fill", "#B4B4C7");
+      } else {
+        path.setAttribute("fill", "#604FFD");
+      }
+    }
+  });
+
+  // 切换文字颜色
+  const sideNames = document.querySelectorAll(".side-name");
+  sideNames.forEach(name => {
+    const element = name as HTMLElement;
+    const parentElement = element.closest(".hover-box");
+    if (parentElement?.classList.contains("active")) {
+      // 选中的菜单项
+      if (newTheme === "dark") {
+        element.style.color = "white";
+      } else {
+        element.style.color = "#604FFD";
+      }
+    } else {
+      // 未选中的菜单项
+      if (newTheme === "dark") {
+        element.style.color = "#B4B4C7";
+      } else {
+        element.style.color = "#604FFD";
+      }
+    }
+  });
+
   currentTheme.value = newTheme;
+}
+
+// 添加菜单切换函数
+function handleMenuClick(menuName: string) {
+  activeMenu.value = menuName;
+
+  // 更新 SVG 图标颜色
+  const svgPaths = document.querySelectorAll(".hover-box svg path");
+  svgPaths.forEach(path => {
+    const parentElement = path.closest(".hover-box");
+    if (parentElement?.classList.contains("active")) {
+      // 选中的菜单项
+      if (currentTheme.value === "dark") {
+        path.setAttribute("fill", "white");
+      } else {
+        path.setAttribute("fill", "#604FFD");
+      }
+    } else {
+      // 未选中的菜单项
+      if (currentTheme.value === "dark") {
+        path.setAttribute("fill", "#B4B4C7");
+      } else {
+        path.setAttribute("fill", "#604FFD");
+      }
+    }
+  });
+
+  // 更新文字颜色
+  const sideNames = document.querySelectorAll(".side-name");
+  sideNames.forEach(name => {
+    const element = name as HTMLElement;
+    const parentElement = element.closest(".hover-box");
+    if (parentElement?.classList.contains("active")) {
+      // 选中的菜单项
+      if (currentTheme.value === "dark") {
+        element.style.color = "white";
+      } else {
+        element.style.color = "#604FFD";
+      }
+    } else {
+      // 未选中的菜单项
+      if (currentTheme.value === "dark") {
+        element.style.color = "#B4B4C7";
+      } else {
+        element.style.color = "#604FFD";
+      }
+    }
+  });
 }
 </script>
 
