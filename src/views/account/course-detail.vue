@@ -999,7 +999,10 @@
                         src="https://image.zhihuishu.com/zhs/b2cm/base1/202411/33b30e1359074b389417c68c5c898253.png"
                         alt=""
                       /><span>知识点描述</span>
-                      <div class="botton-box-down close-status" />
+                      <div
+                        class="botton-box-down close-status"
+                        @click="toggleContent"
+                      />
                     </div>
                     <div class="label-list deslabel-list">
                       <div class="lab-item active"><span>描述一</span></div>
@@ -1018,11 +1021,22 @@
                   </div>
                   <div class="resource-warp">
                     <div class="resource-tab">
-                      <div class="tab-item active">
-                        <i /><span>必学资源</span>
+                      <div
+                        class="tab-item"
+                        :class="{ active: activeResourceTab === 'required' }"
+                        @click="handleResourceTabClick('required')"
+                      >
+                        <i />
+                        <span>必学资源</span>
                       </div>
-                      <div class="tab-item"><i /><span>选学资源</span></div>
-                      <!---->
+                      <div
+                        class="tab-item"
+                        :class="{ active: activeResourceTab === 'optional' }"
+                        @click="handleResourceTabClick('optional')"
+                      >
+                        <i />
+                        <span>选学资源</span>
+                      </div>
                     </div>
                     <div class="label-list rlabel-list">
                       <div class="label-name active">
@@ -1674,7 +1688,38 @@ import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-i
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 
 const currentTheme = ref("light");
-const activeMenu = ref("course-learn"); // 添加当前选中的菜单状态
+const activeMenu = ref("course-learn");
+const isContentCollapsed = ref(false);
+const activeResourceTab = ref("required");
+
+// 添加资源标签切换函数
+const handleResourceTabClick = (tab: string) => {
+  activeResourceTab.value = tab;
+};
+
+// 添加折叠处理函数
+function toggleContent() {
+  isContentCollapsed.value = !isContentCollapsed.value;
+  const contentElement = document.querySelector(
+    ".kgDescribe-warp"
+  ) as HTMLElement;
+  const introduceDiv = contentElement?.querySelector(
+    ".introduce-div"
+  ) as HTMLElement;
+  const buttonElement = document.querySelector(
+    ".botton-box-down"
+  ) as HTMLElement;
+
+  if (contentElement && introduceDiv && buttonElement) {
+    if (isContentCollapsed.value) {
+      introduceDiv.style.display = "none";
+      buttonElement.style.transform = "rotate(180deg)";
+    } else {
+      introduceDiv.style.display = "block";
+      buttonElement.style.transform = "rotate(0deg)";
+    }
+  }
+}
 
 function toggleTheme() {
   const oldTheme = currentTheme.value;
@@ -1803,5 +1848,27 @@ function handleMenuClick(menuName: string) {
 .avatar-info {
   display: flex;
   align-items: center;
+}
+
+/* 添加按钮旋转动画 */
+.botton-box-down {
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+/* 修复标签按钮高度 */
+.resource-warp .label-list .label-name {
+  height: auto;
+}
+
+/* 添加标签切换样式 */
+.resource-tab .tab-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.resource-tab .tab-item.active {
+  color: #604ffd;
+  font-weight: bold;
 }
 </style>
