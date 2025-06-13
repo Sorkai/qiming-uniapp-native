@@ -1255,11 +1255,12 @@ function goBack() {
 </script>
 
 <style>
-@import "@/../coursecss/css/chunk-b3e9f934.1c00050a.css";
-@import "@/../coursecss/css/chunk-8cf7ce30.92e48af1.css";
-@import "@/../coursecss/css/chunk-3cf64ec0.4f07a253.css";
-@import "@/../coursecss/css/chunk-3248eec0.130a3cd9.css";
-@import "@/../coursecss/css/app.a5f91bbb.css";
+@import "@/../coursecss/css/chunk-1.css";
+@import "@/../coursecss/css/chunk-2.css";
+@import "@/../coursecss/css/chunk-3.css";
+@import "@/../coursecss/css/chunk-4.css";
+@import "@/../coursecss/css/chunk-5.css";
+@import "@/../coursecss/css/app-1.css";
 </style>
 
 <style scoped>
