@@ -4,7 +4,7 @@
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
         <div class="logo" @click="router.push('/home')">
-          <img src="@/assets/logo.png" alt="Logo" />
+          <img :src="logo" alt="Logo" />
         </div>
         <div class="header-right">
           <template v-if="userInfo">
@@ -127,10 +127,19 @@ import { userKey, removeToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
 
+// 导入图片资源
+import banner1 from "@/assets/home/banner1.jpg";
+import banner2 from "@/assets/home/banner2.jpg";
+import card1 from "@/assets/home/card1.jpg";
+import card2 from "@/assets/home/card2.jpg";
+import card3 from "@/assets/home/card3.jpg";
+import logo from "@/assets/logo.png";
+import defaultAvatarImg from "@/assets/user.jpg"; // 使用已有的user.jpg作为默认头像
+
 const router = useRouter();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
-const defaultAvatar = "/src/assets/avatar.png"; // 默认头像路径
+const defaultAvatar = defaultAvatarImg;
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
 // 监听滚动事件
@@ -140,9 +149,6 @@ const handleScroll = () => {
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
-  if (!userInfo.value) {
-    showLoginDialog.value = true;
-  }
 });
 
 onUnmounted(() => {
@@ -154,12 +160,12 @@ const carouselItems = ref([
   {
     title: "创新技术平台",
     subtitle: "全方位技术支持",
-    background: "/src/assets/home/banner1.jpg"
+    background: banner1
   },
   {
     title: "智慧解决方案",
     subtitle: "助力企业转型",
-    background: "/src/assets/home/banner2.jpg"
+    background: banner2
   }
 ]);
 
@@ -169,19 +175,19 @@ const features = ref([
     icon: "Monitor",
     title: "智能管理",
     description: "提供智能化的管理工具，提升工作效率",
-    image: "/src/assets/home/card1.jpg"
+    image: card1
   },
   {
     icon: "Connection",
     title: "协同办公",
     description: "多部门协同工作，信息共享无障碍",
-    image: "/src/assets/home/card2.jpg"
+    image: card2
   },
   {
     icon: "Operation",
     title: "数据分析",
     description: "强大的数据分析能力，助力决策制定",
-    image: "/src/assets/home/card3.jpg"
+    image: card3
   }
 ]);
 
