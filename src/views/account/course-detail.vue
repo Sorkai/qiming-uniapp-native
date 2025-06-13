@@ -147,7 +147,11 @@
               class="header-content"
             >
               <div data-v-3e66491d="" class="item header-left">
-                <div data-v-3e66491d="" class="item header-back">
+                <div
+                  data-v-3e66491d=""
+                  class="item header-back"
+                  @click="goBack"
+                >
                   <i data-v-3e66491d="" />
                 </div>
                 <span data-v-3e66491d="" class="current-time"
@@ -1068,6 +1072,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import CourseLearnIcon from "@/assets/course-icons/course-learn.svg?component";
 import MasteryIcon from "@/assets/course-icons/mastery.svg?component";
 import CourseQaIcon from "@/assets/course-icons/course-qa.svg?component";
@@ -1086,6 +1091,7 @@ import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
 import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-icon.svg?component";
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 
+const router = useRouter();
 const currentTheme = ref("light");
 const activeMenu = ref("course-learn");
 const isContentCollapsed = ref(false);
@@ -1241,6 +1247,10 @@ function handleModeClick(mode: string) {
 // 添加节点点击处理函数
 function handleNodeClick(nodeId: string) {
   activeNode.value = nodeId;
+}
+
+function goBack() {
+  router.push("/account");
 }
 </script>
 

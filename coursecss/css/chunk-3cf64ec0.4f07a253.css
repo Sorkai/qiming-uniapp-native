@@ -56,7 +56,8 @@
   .item.header-left
   .header-back
   i[data-v-3e66491d] {
-  background: url(../img/goBack.f9072aca.svg) no-repeat 50%;
+  background: url(../../src/assets/course-icons/arrow-left-circle.svg) no-repeat
+    50%;
   background-size: 2.08333vw;
   cursor: pointer;
   display: block;
