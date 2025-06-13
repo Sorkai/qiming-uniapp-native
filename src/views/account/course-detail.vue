@@ -13,6 +13,7 @@
           class="el-tooltip item"
           :class="{ active: activeMenu === 'course-learn' }"
           tabindex="0"
+          data-menu="course-learn"
           @click="handleMenuClick('course-learn')"
         >
           <div
@@ -30,6 +31,7 @@
           class="el-tooltip item"
           :class="{ active: activeMenu === 'mastery' }"
           tabindex="0"
+          data-menu="mastery"
           @click="handleMenuClick('mastery')"
         >
           <div
@@ -48,6 +50,7 @@
           class="el-tooltip item"
           :class="{ active: activeMenu === 'course-qa' }"
           tabindex="0"
+          data-menu="course-qa"
           @click="handleMenuClick('course-qa')"
         >
           <div
@@ -65,6 +68,7 @@
           class="el-tooltip item"
           :class="{ active: activeMenu === 'homework-exam' }"
           tabindex="0"
+          data-menu="homework-exam"
           @click="handleMenuClick('homework-exam')"
         >
           <div
@@ -82,6 +86,7 @@
           class="el-tooltip item"
           :class="{ active: activeMenu === 'course-materials' }"
           tabindex="0"
+          data-menu="course-materials"
           @click="handleMenuClick('course-materials')"
         >
           <div
@@ -99,6 +104,7 @@
           class="el-tooltip item"
           :class="{ active: activeMenu === 'grades' }"
           tabindex="0"
+          data-menu="grades"
           @click="handleMenuClick('grades')"
         >
           <div
@@ -117,6 +123,7 @@
           class="el-tooltip item"
           :class="{ active: activeMenu === 'ai-doc-qa' }"
           tabindex="0"
+          data-menu="ai-doc-qa"
           @click="handleMenuClick('ai-doc-qa')"
         >
           <div
@@ -1149,8 +1156,12 @@ function toggleTheme() {
   const svgPaths = document.querySelectorAll(".hover-box svg path");
   svgPaths.forEach(path => {
     const parentElement = path.closest(".hover-box");
-    if (parentElement?.classList.contains("active")) {
-      // 选中的菜单项
+    const menuItem = parentElement?.closest(".item");
+    const currentMenuName = menuItem?.getAttribute("data-menu");
+    const isCurrentActive = currentMenuName === activeMenu.value;
+
+    if (isCurrentActive) {
+      // 当前选中的菜单项
       if (newTheme === "dark") {
         path.setAttribute("fill", "white");
       } else {
@@ -1170,9 +1181,12 @@ function toggleTheme() {
   const sideNames = document.querySelectorAll(".side-name");
   sideNames.forEach(name => {
     const element = name as HTMLElement;
-    const parentElement = element.closest(".hover-box");
-    if (parentElement?.classList.contains("active")) {
-      // 选中的菜单项
+    const menuItem = element.closest(".item");
+    const currentMenuName = menuItem?.getAttribute("data-menu");
+    const isCurrentActive = currentMenuName === activeMenu.value;
+
+    if (isCurrentActive) {
+      // 当前选中的菜单项
       if (newTheme === "dark") {
         element.style.color = "white";
       } else {
@@ -1199,8 +1213,12 @@ function handleMenuClick(menuName: string) {
   const svgPaths = document.querySelectorAll(".hover-box svg path");
   svgPaths.forEach(path => {
     const parentElement = path.closest(".hover-box");
-    if (parentElement?.classList.contains("active")) {
-      // 选中的菜单项
+    const menuItem = parentElement?.closest(".item");
+    const currentMenuName = menuItem?.getAttribute("data-menu");
+    const isCurrentActive = currentMenuName === menuName;
+
+    if (isCurrentActive) {
+      // 当前选中的菜单项
       if (currentTheme.value === "dark") {
         path.setAttribute("fill", "white");
       } else {
@@ -1211,7 +1229,7 @@ function handleMenuClick(menuName: string) {
       if (currentTheme.value === "dark") {
         path.setAttribute("fill", "#B4B4C7");
       } else {
-        path.setAttribute("fill", "#604FFD");
+        path.setAttribute("fill", "#000");
       }
     }
   });
@@ -1220,20 +1238,23 @@ function handleMenuClick(menuName: string) {
   const sideNames = document.querySelectorAll(".side-name");
   sideNames.forEach(name => {
     const element = name as HTMLElement;
-    const parentElement = element.closest(".hover-box");
-    if (parentElement?.classList.contains("active")) {
-      // 选中的菜单项
+    const menuItem = element.closest(".item");
+    const currentMenuName = menuItem?.getAttribute("data-menu");
+    const isCurrentActive = currentMenuName === menuName;
+
+    if (isCurrentActive) {
+      // 当前选中的菜单项
       if (currentTheme.value === "dark") {
         element.style.color = "white";
       } else {
-        element.style.color = "#604FFD";
+        element.style.color = "#B4B4C7";
       }
     } else {
       // 未选中的菜单项
       if (currentTheme.value === "dark") {
         element.style.color = "#B4B4C7";
       } else {
-        element.style.color = "#604FFD";
+        element.style.color = "#000";
       }
     }
   });
@@ -1258,7 +1279,7 @@ function goBack() {
 @import "@/../coursecss/css/chunk-1.css";
 @import "@/../coursecss/css/chunk-2.css";
 @import "@/../coursecss/css/chunk-3.css";
-@import "@/../coursecss/css/chunk-4.css";
+/* @import "@/../coursecss/css/chunk-4.css"; */
 @import "@/../coursecss/css/chunk-5.css";
 @import "@/../coursecss/css/app-1.css";
 </style>
