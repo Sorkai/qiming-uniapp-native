@@ -102,7 +102,7 @@ export function useNav() {
   }
 
   function backTopMenu() {
-    router.push(getTopMenu()?.path);
+    router.push("/home");
   }
 
   function onPanel() {
