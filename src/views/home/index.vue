@@ -213,6 +213,8 @@ const handleCommand = (command: string) => {
 const handleLoginSuccess = () => {
   userInfo.value = storageLocal().getItem(userKey);
   showLoginDialog.value = false;
+  // 刷新当前页面
+  window.location.reload();
 };
 </script>
 
