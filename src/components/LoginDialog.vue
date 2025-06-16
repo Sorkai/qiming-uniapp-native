@@ -175,30 +175,6 @@
             </div>
           </div>
 
-          <div class="form-item verification-code">
-            <el-input
-              v-model="registerForm.code"
-              placeholder="请输入验证码"
-              :class="{ 'is-error': errors.registerCode }"
-            >
-              <template #prefix>
-                <Icon icon="mdi:shield-key-outline" />
-              </template>
-            </el-input>
-            <button
-              class="code-button"
-              :class="{ disabled: registerCountdown > 0 }"
-              @click="sendRegisterCode"
-            >
-              {{
-                registerCountdown > 0 ? `${registerCountdown}s` : "获取验证码"
-              }}
-            </button>
-            <div v-if="errors.registerCode" class="error-message">
-              {{ errors.registerCode }}
-            </div>
-          </div>
-
           <div class="form-item">
             <el-input
               v-model="registerForm.password"
@@ -255,6 +231,8 @@ import { Icon } from "@iconify/vue";
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
+import { userRegister, userLogin, getUserDetail } from "@/api/user";
+import { setToken, getToken } from "@/utils/auth";
 
 interface LoginForm {
   username: string;
@@ -275,14 +253,12 @@ interface Errors {
 
 interface RegisterForm {
   phone: string;
-  code: string;
   password: string;
   confirmPassword: string;
 }
 
 interface RegisterErrors {
   registerPhone: string;
-  registerCode: string;
   registerPassword: string;
   confirmPassword: string;
 }
@@ -317,11 +293,9 @@ const phoneForm = reactive<PhoneForm>({
 
 const isRegister = ref(false);
 const registerLoading = ref(false);
-const registerCountdown = ref(0);
 
 const registerForm = reactive<RegisterForm>({
   phone: "",
-  code: "",
   password: "",
   confirmPassword: ""
 });
@@ -333,7 +307,6 @@ const errors = reactive<Errors & RegisterErrors>({
   phone: "",
   code: "",
   registerPhone: "",
-  registerCode: "",
   registerPassword: "",
   confirmPassword: ""
 });
@@ -362,66 +335,145 @@ const sendCode = async () => {
   ElMessage.success("验证码已发送");
 };
 
-// 登录处理
-const handleLogin = async () => {
-  // 清除错误信息
-  errors.username = "";
-  errors.password = "";
-
-  // 表单验证
-  if (!loginForm.username) {
-    errors.username = "请输入用户名";
-    return;
-  }
-  if (!loginForm.password) {
-    errors.password = "请输入密码";
-    return;
-  }
-
-  loading.value = true;
+// 获取用户详细信息
+const fetchUserDetail = async () => {
   try {
-    const res = await useUserStoreHook().loginByUsername({
-      username: loginForm.username,
-      password: loginForm.password
-    });
+    const res = await getUserDetail();
+    console.log("用户详细信息:", res);
 
-    if (res.success) {
-      message(t("login.pureLoginSuccess"), { type: "success" });
-      emit("login-success");
-      emit("update:visible", false);
+    if (res && res.data && res.data.userInfo) {
+      const userInfo = res.data.userInfo;
+
+      // 更新用户信息到存储，但保持admin角色不变
+      const userStore = useUserStoreHook();
+      userStore.SET_NICKNAME(userInfo.nickname || "");
+      userStore.SET_AVATAR(userInfo.avatar || "");
+
+      // 更新本地存储中的用户信息，保持角色和权限不变
+      setToken({
+        // 使用当前token，不变更token相关信息
+        accessToken: getToken()?.accessToken || "",
+        refreshToken: getToken()?.refreshToken || "",
+        expires: getToken()?.expires
+          ? new Date(getToken().expires)
+          : new Date(),
+        // 更新用户详细信息
+        username: userInfo.mobile,
+        nickname: userInfo.nickname,
+        avatar: userInfo.avatar,
+        // 重要：保持 admin 角色以确保菜单正常显示
+        roles: ["admin"],
+        // 添加一些常用权限
+        permissions: ["*:*:*"]
+      });
+
+      // 存储用户ID和其他信息到localStorage
+      localStorage.setItem("userId", userInfo.id.toString());
+      localStorage.setItem("userMobile", userInfo.mobile);
+      localStorage.setItem("userSex", userInfo.sex.toString());
+      localStorage.setItem("userInfo", userInfo.info || "");
+      localStorage.setItem("userRoleType", userInfo.roleType.toString());
+
+      console.log("用户信息更新成功", userInfo);
     } else {
-      message(t("login.pureLoginFail"), { type: "error" });
+      console.warn("获取用户详细信息失败或信息为空");
     }
+
+    return res;
   } catch (error) {
-    console.error("Login error:", error);
-    message(t("login.pureLoginFail"), { type: "error" });
-  } finally {
-    loading.value = false;
+    console.error("获取用户详细信息出错:", error);
+    return null;
   }
 };
 
-// 发送注册验证码
-const sendRegisterCode = async () => {
-  if (registerCountdown.value > 0) return;
-  if (!registerForm.phone) {
-    errors.registerPhone = "请输入手机号";
-    return;
-  }
-  if (!/^1[3-9]\d{9}$/.test(registerForm.phone)) {
-    errors.registerPhone = "请输入正确的手机号";
-    return;
-  }
+// 登录处理
+const handleLogin = async () => {
+  // 账号密码登录处理
+  if (activeTab.value === "account") {
+    // 清除错误信息
+    errors.username = "";
+    errors.password = "";
 
-  registerCountdown.value = 60;
-  const timer = setInterval(() => {
-    registerCountdown.value--;
-    if (registerCountdown.value <= 0) {
-      clearInterval(timer);
+    // 表单验证
+    if (!loginForm.username) {
+      errors.username = "请输入手机号";
+      return;
     }
-  }, 1000);
+    if (!loginForm.password) {
+      errors.password = "请输入密码";
+      return;
+    }
 
-  // TODO: 调用发送验证码接口
-  ElMessage.success("验证码已发送");
+    loading.value = true;
+    try {
+      // 调用登录API
+      const res = await userLogin({
+        mobile: loginForm.username,
+        password: loginForm.password
+      });
+
+      console.log("登录结果:", res);
+
+      // 存储token信息
+      if (res && res.data && res.data.accessToken) {
+        setToken({
+          accessToken: res.data.accessToken,
+          expires: new Date(res.data.accessExpire * 1000), // 转换为日期对象
+          refreshToken: res.data.accessToken, // 后端没有提供refreshToken，暂时使用accessToken代替
+          username: loginForm.username,
+          nickname: loginForm.username,
+          // 重要：保持 admin 角色以确保菜单正常显示
+          roles: ["admin"],
+          // 添加一些常用权限
+          permissions: ["*:*:*"]
+        });
+
+        // 获取用户详细信息
+        await fetchUserDetail();
+
+        message(t("login.pureLoginSuccess"), { type: "success" });
+
+        // 刷新页面以确保菜单重新加载
+        // window.location.reload();
+
+        emit("login-success");
+        emit("update:visible", false);
+      } else {
+        message(t("login.pureLoginFail"), { type: "error" });
+      }
+    } catch (error) {
+      console.error("登录失败:", error);
+      message(t("login.pureLoginFail"), { type: "error" });
+    } finally {
+      loading.value = false;
+    }
+  } else {
+    // 手机验证码登录处理
+    errors.phone = "";
+    errors.code = "";
+
+    if (!phoneForm.phone) {
+      errors.phone = "请输入手机号";
+      return;
+    }
+    if (!phoneForm.code) {
+      errors.code = "请输入验证码";
+      return;
+    }
+
+    loading.value = true;
+    try {
+      // TODO: 实现手机验证码登录
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      ElMessage.success("登录成功");
+      emit("login-success");
+      emit("update:visible", false);
+    } catch (error) {
+      ElMessage.error("登录失败");
+    } finally {
+      loading.value = false;
+    }
+  }
 };
 
 // 注册处理
@@ -436,10 +488,6 @@ const handleRegister = async () => {
   // 表单验证
   if (!registerForm.phone) {
     errors.registerPhone = "请输入手机号";
-    return;
-  }
-  if (!registerForm.code) {
-    errors.registerCode = "请输入验证码";
     return;
   }
   if (!registerForm.password) {
@@ -457,16 +505,47 @@ const handleRegister = async () => {
 
   registerLoading.value = true;
   try {
-    // TODO: 实现注册逻辑
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    ElMessage.success("注册成功");
-    isRegister.value = false;
-    // 清空注册表单
-    Object.keys(registerForm).forEach(key => {
-      registerForm[key as keyof RegisterForm] = "";
+    // 调用注册API
+    const res = await userRegister({
+      mobile: registerForm.phone,
+      password: registerForm.password
     });
+
+    console.log("注册结果:", res);
+
+    // 存储token信息
+    if (res && res.data && res.data.accessToken) {
+      setToken({
+        accessToken: res.data.accessToken,
+        expires: new Date(res.data.accessExpire * 1000), // 转换为日期对象
+        refreshToken: res.data.accessToken, // 后端没有提供refreshToken，暂时使用accessToken代替
+        username: registerForm.phone,
+        nickname: registerForm.phone,
+        // 重要：保持 admin 角色以确保菜单正常显示
+        roles: ["admin"],
+        // 添加一些常用权限
+        permissions: ["*:*:*"]
+      });
+
+      // 获取用户详细信息
+      await fetchUserDetail();
+
+      // 清空注册表单
+      Object.keys(registerForm).forEach(key => {
+        registerForm[key as keyof RegisterForm] = "";
+      });
+
+      // 直接关闭登录弹窗
+      emit("login-success");
+      emit("update:visible", false);
+
+      ElMessage.success("注册成功，已自动登录");
+    } else {
+      ElMessage.error("注册成功但未返回token信息");
+    }
   } catch (error) {
-    ElMessage.error("注册失败");
+    console.error("注册失败:", error);
+    ElMessage.error("注册失败，请稍后重试");
   } finally {
     registerLoading.value = false;
   }

@@ -54,6 +54,62 @@ export type UserInfoResult = {
   data: UserInfo;
 };
 
+export type UserCenterLoginResult = {
+  code: number;
+  msg: string;
+  data: {
+    accessToken: string;
+    accessExpire: number;
+    refreshAfter: number;
+  };
+};
+
+export type UserCenterDetailResult = {
+  code: number;
+  msg: string;
+  data: {
+    userInfo: {
+      id: number;
+      mobile: string;
+      nickname: string;
+      sex: number;
+      avatar: string;
+      info: string;
+      roleType: number;
+    };
+  };
+};
+
+export type UploadResult = {
+  url: string;
+  fileId: number;
+};
+
+export type FileListResult = {
+  total: number;
+  fileList: Array<{
+    fileId: number;
+    fileUrl: string;
+    fileName: string;
+    extension: string;
+    size: number;
+    resourceType: string;
+  }>;
+};
+
+export type UserListResult = {
+  total: number;
+  userList: Array<{
+    id: number;
+    mobile: string;
+    nickname: string;
+    sex: number;
+    avatar: string;
+    info: string;
+    roleType: number;
+  }>;
+};
+
 type ResultTable = {
   success: boolean;
   data?: {
@@ -86,4 +142,57 @@ export const getMine = (data?: object) => {
 /** 账户设置-个人安全日志 */
 export const getMineLogs = (data?: object) => {
   return http.request<ResultTable>("get", "/mine-logs", { data });
+};
+
+// 新增用户中心接口
+
+/** 用户注册 */
+export const userRegister = (data: { mobile: string; password: string }) => {
+  return http.request<UserCenterLoginResult>(
+    "post",
+    "/usercenter/v1/user/register",
+    { data }
+  );
+};
+
+/** 用户登录 */
+export const userLogin = (data: { mobile: string; password: string }) => {
+  return http.request<UserCenterLoginResult>(
+    "post",
+    "/usercenter/v1/user/login",
+    { data }
+  );
+};
+
+/** 获取用户信息 */
+export const getUserDetail = () => {
+  return http.request<UserCenterDetailResult>(
+    "post",
+    "/usercenter/v1/user/detail",
+    {}
+  );
+};
+
+/** 文件上传 */
+export const uploadFile = (data: FormData) => {
+  return http.request<UploadResult>("post", "/usercenter/v1/user/upload", {
+    data,
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  });
+};
+
+/** 获取文件列表 */
+export const getFileList = (params: { pageNum: number; pageSize?: number }) => {
+  return http.request<FileListResult>("get", "/usercenter/v1/user/file/list", {
+    params
+  });
+};
+
+/** 获取用户列表 */
+export const getUserList = (params: { pageNum: number; pageSize?: number }) => {
+  return http.request<UserListResult>("get", "/usercenter/v1/user/list", {
+    params
+  });
 };
