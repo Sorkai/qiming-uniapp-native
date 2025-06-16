@@ -34,7 +34,7 @@
         <el-table-column label="封面" width="120">
           <template #default="scope">
             <el-image
-              style="width: 80px; height: 50px"
+              style="width: 80px; height: 80px"
               :src="scope.row.thumbUrl"
               fit="cover"
               :preview-src-list="[scope.row.thumbUrl]"
