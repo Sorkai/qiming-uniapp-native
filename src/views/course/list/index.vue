@@ -363,7 +363,6 @@
               :on-change="handleThumbChange"
             >
               <el-button type="primary">选择图片</el-button>
-              <div class="upload-hint">建议尺寸: 800x480px</div>
             </el-upload>
           </div>
         </el-form-item>

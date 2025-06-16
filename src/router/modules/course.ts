@@ -15,6 +15,14 @@ export default {
       meta: {
         title: "课程列表"
       }
+    },
+    {
+      path: "/course/category",
+      name: "CourseCategory",
+      component: () => import("@/views/course/category/index.vue"),
+      meta: {
+        title: "课程分类"
+      }
     }
   ]
 };
