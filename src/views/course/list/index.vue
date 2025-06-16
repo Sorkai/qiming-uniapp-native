@@ -230,38 +230,84 @@
     </el-dialog>
 
     <!-- 课时列表弹窗 -->
-    <el-dialog v-model="hoursDialogVisible" title="课时列表" width="60%">
+    <el-dialog v-model="hoursDialogVisible" title="课时列表" width="70%">
       <div v-loading="hoursLoading">
-        <div v-if="courseHours.length === 0" class="empty-text">
-          该课程暂无课时
+        <div
+          v-if="!hoursLoading && courseHours.length === 0"
+          class="empty-state"
+        >
+          该课程暂无课时信息
         </div>
         <div v-else>
-          <div
-            v-for="(chapter, index) in courseHours"
-            :key="index"
-            class="chapter-item"
-          >
-            <h3 class="chapter-title">{{ chapter.name }}</h3>
-            <el-table :data="chapter.hourList" stripe style="width: 100%">
-              <el-table-column prop="hourId" label="ID" width="80" />
-              <el-table-column prop="title" label="课时标题" />
-              <el-table-column prop="rType" label="资源类型" width="100" />
-              <el-table-column label="时长" width="100">
-                <template #default="scope">
-                  {{ formatDuration(scope.row.duration) }}
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="80">
-                <template #default="scope">
-                  <el-button
-                    v-if="scope.row.fileUrl"
+          <!-- 课程信息头部 -->
+          <div v-if="currentCourse" class="course-header">
+            <div class="course-info">
+              <h2>{{ currentCourse.title }}</h2>
+              <div class="meta-info">
+                <span class="meta-item">
+                  <label>类型:</label>
+                  <el-tag
+                    :type="currentCourse.isRequired === 1 ? 'danger' : 'info'"
                     size="small"
-                    @click="previewResource(scope.row)"
-                    >预览</el-button
                   >
-                </template>
-              </el-table-column>
-            </el-table>
+                    {{ currentCourse.isRequired === 1 ? "必修" : "选修" }}
+                  </el-tag>
+                </span>
+                <span class="meta-item">
+                  <label>创建人:</label>
+                  {{ currentCourse.userName }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <el-divider />
+
+          <!-- 章节和课时内容 -->
+          <div class="chapter-list">
+            <div
+              v-for="chapter in courseHours"
+              :key="'chapter-' + chapter.chapterId"
+              class="chapter-item"
+            >
+              <div class="chapter-title">
+                {{ chapter.name }}
+              </div>
+
+              <el-table
+                :data="chapter.hourList"
+                stripe
+                style="width: 100%"
+                border
+              >
+                <el-table-column prop="hourId" label="ID" width="80" />
+                <el-table-column
+                  prop="title"
+                  label="课时标题"
+                  min-width="150"
+                />
+                <el-table-column label="时长" width="100">
+                  <template #default="scope">
+                    <span>{{ formatDuration(scope.row.duration) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="资源类型" width="100">
+                  <template #default="scope">
+                    <el-tag size="small">{{ scope.row.rType }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="120">
+                  <template #default="scope">
+                    <el-button
+                      size="small"
+                      type="primary"
+                      @click="previewResource(scope.row)"
+                      >预览</el-button
+                    >
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
           </div>
         </div>
       </div>
@@ -295,97 +341,18 @@
     <el-dialog
       v-model="courseFormDialogVisible"
       :title="isEdit ? '编辑课程' : '创建课程'"
-      width="70%"
+      width="80%"
       :close-on-click-modal="false"
+      destroy-on-close
+      class="course-form-dialog"
     >
-      <el-form
-        ref="courseFormRef"
-        v-loading="courseFormLoading"
-        :model="courseForm"
-        :rules="courseFormRules"
-        label-width="100px"
-      >
-        <el-form-item label="课程标题" prop="title">
-          <el-input v-model="courseForm.title" placeholder="请输入课程标题" />
-        </el-form-item>
-        <el-form-item label="课程简介" prop="shortDesc">
-          <el-input
-            v-model="courseForm.shortDesc"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入课程简介"
-          />
-        </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="是否必修" prop="isRequired">
-              <el-radio-group v-model="courseForm.isRequired">
-                <el-radio :label="1">必修</el-radio>
-                <el-radio :label="0">选修</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="是否章节" prop="isChapter">
-              <el-radio-group v-model="courseForm.isChapter">
-                <el-radio :label="1">是</el-radio>
-                <el-radio :label="0">否</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item label="课程封面" prop="thumb">
-          <div class="upload-box">
-            <div v-if="courseForm.thumbUrl" class="upload-preview">
-              <el-image
-                style="width: 200px; height: 120px"
-                :src="courseForm.thumbUrl"
-                fit="cover"
-              />
-              <div class="upload-actions">
-                <el-button
-                  type="danger"
-                  size="small"
-                  @click="
-                    courseForm.thumbUrl = '';
-                    courseForm.thumb = 0;
-                  "
-                  >移除</el-button
-                >
-              </div>
-            </div>
-            <el-upload
-              v-else
-              class="upload-trigger"
-              action="#"
-              :auto-upload="false"
-              :show-file-list="false"
-              :on-change="handleThumbChange"
-            >
-              <el-button type="primary">选择图片</el-button>
-            </el-upload>
-          </div>
-        </el-form-item>
-        <el-form-item label="课程分类" prop="categoryIds">
-          <el-checkbox-group v-model="courseForm.categoryIds">
-            <el-checkbox
-              v-for="category in categoryOptions"
-              :key="category.categoryId"
-              :label="category.categoryId"
-            >
-              {{ category.name }}
-            </el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="结束时间" prop="endingTime">
-          <el-date-picker
-            v-model="courseForm.endingTime"
-            type="datetime"
-            placeholder="选择结束时间"
-            value-format="YYYY-MM-DDTHH:mm:ss.000Z"
-          />
-        </el-form-item>
-      </el-form>
+      <div class="dialog-content-wrapper">
+        <CourseForm
+          ref="courseFormRef"
+          v-model="courseForm"
+          :loading="courseFormLoading"
+        />
+      </div>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="courseFormDialogVisible = false">取消</el-button>
@@ -406,6 +373,7 @@ import {
   getCourseDetail,
   createCourse
 } from "@/api/course";
+import CourseForm from "./components/CourseForm.vue";
 
 const courseFormRef = ref<InstanceType<typeof ElForm>>();
 
@@ -508,28 +476,34 @@ const handleThumbChange = file => {
 const submitCourseForm = async () => {
   if (!courseFormRef.value) return;
 
-  await courseFormRef.value.validate(async valid => {
+  try {
+    // 使用表单组件的验证方法
+    const valid = await courseFormRef.value.validate();
+
     if (valid) {
       courseFormLoading.value = true;
-      try {
-        // 如果是编辑模式，调用更新接口；如果是创建模式，调用创建接口
-        const res = await createCourse(courseForm.value);
 
-        if (res && res.code === 200) {
-          ElMessage.success(isEdit.value ? "课程更新成功" : "课程创建成功");
-          courseFormDialogVisible.value = false;
-          fetchCourseList(); // 刷新列表
-        } else {
-          ElMessage.error(isEdit.value ? "课程更新失败" : "课程创建失败");
-        }
-      } catch (error) {
-        console.error(isEdit.value ? "更新课程失败:" : "创建课程失败:", error);
-        ElMessage.error(isEdit.value ? "更新课程失败" : "创建课程失败");
-      } finally {
-        courseFormLoading.value = false;
+      // 准备提交数据，完全移除顶层的hourList
+      const formData = { ...courseForm.value };
+      const { hourList, ...submitData } = formData;
+
+      // 如果是编辑模式，调用更新接口；如果是创建模式，调用创建接口
+      const res = await createCourse(submitData);
+
+      if (res && res.code === 200) {
+        ElMessage.success(isEdit.value ? "课程更新成功" : "课程创建成功");
+        courseFormDialogVisible.value = false;
+        fetchCourseList(); // 刷新列表
+      } else {
+        ElMessage.error(isEdit.value ? "课程更新失败" : "课程创建失败");
       }
     }
-  });
+  } catch (error) {
+    console.error(isEdit.value ? "更新课程失败:" : "创建课程失败:", error);
+    ElMessage.error(isEdit.value ? "更新课程失败" : "创建课程失败");
+  } finally {
+    courseFormLoading.value = false;
+  }
 };
 
 // 处理页面大小变化
@@ -646,9 +620,9 @@ const editCourse = course => {
       ? course.categoryList.map(c => c.categoryId)
       : [],
     endingTime: course.endTime || "",
-    chapterList: [],
-    hourList: [],
-    attrList: []
+    chapterList: course.chapterList || [],
+    hourList: course.hourList || [],
+    attrList: course.attrList || []
   };
 
   courseFormDialogVisible.value = true;
@@ -912,5 +886,13 @@ onMounted(() => {
 // 避免每行只显示一个标签
 .category-tag {
   margin: 0;
+}
+
+.course-form-dialog {
+  .dialog-content-wrapper {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 10px;
+  }
 }
 </style>
