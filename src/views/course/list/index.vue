@@ -38,6 +38,9 @@
               :src="scope.row.thumbUrl"
               fit="cover"
               :preview-src-list="[scope.row.thumbUrl]"
+              :initial-index="0"
+              teleported
+              preview-teleported
             >
               <template #error>
                 <div class="image-placeholder">无图片</div>
@@ -150,6 +153,9 @@
                 :preview-src-list="
                   courseDetail?.thumbUrl ? [courseDetail.thumbUrl] : []
                 "
+                :initial-index="0"
+                teleported
+                preview-teleported
               >
                 <template #error>
                   <div class="image-placeholder">无图片</div>
