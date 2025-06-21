@@ -7,6 +7,7 @@ import { buildHierarchyTree } from "@/utils/tree";
 import remainingRouter from "./modules/remaining";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { useUserStoreHook } from "@/store/modules/user";
 import {
   isUrl,
   openLink,
@@ -37,6 +38,7 @@ import {
   removeToken,
   multipleTabsKey
 } from "@/utils/auth";
+import { ElMessage } from "element-plus";
 
 /** 自动导入全部静态路由，无需再手动引入！匹配 src/router/modules 目录（任何嵌套级别）中具有 .ts 扩展名的所有文件，除了 remaining.ts 文件
  * 如何匹配所有文件请看：https://github.com/mrmlnc/fast-glob#basic-syntax
@@ -121,6 +123,31 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   }
   const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
   NProgress.start();
+
+  // 新增：检测状态不一致的情况（localStorage有用户信息但cookie已失效）
+  if (userInfo && !Cookies.get(multipleTabsKey)) {
+    // 状态不一致，自动清理
+    removeToken();
+    storageLocal().removeItem(userKey);
+    // 使用pinia store清理用户状态，确保UI更新
+    const userStore = useUserStoreHook();
+    userStore.SET_USERNAME("");
+    userStore.SET_NICKNAME("");
+    userStore.SET_AVATAR("");
+    userStore.SET_ROLES([]);
+    userStore.SET_PERMS([]);
+
+    ElMessage.warning("登录状态已失效，请重新登录");
+    // 使用replace而非push，并强制刷新页面确保UI状态一致
+    next({ path: "/home", replace: true });
+    // 短暂延迟后刷新页面，确保消息能显示且状态完全清理
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+    NProgress.done();
+    return;
+  }
+
   const externalLink = isUrl(to?.name as string);
   if (!externalLink) {
     to.matched.some(item => {
