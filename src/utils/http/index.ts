@@ -138,6 +138,9 @@ class PureHttp {
       },
       (error: PureHttpError) => {
         const $error = error;
+        if ($error.response?.status === 401) {
+          useUserStoreHook().logOut();
+        }
         $error.isCancelRequest = Axios.isCancel($error);
         // 关闭进度条动画
         NProgress.done();
