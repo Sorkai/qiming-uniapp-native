@@ -150,7 +150,7 @@ export const getMineLogs = (data?: object) => {
 export const userRegister = (data: { mobile: string; password: string }) => {
   return http.request<UserCenterLoginResult>(
     "post",
-    "/usercenter/v1/user/register",
+    "/edu/v1/user/register",
     { data }
   );
 };
@@ -159,7 +159,7 @@ export const userRegister = (data: { mobile: string; password: string }) => {
 export const userLogin = (data: { mobile: string; password: string }) => {
   return http.request<UserCenterLoginResult>(
     "post",
-    "/usercenter/v1/user/login",
+    "/edu/v1/user/login",
     { data }
   );
 };
@@ -168,14 +168,14 @@ export const userLogin = (data: { mobile: string; password: string }) => {
 export const getUserDetail = () => {
   return http.request<UserCenterDetailResult>(
     "post",
-    "/usercenter/v1/user/detail",
+    "/edu/v1/user/detail",
     {}
   );
 };
 
 /** 文件上传 */
 export const uploadFile = (data: FormData) => {
-  return http.request<UploadResult>("post", "/usercenter/v1/user/upload", {
+  return http.request<UploadResult>("post", "/edu/v1/user/upload", {
     data,
     headers: {
       "Content-Type": "multipart/form-data"
@@ -185,14 +185,14 @@ export const uploadFile = (data: FormData) => {
 
 /** 获取文件列表 */
 export const getFileList = (params: { pageNum: number; pageSize?: number }) => {
-  return http.request<FileListResult>("get", "/usercenter/v1/user/file/list", {
+  return http.request<FileListResult>("get", "/edu/backend/v1/user/file/list", {
     params
   });
 };
 
 /** 获取用户列表 */
 export const getUserList = (params: { pageNum: number; pageSize?: number }) => {
-  return http.request<UserListResult>("get", "/usercenter/v1/user/list", {
+  return http.request<UserListResult>("get", "/edu/backend/v1/user/list", {
     params
   });
 };

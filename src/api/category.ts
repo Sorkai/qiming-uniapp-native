@@ -14,7 +14,7 @@ export const getCategoryList = (params: {
       categoryId: number;
       name: string;
     }>;
-  }>("get", "/course/v1/course/category/list", { params });
+  }>("get", "/edu/backend/v1/course/category/list", { params });
 };
 
 /**
@@ -25,7 +25,7 @@ export const upsertCategory = (data: {
   categoryId?: number;
   categoryName: string;
 }) => {
-  return http.request<void>("post", "/course/v1/course/category/upsert", {
+  return http.request<void>("post", "/edu/backend/v1/course/category/upsert", {
     data
   });
 };
@@ -35,7 +35,7 @@ export const upsertCategory = (data: {
  * @param data 请求参数
  */
 export const deleteCategory = (data: { categoryId: number }) => {
-  return http.request<void>("post", "/course/v1/course/category/delete", {
+  return http.request<void>("post", "/edu/backend/v1/course/category/delete", {
     data
   });
 };

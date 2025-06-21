@@ -84,7 +84,7 @@ export interface ApiResponse<T = any> {
  * 创建课程
  */
 export const createCourse = (data: CourseCreateParams) => {
-  return http.request<ApiResponse>("post", "/course/v1/course/create", {
+  return http.request<ApiResponse>("post", "/edu/backend/v1/course/create", {
     data
   });
 };
@@ -99,7 +99,7 @@ export const getCourseList = (params: {
 }) => {
   return http.request<ApiResponse<CourseListResult>>(
     "get",
-    "/course/v1/course/list",
+    "/edu/backend/v1/course/list",
     { params }
   );
 };
@@ -110,7 +110,7 @@ export const getCourseList = (params: {
 export const getCourseHoursList = (params: { courseId: number }) => {
   return http.request<ApiResponse<CourseHoursListResult>>(
     "get",
-    "/course/v1/course/hours/list",
+    "/edu/backend/v1/course/hours/list",
     { params }
   );
 };
@@ -121,7 +121,7 @@ export const getCourseHoursList = (params: { courseId: number }) => {
 export const getCourseAttrList = (params: { courseId: number }) => {
   return http.request<ApiResponse<CourseAttrListResult>>(
     "get",
-    "/course/v1/course/attr/list",
+    "/edu/backend/v1/course/attr/list",
     { params }
   );
 };
@@ -130,7 +130,7 @@ export const getCourseAttrList = (params: { courseId: number }) => {
  * 获取课程详情
  */
 export const getCourseDetail = (params: { courseId: number }) => {
-  return http.request<ApiResponse>("get", "/course/v1/course/detail", {
+  return http.request<ApiResponse>("get", "/edu/backend/v1/course/detail", {
     params
   });
 };
