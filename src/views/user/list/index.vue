@@ -6,7 +6,20 @@
           <span>用户列表</span>
         </div>
       </template>
-      <el-table :data="userList" stripe style="width: 100%" v-loading="loading">
+      <el-form :inline="true" :model="searchForm" class="search-form">
+        <!-- <el-form-item label="手机号">
+          <el-input
+            v-model="searchForm.mobile"
+            placeholder="请输入手机号"
+            clearable
+          />
+        </el-form-item> -->
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <!-- <el-button @click="resetSearch">重置</el-button> -->
+        </el-form-item>
+      </el-form>
+      <el-table v-loading="loading" :data="userList" stripe style="width: 100%">
         <el-table-column prop="id" label="用户ID" width="100" />
         <el-table-column prop="mobile" label="手机号" width="180" />
         <el-table-column prop="nickname" label="昵称" width="180" />
@@ -19,11 +32,8 @@
         </el-table-column>
         <el-table-column prop="avatar" label="头像" width="100">
           <template #default="scope">
-            <el-avatar
-              :src="scope.row.avatar"
-              v-if="scope.row.avatar"
-            ></el-avatar>
-            <el-avatar v-else icon="UserFilled"></el-avatar>
+            <el-avatar v-if="scope.row.avatar" :src="scope.row.avatar" />
+            <el-avatar v-else icon="UserFilled" />
           </template>
         </el-table-column>
         <el-table-column prop="info" label="个性签名" />
@@ -50,7 +60,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import { getUserList } from "@/api/user";
 import { ElMessage } from "element-plus";
 
@@ -61,13 +71,15 @@ const currentPage = ref(1);
 const pageSize = ref(20);
 const loading = ref(false);
 
+const searchForm = reactive({ mobile: "" });
+
 // 获取角色类型名称
 const getRoleTypeName = (roleType: number) => {
   switch (roleType) {
     case 1:
-      return "普通用户";
+      return "学生";
     case 2:
-      return "VIP用户";
+      return "教师";
     case 3:
       return "管理员";
     default:
@@ -87,13 +99,27 @@ const handleCurrentChange = (val: number) => {
   fetchUserList();
 };
 
+// 搜索操作
+const handleSearch = () => {
+  currentPage.value = 1; // 搜索时重置回第一页
+  fetchUserList();
+};
+
+// 重置搜索
+const resetSearch = () => {
+  searchForm.mobile = "";
+  currentPage.value = 1; // 重置时也回到第一页
+  fetchUserList();
+};
+
 // 获取用户列表数据
 const fetchUserList = async () => {
   loading.value = true;
   try {
     const res = await getUserList({
       pageNum: currentPage.value,
-      pageSize: pageSize.value
+      pageSize: pageSize.value,
+      mobile: searchForm.mobile // 将userName改为mobile，以匹配API定义
     });
 
     // 正确处理嵌套在data中的userList和total

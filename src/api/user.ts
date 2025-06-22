@@ -191,7 +191,7 @@ export const getFileList = (params: { pageNum: number; pageSize?: number }) => {
 };
 
 /** 获取用户列表 */
-export const getUserList = (params: { pageNum: number; pageSize?: number }) => {
+export const getUserList = (params: { pageNum: number; pageSize?: number; mobile?: string }) => {
   return http.request<UserListResult>("get", "/edu/backend/v1/user/list", {
     params
   });
