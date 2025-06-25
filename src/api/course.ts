@@ -1,33 +1,54 @@
 import { http } from "@/utils/http";
 
 export interface CourseCreateParams {
-  title: string;
-  thumb: number;
-  shortDesc: string;
-  isRequired: number;
-  categoryIds: number[];
-  isChapter: number;
-  endingTime: string;
-  chapterList?: {
-    chapterId?: number;
-    name: string;
-    hourList: any[];
-  }[];
-  hourList?: {
-    resourceId: number;
-    duration: number;
-    title?: string;
-    rType?: string;
-    hourId?: number;
-    fileUrl?: string;
-  }[];
-  attrList?: {
-    resourceId: number;
-    title?: string;
-    rType?: string;
-    attrId?: number;
-    fileUrl?: string;
-  }[];
+  title: string; // 课程标题
+  thumb_url: string; // 课程封面地址
+  shortDesc: string; // 课程简介
+  isRequired: number; // 是否必修，1: 必修，0: 选修
+  categoryIds: number[]; // 课程分类ID列表
+  isChapter: number; // 是否章节，1: 是，0: 否
+  endingTime: string; // 课程结束时间（yyyy-MM-dd hh:mm:ss）
+  chapterList?: Array<{
+    // 章节列表（可选）
+    chapterId?: number; // 章节ID（可选）
+    name: string; // 章节标题
+    hourList: Array<{
+      // 章节课时
+      resourceId: number; // 课时资源ID
+      duration: number; // 时长（秒）
+      title?: string; // 课时标题（可选）
+      rType?: string; // 资源类型（可选）
+      hourId?: number; // 课时ID（可选）
+      fileUrl?: string; // 课时文件地址（可选）
+    }>;
+  }>;
+  hourList?: Array<{
+    // 课时列表（可选）
+    resourceId: number; // 课时资源ID
+    duration: number; // 时长（秒）
+    title?: string; // 课时标题（可选）
+    rType?: string; // 资源类型（可选）
+    hourId?: number; // 课时ID（可选）
+    fileUrl?: string; // 课时文件地址（可选）
+  }>;
+  attrList?: Array<{
+    // 附件资源列表（可选）
+    resourceId: number; // 附件资源ID
+    title?: string; // 附件标题（可选）
+    rType?: string; // 附件类型（可选）
+    attrId?: number; // 附件ID（可选）
+    fileUrl?: string; // 附件地址（可选）
+  }>;
+}
+
+export interface CourseUpdateParams {
+  courseId: number; // 课程ID
+  title?: string; // 课程标题（可选）
+  thumbUrl?: string; // 课程封面Url（可选）
+  shortDesc?: string; // 课程简介（可选）
+  isRequired?: number; // 是否必修，1: 必修，0: 选修
+  categoryIds?: number[]; // 课程分类ID列表
+  endingTime?: string; // 课程结束时间（yyyy-MM-dd hh:mm:ss）（可选）
 }
 
 export interface CourseListResult {

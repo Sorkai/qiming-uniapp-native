@@ -371,7 +371,8 @@ import {
   getCourseHoursList,
   getCourseAttrList,
   getCourseDetail,
-  createCourse
+  createCourse,
+  updateCourse
 } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
 
@@ -412,7 +413,7 @@ const courseForm = ref({
   title: "",
   shortDesc: "",
   thumb: 0,
-  thumbUrl: "",
+  thumb_url: "",
   isRequired: 1,
   isChapter: 0,
   categoryIds: [],
@@ -467,7 +468,7 @@ const formatDuration = (seconds: number) => {
 // 处理封面图片选择
 const handleThumbChange = file => {
   // 通常这里应该上传文件到服务器，这里仅做演示，使用本地URL预览
-  courseForm.value.thumbUrl = URL.createObjectURL(file.raw);
+  courseForm.value.thumb_url = URL.createObjectURL(file.raw); // 使用thumb_url字段与API参数一致
   // 假设上传成功后服务器返回资源ID
   courseForm.value.thumb = 1001; // 实际项目中应该使用服务器返回的资源ID
 };
@@ -488,7 +489,19 @@ const submitCourseForm = async () => {
       const { hourList, ...submitData } = formData;
 
       // 如果是编辑模式，调用更新接口；如果是创建模式，调用创建接口
-      const res = await createCourse(submitData);
+      let res;
+
+      if (isEdit.value) {
+        // 编辑模式，需要将thumb_url转换为thumbUrl
+        const { thumb_url, ...updateData } = submitData;
+        res = await updateCourse({
+          ...updateData,
+          thumbUrl: thumb_url // 字段名转换
+        });
+      } else {
+        // 创建模式
+        res = await createCourse(submitData);
+      }
 
       if (res && res.code === 200) {
         ElMessage.success(isEdit.value ? "课程更新成功" : "课程创建成功");
@@ -564,7 +577,7 @@ const openCreateDialog = () => {
     title: "",
     shortDesc: "",
     thumb: 0,
-    thumbUrl: "",
+    thumb_url: "", // 使用thumb_url字段与API参数一致
     isRequired: 1,
     isChapter: 0,
     categoryIds: [],
@@ -613,7 +626,7 @@ const editCourse = course => {
     title: course.title,
     shortDesc: course.shortDesc || "",
     thumb: course.thumb || 0,
-    thumbUrl: course.thumbUrl || "",
+    thumb_url: course.thumbUrl || "", // 从API返回的thumbUrl映射到表单的thumb_url字段
     isRequired: course.isRequired !== undefined ? course.isRequired : 1,
     isChapter: course.isChapter !== undefined ? course.isChapter : 0,
     categoryIds: course.categoryList
@@ -890,7 +903,7 @@ onMounted(() => {
 
 .course-form-dialog {
   .dialog-content-wrapper {
-    max-height: 65vh;
+    max-height: 55vh;
     overflow-y: auto;
     padding-right: 10px;
   }

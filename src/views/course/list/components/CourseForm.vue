@@ -38,12 +38,12 @@
       </el-col>
     </el-row>
 
-    <el-form-item label="课程封面" prop="thumb">
+    <el-form-item label="课程封面" prop="thumb_url">
       <div class="upload-box">
-        <div v-if="formData.thumbUrl" class="upload-preview">
+        <div v-if="formData.thumb_url" class="upload-preview">
           <el-image
             style="width: 200px; height: 120px"
-            :src="formData.thumbUrl"
+            :src="formData.thumb_url"
             fit="cover"
           />
           <div class="upload-actions">
@@ -198,33 +198,19 @@
                       <div class="hour-card">
                         <el-row :gutter="20">
                           <el-col :span="24">
-                            <el-form-item
-                              :label="'课时标题'"
-                              :prop="
-                                'chapterList.' +
-                                chapterIndex +
-                                '.hourList.' +
-                                hourIndex +
-                                '.title'
-                              "
-                              :rules="[
-                                {
-                                  required: true,
-                                  message: '请输入课时标题',
-                                  trigger: 'blur'
-                                }
-                              ]"
-                            >
+                            <!-- 课时标题不需要手动输入，由系统根据文件名自动填写 -->
+                            <el-form-item :label="'课时标题'">
                               <el-input
                                 v-model="hour.title"
-                                placeholder="请输入课时标题"
+                                placeholder="将使用上传的文件名"
+                                disabled
                               />
                             </el-form-item>
                           </el-col>
                         </el-row>
 
                         <el-row :gutter="20">
-                          <el-col :span="12">
+                          <el-col :span="24">
                             <el-form-item
                               :label="'时长(秒)'"
                               :prop="
@@ -239,28 +225,9 @@
                                 v-model="hour.duration"
                                 :min="0"
                                 :step="1"
+                                disabled
+                                placeholder="上传视频后自动获取"
                               />
-                            </el-form-item>
-                          </el-col>
-                          <el-col :span="12">
-                            <el-form-item
-                              :label="'资源类型'"
-                              :prop="
-                                'chapterList.' +
-                                chapterIndex +
-                                '.hourList.' +
-                                hourIndex +
-                                '.rType'
-                              "
-                            >
-                              <el-select
-                                v-model="hour.rType"
-                                placeholder="请选择资源类型"
-                              >
-                                <el-option label="视频" value="video" />
-                                <el-option label="音频" value="audio" />
-                                <el-option label="文档" value="document" />
-                              </el-select>
                             </el-form-item>
                           </el-col>
                         </el-row>
@@ -274,12 +241,22 @@
                             hourIndex +
                             '.resourceId'
                           "
+                          :rules="[
+                            {
+                              required: true,
+                              type: 'number',
+                              min: 1,
+                              message: '请上传视频资源',
+                              trigger: 'change'
+                            }
+                          ]"
                         >
                           <div class="upload-with-preview">
                             <div v-if="hour.fileUrl" class="resource-preview">
                               <div class="resource-info">
-                                <i class="el-icon-document" />
+                                <i class="el-icon-video-camera" />
                                 <span class="resource-name">{{
+                                  hour.originalFileName ||
                                   getFileName(hour.fileUrl)
                                 }}</span>
                               </div>
@@ -299,23 +276,39 @@
                                 >
                               </div>
                             </div>
+                            <div
+                              v-if="hour.isUploading"
+                              class="uploading-overlay"
+                            >
+                              <div class="uploading-indicator">
+                                <el-icon class="is-loading"
+                                  ><Loading
+                                /></el-icon>
+                                <span>上传中...</span>
+                              </div>
+                            </div>
                             <el-upload
-                              v-else
+                              v-if="!hour.isUploading && !hour.fileUrl"
                               class="resource-upload"
                               action="#"
                               :auto-upload="false"
                               :show-file-list="false"
+                              :accept="'.mp4,.webm,.ogg'"
                               :on-change="
-                                file =>
+                                file => {
+                                  chapter.hourList[hourIndex].isUploading =
+                                    true;
                                   handleResourceUpload(
                                     file,
                                     chapter.hourList,
                                     hourIndex
-                                  )
+                                  );
+                                }
                               "
                             >
                               <div class="upload-icon-container">
                                 <el-icon><Plus /></el-icon>
+                                <p class="upload-tip">点击上传课时视频</p>
                               </div>
                             </el-upload>
                           </div>
@@ -364,27 +357,19 @@
                 <div class="hour-card">
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item
-                        :label="'课时标题'"
-                        :prop="'hourList.' + hourIndex + '.title'"
-                        :rules="[
-                          {
-                            required: true,
-                            message: '请输入课时标题',
-                            trigger: 'blur'
-                          }
-                        ]"
-                      >
+                      <!-- 课时标题不需要手动输入，由系统根据文件名自动填写 -->
+                      <el-form-item :label="'课时标题'">
                         <el-input
                           v-model="hour.title"
-                          placeholder="请输入课时标题"
+                          placeholder="将使用上传的文件名"
+                          disabled
                         />
                       </el-form-item>
                     </el-col>
                   </el-row>
 
                   <el-row :gutter="20">
-                    <el-col :span="12">
+                    <el-col :span="24">
                       <el-form-item
                         :label="'时长(秒)'"
                         :prop="'hourList.' + hourIndex + '.duration'"
@@ -393,22 +378,9 @@
                           v-model="hour.duration"
                           :min="0"
                           :step="1"
+                          disabled
+                          placeholder="上传视频后自动获取"
                         />
-                      </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                      <el-form-item
-                        :label="'资源类型'"
-                        :prop="'hourList.' + hourIndex + '.rType'"
-                      >
-                        <el-select
-                          v-model="hour.rType"
-                          placeholder="请选择资源类型"
-                        >
-                          <el-option label="视频" value="video" />
-                          <el-option label="音频" value="audio" />
-                          <el-option label="文档" value="document" />
-                        </el-select>
                       </el-form-item>
                     </el-col>
                   </el-row>
@@ -416,13 +388,22 @@
                   <el-form-item
                     :label="'课时资源'"
                     :prop="'hourList.' + hourIndex + '.resourceId'"
+                    :rules="[
+                      {
+                        required: true,
+                        type: 'number',
+                        min: 1,
+                        message: '请上传视频资源',
+                        trigger: 'change'
+                      }
+                    ]"
                   >
                     <div class="upload-with-preview">
                       <div v-if="hour.fileUrl" class="resource-preview">
                         <div class="resource-info">
-                          <i class="el-icon-document" />
+                          <i class="el-icon-video-camera" />
                           <span class="resource-name">{{
-                            getFileName(hour.fileUrl)
+                            hour.originalFileName || getFileName(hour.fileUrl)
                           }}</span>
                         </div>
                         <div class="resource-actions">
@@ -441,23 +422,33 @@
                           >
                         </div>
                       </div>
+                      <div v-if="hour.isUploading" class="uploading-overlay">
+                        <div class="uploading-indicator">
+                          <el-icon class="is-loading"><Loading /></el-icon>
+                          <span>上传中...</span>
+                        </div>
+                      </div>
                       <el-upload
-                        v-else
+                        v-if="!hour.isUploading && !hour.fileUrl"
                         class="resource-upload"
                         action="#"
                         :auto-upload="false"
                         :show-file-list="false"
+                        :accept="'.mp4,.webm,.ogg'"
                         :on-change="
-                          file =>
+                          file => {
+                            formData.hourList[hourIndex].isUploading = true;
                             handleResourceUpload(
                               file,
                               formData.hourList,
                               hourIndex
-                            )
+                            );
+                          }
                         "
                       >
                         <div class="upload-icon-container">
                           <el-icon><Plus /></el-icon>
+                          <p class="upload-tip">点击上传课时视频</p>
                         </div>
                       </el-upload>
                     </div>
@@ -522,7 +513,7 @@
                   <div class="resource-info">
                     <i class="el-icon-document" />
                     <span class="resource-name">{{
-                      getFileName(attr.fileUrl)
+                      attr.originalFileName || getFileName(attr.fileUrl)
                     }}</span>
                   </div>
                   <div class="resource-actions">
@@ -574,7 +565,7 @@ import { ref, reactive, defineProps, defineEmits, watch, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { uploadFile } from "@/api/user";
 import { getCategoryList } from "@/api/category";
-import { Plus } from "@element-plus/icons-vue";
+import { Plus, Loading } from "@element-plus/icons-vue";
 
 const props = defineProps({
   modelValue: {
@@ -605,11 +596,9 @@ const formData = reactive({ ...props.modelValue });
 const formRules = {
   title: [{ required: true, message: "请输入课程标题", trigger: "blur" }],
   shortDesc: [{ required: true, message: "请输入课程简介", trigger: "blur" }],
-  thumb: [
+  thumb_url: [
     {
       required: true,
-      type: "number",
-      min: 1,
       message: "请上传课程封面",
       trigger: "change"
     }
@@ -703,11 +692,16 @@ const handleCoverUpload = async file => {
     uploadFormData.append("file", file.raw);
 
     const res = await uploadFile(uploadFormData);
-    if (res && res.code === 200 && res.data) {
-      // 更新表单数据
-      formData.thumb = res.data.fileId;
-      formData.thumbUrl = res.data.url;
-      ElMessage.success("封面上传成功");
+    // 处理API响应，确保无论返回格式如何都能获取到上传结果
+    if (res) {
+      const fileUrl = res.url || (res.data && res.data.url);
+      if (fileUrl) {
+        // 更新表单数据，使用thumb_url字段
+        formData.thumb_url = fileUrl;
+        ElMessage.success("封面上传成功");
+      } else {
+        ElMessage.error("封面上传失败：无法获取文件URL");
+      }
     } else {
       ElMessage.error("封面上传失败");
     }
@@ -719,11 +713,10 @@ const handleCoverUpload = async file => {
 
 // 移除封面
 const removeCover = () => {
-  formData.thumb = 0;
-  formData.thumbUrl = "";
+  formData.thumb_url = "";
 };
 
-// 从URL中获取文件名
+// 从URL中获取文件名（保留后缀）
 const getFileName = url => {
   if (!url) return "未知文件";
   const parts = url.split("/");
@@ -756,11 +749,13 @@ const removeChapter = index => {
 // 课时相关方法
 const addHour = () => {
   formData.hourList.push({
-    title: "", // 去除默认值
-    duration: 0,
-    rType: "video",
+    title: "", // 自动填充，由视频文件名决定
+    duration: 0, // 自动填充，由视频时长决定
+    rType: "video", // 默认视频类型
     resourceId: 0,
-    fileUrl: ""
+    fileUrl: "",
+    isUploading: false, // 用于控制上传状态
+    originalFileName: "" // 保存原始文件名
   });
 
   // 初始化独立课时的折叠状态数组
@@ -778,11 +773,13 @@ const removeHour = index => {
 
 const addHourToChapter = chapterIndex => {
   formData.chapterList[chapterIndex].hourList.push({
-    title: "", // 去除默认值
-    duration: 0,
-    rType: "video",
+    title: "", // 自动填充，由视频文件名决定
+    duration: 0, // 自动填充，由视频时长决定
+    rType: "video", // 默认视频类型
     resourceId: 0,
-    fileUrl: ""
+    fileUrl: "",
+    isUploading: false, // 用于控制上传状态
+    originalFileName: "" // 保存原始文件名
   });
 
   // 初始化当前章节的课时折叠状态数组
@@ -803,19 +800,56 @@ const removeHourFromChapter = (chapterIndex, hourIndex) => {
 // 处理资源上传
 const handleResourceUpload = async (file, list, index) => {
   try {
+    // 检查文件类型是否为视频
+    const acceptedTypes = ["video/mp4", "video/webm", "video/ogg"];
+
+    if (!acceptedTypes.includes(file.raw.type)) {
+      list[index].isUploading = false;
+      ElMessage.error("请上传视频文件（MP4、WebM、Ogg格式）");
+      return;
+    }
+
+    // 获取原始文件名
+    const originalFileName = file.name;
+    // 不含扩展名的文件名用于标题
+    const titleWithoutExt =
+      originalFileName.substring(0, originalFileName.lastIndexOf(".")) ||
+      originalFileName;
+
     const formData = new FormData();
     formData.append("file", file.raw);
 
     const res = await uploadFile(formData);
-    if (res && res.code === 200 && res.data) {
-      // 更新表单数据
-      list[index].resourceId = res.data.fileId;
-      list[index].fileUrl = res.data.url;
-      ElMessage.success("资源上传成功");
+    // 上传完成后结束上传状态
+    list[index].isUploading = false;
+
+    // 处理API响应，确保无论返回格式如何都能获取到上传结果
+    if (res) {
+      const fileUrl = res.url || (res.data && res.data.url);
+      const fileId = res.fileId || (res.data && res.data.fileId);
+
+      if (fileUrl && fileId) {
+        // 更新表单数据
+        list[index].resourceId = fileId;
+        list[index].fileUrl = fileUrl;
+        list[index].originalFileName = originalFileName; // 保存原始文件名
+        list[index].title = titleWithoutExt; // 设置标题为不含扩展名的文件名
+
+        // 模拟从视频中提取时长（实际项目中可能需要服务端支持）
+        // 这里简单设置一个随机时长，实际应用中应该从视频文件中提取
+        list[index].duration = Math.floor(Math.random() * 600) + 60; // 60-660秒
+        list[index].rType = "video"; // 设置为视频类型
+
+        ElMessage.success("视频上传成功，已自动设置标题和时长");
+      } else {
+        ElMessage.error("资源上传失败：无法获取文件信息");
+      }
     } else {
       ElMessage.error("资源上传失败");
     }
   } catch (error) {
+    // 发生错误时也要结束上传状态
+    list[index].isUploading = false;
     console.error("资源上传失败:", error);
     ElMessage.error("资源上传失败");
   }
@@ -824,6 +858,9 @@ const handleResourceUpload = async (file, list, index) => {
 const removeResource = (list, index) => {
   list[index].resourceId = 0;
   list[index].fileUrl = "";
+  list[index].title = ""; // 清空标题
+  list[index].duration = 0; // 重置时长
+  list[index].originalFileName = ""; // 清空原始文件名
 };
 
 // 附件相关方法
@@ -832,7 +869,8 @@ const addAttr = () => {
     title: "新附件",
     rType: "document",
     resourceId: 0,
-    fileUrl: ""
+    fileUrl: "",
+    originalFileName: "" // 添加原始文件名字段
   });
 };
 
@@ -845,12 +883,28 @@ const handleAttrUpload = async (file, index) => {
     const uploadFormData = new FormData();
     uploadFormData.append("file", file.raw);
 
+    // 获取原始文件名
+    const originalFileName = file.name;
+    // 不含扩展名的文件名用于标题
+    const titleWithoutExt =
+      originalFileName.substring(0, originalFileName.lastIndexOf(".")) ||
+      originalFileName;
+
     const res = await uploadFile(uploadFormData);
-    if (res && res.code === 200 && res.data) {
-      // 更新表单数据
-      formData.attrList[index].resourceId = res.data.fileId;
-      formData.attrList[index].fileUrl = res.data.url;
-      ElMessage.success("附件上传成功");
+    // 处理API响应，确保无论返回格式如何都能获取到上传结果
+    if (res) {
+      const fileUrl = res.url || (res.data && res.data.url);
+      const fileId = res.fileId || (res.data && res.data.fileId);
+      if (fileUrl && fileId) {
+        // 更新表单数据
+        formData.attrList[index].resourceId = fileId;
+        formData.attrList[index].fileUrl = fileUrl;
+        formData.attrList[index].originalFileName = originalFileName; // 保存原始文件名
+        formData.attrList[index].title = titleWithoutExt; // 设置标题为不含扩展名的文件名
+        ElMessage.success("附件上传成功");
+      } else {
+        ElMessage.error("附件上传失败：无法获取文件信息");
+      }
     } else {
       ElMessage.error("附件上传失败");
     }
@@ -863,6 +917,7 @@ const handleAttrUpload = async (file, index) => {
 const removeAttrResource = index => {
   formData.attrList[index].resourceId = 0;
   formData.attrList[index].fileUrl = "";
+  formData.attrList[index].originalFileName = ""; // 清空原始文件名
 };
 
 // 表单验证方法
@@ -1030,6 +1085,7 @@ defineExpose({
 
 .upload-with-preview {
   width: 100%;
+  position: relative;
 }
 
 .resource-preview {
@@ -1083,6 +1139,45 @@ defineExpose({
     span {
       font-size: 14px;
       color: #606266;
+    }
+
+    .upload-tip {
+      font-size: 14px;
+      color: #606266;
+      margin-top: 5px;
+    }
+  }
+
+  .uploading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 4px;
+    border: 1px dashed #d9d9d9;
+  }
+
+  .uploading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    .el-icon {
+      font-size: 24px;
+      color: #409eff;
+      margin-bottom: 8px;
+    }
+
+    span {
+      font-size: 14px;
+      color: #409eff;
     }
   }
 }

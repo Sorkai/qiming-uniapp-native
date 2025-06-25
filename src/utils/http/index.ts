@@ -16,8 +16,8 @@ import { useUserStoreHook } from "@/store/modules/user";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
-  // 请求超时时间
-  timeout: 10000,
+  // 请求超时时间，上传大文件时设置为0表示不超时
+  timeout: 0,
   // 设置基础URL
   baseURL: "http://82.156.135.40:1004",
   headers: {
