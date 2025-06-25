@@ -111,6 +111,15 @@ export const createCourse = (data: CourseCreateParams) => {
 };
 
 /**
+ * 更新课程信息
+ */
+export const updateCourse = (data: CourseUpdateParams) => {
+  return http.request<ApiResponse>("post", "/edu/backend/v1/course/update", {
+    data
+  });
+};
+
+/**
  * 获取课程列表
  */
 export const getCourseList = (params: {

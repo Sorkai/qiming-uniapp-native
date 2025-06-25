@@ -81,8 +81,12 @@ export type UserCenterDetailResult = {
 };
 
 export type UploadResult = {
-  url: string;
-  fileId: number;
+  code: number;
+  msg: string;
+  data: {
+    url: string;
+    fileId: number;
+  }
 };
 
 export type FileListResult = {

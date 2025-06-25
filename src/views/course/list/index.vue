@@ -101,9 +101,9 @@
           <template #default="scope">
             <div class="action-buttons">
               <div class="button-row">
-                <el-button size="small" @click="viewCourse(scope.row)"
+                <!-- <el-button size="small" @click="viewCourse(scope.row)"
                   >查看</el-button
-                >
+                > -->
                 <el-button
                   size="small"
                   type="primary"
@@ -222,9 +222,9 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="detailDialogVisible = false">关闭</el-button>
-          <el-button type="primary" @click="editCourse(courseDetail)"
+          <!-- <el-button type="primary" @click="editCourse(courseDetail)"
             >编辑课程</el-button
-          >
+          > -->
         </div>
       </template>
     </el-dialog>
@@ -351,6 +351,7 @@
           ref="courseFormRef"
           v-model="courseForm"
           :loading="courseFormLoading"
+          :is-edit="isEdit"
         />
       </div>
       <template #footer>
@@ -423,16 +424,6 @@ const courseForm = ref({
   attrList: []
 });
 
-// 分类选项
-const categoryOptions = ref([
-  { categoryId: 1, name: "前端开发" },
-  { categoryId: 2, name: "后端开发" },
-  { categoryId: 3, name: "移动开发" },
-  { categoryId: 4, name: "数据库" },
-  { categoryId: 5, name: "运维/测试" },
-  { categoryId: 6, name: "人工智能" }
-]);
-
 // 表单验证规则
 const courseFormRules = {
   title: [{ required: true, message: "请输入课程标题", trigger: "blur" }],
@@ -484,31 +475,51 @@ const submitCourseForm = async () => {
     if (valid) {
       courseFormLoading.value = true;
 
-      // 准备提交数据，完全移除顶层的hourList
+      // 准备提交数据
       const formData = { ...courseForm.value };
-      const { hourList, ...submitData } = formData;
-
-      // 如果是编辑模式，调用更新接口；如果是创建模式，调用创建接口
-      let res;
+      let submitData;
 
       if (isEdit.value) {
-        // 编辑模式，需要将thumb_url转换为thumbUrl
-        const { thumb_url, ...updateData } = submitData;
-        res = await updateCourse({
+        // 编辑模式，移除不需要的字段
+        const { thumb_url, hourList, chapterList, attrList, ...updateData } =
+          formData;
+        submitData = {
           ...updateData,
           thumbUrl: thumb_url // 字段名转换
-        });
+        };
+
+        // 调用更新接口
+        const res = await updateCourse(submitData);
+
+        if (res && res.code === 200) {
+          ElMessage.success("课程更新成功");
+          courseFormDialogVisible.value = false;
+          fetchCourseList(); // 刷新列表
+        } else {
+          ElMessage.error("课程更新失败");
+        }
       } else {
         // 创建模式
-        res = await createCourse(submitData);
-      }
+        if (formData.isChapter === 1) {
+          // 有章节模式，移除顶层hourList
+          const { hourList, ...chapterData } = formData;
+          submitData = chapterData;
+        } else {
+          // 无章节模式，保留顶层hourList，移除chapterList
+          const { chapterList, ...hourData } = formData;
+          submitData = hourData;
+        }
 
-      if (res && res.code === 200) {
-        ElMessage.success(isEdit.value ? "课程更新成功" : "课程创建成功");
-        courseFormDialogVisible.value = false;
-        fetchCourseList(); // 刷新列表
-      } else {
-        ElMessage.error(isEdit.value ? "课程更新失败" : "课程创建失败");
+        // 调用创建接口
+        const res = await createCourse(submitData);
+
+        if (res && res.code === 200) {
+          ElMessage.success("课程创建成功");
+          courseFormDialogVisible.value = false;
+          fetchCourseList(); // 刷新列表
+        } else {
+          ElMessage.error("课程创建失败");
+        }
       }
     }
   } catch (error) {
@@ -579,7 +590,7 @@ const openCreateDialog = () => {
     thumb: 0,
     thumb_url: "", // 使用thumb_url字段与API参数一致
     isRequired: 1,
-    isChapter: 0,
+    isChapter: 1, // 默认为有章节模式
     categoryIds: [],
     endingTime: "",
     chapterList: [],

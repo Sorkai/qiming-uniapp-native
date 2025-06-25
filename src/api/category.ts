@@ -9,11 +9,15 @@ export const getCategoryList = (params: {
   pageSize?: number;
 }) => {
   return http.request<{
-    total: number;
-    categoryList: Array<{
-      categoryId: number;
-      name: string;
-    }>;
+    code: number;
+    msg: string;
+    data: {
+      total: number;
+      categoryList: Array<{
+        categoryId: number;
+        name: string;
+      }>;
+    }
   }>("get", "/edu/backend/v1/course/category/list", { params });
 };
 
