@@ -23,6 +23,14 @@ export default {
       meta: {
         title: "课程分类"
       }
+    },
+    {
+      path: "/course/assessment",
+      name: "CourseAssessment",
+      component: () => import("@/views/course/assessment/index.vue"),
+      meta: {
+        title: "作业与考试"
+      }
     }
   ]
 };
