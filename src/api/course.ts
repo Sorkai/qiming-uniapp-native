@@ -95,6 +95,28 @@ export interface CourseAttrListResult {
   }>;
 }
 
+export interface AllocationUserResult {
+  total: number;
+  list: Array<{
+    userId: number;
+    userName: string;
+    avatar: string;
+  }>;
+}
+
+export interface StudyUserResult {
+  total: number;
+  list: Array<{
+    userId: number;
+    userName: string;
+    avatar: string;
+    totalHours: number;
+    finishedHours: number;
+    startStudyTime: string;
+    finishedStudyTime?: string;
+  }>;
+}
+
 export interface ApiResponse<T = any> {
   code: number;
   msg: string;
@@ -163,4 +185,53 @@ export const getCourseDetail = (params: { courseId: number }) => {
   return http.request<ApiResponse>("get", "/edu/backend/v1/course/detail", {
     params
   });
+};
+
+/**
+ * 课程分配
+ * @param data 课程ID和用户ID列表
+ */
+export const coursesAllocation = (data: {
+  courseId: number;
+  userIdList: number[];
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/course/allocation",
+    { data }
+  );
+};
+
+/**
+ * 获取课程可分配的学员列表
+ * @param params 查询参数
+ */
+export const getAllocationUserList = (params: {
+  courseId: number;
+  userName?: string;
+  pageNum: number;
+  pageSize?: number;
+}) => {
+  return http.request<ApiResponse<AllocationUserResult>>(
+    "get",
+    "/edu/backend/v1/course/allocation/user/list",
+    { params }
+  );
+};
+
+/**
+ * 获取课程学员学习情况列表
+ * @param params 查询参数
+ */
+export const getStudyUserList = (params: {
+  courseId: number;
+  userName?: string;
+  pageNum: number;
+  pageSize?: number;
+}) => {
+  return http.request<ApiResponse<StudyUserResult>>(
+    "get",
+    "/edu/backend/v1/course/study/user/list",
+    { params }
+  );
 };

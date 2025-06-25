@@ -110,6 +110,12 @@
                   @click="editCourse(scope.row)"
                   >编辑</el-button
                 >
+                <el-button
+                  size="small"
+                  type="success"
+                  @click="showAllocationDialog(scope.row)"
+                  >分配</el-button
+                >
               </div>
               <div class="button-row">
                 <el-button size="small" @click="viewHours(scope.row)"
@@ -117,6 +123,14 @@
                 >
                 <el-button size="small" @click="viewAttrs(scope.row)"
                   >附件</el-button
+                >
+              </div>
+              <div class="button-row">
+                <el-button
+                  size="small"
+                  type="warning"
+                  @click="showStudyStatusDialog(scope.row)"
+                  >学习情况</el-button
                 >
               </div>
             </div>
@@ -341,12 +355,9 @@
     <el-dialog
       v-model="courseFormDialogVisible"
       :title="isEdit ? '编辑课程' : '创建课程'"
-      width="80%"
-      :close-on-click-modal="false"
-      destroy-on-close
-      class="course-form-dialog"
+      width="70%"
     >
-      <div class="dialog-content-wrapper">
+      <div v-loading="courseFormLoading">
         <CourseForm
           ref="courseFormRef"
           v-model="courseForm"
@@ -361,6 +372,167 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 课程分配弹窗 -->
+    <el-dialog v-model="allocationDialogVisible" title="课程分配" width="60%">
+      <div v-loading="allocationLoading">
+        <div v-if="currentCourse" class="allocation-header">
+          <h3>{{ currentCourse.title }} - 为该课程分配学员</h3>
+        </div>
+
+        <el-form :inline="true" class="search-form">
+          <el-form-item label="学员姓名">
+            <el-input
+              v-model="allocationSearchForm.userName"
+              placeholder="请输入学员姓名"
+              clearable
+              @keyup.enter="searchAllocationUsers"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="searchAllocationUsers"
+              >搜索</el-button
+            >
+            <el-button @click="resetAllocationSearch">重置</el-button>
+          </el-form-item>
+        </el-form>
+
+        <!-- 可分配学员表格 -->
+        <div style="height: 40vh; overflow-y: auto">
+          <el-table
+            v-loading="allocationTableLoading"
+            :data="allocationUsers"
+            stripe
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" width="55" />
+            <el-table-column prop="userId" label="ID" width="80" />
+            <el-table-column label="头像" width="80">
+              <template #default="scope">
+                <el-avatar :size="40" :src="scope.row.avatar">
+                  {{ scope.row.userName?.charAt(0) || "U" }}
+                </el-avatar>
+              </template>
+            </el-table-column>
+            <el-table-column prop="userName" label="用户名" />
+          </el-table>
+        </div>
+
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="allocationCurrentPage"
+            v-model:page-size="allocationPageSize"
+            :page-sizes="[10, 20, 30, 50]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="allocationTotal"
+            @size-change="handleAllocationSizeChange"
+            @current-change="handleAllocationCurrentChange"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="allocationDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitAllocation"
+            >确定分配</el-button
+          >
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 学习情况弹窗 -->
+    <el-dialog
+      v-model="studyStatusDialogVisible"
+      title="学员学习情况"
+      width="80%"
+    >
+      <div v-loading="studyStatusLoading">
+        <div v-if="currentCourse" class="allocation-header">
+          <h3>{{ currentCourse.title }} - 学员学习情况列表</h3>
+        </div>
+
+        <el-form :inline="true" class="search-form">
+          <el-form-item label="学员姓名">
+            <el-input
+              v-model="studyStatusSearchForm.userName"
+              placeholder="请输入学员姓名"
+              clearable
+              @keyup.enter="searchStudyUsers"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="searchStudyUsers">搜索</el-button>
+            <el-button @click="resetStudySearch">重置</el-button>
+          </el-form-item>
+        </el-form>
+
+        <!-- 学习情况表格 -->
+        <div style="height: 40vh; overflow-y: auto">
+          <el-table
+            v-loading="studyStatusTableLoading"
+            :data="studyUsers"
+            stripe
+            style="width: 100%"
+          >
+            <el-table-column prop="userId" label="ID" width="80" />
+            <el-table-column label="头像" width="80">
+              <template #default="scope">
+                <el-avatar :size="40" :src="scope.row.avatar">
+                  {{ scope.row.userName?.charAt(0) || "U" }}
+                </el-avatar>
+              </template>
+            </el-table-column>
+            <el-table-column prop="userName" label="用户名" />
+            <el-table-column prop="totalHours" label="总课时数" width="100" />
+            <el-table-column
+              prop="finishedHours"
+              label="已完成课时数"
+              width="120"
+            />
+            <el-table-column label="完成率" width="100">
+              <template #default="scope">
+                <el-progress
+                  :percentage="
+                    calculateProgress(
+                      scope.row.finishedHours,
+                      scope.row.totalHours
+                    )
+                  "
+                  :format="percentageFormat"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="startStudyTime"
+              label="开始学习时间"
+              width="170"
+            />
+            <el-table-column
+              prop="finishedStudyTime"
+              label="完成学习时间"
+              width="170"
+            >
+              <template #default="scope">
+                {{ scope.row.finishedStudyTime || "-" }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="studyStatusCurrentPage"
+            v-model:page-size="studyStatusPageSize"
+            :page-sizes="[10, 20, 30, 50]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="studyStatusTotal"
+            @size-change="handleStudyStatusSizeChange"
+            @current-change="handleStudyStatusCurrentChange"
+          />
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -373,7 +545,10 @@ import {
   getCourseAttrList,
   getCourseDetail,
   createCourse,
-  updateCourse
+  updateCourse,
+  coursesAllocation,
+  getAllocationUserList,
+  getStudyUserList
 } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
 
@@ -405,6 +580,19 @@ const detailDialogVisible = ref(false);
 const detailLoading = ref(false);
 const courseDetail = ref(null);
 
+// 课程分配相关
+const allocationDialogVisible = ref(false);
+const allocationLoading = ref(false);
+const allocationTableLoading = ref(false);
+const allocationUsers = ref([]);
+const allocationTotal = ref(0);
+const allocationCurrentPage = ref(1);
+const allocationPageSize = ref(20);
+const selectedUsers = ref([]);
+const allocationSearchForm = ref({
+  userName: ""
+});
+
 // 课程表单相关
 const courseFormDialogVisible = ref(false);
 const courseFormLoading = ref(false);
@@ -416,7 +604,7 @@ const courseForm = ref({
   thumb: 0,
   thumb_url: "",
   isRequired: 1,
-  isChapter: 0,
+  isChapter: 1, // 默认为有章节模式
   categoryIds: [],
   endingTime: "",
   chapterList: [],
@@ -720,6 +908,192 @@ const downloadAttachment = attachment => {
   }
 };
 
+// 显示分配弹窗
+const showAllocationDialog = course => {
+  currentCourse.value = course;
+  allocationDialogVisible.value = true;
+  allocationCurrentPage.value = 1;
+  allocationPageSize.value = 20;
+  selectedUsers.value = [];
+  allocationSearchForm.value.userName = "";
+  allocationLoading.value = true;
+
+  // 加载可分配的用户
+  fetchAllocationUsers();
+};
+
+// 获取可分配的用户列表
+const fetchAllocationUsers = async () => {
+  allocationTableLoading.value = true;
+  try {
+    const res = await getAllocationUserList({
+      courseId: currentCourse.value.courseId,
+      userName: allocationSearchForm.value.userName,
+      pageNum: allocationCurrentPage.value,
+      pageSize: allocationPageSize.value
+    });
+
+    if (res && res.code === 200 && res.data) {
+      allocationUsers.value = res.data.list || [];
+      allocationTotal.value = res.data.total || 0;
+    } else {
+      allocationUsers.value = [];
+      allocationTotal.value = 0;
+      ElMessage.warning("获取用户列表失败");
+    }
+  } catch (error) {
+    console.error("获取用户列表失败:", error);
+    ElMessage.error("获取用户列表失败");
+    allocationUsers.value = [];
+    allocationTotal.value = 0;
+  } finally {
+    allocationTableLoading.value = false;
+    allocationLoading.value = false;
+  }
+};
+
+// 搜索用户
+const searchAllocationUsers = () => {
+  allocationCurrentPage.value = 1;
+  fetchAllocationUsers();
+};
+
+// 重置搜索
+const resetAllocationSearch = () => {
+  allocationSearchForm.value.userName = "";
+  allocationCurrentPage.value = 1;
+  fetchAllocationUsers();
+};
+
+// 处理表格选择变化
+const handleSelectionChange = selection => {
+  selectedUsers.value = selection;
+};
+
+// 处理分配页面大小变化
+const handleAllocationSizeChange = (val: number) => {
+  allocationPageSize.value = val;
+  fetchAllocationUsers();
+};
+
+// 处理分配页码变化
+const handleAllocationCurrentChange = (val: number) => {
+  allocationCurrentPage.value = val;
+  fetchAllocationUsers();
+};
+
+// 提交课程分配
+const submitAllocation = async () => {
+  if (selectedUsers.value.length === 0) {
+    ElMessage.warning("请选择需要分配的用户");
+    return;
+  }
+
+  try {
+    allocationLoading.value = true;
+    const userIds = selectedUsers.value.map(user => user.userId);
+
+    const res = await coursesAllocation({
+      courseId: currentCourse.value.courseId,
+      userIdList: userIds
+    });
+
+    if (res && res.code === 200) {
+      ElMessage.success("课程分配成功");
+      allocationDialogVisible.value = false;
+    } else {
+      ElMessage.error("课程分配失败");
+    }
+  } catch (error) {
+    console.error("课程分配失败:", error);
+    ElMessage.error("课程分配失败");
+  } finally {
+    allocationLoading.value = false;
+  }
+};
+
+// 学习情况对话框数据
+const studyStatusDialogVisible = ref(false);
+const studyStatusLoading = ref(false);
+const studyStatusTableLoading = ref(false);
+const studyUsers = ref<any[]>([]);
+const studyStatusCurrentPage = ref(1);
+const studyStatusPageSize = ref(10);
+const studyStatusTotal = ref(0);
+const studyStatusSearchForm = ref({
+  userName: ""
+});
+
+// 显示学习情况对话框
+const showStudyStatusDialog = async (row: any) => {
+  currentCourse.value = row;
+  studyStatusDialogVisible.value = true;
+  studyStatusLoading.value = true;
+  await fetchStudyUserList();
+  studyStatusLoading.value = false;
+};
+
+// 获取学习情况列表
+const fetchStudyUserList = async () => {
+  try {
+    studyStatusTableLoading.value = true;
+    const params = {
+      courseId: currentCourse.value?.courseId,
+      pageNum: studyStatusCurrentPage.value,
+      pageSize: studyStatusPageSize.value,
+      ...(studyStatusSearchForm.value.userName
+        ? { userName: studyStatusSearchForm.value.userName }
+        : {})
+    };
+
+    const { data } = await getStudyUserList(params);
+    studyUsers.value = data.list;
+    studyStatusTotal.value = data.total;
+  } catch (error) {
+    console.error("获取学习情况列表失败", error);
+    ElMessage.error("获取学习情况列表失败");
+  } finally {
+    studyStatusTableLoading.value = false;
+  }
+};
+
+// 搜索学习记录
+const searchStudyUsers = () => {
+  studyStatusCurrentPage.value = 1;
+  fetchStudyUserList();
+};
+
+// 重置学习情况搜索
+const resetStudySearch = () => {
+  studyStatusSearchForm.value.userName = "";
+  searchStudyUsers();
+};
+
+// 处理学习情况分页变化
+const handleStudyStatusCurrentChange = (val: number) => {
+  studyStatusCurrentPage.value = val;
+  fetchStudyUserList();
+};
+
+// 处理学习情况每页条数变化
+const handleStudyStatusSizeChange = (val: number) => {
+  studyStatusPageSize.value = val;
+  studyStatusCurrentPage.value = 1;
+  fetchStudyUserList();
+};
+
+// 计算进度百分比
+const calculateProgress = (finished: number, total: number) => {
+  if (!total) return 0;
+  const percentage = (finished / total) * 100;
+  return parseFloat(percentage.toFixed(1));
+};
+
+// 格式化百分比显示
+const percentageFormat = (percentage: number) => {
+  return `${percentage}%`;
+};
+
 // 页面加载时获取数据
 onMounted(() => {
   fetchCourseList();
@@ -894,11 +1268,6 @@ onMounted(() => {
 .button-row {
   display: flex;
   gap: 8px;
-
-  .el-button {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
 }
 
 .category-tags {
@@ -917,6 +1286,24 @@ onMounted(() => {
     max-height: 55vh;
     overflow-y: auto;
     padding-right: 10px;
+  }
+}
+
+.allocation-header {
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  p {
+    margin: 0;
+    color: #606266;
   }
 }
 </style>
