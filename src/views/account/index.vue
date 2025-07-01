@@ -111,14 +111,16 @@
                           <div
                             class="course-thumb"
                             :style="{
-                              backgroundImage: course.thumbUrl
-                                ? `url(${course.thumbUrl})`
-                                : '',
                               backgroundColor: course.thumbUrl
                                 ? ''
                                 : getCoverColor(course.courseId)
                             }"
                           >
+                            <img
+                              v-if="course.thumbUrl"
+                              :src="course.thumbUrl"
+                              class="thumb-image"
+                            />
                             <el-tag size="small" type="warning">考试</el-tag>
                           </div>
                           <div class="course-content">
@@ -148,14 +150,16 @@
                           <div
                             class="course-thumb"
                             :style="{
-                              backgroundImage: course.thumbUrl
-                                ? `url(${course.thumbUrl})`
-                                : '',
                               backgroundColor: course.thumbUrl
                                 ? ''
                                 : getCoverColor(course.courseId)
                             }"
                           >
+                            <img
+                              v-if="course.thumbUrl"
+                              :src="course.thumbUrl"
+                              class="thumb-image"
+                            />
                             <el-tag size="small" type="success">结课</el-tag>
                           </div>
                           <div class="course-content">
@@ -185,14 +189,16 @@
                           <div
                             class="course-thumb"
                             :style="{
-                              backgroundImage: course.thumbUrl
-                                ? `url(${course.thumbUrl})`
-                                : '',
                               backgroundColor: course.thumbUrl
                                 ? ''
                                 : getCoverColor(course.courseId)
                             }"
                           >
+                            <img
+                              v-if="course.thumbUrl"
+                              :src="course.thumbUrl"
+                              class="thumb-image"
+                            />
                             <el-tag size="small" type="danger">作业</el-tag>
                           </div>
                           <div class="course-content">
@@ -280,14 +286,16 @@
                   <div
                     class="course-cover"
                     :style="{
-                      backgroundImage: course.thumbUrl
-                        ? `url(${course.thumbUrl})`
-                        : '',
                       backgroundColor: course.thumbUrl
                         ? ''
                         : getCoverColor(course.courseId)
                     }"
                   >
+                    <img
+                      v-if="course.thumbUrl"
+                      :src="course.thumbUrl"
+                      class="cover-image"
+                    />
                     <div class="course-status">
                       <el-tag
                         :type="
@@ -968,6 +976,15 @@ const handleCourseClick = (courseId: number) => {
             overflow: hidden;
             border-radius: 2px;
 
+            .thumb-image {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+              position: absolute;
+              top: 0;
+              left: 0;
+            }
+
             .el-tag {
               position: absolute;
               top: 2px;
@@ -1076,6 +1093,15 @@ const handleCourseClick = (courseId: number) => {
           opacity: 0.9;
         }
 
+        .cover-image {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+
         .course-status {
           position: absolute;
           top: 4px;
@@ -1169,5 +1195,15 @@ const handleCourseClick = (courseId: number) => {
       }
     }
   }
+}
+
+// 添加thumb-image类的样式
+.thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 </style>
