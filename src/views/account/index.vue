@@ -763,6 +763,7 @@ const handleCourseClick = (courseId: number) => {
           font-size: 18px;
           font-weight: 500;
           color: #333;
+          padding-left: 10px;
         }
 
         p {
@@ -920,6 +921,8 @@ const handleCourseClick = (courseId: number) => {
     }
 
     .course-card {
+      min-height: 50vh; /* 添加固定高度，与无数据状态一致 */
+
       .course-section {
         margin-bottom: 10px;
 
