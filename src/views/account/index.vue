@@ -90,80 +90,133 @@
               <div class="course-info">
                 <h3>课程信息</h3>
                 <div class="course-card">
-                  <!-- 将要考试的课程 -->
-                  <div class="course-section">
-                    <h4>将要考试的</h4>
-                    <div class="mini-course-list">
-                      <div
-                        v-for="i in 2"
-                        :key="'exam-' + i"
-                        class="mini-course-item"
-                      >
-                        <div
-                          class="course-thumb"
-                          :style="{ backgroundColor: getCoverColor(i) }"
-                        >
-                          <el-tag size="small" type="warning">考试</el-tag>
-                        </div>
-                        <div class="course-content">
-                          <span class="course-name"
-                            >高等数学期末考试 {{ i }}</span
-                          >
-                          <span class="course-time">{{ i }}天后</span>
-                        </div>
-                      </div>
-                    </div>
+                  <!-- 加载状态 -->
+                  <div v-if="loading" class="loading-container">
+                    <el-skeleton animated :rows="3" />
                   </div>
 
-                  <!-- 将要结课的课程 -->
-                  <div class="course-section">
-                    <h4>将要结课的</h4>
-                    <div class="mini-course-list">
-                      <div
-                        v-for="i in 3"
-                        :key="'end-' + i"
-                        class="mini-course-item"
-                      >
+                  <template v-else>
+                    <!-- 将要考试的课程 -->
+                    <div
+                      v-if="myCourses.examList.length > 0"
+                      class="course-section"
+                    >
+                      <h4>将要考试的</h4>
+                      <div class="mini-course-list">
                         <div
-                          class="course-thumb"
-                          :style="{ backgroundColor: getCoverColor(i + 5) }"
+                          v-for="course in myCourses.examList"
+                          :key="'exam-' + course.courseId"
+                          class="mini-course-item"
                         >
-                          <el-tag size="small" type="success">结课</el-tag>
-                        </div>
-                        <div class="course-content">
-                          <span class="course-name"
-                            >数据结构与算法 {{ i }}</span
+                          <div
+                            class="course-thumb"
+                            :style="{
+                              backgroundImage: course.thumbUrl
+                                ? `url(${course.thumbUrl})`
+                                : '',
+                              backgroundColor: course.thumbUrl
+                                ? ''
+                                : getCoverColor(course.courseId)
+                            }"
                           >
-                          <span class="course-time">{{ i + 3 }}天后</span>
+                            <el-tag size="small" type="warning">考试</el-tag>
+                          </div>
+                          <div class="course-content">
+                            <span class="course-name">{{
+                              course.courseName
+                            }}</span>
+                            <span class="course-time"
+                              >{{ course.daysLeft }}天后</span
+                            >
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <!-- 作业未交的课程 -->
-                  <div class="course-section">
-                    <h4>作业未交的</h4>
-                    <div class="mini-course-list">
-                      <div
-                        v-for="i in 4"
-                        :key="'homework-' + i"
-                        class="mini-course-item"
-                      >
+                    <!-- 将要结课的课程 -->
+                    <div
+                      v-if="myCourses.endingList.length > 0"
+                      class="course-section"
+                    >
+                      <h4>将要结课的</h4>
+                      <div class="mini-course-list">
                         <div
-                          class="course-thumb"
-                          :style="{ backgroundColor: getCoverColor(i + 9) }"
+                          v-for="course in myCourses.endingList"
+                          :key="'end-' + course.courseId"
+                          class="mini-course-item"
                         >
-                          <el-tag size="small" type="danger">作业</el-tag>
-                        </div>
-                        <div class="course-content">
-                          <span class="course-name"
-                            >计算机网络实验报告 {{ i }}</span
+                          <div
+                            class="course-thumb"
+                            :style="{
+                              backgroundImage: course.thumbUrl
+                                ? `url(${course.thumbUrl})`
+                                : '',
+                              backgroundColor: course.thumbUrl
+                                ? ''
+                                : getCoverColor(course.courseId)
+                            }"
                           >
-                          <span class="course-time">{{ i + 1 }}天后</span>
+                            <el-tag size="small" type="success">结课</el-tag>
+                          </div>
+                          <div class="course-content">
+                            <span class="course-name">{{
+                              course.courseName
+                            }}</span>
+                            <span class="course-time"
+                              >{{ course.daysLeft }}天后</span
+                            >
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+
+                    <!-- 作业未交的课程 -->
+                    <div
+                      v-if="myCourses.homeworkList.length > 0"
+                      class="course-section"
+                    >
+                      <h4>作业未交的</h4>
+                      <div class="mini-course-list">
+                        <div
+                          v-for="course in myCourses.homeworkList"
+                          :key="'homework-' + course.courseId"
+                          class="mini-course-item"
+                        >
+                          <div
+                            class="course-thumb"
+                            :style="{
+                              backgroundImage: course.thumbUrl
+                                ? `url(${course.thumbUrl})`
+                                : '',
+                              backgroundColor: course.thumbUrl
+                                ? ''
+                                : getCoverColor(course.courseId)
+                            }"
+                          >
+                            <el-tag size="small" type="danger">作业</el-tag>
+                          </div>
+                          <div class="course-content">
+                            <span class="course-name">{{
+                              course.courseName
+                            }}</span>
+                            <span class="course-time"
+                              >{{ course.daysLeft }}天后</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 无数据提示 -->
+                    <el-empty
+                      v-if="
+                        !myCourses.examList.length &&
+                        !myCourses.endingList.length &&
+                        !myCourses.homeworkList.length
+                      "
+                      description="暂无课程数据"
+                    />
+                  </template>
                 </div>
               </div>
               <div class="ai-summary">
@@ -276,7 +329,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   User,
@@ -299,6 +352,7 @@ import { userKey, removeToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
 import { UserProfile } from "./components";
+import { getFrontendCourseList } from "@/api/frontend/course";
 
 const router = useRouter();
 const route = useRoute();
@@ -318,6 +372,79 @@ const totalPages = computed(() => Math.ceil(total.value / pageSize.value));
 
 // 添加课程筛选状态
 const courseFilter = ref("all");
+
+// 课程数据加载状态
+const loading = ref(false);
+
+// 我的课程数据
+const myCourses = ref({
+  examList: [], // 考试课程
+  endingList: [], // 结课课程
+  homeworkList: [] // 作业课程
+});
+
+// 获取课程列表
+const fetchCourseList = async () => {
+  try {
+    loading.value = true;
+    const { code, data, msg } = await getFrontendCourseList({
+      pageNum: 1,
+      pageSize: 100 // 获取足够多的课程数据
+    });
+
+    if (code === 200 && data) {
+      return data.list || [];
+    } else {
+      ElMessage.error(msg || "获取课程列表失败");
+      return [];
+    }
+  } catch (error) {
+    console.error("获取课程列表出错:", error);
+    ElMessage.error("获取课程数据失败，请稍后重试");
+    return [];
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 加载主页数据
+const loadHomeData = async () => {
+  loading.value = true;
+
+  try {
+    // 获取课程列表
+    const courseList = await fetchCourseList();
+
+    // 这里只是模拟数据，实际项目中应该根据后端接口返回的数据进行处理
+    // 将数据分类到不同的列表中
+    if (courseList.length > 0) {
+      // 随机分配一些课程到各个类别，实际项目中应该根据业务逻辑处理
+      myCourses.value.examList = courseList.slice(0, 2).map(course => ({
+        ...course,
+        daysLeft: Math.floor(Math.random() * 5) + 1 // 随机1-5天
+      }));
+
+      myCourses.value.endingList = courseList.slice(2, 5).map(course => ({
+        ...course,
+        daysLeft: Math.floor(Math.random() * 7) + 3 // 随机3-10天
+      }));
+
+      myCourses.value.homeworkList = courseList.slice(5, 9).map(course => ({
+        ...course,
+        daysLeft: Math.floor(Math.random() * 5) + 1 // 随机1-5天
+      }));
+    } else {
+      // 如果没有数据，则清空所有列表
+      myCourses.value.examList = [];
+      myCourses.value.endingList = [];
+      myCourses.value.homeworkList = [];
+    }
+  } catch (error) {
+    console.error("加载主页数据失败:", error);
+  } finally {
+    loading.value = false;
+  }
+};
 
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
@@ -340,6 +467,11 @@ onMounted(() => {
     "userInfoUpdated",
     handleUserInfoUpdate as EventListener
   );
+
+  // 如果当前是首页，加载课程数据
+  if (activeMenu.value === "home") {
+    loadHomeData();
+  }
 });
 
 onUnmounted(() => {
@@ -348,6 +480,13 @@ onUnmounted(() => {
     "userInfoUpdated",
     handleUserInfoUpdate as EventListener
   );
+});
+
+// 监听菜单选择，切换到首页时加载数据
+watch(activeMenu, newVal => {
+  if (newVal === "home") {
+    loadHomeData();
+  }
 });
 
 // 处理下拉菜单命令
