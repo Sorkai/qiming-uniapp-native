@@ -336,12 +336,18 @@ const handleUserInfoUpdate = (event: CustomEvent) => {
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
-  window.addEventListener("userInfoUpdated", handleUserInfoUpdate as EventListener);
+  window.addEventListener(
+    "userInfoUpdated",
+    handleUserInfoUpdate as EventListener
+  );
 });
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
-  window.removeEventListener("userInfoUpdated", handleUserInfoUpdate as EventListener);
+  window.removeEventListener(
+    "userInfoUpdated",
+    handleUserInfoUpdate as EventListener
+  );
 });
 
 // 处理下拉菜单命令

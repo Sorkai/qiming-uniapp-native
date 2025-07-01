@@ -56,9 +56,13 @@
             :show-file-list="false"
             :on-change="handleAvatarChange"
           >
-            <el-avatar v-if="avatarUrl" :src="avatarUrl" :size="100" />
-            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-            <div class="el-upload__text">点击上传头像</div>
+            <div class="avatar-container">
+              <el-avatar v-if="avatarUrl" :src="avatarUrl" :size="100" />
+              <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+              <div class="edit-icon">
+                <el-icon><Edit /></el-icon>
+              </div>
+            </div>
           </el-upload>
         </el-form-item>
         <el-form-item label="昵称" prop="nickname">
@@ -101,6 +105,7 @@ import { storageLocal } from "@pureadmin/utils";
 import { userKey } from "@/utils/auth";
 import type { DataInfo } from "@/utils/auth";
 import { updateFrontendUserInfo } from "@/api/frontend/user";
+import { uploadFile } from "@/api/user";
 
 const defaultAvatar = "/src/assets/user.jpg";
 const dialogVisible = ref(false);
@@ -157,7 +162,7 @@ const openEditDialog = () => {
 };
 
 // 处理头像变更
-const handleAvatarChange = file => {
+const handleAvatarChange = async file => {
   const isJPG = file.type === "image/jpeg";
   const isPNG = file.type === "image/png";
   const isLt2M = file.size / 1024 / 1024 < 2;
@@ -167,24 +172,27 @@ const handleAvatarChange = file => {
     return false;
   }
 
-  // 这里只做本地预览，实际项目中应该上传到服务器并获取URL
+  // 本地预览
   avatarUrl.value = URL.createObjectURL(file.raw);
 
-  // 模拟上传，实际项目中应该使用上传接口
-  // 示例: 使用FormData上传文件
-  /*
-  const formData = new FormData();
-  formData.append('avatar', file.raw);
-  // 上传头像的API调用
-  uploadAvatar(formData).then(res => {
-    if (res.code === 200) {
-      form.avatar = res.data.url;
-    }
-  });
-  */
+  try {
+    // 使用FormData上传文件
+    const formData = new FormData();
+    formData.append("file", file.raw);
 
-  // 临时设置一个URL，实际项目中应该使用上传接口返回的URL
-  form.avatar = avatarUrl.value;
+    // 上传头像
+    const { code, msg, data } = await uploadFile(formData);
+
+    if (code === 200 && data?.url) {
+      form.avatar = data.url;
+      ElMessage.success("头像上传成功");
+    } else {
+      ElMessage.error(msg || "头像上传失败");
+    }
+  } catch (error) {
+    console.error("上传头像失败:", error);
+    ElMessage.error("上传头像失败，请稍后重试");
+  }
 };
 
 // 提交表单
@@ -346,24 +354,41 @@ onMounted(() => {
   width: 100%;
   text-align: center;
 
-  .avatar-uploader-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100px;
-    height: 100px;
-    font-size: 28px;
-    color: #8c939d;
-    background: #f5f7fa;
-    border: 1px dashed #d9d9d9;
-    border-radius: 50%;
+  .avatar-container {
+    position: relative;
     cursor: pointer;
-  }
 
-  .el-upload__text {
-    margin-top: 10px;
-    font-size: 12px;
-    color: #606266;
+    .avatar-uploader-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100px;
+      height: 100px;
+      font-size: 28px;
+      color: #8c939d;
+      background: #f5f7fa;
+      border: 1px dashed #d9d9d9;
+      border-radius: 50%;
+    }
+
+    .edit-icon {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      color: #fff;
+      background-color: #409eff;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+      .el-icon {
+        font-size: 14px;
+      }
+    }
   }
 }
 </style>
