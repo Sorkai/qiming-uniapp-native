@@ -377,7 +377,9 @@
                     <div class="small-text">
                       <i />同学们，本次我们学习的知识点是
                     </div>
-                    <div class="kg-name">深刻认识新时代我国国家安全形势</div>
+                    <div class="kg-name">
+                      {{ currentVideoTitle }}
+                    </div>
                   </div>
                   <div
                     class="preview-warp"
@@ -388,7 +390,28 @@
                       border-radius: 0.83333vw;
                     "
                   >
-                    <!-- 视频播放器相关内容已删除 -->
+                    <video
+                      v-if="currentVideoUrl"
+                      ref="videoPlayer"
+                      controls
+                      style="width: 100%; height: 100%"
+                      :src="currentVideoUrl"
+                      @loadeddata="videoLoaded"
+                      @ended="videoEnded"
+                    />
+                    <div
+                      v-else
+                      class="loading-placeholder"
+                      style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100%;
+                        color: #fff;
+                      "
+                    >
+                      {{ loading ? "加载中..." : "暂无视频" }}
+                    </div>
                   </div>
                   <div
                     class="kgDescribe-warp"
@@ -794,228 +817,129 @@
                           <div class="chapterList-box">
                             <ul class="list">
                               <span class="position_first_bg" />
-                              <li class="clearfix font_gray_inclined chapter">
-                                <span title="第一章" class="catalogue_title3 fl"
-                                  ><b>第一章</b></span
-                                ><em class="Sectionmark-em fl" /><span
-                                  title="导论"
+
+                              <!-- 使用API返回的章节列表 -->
+                              <template
+                                v-for="(
+                                  chapter, chapterIndex
+                                ) in courseDetail?.courseChapterList"
+                                :key="chapter.chapterId"
+                              >
+                                <li class="clearfix font_gray_inclined chapter">
+                                  <span
+                                    :title="`第${chapterIndex + 1}章`"
+                                    class="catalogue_title3 fl"
+                                  >
+                                    <b>第{{ chapterIndex + 1 }}章</b>
+                                  </span>
+                                  <em class="Sectionmark-em fl" />
+                                  <span
+                                    :title="chapter.name"
+                                    class="catalogue_title fl catalogue_titleweight"
+                                    >{{ chapter.name }}</span
+                                  >
+                                </li>
+                                <div
+                                  v-for="(hour, hourIndex) in chapter.hourList"
+                                  :key="hour.hourId"
+                                  class="inner-li"
+                                >
+                                  <li
+                                    class="clearfix video"
+                                    :class="{
+                                      activeNode:
+                                        activeNode ===
+                                        `${chapterIndex + 1}.${hourIndex + 1}`
+                                    }"
+                                    @click="
+                                      handleNodeClick(
+                                        `${chapterIndex + 1}.${hourIndex + 1}`,
+                                        hour
+                                      )
+                                    "
+                                  >
+                                    <span
+                                      class="catalogue_title3 fl cataloguediv-l"
+                                      ><b class="pl5 hour"
+                                        >{{ chapterIndex + 1 }}.{{
+                                          hourIndex + 1
+                                        }}</b
+                                      ></span
+                                    >
+                                    <div class="fl cataloguediv-c haveRe">
+                                      <span
+                                        :title="hour.title"
+                                        class="catalogue_title"
+                                        >{{ hour.title }}</span
+                                      >
+                                      <div class="resource-box clearfix">
+                                        <div class="resource-text">
+                                          必学 <span>{{ hour.finished }}</span
+                                          >/1
+                                        </div>
+                                        <div class="resource-bar">
+                                          <div
+                                            role="progressbar"
+                                            :aria-valuenow="hour.finished * 100"
+                                            aria-valuemin="0"
+                                            aria-valuemax="100"
+                                            class="el-progress el-progress--line"
+                                          >
+                                            <div class="el-progress-bar">
+                                              <div
+                                                class="el-progress-bar__outer"
+                                                style="height: 6px"
+                                              >
+                                                <div
+                                                  class="el-progress-bar__inner"
+                                                  :style="{
+                                                    width:
+                                                      hour.finished * 100 + '%'
+                                                  }"
+                                                />
+                                              </div>
+                                            </div>
+                                            <div
+                                              class="el-progress__text"
+                                              style="font-size: 14.4px"
+                                            >
+                                              {{ hour.finished * 100 }}%
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="progress" />
+                                    <em class="Sectionmark-em" />
+                                    <div class="icon-box">
+                                      <div
+                                        v-if="hour.finished === 1"
+                                        class="isFinish"
+                                      >
+                                        <img
+                                          src="https://image.zhihuishu.com/zhs/b2cm/base1/202411/e72ded52758742c186763c64f841692d.png"
+                                          alt=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </li>
+                                </div>
+                              </template>
+
+                              <!-- 如果没有数据则显示加载中 -->
+                              <li
+                                v-if="
+                                  loading ||
+                                  !courseDetail?.courseChapterList?.length
+                                "
+                                class="clearfix chapter"
+                              >
+                                <span
                                   class="catalogue_title fl catalogue_titleweight"
-                                  >导论</span
                                 >
+                                  {{ loading ? "加载中..." : "暂无章节数据" }}
+                                </span>
                               </li>
-                              <div class="inner-li">
-                                <li
-                                  class="clearfix video"
-                                  :class="{ activeNode: activeNode === '1.1' }"
-                                  @click="handleNodeClick('1.1')"
-                                >
-                                  <span
-                                    class="catalogue_title3 fl cataloguediv-l"
-                                    ><b class="pl5 hour">1.1</b></span
-                                  >
-                                  <div class="fl cataloguediv-c haveRe">
-                                    <span
-                                      title="深刻认识新时代我国国家安全形势"
-                                      class="catalogue_title"
-                                      >深刻认识新时代我国国家安全形势</span
-                                    >
-                                    <div class="resource-box clearfix">
-                                      <div class="resource-text">
-                                        必学 <span> 1</span>/1
-                                      </div>
-                                      <div class="resource-bar">
-                                        <div
-                                          role="progressbar"
-                                          aria-valuenow="100"
-                                          aria-valuemin="0"
-                                          aria-valuemax="100"
-                                          class="el-progress el-progress--line"
-                                        >
-                                          <div class="el-progress-bar">
-                                            <div
-                                              class="el-progress-bar__outer"
-                                              style="height: 6px"
-                                            >
-                                              <div
-                                                class="el-progress-bar__inner"
-                                                style="width: 100%"
-                                              >
-                                                <!---->
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div
-                                            class="el-progress__text"
-                                            style="font-size: 14.4px"
-                                          >
-                                            100%
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div class="progress" />
-                                  <em class="Sectionmark-em" />
-                                  <div class="icon-box">
-                                    <div class="isFinish">
-                                      <img
-                                        src="https://image.zhihuishu.com/zhs/b2cm/base1/202411/e72ded52758742c186763c64f841692d.png"
-                                        alt=""
-                                      />
-                                    </div>
-                                    <!---->
-                                    <div class="haveDone">
-                                      <img
-                                        src="https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/a9fd8153a1594110957604220c36b05f.png"
-                                        alt=""
-                                      />
-                                    </div>
-                                  </div>
-                                </li>
-                                <!---->
-                              </div>
-                              <div class="inner-li">
-                                <li
-                                  class="clearfix video"
-                                  :class="{ activeNode: activeNode === '1.2' }"
-                                  @click="handleNodeClick('1.2')"
-                                >
-                                  <span
-                                    class="catalogue_title3 fl cataloguediv-l"
-                                    ><b class="pl5 hour">1.2</b></span
-                                  >
-                                  <div class="fl cataloguediv-c haveRe">
-                                    <span
-                                      title="不断加强大学生国家安全教育"
-                                      class="catalogue_title"
-                                      >不断加强大学生国家安全教育</span
-                                    >
-                                    <div class="resource-box clearfix">
-                                      <div class="resource-text">
-                                        必学 <span> 1</span>/1
-                                      </div>
-                                      <div class="resource-bar">
-                                        <div
-                                          role="progressbar"
-                                          aria-valuenow="100"
-                                          aria-valuemin="0"
-                                          aria-valuemax="100"
-                                          class="el-progress el-progress--line"
-                                        >
-                                          <div class="el-progress-bar">
-                                            <div
-                                              class="el-progress-bar__outer"
-                                              style="height: 6px"
-                                            >
-                                              <div
-                                                class="el-progress-bar__inner"
-                                                style="width: 100%"
-                                              >
-                                                <!---->
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div
-                                            class="el-progress__text"
-                                            style="font-size: 14.4px"
-                                          >
-                                            100%
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div class="progress" />
-                                  <em class="Sectionmark-em" />
-                                  <div class="icon-box">
-                                    <div class="isFinish">
-                                      <img
-                                        src="https://image.zhihuishu.com/zhs/b2cm/base1/202411/e72ded52758742c186763c64f841692d.png"
-                                        alt=""
-                                      />
-                                    </div>
-                                    <!---->
-                                    <div class="haveDone">
-                                      <img
-                                        src="https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/a9fd8153a1594110957604220c36b05f.png"
-                                        alt=""
-                                      />
-                                    </div>
-                                  </div>
-                                </li>
-                                <!---->
-                              </div>
-                              <div class="inner-li">
-                                <li
-                                  class="clearfix video last-child last-child-num"
-                                  :class="{ activeNode: activeNode === '1.3' }"
-                                  @click="handleNodeClick('1.3')"
-                                >
-                                  <span
-                                    class="catalogue_title3 fl cataloguediv-l"
-                                    ><b class="pl5 hour">1.3</b></span
-                                  >
-                                  <div class="fl cataloguediv-c haveRe">
-                                    <span
-                                      title="深入学习贯彻总体国家安全观"
-                                      class="catalogue_title"
-                                      >深入学习贯彻总体国家安全观</span
-                                    >
-                                    <div class="resource-box clearfix">
-                                      <div class="resource-text">
-                                        必学 <span> 1</span>/1
-                                      </div>
-                                      <div class="resource-bar">
-                                        <div
-                                          role="progressbar"
-                                          aria-valuenow="100"
-                                          aria-valuemin="0"
-                                          aria-valuemax="100"
-                                          class="el-progress el-progress--line"
-                                        >
-                                          <div class="el-progress-bar">
-                                            <div
-                                              class="el-progress-bar__outer"
-                                              style="height: 6px"
-                                            >
-                                              <div
-                                                class="el-progress-bar__inner"
-                                                style="width: 100%"
-                                              >
-                                                <!---->
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div
-                                            class="el-progress__text"
-                                            style="font-size: 14.4px"
-                                          >
-                                            100%
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div class="progress" />
-                                  <em class="Sectionmark-em" />
-                                  <div class="icon-box">
-                                    <div class="isFinish">
-                                      <img
-                                        src="https://image.zhihuishu.com/zhs/b2cm/base1/202411/e72ded52758742c186763c64f841692d.png"
-                                        alt=""
-                                      />
-                                    </div>
-                                    <!---->
-                                    <div class="haveDone">
-                                      <img
-                                        src="https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/a9fd8153a1594110957604220c36b05f.png"
-                                        alt=""
-                                      />
-                                    </div>
-                                  </div>
-                                </li>
-                                <!---->
-                              </div>
                             </ul>
                           </div>
                         </div>
@@ -1078,8 +1002,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted, nextTick } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import {
+  getFrontendCourseDetail,
+  reportFrontendLesson
+} from "@/api/frontend/course";
+import { ElMessage } from "element-plus";
 import CourseLearnIcon from "@/assets/course-icons/course-learn.svg?component";
 import MasteryIcon from "@/assets/course-icons/mastery.svg?component";
 import CourseQaIcon from "@/assets/course-icons/course-qa.svg?component";
@@ -1099,18 +1028,69 @@ import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-i
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 
 const router = useRouter();
+const route = useRoute();
+const courseId = computed(() => Number(route.params.id));
+const courseDetail = ref(null);
+const loading = ref(false);
 const currentTheme = ref("light");
 const activeMenu = ref("course-learn");
 const isContentCollapsed = ref(false);
 const activeResourceTab = ref("required");
 const activeMode = ref("0");
 const activeNode = ref("1.1");
+const currentVideoUrl = ref("");
+const videoPlayer = ref(null);
+const autoPlayOnLoad = ref(false);
+const currentHour = ref(null);
 
 const describeImgSrc = computed(() =>
   currentTheme.value === "dark"
     ? "https://image.zhihuishu.com/zhs/b2cm/base1/202408/7e6f3450c9fc44bc8dfd380ea2aa2c24.png"
     : "https://image.zhihuishu.com/zhs/b2cm/base1/202411/33b30e1359074b389417c68c5c898253.png"
 );
+
+// 当前播放视频的标题
+const currentVideoTitle = computed(() => {
+  return (
+    currentHour.value?.title || courseDetail.value?.courseName || "加载中..."
+  );
+});
+
+// 获取课程详情
+const fetchCourseDetail = async () => {
+  if (!courseId.value) return;
+
+  loading.value = true;
+  try {
+    const { code, data, msg } = await getFrontendCourseDetail({
+      courseId: courseId.value
+    });
+
+    if (code === 200 && data) {
+      courseDetail.value = data;
+      console.log("课程详情数据:", data);
+
+      // 默认加载第一个章节的第一个课时视频
+      if (data.courseChapterList && data.courseChapterList.length > 0) {
+        const firstChapter = data.courseChapterList[0];
+        if (firstChapter.hourList && firstChapter.hourList.length > 0) {
+          const firstHour = firstChapter.hourList[0];
+          currentHour.value = firstHour; // 保存当前课时信息
+          currentVideoUrl.value = firstHour.fileUrl;
+          activeNode.value = "1.1"; // 默认选中第一个节点
+          autoPlayOnLoad.value = true; // 设置标记以在视频加载后自动播放
+        }
+      }
+    } else {
+      ElMessage.error(msg || "获取课程详情失败");
+    }
+  } catch (error) {
+    console.error("获取课程详情出错:", error);
+    ElMessage.error("获取课程详情数据失败，请稍后重试");
+  } finally {
+    loading.value = false;
+  }
+};
 
 // 添加资源标签切换函数
 const handleResourceTabClick = (tab: string) => {
@@ -1266,13 +1246,76 @@ function handleModeClick(mode: string) {
 }
 
 // 添加节点点击处理函数
-function handleNodeClick(nodeId: string) {
+function handleNodeClick(nodeId: string, hour: any) {
   activeNode.value = nodeId;
+  if (hour && hour.fileUrl) {
+    // 保存当前课时信息
+    currentHour.value = hour;
+
+    // 保存旧的视频URL，用于判断是否真的改变了视频
+    const oldVideoUrl = currentVideoUrl.value;
+    currentVideoUrl.value = hour.fileUrl;
+
+    // 如果视频URL发生变化，设置标记以在视频加载后自动播放
+    if (oldVideoUrl !== hour.fileUrl) {
+      autoPlayOnLoad.value = true;
+    }
+
+    // 如果视频已经加载完成并且URL没变，则直接播放
+    if (videoPlayer.value && oldVideoUrl === hour.fileUrl) {
+      videoPlayer.value.currentTime = 0; // 重置到开头
+      videoPlayer.value.play();
+    }
+  }
 }
 
-function goBack() {
-  router.push("/account");
+// 视频加载完成后的回调
+function videoLoaded() {
+  if (autoPlayOnLoad.value && videoPlayer.value) {
+    videoPlayer.value.play();
+    autoPlayOnLoad.value = false;
+  }
 }
+
+// 视频播放完成后的回调
+function videoEnded() {
+  // 只有在视频播放完成且课时未完成时才上报进度
+  if (currentHour.value && currentHour.value.finished !== 1) {
+    reportProgress(currentHour.value.hourId);
+
+    // 更新本地状态，避免重复上报
+    currentHour.value.finished = 1;
+
+    // 更新课程完成进度
+    if (courseDetail.value) {
+      courseDetail.value.finishedHours += 1;
+    }
+
+    ElMessage.success("学习进度已更新");
+  }
+}
+
+// 上报学习进度
+async function reportProgress(hourId: number) {
+  try {
+    await reportFrontendLesson({
+      courseId: courseId.value,
+      hourId: hourId
+    });
+    console.log("学习进度上报成功");
+  } catch (error) {
+    console.error("学习进度上报失败:", error);
+  }
+}
+
+// 返回上一页
+const goBack = () => {
+  router.back();
+};
+
+onMounted(() => {
+  fetchCourseDetail();
+});
 </script>
 
 <style>
