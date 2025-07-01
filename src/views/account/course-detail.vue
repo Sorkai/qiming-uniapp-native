@@ -554,7 +554,7 @@
                             <div data-v-0762fd62="" class="photo">
                               <img
                                 data-v-0762fd62=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202411/9b01df14f9824284901dca0376b07324.png"
+                                src="@/assets/aipeople.jpg"
                                 alt=""
                               />
                             </div>
@@ -573,6 +573,7 @@
                                   autocomplete="off"
                                   placeholder="输入您的问题，与AI助教互动问答..."
                                   class="el-input__inner"
+                                  style="padding-left: 10px; font-size: 10px"
                                   @click="openAiDialog"
                                 /><!----><!----><!----><!---->
                               </div>
@@ -645,8 +646,9 @@
                                       >
                                         <img
                                           data-v-0762fd62=""
-                                          src="https://image.zhihuishu.com/zhs/b2cm/base1/202408/d22ea904b368461092afc351c3226de2.png"
+                                          src="@/assets/aipeople.jpg"
                                           alt=""
+                                          style="transform: scaleX(-1)"
                                         />
                                       </div>
                                       <div data-v-0762fd62="" class="code-icon">
@@ -816,7 +818,11 @@
                                         placeholder="请输入您的问题"
                                         maxlength="300"
                                         class="el-textarea__inner"
-                                        style="min-height: 12px; height: 12px"
+                                        :style="
+                                          currentMessage.trim()
+                                            ? 'min-height: 12px;'
+                                            : 'min-height: 12px; height: 12px;'
+                                        "
                                         @keydown.enter.prevent="sendMessage"
                                       /><!---->
                                     </div>
@@ -848,14 +854,7 @@
                                   <SendIcon v-else />
                                 </div>
                               </div>
-                              <div data-v-0762fd62="" class="ai-tips-box">
-                                <p data-v-0762fd62="" class="pad-bottom-8">
-                                  仅限学习期间使用：<span data-v-0762fd62=""
-                                    >2025-04-01</span
-                                  >至<span data-v-0762fd62="">2025-05-31</span>
-                                </p>
-                                <!----><!---->
-                              </div>
+                              <div data-v-0762fd62="" class="ai-tips-box" />
                             </div>
                           </div>
                           <div
@@ -1862,5 +1861,12 @@ onMounted(() => {
 
 .typing-dot:nth-child(3) {
   animation-delay: 0.4s;
+}
+
+/* 输入框样式 */
+.el-textarea__inner {
+  box-shadow: none !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 </style>
