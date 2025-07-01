@@ -161,9 +161,9 @@
                 >
                   <i data-v-3e66491d="" />
                 </div>
-                <span data-v-3e66491d="" class="current-time"
-                  >2025年06月10日</span
-                >
+                <span data-v-3e66491d="" class="current-time">{{
+                  currentDate
+                }}</span>
                 <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
                   <ThemeSunIcon
                     data-v-3e66491d=""
@@ -1054,6 +1054,15 @@ const currentVideoTitle = computed(() => {
   return (
     currentHour.value?.title || courseDetail.value?.courseName || "加载中..."
   );
+});
+
+// 当前日期，格式化为"年月日"
+const currentDate = computed(() => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}年${month}月${day}日`;
 });
 
 // 获取课程详情
