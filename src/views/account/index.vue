@@ -262,39 +262,81 @@
                 </el-select>
               </div>
             </div>
-            <div class="course-grid">
-              <div
-                v-for="i in 8"
-                :key="i"
-                class="course-item"
-                @click="router.push(`/course/${i}`)"
-              >
+
+            <!-- 加载状态 -->
+            <div v-if="coursesData.loading" class="loading-container">
+              <el-skeleton animated :rows="3" />
+            </div>
+
+            <!-- 课程网格 -->
+            <template v-else>
+              <div v-if="coursesData.list.length > 0" class="course-grid">
                 <div
-                  class="course-cover"
-                  :style="{ backgroundColor: getCoverColor(i) }"
+                  v-for="course in coursesData.list"
+                  :key="course.courseId"
+                  class="course-item"
+                  @click="handleCourseClick(course.courseId)"
                 >
-                  <div class="course-status">
-                    <el-tag type="success">进行中</el-tag>
+                  <div
+                    class="course-cover"
+                    :style="{
+                      backgroundImage: course.thumbUrl
+                        ? `url(${course.thumbUrl})`
+                        : '',
+                      backgroundColor: course.thumbUrl
+                        ? ''
+                        : getCoverColor(course.courseId)
+                    }"
+                  >
+                    <div class="course-status">
+                      <el-tag
+                        :type="
+                          course.finishedHours >= course.totalHours
+                            ? 'info'
+                            : course.finishedHours > 0
+                              ? 'success'
+                              : 'warning'
+                        "
+                      >
+                        {{
+                          course.finishedHours >= course.totalHours
+                            ? "已完成"
+                            : course.finishedHours > 0
+                              ? "进行中"
+                              : "未开始"
+                        }}
+                      </el-tag>
+                    </div>
                   </div>
-                </div>
-                <div class="course-info">
-                  <h4>课程名称 {{ i }}</h4>
-                  <p>
-                    课程简介：这是一段课程简介文字，描述课程的主要内容和特点。
-                  </p>
-                  <div class="course-meta">
-                    <span
-                      ><el-icon><Clock /></el-icon> 学习进度：75%</span
-                    >
-                    <span
-                      ><el-icon><Calendar /></el-icon> 剩余时间：15天</span
-                    >
+                  <div class="course-info">
+                    <h4>{{ course.courseName }}</h4>
+                    <p>
+                      {{ course.isRequired === 1 ? "必修课程" : "选修课程" }}
+                    </p>
+                    <div class="course-meta">
+                      <span>
+                        <el-icon><Clock /></el-icon>
+                        学习进度：{{
+                          Math.floor(
+                            (course.finishedHours / course.totalHours) * 100
+                          )
+                        }}%
+                      </span>
+                      <span>
+                        <el-icon><Calendar /></el-icon>
+                        课时：{{ course.totalHours }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+
+              <!-- 无数据提示 -->
+              <el-empty v-else description="暂无课程数据" />
+            </template>
+
             <!-- 分页 -->
-            <div class="pagination">
+            <div v-if="coursesData.list.length > 0" class="pagination">
               <el-button
                 :disabled="currentPage === 1"
                 size="small"
@@ -383,6 +425,12 @@ const myCourses = ref({
   homeworkList: [] // 作业课程
 });
 
+// 课程页面数据
+const coursesData = ref({
+  list: [], // 课程列表
+  loading: false // 加载状态
+});
+
 // 获取课程列表
 const fetchCourseList = async () => {
   try {
@@ -446,9 +494,46 @@ const loadHomeData = async () => {
   }
 };
 
+// 加载课程页面数据
+const loadCoursePageData = async () => {
+  coursesData.value.loading = true;
+  try {
+    // 分页获取课程列表
+    const { code, data, msg } = await getFrontendCourseList({
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
+      queryType:
+        courseFilter.value === "all"
+          ? undefined
+          : courseFilter.value === "ongoing"
+            ? 4
+            : courseFilter.value === "completed"
+              ? 3
+              : 0
+    });
+
+    if (code === 200 && data) {
+      coursesData.value.list = data.list || [];
+      total.value = data.total || 0;
+    } else {
+      ElMessage.error(msg || "获取课程列表失败");
+      coursesData.value.list = [];
+      total.value = 0;
+    }
+  } catch (error) {
+    console.error("获取课程列表出错:", error);
+    ElMessage.error("获取课程数据失败，请稍后重试");
+    coursesData.value.list = [];
+    total.value = 0;
+  } finally {
+    coursesData.value.loading = false;
+  }
+};
+
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
   activeMenu.value = index;
+  // 不在这里调用加载数据，只通过 watch 监听器加载数据
 };
 
 // 监听滚动事件
@@ -482,11 +567,19 @@ onUnmounted(() => {
   );
 });
 
-// 监听菜单选择，切换到首页时加载数据
+// 监听菜单选择，切换到首页或课程页面时加载数据
 watch(activeMenu, newVal => {
   if (newVal === "home") {
     loadHomeData();
+  } else if (newVal === "course") {
+    loadCoursePageData();
   }
+});
+
+// 监听课程筛选变化
+watch(courseFilter, () => {
+  currentPage.value = 1; // 重置为第一页
+  loadCoursePageData();
 });
 
 // 处理下拉菜单命令
@@ -522,14 +615,14 @@ const format = (percentage: number) => {
 const handlePrevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
-    // 这里应该调用获取课程列表的接口
+    loadCoursePageData();
   }
 };
 
 const handleNextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
-    // 这里应该调用获取课程列表的接口
+    loadCoursePageData();
   }
 };
 
