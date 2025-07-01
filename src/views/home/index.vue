@@ -18,7 +18,7 @@
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="space">
+                  <el-dropdown-item v-if="hasManageAccess" command="space">
                     <el-icon><User /></el-icon>
                     进入空间
                   </el-dropdown-item>
@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import {
   Monitor,
@@ -141,6 +141,12 @@ const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const defaultAvatar = defaultAvatarImg;
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
+
+// 检查用户是否有管理权限（教师或管理员）
+const hasManageAccess = computed(() => {
+  const roles = userInfo.value?.roles || [];
+  return roles.includes('admin') || roles.includes('teacher');
+});
 
 // 监听滚动事件
 const handleScroll = () => {
@@ -195,7 +201,13 @@ const features = ref([
 const handleCommand = (command: string) => {
   switch (command) {
     case "space":
-      router.push("/welcome/index");
+      // 检查用户角色，只允许教师和管理员进入空间
+      const roles = userInfo.value?.roles || [];
+      if (roles.includes('admin') || roles.includes('teacher')) {
+        router.push("/welcome/index");
+      } else {
+        ElMessage.warning("您没有权限进入后台管理空间");
+      }
       break;
     case "account":
       router.push("/account");
