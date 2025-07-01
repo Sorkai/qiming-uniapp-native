@@ -18,7 +18,7 @@
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="space">
+                  <el-dropdown-item v-if="hasAdminAccess" command="space">
                     <el-icon><User /></el-icon>
                     进入空间
                   </el-dropdown-item>
@@ -390,7 +390,7 @@ import {
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
-import { userKey, removeToken } from "@/utils/auth";
+import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
 import { UserProfile } from "./components";
@@ -582,11 +582,21 @@ watch(courseFilter, () => {
   loadCoursePageData();
 });
 
+// 检查用户是否有管理权限（教师或管理员）
+const hasAdminAccess = computed(() => {
+  return hasManageAccess();
+});
+
 // 处理下拉菜单命令
 const handleCommand = (command: string) => {
   switch (command) {
     case "space":
-      router.push("/welcome/index");
+      // 只有管理员或教师可以访问管理空间
+      if (hasAdminAccess.value) {
+        router.push("/welcome/index");
+      } else {
+        ElMessage.warning("您没有权限访问管理空间");
+      }
       break;
     case "account":
       router.push("/account");

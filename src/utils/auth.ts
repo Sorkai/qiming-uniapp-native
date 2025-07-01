@@ -19,6 +19,8 @@ export interface DataInfo<T> {
   roles?: Array<string>;
   /** 当前登录用户的按钮级别权限 */
   permissions?: Array<string>;
+  /** 角色类型 1:学生 2:教师 3:管理员 */
+  roleType?: number;
 }
 
 export const userKey = "user-info";
@@ -43,7 +45,7 @@ export function getToken(): DataInfo<number> {
  * @description 设置`token`以及一些必要信息并采用无感刷新`token`方案
  * 无感刷新：后端返回`accessToken`（访问接口使用的`token`）、`refreshToken`（用于调用刷新`accessToken`的接口时所需的`token`，`refreshToken`的过期时间（比如30天）应大于`accessToken`的过期时间（比如2小时））、`expires`（`accessToken`的过期时间）
  * 将`accessToken`、`expires`、`refreshToken`这三条信息放在key值为authorized-token的cookie里（过期自动销毁）
- * 将`avatar`、`username`、`nickname`、`roles`、`permissions`、`refreshToken`、`expires`这七条信息放在key值为`user-info`的localStorage里（利用`multipleTabsKey`当浏览器完全关闭后自动销毁）
+ * 将`avatar`、`username`、`nickname`、`roles`、`permissions`、`refreshToken`、`expires`、`roleType`这八条信息放在key值为`user-info`的localStorage里（利用`multipleTabsKey`当浏览器完全关闭后自动销毁）
  */
 export function setToken(data: DataInfo<Date>) {
   let expires = 0;
@@ -54,8 +56,8 @@ export function setToken(data: DataInfo<Date>) {
 
   expires > 0
     ? Cookies.set(TokenKey, cookieString, {
-        expires: (expires - Date.now()) / 86400000
-      })
+      expires: (expires - Date.now()) / 86400000
+    })
     : Cookies.set(TokenKey, cookieString);
 
   Cookies.set(
@@ -63,12 +65,12 @@ export function setToken(data: DataInfo<Date>) {
     "true",
     isRemembered
       ? {
-          expires: loginDay
-        }
+        expires: loginDay
+      }
       : {}
   );
 
-  function setUserKey({ avatar, username, nickname, roles, permissions }) {
+  function setUserKey({ avatar, username, nickname, roles, permissions, roleType }) {
     useUserStoreHook().SET_AVATAR(avatar);
     useUserStoreHook().SET_USERNAME(username);
     useUserStoreHook().SET_NICKNAME(nickname);
@@ -81,7 +83,8 @@ export function setToken(data: DataInfo<Date>) {
       username,
       nickname,
       roles,
-      permissions
+      permissions,
+      roleType
     });
   }
 
@@ -92,7 +95,8 @@ export function setToken(data: DataInfo<Date>) {
       username,
       nickname: data?.nickname ?? "",
       roles,
-      permissions: data?.permissions ?? []
+      permissions: data?.permissions ?? [],
+      roleType: data?.roleType ?? 0
     });
   } else {
     const avatar =
@@ -105,12 +109,15 @@ export function setToken(data: DataInfo<Date>) {
       storageLocal().getItem<DataInfo<number>>(userKey)?.roles ?? [];
     const permissions =
       storageLocal().getItem<DataInfo<number>>(userKey)?.permissions ?? [];
+    const roleType =
+      storageLocal().getItem<DataInfo<number>>(userKey)?.roleType ?? 0;
     setUserKey({
       avatar,
       username,
       nickname,
       roles,
-      permissions
+      permissions,
+      roleType
     });
   }
 }
@@ -138,4 +145,17 @@ export const hasPerms = (value: string | Array<string>): boolean => {
     ? permissions.includes(value)
     : isIncludeAllChildren(value, permissions);
   return isAuths ? true : false;
+};
+
+/** 判断用户是否有管理权限（教师或管理员）*/
+export const hasManageAccess = (): boolean => {
+  const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
+  if (!userInfo) return false;
+
+  // 根据roleType判断 2:教师 3:管理员
+  if (userInfo.roleType === 2 || userInfo.roleType === 3) {
+    return true;
+  }
+
+  return false;
 };

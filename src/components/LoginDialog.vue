@@ -364,7 +364,9 @@ const fetchUserDetail = async () => {
         // 重要：保持 admin 角色以确保菜单正常显示
         roles: ["admin"],
         // 添加一些常用权限
-        permissions: ["*:*:*"]
+        permissions: ["*:*:*"],
+        // 添加角色类型 1:学生 2:教师 3:管理员
+        roleType: userInfo.roleType
       });
 
       // 存储用户ID和其他信息到localStorage
