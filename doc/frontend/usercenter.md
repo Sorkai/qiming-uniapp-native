@@ -16,3 +16,18 @@
 ```
 
 - **响应参数**：无
+
+## 修改密码
+
+- **接口地址**：`/edu/frontend/v1/user/update/password`
+- **请求方式**：POST
+- **请求参数**：
+
+```json
+{
+  "oldPassword": "string", // 原密码
+  "newPassword": "string"       // 新密码
+}
+```
+
+- **响应参数**：无

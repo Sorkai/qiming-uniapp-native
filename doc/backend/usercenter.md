@@ -58,3 +58,18 @@ pageSize: int64   // 每页数量，默认20
   ]
 }
 ```
+
+## 修改用户角色
+
+- **接口地址**：`/edu/backend/v1/user/update/role`
+- **请求方式**: POST
+- **请求参数**：
+
+```json
+{
+  "targetUserId": "int64",         // 目标用户ID
+  "roleType": "strint64ing"           // 角色类型 1:学生 2:教师 3:管理员
+}
+```
+
+- **响应参数**：无

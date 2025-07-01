@@ -12,6 +12,7 @@
 | --- | --- | --- | --- |
 | pageNum | int64 | 是 | 页码 |
 | pageSize | int64 | 否 | 每页数量，默认20 |
+| courseId | int64 | 否 | 课程ID |
 | courseName | string | 否 | 课程名称，用于模糊查询 |
 
 - **响应参数**：
@@ -168,7 +169,7 @@
 
 ## 课程作业相关接口
 
-## 获取课程章节作业列表
+### 获取课程章节作业列表
 
 - **接口地址**：`/edu/backend/v1/course/homework/list`
 - **请求方式**：GET
@@ -178,6 +179,8 @@
 | --- | --- | --- | --- |
 | pageNum | int64 | 是 | 页码 |
 | pageSize | int64 | 否 | 每页数量，默认20 |
+| courseId | int64 | 否 | 课程ID |
+| chapterId | int64 | 否 | 章节ID |
 | homeworkName | string | 否 | 作业名称，用于模糊查询 |
 
 - **响应参数**：
@@ -204,7 +207,7 @@
 }
 ```
 
-## 获取课程作业试题列表
+### 获取课程作业试题列表
 
 - **接口地址**：`/edu/backend/v1/homework/question/list`
 - **请求方式**：GET
@@ -237,7 +240,7 @@
 }
 ```
 
-## 创建课程作业
+### 创建课程作业
 
 - **接口地址**：`/edu/backend/v1/course/homework/create`
 - **请求方式**：POST
@@ -262,7 +265,7 @@
 }
 ```
 
-## 更新课程作业
+### 更新课程作业
 
 - **接口地址**：`/edu/backend/v1/course/homework/update`
 - **请求方式**：POST
@@ -283,7 +286,7 @@
 {}
 ```
 
-## 删除课程作业
+### 删除课程作业
 
 - **接口地址**：`/edu/backend/v1/course/homework/delete`
 - **请求方式**：POST
@@ -301,7 +304,7 @@
 {}
 ```
 
-## 批量添加课程作业试题
+### 批量添加课程作业试题
 
 - **接口地址**：`/edu/backend/v1/homework/question/batch/add`
 - **请求方式**：POST
