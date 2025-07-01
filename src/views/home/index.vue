@@ -10,7 +10,7 @@
           <template v-if="userInfo">
             <el-dropdown trigger="hover" @command="handleCommand">
               <div class="user-info">
-                <el-avatar :size="32" :src="userInfo.avatar || defaultAvatar" />
+                <el-avatar :size="32" :src="userInfo.avatar" />
                 <span class="nickname">{{
                   userInfo.nickname || userInfo.username
                 }}</span>
@@ -134,12 +134,10 @@ import card1 from "@/assets/home/card1.jpg";
 import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
-import defaultAvatarImg from "@/assets/user.jpg"; // 使用已有的user.jpg作为默认头像
 
 const router = useRouter();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
-const defaultAvatar = defaultAvatarImg;
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
 // 检查用户是否有管理权限（教师或管理员）
