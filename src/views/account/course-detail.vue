@@ -178,26 +178,19 @@
                 </div>
               </div>
               <div data-v-3e66491d="" class="item header-center">
-                <div data-v-cebc91e2="" data-v-3e66491d="" class="study-mode">
+                <div
+                  data-v-cebc91e2=""
+                  data-v-3e66491d=""
+                  class="study-mode custom-mode"
+                >
                   <div
                     data-v-cebc91e2=""
                     data-v-3e66491d=""
                     data-name="0"
-                    class="mode-item"
-                    :class="{ active: activeMode === '0' }"
-                    @click="handleModeClick('0')"
+                    class="mode-item active"
+                    style="margin: 0 auto"
                   >
                     章节模式
-                  </div>
-                  <div
-                    data-v-cebc91e2=""
-                    data-v-3e66491d=""
-                    data-name="1"
-                    class="mode-item"
-                    :class="{ active: activeMode === '1' }"
-                    @click="handleModeClick('1')"
-                  >
-                    图谱模式
                   </div>
                 </div>
               </div>
@@ -1193,7 +1186,8 @@ const currentTheme = ref("light");
 const activeMenu = ref("course-learn");
 const isContentCollapsed = ref(false);
 const activeResourceTab = ref("required");
-const activeMode = ref("0");
+// 移除了图谱模式，所以不再需要activeMode变量
+// const activeMode = ref("0");
 const activeNode = ref("1.1");
 const currentVideoUrl = ref("");
 const videoPlayer = ref(null);
@@ -1420,10 +1414,10 @@ function handleMenuClick(menuName: string) {
   });
 }
 
-// 添加模式切换函数
-function handleModeClick(mode: string) {
-  activeMode.value = mode;
-}
+// 已移除图谱模式，不再需要此函数
+// function handleModeClick(mode: string) {
+//   activeMode.value = mode;
+// }
 
 // 添加节点点击处理函数
 function handleNodeClick(nodeId: string, hour: any) {
@@ -1924,5 +1918,10 @@ onMounted(() => {
 .hover-box svg {
   width: 25px;
   height: 25px;
+}
+
+/* 移除章节模式背景 */
+.custom-mode {
+  background: transparent !important;
 }
 </style>
