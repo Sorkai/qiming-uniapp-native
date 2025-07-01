@@ -573,7 +573,6 @@
                                   autocomplete="off"
                                   placeholder="输入您的问题，与AI助教互动问答..."
                                   class="el-input__inner"
-                                  style="font-size: 0.8rem"
                                   @click="openAiDialog"
                                 /><!----><!----><!----><!---->
                               </div>
@@ -635,6 +634,7 @@
                                   "
                                 >
                                   <div class="el-scrollbar__view">
+                                    <!-- 修改聊天消息区域，使用现有的CSS样式类 -->
                                     <div
                                       data-v-0762fd62=""
                                       class="header-tips-box"
@@ -666,7 +666,120 @@
                                         课程学习中欢迎随时提问，我将全力为您答疑解惑，共同进步哦！
                                       </div>
                                     </div>
-                                    <!---->
+
+                                    <!-- 聊天消息区域 -->
+                                    <div
+                                      v-for="(message, index) in chatMessages"
+                                      :key="index"
+                                      data-v-0762fd62=""
+                                    >
+                                      <!-- 用户消息 -->
+                                      <div
+                                        v-if="message.role === 'user'"
+                                        :id="`talk_${index}`"
+                                        data-v-0762fd62=""
+                                        class="ai-chat-share-container_nVXTe"
+                                      >
+                                        <div
+                                          data-v-0762fd62=""
+                                          class="chat-common_3Wk2t margin-bottom-16 chat-common_AKa0H"
+                                        >
+                                          <div
+                                            data-v-0762fd62=""
+                                            class="question-container_2GfLA chat-common_AKa0H"
+                                          >
+                                            <div
+                                              data-v-0762fd62=""
+                                              class="question-content_1e1fE question-content-animation_2xq2F"
+                                            >
+                                              {{ message.content }}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <!-- AI回复 -->
+                                      <div
+                                        v-else
+                                        :id="`talk_${index}`"
+                                        data-v-0762fd62=""
+                                        class="ai-chat-share-container_nVXTe"
+                                      >
+                                        <div
+                                          data-v-0762fd62=""
+                                          class="chat-common_3Wk2t margin-bottom-16"
+                                        >
+                                          <div
+                                            data-v-0762fd62=""
+                                            class="answer-box-wrapper_1QYRS full-line_3ITtH chat-ans_1oSN6"
+                                          >
+                                            <div
+                                              data-v-0762fd62=""
+                                              class="answer-content-box_2Pu7S chat-answer-content-box"
+                                            >
+                                              <div
+                                                data-v-0762fd62=""
+                                                class="markdown-content"
+                                              >
+                                                <p
+                                                  :id="`turnMathJax${index}`"
+                                                  data-v-0762fd62=""
+                                                  class="result"
+                                                  v-html="
+                                                    parseMarkdown(
+                                                      message.content
+                                                    )
+                                                  "
+                                                />
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- 正在输入提示 -->
+                                    <div v-if="isTyping" data-v-0762fd62="">
+                                      <div
+                                        data-v-0762fd62=""
+                                        class="ai-chat-share-container_nVXTe"
+                                      >
+                                        <div
+                                          data-v-0762fd62=""
+                                          class="chat-common_3Wk2t margin-bottom-16"
+                                        >
+                                          <div
+                                            data-v-0762fd62=""
+                                            class="answer-box-wrapper_1QYRS full-line_3ITtH chat-ans_1oSN6"
+                                          >
+                                            <div
+                                              data-v-0762fd62=""
+                                              class="answer-content-box_2Pu7S chat-answer-content-box"
+                                            >
+                                              <div
+                                                data-v-0762fd62=""
+                                                class="markdown-content"
+                                              >
+                                                <p
+                                                  data-v-0762fd62=""
+                                                  class="result"
+                                                >
+                                                  <span class="typing-dot"
+                                                    >.</span
+                                                  >
+                                                  <span class="typing-dot"
+                                                    >.</span
+                                                  >
+                                                  <span class="typing-dot"
+                                                    >.</span
+                                                  >
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                                 <div class="el-scrollbar__bar is-horizontal">
@@ -698,24 +811,50 @@
                                   >
                                     <div data-v-0762fd62="" class="el-textarea">
                                       <textarea
+                                        v-model="currentMessage"
                                         autocomplete="off"
                                         placeholder="请输入您的问题"
                                         maxlength="300"
                                         class="el-textarea__inner"
-                                        style="min-height: 12px"
+                                        style="min-height: 12px; height: 12px"
+                                        @keydown.enter.prevent="sendMessage"
                                       /><!---->
                                     </div>
                                   </div>
                                   <div
                                     data-v-0762fd62=""
-                                    class="add-new-talk not-allowed"
+                                    class="add-new-talk"
+                                    :class="{
+                                      'not-allowed': !currentMessage.trim()
+                                    }"
                                   >
                                     <AddNewTalkIcon />
                                   </div>
                                 </div>
-                                <div data-v-0762fd62="" class="not-send-btn">
-                                  <NotSendBtnIcon />
+                                <div
+                                  data-v-0762fd62=""
+                                  :class="
+                                    currentMessage.trim() && !sendingMessage
+                                      ? 'send-btn'
+                                      : 'not-send-btn'
+                                  "
+                                  @click="sendMessage"
+                                >
+                                  <NotSendBtnIcon
+                                    v-if="
+                                      !currentMessage.trim() || sendingMessage
+                                    "
+                                  />
+                                  <SendIcon v-else />
                                 </div>
+                              </div>
+                              <div data-v-0762fd62="" class="ai-tips-box">
+                                <p data-v-0762fd62="" class="pad-bottom-8">
+                                  仅限学习期间使用：<span data-v-0762fd62=""
+                                    >2025-04-01</span
+                                  >至<span data-v-0762fd62="">2025-05-31</span>
+                                </p>
+                                <!----><!---->
                               </div>
                             </div>
                           </div>
@@ -1022,6 +1161,11 @@ import {
   getFrontendCourseDetail,
   reportFrontendLesson
 } from "@/api/frontend/course";
+import {
+  courseAIChatStream,
+  getConversationHistory
+} from "@/api/frontend/chat";
+
 import { ElMessage } from "element-plus";
 import CourseLearnIcon from "@/assets/course-icons/course-learn.svg?component";
 import MasteryIcon from "@/assets/course-icons/mastery.svg?component";
@@ -1057,6 +1201,17 @@ const videoPlayer = ref(null);
 const autoPlayOnLoad = ref(false);
 const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
+
+// 添加AI聊天相关状态
+const conversationId = ref("");
+const chatMessages = ref<
+  Array<{ role: string; content: string; timestamp: string }>
+>([]);
+const currentMessage = ref("");
+const sendingMessage = ref(false);
+const streamResponse = ref("");
+const isTyping = ref(false);
+const cancelStreamRequest = ref<() => void | null>(null);
 
 const describeImgSrc = computed(() =>
   currentTheme.value === "dark"
@@ -1345,10 +1500,174 @@ const openAiDialog = () => {
 // 关闭AI对话框
 const closeAiDialog = () => {
   isAiDialogVisible.value = false;
+
+  // 如果有活跃的流请求，取消它
+  if (cancelStreamRequest.value) {
+    cancelStreamRequest.value();
+    cancelStreamRequest.value = null;
+  }
+};
+
+// 初始化聊天功能
+const initChat = () => {
+  // 生成或重用会话ID
+  const storedConversationId = localStorage.getItem(`chat_${courseId.value}`);
+  if (storedConversationId) {
+    conversationId.value = storedConversationId;
+    // 尝试加载历史记录，但不阻塞UI
+    try {
+      loadChatHistory();
+    } catch (e) {
+      console.warn("历史记录加载失败，将开始新对话", e);
+      // 历史加载失败也没关系，继续使用空白对话
+    }
+  } else {
+    // 简单生成唯一ID: 时间戳+随机数
+    conversationId.value =
+      Date.now().toString() + Math.random().toString(36).substring(2);
+    localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
+    // 对于新对话不需要加载历史
+  }
+};
+
+// 加载聊天历史
+const loadChatHistory = async () => {
+  try {
+    const response = await getConversationHistory(conversationId.value);
+    console.log("聊天历史响应:", response);
+    if (response && response.history && Array.isArray(response.history)) {
+      chatMessages.value = response.history;
+      // 滚动到底部
+      nextTick(() => {
+        scrollToBottom();
+      });
+    } else {
+      console.log("没有历史聊天记录或格式不正确");
+    }
+  } catch (error) {
+    console.error("加载聊天历史失败:", error);
+    // 失败了也没关系，我们可以继续新的对话
+  }
+};
+
+// 发送消息
+const sendMessage = async () => {
+  if (!currentMessage.value.trim() || sendingMessage.value) return;
+
+  const userMessage = currentMessage.value.trim();
+
+  // 添加用户消息到聊天记录
+  chatMessages.value.push({
+    role: "user",
+    content: userMessage,
+    timestamp: new Date().toISOString()
+  });
+
+  // 清空输入框
+  currentMessage.value = "";
+  sendingMessage.value = true;
+  streamResponse.value = "";
+
+  // 先不显示isTyping，等请求启动后再显示
+
+  // 滚动到底部
+  nextTick(() => {
+    scrollToBottom();
+  });
+
+  try {
+    // 不再预先添加AI消息，而是等待第一个响应
+    let aiMessageAdded = false;
+    let currentResponseIndex = -1;
+
+    // 现在显示"正在输入"状态
+    isTyping.value = true;
+
+    // 使用流式API
+    cancelStreamRequest.value = courseAIChatStream(
+      {
+        course_id: courseId.value,
+        conversation_id: conversationId.value,
+        message: userMessage
+      },
+      data => {
+        // 更新会话ID
+        if (data.conversation_id) {
+          conversationId.value = data.conversation_id;
+          localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
+        }
+
+        // 只有收到非空内容时才添加AI消息
+        if (data.delta) {
+          if (!aiMessageAdded) {
+            // 收到第一个响应，隐藏"正在输入"提示
+            isTyping.value = false;
+
+            aiMessageAdded = true;
+            currentResponseIndex = chatMessages.value.length;
+            chatMessages.value.push({
+              role: "ai",
+              content: data.delta,
+              timestamp: new Date().toISOString()
+            });
+          } else {
+            // 累积响应内容
+            chatMessages.value[currentResponseIndex].content += data.delta;
+          }
+        }
+
+        // 流结束时
+        if (data.finished) {
+          sendingMessage.value = false;
+          isTyping.value = false;
+        }
+
+        // 滚动到底部
+        nextTick(() => {
+          scrollToBottom();
+        });
+      }
+    );
+  } catch (error) {
+    console.error("发送消息失败:", error);
+    ElMessage.error("发送失败，请重试");
+
+    // 添加错误消息
+    chatMessages.value.push({
+      role: "ai",
+      content: "抱歉，发生了错误，请稍后重试。",
+      timestamp: new Date().toISOString()
+    });
+
+    sendingMessage.value = false;
+    isTyping.value = false;
+  }
+};
+
+// 滚动到底部
+const scrollToBottom = () => {
+  const scrollbar = document.querySelector(".ai-talk-box .el-scrollbar__wrap");
+  if (scrollbar) {
+    scrollbar.scrollTop = scrollbar.scrollHeight;
+  }
+};
+
+// 简单的Markdown解析函数
+const parseMarkdown = (text: string) => {
+  if (!text) return "";
+
+  // 处理粗体 **text**
+  let formatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+  // 处理换行符
+  formatted = formatted.replace(/\n/g, "<br>");
+
+  return formatted;
 };
 
 onMounted(() => {
   fetchCourseDetail();
+  initChat(); // 初始化AI聊天
 });
 </script>
 
@@ -1434,8 +1753,114 @@ onMounted(() => {
   justify-content: center;
 }
 
-.ai-hepler-pro-input .el-input__inner {
-  font-size: 0.8rem;
-  padding-left: 10px;
+/* 聊天消息样式 */
+.message-item {
+  display: flex;
+  margin-bottom: 16px;
+  padding: 0 12px;
+}
+
+.message-item.user {
+  justify-content: flex-end;
+}
+
+.message-content {
+  display: flex;
+  max-width: 80%;
+}
+
+.message-item.user .message-content {
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 8px;
+}
+
+.message-item.user .avatar {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bubble {
+  padding: 10px 14px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.message-item.user .bubble {
+  background-color: #604ffd;
+  color: white;
+}
+
+.typing {
+  display: flex;
+  align-items: center;
+  min-width: 40px;
+  min-height: 20px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #666;
+  margin: 0 2px;
+  animation: typing 1.4s infinite both;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.send-btn {
+  cursor: pointer;
+  color: #604ffd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 用于打字动画效果 */
+.typing-dot {
+  display: inline-block;
+  margin: 0 2px;
+  animation: typing 1.4s infinite both;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
 }
 </style>
