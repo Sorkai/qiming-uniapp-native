@@ -573,9 +573,15 @@
                                   autocomplete="off"
                                   placeholder="输入您的问题，与AI助教互动问答..."
                                   class="el-input__inner"
+                                  style="font-size: 0.8rem"
+                                  @click="openAiDialog"
                                 /><!----><!----><!----><!---->
                               </div>
-                              <span data-v-0762fd62="" class="mock-send-btn">
+                              <span
+                                data-v-0762fd62=""
+                                class="mock-send-btn"
+                                @click="openAiDialog"
+                              >
                                 <SendIcon />
                               </span>
                             </div>
@@ -583,13 +589,24 @@
                         </div>
                       </div>
                       <!----><!----><!---->
+                      <!-- ai 返回按钮 -->
                       <div
                         data-v-0762fd62=""
                         class="not-expand-icon"
-                        style="right: 26.875vw; display: none"
+                        style="
+                          right: 26.875vw;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        "
+                        :style="{
+                          display: isAiDialogVisible ? 'flex' : 'none'
+                        }"
+                        @click="closeAiDialog"
                       >
                         <NotExpandIcon />
                       </div>
+                      <!-- ai弹窗 -->
                       <div
                         data-v-0762fd62=""
                         class="ai-draggable-dialog auto"
@@ -597,8 +614,10 @@
                           width: 23.9583vw;
                           height: calc(100% - 5.3125vw);
                           top: auto;
-                          display: none;
                         "
+                        :style="{
+                          display: isAiDialogVisible ? 'block' : 'none'
+                        }"
                       >
                         <div data-v-0762fd62="" class="ai-fill-bg">
                           <div data-v-0762fd62="" class="dialog-content">
@@ -683,7 +702,7 @@
                                         placeholder="请输入您的问题"
                                         maxlength="300"
                                         class="el-textarea__inner"
-                                        style="min-height: 12px; height: 12px"
+                                        style="min-height: 12px"
                                       /><!---->
                                     </div>
                                   </div>
@@ -698,14 +717,6 @@
                                   <NotSendBtnIcon />
                                 </div>
                               </div>
-                              <div data-v-0762fd62="" class="ai-tips-box">
-                                <p data-v-0762fd62="" class="pad-bottom-8">
-                                  仅限学习期间使用：<span data-v-0762fd62=""
-                                    >2025-04-01</span
-                                  >至<span data-v-0762fd62="">2025-05-31</span>
-                                </p>
-                                <!----><!---->
-                              </div>
                             </div>
                           </div>
                           <div
@@ -717,6 +728,7 @@
                           </div>
                         </div>
                       </div>
+                      <!-- 欢迎使用AI助教 -->
                       <div
                         data-v-0762fd62=""
                         class="el-dialog__wrapper"
@@ -746,6 +758,7 @@
                           </div>
                         </div>
                       </div>
+                      <!-- 温馨提示 -->
                       <div
                         data-v-0762fd62=""
                         class="el-dialog__wrapper"
@@ -779,6 +792,7 @@
                         class="el-dialog__wrapper"
                         style="display: none"
                       >
+                        <!-- 反馈 -->
                         <div
                           role="dialog"
                           aria-modal="true"
@@ -1042,6 +1056,7 @@ const currentVideoUrl = ref("");
 const videoPlayer = ref(null);
 const autoPlayOnLoad = ref(false);
 const currentHour = ref(null);
+const isAiDialogVisible = ref(false);
 
 const describeImgSrc = computed(() =>
   currentTheme.value === "dark"
@@ -1322,18 +1337,33 @@ const goBack = () => {
   router.back();
 };
 
+// 打开AI对话框
+const openAiDialog = () => {
+  isAiDialogVisible.value = true;
+};
+
+// 关闭AI对话框
+const closeAiDialog = () => {
+  isAiDialogVisible.value = false;
+};
+
 onMounted(() => {
   fetchCourseDetail();
 });
 </script>
 
 <style>
-@import "@/../coursecss/css/chunk-1.css";
+/* @import "@/../coursecss/css/chunk-1.css";
 @import "@/../coursecss/css/chunk-2.css";
 @import "@/../coursecss/css/chunk-3.css";
-/* @import "@/../coursecss/css/chunk-4.css"; */
 @import "@/../coursecss/css/chunk-5.css";
-@import "@/../coursecss/css/app-1.css";
+@import "@/../coursecss/css/app-1.css"; */
+
+@import "@/../coursecss/css/chunk-b3e9f934.1c00050a.css";
+@import "@/../coursecss/css/chunk-8cf7ce30.92e48af1.css";
+@import "@/../coursecss/css/chunk-3cf64ec0.4f07a253.css";
+@import "@/../coursecss/css/chunk-3248eec0.130a3cd9.css";
+@import "@/../coursecss/css/app.a5f91bbb.css";
 </style>
 
 <style scoped>
@@ -1395,5 +1425,17 @@ onMounted(() => {
 /* 修改圆点位置 */
 :deep(.rightTreeWarp .chapterList-box .list li .Sectionmark-em) {
   left: 3vw !important;
+}
+
+/* 确保SVG图标居中 */
+.not-expand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-hepler-pro-input .el-input__inner {
+  font-size: 0.8rem;
+  padding-left: 10px;
 }
 </style>
