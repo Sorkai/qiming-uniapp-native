@@ -111,6 +111,8 @@
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
+            popper-class="date-picker-popper"
+            :teleported="false"
           />
         </el-form-item>
       </el-form>
@@ -349,6 +351,7 @@ const submitForm = async () => {
           });
           ElMessage.success("更新考试成功");
         } else {
+          // 创建考试时不传递 examId，直接使用所需字段
           await createExam({
             courseId: form.value.courseId,
             title: form.value.title,

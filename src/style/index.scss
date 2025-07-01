@@ -36,3 +36,15 @@
 .html-weakness {
   filter: invert(80%);
 }
+
+/* 日期选择器弹窗在对话框内的样式 */
+.date-picker-popper {
+  position: absolute !important;
+  z-index: 9999 !important;
+
+  &.el-popper {
+    inset: auto !important;
+    margin-top: 0 !important;
+    position: absolute !important;
+  }
+}

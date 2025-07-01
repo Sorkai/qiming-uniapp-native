@@ -4,6 +4,7 @@ export interface HomeworkListParams {
   pageNum: number;
   pageSize?: number;
   homeworkName?: string;
+  courseId?: number;
 }
 
 export interface HomeworkListResult {

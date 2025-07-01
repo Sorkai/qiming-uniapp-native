@@ -29,9 +29,7 @@
             @click="showQuestionDialog(scope.row)"
             >试题管理</el-button
           >
-          <el-button
-            size="small"
-            @click="showEditDialog(scope.row)"
+          <el-button size="small" @click="showEditDialog(scope.row)"
             >编辑</el-button
           >
           <el-button
@@ -65,16 +63,16 @@
     >
       <el-form
         ref="formRef"
+        v-loading="formLoading"
         :model="form"
         :rules="rules"
         label-width="100px"
-        v-loading="formLoading"
       >
         <el-form-item label="作业标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入作业标题" />
         </el-form-item>
 
-        <el-form-item label="所属章节" prop="chapterId" v-if="!isEdit">
+        <el-form-item v-if="!isEdit" label="所属章节" prop="chapterId">
           <el-select
             v-model="form.chapterId"
             placeholder="请选择章节"
@@ -90,7 +88,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="所属课时" prop="hourId" v-if="!isEdit">
+        <el-form-item v-if="!isEdit" label="所属课时" prop="hourId">
           <el-select
             v-model="form.hourId"
             placeholder="请选择课时"
@@ -122,6 +120,8 @@
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
+            popper-class="date-picker-popper"
+            :teleported="false"
           />
         </el-form-item>
       </el-form>
@@ -142,7 +142,10 @@
     >
       <div v-if="currentHomework" class="question-dialog-header">
         <h3>{{ currentHomework.title }}</h3>
-        <p>试题数量: {{ currentHomework.questionNum }} | 总分: {{ currentHomework.totalPoints }}</p>
+        <p>
+          试题数量: {{ currentHomework.questionNum }} | 总分:
+          {{ currentHomework.totalPoints }}
+        </p>
       </div>
 
       <div class="question-operation-bar">
@@ -164,7 +167,12 @@
           </template>
         </el-table-column>
         <el-table-column prop="title" label="标题" width="150" />
-        <el-table-column prop="stem" label="题干" min-width="250" show-overflow-tooltip />
+        <el-table-column
+          prop="stem"
+          label="题干"
+          min-width="250"
+          show-overflow-tooltip
+        />
         <el-table-column prop="points" label="分值" width="80" />
         <el-table-column prop="difficulty" label="难度" width="80">
           <template #default="scope">
@@ -178,9 +186,7 @@
         <el-table-column prop="sortOrder" label="排序" width="80" />
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="scope">
-            <el-button
-              size="small"
-              @click="editQuestion(scope.row)"
+            <el-button size="small" @click="editQuestion(scope.row)"
               >编辑</el-button
             >
             <el-button
@@ -214,12 +220,12 @@
 import { ref, watch, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
-import { 
-  getHomeworkList, 
-  getHomeworkQuestionList, 
-  createHomework, 
-  updateHomework, 
-  deleteHomework 
+import {
+  getHomeworkList,
+  getHomeworkQuestionList,
+  createHomework,
+  updateHomework,
+  deleteHomework
 } from "@/api/homework";
 import { getCourseHoursList } from "@/api/course";
 
@@ -246,11 +252,12 @@ const dialogVisible = ref(false);
 const formLoading = ref(false);
 const isEdit = ref(false);
 const formRef = ref(null);
+// 当前正在编辑的作业ID
+const currentEditId = ref<number | null>(null);
 const form = ref({
-  homeworkId: 0,
   courseId: props.courseId,
-  chapterId: null,
-  hourId: null,
+  chapterId: null as number | null,
+  hourId: null as number | null,
   title: "",
   description: "",
   dueDate: ""
@@ -277,7 +284,7 @@ const questionTotal = ref(0);
 // 监听课程ID变化，重新加载数据
 watch(
   () => props.courseId,
-  (newVal) => {
+  newVal => {
     if (newVal) {
       currentPage.value = 1;
       fetchHomeworkList();
@@ -292,13 +299,13 @@ watch(
 // 获取作业列表
 const fetchHomeworkList = async () => {
   if (!props.courseId) return;
-  
+
   loading.value = true;
   try {
     const { data } = await getHomeworkList({
       pageNum: currentPage.value,
-      pageSize: pageSize.value,
-      courseId: props.courseId
+      pageSize: pageSize.value
+      // courseId: props.courseId
     });
     homeworkList.value = data.homeworkList;
     total.value = data.total;
@@ -322,7 +329,7 @@ const fetchChapters = async () => {
 };
 
 // 处理章节变化，加载对应的课时
-const handleChapterChange = (chapterId) => {
+const handleChapterChange = chapterId => {
   form.value.hourId = null;
   const chapter = chapterOptions.value.find(c => c.chapterId === chapterId);
   if (chapter) {
@@ -347,10 +354,9 @@ const handleCurrentChange = (val: number) => {
 const showCreateDialog = () => {
   isEdit.value = false;
   form.value = {
-    homeworkId: 0,
     courseId: props.courseId,
-    chapterId: null,
-    hourId: null,
+    chapterId: null as number | null,
+    hourId: null as number | null,
     title: "",
     description: "",
     dueDate: ""
@@ -359,10 +365,11 @@ const showCreateDialog = () => {
 };
 
 // 显示编辑对话框
-const showEditDialog = (row) => {
+const showEditDialog = row => {
   isEdit.value = true;
+  // 编辑时临时保存当前作业ID
+  currentEditId.value = row.homeworkId;
   form.value = {
-    homeworkId: row.homeworkId,
     courseId: props.courseId,
     chapterId: row.chapterId,
     hourId: row.hourId,
@@ -376,8 +383,8 @@ const showEditDialog = (row) => {
 // 提交表单
 const submitForm = async () => {
   if (!formRef.value) return;
-  
-  await formRef.value.validate(async (valid) => {
+
+  await formRef.value.validate(async valid => {
     if (valid) {
       formLoading.value = true;
       try {
@@ -390,7 +397,15 @@ const submitForm = async () => {
           });
           ElMessage.success("更新作业成功");
         } else {
-          await createHomework(form.value);
+          // 创建作业时不传递 homeworkId，确保类型转换正确
+          await createHomework({
+            courseId: Number(props.courseId),
+            chapterId: Number(form.value.chapterId),
+            hourId: Number(form.value.hourId),
+            title: form.value.title,
+            description: form.value.description,
+            dueDate: form.value.dueDate
+          });
           ElMessage.success("创建作业成功");
         }
         dialogVisible.value = false;
@@ -406,7 +421,7 @@ const submitForm = async () => {
 };
 
 // 确认删除
-const confirmDelete = (row) => {
+const confirmDelete = row => {
   ElMessageBox.confirm(`确定要删除作业 "${row.title}" 吗？`, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -426,7 +441,7 @@ const confirmDelete = (row) => {
 };
 
 // 显示试题管理对话框
-const showQuestionDialog = async (row) => {
+const showQuestionDialog = async row => {
   currentHomework.value = row;
   questionDialogVisible.value = true;
   questionCurrentPage.value = 1;
@@ -436,7 +451,7 @@ const showQuestionDialog = async (row) => {
 // 获取试题列表
 const fetchQuestionList = async () => {
   if (!currentHomework.value) return;
-  
+
   questionLoading.value = true;
   try {
     const { data } = await getHomeworkQuestionList({
@@ -472,13 +487,13 @@ const showAddQuestionDialog = () => {
 };
 
 // 编辑试题
-const editQuestion = (row) => {
+const editQuestion = row => {
   // 这里可以实现编辑试题的逻辑
   ElMessage.info("编辑试题功能待实现");
 };
 
 // 删除试题
-const deleteQuestion = (row) => {
+const deleteQuestion = row => {
   // 这里可以实现删除试题的逻辑
   ElMessage.info("删除试题功能待实现");
 };
@@ -537,4 +552,4 @@ onMounted(() => {
 .question-operation-bar {
   margin-bottom: 20px;
 }
-</style> 
+</style>
