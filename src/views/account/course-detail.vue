@@ -1166,13 +1166,13 @@ import {
 } from "@/api/frontend/chat";
 
 import { ElMessage } from "element-plus";
-import CourseLearnIcon from "@/assets/course-icons/course-learn.svg?component";
-import MasteryIcon from "@/assets/course-icons/mastery.svg?component";
-import CourseQaIcon from "@/assets/course-icons/course-qa.svg?component";
-import HomeworkExamIcon from "@/assets/course-icons/homework-exam.svg?component";
+import CourseLearnIcon from "@/assets/course-icons/course-learn-new.svg?component";
+import MasteryIcon from "@/assets/course-icons/mastery-new.svg?component";
+import CourseQaIcon from "@/assets/course-icons/course-qa-new.svg?component";
+import HomeworkExamIcon from "@/assets/course-icons/homework-exam-new.svg?component";
 import GradesIcon from "@/assets/course-icons/grades.svg?component";
-import AiDocQaIcon from "@/assets/course-icons/ai-doc-qa.svg?component";
-import CourseMaterialsIcon from "@/assets/course-icons/course-materials.svg?component";
+import AiDocQaIcon from "@/assets/course-icons/ai-doc-qa-new.svg?component";
+import CourseMaterialsIcon from "@/assets/course-icons/course-materials-new.svg?component";
 import ThemeSunIcon from "@/assets/course-icons/theme-sun.svg?component";
 import ThemeMoonIcon from "@/assets/course-icons/theme-moon.svg?component";
 import SeekLeftIcon from "@/assets/course-icons/seek-left.svg?component";
@@ -1311,28 +1311,29 @@ function toggleTheme() {
   });
 
   // 切换 SVG 图标颜色
-  const svgPaths = document.querySelectorAll(".hover-box svg path");
-  svgPaths.forEach(path => {
-    const parentElement = path.closest(".hover-box");
+  const svgElements = document.querySelectorAll(".hover-box svg");
+  svgElements.forEach(svg => {
+    const parentElement = svg.closest(".hover-box");
     const menuItem = parentElement?.closest(".item");
     const currentMenuName = menuItem?.getAttribute("data-menu");
     const isCurrentActive = currentMenuName === activeMenu.value;
 
-    if (isCurrentActive) {
-      // 当前选中的菜单项
-      if (newTheme === "dark") {
-        path.setAttribute("fill", "white");
-      } else {
-        path.setAttribute("fill", "#604FFD");
+    // 定义颜色
+    const activeColor = newTheme === "dark" ? "white" : "#604FFD";
+    const inactiveColor = newTheme === "dark" ? "#B4B4C7" : "#604FFD";
+    const color = isCurrentActive ? activeColor : inactiveColor;
+
+    // 设置整个SVG的stroke颜色
+    svg.setAttribute("stroke", color);
+
+    // 设置所有path和circle的填充颜色
+    const elements = svg.querySelectorAll("path, circle, rect");
+    elements.forEach(el => {
+      if (el.getAttribute("fill") !== "none") {
+        el.setAttribute("fill", color);
       }
-    } else {
-      // 未选中的菜单项
-      if (newTheme === "dark") {
-        path.setAttribute("fill", "#B4B4C7");
-      } else {
-        path.setAttribute("fill", "#604FFD");
-      }
-    }
+      el.setAttribute("stroke", color);
+    });
   });
 
   // 切换文字颜色
@@ -1368,28 +1369,29 @@ function handleMenuClick(menuName: string) {
   activeMenu.value = menuName;
 
   // 更新 SVG 图标颜色
-  const svgPaths = document.querySelectorAll(".hover-box svg path");
-  svgPaths.forEach(path => {
-    const parentElement = path.closest(".hover-box");
+  const svgElements = document.querySelectorAll(".hover-box svg");
+  svgElements.forEach(svg => {
+    const parentElement = svg.closest(".hover-box");
     const menuItem = parentElement?.closest(".item");
     const currentMenuName = menuItem?.getAttribute("data-menu");
     const isCurrentActive = currentMenuName === menuName;
 
-    if (isCurrentActive) {
-      // 当前选中的菜单项
-      if (currentTheme.value === "dark") {
-        path.setAttribute("fill", "white");
-      } else {
-        path.setAttribute("fill", "#604FFD");
+    // 定义颜色
+    const activeColor = currentTheme.value === "dark" ? "white" : "#604FFD";
+    const inactiveColor = currentTheme.value === "dark" ? "#B4B4C7" : "#604FFD";
+    const color = isCurrentActive ? activeColor : inactiveColor;
+
+    // 设置整个SVG的stroke颜色
+    svg.setAttribute("stroke", color);
+
+    // 设置所有path和circle的填充颜色
+    const elements = svg.querySelectorAll("path, circle, rect");
+    elements.forEach(el => {
+      if (el.getAttribute("fill") !== "none") {
+        el.setAttribute("fill", color);
       }
-    } else {
-      // 未选中的菜单项
-      if (currentTheme.value === "dark") {
-        path.setAttribute("fill", "#B4B4C7");
-      } else {
-        path.setAttribute("fill", "#000");
-      }
-    }
+      el.setAttribute("stroke", color);
+    });
   });
 
   // 更新文字颜色
@@ -1405,14 +1407,14 @@ function handleMenuClick(menuName: string) {
       if (currentTheme.value === "dark") {
         element.style.color = "white";
       } else {
-        element.style.color = "#B4B4C7";
+        element.style.color = "#604FFD";
       }
     } else {
       // 未选中的菜单项
       if (currentTheme.value === "dark") {
         element.style.color = "#B4B4C7";
       } else {
-        element.style.color = "#000";
+        element.style.color = "#604FFD";
       }
     }
   });
@@ -1664,9 +1666,57 @@ const parseMarkdown = (text: string) => {
   return formatted;
 };
 
+// 初始化SVG图标和文字颜色
+const initIconColors = () => {
+  // 初始化SVG图标颜色
+  const svgElements = document.querySelectorAll(".hover-box svg");
+  svgElements.forEach(svg => {
+    const parentElement = svg.closest(".hover-box");
+    const menuItem = parentElement?.closest(".item");
+    const currentMenuName = menuItem?.getAttribute("data-menu");
+    const isCurrentActive = currentMenuName === activeMenu.value;
+
+    // 浅色模式下所有图标默认使用紫色
+    const color = isCurrentActive ? "#604FFD" : "#604FFD";
+
+    // 设置整个SVG的stroke颜色
+    svg.setAttribute("stroke", color);
+
+    // 设置所有path和circle的填充颜色
+    const elements = svg.querySelectorAll("path, circle, rect");
+    elements.forEach(el => {
+      if (el.getAttribute("fill") !== "none") {
+        el.setAttribute("fill", color);
+      }
+      el.setAttribute("stroke", color);
+    });
+  });
+
+  // 初始化文字颜色
+  const sideNames = document.querySelectorAll(".side-name");
+  sideNames.forEach(name => {
+    const element = name as HTMLElement;
+    const menuItem = element.closest(".item");
+    const currentMenuName = menuItem?.getAttribute("data-menu");
+    const isCurrentActive = currentMenuName === activeMenu.value;
+
+    // 设置文字颜色
+    if (isCurrentActive) {
+      element.style.color = "#604FFD"; // 选中状态为紫色
+    } else {
+      element.style.color = "#604FFD"; // 非选中也使用紫色
+    }
+  });
+};
+
 onMounted(() => {
   fetchCourseDetail();
   initChat(); // 初始化AI聊天
+
+  // 等待DOM更新后初始化图标颜色
+  nextTick(() => {
+    initIconColors();
+  });
 });
 </script>
 
@@ -1868,5 +1918,11 @@ onMounted(() => {
   box-shadow: none !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/* 缩小侧边栏SVG图标尺寸 */
+.hover-box svg {
+  width: 25px;
+  height: 25px;
 }
 </style>
