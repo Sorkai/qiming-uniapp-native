@@ -10,7 +10,7 @@
           <template v-if="userInfo">
             <el-dropdown trigger="hover" @command="handleCommand">
               <div class="user-info">
-                <el-avatar :size="32" :src="userInfo.avatar || defaultAvatar" />
+                <el-avatar :size="32" :src="userInfo.avatar" />
                 <span class="nickname">{{
                   userInfo.nickname || userInfo.username
                 }}</span>
@@ -49,7 +49,7 @@
     <div class="account-content">
       <div class="account-sidebar">
         <div class="user-info">
-          <el-avatar :size="80" :src="userInfo?.avatar || defaultAvatar" />
+          <el-avatar :size="80" :src="userInfo?.avatar" />
           <h3>{{ userInfo?.nickname || userInfo?.username }}</h3>
         </div>
         <el-menu
@@ -65,10 +65,17 @@
             <el-icon><Reading /></el-icon>
             <span>课程</span>
           </el-menu-item>
+          <el-menu-item index="profile">
+            <el-icon><User /></el-icon>
+            <span>个人资料</span>
+          </el-menu-item>
         </el-menu>
       </div>
       <div class="account-main">
-        <div v-if="activeMenu === 'home'">
+        <div v-if="activeMenu === 'profile'">
+          <user-profile />
+        </div>
+        <div v-else-if="activeMenu === 'home'">
           <!-- 上方卡片 -->
           <div class="card">
             <!-- 重要提醒 -->
@@ -291,12 +298,13 @@ import { storageLocal } from "@pureadmin/utils";
 import { userKey, removeToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
+import { UserProfile } from "./components";
 
 const router = useRouter();
 const route = useRoute();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
-const defaultAvatar = "/src/assets/avatar.png";
+
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
 // 当前激活的菜单项
@@ -321,12 +329,19 @@ const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
 };
 
+// 监听用户信息更新事件
+const handleUserInfoUpdate = (event: CustomEvent) => {
+  userInfo.value = event.detail;
+};
+
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
+  window.addEventListener("userInfoUpdated", handleUserInfoUpdate as EventListener);
 });
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener("userInfoUpdated", handleUserInfoUpdate as EventListener);
 });
 
 // 处理下拉菜单命令

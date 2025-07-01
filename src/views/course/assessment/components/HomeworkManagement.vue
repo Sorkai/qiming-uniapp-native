@@ -220,12 +220,12 @@
 import { ref, watch, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
-import {
-  getHomeworkList,
-  getHomeworkQuestionList,
-  createHomework,
-  updateHomework,
-  deleteHomework
+import { 
+  getHomeworkList, 
+  getHomeworkQuestionList, 
+  createHomework, 
+  updateHomework, 
+  deleteHomework 
 } from "@/api/homework";
 import { getCourseHoursList } from "@/api/course";
 
@@ -299,7 +299,7 @@ watch(
 // 获取作业列表
 const fetchHomeworkList = async () => {
   if (!props.courseId) return;
-
+  
   loading.value = true;
   try {
     const { data } = await getHomeworkList({
@@ -383,7 +383,7 @@ const showEditDialog = row => {
 // 提交表单
 const submitForm = async () => {
   if (!formRef.value) return;
-
+  
   await formRef.value.validate(async valid => {
     if (valid) {
       formLoading.value = true;
@@ -451,7 +451,7 @@ const showQuestionDialog = async row => {
 // 获取试题列表
 const fetchQuestionList = async () => {
   if (!currentHomework.value) return;
-
+  
   questionLoading.value = true;
   try {
     const { data } = await getHomeworkQuestionList({
@@ -552,4 +552,4 @@ onMounted(() => {
 .question-operation-bar {
   margin-bottom: 20px;
 }
-</style>
+</style> 

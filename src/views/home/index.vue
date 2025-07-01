@@ -204,7 +204,7 @@ const handleCommand = (command: string) => {
       // 检查用户角色，只允许教师和管理员进入空间
       const roles = userInfo.value?.roles || [];
       if (roles.includes('admin') || roles.includes('teacher')) {
-        router.push("/welcome/index");
+      router.push("/welcome/index");
       } else {
         ElMessage.warning("您没有权限进入后台管理空间");
       }

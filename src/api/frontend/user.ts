@@ -17,9 +17,7 @@ export interface ApiResponse<T = any> {
  * 更新前端用户信息
  */
 export const updateFrontendUserInfo = (data: UpdateUserInfoParams) => {
-  return http.request<ApiResponse>(
-    "post",
-    "/edu/frontend/v1/user/update",
-    { data }
-  );
-}; 
+  return http.request<ApiResponse>("post", "/edu/frontend/v1/user/update", {
+    data
+  });
+};
