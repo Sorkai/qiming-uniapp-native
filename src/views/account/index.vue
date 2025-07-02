@@ -82,7 +82,10 @@
             <div class="reminder">
               <div class="reminder-content">
                 <el-icon><InfoFilled /></el-icon>
-                <span>重要提示:xxx</span>
+                <span
+                  >重要提示:同学们，新学期到了，系统已经分配最新的课程，请各位同学抓紧学习
+                  书山有路勤为径，学海无涯苦作舟 🎉</span
+                >
               </div>
             </div>
             <!-- 课程信息和AI总结 -->
