@@ -42,6 +42,17 @@
             {{ getRoleTypeName(scope.row.roleType) }}
           </template>
         </el-table-column>
+        <el-table-column v-if="isAdminUser" label="操作" width="180">
+          <template #default="scope">
+            <el-button 
+              type="primary" 
+              size="small"
+              @click="handleEditRole(scope.row)"
+            >
+              修改角色
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
       <div class="pagination-container">
@@ -56,13 +67,46 @@
         />
       </div>
     </el-card>
+
+    <!-- 修改角色对话框 -->
+    <el-dialog
+      v-model="roleDialogVisible"
+      title="修改用户角色"
+      width="30%"
+      :close-on-click-modal="false"
+    >
+      <el-form ref="roleFormRef" :model="roleForm" label-width="100px">
+        <el-form-item label="当前用户">
+          {{ roleForm.nickname || roleForm.mobile }}
+        </el-form-item>
+        <el-form-item label="当前角色">
+          {{ getRoleTypeName(roleForm.currentRoleType) }}
+        </el-form-item>
+        <el-form-item label="新角色" prop="roleType">
+          <el-select v-model="roleForm.roleType" placeholder="请选择新角色">
+            <el-option label="学生" :value="1" />
+            <el-option label="教师" :value="2" />
+            <el-option label="管理员" :value="3" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="roleDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="roleUpdateLoading" @click="submitRoleChange">
+            确认
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, reactive } from "vue";
-import { getUserList } from "@/api/user";
-import { ElMessage } from "element-plus";
+import { ref, onMounted, reactive, computed } from "vue";
+import { getUserList, updateUserRole } from "@/api/user";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { isAdmin } from "@/utils/auth";
 
 // 数据定义
 const userList = ref([]);
@@ -72,6 +116,20 @@ const pageSize = ref(20);
 const loading = ref(false);
 
 const searchForm = reactive({ mobile: "" });
+
+// 判断当前用户是否是管理员
+const isAdminUser = computed(() => isAdmin());
+
+// 修改角色对话框
+const roleDialogVisible = ref(false);
+const roleUpdateLoading = ref(false);
+const roleForm = reactive({
+  id: 0,
+  nickname: "",
+  mobile: "",
+  currentRoleType: 0,
+  roleType: 0
+});
 
 // 获取角色类型名称
 const getRoleTypeName = (roleType: number) => {
@@ -110,6 +168,68 @@ const resetSearch = () => {
   searchForm.mobile = "";
   currentPage.value = 1; // 重置时也回到第一页
   fetchUserList();
+};
+
+// 打开修改角色对话框
+const handleEditRole = (user) => {
+  if (!isAdminUser.value) {
+    ElMessage.warning("只有管理员可以修改用户角色");
+    return;
+  }
+
+  roleForm.id = user.id;
+  roleForm.nickname = user.nickname;
+  roleForm.mobile = user.mobile;
+  roleForm.currentRoleType = user.roleType;
+  roleForm.roleType = user.roleType; // 默认选中当前角色
+
+  roleDialogVisible.value = true;
+};
+
+// 提交角色修改
+const submitRoleChange = async () => {
+  if (roleForm.roleType === roleForm.currentRoleType) {
+    ElMessage.info("角色未变更，无需修改");
+    return;
+  }
+
+  // 二次确认
+  try {
+    await ElMessageBox.confirm(
+      `确认将用户 ${roleForm.nickname || roleForm.mobile} 的角色从 ${getRoleTypeName(
+        roleForm.currentRoleType
+      )} 修改为 ${getRoleTypeName(roleForm.roleType)} 吗？`,
+      "确认修改",
+      {
+        confirmButtonText: "确认",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    );
+  } catch (e) {
+    return; // 用户取消操作
+  }
+
+  roleUpdateLoading.value = true;
+  try {
+    const res = await updateUserRole({
+      targetUserId: roleForm.id,
+      roleType: roleForm.roleType
+    });
+
+    if (res && res.code === 200) {
+      ElMessage.success("角色修改成功");
+      roleDialogVisible.value = false;
+      fetchUserList(); // 刷新列表
+    } else {
+      ElMessage.error(res?.msg || "角色修改失败");
+    }
+  } catch (error) {
+    console.error("修改用户角色失败:", error);
+    ElMessage.error("修改用户角色失败，请稍后重试");
+  } finally {
+    roleUpdateLoading.value = false;
+  }
 };
 
 // 获取用户列表数据

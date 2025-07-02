@@ -200,3 +200,12 @@ export const getUserList = (params: { pageNum: number; pageSize?: number; mobile
     params
   });
 };
+
+/** 修改用户角色 */
+export const updateUserRole = (data: { targetUserId: number; roleType: number }) => {
+  return http.request<{ code: number; msg: string; data: any }>(
+    "post",
+    "/edu/backend/v1/user/update/role",
+    { data }
+  );
+};

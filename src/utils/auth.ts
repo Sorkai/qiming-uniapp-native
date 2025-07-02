@@ -159,3 +159,12 @@ export const hasManageAccess = (): boolean => {
 
   return false;
 };
+
+/** 判断用户是否是管理员 */
+export const isAdmin = (): boolean => {
+  const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
+  if (!userInfo) return false;
+
+  // 只有roleType为3(管理员)才返回true
+  return userInfo.roleType === 3;
+};
