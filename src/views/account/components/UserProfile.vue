@@ -2,10 +2,16 @@
   <div class="user-profile">
     <div class="profile-header">
       <h3>个人资料</h3>
-      <el-button type="primary" size="small" @click="openEditDialog">
-        <el-icon><Edit /></el-icon>
-        修改资料
-      </el-button>
+      <div class="action-buttons">
+        <el-button type="primary" size="small" @click="openEditDialog">
+          <el-icon><Edit /></el-icon>
+          修改资料
+        </el-button>
+        <el-button type="warning" size="small" @click="openPasswordDialog">
+          <el-icon><Lock /></el-icon>
+          修改密码
+        </el-button>
+      </div>
     </div>
 
     <div class="profile-content">
@@ -93,24 +99,87 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 修改密码弹窗 -->
+    <el-dialog
+      v-model="passwordDialogVisible"
+      title="修改密码"
+      width="500px"
+      destroy-on-close
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="passwordRules"
+        label-width="100px"
+      >
+        <el-form-item label="原密码" prop="oldPassword">
+          <el-input
+            v-model="passwordForm.oldPassword"
+            type="password"
+            placeholder="请输入原密码"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input
+            v-model="passwordForm.newPassword"
+            type="password"
+            placeholder="请输入新密码"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item label="确认新密码" prop="confirmPassword">
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入新密码"
+            show-password
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="passwordDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="passwordLoading"
+          @click="submitPasswordForm"
+        >
+          确认修改
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from "vue";
-import { Edit, Plus } from "@element-plus/icons-vue";
+import { useRouter } from "vue-router";
+import { Edit, Plus, Lock } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
-import { userKey } from "@/utils/auth";
+import { userKey, removeToken } from "@/utils/auth";
 import type { DataInfo } from "@/utils/auth";
-import { updateFrontendUserInfo } from "@/api/frontend/user";
+import { updateFrontendUserInfo, updateFrontendUserPassword } from "@/api/frontend/user";
 import { uploadFile } from "@/api/user";
 
+const router = useRouter();
 const defaultAvatar = "/src/assets/user.jpg";
 const dialogVisible = ref(false);
 const loading = ref(false);
 const userInfo = ref<DataInfo<number> | any>(storageLocal().getItem(userKey));
+
+// 修改密码相关
+const passwordDialogVisible = ref(false);
+const passwordLoading = ref(false);
+const passwordFormRef = ref<FormInstance>();
+const passwordForm = reactive({
+  oldPassword: "",
+  newPassword: "",
+  confirmPassword: ""
+});
 
 const formRef = ref<FormInstance>();
 const avatarUrl = ref("");
@@ -128,6 +197,32 @@ const rules = {
   nickname: [{ max: 20, message: "昵称长度不能超过20个字符", trigger: "blur" }],
   info: [
     { max: 200, message: "个性签名长度不能超过200个字符", trigger: "blur" }
+  ]
+};
+
+// 密码表单验证规则
+const validateConfirmPassword = (rule, value, callback) => {
+  if (value === "") {
+    callback(new Error("请再次输入新密码"));
+  } else if (value !== passwordForm.newPassword) {
+    callback(new Error("两次输入的密码不一致"));
+  } else {
+    callback();
+  }
+};
+
+const passwordRules = {
+  oldPassword: [
+    { required: true, message: "请输入原密码", trigger: "blur" },
+    { min: 6, message: "密码长度不能少于6个字符", trigger: "blur" }
+  ],
+  newPassword: [
+    { required: true, message: "请输入新密码", trigger: "blur" },
+    { min: 6, message: "密码长度不能少于6个字符", trigger: "blur" }
+  ],
+  confirmPassword: [
+    { required: true, message: "请再次输入新密码", trigger: "blur" },
+    { validator: validateConfirmPassword, trigger: "blur" }
   ]
 };
 
@@ -260,6 +355,66 @@ const submitForm = async () => {
   });
 };
 
+// 打开修改密码对话框
+const openPasswordDialog = () => {
+  passwordForm.oldPassword = "";
+  passwordForm.newPassword = "";
+  passwordForm.confirmPassword = "";
+  passwordDialogVisible.value = true;
+};
+
+// 提交密码修改表单
+const submitPasswordForm = async () => {
+  if (!passwordFormRef.value) return;
+
+  await passwordFormRef.value.validate(async valid => {
+    if (valid) {
+      try {
+        passwordLoading.value = true;
+
+        const { code, msg } = await updateFrontendUserPassword({
+          oldPassword: passwordForm.oldPassword,
+          newPassword: passwordForm.newPassword
+        });
+
+        if (code === 200) {
+          ElMessage.success("密码修改成功，即将退出登录");
+          passwordDialogVisible.value = false;
+          
+          // 延迟1.5秒后退出登录，让用户看到成功提示
+          setTimeout(() => {
+            // 清除登录信息
+            removeToken();
+            // 跳转到首页
+            router.push("/home");
+          }, 1500);
+        } else {
+          // 处理特定错误码
+          if (code === 100001) {
+            ElMessage.error("原密码错误，请重新输入");
+            // 清空原密码输入框，便于用户重新输入
+            passwordForm.oldPassword = "";
+          } else {
+            ElMessage.error(msg || "密码修改失败，请稍后重试");
+          }
+        }
+      } catch (error) {
+        console.error("修改密码失败:", error);
+        // 检查是否包含特定错误信息
+        if (error.response?.data?.code === 100001 || 
+            (typeof error === 'object' && error.toString().includes("原密码新信息错误"))) {
+          ElMessage.error("原密码错误，请重新输入");
+          passwordForm.oldPassword = "";
+        } else {
+          ElMessage.error("系统错误，请稍后重试");
+        }
+      } finally {
+        passwordLoading.value = false;
+      }
+    }
+  });
+};
+
 // 组件挂载时获取最新用户信息
 onMounted(() => {
   // 可以在这里添加获取用户详情的接口调用
@@ -280,6 +435,11 @@ onMounted(() => {
       font-size: 18px;
       font-weight: 600;
       color: #333;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 10px;
     }
   }
 
