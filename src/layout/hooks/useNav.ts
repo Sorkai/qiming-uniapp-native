@@ -110,7 +110,8 @@ export function useNav() {
   }
 
   function toAccountSettings() {
-    router.push({ name: "AccountSettings" });
+    // 修改为跳转到账号管理页面
+    router.push({ name: "Account" });
   }
 
   function toggleSideBar() {
