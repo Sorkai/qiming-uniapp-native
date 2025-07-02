@@ -1926,6 +1926,7 @@ onMounted(() => {
   box-shadow: none !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  font-size: 10px;
 }
 
 /* 缩小侧边栏SVG图标尺寸 */
