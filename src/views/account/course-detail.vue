@@ -196,7 +196,7 @@
               </div>
               <div data-v-3e66491d="" class="item header-right">
                 <ul data-v-3e66491d="" class="popper-box">
-                  <li data-v-3e66491d="" class="mypopper brepopper">
+                  <!-- <li data-v-3e66491d="" class="mypopper brepopper">
                     <div
                       data-v-3e66491d=""
                       class="icon-item icon-item1 new-icon"
@@ -239,7 +239,7 @@
                         <div data-v-3e66491d="" class="tuike">退课</div>
                       </div>
                     </div>
-                  </li>
+                  </li> -->
                   <li data-v-3e66491d="" style="margin-left: 1.875vw">
                     <ul
                       data-v-3e66491d=""
@@ -260,10 +260,12 @@
                           <div data-v-3e66491d="" class="avatar-info">
                             <img
                               data-v-3e66491d=""
-                              src="https://image.zhihuishu.com/zhs/zd/avatar/202411/b901eb69b7a744b4bc784e7a45e6b69d_s3.png"
+                              :src="userAvatar"
                               alt=""
                               class="avatar"
-                            /><span data-v-3e66491d="" class="name">test</span>
+                            /><span data-v-3e66491d="" class="name">{{
+                              userNickname
+                            }}</span>
                           </div>
                           <i
                             class="el-submenu__icon-arrow el-icon-arrow-down"
@@ -1157,6 +1159,8 @@ import {
   courseAIChatStream,
   getConversationHistory
 } from "@/api/frontend/chat";
+import { storageLocal } from "@pureadmin/utils";
+import { userKey } from "@/utils/auth";
 
 import { ElMessage } from "element-plus";
 import CourseLearnIcon from "@/assets/course-icons/course-learn-new.svg?component";
@@ -1194,6 +1198,16 @@ const videoPlayer = ref(null);
 const autoPlayOnLoad = ref(false);
 const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
+
+// 获取本地存储的用户信息
+const userInfo = storageLocal().getItem(userKey) || {};
+const userAvatar = ref(
+  (userInfo as any)?.avatar ||
+    "https://image.zhihuishu.com/zhs/zd/avatar/202411/b901eb69b7a744b4bc784e7a45e6b69d_s3.png"
+);
+const userNickname = ref(
+  (userInfo as any)?.nickname || (userInfo as any)?.username || "用户"
+);
 
 // 添加AI聊天相关状态
 const conversationId = ref("");
