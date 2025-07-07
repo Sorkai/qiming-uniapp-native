@@ -247,3 +247,60 @@ export const deleteCourse = (data: { courseId: number }) => {
     { data }
   );
 };
+
+/**
+ * 新增课程的章节及课时
+ * @param data 包含课程ID和章节信息的数据对象
+ */
+export const createCourseChapter = (data: {
+  courseId: number;
+  chapter: {
+    chapterId?: number;
+    name: string;
+    hourList: Array<{
+      resourceId: number;
+      duration: number;
+      title?: string;
+      rType?: string;
+      hourId?: number;
+      fileUrl?: string;
+    }>;
+  };
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/course/create/chapter",
+    { data }
+  );
+};
+
+/**
+ * 删除章节
+ * @param data 包含课程ID和章节ID的数据对象
+ */
+export const deleteChapter = (data: {
+  courseId: number;
+  chapterId: number;
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/course/delete/chapter",
+    { data }
+  );
+};
+
+/**
+ * 删除课时
+ * @param data 包含课程ID、章节ID和课时ID的数据对象
+ */
+export const deleteHour = (data: {
+  courseId: number;
+  chapterId: number;
+  hourId: number;
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/course/delete/hour",
+    { data }
+  );
+};

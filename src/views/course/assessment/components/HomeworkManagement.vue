@@ -304,8 +304,8 @@ const fetchHomeworkList = async () => {
   try {
     const { data } = await getHomeworkList({
       pageNum: currentPage.value,
-      pageSize: pageSize.value
-      // courseId: props.courseId
+      pageSize: pageSize.value,
+      courseId: props.courseId
     });
     homeworkList.value = data.homeworkList;
     total.value = data.total;

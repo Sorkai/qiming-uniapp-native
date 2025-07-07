@@ -281,6 +281,11 @@
                 </span>
               </div>
             </div>
+            <div>
+              <el-button type="primary" @click="showAddChapterDialog">
+                新增章节
+              </el-button>
+            </div>
           </div>
 
           <el-divider />
@@ -294,6 +299,12 @@
             >
               <div class="chapter-title">
                 {{ chapter.name }}
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="confirmDeleteChapter(chapter, currentCourse)"
+                  >删除章节</el-button
+                >
               </div>
 
               <el-table
@@ -318,13 +329,21 @@
                     <el-tag size="small">{{ scope.row.rType }}</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="操作" width="120">
+                <el-table-column label="操作" width="180">
                   <template #default="scope">
                     <el-button
                       size="small"
                       type="primary"
-                      @click="previewResource(scope.row)"
+                      @click="previewResource(scope.row.fileUrl)"
                       >预览</el-button
+                    >
+                    <el-button
+                      size="small"
+                      type="danger"
+                      @click="
+                        confirmDeleteHour(scope.row, chapter, currentCourse)
+                      "
+                      >删除</el-button
                     >
                   </template>
                 </el-table-column>
@@ -561,12 +580,193 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 新增章节对话框 -->
+    <el-dialog v-model="addChapterDialogVisible" title="新增章节" width="70%">
+      <div v-loading="addChapterLoading">
+        <el-form
+          ref="newChapterFormRef"
+          :model="newChapterForm"
+          label-width="120px"
+        >
+          <el-form-item
+            label="章节名称"
+            prop="name"
+            :rules="[
+              { required: true, message: '请输入章节名称', trigger: 'blur' }
+            ]"
+          >
+            <el-input
+              v-model="newChapterForm.name"
+              placeholder="请输入章节名称"
+            />
+          </el-form-item>
+
+          <div class="form-section">
+            <div class="section-header">
+              <h3>课时列表</h3>
+              <div>
+                <el-button type="primary" @click="addHour">添加课时</el-button>
+              </div>
+            </div>
+
+            <div
+              v-if="newChapterForm.hourList.length === 0"
+              class="empty-placeholder"
+            >
+              尚未添加课时，点击"添加课时"按钮添加
+            </div>
+            <div v-else class="hour-list">
+              <el-collapse v-model="activeHours">
+                <el-collapse-item
+                  v-for="(hour, hourIndex) in newChapterForm.hourList"
+                  :key="'hour-' + hourIndex"
+                  :name="hourIndex"
+                >
+                  <template #title>
+                    <div class="hour-header">
+                      <span
+                        >{{ hour.title || "未命名课时" }}
+                        <span class="required-mark">*</span>
+                      </span>
+                      <div class="hour-title-actions">
+                        <el-button
+                          type="danger"
+                          size="small"
+                          @click.stop="removeHour(hourIndex)"
+                          >删除课时</el-button
+                        >
+                      </div>
+                    </div>
+                  </template>
+                  <div class="hour-content">
+                    <div class="hour-card">
+                      <el-row :gutter="20">
+                        <el-col :span="24">
+                          <el-form-item :label="'课时标题'">
+                            <el-input
+                              v-model="hour.title"
+                              placeholder="将使用上传的文件名"
+                              disabled
+                            />
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
+
+                      <el-row :gutter="20">
+                        <el-col :span="24">
+                          <el-form-item
+                            :label="'时长(秒)'"
+                            :prop="`hourList[${hourIndex}].duration`"
+                          >
+                            <el-input-number
+                              v-model="hour.duration"
+                              :min="0"
+                              :step="1"
+                              disabled
+                              placeholder="上传视频后自动获取"
+                            />
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
+
+                      <el-form-item
+                        :label="'课时资源'"
+                        :prop="`hourList[${hourIndex}].resourceId`"
+                        :rules="[
+                          {
+                            required: true,
+                            type: 'number',
+                            min: 1,
+                            message: '请上传视频资源',
+                            trigger: 'change'
+                          }
+                        ]"
+                      >
+                        <div class="upload-with-preview">
+                          <div v-if="hour.fileUrl" class="resource-preview">
+                            <div class="resource-info">
+                              <i class="el-icon-video-camera" />
+                              <span class="resource-name">{{
+                                hour.originalFileName ||
+                                getFileName(hour.fileUrl)
+                              }}</span>
+                            </div>
+                            <div class="resource-actions">
+                              <el-button
+                                size="small"
+                                @click="previewResource(hour.fileUrl)"
+                                >预览</el-button
+                              >
+                              <el-button
+                                size="small"
+                                type="danger"
+                                @click="
+                                  removeResource(
+                                    newChapterForm.hourList,
+                                    hourIndex
+                                  )
+                                "
+                                >移除</el-button
+                              >
+                            </div>
+                          </div>
+                          <div
+                            v-if="hour.isUploading"
+                            class="uploading-overlay"
+                          >
+                            <div class="uploading-indicator">
+                              <el-icon class="is-loading"><Loading /></el-icon>
+                              <span>上传中...</span>
+                            </div>
+                          </div>
+                          <el-upload
+                            v-if="!hour.isUploading && !hour.fileUrl"
+                            class="resource-upload"
+                            action="#"
+                            :auto-upload="false"
+                            :show-file-list="false"
+                            :accept="'.mp4,.webm,.ogg'"
+                            :on-change="
+                              file => {
+                                newChapterForm.hourList[hourIndex].isUploading =
+                                  true;
+                                handleResourceUpload(
+                                  file,
+                                  newChapterForm.hourList,
+                                  hourIndex
+                                );
+                              }
+                            "
+                          >
+                            <div class="upload-icon-container">
+                              <el-icon><Plus /></el-icon>
+                              <p class="upload-tip">点击上传课时视频</p>
+                            </div>
+                          </el-upload>
+                        </div>
+                      </el-form-item>
+                    </div>
+                  </div>
+                </el-collapse-item>
+              </el-collapse>
+            </div>
+          </div>
+        </el-form>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="addChapterDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitNewChapter">确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted, reactive } from "vue";
-import { ElMessage, ElForm } from "element-plus";
+import { ElMessage, ElMessageBox, ElForm } from "element-plus";
 import {
   getCourseList,
   getCourseHoursList,
@@ -577,9 +777,13 @@ import {
   coursesAllocation,
   getAllocationUserList,
   getStudyUserList,
-  deleteCourse
+  deleteCourse,
+  deleteChapter,
+  deleteHour,
+  createCourseChapter
 } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
+import { Plus, Loading } from "@element-plus/icons-vue";
 
 const courseFormRef = ref<InstanceType<typeof ElForm>>();
 
@@ -920,12 +1124,9 @@ const viewAttrs = async course => {
 };
 
 // 预览资源
-const previewResource = resource => {
-  if (resource.fileUrl) {
-    window.open(resource.fileUrl);
-  } else {
-    ElMessage.warning("无效的资源链接");
-  }
+const previewResource = (url: string) => {
+  if (!url) return;
+  window.open(url, "_blank");
 };
 
 // 下载附件
@@ -1161,6 +1362,207 @@ const handleDeleteCourse = async () => {
   }
 };
 
+// 删除章节
+const confirmDeleteChapter = async (chapter: any, course: any) => {
+  try {
+    const response = await deleteChapter({
+      courseId: course.courseId,
+      chapterId: chapter.chapterId
+    });
+
+    if (response.code === 200) {
+      ElMessage.success("章节删除成功");
+      // 重新获取课时列表
+      await viewHours(course);
+    } else {
+      ElMessage.error(response.msg || "删除章节失败，请稍后重试");
+    }
+  } catch (error: any) {
+    console.error("删除章节出错:", error);
+    // 处理API错误响应，显示服务器返回的错误信息
+    if (error.response && error.response.data) {
+      ElMessage.error(error.response.data.msg || "删除章节失败，请稍后重试");
+    } else {
+      ElMessage.error("删除章节失败，请稍后重试");
+    }
+  }
+};
+
+// 删除课时
+const confirmDeleteHour = async (hour: any, chapter: any, course: any) => {
+  try {
+    const response = await deleteHour({
+      courseId: course.courseId,
+      chapterId: chapter.chapterId,
+      hourId: hour.hourId
+    });
+
+    if (response.code === 200) {
+      ElMessage.success("课时删除成功");
+      // 重新获取课时列表
+      await viewHours(course);
+    } else {
+      ElMessage.error(response.msg || "删除课时失败，请稍后重试");
+    }
+  } catch (error: any) {
+    console.error("删除课时出错:", error);
+    // 处理API错误响应，显示服务器返回的错误信息
+    if (error.response && error.response.data) {
+      ElMessage.error(error.response.data.msg || "删除课时失败，请稍后重试");
+    } else {
+      ElMessage.error("删除课时失败，请稍后重试");
+    }
+  }
+};
+
+// 新增章节相关
+const addChapterDialogVisible = ref(false);
+const addChapterLoading = ref(false);
+const newChapterFormRef = ref();
+const newChapterForm = ref({
+  name: "",
+  hourList: [] as any[]
+});
+const activeHours = ref([0]); // 默认展开第一个课时
+
+// 显示新增章节对话框
+const showAddChapterDialog = () => {
+  newChapterForm.value = {
+    name: "",
+    hourList: []
+  };
+  activeHours.value = [];
+  addChapterDialogVisible.value = true;
+};
+
+// 添加课时
+const addHour = () => {
+  const newIndex = newChapterForm.value.hourList.length;
+  newChapterForm.value.hourList.push({
+    title: "",
+    resourceId: null,
+    duration: null,
+    rType: "",
+    fileUrl: "",
+    isUploading: false,
+    originalFileName: ""
+  });
+
+  // 添加课时后自动展开
+  activeHours.value.push(newIndex);
+};
+
+// 移除课时
+const removeHour = (index: number) => {
+  newChapterForm.value.hourList.splice(index, 1);
+  // 更新活动课时索引
+  activeHours.value = activeHours.value
+    .filter(i => i !== index)
+    .map(i => (i > index ? i - 1 : i));
+};
+
+// 处理资源上传
+const handleResourceUpload = async (
+  file: any,
+  hourList: any[],
+  hourIndex: number
+) => {
+  try {
+    // 模拟上传过程
+    const formData = new FormData();
+    formData.append("file", file.raw);
+
+    // TODO: 这里应该调用实际的上传API
+    // 假设上传成功后会返回以下数据
+    setTimeout(() => {
+      const result = {
+        resourceId: Math.floor(Math.random() * 10000) + 1,
+        title: file.name.split(".")[0],
+        fileUrl: URL.createObjectURL(file.raw),
+        rType: file.raw.type.split("/")[1].toUpperCase(),
+        duration: Math.floor(Math.random() * 600) + 60 // 模拟60-660秒的时长
+      };
+
+      // 更新课时信息
+      hourList[hourIndex].resourceId = result.resourceId;
+      hourList[hourIndex].title = result.title;
+      hourList[hourIndex].fileUrl = result.fileUrl;
+      hourList[hourIndex].rType = result.rType;
+      hourList[hourIndex].duration = result.duration;
+      hourList[hourIndex].originalFileName = file.name;
+      hourList[hourIndex].isUploading = false;
+    }, 1500);
+  } catch (error) {
+    console.error("上传资源失败:", error);
+    hourList[hourIndex].isUploading = false;
+    ElMessage.error("上传资源失败，请重试");
+  }
+};
+
+// 从文件URL中提取文件名
+const getFileName = (url: string) => {
+  if (!url) return "";
+  const parts = url.split("/");
+  return parts[parts.length - 1];
+};
+
+// 移除资源
+const removeResource = (hourList: any[], hourIndex: number) => {
+  hourList[hourIndex].resourceId = null;
+  hourList[hourIndex].title = "";
+  hourList[hourIndex].fileUrl = "";
+  hourList[hourIndex].rType = "";
+  hourList[hourIndex].duration = null;
+  hourList[hourIndex].originalFileName = "";
+};
+
+// 提交新章节
+const submitNewChapter = async () => {
+  // 表单验证
+  if (!newChapterFormRef.value) return;
+
+  try {
+    await newChapterFormRef.value.validate();
+
+    // 检查是否有课时
+    if (newChapterForm.value.hourList.length === 0) {
+      ElMessage.warning("请至少添加一个课时");
+      return;
+    }
+
+    addChapterLoading.value = true;
+
+    // 提交数据
+    const response = await createCourseChapter({
+      courseId: currentCourse.value.courseId,
+      chapter: {
+        name: newChapterForm.value.name,
+        hourList: newChapterForm.value.hourList
+      }
+    });
+
+    if (response.code === 200) {
+      ElMessage.success("章节添加成功");
+      addChapterDialogVisible.value = false;
+      // 重新获取课时列表
+      await viewHours(currentCourse.value);
+    } else {
+      ElMessage.error(response.msg || "添加章节失败，请稍后重试");
+    }
+  } catch (error: any) {
+    console.error("添加章节出错:", error);
+    if (error.response && error.response.data) {
+      ElMessage.error(error.response.data.msg || "添加章节失败，请稍后重试");
+    } else if (error.message) {
+      ElMessage.error(error.message);
+    } else {
+      ElMessage.error("添加章节失败，请稍后重试");
+    }
+  } finally {
+    addChapterLoading.value = false;
+  }
+};
+
 // 页面加载时获取数据
 onMounted(() => {
   fetchCourseList();
@@ -1340,7 +1742,7 @@ onMounted(() => {
 .category-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
 }
 
 // 避免每行只显示一个标签
@@ -1372,5 +1774,162 @@ onMounted(() => {
     margin: 0;
     color: #606266;
   }
+}
+
+// 章节标题样式
+.chapter-title {
+  margin-bottom: 8px;
+  padding-left: 8px;
+  border-left: 3px solid #409eff;
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// 新增章节相关样式
+.hours-list {
+  margin-top: 15px;
+}
+
+.hour-item {
+  margin-bottom: 20px;
+}
+
+.hour-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-hour-btn {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+}
+
+.form-section {
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.empty-placeholder {
+  text-align: center;
+  color: #909399;
+  padding: 20px 0;
+}
+
+.hour-list {
+  margin-top: 15px;
+}
+
+.hour-content {
+  padding: 10px;
+}
+
+.hour-card {
+  padding: 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+}
+
+.required-mark {
+  color: #f56c6c;
+  margin-left: 5px;
+}
+
+.hour-title-actions {
+  float: right;
+}
+
+/* 上传相关样式 */
+.upload-with-preview {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  background-color: #fbfdff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.resource-upload {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.upload-icon-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8c939d;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.upload-tip {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.resource-preview {
+  width: 100%;
+  display: flex;
+  padding: 10px 15px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.resource-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 70%;
+}
+
+.resource-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.uploading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.uploading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 </style>
