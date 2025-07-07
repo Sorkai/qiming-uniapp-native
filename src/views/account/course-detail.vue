@@ -1192,103 +1192,15 @@
                   本课程知识点我的情况占比
                 </h1>
                 <div
+                  ref="masteryChartRef"
                   data-v-423b05d0=""
                   class="my-point-EChart"
-                  _echarts_instance_="ec_1751862800698"
                   style="
                     user-select: none;
                     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
                     position: relative;
                   "
-                >
-                  <div
-                    style="
-                      position: relative;
-                      width: 202px;
-                      height: 195px;
-                      padding: 0px;
-                      margin: 0px;
-                      border-width: 0px;
-                      cursor: default;
-                    "
-                  >
-                    <canvas
-                      data-zr-dom-id="zr_0"
-                      width="404"
-                      height="390"
-                      style="
-                        position: absolute;
-                        left: 0px;
-                        top: 0px;
-                        width: 202px;
-                        height: 195px;
-                        user-select: none;
-                        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-                        padding: 0px;
-                        margin: 0px;
-                        border-width: 0px;
-                      "
-                    />
-                  </div>
-                  <div
-                    class=""
-                    style="
-                      position: absolute;
-                      display: block;
-                      border-style: solid;
-                      white-space: nowrap;
-                      z-index: 9999999;
-                      box-shadow: rgba(0, 0, 0, 0.2) 1px 2px 10px;
-                      transition:
-                        opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1),
-                        visibility 0.2s cubic-bezier(0.23, 1, 0.32, 1),
-                        transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-                      background-color: rgba(0, 0, 0, 0.8);
-                      border-width: 0px;
-                      border-radius: 16px;
-                      color: rgb(255, 255, 255);
-                      font: 14px / 21px sans-serif;
-                      top: 0px;
-                      left: 0px;
-                      transform: translate3d(3px, 85px, 0px);
-                      border-color: rgb(140, 229, 162);
-                      pointer-events: none;
-                      padding: 12px 16px !important;
-                      backdrop-filter: blur(20px) !important;
-                      visibility: hidden;
-                      opacity: 0;
-                    "
-                  >
-                    <div
-                      class="echar-tooltip"
-                      style="
-                        color: #fff;
-                        font-size: 16px;
-                        font-weight: 700;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 7px;
-                        justify-content: space-between;
-                      "
-                    >
-                      <div style="display: flex; align-items: center; gap: 4px">
-                        <i
-                          style="
-                            display: inline-block;
-                            width: 8px;
-                            height: 8px;
-                            border-radius: 2px;
-                            background-color: #8ce5a2;
-                          "
-                        />
-                      </div>
-                      <div>
-                        <span style="margin-right: 10px">掌握较好</span>
-                        <span>100%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                />
                 <div data-v-423b05d0="" class="custom-legend">
                   <li data-v-423b05d0="" class="item-legend">
                     <i
@@ -1464,7 +1376,7 @@
                               data-v-1cf35c08=""
                               class="line3-item3 z-line-3"
                             >
-                              安全问题是世界共同关注的焦点问题。近年来,安全问题没有减少,反而愈加复杂多变。这需要我们重视国家安全问题研究,只有加强对国家安全的认识,才能有效维护中国国家安全,做好国家安全工作,完善国家安全工作机制。当今世界局势百年未遇,机遇与挑战并存,中国必须在发展和安全两方面做好统筹之策,这是新时代党和国家的一项重要任务。总体国家安全观是党和国家关于国家安全的新思想、新理念,是习近平新时代中国特色社会主义思想的重要部分。研究总体国家安全观对推动改革发展事业、实现伟大梦想具有重要的作用。论文立足“总体安全”,对总体国家安全观进行系统归纳,提炼出逻辑严谨和结构完整的安全思想体系。首先追溯总体国家安全观的形成背景和理论渊源。分析了总体国家安全观是在全球化世界形势深刻变化、中国周边安全环境复杂多变以及国内面临的压力和挑战的背景下提出的。它继承了马克思主义的科学思维方法,回答了“怎样认识新形势下的国家安全”的问题;深化了原有的国家安全理论,形成了“总体安全”的大安全格局;借鉴了传统优秀文化中的政治思想,强化忧患意识,形成国家安全的战略思维。其次,总体国家安全观的内容体现了“总体安全”概念,明确了宗旨、地位和作用,以及构建国家安全体系的重要举措。本文试图抓住理论渊源与新理念之间的系与发展演变过程。在研究思维上,本文立足“总体安全”,整体上把握总体国家安全观;在研究路径上,采取纵向的连续性研究和横向的对比研究相结合的方法,进一步梳理习近平总体国家安全观的内涵和外延。本文认为习近平总体国家安全观的特点在于时代性、前瞻性、人民性、纲领性和整体性。习近平总体国家安全观的意义在于发展了马克思主义中国化的国家安全思想以及中国特色社会主义理论体系的理论意义;提高党领导能力和国家治理能力水平;以及开辟了人类社会国家安全新纪元。
+                              安全问题是世界共同关注的焦点问题。近年来,安全问题没有减少,反而愈加复杂多变。这需要我们重视国家安全问题研究,只有加强对国家安全的认识,才能有效维护中国国家安全,做好国家安全工作,完善国家安全工作机制。当今世界局势百年未遇,机遇与挑战并存,中国必须在发展和安全两方面做好统筹之策,这是新时代党和国家的一项重要任务。总体国家安全观是党和国家关于国家安全的新思想、新理念,是习近平新时代中国特色社会主义思想的重要部分。研究总体国家安全观对推动改革发展事业、实现伟大梦想具有重要的作用。论文立足"总体安全",对总体国家安全观进行系统归纳,提炼出逻辑严谨和结构完整的安全思想体系。首先追溯总体国家安全观的形成背景和理论渊源。分析了总体国家安全观是在全球化世界形势深刻变化、中国周边安全环境复杂多变以及国内面临的压力和挑战的背景下提出的。它继承了马克思主义的科学思维方法,回答了"怎样认识新形势下的国家安全"的问题;深化了原有的国家安全理论,形成了"总体安全"的大安全格局;借鉴了传统优秀文化中的政治思想,强化忧患意识,形成国家安全的战略思维。其次,总体国家安全观的内容体现了"总体安全"概念,明确了宗旨、地位和作用,以及构建国家安全体系的重要举措。本文试图抓住理论渊源与新理念之间的系与发展演变过程。在研究思维上,本文立足"总体安全",整体上把握总体国家安全观;在研究路径上,采取纵向的连续性研究和横向的对比研究相结合的方法,进一步梳理习近平总体国家安全观的内涵和外延。本文认为习近平总体国家安全观的特点在于时代性、前瞻性、人民性、纲领性和整体性。习近平总体国家安全观的意义在于发展了马克思主义中国化的国家安全思想以及中国特色社会主义理论体系的理论意义;提高党领导能力和国家治理能力水平;以及开辟了人类社会国家安全新纪元。
                             </div>
                             <div data-v-1cf35c08="" class="line3-item-date">
                               2024-03-15
@@ -1495,7 +1407,7 @@
                               data-v-1cf35c08=""
                               class="line3-item3 z-line-3"
                             >
-                              党的十八大以来,以习近平同志为核心的党中央统筹新时代&quot;两个大局&quot;和国家安全形势任务,提出了总体国家安全观,并不断发展完善。总体国家安全观主要通过领导论、地位论、总体论、宗旨论、道路论、体系论、防范论、科技论、法治论和共同论等内涵要义,科学、系统地回答了新时代国家安全事业的领导核心、地位作用、总体性质、立场宗旨、道路方向、布局体系、防范化解、科技支撑、法治轨道和共同安全等重大问题,形成了中国共产党对于新时代国家安全事业发展规律的认识深化和重大理论创新。总体国家安全观体现鲜明的马克思主义理论品格,具有突出的人民性、系统性、发展性和实践性,对于新时代国家安全事业发展以及世界安全格局演进,具有重大的理论和实践意义。
+                              党的十八大以来,以习近平同志为核心的党中央统筹新时代"两个大局"和国家安全形势任务,提出了总体国家安全观,并不断发展完善。总体国家安全观主要通过领导论、地位论、总体论、宗旨论、道路论、体系论、防范论、科技论、法治论和共同论等内涵要义,科学、系统地回答了新时代国家安全事业的领导核心、地位作用、总体性质、立场宗旨、道路方向、布局体系、防范化解、科技支撑、法治轨道和共同安全等重大问题,形成了中国共产党对于新时代国家安全事业发展规律的认识深化和重大理论创新。总体国家安全观体现鲜明的马克思主义理论品格,具有突出的人民性、系统性、发展性和实践性,对于新时代国家安全事业发展以及世界安全格局演进,具有重大的理论和实践意义。
                             </div>
                             <div data-v-1cf35c08="" class="line3-item-date">
                               2023-11-29
@@ -1510,7 +1422,7 @@
                       </div>
                       <div data-v-1cf35c08="" class="line3-small">定义</div>
                       <div data-v-1cf35c08="" class="line3-content">
-                        “新时代维护生态安全的途径和方法”是指在新时代背景下，为了确保生态系统的稳定和安全，所采取的各种措施和方法，包括加强生态保护、推动可持续发展、加强环境监管、提高公众环保意识等。
+                        "新时代维护生态安全的途径和方法"是指在新时代背景下，为了确保生态系统的稳定和安全，所采取的各种措施和方法，包括加强生态保护、推动可持续发展、加强环境监管、提高公众环保意识等。
                       </div>
                       <div data-v-1cf35c08="" class="line3-source-list">
                         <div data-v-1cf35c08="" class="line3-list-scroll">
@@ -1541,7 +1453,7 @@
                               class="line3-item3 z-line-3"
                             >
                               作为祖国最东、最北的省份，黑龙江生态资源独特富集，是祖国北方生态安全屏障。党的十八大以来，
-                              习近平总书记3次视察黑龙江，大小兴安岭都留下了他心系“绿色中国”的足迹。龙江青年要牢固树立“绿水青山就是金山银山、冰天雪地也是金山银山”的理念，守青山、护绿水，肩负起筑牢祖国北方生态安全屏障的青年担当。
+                              习近平总书记3次视察黑龙江，大小兴安岭都留下了他心系"绿色中国"的足迹。龙江青年要牢固树立"绿水青山就是金山银山、冰天雪地也是金山银山"的理念，守青山、护绿水，肩负起筑牢祖国北方生态安全屏障的青年担当。
                             </div>
                             <div data-v-1cf35c08="" class="line3-item-date" />
                           </div>
@@ -1735,7 +1647,7 @@
                               data-v-1cf35c08=""
                               class="line3-item3 z-line-3"
                             >
-                              农村基本经营制度是中国特色社会主义政治经济学的重要内容,深入系统地研究其科学内涵及质规定性对于坚持和完善农村基本经营制度具有重要的理论价值和现实意义。农村基本经营制度包括农地产权制度、农业经营主体和农业经营方式三大构成要素。其中,农地产权制度层面的集体所有制规定性、农业经营主体层面的家庭经营基础性和农业经营方式层面的规定性是中国农村基本经营制度的质的规定性。&quot;坚持&quot;和&quot;完善&quot;的统一,构成了中国农村基本经营制度的演变逻辑。
+                              农村基本经营制度是中国特色社会主义政治经济学的重要内容,深入系统地研究其科学内涵及质规定性对于坚持和完善农村基本经营制度具有重要的理论价值和现实意义。农村基本经营制度包括农地产权制度、农业经营主体和农业经营方式三大构成要素。其中,农地产权制度层面的集体所有制规定性、农业经营主体层面的家庭经营基础性和农业经营方式层面的规定性是中国农村基本经营制度的质的规定性。"坚持"和"完善"的统一,构成了中国农村基本经营制度的演变逻辑。
                             </div>
                             <div data-v-1cf35c08="" class="line3-item-date">
                               2023-11-30
@@ -1897,7 +1809,7 @@
                           aria-describedby="el-popover-4253"
                           tabindex="0"
                           ><span data-v-b3b486ce="" class="z-line-2"
-                            >总体国家安全观的“十个坚持”</span
+                            >总体国家安全观的"十个坚持"</span
                           ></span
                         ></span
                       ></span
@@ -1916,7 +1828,7 @@
                         <!---->
                         <div data-v-b3b486ce="" class="custom-content">
                           <strong data-v-b3b486ce="" class="name"
-                            >总体国家安全观的“五个统筹”</strong
+                            >总体国家安全观的"五个统筹"</strong
                           >
                           <div data-v-b3b486ce="" class="text">
                             掌握度：
@@ -1956,7 +1868,7 @@
                           aria-describedby="el-popover-2183"
                           tabindex="0"
                           ><span data-v-b3b486ce="" class="z-line-2"
-                            >总体国家安全观的“五个统筹”</span
+                            >总体国家安全观的"五个统筹"</span
                           ></span
                         ></span
                       ></span
@@ -2122,6 +2034,7 @@ import AddNewTalkIcon from "@/assets/course-icons/add-new-talk-icon.svg?componen
 import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
 import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-icon.svg?component";
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
+import * as echarts from "echarts";
 
 const router = useRouter();
 const route = useRoute();
@@ -2140,6 +2053,8 @@ const videoPlayer = ref(null);
 const autoPlayOnLoad = ref(false);
 const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
+const masteryChartRef = ref(null); // 添加图表引用
+let masteryChart = null; // 添加图表实例变量
 
 // 获取本地存储的用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
@@ -2312,6 +2227,17 @@ function toggleTheme() {
   });
 
   currentTheme.value = newTheme;
+
+  // 如果在掌握度页面，重新初始化图表以适应新主题
+  if (activeMenu.value === "mastery" && masteryChart) {
+    // 销毁旧图表
+    masteryChart.dispose();
+    masteryChart = null;
+    // 重新初始化
+    nextTick(() => {
+      initMasteryChart();
+    });
+  }
 }
 
 // 添加菜单切换函数
@@ -2368,6 +2294,19 @@ function handleMenuClick(menuName: string) {
       }
     }
   });
+
+  // 如果切换到掌握度页面，初始化图表
+  if (menuName === "mastery") {
+    nextTick(() => {
+      // 检查图表是否已经初始化
+      if (!masteryChart && masteryChartRef.value) {
+        initMasteryChart();
+      } else if (masteryChart) {
+        // 已初始化但可能需要刷新
+        masteryChart.resize();
+      }
+    });
+  }
 }
 
 // 已移除图谱模式，不再需要此函数
@@ -2659,13 +2598,100 @@ const initIconColors = () => {
   });
 };
 
+// 初始化掌握度圆环图表
+const initMasteryChart = () => {
+  // 确保DOM已加载
+  if (!masteryChartRef.value) return;
+
+  // 初始化echarts实例
+  masteryChart = echarts.init(masteryChartRef.value);
+
+  // 基于legend数据构建图表数据
+  const chartData = [
+    {
+      name: "掌握较好",
+      value: 100.0,
+      itemStyle: { color: "rgb(140, 229, 162)" }
+    },
+    {
+      name: "掌握一般",
+      value: 0.0,
+      itemStyle: { color: "rgb(255, 203, 102)" }
+    },
+    { name: "薄弱点", value: 0.0, itemStyle: { color: "rgb(255, 162, 162)" } },
+    { name: "遗漏点", value: 0.0, itemStyle: { color: "rgb(204, 204, 204)" } },
+    { name: "免考", value: 0.0, itemStyle: { color: "rgb(143, 208, 255)" } }
+  ];
+
+  // 过滤掉数值为0的项，以便正确显示
+  const filteredData = chartData.filter(item => item.value > 0);
+
+  // 图表配置
+  const option = {
+    tooltip: {
+      trigger: "item",
+      formatter: "{b}: {c}%",
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+      borderWidth: 0,
+      borderRadius: 16,
+      textStyle: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: 700
+      },
+      padding: [12, 16],
+      extraCssText: "backdrop-filter: blur(20px);"
+    },
+    series: [
+      {
+        name: "掌握度",
+        type: "pie",
+        radius: ["60%", "80%"], // 环形图的内外半径
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 0,
+          borderColor: "#fff",
+          borderWidth: 2
+        },
+        label: {
+          show: false
+        },
+        emphasis: {
+          scale: true,
+          scaleSize: 10
+        },
+        data:
+          filteredData.length > 0
+            ? filteredData
+            : [
+                // 如果没有数据，显示一个占位图
+                {
+                  value: 100,
+                  name: "暂无数据",
+                  itemStyle: { color: "#f0f0f0" }
+                }
+              ]
+      }
+    ]
+  };
+
+  // 应用配置
+  masteryChart.setOption(option);
+
+  // 添加窗口大小变化的自适应
+  window.addEventListener("resize", () => {
+    masteryChart?.resize();
+  });
+};
+
 onMounted(() => {
   fetchCourseDetail();
   initChat(); // 初始化AI聊天
 
-  // 等待DOM更新后初始化图标颜色
+  // 等待DOM更新后初始化图标颜色和图表
   nextTick(() => {
     initIconColors();
+    initMasteryChart(); // 初始化掌握度图表
   });
 });
 </script>
