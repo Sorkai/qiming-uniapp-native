@@ -19,9 +19,7 @@
       <el-table-column prop="questionNum" label="题目数量" width="100" />
       <el-table-column prop="totalPoints" label="总分" width="80" />
       <el-table-column prop="timeLimit" label="时间限制" width="100">
-        <template #default="scope">
-          {{ scope.row.timeLimit }} 分钟
-        </template>
+        <template #default="scope"> {{ scope.row.timeLimit }} 分钟 </template>
       </el-table-column>
       <el-table-column label="考试时间" min-width="200">
         <template #default="scope">
@@ -37,9 +35,7 @@
             @click="showQuestionDialog(scope.row)"
             >试题管理</el-button
           >
-          <el-button
-            size="small"
-            @click="showEditDialog(scope.row)"
+          <el-button size="small" @click="showEditDialog(scope.row)"
             >编辑</el-button
           >
           <el-button
@@ -73,10 +69,10 @@
     >
       <el-form
         ref="formRef"
+        v-loading="formLoading"
         :model="form"
         :rules="rules"
         label-width="100px"
-        v-loading="formLoading"
       >
         <el-form-item label="考试标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入考试标题" />
@@ -133,14 +129,17 @@
     >
       <div v-if="currentExam" class="question-dialog-header">
         <h3>{{ currentExam.title }}</h3>
-        <p>试题数量: {{ currentExam.questionNum }} | 总分: {{ currentExam.totalPoints }}</p>
+        <p>
+          试题数量: {{ currentExam.questionNum }} | 总分:
+          {{ currentExam.totalPoints }}
+        </p>
       </div>
 
-      <div class="question-operation-bar">
+      <!-- <div class="question-operation-bar">
         <el-button type="primary" @click="showAddQuestionDialog">
           <el-icon><Plus /></el-icon>添加试题
         </el-button>
-      </div>
+      </div> -->
 
       <el-table
         v-loading="questionLoading"
@@ -155,9 +154,14 @@
           </template>
         </el-table-column>
         <el-table-column prop="title" label="标题" width="150" />
-        <el-table-column prop="stem" label="题干" min-width="250" show-overflow-tooltip />
+        <el-table-column
+          prop="stem"
+          label="题干"
+          min-width="250"
+          show-overflow-tooltip
+        />
         <el-table-column prop="points" label="分值" width="80" />
-        <el-table-column prop="difficulty" label="难度" width="80">
+        <el-table-column prop="difficulty" label="难度" width="150">
           <template #default="scope">
             <el-rate
               v-model="scope.row.difficulty"
@@ -167,18 +171,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="sortOrder" label="排序" width="80" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="scope">
             <el-button
               size="small"
-              @click="editQuestion(scope.row)"
-              >编辑</el-button
-            >
-            <el-button
-              size="small"
-              type="danger"
-              @click="deleteQuestion(scope.row)"
-              >删除</el-button
+              type="primary"
+              @click="viewQuestionDetail(scope.row)"
+              >查看</el-button
             >
           </template>
         </el-table-column>
@@ -197,7 +196,58 @@
       </div>
     </el-dialog>
 
-    <!-- 这里可以添加试题相关的对话框，但由于复杂度较高，可以后续实现 -->
+    <!-- 查看试题详情弹窗 -->
+    <el-dialog v-model="detailDialogVisible" title="试题详情" width="70%">
+      <div v-if="currentQuestion" class="question-detail">
+        <el-descriptions border :column="1" size="default">
+          <el-descriptions-item label="题型">
+            {{ getQuestionTypeName(currentQuestion.questionType) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="标题">
+            {{ currentQuestion.title }}
+          </el-descriptions-item>
+          <el-descriptions-item label="题干">
+            {{ currentQuestion.stem }}
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="currentQuestion.options && currentQuestion.options !== 'null'"
+            label="选项"
+          >
+            <div
+              v-for="(option, index) in parseOptions(currentQuestion.options)"
+              :key="index"
+              class="option-item"
+            >
+              {{ getOptionLabel(index) }}: {{ option }}
+            </div>
+          </el-descriptions-item>
+          <el-descriptions-item label="正确答案">
+            <div v-if="isMultipleChoice(currentQuestion)">
+              {{ formatMultipleAnswers(currentQuestion.correctAnswer) }}
+            </div>
+            <div v-else>
+              {{ currentQuestion.correctAnswer }}
+            </div>
+          </el-descriptions-item>
+          <el-descriptions-item label="分析">
+            <div class="analysis-content">{{ currentQuestion.analysis }}</div>
+          </el-descriptions-item>
+          <el-descriptions-item label="分值">
+            {{ currentQuestion.points }}
+          </el-descriptions-item>
+          <el-descriptions-item label="难度">
+            <el-rate
+              v-model="currentQuestion.difficulty"
+              disabled
+              text-color="#ff9900"
+            />
+          </el-descriptions-item>
+          <el-descriptions-item label="排序">
+            {{ currentQuestion.sortOrder }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -205,12 +255,12 @@
 import { ref, watch, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
-import { 
-  getExamList, 
-  getExamQuestionList, 
-  createExam, 
-  updateExam, 
-  deleteExam 
+import {
+  getExamList,
+  getExamQuestionList,
+  createExam,
+  updateExam,
+  deleteExam
 } from "@/api/exam";
 
 const props = defineProps({
@@ -258,10 +308,14 @@ const questionCurrentPage = ref(1);
 const questionPageSize = ref(10);
 const questionTotal = ref(0);
 
+// 试题详情相关
+const detailDialogVisible = ref(false);
+const currentQuestion = ref(null);
+
 // 监听课程ID变化，重新加载数据
 watch(
   () => props.courseId,
-  (newVal) => {
+  newVal => {
     if (newVal) {
       currentPage.value = 1;
       fetchExamList();
@@ -275,7 +329,7 @@ watch(
 // 获取考试列表
 const fetchExamList = async () => {
   if (!props.courseId) return;
-  
+
   loading.value = true;
   try {
     const { data } = await getExamList({
@@ -319,7 +373,7 @@ const showCreateDialog = () => {
 };
 
 // 显示编辑对话框
-const showEditDialog = (row) => {
+const showEditDialog = row => {
   isEdit.value = true;
   form.value = {
     examId: row.examId,
@@ -335,8 +389,8 @@ const showEditDialog = (row) => {
 // 提交表单
 const submitForm = async () => {
   if (!formRef.value) return;
-  
-  await formRef.value.validate(async (valid) => {
+
+  await formRef.value.validate(async valid => {
     if (valid) {
       formLoading.value = true;
       try {
@@ -375,7 +429,7 @@ const submitForm = async () => {
 };
 
 // 确认删除
-const confirmDelete = (row) => {
+const confirmDelete = row => {
   ElMessageBox.confirm(`确定要删除考试 "${row.title}" 吗？`, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -395,7 +449,7 @@ const confirmDelete = (row) => {
 };
 
 // 显示试题管理对话框
-const showQuestionDialog = async (row) => {
+const showQuestionDialog = async row => {
   currentExam.value = row;
   questionDialogVisible.value = true;
   questionCurrentPage.value = 1;
@@ -405,7 +459,7 @@ const showQuestionDialog = async (row) => {
 // 获取试题列表
 const fetchQuestionList = async () => {
   if (!currentExam.value) return;
-  
+
   questionLoading.value = true;
   try {
     const { data } = await getExamQuestionList({
@@ -441,13 +495,13 @@ const showAddQuestionDialog = () => {
 };
 
 // 编辑试题
-const editQuestion = (row) => {
+const editQuestion = row => {
   // 这里可以实现编辑试题的逻辑
   ElMessage.info("编辑试题功能待实现");
 };
 
 // 删除试题
-const deleteQuestion = (row) => {
+const deleteQuestion = row => {
   // 这里可以实现删除试题的逻辑
   ElMessage.info("删除试题功能待实现");
 };
@@ -463,6 +517,46 @@ const getQuestionTypeName = (type: number) => {
     6: "论述题"
   };
   return typeMap[type] || "未知题型";
+};
+
+// 查看试题详情
+const viewQuestionDetail = question => {
+  currentQuestion.value = question;
+  detailDialogVisible.value = true;
+};
+
+// 解析选项字符串
+const parseOptions = optionsStr => {
+  try {
+    if (!optionsStr || optionsStr === "null") return [];
+    return JSON.parse(optionsStr);
+  } catch (e) {
+    console.error("解析选项出错", e);
+    return [];
+  }
+};
+
+// 获取选项标签 (A, B, C...)
+const getOptionLabel = index => {
+  return String.fromCharCode(65 + index); // 65 是 ASCII 码中 'A' 的值
+};
+
+// 判断是否为多选题
+const isMultipleChoice = question => {
+  return question.questionType === 2;
+};
+
+// 格式化多选题答案
+const formatMultipleAnswers = answerStr => {
+  try {
+    const answers = JSON.parse(answerStr);
+    if (Array.isArray(answers)) {
+      return answers.join(", ");
+    }
+    return answerStr;
+  } catch (e) {
+    return answerStr;
+  }
 };
 
 // 页面加载时获取数据
@@ -505,4 +599,15 @@ onMounted(() => {
 .question-operation-bar {
   margin-bottom: 20px;
 }
-</style> 
+
+.question-detail {
+  .option-item {
+    margin-bottom: 8px;
+  }
+
+  .analysis-content {
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+}
+</style>
