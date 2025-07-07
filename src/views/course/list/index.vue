@@ -133,6 +133,14 @@
                   >学习情况</el-button
                 >
               </div>
+              <div class="button-row">
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="confirmDelete(scope.row)"
+                  >删除</el-button
+                >
+              </div>
             </div>
           </template>
         </el-table-column>
@@ -533,6 +541,26 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 删除课程确认对话框 -->
+    <el-dialog
+      v-model="deleteConfirmVisible"
+      title="确认删除"
+      width="30%"
+      center
+    >
+      <span
+        >确定要删除课程 "{{ currentCourse?.title }}" 吗？此操作不可恢复！</span
+      >
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="deleteConfirmVisible = false">取消</el-button>
+          <el-button type="danger" @click="handleDeleteCourse"
+            >确定删除</el-button
+          >
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -548,7 +576,8 @@ import {
   updateCourse,
   coursesAllocation,
   getAllocationUserList,
-  getStudyUserList
+  getStudyUserList,
+  deleteCourse
 } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
 
@@ -1092,6 +1121,44 @@ const calculateProgress = (finished: number, total: number) => {
 // 格式化百分比显示
 const percentageFormat = (percentage: number) => {
   return `${percentage}%`;
+};
+
+// 删除课程确认对话框
+const deleteConfirmVisible = ref(false);
+
+// 打开删除确认对话框
+const confirmDelete = (row: any) => {
+  currentCourse.value = row;
+  deleteConfirmVisible.value = true;
+};
+
+// 处理删除课程
+const handleDeleteCourse = async () => {
+  try {
+    loading.value = true;
+    const response = await deleteCourse({
+      courseId: currentCourse.value.courseId
+    });
+
+    if (response.code === 200) {
+      ElMessage.success("课程删除成功");
+      deleteConfirmVisible.value = false;
+      // 重新获取课程列表
+      fetchCourseList();
+    } else {
+      ElMessage.error(response.msg || "删除失败，请稍后重试");
+    }
+  } catch (error: any) {
+    console.error("删除课程出错:", error);
+    // 处理API错误响应，显示服务器返回的错误信息
+    if (error.response && error.response.data) {
+      ElMessage.error(error.response.data.msg || "删除失败，请稍后重试");
+    } else {
+      ElMessage.error("删除失败，请稍后重试");
+    }
+  } finally {
+    loading.value = false;
+  }
 };
 
 // 页面加载时获取数据

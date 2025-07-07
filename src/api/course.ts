@@ -235,3 +235,15 @@ export const getStudyUserList = (params: {
     { params }
   );
 };
+
+/**
+ * 删除课程
+ * @param data 包含课程ID的数据对象
+ */
+export const deleteCourse = (data: { courseId: number }) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/course/delete",
+    { data }
+  );
+};
