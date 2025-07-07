@@ -127,17 +127,11 @@ export function getConversationHistory(conversationId: string) {
   const token = getToken();
   const authHeader = token ? formatToken(token.accessToken) : "";
 
-  // 直接使用URLSearchParams格式化数据，而不是JSON
-  const params = new URLSearchParams();
-  params.append("conversation_id", conversationId);
-
-  // 使用axios原生方法
+  // 使用axios发送GET请求
   return axios({
-    method: "post",
-    url: "http://82.156.135.40:1004/edu/frontend/v1/ai/get/conversations",
-    data: params,
+    method: "get",
+    url: `http://82.156.135.40:1004/edu/frontend/v1/ai/get/conversations?conversation_id=${conversationId}`,
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
       Authorization: authHeader,
       "X-Requested-With": "XMLHttpRequest"
     }

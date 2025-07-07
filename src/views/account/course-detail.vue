@@ -2425,8 +2425,14 @@ const loadChatHistory = async () => {
   try {
     const response = await getConversationHistory(conversationId.value);
     console.log("聊天历史响应:", response);
-    if (response && response.history && Array.isArray(response.history)) {
-      chatMessages.value = response.history;
+    // 从响应中提取正确的历史记录路径：data.data.history
+    if (
+      response &&
+      response.code === 200 &&
+      response.data &&
+      response.data.history
+    ) {
+      chatMessages.value = response.data.history;
       // 滚动到底部
       nextTick(() => {
         scrollToBottom();
