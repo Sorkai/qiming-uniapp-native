@@ -117,7 +117,7 @@
             <div data-v-1139a0f7="" class="side-name">成绩</div>
           </div>
         </div>
-        <div data-v-8289e326="" class="line" />
+        <!-- <div data-v-8289e326="" class="line" />
         <div
           data-v-8289e326=""
           class="el-tooltip item"
@@ -135,7 +135,7 @@
             <AiDocQaIcon data-v-1139a0f7="" />
             <div data-v-1139a0f7="" class="side-name">AI文档问答</div>
           </div>
-        </div>
+        </div> -->
         <div data-v-8289e326="" class="line" />
       </div>
       <div data-v-2cf49992="" class="layout-inner-content">
