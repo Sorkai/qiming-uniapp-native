@@ -143,7 +143,7 @@ export interface ApiResponse<T = any> {
 export const getExamDetail = (data: ExamDetailParams) => {
   return http.request<ApiResponse<ExamDetailResult>>(
     "post",
-    "/api/frontend/work/getExamDetail",
+    "/edu/frontend/v1/work/getExamDetail",
     { data }
   );
 };
@@ -154,7 +154,7 @@ export const getExamDetail = (data: ExamDetailParams) => {
 export const submitExamAnswers = (data: SubmitExamAnswersParams) => {
   return http.request<ApiResponse<ExamAnswerResult>>(
     "post",
-    "/api/frontend/work/submitExamAnswers",
+    "/edu/frontend/v1/work/submitExamAnswers",
     { data }
   );
 };
@@ -165,7 +165,7 @@ export const submitExamAnswers = (data: SubmitExamAnswersParams) => {
 export const getHomeworkDetail = (data: HomeworkDetailParams) => {
   return http.request<ApiResponse<HomeworkDetailResult>>(
     "post",
-    "/api/frontend/work/getHomeworkDetail",
+    "/edu/frontend/v1/work/getHomeworkDetail",
     { data }
   );
 };
@@ -176,7 +176,7 @@ export const getHomeworkDetail = (data: HomeworkDetailParams) => {
 export const submitHomeworkAnswers = (data: SubmitHomeworkAnswersParams) => {
   return http.request<ApiResponse<HomeworkAnswerResult>>(
     "post",
-    "/api/frontend/work/submitHomeworkAnswers",
+    "/edu/frontend/v1/work/submitHomeworkAnswers",
     { data }
   );
 };
@@ -187,7 +187,7 @@ export const submitHomeworkAnswers = (data: SubmitHomeworkAnswersParams) => {
 export const getUserCourseExamList = (data: { courseId: number }) => {
   return http.request<ApiResponse<CourseExamListResult[]>>(
     "post",
-    "/api/frontend/work/getUserCourseExamList",
+    "/edu/frontend/v1/work/getUserCourseExamList",
     { data }
   );
 };
@@ -198,7 +198,7 @@ export const getUserCourseExamList = (data: { courseId: number }) => {
 export const getUserCourseHomeworkList = (data: { courseId: number }) => {
   return http.request<ApiResponse<CourseHomeworkListResult[]>>(
     "post",
-    "/api/frontend/work/getUserCourseHomeworkList",
+    "/edu/frontend/v1/work/getUserCourseHomeworkList",
     { data }
   );
 };
@@ -209,7 +209,7 @@ export const getUserCourseHomeworkList = (data: { courseId: number }) => {
 export const getUserWrongQuestionList = (data: WrongQuestionListParams) => {
   return http.request<ApiResponse<WrongQuestionListResult>>(
     "post",
-    "/api/frontend/work/getUserWrongQuestionList",
+    "/edu/frontend/v1/work/getUserWrongQuestionList",
     { data }
   );
 }; 

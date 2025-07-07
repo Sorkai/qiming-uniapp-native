@@ -139,6 +139,160 @@
         <div data-v-8289e326="" class="line" />
       </div>
       <div data-v-2cf49992="" class="layout-inner-content">
+        <!-- 课程资料 -->
+        <div
+          v-show="activeMenu === 'course-materials'"
+          data-v-2cf49992=""
+          class="course-materials-wrapper"
+          :class="currentTheme"
+        >
+          <!-- 头部 -->
+          <div
+            data-v-3e66491d=""
+            data-v-cebc91e2=""
+            class="layout-header"
+            :class="currentTheme"
+            isatlas="1"
+            style="z-index: 10"
+          >
+            <div
+              id="header-content-layout only-filter"
+              data-v-3e66491d=""
+              class="header-content"
+            >
+              <div data-v-3e66491d="" class="item header-left">
+                <div
+                  data-v-3e66491d=""
+                  class="item header-back"
+                  @click="goBack"
+                >
+                  <i data-v-3e66491d="" />
+                </div>
+                <span data-v-3e66491d="" class="current-time">{{
+                  currentDate
+                }}</span>
+                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
+                  <ThemeSunIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                  />
+                  <ThemeMoonIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                  />
+                </div>
+              </div>
+              <div data-v-3e66491d="" class="item header-center">
+                <div
+                  data-v-cebc91e2=""
+                  data-v-3e66491d=""
+                  class="study-mode custom-mode"
+                >
+                  <div
+                    data-v-cebc91e2=""
+                    data-v-3e66491d=""
+                    data-name="0"
+                    class="mode-item active"
+                    style="margin: 0 auto"
+                  >
+                    课程资料
+                  </div>
+                </div>
+              </div>
+              <div data-v-3e66491d="" class="item header-right">
+                <ul data-v-3e66491d="" class="popper-box">
+                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
+                    <ul
+                      data-v-3e66491d=""
+                      role="menubar"
+                      class="fu-header-users el-menu--horizontal el-menu"
+                    >
+                      <li
+                        data-v-3e66491d=""
+                        role="menuitem"
+                        aria-haspopup="true"
+                        class="el-submenu"
+                        tabindex="0"
+                      >
+                        <div
+                          class="el-submenu__title"
+                          style="border-bottom-color: transparent"
+                        >
+                          <div data-v-3e66491d="" class="avatar-info">
+                            <img
+                              data-v-3e66491d=""
+                              :src="userAvatar"
+                              alt=""
+                              class="avatar"
+                            />
+                            <span data-v-3e66491d="" class="name">{{
+                              userNickname
+                            }}</span>
+                          </div>
+                          <i
+                            class="el-submenu__icon-arrow el-icon-arrow-down"
+                          />
+                        </div>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- 内容 -->
+          <div class="materials-container" :class="currentTheme">
+            <div
+              v-if="courseAttrList && courseAttrList.length > 0"
+              class="materials-list"
+            >
+              <div
+                v-for="(item, index) in courseAttrList"
+                :key="index"
+                class="material-item"
+                :class="{ dark: currentTheme === 'dark' }"
+                @click="viewMaterial(item)"
+              >
+                <div class="material-icon">
+                  <img
+                    v-if="item.rType === 'IMAGE'"
+                    src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
+                    alt="图片"
+                  />
+                  <img
+                    v-else-if="item.rType === 'VIDEO'"
+                    src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
+                    alt="视频"
+                  />
+                  <img
+                    v-else-if="item.rType === 'DOCUMENT'"
+                    src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
+                    alt="文档"
+                  />
+                  <img
+                    v-else
+                    src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
+                    alt="资源"
+                  />
+                </div>
+                <div class="material-info">
+                  <div class="material-title">{{ item.title }}</div>
+                  <div class="material-type">
+                    {{ getMaterialTypeName(item.rType) }}
+                  </div>
+                </div>
+                <div class="material-action">
+                  <el-button size="small" type="primary">查看</el-button>
+                </div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无课程资料" />
+          </div>
+        </div>
+
         <!-- 课程学习 -->
         <div
           v-show="activeMenu == 'course-learn'"
@@ -2045,6 +2199,7 @@ const currentTheme = ref("light");
 const activeMenu = ref("course-learn");
 const isContentCollapsed = ref(false);
 const activeResourceTab = ref("required");
+const courseAttrList = ref([]); // 课程资料列表
 // 移除了图谱模式，所以不再需要activeMode变量
 // const activeMode = ref("0");
 const activeNode = ref("1.1");
@@ -2113,6 +2268,11 @@ const fetchCourseDetail = async () => {
       courseDetail.value = data;
       console.log("课程详情数据:", data);
 
+      // 加载课程资料数据
+      if (data.courseAttrList) {
+        courseAttrList.value = data.courseAttrList;
+      }
+
       // 默认加载第一个章节的第一个课时视频
       if (data.courseChapterList && data.courseChapterList.length > 0) {
         const firstChapter = data.courseChapterList[0];
@@ -2138,6 +2298,25 @@ const fetchCourseDetail = async () => {
 // 添加资源标签切换函数
 const handleResourceTabClick = (tab: string) => {
   activeResourceTab.value = tab;
+};
+
+// 获取课程资料类型名称
+const getMaterialTypeName = (type: string) => {
+  const typeMap: Record<string, string> = {
+    IMAGE: "图片",
+    VIDEO: "视频",
+    DOCUMENT: "文档",
+    PDF: "PDF文档",
+    AUDIO: "音频"
+  };
+  return typeMap[type] || "其他资源";
+};
+
+// 查看课程资料
+const viewMaterial = (material: any) => {
+  if (material && material.fileUrl) {
+    window.open(material.fileUrl, "_blank");
+  }
 };
 
 // 添加折叠处理函数
@@ -2916,5 +3095,123 @@ onMounted(() => {
 }
 .mastery-page-content {
   height: 100vh;
+}
+
+/* 课程资料相关样式 */
+.course-materials-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background-color: #f5f7fa; /* 默认浅色背景 */
+}
+
+.course-materials-wrapper.dark {
+  background-color: #1e1e1e;
+}
+
+.materials-container {
+  padding: 80px 20px 20px;
+  width: 100%;
+  height: calc(100vh - 125px);
+  overflow-y: auto;
+  background-color: #f5f7fa; /* 默认浅色背景 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.materials-container.dark {
+  background-color: #1e1e1e;
+}
+
+.materials-container.light {
+  background-color: #f5f7fa;
+}
+
+.materials-title {
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.materials-list {
+  display: grid;
+  gap: 20px;
+  width: 90%;
+  max-width: 1400px;
+}
+
+.material-item {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: #fff;
+  transition: all 0.3s;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+.material-item.dark {
+  background-color: #252525;
+  border-color: #3e3e3e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.material-item:hover {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.material-item.dark:hover {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+}
+
+.material-icon {
+  flex-shrink: 0;
+  margin-right: 15px;
+}
+
+.material-icon img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.material-info {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.material-info .material-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: #303133;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.material-item.dark .material-info .material-title {
+  color: #e0e0e0;
+}
+
+.material-info .material-type {
+  font-size: 12px;
+  color: #909399;
+}
+
+.material-item.dark .material-info .material-type {
+  color: #aaa;
+}
+
+.material-action {
+  flex-shrink: 0;
+  margin-left: 10px;
 }
 </style>
