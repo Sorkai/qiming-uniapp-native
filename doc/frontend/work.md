@@ -2,9 +2,9 @@
 
 ## 1. 获取考试详情
 
-**接口地址**：`/api/frontend/work/getExamDetail`
+**接口地址**：`/edu/frontend/v1/exam/detail `
 
-**请求方式**：POST
+**请求方式**：GET
 
 **请求参数**：
 
@@ -40,7 +40,7 @@
 
 ## 2. 提交考试答案
 
-**接口地址**：`/api/frontend/work/submitExamAnswers`
+**接口地址**：`/edu/frontend/v1/exam/submit`
 
 **请求方式**：POST
 
@@ -66,9 +66,9 @@
 
 ## 3. 获取作业详情
 
-**接口地址**：`/api/frontend/work/getHomeworkDetail`
+**接口地址**：`/edu/frontend/v1/homework/detail`
 
-**请求方式**：POST
+**请求方式**：GET
 
 **请求参数**：
 
@@ -102,7 +102,7 @@
 
 ## 4. 提交作业答案
 
-**接口地址**：`/api/frontend/work/submitHomeworkAnswers`
+**接口地址**：`/edu/frontend/v1/homework/submit`
 
 **请求方式**：POST
 
@@ -128,9 +128,9 @@
 
 ## 5. 获取用户课程考试列表
 
-**接口地址**：`/api/frontend/work/getUserCourseExamList`
+**接口地址**：`/edu/frontend/v1/course/exam/list`
 
-**请求方式**：POST
+**请求方式**：GET
 
 **请求参数**：
 
@@ -158,9 +158,9 @@
 
 ## 6. 获取用户课程作业列表
 
-**接口地址**：`/api/frontend/work/getUserCourseHomeworkList`
+**接口地址**：`/edu/frontend/v1/course/homework/list`
 
-**请求方式**：POST
+**请求方式**：GET
 
 **请求参数**：
 
@@ -186,9 +186,9 @@
 
 ## 7. 获取用户错题列表
 
-**接口地址**：`/api/frontend/work/getUserWrongQuestionList`
+**接口地址**：`/edu/frontend/v1/wrong/question/list`
 
-**请求方式**：POST
+**请求方式**：GET
 
 **请求参数**：
 

@@ -84,24 +84,24 @@ export interface CourseExamListResult {
   examId: number;
   title: string;
   description: string;
-  questionCount: number;
-  totalScore: number;
+  questionNum: number;
+  totalPoints: number;
   timeLimit: number;
-  startTime: string;
-  endTime: string;
-  status: number; // 1：未开始，2：进行中，3：已完成，4：已过期
-  score?: number; // 仅当status=3时有值
+  availableFrom: string;
+  availableTo: string;
+  status: number;
+  score: number;
 }
 
 export interface CourseHomeworkListResult {
   homeworkId: number;
   title: string;
   description: string;
-  questionCount: number;
-  totalScore: number;
-  deadline: string;
-  status: number; // 1：未开始，2：进行中，3：已完成，4：已过期
-  score?: number; // 仅当status=3时有值
+  questionNum: number;
+  totalPoints: number;
+  dueDate: string;
+  status: number;
+  score: number;
 }
 
 export interface WrongQuestionListParams {
@@ -134,17 +134,17 @@ export interface WrongQuestionListResult {
 export interface ApiResponse<T = any> {
   code: number;
   msg: string;
-  data: T;
+  data: T | { list?: T[] };
 }
 
 /**
  * 获取考试详情
  */
-export const getExamDetail = (data: ExamDetailParams) => {
+export const getExamDetail = (params: ExamDetailParams) => {
   return http.request<ApiResponse<ExamDetailResult>>(
-    "post",
-    "/edu/frontend/v1/work/getExamDetail",
-    { data }
+    "get",
+    "/edu/frontend/v1/exam/detail",
+    { params }
   );
 };
 
@@ -154,7 +154,7 @@ export const getExamDetail = (data: ExamDetailParams) => {
 export const submitExamAnswers = (data: SubmitExamAnswersParams) => {
   return http.request<ApiResponse<ExamAnswerResult>>(
     "post",
-    "/edu/frontend/v1/work/submitExamAnswers",
+    "/edu/frontend/v1/exam/submit",
     { data }
   );
 };
@@ -162,11 +162,11 @@ export const submitExamAnswers = (data: SubmitExamAnswersParams) => {
 /**
  * 获取作业详情
  */
-export const getHomeworkDetail = (data: HomeworkDetailParams) => {
+export const getHomeworkDetail = (params: HomeworkDetailParams) => {
   return http.request<ApiResponse<HomeworkDetailResult>>(
-    "post",
-    "/edu/frontend/v1/work/getHomeworkDetail",
-    { data }
+    "get",
+    "/edu/frontend/v1/homework/detail",
+    { params }
   );
 };
 
@@ -176,7 +176,7 @@ export const getHomeworkDetail = (data: HomeworkDetailParams) => {
 export const submitHomeworkAnswers = (data: SubmitHomeworkAnswersParams) => {
   return http.request<ApiResponse<HomeworkAnswerResult>>(
     "post",
-    "/edu/frontend/v1/work/submitHomeworkAnswers",
+    "/edu/frontend/v1/homework/submit",
     { data }
   );
 };
@@ -184,32 +184,32 @@ export const submitHomeworkAnswers = (data: SubmitHomeworkAnswersParams) => {
 /**
  * 获取用户课程考试列表
  */
-export const getUserCourseExamList = (data: { courseId: number }) => {
+export const getUserCourseExamList = (params: { courseId: number }) => {
   return http.request<ApiResponse<CourseExamListResult[]>>(
-    "post",
-    "/edu/frontend/v1/work/getUserCourseExamList",
-    { data }
+    "get",
+    "/edu/frontend/v1/course/exam/list",
+    { params }
   );
 };
 
 /**
  * 获取用户课程作业列表
  */
-export const getUserCourseHomeworkList = (data: { courseId: number }) => {
+export const getUserCourseHomeworkList = (params: { courseId: number }) => {
   return http.request<ApiResponse<CourseHomeworkListResult[]>>(
-    "post",
-    "/edu/frontend/v1/work/getUserCourseHomeworkList",
-    { data }
+    "get",
+    "/edu/frontend/v1/course/homework/list",
+    { params }
   );
 };
 
 /**
  * 获取用户错题列表
  */
-export const getUserWrongQuestionList = (data: WrongQuestionListParams) => {
+export const getUserWrongQuestionList = (params: WrongQuestionListParams) => {
   return http.request<ApiResponse<WrongQuestionListResult>>(
-    "post",
-    "/edu/frontend/v1/work/getUserWrongQuestionList",
-    { data }
+    "get",
+    "/edu/frontend/v1/wrong/question/list",
+    { params }
   );
-}; 
+};

@@ -78,5 +78,25 @@ export default [
       showLink: false,
       rank: 106
     }
+  },
+  {
+    path: "/account/homework-detail",
+    name: "HomeworkDetail",
+    component: () => import("@/views/account/homework-detail.vue"),
+    meta: {
+      title: "作业详情",
+      showLink: false,
+      rank: 107
+    }
+  },
+  {
+    path: "/account/exam-detail",
+    name: "ExamDetail",
+    component: () => import("@/views/account/exam-detail.vue"),
+    meta: {
+      title: "考试详情",
+      showLink: false,
+      rank: 108
+    }
   }
 ] satisfies Array<RouteConfigsTable>;
