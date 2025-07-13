@@ -2730,6 +2730,13 @@ function toggleTheme() {
 function handleMenuClick(menuName: string) {
   activeMenu.value = menuName;
 
+  // 如果视频正在播放且切换到了非课程学习菜单，则暂停视频
+  if (menuName !== "course-learn" && videoPlayer.value) {
+    if (!videoPlayer.value.paused) {
+      videoPlayer.value.pause();
+    }
+  }
+
   // 当切换到作业考试菜单时，加载作业和考试数据
   if (menuName === "homework-exam") {
     fetchHomeworkList();
