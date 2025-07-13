@@ -25,63 +25,63 @@ const isAdminUser = ref(isAdmin());
     <el-row :gutter="24" justify="space-around">
       <!-- 只有管理员才能看到这两个图表 -->
       <template v-if="isAdminUser">
-        <re-col
-          v-motion
-          class="mb-[18px]"
+      <re-col
+        v-motion
+        class="mb-[18px]"
           :value="12"
           :md="12"
           :sm="24"
-          :xs="24"
-          :initial="{
-            opacity: 0,
-            y: 100
-          }"
-          :enter="{
-            opacity: 1,
-            y: 0,
-            transition: {
+        :xs="24"
+        :initial="{
+          opacity: 0,
+          y: 100
+        }"
+        :enter="{
+          opacity: 1,
+          y: 0,
+          transition: {
               delay: 100
-            }
-          }"
-        >
-          <el-card shadow="never">
+          }
+        }"
+      >
+        <el-card shadow="never">
             <template #header>
-              <div class="flex justify-between">
+          <div class="flex justify-between">
                 <span class="text-md font-medium">最近7天使用情况</span>
-              </div>
+          </div>
             </template>
             <TeacherStudentUsage />
-          </el-card>
-        </re-col>
-        
-        <re-col
-          v-motion
-          class="mb-[18px]"
+        </el-card>
+      </re-col>
+
+      <re-col
+        v-motion
+        class="mb-[18px]"
           :value="12"
           :md="12"
           :sm="24"
-          :xs="24"
-          :initial="{
-            opacity: 0,
-            y: 100
-          }"
-          :enter="{
-            opacity: 1,
-            y: 0,
-            transition: {
+        :xs="24"
+        :initial="{
+          opacity: 0,
+          y: 100
+        }"
+        :enter="{
+          opacity: 1,
+          y: 0,
+          transition: {
               delay: 150
-            }
-          }"
-        >
+          }
+        }"
+      >
           <el-card shadow="never">
             <template #header>
-              <div class="flex justify-between">
+          <div class="flex justify-between">
                 <span class="text-md font-medium">一周内使用总情况</span>
-              </div>
+          </div>
             </template>
             <WeekUsage />
-          </el-card>
-        </re-col>
+        </el-card>
+      </re-col>
       </template>
 
       <!-- 所有用户(包括教师)都可以看到课程统计 -->
@@ -106,9 +106,9 @@ const isAdminUser = ref(isAdmin());
       >
         <el-card shadow="never">
           <template #header>
-            <div class="flex justify-between">
+          <div class="flex justify-between">
               <span class="text-md font-medium">课程统计</span>
-            </div>
+          </div>
           </template>
           <CourseStatistics />
         </el-card>

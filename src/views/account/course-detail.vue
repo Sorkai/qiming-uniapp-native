@@ -462,8 +462,12 @@
                         <span>题目数量: {{ item.questionNum }}</span>
                         <span>总分: {{ item.totalPoints }}</span>
                         <span>时间限制: {{ item.timeLimit }}分钟</span>
-                        <span>开始时间: {{ formatDate(item.availableFrom) }}</span>
-                        <span>结束时间: {{ formatDate(item.availableTo) }}</span>
+                        <span
+                          >开始时间: {{ formatDate(item.availableFrom) }}</span
+                        >
+                        <span
+                          >结束时间: {{ formatDate(item.availableTo) }}</span
+                        >
                       </div>
                     </div>
                     <div class="exam-status">
@@ -1494,6 +1498,7 @@
             </div>
           </div>
         </div>
+
         <!-- 掌握度 -->
         <div
           v-show="activeMenu == 'mastery'"
@@ -2343,6 +2348,229 @@
             </div>
           </div>
         </div>
+
+        <!-- 课程问答页面 -->
+        <div
+          v-show="activeMenu === 'course-qa'"
+          data-v-2cf49992=""
+          class="course-qa-wrapper"
+          :class="currentTheme"
+        >
+          <!-- 头部 -->
+          <div
+            data-v-3e66491d=""
+            data-v-cebc91e2=""
+            class="layout-header"
+            :class="currentTheme"
+            isatlas="1"
+            style="z-index: 10"
+          >
+            <div
+              id="header-content-layout only-filter"
+              data-v-3e66491d=""
+              class="header-content"
+            >
+              <div data-v-3e66491d="" class="item header-left">
+                <div
+                  data-v-3e66491d=""
+                  class="item header-back"
+                  @click="goBack"
+                >
+                  <i data-v-3e66491d="" />
+                </div>
+                <span data-v-3e66491d="" class="current-time">{{
+                  currentDate
+                }}</span>
+                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
+                  <ThemeSunIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                  />
+                  <ThemeMoonIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 课程问答内容 -->
+          <div class="course-qa-container" :class="currentTheme">
+            <!-- 两列布局 -->
+            <div class="qa-content-layout">
+              <!-- 左侧区域 - 统计和历史 -->
+              <div class="qa-content-left">
+                <div class="left-scroll">
+                  <!-- 统计数据 -->
+                  <ul class="qa-data-ul">
+                    <li>
+                      <span class="text">累计提问</span>
+                      <span class="num">{{ qaStats.totalQuestions || 0 }}</span>
+                    </li>
+                    <li>
+                      <span class="text">已解决问题</span>
+                      <span class="num">{{
+                        qaStats.solvedQuestions || 0
+                      }}</span>
+                    </li>
+                    <li>
+                      <span class="text">解答率</span>
+                      <span class="num">{{ qaStats.solveRate || "0%" }}</span>
+                    </li>
+                    <li>
+                      <span class="text">平均响应时间</span>
+                      <span class="num">{{
+                        qaStats.avgResponseTime || "0分钟"
+                      }}</span>
+                    </li>
+                  </ul>
+
+                  <!-- 历史问答 -->
+                  <div class="qa-history-container">
+                    <h3 class="qa-section-title">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M6.5 2C4.01472 2 2 4.01472 2 6.5V17.5C2 19.9853 4.01472 22 6.5 22H17.5C19.9853 22 22 19.9853 22 17.5V6.5C22 4.01472 19.9853 2 17.5 2H6.5ZM6 7.5C6 7.22386 6.22386 7 6.5 7H13.5C13.7761 7 14 7.22386 14 7.5C14 7.77614 13.7761 8 13.5 8H6.5C6.22386 8 6 7.77614 6 7.5ZM6.5 11C6.22386 11 6 11.2239 6 11.5C6 11.7761 6.22386 12 6.5 12H17.5C17.7761 12 18 11.7761 18 11.5C18 11.2239 17.7761 11 17.5 11H6.5ZM6 15.5C6 15.2239 6.22386 15 6.5 15H13.5C13.7761 15 14 15.2239 14 15.5C14 15.7761 13.7761 16 13.5 16H6.5C6.22386 16 6 15.7761 6 15.5Z"
+                          :fill="currentTheme === 'dark' ? '#fff' : '#604FFD'"
+                        />
+                      </svg>
+                      历史问答
+                    </h3>
+
+                    <div
+                      v-if="qaHistoryList.length > 0"
+                      class="qa-history-list"
+                    >
+                      <div
+                        v-for="(item, index) in qaHistoryList"
+                        :key="index"
+                        class="qa-history-item"
+                        :class="{ active: selectedHistoryItem === index }"
+                        @click="selectHistoryItem(index)"
+                      >
+                        <div class="qa-history-title">{{ item.question }}</div>
+                        <div class="qa-history-time">
+                          {{ formatDate(item.timestamp) }}
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="qa-empty-history">
+                      <p>暂无历史问答</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 右侧区域 - 聊天 -->
+              <div class="qa-content-right">
+                <div class="qa-chat-container">
+                  <div class="qa-chat-header">
+                    <h3>课程问答</h3>
+                    <p>向教师提问，或使用AI智能解答</p>
+                  </div>
+
+                  <!-- 聊天区域 -->
+                  <div ref="chatBodyRef" class="qa-chat-body">
+                    <div
+                      v-if="chatMessages.length > 0"
+                      class="qa-chat-messages"
+                    >
+                      <div
+                        v-for="(message, index) in chatMessages"
+                        :key="index"
+                        class="qa-message-item"
+                        :class="message.role"
+                      >
+                        <div class="qa-message-avatar">
+                          <img
+                            :src="
+                              message.role === 'user'
+                                ? userAvatar
+                                : 'https://image.zhihuishu.com/zhs/zd/avatar/202411/b901eb69b7a744b4bc784e7a45e6b69d_s3.png'
+                            "
+                            alt="Avatar"
+                          />
+                        </div>
+                        <div class="qa-message-content">
+                          <div class="qa-message-name">
+                            {{
+                              message.role === "user"
+                                ? userNickname
+                                : "智能助手"
+                            }}
+                          </div>
+                          <div
+                            class="qa-message-text"
+                            v-html="parseMarkdown(message.content)"
+                          />
+                          <div class="qa-message-time">
+                            {{ formatMessageTime(message.timestamp) }}
+                          </div>
+                        </div>
+                      </div>
+                      <!-- 正在输入提示 -->
+                      <div v-if="isTyping" class="qa-typing-indicator">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+                    <div v-else class="qa-empty-chat">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="64"
+                        height="64"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10 1.5 0 2.921-.33 4.21-.92l3.715 1.483a1 1 0 001.317-1.024l-.473-4.593A9.96 9.96 0 0022 12c0-5.523-4.477-10-10-10zm0 18a8 8 0 110-16 8 8 0 010 16z"
+                          fill="#604FFD"
+                        />
+                        <circle cx="8" cy="10" r="1.5" fill="#604FFD" />
+                        <circle cx="12" cy="10" r="1.5" fill="#604FFD" />
+                        <circle cx="16" cy="10" r="1.5" fill="#604FFD" />
+                      </svg>
+                      <p>暂无对话，发送第一条消息开始聊天</p>
+                    </div>
+                  </div>
+
+                  <!-- 输入区域 -->
+                  <div class="qa-chat-footer">
+                    <div class="qa-input-wrapper">
+                      <textarea
+                        v-model="currentMessage"
+                        class="qa-input"
+                        placeholder="请输入您的问题..."
+                        @keydown.enter.prevent="sendMessage"
+                      />
+                      <button
+                        class="qa-send-button"
+                        :disabled="sendingMessage || !currentMessage.trim()"
+                        @click="sendMessage"
+                      >
+                        <SendIcon />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2410,6 +2638,17 @@ const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
 const masteryChartRef = ref(null); // 添加图表引用
 let masteryChart = null; // 添加图表实例变量
+
+// 课程问答相关数据
+const chatBodyRef = ref(null);
+const selectedHistoryItem = ref(-1);
+const qaHistoryList = ref([]);
+const qaStats = ref({
+  totalQuestions: 12,
+  solvedQuestions: 10,
+  solveRate: "83%",
+  avgResponseTime: "5分钟"
+});
 
 // 获取本地存储的用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
@@ -2934,7 +3173,7 @@ const loadChatHistory = async () => {
       chatMessages.value = response.data.history;
       // 滚动到底部
       nextTick(() => {
-        scrollToBottom();
+        scrollToBottomQA();
       });
     } else {
       console.log("没有历史聊天记录或格式不正确");
@@ -2967,7 +3206,7 @@ const sendMessage = async () => {
 
   // 滚动到底部
   nextTick(() => {
-    scrollToBottom();
+    scrollToBottomQA();
   });
 
   try {
@@ -3019,7 +3258,7 @@ const sendMessage = async () => {
 
         // 滚动到底部
         nextTick(() => {
-          scrollToBottom();
+          scrollToBottomQA();
         });
       }
     );
@@ -3058,6 +3297,45 @@ const parseMarkdown = (text: string) => {
   formatted = formatted.replace(/\n/g, "<br>");
 
   return formatted;
+};
+
+// 格式化消息时间
+const formatMessageTime = (timestamp: string) => {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+};
+
+// 选择历史聊天记录
+const selectHistoryItem = (index: number) => {
+  selectedHistoryItem.value = index;
+  const selectedHistory = qaHistoryList.value[index];
+
+  // 加载历史对话
+  chatMessages.value = [
+    {
+      role: "user",
+      content: selectedHistory.question,
+      timestamp: selectedHistory.timestamp
+    },
+    {
+      role: "ai",
+      content: selectedHistory.answer,
+      timestamp: selectedHistory.timestamp
+    }
+  ];
+
+  // 滚动到底部
+  nextTick(() => {
+    scrollToBottomQA();
+  });
+};
+
+// 滚动聊天窗口到底部
+const scrollToBottomQA = () => {
+  if (chatBodyRef.value) {
+    chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight;
+  }
 };
 
 // 初始化SVG图标和文字颜色
@@ -3189,9 +3467,35 @@ const initMasteryChart = () => {
   });
 };
 
+// 初始化课程问答历史数据
+const initQAHistory = () => {
+  // 模拟历史问答数据
+  qaHistoryList.value = [
+    {
+      question: "这门课程的考核方式是什么？",
+      answer:
+        "本课程采用线上考试的方式进行考核，总成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。",
+      timestamp: "2025-07-13T16:30:00Z"
+    },
+    {
+      question: "如何理解计算机网络的OSI七层模型？",
+      answer:
+        "OSI七层模型从下到上分别是：物理层、数据链路层、网络层、传输层、会话层、表示层和应用层。各层有不同的功能：\n\n- 物理层：处理比特流传输\n- 数据链路层：负责节点之间的数据传输\n- 网络层：处理分组路由\n- 传输层：提供端到端的可靠数据传输\n- 会话层：建立、管理和终止会话\n- 表示层：数据格式转换、加密解密\n- 应用层：为应用程序提供网络服务",
+      timestamp: "2025-07-13T15:45:00Z"
+    },
+    {
+      question: "期末考试的范围是什么？",
+      answer:
+        "期末考试范围包括课程的所有章节内容，特别关注第3、4、7章的核心概念和应用案例。考试形式为线上闭卷，时间为90分钟。",
+      timestamp: "2025-07-12T09:15:00Z"
+    }
+  ];
+};
+
 onMounted(() => {
   fetchCourseDetail();
   initChat(); // 初始化AI聊天
+  initQAHistory(); // 初始化课程问答历史数据
 
   // 获取作业和考试列表
   fetchHomeworkList();
@@ -3239,6 +3543,492 @@ onMounted(() => {
 .botton-box-down {
   transition: transform 0.3s ease;
   cursor: pointer;
+}
+
+/* 课程问答样式 */
+.course-qa-wrapper {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.course-qa-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 80px 20px 20px 120px; /* 增加上边距和左边距，避免被菜单遮挡 */
+  background-color: #f5f7fa;
+  height: calc(100vh - 125px);
+}
+
+.course-qa-container.dark {
+  background-color: #1d1e1f;
+  color: #fff;
+}
+
+.qa-content-layout {
+  display: flex;
+  height: 100%;
+  gap: 20px;
+  width: 100%;
+}
+
+.qa-content-left {
+  width: 30%;
+  min-width: 320px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .qa-content-left {
+  background-color: #2a2a2a;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.left-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.qa-data-ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  padding: 0;
+  margin: 0 0 20px 0;
+  list-style: none;
+  width: 100%;
+}
+
+.qa-data-ul li {
+  background-color: rgba(96, 79, 253, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100px;
+}
+
+.dark .qa-data-ul li {
+  background-color: #333;
+}
+
+.qa-data-ul .text {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.dark .qa-data-ul .text {
+  color: #bbb;
+}
+
+.qa-data-ul .num {
+  font-size: 24px;
+  font-weight: bold;
+  color: #604ffd;
+  line-height: 24px;
+}
+
+.qa-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.dark .qa-section-title {
+  color: #fff;
+}
+
+.qa-history-container {
+  margin-top: 20px;
+}
+
+.qa-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qa-history-item {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.dark .qa-history-item {
+  background-color: #333;
+}
+
+.qa-history-item:hover {
+  background-color: #f0f0f0;
+}
+
+.dark .qa-history-item:hover {
+  background-color: #444;
+}
+
+.qa-history-item.active {
+  border-left-color: #604ffd;
+  background-color: rgba(96, 79, 253, 0.1);
+}
+
+.dark .qa-history-item.active {
+  background-color: rgba(96, 79, 253, 0.2);
+}
+
+.qa-history-title {
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark .qa-history-title {
+  color: #fff;
+}
+
+.qa-history-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.qa-empty-history {
+  text-align: center;
+  padding: 30px 0;
+  color: #999;
+}
+
+.qa-content-right {
+  flex: 1;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: calc(70% - 20px);
+}
+
+.dark .qa-content-right {
+  background-color: #2a2a2a;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.qa-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.qa-chat-header {
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dark .qa-chat-header {
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.qa-chat-header h3 {
+  margin: 0 0 5px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.dark .qa-chat-header h3 {
+  color: #fff;
+}
+
+.qa-chat-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.dark .qa-chat-header p {
+  color: #bbb;
+}
+
+.qa-chat-body {
+  height: 400px; /* 固定高度 */
+  max-height: calc(100vh - 300px); /* 最大高度，适应不同屏幕 */
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.dark .qa-chat-body {
+  background-color: #333;
+}
+
+.qa-chat-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.qa-chat-body::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.qa-chat-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark .qa-chat-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .qa-chat-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.qa-chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.qa-message-item {
+  display: flex;
+  gap: 12px;
+  max-width: 80%;
+}
+
+.qa-message-item.ai {
+  align-self: flex-start;
+}
+
+.qa-message-item.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.qa-message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.qa-message-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.qa-message-content {
+  background-color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.dark .qa-message-content {
+  background-color: #2a2a2a;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.qa-message-item.user .qa-message-content {
+  background-color: #604ffd;
+  color: #fff;
+}
+
+.dark .qa-message-item.user .qa-message-content {
+  background-color: #604ffd;
+}
+
+.qa-message-name {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.dark .qa-message-name {
+  color: #fff;
+}
+
+.qa-message-item.user .qa-message-name {
+  color: #fff;
+}
+
+.qa-message-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.dark .qa-message-text {
+  color: #ddd;
+}
+
+.qa-message-item.user .qa-message-text {
+  color: #fff;
+}
+
+.qa-message-time {
+  font-size: 12px;
+  color: #999;
+  text-align: right;
+  margin-top: 5px;
+}
+
+.qa-message-item.user .qa-message-time {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.qa-empty-chat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+  gap: 20px;
+}
+
+.qa-typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 15px;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+}
+
+.dark .qa-typing-indicator {
+  background-color: #444;
+}
+
+.qa-typing-indicator span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  background-color: #604ffd;
+  border-radius: 50%;
+  animation: typing 1.4s infinite both;
+}
+
+.qa-typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.qa-typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+}
+
+.qa-chat-footer {
+  padding: 15px;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0; /* 防止压缩 */
+  background-color: #fff; /* 确保背景色 */
+  position: relative; /* 相对定位 */
+  z-index: 2; /* 确保在消息上方 */
+}
+
+.dark .qa-chat-footer {
+  border-top: 1px solid #3a3a3a;
+}
+
+.qa-input-wrapper {
+  display: flex;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.dark .qa-input-wrapper {
+  background-color: #333;
+}
+
+.qa-input {
+  flex: 1;
+  border: none;
+  background: none;
+  resize: none;
+  min-height: 40px;
+  max-height: 120px;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  font-family: inherit;
+}
+
+.dark .qa-input {
+  color: #fff;
+}
+
+.qa-input::placeholder {
+  color: #999;
+}
+
+.qa-send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #604ffd;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+.qa-send-button:hover {
+  background-color: #4d3fd9;
+}
+
+.qa-send-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 /* 修复标签按钮高度 */
