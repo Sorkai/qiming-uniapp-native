@@ -5,7 +5,8 @@ import { useDark } from "./utils";
 import { 
   TeacherStudentUsage,
   WeekUsage, 
-  CourseStatistics
+  CourseStatistics,
+  EfficientIndex
 } from "./components/charts";
 import { isAdmin } from "@/utils/auth";
 
@@ -83,6 +84,36 @@ const isAdminUser = ref(isAdmin());
         </el-card>
       </re-col>
       </template>
+      
+      <!-- 教学效率指数图表（所有用户可见） -->
+      <re-col
+        v-motion
+        class="mb-[18px]"
+        :value="24"
+        :md="24"
+        :sm="24"
+        :xs="24"
+        :initial="{
+          opacity: 0,
+          y: 100
+        }"
+        :enter="{
+          opacity: 1,
+          y: 0,
+          transition: {
+            delay: 180
+          }
+        }"
+      >
+        <el-card shadow="never">
+          <template #header>
+            <div class="flex justify-between">
+              <span class="text-md font-medium">教学效率指数</span>
+            </div>
+          </template>
+          <EfficientIndex />
+        </el-card>
+      </re-col>
 
       <!-- 所有用户(包括教师)都可以看到课程统计 -->
       <re-col

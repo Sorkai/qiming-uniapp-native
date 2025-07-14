@@ -20,6 +20,20 @@ interface WeekUsageResult {
   teacherTotalNum: number; // 老师总次数
 }
 
+// 教学效率指数接口返回类型
+interface EfficientIndexResult {
+  efficientIndexList: Array<{
+    courseId: number; // 课程ID
+    courseName: string; // 课程名称
+    planTime: number; // 备课耗时（分钟）
+    correctPlanTime: number; // 备课修正耗时（分钟）
+    planWorkTime: number; // 课后练习设计耗时（分钟）
+    correctPlanWorkTime: number; // 课后练习设计修正耗时（分钟）
+    isShowTime: number; // 是否展示时间 0:否 1：是
+    optimizeDirection: string; // 优化方向建议
+  }>;
+}
+
 interface CourseUsersProgressResult {
   courseUsersProgress: Array<{
     courseId: number; // 课程id
@@ -86,6 +100,16 @@ export const getWeekUsage = () => {
 };
 
 /**
+ * 获取教学效率指数【管理端统计】
+ */
+export const getEfficientIndex = () => {
+  return http.request<ApiResponse<EfficientIndexResult>>(
+    "get",
+    "/edu/backend/v1/statistics/efficient/index"
+  );
+};
+
+/**
  * 统计老师课程下学生完成的进度【老师端统计】
  */
 export const getCourseUsersProgress = () => {
@@ -103,4 +127,4 @@ export const getCourseUsersExamInfo = () => {
     "get",
     "/edu/backend/v1/statistics/course/users/exam/info"
   );
-}; 
+};
