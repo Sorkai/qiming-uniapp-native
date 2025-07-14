@@ -154,7 +154,7 @@ export const getFrontendCourseList = (params: {
 }) => {
   return http.request<ApiResponse<CourseListResult>>(
     "get",
-    "/edu/frontend/v1/course/frontend/list",
+    "/edu/frontend/v1/course/list",
     { params }
   );
 };
