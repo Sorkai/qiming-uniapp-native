@@ -1506,558 +1506,133 @@
           data-v-2cf49992=""
           class="mastery-page-content light"
         >
-          <div data-v-487e2460="" class="mastery-content-left">
+          <div
+            data-v-487e2460=""
+            class="mastery-content-left"
+            style="width: 100%"
+          >
             <div data-v-487e2460="" class="left-scroll">
               <ul data-v-487e2460="" class="mastery-data-ul">
                 <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">考核知识点总数</span
-                  ><span data-v-487e2460="" class="num">110</span>
+                  <span data-v-487e2460="" class="text">知识点总数</span
+                  ><span data-v-487e2460="" class="num">{{
+                    studyEffectData.knowledgePointNum || 0
+                  }}</span>
                 </li>
                 <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">平均掌握度</span
-                  ><span data-v-487e2460="" class="num">92.7%</span>
-                </li>
-                <li data-v-487e2460="" class="icon-tip">
-                  <i
-                    data-v-487e2460=""
-                    class="el-tooltip icon-img"
-                    aria-describedby="el-tooltip-7778"
-                    tabindex="0"
-                  />
+                  <span data-v-487e2460="" class="text">重点数量</span
+                  ><span data-v-487e2460="" class="num">{{
+                    studyEffectData.keyPointNum || 0
+                  }}</span>
                 </li>
                 <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">薄弱点个数</span
-                  ><span data-v-487e2460="" class="num">0</span>
+                  <span data-v-487e2460="" class="text">难点数量</span
+                  ><span data-v-487e2460="" class="num">{{
+                    studyEffectData.difficultPointNum || 0
+                  }}</span>
                 </li>
                 <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">遗漏点个数</span
-                  ><span data-v-487e2460="" class="num">0</span>
-                </li>
-                <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">免考个数</span
-                  ><span data-v-487e2460="" class="num">0</span>
+                  <span data-v-487e2460="" class="text">概念数量</span
+                  ><span data-v-487e2460="" class="num">{{
+                    studyEffectData.conceptNum || 0
+                  }}</span>
                 </li>
               </ul>
-              <div data-v-423b05d0="" data-v-487e2460="" class="echart-content">
-                <h1 data-v-423b05d0="" class="echart-title">
-                  本课程知识点我的情况占比
-                </h1>
+
+              <div
+                v-if="
+                  studyEffectData.chapterList &&
+                  studyEffectData.chapterList.length > 0
+                "
+              >
                 <div
-                  ref="masteryChartRef"
-                  data-v-423b05d0=""
-                  class="my-point-EChart"
-                  style="
-                    user-select: none;
-                    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-                    position: relative;
-                  "
-                />
-                <div data-v-423b05d0="" class="custom-legend">
-                  <li data-v-423b05d0="" class="item-legend">
-                    <i
-                      data-v-423b05d0=""
-                      class="icon"
-                      style="background-color: rgb(140, 229, 162)"
-                    /><span data-v-423b05d0="" class="name">掌握较好</span
-                    ><span data-v-423b05d0="" class="num">100.0%</span>
-                  </li>
-                  <li data-v-423b05d0="" class="item-legend">
-                    <i
-                      data-v-423b05d0=""
-                      class="icon"
-                      style="background-color: rgb(255, 203, 102)"
-                    /><span data-v-423b05d0="" class="name">掌握一般</span
-                    ><span data-v-423b05d0="" class="num">0.0%</span>
-                  </li>
-                  <li data-v-423b05d0="" class="item-legend">
-                    <i
-                      data-v-423b05d0=""
-                      class="icon"
-                      style="background-color: rgb(255, 162, 162)"
-                    /><span data-v-423b05d0="" class="name">薄弱点</span
-                    ><span data-v-423b05d0="" class="num">0.0%</span>
-                  </li>
-                  <li data-v-423b05d0="" class="item-legend">
-                    <i
-                      data-v-423b05d0=""
-                      class="icon"
-                      style="background-color: rgb(204, 204, 204)"
-                    /><span data-v-423b05d0="" class="name">遗漏点</span
-                    ><span data-v-423b05d0="" class="num">0.0%</span>
-                  </li>
-                  <li data-v-423b05d0="" class="item-legend">
-                    <i
-                      data-v-423b05d0=""
-                      class="icon"
-                      style="background-color: rgb(143, 208, 255)"
-                    /><span data-v-423b05d0="" class="name">免考</span
-                    ><span data-v-423b05d0="" class="num">0.0%</span>
-                  </li>
-                </div>
-              </div>
-              <div data-v-487e2460="">
-                <div
-                  data-v-1cf35c08=""
-                  data-v-487e2460=""
-                  class="related-resources-mastery"
+                  v-for="(chapter, index) in studyEffectData.chapterList"
+                  :key="index"
+                  class="chapter-section"
                 >
-                  <h1 data-v-1cf35c08="" class="sun-up">
-                    <svg
-                      data-v-1cf35c08=""
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="32"
-                      height="32"
-                      viewbox="0 0 32 32"
-                      fill="none"
+                  <h2>{{ chapter.chapterName }}</h2>
+
+                  <!-- 重点部分 -->
+                  <div
+                    v-if="
+                      chapter.keyPointArray && chapter.keyPointArray.length > 0
+                    "
+                    class="point-section"
+                  >
+                    <h3>重点</h3>
+                    <div
+                      v-for="(item, idx) in chapter.keyPointArray"
+                      :key="'key-' + idx"
+                      class="point-item"
                     >
-                      <path
-                        data-v-1cf35c08=""
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M14.709 4.77212C14.3281 3.74262 12.8719 3.74263 12.491 4.77212L10.5949 9.89626C10.4751 10.2199 10.2199 10.4751 9.89626 10.5949L4.77212 12.491C3.74262 12.8719 3.74263 14.3281 4.77212 14.709L9.89626 16.6051C10.2199 16.7249 10.4751 16.9801 10.5949 17.3037L12.491 22.4279C12.8719 23.4574 14.3281 23.4574 14.709 22.4279L16.6051 17.3037C16.7249 16.9801 16.9801 16.7249 17.3037 16.6051L22.4279 14.709C23.4574 14.3281 23.4574 12.8719 22.4279 12.491L17.3037 10.5949C16.9801 10.4751 16.7249 10.2199 16.6051 9.89626L14.709 4.77212ZM23.7545 18.7861C23.564 18.2713 22.836 18.2713 22.6455 18.7861L21.6974 21.3481C21.6376 21.51 21.51 21.6376 21.3481 21.6974L18.7861 22.6455C18.2713 22.836 18.2713 23.564 18.7861 23.7545L21.3481 24.7026C21.51 24.7624 21.6376 24.89 21.6974 25.0519L22.6455 27.6139C22.836 28.1287 23.564 28.1287 23.7545 27.6139L24.7026 25.0519C24.7624 24.89 24.89 24.7624 25.0519 24.7026L27.6139 23.7545C28.1287 23.564 28.1287 22.836 27.6139 22.6455L25.0519 21.6974C24.89 21.6376 24.7624 21.51 24.7026 21.3481L23.7545 18.7861Z"
-                        fill="#47FFFF"
-                      /></svg
-                    ><span data-v-1cf35c08="">AI助教总结</span>
-                  </h1>
-                  <div data-v-1cf35c08="">
-                    <p data-v-1cf35c08="" class="remark">
-                      以下知识点相关资源：
-                    </p>
-                    <div data-v-1cf35c08="" class="line3 line">
-                      <div data-v-1cf35c08="" class="line3-sub">
-                        总体国家安全观涵盖的重点领域
-                      </div>
-                      <div data-v-1cf35c08="" class="line3-small">定义</div>
-                      <div data-v-1cf35c08="" class="line3-content">
-                        总体国家安全观涵盖的重点领域包括政治安全、国土安全、军事安全、经济安全、文化安全、社会安全、科技安全、网络安全、生态安全、资源安全、核安全、海外利益安全、太空安全、深海安全、极地安全等。
-                      </div>
-                      <div data-v-1cf35c08="" class="line3-source-list">
-                        <div data-v-1cf35c08="" class="line3-list-scroll">
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              />
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                总体国家安全观
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              总体国家安全观是一个内容丰富、开放包容、不断发展的思想体系，其核心要义可以概括为五大要素和五对关系。
-                              [9]xa0
-                              2014年4月15日，习近平总书记主持召开中央国家安全委员会第一次会议。习近平总书记在讲话中首次提出总体国家安全观，阐述了总体国家安全观的基本内涵、指导思想和贯彻原则。
-                              [9]xa0
-                              2021年4月14日，总体国家安全观研究中心挂牌成立。
-                              [4]
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date" />
-                          </div>
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              >
-                                大连交通大学
-                              </div>
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                大学生总体国家安全观教育问题研究
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              随着经济全球化和科技革命的深入发展,国际安全形势发生着深刻的变化,国家安全问题不容小觑,维护国家安全任重而道远。总体国家安全观是国家安全建设的重大理论创新与重要内容,对中国国家安全战略的调整具有重大指导意义。为践行总体国家安全观,教育部在2018年正式颁发了《关于加强大中小学国家安全教育的实施意见》,在国民教育体系中添加国家安全教育的相关内容。大学生作为建设中国特色社会主义事业的接班人,对其进行国家安全教育尤为关键,研究大学生总体国家安全观教育问题具有强烈的现实意义与理论意义。论文采用问卷调查法和文献搜集法,对大学生总体国家安全观教育问题进行研究。首先,在理论层面上,通过对总体国家安全观与大学生总体国家观教育相关概念界定,将大学生总体国家安全观教育的构成要素划分为主体、客体、介体与环体四个方面。其次,在实践层面上,通过对大学生总体国家安全观教育现状进行调查问卷,分析总结出大学生总体国家安全观教育取得的成效及其面临的问题。在此基础上,深入分析存在问题的成因,即教育主体尚未形成协同育人机制、教育客体缺乏对国家安全形势的研判能力、教育介体尚未形成完善的教育场域、教育环体尚未与高校形成有机联动。最后,针对新时代大学生总体国家安全观教育问题背后的深层次原因,提出创新性、针对性的解决对策,即提升主体重视程度,强化大学生总体国家安全观教育主体的协同育人机制;增强教育客体国家安全形势研判能力和使命意识,提升大学生总体国家安全观教育客体的自我教育能动性;拓展教育介体的场域实效功能,提高大学生总体国家安全观教育的实效性;增强教育环体宣传联动效能,实现大学生总体国家安全观教育的多方联动。最终落实加强大学生国家安全教育的目标任务,提升大学生国家安全意识,提高维护国家安全能力,强化责任担当,筑牢国家安全防线,培养德智体美全面发展的社会主义建设者和接班人。
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date">
-                              2024-02-29
-                            </div>
-                          </div>
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              >
-                                广东财经大学
-                              </div>
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                习近平总体国家安全观研究
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              安全问题是世界共同关注的焦点问题。近年来,安全问题没有减少,反而愈加复杂多变。这需要我们重视国家安全问题研究,只有加强对国家安全的认识,才能有效维护中国国家安全,做好国家安全工作,完善国家安全工作机制。当今世界局势百年未遇,机遇与挑战并存,中国必须在发展和安全两方面做好统筹之策,这是新时代党和国家的一项重要任务。总体国家安全观是党和国家关于国家安全的新思想、新理念,是习近平新时代中国特色社会主义思想的重要部分。研究总体国家安全观对推动改革发展事业、实现伟大梦想具有重要的作用。论文立足"总体安全",对总体国家安全观进行系统归纳,提炼出逻辑严谨和结构完整的安全思想体系。首先追溯总体国家安全观的形成背景和理论渊源。分析了总体国家安全观是在全球化世界形势深刻变化、中国周边安全环境复杂多变以及国内面临的压力和挑战的背景下提出的。它继承了马克思主义的科学思维方法,回答了"怎样认识新形势下的国家安全"的问题;深化了原有的国家安全理论,形成了"总体安全"的大安全格局;借鉴了传统优秀文化中的政治思想,强化忧患意识,形成国家安全的战略思维。其次,总体国家安全观的内容体现了"总体安全"概念,明确了宗旨、地位和作用,以及构建国家安全体系的重要举措。本文试图抓住理论渊源与新理念之间的系与发展演变过程。在研究思维上,本文立足"总体安全",整体上把握总体国家安全观;在研究路径上,采取纵向的连续性研究和横向的对比研究相结合的方法,进一步梳理习近平总体国家安全观的内涵和外延。本文认为习近平总体国家安全观的特点在于时代性、前瞻性、人民性、纲领性和整体性。习近平总体国家安全观的意义在于发展了马克思主义中国化的国家安全思想以及中国特色社会主义理论体系的理论意义;提高党领导能力和国家治理能力水平;以及开辟了人类社会国家安全新纪元。
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date">
-                              2024-03-15
-                            </div>
-                          </div>
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              />
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                总体国家安全观的理论要义阐释
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              党的十八大以来,以习近平同志为核心的党中央统筹新时代"两个大局"和国家安全形势任务,提出了总体国家安全观,并不断发展完善。总体国家安全观主要通过领导论、地位论、总体论、宗旨论、道路论、体系论、防范论、科技论、法治论和共同论等内涵要义,科学、系统地回答了新时代国家安全事业的领导核心、地位作用、总体性质、立场宗旨、道路方向、布局体系、防范化解、科技支撑、法治轨道和共同安全等重大问题,形成了中国共产党对于新时代国家安全事业发展规律的认识深化和重大理论创新。总体国家安全观体现鲜明的马克思主义理论品格,具有突出的人民性、系统性、发展性和实践性,对于新时代国家安全事业发展以及世界安全格局演进,具有重大的理论和实践意义。
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date">
-                              2023-11-29
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div data-v-1cf35c08="" class="line3 line">
-                      <div data-v-1cf35c08="" class="line3-sub">
-                        新时代维护生态安全的途径和方法
-                      </div>
-                      <div data-v-1cf35c08="" class="line3-small">定义</div>
-                      <div data-v-1cf35c08="" class="line3-content">
-                        "新时代维护生态安全的途径和方法"是指在新时代背景下，为了确保生态系统的稳定和安全，所采取的各种措施和方法，包括加强生态保护、推动可持续发展、加强环境监管、提高公众环保意识等。
-                      </div>
-                      <div data-v-1cf35c08="" class="line3-source-list">
-                        <div data-v-1cf35c08="" class="line3-list-scroll">
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              />
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                《生态安全：维护五大安全
-                                践行青年担当》（第七届全国大学生讲思政课公开展示作品）
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              作为祖国最东、最北的省份，黑龙江生态资源独特富集，是祖国北方生态安全屏障。党的十八大以来，
-                              习近平总书记3次视察黑龙江，大小兴安岭都留下了他心系"绿色中国"的足迹。龙江青年要牢固树立"绿水青山就是金山银山、冰天雪地也是金山银山"的理念，守青山、护绿水，肩负起筑牢祖国北方生态安全屏障的青年担当。
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date" />
-                          </div>
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              />
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                生态安全（下）
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              传播安全文化，分享安全技术
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date" />
-                          </div>
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              />
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                生态安全（中）
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              传播安全文化，分享安全知识
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date" />
-                          </div>
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              />
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                生态护坡模具 阶梯生态护坡模具
-                                维护建设区域的生态环境
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              生态护坡模具 阶梯生态护坡模具
-                              维护建设区域的生态环境
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div data-v-1cf35c08="" class="line3 line">
-                      <div data-v-1cf35c08="" class="line3-sub">
-                        坚持以军事安全为保障的科学内涵
-                      </div>
-                      <div data-v-1cf35c08="" class="line3-small">定义</div>
-                      <div data-v-1cf35c08="" class="line3-content">
-                        坚持以军事安全为保障的科学内涵是指在国家总体安全观的指导下，将军事安全作为国家安全的重要保障，通过加强军事力量建设、提高军事能力、维护国家主权和安全等方面的工作，确保国家的安全和稳定。
-                      </div>
-                      <div data-v-1cf35c08="" class="line3-source-list">
-                        <div data-v-1cf35c08="" class="line3-list-scroll">
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              />
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                军事安全
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              军事安全（military
-                              security）是指主权国家为了保卫国家主权和领土完整，有效遏制、抵御外来武装力量的侵略和颠覆所进行的必要的军事防御准备。
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date" />
-                          </div>
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              />
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                坚持
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              坚持（名词、形容词、动词），汉语词汇。拼音：jiān
-                              ch&iacute;
-                              即意志坚强，坚韧不拔，持即持久，有耐性。坚持意思是不改变不动摇，始终如一。坚持是意志力的良好表现。坚持也是有毅力的一种表现。
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date" />
-                          </div>
-                          <div data-v-1cf35c08="" class="line3-item">
-                            <div data-v-1cf35c08="" class="line3-item1">
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item1-school z-line-1"
-                              >
-                                当代经济研究
-                              </div>
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item2">
-                              <img
-                                data-v-1cf35c08=""
-                                src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                                alt=""
-                                class="line3-item2-icon"
-                              />
-                              <div
-                                data-v-1cf35c08=""
-                                class="line3-item2-title z-line-2"
-                              >
-                                中国农村基本经营制度:科学内涵、质规定性及演变逻辑
-                              </div>
-                            </div>
-                            <div
-                              data-v-1cf35c08=""
-                              class="line3-item3 z-line-3"
-                            >
-                              农村基本经营制度是中国特色社会主义政治经济学的重要内容,深入系统地研究其科学内涵及质规定性对于坚持和完善农村基本经营制度具有重要的理论价值和现实意义。农村基本经营制度包括农地产权制度、农业经营主体和农业经营方式三大构成要素。其中,农地产权制度层面的集体所有制规定性、农业经营主体层面的家庭经营基础性和农业经营方式层面的规定性是中国农村基本经营制度的质的规定性。"坚持"和"完善"的统一,构成了中国农村基本经营制度的演变逻辑。
-                            </div>
-                            <div data-v-1cf35c08="" class="line3-item-date">
-                              2023-11-30
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <div class="point-title">{{ item.title }}</div>
+                      <div class="point-content">{{ item.content }}</div>
                     </div>
                   </div>
+
+                  <!-- 难点部分 -->
                   <div
-                    data-v-6c888e32=""
-                    data-v-1cf35c08=""
-                    class="el-dialog__wrapper"
-                    style="display: none"
+                    v-if="
+                      chapter.difficultPointArray &&
+                      chapter.difficultPointArray.length > 0
+                    "
+                    class="point-section"
                   >
+                    <h3>难点</h3>
                     <div
-                      role="dialog"
-                      aria-modal="true"
-                      aria-label="提示"
-                      class="el-dialog custom-dialog"
-                      style="margin-top: 15vh; width: 30.2083vw"
+                      v-for="(item, idx) in chapter.difficultPointArray"
+                      :key="'diff-' + idx"
+                      class="point-item"
                     >
-                      <div class="el-dialog__header">
-                        <span class="el-dialog__title">提示</span>
-                        <button
-                          type="button"
-                          aria-label="Close"
-                          class="el-dialog__headerbtn"
-                        >
-                          <i class="el-dialog__close el-icon el-icon-close" />
-                        </button>
-                      </div>
-                      <!---->
-                      <div class="el-dialog__footer">
-                        <span data-v-6c888e32="" class="dialog-footer"
-                          ><button
-                            data-v-6c888e32=""
-                            type="button"
-                            class="el-button btn1 el-button--default"
-                          >
-                            <!---->
-                            <!----><span>继续访问</span></button
-                          ><button
-                            data-v-6c888e32=""
-                            type="button"
-                            class="el-button btn2 el-button--default"
-                          >
-                            <!---->
-                            <!----><span>返回</span>
-                          </button></span
-                        >
-                      </div>
+                      <div class="point-title">{{ item.title }}</div>
+                      <div class="point-content">{{ item.content }}</div>
+                    </div>
+                  </div>
+
+                  <!-- 知识点部分 -->
+                  <div
+                    v-if="
+                      chapter.knowledgeArray &&
+                      chapter.knowledgeArray.length > 0
+                    "
+                    class="point-section"
+                  >
+                    <h3>知识点</h3>
+                    <div
+                      v-for="(item, idx) in chapter.knowledgeArray"
+                      :key="'know-' + idx"
+                      class="point-item"
+                    >
+                      <div class="point-title">{{ item.title }}</div>
+                      <div class="point-content">{{ item.content }}</div>
+                    </div>
+                  </div>
+
+                  <!-- 概念部分 -->
+                  <div
+                    v-if="
+                      chapter.ConceptArray && chapter.chapterList.length > 0
+                    "
+                    class="point-section"
+                  >
+                    <h3>概念</h3>
+                    <div
+                      v-for="(item, idx) in chapter.ConceptArray"
+                      :key="'con-' + idx"
+                      class="point-item"
+                    >
+                      <div class="point-title">{{ item.title }}</div>
+                      <div class="point-content">{{ item.content }}</div>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <!-- 如果没有章节数据，显示无数据提示 -->
+              <div v-else class="no-data">暂无学习效果数据</div>
             </div>
           </div>
-          <div data-v-487e2460="" class="mastery-content-right">
+          <div v-if="false" data-v-487e2460="" class="mastery-content-right">
             <div data-v-b3b486ce="" data-v-487e2460="" class="mastery-box">
               <div data-v-b3b486ce="" class="mastery-status">
                 <div data-v-b3b486ce="" class="mastery-status-item">
@@ -2848,13 +2423,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick, watch, reactive } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   getCourseDetail,
   reportCourseLesson,
   getCourseScore,
-  CourseScoreResult
+  CourseScoreResult,
+  getCourseStudyEffect
 } from "@/api/frontend/course";
 import {
   courseAIChatStream,
@@ -3865,6 +3441,40 @@ const initQAHistory = () => {
     }
   ];
 };
+
+// 学习效果数据
+const studyEffectData = ref({
+  courseId: 0,
+  keyPointNum: 0,
+  difficultPointNum: 0,
+  knowledgePointNum: 0,
+  conceptNum: 0,
+  chapterList: []
+});
+
+// 获取课程学习效果
+const fetchCourseStudyEffect = async () => {
+  try {
+    const { data } = await getCourseStudyEffect({
+      courseId: courseId.value
+    });
+    if (data.code === 200) {
+      studyEffectData.value = data.data;
+    }
+  } catch (error) {
+    console.error("获取课程学习效果失败", error);
+  }
+};
+
+watch(
+  () => activeMenu.value,
+  newVal => {
+    if (newVal === "mastery") {
+      fetchCourseStudyEffect();
+    }
+    // ... existing code ...
+  }
+);
 
 onMounted(async () => {
   // 获取课程ID
@@ -4972,5 +4582,57 @@ onMounted(async () => {
 .grades-chart {
   width: 100%;
   height: 350px;
+}
+
+.chapter-section {
+  margin-bottom: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.chapter-section h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.point-section {
+  margin-bottom: 16px;
+}
+
+.point-section h3 {
+  font-size: 16px;
+  color: #606266;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.point-item {
+  background-color: #f9f9f9;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.point-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #303133;
+}
+
+.point-content {
+  color: #606266;
+  line-height: 1.5;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px 0;
+  color: #909399;
+  font-size: 14px;
 }
 </style>

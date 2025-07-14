@@ -48,6 +48,34 @@ export interface CourseScoreResult {
   examScore: number;
 }
 
+export interface CourseStudyEffectResult {
+  courseId: number;
+  keyPointNum: number;
+  difficultPointNum: number;
+  knowledgePointNum: number;
+  conceptNum: number;
+  chapterList: Array<{
+    chapterId: number;
+    chapterName: string;
+    keyPointArray: Array<{
+      title: string;
+      content: string;
+    }>;
+    difficultPointArray: Array<{
+      title: string;
+      content: string;
+    }>;
+    knowledgeArray: Array<{
+      title: string;
+      content: string;
+    }>;
+    ConceptArray: Array<{
+      title: string;
+      content: string;
+    }>;
+  }>;
+}
+
 export interface ApiResponse<T = any> {
   code: number;
   msg: string;
@@ -98,7 +126,7 @@ export const reportCourseLesson = (data: {
  * 获取课程学习效果
  */
 export const getCourseStudyEffect = (params: { courseId: number }) => {
-  return http.request<ApiResponse>(
+  return http.request<ApiResponse<CourseStudyEffectResult>>(
     "get",
     "/edu/frontend/v1/course/study/effect",
     { params }
@@ -114,4 +142,4 @@ export const getCourseScore = (params: { courseId: number }) => {
     "/edu/frontend/v1/course/score",
     { params }
   );
-}; 
+};
