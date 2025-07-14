@@ -49,6 +49,17 @@ interface CourseUsersExamInfoResult {
   }>;
 }
 
+interface EfficientIndexResult {
+  efficientIndexList: Array<{
+    courseName: string; // 课程名称
+    planTime: number; // 备课耗时(分钟)
+    correctPlanTime: number; // 备课修正耗时(分钟)
+    planWorkTime: number; // 作业设计耗时(分钟)
+    correctPlanWorkTime: number; // 作业设计修正耗时(分钟)
+    optimizeDirection?: string; // 优化方向建议
+  }>;
+}
+
 interface ApiResponse<T = any> {
   code: number;
   msg: string;
@@ -102,5 +113,15 @@ export const getCourseUsersExamInfo = () => {
   return http.request<ApiResponse<CourseUsersExamInfoResult>>(
     "get",
     "/edu/backend/v1/statistics/course/users/exam/info"
+  );
+};
+
+/**
+ * 获取教学效率指数数据
+ */
+export const getEfficientIndex = () => {
+  return http.request<ApiResponse<EfficientIndexResult>>(
+    "get",
+    "/edu/backend/v1/statistics/efficient/index"
   );
 };

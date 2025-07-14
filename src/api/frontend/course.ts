@@ -143,3 +143,18 @@ export const getCourseScore = (params: { courseId: number }) => {
     { params }
   );
 };
+
+/**
+ * 获取前台课程列表
+ */
+export const getFrontendCourseList = (params: {
+  pageNum: number;
+  pageSize?: number;
+  status?: string;
+}) => {
+  return http.request<ApiResponse<CourseListResult>>(
+    "get",
+    "/edu/frontend/v1/course/frontend/list",
+    { params }
+  );
+};
