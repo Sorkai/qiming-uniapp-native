@@ -1,19 +1,13 @@
 import { http } from "@/utils/http";
 
-export interface CourseListParams {
-  pageNum: number;
-  pageSize?: number;
-  queryType?: number; // 查询类型 0:全部 1:必修 2:选修 3:已学完 4:未学完（默认0）
-}
-
 export interface CourseListResult {
   list: Array<{
     courseId: number;
     courseName: string;
     thumbUrl: string;
-    isRequired: number; // 是否必修 1:必修 0:选修
-    totalHours: number; // 总课时数
-    finishedHours: number; // 已完成课时数
+    isRequired: number;
+    totalHours: number;
+    finishedHours: number;
   }>;
   total: number;
 }
@@ -35,7 +29,7 @@ export interface CourseDetailResult {
       title: string;
       rType: string;
       fileUrl: string;
-      finished: number; // 是否完成 0:否 1:是
+      finished: number;
     }>;
   }>;
   courseAttrList: Array<{
@@ -47,9 +41,11 @@ export interface CourseDetailResult {
   }>;
 }
 
-export interface CourseReportLessonParams {
+export interface CourseScoreResult {
   courseId: number;
-  hourId: number;
+  courseScore: number;
+  workScore: number;
+  examScore: number;
 }
 
 export interface ApiResponse<T = any> {
@@ -61,7 +57,11 @@ export interface ApiResponse<T = any> {
 /**
  * 获取课程列表
  */
-export const getFrontendCourseList = (params: CourseListParams) => {
+export const getCourseList = (params: {
+  pageNum: number;
+  pageSize?: number;
+  queryType?: number;
+}) => {
   return http.request<ApiResponse<CourseListResult>>(
     "get",
     "/edu/frontend/v1/course/list",
@@ -72,7 +72,7 @@ export const getFrontendCourseList = (params: CourseListParams) => {
 /**
  * 获取课程详情
  */
-export const getFrontendCourseDetail = (params: { courseId: number }) => {
+export const getCourseDetail = (params: { courseId: number }) => {
   return http.request<ApiResponse<CourseDetailResult>>(
     "get",
     "/edu/frontend/v1/course/detail",
@@ -83,10 +83,35 @@ export const getFrontendCourseDetail = (params: { courseId: number }) => {
 /**
  * 课时完成上报
  */
-export const reportFrontendLesson = (data: CourseReportLessonParams) => {
+export const reportCourseLesson = (data: {
+  courseId: number;
+  hourId: number;
+}) => {
   return http.request<ApiResponse>(
     "post",
     "/edu/frontend/v1/course/report/lesson",
     { data }
+  );
+};
+
+/**
+ * 获取课程学习效果
+ */
+export const getCourseStudyEffect = (params: { courseId: number }) => {
+  return http.request<ApiResponse>(
+    "get",
+    "/edu/frontend/v1/course/study/effect",
+    { params }
+  );
+};
+
+/**
+ * 获取课程成绩
+ */
+export const getCourseScore = (params: { courseId: number }) => {
+  return http.request<ApiResponse<CourseScoreResult>>(
+    "get",
+    "/edu/frontend/v1/course/score",
+    { params }
   );
 }; 

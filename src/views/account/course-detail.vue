@@ -2394,10 +2394,65 @@
                   />
                 </div>
               </div>
+              <div data-v-3e66491d="" class="item header-center">
+                <div
+                  data-v-cebc91e2=""
+                  data-v-3e66491d=""
+                  class="study-mode custom-mode"
+                >
+                  <div
+                    data-v-cebc91e2=""
+                    data-v-3e66491d=""
+                    data-name="0"
+                    class="mode-item active"
+                    style="margin: 0 auto"
+                  >
+                    课程问答
+                  </div>
+                </div>
+              </div>
+              <div data-v-3e66491d="" class="item header-right">
+                <ul data-v-3e66491d="" class="popper-box">
+                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
+                    <ul
+                      data-v-3e66491d=""
+                      role="menubar"
+                      class="fu-header-users el-menu--horizontal el-menu"
+                    >
+                      <li
+                        data-v-3e66491d=""
+                        role="menuitem"
+                        aria-haspopup="true"
+                        class="el-submenu"
+                        tabindex="0"
+                      >
+                        <div
+                          class="el-submenu__title"
+                          style="border-bottom-color: transparent"
+                        >
+                          <div data-v-3e66491d="" class="avatar-info">
+                            <img
+                              data-v-3e66491d=""
+                              :src="userAvatar"
+                              alt=""
+                              class="avatar"
+                            />
+                            <span data-v-3e66491d="" class="name">{{
+                              userNickname
+                            }}</span>
+                          </div>
+                          <i
+                            class="el-submenu__icon-arrow el-icon-arrow-down"
+                          />
+                        </div>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
-          <!-- 课程问答内容 -->
           <div class="course-qa-container" :class="currentTheme">
             <!-- 两列布局 -->
             <div class="qa-content-layout">
@@ -2571,6 +2626,222 @@
             </div>
           </div>
         </div>
+
+        <!-- 课程成绩页面 -->
+        <div
+          v-show="activeMenu === 'grades'"
+          data-v-2cf49992=""
+          class="course-grades-wrapper"
+          :class="currentTheme"
+        >
+          <!-- 头部 -->
+          <div
+            data-v-3e66491d=""
+            data-v-cebc91e2=""
+            class="layout-header"
+            :class="currentTheme"
+            isatlas="1"
+            style="z-index: 10"
+          >
+            <div
+              id="header-content-layout only-filter"
+              data-v-3e66491d=""
+              class="header-content"
+            >
+              <div data-v-3e66491d="" class="item header-left">
+                <div
+                  data-v-3e66491d=""
+                  class="item header-back"
+                  @click="goBack"
+                >
+                  <i data-v-3e66491d="" />
+                </div>
+                <span data-v-3e66491d="" class="current-time">{{
+                  currentDate
+                }}</span>
+                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
+                  <ThemeSunIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                  />
+                  <ThemeMoonIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                  />
+                </div>
+              </div>
+              <div data-v-3e66491d="" class="item header-center">
+                <div
+                  data-v-cebc91e2=""
+                  data-v-3e66491d=""
+                  class="study-mode custom-mode"
+                >
+                  <div
+                    data-v-cebc91e2=""
+                    data-v-3e66491d=""
+                    data-name="0"
+                    class="mode-item active"
+                    style="margin: 0 auto"
+                  >
+                    课程成绩
+                  </div>
+                </div>
+              </div>
+              <div data-v-3e66491d="" class="item header-right">
+                <ul data-v-3e66491d="" class="popper-box">
+                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
+                    <ul
+                      data-v-3e66491d=""
+                      role="menubar"
+                      class="fu-header-users el-menu--horizontal el-menu"
+                    >
+                      <li
+                        data-v-3e66491d=""
+                        role="menuitem"
+                        aria-haspopup="true"
+                        class="el-submenu"
+                        tabindex="0"
+                      >
+                        <div
+                          class="el-submenu__title"
+                          style="border-bottom-color: transparent"
+                        >
+                          <div data-v-3e66491d="" class="avatar-info">
+                            <img
+                              data-v-3e66491d=""
+                              :src="userAvatar"
+                              alt=""
+                              class="avatar"
+                            />
+                            <span data-v-3e66491d="" class="name">{{
+                              userNickname
+                            }}</span>
+                          </div>
+                          <i
+                            class="el-submenu__icon-arrow el-icon-arrow-down"
+                          />
+                        </div>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="course-grades-container" :class="currentTheme">
+            <div class="grades-content">
+              <!-- 成绩卡片 -->
+              <div class="grades-cards">
+                <div class="grades-card" :class="currentTheme">
+                  <div class="grades-card-header">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M12 20h9" />
+                      <path
+                        d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                      />
+                    </svg>
+                    <h3>课时成绩</h3>
+                  </div>
+                  <div class="grades-card-content">
+                    <div v-if="courseScores" class="grades-score">
+                      {{ courseScores.courseScore || 0 }}
+                    </div>
+                    <div v-else class="grades-loading">
+                      <el-skeleton :rows="1" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grades-card" :class="currentTheme">
+                  <div class="grades-card-header">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                      />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    <h3>作业成绩</h3>
+                  </div>
+                  <div class="grades-card-content">
+                    <div v-if="courseScores" class="grades-score">
+                      {{ courseScores.workScore || 0 }}
+                    </div>
+                    <div v-else class="grades-loading">
+                      <el-skeleton :rows="1" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grades-card" :class="currentTheme">
+                  <div class="grades-card-header">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                      <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                      <line x1="6" y1="1" x2="6" y2="4" />
+                      <line x1="10" y1="1" x2="10" y2="4" />
+                      <line x1="14" y1="1" x2="14" y2="4" />
+                    </svg>
+                    <h3>考试成绩</h3>
+                  </div>
+                  <div class="grades-card-content">
+                    <div v-if="courseScores" class="grades-score">
+                      {{ courseScores.examScore || 0 }}
+                    </div>
+                    <div v-else class="grades-loading">
+                      <el-skeleton :rows="1" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 成绩图表 -->
+              <div class="grades-chart-container" :class="currentTheme">
+                <div class="grades-chart-header">
+                  <h3>成绩分布</h3>
+                </div>
+                <div class="grades-chart-content">
+                  <div ref="gradesChartRef" class="grades-chart" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2580,8 +2851,10 @@
 import { ref, computed, onMounted, nextTick } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
-  getFrontendCourseDetail,
-  reportFrontendLesson
+  getCourseDetail,
+  reportCourseLesson,
+  getCourseScore,
+  CourseScoreResult
 } from "@/api/frontend/course";
 import {
   courseAIChatStream,
@@ -2638,6 +2911,11 @@ const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
 const masteryChartRef = ref(null); // 添加图表引用
 let masteryChart = null; // 添加图表实例变量
+
+// 课程成绩相关
+const courseScores = ref<CourseScoreResult | null>(null);
+const gradesLoading = ref(false);
+const gradesChartRef = ref(null);
 
 // 课程问答相关数据
 const chatBodyRef = ref(null);
@@ -2699,7 +2977,7 @@ const fetchCourseDetail = async () => {
 
   loading.value = true;
   try {
-    const { code, data, msg } = await getFrontendCourseDetail({
+    const { code, data, msg } = await getCourseDetail({
       courseId: courseId.value
     });
 
@@ -2982,6 +3260,11 @@ function handleMenuClick(menuName: string) {
     fetchExamList();
   }
 
+  // 当切换到成绩菜单时，加载成绩数据
+  if (menuName === "grades") {
+    fetchCourseScores();
+  }
+
   // 更新 SVG 图标颜色
   const svgElements = document.querySelectorAll(".hover-box svg");
   svgElements.forEach(svg => {
@@ -3105,7 +3388,7 @@ function videoEnded() {
 // 上报学习进度
 async function reportProgress(hourId: number) {
   try {
-    await reportFrontendLesson({
+    await reportCourseLesson({
       courseId: courseId.value,
       hourId: hourId
     });
@@ -3381,6 +3664,97 @@ const initIconColors = () => {
   });
 };
 
+// 获取课程成绩
+const fetchCourseScores = async () => {
+  if (!courseId.value) return;
+  gradesLoading.value = true;
+
+  try {
+    const response = await getCourseScore({ courseId: courseId.value });
+    if (response && response.code === 200 && response.data) {
+      courseScores.value = response.data;
+      // 在DOM更新后初始化图表
+      nextTick(() => {
+        initGradesChart();
+      });
+    }
+  } catch (error) {
+    console.error("获取课程成绩失败:", error);
+    ElMessage.error("获取成绩数据失败，请稍后重试");
+  } finally {
+    gradesLoading.value = false;
+  }
+};
+
+// 初始化成绩图表
+const initGradesChart = () => {
+  if (!gradesChartRef.value || !courseScores.value) return;
+
+  const gradeChart = echarts.init(gradesChartRef.value);
+
+  const option = {
+    tooltip: {
+      trigger: "item",
+      formatter: "{b}: {c}"
+    },
+    legend: {
+      orient: "horizontal",
+      bottom: 0,
+      data: ["课时成绩", "作业成绩", "考试成绩"]
+    },
+    series: [
+      {
+        type: "pie",
+        radius: ["40%", "70%"],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: "#fff",
+          borderWidth: 2
+        },
+        label: {
+          show: false,
+          position: "center"
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 20,
+            fontWeight: "bold"
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: [
+          {
+            value: courseScores.value.courseScore,
+            name: "课时成绩",
+            itemStyle: { color: "#41b6ff" }
+          },
+          {
+            value: courseScores.value.workScore,
+            name: "作业成绩",
+            itemStyle: { color: "#e85f33" }
+          },
+          {
+            value: courseScores.value.examScore,
+            name: "考试成绩",
+            itemStyle: { color: "#604ffd" }
+          }
+        ]
+      }
+    ]
+  };
+
+  gradeChart.setOption(option);
+
+  // 处理窗口大小变化
+  window.addEventListener("resize", () => {
+    gradeChart.resize();
+  });
+};
+
 // 初始化掌握度圆环图表
 const initMasteryChart = () => {
   // 确保DOM已加载
@@ -3492,16 +3866,25 @@ const initQAHistory = () => {
   ];
 };
 
-onMounted(() => {
-  fetchCourseDetail();
-  initChat(); // 初始化AI聊天
-  initQAHistory(); // 初始化课程问答历史数据
+onMounted(async () => {
+  // 获取课程ID
+  courseId.value = Number(route.params.id);
 
-  // 获取作业和考试列表
-  fetchHomeworkList();
-  fetchExamList();
+  // 获取课程详情
+  await fetchCourseDetail();
 
-  // 等待DOM更新后初始化图标颜色和图表
+  // 初始化AI聊天
+  initChat();
+
+  // 初始化课程问答历史数据
+  initQAHistory();
+
+  // 如果当前是成绩菜单，加载成绩数据
+  if (activeMenu.value === "grades") {
+    fetchCourseScores();
+  }
+
+  // 等待DOM更新后初始化图表
   nextTick(() => {
     initIconColors();
     initMasteryChart(); // 初始化掌握度图表
@@ -4455,5 +4838,139 @@ onMounted(() => {
 .homework-action,
 .exam-action {
   flex-shrink: 0;
+}
+
+/* 课程成绩相关样式 */
+.course-grades-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background-color: #f5f7fa; /* 默认浅色背景 */
+}
+
+.course-grades-wrapper.dark {
+  background-color: #1e1e1e;
+}
+
+.course-grades-container {
+  padding: 80px 20px 20px;
+  width: 100%;
+  height: calc(100vh - 125px);
+  overflow-y: auto;
+  background-color: #f5f7fa; /* 默认浅色背景 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.course-grades-container.dark {
+  background-color: #1e1e1e;
+}
+
+.grades-content {
+  width: 90%;
+  max-width: 1400px;
+}
+
+.grades-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.grades-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+}
+
+.grades-card.dark {
+  background-color: #252525;
+  border-color: #3e3e3e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.grades-card:hover {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+}
+
+.grades-card.dark:hover {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+}
+
+.grades-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.grades-card-header svg {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  color: #604ffd;
+}
+
+.grades-card-header h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #303133;
+  margin: 0;
+}
+
+.grades-card.dark .grades-card-header h3 {
+  color: #e0e0e0;
+}
+
+.grades-card-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+}
+
+.grades-score {
+  font-size: 48px;
+  font-weight: 600;
+  color: #604ffd;
+}
+
+.grades-chart-container {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+}
+
+.grades-chart-container.dark {
+  background-color: #252525;
+  border-color: #3e3e3e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.grades-chart-header {
+  margin-bottom: 20px;
+}
+
+.grades-chart-header h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #303133;
+  margin: 0;
+}
+
+.grades-chart-container.dark .grades-chart-header h3 {
+  color: #e0e0e0;
+}
+
+.grades-chart {
+  width: 100%;
+  height: 350px;
 }
 </style>
