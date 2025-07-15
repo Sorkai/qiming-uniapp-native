@@ -54,8 +54,18 @@ function ascending(arr: any[]) {
 
 /** 过滤meta中showLink为false的菜单 */
 function filterTree(data: RouteComponent[]) {
+  // 获取用户的roleType
+  const userRoleType = storageLocal().getItem<DataInfo<number>>(userKey)?.roleType ?? 0;
+
   const newTree = cloneDeep(data).filter(
-    (v: { meta: { showLink: boolean } }) => v.meta?.showLink !== false
+    (v: { meta: { showLink: boolean }, path: string }) => {
+      // 如果是用户管理相关路由且当前用户角色是教师(roleType=2)，则隐藏菜单
+      if (v.path === "/user" && userRoleType === 2) {
+        return false;
+      }
+      // 原来的过滤条件
+      return v.meta?.showLink !== false;
+    }
   );
   newTree.forEach(
     (v: { children }) => v.children && (v.children = filterTree(v.children))

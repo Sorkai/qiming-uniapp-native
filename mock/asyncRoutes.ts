@@ -51,7 +51,8 @@ const systemManagementRouter = {
   meta: {
     icon: "ri:settings-3-line",
     title: "menus.pureSysManagement",
-    rank: system
+    rank: system,
+    showLink: false
   },
   children: [
     {
