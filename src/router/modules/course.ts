@@ -31,6 +31,14 @@ export default {
       meta: {
         title: "作业与考试"
       }
+    },
+    {
+      path: "/course/teacherplan",
+      name: "CourseTeacherPlan",
+      component: () => import("@/views/course/teacherplan/index.vue"),
+      meta: {
+        title: "教案管理"
+      }
     }
   ]
 };

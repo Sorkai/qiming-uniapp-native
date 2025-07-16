@@ -304,3 +304,43 @@ export const deleteHour = (data: {
     { data }
   );
 };
+
+/**
+ * 生成教案
+ * @param data 包含课程ID和章节ID的数据对象
+ */
+export const generateTeacherPlan = (data: { course_id: number; chapter_id: number }) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/course/generate/teacher/plan",
+    { data }
+  );
+};
+
+/**
+ * 获取教案列表
+ * @param params 分页参数
+ */
+export const getTeacherPlanList = (params: { pageNum: number; pageSize?: number }) => {
+  return http.request<ApiResponse<{
+    total: number;
+    teacherPlanList: Array<{
+      teacherPlanId: number;
+      courseId: number;
+      chapterId: number;
+      courseName: string;
+      chapterName: string;
+    }>;
+  }>>("get", "/edu/backend/v1/course/teacher/plan/list", { params });
+};
+
+/**
+ * 查看教案生成进度
+ * @param params 包含教案ID的参数对象
+ */
+export const getTeacherPlanProgress = (params: { teacherPlanId: number }) => {
+  return http.request<ApiResponse<{
+    progress: number;
+    downloadUrl?: string;
+  }>>("get", "/edu/backend/v1/course/teacher/plan/progress", { params });
+};
