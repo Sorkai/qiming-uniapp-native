@@ -2718,14 +2718,19 @@ const getExamStatusText = (status: number) => {
 // 查看作业
 const viewHomework = (homework: any) => {
   if (homework && homework.homeworkId) {
-    // 重定向到作业详情页
-    router.push({
-      path: `/account/homework-detail`,
-      query: {
-        homeworkId: homework.homeworkId,
-        courseId: route.params.id
-      }
-    });
+    // 只有状态为2(进行中)的作业可以查看
+    if (homework.status === 2) {
+      // 重定向到作业详情页
+      router.push({
+        path: `/account/homework-detail`,
+        query: {
+          homeworkId: homework.homeworkId,
+          courseId: route.params.id
+        }
+      });
+    } else {
+      ElMessage.warning(`${getHomeworkStatusText(homework.status)}状态的作业不可查看`);
+    }
   }
 };
 
