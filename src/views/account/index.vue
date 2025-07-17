@@ -110,6 +110,7 @@
                           v-for="course in myCourses.examList"
                           :key="'exam-' + course.courseId"
                           class="mini-course-item"
+                          @click="handleCourseClick(course.courseId)"
                         >
                           <div
                             class="course-thumb"
@@ -149,6 +150,7 @@
                           v-for="course in myCourses.endingList"
                           :key="'end-' + course.courseId"
                           class="mini-course-item"
+                          @click="handleCourseClick(course.courseId)"
                         >
                           <div
                             class="course-thumb"
@@ -188,6 +190,7 @@
                           v-for="course in myCourses.homeworkList"
                           :key="'homework-' + course.courseId"
                           class="mini-course-item"
+                          @click="handleCourseClick(course.courseId)"
                         >
                           <div
                             class="course-thumb"
@@ -956,6 +959,7 @@ const handleCourseClick = (courseId: number) => {
         }
 
         .mini-course-item {
+  cursor: pointer;
           display: flex;
           gap: 8px;
           align-items: center;
