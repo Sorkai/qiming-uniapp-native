@@ -2181,19 +2181,20 @@
                   <!-- 输入区域 -->
                   <div class="qa-chat-footer">
                     <div class="qa-input-wrapper">
-                      <textarea
-                        v-model="currentMessage"
-                        class="qa-input"
-                        placeholder="请输入您的问题..."
-                        @keydown.enter.prevent="sendMessage"
-                      />
-                      <button
-                        class="qa-send-button"
-                        :disabled="sendingMessage || !currentMessage.trim()"
-                        @click="sendMessage"
+                      <div
+                        class="qa-input disabled"
+                        style="
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          color: #999;
+                          cursor: not-allowed;
+                          background-color: #f5f5f5;
+                          height: 100%;
+                        "
                       >
-                        <SendIcon />
-                      </button>
+                        教师已关闭讨论功能
+                      </div>
                     </div>
                   </div>
                 </div>
