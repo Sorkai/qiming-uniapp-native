@@ -126,6 +126,7 @@
       title="试题管理"
       width="90%"
       top="5vh"
+      @closed="handleQuestionDialogClosed"
     >
       <div v-if="currentExam" class="question-dialog-header">
         <h3>{{ currentExam.title }}</h3>
@@ -600,6 +601,12 @@ const formatMultipleAnswers = answerStr => {
   } catch (e) {
     return answerStr;
   }
+};
+
+// 处理试题管理对话框关闭
+const handleQuestionDialogClosed = () => {
+  // 刷新考试列表
+  fetchExamList();
 };
 
 // 页面加载时获取数据

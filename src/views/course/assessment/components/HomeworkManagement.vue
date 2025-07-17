@@ -139,6 +139,7 @@
       title="作业管理"
       width="90%"
       top="5vh"
+      @closed="handleQuestionDialogClosed"
     >
       <div v-if="currentHomework" class="question-dialog-header">
         <h3>{{ currentHomework.title }}</h3>
@@ -654,6 +655,12 @@ const formatMultipleAnswers = answerStr => {
   } catch (e) {
     return answerStr;
   }
+};
+
+// 处理作业管理对话框关闭
+const handleQuestionDialogClosed = () => {
+  // 刷新作业列表
+  fetchHomeworkList();
 };
 
 // 页面加载时获取数据
