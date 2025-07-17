@@ -239,17 +239,6 @@
                     <li>已完成基础模块学习，掌握度良好</li>
                     <li>建议加强实践环节的练习</li>
                     <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
-                    <li>下周将开始新模块的学习</li>
                   </ul>
                 </div>
               </div>
@@ -959,7 +948,7 @@ const handleCourseClick = (courseId: number) => {
         }
 
         .mini-course-item {
-  cursor: pointer;
+          cursor: pointer;
           display: flex;
           gap: 8px;
           align-items: center;
