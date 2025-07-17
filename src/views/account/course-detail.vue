@@ -3777,8 +3777,7 @@ onMounted(async () => {
 }
 
 .qa-chat-body {
-  height: 400px; /* 固定高度 */
-  max-height: calc(100vh - 300px); /* 最大高度，适应不同屏幕 */
+  height: calc(100vh - 270px); /* 最大高度，适应不同屏幕 */
   padding: 20px;
   overflow-y: auto;
   background-color: #f9f9f9;
