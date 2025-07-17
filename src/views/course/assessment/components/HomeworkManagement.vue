@@ -505,7 +505,6 @@ const fetchQuestionList = async () => {
   if (!currentHomework.value) return;
 
   // 检查作业ID是否存在且有效（不为0）
-  currentHomework.value.homeworkId = 10;
   if (
     currentHomework.value.homeworkId === 0 ||
     currentHomework.value.homeworkId === null ||
