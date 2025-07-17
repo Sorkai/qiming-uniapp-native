@@ -942,7 +942,7 @@ const handleCourseClick = (courseId: number) => {
 
         .mini-course-list {
           display: grid;
-          grid-template-columns: repeat(auto-fill, 200px); // 固定卡片宽度
+          grid-template-columns: repeat(auto-fill, 250px); // 固定卡片宽度
           gap: 8px;
           justify-content: start; // 从左侧开始排列
         }
@@ -952,25 +952,27 @@ const handleCourseClick = (courseId: number) => {
           display: flex;
           gap: 8px;
           align-items: center;
-          width: 200px; // 固定卡片宽度
-          min-width: 0;
-          padding: 4px;
-          background: #fafafa;
-          border: 1px solid #f0f0f0;
-          border-radius: 2px;
-          transition: all 0.2s ease;
+          width: 250px; // 设置固定宽度
+          padding: 8px;
+          background: #fff;
+          border: 1px solid #ebeef5;
+          border-radius: 4px;
+          box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+          transition: all 0.3s ease;
+          margin-bottom: 8px;
 
           &:hover {
-            background: #f5f5f5;
+            box-shadow: 0 3px 8px rgb(0 0 0 / 10%);
+            transform: translateY(-2px);
           }
 
           .course-thumb {
             position: relative;
             flex-shrink: 0;
-            width: 36px;
-            height: 36px;
+            width: 60px;
+            height: 60px;
             overflow: hidden;
-            border-radius: 2px;
+            border-radius: 4px;
 
             .thumb-image {
               width: 100%;
@@ -983,13 +985,13 @@ const handleCourseClick = (courseId: number) => {
 
             .el-tag {
               position: absolute;
-              top: 2px;
-              right: 2px;
+              top: 4px;
+              right: 4px;
               z-index: 1;
-              height: 14px;
-              padding: 0 3px;
-              font-size: 9px;
-              line-height: 12px;
+              height: 18px;
+              padding: 0 4px;
+              font-size: 11px;
+              line-height: 16px;
             }
           }
 
@@ -997,19 +999,20 @@ const handleCourseClick = (courseId: number) => {
             display: flex;
             flex: 1;
             flex-direction: column;
-            gap: 2px;
+            gap: 4px;
             min-width: 0;
 
             .course-name {
               @include text-ellipsis;
 
-              font-size: 12px;
+              font-size: 13px;
+              font-weight: 600;
               color: #333;
             }
 
             .course-time {
-              font-size: 11px;
-              color: #999;
+              font-size: 12px;
+              color: #606266;
             }
           }
         }
