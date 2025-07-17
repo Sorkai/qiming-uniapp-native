@@ -156,6 +156,7 @@ const {
         </template>
       </el-dropdown>
       <span
+        v-if="false"
         class="set-icon navbar-bg-hover"
         :title="t('buttons.pureOpenSystemSet')"
         @click="onPanel"

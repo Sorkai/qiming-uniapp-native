@@ -66,6 +66,7 @@ function onShow(btn: floatBtnsType, index: number) {
   position: fixed;
   right: 10px;
   bottom: 60px;
+  display: none; /* 添加这一行隐藏整个浮动按钮组 */
 
   .pure-float-btn {
     width: 40px;
