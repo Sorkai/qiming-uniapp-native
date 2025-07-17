@@ -2737,14 +2737,19 @@ const viewHomework = (homework: any) => {
 // 查看考试
 const viewExam = (exam: any) => {
   if (exam && exam.examId) {
-    // 重定向到考试页面，不再根据状态判断
-    router.push({
-      path: `/account/exam-detail`,
-      query: {
-        examId: exam.examId,
-        courseId: route.params.id
-      }
-    });
+    // 只有状态为2(进行中)的考试可以查看
+    if (exam.status === 2) {
+      // 重定向到考试页面
+      router.push({
+        path: `/account/exam-detail`,
+        query: {
+          examId: exam.examId,
+          courseId: route.params.id
+        }
+      });
+    } else {
+      ElMessage.warning(`${getExamStatusText(exam.status)}状态的考试不可查看`);
+    }
   }
 };
 
