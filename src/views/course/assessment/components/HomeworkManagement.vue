@@ -142,17 +142,13 @@
     >
       <div v-if="currentHomework" class="question-dialog-header">
         <h3>{{ currentHomework.title }}</h3>
-        <p>
-          试题数量: {{ currentHomework.questionNum }} | 总分:
-          {{ currentHomework.totalPoints }}
-        </p>
       </div>
 
-      <!-- <div class="question-operation-bar">
-        <el-button type="primary" @click="showAddQuestionDialog">
-          <el-icon><Plus /></el-icon>添加试题
+      <div class="question-operation-bar">
+        <el-button type="primary" @click="addRandomQuestion">
+          <el-icon><Plus /></el-icon>随机添加试题
         </el-button>
-      </div> -->
+      </div>
 
       <el-table
         v-loading="questionLoading"
@@ -184,13 +180,19 @@
           </template>
         </el-table-column>
         <el-table-column prop="sortOrder" label="排序" width="80" />
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="scope">
             <el-button
               size="small"
               type="primary"
               @click="viewQuestionDetail(scope.row)"
               >查看</el-button
+            >
+            <el-button
+              size="small"
+              type="danger"
+              @click="deleteQuestion(scope.row)"
+              >删除</el-button
             >
           </template>
         </el-table-column>
@@ -275,6 +277,7 @@ import {
   updateHomework,
   deleteHomework
 } from "@/api/homework";
+import { deleteWorkQuestion, addRandomWorkQuestion } from "@/api/work";
 import { getCourseHoursList } from "@/api/course";
 
 const props = defineProps({
@@ -554,10 +557,50 @@ const editQuestion = row => {
   ElMessage.info("编辑试题功能待实现");
 };
 
+// 随机添加一道试题
+const addRandomQuestion = async () => {
+  if (!currentHomework.value) return;
+
+  try {
+    await addRandomWorkQuestion({
+      addType: 2, // 2表示作业
+      sourceId: currentHomework.value.homeworkId
+    });
+    ElMessage.success("随机添加试题成功");
+    // 重新获取试题列表
+    await fetchQuestionList();
+  } catch (error) {
+    console.error("随机添加试题失败", error);
+    ElMessage.error("随机添加试题失败");
+  }
+};
+
 // 删除试题
 const deleteQuestion = row => {
-  // 这里可以实现删除试题的逻辑
-  ElMessage.info("删除试题功能待实现");
+  ElMessageBox.confirm(`确定要删除该试题吗？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  })
+    .then(async () => {
+      try {
+        console.log("要删除的试题:", row);
+        await deleteWorkQuestion({
+          deleteType: 2, // 2表示作业
+          sourceId: currentHomework.value.homeworkId,
+          questionId: row.questionId // 只使用questionId字段
+        });
+        ElMessage.success("删除试题成功");
+        // 重新获取试题列表
+        await fetchQuestionList();
+      } catch (error) {
+        console.error("删除试题失败", error);
+        ElMessage.error(
+          `删除试题失败：${error.message || JSON.stringify(error)}`
+        );
+      }
+    })
+    .catch(() => {});
 };
 
 // 获取题型名称
