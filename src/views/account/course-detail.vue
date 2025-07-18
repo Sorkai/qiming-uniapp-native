@@ -488,13 +488,7 @@
                     </div>
                     <div class="wrong-question-info">
                       <div class="wrong-question-title">{{ item.title }}</div>
-                      <div class="wrong-question-meta">
-                        <span
-                          >来源: {{ getSourceTypeText(item.sourceType) }} -
-                          {{ item.sourceTitle }}</span
-                        >
-                        <span>创建时间: {{ formatDate(item.createTime) }}</span>
-                      </div>
+                      <div class="wrong-question-meta"></div>
                     </div>
                     <div class="wrong-question-action">
                       <el-button

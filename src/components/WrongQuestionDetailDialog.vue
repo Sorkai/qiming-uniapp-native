@@ -1,13 +1,13 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="错题详情"
+    :title="wrongQuestion?.sourceName || '错题详情'"
     width="60%"
     :before-close="handleClose"
   >
     <div class="wrong-question-detail">
-      <h3 class="question-title">{{ wrongQuestion.title }}</h3>
-      <div class="question-stem" v-html="wrongQuestion.stem"></div>
+      <h3 class="question-title">{{ wrongQuestion?.title }}</h3>
+      <div class="question-stem" v-html="wrongQuestion?.stem"></div>
 
       <div v-if="isChoiceQuestion" class="question-options">
         <h4>选项:</h4>
@@ -16,26 +16,20 @@
             v-for="(option, idx) in parsedOptions"
             :key="idx"
             :class="{
-              'is-correct': isOptionCorrect(option.optionId),
-              'is-user-answer': isUserAnswer(option.optionId)
+              'is-correct': isOptionCorrect(option.optionId)
             }"
           >
-            <span class="option-label">{{ getOptionLabel(idx) }}.</span>
+            <span class="option-label">{{ option.optionId }}.</span>
             <span v-html="option.content"></span>
           </li>
         </ul>
       </div>
 
-      <div class="question-answers">
-        <h4>你的答案:</h4>
-        <p :class="{ 'is-correct-answer': isUserAnswerCorrect }">
-          {{ displayUserAnswer }}
-        </p>
-
+      <div v-show="showAnswerAnalysis" class="question-answers">
         <h4>正确答案:</h4>
         <p>{{ displayCorrectAnswer }}</p>
 
-        <div v-if="wrongQuestion.analysis">
+        <div v-if="wrongQuestion?.analysis">
           <h4>解析:</h4>
           <div v-html="wrongQuestion.analysis"></div>
         </div>
@@ -44,6 +38,9 @@
 
     <template #footer>
       <span class="dialog-footer">
+        <el-button @click="handleShowAnswerAnalysis">{{
+          showAnswerAnalysis ? "隐藏答案解析" : "查看答案解析"
+        }}</el-button>
         <el-button @click="handleClose">关闭</el-button>
       </span>
     </template>
@@ -55,7 +52,7 @@ import { ref, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 
 interface Option {
-  optionId: string;
+  optionId: string; // A, B, C, etc.
   content: string;
 }
 
@@ -65,13 +62,13 @@ interface WrongQuestion {
   sourceId: number;
   sourceName: string;
   questionId: number;
-  questionType: number;
+  questionType: number; // 1: 单选题, 2: 多选题, 3: 判断题, 4: 填空题, 5: 简答题, 6: 编程题
   title: string;
   stem: string;
-  options: string | null; // Stringified JSON array
+  options: string | null; // Stringified JSON array of strings, e.g., "["Option A","Option B"]"
   analysis: string | null;
-  answer: string; // Stringified, can be array for multi-choice/fill-in-blank
-  userAnswer: string;
+  answer: string; // Stringified, can be array for multi-choice/fill-in-blank, e.g., "['A']" or "Answer Text"
+  userAnswer: string; // String for single, comma-separated for multi-choice/fill-in-blank
   wrongNum: number;
   lastWrongTime: string;
 }
@@ -84,11 +81,16 @@ const props = defineProps<{
 const emit = defineEmits(["update:modelValue"]);
 
 const visible = ref(props.modelValue);
+const showAnswerAnalysis = ref(false); // 控制答案和解析的显示
 
 watch(
   () => props.modelValue,
   newVal => {
     visible.value = newVal;
+    // 当对话框关闭时，重置答案显示状态
+    if (!newVal) {
+      showAnswerAnalysis.value = false;
+    }
   }
 );
 
@@ -103,6 +105,10 @@ const handleClose = () => {
   visible.value = false;
 };
 
+const handleShowAnswerAnalysis = () => {
+  showAnswerAnalysis.value = !showAnswerAnalysis.value;
+};
+
 const isChoiceQuestion = computed(() => {
   return (
     props.wrongQuestion?.questionType === 1 ||
@@ -113,7 +119,11 @@ const isChoiceQuestion = computed(() => {
 const parsedOptions = computed<Option[]>(() => {
   if (props.wrongQuestion?.options && isChoiceQuestion.value) {
     try {
-      return JSON.parse(props.wrongQuestion.options);
+      const rawOptions: string[] = JSON.parse(props.wrongQuestion.options);
+      return rawOptions.map((content, index) => ({
+        optionId: String.fromCharCode(65 + index), // Generate A, B, C...
+        content: content
+      }));
     } catch (e) {
       console.error("Failed to parse options:", e);
       return [];
@@ -123,79 +133,32 @@ const parsedOptions = computed<Option[]>(() => {
 });
 
 const parsedCorrectAnswer = computed<string[]>(() => {
-  if (props.wrongQuestion?.answer) {
-    try {
-      // Answers can be array for multi-choice or single string in an array for others
-      const answer = JSON.parse(props.wrongQuestion.answer);
-      return Array.isArray(answer) ? answer : [answer];
-    } catch (e) {
-      return [props.wrongQuestion.answer]; // Fallback if not JSON or single string
+  if (!props.wrongQuestion?.answer) return [];
+  try {
+    const parsed = JSON.parse(props.wrongQuestion.answer);
+    if (Array.isArray(parsed)) {
+      return parsed.map(String); // Ensure elements are strings
+    } else {
+      return [String(parsed)]; // If not an array, treat as a single string
     }
+  } catch (e) {
+    // If parsing fails, treat as a literal string
+    return [props.wrongQuestion.answer];
   }
-  return [];
 });
 
 const displayCorrectAnswer = computed(() => {
   if (!props.wrongQuestion) return "";
+  // For choice questions, show A, B, C...
   if (isChoiceQuestion.value) {
-    const labels = parsedCorrectAnswer.value.map(ans => {
-      const index = parsedOptions.value.findIndex(opt => opt.optionId === ans);
-      return index !== -1 ? getOptionLabel(index) : ans; // Fallback to optionId if label not found
-    });
-    return labels.join(", ");
+    return parsedCorrectAnswer.value.join(", ");
   }
+  // For other question types, show the raw answer
   return parsedCorrectAnswer.value.join(", ");
 });
 
-const displayUserAnswer = computed(() => {
-  if (!props.wrongQuestion) return "";
-  if (isChoiceQuestion.value) {
-    const labels = props.wrongQuestion.userAnswer.split(",").map(ans => {
-      const index = parsedOptions.value.findIndex(
-        opt => opt.optionId === ans.trim()
-      );
-      return index !== -1 ? getOptionLabel(index) : ans.trim();
-    });
-    return labels.join(", ");
-  }
-  return props.wrongQuestion.userAnswer;
-});
-
-const isUserAnswerCorrect = computed(() => {
-  if (!props.wrongQuestion) return false;
-
-  const userAnswer = props.wrongQuestion.userAnswer;
-  const correctAnswer = parsedCorrectAnswer.value;
-
-  if (isChoiceQuestion.value) {
-    // For choice questions, compare sorted arrays of option IDs
-    const userAnsArray = userAnswer
-      .split(",")
-      .map(s => s.trim())
-      .sort();
-    const correctAnsArray = correctAnswer.sort();
-    return JSON.stringify(userAnsArray) === JSON.stringify(correctAnsArray);
-  } else {
-    // For other types, direct string comparison
-    return userAnswer === correctAnswer[0];
-  }
-});
-
-const getOptionLabel = (index: number) => {
-  return String.fromCharCode(65 + index); // A, B, C, ...
-};
-
 const isOptionCorrect = (optionId: string) => {
   return parsedCorrectAnswer.value.includes(optionId);
-};
-
-const isUserAnswer = (optionId: string) => {
-  if (!props.wrongQuestion || !props.wrongQuestion.userAnswer) return false;
-  // For multiple choices, userAnswer might be "A,B" or "optionId1,optionId2"
-  return props.wrongQuestion.userAnswer
-    .split(",")
-    .map(s => s.trim())
-    .includes(optionId);
 };
 </script>
 
@@ -250,14 +213,7 @@ const isUserAnswer = (optionId: string) => {
 
 .question-options li.is-correct {
   color: #67c23a; /* Green for correct options */
-}
-
-.question-options li.is-user-answer {
-  background-color: #f0f9eb; /* Light green background for user's selected options */
-}
-
-.question-options li.is-correct.is-user-answer {
-  background-color: #e1f3d8; /* Darker light green if user selected correct option */
+  font-weight: bold;
 }
 
 .question-answers p {
@@ -265,10 +221,5 @@ const isUserAnswer = (optionId: string) => {
   line-height: 1.6;
   color: #666;
   white-space: pre-wrap; /* Preserve whitespace and breaks */
-}
-
-.question-answers .is-correct-answer {
-  color: #67c23a; /* Green if user's answer is correct */
-  font-weight: bold;
 }
 </style>
