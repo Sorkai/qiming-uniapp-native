@@ -485,6 +485,46 @@
                 </div>
                 <el-empty v-else description="暂无考试" />
               </el-tab-pane>
+              <!-- 新增随练标签页 -->
+              <el-tab-pane label="随练" name="practice">
+                <div
+                  v-if="wrongQuestionList && wrongQuestionList.length > 0"
+                  class="wrong-question-list"
+                >
+                  <div
+                    v-for="(item, index) in wrongQuestionList"
+                    :key="index"
+                    class="wrong-question-item"
+                    :class="{ dark: currentTheme === 'dark' }"
+                  >
+                    <div class="wrong-question-icon">
+                      <img
+                        src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
+                        alt="错题"
+                      />
+                    </div>
+                    <div class="wrong-question-info">
+                      <div class="wrong-question-title">{{ item.title }}</div>
+                      <div class="wrong-question-meta">
+                        <span
+                          >来源: {{ getSourceTypeText(item.sourceType) }} -
+                          {{ item.sourceTitle }}</span
+                        >
+                        <span>创建时间: {{ formatDate(item.createTime) }}</span>
+                      </div>
+                    </div>
+                    <div class="wrong-question-action">
+                      <el-button
+                        size="small"
+                        type="primary"
+                        @click="viewWrongQuestion(item)"
+                        >查看</el-button
+                      >
+                    </div>
+                  </div>
+                </div>
+                <el-empty v-else description="暂无错题" />
+              </el-tab-pane>
             </el-tabs>
           </div>
         </div>
@@ -2527,6 +2567,10 @@
         </div>
       </div>
     </div>
+    <WrongQuestionDetailDialog
+      v-model="isWrongQuestionDialogVisible"
+      :wrong-question="selectedWrongQuestion"
+    />
   </div>
 </template>
 
@@ -2547,7 +2591,8 @@ import {
 } from "@/api/frontend/chat";
 import {
   getUserCourseHomeworkList,
-  getUserCourseExamList
+  getUserCourseExamList,
+  getUserWrongQuestionList
 } from "@/api/frontend/work";
 import { storageLocal } from "@pureadmin/utils";
 import { userKey } from "@/utils/auth";
@@ -2571,6 +2616,7 @@ import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
 import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-icon.svg?component";
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 import * as echarts from "echarts";
+import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
 
 const router = useRouter();
 const route = useRoute();
@@ -2612,6 +2658,11 @@ const qaStats = ref({
   solveRate: "83%",
   avgResponseTime: "5分钟"
 });
+
+// 新增错题列表相关
+const wrongQuestionList = ref([]);
+const isWrongQuestionDialogVisible = ref(false); // 控制错题详情对话框显示
+const selectedWrongQuestion = ref(null); // 存储当前选中的错题
 
 // 获取本地存储的用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
@@ -3170,6 +3221,24 @@ const sendMessage = async () => {
 
   const userMessage = currentMessage.value.trim();
 
+  // 获取当前章节ID
+  let currentChapterId = null;
+  if (
+    currentHour.value &&
+    courseDetail.value &&
+    courseDetail.value.courseChapterList
+  ) {
+    for (const chapter of courseDetail.value.courseChapterList) {
+      if (
+        chapter.hourList &&
+        chapter.hourList.some(hour => hour.hourId === currentHour.value.hourId)
+      ) {
+        currentChapterId = chapter.chapterId;
+        break;
+      }
+    }
+  }
+
   // 添加用户消息到聊天记录
   chatMessages.value.push({
     role: "user",
@@ -3202,7 +3271,8 @@ const sendMessage = async () => {
       {
         course_id: courseId.value,
         conversation_id: conversationId.value,
-        message: userMessage
+        message: userMessage,
+        chapter_id: currentChapterId // 添加章节ID
       },
       data => {
         // 更新会话ID
@@ -3637,6 +3707,39 @@ const fetchCourseStudyEffect = async () => {
   }
 };
 
+// 获取用户错题列表
+const fetchWrongQuestionList = async () => {
+  try {
+    const { code, data, msg } = await getUserWrongQuestionList({
+      page: 1,
+      pageSize: 10 // 可以根据需要调整每页显示数量
+    });
+    if (code === 200 && data && data.list) {
+      wrongQuestionList.value = data.list;
+    } else {
+      ElMessage.error(msg || "获取错题列表失败");
+    }
+  } catch (error) {
+    console.error("获取错题列表出错:", error);
+    ElMessage.error("获取错题列表失败，请稍后重试");
+  }
+};
+
+// 获取来源类型文本
+const getSourceTypeText = (sourceType: number) => {
+  const typeMap: Record<number, string> = {
+    1: "作业",
+    2: "考试"
+  };
+  return typeMap[sourceType] || "未知";
+};
+
+// 查看错题（占位函数，待后续实现跳转逻辑）
+const viewWrongQuestion = (item: any) => {
+  selectedWrongQuestion.value = item; // 设置当前选中的错题
+  isWrongQuestionDialogVisible.value = true; // 显示对话框
+};
+
 watch(
   () => activeMenu.value,
   newVal => {
@@ -3644,6 +3747,16 @@ watch(
       fetchCourseStudyEffect();
     }
     // ... existing code ...
+  }
+);
+
+// 监听 homeworkExamTab 变化，当切换到"随练"标签时加载错题列表
+watch(
+  () => homeworkExamTab.value,
+  newVal => {
+    if (newVal === "practice") {
+      fetchWrongQuestionList();
+    }
   }
 );
 
@@ -4820,5 +4933,83 @@ onMounted(async () => {
 
 .collapsible-header i.rotated {
   transform: rotate(-90deg);
+}
+
+/* 随练错题列表样式 */
+.wrong-question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.wrong-question-item {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: #fff;
+  transition: all 0.3s;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.wrong-question-item.dark {
+  background-color: #252525;
+  border-color: #3e3e3e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.wrong-question-item:hover {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.wrong-question-item.dark:hover {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+}
+
+.wrong-question-icon {
+  flex-shrink: 0;
+  margin-right: 15px;
+}
+
+.wrong-question-icon img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.wrong-question-info {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.wrong-question-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #303133;
+}
+
+.wrong-question-item.dark .wrong-question-title {
+  color: #e0e0e0;
+}
+
+.wrong-question-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.wrong-question-item.dark .wrong-question-meta {
+  color: #aaa;
+}
+
+.wrong-question-action {
+  flex-shrink: 0;
 }
 </style>
