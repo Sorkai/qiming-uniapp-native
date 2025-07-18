@@ -1542,79 +1542,194 @@
                   :key="index"
                   class="chapter-section"
                 >
-                  <h2>{{ chapter.chapterName }}</h2>
-
-                  <!-- 重点部分 -->
-                  <div
-                    v-if="
-                      chapter.keyPointArray && chapter.keyPointArray.length > 0
-                    "
-                    class="point-section"
+                  <h2
+                    class="collapsible-header"
+                    @click="toggleChapterCollapse(chapter.chapterId)"
                   >
-                    <h3>重点</h3>
+                    {{ chapter.chapterName }}
+                    <i
+                      class="el-icon-arrow-down"
+                      :class="{
+                        rotated: !isChapterExpanded(chapter.chapterId)
+                      }"
+                    />
+                  </h2>
+
+                  <div v-show="isChapterExpanded(chapter.chapterId)">
+                    <!-- 重点部分 -->
                     <div
-                      v-for="(item, idx) in chapter.keyPointArray"
-                      :key="'key-' + idx"
-                      class="point-item"
+                      v-if="
+                        chapter.keyPointArray &&
+                        chapter.keyPointArray.length > 0
+                      "
+                      class="point-section"
                     >
-                      <div class="point-title">{{ item.title }}</div>
-                      <div class="point-content">{{ item.content }}</div>
+                      <h3
+                        class="collapsible-header"
+                        @click="
+                          toggleSubsectionCollapse(
+                            chapter.chapterId,
+                            'keyPoint'
+                          )
+                        "
+                      >
+                        重点
+                        <i
+                          class="el-icon-arrow-down"
+                          :class="{
+                            rotated: !isSubsectionExpanded(
+                              chapter.chapterId,
+                              'keyPoint'
+                            )
+                          }"
+                        />
+                      </h3>
+                      <div
+                        v-show="
+                          isSubsectionExpanded(chapter.chapterId, 'keyPoint')
+                        "
+                      >
+                        <div
+                          v-for="(item, idx) in chapter.keyPointArray || []"
+                          :key="'key-' + idx"
+                          class="point-item"
+                        >
+                          <div class="point-title">{{ item.title }}</div>
+                          <div class="point-content">{{ item.content }}</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- 难点部分 -->
-                  <div
-                    v-if="
-                      chapter.difficultPointArray &&
-                      chapter.difficultPointArray.length > 0
-                    "
-                    class="point-section"
-                  >
-                    <h3>难点</h3>
+                    <!-- 难点部分 -->
                     <div
-                      v-for="(item, idx) in chapter.difficultPointArray"
-                      :key="'diff-' + idx"
-                      class="point-item"
+                      v-if="
+                        chapter.difficultPointArray &&
+                        chapter.difficultPointArray.length > 0
+                      "
+                      class="point-section"
                     >
-                      <div class="point-title">{{ item.title }}</div>
-                      <div class="point-content">{{ item.content }}</div>
+                      <h3
+                        class="collapsible-header"
+                        @click="
+                          toggleSubsectionCollapse(
+                            chapter.chapterId,
+                            'difficultPoint'
+                          )
+                        "
+                      >
+                        难点
+                        <i
+                          class="el-icon-arrow-down"
+                          :class="{
+                            rotated: !isSubsectionExpanded(
+                              chapter.chapterId,
+                              'difficultPoint'
+                            )
+                          }"
+                        />
+                      </h3>
+                      <div
+                        v-show="
+                          isSubsectionExpanded(
+                            chapter.chapterId,
+                            'difficultPoint'
+                          )
+                        "
+                      >
+                        <div
+                          v-for="(item, idx) in chapter.difficultPointArray ||
+                          []"
+                          :key="'diff-' + idx"
+                          class="point-item"
+                        >
+                          <div class="point-title">{{ item.title }}</div>
+                          <div class="point-content">{{ item.content }}</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- 知识点部分 -->
-                  <div
-                    v-if="
-                      chapter.knowledgeArray &&
-                      chapter.knowledgeArray.length > 0
-                    "
-                    class="point-section"
-                  >
-                    <h3>知识点</h3>
+                    <!-- 知识点部分 -->
                     <div
-                      v-for="(item, idx) in chapter.knowledgeArray"
-                      :key="'know-' + idx"
-                      class="point-item"
+                      v-if="
+                        chapter.knowledgeArray &&
+                        chapter.knowledgeArray.length > 0
+                      "
+                      class="point-section"
                     >
-                      <div class="point-title">{{ item.title }}</div>
-                      <div class="point-content">{{ item.content }}</div>
+                      <h3
+                        class="collapsible-header"
+                        @click="
+                          toggleSubsectionCollapse(
+                            chapter.chapterId,
+                            'knowledge'
+                          )
+                        "
+                      >
+                        知识点
+                        <i
+                          class="el-icon-arrow-down"
+                          :class="{
+                            rotated: !isSubsectionExpanded(
+                              chapter.chapterId,
+                              'knowledge'
+                            )
+                          }"
+                        />
+                      </h3>
+                      <div
+                        v-show="
+                          isSubsectionExpanded(chapter.chapterId, 'knowledge')
+                        "
+                      >
+                        <div
+                          v-for="(item, idx) in chapter.knowledgeArray || []"
+                          :key="'know-' + idx"
+                          class="point-item"
+                        >
+                          <div class="point-title">{{ item.title }}</div>
+                          <div class="point-content">{{ item.content }}</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- 概念部分 -->
-                  <div
-                    v-if="
-                      chapter.ConceptArray && chapter.chapterList.length > 0
-                    "
-                    class="point-section"
-                  >
-                    <h3>概念</h3>
+                    <!-- 概念部分 -->
                     <div
-                      v-for="(item, idx) in chapter.ConceptArray"
-                      :key="'con-' + idx"
-                      class="point-item"
+                      v-if="
+                        chapter.ConceptArray && chapter.ConceptArray.length > 0
+                      "
+                      class="point-section"
                     >
-                      <div class="point-title">{{ item.title }}</div>
-                      <div class="point-content">{{ item.content }}</div>
+                      <h3
+                        class="collapsible-header"
+                        @click="
+                          toggleSubsectionCollapse(chapter.chapterId, 'concept')
+                        "
+                      >
+                        概念
+                        <i
+                          class="el-icon-arrow-down"
+                          :class="{
+                            rotated: !isSubsectionExpanded(
+                              chapter.chapterId,
+                              'concept'
+                            )
+                          }"
+                        />
+                      </h3>
+                      <div
+                        v-show="
+                          isSubsectionExpanded(chapter.chapterId, 'concept')
+                        "
+                      >
+                        <div
+                          v-for="(item, idx) in chapter.ConceptArray || []"
+                          :key="'con-' + idx"
+                          class="point-item"
+                        >
+                          <div class="point-title">{{ item.title }}</div>
+                          <div class="point-content">{{ item.content }}</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3458,14 +3573,64 @@ const studyEffectData = ref({
   chapterList: []
 });
 
+// New reactive states for collapse
+const chapterCollapseStates = reactive(new Map<number, boolean>());
+const subsectionCollapseStates = reactive(new Map<string, boolean>());
+
+// Helper functions for collapse
+const toggleChapterCollapse = (chapterId: number) => {
+  chapterCollapseStates.set(chapterId, !chapterCollapseStates.get(chapterId));
+};
+
+const isChapterExpanded = (chapterId: number) => {
+  return chapterCollapseStates.get(chapterId) ?? false; // Default to collapsed
+};
+
+const toggleSubsectionCollapse = (chapterId: number, sectionType: string) => {
+  const key = `${chapterId}-${sectionType}`;
+  subsectionCollapseStates.set(key, !subsectionCollapseStates.get(key));
+};
+
+const isSubsectionExpanded = (chapterId: number, sectionType: string) => {
+  const key = `${chapterId}-${sectionType}`;
+  return subsectionCollapseStates.get(key) ?? false; // Default to collapsed
+};
+
 // 获取课程学习效果
 const fetchCourseStudyEffect = async () => {
   try {
-    const { data } = await getCourseStudyEffect({
+    const response = await getCourseStudyEffect({
       courseId: courseId.value
     });
-    if (data.code === 200) {
-      studyEffectData.value = data.data;
+    if (response && response.code === 200 && response.data) {
+      studyEffectData.value = response.data;
+      console.log("获取到的学习效果数据:", studyEffectData.value);
+
+      // Initialize collapse states for new data
+      if (response.data.chapterList) {
+        response.data.chapterList.forEach(chapter => {
+          chapterCollapseStates.set(chapter.chapterId, false); // All chapters collapsed by default
+
+          // Initialize subsections
+          if (chapter.keyPointArray)
+            subsectionCollapseStates.set(
+              `${chapter.chapterId}-keyPoint`,
+              false
+            );
+          if (chapter.difficultPointArray)
+            subsectionCollapseStates.set(
+              `${chapter.chapterId}-difficultPoint`,
+              false
+            );
+          if (chapter.knowledgeArray)
+            subsectionCollapseStates.set(
+              `${chapter.chapterId}-knowledge`,
+              false
+            );
+          if (chapter.ConceptArray)
+            subsectionCollapseStates.set(`${chapter.chapterId}-concept`, false);
+        });
+      }
     }
   } catch (error) {
     console.error("获取课程学习效果失败", error);
@@ -4639,5 +4804,21 @@ onMounted(async () => {
   padding: 40px 0;
   color: #909399;
   font-size: 14px;
+}
+
+.collapsible-header {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 10px; /* 留出图标位置 */
+}
+
+.collapsible-header i {
+  transition: transform 0.3s ease;
+}
+
+.collapsible-header i.rotated {
+  transform: rotate(-90deg);
 }
 </style>
