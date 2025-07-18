@@ -2594,7 +2594,7 @@ import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-i
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 import * as echarts from "echarts";
 import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
-import logo from "@/assets/logo.png"; // 导入logo图片
+import logo from "@/assets/kecheng.jpg"; // 导入logo图片
 
 const router = useRouter();
 const route = useRoute();
