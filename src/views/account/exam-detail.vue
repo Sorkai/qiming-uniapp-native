@@ -76,12 +76,15 @@
 
               <!-- 选项 - 单选题 -->
               <div v-if="question.type === 1" class="options">
-                <el-radio-group v-model="answers[question.questionId]" disabled>
+                <el-radio-group
+                  v-model="answers[question.questionId]"
+                  :disabled="!examStarted || examCompleted"
+                >
                   <el-radio
                     v-for="option in question.options"
                     :key="option.optionId"
                     :label="option.optionId"
-                    disabled
+                    :disabled="!examStarted || examCompleted"
                   >
                     {{ option.optionId }}. {{ option.content }}
                   </el-radio>
@@ -92,13 +95,13 @@
               <div v-else-if="question.type === 2" class="options">
                 <el-checkbox-group
                   v-model="answers[question.questionId]"
-                  disabled
+                  :disabled="!examStarted || examCompleted"
                 >
                   <el-checkbox
                     v-for="option in question.options"
                     :key="option.optionId"
                     :label="option.optionId"
-                    disabled
+                    :disabled="!examStarted || examCompleted"
                   >
                     {{ option.optionId }}. {{ option.content }}
                   </el-checkbox>
@@ -107,9 +110,16 @@
 
               <!-- 判断题 -->
               <div v-else-if="question.type === 3" class="options">
-                <el-radio-group v-model="answers[question.questionId]" disabled>
-                  <el-radio label="1" disabled>正确</el-radio>
-                  <el-radio label="0" disabled>错误</el-radio>
+                <el-radio-group
+                  v-model="answers[question.questionId]"
+                  :disabled="!examStarted || examCompleted"
+                >
+                  <el-radio label="1" :disabled="!examStarted || examCompleted"
+                    >正确</el-radio
+                  >
+                  <el-radio label="0" :disabled="!examStarted || examCompleted"
+                    >错误</el-radio
+                  >
                 </el-radio-group>
               </div>
 
@@ -119,7 +129,7 @@
                   v-model="answers[question.questionId]"
                   type="text"
                   placeholder="请输入答案"
-                  disabled
+                  :disabled="!examStarted || examCompleted"
                 />
               </div>
 
@@ -130,7 +140,7 @@
                   type="textarea"
                   :rows="4"
                   placeholder="请输入答案"
-                  disabled
+                  :disabled="!examStarted || examCompleted"
                 />
               </div>
 
@@ -141,7 +151,7 @@
                   type="textarea"
                   :rows="6"
                   placeholder="请输入代码答案"
-                  disabled
+                  :disabled="!examStarted || examCompleted"
                 />
               </div>
             </div>
@@ -202,6 +212,22 @@
           description="未找到考试或考试已过期"
         />
       </el-card>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div
+      v-if="examStarted && !examCompleted"
+      class="footer-actions"
+      :class="currentTheme"
+    >
+      <el-button
+        type="primary"
+        size="large"
+        @click="submitExam"
+        :loading="submitting"
+      >
+        提交考试
+      </el-button>
     </div>
 
     <!-- 提交结果弹窗 -->
@@ -336,18 +362,27 @@ const fetchExamDetail = async () => {
       };
 
       // 设置考试状态
-      examStatus.value = response.data.status || 0;
+      const now = dayjs();
+      const startTime = dayjs(response.data.availableFrom);
+      const endTime = dayjs(response.data.availableTo);
 
-      // 如果考试已完成，直接设置完成状态
-      if (examStatus.value === 3) {
+      if (response.data.finished === 1) {
+        examStatus.value = 3; // 已完成
         examCompleted.value = true;
         submissionResult.value = {
           score: response.data.score || 0,
           totalScore: exam.value.totalScore
         };
+      } else if (now.isAfter(endTime)) {
+        examStatus.value = 4; // 已过期
+      } else if (now.isBefore(startTime)) {
+        examStatus.value = 1; // 未开始
+      } else {
+        examStatus.value = 2; // 进行中
       }
 
       console.log("处理后的考试数据:", exam.value);
+      console.log("计算出的考试状态:", examStatus.value);
     } else {
       ElMessage.error(response.msg || "获取考试详情失败");
     }
@@ -796,6 +831,27 @@ onBeforeUnmount(() => {
   .result-message {
     font-size: 16px;
     text-align: center;
+  }
+}
+
+.footer-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: #fff;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  transition: background-color 0.3s;
+
+  &.dark {
+    background-color: #252525;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
   }
 }
 </style>
