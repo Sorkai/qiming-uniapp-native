@@ -257,26 +257,18 @@
                 @click="viewMaterial(item)"
               >
                 <div class="material-icon">
-                  <img
-                    v-if="item.rType === 'IMAGE'"
-                    src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                    alt="图片"
-                  />
+                  <img v-if="item.rType === 'IMAGE'" :src="logo" alt="图片" />
                   <img
                     v-else-if="item.rType === 'VIDEO'"
-                    src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
+                    :src="logo"
                     alt="视频"
                   />
                   <img
                     v-else-if="item.rType === 'DOCUMENT'"
-                    src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
+                    :src="logo"
                     alt="文档"
                   />
-                  <img
-                    v-else
-                    src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                    alt="资源"
-                  />
+                  <img v-else :src="logo" alt="资源" />
                 </div>
                 <div class="material-info">
                   <div class="material-title">{{ item.title }}</div>
@@ -413,10 +405,7 @@
                     @click="viewHomework(item)"
                   >
                     <div class="homework-icon">
-                      <img
-                        src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                        alt="作业"
-                      />
+                      <img :src="logo" alt="作业" />
                     </div>
                     <div class="homework-info">
                       <div class="homework-title">{{ item.title }}</div>
@@ -451,10 +440,7 @@
                     @click="viewExam(item)"
                   >
                     <div class="exam-icon">
-                      <img
-                        src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                        alt="考试"
-                      />
+                      <img :src="logo" alt="考试" />
                     </div>
                     <div class="exam-info">
                       <div class="exam-title">{{ item.title }}</div>
@@ -498,10 +484,7 @@
                     :class="{ dark: currentTheme === 'dark' }"
                   >
                     <div class="wrong-question-icon">
-                      <img
-                        src="https://image.zhihuishu.com/zhs/b2cm/base1/202210/a030cec12c694944b06cc4e8addce325.png"
-                        alt="错题"
-                      />
+                      <img :src="logo" alt="错题" />
                     </div>
                     <div class="wrong-question-info">
                       <div class="wrong-question-title">{{ item.title }}</div>
@@ -2617,6 +2600,7 @@ import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-i
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 import * as echarts from "echarts";
 import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
+import logo from "@/assets/logo.png"; // 导入logo图片
 
 const router = useRouter();
 const route = useRoute();
