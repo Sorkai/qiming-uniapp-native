@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref, watch, computed } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
-import { getCourseUsersProgress, getCourseUsersExamInfo } from "@/api/statistics";
+import {
+  getCourseUsersProgress,
+  getCourseUsersExamInfo
+} from "@/api/statistics";
 import { getCourseList } from "@/api/course";
 
 defineOptions({
@@ -13,11 +16,20 @@ interface CourseOption {
   label: string;
 }
 
+interface ExamOption {
+  value: number;
+  label: string;
+  examId: number;
+  examName: string;
+}
+
 const loading = ref(true);
 const progressLoading = ref(false);
 const examLoading = ref(false);
 const courseOptions = ref<CourseOption[]>([]);
+const examOptions = ref<ExamOption[]>([]);
 const selectedCourse = ref<number>();
+const selectedExam = ref<number>();
 
 // 缓存所有课程的数据
 const allProgressData = ref<any[]>([]);
@@ -47,7 +59,7 @@ const fetchCourseList = async () => {
         value: course.courseId,
         label: course.title
       }));
-      
+
       if (courseOptions.value.length > 0) {
         selectedCourse.value = courseOptions.value[0].value;
       }
@@ -69,19 +81,19 @@ const fetchAllData = async () => {
       getCourseUsersProgress(),
       getCourseUsersExamInfo()
     ]);
-    
+
     // 缓存所有课程的进度数据
     if (progressRes?.data?.courseUsersProgress) {
       allProgressData.value = progressRes.data.courseUsersProgress;
       console.log("所有课程进度数据:", allProgressData.value);
     }
-    
-    // 缓存所有课程的考试数据
+
+    // 缓存所有课程的考试数据 - 修复数据结构
     if (examRes?.data?.courseUsersExamInfo) {
       allExamData.value = examRes.data.courseUsersExamInfo;
       console.log("所有课程考试数据:", allExamData.value);
     }
-    
+
     // 如果已经选择了课程，则渲染对应课程的数据
     if (selectedCourse.value) {
       renderCourseData(selectedCourse.value);
@@ -100,21 +112,44 @@ const fetchAllData = async () => {
 const renderCourseData = (courseId: number) => {
   progressLoading.value = true;
   examLoading.value = true;
-  
+
   try {
     // 从缓存中查找对应课程的进度数据
-    const progressData = allProgressData.value.find(item => item.courseId === courseId);
+    const progressData = allProgressData.value.find(
+      item => item.courseId === courseId
+    );
     if (progressData) {
       renderProgressChart(progressData);
     } else {
       renderEmptyProgressChart("该课程暂无学生进度数据");
     }
-    
-    // 从缓存中查找对应课程的考试数据
-    const examData = allExamData.value.find(item => item.courseId === courseId);
-    if (examData) {
-      renderExamChart(examData);
+
+    // 从缓存中查找对应课程的所有考试数据
+    const courseExamData = allExamData.value.filter(
+      item => item.courseId === courseId
+    );
+    if (courseExamData && courseExamData.length > 0) {
+      // 更新考试选项
+      examOptions.value = courseExamData.map(item => ({
+        value: item.examId,
+        label: item.examName,
+        examId: item.examId,
+        examName: item.examName
+      }));
+
+      // 默认选择第一个考试
+      if (examOptions.value.length > 0) {
+        selectedExam.value = examOptions.value[0].value;
+        const selectedExamData = courseExamData.find(
+          item => item.examId === selectedExam.value
+        );
+        if (selectedExamData) {
+          renderExamChart(selectedExamData);
+        }
+      }
     } else {
+      examOptions.value = [];
+      selectedExam.value = undefined;
       renderEmptyExamChart("该课程暂无考试成绩数据");
     }
   } catch (error) {
@@ -127,17 +162,33 @@ const renderCourseData = (courseId: number) => {
   }
 };
 
+// 根据选择的考试渲染考试图表
+const renderSelectedExamChart = (examId: number) => {
+  if (!selectedCourse.value || !examId) return;
+
+  const courseExamData = allExamData.value.filter(
+    item => item.courseId === selectedCourse.value
+  );
+  const selectedExamData = courseExamData.find(item => item.examId === examId);
+
+  if (selectedExamData) {
+    renderExamChart(selectedExamData);
+  } else {
+    renderEmptyExamChart("该考试暂无成绩数据");
+  }
+};
+
 // 渲染学生进度图表
-const renderProgressChart = (courseData) => {
+const renderProgressChart = courseData => {
   // 如果没有学生数据或者学生数据为空数组，显示空图表
   if (!courseData.usersProgress || courseData.usersProgress.length === 0) {
     renderEmptyProgressChart("该课程暂无学生进度数据");
     return;
   }
-  
+
   const userNames = courseData.usersProgress.map(user => user.userName);
   const progressData = courseData.usersProgress.map(user => user.progress);
-  
+
   setProgressOptions({
     tooltip: {
       trigger: "axis",
@@ -164,9 +215,9 @@ const renderProgressChart = (courseData) => {
       data: userNames,
       axisLabel: {
         fontSize: "0.875rem",
-        formatter: function(value) {
+        formatter: function (value) {
           // 名字过长时截断
-          if(value.length > 5) {
+          if (value.length > 5) {
             return value.substring(0, 5) + "...";
           }
           return value;
@@ -184,13 +235,13 @@ const renderProgressChart = (courseData) => {
           formatter: "{c}%"
         },
         itemStyle: {
-          color: function(params) {
+          color: function (params) {
             const progress = params.value;
-            if (progress < 30) return "#e74c3c";
-            if (progress < 70) return "#f39c12";
-            return "#27ae60";
+            if (progress < 30) return "#e85f33"; // 使用橙色表示低进度
+            if (progress < 70) return "#f39c12"; // 黄色表示中等进度
+            return "#41b6ff"; // 使用蓝色表示高进度
           },
-          borderRadius: [0, 4, 4, 0]
+          borderRadius: [0, 10, 10, 0] // 统一圆角风格
         }
       }
     ]
@@ -218,24 +269,26 @@ const renderEmptyProgressChart = (message = "暂无课程进度数据") => {
 };
 
 // 渲染考试成绩图表
-const renderExamChart = (courseData) => {
+const renderExamChart = courseData => {
   // 如果没有考试信息或者考试信息为空数组，显示空图表
   if (!courseData.examInfo || courseData.examInfo.length === 0) {
     renderEmptyExamChart("该课程暂无考试成绩数据");
     return;
   }
-  
+
   // 转换等级为文字说明
   const levelTexts = {
     1: "差",
     2: "中等",
-    3: "良好", 
+    3: "良好",
     4: "优秀"
   };
-  
-  const levels = courseData.examInfo.map(item => levelTexts[item.level] || `等级${item.level}`);
+
+  const levels = courseData.examInfo.map(
+    item => levelTexts[item.level] || `等级${item.level}`
+  );
   const counts = courseData.examInfo.map(item => item.levelNum);
-  
+
   setExamOptions({
     title: {
       text: courseData.examName,
@@ -257,17 +310,23 @@ const renderExamChart = (courseData) => {
       {
         name: "成绩分布",
         type: "pie",
-        radius: "60%",
+        radius: ["40%", "70%"], // 改为环形图风格
         center: ["50%", "50%"],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10, // 统一圆角风格
+          borderColor: isDark.value ? "#1d1e1f" : "#fff",
+          borderWidth: 2
+        },
         data: levels.map((level, index) => ({
           name: level,
           value: counts[index],
           itemStyle: {
             color: [
-              "#e74c3c", // 差
-              "#f39c12", // 中等
-              "#3498db", // 良好
-              "#27ae60"  // 优秀
+              "#e85f33", // 差 - 橙色
+              "#f39c12", // 中等 - 黄色
+              "#41b6ff", // 良好 - 蓝色
+              "#27ae60" // 优秀 - 绿色
             ][index % 4]
           }
         })),
@@ -280,7 +339,10 @@ const renderExamChart = (courseData) => {
         },
         label: {
           show: true,
-          formatter: "{b}: {c}人"
+          formatter: "{b}: {c}人 ({d}%)"
+        },
+        labelLine: {
+          show: true
         }
       }
     ]
@@ -300,11 +362,27 @@ const renderEmptyExamChart = (message = "暂无考试成绩数据") => {
 };
 
 // 课程变化时从缓存中渲染对应数据
-watch(() => selectedCourse.value, (newCourseId) => {
-  if (newCourseId && (allProgressData.value.length > 0 || allExamData.value.length > 0)) {
-    renderCourseData(newCourseId);
+watch(
+  () => selectedCourse.value,
+  newCourseId => {
+    if (
+      newCourseId &&
+      (allProgressData.value.length > 0 || allExamData.value.length > 0)
+    ) {
+      renderCourseData(newCourseId);
+    }
   }
-});
+);
+
+// 考试变化时重新渲染考试图表
+watch(
+  () => selectedExam.value,
+  newExamId => {
+    if (newExamId) {
+      renderSelectedExamChart(newExamId);
+    }
+  }
+);
 
 onMounted(() => {
   fetchCourseList();
@@ -317,8 +395,8 @@ onMounted(() => {
     <el-skeleton :loading="loading" animated :rows="1">
       <template #default>
         <div class="mb-4">
-          <el-select 
-            v-model="selectedCourse" 
+          <el-select
+            v-model="selectedCourse"
             placeholder="请选择课程"
             class="w-64"
             :disabled="courseOptions.length === 0"
@@ -331,7 +409,7 @@ onMounted(() => {
             />
           </el-select>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- 课程进度图表 -->
           <el-card shadow="never">
@@ -343,22 +421,44 @@ onMounted(() => {
             </template>
             <el-skeleton :loading="progressLoading" animated :rows="5">
               <template #default>
-                <div ref="progressChartRef" style="width: 100%; height: 300px"></div>
+                <div
+                  ref="progressChartRef"
+                  style="width: 100%; height: 300px"
+                ></div>
               </template>
             </el-skeleton>
           </el-card>
-          
+
           <!-- 考试成绩图表 -->
           <el-card shadow="never">
             <template #header>
               <div class="flex justify-between items-center">
                 <span class="font-medium">学生考试成绩</span>
-                <el-tag size="small" v-if="examLoading">加载中...</el-tag>
+                <div class="flex items-center gap-2">
+                  <el-select
+                    v-model="selectedExam"
+                    placeholder="请选择考试"
+                    size="small"
+                    style="width: 120px"
+                    :disabled="examOptions.length === 0"
+                  >
+                    <el-option
+                      v-for="item in examOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    />
+                  </el-select>
+                  <el-tag size="small" v-if="examLoading">加载中...</el-tag>
+                </div>
               </div>
             </template>
             <el-skeleton :loading="examLoading" animated :rows="5">
               <template #default>
-                <div ref="examChartRef" style="width: 100%; height: 300px"></div>
+                <div
+                  ref="examChartRef"
+                  style="width: 100%; height: 300px"
+                ></div>
               </template>
             </el-skeleton>
           </el-card>
@@ -366,4 +466,4 @@ onMounted(() => {
       </template>
     </el-skeleton>
   </div>
-</template> 
+</template>
