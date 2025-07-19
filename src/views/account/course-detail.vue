@@ -844,7 +844,7 @@
                                   <div class="video-img-bg">
                                     <div class="img-bg" />
                                     <img
-                                      src="../../coursecss/images/course-detail-screenshot.jpg"
+                                      src="@/assets/course-detail-images/course-detail-screenshot.jpg"
                                       alt=""
                                     />
                                     <div class="file-type file-video">
@@ -853,14 +853,14 @@
                                     <div class="video-time">00:07:13</div>
                                     <div class="isActive">
                                       <img
-                                        src="../../coursecss/images/course-detail-gif.gif"
+                                        src="@/assets/course-detail-images/course-detail-gif.gif"
                                         alt=""
                                       />
                                     </div>
                                     <!---->
                                     <div class="isFinsh">
                                       <img
-                                        src="../../coursecss/images/course-detail-icon1.png"
+                                        src="@/assets/course-detail-images/course-detail-icon1.png"
                                         alt=""
                                       />已完成
                                     </div>
@@ -1013,7 +1013,7 @@
                                       <div data-v-0762fd62="" class="code-icon">
                                         <img
                                           data-v-0762fd62=""
-                                          src="../../coursecss/images/course-detail-icon2.png"
+                                          src="@/assets/course-detail-images/course-detail-icon2.png"
                                           alt=""
                                         />
                                       </div>
@@ -1428,7 +1428,7 @@
                                         class="isFinish"
                                       >
                                         <img
-                                          src="../../coursecss/images/course-detail-icon3.png"
+                                          src="@/assets/course-detail-images/course-detail-icon3.png"
                                           alt=""
                                         />
                                       </div>
@@ -2272,7 +2272,7 @@
                             :src="
                               message.role === 'user'
                                 ? userAvatar
-                                : '../../coursecss/images/avatar-default.png'
+                                : '@/assets/course-detail-images/avatar-default.png'
                             "
                             alt="Avatar"
                           />
@@ -2666,7 +2666,7 @@ const selectedWrongQuestion = ref(null); // 存储当前选中的错题
 const userInfo = storageLocal().getItem(userKey) || {};
 const userAvatar = ref(
   (userInfo as any)?.avatar ||
-    "../../coursecss/images/avatar-default.png"
+    "@/assets/course-detail-images/avatar-default.png"
 );
 const userNickname = ref(
   (userInfo as any)?.nickname || (userInfo as any)?.username || "用户"
@@ -2685,8 +2685,8 @@ const cancelStreamRequest = ref<() => void | null>(null);
 
 const describeImgSrc = computed(() =>
   currentTheme.value === "dark"
-    ? "../../coursecss/images/resource-tab-normal-vue.png"
-    : "../../coursecss/images/resource-tab-active-vue.png"
+    ? "@/assets/course-detail-images/resource-tab-normal-vue.png"
+    : "@/assets/course-detail-images/resource-tab-active-vue.png"
 );
 
 // 当前播放视频的标题
