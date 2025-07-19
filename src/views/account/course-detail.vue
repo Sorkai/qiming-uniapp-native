@@ -2313,7 +2313,6 @@
                           justify-content: center;
                           color: #999;
                           cursor: not-allowed;
-                          background-color: #f5f5f5;
                           height: 100%;
                         "
                       >
@@ -4212,7 +4211,6 @@ onMounted(async () => {
   padding: 15px;
   border-top: 1px solid #f0f0f0;
   flex-shrink: 0; /* 防止压缩 */
-  background-color: #fff; /* 确保背景色 */
   position: relative; /* 相对定位 */
   z-index: 2; /* 确保在消息上方 */
 }
@@ -4223,13 +4221,11 @@ onMounted(async () => {
 
 .qa-input-wrapper {
   display: flex;
-  background-color: #f5f7fa;
   border-radius: 8px;
   padding: 10px;
 }
 
 .dark .qa-input-wrapper {
-  background-color: #333;
 }
 
 .qa-input {
@@ -4841,7 +4837,6 @@ onMounted(async () => {
 
 .chapter-section {
   margin-bottom: 20px;
-  background-color: #fff;
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
@@ -4867,7 +4862,6 @@ onMounted(async () => {
 }
 
 .point-item {
-  background-color: #f9f9f9;
   padding: 12px;
   border-radius: 4px;
   margin-bottom: 8px;
