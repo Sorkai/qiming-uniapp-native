@@ -198,7 +198,7 @@ const renderProgressChart = courseData => {
     },
     grid: {
       left: 80,
-      right: 20,
+      right: 100,
       top: 20,
       bottom: 60
     },
@@ -214,12 +214,9 @@ const renderProgressChart = courseData => {
       type: "category",
       data: userNames,
       axisLabel: {
-        fontSize: "0.875rem",
+        fontSize: "0.75rem",
         formatter: function (value) {
-          // 名字过长时截断
-          if (value.length > 5) {
-            return value.substring(0, 5) + "...";
-          }
+          // 显示完整名字，不截断
           return value;
         }
       }
