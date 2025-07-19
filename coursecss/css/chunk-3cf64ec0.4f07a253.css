@@ -203,11 +203,11 @@
 }
 
 .light.fu-header-users-3 .fu-i.fu-header-f1:after {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/f1d7fe2ea8e34c1aa17da71c14738e1d.png);
+  background-image: url(../images/fu-header-f1.png);
 }
 
 .light.fu-header-users-3 .fu-i.fu-header-f2:after {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/a01a8f072d9540eb91f32c0d02c32090.png);
+  background-image: url(../images/fu-header-f2.png);
 }
 
 .light.fu-header-users-3 .fu-i:hover {
@@ -216,11 +216,11 @@
 }
 
 .light.fu-header-users-3 .fu-i:hover.fu-header-f1:after {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/86fbf07dd063498aa73f11f164d4ceaf.png);
+  background-image: url(../images/fu-header-f1-hover.png);
 }
 
 .light.fu-header-users-3 .fu-i:hover.fu-header-f2:after {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/5795c2c3cb694d4395aaf72fd40c0c96.png);
+  background-image: url(../images/fu-header-f2-hover.png);
 }
 
 .dark .avatar-info .name,
@@ -494,7 +494,7 @@
   display: block;
   width: 1.875vw;
   height: 0.83333vw;
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202412/3c2a39de482c49e8965f228b143df6f0.png);
+  background-image: url(../images/tag-icon.png);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: 0 0;
@@ -505,7 +505,7 @@
   width: 0.41667vw;
   height: 0.41667vw;
   border-radius: 50%;
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/1aa5dbfdb0ff4a3781fd662b2c3466ff.png)
+  background: url(../images/yuandian-icon.png)
     no-repeat 50%;
   position: absolute;
   top: 0.41667vw;
@@ -1077,7 +1077,7 @@
 }
 
 .light .header-content .item.header-left .header-back i[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/7ec5d6346c2b4fb29a805761c7c510d4.png);
+  background-image: url(../images/arrow-left-light.png);
   border-radius: 50%;
 }
 
@@ -1090,23 +1090,23 @@
 }
 
 .light .icon-item.icon-item1[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/3a37525ab5de46458d8427d3e1cbce90.png);
+  background-image: url(../images/icon-item1-light.png);
 }
 
 .light .icon-item.icon-item2[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/e10fc8568c74497abc1c0539e875c65d.png);
+  background-image: url(../images/icon-item2-light.png);
 }
 
 .light .icon-item.icon-item3[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/c07a3c94531149ab9791c7aee13f9c4f.png);
+  background-image: url(../images/icon-item3-light.png);
 }
 
 .light .icon-item.icon-item4[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/afc1c558cee6434f8d31bb81cbdb0dbd.png);
+  background-image: url(../images/icon-item4-light.png);
 }
 
 .light .icon-item.icon-item5[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/3d5b28a669444a69b32299e403163188.png);
+  background-image: url(../images/icon-item5-light.png);
 }
 
 .light .icon-hover[data-v-3e66491d],
@@ -1142,23 +1142,23 @@
 }
 
 .dark .icon-item.icon-item1[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/b906a7380566400b8cc103d919cc5759.png);
+  background-image: url(../images/icon-item1-dark.png);
 }
 
 .dark .icon-item.icon-item2[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202408/512988043f324b3a8f634bcfeb46d140.png);
+  background-image: url(../images/icon-item2-dark.png);
 }
 
 .dark .icon-item.icon-item3[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/c565d3b7cb104422902fe9695b9e08b0.png);
+  background-image: url(../images/icon-item3-dark.png);
 }
 
 .dark .icon-item.icon-item4[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/41c5954f8e034728812b53c31ba68938.png);
+  background-image: url(../images/icon-item4-dark.png);
 }
 
 .dark .icon-item.icon-item5[data-v-3e66491d] {
-  background-image: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/98dc1c2d93c94e5da378d4082a83fda0.png);
+  background-image: url(../images/icon-item5-dark.png);
 }
 
 .dark .icon-hover[data-v-3e66491d],

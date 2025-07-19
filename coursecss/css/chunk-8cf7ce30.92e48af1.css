@@ -79,7 +79,7 @@
 }
 
 .rightTreeWarp .chapterList-box .list li:hover .Sectionmark-em {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202409/2c3b669a9ce04bc0b4c41f83e29f8448.png);
+  background-image: url(../images/sectionmark-hover.png);
   z-index: 33;
 }
 
@@ -191,7 +191,7 @@
 }
 
 .rightTreeWarp .chapterList-box .list li .Sectionmark-em {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202408/4cff32c251dd42e7b1c3df21df94529b.png);
+  background-image: url(../images/sectionmark-normal.png);
   background-repeat: no-repeat;
   background-size: 100% 100%;
   background-position: 0 0;
@@ -249,7 +249,7 @@
 }
 
 .rightTreeWarp .chapterList-box .list .forbidClick:hover .Sectionmark-em {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202408/4cff32c251dd42e7b1c3df21df94529b.png);
+  background-image: url(../images/sectionmark-normal.png);
   z-index: 33;
 }
 
@@ -275,7 +275,7 @@
 }
 
 .rightTreeWarp .chapterList-box .list .activeNode .Sectionmark-em {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202409/2c3b669a9ce04bc0b4c41f83e29f8448.png);
+  background-image: url(../images/sectionmark-hover.png);
   z-index: 33;
 }
 
@@ -321,7 +321,7 @@
   .icon-c {
   width: 0.625vw;
   height: 0.625vw;
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/83048771550a454bb484a1377f075d97.png)
+  background: url(../images/icon-c-normal.png)
     no-repeat 50%;
   margin: 0 2%;
   position: relative;
@@ -384,7 +384,7 @@
 .rightTreeWarp .chapterList-box .chapter-list .activeNode .icon-c {
   width: 0.625vw;
   height: 0.625vw;
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/156a87d229e8413ab00b737102baa91a.png)
+  background: url(../images/icon-c-active.png)
     no-repeat 50% !important;
   margin: 0 2%;
   position: relative;
@@ -445,7 +445,7 @@
 }
 
 .light .rightTreeWarp .chapterList-box .list li .Sectionmark-em {
-  background-image: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/a800d7fe02154a678ce59ce4c724634c.png);
+  background-image: url(../images/sectionmark-light.png);
 }
 
 .resource-warp {
@@ -477,7 +477,7 @@
   display: block;
   width: 1.66667vw;
   height: 1.66667vw;
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/87debb588bca487ab17053b511736df9.png)
+  background: url(../images/resource-tab-normal.png)
     no-repeat 50%;
 }
 
@@ -517,7 +517,7 @@
 }
 
 .resource-warp .resource-tab .active i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/220131445f32418aae9346247046d997.png)
+  background: url(../images/resource-tab-active.png)
     no-repeat 50%;
 }
 
@@ -735,7 +735,7 @@
   .video-img-bg
   .file-video
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/f92efcb9cbe741a5a9dbf5c5792a34e0.png)
+  background: url(../images/file-video-icon.png)
     no-repeat 50%;
   background-size: 1.5625vw;
 }
@@ -780,7 +780,7 @@
   .video-img-bg
   .file-word
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/868c8763b6c245a29a2fdb6269813402.png)
+  background: url(../images/file-word-icon.png)
     no-repeat 50%;
   background-size: 1.5625vw;
 }
@@ -792,7 +792,7 @@
   .video-img-bg
   .file-excel
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/c93d3991cd8446d880f26038fbb797e7.png)
+  background: url(../images/file-excel-icon.png)
     no-repeat 50%;
   background-size: 1.5625vw;
 }
@@ -804,7 +804,7 @@
   .video-img-bg
   .file-img
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/2aa3e8b3b98d4a1da328a0b944a128d1.png)
+  background: url(../images/file-img-icon.png)
     no-repeat 50%;
   background-size: 1.5625vw;
 }
@@ -816,7 +816,7 @@
   .video-img-bg
   .file-music
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/7ae4a463af894f7cbc0e9267085374be.png)
+  background: url(../images/file-music-icon.png)
     no-repeat 50%;
   background-size: 1.5625vw;
 }
@@ -828,7 +828,7 @@
   .video-img-bg
   .file-ppt
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/748ac1625e754a75aba89369761d0874.png)
+  background: url(../images/file-ppt-icon.png)
     no-repeat 50%;
   background-size: 1.5625vw;
 }
@@ -840,7 +840,7 @@
   .video-img-bg
   .file-swf
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/1e4a554a60b74aa9a4be425b279e855c.png)
+  background: url(../images/file-swf-icon.png)
     no-repeat 50%;
   background-size: 1.5625vw;
 }
@@ -852,7 +852,7 @@
   .video-img-bg
   .file-other
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/206955b9a62c4909b20cc1a73172b4ce.png)
+  background: url(../images/file-other-icon.png)
     no-repeat 50%;
   background-size: 1.5625vw;
 }
@@ -862,7 +862,7 @@
 }
 
 .resource-warp .resources-list .basic-info-video-card-container .file-ppt i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/52f59b0ad32341719bd1f7dcf1c78e08.png)
+  background: url(../images/file-ppt-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
@@ -881,7 +881,7 @@
   .file-word
   .type-btn
   i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/debfd1b1210b4902837d2e08d8f7889e.png)
+  background: url(../images/file-word-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
@@ -900,7 +900,7 @@
   .file-img
   .type-btn
   i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/a1911cb64f374d90a90f7f3c89ae4680.png)
+  background: url(../images/file-img-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
@@ -919,7 +919,7 @@
   .file-html
   .type-btn
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/d5aedbce8bda4347b2fab8fdff0942a7.png)
+  background: url(../images/file-html-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
@@ -938,13 +938,13 @@
   .file-music
   .type-btn
   i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/01b00a9a51e64b669f0b40142873c0b4.png)
+  background: url(../images/file-music-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
 
 .resource-warp .resources-list .basic-info-video-card-container .file-video i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/03661296834e4a25b29a1c4f5524c707.png)
+  background: url(../images/file-video-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
@@ -963,7 +963,7 @@
   .file-swf
   .type-btn
   i {
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/a384c6384646474193f679f704252fea.png)
+  background: url(../images/file-swf-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
@@ -991,13 +991,13 @@
 }
 
 .light .resource-warp .resource-tab .tab-item.active i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/33b30e1359074b389417c68c5c898253.png)
+  background: url(../images/resource-tab-active-light.png)
     no-repeat 50%;
   background-size: 100%;
 }
 
 .light .resource-warp .resource-tab .tab-item i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/6640f1992cdf4dbeaf9793e75dcc99e3.png)
+  background: url(../images/resource-tab-normal-light.png)
     no-repeat 50%;
   background-size: 100%;
 }
@@ -1327,7 +1327,7 @@
   top: 0.41667vw;
   width: 1.25vw;
   height: 1.25vw;
-  background-image: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/a635751a038d4f70b79c5c5f6a0b9b72.png);
+  background-image: url(../images/botton-down-icon.png);
   background-repeat: no-repeat;
   background-position: 0 0;
   background-size: 100% 100%;
@@ -1468,7 +1468,7 @@ html {
 .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i {
   width: 1.04167vw;
   height: 1.04167vw;
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202407/72599eabc3ed47eebc33b94bff967d88.png)
+  background: url(../images/kg-icon-dark.png)
     no-repeat 50%;
   margin-right: 0.10417vw;
 }
@@ -1566,7 +1566,7 @@ html {
 }
 
 .light .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/1777768485bf4754aeb9374dba67f4c7.png)
+  background: url(../images/kg-icon-light.png)
     no-repeat 50%;
   background-size: 100%;
 }
@@ -1586,7 +1586,7 @@ html {
 .light .ai-ability-box .botton-box-down:after,
 .light .kgDescribe-warp .botton-box-down:after,
 .light .resource-warp .botton-box-down:after {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/80449596144b40c39b0fc07cb3e179b7.png)
+  background: url(../images/down-arrow-icon.png)
     no-repeat 50%;
   background-size: 100%;
 }
@@ -1600,7 +1600,7 @@ html {
 .light .ai-ability-box .text-list .text-item .inner-box:after,
 .light .kgDescribe-warp .text-list .text-item .inner-box:after,
 .light .resource-warp .text-list .text-item .inner-box:after {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/80449596144b40c39b0fc07cb3e179b7.png)
+  background: url(../images/down-arrow-icon.png)
     no-repeat 50%;
   background-size: 100%;
 }

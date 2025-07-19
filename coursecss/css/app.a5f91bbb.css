@@ -824,7 +824,7 @@ body[aria-hidden="true"] {
   .el-icon-close:before {
   width: 0.83333vw;
   height: 0.83333vw;
-  background: url(//image.zhihuishu.com/zhs/ablecommons/demo/201807/afd8368cdd3d47b281dd6870b48d6383.png)
+  background: url(../images/close-icon.png)
     no-repeat;
   cursor: pointer;
   color: #c6c6d3;
@@ -869,7 +869,7 @@ body[aria-hidden="true"] {
   font-size: 0.72917vw;
   border: none;
   padding: 0;
-  background: url(//image.zhihuishu.com/zhs_yanfa_150820/able-commons/demo/201807/ce756b9a0d2742f6a9e63a700669929b.png)
+  background: url(../images/button-hover.png)
     no-repeat;
   transition: 0s;
 }
@@ -894,7 +894,7 @@ body[aria-hidden="true"] {
   font-size: 0.72917vw;
   border: none;
   padding: 0;
-  background: url(//image.zhihuishu.com/zhs/able-commons/demo/201808/09eac59fe57f4815af4fba5a43f59338.png)
+  background: url(../images/button-normal.png)
     0 1px no-repeat;
   transition: 0s;
 }
@@ -1010,7 +1010,7 @@ body[aria-hidden="true"] {
   border: none;
   padding: 0;
   line-height: 1.97917vw;
-  background: url(//image.zhihuishu.com/zhs/able-commons/demo/201808/09eac59fe57f4815af4fba5a43f59338.png)
+  background: url(../images/button-normal.png)
     0 1px no-repeat;
   transition: 0s;
   color: #fff;
@@ -1101,7 +1101,7 @@ body[aria-hidden="true"] {
 }
 
 .delete-dialog .el-dialog__footer .dialog-footer .sure-btn {
-  background: url(//image.zhihuishu.com/zhs_yanfa_150820/ablecommons/demo/201807/6478d62358a141878cc87864b06dd792.png);
+  background: url(../images/button-active.png);
   background-repeat: no-repeat;
 }
 
@@ -1138,7 +1138,7 @@ body[aria-hidden="true"] {
 }
 
 .delete-dialog .el-dialog__footer .student-dialog-footer .sure-btn {
-  background: url(//image.zhihuishu.com/zhs_yanfa_150820/ablecommons/demo/201808/6e5116b85b8f416a9f0723b33fd00e01.png);
+  background: url(../images/button-primary.png);
 }
 
 .delete-dialog .el-dialog__footer .student-dialog-footer .close-btn {
@@ -1180,7 +1180,7 @@ body[aria-hidden="true"] {
   width: 3.95833vw;
   height: 2.29167vw;
   line-height: 2.34375vw;
-  background: url(//image.zhihuishu.com/zhs_yufa_150820/ablecommons/demo/201808/9ea72338ad8a4e2e80f3a131781f544a.png)
+  background: url(../images/button-default.png)
     no-repeat;
   border: none;
   padding: 0;
@@ -1193,12 +1193,12 @@ body[aria-hidden="true"] {
 }
 
 .custom-dialog-1 .el-button--primary:hover {
-  background: url(//image.zhihuishu.com/zhs_yufa_150820/ablecommons/demo/201808/9ea72338ad8a4e2e80f3a131781f544a.png)
+  background: url(../images/button-default.png)
     0 -2.8125vw no-repeat;
 }
 
 .custom-dialog-1 .el-button--primary:active {
-  background: url(//image.zhihuishu.com/zhs_yufa_150820/ablecommons/demo/201808/9ea72338ad8a4e2e80f3a131781f544a.png)
+  background: url(../images/button-default.png)
     0 -5.625vw no-repeat;
 }
 
@@ -1208,7 +1208,7 @@ body[aria-hidden="true"] {
   font-size: 0.72917vw;
   border: none;
   padding: 0;
-  background: url(//image.zhihuishu.com/zhs/able-commons/demo/201808/09eac59fe57f4815af4fba5a43f59338.png)
+  background: url(../images/button-normal.png)
     0 1px no-repeat;
   transition: 0s;
   color: #fff;
@@ -1222,13 +1222,13 @@ body[aria-hidden="true"] {
 
 .custom-dialog-1 .el-button--senswordstu:hover {
   color: #fff;
-  background: url(//image.zhihuishu.com/zhs/able-commons/demo/201808/09eac59fe57f4815af4fba5a43f59338.png)
+  background: url(../images/button-normal.png)
     0 -3.75vw no-repeat;
 }
 
 .custom-dialog-1 .el-button--senswordstu:active {
   color: #fff;
-  background: url(//image.zhihuishu.com/zhs/able-commons/demo/201808/09eac59fe57f4815af4fba5a43f59338.png)
+  background: url(../images/button-normal.png)
     0 -7.5vw no-repeat;
 }
 
@@ -1238,7 +1238,7 @@ body[aria-hidden="true"] {
   font-size: 0.72917vw;
   border: none;
   padding: 0;
-  background: url(//image.zhihuishu.com/zhs_yanfa_150820/able-commons/demo/201807/ce756b9a0d2742f6a9e63a700669929b.png)
+  background: url(../images/button-hover.png)
     no-repeat;
   transition: 0s;
   color: #fff;
@@ -1252,20 +1252,20 @@ body[aria-hidden="true"] {
 
 .custom-dialog-1 .el-button--senswordtch:hover {
   color: #fff;
-  background: url(//image.zhihuishu.com/zhs_yanfa_150820/able-commons/demo/201807/ce756b9a0d2742f6a9e63a700669929b.png)
+  background: url(../images/button-hover.png)
     no-repeat 0 -2.8125vw;
 }
 
 .custom-dialog-1 .el-button--senswordtch:active {
   color: #fff;
-  background: url(//image.zhihuishu.com/zhs_yanfa_150820/able-commons/demo/201807/ce756b9a0d2742f6a9e63a700669929b.png)
+  background: url(../images/button-hover.png)
     no-repeat 0 -5.625vw;
 }
 
 .custom-dialog-1 .dialog-footer-work .el-button--primary {
   width: 3.95833vw;
   height: 2.23958vw;
-  background: url(//image.zhihuishu.com/zhs/able-commons/demo/201808/a8bb453f898649ef81aafd9418a6cc1f.png)
+  background: url(../images/button-work-primary.png)
     no-repeat;
   border: none;
   padding: 0;
@@ -1287,7 +1287,7 @@ body[aria-hidden="true"] {
 .custom-dialog-1 .dialog-footer-work .el-button--default {
   width: 4.11458vw;
   height: 1.77083vw;
-  background: url(//image.zhihuishu.com/zhs/able-commons/demo/201808/08543feef7c64305adeb9efab318df24.png)
+  background: url(../images/button-work-default.png)
     0 1px no-repeat;
   border: none;
   padding: 0;
@@ -1312,7 +1312,7 @@ body[aria-hidden="true"] {
   width: 4.11458vw;
   height: 1.77083vw;
   line-height: 1.77083vw;
-  background: url(//image.zhihuishu.com/zhs_yufa_150820/ablecommons/demo/201808/7232728da7af4c9faf1b0e73c484cf22.png)
+  background: url(../images/button-default-hover.png)
     0 1px no-repeat;
   border: none;
   padding: 0;
@@ -1327,12 +1327,12 @@ body[aria-hidden="true"] {
 }
 
 .custom-dialog-1 .el-button--default:hover {
-  background: url(//image.zhihuishu.com/zhs_yufa_150820/ablecommons/demo/201808/7232728da7af4c9faf1b0e73c484cf22.png)
+  background: url(../images/button-default-hover.png)
     0 -1.82292vw no-repeat;
 }
 
 .custom-dialog-1 .el-button--default:active {
-  background: url(//image.zhihuishu.com/zhs_yufa_150820/ablecommons/demo/201808/7232728da7af4c9faf1b0e73c484cf22.png)
+  background: url(../images/button-default-hover.png)
     0 -3.64583vw no-repeat;
 }
 
@@ -1398,7 +1398,7 @@ body[aria-hidden="true"] {
 }
 
 .custon-dislog-btn .el-button--primary {
-  background: url(//image.zhihuishu.com/zhs_yanfa_150820/able-commons/demo/201807/963b1b2f9ea342ff891038fc66d4998c.png)
+  background: url(../images/button-primary-hover.png)
     no-repeat;
   height: 2.34375vw;
   width: 4.6875vw;
@@ -1413,7 +1413,7 @@ body[aria-hidden="true"] {
 }
 
 .custon-dislog-btn .el-button--default {
-  background: url(//image.zhihuishu.com/zhs_yanfa_150820/able-commons/demo/201807/84ab3fbada0049c394515709b2356ec0.png)
+  background: url(../images/button-default-active.png)
     0 1px no-repeat;
   height: 1.77083vw;
   line-height: 1.77083vw;
@@ -1797,7 +1797,7 @@ pre {
   display: inline-block;
   width: 4.6875vw;
   height: 1.71875vw;
-  background: url(//image.zhihuishu.com/zhs/ablecommons/demo/201808/953e0a65ee44496e9b2dad05a7c1b6f2.png)
+  background: url(../images/border-btn-theme1.png)
     0 1px no-repeat;
   line-height: 1.71875vw;
   color: #26a9ff;
@@ -1809,12 +1809,12 @@ pre {
 
 .border-btn-theme-1.theme-2 {
   width: 5.41667vw;
-  background-image: url(//image.zhihuishu.com/zhs/ablecommons/demo/201811/c50efac90f1b45c18fc8663d93e20151.png);
+  background-image: url(../images/border-btn-theme2.png);
 }
 
 .border-btn-theme-1.theme-3 {
   width: 3.95833vw;
-  background-image: url(//image.zhihuishu.com/zhs_yufa_150820/ablecommons/demo/201811/7ccda0b1754d4c5d80874e75da9bdd1e.png);
+  background-image: url(../images/border-btn-theme3.png);
   color: #c6c6d3;
 }
 
@@ -1837,7 +1837,7 @@ pre {
   display: inline-block;
   width: 4.58333vw;
   height: 2.34375vw;
-  background: url(//image.zhihuishu.com/zhs/ablecommons/demo/201808/6e80a5279a6e4c47886903d28e59c210.png)
+  background: url(../images/bg-btn-theme1.png)
     no-repeat;
   line-height: 2.34375vw;
   color: #fff;
@@ -1849,7 +1849,7 @@ pre {
 
 .bg-btn-theme-1.theme-2 {
   width: 3.95833vw;
-  background-image: url(//image.zhihuishu.com/zhs_yufa_150820/ablecommons/demo/201811/414cd6f9b4544f6598e14b1490263d2a.png);
+  background-image: url(../images/bg-btn-theme2.png);
 }
 
 .bg-btn-theme-1:hover {
@@ -1985,7 +1985,7 @@ pre {
 .tool-content ul li i {
   width: 0.625vw;
   height: 0.625vw;
-  background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202401/6d71f228a5344acf83014150f8cd397c.png)
+  background: url(../images/tool-content-icon.png)
     no-repeat 50%;
   background-size: 0.625vw;
   position: absolute;
@@ -2004,7 +2004,7 @@ pre {
     line-height: 36px;
   }
   .fullscreen-ico {
-    background: url(//image.zhihuishu.com/zhs_yufa_150820/able-commons/demo/201905/362459150bf647008c744d21e1f92f98.png)
+    background: url(../images/fullscreen-icon.png)
       no-repeat;
     width: 58px;
     height: 58px;
@@ -2016,7 +2016,7 @@ pre {
     z-index: 99;
   }
   .fullscreen-ico.full {
-    background: url(//image.zhihuishu.com/zhs_yufa_150820/able-commons/demo/201905/362459150bf647008c744d21e1f92f98.png)
+    background: url(../images/fullscreen-icon.png)
       0 -107px no-repeat !important;
   }
   .fullscreen-ico:hover {
@@ -2044,7 +2044,7 @@ pre {
     font-size: 26px;
   }
   .fullscreen-ico {
-    background: url(//image.zhihuishu.com/zhs_yufa_150820/able-commons/demo/201905/362459150bf647008c744d21e1f92f98.png)
+    background: url(../images/fullscreen-icon.png)
       0 -267px no-repeat;
     width: 83px;
     height: 81px;
@@ -2056,7 +2056,7 @@ pre {
     z-index: 99;
   }
   .fullscreen-ico.full {
-    background: url(//image.zhihuishu.com/zhs_yufa_150820/able-commons/demo/201905/362459150bf647008c744d21e1f92f98.png)
+    background: url(../images/fullscreen-icon.png)
       0 -400px no-repeat !important;
   }
   .fullscreen-ico:hover {

@@ -844,7 +844,7 @@
                                   <div class="video-img-bg">
                                     <div class="img-bg" />
                                     <img
-                                      src="https://image.zhihuishu.com/screenshot/zhs/ai-smart-course-h5/TEACH_RESOURCE/202503/f4a27bf2dfbd4399b6ccf1ef0dc353d0.jpg"
+                                      src="../../coursecss/images/course-detail-screenshot.jpg"
                                       alt=""
                                     />
                                     <div class="file-type file-video">
@@ -853,14 +853,14 @@
                                     <div class="video-time">00:07:13</div>
                                     <div class="isActive">
                                       <img
-                                        src="https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202308/56da0a86aeeb4f2eb7d503ee11dea19f.gif"
+                                        src="../../coursecss/images/course-detail-gif.gif"
                                         alt=""
                                       />
                                     </div>
                                     <!---->
                                     <div class="isFinsh">
                                       <img
-                                        src="https://image.zhihuishu.com/zhs/b2cm/base1/202408/c0805653b2404808acd72b0db4092e61.png"
+                                        src="../../coursecss/images/course-detail-icon1.png"
                                         alt=""
                                       />已完成
                                     </div>
@@ -1013,7 +1013,7 @@
                                       <div data-v-0762fd62="" class="code-icon">
                                         <img
                                           data-v-0762fd62=""
-                                          src="https://image.zhihuishu.com/zhs/b2cm/base1/202411/cbfe6f1ad06b413d91391b1625d37210.png"
+                                          src="../../coursecss/images/course-detail-icon2.png"
                                           alt=""
                                         />
                                       </div>
@@ -1428,7 +1428,7 @@
                                         class="isFinish"
                                       >
                                         <img
-                                          src="https://image.zhihuishu.com/zhs/b2cm/base1/202411/e72ded52758742c186763c64f841692d.png"
+                                          src="../../coursecss/images/course-detail-icon3.png"
                                           alt=""
                                         />
                                       </div>
@@ -2272,7 +2272,7 @@
                             :src="
                               message.role === 'user'
                                 ? userAvatar
-                                : 'https://image.zhihuishu.com/zhs/zd/avatar/202411/b901eb69b7a744b4bc784e7a45e6b69d_s3.png'
+                                : '../../coursecss/images/avatar-default.png'
                             "
                             alt="Avatar"
                           />
@@ -2666,7 +2666,7 @@ const selectedWrongQuestion = ref(null); // 存储当前选中的错题
 const userInfo = storageLocal().getItem(userKey) || {};
 const userAvatar = ref(
   (userInfo as any)?.avatar ||
-    "https://image.zhihuishu.com/zhs/zd/avatar/202411/b901eb69b7a744b4bc784e7a45e6b69d_s3.png"
+    "../../coursecss/images/avatar-default.png"
 );
 const userNickname = ref(
   (userInfo as any)?.nickname || (userInfo as any)?.username || "用户"
@@ -2685,8 +2685,8 @@ const cancelStreamRequest = ref<() => void | null>(null);
 
 const describeImgSrc = computed(() =>
   currentTheme.value === "dark"
-    ? "https://image.zhihuishu.com/zhs/b2cm/base1/202408/7e6f3450c9fc44bc8dfd380ea2aa2c24.png"
-    : "https://image.zhihuishu.com/zhs/b2cm/base1/202411/33b30e1359074b389417c68c5c898253.png"
+    ? "../../coursecss/images/resource-tab-normal-vue.png"
+    : "../../coursecss/images/resource-tab-active-vue.png"
 );
 
 // 当前播放视频的标题

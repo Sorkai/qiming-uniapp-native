@@ -28,7 +28,7 @@ export function courseAIChatStream(
   const authHeader = token ? formatToken(token.accessToken) : "";
 
   // 使用fetch API发送POST请求并处理流式响应
-  fetch("http://82.156.135.40:1004/edu/frontend/v1/ai/chat/stream", {
+  fetch("https://aiedu-api.lehinet.com/edu/frontend/v1/ai/chat/stream", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -130,7 +130,7 @@ export function getConversationHistory(conversationId: string) {
   // 使用axios发送GET请求
   return axios({
     method: "get",
-    url: `http://82.156.135.40:1004/edu/frontend/v1/ai/get/conversations?conversation_id=${conversationId}`,
+    url: `https://aiedu-api.lehinet.com/edu/frontend/v1/ai/get/conversations?conversation_id=${conversationId}`,
     headers: {
       Authorization: authHeader,
       "X-Requested-With": "XMLHttpRequest"

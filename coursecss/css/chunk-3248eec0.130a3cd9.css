@@ -101,7 +101,7 @@ code.hljs {
 }
 
 .icon-mode-box .ai-hide-icon[data-v-0762fd62] {
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202407/d92ac05dff9b469e8a29fda207e6d44f.png)
+  background: url(../images/ai-hide-icon.png)
     no-repeat;
   width: 1.66667vw;
   height: 5.57292vw;
@@ -236,7 +236,7 @@ code.hljs {
 .ai-helper-sections.light .ai-fill-bg[data-v-0762fd62] {
   border: 1px solid rgba(0, 0, 0, 0.2) !important;
   background-size: cover;
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/ee71b065a13544359e7077f78f5054be.png)
+  background: url(../images/ai-fill-bg-light.png)
     no-repeat 50%;
 }
 
@@ -2150,14 +2150,14 @@ html .hljs-link {
 
 .light .glow-border {
   color: #000;
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202411/c1d43c58598b4f99877100932c6e43b1.png)
+  background: url(../images/glow-border-light.png)
     no-repeat;
   background-size: 100%;
 }
 
 .dark .glow-border {
   color: #fff;
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202408/100d2533caaa4020b7f9013979c15173.png)
+  background: url(../images/glow-border-dark.png)
     no-repeat;
   background-size: 100%;
 }
@@ -2177,7 +2177,7 @@ html .hljs-link {
   position: absolute;
   inset: 0.10417vw;
   border-radius: 0.67708vw;
-  background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202408/91a0d27bb9ec44b9ab70d8ba087a66ba.png)
+  background: url(../images/inset-div-bg.png)
     no-repeat;
   box-sizing: border-box;
   z-index: 1;

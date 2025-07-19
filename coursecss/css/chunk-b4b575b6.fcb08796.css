@@ -495,35 +495,35 @@
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-box .video-icon[data-v-914d69da] {
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/889e6600d9c74ff0ab955e9add37da1e.png) no-repeat 50%/100%
+    background: url(../images/video-icon-mastery.png) no-repeat 50%/100%
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-box .ppt-icon[data-v-914d69da] {
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/ac9c08d43cd0475ba38f2792b81fc1bf.png) no-repeat 50%/100%
+    background: url(../images/ppt-icon-mastery.png) no-repeat 50%/100%
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-box .xls-icon[data-v-914d69da] {
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/b659102bf2f3461fb3650df41b7c37b8.png) no-repeat 50%/100%
+    background: url(../images/xls-icon-mastery.png) no-repeat 50%/100%
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-box .doc-icon[data-v-914d69da] {
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/486ce6b17a764b69b2e4419b62634e55.png) no-repeat 50%/100%
+    background: url(../images/doc-icon-mastery.png) no-repeat 50%/100%
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-box .music-icon[data-v-914d69da] {
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/c6a402ecc2e6400d902d697ecf7bde91.png) no-repeat 50%/100%
+    background: url(../images/music-icon-mastery.png) no-repeat 50%/100%
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-box .image-icon[data-v-914d69da] {
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/2260ed36c2084f78a77e646c640412d4.png) no-repeat 50%/100%
+    background: url(../images/image-icon-mastery.png) no-repeat 50%/100%
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-box .gif-icon[data-v-914d69da] {
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/78eed83ae9414432b6c9daae0290423c.png) no-repeat 50%/100%
+    background: url(../images/gif-icon-mastery.png) no-repeat 50%/100%
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-box .unknow-type[data-v-914d69da] {
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202408/be71110bced9415aa975f4e4dbafc114.png) no-repeat 50%/100%
+    background: url(../images/unknow-type-mastery.png) no-repeat 50%/100%
 }
 
 .need-study-mastery .ai-teaching-assistant .pending-course .video-list .item .video-name[data-v-914d69da] {
@@ -999,7 +999,7 @@
     right: 0;
     width: 1.5625vw;
     height: 1.5625vw;
-    background: url(https://image.zhihuishu.com/zhs_yufa_150820/b2cm/base1/202409/c4d2e0d829d34de7a1241c4963f9dcfc.png) 50%/cover no-repeat
+    background: url(../images/icon-tip-dark.png) 50%/cover no-repeat
 }
 
 .mastery-page-content .mastery-content-left .mastery-data-ul li .text[data-v-487e2460] {
@@ -1052,7 +1052,7 @@
 }
 
 .light.mastery-page-content .mastery-content-left .mastery-data-ul li.icon-tip .icon-img[data-v-487e2460] {
-    background: url(https://image.zhihuishu.com/zhs/b2cm/base1/202412/fe21d13771dd484d88d0850ad097c72f.png) 50%/100% no-repeat
+    background: url(../images/icon-tip-light.png) 50%/100% no-repeat
 }
 
 .custom-tooltip-style {

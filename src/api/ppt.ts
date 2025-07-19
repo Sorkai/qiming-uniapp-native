@@ -12,6 +12,6 @@ interface PptTokenResponse {
 // 获取AI PPT生成token
 export const getPptToken = () => {
   return http.request<PptTokenResponse>("post", "/edu/v1/user/get/ppt/token", {
-    baseURL: "http://82.156.135.40:1004"
+    baseURL: "https://aiedu-api.lehinet.com"
   });
 }; 

@@ -19,7 +19,7 @@ const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间，上传大文件时设置为0表示不超时
   timeout: 0,
   // 设置基础URL
-  baseURL: "http://82.156.135.40:1004",
+  baseURL: "https://aiedu-api.lehinet.com",
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
