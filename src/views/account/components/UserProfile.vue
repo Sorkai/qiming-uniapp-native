@@ -162,8 +162,11 @@ import { ElMessage } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
 import { userKey, removeToken } from "@/utils/auth";
 import type { DataInfo } from "@/utils/auth";
-import { updateFrontendUserInfo, updateFrontendUserPassword } from "@/api/frontend/user";
-import { uploadFile } from "@/api/user";
+import {
+  updateFrontendUserInfo,
+  updateFrontendUserPassword
+} from "@/api/frontend/user";
+import { uploadFile, getUserDetail } from "@/api/user";
 
 const router = useRouter();
 const defaultAvatar = "/src/assets/user.jpg";
@@ -228,17 +231,17 @@ const passwordRules = {
 
 // 计算属性：用户角色展示
 const userRole = computed(() => {
-  if (!userInfo.value?.roles) return "普通用户";
-
-  if (userInfo.value.roles.includes("admin")) {
-    return "管理员";
-  } else if (userInfo.value.roles.includes("teacher")) {
-    return "教师";
-  } else if (userInfo.value.roles.includes("student")) {
-    return "学生";
+  const roleType = userInfo.value?.roleType;
+  switch (roleType) {
+    case 1:
+      return "学生";
+    case 2:
+      return "教师";
+    case 3:
+      return "管理员";
+    default:
+      return "普通用户";
   }
-
-  return "普通用户";
 });
 
 // 计算属性：性别显示
@@ -247,12 +250,31 @@ const getSexLabel = computed(() => {
   return sex === 1 ? "男" : sex === 2 ? "女" : "保密";
 });
 
+// 获取用户详情
+const fetchUserDetail = async () => {
+  try {
+    const res = await getUserDetail();
+    if (res.code === 200) {
+      userInfo.value = res.data.userInfo; // 修改这里，从res.data.userInfo获取
+      storageLocal().setItem(userKey, res.data.userInfo); // 更新缓存
+      // ElMessage.success("用户信息已更新"); // 移除此行
+    } else {
+      ElMessage.error(res.message || "获取用户信息失败");
+    }
+  } catch (error) {
+    ElMessage.error("获取用户信息失败");
+    console.error("获取用户信息失败", error);
+  }
+};
+
 // 打开编辑对话框
 const openEditDialog = () => {
-  avatarUrl.value = userInfo.value?.avatar;
-  form.nickname = userInfo.value?.nickname || "";
-  form.sex = userInfo.value?.sex || 0;
-  form.info = userInfo.value?.info || "";
+  if (userInfo.value) {
+    form.nickname = userInfo.value.nickname || "";
+    form.sex = userInfo.value.sex || 0;
+    form.info = userInfo.value.info || "";
+    avatarUrl.value = userInfo.value.avatar || defaultAvatar;
+  }
   dialogVisible.value = true;
 };
 
@@ -319,31 +341,11 @@ const submitForm = async () => {
         const { code, msg } = await updateFrontendUserInfo(updateData);
 
         if (code === 200) {
-          ElMessage.success("个人资料更新成功");
+          ElMessage.success("资料修改成功");
           dialogVisible.value = false;
-
-          // 更新本地存储的用户信息
-          const currentUserInfo = storageLocal().getItem(userKey);
-          if (currentUserInfo && typeof currentUserInfo === "object") {
-            const updatedInfo = {
-              ...(currentUserInfo as Record<string, any>),
-              nickname: form.nickname,
-              avatar: form.avatar || (currentUserInfo as any).avatar,
-              sex: form.sex,
-              info: form.info
-            };
-            storageLocal().setItem(userKey, updatedInfo);
-            userInfo.value = updatedInfo;
-
-            // 更新全局状态，使头部和侧边栏的用户信息也能更新
-            window.dispatchEvent(
-              new CustomEvent("userInfoUpdated", {
-                detail: updatedInfo
-              })
-            );
-          }
+          fetchUserDetail(); // 重新获取用户信息
         } else {
-          ElMessage.error(msg || "更新失败，请稍后重试");
+          ElMessage.error(msg || "资料修改失败");
         }
       } catch (error) {
         console.error("更新个人资料失败:", error);
@@ -380,7 +382,7 @@ const submitPasswordForm = async () => {
         if (code === 200) {
           ElMessage.success("密码修改成功，即将退出登录");
           passwordDialogVisible.value = false;
-          
+
           // 延迟1.5秒后退出登录，让用户看到成功提示
           setTimeout(() => {
             // 清除登录信息
@@ -401,8 +403,11 @@ const submitPasswordForm = async () => {
       } catch (error) {
         console.error("修改密码失败:", error);
         // 检查是否包含特定错误信息
-        if (error.response?.data?.code === 100001 || 
-            (typeof error === 'object' && error.toString().includes("原密码新信息错误"))) {
+        if (
+          error.response?.data?.code === 100001 ||
+          (typeof error === "object" &&
+            error.toString().includes("原密码新信息错误"))
+        ) {
           ElMessage.error("原密码错误，请重新输入");
           passwordForm.oldPassword = "";
         } else {
@@ -417,8 +422,7 @@ const submitPasswordForm = async () => {
 
 // 组件挂载时获取最新用户信息
 onMounted(() => {
-  // 可以在这里添加获取用户详情的接口调用
-  userInfo.value = storageLocal().getItem(userKey);
+  fetchUserDetail();
 });
 </script>
 
@@ -436,7 +440,7 @@ onMounted(() => {
       font-weight: 600;
       color: #333;
     }
-    
+
     .action-buttons {
       display: flex;
       gap: 10px;
