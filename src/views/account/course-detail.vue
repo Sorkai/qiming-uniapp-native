@@ -1558,6 +1558,7 @@
                   v-for="(chapter, index) in studyEffectData.chapterList"
                   :key="index"
                   class="chapter-section"
+                  :class="currentTheme"
                 >
                   <h2
                     class="collapsible-header"
@@ -1580,6 +1581,7 @@
                         chapter.keyPointArray.length > 0
                       "
                       class="point-section"
+                      :class="currentTheme"
                     >
                       <h3
                         class="collapsible-header"
@@ -1611,8 +1613,12 @@
                           :key="'key-' + idx"
                           class="point-item"
                         >
-                          <div class="point-title">{{ item.title }}</div>
-                          <div class="point-content">{{ item.content }}</div>
+                          <div class="point-title" :class="currentTheme">
+                            {{ item.title }}
+                          </div>
+                          <div class="point-content" :class="currentTheme">
+                            {{ item.content }}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1624,6 +1630,7 @@
                         chapter.difficultPointArray.length > 0
                       "
                       class="point-section"
+                      :class="currentTheme"
                     >
                       <h3
                         class="collapsible-header"
@@ -1659,8 +1666,12 @@
                           :key="'diff-' + idx"
                           class="point-item"
                         >
-                          <div class="point-title">{{ item.title }}</div>
-                          <div class="point-content">{{ item.content }}</div>
+                          <div class="point-title" :class="currentTheme">
+                            {{ item.title }}
+                          </div>
+                          <div class="point-content" :class="currentTheme">
+                            {{ item.content }}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1672,6 +1683,7 @@
                         chapter.knowledgeArray.length > 0
                       "
                       class="point-section"
+                      :class="currentTheme"
                     >
                       <h3
                         class="collapsible-header"
@@ -1703,8 +1715,12 @@
                           :key="'know-' + idx"
                           class="point-item"
                         >
-                          <div class="point-title">{{ item.title }}</div>
-                          <div class="point-content">{{ item.content }}</div>
+                          <div class="point-title" :class="currentTheme">
+                            {{ item.title }}
+                          </div>
+                          <div class="point-content" :class="currentTheme">
+                            {{ item.content }}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1715,6 +1731,7 @@
                         chapter.ConceptArray && chapter.ConceptArray.length > 0
                       "
                       class="point-section"
+                      :class="currentTheme"
                     >
                       <h3
                         class="collapsible-header"
@@ -1743,8 +1760,12 @@
                           :key="'con-' + idx"
                           class="point-item"
                         >
-                          <div class="point-title">{{ item.title }}</div>
-                          <div class="point-content">{{ item.content }}</div>
+                          <div class="point-title" :class="currentTheme">
+                            {{ item.title }}
+                          </div>
+                          <div class="point-content" :class="currentTheme">
+                            {{ item.content }}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -4876,6 +4897,30 @@ onMounted(async () => {
 .point-content {
   color: #606266;
   line-height: 1.5;
+}
+
+/* 暗黑模式下的章节和要点样式 */
+.chapter-section.dark {
+  background-color: #252525;
+  border-color: #3e3e3e;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2);
+}
+
+.chapter-section.dark h2 {
+  color: #ffffff;
+  border-bottom-color: #3e3e3e;
+}
+
+.point-section.dark h3 {
+  color: #e0e0e0;
+}
+
+.point-title.dark {
+  color: #ffffff;
+}
+
+.point-content.dark {
+  color: #e0e0e0;
 }
 
 .no-data {
