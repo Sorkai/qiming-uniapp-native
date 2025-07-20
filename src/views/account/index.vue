@@ -73,6 +73,10 @@
             <el-icon><Folder /></el-icon>
             <span>学习云盘</span>
           </el-menu-item>
+          <el-menu-item index="notification">
+            <el-icon><Bell /></el-icon>
+            <span>系统通知</span>
+          </el-menu-item>
         </el-menu>
       </div>
       <div class="account-main">
@@ -81,6 +85,9 @@
         </div>
         <div v-else-if="activeMenu === 'cloud-disk'">
           <cloud-disk />
+        </div>
+        <div v-else-if="activeMenu === 'notification'">
+          <system-notification />
         </div>
         <div v-else-if="activeMenu === 'home'">
           <!-- 上方卡片 -->
@@ -397,7 +404,8 @@ import {
   Calendar,
   InfoFilled,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  Bell
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
@@ -406,6 +414,7 @@ import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
 import { UserProfile } from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
+import SystemNotification from "./components/SystemNotification.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
 const router = useRouter();
