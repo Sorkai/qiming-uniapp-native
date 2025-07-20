@@ -2,7 +2,13 @@
 import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { getEfficientIndex } from "@/api/statistics";
-import { ElTooltip, ElCheckbox, ElCheckboxGroup } from "element-plus";
+import {
+  ElTooltip,
+  ElCheckbox,
+  ElCheckboxGroup,
+  ElDialog,
+  ElButton
+} from "element-plus";
 
 defineOptions({
   name: "EfficientIndex"
@@ -166,6 +172,14 @@ const optimizeSuggestions = computed(() => {
     }));
 });
 
+const dialogVisible = ref(false);
+const selectedSuggestion = ref(null);
+
+const showDetails = item => {
+  selectedSuggestion.value = item;
+  dialogVisible.value = true;
+};
+
 // 默认显示优化建议
 showOptimizePanel.value = true;
 
@@ -225,12 +239,34 @@ onMounted(() => {
                   <p>{{ item.optimizeDirection }}</p>
                 </div>
                 <div class="card-footer">
-                  <el-button type="primary" link>查看详情</el-button>
+                  <el-button type="primary" link @click="showDetails(item)"
+                    >查看详情</el-button
+                  >
                 </div>
               </el-card>
             </el-col>
           </el-row>
         </div>
+
+        <!-- 优化建议详情弹窗 -->
+        <el-dialog
+          v-model="dialogVisible"
+          :title="selectedSuggestion?.courseName + ' 的优化建议'"
+          width="40%"
+          center
+          append-to-body
+        >
+          <div class="dialog-content">
+            <p>{{ selectedSuggestion?.optimizeDirection }}</p>
+          </div>
+          <template #footer>
+            <span class="dialog-footer">
+              <el-button type="primary" @click="dialogVisible = false"
+                >我知道了</el-button
+              >
+            </span>
+          </template>
+        </el-dialog>
       </template>
     </el-skeleton>
   </div>
@@ -280,5 +316,12 @@ onMounted(() => {
       margin-top: 10px;
     }
   }
+}
+
+.dialog-content {
+  padding: 20px;
+  line-height: 1.8;
+  font-size: 16px;
+  white-space: pre-wrap;
 }
 </style>
