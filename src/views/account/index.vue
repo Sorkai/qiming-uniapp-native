@@ -77,6 +77,10 @@
             <el-icon><Bell /></el-icon>
             <span>系统通知</span>
           </el-menu-item>
+          <el-menu-item index="todo">
+            <el-icon><Tickets /></el-icon>
+            <span>待办事项</span>
+          </el-menu-item>
         </el-menu>
       </div>
       <div class="account-main">
@@ -88,6 +92,9 @@
         </div>
         <div v-else-if="activeMenu === 'notification'">
           <system-notification />
+        </div>
+        <div v-else-if="activeMenu === 'todo'">
+          <todo />
         </div>
         <div v-else-if="activeMenu === 'home'">
           <!-- 上方卡片 -->
@@ -396,16 +403,16 @@ import {
   InfoFilled,
   ArrowLeft,
   ArrowRight,
-  Bell
+  Bell,
+  Tickets
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
 import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
-import { UserProfile } from "./components";
+import { UserProfile, SystemNotification, Todo } from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
-import SystemNotification from "./components/SystemNotification.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
 const router = useRouter();
