@@ -139,7 +139,7 @@
                               :src="course.thumbUrl"
                               class="thumb-image"
                             />
-                            <el-tag size="small" type="warning">考试</el-tag>
+                            <el-tag type="warning">考试</el-tag>
                           </div>
                           <div class="course-content">
                             <span class="course-name">{{
@@ -179,7 +179,7 @@
                               :src="course.thumbUrl"
                               class="thumb-image"
                             />
-                            <el-tag size="small" type="success">结课</el-tag>
+                            <el-tag type="success">结课</el-tag>
                           </div>
                           <div class="course-content">
                             <span class="course-name">{{
@@ -219,7 +219,7 @@
                               :src="course.thumbUrl"
                               class="thumb-image"
                             />
-                            <el-tag size="small" type="danger">作业</el-tag>
+                            <el-tag type="danger">作业</el-tag>
                           </div>
                           <div class="course-content">
                             <span class="course-name">{{
@@ -265,11 +265,7 @@
             <div class="course-header">
               <h3>我的课程</h3>
               <div class="course-filter">
-                <el-select
-                  v-model="courseFilter"
-                  placeholder="课程状态"
-                  size="small"
-                >
+                <el-select v-model="courseFilter" placeholder="课程状态">
                   <el-option label="全部" value="all" />
                   <el-option label="进行中" value="ongoing" />
                   <el-option label="已完成" value="completed" />
@@ -354,11 +350,7 @@
 
             <!-- 分页 -->
             <div v-if="coursesData.list.length > 0" class="pagination">
-              <el-button
-                :disabled="currentPage === 1"
-                size="small"
-                @click="handlePrevPage"
-              >
+              <el-button :disabled="currentPage === 1" @click="handlePrevPage">
                 <el-icon><ArrowLeft /></el-icon>
                 上一页
               </el-button>
@@ -367,7 +359,6 @@
               >
               <el-button
                 :disabled="currentPage === totalPages"
-                size="small"
                 @click="handleNextPage"
               >
                 下一页
@@ -688,7 +679,7 @@ const handleCourseClick = (courseId: number) => {
 
 .account-container {
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background-color: #f7f8fc;
 
   .header {
     position: fixed;
@@ -696,13 +687,19 @@ const handleCourseClick = (courseId: number) => {
     right: 0;
     left: 0;
     z-index: 1000;
-    height: 60px;
-    background: #6b46c1;
-    box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
-    transition: box-shadow 0.3s ease;
+    height: 64px;
+    background: linear-gradient(45deg, #6b46c1, #8a5cf6);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+    transition: all 0.3s ease;
 
     &.header-scrolled {
+      background: #fff;
       box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+
+      .user-info .nickname,
+      .user-info .el-icon--right {
+        color: #333;
+      }
     }
 
     .header-content {
@@ -710,7 +707,7 @@ const handleCourseClick = (courseId: number) => {
       align-items: center;
       justify-content: space-between;
       height: 100%;
-      padding: 0 120px;
+      padding: 0 80px;
       margin: 0 auto;
 
       .logo {
@@ -731,6 +728,8 @@ const handleCourseClick = (courseId: number) => {
         transition: all 0.3s;
 
         &:hover {
+          background-color: rgb(255 255 255 / 20%);
+
           .el-icon--right {
             transform: rotate(180deg);
           }
@@ -741,14 +740,15 @@ const handleCourseClick = (courseId: number) => {
           font-size: 16px;
           font-weight: 600;
           color: #fff;
-          text-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+          text-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+          transition: color 0.3s;
         }
 
         .el-icon--right {
           font-size: 18px;
           font-weight: bold;
           color: #fff;
-          transition: transform 0.3s ease;
+          transition: all 0.3s ease;
         }
       }
     }
@@ -756,9 +756,9 @@ const handleCourseClick = (courseId: number) => {
 
   .account-content {
     display: flex;
-    gap: 16px;
+    gap: 24px;
     min-height: calc(100vh - 90px);
-    padding: 70px 16px 16px;
+    padding: 88px 32px 32px;
 
     .account-sidebar {
       flex-shrink: 0;
@@ -766,35 +766,44 @@ const handleCourseClick = (courseId: number) => {
 
       .user-info {
         padding: 30px 20px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
         text-align: center;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
 
         h3 {
           margin: 15px 0 5px;
           font-size: 18px;
-          font-weight: 500;
+          font-weight: 600;
           color: #333;
-          padding-left: 10px;
-        }
-
-        p {
-          margin: 0;
-          font-size: 14px;
-          color: #666;
         }
       }
 
       .account-menu {
+        padding: 8px;
         background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
 
         :deep(.el-menu-item) {
           height: 50px;
+          margin-bottom: 4px;
           line-height: 50px;
+          border-radius: 8px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background-color: #f7f8fc;
+          }
+
+          &.is-active {
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(45deg, #6b46c1, #8a5cf6);
+            box-shadow: 0 4px 8px rgb(107 70 193 / 30%);
+          }
 
           .el-icon {
             margin-right: 10px;
@@ -806,69 +815,58 @@ const handleCourseClick = (courseId: number) => {
 
     .account-main {
       flex: 1;
-      padding: 30px;
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
+      padding: 0;
+      background-color: transparent;
+      border-radius: 12px;
+      box-shadow: none;
     }
   }
 }
 
-// 路由切换动画
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
 .card {
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
   background-color: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
 
   .reminder {
-    margin-bottom: 12px;
+    margin-bottom: 20px;
 
     .reminder-content {
       display: flex;
       align-items: center;
-      padding: 8px 12px;
-      font-size: 13px;
-      color: #333;
-      background-color: #fff2f0;
-      border: 1px solid #ffccc7;
-      border-radius: 4px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #5a4bad;
+      background-color: rgb(107 70 193 / 10%);
+      border: 1px solid rgb(107 70 193 / 20%);
+      border-radius: 8px;
 
       .el-icon {
-        margin-right: 8px;
-        font-size: 16px;
-        color: #ff4d4f;
+        margin-right: 12px;
+        font-size: 20px;
+        color: #6b46c1;
       }
 
       span {
         flex: 1;
-        line-height: 1.4;
+        line-height: 1.5;
       }
     }
   }
 
   .info-section {
     display: flex;
-    gap: 16px;
+    gap: 24px;
 
     .course-info {
-      flex: 0.7; // 占 70% 宽度
+      flex: 0.7;
 
       h3 {
-        margin: 0 0 12px;
-        font-size: 15px;
+        margin: 0 0 16px;
+        font-size: 18px;
         font-weight: 600;
         color: #333;
       }
@@ -876,32 +874,36 @@ const handleCourseClick = (courseId: number) => {
 
     .ai-summary {
       position: relative;
-      flex: 0.3; // 占 30% 宽度
+      flex: 0.3;
 
       h3 {
-        margin: 0 0 12px;
-        font-size: 15px;
+        margin: 0 0 16px;
+        font-size: 18px;
         font-weight: 600;
         color: #333;
       }
 
       .summary-card {
         position: absolute;
-        inset: 33px 0 0;
+        inset: 45px 0 0;
+        padding: 16px;
         overflow: hidden;
+        color: #fff;
+        background: linear-gradient(135deg, #8a5cf6, #6b46c1);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgb(107 70 193 / 40%);
 
         p {
-          margin: 0 0 8px;
-          font-size: 13px;
-          color: #606266;
+          margin: 0 0 12px;
+          font-size: 14px;
+          font-weight: 500;
         }
 
         ul {
-          height: calc(100% - 24px);
-          padding-left: 16px;
+          height: calc(100% - 32px);
+          padding-left: 20px;
           margin: 0;
           overflow-y: auto;
-          color: #606266;
           list-style-type: disc;
 
           &::-webkit-scrollbar {
@@ -909,14 +911,14 @@ const handleCourseClick = (courseId: number) => {
           }
 
           &::-webkit-scrollbar-thumb {
-            background-color: #dcdfe6;
+            background-color: rgb(255 255 255 / 50%);
             border-radius: 2px;
           }
 
           li {
-            margin-bottom: 4px;
-            font-size: 13px;
-            line-height: 1.4;
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.6;
 
             &:last-child {
               margin-bottom: 0;
@@ -926,72 +928,62 @@ const handleCourseClick = (courseId: number) => {
       }
     }
 
-    .course-card,
-    .summary-card {
-      padding: 12px;
-      background-color: #f5f7fa;
-      border: 1px solid #e4e7ed;
-      border-radius: 6px;
-    }
-
     .course-card {
-      min-height: 50vh; /* 添加固定高度，与无数据状态一致 */
+      min-height: 50vh;
+      padding: 16px;
+      background-color: #f7f8fc;
+      border: 1px solid #eef0f5;
+      border-radius: 8px;
 
       .course-section {
-        margin-bottom: 10px;
+        margin-bottom: 16px;
 
         &:last-child {
           margin-bottom: 0;
         }
 
         h4 {
-          margin: 0 0 4px;
-          font-size: 12px;
-          font-weight: 500;
+          margin: 0 0 8px;
+          font-size: 14px;
+          font-weight: 600;
           color: #666;
         }
 
         .mini-course-list {
           display: grid;
-          grid-template-columns: repeat(auto-fill, 250px); // 固定卡片宽度
-          gap: 8px;
-          justify-content: start; // 从左侧开始排列
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 12px;
         }
 
         .mini-course-item {
           cursor: pointer;
           display: flex;
-          gap: 8px;
+          gap: 12px;
           align-items: center;
-          width: 250px; // 设置固定宽度
-          padding: 8px;
+          padding: 12px;
           background: #fff;
           border: 1px solid #ebeef5;
-          border-radius: 4px;
-          box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
           transition: all 0.3s ease;
-          margin-bottom: 8px;
 
           &:hover {
-            box-shadow: 0 3px 8px rgb(0 0 0 / 10%);
-            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
+            transform: translateY(-4px) scale(1.02);
           }
 
           .course-thumb {
             position: relative;
             flex-shrink: 0;
-            width: 60px;
-            height: 60px;
+            width: 64px;
+            height: 64px;
             overflow: hidden;
-            border-radius: 4px;
+            border-radius: 6px;
 
             .thumb-image {
               width: 100%;
               height: 100%;
-              object-fit: contain;
-              position: absolute;
-              top: 0;
-              left: 0;
+              object-fit: cover;
             }
 
             .el-tag {
@@ -999,10 +991,6 @@ const handleCourseClick = (courseId: number) => {
               top: 4px;
               right: 4px;
               z-index: 1;
-              height: 18px;
-              padding: 0 4px;
-              font-size: 11px;
-              line-height: 16px;
             }
           }
 
@@ -1016,13 +1004,13 @@ const handleCourseClick = (courseId: number) => {
             .course-name {
               @include text-ellipsis;
 
-              font-size: 13px;
+              font-size: 14px;
               font-weight: 600;
               color: #333;
             }
 
             .course-time {
-              font-size: 12px;
+              font-size: 13px;
               color: #606266;
             }
           }
@@ -1037,139 +1025,91 @@ const handleCourseClick = (courseId: number) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 
     h3 {
       margin: 0;
-      font-size: 15px;
+      font-size: 18px;
       font-weight: 600;
       color: #333;
     }
-
-    .course-filter {
-      :deep(.el-select) {
-        width: 120px;
-      }
-    }
-  }
-
-  h3 {
-    margin: 0 0 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #333;
   }
 
   .course-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-    margin-bottom: 12px;
-
-    @media screen and (width <= 1400px) {
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    }
-
-    @media screen and (width <= 1200px) {
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    }
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
 
     .course-item {
-      width: 100%;
-      min-width: 160px;
-      max-width: 220px;
-      margin: 0 auto;
       overflow: hidden;
       cursor: pointer;
       background-color: #fff;
       border: 1px solid #ebeef5;
-      border-radius: 3px;
-      box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
       transition: all 0.3s ease;
 
       &:hover {
-        box-shadow: 0 3px 8px rgb(0 0 0 / 10%);
-        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
+        transform: translateY(-4px);
       }
 
       .course-cover {
         position: relative;
         width: 100%;
-        padding-top: 56.25%; // 16:9 宽高比
-        overflow: hidden;
-        transition: all 0.3s ease;
-
-        &:hover {
-          opacity: 0.9;
-        }
+        padding-top: 56.25%; // 16:9
 
         .cover-image {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
           position: absolute;
           top: 0;
           left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .course-status {
           position: absolute;
-          top: 4px;
-          right: 4px;
+          top: 8px;
+          right: 8px;
           z-index: 1;
-
-          :deep(.el-tag) {
-            height: 18px;
-            padding: 0 4px;
-            font-size: 11px;
-            line-height: 16px;
-          }
         }
       }
 
       .course-info {
-        padding: 8px;
+        padding: 12px;
 
         h4 {
-          margin: 0 0 4px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          font-size: 12px;
+          @include text-ellipsis;
+
+          margin: 0 0 8px;
+          font-size: 15px;
           font-weight: 600;
           color: #333;
-          white-space: nowrap;
         }
 
         p {
-          display: -webkit-box;
-          height: 28px;
-          margin: 0 0 4px;
-          overflow: hidden;
-          -webkit-line-clamp: 2;
-          font-size: 11px;
-          line-height: 1.3;
+          height: 32px;
+          margin: 0 0 8px;
+          font-size: 13px;
+          line-height: 1.4;
           color: #606266;
-          -webkit-box-orient: vertical;
         }
 
         .course-meta {
           display: flex;
           justify-content: space-between;
-          font-size: 10px;
+          font-size: 12px;
           color: #909399;
 
           span {
             display: flex;
             align-items: center;
-            max-width: 45%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
 
             .el-icon {
-              flex-shrink: 0;
-              margin-right: 2px;
-              font-size: 11px;
+              margin-right: 4px;
+              font-size: 14px;
             }
           }
         }
@@ -1188,32 +1128,19 @@ const handleCourseClick = (courseId: number) => {
 
     .page-info {
       min-width: 60px;
-      font-size: 13px;
+      font-size: 14px;
       color: #606266;
       text-align: center;
-    }
-
-    :deep(.el-button) {
-      --el-button-size: 28px;
-
-      padding: 0 12px;
-      font-size: 13px;
-
-      .el-icon {
-        font-size: 14px;
-        vertical-align: -0.1em;
-      }
     }
   }
 }
 
-// 添加thumb-image类的样式
 .thumb-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>
