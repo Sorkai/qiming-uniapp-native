@@ -1,61 +1,86 @@
 <template>
-  <div class="todo-container card">
-    <div class="todo-header">
-      <h3>待办事项</h3>
-      <el-button type="primary" :icon="Plus" @click="openAddDialog"
-        >添加待办</el-button
-      >
+  <div class="todo-container">
+    <div class="todo-header card">
+      <div class="header-left">
+        <h3>待办事项</h3>
+        <p>共 {{ totalTodos }} 项，已完成 {{ completedTodos }} 项</p>
+      </div>
+      <div class="header-right">
+        <el-button type="primary" :icon="Plus" @click="openAddDialog" round
+          >添加待办</el-button
+        >
+      </div>
     </div>
 
-    <el-table :data="todos" style="width: 100%" v-loading="loading">
-      <el-table-column prop="title" label="标题" width="200" />
-      <el-table-column prop="publisher" label="发布者" width="120" />
-      <el-table-column prop="details" label="详细信息" show-overflow-tooltip />
-      <el-table-column prop="time" label="时间" width="180" />
-      <el-table-column prop="completed" label="状态" width="100">
-        <template #default="{ row }">
-          <el-tag :type="row.completed ? 'success' : 'warning'">
-            {{ row.completed ? "已完成" : "待处理" }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="220">
-        <template #default="{ row }">
-          <el-button
-            size="small"
-            type="success"
-            :icon="Check"
-            @click="toggleStatus(row)"
-            v-if="!row.completed"
+    <div class="todo-controls card">
+      <el-radio-group v-model="filterStatus" size="large">
+        <el-radio-button label="all">全部</el-radio-button>
+        <el-radio-button label="pending">待处理</el-radio-button>
+        <el-radio-button label="completed">已完成</el-radio-button>
+      </el-radio-group>
+    </div>
+
+    <transition-group name="todo-list" tag="div" class="todo-list">
+      <div
+        v-for="todo in filteredTodos"
+        :key="todo.id"
+        class="todo-item card"
+        :class="{ completed: todo.completed }"
+      >
+        <div class="item-content">
+          <div class="item-header">
+            <span class="item-title">{{ todo.title }}</span>
+            <el-tag :type="todo.completed ? 'success' : 'warning'" size="small">
+              {{ todo.completed ? "已完成" : "待处理" }}
+            </el-tag>
+          </div>
+          <p class="item-details">{{ todo.details }}</p>
+          <div class="item-footer">
+            <span class="item-publisher">
+              <el-icon><User /></el-icon> {{ todo.publisher }}
+            </span>
+            <span class="item-time">
+              <el-icon><Clock /></el-icon> {{ todo.time }}
+            </span>
+          </div>
+        </div>
+        <div class="item-actions">
+          <el-tooltip
+            :content="todo.completed ? '标记为未完成' : '标记为已完成'"
+            placement="top"
           >
-            完成
-          </el-button>
-          <el-button
-            size="small"
-            type="warning"
-            :icon="Refresh"
-            @click="toggleStatus(row)"
-            v-else
-          >
-            重置
-          </el-button>
-          <el-button
-            size="small"
-            type="primary"
-            :icon="Edit"
-            @click="openEditDialog(row)"
-            >编辑</el-button
-          >
-          <el-button
-            size="small"
-            type="danger"
-            :icon="Delete"
-            @click="deleteTodo(row)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
+            <el-button
+              :type="todo.completed ? 'warning' : 'success'"
+              :icon="todo.completed ? Refresh : Check"
+              @click="toggleStatus(todo)"
+              circle
+            />
+          </el-tooltip>
+          <el-tooltip content="编辑" placement="top">
+            <el-button
+              type="primary"
+              :icon="Edit"
+              @click="openEditDialog(todo)"
+              circle
+            />
+          </el-tooltip>
+          <el-tooltip content="删除" placement="top">
+            <el-button
+              type="danger"
+              :icon="Delete"
+              @click="deleteTodo(todo)"
+              circle
+            />
+          </el-tooltip>
+        </div>
+      </div>
+    </transition-group>
+
+    <el-empty
+      v-if="filteredTodos.length === 0"
+      description="暂无待办事项"
+      class="card"
+    />
 
     <!-- 添加/编辑待办对话框 -->
     <el-dialog
@@ -88,14 +113,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Plus,
   Edit,
   Delete,
   Check,
-  Refresh
+  Refresh,
+  User,
+  Clock
 } from "@element-plus/icons-vue";
 
 interface TodoItem {
@@ -112,6 +139,7 @@ const todos = ref<TodoItem[]>([]);
 const dialogVisible = ref(false);
 const isEditMode = ref(false);
 const formRef = ref(null);
+const filterStatus = ref("all"); // all, pending, completed
 
 const initialFormState = {
   id: 0,
@@ -153,18 +181,37 @@ const initialTodos: TodoItem[] = [
   }
 ];
 
+// 过滤后的待办事项
+const filteredTodos = computed(() => {
+  if (filterStatus.value === "pending") {
+    return todos.value.filter(todo => !todo.completed);
+  }
+  if (filterStatus.value === "completed") {
+    return todos.value.filter(todo => todo.completed);
+  }
+  return todos.value;
+});
+
+// 统计信息
+const totalTodos = computed(() => todos.value.length);
+const completedTodos = computed(
+  () => todos.value.filter(todo => todo.completed).length
+);
+
 // 从localStorage加载数据
 const loadTodos = () => {
   loading.value = true;
-  const storedTodos = localStorage.getItem(TODO_STORAGE_KEY);
-  if (storedTodos) {
-    todos.value = JSON.parse(storedTodos);
-  } else {
-    // 如果没有存储数据，则使用初始数据
-    todos.value = initialTodos;
-    saveTodos();
-  }
-  loading.value = false;
+  setTimeout(() => {
+    const storedTodos = localStorage.getItem(TODO_STORAGE_KEY);
+    if (storedTodos) {
+      todos.value = JSON.parse(storedTodos);
+    } else {
+      // 如果没有存储数据，则使用初始数据
+      todos.value = initialTodos;
+      saveTodos();
+    }
+    loading.value = false;
+  }, 500); // 模拟加载效果
 };
 
 // 保存数据到localStorage
@@ -260,24 +307,131 @@ const toggleStatus = (row: TodoItem) => {
 </script>
 
 <style lang="scss" scoped>
-.todo-container {
+.card {
   padding: 24px;
+  margin-bottom: 24px;
   background-color: #fff;
+  border: none;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+  transition: all 0.3s ease;
 }
 
-.todo-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+.todo-container {
+  .todo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-  h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
+    .header-left {
+      h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 600;
+        color: #333;
+      }
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: #909399;
+      }
+    }
   }
+
+  .todo-controls {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .todo-list {
+    position: relative;
+    padding: 0;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    opacity: 1;
+    transition:
+      transform 0.4s ease,
+      opacity 0.4s ease,
+      background-color 0.3s;
+
+    &:hover {
+      transform: translateY(-5px) scale(1.01);
+      box-shadow: 0 8px 25px rgb(0 0 0 / 10%);
+    }
+
+    &.completed {
+      .item-title {
+        text-decoration: line-through;
+        color: #909399;
+      }
+      background-color: #f7f8fc;
+    }
+
+    .item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+
+      .item-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #303133;
+        transition: color 0.3s;
+      }
+    }
+
+    .item-details {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: #606266;
+      line-height: 1.6;
+    }
+
+    .item-footer {
+      display: flex;
+      gap: 24px;
+      font-size: 13px;
+      color: #909399;
+
+      span {
+        display: flex;
+        align-items: center;
+        .el-icon {
+          margin-right: 6px;
+        }
+      }
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 10px;
+    }
+  }
+}
+
+// Transition-group animations
+.todo-list-enter-active,
+.todo-list-leave-active {
+  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
+}
+.todo-list-enter-from,
+.todo-list-leave-to {
+  opacity: 0;
+  transform: scale(0.95) translateY(20px);
+}
+.todo-list-leave-active {
+  position: absolute;
+  width: calc(100% - 48px);
 }
 </style>
