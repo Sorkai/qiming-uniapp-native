@@ -69,11 +69,18 @@
             <el-icon><User /></el-icon>
             <span>个人资料</span>
           </el-menu-item>
+          <el-menu-item index="cloud-disk">
+            <el-icon><Folder /></el-icon>
+            <span>学习云盘</span>
+          </el-menu-item>
         </el-menu>
       </div>
       <div class="account-main">
         <div v-if="activeMenu === 'profile'">
           <user-profile />
+        </div>
+        <div v-else-if="activeMenu === 'cloud-disk'">
+          <cloud-disk />
         </div>
         <div v-else-if="activeMenu === 'home'">
           <!-- 上方卡片 -->
@@ -384,6 +391,7 @@ import {
   HomeFilled,
   Reading,
   Document,
+  Folder,
   Edit,
   Clock,
   Calendar,
@@ -397,6 +405,7 @@ import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
 import { UserProfile } from "./components";
+import CloudDisk from "./components/CloudDisk.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
 const router = useRouter();
@@ -505,14 +514,7 @@ const loadCoursePageData = async () => {
     const { code, data, msg } = await getFrontendCourseList({
       pageNum: currentPage.value,
       pageSize: pageSize.value,
-      queryType:
-        courseFilter.value === "all"
-          ? undefined
-          : courseFilter.value === "ongoing"
-            ? 4
-            : courseFilter.value === "completed"
-              ? 3
-              : 0
+      status: courseFilter.value === "all" ? undefined : courseFilter.value
     });
 
     if (code === 200 && data) {
