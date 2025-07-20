@@ -63,6 +63,18 @@ const notificationList = ref([
     align-items: center;
   }
 
+  .el-timeline-item__wrapper {
+    .el-card {
+      transition: all 0.3s ease-in-out;
+      cursor: pointer;
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+
   h4 {
     margin: 0 0 10px;
     font-size: 16px;
