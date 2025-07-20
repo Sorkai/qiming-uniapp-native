@@ -134,7 +134,7 @@
 
       <div class="question-operation-bar">
         <el-button type="primary" @click="addRandomQuestion">
-          <el-icon><Plus /></el-icon>随机添加试题
+          <el-icon><Plus /></el-icon>AI生成新试题
         </el-button>
       </div>
 
@@ -513,12 +513,12 @@ const addRandomQuestion = async () => {
       addType: 1, // 1表示试卷
       sourceId: currentExam.value.examId
     });
-    ElMessage.success("随机添加试题成功");
+    ElMessage.success("AI生成新试题成功");
     // 重新获取试题列表
     await fetchQuestionList();
   } catch (error) {
-    console.error("随机添加试题失败", error);
-    ElMessage.error("随机添加试题失败");
+    console.error("AI生成新试题失败", error);
+    ElMessage.error("AI生成新试题失败");
   }
 };
 
