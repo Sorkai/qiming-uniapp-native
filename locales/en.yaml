@@ -192,6 +192,7 @@ menus:
   pureBoard: Paint Board
   pureMindMap: Mind Map
   cloudDisk: Cloud Disk
+  systemNotification: System Notification
   pureMenuOverflow: Menu Overflow Show Tooltip Text
   pureChildMenuOverflow: Child Menu Overflow Show Tooltip Text
 status:
