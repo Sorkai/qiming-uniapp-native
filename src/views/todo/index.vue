@@ -6,7 +6,7 @@
         <p>共 {{ totalTodos }} 项，已完成 {{ completedTodos }} 项</p>
       </div>
       <div class="header-right">
-        <el-button type="primary" :icon="Plus" @click="openAddDialog" round
+        <el-button type="primary" :icon="Plus" round @click="openAddDialog"
           >添加待办</el-button
         >
       </div>
@@ -52,24 +52,24 @@
             <el-button
               :type="todo.completed ? 'warning' : 'success'"
               :icon="todo.completed ? Refresh : Check"
-              @click="toggleStatus(todo)"
               circle
+              @click="toggleStatus(todo)"
             />
           </el-tooltip>
           <el-tooltip content="编辑" placement="top">
             <el-button
               type="primary"
               :icon="Edit"
-              @click="openEditDialog(todo)"
               circle
+              @click="openEditDialog(todo)"
             />
           </el-tooltip>
           <el-tooltip content="删除" placement="top">
             <el-button
               type="danger"
               :icon="Delete"
-              @click="deleteTodo(todo)"
               circle
+              @click="deleteTodo(todo)"
             />
           </el-tooltip>
         </div>
@@ -89,7 +89,7 @@
       width="500px"
       @close="resetForm"
     >
-      <el-form :model="form" ref="formRef" label-width="80px">
+      <el-form ref="formRef" :model="form" label-width="80px">
         <el-form-item label="标题" prop="title" required>
           <el-input v-model="form.title" placeholder="请输入标题" />
         </el-form-item>
@@ -98,8 +98,8 @@
         </el-form-item>
         <el-form-item label="详细信息" prop="details">
           <el-input
-            type="textarea"
             v-model="form.details"
+            type="textarea"
             placeholder="请输入详细信息"
           />
         </el-form-item>
@@ -157,26 +157,26 @@ const TODO_STORAGE_KEY = "vue-pure-admin-todos";
 const initialTodos: TodoItem[] = [
   {
     id: 1,
-    title: "完成项目报告",
-    publisher: "张三",
-    details: "需要完成Q3季度的项目总结报告，并提交给部门主管。",
-    time: "2025-08-15 10:00:00",
+    title: "完成期末成绩录入",
+    publisher: "王老师",
+    details: "请于本周内在教务系统完成本班学生的期末成绩录入。",
+    time: "2025-07-25 17:00:00",
     completed: false
   },
   {
     id: 2,
-    title: "准备技术分享会",
-    publisher: "李四",
-    details: "准备关于Vue 3 Composition API的技术分享，制作PPT。",
-    time: "2025-08-20 14:30:00",
+    title: "参加教研组会议",
+    publisher: "教研组长",
+    details: "本月28日下午3点在会议室召开教研组例会，请准时参加。",
+    time: "2025-07-28 15:00:00",
     completed: false
   },
   {
     id: 3,
-    title: "修复Bug #1024",
-    publisher: "王五",
-    details: "修复用户反馈的登录页面样式错乱问题。",
-    time: "2025-08-12 18:00:00",
+    title: "整理学生档案",
+    publisher: "教务处",
+    details: "需完成新学期学生档案整理及归档工作。",
+    time: "2025-07-30 16:00:00",
     completed: true
   }
 ];
