@@ -166,7 +166,7 @@
                   class="item header-back"
                   @click="goBack"
                 >
-                  <i data-v-3e66491d="" />
+                  <BackArrowIcon :class="['back-icon', currentTheme]" />
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -312,7 +312,7 @@
                   class="item header-back"
                   @click="goBack"
                 >
-                  <i data-v-3e66491d="" />
+                  <BackArrowIcon :class="['back-icon', currentTheme]" />
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -488,7 +488,7 @@
                     </div>
                     <div class="wrong-question-info">
                       <div class="wrong-question-title">{{ item.title }}</div>
-                      <div class="wrong-question-meta"></div>
+                      <div class="wrong-question-meta" />
                     </div>
                     <div class="wrong-question-action">
                       <el-button
@@ -531,7 +531,7 @@
                   class="item header-back"
                   @click="goBack"
                 >
-                  <i data-v-3e66491d="" />
+                  <BackArrowIcon :class="['back-icon', currentTheme]" />
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -2354,6 +2354,7 @@ import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
 import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-icon.svg?component";
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 import * as echarts from "echarts";
+import BackArrowIcon from "@/components/icons/BackArrowIcon.vue";
 import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
 import logo from "@/assets/kecheng.jpg"; // 导入logo图片
 import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal-vue.png";
@@ -3534,6 +3535,24 @@ onMounted(async () => {
 </style>
 
 <style scoped>
+.back-icon {
+  width: 40px;
+  height: 40px;
+  transition: color 0.3s ease;
+  cursor: pointer;
+  padding-right: 15px;
+}
+
+/* 浅色模式下的颜色 */
+.back-icon.light {
+  color: #604ffd;
+}
+
+/* 深色模式下的颜色 */
+.back-icon.dark {
+  color: #ffffff;
+}
+
 .header-back > i {
   margin-left: -1.5vw;
 }
