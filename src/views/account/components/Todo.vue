@@ -93,8 +93,8 @@
         <el-form-item label="标题" prop="title" required>
           <el-input v-model="form.title" placeholder="请输入标题" />
         </el-form-item>
-        <el-form-item label="发布者" prop="publisher" required>
-          <el-input v-model="form.publisher" placeholder="请输入发布者" />
+        <el-form-item label="关系人" prop="publisher" required>
+          <el-input v-model="form.publisher" placeholder="请输入关系人" />
         </el-form-item>
         <el-form-item label="详细信息" prop="details">
           <el-input
@@ -153,30 +153,29 @@ const form = ref<TodoItem>({ ...initialFormState });
 
 const TODO_STORAGE_KEY = "vue-pure-admin-todos";
 
-// 初始硬编码数据
 const initialTodos: TodoItem[] = [
   {
     id: 1,
-    title: "完成项目报告",
-    publisher: "张三",
-    details: "需要完成Q3季度的项目总结报告，并提交给部门主管。",
-    time: "2025-08-15 10:00:00",
+    title: "完成高等数学作业",
+    publisher: "王小明",
+    details: "完成第5章习题并上传至学习平台。",
+    time: "2025-07-15 10:00:00",
     completed: false
   },
   {
     id: 2,
-    title: "准备技术分享会",
-    publisher: "李四",
-    details: "准备关于Vue 3 Composition API的技术分享，制作PPT。",
-    time: "2025-08-20 14:30:00",
+    title: "准备英语口语考试",
+    publisher: "李晓红",
+    details: "整理考试重点，练习自我介绍和常见问答。",
+    time: "2025-07-20 14:30:00",
     completed: false
   },
   {
     id: 3,
-    title: "修复Bug #1024",
-    publisher: "王五",
-    details: "修复用户反馈的登录页面样式错乱问题。",
-    time: "2025-08-12 18:00:00",
+    title: "小组项目讨论",
+    publisher: "张伟",
+    details: "与小组成员线上讨论数据库课程设计方案。",
+    time: "2025-07-12 18:00:00",
     completed: true
   }
 ];
