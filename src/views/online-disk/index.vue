@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>教学云盘</span>
+          <span>在线云盘</span>
         </div>
       </template>
 
@@ -85,7 +85,7 @@ import {
 } from "@element-plus/icons-vue";
 
 defineOptions({
-  name: "CloudDisk"
+  name: "OnlineDisk"
 });
 
 const fileList = ref([

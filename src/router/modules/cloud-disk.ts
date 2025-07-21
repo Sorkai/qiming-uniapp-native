@@ -10,6 +10,6 @@ export default {
     icon: () => h(FolderClose),
     title: $t("menus.cloudDisk"),
     rank: 10,
-    roles: ["admin", "teacher"]
+    roles: ["teacher"]
   }
 } as RouteConfigsTable;
