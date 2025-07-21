@@ -1,4 +1,4 @@
-  import { $t } from "@/plugins/i18n";
+import { $t } from "@/plugins/i18n";
 import { h } from "vue";
 import Message from "@icon-park/vue-next/es/icons/Message";
 
