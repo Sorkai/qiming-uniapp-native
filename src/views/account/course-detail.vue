@@ -3415,14 +3415,15 @@ const fetchCourseStudyEffect = async () => {
 
       // Initialize collapse states for new data
       if (response.data.chapterList) {
-        response.data.chapterList.forEach(chapter => {
-          chapterCollapseStates.set(chapter.chapterId, false); // All chapters collapsed by default
+        response.data.chapterList.forEach((chapter, idx) => {
+          // 默认第1章展开
+          chapterCollapseStates.set(chapter.chapterId, idx === 0);
 
-          // Initialize subsections
+          // 默认第1章的重点展开
           if (chapter.keyPointArray)
             subsectionCollapseStates.set(
               `${chapter.chapterId}-keyPoint`,
-              false
+              idx === 0
             );
           if (chapter.difficultPointArray)
             subsectionCollapseStates.set(
