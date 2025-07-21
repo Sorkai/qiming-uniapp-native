@@ -2356,6 +2356,9 @@ import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 import * as echarts from "echarts";
 import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
 import logo from "@/assets/kecheng.jpg"; // 导入logo图片
+import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal-vue.png";
+import resourceTabActive from "@/assets/course-detail-images/resource-tab-active-vue.png";
+import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 
 const router = useRouter();
 const route = useRoute();
@@ -2405,10 +2408,7 @@ const selectedWrongQuestion = ref(null); // 存储当前选中的错题
 
 // 获取本地存储的用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
-const userAvatar = ref(
-  (userInfo as any)?.avatar ||
-    "@/assets/course-detail-images/avatar-default.png"
-);
+const userAvatar = ref((userInfo as any)?.avatar || avatarDefault);
 const userNickname = ref(
   (userInfo as any)?.nickname || (userInfo as any)?.username || "用户"
 );
@@ -2425,9 +2425,7 @@ const isTyping = ref(false);
 const cancelStreamRequest = ref<() => void | null>(null);
 
 const describeImgSrc = computed(() =>
-  currentTheme.value === "dark"
-    ? "@/assets/course-detail-images/resource-tab-normal-vue.png"
-    : "@/assets/course-detail-images/resource-tab-active-vue.png"
+  currentTheme.value === "dark" ? resourceTabNormal : resourceTabActive
 );
 
 // 当前播放视频的标题
