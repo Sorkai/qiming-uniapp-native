@@ -18,7 +18,7 @@ defineOptions({
 
 const { isDark } = useDark();
 const userStore = useUserStoreHook();
-const username = ref(userStore.username);
+const nickname = ref(userStore.nickname || userStore.username);
 
 // 判断当前用户是否是管理员
 const isAdminUser = ref(isAdmin());
@@ -30,8 +30,8 @@ const isAdminUser = ref(isAdmin());
     <el-card shadow="never" class="welcome-card" :body-style="{ padding: 0 }">
       <div class="welcome-banner">
         <div class="welcome-text">
-          <h2 class="welcome-title">欢迎回来, {{ username }}!</h2>
-          <p class="welcome-subtitle">开始新的一天，继续你的学习旅程吧。</p>
+          <h2 class="welcome-title">欢迎回来, {{ nickname }}!</h2>
+          <p class="welcome-subtitle">开始新的一天，继续你的教学旅程吧。</p>
         </div>
       </div>
     </el-card>

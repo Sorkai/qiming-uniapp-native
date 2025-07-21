@@ -221,7 +221,7 @@ onMounted(() => {
         <div v-if="optimizeSuggestions.length" class="optimize-suggestions mt-6">
           <h3 class="suggestion-main-title">
             <re-icon icon="ep:opportunity" class="mr-2" />
-            教学优化建议
+            AI 教学优化建议
           </h3>
           <el-row :gutter="16">
             <el-col
