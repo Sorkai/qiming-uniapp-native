@@ -191,6 +191,7 @@ menus:
   pureVxeTable: Virtual Usage
   pureBoard: Paint Board
   pureMindMap: Mind Map
+  cloudDisk: Cloud Disk
   pureMenuOverflow: Menu Overflow Show Tooltip Text
   pureChildMenuOverflow: Child Menu Overflow Show Tooltip Text
 status:
