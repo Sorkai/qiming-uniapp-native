@@ -3450,8 +3450,9 @@ const fetchCourseStudyEffect = async () => {
 const fetchWrongQuestionList = async () => {
   try {
     const { code, data, msg } = await getUserWrongQuestionList({
+      courseId: courseId.value,
       page: 1,
-      pageSize: 10 // 可以根据需要调整每页显示数量
+      pageSize: 100 // 可以根据需要调整每页显示数量
     });
     if (code === 200 && data && data.list) {
       wrongQuestionList.value = data.list;
