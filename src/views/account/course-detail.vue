@@ -913,7 +913,7 @@
                             <div data-v-0762fd62="" class="photo">
                               <img
                                 data-v-0762fd62=""
-                                src="@/assets/aipeople.jpg"
+                                :src="aiPeopleAvatar"
                                 alt=""
                               />
                             </div>
@@ -1005,7 +1005,7 @@
                                       >
                                         <img
                                           data-v-0762fd62=""
-                                          src="@/assets/aipeople.jpg"
+                                          :src="aiPeopleAvatar"
                                           alt=""
                                           style="transform: scaleX(-1)"
                                         />
@@ -2013,7 +2013,7 @@
                             :src="
                               message.role === 'user'
                                 ? userAvatar
-                                : '@/assets/course-detail-images/avatar-default.png'
+                                : aiPeopleAvatar
                             "
                             alt="Avatar"
                           />
@@ -2360,6 +2360,7 @@ import logo from "@/assets/kecheng.jpg"; // 导入logo图片
 import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal-vue.png";
 import resourceTabActive from "@/assets/course-detail-images/resource-tab-active-vue.png";
 import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
+import aiPeopleAvatar from "@/assets/aipeople.jpg"; // 引入aipeople.jpg
 
 const router = useRouter();
 const route = useRoute();
@@ -2416,6 +2417,7 @@ const userNickname = ref(
 
 // 添加AI聊天相关状态
 const conversationId = ref("");
+const previousChapterId = ref<number | null>(null); // 新增状态
 const chatMessages = ref<
   Array<{ role: string; content: string; timestamp: string }>
 >([]);
@@ -2923,6 +2925,7 @@ const initChat = () => {
     conversationId.value =
       Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
+    previousChapterId.value = currentChapterId; // 初始化时也设置previousChapterId
     // 对于新对话不需要加载历史
   }
 };
@@ -2960,7 +2963,7 @@ const sendMessage = async () => {
   const userMessage = currentMessage.value.trim();
 
   // 获取当前章节ID
-  let currentChapterId = null;
+  let currentChapterId: number | null = null; // 明确类型
   if (
     currentHour.value &&
     courseDetail.value &&
@@ -2976,6 +2979,22 @@ const sendMessage = async () => {
       }
     }
   }
+
+  // 如果章节ID发生变化，重新生成会话ID
+  if (
+    currentChapterId !== null &&
+    previousChapterId.value !== null &&
+    currentChapterId !== previousChapterId.value
+  ) {
+    conversationId.value =
+      Date.now().toString() + Math.random().toString(36).substring(2);
+    localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
+    chatMessages.value = []; // 清空之前的聊天记录
+    console.log(`章节ID变化，生成新的会话ID: ${conversationId.value}`);
+  }
+
+  // 更新previousChapterId
+  previousChapterId.value = currentChapterId;
 
   // 添加用户消息到聊天记录
   chatMessages.value.push({
