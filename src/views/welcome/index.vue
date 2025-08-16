@@ -2,19 +2,23 @@
 import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { useDark } from "./utils";
-import { 
+import {
   TeacherStudentUsage,
-  WeekUsage, 
+  WeekUsage,
   CourseStatistics,
   EfficientIndex
 } from "./components/charts";
 import { isAdmin } from "@/utils/auth";
+import { useUserStoreHook } from "@/store/modules/user";
+import welcomeBanner from "@/assets/kecheng.jpg";
 
 defineOptions({
   name: "Welcome"
 });
 
 const { isDark } = useDark();
+const userStore = useUserStoreHook();
+const nickname = ref(userStore.nickname || userStore.username);
 
 // 判断当前用户是否是管理员
 const isAdminUser = ref(isAdmin());
@@ -22,8 +26,18 @@ const isAdminUser = ref(isAdmin());
 
 <template>
   <div>
+    <!-- Welcome Banner -->
+    <el-card shadow="never" class="welcome-card" :body-style="{ padding: 0 }">
+      <div class="welcome-banner">
+        <div class="welcome-text">
+          <h2 class="welcome-title">欢迎回来, {{ nickname }}!</h2>
+          <p class="welcome-subtitle">开始新的一天，继续你的教学旅程吧。</p>
+        </div>
+      </div>
+    </el-card>
+
     <!-- 统计API图表部分 -->
-    <el-row :gutter="24" justify="space-around">
+    <el-row :gutter="24" justify="space-around" class="mt-4">
       <!-- 只有管理员才能看到这两个图表 -->
       <template v-if="isAdminUser">
       <re-col
@@ -46,12 +60,19 @@ const isAdminUser = ref(isAdmin());
         }"
       >
         <el-card shadow="never">
-            <template #header>
-          <div class="flex justify-between">
-                <span class="text-md font-medium">最近7天使用情况</span>
-          </div>
-            </template>
-            <TeacherStudentUsage />
+          <template #header>
+            <div class="flex items-center justify-between">
+              <span class="text-md font-medium">
+                <re-icon
+                  icon="ep:data-line"
+                  class="mr-2"
+                  style="vertical-align: middle"
+                />
+                最近7天使用情况
+              </span>
+            </div>
+          </template>
+          <TeacherStudentUsage />
         </el-card>
       </re-col>
 
@@ -76,12 +97,19 @@ const isAdminUser = ref(isAdmin());
       >
           <el-card shadow="never">
             <template #header>
-          <div class="flex justify-between">
-                <span class="text-md font-medium">一周内使用总情况</span>
-          </div>
+              <div class="flex items-center justify-between">
+                <span class="text-md font-medium">
+                  <re-icon
+                    icon="ep:data-analysis"
+                    class="mr-2"
+                    style="vertical-align: middle"
+                  />
+                  一周内使用总情况
+                </span>
+              </div>
             </template>
             <WeekUsage />
-        </el-card>
+          </el-card>
       </re-col>
       </template>
       
@@ -107,8 +135,15 @@ const isAdminUser = ref(isAdmin());
       >
         <el-card shadow="never">
           <template #header>
-            <div class="flex justify-between">
-              <span class="text-md font-medium">教学效率指数</span>
+            <div class="flex items-center justify-between">
+              <span class="text-md font-medium">
+                <re-icon
+                  icon="ep:trend-charts"
+                  class="mr-2"
+                  style="vertical-align: middle"
+                />
+                教学效率指数
+              </span>
             </div>
           </template>
           <EfficientIndex />
@@ -137,9 +172,16 @@ const isAdminUser = ref(isAdmin());
       >
         <el-card shadow="never">
           <template #header>
-          <div class="flex justify-between">
-              <span class="text-md font-medium">课程统计</span>
-          </div>
+            <div class="flex items-center justify-between">
+              <span class="text-md font-medium">
+                <re-icon
+                  icon="ep:reading"
+                  class="mr-2"
+                  style="vertical-align: middle"
+                />
+                课程统计
+              </span>
+            </div>
           </template>
           <CourseStatistics />
         </el-card>
@@ -149,11 +191,64 @@ const isAdminUser = ref(isAdmin());
 </template>
 
 <style lang="scss" scoped>
+.welcome-card {
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.welcome-banner {
+  height: 200px;
+  background-image: url("@/assets/kecheng.jpg");
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  color: #fff;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+  }
+}
+
+.welcome-text {
+  position: relative;
+  z-index: 2;
+}
+
+.welcome-title {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-subtitle {
+  font-size: 1.2rem;
+  margin-top: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
 :deep(.el-card) {
   transition: all 0.3s;
+  border-radius: 8px;
   &:hover {
     transform: translateY(-4px);
     box-shadow: var(--el-box-shadow-light);
   }
+}
+
+.mt-4 {
+  margin-top: 1rem;
 }
 </style>

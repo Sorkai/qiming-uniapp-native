@@ -2,7 +2,13 @@
 import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { getEfficientIndex } from "@/api/statistics";
-import { ElTooltip, ElCheckbox, ElCheckboxGroup } from "element-plus";
+import {
+  ElTooltip,
+  ElCheckbox,
+  ElCheckboxGroup,
+  ElDialog,
+  ElButton
+} from "element-plus";
 
 defineOptions({
   name: "EfficientIndex"
@@ -166,10 +172,16 @@ const optimizeSuggestions = computed(() => {
     }));
 });
 
-// 切换显示优化建议面板
-const toggleOptimizePanel = () => {
-  showOptimizePanel.value = !showOptimizePanel.value;
+const dialogVisible = ref(false);
+const selectedSuggestion = ref(null);
+
+const showDetails = item => {
+  selectedSuggestion.value = item;
+  dialogVisible.value = true;
 };
+
+// 默认显示优化建议
+showOptimizePanel.value = true;
 
 watch(
   () => selectedCourses.value,
@@ -205,37 +217,56 @@ onMounted(() => {
         
         <div ref="chartRef" style="width: 100%; height: 350px"></div>
         
-        <!-- 优化建议按钮 -->
-        <div class="optimize-toggle" v-if="optimizeSuggestions.length">
-          <div class="optimize-header">
-            <el-button
-              type="primary"
-              link
-              :icon="showOptimizePanel ? 'CaretTop' : 'CaretBottom'"
-              @click="toggleOptimizePanel"
-            >
-              {{ showOptimizePanel ? '收起优化建议' : '查看优化建议' }}
-            </el-button>
-          </div>
-        </div>
-        
         <!-- 优化建议面板 -->
-        <div v-if="showOptimizePanel && optimizeSuggestions.length" class="optimize-suggestions">
-          <el-collapse accordion>
-            <el-collapse-item 
-              v-for="(item, index) in optimizeSuggestions" 
-              :key="index" 
-              :name="index"
+        <div v-if="optimizeSuggestions.length" class="optimize-suggestions mt-6">
+          <h3 class="suggestion-main-title">
+            <re-icon icon="ep:opportunity" class="mr-2" />
+            AI 教学优化建议
+          </h3>
+          <el-row :gutter="16">
+            <el-col
+              v-for="(item, index) in optimizeSuggestions"
+              :key="index"
+              :span="8"
             >
-              <template #title>
-                <span class="optimize-title">{{ item.courseName }} 的优化建议</span>
-              </template>
-              <div class="optimize-content">
-                {{ item.optimizeDirection }}
-              </div>
-            </el-collapse-item>
-          </el-collapse>
+              <el-card class="suggestion-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <span>{{ item.courseName }}</span>
+                  </div>
+                </template>
+                <div class="suggestion-content">
+                  <p>{{ item.optimizeDirection }}</p>
+                </div>
+                <div class="card-footer">
+                  <el-button type="primary" link @click="showDetails(item)"
+                    >查看详情</el-button
+                  >
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
         </div>
+
+        <!-- 优化建议详情弹窗 -->
+        <el-dialog
+          v-model="dialogVisible"
+          :title="selectedSuggestion?.courseName + ' 的优化建议'"
+          width="40%"
+          center
+          append-to-body
+        >
+          <div class="dialog-content">
+            <p>{{ selectedSuggestion?.optimizeDirection }}</p>
+          </div>
+          <template #footer>
+            <span class="dialog-footer">
+              <el-button type="primary" @click="dialogVisible = false"
+                >我知道了</el-button
+              >
+            </span>
+          </template>
+        </el-dialog>
       </template>
     </el-skeleton>
   </div>
@@ -251,39 +282,46 @@ onMounted(() => {
   font-size: 12px;
 }
 
-.optimize-toggle {
-  margin: 15px 0;
-  
-  .optimize-header {
-    text-align: left;
-    border-bottom: 1px solid #ebeef5;
-    padding-bottom: 8px;
+.optimize-suggestions {
+  .suggestion-main-title {
+    font-size: 18px;
+    font-weight: 600;
     margin-bottom: 16px;
-    
-    :deep(.el-button) {
-      padding-left: 0;
+    color: var(--el-text-color-primary);
+  }
+
+  .suggestion-card {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 16px;
+    transition: all 0.3s;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-4px);
+    }
+
+    .card-header {
+      font-weight: 600;
+      color: var(--el-color-primary);
+    }
+
+    .suggestion-content {
+      color: #606266;
+      min-height: 60px;
+    }
+
+    .card-footer {
+      text-align: right;
+      margin-top: 10px;
     }
   }
 }
 
-.optimize-suggestions {
-  margin-top: 10px;
-  
-  :deep(.el-collapse-item__header) {
-    font-size: 14px;
-    font-weight: 500;
-  }
-  
-  .optimize-title {
-    font-weight: 500;
-    color: var(--el-color-primary);
-  }
-  
-  .optimize-content {
-    padding: 10px;
-    line-height: 1.6;
-    white-space: pre-line; /* 保留换行符 */
-    word-break: break-word; /* 确保长文本自动换行 */
-  }
+.dialog-content {
+  padding: 20px;
+  line-height: 1.8;
+  font-size: 16px;
+  white-space: pre-wrap;
 }
-</style> 
+</style>

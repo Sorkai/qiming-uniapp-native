@@ -41,7 +41,7 @@
             :class="{ active: activeMenu === 'mastery' }"
           >
             <MasteryIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">掌握度</div>
+            <div data-v-1139a0f7="" class="side-name">知识点</div>
           </div>
         </div>
         <div data-v-8289e326="" class="line" />
@@ -166,7 +166,7 @@
                   class="item header-back"
                   @click="goBack"
                 >
-                  <i data-v-3e66491d="" />
+                  <BackArrowIcon :class="['back-icon', currentTheme]" />
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -312,7 +312,7 @@
                   class="item header-back"
                   @click="goBack"
                 >
-                  <i data-v-3e66491d="" />
+                  <BackArrowIcon :class="['back-icon', currentTheme]" />
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -488,7 +488,7 @@
                     </div>
                     <div class="wrong-question-info">
                       <div class="wrong-question-title">{{ item.title }}</div>
-                      <div class="wrong-question-meta"></div>
+                      <div class="wrong-question-meta" />
                     </div>
                     <div class="wrong-question-action">
                       <el-button
@@ -531,7 +531,7 @@
                   class="item header-back"
                   @click="goBack"
                 >
-                  <i data-v-3e66491d="" />
+                  <BackArrowIcon :class="['back-icon', currentTheme]" />
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -913,7 +913,7 @@
                             <div data-v-0762fd62="" class="photo">
                               <img
                                 data-v-0762fd62=""
-                                src="@/assets/aipeople.jpg"
+                                :src="aiPeopleAvatar"
                                 alt=""
                               />
                             </div>
@@ -1005,7 +1005,7 @@
                                       >
                                         <img
                                           data-v-0762fd62=""
-                                          src="@/assets/aipeople.jpg"
+                                          :src="aiPeopleAvatar"
                                           alt=""
                                           style="transform: scaleX(-1)"
                                         />
@@ -1508,7 +1508,7 @@
           </div>
         </div>
 
-        <!-- 掌握度 -->
+        <!-- 知识点 -->
         <div
           v-show="activeMenu == 'mastery'"
           data-v-487e2460=""
@@ -1806,265 +1806,6 @@
                   <span data-v-b3b486ce="" class="score" />
                 </div>
               </div>
-              <div data-v-b3b486ce="" class="mastery-content">
-                <h1 data-v-b3b486ce="" class="mastery-name">
-                  <svg
-                    data-v-b3b486ce=""
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewbox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      data-v-b3b486ce=""
-                      fill-rule="evenodd"
-                      clip-rule="evenodd"
-                      d="M11.0317 3.57909C10.746 2.80697 9.65396 2.80697 9.36825 3.57909L7.94617 7.4222C7.85634 7.66495 7.66495 7.85634 7.4222 7.94617L3.57909 9.36825C2.80697 9.65396 2.80697 10.746 3.57909 11.0318L7.4222 12.4538C7.66495 12.5437 7.85634 12.735 7.94617 12.9778L9.36825 16.8209C9.65396 17.593 10.746 17.593 11.0318 16.8209L12.4538 12.9778C12.5437 12.735 12.735 12.5437 12.9778 12.4538L16.8209 11.0317C17.593 10.746 17.593 9.65396 16.8209 9.36825L12.9778 7.94617C12.735 7.85634 12.5437 7.66495 12.4538 7.4222L11.0317 3.57909ZM17.8159 14.0895C17.673 13.7035 17.127 13.7035 16.9841 14.0895L16.2731 16.0111C16.2282 16.1325 16.1325 16.2282 16.0111 16.2731L14.0895 16.9841C13.7035 17.127 13.7035 17.673 14.0895 17.8159L16.0111 18.5269C16.1325 18.5718 16.2282 18.6675 16.2731 18.7889L16.9841 20.7105C17.127 21.0965 17.673 21.0965 17.8159 20.7105L18.5269 18.7889C18.5718 18.6675 18.6675 18.5718 18.7889 18.5269L20.7105 17.8159C21.0965 17.673 21.0965 17.127 20.7105 16.9841L18.7889 16.2731C18.6675 16.2282 18.5718 16.1325 18.5269 16.0111L17.8159 14.0895Z"
-                      :fill="currentTheme === 'dark' ? '#fff' : '#604FFD'"
-                    /></svg
-                  >完整准确领会总体国家安全观
-                </h1>
-                <ul data-v-b3b486ce="" class="chunk-list">
-                  <li data-v-b3b486ce="" class="item-box green">
-                    <span data-v-b3b486ce=""
-                      ><span class="el-popover__reference-wrapper"
-                        ><span
-                          data-v-b3b486ce=""
-                          class="item-box-name el-popover__reference"
-                          aria-describedby="el-popover-8164"
-                          tabindex="0"
-                          ><span data-v-b3b486ce="" class="z-line-2"
-                            >中国共产党国家安全思想的演进</span
-                          ></span
-                        ></span
-                      ></span
-                    >
-                  </li>
-                  <li data-v-b3b486ce="" class="item-box green">
-                    <span data-v-b3b486ce=""
-                      ><span class="el-popover__reference-wrapper"
-                        ><span
-                          data-v-b3b486ce=""
-                          class="item-box-name el-popover__reference"
-                          aria-describedby="el-popover-6319"
-                          tabindex="0"
-                          ><span data-v-b3b486ce="" class="z-line-2"
-                            >总体国家安全观的形成和发展</span
-                          ></span
-                        ></span
-                      ></span
-                    >
-                  </li>
-                  <li data-v-b3b486ce="" class="item-box green">
-                    <span data-v-b3b486ce=""
-                      ><span class="el-popover__reference-wrapper"
-                        ><span
-                          data-v-b3b486ce=""
-                          class="item-box-name el-popover__reference"
-                          aria-describedby="el-popover-3385"
-                          tabindex="0"
-                          ><span data-v-b3b486ce="" class="z-line-2"
-                            >创造性提出总体国家安全观的重大意义</span
-                          ></span
-                        ></span
-                      ></span
-                    >
-                  </li>
-                  <li data-v-b3b486ce="" class="item-box green">
-                    <span data-v-b3b486ce=""
-                      ><span class="el-popover__reference-wrapper"
-                        ><span
-                          data-v-b3b486ce=""
-                          class="item-box-name el-popover__reference"
-                          aria-describedby="el-popover-4253"
-                          tabindex="0"
-                          ><span data-v-b3b486ce="" class="z-line-2"
-                            >总体国家安全观的"十个坚持"</span
-                          ></span
-                        ></span
-                      ></span
-                    >
-                  </li>
-                  <li data-v-b3b486ce="" class="item-box green">
-                    <span data-v-b3b486ce="">
-                      <div
-                        id="el-popover-2183"
-                        role="tooltip"
-                        aria-hidden="true"
-                        class="el-popover el-popper mastery-box-custom-popover"
-                        tabindex="0"
-                        style="display: none"
-                      >
-                        <!---->
-                        <div data-v-b3b486ce="" class="custom-content">
-                          <strong data-v-b3b486ce="" class="name"
-                            >总体国家安全观的"五个统筹"</strong
-                          >
-                          <div data-v-b3b486ce="" class="text">
-                            掌握度：
-                            <span data-v-b3b486ce="">100%</span>
-                            <button
-                              data-v-b3b486ce=""
-                              type="button"
-                              class="el-button btn el-button--primary"
-                            >
-                              <!---->
-                              <!----><span
-                                ><span data-v-b3b486ce="">提升掌握度</span>
-                                <svg
-                                  data-v-b3b486ce=""
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewbox="0 0 24 24"
-                                  fill="none"
-                                >
-                                  <path
-                                    data-v-b3b486ce=""
-                                    fill-rule="evenodd"
-                                    clip-rule="evenodd"
-                                    d="M17.3759 18.2505C17.943 18.2505 18.4028 17.7908 18.4028 17.2237L18.4028 7.05826C18.4028 6.49114 17.943 6.0314 17.3759 6.0314L7.2105 6.0314C6.64338 6.0314 6.18364 6.49114 6.18364 7.05826C6.18364 7.62538 6.64338 8.08512 7.2105 8.08512L14.8968 8.08512L6.84745 16.1345C6.44644 16.5355 6.44644 17.1857 6.84745 17.5867C7.24846 17.9877 7.89864 17.9877 8.29965 17.5867L16.349 9.53732L16.349 17.2237C16.349 17.7908 16.8088 18.2505 17.3759 18.2505Z"
-                                    fill="white"
-                                  /></svg
-                              ></span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <span class="el-popover__reference-wrapper"
-                        ><span
-                          data-v-b3b486ce=""
-                          class="item-box-name el-popover__reference"
-                          aria-describedby="el-popover-2183"
-                          tabindex="0"
-                          ><span data-v-b3b486ce="" class="z-line-2"
-                            >总体国家安全观的"五个统筹"</span
-                          ></span
-                        ></span
-                      ></span
-                    >
-                  </li>
-                  <li data-v-b3b486ce="" class="item-box green">
-                    <span data-v-b3b486ce="">
-                      <div
-                        id="el-popover-8271"
-                        role="tooltip"
-                        aria-hidden="true"
-                        class="el-popover el-popper mastery-box-custom-popover"
-                        tabindex="0"
-                        style="display: none"
-                      >
-                        <!---->
-                        <div data-v-b3b486ce="" class="custom-content">
-                          <strong data-v-b3b486ce="" class="name"
-                            >总体国家安全观涵盖的重点领域</strong
-                          >
-                          <div data-v-b3b486ce="" class="text">
-                            掌握度：
-                            <span data-v-b3b486ce="">80%</span>
-                            <button
-                              data-v-b3b486ce=""
-                              type="button"
-                              class="el-button btn el-button--primary"
-                            >
-                              <!---->
-                              <!----><span
-                                ><span data-v-b3b486ce="">提升掌握度</span>
-                                <svg
-                                  data-v-b3b486ce=""
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewbox="0 0 24 24"
-                                  fill="none"
-                                >
-                                  <path
-                                    data-v-b3b486ce=""
-                                    fill-rule="evenodd"
-                                    clip-rule="evenodd"
-                                    d="M17.3759 18.2505C17.943 18.2505 18.4028 17.7908 18.4028 17.2237L18.4028 7.05826C18.4028 6.49114 17.943 6.0314 17.3759 6.0314L7.2105 6.0314C6.64338 6.0314 6.18364 6.49114 6.18364 7.05826C6.18364 7.62538 6.64338 8.08512 7.2105 8.08512L14.8968 8.08512L6.84745 16.1345C6.44644 16.5355 6.44644 17.1857 6.84745 17.5867C7.24846 17.9877 7.89864 17.9877 8.29965 17.5867L16.349 9.53732L16.349 17.2237C16.349 17.7908 16.8088 18.2505 17.3759 18.2505Z"
-                                    fill="white"
-                                  /></svg
-                              ></span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <span class="el-popover__reference-wrapper"
-                        ><span
-                          data-v-b3b486ce=""
-                          class="item-box-name el-popover__reference"
-                          aria-describedby="el-popover-8271"
-                          tabindex="0"
-                          ><span data-v-b3b486ce="" class="z-line-2"
-                            >总体国家安全观涵盖的重点领域</span
-                          ></span
-                        ></span
-                      ></span
-                    >
-                  </li>
-                  <li data-v-b3b486ce="" class="item-box green">
-                    <span data-v-b3b486ce="">
-                      <div
-                        id="el-popover-1237"
-                        role="tooltip"
-                        aria-hidden="true"
-                        class="el-popover el-popper mastery-box-custom-popover"
-                        tabindex="0"
-                        style="display: none"
-                      >
-                        <!---->
-                        <div data-v-b3b486ce="" class="custom-content">
-                          <strong data-v-b3b486ce="" class="name"
-                            >总体国家安全观的基本特征</strong
-                          >
-                          <div data-v-b3b486ce="" class="text">
-                            掌握度：
-                            <span data-v-b3b486ce="">80%</span>
-                            <button
-                              data-v-b3b486ce=""
-                              type="button"
-                              class="el-button btn el-button--primary"
-                            >
-                              <!---->
-                              <!----><span
-                                ><span data-v-b3b486ce="">提升掌握度</span>
-                                <svg
-                                  data-v-b3b486ce=""
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewbox="0 0 24 24"
-                                  fill="none"
-                                >
-                                  <path
-                                    data-v-b3b486ce=""
-                                    fill-rule="evenodd"
-                                    clip-rule="evenodd"
-                                    d="M17.3759 18.2505C17.943 18.2505 18.4028 17.7908 18.4028 17.2237L18.4028 7.05826C18.4028 6.49114 17.943 6.0314 17.3759 6.0314L7.2105 6.0314C6.64338 6.0314 6.18364 6.49114 6.18364 7.05826C6.18364 7.62538 6.64338 8.08512 7.2105 8.08512L14.8968 8.08512L6.84745 16.1345C6.44644 16.5355 6.44644 17.1857 6.84745 17.5867C7.24846 17.9877 7.89864 17.9877 8.29965 17.5867L16.349 9.53732L16.349 17.2237C16.349 17.7908 16.8088 18.2505 17.3759 18.2505Z"
-                                    fill="white"
-                                  /></svg
-                              ></span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <span class="el-popover__reference-wrapper"
-                        ><span
-                          data-v-b3b486ce=""
-                          class="item-box-name el-popover__reference"
-                          aria-describedby="el-popover-1237"
-                          tabindex="0"
-                          ><span data-v-b3b486ce="" class="z-line-2"
-                            >总体国家安全观的基本特征</span
-                          ></span
-                        ></span
-                      ></span
-                    >
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
@@ -2272,7 +2013,7 @@
                             :src="
                               message.role === 'user'
                                 ? userAvatar
-                                : '@/assets/course-detail-images/avatar-default.png'
+                                : aiPeopleAvatar
                             "
                             alt="Avatar"
                           />
@@ -2613,8 +2354,13 @@ import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
 import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-icon.svg?component";
 import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 import * as echarts from "echarts";
+import BackArrowIcon from "@/components/icons/BackArrowIcon.vue";
 import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
 import logo from "@/assets/kecheng.jpg"; // 导入logo图片
+import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal-vue.png";
+import resourceTabActive from "@/assets/course-detail-images/resource-tab-active-vue.png";
+import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
+import aiPeopleAvatar from "@/assets/aipeople.jpg"; // 引入aipeople.jpg
 
 const router = useRouter();
 const route = useRoute();
@@ -2664,16 +2410,14 @@ const selectedWrongQuestion = ref(null); // 存储当前选中的错题
 
 // 获取本地存储的用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
-const userAvatar = ref(
-  (userInfo as any)?.avatar ||
-    "@/assets/course-detail-images/avatar-default.png"
-);
+const userAvatar = ref((userInfo as any)?.avatar || avatarDefault);
 const userNickname = ref(
   (userInfo as any)?.nickname || (userInfo as any)?.username || "用户"
 );
 
 // 添加AI聊天相关状态
 const conversationId = ref("");
+const previousChapterId = ref<number | null>(null); // 新增状态
 const chatMessages = ref<
   Array<{ role: string; content: string; timestamp: string }>
 >([]);
@@ -2684,9 +2428,7 @@ const isTyping = ref(false);
 const cancelStreamRequest = ref<() => void | null>(null);
 
 const describeImgSrc = computed(() =>
-  currentTheme.value === "dark"
-    ? "@/assets/course-detail-images/resource-tab-normal-vue.png"
-    : "@/assets/course-detail-images/resource-tab-active-vue.png"
+  currentTheme.value === "dark" ? resourceTabNormal : resourceTabActive
 );
 
 // 当前播放视频的标题
@@ -2977,7 +2719,7 @@ function toggleTheme() {
 
   currentTheme.value = newTheme;
 
-  // 如果在掌握度页面，重新初始化图表以适应新主题
+  // 如果在知识点页面，重新初始化图表以适应新主题
   if (activeMenu.value === "mastery" && masteryChart) {
     // 销毁旧图表
     masteryChart.dispose();
@@ -3062,7 +2804,7 @@ function handleMenuClick(menuName: string) {
     }
   });
 
-  // 如果切换到掌握度页面，初始化图表
+  // 如果切换到知识点页面，初始化图表
   if (menuName === "mastery") {
     nextTick(() => {
       // 检查图表是否已经初始化
@@ -3183,6 +2925,7 @@ const initChat = () => {
     conversationId.value =
       Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
+    previousChapterId.value = currentChapterId; // 初始化时也设置previousChapterId
     // 对于新对话不需要加载历史
   }
 };
@@ -3220,7 +2963,7 @@ const sendMessage = async () => {
   const userMessage = currentMessage.value.trim();
 
   // 获取当前章节ID
-  let currentChapterId = null;
+  let currentChapterId: number | null = null; // 明确类型
   if (
     currentHour.value &&
     courseDetail.value &&
@@ -3236,6 +2979,22 @@ const sendMessage = async () => {
       }
     }
   }
+
+  // 如果章节ID发生变化，重新生成会话ID
+  if (
+    currentChapterId !== null &&
+    previousChapterId.value !== null &&
+    currentChapterId !== previousChapterId.value
+  ) {
+    conversationId.value =
+      Date.now().toString() + Math.random().toString(36).substring(2);
+    localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
+    chatMessages.value = []; // 清空之前的聊天记录
+    console.log(`章节ID变化，生成新的会话ID: ${conversationId.value}`);
+  }
+
+  // 更新previousChapterId
+  previousChapterId.value = currentChapterId;
 
   // 添加用户消息到聊天记录
   chatMessages.value.push({
@@ -3520,7 +3279,7 @@ const initGradesChart = () => {
   });
 };
 
-// 初始化掌握度圆环图表
+// 初始化知识点圆环图表
 const initMasteryChart = () => {
   // 确保DOM已加载
   if (!masteryChartRef.value) return;
@@ -3566,7 +3325,7 @@ const initMasteryChart = () => {
     },
     series: [
       {
-        name: "掌握度",
+        name: "知识点",
         type: "pie",
         radius: ["60%", "80%"], // 环形图的内外半径
         avoidLabelOverlap: false,
@@ -3617,9 +3376,9 @@ const initQAHistory = () => {
       timestamp: "2025-07-13T16:30:00Z"
     },
     {
-      question: "如何理解计算机网络的OSI七层模型？",
+      question: "这门课程的成绩构成是怎么样的？",
       answer:
-        "OSI七层模型从下到上分别是：物理层、数据链路层、网络层、传输层、会话层、表示层和应用层。各层有不同的功能：\n\n- 物理层：处理比特流传输\n- 数据链路层：负责节点之间的数据传输\n- 网络层：处理分组路由\n- 传输层：提供端到端的可靠数据传输\n- 会话层：建立、管理和终止会话\n- 表示层：数据格式转换、加密解密\n- 应用层：为应用程序提供网络服务",
+        "课程成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。平时作业包括每周的课后练习和项目作业，课堂表现包括课堂参与度和小组讨论。",
       timestamp: "2025-07-13T15:45:00Z"
     },
     {
@@ -3676,14 +3435,15 @@ const fetchCourseStudyEffect = async () => {
 
       // Initialize collapse states for new data
       if (response.data.chapterList) {
-        response.data.chapterList.forEach(chapter => {
-          chapterCollapseStates.set(chapter.chapterId, false); // All chapters collapsed by default
+        response.data.chapterList.forEach((chapter, idx) => {
+          // 默认第1章展开
+          chapterCollapseStates.set(chapter.chapterId, idx === 0);
 
-          // Initialize subsections
+          // 默认第1章的重点展开
           if (chapter.keyPointArray)
             subsectionCollapseStates.set(
               `${chapter.chapterId}-keyPoint`,
-              false
+              idx === 0
             );
           if (chapter.difficultPointArray)
             subsectionCollapseStates.set(
@@ -3709,8 +3469,9 @@ const fetchCourseStudyEffect = async () => {
 const fetchWrongQuestionList = async () => {
   try {
     const { code, data, msg } = await getUserWrongQuestionList({
+      courseId: courseId.value,
       page: 1,
-      pageSize: 10 // 可以根据需要调整每页显示数量
+      pageSize: 100 // 可以根据需要调整每页显示数量
     });
     if (code === 200 && data && data.list) {
       wrongQuestionList.value = data.list;
@@ -3779,7 +3540,7 @@ onMounted(async () => {
   // 等待DOM更新后初始化图表
   nextTick(() => {
     initIconColors();
-    initMasteryChart(); // 初始化掌握度图表
+    initMasteryChart(); // 初始化知识点图表
   });
 });
 </script>
@@ -3794,6 +3555,24 @@ onMounted(async () => {
 </style>
 
 <style scoped>
+.back-icon {
+  width: 40px;
+  height: 40px;
+  transition: color 0.3s ease;
+  cursor: pointer;
+  padding-right: 15px;
+}
+
+/* 浅色模式下的颜色 */
+.back-icon.light {
+  color: #604ffd;
+}
+
+/* 深色模式下的颜色 */
+.back-icon.dark {
+  color: #ffffff;
+}
+
 .header-back > i {
   margin-left: -1.5vw;
 }

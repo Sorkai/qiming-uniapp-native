@@ -17,6 +17,9 @@ importers:
       '@howdyjs/mouse-menu':
         specifier: ^2.1.7
         version: 2.1.7(vue@3.5.16(typescript@5.8.3))
+      '@icon-park/vue-next':
+        specifier: ^1.4.2
+        version: 1.4.2(vue@3.5.16(typescript@5.8.3))
       '@imengyu/vue3-context-menu':
         specifier: ^1.4.9
         version: 1.5.0
@@ -107,6 +110,9 @@ importers:
       localforage:
         specifier: ^1.10.0
         version: 1.10.0
+      microsoft-clarity:
+        specifier: ^1.0.0
+        version: 1.0.0
       mint-filter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -1084,6 +1090,12 @@ packages:
   '@humanwhocodes/retry@0.4.3':
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
+
+  '@icon-park/vue-next@1.4.2':
+    resolution: {integrity: sha512-+QklF255wkfBOabY+xw6FAI0Bwln/RhdwCunNy/9sKdKuChtaU67QZqU67KGAvZUTeeBgsL+yaHHxqfQeGZXEQ==}
+    engines: {node: '>= 8.0.0', npm: '>= 5.0.0'}
+    peerDependencies:
+      vue: 3.x
 
   '@iconify/json@2.2.347':
     resolution: {integrity: sha512-couLr3Btp0O1omfKXqxP+/l4WoYr6vZpBs/BxBeXXT1R9dhXbEw8i8SxnO4FiiSqyIdJ3bVaBPA2tTm2ci8cKQ==}
@@ -3977,6 +3989,9 @@ packages:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
 
+  microsoft-clarity@1.0.0:
+    resolution: {integrity: sha512-pKgILvxvFN9l/G0CMynPmejFQWm3eOgZriKHF4AZud5gYlxRh8HIjwHbGTJDMcAKK1d5DaaUti1XVRBYZJKfvw==}
+
   mime-db@1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
     engines: {node: '>= 0.6'}
@@ -6264,6 +6279,10 @@ snapshots:
   '@humanwhocodes/retry@0.3.1': {}
 
   '@humanwhocodes/retry@0.4.3': {}
+
+  '@icon-park/vue-next@1.4.2(vue@3.5.16(typescript@5.8.3))':
+    dependencies:
+      vue: 3.5.16(typescript@5.8.3)
 
   '@iconify/json@2.2.347':
     dependencies:
@@ -9681,6 +9700,8 @@ snapshots:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.1
+
+  microsoft-clarity@1.0.0: {}
 
   mime-db@1.52.0: {}
 

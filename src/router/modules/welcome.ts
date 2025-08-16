@@ -5,7 +5,7 @@ export default {
   redirect: "/welcome/index",
   meta: {
     icon: "ep:home-filled",
-    title: "welcome",
+    title: "欢迎",
     rank: welcome
   },
   children: [
@@ -14,7 +14,7 @@ export default {
       name: "WelcomePage",
       component: () => import("@/views/welcome/index.vue"),
       meta: {
-        title: "welcome"
+        title: "欢迎"
       }
     }
   ]
