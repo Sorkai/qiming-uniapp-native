@@ -3514,7 +3514,10 @@ watch(
   () => homeworkExamTab.value,
   newVal => {
     if (newVal === "practice") {
-      fetchWrongQuestionList();
+      router.push({
+        path: "/account/wrong-exercise",
+        query: { courseId: String(courseId.value || route.params.id) }
+      });
     }
   }
 );
