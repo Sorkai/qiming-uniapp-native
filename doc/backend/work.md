@@ -334,3 +334,58 @@
 ```json
 {}
 ```
+
+### 创建课程考试
+
+- **接口地址**：`/edu/backend/v1/course/exam/create`
+- **请求方式**：POST
+- **请求参数**：
+
+```json
+{
+  "courseId": "int64",      // 关联课程ID
+  "title": "string",        // 考试标题
+  "description": "string",  // 考试描述
+  "timeLimit": "int64",     // 时间限制(分钟)
+  "availableFrom": "string", // 考试开始时间 yyyy-MM-dd HH:mm:ss
+  "availableTo": "string"   // 考试结束时间 yyyy-MM-dd HH:mm:ss
+}
+```
+
+### 删除试卷、作业的单道习题
+#### 删除后需调用习题列表查询，才能看到添加的习题
+- **接口地址**：`/edu/backend/v1/work/delete/question`
+- **请求方式**：POST
+- **请求参数**：
+
+```json
+{
+  "deleteType": "int64",      // 删除类型 1:试卷 2:作业
+  "sourceId": "int64",        // 试卷、作业的ID
+  "questionId": "int64"  // 习题的ID
+}
+```
+- **响应参数**：
+
+```json
+{}
+```
+
+### 随机添加一道试卷、作业的习题
+#### 新增后需调用习题列表查询，才能看到添加的习题
+- **接口地址**：`/edu/backend/v1/work/round/add/question`
+- **请求方式**：POST
+- **请求参数**：
+
+```json
+{
+  "addType": "int64",      // 新增的类型 1:试卷 2:作业
+  "sourceId": "int64"        // 试卷、作业的ID
+}
+```
+
+- **响应参数**：
+
+```json
+{}
+```

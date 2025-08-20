@@ -93,3 +93,76 @@ courseId: int64    // 课程ID
 ```
 
 - **响应参数**：无
+
+## 获取课程学习效果
+
+- **接口地址**：`/edu/frontend/v1/course/study/effect`
+- **请求方式**：GET
+- **请求参数**：
+
+```
+courseId: int64    // 课程ID
+```
+
+- **响应参数**：
+
+```json
+{
+  "courseId": "int64",          // 课程ID
+  "keyPointNum": "int64",       // 重点数量
+  "difficultPointNum": "int64", // 难点数量
+  "knowledgePointNum": "int64", // 知识点数量
+  "conceptNum": "int64",        // 概念数量
+  "chapterList": [              // 章节数据
+    {
+      "chapterId": "int64",      // 章节ID
+      "chapterName": "string",   // 章节名称
+      "keyPointArray": [         // 重点信息
+        {
+          "title": "string",      // 标题
+          "content": "string"     // 内容
+        }
+      ],
+      "difficultPointArray": [    // 难点信息
+        {
+          "title": "string",      // 标题
+          "content": "string"     // 内容
+        }
+      ],
+      "knowledgeArray": [         // 知识点信息
+        {
+          "title": "string",      // 标题
+          "content": "string"     // 内容
+        }
+      ],
+      "ConceptArray": [           // 概念信息
+        {
+          "title": "string",      // 标题
+          "content": "string"     // 内容
+        }
+      ]
+    }
+  ]
+}
+```
+
+## 获取课程成绩
+
+- **接口地址**：`/edu/frontend/v1/course/score`
+- **请求方式**：GET
+- **请求参数**：
+
+```
+courseId: int64    // 课程ID
+```
+
+- **响应参数**：
+
+```json
+{
+  "courseId": "int64",          // 课程ID
+  "courseScore": "int64",       // 课时成绩
+  "workScore": "int64", // 作业成绩
+  "examScore": "int64", // 考试成绩
+}
+```
