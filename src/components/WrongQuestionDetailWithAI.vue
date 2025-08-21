@@ -67,7 +67,10 @@
             <div class="q"><b>{{ idx + 1 }}.</b><div class="qtxt" v-html="ex.question" /></div>
             <div v-if="ex.options && ex.options.length" class="opts">
               <ul>
-                <li v-for="(o, i2) in ex.options" :key="i2"><b>{{ abcd(i2) }}.</b> {{ o }}</li>
+                <li v-for="(o, i2) in ex.options" :key="i2">
+                  <template v-if="needsPrefix(o)"><b>{{ abcd(i2) }}.</b> {{ stripPrefix(o) }}</template>
+                  <template v-else><span v-html="o" /></template>
+                </li>
               </ul>
             </div>
             <el-button text type="primary" @click="toggleExplain(idx)">{{ showExplain[idx] ? '隐藏解析' : '查看解析' }}</el-button>
@@ -168,6 +171,9 @@ const displayCorrectAnswer = computed(() => {
 
 const toggleBase = () => (baseOpened.value = !baseOpened.value);
 const abcd = (i: number) => String.fromCharCode(65 + i);
+// 判断是否需要我们加前缀（如果后端已经带 'A.' 或 'A、' 等就不再加）
+const needsPrefix = (o: string) => !/^\s*[A-D][\.|、]/.test(o);
+const stripPrefix = (o: string) => o.replace(/^\s*[A-D][\.|、]\s*/, '');
 const showExplain = ref<Record<number, boolean>>({});
 const toggleExplain = (i: number) => (showExplain.value[i] = !showExplain.value[i]);
 
