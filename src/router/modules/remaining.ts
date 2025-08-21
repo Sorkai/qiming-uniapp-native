@@ -98,5 +98,15 @@ export default [
       showLink: false,
       rank: 108
     }
+  },
+  {
+    path: "/account/wrong-exercise",
+    name: "WrongExercise",
+    component: () => import("@/views/account/wrong-exercise.vue"),
+    meta: {
+      title: "随练",
+      showLink: false,
+      rank: 109
+    }
   }
 ] satisfies Array<RouteConfigsTable>;
