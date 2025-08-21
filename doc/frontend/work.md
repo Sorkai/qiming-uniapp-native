@@ -262,6 +262,9 @@
 | pageNum | int64 | 否 | 页码，默认为1 |
 | pageSize | int64 | 否 | 每页数量，默认为10 |
 | sourceType | int64 | 否 | 来源类型 1:作业 2:考试 3:自测题，不传则查询所有 |
+| courseId | int64 | 否 | 课程ID（可选筛选条件） |
+
+说明：用户ID不需要在参数中传递，接口从JWT中获取当前登录用户ID。
 
 #### 响应参数
 
@@ -283,3 +286,8 @@
 | title | string | 题目标题 |
 | stem | string | 题目题干 |
 | options | string | 选项(JSON格式，如{"A":"选项1","B":"选项2"}) |
+| analysis | string | 解析 |
+| answer | string | 正确答案 |
+| userAnswer | string | 用户答案 |
+| wrongNum | int64 | 错误次数 |
+| lastWrongTime | string | 最近错误时间，格式：yyyy-MM-dd HH:mm:ss |

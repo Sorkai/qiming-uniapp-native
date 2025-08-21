@@ -105,29 +105,30 @@ export interface CourseHomeworkListResult {
 }
 
 export interface WrongQuestionListParams {
-  page: number;
-  pageSize: number;
-  sourceType?: number; // 来源类型（1：作业，2：考试，不传则查询全部）
+  page?: number; // 兼容旧参数
+  pageNum?: number; // 文档中的参数名
+  pageSize?: number;
+  sourceType?: number; // 1：作业，2：考试，3：自测题
+  courseId?: number; // 可选课程筛选
 }
 
 export interface WrongQuestionListResult {
   total: number;
   list: Array<{
-    wrongQuestionId: number;
-    questionId: number;
-    title: string;
-    content: string;
-    type: number; // 1：单选题，2：多选题，3：判断题，4：填空题，5：简答题
-    options?: Array<{
-      optionId: string;
-      content: string;
-    }>;
+    id: number; // 错题ID
+    sourceType: number; // 来源类型 1:作业 2:考试 3:自测题
+    sourceId: number; // 来源ID
+    sourceName: string; // 来源名称
+    questionId: number; // 题目ID
+    questionType: number; // 1-单选/2-多选/3-判断/4-填空/5-简答/6-论述
+    title: string; // 题目标题
+    stem: string; // 题目题干
+    options: string | null; // 选项(JSON字符串)
+    analysis: string | null; // 解析
     answer: string; // 正确答案
     userAnswer: string; // 用户答案
-    sourceType: number; // 来源类型（1：作业，2：考试）
-    sourceId: number; // 来源ID（作业ID或考试ID）
-    sourceTitle: string; // 来源标题（作业标题或考试标题）
-    createTime: string; // 创建时间
+    wrongNum: number; // 错误次数
+    lastWrongTime: string; // 最近错误时间
   }>;
 }
 

@@ -11,7 +11,7 @@
     </div>
 
     <div class="main-content" :class="currentTheme">
-      <el-card>
+  <el-card>
         <template #header>
           <div class="card-header">
             <h3>历史错题</h3>
@@ -32,15 +32,14 @@
               v-for="item in records"
               :key="item.id"
             >
-              <div class="w-title" v-html="item.original_exercise_content" />
+              <div class="w-title" v-html="item.stem" />
               <div class="w-meta">
-                <span class="tag">学生答案：{{ item.student_answer }}</span>
-                <span class="tag right">正确：{{ item.correct_answer }}</span>
-                <span class="time">{{ formatTime(item.created_at) }}</span>
+                <span class="tag">来源：{{ sourceText(item.sourceType) }}</span>
+                <span class="tag">错误次数：{{ item.wrongNum }}</span>
+                <span class="time">{{ item.lastWrongTime }}</span>
               </div>
               <div class="actions">
                 <el-button type="primary" text @click="openDetail(item)">查看</el-button>
-                <el-button type="success" text @click="analyze(item)">智能分析/相似题</el-button>
               </div>
             </div>
 
@@ -60,17 +59,12 @@
     </div>
 
     <!-- 详情（沿用现有错题弹窗） -->
-    <WrongQuestionDetailDialog
+    <WrongQuestionDetailWithAI
       v-model="detailVisible"
-      :wrong-question="toLegacyWrong(itemForDetail)"
-    />
-
-    <!-- 智能分析弹窗 -->
-    <WrongExerciseAnalyzeDialog
-      v-model="analyzeVisible"
-      :original="currentOriginal"
-      :response="analyzeResp"
-      :loading="analyzing"
+      :course-id="courseId"
+      :wrong="normalizeWrong(itemForDetail)"
+      :initial-analysis="findHistory(itemForDetail)"
+      @analyzed="cacheAnalysis"
     />
   </div>
 </template>
@@ -80,9 +74,9 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
-import WrongQuestionDetailDialog from '@/components/WrongQuestionDetailDialog.vue';
-import WrongExerciseAnalyzeDialog from '@/components/WrongExerciseAnalyzeDialog.vue';
-import { getWrongExerciseHistory, analyzeWrongExercise, type WrongExerciseHistoryRecord, type WrongExerciseAnalyzeResponse } from '@/api/frontend/wrong-exercise';
+import WrongQuestionDetailWithAI from '@/components/WrongQuestionDetailWithAI.vue';
+import { getWrongExerciseHistory, type WrongExerciseAnalyzeResponse } from '@/api/frontend/wrong-exercise';
+import { getUserWrongQuestionList, type WrongQuestionListResult } from '@/api/frontend/work';
 
 const route = useRoute();
 const router = useRouter();
@@ -92,91 +86,90 @@ const page = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
 const loading = ref(false);
-const records = ref<WrongExerciseHistoryRecord[]>([]);
+const records = ref<WrongQuestionListResult['list']>([] as any);
 
 const courseId = computed(() => Number(route.query.courseId || route.params.id));
 
-const fetchHistory = async () => {
+const analysisHistoryMap = ref<Record<string, WrongExerciseAnalyzeResponse>>({});
+
+const fetchList = async () => {
   loading.value = true;
   try {
-    const { data } = await getWrongExerciseHistory({ course_id: courseId.value, page: page.value, page_size: pageSize.value });
-    if (data) {
-      total.value = data.total;
-      records.value = data.records || [];
+    const { code, data } = await getUserWrongQuestionList({
+      pageNum: page.value,
+      pageSize: pageSize.value,
+      courseId: courseId.value
+    } as any);
+    if (code === 200 && data) {
+      records.value = (data as any).list || [];
+      total.value = (data as any).total || 0;
     }
   } finally {
     loading.value = false;
   }
 };
 
+const fetchAnalyzedHistory = async () => {
+  try {
+    const { data } = await getWrongExerciseHistory({ course_id: courseId.value, page: 1, page_size: 100 });
+    if (data && data.records) {
+      const map: Record<string, WrongExerciseAnalyzeResponse> = {};
+      for (const rec of data.records) {
+        map[String(rec.original_exercise_id)] = {
+          analysis: rec.analysis,
+          generated_exercises: rec.generated_exercises
+        } as WrongExerciseAnalyzeResponse;
+      }
+      analysisHistoryMap.value = map;
+    }
+  } catch {}
+};
+
 const handlePageChange = (p: number) => {
   page.value = p;
-  fetchHistory();
+  fetchList();
 };
 
 // 详情弹窗
 const detailVisible = ref(false);
-const itemForDetail = ref<WrongExerciseHistoryRecord | null>(null);
-const openDetail = (item: WrongExerciseHistoryRecord) => {
+const itemForDetail = ref<any | null>(null);
+const openDetail = (item: any) => {
   itemForDetail.value = item;
   detailVisible.value = true;
 };
-
-function toLegacyWrong(item: WrongExerciseHistoryRecord | null) {
+function normalizeWrong(item: any | null) {
   if (!item) return null;
   return {
-    id: 0,
-    sourceType: 1,
-    sourceId: 0,
-    sourceName: '错题详情',
-    questionId: 0,
-  questionType: 5,
-    title: '错题',
-    stem: item.original_exercise_content,
-    options: null,
-    analysis: item.analysis ? `${item.analysis.error_type}：${item.analysis.error_reason}` : '',
-    answer: JSON.stringify(item.correct_answer),
-    userAnswer: String(item.student_answer),
-    wrongNum: 1,
-    lastWrongTime: item.created_at
+  id: item.id,
+  questionId: item.questionId,
+  questionType: item.questionType,
+  title: item.title,
+  stem: item.stem,
+  options: item.options,
+  analysis: item.analysis,
+  answer: item.answer,
+  userAnswer: item.userAnswer
   };
 }
 
-// 智能分析
-const analyzeVisible = ref(false);
-const analyzing = ref(false);
-const analyzeResp = ref<WrongExerciseAnalyzeResponse | null>(null);
-const currentOriginal = ref<{ original_exercise_content: string; student_answer: string; correct_answer: string } | null>(null);
+function findHistory(item: any | null) {
+  if (!item) return null;
+  const key = String(item.questionId || item.id);
+  return analysisHistoryMap.value[key] || null;
+}
 
-const analyze = async (item: WrongExerciseHistoryRecord) => {
-  analyzeVisible.value = true;
-  analyzeResp.value = null;
-  currentOriginal.value = {
-    original_exercise_content: item.original_exercise_content,
-    student_answer: item.student_answer,
-    correct_answer: item.correct_answer
-  };
-  analyzing.value = true;
-  try {
-    const { data } = await analyzeWrongExercise({
-      course_id: courseId.value,
-      original_exercise_id: item.original_exercise_id,
-      original_exercise_content: item.original_exercise_content,
-      student_answer: item.student_answer,
-      correct_answer: item.correct_answer
-    });
-    if (data) analyzeResp.value = data;
-  } finally {
-    analyzing.value = false;
-  }
-};
+function cacheAnalysis(payload: { key: string; response: WrongExerciseAnalyzeResponse }) {
+  analysisHistoryMap.value[payload.key] = payload.response;
+}
 
 const formatTime = (t: string) => dayjs(t).format('YYYY-MM-DD HH:mm');
+const sourceText = (s: number) => ({ 1: '作业', 2: '考试', 3: '自测题' } as any)[s] || '未知';
 
 const goBack = () => router.back();
 
-onMounted(() => {
-  fetchHistory();
+onMounted(async () => {
+  await fetchList();
+  fetchAnalyzedHistory();
 });
 </script>
 
