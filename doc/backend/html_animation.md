@@ -50,8 +50,8 @@ POST /edu/backend/v1/html-animation/generate
   "courseId":3,
   "chapterId":11,
   "tasks":[
-    {"taskId":"10ef...","status":"completed","version":3,"fileName":"v3_....html","objectName":"html_animations/3/11/v3_....html","fileSize":14001,"errorMessage":"","createdAt":"2025-08-22T22:57:37","updatedAt":"2025-08-22T22:58:21","completedAt":"2025-08-22T22:58:21"},
-    {"taskId":"10ef...","status":"processing","version":0,"fileName":"","objectName":"","fileSize":0,"errorMessage":"","createdAt":"2025-08-23T10:00:00","updatedAt":"2025-08-23T10:00:00","completedAt":""}
+    {"taskId":"10ef...","status":"completed","version":3,"fileName":"v3_....html","objectName":"html_animations/3/11/v3_....html","fileUrl":"https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/3/11/v3_....html","fileSize":14001,"errorMessage":"","createdAt":"2025-08-22T22:57:37","updatedAt":"2025-08-22T22:58:21","completedAt":"2025-08-22T22:58:21"},
+    {"taskId":"10ef...","status":"processing","version":0,"fileName":"","objectName":"","fileUrl":"","fileSize":0,"errorMessage":"","createdAt":"2025-08-23T10:00:00","updatedAt":"2025-08-23T10:00:00","completedAt":""}
   ],
   "displayVersionRaw":"latest",
   "displayVersionResolved":"3"
@@ -83,6 +83,36 @@ Response: `{"totalChapters":120,"successChapters":115}`
   "chapterId":11,
   "version":"3",
   "url":"https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/3/11/v3_xxxx.html"
+}
+```
+
+### 无配置或无版本时的响应示例
+
+- 未配置展示版本（HTTP 404）
+```json
+HTTP/1.1 404 Not Found
+{
+  "code": 404,
+  "message": "尚未配置展示版本",
+  "suggest": "请联系教师或触发生成"
+}
+```
+
+- 已配置为 latest 但无可用版本（HTTP 200，available=false）
+```json
+HTTP/1.1 200 OK
+{
+  "available": false,
+  "message": "无可用HTML动画版本"
+}
+```
+
+- 目标版本元数据存在但对象缺失（HTTP 404）
+```json
+HTTP/1.1 404 Not Found
+{
+  "code": 404,
+  "message": "版本对象不存在"
 }
 ```
 
