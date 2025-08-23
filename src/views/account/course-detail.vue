@@ -308,35 +308,97 @@
           class="course-materials-wrapper"
           :class="currentTheme"
         >
-          <!-- 头部 -->
+          <!-- 头部（复用课程资料完整结构确保样式一致） -->
           <div
+            data-v-3e66491d=""
+            data-v-cebc91e2=""
             class="layout-header"
             :class="currentTheme"
+            isatlas="1"
             style="z-index: 10"
           >
-            <div class="header-content">
-              <div class="item header-left">
-                <div class="item header-back" @click="goBack">
+            <div
+              data-v-3e66491d=""
+              class="header-content"
+            >
+              <div data-v-3e66491d="" class="item header-left">
+                <div
+                  data-v-3e66491d=""
+                  class="item header-back"
+                  @click="goBack"
+                >
                   <BackArrowIcon :class="['back-icon', currentTheme]" />
                 </div>
-                <span class="current-time">{{ currentDate }}</span>
-                <div class="theme-mode" @click="toggleTheme">
+                <span data-v-3e66491d="" class="current-time">{{ currentDate }}</span>
+                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
                   <ThemeSunIcon
+                    data-v-3e66491d=""
                     :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
                     :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
                   />
                   <ThemeMoonIcon
+                    data-v-3e66491d=""
                     :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
                     :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
                   />
                 </div>
               </div>
-              <div class="item header-center">
-                <div class="study-mode custom-mode">
-                  <div class="mode-item active" style="margin: 0 auto">HTML动画</div>
+              <div data-v-3e66491d="" class="item header-center">
+                <div
+                  data-v-cebc91e2=""
+                  data-v-3e66491d=""
+                  class="study-mode custom-mode"
+                >
+                  <div
+                    data-v-cebc91e2=""
+                    data-v-3e66491d=""
+                    data-name="0"
+                    class="mode-item active"
+                    style="margin: 0 auto"
+                  >
+                    HTML动画
+                  </div>
                 </div>
               </div>
-              <div class="item header-right" />
+              <div data-v-3e66491d="" class="item header-right">
+                <ul data-v-3e66491d="" class="popper-box">
+                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
+                    <ul
+                      data-v-3e66491d=""
+                      role="menubar"
+                      class="fu-header-users el-menu--horizontal el-menu"
+                    >
+                      <li
+                        data-v-3e66491d=""
+                        role="menuitem"
+                        aria-haspopup="true"
+                        class="el-submenu"
+                        tabindex="0"
+                      >
+                        <div
+                          class="el-submenu__title"
+                          style="border-bottom-color: transparent"
+                        >
+                          <div data-v-3e66491d="" class="avatar-info">
+                            <img
+                              data-v-3e66491d=""
+                              :src="userAvatar"
+                              alt=""
+                              class="avatar"
+                            />
+                            <span data-v-3e66491d="" class="name">{{
+                              userNickname
+                            }}</span>
+                          </div>
+                          <i
+                            class="el-submenu__icon-arrow el-icon-arrow-down"
+                          />
+                        </div>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
           <!-- 内容 -->
