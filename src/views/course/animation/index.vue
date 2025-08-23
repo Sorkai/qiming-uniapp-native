@@ -316,8 +316,8 @@ function openPreview(row: HtmlAnimationTask){
 }
 
 function buildFileUrl(row: HtmlAnimationTask){
-  // 后端提供 objectName + 可能需要拼域。当前缺少域配置，假设后端 list 已返回可访问 fileName/objectName 之一
-  // 优先尝试直接 fileName 为完整URL，否则返回 objectName 作为相对路径。
+  // 优先使用后端直接返回的 fileUrl（完整URL）
+  if((row as any).fileUrl) return (row as any).fileUrl as string;
   if(row.fileName && row.fileName.startsWith('http')) return row.fileName;
   if(row.objectName && row.objectName.startsWith('http')) return row.objectName;
   return row.fileName || row.objectName || '';

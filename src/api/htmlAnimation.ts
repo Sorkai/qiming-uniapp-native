@@ -6,6 +6,7 @@ export interface HtmlAnimationTask {
   version: number; // 0 表示还未分配版本(进行中)
   fileName: string;
   objectName: string;
+  fileUrl?: string; // 完整可访问URL（后端新增）
   fileSize: number;
   errorMessage: string;
   createdAt: string;
