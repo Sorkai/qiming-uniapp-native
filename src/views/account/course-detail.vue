@@ -302,56 +302,76 @@
             <el-empty v-else description="暂无课程资料" />
           </div>
         </div>
-        <!-- HTML 动画列表 -->
+        <!-- HTML 动画列表（复用课程资料布局样式） -->
         <div
           v-show="activeMenu === 'html-animations'"
           class="course-materials-wrapper"
           :class="currentTheme"
         >
-          <div class="html-animations-header">
-            <div class="header-left">
-              <div class="item header-back" @click="goBack">
-                <BackArrowIcon :class="['back-icon', currentTheme]" />
+          <!-- 头部 -->
+          <div
+            class="layout-header"
+            :class="currentTheme"
+            style="z-index: 10"
+          >
+            <div class="header-content">
+              <div class="item header-left">
+                <div class="item header-back" @click="goBack">
+                  <BackArrowIcon :class="['back-icon', currentTheme]" />
+                </div>
+                <span class="current-time">{{ currentDate }}</span>
+                <div class="theme-mode" @click="toggleTheme">
+                  <ThemeSunIcon
+                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                  />
+                  <ThemeMoonIcon
+                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                  />
+                </div>
               </div>
-              <span class="current-time">{{ currentDate }}</span>
-              <div class="theme-mode" @click="toggleTheme">
-                <ThemeSunIcon
-                  :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
-                  :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
-                />
-                <ThemeMoonIcon
-                  :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
-                  :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
-                />
+              <div class="item header-center">
+                <div class="study-mode custom-mode">
+                  <div class="mode-item active" style="margin: 0 auto">HTML动画</div>
+                </div>
               </div>
-            </div>
-            <div class="header-center">
-              <div class="study-mode custom-mode">
-                <div class="mode-item active" style="margin:0 auto">HTML动画</div>
-              </div>
-            </div>
-            <div class="header-right" />
-          </div>
-          <div class="html-animations-body">
-            <div v-if="htmlAnimationLoading" class="html-anim-loading">加载中...</div>
-            <div v-else-if="htmlAnimationList.length === 0" class="html-anim-empty">暂无可展示的章节动画</div>
-            <div v-else class="html-anim-grid">
-              <div
-                v-for="item in htmlAnimationList"
-                :key="item.chapterId"
-                class="html-anim-item"
-                @click="openHtmlAnimation(item)"
-              >
-                <div class="anim-title">{{ item.chapterName }}</div>
-                <div class="anim-meta">版本: {{ item.version }}</div>
-                <div class="anim-action">点击查看</div>
-              </div>
+              <div class="item header-right" />
             </div>
           </div>
+          <!-- 内容 -->
+            <div class="materials-container" :class="currentTheme">
+              <div v-if="htmlAnimationLoading" class="materials-list">
+                <el-empty description="加载中..." />
+              </div>
+              <div v-else-if="htmlAnimationList.length === 0" class="materials-list">
+                <el-empty description="暂无可展示的章节动画" />
+              </div>
+              <div v-else class="materials-list">
+                <div
+                  v-for="item in htmlAnimationList"
+                  :key="item.chapterId"
+                  class="material-item"
+                  :class="{ dark: currentTheme === 'dark' }"
+                  @click="openHtmlAnimation(item)"
+                >
+                  <div class="material-icon">
+                    <img :src="logo" alt="动画" />
+                  </div>
+                  <div class="material-info">
+                    <div class="material-title">{{ item.chapterName }}</div>
+                    <div class="material-type">版本: {{ item.version }}</div>
+                  </div>
+                  <div class="material-action">
+                    <el-button size="small" type="primary">查看</el-button>
+                  </div>
+                </div>
+              </div>
+            </div>
           <el-dialog
             v-model="htmlAnimPreviewVisible"
             title="HTML动画预览"
-            width="80%"
+            width="85%"
             top="5vh"
           >
             <div v-if="htmlAnimPreviewUrl" class="preview-wrapper">
@@ -4411,17 +4431,7 @@ onMounted(async () => {
   background-color: #1e1e1e;
 }
 
-/* HTML 动画列表样式 */
-.html-animations-header { display:flex; justify-content:space-between; align-items:center; padding:12px 24px; }
-.html-animations-body { padding:24px; overflow-y:auto; height:calc(100vh - 140px); }
-.html-anim-loading, .html-anim-empty { text-align:center; padding:60px 0; color:#909399; }
-.html-anim-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
-.html-anim-item { cursor:pointer; border:1px solid #e5e5e5; border-radius:8px; padding:16px; background:#fff; transition:box-shadow .2s,transform .2s; display:flex; flex-direction:column; min-height:120px; }
-.dark .html-anim-item { background:#1e1e1e; border-color:#333; }
-.html-anim-item:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); transform:translateY(-2px); }
-.anim-title { font-weight:600; font-size:15px; margin-bottom:8px; line-height:1.3; }
-.anim-meta { font-size:12px; color:#909399; margin-top:auto; }
-.anim-action { margin-top:6px; font-size:12px; color:#409eff; }
+/* （HTML 动画列表复用 materials 样式，移除自定义块） */
 
 .materials-container {
   padding: 80px 20px 20px;
