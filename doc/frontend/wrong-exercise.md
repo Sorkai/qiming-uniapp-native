@@ -45,7 +45,7 @@ $headers = @{ "Authorization" = "Bearer <TOKEN>"; "Content-Type" = "application/
 $body = @{ course_id = 1001; original_exercise_id = "exercise_001"; original_exercise_content = "计算 2 + 3 × 4 的值"; student_answer = "20"; correct_answer = "14" } | ConvertTo-Json
 Invoke-RestMethod -Method POST -Uri "http://localhost:1004/edu/frontend/v1/ai/wrong-exercise/analyze" -Headers $headers -Body $body
 
-## 2. 错题历史
+## 2. 错题分析历史
 
 - 方法：GET
 - 路径：/ai/wrong-exercise/history

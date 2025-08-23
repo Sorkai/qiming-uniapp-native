@@ -198,6 +198,30 @@ menus:
   pureChildMenuOverflow: 菜单超出显示 Tooltip 文字提示
   aiPPT: AI生成课件
   aiPPTGen: AI生成PPT
+  aiAnimation: AI动画
+  aiAnimationGenerate: 生成动画
+  aiAnimationForceSync: 强制同步
+  aiAnimationSetLatest: 设展示=最新
+  aiAnimationStopPolling: 停止轮询
+  aiAnimationDisplayVersion: 展示版本
+  aiAnimationLatestSuccess: 最近成功
+  aiAnimationStats: 统计
+  aiAnimationVersion: 版本
+  aiAnimationStatus: 状态
+  aiAnimationFileName: 文件名
+  aiAnimationFileSize: 大小
+  aiAnimationCreatedAt: 创建时间
+  aiAnimationCompletedAt: 完成时间
+  aiAnimationDisplay: 展示
+  aiAnimationError: 错误
+  aiAnimationActions: 操作
+  aiAnimationPreview: 预览
+  aiAnimationSetDisplay: 设为展示
+  aiAnimationCopyUrl: 复制URL
+  aiAnimationSearchPlaceholder: 搜索文件名
+  aiAnimationSelectCourse: 选择课程
+  aiAnimationSelectChapter: 选择章节
+  aiAnimationEmptyTip: 请选择课程与章节以查看动画任务
 status:
   pureLoad: 加载中...
   pureMessage: 消息
