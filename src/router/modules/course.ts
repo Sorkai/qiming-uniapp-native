@@ -40,5 +40,14 @@ export default {
         title: "教案管理"
       }
     }
+    ,
+    {
+      path: "/course/animation",
+      name: "CourseAnimation",
+      component: () => import("@/views/course/animation/index.vue"),
+      meta: {
+        title: "AI动画"
+      }
+    }
   ]
 };
