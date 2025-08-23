@@ -4600,6 +4600,18 @@ onMounted(async () => {
   margin-left: 10px;
 }
 
+/* HTML 动画预览对话框高度优化 */
+.preview-wrapper {
+  width: 100%;
+  height: 75vh; /* 提高整体高度 */
+  overflow: hidden;
+}
+.preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 /* 作业考试相关样式 */
 .homework-exam-wrapper {
   display: flex;
