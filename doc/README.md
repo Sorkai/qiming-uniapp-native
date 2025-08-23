@@ -11,6 +11,16 @@
   - [用户中心](./backend/usercenter.md)
   - [课程管理](./backend/course.md)
   - [分类管理](./backend/category.md)
+  - [HTML 动画](./backend/html_animation.md)
 - 前端接口
   - [用户中心](./frontend/usercenter.md)
   - [课程管理](./frontend/course.md)
+  - [HTML 动画展示](./backend/html_animation.md#获取展示动画)
+  
+## CI/CD
+
+- CNB 云原生构建：见 [CI-CD-CNB.md](./CI-CD-CNB.md)
+
+## 部署
+
+- 部署指南：见 [DEPLOYMENT.md](./DEPLOYMENT.md)

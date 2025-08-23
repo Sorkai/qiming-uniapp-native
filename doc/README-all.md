@@ -152,6 +152,14 @@ API服务默认运行在 http://localhost:1004
 - [前端接口](./doc/frontend/)
     - 前端错题分析接口见：`doc/frontend/wrong-exercise.md`，提供错题分析与历史查询的调用示例（支持 PowerShell 示例）。
 
+## CI/CD
+
+- 迁移至 cnb.cool 流水线，详情见：`doc/CI-CD-CNB.md`
+
+## 部署
+
+- 参考部署指南：`doc/DEPLOYMENT.md`
+
 ## 开发指南
 
 ### 代码生成
@@ -163,4 +171,113 @@ API服务默认运行在 http://localhost:1004
 1. 在 `app/api/desc` 目录下添加API描述文件
 2. 使用go-zero工具生成API代码
 3. 实现API逻辑
+
+### 版本号注入与查看
+
+- 后端在启动时会输出版本信息（版本、提交、构建日期）。
+- 版本信息定义在 `pkg/version` 包中，可通过 `-ldflags` 在构建时注入：
+
+示例（PowerShell）：
+
+```powershell
+# 在项目根目录（包含 go.mod）下执行
+$version = "v1.0.0"
+$commit  = $(git rev-parse --short HEAD)
+$date    = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssK')
+
+go build `
+    -ldflags "-X aiedu/pkg/version.Version=$version -X aiedu/pkg/version.Commit=$commit -X aiedu/pkg/version.Date=$date" `
+    -o bin/aiedu-api.exe `
+    ./app/api
+
+# 运行后将打印类似：
+# AiEdu backend version=v1.0.0 commit=abc1234 date=2025-08-22T10:20:30+08:00
+./bin/aiedu-api.exe -f app/api/etc/aieduapi.yaml
+```
+
+Docker 打包时也可通过 `--build-arg` 或 CI 注入相同的 ldflags。若未注入，默认输出为 `version=dev commit=unknown date=unknown`。
+
+#### `/version` API
+
+- 无需鉴权，GET `http://<host>:<port>/edu/v1/version`
+- 返回示例：
+
+```json
+{
+    "code": 0,
+    "msg": "",
+    "data": {
+        "version": "v1.0.0",
+        "commit": "abc1234",
+        "date": "2025-08-22T10:20:30+08:00"
+    }
+}
+```
+
+#### Docker/CI 注入示例
+
+- Dockerfile 中可使用构建参数并传递给 `go build`：
+
+```Dockerfile
+ARG APP_VERSION=dev
+ARG APP_COMMIT=unknown
+ARG APP_DATE=unknown
+
+RUN go build -ldflags "-s -w \
+    -X aiedu/pkg/version.Version=${APP_VERSION} \
+    -X aiedu/pkg/version.Commit=${APP_COMMIT} \
+    -X aiedu/pkg/version.Date=${APP_DATE}" \
+    -o /app/aiedu-api ./app/api
+```
+
+- 构建命令（PowerShell）：
+
+```powershell
+$version = "v1.0.0"
+$commit  = $(git rev-parse --short HEAD)
+$date    = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssK')
+
+docker build `
+    --build-arg APP_VERSION=$version `
+    --build-arg APP_COMMIT=$commit `
+    --build-arg APP_DATE=$date `
+    -t aiedu/api:$version `
+    -f docker/api/Dockerfile `
+    .
+```
+
+    #### `/healthz` API
+
+    - 无需鉴权，GET `http://<host>:<port>/edu/v1/healthz`
+    - 返回示例：
+
+    ```json
+    {
+        "code": 0,
+        "msg": "",
+        "data": {
+            "status": "ok",
+            "version": "v1.0.0",
+            "commit": "abc1234",
+            "date": "2025-08-22T10:20:30+08:00"
+        }
+    }
+    ```
+
+    #### docker-compose 构建注入
+
+    `docker-compose.yml` 已添加构建参数透传，使用方式（PowerShell）：
+
+    ```powershell
+    $env:APP_VERSION = "v1.0.0"
+    $env:APP_COMMIT  = $(git rev-parse --short HEAD)
+    $env:APP_DATE    = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssK')
+
+    docker compose build api
+    docker compose up -d api
+
+    # 验证
+    curl http://localhost:1004/edu/v1/version
+    curl http://localhost:1004/edu/v1/healthz
+    ```
 
