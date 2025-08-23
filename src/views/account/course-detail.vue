@@ -102,6 +102,24 @@
         <div
           data-v-8289e326=""
           class="el-tooltip item"
+          :class="{ active: activeMenu === 'html-animations' }"
+          tabindex="0"
+          data-menu="html-animations"
+          @click="handleMenuClick('html-animations')"
+        >
+          <div
+            data-v-1139a0f7=""
+            data-v-8289e326=""
+            class="hover-box"
+            :class="{ active: activeMenu === 'html-animations' }"
+          >
+            <CourseMaterialsIcon data-v-1139a0f7="" />
+            <div data-v-1139a0f7="" class="side-name">HTML动画</div>
+          </div>
+        </div>
+        <div
+          data-v-8289e326=""
+          class="el-tooltip item"
           :class="{ active: activeMenu === 'grades' }"
           tabindex="0"
           data-menu="grades"
@@ -283,6 +301,69 @@
             </div>
             <el-empty v-else description="暂无课程资料" />
           </div>
+        </div>
+        <!-- HTML 动画列表 -->
+        <div
+          v-show="activeMenu === 'html-animations'"
+          class="course-materials-wrapper"
+          :class="currentTheme"
+        >
+          <div class="html-animations-header">
+            <div class="header-left">
+              <div class="item header-back" @click="goBack">
+                <BackArrowIcon :class="['back-icon', currentTheme]" />
+              </div>
+              <span class="current-time">{{ currentDate }}</span>
+              <div class="theme-mode" @click="toggleTheme">
+                <ThemeSunIcon
+                  :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                  :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                />
+                <ThemeMoonIcon
+                  :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                  :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                />
+              </div>
+            </div>
+            <div class="header-center">
+              <div class="study-mode custom-mode">
+                <div class="mode-item active" style="margin:0 auto">HTML动画</div>
+              </div>
+            </div>
+            <div class="header-right" />
+          </div>
+          <div class="html-animations-body">
+            <div v-if="htmlAnimationLoading" class="html-anim-loading">加载中...</div>
+            <div v-else-if="htmlAnimationList.length === 0" class="html-anim-empty">暂无可展示的章节动画</div>
+            <div v-else class="html-anim-grid">
+              <div
+                v-for="item in htmlAnimationList"
+                :key="item.chapterId"
+                class="html-anim-item"
+                @click="openHtmlAnimation(item)"
+              >
+                <div class="anim-title">{{ item.chapterName }}</div>
+                <div class="anim-meta">版本: {{ item.version }}</div>
+                <div class="anim-action">点击查看</div>
+              </div>
+            </div>
+          </div>
+          <el-dialog
+            v-model="htmlAnimPreviewVisible"
+            title="HTML动画预览"
+            width="80%"
+            top="5vh"
+          >
+            <div v-if="htmlAnimPreviewUrl" class="preview-wrapper">
+              <iframe :src="htmlAnimPreviewUrl" frameborder="0" class="preview-iframe" />
+            </div>
+            <template #footer>
+              <div class="dialog-footer">
+                <el-button @click="openHtmlAnimInNew">新窗口打开</el-button>
+                <el-button type="primary" @click="htmlAnimPreviewVisible=false">关闭</el-button>
+              </div>
+            </template>
+          </el-dialog>
         </div>
 
         <!-- 作业考试 -->
@@ -2361,6 +2442,7 @@ import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal
 import resourceTabActive from "@/assets/course-detail-images/resource-tab-active-vue.png";
 import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 import aiPeopleAvatar from "@/assets/aipeople.jpg"; // 引入aipeople.jpg
+import { getHtmlAnimationDisplay } from "@/api/htmlAnimation";
 
 const router = useRouter();
 const route = useRoute();
@@ -2753,6 +2835,11 @@ function handleMenuClick(menuName: string) {
     fetchCourseScores();
   }
 
+  // 切换到 HTML 动画时加载
+  if (menuName === "html-animations") {
+    fetchHtmlAnimations();
+  }
+
   // 更新 SVG 图标颜色
   const svgElements = document.querySelectorAll(".hover-box svg");
   svgElements.forEach(svg => {
@@ -2816,6 +2903,59 @@ function handleMenuClick(menuName: string) {
       }
     });
   }
+}
+
+// ================= HTML 动画展示（学生端只读） =================
+const htmlAnimationList = ref<
+  Array<{
+    chapterId: number;
+    chapterName: string;
+    version: string;
+    url: string;
+  }>
+>([]);
+const htmlAnimationLoading = ref(false);
+const htmlAnimPreviewVisible = ref(false);
+const htmlAnimPreviewUrl = ref("");
+
+async function fetchHtmlAnimations() {
+  if (!courseDetail.value) return;
+  htmlAnimationLoading.value = true;
+  htmlAnimationList.value = [];
+  try {
+    const chapters = courseDetail.value.courseChapterList || [];
+    // 并发获取展示动画
+    const promises = chapters.map(async (ch: any) => {
+      try {
+        const { data } = await getHtmlAnimationDisplay({
+          courseId: courseDetail.value.courseId,
+            chapterId: ch.chapterId
+        });
+        if (data && data.url) {
+          htmlAnimationList.value.push({
+            chapterId: ch.chapterId,
+            chapterName: ch.name || ch.chapterName,
+            version: data.version,
+            url: data.url
+          });
+        }
+      } catch (e) {
+        // 忽略无展示版本/404
+      }
+    });
+    await Promise.all(promises);
+  } finally {
+    htmlAnimationLoading.value = false;
+  }
+}
+
+function openHtmlAnimation(item: { url: string }) {
+  htmlAnimPreviewUrl.value = item.url;
+  htmlAnimPreviewVisible.value = true;
+}
+
+function openHtmlAnimInNew() {
+  if (htmlAnimPreviewUrl.value) window.open(htmlAnimPreviewUrl.value, "_blank");
 }
 
 // 已移除图谱模式，不再需要此函数
@@ -4270,6 +4410,18 @@ onMounted(async () => {
 .course-materials-wrapper.dark {
   background-color: #1e1e1e;
 }
+
+/* HTML 动画列表样式 */
+.html-animations-header { display:flex; justify-content:space-between; align-items:center; padding:12px 24px; }
+.html-animations-body { padding:24px; overflow-y:auto; height:calc(100vh - 140px); }
+.html-anim-loading, .html-anim-empty { text-align:center; padding:60px 0; color:#909399; }
+.html-anim-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+.html-anim-item { cursor:pointer; border:1px solid #e5e5e5; border-radius:8px; padding:16px; background:#fff; transition:box-shadow .2s,transform .2s; display:flex; flex-direction:column; min-height:120px; }
+.dark .html-anim-item { background:#1e1e1e; border-color:#333; }
+.html-anim-item:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); transform:translateY(-2px); }
+.anim-title { font-weight:600; font-size:15px; margin-bottom:8px; line-height:1.3; }
+.anim-meta { font-size:12px; color:#909399; margin-top:auto; }
+.anim-action { margin-top:6px; font-size:12px; color:#409eff; }
 
 .materials-container {
   padding: 80px 20px 20px;
