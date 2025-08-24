@@ -450,6 +450,8 @@ onMounted(async () => {
 .header .placeholder { min-width:60px; }
 
 .main-content { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+.practice-container[data-embedded="true"] .main-content { max-width: 1400px; width:100%; padding:0 10px; }
+.practice-container[data-embedded="true"] .el-card { width:100%; }
 .card-header { display:flex; align-items:center; justify-content:space-between; }
 
 .wrong-list { display: flex; flex-direction: column; gap: 14px; }
