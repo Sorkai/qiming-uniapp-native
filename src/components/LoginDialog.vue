@@ -39,7 +39,7 @@
         </div>
 
         <!-- 账号密码登录 -->
-        <div v-show="activeTab === 'account'" class="login-form">
+  <div v-show="activeTab === 'account'" class="login-form" @keyup.enter="handleLogin">
           <div class="form-item">
             <el-input
               v-model="loginForm.username"
@@ -73,7 +73,7 @@
         </div>
 
         <!-- 手机验证码登录 -->
-        <div v-show="activeTab === 'phone'" class="login-form">
+  <div v-show="activeTab === 'phone'" class="login-form" @keyup.enter="handleLogin">
           <div class="form-item">
             <el-input
               v-model="phoneForm.phone"
@@ -159,7 +159,7 @@
           </a>
         </div>
 
-        <div class="login-form">
+  <div class="login-form" @keyup.enter="handleRegister">
           <div class="form-item">
             <el-input
               v-model="registerForm.phone"
