@@ -1,6 +1,6 @@
 <template>
-  <div class="practice-container" :class="currentTheme">
-    <div class="header" :class="currentTheme">
+  <div class="practice-container" :class="currentTheme" :data-embedded="embedded">
+    <div v-if="!embedded" class="header" :class="currentTheme">
       <div class="header-content">
         <div class="back-btn" @click="goBack">
           <el-icon><ArrowLeft /></el-icon> 返回
@@ -165,6 +165,10 @@ const route = useRoute();
 const router = useRouter();
 const currentTheme = ref('light');
 
+// 嵌入模式 props
+const props = defineProps<{ embedded?: boolean; courseId?: number }>();
+const embedded = computed(() => !!props.embedded);
+
 const page = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
@@ -208,7 +212,10 @@ function resetFilters() {
   refreshList();
 }
 
-const courseId = computed(() => Number(route.query.courseId || route.params.id));
+const courseId = computed(() => {
+  if (props.courseId) return props.courseId;
+  return Number(route.query.courseId || route.params.id);
+});
 
 const analysisHistoryMap = ref<Record<string, WrongExerciseAnalyzeResponse>>({});
 
@@ -419,7 +426,7 @@ async function batchAnalyze(customList?: any[]) {
 const formatTime = (t: string) => dayjs(t).format('YYYY-MM-DD HH:mm');
 const sourceText = (s: number) => ({ 1: '作业', 2: '考试', 3: '自测题' } as any)[s] || '未知';
 
-const goBack = () => router.back();
+const goBack = () => { if (!embedded.value) router.back(); };
 
 onMounted(async () => {
   await fetchList();
@@ -443,6 +450,8 @@ onMounted(async () => {
 .header .placeholder { min-width:60px; }
 
 .main-content { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+.practice-container[data-embedded="true"] .main-content { max-width: 1400px; width:100%; padding:0 10px; }
+.practice-container[data-embedded="true"] .el-card { width:100%; }
 .card-header { display:flex; align-items:center; justify-content:space-between; }
 
 .wrong-list { display: flex; flex-direction: column; gap: 14px; }

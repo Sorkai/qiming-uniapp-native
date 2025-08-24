@@ -634,36 +634,9 @@
                 </div>
                 <el-empty v-else description="暂无考试" />
               </el-tab-pane>
-              <!-- 新增随练标签页 -->
+              <!-- 随练标签页：嵌入新版随练组件 -->
               <el-tab-pane label="随练" name="practice">
-                <div
-                  v-if="wrongQuestionList && wrongQuestionList.length > 0"
-                  class="wrong-question-list"
-                >
-                  <div
-                    v-for="(item, index) in wrongQuestionList"
-                    :key="index"
-                    class="wrong-question-item"
-                    :class="{ dark: currentTheme === 'dark' }"
-                  >
-                    <div class="wrong-question-icon">
-                      <img :src="logo" alt="错题" />
-                    </div>
-                    <div class="wrong-question-info">
-                      <div class="wrong-question-title">{{ item.title }}</div>
-                      <div class="wrong-question-meta" />
-                    </div>
-                    <div class="wrong-question-action">
-                      <el-button
-                        size="small"
-                        type="primary"
-                        @click="viewWrongQuestion(item)"
-                        >查看</el-button
-                      >
-                    </div>
-                  </div>
-                </div>
-                <el-empty v-else description="暂无错题" />
+                <WrongExercise :embedded="true" :course-id="courseId" />
               </el-tab-pane>
             </el-tabs>
           </div>
@@ -2519,6 +2492,7 @@ import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
 import * as echarts from "echarts";
 import BackArrowIcon from "@/components/icons/BackArrowIcon.vue";
 import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
+import WrongExercise from "@/views/account/wrong-exercise.vue"; // 嵌入随练组件
 import logo from "@/assets/kecheng.jpg"; // 导入logo图片
 import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal-vue.png";
 import resourceTabActive from "@/assets/course-detail-images/resource-tab-active-vue.png";
@@ -2528,7 +2502,8 @@ import { getHtmlAnimationDisplay } from "@/api/htmlAnimation";
 
 const router = useRouter();
 const route = useRoute();
-const courseId = computed(() => Number(route.params.id));
+const baseCourseId = ref<number | null>(null);
+const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref(null);
 const loading = ref(false);
 const currentTheme = ref("light");
@@ -2567,10 +2542,10 @@ const qaStats = ref({
   avgResponseTime: "5分钟"
 });
 
-// 新增错题列表相关
-const wrongQuestionList = ref([]);
-const isWrongQuestionDialogVisible = ref(false); // 控制错题详情对话框显示
-const selectedWrongQuestion = ref(null); // 存储当前选中的错题
+// 旧随练错题列表逻辑已由新组件接管，保留占位变量避免引用报错（若有遗留）
+const wrongQuestionList = ref([]); // deprecated
+const isWrongQuestionDialogVisible = ref(false);
+const selectedWrongQuestion = ref(null);
 
 // 获取本地存储的用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
@@ -3687,24 +3662,7 @@ const fetchCourseStudyEffect = async () => {
   }
 };
 
-// 获取用户错题列表
-const fetchWrongQuestionList = async () => {
-  try {
-    const { code, data, msg } = await getUserWrongQuestionList({
-      courseId: courseId.value,
-      page: 1,
-      pageSize: 100 // 可以根据需要调整每页显示数量
-    });
-    if (code === 200 && data && data.list) {
-      wrongQuestionList.value = data.list;
-    } else {
-      ElMessage.error(msg || "获取错题列表失败");
-    }
-  } catch (error) {
-    console.error("获取错题列表出错:", error);
-    ElMessage.error("获取错题列表失败，请稍后重试");
-  }
-};
+// 旧 fetchWrongQuestionList 已废弃，由嵌入组件内部自行拉取
 
 // 获取来源类型文本
 const getSourceTypeText = (sourceType: number) => {
@@ -3731,22 +3689,10 @@ watch(
   }
 );
 
-// 监听 homeworkExamTab 变化，当切换到"随练"标签时加载错题列表
-watch(
-  () => homeworkExamTab.value,
-  newVal => {
-    if (newVal === "practice") {
-      router.push({
-        path: "/account/wrong-exercise",
-        query: { courseId: String(courseId.value || route.params.id) }
-      });
-    }
-  }
-);
+// 移除原随练标签跳转逻辑，改为内部嵌入组件
 
 onMounted(async () => {
-  // 获取课程ID
-  courseId.value = Number(route.params.id);
+  baseCourseId.value = Number(route.params.id);
 
   // 获取课程详情
   await fetchCourseDetail();

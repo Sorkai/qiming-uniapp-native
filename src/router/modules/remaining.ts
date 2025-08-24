@@ -99,14 +99,5 @@ export default [
       rank: 108
     }
   },
-  {
-    path: "/account/wrong-exercise",
-    name: "WrongExercise",
-    component: () => import("@/views/account/wrong-exercise.vue"),
-    meta: {
-      title: "随练",
-      showLink: false,
-      rank: 109
-    }
-  }
+  // 嵌入到课程详情中的随练页面已不再需要独立路由
 ] satisfies Array<RouteConfigsTable>;
