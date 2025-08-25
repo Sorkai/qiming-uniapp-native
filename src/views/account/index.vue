@@ -255,11 +255,12 @@
               <div class="ai-summary">
                 <h3>AI总结</h3>
                 <div class="summary-card">
-                  <p>根据您的学习进度，AI为您总结：</p>
+                  <p>{{ aiSummaryTitle }}</p>
                   <ul>
-                    <li>已完成基础模块学习，知识点良好</li>
-                    <li>建议加强实践环节的练习</li>
-                    <li>下周将开始新模块的学习</li>
+                    <li v-for="(item, idx) in displayedSummary" :key="idx">
+                      {{ item }}
+                    </li>
+                    <li v-if="isTyping" class="typing-cursor">正在生成中<span class="dot" v-for="n in 3" :key="n">.</span></li>
                   </ul>
                 </div>
               </div>
@@ -674,6 +675,110 @@ const getCoverColor = (index: number) => {
 const handleCourseClick = (courseId: number) => {
   router.push(`/course/${courseId}`);
 };
+
+// ---------------- AI 总结相关（后续可替换为真实接口） ----------------
+// 标题与列表通过变量控制，方便后续替换为后端返回
+const aiSummaryTitle = ref("根据您的学习进度，AI助手小启为您总结：");
+const aiSummaryList = ref<string[]>([
+  "您目前已完成基础模块学习，知识点体系良好",
+  "建议加强实践环节的练习",
+  "下周将开始新模块的学习",
+  "根据您的习题练习已经生成相似题目推荐，推荐练习",
+  "您可以结合AI课程动画再次复习知识点体系",
+  "知识点已生成可以在课程主页进行观看"
+]);
+
+// 打字效果相关状态
+const typingIndex = ref(0); // 当前正在打的行索引
+const charIndex = ref(0); // 当前行字符位置
+const typedLines = ref<string[]>([]); // 已经显示的内容（含正在输入的行）
+const isTyping = ref(false);
+const typingSpeed = 55; // 每个字符毫秒
+let typingTimer: number | null = null;
+
+const resetTyping = () => {
+  if (typingTimer) {
+    clearTimeout(typingTimer);
+    typingTimer = null;
+  }
+  typedLines.value = [];
+  typingIndex.value = 0;
+  charIndex.value = 0;
+  isTyping.value = false;
+};
+
+const typeNextChar = () => {
+  const lines = aiSummaryList.value;
+  if (typingIndex.value >= lines.length) {
+    isTyping.value = false;
+    typingTimer = null;
+    return;
+  }
+
+  const currentLine = lines[typingIndex.value];
+  // 初始化当前行
+  if (!typedLines.value[typingIndex.value]) {
+    typedLines.value[typingIndex.value] = "";
+  }
+
+  // 追加一个字符
+  typedLines.value[typingIndex.value] += currentLine[charIndex.value];
+  charIndex.value++;
+
+  if (charIndex.value < currentLine.length) {
+    typingTimer = window.setTimeout(typeNextChar, typingSpeed);
+  } else {
+    // 当前行完成，进入下一行
+    typingIndex.value++;
+    charIndex.value = 0;
+    typingTimer = window.setTimeout(typeNextChar, 320); // 换行停顿
+  }
+};
+
+const startTyping = () => {
+  resetTyping();
+  if (!aiSummaryList.value.length) return;
+  isTyping.value = true;
+  typeNextChar();
+};
+
+// 供模板使用的展示列表
+const displayedSummary = computed(() => typedLines.value);
+
+// 当进入首页时启动打字
+watch(activeMenu, newVal => {
+  if (newVal === "home") {
+    // 延迟确保数据已准备
+    setTimeout(() => startTyping(), 100);
+  }
+});
+
+// 初次挂载如果就在首页也启动
+onMounted(() => {
+  if (activeMenu.value === "home") {
+    setTimeout(() => startTyping(), 150);
+  }
+});
+
+onUnmounted(() => {
+  if (typingTimer) clearTimeout(typingTimer);
+});
+
+// 预留：未来从后端获取 AI 总结内容
+// const loadAiSummary = async () => {
+//   try {
+//     const { code, data } = await getAiSummary();
+//     if (code === 200 && data) {
+//       aiSummaryTitle.value = data.title;
+//       aiSummaryList.value = data.items || [];
+//     }
+//   } catch (e) {
+//     console.error('获取AI总结失败', e);
+//   }
+// };
+
+// 如果需要与首页数据一起加载，可在 loadHomeData 里调用：
+// loadAiSummary();
 </script>
 
 <style lang="scss" scoped>
