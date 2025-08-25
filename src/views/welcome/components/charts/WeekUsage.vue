@@ -95,9 +95,9 @@ onMounted(() => {
 
 <template>
   <div class="w-full">
-    <el-skeleton :loading="loading" animated :rows="5">
+    <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div ref="chartRef" style="width: 100%; height: 300px"></div>
+        <div ref="chartRef" style="width: 100%; height: 350px"></div>
       </template>
     </el-skeleton>
   </div>

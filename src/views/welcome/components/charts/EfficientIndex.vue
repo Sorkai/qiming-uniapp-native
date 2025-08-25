@@ -223,11 +223,12 @@ onMounted(() => {
             <re-icon icon="ep:opportunity" class="mr-2" />
             AI 教学优化建议
           </h3>
-          <el-row :gutter="16">
+          <el-row :gutter="16" class="suggestion-row">
             <el-col
               v-for="(item, index) in optimizeSuggestions"
               :key="index"
               :span="8"
+              class="suggestion-col"
             >
               <el-card class="suggestion-card" shadow="hover">
                 <template #header>
@@ -290,11 +291,32 @@ onMounted(() => {
     color: var(--el-text-color-primary);
   }
 
+  .suggestion-row {
+    // 让el-row里的列高度对齐
+    align-items: stretch;
+  }
+
+  .suggestion-col {
+    display: flex;
+  }
+
   .suggestion-card {
     border-radius: 8px;
     border: 1px solid #e0e0e0;
     margin-bottom: 16px;
     transition: all 0.3s;
+    // 占满列可使所有卡片等高
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+
+    // 使 body 区域也为弹性布局以便 footer 底部对齐
+    :deep(.el-card__body) {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      height: 100%;
+    }
 
     &:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -308,12 +330,15 @@ onMounted(() => {
 
     .suggestion-content {
       color: #606266;
-      min-height: 60px;
+      flex: 1 1 auto;
+      // 保留最小高度防止过短
+      min-height: 120px;
     }
 
     .card-footer {
       text-align: right;
-      margin-top: 10px;
+      margin-top: auto; // 推到底部
+      padding-top: 8px;
     }
   }
 }
