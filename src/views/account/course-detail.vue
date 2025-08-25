@@ -1660,7 +1660,7 @@
               <div class="mastery-summary-wrapper">
                 <div class="mastery-summary-left">
                   <div class="summary-card" :class="currentTheme">
-                    <div class="summary-title">知识点总数</div>
+                    <div class="summary-title">基础知识点</div>
                     <div class="summary-value">{{ studyEffectData.knowledgePointNum || 0 }}</div>
                   </div>
                   <div class="summary-card" :class="currentTheme">
@@ -1696,6 +1696,7 @@
                 >
                   <h2
                     class="collapsible-header"
+                    :class="{ 'is-expanded': isChapterExpanded(chapter.chapterId) }"
                     @click="toggleChapterCollapse(chapter.chapterId)"
                   >
                     {{ chapter.chapterName }}
@@ -1707,7 +1708,8 @@
                     />
                   </h2>
 
-                  <div v-show="isChapterExpanded(chapter.chapterId)">
+                  <transition name="chapter-collapse">
+                  <div v-show="isChapterExpanded(chapter.chapterId)" class="chapter-body">
                     <!-- 重点部分 -->
                     <div
                       v-if="
@@ -1719,6 +1721,7 @@
                     >
                       <h3
                         class="collapsible-header"
+                        :class="{ 'is-expanded': isSubsectionExpanded(chapter.chapterId, 'keyPoint') }"
                         @click="
                           toggleSubsectionCollapse(
                             chapter.chapterId,
@@ -1726,7 +1729,7 @@
                           )
                         "
                       >
-                        重点
+                        <span class="count-badge">{{ chapter.keyPointArray.length }}</span> 重点
                         <i
                           class="el-icon-arrow-down"
                           :class="{
@@ -1737,10 +1740,12 @@
                           }"
                         />
                       </h3>
-                      <div
-                        v-show="
-                          isSubsectionExpanded(chapter.chapterId, 'keyPoint')
-                        "
+                      <transition name="sub-collapse">
+                      <transition-group
+                        v-show="isSubsectionExpanded(chapter.chapterId, 'keyPoint')"
+                        name="point-fade"
+                        tag="div"
+                        class="subsection-wrapper"
                       >
                         <div
                           v-for="(item, idx) in chapter.keyPointArray || []"
@@ -1754,7 +1759,8 @@
                             {{ item.content }}
                           </div>
                         </div>
-                      </div>
+                      </transition-group>
+                      </transition>
                     </div>
 
                     <!-- 难点部分 -->
@@ -1768,6 +1774,7 @@
                     >
                       <h3
                         class="collapsible-header"
+                        :class="{ 'is-expanded': isSubsectionExpanded(chapter.chapterId, 'difficultPoint') }"
                         @click="
                           toggleSubsectionCollapse(
                             chapter.chapterId,
@@ -1775,7 +1782,7 @@
                           )
                         "
                       >
-                        难点
+                        <span class="count-badge">{{ chapter.difficultPointArray.length }}</span> 难点
                         <i
                           class="el-icon-arrow-down"
                           :class="{
@@ -1786,17 +1793,15 @@
                           }"
                         />
                       </h3>
-                      <div
-                        v-show="
-                          isSubsectionExpanded(
-                            chapter.chapterId,
-                            'difficultPoint'
-                          )
-                        "
+                      <transition name="sub-collapse">
+                      <transition-group
+                        v-show="isSubsectionExpanded(chapter.chapterId, 'difficultPoint')"
+                        name="point-fade"
+                        tag="div"
+                        class="subsection-wrapper"
                       >
                         <div
-                          v-for="(item, idx) in chapter.difficultPointArray ||
-                          []"
+                          v-for="(item, idx) in chapter.difficultPointArray || []"
                           :key="'diff-' + idx"
                           class="point-item"
                         >
@@ -1807,7 +1812,8 @@
                             {{ item.content }}
                           </div>
                         </div>
-                      </div>
+                      </transition-group>
+                      </transition>
                     </div>
 
                     <!-- 知识点部分 -->
@@ -1821,6 +1827,7 @@
                     >
                       <h3
                         class="collapsible-header"
+                        :class="{ 'is-expanded': isSubsectionExpanded(chapter.chapterId, 'knowledge') }"
                         @click="
                           toggleSubsectionCollapse(
                             chapter.chapterId,
@@ -1828,7 +1835,7 @@
                           )
                         "
                       >
-                        知识点
+                        <span class="count-badge">{{ chapter.knowledgeArray.length }}</span> 基础知识点
                         <i
                           class="el-icon-arrow-down"
                           :class="{
@@ -1839,10 +1846,12 @@
                           }"
                         />
                       </h3>
-                      <div
-                        v-show="
-                          isSubsectionExpanded(chapter.chapterId, 'knowledge')
-                        "
+                      <transition name="sub-collapse">
+                      <transition-group
+                        v-show="isSubsectionExpanded(chapter.chapterId, 'knowledge')"
+                        name="point-fade"
+                        tag="div"
+                        class="subsection-wrapper"
                       >
                         <div
                           v-for="(item, idx) in chapter.knowledgeArray || []"
@@ -1856,7 +1865,8 @@
                             {{ item.content }}
                           </div>
                         </div>
-                      </div>
+                      </transition-group>
+                      </transition>
                     </div>
 
                     <!-- 概念部分 -->
@@ -1873,7 +1883,7 @@
                           toggleSubsectionCollapse(chapter.chapterId, 'concept')
                         "
                       >
-                        概念
+                        <span class="count-badge">{{ chapter.ConceptArray.length }}</span> 概念
                         <i
                           class="el-icon-arrow-down"
                           :class="{
@@ -1884,10 +1894,12 @@
                           }"
                         />
                       </h3>
-                      <div
-                        v-show="
-                          isSubsectionExpanded(chapter.chapterId, 'concept')
-                        "
+                      <transition name="sub-collapse">
+                      <transition-group
+                        v-show="isSubsectionExpanded(chapter.chapterId, 'concept')"
+                        name="point-fade"
+                        tag="div"
+                        class="subsection-wrapper"
                       >
                         <div
                           v-for="(item, idx) in chapter.ConceptArray || []"
@@ -1901,9 +1913,11 @@
                             {{ item.content }}
                           </div>
                         </div>
-                      </div>
+                      </transition-group>
+                      </transition>
                     </div>
                   </div>
+                  </transition>
                 </div>
               </div>
 
@@ -3602,7 +3616,7 @@ const updateMasterySummaryChart = () => {
     },
     xAxis: {
       type: "category",
-      data: ["知识点", "重点", "难点", "概念"],
+      data: ["基础知识点", "重点", "难点", "概念"],
       axisLine: { lineStyle: { color: borderColor } },
       axisTick: { show: false },
       axisLabel: { color: textColor, fontSize: 12 }
@@ -3728,28 +3742,27 @@ const fetchCourseStudyEffect = async () => {
 
       // Initialize collapse states for new data
       if (response.data.chapterList) {
-        response.data.chapterList.forEach((chapter, idx) => {
-          // 默认第1章展开
-          chapterCollapseStates.set(chapter.chapterId, idx === 0);
-
-          // 默认第1章的重点展开
+        // 初始全部折叠
+        response.data.chapterList.forEach(chapter => {
+          chapterCollapseStates.set(chapter.chapterId, false);
           if (chapter.keyPointArray)
-            subsectionCollapseStates.set(
-              `${chapter.chapterId}-keyPoint`,
-              idx === 0
-            );
+            subsectionCollapseStates.set(`${chapter.chapterId}-keyPoint`, false);
           if (chapter.difficultPointArray)
-            subsectionCollapseStates.set(
-              `${chapter.chapterId}-difficultPoint`,
-              false
-            );
+            subsectionCollapseStates.set(`${chapter.chapterId}-difficultPoint`, false);
           if (chapter.knowledgeArray)
-            subsectionCollapseStates.set(
-              `${chapter.chapterId}-knowledge`,
-              false
-            );
+            subsectionCollapseStates.set(`${chapter.chapterId}-knowledge`, false);
           if (chapter.ConceptArray)
             subsectionCollapseStates.set(`${chapter.chapterId}-concept`, false);
+        });
+
+        // 使用 nextTick + requestAnimationFrame 触发展开动画（首章）
+        nextTick(() => {
+          const first = response.data.chapterList[0];
+            if (first) {
+              requestAnimationFrame(() => {
+                chapterCollapseStates.set(first.chapterId, true);
+              });
+            }
         });
       }
     }
@@ -4319,9 +4332,6 @@ watch(
   display: flex;
   border-radius: 8px;
   padding: 10px;
-}
-
-.dark .qa-input-wrapper {
 }
 
 .qa-input {
@@ -4962,6 +4972,8 @@ watch(
 
 .point-section {
   margin-bottom: 16px;
+  position: relative;
+  padding-left: 14px;
 }
 
 .point-section h3 {
@@ -4969,7 +4981,80 @@ watch(
   color: #606266;
   margin-bottom: 8px;
   font-weight: 500;
+  position: relative;
 }
+
+.point-section:before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg,#604ffd,#8f7bff);
+  opacity: .18;
+}
+
+.point-section.dark:before { background: linear-gradient(180deg,#8f7bff,#604ffd); opacity:.35; }
+
+.chapter-body { position: relative; }
+
+.point-item {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(4px);
+  border: 1px solid #f1f1f5;
+  transition: background .3s, border-color .3s, transform .3s;
+}
+.point-item:hover { background:#fff; transform: translateY(-2px); }
+.point-item.dark {
+  background: rgba(37,37,37,0.55);
+  border-color:#3e3e3e;
+}
+.point-item.dark:hover { background:#2e2e2e; }
+
+.point-item + .point-item { margin-top: 10px; }
+
+.count-badge {
+  display:inline-block;
+  min-width:22px;
+  padding:2px 6px;
+  font-size:12px;
+  line-height:1;
+  border-radius:10px;
+  background:linear-gradient(90deg,#604ffd,#8f7bff);
+  color:#fff;
+  font-weight:600;
+  margin-right:8px;
+  box-shadow:0 2px 6px rgba(96,79,253,.4);
+}
+.dark .count-badge { background:linear-gradient(90deg,#8f7bff,#604ffd); box-shadow:0 2px 6px rgba(143,123,255,.4); }
+
+/* 章节展开动画 */
+.chapter-collapse-enter-active, .chapter-collapse-leave-active { transition: all .35s cubic-bezier(.4,0,.2,1); overflow:hidden; }
+.chapter-collapse-enter-from, .chapter-collapse-leave-to { opacity:0; transform: translateY(-6px); max-height:0; }
+.chapter-collapse-enter-to, .chapter-collapse-leave-from { opacity:1; transform:translateY(0); }
+
+/* 子项列表淡入 */
+.point-fade-enter-active { transition: all .4s cubic-bezier(.34,1.56,.64,1); }
+.point-fade-leave-active { transition: all .25s ease; position:relative; }
+.point-fade-enter-from, .point-fade-leave-to { opacity:0; transform: translateY(6px) scale(.98); }
+.point-fade-enter-to { opacity:1; transform:translateY(0) scale(1); }
+
+/* 让每个子项有级联延迟 */
+.point-fade-enter-active > .point-item { animation: pointStagger .6s ease forwards; opacity:0; }
+.point-fade-enter-active > .point-item:nth-child(1){animation-delay:.05s}
+.point-fade-enter-active > .point-item:nth-child(2){animation-delay:.1s}
+.point-fade-enter-active > .point-item:nth-child(3){animation-delay:.15s}
+.point-fade-enter-active > .point-item:nth-child(4){animation-delay:.2s}
+.point-fade-enter-active > .point-item:nth-child(5){animation-delay:.25s}
+.point-fade-enter-active > .point-item:nth-child(6){animation-delay:.3s}
+@keyframes pointStagger { to { opacity:1; transform:translateY(0) scale(1);} from { opacity:0; transform:translateY(10px) scale(.96);} }
+
+/* 子节高度折叠动画，确保不是从页面顶端落下 */
+.sub-collapse-enter-active, .sub-collapse-leave-active { transition: all .28s ease; overflow:hidden; }
+.sub-collapse-enter-from, .sub-collapse-leave-to { max-height:0; opacity:0; transform:translateY(-4px); }
+.sub-collapse-enter-to, .sub-collapse-leave-from { max-height:800px; opacity:1; transform:translateY(0); }
 
 .point-item {
   padding: 12px;
@@ -5034,6 +5119,66 @@ watch(
 .collapsible-header i.rotated {
   transform: rotate(-90deg);
 }
+
+/* 新增：子节标题高阶外观 */
+.point-section > .collapsible-header {
+  background: linear-gradient(145deg, #ffffff, #f5f7ff);
+  border: 1px solid #eceefe;
+  border-radius: 14px;
+  padding: 10px 14px 10px 14px;
+  margin: 4px 0 10px;
+  box-shadow: 0 2px 4px -1px rgba(96,79,253,0.08), 0 4px 14px -4px rgba(96,79,253,0.12);
+  position: relative;
+  overflow: hidden;
+  transition: background .35s, box-shadow .35s, transform .35s;
+}
+.point-section > .collapsible-header:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(96,79,253,.18), transparent 60%);
+  opacity: .6;
+  pointer-events: none;
+}
+.point-section > .collapsible-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px -2px rgba(96,79,253,0.16), 0 6px 20px -6px rgba(96,79,253,0.22);
+}
+.point-section > .collapsible-header.is-expanded {
+  background: linear-gradient(145deg,#fff,#f0f3ff);
+  border-color:#d7dafa;
+}
+.point-section.dark > .collapsible-header {
+  background: linear-gradient(145deg,#2a2a35,#23232b);
+  border: 1px solid #3d3f55;
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,.5), 0 4px 14px -4px rgba(0,0,0,.65);
+}
+.point-section.dark > .collapsible-header:before {
+  background: radial-gradient(circle at 20% 20%, rgba(143,123,255,.35), transparent 65%);
+}
+.point-section.dark > .collapsible-header:hover {
+  box-shadow: 0 4px 10px -2px rgba(0,0,0,.6), 0 6px 20px -6px rgba(0,0,0,.7);
+}
+.point-section.dark > .collapsible-header.is-expanded {
+  background: linear-gradient(145deg,#32323d,#292a33);
+  border-color:#4d5070;
+}
+
+/* 徽章在新容器中的微调 */
+.point-section > .collapsible-header .count-badge {
+  margin-right:10px;
+  flex-shrink:0;
+}
+
+/* 箭头对齐与视觉缩进 */
+.point-section > .collapsible-header i {
+  margin-left: 12px;
+  font-size: 14px;
+  color:#878b99;
+  transition: color .3s;
+}
+.point-section > .collapsible-header:hover i { color:#604ffd; }
+.point-section.dark > .collapsible-header:hover i { color:#8f7bff; }
 
 /* 随练错题列表样式 */
 .wrong-question-list {
