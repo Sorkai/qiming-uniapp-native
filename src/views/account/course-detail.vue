@@ -3758,6 +3758,12 @@ onMounted(async () => {
   align-items: center;
 }
 
+/* 调整日期与返回按钮距离 */
+.current-time {
+  margin-left: 25px;
+  display: inline-block;
+}
+
 /* 添加按钮旋转动画 */
 .botton-box-down {
   transition: transform 0.3s ease;
