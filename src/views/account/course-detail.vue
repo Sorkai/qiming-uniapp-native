@@ -1657,32 +1657,30 @@
             style="width: 100%"
           >
             <div data-v-487e2460="" class="left-scroll">
-              <ul data-v-487e2460="" class="mastery-data-ul">
-                <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">知识点总数</span
-                  ><span data-v-487e2460="" class="num">{{
-                    studyEffectData.knowledgePointNum || 0
-                  }}</span>
-                </li>
-                <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">重点数量</span
-                  ><span data-v-487e2460="" class="num">{{
-                    studyEffectData.keyPointNum || 0
-                  }}</span>
-                </li>
-                <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">难点数量</span
-                  ><span data-v-487e2460="" class="num">{{
-                    studyEffectData.difficultPointNum || 0
-                  }}</span>
-                </li>
-                <li data-v-487e2460="">
-                  <span data-v-487e2460="" class="text">概念数量</span
-                  ><span data-v-487e2460="" class="num">{{
-                    studyEffectData.conceptNum || 0
-                  }}</span>
-                </li>
-              </ul>
+              <div class="mastery-summary-wrapper">
+                <div class="mastery-summary-left">
+                  <div class="summary-card" :class="currentTheme">
+                    <div class="summary-title">知识点总数</div>
+                    <div class="summary-value">{{ studyEffectData.knowledgePointNum || 0 }}</div>
+                  </div>
+                  <div class="summary-card" :class="currentTheme">
+                    <div class="summary-title">重点数量</div>
+                    <div class="summary-value">{{ studyEffectData.keyPointNum || 0 }}</div>
+                  </div>
+                  <div class="summary-card" :class="currentTheme">
+                    <div class="summary-title">难点数量</div>
+                    <div class="summary-value">{{ studyEffectData.difficultPointNum || 0 }}</div>
+                  </div>
+                  <div class="summary-card" :class="currentTheme">
+                    <div class="summary-title">概念数量</div>
+                    <div class="summary-value">{{ studyEffectData.conceptNum || 0 }}</div>
+                  </div>
+                </div>
+                <div class="mastery-summary-right" :class="currentTheme">
+                  <div class="summary-chart-title">掌握结构概览</div>
+                  <div ref="masterySummaryChartRef" class="summary-chart" />
+                </div>
+              </div>
 
               <div
                 v-if="
@@ -2525,6 +2523,9 @@ const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
 const masteryChartRef = ref(null); // 添加图表引用
 let masteryChart = null; // 添加图表实例变量
+// 新增掌握概览柱状图引用
+const masterySummaryChartRef = ref(null);
+let masterySummaryChart: any = null;
 
 // 课程成绩相关
 const courseScores = ref<CourseScoreResult | null>(null);
@@ -2957,6 +2958,12 @@ function handleMenuClick(menuName: string) {
       } else if (masteryChart) {
         // 已初始化但可能需要刷新
         masteryChart.resize();
+      }
+      // 初始化或刷新掌握概览柱状图
+      if (!masterySummaryChart && masterySummaryChartRef.value) {
+        initMasterySummaryChart();
+      } else if (masterySummaryChart) {
+        masterySummaryChart.resize();
       }
     });
   }
@@ -3562,6 +3569,90 @@ const initMasteryChart = () => {
   });
 };
 
+// ============ 新增 四项数量柱状图 ============
+const initMasterySummaryChart = () => {
+  if (!masterySummaryChartRef.value) return;
+  masterySummaryChart = echarts.init(masterySummaryChartRef.value);
+  updateMasterySummaryChart();
+  window.addEventListener("resize", () => masterySummaryChart?.resize());
+};
+
+const updateMasterySummaryChart = () => {
+  if (!masterySummaryChart) return;
+  const isDark = currentTheme.value === "dark";
+  const textColor = isDark ? "#e0e0e0" : "#303133";
+  const borderColor = isDark ? "#3e3e3e" : "#ebeef5";
+  const dataValues = [
+    studyEffectData.value.knowledgePointNum || 0,
+    studyEffectData.value.keyPointNum || 0,
+    studyEffectData.value.difficultPointNum || 0,
+    studyEffectData.value.conceptNum || 0
+  ];
+  const maxVal = Math.max(...dataValues, 10);
+  masterySummaryChart.setOption({
+    grid: { left: 40, right: 20, top: 40, bottom: 30 },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      backgroundColor: "rgba(0,0,0,0.75)",
+      borderWidth: 0,
+      borderRadius: 10,
+      padding: [10, 14],
+      textStyle: { color: "#fff", fontWeight: 500 }
+    },
+    xAxis: {
+      type: "category",
+      data: ["知识点", "重点", "难点", "概念"],
+      axisLine: { lineStyle: { color: borderColor } },
+      axisTick: { show: false },
+      axisLabel: { color: textColor, fontSize: 12 }
+    },
+    yAxis: {
+      type: "value",
+      min: 0,
+      max: Math.ceil(maxVal * 1.1),
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { lineStyle: { color: borderColor, type: "dashed" } },
+      axisLabel: { color: textColor }
+    },
+    animationDuration: 600,
+    series: [
+      {
+        name: "数量",
+        type: "bar",
+        data: dataValues.map((v, i) => {
+          const colors = [
+            ["#8F7BFF", "#604FFD"],
+            ["#FFB86C", "#FF9F43"],
+            ["#FF8AA1", "#FF5572"],
+            ["#72D5FF", "#41B6FF"]
+          ];
+          const [c1, c2] = colors[i];
+          return {
+            value: v,
+            itemStyle: {
+              borderRadius: [6, 6, 0, 0],
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: c1 },
+                { offset: 1, color: c2 }
+              ])
+            }
+          };
+        }),
+        barWidth: 36,
+        label: {
+          show: true,
+          position: "top",
+          color: textColor,
+          fontWeight: 600,
+          formatter: p => p.value
+        }
+      }
+    ]
+  });
+};
+
 // 初始化课程问答历史数据
 const initQAHistory = () => {
   // 模拟历史问答数据
@@ -3629,6 +3720,11 @@ const fetchCourseStudyEffect = async () => {
     if (response && response.code === 200 && response.data) {
       studyEffectData.value = response.data;
       console.log("获取到的学习效果数据:", studyEffectData.value);
+      // 主动更新/初始化柱状图（避免 watcher 尚未注册时丢失首次渲染）
+      if (activeMenu.value === "mastery") {
+        if (masterySummaryChart) updateMasterySummaryChart();
+        else if (masterySummaryChartRef.value) initMasterySummaryChart();
+      }
 
       // Initialize collapse states for new data
       if (response.data.chapterList) {
@@ -3712,8 +3808,31 @@ onMounted(async () => {
   nextTick(() => {
     initIconColors();
     initMasteryChart(); // 初始化知识点图表
+    if (masterySummaryChartRef.value) initMasterySummaryChart();
   });
 });
+
+// 监听主题变化：重绘柱状图
+watch(currentTheme, () => {
+  if (activeMenu.value === "mastery" && masterySummaryChart) {
+    masterySummaryChart.dispose();
+    masterySummaryChart = null;
+    nextTick(() => initMasterySummaryChart());
+  }
+});
+
+// 监听数据变化：更新柱状图
+watch(
+  () => [
+    studyEffectData.value.knowledgePointNum,
+    studyEffectData.value.keyPointNum,
+    studyEffectData.value.difficultPointNum,
+    studyEffectData.value.conceptNum
+  ],
+  () => {
+    if (masterySummaryChart) updateMasterySummaryChart();
+  }
+);
 </script>
 
 <style>
@@ -4992,5 +5111,105 @@ onMounted(async () => {
 
 .wrong-question-action {
   flex-shrink: 0;
+}
+
+/* ================= 知识点统计概览 ================= */
+.mastery-summary-wrapper {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.mastery-summary-left {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 16px;
+  flex: 1 1 380px;
+  max-width: 520px;
+}
+
+.summary-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 20px 14px;
+  box-shadow: 0 4px 18px -2px rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s;
+  backdrop-filter: blur(6px);
+}
+.summary-card:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(96,79,253,0.08), rgba(96,79,253,0));
+  pointer-events: none;
+}
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px -4px rgba(0,0,0,0.12), 0 4px 8px -2px rgba(0,0,0,0.08);
+}
+.summary-card.dark {
+  background: #252525;
+  box-shadow: 0 4px 18px -2px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.4);
+}
+.summary-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 8px;
+}
+.summary-card.dark .summary-title { color: #b4b4c7; }
+.summary-value {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1px;
+  background: linear-gradient(90deg,#604ffd,#8f7bff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.summary-card.dark .summary-value {
+  background: linear-gradient(90deg,#a89bff,#7869ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.mastery-summary-right {
+  flex: 1 1 480px;
+  min-width: 360px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px 20px 12px;
+  box-shadow: 0 4px 18px -2px rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.04);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.mastery-summary-right.dark {
+  background: #252525;
+  box-shadow: 0 4px 18px -2px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.4);
+}
+.summary-chart-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 6px;
+}
+.mastery-summary-right.dark .summary-chart-title { color: #e0e0e0; }
+.summary-chart {
+  flex: 1;
+  width: 100%;
+  height: 240px;
+}
+
+@media (max-width: 1200px) {
+  .mastery-summary-wrapper { flex-direction: column; }
+  .mastery-summary-right { min-height: 260px; }
+  .summary-chart { height: 220px; }
 }
 </style>
