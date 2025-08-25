@@ -277,6 +277,7 @@ const handleLoginSuccess = () => {
 
       img {
         height: 100%;
+        border-radius: 12px;
       }
     }
 
