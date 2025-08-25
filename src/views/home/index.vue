@@ -4,7 +4,7 @@
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
         <div class="logo" @click="router.push('/home')">
-          <img :src="logo" alt="Logo" />
+          <img :src="logo" alt="Logo" class="app-logo-img" />
         </div>
         <div class="header-right">
           <template v-if="userInfo">
@@ -277,7 +277,6 @@ const handleLoginSuccess = () => {
 
       img {
         height: 100%;
-        border-radius: 12px;
       }
     }
 

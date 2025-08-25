@@ -4,6 +4,12 @@
 @use "sidebar";
 @use "dark";
 
+/* 全局统一 logo 圆角样式 */
+.app-logo-img {
+  border-radius: 12px;
+  display: inline-block;
+}
+
 /* 自定义全局 CssVar */
 :root {
   /* 左侧菜单展开、收起动画时长 */
