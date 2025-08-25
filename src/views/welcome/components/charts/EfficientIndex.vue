@@ -100,7 +100,18 @@ const renderChart = () => {
         axisLabel: {
           fontSize: "0.875rem",
           interval: 0,
-          rotate: 30
+          rotate: 30,
+          // 自动换行：每行最多8个字
+          formatter: (value: string) => {
+            const maxPerLine = 8;
+            if (!value) return "";
+            if (value.length <= maxPerLine) return value;
+            const lines: string[] = [];
+            for (let i = 0; i < value.length; i += maxPerLine) {
+              lines.push(value.slice(i, i + maxPerLine));
+            }
+            return lines.join("\n");
+          }
         }
       }
     ],
