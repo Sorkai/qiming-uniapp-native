@@ -14,7 +14,7 @@
     <div class="login-container">
       <div class="login-header">
         <div class="login-logo">
-          <img src="@/assets/logo.png" alt="Logo" />
+          <img src="@/assets/logo.png" alt="Logo" class="app-logo-img" />
         </div>
         <!-- <div class="login-title">账号登录</div> -->
       </div>
@@ -579,12 +579,11 @@ const handleRegister = async () => {
       height: 60px;
       margin: 0 auto;
 
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-          border-radius: 12px;
-      }
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
     }
 
     .login-title {

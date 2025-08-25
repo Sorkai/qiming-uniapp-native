@@ -70,7 +70,7 @@ onMounted(() => {
     class="horizontal-header"
   >
     <div v-if="showLogo" class="horizontal-header-left" @click="backTopMenu">
-      <img :src="getLogo()" alt="logo" />
+      <img :src="getLogo()" alt="logo" class="app-logo-img" />
       <span>{{ title }}</span>
     </div>
     <el-menu
@@ -200,6 +200,8 @@ onMounted(() => {
 :deep(.el-loading-mask) {
   opacity: 0.45;
 }
+
+/* 使用全局 .app-logo-img 提供圆角 */
 
 .translation {
   ::v-deep(.el-dropdown-menu__item) {

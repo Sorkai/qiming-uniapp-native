@@ -4,7 +4,7 @@
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
         <div class="logo" @click="router.push('/home')">
-          <img src="@/assets/logo.png" alt="Logo" />
+          <img src="@/assets/logo.png" alt="Logo" class="app-logo-img" />
         </div>
         <div class="header-right">
           <template v-if="userInfo">
@@ -723,7 +723,6 @@ const handleCourseClick = (courseId: number) => {
 
         img {
           height: 100%;
-          border-radius: 12px;
         }
       }
 
