@@ -16,6 +16,7 @@ import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import Fullscreen from "~icons/ri/fullscreen-fill";
+import logoPng from "@/assets/logo.png";
 
 const errorInfo =
   "The current routing configuration is incorrect, please check the configuration";
@@ -143,9 +144,9 @@ export function useNav() {
     return remainingPaths.includes(path);
   }
 
-  /** 获取`logo` */
+  /** 获取`logo` 改为使用本地 assets/logo.png (通过别名避免相对路径错误) */
   function getLogo() {
-    return new URL("/logo.svg", import.meta.url).href;
+    return logoPng as unknown as string;
   }
 
   return {

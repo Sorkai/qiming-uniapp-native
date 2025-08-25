@@ -115,7 +115,7 @@ onBeforeUnmount(() => {
       ]"
     >
       <div v-if="showLogo" class="double-logo" @click="backTopMenu">
-        <img :src="getLogo()" alt="logo" />
+        <img :src="getLogo()" alt="logo" class="app-logo-img" />
       </div>
       <el-scrollbar wrap-class="scrollbar-wrapper">
         <ul>
