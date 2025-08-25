@@ -877,6 +877,12 @@ onUnmounted(() => {
       width: 240px;
 
       .user-info {
+        /* 显式指定纵向布局，避免被其它 .user-info flex 规则影响导致昵称跑到右侧 */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        /* 兜底：若被外部样式覆盖成 row，这里提高一些特异性 */
+        &.user-info { flex-direction: column; }
         padding: 30px 20px;
         margin-bottom: 24px;
         text-align: center;
@@ -1013,10 +1019,11 @@ onUnmounted(() => {
 
         ul {
           height: calc(100% - 32px);
-          padding-left: 20px;
+          /* 统一移除默认样式，改为自定义圆点，避免被其它全局 reset 覆盖后无法恢复 */
+          padding-left: 0;
           margin: 0;
           overflow-y: auto;
-          list-style-type: disc;
+          list-style: none;
 
           &::-webkit-scrollbar {
             width: 4px;
@@ -1028,6 +1035,8 @@ onUnmounted(() => {
           }
 
           li {
+            position: relative;
+            padding-left: 16px;
             margin-bottom: 8px;
             font-size: 14px;
             line-height: 1.6;
@@ -1035,6 +1044,21 @@ onUnmounted(() => {
             &:last-child {
               margin-bottom: 0;
             }
+
+            &::before {
+              content: "";
+              position: absolute;
+              top: 0.9em;
+              left: 0;
+              width: 6px;
+              height: 6px;
+              background: #fff;
+              border-radius: 50%;
+              transform: translateY(-50%);
+              opacity: 0.9;
+            }
+
+            &.typing-cursor::before { display: none; }
           }
         }
       }
