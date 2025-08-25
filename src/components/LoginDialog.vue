@@ -583,6 +583,7 @@ const handleRegister = async () => {
         width: 100%;
         height: 100%;
         object-fit: contain;
+          border-radius: 12px;
       }
     }
 
