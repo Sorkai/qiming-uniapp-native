@@ -1,15 +1,24 @@
 <template>
   <div class="user-profile">
+    <!-- 顶部自定义横幅图片区域 -->
+    <div class="profile-banner" v-if="extraInfo.bannerUrl || defaultBanner" :style="bannerStyle">
+      <div class="banner-overlay">
+        <div class="banner-text">
+          <div class="banner-title">个人中心</div>
+          <div class="banner-sub">定制你的专属空间</div>
+        </div>
+      </div>
+    </div>
     <div class="profile-header">
       <h3>个人资料</h3>
       <div class="action-buttons">
-        <el-button type="primary" size="small" @click="openEditDialog">
+        <el-button class="btn-elevated info" size="small" @click="openEditDialog">
           <el-icon><Edit /></el-icon>
-          修改资料
+          <span>修改资料</span>
         </el-button>
-        <el-button type="warning" size="small" @click="openPasswordDialog">
+        <el-button class="btn-elevated warn" size="small" @click="openPasswordDialog">
           <el-icon><Lock /></el-icon>
-          修改密码
+          <span>修改密码</span>
         </el-button>
       </div>
     </div>
@@ -24,23 +33,51 @@
       </div>
 
       <div class="profile-info">
-        <div class="info-item">
-          <div class="label">用户名</div>
-          <div class="value">{{ userInfo?.username }}</div>
-        </div>
-        <div class="info-item">
-          <div class="label">昵称</div>
-          <div class="value">{{ userInfo?.nickname || "未设置" }}</div>
-        </div>
-        <div class="info-item">
-          <div class="label">性别</div>
-          <div class="value">{{ getSexLabel }}</div>
-        </div>
-        <div class="info-item">
-          <div class="label">个性签名</div>
-          <div class="value">
-            {{ userInfo?.info || "这个人很懒，什么都没留下" }}
+        <div class="info-group">
+          <div class="group-title">基本信息</div>
+          <div class="info-item">
+            <div class="label">用户名</div>
+            <div class="value">{{ userInfo?.username || userInfo?.mobile || "-" }}</div>
           </div>
+          <div class="info-item">
+            <div class="label">昵称</div>
+            <div class="value">{{ userInfo?.nickname || "未设置" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="label">邮箱</div>
+            <div class="value email-value">
+              <el-icon v-if="extraInfo.email"><Message /></el-icon>
+              {{ extraInfo.email || "未设置" }}
+              <el-tag v-if="!extraInfo.email" size="small" type="info" effect="plain">建议尽快完善</el-tag>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="label">性别</div>
+            <div class="value">{{ getSexLabel }}</div>
+          </div>
+          <div class="info-item signature">
+            <div class="label">个性签名</div>
+            <div class="value">
+              {{ userInfo?.info || "这个人很懒，什么都没留下" }}
+            </div>
+          </div>
+        </div>
+        <div class="info-group timeline">
+          <div class="group-title">账户时间</div>
+          <div class="info-item">
+            <div class="label">注册时间</div>
+            <div class="value time-value">
+              <el-icon><Calendar /></el-icon>
+              {{ formattedRegisterTime }}
+            </div>
+          </div>
+            <div class="info-item">
+              <div class="label">最后登录</div>
+              <div class="value time-value">
+                <el-icon><Calendar /></el-icon>
+                {{ formattedLastLoginTime }}
+              </div>
+            </div>
         </div>
       </div>
     </div>
@@ -73,6 +110,21 @@
         </el-form-item>
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="form.nickname" placeholder="请输入昵称" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="form.email" placeholder="请输入邮箱" />
+        </el-form-item>
+        <el-form-item label="横幅图" prop="bannerUrl">
+          <el-input
+            v-model="form.bannerUrl"
+            placeholder="请输入横幅图片地址（留空使用默认图）"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item v-if="form.bannerUrl" label="预览">
+          <div class="banner-preview">
+            <img :src="form.bannerUrl" alt="banner" />
+          </div>
         </el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="form.sex">
@@ -156,17 +208,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
-import { Edit, Plus, Lock } from "@element-plus/icons-vue";
+import { Edit, Plus, Lock, Calendar, Message } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
 import { userKey, removeToken } from "@/utils/auth";
 import type { DataInfo } from "@/utils/auth";
-import {
-  updateFrontendUserInfo,
-  updateFrontendUserPassword
-} from "@/api/frontend/user";
+import { updateFrontendUserInfo, updateFrontendUserPassword } from "@/api/frontend/user";
 import { uploadFile, getUserDetail } from "@/api/user";
+import dayjs from "dayjs";
 
 const router = useRouter();
 const defaultAvatar = "/src/assets/user.jpg";
@@ -192,12 +242,56 @@ const form = reactive({
   nickname: "",
   sex: 0,
   avatar: "",
-  info: ""
+  info: "",
+  email: "",
+  bannerUrl: ""
 });
 
+// 额外前端模拟信息（注册时间、最后登录时间、邮箱）
+const EXTRA_KEY = "userExtraInfo";
+interface ExtraInfo {
+  registrationTime: string; // ISO string
+  lastLoginTime: string; // ISO string
+  email?: string;
+  bannerUrl?: string;
+}
+const extraInfo = reactive<ExtraInfo>({
+  registrationTime: "",
+  lastLoginTime: "",
+  email: "",
+  bannerUrl: ""
+});
+
+const loadExtraInfo = () => {
+  try {
+    const cached = storageLocal().getItem(EXTRA_KEY) as ExtraInfo | null;
+    if (cached && cached.registrationTime) {
+      Object.assign(extraInfo, cached, { lastLoginTime: dayjs().toISOString() });
+    } else {
+      extraInfo.registrationTime = dayjs().toISOString();
+      extraInfo.lastLoginTime = dayjs().toISOString();
+    }
+    persistExtra();
+  } catch (e) {
+    console.warn("读取额外信息失败", e);
+  }
+};
+
+const persistExtra = () => {
+  storageLocal().setItem(EXTRA_KEY, { ...extraInfo });
+};
+
 // 表单验证规则
+const emailValidator = (rule, value, callback) => {
+  if (!value) return callback();
+  const emailRegex = /^(?:[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*)@(?:[A-Z0-9-]+\.)+[A-Z]{2,}$/i;
+  if (!emailRegex.test(value)) callback(new Error("邮箱格式不正确"));
+  else callback();
+};
+
 const rules = {
   nickname: [{ max: 20, message: "昵称长度不能超过20个字符", trigger: "blur" }],
+  email: [{ validator: emailValidator, trigger: "blur" }],
   info: [
     { max: 200, message: "个性签名长度不能超过200个字符", trigger: "blur" }
   ]
@@ -259,7 +353,7 @@ const fetchUserDetail = async () => {
       storageLocal().setItem(userKey, res.data.userInfo); // 更新缓存
       // ElMessage.success("用户信息已更新"); // 移除此行
     } else {
-      ElMessage.error(res.message || "获取用户信息失败");
+      ElMessage.error(res.msg || "获取用户信息失败");
     }
   } catch (error) {
     ElMessage.error("获取用户信息失败");
@@ -273,6 +367,8 @@ const openEditDialog = () => {
     form.nickname = userInfo.value.nickname || "";
     form.sex = userInfo.value.sex || 0;
     form.info = userInfo.value.info || "";
+    form.email = extraInfo.email || "";
+    form.bannerUrl = extraInfo.bannerUrl || "";
     avatarUrl.value = userInfo.value.avatar || defaultAvatar;
   }
   dialogVisible.value = true;
@@ -338,12 +434,16 @@ const submitForm = async () => {
           updateData.avatar = form.avatar;
         }
 
-        const { code, msg } = await updateFrontendUserInfo(updateData);
+  const { code, msg } = await updateFrontendUserInfo(updateData);
 
         if (code === 200) {
-          ElMessage.success("资料修改成功");
-          dialogVisible.value = false;
-          fetchUserDetail(); // 重新获取用户信息
+          // 前端模拟保存邮箱
+            extraInfo.email = form.email || "";
+            extraInfo.bannerUrl = form.bannerUrl || "";
+            persistExtra();
+            ElMessage.success("资料修改成功");
+            dialogVisible.value = false;
+            fetchUserDetail(); // 重新获取用户信息
         } else {
           ElMessage.error(msg || "资料修改失败");
         }
@@ -421,13 +521,54 @@ const submitPasswordForm = async () => {
 };
 
 // 组件挂载时获取最新用户信息
+// 时间与展示格式化
+const formattedRegisterTime = computed(() =>
+  extraInfo.registrationTime ? dayjs(extraInfo.registrationTime).format("YYYY-MM-DD HH:mm:ss") : "-"
+);
+const formattedLastLoginTime = computed(() =>
+  extraInfo.lastLoginTime ? dayjs(extraInfo.lastLoginTime).format("YYYY-MM-DD HH:mm:ss") : "-"
+);
+
+// 横幅默认图片与样式
+const defaultBanner = '/src/assets/course/cover-default.jpg';
+const bannerStyle = computed(() => {
+  const url = extraInfo.bannerUrl || defaultBanner;
+  return { backgroundImage: `url(${url})` };
+});
+
 onMounted(() => {
+  loadExtraInfo();
   fetchUserDetail();
 });
 </script>
 
 <style lang="scss" scoped>
 .user-profile {
+  .profile-banner {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    margin: 0 0 24px;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px -4px rgba(0,0,0,0.12);
+    display: flex;
+    align-items: flex-end;
+    .banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.55));
+      display: flex;
+      align-items: flex-end;
+      padding: 18px 24px;
+    }
+    .banner-text { color: #fff; }
+    .banner-title { font-size: 20px; font-weight: 600; letter-spacing: .5px; }
+    .banner-sub { font-size: 12px; opacity: .85; margin-top: 4px; }
+  }
   .profile-header {
     display: flex;
     align-items: center;
@@ -443,7 +584,41 @@ onMounted(() => {
 
     .action-buttons {
       display: flex;
-      gap: 10px;
+      gap: 12px;
+
+      .btn-elevated {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 14px;
+        font-weight: 500;
+        border: none;
+        position: relative;
+        overflow: hidden;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        transition: transform 0.2s, box-shadow 0.2s;
+
+        &.warn {
+          background: linear-gradient(135deg, #f59e0b, #f97316);
+          box-shadow: 0 4px 12px rgba(251, 146, 60, 0.35);
+        }
+        &.info {
+          background: linear-gradient(135deg, #3b82f6, #6366f1);
+        }
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+          &.warn {
+            box-shadow: 0 6px 16px rgba(251, 146, 60, 0.45);
+          }
+        }
+        &:active {
+          transform: translateY(0);
+        }
+      }
     }
   }
 
@@ -489,22 +664,78 @@ onMounted(() => {
 
   .profile-info {
     flex: 1;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
 
-    .info-item {
-      display: flex;
-      margin-bottom: 16px;
-      line-height: 24px;
+    .info-group {
+      flex: 1 1 320px;
+      background: linear-gradient(145deg, #ffffff, #f3f4f6);
+      border: 1px solid #eef0f4;
+      border-radius: 12px;
+      padding: 18px 22px 8px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      backdrop-filter: blur(4px);
+      transition: box-shadow .25s, transform .25s;
 
-      .label {
-        width: 80px;
-        font-size: 14px;
-        color: #909399;
+      &:hover {
+        box-shadow: 0 8px 22px -4px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
       }
 
-      .value {
-        flex: 1;
-        font-size: 14px;
-        color: #333;
+      &.timeline {
+        background: linear-gradient(135deg,#fdfbfb,#ebedee);
+      }
+
+      .group-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 14px;
+        position: relative;
+        padding-left: 10px;
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 3px;
+          width: 4px;
+          height: 14px;
+          border-radius: 2px;
+          background: linear-gradient(180deg,#6366f1,#8b5cf6);
+        }
+      }
+
+      .info-item {
+        display: flex;
+        margin-bottom: 14px;
+        line-height: 20px;
+        font-size: 13px;
+        align-items: flex-start;
+        .label {
+          width: 72px;
+          color: #6b7280;
+          font-weight: 500;
+        }
+        .value {
+          flex: 1;
+          color: #1f2937;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          word-break: break-all;
+        }
+        &.signature .value {
+          line-height: 1.4;
+          white-space: pre-wrap;
+        }
+        .time-value {
+          .el-icon { color: #6366f1; }
+        }
+        .email-value {
+          .el-icon { color: #10b981; }
+        }
       }
     }
   }
@@ -553,6 +784,22 @@ onMounted(() => {
         font-size: 14px;
       }
     }
+  }
+}
+
+.banner-preview {
+  width: 100%;
+  max-height: 120px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px -2px rgba(0,0,0,0.06);
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+@media (max-width: 768px) {
+  .user-profile {
+    .profile-info { flex-direction: column; }
   }
 }
 </style>
