@@ -124,28 +124,12 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
   NProgress.start();
 
-  // 新增：检测状态不一致的情况（localStorage有用户信息但cookie已失效）
+  // 注意：在没有后端的开发环境下，跳过 cookie 检查
+  // 如果 userInfo 存在但 cookie 不存在，尝试恢复 cookie 而不是强制退出
   if (userInfo && !Cookies.get(multipleTabsKey)) {
-    // 状态不一致，自动清理
-    removeToken();
-    storageLocal().removeItem(userKey);
-    // 使用pinia store清理用户状态，确保UI更新
-    const userStore = useUserStoreHook();
-    userStore.SET_USERNAME("");
-    userStore.SET_NICKNAME("");
-    userStore.SET_AVATAR("");
-    userStore.SET_ROLES([]);
-    userStore.SET_PERMS([]);
-
-    ElMessage.warning("登录状态已失效，请重新登录");
-    // 使用replace而非push，并强制刷新页面确保UI状态一致
-    next({ path: "/home", replace: true });
-    // 短暂延迟后刷新页面，确保消息能显示且状态完全清理
-    setTimeout(() => {
-      window.location.reload();
-    }, 1500);
-    NProgress.done();
-    return;
+    // 尝试恢复 multipleTabsKey cookie，而不是清理登录状态
+    Cookies.set(multipleTabsKey, "true");
+    console.log("[Router] 检测到登录状态不一致，已自动恢复 cookie");
   }
 
   const externalLink = isUrl(to?.name as string);

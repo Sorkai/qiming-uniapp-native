@@ -430,7 +430,7 @@
   .resource-box
   .resource-text
   span {
-  color: #604ffd;
+  color: #6b8cdb;
 }
 
 .light
@@ -441,7 +441,7 @@
   .resource-box
   .resource-bar
   .el-progress-bar__inner {
-  background: #604ffd;
+  background: #6b8cdb;
 }
 
 .light .rightTreeWarp .chapterList-box .list li .Sectionmark-em {
@@ -1008,7 +1008,7 @@
 
 .light .resource-warp .label-list .active {
   border-radius: 0.41667vw;
-  background: #604ffd;
+  background: #6b8cdb;
 }
 
 .light .resource-warp .resources-item {
@@ -1016,7 +1016,7 @@
 }
 
 .light .resource-warp .resources-item.active {
-  border-color: #604ffd;
+  border-color: #6b8cdb;
 }
 
 .light
@@ -1392,7 +1392,7 @@
 }
 
 .kgDescribe-warp .label-list .active {
-  background: #604ffd;
+  background: #6b8cdb;
 }
 
 .kgDescribe-warp .label-over {
@@ -1544,7 +1544,7 @@ html {
 
 .aloneMapCourrseWarp .aberrant a {
   display: block;
-  background: #604ffd;
+  background: #6b8cdb;
   width: 7.8125vw;
   line-height: 2.8125vw;
   text-align: center;
@@ -1608,14 +1608,14 @@ html {
 .light .ai-ability-box .text-list .text-item .label-list .lab-item:hover,
 .light .kgDescribe-warp .text-list .text-item .label-list .lab-item:hover,
 .light .resource-warp .text-list .text-item .label-list .lab-item:hover {
-  background: #604ffd !important;
+  background: #6b8cdb !important;
   color: #fff !important;
 }
 
 .light .ai-ability-box .top-box .title,
 .light .kgDescribe-warp .top-test span,
 .light .resource-warp .resource-tab .active span {
-  background: linear-gradient(90deg, #604ffd, #00f0ff);
+  background: linear-gradient(90deg, #6b8cdb, #00f0ff);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1632,7 +1632,7 @@ html {
 
 .light .ai-ability-box .text-list .text-item span.active,
 .light .kgDescribe-warp .introduce-div span.active {
-  color: #604ffd;
+  color: #6b8cdb;
 }
 
 .study-mode[data-v-cebc91e2] {
@@ -1669,7 +1669,7 @@ html {
   color: #fff;
   line-height: 2.5vw;
   font-weight: bolder;
-  background-color: #604ffd;
+  background-color: #6b8cdb;
   font-weight: 1000;
   font-family: AlibabaPuHuiTi-Black;
 }
@@ -1684,14 +1684,14 @@ html {
 }
 
 .light .study-mode[data-v-cebc91e2] {
-  color: #604ffd;
+  color: #6b8cdb;
   background: rgba(96, 79, 253, 0.1);
   border-radius: 0.83333vw !important;
   overflow: hidden !important;
 }
 
 .light .study-mode .mode-item[data-v-cebc91e2] {
-  color: #604ffd;
+  color: #6b8cdb;
 }
 
 .light .study-mode .mode-item.active[data-v-cebc91e2] {

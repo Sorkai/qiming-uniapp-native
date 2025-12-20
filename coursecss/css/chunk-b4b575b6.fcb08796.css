@@ -203,7 +203,7 @@
     height: 2.08333vw;
     min-width: 7.03125vw;
     border-radius: 2.91667vw;
-    background-color: #604ffd;
+    background-color: #6b8cdb;
     display: flex;
     padding: .41667vw .625vw .41667vw .83333vw;
     justify-content: center;
@@ -259,7 +259,7 @@
     width: .3125vw;
     height: .9375vw;
     border-radius: 5.20833vw;
-    background: #604ffd
+    background: #6b8cdb
 }
 
 .echart-content .my-point-EChart[data-v-423b05d0] {
@@ -540,7 +540,7 @@
 }
 
 .light .need-study-mastery .sun-up span[data-v-914d69da] {
-    background: linear-gradient(90deg,#604ffd,#00f0ff);
+    background: linear-gradient(90deg,#6b8cdb,#00f0ff);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent
@@ -853,7 +853,7 @@
     border-radius: .41667vw;
     width: 6.66667vw;
     flex-shrink: 0;
-    background-color: #604ffd;
+    background-color: #6b8cdb;
     height: 3.85417vw;
     margin-right: .41667vw
 }
@@ -887,7 +887,7 @@
 }
 
 .light .related-resources-mastery .sun-up span[data-v-1cf35c08] {
-    background: linear-gradient(90deg,#604ffd,#00f0ff);
+    background: linear-gradient(90deg,#6b8cdb,#00f0ff);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent
@@ -1039,12 +1039,12 @@
 
 .light.mastery-page-content .mastery-content-left .mastery-data-ul li[data-v-487e2460] {
     border-radius: .83333vw;
-    color: #604ffd;
+    color: #6b8cdb;
     background: rgba(96,79,253,.1)
 }
 
 .light.mastery-page-content .mastery-content-left .mastery-data-ul li .num[data-v-487e2460] {
-    color: #604ffd
+    color: #6b8cdb
 }
 
 .light.mastery-page-content .mastery-content-left .mastery-data-ul li.icon-tip[data-v-487e2460] {

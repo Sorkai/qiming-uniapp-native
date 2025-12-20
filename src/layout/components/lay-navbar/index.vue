@@ -42,7 +42,7 @@ const {
 </script>
 
 <template>
-  <div class="navbar bg-[#fff] shadow-xs shadow-[rgba(0,21,41,0.08)]">
+  <div class="navbar bg-transparent dark:bg-transparent">
     <LaySidebarTopCollapse
       v-if="device === 'mobile'"
       class="hamburger-container"

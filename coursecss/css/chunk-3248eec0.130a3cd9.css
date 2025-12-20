@@ -266,7 +266,7 @@ code.hljs {
   .ai-want-question
   .question-one-question
   span[data-v-0762fd62] {
-  color: #604ffd;
+  color: #6b8cdb;
 }
 
 .ai-helper-sections.light
@@ -387,7 +387,7 @@ code.hljs {
   height: 2.29167vw;
   flex-shrink: 0;
   border-radius: 0.625vw;
-  background: #604ffd;
+  background: #6b8cdb;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -632,7 +632,7 @@ code.hljs {
   height: 2.91667vw;
   flex-shrink: 0;
   border-radius: 0.625vw;
-  background: #604ffd;
+  background: #6b8cdb;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -652,7 +652,7 @@ code.hljs {
   height: 2.91667vw;
   flex-shrink: 0;
   border-radius: 0.625vw;
-  background: #604ffd;
+  background: #6b8cdb;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -740,7 +740,7 @@ code.hljs {
   align-items: center;
   flex-shrink: 0;
   border-radius: 0.83333vw;
-  border: 1px solid #604ffd;
+  border: 1px solid #6b8cdb;
   z-index: 3500;
 }
 
@@ -1206,7 +1206,7 @@ code.hljs {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   padding: 0.83333vw;
-  background-color: #604ffd;
+  background-color: #6b8cdb;
   position: relative;
   font-size: 0.83333vw;
   letter-spacing: 0.6px;
@@ -1609,12 +1609,12 @@ html .hljs-link {
 
 .ai-pro-content-edit-box .el-input__inner:focus,
 .ai-pro-content-edit-box .el-textarea__inner:focus {
-  border: 1px solid #604ffd;
+  border: 1px solid #6b8cdb;
   box-shadow: none;
 }
 
 .ai-active {
-  border: 1px solid #604ffd;
+  border: 1px solid #6b8cdb;
 }
 
 .ai-helper-agreement-Dialog {
@@ -1736,7 +1736,7 @@ html .hljs-link {
 
 .ai-helper-agreement-Dialog .ai-agree-dialog-footer .primary-btn {
   padding: 0.41667vw 0;
-  background: #604ffd;
+  background: #6b8cdb;
   color: #fff;
   cursor: pointer;
 }
@@ -1956,7 +1956,7 @@ html .hljs-link {
   .feedback-center-box
   .feedback-input-box
   .el-textarea__inner:focus {
-  border: 1px solid #604ffd;
+  border: 1px solid #6b8cdb;
   box-shadow: none;
 }
 
@@ -1993,7 +1993,7 @@ html .hljs-link {
   .ai-helper-feedback-content
   .feedback-center-box
   .opts-active {
-  background-color: #604ffd !important;
+  background-color: #6b8cdb !important;
 }
 
 .ai-helper-feedback-Dialog .el-dialog__footer {
@@ -2006,7 +2006,7 @@ html .hljs-link {
 }
 
 .ai-helper-feedback-Dialog .ai-feedback-dialog-footer .primary-btn {
-  background: #604ffd;
+  background: #6b8cdb;
   color: #fff;
   cursor: pointer;
 }
@@ -2096,7 +2096,7 @@ html .hljs-link {
   .ai-answer-tools
   .tools-tips
   span {
-  color: #604ffd !important;
+  color: #6b8cdb !important;
 }
 
 .light .ai-helper-feedback-Dialog {

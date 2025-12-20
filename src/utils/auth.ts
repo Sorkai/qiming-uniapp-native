@@ -60,14 +60,14 @@ export function setToken(data: DataInfo<Date>) {
     })
     : Cookies.set(TokenKey, cookieString);
 
+  // 确保 multipleTabsKey cookie 总是被设置，默认7天过期
+  // 这样可以避免登录后立即被路由守卫检测到状态不一致而退出
   Cookies.set(
     multipleTabsKey,
     "true",
-    isRemembered
-      ? {
-        expires: loginDay
-      }
-      : {}
+    {
+      expires: isRemembered ? loginDay : 7
+    }
   );
 
   function setUserKey({ avatar, username, nickname, roles, permissions, roleType }) {

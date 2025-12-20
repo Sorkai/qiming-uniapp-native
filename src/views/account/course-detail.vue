@@ -1,162 +1,36 @@
 <template>
-  <div id="app">
-    <div data-v-2cf49992="" class="layout-container">
+  <div id="app" :class="currentTheme">
+    <div class="layout-container" :class="currentTheme">
+      <!-- 侧边栏菜单 - 使用 v-for 循环渲染 -->
       <div
         id="layout-sidebar"
-        data-v-8289e326=""
-        data-v-2cf49992=""
-        class="layout-sidebar light"
-        style="top: 125.389px"
+        class="layout-sidebar"
+        :class="currentTheme"
       >
-        <div
-          data-v-8289e326=""
-          class="el-tooltip item"
-          :class="{ active: activeMenu === 'course-learn' }"
-          tabindex="0"
-          data-menu="course-learn"
-          @click="handleMenuClick('course-learn')"
-        >
+        <template v-for="(item, index) in sidebarMenuItems" :key="item.key">
+          <!-- 分割线 -->
+          <div v-if="item.type === 'divider'" class="line" />
+          <!-- 菜单项 -->
           <div
-            data-v-1139a0f7=""
-            data-v-8289e326=""
-            class="hover-box"
-            :class="{ active: activeMenu === 'course-learn' }"
+            v-else
+            class="el-tooltip item"
+            :class="{ active: activeMenu === item.key }"
+            tabindex="0"
+            :data-menu="item.key"
+            @click="handleMenuClick(item.key)"
           >
-            <CourseLearnIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">课程学习</div>
+            <div
+              class="hover-box"
+              :class="{ active: activeMenu === item.key }"
+            >
+              <component :is="item.icon" />
+              <div class="side-name">{{ item.label }}</div>
+            </div>
           </div>
-        </div>
-        <div
-          data-v-8289e326=""
-          class="el-tooltip item"
-          :class="{ active: activeMenu === 'mastery' }"
-          tabindex="0"
-          data-menu="mastery"
-          @click="handleMenuClick('mastery')"
-        >
-          <div
-            data-v-1139a0f7=""
-            data-v-8289e326=""
-            class="hover-box"
-            :class="{ active: activeMenu === 'mastery' }"
-          >
-            <MasteryIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">知识点</div>
-          </div>
-        </div>
-        <div data-v-8289e326="" class="line" />
-        <div
-          data-v-8289e326=""
-          class="el-tooltip item"
-          :class="{ active: activeMenu === 'course-qa' }"
-          tabindex="0"
-          data-menu="course-qa"
-          @click="handleMenuClick('course-qa')"
-        >
-          <div
-            data-v-1139a0f7=""
-            data-v-8289e326=""
-            class="hover-box"
-            :class="{ active: activeMenu === 'course-qa' }"
-          >
-            <CourseQaIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">课程问答</div>
-          </div>
-        </div>
-        <div
-          data-v-8289e326=""
-          class="el-tooltip item"
-          :class="{ active: activeMenu === 'homework-exam' }"
-          tabindex="0"
-          data-menu="homework-exam"
-          @click="handleMenuClick('homework-exam')"
-        >
-          <div
-            data-v-1139a0f7=""
-            data-v-8289e326=""
-            class="hover-box"
-            :class="{ active: activeMenu === 'homework-exam' }"
-          >
-            <HomeworkExamIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">作业考试</div>
-          </div>
-        </div>
-        <div
-          data-v-8289e326=""
-          class="el-tooltip item"
-          :class="{ active: activeMenu === 'course-materials' }"
-          tabindex="0"
-          data-menu="course-materials"
-          @click="handleMenuClick('course-materials')"
-        >
-          <div
-            data-v-1139a0f7=""
-            data-v-8289e326=""
-            class="hover-box"
-            :class="{ active: activeMenu === 'course-materials' }"
-          >
-            <CourseMaterialsIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">课程资料</div>
-          </div>
-        </div>
-        <div
-          data-v-8289e326=""
-          class="el-tooltip item"
-          :class="{ active: activeMenu === 'html-animations' }"
-          tabindex="0"
-          data-menu="html-animations"
-          @click="handleMenuClick('html-animations')"
-        >
-          <div
-            data-v-1139a0f7=""
-            data-v-8289e326=""
-            class="hover-box"
-            :class="{ active: activeMenu === 'html-animations' }"
-          >
-            <CourseMaterialsIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">HTML动画</div>
-          </div>
-        </div>
-        <div
-          data-v-8289e326=""
-          class="el-tooltip item"
-          :class="{ active: activeMenu === 'grades' }"
-          tabindex="0"
-          data-menu="grades"
-          @click="handleMenuClick('grades')"
-        >
-          <div
-            data-v-1139a0f7=""
-            data-v-8289e326=""
-            class="hover-box"
-            :class="{ active: activeMenu === 'grades' }"
-          >
-            <GradesIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">成绩</div>
-          </div>
-        </div>
-        <!-- <div data-v-8289e326="" class="line" />
-        <div
-          data-v-8289e326=""
-          class="el-tooltip item"
-          :class="{ active: activeMenu === 'ai-doc-qa' }"
-          tabindex="0"
-          data-menu="ai-doc-qa"
-          @click="handleMenuClick('ai-doc-qa')"
-        >
-          <div
-            data-v-1139a0f7=""
-            data-v-8289e326=""
-            class="hover-box"
-            :class="{ active: activeMenu === 'ai-doc-qa' }"
-          >
-            <AiDocQaIcon data-v-1139a0f7="" />
-            <div data-v-1139a0f7="" class="side-name">AI文档问答</div>
-          </div>
-        </div> -->
-        <div data-v-8289e326="" class="line" />
+        </template>
+        <div class="line" />
       </div>
-      <div data-v-2cf49992="" class="layout-inner-content">
+      <div data-v-2cf49992="" class="layout-inner-content" :class="currentTheme">
         <!-- 课程资料 -->
         <div
           v-show="activeMenu === 'course-materials'"
@@ -183,8 +57,9 @@
                   data-v-3e66491d=""
                   class="item header-back"
                   @click="goBack"
+                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
-                  <BackArrowIcon :class="['back-icon', currentTheme]" />
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -192,13 +67,13 @@
                 <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
                   <ThemeSunIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
                   />
                   <ThemeMoonIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
                   />
                 </div>
               </div>
@@ -220,43 +95,21 @@
                 </div>
               </div>
               <div data-v-3e66491d="" class="item header-right">
-                <ul data-v-3e66491d="" class="popper-box">
-                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
-                    <ul
-                      data-v-3e66491d=""
-                      role="menubar"
-                      class="fu-header-users el-menu--horizontal el-menu"
-                    >
-                      <li
-                        data-v-3e66491d=""
-                        role="menuitem"
-                        aria-haspopup="true"
-                        class="el-submenu"
-                        tabindex="0"
-                      >
-                        <div
-                          class="el-submenu__title"
-                          style="border-bottom-color: transparent"
-                        >
-                          <div data-v-3e66491d="" class="avatar-info">
-                            <img
-                              data-v-3e66491d=""
-                              :src="userAvatar"
-                              alt=""
-                              class="avatar"
-                            />
-                            <span data-v-3e66491d="" class="name">{{
-                              userNickname
-                            }}</span>
-                          </div>
-                          <i
-                            class="el-submenu__icon-arrow el-icon-arrow-down"
-                          />
-                        </div>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
+                <div class="user-dropdown-area">
+                  <el-dropdown trigger="click">
+                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
+                      <img :src="userAvatar" alt="" class="avatar" />
+                      <span class="name">{{ userNickname }}</span>
+                      <i class="el-icon-arrow-down" />
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
+                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </div>
             </div>
           </div>
@@ -326,20 +179,21 @@
                   data-v-3e66491d=""
                   class="item header-back"
                   @click="goBack"
+                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
-                  <BackArrowIcon :class="['back-icon', currentTheme]" />
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{ currentDate }}</span>
                 <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
                   <ThemeSunIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
                   />
                   <ThemeMoonIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
                   />
                 </div>
               </div>
@@ -361,43 +215,21 @@
                 </div>
               </div>
               <div data-v-3e66491d="" class="item header-right">
-                <ul data-v-3e66491d="" class="popper-box">
-                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
-                    <ul
-                      data-v-3e66491d=""
-                      role="menubar"
-                      class="fu-header-users el-menu--horizontal el-menu"
-                    >
-                      <li
-                        data-v-3e66491d=""
-                        role="menuitem"
-                        aria-haspopup="true"
-                        class="el-submenu"
-                        tabindex="0"
-                      >
-                        <div
-                          class="el-submenu__title"
-                          style="border-bottom-color: transparent"
-                        >
-                          <div data-v-3e66491d="" class="avatar-info">
-                            <img
-                              data-v-3e66491d=""
-                              :src="userAvatar"
-                              alt=""
-                              class="avatar"
-                            />
-                            <span data-v-3e66491d="" class="name">{{
-                              userNickname
-                            }}</span>
-                          </div>
-                          <i
-                            class="el-submenu__icon-arrow el-icon-arrow-down"
-                          />
-                        </div>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
+                <div class="user-dropdown-area">
+                  <el-dropdown trigger="click">
+                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
+                      <img :src="userAvatar" alt="" class="avatar" />
+                      <span class="name">{{ userNickname }}</span>
+                      <i class="el-icon-arrow-down" />
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
+                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </div>
             </div>
           </div>
@@ -474,8 +306,9 @@
                   data-v-3e66491d=""
                   class="item header-back"
                   @click="goBack"
+                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
-                  <BackArrowIcon :class="['back-icon', currentTheme]" />
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -483,13 +316,13 @@
                 <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
                   <ThemeSunIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
                   />
                   <ThemeMoonIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
                   />
                 </div>
               </div>
@@ -511,43 +344,21 @@
                 </div>
               </div>
               <div data-v-3e66491d="" class="item header-right">
-                <ul data-v-3e66491d="" class="popper-box">
-                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
-                    <ul
-                      data-v-3e66491d=""
-                      role="menubar"
-                      class="fu-header-users el-menu--horizontal el-menu"
-                    >
-                      <li
-                        data-v-3e66491d=""
-                        role="menuitem"
-                        aria-haspopup="true"
-                        class="el-submenu"
-                        tabindex="0"
-                      >
-                        <div
-                          class="el-submenu__title"
-                          style="border-bottom-color: transparent"
-                        >
-                          <div data-v-3e66491d="" class="avatar-info">
-                            <img
-                              data-v-3e66491d=""
-                              :src="userAvatar"
-                              alt=""
-                              class="avatar"
-                            />
-                            <span data-v-3e66491d="" class="name">{{
-                              userNickname
-                            }}</span>
-                          </div>
-                          <i
-                            class="el-submenu__icon-arrow el-icon-arrow-down"
-                          />
-                        </div>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
+                <div class="user-dropdown-area">
+                  <el-dropdown trigger="click">
+                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
+                      <img :src="userAvatar" alt="" class="avatar" />
+                      <span class="name">{{ userNickname }}</span>
+                      <i class="el-icon-arrow-down" />
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
+                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </div>
             </div>
           </div>
@@ -591,7 +402,11 @@
                     </div>
                   </div>
                 </div>
-                <el-empty v-else description="暂无作业" />
+                <el-empty v-else description="暂无作业">
+                  <template #image>
+                    <img :src="HomeworkEmptyImg" alt="暂无作业" style="width: 120px; height: 120px;" />
+                  </template>
+                </el-empty>
               </el-tab-pane>
               <el-tab-pane label="考试" name="exam">
                 <div v-if="examList && examList.length > 0" class="exam-list">
@@ -647,6 +462,7 @@
           v-show="activeMenu == 'course-learn'"
           data-v-cebc91e2=""
           data-v-2cf49992=""
+          :class="currentTheme"
         >
           <!-- 课程学习 -->
           <div
@@ -666,8 +482,9 @@
                   data-v-3e66491d=""
                   class="item header-back"
                   @click="goBack"
+                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
-                  <BackArrowIcon :class="['back-icon', currentTheme]" />
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -675,13 +492,13 @@
                 <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
                   <ThemeSunIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
                   />
                   <ThemeMoonIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
                   />
                 </div>
               </div>
@@ -703,117 +520,21 @@
                 </div>
               </div>
               <div data-v-3e66491d="" class="item header-right">
-                <ul data-v-3e66491d="" class="popper-box">
-                  <!-- <li data-v-3e66491d="" class="mypopper brepopper">
-                    <div
-                      data-v-3e66491d=""
-                      class="icon-item icon-item1 new-icon"
-                    >
-                      <div data-v-3e66491d="" class="icon-hover">课程提醒</div>
-                      <span data-v-3e66491d="" class="tag" />
+                <div class="user-dropdown-area">
+                  <el-dropdown trigger="click">
+                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
+                      <img :src="userAvatar" alt="" class="avatar" />
+                      <span class="name">{{ userNickname }}</span>
+                      <i class="el-icon-arrow-down" />
                     </div>
-                  </li>
-                  <li data-v-3e66491d="" class="mypopper brepopper">
-                    <div
-                      data-v-3e66491d=""
-                      class="icon-item icon-item2 new-icon"
-                    >
-                      <div data-v-3e66491d="" class="icon-hover">学前必读</div>
-                    </div>
-                  </li>
-                  <li data-v-3e66491d="" class="mypopper brepopper">
-                    <div
-                      data-v-3e66491d=""
-                      class="icon-item icon-item3 new-icon"
-                    >
-                      <div data-v-3e66491d="" class="icon-hover">班级信息</div>
-                    </div>
-                  </li>
-                  <li data-v-3e66491d="" class="mypopper brepopper">
-                    <div
-                      data-v-3e66491d=""
-                      class="icon-item icon-item4 new-icon"
-                    >
-                      <div data-v-3e66491d="" class="icon-hover">消息中心</div>
-                      <div data-v-3e66491d="" class="yuandian" />
-                    </div>
-                  </li>
-                  <li data-v-3e66491d="" class="mypopper brepopper">
-                    <div
-                      data-v-3e66491d=""
-                      class="icon-item icon-item5 new-icon"
-                    >
-                      <div data-v-3e66491d="" class="tuikeIcon">
-                        <div data-v-3e66491d="" class="tuike">退课</div>
-                      </div>
-                    </div>
-                  </li> -->
-                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
-                    <ul
-                      data-v-3e66491d=""
-                      role="menubar"
-                      class="fu-header-users el-menu--horizontal el-menu"
-                    >
-                      <li
-                        data-v-3e66491d=""
-                        role="menuitem"
-                        aria-haspopup="true"
-                        class="el-submenu"
-                        tabindex="0"
-                      >
-                        <div
-                          class="el-submenu__title"
-                          style="border-bottom-color: transparent"
-                        >
-                          <div data-v-3e66491d="" class="avatar-info">
-                            <img
-                              data-v-3e66491d=""
-                              :src="userAvatar"
-                              alt=""
-                              class="avatar"
-                            /><span data-v-3e66491d="" class="name">{{
-                              userNickname
-                            }}</span>
-                          </div>
-                          <i
-                            class="el-submenu__icon-arrow el-icon-arrow-down"
-                          />
-                        </div>
-                        <div
-                          class="el-menu--horizontal light fu-header-users-3"
-                          style="display: none"
-                        >
-                          <ul
-                            role="menu"
-                            class="el-menu el-menu--popup el-menu--popup-bottom-start"
-                          >
-                            <li
-                              data-v-3e66491d=""
-                              role="menuitem"
-                              tabindex="-1"
-                              class="el-menu-item fu-header-1"
-                            >
-                              <span data-v-3e66491d="" class="fu-i fu-header-f1"
-                                >账号管理</span
-                              >
-                            </li>
-                            <li
-                              data-v-3e66491d=""
-                              role="menuitem"
-                              tabindex="-1"
-                              class="el-menu-item fu-header-1"
-                            >
-                              <span data-v-3e66491d="" class="fu-i fu-header-f2"
-                                >安全退出</span
-                              >
-                            </li>
-                          </ul>
-                        </div>
-                      </li>
-                    </ul>
-                    <div data-v-3e66491d="" class="user-info" />
-                  </li>
-                </ul>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
+                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </div>
             </div>
             <div data-v-3e66491d="" class="hover-area" />
@@ -1651,6 +1372,81 @@
           data-v-2cf49992=""
           class="mastery-page-content light"
         >
+          <!-- 头部 -->
+          <div
+            data-v-3e66491d=""
+            data-v-cebc91e2=""
+            class="layout-header"
+            :class="currentTheme"
+            isatlas="1"
+            style="z-index: 10"
+          >
+            <div
+              id="header-content-layout only-filter"
+              data-v-3e66491d=""
+              class="header-content"
+            >
+              <div data-v-3e66491d="" class="item header-left">
+                <div
+                  data-v-3e66491d=""
+                  class="item header-back"
+                  @click="goBack"
+                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
+                >
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </div>
+                <span data-v-3e66491d="" class="current-time">{{
+                  currentDate
+                }}</span>
+                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
+                  <ThemeSunIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
+                  />
+                  <ThemeMoonIcon
+                    data-v-3e66491d=""
+                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
+                  />
+                </div>
+              </div>
+              <div data-v-3e66491d="" class="item header-center">
+                <div
+                  data-v-cebc91e2=""
+                  data-v-3e66491d=""
+                  class="study-mode custom-mode"
+                >
+                  <div
+                    data-v-cebc91e2=""
+                    data-v-3e66491d=""
+                    data-name="0"
+                    class="mode-item active"
+                    style="margin: 0 auto"
+                  >
+                    知识点掌握
+                  </div>
+                </div>
+              </div>
+              <div data-v-3e66491d="" class="item header-right">
+                <div class="user-dropdown-area">
+                  <el-dropdown trigger="click">
+                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
+                      <img :src="userAvatar" alt="" class="avatar" />
+                      <span class="name">{{ userNickname }}</span>
+                      <i class="el-icon-arrow-down" />
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
+                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </div>
+            </div>
+          </div>
           <div
             data-v-487e2460=""
             class="mastery-content-left"
@@ -1984,8 +1780,9 @@
                   data-v-3e66491d=""
                   class="item header-back"
                   @click="goBack"
+                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
-                  <i data-v-3e66491d="" />
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -1993,13 +1790,13 @@
                 <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
                   <ThemeSunIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
                   />
                   <ThemeMoonIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
                   />
                 </div>
               </div>
@@ -2021,43 +1818,21 @@
                 </div>
               </div>
               <div data-v-3e66491d="" class="item header-right">
-                <ul data-v-3e66491d="" class="popper-box">
-                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
-                    <ul
-                      data-v-3e66491d=""
-                      role="menubar"
-                      class="fu-header-users el-menu--horizontal el-menu"
-                    >
-                      <li
-                        data-v-3e66491d=""
-                        role="menuitem"
-                        aria-haspopup="true"
-                        class="el-submenu"
-                        tabindex="0"
-                      >
-                        <div
-                          class="el-submenu__title"
-                          style="border-bottom-color: transparent"
-                        >
-                          <div data-v-3e66491d="" class="avatar-info">
-                            <img
-                              data-v-3e66491d=""
-                              :src="userAvatar"
-                              alt=""
-                              class="avatar"
-                            />
-                            <span data-v-3e66491d="" class="name">{{
-                              userNickname
-                            }}</span>
-                          </div>
-                          <i
-                            class="el-submenu__icon-arrow el-icon-arrow-down"
-                          />
-                        </div>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
+                <div class="user-dropdown-area">
+                  <el-dropdown trigger="click">
+                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
+                      <img :src="userAvatar" alt="" class="avatar" />
+                      <span class="name">{{ userNickname }}</span>
+                      <i class="el-icon-arrow-down" />
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
+                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </div>
             </div>
           </div>
@@ -2071,24 +1846,40 @@
                   <!-- 统计数据 -->
                   <ul class="qa-data-ul">
                     <li>
-                      <span class="text">累计提问</span>
-                      <span class="num">{{ qaStats.totalQuestions || 0 }}</span>
+                      <div class="qa-data-icon">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                      </div>
+                      <div class="qa-data-info">
+                        <span class="text">累计提问</span>
+                        <span class="num">{{ qaStats.totalQuestions || 0 }}</span>
+                      </div>
                     </li>
                     <li>
-                      <span class="text">已解决问题</span>
-                      <span class="num">{{
-                        qaStats.solvedQuestions || 0
-                      }}</span>
+                      <div class="qa-data-icon success">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                      </div>
+                      <div class="qa-data-info">
+                        <span class="text">已解决</span>
+                        <span class="num">{{ qaStats.solvedQuestions || 0 }}</span>
+                      </div>
                     </li>
                     <li>
-                      <span class="text">解答率</span>
-                      <span class="num">{{ qaStats.solveRate || "0%" }}</span>
+                      <div class="qa-data-icon warning">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+                      </div>
+                      <div class="qa-data-info">
+                        <span class="text">解答率</span>
+                        <span class="num">{{ qaStats.solveRate || "0%" }}</span>
+                      </div>
                     </li>
                     <li>
-                      <span class="text">平均响应时间</span>
-                      <span class="num">{{
-                        qaStats.avgResponseTime || "0分钟"
-                      }}</span>
+                      <div class="qa-data-icon info">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                      </div>
+                      <div class="qa-data-info">
+                        <span class="text">响应时间</span>
+                        <span class="num">{{ qaStats.avgResponseTime || "0分钟" }}</span>
+                      </div>
                     </li>
                   </ul>
 
@@ -2106,7 +1897,7 @@
                           fill-rule="evenodd"
                           clip-rule="evenodd"
                           d="M6.5 2C4.01472 2 2 4.01472 2 6.5V17.5C2 19.9853 4.01472 22 6.5 22H17.5C19.9853 22 22 19.9853 22 17.5V6.5C22 4.01472 19.9853 2 17.5 2H6.5ZM6 7.5C6 7.22386 6.22386 7 6.5 7H13.5C13.7761 7 14 7.22386 14 7.5C14 7.77614 13.7761 8 13.5 8H6.5C6.22386 8 6 7.77614 6 7.5ZM6.5 11C6.22386 11 6 11.2239 6 11.5C6 11.7761 6.22386 12 6.5 12H17.5C17.7761 12 18 11.7761 18 11.5C18 11.2239 17.7761 11 17.5 11H6.5ZM6 15.5C6 15.2239 6.22386 15 6.5 15H13.5C13.7761 15 14 15.2239 14 15.5C14 15.7761 13.7761 16 13.5 16H6.5C6.22386 16 6 15.7761 6 15.5Z"
-                          :fill="currentTheme === 'dark' ? '#fff' : '#604FFD'"
+                          :fill="currentTheme === 'dark' ? '#fff' : '#CFD8F0'"
                         />
                       </svg>
                       历史问答
@@ -2202,11 +1993,11 @@
                           fill-rule="evenodd"
                           clip-rule="evenodd"
                           d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10 1.5 0 2.921-.33 4.21-.92l3.715 1.483a1 1 0 001.317-1.024l-.473-4.593A9.96 9.96 0 0022 12c0-5.523-4.477-10-10-10zm0 18a8 8 0 110-16 8 8 0 010 16z"
-                          fill="#604FFD"
+                          fill="#CFD8F0"
                         />
-                        <circle cx="8" cy="10" r="1.5" fill="#604FFD" />
-                        <circle cx="12" cy="10" r="1.5" fill="#604FFD" />
-                        <circle cx="16" cy="10" r="1.5" fill="#604FFD" />
+                        <circle cx="8" cy="10" r="1.5" fill="#CFD8F0" />
+                        <circle cx="12" cy="10" r="1.5" fill="#CFD8F0" />
+                        <circle cx="16" cy="10" r="1.5" fill="#CFD8F0" />
                       </svg>
                       <p>暂无对话，发送第一条消息开始聊天</p>
                     </div>
@@ -2214,20 +2005,12 @@
 
                   <!-- 输入区域 -->
                   <div class="qa-chat-footer">
-                    <div class="qa-input-wrapper">
-                      <div
-                        class="qa-input disabled"
-                        style="
-                          display: flex;
-                          align-items: center;
-                          justify-content: center;
-                          color: #999;
-                          cursor: not-allowed;
-                          height: 100%;
-                        "
-                      >
-                        教师已关闭讨论功能
-                      </div>
+                    <div class="qa-closed-notice">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                      </svg>
+                      <span>教师已关闭讨论功能</span>
                     </div>
                   </div>
                 </div>
@@ -2262,8 +2045,9 @@
                   data-v-3e66491d=""
                   class="item header-back"
                   @click="goBack"
+                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
-                  <i data-v-3e66491d="" />
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
                 <span data-v-3e66491d="" class="current-time">{{
                   currentDate
@@ -2271,13 +2055,13 @@
                 <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
                   <ThemeSunIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
                   />
                   <ThemeMoonIcon
                     data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#604FFD' : '#B4B4C7'"
+                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
+                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
                   />
                 </div>
               </div>
@@ -2299,43 +2083,21 @@
                 </div>
               </div>
               <div data-v-3e66491d="" class="item header-right">
-                <ul data-v-3e66491d="" class="popper-box">
-                  <li data-v-3e66491d="" style="margin-left: 1.875vw">
-                    <ul
-                      data-v-3e66491d=""
-                      role="menubar"
-                      class="fu-header-users el-menu--horizontal el-menu"
-                    >
-                      <li
-                        data-v-3e66491d=""
-                        role="menuitem"
-                        aria-haspopup="true"
-                        class="el-submenu"
-                        tabindex="0"
-                      >
-                        <div
-                          class="el-submenu__title"
-                          style="border-bottom-color: transparent"
-                        >
-                          <div data-v-3e66491d="" class="avatar-info">
-                            <img
-                              data-v-3e66491d=""
-                              :src="userAvatar"
-                              alt=""
-                              class="avatar"
-                            />
-                            <span data-v-3e66491d="" class="name">{{
-                              userNickname
-                            }}</span>
-                          </div>
-                          <i
-                            class="el-submenu__icon-arrow el-icon-arrow-down"
-                          />
-                        </div>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
+                <div class="user-dropdown-area">
+                  <el-dropdown trigger="click">
+                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
+                      <img :src="userAvatar" alt="" class="avatar" />
+                      <span class="name">{{ userNickname }}</span>
+                      <i class="el-icon-arrow-down" />
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
+                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </div>
             </div>
           </div>
@@ -2483,7 +2245,7 @@ import {
 import { storageLocal } from "@pureadmin/utils";
 import { userKey } from "@/utils/auth";
 
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import CourseLearnIcon from "@/assets/course-icons/course-learn-new.svg?component";
 import MasteryIcon from "@/assets/course-icons/mastery-new.svg?component";
 import CourseQaIcon from "@/assets/course-icons/course-qa-new.svg?component";
@@ -2506,11 +2268,13 @@ import BackArrowIcon from "@/components/icons/BackArrowIcon.vue";
 import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
 import WrongExercise from "@/views/account/wrong-exercise.vue"; // 嵌入随练组件
 import logo from "@/assets/kecheng.jpg"; // 导入logo图片
+import HomeworkEmptyImg from "@/assets/new-release/homework-svgrepo-com.svg?url";
 import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal-vue.png";
 import resourceTabActive from "@/assets/course-detail-images/resource-tab-active-vue.png";
 import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 import aiPeopleAvatar from "@/assets/aipeople.jpg"; // 引入aipeople.jpg
 import { getHtmlAnimationDisplay } from "@/api/htmlAnimation";
+import { useUserStoreHook } from "@/store/modules/user";
 
 const router = useRouter();
 const route = useRoute();
@@ -2520,6 +2284,19 @@ const courseDetail = ref(null);
 const loading = ref(false);
 const currentTheme = ref("light");
 const activeMenu = ref("course-learn");
+
+// 侧边栏菜单配置
+const sidebarMenuItems = [
+  { key: "course-learn", label: "课程学习", icon: CourseLearnIcon },
+  { key: "mastery", label: "知识点", icon: MasteryIcon },
+  { type: "divider" },
+  { key: "course-qa", label: "课程问答", icon: CourseQaIcon },
+  { key: "homework-exam", label: "作业考试", icon: HomeworkExamIcon },
+  { key: "course-materials", label: "课程资料", icon: CourseMaterialsIcon },
+  { key: "html-animations", label: "HTML动画", icon: CourseMaterialsIcon },
+  { key: "grades", label: "成绩", icon: GradesIcon }
+];
+
 const isContentCollapsed = ref(false);
 const activeResourceTab = ref("required");
 const courseAttrList = ref([]); // 课程资料列表
@@ -2820,6 +2597,10 @@ function toggleTheme() {
     el.classList.add(newTheme);
   });
 
+  // 同时切换 body 的主题类
+  document.body.classList.remove(oldTheme);
+  document.body.classList.add(newTheme);
+
   // 切换 SVG 图标颜色
   const svgElements = document.querySelectorAll(".hover-box svg");
   svgElements.forEach(svg => {
@@ -2829,8 +2610,8 @@ function toggleTheme() {
     const isCurrentActive = currentMenuName === activeMenu.value;
 
     // 定义颜色
-    const activeColor = newTheme === "dark" ? "white" : "#604FFD";
-    const inactiveColor = newTheme === "dark" ? "#B4B4C7" : "#604FFD";
+    const activeColor = newTheme === "dark" ? "white" : "white";
+    const inactiveColor = newTheme === "dark" ? "#B4B4C7" : "#5a6b8a";
     const color = isCurrentActive ? activeColor : inactiveColor;
 
     // 设置整个SVG的stroke颜色
@@ -2856,17 +2637,13 @@ function toggleTheme() {
 
     if (isCurrentActive) {
       // 当前选中的菜单项
-      if (newTheme === "dark") {
-        element.style.color = "white";
-      } else {
-        element.style.color = "#604FFD";
-      }
+      element.style.color = "white";
     } else {
       // 未选中的菜单项
       if (newTheme === "dark") {
         element.style.color = "#B4B4C7";
       } else {
-        element.style.color = "#604FFD";
+        element.style.color = "#5a6b8a";
       }
     }
   });
@@ -2884,6 +2661,24 @@ function toggleTheme() {
     });
   }
 }
+
+// 退出登录
+const handleLogout = () => {
+  ElMessageBox.confirm("确定要退出登录吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  })
+    .then(() => {
+      useUserStoreHook().logOut();
+    })
+    .catch(() => {});
+};
+
+// 跳转到账号管理
+const goToAccount = () => {
+  router.push("/account/settings");
+};
 
 // 添加菜单切换函数
 function handleMenuClick(menuName: string) {
@@ -2921,8 +2716,8 @@ function handleMenuClick(menuName: string) {
     const isCurrentActive = currentMenuName === menuName;
 
     // 定义颜色
-    const activeColor = currentTheme.value === "dark" ? "white" : "#604FFD";
-    const inactiveColor = currentTheme.value === "dark" ? "#B4B4C7" : "#604FFD";
+    const activeColor = currentTheme.value === "dark" ? "white" : "white";
+    const inactiveColor = currentTheme.value === "dark" ? "#B4B4C7" : "#5a6b8a";
     const color = isCurrentActive ? activeColor : inactiveColor;
 
     // 设置整个SVG的stroke颜色
@@ -2948,17 +2743,13 @@ function handleMenuClick(menuName: string) {
 
     if (isCurrentActive) {
       // 当前选中的菜单项
-      if (currentTheme.value === "dark") {
-        element.style.color = "white";
-      } else {
-        element.style.color = "#604FFD";
-      }
+      element.style.color = "white";
     } else {
       // 未选中的菜单项
       if (currentTheme.value === "dark") {
         element.style.color = "#B4B4C7";
       } else {
-        element.style.color = "#604FFD";
+        element.style.color = "#5a6b8a";
       }
     }
   });
@@ -3106,7 +2897,11 @@ async function reportProgress(hourId: number) {
 
 // 返回上一页
 const goBack = () => {
-  router.back();
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push("/account");
+  }
 };
 
 // 打开AI对话框
@@ -3373,8 +3168,8 @@ const initIconColors = () => {
     const currentMenuName = menuItem?.getAttribute("data-menu");
     const isCurrentActive = currentMenuName === activeMenu.value;
 
-    // 浅色模式下所有图标默认使用紫色
-    const color = isCurrentActive ? "#604FFD" : "#604FFD";
+    // 浅色模式下所有图标默认使用深蓝色
+    const color = isCurrentActive ? "white" : "#5a6b8a";
 
     // 设置整个SVG的stroke颜色
     svg.setAttribute("stroke", color);
@@ -3399,9 +3194,9 @@ const initIconColors = () => {
 
     // 设置文字颜色
     if (isCurrentActive) {
-      element.style.color = "#604FFD"; // 选中状态为紫色
+      element.style.color = "white"; // 选中状态为白色
     } else {
-      element.style.color = "#604FFD"; // 非选中也使用紫色
+      element.style.color = "#5a6b8a"; // 非选中也使用深蓝色
     }
   });
 };
@@ -3472,17 +3267,17 @@ const initGradesChart = () => {
           {
             value: courseScores.value.courseScore,
             name: "课时成绩",
-            itemStyle: { color: "#41b6ff" }
+            itemStyle: { color: "#409eff" }
           },
           {
             value: courseScores.value.workScore,
             name: "作业成绩",
-            itemStyle: { color: "#e85f33" }
+            itemStyle: { color: "#604ffd" }
           },
           {
             value: courseScores.value.examScore,
             name: "考试成绩",
-            itemStyle: { color: "#604ffd" }
+            itemStyle: { color: "#ff6b6b" }
           }
         ]
       }
@@ -3637,9 +3432,9 @@ const updateMasterySummaryChart = () => {
         type: "bar",
         data: dataValues.map((v, i) => {
           const colors = [
-            ["#8F7BFF", "#604FFD"],
-            ["#FFB86C", "#FF9F43"],
-            ["#FF8AA1", "#FF5572"],
+            ["#a8b8e8", "#CFD8F0"],
+            ["#c8d4f0", "#7a8bb8"],
+            ["#dce2f7", "#a8b8e8"],
             ["#72D5FF", "#41B6FF"]
           ];
           const [c1, c2] = colors[i];
@@ -3802,6 +3597,9 @@ watch(
 
 onMounted(async () => {
   baseCourseId.value = Number(route.params.id);
+  
+  // 初始化 body 主题类
+  document.body.classList.add(currentTheme.value);
 
   // 获取课程详情
   await fetchCourseDetail();
@@ -3855,9 +3653,109 @@ watch(
 @import "@/../coursecss/css/chunk-3248eec0.130a3cd9.css";
 @import "@/../coursecss/css/app.a5f91bbb.css";
 @import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
+
+/* 覆盖外部 CSS 中的 body 背景色 */
+body {
+  background-color: #ffffff !important;
+}
+
+/* 修复布局容器样式 */
+#app {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+#app.dark {
+  background-color: #1a1a1a !important;
+}
+
+.layout-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+}
+
+.layout-container.dark {
+  background-color: #1a1a1a !important;
+}
+
+.layout-inner-content {
+  position: relative;
+  flex: 1;
+  margin-left: 90px !important; /* 与侧边栏右侧对齐 (10px left + 80px width) */
+  margin-top: 20px !important;
+  margin-bottom: 15px !important;
+  margin-right: 15px !important;
+  height: calc(100vh - 35px) !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background-color: #ffffff;
+  box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.1) !important;
+  border: 1px solid #eef2f7 !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 暗黑模式下的背景色 */
+:global(body.dark) {
+  background-color: #1a1a1a !important;
+}
+
+.layout-container.dark .layout-inner-content,
+.layout-inner-content.dark {
+  background-color: #1a1a1a !important;
+  border: 1px solid rgba(60, 60, 80, 0.8) !important;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
+}
 </style>
 
 <style scoped>
+.user-dropdown-area {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.user-dropdown-area .avatar-info {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 20px;
+  transition: background-color 0.3s;
+}
+
+.user-dropdown-area .avatar-info:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .user-dropdown-area .avatar-info:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-dropdown-area .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+}
+
+.user-dropdown-area .name {
+  font-size: 14px;
+  color: #333;
+  margin-right: 4px;
+}
+
+.dark .user-dropdown-area .name {
+  color: #e0e0e0;
+}
+
+.user-dropdown-area .el-icon-arrow-down {
+  font-size: 12px;
+  color: #999;
+}
+
 .back-icon {
   width: 40px;
   height: 40px;
@@ -3868,7 +3766,7 @@ watch(
 
 /* 浅色模式下的颜色 */
 .back-icon.light {
-  color: #604ffd;
+  color: #CFD8F0;
 }
 
 /* 深色模式下的颜色 */
@@ -3876,9 +3774,66 @@ watch(
   color: #ffffff;
 }
 
-.header-back > i {
-  margin-left: -1.5vw;
+.header-left {
+  display: flex !important;
+  align-items: center !important;
 }
+
+.header-back {
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 44px !important;
+  height: 44px !important;
+  z-index: 200 !important;
+  transition: all 0.3s ease !important;
+  background: transparent !important; /* 移除背景圈 */
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.header-back:hover {
+  transform: scale(1.1) !important;
+  background: transparent !important; /* 悬停也不需要背景圈 */
+}
+
+.header-back > i,
+.header-back .back-arrow-svg {
+  margin-left: 0 !important; /* 移除负边距，确保图标可见 */
+  color: #409eff !important; /* 确保图标颜色醒目 */
+  visibility: visible !important;
+  display: inline-block !important;
+}
+
+.header-back .back-arrow-svg {
+  width: 24px !important;
+  height: 24px !important;
+  display: block !important;
+  stroke: #409eff !important;
+  stroke-width: 3.5 !important;
+  fill: none !important;
+  overflow: visible !important;
+}
+
+/* 修复头部位置，避免被侧边栏遮挡 */
+:deep(.layout-header) {
+  left: 90px !important; /* 往右挪，对齐侧边栏右侧/主体内容左侧 */
+  top: 20px !important;
+  width: calc(100% - 105px) !important; /* 90px left + 15px right margin */
+  border-radius: 24px 24px 0 0 !important; /* 顶部两个角圆润 */
+  z-index: 150 !important;
+  transition: all 0.3s ease-in-out;
+  background: #ffffff !important;
+  backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid #f0f2f5 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
+}
+
+:deep(.layout-header .header-content .item.header-left) {
+  padding-left: 10px !important; /* 减少左侧间距，让返回按钮靠近侧边栏 */
+}
+
 .layout-header .header-content .item[data-v-3e66491d] {
   padding: 0 2.5vw;
 }
@@ -3902,52 +3857,66 @@ watch(
   cursor: pointer;
 }
 
+/* 课程成绩样式 */
+.course-grades-wrapper {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-top: 80px;
+  align-items: center;
+  background-color: #ffffff;
+}
+
 /* 课程问答样式 */
 .course-qa-wrapper {
   height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  padding-top: 80px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.course-qa-wrapper.dark {
+  background-color: #1a1a1a;
 }
 
 .course-qa-container {
   flex: 1;
+  padding: 20px 20px 20px 10px; /* 左侧对齐返回按钮 (header left 100px + padding-left 10px) */
+  width: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 80px 20px 20px 120px; /* 增加上边距和左边距，避免被菜单遮挡 */
-  background-color: #f5f7fa;
-  height: calc(100vh - 125px);
-}
-
-.course-qa-container.dark {
-  background-color: #1d1e1f;
-  color: #fff;
 }
 
 .qa-content-layout {
   display: flex;
-  height: 100%;
+  flex: 1;
   gap: 20px;
   width: 100%;
+  height: 100%;
 }
 
 .qa-content-left {
   width: 30%;
   min-width: 320px;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.08);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #eef2f7;
 }
 
 .dark .qa-content-left {
-  background-color: #2a2a2a;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  background-color: #1a1a1a;
+  border-color: #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .left-scroll {
@@ -3959,58 +3928,103 @@ watch(
 .qa-data-ul {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 12px;
   padding: 0;
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   list-style: none;
   width: 100%;
 }
 
 .qa-data-ul li {
-  background-color: rgba(96, 79, 253, 0.1);
-  border-radius: 8px;
-  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  height: 100px;
+  gap: 12px;
+  height: 80px;
+  border: 1px solid #eef2f7;
+  transition: all 0.3s ease;
 }
 
 .dark .qa-data-ul li {
-  background-color: #333;
+  background-color: #2a2a2a;
+  border-color: #3a3a3a;
+}
+
+.qa-data-ul li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
+}
+
+.qa-data-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: rgba(64, 158, 255, 0.1);
+  color: #409eff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.qa-data-icon.success {
+  background-color: rgba(103, 194, 58, 0.1);
+  color: #67c23a;
+}
+
+.qa-data-icon.warning {
+  background-color: rgba(230, 162, 60, 0.1);
+  color: #e6a23c;
+}
+
+.qa-data-icon.info {
+  background-color: rgba(144, 147, 153, 0.1);
+  color: #909399;
+}
+
+.qa-data-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .qa-data-ul .text {
-  font-size: 16px;
-  color: #666;
-  margin-bottom: 8px;
-  font-weight: 700;
-  line-height: 16px;
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 4px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .dark .qa-data-ul .text {
-  color: #bbb;
+  color: #a0a0a0;
 }
 
 .qa-data-ul .num {
-  font-size: 24px;
-  font-weight: bold;
-  color: #604ffd;
-  line-height: 24px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1;
+}
+
+.dark .qa-data-ul .num {
+  color: #ffffff;
 }
 
 .qa-section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  margin-bottom: 15px;
-  color: #333;
+  gap: 10px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: #303133;
+  font-weight: 700;
 }
 
 .dark .qa-section-title {
-  color: #fff;
+  color: #ffffff;
 }
 
 .qa-history-container {
@@ -4024,157 +4038,142 @@ watch(
 }
 
 .qa-history-item {
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 12px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  border-left: 3px solid transparent;
+  border: 1px solid #eef2f7;
+  margin-bottom: 8px;
 }
 
 .dark .qa-history-item {
-  background-color: #333;
+  background-color: #2a2a2a;
+  border-color: #3a3a3a;
 }
 
 .qa-history-item:hover {
-  background-color: #f0f0f0;
+  background-color: #f5f9ff;
+  border-color: #d0e5ff;
+  transform: translateX(4px);
 }
 
 .dark .qa-history-item:hover {
-  background-color: #444;
+  background-color: #333;
+  border-color: #444;
 }
 
 .qa-history-item.active {
-  border-left-color: #604ffd;
-  background-color: rgba(96, 79, 253, 0.1);
+  background-color: #ecf5ff;
+  border-color: #409eff;
+  border-left: 4px solid #409eff;
 }
 
 .dark .qa-history-item.active {
-  background-color: rgba(96, 79, 253, 0.2);
+  background-color: rgba(64, 158, 255, 0.1);
+  border-color: #409eff;
 }
 
 .qa-history-title {
   font-size: 14px;
-  margin-bottom: 5px;
-  color: #333;
+  margin-bottom: 6px;
+  color: #303133;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
 }
 
 .dark .qa-history-title {
-  color: #fff;
+  color: #e0e0e0;
 }
 
 .qa-history-time {
   font-size: 12px;
-  color: #999;
+  color: #909399;
 }
 
 .qa-empty-history {
   text-align: center;
-  padding: 30px 0;
-  color: #999;
+  padding: 40px 0;
+  color: #909399;
 }
 
 .qa-content-right {
   flex: 1;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.08);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   max-width: calc(70% - 20px);
+  border: 1px solid #eef2f7;
 }
 
 .dark .qa-content-right {
-  background-color: #2a2a2a;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  background-color: #1a1a1a;
+  border-color: #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .qa-chat-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  justify-content: space-between;
 }
 
 .qa-chat-header {
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f2f5;
+  background-color: #fff;
 }
 
 .dark .qa-chat-header {
-  border-bottom: 1px solid #3a3a3a;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #333;
 }
 
 .qa-chat-header h3 {
-  margin: 0 0 5px 0;
+  margin: 0 0 4px 0;
   font-size: 18px;
-  color: #333;
+  color: #303133;
+  font-weight: 700;
 }
 
 .dark .qa-chat-header h3 {
-  color: #fff;
+  color: #ffffff;
 }
 
 .qa-chat-header p {
   margin: 0;
-  font-size: 14px;
-  color: #666;
-}
-
-.dark .qa-chat-header p {
-  color: #bbb;
+  font-size: 13px;
+  color: #909399;
 }
 
 .qa-chat-body {
-  height: calc(100vh - 270px); /* 最大高度，适应不同屏幕 */
-  padding: 20px;
+  flex: 1;
+  padding: 24px;
   overflow-y: auto;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   display: flex;
   flex-direction: column;
 }
 
 .dark .qa-chat-body {
-  background-color: #333;
-}
-
-.qa-chat-body::-webkit-scrollbar {
-  width: 6px;
-}
-
-.qa-chat-body::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.qa-chat-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.dark .qa-chat-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.dark .qa-chat-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background-color: #16161a;
 }
 
 .qa-chat-messages {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  flex: 1;
-  overflow-y: auto;
+  gap: 24px;
 }
 
 .qa-message-item {
   display: flex;
   gap: 12px;
-  max-width: 80%;
+  max-width: 85%;
 }
 
 .qa-message-item.ai {
@@ -4187,11 +4186,13 @@ watch(
 }
 
 .qa-message-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .qa-message-avatar img {
@@ -4202,48 +4203,47 @@ watch(
 
 .qa-message-content {
   background-color: #fff;
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  padding: 14px 18px;
+  border-radius: 16px;
+  border-top-left-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  position: relative;
+}
+
+.qa-message-item.user .qa-message-content {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: #fff;
+  border-radius: 16px;
+  border-top-right-radius: 4px;
+  border-top-left-radius: 16px;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
 }
 
 .dark .qa-message-content {
   background-color: #2a2a2a;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.qa-message-item.user .qa-message-content {
-  background-color: #604ffd;
-  color: #fff;
-}
-
-.dark .qa-message-item.user .qa-message-content {
-  background-color: #604ffd;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 .qa-message-name {
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #333;
-}
-
-.dark .qa-message-name {
-  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #909399;
 }
 
 .qa-message-item.user .qa-message-name {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: right;
 }
 
 .qa-message-text {
   font-size: 14px;
-  line-height: 1.5;
-  color: #333;
+  line-height: 1.6;
+  color: #303133;
 }
 
 .dark .qa-message-text {
-  color: #ddd;
+  color: #e0e0e0;
 }
 
 .qa-message-item.user .qa-message-text {
@@ -4251,14 +4251,14 @@ watch(
 }
 
 .qa-message-time {
-  font-size: 12px;
-  color: #999;
-  text-align: right;
-  margin-top: 5px;
+  font-size: 11px;
+  color: #c0c4cc;
+  margin-top: 8px;
 }
 
 .qa-message-item.user .qa-message-time {
   color: rgba(255, 255, 255, 0.7);
+  text-align: right;
 }
 
 .qa-empty-chat {
@@ -4267,7 +4267,7 @@ watch(
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #999;
+  color: #409eff;
   gap: 20px;
 }
 
@@ -4288,7 +4288,7 @@ watch(
   display: block;
   width: 8px;
   height: 8px;
-  background-color: #604ffd;
+  background-color: #CFD8F0;
   border-radius: 50%;
   animation: typing 1.4s infinite both;
 }
@@ -4317,21 +4317,43 @@ watch(
 }
 
 .qa-chat-footer {
-  padding: 15px;
-  border-top: 1px solid #f0f0f0;
-  flex-shrink: 0; /* 防止压缩 */
-  position: relative; /* 相对定位 */
-  z-index: 2; /* 确保在消息上方 */
+  padding: 20px 24px;
+  background-color: #ffffff;
+  border-top: 1px solid #f0f2f5;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .dark .qa-chat-footer {
-  border-top: 1px solid #3a3a3a;
+  background-color: #1a1a1a;
+  border-top: 1px solid #333;
 }
 
 .qa-input-wrapper {
   display: flex;
-  border-radius: 8px;
-  padding: 10px;
+  gap: 12px;
+  align-items: flex-end;
+  background-color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid #eef2f7;
+  transition: all 0.3s ease;
+}
+
+.dark .qa-input-wrapper {
+  background-color: #2a2a2a;
+  border-color: #3a3a3a;
+}
+
+.qa-input-wrapper:focus-within {
+  border-color: #409eff;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+}
+
+.dark .qa-input-wrapper:focus-within {
+  background-color: #2a2a2a;
 }
 
 .qa-input {
@@ -4344,23 +4366,24 @@ watch(
   outline: none;
   font-size: 14px;
   line-height: 1.5;
-  color: #333;
+  color: #303133;
   font-family: inherit;
+  padding: 8px 0;
 }
 
 .dark .qa-input {
-  color: #fff;
+  color: #e0e0e0;
 }
 
 .qa-input::placeholder {
-  color: #999;
+  color: #909399;
 }
 
 .qa-send-button {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  background-color: #604ffd;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -4373,12 +4396,49 @@ watch(
 }
 
 .qa-send-button:hover {
-  background-color: #4d3fd9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+}
+
+.qa-send-button:active {
+  transform: translateY(0);
 }
 
 .qa-send-button:disabled {
-  background-color: #ccc;
+  background: #e4e7ed;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.dark .qa-send-button:disabled {
+  background: #333;
+  color: #666;
+}
+
+.qa-closed-notice {
+  text-align: center;
+  padding: 16px;
+  background-color: #fef0f0;
+  color: #f56c6c;
+  border-radius: 12px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #fde2e2;
+  font-weight: 500;
+}
+
+.dark .qa-closed-notice {
+  background-color: rgba(245, 108, 108, 0.1);
+  border-color: rgba(245, 108, 108, 0.2);
+}
+
+.qa-closed-notice svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* 修复标签按钮高度 */
@@ -4393,7 +4453,7 @@ watch(
 }
 
 .resource-tab .tab-item.active {
-  color: #604ffd;
+  color: #CFD8F0;
   font-weight: bold;
 }
 
@@ -4407,7 +4467,7 @@ watch(
 }
 
 .kgDescribe-warp .label-list .lab-item.active {
-  background-color: #604ffd !important;
+  background-color: #CFD8F0 !important;
   color: white !important;
 }
 
@@ -4476,7 +4536,7 @@ watch(
 }
 
 .message-item.user .bubble {
-  background-color: #604ffd;
+  background-color: #CFD8F0;
   color: white;
 }
 
@@ -4518,7 +4578,7 @@ watch(
 
 .send-btn {
   cursor: pointer;
-  color: #604ffd;
+  color: #CFD8F0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4553,47 +4613,172 @@ watch(
   height: 25px;
 }
 
+/* 侧边栏样式优化 - 独立显示，与左右保持距离 */
+:deep(.layout-sidebar) {
+  width: 80px !important; /* 侧边栏加宽 */
+  min-width: 80px !important;
+  left: 10px !important; /* 减少左侧留白 */
+  top: 20px !important;
+  height: calc(100vh - 35px) !important;
+  border-radius: 24px !important; /* 更加圆润 */
+  background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;
+  box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.3) !important;
+  border: 1px solid #dce5ff !important;
+  backdrop-filter: blur(20px) !important;
+  z-index: 100 !important;
+  position: fixed !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 15px 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+:deep(.layout-sidebar.dark) {
+  background: #1a1a1a !important;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid rgba(60, 60, 80, 0.8) !important;
+}
+
+/* 侧边栏菜单项样式调整 */
+:deep(.layout-sidebar .item) {
+  padding: 6px 10px !important; /* 增加左右间距，让圆角底衬更明显 */
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.layout-sidebar .hover-box) {
+  width: 100% !important;
+  padding: 12px 0 !important;
+  border-radius: 16px !important; /* 选中底衬更加圆润 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+  position: relative;
+}
+
+:deep(.layout-sidebar .hover-box:hover) {
+  background: rgba(64, 158, 255, 0.1) !important;
+}
+
+:deep(.layout-sidebar .hover-box.active) {
+  background: #409eff !important;
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3) !important;
+}
+
+:deep(.layout-sidebar .hover-box.active::before) {
+  display: none !important; /* 移除左侧白条，改用纯圆角底衬 */
+}
+
+:deep(.layout-sidebar .side-name) {
+  font-size: 11px !important;
+  margin-top: 6px !important;
+  color: #5a6b8a !important;
+  white-space: nowrap;
+  transition: transform 0.2s ease-in-out, color 0.3s !important;
+  display: inline-block;
+}
+
+:deep(.layout-sidebar.dark .side-name) {
+  color: #a8b8e8 !important;
+}
+
+/* 鼠标悬停效果：背景微调 + 文字放大 */
+:deep(.layout-sidebar .hover-box:hover) {
+  background: rgba(207, 216, 240, 0.4) !important;
+}
+
+:deep(.layout-sidebar .hover-box:hover .side-name) {
+  transform: scale(1.15) !important; /* 鼠标悬停放大文字 */
+  color: #2d3a53 !important;
+}
+
+:deep(.layout-sidebar.dark .hover-box:hover .side-name) {
+  color: #ffffff !important;
+}
+
+/* 选中状态：加深底色 + 底衬效果 */
+:deep(.layout-sidebar .hover-box.active) {
+  background: #5a6b8a !important; /* 选中时加深底色 */
+  box-shadow: 0 4px 12px rgba(90, 107, 138, 0.4) !important;
+  position: relative;
+}
+
+:deep(.layout-sidebar .hover-box.active .side-name) {
+  color: #ffffff !important;
+  font-weight: bold !important;
+}
+
+:deep(.layout-sidebar .hover-box.active svg) {
+  filter: brightness(0) invert(1) !important; /* 尝试将图标转为白色 */
+}
+
+:deep(.layout-sidebar.dark .hover-box.active) {
+  background: #4a5a7a !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 侧边栏分割线样式 */
+:deep(.layout-sidebar .line) {
+  margin: 8px 8px !important;
+  background: linear-gradient(90deg, transparent, rgba(207, 216, 240, 0.5), transparent) !important;
+}
+
+:deep(.layout-sidebar.dark .line) {
+  background: linear-gradient(90deg, transparent, rgba(100, 100, 120, 0.4), transparent) !important;
+}
+
 /* 移除章节模式背景 */
 .custom-mode {
   background: transparent !important;
 }
 .mastery-page-content {
-  height: 100vh;
+  height: 100%;
+  padding-top: 80px;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 /* 课程资料相关样式 */
 .course-materials-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   width: 100%;
-  background-color: #f5f7fa; /* 默认浅色背景 */
+  background-color: #ffffff; /* 统一改为白色背景 */
 }
 
 .course-materials-wrapper.dark {
-  background-color: #1e1e1e;
+  background-color: #1a1a1a;
 }
 
 /* （HTML 动画列表复用 materials 样式，移除自定义块） */
 
 .materials-container {
-  padding: 80px 20px 20px;
+  padding: 100px 20px 20px;
   width: 100%;
-  height: calc(100vh - 125px);
+  height: 100%;
   overflow-y: auto;
-  background-color: #f5f7fa; /* 默认浅色背景 */
+  background-color: #ffffff; /* 统一改为白色背景 */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 .materials-container.dark {
-  background-color: #1e1e1e;
+  background-color: #1a1a1a;
 }
 
 .materials-container.light {
-  background-color: #f5f7fa;
+  background-color: #ffffff;
 }
 
 .materials-title {
@@ -4624,7 +4809,7 @@ watch(
 }
 
 .material-item.dark {
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
@@ -4697,28 +4882,29 @@ watch(
 .homework-exam-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   width: 100%;
-  background-color: #f5f7fa; /* 默认浅色背景 */
+  background-color: #ffffff; /* 统一改为白色背景 */
 }
 
 .homework-exam-wrapper.dark {
-  background-color: #1e1e1e;
+  background-color: #1a1a1a;
 }
 
 .homework-container {
   padding: 80px 20px 20px;
   width: 100%;
-  height: calc(100vh - 125px);
+  height: 100%;
   overflow-y: auto;
-  background-color: #f5f7fa; /* 默认浅色背景 */
+  background-color: #ffffff; /* 统一改为白色背景 */
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .homework-container.dark {
-  background-color: #1e1e1e;
+  background-color: #1a1a1a;
 }
 
 .homework-tabs {
@@ -4750,7 +4936,7 @@ watch(
 
 .homework-item.dark,
 .exam-item.dark {
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
@@ -4825,28 +5011,29 @@ watch(
 .course-grades-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   width: 100%;
-  background-color: #f5f7fa; /* 默认浅色背景 */
+  background-color: #ffffff; /* 统一改为白色背景 */
 }
 
 .course-grades-wrapper.dark {
-  background-color: #1e1e1e;
+  background-color: #1a1a1a;
 }
 
 .course-grades-container {
   padding: 80px 20px 20px;
   width: 100%;
-  height: calc(100vh - 125px);
+  height: 100%;
   overflow-y: auto;
-  background-color: #f5f7fa; /* 默认浅色背景 */
+  background-color: #ffffff; /* 统一改为白色背景 */
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .course-grades-container.dark {
-  background-color: #1e1e1e;
+  background-color: #1a1a1a;
 }
 
 .grades-content {
@@ -4863,21 +5050,23 @@ watch(
 
 .grades-card {
   background-color: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
   transition: all 0.3s;
+  border: 1px solid #c6e2ff;
 }
 
 .grades-card.dark {
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .grades-card:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
   transform: translateY(-5px);
+  border-color: #409eff;
 }
 
 .grades-card.dark:hover {
@@ -4887,20 +5076,20 @@ watch(
 .grades-card-header {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .grades-card-header svg {
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
-  color: #604ffd;
+  width: 28px;
+  height: 28px;
+  margin-right: 12px;
+  color: #409eff;
 }
 
 .grades-card-header h3 {
-  font-size: 16px;
-  font-weight: 500;
-  color: #303133;
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a1a1a;
   margin: 0;
 }
 
@@ -4912,37 +5101,41 @@ watch(
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 80px;
+  min-height: 100px;
 }
 
 .grades-score {
-  font-size: 48px;
-  font-weight: 600;
-  color: #604ffd;
+  font-size: 56px;
+  font-weight: 800;
+  color: #604ffd; /* 使用醒目的紫色 */
+  text-shadow: 0 2px 4px rgba(96, 79, 253, 0.1);
 }
 
 .grades-chart-container {
   background-color: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  margin-top: 20px;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
+  margin-top: 30px;
+  border: 1px solid #c6e2ff;
 }
 
 .grades-chart-container.dark {
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .grades-chart-header {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #f0f2f5;
+  padding-bottom: 15px;
 }
 
 .grades-chart-header h3 {
-  font-size: 18px;
-  font-weight: 500;
-  color: #303133;
+  font-size: 20px;
+  font-weight: bold;
+  color: #1a1a1a;
   margin: 0;
 }
 
@@ -4992,11 +5185,11 @@ watch(
   bottom: 6px;
   width: 3px;
   border-radius: 3px;
-  background: linear-gradient(180deg,#604ffd,#8f7bff);
+  background: linear-gradient(180deg,#CFD8F0,#a8b8e8);
   opacity: .18;
 }
 
-.point-section.dark:before { background: linear-gradient(180deg,#8f7bff,#604ffd); opacity:.35; }
+.point-section.dark:before { background: linear-gradient(180deg,#a8b8e8,#CFD8F0); opacity:.35; }
 
 .chapter-body { position: relative; }
 
@@ -5008,7 +5201,7 @@ watch(
 }
 .point-item:hover { background:#fff; transform: translateY(-2px); }
 .point-item.dark {
-  background: rgba(37,37,37,0.55);
+  background: rgba(26,26,26,0.55);
   border-color:#3e3e3e;
 }
 .point-item.dark:hover { background:#2e2e2e; }
@@ -5022,13 +5215,13 @@ watch(
   font-size:12px;
   line-height:1;
   border-radius:10px;
-  background:linear-gradient(90deg,#604ffd,#8f7bff);
+  background:linear-gradient(90deg,#CFD8F0,#a8b8e8);
   color:#fff;
   font-weight:600;
   margin-right:8px;
-  box-shadow:0 2px 6px rgba(96,79,253,.4);
+  box-shadow:0 2px 6px rgba(90,107,138,.4);
 }
-.dark .count-badge { background:linear-gradient(90deg,#8f7bff,#604ffd); box-shadow:0 2px 6px rgba(143,123,255,.4); }
+.dark .count-badge { background:linear-gradient(90deg,#a8b8e8,#CFD8F0); box-shadow:0 2px 6px rgba(168,184,232,.4); }
 
 /* 章节展开动画 */
 .chapter-collapse-enter-active, .chapter-collapse-leave-active { transition: all .35s cubic-bezier(.4,0,.2,1); overflow:hidden; }
@@ -5075,7 +5268,7 @@ watch(
 
 /* 暗黑模式下的章节和要点样式 */
 .chapter-section.dark {
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2);
 }
@@ -5122,12 +5315,12 @@ watch(
 
 /* 新增：子节标题高阶外观 */
 .point-section > .collapsible-header {
-  background: linear-gradient(145deg, #ffffff, #f5f7ff);
-  border: 1px solid #eceefe;
+  background: linear-gradient(145deg, #ffffff, #f5f8ff);
+  border: 1px solid #dce2f7;
   border-radius: 14px;
   padding: 10px 14px 10px 14px;
   margin: 4px 0 10px;
-  box-shadow: 0 2px 4px -1px rgba(96,79,253,0.08), 0 4px 14px -4px rgba(96,79,253,0.12);
+  box-shadow: 0 2px 4px -1px rgba(90,107,138,0.08), 0 4px 14px -4px rgba(90,107,138,0.12);
   position: relative;
   overflow: hidden;
   transition: background .35s, box-shadow .35s, transform .35s;
@@ -5136,17 +5329,17 @@ watch(
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(96,79,253,.18), transparent 60%);
+  background: radial-gradient(circle at 20% 20%, rgba(90,107,138,.18), transparent 60%);
   opacity: .6;
   pointer-events: none;
 }
 .point-section > .collapsible-header:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px -2px rgba(96,79,253,0.16), 0 6px 20px -6px rgba(96,79,253,0.22);
+  box-shadow: 0 4px 10px -2px rgba(90,107,138,0.16), 0 6px 20px -6px rgba(90,107,138,0.22);
 }
 .point-section > .collapsible-header.is-expanded {
-  background: linear-gradient(145deg,#fff,#f0f3ff);
-  border-color:#d7dafa;
+  background: linear-gradient(145deg,#fff,#f0f5ff);
+  border-color:#c8d4f0;
 }
 .point-section.dark > .collapsible-header {
   background: linear-gradient(145deg,#2a2a35,#23232b);
@@ -5154,7 +5347,7 @@ watch(
   box-shadow: 0 2px 4px -1px rgba(0,0,0,.5), 0 4px 14px -4px rgba(0,0,0,.65);
 }
 .point-section.dark > .collapsible-header:before {
-  background: radial-gradient(circle at 20% 20%, rgba(143,123,255,.35), transparent 65%);
+  background: radial-gradient(circle at 20% 20%, rgba(168,184,232,.35), transparent 65%);
 }
 .point-section.dark > .collapsible-header:hover {
   box-shadow: 0 4px 10px -2px rgba(0,0,0,.6), 0 6px 20px -6px rgba(0,0,0,.7);
@@ -5177,8 +5370,8 @@ watch(
   color:#878b99;
   transition: color .3s;
 }
-.point-section > .collapsible-header:hover i { color:#604ffd; }
-.point-section.dark > .collapsible-header:hover i { color:#8f7bff; }
+.point-section > .collapsible-header:hover i { color:#CFD8F0; }
+.point-section.dark > .collapsible-header:hover i { color:#a8b8e8; }
 
 /* 随练错题列表样式 */
 .wrong-question-list {
@@ -5202,7 +5395,7 @@ watch(
 }
 
 .wrong-question-item.dark {
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
@@ -5297,7 +5490,7 @@ watch(
   box-shadow: 0 10px 28px -4px rgba(0,0,0,0.12), 0 4px 8px -2px rgba(0,0,0,0.08);
 }
 .summary-card.dark {
-  background: #252525;
+  background: #1a1a1a;
   box-shadow: 0 4px 18px -2px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.4);
 }
 .summary-title {
@@ -5312,13 +5505,13 @@ watch(
   font-weight: 700;
   line-height: 1;
   letter-spacing: -1px;
-  background: linear-gradient(90deg,#604ffd,#8f7bff);
+  background: linear-gradient(90deg,#CFD8F0,#a8b8e8);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
 }
 .summary-card.dark .summary-value {
-  background: linear-gradient(90deg,#a89bff,#7869ff);
+  background: linear-gradient(90deg,#c8d4f0,#7a8bb8);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
@@ -5336,7 +5529,7 @@ watch(
   flex-direction: column;
 }
 .mastery-summary-right.dark {
-  background: #252525;
+  background: #1a1a1a;
   box-shadow: 0 4px 18px -2px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.4);
 }
 .summary-chart-title {
@@ -5356,5 +5549,547 @@ watch(
   .mastery-summary-wrapper { flex-direction: column; }
   .mastery-summary-right { min-height: 260px; }
   .summary-chart { height: 220px; }
+}
+
+/* ================= 减少留白：让课程学习等页面填满宽度 ================= */
+:deep(.study-container) {
+  padding-left: 1.5vw !important; /* 减少左边距 */
+  padding-right: 1.5vw !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.aloneMapCourrseWarp) {
+  min-width: unset !important; /* 移除最小宽度限制 */
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-right: 0 !important;
+}
+
+:deep(.aloneMapCourrseWarp .left-warp) {
+  flex: 1 !important;
+  min-width: unset !important; /* 移除最小宽度限制 */
+  max-width: calc(100% - 26vw) !important; /* 留出右侧目录空间 */
+  margin-right: 1vw !important;
+}
+
+:deep(.aloneMapCourrseWarp .rigth-warp) {
+  width: 25vw !important; /* 稍微加宽右侧目录 */
+  margin-right: 0.5vw !important;
+  flex-shrink: 0 !important;
+}
+
+:deep(.rightTreeWarp) {
+  width: 25vw !important;
+  right: 1vw !important;
+  margin-right: 0 !important;
+}
+
+/* 知识点页面填满宽度 */
+:deep(.mastery-page-content) {
+  padding-left: 1.5vw !important;
+  padding-right: 1.5vw !important;
+  padding-top: 100px !important; /* 增加顶部间距，让内容往下移 */
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.mastery-page-content .mastery-content-left) {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 1vw !important;
+}
+
+:deep(.mastery-page-content .left-scroll) {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 课程资料页面填满宽度 */
+.materials-container {
+  padding-left: 2vw !important;
+  padding-right: 2vw !important;
+}
+
+.materials-list {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 作业考试页面填满宽度 */
+.homework-container {
+  padding-left: 2vw !important;
+  padding-right: 2vw !important;
+}
+
+.homework-tabs {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 成绩页面填满宽度 */
+.grades-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 1vw !important;
+}
+
+/* 提高右侧主界面颜色的显眼度 - 彻底移除灰色，改用鲜艳色系 */
+:deep(.light .rightTreeWarp),
+:deep(.light .course-grades-wrapper),
+:deep(.light .course-materials-wrapper),
+:deep(.light .materials-container),
+:deep(.light .qa-chat-body) {
+  background: #ffffff !important; /* 统一改为白色背景 */
+  border-left: 1px solid #f0f2f5 !important;
+}
+
+:deep(.light .rightTreeWarp .chapterList-box .list li .catalogue_title) {
+  color: #1a1a1a !important; /* 纯黑文字，最显眼 */
+}
+
+:deep(.light .rightTreeWarp .chapterList-box .list .activeNode) {
+  background: #e1f0ff !important; /* 明显的蓝色激活背景 */
+  border: 1px solid #a0cfff !important;
+}
+
+:deep(.light .rightTreeWarp .chapterList-box .list li .catalogue_title3) {
+  color: #409eff !important; /* 章节数字改为亮蓝色 */
+  font-weight: bold !important;
+}
+
+:deep(.light .rightTreeWarp .chapterList-box .list li .resource-box .resource-text) {
+  color: #303133 !important;
+}
+
+:deep(.light .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span) {
+  color: #ff6b6b !important; /* 进度数字改为醒目的珊瑚红 */
+  font-weight: bold !important;
+}
+
+:deep(.light .rightTreeWarp .chapterList-box .list li .resource-box .resource-bar .el-progress-bar__inner) {
+  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%) !important; /* 亮青色渐变 */
+}
+
+/* 左侧视频区域颜色优化 */
+:deep(.light .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name) {
+  color: #409eff !important; /* 知识点名称改为品牌蓝 */
+  font-weight: 800 !important;
+}
+
+:deep(.light .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text) {
+  color: #303133 !important;
+}
+
+:deep(.light .kgDescribe-warp) {
+  border: 1px solid #c6e2ff !important;
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.1) !important;
+}
+
+/* 返回按钮颜色 */
+:deep(.light .header-back .iconfont) {
+  color: #409eff !important;
+}
+
+/* AI助教区域颜色优化 */
+:deep(.ai-helper-sections.light .people-name) {
+  color: #604ffd !important; /* AI名称改为醒目的紫色 */
+  font-weight: bold !important;
+}
+
+:deep(.ai-helper-sections.light .ai-tips-box),
+:deep(.ai-helper-sections.light .ai-tips-box span) {
+  color: #409eff !important;
+}
+
+:deep(.ai-helper-sections.light .el-input__inner) {
+  border-color: #409eff !important;
+}
+
+:deep(.ai-helper-sections.light .el-input__inner::placeholder) {
+  color: #a0cfff !important;
+}
+
+/* 问答与资料区域颜色优化 */
+:deep(.light .qa-content-left),
+:deep(.light .qa-content-right),
+:deep(.light .material-item) {
+  border-color: #c6e2ff !important;
+  background-color: #ffffff !important;
+}
+
+:deep(.light .qa-data-ul .text) {
+  color: #604ffd !important; /* 统计文字改为紫色 */
+}
+
+:deep(.light .qa-section-title),
+:deep(.light .qa-chat-header h3),
+:deep(.light .qa-history-title) {
+  color: #1a73e8 !important; /* 标题改为亮蓝色 */
+}
+
+:deep(.light .qa-history-item:hover) {
+  background-color: #e1f0ff !important;
+}
+
+/* 通用颜色优化 - 彻底替换不显眼的灰色 */
+:deep(.light .el-text--secondary),
+:deep(.light .material-info .material-type),
+:deep(.light .homework-meta),
+:deep(.light .exam-meta),
+:deep(.light .wrong-question-meta),
+:deep(.light .qa-history-time),
+:deep(.light .qa-chat-header p),
+:deep(.light .qa-empty-history),
+:deep(.light .qa-empty-chat),
+:deep(.light .qa-message-time) {
+  color: #409eff !important; /* 次要信息全部改为蓝色，不再使用灰色 */
+}
+
+:deep(.light .material-info .material-title),
+:deep(.light .homework-title),
+:deep(.light .exam-title) {
+  color: #1a1a1a !important; /* 标题改为纯黑，增加对比度 */
+  font-weight: bold !important;
+}
+
+:deep(.light .summary-title),
+:deep(.light .grades-card-header h3),
+:deep(.light .grades-chart-header h3) {
+  color: #1a1a1a !important;
+  font-weight: bold !important;
+}
+
+:deep(.light .grades-score) {
+  color: #604ffd !important; /* 成绩数字使用醒目的紫色 */
+}
+
+:deep(.light .grades-card-header svg) {
+  color: #409eff !important; /* 成绩卡片图标改为蓝色 */
+}
+
+:deep(.light .current-time) {
+  color: #409eff !important; /* 顶部日期改为蓝色 */
+  font-weight: bold !important;
+  font-size: 18px !important; /* 日期加大 */
+}
+
+/* 侧边栏交互增强 */
+:deep(.layout-sidebar .hover-box) {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+:deep(.layout-sidebar .hover-box:hover) {
+  background: #e6f0ff !important;
+  transform: translateY(-2px) scale(1.1) !important;
+}
+
+:deep(.layout-sidebar .hover-box.active) {
+  background: #409eff !important;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4) !important;
+}
+
+:deep(.layout-sidebar .side-name) {
+  transition: all 0.3s !important;
+}
+
+:deep(.layout-sidebar .hover-box:hover .side-name) {
+  color: #409eff !important;
+  font-weight: bold !important;
+}
+
+/* ================= 深色模式适配 (Dark Mode) ================= */
+:deep(.dark .rightTreeWarp),
+:deep(.dark .course-grades-wrapper),
+:deep(.dark .course-materials-wrapper),
+:deep(.dark .course-animations-wrapper),
+:deep(.dark .course-qa-wrapper),
+:deep(.dark .materials-container),
+:deep(.dark .qa-chat-body),
+:deep(.dark .homework-container),
+:deep(.dark .mastery-page-content),
+:deep(.dark .study-container) {
+  background: #1a1a1a !important; /* 深色背景 */
+  border-left: 1px solid #333 !important;
+  color: #e0e0e0 !important;
+}
+
+:deep(.light .layout-header),
+:deep(.light .layout-header .header-content) {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+}
+
+:deep(.dark .layout-header),
+:deep(.dark .layout-header .header-content) {
+  background: #1a1a1a !important;
+  backdrop-filter: none !important;
+  border-bottom: 1px solid #333 !important;
+  border-radius: 24px 24px 0 0 !important; /* 深色模式也保持圆角 */
+  box-shadow: none !important;
+}
+
+:deep(.dark .rightTreeWarp .chapterList-box .list li .catalogue_title) {
+  color: #e0e0e0 !important;
+}
+
+:deep(.dark .rightTreeWarp .chapterList-box .list .activeNode) {
+  background: #2c3e50 !important;
+  border: 1px solid #409eff !important;
+}
+
+:deep(.dark .rightTreeWarp .chapterList-box .list li .catalogue_title3) {
+  color: #4facfe !important;
+  font-weight: bold !important;
+}
+
+:deep(.dark .rightTreeWarp .chapterList-box .list li .resource-box .resource-text) {
+  color: #b4b4c7 !important;
+}
+
+:deep(.dark .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span) {
+  color: #ff8e8e !important;
+}
+
+/* 左侧视频区域深色优化 */
+:deep(.dark .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name) {
+  color: #4facfe !important;
+  font-weight: 800 !important;
+}
+
+:deep(.dark .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text) {
+  color: #b4b4c7 !important;
+}
+
+:deep(.dark .kgDescribe-warp) {
+  background: #1a1a1a !important;
+  border: 1px solid #333 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+:deep(.dark .kgDescribe-warp .introduce-div) {
+  color: #d0d0d0 !important;
+}
+
+/* 返回按钮深色 */
+:deep(.dark .header-back svg) {
+  stroke: #4facfe !important;
+}
+
+/* AI助教区域深色优化 */
+:deep(.ai-helper-sections.dark .people-name) {
+  color: #a29bfe !important;
+  font-weight: bold !important;
+}
+
+:deep(.ai-helper-sections.dark .ai-tips-box),
+:deep(.ai-helper-sections.dark .ai-tips-box span) {
+  color: #4facfe !important;
+}
+
+:deep(.ai-helper-sections.dark .el-input__inner) {
+  background-color: #2c2c2c !important;
+  border-color: #444 !important;
+  color: #fff !important;
+}
+
+:deep(.ai-helper-sections.dark .el-input__inner::placeholder) {
+  color: #666 !important;
+}
+
+/* 问答与资料区域深色优化 */
+:deep(.dark .qa-content-left),
+:deep(.dark .qa-content-right),
+:deep(.dark .material-item),
+:deep(.dark .homework-item),
+:deep(.dark .exam-item) {
+  border-color: #333 !important;
+  background-color: #1a1a1a !important;
+}
+
+:deep(.dark .qa-data-ul .text) {
+  color: #a29bfe !important;
+}
+
+:deep(.dark .qa-section-title),
+:deep(.dark .qa-chat-header h3),
+:deep(.dark .qa-history-title) {
+  color: #4facfe !important;
+}
+
+:deep(.dark .qa-history-item:hover) {
+  background-color: #2c3e50 !important;
+}
+
+/* 通用文字深色优化 */
+:deep(.dark .el-text--secondary),
+:deep(.dark .material-info .material-type),
+:deep(.dark .homework-meta),
+:deep(.dark .exam-meta),
+:deep(.dark .wrong-question-meta),
+:deep(.dark .qa-history-time),
+:deep(.dark .qa-chat-header p),
+:deep(.dark .qa-empty-history),
+:deep(.dark .qa-empty-chat),
+:deep(.dark .qa-message-time) {
+  color: #888 !important;
+}
+
+:deep(.dark .material-info .material-title),
+:deep(.dark .homework-title),
+:deep(.dark .exam-title) {
+  color: #fff !important;
+}
+
+:deep(.dark .summary-title),
+:deep(.dark .grades-card-header h3),
+:deep(.dark .grades-chart-header h3) {
+  color: #e0e0e0 !important;
+}
+
+:deep(.dark .grades-score) {
+  color: #a29bfe !important;
+}
+
+:deep(.dark .current-time) {
+  color: #4facfe !important;
+  font-weight: bold !important;
+  font-size: 18px !important;
+}
+
+/* 侧边栏深色适配 */
+:deep(.dark .layout-sidebar) {
+  background: #1a1a1a !important;
+  border-right: 1px solid #333 !important;
+}
+
+:deep(.dark .layout-sidebar .hover-box:hover) {
+  background: #2c3e50 !important;
+}
+
+:deep(.dark .layout-sidebar .hover-box.active) {
+  background: #409eff !important;
+}
+
+:deep(.dark .layout-sidebar .side-name) {
+  color: #888 !important;
+}
+
+:deep(.dark .layout-sidebar .hover-box.active .side-name),
+:deep(.dark .layout-sidebar .hover-box:hover .side-name) {
+  color: #fff !important;
+}
+
+/* 下拉菜单深色适配 */
+:deep(.el-dropdown-menu) {
+  background-color: #ffffff !important;
+  border: 1px solid #ebeef5 !important;
+}
+
+:deep(.dark .el-dropdown-menu) {
+  background-color: #1a1a1a !important;
+  border: 1px solid #333 !important;
+}
+
+:deep(.el-dropdown-menu__item) {
+  color: #606266 !important;
+}
+
+:deep(.dark .el-dropdown-menu__item) {
+  color: #e0e0e0 !important;
+}
+
+:deep(.el-dropdown-menu__item:hover) {
+  background-color: #f5f7fa !important;
+  color: #409eff !important;
+}
+
+:deep(.dark .el-dropdown-menu__item:hover) {
+  background-color: #2c3e50 !important;
+  color: #409eff !important;
+}
+
+:deep(.el-dropdown-menu__item--divided::before) {
+  background-color: #ebeef5 !important;
+}
+
+:deep(.dark .el-dropdown-menu__item--divided::before) {
+  background-color: #333 !important;
+}
+
+/* ================= 增大作业考试、课程资料、HTML动画界面字体大小 ================= */
+/* 课程资料 & HTML动画 列表项字体加大 */
+.material-info .material-title {
+  font-size: 18px !important; /* 从14px增大到18px */
+  font-weight: 600 !important;
+}
+
+.material-info .material-type {
+  font-size: 15px !important; /* 从12px增大到15px */
+}
+
+.material-icon img {
+  width: 50px !important; /* 从40px增大到50px */
+  height: 50px !important;
+}
+
+.material-item {
+  padding: 20px !important; /* 从15px增大到20px */
+}
+
+/* 作业考试 列表项字体加大 */
+.homework-title,
+.exam-title {
+  font-size: 20px !important; /* 从16px增大到20px */
+  font-weight: 600 !important;
+}
+
+.homework-meta,
+.exam-meta {
+  font-size: 15px !important; /* 从12px增大到15px */
+  gap: 15px !important; /* 从10px增大到15px */
+}
+
+.homework-meta span,
+.exam-meta span {
+  font-size: 15px !important;
+}
+
+.homework-icon img,
+.exam-icon img {
+  width: 50px !important; /* 从40px增大到50px */
+  height: 50px !important;
+}
+
+.homework-item,
+.exam-item {
+  padding: 20px !important; /* 从15px增大到20px */
+}
+
+/* 作业考试标签页字体加大 */
+:deep(.homework-tabs .el-tabs__item) {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+
+/* el-button 查看按钮加大 */
+.material-action .el-button,
+.homework-action .el-button,
+.exam-action .el-button {
+  font-size: 15px !important;
+  padding: 10px 20px !important;
+}
+
+/* el-tag 状态标签加大 */
+.homework-status .el-tag,
+.exam-status .el-tag {
+  font-size: 14px !important;
+  padding: 6px 12px !important;
+}
+
+/* el-empty 空状态文字加大 */
+:deep(.materials-container .el-empty__description),
+:deep(.homework-container .el-empty__description) {
+  font-size: 16px !important;
 }
 </style>

@@ -48,9 +48,13 @@
     <!-- 账号管理内容 -->
     <div class="account-content">
       <div class="account-sidebar">
-        <div class="user-info">
-          <el-avatar :size="80" :src="userInfo?.avatar" />
+        <div class="user-info-card">
+          <div class="avatar-wrapper">
+            <el-avatar :size="80" :src="userInfo?.avatar" />
+            <div class="avatar-ring"></div>
+          </div>
           <h3>{{ userInfo?.nickname || userInfo?.username }}</h3>
+          <p class="user-role">学生</p>
         </div>
         <el-menu
           :default-active="activeMenu"
@@ -81,6 +85,14 @@
             <el-icon><Tickets /></el-icon>
             <span>待办事项</span>
           </el-menu-item>
+          <el-menu-item index="virtual-lab">
+            <el-icon><Cpu /></el-icon>
+            <span>虚拟实验室</span>
+          </el-menu-item>
+          <el-menu-item index="competition">
+            <el-icon><Trophy /></el-icon>
+            <span>赛事场</span>
+          </el-menu-item>
         </el-menu>
       </div>
       <div class="account-main">
@@ -96,7 +108,49 @@
         <div v-else-if="activeMenu === 'todo'">
           <todo />
         </div>
+        <div v-else-if="activeMenu === 'virtual-lab'">
+          <virtual-lab />
+        </div>
+        <div v-else-if="activeMenu === 'competition'">
+          <competition />
+        </div>
         <div v-else-if="activeMenu === 'home'">
+          <!-- 快速入口卡片 -->
+          <div class="quick-access-section">
+            <div class="quick-access-card lab-access" @click="activeMenu = 'virtual-lab'">
+              <div class="access-icon">🧪</div>
+              <div class="access-info">
+                <h4>虚拟实验室</h4>
+                <p>探索 HTML 动画与 AI 小游戏</p>
+              </div>
+              <div class="access-arrow">→</div>
+            </div>
+            <div class="quick-access-card competition-access" @click="activeMenu = 'competition'">
+              <div class="access-icon">🏆</div>
+              <div class="access-info">
+                <h4>赛事场</h4>
+                <p>在线 OJ、题库训练、作文批改</p>
+              </div>
+              <div class="access-arrow">→</div>
+            </div>
+            <div class="quick-access-card course-access" @click="activeMenu = 'course'">
+              <div class="access-icon">📚</div>
+              <div class="access-info">
+                <h4>我的课程</h4>
+                <p>查看全部课程学习进度</p>
+              </div>
+              <div class="access-arrow">→</div>
+            </div>
+            <div class="quick-access-card cloud-access" @click="activeMenu = 'cloud-disk'">
+              <div class="access-icon">☁️</div>
+              <div class="access-info">
+                <h4>学习云盘</h4>
+                <p>管理你的学习资料</p>
+              </div>
+              <div class="access-arrow">→</div>
+            </div>
+          </div>
+
           <!-- 上方卡片 -->
           <div class="card">
             <!-- 重要提醒 -->
@@ -405,14 +459,16 @@ import {
   ArrowLeft,
   ArrowRight,
   Bell,
-  Tickets
+  Tickets,
+  Cpu,
+  Trophy
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
 import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
-import { UserProfile, SystemNotification, Todo } from "./components";
+import { UserProfile, SystemNotification, Todo, VirtualLab, Competition } from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
@@ -800,7 +856,7 @@ onUnmounted(() => {
     left: 0;
     z-index: 1000;
     height: 64px;
-    background: linear-gradient(45deg, #6b46c1, #8a5cf6);
+    background: linear-gradient(45deg, #c8d4f0, #dce2f7);
     box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: all 0.3s ease;
 
@@ -824,7 +880,11 @@ onUnmounted(() => {
 
       .logo {
         height: 48px;
+        padding: 6px;
         cursor: pointer;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 
         img {
           height: 100%;
@@ -851,15 +911,14 @@ onUnmounted(() => {
           margin: 0 8px;
           font-size: 16px;
           font-weight: 600;
-          color: #fff;
-          text-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+          color: #333;
           transition: color 0.3s;
         }
 
         .el-icon--right {
           font-size: 18px;
           font-weight: bold;
-          color: #fff;
+          color: #333;
           transition: all 0.3s ease;
         }
       }
@@ -876,59 +935,251 @@ onUnmounted(() => {
       flex-shrink: 0;
       width: 240px;
 
-      .user-info {
-        /* 显式指定纵向布局，避免被其它 .user-info flex 规则影响导致昵称跑到右侧 */
+      .user-info-card {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        /* 兜底：若被外部样式覆盖成 row，这里提高一些特异性 */
-        &.user-info { flex-direction: column; }
-        padding: 30px 20px;
-        margin-bottom: 24px;
+        padding: 30px 20px 24px;
+        margin-bottom: 16px;
         text-align: center;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+        background: linear-gradient(145deg, #fff, #f8faff);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
+
+          .avatar-ring {
+            transform: scale(1.05);
+            border-color: #dce2f7;
+          }
+        }
+
+        .avatar-wrapper {
+          position: relative;
+          margin-bottom: 8px;
+
+          .el-avatar {
+            border: 3px solid #fff;
+            box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+            transition: transform 0.3s ease;
+          }
+
+          &:hover .el-avatar {
+            transform: scale(1.05);
+          }
+
+          .avatar-ring {
+            position: absolute;
+            inset: -6px;
+            border: 2px dashed #c8d4f0;
+            border-radius: 50%;
+            transition: all 0.4s ease;
+            animation: rotate 12s linear infinite;
+          }
+        }
 
         h3 {
-          margin: 15px 0 5px;
+          margin: 12px 0 4px;
           font-size: 18px;
           font-weight: 600;
           color: #333;
         }
+
+        .user-role {
+          margin: 0;
+          padding: 4px 12px;
+          font-size: 12px;
+          color: #666;
+          background: linear-gradient(135deg, #e8edf8, #dce2f7);
+          border-radius: 12px;
+        }
       }
 
       .account-menu {
-        padding: 8px;
-        background-color: #fff;
+        padding: 12px;
+        background: linear-gradient(145deg, #fff, #fafbff);
         border: none;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
 
         :deep(.el-menu-item) {
-          height: 50px;
-          margin-bottom: 4px;
-          line-height: 50px;
-          border-radius: 8px;
-          transition: all 0.3s ease;
+          position: relative;
+          height: 48px;
+          margin-bottom: 6px;
+          line-height: 48px;
+          color: #555;
+          border-radius: 12px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow: hidden;
+
+          &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 4px;
+            height: 0;
+            background: linear-gradient(180deg, #c8d4f0, #dce2f7);
+            border-radius: 0 4px 4px 0;
+            transform: translateY(-50%);
+            transition: height 0.3s ease;
+          }
 
           &:hover {
-            background-color: #f7f8fc;
+            padding-left: 24px;
+            color: #333;
+            background: linear-gradient(90deg, rgb(220 226 247 / 40%), transparent);
+            transform: scale(1.05);
+            transform-origin: left center;
+
+            &::before {
+              height: 60%;
+            }
+
+            .el-icon {
+              transform: scale(1.2);
+              color: #5a6b8a;
+            }
+
+            span {
+              font-weight: 600;
+            }
           }
 
           &.is-active {
-            font-weight: bold;
-            color: #fff;
-            background: linear-gradient(45deg, #6b46c1, #8a5cf6);
-            box-shadow: 0 4px 8px rgb(107 70 193 / 30%);
+            padding-left: 24px;
+            font-weight: 600;
+            color: #333;
+            background: linear-gradient(90deg, rgb(220 226 247 / 60%), rgb(220 226 247 / 20%));
+            box-shadow: inset 0 0 0 1px rgb(200 212 240 / 50%);
+
+            &::before {
+              height: 70%;
+              background: linear-gradient(180deg, #a8b8e8, #c8d4f0);
+            }
+
+            .el-icon {
+              transform: scale(1.1);
+              color: #5a6b8a;
+              animation: iconPulse 1.5s ease-in-out infinite;
+            }
           }
 
           .el-icon {
-            margin-right: 10px;
+            margin-right: 12px;
             font-size: 18px;
+            color: #888;
+            transition: all 0.3s ease;
+          }
+
+          /* 每个菜单项不同的悬停动画 */
+          &:nth-child(1):hover .el-icon {
+            animation: iconBounce 0.5s ease;
+          }
+          &:nth-child(2):hover .el-icon {
+            animation: iconFlip 0.6s ease;
+          }
+          &:nth-child(3):hover .el-icon {
+            animation: iconHeartbeat 0.8s ease;
+          }
+          &:nth-child(4):hover .el-icon {
+            animation: iconFloat 0.8s ease;
+          }
+          &:nth-child(5):hover .el-icon {
+            animation: iconRing 0.6s ease;
+          }
+          
+          /* 待办事项 - 红色打勾效果 */
+          &:nth-child(6) {
+            .el-icon {
+              position: relative;
+              overflow: visible;
+            }
+            
+            .el-icon::after {
+              content: '';
+              position: absolute;
+              bottom: -0.6px;
+              right: -1.2px;
+              width: 0;
+              height: 0;
+              border-bottom: 2px solid #e53935;
+              border-right: 2px solid #e53935;
+              border-radius: 0 0 2px 0;
+              transform: rotate(45deg);
+              opacity: 0;
+              transition: all 0.3s ease;
+            }
+          }
+          
+          &:nth-child(6):hover {
+            .el-icon::after {
+              width: 8px;
+              height: 14px;
+              opacity: 1;
+            }
+          }
+
+          span {
+            font-size: 14px;
+            transition: all 0.3s ease;
           }
         }
       }
+    }
+
+    /* 图标动画关键帧 */
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes iconBounce {
+      0%, 100% { transform: scale(1.2) translateY(0); }
+      30% { transform: scale(1.2) translateY(-6px); }
+      50% { transform: scale(1.2) translateY(0); }
+      70% { transform: scale(1.2) translateY(-3px); }
+    }
+
+    @keyframes iconFlip {
+      0% { transform: scale(1.2) rotateY(0); }
+      50% { transform: scale(1.2) rotateY(180deg); }
+      100% { transform: scale(1.2) rotateY(360deg); }
+    }
+
+    /* 个人资料 - 心跳/呼吸效果 */
+    @keyframes iconHeartbeat {
+      0% { transform: scale(1.2); }
+      15% { transform: scale(1.35); }
+      30% { transform: scale(1.2); }
+      45% { transform: scale(1.3); }
+      60%, 100% { transform: scale(1.2); }
+    }
+
+    /* 学习云盘 - 上浮到云端效果 */
+    @keyframes iconFloat {
+      0% { transform: scale(1.2) translateY(0); }
+      50% { transform: scale(1.2) translateY(-8px); }
+      100% { transform: scale(1.2) translateY(0); }
+    }
+
+    @keyframes iconRing {
+      0% { transform: scale(1.2) rotate(0); }
+      10% { transform: scale(1.2) rotate(20deg); }
+      20% { transform: scale(1.2) rotate(-15deg); }
+      30% { transform: scale(1.2) rotate(10deg); }
+      40% { transform: scale(1.2) rotate(-10deg); }
+      50% { transform: scale(1.2) rotate(5deg); }
+      60%, 100% { transform: scale(1.2) rotate(0); }
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1.1); }
+      50% { transform: scale(1.25); }
     }
 
     .account-main {
@@ -937,6 +1188,91 @@ onUnmounted(() => {
       background-color: transparent;
       border-radius: 12px;
       box-shadow: none;
+    }
+  }
+}
+
+.quick-access-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .quick-access-card {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 20px;
+    cursor: pointer;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
+
+      .access-arrow {
+        transform: translateX(4px);
+        opacity: 1;
+      }
+    }
+
+    .access-icon {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      font-size: 28px;
+      border-radius: 14px;
+    }
+
+    .access-info {
+      flex: 1;
+      min-width: 0;
+
+      h4 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      p {
+        margin: 0;
+        font-size: 12px;
+        color: #999;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .access-arrow {
+      font-size: 20px;
+      font-weight: bold;
+      color: #999;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+
+    &.lab-access .access-icon {
+      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    }
+
+    &.competition-access .access-icon {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+    }
+
+    &.course-access .access-icon {
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    }
+
+    &.cloud-access .access-icon {
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
     }
   }
 }
@@ -957,15 +1293,15 @@ onUnmounted(() => {
       align-items: center;
       padding: 12px 16px;
       font-size: 14px;
-      color: #5a4bad;
-      background-color: rgb(107 70 193 / 10%);
-      border: 1px solid rgb(107 70 193 / 20%);
+      color: #5a6b8a;
+      background-color: rgb(220 226 247 / 30%);
+      border: 1px solid rgb(220 226 247 / 60%);
       border-radius: 8px;
 
       .el-icon {
         margin-right: 12px;
         font-size: 20px;
-        color: #6b46c1;
+        color: #7a8bb8;
       }
 
       span {
@@ -1006,10 +1342,10 @@ onUnmounted(() => {
         inset: 45px 0 0;
         padding: 16px;
         overflow: hidden;
-        color: #fff;
-        background: linear-gradient(135deg, #8a5cf6, #6b46c1);
+        color: #333;
+        background: linear-gradient(135deg, #dce2f7, #c8d4f0);
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgb(107 70 193 / 40%);
+        box-shadow: 0 4px 12px rgb(220 226 247 / 60%);
 
         p {
           margin: 0 0 12px;
@@ -1162,12 +1498,38 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #dce2f7, #c8d4f0);
+    border-radius: 12px;
 
     h3 {
       margin: 0;
       font-size: 18px;
       font-weight: 600;
       color: #333;
+    }
+
+    .course-filter {
+      :deep(.el-select) {
+        .el-select__wrapper {
+          background: #c8d4f0;
+          border: none;
+          border-radius: 8px;
+          box-shadow: none;
+        }
+
+        .el-select__placeholder {
+          color: #333 !important;
+        }
+
+        .el-select__suffix {
+          color: #000 !important;
+          
+          .el-icon {
+            color: #000 !important;
+          }
+        }
+      }
     }
   }
 
@@ -1181,20 +1543,22 @@ onUnmounted(() => {
       overflow: hidden;
       cursor: pointer;
       background-color: #fff;
-      border: 1px solid #ebeef5;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
+      border: 1px solid rgb(220 226 247 / 60%);
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgb(220 226 247 / 40%);
       transition: all 0.3s ease;
 
       &:hover {
-        box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
-        transform: translateY(-4px);
+        border-color: #c8d4f0;
+        box-shadow: 0 8px 24px rgb(200 212 240 / 50%);
+        transform: translateY(-6px);
       }
 
       .course-cover {
         position: relative;
         width: 100%;
         padding-top: 56.25%; // 16:9
+        background: linear-gradient(135deg, rgb(220 226 247 / 30%), rgb(200 212 240 / 20%));
 
         .cover-image {
           position: absolute;
@@ -1214,7 +1578,8 @@ onUnmounted(() => {
       }
 
       .course-info {
-        padding: 12px;
+        padding: 14px;
+        background: linear-gradient(180deg, #fff, rgb(220 226 247 / 15%));
 
         h4 {
           @include text-ellipsis;
@@ -1237,7 +1602,7 @@ onUnmounted(() => {
           display: flex;
           justify-content: space-between;
           font-size: 12px;
-          color: #909399;
+          color: #7a8bb8;
 
           span {
             display: flex;
@@ -1246,6 +1611,7 @@ onUnmounted(() => {
             .el-icon {
               margin-right: 4px;
               font-size: 14px;
+              color: #a8b8e8;
             }
           }
         }
@@ -1260,13 +1626,16 @@ onUnmounted(() => {
     justify-content: center;
     padding-top: 16px;
     margin-top: 16px;
-    border-top: 1px solid #ebeef5;
+    border-top: 1px solid rgb(220 226 247 / 60%);
 
     .page-info {
       min-width: 60px;
+      padding: 4px 12px;
       font-size: 14px;
-      color: #606266;
+      color: #5a6b8a;
       text-align: center;
+      background: linear-gradient(135deg, rgb(220 226 247 / 40%), rgb(200 212 240 / 30%));
+      border-radius: 8px;
     }
   }
 }

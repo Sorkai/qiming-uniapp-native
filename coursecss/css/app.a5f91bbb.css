@@ -1600,7 +1600,7 @@ body[aria-hidden="true"] {
 }
 
 .newAiPop .el-dialog__header .el-dialog__title {
-  color: #604ffd;
+  color: #6b8cdb;
   font-family: "Alibaba PuHuiTi 3.0";
   font-size: 1.14583vw;
   font-style: normal;
@@ -1630,7 +1630,7 @@ body[aria-hidden="true"] {
 }
 
 .newAiPop .el-dialog__header .header-slot span {
-  color: #604ffd;
+  color: #6b8cdb;
   font-family: AlibabaPuHuiTi-Black;
   font-size: 1.25vw;
   font-style: normal;
@@ -1663,7 +1663,7 @@ body[aria-hidden="true"] {
 
 .newAiPop .el-dialog__footer .btn-list .btn.primary {
   border-radius: 0.83333vw;
-  background: #604ffd;
+  background: #6b8cdb;
 }
 
 .newAiPop .el-dialog__footer .btn-list .btn:last-child {

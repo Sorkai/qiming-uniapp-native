@@ -18,8 +18,8 @@ import { useUserStoreHook } from "@/store/modules/user";
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间，上传大文件时设置为0表示不超时
   timeout: 0,
-  // 设置基础URL
-  baseURL: "https://aiedu-api.lehinet.com",
+  // 设置基础URL（开发环境注释掉以使用 mock 数据）
+  // baseURL: "https://aiedu-api.lehinet.com",
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
