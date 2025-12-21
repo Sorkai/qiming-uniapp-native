@@ -5640,6 +5640,38 @@ body {
   width: 25vw !important;
   right: 1vw !important;
   margin-right: 0 !important;
+  position: fixed !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+}
+
+/* 目录跑马灯特效 */
+:deep(.rightTreeWarp::after) {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1.5px; /* 细框线 */
+  background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+  background-size: 200% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ai-border-marquee 3s linear infinite;
+  pointer-events: none;
+}
+
+/* 知识点描述延展与对齐 */
+:deep(.kgDescribe-warp) {
+  min-height: calc(100vh - 480px) !important; /* 延展高度以对齐目录底端 */
+  display: flex !important;
+  flex-direction: column !important;
+  margin-bottom: 20px !important;
+}
+
+:deep(.kgDescribe-warp .introduce-div) {
+  flex: 1 !important;
 }
 
 /* 知识点页面填满宽度 */
@@ -5692,7 +5724,12 @@ body {
 }
 
 /* 提高右侧主界面颜色的显眼度 - 彻底移除灰色，改用鲜艳色系 */
-:deep(.light .rightTreeWarp),
+:deep(.light .rightTreeWarp) {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
 :deep(.light .course-grades-wrapper),
 :deep(.light .course-materials-wrapper),
 :deep(.light .materials-container),
@@ -5859,7 +5896,12 @@ body {
 }
 
 /* ================= 深色模式适配 (Dark Mode) ================= */
-:deep(.dark .rightTreeWarp),
+:deep(.dark .rightTreeWarp) {
+  background: rgba(26, 26, 26, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
 :deep(.dark .course-grades-wrapper),
 :deep(.dark .course-materials-wrapper),
 :deep(.dark .course-animations-wrapper),
@@ -6189,6 +6231,29 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
   background: rgba(255, 255, 255, 0.6) !important;
   border-radius: 20px !important;
+  position: relative;
+}
+
+/* AI 弹窗跑马灯细边框 */
+.ai-draggable-dialog::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1.5px; /* 边框粗细 */
+  background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+  background-size: 200% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ai-border-marquee 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes ai-border-marquee {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
 }
 
 .dark .ai-draggable-dialog {
@@ -6393,28 +6458,29 @@ body {
   opacity: 0.8;
 }
 
-/* AI 助教入口呼吸灯特效 */
+/* AI 助教入口跑马灯特效 */
 .out-ai-pro-talk-box {
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .out-ai-pro-talk-box::after {
   content: "";
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(64, 158, 255, 0.1),
-    transparent
-  );
-  transform: rotate(45deg);
-  animation: ai-shimmer 3s infinite;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px; /* 细框线 */
+  background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+  background-size: 200% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ai-border-marquee 3s linear infinite;
+  pointer-events: none;
 }
 
 @keyframes ai-shimmer {
