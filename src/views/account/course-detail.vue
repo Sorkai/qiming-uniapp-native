@@ -1388,7 +1388,8 @@
           v-show="activeMenu == 'mastery'"
           data-v-487e2460=""
           data-v-2cf49992=""
-          class="mastery-page-content light"
+          class="mastery-page-content"
+          :class="currentTheme"
         >
           <!-- 头部 -->
           <div
@@ -1491,9 +1492,15 @@
                     <div class="summary-value">{{ studyEffectData.conceptNum || 0 }}</div>
                   </div>
                 </div>
-                <div class="mastery-summary-right" :class="currentTheme">
-                  <div class="summary-chart-title">掌握结构概览</div>
-                  <div ref="masterySummaryChartRef" class="summary-chart" />
+                <div class="mastery-summary-charts" :class="currentTheme">
+                  <div class="chart-box bar-chart-box">
+                    <div class="summary-chart-title">数量分布</div>
+                    <div ref="masterySummaryChartRef" class="summary-chart-bar" />
+                  </div>
+                  <div class="chart-box pie-chart-box">
+                    <div class="summary-chart-title">占比分布</div>
+                    <div ref="masteryPieChartRef" class="summary-chart-pie" />
+                  </div>
                 </div>
               </div>
 
@@ -1502,12 +1509,14 @@
                   studyEffectData.chapterList &&
                   studyEffectData.chapterList.length > 0
                 "
+                class="chapters-grid"
               >
                 <div
                   v-for="(chapter, index) in studyEffectData.chapterList"
                   :key="index"
                   class="chapter-section"
-                  :class="currentTheme"
+                  :class="[currentTheme, { 'slide-in-left': index % 2 === 0, 'slide-in-right': index % 2 === 1 }]"
+                  :style="{ animationDelay: `${index * 0.1}s` }"
                 >
                   <h2
                     class="collapsible-header"
@@ -1523,7 +1532,12 @@
                     />
                   </h2>
 
-                  <transition name="chapter-collapse">
+                  <transition
+                    @enter="collapseEnter"
+                    @after-enter="collapseAfterEnter"
+                    @leave="collapseLeave"
+                    @after-leave="collapseAfterLeave"
+                  >
                   <div v-show="isChapterExpanded(chapter.chapterId)" class="chapter-body">
                     <!-- 重点部分 -->
                     <div
@@ -1554,7 +1568,12 @@
                           }"
                         />
                       </h3>
-                      <transition name="sub-collapse">
+                      <transition
+                        @enter="collapseEnter"
+                        @after-enter="collapseAfterEnter"
+                        @leave="collapseLeave"
+                        @after-leave="collapseAfterLeave"
+                      >
                         <div v-show="isSubsectionExpanded(chapter.chapterId, 'keyPoint')" class="subsection-wrapper">
                           <transition-group name="point-fade" tag="div">
                             <div
@@ -1604,7 +1623,12 @@
                           }"
                         />
                       </h3>
-                      <transition name="sub-collapse">
+                      <transition
+                        @enter="collapseEnter"
+                        @after-enter="collapseAfterEnter"
+                        @leave="collapseLeave"
+                        @after-leave="collapseAfterLeave"
+                      >
                         <div v-show="isSubsectionExpanded(chapter.chapterId, 'difficultPoint')" class="subsection-wrapper">
                           <transition-group name="point-fade" tag="div">
                             <div
@@ -1654,7 +1678,12 @@
                           }"
                         />
                       </h3>
-                      <transition name="sub-collapse">
+                      <transition
+                        @enter="collapseEnter"
+                        @after-enter="collapseAfterEnter"
+                        @leave="collapseLeave"
+                        @after-leave="collapseAfterLeave"
+                      >
                         <div v-show="isSubsectionExpanded(chapter.chapterId, 'knowledge')" class="subsection-wrapper">
                           <transition-group name="point-fade" tag="div">
                             <div
@@ -1703,7 +1732,12 @@
                           }"
                         />
                       </h3>
-                      <transition name="sub-collapse">
+                      <transition
+                        @enter="collapseEnter"
+                        @after-enter="collapseAfterEnter"
+                        @leave="collapseLeave"
+                        @after-leave="collapseAfterLeave"
+                      >
                         <div v-show="isSubsectionExpanded(chapter.chapterId, 'concept')" class="subsection-wrapper">
                           <transition-group name="point-fade" tag="div">
                             <div
@@ -2327,9 +2361,11 @@ const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
 const masteryChartRef = ref(null); // 添加图表引用
 let masteryChart = null; // 添加图表实例变量
-// 新增掌握概览柱状图引用
+// 新增掌握概览柱状图和饼状图引用
 const masterySummaryChartRef = ref(null);
 let masterySummaryChart: any = null;
+const masteryPieChartRef = ref(null);
+let masteryPieChart: any = null;
 
 // 课程成绩相关
 const courseScores = ref<CourseScoreResult | null>(null);
@@ -2685,17 +2721,6 @@ function toggleTheme() {
   });
 
   currentTheme.value = newTheme;
-
-  // 如果在知识点页面，重新初始化图表以适应新主题
-  if (activeMenu.value === "mastery" && masteryChart) {
-    // 销毁旧图表
-    masteryChart.dispose();
-    masteryChart = null;
-    // 重新初始化
-    nextTick(() => {
-      initMasteryChart();
-    });
-  }
 }
 
 // 退出登录
@@ -2805,6 +2830,12 @@ function handleMenuClick(menuName: string) {
         initMasterySummaryChart();
       } else if (masterySummaryChart) {
         masterySummaryChart.resize();
+      }
+      // 初始化或刷新掌握概览饼状图
+      if (!masteryPieChart && masteryPieChartRef.value) {
+        initMasteryPieChart();
+      } else if (masteryPieChart) {
+        masteryPieChart.resize();
       }
     });
   }
@@ -3435,16 +3466,131 @@ const initMasteryChart = () => {
 // ============ 新增 四项数量柱状图 ============
 const initMasterySummaryChart = () => {
   if (!masterySummaryChartRef.value) return;
+  if (masterySummaryChart) masterySummaryChart.dispose();
   masterySummaryChart = echarts.init(masterySummaryChartRef.value);
   updateMasterySummaryChart();
   window.addEventListener("resize", () => masterySummaryChart?.resize());
 };
 
+// 初始化饼状图
+const initMasteryPieChart = () => {
+  if (!masteryPieChartRef.value) return;
+  if (masteryPieChart) masteryPieChart.dispose();
+  masteryPieChart = echarts.init(masteryPieChartRef.value);
+  updateMasteryPieChart();
+  window.addEventListener("resize", () => masteryPieChart?.resize());
+};
+
+const updateMasteryPieChart = () => {
+  if (!masteryPieChart) return;
+  const isDark = currentTheme.value === "dark";
+  
+  // 1. 准备数据
+  const rawData = [
+    { value: studyEffectData.value.knowledgePointNum || 0, name: "基础知识点" },
+    { value: studyEffectData.value.keyPointNum || 0, name: "重点" },
+    { value: studyEffectData.value.difficultPointNum || 0, name: "难点" },
+    { value: studyEffectData.value.conceptNum || 0, name: "概念" }
+  ];
+  
+  const total = rawData.reduce((sum, item) => sum + item.value, 0);
+  // 过滤掉 0 值用于显示饼图，但图例保留所有
+  const chartData = rawData.filter(d => d.value > 0);
+
+  // 2. 配色方案
+  const colors = isDark 
+    ? ["#4facfe", "#00f2fe", "#2ecc71", "#f1c40f"]
+    : ["#409eff", "#67c23a", "#e6a23c", "#f56c6c"];
+
+  // 3. 配置项
+  masteryPieChart.setOption({
+    tooltip: {
+      trigger: "item",
+      formatter: "{b}: {c} ({d}%)",
+      backgroundColor: isDark ? "rgba(30, 30, 38, 0.9)" : "rgba(255, 255, 255, 0.9)",
+      borderColor: isDark ? "#3d3f55" : "#ebeef5",
+      borderWidth: 1,
+      textStyle: { color: isDark ? "#fff" : "#303133" }
+    },
+    legend: {
+      orient: "vertical",
+      left: "0", // 靠左
+      top: "center", // 垂直居中
+      itemWidth: 14,
+      itemHeight: 14,
+      itemGap: 20, // 增加间距
+      formatter: (name) => {
+        const item = rawData.find(d => d.name === name);
+        return `{name|${name}}   {val|${item?.value || 0}}`;
+      },
+      textStyle: {
+        rich: {
+          name: {
+            fontSize: 14,
+            color: isDark ? "#b4b4c7" : "#606266",
+            width: 90 // 固定宽度对齐
+          },
+          val: {
+            fontSize: 15,
+            fontWeight: "bold",
+            color: isDark ? "#fff" : "#303133"
+          }
+        }
+      }
+    },
+    series: [
+      {
+        name: "知识点分布",
+        type: "pie",
+        radius: ["55%", "75%"], // 环形大小，适中，不至于太大压迫
+        center: ["65%", "50%"], // 居右，留出左侧图例空间
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 8,
+          borderColor: isDark ? "#1e1e26" : "#fff",
+          borderWidth: 3
+        },
+        label: {
+          show: true,
+          position: "center",
+          formatter: `{total|${total}}\n{text|总计}`,
+          rich: {
+            total: {
+              fontSize: 36,
+              fontWeight: "bold",
+              color: isDark ? "#fff" : "#303133",
+              padding: [0, 0, 4, 0]
+            },
+            text: {
+              fontSize: 14,
+              color: isDark ? "#888" : "#999"
+            }
+          }
+        },
+        emphasis: {
+          scale: true,
+          scaleSize: 10,
+          label: {
+            show: true,
+            fontSize: 40,
+            fontWeight: "bold"
+          }
+        },
+        labelLine: { show: false },
+        data: chartData.map((d, i) => ({
+          ...d,
+          itemStyle: { color: colors[i % colors.length] }
+        }))
+      }
+    ]
+  });
+};
+
 const updateMasterySummaryChart = () => {
   if (!masterySummaryChart) return;
   const isDark = currentTheme.value === "dark";
-  const textColor = isDark ? "#e0e0e0" : "#303133";
-  const borderColor = isDark ? "#3e3e3e" : "#ebeef5";
+  const textColor = isDark ? "#b4b4c7" : "#909399";
+  const borderColor = isDark ? "rgba(255,255,255,0.05)" : "#f0f2f5";
   const dataValues = [
     studyEffectData.value.knowledgePointNum || 0,
     studyEffectData.value.keyPointNum || 0,
@@ -3452,64 +3598,77 @@ const updateMasterySummaryChart = () => {
     studyEffectData.value.conceptNum || 0
   ];
   const maxVal = Math.max(...dataValues, 10);
+  
   masterySummaryChart.setOption({
-    grid: { left: 40, right: 20, top: 40, bottom: 30 },
+    grid: { left: "15%", right: "5%", top: "15%", bottom: "15%" },
     tooltip: {
       trigger: "axis",
-      axisPointer: { type: "shadow" },
-      backgroundColor: "rgba(0,0,0,0.75)",
-      borderWidth: 0,
-      borderRadius: 10,
+      axisPointer: { type: "none" },
+      backgroundColor: isDark ? "rgba(30, 30, 38, 0.9)" : "rgba(255, 255, 255, 0.9)",
+      borderColor: isDark ? "#3d3f55" : "#ebeef5",
+      borderWidth: 1,
+      borderRadius: 12,
       padding: [10, 14],
-      textStyle: { color: "#fff", fontWeight: 500 }
+      textStyle: { color: isDark ? "#fff" : "#303133", fontWeight: 500 }
     },
     xAxis: {
       type: "category",
-      data: ["基础知识点", "重点", "难点", "概念"],
-      axisLine: { lineStyle: { color: borderColor } },
+      data: ["基础", "重点", "难点", "概念"],
+      axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: textColor, fontSize: 12 }
+      axisLabel: { color: textColor, fontSize: 12, margin: 15 }
     },
     yAxis: {
       type: "value",
       min: 0,
-      max: Math.ceil(maxVal * 1.1),
+      max: Math.ceil(maxVal * 1.2),
       axisLine: { show: false },
       axisTick: { show: false },
-      splitLine: { lineStyle: { color: borderColor, type: "dashed" } },
-      axisLabel: { color: textColor }
+      splitLine: { lineStyle: { color: borderColor, type: "solid" } },
+      axisLabel: { show: true, color: textColor, fontSize: 11 }
     },
-    animationDuration: 600,
     series: [
       {
         name: "数量",
         type: "bar",
         data: dataValues.map((v, i) => {
-          const colors = [
-            ["#a8b8e8", "#CFD8F0"],
-            ["#c8d4f0", "#7a8bb8"],
-            ["#dce2f7", "#a8b8e8"],
-            ["#72D5FF", "#41B6FF"]
-          ];
+          const colors = isDark 
+            ? [
+                ["#4facfe", "#00f2fe"],
+                ["#72D5FF", "#4facfe"],
+                ["#a8b8e8", "#72D5FF"],
+                ["#c8d4f0", "#a8b8e8"]
+              ]
+            : [
+                ["#409eff", "#72D5FF"],
+                ["#604ffd", "#409eff"],
+                ["#72D5FF", "#CFD8F0"],
+                ["#CFD8F0", "#a8b8e8"]
+              ];
           const [c1, c2] = colors[i];
           return {
             value: v,
             itemStyle: {
-              borderRadius: [6, 6, 0, 0],
+              borderRadius: [8, 8, 8, 8],
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                 { offset: 0, color: c1 },
                 { offset: 1, color: c2 }
-              ])
+              ]),
+              shadowColor: isDark ? "rgba(0,0,0,0.5)" : "rgba(96, 79, 253, 0.15)",
+              shadowBlur: 12,
+              shadowOffsetY: 6
             }
           };
         }),
-        barWidth: 36,
+        barWidth: 28,
+        showBackground: false,
         label: {
           show: true,
           position: "top",
-          color: textColor,
-          fontWeight: 600,
-          formatter: p => p.value
+          distance: 10,
+          color: isDark ? "#fff" : "#303133",
+          fontWeight: "bold",
+          fontSize: 14
         }
       }
     ]
@@ -3574,6 +3733,113 @@ const isSubsectionExpanded = (chapterId: number, sectionType: string) => {
   return subsectionCollapseStates.get(key) ?? false; // Default to collapsed
 };
 
+// JS 动画钩子：解决 max-height 动画卡顿问题，同时处理 padding 造成的卡顿
+const collapseEnter = (el: Element) => {
+  const element = el as HTMLElement;
+  
+  // 0. 准备测量：清除可能残留的样式，确保能获取到自然高度
+  element.style.height = 'auto';
+  element.style.paddingTop = '';
+  element.style.paddingBottom = '';
+  element.style.marginTop = '';
+  element.style.marginBottom = '';
+  element.style.opacity = '';
+  element.style.overflow = 'visible';
+  
+  // 1. 获取真实高度（使用 offsetHeight 以包含 padding 和 border，解决 border-box 下的跳变问题）
+  const fullHeight = element.offsetHeight;
+  const initialStyle = window.getComputedStyle(element);
+  const fullPaddingTop = initialStyle.paddingTop;
+  const fullPaddingBottom = initialStyle.paddingBottom;
+  const fullMarginTop = initialStyle.marginTop;
+  const fullMarginBottom = initialStyle.marginBottom;
+
+  // 2. 立即压缩到起始状态 (0)
+  element.style.height = '0';
+  element.style.paddingTop = '0';
+  element.style.paddingBottom = '0';
+  element.style.marginTop = '0';
+  element.style.marginBottom = '0';
+  element.style.opacity = '0';
+  element.style.overflow = 'hidden';
+  
+  // 3. 强制重绘，确保起始状态生效
+  void element.offsetHeight; 
+  
+  // 4. 开启过渡：指定具体属性以提高性能，避免使用 'all'
+  const transitionStyle = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+  element.style.transition = transitionStyle;
+  // 提示浏览器进行 GPU 加速优化
+  element.style.willChange = 'height, padding, margin, opacity';
+  
+  // 5. 展开到目标状态
+  requestAnimationFrame(() => {
+      element.style.height = fullHeight + 'px';
+      element.style.paddingTop = fullPaddingTop;
+      element.style.paddingBottom = fullPaddingBottom;
+      element.style.marginTop = fullMarginTop;
+      element.style.marginBottom = fullMarginBottom;
+      element.style.opacity = '1';
+  });
+};
+
+const collapseAfterEnter = (el: Element) => {
+  const element = el as HTMLElement;
+  // 动画结束后，清理内联样式，恢复到 CSS 控制状态
+  element.style.height = ''; 
+  element.style.overflow = '';
+  element.style.transition = '';
+  element.style.willChange = '';
+  element.style.paddingTop = '';
+  element.style.paddingBottom = '';
+  element.style.marginTop = '';
+  element.style.marginBottom = '';
+  element.style.opacity = '';
+};
+
+const collapseLeave = (el: Element) => {
+  const element = el as HTMLElement;
+  
+  // 1. 获取当前真实高度和样式
+  const fullHeight = element.offsetHeight;
+  const initialStyle = window.getComputedStyle(element);
+  
+  // 2. 固定当前状态（显式设置像素值，以便 transition 从此开始）
+  element.style.height = fullHeight + 'px';
+  element.style.paddingTop = initialStyle.paddingTop;
+  element.style.paddingBottom = initialStyle.paddingBottom;
+  element.style.marginTop = initialStyle.marginTop;
+  element.style.marginBottom = initialStyle.marginBottom;
+  element.style.overflow = 'hidden';
+  
+  // 3. 强制重绘
+  void element.offsetHeight;
+  
+  // 4. 开启过渡
+  const transitionStyle = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+  element.style.transition = transitionStyle;
+  element.style.willChange = 'height, padding, margin, opacity';
+  
+  // 5. 压缩到 0
+  requestAnimationFrame(() => {
+      element.style.height = '0';
+      element.style.paddingTop = '0';
+      element.style.paddingBottom = '0';
+      element.style.marginTop = '0';
+      element.style.marginBottom = '0';
+      element.style.opacity = '0';
+  });
+};
+
+const collapseAfterLeave = (el: Element) => {
+  const element = el as HTMLElement;
+  // 关键修复：不要在离开后清理 height/padding 等样式，
+  // 保持 height: 0 等状态，防止 display: none 生效前瞬间闪烁回原高度。
+  // 只清理 transition 和 will-change 以免影响下次操作。
+  element.style.transition = '';
+  element.style.willChange = '';
+};
+
 // 获取课程学习效果
 const fetchCourseStudyEffect = async () => {
   try {
@@ -3581,12 +3847,100 @@ const fetchCourseStudyEffect = async () => {
       courseId: courseId.value
     });
     if (response && response.code === 200 && response.data) {
-      studyEffectData.value = response.data;
+      // studyEffectData.value = response.data;
+      // Mock data to make the chart look better populated
+      const mockChapters = [
+        {
+          chapterId: 101,
+          chapterName: "第一章：Vue3 基础核心",
+          keyPointArray: [
+            { title: "响应式原理", content: "深入理解 Proxy 与 Reflect 在 Vue3 中的应用" },
+            { title: "组合式 API", content: "setup 语法糖与生命周期钩子的新变化" }
+          ],
+          difficultPointArray: [
+            { title: "自定义渲染器", content: "如何构建跨平台的自定义渲染器" }
+          ],
+          knowledgeArray: [
+            { title: "模板语法", content: "插值、指令、动态参数" },
+            { title: "计算属性", content: "computed 的使用与缓存机制" },
+            { title: "侦听器", content: "watch 与 watchEffect 的区别" }
+          ],
+          ConceptArray: [
+            { title: "MVVM", content: "Model-View-ViewModel 模式" },
+            { title: "虚拟 DOM", content: "Virtual DOM 的结构与 Diff 算法" }
+          ]
+        },
+        {
+          chapterId: 102,
+          chapterName: "第二章：组件化开发进阶",
+          keyPointArray: [
+            { title: "组件通信", content: "Props, Emit, Provide/Inject, Vuex/Pinia" },
+            { title: "动态组件", content: "component 标签与 keep-alive" }
+          ],
+          difficultPointArray: [
+            { title: "高阶组件", content: "HOC 的实现与应用场景" },
+            { title: "异步组件", content: "defineAsyncComponent 与 Suspense" }
+          ],
+          knowledgeArray: [
+            { title: "插槽", content: "默认插槽、具名插槽、作用域插槽" },
+            { title: "Teleport", content: "传送门组件的使用" }
+          ],
+          ConceptArray: [
+            { title: "单向数据流", content: "父子组件数据传递原则" }
+          ]
+        },
+        {
+          chapterId: 103,
+          chapterName: "第三章：Vue Router 路由管理",
+          keyPointArray: [
+            { title: "路由守卫", content: "全局守卫、路由独享守卫、组件内守卫" }
+          ],
+          difficultPointArray: [
+            { title: "动态路由", content: "addRoute 与 removeRoute 的动态权限管理" }
+          ],
+          knowledgeArray: [
+            { title: "路由模式", content: "Hash 模式与 History 模式" },
+            { title: "嵌套路由", content: "children 配置与 router-view 嵌套" }
+          ],
+          ConceptArray: [
+            { title: "SPA", content: "单页应用的概念与优缺点" }
+          ]
+        },
+        {
+          chapterId: 104,
+          chapterName: "第四章：状态管理 Pinia",
+          keyPointArray: [
+            { title: "Store 定义", content: "defineStore 的使用" },
+            { title: "State/Getters/Actions", content: "核心概念的实战应用" }
+          ],
+          difficultPointArray: [
+            { title: "插件机制", content: "Pinia 插件开发与持久化存储" }
+          ],
+          knowledgeArray: [
+            { title: "模块化", content: "Store 的拆分与组合" }
+          ],
+          ConceptArray: [
+            { title: "状态管理", content: "为何需要全局状态管理" }
+          ]
+        }
+      ];
+
+      studyEffectData.value = {
+        ...response.data,
+        knowledgePointNum: 45,
+        keyPointNum: 18,
+        difficultPointNum: 12,
+        conceptNum: 25,
+        chapterList: [...(response.data.chapterList || []), ...mockChapters]
+      };
       console.log("获取到的学习效果数据:", studyEffectData.value);
-      // 主动更新/初始化柱状图（避免 watcher 尚未注册时丢失首次渲染）
+      // 主动更新/初始化图表
       if (activeMenu.value === "mastery") {
         if (masterySummaryChart) updateMasterySummaryChart();
         else if (masterySummaryChartRef.value) initMasterySummaryChart();
+
+        if (masteryPieChart) updateMasteryPieChart();
+        else if (masteryPieChartRef.value) initMasteryPieChart();
       }
 
       // Initialize collapse states for new data
@@ -3643,7 +3997,6 @@ watch(
     if (newVal === "mastery") {
       fetchCourseStudyEffect();
     }
-    // ... existing code ...
   }
 );
 
@@ -3674,15 +4027,43 @@ onMounted(async () => {
     initIconColors();
     initMasteryChart(); // 初始化知识点图表
     if (masterySummaryChartRef.value) initMasterySummaryChart();
+    if (masteryPieChartRef.value) initMasteryPieChart();
   });
 });
 
-// 监听主题变化：重绘柱状图
+// 监听数据变化：更新图表
+watch(studyEffectData, () => {
+  if (activeMenu.value === "mastery") {
+    nextTick(() => {
+      if (masterySummaryChart) updateMasterySummaryChart();
+      else if (masterySummaryChartRef.value) initMasterySummaryChart();
+
+      if (masteryPieChart) updateMasteryPieChart();
+      else if (masteryPieChartRef.value) initMasteryPieChart();
+    });
+  }
+}, { deep: true });
+
+// 监听主题变化：重绘图表
 watch(currentTheme, () => {
-  if (activeMenu.value === "mastery" && masterySummaryChart) {
-    masterySummaryChart.dispose();
-    masterySummaryChart = null;
-    nextTick(() => initMasterySummaryChart());
+  if (activeMenu.value === "mastery") {
+    if (masteryChart) {
+      masteryChart.dispose();
+      masteryChart = null;
+    }
+    if (masterySummaryChart) {
+      masterySummaryChart.dispose();
+      masterySummaryChart = null;
+    }
+    if (masteryPieChart) {
+      masteryPieChart.dispose();
+      masteryPieChart = null;
+    }
+    nextTick(() => {
+      initMasteryChart();
+      initMasterySummaryChart();
+      initMasteryPieChart();
+    });
   }
 });
 
@@ -3874,7 +4255,7 @@ body {
 
 /* 修复头部位置，避免被侧边栏遮挡 */
 :deep(.layout-header) {
-  left: 90px !important; /* 往右挪，对齐侧边栏右侧/主体内容左侧 */
+  left: 95px !important; /* 往右挪，对齐侧边栏右侧/主体内容左侧 */
   top: 20px !important;
   width: calc(100% - 110px) !important; /* 90px left + 20px right margin */
   border-radius: 20px !important; /* 四周圆角美化 */
@@ -5197,19 +5578,91 @@ body {
   height: 350px;
 }
 
+.chapters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  align-items: start;
+  perspective: 1000px;
+}
+
+@media (max-width: 1280px) {
+  .chapters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .chapter-section {
-  margin-bottom: 20px;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  margin-bottom: 0; /* Grid gap handles spacing */
+  border-radius: 20px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid rgba(220, 226, 247, 0.5);
+  box-shadow: 0 10px 30px -12px rgba(90, 107, 138, 0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  backface-visibility: hidden;
+}
+
+.chapter-section:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 40px -15px rgba(90, 107, 138, 0.25);
+  border-color: #409eff;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotateX(-5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+  }
+}
+
+/* 滚动入场动画 - 奇数章节从左侧滑入 */
+.slide-in-left {
+  animation: slideInFromLeft 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-60px) rotateY(8deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0);
+  }
+}
+
+/* 滚动入场动画 - 偶数章节从右侧滑入 */
+.slide-in-right {
+  animation: slideInFromRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px) rotateY(-8deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0);
+  }
 }
 
 .chapter-section h2 {
-  font-size: 18px;
-  margin-bottom: 16px;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+  border-bottom: 1px solid #f0f2f5;
+  padding-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .point-section {
@@ -5226,7 +5679,7 @@ body {
   position: relative;
 }
 
-.point-section:before {
+/* .point-section:before {
   content: "";
   position: absolute;
   left: 4px;
@@ -5238,7 +5691,7 @@ body {
   opacity: .18;
 }
 
-.point-section.dark:before { background: linear-gradient(180deg,#a8b8e8,#CFD8F0); opacity:.35; }
+.point-section.dark:before { background: linear-gradient(180deg,#a8b8e8,#CFD8F0); opacity:.35; } */
 
 .chapter-body { position: relative; }
 
@@ -5273,7 +5726,7 @@ body {
 .dark .count-badge { background:linear-gradient(90deg,#a8b8e8,#CFD8F0); box-shadow:0 2px 6px rgba(168,184,232,.4); }
 
 /* 章节展开动画 - 更加丝滑 */
-.chapter-collapse-enter-active, .chapter-collapse-leave-active { 
+/* .chapter-collapse-enter-active, .chapter-collapse-leave-active { 
   transition: all .45s cubic-bezier(.4, 0, .2, 1); 
   overflow: hidden; 
 }
@@ -5286,14 +5739,14 @@ body {
   opacity: 1; 
   transform: translateY(0) scale(1); 
   max-height: 2000px; 
-}
+} */
 
 /* 子项列表淡入 - 级联感 */
 .point-fade-enter-active { 
-  transition: all .5s cubic-bezier(.22, 1, .36, 1); 
+  transition: transform .5s cubic-bezier(.22, 1, .36, 1), opacity .5s cubic-bezier(.22, 1, .36, 1); 
 }
 .point-fade-leave-active { 
-  transition: all .3s ease; 
+  transition: transform .3s ease, opacity .3s ease; 
   position: absolute; /* 离场时脱离文档流，避免挤压 */
   width: 100%;
 }
@@ -5307,7 +5760,7 @@ body {
 }
 
 /* 增强 Stagger 效果 */
-.point-fade-enter-active > .point-item { 
+.point-item.point-fade-enter-active { 
   animation: pointSlideIn .6s cubic-bezier(.22, 1, .36, 1) forwards; 
   opacity: 0; 
 }
@@ -5324,13 +5777,13 @@ body {
 }
 
 /* 子节高度折叠动画 */
-.sub-collapse-enter-active {
+/* .sub-collapse-enter-active {
   transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
 }
 
 .sub-collapse-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
 }
 
@@ -5343,10 +5796,10 @@ body {
 
 .sub-collapse-enter-to,
 .sub-collapse-leave-from {
-  max-height: 2000px; /* 足够大的高度 */
+  max-height: 2000px; 
   opacity: 1;
   transform: translateY(0) scale(1);
-}
+} */
 
 .subsection-wrapper {
   padding: 4px 2px 12px;
@@ -5359,7 +5812,8 @@ body {
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(220, 226, 247, 0.5);
   backdrop-filter: blur(5px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  will-change: transform, opacity;
 }
 
 .point-item:hover {
@@ -5384,14 +5838,19 @@ body {
 
 /* 暗黑模式下的章节和要点样式 */
 .chapter-section.dark {
-  background-color: #1a1a1a;
-  border-color: #3e3e3e;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2);
+  background: #1e1e26;
+  border-color: rgba(61, 63, 85, 0.8);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+}
+
+.chapter-section.dark:hover {
+  border-color: #4facfe;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
 }
 
 .chapter-section.dark h2 {
   color: #ffffff;
-  border-bottom-color: #3e3e3e;
+  border-bottom-color: #3d3f55;
 }
 
 .point-section.dark h3 {
@@ -5660,89 +6119,149 @@ body {
   gap: 16px;
   flex: 1 1 380px;
   max-width: 520px;
+  padding: 20px;
+  margin-left: 0;
 }
 
 .summary-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 18px 20px 14px;
-  box-shadow: 0 4px 18px -2px rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.04);
+  background: transparent !important;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: none !important;
+  border: 1px solid rgba(220, 226, 247, 0.3) !important;
   position: relative;
   overflow: hidden;
-  transition: transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s;
-  backdrop-filter: blur(6px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
-.summary-card:before {
+
+.summary-card::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(96,79,253,0.08), rgba(96,79,253,0));
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(64, 158, 255, 0.03), transparent 70%);
   pointer-events: none;
 }
+
 .summary-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 28px -4px rgba(0,0,0,0.12), 0 4px 8px -2px rgba(0,0,0,0.08);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px -15px rgba(96, 79, 253, 0.35);
+  border-color: #604ffd;
 }
+
+.summary-card:hover .summary-value {
+  transform: scale(1.1);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .summary-card.dark {
-  background: #1a1a1a;
-  box-shadow: 0 4px 18px -2px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.4);
+  background: #1e1e26;
+  border-color: rgba(61, 63, 85, 0.8);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
 }
+
 .summary-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #666;
-  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #909399;
+  margin-bottom: 12px;
+  z-index: 1;
 }
-.summary-card.dark .summary-title { color: #b4b4c7; }
+
+.summary-card.dark .summary-title {
+  color: #b4b4c7;
+}
+
 .summary-value {
-  font-size: 40px;
-  font-weight: 700;
+  font-size: 48px;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: -1px;
-  background: linear-gradient(90deg,#CFD8F0,#a8b8e8);
-  background-clip: text;
+  background: linear-gradient(135deg, #409eff, #604ffd);
   -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
+  z-index: 1;
 }
+
 .summary-card.dark .summary-value {
-  background: linear-gradient(90deg,#c8d4f0,#7a8bb8);
-  background-clip: text;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
   -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
 }
 
-.mastery-summary-right {
-  flex: 1 1 480px;
-  min-width: 360px;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 16px 20px 12px;
-  box-shadow: 0 4px 18px -2px rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.04);
+.mastery-summary-charts {
+  flex: 1.5 1 600px;
+  display: flex;
+  gap: 24px;
+  background: transparent !important;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: none !important;
+  border: 1px solid rgba(220, 226, 247, 0.3) !important;
   position: relative;
+  overflow: hidden;
+}
+
+.mastery-summary-charts.dark {
+  background: transparent !important;
+  border-color: rgba(61, 63, 85, 0.5) !important;
+  box-shadow: none !important;
+}
+
+.chart-box {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 280px;
 }
-.mastery-summary-right.dark {
-  background: #1a1a1a;
-  box-shadow: 0 4px 18px -2px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.4);
-}
+
 .summary-chart-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  color: #303133;
-  margin-bottom: 6px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
 }
-.mastery-summary-right.dark .summary-chart-title { color: #e0e0e0; }
-.summary-chart {
-  flex: 1;
+
+.summary-chart-title::before {
+  content: "";
+  width: 4px;
+  height: 16px;
+  background: #409eff;
+  border-radius: 2px;
+  margin-right: 8px;
+}
+
+.mastery-summary-charts.dark .summary-chart-title {
+  color: #ffffff;
+}
+
+.summary-chart-bar,
+.summary-chart-pie {
   width: 100%;
-  height: 240px;
+  height: 320px;
 }
 
 @media (max-width: 1200px) {
-  .mastery-summary-wrapper { flex-direction: column; }
-  .mastery-summary-right { min-height: 260px; }
-  .summary-chart { height: 220px; }
+  .mastery-summary-wrapper {
+    flex-direction: column;
+  }
+  .mastery-summary-charts {
+    flex-direction: column;
+    height: auto;
+  }
+  .summary-chart-bar,
+  .summary-chart-pie {
+    height: 300px;
+  }
 }
 
 /* ================= 减少留白：让课程学习等页面填满宽度 ================= */
@@ -5813,22 +6332,36 @@ body {
 
 /* 知识点页面填满宽度 */
 :deep(.mastery-page-content) {
-  padding-left: 1.5vw !important;
-  padding-right: 1.5vw !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   padding-top: 100px !important; /* 增加顶部间距，让内容往下移 */
-  width: 100% !important;
+  margin-left: 5px !important; /* 对齐侧边栏右侧 */
+  width: calc(100% - 5px) !important; /* 对齐上边栏右侧 */
+  height: 100vh !important;
   box-sizing: border-box !important;
+  overflow: hidden !important;
+  background: transparent !important;
 }
 
 :deep(.mastery-page-content .mastery-content-left) {
   width: 100% !important;
   max-width: 100% !important;
-  padding: 0 1vw !important;
+  padding: 0 !important;
+  height: 100% !important;
 }
 
 :deep(.mastery-page-content .left-scroll) {
   width: 100% !important;
   max-width: 100% !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  padding: 20px 0 100px !important; /* 底部留出空间 */
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+:deep(.mastery-page-content .left-scroll::-webkit-scrollbar) {
+  display: none !important; /* Chrome, Safari and Opera */
 }
 
 /* 课程资料页面填满宽度 */
