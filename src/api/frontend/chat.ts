@@ -12,6 +12,7 @@ export function courseAIChatStream(
     course_id?: number;
     conversation_id?: string;
     message: string;
+    chapter_id?: number | null;
   },
   onMessage: (data: {
     conversation_id: string;

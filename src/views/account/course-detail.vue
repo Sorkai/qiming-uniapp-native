@@ -55,8 +55,9 @@
               <div data-v-3e66491d="" class="item header-left">
                 <div
                   data-v-3e66491d=""
-                  class="item header-back"
+                  class="item header-back spotlight-button"
                   @click="goBack"
+                  @mousemove="handleButtonMouseMove"
                   style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -177,8 +178,9 @@
               <div data-v-3e66491d="" class="item header-left">
                 <div
                   data-v-3e66491d=""
-                  class="item header-back"
+                  class="item header-back spotlight-button"
                   @click="goBack"
+                  @mousemove="handleButtonMouseMove"
                   style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -304,8 +306,9 @@
               <div data-v-3e66491d="" class="item header-left">
                 <div
                   data-v-3e66491d=""
-                  class="item header-back"
+                  class="item header-back spotlight-button"
                   @click="goBack"
+                  @mousemove="handleButtonMouseMove"
                   style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -480,8 +483,9 @@
               <div data-v-3e66491d="" class="item header-left">
                 <div
                   data-v-3e66491d=""
-                  class="item header-back"
+                  class="item header-back spotlight-button"
                   @click="goBack"
+                  @mousemove="handleButtonMouseMove"
                   style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -748,7 +752,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="rigth-warp">
+                <div class="rigth-warp" style="width: 25vw; margin-right: 1vw;">
                   <div>
                     <div data-v-0762fd62="" class="ai-helper-sections light">
                       <div
@@ -757,8 +761,8 @@
                         style="
                           position: fixed;
                           top: 5.83333vw;
-                          margin-right: 0px;
-                          width: 23.9583vw;
+                          right: 1vw !important;
+                          width: 25vw !important;
                           height: 10.4167vw;
                         "
                       >
@@ -789,7 +793,7 @@
                                   autocomplete="off"
                                   placeholder="输入您的问题，与AI助教互动问答..."
                                   class="el-input__inner"
-                                  style="padding-left: 10px; font-size: 10px"
+                                  style="padding-left: 10px; padding-right: 40px; font-size: 14px"
                                   @click="openAiDialog"
                                 /><!----><!----><!----><!---->
                               </div>
@@ -805,38 +809,47 @@
                         </div>
                       </div>
                       <!----><!----><!---->
-                      <!-- ai 返回按钮 -->
-                      <div
-                        data-v-0762fd62=""
-                        class="not-expand-icon"
-                        style="
-                          right: 26.875vw;
-                          display: flex;
-                          align-items: center;
-                          justify-content: center;
-                        "
-                        :style="{
-                          display: isAiDialogVisible ? 'flex' : 'none'
-                        }"
-                        @click="closeAiDialog"
-                      >
-                        <NotExpandIcon />
-                      </div>
                       <!-- ai弹窗 -->
-                      <div
-                        data-v-0762fd62=""
-                        class="ai-draggable-dialog auto"
-                        style="
-                          width: 23.9583vw;
-                          height: calc(100% - 5.3125vw);
-                          top: auto;
-                        "
-                        :style="{
-                          display: isAiDialogVisible ? 'block' : 'none'
-                        }"
-                      >
-                        <div data-v-0762fd62="" class="ai-fill-bg">
-                          <div data-v-0762fd62="" class="dialog-content">
+                      <transition name="ai-slide">
+                        <div
+                          v-if="isAiDialogVisible"
+                          data-v-0762fd62=""
+                          class="ai-draggable-dialog auto"
+                          style="
+                            width: 25vw !important;
+                            right: 1vw !important;
+                            height: calc(100% - 6.5vw) !important;
+                            top: 4.5vw !important;
+                            z-index: 1000;
+                            display: flex;
+                            flex-direction: column;
+                          "
+                        >
+                          <!-- 新增：AI 弹窗顶部装饰条 -->
+                          <div class="ai-dialog-header-bar">
+                            <div class="header-left">
+                              <div class="header-back-btn spotlight-button" @click="closeAiDialog" @mousemove="handleButtonMouseMove">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                              </div>
+                            </div>
+                            <div class="header-title-wrap">
+                              <span class="status-dot"></span>
+                              <span class="header-title">AI 智能助教</span>
+                            </div>
+                            <div class="header-right">
+                              <el-tooltip content="清空对话" placement="top">
+                                <div class="header-action-btn" @click="clearChat">
+                                  <i class="el-icon-delete"></i>
+                                </div>
+                              </el-tooltip>
+                              <div class="header-action-btn close-btn" @click="closeAiDialog">
+                                <i class="el-icon-close"></i>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div data-v-0762fd62="" class="ai-fill-bg" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; border: none !important; background: transparent !important;">
+                            <div data-v-0762fd62="" class="dialog-content" style="flex: 1; overflow: hidden;">
                             <div data-v-0762fd62="" class="ai-talk-box">
                               <div
                                 data-v-0762fd62=""
@@ -886,18 +899,21 @@
                                     </div>
 
                                     <!-- 聊天消息区域 -->
-                                    <div
-                                      v-for="(message, index) in chatMessages"
-                                      :key="index"
-                                      data-v-0762fd62=""
-                                    >
-                                      <!-- 用户消息 -->
+                                    <transition-group name="chat-list" tag="div" class="chat-messages-list">
                                       <div
-                                        v-if="message.role === 'user'"
-                                        :id="`talk_${index}`"
+                                        v-for="(message, index) in chatMessages"
+                                        :key="index"
                                         data-v-0762fd62=""
-                                        class="ai-chat-share-container_nVXTe"
+                                        class="chat-message-item"
+                                        :class="message.role === 'user' ? 'user-message' : 'ai-message'"
                                       >
+                                        <!-- 用户消息 -->
+                                        <div
+                                          v-if="message.role === 'user'"
+                                          :id="`talk_${index}`"
+                                          data-v-0762fd62=""
+                                          class="ai-chat-share-container_nVXTe"
+                                        >
                                         <div
                                           data-v-0762fd62=""
                                           class="chat-common_3Wk2t margin-bottom-16 chat-common_AKa0H"
@@ -957,47 +973,48 @@
                                     </div>
 
                                     <!-- 正在输入提示 -->
-                                    <div v-if="isTyping" data-v-0762fd62="">
-                                      <div
-                                        data-v-0762fd62=""
-                                        class="ai-chat-share-container_nVXTe"
-                                      >
+                                      <div v-if="isTyping" key="typing" data-v-0762fd62="">
                                         <div
                                           data-v-0762fd62=""
-                                          class="chat-common_3Wk2t margin-bottom-16"
+                                          class="ai-chat-share-container_nVXTe"
                                         >
                                           <div
                                             data-v-0762fd62=""
-                                            class="answer-box-wrapper_1QYRS full-line_3ITtH chat-ans_1oSN6"
+                                            class="chat-common_3Wk2t margin-bottom-16"
                                           >
                                             <div
                                               data-v-0762fd62=""
-                                              class="answer-content-box_2Pu7S chat-answer-content-box"
+                                              class="answer-box-wrapper_1QYRS full-line_3ITtH chat-ans_1oSN6"
                                             >
                                               <div
                                                 data-v-0762fd62=""
-                                                class="markdown-content"
+                                                class="answer-content-box_2Pu7S chat-answer-content-box"
                                               >
-                                                <p
+                                                <div
                                                   data-v-0762fd62=""
-                                                  class="result"
+                                                  class="markdown-content"
                                                 >
-                                                  <span class="typing-dot"
-                                                    >.</span
+                                                  <p
+                                                    data-v-0762fd62=""
+                                                    class="result"
                                                   >
-                                                  <span class="typing-dot"
-                                                    >.</span
-                                                  >
-                                                  <span class="typing-dot"
-                                                    >.</span
-                                                  >
-                                                </p>
+                                                    <span class="typing-dot"
+                                                      >.</span
+                                                    >
+                                                    <span class="typing-dot"
+                                                      >.</span
+                                                    >
+                                                    <span class="typing-dot"
+                                                      >.</span
+                                                    >
+                                                  </p>
+                                                </div>
                                               </div>
                                             </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
+                                    </transition-group>
                                   </div>
                                 </div>
                                 <div class="el-scrollbar__bar is-horizontal">
@@ -1036,8 +1053,8 @@
                                         class="el-textarea__inner"
                                         :style="
                                           currentMessage.trim()
-                                            ? 'min-height: 12px;'
-                                            : 'min-height: 12px; height: 12px;'
+                                            ? 'min-height: 40px; line-height: 1.5; padding-right: 40px !important;'
+                                            : 'min-height: 40px; height: 40px; line-height: 40px; padding-top: 0 !important; padding-bottom: 0 !important; padding-right: 40px !important;'
                                         "
                                         @keydown.enter.prevent="sendMessage"
                                       /><!---->
@@ -1073,6 +1090,7 @@
                               <div data-v-0762fd62="" class="ai-tips-box" />
                             </div>
                           </div>
+                          </div>
                           <div
                             data-v-0762fd62=""
                             class="ai-toast-container"
@@ -1081,7 +1099,7 @@
                             <div data-v-0762fd62="" class="ai-toast-message" />
                           </div>
                         </div>
-                      </div>
+                      </transition>
                       <!-- 欢迎使用AI助教 -->
                       <div
                         data-v-0762fd62=""
@@ -1195,10 +1213,10 @@
                               >
                                 <li class="clearfix font_gray_inclined chapter">
                                   <span
-                                    :title="`第${chapterIndex + 1}章`"
+                                    :title="`第${Number(chapterIndex) + 1}章`"
                                     class="catalogue_title3 fl"
                                   >
-                                    <b>第{{ chapterIndex + 1 }}章</b>
+                                    <b>第{{ Number(chapterIndex) + 1 }}章</b>
                                   </span>
                                   <em class="Sectionmark-em fl" />
                                   <span
@@ -1217,11 +1235,11 @@
                                     :class="{
                                       activeNode:
                                         activeNode ===
-                                        `${chapterIndex + 1}.${hourIndex + 1}`
+                                        `${Number(chapterIndex) + 1}.${Number(hourIndex) + 1}`
                                     }"
                                     @click="
                                       handleNodeClick(
-                                        `${chapterIndex + 1}.${hourIndex + 1}`,
+                                        `${Number(chapterIndex) + 1}.${Number(hourIndex) + 1}`,
                                         hour
                                       )
                                     "
@@ -1229,8 +1247,8 @@
                                     <span
                                       class="catalogue_title3 fl cataloguediv-l"
                                       ><b class="pl5 hour"
-                                        >{{ chapterIndex + 1 }}.{{
-                                          hourIndex + 1
+                                        >{{ Number(chapterIndex) + 1 }}.{{
+                                          Number(hourIndex) + 1
                                         }}</b
                                       ></span
                                     >
@@ -1389,8 +1407,9 @@
               <div data-v-3e66491d="" class="item header-left">
                 <div
                   data-v-3e66491d=""
-                  class="item header-back"
+                  class="item header-back spotlight-button"
                   @click="goBack"
+                  @mousemove="handleButtonMouseMove"
                   style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -1778,8 +1797,9 @@
               <div data-v-3e66491d="" class="item header-left">
                 <div
                   data-v-3e66491d=""
-                  class="item header-back"
+                  class="item header-back spotlight-button"
                   @click="goBack"
+                  @mousemove="handleButtonMouseMove"
                   style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -2043,8 +2063,9 @@
               <div data-v-3e66491d="" class="item header-left">
                 <div
                   data-v-3e66491d=""
-                  class="item header-back"
+                  class="item header-back spotlight-button"
                   @click="goBack"
+                  @mousemove="handleButtonMouseMove"
                   style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
                 >
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -2280,7 +2301,7 @@ const router = useRouter();
 const route = useRoute();
 const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
-const courseDetail = ref(null);
+const courseDetail = ref<any>(null);
 const loading = ref(false);
 const currentTheme = ref("light");
 const activeMenu = ref("course-learn");
@@ -2352,9 +2373,32 @@ const previousChapterId = ref<number | null>(null); // 新增状态
 const chatMessages = ref<
   Array<{ role: string; content: string; timestamp: string }>
 >([]);
+
+// 监听聊天记录变化，自动滚动到底部
+watch(
+  () => chatMessages.value,
+  () => {
+    nextTick(() => {
+      scrollToBottom();
+    });
+  },
+  { deep: true }
+);
+
 const currentMessage = ref("");
 const sendingMessage = ref(false);
 const streamResponse = ref("");
+
+// 处理按钮光效
+const handleButtonMouseMove = (e: MouseEvent) => {
+  const target = e.currentTarget as HTMLElement;
+  const rect = target.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  target.style.setProperty("--x", `${x}px`);
+  target.style.setProperty("--y", `${y}px`);
+};
+
 const isTyping = ref(false);
 const cancelStreamRequest = ref<() => void | null>(null);
 
@@ -2458,8 +2502,8 @@ const fetchHomeworkList = async () => {
       courseId: courseId.value
     });
 
-    if (code === 200 && data && data.list) {
-      homeworkList.value = data.list;
+    if (code === 200 && data && (data as any).list) {
+      homeworkList.value = (data as any).list;
     } else {
       ElMessage.error(msg || "获取作业列表失败");
     }
@@ -2478,8 +2522,8 @@ const fetchExamList = async () => {
       courseId: courseId.value
     });
 
-    if (code === 200 && data && data.list) {
-      examList.value = data.list;
+    if (code === 200 && data && (data as any).list) {
+      examList.value = (data as any).list;
     } else {
       ElMessage.error(msg || "获取考试列表失败");
     }
@@ -2920,6 +2964,25 @@ const closeAiDialog = () => {
   }
 };
 
+// 获取当前章节ID
+const getCurrentChapterId = () => {
+  if (
+    currentHour.value &&
+    courseDetail.value &&
+    courseDetail.value.courseChapterList
+  ) {
+    for (const chapter of courseDetail.value.courseChapterList) {
+      if (
+        chapter.hourList &&
+        chapter.hourList.some(hour => hour.hourId === currentHour.value.hourId)
+      ) {
+        return chapter.chapterId;
+      }
+    }
+  }
+  return null;
+};
+
 // 初始化聊天功能
 const initChat = () => {
   // 生成或重用会话ID
@@ -2938,7 +3001,7 @@ const initChat = () => {
     conversationId.value =
       Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
-    previousChapterId.value = currentChapterId; // 初始化时也设置previousChapterId
+    previousChapterId.value = getCurrentChapterId(); // 初始化时也设置previousChapterId
     // 对于新对话不需要加载历史
   }
 };
@@ -2976,22 +3039,7 @@ const sendMessage = async () => {
   const userMessage = currentMessage.value.trim();
 
   // 获取当前章节ID
-  let currentChapterId: number | null = null; // 明确类型
-  if (
-    currentHour.value &&
-    courseDetail.value &&
-    courseDetail.value.courseChapterList
-  ) {
-    for (const chapter of courseDetail.value.courseChapterList) {
-      if (
-        chapter.hourList &&
-        chapter.hourList.some(hour => hour.hourId === currentHour.value.hourId)
-      ) {
-        currentChapterId = chapter.chapterId;
-        break;
-      }
-    }
-  }
+  const currentChapterId = getCurrentChapterId();
 
   // 如果章节ID发生变化，重新生成会话ID
   if (
@@ -3104,6 +3152,20 @@ const scrollToBottom = () => {
   if (scrollbar) {
     scrollbar.scrollTop = scrollbar.scrollHeight;
   }
+};
+
+// 清空聊天记录
+const clearChat = () => {
+  ElMessageBox.confirm("确定要清空所有聊天记录吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  })
+    .then(() => {
+      chatMessages.value = [];
+      ElMessage.success("聊天记录已清空");
+    })
+    .catch(() => {});
 };
 
 // 简单的Markdown解析函数
@@ -3788,14 +3850,16 @@ body {
   height: 44px !important;
   z-index: 200 !important;
   transition: all 0.3s ease !important;
-  background: transparent !important; /* 移除背景圈 */
-  border-radius: 0 !important;
-  box-shadow: none !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 12px !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
 .header-back:hover {
-  transform: scale(1.1) !important;
-  background: transparent !important; /* 悬停也不需要背景圈 */
+  transform: translateY(-2px) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 .header-back > i,
@@ -3819,7 +3883,7 @@ body {
 /* 修复头部位置，避免被侧边栏遮挡 */
 :deep(.layout-header) {
   left: 90px !important; /* 往右挪，对齐侧边栏右侧/主体内容左侧 */
-  top: 20px !important;
+  top: 30px !important;
   width: calc(100% - 105px) !important; /* 90px left + 15px right margin */
   border-radius: 24px 24px 0 0 !important; /* 顶部两个角圆润 */
   z-index: 150 !important;
@@ -4481,13 +4545,6 @@ body {
   left: 3vw !important;
 }
 
-/* 确保SVG图标居中 */
-.not-expand-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* 聊天消息样式 */
 .message-item {
   display: flex;
@@ -4602,9 +4659,9 @@ body {
 /* 输入框样式 */
 .el-textarea__inner {
   box-shadow: none !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  font-size: 10px;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  font-size: 16px !important;
 }
 
 /* 缩小侧边栏SVG图标尺寸 */
@@ -6091,5 +6148,377 @@ body {
 :deep(.materials-container .el-empty__description),
 :deep(.homework-container .el-empty__description) {
   font-size: 16px !important;
+}
+
+/* ================= AI 助教动画特效 (AI Assistant Animations) ================= */
+/* AI 弹窗滑动动画 */
+.ai-slide-enter-active,
+.ai-slide-leave-active {
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ai-slide-enter-from,
+.ai-slide-leave-to {
+  transform: translateX(100%) scale(0.9);
+  opacity: 0;
+  filter: blur(10px);
+}
+
+/* 返回按钮渐变动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* AI 弹窗高阶样式优化 */
+.ai-draggable-dialog {
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(25px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-radius: 20px !important;
+}
+
+.dark .ai-draggable-dialog {
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(30, 30, 30, 0.7) !important;
+}
+
+/* AI 弹窗顶部装饰条样式 */
+.ai-dialog-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 1001;
+  position: relative;
+}
+
+.dark .ai-dialog-header-bar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ai-dialog-header-bar .header-left,
+.ai-dialog-header-bar .header-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.ai-dialog-header-bar .header-right {
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.header-title-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.ai-dialog-header-bar .status-dot {
+  width: 6px;
+  height: 6px;
+  background: #67c23a;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #67c23a;
+  animation: status-pulse 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes status-pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.ai-dialog-header-bar .header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  white-space: nowrap;
+}
+
+.ai-dialog-header-bar .header-back-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(64, 158, 255, 0.2);
+  position: absolute;
+  left: -240px; /* 悬浮在边框外侧 */
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.dark .ai-dialog-header-bar .header-back-btn {
+  background: rgba(45, 45, 45, 0.9) !important;
+  border-color: rgba(64, 158, 255, 0.4);
+}
+
+.ai-dialog-header-bar .header-back-btn:hover {
+  left: -242px; /* 悬停时往外弹一点 */
+  background: #409eff !important;
+  border-color: #409eff;
+  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4);
+}
+
+.ai-dialog-header-bar .header-back-btn:hover svg {
+  stroke: #ffffff !important;
+}
+
+.ai-dialog-header-bar .header-back-btn svg {
+  transition: all 0.3s ease;
+}
+
+.dark .ai-dialog-header-bar .header-title {
+  color: #e0e0e0;
+}
+
+/* 滚动条样式优化：移至最右侧并自动隐藏 */
+.ai-talk-box :deep(.el-scrollbar__wrap) {
+  overflow-x: hidden;
+}
+
+.ai-talk-box :deep(.el-scrollbar__bar) {
+  right: 2px !important;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ai-talk-box:hover :deep(.el-scrollbar__bar) {
+  opacity: 1;
+}
+
+.ai-talk-box :deep(.el-scrollbar__thumb) {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .ai-talk-box :deep(.el-scrollbar__thumb) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.ai-dialog-header-bar .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 2;
+}
+
+.ai-dialog-header-bar .header-action-btn {
+  cursor: pointer;
+  font-size: 18px;
+  color: #909399;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.ai-dialog-header-bar .header-action-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #409eff;
+}
+
+.dark .ai-dialog-header-bar .header-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ai-dialog-header-bar .close-btn:hover {
+  color: #f56c6c;
+}
+
+/* 聚光灯按钮通用样式 */
+.spotlight-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--x, 50%) var(--y, 50%),
+    rgba(64, 158, 255, 0.4) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.spotlight-button:hover::before {
+  opacity: 1;
+}
+
+.mock-send-btn {
+  transition: all 0.2s ease;
+}
+
+.mock-send-btn:active {
+  transform: scale(0.9);
+  opacity: 0.8;
+}
+
+/* AI 助教入口呼吸灯特效 */
+.out-ai-pro-talk-box {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.out-ai-pro-talk-box::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(64, 158, 255, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  animation: ai-shimmer 3s infinite;
+}
+
+@keyframes ai-shimmer {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.out-ai-pro-talk-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.2);
+}
+
+/* AI 头像浮动动画 */
+.ai-helper-sections .photo img {
+  animation: ai-float 3s ease-in-out infinite;
+}
+
+@keyframes ai-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* 聊天列表动画 */
+.chat-list-enter-active,
+.chat-list-leave-active {
+  transition: all 0.4s ease-out;
+}
+
+.chat-list-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.chat-list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/* 聊天消息布局优化 */
+.chat-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px;
+}
+
+.chat-message-item {
+  display: flex;
+  width: 100%;
+}
+
+.chat-message-item.user-message {
+  justify-content: flex-end;
+}
+
+.chat-message-item.ai-message {
+  justify-content: flex-start;
+}
+
+/* 消息气泡微调 */
+.user-message .ai-chat-share-container_nVXTe {
+  margin-left: 20%;
+}
+
+.ai-message .ai-chat-share-container_nVXTe {
+  margin-right: 20%;
+}
+
+/* 消息气泡交互特效 */
+.ai-chat-share-container_nVXTe {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: default;
+}
+
+.ai-chat-share-container_nVXTe:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.02);
+}
+
+.user-message .question-content_1e1fE {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+  color: white !important;
+  border-radius: 18px 18px 2px 18px !important;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3) !important;
+}
+
+.ai-message .answer-content-box_2Pu7S {
+  background: #f4f7f9 !important;
+  border-radius: 18px 18px 18px 2px !important;
+  border: 1px solid #eef2f5 !important;
+}
+
+.dark .ai-message .answer-content-box_2Pu7S {
+  background: #2c2c2c !important;
+  border-color: #444 !important;
+}
+
+/* 正在输入打点动画增强 */
+.typing-dot {
+  display: inline-block;
+  animation: dot-pulse 1.5s infinite;
+  margin: 0 2px;
+  font-weight: bold;
+  color: #409eff;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
 }
 </style>

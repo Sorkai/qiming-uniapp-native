@@ -483,7 +483,7 @@ const getCtaStarStyle = (index: number) => {
 // 轮播图数据
 const carouselItems = ref([
   {
-    title: "启明智教",
+    title: "启明智教 Intelledu",
     subtitle: "智慧教育新纪元",
     description: "基于人工智能深度融合的智慧教育平台，为每位学习者打造专属学习路径",
     background: banner1
