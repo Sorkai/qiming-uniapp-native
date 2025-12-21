@@ -3883,15 +3883,15 @@ body {
 /* 修复头部位置，避免被侧边栏遮挡 */
 :deep(.layout-header) {
   left: 90px !important; /* 往右挪，对齐侧边栏右侧/主体内容左侧 */
-  top: 30px !important;
-  width: calc(100% - 105px) !important; /* 90px left + 15px right margin */
-  border-radius: 24px 24px 0 0 !important; /* 顶部两个角圆润 */
+  top: 20px !important;
+  width: calc(100% - 110px) !important; /* 90px left + 20px right margin */
+  border-radius: 20px !important; /* 四周圆角美化 */
   z-index: 150 !important;
   transition: all 0.3s ease-in-out;
-  background: #ffffff !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(10px) !important;
-  border-bottom: 1px solid #f0f2f5 !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
 :deep(.layout-header .header-content .item.header-left) {
@@ -5876,17 +5876,18 @@ body {
 
 :deep(.light .layout-header),
 :deep(.light .layout-header .header-content) {
-  background: #ffffff !important;
-  backdrop-filter: none !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 20px !important;
 }
 
 :deep(.dark .layout-header),
 :deep(.dark .layout-header .header-content) {
-  background: #1a1a1a !important;
-  backdrop-filter: none !important;
-  border-bottom: 1px solid #333 !important;
-  border-radius: 24px 24px 0 0 !important; /* 深色模式也保持圆角 */
-  box-shadow: none !important;
+  background: rgba(26, 26, 26, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important; /* 四周圆角美化 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
 :deep(.dark .rightTreeWarp .chapterList-box .list li .catalogue_title) {
