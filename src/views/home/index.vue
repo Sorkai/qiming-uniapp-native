@@ -868,7 +868,6 @@ const handleLoginSuccess = () => {
       padding: 8px 20px;
       margin-bottom: 24px;
       font-size: 14px;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
       font-weight: 500;
       letter-spacing: 0.5px;
       color: #60a5fa;
@@ -881,7 +880,6 @@ const handleLoginSuccess = () => {
       margin: 0 0 16px;
       font-size: 68px;
       font-weight: 700;
-      font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
       color: #fff;
       letter-spacing: 4px;
       text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -891,7 +889,6 @@ const handleLoginSuccess = () => {
       margin: 0 0 20px;
       font-size: 42px;
       font-weight: 600;
-      font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
       letter-spacing: 2px;
       background: linear-gradient(135deg, #5dade2 0%, #85c1e9 50%, #aed6f1 100%);
       -webkit-background-clip: text;
@@ -902,7 +899,6 @@ const handleLoginSuccess = () => {
     .hero-desc {
       margin: 0 0 32px;
       font-size: 17px;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
       font-weight: 400;
       line-height: 1.7;
       letter-spacing: 0.5px;
@@ -918,7 +914,6 @@ const handleLoginSuccess = () => {
         padding: 0 36px;
         font-size: 15px;
         font-weight: 500;
-        font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
         letter-spacing: 1px;
         border-radius: 26px;
         transition: all 0.3s ease;
@@ -1307,7 +1302,7 @@ const handleLoginSuccess = () => {
       max-width: 800px;
       padding: 0 40px;
 
-      .quote-mark { font-size: 80px; font-family: Georgia, serif; color: rgba(96, 165, 250, 0.3); line-height: 0.5; }
+      .quote-mark { font-size: 80px; color: rgba(96, 165, 250, 0.3); line-height: 0.5; }
       p { font-size: 24px; font-weight: 300; color: #fff; margin: 16px 0; font-style: italic; }
       .quote-author { font-size: 14px; color: rgba(255, 255, 255, 0.5); }
     }
@@ -1452,7 +1447,6 @@ const handleLoginSuccess = () => {
 
     .quote-icon { 
       font-size: 60px; 
-      font-family: Georgia, serif; 
       color: #60a5fa; 
       margin-bottom: 20px;
       display: block;

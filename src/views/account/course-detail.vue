@@ -5732,10 +5732,13 @@ body {
 :deep(.light .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name) {
   color: #409eff !important; /* 知识点名称改为品牌蓝 */
   font-weight: 800 !important;
+  font-size: 1.8vw !important; /* 调大字体 */
+  margin-top: 20px !important; /* 增加行间距 */
 }
 
 :deep(.light .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text) {
   color: #303133 !important;
+  font-size: 1.1vw !important; /* 调大字体 */
 }
 
 :deep(.light .kgDescribe-warp) {
@@ -5912,10 +5915,13 @@ body {
 :deep(.dark .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name) {
   color: #4facfe !important;
   font-weight: 800 !important;
+  font-size: 1.8vw !important; /* 调大字体 */
+  margin-top: 20px !important; /* 增加行间距 */
 }
 
 :deep(.dark .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text) {
   color: #b4b4c7 !important;
+  font-size: 1.1vw !important; /* 调大字体 */
 }
 
 :deep(.dark .kgDescribe-warp) {

@@ -17,8 +17,9 @@ body {
   height: 100%;
   margin: 0;
   font-family:
-    "Noto Sans SC", "Source Han Sans SC", "思源黑体", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+    "Noto Sans SC", "Source Han Sans SC", "Source Han Sans CN", "思源黑体",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial,
+    sans-serif;
   line-height: inherit;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
@@ -247,4 +248,22 @@ div:focus {
     visibility: hidden;
     content: " ";
   }
+}
+
+/* 强制全局使用思源黑体 */
+*,
+*::before,
+*::after {
+  font-family:
+    "Noto Sans SC", "Source Han Sans SC", "Source Han Sans CN", "思源黑体",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial,
+    sans-serif;
+}
+
+/* 排除图标库 */
+.iconfont,
+[class^="el-icon-"],
+[class*=" el-icon-"],
+.iconify {
+  font-family: "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline" !important;
 }

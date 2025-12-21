@@ -22,10 +22,7 @@ onMounted(() => {
     style="
       border-radius: 10px;
       font-size: 16px;
-      font-family:
-        system-ui, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif,
-        &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;,
-        &quot;Segoe UI Symbol&quot;;
+      font-family: inherit;
     "
     :messageStyles="{
       default: {
