@@ -809,18 +809,19 @@
                         </div>
                       </div>
                       <!----><!----><!---->
-                      <!-- ai弹窗 -->
+                      <!-- ai弹窗 - 改为在入口框下方展开 -->
                       <transition name="ai-slide">
                         <div
                           v-if="isAiDialogVisible"
+                          ref="aiDialogRef"
                           data-v-0762fd62=""
                           class="ai-draggable-dialog auto"
                           style="
                             width: 25vw !important;
                             right: 1vw !important;
-                            height: calc(100% - 6.5vw) !important;
-                            top: 4.5vw !important;
-                            z-index: 1000;
+                            top: calc(5.83333vw + 10.4167vw + 0.5vw) !important;
+                            height: 600px !important;
+                            z-index: 999;
                             display: flex;
                             flex-direction: column;
                           "
@@ -1189,7 +1190,12 @@
                       </div>
                     </div>
                   </div>
-                  <div class="rightTreeWarp" courseinfo="[object Object]">
+                  <div 
+                    ref="catalogRef"
+                    class="rightTreeWarp" 
+                    :style="{ top: catalogTop }"
+                    courseinfo="[object Object]"
+                  >
                     <div class="top-title">目录</div>
                     <div
                       class="my-scrollbar el-scrollbar"
@@ -2359,6 +2365,20 @@ const videoPlayer = ref(null);
 const autoPlayOnLoad = ref(false);
 const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
+const aiDialogRef = ref(null);
+const catalogRef = ref(null);
+
+// 计算目录的 top 位置
+const catalogTop = computed(() => {
+  if (isAiDialogVisible.value) {
+    // 展开状态：AI框初始位置 + 展开后的高度 + 间距
+    return 'calc(5.83333vw + 600px + 1vw)';
+  } else {
+    // 收起状态：AI框初始位置 + 原始高度 + 间距
+    return 'calc(5.83333vw + 10.4167vw + 1vw)';
+  }
+});
+
 const masteryChartRef = ref(null); // 添加图表引用
 let masteryChart = null; // 添加图表实例变量
 // 新增掌握概览柱状图和饼状图引用
@@ -2974,16 +2994,35 @@ const goBack = () => {
 // 打开AI对话框
 const openAiDialog = () => {
   isAiDialogVisible.value = true;
+  // 添加点击外部关闭的监听器
+  nextTick(() => {
+    document.addEventListener('click', handleClickOutside);
+  });
 };
 
 // 关闭AI对话框
 const closeAiDialog = () => {
   isAiDialogVisible.value = false;
+  // 移除点击外部关闭的监听器
+  document.removeEventListener('click', handleClickOutside);
 
   // 如果有活跃的流请求，取消它
   if (cancelStreamRequest.value) {
     cancelStreamRequest.value();
     cancelStreamRequest.value = null;
+  }
+};
+
+// 处理点击外部关闭
+const handleClickOutside = (event: MouseEvent) => {
+  if (!aiDialogRef.value) return;
+  
+  const target = event.target as HTMLElement;
+  const aiDialog = document.querySelector('.ai-draggable-dialog');
+  
+  // 检查点击是否在 AI 对话框外部
+  if (aiDialog && !aiDialog.contains(target) && !aiDialogRef.value.contains(target)) {
+    closeAiDialog();
   }
 };
 
@@ -7135,6 +7174,11 @@ body {
   transition: all 0.3s ease;
   border-radius: 12px !important;
   background: rgba(255, 255, 255, 0.05);
+}
+
+/* 目录平滑过渡 */
+:deep(.rightTreeWarp) {
+  transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .out-ai-pro-talk-box::after {
