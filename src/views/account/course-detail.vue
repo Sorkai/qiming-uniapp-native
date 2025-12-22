@@ -7,12 +7,45 @@
         :active-menu="activeMenu"
         @menu-click="handleMenuClick"
       />
-      <div data-v-2cf49992="" class="layout-inner-content" :class="currentTheme">
-        <!-- 课程资料 -->
-        <CourseMaterials
-          :visible="activeMenu === 'course-materials'"
+
+      <div class="layout-inner-content" :class="currentTheme">
+        <!-- 课程学习 (视频、目录、AI助教) -->
+        <CourseStudy
+          v-if="courseId"
+          ref="courseStudyRef"
+          :visible="activeMenu === 'course-learn'"
           :current-theme="currentTheme"
-          :course-attr-list="courseAttrList"
+          :user-avatar="userAvatar"
+          :user-nickname="userNickname"
+          :course-name="courseDetail?.courseName"
+          :current-hour="currentHour"
+          :current-video-url="currentVideoUrl"
+          :loading="loading"
+          :course-content-html="courseContentHtml"
+          :is-ai-dialog-visible="isAiDialogVisible"
+          :chat-messages="chatMessages"
+          :is-typing="isTyping"
+          :sending-message="sendingMessage"
+          :chapter-list="courseDetail?.courseChapterList"
+          :active-node="activeNode"
+          @go-back="goBack"
+          @toggle-theme="toggleTheme"
+          @go-to-account="goToAccount"
+          @logout="handleLogout"
+          @video-loaded="videoLoaded"
+          @video-ended="videoEnded"
+          @open-ai="openAiDialog"
+          @close-ai="closeAiDialog"
+          @clear-chat="clearChat"
+          @send-message="handleSendMessage"
+          @node-click="handleNodeClick"
+        />
+
+        <!-- 知识点掌握 -->
+        <MasteryPage
+          :visible="activeMenu === 'mastery'"
+          :current-theme="currentTheme"
+          :study-effect-data="studyEffectData"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
           @go-back="goBack"
@@ -20,18 +53,22 @@
           @go-to-account="goToAccount"
           @logout="handleLogout"
         />
-        <!-- HTML 动画列表 -->
-        <HtmlAnimations
-          :visible="activeMenu === 'html-animations'"
+
+        <!-- 课程问答 -->
+        <CourseQA
+          :visible="activeMenu === 'course-qa'"
           :current-theme="currentTheme"
-          :loading="htmlAnimationLoading"
-          :animation-list="htmlAnimationList"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
+          :qa-stats="qaStats"
+          :qa-history-list="qaHistoryList"
+          :chat-messages="chatMessages"
+          :is-typing="isTyping"
           @go-back="goBack"
           @toggle-theme="toggleTheme"
           @go-to-account="goToAccount"
           @logout="handleLogout"
+          @send-message="handleSendMessage"
         />
 
         <!-- 作业考试 -->
@@ -50,940 +87,11 @@
           @logout="handleLogout"
         />
 
-        <!-- 课程学习 -->
-        <div
-          v-show="activeMenu == 'course-learn'"
-          data-v-cebc91e2=""
-          data-v-2cf49992=""
-          :class="currentTheme"
-        >
-          <!-- 课程学习 -->
-          <div
-            data-v-3e66491d=""
-            data-v-cebc91e2=""
-            class="layout-header light"
-            isatlas="1"
-            style="z-index: 10"
-          >
-            <div
-              id="header-content-layout only-filter"
-              data-v-3e66491d=""
-              class="header-content"
-            >
-              <div data-v-3e66491d="" class="item header-left">
-                <div
-                  data-v-3e66491d=""
-                  class="item header-back spotlight-button"
-                  @click="goBack"
-                  @mousemove="handleButtonMouseMove"
-                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </div>
-                <span data-v-3e66491d="" class="current-time">{{
-                  currentDate
-                }}</span>
-                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
-                  <ThemeSunIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                  <ThemeMoonIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-center">
-                <div
-                  data-v-cebc91e2=""
-                  data-v-3e66491d=""
-                  class="study-mode custom-mode"
-                >
-                  <div
-                    data-v-cebc91e2=""
-                    data-v-3e66491d=""
-                    data-name="0"
-                    class="mode-item active"
-                    style="margin: 0 auto"
-                  >
-                    章节模式
-                  </div>
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-right">
-                <div class="user-dropdown-area">
-                  <el-dropdown trigger="click">
-                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
-                      <img :src="userAvatar" alt="" class="avatar" />
-                      <span class="name">{{ userNickname }}</span>
-                      <i class="el-icon-arrow-down" />
-                    </div>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
-                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-            </div>
-            <div data-v-3e66491d="" class="hover-area" />
-            <!----><!---->
-            <div
-              data-v-3e66491d=""
-              class="el-dialog__wrapper courseRemind khfaPop light"
-              style="display: none"
-            >
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-label="dialog"
-                class="el-dialog newAiPop"
-                style="margin-top: 15vh; width: 39.0625vw"
-              >
-                <div class="el-dialog__header">
-                  <div data-v-3e66491d="" class="header-slot header-slot-box">
-                    <StudyBeforeReadingIcon /><span
-                      data-v-3e66491d=""
-                      class="study-before-texts"
-                      >学前必读</span
-                    ><i data-v-3e66491d="" class="el-icon-error" />
-                  </div>
-                  <!---->
-                </div>
-                <!----><!---->
-              </div>
-            </div>
-            <!---->
-            <div
-              data-v-3e66491d=""
-              class="el-dialog__wrapper light courseRemind courseRemindAd"
-              style="display: none"
-            >
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-label="dialog"
-                class="el-dialog newAiPop"
-                style="margin-top: 15vh; width: 28.125vw"
-              >
-                <div class="el-dialog__header">
-                  <div data-v-3e66491d="" class="header-slot">
-                    <i data-v-3e66491d="" class="el-icon-error" />
-                  </div>
-                  <!---->
-                </div>
-                <!---->
-                <div class="el-dialog__footer">
-                  <div data-v-3e66491d="" class="btn-list">
-                    <div data-v-3e66491d="" class="btn">取消</div>
-                    <div data-v-3e66491d="" class="btn primary">确定</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div data-v-cebc91e2="" class="study-container light">
-            <div data-v-cebc91e2="" class="light" style="overflow: hidden">
-              <div class="aloneMapCourrseWarp">
-                <div class="left-warp">
-                  <div class="courseMsg-box">
-                    <div class="small-text">
-                      <i />同学们，本次我们学习的知识点是
-                    </div>
-                    <div class="kg-name">
-                      {{ currentVideoTitle }}
-                    </div>
-                  </div>
-                  <div
-                    class="preview-warp"
-                    style="
-                      width: 100%;
-                      height: 369px;
-                      background: rgb(0, 0, 0);
-                      border-radius: 0.83333vw;
-                    "
-                  >
-                    <video
-                      v-if="currentVideoUrl"
-                      ref="videoPlayer"
-                      controls
-                      style="width: 100%; height: 100%"
-                      :src="currentVideoUrl"
-                      @loadeddata="videoLoaded"
-                      @ended="videoEnded"
-                    />
-                    <div
-                      v-else
-                      class="loading-placeholder"
-                      style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        height: 100%;
-                        color: #fff;
-                      "
-                    >
-                      {{ loading ? "加载中..." : "暂无视频" }}
-                    </div>
-                  </div>
-                  <div
-                    class="kgDescribe-warp"
-                    style="height: auto"
-                    courseinfo="[object Object]"
-                  >
-                    <div class="top-test">
-                      <img :src="describeImgSrc" alt="" /><span
-                        >知识点描述</span
-                      >
-                    </div>
-                    <div class="introduce-div">
-                      <div
-                        v-if="courseDetail"
-                        v-html="getCourseContentByName(courseDetail.courseName)"
-                      />
-                      <div v-else>加载课程内容中...</div>
-                    </div>
-                  </div>
-                  <div data-v-e74995e4="" class="ai-observer" style="">
-                    <!---->
-                  </div>
-                  <div class="resource-warp" style="display: none">
-                    <div class="resource-tab">
-                      <div
-                        class="tab-item"
-                        :class="{ active: activeResourceTab === 'required' }"
-                        @click="handleResourceTabClick('required')"
-                      >
-                        <i />
-                        <span>必学资源</span>
-                      </div>
-                      <div
-                        class="tab-item"
-                        :class="{ active: activeResourceTab === 'optional' }"
-                        @click="handleResourceTabClick('optional')"
-                      >
-                        <i />
-                        <span>选学资源</span>
-                      </div>
-                    </div>
-                    <div class="label-list rlabel-list">
-                      <div class="label-name active">
-                        <span class="name-box"
-                          >全部<span class="lab-number">1</span></span
-                        >
-                      </div>
-                    </div>
-                    <div class="el-scrollbar" style="height: 100%">
-                      <div
-                        class="el-scrollbar__wrap"
-                        style="margin-bottom: -1px; margin-right: -1px"
-                      >
-                        <div class="el-scrollbar__view">
-                          <div class="resources-list">
-                            <!----><!---->
-                            <div class="resources-item active">
-                              <div
-                                data="74468421"
-                                class="basic-info-video-card-container"
-                              >
-                                <div class="video-wrap">
-                                  <div class="video-img-bg">
-                                    <div class="img-bg" />
-                                    <img
-                                      src="@/assets/course-detail-images/course-detail-screenshot.jpg"
-                                      alt=""
-                                    />
-                                    <div class="file-type file-video">
-                                      <i />
-                                    </div>
-                                    <div class="video-time">00:07:13</div>
-                                    <div class="isActive">
-                                      <img
-                                        src="@/assets/course-detail-images/course-detail-gif.gif"
-                                        alt=""
-                                      />
-                                    </div>
-                                    <!---->
-                                    <div class="isFinsh">
-                                      <img
-                                        src="@/assets/course-detail-images/course-detail-icon1.png"
-                                        alt=""
-                                      />已完成
-                                    </div>
-                                  </div>
-                                </div>
-                                <div class="video-info">
-                                  <div class="file-name">
-                                    深刻认识新时代我国国家安全形势.mp4
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="el-scrollbar__bar is-horizontal">
-                        <div
-                          class="el-scrollbar__thumb"
-                          style="transform: translateX(0%)"
-                        />
-                      </div>
-                      <div class="el-scrollbar__bar is-vertical">
-                        <div
-                          class="el-scrollbar__thumb"
-                          style="transform: translateY(0%)"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="rigth-warp" style="width: 25vw; margin-right: 1vw;">
-                  <div>
-                    <div data-v-0762fd62="" class="ai-helper-sections light">
-                      <div
-                        data-v-0762fd62=""
-                        class="out-ai-showbox-pro"
-                        style="
-                          position: fixed;
-                          top: 5.83333vw;
-                          right: 1vw !important;
-                          width: 25vw !important;
-                          height: 10.4167vw;
-                        "
-                      >
-                        <div
-                          data-v-0762fd62=""
-                          class="out-ai-pro-talk-box glow-border"
-                        >
-                          <div data-v-0762fd62="" class="inset-div">
-                            <div data-v-0762fd62="" class="photo">
-                              <img
-                                data-v-0762fd62=""
-                                :src="aiPeopleAvatar"
-                                alt=""
-                              />
-                            </div>
-                            <div data-v-0762fd62="" class="ai-hepler-pro-box">
-                              <div data-v-0762fd62="" class="people-name">
-                                AI助教
-                              </div>
-                              <div data-v-0762fd62="" class="init-talk-cotent">
-                                Hi～我是您的AI助教
-                              </div>
-                            </div>
-                            <div data-v-0762fd62="" class="ai-hepler-pro-input">
-                              <div data-v-0762fd62="" class="el-input">
-                                <!----><input
-                                  type="text"
-                                  autocomplete="off"
-                                  placeholder="输入您的问题，与AI助教互动问答..."
-                                  class="el-input__inner"
-                                  style="padding-left: 10px; padding-right: 40px; font-size: 14px"
-                                  @click="openAiDialog"
-                                /><!----><!----><!----><!---->
-                              </div>
-                              <span
-                                data-v-0762fd62=""
-                                class="mock-send-btn"
-                                @click="openAiDialog"
-                              >
-                                <SendIcon />
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <!----><!----><!---->
-                      <!-- ai弹窗 - 改为在入口框下方展开 -->
-                      <transition name="ai-slide">
-                        <div
-                          v-if="isAiDialogVisible"
-                          ref="aiDialogRef"
-                          data-v-0762fd62=""
-                          class="ai-draggable-dialog auto"
-                          style="
-                            width: 25vw !important;
-                            right: 1vw !important;
-                            top: calc(5.83333vw + 10.4167vw + 0.5vw) !important;
-                            height: 600px !important;
-                            z-index: 999;
-                            display: flex;
-                            flex-direction: column;
-                          "
-                        >
-                          <!-- 新增：AI 弹窗顶部装饰条 -->
-                          <div class="ai-dialog-header-bar">
-                            <div class="header-left">
-                              <div class="header-back-btn spotlight-button" @click="closeAiDialog" @mousemove="handleButtonMouseMove">
-                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                              </div>
-                            </div>
-                            <div class="header-title-wrap">
-                              <span class="status-dot"></span>
-                              <span class="header-title">AI 智能助教</span>
-                            </div>
-                            <div class="header-right">
-                              <el-tooltip content="清空对话" placement="top">
-                                <div class="header-action-btn" @click="clearChat">
-                                  <i class="el-icon-delete"></i>
-                                </div>
-                              </el-tooltip>
-                              <div class="header-action-btn close-btn" @click="closeAiDialog">
-                                <i class="el-icon-close"></i>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div data-v-0762fd62="" class="ai-fill-bg" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; border: none !important; background: transparent !important;">
-                            <div data-v-0762fd62="" class="dialog-content" style="flex: 1; overflow: hidden;">
-                            <div data-v-0762fd62="" class="ai-talk-box">
-                              <div
-                                data-v-0762fd62=""
-                                class="el-scrollbar"
-                                style="height: 100%; box-sizing: border-box"
-                              >
-                                <div
-                                  class="el-scrollbar__wrap"
-                                  style="
-                                    margin-bottom: -1px;
-                                    margin-right: -1px;
-                                  "
-                                >
-                                  <div class="el-scrollbar__view">
-                                    <!-- 修改聊天消息区域，使用现有的CSS样式类 -->
-                                    <div
-                                      data-v-0762fd62=""
-                                      class="header-tips-box"
-                                    >
-                                      <div
-                                        data-v-0762fd62=""
-                                        class="robbot-icon"
-                                      >
-                                        <img
-                                          data-v-0762fd62=""
-                                          :src="aiPeopleAvatar"
-                                          alt=""
-                                          style="transform: scaleX(-1)"
-                                        />
-                                      </div>
-                                      <div data-v-0762fd62="" class="code-icon">
-                                        <img
-                                          data-v-0762fd62=""
-                                          src="@/assets/course-detail-images/course-detail-icon2.png"
-                                          alt=""
-                                        />
-                                      </div>
-                                      <p data-v-0762fd62="" class="code-hello">
-                                        Hi～我是您的AI助教
-                                      </p>
-                                      <div
-                                        data-v-0762fd62=""
-                                        class="ai-heler-header-tips"
-                                      >
-                                        课程学习中欢迎随时提问，我将全力为您答疑解惑，共同进步哦！
-                                      </div>
-                                    </div>
-
-                                    <!-- 聊天消息区域 -->
-                                    <transition-group name="chat-list" tag="div" class="chat-messages-list">
-                                      <div
-                                        v-for="(message, index) in chatMessages"
-                                        :key="index"
-                                        data-v-0762fd62=""
-                                        class="chat-message-item"
-                                        :class="message.role === 'user' ? 'user-message' : 'ai-message'"
-                                      >
-                                        <!-- 用户消息 -->
-                                        <div
-                                          v-if="message.role === 'user'"
-                                          :id="`talk_${index}`"
-                                          data-v-0762fd62=""
-                                          class="ai-chat-share-container_nVXTe"
-                                        >
-                                        <div
-                                          data-v-0762fd62=""
-                                          class="chat-common_3Wk2t margin-bottom-16 chat-common_AKa0H"
-                                        >
-                                          <div
-                                            data-v-0762fd62=""
-                                            class="question-container_2GfLA chat-common_AKa0H"
-                                          >
-                                            <div
-                                              data-v-0762fd62=""
-                                              class="question-content_1e1fE question-content-animation_2xq2F"
-                                            >
-                                              {{ message.content }}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                      <!-- AI回复 -->
-                                      <div
-                                        v-else
-                                        :id="`talk_${index}`"
-                                        data-v-0762fd62=""
-                                        class="ai-chat-share-container_nVXTe"
-                                      >
-                                        <div
-                                          data-v-0762fd62=""
-                                          class="chat-common_3Wk2t margin-bottom-16"
-                                        >
-                                          <div
-                                            data-v-0762fd62=""
-                                            class="answer-box-wrapper_1QYRS full-line_3ITtH chat-ans_1oSN6"
-                                          >
-                                            <div
-                                              data-v-0762fd62=""
-                                              class="answer-content-box_2Pu7S chat-answer-content-box"
-                                            >
-                                              <div
-                                                data-v-0762fd62=""
-                                                class="markdown-content"
-                                              >
-                                                <p
-                                                  :id="`turnMathJax${index}`"
-                                                  data-v-0762fd62=""
-                                                  class="result"
-                                                  v-html="
-                                                    parseMarkdown(
-                                                      message.content
-                                                    )
-                                                  "
-                                                />
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <!-- 正在输入提示 -->
-                                      <div v-if="isTyping" key="typing" data-v-0762fd62="">
-                                        <div
-                                          data-v-0762fd62=""
-                                          class="ai-chat-share-container_nVXTe"
-                                        >
-                                          <div
-                                            data-v-0762fd62=""
-                                            class="chat-common_3Wk2t margin-bottom-16"
-                                          >
-                                            <div
-                                              data-v-0762fd62=""
-                                              class="answer-box-wrapper_1QYRS full-line_3ITtH chat-ans_1oSN6"
-                                            >
-                                              <div
-                                                data-v-0762fd62=""
-                                                class="answer-content-box_2Pu7S chat-answer-content-box"
-                                              >
-                                                <div
-                                                  data-v-0762fd62=""
-                                                  class="markdown-content"
-                                                >
-                                                  <p
-                                                    data-v-0762fd62=""
-                                                    class="result"
-                                                  >
-                                                    <span class="typing-dot"
-                                                      >.</span
-                                                    >
-                                                    <span class="typing-dot"
-                                                      >.</span
-                                                    >
-                                                    <span class="typing-dot"
-                                                      >.</span
-                                                    >
-                                                  </p>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </transition-group>
-                                  </div>
-                                </div>
-                                <div class="el-scrollbar__bar is-horizontal">
-                                  <div
-                                    class="el-scrollbar__thumb"
-                                    style="transform: translateX(0%)"
-                                  />
-                                </div>
-                                <div class="el-scrollbar__bar is-vertical">
-                                  <div
-                                    class="el-scrollbar__thumb"
-                                    style="transform: translateY(0%)"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            <div data-v-0762fd62="" class="talk-input-box">
-                              <div data-v-0762fd62="" class="ai-footer-btns">
-                                <!----><!---->
-                              </div>
-                              <div data-v-0762fd62="" class="input-box">
-                                <div
-                                  data-v-0762fd62=""
-                                  class="ai-pro-content-edit-box"
-                                >
-                                  <div
-                                    data-v-0762fd62=""
-                                    class="input-fill-box-new"
-                                  >
-                                    <div data-v-0762fd62="" class="el-textarea">
-                                      <textarea
-                                        v-model="currentMessage"
-                                        autocomplete="off"
-                                        placeholder="请输入您的问题"
-                                        maxlength="300"
-                                        class="el-textarea__inner"
-                                        :style="
-                                          currentMessage.trim()
-                                            ? 'min-height: 40px; line-height: 1.5; padding-right: 40px !important;'
-                                            : 'min-height: 40px; height: 40px; line-height: 40px; padding-top: 0 !important; padding-bottom: 0 !important; padding-right: 40px !important;'
-                                        "
-                                        @keydown.enter.prevent="sendMessage"
-                                      /><!---->
-                                    </div>
-                                  </div>
-                                  <div
-                                    data-v-0762fd62=""
-                                    class="add-new-talk"
-                                    :class="{
-                                      'not-allowed': !currentMessage.trim()
-                                    }"
-                                  >
-                                    <AddNewTalkIcon />
-                                  </div>
-                                </div>
-                                <div
-                                  data-v-0762fd62=""
-                                  :class="
-                                    currentMessage.trim() && !sendingMessage
-                                      ? 'send-btn'
-                                      : 'not-send-btn'
-                                  "
-                                  @click="sendMessage"
-                                >
-                                  <NotSendBtnIcon
-                                    v-if="
-                                      !currentMessage.trim() || sendingMessage
-                                    "
-                                  />
-                                  <SendIcon v-else />
-                                </div>
-                              </div>
-                              <div data-v-0762fd62="" class="ai-tips-box" />
-                            </div>
-                          </div>
-                          </div>
-                          <div
-                            data-v-0762fd62=""
-                            class="ai-toast-container"
-                            style="display: none"
-                          >
-                            <div data-v-0762fd62="" class="ai-toast-message" />
-                          </div>
-                        </div>
-                      </transition>
-                      <!-- 欢迎使用AI助教 -->
-                      <div
-                        data-v-0762fd62=""
-                        class="el-dialog__wrapper"
-                        style="display: none"
-                      >
-                        <div
-                          role="dialog"
-                          aria-modal="true"
-                          aria-label="欢迎使用AI助教"
-                          class="el-dialog el-dialog--center ai-helper-agreement-Dialog"
-                          style="margin-top: 15vh; width: 37.5vw"
-                        >
-                          <div class="el-dialog__header">
-                            <span class="el-dialog__title">欢迎使用AI助教</span
-                            ><!---->
-                          </div>
-                          <!---->
-                          <div class="el-dialog__footer">
-                            <span
-                              data-v-0762fd62=""
-                              class="ai-agree-dialog-footer"
-                              ><div data-v-0762fd62="" class="disable-btn">
-                                确定
-                              </div>
-                              <!----></span
-                            >
-                          </div>
-                        </div>
-                      </div>
-                      <!-- 温馨提示 -->
-                      <div
-                        data-v-0762fd62=""
-                        class="el-dialog__wrapper"
-                        style="display: none"
-                      >
-                        <div
-                          role="dialog"
-                          aria-modal="true"
-                          aria-label="温馨提示"
-                          class="el-dialog el-dialog--center ai-helper-agreement-Dialog"
-                          style="margin-top: 15vh; width: 41.6667vw"
-                        >
-                          <div class="el-dialog__header">
-                            <span class="el-dialog__title">温馨提示</span
-                            ><!---->
-                          </div>
-                          <!---->
-                          <div class="el-dialog__footer">
-                            <span
-                              data-v-0762fd62=""
-                              class="ai-agree-dialog-footer"
-                              ><div data-v-0762fd62="" class="primary-btn">
-                                我知道了
-                              </div></span
-                            >
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        data-v-0762fd62=""
-                        class="el-dialog__wrapper"
-                        style="display: none"
-                      >
-                        <!-- 反馈 -->
-                        <div
-                          role="dialog"
-                          aria-modal="true"
-                          aria-label="dialog"
-                          class="el-dialog el-dialog--center ai-helper-feedback-Dialog"
-                          style="margin-top: 15vh; width: 41.6667vw"
-                        >
-                          <div class="el-dialog__header">
-                            <span class="el-dialog__title" /><!---->
-                          </div>
-                          <!---->
-                          <div class="el-dialog__footer">
-                            <span
-                              data-v-0762fd62=""
-                              class="ai-feedback-dialog-footer"
-                              ><div data-v-0762fd62="" class="disable-btn">
-                                提交
-                              </div></span
-                            >
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div 
-                    ref="catalogRef"
-                    class="rightTreeWarp" 
-                    :style="{ top: catalogTop }"
-                    courseinfo="[object Object]"
-                  >
-                    <div class="top-title">目录</div>
-                    <div
-                      class="my-scrollbar el-scrollbar"
-                      style="height: calc(100% - 3.38542vw)"
-                    >
-                      <div
-                        class="el-scrollbar__wrap"
-                        style="margin-bottom: -1px; margin-right: -1px"
-                      >
-                        <div class="el-scrollbar__view">
-                          <div class="chapterList-box">
-                            <ul class="list">
-                              <span class="position_first_bg" />
-
-                              <!-- 使用API返回的章节列表 -->
-                              <template
-                                v-for="(
-                                  chapter, chapterIndex
-                                ) in courseDetail?.courseChapterList"
-                                :key="chapter.chapterId"
-                              >
-                                <li class="clearfix font_gray_inclined chapter">
-                                  <span
-                                    :title="`第${Number(chapterIndex) + 1}章`"
-                                    class="catalogue_title3 fl"
-                                  >
-                                    <b>第{{ Number(chapterIndex) + 1 }}章</b>
-                                  </span>
-                                  <em class="Sectionmark-em fl" />
-                                  <span
-                                    :title="chapter.name"
-                                    class="catalogue_title fl catalogue_titleweight"
-                                    >{{ chapter.name }}</span
-                                  >
-                                </li>
-                                <div
-                                  v-for="(hour, hourIndex) in chapter.hourList"
-                                  :key="hour.hourId"
-                                  class="inner-li"
-                                >
-                                  <li
-                                    class="clearfix video"
-                                    :class="{
-                                      activeNode:
-                                        activeNode ===
-                                        `${Number(chapterIndex) + 1}.${Number(hourIndex) + 1}`
-                                    }"
-                                    @click="
-                                      handleNodeClick(
-                                        `${Number(chapterIndex) + 1}.${Number(hourIndex) + 1}`,
-                                        hour
-                                      )
-                                    "
-                                  >
-                                    <span
-                                      class="catalogue_title3 fl cataloguediv-l"
-                                      ><b class="pl5 hour"
-                                        >{{ Number(chapterIndex) + 1 }}.{{
-                                          Number(hourIndex) + 1
-                                        }}</b
-                                      ></span
-                                    >
-                                    <div class="fl cataloguediv-c haveRe">
-                                      <span
-                                        :title="hour.title"
-                                        class="catalogue_title"
-                                        >{{ hour.title }}</span
-                                      >
-                                      <div class="resource-box clearfix">
-                                        <div class="resource-text">
-                                          必学 <span>{{ hour.finished }}</span
-                                          >/1
-                                        </div>
-                                        <div class="resource-bar">
-                                          <div
-                                            role="progressbar"
-                                            :aria-valuenow="hour.finished * 100"
-                                            aria-valuemin="0"
-                                            aria-valuemax="100"
-                                            class="el-progress el-progress--line"
-                                          >
-                                            <div class="el-progress-bar">
-                                              <div
-                                                class="el-progress-bar__outer"
-                                                style="height: 6px"
-                                              >
-                                                <div
-                                                  class="el-progress-bar__inner"
-                                                  :style="{
-                                                    width:
-                                                      hour.finished * 100 + '%'
-                                                  }"
-                                                />
-                                              </div>
-                                            </div>
-                                            <div
-                                              class="el-progress__text"
-                                              style="font-size: 14.4px"
-                                            >
-                                              {{ hour.finished * 100 }}%
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div class="progress" />
-                                    <em class="Sectionmark-em" />
-                                    <div class="icon-box">
-                                      <div
-                                        v-if="hour.finished === 1"
-                                        class="isFinish"
-                                      >
-                                        <img
-                                          src="@/assets/course-detail-images/course-detail-icon3.png"
-                                          alt=""
-                                        />
-                                      </div>
-                                    </div>
-                                  </li>
-                                </div>
-                              </template>
-
-                              <!-- 如果没有数据则显示加载中 -->
-                              <li
-                                v-if="
-                                  loading ||
-                                  !courseDetail?.courseChapterList?.length
-                                "
-                                class="clearfix chapter"
-                              >
-                                <span
-                                  class="catalogue_title fl catalogue_titleweight"
-                                >
-                                  {{ loading ? "加载中..." : "暂无章节数据" }}
-                                </span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="el-scrollbar__bar is-horizontal">
-                        <div
-                          class="el-scrollbar__thumb"
-                          style="transform: translateX(0%)"
-                        />
-                      </div>
-                      <div class="el-scrollbar__bar is-vertical">
-                        <div
-                          class="el-scrollbar__thumb"
-                          style="transform: translateY(0%)"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  data-v-4f948fdc=""
-                  class="el-dialog__wrapper wxtsPop"
-                  tiptype=""
-                  style="display: none"
-                >
-                  <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="温馨提示"
-                    class="el-dialog newAiPop wxtsPop"
-                    style="margin-top: 15vh; width: 30.2083vw"
-                  >
-                    <div class="el-dialog__header">
-                      <span class="el-dialog__title">温馨提示</span
-                      ><button
-                        type="button"
-                        aria-label="Close"
-                        class="el-dialog__headerbtn"
-                      >
-                        <i class="el-dialog__close el-icon el-icon-close" />
-                      </button>
-                    </div>
-                    <!---->
-                    <div class="el-dialog__footer">
-                      <div data-v-4f948fdc="" class="btn-list">
-                        <div data-v-4f948fdc="" class="btn primary">
-                          我知道了
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 知识点掌握 -->
-        <MasteryPage
-          :visible="activeMenu === 'mastery'"
+        <!-- 课程资料 -->
+        <CourseMaterials
+          :visible="activeMenu === 'course-materials'"
           :current-theme="currentTheme"
-          :study-effect-data="studyEffectData"
+          :course-attr-list="courseAttrList"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
           @go-back="goBack"
@@ -992,24 +100,21 @@
           @logout="handleLogout"
         />
 
-        <!-- 课程问答页面 -->
-        <CourseQA
-          :visible="activeMenu === 'course-qa'"
+        <!-- HTML 动画 -->
+        <HtmlAnimations
+          :visible="activeMenu === 'html-animations'"
           :current-theme="currentTheme"
+          :loading="htmlAnimationLoading"
+          :animation-list="htmlAnimationList"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
-          :qa-stats="qaStats"
-          :qa-history-list="qaHistoryList"
-          :chat-messages="chatMessages"
-          :is-typing="isTyping"
           @go-back="goBack"
           @toggle-theme="toggleTheme"
           @go-to-account="goToAccount"
           @logout="handleLogout"
-          @send-message="handleQASend"
         />
 
-        <!-- 课程成绩页面 -->
+        <!-- 课程成绩 -->
         <CourseGrades
           :visible="activeMenu === 'grades'"
           :current-theme="currentTheme"
@@ -1023,21 +128,22 @@
         />
       </div>
     </div>
-    <WrongQuestionDetailDialog
-      v-model="isWrongQuestionDialogVisible"
-      :wrong-question="selectedWrongQuestion"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch, reactive } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { storageLocal } from "@pureadmin/utils";
+import { userKey } from "@/utils/auth";
+import { useUserStoreHook } from "@/store/modules/user";
+
+// 导入 API
 import {
   getCourseDetail,
   reportCourseLesson,
   getCourseScore,
-  CourseScoreResult,
   getCourseStudyEffect
 } from "@/api/frontend/course";
 import { getCourseContentByName } from "@/utils/courseContents";
@@ -1047,52 +153,29 @@ import {
 } from "@/api/frontend/chat";
 import {
   getUserCourseHomeworkList,
-  getUserCourseExamList,
-  getUserWrongQuestionList
+  getUserCourseExamList
 } from "@/api/frontend/work";
-import { storageLocal } from "@pureadmin/utils";
-import { userKey } from "@/utils/auth";
-
-import { ElMessage, ElMessageBox } from "element-plus";
-import CourseLearnIcon from "@/assets/course-icons/course-learn-new.svg?component";
-import MasteryIcon from "@/assets/course-icons/mastery-new.svg?component";
-import CourseQaIcon from "@/assets/course-icons/course-qa-new.svg?component";
-import HomeworkExamIcon from "@/assets/course-icons/homework-exam-new.svg?component";
-import GradesIcon from "@/assets/course-icons/grades.svg?component";
-import AiDocQaIcon from "@/assets/course-icons/ai-doc-qa-new.svg?component";
-import CourseMaterialsIcon from "@/assets/course-icons/course-materials-new.svg?component";
-import ThemeSunIcon from "@/assets/course-icons/theme-sun.svg?component";
-import ThemeMoonIcon from "@/assets/course-icons/theme-moon.svg?component";
-import SeekLeftIcon from "@/assets/course-icons/seek-left.svg?component";
-import SeekRightIcon from "@/assets/course-icons/seek-right.svg?component";
-import SendIcon from "@/assets/course-icons/send-icon.svg?component";
-import NotExpandIcon from "@/assets/course-icons/not-expand-icon.svg?component";
-import AddNewTalkIcon from "@/assets/course-icons/add-new-talk-icon.svg?component";
-import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
-import StudyBeforeReadingIcon from "@/assets/course-icons/study-before-reading-icon.svg?component";
-import PicInPicIcon from "@/assets/course-icons/pic-in-pic-icon.svg?component";
-import * as echarts from "echarts";
-import BackArrowIcon from "@/components/icons/BackArrowIcon.vue";
-import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
-import WrongExercise from "@/views/account/wrong-exercise.vue"; // 嵌入随练组件
-import logo from "@/assets/kecheng.jpg"; // 导入logo图片
-import CourseMaterials from "./course-detail/CourseMaterials.vue"; // 课程资料子组件
-import HtmlAnimations from "./course-detail/HtmlAnimations.vue"; // HTML 动画子组件
-import HomeworkExam from "./course-detail/HomeworkExam.vue"; // 作业考试子组件
-import CourseGrades from "./course-detail/CourseGrades.vue"; // 课程成绩子组件
-import CourseSidebar from "./course-detail/CourseSidebar.vue"; // 侧边栏子组件
-import MasteryPage from "./course-detail/MasteryPage.vue"; // 知识点掌握子组件
-import CourseQA from "./course-detail/CourseQA.vue"; // 课程问答子组件
-import HomeworkEmptyImg from "@/assets/new-release/homework-svgrepo-com.svg?url";
-import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal-vue.png";
-import resourceTabActive from "@/assets/course-detail-images/resource-tab-active-vue.png";
-import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
-import aiPeopleAvatar from "@/assets/aipeople.jpg"; // 引入aipeople.jpg
 import { getHtmlAnimationDisplay } from "@/api/htmlAnimation";
-import { useUserStoreHook } from "@/store/modules/user";
+
+// 导入拆分后的组件
+import {
+  CourseSidebar,
+  CourseStudy,
+  MasteryPage,
+  CourseQA,
+  HomeworkExam,
+  CourseMaterials,
+  HtmlAnimations,
+  CourseGrades
+} from "./course-detail/index";
+
+// 导入资源
+import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 
 const router = useRouter();
 const route = useRoute();
+
+// 基础状态
 const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
@@ -1100,391 +183,114 @@ const loading = ref(false);
 const currentTheme = ref("light");
 const activeMenu = ref("course-learn");
 
-// 侧边栏菜单配置
-const sidebarMenuItems = [
-  { key: "course-learn", label: "课程学习", icon: CourseLearnIcon },
-  { key: "mastery", label: "知识点", icon: MasteryIcon },
-  { type: "divider" },
-  { key: "course-qa", label: "课程问答", icon: CourseQaIcon },
-  { key: "homework-exam", label: "作业考试", icon: HomeworkExamIcon },
-  { key: "course-materials", label: "课程资料", icon: CourseMaterialsIcon },
-  { key: "html-animations", label: "HTML动画", icon: CourseMaterialsIcon },
-  { key: "grades", label: "成绩", icon: GradesIcon }
-];
-
-const isContentCollapsed = ref(false);
-const activeResourceTab = ref("required");
-const courseAttrList = ref([]); // 课程资料列表
-// 作业考试相关
-const homeworkExamTab = ref("homework");
-const homeworkList = ref([]);
-const examList = ref([]);
-// 移除了图谱模式，所以不再需要activeMode变量
-// const activeMode = ref("0");
-const activeNode = ref("1.1");
-const currentVideoUrl = ref("");
-const videoPlayer = ref(null);
-const autoPlayOnLoad = ref(false);
-const currentHour = ref(null);
-const isAiDialogVisible = ref(false);
-const courseStudyRef = ref(null);
-
-// 课程成绩相关
-const courseScores = ref<CourseScoreResult | null>(null);
-const gradesLoading = ref(false);
-
-// 课程问答相关数据
-const qaHistoryList = ref([]);
-const qaStats = ref({
-  totalQuestions: 12,
-  solvedQuestions: 10,
-  solveRate: "83%",
-  avgResponseTime: "5分钟"
-});
-
-// 随练对话框状态（部分逻辑可能仍旧触发）
-const isWrongQuestionDialogVisible = ref(false);
-const selectedWrongQuestion = ref(null);
-
-// 获取本地存储的用户信息
+// 用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
 const userAvatar = ref((userInfo as any)?.avatar || avatarDefault);
 const userNickname = ref(
   (userInfo as any)?.nickname || (userInfo as any)?.username || "用户"
 );
 
-// 添加AI聊天相关状态
+// 课程学习相关
+const courseStudyRef = ref(null);
+const currentHour = ref(null);
+const currentVideoUrl = ref("");
+const activeNode = ref("1.1");
+const autoPlayOnLoad = ref(false);
+const courseContentHtml = computed(() => {
+  return courseDetail.value ? getCourseContentByName(courseDetail.value.courseName) : "加载中...";
+});
+
+// AI 聊天相关
+const isAiDialogVisible = ref(false);
 const conversationId = ref("");
-const previousChapterId = ref<number | null>(null); // 新增状态
-const chatMessages = ref<
-  Array<{ role: string; content: string; timestamp: string }>
->([]);
-
-// 监听聊天记录变化，自动滚动到底部
-watch(
-  () => chatMessages.value,
-  () => {
-    nextTick(() => {
-      scrollToBottom();
-    });
-  },
-  { deep: true }
-);
-
-const currentMessage = ref("");
-const sendingMessage = ref(false);
-const streamResponse = ref("");
-
-const scrollToBottom = () => {
-  // 这是一个占位符，实际滚动逻辑在子组件中通过 watch 处理
-  console.log("scrollToBottom called");
-};
-
-// 处理按钮光效
-const handleButtonMouseMove = (e: MouseEvent) => {
-  const target = e.currentTarget as HTMLElement;
-  const rect = target.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  target.style.setProperty("--x", `${x}px`);
-  target.style.setProperty("--y", `${y}px`);
-};
-
+const previousChapterId = ref<number | null>(null);
+const chatMessages = ref<any[]>([]);
 const isTyping = ref(false);
-const cancelStreamRequest = ref<() => void | null>(null);
+const sendingMessage = ref(false);
+const cancelStreamRequest = ref<any>(null);
 
-const describeImgSrc = computed(() =>
-  currentTheme.value === "dark" ? resourceTabNormal : resourceTabActive
-);
-
-// 当前播放视频的标题
-const currentVideoTitle = computed(() => {
-  return (
-    currentHour.value?.title || courseDetail.value?.courseName || "加载中..."
-  );
+// 知识点掌握相关
+const studyEffectData = ref<any>({
+  courseId: 0,
+  keyPointNum: 0,
+  difficultPointNum: 0,
+  knowledgePointNum: 0,
+  conceptNum: 0,
+  chapterList: []
 });
 
-// 当前日期，格式化为"年月日"
-const currentDate = computed(() => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}年${month}月${day}日`;
+// 课程问答相关
+const qaStats = ref({
+  totalQuestions: 12,
+  solvedQuestions: 10,
+  solveRate: "83%",
+  avgResponseTime: "5分钟"
 });
+const qaHistoryList = ref<any[]>([]);
 
-// 获取课程详情
-const fetchCourseDetail = async () => {
-  if (!courseId.value) return;
+// 作业考试相关
+const homeworkList = ref<any[]>([]);
+const examList = ref<any[]>([]);
 
-  loading.value = true;
-  try {
-    const { code, data, msg } = await getCourseDetail({
-      courseId: courseId.value
-    });
+// 课程资料相关
+const courseAttrList = ref<any[]>([]);
 
-    if (code === 200 && data) {
-      courseDetail.value = data;
-      console.log("课程详情数据:", data);
+// HTML 动画相关
+const htmlAnimationList = ref<any[]>([]);
+const htmlAnimationLoading = ref(false);
 
-      // 加载课程资料数据
-      if (data.courseAttrList) {
-        courseAttrList.value = data.courseAttrList;
-      }
+// 成绩相关
+const courseScores = ref<any>(null);
 
-      // 默认加载第一个章节的第一个课时视频
-      if (data.courseChapterList && data.courseChapterList.length > 0) {
-        const firstChapter = data.courseChapterList[0];
-        if (firstChapter.hourList && firstChapter.hourList.length > 0) {
-          const firstHour = firstChapter.hourList[0];
-          currentHour.value = firstHour; // 保存当前课时信息
-          currentVideoUrl.value = firstHour.fileUrl;
-          activeNode.value = "1.1"; // 默认选中第一个节点
-          autoPlayOnLoad.value = true; // 设置标记以在视频加载后自动播放
-        }
-      }
-    } else {
-      ElMessage.error(msg || "获取课程详情失败");
-    }
-  } catch (error) {
-    console.error("获取课程详情出错:", error);
-    ElMessage.error("获取课程详情数据失败，请稍后重试");
-  } finally {
-    loading.value = false;
-  }
-};
+// ================= 方法 =================
 
-// 添加资源标签切换函数
-const handleResourceTabClick = (tab: string) => {
-  activeResourceTab.value = tab;
-};
-
-// 获取课程资料类型名称
-const getMaterialTypeName = (type: string) => {
-  const typeMap: Record<string, string> = {
-    IMAGE: "图片",
-    VIDEO: "视频",
-    DOCUMENT: "文档",
-    PDF: "PDF文档",
-    AUDIO: "音频"
-  };
-  return typeMap[type] || "其他资源";
-};
-
-// 查看课程资料
-const viewMaterial = (material: any) => {
-  if (material && material.fileUrl) {
-    window.open(material.fileUrl, "_blank");
-  }
-};
-
-// 添加折叠处理函数
-const toggleContent = () => {
-  isContentCollapsed.value = !isContentCollapsed.value;
-};
-
-// 作业考试相关方法
-// 获取作业列表
-const fetchHomeworkList = async () => {
-  if (!courseId.value) return;
-
-  try {
-    const { code, data, msg } = await getUserCourseHomeworkList({
-      courseId: courseId.value
-    });
-
-    if (code === 200 && data && (data as any).list) {
-      homeworkList.value = (data as any).list;
-    } else {
-      ElMessage.error(msg || "获取作业列表失败");
-    }
-  } catch (error) {
-    console.error("获取作业列表出错:", error);
-    ElMessage.error("获取作业列表失败，请稍后重试");
-  }
-};
-
-// 获取考试列表
-const fetchExamList = async () => {
-  if (!courseId.value) return;
-
-  try {
-    const { code, data, msg } = await getUserCourseExamList({
-      courseId: courseId.value
-    });
-
-    if (code === 200 && data && (data as any).list) {
-      examList.value = (data as any).list;
-    } else {
-      ElMessage.error(msg || "获取考试列表失败");
-    }
-  } catch (error) {
-    console.error("获取考试列表出错:", error);
-    ElMessage.error("获取考试列表失败，请稍后重试");
-  }
-};
-
-// 格式化日期
-const formatDate = (dateString: string) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-};
-
-// 获取作业状态类型
-const getHomeworkStatusType = (status: number) => {
-  const typeMap: Record<
-    number,
-    "info" | "warning" | "success" | "danger" | "primary"
-  > = {
-    1: "info", // 未开始
-    2: "warning", // 进行中
-    3: "success", // 已完成
-    4: "danger" // 已过期
-  };
-  return typeMap[status] || "info";
-};
-
-// 获取作业状态文本
-const getHomeworkStatusText = (status: number) => {
-  const textMap: Record<number, string> = {
-    1: "未开始",
-    2: "进行中",
-    3: "已完成",
-    4: "已过期"
-  };
-  return textMap[status] || "未知状态";
-};
-
-// 获取考试状态类型
-const getExamStatusType = (status: number) => {
-  const typeMap: Record<
-    number,
-    "info" | "warning" | "success" | "danger" | "primary"
-  > = {
-    1: "info", // 未开始
-    2: "warning", // 进行中
-    3: "success", // 已完成
-    4: "danger" // 已过期
-  };
-  return typeMap[status] || "info";
-};
-
-// 获取考试状态文本
-const getExamStatusText = (status: number) => {
-  const textMap: Record<number, string> = {
-    1: "未开始",
-    2: "进行中",
-    3: "已完成",
-    4: "已过期"
-  };
-  return textMap[status] || "未知状态";
-};
-
-// 查看作业
-const viewHomework = (homework: any) => {
-  if (homework && homework.homeworkId) {
-    // 只有状态为2(进行中)的作业可以查看
-    if (homework.status === 2) {
-      // 重定向到作业详情页
-      router.push({
-        path: `/account/homework-detail`,
-        query: {
-          homeworkId: homework.homeworkId,
-          courseId: route.params.id
-        }
-      });
-    } else {
-      ElMessage.warning(
-        `${getHomeworkStatusText(homework.status)}状态的作业不可查看`
-      );
-    }
-  }
-};
-
-// 查看考试
-const viewExam = (exam: any) => {
-  if (exam && exam.examId) {
-    // 只有状态为2(进行中)的考试可以查看
-    if (exam.status === 2) {
-      // 重定向到考试页面
-      router.push({
-        path: `/account/exam-detail`,
-        query: {
-          examId: exam.examId,
-          courseId: route.params.id
-        }
-      });
-    } else {
-      ElMessage.warning(`${getExamStatusText(exam.status)}状态的考试不可查看`);
-    }
-  }
-};
-
-function toggleTheme() {
+// 主题切换
+const toggleTheme = () => {
   const oldTheme = currentTheme.value;
   const newTheme = oldTheme === "light" ? "dark" : "light";
-
-  // 切换容器主题
-  const elements = document.querySelectorAll(`.${oldTheme}`);
-  elements.forEach(el => {
-    el.classList.remove(oldTheme);
-    el.classList.add(newTheme);
-  });
-
-  // 同时切换 body 的主题类
   document.body.classList.remove(oldTheme);
   document.body.classList.add(newTheme);
-
-  // 切换 SVG 图标颜色
-  const svgElements = document.querySelectorAll(".hover-box svg");
-  svgElements.forEach(svg => {
-    const parentElement = svg.closest(".hover-box");
-    const menuItem = parentElement?.closest(".item");
-    const currentMenuName = menuItem?.getAttribute("data-menu");
-    const isCurrentActive = currentMenuName === activeMenu.value;
-
-    // 定义颜色
-    const activeColor = newTheme === "dark" ? "white" : "white";
-    const inactiveColor = newTheme === "dark" ? "#B4B4C7" : "#5a6b8a";
-    const color = isCurrentActive ? activeColor : inactiveColor;
-
-    // 设置整个SVG的stroke颜色
-    svg.setAttribute("stroke", color);
-
-    // 设置所有path和circle的填充颜色
-    const elements = svg.querySelectorAll("path, circle, rect");
-    elements.forEach(el => {
-      if (el.getAttribute("fill") !== "none") {
-        el.setAttribute("fill", color);
-      }
-      el.setAttribute("stroke", color);
-    });
-  });
-
-  // 切换文字颜色
-  const sideNames = document.querySelectorAll(".side-name");
-  sideNames.forEach(name => {
-    const element = name as HTMLElement;
-    const menuItem = element.closest(".item");
-    const currentMenuName = menuItem?.getAttribute("data-menu");
-    const isCurrentActive = currentMenuName === activeMenu.value;
-
-    if (isCurrentActive) {
-      // 当前选中的菜单项
-      element.style.color = "white";
-    } else {
-      // 未选中的菜单项
-      if (newTheme === "dark") {
-        element.style.color = "#B4B4C7";
-      } else {
-        element.style.color = "#5a6b8a";
-      }
-    }
-  });
-
   currentTheme.value = newTheme;
-}
+};
+
+// 菜单切换
+const handleMenuClick = (menuName: string) => {
+  activeMenu.value = menuName;
+
+  // 如果视频正在播放且切换到了非课程学习菜单，则暂停视频
+  const videoPlayerEl = courseStudyRef.value?.videoPlayer;
+  if (menuName !== "course-learn" && videoPlayerEl) {
+    if (!videoPlayerEl.paused) {
+      videoPlayerEl.pause();
+    }
+  }
+
+  // 加载对应数据
+  if (menuName === "homework-exam") {
+    fetchHomeworkList();
+    fetchExamList();
+  } else if (menuName === "grades") {
+    fetchCourseScores();
+  } else if (menuName === "html-animations") {
+    fetchHtmlAnimations();
+  } else if (menuName === "mastery") {
+    fetchCourseStudyEffect();
+  }
+};
+
+// 返回
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push("/account");
+  }
+};
+
+// 跳转账号管理
+const goToAccount = () => {
+  router.push("/account/settings");
+};
 
 // 退出登录
 const handleLogout = () => {
@@ -1499,636 +305,235 @@ const handleLogout = () => {
     .catch(() => {});
 };
 
-// 跳转到账号管理
-const goToAccount = () => {
-  router.push("/account/settings");
+// 获取课程详情
+const fetchCourseDetail = async () => {
+  if (!courseId.value) return;
+  loading.value = true;
+  try {
+    const { code, data, msg } = await getCourseDetail({ courseId: courseId.value });
+    if (code === 200 && data) {
+      courseDetail.value = data;
+      if (data.courseAttrList) courseAttrList.value = data.courseAttrList;
+      
+      // 默认加载第一个课时
+      if (data.courseChapterList?.length > 0) {
+        const firstHour = data.courseChapterList[0].hourList?.[0];
+        if (firstHour) {
+          currentHour.value = firstHour;
+          currentVideoUrl.value = firstHour.fileUrl;
+          activeNode.value = "1.1";
+          autoPlayOnLoad.value = true;
+        }
+      }
+    } else {
+      ElMessage.error(msg || "获取课程详情失败");
+    }
+  } catch (error) {
+    console.error("获取课程详情出错:", error);
+  } finally {
+    loading.value = false;
+  }
 };
 
-// 添加菜单切换函数
-function handleMenuClick(menuName: string) {
-  activeMenu.value = menuName;
-
-  // 如果视频正在播放且切换到了非课程学习菜单，则暂停视频
+// 视频加载与播放
+const videoLoaded = () => {
   const videoPlayerEl = courseStudyRef.value?.videoPlayer;
-  if (menuName !== "course-learn" && videoPlayerEl) {
-    if (!videoPlayerEl.paused) {
-      videoPlayerEl.pause();
-    }
-  }
-
-  // 当切换到作业考试菜单时，加载作业和考试数据
-  if (menuName === "homework-exam") {
-    fetchHomeworkList();
-    fetchExamList();
-  }
-
-  // 当切换到成绩菜单时，加载成绩数据
-  if (menuName === "grades") {
-    fetchCourseScores();
-  }
-
-  // 切换到 HTML 动画时加载
-  if (menuName === "html-animations") {
-    fetchHtmlAnimations();
-  }
-
-  // 更新侧边栏状态逻辑保持在子组件中，这里不再需要操作 DOM 修改图标颜色
-}
-
-// ================= HTML 动画展示（学生端只读） =================
-const htmlAnimationList = ref<
-  Array<{
-    chapterId: number;
-    chapterName: string;
-    version: string;
-    url: string;
-  }>
->([]);
-const htmlAnimationLoading = ref(false);
-const htmlAnimPreviewVisible = ref(false);
-const htmlAnimPreviewUrl = ref("");
-
-async function fetchHtmlAnimations() {
-  if (!courseDetail.value) return;
-  htmlAnimationLoading.value = true;
-  htmlAnimationList.value = [];
-  try {
-    const chapters = courseDetail.value.courseChapterList || [];
-    // 并发获取展示动画
-    const promises = chapters.map(async (ch: any) => {
-      try {
-        const { data } = await getHtmlAnimationDisplay({
-          courseId: courseDetail.value.courseId,
-            chapterId: ch.chapterId
-        });
-        if (data && data.url) {
-          htmlAnimationList.value.push({
-            chapterId: ch.chapterId,
-            chapterName: ch.name || ch.chapterName,
-            version: data.version,
-            url: data.url
-          });
-        }
-      } catch (e) {
-        // 忽略无展示版本/404
-      }
-    });
-    await Promise.all(promises);
-  } finally {
-    htmlAnimationLoading.value = false;
-  }
-}
-
-function openHtmlAnimation(item: { url: string }) {
-  htmlAnimPreviewUrl.value = item.url;
-  htmlAnimPreviewVisible.value = true;
-}
-
-function openHtmlAnimInNew() {
-  if (htmlAnimPreviewUrl.value) window.open(htmlAnimPreviewUrl.value, "_blank");
-}
-
-// 已移除图谱模式，不再需要此函数
-// function handleModeClick(mode: string) {
-//   activeMode.value = mode;
-// }
-
-// 添加节点点击处理函数
-function handleNodeClick(nodeId: string, hour: any) {
-  activeNode.value = nodeId;
-  if (hour && hour.fileUrl) {
-    // 保存当前课时信息
-    currentHour.value = hour;
-
-    // 保存旧的视频URL，用于判断是否真的改变了视频
-    const oldVideoUrl = currentVideoUrl.value;
-    currentVideoUrl.value = hour.fileUrl;
-
-    // 如果视频URL发生变化，设置标记以在视频加载后自动播放
-    if (oldVideoUrl !== hour.fileUrl) {
-      autoPlayOnLoad.value = true;
-    }
-
-    // 如果视频已经加载完成并且URL没变，则直接播放
-    if (videoPlayer.value && oldVideoUrl === hour.fileUrl) {
-      videoPlayer.value.currentTime = 0; // 重置到开头
-      videoPlayer.value.play();
-    }
-  }
-}
-
-// 视频加载完成后的回调
-function videoLoaded() {
-  if (autoPlayOnLoad.value && videoPlayer.value) {
-    videoPlayer.value.play();
+  if (autoPlayOnLoad.value && videoPlayerEl) {
+    videoPlayerEl.play();
     autoPlayOnLoad.value = false;
   }
-}
+};
 
-// 视频播放完成后的回调
-function videoEnded() {
-  // 只有在视频播放完成且课时未完成时才上报进度
+const videoEnded = async () => {
   if (currentHour.value && currentHour.value.finished !== 1) {
-    reportProgress(currentHour.value.hourId);
-
-    // 更新本地状态，避免重复上报
-    currentHour.value.finished = 1;
-
-    // 更新课程完成进度
-    if (courseDetail.value) {
-      courseDetail.value.finishedHours += 1;
+    try {
+      await reportCourseLesson({ courseId: courseId.value, hourId: currentHour.value.hourId });
+      currentHour.value.finished = 1;
+      if (courseDetail.value) courseDetail.value.finishedHours += 1;
+      ElMessage.success("学习进度已更新");
+    } catch (error) {
+      console.error("进度上报失败:", error);
     }
-
-    ElMessage.success("学习进度已更新");
-  }
-}
-
-// 上报学习进度
-async function reportProgress(hourId: number) {
-  try {
-    await reportCourseLesson({
-      courseId: courseId.value,
-      hourId: hourId
-    });
-    console.log("学习进度上报成功");
-  } catch (error) {
-    console.error("学习进度上报失败:", error);
-  }
-}
-
-// 返回上一页
-const goBack = () => {
-  if (window.history.length > 1) {
-    router.back();
-  } else {
-    router.push("/account");
   }
 };
 
-// 打开AI对话框
+const handleNodeClick = (nodeId: string, hour: any) => {
+  activeNode.value = nodeId;
+  if (hour?.fileUrl) {
+    currentHour.value = hour;
+    const oldUrl = currentVideoUrl.value;
+    currentVideoUrl.value = hour.fileUrl;
+    if (oldUrl !== hour.fileUrl) autoPlayOnLoad.value = true;
+    
+    const videoPlayerEl = courseStudyRef.value?.videoPlayer;
+    if (videoPlayerEl && oldUrl === hour.fileUrl) {
+      videoPlayerEl.currentTime = 0;
+      videoPlayerEl.play();
+    }
+  }
+};
+
+// AI 聊天逻辑
 const openAiDialog = () => {
   isAiDialogVisible.value = true;
-  // 添加点击外部关闭的监听器
-  nextTick(() => {
-    document.addEventListener('click', handleClickOutside);
-  });
 };
-
-// 关闭AI对话框
 const closeAiDialog = () => {
   isAiDialogVisible.value = false;
-  // 移除点击外部关闭的监听器
-  document.removeEventListener('click', handleClickOutside);
-
-  // 如果有活跃的流请求，取消它
   if (cancelStreamRequest.value) {
     cancelStreamRequest.value();
     cancelStreamRequest.value = null;
   }
 };
 
-// 处理点击外部关闭
-const handleClickOutside = (event: MouseEvent) => {
-  if (!aiDialogRef.value) return;
-  
-  const target = event.target as HTMLElement;
-  const aiDialog = document.querySelector('.ai-draggable-dialog');
-  
-  // 检查点击是否在 AI 对话框外部
-  if (aiDialog && !aiDialog.contains(target) && !aiDialogRef.value.contains(target)) {
-    closeAiDialog();
-  }
-};
-
-// 获取当前章节ID
 const getCurrentChapterId = () => {
-  if (
-    currentHour.value &&
-    courseDetail.value &&
-    courseDetail.value.courseChapterList
-  ) {
-    for (const chapter of courseDetail.value.courseChapterList) {
-      if (
-        chapter.hourList &&
-        chapter.hourList.some(hour => hour.hourId === currentHour.value.hourId)
-      ) {
-        return chapter.chapterId;
-      }
+  if (!currentHour.value || !courseDetail.value?.courseChapterList) return null;
+  for (const chapter of courseDetail.value.courseChapterList) {
+    if (chapter.hourList?.some(h => h.hourId === currentHour.value.hourId)) {
+      return chapter.chapterId;
     }
   }
   return null;
 };
 
-// 初始化聊天功能
-const initChat = () => {
-  // 生成或重用会话ID
-  const storedConversationId = localStorage.getItem(`chat_${courseId.value}`);
-  if (storedConversationId) {
-    conversationId.value = storedConversationId;
-    // 尝试加载历史记录，但不阻塞UI
-    try {
-      loadChatHistory();
-    } catch (e) {
-      console.warn("历史记录加载失败，将开始新对话", e);
-      // 历史加载失败也没关系，继续使用空白对话
-    }
-  } else {
-    // 简单生成唯一ID: 时间戳+随机数
-    conversationId.value =
-      Date.now().toString() + Math.random().toString(36).substring(2);
-    localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
-    previousChapterId.value = getCurrentChapterId(); // 初始化时也设置previousChapterId
-    // 对于新对话不需要加载历史
-  }
-};
-
-// 加载聊天历史
-const loadChatHistory = async () => {
-  try {
-    const response = await getConversationHistory(conversationId.value);
-    console.log("聊天历史响应:", response);
-    // 从响应中提取正确的历史记录路径：data.data.history
-    if (
-      response &&
-      response.code === 200 &&
-      response.data &&
-      response.data.history
-    ) {
-      chatMessages.value = response.data.history;
-    } else {
-      console.log("没有历史聊天记录或格式不正确");
-    }
-  } catch (error) {
-    console.error("加载聊天历史失败:", error);
-    // 失败了也没关系，我们可以继续新的对话
-  }
-};
-
-// 发送消息
-const sendMessage = async () => {
-  if (!currentMessage.value.trim() || sendingMessage.value) return;
-
-  const userMessage = currentMessage.value.trim();
-
-  // 获取当前章节ID
+const handleSendMessage = async (content: string) => {
+  if (!content.trim() || sendingMessage.value) return;
+  const userMsg = content.trim();
   const currentChapterId = getCurrentChapterId();
 
-  // 如果章节ID发生变化，重新生成会话ID
-  if (
-    currentChapterId !== null &&
-    previousChapterId.value !== null &&
-    currentChapterId !== previousChapterId.value
-  ) {
-    conversationId.value =
-      Date.now().toString() + Math.random().toString(36).substring(2);
-    localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
-    chatMessages.value = []; // 清空之前的聊天记录
-    console.log(`章节ID变化，生成新的会话ID: ${conversationId.value}`);
+  if (currentChapterId !== null && previousChapterId.value !== null && currentChapterId !== previousChapterId.value) {
+    conversationId.value = Date.now().toString() + Math.random().toString(36).substring(2);
+    chatMessages.value = [];
   }
-
-  // 更新previousChapterId
   previousChapterId.value = currentChapterId;
 
-  // 添加用户消息到聊天记录
-  chatMessages.value.push({
-    role: "user",
-    content: userMessage,
-    timestamp: new Date().toISOString()
-  });
-
-  // 清空输入框
-  currentMessage.value = "";
+  chatMessages.value.push({ role: "user", content: userMsg, timestamp: new Date().toISOString() });
   sendingMessage.value = true;
-  streamResponse.value = "";
-
-  // 先不显示isTyping，等请求启动后再显示
+  isTyping.value = true;
 
   try {
-    // 不再预先添加AI消息，而是等待第一个响应
     let aiMessageAdded = false;
-    let currentResponseIndex = -1;
-
-    // 现在显示"正在输入"状态
-    isTyping.value = true;
-
-    // 使用流式API
     cancelStreamRequest.value = courseAIChatStream(
-      {
-        course_id: courseId.value,
-        conversation_id: conversationId.value,
-        message: userMessage,
-        chapter_id: currentChapterId // 添加章节ID
-      },
-      data => {
-        // 更新会话ID
-        if (data.conversation_id) {
-          conversationId.value = data.conversation_id;
-          localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
-        }
-
-        // 只有收到非空内容时才添加AI消息
+      { course_id: courseId.value, conversation_id: conversationId.value, message: userMsg, chapter_id: currentChapterId },
+      (data) => {
+        if (data.conversation_id) conversationId.value = data.conversation_id;
         if (data.delta) {
           if (!aiMessageAdded) {
-            // 收到第一个响应，隐藏"正在输入"提示
             isTyping.value = false;
-
             aiMessageAdded = true;
-            currentResponseIndex = chatMessages.value.length;
-            chatMessages.value.push({
-              role: "ai",
-              content: data.delta,
-              timestamp: new Date().toISOString()
-            });
+            chatMessages.value.push({ role: "ai", content: data.delta, timestamp: new Date().toISOString() });
           } else {
-            // 累积响应内容
-            chatMessages.value[currentResponseIndex].content += data.delta;
+            chatMessages.value[chatMessages.value.length - 1].content += data.delta;
           }
         }
-
-        // 流结束时
         if (data.finished) {
           sendingMessage.value = false;
           isTyping.value = false;
         }
-
-        // 滚动到底部
-        nextTick(() => {
-          // scrollToBottomQA();
-        });
       }
     );
   } catch (error) {
-    console.error("发送消息失败:", error);
-    ElMessage.error("发送失败，请重试");
-
-    // 添加错误消息
-    chatMessages.value.push({
-      role: "ai",
-      content: "抱歉，发生了错误，请稍后重试。",
-      timestamp: new Date().toISOString()
-    });
-
+    ElMessage.error("发送失败");
     sendingMessage.value = false;
     isTyping.value = false;
   }
 };
 
-// 清空聊天记录
 const clearChat = () => {
-  ElMessageBox.confirm("确定要清空所有聊天记录吗？", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-    .then(() => {
-      chatMessages.value = [];
-      ElMessage.success("聊天记录已清空");
-    })
-    .catch(() => {});
+  ElMessageBox.confirm("确定清空聊天记录？", "提示", { type: "warning" }).then(() => {
+    chatMessages.value = [];
+  });
 };
 
-const handleQASend = (content: string) => {
-  currentMessage.value = content;
-  sendMessage();
-};
-
-// 获取课程成绩
-const fetchCourseScores = async () => {
+// 数据获取方法
+const fetchHomeworkList = async () => {
   if (!courseId.value) return;
-  gradesLoading.value = true;
-
   try {
-    const response = await getCourseScore({ courseId: courseId.value });
-    if (response && response.code === 200 && response.data) {
-      courseScores.value = response.data;
-    }
-  } catch (error) {
-    console.error("获取课程成绩失败:", error);
-    ElMessage.error("获取成绩数据失败，请稍后重试");
+    const { code, data } = await getUserCourseHomeworkList({ courseId: courseId.value });
+    if (code === 200) homeworkList.value = (data as any).list || [];
+  } catch (e) {}
+};
+
+const fetchExamList = async () => {
+  if (!courseId.value) return;
+  try {
+    const { code, data } = await getUserCourseExamList({ courseId: courseId.value });
+    if (code === 200) examList.value = (data as any).list || [];
+  } catch (e) {}
+};
+
+const fetchHtmlAnimations = async () => {
+  if (!courseDetail.value) return;
+  htmlAnimationLoading.value = true;
+  htmlAnimationList.value = [];
+  try {
+    const chapters = courseDetail.value.courseChapterList || [];
+    const promises = chapters.map(async (ch: any) => {
+      try {
+        const { data } = await getHtmlAnimationDisplay({ courseId: courseDetail.value.courseId, chapterId: ch.chapterId });
+        if (data?.url) {
+          htmlAnimationList.value.push({ chapterId: ch.chapterId, chapterName: ch.name, version: data.version, url: data.url });
+        }
+      } catch (e) {}
+    });
+    await Promise.all(promises);
   } finally {
-    gradesLoading.value = false;
+    htmlAnimationLoading.value = false;
   }
 };
 
-// 冗余图表和 UI 逻辑已迁移至子组件
+const fetchCourseScores = async () => {
+  if (!courseId.value) return;
+  try {
+    const response = await getCourseScore({ courseId: courseId.value });
+    if (response?.code === 200) courseScores.value = response.data;
+  } catch (e) {}
+};
+
+const fetchCourseStudyEffect = async () => {
+  try {
+    const response = await getCourseStudyEffect({ courseId: courseId.value });
+    if (response?.code === 200) studyEffectData.value = response.data;
+  } catch (e) {}
+};
 
 // 初始化课程问答历史数据
 const initQAHistory = () => {
-  // 模拟历史问答数据
   qaHistoryList.value = [
     {
       question: "这门课程的考核方式是什么？",
-      answer:
-        "本课程采用线上考试的方式进行考核，总成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。",
+      answer: "本课程采用线上考试的方式进行考核，总成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。",
       timestamp: "2025-08-13T16:30:00Z"
     },
     {
       question: "这门课程的成绩构成是怎么样的？",
-      answer:
-        "课程成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。平时作业包括每周的课后练习和项目作业，课堂表现包括课堂参与度和小组讨论。",
+      answer: "课程成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。平时作业包括每周的课后练习和项目作业，课堂表现包括课堂参与度和小组讨论。",
       timestamp: "2025-08-13T15:45:00Z"
     },
     {
       question: "期末考试的范围是什么？",
-      answer:
-        "期末考试范围包括课程的所有章节内容，特别关注第3、4、7章的核心概念和应用案例。考试形式为线上闭卷，时间为90分钟。",
+      answer: "期末考试范围包括课程的所有章节内容，特别关注第3、4、7章的核心概念和应用案例。考试形式为线上闭卷，时间为90分钟。",
       timestamp: "2025-08-12T09:15:00Z"
     }
   ];
 };
 
-// 学习效果数据
-const studyEffectData = ref({
-  courseId: 0,
-  keyPointNum: 0,
-  difficultPointNum: 0,
-  knowledgePointNum: 0,
-  conceptNum: 0,
-  chapterList: []
-});
-
-// 交互动画逻辑已迁移至子组件
-
-// 获取课程学习效果
-const fetchCourseStudyEffect = async () => {
-  try {
-    const response = await getCourseStudyEffect({
-      courseId: courseId.value
-    });
-    if (response && response.code === 200 && response.data) {
-      // studyEffectData.value = response.data;
-      // Mock data to make the chart look better populated
-      const mockChapters = [
-        {
-          chapterId: 101,
-          chapterName: "第一章：Vue3 基础核心",
-          keyPointArray: [
-            { title: "响应式原理", content: "深入理解 Proxy 与 Reflect 在 Vue3 中的应用" },
-            { title: "组合式 API", content: "setup 语法糖与生命周期钩子的新变化" }
-          ],
-          difficultPointArray: [
-            { title: "自定义渲染器", content: "如何构建跨平台的自定义渲染器" }
-          ],
-          knowledgeArray: [
-            { title: "模板语法", content: "插值、指令、动态参数" },
-            { title: "计算属性", content: "computed 的使用与缓存机制" },
-            { title: "侦听器", content: "watch 与 watchEffect 的区别" }
-          ],
-          ConceptArray: [
-            { title: "MVVM", content: "Model-View-ViewModel 模式" },
-            { title: "虚拟 DOM", content: "Virtual DOM 的结构与 Diff 算法" }
-          ]
-        },
-        {
-          chapterId: 102,
-          chapterName: "第二章：组件化开发进阶",
-          keyPointArray: [
-            { title: "组件通信", content: "Props, Emit, Provide/Inject, Vuex/Pinia" },
-            { title: "动态组件", content: "component 标签与 keep-alive" }
-          ],
-          difficultPointArray: [
-            { title: "高阶组件", content: "HOC 的实现与应用场景" },
-            { title: "异步组件", content: "defineAsyncComponent 与 Suspense" }
-          ],
-          knowledgeArray: [
-            { title: "插槽", content: "默认插槽、具名插槽、作用域插槽" },
-            { title: "Teleport", content: "传送门组件的使用" }
-          ],
-          ConceptArray: [
-            { title: "单向数据流", content: "父子组件数据传递原则" }
-          ]
-        },
-        {
-          chapterId: 103,
-          chapterName: "第三章：Vue Router 路由管理",
-          keyPointArray: [
-            { title: "路由守卫", content: "全局守卫、路由独享守卫、组件内守卫" }
-          ],
-          difficultPointArray: [
-            { title: "动态路由", content: "addRoute 与 removeRoute 的动态权限管理" }
-          ],
-          knowledgeArray: [
-            { title: "路由模式", content: "Hash 模式与 History 模式" },
-            { title: "嵌套路由", content: "children 配置与 router-view 嵌套" }
-          ],
-          ConceptArray: [
-            { title: "SPA", content: "单页应用的概念与优缺点" }
-          ]
-        },
-        {
-          chapterId: 104,
-          chapterName: "第四章：状态管理 Pinia",
-          keyPointArray: [
-            { title: "Store 定义", content: "defineStore 的使用" },
-            { title: "State/Getters/Actions", content: "核心概念的实战应用" }
-          ],
-          difficultPointArray: [
-            { title: "插件机制", content: "Pinia 插件开发与持久化存储" }
-          ],
-          knowledgeArray: [
-            { title: "模块化", content: "Store 的拆分与组合" }
-          ],
-          ConceptArray: [
-            { title: "状态管理", content: "为何需要全局状态管理" }
-          ]
-        }
-      ];
-
-      studyEffectData.value = {
-        ...response.data,
-        knowledgePointNum: 45,
-        keyPointNum: 18,
-        difficultPointNum: 12,
-        conceptNum: 25,
-        chapterList: [...(response.data.chapterList || []), ...mockChapters]
-      };
-      console.log("获取到的学习效果数据:", studyEffectData.value);
-      // 主动更新/初始化图表
-      if (activeMenu.value === "mastery") {
-        if (masterySummaryChart) updateMasterySummaryChart();
-        else if (masterySummaryChartRef.value) initMasterySummaryChart();
-
-        if (masteryPieChart) updateMasteryPieChart();
-        else if (masteryPieChartRef.value) initMasteryPieChart();
-      }
-
-      // Initialize collapse states for new data
-      if (response.data.chapterList) {
-        // 初始全部折叠
-        response.data.chapterList.forEach(chapter => {
-          chapterCollapseStates.set(chapter.chapterId, false);
-          if (chapter.keyPointArray)
-            subsectionCollapseStates.set(`${chapter.chapterId}-keyPoint`, false);
-          if (chapter.difficultPointArray)
-            subsectionCollapseStates.set(`${chapter.chapterId}-difficultPoint`, false);
-          if (chapter.knowledgeArray)
-            subsectionCollapseStates.set(`${chapter.chapterId}-knowledge`, false);
-          if (chapter.ConceptArray)
-            subsectionCollapseStates.set(`${chapter.chapterId}-concept`, false);
-        });
-
-        // 使用 nextTick + requestAnimationFrame 触发展开动画（首章）
-        nextTick(() => {
-          const first = response.data.chapterList[0];
-            if (first) {
-              requestAnimationFrame(() => {
-                chapterCollapseStates.set(first.chapterId, true);
-              });
-            }
-        });
-      }
-    }
-  } catch (error) {
-    console.error("获取课程学习效果失败", error);
-  }
-};
-
-// 旧 fetchWrongQuestionList 已废弃，由嵌入组件内部自行拉取
-
-// 获取来源类型文本
-const getSourceTypeText = (sourceType: number) => {
-  const typeMap: Record<number, string> = {
-    1: "作业",
-    2: "考试"
-  };
-  return typeMap[sourceType] || "未知";
-};
-
-// 查看错题（占位函数，待后续实现跳转逻辑）
-const viewWrongQuestion = (item: any) => {
-  selectedWrongQuestion.value = item; // 设置当前选中的错题
-  isWrongQuestionDialogVisible.value = true; // 显示对话框
-};
-
-watch(
-  () => activeMenu.value,
-  newVal => {
-    if (newVal === "mastery") {
-      fetchCourseStudyEffect();
-    }
-  }
-);
-
-// 移除原随练标签跳转逻辑，改为内部嵌入组件
-
 onMounted(async () => {
   baseCourseId.value = Number(route.params.id);
-  
-  // 初始化 body 主题类
   document.body.classList.add(currentTheme.value);
-
-  // 获取课程详情
   await fetchCourseDetail();
-
-  // 初始化AI聊天
-  initChat();
-
-  // 初始化课程问答历史数据
   initQAHistory();
-
-  // 如果当前是成绩菜单，加载成绩数据
-  if (activeMenu.value === "grades") {
-    fetchCourseScores();
+  
+  // 初始化 AI 聊天
+  const storedId = localStorage.getItem(`chat_${courseId.value}`);
+  if (storedId) {
+    conversationId.value = storedId;
+    try {
+      const res = await getConversationHistory(storedId);
+      if (res?.code === 200) chatMessages.value = res.data.history || [];
+    } catch (e) {}
+  } else {
+    conversationId.value = Date.now().toString() + Math.random().toString(36).substring(2);
+    localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
   }
 });
 </script>
@@ -2141,3184 +546,649 @@ onMounted(async () => {
 @import "@/../coursecss/css/app.a5f91bbb.css";
 @import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
 
-/* 覆盖外部 CSS 中的 body 背景色 */
-body {
-  background-color: #ffffff !important;
-}
+html, body { background-color: #f5f7fa !important; }
+#app { width: 100%; min-height: 100vh; background-color: #f5f7fa !important; }
+#app.dark { background-color: #1a1a1a !important; }
+.layout-container { position: relative; width: 100%; min-height: 100vh; display: flex; background-color: #f5f7fa !important; }
+.layout-container.dark { background-color: #1a1a1a !important; }
 
-/* 修复布局容器样式 */
-#app {
-  width: 100%;
-  min-height: 100vh;
-  background-color: #ffffff;
-}
-
-#app.dark {
-  background-color: #1a1a1a !important;
-}
-
-.layout-container {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-}
-
-.layout-container.dark {
-  background-color: #1a1a1a !important;
+/* 覆盖外部CSS中的侧边栏样式 */
+.layout-sidebar.light,
+#layout-sidebar.light,
+.layout-sidebar[class*="light"] {
+  height: auto !important;
+  max-height: calc(100vh - 97px) !important;
 }
 
 .layout-inner-content {
   position: relative;
   flex: 1;
-  margin-left: 90px !important; /* 与侧边栏右侧对齐 (10px left + 80px width) */
+  margin-left: 90px !important;
   margin-top: 20px !important;
   margin-bottom: 15px !important;
   margin-right: 15px !important;
   height: calc(100vh - 35px) !important;
   border-radius: 24px !important;
-  overflow: hidden !important;
-  background-color: #ffffff;
-  box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.1) !important;
-  border: 1px solid #eef2f7 !important;
+  overflow: visible !important; /* 允许圆角阴影溢出，避免被切断 */
+  background-color: transparent !important;
   transition: all 0.3s ease !important;
 }
 
-/* 暗黑模式下的背景色 */
-:global(body.dark) {
-  background-color: #1a1a1a !important;
-}
-
-.layout-container.dark .layout-inner-content,
 .layout-inner-content.dark {
-  background-color: #1a1a1a !important;
-  border: 1px solid rgba(60, 60, 80, 0.8) !important;
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
+  background-color: transparent !important;
 }
 </style>
 
 <style scoped>
-.user-dropdown-area {
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
-
-.user-dropdown-area .avatar-info {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 20px;
-  transition: background-color 0.3s;
-}
-
-.user-dropdown-area .avatar-info:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.dark .user-dropdown-area .avatar-info:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.user-dropdown-area .avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 8px;
-  object-fit: cover;
-}
-
-.user-dropdown-area .name {
-  font-size: 14px;
-  color: #333;
-  margin-right: 4px;
-}
-
-.dark .user-dropdown-area .name {
-  color: #e0e0e0;
-}
-
-.user-dropdown-area .el-icon-arrow-down {
-  font-size: 12px;
-  color: #999;
-}
-
-.back-icon {
-  width: 40px;
-  height: 40px;
-  transition: color 0.3s ease;
-  cursor: pointer;
-  padding-right: 15px;
-}
-
-/* 浅色模式下的颜色 */
-.back-icon.light {
-  color: #CFD8F0;
-}
-
-/* 深色模式下的颜色 */
-.back-icon.dark {
-  color: #ffffff;
-}
-
-.header-left {
-  display: flex !important;
-  align-items: center !important;
-}
-
-.header-back {
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 44px !important;
-  height: 44px !important;
-  z-index: 200 !important;
-  transition: all 0.3s ease !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-radius: 12px !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-.header-back:hover {
-  transform: translateY(-2px) !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-}
-
-.header-back > i,
-.header-back .back-arrow-svg {
-  margin-left: 0 !important; /* 移除负边距，确保图标可见 */
-  color: #409eff !important; /* 确保图标颜色醒目 */
-  visibility: visible !important;
-  display: inline-block !important;
-}
-
-.header-back .back-arrow-svg {
-  width: 24px !important;
-  height: 24px !important;
-  display: block !important;
-  stroke: #409eff !important;
-  stroke-width: 3.5 !important;
-  fill: none !important;
-  overflow: visible !important;
-}
-
-/* 修复头部位置，避免被侧边栏遮挡 */
+/*==================== 1. 头部栏样式修复 ==================== */
 :deep(.layout-header) {
-  left: 95px !important; /* 往右挪，对齐侧边栏右侧/主体内容左侧 */
-  top: 20px !important;
-  width: calc(100% - 110px) !important; /* 90px left + 20px right margin */
-  border-radius: 20px !important; /* 四周圆角美化 */
-  z-index: 150 !important;
-  transition: all 0.3s ease-in-out;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-}
-
-:deep(.layout-header .header-content .item.header-left) {
-  padding-left: 10px !important; /* 减少左侧间距，让返回按钮靠近侧边栏 */
-}
-
-.layout-header .header-content .item[data-v-3e66491d] {
-  padding: 0 2.5vw;
-}
-.el-menu--horizontal {
-  height: 2.29167vw !important;
-}
-.avatar-info {
-  display: flex;
-  align-items: center;
-}
-
-/* 调整日期与返回按钮距离 */
-.current-time {
-  margin-left: 25px;
-  display: inline-block;
-}
-
-/* 添加按钮旋转动画 */
-.botton-box-down {
-  transition: transform 0.3s ease;
-  cursor: pointer;
-}
-
-/* 课程成绩样式 */
-.course-grades-wrapper {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  padding-top: 80px;
-  align-items: center;
-  background-color: #ffffff;
-}
-
-/* 课程问答样式 */
-.course-qa-wrapper {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  padding-top: 80px;
-  background-color: #ffffff;
-  box-sizing: border-box;
-}
-
-.course-qa-wrapper.dark {
-  background-color: #1a1a1a;
-}
-
-.course-qa-container {
-  flex: 1;
-  padding: 20px 20px 20px 10px; /* 左侧对齐返回按钮 (header left 100px + padding-left 10px) */
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.qa-content-layout {
-  display: flex;
-  flex: 1;
-  gap: 20px;
-  width: 100%;
-  height: 100%;
-}
-
-.qa-content-left {
-  width: 30%;
-  min-width: 320px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.08);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #eef2f7;
-}
-
-.dark .qa-content-left {
-  background-color: #1a1a1a;
-  border-color: #333;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-.left-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
-.qa-data-ul {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 0;
-  margin: 0 0 24px 0;
-  list-style: none;
-  width: 100%;
-}
-
-.qa-data-ul li {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 80px;
-  border: 1px solid #eef2f7;
-  transition: all 0.3s ease;
-}
-
-.dark .qa-data-ul li {
-  background-color: #2a2a2a;
-  border-color: #3a3a3a;
-}
-
-.qa-data-ul li:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
-}
-
-.qa-data-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background-color: rgba(64, 158, 255, 0.1);
-  color: #409eff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.qa-data-icon.success {
-  background-color: rgba(103, 194, 58, 0.1);
-  color: #67c23a;
-}
-
-.qa-data-icon.warning {
-  background-color: rgba(230, 162, 60, 0.1);
-  color: #e6a23c;
-}
-
-.qa-data-icon.info {
-  background-color: rgba(144, 147, 153, 0.1);
-  color: #909399;
-}
-
-.qa-data-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.qa-data-ul .text {
-  font-size: 13px;
-  color: #909399;
-  margin-bottom: 4px;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.dark .qa-data-ul .text {
-  color: #a0a0a0;
-}
-
-.qa-data-ul .num {
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
-  line-height: 1;
-}
-
-.dark .qa-data-ul .num {
-  color: #ffffff;
-}
-
-.qa-section-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  margin-bottom: 16px;
-  color: #303133;
-  font-weight: 700;
-}
-
-.dark .qa-section-title {
-  color: #ffffff;
-}
-
-.qa-history-container {
-  margin-top: 20px;
-}
-
-.qa-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.qa-history-item {
-  background-color: #ffffff;
-  border-radius: 10px;
-  padding: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #eef2f7;
-  margin-bottom: 8px;
-}
-
-.dark .qa-history-item {
-  background-color: #2a2a2a;
-  border-color: #3a3a3a;
-}
-
-.qa-history-item:hover {
-  background-color: #f5f9ff;
-  border-color: #d0e5ff;
-  transform: translateX(4px);
-}
-
-.dark .qa-history-item:hover {
-  background-color: #333;
-  border-color: #444;
-}
-
-.qa-history-item.active {
-  background-color: #ecf5ff;
-  border-color: #409eff;
-  border-left: 4px solid #409eff;
-}
-
-.dark .qa-history-item.active {
-  background-color: rgba(64, 158, 255, 0.1);
-  border-color: #409eff;
-}
-
-.qa-history-title {
-  font-size: 14px;
-  margin-bottom: 6px;
-  color: #303133;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-}
-
-.dark .qa-history-title {
-  color: #e0e0e0;
-}
-
-.qa-history-time {
-  font-size: 12px;
-  color: #909399;
-}
-
-.qa-empty-history {
-  text-align: center;
-  padding: 40px 0;
-  color: #909399;
-}
-
-.qa-content-right {
-  flex: 1;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  max-width: calc(70% - 20px);
-  border: 1px solid #eef2f7;
-}
-
-.dark .qa-content-right {
-  background-color: #1a1a1a;
-  border-color: #333;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-.qa-chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.qa-chat-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f2f5;
-  background-color: #fff;
-}
-
-.dark .qa-chat-header {
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #333;
-}
-
-.qa-chat-header h3 {
-  margin: 0 0 4px 0;
-  font-size: 18px;
-  color: #303133;
-  font-weight: 700;
-}
-
-.dark .qa-chat-header h3 {
-  color: #ffffff;
-}
-
-.qa-chat-header p {
-  margin: 0;
-  font-size: 13px;
-  color: #909399;
-}
-
-.qa-chat-body {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-  background-color: #ffffff;
-  display: flex;
-  flex-direction: column;
-}
-
-.dark .qa-chat-body {
-  background-color: #16161a;
-}
-
-.qa-chat-messages {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.qa-message-item {
-  display: flex;
-  gap: 12px;
-  max-width: 85%;
-}
-
-.qa-message-item.ai {
-  align-self: flex-start;
-}
-
-.qa-message-item.user {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.qa-message-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.qa-message-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.qa-message-content {
-  background-color: #fff;
-  padding: 14px 18px;
-  border-radius: 16px;
-  border-top-left-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
-  position: relative;
-}
-
-.qa-message-item.user .qa-message-content {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: #fff;
-  border-radius: 16px;
-  border-top-right-radius: 4px;
-  border-top-left-radius: 16px;
-  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
-}
-
-.dark .qa-message-content {
-  background-color: #2a2a2a;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-}
-
-.qa-message-name {
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #909399;
-}
-
-.qa-message-item.user .qa-message-name {
-  color: rgba(255, 255, 255, 0.8);
-  text-align: right;
-}
-
-.qa-message-text {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #303133;
-}
-
-.dark .qa-message-text {
-  color: #e0e0e0;
-}
-
-.qa-message-item.user .qa-message-text {
-  color: #fff;
-}
-
-.qa-message-time {
-  font-size: 11px;
-  color: #c0c4cc;
-  margin-top: 8px;
-}
-
-.qa-message-item.user .qa-message-time {
-  color: rgba(255, 255, 255, 0.7);
-  text-align: right;
-}
-
-.qa-empty-chat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #409eff;
-  gap: 20px;
-}
-
-.qa-typing-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 10px 15px;
-  background-color: #f0f0f0;
-  border-radius: 20px;
-}
-
-.dark .qa-typing-indicator {
-  background-color: #444;
-}
-
-.qa-typing-indicator span {
-  display: block;
-  width: 8px;
-  height: 8px;
-  background-color: #CFD8F0;
-  border-radius: 50%;
-  animation: typing 1.4s infinite both;
-}
-
-.qa-typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.qa-typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typing {
-  0% {
-    transform: scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.5);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.7;
-  }
-}
-
-.qa-chat-footer {
-  padding: 20px 24px;
-  background-color: #ffffff;
-  border-top: 1px solid #f0f2f5;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 2;
-}
-
-.dark .qa-chat-footer {
-  background-color: #1a1a1a;
-  border-top: 1px solid #333;
-}
-
-.qa-input-wrapper {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  background-color: #ffffff;
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1px solid #eef2f7;
-  transition: all 0.3s ease;
-}
-
-.dark .qa-input-wrapper {
-  background-color: #2a2a2a;
-  border-color: #3a3a3a;
-}
-
-.qa-input-wrapper:focus-within {
-  border-color: #409eff;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.dark .qa-input-wrapper:focus-within {
-  background-color: #2a2a2a;
-}
-
-.qa-input {
-  flex: 1;
-  border: none;
-  background: none;
-  resize: none;
-  min-height: 40px;
-  max-height: 120px;
-  outline: none;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #303133;
-  font-family: inherit;
-  padding: 8px 0;
-}
-
-.dark .qa-input {
-  color: #e0e0e0;
-}
-
-.qa-input::placeholder {
-  color: #909399;
-}
-
-.qa-send-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  margin-left: 10px;
-}
-
-.qa-send-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
-}
-
-.qa-send-button:active {
-  transform: translateY(0);
-}
-
-.qa-send-button:disabled {
-  background: #e4e7ed;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.dark .qa-send-button:disabled {
-  background: #333;
-  color: #666;
-}
-
-.qa-closed-notice {
-  text-align: center;
-  padding: 16px;
-  background-color: #fef0f0;
-  color: #f56c6c;
-  border-radius: 12px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 1px solid #fde2e2;
-  font-weight: 500;
-}
-
-.dark .qa-closed-notice {
-  background-color: rgba(245, 108, 108, 0.1);
-  border-color: rgba(245, 108, 108, 0.2);
-}
-
-.qa-closed-notice svg {
-  width: 20px;
-  height: 20px;
-}
-
-/* 修复标签按钮高度 */
-.resource-warp .label-list .label-name {
-  height: auto;
-}
-
-/* 添加标签切换样式 */
-.resource-tab .tab-item {
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.resource-tab .tab-item.active {
-  color: #CFD8F0;
-  font-weight: bold;
-}
-
-/* 知识点描述标签样式 */
-.kgDescribe-warp .label-list .lab-item {
-  transition: all 0.3s ease;
-}
-
-.kgDescribe-warp .label-list .lab-item:hover {
-  background-color: rgba(96, 79, 253, 0.1) !important;
-}
-
-.kgDescribe-warp .label-list .lab-item.active {
-  background-color: #CFD8F0 !important;
-  color: white !important;
-}
-
-/* 修改竖虚线位置 */
-:deep(.rightTreeWarp .chapterList-box .list li:after) {
-  left: 3.25vw !important;
-}
-
-/* 修改圆点位置 */
-:deep(.rightTreeWarp .chapterList-box .list li .Sectionmark-em) {
-  left: 3vw !important;
-}
-
-/* 聊天消息样式 */
-.message-item {
-  display: flex;
-  margin-bottom: 16px;
-  padding: 0 12px;
-}
-
-.message-item.user {
-  justify-content: flex-end;
-}
-
-.message-content {
-  display: flex;
-  max-width: 80%;
-}
-
-.message-item.user .message-content {
-  flex-direction: row-reverse;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 8px;
-}
-
-.message-item.user .avatar {
-  margin-right: 0;
-  margin-left: 8px;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.bubble {
-  padding: 10px 14px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.message-item.user .bubble {
-  background-color: #CFD8F0;
-  color: white;
-}
-
-.typing {
-  display: flex;
-  align-items: center;
-  min-width: 40px;
-  min-height: 20px;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #666;
-  margin: 0 2px;
-  animation: typing 1.4s infinite both;
-}
-
-.dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typing {
-  0% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
-.send-btn {
-  cursor: pointer;
-  color: #CFD8F0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 用于打字动画效果 */
-.typing-dot {
-  display: inline-block;
-  margin: 0 2px;
-  animation: typing 1.4s infinite both;
-}
-
-.typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-/* 输入框样式 */
-.el-textarea__inner {
-  box-shadow: none !important;
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-  font-size: 16px !important;
-}
-
-/* 缩小侧边栏SVG图标尺寸 */
-.hover-box svg {
-  width: 25px;
-  height: 25px;
-}
-
-/* 侧边栏样式优化 - 独立显示，与左右保持距离 */
-:deep(.layout-sidebar) {
-  width: 80px !important; /* 侧边栏加宽 */
-  min-width: 80px !important;
-  left: 10px !important; /* 减少左侧留白 */
-  top: 20px !important;
-  height: calc(100vh - 35px) !important;
-  border-radius: 24px !important; /* 更加圆润 */
-  background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;
-  box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.3) !important;
-  border: 1px solid #dce5ff !important;
-  backdrop-filter: blur(20px) !important;
+  position: fixed !important;
+  top: 15px !important;
+  left: 15px !important;
+  right: 15px !important;
+  height: 56px !important;
   z-index: 100 !important;
-  position: fixed !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 15px 0 !important;
   display: flex !important;
-  flex-direction: column !important;
   align-items: center !important;
-}
-
-:deep(.layout-sidebar.dark) {
-  background: #1a1a1a !important;
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
-  border: 1px solid rgba(60, 60, 80, 0.8) !important;
-}
-
-/* 侧边栏菜单项样式调整 */
-:deep(.layout-sidebar .item) {
-  padding: 6px 10px !important; /* 增加左右间距，让圆角底衬更明显 */
-  width: 100% !important;
-  display: flex !important;
-  justify-content: center !important;
-  box-sizing: border-box !important;
-}
-
-:deep(.layout-sidebar .hover-box) {
-  width: 100% !important;
-  padding: 12px 0 !important;
-  border-radius: 16px !important; /* 选中底衬更加圆润 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease !important;
-  cursor: pointer;
-  position: relative;
-}
-
-:deep(.layout-sidebar .hover-box:hover) {
-  background: rgba(64, 158, 255, 0.1) !important;
-}
-
-:deep(.layout-sidebar .hover-box.active) {
-  background: #409eff !important;
-  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3) !important;
-}
-
-:deep(.layout-sidebar .hover-box.active::before) {
-  display: none !important; /* 移除左侧白条，改用纯圆角底衬 */
-}
-
-:deep(.layout-sidebar .side-name) {
-  font-size: 11px !important;
-  margin-top: 6px !important;
-  color: #5a6b8a !important;
-  white-space: nowrap;
-  transition: transform 0.2s ease-in-out, color 0.3s !important;
-  display: inline-block;
-}
-
-:deep(.layout-sidebar.dark .side-name) {
-  color: #a8b8e8 !important;
-}
-
-/* 鼠标悬停效果：背景微调 + 文字放大 */
-:deep(.layout-sidebar .hover-box:hover) {
-  background: rgba(207, 216, 240, 0.4) !important;
-}
-
-:deep(.layout-sidebar .hover-box:hover .side-name) {
-  transform: scale(1.15) !important; /* 鼠标悬停放大文字 */
-  color: #2d3a53 !important;
-}
-
-:deep(.layout-sidebar.dark .hover-box:hover .side-name) {
-  color: #ffffff !important;
-}
-
-/* 选中状态：加深底色 + 底衬效果 */
-:deep(.layout-sidebar .hover-box.active) {
-  background: #5a6b8a !important; /* 选中时加深底色 */
-  box-shadow: 0 4px 12px rgba(90, 107, 138, 0.4) !important;
-  position: relative;
-}
-
-:deep(.layout-sidebar .hover-box.active .side-name) {
-  color: #ffffff !important;
-  font-weight: bold !important;
-}
-
-:deep(.layout-sidebar .hover-box.active svg) {
-  filter: brightness(0) invert(1) !important; /* 尝试将图标转为白色 */
-}
-
-:deep(.layout-sidebar.dark .hover-box.active) {
-  background: #4a5a7a !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* 侧边栏分割线样式 */
-:deep(.layout-sidebar .line) {
-  margin: 8px 8px !important;
-  background: linear-gradient(90deg, transparent, rgba(207, 216, 240, 0.5), transparent) !important;
-}
-
-:deep(.layout-sidebar.dark .line) {
-  background: linear-gradient(90deg, transparent, rgba(100, 100, 120, 0.4), transparent) !important;
-}
-
-/* 移除章节模式背景 */
-.custom-mode {
-  background: transparent !important;
-}
-.mastery-page-content {
-  height: 100%;
-  padding-top: 80px;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
-/* 课程资料相关样式 */
-.course-materials-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  background-color: #ffffff; /* 统一改为白色背景 */
-}
-
-.course-materials-wrapper.dark {
-  background-color: #1a1a1a;
-}
-
-/* （HTML 动画列表复用 materials 样式，移除自定义块） */
-
-.materials-container {
-  padding: 100px 20px 20px;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  background-color: #ffffff; /* 统一改为白色背景 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  box-sizing: border-box;
-}
-
-.materials-container.dark {
-  background-color: #1a1a1a;
-}
-
-.materials-container.light {
-  background-color: #ffffff;
-}
-
-.materials-title {
-  font-size: 18px;
-  margin-bottom: 20px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.materials-list {
-  display: grid;
-  gap: 20px;
-  width: 90%;
-  max-width: 1400px;
-}
-
-.material-item {
-  display: flex;
-  align-items: center;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 15px;
-  background-color: #fff;
-  transition: all 0.3s;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  width: 100%;
-}
-
-.material-item.dark {
-  background-color: #1a1a1a;
-  border-color: #3e3e3e;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.material-item:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.material-item.dark:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
-}
-
-.material-icon {
-  flex-shrink: 0;
-  margin-right: 15px;
-}
-
-.material-icon img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.material-info {
-  flex-grow: 1;
-  overflow: hidden;
-}
-
-.material-info .material-title {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 5px;
-  color: #303133;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.material-item.dark .material-info .material-title {
-  color: #e0e0e0;
-}
-
-.material-info .material-type {
-  font-size: 12px;
-  color: #909399;
-}
-
-.material-item.dark .material-info .material-type {
-  color: #aaa;
-}
-
-.material-action {
-  flex-shrink: 0;
-  margin-left: 10px;
-}
-
-/* HTML 动画预览对话框高度优化 */
-.preview-wrapper {
-  width: 100%;
-  height: 75vh; /* 提高整体高度 */
-  overflow: hidden;
-}
-.preview-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-/* 作业考试相关样式 */
-.homework-exam-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  background-color: #ffffff; /* 统一改为白色背景 */
-}
-
-.homework-exam-wrapper.dark {
-  background-color: #1a1a1a;
-}
-
-.homework-container {
-  padding: 80px 20px 20px;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  background-color: #ffffff; /* 统一改为白色背景 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.homework-container.dark {
-  background-color: #1a1a1a;
-}
-
-.homework-tabs {
-  width: 90%;
-  max-width: 1400px;
-}
-
-.homework-list,
-.exam-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  margin-top: 20px;
-}
-
-.homework-item,
-.exam-item {
-  display: flex;
-  align-items: center;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 15px;
-  background-color: #fff;
-  transition: all 0.3s;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.homework-item.dark,
-.exam-item.dark {
-  background-color: #1a1a1a;
-  border-color: #3e3e3e;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.homework-item:hover,
-.exam-item:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.homework-item.dark:hover,
-.exam-item.dark:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
-}
-
-.homework-icon,
-.exam-icon {
-  flex-shrink: 0;
-  margin-right: 15px;
-}
-
-.homework-icon img,
-.exam-icon img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.homework-info,
-.exam-info {
-  flex-grow: 1;
-  overflow: hidden;
-}
-
-.homework-title,
-.exam-title {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: #303133;
-}
-
-.homework-item.dark .homework-title,
-.exam-item.dark .exam-title {
-  color: #e0e0e0;
-}
-
-.homework-meta,
-.exam-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.homework-item.dark .homework-meta,
-.exam-item.dark .exam-meta {
-  color: #aaa;
-}
-
-.homework-status,
-.exam-status {
-  margin: 0 15px;
-}
-
-.homework-action,
-.exam-action {
-  flex-shrink: 0;
-}
-
-/* 课程成绩相关样式 */
-.course-grades-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  background-color: #ffffff; /* 统一改为白色背景 */
-}
-
-.course-grades-wrapper.dark {
-  background-color: #1a1a1a;
-}
-
-.course-grades-container {
-  padding: 80px 20px 20px;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  background-color: #ffffff; /* 统一改为白色背景 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.course-grades-container.dark {
-  background-color: #1a1a1a;
-}
-
-.grades-content {
-  width: 90%;
-  max-width: 1400px;
-}
-
-.grades-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.grades-card {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
-  transition: all 0.3s;
-  border: 1px solid #c6e2ff;
-}
-
-.grades-card.dark {
-  background-color: #1a1a1a;
-  border-color: #3e3e3e;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.grades-card:hover {
-  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
-  transform: translateY(-5px);
-  border-color: #409eff;
-}
-
-.grades-card.dark:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
-}
-
-.grades-card-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.grades-card-header svg {
-  width: 28px;
-  height: 28px;
-  margin-right: 12px;
-  color: #409eff;
-}
-
-.grades-card-header h3 {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1a1a1a;
-  margin: 0;
-}
-
-.grades-card.dark .grades-card-header h3 {
-  color: #e0e0e0;
-}
-
-.grades-card-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100px;
-}
-
-.grades-score {
-  font-size: 56px;
-  font-weight: 800;
-  color: #604ffd; /* 使用醒目的紫色 */
-  text-shadow: 0 2px 4px rgba(96, 79, 253, 0.1);
-}
-
-.grades-chart-container {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
-  margin-top: 30px;
-  border: 1px solid #c6e2ff;
-}
-
-.grades-chart-container.dark {
-  background-color: #1a1a1a;
-  border-color: #3e3e3e;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.grades-chart-header {
-  margin-bottom: 25px;
-  border-bottom: 1px solid #f0f2f5;
-  padding-bottom: 15px;
-}
-
-.grades-chart-header h3 {
-  font-size: 20px;
-  font-weight: bold;
-  color: #1a1a1a;
-  margin: 0;
-}
-
-.grades-chart-container.dark .grades-chart-header h3 {
-  color: #e0e0e0;
-}
-
-.grades-chart {
-  width: 100%;
-  height: 350px;
-}
-
-.chapters-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  align-items: start;
-  perspective: 1000px;
-}
-
-@media (max-width: 1280px) {
-  .chapters-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.chapter-section {
-  margin-bottom: 0; /* Grid gap handles spacing */
-  border-radius: 20px;
-  padding: 24px;
-  background: #fff;
-  border: 1px solid rgba(220, 226, 247, 0.5);
-  box-shadow: 0 10px 30px -12px rgba(90, 107, 138, 0.15);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-  backface-visibility: hidden;
-}
-
-.chapter-section:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 20px 40px -15px rgba(90, 107, 138, 0.25);
-  border-color: #409eff;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px) rotateX(-5deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) rotateX(0);
-  }
-}
-
-/* 滚动入场动画 - 奇数章节从左侧滑入 */
-.slide-in-left {
-  animation: slideInFromLeft 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes slideInFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-60px) rotateY(8deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) rotateY(0);
-  }
-}
-
-/* 滚动入场动画 - 偶数章节从右侧滑入 */
-.slide-in-right {
-  animation: slideInFromRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes slideInFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(60px) rotateY(-8deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) rotateY(0);
-  }
-}
-
-.chapter-section h2 {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: #1a1a1a;
-  border-bottom: 1px solid #f0f2f5;
-  padding-bottom: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.point-section {
-  margin-bottom: 16px;
-  position: relative;
-  padding-left: 14px;
-}
-
-.point-section h3 {
-  font-size: 16px;
-  color: #606266;
-  margin-bottom: 8px;
-  font-weight: 500;
-  position: relative;
-}
-
-/* .point-section:before {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  border-radius: 3px;
-  background: linear-gradient(180deg,#CFD8F0,#a8b8e8);
-  opacity: .18;
-}
-
-.point-section.dark:before { background: linear-gradient(180deg,#a8b8e8,#CFD8F0); opacity:.35; } */
-
-.chapter-body { position: relative; }
-
-.point-item {
-  background: rgba(255,255,255,0.65);
-  backdrop-filter: blur(4px);
-  border: 1px solid #f1f1f5;
-  transition: background .3s, border-color .3s, transform .3s;
-}
-.point-item:hover { background:#fff; transform: translateY(-2px); }
-.point-item.dark {
-  background: rgba(26,26,26,0.55);
-  border-color:#3e3e3e;
-}
-.point-item.dark:hover { background:#2e2e2e; }
-
-.point-item + .point-item { margin-top: 10px; }
-
-.count-badge {
-  display:inline-block;
-  min-width:22px;
-  padding:2px 6px;
-  font-size:12px;
-  line-height:1;
-  border-radius:10px;
-  background:linear-gradient(90deg,#CFD8F0,#a8b8e8);
-  color:#fff;
-  font-weight:600;
-  margin-right:8px;
-  box-shadow:0 2px 6px rgba(90,107,138,.4);
-}
-.dark .count-badge { background:linear-gradient(90deg,#a8b8e8,#CFD8F0); box-shadow:0 2px 6px rgba(168,184,232,.4); }
-
-/* 章节展开动画 - 更加丝滑 */
-/* .chapter-collapse-enter-active, .chapter-collapse-leave-active { 
-  transition: all .45s cubic-bezier(.4, 0, .2, 1); 
-  overflow: hidden; 
-}
-.chapter-collapse-enter-from, .chapter-collapse-leave-to { 
-  opacity: 0; 
-  transform: translateY(-10px) scale(0.99); 
-  max-height: 0; 
-}
-.chapter-collapse-enter-to, .chapter-collapse-leave-from { 
-  opacity: 1; 
-  transform: translateY(0) scale(1); 
-  max-height: 2000px; 
-} */
-
-/* 子项列表淡入 - 级联感 */
-.point-fade-enter-active { 
-  transition: transform .5s cubic-bezier(.22, 1, .36, 1), opacity .5s cubic-bezier(.22, 1, .36, 1); 
-}
-.point-fade-leave-active { 
-  transition: transform .3s ease, opacity .3s ease; 
-  position: absolute; /* 离场时脱离文档流，避免挤压 */
-  width: 100%;
-}
-.point-fade-enter-from { 
-  opacity: 0; 
-  transform: translateX(-15px); 
-}
-.point-fade-leave-to { 
-  opacity: 0; 
-  transform: translateX(15px); 
-}
-
-/* 增强 Stagger 效果 */
-.point-item.point-fade-enter-active { 
-  animation: pointSlideIn .6s cubic-bezier(.22, 1, .36, 1) forwards; 
-  opacity: 0; 
-}
-.point-fade-enter-active > .point-item:nth-child(1){animation-delay:.05s}
-.point-fade-enter-active > .point-item:nth-child(2){animation-delay:.1s}
-.point-fade-enter-active > .point-item:nth-child(3){animation-delay:.15s}
-.point-fade-enter-active > .point-item:nth-child(4){animation-delay:.2s}
-.point-fade-enter-active > .point-item:nth-child(5){animation-delay:.25s}
-.point-fade-enter-active > .point-item:nth-child(6){animation-delay:.3s}
-
-@keyframes pointSlideIn { 
-  from { opacity: 0; transform: translateX(-20px); } 
-  to { opacity: 1; transform: translateX(0); } 
-}
-
-/* 子节高度折叠动画 */
-/* .sub-collapse-enter-active {
-  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  overflow: hidden;
-}
-
-.sub-collapse-leave-active {
-  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  overflow: hidden;
-}
-
-.sub-collapse-enter-from,
-.sub-collapse-leave-to {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-10px) scale(0.98);
-}
-
-.sub-collapse-enter-to,
-.sub-collapse-leave-from {
-  max-height: 2000px; 
-  opacity: 1;
-  transform: translateY(0) scale(1);
-} */
-
-.subsection-wrapper {
-  padding: 4px 2px 12px;
-}
-
-.point-item {
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(220, 226, 247, 0.5);
-  backdrop-filter: blur(5px);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s, border-color 0.3s, box-shadow 0.3s;
-  will-change: transform, opacity;
-}
-
-.point-item:hover {
-  background: #fff;
-  transform: translateX(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border-color: #409eff;
-}
-
-.point-title {
-  font-weight: bold;
-  margin-bottom: 6px;
-  color: #303133;
-  font-size: 15px;
-}
-
-.point-content {
-  color: #606266;
-  line-height: 1.6;
-  font-size: 14px;
-}
-
-/* 暗黑模式下的章节和要点样式 */
-.chapter-section.dark {
-  background: #1e1e26;
-  border-color: rgba(61, 63, 85, 0.8);
-  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
-}
-
-.chapter-section.dark:hover {
-  border-color: #4facfe;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
-}
-
-.chapter-section.dark h2 {
-  color: #ffffff;
-  border-bottom-color: #3d3f55;
-}
-
-.point-section.dark h3 {
-  color: #e0e0e0;
-}
-
-.point-item.dark {
-  background: rgba(42, 42, 53, 0.4);
-  border-color: rgba(61, 63, 85, 0.5);
-}
-
-.point-item.dark:hover {
-  background: rgba(42, 42, 53, 0.8);
-  border-color: #4facfe;
-}
-
-.point-title.dark {
-  color: #ffffff;
-}
-
-.point-content.dark {
-  color: #e0e0e0;
-}
-
-.no-data {
-  text-align: center;
-  padding: 40px 0;
-  color: #909399;
-  font-size: 14px;
-}
-
-.collapsible-header {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-right: 10px;
-}
-
-.collapsible-header i {
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.collapsible-header i.rotated {
-  transform: rotate(-180deg);
-}
-
-/* 新增：子节标题高阶外观 */
-.point-section > .collapsible-header {
-  background: linear-gradient(145deg, #ffffff, #f8faff);
-  border: 1px solid rgba(220, 226, 247, 0.8);
-  border-radius: 16px;
-  padding: 12px 16px;
-  margin: 8px 0 12px;
-  box-shadow: 0 4px 15px -5px rgba(90, 107, 138, 0.1);
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.point-section > .collapsible-header:before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 0% 0%, rgba(64, 158, 255, 0.05), transparent 50%);
-  opacity: 0;
-  transition: opacity 0.4s;
-  pointer-events: none;
-}
-
-.point-section > .collapsible-header:hover {
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 8px 25px -8px rgba(90, 107, 138, 0.2);
-  border-color: #409eff;
-}
-
-.point-section > .collapsible-header:hover:before {
-  opacity: 1;
-}
-
-.point-section > .collapsible-header.is-expanded {
-  background: #fff;
-  border-color: #409eff;
-  box-shadow: 0 10px 30px -10px rgba(64, 158, 255, 0.3);
-}
-
-.point-section > .collapsible-header.is-expanded::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #409eff, transparent);
-  animation: glow-line 2s infinite;
-}
-
-@keyframes glow-line {
-  0% { opacity: 0.3; transform: scaleX(0.5); }
-  50% { opacity: 1; transform: scaleX(1); }
-  100% { opacity: 0.3; transform: scaleX(0.5); }
-}
-
-/* 徽章在新容器中的微调 */
-.point-section > .collapsible-header .count-badge {
-  margin-right: 12px;
-  flex-shrink: 0;
-  background: rgba(64, 158, 255, 0.1);
-  color: #409eff;
-  border: 1px solid rgba(64, 158, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: bold;
-  transition: all 0.3s;
-}
-
-.point-section > .collapsible-header:hover .count-badge {
-  background: #409eff;
-  color: #fff;
-  transform: scale(1.1);
-}
-
-.point-section.dark > .collapsible-header {
-  background: linear-gradient(145deg, #2a2a35, #23232b);
-  border: 1px solid rgba(61, 63, 85, 0.8);
-  box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.3);
-}
-
-.point-section.dark > .collapsible-header:before {
-  background: radial-gradient(circle at 0% 0%, rgba(79, 172, 254, 0.1), transparent 50%);
-}
-
-.point-section.dark > .collapsible-header:hover {
-  border-color: #4facfe;
-  box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.5);
-}
-
-.point-section.dark > .collapsible-header.is-expanded {
-  background: #2a2a35;
-  border-color: #4facfe;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
-}
-
-.point-section.dark > .collapsible-header.is-expanded::after {
-  background: linear-gradient(90deg, transparent, #4facfe, transparent);
-}
-
-.point-section.dark > .collapsible-header .count-badge {
-  background: rgba(79, 172, 254, 0.1);
-  color: #4facfe;
-  border-color: rgba(79, 172, 254, 0.2);
-}
-
-.point-section.dark > .collapsible-header:hover .count-badge {
-  background: #4facfe;
-  color: #fff;
-}
-
-/* 箭头对齐与视觉缩进 */
-.point-section > .collapsible-header i {
-  margin-left: 12px;
-  font-size: 16px;
-  color: #909399;
-  transition: all 0.3s;
-}
-
-.point-section > .collapsible-header:hover i {
-  color: #409eff;
-}
-
-.point-section.dark > .collapsible-header:hover i {
-  color: #4facfe;
-}
-
-/* 随练错题列表样式 */
-.wrong-question-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  margin-top: 20px;
-}
-
-.wrong-question-item {
-  display: flex;
-  align-items: center;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 15px;
-  background-color: #fff;
-  transition: all 0.3s;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.wrong-question-item.dark {
-  background-color: #1a1a1a;
-  border-color: #3e3e3e;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.wrong-question-item:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.wrong-question-item.dark:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
-}
-
-.wrong-question-icon {
-  flex-shrink: 0;
-  margin-right: 15px;
-}
-
-.wrong-question-icon img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.wrong-question-info {
-  flex-grow: 1;
-  overflow: hidden;
-}
-
-.wrong-question-title {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: #303133;
-}
-
-.wrong-question-item.dark .wrong-question-title {
-  color: #e0e0e0;
-}
-
-.wrong-question-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.wrong-question-item.dark .wrong-question-meta {
-  color: #aaa;
-}
-
-.wrong-question-action {
-  flex-shrink: 0;
-}
-
-/* ================= 知识点统计概览 ================= */
-.mastery-summary-wrapper {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 32px;
-  align-items: stretch;
-  flex-wrap: wrap;
-}
-
-.mastery-summary-left {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
-  gap: 16px;
-  flex: 1 1 380px;
-  max-width: 520px;
-  padding: 20px;
-  margin-left: 0;
-}
-
-.summary-card {
-  background: transparent !important;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: none !important;
-  border: 1px solid rgba(220, 226, 247, 0.3) !important;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.summary-card::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(64, 158, 255, 0.03), transparent 70%);
-  pointer-events: none;
-}
-
-.summary-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 40px -15px rgba(96, 79, 253, 0.35);
-  border-color: #604ffd;
-}
-
-.summary-card:hover .summary-value {
-  transform: scale(1.1);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.summary-card.dark {
-  background: #1e1e26;
-  border-color: rgba(61, 63, 85, 0.8);
-  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
-}
-
-.summary-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #909399;
-  margin-bottom: 12px;
-  z-index: 1;
-}
-
-.summary-card.dark .summary-title {
-  color: #b4b4c7;
-}
-
-.summary-value {
-  font-size: 48px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -1px;
-  background: linear-gradient(135deg, #409eff, #604ffd);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  z-index: 1;
-}
-
-.summary-card.dark .summary-value {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.mastery-summary-charts {
-  flex: 1.5 1 600px;
-  display: flex;
-  gap: 24px;
-  background: transparent !important;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: none !important;
-  border: 1px solid rgba(220, 226, 247, 0.3) !important;
-  position: relative;
-  overflow: hidden;
-}
-
-.mastery-summary-charts.dark {
-  background: transparent !important;
-  border-color: rgba(61, 63, 85, 0.5) !important;
-  box-shadow: none !important;
-}
-
-.chart-box {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 280px;
-}
-
-.summary-chart-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-}
-
-.summary-chart-title::before {
-  content: "";
-  width: 4px;
-  height: 16px;
-  background: #409eff;
-  border-radius: 2px;
-  margin-right: 8px;
-}
-
-.mastery-summary-charts.dark .summary-chart-title {
-  color: #ffffff;
-}
-
-.summary-chart-bar,
-.summary-chart-pie {
-  width: 100%;
-  height: 320px;
-}
-
-@media (max-width: 1200px) {
-  .mastery-summary-wrapper {
-    flex-direction: column;
-  }
-  .mastery-summary-charts {
-    flex-direction: column;
-    height: auto;
-  }
-  .summary-chart-bar,
-  .summary-chart-pie {
-    height: 300px;
-  }
-}
-
-/* ================= 减少留白：让课程学习等页面填满宽度 ================= */
-:deep(.study-container) {
-  padding-left: 1.5vw !important; /* 减少左边距 */
-  padding-right: 1.5vw !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-:deep(.aloneMapCourrseWarp) {
-  min-width: unset !important; /* 移除最小宽度限制 */
-  width: 100% !important;
-  max-width: 100% !important;
-  padding-right: 0 !important;
-}
-
-:deep(.aloneMapCourrseWarp .left-warp) {
-  flex: 1 !important;
-  min-width: unset !important; /* 移除最小宽度限制 */
-  max-width: calc(100% - 26vw) !important; /* 留出右侧目录空间 */
-  margin-right: 1vw !important;
-}
-
-:deep(.aloneMapCourrseWarp .rigth-warp) {
-  width: 25vw !important; /* 稍微加宽右侧目录 */
-  margin-right: 0.5vw !important;
-  flex-shrink: 0 !important;
-}
-
-:deep(.rightTreeWarp) {
-  width: 25vw !important;
-  right: 1vw !important;
-  margin-right: 0 !important;
-  position: fixed !important;
-  overflow: hidden !important;
-  border-radius: 16px !important;
-}
-
-/* 目录跑马灯特效 */
-:deep(.rightTreeWarp::after) {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  padding: 1.5px; /* 细框线 */
-  background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
-  background-size: 200% 100%;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: ai-border-marquee 3s linear infinite;
-  pointer-events: none;
-}
-
-/* 知识点描述延展与对齐 */
-:deep(.kgDescribe-warp) {
-  min-height: calc(100vh - 480px) !important; /* 延展高度以对齐目录底端 */
-  display: flex !important;
-  flex-direction: column !important;
-  margin-bottom: 20px !important;
-}
-
-:deep(.kgDescribe-warp .introduce-div) {
-  flex: 1 !important;
-}
-
-/* 知识点页面填满宽度 */
-:deep(.mastery-page-content) {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  padding-top: 100px !important; /* 增加顶部间距，让内容往下移 */
-  margin-left: 5px !important; /* 对齐侧边栏右侧 */
-  width: calc(100% - 5px) !important; /* 对齐上边栏右侧 */
-  height: 100vh !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-  background: transparent !important;
-}
-
-:deep(.mastery-page-content .mastery-content-left) {
-  width: 100% !important;
-  max-width: 100% !important;
-  padding: 0 !important;
-  height: 100% !important;
-}
-
-:deep(.mastery-page-content .left-scroll) {
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 100% !important;
-  overflow-y: auto !important;
-  padding: 20px 0 100px !important; /* 底部留出空间 */
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none !important; /* IE and Edge */
-}
-
-:deep(.mastery-page-content .left-scroll::-webkit-scrollbar) {
-  display: none !important; /* Chrome, Safari and Opera */
-}
-
-/* 课程资料页面填满宽度 */
-.materials-container {
-  padding-left: 2vw !important;
-  padding-right: 2vw !important;
-}
-
-.materials-list {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-/* 作业考试页面填满宽度 */
-.homework-container {
-  padding-left: 2vw !important;
-  padding-right: 2vw !important;
-}
-
-.homework-tabs {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-/* 成绩页面填满宽度 */
-.grades-content {
-  width: 100% !important;
-  max-width: 100% !important;
-  padding: 0 1vw !important;
-}
-
-/* 提高右侧主界面颜色的显眼度 - 彻底移除灰色，改用鲜艳色系 */
-:deep(.light .rightTreeWarp) {
-  background: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-}
-
-:deep(.light .course-grades-wrapper),
-:deep(.light .course-materials-wrapper),
-:deep(.light .materials-container),
-:deep(.light .qa-chat-body) {
-  background: #ffffff !important; /* 统一改为白色背景 */
-  border-left: 1px solid #f0f2f5 !important;
-}
-
-:deep(.light .rightTreeWarp .chapterList-box .list li .catalogue_title) {
-  color: #1a1a1a !important; /* 纯黑文字，最显眼 */
-}
-
-:deep(.light .rightTreeWarp .chapterList-box .list .activeNode) {
-  background: #e1f0ff !important; /* 明显的蓝色激活背景 */
-  border: 1px solid #a0cfff !important;
-}
-
-:deep(.light .rightTreeWarp .chapterList-box .list li .catalogue_title3) {
-  color: #409eff !important; /* 章节数字改为亮蓝色 */
-  font-weight: bold !important;
-}
-
-:deep(.light .rightTreeWarp .chapterList-box .list li .resource-box .resource-text) {
-  color: #303133 !important;
-}
-
-:deep(.light .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span) {
-  color: #ff6b6b !important; /* 进度数字改为醒目的珊瑚红 */
-  font-weight: bold !important;
-}
-
-:deep(.light .rightTreeWarp .chapterList-box .list li .resource-box .resource-bar .el-progress-bar__inner) {
-  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%) !important; /* 亮青色渐变 */
-}
-
-/* 左侧视频区域颜色优化 */
-:deep(.light .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name) {
-  color: #409eff !important; /* 知识点名称改为品牌蓝 */
-  font-weight: 800 !important;
-  font-size: 1.8vw !important; /* 调大字体 */
-  margin-top: 20px !important; /* 增加行间距 */
-}
-
-:deep(.light .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text) {
-  color: #303133 !important;
-  font-size: 1.1vw !important; /* 调大字体 */
-}
-
-:deep(.light .kgDescribe-warp) {
-  border: 1px solid #c6e2ff !important;
-  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.1) !important;
-}
-
-/* 返回按钮颜色 */
-:deep(.light .header-back .iconfont) {
-  color: #409eff !important;
-}
-
-/* AI助教区域颜色优化 */
-:deep(.ai-helper-sections.light .people-name) {
-  color: #604ffd !important; /* AI名称改为醒目的紫色 */
-  font-weight: bold !important;
-}
-
-:deep(.ai-helper-sections.light .ai-tips-box),
-:deep(.ai-helper-sections.light .ai-tips-box span) {
-  color: #409eff !important;
-}
-
-:deep(.ai-helper-sections.light .el-input__inner) {
-  border-color: #409eff !important;
-}
-
-:deep(.ai-helper-sections.light .el-input__inner::placeholder) {
-  color: #a0cfff !important;
-}
-
-/* 问答与资料区域颜色优化 */
-:deep(.light .qa-content-left),
-:deep(.light .qa-content-right),
-:deep(.light .material-item) {
-  border-color: #c6e2ff !important;
-  background-color: #ffffff !important;
-}
-
-:deep(.light .qa-data-ul .text) {
-  color: #604ffd !important; /* 统计文字改为紫色 */
-}
-
-:deep(.light .qa-section-title),
-:deep(.light .qa-chat-header h3),
-:deep(.light .qa-history-title) {
-  color: #1a73e8 !important; /* 标题改为亮蓝色 */
-}
-
-:deep(.light .qa-history-item:hover) {
-  background-color: #e1f0ff !important;
-}
-
-/* 通用颜色优化 - 彻底替换不显眼的灰色 */
-:deep(.light .el-text--secondary),
-:deep(.light .material-info .material-type),
-:deep(.light .homework-meta),
-:deep(.light .exam-meta),
-:deep(.light .wrong-question-meta),
-:deep(.light .qa-history-time),
-:deep(.light .qa-chat-header p),
-:deep(.light .qa-empty-history),
-:deep(.light .qa-empty-chat),
-:deep(.light .qa-message-time) {
-  color: #409eff !important; /* 次要信息全部改为蓝色，不再使用灰色 */
-}
-
-:deep(.light .material-info .material-title),
-:deep(.light .homework-title),
-:deep(.light .exam-title) {
-  color: #1a1a1a !important; /* 标题改为纯黑，增加对比度 */
-  font-weight: bold !important;
-}
-
-:deep(.light .summary-title),
-:deep(.light .grades-card-header h3),
-:deep(.light .grades-chart-header h3) {
-  color: #1a1a1a !important;
-  font-weight: bold !important;
-}
-
-:deep(.light .grades-score) {
-  color: #604ffd !important; /* 成绩数字使用醒目的紫色 */
-}
-
-:deep(.light .grades-card-header svg) {
-  color: #409eff !important; /* 成绩卡片图标改为蓝色 */
-}
-
-:deep(.light .current-time) {
-  color: #409eff !important; /* 顶部日期改为蓝色 */
-  font-weight: bold !important;
-  font-size: 18px !important; /* 日期加大 */
-}
-
-/* 侧边栏交互增强 */
-:deep(.layout-sidebar .hover-box) {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-:deep(.layout-sidebar .hover-box:hover) {
-  background: #e6f0ff !important;
-  transform: translateY(-2px) scale(1.1) !important;
-}
-
-:deep(.layout-sidebar .hover-box.active) {
-  background: #409eff !important;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4) !important;
-}
-
-:deep(.layout-sidebar .side-name) {
-  transition: all 0.3s !important;
-}
-
-:deep(.layout-sidebar .hover-box:hover .side-name) {
-  color: #409eff !important;
-  font-weight: bold !important;
-}
-
-/* ================= 深色模式适配 (Dark Mode) ================= */
-:deep(.dark .rightTreeWarp) {
-  background: rgba(26, 26, 26, 0.8) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-:deep(.dark .course-grades-wrapper),
-:deep(.dark .course-materials-wrapper),
-:deep(.dark .course-animations-wrapper),
-:deep(.dark .course-qa-wrapper),
-:deep(.dark .materials-container),
-:deep(.dark .qa-chat-body),
-:deep(.dark .homework-container),
-:deep(.dark .mastery-page-content),
-:deep(.dark .study-container) {
-  background: #1a1a1a !important; /* 深色背景 */
-  border-left: 1px solid #333 !important;
-  color: #e0e0e0 !important;
-}
-
-:deep(.light .layout-header),
-:deep(.light .layout-header .header-content) {
-  background: rgba(255, 255, 255, 0.9) !important;
+  justify-content: space-between !important;
+  padding: 0 20px !important;
+  background: rgba(255, 255, 255, 0.6) !important;
   backdrop-filter: blur(10px) !important;
   border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s ease !important;
 }
 
-:deep(.dark .layout-header),
-:deep(.dark .layout-header .header-content) {
-  background: rgba(26, 26, 26, 0.9) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 20px !important; /* 四周圆角美化 */
+:deep(.layout-header:hover) {
+  background: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.1) !important;
+}
+
+.dark :deep(.layout-header) {
+  background: rgba(30, 30, 40, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-:deep(.dark .rightTreeWarp .chapterList-box .list li .catalogue_title) {
-  color: #e0e0e0 !important;
+.dark :deep(.layout-header:hover) {
+  background: rgba(40, 40, 50, 0.8) !important;
 }
 
-:deep(.dark .rightTreeWarp .chapterList-box .list .activeNode) {
-  background: #2c3e50 !important;
-  border: 1px solid #409eff !important;
+:deep(.layout-header .header-left) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
 }
 
-:deep(.dark .rightTreeWarp .chapterList-box .list li .catalogue_title3) {
-  color: #4facfe !important;
-  font-weight: bold !important;
-}
-
-:deep(.dark .rightTreeWarp .chapterList-box .list li .resource-box .resource-text) {
-  color: #b4b4c7 !important;
-}
-
-:deep(.dark .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span) {
-  color: #ff8e8e !important;
-}
-
-/* 左侧视频区域深色优化 */
-:deep(.dark .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name) {
-  color: #4facfe !important;
-  font-weight: 800 !important;
-  font-size: 1.8vw !important; /* 调大字体 */
-  margin-top: 20px !important; /* 增加行间距 */
-}
-
-:deep(.dark .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text) {
-  color: #b4b4c7 !important;
-  font-size: 1.1vw !important; /* 调大字体 */
-}
-
-:deep(.dark .kgDescribe-warp) {
-  background: #1a1a1a !important;
-  border: 1px solid #333 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-}
-
-:deep(.dark .kgDescribe-warp .introduce-div) {
-  color: #d0d0d0 !important;
-}
-
-/* 返回按钮深色 */
-:deep(.dark .header-back svg) {
-  stroke: #4facfe !important;
-}
-
-/* AI助教区域深色优化 */
-:deep(.ai-helper-sections.dark .people-name) {
-  color: #a29bfe !important;
-  font-weight: bold !important;
-}
-
-:deep(.ai-helper-sections.dark .ai-tips-box),
-:deep(.ai-helper-sections.dark .ai-tips-box span) {
-  color: #4facfe !important;
-}
-
-:deep(.ai-helper-sections.dark .el-input__inner) {
-  background-color: #2c2c2c !important;
-  border-color: #444 !important;
-  color: #fff !important;
-}
-
-:deep(.ai-helper-sections.dark .el-input__inner::placeholder) {
-  color: #666 !important;
-}
-
-/* 问答与资料区域深色优化 */
-:deep(.dark .qa-content-left),
-:deep(.dark .qa-content-right),
-:deep(.dark .material-item),
-:deep(.dark .homework-item),
-:deep(.dark .exam-item) {
-  border-color: #333 !important;
-  background-color: #1a1a1a !important;
-}
-
-:deep(.dark .qa-data-ul .text) {
-  color: #a29bfe !important;
-}
-
-:deep(.dark .qa-section-title),
-:deep(.dark .qa-chat-header h3),
-:deep(.dark .qa-history-title) {
-  color: #4facfe !important;
-}
-
-:deep(.dark .qa-history-item:hover) {
-  background-color: #2c3e50 !important;
-}
-
-/* 通用文字深色优化 */
-:deep(.dark .el-text--secondary),
-:deep(.dark .material-info .material-type),
-:deep(.dark .homework-meta),
-:deep(.dark .exam-meta),
-:deep(.dark .wrong-question-meta),
-:deep(.dark .qa-history-time),
-:deep(.dark .qa-chat-header p),
-:deep(.dark .qa-empty-history),
-:deep(.dark .qa-empty-chat),
-:deep(.dark .qa-message-time) {
-  color: #888 !important;
-}
-
-:deep(.dark .material-info .material-title),
-:deep(.dark .homework-title),
-:deep(.dark .exam-title) {
-  color: #fff !important;
-}
-
-:deep(.dark .summary-title),
-:deep(.dark .grades-card-header h3),
-:deep(.dark .grades-chart-header h3) {
-  color: #e0e0e0 !important;
-}
-
-:deep(.dark .grades-score) {
-  color: #a29bfe !important;
-}
-
-:deep(.dark .current-time) {
-  color: #4facfe !important;
-  font-weight: bold !important;
-  font-size: 18px !important;
-}
-
-/* 侧边栏深色适配 */
-:deep(.dark .layout-sidebar) {
-  background: #1a1a1a !important;
-  border-right: 1px solid #333 !important;
-}
-
-:deep(.dark .layout-sidebar .hover-box:hover) {
-  background: #2c3e50 !important;
-}
-
-:deep(.dark .layout-sidebar .hover-box.active) {
-  background: #409eff !important;
-}
-
-:deep(.dark .layout-sidebar .side-name) {
-  color: #888 !important;
-}
-
-:deep(.dark .layout-sidebar .hover-box.active .side-name),
-:deep(.dark .layout-sidebar .hover-box:hover .side-name) {
-  color: #fff !important;
-}
-
-/* 下拉菜单深色适配 */
-:deep(.el-dropdown-menu) {
-  background-color: #ffffff !important;
-  border: 1px solid #ebeef5 !important;
-}
-
-:deep(.dark .el-dropdown-menu) {
-  background-color: #1a1a1a !important;
-  border: 1px solid #333 !important;
-}
-
-:deep(.el-dropdown-menu__item) {
-  color: #606266 !important;
-}
-
-:deep(.dark .el-dropdown-menu__item) {
-  color: #e0e0e0 !important;
-}
-
-:deep(.el-dropdown-menu__item:hover) {
-  background-color: #f5f7fa !important;
-  color: #409eff !important;
-}
-
-:deep(.dark .el-dropdown-menu__item:hover) {
-  background-color: #2c3e50 !important;
-  color: #409eff !important;
-}
-
-:deep(.el-dropdown-menu__item--divided::before) {
-  background-color: #ebeef5 !important;
-}
-
-:deep(.dark .el-dropdown-menu__item--divided::before) {
-  background-color: #333 !important;
-}
-
-/* ================= 增大作业考试、课程资料、HTML动画界面字体大小 ================= */
-/* 课程资料 & HTML动画 列表项字体加大 */
-.material-info .material-title {
-  font-size: 18px !important; /* 从14px增大到18px */
-  font-weight: 600 !important;
-}
-
-.material-info .material-type {
-  font-size: 15px !important; /* 从12px增大到15px */
-}
-
-.material-icon img {
-  width: 50px !important; /* 从40px增大到50px */
-  height: 50px !important;
-}
-
-.material-item {
-  padding: 20px !important; /* 从15px增大到20px */
-}
-
-/* 作业考试 列表项字体加大 */
-.homework-title,
-.exam-title {
-  font-size: 20px !important; /* 从16px增大到20px */
-  font-weight: 600 !important;
-}
-
-.homework-meta,
-.exam-meta {
-  font-size: 15px !important; /* 从12px增大到15px */
-  gap: 15px !important; /* 从10px增大到15px */
-}
-
-.homework-meta span,
-.exam-meta span {
-  font-size: 15px !important;
-}
-
-.homework-icon img,
-.exam-icon img {
-  width: 50px !important; /* 从40px增大到50px */
-  height: 50px !important;
-}
-
-.homework-item,
-.exam-item {
-  padding: 20px !important; /* 从15px增大到20px */
-}
-
-/* 作业考试标签页字体加大 */
-:deep(.homework-tabs .el-tabs__item) {
+:deep(.layout-header .header-title) {
   font-size: 18px !important;
   font-weight: 600 !important;
+  color: #303133 !important;
 }
 
-/* el-button 查看按钮加大 */
-.material-action .el-button,
-.homework-action .el-button,
-.exam-action .el-button {
-  font-size: 15px !important;
-  padding: 10px 20px !important;
+.dark :deep(.layout-header .header-title) {
+  color: #e0e0e0 !important;
 }
 
-/* el-tag 状态标签加大 */
-.homework-status .el-tag,
-.exam-status .el-tag {
-  font-size: 14px !important;
-  padding: 6px 12px !important;
+:deep(.layout-header .header-right) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
 }
 
-/* el-empty 空状态文字加大 */
-:deep(.materials-container .el-empty__description),
-:deep(.homework-container .el-empty__description) {
-  font-size: 16px !important;
+:deep(.layout-header .back-btn) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%) !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
 }
 
-/* ================= AI 助教动画特效 (AI Assistant Animations) ================= */
-/* AI 弹窗滑动动画 */
-.ai-slide-enter-active,
-.ai-slide-leave-active {
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+:deep(.layout-header .back-btn:hover) {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%) !important;
+  transform: translateX(-2px) !important;
 }
 
-.ai-slide-enter-from,
-.ai-slide-leave-to {
-  transform: translateX(100%) scale(0.9);
-  opacity: 0;
-  filter: blur(10px);
+:deep(.layout-header .back-btn:hover svg) {
+  stroke: white !important;
 }
 
-/* 返回按钮渐变动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
+/* ==================== 2. AI 对话窗口样式修复 ==================== */
+:deep(.ai-helper-sections) {
+  position: relative !important;
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* AI 弹窗高阶样式优化 */
-.ai-draggable-dialog {
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1) !important;
-  backdrop-filter: blur(25px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  background: rgba(255, 255, 255, 0.6) !important;
+:deep(.out-ai-pro-talk-box) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 247, 250, 0.9) 100%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
   border-radius: 20px !important;
-  position: relative;
+  border: 1px solid rgba(64, 158, 255, 0.2) !important;
+  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2) !important;
+  padding: 16px !important;
+  transition: all 0.3s ease !important;
 }
 
-/* AI 弹窗跑马灯细边框 */
-.ai-draggable-dialog::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  padding: 1.5px; /* 边框粗细 */
-  background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
-  background-size: 200% 100%;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: ai-border-marquee 3s linear infinite;
-  pointer-events: none;
+.dark :deep(.out-ai-pro-talk-box) {
+  background: linear-gradient(135deg, rgba(40, 40, 50, 0.9) 0%, rgba(30, 30, 40, 0.9) 100%) !important;
+  border: 1px solid rgba(64, 158, 255, 0.3) !important;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.4) !important;
 }
 
-@keyframes ai-border-marquee {
+:deep(.out-ai-pro-talk-box .inset-div) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+:deep(.out-ai-pro-talk-box .photo) {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  border: 2px solid rgba(64, 158, 255, 0.3) !important;
+}
+
+:deep(.out-ai-pro-talk-box .photo img) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+:deep(.out-ai-pro-talk-box .ai-hepler-pro-box) {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+:deep(.out-ai-pro-talk-box .people-name) {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #303133 !important;
+  margin-bottom: 4px !important;
+}
+
+.dark :deep(.out-ai-pro-talk-box .people-name) {
+  color: #e0e0e0 !important;
+}
+
+:deep(.out-ai-pro-talk-box .init-talk-cotent) {
+  font-size: 12px !important;
+  color: #909399 !important;
+}
+
+:deep(.out-ai-pro-talk-box .ai-hepler-pro-input) {
+  position: relative !important;
+  margin-top: 12px !important;
+}
+
+:deep(.out-ai-pro-talk-box .ai-hepler-pro-input .el-input__inner) {
+  height: 40px !important;
+  border-radius: 20px !important;
+  border: 1px solid #dcdfe6 !important;
+  background: #fff !important;
+  padding-left: 16px !important;
+  padding-right: 44px !important;
+  font-size: 13px !important;
+  transition: all 0.3s ease !important;
+}
+
+.dark :deep(.out-ai-pro-talk-box .ai-hepler-pro-input .el-input__inner) {
+  background: #2c2c2c !important;
+  border-color: #444 !important;
+  color: #e0e0e0 !important;
+}
+
+:deep(.out-ai-pro-talk-box .ai-hepler-pro-input .el-input__inner:focus) {
+  border-color: #409eff !important;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2) !important;
+}
+
+:deep(.out-ai-pro-talk-box .mock-send-btn) {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%) !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+}
+
+:deep(.out-ai-pro-talk-box .mock-send-btn:hover) {
+  transform: translateY(-50%) scale(1.1) !important;box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4) !important;
+}
+
+:deep(.out-ai-pro-talk-box .mock-send-btn svg) {
+  width: 14px !important;
+  height: 14px !important;
+  fill: white !important;
+}
+
+:deep(.glow-border) {
+  position: relative !important;
+}
+
+:deep(.glow-border::before) {
+  content: "" !important;
+  position: absolute !important;
+  inset: -2px !important;
+  border-radius: 22px !important;
+  padding: 2px !important;
+  background: linear-gradient(90deg, #409eff, #604ffd, #409eff) !important;
+  background-size: 200% 100% !important;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  mask-composite: exclude !important;
+  animation: ai-glow-border 3s linear infinite !important;
+  pointer-events: none !important;
+}
+
+@keyframes ai-glow-border {
   0% { background-position: 0% 0%; }
   100% { background-position: 200% 0%; }
 }
 
-.dark .ai-draggable-dialog {
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4) !important;
+:deep(.ai-draggable-dialog) {
+  position: fixed !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(25px) saturate(150%) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 20px 60px -10px rgba(64, 158, 255, 0.25) !important;
+  overflow: hidden !important;
+}
+
+.dark :deep(.ai-draggable-dialog) {
+  background: rgba(30, 30, 40, 0.95) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: rgba(30, 30, 30, 0.7) !important;
+  box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* AI 弹窗顶部装饰条样式 */
-.ai-dialog-header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: transparent !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  z-index: 1001;
-  position: relative;
+:deep(.ai-draggable-dialog::after) {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 20px !important;
+  padding: 1.5px !important;
+  background: linear-gradient(90deg, #409eff, #604ffd, #409eff) !important;
+  background-size: 200% 100% !important;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  mask-composite: exclude !important;
+  animation: ai-glow-border 3s linear infinite !important;
+  pointer-events: none !important;
 }
 
-.dark .ai-dialog-header-bar {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+:deep(.ai-dialog-header-bar) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 16px !important;
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.1) 0%, rgba(96, 79, 253, 0.1) 100%) !important;
+  border-bottom: 1px solid rgba(64, 158, 255, 0.1) !important;
 }
 
-.ai-dialog-header-bar .header-left,
-.ai-dialog-header-bar .header-right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  z-index: 2;
+:deep(.ai-dialog-header-bar .header-title-wrap) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
-.ai-dialog-header-bar .header-right {
-  justify-content: flex-end;
-  gap: 12px;
+:deep(.ai-dialog-header-bar .status-dot) {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #67c23a !important;
+  animation: pulse-dot 2s ease-in-out infinite !important;
 }
 
-.header-title-wrap {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 1;
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.8); }
 }
 
-.ai-dialog-header-bar .status-dot {
-  width: 6px;
-  height: 6px;
-  background: #67c23a;
-  border-radius: 50%;
-  box-shadow: 0 0 6px #67c23a;
-  animation: status-pulse 2s infinite;
-  flex-shrink: 0;
+:deep(.ai-dialog-header-bar .header-title) {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #303133 !important;
 }
 
-@keyframes status-pulse {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.2); }
-  100% { opacity: 1; transform: scale(1); }
+.dark :deep(.ai-dialog-header-bar .header-title) {
+  color: #e0e0e0 !important;
 }
 
-.ai-dialog-header-bar .header-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-  white-space: nowrap;
+:deep(.ai-dialog-header-bar .header-left),
+:deep(.ai-dialog-header-bar .header-right) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
-.ai-dialog-header-bar .header-back-btn {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: 1px solid rgba(64, 158, 255, 0.2);
-  position: absolute;
-  left: -240px; /* 悬浮在边框外侧 */
-  top: 50%;
-  transform: translateY(-50%);
-  box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  overflow: hidden;
+:deep(.ai-dialog-header-bar .header-back-btn),
+:deep(.ai-dialog-header-bar .header-action-btn) {
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  background: rgba(64, 158, 255, 0.1) !important;
 }
 
-.dark .ai-dialog-header-bar .header-back-btn {
-  background: rgba(45, 45, 45, 0.9) !important;
-  border-color: rgba(64, 158, 255, 0.4);
+:deep(.ai-dialog-header-bar .header-back-btn:hover),
+:deep(.ai-dialog-header-bar .header-action-btn:hover) {
+  background: rgba(64, 158, 255, 0.2) !important;transform: scale(1.05) !important;
 }
 
-.ai-dialog-header-bar .header-back-btn:hover {
-  left: -242px; /* 悬停时往外弹一点 */
-  background: #409eff !important;
-  border-color: #409eff;
-  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4);
+:deep(.ai-fill-bg) {
+  background: linear-gradient(180deg, rgba(245, 247, 250, 0.5) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
 }
 
-.ai-dialog-header-bar .header-back-btn:hover svg {
-  stroke: #ffffff !important;
+.dark :deep(.ai-fill-bg) {
+  background: linear-gradient(180deg, rgba(30, 30, 40, 0.5) 0%, rgba(40, 40, 50, 0.8) 100%) !important;
 }
 
-.ai-dialog-header-bar .header-back-btn svg {
-  transition: all 0.3s ease;
+:deep(.ai-talk-box) {
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
-.dark .ai-dialog-header-bar .header-title {
-  color: #e0e0e0;
+:deep(.chat-scrollbar) {
+  height: 100% !important;
 }
 
-/* 滚动条样式优化：移至最右侧并自动隐藏 */
-.ai-talk-box :deep(.el-scrollbar__wrap) {
-  overflow-x: hidden;
+:deep(.header-tips-box) {
+  text-align: center !important;
+  padding: 20px !important;
 }
 
-.ai-talk-box :deep(.el-scrollbar__bar) {
-  right: 2px !important;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+:deep(.header-tips-box .robbot-icon) {
+  width: 60px !important;
+  height: 60px !important;
+  margin: 0 auto 12px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  border: 3px solid rgba(64, 158, 255, 0.3) !important;
 }
 
-.ai-talk-box:hover :deep(.el-scrollbar__bar) {
-  opacity: 1;
+:deep(.header-tips-box .robbot-icon img) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
 }
 
-.ai-talk-box :deep(.el-scrollbar__thumb) {
-  background-color: rgba(0, 0, 0, 0.1) !important;
+:deep(.header-tips-box .code-hello) {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #303133 !important;
+  margin: 12px 0 8px !important;
 }
 
-.dark .ai-talk-box :deep(.el-scrollbar__thumb) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+.dark :deep(.header-tips-box .code-hello) {
+  color: #e0e0e0 !important;
 }
 
-.ai-dialog-header-bar .header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 2;
+:deep(.header-tips-box .ai-heler-header-tips) {
+  font-size: 13px !important;
+  color: #909399 !important;
+  line-height: 1.6 !important;
 }
 
-.ai-dialog-header-bar .header-action-btn {
-  cursor: pointer;
-  font-size: 18px;
-  color: #909399;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+:deep(.talk-input-box) {
+  padding: 12px 16px !important;
+  border-top: 1px solid rgba(64, 158, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
 }
 
-.ai-dialog-header-bar .header-action-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #409eff;
+.dark :deep(.talk-input-box) {
+  background: rgba(30, 30, 40, 0.8) !important;
+  border-top-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.dark .ai-dialog-header-bar .header-action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+:deep(.talk-input-box .input-box) {
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 12px !important;
 }
 
-.ai-dialog-header-bar .close-btn:hover {
-  color: #f56c6c;
+:deep(.talk-input-box .ai-pro-content-edit-box) {
+  flex: 1 !important;
 }
 
-/* 聚光灯按钮通用样式 */
-.spotlight-button {
-  position: relative;
-  overflow: hidden;
+:deep(.talk-input-box .ai-pro-content-edit-box .el-textarea__inner) {
+  border-radius: 16px !important;
+  border: 1px solid #dcdfe6 !important;
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  resize: none !important;
+  max-height: 120px !important;
+  transition: all 0.3s ease !important;
 }
 
-.spotlight-button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at var(--x, 50%) var(--y, 50%),
-    rgba(64, 158, 255, 0.4) 0%,
-    transparent 70%
-  );
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
+.dark :deep(.talk-input-box .ai-pro-content-edit-box .el-textarea__inner) {
+  background: #2c2c2c !important;
+  border-color: #444 !important;
+  color: #e0e0e0 !important;
 }
 
-.spotlight-button:hover::before {
-  opacity: 1;
+:deep(.talk-input-box .ai-pro-content-edit-box .el-textarea__inner:focus) {
+  border-color: #409eff !important;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2) !important;
 }
 
-.mock-send-btn {
-  transition: all 0.2s ease;
-}
-
-.mock-send-btn:active {
-  transform: scale(0.9);
-  opacity: 0.8;
-}
-
-/* AI 助教入口跑马灯特效 */
-.out-ai-pro-talk-box {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
+:deep(.talk-input-box .send-btn) {
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%) !important;
   border-radius: 12px !important;
-  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  flex-shrink: 0 !important;
 }
 
-/* 目录平滑过渡 */
+:deep(.talk-input-box .send-btn:hover) {
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.4) !important;
+}
+
+:deep(.talk-input-box .send-btn svg) {
+  width: 20px !important;
+  height: 20px !important;
+  fill: white !important;
+}
+
+:deep(.talk-input-box .not-send-btn) {
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #e4e7ed !important;
+  border-radius: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+.dark :deep(.talk-input-box .not-send-btn) {
+  background: #444 !important;
+}
+
+:deep(.talk-input-box .not-send-btn svg) {
+  width: 20px !important;
+  height: 20px !important;
+  fill: #909399 !important;
+}
+
+/* ====================3. 目录样式修复 ==================== */
 :deep(.rightTreeWarp) {
+  position: fixed !important;
+  width: 25vw !important;
+  right: 1vw !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(64, 158, 255, 0.15) !important;
+  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.15) !important;
+  overflow: hidden !important;
   transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.out-ai-pro-talk-box::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px; /* 细框线 */
-  background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
-  background-size: 200% 100%;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: ai-border-marquee 3s linear infinite;
-  pointer-events: none;
+.dark :deep(.rightTreeWarp) {
+  background: rgba(30, 30, 40, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.4) !important;
 }
 
-@keyframes ai-shimmer {
-  0% { transform: translateX(-100%) rotate(45deg); }
-  100% { transform: translateX(100%) rotate(45deg); }
+:deep(.rightTreeWarp::after) {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 16px !important;
+  padding: 1.5px !important;
+  background: linear-gradient(90deg, #409eff, #604ffd, #409eff) !important;
+  background-size: 200% 100% !important;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  mask-composite: exclude !important;
+  animation: ai-glow-border 3s linear infinite !important;
+  pointer-events: none !important;
 }
 
-.out-ai-pro-talk-box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.2);
+:deep(.rightTreeWarp .top-title) {
+  padding: 16px 20px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #303133 !important;border-bottom: 1px solid rgba(64, 158, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.05) 0%, rgba(96, 79, 253, 0.05) 100%) !important;
 }
 
-/* AI 头像浮动动画 */
-.ai-helper-sections .photo img {
-  animation: ai-float 3s ease-in-out infinite;
+.dark :deep(.rightTreeWarp .top-title) {
+  color: #e0e0e0 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-@keyframes ai-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+:deep(.rightTreeWarp .chapterList-box) {
+  padding: 12px !important;
 }
 
-/* 聊天列表动画 */
-.chat-list-enter-active,
-.chat-list-leave-active {
-  transition: all 0.4s ease-out;
+:deep(.rightTreeWarp .list) {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-.chat-list-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
+:deep(.rightTreeWarp .chapter) {
+  padding: 12px16px !important;
+  margin-bottom: 8px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(96, 79, 253, 0.08) 100%) !important;
 }
 
-.chat-list-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
+:deep(.rightTreeWarp .chapter .catalogue_title3) {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #409eff !important;
+  margin-right: 8px !important;
 }
 
-/* 聊天消息布局优化 */
-.chat-messages-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 10px;
+:deep(.rightTreeWarp .chapter .catalogue_title) {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #303133 !important;
 }
 
-.chat-message-item {
-  display: flex;
-  width: 100%;
+.dark :deep(.rightTreeWarp .chapter .catalogue_title) {
+  color: #e0e0e0 !important;
 }
 
-.chat-message-item.user-message {
-  justify-content: flex-end;
+:deep(.rightTreeWarp .inner-li) {
+  margin-left: 8px !important;
 }
 
-.chat-message-item.ai-message {
-  justify-content: flex-start;
+:deep(.rightTreeWarp .video) {
+  padding: 10px 12px !important;
+  margin-bottom: 4px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  border: 1px solid transparent !important;
 }
 
-/* 消息气泡微调 */
-.user-message .ai-chat-share-container_nVXTe {
-  margin-left: 20%;
+:deep(.rightTreeWarp .video:hover) {
+  background: rgba(64, 158, 255, 0.08) !important;
+  border-color: rgba(64, 158, 255, 0.2) !important;
 }
 
-.ai-message .ai-chat-share-container_nVXTe {
-  margin-right: 20%;
+:deep(.rightTreeWarp .video.activeNode) {
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.15) 0%, rgba(96, 79, 253, 0.15) 100%) !important;
+  border-color: rgba(64, 158, 255, 0.3) !important;
 }
 
-/* 消息气泡交互特效 */
-.ai-chat-share-container_nVXTe {
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  cursor: default;
+:deep(.rightTreeWarp .video .catalogue_title3) {
+  font-size: 12px !important;
+  color: #909399 !important;
+  margin-right: 8px !important;
 }
 
-.ai-chat-share-container_nVXTe:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.02);
+:deep(.rightTreeWarp .video .catalogue_title) {
+  font-size: 13px !important;
+  color: #606266 !important;
+  line-height: 1.4 !important;
 }
 
-.user-message .question-content_1e1fE {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-  color: white !important;
-  border-radius: 18px 18px 2px 18px !important;
-  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3) !important;
+.dark :deep(.rightTreeWarp .video .catalogue_title) {
+  color: #c0c4cc !important;
 }
 
-.ai-message .answer-content-box_2Pu7S {
-  background: #f4f7f9 !important;
-  border-radius: 18px 18px 18px 2px !important;
-  border: 1px solid #eef2f5 !important;
+:deep(.rightTreeWarp .video .resource-box) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 6px !important;
 }
 
-.dark .ai-message .answer-content-box_2Pu7S {
-  background: #2c2c2c !important;
-  border-color: #444 !important;
+:deep(.rightTreeWarp .video .resource-text) {
+  font-size: 11px !important;
+  color: #909399 !important;
 }
 
-/* 正在输入打点动画增强 */
-.typing-dot {
-  display: inline-block;
-  animation: dot-pulse 1.5s infinite;
-  margin: 0 2px;
-  font-weight: bold;
-  color: #409eff;
+:deep(.rightTreeWarp .video .resource-bar) {
+  flex: 1 !important;
+  max-width: 80px !important;
 }
 
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+:deep(.rightTreeWarp .video .icon-box .isFinish) {
+  width: 20px !important;
+  height: 20px !important;
+}
 
-@keyframes dot-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.3); }
+:deep(.rightTreeWarp .video .icon-box .isFinish img) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+:deep(.rightTreeWarp .el-progress-bar__outer) {
+  background: #e4e7ed !important;
+  border-radius: 4px !important;
+}
+
+.dark :deep(.rightTreeWarp .el-progress-bar__outer) {
+  background: #444 !important;
+}
+
+:deep(.rightTreeWarp .el-progress-bar__inner) {
+  background: linear-gradient(90deg, #409eff, #66b1ff) !important;
+  border-radius: 4px !important;
 }
 </style>

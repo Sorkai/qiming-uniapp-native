@@ -26,7 +26,6 @@
         </div>
       </div>
     </template>
-    <div class="line" />
   </div>
 </template>
 
@@ -68,13 +67,14 @@ const sidebarMenuItems = [
   width: 80px !important;
   min-width: 80px !important;
   left: 10px !important;
-  top: 20px !important;
-  height: calc(100vh - 35px) !important;
+  top: 80px !important;
+  height: auto !important;
+  max-height: calc(100vh - 97px) !important;
   border-radius: 24px !important;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;
-  box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.3) !important;
-  border: 1px solid #dce5ff !important;
-  backdrop-filter: blur(20px) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2) !important;
+  border: 1px solid rgba(64, 158, 255, 0.2) !important;
   z-index: 100 !important;
   position: fixed !important;
   overflow-y: auto !important;
@@ -85,10 +85,33 @@ const sidebarMenuItems = [
   align-items: center !important;
 }
 
+.layout-sidebar::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 24px !important;
+  padding: 1.5px !important;
+  background: linear-gradient(90deg, #409eff, #604ffd, #409eff) !important;
+  background-size: 200% 100% !important;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  mask-composite: exclude !important;
+  animation: sidebar-glow-border 3s linear infinite !important;
+  pointer-events: none !important;
+}
+
+@keyframes sidebar-glow-border {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+.layout-sidebar.light {
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
 .layout-sidebar.dark {
-  background: #1a1a1a !important;
+  background: rgba(30, 30, 40, 0.9) !important;
   box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
-  border: 1px solid rgba(60, 60, 80, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 /* 侧边栏菜单项样式调整 */
@@ -170,6 +193,10 @@ const sidebarMenuItems = [
   background: linear-gradient(90deg, transparent, rgba(207, 216, 240, 0.5), transparent) !important;
 }
 
+.layout-sidebar .line:last-child {
+  display: none !important;
+}
+
 .dark .line {
   background: linear-gradient(90deg, transparent, rgba(100, 100, 120, 0.4), transparent) !important;
 }
@@ -178,5 +205,36 @@ const sidebarMenuItems = [
 .hover-box svg {
   width: 25px;
   height: 25px;
+  color: #5a6b8a !important;
+  transition: all 0.3s ease !important;
+}
+
+.hover-box svg :deep(path),
+.hover-box svg :deep(circle),
+.hover-box svg :deep(rect),
+.hover-box svg :deep(ellipse),
+.hover-box svg :deep(line),
+.hover-box svg :deep(polyline),
+.hover-box svg :deep(polygon) {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.dark .hover-box svg {
+  color: #4facfe !important; /* 深色模式使用亮蓝色，确保清晰可见 */
+}
+
+.layout-sidebar .hover-box:hover svg {
+  color: #409eff !important;
+}
+
+.dark .layout-sidebar .hover-box:hover svg {
+  color: #ffffff !important;
+}
+
+.item.active svg,
+.hover-box.active svg {
+  color: #ffffff !important;
+  filter: none !important;
 }
 </style>

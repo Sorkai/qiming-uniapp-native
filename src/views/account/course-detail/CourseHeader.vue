@@ -1,15 +1,11 @@
 <template>
   <div
-    data-v-3e66491d=""
-    data-v-cebc91e2=""
     class="layout-header"
     :class="currentTheme"
     isatlas="1"
-    style="z-index: 10"
   >
     <div
       id="header-content-layout only-filter"
-      data-v-3e66491d=""
       class="header-content"
     >
       <div data-v-3e66491d="" class="item header-left">
@@ -121,19 +117,29 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .user-dropdown-area .avatar-info {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 20px;
-  transition: background-color 0.3s;
+  display: flex !important;
+  align-items: center !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: rgba(0, 0, 0, 0.02) !important;
 }
 
 .user-dropdown-area .avatar-info:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(64, 158, 255, 0.1) !important;
+  transform: translateY(-1px) !important;
 }
 
-.dark .user-dropdown-area .avatar-info:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.user-dropdown-area .avatar-info:active {
+  transform: scale(0.95) !important;
+}
+
+.layout-header.dark .user-dropdown-area .avatar-info {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.layout-header.dark .user-dropdown-area .avatar-info:hover {
+  background-color: rgba(64, 158, 255, 0.2) !important;
 }
 
 .user-dropdown-area .avatar {
@@ -150,7 +156,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   margin-right: 4px;
 }
 
-.dark .user-dropdown-area .name {
+.layout-header.dark .user-dropdown-area .name {
   color: #e0e0e0;
 }
 
@@ -159,9 +165,14 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   color: #999;
 }
 
+.layout-header.dark .user-dropdown-area .el-icon-arrow-down {
+  color: #b4b4c7;
+}
+
 .header-left {
   display: flex !important;
   align-items: center !important;
+  padding-left: 0 !important; /* 向左移动 */
 }
 
 .header-back {
@@ -169,26 +180,37 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  min-width: 44px !important;
-  height: 44px !important;
+  min-width: 36px !important;
+  height: 36px !important;
   z-index: 200 !important;
-  transition: all 0.3s ease !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: rgba(64, 158, 255, 0.1) !important;
+  border-radius: 10px !important;
   position: relative !important;
   overflow: hidden !important;
 }
 
 .header-back:hover {
-  transform: translateY(-2px) !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  transform: scale(1.05) !important;
+  background: rgba(64, 158, 255, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2) !important;
+}
+
+.header-back:active {
+  transform: scale(0.95) !important;
 }
 
 /* 调整日期与返回按钮距离 */
 .current-time {
-  margin-left: 25px;
-  display: inline-block;
+  margin-left: 25px !important;
+  display: inline-block !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  color: #409eff !important;
+}
+
+.layout-header.dark .current-time {
+  color: #4facfe !important;
 }
 
 /* 聚光灯按钮通用样式 */
@@ -218,5 +240,157 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 /* 移除章节模式背景 */
 .custom-mode {
   background: transparent !important;
+}
+
+/* 头部固定定位 - 确保所有页面位置一致 */
+.layout-header {
+  position: fixed !important;
+  top: 15px !important;
+  left: 15px !important;
+  right: 15px !important;
+  height: 56px !important;
+  z-index: 90 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 20px !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  box-sizing: border-box !important;
+  transition: all 0.3s ease !important;
+  overflow: hidden !important; /* 关键：防止内部背景溢出圆角 */
+}
+
+.layout-header:hover {
+  background: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.1) !important;
+}
+
+.layout-header.dark {
+  background: rgba(30, 30, 40, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.layout-header.dark:hover {
+  background: rgba(40, 40, 50, 0.8) !important;
+}
+
+.layout-header .header-content {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+}
+
+.layout-header .item.header-left {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding-left: 0 !important; /* 向左移动 */
+  min-width: 0 !important;
+}
+
+.layout-header .item.header-center {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  padding: 0 20px !important; /* 防止与两侧重叠 */
+  z-index: 2 !important;
+}
+
+.layout-header .item.header-right {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  padding-right: 60px !important; /* 进一步增加右边距以将内容向左推 */
+  min-width: 0 !important;
+}
+
+.layout-header .item.header-right {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+/* 主题切换按钮样式 */
+.theme-mode {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: 20px !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.theme-mode:hover {
+  background: rgba(64, 158, 255, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+.theme-mode:active {
+  transform: scale(0.9) !important;
+}
+
+.layout-header.dark .theme-mode {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.layout-header.dark .theme-mode:hover {
+  background: rgba(64, 158, 255, 0.2) !important;
+}
+
+/* 标题样式 */
+.study-mode .mode-item {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #303133 !important;
+}
+
+.layout-header.dark .study-mode .mode-item {
+  color: #e0e0e0 !important;
+}
+
+/* 头部左侧区域 */
+.layout-header .item.header-left {
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* 头部右侧区域 */
+.layout-header .item.header-right {
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* 深色模式下返回按钮背景 */
+.layout-header.dark .header-back {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.layout-header.dark .header-back:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* 深色模式下返回按钮 SVG 图标颜色 */
+.layout-header.dark .header-back svg {
+  stroke: #4facfe !important;
+}
+
+/* 深色模式下主题切换图标 */
+.layout-header.dark .theme-mode svg {
+  fill: #b4b4c7 !important;
+  stroke: #b4b4c7 !important;
 }
 </style>

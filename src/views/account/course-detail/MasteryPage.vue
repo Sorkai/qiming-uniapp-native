@@ -675,7 +675,7 @@ onUnmounted(() => {
 .mastery-page-content {
   padding-left: 0 !important;
   padding-right: 0 !important;
-  padding-top: 100px !important;
+  padding-top: 60px !important;
   margin-left: 5px !important;
   width: calc(100% - 5px) !important;
   height: 100vh !important;
@@ -755,6 +755,10 @@ onUnmounted(() => {
   z-index: 1;
 }
 
+.dark .summary-title {
+  color: #b4b4c7;
+}
+
 .summary-value {
   font-size: 48px;
   font-weight: 800;
@@ -802,7 +806,7 @@ onUnmounted(() => {
   width: 4px; height: 16px; background: #409eff; border-radius: 2px; margin-right: 8px;
 }
 
-.dark .summary-chart-title { color: #ffffff; }
+.dark .summary-chart-title { color: #4facfe !important; }
 
 .summary-chart-bar,
 .summary-chart-pie {
@@ -871,6 +875,7 @@ onUnmounted(() => {
 .point-section.dark > .collapsible-header {
   background: linear-gradient(145deg, #2a2a35, #23232b);
   border-color: rgba(61, 63, 85, 0.8);
+  color: #4facfe;
 }
 
 .point-section > .collapsible-header.is-expanded {

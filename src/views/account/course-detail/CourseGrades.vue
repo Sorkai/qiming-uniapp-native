@@ -397,10 +397,4 @@ onUnmounted(() => {
   height: 350px;
 }
 
-/* 浅色模式文字颜色优化 */
-:deep(.light .current-time) {
-  color: #409eff;
-  font-weight: bold;
-  font-size: 18px;
-}
 </style>

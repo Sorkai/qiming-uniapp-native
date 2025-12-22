@@ -464,10 +464,10 @@ body {
   top: 20px !important;
   height: calc(100vh - 35px) !important;
   border-radius: 24px !important;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;
-  box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.3) !important;
-  border: 1px solid #dce5ff !important;
-  backdrop-filter: blur(20px) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2) !important;
+  border: 1px solid rgba(64, 158, 255, 0.2) !important;
   z-index: 100 !important;
   position: fixed !important;
   overflow-y: auto !important;
@@ -478,10 +478,29 @@ body {
   align-items: center !important;
 }
 
+:deep(.layout-sidebar::after) {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 24px !important;
+  padding: 1.5px !important;
+  background: linear-gradient(90deg, #409eff, #604ffd, #409eff) !important;
+  background-size: 200% 100% !important;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  mask-composite: exclude !important;
+  animation: sidebar-glow-border 3s linear infinite !important;
+  pointer-events: none !important;
+}
+
+@keyframes sidebar-glow-border {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
 :deep(.layout-sidebar.dark) {
-  background: #1a1a1a !important;
+  background: rgba(30, 30, 40, 0.9) !important;
   box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
-  border: 1px solid rgba(60, 60, 80, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 :deep(.layout-header) {

@@ -560,5 +560,4 @@ watch(
 :deep(.light .qa-data-ul .text) { color: #604ffd; }
 :deep(.light .qa-section-title), :deep(.light .qa-chat-header h3), :deep(.light .qa-history-title) { color: #1a73e8; }
 :deep(.light .qa-message-time), :deep(.light .qa-chat-header p) { color: #409eff; }
-:deep(.light .current-time) { color: #409eff; font-weight: bold; font-size: 18px; }
 </style>
