@@ -51,10 +51,8 @@
           right: 1vw !important;
           top: calc(5.83333vw + 10.4167vw + 0.5vw) !important;
           height: 600px !important;
-          z-index: 999;
-          display: flex;
-          flex-direction: column;
-        "
+          z-index: 999;display: flex;
+          flex-direction: column;"
       >
         <div class="ai-dialog-header-bar">
           <div class="header-left">
@@ -107,8 +105,7 @@
                         <div :class="message.role === 'user' ? 'question-container_2GfLA' : 'answer-box-wrapper_1QYRS'">
                           <div :class="message.role === 'user' ? 'question-content_1e1fE' : 'answer-content-box_2Pu7S'">
                             <div v-if="message.role === 'user'">{{ message.content }}</div>
-                            <div v-else class="markdown-content">
-                              <p class="result" v-html="parseMarkdown(message.content)" />
+                            <div v-else class="markdown-content"><p class="result" v-html="parseMarkdown(message.content)" />
                             </div>
                           </div>
                         </div>
@@ -126,7 +123,7 @@
                                 <span class="typing-dot">.</span>
                                 <span class="typing-dot">.</span>
                                 <span class="typing-dot">.</span>
-                              </p>
+                </p>
                             </div>
                           </div>
                         </div>
@@ -150,12 +147,11 @@
                         :style="
                           currentMessage.trim()
                             ? 'min-height: 40px; line-height: 1.5; padding-right: 40px !important;'
-                            : 'min-height: 40px; height: 40px; line-height: 40px; padding-top: 0 !important; padding-bottom: 0 !important; padding-right: 40px !important;'
+                            : 'min-height: 40px; height: 40px; line-height: 40px; padding-top: 0!important; padding-bottom: 0 !important; padding-right: 40px !important;'
                         "
                         @keydown.enter.prevent="sendMessage"
                       />
-                    </div>
-                  </div>
+                    </div></div>
                   <div
                     class="add-new-talk"
                     :class="{ 'not-allowed': !currentMessage.trim() }"
@@ -205,7 +201,7 @@ const conversationId = ref("");
 const previousChapterId = ref<number | null>(null);
 const cancelStreamRequest = ref<any>(null);
 
-// 监听聊天记录变化，自动滚动到底部
+//监听聊天记录变化，自动滚动到底部
 watch(() => chatMessages.value, () => {
   nextTick(() => {
     scrollToBottom();
@@ -237,17 +233,15 @@ const openAiDialog = () => {
 };
 
 const closeAiDialog = () => {
-  isAiDialogVisible.value = false;
-  if (cancelStreamRequest.value) {
-    cancelStreamRequest.value();
-    cancelStreamRequest.value = null;
+  isAiDialogVisible.value = false;if (cancelStreamRequest.value) {
+    cancelStreamRequest.value();cancelStreamRequest.value = null;
   }
 };
 
 const handleClickOutside = (event: MouseEvent) => {
   if (!aiDialogRef.value) return;
   const target = event.target as HTMLElement;
-  if (aiDialogRef.value && !(aiDialogRef.value as any).contains(target) && !target.closest(".out-ai-showbox-pro")) {
+  if (aiDialogRef.value &&!(aiDialogRef.value as any).contains(target) && !target.closest(".out-ai-showbox-pro")) {
     closeAiDialog();
   }
 };
@@ -284,8 +278,7 @@ const sendMessage = async () => {
   if (currentChapterId !== null && previousChapterId.value !== null && currentChapterId !== previousChapterId.value) {
     conversationId.value = Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${props.courseId}`, conversationId.value);
-    chatMessages.value = [];
-  }
+    chatMessages.value = [];}
 
   previousChapterId.value = currentChapterId;
 
@@ -319,8 +312,7 @@ const sendMessage = async () => {
         if (data.delta) {
           if (!aiMessageAdded) {
             isTyping.value = false;
-            aiMessageAdded = true;
-            currentResponseIndex = chatMessages.value.length;
+            aiMessageAdded = true;currentResponseIndex = chatMessages.value.length;
             chatMessages.value.push({
               role: "ai",
               content: data.delta,
@@ -354,8 +346,7 @@ const parseMarkdown = (text: string) => {
   if (!text) return "";
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/
-/g, "<br>");
+    .replace(/\\n/g, "<br>");
 };
 
 const clearChat = () => {

@@ -11,7 +11,7 @@ onMounted(() => {
       return {
         text: "仅演示，如需AI服务，请参考 https://deepchat.dev/docs/connect"
       };
-    }z
+    }
   };
 });
 </script>
