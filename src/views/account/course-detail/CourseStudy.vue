@@ -408,7 +408,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   background: linear-gradient(135deg, $gray-50 0%, #eef2ff 100%);
 
   &.dark {
-    background: linear-gradient(135deg, $gray-900 0%, #1a1a2e 100%);
+    background: #1a1a1a;
   }
 }
 
@@ -553,7 +553,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   .dark & {
-    background: rgba(30, 41, 59, 0.8);
+    background: rgba(40, 40, 40, 0.8);
     border-color: rgba(255, 255, 255, 0.1);
   }
 }

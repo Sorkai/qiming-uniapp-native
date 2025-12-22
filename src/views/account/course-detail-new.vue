@@ -55,6 +55,7 @@
         <CourseGrades
           :visible="activeMenu === 'grades'"
           :current-theme="currentTheme"
+          :course-id="courseId"
           :course-scores="courseScores"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"

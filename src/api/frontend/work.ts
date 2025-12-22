@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import type { ApiResponse } from "./types";
 
 export interface ExamDetailParams {
   examId: number;
@@ -130,12 +131,6 @@ export interface WrongQuestionListResult {
     wrongNum: number; // 错误次数
     lastWrongTime: string; // 最近错误时间
   }>;
-}
-
-export interface ApiResponse<T = any> {
-  code: number;
-  msg: string;
-  data: T | { list?: T[] };
 }
 
 /**

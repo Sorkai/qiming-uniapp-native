@@ -305,6 +305,73 @@ pageSize: int64    // 每页数量，默认20
 
 - **响应参数**：无
 
+## 生成教案
+
+- **接口地址**：`/edu/backend/v1/course/generate/teacher/plan`
+- **请求方式**：POST
+- **请求参数**：
+```json
+{
+  "course_id": 1,
+  "chapter_id": 1
+}
+```
+- **响应参数**：
+```json
+{
+  "code": 200,
+  "msg": "成功",
+  "data": {
+    "teacherPlanId": 1
+  }
+}
+```
+
+## 获取教案列表
+
+- **接口地址**：`/edu/backend/v1/course/teacher/plan/list`
+- **请求方式**：GET
+- **请求参数**：
+  - `pageNum`: number
+  - `pageSize`: number (可选)
+- **响应参数**：
+```json
+{
+  "code": 200,
+  "msg": "成功",
+  "data": {
+    "total": 10,
+    "teacherPlanList": [
+      {
+        "teacherPlanId": 1,
+        "courseId": 1,
+        "chapterId": 1,
+        "courseName": "string",
+        "chapterName": "string"
+      }
+    ]
+  }
+}
+```
+
+## 查看教案进度
+
+- **接口地址**：`/edu/backend/v1/course/teacher/plan/progress`
+- **请求方式**：GET
+- **请求参数**：
+  - `teacherPlanId`: number
+- **响应参数**：
+```json
+{
+  "code": 200,
+  "msg": "成功",
+  "data": {
+    "progress": 100,
+    "downloadUrl": "string"
+  }
+}
+```
+
 ## 删除课时
 
 - **接口地址**：`/edu/backend/v1/course/delete/hour`

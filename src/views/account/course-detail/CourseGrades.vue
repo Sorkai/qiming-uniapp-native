@@ -11,6 +11,11 @@ import {
   Coffee
 } from "@element-plus/icons-vue";
 import CourseHeader from "./CourseHeader.vue";
+import {
+  getCourseGradesList,
+  getCourseGradesStatistics,
+  getCourseGradesClassComparison
+} from "@/api/frontend/course";
 
 defineOptions({
   name: "CourseGrades"
@@ -23,6 +28,7 @@ const props = defineProps<{
   courseScores: any | null;
   userAvatar: string;
   userNickname: string;
+  courseId: number;
 }>();
 
 // Emits
@@ -33,69 +39,84 @@ defineEmits<{
   (e: "logout"): void;
 }>();
 
-// 模拟成绩列表数据
-const gradesList = ref([
-  {
-    name: "第一章测验",
-    type: "考试",
-    score: 95,
-    submitTime: "2024-01-15 14:30",
-    gradedTime: "2024-01-16 09:00",
-    comment: "完成得很好，对知识点掌握扎实！"
-  },
-  {
-    name: "课后作业1",
-    type: "作业",
-    score: 88,
-    submitTime: "2024-01-18 16:20",
-    gradedTime: "2024-01-19 10:30",
-    comment: "整体不错，部分细节需要注意。"
-  },
-  {
-    name: "实验报告1",
-    type: "实验",
-    score: 92,
-    submitTime: "2024-01-20 11:00",
-    gradedTime: "2024-01-21 15:00",
-    comment: "实验过程记录详细，分析到位。"
-  },
-  {
-    name: "期中考试",
-    type: "考试",
-    score: 85,
-    submitTime: "2024-01-25 10:00",
-    gradedTime: "2024-01-28 14:00",
-    comment: "基础扎实，继续保持！"
-  }
-]);
+// 成绩列表数据（从API获取）
+const gradesList = ref<Array<{
+  name: string;
+  type: string;
+  score: number;
+  submitTime: string;
+  gradedTime: string;
+  comment: string;
+}>>([]);
 
-// 计算统计数据
-const statistics = computed(() => {
-  if (!gradesList.value.length) {
-    return {
-      totalAssignments: 0,
-      completedAssignments: 0,
-      averageScore: 0,
-      highestScore: 0,
-      completionRate: 0
-    };
-  }
-
-  const completed = gradesList.value.filter(item => item.score !== null);
-  const scores = completed.map(item => parseFloat(item.score as any));
-
-  return {
-    totalAssignments: gradesList.value.length,
-    completedAssignments: completed.length,
-    averageScore: scores.length
-      ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)
-      : 0,
-    highestScore: scores.length ? Math.max(...scores).toFixed(1) : 0,
-    completionRate: gradesList.value.length
-      ? ((completed.length / gradesList.value.length) * 100).toFixed(0)
-      : 0
-  };
+// 统计数据（从API获取）
+const statistics = ref({
+  totalAssignments: 0,
+  completedAssignments: 0,
+  averageScore: 0,
+  highestScore: 0,
+  completionRate: 0
 });
+
+// 班级对比数据（从API获取）
+const classComparisonData = ref({
+  categories: [] as string[],
+  personalScores: [] as number[],
+  classAverages: [] as number[]
+});
+
+// 加载状态
+const loading = ref(false);
+
+// 获取成绩详情列表
+const fetchGradesList = async () => {
+  if (!props.courseId) return;
+  try {
+    const res = await getCourseGradesList({ courseId: props.courseId });
+    if (res?.code === 200 && res?.data?.list) {
+      gradesList.value = res.data.list;
+    }
+  } catch (error) {
+    console.error("获取成绩列表失败:", error);
+  }
+};
+
+// 获取成绩统计数据
+const fetchStatistics = async () => {
+  if (!props.courseId) return;
+  try {
+    const res = await getCourseGradesStatistics({ courseId: props.courseId });
+    if (res?.code === 200 && res?.data) {
+      statistics.value = res.data;
+    }
+  } catch (error) {
+    console.error("获取成绩统计失败:", error);
+  }
+};
+
+// 获取班级对比数据
+const fetchClassComparison = async () => {
+  if (!props.courseId) return;
+  try {
+    const res = await getCourseGradesClassComparison({ courseId: props.courseId });
+    if (res?.code === 200 && res?.data) {
+      classComparisonData.value = res.data;
+    }
+  } catch (error) {
+    console.error("获取班级对比数据失败:", error);
+  }
+};
+
+// 加载所有数据
+const loadAllData = async () => {
+  loading.value = true;
+  await Promise.all([
+    fetchGradesList(),
+    fetchStatistics(),
+    fetchClassComparison()
+  ]);
+  loading.value = false;
+};
 
 // 获取成绩等级
 const getGradeLevel = (score: number) => {
@@ -114,6 +135,14 @@ const getAssignmentIcon = (type: string) => {
     实验: TrendCharts
   };
   return icons[type] || Document;
+};
+
+// 滚动到成绩列表
+const gradesListCardRef = ref<any>(null);
+const scrollToGradesList = () => {
+  if (gradesListCardRef.value?.$el) {
+    gradesListCardRef.value.$el.scrollIntoView({ behavior: "smooth" });
+  }
 };
 
 const gradesChartRef = ref<HTMLElement | null>(null);
@@ -148,7 +177,7 @@ const initGradesChart = () => {
     tooltip: { trigger: "item", formatter: "{b}: {c}" },
     legend: {
       orient: "horizontal",
-      bottom: 0,
+      top: 30,
       textStyle: { color: props.currentTheme === "dark" ? "#e0e0e0" : "#333" }
     },
     series: [
@@ -207,11 +236,19 @@ const initTrendChart = () => {
         color: props.currentTheme === "dark" ? "#e0e0e0" : "#333"
       }
     },
+    grid: {
+      top: 50,
+      bottom: 100
+    },
     tooltip: { trigger: "axis" },
     xAxis: {
       type: "category",
-      data: gradesList.value.map(item => item.name.substring(0, 5)),
-      axisLabel: { color: props.currentTheme === "dark" ? "#a0a0a0" : "#666" }
+      data: gradesList.value.map(item => item.name),
+      axisLabel: {
+        color: props.currentTheme === "dark" ? "#a0a0a0" : "#666",
+        interval: 0,
+        rotate: 45
+      }
     },
     yAxis: {
       type: "value",
@@ -221,6 +258,20 @@ const initTrendChart = () => {
         lineStyle: { color: props.currentTheme === "dark" ? "#3e3e3e" : "#eee" }
       }
     },
+    dataZoom: [
+      {
+        type: "slider",
+        show: gradesList.value.length > 5,
+        start: gradesList.value.length > 5 ? ((gradesList.value.length - 5) / gradesList.value.length) * 100 : 0,
+        end: 100,
+        height: 15,
+        bottom: 5,
+        borderColor: "transparent",
+        backgroundColor: props.currentTheme === "dark" ? "#333" : "#f4f4f4",
+        fillerColor: "rgba(96, 79, 253, 0.2)",
+        handleStyle: { color: "#604ffd" }
+      }
+    ],
     series: [
       {
         data: gradesList.value.map(item => item.score),
@@ -260,15 +311,23 @@ const initClassChart = () => {
         color: props.currentTheme === "dark" ? "#e0e0e0" : "#333"
       }
     },
+    grid: {
+      top: 70,
+      bottom: 100
+    },
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: {
-      bottom: 0,
+      top: 30,
       textStyle: { color: props.currentTheme === "dark" ? "#e0e0e0" : "#333" }
     },
     xAxis: {
       type: "category",
-      data: ["作业1", "作业2", "测验1", "期中"],
-      axisLabel: { color: props.currentTheme === "dark" ? "#a0a0a0" : "#666" }
+      data: classComparisonData.value.categories,
+      axisLabel: {
+        color: props.currentTheme === "dark" ? "#a0a0a0" : "#666",
+        interval: 0,
+        rotate: 45
+      }
     },
     yAxis: {
       type: "value",
@@ -278,17 +337,31 @@ const initClassChart = () => {
         lineStyle: { color: props.currentTheme === "dark" ? "#3e3e3e" : "#eee" }
       }
     },
+    dataZoom: [
+      {
+        type: "slider",
+        show: classComparisonData.value.categories.length > 5,
+        start: classComparisonData.value.categories.length > 5 ? ((classComparisonData.value.categories.length - 5) / classComparisonData.value.categories.length) * 100 : 0,
+        end: 100,
+        height: 15,
+        bottom: 0,
+        borderColor: "transparent",
+        backgroundColor: props.currentTheme === "dark" ? "#333" : "#f4f4f4",
+        fillerColor: "rgba(64, 158, 255, 0.2)",
+        handleStyle: { color: "#409eff" }
+      }
+    ],
     series: [
       {
         name: "个人得分",
         type: "bar",
-        data: [88, 92, 95, 85],
+        data: classComparisonData.value.personalScores,
         itemStyle: { color: "#409eff", borderRadius: [4, 4, 0, 0] }
       },
       {
         name: "班级平均",
         type: "bar",
-        data: [75, 82, 80, 78],
+        data: classComparisonData.value.classAverages,
         itemStyle: { color: "#67c23a", borderRadius: [4, 4, 0, 0] }
       }
     ]
@@ -348,11 +421,11 @@ const initMasteryChart = () => {
         data: [
           {
             value: [
-              props.courseScores?.courseScore || 85,
-              props.courseScores?.workScore || 90,
-              props.courseScores?.examScore || 78,
-              parseFloat(statistics.value.averageScore as any) || 88,
-              parseFloat(statistics.value.completionRate as any) || 95
+              props.courseScores?.courseScore || 0,
+              props.courseScores?.workScore || 0,
+              props.courseScores?.examScore || 0,
+              statistics.value.averageScore || 0,
+              statistics.value.completionRate || 0
             ],
             name: "个人能力",
             itemStyle: { color: "#604ffd" },
@@ -380,14 +453,28 @@ const initAllCharts = () => {
 // 监听分数变化或可见性变化
 watch(
   () => [props.visible, props.courseScores, props.currentTheme],
-  () => {
+  async () => {
     if (props.visible) {
+      await loadAllData();
       nextTick(() => {
         initAllCharts();
       });
     }
   },
   { deep: true }
+);
+
+// 监听 courseId 变化
+watch(
+  () => props.courseId,
+  async (newId) => {
+    if (newId && props.visible) {
+      await loadAllData();
+      nextTick(() => {
+        initAllCharts();
+      });
+    }
+  }
 );
 
 const handleResize = () => {
@@ -397,9 +484,10 @@ const handleResize = () => {
   masteryChartInstance?.resize();
 };
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener("resize", handleResize);
   if (props.visible) {
+    await loadAllData();
     initAllCharts();
   }
 });
@@ -539,6 +627,9 @@ onUnmounted(() => {
         <div class="grades-charts-section" :class="currentTheme">
           <div class="section-header">
             <h3>成绩多维分析</h3>
+            <el-button type="primary" link @click="scrollToGradesList">
+              查看全部数据 <el-icon class="el-icon--right"><Clock /></el-icon>
+            </el-button>
           </div>
           <div class="charts-grid">
             <div class="chart-item-wrapper" :class="currentTheme">
@@ -557,7 +648,7 @@ onUnmounted(() => {
         </div>
 
         <!-- 成绩列表详情 -->
-        <el-card class="grades-list-card" shadow="never" :class="currentTheme">
+        <el-card ref="gradesListCardRef" class="grades-list-card" shadow="never" :class="currentTheme">
           <template #header>
             <div class="card-header">
               <span class="header-title">
@@ -815,6 +906,9 @@ onUnmounted(() => {
     margin-bottom: 25px;
     border-bottom: 1px solid #f0f2f5;
     padding-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
     h3 {
       font-size: 20px;
@@ -883,7 +977,7 @@ onUnmounted(() => {
       .item-name { color: #e0e0e0; }
       .score-total, .meta-item { color: #a0a0a0; }
       .grade-item-footer .teacher-comment {
-        background: #1e293b;
+        background: #2a2a2a;
         color: #cbd5e1;
       }
     }

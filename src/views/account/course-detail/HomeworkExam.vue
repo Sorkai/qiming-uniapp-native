@@ -289,7 +289,7 @@ const viewExam = (exam: any) => {
 
 .homework-item.dark,
 .exam-item.dark {
-  background-color: #1a1a1a;
+  background-color: #2a2a2a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }

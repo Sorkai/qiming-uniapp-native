@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import type { ApiResponse } from "./types";
 
 export interface UpdateUserInfoParams {
   nickname?: string; // 昵称（可选）
@@ -10,12 +11,6 @@ export interface UpdateUserInfoParams {
 export interface UpdatePasswordParams {
   oldPassword: string; // 原密码
   newPassword: string; // 新密码
-}
-
-export interface ApiResponse<T = any> {
-  code: number;
-  msg: string;
-  data: T;
 }
 
 /**
@@ -37,5 +32,15 @@ export const updateFrontendUserPassword = (data: UpdatePasswordParams) => {
     {
       data
     }
+  );
+};
+
+/**
+ * 获取学习总结(AI)
+ */
+export const getLearningSummary = () => {
+  return http.request<ApiResponse<{ title: string; items: string[] }>>(
+    "get",
+    "/edu/frontend/v1/user/learning/summary"
   );
 };

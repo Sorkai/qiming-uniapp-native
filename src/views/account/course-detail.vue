@@ -121,6 +121,7 @@
           :course-scores="courseScores"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
+          :course-id="courseId"
           @go-back="goBack"
           @toggle-theme="toggleTheme"
           @go-to-account="goToAccount"
@@ -245,7 +246,48 @@ const courseScores = ref<any>(null);
 // ================= 方法 =================
 
 // 主题切换
-const toggleTheme = () => {
+const toggleTheme = (event?: MouseEvent) => {
+  const isAppearanceTransition =
+    // @ts-ignore
+    document.startViewTransition &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!isAppearanceTransition || !event) {
+    performThemeToggle();
+    return;
+  }
+
+  const x = event.clientX;
+  const y = event.clientY;
+  const endRadius = Math.hypot(
+    Math.max(x, innerWidth - x),
+    Math.max(y, innerHeight - y)
+  );
+
+  // @ts-ignore
+  const transition = document.startViewTransition(() => {
+    performThemeToggle();
+  });
+
+  transition.ready.then(() => {
+    const clipPath = [
+      `circle(0px at ${x}px ${y}px)`,
+      `circle(${endRadius}px at ${x}px ${y}px)`
+    ];
+    document.documentElement.animate(
+      {
+        clipPath
+      },
+      {
+        duration: 400,
+        easing: "ease-in",
+        pseudoElement: "::view-transition-new(root)"
+      }
+    );
+  });
+};
+
+const performThemeToggle = () => {
   const oldTheme = currentTheme.value;
   const newTheme = oldTheme === "light" ? "dark" : "light";
   document.body.classList.remove(oldTheme);

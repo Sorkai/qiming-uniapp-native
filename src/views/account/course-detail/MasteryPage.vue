@@ -743,8 +743,8 @@ onUnmounted(() => {
 }
 
 .summary-card.dark {
-  background: #1e1e26;
-  border-color: rgba(61, 63, 85, 0.8) !important;
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .summary-title {
@@ -839,8 +839,8 @@ onUnmounted(() => {
 }
 
 .dark .chapter-section {
-  background: #1e1e26;
-  border-color: rgba(61, 63, 85, 0.8);
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
 }
 

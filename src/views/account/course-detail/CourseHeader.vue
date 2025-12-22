@@ -269,7 +269,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .layout-header.dark {
-  background: rgba(30, 30, 40, 0.6) !important;
+  background: rgba(30, 30, 30, 0.6) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
