@@ -13,7 +13,7 @@
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
@@ -235,7 +235,7 @@ const props = defineProps<{
 // Emits
 const emit = defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
   (e: "send-message", content: string): void;
@@ -316,13 +316,13 @@ watch(
   display: flex;
   flex-direction: column;
   padding-top: 80px;
-  background-color: #ffffff;
+  background-color: transparent; /* 背景透明，由父布局控制，防止“蒙一层” */
   box-sizing: border-box;
   position: relative;
 }
 
 .course-qa-wrapper.dark {
-  background-color: #1a1a1a;
+  background-color: transparent;
 }
 
 .course-qa-container {

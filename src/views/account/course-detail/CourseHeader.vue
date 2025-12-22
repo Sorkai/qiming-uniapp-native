@@ -19,17 +19,20 @@
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </div>
         <span data-v-3e66491d="" class="current-time">{{ currentDate }}</span>
-        <div data-v-3e66491d="" class="theme-mode" @click="$emit('toggle-theme')">
-          <ThemeSunIcon
-            data-v-3e66491d=""
-            :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-            :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-          />
-          <ThemeMoonIcon
-            data-v-3e66491d=""
-            :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-            :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-          />
+        <div
+          class="premium-switch-mini"
+          :class="{ 'is-dark': currentTheme === 'dark' }"
+          @click="$emit('toggle-theme', $event)"
+        >
+          <div class="switch-inner">
+            <div class="icon-box sun">
+              <ThemeSunIcon />
+            </div>
+            <div class="icon-box moon">
+              <ThemeMoonIcon />
+            </div>
+            <div class="switch-handle"></div>
+          </div>
         </div>
       </div>
       <div data-v-3e66491d="" class="item header-center">
@@ -84,7 +87,7 @@ const props = defineProps<{
 
 defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();
@@ -319,34 +322,90 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   justify-content: flex-end !important;
 }
 
-/* 主题切换按钮样式 */
-.theme-mode {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  margin-left: 20px !important;
-  padding: 6px 12px !important;
-  border-radius: 20px !important;
-  background: rgba(0, 0, 0, 0.03) !important;
-  cursor: pointer !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+/* 精致主题切换开关 - 学生端专用 */
+.premium-switch-mini {
+  --switch-w: 52px;
+  --switch-h: 26px;
+  --handle-s: 20px;
+  --padding: 3px;
+
+  position: relative;
+  width: var(--switch-w);
+  height: var(--switch-h);
+  margin-left: 20px;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 30px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
 }
 
-.theme-mode:hover {
-  background: rgba(64, 158, 255, 0.1) !important;
-  transform: translateY(-1px) !important;
+.layout-header.dark .premium-switch-mini {
+  background-color: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.theme-mode:active {
-  transform: scale(0.9) !important;
+.premium-switch-mini:hover {
+  transform: scale(1.05);
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
-.layout-header.dark .theme-mode {
-  background: rgba(255, 255, 255, 0.05) !important;
+.layout-header.dark .premium-switch-mini:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
-.layout-header.dark .theme-mode:hover {
-  background: rgba(64, 158, 255, 0.2) !important;
+.premium-switch-mini.is-dark .switch-handle {
+  transform: translateX(calc(var(--switch-w) - var(--handle-s) - var(--padding) * 2));
+  background-color: #f6c138;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(246, 193, 56, 0.4);
+}
+
+.premium-switch-mini.is-dark .sun { opacity: 0.2; transform: scale(0.8); }
+.premium-switch-mini.is-dark .moon { opacity: 1; color: #f6c138; transform: scale(1); }
+
+.switch-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--padding);
+}
+
+.icon-box {
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--handle-s);
+  height: var(--handle-s);
+  color: #94a3b8;
+  transition: all 0.4s ease;
+}
+
+.icon-box svg {
+  width: 14px !important;
+  height: 14px !important;
+  fill: currentColor !important;
+  stroke: none !important;
+}
+
+.sun { color: #ffb900; }
+.moon { opacity: 0.4; transform: scale(0.8); }
+
+.switch-handle {
+  position: absolute;
+  top: var(--padding);
+  left: var(--padding);
+  width: var(--handle-s);
+  height: var(--handle-s);
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* 标题样式 */

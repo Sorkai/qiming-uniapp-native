@@ -12,7 +12,7 @@
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
@@ -144,7 +144,7 @@ const props = defineProps<{
 // Emits
 defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();
@@ -180,11 +180,11 @@ const openHtmlAnimInNew = () => {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  background: transparent; /* 背景透明，防止侧边栏色差 */
 }
 
 .course-materials-wrapper.dark {
-  background: #1a1a1a;
+  background: transparent;
 }
 
 .materials-container {

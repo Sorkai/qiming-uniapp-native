@@ -105,13 +105,13 @@ const sidebarMenuItems = [
 }
 
 .layout-sidebar.light {
-  background: rgba(255, 255, 255, 0.8) !important;
+  background: #f5f7fa !important; /* 与页面背景完全统一，消除色差 */
 }
 
 .layout-sidebar.dark {
-  background: rgba(30, 30, 30, 0.9) !important;
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #1a1a1a !important; /* 与深色模式背景完全统一 */
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 /* 侧边栏菜单项样式调整 */

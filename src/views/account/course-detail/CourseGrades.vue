@@ -34,7 +34,7 @@ const props = defineProps<{
 // Emits
 defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();
@@ -510,7 +510,7 @@ onUnmounted(() => {
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
@@ -728,10 +728,10 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: #ffffff;
+  background-color: transparent;
 
   &.dark {
-    background-color: #1a1a1a;
+    background-color: transparent;
   }
 }
 
@@ -740,14 +740,14 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  background-color: #f5f7fa;
+  background-color: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
   box-sizing: border-box;
 
   &.dark {
-    background-color: #1a1a1a;
+    background-color: transparent;
   }
 }
 

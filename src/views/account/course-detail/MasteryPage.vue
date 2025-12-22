@@ -14,7 +14,7 @@
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
@@ -344,7 +344,7 @@ const props = defineProps<{
 // Emits
 defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();

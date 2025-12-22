@@ -29,7 +29,7 @@
           :chapter-list="courseDetail?.courseChapterList"
           :active-node="activeNode"
           @go-back="goBack"
-          @toggle-theme="toggleTheme"
+          @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
           @logout="handleLogout"
           @video-loaded="videoLoaded"
@@ -49,7 +49,7 @@
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
           @go-back="goBack"
-          @toggle-theme="toggleTheme"
+          @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
           @logout="handleLogout"
         />
@@ -65,7 +65,7 @@
           :chat-messages="chatMessages"
           :is-typing="isTyping"
           @go-back="goBack"
-          @toggle-theme="toggleTheme"
+          @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
           @logout="handleLogout"
           @send-message="handleSendMessage"
@@ -82,7 +82,7 @@
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
           @go-back="goBack"
-          @toggle-theme="toggleTheme"
+          @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
           @logout="handleLogout"
         />
@@ -95,7 +95,7 @@
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
           @go-back="goBack"
-          @toggle-theme="toggleTheme"
+          @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
           @logout="handleLogout"
         />
@@ -109,7 +109,7 @@
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
           @go-back="goBack"
-          @toggle-theme="toggleTheme"
+          @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
           @logout="handleLogout"
         />
@@ -123,7 +123,7 @@
           :user-nickname="userNickname"
           :course-id="courseId"
           @go-back="goBack"
-          @toggle-theme="toggleTheme"
+          @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
           @logout="handleLogout"
         />
@@ -247,44 +247,52 @@ const courseScores = ref<any>(null);
 
 // 主题切换
 const toggleTheme = (event?: MouseEvent) => {
-  const isAppearanceTransition =
-    // @ts-ignore
-    document.startViewTransition &&
-    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (loading.value) return;
 
-  if (!isAppearanceTransition || !event) {
-    performThemeToggle();
-    return;
-  }
-
-  const x = event.clientX;
-  const y = event.clientY;
+  const x = event?.clientX ?? window.innerWidth / 2;
+  const y = event.clientY ?? window.innerHeight / 2;
   const endRadius = Math.hypot(
-    Math.max(x, innerWidth - x),
-    Math.max(y, innerHeight - y)
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y)
   );
 
-  // @ts-ignore
-  const transition = document.startViewTransition(() => {
-    performThemeToggle();
+  // 创建扩散遮罩层 (全浏览器兼容方案)
+  const overlay = document.createElement("div");
+  const isToDark = currentTheme.value === "light";
+
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    pointer-events: none;
+    background: ${isToDark ? "#1a1a1a" : "#f5f7fa"};
+    clip-path: circle(0px at ${x}px ${y}px);
+    transition: clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  `;
+  document.body.appendChild(overlay);
+
+  // 触发扩散
+  requestAnimationFrame(() => {
+    overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
   });
 
-  transition.ready.then(() => {
-    const clipPath = [
-      `circle(0px at ${x}px ${y}px)`,
-      `circle(${endRadius}px at ${x}px ${y}px)`
-    ];
-    document.documentElement.animate(
-      {
-        clipPath
-      },
-      {
-        duration: 400,
-        easing: "ease-in",
-        pseudoElement: "::view-transition-new(root)"
-      }
-    );
-  });
+  // 切换实际主题
+  setTimeout(() => {
+    performThemeToggle();
+    nextTick(() => {
+      // 渐隐移除遮罩
+      overlay.style.transition =
+        "opacity 500ms ease, clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1)";
+      overlay.style.opacity = "0";
+
+      setTimeout(() => {
+        overlay.remove();
+      }, 500);
+    });
+  }, 500);
 };
 
 const performThemeToggle = () => {
@@ -589,9 +597,9 @@ onMounted(async () => {
 @import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
 
 html, body { background-color: #f5f7fa !important; }
-#app { width: 100%; min-height: 100vh; background-color: #f5f7fa !important; }
+#app { width: 100%; min-height: 100vh; background-color: #f5f7fa !important; transition: background-color 0.3s ease; }
 #app.dark { background-color: #1a1a1a !important; }
-.layout-container { position: relative; width: 100%; min-height: 100vh; display: flex; background-color: #f5f7fa !important; }
+.layout-container { position: relative; width: 100%; min-height: 100vh; display: flex; background-color: #f5f7fa !important; transition: background-color 0.3s ease; }
 .layout-container.dark { background-color: #1a1a1a !important; }
 
 /* 覆盖外部CSS中的侧边栏样式 */

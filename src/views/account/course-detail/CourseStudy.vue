@@ -9,7 +9,9 @@
       title="章节模式"
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
-      @go-back="$emit('go-back')"@toggle-theme="$emit('toggle-theme')"@go-to-account="$emit('go-to-account')"
+      @go-back="$emit('go-back')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
+      @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
 
@@ -405,10 +407,10 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 .course-study-root {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, $gray-50 0%, #eef2ff 100%);
+  background: transparent; /* 背景透明，由父布局控制，消除侧边栏色差 */
 
   &.dark {
-    background: #1a1a1a;
+    background: transparent;
   }
 }
 

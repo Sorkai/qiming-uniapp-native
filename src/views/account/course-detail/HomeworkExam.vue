@@ -13,7 +13,7 @@
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
@@ -136,7 +136,7 @@ const props = defineProps<{
 // Emits
 defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();
@@ -237,11 +237,11 @@ const viewExam = (exam: any) => {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: #ffffff;
+  background-color: transparent; /* 背景透明，由父布局控制 */
 }
 
 .homework-exam-wrapper.dark {
-  background-color: #1a1a1a;
+  background-color: transparent;
 }
 
 .homework-container {
@@ -249,7 +249,7 @@ const viewExam = (exam: any) => {
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  background-color: #ffffff;
+  background-color: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -257,7 +257,7 @@ const viewExam = (exam: any) => {
 }
 
 .homework-container.dark {
-  background-color: #1a1a1a;
+  background-color: transparent;
 }
 
 .homework-tabs {
