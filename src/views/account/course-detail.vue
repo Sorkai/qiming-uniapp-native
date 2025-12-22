@@ -1,464 +1,54 @@
 <template>
   <div id="app" :class="currentTheme">
     <div class="layout-container" :class="currentTheme">
-      <!-- 侧边栏菜单 - 使用 v-for 循环渲染 -->
-      <div
-        id="layout-sidebar"
-        class="layout-sidebar"
-        :class="currentTheme"
-      >
-        <template v-for="(item, index) in sidebarMenuItems" :key="item.key">
-          <!-- 分割线 -->
-          <div v-if="item.type === 'divider'" class="line" />
-          <!-- 菜单项 -->
-          <div
-            v-else
-            class="el-tooltip item"
-            :class="{ active: activeMenu === item.key }"
-            tabindex="0"
-            :data-menu="item.key"
-            @click="handleMenuClick(item.key)"
-          >
-            <div
-              class="hover-box"
-              :class="{ active: activeMenu === item.key }"
-            >
-              <component :is="item.icon" />
-              <div class="side-name">{{ item.label }}</div>
-            </div>
-          </div>
-        </template>
-        <div class="line" />
-      </div>
+      <!-- 侧边栏菜单 -->
+      <CourseSidebar
+        :current-theme="currentTheme"
+        :active-menu="activeMenu"
+        @menu-click="handleMenuClick"
+      />
       <div data-v-2cf49992="" class="layout-inner-content" :class="currentTheme">
         <!-- 课程资料 -->
-        <div
-          v-show="activeMenu === 'course-materials'"
-          data-v-2cf49992=""
-          class="course-materials-wrapper"
-          :class="currentTheme"
-        >
-          <!-- 头部 -->
-          <div
-            data-v-3e66491d=""
-            data-v-cebc91e2=""
-            class="layout-header"
-            :class="currentTheme"
-            isatlas="1"
-            style="z-index: 10"
-          >
-            <div
-              id="header-content-layout only-filter"
-              data-v-3e66491d=""
-              class="header-content"
-            >
-              <div data-v-3e66491d="" class="item header-left">
-                <div
-                  data-v-3e66491d=""
-                  class="item header-back spotlight-button"
-                  @click="goBack"
-                  @mousemove="handleButtonMouseMove"
-                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </div>
-                <span data-v-3e66491d="" class="current-time">{{
-                  currentDate
-                }}</span>
-                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
-                  <ThemeSunIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                  <ThemeMoonIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-center">
-                <div
-                  data-v-cebc91e2=""
-                  data-v-3e66491d=""
-                  class="study-mode custom-mode"
-                >
-                  <div
-                    data-v-cebc91e2=""
-                    data-v-3e66491d=""
-                    data-name="0"
-                    class="mode-item active"
-                    style="margin: 0 auto"
-                  >
-                    课程资料
-                  </div>
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-right">
-                <div class="user-dropdown-area">
-                  <el-dropdown trigger="click">
-                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
-                      <img :src="userAvatar" alt="" class="avatar" />
-                      <span class="name">{{ userNickname }}</span>
-                      <i class="el-icon-arrow-down" />
-                    </div>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
-                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 内容 -->
-          <div class="materials-container" :class="currentTheme">
-            <div
-              v-if="courseAttrList && courseAttrList.length > 0"
-              class="materials-list"
-            >
-              <div
-                v-for="(item, index) in courseAttrList"
-                :key="index"
-                class="material-item"
-                :class="{ dark: currentTheme === 'dark' }"
-                @click="viewMaterial(item)"
-              >
-                <div class="material-icon">
-                  <img v-if="item.rType === 'IMAGE'" :src="logo" alt="图片" />
-                  <img
-                    v-else-if="item.rType === 'VIDEO'"
-                    :src="logo"
-                    alt="视频"
-                  />
-                  <img
-                    v-else-if="item.rType === 'DOCUMENT'"
-                    :src="logo"
-                    alt="文档"
-                  />
-                  <img v-else :src="logo" alt="资源" />
-                </div>
-                <div class="material-info">
-                  <div class="material-title">{{ item.title }}</div>
-                  <div class="material-type">
-                    {{ getMaterialTypeName(item.rType) }}
-                  </div>
-                </div>
-                <div class="material-action">
-                  <el-button size="small" type="primary">查看</el-button>
-                </div>
-              </div>
-            </div>
-            <el-empty v-else description="暂无课程资料" />
-          </div>
-        </div>
-        <!-- HTML 动画列表（复用课程资料布局样式） -->
-        <div
-          v-show="activeMenu === 'html-animations'"
-          class="course-materials-wrapper"
-          :class="currentTheme"
-        >
-          <!-- 头部（复用课程资料完整结构确保样式一致） -->
-          <div
-            data-v-3e66491d=""
-            data-v-cebc91e2=""
-            class="layout-header"
-            :class="currentTheme"
-            isatlas="1"
-            style="z-index: 10"
-          >
-            <div
-              data-v-3e66491d=""
-              class="header-content"
-            >
-              <div data-v-3e66491d="" class="item header-left">
-                <div
-                  data-v-3e66491d=""
-                  class="item header-back spotlight-button"
-                  @click="goBack"
-                  @mousemove="handleButtonMouseMove"
-                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </div>
-                <span data-v-3e66491d="" class="current-time">{{ currentDate }}</span>
-                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
-                  <ThemeSunIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                  <ThemeMoonIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-center">
-                <div
-                  data-v-cebc91e2=""
-                  data-v-3e66491d=""
-                  class="study-mode custom-mode"
-                >
-                  <div
-                    data-v-cebc91e2=""
-                    data-v-3e66491d=""
-                    data-name="0"
-                    class="mode-item active"
-                    style="margin: 0 auto"
-                  >
-                    HTML动画
-                  </div>
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-right">
-                <div class="user-dropdown-area">
-                  <el-dropdown trigger="click">
-                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
-                      <img :src="userAvatar" alt="" class="avatar" />
-                      <span class="name">{{ userNickname }}</span>
-                      <i class="el-icon-arrow-down" />
-                    </div>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
-                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- 内容 -->
-            <div class="materials-container" :class="currentTheme">
-              <div v-if="htmlAnimationLoading" class="materials-list">
-                <el-empty description="加载中..." />
-              </div>
-              <div v-else-if="htmlAnimationList.length === 0" class="materials-list">
-                <el-empty description="暂无可展示的章节动画" />
-              </div>
-              <div v-else class="materials-list">
-                <div
-                  v-for="item in htmlAnimationList"
-                  :key="item.chapterId"
-                  class="material-item"
-                  :class="{ dark: currentTheme === 'dark' }"
-                  @click="openHtmlAnimation(item)"
-                >
-                  <div class="material-icon">
-                    <img :src="logo" alt="动画" />
-                  </div>
-                  <div class="material-info">
-                    <div class="material-title">{{ item.chapterName }}</div>
-                    <div class="material-type">版本: {{ item.version }}</div>
-                  </div>
-                  <div class="material-action">
-                    <el-button size="small" type="primary">查看</el-button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <el-dialog
-            v-model="htmlAnimPreviewVisible"
-            title="HTML动画预览"
-            width="85%"
-            top="5vh"
-          >
-            <div v-if="htmlAnimPreviewUrl" class="preview-wrapper">
-              <iframe :src="htmlAnimPreviewUrl" frameborder="0" class="preview-iframe" />
-            </div>
-            <template #footer>
-              <div class="dialog-footer">
-                <el-button @click="openHtmlAnimInNew">新窗口打开</el-button>
-                <el-button type="primary" @click="htmlAnimPreviewVisible=false">关闭</el-button>
-              </div>
-            </template>
-          </el-dialog>
-        </div>
+        <CourseMaterials
+          :visible="activeMenu === 'course-materials'"
+          :current-theme="currentTheme"
+          :course-attr-list="courseAttrList"
+          :user-avatar="userAvatar"
+          :user-nickname="userNickname"
+          @go-back="goBack"
+          @toggle-theme="toggleTheme"
+          @go-to-account="goToAccount"
+          @logout="handleLogout"
+        />
+        <!-- HTML 动画列表 -->
+        <HtmlAnimations
+          :visible="activeMenu === 'html-animations'"
+          :current-theme="currentTheme"
+          :loading="htmlAnimationLoading"
+          :animation-list="htmlAnimationList"
+          :user-avatar="userAvatar"
+          :user-nickname="userNickname"
+          @go-back="goBack"
+          @toggle-theme="toggleTheme"
+          @go-to-account="goToAccount"
+          @logout="handleLogout"
+        />
 
         <!-- 作业考试 -->
-        <div
-          v-show="activeMenu === 'homework-exam'"
-          data-v-2cf49992=""
-          class="homework-exam-wrapper"
-          :class="currentTheme"
-        >
-          <!-- 头部 -->
-          <div
-            data-v-3e66491d=""
-            data-v-cebc91e2=""
-            class="layout-header"
-            :class="currentTheme"
-            isatlas="1"
-            style="z-index: 10"
-          >
-            <div
-              id="header-content-layout only-filter"
-              data-v-3e66491d=""
-              class="header-content"
-            >
-              <div data-v-3e66491d="" class="item header-left">
-                <div
-                  data-v-3e66491d=""
-                  class="item header-back spotlight-button"
-                  @click="goBack"
-                  @mousemove="handleButtonMouseMove"
-                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </div>
-                <span data-v-3e66491d="" class="current-time">{{
-                  currentDate
-                }}</span>
-                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
-                  <ThemeSunIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                  <ThemeMoonIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-center">
-                <div
-                  data-v-cebc91e2=""
-                  data-v-3e66491d=""
-                  class="study-mode custom-mode"
-                >
-                  <div
-                    data-v-cebc91e2=""
-                    data-v-3e66491d=""
-                    data-name="0"
-                    class="mode-item active"
-                    style="margin: 0 auto"
-                  >
-                    作业考试
-                  </div>
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-right">
-                <div class="user-dropdown-area">
-                  <el-dropdown trigger="click">
-                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
-                      <img :src="userAvatar" alt="" class="avatar" />
-                      <span class="name">{{ userNickname }}</span>
-                      <i class="el-icon-arrow-down" />
-                    </div>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
-                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 内容 -->
-          <div class="homework-container" :class="currentTheme">
-            <el-tabs v-model="homeworkExamTab" class="homework-tabs">
-              <el-tab-pane label="作业" name="homework">
-                <div
-                  v-if="homeworkList && homeworkList.length > 0"
-                  class="homework-list"
-                >
-                  <div
-                    v-for="(item, index) in homeworkList"
-                    :key="index"
-                    class="homework-item"
-                    :class="{ dark: currentTheme === 'dark' }"
-                    @click="viewHomework(item)"
-                  >
-                    <div class="homework-icon">
-                      <img :src="logo" alt="作业" />
-                    </div>
-                    <div class="homework-info">
-                      <div class="homework-title">{{ item.title }}</div>
-                      <div class="homework-meta">
-                        <span>题目数量: {{ item.questionNum }}</span>
-                        <span>总分: {{ item.totalPoints }}</span>
-                        <span>截止日期: {{ formatDate(item.dueDate) }}</span>
-                      </div>
-                    </div>
-                    <div class="homework-status">
-                      <el-tag
-                        :type="getHomeworkStatusType(item.status)"
-                        effect="plain"
-                      >
-                        {{ getHomeworkStatusText(item.status) }}
-                      </el-tag>
-                    </div>
-                    <div class="homework-action">
-                      <el-button size="small" type="primary">查看</el-button>
-                    </div>
-                  </div>
-                </div>
-                <el-empty v-else description="暂无作业">
-                  <template #image>
-                    <img :src="HomeworkEmptyImg" alt="暂无作业" style="width: 120px; height: 120px;" />
-                  </template>
-                </el-empty>
-              </el-tab-pane>
-              <el-tab-pane label="考试" name="exam">
-                <div v-if="examList && examList.length > 0" class="exam-list">
-                  <div
-                    v-for="(item, index) in examList"
-                    :key="index"
-                    class="exam-item"
-                    :class="{ dark: currentTheme === 'dark' }"
-                    @click="viewExam(item)"
-                  >
-                    <div class="exam-icon">
-                      <img :src="logo" alt="考试" />
-                    </div>
-                    <div class="exam-info">
-                      <div class="exam-title">{{ item.title }}</div>
-                      <div class="exam-meta">
-                        <span>题目数量: {{ item.questionNum }}</span>
-                        <span>总分: {{ item.totalPoints }}</span>
-                        <span>时间限制: {{ item.timeLimit }}分钟</span>
-                        <span
-                          >开始时间: {{ formatDate(item.availableFrom) }}</span
-                        >
-                        <span
-                          >结束时间: {{ formatDate(item.availableTo) }}</span
-                        >
-                      </div>
-                    </div>
-                    <div class="exam-status">
-                      <el-tag
-                        :type="getExamStatusType(item.status)"
-                        effect="plain"
-                      >
-                        {{ getExamStatusText(item.status) }}
-                      </el-tag>
-                    </div>
-                    <div class="exam-action">
-                      <el-button size="small" type="primary">查看</el-button>
-                    </div>
-                  </div>
-                </div>
-                <el-empty v-else description="暂无考试" />
-              </el-tab-pane>
-              <!-- 随练标签页：嵌入新版随练组件 -->
-              <el-tab-pane label="随练" name="practice">
-                <WrongExercise :embedded="true" :course-id="courseId" />
-              </el-tab-pane>
-            </el-tabs>
-          </div>
-        </div>
+        <HomeworkExam
+          v-if="courseId"
+          :visible="activeMenu === 'homework-exam'"
+          :current-theme="currentTheme"
+          :course-id="courseId"
+          :homework-list="homeworkList"
+          :exam-list="examList"
+          :user-avatar="userAvatar"
+          :user-nickname="userNickname"
+          @go-back="goBack"
+          @toggle-theme="toggleTheme"
+          @go-to-account="goToAccount"
+          @logout="handleLogout"
+        />
 
         <!-- 课程学习 -->
         <div
@@ -1389,883 +979,48 @@
           </div>
         </div>
 
-        <!-- 知识点 -->
-        <div
-          v-show="activeMenu == 'mastery'"
-          data-v-487e2460=""
-          data-v-2cf49992=""
-          class="mastery-page-content"
-          :class="currentTheme"
-        >
-          <!-- 头部 -->
-          <div
-            data-v-3e66491d=""
-            data-v-cebc91e2=""
-            class="layout-header"
-            :class="currentTheme"
-            isatlas="1"
-            style="z-index: 10"
-          >
-            <div
-              id="header-content-layout only-filter"
-              data-v-3e66491d=""
-              class="header-content"
-            >
-              <div data-v-3e66491d="" class="item header-left">
-                <div
-                  data-v-3e66491d=""
-                  class="item header-back spotlight-button"
-                  @click="goBack"
-                  @mousemove="handleButtonMouseMove"
-                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </div>
-                <span data-v-3e66491d="" class="current-time">{{
-                  currentDate
-                }}</span>
-                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
-                  <ThemeSunIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                  <ThemeMoonIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-center">
-                <div
-                  data-v-cebc91e2=""
-                  data-v-3e66491d=""
-                  class="study-mode custom-mode"
-                >
-                  <div
-                    data-v-cebc91e2=""
-                    data-v-3e66491d=""
-                    data-name="0"
-                    class="mode-item active"
-                    style="margin: 0 auto"
-                  >
-                    知识点掌握
-                  </div>
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-right">
-                <div class="user-dropdown-area">
-                  <el-dropdown trigger="click">
-                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
-                      <img :src="userAvatar" alt="" class="avatar" />
-                      <span class="name">{{ userNickname }}</span>
-                      <i class="el-icon-arrow-down" />
-                    </div>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
-                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            data-v-487e2460=""
-            class="mastery-content-left"
-            style="width: 100%"
-          >
-            <div data-v-487e2460="" class="left-scroll">
-              <div class="mastery-summary-wrapper">
-                <div class="mastery-summary-left">
-                  <div class="summary-card" :class="currentTheme">
-                    <div class="summary-title">基础知识点</div>
-                    <div class="summary-value">{{ studyEffectData.knowledgePointNum || 0 }}</div>
-                  </div>
-                  <div class="summary-card" :class="currentTheme">
-                    <div class="summary-title">重点数量</div>
-                    <div class="summary-value">{{ studyEffectData.keyPointNum || 0 }}</div>
-                  </div>
-                  <div class="summary-card" :class="currentTheme">
-                    <div class="summary-title">难点数量</div>
-                    <div class="summary-value">{{ studyEffectData.difficultPointNum || 0 }}</div>
-                  </div>
-                  <div class="summary-card" :class="currentTheme">
-                    <div class="summary-title">概念数量</div>
-                    <div class="summary-value">{{ studyEffectData.conceptNum || 0 }}</div>
-                  </div>
-                </div>
-                <div class="mastery-summary-charts" :class="currentTheme">
-                  <div class="chart-box bar-chart-box">
-                    <div class="summary-chart-title">数量分布</div>
-                    <div ref="masterySummaryChartRef" class="summary-chart-bar" />
-                  </div>
-                  <div class="chart-box pie-chart-box">
-                    <div class="summary-chart-title">占比分布</div>
-                    <div ref="masteryPieChartRef" class="summary-chart-pie" />
-                  </div>
-                </div>
-              </div>
-
-              <div
-                v-if="
-                  studyEffectData.chapterList &&
-                  studyEffectData.chapterList.length > 0
-                "
-                class="chapters-grid"
-              >
-                <div
-                  v-for="(chapter, index) in studyEffectData.chapterList"
-                  :key="index"
-                  class="chapter-section"
-                  :class="[currentTheme, { 'slide-in-left': index % 2 === 0, 'slide-in-right': index % 2 === 1 }]"
-                  :style="{ animationDelay: `${index * 0.1}s` }"
-                >
-                  <h2
-                    class="collapsible-header"
-                    :class="{ 'is-expanded': isChapterExpanded(chapter.chapterId) }"
-                    @click="toggleChapterCollapse(chapter.chapterId)"
-                  >
-                    {{ chapter.chapterName }}
-                    <i
-                      class="el-icon-arrow-down"
-                      :class="{
-                        rotated: !isChapterExpanded(chapter.chapterId)
-                      }"
-                    />
-                  </h2>
-
-                  <transition
-                    @enter="collapseEnter"
-                    @after-enter="collapseAfterEnter"
-                    @leave="collapseLeave"
-                    @after-leave="collapseAfterLeave"
-                  >
-                  <div v-show="isChapterExpanded(chapter.chapterId)" class="chapter-body">
-                    <!-- 重点部分 -->
-                    <div
-                      v-if="
-                        chapter.keyPointArray &&
-                        chapter.keyPointArray.length > 0
-                      "
-                      class="point-section"
-                      :class="currentTheme"
-                    >
-                      <h3
-                        class="collapsible-header spotlight-button"
-                        :class="{ 'is-expanded': isSubsectionExpanded(chapter.chapterId, 'keyPoint') }"
-                        @click="toggleSubsectionCollapse(chapter.chapterId, 'keyPoint')"
-                        @mousemove="handleButtonMouseMove"
-                      >
-                        <div style="display: flex; align-items: center;">
-                          <span class="count-badge">{{ chapter.keyPointArray.length }}</span>
-                          <span style="font-weight: 600;">重点内容</span>
-                        </div>
-                        <i
-                          class="el-icon-arrow-down"
-                          :class="{
-                            rotated: isSubsectionExpanded(
-                              chapter.chapterId,
-                              'keyPoint'
-                            )
-                          }"
-                        />
-                      </h3>
-                      <transition
-                        @enter="collapseEnter"
-                        @after-enter="collapseAfterEnter"
-                        @leave="collapseLeave"
-                        @after-leave="collapseAfterLeave"
-                      >
-                        <div v-show="isSubsectionExpanded(chapter.chapterId, 'keyPoint')" class="subsection-wrapper">
-                          <transition-group name="point-fade" tag="div">
-                            <div
-                              v-for="(item, idx) in chapter.keyPointArray || []"
-                              :key="'key-' + idx"
-                              class="point-item"
-                              :class="currentTheme"
-                            >
-                              <div class="point-title" :class="currentTheme">
-                                {{ item.title }}
-                              </div>
-                              <div class="point-content" :class="currentTheme">
-                                {{ item.content }}
-                              </div>
-                            </div>
-                          </transition-group>
-                        </div>
-                      </transition>
-                    </div>
-
-                    <!-- 难点部分 -->
-                    <div
-                      v-if="
-                        chapter.difficultPointArray &&
-                        chapter.difficultPointArray.length > 0
-                      "
-                      class="point-section"
-                      :class="currentTheme"
-                    >
-                      <h3
-                        class="collapsible-header spotlight-button"
-                        :class="{ 'is-expanded': isSubsectionExpanded(chapter.chapterId, 'difficultPoint') }"
-                        @click="toggleSubsectionCollapse(chapter.chapterId, 'difficultPoint')"
-                        @mousemove="handleButtonMouseMove"
-                      >
-                        <div style="display: flex; align-items: center;">
-                          <span class="count-badge">{{ chapter.difficultPointArray.length }}</span>
-                          <span style="font-weight: 600;">难点解析</span>
-                        </div>
-                        <i
-                          class="el-icon-arrow-down"
-                          :class="{
-                            rotated: isSubsectionExpanded(
-                              chapter.chapterId,
-                              'difficultPoint'
-                            )
-                          }"
-                        />
-                      </h3>
-                      <transition
-                        @enter="collapseEnter"
-                        @after-enter="collapseAfterEnter"
-                        @leave="collapseLeave"
-                        @after-leave="collapseAfterLeave"
-                      >
-                        <div v-show="isSubsectionExpanded(chapter.chapterId, 'difficultPoint')" class="subsection-wrapper">
-                          <transition-group name="point-fade" tag="div">
-                            <div
-                              v-for="(item, idx) in chapter.difficultPointArray || []"
-                              :key="'diff-' + idx"
-                              class="point-item"
-                              :class="currentTheme"
-                            >
-                              <div class="point-title" :class="currentTheme">
-                                {{ item.title }}
-                              </div>
-                              <div class="point-content" :class="currentTheme">
-                                {{ item.content }}
-                              </div>
-                            </div>
-                          </transition-group>
-                        </div>
-                      </transition>
-                    </div>
-
-                    <!-- 知识点部分 -->
-                    <div
-                      v-if="
-                        chapter.knowledgeArray &&
-                        chapter.knowledgeArray.length > 0
-                      "
-                      class="point-section"
-                      :class="currentTheme"
-                    >
-                      <h3
-                        class="collapsible-header spotlight-button"
-                        :class="{ 'is-expanded': isSubsectionExpanded(chapter.chapterId, 'knowledge') }"
-                        @click="toggleSubsectionCollapse(chapter.chapterId, 'knowledge')"
-                        @mousemove="handleButtonMouseMove"
-                      >
-                        <div style="display: flex; align-items: center;">
-                          <span class="count-badge">{{ chapter.knowledgeArray.length }}</span>
-                          <span style="font-weight: 600;">基础知识点</span>
-                        </div>
-                        <i
-                          class="el-icon-arrow-down"
-                          :class="{
-                            rotated: isSubsectionExpanded(
-                              chapter.chapterId,
-                              'knowledge'
-                            )
-                          }"
-                        />
-                      </h3>
-                      <transition
-                        @enter="collapseEnter"
-                        @after-enter="collapseAfterEnter"
-                        @leave="collapseLeave"
-                        @after-leave="collapseAfterLeave"
-                      >
-                        <div v-show="isSubsectionExpanded(chapter.chapterId, 'knowledge')" class="subsection-wrapper">
-                          <transition-group name="point-fade" tag="div">
-                            <div
-                              v-for="(item, idx) in chapter.knowledgeArray || []"
-                              :key="'know-' + idx"
-                              class="point-item"
-                              :class="currentTheme"
-                            >
-                              <div class="point-title" :class="currentTheme">
-                                {{ item.title }}
-                              </div>
-                              <div class="point-content" :class="currentTheme">
-                                {{ item.content }}
-                              </div>
-                            </div>
-                          </transition-group>
-                        </div>
-                      </transition>
-                    </div>
-
-                    <!-- 概念部分 -->
-                    <div
-                      v-if="
-                        chapter.ConceptArray && chapter.ConceptArray.length > 0
-                      "
-                      class="point-section"
-                      :class="currentTheme"
-                    >
-                      <h3
-                        class="collapsible-header spotlight-button"
-                        :class="{ 'is-expanded': isSubsectionExpanded(chapter.chapterId, 'concept') }"
-                        @click="toggleSubsectionCollapse(chapter.chapterId, 'concept')"
-                        @mousemove="handleButtonMouseMove"
-                      >
-                        <div style="display: flex; align-items: center;">
-                          <span class="count-badge">{{ chapter.ConceptArray.length }}</span>
-                          <span style="font-weight: 600;">核心概念</span>
-                        </div>
-                        <i
-                          class="el-icon-arrow-down"
-                          :class="{
-                            rotated: isSubsectionExpanded(
-                              chapter.chapterId,
-                              'concept'
-                            )
-                          }"
-                        />
-                      </h3>
-                      <transition
-                        @enter="collapseEnter"
-                        @after-enter="collapseAfterEnter"
-                        @leave="collapseLeave"
-                        @after-leave="collapseAfterLeave"
-                      >
-                        <div v-show="isSubsectionExpanded(chapter.chapterId, 'concept')" class="subsection-wrapper">
-                          <transition-group name="point-fade" tag="div">
-                            <div
-                              v-for="(item, idx) in chapter.ConceptArray || []"
-                              :key="'con-' + idx"
-                              class="point-item"
-                              :class="currentTheme"
-                            >
-                              <div class="point-title" :class="currentTheme">
-                                {{ item.title }}
-                              </div>
-                              <div class="point-content" :class="currentTheme">
-                                {{ item.content }}
-                              </div>
-                            </div>
-                          </transition-group>
-                        </div>
-                      </transition>
-                    </div>
-                  </div>
-                  </transition>
-                </div>
-              </div>
-
-              <!-- 如果没有章节数据，显示无数据提示 -->
-              <div v-else class="no-data">暂无学习效果数据</div>
-            </div>
-          </div>
-          <div v-if="false" data-v-487e2460="" class="mastery-content-right">
-            <div data-v-b3b486ce="" data-v-487e2460="" class="mastery-box">
-              <div data-v-b3b486ce="" class="mastery-status">
-                <div data-v-b3b486ce="" class="mastery-status-item">
-                  <span data-v-b3b486ce="" class="status green" />
-                  <span data-v-b3b486ce="" class="name">掌握较好</span>
-                  <span data-v-b3b486ce="" class="score">100-80(含)</span>
-                </div>
-                <div data-v-b3b486ce="" class="mastery-status-item">
-                  <span data-v-b3b486ce="" class="status origin" />
-                  <span data-v-b3b486ce="" class="name">掌握一般</span>
-                  <span data-v-b3b486ce="" class="score">80-60(含)</span>
-                </div>
-                <div data-v-b3b486ce="" class="mastery-status-item">
-                  <span data-v-b3b486ce="" class="status pink" />
-                  <span data-v-b3b486ce="" class="name">薄弱点</span>
-                  <span data-v-b3b486ce="" class="score">60-0(不含)</span>
-                </div>
-                <div data-v-b3b486ce="" class="mastery-status-item">
-                  <span data-v-b3b486ce="" class="status gray" />
-                  <span data-v-b3b486ce="" class="name">遗漏点</span>
-                  <span data-v-b3b486ce="" class="score">0</span>
-                </div>
-                <div data-v-b3b486ce="" class="mastery-status-item">
-                  <span data-v-b3b486ce="" class="status blue" />
-                  <span data-v-b3b486ce="" class="name">免考</span>
-                  <span data-v-b3b486ce="" class="score" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- 知识点掌握 -->
+        <MasteryPage
+          :visible="activeMenu === 'mastery'"
+          :current-theme="currentTheme"
+          :study-effect-data="studyEffectData"
+          :user-avatar="userAvatar"
+          :user-nickname="userNickname"
+          @go-back="goBack"
+          @toggle-theme="toggleTheme"
+          @go-to-account="goToAccount"
+          @logout="handleLogout"
+        />
 
         <!-- 课程问答页面 -->
-        <div
-          v-show="activeMenu === 'course-qa'"
-          data-v-2cf49992=""
-          class="course-qa-wrapper"
-          :class="currentTheme"
-        >
-          <!-- 头部 -->
-          <div
-            data-v-3e66491d=""
-            data-v-cebc91e2=""
-            class="layout-header"
-            :class="currentTheme"
-            isatlas="1"
-            style="z-index: 10"
-          >
-            <div
-              id="header-content-layout only-filter"
-              data-v-3e66491d=""
-              class="header-content"
-            >
-              <div data-v-3e66491d="" class="item header-left">
-                <div
-                  data-v-3e66491d=""
-                  class="item header-back spotlight-button"
-                  @click="goBack"
-                  @mousemove="handleButtonMouseMove"
-                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </div>
-                <span data-v-3e66491d="" class="current-time">{{
-                  currentDate
-                }}</span>
-                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
-                  <ThemeSunIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                  <ThemeMoonIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-center">
-                <div
-                  data-v-cebc91e2=""
-                  data-v-3e66491d=""
-                  class="study-mode custom-mode"
-                >
-                  <div
-                    data-v-cebc91e2=""
-                    data-v-3e66491d=""
-                    data-name="0"
-                    class="mode-item active"
-                    style="margin: 0 auto"
-                  >
-                    课程问答
-                  </div>
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-right">
-                <div class="user-dropdown-area">
-                  <el-dropdown trigger="click">
-                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
-                      <img :src="userAvatar" alt="" class="avatar" />
-                      <span class="name">{{ userNickname }}</span>
-                      <i class="el-icon-arrow-down" />
-                    </div>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
-                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="course-qa-container" :class="currentTheme">
-            <!-- 两列布局 -->
-            <div class="qa-content-layout">
-              <!-- 左侧区域 - 统计和历史 -->
-              <div class="qa-content-left">
-                <div class="left-scroll">
-                  <!-- 统计数据 -->
-                  <ul class="qa-data-ul">
-                    <li>
-                      <div class="qa-data-icon">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                      </div>
-                      <div class="qa-data-info">
-                        <span class="text">累计提问</span>
-                        <span class="num">{{ qaStats.totalQuestions || 0 }}</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div class="qa-data-icon success">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                      </div>
-                      <div class="qa-data-info">
-                        <span class="text">已解决</span>
-                        <span class="num">{{ qaStats.solvedQuestions || 0 }}</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div class="qa-data-icon warning">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
-                      </div>
-                      <div class="qa-data-info">
-                        <span class="text">解答率</span>
-                        <span class="num">{{ qaStats.solveRate || "0%" }}</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div class="qa-data-icon info">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-                      </div>
-                      <div class="qa-data-info">
-                        <span class="text">响应时间</span>
-                        <span class="num">{{ qaStats.avgResponseTime || "0分钟" }}</span>
-                      </div>
-                    </li>
-                  </ul>
-
-                  <!-- 历史问答 -->
-                  <div class="qa-history-container">
-                    <h3 class="qa-section-title">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <path
-                          fill-rule="evenodd"
-                          clip-rule="evenodd"
-                          d="M6.5 2C4.01472 2 2 4.01472 2 6.5V17.5C2 19.9853 4.01472 22 6.5 22H17.5C19.9853 22 22 19.9853 22 17.5V6.5C22 4.01472 19.9853 2 17.5 2H6.5ZM6 7.5C6 7.22386 6.22386 7 6.5 7H13.5C13.7761 7 14 7.22386 14 7.5C14 7.77614 13.7761 8 13.5 8H6.5C6.22386 8 6 7.77614 6 7.5ZM6.5 11C6.22386 11 6 11.2239 6 11.5C6 11.7761 6.22386 12 6.5 12H17.5C17.7761 12 18 11.7761 18 11.5C18 11.2239 17.7761 11 17.5 11H6.5ZM6 15.5C6 15.2239 6.22386 15 6.5 15H13.5C13.7761 15 14 15.2239 14 15.5C14 15.7761 13.7761 16 13.5 16H6.5C6.22386 16 6 15.7761 6 15.5Z"
-                          :fill="currentTheme === 'dark' ? '#fff' : '#CFD8F0'"
-                        />
-                      </svg>
-                      历史问答
-                    </h3>
-
-                    <div
-                      v-if="qaHistoryList.length > 0"
-                      class="qa-history-list"
-                    >
-                      <div
-                        v-for="(item, index) in qaHistoryList"
-                        :key="index"
-                        class="qa-history-item"
-                        :class="{ active: selectedHistoryItem === index }"
-                        @click="selectHistoryItem(index)"
-                      >
-                        <div class="qa-history-title">{{ item.question }}</div>
-                        <div class="qa-history-time">
-                          {{ formatDate(item.timestamp) }}
-                        </div>
-                      </div>
-                    </div>
-                    <div v-else class="qa-empty-history">
-                      <p>暂无历史问答</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 右侧区域 - 聊天 -->
-              <div class="qa-content-right">
-                <div class="qa-chat-container">
-                  <div class="qa-chat-header">
-                    <h3>课程问答</h3>
-                    <p>向教师提问，或使用AI智能解答</p>
-                  </div>
-
-                  <!-- 聊天区域 -->
-                  <div ref="chatBodyRef" class="qa-chat-body">
-                    <div
-                      v-if="chatMessages.length > 0"
-                      class="qa-chat-messages"
-                    >
-                      <div
-                        v-for="(message, index) in chatMessages"
-                        :key="index"
-                        class="qa-message-item"
-                        :class="message.role"
-                      >
-                        <div class="qa-message-avatar">
-                          <img
-                            :src="
-                              message.role === 'user'
-                                ? userAvatar
-                                : aiPeopleAvatar
-                            "
-                            alt="Avatar"
-                          />
-                        </div>
-                        <div class="qa-message-content">
-                          <div class="qa-message-name">
-                            {{
-                              message.role === "user"
-                                ? userNickname
-                                : "智能助手"
-                            }}
-                          </div>
-                          <div
-                            class="qa-message-text"
-                            v-html="parseMarkdown(message.content)"
-                          />
-                          <div class="qa-message-time">
-                            {{ formatMessageTime(message.timestamp) }}
-                          </div>
-                        </div>
-                      </div>
-                      <!-- 正在输入提示 -->
-                      <div v-if="isTyping" class="qa-typing-indicator">
-                        <span />
-                        <span />
-                        <span />
-                      </div>
-                    </div>
-                    <div v-else class="qa-empty-chat">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="64"
-                        height="64"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <path
-                          fill-rule="evenodd"
-                          clip-rule="evenodd"
-                          d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10 1.5 0 2.921-.33 4.21-.92l3.715 1.483a1 1 0 001.317-1.024l-.473-4.593A9.96 9.96 0 0022 12c0-5.523-4.477-10-10-10zm0 18a8 8 0 110-16 8 8 0 010 16z"
-                          fill="#CFD8F0"
-                        />
-                        <circle cx="8" cy="10" r="1.5" fill="#CFD8F0" />
-                        <circle cx="12" cy="10" r="1.5" fill="#CFD8F0" />
-                        <circle cx="16" cy="10" r="1.5" fill="#CFD8F0" />
-                      </svg>
-                      <p>暂无对话，发送第一条消息开始聊天</p>
-                    </div>
-                  </div>
-
-                  <!-- 输入区域 -->
-                  <div class="qa-chat-footer">
-                    <div class="qa-closed-notice">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                      </svg>
-                      <span>教师已关闭讨论功能</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CourseQA
+          :visible="activeMenu === 'course-qa'"
+          :current-theme="currentTheme"
+          :user-avatar="userAvatar"
+          :user-nickname="userNickname"
+          :qa-stats="qaStats"
+          :qa-history-list="qaHistoryList"
+          :chat-messages="chatMessages"
+          :is-typing="isTyping"
+          @go-back="goBack"
+          @toggle-theme="toggleTheme"
+          @go-to-account="goToAccount"
+          @logout="handleLogout"
+          @send-message="handleQASend"
+        />
 
         <!-- 课程成绩页面 -->
-        <div
-          v-show="activeMenu === 'grades'"
-          data-v-2cf49992=""
-          class="course-grades-wrapper"
-          :class="currentTheme"
-        >
-          <!-- 头部 -->
-          <div
-            data-v-3e66491d=""
-            data-v-cebc91e2=""
-            class="layout-header"
-            :class="currentTheme"
-            isatlas="1"
-            style="z-index: 10"
-          >
-            <div
-              id="header-content-layout only-filter"
-              data-v-3e66491d=""
-              class="header-content"
-            >
-              <div data-v-3e66491d="" class="item header-left">
-                <div
-                  data-v-3e66491d=""
-                  class="item header-back spotlight-button"
-                  @click="goBack"
-                  @mousemove="handleButtonMouseMove"
-                  style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </div>
-                <span data-v-3e66491d="" class="current-time">{{
-                  currentDate
-                }}</span>
-                <div data-v-3e66491d="" class="theme-mode" @click="toggleTheme">
-                  <ThemeSunIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'light' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                  <ThemeMoonIcon
-                    data-v-3e66491d=""
-                    :fill="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                    :stroke="currentTheme === 'dark' ? '#CFD8F0' : '#B4B4C7'"
-                  />
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-center">
-                <div
-                  data-v-cebc91e2=""
-                  data-v-3e66491d=""
-                  class="study-mode custom-mode"
-                >
-                  <div
-                    data-v-cebc91e2=""
-                    data-v-3e66491d=""
-                    data-name="0"
-                    class="mode-item active"
-                    style="margin: 0 auto"
-                  >
-                    课程成绩
-                  </div>
-                </div>
-              </div>
-              <div data-v-3e66491d="" class="item header-right">
-                <div class="user-dropdown-area">
-                  <el-dropdown trigger="click">
-                    <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
-                      <img :src="userAvatar" alt="" class="avatar" />
-                      <span class="name">{{ userNickname }}</span>
-                      <i class="el-icon-arrow-down" />
-                    </div>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="goToAccount">账号管理</el-dropdown-item>
-                        <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="course-grades-container" :class="currentTheme">
-            <div class="grades-content">
-              <!-- 成绩卡片 -->
-              <div class="grades-cards">
-                <div class="grades-card" :class="currentTheme">
-                  <div class="grades-card-header">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="M12 20h9" />
-                      <path
-                        d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-                      />
-                    </svg>
-                    <h3>课时成绩</h3>
-                  </div>
-                  <div class="grades-card-content">
-                    <div v-if="courseScores" class="grades-score">
-                      {{ courseScores.courseScore || 0 }}
-                    </div>
-                    <div v-else class="grades-loading">
-                      <el-skeleton :rows="1" />
-                    </div>
-                  </div>
-                </div>
-
-                <div class="grades-card" :class="currentTheme">
-                  <div class="grades-card-header">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path
-                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                      />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                      <polyline points="10 9 9 9 8 9" />
-                    </svg>
-                    <h3>作业成绩</h3>
-                  </div>
-                  <div class="grades-card-content">
-                    <div v-if="courseScores" class="grades-score">
-                      {{ courseScores.workScore || 0 }}
-                    </div>
-                    <div v-else class="grades-loading">
-                      <el-skeleton :rows="1" />
-                    </div>
-                  </div>
-                </div>
-
-                <div class="grades-card" :class="currentTheme">
-                  <div class="grades-card-header">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
-                      <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-                      <line x1="6" y1="1" x2="6" y2="4" />
-                      <line x1="10" y1="1" x2="10" y2="4" />
-                      <line x1="14" y1="1" x2="14" y2="4" />
-                    </svg>
-                    <h3>考试成绩</h3>
-                  </div>
-                  <div class="grades-card-content">
-                    <div v-if="courseScores" class="grades-score">
-                      {{ courseScores.examScore || 0 }}
-                    </div>
-                    <div v-else class="grades-loading">
-                      <el-skeleton :rows="1" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 成绩图表 -->
-              <div class="grades-chart-container" :class="currentTheme">
-                <div class="grades-chart-header">
-                  <h3>成绩分布</h3>
-                </div>
-                <div class="grades-chart-content">
-                  <div ref="gradesChartRef" class="grades-chart" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CourseGrades
+          :visible="activeMenu === 'grades'"
+          :current-theme="currentTheme"
+          :course-scores="courseScores"
+          :user-avatar="userAvatar"
+          :user-nickname="userNickname"
+          @go-back="goBack"
+          @toggle-theme="toggleTheme"
+          @go-to-account="goToAccount"
+          @logout="handleLogout"
+        />
       </div>
     </div>
     <WrongQuestionDetailDialog
@@ -2321,6 +1076,13 @@ import BackArrowIcon from "@/components/icons/BackArrowIcon.vue";
 import WrongQuestionDetailDialog from "@/components/WrongQuestionDetailDialog.vue"; // 导入新的组件
 import WrongExercise from "@/views/account/wrong-exercise.vue"; // 嵌入随练组件
 import logo from "@/assets/kecheng.jpg"; // 导入logo图片
+import CourseMaterials from "./course-detail/CourseMaterials.vue"; // 课程资料子组件
+import HtmlAnimations from "./course-detail/HtmlAnimations.vue"; // HTML 动画子组件
+import HomeworkExam from "./course-detail/HomeworkExam.vue"; // 作业考试子组件
+import CourseGrades from "./course-detail/CourseGrades.vue"; // 课程成绩子组件
+import CourseSidebar from "./course-detail/CourseSidebar.vue"; // 侧边栏子组件
+import MasteryPage from "./course-detail/MasteryPage.vue"; // 知识点掌握子组件
+import CourseQA from "./course-detail/CourseQA.vue"; // 课程问答子组件
 import HomeworkEmptyImg from "@/assets/new-release/homework-svgrepo-com.svg?url";
 import resourceTabNormal from "@/assets/course-detail-images/resource-tab-normal-vue.png";
 import resourceTabActive from "@/assets/course-detail-images/resource-tab-active-vue.png";
@@ -2365,36 +1127,13 @@ const videoPlayer = ref(null);
 const autoPlayOnLoad = ref(false);
 const currentHour = ref(null);
 const isAiDialogVisible = ref(false);
-const aiDialogRef = ref(null);
-const catalogRef = ref(null);
-
-// 计算目录的 top 位置
-const catalogTop = computed(() => {
-  if (isAiDialogVisible.value) {
-    // 展开状态：AI框初始位置 + 展开后的高度 + 间距
-    return 'calc(5.83333vw + 600px + 1vw)';
-  } else {
-    // 收起状态：AI框初始位置 + 原始高度 + 间距
-    return 'calc(5.83333vw + 10.4167vw + 1vw)';
-  }
-});
-
-const masteryChartRef = ref(null); // 添加图表引用
-let masteryChart = null; // 添加图表实例变量
-// 新增掌握概览柱状图和饼状图引用
-const masterySummaryChartRef = ref(null);
-let masterySummaryChart: any = null;
-const masteryPieChartRef = ref(null);
-let masteryPieChart: any = null;
+const courseStudyRef = ref(null);
 
 // 课程成绩相关
 const courseScores = ref<CourseScoreResult | null>(null);
 const gradesLoading = ref(false);
-const gradesChartRef = ref(null);
 
 // 课程问答相关数据
-const chatBodyRef = ref(null);
-const selectedHistoryItem = ref(-1);
 const qaHistoryList = ref([]);
 const qaStats = ref({
   totalQuestions: 12,
@@ -2403,8 +1142,7 @@ const qaStats = ref({
   avgResponseTime: "5分钟"
 });
 
-// 旧随练错题列表逻辑已由新组件接管，保留占位变量避免引用报错（若有遗留）
-const wrongQuestionList = ref([]); // deprecated
+// 随练对话框状态（部分逻辑可能仍旧触发）
 const isWrongQuestionDialogVisible = ref(false);
 const selectedWrongQuestion = ref(null);
 
@@ -2436,6 +1174,11 @@ watch(
 const currentMessage = ref("");
 const sendingMessage = ref(false);
 const streamResponse = ref("");
+
+const scrollToBottom = () => {
+  // 这是一个占位符，实际滚动逻辑在子组件中通过 watch 处理
+  console.log("scrollToBottom called");
+};
 
 // 处理按钮光效
 const handleButtonMouseMove = (e: MouseEvent) => {
@@ -2766,9 +1509,10 @@ function handleMenuClick(menuName: string) {
   activeMenu.value = menuName;
 
   // 如果视频正在播放且切换到了非课程学习菜单，则暂停视频
-  if (menuName !== "course-learn" && videoPlayer.value) {
-    if (!videoPlayer.value.paused) {
-      videoPlayer.value.pause();
+  const videoPlayerEl = courseStudyRef.value?.videoPlayer;
+  if (menuName !== "course-learn" && videoPlayerEl) {
+    if (!videoPlayerEl.paused) {
+      videoPlayerEl.pause();
     }
   }
 
@@ -2788,77 +1532,7 @@ function handleMenuClick(menuName: string) {
     fetchHtmlAnimations();
   }
 
-  // 更新 SVG 图标颜色
-  const svgElements = document.querySelectorAll(".hover-box svg");
-  svgElements.forEach(svg => {
-    const parentElement = svg.closest(".hover-box");
-    const menuItem = parentElement?.closest(".item");
-    const currentMenuName = menuItem?.getAttribute("data-menu");
-    const isCurrentActive = currentMenuName === menuName;
-
-    // 定义颜色
-    const activeColor = currentTheme.value === "dark" ? "white" : "white";
-    const inactiveColor = currentTheme.value === "dark" ? "#B4B4C7" : "#5a6b8a";
-    const color = isCurrentActive ? activeColor : inactiveColor;
-
-    // 设置整个SVG的stroke颜色
-    svg.setAttribute("stroke", color);
-
-    // 设置所有path和circle的填充颜色
-    const elements = svg.querySelectorAll("path, circle, rect");
-    elements.forEach(el => {
-      if (el.getAttribute("fill") !== "none") {
-        el.setAttribute("fill", color);
-      }
-      el.setAttribute("stroke", color);
-    });
-  });
-
-  // 更新文字颜色
-  const sideNames = document.querySelectorAll(".side-name");
-  sideNames.forEach(name => {
-    const element = name as HTMLElement;
-    const menuItem = element.closest(".item");
-    const currentMenuName = menuItem?.getAttribute("data-menu");
-    const isCurrentActive = currentMenuName === menuName;
-
-    if (isCurrentActive) {
-      // 当前选中的菜单项
-      element.style.color = "white";
-    } else {
-      // 未选中的菜单项
-      if (currentTheme.value === "dark") {
-        element.style.color = "#B4B4C7";
-      } else {
-        element.style.color = "#5a6b8a";
-      }
-    }
-  });
-
-  // 如果切换到知识点页面，初始化图表
-  if (menuName === "mastery") {
-    nextTick(() => {
-      // 检查图表是否已经初始化
-      if (!masteryChart && masteryChartRef.value) {
-        initMasteryChart();
-      } else if (masteryChart) {
-        // 已初始化但可能需要刷新
-        masteryChart.resize();
-      }
-      // 初始化或刷新掌握概览柱状图
-      if (!masterySummaryChart && masterySummaryChartRef.value) {
-        initMasterySummaryChart();
-      } else if (masterySummaryChart) {
-        masterySummaryChart.resize();
-      }
-      // 初始化或刷新掌握概览饼状图
-      if (!masteryPieChart && masteryPieChartRef.value) {
-        initMasteryPieChart();
-      } else if (masteryPieChart) {
-        masteryPieChart.resize();
-      }
-    });
-  }
+  // 更新侧边栏状态逻辑保持在子组件中，这里不再需要操作 DOM 修改图标颜色
 }
 
 // ================= HTML 动画展示（学生端只读） =================
@@ -3081,10 +1755,6 @@ const loadChatHistory = async () => {
       response.data.history
     ) {
       chatMessages.value = response.data.history;
-      // 滚动到底部
-      nextTick(() => {
-        scrollToBottomQA();
-      });
     } else {
       console.log("没有历史聊天记录或格式不正确");
     }
@@ -3132,11 +1802,6 @@ const sendMessage = async () => {
   streamResponse.value = "";
 
   // 先不显示isTyping，等请求启动后再显示
-
-  // 滚动到底部
-  nextTick(() => {
-    scrollToBottomQA();
-  });
 
   try {
     // 不再预先添加AI消息，而是等待第一个响应
@@ -3188,7 +1853,7 @@ const sendMessage = async () => {
 
         // 滚动到底部
         nextTick(() => {
-          scrollToBottomQA();
+          // scrollToBottomQA();
         });
       }
     );
@@ -3208,14 +1873,6 @@ const sendMessage = async () => {
   }
 };
 
-// 滚动到底部
-const scrollToBottom = () => {
-  const scrollbar = document.querySelector(".ai-talk-box .el-scrollbar__wrap");
-  if (scrollbar) {
-    scrollbar.scrollTop = scrollbar.scrollHeight;
-  }
-};
-
 // 清空聊天记录
 const clearChat = () => {
   ElMessageBox.confirm("确定要清空所有聊天记录吗？", "提示", {
@@ -3230,99 +1887,9 @@ const clearChat = () => {
     .catch(() => {});
 };
 
-// 简单的Markdown解析函数
-const parseMarkdown = (text: string) => {
-  if (!text) return "";
-
-  // 处理粗体 **text**
-  let formatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-
-  // 处理换行符
-  formatted = formatted.replace(/\n/g, "<br>");
-
-  return formatted;
-};
-
-// 格式化消息时间
-const formatMessageTime = (timestamp: string) => {
-  if (!timestamp) return "";
-  const date = new Date(timestamp);
-  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
-};
-
-// 选择历史聊天记录
-const selectHistoryItem = (index: number) => {
-  selectedHistoryItem.value = index;
-  const selectedHistory = qaHistoryList.value[index];
-
-  // 加载历史对话
-  chatMessages.value = [
-    {
-      role: "user",
-      content: selectedHistory.question,
-      timestamp: selectedHistory.timestamp
-    },
-    {
-      role: "ai",
-      content: selectedHistory.answer,
-      timestamp: selectedHistory.timestamp
-    }
-  ];
-
-  // 滚动到底部
-  nextTick(() => {
-    scrollToBottomQA();
-  });
-};
-
-// 滚动聊天窗口到底部
-const scrollToBottomQA = () => {
-  if (chatBodyRef.value) {
-    chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight;
-  }
-};
-
-// 初始化SVG图标和文字颜色
-const initIconColors = () => {
-  // 初始化SVG图标颜色
-  const svgElements = document.querySelectorAll(".hover-box svg");
-  svgElements.forEach(svg => {
-    const parentElement = svg.closest(".hover-box");
-    const menuItem = parentElement?.closest(".item");
-    const currentMenuName = menuItem?.getAttribute("data-menu");
-    const isCurrentActive = currentMenuName === activeMenu.value;
-
-    // 浅色模式下所有图标默认使用深蓝色
-    const color = isCurrentActive ? "white" : "#5a6b8a";
-
-    // 设置整个SVG的stroke颜色
-    svg.setAttribute("stroke", color);
-
-    // 设置所有path和circle的填充颜色
-    const elements = svg.querySelectorAll("path, circle, rect");
-    elements.forEach(el => {
-      if (el.getAttribute("fill") !== "none") {
-        el.setAttribute("fill", color);
-      }
-      el.setAttribute("stroke", color);
-    });
-  });
-
-  // 初始化文字颜色
-  const sideNames = document.querySelectorAll(".side-name");
-  sideNames.forEach(name => {
-    const element = name as HTMLElement;
-    const menuItem = element.closest(".item");
-    const currentMenuName = menuItem?.getAttribute("data-menu");
-    const isCurrentActive = currentMenuName === activeMenu.value;
-
-    // 设置文字颜色
-    if (isCurrentActive) {
-      element.style.color = "white"; // 选中状态为白色
-    } else {
-      element.style.color = "#5a6b8a"; // 非选中也使用深蓝色
-    }
-  });
+const handleQASend = (content: string) => {
+  currentMessage.value = content;
+  sendMessage();
 };
 
 // 获取课程成绩
@@ -3334,10 +1901,6 @@ const fetchCourseScores = async () => {
     const response = await getCourseScore({ courseId: courseId.value });
     if (response && response.code === 200 && response.data) {
       courseScores.value = response.data;
-      // 在DOM更新后初始化图表
-      nextTick(() => {
-        initGradesChart();
-      });
     }
   } catch (error) {
     console.error("获取课程成绩失败:", error);
@@ -3347,372 +1910,7 @@ const fetchCourseScores = async () => {
   }
 };
 
-// 初始化成绩图表
-const initGradesChart = () => {
-  if (!gradesChartRef.value || !courseScores.value) return;
-
-  const gradeChart = echarts.init(gradesChartRef.value);
-
-  const option = {
-    tooltip: {
-      trigger: "item",
-      formatter: "{b}: {c}"
-    },
-    legend: {
-      orient: "horizontal",
-      bottom: 0,
-      data: ["课时成绩", "作业成绩", "考试成绩"]
-    },
-    series: [
-      {
-        type: "pie",
-        radius: ["40%", "70%"],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: "#fff",
-          borderWidth: 2
-        },
-        label: {
-          show: false,
-          position: "center"
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 20,
-            fontWeight: "bold"
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: [
-          {
-            value: courseScores.value.courseScore,
-            name: "课时成绩",
-            itemStyle: { color: "#409eff" }
-          },
-          {
-            value: courseScores.value.workScore,
-            name: "作业成绩",
-            itemStyle: { color: "#604ffd" }
-          },
-          {
-            value: courseScores.value.examScore,
-            name: "考试成绩",
-            itemStyle: { color: "#ff6b6b" }
-          }
-        ]
-      }
-    ]
-  };
-
-  gradeChart.setOption(option);
-
-  // 处理窗口大小变化
-  window.addEventListener("resize", () => {
-    gradeChart.resize();
-  });
-};
-
-// 初始化知识点圆环图表
-const initMasteryChart = () => {
-  // 确保DOM已加载
-  if (!masteryChartRef.value) return;
-
-  // 初始化echarts实例
-  masteryChart = echarts.init(masteryChartRef.value);
-
-  // 基于legend数据构建图表数据
-  const chartData = [
-    {
-      name: "掌握较好",
-      value: 100.0,
-      itemStyle: { color: "rgb(140, 229, 162)" }
-    },
-    {
-      name: "掌握一般",
-      value: 0.0,
-      itemStyle: { color: "rgb(255, 203, 102)" }
-    },
-    { name: "薄弱点", value: 0.0, itemStyle: { color: "rgb(255, 162, 162)" } },
-    { name: "遗漏点", value: 0.0, itemStyle: { color: "rgb(204, 204, 204)" } },
-    { name: "免考", value: 0.0, itemStyle: { color: "rgb(143, 208, 255)" } }
-  ];
-
-  // 过滤掉数值为0的项，以便正确显示
-  const filteredData = chartData.filter(item => item.value > 0);
-
-  // 图表配置
-  const option = {
-    tooltip: {
-      trigger: "item",
-      formatter: "{b}: {c}%",
-      backgroundColor: "rgba(0, 0, 0, 0.8)",
-      borderWidth: 0,
-      borderRadius: 16,
-      textStyle: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: 700
-      },
-      padding: [12, 16],
-      extraCssText: "backdrop-filter: blur(20px);"
-    },
-    series: [
-      {
-        name: "知识点",
-        type: "pie",
-        radius: ["60%", "80%"], // 环形图的内外半径
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 0,
-          borderColor: "#fff",
-          borderWidth: 2
-        },
-        label: {
-          show: false
-        },
-        emphasis: {
-          scale: true,
-          scaleSize: 10
-        },
-        data:
-          filteredData.length > 0
-            ? filteredData
-            : [
-                // 如果没有数据，显示一个占位图
-                {
-                  value: 100,
-                  name: "暂无数据",
-                  itemStyle: { color: "#f0f0f0" }
-                }
-              ]
-      }
-    ]
-  };
-
-  // 应用配置
-  masteryChart.setOption(option);
-
-  // 添加窗口大小变化的自适应
-  window.addEventListener("resize", () => {
-    masteryChart?.resize();
-  });
-};
-
-// ============ 新增 四项数量柱状图 ============
-const initMasterySummaryChart = () => {
-  if (!masterySummaryChartRef.value) return;
-  if (masterySummaryChart) masterySummaryChart.dispose();
-  masterySummaryChart = echarts.init(masterySummaryChartRef.value);
-  updateMasterySummaryChart();
-  window.addEventListener("resize", () => masterySummaryChart?.resize());
-};
-
-// 初始化饼状图
-const initMasteryPieChart = () => {
-  if (!masteryPieChartRef.value) return;
-  if (masteryPieChart) masteryPieChart.dispose();
-  masteryPieChart = echarts.init(masteryPieChartRef.value);
-  updateMasteryPieChart();
-  window.addEventListener("resize", () => masteryPieChart?.resize());
-};
-
-const updateMasteryPieChart = () => {
-  if (!masteryPieChart) return;
-  const isDark = currentTheme.value === "dark";
-  
-  // 1. 准备数据
-  const rawData = [
-    { value: studyEffectData.value.knowledgePointNum || 0, name: "基础知识点" },
-    { value: studyEffectData.value.keyPointNum || 0, name: "重点" },
-    { value: studyEffectData.value.difficultPointNum || 0, name: "难点" },
-    { value: studyEffectData.value.conceptNum || 0, name: "概念" }
-  ];
-  
-  const total = rawData.reduce((sum, item) => sum + item.value, 0);
-  // 过滤掉 0 值用于显示饼图，但图例保留所有
-  const chartData = rawData.filter(d => d.value > 0);
-
-  // 2. 配色方案
-  const colors = isDark 
-    ? ["#4facfe", "#00f2fe", "#2ecc71", "#f1c40f"]
-    : ["#409eff", "#67c23a", "#e6a23c", "#f56c6c"];
-
-  // 3. 配置项
-  masteryPieChart.setOption({
-    tooltip: {
-      trigger: "item",
-      formatter: "{b}: {c} ({d}%)",
-      backgroundColor: isDark ? "rgba(30, 30, 38, 0.9)" : "rgba(255, 255, 255, 0.9)",
-      borderColor: isDark ? "#3d3f55" : "#ebeef5",
-      borderWidth: 1,
-      textStyle: { color: isDark ? "#fff" : "#303133" }
-    },
-    legend: {
-      orient: "vertical",
-      left: "0", // 靠左
-      top: "center", // 垂直居中
-      itemWidth: 14,
-      itemHeight: 14,
-      itemGap: 20, // 增加间距
-      formatter: (name) => {
-        const item = rawData.find(d => d.name === name);
-        return `{name|${name}}   {val|${item?.value || 0}}`;
-      },
-      textStyle: {
-        rich: {
-          name: {
-            fontSize: 14,
-            color: isDark ? "#b4b4c7" : "#606266",
-            width: 90 // 固定宽度对齐
-          },
-          val: {
-            fontSize: 15,
-            fontWeight: "bold",
-            color: isDark ? "#fff" : "#303133"
-          }
-        }
-      }
-    },
-    series: [
-      {
-        name: "知识点分布",
-        type: "pie",
-        radius: ["55%", "75%"], // 环形大小，适中，不至于太大压迫
-        center: ["65%", "50%"], // 居右，留出左侧图例空间
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 8,
-          borderColor: isDark ? "#1e1e26" : "#fff",
-          borderWidth: 3
-        },
-        label: {
-          show: true,
-          position: "center",
-          formatter: `{total|${total}}\n{text|总计}`,
-          rich: {
-            total: {
-              fontSize: 36,
-              fontWeight: "bold",
-              color: isDark ? "#fff" : "#303133",
-              padding: [0, 0, 4, 0]
-            },
-            text: {
-              fontSize: 14,
-              color: isDark ? "#888" : "#999"
-            }
-          }
-        },
-        emphasis: {
-          scale: true,
-          scaleSize: 10,
-          label: {
-            show: true,
-            fontSize: 40,
-            fontWeight: "bold"
-          }
-        },
-        labelLine: { show: false },
-        data: chartData.map((d, i) => ({
-          ...d,
-          itemStyle: { color: colors[i % colors.length] }
-        }))
-      }
-    ]
-  });
-};
-
-const updateMasterySummaryChart = () => {
-  if (!masterySummaryChart) return;
-  const isDark = currentTheme.value === "dark";
-  const textColor = isDark ? "#b4b4c7" : "#909399";
-  const borderColor = isDark ? "rgba(255,255,255,0.05)" : "#f0f2f5";
-  const dataValues = [
-    studyEffectData.value.knowledgePointNum || 0,
-    studyEffectData.value.keyPointNum || 0,
-    studyEffectData.value.difficultPointNum || 0,
-    studyEffectData.value.conceptNum || 0
-  ];
-  const maxVal = Math.max(...dataValues, 10);
-  
-  masterySummaryChart.setOption({
-    grid: { left: "15%", right: "5%", top: "15%", bottom: "15%" },
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "none" },
-      backgroundColor: isDark ? "rgba(30, 30, 38, 0.9)" : "rgba(255, 255, 255, 0.9)",
-      borderColor: isDark ? "#3d3f55" : "#ebeef5",
-      borderWidth: 1,
-      borderRadius: 12,
-      padding: [10, 14],
-      textStyle: { color: isDark ? "#fff" : "#303133", fontWeight: 500 }
-    },
-    xAxis: {
-      type: "category",
-      data: ["基础", "重点", "难点", "概念"],
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { color: textColor, fontSize: 12, margin: 15 }
-    },
-    yAxis: {
-      type: "value",
-      min: 0,
-      max: Math.ceil(maxVal * 1.2),
-      axisLine: { show: false },
-      axisTick: { show: false },
-      splitLine: { lineStyle: { color: borderColor, type: "solid" } },
-      axisLabel: { show: true, color: textColor, fontSize: 11 }
-    },
-    series: [
-      {
-        name: "数量",
-        type: "bar",
-        data: dataValues.map((v, i) => {
-          const colors = isDark 
-            ? [
-                ["#4facfe", "#00f2fe"],
-                ["#72D5FF", "#4facfe"],
-                ["#a8b8e8", "#72D5FF"],
-                ["#c8d4f0", "#a8b8e8"]
-              ]
-            : [
-                ["#409eff", "#72D5FF"],
-                ["#604ffd", "#409eff"],
-                ["#72D5FF", "#CFD8F0"],
-                ["#CFD8F0", "#a8b8e8"]
-              ];
-          const [c1, c2] = colors[i];
-          return {
-            value: v,
-            itemStyle: {
-              borderRadius: [8, 8, 8, 8],
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: c1 },
-                { offset: 1, color: c2 }
-              ]),
-              shadowColor: isDark ? "rgba(0,0,0,0.5)" : "rgba(96, 79, 253, 0.15)",
-              shadowBlur: 12,
-              shadowOffsetY: 6
-            }
-          };
-        }),
-        barWidth: 28,
-        showBackground: false,
-        label: {
-          show: true,
-          position: "top",
-          distance: 10,
-          color: isDark ? "#fff" : "#303133",
-          fontWeight: "bold",
-          fontSize: 14
-        }
-      }
-    ]
-  });
-};
+// 冗余图表和 UI 逻辑已迁移至子组件
 
 // 初始化课程问答历史数据
 const initQAHistory = () => {
@@ -3749,135 +1947,7 @@ const studyEffectData = ref({
   chapterList: []
 });
 
-// New reactive states for collapse
-const chapterCollapseStates = reactive(new Map<number, boolean>());
-const subsectionCollapseStates = reactive(new Map<string, boolean>());
-
-// Helper functions for collapse
-const toggleChapterCollapse = (chapterId: number) => {
-  chapterCollapseStates.set(chapterId, !chapterCollapseStates.get(chapterId));
-};
-
-const isChapterExpanded = (chapterId: number) => {
-  return chapterCollapseStates.get(chapterId) ?? false; // Default to collapsed
-};
-
-const toggleSubsectionCollapse = (chapterId: number, sectionType: string) => {
-  const key = `${chapterId}-${sectionType}`;
-  subsectionCollapseStates.set(key, !subsectionCollapseStates.get(key));
-};
-
-const isSubsectionExpanded = (chapterId: number, sectionType: string) => {
-  const key = `${chapterId}-${sectionType}`;
-  return subsectionCollapseStates.get(key) ?? false; // Default to collapsed
-};
-
-// JS 动画钩子：解决 max-height 动画卡顿问题，同时处理 padding 造成的卡顿
-const collapseEnter = (el: Element) => {
-  const element = el as HTMLElement;
-  
-  // 0. 准备测量：清除可能残留的样式，确保能获取到自然高度
-  element.style.height = 'auto';
-  element.style.paddingTop = '';
-  element.style.paddingBottom = '';
-  element.style.marginTop = '';
-  element.style.marginBottom = '';
-  element.style.opacity = '';
-  element.style.overflow = 'visible';
-  
-  // 1. 获取真实高度（使用 offsetHeight 以包含 padding 和 border，解决 border-box 下的跳变问题）
-  const fullHeight = element.offsetHeight;
-  const initialStyle = window.getComputedStyle(element);
-  const fullPaddingTop = initialStyle.paddingTop;
-  const fullPaddingBottom = initialStyle.paddingBottom;
-  const fullMarginTop = initialStyle.marginTop;
-  const fullMarginBottom = initialStyle.marginBottom;
-
-  // 2. 立即压缩到起始状态 (0)
-  element.style.height = '0';
-  element.style.paddingTop = '0';
-  element.style.paddingBottom = '0';
-  element.style.marginTop = '0';
-  element.style.marginBottom = '0';
-  element.style.opacity = '0';
-  element.style.overflow = 'hidden';
-  
-  // 3. 强制重绘，确保起始状态生效
-  void element.offsetHeight; 
-  
-  // 4. 开启过渡：指定具体属性以提高性能，避免使用 'all'
-  const transitionStyle = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-  element.style.transition = transitionStyle;
-  // 提示浏览器进行 GPU 加速优化
-  element.style.willChange = 'height, padding, margin, opacity';
-  
-  // 5. 展开到目标状态
-  requestAnimationFrame(() => {
-      element.style.height = fullHeight + 'px';
-      element.style.paddingTop = fullPaddingTop;
-      element.style.paddingBottom = fullPaddingBottom;
-      element.style.marginTop = fullMarginTop;
-      element.style.marginBottom = fullMarginBottom;
-      element.style.opacity = '1';
-  });
-};
-
-const collapseAfterEnter = (el: Element) => {
-  const element = el as HTMLElement;
-  // 动画结束后，清理内联样式，恢复到 CSS 控制状态
-  element.style.height = ''; 
-  element.style.overflow = '';
-  element.style.transition = '';
-  element.style.willChange = '';
-  element.style.paddingTop = '';
-  element.style.paddingBottom = '';
-  element.style.marginTop = '';
-  element.style.marginBottom = '';
-  element.style.opacity = '';
-};
-
-const collapseLeave = (el: Element) => {
-  const element = el as HTMLElement;
-  
-  // 1. 获取当前真实高度和样式
-  const fullHeight = element.offsetHeight;
-  const initialStyle = window.getComputedStyle(element);
-  
-  // 2. 固定当前状态（显式设置像素值，以便 transition 从此开始）
-  element.style.height = fullHeight + 'px';
-  element.style.paddingTop = initialStyle.paddingTop;
-  element.style.paddingBottom = initialStyle.paddingBottom;
-  element.style.marginTop = initialStyle.marginTop;
-  element.style.marginBottom = initialStyle.marginBottom;
-  element.style.overflow = 'hidden';
-  
-  // 3. 强制重绘
-  void element.offsetHeight;
-  
-  // 4. 开启过渡
-  const transitionStyle = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-  element.style.transition = transitionStyle;
-  element.style.willChange = 'height, padding, margin, opacity';
-  
-  // 5. 压缩到 0
-  requestAnimationFrame(() => {
-      element.style.height = '0';
-      element.style.paddingTop = '0';
-      element.style.paddingBottom = '0';
-      element.style.marginTop = '0';
-      element.style.marginBottom = '0';
-      element.style.opacity = '0';
-  });
-};
-
-const collapseAfterLeave = (el: Element) => {
-  const element = el as HTMLElement;
-  // 关键修复：不要在离开后清理 height/padding 等样式，
-  // 保持 height: 0 等状态，防止 display: none 生效前瞬间闪烁回原高度。
-  // 只清理 transition 和 will-change 以免影响下次操作。
-  element.style.transition = '';
-  element.style.willChange = '';
-};
+// 交互动画逻辑已迁移至子组件
 
 // 获取课程学习效果
 const fetchCourseStudyEffect = async () => {
@@ -4060,64 +2130,7 @@ onMounted(async () => {
   if (activeMenu.value === "grades") {
     fetchCourseScores();
   }
-
-  // 等待DOM更新后初始化图表
-  nextTick(() => {
-    initIconColors();
-    initMasteryChart(); // 初始化知识点图表
-    if (masterySummaryChartRef.value) initMasterySummaryChart();
-    if (masteryPieChartRef.value) initMasteryPieChart();
-  });
 });
-
-// 监听数据变化：更新图表
-watch(studyEffectData, () => {
-  if (activeMenu.value === "mastery") {
-    nextTick(() => {
-      if (masterySummaryChart) updateMasterySummaryChart();
-      else if (masterySummaryChartRef.value) initMasterySummaryChart();
-
-      if (masteryPieChart) updateMasteryPieChart();
-      else if (masteryPieChartRef.value) initMasteryPieChart();
-    });
-  }
-}, { deep: true });
-
-// 监听主题变化：重绘图表
-watch(currentTheme, () => {
-  if (activeMenu.value === "mastery") {
-    if (masteryChart) {
-      masteryChart.dispose();
-      masteryChart = null;
-    }
-    if (masterySummaryChart) {
-      masterySummaryChart.dispose();
-      masterySummaryChart = null;
-    }
-    if (masteryPieChart) {
-      masteryPieChart.dispose();
-      masteryPieChart = null;
-    }
-    nextTick(() => {
-      initMasteryChart();
-      initMasterySummaryChart();
-      initMasteryPieChart();
-    });
-  }
-});
-
-// 监听数据变化：更新柱状图
-watch(
-  () => [
-    studyEffectData.value.knowledgePointNum,
-    studyEffectData.value.keyPointNum,
-    studyEffectData.value.difficultPointNum,
-    studyEffectData.value.conceptNum
-  ],
-  () => {
-    if (masterySummaryChart) updateMasterySummaryChart();
-  }
-);
 </script>
 
 <style>
