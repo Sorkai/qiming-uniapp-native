@@ -561,7 +561,7 @@ const updateMasterySummaryChart = () => {
     props.studyEffectData.difficultPointNum || 0,
     props.studyEffectData.conceptNum || 0
   ];
-  const maxVal = Math.max(...dataValues, 10);
+  const maxVal = Math.max(...dataValues);
   
   masterySummaryChart.setOption({
     grid: { left: "15%", right: "5%", top: "15%", bottom: "15%" },
@@ -585,7 +585,8 @@ const updateMasterySummaryChart = () => {
     yAxis: {
       type: "value",
       min: 0,
-      max: Math.ceil(maxVal * 1.2),
+      max: maxVal > 0 ? Math.ceil(maxVal * 1.2) : undefined,
+      minInterval: 1,
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: { lineStyle: { color: borderColor, type: "solid" } },
@@ -612,7 +613,7 @@ const updateMasterySummaryChart = () => {
         }),
         barWidth: 28,
         showBackground: false,
-        label: { show: true, position: "top", distance: 10, color: isDark ? "#fff" : "#303133", fontWeight: "bold", fontSize: 14 }
+        label: { show: true, position: "top", distance: 5, color: isDark ? "#fff" : "#303133", fontWeight: "bold", fontSize: 14 }
       }
     ]
   });
@@ -678,9 +679,10 @@ onUnmounted(() => {
   padding-top: 60px !important;
   margin-left: 5px !important;
   width: calc(100% - 5px) !important;
-  height: 100vh !important;
+  height: 100% !important;
   box-sizing: border-box !important;
-  overflow: hidden !important;
+  overflow-y: auto !important; /* 关键：允许纵向滚动 */
+  overflow-x: hidden !important;
   background: transparent !important;
   position: relative;
 }
@@ -721,6 +723,12 @@ onUnmounted(() => {
   flex: 1 1 380px;
   max-width: 520px;
   padding: 20px;
+  background: #f3f0ff;
+  border-radius: 24px;
+}
+
+.dark .mastery-summary-left {
+  background: rgba(106, 90, 205, 0.1);
 }
 
 .summary-card {
@@ -733,7 +741,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: transparent;
+  background: #fff;
 }
 
 .summary-card:hover {

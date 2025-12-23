@@ -188,7 +188,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   z-index: 200 !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   background: rgba(64, 158, 255, 0.1) !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   position: relative !important;
   overflow: hidden !important;
 }

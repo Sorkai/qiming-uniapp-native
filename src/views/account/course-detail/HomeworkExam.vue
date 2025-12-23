@@ -279,7 +279,7 @@ const viewExam = (exam: any) => {
   display: flex;
   align-items: center;
   border: 1px solid #ebeef5;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
   background-color: #fff;
   transition: all 0.3s;

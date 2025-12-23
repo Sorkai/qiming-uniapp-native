@@ -1,3 +1,18 @@
+:root {
+  /* 统一修改 Element Plus 按钮和标签的圆角 */
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+}
+
+.el-button:not(.is-round):not(.is-circle) {
+  border-radius: var(--el-border-radius-base) !important;
+}
+
+.el-tag:not(.is-round) {
+  border-radius: var(--el-border-radius-small) !important;
+}
+
 .el-form-item__label {
   font-weight: 700;
 }

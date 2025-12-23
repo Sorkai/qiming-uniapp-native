@@ -407,7 +407,9 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 .course-study-root {
   width: 100%;
   height: 100%;
-  background: transparent; /* 背景透明，由父布局控制，消除侧边栏色差 */
+  background: transparent;
+  overflow-y: auto; /* 关键：允许纵向滚动 */
+  overflow-x: hidden;
 
   &.dark {
     background: transparent;
@@ -415,15 +417,15 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .study-container {
-  padding: 88px 32px 32px;
-  height: 100%;
+  padding: 88px 32px 100px; /* 增加底部留白 */
   box-sizing: border-box;
+  min-height: min-content;
 }
 
 .main-layout {
   display: flex;
   gap: 32px;
-  height: 100%;
+  align-items: flex-start; /* 防止子项被拉伸 */
 }
 
 .left-main {
@@ -535,8 +537,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  flex: 1;
-  min-height: 0;
+  margin-bottom: 32px; /* 增加底部间距 */
 }
 
 .glass-card {
@@ -549,6 +550,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   flex-direction: column;
   overflow: hidden;
   transition: all 0.3s ease;
+  min-height: 300px; /* 改为最小高度，让卡片随内容撑开 */
 
   &:hover {
     box-shadow: $shadow-xl;transform: translateY(-2px);
@@ -622,8 +624,6 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 .card-body {
   flex: 1;
   padding: 20px 24px;
-  overflow-y: auto;
-  min-height: 0;
 }
 
 .knowledge-content {
@@ -686,6 +686,9 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   flex-direction: column;
   gap: 20px;
   flex-shrink: 0;
+  position: sticky;
+  top: 88px; /* 对应 Header 高度 */
+  height: fit-content;
 }
 
 .ai-assistant-widget {

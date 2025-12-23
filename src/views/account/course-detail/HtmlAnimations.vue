@@ -47,7 +47,7 @@
           @click="openHtmlAnimation(item)"
         >
           <div class="card-preview">
-            <img :src="getPlaceholder(item.chapterId)" alt="预览图" />
+            <img :src="item.previewUrl || getPlaceholder(item.chapterId)" alt="预览图" />
             <div class="play-overlay">
               <el-icon size="48">
                 <component :is="VideoPlay" />
@@ -68,26 +68,24 @@
       v-model="htmlAnimPreviewVisible"
       width="90%"
       top="2vh"
-      class="immersive-dialog"
+      :class="['immersive-dialog', currentTheme]"
       :show-close="false"
       destroy-on-close
     >
-      <template #header>
-        <div class="dialog-header-custom">
-          <div class="header-info">
-            <el-icon><component :is="VideoPlay" /></el-icon>
-            <span class="title">HTML动画预览</span>
+      <div class="dialog-header-custom">
+        <div class="header-info">
+          <el-icon><component :is="VideoPlay" /></el-icon>
+          <span class="title">HTML动画预览</span>
+        </div>
+        <div class="header-actions">
+          <div class="action-btn" @click="openHtmlAnimInNew" title="新窗口打开">
+            <el-icon size="18"><component :is="ExternalLink" /></el-icon>
           </div>
-          <div class="header-actions">
-            <div class="action-btn" @click="openHtmlAnimInNew" title="新窗口打开">
-              <el-icon size="18"><component :is="ExternalLink" /></el-icon>
-            </div>
-            <div class="action-btn close" @click="htmlAnimPreviewVisible = false" title="关闭">
-              <el-icon size="18"><component :is="Close" /></el-icon>
-            </div>
+          <div class="action-btn close" @click="htmlAnimPreviewVisible = false" title="关闭">
+            <el-icon size="18"><component :is="Close" /></el-icon>
           </div>
         </div>
-      </template>
+      </div>
       <div v-if="htmlAnimPreviewUrl" class="preview-wrapper-immersive">
         <div v-if="iframeLoading" class="loading-overlay">
           <el-icon class="is-loading" size="40"><component :is="Loading" /></el-icon>
@@ -136,6 +134,7 @@ const props = defineProps<{
     chapterName: string;
     version: string;
     url: string;
+    previewUrl?: string;
   }>;
   userAvatar: string;
   userNickname: string;
@@ -219,6 +218,8 @@ const openHtmlAnimInNew = () => {
   transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.5);
+  /* 强制开启 GPU 加速，修复毛玻璃边缘渲染 Bug */
+  transform: translateZ(0);
 }
 
 .animation-card:hover {
@@ -257,7 +258,7 @@ const openHtmlAnimInNew = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(64, 158, 255, 0.1);
+  background: rgba(0, 184, 212, 0.1);
   opacity: 0;
   transition: all 0.4s ease;
   z-index: 5;
@@ -270,15 +271,15 @@ const openHtmlAnimInNew = () => {
 .play-overlay .el-icon {
   font-size: 56px;
   color: #fff;
-  filter: drop-shadow(0 0 10px rgba(64, 158, 255, 0.6));
+  filter: drop-shadow(0 0 10px rgba(0, 184, 212, 0.6));
 }
 
 /* 优化的平滑毛玻璃过渡：由于 mask-image 实现模糊渐变更加优雅 */
 .card-info-glass {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: -1px;
+  left: -1px;
+  right: -1px;
   padding: 80px 24px 24px;
   /* 降低背景颜色遮挡，使其更透明 */
   background: linear-gradient(
@@ -289,9 +290,10 @@ const openHtmlAnimInNew = () => {
   );
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
-  /* 调整 mask 渐变，让预览图露出更多 */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
-  mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
+  /* 调整 mask 渐变，确保底部完全不透明以修复边缘缝隙 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60%, black 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 60%, black 100%);
+  border-radius: 0 0 24px 24px;
   z-index: 3;
   display: flex;
   flex-direction: column;
@@ -325,7 +327,14 @@ const openHtmlAnimInNew = () => {
 }
 
 .animation-card:hover .card-title {
-  color: #409eff;
+  color: #00b8d4;
+  /* 增加白色描边，确保在各种背景图上都能看清 */
+  text-shadow: 
+    -1px -1px 0 #fff,  
+     1px -1px 0 #fff,
+    -1px  1px 0 #fff,
+     1px  1px 0 #fff,
+     0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .dark .card-title {
@@ -333,73 +342,107 @@ const openHtmlAnimInNew = () => {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+.dark .animation-card:hover .card-title {
+  color: #00b8d4;
+  /* 深色模式下同样使用白色描边，配合青色文字会有很强的霓虹感 */
+  text-shadow: 
+    -1px -1px 0 #fff,  
+     1px -1px 0 #fff,
+    -1px  1px 0 #fff,
+     1px  1px 0 #fff;
+}
+
 .card-version {
   font-size: 13px;
-  color: #409eff;
+  color: #1d1d1f;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
 
 .dark .card-version {
-  color: #409eff;
+  color: #00b8d4;
 }
 
 /* 预览弹窗样式统一 */
 :deep(.immersive-dialog) {
-  background: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(30px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
-  border-radius: 28px !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.3) !important;
+  background: rgba(248, 250, 252, 0.8) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border-radius: 32px !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25) !important;
   overflow: hidden;
 }
 
-:deep(.dark .immersive-dialog) {
-  background: rgba(15, 23, 42, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+:deep(.immersive-dialog.dark) {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+:deep(.immersive-dialog .el-dialog__header) {
+  display: none;
+}
+
+:deep(.immersive-dialog .el-dialog__body) {
+  padding: 0 !important;
 }
 
 .dialog-header-custom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 28px;
-  background: rgba(255, 255, 255, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 20px;
+  margin: 20px 20px 16px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.dark .dialog-header-custom {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 
 .header-info {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .header-info .el-icon {
-  color: #409eff; /* 统一系统蓝 */
-  font-size: 22px;
+  color: #00b8d4;
+  font-size: 20px;
 }
 
 .header-info .title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: #1e293b;
+  letter-spacing: 0.5px;
 }
 
 .dark .header-info .title {
   color: #f1f5f9;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .action-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(0, 0, 0, 0.03);
   color: #475569;
 }
 
@@ -409,8 +452,8 @@ const openHtmlAnimInNew = () => {
 }
 
 .action-btn:hover {
-  background: rgba(64, 158, 255, 0.15);
-  color: #409eff;
+  background: rgba(0, 184, 212, 0.15);
+  color: #00b8d4;
   transform: translateY(-2px);
 }
 
@@ -420,14 +463,20 @@ const openHtmlAnimInNew = () => {
 }
 
 .preview-wrapper-immersive {
-  width: 100%;
-  height: 82vh;
+  width: calc(100% - 40px);
+  height: 80vh;
+  margin: 0 20px 20px;
   position: relative;
-  background: #fff;
+  background: #f8fafc;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .dark .preview-wrapper-immersive {
-  background: #1a1a1a;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .loading-overlay {
@@ -450,7 +499,7 @@ const openHtmlAnimInNew = () => {
 
 /* 统一配色方案 */
 :deep(.light .card-version) {
-  color: #409eff;
+  color: #1d1d1f;
   opacity: 0.8;
 }
 </style>

@@ -40,6 +40,7 @@ export interface HtmlAnimationDisplayResult {
   chapterId: number;
   version: string; // 当前展示版本（解析后的）
   url: string; // 展示文件 URL
+  previewUrl?: string; // 预览图 URL（后端新增）
 }
 
 export interface ApiResponse<T = any> {

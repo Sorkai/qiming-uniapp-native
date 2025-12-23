@@ -1288,15 +1288,15 @@ onUnmounted(() => {
   .reminder {
     margin-bottom: 20px;
 
-    .reminder-content {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      font-size: 14px;
-      color: #5a6b8a;
-      background-color: rgb(220 226 247 / 30%);
-      border: 1px solid rgb(220 226 247 / 60%);
-      border-radius: 8px;
+      .reminder-content {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #5a6b8a;
+        background-color: rgb(220 226 247 / 30%);
+        border: 1px solid rgb(220 226 247 / 60%);
+        border-radius: 12px;
 
       .el-icon {
         margin-right: 12px;
@@ -1344,7 +1344,7 @@ onUnmounted(() => {
         overflow: hidden;
         color: #333;
         background: linear-gradient(135deg, #dce2f7, #c8d4f0);
-        border-radius: 8px;
+        border-radius: 12px;
         box-shadow: 0 4px 12px rgb(220 226 247 / 60%);
 
         p {
@@ -1405,7 +1405,7 @@ onUnmounted(() => {
       padding: 16px;
       background-color: #f7f8fc;
       border: 1px solid #eef0f5;
-      border-radius: 8px;
+      border-radius: 12px;
 
       .course-section {
         margin-bottom: 16px;
@@ -1435,7 +1435,7 @@ onUnmounted(() => {
           padding: 12px;
           background: #fff;
           border: 1px solid #ebeef5;
-          border-radius: 8px;
+          border-radius: 12px;
           box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
           transition: all 0.3s ease;
 
@@ -1450,7 +1450,7 @@ onUnmounted(() => {
             width: 64px;
             height: 64px;
             overflow: hidden;
-            border-radius: 6px;
+            border-radius: 8px;
 
             .thumb-image {
               width: 100%;
@@ -1635,7 +1635,7 @@ onUnmounted(() => {
       color: #5a6b8a;
       text-align: center;
       background: linear-gradient(135deg, rgb(220 226 247 / 40%), rgb(200 212 240 / 30%));
-      border-radius: 8px;
+      border-radius: 10px;
     }
   }
 }

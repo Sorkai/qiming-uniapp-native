@@ -801,12 +801,12 @@ export default defineFakeRoute([
       const sourceType = getQueryParam(query, "sourceType")
         ? parseInt(getQueryParam(query, "sourceType"))
         : null;
-      
+
       let filteredList = mockWrongQuestionList;
       if (sourceType) {
         filteredList = mockWrongQuestionList.filter(q => q.sourceType === sourceType);
       }
-      
+
       const start = (pageNum - 1) * pageSize;
       const end = start + pageSize;
       const list = filteredList.slice(start, end);
@@ -859,8 +859,54 @@ export default defineFakeRoute([
     response: ({ query }) => {
       const courseId = parseInt(getQueryParam(query, "courseId"));
       const chapterId = parseInt(getQueryParam(query, "chapterId"));
-      
-      // 模拟部分章节有动画
+
+      // 模拟不同课程和章节的动画数据
+      const animations = {
+        // Python 基础入门
+        1: {
+          1: { version: "2", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/1/1/v2_python_intro.html" },
+          2: { version: "1", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/1/2/v1_variables.html" },
+          3: { version: "3", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/1/3/v3_control_flow.html" }
+        },
+        // Web 前端开发
+        2: {
+          1: { version: "1", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/2/1/v1_html_tags.html" },
+          5: { version: "2", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/2/5/v2_css_flexbox.html" }
+        },
+        // 数据结构与算法
+        3: {
+          10: { version: "5", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/3/10/v5_linked_list.html" },
+          11: { version: "2", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/3/11/v2_binary_tree.html" },
+          12: { version: "1", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/3/12/v1_quick_sort.html" }
+        },
+        // Vue3 实战开发
+        4: {
+          1: { version: "1", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/4/1/v1_composition_api.html" },
+          3: { version: "2", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/4/3/v2_reactivity.html" }
+        },
+        // 人工智能导论
+        6: {
+          1: { version: "1", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/6/1/v1_neural_network.html" },
+          5: { version: "3", url: "https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/6/5/v3_gradient_descent.html" }
+        }
+      };
+
+      const courseAnims = animations[courseId];
+      if (courseAnims && courseAnims[chapterId]) {
+        const anim = courseAnims[chapterId];
+        return {
+          code: 200,
+          msg: "获取成功",
+          data: {
+            courseId,
+            chapterId,
+            version: anim.version,
+            url: anim.url
+          }
+        };
+      }
+
+      // 兜底逻辑：奇数章节返回一个通用模拟动画，偶数返回 404
       if (chapterId % 2 === 1) {
         return {
           code: 200,
@@ -869,14 +915,14 @@ export default defineFakeRoute([
             courseId,
             chapterId,
             version: "1",
-            url: `https://example.com/animations/course_${courseId}_chapter_${chapterId}.html`
+            url: `https://aiedu-file.lehinet.com/ai-edu-bucket/html_animations/${courseId}/${chapterId}/v1_default.html`
           }
         };
       }
-      
+
       return {
         code: 404,
-        msg: "暂无动画",
+        msg: "该章节暂无动画演示",
         data: null
       };
     }

@@ -521,7 +521,13 @@ const fetchHtmlAnimations = async () => {
       try {
         const { data } = await getHtmlAnimationDisplay({ courseId: courseDetail.value.courseId, chapterId: ch.chapterId });
         if (data?.url) {
-          htmlAnimationList.value.push({ chapterId: ch.chapterId, chapterName: ch.name, version: data.version, url: data.url });
+          htmlAnimationList.value.push({
+            chapterId: ch.chapterId,
+            chapterName: ch.name,
+            version: data.version,
+            url: data.url,
+            previewUrl: data.previewUrl
+          });
         }
       } catch (e) {}
     });
@@ -619,7 +625,7 @@ html, body { background-color: #f5f7fa !important; }
   margin-right: 15px !important;
   height: calc(100vh - 35px) !important;
   border-radius: 24px !important;
-  overflow: visible !important; /* 允许圆角阴影溢出，避免被切断 */
+  overflow: hidden !important; /* 容器层级不滚动，由子页面内部滚动 */
   background-color: transparent !important;
   transition: all 0.3s ease !important;
 }
