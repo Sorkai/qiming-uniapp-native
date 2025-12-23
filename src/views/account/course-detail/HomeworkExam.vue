@@ -245,7 +245,7 @@ const viewExam = (exam: any) => {
 }
 
 .homework-container {
-  padding: 80px 20px 20px;
+  padding: 60px 20px 20px;
   width: 100%;
   height: 100%;
   overflow-y: auto;

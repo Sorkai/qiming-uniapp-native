@@ -113,7 +113,7 @@ const viewMaterial = (material: any) => {
 }
 
 .materials-container {
-  padding: 100px 20px 20px;
+  padding: 60px 20px 20px;
   width: 100%;
   height: 100%;
   overflow-y: auto;

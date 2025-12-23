@@ -311,11 +311,11 @@ watch(
 <style scoped>
 /* 课程问答样式 */
 .course-qa-wrapper {
-  height: 100vh;
+  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
-  padding-top: 80px;
+  padding-top: 60px;
   background-color: transparent; /* 背景透明，由父布局控制，防止“蒙一层” */
   box-sizing: border-box;
   position: relative;
@@ -327,7 +327,7 @@ watch(
 
 .course-qa-container {
   flex: 1;
-  padding: 20px 20px 20px 10px;
+  padding: 0 20px 20px 10px;
   width: 100%;
   display: flex;
   flex-direction: column;

@@ -699,7 +699,7 @@ onUnmounted(() => {
   max-width: 100% !important;
   height: 100% !important;
   overflow-y: auto !important;
-  padding: 20px 24px 100px !important;
+  padding: 0 24px 100px !important;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }

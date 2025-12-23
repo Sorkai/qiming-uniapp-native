@@ -187,8 +187,8 @@ const openHtmlAnimInNew = () => {
 }
 
 .materials-container {
-  /* 88px 顶部偏移对齐侧边栏，32px 左间距与课程页面保持一致 */
-  padding: 88px 32px 32px !important;
+  /* 60px 顶部偏移 + 20px 容器边距 = 80px，对齐侧边栏 */
+  padding: 60px 32px 32px !important;
   width: 100%;
   height: 100%;
   overflow-y: auto;
