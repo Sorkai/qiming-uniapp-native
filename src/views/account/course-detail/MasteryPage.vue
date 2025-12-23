@@ -315,7 +315,9 @@
         </div>
 
         <!-- 如果没有章节数据，显示无数据提示 -->
-        <div v-else class="no-data">暂无学习效果数据</div>
+        <div v-else class="empty-wrapper">
+          <el-empty description="暂无学习效果数据" />
+        </div>
       </div>
     </div>
   </div>
@@ -937,6 +939,20 @@ onUnmounted(() => {
   opacity: 0; transition: opacity 0.3s; pointer-events: none;
 }
 .spotlight-button:hover::before { opacity: 1; }
+
+.empty-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  width: 100%;
+}
+
+.dark :deep(.el-empty__image img),
+.dark :deep(.el-empty__image svg) {
+  filter: brightness(0.7);
+  opacity: 0.8;
+}
 
 .no-data { text-align: center; padding: 40px 0; color: #909399; font-size: 14px; }
 </style>

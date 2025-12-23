@@ -480,7 +480,17 @@ const showLoginDialog = ref(false);
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
 // 当前激活的菜单项
-const activeMenu = ref("home");
+const activeMenu = ref<string>("home");
+
+// 初始化菜单状态
+const initActiveMenu = () => {
+  const savedMenu = storageLocal().getItem("account_active_menu");
+  if (typeof savedMenu === "string" && savedMenu) {
+    activeMenu.value = savedMenu;
+  } else {
+    activeMenu.value = "home";
+  }
+};
 
 // 分页相关
 const currentPage = ref(1);
@@ -602,7 +612,6 @@ const loadCoursePageData = async () => {
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
   activeMenu.value = index;
-  // 不在这里调用加载数据，只通过 watch 监听器加载数据
 };
 
 // 监听滚动事件
@@ -615,34 +624,12 @@ const handleUserInfoUpdate = (event: CustomEvent) => {
   userInfo.value = event.detail;
 };
 
-onMounted(() => {
-  window.addEventListener("scroll", handleScroll);
-  window.addEventListener(
-    "userInfoUpdated",
-    handleUserInfoUpdate as EventListener
-  );
-
-  // 如果当前是首页，加载课程数据
-  if (activeMenu.value === "home") {
-    loadHomeData();
-  }
-});
-
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener(
     "userInfoUpdated",
     handleUserInfoUpdate as EventListener
   );
-});
-
-// 监听菜单选择，切换到首页或课程页面时加载数据
-watch(activeMenu, newVal => {
-  if (newVal === "home") {
-    loadHomeData();
-  } else if (newVal === "course") {
-    loadCoursePageData();
-  }
 });
 
 // 监听课程筛选变化
@@ -801,40 +788,49 @@ const startTyping = () => {
 // 供模板使用的展示列表
 const displayedSummary = computed(() => typedLines.value);
 
-// 当进入首页时启动打字
-watch(activeMenu, newVal => {
+const initialLoadDone = ref(false);
+
+// 监听菜单变化并持久化
+watch(activeMenu, async newVal => {
+  storageLocal().setItem("account_active_menu", newVal);
+  if (!initialLoadDone.value) return;
+
   if (newVal === "home") {
-    // 延迟确保数据已准备
-    setTimeout(() => startTyping(), 100);
+    await loadHomeData();
+    startTyping();
+  } else if (newVal === "course") {
+    await loadCoursePageData();
   }
 });
 
 // 初次挂载如果就在首页也启动
-onMounted(() => {
+onMounted(async () => {
+  window.addEventListener("scroll", handleScroll);
+  window.addEventListener(
+    "userInfoUpdated",
+    handleUserInfoUpdate as EventListener
+  );
+
+  initActiveMenu();
+
   if (activeMenu.value === "home") {
+    await loadHomeData();
     setTimeout(() => startTyping(), 150);
+  } else if (activeMenu.value === "course") {
+    await loadCoursePageData();
   }
+
+  initialLoadDone.value = true;
 });
 
 onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener(
+    "userInfoUpdated",
+    handleUserInfoUpdate as EventListener
+  );
   if (typingTimer) clearTimeout(typingTimer);
 });
-
-// 预留：未来从后端获取 AI 总结内容
-// const loadAiSummary = async () => {
-//   try {
-//     const { code, data } = await getAiSummary();
-//     if (code === 200 && data) {
-//       aiSummaryTitle.value = data.title;
-//       aiSummaryList.value = data.items || [];
-//     }
-//   } catch (e) {
-//     console.error('获取AI总结失败', e);
-//   }
-// };
-
-// 如果需要与首页数据一起加载，可在 loadHomeData 里调用：
-// loadAiSummary();
 </script>
 
 <style lang="scss" scoped>

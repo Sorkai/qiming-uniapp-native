@@ -182,7 +182,66 @@ const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
 const currentTheme = ref("light");
-const activeMenu = ref("course-learn");
+const activeMenu = ref(
+  (storageLocal().getItem(`course_detail_active_menu_${route.params.id}`) as string) ||
+    "course-learn"
+);
+
+// 监听菜单变化并持久化
+watch(activeMenu, newVal => {
+  storageLocal().setItem(`course_detail_active_menu_${route.params.id}`, newVal);
+  // 切换菜单时加载对应数据
+  if (newVal === "homework-exam") {
+    fetchHomeworkList();
+    fetchExamList();
+  } else if (newVal === "grades") {
+    fetchCourseScores();
+  } else if (newVal === "html-animations") {
+    fetchHtmlAnimations();
+  } else if (newVal === "mastery") {
+    fetchCourseStudyEffect();
+  }
+});
+
+// 监听路由参数变化，处理课程切换
+watch(
+  () => route.params.id,
+  newId => {
+    if (newId) {
+      const id = Number(newId);
+      baseCourseId.value = id;
+
+      // 恢复新课程的菜单状态
+      const savedMenu = storageLocal().getItem(
+        `course_detail_active_menu_${id}`
+      ) as string;
+      activeMenu.value = savedMenu || "course-learn";
+
+      // 恢复新课程的课时状态
+      const savedNode = storageLocal().getItem(
+        `course_detail_active_node_${id}`
+      ) as string;
+      activeNode.value = savedNode || "1.1";
+
+      fetchCourseDetail();
+
+      // 如果不是默认页，加载对应数据
+      if (activeMenu.value !== "course-learn") {
+        const menuName = activeMenu.value;
+        if (menuName === "homework-exam") {
+          fetchHomeworkList();
+          fetchExamList();
+        } else if (menuName === "grades") {
+          fetchCourseScores();
+        } else if (menuName === "html-animations") {
+          fetchHtmlAnimations();
+        } else if (menuName === "mastery") {
+          fetchCourseStudyEffect();
+        }
+      }
+    }
+  }
+);
 
 // 用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
@@ -195,7 +254,9 @@ const userNickname = ref(
 const courseStudyRef = ref(null);
 const currentHour = ref(null);
 const currentVideoUrl = ref("");
-const activeNode = ref("1.1");
+const activeNode = ref(
+  (storageLocal().getItem(`course_detail_active_node_${route.params.id}`) as string) || "1.1"
+);
 const autoPlayOnLoad = ref(false);
 const courseContentHtml = computed(() => {
   return courseDetail.value ? getCourseContentByName(courseDetail.value.courseName) : "加载中...";
@@ -364,15 +425,37 @@ const fetchCourseDetail = async () => {
     if (code === 200 && data) {
       courseDetail.value = data;
       if (data.courseAttrList) courseAttrList.value = data.courseAttrList;
-      
-      // 默认加载第一个课时
+
+      // 恢复上次观看的课时或默认加载第一个课时
       if (data.courseChapterList?.length > 0) {
-        const firstHour = data.courseChapterList[0].hourList?.[0];
-        if (firstHour) {
-          currentHour.value = firstHour;
-          currentVideoUrl.value = firstHour.fileUrl;
-          activeNode.value = "1.1";
-          autoPlayOnLoad.value = true;
+        const savedNodeId = storageLocal().getItem(
+          `course_detail_active_node_${courseId.value}`
+        ) as string;
+        let targetHour = null;
+        let targetNodeId = "1.1";
+
+        if (savedNodeId) {
+          const parts = savedNodeId.split(".");
+          if (parts.length === 2) {
+            const cIdx = parseInt(parts[0]) - 1;
+            const hIdx = parseInt(parts[1]) - 1;
+            targetHour = data.courseChapterList[cIdx]?.hourList?.[hIdx];
+            if (targetHour) {
+              targetNodeId = savedNodeId;
+            }
+          }
+        }
+
+        if (!targetHour) {
+          targetHour = data.courseChapterList[0].hourList?.[0];
+        }
+
+        if (targetHour) {
+          currentHour.value = targetHour;
+          currentVideoUrl.value = targetHour.fileUrl;
+          activeNode.value = targetNodeId;
+          // 只有在课程学习标签页时才自动播放
+          autoPlayOnLoad.value = activeMenu.value === "course-learn";
         }
       }
     } else {
@@ -409,12 +492,13 @@ const videoEnded = async () => {
 
 const handleNodeClick = (nodeId: string, hour: any) => {
   activeNode.value = nodeId;
+  storageLocal().setItem(`course_detail_active_node_${courseId.value}`, nodeId);
   if (hour?.fileUrl) {
     currentHour.value = hour;
     const oldUrl = currentVideoUrl.value;
     currentVideoUrl.value = hour.fileUrl;
     if (oldUrl !== hour.fileUrl) autoPlayOnLoad.value = true;
-    
+
     const videoPlayerEl = courseStudyRef.value?.videoPlayer;
     if (videoPlayerEl && oldUrl === hour.fileUrl) {
       videoPlayerEl.currentTime = 0;
@@ -578,7 +662,22 @@ onMounted(async () => {
   document.body.classList.add(currentTheme.value);
   await fetchCourseDetail();
   initQAHistory();
-  
+
+  // 初始化加载对应数据（如果不是默认页）
+  if (activeMenu.value !== "course-learn") {
+    const menuName = activeMenu.value;
+    if (menuName === "homework-exam") {
+      fetchHomeworkList();
+      fetchExamList();
+    } else if (menuName === "grades") {
+      fetchCourseScores();
+    } else if (menuName === "html-animations") {
+      fetchHtmlAnimations();
+    } else if (menuName === "mastery") {
+      fetchCourseStudyEffect();
+    }
+  }
+
   // 初始化 AI 聊天
   const storedId = localStorage.getItem(`chat_${courseId.value}`);
   if (storedId) {
@@ -636,84 +735,6 @@ html, body { background-color: #f5f7fa !important; }
 </style>
 
 <style scoped>
-/*==================== 1. 头部栏样式修复 ==================== */
-:deep(.layout-header) {
-  position: fixed !important;
-  top: 15px !important;
-  left: 15px !important;
-  right: 15px !important;
-  height: 56px !important;
-  z-index: 100 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 0 20px !important;
-  background: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: blur(10px) !important;
-  border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-  transition: all 0.3s ease !important;
-}
-
-:deep(.layout-header:hover) {
-  background: rgba(255, 255, 255, 0.8) !important;
-  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.1) !important;
-}
-
-.dark :deep(.layout-header) {
-  background: rgba(30, 30, 40, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-.dark :deep(.layout-header:hover) {
-  background: rgba(40, 40, 50, 0.8) !important;
-}
-
-:deep(.layout-header .header-left) {
-  display: flex !important;
-  align-items: center !important;
-  gap: 16px !important;
-}
-
-:deep(.layout-header .header-title) {
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  color: #303133 !important;
-}
-
-.dark :deep(.layout-header .header-title) {
-  color: #e0e0e0 !important;
-}
-
-:deep(.layout-header .header-right) {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-}
-
-:deep(.layout-header .back-btn) {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 10px !important;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%) !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-:deep(.layout-header .back-btn:hover) {
-  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%) !important;
-  transform: translateX(-2px) !important;
-}
-
-:deep(.layout-header .back-btn:hover svg) {
-  stroke: white !important;
-}
-
 /* ==================== 2. AI 对话窗口样式修复 ==================== */
 :deep(.ai-helper-sections) {
   position: relative !important;
@@ -1145,7 +1166,7 @@ html, body { background-color: #f5f7fa !important; }
 }
 
 :deep(.rightTreeWarp .chapter) {
-  padding: 12px16px !important;
+  padding: 12px 16px !important;
   margin-bottom: 8px !important;
   border-radius: 10px !important;
   background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(96, 79, 253, 0.08) 100%) !important;

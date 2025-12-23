@@ -48,7 +48,7 @@
             v-else
             type="primary"
             class="login-btn"
-            @click="showLoginDialog = true"
+            @click="openLoginDialog"
             >登录</el-button
           >
         </div>
@@ -83,10 +83,19 @@
               <p class="sub-title">{{ item.subtitle }}</p>
               <p class="hero-desc">{{ item.description }}</p>
               <div class="hero-buttons">
-                <el-button type="primary" size="large" class="hero-btn primary" @click="showLoginDialog = true">
+                <el-button 
+                  type="primary" 
+                  size="large" 
+                  class="hero-btn primary" 
+                  @click="openLoginDialog"
+                >
                   立即体验
                 </el-button>
-                <el-button size="large" class="hero-btn secondary" @click="scrollToSection('features')">
+                <el-button 
+                  size="large" 
+                  class="hero-btn secondary" 
+                  @click="scrollToSection('features')"
+                >
                   了解更多
                 </el-button>
               </div>
@@ -284,10 +293,17 @@
         <h2>开启智慧学习之旅</h2>
         <p>立即加入，体验 AI 驱动的全新教育模式</p>
         <div class="cta-buttons">
-          <el-button type="primary" size="large" @click="showLoginDialog = true">
+          <el-button 
+            type="primary" 
+            size="large" 
+            @click="openLoginDialog"
+          >
             免费试用
           </el-button>
-          <el-button size="large" plain>
+          <el-button 
+            size="large" 
+            plain
+          >
             联系我们
           </el-button>
         </div>
@@ -366,7 +382,7 @@ import {
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
-import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
+import { userKey, removeToken, hasManageAccess, getToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
 
@@ -383,6 +399,20 @@ const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
+// 打开登录弹窗
+const openLoginDialog = () => {
+  const token = getToken();
+  if (token && token.accessToken) {
+    if (hasAdminAccess.value) {
+      router.push("/welcome/index");
+    } else {
+      router.push("/account");
+    }
+    return;
+  }
+  showLoginDialog.value = true;
+};
+
 // 检查用户是否有管理权限（教师或管理员）
 const hasAdminAccess = computed(() => {
   return hasManageAccess();
@@ -391,6 +421,18 @@ const hasAdminAccess = computed(() => {
 // 监听滚动事件
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
+};
+
+// 鼠标光效处理
+const handleMouseMove = (e: MouseEvent) => {
+  const elements = document.querySelectorAll('.stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .testimonial-card, .hero-btn, .cta-buttons .el-button');
+  elements.forEach((el: any) => {
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    el.style.setProperty("--mouse-x", `${x}px`);
+    el.style.setProperty("--mouse-y", `${y}px`);
+  });
 };
 
 // 滚动动画观察器
@@ -415,12 +457,15 @@ const initScrollAnimations = () => {
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
+  window.addEventListener("mousemove", handleMouseMove);
+  
   // 延迟初始化滚动动画，确保DOM已渲染
   setTimeout(initScrollAnimations, 100);
 });
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener("mousemove", handleMouseMove);
 });
 
 // 滚动到指定区域
@@ -688,7 +733,7 @@ const handleLoginSuccess = () => {
         height: 48px;
         padding: 4px;
         background: #fff;
-        border-radius: 8px;
+        border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
 
@@ -736,7 +781,7 @@ const handleLoginSuccess = () => {
       color: #0a0a1a;
       background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
       border: none;
-      border-radius: 21px;
+      border-radius: 24px !important;
       transition: all 0.3s ease;
 
       &:hover {
@@ -873,7 +918,7 @@ const handleLoginSuccess = () => {
       color: #60a5fa;
       background: rgba(96, 165, 250, 0.1);
       border: 1px solid rgba(96, 165, 250, 0.3);
-      border-radius: 30px;
+      border-radius: 30px !important;
     }
 
     .main-title {
@@ -908,37 +953,81 @@ const handleLoginSuccess = () => {
     .hero-buttons {
       display: flex;
       gap: 16px;
+      position: relative;
+      z-index: 100;
 
       .hero-btn {
-        height: 52px;
-        padding: 0 36px;
-        font-size: 15px;
-        font-weight: 500;
+        position: relative;
+        height: 54px;
+        padding: 0 38px;
+        font-size: 16px;
+        font-weight: 600;
         letter-spacing: 1px;
-        border-radius: 26px;
-        transition: all 0.3s ease;
+        border-radius: 30px !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow: hidden;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        :deep(span) {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        &:hover {
+          transform: translateY(-6px) scale(1.05) !important;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+        }
 
         &.primary {
-          color: #fff;
-          background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);
-          border: none;
-          box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+          color: #0a0a1a !important;
+          background: 
+            radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.5), transparent),
+            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%) !important;
+          box-shadow: 0 4px 15px rgba(96, 165, 250, 0.4);
+
+          &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+              90deg,
+              transparent,
+              rgba(255, 255, 255, 0.4),
+              transparent
+            );
+            transition: 0.6s;
+            z-index: 1;
+            pointer-events: none;
+          }
 
           &:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.5);
+            box-shadow: 0 12px 30px rgba(96, 165, 250, 0.6) !important;
+            &::before { left: 100%; }
           }
         }
 
         &.secondary {
-          color: rgba(255, 255, 255, 0.9);
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #fff !important;
+          background: 
+            radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.3), transparent),
+            rgba(255, 255, 255, 0.1) !important;
+          border: 2px solid rgba(255, 255, 255, 0.3) !important;
           backdrop-filter: blur(10px);
 
           &:hover { 
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: 
+              radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.4), transparent),
+              rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(255, 255, 255, 0.6) !important;
           }
         }
       }
@@ -984,22 +1073,45 @@ const handleLoginSuccess = () => {
   }
 
   .stat-card {
+    position: relative;
     flex: 1;
     max-width: 260px;
     padding: 40px 30px;
     text-align: center;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    border-radius: 24px;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     cursor: pointer;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.06),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
 
     &:hover {
       transform: translateY(-12px) scale(1.03);
       border-color: rgba(96, 165, 250, 0.5);
       box-shadow: 0 20px 40px rgba(96, 165, 250, 0.15);
       background: linear-gradient(145deg, rgba(30, 30, 60, 0.5) 0%, rgba(20, 20, 45, 0.7) 100%);
+
+      &::before { opacity: 1; }
+    }
+
+    .stat-icon, .stat-number, .stat-label {
+      position: relative;
+      z-index: 1;
     }
 
     .stat-icon { 
@@ -1047,17 +1159,41 @@ const handleLoginSuccess = () => {
     padding: 40px 30px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    border-radius: 24px;
     text-align: center;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     transform-style: preserve-3d;
     cursor: pointer;
 
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.08),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
+
     &:hover {
       transform: translateY(-12px) rotateX(5deg) scale(1.02);
       border-color: rgba(96, 165, 250, 0.6);
       box-shadow: 0 25px 50px rgba(96, 165, 250, 0.2), 0 10px 20px rgba(0, 0, 0, 0.3);
+
+      &::before { opacity: 1; }
+    }
+
+    .ai-icon, h3, p, .ai-glow {
+      position: relative;
+      z-index: 1;
+    }
+
+    &:hover {
       background: linear-gradient(145deg, rgba(30, 30, 60, 0.6) 0%, rgba(20, 20, 45, 0.8) 100%);
       .ai-glow { opacity: 1; }
     }
@@ -1235,16 +1371,33 @@ const handleLoginSuccess = () => {
   .feature-item {
     position: relative;
     overflow: hidden;
-    border-radius: 20px;
+    border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
 
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.1),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 2;
+      pointer-events: none;
+    }
+
     &:hover {
       transform: translateY(-15px) rotateX(5deg);
       border-color: rgba(96, 165, 250, 0.5);
       box-shadow: 0 30px 60px rgba(96, 165, 250, 0.2), 0 15px 30px rgba(0, 0, 0, 0.4);
+
+      &::before { opacity: 1; }
 
       .feature-image img { transform: scale(1.15); }
       
@@ -1321,19 +1474,42 @@ const handleLoginSuccess = () => {
   }
 
   .service-card {
+    position: relative;
     padding: 40px 30px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    border-radius: 24px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     backface-visibility: hidden;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.08),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
 
     &:hover {
       background: linear-gradient(145deg, rgba(30, 30, 60, 0.8) 0%, rgba(20, 20, 45, 0.9) 100%);
       border-color: rgba(96, 165, 250, 0.5);
       transform: translateY(-10px) scale(1.02);
       box-shadow: 0 20px 40px rgba(96, 165, 250, 0.15), 0 10px 20px rgba(0, 0, 0, 0.3);
+
+      &::before { opacity: 1; }
+    }
+
+    .service-icon, h3, p {
+      position: relative;
+      z-index: 1;
     }
 
     .service-icon { 
@@ -1388,20 +1564,43 @@ const handleLoginSuccess = () => {
   }
 
   .tech-card {
+    position: relative;
     padding: 30px 20px;
     text-align: center;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    border-radius: 20px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     cursor: pointer;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.08),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
 
     &:hover {
       transform: translateY(-8px) rotateY(10deg);
       border-color: rgba(96, 165, 250, 0.5);
       background: linear-gradient(145deg, rgba(96, 165, 250, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
       box-shadow: 0 15px 30px rgba(96, 165, 250, 0.2);
+
+      &::before { opacity: 1; }
+    }
+
+    .tech-icon, .tech-name, .tech-version {
+      position: relative;
+      z-index: 1;
     }
 
     .tech-icon { 
@@ -1431,18 +1630,41 @@ const handleLoginSuccess = () => {
   }
 
   .testimonial-card {
+    position: relative;
     padding: 40px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    border-radius: 24px;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.08),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
 
     &:hover { 
       background: linear-gradient(145deg, rgba(30, 30, 60, 0.6) 0%, rgba(20, 20, 45, 0.8) 100%); 
       transform: translateY(-10px) rotateX(3deg); 
       box-shadow: 0 25px 50px rgba(96, 165, 250, 0.15);
       border-color: rgba(167, 139, 250, 0.4);
+
+      &::before { opacity: 1; }
+    }
+
+    .quote-icon, .testimonial-content, .user-profile {
+      position: relative;
+      z-index: 1;
     }
 
     .quote-icon { 
@@ -1517,26 +1739,55 @@ const handleLoginSuccess = () => {
       display: flex;
       justify-content: center;
       gap: 20px;
+      position: relative;
+      z-index: 10;
 
       .el-button {
-        height: 52px;
-        padding: 0 40px;
+        position: relative;
+        height: 54px;
+        padding: 0 42px;
         font-size: 16px;
         font-weight: 600;
-        border-radius: 26px;
+        border-radius: 30px !important;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+        :deep(span) {
+          position: relative;
+          z-index: 2;
+        }
+
+        &:hover {
+          transform: translateY(-6px) scale(1.05) !important;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+        }
 
         &--primary {
-          background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+          background: 
+            radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.5), transparent),
+            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%) !important;
           color: #0a0a1a;
           border: none;
+          box-shadow: 0 4px 15px rgba(96, 165, 250, 0.4);
+
+          &:hover {
+            box-shadow: 0 12px 30px rgba(96, 165, 250, 0.6);
+          }
         }
 
         &.is-plain {
           color: #fff;
-          background: transparent;
+          background: 
+            radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.3), transparent),
+            transparent !important;
           border: 2px solid rgba(255, 255, 255, 0.3);
 
-          &:hover { background: rgba(255, 255, 255, 0.1); }
+          &:hover { 
+            background: 
+              radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.4), transparent),
+              rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(255, 255, 255, 0.5);
+          }
         }
       }
     }

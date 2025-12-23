@@ -19,10 +19,10 @@
 
     <!-- 内容 -->
     <div class="materials-container" :class="currentTheme">
-      <div v-if="loading" class="materials-list">
+      <div v-if="loading" class="materials-list empty-state">
         <el-empty description="加载中..." />
       </div>
-      <div v-else-if="animationList.length === 0" class="materials-list">
+      <div v-else-if="animationList.length === 0" class="materials-list empty-state">
         <el-empty description="暂无可展示的章节动画" />
       </div>
       <div v-else class="materials-list album-grid">
@@ -194,9 +194,15 @@ const openHtmlAnimInNew = () => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
   box-sizing: border-box;
+}
+
+.materials-list.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .materials-list.album-grid {
@@ -361,6 +367,12 @@ const openHtmlAnimInNew = () => {
 
 .dark .card-version {
   color: #00b8d4;
+}
+
+.dark :deep(.el-empty__image img),
+.dark :deep(.el-empty__image svg) {
+  filter: brightness(0.7);
+  opacity: 0.8;
 }
 
 /* 预览弹窗样式统一 */

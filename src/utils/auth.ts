@@ -127,6 +127,19 @@ export function removeToken() {
   Cookies.remove(TokenKey);
   Cookies.remove(multipleTabsKey);
   storageLocal().removeItem(userKey);
+
+  // 清除持久化的 UI 状态
+  storageLocal().removeItem("account_active_menu");
+  // 清除所有课程详情页的持久化状态
+  const keys = Object.keys(localStorage);
+  keys.forEach(key => {
+    if (
+      key.includes("course_detail_active_") ||
+      key.includes("account_active_menu")
+    ) {
+      localStorage.removeItem(key);
+    }
+  });
 }
 
 /** 格式化token（jwt格式） */

@@ -1,82 +1,88 @@
 <template>
-  <div
-    class="layout-header"
-    :class="currentTheme"
-    isatlas="1"
-  >
-    <div
-      id="header-content-layout only-filter"
-      class="header-content"
-    >
-      <div data-v-3e66491d="" class="item header-left">
+  <div class="layout-header" :class="currentTheme">
+    <div class="header-content">
+      <!-- 左侧区域：返回按钮、日期、主题切换 -->
+      <div class="header-left">
         <div
-          data-v-3e66491d=""
-          class="item header-back spotlight-button"
+          class="back-btn spotlight-button"
           @click="$emit('go-back')"
           @mousemove="handleButtonMouseMove"
-          style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
         >
-          <svg viewBox="0 0 24 24" width="24" height="24" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; min-width: 24px; min-height: 24px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            stroke="currentColor"
+            stroke-width="3"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
         </div>
-        <span data-v-3e66491d="" class="current-time">{{ currentDate }}</span>
+        <span class="header-date">{{ currentDate }}</span>
         <div
-          class="premium-switch-mini"
+          class="theme-toggle-premium"
           :class="{ 'is-dark': currentTheme === 'dark' }"
           @click="$emit('toggle-theme', $event)"
         >
-          <div class="switch-inner">
-            <div class="icon-box sun">
-              <ThemeSunIcon />
+          <div class="toggle-inner">
+            <div class="toggle-icon sun">
+              <IconifyIconOffline :icon="Sunny" />
             </div>
-            <div class="icon-box moon">
-              <ThemeMoonIcon />
+            <div class="toggle-icon moon">
+              <svg viewBox="0 0 24 24" class="moon-svg">
+                <path d="M12.1,22c-4.8,0-9-3.4-9.8-8.2c-1.1-6,2.8-11.7,8.8-12.8c1.1-0.2,2.1-0.2,3.1,0c-4.3,1.4-6.7,6.1-5.3,10.4c1,3.1,3.8,5.2,7,5.2c1.4,0,2.8-0.4,4-1.1c-1.4,3.7-5.1,6.3-9.1,6.5C11.1,22,11.1,22,12.1,22z" fill="currentColor"/>
+              </svg>
             </div>
-            <div class="switch-handle"></div>
+            <div class="toggle-handle">
+              <div class="handle-shine"></div>
+            </div>
+            <div class="star star-1"></div>
+            <div class="star star-2"></div>
           </div>
         </div>
       </div>
-      <div data-v-3e66491d="" class="item header-center">
-        <div
-          data-v-cebc91e2=""
-          data-v-3e66491d=""
-          class="study-mode custom-mode"
-        >
-          <div
-            data-v-cebc91e2=""
-            data-v-3e66491d=""
-            data-name="0"
-            class="mode-item active"
-            style="margin: 0 auto"
-          >
-            {{ title }}
-          </div>
+
+      <!-- 中间区域：紫色渐变标题底衬 -->
+      <div class="header-center">
+        <div class="title-capsule">
+          {{ title }}
         </div>
       </div>
-      <div data-v-3e66491d="" class="item header-right">
-        <div class="user-dropdown-area">
-          <el-dropdown trigger="click">
-            <div class="avatar-info" style="cursor: pointer; display: flex; align-items: center;">
-              <img :src="userAvatar" alt="" class="avatar" />
-              <span class="name">{{ userNickname }}</span>
-              <i class="el-icon-arrow-down" />
-            </div>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="$emit('go-to-account')">账号管理</el-dropdown-item>
-                <el-dropdown-item divided @click="$emit('logout')">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
+
+      <!-- 右侧区域：像素级复刻主导航栏的用户胶囊 -->
+      <div class="header-right">
+        <el-dropdown trigger="click" @visible-change="v => (visible = v)">
+          <div class="user-capsule">
+            <img :src="userAvatar" class="user-avatar" />
+            <span v-if="userNickname" class="user-name">
+              {{ userNickname }}
+            </span>
+            <IconifyIconOffline
+              :icon="ArrowDown"
+              class="dropdown-arrow"
+              :class="{ 'is-open': visible }"
+            />
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="$emit('go-to-account')">账号管理</el-dropdown-item>
+              <el-dropdown-item divided @click="$emit('logout')">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import ThemeSunIcon from "@/assets/course-icons/theme-sun.svg?component";
-import ThemeMoonIcon from "@/assets/course-icons/theme-moon.svg?component";
+import { ref, computed } from "vue";
+import Sunny from "~icons/ep/sunny";
+import Moon from "~icons/ep/moon";
+import ArrowDown from "~icons/ep/arrow-down";
 
 const props = defineProps<{
   currentTheme: string;
@@ -85,6 +91,8 @@ const props = defineProps<{
   userNickname: string;
 }>();
 
+const visible = ref(false);
+
 defineEmits<{
   (e: "go-back"): void;
   (e: "toggle-theme", event: MouseEvent): void;
@@ -92,7 +100,6 @@ defineEmits<{
   (e: "logout"): void;
 }>();
 
-// 当前日期，格式化为"年月日"
 const currentDate = computed(() => {
   const date = new Date();
   const year = date.getFullYear();
@@ -101,7 +108,6 @@ const currentDate = computed(() => {
   return `${year}年${month}月${day}日`;
 });
 
-// 处理按钮光效
 const handleButtonMouseMove = (e: MouseEvent) => {
   const target = e.currentTarget as HTMLElement;
   const rect = target.getBoundingClientRect();
@@ -113,110 +119,323 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 </script>
 
 <style scoped>
-.user-dropdown-area {
+/* 头部整体布局 */
+.layout-header {
+  position: fixed !important;
+  top: 15px !important;
+  left: 15px !important;
+  right: 15px !important;
+  height: 56px !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 20px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+  box-sizing: border-box !important;
+  transition: all 0.3s ease !important;
+}
+
+.layout-header.dark {
+  background: rgba(30, 30, 35, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.header-content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 左侧区域 */
+.header-left {
+  flex: 1;
   display: flex;
   align-items: center;
-  height: 100%;
 }
 
-.user-dropdown-area .avatar-info {
-  display: flex !important;
-  align-items: center !important;
-  padding: 4px 12px !important;
-  border-radius: 20px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  background: rgba(0, 0, 0, 0.02) !important;
+.back-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(64, 158, 255, 0.12);
+  border-radius: 12px;
+  color: #409eff;
+  transition: all 0.3s ease;
 }
 
-.user-dropdown-area .avatar-info:hover {
-  background-color: rgba(64, 158, 255, 0.1) !important;
-  transform: translateY(-1px) !important;
+.back-btn:hover {
+  background: rgba(64, 158, 255, 0.2);
+  transform: scale(1.05);
 }
 
-.user-dropdown-area .avatar-info:active {
-  transform: scale(0.95) !important;
+.header-date {
+  margin-left: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #409eff;
+  white-space: nowrap;
 }
 
-.layout-header.dark .user-dropdown-area .avatar-info {
-  background: rgba(255, 255, 255, 0.05) !important;
+.layout-header.dark .header-date {
+  color: #4facfe;
 }
 
-.layout-header.dark .user-dropdown-area .avatar-info:hover {
-  background-color: rgba(64, 158, 255, 0.2) !important;
-}
-
-.user-dropdown-area .avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 8px;
-  object-fit: cover;
-}
-
-.user-dropdown-area .name {
-  font-size: 14px;
-  color: #333;
-  margin-right: 4px;
-}
-
-.layout-header.dark .user-dropdown-area .name {
-  color: #e0e0e0;
-}
-
-.user-dropdown-area .el-icon-arrow-down {
-  font-size: 12px;
-  color: #999;
-}
-
-.layout-header.dark .user-dropdown-area .el-icon-arrow-down {
-  color: #b4b4c7;
-}
-
-.header-left {
-  display: flex !important;
-  align-items: center !important;
-  padding-left: 0 !important; /* 向左移动 */
-}
-
-.header-back {
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 36px !important;
-  height: 36px !important;
-  z-index: 200 !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  background: rgba(64, 158, 255, 0.1) !important;
-  border-radius: 12px !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-.header-back:hover {
-  transform: scale(1.05) !important;
-  background: rgba(64, 158, 255, 0.2) !important;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2) !important;
-}
-
-.header-back:active {
-  transform: scale(0.95) !important;
-}
-
-/* 调整日期与返回按钮距离 */
-.current-time {
-  margin-left: 25px !important;
-  display: inline-block !important;
-  font-size: 18px !important;
-  font-weight: bold !important;
-  color: #409eff !important;
-}
-
-.layout-header.dark .current-time {
+.layout-header.dark .back-btn {
+  background: #262626 !important;
   color: #4facfe !important;
+  border: 1px solid rgba(79, 172, 254, 0.3) !important;
 }
 
-/* 聚光灯按钮通用样式 */
+.layout-header.dark .back-btn:hover {
+  background: #333333 !important;
+  border-color: #4facfe !important;
+}
+
+/* 主题切换按钮 - 重新设计为更精致的样式 */
+.theme-toggle-premium {
+  --w: 56px;
+  --h: 28px;
+  --s: 22px;
+  --p: 3px;
+  margin-left: 18px;
+  width: var(--w);
+  height: var(--h);
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 30px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.layout-header.dark .theme-toggle-premium {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+}
+
+.toggle-icon {
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+.moon-svg {
+  width: 14px;
+  height: 14px;
+  transform: rotate(-15deg);
+  transition: all 0.4s ease;
+}
+
+.sun { color: #f59e0b; }
+.moon { color: #94a3b8; }
+
+.theme-toggle-premium:not(.is-dark) .sun {
+  filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
+}
+
+.is-dark .sun { 
+  opacity: 0; 
+  transform: scale(0.5) rotate(45deg); 
+}
+
+.is-dark .moon { 
+  color: #f1f5f9; 
+  opacity: 1; 
+  transform: scale(1.2);
+}
+
+.is-dark .moon-svg {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+}
+
+.toggle-handle {
+  position: absolute;
+  top: var(--p);
+  left: var(--p);
+  width: var(--s);
+  height: var(--s);
+  background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
+  border-radius: 50%;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  overflow: hidden;
+}
+
+.handle-shine {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, transparent 50%);
+  opacity: 0.5;
+}
+
+.is-dark .toggle-handle {
+  transform: translateX(calc(var(--w) - var(--s) - var(--p) * 2));
+  background: linear-gradient(135deg, #f6c138 0%, #eab308 100%);
+  box-shadow: 0 0 15px rgba(246, 193, 56, 0.6), inset 0 -2px 4px rgba(0,0,0,0.2);
+}
+
+/* 星星装饰 */
+.star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  transition: all 0.4s ease;
+  z-index: 0;
+}
+
+.star-1 {
+  width: 2px;
+  height: 2px;
+  right: 12px;
+  top: 8px;
+}
+
+.star-2 {
+  width: 3px;
+  height: 3px;
+  right: 18px;
+  bottom: 7px;
+}
+
+.is-dark .star {
+  opacity: 0.8;
+  animation: star-twinkle 2s infinite ease-in-out;
+}
+
+.is-dark .star-2 {
+  animation-delay: 1s;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+.theme-toggle-premium:hover .toggle-handle {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 中间标题区域 */
+.header-center {
+  flex: 0 0 auto;
+}
+
+.title-capsule {
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%) !important;
+  color: white !important;
+  padding: 10px 32px !important;
+  border-radius: 16px !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 15px rgba(74, 0, 224, 0.25) !important;
+  white-space: nowrap !important;
+}
+
+.layout-header.dark .title-capsule {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3) !important;
+}
+
+/* 右侧区域 */
+.header-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-capsule {
+  display: flex !important;
+  align-items: center !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 20px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  user-select: none !important;
+}
+
+.layout-header.dark .user-capsule {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.user-capsule:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+.layout-header.dark .user-capsule:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.user-avatar {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+.user-name {
+  margin-left: 8px !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+  white-space: nowrap !important;
+}
+
+.layout-header.dark .user-name {
+  color: #eee !important;
+}
+
+.dropdown-arrow {
+  margin-left: 6px !important;
+  font-size: 12px !important;
+  color: #999 !important;
+  transition: transform 0.3s ease !important;
+  display: inline-block !important;
+}
+
+.layout-header.dark .dropdown-arrow {
+  color: #bbb !important;
+}
+
+.dropdown-arrow.is-open {
+  transform: rotate(180deg) !important;
+}
+
+/* 聚光灯按钮效果 */
 .spotlight-button {
   position: relative;
   overflow: hidden;
@@ -238,218 +457,5 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 .spotlight-button:hover::before {
   opacity: 1;
-}
-
-/* 移除章节模式背景 */
-.custom-mode {
-  background: transparent !important;
-}
-
-/* 头部固定定位 - 确保所有页面位置一致 */
-.layout-header {
-  position: fixed !important;
-  top: 15px !important;
-  left: 15px !important;
-  right: 15px !important;
-  height: 56px !important;
-  z-index: 90 !important;
-  display: flex !important;
-  align-items: center !important;
-  padding: 0 20px !important;
-  background: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: blur(10px) !important;
-  border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-  box-sizing: border-box !important;
-  transition: all 0.3s ease !important;
-  overflow: hidden !important; /* 关键：防止内部背景溢出圆角 */
-}
-
-.layout-header:hover {
-  background: rgba(255, 255, 255, 0.8) !important;
-  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.1) !important;
-}
-
-.layout-header.dark {
-  background: rgba(30, 30, 30, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-.layout-header.dark:hover {
-  background: rgba(40, 40, 50, 0.8) !important;
-}
-
-.layout-header .header-content {
-  display: flex !important;
-  align-items: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  background: transparent !important;
-}
-
-.layout-header .item.header-left {
-  flex: 1 !important;
-  display: flex !important;
-  align-items: center !important;
-  padding-left: 0 !important; /* 向左移动 */
-  min-width: 0 !important;
-}
-
-.layout-header .item.header-center {
-  flex: 0 0 auto !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  white-space: nowrap !important;
-  padding: 0 20px !important; /* 防止与两侧重叠 */
-  z-index: 2 !important;
-}
-
-.layout-header .item.header-right {
-  flex: 1 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  padding-right: 60px !important; /* 进一步增加右边距以将内容向左推 */
-  min-width: 0 !important;
-}
-
-.layout-header .item.header-right {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-}
-
-/* 精致主题切换开关 - 学生端专用 */
-.premium-switch-mini {
-  --switch-w: 52px;
-  --switch-h: 26px;
-  --handle-s: 20px;
-  --padding: 3px;
-
-  position: relative;
-  width: var(--switch-w);
-  height: var(--switch-h);
-  margin-left: 20px;
-  cursor: pointer;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 30px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: center;
-}
-
-.layout-header.dark .premium-switch-mini {
-  background-color: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.premium-switch-mini:hover {
-  transform: scale(1.05);
-  background-color: rgba(0, 0, 0, 0.08);
-}
-
-.layout-header.dark .premium-switch-mini:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.premium-switch-mini.is-dark .switch-handle {
-  transform: translateX(calc(var(--switch-w) - var(--handle-s) - var(--padding) * 2));
-  background-color: #f6c138;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(246, 193, 56, 0.4);
-}
-
-.premium-switch-mini.is-dark .sun { opacity: 0.2; transform: scale(0.8); }
-.premium-switch-mini.is-dark .moon { opacity: 1; color: #f6c138; transform: scale(1); }
-
-.switch-inner {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  height: 100%;
-  padding: 0 var(--padding);
-}
-
-.icon-box {
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--handle-s);
-  height: var(--handle-s);
-  color: #94a3b8;
-  transition: all 0.4s ease;
-}
-
-.icon-box svg {
-  width: 14px !important;
-  height: 14px !important;
-  fill: currentColor !important;
-  stroke: none !important;
-}
-
-.sun { color: #ffb900; }
-.moon { opacity: 0.4; transform: scale(0.8); }
-
-.switch-handle {
-  position: absolute;
-  top: var(--padding);
-  left: var(--padding);
-  width: var(--handle-s);
-  height: var(--handle-s);
-  background-color: #fff;
-  border-radius: 50%;
-  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* 标题样式 */
-.study-mode .mode-item {
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  color: #303133 !important;
-}
-
-.layout-header.dark .study-mode .mode-item {
-  color: #e0e0e0 !important;
-}
-
-/* 头部左侧区域 */
-.layout-header .item.header-left {
-  display: flex !important;
-  align-items: center !important;
-  flex-shrink: 0 !important;
-}
-
-/* 头部右侧区域 */
-.layout-header .item.header-right {
-  display: flex !important;
-  align-items: center !important;
-  flex-shrink: 0 !important;
-}
-
-/* 深色模式下返回按钮背景 */
-.layout-header.dark .header-back {
-  background: rgba(255, 255, 255, 0.08) !important;
-}
-
-.layout-header.dark .header-back:hover {
-  background: rgba(255, 255, 255, 0.15) !important;
-}
-
-/* 深色模式下返回按钮 SVG 图标颜色 */
-.layout-header.dark .header-back svg {
-  stroke: #4facfe !important;
-}
-
-/* 深色模式下主题切换图标 */
-.layout-header.dark .theme-mode svg {
-  fill: #b4b4c7 !important;
-  stroke: #b4b4c7 !important;
 }
 </style>

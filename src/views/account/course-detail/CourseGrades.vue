@@ -956,6 +956,12 @@ onUnmounted(() => {
 
     :deep(.el-card__header) { border-bottom-color: #3e3e3e; }
     .card-header .header-title { color: #e0e0e0; }
+
+    :deep(.el-empty__image img),
+    :deep(.el-empty__image svg) {
+      filter: brightness(0.7);
+      opacity: 0.8;
+    }
   }
 
   .card-header {

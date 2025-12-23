@@ -143,8 +143,9 @@ const sidebarMenuItems = [
 }
 
 .layout-sidebar .side-name {
-  font-size: 11px !important;
-  margin-top: 6px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  margin-top: 4px !important;
   color: #5a6b8a !important;
   white-space: nowrap;
   transition: transform 0.2s ease-in-out, color 0.3s !important;

@@ -56,7 +56,9 @@
           </div>
         </div>
       </div>
-      <el-empty v-else description="暂无课程资料" />
+      <div v-else class="empty-wrapper">
+        <el-empty description="暂无课程资料" />
+      </div>
     </div>
   </div>
 </template>
@@ -120,11 +122,22 @@ const viewMaterial = (material: any) => {
   background-color: transparent;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
   box-sizing: border-box;
   padding-left: 2vw;
   padding-right: 2vw;
+}
+
+.empty-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark :deep(.el-empty__image img),
+.dark :deep(.el-empty__image svg) {
+  filter: brightness(0.7);
+  opacity: 0.8;
 }
 
 .materials-title {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
 import LayNotice from "../lay-notice/index.vue";
@@ -14,6 +15,7 @@ import AccountSettingsIcon from "~icons/ri/user-settings-line";
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
 import Check from "~icons/ep/check";
+import ArrowDown from "~icons/ep/arrow-down";
 
 const {
   layout,
@@ -29,6 +31,8 @@ const {
   getDropdownItemStyle,
   getDropdownItemClass
 } = useNav();
+
+const visible = ref(false);
 
 const {
   t,
@@ -131,10 +135,21 @@ const {
       <!-- 消息通知 -->
       <!-- <LayNotice id="header-notice" /> -->
       <!-- 退出登录 -->
-      <el-dropdown trigger="click">
-        <span class="el-dropdown-link navbar-bg-hover select-none">
-          <img :src="userAvatar" :style="avatarsStyle" />
-          <p v-if="username" class="dark:text-white">{{ username }}</p>
+      <el-dropdown trigger="click" @visible-change="v => (visible = v)">
+        <span
+          class="el-dropdown-link select-none bg-black/5 dark:bg-white/15 hover:bg-black/10 dark:hover:bg-white/25 transition-all duration-200 px-3 h-[34px] rounded-full flex items-center justify-center cursor-pointer"
+        >
+          <img :src="userAvatar" class="w-[24px] h-[24px] rounded-full" />
+          <p v-if="username" class="ml-2 text-[14px] dark:text-white">
+            {{ username }}
+          </p>
+          <IconifyIconOffline
+            :icon="ArrowDown"
+            :class="[
+              'ml-1 text-[12px] dark:text-white transition-transform duration-300',
+              { 'rotate-180': visible }
+            ]"
+          />
         </span>
         <template #dropdown>
           <el-dropdown-menu class="logout">
@@ -189,22 +204,10 @@ const {
     color: #000000d9;
 
     .el-dropdown-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      height: 48px;
-      padding: 10px;
       color: #000000d9;
-      cursor: pointer;
 
       p {
         font-size: 14px;
-      }
-
-      img {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
       }
     }
   }

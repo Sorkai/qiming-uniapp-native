@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
@@ -173,7 +173,43 @@ const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
 const currentTheme = ref("light");
-const activeMenu = ref("course-learn");
+const activeMenu = ref(
+  (storageLocal().getItem(`course_detail_active_menu_${route.params.id}`) as string) ||
+    "course-learn"
+);
+
+
+// 监听路由参数变化，处理课程切换
+watch(
+  () => route.params.id,
+  newId => {
+    if (newId) {
+      const id = Number(newId);
+      baseCourseId.value = id;
+
+      // 恢复新课程的菜单状态
+      const savedMenu = storageLocal().getItem(
+        `course_detail_active_menu_${id}`
+      ) as string;
+      activeMenu.value = savedMenu || "course-learn";
+
+      fetchCourseDetail();
+
+      // 如果不是默认页，加载对应数据
+      if (activeMenu.value !== "course-learn") {
+        const menuName = activeMenu.value;
+        if (menuName === "homework-exam") {
+          fetchHomeworkList();
+          fetchExamList();
+        } else if (menuName === "grades") {
+          fetchCourseScores();
+        } else if (menuName === "html-animations") {
+          fetchHtmlAnimations();
+        }
+      }
+    }
+  }
+);
 
 // 用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
@@ -364,6 +400,33 @@ onMounted(async () => {
   baseCourseId.value = Number(route.params.id);
   document.body.classList.add(currentTheme.value);
   await fetchCourseDetail();
+
+  // 初始化加载对应数据（如果不是默认页）
+  if (activeMenu.value !== "course-learn") {
+    const menuName = activeMenu.value;
+    if (menuName === "homework-exam") {
+      fetchHomeworkList();
+      fetchExamList();
+    } else if (menuName === "grades") {
+      fetchCourseScores();
+    } else if (menuName === "html-animations") {
+      fetchHtmlAnimations();
+    }
+  }
+});
+
+// 监听菜单变化并持久化
+watch(activeMenu, newVal => {
+  storageLocal().setItem(`course_detail_active_menu_${route.params.id}`, newVal);
+  // 加载对应数据
+  if (newVal === "homework-exam") {
+    fetchHomeworkList();
+    fetchExamList();
+  } else if (newVal === "grades") {
+    fetchCourseScores();
+  } else if (newVal === "html-animations") {
+    fetchHtmlAnimations();
+  }
 });
 </script>
 

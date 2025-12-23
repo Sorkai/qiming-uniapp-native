@@ -106,7 +106,7 @@
         </el-tab-pane>
         <!-- 随练标签页：嵌入新版随练组件 -->
         <el-tab-pane label="随练" name="practice">
-          <WrongExercise :embedded="true" :course-id="courseId" />
+          <WrongExercise :embedded="true" :course-id="courseId" :current-theme="currentTheme" />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -256,6 +256,12 @@ const viewExam = (exam: any) => {
   box-sizing: border-box;
 }
 
+.dark :deep(.el-empty__image img),
+.dark :deep(.el-empty__image svg) {
+  filter: brightness(0.7);
+  opacity: 0.8;
+}
+
 .homework-container.dark {
   background-color: transparent;
 }
@@ -364,6 +370,27 @@ const viewExam = (exam: any) => {
 :deep(.homework-tabs .el-tabs__item) {
   font-size: 18px;
   font-weight: 600;
+  color: #303133;
+}
+
+.dark :deep(.homework-tabs .el-tabs__item) {
+  color: #e0e0e0;
+}
+
+.dark :deep(.homework-tabs .el-tabs__item.is-active) {
+  color: #409eff;
+}
+
+.dark :deep(.homework-tabs .el-tabs__item:hover) {
+  color: #409eff;
+}
+
+.dark :deep(.homework-tabs .el-tabs__active-bar) {
+  background-color: #409eff;
+}
+
+.dark :deep(.homework-tabs .el-tabs__nav-wrap::after) {
+  background-color: #3e3e3e;
 }
 
 /* 查看按钮加大 */

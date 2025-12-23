@@ -446,6 +446,12 @@ watch(
 .dark .qa-chat-header h3 { color: #ffffff; }
 .qa-chat-header p { margin: 0; font-size: 13px; color: #909399; }
 
+.dark .qa-empty-history svg,
+.dark .qa-empty-chat svg {
+  filter: brightness(0.7);
+  opacity: 0.6;
+}
+
 .qa-chat-body { flex: 1; padding: 24px; overflow-y: auto; background-color: #ffffff; display: flex; flex-direction: column; }
 .dark .qa-chat-body { background-color: #16161a; }
 .qa-chat-messages { display: flex; flex-direction: column; gap: 24px; }
