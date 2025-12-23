@@ -336,6 +336,7 @@ export default defineFakeRoute([
   {
     url: "/edu/frontend/v1/course/detail",
     method: "get",
+    timeout: 800,
     response: ({ query }) => {
       const courseId = parseInt(getQueryParam(query, "courseId"));
       const course = mockCourses.find(c => c.courseId === courseId);
@@ -348,79 +349,68 @@ export default defineFakeRoute([
         };
       }
 
+      // 动态生成更多章节以测试滚动逻辑
+      const generatedChapters = Array.from({ length: 30 }, (_, i) => ({
+        chapterId: i + 1,
+        name: `第 ${i + 1} 章：${[
+            "基础概念",
+            "核心知识",
+            "进阶内容",
+            "实战演练",
+            "性能优化",
+            "架构设计",
+            "自动化测试",
+            "部署运维",
+            "安全性考虑",
+            "未来趋势",
+            "总结与回顾",
+            "扩展阅读",
+            "面试指南",
+            "工具推荐",
+            "社区资源",
+            "深度剖析",
+            "最佳实践",
+            "常见陷阱",
+            "性能调优",
+            "高可用架构",
+            "微服务治理",
+            "容器化部署",
+            "持续集成",
+            "监控告警",
+            "日志分析",
+            "故障排查",
+            "团队协作",
+            "项目管理",
+            "职业规划",
+            "终身学习"
+          ][i] || `额外章节 ${i + 1}`
+          }`,
+        hourList: Array.from({ length: Math.floor(Math.random() * 5) + 3 }, (_, j) => ({
+          hourId: i * 100 + j + 1,
+          duration: 1800 + Math.floor(Math.random() * 1800),
+          title: `${i + 1}.${j + 1} ${[
+              "理论讲解",
+              "代码演示",
+              "动手实践",
+              "疑难解答",
+              "小结测试",
+              "案例分析",
+              "深度思考",
+              "课后练习"
+            ][j] || `补充内容 ${j + 1}`
+            }`,
+          rType: "video",
+          fileUrl: "",
+          finished: i < 5 ? 1 : 0 // 前五章标记为已完成
+        }))
+      }));
+
       return {
         code: 200,
         msg: "获取成功",
         data: {
           ...course,
-          courseChapterList: [
-            {
-              chapterId: 1,
-              name: "第一章：基础概念",
-              hourList: [
-                {
-                  hourId: 1,
-                  duration: 1800,
-                  title: "1.1 课程介绍",
-                  rType: "video",
-                  fileUrl: "",
-                  finished: 1
-                },
-                {
-                  hourId: 2,
-                  duration: 2400,
-                  title: "1.2 环境搭建",
-                  rType: "video",
-                  fileUrl: "",
-                  finished: 1
-                }
-              ]
-            },
-            {
-              chapterId: 2,
-              name: "第二章：核心知识",
-              hourList: [
-                {
-                  hourId: 3,
-                  duration: 3000,
-                  title: "2.1 核心概念讲解",
-                  rType: "video",
-                  fileUrl: "",
-                  finished: 0
-                },
-                {
-                  hourId: 4,
-                  duration: 2700,
-                  title: "2.2 实践练习",
-                  rType: "video",
-                  fileUrl: "",
-                  finished: 0
-                }
-              ]
-            },
-            {
-              chapterId: 3,
-              name: "第三章：进阶内容",
-              hourList: [
-                {
-                  hourId: 5,
-                  duration: 3600,
-                  title: "3.1 高级特性",
-                  rType: "video",
-                  fileUrl: "",
-                  finished: 0
-                },
-                {
-                  hourId: 6,
-                  duration: 2400,
-                  title: "3.2 项目实战",
-                  rType: "video",
-                  fileUrl: "",
-                  finished: 0
-                }
-              ]
-            }
-          ],
+          courseChapterList: generatedChapters,
           courseAttrList: [
             {
               resourceId: 1,

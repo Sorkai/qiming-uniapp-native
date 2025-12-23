@@ -143,7 +143,7 @@
               <span class="chapter-count">{{ getTotalLessons() }} 课时</span>
             </div>
             <div class="catalog-body">
-              <el-scrollbar>
+              <el-scrollbar ref="catalogScrollRef">
                 <div class="chapter-tree">
                   <div
                     v-for="(chapter, cIndex) in chapterList"
@@ -295,7 +295,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
 import CourseHeader from "./CourseHeader.vue";
 import aiPeopleAvatar from "@/assets/aipeople.jpg";
 
@@ -333,6 +333,37 @@ const emit = defineEmits([
 
 const internalMsg = ref("");
 const videoPlayerRef = ref(null);
+const catalogScrollRef = ref(null);
+
+// 监听 activeNode 变化，自动滚动到当前课时
+watch(
+  () => props.activeNode,
+  () => {
+    if (!props.visible) return;
+    nextTick(() => {
+      const activeEl = document.querySelector(".lesson-node.active");
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+  },
+  { immediate: true }
+);
+
+// 当组件变为可见时，也触发一次滚动
+watch(
+  () => props.visible,
+  (val) => {
+    if (val) {
+      nextTick(() => {
+        const activeEl = document.querySelector(".lesson-node.active");
+        if (activeEl) {
+          activeEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+    }
+  }
+);
 
 const mockSummary = [
   "本节课主要介绍了课程的整体目标和学习路径。",
@@ -408,8 +439,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   width: 100%;
   height: 100%;
   background: transparent;
-  overflow-y: auto; /* 关键：允许纵向滚动 */
-  overflow-x: hidden;
+  overflow: hidden; /* 禁止根容器滚动，改为局部滚动 */
 
   &.dark {
     background: transparent;
@@ -417,15 +447,19 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .study-container {
-  padding: 88px 32px 100px; /* 增加底部留白 */
+  padding: 60px 32px 24px;
   box-sizing: border-box;
-  min-height: min-content;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-layout {
   display: flex;
   gap: 32px;
-  align-items: flex-start; /* 防止子项被拉伸 */
+  flex: 1;
+  min-height: 0; /* 允许 flex 子项在溢出时收缩 */
+  align-items: stretch;
 }
 
 .left-main {
@@ -434,6 +468,15 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   flex-direction: column;
   gap: 24px;
   min-width: 0;
+  overflow-y: auto; /* 左侧内容独立滚动 */
+  padding-right: 0; /* 移除右边距，因为滚动条隐藏了 */
+  
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
 }
 
 .video-section {
@@ -441,6 +484,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   border-radius: $radius-xl;
   overflow: hidden;
   box-shadow: $shadow-xl;
+  flex-shrink: 0; /* 视频区域不收缩 */
 }
 
 .video-player-wrapper {
@@ -686,9 +730,8 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   flex-direction: column;
   gap: 20px;
   flex-shrink: 0;
-  position: sticky;
-  top: 88px; /* 对应 Header 高度 */
-  height: fit-content;
+  height: 100%;
+  z-index: 10;
 }
 
 .ai-assistant-widget {
@@ -852,7 +895,24 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     padding: 16px;
     overflow: hidden;
 
-    :deep(.el-scrollbar) { height: 100%; }}
+    :deep(.el-scrollbar) {
+      height: 100%;
+      
+      /* 隐藏 Element Plus 滚动条轨道和滑块 */
+      .el-scrollbar__bar {
+        display: none !important;
+      }
+      
+      /* 确保原生滚动条也被隐藏（以防万一） */
+      .el-scrollbar__wrap {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        &::-webkit-scrollbar {
+          display: none;
+        }
+      }
+    }
+  }
 }
 
 .chapter-tree {
