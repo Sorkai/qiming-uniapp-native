@@ -57,14 +57,6 @@
 
     <!-- 英雄区域 - 星空背景 -->
     <div class="banner">
-      <!-- 星空背景层 -->
-      <div class="starfield">
-        <div v-for="i in 40" :key="'star-'+i" class="star" :style="getStarStyle(i)"></div>
-        <div v-for="i in 3" :key="'shooting-'+i" class="shooting-star" :style="getShootingStarStyle(i)"></div>
-      </div>
-      <div class="hero-particles">
-        <div v-for="i in 8" :key="i" class="particle" :style="getParticleStyle(i)"></div>
-      </div>
       <el-carousel
         height="100vh"
         :interval="5000"
@@ -77,6 +69,15 @@
             class="carousel-content"
             :style="{ backgroundImage: `url(${item.background})` }"
           >
+            <!-- 背景效果移入内容层，确保层级正确且不干扰交互 -->
+            <div class="starfield">
+              <div v-for="i in 40" :key="'star-'+i" class="star" :style="getStarStyle(i)"></div>
+              <div v-for="i in 3" :key="'shooting-'+i" class="shooting-star" :style="getShootingStarStyle(i)"></div>
+            </div>
+            <div class="hero-particles">
+              <div v-for="i in 8" :key="i" class="particle" :style="getParticleStyle(i)"></div>
+            </div>
+
             <div class="carousel-text">
               <div class="hero-badge">AI 深度融合的智慧教育平台</div>
               <h2 class="main-title">{{ item.title }}</h2>
@@ -381,7 +382,7 @@ import {
   Check
 } from "@element-plus/icons-vue";
 import { storageLocal } from "@pureadmin/utils";
-import { userKey, removeToken, hasManageAccess, getToken } from "@/utils/auth";
+import { userKey, removeToken, getToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
 
@@ -403,58 +404,51 @@ const showLoginDialog = ref(false);
 
 /**
  * 立即体验/立即试用/登录处理
- * 1、如果当前未登录弹出登录窗口
- * 2、如果当前登录直接进入系统
  */
-const handleEntry = () => {
+const handleEntry = (e?: Event) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
+  // 获取最新的登录状态
   const token = getToken();
-  if (token && token.accessToken) {
-    // 已经登录，根据角色进入对应页面
-    const user = storageLocal().getItem<DataInfo<number>>(userKey);
-    if (user && (user.roleType === 2 || user.roleType === 3)) {
-      // 教师或管理员进入后台管理
+  const currentInfo = storageLocal().getItem<DataInfo<number>>(userKey);
+  const isLogged = !!(token?.accessToken || currentInfo);
+
+  console.log("handleEntry clicked, isLogged:", isLogged);
+
+  if (isLogged) {
+    const user = currentInfo || userInfo.value;
+    // 角色类型判断：2和3通常代表教师或管理员，跳转到管理后台；其他跳转到个人中心
+    if (user?.roleType === 2 || user?.roleType === 3) {
       router.push("/welcome/index");
     } else {
-      // 学生进入个人中心
       router.push("/account");
     }
   } else {
-    // 未登录时弹出登录窗口
     showLoginDialog.value = true;
   }
 };
 
-/**
- * 登录成功后的处理
- */
 const handleLoginSuccess = () => {
-  // 刷新用户信息
   userInfo.value = storageLocal().getItem(userKey);
-  const user = storageLocal().getItem<DataInfo<number>>(userKey);
-
-  // 登录成功后根据角色进入对应页面
-  if (user && (user.roleType === 2 || user.roleType === 3)) {
-    // 教师/管理员进入工作台
+  if (userInfo.value && (userInfo.value.roleType === 2 || userInfo.value.roleType === 3)) {
     router.push("/welcome/index");
   } else {
-    // 学生进入个人中心
     router.push("/account");
   }
 };
 
-// 检查用户是否有管理权限（教师或管理员）
 const hasAdminAccess = computed(() => {
   if (!userInfo.value) return false;
-  // 角色类型 2:教师 3:管理员
   return userInfo.value.roleType === 2 || userInfo.value.roleType === 3;
 });
 
-// 监听滚动事件
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
 };
 
-// 鼠标光效处理
 const handleMouseMove = (e: MouseEvent) => {
   const elements = document.querySelectorAll('.stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .testimonial-card, .hero-btn, .cta-buttons .el-button');
   elements.forEach((el: any) => {
@@ -466,7 +460,6 @@ const handleMouseMove = (e: MouseEvent) => {
   });
 };
 
-// 滚动动画观察器
 const initScrollAnimations = () => {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -479,7 +472,6 @@ const initScrollAnimations = () => {
     { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
   );
 
-  // 观察所有需要动画的元素
   document.querySelectorAll('.stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .testimonial-card, .section-header').forEach((el) => {
     el.classList.add('scroll-animate');
     observer.observe(el);
@@ -489,8 +481,6 @@ const initScrollAnimations = () => {
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("mousemove", handleMouseMove);
-  
-  // 延迟初始化滚动动画，确保DOM已渲染
   setTimeout(initScrollAnimations, 100);
 });
 
@@ -499,7 +489,6 @@ onUnmounted(() => {
   window.removeEventListener("mousemove", handleMouseMove);
 });
 
-// 滚动到指定区域
 const scrollToSection = (id: string) => {
   const element = document.getElementById(id);
   if (element) {
@@ -507,7 +496,6 @@ const scrollToSection = (id: string) => {
   }
 };
 
-// 星星样式
 const getStarStyle = (index: number) => {
   const size = Math.random() * 3 + 1;
   return {
@@ -520,7 +508,6 @@ const getStarStyle = (index: number) => {
   };
 };
 
-// 流星样式 - 从右上角出现，斜向左下落
 const getShootingStarStyle = (index: number) => {
   return {
     left: `${50 + Math.random() * 50}%`,
@@ -530,7 +517,6 @@ const getShootingStarStyle = (index: number) => {
   };
 };
 
-// 粒子样式
 const getParticleStyle = (index: number) => {
   const size = Math.random() * 6 + 2;
   return {
@@ -543,7 +529,6 @@ const getParticleStyle = (index: number) => {
   };
 };
 
-// CTA区域星星样式
 const getCtaStarStyle = (index: number) => {
   const size = Math.random() * 2 + 1;
   return {
@@ -556,7 +541,6 @@ const getCtaStarStyle = (index: number) => {
   };
 };
 
-// 轮播图数据
 const carouselItems = ref([
   {
     title: "启明智教 Intelledu",
@@ -572,7 +556,6 @@ const carouselItems = ref([
   }
 ]);
 
-// 统计数据
 const statsData = ref([
   { icon: "👨‍🎓", number: "1,000+", label: "预计注册学员" },
   { icon: "👩‍🏫", number: "50+", label: "预计优秀教师" },
@@ -580,7 +563,6 @@ const statsData = ref([
   { icon: "⭐", number: "98%+", label: "预计学员满意度" }
 ]);
 
-// AI 赋能特性
 const aiFeatures = ref([
   {
     icon: "🧠",
@@ -604,7 +586,6 @@ const aiFeatures = ref([
   }
 ]);
 
-// 平台特性数据
 const features = ref([
   {
     icon: "Monitor",
@@ -626,7 +607,6 @@ const features = ref([
   }
 ]);
 
-// 核心服务
 const services = ref([
   {
     icon: "📖",
@@ -654,7 +634,6 @@ const services = ref([
   }
 ]);
 
-// 技术栈
 const techStack = ref([
   { icon: "🧠", name: "多模态 AI", version: "大语言模型" },
   { icon: "🔮", name: "深度学习", version: "神经网络" },
@@ -666,7 +645,6 @@ const techStack = ref([
   { icon: "🌐", name: "边缘计算", version: "低延迟响应" }
 ]);
 
-// 用户评价
 const testimonials = ref([
   {
     content: "启明智教帮助我找到了学习的薄弱点，针对性练习后成绩提升了很多，特别是错题分析功能太实用了！",
@@ -688,11 +666,9 @@ const testimonials = ref([
   }
 ]);
 
-// 处理下拉菜单命令
 const handleCommand = (command: string) => {
   switch (command) {
     case "space":
-      // 检查用户权限，只允许教师和管理员进入空间
       if (hasAdminAccess.value) {
         router.push("/welcome/index");
       } else {
@@ -791,6 +767,7 @@ const handleCommand = (command: string) => {
         color: rgba(255, 255, 255, 0.8);
         text-decoration: none;
         transition: all 0.3s;
+        cursor: pointer !important;
 
         &:hover { color: #60a5fa; }
       }
@@ -806,6 +783,7 @@ const handleCommand = (command: string) => {
       border: none;
       border-radius: 24px !important;
       transition: all 0.3s ease;
+      cursor: pointer !important;
 
       &:hover {
         transform: translateY(-2px);
@@ -846,6 +824,7 @@ const handleCommand = (command: string) => {
     inset: 0;
     z-index: 1;
     opacity: 0.3;
+    pointer-events: none;
 
     .star {
       position: absolute;
@@ -917,12 +896,15 @@ const handleCommand = (command: string) => {
   height: 100%;
   background-size: cover;
   background-position: center;
+  position: relative;
 
   &::before {
     position: absolute;
     inset: 0;
     content: "";
     background: linear-gradient(135deg, rgba(10, 10, 26, 0.5) 0%, rgba(10, 10, 26, 0.3) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
 
   .carousel-text {
@@ -978,9 +960,11 @@ const handleCommand = (command: string) => {
       gap: 16px;
       position: relative;
       z-index: 100;
+      pointer-events: auto !important;
 
       .hero-btn {
         position: relative;
+        z-index: 101;
         height: 54px;
         padding: 0 38px;
         font-size: 16px;
@@ -993,6 +977,8 @@ const handleCommand = (command: string) => {
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer !important;
+        pointer-events: auto !important;
 
         :deep(span) {
           position: relative;
@@ -1000,6 +986,8 @@ const handleCommand = (command: string) => {
           display: flex;
           align-items: center;
           gap: 8px;
+          cursor: pointer !important;
+          pointer-events: none; // 让点击穿透到按钮本身
         }
 
         &:hover {
@@ -1107,7 +1095,6 @@ const handleCommand = (command: string) => {
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     cursor: pointer;
-    overflow: hidden;
 
     &::before {
       content: "";
@@ -1399,6 +1386,7 @@ const handleCommand = (command: string) => {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
+    cursor: pointer;
 
     &::before {
       content: "";
@@ -1506,6 +1494,7 @@ const handleCommand = (command: string) => {
     transform-style: preserve-3d;
     backface-visibility: hidden;
     overflow: hidden;
+    cursor: pointer;
 
     &::before {
       content: "";
@@ -1661,6 +1650,7 @@ const handleCommand = (command: string) => {
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     overflow: hidden;
+    cursor: pointer;
 
     &::before {
       content: "";
@@ -1774,10 +1764,15 @@ const handleCommand = (command: string) => {
         border-radius: 30px !important;
         overflow: hidden;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer !important;
 
         :deep(span) {
           position: relative;
           z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer !important;
         }
 
         &:hover {
@@ -2087,9 +2082,7 @@ const handleCommand = (command: string) => {
 
 .hero-desc {
   display: inline-block;
-  border-right: 2px solid #60a5fa;
   padding-right: 8px;
-  animation: blink-cursor 1s step-end infinite;
 }
 
 /* 悬停时图标旋转 */
