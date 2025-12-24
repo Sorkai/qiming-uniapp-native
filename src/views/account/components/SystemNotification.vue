@@ -1,6 +1,6 @@
 <template>
-  <div class="system-notification">
-    <el-card shadow="never">
+  <div class="system-notification" :class="currentTheme">
+    <el-card shadow="never" class="main-card">
       <template #header>
         <div class="card-header">
           <span>系统通知</span>
@@ -12,11 +12,12 @@
           :key="index"
           :timestamp="item.timestamp"
           placement="top"
+          class="notification-item"
         >
-          <el-card>
+          <el-card class="content-card">
             <h4>{{ item.title }}</h4>
-            <p>发布者: {{ item.publisher }}</p>
-            <p>{{ item.content }}</p>
+            <p class="publisher">发布者: {{ item.publisher }}</p>
+            <p class="content">{{ item.content }}</p>
           </el-card>
         </el-timeline-item>
       </el-timeline>
@@ -26,6 +27,10 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+
+defineProps<{
+  currentTheme?: string;
+}>();
 
 const notificationList = ref([
   {
@@ -59,20 +64,49 @@ const notificationList = ref([
 
 <style lang="scss" scoped>
 .system-notification {
+  .main-card {
+    .dark & {
+      background-color: transparent;
+      border: none;
+      
+      :deep(.el-card__header) {
+        border-bottom-color: #1e293b;
+        color: #f1f5f9;
+      }
+    }
+  }
+
   .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-weight: 600;
   }
 
-  .el-timeline-item__wrapper {
-    .el-card {
+  .notification-item {
+    :deep(.el-timeline-item__timestamp) {
+      .dark & {
+        color: #64748b;
+      }
+    }
+
+    .content-card {
       transition: all 0.3s ease-in-out;
       cursor: pointer;
+      
+      .dark & {
+        background-color: #1e293b;
+        border-color: #334155;
+      }
 
       &:hover {
         transform: translateY(-5px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        
+        .dark & {
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+          background-color: #334155;
+        }
       }
     }
   }
@@ -81,12 +115,30 @@ const notificationList = ref([
     margin: 0 0 10px;
     font-size: 16px;
     font-weight: 600;
+    
+    .dark & {
+      color: #f1f5f9;
+    }
   }
 
   p {
     margin: 0 0 5px;
     font-size: 14px;
-    color: #606266;
+    
+    &.publisher {
+      color: #909399;
+      .dark & {
+        color: #94a3b8;
+      }
+    }
+    
+    &.content {
+      color: #606266;
+      line-height: 1.6;
+      .dark & {
+        color: #cbd5e1;
+      }
+    }
   }
 }
 </style>

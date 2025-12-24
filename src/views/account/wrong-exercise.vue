@@ -86,6 +86,7 @@
           <div v-else class="wrong-list">
             <div
               class="wrong-item"
+              :class="{ dark: currentTheme === 'dark' }"
               v-for="item in filteredRecords"
               :key="item.id"
             >
@@ -126,7 +127,7 @@
     <!-- 批量分析全屏进度 -->
     <transition name="fade">
       <div v-if="batchAnalyzing" class="batch-overlay">
-        <div class="overlay-content">
+        <div class="overlay-content" :class="{ dark: currentTheme === 'dark' }">
           <h3>AI 分析中...</h3>
           <el-progress :percentage="batchProgressPercent" :stroke-width="20" style="width:320px; margin:10px 0 16px;" />
           <div class="stats">
@@ -144,6 +145,7 @@
     <WrongQuestionDetailWithAI
       v-model="detailVisible"
       :course-id="courseId"
+      :current-theme="currentTheme"
       :wrong="normalizeWrong(itemForDetail)"
       :initial-analysis="findHistory(itemForDetail)"
       @analyzed="cacheAnalysis"

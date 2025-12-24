@@ -203,7 +203,8 @@ const viewHomework = (homework: any) => {
         path: `/account/homework-detail`,
         query: {
           homeworkId: homework.homeworkId,
-          courseId: props.courseId.toString()
+          courseId: props.courseId.toString(),
+          theme: props.currentTheme
         }
       });
     } else {
@@ -220,7 +221,8 @@ const viewExam = (exam: any) => {
         path: `/account/exam-detail`,
         query: {
           examId: exam.examId,
-          courseId: props.courseId.toString()
+          courseId: props.courseId.toString(),
+          theme: props.currentTheme
         }
       });
     } else {

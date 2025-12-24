@@ -1,5 +1,5 @@
 <template>
-  <div class="todo-container">
+  <div class="todo-container" :class="currentTheme">
     <div class="todo-header card">
       <div class="header-left">
         <h3>待办事项</h3>
@@ -124,6 +124,10 @@ import {
   User,
   Clock
 } from "@element-plus/icons-vue";
+
+defineProps<{
+  currentTheme?: string;
+}>();
 
 interface TodoItem {
   id: number;
@@ -314,6 +318,11 @@ const toggleStatus = (row: TodoItem) => {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
   transition: all 0.3s ease;
+  
+  .dark & {
+    background-color: #1e293b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .todo-container {
@@ -328,11 +337,19 @@ const toggleStatus = (row: TodoItem) => {
         font-size: 22px;
         font-weight: 600;
         color: #333;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
       }
       p {
         margin: 0;
         font-size: 14px;
         color: #909399;
+        
+        .dark & {
+          color: #94a3b8;
+        }
       }
     }
   }
@@ -340,6 +357,24 @@ const toggleStatus = (row: TodoItem) => {
   .todo-controls {
     display: flex;
     justify-content: flex-end;
+    
+    :deep(.el-radio-group) {
+      .el-radio-button__inner {
+        .dark & {
+          background-color: #0f172a;
+          border-color: #334155;
+          color: #94a3b8;
+        }
+      }
+      
+      .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+        .dark & {
+          background-color: #3b82f6;
+          border-color: #3b82f6;
+          color: #fff;
+        }
+      }
+    }
   }
 
   .todo-list {
@@ -361,14 +396,26 @@ const toggleStatus = (row: TodoItem) => {
     &:hover {
       transform: translateY(-5px) scale(1.01);
       box-shadow: 0 8px 25px rgb(0 0 0 / 10%);
+      
+      .dark & {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      }
     }
 
     &.completed {
       .item-title {
         text-decoration: line-through;
         color: #909399;
+        
+        .dark & {
+          color: #64748b;
+        }
       }
       background-color: #f7f8fc;
+      
+      .dark & {
+        background-color: #0f172a;
+      }
     }
 
     .item-content {
@@ -387,6 +434,10 @@ const toggleStatus = (row: TodoItem) => {
         font-weight: 600;
         color: #303133;
         transition: color 0.3s;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
       }
     }
 
@@ -395,6 +446,10 @@ const toggleStatus = (row: TodoItem) => {
       font-size: 14px;
       color: #606266;
       line-height: 1.6;
+      
+      .dark & {
+        color: #cbd5e1;
+      }
     }
 
     .item-footer {
@@ -402,6 +457,10 @@ const toggleStatus = (row: TodoItem) => {
       gap: 24px;
       font-size: 13px;
       color: #909399;
+      
+      .dark & {
+        color: #64748b;
+      }
 
       span {
         display: flex;

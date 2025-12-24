@@ -181,7 +181,7 @@ const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
-const currentTheme = ref("light");
+const currentTheme = ref(storageLocal().getItem("course_theme") as string || "light");
 const activeMenu = ref(
   (storageLocal().getItem(`course_detail_active_menu_${route.params.id}`) as string) ||
     "course-learn"
@@ -359,10 +359,18 @@ const toggleTheme = (event?: MouseEvent) => {
 const performThemeToggle = () => {
   const oldTheme = currentTheme.value;
   const newTheme = oldTheme === "light" ? "dark" : "light";
-  document.body.classList.remove(oldTheme);
-  document.body.classList.add(newTheme);
   currentTheme.value = newTheme;
 };
+
+// 监听主题变化
+watch(currentTheme, (val) => {
+  storageLocal().setItem("course_theme", val);
+  const other = val === "light" ? "dark" : "light";
+  document.documentElement.classList.remove(other);
+  document.documentElement.classList.add(val);
+  document.body.classList.remove(other);
+  document.body.classList.add(val);
+}, { immediate: true });
 
 // 菜单切换
 const handleMenuClick = (menuName: string) => {
@@ -659,7 +667,6 @@ const initQAHistory = () => {
 
 onMounted(async () => {
   baseCourseId.value = Number(route.params.id);
-  document.body.classList.add(currentTheme.value);
   await fetchCourseDetail();
   initQAHistory();
 
@@ -701,11 +708,34 @@ onMounted(async () => {
 @import "@/../coursecss/css/app.a5f91bbb.css";
 @import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
 
-html, body { background-color: #f5f7fa !important; }
-#app { width: 100%; min-height: 100vh; background-color: #f5f7fa !important; transition: background-color 0.3s ease; }
-#app.dark { background-color: #1a1a1a !important; }
-.layout-container { position: relative; width: 100%; min-height: 100vh; display: flex; background-color: #f5f7fa !important; transition: background-color 0.3s ease; }
-.layout-container.dark { background-color: #1a1a1a !important; }
+html,
+body {
+  background-color: #f5f7fa !important;
+}
+html.dark,
+body.dark {
+  background-color: #1a1a1a !important;
+}
+#app {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f5f7fa !important;
+  transition: background-color 0.3s ease;
+}
+#app.dark {
+  background-color: #1a1a1a !important;
+}
+.layout-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  background-color: #f5f7fa !important;
+  transition: background-color 0.3s ease;
+}
+.layout-container.dark {
+  background-color: #1a1a1a !important;
+}
 
 /* 覆盖外部CSS中的侧边栏样式 */
 .layout-sidebar.light,

@@ -1,5 +1,5 @@
 <template>
-  <div class="user-profile">
+  <div class="user-profile" :class="currentTheme">
     <!-- 顶部自定义横幅图片区域 -->
     <div class="profile-banner" v-if="extraInfo.bannerUrl || defaultBanner" :style="bannerStyle">
       <div class="banner-overlay">
@@ -217,6 +217,10 @@ import type { DataInfo } from "@/utils/auth";
 import { updateFrontendUserInfo, updateFrontendUserPassword } from "@/api/frontend/user";
 import { uploadFile, getUserDetail } from "@/api/user";
 import dayjs from "dayjs";
+
+const props = defineProps<{
+  currentTheme?: string;
+}>();
 
 const router = useRouter();
 const defaultAvatar = "/src/assets/user.jpg";
@@ -580,6 +584,10 @@ onMounted(() => {
       font-size: 18px;
       font-weight: 600;
       color: #333;
+      
+      .dark & {
+        color: #f1f5f9;
+      }
     }
 
     .action-buttons {
@@ -640,6 +648,10 @@ onMounted(() => {
     text-align: center;
     background-color: #f9f9f9;
     border-radius: 8px;
+    
+    .dark & {
+      background-color: #111b2d;
+    }
 
     .el-avatar {
       margin-bottom: 16px;
@@ -651,6 +663,10 @@ onMounted(() => {
       font-size: 18px;
       font-weight: 600;
       color: #333;
+      
+      .dark & {
+        color: #f1f5f9;
+      }
     }
 
     .user-role {
@@ -679,6 +695,12 @@ onMounted(() => {
       backdrop-filter: blur(4px);
       transition: box-shadow .25s, transform .25s;
 
+      .dark & {
+        background: linear-gradient(145deg, #111b2d, #1e293b);
+        border-color: #1e293b;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
       &:hover {
         box-shadow: 0 8px 22px -4px rgba(0,0,0,0.08);
         transform: translateY(-2px);
@@ -686,6 +708,10 @@ onMounted(() => {
 
       &.timeline {
         background: linear-gradient(135deg,#fdfbfb,#ebedee);
+        
+        .dark & {
+          background: linear-gradient(135deg, #0f172a, #111b2d);
+        }
       }
 
       .group-title {
@@ -695,6 +721,11 @@ onMounted(() => {
         margin-bottom: 14px;
         position: relative;
         padding-left: 10px;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
+
         &::before {
           content: '';
           position: absolute;
@@ -717,6 +748,10 @@ onMounted(() => {
           width: 72px;
           color: #6b7280;
           font-weight: 500;
+          
+          .dark & {
+            color: #94a3b8;
+          }
         }
         .value {
           flex: 1;
@@ -725,6 +760,10 @@ onMounted(() => {
           align-items: center;
           gap: 6px;
           word-break: break-all;
+          
+          .dark & {
+            color: #e2e8f0;
+          }
         }
         &.signature .value {
           line-height: 1.4;

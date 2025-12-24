@@ -1,5 +1,5 @@
 <template>
-  <div class="competition">
+  <div class="competition" :class="currentTheme">
     <!-- 顶部横幅 -->
     <div class="competition-banner">
       <div class="banner-content">
@@ -353,6 +353,10 @@ import { ref } from "vue";
 import { Clock, User, CircleCheck, Warning } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 
+defineProps<{
+  currentTheme?: string;
+}>();
+
 const userRank = ref(128);
 const userPoints = ref(2580);
 
@@ -570,6 +574,11 @@ const formatTime = (seconds: number) => {
     background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgb(245 158 11 / 30%);
+    
+    .dark & {
+      background: linear-gradient(135deg, #7c2d12 0%, #450a0a 100%);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
 
     .banner-content {
       display: flex;
@@ -649,10 +658,19 @@ const formatTime = (seconds: number) => {
     border-radius: 16px;
     box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
     transition: all 0.3s ease;
+    
+    .dark & {
+      background: #1e293b;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
 
     &:hover {
       box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
       transform: translateY(-4px);
+      
+      .dark & {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
     }
 
     .card-icon {
@@ -665,6 +683,10 @@ const formatTime = (seconds: number) => {
       font-size: 32px;
       background: #f3f4f6;
       border-radius: 16px;
+      
+      .dark & {
+        background: #334155;
+      }
     }
 
     .card-content {
@@ -675,12 +697,20 @@ const formatTime = (seconds: number) => {
         font-size: 18px;
         font-weight: 600;
         color: #333;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
       }
 
       p {
         margin: 0 0 8px;
         font-size: 13px;
         color: #666;
+        
+        .dark & {
+          color: #94a3b8;
+        }
       }
 
       .card-stats {
@@ -688,27 +718,47 @@ const formatTime = (seconds: number) => {
         gap: 16px;
         font-size: 12px;
         color: #999;
+        
+        .dark & {
+          color: #64748b;
+        }
 
         strong {
           color: #333;
+          
+          .dark & {
+            color: #e2e8f0;
+          }
         }
       }
     }
 
     &.oj-card .card-icon {
       background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+      .dark & {
+        background: linear-gradient(135deg, #4c1d95, #2e1065);
+      }
     }
 
     &.training-card .card-icon {
       background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      .dark & {
+        background: linear-gradient(135deg, #064e3b, #065f46);
+      }
     }
 
     &.essay-card .card-icon {
       background: linear-gradient(135deg, #fef3c7, #fde68a);
+      .dark & {
+        background: linear-gradient(135deg, #78350f, #92400e);
+      }
     }
 
     &.security-card .card-icon {
       background: linear-gradient(135deg, #fee2e2, #fecaca);
+      .dark & {
+        background: linear-gradient(135deg, #7f1d1d, #991b1b);
+      }
     }
   }
 
@@ -719,6 +769,11 @@ const formatTime = (seconds: number) => {
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+    
+    .dark & {
+      background: #1e293b;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
 
     .section-header {
       display: flex;
@@ -731,6 +786,10 @@ const formatTime = (seconds: number) => {
         font-size: 18px;
         font-weight: 600;
         color: #333;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
       }
     }
   }
@@ -749,10 +808,20 @@ const formatTime = (seconds: number) => {
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       transition: all 0.3s ease;
+      
+      .dark & {
+        background: #0f172a;
+        border-color: #334155;
+      }
 
       &:hover {
         background: #f3f4f6;
         border-color: #d1d5db;
+        
+        .dark & {
+          background: #1e293b;
+          border-color: #475569;
+        }
       }
 
       &.is-ongoing {
@@ -772,12 +841,20 @@ const formatTime = (seconds: number) => {
           font-size: 15px;
           font-weight: 600;
           color: #333;
+          
+          .dark & {
+            color: #f1f5f9;
+          }
         }
 
         p {
           margin: 0 0 8px;
           font-size: 13px;
           color: #666;
+          
+          .dark & {
+            color: #94a3b8;
+          }
         }
 
         .event-meta {
@@ -785,6 +862,10 @@ const formatTime = (seconds: number) => {
           gap: 20px;
           font-size: 12px;
           color: #999;
+          
+          .dark & {
+            color: #64748b;
+          }
 
           span {
             display: flex;
@@ -807,6 +888,9 @@ const formatTime = (seconds: number) => {
 
       &:hover {
         background: #f9fafb;
+        .dark & {
+          background: #0f172a;
+        }
       }
 
       &.is-top3 {
@@ -825,6 +909,10 @@ const formatTime = (seconds: number) => {
           font-size: 16px;
           font-weight: 600;
           color: #666;
+          
+          .dark & {
+            color: #94a3b8;
+          }
         }
       }
 
@@ -837,11 +925,19 @@ const formatTime = (seconds: number) => {
           font-size: 14px;
           font-weight: 600;
           color: #333;
+          
+          .dark & {
+            color: #f1f5f9;
+          }
         }
 
         .solved {
           font-size: 12px;
           color: #999;
+          
+          .dark & {
+            color: #64748b;
+          }
         }
       }
 
@@ -887,11 +983,21 @@ const formatTime = (seconds: number) => {
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       transition: all 0.3s ease;
+      
+      .dark & {
+        background: #0f172a;
+        border-color: #334155;
+      }
 
       &:hover {
         background: #f3f4f6;
         border-color: #d1d5db;
         transform: translateY(-2px);
+        
+        .dark & {
+          background: #1e293b;
+          border-color: #475569;
+        }
       }
 
       .category-icon {
@@ -907,12 +1013,20 @@ const formatTime = (seconds: number) => {
           font-size: 16px;
           font-weight: 600;
           color: #333;
+          
+          .dark & {
+            color: #f1f5f9;
+          }
         }
 
         p {
           margin: 0;
           font-size: 12px;
           color: #999;
+          
+          .dark & {
+            color: #94a3b8;
+          }
         }
       }
     }
@@ -936,12 +1050,20 @@ const formatTime = (seconds: number) => {
     padding: 20px;
     background: #f9fafb;
     border-radius: 12px;
+    
+    .dark & {
+      background: #0f172a;
+    }
 
     h4 {
       margin: 0 0 16px;
       font-size: 16px;
       font-weight: 600;
       color: #333;
+      
+      .dark & {
+        color: #f1f5f9;
+      }
     }
 
     .result-score {
@@ -976,6 +1098,10 @@ const formatTime = (seconds: number) => {
       .detail-item {
         padding: 12px 0;
         border-bottom: 1px solid #e5e7eb;
+        
+        .dark & {
+          border-color: #334155;
+        }
 
         &:last-child {
           border-bottom: none;
@@ -984,10 +1110,18 @@ const formatTime = (seconds: number) => {
         .label {
           font-weight: 600;
           color: #333;
+          
+          .dark & {
+            color: #e2e8f0;
+          }
         }
 
         .value {
           color: #666;
+          
+          .dark & {
+            color: #94a3b8;
+          }
         }
       }
     }
@@ -1010,12 +1144,20 @@ const formatTime = (seconds: number) => {
       font-size: 24px;
       font-weight: 600;
       color: #333;
+      
+      .dark & {
+        color: #f1f5f9;
+      }
     }
 
     p {
       margin: 0 0 24px;
       font-size: 14px;
       color: #666;
+      
+      .dark & {
+        color: #94a3b8;
+      }
     }
 
     .intro-stats {
@@ -1037,6 +1179,10 @@ const formatTime = (seconds: number) => {
         .label {
           font-size: 12px;
           color: #999;
+          
+          .dark & {
+            color: #64748b;
+          }
         }
       }
     }
@@ -1051,11 +1197,19 @@ const formatTime = (seconds: number) => {
       margin-bottom: 24px;
       background: #f3f4f6;
       border-radius: 8px;
+      
+      .dark & {
+        background: #1e293b;
+      }
 
       .question-num {
         font-size: 14px;
         font-weight: 600;
         color: #333;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
       }
 
       .timer {
@@ -1077,6 +1231,10 @@ const formatTime = (seconds: number) => {
         font-weight: 600;
         line-height: 1.6;
         color: #333;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
       }
 
       .options {
@@ -1090,6 +1248,21 @@ const formatTime = (seconds: number) => {
           border: 1px solid #e5e7eb;
           border-radius: 8px;
           transition: all 0.2s;
+          
+          .dark & {
+            background: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+            
+            &:hover {
+              background: #1e293b;
+              border-color: #475569;
+            }
+            
+            :deep(.el-radio__label) {
+              color: #f1f5f9;
+            }
+          }
 
           &:hover {
             background: #f3f4f6;

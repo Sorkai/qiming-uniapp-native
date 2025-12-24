@@ -1,5 +1,5 @@
 <template>
-  <div class="account-container">
+  <div class="account-container" :class="currentTheme">
     <!-- 顶部导航 -->
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
@@ -7,6 +7,51 @@
           <img src="@/assets/logo.png" alt="Logo" class="app-logo-img" />
         </div>
         <div class="header-right">
+          <!-- 主题切换按钮 -->
+          <div class="theme-toggle-wrapper">
+            <div
+              class="theme-btn-premium"
+              :class="{ 'is-dark': currentTheme === 'dark' }"
+              @click="toggleTheme"
+            >
+              <div class="sun-moon-wrapper">
+                <div class="icon sun">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </div>
+                <div class="icon moon">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="switch-dot"></div>
+            </div>
+          </div>
+
           <template v-if="userInfo">
             <el-dropdown trigger="hover" @command="handleCommand">
               <div class="user-info">
@@ -97,22 +142,22 @@
       </div>
       <div class="account-main">
         <div v-if="activeMenu === 'profile'">
-          <user-profile />
+          <user-profile :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'cloud-disk'">
-          <cloud-disk />
+          <cloud-disk :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'notification'">
-          <system-notification />
+          <system-notification :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'todo'">
-          <todo />
+          <todo :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'virtual-lab'">
-          <virtual-lab />
+          <virtual-lab :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'competition'">
-          <competition />
+          <competition :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'home'">
           <!-- 快速入口卡片 -->
@@ -152,7 +197,7 @@
           </div>
 
           <!-- 上方卡片 -->
-          <div class="card">
+          <div class="card" :class="currentTheme">
             <!-- 重要提醒 -->
             <div class="reminder">
               <el-carousel
@@ -316,7 +361,7 @@
               </div>
               <div class="ai-summary">
                 <h3>AI总结</h3>
-                <div class="summary-card">
+                <div class="summary-card" :class="currentTheme">
                   <p>{{ aiSummaryTitle }}</p>
                   <ul>
                     <li v-for="(item, idx) in displayedSummary" :key="idx">
@@ -331,8 +376,8 @@
         </div>
         <div v-else-if="activeMenu === 'course'">
           <!-- 课程列表卡片 -->
-          <div class="card course-list">
-            <div class="course-header">
+          <div class="card course-list" :class="currentTheme">
+            <div class="course-header" :class="currentTheme">
               <h3>我的课程</h3>
               <div class="course-filter">
                 <el-select v-model="courseFilter" placeholder="课程状态">
@@ -469,7 +514,9 @@ import {
   Bell,
   Tickets,
   Cpu,
-  Trophy
+  Trophy,
+  Sunny,
+  Moon
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
@@ -486,6 +533,74 @@ const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
+
+// 主题相关
+const currentTheme = ref(storageLocal().getItem("course_theme") as string || "light");
+
+// 监听主题变化
+watch(
+  currentTheme,
+  val => {
+    storageLocal().setItem("course_theme", val);
+    const other = val === "light" ? "dark" : "light";
+    document.documentElement.classList.remove(other);
+    document.documentElement.classList.add(val);
+    document.body.classList.remove(other);
+    document.body.classList.add(val);
+  },
+  { immediate: true }
+);
+
+const isAnimating = ref(false);
+const toggleTheme = (event: MouseEvent) => {
+  if (isAnimating.value) return;
+  isAnimating.value = true;
+
+  const x = event.clientX;
+  const y = event.clientY;
+  const endRadius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y)
+  );
+
+  // 1. 创建扩散层
+  const overlay = document.createElement("div");
+  const isToDark = currentTheme.value === "light";
+
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    pointer-events: none;
+    background: ${isToDark ? "#0b1120" : "#f7f8fc"};
+    clip-path: circle(0px at ${x}px ${y}px);
+    transition: clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  `;
+  document.body.appendChild(overlay);
+
+  // 2. 触发扩散动画
+  requestAnimationFrame(() => {
+    overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
+  });
+
+  // 3. 切换实际主题
+  setTimeout(() => {
+    currentTheme.value = isToDark ? "dark" : "light";
+
+    // 4. 让遮罩层淡出
+    overlay.style.transition =
+      "opacity 500ms ease, clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1)";
+    overlay.style.opacity = "0";
+
+    setTimeout(() => {
+      overlay.remove();
+      isAnimating.value = false;
+    }, 500);
+  }, 500);
+};
 
 // 当前激活的菜单项
 const activeMenu = ref<string>("home");
@@ -861,6 +976,12 @@ onUnmounted(() => {
 .account-container {
   min-height: 100vh;
   background-color: #f7f8fc;
+  transition: background-color 0.3s ease;
+
+  &.dark {
+    background-color: #0b1120;
+    color: #f1f5f9;
+  }
 
   .header {
     position: fixed;
@@ -880,6 +1001,24 @@ onUnmounted(() => {
       .user-info .nickname,
       .user-info .el-icon--right {
         color: #333;
+
+        .dark & {
+          color: #f1f5f9;
+        }
+      }
+    }
+
+    .dark & {
+      background: linear-gradient(45deg, #1e293b, #0f172a);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+      &.header-scrolled {
+        background: #111b2d;
+      }
+
+      .theme-toggle {
+        color: #38bdf8;
+        background-color: rgba(255, 255, 255, 0.05);
       }
     }
 
@@ -899,40 +1038,152 @@ onUnmounted(() => {
         border-radius: 8px;
         box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 
+        .dark & {
+          background-color: #1e293b;
+        }
+
         img {
           height: 100%;
         }
       }
 
-      .user-info {
+      .header-right {
         display: flex;
         align-items: center;
-        padding: 0 8px;
-        cursor: pointer;
-        border-radius: 18px;
-        transition: all 0.3s;
 
-        &:hover {
-          background-color: rgb(255 255 255 / 20%);
+        .theme-toggle-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 20px;
+        }
 
-          .el-icon--right {
-            transform: rotate(180deg);
+        .theme-btn-premium {
+          position: relative;
+          width: 52px;
+          height: 28px;
+          padding: 4px;
+          cursor: pointer;
+          background-color: rgba(255, 255, 255, 0.4);
+          border-radius: 100px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+
+          &:hover {
+            transform: scale(1.05);
+            background-color: rgba(255, 255, 255, 0.6);
+          }
+
+          &.is-dark {
+            background-color: #2d3748;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+
+            .switch-dot {
+              transform: translateX(24px);
+              background-color: #1a202c;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            }
+
+            .sun {
+              transform: translateY(20px) scale(0);
+              opacity: 0;
+            }
+
+            .moon {
+              transform: translateY(0) scale(1);
+              opacity: 1;
+              color: #f6e05e;
+            }
+          }
+
+          .sun-moon-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+          }
+
+          .icon {
+            position: absolute;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+            svg {
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .sun {
+            left: 0;
+            color: #f6ad55;
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+
+          .moon {
+            right: 0;
+            color: #718096;
+            transform: translateY(-20px) scale(0);
+            opacity: 0;
+          }
+
+          .switch-dot {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
           }
         }
 
-        .nickname {
-          margin: 0 8px;
-          font-size: 16px;
-          font-weight: 600;
-          color: #333;
-          transition: color 0.3s;
-        }
+        .user-info {
+          display: flex;
+          align-items: center;
+          padding: 0 8px;
+          cursor: pointer;
+          border-radius: 18px;
+          transition: all 0.3s;
 
-        .el-icon--right {
-          font-size: 18px;
-          font-weight: bold;
-          color: #333;
-          transition: all 0.3s ease;
+          &:hover {
+            background-color: rgb(255 255 255 / 20%);
+
+            .el-icon--right {
+              transform: rotate(180deg);
+            }
+          }
+
+          .nickname {
+            margin: 0 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            transition: color 0.3s;
+
+            .dark & {
+              color: #f1f5f9 !important;
+            }
+          }
+
+          .el-icon--right {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s ease;
+
+            .dark & {
+              color: #f1f5f9 !important;
+            }
+          }
         }
       }
     }
@@ -1000,6 +1251,10 @@ onUnmounted(() => {
           font-size: 18px;
           font-weight: 600;
           color: #333;
+
+          .dark & {
+            color: #f1f5f9 !important;
+          }
         }
 
         .user-role {
@@ -1009,6 +1264,20 @@ onUnmounted(() => {
           color: #666;
           background: linear-gradient(135deg, #e8edf8, #dce2f7);
           border-radius: 12px;
+
+          .dark & {
+            color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.1);
+          }
+        }
+
+        .dark & {
+          background: linear-gradient(145deg, #111b2d, #1e293b);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+
+          .avatar-ring {
+            border-color: #334155;
+          }
         }
       }
 
@@ -1018,6 +1287,11 @@ onUnmounted(() => {
         border: none;
         border-radius: 16px;
         box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+
+        .dark & {
+          background: linear-gradient(145deg, #111b2d, #0f172a);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
 
         :deep(.el-menu-item) {
           position: relative;
@@ -1030,7 +1304,7 @@ onUnmounted(() => {
           overflow: hidden;
 
           &::before {
-            content: '';
+            content: "";
             position: absolute;
             left: 0;
             top: 50%;
@@ -1045,7 +1319,11 @@ onUnmounted(() => {
           &:hover {
             padding-left: 24px;
             color: #333;
-            background: linear-gradient(90deg, rgb(220 226 247 / 40%), transparent);
+            background: linear-gradient(
+              90deg,
+              rgb(220 226 247 / 40%),
+              transparent
+            );
             transform: scale(1.05);
             transform-origin: left center;
 
@@ -1067,18 +1345,57 @@ onUnmounted(() => {
             padding-left: 24px;
             font-weight: 600;
             color: #333;
-            background: linear-gradient(90deg, rgb(220 226 247 / 60%), rgb(220 226 247 / 20%));
+            background: linear-gradient(
+              90deg,
+              rgb(220 226 247 / 60%),
+              rgb(220 226 247 / 20%)
+            );
             box-shadow: inset 0 0 0 1px rgb(200 212 240 / 50%);
+
+            .dark & {
+              color: #f1f5f9;
+              background: linear-gradient(
+                90deg,
+                rgba(56, 189, 248, 0.15),
+                transparent
+              );
+              box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.2);
+            }
 
             &::before {
               height: 70%;
               background: linear-gradient(180deg, #a8b8e8, #c8d4f0);
+
+              .dark & {
+                background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+              }
             }
 
             .el-icon {
               transform: scale(1.1);
               color: #5a6b8a;
               animation: iconPulse 1.5s ease-in-out infinite;
+
+              .dark & {
+                color: #38bdf8;
+              }
+            }
+          }
+
+          .dark & {
+            color: #94a3b8;
+
+            &:hover {
+              color: #f1f5f9;
+              background: linear-gradient(
+                90deg,
+                rgba(56, 189, 248, 0.1),
+                transparent
+              );
+
+              .el-icon {
+                color: #38bdf8;
+              }
             }
           }
 
@@ -1105,16 +1422,16 @@ onUnmounted(() => {
           &:nth-child(5):hover .el-icon {
             animation: iconRing 0.6s ease;
           }
-          
+
           /* 待办事项 - 红色打勾效果 */
           &:nth-child(6) {
             .el-icon {
               position: relative;
               overflow: visible;
             }
-            
+
             .el-icon::after {
-              content: '';
+              content: "";
               position: absolute;
               bottom: -0.6px;
               right: -1.2px;
@@ -1128,7 +1445,7 @@ onUnmounted(() => {
               transition: all 0.3s ease;
             }
           }
-          
+
           &:nth-child(6):hover {
             .el-icon::after {
               width: 8px;
@@ -1145,56 +1462,6 @@ onUnmounted(() => {
       }
     }
 
-    /* 图标动画关键帧 */
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes iconBounce {
-      0%, 100% { transform: scale(1.2) translateY(0); }
-      30% { transform: scale(1.2) translateY(-6px); }
-      50% { transform: scale(1.2) translateY(0); }
-      70% { transform: scale(1.2) translateY(-3px); }
-    }
-
-    @keyframes iconFlip {
-      0% { transform: scale(1.2) rotateY(0); }
-      50% { transform: scale(1.2) rotateY(180deg); }
-      100% { transform: scale(1.2) rotateY(360deg); }
-    }
-
-    /* 个人资料 - 心跳/呼吸效果 */
-    @keyframes iconHeartbeat {
-      0% { transform: scale(1.2); }
-      15% { transform: scale(1.35); }
-      30% { transform: scale(1.2); }
-      45% { transform: scale(1.3); }
-      60%, 100% { transform: scale(1.2); }
-    }
-
-    /* 学习云盘 - 上浮到云端效果 */
-    @keyframes iconFloat {
-      0% { transform: scale(1.2) translateY(0); }
-      50% { transform: scale(1.2) translateY(-8px); }
-      100% { transform: scale(1.2) translateY(0); }
-    }
-
-    @keyframes iconRing {
-      0% { transform: scale(1.2) rotate(0); }
-      10% { transform: scale(1.2) rotate(20deg); }
-      20% { transform: scale(1.2) rotate(-15deg); }
-      30% { transform: scale(1.2) rotate(10deg); }
-      40% { transform: scale(1.2) rotate(-10deg); }
-      50% { transform: scale(1.2) rotate(5deg); }
-      60%, 100% { transform: scale(1.2) rotate(0); }
-    }
-
-    @keyframes iconPulse {
-      0%, 100% { transform: scale(1.1); }
-      50% { transform: scale(1.25); }
-    }
-
     .account-main {
       flex: 1;
       padding: 0;
@@ -1209,77 +1476,111 @@ onUnmounted(() => {
         margin-bottom: 24px;
 
         .quick-access-card {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    padding: 20px;
-    cursor: pointer;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
-    transition: all 0.3s ease;
+          display: flex;
+          gap: 16px;
+          align-items: center;
+          padding: 20px;
+          cursor: pointer;
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+          transition: all 0.3s ease;
 
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
+          .dark & {
+            background: #111b2d;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 
-      .access-arrow {
-        transform: translateX(4px);
-        opacity: 1;
-      }
-    }
+            &.lab-access .access-icon {
+              background: linear-gradient(135deg, #2e1065, #4c1d95);
+            }
 
-    .access-icon {
-      display: flex;
-      flex-shrink: 0;
-      align-items: center;
-      justify-content: center;
-      width: 56px;
-      height: 56px;
-      font-size: 28px;
-      border-radius: 14px;
-    }
+            &.competition-access .access-icon {
+              background: linear-gradient(135deg, #451a03, #78350f);
+            }
 
-    .access-info {
-      flex: 1;
-      min-width: 0;
+            &.course-access .access-icon {
+              background: linear-gradient(135deg, #064e3b, #065f46);
+            }
 
-      h4 {
-        margin: 0 0 4px;
-        font-size: 16px;
-        font-weight: 600;
-        color: #333;
-      }
+            &.cloud-access .access-icon {
+              background: linear-gradient(135deg, #0c4a6e, #075985);
+            }
+          }
 
-      p {
-        margin: 0;
-        font-size: 12px;
-        color: #999;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
+          &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
 
-    .access-arrow {
-      font-size: 20px;
-      font-weight: bold;
-      color: #999;
-      opacity: 0.5;
-      transition: all 0.3s ease;
-    }
+            .access-arrow {
+              transform: translateX(4px);
+              opacity: 1;
+            }
+          }
 
-    &.lab-access .access-icon {
-      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
-    }
+          .access-icon {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            font-size: 28px;
+            border-radius: 14px;
+          }
 
-    &.competition-access .access-icon {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-    }
+          .access-info {
+            flex: 1;
+            min-width: 0;
 
-    &.course-access .access-icon {
-      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-    }
+            h4 {
+              margin: 0 0 4px;
+              font-size: 16px;
+              font-weight: 600;
+              color: #333;
+
+              .dark & {
+                color: #f1f5f9 !important;
+              }
+            }
+
+            p {
+              margin: 0;
+              font-size: 12px;
+              color: #999;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+
+              .dark & {
+                color: #94a3b8 !important;
+              }
+            }
+          }
+
+          .access-arrow {
+            font-size: 20px;
+            font-weight: bold;
+            color: #999;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+
+            .dark & {
+              color: #38bdf8 !important;
+              opacity: 1;
+            }
+          }
+
+          &.lab-access .access-icon {
+            background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+          }
+
+          &.competition-access .access-icon {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+          }
+
+          &.course-access .access-icon {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+          }
 
           &.cloud-access .access-icon {
             background: linear-gradient(135deg, #e0f2fe, #bae6fd);
@@ -1295,215 +1596,282 @@ onUnmounted(() => {
         border-radius: 12px;
         box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
 
+        .dark & {
+          background-color: #111b2d;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
         .reminder {
-    margin-bottom: 20px;
+          margin-bottom: 20px;
 
-    :deep(.el-carousel__item) {
-      display: flex;
-      align-items: center;
-    }
-
-    .reminder-content {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      height: 100%;
-      padding: 0 16px;
-      font-size: 14px;
-      color: #5a6b8a;
-      background-color: rgb(220 226 247 / 30%);
-      border: 1px solid rgb(220 226 247 / 60%);
-      border-radius: 12px;
-
-      .el-icon {
-        margin-right: 12px;
-        font-size: 20px;
-        color: #7a8bb8;
-      }
-
-      .notice-text {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
-  }
-
-  .info-section {
-    display: flex;
-    gap: 24px;
-
-    .course-info {
-      flex: 0.7;
-
-      h3 {
-        margin: 0 0 16px;
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-      }
-    }
-
-    .ai-summary {
-      position: relative;
-      flex: 0.3;
-
-      h3 {
-        margin: 0 0 16px;
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-      }
-
-      .summary-card {
-        position: absolute;
-        inset: 45px 0 0;
-        padding: 16px;
-        overflow: hidden;
-        color: #333;
-        background: linear-gradient(135deg, #dce2f7, #c8d4f0);
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgb(220 226 247 / 60%);
-
-        p {
-          margin: 0 0 12px;
-          font-size: 14px;
-          font-weight: 500;
-        }
-
-        ul {
-          height: calc(100% - 32px);
-          /* 统一移除默认样式，改为自定义圆点，避免被其它全局 reset 覆盖后无法恢复 */
-          padding-left: 0;
-          margin: 0;
-          overflow-y: auto;
-          list-style: none;
-
-          &::-webkit-scrollbar {
-            width: 4px;
-          }
-
-          &::-webkit-scrollbar-thumb {
-            background-color: rgb(255 255 255 / 50%);
-            border-radius: 2px;
-          }
-
-          li {
-            position: relative;
-            padding-left: 16px;
-            margin-bottom: 8px;
-            font-size: 14px;
-            line-height: 1.6;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
-
-            &::before {
-              content: "";
-              position: absolute;
-              top: 0.9em;
-              left: 0;
-              width: 6px;
-              height: 6px;
-              background: #fff;
-              border-radius: 50%;
-              transform: translateY(-50%);
-              opacity: 0.9;
-            }
-
-            &.typing-cursor::before { display: none; }
-          }
-        }
-      }
-    }
-
-    .course-card {
-      min-height: 50vh;
-      padding: 16px;
-      background-color: #f7f8fc;
-      border: 1px solid #eef0f5;
-      border-radius: 12px;
-
-      .course-section {
-        margin-bottom: 16px;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        h4 {
-          margin: 0 0 8px;
-          font-size: 14px;
-          font-weight: 600;
-          color: #666;
-        }
-
-        .mini-course-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 12px;
-        }
-
-        .mini-course-item {
-          cursor: pointer;
-          display: flex;
-          gap: 12px;
-          align-items: center;
-          padding: 12px;
-          background: #fff;
-          border: 1px solid #ebeef5;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
-          transition: all 0.3s ease;
-
-          &:hover {
-            box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
-            transform: translateY(-4px) scale(1.02);
-          }
-
-          .course-thumb {
-            position: relative;
-            flex-shrink: 0;
-            width: 64px;
-            height: 64px;
-            overflow: hidden;
-            border-radius: 8px;
-
-            .el-tag {
-              position: absolute;
-              top: 4px;
-              right: 4px;
-              z-index: 1;
-            }
-          }
-
-          .course-content {
+          :deep(.el-carousel__item) {
             display: flex;
-            flex: 1;
-            flex-direction: column;
-            gap: 4px;
-            min-width: 0;
+            align-items: center;
+          }
 
-            .course-name {
-              @include text-ellipsis;
+          .reminder-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 0 16px;
+            font-size: 14px;
+            color: #5a6b8a;
+            background-color: rgb(220 226 247 / 30%);
+            border: 1px solid rgb(220 226 247 / 60%);
+            border-radius: 12px;
 
-              font-size: 14px;
+            .dark & {
+              color: #38bdf8;
+              background-color: rgba(56, 189, 248, 0.05);
+              border-color: rgba(56, 189, 248, 0.2);
+            }
+
+            .el-icon {
+              margin-right: 12px;
+              font-size: 20px;
+              color: #7a8bb8;
+            }
+
+            .notice-text {
+              flex: 1;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+          }
+        }
+
+        .info-section {
+          display: flex;
+          gap: 24px;
+
+          .course-info {
+            flex: 0.7;
+
+            h3 {
+              margin: 0 0 16px;
+              font-size: 18px;
               font-weight: 600;
               color: #333;
+
+              .dark & {
+                color: #f1f5f9 !important;
+              }
             }
 
-            .course-time {
-              font-size: 13px;
-              color: #606266;
+            .course-card {
+              min-height: 50vh;
+              padding: 16px;
+              background-color: #f7f8fc;
+              border: 1px solid #eef0f5;
+              border-radius: 12px;
+
+              .dark & {
+                background-color: #0f172a;
+                border-color: #1e293b;
+              }
+
+              .course-section {
+                margin-bottom: 16px;
+
+                &:last-child {
+                  margin-bottom: 0;
+                }
+
+                h4 {
+                  margin: 0 0 8px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #666;
+
+                  .dark & {
+                    color: #cbd5e1 !important;
+                  }
+                }
+
+                .mini-course-list {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                  gap: 12px;
+                }
+
+                .mini-course-item {
+                  cursor: pointer;
+                  display: flex;
+                  gap: 12px;
+                  align-items: center;
+                  padding: 12px;
+                  background: #fff;
+                  border: 1px solid #ebeef5;
+                  border-radius: 12px;
+                  box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
+                  transition: all 0.3s ease;
+
+                  .dark & {
+                    background: #1e293b;
+                    border-color: #334155;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+                    &:hover {
+                      background: #334155;
+                      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+                    }
+                  }
+
+                  &:hover {
+                    box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
+                    transform: translateY(-4px) scale(1.02);
+                  }
+
+                  .course-thumb {
+                    position: relative;
+                    flex-shrink: 0;
+                    width: 64px;
+                    height: 64px;
+                    overflow: hidden;
+                    border-radius: 8px;
+
+                    .thumb-image {
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      width: 100%;
+                      height: 100%;
+                      object-fit: cover;
+                    }
+
+                    .el-tag {
+                      position: absolute;
+                      top: 4px;
+                      right: 4px;
+                      z-index: 1;
+                    }
+                  }
+
+                  .course-content {
+                    display: flex;
+                    flex: 1;
+                    flex-direction: column;
+                    gap: 4px;
+                    min-width: 0;
+
+                    .course-name {
+                      @include text-ellipsis;
+                      font-size: 14px;
+                      font-weight: 600;
+                      color: #333;
+
+                      .dark & {
+                        color: #f1f5f9 !important;
+                      }
+                    }
+
+                    .course-time {
+                      font-size: 13px;
+                      color: #606266;
+
+                      .dark & {
+                        color: #94a3b8 !important;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          .ai-summary {
+            position: relative;
+            flex: 0.3;
+
+            h3 {
+              margin: 0 0 16px;
+              font-size: 18px;
+              font-weight: 600;
+              color: #333;
+
+              .dark & {
+                color: #f1f5f9 !important;
+              }
+            }
+
+            .summary-card {
+              position: absolute;
+              inset: 45px 0 0;
+              padding: 16px;
+              overflow: hidden;
+              color: #333;
+              background: linear-gradient(135deg, #dce2f7, #c8d4f0);
+              border-radius: 12px;
+              box-shadow: 0 4px 12px rgb(220 226 247 / 60%);
+
+              .dark & {
+                background: linear-gradient(135deg, #1e293b, #0f172a);
+                color: #cbd5e1;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(56, 189, 248, 0.2);
+              }
+
+              p {
+                margin: 0 0 12px;
+                font-size: 14px;
+                font-weight: 500;
+              }
+
+              ul {
+                height: calc(100% - 32px);
+                padding-left: 0;
+                margin: 0;
+                overflow-y: auto;
+                list-style: none;
+
+                &::-webkit-scrollbar {
+                  width: 4px;
+                }
+
+                &::-webkit-scrollbar-thumb {
+                  background-color: rgb(255 255 255 / 50%);
+                  border-radius: 2px;
+                }
+
+                li {
+                  position: relative;
+                  padding-left: 16px;
+                  margin-bottom: 8px;
+                  font-size: 14px;
+                  line-height: 1.6;
+
+                  &:last-child {
+                    margin-bottom: 0;
+                  }
+
+                  &::before {
+                    content: "";
+                    position: absolute;
+                    top: 0.9em;
+                    left: 0;
+                    width: 6px;
+                    height: 6px;
+                    background: #fff;
+                    border-radius: 50%;
+                    transform: translateY(-50%);
+                    opacity: 0.9;
+                  }
+
+                  &.typing-cursor {
+                    color: #94a3b8;
+
+                    &::before {
+                      display: none;
+                    }
+                  }
+                }
+              }
             }
           }
         }
       }
-    }
-  }
-}
 
       .course-list {
         .course-header {
@@ -1515,122 +1883,181 @@ onUnmounted(() => {
           background: linear-gradient(135deg, #dce2f7, #c8d4f0);
           border-radius: 12px;
 
-          h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .course-filter {
-      :deep(.el-select) {
-        .el-select__wrapper {
-          background: #c8d4f0;
-          border: none;
-          border-radius: 8px;
-          box-shadow: none;
-        }
-
-        .el-select__placeholder {
-          color: #333 !important;
-        }
-
-        .el-select__suffix {
-          color: #000 !important;
-          
-          .el-icon {
-            color: #000 !important;
+          .dark & {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid rgba(56, 189, 248, 0.2);
           }
-        }
-      }
-    }
-  }
 
-  .course-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px;
-    margin-bottom: 24px;
+          h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
 
-    .course-item {
-      overflow: hidden;
-      cursor: pointer;
-      background-color: #fff;
-      border: 1px solid rgb(220 226 247 / 60%);
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgb(220 226 247 / 40%);
-      transition: all 0.3s ease;
+            .dark & {
+              color: #f1f5f9 !important;
+            }
+          }
 
-      &:hover {
-        border-color: #c8d4f0;
-        box-shadow: 0 8px 24px rgb(200 212 240 / 50%);
-        transform: translateY(-6px);
-      }
+          .course-filter {
+            :deep(.el-select) {
+              .el-select__wrapper {
+                background: #c8d4f0;
+                border: none;
+                border-radius: 8px;
+                box-shadow: none;
 
-      .course-cover {
-        position: relative;
-        width: 100%;
-        padding-top: 56.25%; // 16:9
-        background: linear-gradient(135deg, rgb(220 226 247 / 30%), rgb(200 212 240 / 20%));
+                .dark & {
+                  background: #334155;
+                }
+              }
 
-        .cover-image {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
+              .el-select__placeholder {
+                color: #333 !important;
 
-        .course-status {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          z-index: 1;
-        }
-      }
+                .dark & {
+                  color: #f1f5f9 !important;
+                }
+              }
 
-      .course-info {
-        padding: 14px;
-        background: linear-gradient(180deg, #fff, rgb(220 226 247 / 15%));
+              .el-select__suffix {
+                color: #000 !important;
 
-        h4 {
-          @include text-ellipsis;
+                .dark & {
+                  color: #f1f5f9 !important;
+                }
 
-          margin: 0 0 8px;
-          font-size: 15px;
-          font-weight: 600;
-          color: #333;
-        }
+                .el-icon {
+                  color: #000 !important;
 
-        p {
-          height: 32px;
-          margin: 0 0 8px;
-          font-size: 13px;
-          line-height: 1.4;
-          color: #606266;
-        }
-
-        .course-meta {
-          display: flex;
-          justify-content: space-between;
-          font-size: 12px;
-          color: #7a8bb8;
-
-          span {
-            display: flex;
-            align-items: center;
-
-            .el-icon {
-              margin-right: 4px;
-              font-size: 14px;
-              color: #a8b8e8;
+                  .dark & {
+                    color: #f1f5f9 !important;
+                  }
+                }
+              }
             }
           }
         }
-      }
-    }
-  }
+
+        .course-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 20px;
+          margin-bottom: 24px;
+
+          .course-item {
+            overflow: hidden;
+            cursor: pointer;
+            background-color: #fff;
+            border: 1px solid rgb(220 226 247 / 60%);
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgb(220 226 247 / 40%);
+            transition: all 0.3s ease;
+
+            .dark & {
+              background-color: #111b2d;
+              border-color: #1e293b;
+              box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+
+              &:hover {
+                border-color: #38bdf8;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+              }
+            }
+
+            &:hover {
+              border-color: #c8d4f0;
+              box-shadow: 0 8px 24px rgb(200 212 240 / 50%);
+              transform: translateY(-6px);
+            }
+
+            .course-cover {
+              position: relative;
+              width: 100%;
+              padding-top: 56.25%; // 16:9
+              background: linear-gradient(
+                135deg,
+                rgb(220 226 247 / 30%),
+                rgb(200 212 240 / 20%)
+              );
+
+              .cover-image {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              }
+
+              .course-status {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                z-index: 1;
+              }
+            }
+
+            .course-info {
+              padding: 14px;
+              background: linear-gradient(180deg, #fff, rgb(220 226 247 / 15%));
+
+              .dark & {
+                background: linear-gradient(
+                  180deg,
+                  #111b2d,
+                  rgba(56, 189, 248, 0.05)
+                );
+              }
+
+              h4 {
+                @include text-ellipsis;
+                margin: 0 0 8px;
+                font-size: 15px;
+                font-weight: 600;
+                color: #333;
+
+                .dark & {
+                  color: #f1f5f9 !important;
+                }
+              }
+
+              p {
+                height: 32px;
+                margin: 0 0 8px;
+                font-size: 13px;
+                line-height: 1.4;
+                color: #606266;
+
+                .dark & {
+                  color: #94a3b8 !important;
+                }
+              }
+
+              .course-meta {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                color: #7a8bb8;
+
+                .dark & {
+                  color: #64748b;
+                }
+
+                span {
+                  display: flex;
+                  align-items: center;
+
+                  .el-icon {
+                    margin-right: 4px;
+                    font-size: 14px;
+                    color: #a8b8e8;
+                  }
+                }
+              }
+            }
+          }
+        }
 
   .pagination {
     display: flex;
@@ -1641,27 +2068,138 @@ onUnmounted(() => {
     margin-top: 16px;
     border-top: 1px solid rgb(220 226 247 / 60%);
 
+    .dark & {
+      border-top-color: #1e293b;
+    }
+
     .page-info {
       min-width: 60px;
       padding: 4px 12px;
       font-size: 14px;
       color: #5a6b8a;
       text-align: center;
-      background: linear-gradient(135deg, rgb(220 226 247 / 40%), rgb(200 212 240 / 30%));
+      background: linear-gradient(
+        135deg,
+        rgb(220 226 247 / 40%),
+        rgb(200 212 240 / 30%)
+      );
       border-radius: 10px;
+
+      .dark & {
+        color: #38bdf8;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+      }
     }
   }
 }
+}
+}
+}
 
-      .thumb-image {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    }
+/* 图标动画关键帧 */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes iconBounce {
+  0%,
+  100% {
+    transform: scale(1.2) translateY(0);
+  }
+  30% {
+    transform: scale(1.2) translateY(-6px);
+  }
+  50% {
+    transform: scale(1.2) translateY(0);
+  }
+  70% {
+    transform: scale(1.2) translateY(-3px);
+  }
+}
+
+@keyframes iconFlip {
+  0% {
+    transform: scale(1.2) rotateY(0);
+  }
+  50% {
+    transform: scale(1.2) rotateY(180deg);
+  }
+  100% {
+    transform: scale(1.2) rotateY(360deg);
+  }
+}
+
+/* 个人资料 - 心跳/呼吸效果 */
+@keyframes iconHeartbeat {
+  0% {
+    transform: scale(1.2);
+  }
+  15% {
+    transform: scale(1.35);
+  }
+  30% {
+    transform: scale(1.2);
+  }
+  45% {
+    transform: scale(1.3);
+  }
+  60%,
+  100% {
+    transform: scale(1.2);
+  }
+}
+
+/* 学习云盘 - 上浮到云端效果 */
+@keyframes iconFloat {
+  0% {
+    transform: scale(1.2) translateY(0);
+  }
+  50% {
+    transform: scale(1.2) translateY(-8px);
+  }
+  100% {
+    transform: scale(1.2) translateY(0);
+  }
+}
+
+@keyframes iconRing {
+  0% {
+    transform: scale(1.2) rotate(0);
+  }
+  10% {
+    transform: scale(1.2) rotate(20deg);
+  }
+  20% {
+    transform: scale(1.2) rotate(-15deg);
+  }
+  30% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  40% {
+    transform: scale(1.2) rotate(-10deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  60%,
+  100% {
+    transform: scale(1.2) rotate(0);
+  }
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1.25);
   }
 }
 </style>

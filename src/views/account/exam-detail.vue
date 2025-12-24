@@ -20,8 +20,8 @@
           <div class="card-header">
             <h3>{{ exam.title }}</h3>
             <div class="meta-info">
-              <span>总题数：{{ exam.questionCount }} 题</span>
-              <span>总分值：{{ exam.totalScore }} 分</span>
+              <span>总题数：{{ exam.questionNum }} 题</span>
+              <span>总分值：{{ exam.totalPoints }} 分</span>
               <span>时间限制：{{ exam.timeLimit }} 分钟</span>
               <span v-if="examStatus === 3" class="exam-status completed"
                 >已完成</span
@@ -52,11 +52,11 @@
 
           <!-- 问题列表 -->
           <div
-            v-if="exam.questions && exam.questions.length > 0"
+            v-if="exam.questionList && exam.questionList.length > 0"
             class="questions-list"
           >
             <div
-              v-for="(question, index) in exam.questions"
+              v-for="(question, index) in exam.questionList"
               :key="question.questionId"
               class="question-item"
               :class="{ dark: currentTheme === 'dark' }"
@@ -66,22 +66,22 @@
                   <span class="question-number">{{ index + 1 }}.</span>
                   <span>{{ question.title }}</span>
                   <span class="question-type">{{
-                    getQuestionType(question.type)
+                    getQuestionType(question.questionType)
                   }}</span>
-                  <span class="question-score">{{ question.score }} 分</span>
+                  <span class="question-score">{{ question.points }} 分</span>
                 </div>
               </div>
 
-              <div class="question-content" v-html="question.content" />
+              <div class="question-content" v-html="question.stem" />
 
               <!-- 选项 - 单选题 -->
-              <div v-if="question.type === 1" class="options">
+              <div v-if="question.questionType === 1" class="options">
                 <el-radio-group
                   v-model="answers[question.questionId]"
                   :disabled="!examStarted || examCompleted"
                 >
                   <el-radio
-                    v-for="option in question.options"
+                    v-for="option in parseOptions(question.options)"
                     :key="option.optionId"
                     :label="option.optionId"
                     :disabled="!examStarted || examCompleted"
@@ -92,13 +92,13 @@
               </div>
 
               <!-- 选项 - 多选题 -->
-              <div v-else-if="question.type === 2" class="options">
+              <div v-else-if="question.questionType === 2" class="options">
                 <el-checkbox-group
                   v-model="answers[question.questionId]"
                   :disabled="!examStarted || examCompleted"
                 >
                   <el-checkbox
-                    v-for="option in question.options"
+                    v-for="option in parseOptions(question.options)"
                     :key="option.optionId"
                     :label="option.optionId"
                     :disabled="!examStarted || examCompleted"
@@ -109,7 +109,7 @@
               </div>
 
               <!-- 判断题 -->
-              <div v-else-if="question.type === 3" class="options">
+              <div v-else-if="question.questionType === 3" class="options">
                 <el-radio-group
                   v-model="answers[question.questionId]"
                   :disabled="!examStarted || examCompleted"
@@ -124,7 +124,7 @@
               </div>
 
               <!-- 填空题 -->
-              <div v-else-if="question.type === 4" class="options">
+              <div v-else-if="question.questionType === 4" class="options">
                 <el-input
                   v-model="answers[question.questionId]"
                   type="text"
@@ -134,7 +134,7 @@
               </div>
 
               <!-- 简答题 -->
-              <div v-else-if="question.type === 5" class="options">
+              <div v-else-if="question.questionType === 5" class="options">
                 <el-input
                   v-model="answers[question.questionId]"
                   type="textarea"
@@ -145,7 +145,7 @@
               </div>
 
               <!-- 代码题 -->
-              <div v-else-if="question.type === 6" class="options">
+              <div v-else-if="question.questionType === 6" class="options">
                 <el-input
                   v-model="answers[question.questionId]"
                   type="textarea"
@@ -207,7 +207,7 @@
         <el-empty
           v-if="
             !loading &&
-            (!exam || !exam.questions || exam.questions.length === 0)
+            (!exam || !exam.questionList || exam.questionList.length === 0)
           "
           description="未找到考试或考试已过期"
         />
@@ -270,7 +270,7 @@ import {
 
 const route = useRoute();
 const router = useRouter();
-const currentTheme = ref("light"); // 保留变量但不提供切换功能
+const currentTheme = ref((route.query.theme as string) || "light");
 
 // 考试相关数据
 const loading = ref(true);
@@ -288,6 +288,24 @@ const showResultDialog = ref(false);
 const resultDialogTitle = ref("考试提交结果");
 const resultDialogMessage = ref("");
 const submissionResult = ref<ExamAnswerResult | null>(null);
+
+// 解析选项
+const parseOptions = (optionsStr: string | null) => {
+  if (!optionsStr || optionsStr === "null") return [];
+  try {
+    const options = JSON.parse(optionsStr);
+    if (Array.isArray(options)) {
+      return options.map((opt, index) => ({
+        optionId: String.fromCharCode(65 + index),
+        content: opt
+      }));
+    }
+    return [];
+  } catch (e) {
+    console.error("解析选项出错", e);
+    return [];
+  }
+};
 
 // 格式化剩余时间
 const formatRemainingTime = computed(() => {
@@ -315,51 +333,7 @@ const fetchExamDetail = async () => {
     });
 
     if (response.code === 200 && response.data) {
-      // 适配返回的数据结构
-      exam.value = {
-        examId: response.data.examId,
-        title: response.data.title,
-        description: response.data.description,
-        questionCount: response.data.questionNum,
-        totalScore: response.data.totalPoints,
-        timeLimit: response.data.timeLimit,
-        startTime: response.data.availableFrom,
-        endTime: response.data.availableTo,
-        questions: (response.data.questionList || [])
-          .map((item, index) => {
-            // 处理选项，将JSON字符串解析为数组
-            let options = [];
-            if (item.options && item.options !== "null") {
-              try {
-                // 检查是否已经是对象数组
-                if (typeof item.options === "string") {
-                  options = JSON.parse(item.options).map((opt, index) => {
-                    return {
-                      optionId: String.fromCharCode(65 + index), // 使用A, B, C, D作为选项ID
-                      content: opt
-                    };
-                  });
-                } else {
-                  // 已经是对象数组
-                  options = item.options;
-                }
-              } catch (e) {
-                console.error("解析选项出错", e);
-              }
-            }
-
-            return {
-              questionId: item.questionId,
-              title: item.title,
-              content: item.stem || item.content || item.title,
-              type: item.questionType,
-              score: item.points,
-              options,
-              sortOrder: item.sortOrder || index
-            };
-          })
-          .sort((a, b) => a.sortOrder - b.sortOrder) // 根据sortOrder排序
-      };
+      exam.value = response.data;
 
       // 设置考试状态
       const now = dayjs();
@@ -371,7 +345,7 @@ const fetchExamDetail = async () => {
         examCompleted.value = true;
         submissionResult.value = {
           score: response.data.score || 0,
-          totalScore: exam.value.totalScore
+          totalScore: exam.value.totalPoints
         };
       } else if (now.isAfter(endTime)) {
         examStatus.value = 4; // 已过期
@@ -445,8 +419,8 @@ const submitExam = async () => {
 
       // 如果是代码题，添加语言信息
       if (
-        exam.value.questions.find(q => q.questionId === Number(questionId))
-          ?.type === 6
+        exam.value.questionList.find(q => q.questionId === Number(questionId))
+          ?.questionType === 6
       ) {
         formattedAnswer = Array.isArray(answer)
           ? answer.join("")
@@ -479,10 +453,10 @@ const submitExam = async () => {
 
         submissionResult.value = {
           score: response.data.score,
-          totalScore: exam.value.totalScore
+          totalScore: exam.value.totalPoints
         };
         resultDialogTitle.value = "考试提交成功";
-        resultDialogMessage.value = `您的得分为 ${response.data.score}/${exam.value.totalScore}`;
+        resultDialogMessage.value = `您的得分为 ${response.data.score}/${exam.value.totalPoints}`;
         showResultDialog.value = true;
         examCompleted.value = true;
       } else {
@@ -554,6 +528,10 @@ const goBack = () => {
 
 onMounted(() => {
   fetchExamDetail();
+  if (currentTheme.value === "dark") {
+    document.documentElement.classList.add("dark");
+    document.body.classList.add("dark");
+  }
 
   // 添加页面关闭确认
   window.addEventListener("beforeunload", function (e) {
@@ -586,8 +564,8 @@ onBeforeUnmount(() => {
   transition: background-color 0.3s;
 
   &.dark {
-    background-color: #1a1a1a;
-    color: #e0e0e0;
+    background-color: #1a1a1a !important;
+    color: #e0e0e0 !important;
   }
 
   .header {
@@ -650,10 +628,13 @@ onBeforeUnmount(() => {
     padding: 0 20px;
 
     &.dark {
-      .el-card {
-        background-color: #252525;
-        color: #e0e0e0;
-        border: 1px solid #333;
+      :deep(.el-card) {
+        background-color: #252525 !important;
+        color: #e0e0e0 !important;
+        border: 1px solid #333 !important;
+      }
+      :deep(.el-card__header) {
+        border-bottom: 1px solid #333 !important;
       }
     }
 
@@ -673,6 +654,10 @@ onBeforeUnmount(() => {
         justify-content: center;
         margin-bottom: 20px;
 
+        .dark & {
+          color: #aaa;
+        }
+
         .exam-status {
           font-weight: bold;
           padding: 4px 8px;
@@ -684,24 +669,44 @@ onBeforeUnmount(() => {
           color: #67c23a;
           background-color: #f0f9eb;
           border: 1px solid #e1f3d8;
+
+          .dark & {
+            background-color: rgba(103, 194, 58, 0.2);
+            border-color: rgba(103, 194, 58, 0.3);
+          }
         }
 
         .expired {
           color: #f56c6c;
           background-color: #fef0f0;
           border: 1px solid #fde2e2;
+
+          .dark & {
+            background-color: rgba(245, 108, 108, 0.2);
+            border-color: rgba(245, 108, 108, 0.3);
+          }
         }
 
         .not-started {
           color: #909399;
           background-color: #f4f4f5;
           border: 1px solid #e9e9eb;
+
+          .dark & {
+            background-color: rgba(144, 147, 153, 0.2);
+            border-color: rgba(144, 147, 153, 0.3);
+          }
         }
 
         .in-progress {
           color: #e6a23c;
           background-color: #fdf6ec;
           border: 1px solid #faecd8;
+
+          .dark & {
+            background-color: rgba(230, 162, 60, 0.2);
+            border-color: rgba(230, 162, 60, 0.3);
+          }
         }
       }
     }
@@ -728,6 +733,7 @@ onBeforeUnmount(() => {
 
         .dark & {
           background-color: #333;
+          color: #e0e0e0;
         }
       }
 
@@ -742,6 +748,7 @@ onBeforeUnmount(() => {
           &.dark {
             background-color: #333;
             box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.15);
+            color: #e0e0e0;
           }
 
           .question-header {
@@ -763,6 +770,10 @@ onBeforeUnmount(() => {
                 font-size: 14px;
                 color: #606266;
                 font-weight: normal;
+
+                .dark & {
+                  color: #aaa;
+                }
               }
             }
           }
@@ -770,6 +781,12 @@ onBeforeUnmount(() => {
           .question-content {
             margin-bottom: 15px;
             line-height: 1.6;
+
+            .dark & {
+              :deep(*) {
+                color: #e0e0e0 !important;
+              }
+            }
           }
 
           .options {

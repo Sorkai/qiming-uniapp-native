@@ -1,5 +1,5 @@
 <template>
-  <div class="virtual-lab">
+  <div class="virtual-lab" :class="currentTheme">
     <!-- 顶部介绍区域 -->
     <div class="lab-header">
       <div class="header-content">
@@ -102,6 +102,10 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { Star, Clock, ArrowRight } from "@element-plus/icons-vue";
+
+defineProps<{
+  currentTheme?: string;
+}>();
 
 interface LabItem {
   id: number;
@@ -273,6 +277,11 @@ const handleDialogClose = () => {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgb(102 126 234 / 30%);
+    
+    .dark & {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
 
     .header-content {
       display: flex;
@@ -325,6 +334,21 @@ const handleDialogClose = () => {
         padding: 12px 24px;
         font-size: 14px;
         border-radius: 20px !important;
+        
+        .dark & {
+          background-color: #1e293b;
+          border-color: #334155;
+          color: #94a3b8;
+        }
+      }
+
+      .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+        .dark & {
+          background-color: #3b82f6;
+          border-color: #3b82f6;
+          color: #fff;
+          box-shadow: -1px 0 0 0 #3b82f6;
+        }
       }
 
       .el-radio-button:first-child .el-radio-button__inner {
@@ -350,10 +374,19 @@ const handleDialogClose = () => {
     border-radius: 16px;
     box-shadow: 0 4px 20px rgb(0 0 0 / 8%);
     transition: all 0.3s ease;
+    
+    .dark & {
+      background: #1e293b;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
 
     &:hover {
       box-shadow: 0 12px 40px rgb(0 0 0 / 15%);
       transform: translateY(-8px);
+      
+      .dark & {
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      }
 
       .card-preview .preview-icon {
         transform: scale(1.2);
@@ -370,6 +403,10 @@ const handleDialogClose = () => {
       align-items: center;
       justify-content: center;
       height: 140px;
+      
+      .dark & {
+        opacity: 0.9;
+      }
 
       .preview-icon {
         font-size: 48px;
@@ -397,6 +434,10 @@ const handleDialogClose = () => {
         font-size: 16px;
         font-weight: 600;
         color: #333;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
       }
 
       p {
@@ -405,6 +446,10 @@ const handleDialogClose = () => {
         font-size: 13px;
         line-height: 1.5;
         color: #666;
+        
+        .dark & {
+          color: #94a3b8;
+        }
       }
 
       .card-meta {
@@ -412,6 +457,10 @@ const handleDialogClose = () => {
         gap: 16px;
         font-size: 12px;
         color: #999;
+        
+        .dark & {
+          color: #64748b;
+        }
 
         span {
           display: flex;

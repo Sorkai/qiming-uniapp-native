@@ -4,8 +4,11 @@
     :title="titleText"
     width="70%"
     :before-close="handleClose"
+    :class="['custom-ai-detail-dialog', currentTheme]"
+    :append-to-body="true"
+    :destroy-on-close="true"
   >
-    <div class="wrap" v-loading="loading">
+    <div class="wrap" :class="{ dark: currentTheme === 'dark' }" v-loading="loading">
       <!-- 原题区域 -->
       <section class="block">
         <h3 class="h3">题目</h3>
@@ -111,6 +114,7 @@ export interface NormalizedWrongQuestion {
 const props = defineProps<{
   modelValue: boolean;
   courseId: number | string;
+  currentTheme?: string;
   wrong: NormalizedWrongQuestion | null;
   initialAnalysis?: WrongExerciseAnalyzeResponse | null;
 }>();
@@ -206,23 +210,203 @@ const handleClose = () => (visible.value = false);
 </script>
 
 <style scoped>
-.wrap { max-height: 70vh; overflow: auto; }
-.block { margin-bottom: 18px; }
-.h3 { margin: 0 0 10px; font-weight: 600; }
-.stem { background:#f7f8fa; padding: 10px 12px; border-radius: 6px; }
-.options ul { list-style:none; padding:0; margin:8px 0 0; }
-.options li { padding:6px 0; }
-.options .label { margin-right:6px; }
-.answers { margin-top: 8px; }
-.base { margin-top: 8px; background:#f9fafb; padding:10px; border-radius:6px; }
-.uans { color:#409eff; }
-.cans { color:#67c23a; }
-.ai-header { display:flex; align-items:center; justify-content:space-between; }
-.prewrap { white-space: pre-wrap; }
-.sim-list { display:flex; flex-direction:column; gap:12px; }
-.sim-item { padding:10px; border:1px solid #f0f0f0; border-radius:8px; }
-.q { display:flex; gap:8px; }
-.qtxt { flex:1; }
-.exp { margin-top:8px; background:#f9fafb; padding:10px; border-radius:6px; }
-.mr8 { margin-right: 8px; }
+.wrap {
+  max-height: 70vh;
+  overflow: auto;
+  padding: 4px;
+}
+.wrap.dark {
+  color: #e0e0e0;
+}
+.block {
+  margin-bottom: 24px;
+}
+.h3 {
+  margin: 0 0 12px;
+  font-weight: 600;
+  font-size: 18px;
+}
+.stem {
+  background: #f7f8fa;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.wrap.dark .stem {
+  background: #333;
+  color: #e0e0e0;
+}
+.wrap.dark .stem :deep(*) {
+  color: #e0e0e0 !important;
+}
+.options ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+.options li {
+  padding: 8px 0;
+  display: flex;
+  align-items: flex-start;
+  color: #333;
+}
+.wrap.dark .options li {
+  color: #e0e0e0;
+}
+.options .label {
+  margin-right: 8px;
+  color: #409eff;
+  font-weight: bold;
+}
+.wrap.dark .options .label {
+  color: #4facfe;
+}
+.answers {
+  margin-top: 12px;
+}
+.base {
+  margin-top: 12px;
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+.wrap.dark .base {
+  background: #252525;
+  color: #e0e0e0;
+  border-color: #444;
+}
+.uans {
+  color: #409eff;
+}
+.cans {
+  color: #67c23a;
+}
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.prewrap {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.sim-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sim-item {
+  padding: 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #333;
+}
+.wrap.dark .sim-item {
+  border-color: #444;
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+.q {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.qtxt {
+  flex: 1;
+}
+.exp {
+  margin-top: 12px;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.wrap.dark .exp {
+  background: #333;
+  color: #e0e0e0;
+}
+.mr8 {
+  margin-right: 8px;
+}
+</style>
+
+<style>
+/* 彻底加固深色模式弹窗样式（处理 Portal 渲染） */
+.custom-ai-detail-dialog.dark .el-dialog,
+html.dark .custom-ai-detail-dialog .el-dialog {
+  background-color: #1a1a1a !important;
+  border: 1px solid #333 !important;
+  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+.custom-ai-detail-dialog.dark .el-dialog__header,
+html.dark .custom-ai-detail-dialog .el-dialog__header {
+  background-color: #1a1a1a !important;
+  border-bottom: 1px solid #333 !important;
+  margin-right: 0 !important;
+  padding: 20px !important;
+}
+
+.custom-ai-detail-dialog.dark .el-dialog__title,
+html.dark .custom-ai-detail-dialog .el-dialog__title {
+  color: #e0e0e0 !important;
+}
+
+.custom-ai-detail-dialog.dark .el-dialog__body,
+html.dark .custom-ai-detail-dialog .el-dialog__body {
+  background-color: #1a1a1a !important;
+  color: #e0e0e0 !important;
+  padding: 20px !important;
+}
+
+.custom-ai-detail-dialog.dark .el-dialog__footer,
+html.dark .custom-ai-detail-dialog .el-dialog__footer {
+  background-color: #1a1a1a !important;
+  border-top: 1px solid #333 !important;
+  padding: 10px 20px 20px !important;
+}
+
+/* 描述列表深色模式加固 */
+.custom-ai-detail-dialog.dark .el-descriptions__body,
+html.dark .custom-ai-detail-dialog .el-descriptions__body {
+  background-color: #252525 !important;
+}
+
+.custom-ai-detail-dialog.dark .el-descriptions__label,
+html.dark .custom-ai-detail-dialog .el-descriptions__label {
+  background-color: #333 !important;
+  color: #aaa !important;
+  border-color: #444 !important;
+}
+
+.custom-ai-detail-dialog.dark .el-descriptions__content,
+html.dark .custom-ai-detail-dialog .el-descriptions__content {
+  background-color: #252525 !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+
+.custom-ai-detail-dialog.dark .el-descriptions--border,
+html.dark .custom-ai-detail-dialog .el-descriptions--border {
+  border-color: #444 !important;
+}
+
+/* 按钮和空状态加固 */
+.custom-ai-detail-dialog.dark .el-button--default:not(.is-text),
+html.dark .custom-ai-detail-dialog .el-button--default:not(.is-text) {
+  background-color: #333 !important;
+  border-color: #444 !important;
+  color: #e0e0e0 !important;
+}
+
+.custom-ai-detail-dialog.dark .el-empty__description p,
+html.dark .custom-ai-detail-dialog .el-empty__description p {
+  color: #888 !important;
+}
 </style>

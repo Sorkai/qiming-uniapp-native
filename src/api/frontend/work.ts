@@ -10,21 +10,25 @@ export interface ExamDetailResult {
   examId: number;
   title: string;
   description: string;
-  questionCount: number;
-  totalScore: number;
+  questionNum: number;
+  totalPoints: number;
   timeLimit: number;
-  startTime: string;
-  endTime: string;
-  questions: Array<{
+  availableFrom: string;
+  availableTo: string;
+  finished: number;
+  score: number;
+  questionList: Array<{
     questionId: number;
+    questionType: number;
     title: string;
-    content: string;
-    type: number; // 1：单选题，2：多选题，3：判断题，4：填空题，5：简答题
-    score: number;
-    options?: Array<{
-      optionId: string;
-      content: string;
-    }>;
+    stem: string;
+    content?: string;
+    options: string | null;
+    correctAnswer: string;
+    analysis: string;
+    points: number;
+    difficulty: number;
+    sortOrder: number;
   }>;
 }
 
@@ -51,19 +55,23 @@ export interface HomeworkDetailResult {
   homeworkId: number;
   title: string;
   description: string;
-  questionCount: number;
-  totalScore: number;
-  deadline: string;
-  questions: Array<{
+  questionNum: number;
+  totalPoints: number;
+  dueDate: string;
+  finished: number;
+  score: number;
+  questionList: Array<{
     questionId: number;
+    questionType: number;
     title: string;
-    content: string;
-    type: number; // 1：单选题，2：多选题，3：判断题，4：填空题，5：简答题
-    score: number;
-    options?: Array<{
-      optionId: string;
-      content: string;
-    }>;
+    stem: string;
+    content?: string;
+    options: string | null;
+    correctAnswer: string;
+    analysis: string;
+    points: number;
+    difficulty: number;
+    sortOrder: number;
   }>;
 }
 
