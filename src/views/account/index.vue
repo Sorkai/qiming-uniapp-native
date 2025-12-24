@@ -155,13 +155,21 @@
           <div class="card">
             <!-- 重要提醒 -->
             <div class="reminder">
-              <div class="reminder-content">
-                <el-icon><InfoFilled /></el-icon>
-                <span
-                  >重要提示:同学们，新学期到了，系统已经分配最新的课程，请各位同学抓紧学习
-                  书山有路勤为径，学海无涯苦作舟 🎉</span
-                >
-              </div>
+              <el-carousel
+                height="46px"
+                direction="vertical"
+                :autoplay="true"
+                :interval="4000"
+                indicator-position="none"
+                arrow="never"
+              >
+                <el-carousel-item v-for="(notice, index) in notices" :key="index">
+                  <div class="reminder-content">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span class="notice-text">{{ notice }}</span>
+                  </div>
+                </el-carousel-item>
+              </el-carousel>
             </div>
             <!-- 课程信息和AI总结 -->
             <div class="info-section">
@@ -510,6 +518,15 @@ const myCourses = ref({
   endingList: [], // 结课课程
   homeworkList: [] // 作业课程
 });
+
+// 轮播通知数据
+const notices = ref([
+  "重要提示:同学们，新学期到了，系统已经分配最新的课程，请各位同学抓紧学习 书山有路勤为径，学海无涯苦作舟 🎉",
+  "温馨提示：请同学们按时提交作业，避免影响课程进度和最终成绩。如有疑问请及时联系课程导师。",
+  "新功能上线：虚拟实验室现已支持更多实验场景，欢迎同学们前往体验，探索科学的奥秘。",
+  "赛事预告：下周将举行全校程序设计大赛，感兴趣的同学请在赛事场报名，展示你的编程才华。",
+  "学习建议：合理安排学习时间，利用好学习云盘整理资料，保持良好的学习习惯是成功的关键。"
+]);
 
 // 课程页面数据
 const coursesData = ref({
@@ -1284,15 +1301,22 @@ onUnmounted(() => {
   .reminder {
     margin-bottom: 20px;
 
-      .reminder-content {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        font-size: 14px;
-        color: #5a6b8a;
-        background-color: rgb(220 226 247 / 30%);
-        border: 1px solid rgb(220 226 247 / 60%);
-        border-radius: 12px;
+    :deep(.el-carousel__item) {
+      display: flex;
+      align-items: center;
+    }
+
+    .reminder-content {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      padding: 0 16px;
+      font-size: 14px;
+      color: #5a6b8a;
+      background-color: rgb(220 226 247 / 30%);
+      border: 1px solid rgb(220 226 247 / 60%);
+      border-radius: 12px;
 
       .el-icon {
         margin-right: 12px;
@@ -1300,9 +1324,11 @@ onUnmounted(() => {
         color: #7a8bb8;
       }
 
-      span {
+      .notice-text {
         flex: 1;
-        line-height: 1.5;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
   }
