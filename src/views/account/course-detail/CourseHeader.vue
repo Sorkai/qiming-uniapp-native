@@ -54,7 +54,11 @@
 
       <!-- 右侧区域：像素级复刻主导航栏的用户胶囊 -->
       <div class="header-right">
-        <el-dropdown trigger="click" @visible-change="v => (visible = v)">
+        <el-dropdown
+          trigger="click"
+          @visible-change="v => (visible = v)"
+          popper-class="course-user-dropdown"
+        >
           <div class="user-capsule">
             <img :src="userAvatar" class="user-avatar" />
             <span v-if="userNickname" class="user-name">
@@ -63,13 +67,19 @@
             <IconifyIconOffline
               :icon="ArrowDown"
               class="dropdown-arrow"
-              :class="{ 'is-open': visible }"
+              :class="{ 'rotate-180': visible }"
             />
           </div>
           <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="$emit('go-to-account')">账号管理</el-dropdown-item>
-              <el-dropdown-item divided @click="$emit('logout')">退出登录</el-dropdown-item>
+            <el-dropdown-menu class="logout">
+              <el-dropdown-item @click="$emit('go-to-account')">
+                <IconifyIconOffline :icon="Setting" style="margin: 5px" />
+                账号管理
+              </el-dropdown-item>
+              <el-dropdown-item divided @click="$emit('logout')" class="logout-item">
+                <IconifyIconOffline :icon="LogoutIcon" style="margin: 5px" />
+                退出登录
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -83,6 +93,8 @@ import { ref, computed } from "vue";
 import Sunny from "~icons/ep/sunny";
 import Moon from "~icons/ep/moon";
 import ArrowDown from "~icons/ep/arrow-down";
+import Setting from "~icons/ri/user-settings-line";
+import LogoutIcon from "~icons/ri/logout-circle-r-line";
 
 const props = defineProps<{
   currentTheme: string;
@@ -201,7 +213,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   border-color: #4facfe !important;
 }
 
-/* 主题切换按钮 - 重新设计为更精致的样式 */
+/* 主题切换按钮 */
 .theme-toggle-premium {
   --w: 56px;
   --h: 28px;
@@ -255,10 +267,6 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 .sun { color: #f59e0b; }
 .moon { color: #94a3b8; }
 
-.theme-toggle-premium:not(.is-dark) .sun {
-  filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
-}
-
 .is-dark .sun { 
   opacity: 0; 
   transform: scale(0.5) rotate(45deg); 
@@ -268,10 +276,6 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   color: #f1f5f9; 
   opacity: 1; 
   transform: scale(1.2);
-}
-
-.is-dark .moon-svg {
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
 }
 
 .toggle-handle {
@@ -285,65 +289,11 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 2;
-  overflow: hidden;
-}
-
-.handle-shine {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, transparent 50%);
-  opacity: 0.5;
 }
 
 .is-dark .toggle-handle {
   transform: translateX(calc(var(--w) - var(--s) - var(--p) * 2));
   background: linear-gradient(135deg, #f6c138 0%, #eab308 100%);
-  box-shadow: 0 0 15px rgba(246, 193, 56, 0.6), inset 0 -2px 4px rgba(0,0,0,0.2);
-}
-
-/* 星星装饰 */
-.star {
-  position: absolute;
-  background: #fff;
-  border-radius: 50%;
-  opacity: 0;
-  transition: all 0.4s ease;
-  z-index: 0;
-}
-
-.star-1 {
-  width: 2px;
-  height: 2px;
-  right: 12px;
-  top: 8px;
-}
-
-.star-2 {
-  width: 3px;
-  height: 3px;
-  right: 18px;
-  bottom: 7px;
-}
-
-.is-dark .star {
-  opacity: 0.8;
-  animation: star-twinkle 2s infinite ease-in-out;
-}
-
-.is-dark .star-2 {
-  animation-delay: 1s;
-}
-
-@keyframes star-twinkle {
-  0%, 100% { transform: scale(1); opacity: 0.4; }
-  50% { transform: scale(1.2); opacity: 1; }
-}
-
-.theme-toggle-premium:hover .toggle-handle {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* 中间标题区域 */
@@ -364,10 +314,9 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 .layout-header.dark .title-capsule {
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3) !important;
 }
 
-/* 右侧区域 */
+/* 右侧区域 - 像素级复刻主页面 */
 .header-right {
   flex: 1;
   display: flex;
@@ -377,31 +326,30 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 .user-capsule {
   display: flex !important;
   align-items: center !important;
-  height: 36px !important;
-  padding: 0 14px !important;
+  height: 34px !important;
+  padding: 0 12px !important;
   background: rgba(0, 0, 0, 0.05) !important;
-  border-radius: 20px !important;
+  border-radius: 17px !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
   user-select: none !important;
 }
 
 .layout-header.dark .user-capsule {
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
 }
 
 .user-capsule:hover {
   background: rgba(0, 0, 0, 0.1) !important;
-  transform: translateY(-1px);
 }
 
 .layout-header.dark .user-capsule:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.25) !important;
 }
 
 .user-avatar {
-  width: 26px !important;
-  height: 26px !important;
+  width: 24px !important;
+  height: 24px !important;
   border-radius: 50% !important;
   object-fit: cover !important;
   flex-shrink: 0 !important;
@@ -409,30 +357,66 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 .user-name {
   margin-left: 8px !important;
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  color: #333 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: #000000d9 !important;
   white-space: nowrap !important;
 }
 
 .layout-header.dark .user-name {
-  color: #eee !important;
+  color: #fff !important;
 }
 
 .dropdown-arrow {
-  margin-left: 6px !important;
+  margin-left: 4px !important;
   font-size: 12px !important;
-  color: #999 !important;
+  color: #000000d9 !important;
   transition: transform 0.3s ease !important;
   display: inline-block !important;
 }
 
 .layout-header.dark .dropdown-arrow {
-  color: #bbb !important;
+  color: #fff !important;
 }
 
-.dropdown-arrow.is-open {
-  transform: rotate(180deg) !important;
+/* 下拉菜单样式复刻 */
+:global(.course-user-dropdown) {
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid #ebeef5 !important;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+:global(.course-user-dropdown .el-dropdown-menu) {
+  padding: 0 !important;
+}
+
+:global(.course-user-dropdown .el-dropdown-menu__item) {
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  min-width: 120px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  color: #606266 !important;
+  line-height: 22px !important;
+}
+
+:global(.course-user-dropdown .el-dropdown-menu__item:hover) {
+  background-color: #f5f7fa !important;
+  color: var(--el-color-primary) !important;
+}
+
+:global(.course-user-dropdown .logout-item) {
+  color: #f56c6c !important;
+}
+
+:global(.course-user-dropdown .el-dropdown-menu__item--divided) {
+  margin-top: 0 !important;
+  border-top: 1px solid #ebeef5 !important;
+}
+
+:global(.course-user-dropdown .el-dropdown-menu__item--divided:before) {
+  display: none !important;
 }
 
 /* 聚光灯按钮效果 */

@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :class="currentTheme">
+  <div class="course-detail-root" :class="currentTheme">
     <div class="layout-container" :class="currentTheme">
       <!-- 侧边栏菜单 -->
       <CourseSidebar
@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
@@ -370,6 +370,13 @@ watch(currentTheme, (val) => {
   document.documentElement.classList.add(val);
   document.body.classList.remove(other);
   document.body.classList.add(val);
+
+  // 同步到管理后台主题设置
+  const layout = storageLocal().getItem("responsive-layout") as any;
+  if (layout) {
+    layout.darkMode = val === "dark";
+    storageLocal().setItem("responsive-layout", layout);
+  }
 }, { immediate: true });
 
 // 菜单切换
@@ -408,7 +415,8 @@ const goBack = () => {
 
 // 跳转账号管理
 const goToAccount = () => {
-  router.push("/account/settings");
+  // 课程详情页是从学生中心进入的，账号管理应跳转回学生中心
+  router.push("/account");
 };
 
 // 退出登录
@@ -666,6 +674,7 @@ const initQAHistory = () => {
 };
 
 onMounted(async () => {
+  document.body.classList.add("course-page");
   baseCourseId.value = Number(route.params.id);
   await fetchCourseDetail();
   initQAHistory();
@@ -698,6 +707,10 @@ onMounted(async () => {
     localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
   }
 });
+
+onBeforeUnmount(() => {
+  document.body.classList.remove("course-page");
+});
 </script>
 
 <style>
@@ -708,33 +721,25 @@ onMounted(async () => {
 @import "@/../coursecss/css/app.a5f91bbb.css";
 @import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
 
-html,
-body {
-  background-color: #f5f7fa !important;
-}
-html.dark,
-body.dark {
-  background-color: #1a1a1a !important;
-}
-#app {
+.course-detail-root {
   width: 100%;
   min-height: 100vh;
-  background-color: #f5f7fa !important;
+  background-color: #f5f7fa;
   transition: background-color 0.3s ease;
 }
-#app.dark {
-  background-color: #1a1a1a !important;
+.course-detail-root.dark {
+  background-color: #1a1a1a;
 }
-.layout-container {
+.course-detail-root .layout-container {
   position: relative;
   width: 100%;
   min-height: 100vh;
   display: flex;
-  background-color: #f5f7fa !important;
+  background-color: #f5f7fa;
   transition: background-color 0.3s ease;
 }
-.layout-container.dark {
-  background-color: #1a1a1a !important;
+.course-detail-root .layout-container.dark {
+  background-color: #1a1a1a;
 }
 
 /* 覆盖外部CSS中的侧边栏样式 */
@@ -745,7 +750,7 @@ body.dark {
   max-height: calc(100vh - 97px) !important;
 }
 
-.layout-inner-content {
+.course-detail-root .layout-inner-content {
   position: relative;
   flex: 1;
   margin-left: 90px !important;
@@ -755,12 +760,12 @@ body.dark {
   height: calc(100vh - 35px) !important;
   border-radius: 24px !important;
   overflow: hidden !important; /* 容器层级不滚动，由子页面内部滚动 */
-  background-color: transparent !important;
+  background-color: #f5f7fa !important;
   transition: all 0.3s ease !important;
 }
 
-.layout-inner-content.dark {
-  background-color: transparent !important;
+.course-detail-root .layout-inner-content.dark {
+  background-color: #1a1a1a !important;
 }
 </style>
 

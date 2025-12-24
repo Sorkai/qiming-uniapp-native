@@ -172,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ArrowLeft } from "@element-plus/icons-vue";
@@ -192,7 +192,7 @@ const currentTheme = ref((route.query.theme as string) || "light");
 const loading = ref(true);
 const submitting = ref(false);
 const homework = ref<HomeworkDetailResult>({} as HomeworkDetailResult);
-const answers = reactive<Record<number, string | string[]>>({});
+const answers = reactive<Record<number, any>>({});
 
 // 提交结果相关
 const showResultDialog = ref(false);
@@ -354,10 +354,20 @@ const goBack = () => {
 
 onMounted(() => {
   fetchHomeworkDetail();
-  if (currentTheme.value === "dark") {
-    document.documentElement.classList.add("dark");
-    document.body.classList.add("dark");
-  }
+  const theme = currentTheme.value;
+  const other = theme === "dark" ? "light" : "dark";
+  document.documentElement.classList.remove(other);
+  document.documentElement.classList.add(theme);
+  document.body.classList.remove(other);
+  document.body.classList.add(theme);
+  document.body.classList.add("homework-page");
+});
+
+onBeforeUnmount(() => {
+  document.body.classList.remove("homework-page");
+  // 退出时移除可能存在的主题类名，防止污染主站
+  document.documentElement.classList.remove("light", "dark");
+  document.body.classList.remove("light", "dark");
 });
 </script>
 
@@ -369,8 +379,8 @@ onMounted(() => {
   transition: background-color 0.3s;
 
   &.dark {
-    background-color: #1a1a1a !important;
-    color: #e0e0e0 !important;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
   }
 
   .header {
@@ -430,9 +440,9 @@ onMounted(() => {
 
     &.dark {
       :deep(.el-card) {
-        background-color: #252525 !important;
-        color: #e0e0e0 !important;
-        border: 1px solid #333 !important;
+        background-color: #252525;
+        color: #e0e0e0;
+        border: 1px solid #333;
       }
       :deep(.el-card__header) {
         border-bottom: 1px solid #333 !important;

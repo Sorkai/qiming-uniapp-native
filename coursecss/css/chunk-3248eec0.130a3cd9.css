@@ -1,89 +1,89 @@
-pre code.hljs {
+.course-page pre code.hljs {
   display: block;
   overflow-x: auto;
   padding: 1em;
 }
 
-code.hljs {
+.course-page code.hljs {
   padding: 0.15625vw 0.26042vw;
 }
 
-.hljs {
+.course-page .hljs {
   color: #abb2bf;
   background: #282c34;
 }
 
-.hljs-comment,
-.hljs-quote {
+.course-page .hljs-comment,
+.course-page .hljs-quote {
   color: #5c6370;
   font-style: italic;
 }
 
-.hljs-doctag,
-.hljs-formula,
-.hljs-keyword {
+.course-page .hljs-doctag,
+.course-page .hljs-formula,
+.course-page .hljs-keyword {
   color: #c678dd;
 }
 
-.hljs-deletion,
-.hljs-name,
-.hljs-section,
-.hljs-selector-tag,
-.hljs-subst {
+.course-page .hljs-deletion,
+.course-page .hljs-name,
+.course-page .hljs-section,
+.course-page .hljs-selector-tag,
+.course-page .hljs-subst {
   color: #e06c75;
 }
 
-.hljs-literal {
+.course-page .hljs-literal {
   color: #56b6c2;
 }
 
-.hljs-addition,
-.hljs-attribute,
-.hljs-meta .hljs-string,
-.hljs-regexp,
-.hljs-string {
+.course-page .hljs-addition,
+.course-page .hljs-attribute,
+.course-page .hljs-meta .hljs-string,
+.course-page .hljs-regexp,
+.course-page .hljs-string {
   color: #98c379;
 }
 
-.hljs-attr,
-.hljs-number,
-.hljs-selector-attr,
-.hljs-selector-class,
-.hljs-selector-pseudo,
-.hljs-template-variable,
-.hljs-type,
-.hljs-variable {
+.course-page .hljs-attr,
+.course-page .hljs-number,
+.course-page .hljs-selector-attr,
+.course-page .hljs-selector-class,
+.course-page .hljs-selector-pseudo,
+.course-page .hljs-template-variable,
+.course-page .hljs-type,
+.course-page .hljs-variable {
   color: #d19a66;
 }
 
-.hljs-bullet,
-.hljs-link,
-.hljs-meta,
-.hljs-selector-id,
-.hljs-symbol,
-.hljs-title {
+.course-page .hljs-bullet,
+.course-page .hljs-link,
+.course-page .hljs-meta,
+.course-page .hljs-selector-id,
+.course-page .hljs-symbol,
+.course-page .hljs-title {
   color: #61aeee;
 }
 
-.hljs-built_in,
-.hljs-class .hljs-title,
-.hljs-title.class_ {
+.course-page .hljs-built_in,
+.course-page .hljs-class .hljs-title,
+.course-page .hljs-title.class_ {
   color: #e6c07b;
 }
 
-.hljs-emphasis {
+.course-page .hljs-emphasis {
   font-style: italic;
 }
 
-.hljs-strong {
+.course-page .hljs-strong {
   font-weight: 700;
 }
 
-.hljs-link {
+.course-page .hljs-link {
   text-decoration: underline;
 }
 
-* {
+.course-page * {
   padding: 0;
   margin: 0;
 }
@@ -1391,95 +1391,95 @@ code.hljs {
   z-index: 4001 !important;
 }
 
-html pre code .hljs {
+.course-page pre code .hljs {
   display: block;
   overflow-x: auto;
   padding: 1em;
   margin: 0.20833vw 0;
 }
 
-html code .hljs {
+.course-page code .hljs {
   padding: 0.15625vw 0.26042vw;
 }
 
-html code .hljs::-webkit-scrollbar {
+.course-page code .hljs::-webkit-scrollbar {
   height: 0.20833vw;
 }
 
-html .hljs {
+.course-page .hljs {
   color: #fff !important;
   border-radius: 0.20833vw !important;
   background: #252525 !important;
   margin: 0.20833vw 0 !important;
 }
 
-html .hljs-comment,
-html .hljs-quote {
+.course-page .hljs-comment,
+.course-page .hljs-quote {
   color: #a0a1a7;
   font-style: italic;
 }
 
-html .hljs-doctag,
-html .hljs-formula,
-html .hljs-keyword {
+.course-page .hljs-doctag,
+.course-page .hljs-formula,
+.course-page .hljs-keyword {
   color: #a626a4;
 }
 
-html .hljs-deletion,
-html .hljs-name,
-html .hljs-section,
-html .hljs-selector-tag,
-html .hljs-subst {
+.course-page .hljs-deletion,
+.course-page .hljs-name,
+.course-page .hljs-section,
+.course-page .hljs-selector-tag,
+.course-page .hljs-subst {
   color: #e45649;
 }
 
-html .hljs-literal {
+.course-page .hljs-literal {
   color: #0184bb;
 }
 
-html .hljs-addition,
-html .hljs-attribute,
-html .hljs-meta .hljs-string,
-html .hljs-regexp,
-html .hljs-string {
+.course-page .hljs-addition,
+.course-page .hljs-attribute,
+.course-page .hljs-meta .hljs-string,
+.course-page .hljs-regexp,
+.course-page .hljs-string {
   color: #50a14f;
 }
 
-html .hljs-attr,
-html .hljs-number,
-html .hljs-selector-attr,
-html .hljs-selector-class,
-html .hljs-selector-pseudo,
-html .hljs-template-variable,
-html .hljs-type,
-html .hljs-variable {
+.course-page .hljs-attr,
+.course-page .hljs-number,
+.course-page .hljs-selector-attr,
+.course-page .hljs-selector-class,
+.course-page .hljs-selector-pseudo,
+.course-page .hljs-template-variable,
+.course-page .hljs-type,
+.course-page .hljs-variable {
   color: #986801;
 }
 
-html .hljs-bullet,
-html .hljs-link,
-html .hljs-meta,
-html .hljs-selector-id,
-html .hljs-symbol,
-html .hljs-title {
+.course-page .hljs-bullet,
+.course-page .hljs-link,
+.course-page .hljs-meta,
+.course-page .hljs-selector-id,
+.course-page .hljs-symbol,
+.course-page .hljs-title {
   color: #4078f2;
 }
 
-html .hljs-built_in,
-html .hljs-class .hljs-title,
-html .hljs-title.class_ {
+.course-page .hljs-built_in,
+.course-page .hljs-class .hljs-title,
+.course-page .hljs-title.class_ {
   color: #c18401;
 }
 
-html .hljs-emphasis {
+.course-page .hljs-emphasis {
   font-style: italic;
 }
 
-html .hljs-strong {
+.course-page .hljs-strong {
   font-weight: 700;
 }
 
-html .hljs-link {
+.course-page .hljs-link {
   text-decoration: underline;
 }
 

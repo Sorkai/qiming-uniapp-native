@@ -276,7 +276,7 @@ const currentTheme = ref((route.query.theme as string) || "light");
 const loading = ref(true);
 const submitting = ref(false);
 const exam = ref<ExamDetailResult>({} as ExamDetailResult);
-const answers = reactive<Record<number, string | string[]>>({});
+const answers = reactive<Record<number, any>>({});
 const examStarted = ref(false);
 const examCompleted = ref(false);
 const remainingTime = ref(0);
@@ -528,10 +528,13 @@ const goBack = () => {
 
 onMounted(() => {
   fetchExamDetail();
-  if (currentTheme.value === "dark") {
-    document.documentElement.classList.add("dark");
-    document.body.classList.add("dark");
-  }
+  const theme = currentTheme.value;
+  const other = theme === "dark" ? "light" : "dark";
+  document.documentElement.classList.remove(other);
+  document.documentElement.classList.add(theme);
+  document.body.classList.remove(other);
+  document.body.classList.add(theme);
+  document.body.classList.add("exam-page");
 
   // 添加页面关闭确认
   window.addEventListener("beforeunload", function (e) {
@@ -553,6 +556,11 @@ onBeforeUnmount(() => {
       e.returnValue = "考试尚未完成，确定要离开吗？";
     }
   });
+
+  document.body.classList.remove("exam-page");
+  // 退出时移除可能存在的主题类名，防止污染主站
+  document.documentElement.classList.remove("light", "dark");
+  document.body.classList.remove("light", "dark");
 });
 </script>
 
@@ -564,8 +572,8 @@ onBeforeUnmount(() => {
   transition: background-color 0.3s;
 
   &.dark {
-    background-color: #1a1a1a !important;
-    color: #e0e0e0 !important;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
   }
 
   .header {
@@ -629,9 +637,9 @@ onBeforeUnmount(() => {
 
     &.dark {
       :deep(.el-card) {
-        background-color: #252525 !important;
-        color: #e0e0e0 !important;
-        border: 1px solid #333 !important;
+        background-color: #252525;
+        color: #e0e0e0;
+        border: 1px solid #333;
       }
       :deep(.el-card__header) {
         border-bottom: 1px solid #333 !important;

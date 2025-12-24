@@ -111,8 +111,12 @@ export function useNav() {
   }
 
   function toAccountSettings() {
-    // 修改为跳转到账号管理页面
-    router.push({ name: "Account" });
+    // 根据角色跳转：管理员/教师跳转至管理后台首页，学生跳转至个人中心
+    if (useUserStoreHook().roles?.includes("admin") || useUserStoreHook().roles?.includes("teacher")) {
+      router.push("/welcome");
+    } else {
+      router.push("/account");
+    }
   }
 
   function toggleSideBar() {

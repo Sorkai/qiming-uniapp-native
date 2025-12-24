@@ -22,6 +22,7 @@
 - [14. PPT模块](#14-ppt模块)
 - [15. 虚拟实验室模块](#15-虚拟实验室模块)
 - [16. 赛事场模块](#16-赛事场模块)
+- [17. 路由与列表模块](#17-路由与列表模块)
 
 ---
 
@@ -40,6 +41,8 @@ interface ApiResponse<T = any> {
 ## 1. 用户认证模块
 
 ### 1.1 系统登录
+
+**前端函数名**: `getLogin` (定义于 `src/api/user.ts`)
 
 **接口地址**: `POST /login`
 
@@ -69,6 +72,8 @@ interface ApiResponse<T = any> {
 
 ### 1.2 刷新Token
 
+**前端函数名**: `refreshTokenApi` (定义于 `src/api/user.ts`)
+
 **接口地址**: `POST /refresh-token`
 
 **请求参数**:
@@ -91,6 +96,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 1.3 用户中心登录
+
+**前端函数名**: `userLogin` (定义于 `src/api/user.ts`)
 
 **接口地址**: `POST /edu/v1/user/login`
 
@@ -117,6 +124,8 @@ interface ApiResponse<T = any> {
 
 ### 1.4 用户注册
 
+**前端函数名**: `userRegister` (定义于 `src/api/user.ts`)
+
 **接口地址**: `POST /edu/v1/user/register`
 
 **请求参数**:
@@ -142,6 +151,8 @@ interface ApiResponse<T = any> {
 
 ### 1.5 获取用户详情
 
+**前端函数名**: `getUserDetail` (定义于 `src/api/user.ts`)
+
 **接口地址**: `POST /edu/v1/user/detail`
 
 **请求参数**: 无
@@ -166,6 +177,8 @@ interface ApiResponse<T = any> {
 
 ### 1.6 获取学习总结(AI)
 
+**前端函数名**: `getLearningSummary` (定义于 `src/api/frontend/user.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/user/learning/summary`
 
 **请求参数**: 无
@@ -187,6 +200,8 @@ interface ApiResponse<T = any> {
 ## 2. 前端课程模块
 
 ### 2.1 获取课程列表
+
+**前端函数名**: `getCourseList` / `getFrontendCourseList` (定义于 `src/api/frontend/course.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/course/list`
 
@@ -219,6 +234,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 2.2 获取课程详情
+
+**前端函数名**: `getCourseDetail` (定义于 `src/api/frontend/course.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/course/detail`
 
@@ -267,6 +284,8 @@ interface ApiResponse<T = any> {
 
 ### 2.3 课时完成上报
 
+**前端函数名**: `reportCourseLesson` (定义于 `src/api/frontend/course.ts`)
+
 **接口地址**: `POST /edu/frontend/v1/course/report/lesson`
 
 **请求参数**:
@@ -287,6 +306,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 2.4 获取课程学习效果
+
+**前端函数名**: `getCourseStudyEffect` (定义于 `src/api/frontend/course.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/course/study/effect`
 
@@ -334,6 +355,8 @@ interface ApiResponse<T = any> {
 
 ### 2.5 获取课程成绩概览
 
+**前端函数名**: `getCourseScore` (定义于 `src/api/frontend/course.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/course/score`
 
 **请求参数**:
@@ -357,6 +380,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 2.6 获取课程成绩详情列表
+
+**前端函数名**: `getCourseGradesList` (定义于 `src/api/frontend/course.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/course/grades/list`
 
@@ -423,6 +448,8 @@ interface ApiResponse<T = any> {
 
 ### 2.7 获取课程成绩统计指标
 
+**前端函数名**: `getCourseGradesStatistics` (定义于 `src/api/frontend/course.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/course/grades/statistics`
 
 **请求参数**:
@@ -463,6 +490,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 2.8 获取成绩班级对比数据
+
+**前端函数名**: `getCourseGradesClassComparison` (定义于 `src/api/frontend/course.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/course/grades/class-comparison`
 
@@ -514,6 +543,8 @@ interface ApiResponse<T = any> {
 
 ### 3.1 更新用户信息
 
+**前端函数名**: `updateFrontendUserInfo` (定义于 `src/api/frontend/user.ts`)
+
 **接口地址**: `POST /edu/frontend/v1/user/update`
 
 **请求参数**:
@@ -536,6 +567,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 3.2 修改用户密码
+
+**前端函数名**: `updateFrontendUserPassword` (定义于 `src/api/frontend/user.ts`)
 
 **接口地址**: `POST /edu/frontend/v1/user/update/password`
 
@@ -561,6 +594,8 @@ interface ApiResponse<T = any> {
 ## 4. 前端作业考试模块
 
 ### 4.1 获取用户课程考试列表
+
+**前端函数名**: `getUserCourseExamList` (定义于 `src/api/frontend/work.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/course/exam/list`
 
@@ -591,6 +626,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 4.2 获取考试详情
+
+**前端函数名**: `getExamDetail` (定义于 `src/api/frontend/work.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/exam/detail`
 
@@ -633,6 +670,8 @@ interface ApiResponse<T = any> {
 
 ### 4.3 提交考试答案
 
+**前端函数名**: `submitExamAnswers` (定义于 `src/api/frontend/work.ts`)
+
 **接口地址**: `POST /edu/frontend/v1/exam/submit`
 
 **请求参数**:
@@ -659,6 +698,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 4.4 获取用户课程作业列表
+
+**前端函数名**: `getUserCourseHomeworkList` (定义于 `src/api/frontend/work.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/course/homework/list`
 
@@ -687,6 +728,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 4.5 获取作业详情
+
+**前端函数名**: `getHomeworkDetail` (定义于 `src/api/frontend/work.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/homework/detail`
 
@@ -727,6 +770,8 @@ interface ApiResponse<T = any> {
 
 ### 4.6 提交作业答案
 
+**前端函数名**: `submitHomeworkAnswers` (定义于 `src/api/frontend/work.ts`)
+
 **接口地址**: `POST /edu/frontend/v1/homework/submit`
 
 **请求参数**:
@@ -754,6 +799,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 4.7 获取用户错题列表
+
+**前端函数名**: `getUserWrongQuestionList` (定义于 `src/api/frontend/work.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/wrong/question/list`
 
@@ -800,6 +847,8 @@ interface ApiResponse<T = any> {
 
 ### 5.1 AI聊天流式接口
 
+**前端函数名**: `courseAIChatStream` (定义于 `src/api/frontend/chat.ts`)
+
 **接口地址**: `POST /edu/frontend/v1/ai/chat/stream`
 
 **请求参数**:
@@ -822,6 +871,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 5.2 获取会话历史
+
+**前端函数名**: `getConversationHistory` (定义于 `src/api/frontend/chat.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/ai/get/conversations`
 
@@ -846,6 +897,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 5.3 错题分析
+
+**前端函数名**: `analyzeWrongExercise` (定义于 `src/api/frontend/wrong-exercise.ts`)
 
 **接口地址**: `POST /edu/frontend/v1/ai/wrong-exercise/analyze`
 
@@ -887,6 +940,8 @@ interface ApiResponse<T = any> {
 
 ### 5.4 获取错题分析历史
 
+**前端函数名**: `getWrongExerciseHistory` (定义于 `src/api/frontend/wrong-exercise.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/ai/wrong-exercise/history`
 
 **请求参数**:
@@ -926,6 +981,8 @@ interface ApiResponse<T = any> {
 
 ### 5.5 作文批改分析
 
+**前端函数名**: `analyzeEssay` (定义于 `src/api/frontend/chat.ts`)
+
 **接口地址**: `POST /edu/frontend/v1/ai/essay/analyze`
 
 **请求参数**:
@@ -956,6 +1013,8 @@ interface ApiResponse<T = any> {
 ## 6. 后端课程管理模块
 
 ### 6.1 创建课程
+
+**前端函数名**: `createCourse` (定义于 `src/api/course.ts`)
 
 **接口地址**: `POST /edu/backend/v1/course/create`
 
@@ -1012,6 +1071,8 @@ interface ApiResponse<T = any> {
 
 ### 6.2 更新课程
 
+**前端函数名**: `updateCourse` (定义于 `src/api/course.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/update`
 
 **请求参数**:
@@ -1037,6 +1098,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 6.3 获取课程列表
+
+**前端函数名**: `getCourseList` (定义于 `src/api/course.ts`)
 
 **接口地址**: `GET /edu/backend/v1/course/list`
 
@@ -1077,6 +1140,8 @@ interface ApiResponse<T = any> {
 
 ### 6.4 获取课时列表
 
+**前端函数名**: `getCourseHoursList` (定义于 `src/api/course.ts`)
+
 **接口地址**: `GET /edu/backend/v1/course/hours/list`
 
 **请求参数**:
@@ -1110,6 +1175,8 @@ interface ApiResponse<T = any> {
 
 ### 6.5 获取课程附件列表
 
+**前端函数名**: `getCourseAttrList` (定义于 `src/api/course.ts`)
+
 **接口地址**: `GET /edu/backend/v1/course/attr/list`
 
 **请求参数**:
@@ -1137,6 +1204,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 6.6 获取课程详情
+
+**前端函数名**: `getCourseDetail` (定义于 `src/api/course.ts`)
 
 **接口地址**: `GET /edu/backend/v1/course/detail`
 
@@ -1166,6 +1235,8 @@ interface ApiResponse<T = any> {
 
 ### 6.7 课程分配
 
+**前端函数名**: `coursesAllocation` (定义于 `src/api/course.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/allocation`
 
 **请求参数**:
@@ -1186,6 +1257,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 6.8 获取可分配学员列表
+
+**前端函数名**: `getAllocationUserList` (定义于 `src/api/course.ts`)
 
 **接口地址**: `GET /edu/backend/v1/course/allocation/user/list`
 
@@ -1216,6 +1289,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 6.9 获取学员学习情况
+
+**前端函数名**: `getStudyUserList` (定义于 `src/api/course.ts`)
 
 **接口地址**: `GET /edu/backend/v1/course/study/user/list`
 
@@ -1251,6 +1326,8 @@ interface ApiResponse<T = any> {
 
 ### 6.10 删除课程
 
+**前端函数名**: `deleteCourse` (定义于 `src/api/course.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/delete`
 
 **请求参数**:
@@ -1270,6 +1347,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 6.11 新增章节
+
+**前端函数名**: `createCourseChapter` (定义于 `src/api/course.ts`)
 
 **接口地址**: `POST /edu/backend/v1/course/create/chapter`
 
@@ -1303,6 +1382,8 @@ interface ApiResponse<T = any> {
 
 ### 6.12 删除章节
 
+**前端函数名**: `deleteChapter` (定义于 `src/api/course.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/delete/chapter`
 
 **请求参数**:
@@ -1323,6 +1404,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 6.13 删除课时
+
+**前端函数名**: `deleteHour` (定义于 `src/api/course.ts`)
 
 **接口地址**: `POST /edu/backend/v1/course/delete/hour`
 
@@ -1346,6 +1429,8 @@ interface ApiResponse<T = any> {
 
 ### 6.14 生成教案
 
+**前端函数名**: `generateTeacherPlan` (定义于 `src/api/course.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/generate/teacher/plan`
 
 **请求参数**:
@@ -1368,6 +1453,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 6.15 获取教案列表
+
+**前端函数名**: `getTeacherPlanList` (定义于 `src/api/course.ts`)
 
 **接口地址**: `GET /edu/backend/v1/course/teacher/plan/list`
 
@@ -1399,6 +1486,8 @@ interface ApiResponse<T = any> {
 
 ### 6.16 查看教案进度
 
+**前端函数名**: `getTeacherPlanProgress` (定义于 `src/api/course.ts`)
+
 **接口地址**: `GET /edu/backend/v1/course/teacher/plan/progress`
 
 **请求参数**:
@@ -1425,6 +1514,8 @@ interface ApiResponse<T = any> {
 ## 7. 后端考试管理模块
 
 ### 7.1 获取考试列表
+
+**前端函数名**: `getExamList` (定义于 `src/api/exam.ts`)
 
 **接口地址**: `GET /edu/backend/v1/course/exam/list`
 
@@ -1462,6 +1553,8 @@ interface ApiResponse<T = any> {
 
 ### 7.2 获取考试试题列表
 
+**前端函数名**: `getExamQuestionList` (定义于 `src/api/exam.ts`)
+
 **接口地址**: `GET /edu/backend/v1/exam/question/list`
 
 **请求参数**:
@@ -1496,6 +1589,8 @@ interface ApiResponse<T = any> {
 
 ### 7.3 创建考试
 
+**前端函数名**: `createExam` (定义于 `src/api/exam.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/exam/create`
 
 **请求参数**:
@@ -1522,6 +1617,8 @@ interface ApiResponse<T = any> {
 
 ### 7.4 更新考试
 
+**前端函数名**: `updateExam` (定义于 `src/api/exam.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/exam/update`
 
 **请求参数**:
@@ -1547,6 +1644,8 @@ interface ApiResponse<T = any> {
 
 ### 7.5 删除考试
 
+**前端函数名**: `deleteExam` (定义于 `src/api/exam.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/exam/delete`
 
 **请求参数**:
@@ -1566,6 +1665,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 7.6 批量添加考试试题
+
+**前端函数名**: `batchAddExamQuestions` (定义于 `src/api/exam.ts`)
 
 **接口地址**: `POST /edu/backend/v1/exam/question/batch/add`
 
@@ -1601,6 +1702,8 @@ interface ApiResponse<T = any> {
 ## 8. 后端作业管理模块
 
 ### 8.1 获取作业列表
+
+**前端函数名**: `getHomeworkList` (定义于 `src/api/homework.ts`)
 
 **接口地址**: `GET /edu/backend/v1/course/homework/list`
 
@@ -1641,6 +1744,8 @@ interface ApiResponse<T = any> {
 
 ### 8.2 获取作业试题列表
 
+**前端函数名**: `getHomeworkQuestionList` (定义于 `src/api/homework.ts`)
+
 **接口地址**: `GET /edu/backend/v1/homework/question/list`
 
 **请求参数**:
@@ -1676,6 +1781,8 @@ interface ApiResponse<T = any> {
 
 ### 8.3 创建作业
 
+**前端函数名**: `createHomework` (定义于 `src/api/homework.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/homework/create`
 
 **请求参数**:
@@ -1702,6 +1809,8 @@ interface ApiResponse<T = any> {
 
 ### 8.4 更新作业
 
+**前端函数名**: `updateHomework` (定义于 `src/api/homework.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/homework/update`
 
 **请求参数**:
@@ -1725,6 +1834,8 @@ interface ApiResponse<T = any> {
 
 ### 8.5 删除作业
 
+**前端函数名**: `deleteHomework` (定义于 `src/api/homework.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/homework/delete`
 
 **请求参数**:
@@ -1744,6 +1855,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 8.6 批量添加作业试题
+
+**前端函数名**: `batchAddHomeworkQuestions` (定义于 `src/api/homework.ts`)
 
 **接口地址**: `POST /edu/backend/v1/homework/question/batch/add`
 
@@ -1780,6 +1893,8 @@ interface ApiResponse<T = any> {
 
 ### 9.1 获取分类列表
 
+**前端函数名**: `getCategoryList` (定义于 `src/api/category.ts`)
+
 **接口地址**: `GET /edu/backend/v1/course/category/list`
 
 **请求参数**:
@@ -1807,6 +1922,8 @@ interface ApiResponse<T = any> {
 
 ### 9.2 添加/更新分类
 
+**前端函数名**: `upsertCategory` (定义于 `src/api/category.ts`)
+
 **接口地址**: `POST /edu/backend/v1/course/category/upsert`
 
 **请求参数**:
@@ -1827,6 +1944,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 9.3 删除分类
+
+**前端函数名**: `deleteCategory` (定义于 `src/api/category.ts`)
 
 **接口地址**: `POST /edu/backend/v1/course/category/delete`
 
@@ -1852,6 +1971,8 @@ interface ApiResponse<T = any> {
 
 ### 10.1 获取老师使用情况
 
+**前端函数名**: `getTeacherUsage` (定义于 `src/api/statistics.ts`)
+
 **接口地址**: `GET /edu/backend/v1/statistics/teacher/usage`
 
 **请求参数**: 无
@@ -1871,6 +1992,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 10.2 获取学生使用情况
+
+**前端函数名**: `getStudentUsage` (定义于 `src/api/statistics.ts`)
 
 **接口地址**: `GET /edu/backend/v1/statistics/student/usage`
 
@@ -1892,6 +2015,8 @@ interface ApiResponse<T = any> {
 
 ### 10.3 获取一周使用情况
 
+**前端函数名**: `getWeekUsage` (定义于 `src/api/statistics.ts`)
+
 **接口地址**: `GET /edu/backend/v1/statistics/week/usage`
 
 **请求参数**: 无
@@ -1908,6 +2033,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 10.4 获取课程学生进度
+
+**前端函数名**: `getCourseUsersProgress` (定义于 `src/api/statistics.ts`)
 
 **接口地址**: `GET /edu/backend/v1/statistics/course/users/progress`
 
@@ -1933,6 +2060,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 10.5 获取课程考试成绩
+
+**前端函数名**: `getCourseUsersExamInfo` (定义于 `src/api/statistics.ts`)
 
 **接口地址**: `GET /edu/backend/v1/statistics/course/users/exam/info`
 
@@ -1963,6 +2092,8 @@ interface ApiResponse<T = any> {
 
 ### 10.6 获取教学效率指数
 
+**前端函数名**: `getEfficientIndex` (定义于 `src/api/statistics.ts`)
+
 **接口地址**: `GET /edu/backend/v1/statistics/efficient/index`
 
 **请求参数**: 无
@@ -1991,6 +2122,8 @@ interface ApiResponse<T = any> {
 
 ### 11.1 生成动画
 
+**前端函数名**: `generateHtmlAnimation` (定义于 `src/api/htmlAnimation.ts`)
+
 **接口地址**: `POST /edu/backend/v1/html-animation/generate`
 
 **请求参数**:
@@ -2017,6 +2150,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 11.2 获取动画任务列表
+
+**前端函数名**: `getHtmlAnimationList` (定义于 `src/api/htmlAnimation.ts`)
 
 **接口地址**: `GET /edu/backend/v1/html-animation/list`
 
@@ -2057,6 +2192,8 @@ interface ApiResponse<T = any> {
 
 ### 11.3 设置展示版本
 
+**前端函数名**: `setHtmlAnimationDisplay` (定义于 `src/api/htmlAnimation.ts`)
+
 **接口地址**: `POST /edu/backend/v1/html-animation/display/set`
 
 **请求参数**:
@@ -2078,6 +2215,8 @@ interface ApiResponse<T = any> {
 
 ### 11.4 强制同步
 
+**前端函数名**: `forceSyncHtmlAnimation` (定义于 `src/api/htmlAnimation.ts`)
+
 **接口地址**: `POST /edu/backend/v1/html-animation/sync`
 
 **请求参数**: 无
@@ -2095,6 +2234,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 11.5 获取展示版本(前台)
+
+**前端函数名**: `getHtmlAnimationDisplay` (定义于 `src/api/htmlAnimation.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/html-animation/display`
 
@@ -2126,6 +2267,8 @@ interface ApiResponse<T = any> {
 
 ### 12.1 删除习题
 
+**前端函数名**: `deleteWorkQuestion` (定义于 `src/api/work.ts`)
+
 **接口地址**: `POST /edu/backend/v1/work/delete/question`
 
 **请求参数**:
@@ -2147,6 +2290,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 12.2 随机添加习题
+
+**前端函数名**: `addRandomWorkQuestion` (定义于 `src/api/work.ts`)
 
 **接口地址**: `POST /edu/backend/v1/work/round/add/question`
 
@@ -2173,6 +2318,8 @@ interface ApiResponse<T = any> {
 
 ### 13.1 文件上传
 
+**前端函数名**: `uploadFile` (定义于 `src/api/user.ts`)
+
 **接口地址**: `POST /edu/v1/user/upload`
 
 **请求参数**: FormData
@@ -2194,6 +2341,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 13.2 获取文件列表
+
+**前端函数名**: `getFileList` (定义于 `src/api/user.ts`)
 
 **接口地址**: `GET /edu/backend/v1/user/file/list`
 
@@ -2225,6 +2374,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 13.3 获取用户列表
+
+**前端函数名**: `getUserList` (定义于 `src/api/user.ts`)
 
 **接口地址**: `GET /edu/backend/v1/user/list`
 
@@ -2259,6 +2410,8 @@ interface ApiResponse<T = any> {
 
 ### 13.4 修改用户角色
 
+**前端函数名**: `updateUserRole` (定义于 `src/api/user.ts`)
+
 **接口地址**: `POST /edu/backend/v1/user/update/role`
 
 **请求参数**:
@@ -2284,6 +2437,8 @@ interface ApiResponse<T = any> {
 
 ### 14.1 获取PPT Token
 
+**前端函数名**: `getPptToken` (定义于 `src/api/ppt.ts`)
+
 **接口地址**: `POST /edu/v1/user/get/ppt/token`
 
 **请求参数**: 无
@@ -2306,6 +2461,8 @@ interface ApiResponse<T = any> {
 
 ### 15.1 获取实验室统计数据
 
+**前端函数名**: `getLabStats` (定义于 `src/api/frontend/extra.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/lab/stats`
 
 **请求参数**: 无
@@ -2324,6 +2481,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 15.2 获取实验项目列表
+
+**前端函数名**: `getLabList` (定义于 `src/api/frontend/extra.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/lab/list`
 
@@ -2362,6 +2521,8 @@ interface ApiResponse<T = any> {
 
 ### 16.1 获取赛事场统计与排名
 
+**前端函数名**: `getCompetitionStats` (定义于 `src/api/frontend/extra.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/competition/stats`
 
 **请求参数**: 无
@@ -2391,6 +2552,8 @@ interface ApiResponse<T = any> {
 
 ### 16.2 获取热门赛事列表
 
+**前端函数名**: `getCompetitionEvents` (定义于 `src/api/frontend/extra.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/competition/events`
 
 **请求参数**: 无
@@ -2414,6 +2577,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 16.3 获取积分排行榜
+
+**前端函数名**: `getLeaderboard` (定义于 `src/api/frontend/extra.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/competition/leaderboard`
 
@@ -2442,6 +2607,8 @@ interface ApiResponse<T = any> {
 ```
 
 ### 16.4 获取 OJ 题目列表
+
+**前端函数名**: `getOJProblemList` (定义于 `src/api/frontend/extra.ts`)
 
 **接口地址**: `GET /edu/frontend/v1/competition/oj/list`
 
@@ -2476,6 +2643,8 @@ interface ApiResponse<T = any> {
 
 ### 16.5 获取训练分类
 
+**前端函数名**: `getTrainingCategories` (定义于 `src/api/frontend/extra.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/competition/training/categories`
 
 **请求参数**: 无
@@ -2499,6 +2668,8 @@ interface ApiResponse<T = any> {
 
 ### 16.6 获取国家安全竞赛题目
 
+**前端函数名**: `getSecurityQuiz` (定义于 `src/api/frontend/extra.ts`)
+
 **接口地址**: `GET /edu/frontend/v1/competition/security/quiz`
 
 **请求参数**: 无
@@ -2515,6 +2686,44 @@ interface ApiResponse<T = any> {
       answer: number; // 正确选项索引
     }>;
   }
+}
+```
+
+---
+
+## 17. 路由与列表模块
+
+### 17.1 获取异步路由
+
+**前端函数名**: `getAsyncRoutes` (定义于 `src/api/routes.ts`)
+
+**接口地址**: `GET /get-async-routes`
+
+**请求参数**: 无
+
+**响应参数**:
+```typescript
+{
+  success: boolean;
+  data: Array<any>; // 路由配置列表
+}
+```
+
+### 17.2 获取卡片列表
+
+**前端函数名**: `getCardList` (定义于 `src/api/list.ts`)
+
+**接口地址**: `POST /get-card-list`
+
+**请求参数**: 无
+
+**响应参数**:
+```typescript
+{
+  success: boolean;
+  data?: {
+    list: Array<any>;
+  };
 }
 ```
 

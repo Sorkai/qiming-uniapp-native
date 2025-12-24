@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :class="currentTheme">
+  <div class="course-detail-root" :class="currentTheme">
     <div class="layout-container" :class="currentTheme">
       <!-- 侧边栏菜单 -->
       <CourseSidebar
@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
@@ -172,7 +172,7 @@ const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
-const currentTheme = ref("light");
+const currentTheme = ref(storageLocal().getItem("course_theme") as string || "light");
 const activeMenu = ref(
   (storageLocal().getItem(`course_detail_active_menu_${route.params.id}`) as string) ||
     "course-learn"
@@ -237,6 +237,8 @@ const toggleTheme = () => {
   const oldTheme = currentTheme.value;
   const newTheme = oldTheme === "light" ? "dark" : "light";
 
+  document.documentElement.classList.remove(oldTheme);
+  document.documentElement.classList.add(newTheme);
   document.body.classList.remove(oldTheme);
   document.body.classList.add(newTheme);
 
@@ -273,7 +275,11 @@ const goBack = () => {
 
 // 跳转账号管理
 const goToAccount = () => {
-  router.push("/account/settings");
+  if (useUserStoreHook().roles?.includes("admin") || useUserStoreHook().roles?.includes("teacher")) {
+    router.push("/welcome");
+  } else {
+    router.push("/account");
+  }
 };
 
 // 退出登录
@@ -397,6 +403,7 @@ const fetchCourseScores = async () => {
 };
 
 onMounted(async () => {
+  document.body.classList.add("course-page");
   baseCourseId.value = Number(route.params.id);
   document.body.classList.add(currentTheme.value);
   await fetchCourseDetail();
@@ -428,6 +435,29 @@ watch(activeMenu, newVal => {
     fetchHtmlAnimations();
   }
 });
+
+// 监听主题变化
+watch(currentTheme, (val) => {
+  storageLocal().setItem("course_theme", val);
+  const other = val === "light" ? "dark" : "light";
+  document.documentElement.classList.remove(other);
+  document.documentElement.classList.add(val);
+  document.body.classList.remove(other);
+  document.body.classList.add(val);
+
+  // 同步到管理后台主题设置
+  const layout = storageLocal().getItem("responsive-layout") as any;
+  if (layout) {
+    layout.darkMode = val === "dark";
+    storageLocal().setItem("responsive-layout", layout);
+  }
+}, { immediate: true });
+
+onBeforeUnmount(() => {
+  document.body.classList.remove("course-page");
+  document.documentElement.classList.remove("dark", "light");
+  document.body.classList.remove("dark", "light");
+});
 </script>
 
 <style>
@@ -438,32 +468,28 @@ watch(activeMenu, newVal => {
 @import "@/../coursecss/css/app.a5f91bbb.css";
 @import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
 
-body {
-  background-color: #ffffff !important;
-}
-
-#app {
+.course-detail-root {
   width: 100%;
   min-height: 100vh;
   background-color: #ffffff;
 }
 
-#app.dark {
-  background-color: #1a1a1a !important;
+.course-detail-root.dark {
+  background-color: #1a1a1a;
 }
 
-.layout-container {
+.course-detail-root .layout-container {
   position: relative;
   width: 100%;
   min-height: 100vh;
   display: flex;
 }
 
-.layout-container.dark {
-  background-color: #1a1a1a !important;
+.course-detail-root .layout-container.dark {
+  background-color: #1a1a1a;
 }
 
-.layout-inner-content {
+.course-detail-root .layout-inner-content {
   position: relative;
   flex: 1;
   margin-left: 90px !important;
@@ -473,13 +499,13 @@ body {
   height: calc(100vh - 35px) !important;
   border-radius: 24px !important;
   overflow: hidden !important;
-  background-color: #ffffff;
+  background-color: #f5f7fa !important;
   box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.1) !important;
   border: 1px solid #eef2f7 !important;
   transition: all 0.3s ease !important;
 }
 
-.layout-inner-content.dark {
+.course-detail-root .layout-inner-content.dark {
   background-color: #1a1a1a !important;
   border: 1px solid rgba(60, 60, 80, 0.8) !important;
   box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;

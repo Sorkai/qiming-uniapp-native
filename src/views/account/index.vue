@@ -535,7 +535,10 @@ const showLoginDialog = ref(false);
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
 // 主题相关
-const currentTheme = ref(storageLocal().getItem("course_theme") as string || "light");
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) ||
+    ((storageLocal().getItem("responsive-layout") as any)?.darkMode ? "dark" : "light")
+);
 
 // 监听主题变化
 watch(
@@ -547,6 +550,13 @@ watch(
     document.documentElement.classList.add(val);
     document.body.classList.remove(other);
     document.body.classList.add(val);
+
+    // 同步到管理后台主题设置
+    const layout = storageLocal().getItem("responsive-layout") as any;
+    if (layout) {
+      layout.darkMode = val === "dark";
+      storageLocal().setItem("responsive-layout", layout);
+    }
   },
   { immediate: true }
 );
