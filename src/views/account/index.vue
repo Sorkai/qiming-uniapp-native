@@ -1201,17 +1201,14 @@ onUnmounted(() => {
       background-color: transparent;
       border-radius: 12px;
       box-shadow: none;
-    }
-  }
-}
 
-.quick-access-section {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+      .quick-access-section {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
 
-  .quick-access-card {
+        .quick-access-card {
     display: flex;
     gap: 16px;
     align-items: center;
@@ -1284,21 +1281,21 @@ onUnmounted(() => {
       background: linear-gradient(135deg, #dcfce7, #bbf7d0);
     }
 
-    &.cloud-access .access-icon {
-      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
-    }
-  }
-}
+          &.cloud-access .access-icon {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+          }
+        }
+      }
 
-.card {
-  padding: 24px;
-  margin-bottom: 24px;
-  background-color: #fff;
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+      .card {
+        padding: 24px;
+        margin-bottom: 24px;
+        background-color: #fff;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
 
-  .reminder {
+        .reminder {
     margin-bottom: 20px;
 
     :deep(.el-carousel__item) {
@@ -1474,12 +1471,6 @@ onUnmounted(() => {
             overflow: hidden;
             border-radius: 8px;
 
-            .thumb-image {
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-            }
-
             .el-tag {
               position: absolute;
               top: 4px;
@@ -1514,17 +1505,17 @@ onUnmounted(() => {
   }
 }
 
-.course-list {
-  .course-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, #dce2f7, #c8d4f0);
-    border-radius: 12px;
+      .course-list {
+        .course-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
+          padding: 16px 20px;
+          background: linear-gradient(135deg, #dce2f7, #c8d4f0);
+          border-radius: 12px;
 
-    h3 {
+          h3 {
       margin: 0;
       font-size: 18px;
       font-weight: 600;
@@ -1662,12 +1653,15 @@ onUnmounted(() => {
   }
 }
 
-.thumb-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+      .thumb-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+  }
 }
 </style>

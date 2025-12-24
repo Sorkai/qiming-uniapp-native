@@ -48,7 +48,7 @@
             v-else
             type="primary"
             class="login-btn"
-            @click="openLoginDialog"
+            @click="handleEntry"
             >登录</el-button
           >
         </div>
@@ -87,7 +87,7 @@
                   type="primary" 
                   size="large" 
                   class="hero-btn primary" 
-                  @click="openLoginDialog"
+                  @click="handleEntry"
                 >
                   立即体验
                 </el-button>
@@ -296,9 +296,9 @@
           <el-button 
             type="primary" 
             size="large" 
-            @click="openLoginDialog"
+            @click="handleEntry"
           >
-            免费试用
+            立即试用
           </el-button>
           <el-button 
             size="large" 
@@ -309,6 +309,12 @@
         </div>
       </div>
     </div>
+
+    <!-- 登录弹窗 -->
+    <LoginDialog 
+      v-model:visible="showLoginDialog" 
+      @login-success="handleLoginSuccess"
+    />
 
     <!-- 底部信息 -->
     <footer class="footer-section">
@@ -358,12 +364,6 @@
         </div>
       </div>
     </footer>
-
-    <!-- 登录弹窗 -->
-    <login-dialog
-      v-model:visible="showLoginDialog"
-      @login-success="handleLoginSuccess"
-    />
   </div>
 </template>
 
@@ -380,7 +380,6 @@ import {
   Setting,
   Check
 } from "@element-plus/icons-vue";
-import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
 import { userKey, removeToken, hasManageAccess, getToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
@@ -393,29 +392,61 @@ import card1 from "@/assets/home/card1.jpg";
 import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
+import LoginDialog from "@/components/LoginDialog.vue";
 
 const router = useRouter();
 const isScrolled = ref(false);
-const showLoginDialog = ref(false);
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
-// 打开登录弹窗
-const openLoginDialog = () => {
+// 登录弹窗显示状态
+const showLoginDialog = ref(false);
+
+/**
+ * 立即体验/立即试用/登录处理
+ * 1、如果当前未登录弹出登录窗口
+ * 2、如果当前登录直接进入系统
+ */
+const handleEntry = () => {
   const token = getToken();
   if (token && token.accessToken) {
-    if (hasAdminAccess.value) {
+    // 已经登录，根据角色进入对应页面
+    const user = storageLocal().getItem<DataInfo<number>>(userKey);
+    if (user && (user.roleType === 2 || user.roleType === 3)) {
+      // 教师或管理员进入后台管理
       router.push("/welcome/index");
     } else {
+      // 学生进入个人中心
       router.push("/account");
     }
-    return;
+  } else {
+    // 未登录时弹出登录窗口
+    showLoginDialog.value = true;
   }
-  showLoginDialog.value = true;
+};
+
+/**
+ * 登录成功后的处理
+ */
+const handleLoginSuccess = () => {
+  // 刷新用户信息
+  userInfo.value = storageLocal().getItem(userKey);
+  const user = storageLocal().getItem<DataInfo<number>>(userKey);
+
+  // 登录成功后根据角色进入对应页面
+  if (user && (user.roleType === 2 || user.roleType === 3)) {
+    // 教师/管理员进入工作台
+    router.push("/welcome/index");
+  } else {
+    // 学生进入个人中心
+    router.push("/account");
+  }
 };
 
 // 检查用户是否有管理权限（教师或管理员）
 const hasAdminAccess = computed(() => {
-  return hasManageAccess();
+  if (!userInfo.value) return false;
+  // 角色类型 2:教师 3:管理员
+  return userInfo.value.roleType === 2 || userInfo.value.roleType === 3;
 });
 
 // 监听滚动事件
@@ -678,14 +709,6 @@ const handleCommand = (command: string) => {
       ElMessage.success("退出登录成功");
       break;
   }
-};
-
-// 登录成功处理
-const handleLoginSuccess = () => {
-  userInfo.value = storageLocal().getItem(userKey);
-  showLoginDialog.value = false;
-  // 刷新当前页面
-  window.location.reload();
 };
 </script>
 
@@ -2169,4 +2192,3 @@ const handleLoginSuccess = () => {
   }
 }
 </style>
-
