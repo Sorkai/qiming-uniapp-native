@@ -9,7 +9,9 @@ import {
   type PropType,
   ref,
   unref,
+  watch,
   computed,
+  nextTick,
   onMounted,
   onUnmounted,
   defineComponent
@@ -89,6 +91,20 @@ export default defineComponent({
     const inCircled = ref(props.circled);
     const isInClose = ref(props.isClose);
     const inSrc = ref(props.src);
+
+    watch(
+      () => props.src,
+      async val => {
+        inSrc.value = val;
+        await nextTick();
+        if (cropper.value) {
+          cropper.value.replace(val);
+        } else {
+          init();
+        }
+      }
+    );
+
     const isReady = ref(false);
     const imgBase64 = ref();
 
@@ -172,9 +188,21 @@ export default defineComponent({
 
     function croppered() {
       if (!cropper.value) return;
-      const canvas = inCircled.value
-        ? getRoundedCanvas()
-        : cropper.value.getCroppedCanvas();
+      let canvas;
+      try {
+        canvas = inCircled.value
+          ? getRoundedCanvas()
+          : cropper.value.getCroppedCanvas();
+      } catch (e: any) {
+        emit("error", e);
+        return;
+      }
+
+      if (!canvas) {
+        emit("error", new Error("无法生成裁剪画布"));
+        return;
+      }
+
       // https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLCanvasElement/toBlob
       canvas.toBlob(blob => {
         if (!blob) return;
@@ -378,6 +406,10 @@ export default defineComponent({
       }
     });
 
+    function onImgError() {
+      emit("error", new Error("图片加载失败，请检查格式或网络"));
+    }
+
     function onContextmenu(event) {
       event.preventDefault();
 
@@ -421,6 +453,7 @@ export default defineComponent({
       getImageStyle,
       isReady,
       croppered,
+      onImgError,
       onContextmenu
     };
   },
@@ -431,6 +464,7 @@ export default defineComponent({
       isReady,
       getClass,
       getImageStyle,
+      onImgError,
       onContextmenu,
       getWrapperStyle
     } = this;
@@ -450,6 +484,7 @@ export default defineComponent({
           src={inSrc}
           alt={alt}
           crossorigin={crossorigin}
+          onError={onImgError}
         />
       </div>
     ) : null;

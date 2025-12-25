@@ -811,18 +811,6 @@ export default defineFakeRoute([
       };
     }
   },
-  // 更新用户信息
-  {
-    url: "/edu/frontend/v1/user/update",
-    method: "post",
-    response: () => {
-      return {
-        code: 200,
-        msg: "更新成功",
-        data: null
-      };
-    }
-  },
   // 修改用户密码
   {
     url: "/edu/frontend/v1/user/update/password",
