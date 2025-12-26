@@ -34,7 +34,7 @@
 
             <!-- 账号输入 -->
             <div class="input-group">
-              <div class="input-wrapper" :class="{ focus: isPhoneFocused, error: errors.phone }">
+              <div class="input-wrapper" :class="{ focus: isPhoneFocused, error: errors.phone, 'has-value': !!loginForm.username }">
                 <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20">
                   <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
                 </svg>
@@ -42,12 +42,13 @@
                   ref="phoneInputRef"
                   v-model="loginForm.username"
                   type="text"
-                  :placeholder="loginType === 'sms' ? '请输入手机号' : '请输入账号或手机号'"
+                  placeholder=""
                   maxlength="30"
                   @focus="isPhoneFocused = true"
                   @blur="isPhoneFocused = false"
                   @keyup.enter="loginType === 'sms' ? sendSmsCode() : handlePasswordLogin()"
                 />
+                <label class="floating-label">{{ loginType === 'sms' ? '请输入手机号' : '请输入账号或手机号' }}</label>
               </div>
               <p v-if="errors.phone" class="error-text">{{ errors.phone }}</p>
             </div>
@@ -55,20 +56,25 @@
             <!-- 密码登录 -->
             <template v-if="loginType === 'password'">
               <div class="input-group">
-                <div class="input-wrapper password-wrapper" :class="{ focus: isPasswordFocused, error: errors.password }">
+                <div class="input-wrapper password-wrapper" :class="{ focus: isPasswordFocused, error: errors.password, 'has-value': !!loginForm.password }">
                   <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor" d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
                   </svg>
-                  <input
-                    ref="passwordInputRef"
-                    v-model="loginForm.password"
-                    :type="showLoginPassword ? 'text' : 'password'"
-                    :class="{ 'blur-text': !showLoginPassword && loginForm.password }"
-                    placeholder="请输入密码"
-                    @focus="isPasswordFocused = true"
-                    @blur="isPasswordFocused = false"
-                    @keyup.enter="handlePasswordLogin"
-                  />
+                  <ReInvisibleInk
+                    :active="!showLoginPassword && !!loginForm.password"
+                    class="flex-1"
+                  >
+                    <input
+                      ref="passwordInputRef"
+                      v-model="loginForm.password"
+                      :type="showLoginPassword ? 'text' : 'password'"
+                      placeholder=""
+                      @focus="isPasswordFocused = true"
+                      @blur="isPasswordFocused = false"
+                      @keyup.enter="handlePasswordLogin"
+                    />
+                  </ReInvisibleInk>
+                  <label class="floating-label">请输入密码</label>
                   <button type="button" class="eye-btn" @click="showLoginPassword = !showLoginPassword">
                     <svg v-if="showLoginPassword" viewBox="0 0 24 24" width="20" height="20">
                       <path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
@@ -86,19 +92,20 @@
             <template v-else>
               <div class="input-group">
                 <div class="sms-row">
-                  <div class="input-wrapper sms-input" :class="{ focus: isCodeFocused, error: errors.code }">
+                  <div class="input-wrapper sms-input" :class="{ focus: isCodeFocused, error: errors.code, 'has-value': !!loginForm.smsCode }">
                     <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20">
                       <path fill="currentColor" d="M17,3H7A2,2 0 0,0 5,5V21L12,18L19,21V5A2,2 0 0,0 17,3M12,13L9,10H11V6H13V10H15L12,13Z"/>
                     </svg>
                     <input
                       v-model="loginForm.smsCode"
                       type="text"
-                      placeholder="请输入验证码"
+                      placeholder=""
                       maxlength="6"
                       @focus="isCodeFocused = true"
                       @blur="isCodeFocused = false"
                       @keyup.enter="handleSmsLogin"
                     />
+                    <label class="floating-label">请输入验证码</label>
                   </div>
                   <button 
                     class="sms-btn" 
@@ -163,18 +170,19 @@
 
             <!-- 手机号 -->
             <div class="input-group">
-              <div class="input-wrapper" :class="{ focus: registerPhoneFocused, error: errors.registerPhone }">
+              <div class="input-wrapper" :class="{ focus: registerPhoneFocused, error: errors.registerPhone, 'has-value': !!registerForm.phone }">
                 <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20">
                   <path fill="currentColor" d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"/>
                 </svg>
                 <input
                   v-model="registerForm.phone"
                   type="text"
-                  placeholder="请输入手机号"
+                  placeholder=""
                   maxlength="11"
                   @focus="registerPhoneFocused = true"
                   @blur="registerPhoneFocused = false"
                 />
+                <label class="floating-label">请输入手机号</label>
               </div>
               <p v-if="errors.registerPhone" class="error-text">{{ errors.registerPhone }}</p>
             </div>
@@ -182,18 +190,19 @@
             <!-- 验证码 -->
             <div class="input-group">
               <div class="sms-row">
-                <div class="input-wrapper sms-input" :class="{ focus: registerCodeFocused, error: errors.registerCode }">
+                <div class="input-wrapper sms-input" :class="{ focus: registerCodeFocused, error: errors.registerCode, 'has-value': !!registerForm.code }">
                   <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor" d="M17,3H7A2,2 0 0,0 5,5V21L12,18L19,21V5A2,2 0 0,0 17,3M12,13L9,10H11V6H13V10H15L12,13Z"/>
                   </svg>
                   <input
                     v-model="registerForm.code"
                     type="text"
-                    placeholder="请输入验证码"
+                    placeholder=""
                     maxlength="6"
                     @focus="registerCodeFocused = true"
                     @blur="registerCodeFocused = false"
                   />
+                  <label class="floating-label">请输入验证码</label>
                 </div>
                 <button 
                   class="sms-btn" 
@@ -208,18 +217,23 @@
 
             <!-- 密码 -->
             <div class="input-group">
-              <div class="input-wrapper password-wrapper" :class="{ focus: registerPasswordFocused, error: errors.registerPassword }">
+              <div class="input-wrapper password-wrapper" :class="{ focus: registerPasswordFocused, error: errors.registerPassword, 'has-value': !!registerForm.password }">
                 <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20">
                   <path fill="currentColor" d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
                 </svg>
-                <input
-                  v-model="registerForm.password"
-                  :type="showRegisterPassword ? 'text' : 'password'"
-                  :class="{ 'blur-text': !showRegisterPassword && registerForm.password }"
-                  placeholder="请设置密码"
-                  @focus="registerPasswordFocused = true"
-                  @blur="registerPasswordFocused = false"
-                />
+                <ReInvisibleInk
+                  :active="!showRegisterPassword && !!registerForm.password"
+                  class="flex-1"
+                >
+                  <input
+                    v-model="registerForm.password"
+                    :type="showRegisterPassword ? 'text' : 'password'"
+                    placeholder=""
+                    @focus="registerPasswordFocused = true"
+                    @blur="registerPasswordFocused = false"
+                  />
+                </ReInvisibleInk>
+                <label class="floating-label">请设置密码</label>
                 <button type="button" class="eye-btn" @click="showRegisterPassword = !showRegisterPassword">
                   <svg v-if="showRegisterPassword" viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
@@ -234,19 +248,24 @@
 
             <!-- 确认密码 -->
             <div class="input-group">
-              <div class="input-wrapper password-wrapper" :class="{ focus: confirmPasswordFocused, error: errors.confirmPassword }">
+              <div class="input-wrapper password-wrapper" :class="{ focus: confirmPasswordFocused, error: errors.confirmPassword, 'has-value': !!registerForm.confirmPassword }">
                 <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20">
                   <path fill="currentColor" d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
                 </svg>
-                <input
-                  v-model="registerForm.confirmPassword"
-                  :type="showConfirmPassword ? 'text' : 'password'"
-                  :class="{ 'blur-text': !showConfirmPassword && registerForm.confirmPassword }"
-                  placeholder="请确认密码"
-                  @focus="confirmPasswordFocused = true"
-                  @blur="confirmPasswordFocused = false"
-                  @keyup.enter="handleRegister"
-                />
+                <ReInvisibleInk
+                  :active="!showConfirmPassword && !!registerForm.confirmPassword"
+                  class="flex-1"
+                >
+                  <input
+                    v-model="registerForm.confirmPassword"
+                    :type="showConfirmPassword ? 'text' : 'password'"
+                    placeholder=""
+                    @focus="confirmPasswordFocused = true"
+                    @blur="confirmPasswordFocused = false"
+                    @keyup.enter="handleRegister"
+                  />
+                </ReInvisibleInk>
+                <label class="floating-label">请确认密码</label>
                 <button type="button" class="eye-btn" @click="showConfirmPassword = !showConfirmPassword">
                   <svg v-if="showConfirmPassword" viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
@@ -283,6 +302,7 @@ import { ref, reactive, watch } from "vue";
 import type { PropType } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserStoreHook } from "@/store/modules/user";
+import ReInvisibleInk from "@/components/ReInvisibleInk/index.vue";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { userRegister, userLogin, getUserDetail } from "@/api/user";
@@ -767,6 +787,7 @@ watch(() => props.visible, (val) => {
 }
 
 .input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
   height: 48px;
@@ -786,6 +807,34 @@ watch(() => props.visible, (val) => {
     background: #fff5f5;
     border-color: #ff6b6b;
   }
+}
+
+.floating-label {
+  position: absolute;
+  left: 44px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bfc3c7;
+  font-size: 15px;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.input-wrapper.focus .floating-label,
+.input-wrapper.has-value .floating-label {
+  top: 0;
+  font-size: 12px;
+  color: #5dade2;
+  background: #fff;
+  padding: 0 4px;
+  left: 12px;
+  z-index: 10;
+}
+
+.input-wrapper.error.focus .floating-label,
+.input-wrapper.error.has-value .floating-label {
+  color: #ff6b6b;
 }
 
 .input-icon {
@@ -808,10 +857,6 @@ watch(() => props.visible, (val) => {
     color: #bfc3c7;
   }
 
-  /* 密码模糊效果 */
-  &.blur-text {
-    filter: blur(4px);
-  }
 }
 
 /* 密码眼睛按钮 */

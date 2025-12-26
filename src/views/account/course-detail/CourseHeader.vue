@@ -27,21 +27,13 @@
           :class="{ 'is-dark': currentTheme === 'dark' }"
           @click="$emit('toggle-theme', $event)"
         >
-          <div class="toggle-inner">
-            <div class="toggle-icon sun">
-              <IconifyIconOffline :icon="Sunny" />
-            </div>
-            <div class="toggle-icon moon">
-              <svg viewBox="0 0 24 24" class="moon-svg">
-                <path d="M12.1,22c-4.8,0-9-3.4-9.8-8.2c-1.1-6,2.8-11.7,8.8-12.8c1.1-0.2,2.1-0.2,3.1,0c-4.3,1.4-6.7,6.1-5.3,10.4c1,3.1,3.8,5.2,7,5.2c1.4,0,2.8-0.4,4-1.1c-1.4,3.7-5.1,6.3-9.1,6.5C11.1,22,11.1,22,12.1,22z" fill="currentColor"/>
-              </svg>
-            </div>
-            <div class="toggle-handle">
-              <div class="handle-shine"></div>
-            </div>
-            <div class="star star-1"></div>
-            <div class="star star-2"></div>
+          <div class="toggle-icon sun-icon">
+            <IconifyIconOffline :icon="Sunny" />
           </div>
+          <div class="toggle-icon moon-icon">
+            <IconifyIconOffline :icon="Moon" />
+          </div>
+          <div class="toggle-handle"></div>
         </div>
       </div>
 
@@ -222,60 +214,50 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   margin-left: 18px;
   width: var(--w);
   height: var(--h);
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.08);
   border-radius: 30px;
   position: relative;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
+  transition: all 0.4s ease;
   overflow: hidden;
 }
 
 .layout-header.dark .theme-toggle-premium {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.toggle-inner {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .toggle-icon {
-  z-index: 1;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3; /* 放在滑块上方 */
   width: 18px;
   height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 14px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  font-size: 14px;
+  opacity: 0;
 }
 
-.moon-svg {
-  width: 14px;
-  height: 14px;
-  transform: rotate(-15deg);
-  transition: all 0.4s ease;
+.sun-icon {
+  left: 7px;
+  color: #fff;
 }
 
-.sun { color: #f59e0b; }
-.moon { color: #94a3b8; }
-
-.is-dark .sun { 
-  opacity: 0; 
-  transform: scale(0.5) rotate(45deg); 
+.moon-icon {
+  right: 7px;
+  color: #64748b;
 }
 
-.is-dark .moon { 
-  color: #f1f5f9; 
-  opacity: 1; 
-  transform: scale(1.2);
+.theme-toggle-premium:not(.is-dark) .sun-icon {
+  opacity: 1;
+}
+
+.is-dark .moon-icon {
+  opacity: 1;
 }
 
 .toggle-handle {
@@ -284,16 +266,16 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   left: var(--p);
   width: var(--s);
   height: var(--s);
-  background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
+  background: linear-gradient(135deg, #f6c138 0%, #eab308 100%);
   border-radius: 50%;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 2;
 }
 
 .is-dark .toggle-handle {
   transform: translateX(calc(var(--w) - var(--s) - var(--p) * 2));
-  background: linear-gradient(135deg, #f6c138 0%, #eab308 100%);
+  background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
 }
 
 /* 中间标题区域 */

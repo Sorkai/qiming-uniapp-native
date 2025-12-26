@@ -8,8 +8,11 @@ import type { FormInstance } from "element-plus";
 import { useVerifyCode } from "../utils/verifyCode";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
+import ReInvisibleInk from "@/components/ReInvisibleInk/index.vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
+import Eye from "~icons/ri/eye-line";
+import EyeOff from "~icons/ri/eye-off-line";
 import Iphone from "~icons/ep/iphone";
 import User from "~icons/ri/user-3-fill";
 import Keyhole from "~icons/ri/shield-keyhole-line";
@@ -17,6 +20,13 @@ import Keyhole from "~icons/ri/shield-keyhole-line";
 const { t } = useI18n();
 const checked = ref(false);
 const loading = ref(false);
+const isUsernameFocused = ref(false);
+const isPhoneFocused = ref(false);
+const isVerifyCodeFocused = ref(false);
+const isPasswordFocused = ref(false);
+const isRepeatPasswordFocused = ref(false);
+const passwordVisible = ref(false);
+const repeatPasswordVisible = ref(false);
 const ruleForm = reactive({
   username: "",
   phone: "",
@@ -91,35 +101,53 @@ function onBack() {
           }
         ]"
         prop="username"
+        class="floating-label-item"
+        :class="{ 'has-value': !!ruleForm.username, 'is-focused': isUsernameFocused }"
       >
         <el-input
           v-model="ruleForm.username"
           clearable
-          :placeholder="t('login.pureUsername')"
+          placeholder=""
           :prefix-icon="useRenderIcon(User)"
+          @focus="isUsernameFocused = true"
+          @blur="isUsernameFocused = false"
         />
+        <label class="floating-label">{{ t('login.pureUsername') }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="100">
-      <el-form-item prop="phone">
+      <el-form-item 
+        prop="phone"
+        class="floating-label-item"
+        :class="{ 'has-value': !!ruleForm.phone, 'is-focused': isPhoneFocused }"
+      >
         <el-input
           v-model="ruleForm.phone"
           clearable
-          :placeholder="t('login.purePhone')"
+          placeholder=""
           :prefix-icon="useRenderIcon(Iphone)"
+          @focus="isPhoneFocused = true"
+          @blur="isPhoneFocused = false"
         />
+        <label class="floating-label">{{ t('login.purePhone') }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="150">
-      <el-form-item prop="verifyCode">
+      <el-form-item 
+        prop="verifyCode"
+        class="floating-label-item"
+        :class="{ 'has-value': !!ruleForm.verifyCode, 'is-focused': isVerifyCodeFocused }"
+      >
         <div class="w-full flex justify-between">
           <el-input
             v-model="ruleForm.verifyCode"
             clearable
-            :placeholder="t('login.pureSmsVerifyCode')"
+            placeholder=""
             :prefix-icon="useRenderIcon(Keyhole)"
+            @focus="isVerifyCodeFocused = true"
+            @blur="isVerifyCodeFocused = false"
           />
           <el-button
             :disabled="isDisabled"
@@ -133,30 +161,72 @@ function onBack() {
             }}
           </el-button>
         </div>
+        <label class="floating-label">{{ t('login.pureSmsVerifyCode') }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="200">
-      <el-form-item prop="password">
-        <el-input
-          v-model="ruleForm.password"
-          clearable
-          show-password
-          :placeholder="t('login.purePassword')"
-          :prefix-icon="useRenderIcon(Lock)"
-        />
+      <el-form-item 
+        prop="password"
+        class="floating-label-item"
+        :class="{ 'has-value': !!ruleForm.password, 'is-focused': isPasswordFocused }"
+      >
+        <ReInvisibleInk
+          :active="!passwordVisible && !!ruleForm.password"
+          class="w-full"
+        >
+          <el-input
+            v-model="ruleForm.password"
+            clearable
+            :type="passwordVisible ? 'text' : 'password'"
+            placeholder=""
+            :prefix-icon="useRenderIcon(Lock)"
+            @focus="isPasswordFocused = true"
+            @blur="isPasswordFocused = false"
+          >
+            <template #suffix>
+              <IconifyIconOffline
+                :icon="passwordVisible ? Eye : EyeOff"
+                class="cursor-pointer"
+                @click="passwordVisible = !passwordVisible"
+              />
+            </template>
+          </el-input>
+        </ReInvisibleInk>
+        <label class="floating-label">{{ t('login.purePassword') }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="250">
-      <el-form-item :rules="repeatPasswordRule" prop="repeatPassword">
-        <el-input
-          v-model="ruleForm.repeatPassword"
-          clearable
-          show-password
-          :placeholder="t('login.pureSure')"
-          :prefix-icon="useRenderIcon(Lock)"
-        />
+      <el-form-item 
+        :rules="repeatPasswordRule" 
+        prop="repeatPassword"
+        class="floating-label-item"
+        :class="{ 'has-value': !!ruleForm.repeatPassword, 'is-focused': isRepeatPasswordFocused }"
+      >
+        <ReInvisibleInk
+          :active="!repeatPasswordVisible && !!ruleForm.repeatPassword"
+          class="w-full"
+        >
+          <el-input
+            v-model="ruleForm.repeatPassword"
+            clearable
+            :type="repeatPasswordVisible ? 'text' : 'password'"
+            placeholder=""
+            :prefix-icon="useRenderIcon(Lock)"
+            @focus="isRepeatPasswordFocused = true"
+            @blur="isRepeatPasswordFocused = false"
+          >
+            <template #suffix>
+              <IconifyIconOffline
+                :icon="repeatPasswordVisible ? Eye : EyeOff"
+                class="cursor-pointer"
+                @click="repeatPasswordVisible = !repeatPasswordVisible"
+              />
+            </template>
+          </el-input>
+        </ReInvisibleInk>
+        <label class="floating-label">{{ t('login.pureSure') }}</label>
       </el-form-item>
     </Motion>
 
