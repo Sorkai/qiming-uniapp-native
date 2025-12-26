@@ -7,11 +7,15 @@ import boxen, { type Options as BoxenOptions } from "boxen";
 dayjs.extend(duration);
 
 const welcomeMessage = gradient(["cyan", "magenta"]).multiline(
-  `您好! 欢迎使用 pure-admin 开源项目\n我们为您精心准备了下面两个贴心的保姆级文档\nhttps://pure-admin.cn\nhttps://pure-admin-utils.netlify.app`
+  `您好！欢迎使用 长春工业大学 计算机学院 启明智教项目 
+
+Intelledu.com 
+
+Copyright (c) 2024 吉林省云创迅捷软件开发有限公司 All Rights Reserved. `
 );
 
 const boxenOptions: BoxenOptions = {
-  padding: 0.5,
+  padding: 1,
   borderColor: "cyan",
   borderStyle: "round"
 };

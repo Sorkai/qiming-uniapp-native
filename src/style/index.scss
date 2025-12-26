@@ -23,6 +23,9 @@
   /* switch关闭状态下的color 需要时可取用 */
   --pure-switch-off-color: #a6a6a6;
 
+  /* 主内容区默认边距 */
+  --pure-main-content-margin: 24px 24px 0;
+
   /** 主题色 */
   --pure-theme-sub-menu-active-text: initial;
   --pure-theme-menu-bg: none;
@@ -47,12 +50,17 @@
 
 /* 日期选择器弹窗在对话框内的样式 */
 .date-picker-popper {
-  position: absolute !important;
-  z-index: 9999 !important;
+  position: absolute;
+  z-index: 9999;
 
   &.el-popper {
-    inset: auto !important;
-    margin-top: 0 !important;
-    position: absolute !important;
+    inset: auto;
+    margin-top: 0;
+    position: absolute;
   }
+}
+
+/* 主内容区 */
+.main-content {
+  margin: var(--pure-main-content-margin);
 }

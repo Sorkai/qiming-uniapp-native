@@ -46,9 +46,9 @@
  */
 .outer-most .el-collapse-transition-leave-active,
 .outer-most .el-collapse-transition-enter-active {
-  transition: 0.2s all ease-in-out !important;
+  transition: 0.2s all ease-in-out;
 }
 
 .horizontal-collapse-transition {
-  transition: var(--pure-transition-duration) all !important;
+  transition: var(--pure-transition-duration) all;
 }

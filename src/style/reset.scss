@@ -10,6 +10,7 @@ html {
   line-height: 1.5;
   tab-size: 4;
   text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -265,5 +266,6 @@ div:focus {
 [class^="el-icon-"],
 [class*=" el-icon-"],
 .iconify {
-  font-family: "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline" !important;
+  font-family:
+    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline";
 }

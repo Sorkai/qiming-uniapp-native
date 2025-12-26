@@ -40,7 +40,7 @@ const {
           v-model="form.username"
           placeholder="请输入用户名"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         />
       </el-form-item>
       <el-form-item>
@@ -112,9 +112,6 @@ const {
   margin: 0;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
 
 .search-form {
   :deep(.el-form-item) {

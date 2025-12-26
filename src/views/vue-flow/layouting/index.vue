@@ -134,7 +134,7 @@ async function layoutGraph(direction) {
 }
 
 .main-content {
-  margin: 0 !important;
+  margin: 0;
 }
 
 .layout-flow {

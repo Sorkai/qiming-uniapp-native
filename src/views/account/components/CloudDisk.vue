@@ -359,8 +359,8 @@ const handleDelete = (file: CloudFile) => {
           border-bottom-color: #0f172a;
         }
         
-        &:hover td {
-          background-color: #334155 !important;
+        &:hover > td {
+          background-color: #334155;
         }
       }
     }

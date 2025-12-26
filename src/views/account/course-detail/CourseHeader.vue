@@ -157,39 +157,39 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 头部整体布局 */
 .layout-header {
-  position: fixed !important;
-  top: 15px !important;
-  left: 15px !important;
-  right: 15px !important;
-  height: 56px !important;
-  z-index: 1000 !important;
-  display: flex !important;
-  align-items: center !important;
-  padding: 0 20px !important;
-  background: rgba(255, 255, 255, 0.7) !important;
-  backdrop-filter: blur(12px) !important;
-  border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
-  box-sizing: border-box !important;
-  transition: all 0.3s ease !important;
-}
+  position: fixed;
+  top: 15px;
+  left: 90px;
+  right: 15px;
+  height: 56px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 
-.layout-header.dark {
-  background: rgba(30, 30, 35, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  &.dark {
+    background: rgba(30, 30, 35, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .header-content {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  width: 100% !important;
-  height: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
 }
 
 /* 左侧区域 */
@@ -230,14 +230,14 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .layout-header.dark .back-btn {
-  background: #262626 !important;
-  color: #4facfe !important;
-  border: 1px solid rgba(79, 172, 254, 0.3) !important;
-}
+  background: #262626;
+  color: #4facfe;
+  border: 1px solid rgba(79, 172, 254, 0.3);
 
-.layout-header.dark .back-btn:hover {
-  background: #333333 !important;
-  border-color: #4facfe !important;
+  &:hover {
+    background: #333333;
+    border-color: #4facfe;
+  }
 }
 
 /* 主题切换按钮 */
@@ -359,18 +359,18 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .title-capsule {
-  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%) !important;
-  color: white !important;
-  padding: 10px 32px !important;
-  border-radius: 16px !important;
-  font-size: 24px !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 15px rgba(74, 0, 224, 0.25) !important;
-  white-space: nowrap !important;
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+  color: white;
+  padding: 10px 32px;
+  border-radius: 16px;
+  font-size: 24px;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(74, 0, 224, 0.25);
+  white-space: nowrap;
 }
 
 .layout-header.dark .title-capsule {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
 /* 右侧区域 - 像素级复刻主页面 */
@@ -381,99 +381,99 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .user-capsule {
-  display: flex !important;
-  align-items: center !important;
-  height: 34px !important;
-  padding: 0 12px !important;
-  background: rgba(0, 0, 0, 0.05) !important;
-  border-radius: 17px !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  user-select: none !important;
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 17px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 .layout-header.dark .user-capsule {
-  background: rgba(255, 255, 255, 0.15) !important;
-}
+  background: rgba(255, 255, 255, 0.15);
 
-.user-capsule:hover {
-  background: rgba(0, 0, 0, 0.1) !important;
-}
-
-.layout-header.dark .user-capsule:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
 }
 
 .user-avatar {
-  width: 24px !important;
-  height: 24px !important;
-  border-radius: 50% !important;
-  object-fit: cover !important;
-  flex-shrink: 0 !important;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .user-name {
-  margin-left: 8px !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
-  color: #000000d9 !important;
-  white-space: nowrap !important;
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000d9;
+  white-space: nowrap;
 }
 
 .layout-header.dark .user-name {
-  color: #fff !important;
+  color: #fff;
 }
 
 .dropdown-arrow {
-  margin-left: 4px !important;
-  font-size: 12px !important;
-  color: #000000d9 !important;
-  transition: transform 0.3s ease !important;
-  display: inline-block !important;
+  margin-left: 4px;
+  font-size: 12px;
+  color: #000000d9;
+  transition: transform 0.3s ease;
+  display: inline-block;
 }
 
 .layout-header.dark .dropdown-arrow {
-  color: #fff !important;
+  color: #fff;
 }
 
 /* 下拉菜单样式复刻 */
 :global(.course-user-dropdown) {
-  padding: 0 !important;
-  border-radius: 8px !important;
-  border: 1px solid #ebeef5 !important;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1) !important;
-}
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 
-:global(.course-user-dropdown .el-dropdown-menu) {
-  padding: 0 !important;
-}
+  .el-dropdown-menu {
+    padding: 0;
 
-:global(.course-user-dropdown .el-dropdown-menu__item) {
-  display: inline-flex !important;
-  flex-wrap: wrap !important;
-  min-width: 120px !important;
-  padding: 8px 16px !important;
-  font-size: 14px !important;
-  color: #606266 !important;
-  line-height: 22px !important;
-}
+    &__item {
+      display: inline-flex;
+      flex-wrap: wrap;
+      min-width: 120px;
+      padding: 8px 16px;
+      font-size: 14px;
+      color: #606266;
+      line-height: 22px;
 
-:global(.course-user-dropdown .el-dropdown-menu__item:hover) {
-  background-color: #f5f7fa !important;
-  color: var(--el-color-primary) !important;
-}
+      &:hover {
+        background-color: #f5f7fa;
+        color: var(--el-color-primary);
+      }
 
-:global(.course-user-dropdown .logout-item) {
-  color: #f56c6c !important;
-}
+      &--divided {
+        margin-top: 0;
+        border-top: 1px solid #ebeef5;
 
-:global(.course-user-dropdown .el-dropdown-menu__item--divided) {
-  margin-top: 0 !important;
-  border-top: 1px solid #ebeef5 !important;
-}
+        &:before {
+          display: none;
+        }
+      }
+    }
+  }
 
-:global(.course-user-dropdown .el-dropdown-menu__item--divided:before) {
-  display: none !important;
+  .logout-item {
+    color: #f56c6c;
+  }
 }
 
 /* 聚光灯按钮效果 */

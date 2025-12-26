@@ -211,52 +211,56 @@ const handleClose = () => (visible.value = false);
 
 <style scoped>
 .wrap {
-  max-height: 70vh;
-  overflow: auto;
-  padding: 4px;
+  box-sizing: border-box;
+  max-height: 75vh;
+  overflow-y: auto;
 }
 .wrap.dark {
   color: #e0e0e0;
 }
 .block {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 .h3 {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 20px;
+  color: var(--el-text-color-primary);
 }
 .stem {
   background: #f7f8fa;
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border-radius: 12px;
   color: #333;
-  line-height: 1.6;
-  margin-bottom: 12px;
+  line-height: 1.7;
+  margin-bottom: 16px;
+  font-size: 16px;
 }
 .wrap.dark .stem {
-  background: #333;
+  background: #2a2a2a;
   color: #e0e0e0;
+  border: 1px solid #3e3e3e;
 }
 .wrap.dark .stem :deep(*) {
-  color: #e0e0e0 !important;
+  color: #e0e0e0;
 }
 .options ul {
   list-style: none;
   padding: 0;
-  margin: 8px 0 0;
+  margin: 12px 0 0;
 }
 .options li {
-  padding: 8px 0;
+  padding: 10px 0;
   display: flex;
   align-items: flex-start;
   color: #333;
+  font-size: 15px;
 }
 .wrap.dark .options li {
   color: #e0e0e0;
 }
 .options .label {
-  margin-right: 8px;
+  margin-right: 12px;
   color: #409eff;
   font-weight: bold;
 }
@@ -264,13 +268,13 @@ const handleClose = () => (visible.value = false);
   color: #4facfe;
 }
 .answers {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 .base {
-  margin-top: 12px;
+  margin-top: 16px;
   background: #f9fafb;
-  padding: 16px;
-  border-radius: 8px;
+  padding: 20px;
+  border-radius: 12px;
   border: 1px solid #eee;
 }
 .wrap.dark .base {
@@ -288,48 +292,52 @@ const handleClose = () => (visible.value = false);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .prewrap {
   white-space: pre-wrap;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 .sim-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 .sim-item {
-  padding: 16px;
+  padding: 20px;
   border: 1px solid #f0f0f0;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   color: #333;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 .wrap.dark .sim-item {
-  border-color: #444;
+  border-color: #3e3e3e;
   background: #2a2a2a;
   color: #e0e0e0;
 }
 .q {
   display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-weight: 500;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 16px;
 }
 .qtxt {
   flex: 1;
 }
 .exp {
-  margin-top: 12px;
+  margin-top: 16px;
   background: #f9fafb;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 10px;
   font-size: 14px;
+  border-left: 4px solid #409eff;
 }
 .wrap.dark .exp {
   background: #333;
   color: #e0e0e0;
+  border-left-color: #4facfe;
 }
 .mr8 {
   margin-right: 8px;
@@ -337,76 +345,97 @@ const handleClose = () => (visible.value = false);
 </style>
 
 <style>
-/* 彻底加固深色模式弹窗样式（处理 Portal 渲染） */
+/* 彻底加固弹窗样式（处理 Portal 渲染） */
+.custom-ai-detail-dialog .el-dialog {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.custom-ai-detail-dialog .el-dialog__header {
+  padding: 24px 40px !important;
+  margin-right: 0 !important;
+  border-bottom: 1px solid var(--el-border-color-lighter) !important;
+}
+
+.custom-ai-detail-dialog .el-dialog__body {
+  padding: 0 !important;
+}
+
+.custom-ai-detail-dialog .wrap {
+  padding: 32px 40px 40px !important;
+}
+
+.custom-ai-detail-dialog .el-dialog__footer {
+  padding: 16px 40px 24px !important;
+  border-top: 1px solid var(--el-border-color-lighter) !important;
+}
+
 .custom-ai-detail-dialog.dark .el-dialog,
 html.dark .custom-ai-detail-dialog .el-dialog {
-  background-color: #1a1a1a !important;
-  border: 1px solid #333 !important;
-  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.4) !important;
+  --el-dialog-bg-color: #1a1a1a;
+  background-color: var(--el-dialog-bg-color);
+  border: 1px solid #333;
+  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.4);
 }
 
 .custom-ai-detail-dialog.dark .el-dialog__header,
 html.dark .custom-ai-detail-dialog .el-dialog__header {
-  background-color: #1a1a1a !important;
+  background-color: #1a1a1a;
   border-bottom: 1px solid #333 !important;
-  margin-right: 0 !important;
-  padding: 20px !important;
 }
 
 .custom-ai-detail-dialog.dark .el-dialog__title,
 html.dark .custom-ai-detail-dialog .el-dialog__title {
-  color: #e0e0e0 !important;
+  color: #e0e0e0;
 }
 
 .custom-ai-detail-dialog.dark .el-dialog__body,
 html.dark .custom-ai-detail-dialog .el-dialog__body {
-  background-color: #1a1a1a !important;
-  color: #e0e0e0 !important;
-  padding: 20px !important;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
 }
 
 .custom-ai-detail-dialog.dark .el-dialog__footer,
 html.dark .custom-ai-detail-dialog .el-dialog__footer {
-  background-color: #1a1a1a !important;
+  background-color: #1a1a1a;
   border-top: 1px solid #333 !important;
-  padding: 10px 20px 20px !important;
 }
 
 /* 描述列表深色模式加固 */
 .custom-ai-detail-dialog.dark .el-descriptions__body,
 html.dark .custom-ai-detail-dialog .el-descriptions__body {
-  background-color: #252525 !important;
+  background-color: #252525;
 }
 
 .custom-ai-detail-dialog.dark .el-descriptions__label,
 html.dark .custom-ai-detail-dialog .el-descriptions__label {
-  background-color: #333 !important;
-  color: #aaa !important;
-  border-color: #444 !important;
+  background-color: #333;
+  color: #aaa;
+  border-color: #444;
 }
 
 .custom-ai-detail-dialog.dark .el-descriptions__content,
 html.dark .custom-ai-detail-dialog .el-descriptions__content {
-  background-color: #252525 !important;
-  color: #e0e0e0 !important;
-  border-color: #444 !important;
+  background-color: #252525;
+  color: #e0e0e0;
+  border-color: #444;
 }
 
 .custom-ai-detail-dialog.dark .el-descriptions--border,
 html.dark .custom-ai-detail-dialog .el-descriptions--border {
-  border-color: #444 !important;
+  border-color: #444;
 }
 
 /* 按钮和空状态加固 */
 .custom-ai-detail-dialog.dark .el-button--default:not(.is-text),
 html.dark .custom-ai-detail-dialog .el-button--default:not(.is-text) {
-  background-color: #333 !important;
-  border-color: #444 !important;
-  color: #e0e0e0 !important;
+  background-color: #333;
+  border-color: #444;
+  color: #e0e0e0;
 }
 
 .custom-ai-detail-dialog.dark .el-empty__description p,
 html.dark .custom-ai-detail-dialog .el-empty__description p {
-  color: #888 !important;
+  color: #888;
 }
 </style>

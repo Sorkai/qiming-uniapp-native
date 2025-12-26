@@ -46,7 +46,7 @@ function onFullscreen() {
           v-model="form.name"
           placeholder="请输入部门名称"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         />
       </el-form-item>
       <el-form-item label="状态：" prop="status">
@@ -54,7 +54,7 @@ function onFullscreen() {
           v-model="form.status"
           placeholder="请选择状态"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         >
           <el-option label="启用" :value="1" />
           <el-option label="停用" :value="0" />
@@ -160,9 +160,6 @@ function onFullscreen() {
   height: 0;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
 
 .search-form {
   :deep(.el-form-item) {

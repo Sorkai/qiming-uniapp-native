@@ -172,7 +172,7 @@ const openHtmlAnimInNew = () => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 根容器背景统一为系统浅色调渐变 */
 .course-materials-wrapper {
   display: flex;
@@ -180,21 +180,21 @@ const openHtmlAnimInNew = () => {
   height: 100%;
   width: 100%;
   background: transparent; /* 背景透明，防止侧边栏色差 */
-}
 
-.course-materials-wrapper.dark {
-  background: transparent;
-}
+  &.dark {
+    background: transparent;
+  }
 
-.materials-container {
-  /* 60px 顶部偏移 + 20px 容器边距 = 80px，对齐侧边栏 */
-  padding: 60px 32px 32px !important;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  .materials-container {
+    /* 顶部 80px 偏移以避开 Header，左右 32px 保持对齐 */
+    padding: 80px 32px 24px;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
 }
 
 .materials-list.empty-state {
@@ -286,7 +286,7 @@ const openHtmlAnimInNew = () => {
   bottom: -1px;
   left: -1px;
   right: -1px;
-  padding: 80px 24px 24px;
+  padding: 80px 32px 24px;
   /* 降低背景颜色遮挡，使其更透明 */
   background: linear-gradient(
     to bottom,
@@ -376,27 +376,29 @@ const openHtmlAnimInNew = () => {
 }
 
 /* 预览弹窗样式统一 */
-:deep(.immersive-dialog) {
-  background: rgba(248, 250, 252, 0.8) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25) !important;
-  overflow: hidden;
-}
+.course-materials-wrapper {
+  :deep(.immersive-dialog) {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
 
-:deep(.immersive-dialog.dark) {
-  background: rgba(15, 23, 42, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
+    &.dark {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
 
-:deep(.immersive-dialog .el-dialog__header) {
-  display: none;
-}
+    .el-dialog__header {
+      display: none;
+    }
 
-:deep(.immersive-dialog .el-dialog__body) {
-  padding: 0 !important;
+    .el-dialog__body {
+      padding: 0;
+    }
+  }
 }
 
 .dialog-header-custom {

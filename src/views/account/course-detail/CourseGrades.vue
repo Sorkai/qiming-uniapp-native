@@ -736,7 +736,7 @@ onUnmounted(() => {
 }
 
 .course-grades-container {
-  padding: 60px 20px 20px;
+  padding: 80px 32px 24px;
   width: 100%;
   height: 100%;
   overflow-y: auto;
@@ -753,7 +753,7 @@ onUnmounted(() => {
 
 .grades-content {
   width: 100%;
-  padding: 0 20px;
+  padding: 0;
 }
 
 .grades-cards {
@@ -1046,7 +1046,14 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .statistics-cards { grid-template-columns: 1fr 1fr; }
-  .grade-item-header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+  .statistics-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grade-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }
 </style>

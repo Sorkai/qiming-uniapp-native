@@ -47,7 +47,7 @@ function onFullscreen() {
           v-model="form.title"
           placeholder="请输入菜单名称"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         />
       </el-form-item>
       <el-form-item>
@@ -151,9 +151,6 @@ function onFullscreen() {
   height: 0;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
 
 .search-form {
   :deep(.el-form-item) {

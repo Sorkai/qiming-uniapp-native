@@ -205,16 +205,16 @@ watch(loginDay, value => {
         />
         <!-- 国际化 -->
         <el-dropdown trigger="click">
-          <globalization
-            class="hover:text-primary hover:bg-[transparent]! w-[20px] h-[20px] ml-3 cursor-pointer outline-hidden duration-300"
-          />
-          <template #dropdown>
-            <el-dropdown-menu class="translation">
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'zh')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
-                @click="translationCh"
-              >
+        <globalization
+          class="hover:text-primary hover:bg-transparent w-[20px] h-[20px] ml-3 cursor-pointer outline-hidden duration-300"
+        />
+        <template #dropdown>
+          <el-dropdown-menu class="translation">
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'zh')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'zh')]"
+              @click="translationCh"
+            >
                 <IconifyIconOffline
                   v-show="locale === 'zh'"
                   class="check-btn"
@@ -222,11 +222,11 @@ watch(loginDay, value => {
                 />
                 简体中文
               </el-dropdown-item>
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'tw')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'tw')]"
-                @click="translationTw"
-              >
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'tw')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'tw')]"
+              @click="translationTw"
+            >
                 <IconifyIconOffline
                   v-show="locale === 'tw'"
                   class="check-btn"
@@ -234,31 +234,31 @@ watch(loginDay, value => {
                 />
                 繁體中文
               </el-dropdown-item>
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'en')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
-                @click="translationEn"
-              >
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'en')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'en')]"
+              @click="translationEn"
+            >
                 <span v-show="locale === 'en'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
                 English
               </el-dropdown-item>
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'ja')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'ja')]"
-                @click="translationJa"
-              >
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'ja')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ja')]"
+              @click="translationJa"
+            >
                 <span v-show="locale === 'ja'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
                 日本語
               </el-dropdown-item>
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'ko')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'ko')]"
-                @click="translationKo"
-              >
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'ko')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ko')]"
+              @click="translationKo"
+            >
                 <span v-show="locale === 'ko'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
@@ -486,14 +486,14 @@ watch(loginDay, value => {
                     {{ t("login.pureForget") }}
                   </el-button>
                 </div>
-                <el-button
-                  class="w-full mt-4! login-btn"
-                  size="default"
-                  type="primary"
-                  :loading="loading"
-                  :disabled="disabled"
-                  @click="onLogin(ruleFormRef)"
-                >
+              <el-button
+                class="w-full mt-4 login-btn"
+                size="default"
+                type="primary"
+                :loading="loading"
+                :disabled="disabled"
+                @click="onLogin(ruleFormRef)"
+              >
                   {{ t("login.pureLogin") }}
                 </el-button>
               </el-form-item>
@@ -505,7 +505,7 @@ watch(loginDay, value => {
                   <el-button
                     v-for="(item, index) in operates"
                     :key="index"
-                    class="w-full mt-4!"
+                    class="w-full mt-4"
                     size="default"
                     @click="useUserStoreHook().SET_CURRENTPAGE(index + 1)"
                   >
@@ -1048,7 +1048,7 @@ watch(loginDay, value => {
 }
 
 .translation {
-  ::v-deep(.el-dropdown-menu__item) {
+  :deep(.el-dropdown-menu__item) {
     padding: 5px 40px;
   }
 

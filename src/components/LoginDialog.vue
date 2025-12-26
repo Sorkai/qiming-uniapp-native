@@ -1077,6 +1077,6 @@ watch(() => props.visible, (val) => {
 }
 
 .login-card.shake {
-  animation: shake 0.5s ease-in-out !important;
+  animation: shake 0.5s ease-in-out;
 }
 </style>

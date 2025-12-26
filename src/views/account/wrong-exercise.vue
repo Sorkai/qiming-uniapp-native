@@ -450,6 +450,11 @@ onMounted(async () => {
 .practice-container.dark {
   background-color: transparent;
 }
+.practice-container[data-embedded="true"] {
+  min-height: auto;
+  padding: 20px 0 0;
+  background-color: transparent;
+}
 .header {
   position: fixed;
   top: 0; left: 0; right: 0; height: 60px;
@@ -459,12 +464,12 @@ onMounted(async () => {
   background: #1d1d1d;
   box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
-.header .header-content { display:flex; align-items:center; justify-content:space-between; height:100%; padding:0 20px; max-width: 1100px; margin:0 auto; }
+.header .header-content { display:flex; align-items:center; justify-content:space-between; height:100%; padding:0 32px; max-width: 1200px; margin:0 auto; }
 .header .title { font-size: 18px; font-weight: 600; }
 .header.dark .title { color: #e0e0e0; }
 .header .placeholder { min-width:60px; }
 
-.main-content { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+.main-content { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 .main-content.dark :deep(.el-card) {
   background-color: #2a2a2a;
   border-color: #3e3e3e;
@@ -481,12 +486,29 @@ onMounted(async () => {
   filter: brightness(0.7);
   opacity: 0.8;
 }
-.practice-container[data-embedded="true"] .main-content { max-width: 1400px; width:100%; padding:0 10px; }
-.practice-container[data-embedded="true"] .el-card { width:100%; }
+.practice-container[data-embedded="true"] .main-content {
+  max-width: 100%;
+  width: 100%;
+  padding: 0;
+}
+.practice-container[data-embedded="true"] .el-card {
+  width: 100%;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+.practice-container[data-embedded="true"] :deep(.el-card__header) {
+  padding-left: 0;
+  padding-right: 0;
+}
+.practice-container[data-embedded="true"] :deep(.el-card__body) {
+  padding-left: 0;
+  padding-right: 0;
+}
 .card-header { display:flex; align-items:center; justify-content:space-between; }
 
-.wrong-list { display: flex; flex-direction: column; gap: 14px; }
-.wrong-item { padding: 14px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.wrong-list { display: flex; flex-direction: column; gap: 16px; }
+.wrong-item { padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .wrong-item.dark {
   background: #333;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);

@@ -42,7 +42,7 @@ const {
     />
     <div :class="[deviceDetection() ? ['w-full'] : 'w-[calc(100%-200px)]']">
       <PureTableBar
-        class="mt-0!"
+        class="mt-0"
         title="字典管理（左侧字典树可通过右键单击进行修改和删除）"
         :columns="columns"
         @refresh="onSearch"
@@ -122,7 +122,4 @@ const {
   outline: none;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
 </style>

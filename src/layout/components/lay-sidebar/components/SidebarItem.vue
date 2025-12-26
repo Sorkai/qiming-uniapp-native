@@ -63,7 +63,7 @@ const getSubMenuIconStyle = computed((): CSSProperties => {
 
 const textClass = computed(() => {
   const item = props.item;
-  const baseClass = "w-full! text-inherit!";
+  const baseClass = "w-full text-inherit";
   if (
     layout.value !== "horizontal" &&
     isCollapse.value &&
@@ -71,7 +71,7 @@ const textClass = computed(() => {
     ((layout.value === "vertical" && item.parentId === null) ||
       (/mix|double/.test(layout.value) && item.pathList.length === 2))
   ) {
-    return `${baseClass} min-w-[54px]! text-center! px-3!`;
+    return `${baseClass} min-w-[54px] text-center px-3`;
   }
   return baseClass;
 });
@@ -159,7 +159,7 @@ function resolvePath(routePath) {
             item?.pathList?.length === 2)
         "
         truncated
-        class="w-full! px-3! min-w-[54px]! text-center! text-inherit!"
+        class="w-full px-3 min-w-[54px] text-center text-inherit"
       >
         {{ transformI18n(onlyOneChild.meta.title) }}
       </el-text>
@@ -171,7 +171,7 @@ function resolvePath(routePath) {
               offset: [0, -10],
               theme: tooltipEffect
             }"
-            class="w-full! text-inherit!"
+            class="w-full text-inherit"
           >
             {{ transformI18n(onlyOneChild.meta.title) }}
           </ReText>

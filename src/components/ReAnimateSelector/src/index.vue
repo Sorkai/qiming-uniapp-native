@@ -95,7 +95,7 @@ function onMouseleave() {
           :view-style="{ overflow: 'hidden' }"
           class="border-t border-[#e5e7eb]"
         >
-          <ul class="flex flex-wrap justify-around mb-1!">
+          <ul class="flex flex-wrap justify-around mb-1">
             <li
               v-for="(animate, index) in animatesList"
               :key="index"
@@ -131,6 +131,6 @@ function onMouseleave() {
 
 <style>
 .pure-animate-popper {
-  min-width: 0 !important;
+  min-width: 0;
 }
 </style>

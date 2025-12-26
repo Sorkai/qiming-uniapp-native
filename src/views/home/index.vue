@@ -405,28 +405,27 @@ const showLoginDialog = ref(false);
 /**
  * 立即体验/立即试用/登录处理
  */
-const handleEntry = (e?: Event) => {
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  
-  // 获取最新的登录状态
+const handleEntry = () => {
+  // 获取最新的登录状态和用户信息
   const token = getToken();
-  const currentInfo = storageLocal().getItem<DataInfo<number>>(userKey);
-  const isLogged = !!(token?.accessToken || currentInfo);
-
-  console.log("handleEntry clicked, isLogged:", isLogged);
+  const info = storageLocal().getItem<DataInfo<number>>(userKey);
+  
+  // 判断是否已登录：只要 token 对象存在且包含识别信息，或者本地存储有用户信息，就视为已登录
+  // 注意：某些情况下 LocalStorage 中的 info 对象可能不包含 accessToken
+  const isLogged = !!(token?.accessToken || token?.refreshToken || info);
 
   if (isLogged) {
-    const user = currentInfo || userInfo.value;
-    // 角色类型判断：2和3通常代表教师或管理员，跳转到管理后台；其他跳转到个人中心
-    if (user?.roleType === 2 || user?.roleType === 3) {
+    // 获取角色信息：优先从 info 中获取，因为 Cookie 里的 token 可能不含此字段
+    const roleType = info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
+    
+    // 角色类型判断：2:教师 3:管理员，跳转到管理后台；其他跳转到个人中心
+    if (roleType === 2 || roleType === 3) {
       router.push("/welcome/index");
     } else {
       router.push("/account");
     }
   } else {
+    // 未登录则显示登录弹窗
     showLoginDialog.value = true;
   }
 };
@@ -767,13 +766,13 @@ const handleCommand = (command: string) => {
         color: rgba(255, 255, 255, 0.8);
         text-decoration: none;
         transition: all 0.3s;
-        cursor: pointer !important;
+        cursor: pointer;
 
         &:hover { color: #60a5fa; }
       }
     }
 
-    .login-btn {
+    .login-btn.el-button {
       height: 42px;
       padding: 0 32px;
       font-size: 15px;
@@ -781,9 +780,9 @@ const handleCommand = (command: string) => {
       color: #0a0a1a;
       background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
       border: none;
-      border-radius: 24px !important;
+      border-radius: 24px;
       transition: all 0.3s ease;
-      cursor: pointer !important;
+      cursor: pointer;
 
       &:hover {
         transform: translateY(-2px);
@@ -923,7 +922,7 @@ const handleCommand = (command: string) => {
       color: #60a5fa;
       background: rgba(96, 165, 250, 0.1);
       border: 1px solid rgba(96, 165, 250, 0.3);
-      border-radius: 30px !important;
+      border-radius: 30px;
     }
 
     .main-title {
@@ -960,7 +959,7 @@ const handleCommand = (command: string) => {
       gap: 16px;
       position: relative;
       z-index: 100;
-      pointer-events: auto !important;
+      pointer-events: auto;
 
       .hero-btn {
         position: relative;
@@ -970,15 +969,15 @@ const handleCommand = (command: string) => {
         font-size: 16px;
         font-weight: 600;
         letter-spacing: 1px;
-        border-radius: 30px !important;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border-radius: 30px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
         border: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer !important;
-        pointer-events: auto !important;
+        cursor: pointer;
+        pointer-events: auto;
 
         :deep(span) {
           position: relative;
@@ -986,20 +985,19 @@ const handleCommand = (command: string) => {
           display: flex;
           align-items: center;
           gap: 8px;
-          cursor: pointer !important;
-          pointer-events: none; // 让点击穿透到按钮本身
+          cursor: pointer;
         }
 
         &:hover {
-          transform: translateY(-6px) scale(1.05) !important;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+          transform: translateY(-6px) scale(1.05);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
-        &.primary {
-          color: #0a0a1a !important;
+        &.primary.el-button--primary {
+          color: #0a0a1a;
           background: 
             radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.5), transparent),
-            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%) !important;
+            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
           box-shadow: 0 4px 15px rgba(96, 165, 250, 0.4);
 
           &::before {
@@ -1021,24 +1019,24 @@ const handleCommand = (command: string) => {
           }
 
           &:hover {
-            box-shadow: 0 12px 30px rgba(96, 165, 250, 0.6) !important;
+            box-shadow: 0 12px 30px rgba(96, 165, 250, 0.6);
             &::before { left: 100%; }
           }
         }
 
-        &.secondary {
-          color: #fff !important;
+        &.secondary.el-button {
+          color: #fff;
           background: 
             radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.3), transparent),
-            rgba(255, 255, 255, 0.1) !important;
-          border: 2px solid rgba(255, 255, 255, 0.3) !important;
+            rgba(255, 255, 255, 0.1);
+          border: 2px solid rgba(255, 255, 255, 0.3);
           backdrop-filter: blur(10px);
 
           &:hover { 
             background: 
               radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.4), transparent),
-              rgba(255, 255, 255, 0.2) !important;
-            border-color: rgba(255, 255, 255, 0.6) !important;
+              rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
           }
         }
       }
@@ -1754,6 +1752,7 @@ const handleCommand = (command: string) => {
       gap: 20px;
       position: relative;
       z-index: 10;
+      pointer-events: auto;
 
       .el-button {
         position: relative;
@@ -1761,10 +1760,11 @@ const handleCommand = (command: string) => {
         padding: 0 42px;
         font-size: 16px;
         font-weight: 600;
-        border-radius: 30px !important;
+        border-radius: 30px;
         overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        cursor: pointer !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        pointer-events: auto;
 
         :deep(span) {
           position: relative;
@@ -1772,18 +1772,18 @@ const handleCommand = (command: string) => {
           display: flex;
           align-items: center;
           gap: 8px;
-          cursor: pointer !important;
+          cursor: pointer;
         }
 
         &:hover {
-          transform: translateY(-6px) scale(1.05) !important;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+          transform: translateY(-6px) scale(1.05);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
 
-        &--primary {
+        &.el-button--primary {
           background: 
             radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.5), transparent),
-            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%) !important;
+            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
           color: #0a0a1a;
           border: none;
           box-shadow: 0 4px 15px rgba(96, 165, 250, 0.4);
@@ -1793,17 +1793,17 @@ const handleCommand = (command: string) => {
           }
         }
 
-        &.is-plain {
+        &.is-plain.el-button {
           color: #fff;
           background: 
             radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.3), transparent),
-            transparent !important;
+            transparent;
           border: 2px solid rgba(255, 255, 255, 0.3);
 
           &:hover { 
             background: 
               radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.4), transparent),
-              rgba(255, 255, 255, 0.1) !important;
+              rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.5);
           }
         }
@@ -2177,7 +2177,7 @@ const handleCommand = (command: string) => {
 
 /* 页脚社交链接悬停 */
 .social-link {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   &:hover {
     transform: translateY(-3px);

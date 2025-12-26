@@ -70,14 +70,11 @@ getMine().then(res => {
   <el-container class="h-full">
     <el-aside
       v-if="isOpen"
-      class="pure-account-settings overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r-[1px] border-[var(--pure-border-color)]"
+      class="pure-account-settings overflow-hidden px-2 border-r-[1px] border-[var(--pure-border-color)]"
       :width="deviceDetection() ? '180px' : '240px'"
     >
       <el-menu :default-active="witchPane" class="pure-account-settings-menu">
-        <el-menu-item
-          class="hover:transition-all! hover:duration-200! hover:text-base! h-[50px]!"
-          @click="router.go(-1)"
-        >
+        <el-menu-item class="back-menu-item" @click="router.go(-1)">
           <div class="flex items-center">
             <IconifyIconOffline :icon="leftLine" />
             <span class="ml-2">返回</span>
@@ -86,10 +83,10 @@ getMine().then(res => {
         <div class="flex items-center ml-8 mt-4 mb-4">
           <el-avatar :size="48" :src="userInfo.avatar" />
           <div class="ml-4 flex flex-col max-w-[130px]">
-            <ReText class="font-bold self-baseline!">
+            <ReText class="font-bold self-baseline">
               {{ userInfo.nickname }}
             </ReText>
-            <ReText class="self-baseline!" type="info">
+            <ReText class="self-baseline" type="info">
               {{ userInfo.username }}
             </ReText>
           </div>
@@ -131,28 +128,46 @@ getMine().then(res => {
 
 <style lang="scss">
 .pure-account-settings {
-  background: var(--pure-theme-menu-bg) !important;
+  background: var(--pure-theme-menu-bg);
+
+  &.el-aside {
+    background: var(--pure-theme-menu-bg);
+  }
+
+  html.dark & {
+    background: var(--el-bg-color);
+  }
 }
 
 .pure-account-settings-menu {
   background-color: transparent;
   border: none;
 
+  .back-menu-item {
+    height: 50px;
+
+    &:hover {
+      transition: all 0.2s;
+      font-size: var(--el-font-size-base);
+    }
+  }
+
   .el-menu-item {
-    height: 48px !important;
+    height: 48px;
     color: var(--pure-theme-menu-text);
-    background-color: transparent !important;
+    background-color: transparent;
     transition: color 0.2s;
 
     &:hover {
-      color: var(--pure-theme-menu-title-hover) !important;
+      color: var(--pure-theme-menu-title-hover);
+      background-color: transparent;
     }
 
     &.is-active {
-      color: #fff !important;
+      color: #fff;
 
       &:hover {
-        color: #fff !important;
+        color: #fff;
       }
 
       &::before {
@@ -167,16 +182,22 @@ getMine().then(res => {
     }
   }
 }
+
+.self-baseline {
+  align-self: baseline;
+}
 </style>
 
 <style lang="scss" scoped>
 body[layout] {
-  .el-menu--vertical .is-active {
-    color: #fff !important;
-    transition: color 0.2s;
+  :deep(.el-menu--vertical) {
+    .el-menu-item.is-active {
+      color: #fff;
+      transition: color 0.2s;
 
-    &:hover {
-      color: #fff !important;
+      &:hover {
+        color: #fff;
+      }
     }
   }
 }

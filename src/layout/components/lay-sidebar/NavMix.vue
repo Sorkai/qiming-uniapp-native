@@ -120,7 +120,7 @@ watch(
           <el-dropdown-menu class="translation">
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'zh')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'zh')]"
               @click="translationCh"
             >
               <IconifyIconOffline
@@ -132,7 +132,7 @@ watch(
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'tw')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'tw')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'tw')]"
               @click="translationTw"
             >
               <IconifyIconOffline
@@ -144,7 +144,7 @@ watch(
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'en')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'en')]"
               @click="translationEn"
             >
               <span v-show="locale === 'en'" class="check-btn">
@@ -154,7 +154,7 @@ watch(
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'ja')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'ja')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ja')]"
               @click="translationJa"
             >
               <span v-show="locale === 'ja'" class="check-btn">
@@ -164,7 +164,7 @@ watch(
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'ko')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'ko')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ko')]"
               @click="translationKo"
             >
               <span v-show="locale === 'ko'" class="check-btn">
@@ -223,7 +223,7 @@ watch(
 }
 
 .translation {
-  ::v-deep(.el-dropdown-menu__item) {
+  :deep(.el-dropdown-menu__item) {
     padding: 5px 40px;
   }
 
@@ -236,7 +236,7 @@ watch(
 .logout {
   width: 120px;
 
-  ::v-deep(.el-dropdown-menu__item) {
+  :deep(.el-dropdown-menu__item) {
     display: inline-flex;
     flex-wrap: wrap;
     min-width: 100%;

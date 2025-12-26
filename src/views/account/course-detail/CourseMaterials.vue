@@ -115,7 +115,7 @@ const viewMaterial = (material: any) => {
 }
 
 .materials-container {
-  padding: 60px 20px 20px;
+  padding: 80px 32px 24px;
   width: 100%;
   height: 100%;
   overflow-y: auto;
@@ -123,8 +123,6 @@ const viewMaterial = (material: any) => {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding-left: 2vw;
-  padding-right: 2vw;
 }
 
 .empty-wrapper {

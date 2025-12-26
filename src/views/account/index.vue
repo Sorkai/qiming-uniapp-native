@@ -1180,7 +1180,7 @@ onUnmounted(() => {
             transition: color 0.3s;
 
             .dark & {
-              color: #f1f5f9 !important;
+              color: #f1f5f9;
             }
           }
 
@@ -1191,7 +1191,7 @@ onUnmounted(() => {
             transition: all 0.3s ease;
 
             .dark & {
-              color: #f1f5f9 !important;
+              color: #f1f5f9;
             }
           }
         }
@@ -1263,7 +1263,7 @@ onUnmounted(() => {
           color: #333;
 
           .dark & {
-            color: #f1f5f9 !important;
+            color: #f1f5f9;
           }
         }
 
@@ -1276,7 +1276,7 @@ onUnmounted(() => {
           border-radius: 12px;
 
           .dark & {
-            color: #38bdf8 !important;
+            color: #38bdf8;
             background: rgba(56, 189, 248, 0.1);
           }
         }
@@ -1549,7 +1549,7 @@ onUnmounted(() => {
               color: #333;
 
               .dark & {
-                color: #f1f5f9 !important;
+                color: #f1f5f9;
               }
             }
 
@@ -1562,7 +1562,7 @@ onUnmounted(() => {
               white-space: nowrap;
 
               .dark & {
-                color: #94a3b8 !important;
+                color: #94a3b8;
               }
             }
           }
@@ -1575,7 +1575,7 @@ onUnmounted(() => {
             transition: all 0.3s ease;
 
             .dark & {
-              color: #38bdf8 !important;
+              color: #38bdf8;
               opacity: 1;
             }
           }
@@ -1666,7 +1666,7 @@ onUnmounted(() => {
               color: #333;
 
               .dark & {
-                color: #f1f5f9 !important;
+                color: #f1f5f9;
               }
             }
 
@@ -1696,7 +1696,7 @@ onUnmounted(() => {
                   color: #666;
 
                   .dark & {
-                    color: #cbd5e1 !important;
+                    color: #cbd5e1;
                   }
                 }
 
@@ -1773,7 +1773,7 @@ onUnmounted(() => {
                       color: #333;
 
                       .dark & {
-                        color: #f1f5f9 !important;
+                        color: #f1f5f9;
                       }
                     }
 
@@ -1782,7 +1782,7 @@ onUnmounted(() => {
                       color: #606266;
 
                       .dark & {
-                        color: #94a3b8 !important;
+                        color: #94a3b8;
                       }
                     }
                   }
@@ -1802,7 +1802,7 @@ onUnmounted(() => {
               color: #333;
 
               .dark & {
-                color: #f1f5f9 !important;
+                color: #f1f5f9;
               }
             }
 
@@ -1905,7 +1905,7 @@ onUnmounted(() => {
             color: #333;
 
             .dark & {
-              color: #f1f5f9 !important;
+              color: #f1f5f9;
             }
           }
 
@@ -1923,25 +1923,25 @@ onUnmounted(() => {
               }
 
               .el-select__placeholder {
-                color: #333 !important;
+                color: #333;
 
                 .dark & {
-                  color: #f1f5f9 !important;
+                  color: #f1f5f9;
                 }
               }
 
               .el-select__suffix {
-                color: #000 !important;
+                color: #000;
 
                 .dark & {
-                  color: #f1f5f9 !important;
+                  color: #f1f5f9;
                 }
 
                 .el-icon {
-                  color: #000 !important;
+                  color: #000;
 
                   .dark & {
-                    color: #f1f5f9 !important;
+                    color: #f1f5f9;
                   }
                 }
               }
@@ -2028,7 +2028,7 @@ onUnmounted(() => {
                 color: #333;
 
                 .dark & {
-                  color: #f1f5f9 !important;
+                  color: #f1f5f9;
                 }
               }
 
@@ -2040,7 +2040,7 @@ onUnmounted(() => {
                 color: #606266;
 
                 .dark & {
-                  color: #94a3b8 !important;
+                  color: #94a3b8;
                 }
               }
 

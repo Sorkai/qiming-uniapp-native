@@ -460,7 +460,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<style>
+<style lang="scss">
 @import "@/../coursecss/css/chunk-b3e9f934.1c00050a.css";
 @import "@/../coursecss/css/chunk-8cf7ce30.92e48af1.css";
 @import "@/../coursecss/css/chunk-3cf64ec0.4f07a253.css";
@@ -472,47 +472,44 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 100vh;
   background-color: #ffffff;
-}
 
-.course-detail-root.dark {
-  background-color: #1a1a1a;
-}
+  &.dark {
+    background-color: #1a1a1a;
+  }
 
-.course-detail-root .layout-container {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-}
+  .layout-container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
 
-.course-detail-root .layout-container.dark {
-  background-color: #1a1a1a;
-}
+    &.dark {
+      background-color: #1a1a1a;
+    }
+  }
 
-.course-detail-root .layout-inner-content {
-  position: relative;
-  flex: 1;
-  margin-left: 90px !important;
-  margin-top: 20px !important;
-  margin-bottom: 15px !important;
-  margin-right: 15px !important;
-  height: calc(100vh - 35px) !important;
-  border-radius: 24px !important;
-  overflow: hidden !important;
-  background-color: #f5f7fa !important;
-  box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.1) !important;
-  border: 1px solid #eef2f7 !important;
-  transition: all 0.3s ease !important;
-}
+  .layout-inner-content {
+    position: relative;
+    flex: 1;
+    margin: 20px 15px 15px 90px;
+    height: calc(100vh - 35px);
+    border-radius: 24px;
+    overflow: hidden;
+    background-color: #f5f7fa;
+    box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.1);
+    border: 1px solid #eef2f7;
+    transition: all 0.3s ease;
 
-.course-detail-root .layout-inner-content.dark {
-  background-color: #1a1a1a !important;
-  border: 1px solid rgba(60, 60, 80, 0.8) !important;
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
+    &.dark {
+      background-color: #1a1a1a;
+      border: 1px solid rgba(60, 60, 80, 0.8);
+      box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+    }
+  }
 }
 </style>
 
-<style scoped>
+<style scoped lang="scss">
 /* 占位内容样式 */
 .course-learn-placeholder,
 .mastery-placeholder,
@@ -531,56 +528,62 @@ onBeforeUnmount(() => {
   justify-content: center;
   padding: 40px;
   color: #909399;
-}
 
-.placeholder-content p {
-  margin: 10px 0;
-}
+  p {
+    margin: 10px 0;
+  }
 
-.placeholder-content ul {
-  margin-top: 20px;
-  text-align: left;
-}
+  ul {
+    margin-top: 20px;
+    text-align: left;
+  }
 
-.placeholder-content li {
-  margin: 8px 0;
-  color: #606266;
+  li {
+    margin: 8px 0;
+    color: #606266;
+  }
 }
 
 /* 侧边栏样式 */
 :deep(.layout-sidebar) {
-  width: 80px !important;
-  min-width: 80px !important;
-  left: 10px !important;
-  top: 20px !important;
-  height: calc(100vh - 35px) !important;
-  border-radius: 24px !important;
-  background: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2) !important;
-  border: 1px solid rgba(64, 158, 255, 0.2) !important;
-  z-index: 100 !important;
-  position: fixed !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 15px 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-}
+  width: 80px;
+  min-width: 80px;
+  left: 10px;
+  top: 20px;
+  height: calc(100vh - 35px);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2);
+  border: 1px solid rgba(64, 158, 255, 0.2);
+  z-index: 100;
+  position: fixed;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 15px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-:deep(.layout-sidebar::after) {
-  content: "" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  border-radius: 24px !important;
-  padding: 1.5px !important;
-  background: linear-gradient(90deg, #409eff, #604ffd, #409eff) !important;
-  background-size: 200% 100% !important;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
-  mask-composite: exclude !important;
-  animation: sidebar-glow-border 3s linear infinite !important;
-  pointer-events: none !important;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 1.5px;
+    background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+    background-size: 200% 100%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: sidebar-glow-border 3s linear infinite;
+    pointer-events: none;
+  }
+
+  &.dark {
+    background: rgba(30, 30, 40, 0.9);
+    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 
 @keyframes sidebar-glow-border {
@@ -588,27 +591,21 @@ onBeforeUnmount(() => {
   100% { background-position: 200% 0%; }
 }
 
-:deep(.layout-sidebar.dark) {
-  background: rgba(30, 30, 40, 0.9) !important;
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
 :deep(.layout-header) {
-  left: 95px !important;
-  top: 20px !important;
-  width: calc(100% - 110px) !important;
-  border-radius: 20px !important;
-  z-index: 150 !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-}
+  left: 95px;
+  top: 20px;
+  width: calc(100% - 110px);
+  border-radius: 20px;
+  z-index: 150;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-:deep(.layout-header.dark) {
-  background: rgba(26, 26, 26, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  &.dark {
+    background: rgba(26, 26, 26, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
 }
 </style>

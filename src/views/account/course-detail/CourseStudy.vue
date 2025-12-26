@@ -447,7 +447,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .study-container {
-  padding: 60px 32px 24px;
+  padding: 80px 32px 24px;
   box-sizing: border-box;
   height: 100%;
   display: flex;
@@ -900,7 +900,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
       
       /* 隐藏 Element Plus 滚动条轨道和滑块 */
       .el-scrollbar__bar {
-        display: none !important;
+        display: none;
       }
       
       /* 确保原生滚动条也被隐藏（以防万一） */

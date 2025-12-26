@@ -597,7 +597,7 @@ onBeforeUnmount(() => {
       align-items: center;
       justify-content: space-between;
       height: 100%;
-      padding: 0 20px;
+      padding: 0 32px;
       max-width: 1200px;
       margin: 0 auto;
 
@@ -631,18 +631,19 @@ onBeforeUnmount(() => {
   }
 
   .main-content {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 32px;
 
     &.dark {
       :deep(.el-card) {
         background-color: #252525;
         color: #e0e0e0;
         border: 1px solid #333;
-      }
-      :deep(.el-card__header) {
-        border-bottom: 1px solid #333 !important;
+
+        .el-card__header {
+          border-bottom: 1px solid #333;
+        }
       }
     }
 
@@ -792,7 +793,7 @@ onBeforeUnmount(() => {
 
             .dark & {
               :deep(*) {
-                color: #e0e0e0 !important;
+                color: #e0e0e0;
               }
             }
           }

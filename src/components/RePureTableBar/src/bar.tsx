@@ -87,7 +87,7 @@ export default defineComponent({
         "text-black",
         "dark:text-white",
         "duration-100",
-        "hover:text-primary!",
+        "hover:text-primary",
         "cursor-pointer",
         "outline-hidden"
       ];
@@ -260,7 +260,7 @@ export default defineComponent({
             "pb-2",
             "bg-bg_color",
             isFullscreen.value
-              ? ["h-full!", "z-2002", "fixed", "inset-0"]
+              ? ["h-full", "z-2002", "fixed", "inset-0"]
               : "mt-2"
           ]}
         >
@@ -317,7 +317,7 @@ export default defineComponent({
               >
                 <div class={[topClass.value]}>
                   <el-checkbox
-                    class="-mr-1!"
+                    class="-mr-1"
                     label="列展示"
                     v-model={checkAll.value}
                     indeterminate={isIndeterminate.value}
@@ -347,8 +347,8 @@ export default defineComponent({
                                 class={[
                                   "drag-btn w-[16px] mr-2",
                                   isFixedColumn(item)
-                                    ? "cursor-no-drop!"
-                                    : "cursor-grab!"
+                                    ? "cursor-no-drop"
+                                    : "cursor-grab"
                                 ]}
                                 onMouseenter={(event: {
                                   preventDefault: () => void;

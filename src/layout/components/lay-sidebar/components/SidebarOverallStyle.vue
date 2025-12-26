@@ -208,7 +208,7 @@ const onToggle = async (event: MouseEvent) => {
 <style lang="scss">
 /* 强制关闭所有默认的主题切换过渡，由我们的扩散层接管 */
 html {
-  transition: none !important;
+  transition: none;
 }
 
 /* 确保扩散动画在最顶层 */

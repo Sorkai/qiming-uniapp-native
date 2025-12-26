@@ -137,7 +137,7 @@ onBeforeUnmount(() => {
               :tippyProps="{
                 theme: tooltipEffect
               }"
-              class="w-full! text-inherit! text-xs!"
+              class="w-full text-inherit text-xs"
             >
               {{ transformI18n(menu.meta.title) }}
             </ReText>

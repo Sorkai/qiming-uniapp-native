@@ -247,7 +247,7 @@ const viewExam = (exam: any) => {
 }
 
 .homework-container {
-  padding: 60px 20px 20px;
+  padding: 80px 32px 24px;
   width: 100%;
   height: 100%;
   overflow-y: auto;
@@ -373,6 +373,11 @@ const viewExam = (exam: any) => {
   font-size: 18px;
   font-weight: 600;
   color: #303133;
+  margin-right: 24px;
+}
+
+:deep(.homework-tabs .el-tabs__item:last-child) {
+  margin-right: 0;
 }
 
 .dark :deep(.homework-tabs .el-tabs__item) {
@@ -424,12 +429,12 @@ const viewExam = (exam: any) => {
 
 /* 页面宽度全屏适配 */
 .homework-container {
-  padding-left: 2vw;
-  padding-right: 2vw;
+  padding-left: 32px;
+  padding-right: 32px;
 }
 
 .homework-tabs {
   width: 100%;
-  max-width: 100%;
+  max-width: 1200px;
 }
 </style>

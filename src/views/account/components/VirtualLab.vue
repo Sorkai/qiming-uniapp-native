@@ -330,15 +330,30 @@ const handleDialogClose = () => {
     margin-bottom: 24px;
 
     :deep(.el-radio-group) {
-      .el-radio-button__inner {
-        padding: 12px 24px;
-        font-size: 14px;
-        border-radius: 20px !important;
-        
-        .dark & {
-          background-color: #1e293b;
-          border-color: #334155;
-          color: #94a3b8;
+      .el-radio-button {
+        .el-radio-button__inner {
+          padding: 12px 24px;
+          font-size: 14px;
+          border-radius: 20px;
+          
+          .dark & {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #94a3b8;
+          }
+        }
+
+        &:first-child .el-radio-button__inner {
+          border-radius: 20px 0 0 20px;
+        }
+
+        &:last-child .el-radio-button__inner {
+          border-radius: 0 20px 20px 0;
+        }
+
+        /* 处理单个按钮的情况或强制全圆角 */
+        &.is-active .el-radio-button__inner {
+          border-radius: 20px;
         }
       }
 
@@ -349,14 +364,6 @@ const handleDialogClose = () => {
           color: #fff;
           box-shadow: -1px 0 0 0 #3b82f6;
         }
-      }
-
-      .el-radio-button:first-child .el-radio-button__inner {
-        border-radius: 20px !important;
-      }
-
-      .el-radio-button:last-child .el-radio-button__inner {
-        border-radius: 20px !important;
       }
     }
   }
