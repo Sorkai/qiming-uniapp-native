@@ -27,13 +27,48 @@
           :class="{ 'is-dark': currentTheme === 'dark' }"
           @click="$emit('toggle-theme', $event)"
         >
-          <div class="toggle-icon sun-icon">
-            <IconifyIconOffline :icon="Sunny" />
+          <div class="toggle-handle">
+            <div class="handle-inner">
+              <div class="toggle-icon sun-icon">
+                <svg viewBox="0 0 24 24" class="sun-svg">
+                  <defs>
+                    <radialGradient id="sun-core-v3" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#FFF9C4" />
+                      <stop offset="60%" stop-color="#FFD54F" />
+                      <stop offset="100%" stop-color="#F57C00" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="12" cy="12" r="5.5" fill="url(#sun-core-v3)" />
+                  <g class="sun-rays-v3">
+                    <rect x="11" y="1" width="2" height="4" rx="1" fill="#F57C00" />
+                    <rect x="11" y="19" width="2" height="4" rx="1" fill="#F57C00" />
+                    <rect x="1" y="11" width="4" height="2" rx="1" fill="#F57C00" />
+                    <rect x="19" y="11" width="4" height="2" rx="1" fill="#F57C00" />
+                    <g transform="rotate(45 12 12)">
+                      <rect x="11" y="1" width="2" height="4" rx="1" fill="#F57C00" />
+                      <rect x="11" y="19" width="2" height="4" rx="1" fill="#F57C00" />
+                      <rect x="1" y="11" width="4" height="2" rx="1" fill="#F57C00" />
+                      <rect x="19" y="11" width="4" height="2" rx="1" fill="#F57C00" />
+                    </g>
+                  </g>
+                </svg>
+              </div>
+              <div class="toggle-icon moon-icon">
+                <svg viewBox="0 0 24 24" class="moon-svg-v3">
+                  <defs>
+                    <linearGradient id="moon-grad-v3" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#F1F5F9" />
+                      <stop offset="100%" stop-color="#94A3B8" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 3C10.1 3 8.3 3.6 6.8 4.7C10.5 5.5 13 8.6 13 12C13 15.4 10.5 18.5 6.8 19.3C8.3 20.4 10.1 21 12 21C16.9 21 21 16.9 21 12C21 7.1 16.9 3 12 3Z" fill="url(#moon-grad-v3)" />
+                  <circle cx="15.5" cy="9.5" r="1.2" fill="rgba(100, 116, 139, 0.2)" />
+                  <circle cx="17.5" cy="14.5" r="0.8" fill="rgba(100, 116, 139, 0.2)" />
+                  <circle cx="14" cy="15" r="0.6" fill="rgba(100, 116, 139, 0.2)" />
+                </svg>
+              </div>
+            </div>
           </div>
-          <div class="toggle-icon moon-icon">
-            <IconifyIconOffline :icon="Moon" />
-          </div>
-          <div class="toggle-handle"></div>
         </div>
       </div>
 
@@ -229,35 +264,64 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 .toggle-icon {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
-  z-index: 3; /* 放在滑块上方 */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
   width: 18px;
   height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   opacity: 0;
 }
 
-.sun-icon {
-  left: 7px;
-  color: #fff;
+.sun-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 4px rgba(245, 124, 0, 0.4));
 }
 
-.moon-icon {
-  right: 7px;
-  color: #64748b;
+.sun-rays-v3 {
+  transform-origin: center;
+  animation: rotate-sun 15s linear infinite;
+}
+
+@keyframes rotate-sun {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.moon-svg-v3 {
+  width: 90%;
+  height: 90%;
+  filter: drop-shadow(0 0 3px rgba(148, 163, 184, 0.5));
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.is-dark .moon-svg-v3 {
+  transform: rotate(15deg) scale(1.1);
 }
 
 .theme-toggle-premium:not(.is-dark) .sun-icon {
   opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.theme-toggle-premium:not(.is-dark) .moon-icon {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.5) rotate(-45deg);
 }
 
 .is-dark .moon-icon {
   opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.is-dark .sun-icon {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.5) rotate(45deg);
 }
 
 .toggle-handle {
@@ -266,16 +330,27 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   left: var(--p);
   width: var(--s);
   height: var(--s);
-  background: linear-gradient(135deg, #f6c138 0%, #eab308 100%);
+  background: #fff;
   border-radius: 50%;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 2;
+  overflow: hidden;
+}
+
+.handle-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  transition: all 0.5s ease;
 }
 
 .is-dark .toggle-handle {
   transform: translateX(calc(var(--w) - var(--s) - var(--p) * 2));
-  background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
+}
+
+.is-dark .handle-inner {
+  background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
 }
 
 /* 中间标题区域 */
