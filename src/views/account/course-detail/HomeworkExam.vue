@@ -254,7 +254,6 @@ const viewExam = (exam: any) => {
   background-color: transparent;
   display: flex;
   flex-direction: column;
-  align-items: center;
   box-sizing: border-box;
 }
 
@@ -269,8 +268,7 @@ const viewExam = (exam: any) => {
 }
 
 .homework-tabs {
-  width: 90%;
-  max-width: 1400px;
+  width: 100%;
 }
 
 .homework-list,
@@ -435,6 +433,5 @@ const viewExam = (exam: any) => {
 
 .homework-tabs {
   width: 100%;
-  max-width: 1200px;
 }
 </style>
