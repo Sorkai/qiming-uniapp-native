@@ -105,7 +105,7 @@ watch(
 </script>
 
 <template>
-  <el-breadcrumb class="leading-[50px] select-none" separator="/">
+  <el-breadcrumb class="app-breadcrumb select-none" separator="/">
     <transition-group name="breadcrumb">
       <el-breadcrumb-item
         v-for="item in levelList"
@@ -119,3 +119,57 @@ watch(
     </transition-group>
   </el-breadcrumb>
 </template>
+
+<style lang="scss" scoped>
+.app-breadcrumb {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 48px;
+  margin-left: 8px;
+
+  :deep(.el-breadcrumb__inner) {
+    color: #606266;
+    font-weight: 500;
+    transition: color 0.2s;
+    
+    a {
+       font-weight: normal;
+       color: #606266;
+       transition: color 0.2s;
+       
+       &:hover {
+         color: var(--el-color-primary);
+       }
+    }
+  }
+
+  :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+    color: #303133;
+    font-weight: 600;
+    
+    a {
+      color: #303133;
+      &:hover {
+         color: #303133;
+         cursor: text;
+      }
+    }
+  }
+  
+  :global(html.dark) & {
+    :deep(.el-breadcrumb__inner),
+    :deep(.el-breadcrumb__inner a) {
+       color: #a1a1aa;
+       
+       &:hover {
+         color: var(--el-color-primary);
+       }
+    }
+    
+    :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner),
+    :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner a) {
+       color: #fff;
+    }
+  }
+}
+</style>

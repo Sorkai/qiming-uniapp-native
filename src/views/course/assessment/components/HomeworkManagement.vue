@@ -1,8 +1,12 @@
 <template>
   <div class="homework-management">
-    <div class="operation-bar">
-      <el-button type="primary" @click="showCreateDialog">
-        <el-icon><Plus /></el-icon>添加作业
+    <div class="mb-5 flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+      <div class="text-gray-600 font-medium">
+        <el-icon class="mr-1 mt-0.5"><Notebook /></el-icon>
+        作业列表 ({{ total }})
+      </div>
+      <el-button type="primary" @click="showCreateDialog" :icon="Plus" round>
+        添加作业
       </el-button>
     </div>
 
@@ -13,27 +17,38 @@
       style="width: 100%"
       border
       stripe
+      header-cell-class-name="bg-gray-50 text-gray-700 !font-semibold"
     >
-      <el-table-column prop="homeworkId" label="ID" width="80" />
-      <el-table-column prop="title" label="作业标题" min-width="180" />
-      <el-table-column prop="chapterName" label="所属章节" min-width="150" />
-      <el-table-column prop="hourName" label="所属课时" min-width="150" />
-      <el-table-column prop="questionNum" label="题目数量" width="100" />
-      <el-table-column prop="totalPoints" label="总分" width="80" />
-      <el-table-column prop="dueDate" label="截止日期" width="170" />
-      <el-table-column label="操作" width="250" fixed="right">
+      <el-table-column prop="homeworkId" label="ID" width="80" align="center" />
+      <el-table-column prop="title" label="作业标题" min-width="180">
+        <template #default="{ row }">
+          <span class="font-medium text-blue-600 cursor-pointer hover:underline" @click="showQuestionDialog(row)">{{ row.title }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="chapterName" label="所属章节" min-width="150" show-overflow-tooltip />
+      <el-table-column prop="hourName" label="所属课时" min-width="150" show-overflow-tooltip />
+      <el-table-column prop="questionNum" label="题量" width="80" align="center">
+        <template #default="{ row }">
+          <el-badge :value="row.questionNum" :type="row.questionNum > 0 ? 'primary' : 'info'" />
+        </template>
+      </el-table-column>
+      <el-table-column prop="totalPoints" label="总分" width="80" align="center" />
+      <el-table-column prop="dueDate" label="截止日期" width="170" align="center" />
+      <el-table-column label="操作" width="220" fixed="right" align="center">
         <template #default="scope">
           <el-button
-            size="small"
+            link
             type="primary"
             @click="showQuestionDialog(scope.row)"
-            >作业管理</el-button
+            >试题管理</el-button
           >
-          <el-button size="small" @click="showEditDialog(scope.row)"
+          <el-divider direction="vertical" />
+          <el-button link type="primary" @click="showEditDialog(scope.row)"
             >编辑</el-button
           >
+          <el-divider direction="vertical" />
           <el-button
-            size="small"
+            link
             type="danger"
             @click="confirmDelete(scope.row)"
             >删除</el-button
@@ -41,6 +56,7 @@
         </template>
       </el-table-column>
     </el-table>
+
 
     <!-- 分页 -->
     <div class="pagination-container">

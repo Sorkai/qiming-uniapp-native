@@ -1,63 +1,146 @@
 <template>
-  <div class="ai-animation-page">
-    <el-card class="toolbar-card">
-      <template #header>
-        <div class="toolbar">
-          <div class="selectors">
-            <el-select
-              v-model="selectedCourseId"
-              filterable
-              remote
-              clearable
-              placeholder="选择课程"
-              :remote-method="searchCourses"
-              :loading="courseLoading"
-              style="width:260px"
-              @change="handleCourseChange"
-            >
-              <el-option
-                v-for="c in courseOptions"
-                :key="c.courseId"
-                :label="c.title"
-                :value="c.courseId"
-              />
-            </el-select>
-            <el-select
-              v-model="selectedChapterId"
-              :disabled="!selectedCourseId"
-              placeholder="选择章节"
-              clearable
-              filterable
-              style="width:220px;margin-left:12px"
-              @change="handleChapterChange"
-            >
-              <el-option
-                v-for="ch in chapterOptions"
-                :key="ch.chapterId"
-                :label="ch.name"
-                :value="ch.chapterId"
-              />
-            </el-select>
+  <div class="ai-animation-container p-4 h-[calc(100vh-100px)] flex gap-4 overflow-hidden bg-gray-50/30 font-sans">
+    <!-- 左侧课程选择 -->
+    <div class="w-80 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col shrink-0 overflow-hidden transition-all duration-300 hover:shadow-md">
+      <div class="p-6 border-b border-gray-100 bg-gradient-to-br from-indigo-50/50 to-white text-indigo-900">
+        <h3 class="font-bold flex items-center text-lg">
+          <div class="p-2 bg-indigo-500 rounded-lg mr-3 shadow-indigo-100 shadow-lg">
+            <el-icon class="text-white"><VideoPlay /></el-icon>
           </div>
-          <div class="actions">
-            <el-button type="primary" :disabled="!canGenerate" :loading="generateLoading" @click="onGenerate">生成动画</el-button>
-            <el-button :disabled="!selectedChapterId" @click="refreshList">刷新</el-button>
-            <el-button type="warning" :disabled="!latestCompletedVersion" @click="setDisplayLatest">设展示=最新</el-button>
-            <el-button type="success" :loading="syncLoading" @click="onForceSync">强制同步</el-button>
-            <el-button v-if="polling" type="danger" @click="stopPolling">停止轮询</el-button>
+          智能动画中心
+        </h3>
+        <p class="text-xs text-gray-400 mt-2">AI 辅助生成教学动画与演示</p>
+      </div>
+
+      <div class="p-6 space-y-6 flex-1 overflow-auto custom-scrollbar">
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
+            <el-icon class="mr-1 text-indigo-400"><Reading /></el-icon> 目标课程
+          </label>
+          <el-select
+            v-model="selectedCourseId"
+            filterable
+            remote
+            clearable
+            placeholder="搜索或选择课程..."
+            :remote-method="searchCourses"
+            :loading="courseLoading"
+            class="w-full !rounded-xl"
+            size="large"
+            @change="handleCourseChange"
+          >
+            <el-option
+              v-for="c in courseOptions"
+              :key="c.courseId"
+              :label="c.title"
+              :value="c.courseId"
+            />
+          </el-select>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
+            <el-icon class="mr-1 text-indigo-400"><Management /></el-icon> 对应章节
+          </label>
+          <el-select
+            v-model="selectedChapterId"
+            :disabled="!selectedCourseId"
+            placeholder="请选择课程内的章节..."
+            clearable
+            filterable
+            class="w-full !rounded-xl"
+            size="large"
+            @change="handleChapterChange"
+          >
+            <el-option
+              v-for="ch in chapterOptions"
+              :key="ch.chapterId"
+              :label="ch.name"
+              :value="ch.chapterId"
+            />
+          </el-select>
+        </div>
+
+        <div v-if="selectedChapterId" class="mt-8 transition-all duration-500 animate-[fadeIn_0.5s]">
+          <div class="p-5 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl shadow-indigo-100 shadow-xl text-white relative overflow-hidden">
+            <el-icon class="absolute -right-4 -bottom-4 text-7xl opacity-10 pointer-events-none rotate-12"><Cpu /></el-icon>
+            <div class="relative z-10">
+              <div class="text-[10px] text-white/60 font-bold mb-3 uppercase tracking-widest">Engine Summary</div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-black/10 rounded-xl p-3 backdrop-blur-sm">
+                  <div class="text-[10px] text-white/50 mb-1">已就绪</div>
+                  <div class="text-xl font-black">{{ stats.completed }}</div>
+                </div>
+                <div class="bg-black/10 rounded-xl p-3 backdrop-blur-sm group cursor-help">
+                  <div class="text-[10px] text-white/50 mb-1 font-bold">处理中</div>
+                  <div class="text-xl font-black text-orange-300">{{ stats.processing }}</div>
+                </div>
+              </div>
+              <div class="mt-4 flex items-center justify-between text-[11px] text-white/70 bg-white/5 p-2 rounded-lg">
+                <span>失败记录</span>
+                <span class="font-bold text-red-300">{{ stats.failed }}</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div v-if="displayVersionResolved" class="display-info">
-          展示版本: <el-tag size="small" type="success">{{ displayVersionResolved }}<span v-if="displayVersionRaw==='latest'"> (latest)</span></el-tag>
-          <span class="divider" />
-          <span v-if="latestSuccessTime">最近成功: {{ latestSuccessTime }}</span>
-          <span class="divider" />
-          <span>统计: 成功 {{ stats.completed }} / 进行中 {{ stats.processing }} / 失败 {{ stats.failed }}</span>
-          <span v-if="polling" class="polling-indicator">
-            <el-icon class="is-loading" style="margin-left:6px"><loading /></el-icon>轮询中...
-          </span>
+      </div>
+    </div>
+
+    <!-- 右侧内容区域 -->
+    <div class="flex-1 flex flex-col min-w-0">
+      <!-- 顶部操作栏 -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 flex justify-between items-center transition-all hover:shadow-md">
+        <div class="flex items-center space-x-8">
+          <div v-if="displayVersionResolved" class="flex flex-col">
+            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Active Version</span>
+            <div class="flex items-center">
+              <div class="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 shadow-green-200 shadow-lg animate-pulse" />
+              <el-tag type="success" effect="plain" class="!border-green-100 !bg-green-50 !text-green-600 !font-bold">v{{ displayVersionResolved }}</el-tag>
+            </div>
+          </div>
+          <el-divider direction="vertical" v-if="displayVersionResolved" />
+          <div v-if="polling" class="flex flex-col">
+            <span class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-1">Hub Health</span>
+            <div class="flex items-center text-indigo-600 text-xs font-bold">
+              <el-icon class="mr-1.5 animate-spin text-indigo-500"><Loading /></el-icon>
+              自动化监听中...
+            </div>
+          </div>
         </div>
-      </template>
+
+        <div class="flex gap-3">
+          <el-button
+            type="primary"
+            :disabled="!canGenerate"
+            :loading="generateLoading"
+            class="!rounded-xl !h-11 shadow-lg shadow-indigo-100 !px-6 bg-indigo-600 border-none hover:bg-indigo-700"
+            @click="onGenerate"
+          >
+            <template #icon><el-icon><Cpu /></el-icon></template>
+            AI 增量生成
+          </el-button>
+          <el-button
+            circle
+            :disabled="!selectedChapterId"
+            class="!h-11 !w-11 !rounded-xl border-gray-200 hover:text-indigo-600"
+            @click="refreshList"
+            :icon="Refresh"
+          />
+          <el-divider direction="vertical" class="!h-11 mx-1" />
+          <el-button
+            type="success"
+            plain
+            :loading="syncLoading"
+            class="!rounded-xl !h-11 !border-green-200 !text-green-600 hover:!bg-green-50 shadow-sm"
+            @click="onForceSync"
+            :icon="Upload"
+          >
+            同步结果
+          </el-button>
+        </div>
+      </div>
+      <!-- 列表区域将在此后继续 -->
+
 
       <div v-if="!selectedChapterId" class="empty-block">
         <el-empty description="请选择课程与章节以查看动画任务" />
@@ -131,14 +214,43 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { getCourseList, getCourseHoursList } from '@/api/course';
-import { generateHtmlAnimation, getHtmlAnimationList, setHtmlAnimationDisplay, forceSyncHtmlAnimation, type HtmlAnimationTask } from '@/api/htmlAnimation';
-import { Loading } from '@element-plus/icons-vue';
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { getCourseList, getCourseHoursList } from "@/api/course";
+import {
+  generateHtmlAnimation,
+  getHtmlAnimationList,
+  setHtmlAnimationDisplay,
+  forceSyncHtmlAnimation,
+  getHtmlAnimationDisplay,
+  type HtmlAnimationTask
+} from "@/api/htmlAnimation";
+import {
+  VideoPlay,
+  Loading,
+  Cpu,
+  Refresh,
+  Upload,
+  Search,
+  Document,
+  Promotion,
+  View,
+  More,
+  Download,
+  Delete,
+  Reading,
+  Management,
+  Calendar,
+  DocumentCopy,
+  FullScreen
+} from "@element-plus/icons-vue";
 
-const selectedCourseId = ref<number|null>(null);
-const selectedChapterId = ref<number|null>(null);
+defineOptions({
+  name: "CourseAnimation"
+});
+
+const selectedCourseId = ref<number | null>(null);
+const selectedChapterId = ref<number | null>(null);
 const courseOptions = ref<any[]>([]);
 const chapterOptions = ref<any[]>([]);
 const courseLoading = ref(false);
@@ -149,23 +261,24 @@ const polling = ref(false);
 let pollTimer: any = null;
 
 const tasks = ref<HtmlAnimationTask[]>([]);
-const displayVersionRaw = ref('');
-const displayVersionResolved = ref('');
+const displayVersionRaw = ref("");
+const displayVersionResolved = ref("");
 
-const statusFilter = ref('all');
-const keyword = ref('');
+const statusFilter = ref("all");
+const keyword = ref("");
 
 const previewVisible = ref(false);
-const previewUrl = ref('');
+const previewUrl = ref("");
 
 // 统计
-const stats = computed(()=>{
+const stats = computed(() => {
   return {
-    completed: tasks.value.filter(t=>t.status==='completed').length,
-    processing: tasks.value.filter(t=>t.status==='processing').length,
-    failed: tasks.value.filter(t=>t.status==='failed').length
+    completed: tasks.value.filter(t => t.status === "completed").length,
+    processing: tasks.value.filter(t => t.status === "processing").length,
+    failed: tasks.value.filter(t => t.status === "failed").length
   };
 });
+
 
 const latestCompletedVersion = computed(()=>{
   const versions = tasks.value.filter(t=>t.status==='completed').map(t=>t.version).filter(v=>v>0);

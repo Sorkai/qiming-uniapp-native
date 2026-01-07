@@ -46,7 +46,7 @@ const {
 </script>
 
 <template>
-  <div class="navbar bg-transparent dark:bg-transparent">
+  <div class="navbar">
     <LaySidebarTopCollapse
       v-if="device === 'mobile'"
       class="hamburger-container"
@@ -187,6 +187,11 @@ const {
   width: 100%;
   height: 48px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.5); /* 浅色半透明 */
+  backdrop-filter: blur(12px); /* 毛玻璃效果 */
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* 极淡的分割线 */
+  transition: all 0.3s ease;
 
   .hamburger-container {
     float: left;
@@ -215,6 +220,21 @@ const {
   .breadcrumb-container {
     float: left;
     margin-left: 16px;
+  }
+}
+
+/* 适配深色模式 */
+:global(html.dark) .navbar {
+  background: rgba(20, 20, 20, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #fff;
+  
+  .vertical-header-right {
+    color: #fff;
+    
+    .el-dropdown-link {
+      color: #fff;
+    }
   }
 }
 

@@ -41,6 +41,22 @@ export default defineFakeRoute([
           },
           remark: "普通用户",
           createTime: 1605456000000
+        },
+        {
+          avatar: "https://avatars.githubusercontent.com/u/52823142",
+          username: "teacher",
+          nickname: "教师张老师",
+          phone: "13800000002",
+          email: faker.internet.email(),
+          sex: 1,
+          id: 3,
+          status: 1,
+          dept: {
+            id: 104,
+            name: "教学部门"
+          },
+          remark: "教师",
+          createTime: 1605456000000
         }
       ];
       list = list.filter(item => item.username.includes(body?.username));
