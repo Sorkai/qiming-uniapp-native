@@ -178,7 +178,6 @@ const progressDialogVisible = ref(false);
 const progressLoading = ref(false);
 const currentPlan = ref(null);
 const currentProgress = ref(null);
-const currentProgress = ref(null);
 
 // 获取教案列表
 const fetchPlanList = async () => {

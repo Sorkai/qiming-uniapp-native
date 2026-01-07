@@ -197,7 +197,7 @@
           </el-table-column>
         </el-table>
       </div>
-    </el-card>
+    </div>
 
     <el-dialog v-model="previewVisible" title="动画预览" width="80%" top="5vh">
       <div v-if="previewUrl" class="preview-wrapper">
