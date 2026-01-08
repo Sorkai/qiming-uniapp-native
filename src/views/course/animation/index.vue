@@ -214,20 +214,6 @@
   </div>
 </template>
 
-    <el-dialog v-model="previewVisible" title="动画预览" width="80%" top="5vh">
-      <div v-if="previewUrl" class="preview-wrapper">
-        <iframe :src="previewUrl" frameborder="0" class="preview-iframe" />
-      </div>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="openInNewWindow" :disabled="!previewUrl">新窗口打开</el-button>
-          <el-button type="primary" @click="previewVisible=false">关闭</el-button>
-        </div>
-      </template>
-    </el-dialog>
-  </div>
-</template>
-
 <script lang="ts" setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
