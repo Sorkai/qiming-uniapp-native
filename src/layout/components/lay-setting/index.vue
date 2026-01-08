@@ -32,7 +32,6 @@ const { isDark } = useDark();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 const mixRef = ref();
-const doubleRef = ref();
 const verticalRef = ref();
 const horizontalRef = ref();
 
@@ -275,12 +274,6 @@ watch($storage, ({ layout }) => {
       debounce(setFalse([horizontalRef]), 50);
       debounce(setFalse([doubleRef]), 50);
       break;
-    case "double":
-      toggleClass(true, "is-select", unref(doubleRef));
-      debounce(setFalse([verticalRef]), 50);
-      debounce(setFalse([horizontalRef]), 50);
-      debounce(setFalse([mixRef]), 50);
-      break;
   }
 });
 
@@ -401,20 +394,6 @@ onUnmounted(() => removeMatchMedia);
           :class="layoutTheme.layout === 'mix' ? 'is-select' : ''"
           @click="setLayoutModel('mix')"
         >
-          <div />
-          <div />
-        </li>
-        <li
-          v-if="device !== 'mobile'"
-          ref="doubleRef"
-          v-tippy="{
-            content: t('panel.pureDoubleTip'),
-            zIndex: 41000
-          }"
-          :class="layoutTheme.layout === 'double' ? 'is-select' : ''"
-          @click="setLayoutModel('double')"
-        >
-          <div />
           <div />
           <div />
         </li>
