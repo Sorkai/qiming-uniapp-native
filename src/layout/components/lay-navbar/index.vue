@@ -55,12 +55,14 @@ const {
         @toggleClick="toggleSideBar"
       />
 
-      <div v-if="device !== 'mobile'" class="flex items-center">
+      <div v-if="device !== 'mobile'" class="flex items-center ml-4">
+        <span class="text-xl font-black italic tracking-tighter text-blue-600/80 uppercase">Intelledu</span>
+        <div class="h-4 w-[1px] bg-gray-300 mx-4"></div>
       </div>
 
       <LaySidebarBreadCrumb
         v-if="layout !== 'mix' && device !== 'mobile'"
-        class="breadcrumb-container ml-8"
+        class="breadcrumb-container"
       />
     </div>
 

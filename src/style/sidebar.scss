@@ -148,18 +148,39 @@
 
     .el-menu-item,
     .el-sub-menu__title {
-      height: 54px;
-      margin: 6px 14px;
-      line-height: 54px;
-      border-radius: 14px;
+      height: 48px;
+      margin: 8px 12px;
+      line-height: 48px;
+      border-radius: 12px;
       color: var(--pure-theme-menu-text);
       background-color: transparent;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        background: #fff;
+        border-radius: 0 4px 4px 0;
+        transition: all 0.3s ease;
+      }
 
       &:hover {
         color: var(--el-color-primary);
         background-color: rgba(var(--el-color-primary-rgb), 0.08) !important;
         padding-left: 24px !important;
+
+        i,
+        svg,
+        .iconify {
+          color: var(--el-color-primary) !important;
+          transform: translateX(4px) scale(1.1);
+        }
       }
 
       i,
@@ -167,90 +188,99 @@
       .iconify {
         font-size: 18px;
         margin-right: 12px;
+        color: #64748b; // Muted color for inactive icons
         transition: all 0.3s;
-      }
-
-      &:hover i,
-      &:hover svg,
-      &:hover .iconify {
-        transform: scale(1.1);
       }
 
       div,
       span {
-        height: 54px;
-        line-height: 54px;
+        height: 48px;
+        line-height: 48px;
         font-weight: 500;
-        font-size: 14px;
+        font-size: 16px;
+        letter-spacing: 0.05em;
       }
     }
 
     .is-active {
-      color: var(--el-color-primary);
-      background-color: rgba(var(--el-color-primary-rgb), 0.06) !important;
+      color: #fff !important;
+      background: linear-gradient(135deg, var(--el-color-primary) 0%, color-mix(in srgb, var(--el-color-primary), #000 10%) 100%) !important;
       font-weight: 600;
+      box-shadow: 0 4px 12px -2px rgba(var(--el-color-primary-rgb), 0.4);
+      transform: scale(1.02);
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 20px;
+        width: 4px;
+        left: 0;
+        background: #fff;
+        border-radius: 0 4px 4px 0;
+        z-index: 10;
+      }
+
+      i,
+      svg,
+      .iconify {
+        color: #fff !important;
+        transform: scale(1.1);
+      }
 
       &.nest-menu {
-        background: linear-gradient(135deg, var(--el-color-primary) 0%, color-mix(in srgb, var(--el-color-primary), #000 15%) 100%) !important;
-        color: #fff !important;
-        box-shadow: 0 8px 16px -4px rgba(var(--el-color-primary-rgb), 0.4);
         padding-left: 24px !important;
-
-        i,
-        svg,
-        .iconify {
-          color: #fff !important;
-        }
       }
     }
 
     .el-menu .el-menu--inline .el-sub-menu__title,
     & .el-sub-menu .el-menu-item {
       min-width: $sideBarWidth;
-      font-size: 14px;
+      font-size: 16px;
       background-color: var(--pure-theme-sub-menu-bg);
     }
-
-    /* 有子集的激活菜单左侧小竖条 */
-    .el-menu--collapse .is-active.outer-most.el-sub-menu>.el-sub-menu__title::before {
-      position: absolute;
-      top: 0;
-      left: 0;
-      clear: both;
-      width: 2px;
-      height: 100%;
-      content: "";
-      background-color: var(--pure-theme-menu-active-before);
-      transform: translateY(0);
-      transition: all var(--pure-transition-duration) ease-in-out;
-    }
-
-    .el-menu--collapse .outer-most.el-sub-menu>.el-sub-menu__title::before {
-      position: absolute;
-      top: 50%;
-      display: block;
-      width: 3px;
-      height: 0;
-      content: "";
-      transform: translateY(-50%);
-    }
-
-    /* 无子集的激活菜单背景 */
-    .is-active.submenu-title-noDropdown.outer-most>* {
-      z-index: 1;
-      color: #fff;
-    }
-
-    .is-active.submenu-title-noDropdown.outer-most::before {
-      position: absolute;
-      inset: 0 8px;
-      clear: both;
-      margin: 4px 0;
-      content: "";
-      background: var(--el-color-primary);
-      border-radius: 3px;
-    }
   }
+
+  /* 有子集的激活菜单左侧小竖条 */
+  .el-menu--collapse .is-active.outer-most.el-sub-menu>.el-sub-menu__title::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    clear: both;
+    width: 2px;
+    height: 100%;
+    content: "";
+    background-color: var(--pure-theme-menu-active-before);
+    transform: translateY(0);
+    transition: all var(--pure-transition-duration) ease-in-out;
+  }
+
+  .el-menu--collapse .outer-most.el-sub-menu>.el-sub-menu__title::before {
+    position: absolute;
+    top: 50%;
+    display: block;
+    width: 3px;
+    height: 0;
+    content: "";
+    transform: translateY(-50%);
+  }
+
+  /* 无子集的激活菜单背景 */
+  .is-active.submenu-title-noDropdown.outer-most>* {
+    z-index: 1;
+    color: #fff;
+  }
+
+  /* .is-active.submenu-title-noDropdown.outer-most::before {
+    position: absolute;
+    inset: 0 8px;
+    clear: both;
+    margin: 4px 0;
+    content: "";
+    background: var(--el-color-primary);
+    border-radius: 3px;
+  } */
 
   .double-sidebar {
     position: fixed;
@@ -458,7 +488,7 @@
       height: 82px;
       margin: 10px 8px;
       padding: 10px 2px;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 500;
       line-height: 1.4;
       color: var(--pure-theme-menu-text);
@@ -514,13 +544,13 @@
       &::after {
         content: "";
         position: absolute;
-        right: -8px;
+        left: -8px;
         top: 50%;
         transform: translateY(-50%);
-        width: 3px;
+        width: 4px;
         height: 24px;
         background: var(--el-color-primary);
-        border-radius: 4px 0 0 4px;
+        border-radius: 0 4px 4px 0;
       }
     }
 
@@ -879,6 +909,9 @@ body[layout="vertical"] {
 
   .sidebar-logo-container {
     background: var(--pure-theme-sidebar-logo);
+    padding: 16px 0 !important;
+    height: 80px !important;
+    border-bottom: 1px solid rgba(var(--el-color-primary-rgb), 0.05);
   }
 
   .hideSidebar {

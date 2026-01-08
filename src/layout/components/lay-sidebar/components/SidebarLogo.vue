@@ -22,9 +22,9 @@ const { title, getLogo } = useNav();
 .sidebar-logo-container {
   position: relative;
   width: 100%;
-  height: 72px;
+  height: 80px;
   overflow: hidden;
-  padding: 10px 0;
+  padding: 0;
   display: flex;
   align-items: center;
 
@@ -48,12 +48,16 @@ const { title, getLogo } = useNav();
       margin: 2px 0 0 12px;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-size: 20px;
-      font-weight: 800;
+      font-size: 24px;
+      font-weight: 900;
       line-height: 40px;
       letter-spacing: 0.05em;
-      color: var(--pure-theme-sub-menu-active-text);
+      color: var(--el-color-primary);
+      background: linear-gradient(135deg, var(--el-color-primary) 0%, color-mix(in srgb, var(--el-color-primary), #4facfe 100%) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
       white-space: nowrap;
+      transition: all 0.3s;
     }
   }
 }
