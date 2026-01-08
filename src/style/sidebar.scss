@@ -251,7 +251,7 @@
     position: fixed;
     top: 0;
     bottom: 0;
-    left: 80px;
+    left: 100px;
     z-index: 1001;
     width: $sideBarWidth;
     height: 100%;
@@ -980,37 +980,37 @@ body[layout="double"] {
   }
 
   .double-show.main-container {
-    margin-left: 290px;
+    margin-left: 310px;
 
     .fixed-header {
-      width: calc(100% - #{$sideBarWidth} - 80px);
+      width: calc(100% - #{$sideBarWidth} - 100px);
     }
   }
 
   .double-hidden.main-container {
-    margin-left: 80px;
+    margin-left: 100px;
     transition: none;
 
     .fixed-header {
-      width: calc(100% - 80px);
+      width: calc(100% - 100px);
       transition: none;
     }
   }
 
   .hideSidebar {
     .double-show.main-container {
-      margin-left: 134px;
+      margin-left: 154px;
 
       .fixed-header {
-        width: calc(100% - 134px);
+        width: calc(100% - 154px);
       }
     }
 
     .double-hidden.main-container {
-      margin-left: 80px;
+      margin-left: 100px;
 
       .fixed-header {
-        width: calc(100% - 80px);
+        width: calc(100% - 100px);
       }
     }
 
