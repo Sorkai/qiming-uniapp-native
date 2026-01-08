@@ -70,12 +70,14 @@
 /* 导航路径（面包屑）深色模式终极修复补丁 - 强制覆盖所有可能的颜色冲突 */
 html.dark {
   .el-breadcrumb {
+
     &__inner,
     &__inner a,
     &__inner.is-link,
     &__inner a:hover {
       color: #d4d4d8 !important;
-      -webkit-text-fill-color: #d4d4d8 !important; /* 针对某些可能使用了 text-fill-color 的情况 */
+      -webkit-text-fill-color: #d4d4d8 !important;
+      /* 针对某些可能使用了 text-fill-color 的情况 */
     }
 
     &__item:last-child &__inner,
@@ -94,10 +96,12 @@ html.dark {
 
   /* 针对顶部导航栏中 breadcrumb-container 的特殊覆盖 */
   .breadcrumb-container {
+
     .el-breadcrumb__inner,
     .el-breadcrumb__inner a {
       color: #d4d4d8 !important;
     }
+
     .el-breadcrumb__item:last-child .el-breadcrumb__inner {
       color: #ffffff !important;
     }
