@@ -179,7 +179,7 @@ const renderChart = () => {
         type: "bar",
         barMaxWidth: 30,
         itemStyle: {
-          color: "#6366f1",
+          color: "#3b82f6",
           borderRadius: [6, 6, 0, 0]
         },
         data: planTimeData
@@ -189,7 +189,7 @@ const renderChart = () => {
         type: "bar",
         barMaxWidth: 30,
         itemStyle: {
-          color: "#a855f7",
+          color: "#0ea5e9",
           borderRadius: [6, 6, 0, 0]
         },
         data: correctPlanTimeData
@@ -199,7 +199,7 @@ const renderChart = () => {
         type: "bar",
         barMaxWidth: 30,
         itemStyle: {
-          color: "#3b82f6",
+          color: "#0d9488",
           borderRadius: [6, 6, 0, 0]
         },
         data: planWorkTimeData
@@ -429,7 +429,7 @@ onMounted(() => {
 }
 
 .text-glow {
-  text-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+  text-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
 }
 
 :deep(.el-checkbox) {
@@ -443,7 +443,7 @@ onMounted(() => {
 }
 
 :deep(.el-checkbox.is-checked .el-checkbox__label) {
-  color: #4f46e5;
+  color: #2563eb;
 }
 
 .line-clamp-4 {

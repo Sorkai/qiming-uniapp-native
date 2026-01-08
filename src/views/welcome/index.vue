@@ -103,7 +103,7 @@ watchEffect(() => {
         <div class="mt-8 flex flex-wrap gap-4 justify-center md:justify-start">
           <el-button 
             color="#ffffff" 
-            style="color: #4f46e5" 
+            style="color: #2563eb" 
             round 
             size="large"
             class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-md"
@@ -116,7 +116,7 @@ watchEffect(() => {
             round 
             size="large"
             class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-md"
-            style="color: #4f46e5"
+            style="color: #2563eb"
             @click="handleViewReport"
           >
             <IconifyIconOnline icon="ep:view" class="mr-1" /> 查看报告
@@ -163,7 +163,7 @@ watchEffect(() => {
           <template #header>
             <div class="flex items-center justify-between">
               <span class="text-lg font-bold flex items-center">
-                <span class="w-1 h-5 bg-indigo-500 rounded-full mr-2"></span>
+                <span class="w-1 h-5 bg-blue-500 rounded-full mr-2"></span>
                 最近7天平台活跃度
               </span>
               <el-tag size="small" effect="plain">实时更新</el-tag>
@@ -213,7 +213,7 @@ watchEffect(() => {
           <template #header>
             <div class="flex items-center justify-between">
               <span class="text-lg font-bold flex items-center">
-                <span class="w-1 h-5 bg-violet-500 rounded-full mr-2"></span>
+                <span class="w-1 h-5 bg-amber-500 rounded-full mr-2"></span>
                 效率评价指标
               </span>
             </div>
@@ -258,12 +258,12 @@ watchEffect(() => {
 }
 
 .welcome-header {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
   border-radius: 24px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   
   &:hover {
-    box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.4);
     transform: scale(1.02);
     
     .wave {

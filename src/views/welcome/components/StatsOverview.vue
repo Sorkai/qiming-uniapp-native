@@ -23,8 +23,8 @@ const stats = ref<StatItem[]>([
     unit: "小时",
     trend: 12.5,
     icon: "ep:timer",
-    color: "#4f46e5",
-    bgColor: "#eef2ff"
+    color: "#2563eb",
+    bgColor: "#eff6ff"
   },
   {
     title: "本周活跃学生",
@@ -41,7 +41,7 @@ const stats = ref<StatItem[]>([
     unit: "%",
     trend: -1.5,
     icon: "ep:finished",
-    color: "#10b981",
+    color: "#059669",
     bgColor: "#f0fdf4"
   },
   {
@@ -50,8 +50,8 @@ const stats = ref<StatItem[]>([
     unit: "份",
     trend: 25.0,
     icon: "ep:magic-stick",
-    color: "#8b5cf6",
-    bgColor: "#f5f3ff"
+    color: "#ea580c",
+    bgColor: "#fff7ed"
   }
 ]);
 </script>

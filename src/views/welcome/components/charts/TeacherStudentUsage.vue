@@ -57,7 +57,7 @@ const renderChart = () => {
       axisPointer: {
         type: "line",
         lineStyle: {
-          color: "#4f46e5",
+          color: "#2563eb",
           width: 1,
           type: "dashed"
         }
@@ -126,7 +126,7 @@ const renderChart = () => {
         showSymbol: false,
         lineStyle: {
           width: 3,
-          color: "#4f46e5"
+          color: "#2563eb"
         },
         areaStyle: {
           color: {
@@ -136,8 +136,8 @@ const renderChart = () => {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: "rgba(79, 70, 229, 0.2)" },
-              { offset: 1, color: "rgba(79, 70, 229, 0)" }
+              { offset: 0, color: "rgba(37, 99, 235, 0.2)" },
+              { offset: 1, color: "rgba(37, 99, 235, 0)" }
             ]
           }
         },
