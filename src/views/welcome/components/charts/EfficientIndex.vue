@@ -267,28 +267,28 @@ onMounted(() => {
           <!-- 筛选控制区域 -->
           <div
             v-if="efficientData.length"
-            class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-indigo-100/50 dark:border-indigo-500/20 shadow-lg backdrop-blur-md"
+            class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
           >
             <div class="flex items-center gap-4 shrink-0">
               <div
-                class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30"
+                class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
               >
-                <IconifyIconOnline icon="ep:filter" class="text-2xl" />
+                <IconifyIconOnline icon="ri:filter-3-fill" class="text-2xl" />
               </div>
               <div class="flex flex-col">
                 <span
-                  class="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
+                  class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
                   >筛选分析课程</span
                 >
                 <span
-                  class="text-xs text-indigo-400 dark:text-indigo-300/60 font-medium mt-0.5"
+                  class="text-xs text-blue-400 dark:text-blue-300/60 font-medium mt-0.5"
                   >FILTER & ANALYSIS</span
                 >
               </div>
             </div>
 
             <div
-              class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-indigo-200/50 to-transparent dark:via-indigo-500/20 mx-2"
+              class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-blue-200/50 to-transparent dark:via-blue-500/20 mx-2"
             ></div>
 
             <div class="flex-1 w-full overflow-hidden">
@@ -304,7 +304,7 @@ onMounted(() => {
                   size="large"
                 >
                   <span
-                    class="text-base font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors"
+                    class="text-base font-bold text-slate-700 dark:text-slate-200 hover:text-blue-600 transition-colors"
                     >{{ item.courseName }}</span
                   >
                 </el-checkbox>
@@ -314,7 +314,7 @@ onMounted(() => {
 
           <!-- 图表主体 -->
           <div
-            class="relative bg-white/50 dark:bg-[var(--el-bg-color-overlay)] p-8 rounded-3xl border border-indigo-100/50 dark:border-indigo-500/10 shadow-sm"
+            class="relative bg-white/50 dark:bg-[var(--el-bg-color-overlay)] p-8 rounded-3xl border border-blue-100/50 dark:border-blue-500/10 shadow-sm"
           >
             <div
               ref="chartRef"
@@ -338,7 +338,7 @@ onMounted(() => {
           <div v-if="optimizeSuggestions.length" class="optimize-suggestions mt-4">
             <div class="flex items-center justify-between mb-6">
               <h3 class="flex items-center text-lg font-bold text-gray-800 dark:text-gray-200">
-                <span class="w-2 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full mr-3"></span>
+                <span class="w-2 h-6 bg-gradient-to-b from-blue-500 to-sky-500 rounded-full mr-3"></span>
                 AI 提效建议报告
               </h3>
               <el-button 
@@ -368,7 +368,7 @@ onMounted(() => {
                     >
                       <div>
                         <div class="flex items-center gap-2 mb-4">
-                          <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                          <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
                             <IconifyIconOnline icon="ep:opportunity" />
                           </div>
                           <span class="font-bold text-gray-800 dark:text-gray-200 truncate">{{ item.courseName }}</span>
@@ -407,12 +407,12 @@ onMounted(() => {
           append-to-body
         >
           <div class="p-4">
-            <div class="bg-indigo-50 dark:bg-indigo-500/10 rounded-xl p-5 border border-indigo-100 dark:border-indigo-500/20 mb-6">
-              <h4 class="font-bold text-indigo-700 dark:text-indigo-400 flex items-center mb-2">
+            <div class="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-5 border border-blue-100 dark:border-blue-500/20 mb-6">
+              <h4 class="font-bold text-blue-700 dark:text-blue-400 flex items-center mb-2">
                 <IconifyIconOnline icon="ep:magic-stick" class="mr-2" />
                 AI 诊断核心方向
               </h4>
-              <p class="text-indigo-600 dark:text-indigo-300 leading-relaxed">{{ selectedSuggestion?.optimizeDirection }}</p>
+              <p class="text-blue-600 dark:text-blue-300 leading-relaxed">{{ selectedSuggestion?.optimizeDirection }}</p>
             </div>
             <div class="space-y-4">
               <div class="flex gap-3">

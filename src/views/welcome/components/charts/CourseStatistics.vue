@@ -532,22 +532,22 @@ onMounted(() => {
       <template #default>
         <div class="flex flex-col gap-6">
           <div
-            class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-6 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-indigo-100/50 dark:border-indigo-500/20 shadow-lg backdrop-blur-md"
+            class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
           >
             <div
               class="flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 w-full"
             >
               <div class="flex items-center gap-4 shrink-0">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-                  <IconifyIconOnline icon="ep:trend-charts" class="text-2xl" />
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                  <IconifyIconOnline icon="ri:bar-chart-box-fill" class="text-2xl" />
                 </div>
                 <div class="flex flex-col">
-                  <span class="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-wider text-glow">分析课程数据</span>
-                  <span class="text-xs text-indigo-400 dark:text-indigo-300/60 font-medium mt-0.5">STATISTICS & GROWTH</span>
+                  <span class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow">分析课程数据</span>
+                  <span class="text-xs text-blue-400 dark:text-blue-300/60 font-medium mt-0.5">STATISTICS & GROWTH</span>
                 </div>
               </div>
               
-              <div class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-indigo-200/50 to-transparent dark:via-indigo-500/20 mx-2"></div>
+              <div class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-blue-200/50 to-transparent dark:via-blue-500/20 mx-2"></div>
 
               <div class="flex items-center gap-3 flex-1 w-full max-lg:max-w-none max-w-lg">
                 <el-select
@@ -558,7 +558,7 @@ onMounted(() => {
                   :disabled="courseOptions.length === 0"
                 >
                   <template #prefix>
-                    <IconifyIconOnline icon="ep:reading" class="text-indigo-500" />
+                    <IconifyIconOnline icon="ep:reading" class="text-blue-500" />
                   </template>
                   <el-option
                     v-for="item in courseOptions"
@@ -574,7 +574,7 @@ onMounted(() => {
               <el-button 
                 color="#6366f1" 
                 size="large"
-                class="!rounded-xl shadow-md shadow-indigo-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all" 
+                class="!rounded-xl shadow-md shadow-blue-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all" 
                 @click="fetchAllData"
               >
                 <template #icon>
@@ -585,7 +585,7 @@ onMounted(() => {
               <el-button
                 type="primary"
                 size="large"
-                class="!rounded-xl shadow-md shadow-indigo-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all"
+                class="!rounded-xl shadow-md shadow-blue-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all"
                 @click="handleExport"
               >
                 <template #icon>
@@ -600,11 +600,11 @@ onMounted(() => {
             <!-- 课程进度图表 -->
             <div
               v-loading="progressLoading"
-              class="relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-indigo-500/10 shadow-sm transition-all hover:shadow-md"
+              class="relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-blue-500/10 shadow-sm transition-all hover:shadow-md"
             >
               <div class="flex justify-between items-center mb-6 px-2">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                     <IconifyIconOnline icon="ep:user" />
                   </div>
                   <span class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
@@ -642,11 +642,11 @@ onMounted(() => {
             <!-- 考试成绩图表 -->
             <div
               v-loading="examLoading"
-              class="relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-indigo-500/10 shadow-sm transition-all hover:shadow-md"
+              class="relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-blue-500/10 shadow-sm transition-all hover:shadow-md"
             >
               <div class="flex justify-between items-center mb-6 px-2">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                     <IconifyIconOnline icon="ep:document-checked" />
                   </div>
                   <span class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
@@ -687,21 +687,21 @@ onMounted(() => {
 
 <style scoped>
 .text-glow {
-  text-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+  text-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
 }
 
 :deep(.custom-select-high) {
   .el-input__wrapper {
     background-color: var(--el-bg-color) !important;
     backdrop-filter: blur(4px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
     border-radius: 12px !important;
     padding: 2px 12px;
     transition: all 0.3s;
 
     &:hover,
     &.is-focus {
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.15) !important;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.15) !important;
     }
   }
 
@@ -715,6 +715,6 @@ onMounted(() => {
 }
 
 :deep(.el-select) {
-  --el-select-input-focus-border-color: #4f46e5;
+  --el-select-input-focus-border-color: #2563eb;
 }
 </style>
