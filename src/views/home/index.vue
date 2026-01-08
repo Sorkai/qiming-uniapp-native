@@ -6,7 +6,7 @@
         <div class="logo" @click="router.push('/home')">
           <img :src="logo" alt="Logo" class="app-logo-img" />
           <div class="logo-text-group">
-            <span class="logo-text">云创优学</span>
+            <span class="logo-text">启明智教</span>
           </div>
         </div>
         <nav class="nav-links">
@@ -323,7 +323,7 @@
           <div class="footer-brand">
             <img :src="logo" alt="Logo" class="footer-logo" />
             <p class="footer-desc">
-              云创优学是基于人工智能深度融合的智慧教育平台，致力于为教育者和学习者提供
+              启明智教是基于人工智能深度融合的智慧教育平台，致力于为教育者和学习者提供
               个性化、智能化的教学与学习体验，让每个人都能发现学习的乐趣。
             </p>
             <div class="social-links">
@@ -360,7 +360,7 @@
         <div class="footer-bottom">
           <p class="company-info">吉林省云创迅捷软件开发有限公司</p>
           <p><a href="https://www.intelledu.cn" target="_blank" class="website-link">www.intelledu.cn</a></p>
-          <p>© {{ new Date().getFullYear() }} 云创优学. All rights reserved.</p>
+          <p>© {{ new Date().getFullYear() }} 启明智教. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -541,7 +541,7 @@ const getCtaStarStyle = (index: number) => {
 
 const carouselItems = ref([
   {
-    title: "云创优学",
+    title: "启明智教",
     subtitle: "智慧教育新纪元",
     description: "基于人工智能深度融合的智慧教育平台，为每位学习者打造专属学习路径",
     background: banner1

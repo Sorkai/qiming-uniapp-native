@@ -1,5 +1,5 @@
 <template>
-  <div class="teacher-plan-container h-[calc(100vh-105px)] m-3 flex gap-3 overflow-hidden">
+  <div class="teacher-plan-container h-[calc(100vh-140px)] m-3 flex gap-3 overflow-hidden">
     <!-- 左侧课程选择侧边栏 -->
     <div class="course-sidebar w-[320px] flex flex-col bg-[var(--el-bg-color-overlay)] rounded-xl shadow-sm border border-[var(--el-border-color-light)] overflow-hidden">
       <div class="pt-8 px-8 pb-4 border-b border-[var(--el-border-color-light)] bg-[var(--el-fill-color-light)]/50">
@@ -68,7 +68,7 @@
 
         <!-- 标签页内容区 -->
         <div class="flex-1 overflow-hidden flex flex-col">
-          <el-tabs v-model="activeTab" class="teacher-plan-tabs">
+          <el-tabs v-model="activeTab" class="teacher-plan-tabs" tab-position="top">
             <el-tab-pane label="AI 智能生成工作台" name="generate" class="h-full">
               <plan-generator :course-id="selectedCourseId" @switch-tab="switchTab" />
             </el-tab-pane>
@@ -260,11 +260,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding: 0 24px;
+  overflow: hidden;
+
+  :deep(.el-tabs__header) {
+    margin-bottom: 0;
+    padding: 12px 0 0 0;
+    flex-shrink: 0;
+    order: -1 !important;
+  }
 
   :deep(.el-tabs__item) {
     font-weight: 600;
-    font-size: 15px;
-    height: 50px;
+    font-size: 14px;
+    height: 44px;
     padding: 0 20px;
     transition: all 0.3s;
     
@@ -288,18 +296,16 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 16px 0;
+    padding: 12px 0;
+    overflow: hidden;
+    order: 1 !important;
   }
   
   :deep(.el-tab-pane) {
     height: 100%;
     display: flex;
     flex-direction: column;
-  }
-
-  :deep(.el-tabs__header) {
-    margin-bottom: 0;
-    padding-top: 8px;
+    overflow: hidden;
   }
 }
 
