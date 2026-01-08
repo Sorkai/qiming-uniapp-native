@@ -6,7 +6,7 @@ export default {
   component: () => import("@/views/aippt/index.vue"),
   meta: {
     title: $t("menus.aiPPT"),
-    rank: 15.5,
+    rank: 12,
     icon: "ri:presentation-fill"
   }
 }; 

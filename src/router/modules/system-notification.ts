@@ -1,15 +1,13 @@
 import { $t } from "@/plugins/i18n";
-import { h } from "vue";
-import Message from "@icon-park/vue-next/es/icons/Message";
 
 export default {
   path: "/system-notification",
   name: "SystemNotification",
   component: () => import("@/views/system-notification/index.vue"),
   meta: {
-    icon: () => h(Message),
+    icon: "ri:notification-3-line",
     title: $t("menus.systemNotification"),
-    rank: 11,
+    rank: 10,
     roles: ["admin", "teacher"]
   }
 } as RouteConfigsTable;

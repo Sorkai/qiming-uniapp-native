@@ -105,11 +105,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="w-[310px]">
+  <div class="w-[320px]">
     <div
       :class="[
         'double-left',
-        'w-[100px]',
+        'w-[110px]',
         'h-full',
         showLogo ? 'has-logo' : 'no-logo'
       ]"

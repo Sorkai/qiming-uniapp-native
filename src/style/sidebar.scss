@@ -148,55 +148,60 @@
 
     .el-menu-item,
     .el-sub-menu__title {
-      height: 50px;
+      height: 54px;
+      margin: 6px 14px;
+      line-height: 54px;
+      border-radius: 14px;
       color: var(--pure-theme-menu-text);
       background-color: transparent;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
       &:hover {
-        color: var(--pure-theme-menu-title-hover);
+        color: var(--el-color-primary);
+        background-color: rgba(var(--el-color-primary-rgb), 0.08) !important;
+        padding-left: 24px !important;
+      }
+
+      i,
+      svg,
+      .iconify {
+        font-size: 18px;
+        margin-right: 12px;
+        transition: all 0.3s;
+      }
+
+      &:hover i,
+      &:hover svg,
+      &:hover .iconify {
+        transform: scale(1.1);
       }
 
       div,
       span {
-        height: 50px;
-        line-height: 50px;
-      }
-    }
-
-    .submenu-title-noDropdown,
-    .el-sub-menu__title {
-      &:hover {
-        background-color: transparent;
-      }
-    }
-
-    .is-active>.el-sub-menu__title,
-    .is-active.submenu-title-noDropdown {
-      color: var(--pure-theme-sub-menu-active-text);
-
-      i {
-        color: var(--pure-theme-sub-menu-active-text);
+        height: 54px;
+        line-height: 54px;
+        font-weight: 500;
+        font-size: 14px;
       }
     }
 
     .is-active {
-      color: var(--pure-theme-sub-menu-active-text);
-      transition: color 0.3s;
-    }
+      color: var(--el-color-primary);
+      background-color: rgba(var(--el-color-primary-rgb), 0.06) !important;
+      font-weight: 600;
 
-    .el-menu-item.is-active.nest-menu>* {
-      z-index: 1;
-      color: #fff;
-    }
+      &.nest-menu {
+        background: linear-gradient(135deg, var(--el-color-primary) 0%, color-mix(in srgb, var(--el-color-primary), #000 15%) 100%) !important;
+        color: #fff !important;
+        box-shadow: 0 8px 16px -4px rgba(var(--el-color-primary-rgb), 0.4);
+        padding-left: 24px !important;
 
-    .el-menu-item.is-active.nest-menu::before {
-      position: absolute;
-      inset: 0 8px;
-      clear: both;
-      margin: 4px 0;
-      content: "";
-      background: var(--el-color-primary);
-      border-radius: 3px;
+        i,
+        svg,
+        .iconify {
+          color: #fff !important;
+        }
+      }
     }
 
     .el-menu .el-menu--inline .el-sub-menu__title,
@@ -251,7 +256,7 @@
     position: fixed;
     top: 0;
     bottom: 0;
-    left: 100px;
+    left: 110px;
     z-index: 1001;
     width: $sideBarWidth;
     height: 100%;
@@ -416,9 +421,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 64px;
-    padding: 8px 0;
+    height: 80px;
+    padding: 12px 0;
     cursor: pointer;
+    margin-bottom: 4px;
+
+    .app-logo-img {
+      width: 40px;
+      height: 40px;
+      transition: all 0.3s;
+    }
+
+    &:hover .app-logo-img {
+      transform: scale(1.08);
+    }
   }
 
   .double-left {
@@ -429,7 +445,8 @@
     z-index: 1001;
     background: var(--pure-theme-menu-bg);
     border-right: 1px solid var(--pure-border-color);
-    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 1px 0 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s;
 
     ul>li {
       position: relative;
@@ -438,42 +455,72 @@
       align-items: center;
       justify-content: center;
       width: calc(100% - 16px);
-      height: 72px;
-      margin: 8px;
-      padding: 8px;
+      height: 82px;
+      margin: 10px 8px;
+      padding: 10px 2px;
       font-size: 12px;
-      line-height: 1.2;
+      font-weight: 500;
+      line-height: 1.4;
       color: var(--pure-theme-menu-text);
       text-align: center;
       cursor: pointer;
-      border-radius: 12px;
+      border-radius: 14px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0.85;
 
       &:hover {
         color: var(--el-color-primary);
         background: rgba(var(--el-color-primary-rgb), 0.08);
+        opacity: 1;
+        transform: translateY(-1px);
       }
 
-      .sub-menu-icon {
+      .sub-menu-icon,
+      svg,
+      .iconify {
         margin-right: 0;
-        margin-bottom: 6px;
-        font-size: 20px;
-        transition: transform 0.3s;
+        margin-bottom: 8px;
+        font-size: 24px;
+        transition: all 0.3s;
+        opacity: 0.9;
       }
 
-      &:hover .sub-menu-icon {
+      &:hover .sub-menu-icon,
+      &:hover svg,
+      &:hover .iconify {
         transform: scale(1.1);
+        opacity: 1;
       }
     }
 
     ul>li.is-active {
       color: #fff;
-      background: var(--el-color-primary);
-      box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.3);
+      background: linear-gradient(135deg, var(--el-color-primary) 0%, color-mix(in srgb, var(--el-color-primary), #000 20%) 100%);
+      box-shadow: 0 8px 15px -3px rgba(var(--el-color-primary-rgb), 0.4);
+      opacity: 1;
 
       &:hover {
         color: #fff;
+        background: linear-gradient(135deg, var(--el-color-primary) 0%, color-mix(in srgb, var(--el-color-primary), #000 20%) 100%);
+        transform: translateY(-1px);
+      }
+
+      .sub-menu-icon,
+      svg,
+      .iconify {
+        opacity: 1;
+      }
+
+      &::after {
+        content: "";
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 24px;
         background: var(--el-color-primary);
+        border-radius: 4px 0 0 4px;
       }
     }
 
@@ -822,7 +869,7 @@
 }
 
 body[layout="vertical"] {
-  $sideBarWidth: 210px;
+  $sideBarWidth: 240px;
 
   @include merge-style($sideBarWidth);
 
@@ -920,7 +967,7 @@ body[layout="horizontal"] {
 }
 
 body[layout="mix"] {
-  $sideBarWidth: 210px;
+  $sideBarWidth: 240px;
 
   @include merge-style($sideBarWidth);
 
@@ -980,37 +1027,37 @@ body[layout="double"] {
   }
 
   .double-show.main-container {
-    margin-left: 310px;
+    margin-left: 320px;
 
     .fixed-header {
-      width: calc(100% - #{$sideBarWidth} - 100px);
+      width: calc(100% - #{$sideBarWidth} - 110px);
     }
   }
 
   .double-hidden.main-container {
-    margin-left: 100px;
+    margin-left: 110px;
     transition: none;
 
     .fixed-header {
-      width: calc(100% - 100px);
+      width: calc(100% - 110px);
       transition: none;
     }
   }
 
   .hideSidebar {
     .double-show.main-container {
-      margin-left: 154px;
+      margin-left: 164px;
 
       .fixed-header {
-        width: calc(100% - 154px);
+        width: calc(100% - 164px);
       }
     }
 
     .double-hidden.main-container {
-      margin-left: 100px;
+      margin-left: 110px;
 
       .fixed-header {
-        width: calc(100% - 100px);
+        width: calc(100% - 110px);
       }
     }
 

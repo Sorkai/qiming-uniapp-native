@@ -1,15 +1,13 @@
 import { $t } from "@/plugins/i18n";
-import { h } from "vue";
-import CheckCorrect from "@icon-park/vue-next/es/icons/CheckCorrect";
 
 export default {
   path: "/todo",
   name: "Todo",
   component: () => import("@/views/todo/index.vue"),
   meta: {
-    icon: () => h(CheckCorrect),
+    icon: "ri:task-line",
     title: $t("menus.todo"),
-    rank: 12,
+    rank: 11,
     roles: ["admin", "teacher"]
   }
 } as RouteConfigsTable;

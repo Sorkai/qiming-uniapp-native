@@ -1,15 +1,13 @@
 import { $t } from "@/plugins/i18n";
-import { h } from "vue";
-import FolderClose from "@icon-park/vue-next/es/icons/FolderClose";
 
 export default {
   path: "/cloud-disk",
   name: "CloudDisk",
   component: () => import("@/views/cloud-disk/index.vue"),
   meta: {
-    icon: () => h(FolderClose),
+    icon: "ri:folder-cloud-line",
     title: $t("menus.cloudDisk"),
-    rank: 10,
+    rank: 8,
     roles: ["teacher"]
   }
 } as RouteConfigsTable;
