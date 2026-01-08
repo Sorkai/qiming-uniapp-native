@@ -265,35 +265,57 @@ onMounted(() => {
       <template #default>
         <div class="flex flex-col gap-6">
           <!-- 筛选控制区域 -->
-          <div v-if="efficientData.length" class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 dark:from-[#18181b] dark:to-[#27272a] rounded-2xl border border-indigo-100/50 dark:border-indigo-500/20 shadow-lg backdrop-blur-md">
+          <div
+            v-if="efficientData.length"
+            class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-indigo-100/50 dark:border-indigo-500/20 shadow-lg backdrop-blur-md"
+          >
             <div class="flex items-center gap-4 shrink-0">
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+              <div
+                class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30"
+              >
                 <IconifyIconOnline icon="ep:filter" class="text-2xl" />
               </div>
               <div class="flex flex-col">
-                <span class="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-wider text-glow">筛选分析课程</span>
-                <span class="text-xs text-indigo-400 dark:text-indigo-300/60 font-medium mt-0.5">FILTER & ANALYSIS</span>
+                <span
+                  class="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
+                  >筛选分析课程</span
+                >
+                <span
+                  class="text-xs text-indigo-400 dark:text-indigo-300/60 font-medium mt-0.5"
+                  >FILTER & ANALYSIS</span
+                >
               </div>
             </div>
-            
-            <div class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-indigo-200/50 to-transparent dark:via-indigo-500/20 mx-2"></div>
+
+            <div
+              class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-indigo-200/50 to-transparent dark:via-indigo-500/20 mx-2"
+            ></div>
 
             <div class="flex-1 w-full overflow-hidden">
-              <el-checkbox-group v-model="selectedCourses" @change="handleCoursesChange" class="flex flex-wrap gap-x-10 gap-y-4">
-                <el-checkbox 
-                  v-for="(item, index) in efficientData" 
-                  :key="index" 
+              <el-checkbox-group
+                v-model="selectedCourses"
+                @change="handleCoursesChange"
+                class="flex flex-wrap gap-x-10 gap-y-4"
+              >
+                <el-checkbox
+                  v-for="(item, index) in efficientData"
+                  :key="index"
                   :label="index"
                   size="large"
                 >
-                  <span class="text-base font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors">{{ item.courseName }}</span>
+                  <span
+                    class="text-base font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors"
+                    >{{ item.courseName }}</span
+                  >
                 </el-checkbox>
               </el-checkbox-group>
             </div>
           </div>
 
           <!-- 图表主体 -->
-          <div class="relative bg-white/50 dark:bg-[#18181b] p-8 rounded-3xl border border-indigo-100/50 dark:border-indigo-500/10 shadow-sm">
+          <div
+            class="relative bg-white/50 dark:bg-[var(--el-bg-color-overlay)] p-8 rounded-3xl border border-indigo-100/50 dark:border-indigo-500/10 shadow-sm"
+          >
             <div
               ref="chartRef"
               class="chart-container"
@@ -341,7 +363,9 @@ onMounted(() => {
                     :md="12"
                     class="mb-6"
                   >
-                    <div class="suggestion-card-new p-5 h-full flex flex-col justify-between bg-white dark:bg-[#18181b] border border-slate-100 dark:border-gray-800">
+                    <div
+                      class="suggestion-card-new p-5 h-full flex flex-col justify-between bg-white dark:bg-[var(--el-bg-color-overlay)] border border-slate-100 dark:border-gray-800"
+                    >
                       <div>
                         <div class="flex items-center gap-2 mb-4">
                           <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">

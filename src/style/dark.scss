@@ -16,6 +16,11 @@ html.dark {
   /* switch关闭状态下的color 需要时可取用 */
   --pure-switch-off-color: #ffffff3f;
 
+  /* Element Plus 文本颜色深色适配变量 */
+  --el-text-color-primary: #ffffff;
+  --el-text-color-regular: #d4d4d8;
+  --el-text-color-placeholder: #888888;
+
   /* vxe-table */
   --vxe-form-background-color: #151515;
   --vxe-toolbar-background-color: #151515;

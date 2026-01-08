@@ -531,8 +531,12 @@ onMounted(() => {
     <el-skeleton :loading="loading" animated :rows="1">
       <template #default>
         <div class="flex flex-col gap-6">
-          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-6 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 dark:from-indigo-500/10 dark:to-purple-500/5 rounded-2xl border border-indigo-100/50 dark:border-indigo-500/20 shadow-lg backdrop-blur-md">
-            <div class="flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 w-full">
+          <div
+            class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-6 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-indigo-100/50 dark:border-indigo-500/20 shadow-lg backdrop-blur-md"
+          >
+            <div
+              class="flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 w-full"
+            >
               <div class="flex items-center gap-4 shrink-0">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
                   <IconifyIconOnline icon="ep:trend-charts" class="text-2xl" />
@@ -594,9 +598,9 @@ onMounted(() => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
             <!-- 课程进度图表 -->
-            <div 
+            <div
               v-loading="progressLoading"
-              class="relative bg-white dark:bg-indigo-500/5 p-6 rounded-3xl border border-gray-100 dark:border-indigo-500/10 shadow-sm transition-all hover:shadow-md"
+              class="relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-indigo-500/10 shadow-sm transition-all hover:shadow-md"
             >
               <div class="flex justify-between items-center mb-6 px-2">
                 <div class="flex items-center gap-3">
@@ -636,9 +640,9 @@ onMounted(() => {
             </div>
 
             <!-- 考试成绩图表 -->
-            <div 
+            <div
               v-loading="examLoading"
-              class="relative bg-white dark:bg-indigo-500/5 p-6 rounded-3xl border border-gray-100 dark:border-indigo-500/10 shadow-sm transition-all hover:shadow-md"
+              class="relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-indigo-500/10 shadow-sm transition-all hover:shadow-md"
             >
               <div class="flex justify-between items-center mb-6 px-2">
                 <div class="flex items-center gap-3">
@@ -688,7 +692,7 @@ onMounted(() => {
 
 :deep(.custom-select-high) {
   .el-input__wrapper {
-    background-color: rgba(255, 255, 255, 0.8) !important;
+    background-color: var(--el-bg-color) !important;
     backdrop-filter: blur(4px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08) !important;
     border-radius: 12px !important;

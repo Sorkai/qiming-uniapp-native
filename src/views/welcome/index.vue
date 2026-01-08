@@ -101,22 +101,25 @@ watchEffect(() => {
           欢迎回到智慧教学平台。您的 AI 助手已经为您准备好了今天的课程方案和学生进度报告。
         </p>
         <div class="mt-8 flex flex-wrap gap-4 justify-center md:justify-start">
-          <el-button 
-            color="#ffffff" 
-            style="color: #5B8FF9" 
-            round 
+          <el-button
+            :color="isDark ? '#4f46e5' : '#ffffff'"
+            :style="{ color: isDark ? '#ffffff' : '#5B8FF9' }"
+            round
             size="large"
             class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-md"
             @click="router.push('/course/teacherplan')"
           >
             <IconifyIconOnline icon="ep:plus" class="mr-1" /> 开始新教案
           </el-button>
-          <el-button 
-            color="#ffffff" 
-            round 
+          <el-button
+            :color="isDark ? 'transparent' : '#ffffff'"
+            round
             size="large"
             class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-md"
-            style="color: #5B8FF9"
+            :style="{
+              color: isDark ? '#ffffff' : '#5B8FF9',
+              border: isDark ? '1px solid rgb(255 255 255 / 20%)' : 'none'
+            }"
             @click="handleViewReport"
           >
             <IconifyIconOnline icon="ep:view" class="mr-1" /> 查看报告
@@ -258,10 +261,15 @@ watchEffect(() => {
 }
 
 .welcome-header {
-  background: linear-gradient(135deg, #5B8FF9 0%, #5AD8A6 100%);
+  background: linear-gradient(135deg, #5b8ff9 0%, #5ad8a6 100%);
   border-radius: 24px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
+  html.dark & {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgb(255 255 255 / 10%);
+  }
+
   &:hover {
     box-shadow: 0 20px 40px -10px rgba(91, 143, 249, 0.4);
     transform: scale(1.02);

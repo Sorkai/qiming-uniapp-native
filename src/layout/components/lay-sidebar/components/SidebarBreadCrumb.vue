@@ -126,55 +126,38 @@ watch(
   font-size: 14px;
   margin-left: 8px;
 
+  /* 使用 CSS 变量适配深浅色模式 */
   :deep(.el-breadcrumb__inner) {
-    color: #606266;
+    color: var(--el-text-color-regular) !important;
     font-weight: 500;
     transition: color 0.2s;
-    
+
     a {
-       font-weight: normal;
-       color: #606266;
-       transition: color 0.2s;
-       
-       &:hover {
-         color: var(--el-color-primary);
-       }
+      font-weight: normal;
+      color: var(--el-text-color-regular) !important;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--el-color-primary) !important;
+      }
     }
   }
 
   :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-    color: #303133;
+    color: var(--el-text-color-primary) !important;
     font-weight: 600;
 
     a {
-      color: #303133;
+      color: var(--el-text-color-primary) !important;
       &:hover {
-        color: #303133;
+        color: var(--el-text-color-primary) !important;
         cursor: text;
       }
     }
   }
 
-  :global(html.dark) & {
-    :deep(.el-breadcrumb__inner) {
-      color: #d4d4d8;
-
-      a {
-        color: #d4d4d8;
-
-        &:hover {
-          color: var(--el-color-primary);
-        }
-      }
-    }
-
-    :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-      color: #ffffff !important;
-
-      a {
-        color: #ffffff !important;
-      }
-    }
+  :deep(.el-breadcrumb__separator) {
+    color: var(--el-text-color-placeholder) !important;
   }
 }
 </style>

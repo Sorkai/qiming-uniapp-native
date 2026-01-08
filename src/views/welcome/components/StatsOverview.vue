@@ -20,6 +20,12 @@ interface StatItem {
 
 const colors = ["#5B8FF9", "#5AD8A6", "#F6BD16", "#E8684A"];
 const bgColors = ["#EBF1FF", "#EFFFF9", "#FFFBF0", "#FFF7F5"];
+const darkBgColors = [
+  "rgba(91, 143, 249, 0.15)",
+  "rgba(90, 216, 166, 0.15)",
+  "rgba(246, 189, 22, 0.15)",
+  "rgba(232, 104, 74, 0.15)"
+];
 
 const stats = ref<StatItem[]>([]);
 
@@ -51,10 +57,12 @@ onMounted(async () => {
         <div class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-10 transition-transform duration-700 group-hover:scale-150" :style="{ backgroundColor: item.color }"></div>
         
         <div class="flex justify-between items-start mb-6 relative z-10">
-          <div 
+          <div
             class="icon-wrapper w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-transparent group-hover:shadow-current"
-            :style="{ 
-              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : item.bgColor, 
+            :style="{
+              backgroundColor: isDark
+                ? darkBgColors[stats.indexOf(item) % darkBgColors.length]
+                : item.bgColor,
               color: item.color,
               '--tw-shadow-color': item.color + '33'
             }"
