@@ -1,21 +1,21 @@
 <template>
-  <div class="ai-animation-container p-4 h-[calc(100vh-100px)] flex gap-4 overflow-hidden bg-gray-50/30 font-sans">
+  <div class="ai-animation-container p-4 h-[calc(100vh-100px)] flex gap-4 overflow-hidden bg-[var(--el-bg-color)] font-sans">
     <!-- 左侧课程选择 -->
-    <div class="w-80 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col shrink-0 overflow-hidden transition-all duration-300 hover:shadow-md">
-      <div class="p-6 border-b border-gray-100 bg-gradient-to-br from-indigo-50/50 to-white text-indigo-900">
+    <div class="w-80 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] flex flex-col shrink-0 overflow-hidden transition-all duration-300 hover:shadow-md">
+      <div class="p-6 border-b border-[var(--el-border-color-light)] bg-gradient-to-br from-[var(--el-color-primary-light-9)] to-[var(--el-bg-color-overlay)] text-[var(--el-text-color-primary)]">
         <h3 class="font-bold flex items-center text-lg">
-          <div class="p-2 bg-indigo-500 rounded-lg mr-3 shadow-indigo-100 shadow-lg">
+          <div class="p-2 bg-[var(--el-color-primary)] rounded-lg mr-3 shadow-lg shadow-[var(--el-color-primary-light-8)]">
             <el-icon class="text-white"><VideoPlay /></el-icon>
           </div>
           智能动画中心
         </h3>
-        <p class="text-xs text-gray-400 mt-2">AI 辅助生成教学动画与演示</p>
+        <p class="text-xs text-[var(--el-text-color-placeholder)] mt-2">AI 辅助生成教学动画与演示</p>
       </div>
 
       <div class="p-6 space-y-6 flex-1 overflow-auto custom-scrollbar">
         <div class="space-y-2">
-          <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
-            <el-icon class="mr-1 text-indigo-400"><Reading /></el-icon> 目标课程
+          <label class="text-xs font-bold text-[var(--el-text-color-placeholder)] uppercase tracking-wider flex items-center">
+            <el-icon class="mr-1 text-[var(--el-color-primary)]"><Reading /></el-icon> 目标课程
           </label>
           <el-select
             v-model="selectedCourseId"
@@ -39,8 +39,8 @@
         </div>
 
         <div class="space-y-2">
-          <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
-            <el-icon class="mr-1 text-indigo-400"><Management /></el-icon> 对应章节
+          <label class="text-xs font-bold text-[var(--el-text-color-placeholder)] uppercase tracking-wider flex items-center">
+            <el-icon class="mr-1 text-[var(--el-color-primary)]"><Management /></el-icon> 对应章节
           </label>
           <el-select
             v-model="selectedChapterId"
@@ -62,7 +62,7 @@
         </div>
 
         <div v-if="selectedChapterId" class="mt-8 transition-all duration-500 animate-[fadeIn_0.5s]">
-          <div class="p-5 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl shadow-indigo-100 shadow-xl text-white relative overflow-hidden">
+          <div class="p-5 bg-gradient-to-br from-[var(--el-color-primary)] to-[var(--el-color-primary-light-3)] rounded-2xl shadow-xl shadow-[var(--el-color-primary-light-8)] text-white relative overflow-hidden">
             <el-icon class="absolute -right-4 -bottom-4 text-7xl opacity-10 pointer-events-none rotate-12"><Cpu /></el-icon>
             <div class="relative z-10">
               <div class="text-[10px] text-white/60 font-bold mb-3 uppercase tracking-widest">Engine Summary</div>
@@ -89,20 +89,20 @@
     <!-- 右侧内容区域 -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- 顶部操作栏 -->
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 flex justify-between items-center transition-all hover:shadow-md">
+      <div class="bg-[var(--el-bg-color-overlay)] p-5 rounded-2xl shadow-sm border border-[var(--el-border-color-light)] mb-4 flex justify-between items-center transition-all hover:shadow-md">
         <div class="flex items-center space-x-8">
           <div v-if="displayVersionResolved" class="flex flex-col">
-            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Active Version</span>
+            <span class="text-[10px] text-[var(--el-text-color-placeholder)] font-bold uppercase tracking-widest mb-1">Active Version</span>
             <div class="flex items-center">
-              <div class="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 shadow-green-200 shadow-lg animate-pulse" />
-              <el-tag type="success" effect="plain" class="!border-green-100 !bg-green-50 !text-green-600 !font-bold">v{{ displayVersionResolved }}</el-tag>
+              <div class="w-1.5 h-1.5 bg-[var(--el-color-success)] rounded-full mr-2 shadow-lg shadow-[var(--el-color-success-light-5)] animate-pulse" />
+              <el-tag type="success" effect="plain" class="!border-[var(--el-color-success-light-5)] !bg-[var(--el-color-success-light-9)] !text-[var(--el-color-success)] !font-bold">v{{ displayVersionResolved }}</el-tag>
             </div>
           </div>
           <el-divider direction="vertical" v-if="displayVersionResolved" />
           <div v-if="polling" class="flex flex-col">
-            <span class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-1">Hub Health</span>
-            <div class="flex items-center text-indigo-600 text-xs font-bold">
-              <el-icon class="mr-1.5 animate-spin text-indigo-500"><Loading /></el-icon>
+            <span class="text-[10px] text-[var(--el-color-primary)] font-bold uppercase tracking-widest mb-1">Hub Health</span>
+            <div class="flex items-center text-[var(--el-color-primary)] text-xs font-bold">
+              <el-icon class="mr-1.5 animate-spin"><Loading /></el-icon>
               自动化监听中...
             </div>
           </div>
@@ -113,7 +113,7 @@
             type="primary"
             :disabled="!canGenerate"
             :loading="generateLoading"
-            class="!rounded-xl !h-11 shadow-lg shadow-indigo-100 !px-6 bg-indigo-600 border-none hover:bg-indigo-700"
+            class="!rounded-xl !h-11 shadow-lg shadow-[var(--el-color-primary-light-8)] !px-6"
             @click="onGenerate"
           >
             <template #icon><el-icon><Cpu /></el-icon></template>
@@ -122,7 +122,7 @@
           <el-button
             circle
             :disabled="!selectedChapterId"
-            class="!h-11 !w-11 !rounded-xl border-gray-200 hover:text-indigo-600"
+            class="!h-11 !w-11 !rounded-xl border-[var(--el-border-color-light)] hover:text-[var(--el-color-primary)] bg-transparent"
             @click="refreshList"
             :icon="Refresh"
           />
@@ -131,7 +131,7 @@
             type="success"
             plain
             :loading="syncLoading"
-            class="!rounded-xl !h-11 !border-green-200 !text-green-600 hover:!bg-green-50 shadow-sm"
+            class="!rounded-xl !h-11 !border-[var(--el-color-success-light-5)] !text-[var(--el-color-success)] hover:!bg-[var(--el-color-success-light-9)] shadow-sm bg-transparent"
             @click="onForceSync"
             :icon="Upload"
           >
@@ -139,65 +139,80 @@
           </el-button>
         </div>
       </div>
-      <!-- 列表区域将在此后继续 -->
 
-
-      <div v-if="!selectedChapterId" class="empty-block">
-        <el-empty description="请选择课程与章节以查看动画任务" />
-      </div>
-      <div v-else>
-        <div class="filter-row">
-          <el-radio-group v-model="statusFilter" size="small" @change="applyFilter">
-            <el-radio-button label="all">全部</el-radio-button>
-            <el-radio-button label="completed">成功</el-radio-button>
-            <el-radio-button label="processing">进行中</el-radio-button>
-            <el-radio-button label="failed">失败</el-radio-button>
-          </el-radio-group>
-          <el-input v-model="keyword" placeholder="搜索文件名" clearable size="small" style="width:220px" @input="applyFilter" />
+      <div class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] p-5 overflow-hidden flex flex-col">
+        <div v-if="!selectedChapterId" class="flex-1 flex flex-col items-center justify-center">
+          <el-empty description="请选择课程与章节以查看动画任务" />
         </div>
-        <el-table :data="filteredTasks" v-loading="listLoading" size="small" style="width:100%" :row-class-name="rowClassName">
-          <el-table-column prop="version" label="版本" width="80">
-            <template #default="{ row }">
-              <el-tag v-if="row.status==='completed'" type="success" size="small">v{{ row.version }}</el-tag>
-              <el-tag v-else size="small" type="info">--</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" width="110">
-            <template #default="{ row }">
-              <el-tag v-if="row.status==='completed'" type="success" size="small">完成</el-tag>
-              <el-tag v-else-if="row.status==='processing'" type="warning" size="small">进行中</el-tag>
-              <el-tag v-else-if="row.status==='failed'" type="danger" size="small">失败</el-tag>
-              <el-tag v-else size="small">{{ row.status }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="fileName" label="文件名" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="fileSize" label="大小" width="100">
-            <template #default="{ row }">{{ formatSize(row.fileSize) }}</template>
-          </el-table-column>
-          <el-table-column prop="createdAt" label="创建时间" width="170" />
-          <el-table-column prop="completedAt" label="完成时间" width="170">
-            <template #default="{ row }">{{ row.completedAt || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="展示" width="90">
-            <template #default="{ row }">
-              <el-tag v-if="isDisplayVersion(row)" type="success" size="small">展示</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="错误" min-width="160">
-            <template #default="{ row }">
-              <span v-if="row.status==='failed' && row.errorMessage" class="error-text" v-title="row.errorMessage">{{ truncate(row.errorMessage,32) }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="260" fixed="right">
-            <template #default="{ row }">
-              <el-button size="small" type="primary" :disabled="row.status!=='completed'" @click="openPreview(row)">预览</el-button>
-              <el-button size="small" :disabled="row.status!=='completed' || isDisplayVersion(row)" @click="setDisplay(row)">设为展示</el-button>
-              <el-button size="small" :disabled="row.status!=='completed'" @click="copyUrl(row)">复制URL</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div v-else class="flex-1 flex flex-col overflow-hidden">
+          <div class="flex justify-between items-center mb-6">
+            <el-radio-group v-model="statusFilter" size="large" @change="applyFilter" class="!rounded-xl overflow-hidden">
+              <el-radio-button label="all">全部</el-radio-button>
+              <el-radio-button label="completed">成功</el-radio-button>
+              <el-radio-button label="processing">进行中</el-radio-button>
+              <el-radio-button label="failed">失败</el-radio-button>
+            </el-radio-group>
+            <el-input v-model="keyword" placeholder="搜索文件名..." clearable size="large" class="!w-72 !rounded-xl shadow-sm" @input="applyFilter">
+              <template #prefix><el-icon><Search /></el-icon></template>
+            </el-input>
+          </div>
+          
+          <div class="flex-1 overflow-auto">
+            <el-table :data="filteredTasks" v-loading="listLoading" class="!bg-transparent" :row-class-name="rowClassName" header-cell-class-name="!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] font-bold py-4">
+              <el-table-column prop="version" label="版本" width="100">
+                <template #default="{ row }">
+                  <div class="flex items-center">
+                    <el-icon v-if="isDisplayVersion(row)" class="text-[var(--el-color-success)] mr-2 font-bold"><StarFilled /></el-icon>
+                    <el-tag v-if="row.status==='completed'" type="success" size="small" effect="plain" class="!bg-[var(--el-color-success-light-9)] !font-bold">v{{ row.version }}</el-tag>
+                    <el-tag v-else size="small" type="info" effect="plain" class="!bg-[var(--el-fill-color-light)]">--</el-tag>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" width="120">
+                <template #default="{ row }">
+                  <el-tag v-if="row.status==='completed'" type="success" size="small" effect="plain" class="!bg-[var(--el-color-success-light-9)] !font-bold">完成</el-tag>
+                  <el-tag v-else-if="row.status==='processing'" type="warning" size="small" effect="plain" class="!bg-[var(--el-color-warning-light-9)] !font-bold">进行中</el-tag>
+                  <el-tag v-else-if="row.status==='failed'" type="danger" size="small" effect="plain" class="!bg-[var(--el-color-danger-light-9)] !font-bold">失败</el-tag>
+                  <el-tag v-else size="small" effect="plain" class="!bg-[var(--el-fill-color-light)]">{{ row.status }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="fileName" label="文件名" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="fileSize" label="大小" width="100">
+                <template #default="{ row }">{{ formatSize(row.fileSize) }}</template>
+              </el-table-column>
+              <el-table-column prop="createdAt" label="创建时间" width="170" />
+              <el-table-column label="操作" width="280" fixed="right">
+                <template #default="{ row }">
+                  <div class="flex gap-2">
+                    <el-button size="small" type="primary" plain class="!rounded-lg" :disabled="row.status!=='completed'" @click="openPreview(row)">预览</el-button>
+                    <el-button size="small" type="success" plain class="!rounded-lg" :disabled="row.status!=='completed' || isDisplayVersion(row)" @click="setDisplay(row)">设为展示</el-button>
+                    <el-button size="small" type="info" plain class="!rounded-lg" :disabled="row.status!=='completed'" @click="copyUrl(row)">复制URL</el-button>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- 预览弹窗 -->
+    <el-dialog v-model="previewVisible" title="动画渲染预览" width="85%" top="4vh" class="!rounded-2xl overflow-hidden shadow-2xl">
+      <div v-if="previewUrl" class="h-[75vh] bg-black rounded-xl overflow-hidden border border-[var(--el-border-color-light)]">
+        <iframe :src="previewUrl" frameborder="0" class="w-full h-full" />
+      </div>
+      <template #footer>
+        <div class="flex justify-between items-center px-4 py-2">
+           <span class="text-xs text-[var(--el-text-color-placeholder)] font-mono">DEBUG MODE</span>
+          <div class="space-x-4">
+            <el-button @click="openInNewWindow" :icon="FullScreen" class="!rounded-xl">全屏查看</el-button>
+            <el-button type="primary" @click="previewVisible=false" class="!rounded-xl px-8">完成</el-button>
+          </div>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
+</template>
 
     <el-dialog v-model="previewVisible" title="动画预览" width="80%" top="5vh">
       <div v-if="previewUrl" class="preview-wrapper">
@@ -486,8 +501,8 @@ onMounted(()=>{
 .empty-block { padding:60px 0; }
 .filter-row { display:flex; justify-content:space-between; align-items:center; margin:10px 0 14px; }
 .preview-wrapper { height:70vh; }
-.preview-iframe { width:100%; height:100%; border:1px solid #e5e5e5; border-radius:4px; }
-.error-text { color:#f56c6c; cursor:help; }
-:deep(.row-display) { background: #f0fff4; }
-:deep(.row-failed) { background: #fff5f5; }
+.preview-iframe { width:100%; height:100%; border:1px solid var(--el-border-color-light); border-radius:var(--el-border-radius-base); }
+.error-text { color:var(--el-color-danger); cursor:help; }
+:deep(.row-display) { background: var(--el-color-success-light-9) !important; }
+:deep(.row-failed) { background: var(--el-color-danger-light-9) !important; }
 </style>

@@ -42,31 +42,32 @@ const statsItems = computed(() => [
 .stats-card {
   border: none;
   background: var(--el-bg-color-overlay);
+  border-radius: var(--el-border-radius-base);
   
   .icon-wrapper {
     width: 48px;
     height: 48px;
-    border-radius: 12px;
+    border-radius: var(--el-border-radius-base);
     display: flex;
     align-items: center;
     justify-content: center;
     
-    &.blue { background: rgba(64, 158, 255, 0.1); color: #409eff; }
-    &.green { background: rgba(103, 194, 58, 0.1); color: #67c23a; }
-    &.orange { background: rgba(230, 162, 60, 0.1); color: #e6a23c; }
-    &.purple { background: rgba(153, 102, 255, 0.1); color: #9966ff; }
+    &.blue { background: var(--el-color-primary-light-9); color: var(--el-color-primary); }
+    &.green { background: var(--el-color-success-light-9); color: var(--el-color-success); }
+    &.orange { background: var(--el-color-warning-light-9); color: var(--el-color-warning); }
+    &.purple { background: var(--el-color-danger-light-9); color: var(--el-color-danger); }
   }
 
   .stats-label {
     font-size: 14px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     margin-bottom: 4px;
   }
 
   .stats-value {
     font-size: 20px;
     font-weight: bold;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 </style>

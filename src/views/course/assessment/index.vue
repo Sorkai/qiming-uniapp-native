@@ -1,9 +1,9 @@
 <template>
   <div class="assessment-management flex h-[calc(100vh-120px)] overflow-hidden m-4 gap-4">
     <!-- 左侧课程选择侧边栏 -->
-    <div class="course-sidebar w-[300px] flex flex-col bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-      <div class="p-4 border-b border-gray-100 bg-gray-50/50">
-        <h3 class="text-lg font-bold text-gray-800 mb-3 ml-1">课程中心</h3>
+    <div class="course-sidebar w-[300px] flex flex-col bg-[var(--el-bg-color-overlay)] rounded-lg shadow-sm border border-[var(--el-border-color-light)] overflow-hidden">
+      <div class="p-4 border-b border-[var(--el-border-color-light)] bg-[var(--el-fill-color-light)]">
+        <h3 class="text-lg font-bold text-[var(--el-text-color-primary)] mb-3 ml-1">课程中心</h3>
         <el-input
           v-model="courseSearchQuery"
           placeholder="搜索课程..."
@@ -24,12 +24,12 @@
           :class="['course-item', selectedCourseId === course.courseId ? 'active' : '']"
           @click="selectCourse(course)"
         >
-          <el-image :src="course.thumbUrl" class="w-12 h-9 rounded object-cover mr-3 bg-gray-100">
-            <template #error><div class="flex items-center justify-center w-full h-full text-xs text-gray-400">无图</div></template>
+          <el-image :src="course.thumbUrl" class="w-12 h-9 rounded object-cover mr-3 bg-[var(--el-fill-color-light)]">
+            <template #error><div class="flex items-center justify-center w-full h-full text-xs text-[var(--el-text-color-placeholder)]">无图</div></template>
           </el-image>
           <div class="flex-1 overflow-hidden">
-            <div class="course-name truncate text-sm font-medium">{{ course.title }}</div>
-            <div class="course-meta text-[11px] text-gray-400 mt-0.5">{{ course.isRequired === 1 ? '必修' : '选修' }} · {{ course.userName }}</div>
+            <div class="course-name truncate text-sm font-medium text-[var(--el-text-color-primary)]">{{ course.title }}</div>
+            <div class="course-meta text-[11px] text-[var(--el-text-color-placeholder)] mt-0.5">{{ course.isRequired === 1 ? '必修' : '选修' }} · {{ course.userName }}</div>
           </div>
         </div>
         <el-empty v-if="courseOptions.length === 0" description="未找到匹配课程" :image-size="60" />
@@ -37,16 +37,16 @@
     </div>
 
     <!-- 右侧内容管理区 -->
-    <div class="flex-1 bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+    <div class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-lg shadow-sm border border-[var(--el-border-color-light)] flex flex-col overflow-hidden">
       <template v-if="selectedCourseId">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-white">
+        <div class="p-5 border-b border-[var(--el-border-color-light)] flex justify-between items-center bg-[var(--el-bg-color-overlay)]">
           <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold text-gray-800">{{ currentCourse?.title }}</h2>
+            <h2 class="text-xl font-bold text-[var(--el-text-color-primary)]">{{ currentCourse?.title }}</h2>
             <el-tag :type="currentCourse?.isRequired === 1 ? 'danger' : 'success'" effect="plain" round size="small">
               {{ currentCourse?.isRequired === 1 ? '必修' : '选修' }}
             </el-tag>
           </div>
-          <div class="flex gap-4 text-sm text-gray-500">
+          <div class="flex gap-4 text-sm text-[var(--el-text-color-secondary)]">
              <span>创建人: {{ currentCourse?.userName }}</span>
           </div>
         </div>
@@ -63,7 +63,7 @@
         </div>
       </template>
 
-      <div v-else class="flex-1 flex flex-col items-center justify-center bg-gray-50/30">
+      <div v-else class="flex-1 flex flex-col items-center justify-center bg-[var(--el-fill-color-light)]">
         <el-empty description="请从左侧选择一个课程开始管理" :image-size="120" />
       </div>
     </div>
@@ -150,15 +150,15 @@ onMounted(() => {
   border: 1px solid transparent;
 
   &:hover {
-    background-color: #f5f7fa;
+    background-color: var(--el-fill-color-light);
   }
 
   &.active {
-    background-color: #ecf5ff;
-    border-color: #d9ecff;
+    background-color: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary-light-8);
     
     .course-name {
-      color: #409eff;
+      color: var(--el-color-primary);
     }
   }
 }
@@ -180,7 +180,7 @@ onMounted(() => {
     width: 6px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #e4e7ed;
+    background: var(--el-border-color-lighter);
     border-radius: 10px;
   }
   &::-webkit-scrollbar-track {

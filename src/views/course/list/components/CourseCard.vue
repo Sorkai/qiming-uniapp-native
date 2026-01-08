@@ -73,10 +73,12 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
   transition: all 0.3s;
   border: none;
   overflow: hidden;
+  border-radius: var(--el-border-radius-base);
+  background: var(--el-bg-color-overlay);
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: var(--el-box-shadow-lighter) !important;
     
     .course-actions-overlay {
       opacity: 1;
@@ -113,8 +115,8 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f5f7fa;
-    color: #909399;
+    background-color: var(--el-fill-color-light);
+    color: var(--el-text-color-placeholder);
   }
 }
 
@@ -131,7 +133,7 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,7 +154,7 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
   margin: 0 0 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -161,7 +163,7 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
 .course-desc {
   margin: 0 0 16px;
   font-size: 14px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   height: 40px;
   overflow: hidden;
   display: -webkit-box;
@@ -174,7 +176,7 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 13px;
 
   .meta-item {
@@ -186,5 +188,19 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
 
 .course-footer {
   margin-top: auto;
+
+  .el-button-group {
+    .el-button {
+      border-radius: var(--el-border-radius-base);
+      &:first-child {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      &:last-child {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+    }
+  }
 }
 </style>

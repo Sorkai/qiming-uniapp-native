@@ -1549,7 +1549,7 @@ onMounted(() => {
 
 .empty-state {
   text-align: center;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   padding: 40px 0;
   font-size: 16px;
 }
@@ -1561,6 +1561,8 @@ onMounted(() => {
 
 .course-thumb {
   margin-right: 20px;
+  border-radius: var(--el-border-radius-base);
+  overflow: hidden;
 }
 
 .course-info {
@@ -1569,10 +1571,11 @@ onMounted(() => {
   h2 {
     margin-top: 0;
     margin-bottom: 10px;
+    color: var(--el-text-color-primary);
   }
 
   .course-desc {
-    color: #606266;
+    color: var(--el-text-color-regular);
     margin-bottom: 15px;
   }
 }
@@ -1585,9 +1588,10 @@ onMounted(() => {
 .meta-item {
   margin-right: 20px;
   margin-bottom: 10px;
+  color: var(--el-text-color-primary);
 
   label {
-    color: #909399;
+    color: var(--el-text-color-secondary);
     margin-right: 5px;
   }
 }
@@ -1599,7 +1603,7 @@ onMounted(() => {
   h3 {
     margin-top: 0;
     font-size: 16px;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -1624,6 +1628,8 @@ onMounted(() => {
 
 .upload-preview {
   position: relative;
+  border-radius: var(--el-border-radius-base);
+  overflow: hidden;
 
   .upload-actions {
     position: absolute;
@@ -1635,16 +1641,17 @@ onMounted(() => {
 .upload-trigger {
   height: 120px;
   width: 200px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  background-color: var(--el-fill-color-blank);
 
   .upload-hint {
-    color: #909399;
+    color: var(--el-text-color-placeholder);
     font-size: 12px;
     margin-top: 10px;
   }
@@ -1689,18 +1696,19 @@ onMounted(() => {
 .allocation-header {
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 
   h3 {
     margin-top: 0;
     margin-bottom: 8px;
     font-size: 18px;
     font-weight: bold;
+    color: var(--el-text-color-primary);
   }
 
   p {
     margin: 0;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -1708,12 +1716,13 @@ onMounted(() => {
 .chapter-title {
   margin-bottom: 8px;
   padding-left: 8px;
-  border-left: 3px solid #409eff;
+  border-left: 3px solid var(--el-color-primary);
   font-weight: bold;
   font-size: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: var(--el-text-color-primary);
 }
 
 // 新增章节相关样式
@@ -1749,7 +1758,7 @@ onMounted(() => {
 
 .empty-placeholder {
   text-align: center;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   padding: 20px 0;
 }
 
@@ -1763,12 +1772,13 @@ onMounted(() => {
 
 .hour-card {
   padding: 10px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border: 1px solid var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
+  background: var(--el-fill-color-blank);
 }
 
 .required-mark {
-  color: #f56c6c;
+  color: var(--el-color-danger);
   margin-left: 5px;
 }
 
@@ -1781,9 +1791,9 @@ onMounted(() => {
   position: relative;
   width: 100%;
   height: 150px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  background-color: #fbfdff;
+  border: 1px dashed var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
+  background-color: var(--el-fill-color-blank);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1803,7 +1813,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #8c939d;
+  color: var(--el-text-color-placeholder);
   width: 100%;
   height: 100%;
   cursor: pointer;
@@ -1846,7 +1856,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--el-mask-color-extra-light);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1859,5 +1869,10 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+.search-card {
+  border: none;
+  border-radius: var(--el-border-radius-base);
 }
 </style>

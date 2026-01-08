@@ -1,7 +1,7 @@
 <template>
   <div class="homework-management">
-    <div class="mb-5 flex justify-between items-center bg-gray-50 p-4 rounded-lg">
-      <div class="text-gray-600 font-medium">
+    <div class="mb-5 flex justify-between items-center bg-[var(--el-fill-color-light)] p-4 rounded-lg">
+      <div class="text-[var(--el-text-color-regular)] font-medium">
         <el-icon class="mr-1 mt-0.5"><Notebook /></el-icon>
         作业列表 ({{ total }})
       </div>
@@ -17,12 +17,12 @@
       style="width: 100%"
       border
       stripe
-      header-cell-class-name="bg-gray-50 text-gray-700 !font-semibold"
+      header-cell-class-name="bg-[var(--el-fill-color-light)] text-[var(--el-text-color-primary)] !font-semibold"
     >
       <el-table-column prop="homeworkId" label="ID" width="80" align="center" />
       <el-table-column prop="title" label="作业标题" min-width="180">
         <template #default="{ row }">
-          <span class="font-medium text-blue-600 cursor-pointer hover:underline" @click="showQuestionDialog(row)">{{ row.title }}</span>
+          <span class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline" @click="showQuestionDialog(row)">{{ row.title }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="chapterName" label="所属章节" min-width="150" show-overflow-tooltip />
@@ -709,10 +709,11 @@ onMounted(() => {
   h3 {
     margin-top: 0;
     margin-bottom: 10px;
+    color: var(--el-text-color-primary);
   }
 
   p {
-    color: #606266;
+    color: var(--el-text-color-regular);
     margin: 0;
   }
 }
