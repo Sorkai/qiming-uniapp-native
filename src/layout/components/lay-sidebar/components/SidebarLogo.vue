@@ -1,37 +1,20 @@
 <script setup lang="ts">
 import { useNav } from "@/layout/hooks/useNav";
 
-defineProps({
-  collapse: Boolean
-});
-
 const { title, getLogo } = useNav();
 </script>
 
 <template>
-  <div class="sidebar-logo-container" :class="{ collapses: collapse }">
-    <transition name="sidebarLogoFade">
-      <router-link
-        v-if="collapse"
-        key="collapse"
-        :title="title"
-        class="sidebar-logo-link"
-        to="/"
-      >
-  <img :src="getLogo()" alt="logo" class="app-logo-img" />
-        <span class="sidebar-title">{{ title }}</span>
-      </router-link>
-      <router-link
-        v-else
-        key="expand"
-        :title="title"
-        class="sidebar-logo-link"
-        to="/"
-      >
-  <img :src="getLogo()" alt="logo" class="app-logo-img" />
-        <span class="sidebar-title">{{ title }}</span>
-      </router-link>
-    </transition>
+  <div class="sidebar-logo-container">
+    <router-link
+      key="expand"
+      :title="title"
+      class="sidebar-logo-link"
+      to="/"
+    >
+      <img :src="getLogo()" alt="logo" class="app-logo-img" />
+      <span class="sidebar-title">{{ title }}</span>
+    </router-link>
   </div>
 </template>
 

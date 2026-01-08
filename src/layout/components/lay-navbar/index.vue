@@ -56,15 +56,6 @@ const {
       />
 
       <div v-if="device !== 'mobile'" class="flex items-center">
-        <!-- 品牌名称 -->
-        <div class="brand-title flex items-center select-none cursor-default group mr-8">
-          <div class="flex items-baseline pt-1">
-            <span class="text-2xl font-bold italic text-slate-500/80 dark:text-slate-200/90 tracking-tight mr-2 transition-colors group-hover:text-blue-500" style="font-family: 'Inter', sans-serif;">Intelledu</span>
-            <span class="text-2xl font-black bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500 bg-clip-text text-transparent drop-shadow-sm">启明智教</span>
-          </div>
-        </div>
-
-        <div class="h-6 w-[1px] bg-slate-400/20 dark:bg-slate-500/20 mx-2"></div>
       </div>
 
       <LaySidebarBreadCrumb

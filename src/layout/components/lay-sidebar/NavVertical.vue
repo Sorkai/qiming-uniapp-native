@@ -93,7 +93,7 @@ onBeforeUnmount(() => {
     @mouseenter.prevent="isShow = true"
     @mouseleave.prevent="isShow = false"
   >
-    <LaySidebarLogo v-if="showLogo" :collapse="isCollapse" />
+    <LaySidebarLogo v-if="showLogo" />
     <el-scrollbar
       wrap-class="scrollbar-wrapper"
       :class="[device === 'mobile' ? 'mobile' : 'pc']"
@@ -103,7 +103,7 @@ onBeforeUnmount(() => {
         mode="vertical"
         popper-class="pure-scrollbar"
         class="outer-most select-none"
-        :collapse="isCollapse"
+        :collapse="false"
         :collapse-transition="false"
         :popper-effect="tooltipEffect"
         :default-active="defaultActive"
