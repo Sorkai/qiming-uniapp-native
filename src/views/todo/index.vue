@@ -310,7 +310,7 @@ const toggleStatus = (row: TodoItem) => {
 .card {
   padding: 24px;
   margin-bottom: 24px;
-  background-color: #fff;
+  background-color: var(--el-bg-color);
   border: none;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
@@ -328,12 +328,12 @@ const toggleStatus = (row: TodoItem) => {
         margin: 0 0 8px;
         font-size: 22px;
         font-weight: 600;
-        color: #333;
+        color: var(--el-text-color-primary);
       }
       p {
         margin: 0;
         font-size: 14px;
-        color: #909399;
+        color: var(--el-text-color-secondary);
       }
     }
   }
@@ -365,11 +365,12 @@ const toggleStatus = (row: TodoItem) => {
     }
 
     &.completed {
+      background-color: var(--el-fill-color-light);
+      
       .item-title {
         text-decoration: line-through;
-        color: #909399;
+        color: var(--el-text-color-disabled);
       }
-      background-color: #f7f8fc;
     }
 
     .item-content {
@@ -386,7 +387,7 @@ const toggleStatus = (row: TodoItem) => {
       .item-title {
         font-size: 16px;
         font-weight: 600;
-        color: #303133;
+        color: var(--el-text-color-primary);
         transition: color 0.3s;
       }
     }
@@ -394,7 +395,7 @@ const toggleStatus = (row: TodoItem) => {
     .item-details {
       margin: 0 0 12px;
       font-size: 14px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       line-height: 1.6;
     }
 
@@ -402,7 +403,7 @@ const toggleStatus = (row: TodoItem) => {
       display: flex;
       gap: 24px;
       font-size: 13px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
 
       span {
         display: flex;

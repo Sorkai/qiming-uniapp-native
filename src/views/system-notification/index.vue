@@ -1,12 +1,12 @@
 <template>
-  <div class="app-container">
-    <el-card>
+  <div class="main">
+    <el-card class="box-card">
       <template #header>
         <div class="card-header">
           <span>系统通知</span>
         </div>
       </template>
-      <el-timeline>
+      <el-timeline class="notification-timeline">
         <el-timeline-item
           v-for="(item, index) in notificationList"
           :key="index"
@@ -61,36 +61,83 @@ const notificationList = ref([
 ]);
 </script>
 
-<style scoped>
-.app-container {
-  padding: 20px;
+<style lang="scss" scoped>
+.main {
+  padding: 12px;
+
+  .box-card {
+    margin-bottom: 16px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--el-border-color-light);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  .notification-timeline {
+    padding: 20px 10px;
+  }
+
+  .notification-card {
+    border-radius: 12px;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    border: 1px solid var(--el-border-color-lighter);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: var(--el-color-primary-light-5);
+    }
+
+    h4 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    p {
+      margin: 0 0 5px;
+      font-size: 14px;
+      color: var(--el-text-color-regular);
+      line-height: 1.6;
+    }
+
+    .publisher {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+
+      &::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 12px;
+        background: var(--el-color-primary);
+        margin-right: 8px;
+        border-radius: 2px;
+      }
+    }
+  }
 }
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
+:deep(.el-card__header) {
+  border-radius: 16px 16px 0 0;
 }
-.notification-card {
-  transition: all 0.3s ease-in-out;
-  cursor: pointer;
+
+:deep(.el-card__body) {
+  padding: 16px;
 }
-.notification-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-h4 {
-  margin: 0 0 10px;
-  font-size: 16px;
-  font-weight: 600;
-}
-p {
-  margin: 0 0 5px;
-  font-size: 14px;
-  color: #606266;
-}
-.publisher {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 10px;
+
+:deep(.el-timeline-item__node) {
+  background-color: var(--el-color-primary);
 }
 </style>

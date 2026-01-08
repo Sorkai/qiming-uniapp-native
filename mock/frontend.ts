@@ -353,51 +353,51 @@ export default defineFakeRoute([
       const generatedChapters = Array.from({ length: 30 }, (_, i) => ({
         chapterId: i + 1,
         name: `第 ${i + 1} 章：${[
-            "基础概念",
-            "核心知识",
-            "进阶内容",
-            "实战演练",
-            "性能优化",
-            "架构设计",
-            "自动化测试",
-            "部署运维",
-            "安全性考虑",
-            "未来趋势",
-            "总结与回顾",
-            "扩展阅读",
-            "面试指南",
-            "工具推荐",
-            "社区资源",
-            "深度剖析",
-            "最佳实践",
-            "常见陷阱",
-            "性能调优",
-            "高可用架构",
-            "微服务治理",
-            "容器化部署",
-            "持续集成",
-            "监控告警",
-            "日志分析",
-            "故障排查",
-            "团队协作",
-            "项目管理",
-            "职业规划",
-            "终身学习"
-          ][i] || `额外章节 ${i + 1}`
+          "基础概念",
+          "核心知识",
+          "进阶内容",
+          "实战演练",
+          "性能优化",
+          "架构设计",
+          "自动化测试",
+          "部署运维",
+          "安全性考虑",
+          "未来趋势",
+          "总结与回顾",
+          "扩展阅读",
+          "面试指南",
+          "工具推荐",
+          "社区资源",
+          "深度剖析",
+          "最佳实践",
+          "常见陷阱",
+          "性能调优",
+          "高可用架构",
+          "微服务治理",
+          "容器化部署",
+          "持续集成",
+          "监控告警",
+          "日志分析",
+          "故障排查",
+          "团队协作",
+          "项目管理",
+          "职业规划",
+          "终身学习"
+        ][i] || `额外章节 ${i + 1}`
           }`,
         hourList: Array.from({ length: Math.floor(Math.random() * 5) + 3 }, (_, j) => ({
           hourId: i * 100 + j + 1,
           duration: 1800 + Math.floor(Math.random() * 1800),
           title: `${i + 1}.${j + 1} ${[
-              "理论讲解",
-              "代码演示",
-              "动手实践",
-              "疑难解答",
-              "小结测试",
-              "案例分析",
-              "深度思考",
-              "课后练习"
-            ][j] || `补充内容 ${j + 1}`
+            "理论讲解",
+            "代码演示",
+            "动手实践",
+            "疑难解答",
+            "小结测试",
+            "案例分析",
+            "深度思考",
+            "课后练习"
+          ][j] || `补充内容 ${j + 1}`
             }`,
           rType: "video",
           fileUrl: "",
@@ -981,5 +981,480 @@ export default defineFakeRoute([
         }
       };
     }
+  },
+
+  // ==================== 学生端 OJ Mock ====================
+  {
+    url: "/edu/frontend/v1/oj/stats",
+    method: "get",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        totalProblems: 156,
+        solved: 45,
+        attempted: 12,
+        rank: 23
+      }
+    })
+  },
+  {
+    url: "/edu/frontend/v1/oj/problem/list",
+    method: "get",
+    response: ({ query }) => {
+      const pageNum = parseInt(getQueryParam(query, "pageNum")) || 1;
+      const pageSize = parseInt(getQueryParam(query, "pageSize")) || 10;
+      const mockProblems = [
+        { problemId: 1, title: "两数之和", difficulty: "easy", tags: ["数组", "哈希表"], acceptRate: 66.5, myStatus: "solved" },
+        { problemId: 2, title: "最长回文子串", difficulty: "medium", tags: ["字符串", "动态规划"], acceptRate: 56.2, myStatus: "attempted" },
+        { problemId: 3, title: "合并K个升序链表", difficulty: "hard", tags: ["链表", "分治", "堆"], acceptRate: 38.4, myStatus: null },
+        { problemId: 4, title: "有效的括号", difficulty: "easy", tags: ["栈", "字符串"], acceptRate: 77.3, myStatus: "solved" },
+        { problemId: 5, title: "最大子数组和", difficulty: "medium", tags: ["数组", "动态规划"], acceptRate: 66.8, myStatus: "solved" },
+        { problemId: 6, title: "接雨水", difficulty: "hard", tags: ["数组", "双指针", "动态规划"], acceptRate: 35.9, myStatus: "attempted" },
+        { problemId: 7, title: "二分查找", difficulty: "easy", tags: ["数组", "二分查找"], acceptRate: 84.6, myStatus: null },
+        { problemId: 8, title: "无重复字符的最长子串", difficulty: "medium", tags: ["哈希表", "字符串", "滑动窗口"], acceptRate: 58.3, myStatus: "solved" },
+        { problemId: 9, title: "寻找两个正序数组的中位数", difficulty: "hard", tags: ["数组", "二分查找"], acceptRate: 32.1, myStatus: null },
+        { problemId: 10, title: "整数反转", difficulty: "easy", tags: ["数学"], acceptRate: 72.8, myStatus: "solved" }
+      ];
+      return {
+        code: 200,
+        msg: "success",
+        data: {
+          total: mockProblems.length,
+          list: mockProblems.slice((pageNum - 1) * pageSize, pageNum * pageSize)
+        }
+      };
+    }
+  },
+  {
+    url: "/edu/frontend/v1/oj/problem/detail",
+    method: "get",
+    response: ({ query }) => {
+      const problemId = parseInt(getQueryParam(query, "problemId"));
+      return {
+        code: 200,
+        msg: "success",
+        data: {
+          problemId,
+          title: "两数之和",
+          difficulty: "easy",
+          tags: ["数组", "哈希表"],
+          content: "给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出和为目标值 target 的那两个整数，并返回它们的数组下标。\n\n你可以假设每种输入只会对应一个答案，且同样的元素不能被重复利用。",
+          inputFormat: "第一行包含两个整数 n 和 target，表示数组长度和目标值。\n第二行包含 n 个整数，表示数组元素。",
+          outputFormat: "输出两个整数，表示两个数的下标（从0开始）。",
+          examples: [
+            { input: "4 9\n2 7 11 15", output: "0 1", explanation: "因为 nums[0] + nums[1] == 9，返回 [0, 1]" },
+            { input: "3 6\n3 2 4", output: "1 2" }
+          ],
+          timeLimit: 1000,
+          memoryLimit: 256,
+          hint: "尝试使用哈希表来优化时间复杂度",
+          myStatus: "solved"
+        }
+      };
+    }
+  },
+  {
+    url: "/edu/frontend/v1/oj/submission/my",
+    method: "get",
+    response: ({ query }) => {
+      const pageNum = parseInt(getQueryParam(query, "pageNum")) || 1;
+      const pageSize = parseInt(getQueryParam(query, "pageSize")) || 10;
+      const mockSubmissions = [
+        { submissionId: 1001, problemId: 1, problemTitle: "两数之和", language: "cpp", status: "accepted", runTime: 4, memory: 8.2, submitTime: "2025-01-15 14:32:15" },
+        { submissionId: 1002, problemId: 1, problemTitle: "两数之和", language: "cpp", status: "wrong_answer", runTime: 3, memory: 8.1, submitTime: "2025-01-15 14:28:10" },
+        { submissionId: 1003, problemId: 2, problemTitle: "最长回文子串", language: "python", status: "time_limit", runTime: 2000, memory: 15.6, submitTime: "2025-01-14 16:45:22" },
+        { submissionId: 1004, problemId: 4, problemTitle: "有效的括号", language: "cpp", status: "accepted", runTime: 0, memory: 6.2, submitTime: "2025-01-14 10:20:33" },
+        { submissionId: 1005, problemId: 5, problemTitle: "最大子数组和", language: "java", status: "accepted", runTime: 8, memory: 42.5, submitTime: "2025-01-13 19:15:45" }
+      ];
+      return {
+        code: 200,
+        msg: "success",
+        data: {
+          total: mockSubmissions.length,
+          list: mockSubmissions.slice((pageNum - 1) * pageSize, pageNum * pageSize)
+        }
+      };
+    }
+  },
+  {
+    url: "/edu/frontend/v1/oj/run",
+    method: "post",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        status: "success",
+        output: "0 1",
+        runTime: 2,
+        memory: 7.8
+      }
+    })
+  },
+  {
+    url: "/edu/frontend/v1/oj/submit",
+    method: "post",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        submissionId: 1006,
+        status: "accepted",
+        runTime: 4,
+        memory: 8.2,
+        passedCases: 3,
+        totalCases: 3
+      }
+    })
+  },
+
+  // ==================== 学生端作文批改 Mock ====================
+  {
+    url: "/edu/frontend/v1/essay/topics",
+    method: "get",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        list: [
+          { topicId: 1, title: "我的梦想", requirement: "请以'我的梦想'为题，写一篇不少于800字的记叙文或议论文，要求内容真实、情感真挚、结构完整。", wordLimit: { min: 800, max: 1200 }, deadline: "2025-01-20 23:59:59", hasSubmitted: true, score: 85 },
+          { topicId: 2, title: "春天的故事", requirement: "以'春天的故事'为主题，描写一段发生在春天的难忘经历或感悟。字数800-1000字。", wordLimit: { min: 800, max: 1000 }, deadline: "2025-01-25 23:59:59", hasSubmitted: false },
+          { topicId: 3, title: "读书的意义", requirement: "谈谈你对读书意义的理解，可以结合自身经历，字数不少于800字。", wordLimit: { min: 800, max: 1500 }, deadline: "2025-01-30 23:59:59", hasSubmitted: false }
+        ]
+      }
+    })
+  },
+  {
+    url: "/edu/frontend/v1/essay/my",
+    method: "get",
+    response: ({ query }) => {
+      const topicId = parseInt(getQueryParam(query, "topicId"));
+      if (topicId === 1) {
+        return {
+          code: 200,
+          msg: "success",
+          data: {
+            essayId: 1,
+            content: `每个人都有自己的梦想，梦想是人生道路上的指路明灯，照亮我们前进的方向。我的梦想是成为一名优秀的软件工程师，用代码改变世界。
+
+从小我就对电脑充满好奇，记得第一次接触编程是在初中的信息技术课上。当我成功运行第一个"Hello World"程序时，屏幕上那几个简单的字符仿佛打开了一扇通往新世界的大门。从那时起，我便深深爱上了编程这门技术。
+
+高中后，我开始系统地学习编程知识。我利用课余时间自学Python、JavaScript等编程语言，还参加了学校的编程社团。在社团里，我和志同道合的伙伴们一起研究算法、开发小项目。我们开发的校园二手交易平台获得了学校信息化建设比赛的一等奖，这让我更加坚定了自己的梦想。
+
+当然，追逐梦想的路上并非一帆风顺。有时候，一个看似简单的bug会让我熬夜调试好几个小时；有时候，复杂的算法会让我百思不得其解。但正是这些困难，让我学会了坚持和思考，让我在不断失败中成长。
+
+我相信，只要我不断努力，终有一天我会实现自己的梦想。我会开发出让人们生活更美好的软件，用技术为社会贡献自己的力量。
+
+梦想是远航的帆，我会扬帆起航，驶向那片属于我的星辰大海。`,
+            wordCount: 856,
+            submitTime: "2025-01-15 09:30:00",
+            status: "teacher_reviewed",
+            aiResult: {
+              score: 85,
+              dimensions: [
+                { name: "内容立意", score: 22, maxScore: 25, comment: "主题明确，立意积极向上" },
+                { name: "结构层次", score: 20, maxScore: 25, comment: "结构完整，层次分明" },
+                { name: "语言表达", score: 23, maxScore: 25, comment: "语言流畅，有文采" },
+                { name: "书写规范", score: 20, maxScore: 25, comment: "书写规范，无明显错误" }
+              ],
+              strengths: ["文章结构完整", "语言流畅自然", "情感真挚"],
+              weaknesses: ["部分论述不够深入", "结尾略显仓促"],
+              suggestions: ["增加更多细节描写", "结尾可以进一步升华"],
+              corrections: [
+                { original: "仿佛打开了一扇通往新世界的大门", corrected: "仿佛为我打开了一扇通往新世界的大门", type: "语句优化", reason: "增加主语使句子更完整" }
+              ]
+            },
+            teacherResult: {
+              score: 88,
+              comment: "这是一篇优秀的作文，主题明确，情感真挚，继续加油！",
+              reviewTime: "2025-01-15 16:30:00"
+            }
+          }
+        };
+      }
+      return {
+        code: 200,
+        msg: "success",
+        data: {
+          essayId: null,
+          content: "",
+          wordCount: 0,
+          submitTime: null,
+          status: "draft",
+          aiResult: null,
+          teacherResult: null
+        }
+      };
+    }
+  },
+  {
+    url: "/edu/frontend/v1/essay/draft",
+    method: "post",
+    response: () => ({ code: 200, msg: "草稿保存成功", data: null })
+  },
+  {
+    url: "/edu/frontend/v1/essay/submit",
+    method: "post",
+    response: () => ({
+      code: 200,
+      msg: "提交成功",
+      data: { essayId: 10 }
+    })
+  },
+  {
+    url: "/edu/frontend/v1/essay/ai-check",
+    method: "post",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        score: 78,
+        dimensions: [
+          { name: "内容立意", score: 20, maxScore: 25 },
+          { name: "结构层次", score: 18, maxScore: 25 },
+          { name: "语言表达", score: 22, maxScore: 25 },
+          { name: "书写规范", score: 18, maxScore: 25 }
+        ],
+        suggestions: [
+          "建议增加更多具体事例",
+          "可以适当使用修辞手法增强表现力"
+        ],
+        corrections: [
+          { original: "我认为这很重要", corrected: "我深信这举足轻重", type: "用词建议" }
+        ]
+      }
+    })
+  },
+
+  // ==================== 学生端题库训练 Mock ====================
+  {
+    url: "/edu/frontend/v1/training/categories",
+    method: "get",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: [
+        {
+          categoryId: 1,
+          name: "计算机基础",
+          total: 156,
+          completed: 89,
+          children: [
+            { categoryId: 11, name: "计算机组成原理", total: 45, completed: 32 },
+            { categoryId: 12, name: "操作系统", total: 52, completed: 28 },
+            { categoryId: 13, name: "计算机网络", total: 59, completed: 29 }
+          ]
+        },
+        {
+          categoryId: 2,
+          name: "编程语言",
+          total: 234,
+          completed: 156,
+          children: [
+            { categoryId: 21, name: "Python基础", total: 78, completed: 65 },
+            { categoryId: 22, name: "Java基础", total: 89, completed: 45 },
+            { categoryId: 23, name: "C++基础", total: 67, completed: 46 }
+          ]
+        },
+        {
+          categoryId: 3,
+          name: "数据结构与算法",
+          total: 189,
+          completed: 78,
+          children: [
+            { categoryId: 31, name: "基础数据结构", total: 65, completed: 42 },
+            { categoryId: 32, name: "排序算法", total: 42, completed: 18 },
+            { categoryId: 33, name: "图论算法", total: 82, completed: 18 }
+          ]
+        }
+      ]
+    })
+  },
+  {
+    url: "/edu/frontend/v1/training/questions",
+    method: "get",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        list: [
+          {
+            questionId: 1,
+            content: "以下哪个不是Python的内置数据类型？",
+            type: "single",
+            difficulty: "easy",
+            score: 5,
+            options: [
+              { content: "list" },
+              { content: "tuple" },
+              { content: "array" },
+              { content: "dict" }
+            ],
+            answer: 2,
+            analysis: "Python的内置数据类型包括：int, float, str, list, tuple, dict, set等。array不是Python的内置类型。"
+          },
+          {
+            questionId: 2,
+            content: "在Java中，以下哪些关键字用于异常处理？",
+            type: "multiple",
+            difficulty: "medium",
+            score: 10,
+            options: [
+              { content: "try", isAnswer: true },
+              { content: "catch", isAnswer: true },
+              { content: "throw", isAnswer: true },
+              { content: "class", isAnswer: false }
+            ],
+            analysis: "Java中用于异常处理的关键字包括：try, catch, finally, throw, throws。"
+          },
+          {
+            questionId: 3,
+            content: "TCP协议是面向连接的协议",
+            type: "judge",
+            difficulty: "easy",
+            score: 5,
+            answer: true,
+            analysis: "TCP（传输控制协议）是一种面向连接的、可靠的、基于字节流的传输层通信协议。"
+          },
+          {
+            questionId: 4,
+            content: "快速排序的平均时间复杂度是____",
+            type: "fill",
+            difficulty: "medium",
+            score: 5,
+            answer: "O(nlogn)",
+            analysis: "快速排序的平均时间复杂度为O(nlogn)，最坏情况下为O(n²)。"
+          },
+          {
+            questionId: 5,
+            content: "以下哪种数据结构采用先进先出(FIFO)的原则？",
+            type: "single",
+            difficulty: "easy",
+            score: 5,
+            options: [
+              { content: "栈" },
+              { content: "队列" },
+              { content: "树" },
+              { content: "图" }
+            ],
+            answer: 1,
+            analysis: "队列是一种先进先出(FIFO)的数据结构，而栈是后进先出(LIFO)的数据结构。"
+          }
+        ]
+      }
+    })
+  },
+  {
+    url: "/edu/frontend/v1/training/answer",
+    method: "post",
+    response: () => ({ code: 200, msg: "success", data: null })
+  },
+  {
+    url: "/edu/frontend/v1/training/wrong",
+    method: "get",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        list: [
+          {
+            questionId: 2,
+            content: "在Java中，以下哪些关键字用于异常处理？",
+            type: "multiple",
+            difficulty: "medium",
+            wrongCount: 3,
+            lastWrongTime: "2025-01-15 10:30:00",
+            options: [
+              { content: "try", isAnswer: true },
+              { content: "catch", isAnswer: true },
+              { content: "throw", isAnswer: true },
+              { content: "class", isAnswer: false }
+            ],
+            analysis: "Java中用于异常处理的关键字包括：try, catch, finally, throw, throws。"
+          },
+          {
+            questionId: 6,
+            content: "二叉树的遍历方式包括哪些？",
+            type: "multiple",
+            difficulty: "medium",
+            wrongCount: 2,
+            lastWrongTime: "2025-01-14 16:45:00",
+            options: [
+              { content: "前序遍历", isAnswer: true },
+              { content: "中序遍历", isAnswer: true },
+              { content: "后序遍历", isAnswer: true },
+              { content: "随机遍历", isAnswer: false }
+            ],
+            analysis: "二叉树的遍历方式包括：前序遍历、中序遍历、后序遍历和层序遍历。"
+          }
+        ]
+      }
+    })
+  },
+  {
+    url: "/edu/frontend/v1/training/wrong/clear",
+    method: "post",
+    response: () => ({ code: 200, msg: "清空成功", data: null })
+  },
+  {
+    url: "/edu/frontend/v1/training/exam/start",
+    method: "post",
+    response: ({ body }) => ({
+      code: 200,
+      msg: "success",
+      data: {
+        examId: 1,
+        questions: Array.from({ length: body.questionCount || 10 }, (_, i) => ({
+          questionId: i + 1,
+          content: `模拟考试题目 ${i + 1}：以下关于${["Python", "Java", "C++", "JavaScript", "数据结构"][i % 5]}的描述，哪个是正确的？`,
+          type: i % 3 === 0 ? "single" : i % 3 === 1 ? "multiple" : "judge",
+          difficulty: i % 3 === 0 ? "easy" : i % 3 === 1 ? "medium" : "hard",
+          score: i % 3 === 0 ? 5 : 10,
+          options: i % 3 !== 2 ? [
+            { content: "选项A" },
+            { content: "选项B" },
+            { content: "选项C" },
+            { content: "选项D" }
+          ] : undefined
+        }))
+      }
+    })
+  },
+  {
+    url: "/edu/frontend/v1/training/exam/submit",
+    method: "post",
+    response: ({ body }) => {
+      const totalQuestions = body.questions?.length || 10;
+      const correctCount = Math.floor(totalQuestions * 0.7);
+      return {
+        code: 200,
+        msg: "success",
+        data: {
+          score: correctCount * 5 + (totalQuestions - correctCount) * 2,
+          totalScore: totalQuestions * 5,
+          correctCount,
+          wrongCount: totalQuestions - correctCount,
+          details: body.questions?.map((q: any, i: number) => ({
+            questionId: q.questionId,
+            isCorrect: i < correctCount,
+            userAnswer: body.answers?.[i],
+            correctAnswer: 1
+          })) || []
+        }
+      };
+    }
+  },
+  {
+    url: "/edu/frontend/v1/competition/overview",
+    method: "get",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        ojStats: { total: 156, solved: 45, rank: 23 },
+        essayStats: { submitted: 3, avgScore: 82 },
+        trainingStats: { completed: 323, accuracy: 76.5 }
+      }
+    })
   }
 ]);

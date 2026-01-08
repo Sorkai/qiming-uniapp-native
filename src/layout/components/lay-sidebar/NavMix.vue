@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { isAllEmpty } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import { transformI18n } from "@/plugins/i18n";
@@ -21,6 +22,9 @@ import Check from "~icons/ep/check";
 
 const menuRef = ref();
 const defaultActive = ref(null);
+
+// 使用 storeToRefs 正确获取响应式的 wholeMenus
+const { wholeMenus } = storeToRefs(usePermissionStoreHook());
 
 const {
   t,
@@ -47,12 +51,11 @@ const {
 } = useNav();
 
 function getDefaultActive(routePath) {
-  const wholeMenus = usePermissionStoreHook().wholeMenus;
   /** 当前路由的父级路径 */
-  const parentRoutes = getParentPaths(routePath, wholeMenus)[0];
+  const parentRoutes = getParentPaths(routePath, wholeMenus.value)[0];
   defaultActive.value = !isAllEmpty(route.meta?.activePath)
     ? route.meta.activePath
-    : findRouteByPath(parentRoutes, wholeMenus)?.children[0]?.path;
+    : findRouteByPath(parentRoutes, wholeMenus.value)?.children[0]?.path;
 }
 
 onMounted(() => {
@@ -64,17 +67,18 @@ nextTick(() => {
 });
 
 watch(
-  () => [route.path, usePermissionStoreHook().wholeMenus],
+  () => [route.path, wholeMenus.value],
   () => {
     getDefaultActive(route.path);
-  }
+  },
+  { immediate: true, deep: true }
 );
 </script>
 
 <template>
   <div
     v-if="device !== 'mobile'"
-    v-loading="usePermissionStoreHook().wholeMenus.length === 0"
+    v-loading="wholeMenus.length === 0"
     class="horizontal-header"
   >
     <el-menu
@@ -86,7 +90,7 @@ watch(
       :default-active="defaultActive"
     >
       <el-menu-item
-        v-for="route in usePermissionStoreHook().wholeMenus"
+        v-for="route in wholeMenus"
         :key="route.path"
         :index="resolvePath(route) || route.redirect"
       >

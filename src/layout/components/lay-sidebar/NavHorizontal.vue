@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
@@ -24,6 +25,9 @@ const showLogo = ref(
     `${responsiveStorageNameSpace()}configure`
   )?.showLogo ?? true
 );
+
+// 使用 storeToRefs 正确获取响应式的 wholeMenus
+const { wholeMenus } = storeToRefs(usePermissionStoreHook());
 
 const {
   t,
@@ -66,7 +70,7 @@ onMounted(() => {
 
 <template>
   <div
-    v-loading="usePermissionStoreHook().wholeMenus.length === 0"
+    v-loading="wholeMenus.length === 0"
     class="horizontal-header"
   >
     <div v-if="showLogo" class="horizontal-header-left" @click="backTopMenu">
@@ -81,7 +85,7 @@ onMounted(() => {
       :default-active="defaultActive"
     >
       <LaySidebarItem
-        v-for="route in usePermissionStoreHook().wholeMenus"
+        v-for="route in wholeMenus"
         :key="route.path"
         :item="route"
         :base-path="route.path"

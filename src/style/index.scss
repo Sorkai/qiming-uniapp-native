@@ -65,6 +65,8 @@
   margin: var(--pure-main-content-margin);
 }
 
+
+
 /* 导航路径（面包屑）深色模式终极修复补丁 - 强制覆盖所有可能的颜色冲突 */
 html.dark {
   .el-breadcrumb {

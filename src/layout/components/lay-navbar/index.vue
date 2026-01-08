@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
+import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
 import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
 import LayNotice from "../lay-notice/index.vue";
@@ -34,6 +36,27 @@ const {
 
 const visible = ref(false);
 
+const currentTime = ref("");
+
+const updateTime = () => {
+  const now = dayjs();
+  const weekDay = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][
+    now.day()
+  ];
+  currentTime.value = `${now.format("M月D日")} ${weekDay} ${now.format("HH:mm")}`;
+};
+
+let timer: ReturnType<typeof setInterval>;
+
+onMounted(() => {
+  updateTime();
+  timer = setInterval(updateTime, 1000);
+});
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
+
 const {
   t,
   locale,
@@ -58,6 +81,12 @@ const {
       <div v-if="device !== 'mobile'" class="flex items-center ml-4">
         <span class="text-xl font-black italic tracking-tighter text-blue-600/80 uppercase">Intelledu</span>
         <div class="h-4 w-[1px] bg-gray-300 mx-4"></div>
+        <span
+          class="text-sm font-medium text-gray-500/80 dark:text-gray-400/80 font-mono tracking-tight mr-4 whitespace-nowrap"
+        >
+          {{ currentTime }}
+        </span>
+        <div class="h-4 w-[1px] bg-gray-300 mr-4"></div>
       </div>
 
       <LaySidebarBreadCrumb

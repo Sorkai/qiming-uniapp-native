@@ -310,22 +310,22 @@ const toggleStatus = (row: TodoItem) => {
 </script>
 
 <style lang="scss" scoped>
-.card {
-  padding: 24px;
-  margin-bottom: 24px;
-  background-color: #fff;
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
-  transition: all 0.3s ease;
-  
-  .dark & {
+.todo-container {
+  .card {
+    padding: 24px;
+    margin-bottom: 24px;
+    background-color: #fff;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+    transition: all 0.3s ease;
+  }
+
+  &.dark .card {
     background-color: #1e293b;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
-}
 
-.todo-container {
   .todo-header {
     display: flex;
     align-items: center;
@@ -337,19 +337,22 @@ const toggleStatus = (row: TodoItem) => {
         font-size: 22px;
         font-weight: 600;
         color: #333;
-        
-        .dark & {
-          color: #f1f5f9;
-        }
       }
       p {
         margin: 0;
         font-size: 14px;
         color: #909399;
-        
-        .dark & {
-          color: #94a3b8;
-        }
+      }
+    }
+  }
+
+  &.dark .todo-header {
+    .header-left {
+      h3 {
+        color: #f1f5f9;
+      }
+      p {
+        color: #94a3b8;
       }
     }
   }
@@ -357,22 +360,20 @@ const toggleStatus = (row: TodoItem) => {
   .todo-controls {
     display: flex;
     justify-content: flex-end;
-    
+  }
+
+  &.dark .todo-controls {
     :deep(.el-radio-group) {
       .el-radio-button__inner {
-        .dark & {
-          background-color: #0f172a;
-          border-color: #334155;
-          color: #94a3b8;
-        }
+        background-color: #0f172a;
+        border-color: #334155;
+        color: #94a3b8;
       }
       
       .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-        .dark & {
-          background-color: #3b82f6;
-          border-color: #3b82f6;
-          color: #fff;
-        }
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        color: #fff;
       }
     }
   }
@@ -396,25 +397,14 @@ const toggleStatus = (row: TodoItem) => {
     &:hover {
       transform: translateY(-5px) scale(1.01);
       box-shadow: 0 8px 25px rgb(0 0 0 / 10%);
-      
-      .dark & {
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-      }
     }
 
     &.completed {
+      background-color: #f7f8fc;
+
       .item-title {
         text-decoration: line-through;
         color: #909399;
-        
-        .dark & {
-          color: #64748b;
-        }
-      }
-      background-color: #f7f8fc;
-      
-      .dark & {
-        background-color: #0f172a;
       }
     }
 
@@ -434,10 +424,6 @@ const toggleStatus = (row: TodoItem) => {
         font-weight: 600;
         color: #303133;
         transition: color 0.3s;
-        
-        .dark & {
-          color: #f1f5f9;
-        }
       }
     }
 
@@ -446,10 +432,6 @@ const toggleStatus = (row: TodoItem) => {
       font-size: 14px;
       color: #606266;
       line-height: 1.6;
-      
-      .dark & {
-        color: #cbd5e1;
-      }
     }
 
     .item-footer {
@@ -457,10 +439,6 @@ const toggleStatus = (row: TodoItem) => {
       gap: 24px;
       font-size: 13px;
       color: #909399;
-      
-      .dark & {
-        color: #64748b;
-      }
 
       span {
         display: flex;
@@ -474,6 +452,35 @@ const toggleStatus = (row: TodoItem) => {
     .item-actions {
       display: flex;
       gap: 10px;
+    }
+  }
+
+  // 深色模式样式
+  &.dark {
+    .todo-item {
+      &:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      }
+
+      &.completed {
+        background-color: #0f172a;
+
+        .item-title {
+          color: #64748b;
+        }
+      }
+
+      .item-header .item-title {
+        color: #f1f5f9;
+      }
+
+      .item-details {
+        color: #cbd5e1;
+      }
+
+      .item-footer {
+        color: #64748b;
+      }
     }
   }
 }

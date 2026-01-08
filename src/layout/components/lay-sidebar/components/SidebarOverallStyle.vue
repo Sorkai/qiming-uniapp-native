@@ -54,25 +54,48 @@ const onToggle = async (event: MouseEvent) => {
   `;
   document.body.appendChild(overlay);
 
-  // 2. 触发扩散动画
-  requestAnimationFrame(() => {
-    overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
-  });
-
-  // 3. 在扩散到一半或完成时切换真实主题
-  setTimeout(async () => {
-    toggleTheme();
-    await nextTick();
-
-    // 4. 主题切换后，让遮罩层淡出
-    overlay.style.transition = "opacity 500ms ease, clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1)";
-    overlay.style.opacity = "0";
-
-    setTimeout(() => {
+  // 清理函数，确保遮罩层一定会被移除
+  const cleanup = () => {
+    if (overlay.parentNode) {
       overlay.remove();
-      isAnimating.value = false;
+    }
+    isAnimating.value = false;
+  };
+
+  // 安全网：最多 2 秒后强制清理
+  const safetyTimeout = setTimeout(cleanup, 2000);
+
+  try {
+    // 2. 触发扩散动画
+    requestAnimationFrame(() => {
+      overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
+    });
+
+    // 3. 在扩散到一半或完成时切换真实主题
+    setTimeout(async () => {
+      try {
+        toggleTheme();
+        await nextTick();
+
+        // 4. 主题切换后，让遮罩层淡出
+        overlay.style.transition = "opacity 500ms ease, clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1)";
+        overlay.style.opacity = "0";
+
+        setTimeout(() => {
+          clearTimeout(safetyTimeout);
+          cleanup();
+        }, 500);
+      } catch (error) {
+        console.error("主题切换失败:", error);
+        clearTimeout(safetyTimeout);
+        cleanup();
+      }
     }, 500);
-  }, 500);
+  } catch (error) {
+    console.error("扩散动画失败:", error);
+    clearTimeout(safetyTimeout);
+    cleanup();
+  }
 };
 </script>
 

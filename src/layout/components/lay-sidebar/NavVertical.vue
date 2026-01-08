@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
@@ -31,10 +32,13 @@ const {
 
 const subMenuData = ref([]);
 
+// 使用 storeToRefs 正确获取响应式的 wholeMenus，确保 watch 能正确追踪变化
+const { wholeMenus } = storeToRefs(usePermissionStoreHook());
+
 const menuData = computed(() => {
   return pureApp.layout === "mix" && device.value !== "mobile"
     ? subMenuData.value
-    : usePermissionStoreHook().wholeMenus;
+    : wholeMenus.value;
 });
 
 const loading = computed(() =>
@@ -52,24 +56,25 @@ function getSubMenuData() {
   // path的上级路由组成的数组
   const parentPathArr = getParentPaths(
     path,
-    usePermissionStoreHook().wholeMenus
+    wholeMenus.value
   );
   // 当前路由的父级路由信息
   const parenetRoute = findRouteByPath(
     parentPathArr[0] || path,
-    usePermissionStoreHook().wholeMenus
+    wholeMenus.value
   );
   if (!parenetRoute?.children) return;
   subMenuData.value = parenetRoute?.children;
 }
 
 watch(
-  () => [route.path, usePermissionStoreHook().wholeMenus],
+  () => [route.path, wholeMenus.value],
   () => {
     if (route.path.includes("/redirect")) return;
     getSubMenuData();
     menuSelect(route.path);
-  }
+  },
+  { immediate: true, deep: true }
 );
 
 onMounted(() => {
