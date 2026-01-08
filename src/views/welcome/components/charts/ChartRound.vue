@@ -21,7 +21,8 @@ setOptions({
     textAlign: "center",
     textStyle: {
       fontSize: "16",
-      fontWeight: 600
+      fontWeight: 600,
+      color: isDark.value ? "#ffffff" : "#1e293b"
     }
   },
   polar: {

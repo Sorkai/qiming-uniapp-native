@@ -77,17 +77,18 @@ html.dark {
     $lightness: 15%
   );
 
-  .navbar,
-  .tags-view,
   .contextmenu,
   .double-left,
   .double-sidebar,
   .sidebar-container,
-  .horizontal-header,
-  .sidebar-logo-container,
-  .horizontal-header .el-sub-menu__title,
-  .horizontal-header .submenu-title-noDropdown {
+  .sidebar-logo-container {
     background: var(--el-bg-color);
+  }
+
+  .horizontal-header {
+    background: rgba(26, 26, 26, 0.6) !important;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
   }
 
   .app-main,

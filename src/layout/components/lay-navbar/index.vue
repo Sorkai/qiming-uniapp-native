@@ -46,8 +46,8 @@ const {
 </script>
 
 <template>
-  <div class="navbar bg-[#fff] dark:bg-[#1d1e1f] border-b border-gray-100 dark:border-gray-800 transition-colors duration-300">
-    <div class="flex items-center h-full flex-1 min-w-0 px-4">
+    <div class="navbar bg-white/10 dark:bg-white/[0.03] backdrop-blur-[20px] dark:backdrop-blur-[20px] border-b border-white/20 dark:border-white/10 transition-all duration-700">
+    <div class="flex items-center h-full flex-1 min-w-0 px-8">
       <LaySidebarTopCollapse
         v-if="device === 'mobile'"
         class="hamburger-container"
@@ -57,19 +57,19 @@ const {
 
       <div v-if="device !== 'mobile'" class="flex items-center">
         <!-- 品牌名称 -->
-        <div class="brand-title flex items-center select-none cursor-default group mr-4">
+        <div class="brand-title flex items-center select-none cursor-default group mr-8">
           <div class="flex items-baseline pt-1">
-            <span class="text-lg font-bold italic text-slate-400 dark:text-slate-500 tracking-tight mr-1 transition-colors group-hover:text-blue-500" style="font-family: 'Inter', sans-serif;">Intelledu</span>
-            <span class="text-xl font-black bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">启明智教</span>
+            <span class="text-2xl font-bold italic text-slate-500/80 dark:text-slate-200/90 tracking-tight mr-2 transition-colors group-hover:text-blue-500" style="font-family: 'Inter', sans-serif;">Intelledu</span>
+            <span class="text-2xl font-black bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500 bg-clip-text text-transparent drop-shadow-sm">启明智教</span>
           </div>
         </div>
 
-        <div class="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1"></div>
+        <div class="h-6 w-[1px] bg-slate-400/20 dark:bg-slate-500/20 mx-2"></div>
       </div>
 
       <LaySidebarBreadCrumb
         v-if="layout !== 'mix' && device !== 'mobile'"
-        class="breadcrumb-container ml-4"
+        class="breadcrumb-container ml-8"
       />
     </div>
 
@@ -84,16 +84,16 @@ const {
       <!-- 退出登录 -->
       <el-dropdown trigger="click" @visible-change="v => (visible = v)" class="ml-2">
         <span
-          class="el-dropdown-link select-none bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10"
+          class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10"
         >
           <img :src="userAvatar" class="w-[24px] h-[24px] rounded-full ring-2 ring-white dark:ring-gray-800" />
-          <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200">
-            {{ username }}
-          </p>
+        <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">
+          {{ username }}
+        </p>
           <IconifyIconOffline
             :icon="ArrowDown"
             :class="[
-              'ml-1 text-[12px] text-gray-400 dark:text-gray-500 transition-transform duration-300',
+              'ml-1 text-[12px] text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-700 transition-transform duration-300',
               { 'rotate-180': visible }
             ]"
           />
@@ -124,25 +124,39 @@ const {
 <style lang="scss" scoped>
 .navbar {
   width: 100%;
-  height: 64px;
+  height: 72px; // 增加到 72px 让视觉更通透
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-  z-index: 10;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+  z-index: 1001; // 确保压过标签栏
+  position: relative;
 
   .navbar-item {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     height: 100%;
-    padding: 0 12px;
+    padding: 0 20px;
     cursor: pointer;
-    color: #4b5563;
-    transition: all 0.2s;
+    color: #64748b;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
-      background: rgba(0, 0, 0, 0.025);
+      background: rgba(59, 130, 246, 0.08);
+      color: #3b82f6;
+    }
+  }
+
+  .el-dropdown-link {
+    &:hover {
+      p {
+        color: #111827 !important;
+      }
+      .rotate-180,
+      IconifyIconOffline {
+        color: #4b5563 !important;
+      }
     }
   }
 }
@@ -156,10 +170,11 @@ const {
 /* 适配深色模式 */
 :global(html.dark) {
   .navbar {
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
     
     .navbar-item:hover {
       background: rgba(255, 255, 255, 0.05);
+      color: #60a5fa;
     }
     
     .navbar-item {
@@ -170,16 +185,32 @@ const {
 
 .logout-menu {
   padding: 8px;
-  border-radius: 12px;
+  border-radius: 16px;
+  backdrop-filter: blur(40px);
+  background-color: rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   
   :deep(.el-dropdown-menu__item) {
-    border-radius: 8px;
-    margin-bottom: 2px;
-    padding: 8px 16px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    padding: 10px 18px;
+    font-weight: 500;
     
     &:last-child {
       margin-bottom: 0;
     }
+
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.1) !important;
+      color: #2563eb !important;
+    }
   }
+}
+
+:global(html.dark) .logout-menu {
+  background-color: rgba(30, 30, 35, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(40px);
 }
 </style>

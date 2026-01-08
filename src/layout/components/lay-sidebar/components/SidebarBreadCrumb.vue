@@ -145,29 +145,35 @@ watch(
   :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
     color: #303133;
     font-weight: 600;
-    
+
     a {
       color: #303133;
       &:hover {
-         color: #303133;
-         cursor: text;
+        color: #303133;
+        cursor: text;
       }
     }
   }
-  
+
   :global(html.dark) & {
-    :deep(.el-breadcrumb__inner),
-    :deep(.el-breadcrumb__inner a) {
-       color: #a1a1aa;
-       
-       &:hover {
-         color: var(--el-color-primary);
-       }
+    :deep(.el-breadcrumb__inner) {
+      color: #d4d4d8;
+
+      a {
+        color: #d4d4d8;
+
+        &:hover {
+          color: var(--el-color-primary);
+        }
+      }
     }
-    
-    :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner),
-    :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner a) {
-       color: #fff;
+
+    :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+      color: #ffffff !important;
+
+      a {
+        color: #ffffff !important;
+      }
     }
   }
 }

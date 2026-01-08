@@ -73,7 +73,7 @@ onMounted(async () => {
         </div>
         
         <div class="relative z-10">
-          <p class="text-gray-500 dark:text-gray-400 text-sm mb-2 font-semibold tracking-wide uppercase">{{ item.title }}</p>
+          <p class="text-gray-500 dark:text-gray-300 text-sm mb-2 font-semibold tracking-wide uppercase">{{ item.title }}</p>
           <div class="flex items-baseline gap-2">
             <span class="text-3xl font-black text-gray-900 dark:text-white tabular-nums">
               <ReNormalCountTo
@@ -83,7 +83,7 @@ onMounted(async () => {
                 :decimals="item.unit === '%' ? 1 : 0"
               />
             </span>
-            <span class="text-gray-400 dark:text-gray-500 text-sm font-medium">{{ item.unit }}</span>
+            <span class="text-gray-400 dark:text-gray-300 text-sm font-medium">{{ item.unit }}</span>
           </div>
         </div>
         

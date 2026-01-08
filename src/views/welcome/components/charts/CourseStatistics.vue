@@ -306,30 +306,30 @@ const updateProgressChart = users => {
       type: "value",
       name: "完成进度(%)",
       max: 100,
-      axisLabel: {
-        formatter: "{value}%",
-        color: isDark.value ? "#e5e7eb" : "#4b5563"
-      },
-      splitLine: {
-        lineStyle: {
-          color: isDark.value ? "#3f3f46" : "#f3f4f6",
-          type: "dashed"
+        axisLabel: {
+          formatter: "{value}%",
+          color: isDark.value ? "#cbd5e1" : "#64748b"
+        },
+        splitLine: {
+          lineStyle: {
+            color: isDark.value ? "#475569" : "#f1f5f9",
+            type: "dashed"
+          }
         }
-      }
-    },
-    yAxis: {
-      type: "category",
-      data: userNames,
-      axisLabel: {
-        fontSize: 12,
-        color: isDark.value ? "#e5e7eb" : "#4b5563"
       },
-      axisLine: {
-        lineStyle: {
-          color: isDark.value ? "#52525b" : "#e5e7eb"
+      yAxis: {
+        type: "category",
+        data: userNames,
+        axisLabel: {
+          fontSize: 12,
+          color: isDark.value ? "#fafafa" : "#475569"
+        },
+        axisLine: {
+          lineStyle: {
+            color: isDark.value ? "#475569" : "#e5e7eb"
+          }
         }
-      }
-    },
+      },
     series: [
       {
         name: "完成进度",
@@ -340,7 +340,7 @@ const updateProgressChart = users => {
           show: true,
           position: "right",
           formatter: "{c}%",
-          color: isDark.value ? "#e5e7eb" : "#4b5563",
+          color: isDark.value ? "#ffffff" : "#4b5563",
           fontWeight: "bold"
         },
         itemStyle: {
@@ -411,10 +411,11 @@ const renderExamChart = courseData => {
     title: {
       text: courseData.examName,
       left: "center",
-      top: 0,
+      top: 10,
       textStyle: {
-        fontSize: 14,
-        color: isDark.value ? "#e5e7eb" : "#4b5563"
+        fontSize: 16,
+        fontWeight: "bold",
+        color: isDark.value ? "#ffffff" : "#1e293b"
       }
     },
     tooltip: {
@@ -422,11 +423,12 @@ const renderExamChart = courseData => {
       formatter: "{b}: {c}人 ({d}%)"
     },
     legend: {
-      bottom: 0,
-      itemGap: 15,
+      bottom: "5%",
+      itemGap: 20,
       data: levels,
       textStyle: {
-        color: isDark.value ? "#e5e7eb" : "#4b5563"
+        color: isDark.value ? "#fafafa" : "#334155",
+        fontSize: 13
       }
     },
     series: [
@@ -437,9 +439,9 @@ const renderExamChart = courseData => {
         center: ["50%", "50%"],
         avoidLabelOverlap: true,
         itemStyle: {
-          borderRadius: 8,
+          borderRadius: 12,
           borderColor: isDark.value ? "#1d1e1f" : "#fff",
-          borderWidth: 2
+          borderWidth: 4
         },
         data: levels.map((level, index) => ({
           name: level,
@@ -463,12 +465,14 @@ const renderExamChart = courseData => {
         label: {
           show: true,
           formatter: "{b}: {c}人",
-          color: isDark.value ? "#e5e7eb" : "#4b5563"
+          color: isDark.value ? "#ffffff" : "#334155",
+          fontSize: 12,
+          fontWeight: 500
         },
         labelLine: {
           show: true,
           lineStyle: {
-            color: isDark.value ? "#52525b" : "#e5e7eb"
+            color: isDark.value ? "#cbd5e1" : "#cbd5e1"
           }
         }
       }

@@ -25,13 +25,43 @@
   width: 100%;
   font-size: 14px;
   color: var(--el-text-color-primary);
-  background: transparent;
-  /* 透明背景以融合Navbar */
-  box-shadow: none;
-  padding: 6px 12px 0;
-  /* 增加顶部padding，让标签看起来悬浮 */
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(40px);
+  backdrop-filter: blur(40px);
+  /* 与Navbar呼应的毛玻璃 */
+  box-shadow: 0 8px 10px -5px rgba(0, 0, 0, 0.02);
+  padding: 10px 16px 6px;
+  /* 增加内边距 */
   height: auto;
-  min-height: 40px;
+  min-height: 48px;
+  z-index: 999;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  :global(html.dark) & {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+
+    .scroll-item {
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f8fafc;
+      }
+
+      &.is-active {
+        color: #ffffff !important;
+        background: var(--el-color-primary);
+
+        .tag-title {
+          color: #ffffff !important;
+        }
+      }
+    }
+  }
 
   .scroll-item {
     position: relative;
@@ -184,11 +214,19 @@
     color: var(--el-text-color-primary);
     white-space: nowrap;
     list-style-type: none;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     z-index: 3000;
+
+    :global(html.dark) & {
+      background: rgba(30, 30, 35, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e5e7eb;
+    }
 
     li {
       display: flex;
@@ -210,45 +248,6 @@
         font-size: 16px;
       }
     }
-  }
-}
-
-/* 深色模式适配 */
-:global(html.dark) .tags-view {
-  background: transparent;
-  width: 100%;
-
-  .scroll-item {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    color: #e5e7eb;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    &.is-active {
-      background: var(--el-color-primary);
-      color: #fff;
-      border-color: transparent;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-  }
-
-  .contextmenu {
-    background: #1f1f1f;
-    border: 1px solid #333;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-
-    li:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-  }
-
-  .arrow-left:hover,
-  .arrow-right:hover,
-  .arrow-down:hover {
-    background: rgba(255, 255, 255, 0.1);
   }
 }
 

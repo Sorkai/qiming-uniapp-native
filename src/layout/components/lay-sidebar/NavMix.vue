@@ -183,9 +183,9 @@ watch(
       <LayNotice id="header-notice" />
       <!-- 退出登录 -->
       <el-dropdown trigger="click">
-        <span class="el-dropdown-link navbar-bg-hover select-none">
-          <img :src="userAvatar" :style="avatarsStyle" />
-          <p v-if="username" class="dark:text-white">{{ username }}</p>
+        <span class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10">
+          <img :src="userAvatar" :style="avatarsStyle" class="ring-2 ring-white dark:ring-gray-800" />
+          <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">{{ username }}</p>
         </span>
         <template #dropdown>
           <el-dropdown-item @click="toAccountSettings">

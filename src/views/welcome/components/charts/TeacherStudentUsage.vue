@@ -62,11 +62,11 @@ const renderChart = () => {
           type: "dashed"
         }
       },
-      backgroundColor: "rgba(255, 255, 255, 0.9)",
-      borderColor: "#f1f5f9",
+      backgroundColor: isDark.value ? "rgba(30, 30, 35, 0.9)" : "rgba(255, 255, 255, 0.9)",
+      borderColor: isDark.value ? "#334155" : "#f1f5f9",
       borderWidth: 1,
       textStyle: {
-        color: "#1e293b"
+        color: isDark.value ? "#fafafa" : "#1e293b"
       }
     },
     legend: {
@@ -75,7 +75,7 @@ const renderChart = () => {
       icon: "circle",
       itemGap: 24,
       textStyle: {
-        color: "#64748b"
+        color: isDark.value ? "#fafafa" : "#4b5563"
       }
     },
     grid: {
@@ -91,11 +91,11 @@ const renderChart = () => {
         boundaryGap: false,
         axisLine: {
           lineStyle: {
-            color: "#f1f5f9"
+            color: isDark.value ? "#334155" : "#f1f5f9"
           }
         },
         axisLabel: {
-          color: "#94a3b8",
+          color: isDark.value ? "#cbd5e1" : "#94a3b8",
           fontSize: 11
         },
         axisTick: {
@@ -108,12 +108,12 @@ const renderChart = () => {
         type: "value",
         splitLine: {
           lineStyle: {
-            color: "#f1f5f9",
+            color: isDark.value ? "#334155" : "#f1f5f9",
             type: "dashed"
           }
         },
         axisLabel: {
-          color: "#94a3b8",
+          color: isDark.value ? "#cbd5e1" : "#94a3b8",
           fontSize: 11
         }
       }
@@ -192,4 +192,4 @@ onMounted(() => {
       </template>
     </el-skeleton>
   </div>
-</template> 
+</template>

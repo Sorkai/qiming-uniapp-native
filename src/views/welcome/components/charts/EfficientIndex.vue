@@ -110,7 +110,7 @@ const renderChart = () => {
       bottom: 0,
       itemGap: 20,
       textStyle: {
-        color: isDark.value ? "#e5e7eb" : "#4b5563",
+        color: isDark.value ? "#fafafa" : "#334155",
         fontSize: 12
       }
     },
@@ -131,7 +131,7 @@ const renderChart = () => {
         axisLabel: {
           fontSize: 12,
           interval: 0,
-          color: isDark.value ? "#e5e7eb" : "#4b5563",
+          color: isDark.value ? "#fafafa" : "#64748b",
           rotate: courseNames.length > 5 ? 30 : 0,
           // 自动换行：每行最多8个字
           formatter: (value: string) => {
@@ -148,7 +148,7 @@ const renderChart = () => {
         },
         axisLine: {
           lineStyle: {
-            color: isDark.value ? "#52525b" : "#e5e7eb"
+            color: isDark.value ? "#475569" : "#e5e7eb"
           }
         }
       }
@@ -158,18 +158,19 @@ const renderChart = () => {
         type: "value",
         name: "耗时(分钟)",
         nameTextStyle: {
-          color: isDark.value ? "#e5e7eb" : "#4b5563",
-          padding: [0, 0, 0, 40]
+          color: isDark.value ? "#fafafa" : "#334155",
+          padding: [0, 0, 0, 40],
+          fontWeight: "bold"
         },
         splitLine: {
           lineStyle: {
-            color: isDark.value ? "#3f3f46" : "#f3f4f6",
+            color: isDark.value ? "#475569" : "#f1f5f9",
             type: "dashed"
           }
         },
         axisLabel: {
-          fontSize: 12,
-          color: isDark.value ? "#e5e7eb" : "#4b5563"
+          fontSize: 11,
+          color: isDark.value ? "#cbd5e1" : "#64748b"
         }
       }
     ],

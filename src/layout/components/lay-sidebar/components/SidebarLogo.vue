@@ -39,9 +39,9 @@ const { title, getLogo } = useNav();
 .sidebar-logo-container {
   position: relative;
   width: 100%;
-  height: 64px;
+  height: 72px;
   overflow: hidden;
-  padding: 8px 0;
+  padding: 10px 0;
   display: flex;
   align-items: center;
 
@@ -52,22 +52,22 @@ const { title, getLogo } = useNav();
     justify-content: center;
     width: 100%;
     height: 100%;
-    padding: 0 12px;
+    padding: 0 16px;
 
     img {
       display: inline-block;
-      height: 32px;
+      height: 40px;
     }
 
     .sidebar-title {
       display: inline-block;
-      height: 32px;
+      height: 40px;
       margin: 2px 0 0 12px;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 800;
-      line-height: 32px;
+      line-height: 40px;
       letter-spacing: 0.05em;
       color: var(--pure-theme-sub-menu-active-text);
       white-space: nowrap;

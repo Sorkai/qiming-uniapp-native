@@ -43,7 +43,7 @@ watch(
       legend: {
         data: ["需求人数", "提问数量"],
         textStyle: {
-          color: "#606266",
+          color: isDark.value ? "#ffffff" : "#606266",
           fontSize: "0.875rem"
         },
         bottom: 0
@@ -53,7 +53,13 @@ watch(
           type: "category",
           data: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
           axisLabel: {
-            fontSize: "0.875rem"
+            fontSize: "0.875rem",
+            color: isDark.value ? "#fafafa" : "#606266"
+          },
+          axisLine: {
+            lineStyle: {
+              color: isDark.value ? "#334155" : "#e5e7eb"
+            }
           },
           axisPointer: {
             type: "shadow"
@@ -64,7 +70,8 @@ watch(
         {
           type: "value",
           axisLabel: {
-            fontSize: "0.875rem"
+            fontSize: "0.875rem",
+            color: isDark.value ? "#fafafa" : "#606266"
           },
           splitLine: {
             show: false // 去网格线
