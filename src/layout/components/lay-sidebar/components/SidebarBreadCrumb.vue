@@ -124,7 +124,6 @@ watch(
 .app-breadcrumb {
   display: inline-block;
   font-size: 14px;
-  line-height: 48px;
   margin-left: 8px;
 
   :deep(.el-breadcrumb__inner) {

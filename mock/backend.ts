@@ -624,7 +624,9 @@ export default defineFakeRoute([
               correctPlanTime: 10,
               planWorkTime: 45,
               correctPlanWorkTime: 5,
-              optimizeDirection: "加强循环与函数章节的练习，学生在复杂控制流上耗时较多。"
+              optimizeDirection: "加强循环与函数章节的练习，学生在复杂控制流上耗时较多。",
+              expectedEffect: "预计备课修正耗时减少 15%",
+              difficulty: "低"
             },
             {
               courseName: "Web 前端开发实战",
@@ -632,7 +634,9 @@ export default defineFakeRoute([
               correctPlanTime: 25,
               planWorkTime: 90,
               correctPlanWorkTime: 15,
-              optimizeDirection: "CSS 布局部分建议增加更多实战案例，减少理论讲解。"
+              optimizeDirection: "CSS 布局部分建议增加更多实战案例，减少理论讲解。",
+              expectedEffect: "预计作业设计修正耗时减少 20%",
+              difficulty: "中"
             },
             {
               courseName: "Java 高级进阶",
@@ -640,7 +644,9 @@ export default defineFakeRoute([
               correctPlanTime: 80,
               planWorkTime: 120,
               correctPlanWorkTime: 30,
-              optimizeDirection: "JVM 内存模型部分难度较大，建议拆分为两个课时进行讲解。"
+              optimizeDirection: "JVM 内存模型部分难度较大，建议拆分为两个课时进行讲解。",
+              expectedEffect: "预计备课时间减少 10%",
+              difficulty: "高"
             },
             {
               courseName: "数据结构与算法",
@@ -648,7 +654,9 @@ export default defineFakeRoute([
               correctPlanTime: 15,
               planWorkTime: 60,
               correctPlanWorkTime: 10,
-              optimizeDirection: "动态规划算法是多数学生的薄弱点，可以增加 AI 生成的针对性题库。"
+              optimizeDirection: "动态规划算法是多数学生的薄弱点，可以增加 AI 生成的针对性题库。",
+              expectedEffect: "预计作业评改效率提高 25%",
+              difficulty: "中"
             },
             {
               courseName: "机器学习基础",
@@ -656,7 +664,9 @@ export default defineFakeRoute([
               correctPlanTime: 35,
               planWorkTime: 110,
               correctPlanWorkTime: 20,
-              optimizeDirection: "线性回归与逻辑回归的数学基础需要强化，建议补充线性代数内容。"
+              optimizeDirection: "线性回归与逻辑回归的数学基础需要强化，建议补充线性代数内容。",
+              expectedEffect: "预计备课时间减少 5%，学生掌握度提高 10%",
+              difficulty: "由于涉及多门学科，难度较高"
             },
             {
               courseName: "云计算与容器技术",
@@ -664,7 +674,51 @@ export default defineFakeRoute([
               correctPlanTime: 30,
               planWorkTime: 95,
               correctPlanWorkTime: 18,
-              optimizeDirection: "Docker 与 Kubernetes 的实操练习需要增加，提高学生的动手能力。"
+              optimizeDirection: "Docker 与 Kubernetes 的实操练习需要增加，提高学生的动手能力。",
+              expectedEffect: "预计实操课时占比增加 20%",
+              difficulty: "中"
+            }
+          ]
+        }
+      };
+    }
+  },
+  {
+    url: "/edu/backend/v1/statistics/platform/overview",
+    method: "get",
+    response: () => {
+      return {
+        code: 200,
+        msg: "成功",
+        data: {
+          stats: [
+            {
+              title: "授课时长",
+              value: 1280,
+              unit: "min",
+              trend: 12,
+              icon: "ep:timer"
+            },
+            {
+              title: "活跃学生",
+              value: 156,
+              unit: "位",
+              trend: -5,
+              icon: "ep:user"
+            },
+            {
+              title: "完成进度",
+              value: 85,
+              unit: "%",
+              trend: 8,
+              icon: "ep:finished"
+            },
+            {
+              title: "AI 生成方案",
+              value: 42,
+              unit: "个",
+              trend: 25,
+              icon: "ep:magic-stick"
             }
           ]
         }

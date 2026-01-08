@@ -3,8 +3,10 @@ import { ref, onMounted } from "vue";
 import { type IconifyIcon } from "@iconify/vue";
 import { useDark } from "../utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
+import { getPlatformStats } from "@/api/statistics";
 
 const { isDark } = useDark();
+const loading = ref(true);
 
 interface StatItem {
   title: string;
@@ -16,48 +18,31 @@ interface StatItem {
   bgColor: string;
 }
 
-const stats = ref<StatItem[]>([
-  {
-    title: "累计授课时长",
-    value: "1,280",
-    unit: "小时",
-    trend: 12.5,
-    icon: "ep:timer",
-    color: "#2563eb",
-    bgColor: "#eff6ff"
-  },
-  {
-    title: "本周活跃学生",
-    value: "856",
-    unit: "人",
-    trend: 8.2,
-    icon: "ep:user",
-    color: "#0891b2",
-    bgColor: "#ecfeff"
-  },
-  {
-    title: "平均作业完成率",
-    value: "92.4",
-    unit: "%",
-    trend: -1.5,
-    icon: "ep:finished",
-    color: "#059669",
-    bgColor: "#f0fdf4"
-  },
-  {
-    title: "AI 生成教案",
-    value: "42",
-    unit: "份",
-    trend: 25.0,
-    icon: "ep:magic-stick",
-    color: "#ea580c",
-    bgColor: "#fff7ed"
+const colors = ["#5B8FF9", "#5AD8A6", "#F6BD16", "#E8684A"];
+const bgColors = ["#EBF1FF", "#EFFFF9", "#FFFBF0", "#FFF7F5"];
+
+const stats = ref<StatItem[]>([]);
+
+onMounted(async () => {
+  try {
+    const { data } = await getPlatformStats();
+    if (data && data.stats) {
+      stats.value = data.stats.map((item, index) => ({
+        ...item,
+        color: colors[index % colors.length],
+        bgColor: bgColors[index % bgColors.length]
+      }));
+    }
+  } catch (error) {
+    console.error("Failed to fetch platform stats:", error);
+  } finally {
+    loading.value = false;
   }
-]);
+});
 </script>
 
 <template>
-  <el-row :gutter="20">
+  <el-row :gutter="20" v-loading="loading">
     <el-col v-for="(item, index) in stats" :key="index" :xs="24" :sm="12" :md="6">
       <div 
         class="stat-card p-6 bg-white dark:bg-[var(--el-bg-color-overlay)] rounded-[24px] shadow-sm border border-gray-100 dark:border-transparent mb-4 transition-all duration-500 hover:shadow-xl hover:-translate-y-2 group"

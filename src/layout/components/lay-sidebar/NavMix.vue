@@ -114,7 +114,7 @@ watch(
       <!-- 国际化 -->
       <el-dropdown id="header-translation" trigger="click">
         <GlobalizationIcon
-          class="navbar-bg-hover w-[40px] h-[48px] p-[11px] cursor-pointer outline-hidden"
+          class="navbar-bg-hover w-[40px] h-[64px] p-[18px] cursor-pointer outline-hidden"
         />
         <template #dropdown>
           <el-dropdown-menu class="translation">

@@ -346,9 +346,9 @@ const updateProgressChart = users => {
         itemStyle: {
           color: function (params) {
             const progress = params.value as number;
-            if (progress < 30) return "#ef4444";
-            if (progress < 70) return "#f59e0b";
-            return "#6366f1";
+            if (progress < 30) return "#E8684A";
+            if (progress < 70) return "#F6BD16";
+            return "#5B8FF9";
           },
           borderRadius: [0, 6, 6, 0]
         }
@@ -446,10 +446,10 @@ const renderExamChart = courseData => {
           value: counts[index],
           itemStyle: {
             color: [
-              "#ef4444", 
-              "#f59e0b", 
-              "#6366f1", 
-              "#10b981"
+              "#E8684A", 
+              "#F6BD16", 
+              "#5B8FF9", 
+              "#5AD8A6"
             ][index % 4]
           }
         })),

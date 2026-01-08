@@ -177,40 +177,40 @@ const renderChart = () => {
       {
         name: "备课耗时",
         type: "bar",
-        barMaxWidth: 30,
+        barMaxWidth: 25,
         itemStyle: {
-          color: "#3b82f6",
-          borderRadius: [6, 6, 0, 0]
+          color: "#5B8FF9",
+          borderRadius: [4, 4, 0, 0]
         },
         data: planTimeData
       },
       {
         name: "备课修正耗时",
         type: "bar",
-        barMaxWidth: 30,
+        barMaxWidth: 25,
         itemStyle: {
-          color: "#0ea5e9",
-          borderRadius: [6, 6, 0, 0]
+          color: "#F6BD16",
+          borderRadius: [4, 4, 0, 0]
         },
         data: correctPlanTimeData
       },
       {
         name: "作业设计耗时",
         type: "bar",
-        barMaxWidth: 30,
+        barMaxWidth: 25,
         itemStyle: {
-          color: "#0d9488",
-          borderRadius: [6, 6, 0, 0]
+          color: "#5AD8A6",
+          borderRadius: [4, 4, 0, 0]
         },
         data: planWorkTimeData
       },
       {
         name: "作业设计修正耗时",
         type: "bar",
-        barMaxWidth: 30,
+        barMaxWidth: 25,
         itemStyle: {
-          color: "#10b981",
-          borderRadius: [6, 6, 0, 0]
+          color: "#E8684A",
+          borderRadius: [4, 4, 0, 0]
         },
         data: correctPlanWorkTimeData
       }
@@ -228,7 +228,9 @@ const optimizeSuggestions = computed(() => {
   return efficientData.value.filter(item => item.optimizeDirection?.trim())
     .map(item => ({
       courseName: item.courseName,
-      optimizeDirection: item.optimizeDirection
+      optimizeDirection: item.optimizeDirection,
+      expectedEffect: item.expectedEffect,
+      difficulty: item.difficulty
     }));
 });
 
@@ -392,14 +394,14 @@ onMounted(() => {
                 <div class="text-emerald-500 mt-1"><IconifyIconOnline icon="ep:circle-check" /></div>
                 <div>
                   <h5 class="text-sm font-bold text-gray-700 dark:text-gray-300">预期效果</h5>
-                  <p class="text-xs text-gray-500 dark:text-gray-500">采用建议后，预计备课时间将减少 15-20%</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">{{ selectedSuggestion?.expectedEffect || '暂无数据' }}</p>
                 </div>
               </div>
               <div class="flex gap-3">
                 <div class="text-amber-500 mt-1"><IconifyIconOnline icon="ep:warning" /></div>
                 <div>
                   <h5 class="text-sm font-bold text-gray-700 dark:text-gray-300">执行难度</h5>
-                  <p class="text-xs text-gray-500 dark:text-gray-500">中等，需要调整现有的教学资源库引用逻辑</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">{{ selectedSuggestion?.difficulty || '暂无数据' }}</p>
                 </div>
               </div>
             </div>
@@ -443,7 +445,7 @@ onMounted(() => {
 }
 
 :deep(.el-checkbox.is-checked .el-checkbox__label) {
-  color: #2563eb;
+  color: #5B8FF9;
 }
 
 .line-clamp-4 {

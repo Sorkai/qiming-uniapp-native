@@ -80,8 +80,8 @@ const renderChart = () => {
           show: true
         },
         data: [
-          { value: studentTotalNum, name: "学生使用", itemStyle: { color: "#41b6ff" } },
-          { value: teacherTotalNum, name: "老师使用", itemStyle: { color: "#e85f33" } }
+          { value: studentTotalNum, name: "学生使用", itemStyle: { color: "#5B8FF9" } },
+          { value: teacherTotalNum, name: "老师使用", itemStyle: { color: "#F6BD16" } }
         ]
       }
     ]

@@ -103,7 +103,7 @@ watchEffect(() => {
         <div class="mt-8 flex flex-wrap gap-4 justify-center md:justify-start">
           <el-button 
             color="#ffffff" 
-            style="color: #2563eb" 
+            style="color: #5B8FF9" 
             round 
             size="large"
             class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-md"
@@ -116,7 +116,7 @@ watchEffect(() => {
             round 
             size="large"
             class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-md"
-            style="color: #2563eb"
+            style="color: #5B8FF9"
             @click="handleViewReport"
           >
             <IconifyIconOnline icon="ep:view" class="mr-1" /> 查看报告
@@ -258,12 +258,12 @@ watchEffect(() => {
 }
 
 .welcome-header {
-  background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
+  background: linear-gradient(135deg, #5B8FF9 0%, #5AD8A6 100%);
   border-radius: 24px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   
   &:hover {
-    box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 20px 40px -10px rgba(91, 143, 249, 0.4);
     transform: scale(1.02);
     
     .wave {

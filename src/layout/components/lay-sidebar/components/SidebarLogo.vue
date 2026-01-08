@@ -39,15 +39,20 @@ const { title, getLogo } = useNav();
 .sidebar-logo-container {
   position: relative;
   width: 100%;
-  height: 48px;
+  height: 64px;
   overflow: hidden;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
 
   .sidebar-logo-link {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+    justify-content: center;
+    width: 100%;
     height: 100%;
-    padding-left: 10px;
+    padding: 0 12px;
 
     img {
       display: inline-block;
@@ -61,8 +66,9 @@ const { title, getLogo } = useNav();
       overflow: hidden;
       text-overflow: ellipsis;
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 800;
       line-height: 32px;
+      letter-spacing: 0.05em;
       color: var(--pure-theme-sub-menu-active-text);
       white-space: nowrap;
     }
