@@ -162,14 +162,43 @@
         <div class="transition-text">
           <h2>让每一位学习者<br/>都能发光发亮</h2>
           <p>基于 AI 技术的个性化学习路径规划，因材施教，让知识触手可及</p>
+          <div class="transition-stats">
+            <div class="stat-item">
+              <span class="stat-number">98%</span>
+              <span class="stat-label">学习效率提升</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">50万+</span>
+              <span class="stat-label">活跃学习者</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">1000+</span>
+              <span class="stat-label">精品课程</span>
+            </div>
+          </div>
         </div>
         <div class="transition-visual">
-          <div class="floating-cards">
-            <div class="float-card card-1">📚</div>
-            <div class="float-card card-2">🎯</div>
-            <div class="float-card card-3">💡</div>
-            <div class="float-card card-4">🚀</div>
+          <div class="visual-grid">
+            <div class="grid-card card-large">
+              <div class="card-icon">🎓</div>
+              <div class="card-title">智能学习</div>
+              <div class="card-desc">AI 驱动的个性化学习路径</div>
+            </div>
+            <div class="grid-card card-medium card-top-right">
+              <div class="card-icon">📊</div>
+              <div class="card-title">数据分析</div>
+            </div>
+            <div class="grid-card card-medium card-bottom-left">
+              <div class="card-icon">🏆</div>
+              <div class="card-title">成就系统</div>
+            </div>
+            <div class="grid-card card-small card-1">📚</div>
+            <div class="grid-card card-small card-2">🚀</div>
+            <div class="grid-card card-small card-3">💡</div>
+            <div class="grid-card card-small card-4">🎯</div>
+            <div class="grid-card card-small card-5">⚡</div>
           </div>
+          <div class="visual-glow"></div>
         </div>
       </div>
     </div>
@@ -384,6 +413,7 @@ import { storageLocal } from "@pureadmin/utils";
 import { userKey, removeToken, getToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
+import { initRouter } from "@/router/utils";
 
 // 导入图片资源
 import banner1 from "@/assets/home/banner1.jpg";
@@ -429,7 +459,10 @@ const handleEntry = () => {
   }
 };
 
-const handleLoginSuccess = () => {
+const handleLoginSuccess = async () => {
+  // 首先初始化路由，确保菜单数据正确加载
+  await initRouter();
+  
   userInfo.value = storageLocal().getItem(userKey);
   if (userInfo.value && (userInfo.value.roleType === 2 || userInfo.value.roleType === 3)) {
     router.push("/welcome/index");
@@ -1072,18 +1105,20 @@ const handleCommand = (command: string) => {
 
   .stats-container {
     display: flex;
-    justify-content: center;
+    justify-content: stretch;
     gap: 30px;
-    max-width: 1200px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 60px;
+    box-sizing: border-box;
     perspective: 1000px;
   }
 
   .stat-card {
     position: relative;
     flex: 1;
-    max-width: 260px;
+    max-width: none;
     padding: 40px 30px;
     text-align: center;
     background: rgba(255, 255, 255, 0.03);
@@ -1269,53 +1304,144 @@ const handleCommand = (command: string) => {
 }
 
 .transition-image-section {
-  padding: 50px 0;
+  padding: 80px 0;
   background: linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%);
+  overflow: hidden;
 
   .transition-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1200px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 0 40px;
+    padding: 0 60px;
+    box-sizing: border-box;
+    gap: 60px;
   }
 
   .transition-text {
-    flex: 1;
-    max-width: 500px;
+    flex: 0 0 45%;
+    max-width: 550px;
 
-    h2 { font-size: 48px; font-weight: 700; color: #fff; margin-bottom: 24px; }
-    p { font-size: 18px; color: rgba(255, 255, 255, 0.6); }
+    h2 { font-size: 48px; font-weight: 700; color: #fff; margin-bottom: 24px; line-height: 1.3; }
+    p { font-size: 18px; color: rgba(255, 255, 255, 0.6); margin-bottom: 40px; }
+
+    .transition-stats {
+      display: flex;
+      gap: 40px;
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+
+        .stat-number {
+          font-size: 32px;
+          font-weight: 700;
+          color: #60a5fa;
+          margin-bottom: 4px;
+        }
+
+        .stat-label {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.5);
+        }
+      }
+    }
   }
 
   .transition-visual {
-    flex: 1;
+    flex: 0 0 50%;
+    position: relative;
     display: flex;
     justify-content: center;
+    align-items: center;
+    min-height: 400px;
 
-    .floating-cards {
-      position: relative;
+    .visual-glow {
+      position: absolute;
       width: 300px;
       height: 300px;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(40px);
+      z-index: 0;
+    }
 
-      .float-card {
+    .visual-grid {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      height: 380px;
+      z-index: 1;
+
+      .grid-card {
         position: absolute;
-        width: 80px;
-        height: 80px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 36px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        animation: floatCard 4s ease-in-out infinite;
+        transition: all 0.3s ease;
 
-        &.card-1 { top: 0; left: 50%; transform: translateX(-50%); }
-        &.card-2 { top: 50%; right: 0; transform: translateY(-50%); animation-delay: 1s; }
-        &.card-3 { bottom: 0; left: 50%; transform: translateX(-50%); animation-delay: 2s; }
-        &.card-4 { top: 50%; left: 0; transform: translateY(-50%); animation-delay: 3s; }
+        &:hover {
+          transform: translateY(-5px);
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(96, 165, 250, 0.3);
+        }
+
+        .card-icon { font-size: 36px; margin-bottom: 8px; }
+        .card-title { font-size: 14px; font-weight: 600; color: #fff; }
+        .card-desc { font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 4px; text-align: center; padding: 0 10px; }
+
+        &.card-large {
+          width: 180px;
+          height: 160px;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+          border-color: rgba(96, 165, 250, 0.2);
+          z-index: 3;
+
+          .card-icon { font-size: 48px; }
+          .card-title { font-size: 16px; }
+
+          &:hover { transform: translate(-50%, -55%); }
+        }
+
+        &.card-medium {
+          width: 130px;
+          height: 110px;
+        }
+
+        &.card-top-right {
+          top: 20px;
+          right: 30px;
+          animation: floatCard 5s ease-in-out infinite;
+        }
+
+        &.card-bottom-left {
+          bottom: 20px;
+          left: 30px;
+          animation: floatCard 5s ease-in-out infinite 1.5s;
+        }
+
+        &.card-small {
+          width: 60px;
+          height: 60px;
+          font-size: 28px;
+          animation: floatCard 4s ease-in-out infinite;
+
+          &.card-1 { top: 10px; left: 60px; animation-delay: 0s; }
+          &.card-2 { top: 60px; right: 20px; animation-delay: 0.5s; }
+          &.card-3 { bottom: 60px; right: 50px; animation-delay: 1s; }
+          &.card-4 { bottom: 10px; left: 50%; transform: translateX(-50%); animation-delay: 1.5s; }
+          &.card-5 { top: 50%; left: 10px; transform: translateY(-50%); animation-delay: 2s; }
+        }
       }
     }
   }
@@ -1323,13 +1449,15 @@ const handleCommand = (command: string) => {
 
 @keyframes floatCard {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
+  50% { transform: translateY(-10px); }
 }
 
 .section-container {
-  max-width: 1300px;
-  padding: 0 40px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 60px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .section-header {
@@ -1366,7 +1494,7 @@ const handleCommand = (command: string) => {
 .platform-intro {
   position: relative;
   padding: 50px 0;
-  background: linear-gradient(180deg, #0a0a1a 0%, #12122a 50%, #0a0a1a 100%);
+  background: linear-gradient(180deg, #0a0a1a 0%, #12122a 50%, #1a1a2e 100%);
 
   .feature-list {
     display: grid;
@@ -1447,7 +1575,7 @@ const handleCommand = (command: string) => {
   .parallax-bg {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%);
+    background: #1a1a2e;
   }
 
   .transition-overlay {
@@ -1472,7 +1600,7 @@ const handleCommand = (command: string) => {
 
 .services-section {
   padding: 50px 0;
-  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 100%);
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
 
   .services-grid {
     display: grid;

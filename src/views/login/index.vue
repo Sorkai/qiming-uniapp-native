@@ -26,6 +26,7 @@ import { ref, toRaw, reactive, watch, computed, onMounted } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { resetThemeToDefault } from "@/utils/auth";
 
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
@@ -70,7 +71,11 @@ onMounted(() => {
 
 const { t } = useI18n();
 const { initStorage } = useLayout();
+
+// 管理员/教师端登录页：强制重置为浅色主题，防止从学生端残留深色模式
+resetThemeToDefault();
 initStorage();
+
 const { dataTheme, overallStyle, dataThemeChange } = useDataThemeChange();
 dataThemeChange(overallStyle.value);
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();

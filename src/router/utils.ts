@@ -75,7 +75,16 @@ function filterTree(data: RouteComponent[]) {
 
 /** 过滤children长度为0的的目录，当目录下没有菜单时，会过滤此目录，目录没有赋予roles权限，当目录下只要有一个菜单有显示权限，那么此目录就会显示 */
 function filterChildrenTree(data: RouteComponent[]) {
-  const newTree = cloneDeep(data).filter((v: any) => v?.children?.length !== 0);
+  // 修复：只过滤掉明确有 children 属性且为空数组的目录
+  // 保留没有 children 属性的叶子节点路由
+  const newTree = cloneDeep(data).filter((v: any) => {
+    // 如果 children 不是数组（undefined 或其他），保留该路由（它是叶子节点）
+    if (!Array.isArray(v?.children)) return true;
+    // 如果 children 是数组，只有当它有内容时才保留
+    return v.children.length > 0;
+  });
+  // 修复：递归调用应该是 filterTree 而不是 filterChildrenTree
+  // 这样子路由只会被过滤 showLink: false，而不会被 filterChildrenTree 再次过滤
   newTree.forEach(
     (v: { children }) => v.children && (v.children = filterTree(v.children))
   );
@@ -95,12 +104,32 @@ function isOneOfArray(a: Array<string>, b: Array<string>) {
 function filterNoPermissionTree(data: RouteComponent[]) {
   const currentRoles =
     storageLocal().getItem<DataInfo<number>>(userKey)?.roles ?? [];
-  const newTree = cloneDeep(data).filter((v: any) =>
-    isOneOfArray(v.meta?.roles, currentRoles)
-  );
+  console.log("[Router] filterNoPermissionTree - 当前用户角色:", currentRoles);
+  console.log("[Router] filterNoPermissionTree - 输入菜单数量:", data.length);
+
+  // 修复：如果用户角色为空数组，说明可能是首次登录时 localStorage 还未完全同步
+  // 在这种情况下，不进行权限过滤，保留所有没有明确 roles 限制的菜单
+  const newTree = cloneDeep(data).filter((v: any) => {
+    // 如果路由没有定义 roles 限制，则允许访问
+    if (!v.meta?.roles || !Array.isArray(v.meta.roles) || v.meta.roles.length === 0) {
+      return true;
+    }
+    // 如果用户角色为空，但路由有 roles 限制，则过滤掉
+    if (currentRoles.length === 0) {
+      console.log("[Router] 用户角色为空，过滤掉有权限限制的菜单:", v.path, "需要角色:", v.meta?.roles);
+      return false;
+    }
+    // 正常的权限检查
+    const hasPermission = isOneOfArray(v.meta?.roles, currentRoles);
+    if (!hasPermission) {
+      console.log("[Router] 过滤掉无权限菜单:", v.path, "需要角色:", v.meta?.roles);
+    }
+    return hasPermission;
+  });
   newTree.forEach(
     (v: any) => v.children && (v.children = filterNoPermissionTree(v.children))
   );
+  console.log("[Router] filterNoPermissionTree - 过滤后菜单数量:", newTree.length);
   return filterChildrenTree(newTree);
 }
 
@@ -161,7 +190,9 @@ function addPathMatch() {
 
 /** 处理动态路由（后端返回的路由） */
 function handleAsyncRoutes(routeList) {
+  console.log("[Router] handleAsyncRoutes 开始处理, routeList:", routeList);
   if (routeList.length === 0) {
+    console.log("[Router] 动态路由为空，仅使用静态路由");
     usePermissionStoreHook().handleWholeMenus(routeList);
   } else {
     formatFlatteningRoutes(addAsyncRoutes(routeList)).map(
@@ -190,6 +221,7 @@ function handleAsyncRoutes(routeList) {
     );
     usePermissionStoreHook().handleWholeMenus(routeList);
   }
+  console.log("[Router] handleAsyncRoutes 处理完成, wholeMenus:", usePermissionStoreHook().wholeMenus);
   if (!useMultiTagsStoreHook().getMultiTagsCache) {
     useMultiTagsStoreHook().handleTags("equal", [
       ...routerArrays,
@@ -213,20 +245,38 @@ function initRouter() {
         resolve(router);
       });
     } else {
-      return new Promise(resolve => {
-        getAsyncRoutes().then(({ data }) => {
-          handleAsyncRoutes(cloneDeep(data));
-          storageLocal().setItem(key, data);
-          resolve(router);
-        });
+      return new Promise((resolve, reject) => {
+        getAsyncRoutes()
+          .then(res => {
+            console.log("[Router] 获取动态路由响应:", res);
+            const data = res?.data ?? [];
+            handleAsyncRoutes(cloneDeep(data));
+            storageLocal().setItem(key, data);
+            resolve(router);
+          })
+          .catch(error => {
+            console.error("[Router] 获取动态路由失败:", error);
+            // 即使获取路由失败，也要resolve以避免死循环
+            handleAsyncRoutes([]);
+            resolve(router);
+          });
       });
     }
   } else {
-    return new Promise(resolve => {
-      getAsyncRoutes().then(({ data }) => {
-        handleAsyncRoutes(cloneDeep(data));
-        resolve(router);
-      });
+    return new Promise((resolve, reject) => {
+      getAsyncRoutes()
+        .then(res => {
+          console.log("[Router] 获取动态路由响应:", res);
+          const data = res?.data ?? [];
+          handleAsyncRoutes(cloneDeep(data));
+          resolve(router);
+        })
+        .catch(error => {
+          console.error("[Router] 获取动态路由失败:", error);
+          // 即使获取路由失败，也要resolve以避免死循环
+          handleAsyncRoutes([]);
+          resolve(router);
+        });
     });
   }
 }

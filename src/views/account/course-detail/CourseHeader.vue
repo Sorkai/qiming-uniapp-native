@@ -83,6 +83,8 @@
       <div class="header-right">
         <el-dropdown
           trigger="click"
+          teleported
+          :popper-options="{ modifiers: [{ name: 'offset', options: { offset: [0, 8] } }] }"
           @visible-change="v => (visible = v)"
           popper-class="course-user-dropdown"
         >
@@ -117,8 +119,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import Sunny from "~icons/ep/sunny";
-import Moon from "~icons/ep/moon";
+import { IconifyIconOffline } from "@/components/ReIcon";
 import ArrowDown from "~icons/ep/arrow-down";
 import Setting from "~icons/ri/user-settings-line";
 import LogoutIcon from "~icons/ri/logout-circle-r-line";
@@ -430,50 +431,14 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   color: #000000d9;
   transition: transform 0.3s ease;
   display: inline-block;
+
+  &.rotate-180 {
+    transform: rotate(180deg);
+  }
 }
 
 .layout-header.dark .dropdown-arrow {
   color: #fff;
-}
-
-/* 下拉菜单样式复刻 */
-:global(.course-user-dropdown) {
-  padding: 0;
-  border-radius: 8px;
-  border: 1px solid #ebeef5;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-
-  .el-dropdown-menu {
-    padding: 0;
-
-    &__item {
-      display: inline-flex;
-      flex-wrap: wrap;
-      min-width: 120px;
-      padding: 8px 16px;
-      font-size: 14px;
-      color: #606266;
-      line-height: 22px;
-
-      &:hover {
-        background-color: #f5f7fa;
-        color: var(--el-color-primary);
-      }
-
-      &--divided {
-        margin-top: 0;
-        border-top: 1px solid #ebeef5;
-
-        &:before {
-          display: none;
-        }
-      }
-    }
-  }
-
-  .logout-item {
-    color: #f56c6c;
-  }
 }
 
 /* 聚光灯按钮效果 */
@@ -498,5 +463,57 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 .spotlight-button:hover::before {
   opacity: 1;
+}
+</style>
+
+<!-- 非 scoped 样式，确保下拉菜单正确显示 -->
+<style lang="scss">
+.course-user-dropdown {
+  z-index: 9999 !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid #ebeef5 !important;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1) !important;
+  background: #fff !important;
+
+  .el-dropdown-menu {
+    padding: 0;
+    background: #fff;
+    border: none;
+    box-shadow: none;
+
+    .el-dropdown-menu__item {
+      display: inline-flex;
+      flex-wrap: wrap;
+      min-width: 120px;
+      padding: 8px 16px;
+      font-size: 14px;
+      color: #606266;
+      line-height: 22px;
+
+      &:hover {
+        background-color: #f5f7fa;
+        color: var(--el-color-primary);
+      }
+
+      &.is-divided {
+        margin-top: 0;
+        border-top: 1px solid #ebeef5;
+
+        &::before {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .logout-item {
+    color: #f56c6c !important;
+    
+    &:hover {
+      color: #f56c6c !important;
+      background-color: #fef0f0 !important;
+    }
+  }
 }
 </style>

@@ -358,6 +358,54 @@ export default defineFakeRoute([
       return { code: 200, msg: "删除成功", data: null };
     }
   },
+  // 课程分配学员列表
+  {
+    url: "/edu/backend/v1/course/allocation/user/list",
+    method: "get",
+    response: ({ query }) => {
+      const pageNum = parseInt(getQueryParam(query, "pageNum")) || 1;
+      const pageSize = parseInt(getQueryParam(query, "pageSize")) || 20;
+      const userName = getQueryParam(query, "userName");
+
+      // 模拟学员数据
+      const mockStudents = [
+        { userId: 1, userName: "张三", avatar: "", mobile: "13800138001" },
+        { userId: 2, userName: "李四", avatar: "", mobile: "13800138002" },
+        { userId: 3, userName: "王五", avatar: "", mobile: "13800138003" },
+        { userId: 4, userName: "赵六", avatar: "", mobile: "13800138004" },
+        { userId: 5, userName: "钱七", avatar: "", mobile: "13800138005" },
+        { userId: 6, userName: "孙八", avatar: "", mobile: "13800138006" },
+        { userId: 7, userName: "周九", avatar: "", mobile: "13800138007" },
+        { userId: 8, userName: "吴十", avatar: "", mobile: "13800138008" }
+      ];
+
+      let filtered = mockStudents;
+      if (userName) {
+        filtered = mockStudents.filter(s => s.userName.includes(userName));
+      }
+
+      const start = (pageNum - 1) * pageSize;
+      const end = start + pageSize;
+      const list = filtered.slice(start, end);
+
+      return {
+        code: 200,
+        msg: "success",
+        data: {
+          total: filtered.length,
+          list: list
+        }
+      };
+    }
+  },
+  // 课程分配提交
+  {
+    url: "/edu/backend/v1/course/allocation",
+    method: "post",
+    response: () => {
+      return { code: 200, msg: "分配成功", data: null };
+    }
+  },
   {
     url: "/edu/backend/v1/course/hours/list",
     method: "get",

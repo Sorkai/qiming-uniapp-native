@@ -71,6 +71,10 @@ export const constantMenus: Array<RouteComponent> = ascending(
   routes.flat(Infinity)
 ).concat(...remainingRouter);
 
+// 调试输出
+console.log("[Router Init] 静态路由 constantMenus:", constantMenus);
+console.log("[Router Init] constantMenus 数量:", constantMenus.length);
+
 /** 不参与菜单的路由 */
 export const remainingPaths = Object.keys(remainingRouter).map(v => {
   return remainingRouter[v].path;
