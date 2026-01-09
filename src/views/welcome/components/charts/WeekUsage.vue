@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { getWeekUsage } from "@/api/statistics";
 
@@ -94,6 +94,16 @@ const renderChart = () => {
     ]
   });
 };
+
+// 监听主题变化，重新渲染图表
+watch(
+  () => isDark.value,
+  () => {
+    if (!loading.value) {
+      renderChart();
+    }
+  }
+);
 
 onMounted(() => {
   fetchData();

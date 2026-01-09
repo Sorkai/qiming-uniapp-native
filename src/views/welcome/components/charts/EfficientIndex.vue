@@ -254,6 +254,16 @@ watch(
   { deep: true }
 );
 
+// 监听主题变化，重新渲染图表
+watch(
+  () => isDark.value,
+  () => {
+    if (!loading.value && pagedData.value.length > 0) {
+      renderChart();
+    }
+  }
+);
+
 onMounted(() => {
   fetchData();
 });

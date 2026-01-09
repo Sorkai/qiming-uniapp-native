@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 
 const { isDark } = useDark();
@@ -11,30 +11,47 @@ const { setOptions } = useECharts(pieChartRef, {
   theme
 });
 
-setOptions({
-  tooltip: {
-    trigger: "item"
-  },
-  legend: {
-    icon: "circle",
-    //@ts-expect-error
-    right: true
-  },
-  series: [
-    {
-      name: "饼图",
-      type: "pie",
-      top: "20%",
-      radius: "80%",
-      center: ["40%", "50%"],
-      color: ["#e6a23c", "#f56c6c", "#53a7ff"],
-      data: [
-        { value: 400, name: "watchers" },
-        { value: 1600, name: "forks" },
-        { value: 7200, name: "star" }
-      ]
-    }
-  ]
+const renderChart = () => {
+  setOptions({
+    tooltip: {
+      trigger: "item"
+    },
+    legend: {
+      icon: "circle",
+      //@ts-expect-error
+      right: true,
+      textStyle: {
+        color: isDark.value ? "#ffffff" : "#333"
+      }
+    },
+    series: [
+      {
+        name: "饼图",
+        type: "pie",
+        top: "20%",
+        radius: "80%",
+        center: ["40%", "50%"],
+        color: ["#e6a23c", "#f56c6c", "#53a7ff"],
+        data: [
+          { value: 400, name: "watchers" },
+          { value: 1600, name: "forks" },
+          { value: 7200, name: "star" }
+        ]
+      }
+    ]
+  });
+};
+
+// 监听主题变化，重新渲染图表
+watch(
+  () => isDark.value,
+  () => {
+    renderChart();
+  }
+);
+
+onMounted(() => {
+  renderChart();
 });
 </script>
 

@@ -520,6 +520,25 @@ watch(
   }
 );
 
+// 监听主题变化，重新渲染所有图表
+watch(
+  () => isDark.value,
+  () => {
+    if (!loading.value && selectedCourse.value) {
+      // 重新渲染进度图表
+      if (pagedUsers.value.length > 0) {
+        updateProgressChart(pagedUsers.value);
+      } else {
+        renderEmptyProgressChart();
+      }
+      // 重新渲染考试图表
+      if (selectedExam.value) {
+        renderSelectedExamChart(selectedExam.value);
+      }
+    }
+  }
+);
+
 onMounted(() => {
   fetchCourseList();
   fetchAllData();
