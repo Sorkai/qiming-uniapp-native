@@ -150,7 +150,7 @@ export function removeToken() {
 export function resetThemeToDefault() {
   const layoutKey = `${responsiveStorageNameSpace()}layout`;
   const layout = storageLocal().getItem<StorageConfigs>(layoutKey);
-  
+
   if (layout) {
     // 重置为默认浅色主题
     layout.darkMode = false;
