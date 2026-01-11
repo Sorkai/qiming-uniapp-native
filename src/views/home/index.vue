@@ -387,9 +387,18 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p class="company-info">吉林省云创迅捷软件开发有限公司</p>
           <p><a href="https://www.intelledu.cn" target="_blank" class="website-link">www.intelledu.cn</a></p>
-          <p>© {{ new Date().getFullYear() }} 启明智教. All rights reserved.</p>
+          <p style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 15px;">
+            <a href="https://beian.miit.gov.cn/" target="_blank"
+              style="color: rgba(255, 255, 255, 0.4); text-decoration: none;">吉ICP备2025035820号-1</a>
+            <a href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511" rel="noreferrer"
+              target="_blank"
+              style="color: rgba(255, 255, 255, 0.4); text-decoration: none; display: inline-flex; align-items: center;">
+              <img src="https://jsd.kai233.top/web/img/batb.png" style="margin-right: 3px; width: 20px;"
+                alt="备案图标">吉公网安备22017302000511号
+            </a>
+          </p>
+          <p>© {{ new Date().getFullYear() }} 吉林省云创迅捷软件开发有限公司 版权所有</p>
         </div>
       </div>
     </footer>
