@@ -569,7 +569,13 @@ watch(loginDay, value => {
         <a href="#">隐私政策</a>
       </div>
       <p class="copyright">
-        © {{ new Date().getFullYear() }} Pure Admin. All rights reserved.
+        © {{ new Date().getFullYear() }} 吉林省云创迅捷软件开发有限公司 版权所有
+      </p>
+      <p class="beian" style="margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 12px; color: #888;">
+        <a href="https://beian.miit.gov.cn/" target="_blank" style="color: inherit; text-decoration: none;">吉ICP备2025035820号-1</a>
+        <a href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511" rel="noreferrer" target="_blank" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center;">
+          <img src="https://jsd.kai233.top/web/img/batb.png" style="margin-right: 3px; width: 16px;" alt="备案图标">吉公网安备22017302000511号
+        </a>
       </p>
     </div>
   </div>
