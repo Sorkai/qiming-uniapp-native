@@ -15,7 +15,9 @@ export function useCourseTheme() {
       el.classList.add(newTheme);
     });
 
-    // 同时切换 body 的主题类
+    // 同时切换 html 和 body 的主题类
+    document.documentElement.classList.remove(oldTheme);
+    document.documentElement.classList.add(newTheme);
     document.body.classList.remove(oldTheme);
     document.body.classList.add(newTheme);
 
@@ -68,6 +70,7 @@ export function useCourseTheme() {
 
   // 初始化主题
   const initTheme = () => {
+    document.documentElement.classList.add(currentTheme.value);
     document.body.classList.add(currentTheme.value);
   };
 

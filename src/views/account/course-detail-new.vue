@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :class="currentTheme">
+  <div class="course-detail-root" :class="currentTheme">
     <div class="layout-container" :class="currentTheme">
       <!-- 侧边栏菜单 -->
       <CourseSidebar
@@ -55,6 +55,7 @@
         <CourseGrades
           :visible="activeMenu === 'grades'"
           :current-theme="currentTheme"
+          :course-id="courseId"
           :course-scores="courseScores"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
@@ -131,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
@@ -171,8 +172,44 @@ const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
-const currentTheme = ref("light");
-const activeMenu = ref("course-learn");
+const currentTheme = ref(storageLocal().getItem("course_theme") as string || "light");
+const activeMenu = ref(
+  (storageLocal().getItem(`course_detail_active_menu_${route.params.id}`) as string) ||
+    "course-learn"
+);
+
+
+// 监听路由参数变化，处理课程切换
+watch(
+  () => route.params.id,
+  newId => {
+    if (newId) {
+      const id = Number(newId);
+      baseCourseId.value = id;
+
+      // 恢复新课程的菜单状态
+      const savedMenu = storageLocal().getItem(
+        `course_detail_active_menu_${id}`
+      ) as string;
+      activeMenu.value = savedMenu || "course-learn";
+
+      fetchCourseDetail();
+
+      // 如果不是默认页，加载对应数据
+      if (activeMenu.value !== "course-learn") {
+        const menuName = activeMenu.value;
+        if (menuName === "homework-exam") {
+          fetchHomeworkList();
+          fetchExamList();
+        } else if (menuName === "grades") {
+          fetchCourseScores();
+        } else if (menuName === "html-animations") {
+          fetchHtmlAnimations();
+        }
+      }
+    }
+  }
+);
 
 // 用户信息
 const userInfo = storageLocal().getItem(userKey) || {};
@@ -200,6 +237,8 @@ const toggleTheme = () => {
   const oldTheme = currentTheme.value;
   const newTheme = oldTheme === "light" ? "dark" : "light";
 
+  document.documentElement.classList.remove(oldTheme);
+  document.documentElement.classList.add(newTheme);
   document.body.classList.remove(oldTheme);
   document.body.classList.add(newTheme);
 
@@ -236,7 +275,11 @@ const goBack = () => {
 
 // 跳转账号管理
 const goToAccount = () => {
-  router.push("/account/settings");
+  if (useUserStoreHook().roles?.includes("admin") || useUserStoreHook().roles?.includes("teacher")) {
+    router.push("/welcome");
+  } else {
+    router.push("/account");
+  }
 };
 
 // 退出登录
@@ -331,7 +374,8 @@ const fetchHtmlAnimations = async () => {
             chapterId: ch.chapterId,
             chapterName: ch.name || ch.chapterName,
             version: data.version,
-            url: data.url
+            url: data.url,
+            previewUrl: data.previewUrl
           });
         }
       } catch (e) {
@@ -359,13 +403,64 @@ const fetchCourseScores = async () => {
 };
 
 onMounted(async () => {
+  document.body.classList.add("course-page");
   baseCourseId.value = Number(route.params.id);
   document.body.classList.add(currentTheme.value);
   await fetchCourseDetail();
+
+  // 初始化加载对应数据（如果不是默认页）
+  if (activeMenu.value !== "course-learn") {
+    const menuName = activeMenu.value;
+    if (menuName === "homework-exam") {
+      fetchHomeworkList();
+      fetchExamList();
+    } else if (menuName === "grades") {
+      fetchCourseScores();
+    } else if (menuName === "html-animations") {
+      fetchHtmlAnimations();
+    }
+  }
+});
+
+// 监听菜单变化并持久化
+watch(activeMenu, newVal => {
+  storageLocal().setItem(`course_detail_active_menu_${route.params.id}`, newVal);
+  // 加载对应数据
+  if (newVal === "homework-exam") {
+    fetchHomeworkList();
+    fetchExamList();
+  } else if (newVal === "grades") {
+    fetchCourseScores();
+  } else if (newVal === "html-animations") {
+    fetchHtmlAnimations();
+  }
+});
+
+// 监听主题变化
+watch(currentTheme, (val) => {
+  storageLocal().setItem("course_theme", val);
+  const other = val === "light" ? "dark" : "light";
+  document.documentElement.classList.remove(other);
+  document.documentElement.classList.add(val);
+  document.body.classList.remove(other);
+  document.body.classList.add(val);
+
+  // 同步到管理后台主题设置
+  const layout = storageLocal().getItem("responsive-layout") as any;
+  if (layout) {
+    layout.darkMode = val === "dark";
+    storageLocal().setItem("responsive-layout", layout);
+  }
+}, { immediate: true });
+
+onBeforeUnmount(() => {
+  document.body.classList.remove("course-page");
+  document.documentElement.classList.remove("dark", "light");
+  document.body.classList.remove("dark", "light");
 });
 </script>
 
-<style>
+<style lang="scss">
 @import "@/../coursecss/css/chunk-b3e9f934.1c00050a.css";
 @import "@/../coursecss/css/chunk-8cf7ce30.92e48af1.css";
 @import "@/../coursecss/css/chunk-3cf64ec0.4f07a253.css";
@@ -373,55 +468,48 @@ onMounted(async () => {
 @import "@/../coursecss/css/app.a5f91bbb.css";
 @import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
 
-body {
-  background-color: #ffffff !important;
-}
-
-#app {
+.course-detail-root {
   width: 100%;
   min-height: 100vh;
   background-color: #ffffff;
-}
 
-#app.dark {
-  background-color: #1a1a1a !important;
-}
+  &.dark {
+    background-color: #1a1a1a;
+  }
 
-.layout-container {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-}
+  .layout-container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
 
-.layout-container.dark {
-  background-color: #1a1a1a !important;
-}
+    &.dark {
+      background-color: #1a1a1a;
+    }
+  }
 
-.layout-inner-content {
-  position: relative;
-  flex: 1;
-  margin-left: 90px !important;
-  margin-top: 20px !important;
-  margin-bottom: 15px !important;
-  margin-right: 15px !important;
-  height: calc(100vh - 35px) !important;
-  border-radius: 24px !important;
-  overflow: hidden !important;
-  background-color: #ffffff;
-  box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.1) !important;
-  border: 1px solid #eef2f7 !important;
-  transition: all 0.3s ease !important;
-}
+  .layout-inner-content {
+    position: relative;
+    flex: 1;
+    margin: 20px 15px 15px 90px;
+    height: calc(100vh - 35px);
+    border-radius: 24px;
+    overflow: hidden;
+    background-color: #f5f7fa;
+    box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.1);
+    border: 1px solid #eef2f7;
+    transition: all 0.3s ease;
 
-.layout-inner-content.dark {
-  background-color: #1a1a1a !important;
-  border: 1px solid rgba(60, 60, 80, 0.8) !important;
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
+    &.dark {
+      background-color: #1a1a1a;
+      border: 1px solid rgba(60, 60, 80, 0.8);
+      box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+    }
+  }
 }
 </style>
 
-<style scoped>
+<style scoped lang="scss">
 /* 占位内容样式 */
 .course-learn-placeholder,
 .mastery-placeholder,
@@ -440,56 +528,62 @@ body {
   justify-content: center;
   padding: 40px;
   color: #909399;
-}
 
-.placeholder-content p {
-  margin: 10px 0;
-}
+  p {
+    margin: 10px 0;
+  }
 
-.placeholder-content ul {
-  margin-top: 20px;
-  text-align: left;
-}
+  ul {
+    margin-top: 20px;
+    text-align: left;
+  }
 
-.placeholder-content li {
-  margin: 8px 0;
-  color: #606266;
+  li {
+    margin: 8px 0;
+    color: #606266;
+  }
 }
 
 /* 侧边栏样式 */
 :deep(.layout-sidebar) {
-  width: 80px !important;
-  min-width: 80px !important;
-  left: 10px !important;
-  top: 20px !important;
-  height: calc(100vh - 35px) !important;
-  border-radius: 24px !important;
-  background: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2) !important;
-  border: 1px solid rgba(64, 158, 255, 0.2) !important;
-  z-index: 100 !important;
-  position: fixed !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 15px 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-}
+  width: 80px;
+  min-width: 80px;
+  left: 10px;
+  top: 20px;
+  height: calc(100vh - 35px);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2);
+  border: 1px solid rgba(64, 158, 255, 0.2);
+  z-index: 100;
+  position: fixed;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 15px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-:deep(.layout-sidebar::after) {
-  content: "" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  border-radius: 24px !important;
-  padding: 1.5px !important;
-  background: linear-gradient(90deg, #409eff, #604ffd, #409eff) !important;
-  background-size: 200% 100% !important;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
-  mask-composite: exclude !important;
-  animation: sidebar-glow-border 3s linear infinite !important;
-  pointer-events: none !important;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 1.5px;
+    background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+    background-size: 200% 100%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: sidebar-glow-border 3s linear infinite;
+    pointer-events: none;
+  }
+
+  &.dark {
+    background: rgba(30, 30, 40, 0.9);
+    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 
 @keyframes sidebar-glow-border {
@@ -497,27 +591,21 @@ body {
   100% { background-position: 200% 0%; }
 }
 
-:deep(.layout-sidebar.dark) {
-  background: rgba(30, 30, 40, 0.9) !important;
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
 :deep(.layout-header) {
-  left: 95px !important;
-  top: 20px !important;
-  width: calc(100% - 110px) !important;
-  border-radius: 20px !important;
-  z-index: 150 !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-}
+  left: 95px;
+  top: 20px;
+  width: calc(100% - 110px);
+  border-radius: 20px;
+  z-index: 150;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-:deep(.layout-header.dark) {
-  background: rgba(26, 26, 26, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  &.dark {
+    background: rgba(26, 26, 26, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
 }
 </style>

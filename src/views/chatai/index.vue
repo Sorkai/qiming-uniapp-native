@@ -144,7 +144,7 @@ const swiperExample: any[] = [
   }
 
   .main-content {
-    margin: 0 !important;
+    margin: 0;
   }
 }
 </style>

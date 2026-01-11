@@ -47,7 +47,7 @@ const {
           v-model="form.name"
           placeholder="请输入租户名"
           clearable
-          class="w-[160px]!"
+          class="w-[160px]"
         />
       </el-form-item>
       <el-form-item label="联系人：" prop="contactName">
@@ -55,7 +55,7 @@ const {
           v-model="form.contactName"
           placeholder="请输入联系人"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         />
       </el-form-item>
       <el-form-item label="联系电话：" prop="contactMobile">
@@ -63,7 +63,7 @@ const {
           v-model="form.contactMobile"
           placeholder="请输入联系电话"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         />
       </el-form-item>
       <el-form-item label="状态：" prop="status">
@@ -71,7 +71,7 @@ const {
           v-model="form.status"
           placeholder="请选择状态"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         >
           <el-option label="已启用" value="1" />
           <el-option label="已停用" value="0" />
@@ -93,7 +93,7 @@ const {
     </el-form>
 
     <PureTableBar
-      :class="[isShow && !deviceDetection() ? 'w-[60vw]!' : 'w-full']"
+      :class="[isShow && !deviceDetection() ? 'w-[60vw]' : 'w-full']"
       title="租户列表（仅演示，操作后不生效）"
       :columns="columns"
       @refresh="onSearch"
@@ -167,9 +167,6 @@ const {
   margin: 0;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
 
 .search-form {
   :deep(.el-form-item) {

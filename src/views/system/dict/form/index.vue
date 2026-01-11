@@ -86,7 +86,7 @@ defineExpose({ getRef });
         <el-form-item label="排序">
           <el-input-number
             v-model="newFormInline.sort"
-            class="w-full!"
+            class="w-full"
             :min="1"
             controls-position="right"
             placeholder="请输入排序"

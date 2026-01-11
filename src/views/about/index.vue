@@ -154,13 +154,13 @@ Object.keys(devDependencies).forEach(key => {
 
 <style lang="scss" scoped>
 :deep(.main-label) {
-  font-size: 16px !important;
-  color: var(--el-color-danger) !important;
+  font-size: 16px;
+  color: var(--el-color-danger);
 }
 
 :deep(.pure-version) {
-  font-size: 14px !important;
-  font-weight: 600 !important;
+  font-size: 14px;
+  font-weight: 600;
   opacity: 0.6;
 
   &:hover {
@@ -169,6 +169,6 @@ Object.keys(devDependencies).forEach(key => {
 }
 
 .main-content {
-  margin: 0 !important;
+  margin: 0;
 }
 </style>

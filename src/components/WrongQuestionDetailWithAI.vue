@@ -4,8 +4,11 @@
     :title="titleText"
     width="70%"
     :before-close="handleClose"
+    :class="['custom-ai-detail-dialog', currentTheme]"
+    :append-to-body="true"
+    :destroy-on-close="true"
   >
-    <div class="wrap" v-loading="loading">
+    <div class="wrap" :class="{ dark: currentTheme === 'dark' }" v-loading="loading">
       <!-- 原题区域 -->
       <section class="block">
         <h3 class="h3">题目</h3>
@@ -111,6 +114,7 @@ export interface NormalizedWrongQuestion {
 const props = defineProps<{
   modelValue: boolean;
   courseId: number | string;
+  currentTheme?: string;
   wrong: NormalizedWrongQuestion | null;
   initialAnalysis?: WrongExerciseAnalyzeResponse | null;
 }>();
@@ -206,23 +210,232 @@ const handleClose = () => (visible.value = false);
 </script>
 
 <style scoped>
-.wrap { max-height: 70vh; overflow: auto; }
-.block { margin-bottom: 18px; }
-.h3 { margin: 0 0 10px; font-weight: 600; }
-.stem { background:#f7f8fa; padding: 10px 12px; border-radius: 6px; }
-.options ul { list-style:none; padding:0; margin:8px 0 0; }
-.options li { padding:6px 0; }
-.options .label { margin-right:6px; }
-.answers { margin-top: 8px; }
-.base { margin-top: 8px; background:#f9fafb; padding:10px; border-radius:6px; }
-.uans { color:#409eff; }
-.cans { color:#67c23a; }
-.ai-header { display:flex; align-items:center; justify-content:space-between; }
-.prewrap { white-space: pre-wrap; }
-.sim-list { display:flex; flex-direction:column; gap:12px; }
-.sim-item { padding:10px; border:1px solid #f0f0f0; border-radius:8px; }
-.q { display:flex; gap:8px; }
-.qtxt { flex:1; }
-.exp { margin-top:8px; background:#f9fafb; padding:10px; border-radius:6px; }
-.mr8 { margin-right: 8px; }
+.wrap {
+  box-sizing: border-box;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+.wrap.dark {
+  color: #e0e0e0;
+}
+.block {
+  margin-bottom: 32px;
+}
+.h3 {
+  margin: 0 0 16px;
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--el-text-color-primary);
+}
+.stem {
+  background: #f7f8fa;
+  padding: 16px 20px;
+  border-radius: 12px;
+  color: #333;
+  line-height: 1.7;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+.wrap.dark .stem {
+  background: #2a2a2a;
+  color: #e0e0e0;
+  border: 1px solid #3e3e3e;
+}
+.wrap.dark .stem :deep(*) {
+  color: #e0e0e0;
+}
+.options ul {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+.options li {
+  padding: 10px 0;
+  display: flex;
+  align-items: flex-start;
+  color: #333;
+  font-size: 15px;
+}
+.wrap.dark .options li {
+  color: #e0e0e0;
+}
+.options .label {
+  margin-right: 12px;
+  color: #409eff;
+  font-weight: bold;
+}
+.wrap.dark .options .label {
+  color: #4facfe;
+}
+.answers {
+  margin-top: 16px;
+}
+.base {
+  margin-top: 16px;
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+.wrap.dark .base {
+  background: #252525;
+  color: #e0e0e0;
+  border-color: #444;
+}
+.uans {
+  color: #409eff;
+}
+.cans {
+  color: #67c23a;
+}
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.prewrap {
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+.sim-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sim-item {
+  padding: 20px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  background: #fff;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.wrap.dark .sim-item {
+  border-color: #3e3e3e;
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+.q {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 16px;
+}
+.qtxt {
+  flex: 1;
+}
+.exp {
+  margin-top: 16px;
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  border-left: 4px solid #409eff;
+}
+.wrap.dark .exp {
+  background: #333;
+  color: #e0e0e0;
+  border-left-color: #4facfe;
+}
+.mr8 {
+  margin-right: 8px;
+}
+</style>
+
+<style>
+/* 彻底加固弹窗样式（处理 Portal 渲染） */
+.custom-ai-detail-dialog .el-dialog {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.custom-ai-detail-dialog .el-dialog__header {
+  padding: 24px 40px !important;
+  margin-right: 0 !important;
+  border-bottom: 1px solid var(--el-border-color-lighter) !important;
+}
+
+.custom-ai-detail-dialog .el-dialog__body {
+  padding: 0 !important;
+}
+
+.custom-ai-detail-dialog .wrap {
+  padding: 32px 40px 40px !important;
+}
+
+.custom-ai-detail-dialog .el-dialog__footer {
+  padding: 16px 40px 24px !important;
+  border-top: 1px solid var(--el-border-color-lighter) !important;
+}
+
+.custom-ai-detail-dialog.dark .el-dialog,
+html.dark .custom-ai-detail-dialog .el-dialog {
+  --el-dialog-bg-color: #1a1a1a;
+  background-color: var(--el-dialog-bg-color);
+  border: 1px solid #333;
+  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.4);
+}
+
+.custom-ai-detail-dialog.dark .el-dialog__header,
+html.dark .custom-ai-detail-dialog .el-dialog__header {
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #333 !important;
+}
+
+.custom-ai-detail-dialog.dark .el-dialog__title,
+html.dark .custom-ai-detail-dialog .el-dialog__title {
+  color: #e0e0e0;
+}
+
+.custom-ai-detail-dialog.dark .el-dialog__body,
+html.dark .custom-ai-detail-dialog .el-dialog__body {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.custom-ai-detail-dialog.dark .el-dialog__footer,
+html.dark .custom-ai-detail-dialog .el-dialog__footer {
+  background-color: #1a1a1a;
+  border-top: 1px solid #333 !important;
+}
+
+/* 描述列表深色模式加固 */
+.custom-ai-detail-dialog.dark .el-descriptions__body,
+html.dark .custom-ai-detail-dialog .el-descriptions__body {
+  background-color: #252525;
+}
+
+.custom-ai-detail-dialog.dark .el-descriptions__label,
+html.dark .custom-ai-detail-dialog .el-descriptions__label {
+  background-color: #333;
+  color: #aaa;
+  border-color: #444;
+}
+
+.custom-ai-detail-dialog.dark .el-descriptions__content,
+html.dark .custom-ai-detail-dialog .el-descriptions__content {
+  background-color: #252525;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+.custom-ai-detail-dialog.dark .el-descriptions--border,
+html.dark .custom-ai-detail-dialog .el-descriptions--border {
+  border-color: #444;
+}
+
+/* 按钮和空状态加固 */
+.custom-ai-detail-dialog.dark .el-button--default:not(.is-text),
+html.dark .custom-ai-detail-dialog .el-button--default:not(.is-text) {
+  background-color: #333;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.custom-ai-detail-dialog.dark .el-empty__description p,
+html.dark .custom-ai-detail-dialog .el-empty__description p {
+  color: #888;
+}
 </style>

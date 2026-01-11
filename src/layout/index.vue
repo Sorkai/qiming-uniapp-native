@@ -28,7 +28,6 @@ import LayTag from "./components/lay-tag/index.vue";
 import LayNavbar from "./components/lay-navbar/index.vue";
 import LayContent from "./components/lay-content/index.vue";
 import LaySetting from "./components/lay-setting/index.vue";
-import NavDouble from "./components/lay-sidebar/NavDouble.vue";
 import NavVertical from "./components/lay-sidebar/NavVertical.vue";
 import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
@@ -172,13 +171,11 @@ const LayHeader = defineComponent({
     <NavVertical
       v-show="
         !pureSetting.hiddenSideBar &&
-        (layout.includes('vertical') || layout.includes('mix'))
+        (layout.includes('vertical') || layout.includes('mix') || layout.includes('double'))
       "
     />
-    <NavDouble v-show="layout.includes('double')" />
     <div
       :class="[
-        useAppStoreHook().isShowDouble ? 'double-show' : 'double-hidden',
         'main-container',
         pureSetting.hiddenSideBar ? 'main-hidden' : ''
       ]"

@@ -138,3 +138,25 @@ export function getConversationHistory(conversationId: string) {
     }
   }).then(response => response.data);
 }
+
+/**
+ * 作文批改分析
+ */
+export function analyzeEssay(params: {
+  essayType: "chinese" | "english";
+  content: string;
+}) {
+  const token = getToken();
+  const authHeader = token ? formatToken(token.accessToken) : "";
+
+  return axios({
+    method: "post",
+    url: "https://aiedu-api.lehinet.com/edu/frontend/v1/ai/essay/analyze",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: authHeader,
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    data: params
+  }).then(response => response.data);
+}

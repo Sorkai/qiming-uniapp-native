@@ -1,5 +1,5 @@
 <template>
-  <div class="account-container">
+  <div class="account-container" :class="currentTheme">
     <!-- 顶部导航 -->
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
@@ -7,6 +7,51 @@
           <img src="@/assets/logo.png" alt="Logo" class="app-logo-img" />
         </div>
         <div class="header-right">
+          <!-- 主题切换按钮 -->
+          <div class="theme-toggle-wrapper">
+            <div
+              class="theme-btn-premium"
+              :class="{ 'is-dark': currentTheme === 'dark' }"
+              @click="toggleTheme"
+            >
+              <div class="sun-moon-wrapper">
+                <div class="icon sun">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </div>
+                <div class="icon moon">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="switch-dot"></div>
+            </div>
+          </div>
+
           <template v-if="userInfo">
             <el-dropdown trigger="hover" @command="handleCommand">
               <div class="user-info">
@@ -97,22 +142,22 @@
       </div>
       <div class="account-main">
         <div v-if="activeMenu === 'profile'">
-          <user-profile />
+          <user-profile :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'cloud-disk'">
-          <cloud-disk />
+          <cloud-disk :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'notification'">
-          <system-notification />
+          <system-notification :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'todo'">
-          <todo />
+          <todo :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'virtual-lab'">
-          <virtual-lab />
+          <virtual-lab :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'competition'">
-          <competition />
+          <competition :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'home'">
           <!-- 快速入口卡片 -->
@@ -152,16 +197,24 @@
           </div>
 
           <!-- 上方卡片 -->
-          <div class="card">
+          <div class="card" :class="currentTheme">
             <!-- 重要提醒 -->
             <div class="reminder">
-              <div class="reminder-content">
-                <el-icon><InfoFilled /></el-icon>
-                <span
-                  >重要提示:同学们，新学期到了，系统已经分配最新的课程，请各位同学抓紧学习
-                  书山有路勤为径，学海无涯苦作舟 🎉</span
-                >
-              </div>
+              <el-carousel
+                height="46px"
+                direction="vertical"
+                :autoplay="true"
+                :interval="4000"
+                indicator-position="none"
+                arrow="never"
+              >
+                <el-carousel-item v-for="(notice, index) in notices" :key="index">
+                  <div class="reminder-content">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span class="notice-text">{{ notice }}</span>
+                  </div>
+                </el-carousel-item>
+              </el-carousel>
             </div>
             <!-- 课程信息和AI总结 -->
             <div class="info-section">
@@ -308,7 +361,7 @@
               </div>
               <div class="ai-summary">
                 <h3>AI总结</h3>
-                <div class="summary-card">
+                <div class="summary-card" :class="currentTheme">
                   <p>{{ aiSummaryTitle }}</p>
                   <ul>
                     <li v-for="(item, idx) in displayedSummary" :key="idx">
@@ -323,8 +376,8 @@
         </div>
         <div v-else-if="activeMenu === 'course'">
           <!-- 课程列表卡片 -->
-          <div class="card course-list">
-            <div class="course-header">
+          <div class="card course-list" :class="currentTheme">
+            <div class="course-header" :class="currentTheme">
               <h3>我的课程</h3>
               <div class="course-filter">
                 <el-select v-model="courseFilter" placeholder="课程状态">
@@ -461,7 +514,9 @@ import {
   Bell,
   Tickets,
   Cpu,
-  Trophy
+  Trophy,
+  Sunny,
+  Moon
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
@@ -479,8 +534,96 @@ const showLoginDialog = ref(false);
 
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
+// 主题相关
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) ||
+    ((storageLocal().getItem("responsive-layout") as any)?.darkMode ? "dark" : "light")
+);
+
+// 监听主题变化
+watch(
+  currentTheme,
+  val => {
+    storageLocal().setItem("course_theme", val);
+    const other = val === "light" ? "dark" : "light";
+    document.documentElement.classList.remove(other);
+    document.documentElement.classList.add(val);
+    document.body.classList.remove(other);
+    document.body.classList.add(val);
+
+    // 同步到管理后台主题设置
+    const layout = storageLocal().getItem("responsive-layout") as any;
+    if (layout) {
+      layout.darkMode = val === "dark";
+      storageLocal().setItem("responsive-layout", layout);
+    }
+  },
+  { immediate: true }
+);
+
+const isAnimating = ref(false);
+const toggleTheme = (event: MouseEvent) => {
+  if (isAnimating.value) return;
+  isAnimating.value = true;
+
+  const x = event.clientX;
+  const y = event.clientY;
+  const endRadius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y)
+  );
+
+  // 1. 创建扩散层
+  const overlay = document.createElement("div");
+  const isToDark = currentTheme.value === "light";
+
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    pointer-events: none;
+    background: ${isToDark ? "#0b1120" : "#f7f8fc"};
+    clip-path: circle(0px at ${x}px ${y}px);
+    transition: clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  `;
+  document.body.appendChild(overlay);
+
+  // 2. 触发扩散动画
+  requestAnimationFrame(() => {
+    overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
+  });
+
+  // 3. 切换实际主题
+  setTimeout(() => {
+    currentTheme.value = isToDark ? "dark" : "light";
+
+    // 4. 让遮罩层淡出
+    overlay.style.transition =
+      "opacity 500ms ease, clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1)";
+    overlay.style.opacity = "0";
+
+    setTimeout(() => {
+      overlay.remove();
+      isAnimating.value = false;
+    }, 500);
+  }, 500);
+};
+
 // 当前激活的菜单项
-const activeMenu = ref("home");
+const activeMenu = ref<string>("home");
+
+// 初始化菜单状态
+const initActiveMenu = () => {
+  const savedMenu = storageLocal().getItem("account_active_menu");
+  if (typeof savedMenu === "string" && savedMenu) {
+    activeMenu.value = savedMenu;
+  } else {
+    activeMenu.value = "home";
+  }
+};
 
 // 分页相关
 const currentPage = ref(1);
@@ -500,6 +643,15 @@ const myCourses = ref({
   endingList: [], // 结课课程
   homeworkList: [] // 作业课程
 });
+
+// 轮播通知数据
+const notices = ref([
+  "重要提示:同学们，新学期到了，系统已经分配最新的课程，请各位同学抓紧学习 书山有路勤为径，学海无涯苦作舟 🎉",
+  "温馨提示：请同学们按时提交作业，避免影响课程进度和最终成绩。如有疑问请及时联系课程导师。",
+  "新功能上线：虚拟实验室现已支持更多实验场景，欢迎同学们前往体验，探索科学的奥秘。",
+  "赛事预告：下周将举行全校程序设计大赛，感兴趣的同学请在赛事场报名，展示你的编程才华。",
+  "学习建议：合理安排学习时间，利用好学习云盘整理资料，保持良好的学习习惯是成功的关键。"
+]);
 
 // 课程页面数据
 const coursesData = ref({
@@ -602,7 +754,6 @@ const loadCoursePageData = async () => {
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
   activeMenu.value = index;
-  // 不在这里调用加载数据，只通过 watch 监听器加载数据
 };
 
 // 监听滚动事件
@@ -615,34 +766,12 @@ const handleUserInfoUpdate = (event: CustomEvent) => {
   userInfo.value = event.detail;
 };
 
-onMounted(() => {
-  window.addEventListener("scroll", handleScroll);
-  window.addEventListener(
-    "userInfoUpdated",
-    handleUserInfoUpdate as EventListener
-  );
-
-  // 如果当前是首页，加载课程数据
-  if (activeMenu.value === "home") {
-    loadHomeData();
-  }
-});
-
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener(
     "userInfoUpdated",
     handleUserInfoUpdate as EventListener
   );
-});
-
-// 监听菜单选择，切换到首页或课程页面时加载数据
-watch(activeMenu, newVal => {
-  if (newVal === "home") {
-    loadHomeData();
-  } else if (newVal === "course") {
-    loadCoursePageData();
-  }
 });
 
 // 监听课程筛选变化
@@ -801,40 +930,49 @@ const startTyping = () => {
 // 供模板使用的展示列表
 const displayedSummary = computed(() => typedLines.value);
 
-// 当进入首页时启动打字
-watch(activeMenu, newVal => {
+const initialLoadDone = ref(false);
+
+// 监听菜单变化并持久化
+watch(activeMenu, async newVal => {
+  storageLocal().setItem("account_active_menu", newVal);
+  if (!initialLoadDone.value) return;
+
   if (newVal === "home") {
-    // 延迟确保数据已准备
-    setTimeout(() => startTyping(), 100);
+    await loadHomeData();
+    startTyping();
+  } else if (newVal === "course") {
+    await loadCoursePageData();
   }
 });
 
 // 初次挂载如果就在首页也启动
-onMounted(() => {
+onMounted(async () => {
+  window.addEventListener("scroll", handleScroll);
+  window.addEventListener(
+    "userInfoUpdated",
+    handleUserInfoUpdate as EventListener
+  );
+
+  initActiveMenu();
+
   if (activeMenu.value === "home") {
+    await loadHomeData();
     setTimeout(() => startTyping(), 150);
+  } else if (activeMenu.value === "course") {
+    await loadCoursePageData();
   }
+
+  initialLoadDone.value = true;
 });
 
 onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener(
+    "userInfoUpdated",
+    handleUserInfoUpdate as EventListener
+  );
   if (typingTimer) clearTimeout(typingTimer);
 });
-
-// 预留：未来从后端获取 AI 总结内容
-// const loadAiSummary = async () => {
-//   try {
-//     const { code, data } = await getAiSummary();
-//     if (code === 200 && data) {
-//       aiSummaryTitle.value = data.title;
-//       aiSummaryList.value = data.items || [];
-//     }
-//   } catch (e) {
-//     console.error('获取AI总结失败', e);
-//   }
-// };
-
-// 如果需要与首页数据一起加载，可在 loadHomeData 里调用：
-// loadAiSummary();
 </script>
 
 <style lang="scss" scoped>
@@ -848,6 +986,12 @@ onUnmounted(() => {
 .account-container {
   min-height: 100vh;
   background-color: #f7f8fc;
+  transition: background-color 0.3s ease;
+
+  &.dark {
+    background-color: #0b1120;
+    color: #f1f5f9;
+  }
 
   .header {
     position: fixed;
@@ -867,6 +1011,24 @@ onUnmounted(() => {
       .user-info .nickname,
       .user-info .el-icon--right {
         color: #333;
+
+        .dark & {
+          color: #f1f5f9;
+        }
+      }
+    }
+
+    .dark & {
+      background: linear-gradient(45deg, #1e293b, #0f172a);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+      &.header-scrolled {
+        background: #111b2d;
+      }
+
+      .theme-toggle {
+        color: #38bdf8;
+        background-color: rgba(255, 255, 255, 0.05);
       }
     }
 
@@ -886,40 +1048,152 @@ onUnmounted(() => {
         border-radius: 8px;
         box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 
+        .dark & {
+          background-color: #1e293b;
+        }
+
         img {
           height: 100%;
         }
       }
 
-      .user-info {
+      .header-right {
         display: flex;
         align-items: center;
-        padding: 0 8px;
-        cursor: pointer;
-        border-radius: 18px;
-        transition: all 0.3s;
 
-        &:hover {
-          background-color: rgb(255 255 255 / 20%);
+        .theme-toggle-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 20px;
+        }
 
-          .el-icon--right {
-            transform: rotate(180deg);
+        .theme-btn-premium {
+          position: relative;
+          width: 52px;
+          height: 28px;
+          padding: 4px;
+          cursor: pointer;
+          background-color: rgba(255, 255, 255, 0.4);
+          border-radius: 100px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+
+          &:hover {
+            transform: scale(1.05);
+            background-color: rgba(255, 255, 255, 0.6);
+          }
+
+          &.is-dark {
+            background-color: #2d3748;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+
+            .switch-dot {
+              transform: translateX(24px);
+              background-color: #1a202c;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            }
+
+            .sun {
+              transform: translateY(20px) scale(0);
+              opacity: 0;
+            }
+
+            .moon {
+              transform: translateY(0) scale(1);
+              opacity: 1;
+              color: #f6e05e;
+            }
+          }
+
+          .sun-moon-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+          }
+
+          .icon {
+            position: absolute;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+            svg {
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .sun {
+            left: 0;
+            color: #f6ad55;
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+
+          .moon {
+            right: 0;
+            color: #718096;
+            transform: translateY(-20px) scale(0);
+            opacity: 0;
+          }
+
+          .switch-dot {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
           }
         }
 
-        .nickname {
-          margin: 0 8px;
-          font-size: 16px;
-          font-weight: 600;
-          color: #333;
-          transition: color 0.3s;
-        }
+        .user-info {
+          display: flex;
+          align-items: center;
+          padding: 0 8px;
+          cursor: pointer;
+          border-radius: 18px;
+          transition: all 0.3s;
 
-        .el-icon--right {
-          font-size: 18px;
-          font-weight: bold;
-          color: #333;
-          transition: all 0.3s ease;
+          &:hover {
+            background-color: rgb(255 255 255 / 20%);
+
+            .el-icon--right {
+              transform: rotate(180deg);
+            }
+          }
+
+          .nickname {
+            margin: 0 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            transition: color 0.3s;
+
+            .dark & {
+              color: #f1f5f9;
+            }
+          }
+
+          .el-icon--right {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s ease;
+
+            .dark & {
+              color: #f1f5f9;
+            }
+          }
         }
       }
     }
@@ -987,6 +1261,10 @@ onUnmounted(() => {
           font-size: 18px;
           font-weight: 600;
           color: #333;
+
+          .dark & {
+            color: #f1f5f9;
+          }
         }
 
         .user-role {
@@ -996,6 +1274,20 @@ onUnmounted(() => {
           color: #666;
           background: linear-gradient(135deg, #e8edf8, #dce2f7);
           border-radius: 12px;
+
+          .dark & {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+          }
+        }
+
+        .dark & {
+          background: linear-gradient(145deg, #111b2d, #1e293b);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+
+          .avatar-ring {
+            border-color: #334155;
+          }
         }
       }
 
@@ -1005,6 +1297,11 @@ onUnmounted(() => {
         border: none;
         border-radius: 16px;
         box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+
+        .dark & {
+          background: linear-gradient(145deg, #111b2d, #0f172a);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
 
         :deep(.el-menu-item) {
           position: relative;
@@ -1017,7 +1314,7 @@ onUnmounted(() => {
           overflow: hidden;
 
           &::before {
-            content: '';
+            content: "";
             position: absolute;
             left: 0;
             top: 50%;
@@ -1032,7 +1329,11 @@ onUnmounted(() => {
           &:hover {
             padding-left: 24px;
             color: #333;
-            background: linear-gradient(90deg, rgb(220 226 247 / 40%), transparent);
+            background: linear-gradient(
+              90deg,
+              rgb(220 226 247 / 40%),
+              transparent
+            );
             transform: scale(1.05);
             transform-origin: left center;
 
@@ -1054,18 +1355,57 @@ onUnmounted(() => {
             padding-left: 24px;
             font-weight: 600;
             color: #333;
-            background: linear-gradient(90deg, rgb(220 226 247 / 60%), rgb(220 226 247 / 20%));
+            background: linear-gradient(
+              90deg,
+              rgb(220 226 247 / 60%),
+              rgb(220 226 247 / 20%)
+            );
             box-shadow: inset 0 0 0 1px rgb(200 212 240 / 50%);
+
+            .dark & {
+              color: #f1f5f9;
+              background: linear-gradient(
+                90deg,
+                rgba(56, 189, 248, 0.15),
+                transparent
+              );
+              box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.2);
+            }
 
             &::before {
               height: 70%;
               background: linear-gradient(180deg, #a8b8e8, #c8d4f0);
+
+              .dark & {
+                background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+              }
             }
 
             .el-icon {
               transform: scale(1.1);
               color: #5a6b8a;
               animation: iconPulse 1.5s ease-in-out infinite;
+
+              .dark & {
+                color: #38bdf8;
+              }
+            }
+          }
+
+          .dark & {
+            color: #94a3b8;
+
+            &:hover {
+              color: #f1f5f9;
+              background: linear-gradient(
+                90deg,
+                rgba(56, 189, 248, 0.1),
+                transparent
+              );
+
+              .el-icon {
+                color: #38bdf8;
+              }
             }
           }
 
@@ -1092,16 +1432,16 @@ onUnmounted(() => {
           &:nth-child(5):hover .el-icon {
             animation: iconRing 0.6s ease;
           }
-          
+
           /* 待办事项 - 红色打勾效果 */
           &:nth-child(6) {
             .el-icon {
               position: relative;
               overflow: visible;
             }
-            
+
             .el-icon::after {
-              content: '';
+              content: "";
               position: absolute;
               bottom: -0.6px;
               right: -1.2px;
@@ -1115,7 +1455,7 @@ onUnmounted(() => {
               transition: all 0.3s ease;
             }
           }
-          
+
           &:nth-child(6):hover {
             .el-icon::after {
               width: 8px;
@@ -1132,492 +1472,602 @@ onUnmounted(() => {
       }
     }
 
-    /* 图标动画关键帧 */
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes iconBounce {
-      0%, 100% { transform: scale(1.2) translateY(0); }
-      30% { transform: scale(1.2) translateY(-6px); }
-      50% { transform: scale(1.2) translateY(0); }
-      70% { transform: scale(1.2) translateY(-3px); }
-    }
-
-    @keyframes iconFlip {
-      0% { transform: scale(1.2) rotateY(0); }
-      50% { transform: scale(1.2) rotateY(180deg); }
-      100% { transform: scale(1.2) rotateY(360deg); }
-    }
-
-    /* 个人资料 - 心跳/呼吸效果 */
-    @keyframes iconHeartbeat {
-      0% { transform: scale(1.2); }
-      15% { transform: scale(1.35); }
-      30% { transform: scale(1.2); }
-      45% { transform: scale(1.3); }
-      60%, 100% { transform: scale(1.2); }
-    }
-
-    /* 学习云盘 - 上浮到云端效果 */
-    @keyframes iconFloat {
-      0% { transform: scale(1.2) translateY(0); }
-      50% { transform: scale(1.2) translateY(-8px); }
-      100% { transform: scale(1.2) translateY(0); }
-    }
-
-    @keyframes iconRing {
-      0% { transform: scale(1.2) rotate(0); }
-      10% { transform: scale(1.2) rotate(20deg); }
-      20% { transform: scale(1.2) rotate(-15deg); }
-      30% { transform: scale(1.2) rotate(10deg); }
-      40% { transform: scale(1.2) rotate(-10deg); }
-      50% { transform: scale(1.2) rotate(5deg); }
-      60%, 100% { transform: scale(1.2) rotate(0); }
-    }
-
-    @keyframes iconPulse {
-      0%, 100% { transform: scale(1.1); }
-      50% { transform: scale(1.25); }
-    }
-
     .account-main {
       flex: 1;
       padding: 0;
       background-color: transparent;
       border-radius: 12px;
       box-shadow: none;
-    }
-  }
-}
 
-.quick-access-section {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+      .quick-access-section {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
 
-  .quick-access-card {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    padding: 20px;
-    cursor: pointer;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
-
-      .access-arrow {
-        transform: translateX(4px);
-        opacity: 1;
-      }
-    }
-
-    .access-icon {
-      display: flex;
-      flex-shrink: 0;
-      align-items: center;
-      justify-content: center;
-      width: 56px;
-      height: 56px;
-      font-size: 28px;
-      border-radius: 14px;
-    }
-
-    .access-info {
-      flex: 1;
-      min-width: 0;
-
-      h4 {
-        margin: 0 0 4px;
-        font-size: 16px;
-        font-weight: 600;
-        color: #333;
-      }
-
-      p {
-        margin: 0;
-        font-size: 12px;
-        color: #999;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
-
-    .access-arrow {
-      font-size: 20px;
-      font-weight: bold;
-      color: #999;
-      opacity: 0.5;
-      transition: all 0.3s ease;
-    }
-
-    &.lab-access .access-icon {
-      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
-    }
-
-    &.competition-access .access-icon {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-    }
-
-    &.course-access .access-icon {
-      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-    }
-
-    &.cloud-access .access-icon {
-      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
-    }
-  }
-}
-
-.card {
-  padding: 24px;
-  margin-bottom: 24px;
-  background-color: #fff;
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
-
-  .reminder {
-    margin-bottom: 20px;
-
-    .reminder-content {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      font-size: 14px;
-      color: #5a6b8a;
-      background-color: rgb(220 226 247 / 30%);
-      border: 1px solid rgb(220 226 247 / 60%);
-      border-radius: 8px;
-
-      .el-icon {
-        margin-right: 12px;
-        font-size: 20px;
-        color: #7a8bb8;
-      }
-
-      span {
-        flex: 1;
-        line-height: 1.5;
-      }
-    }
-  }
-
-  .info-section {
-    display: flex;
-    gap: 24px;
-
-    .course-info {
-      flex: 0.7;
-
-      h3 {
-        margin: 0 0 16px;
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-      }
-    }
-
-    .ai-summary {
-      position: relative;
-      flex: 0.3;
-
-      h3 {
-        margin: 0 0 16px;
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-      }
-
-      .summary-card {
-        position: absolute;
-        inset: 45px 0 0;
-        padding: 16px;
-        overflow: hidden;
-        color: #333;
-        background: linear-gradient(135deg, #dce2f7, #c8d4f0);
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgb(220 226 247 / 60%);
-
-        p {
-          margin: 0 0 12px;
-          font-size: 14px;
-          font-weight: 500;
-        }
-
-        ul {
-          height: calc(100% - 32px);
-          /* 统一移除默认样式，改为自定义圆点，避免被其它全局 reset 覆盖后无法恢复 */
-          padding-left: 0;
-          margin: 0;
-          overflow-y: auto;
-          list-style: none;
-
-          &::-webkit-scrollbar {
-            width: 4px;
-          }
-
-          &::-webkit-scrollbar-thumb {
-            background-color: rgb(255 255 255 / 50%);
-            border-radius: 2px;
-          }
-
-          li {
-            position: relative;
-            padding-left: 16px;
-            margin-bottom: 8px;
-            font-size: 14px;
-            line-height: 1.6;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
-
-            &::before {
-              content: "";
-              position: absolute;
-              top: 0.9em;
-              left: 0;
-              width: 6px;
-              height: 6px;
-              background: #fff;
-              border-radius: 50%;
-              transform: translateY(-50%);
-              opacity: 0.9;
-            }
-
-            &.typing-cursor::before { display: none; }
-          }
-        }
-      }
-    }
-
-    .course-card {
-      min-height: 50vh;
-      padding: 16px;
-      background-color: #f7f8fc;
-      border: 1px solid #eef0f5;
-      border-radius: 8px;
-
-      .course-section {
-        margin-bottom: 16px;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        h4 {
-          margin: 0 0 8px;
-          font-size: 14px;
-          font-weight: 600;
-          color: #666;
-        }
-
-        .mini-course-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 12px;
-        }
-
-        .mini-course-item {
-          cursor: pointer;
+        .quick-access-card {
           display: flex;
-          gap: 12px;
+          gap: 16px;
           align-items: center;
-          padding: 12px;
+          padding: 20px;
+          cursor: pointer;
           background: #fff;
-          border: 1px solid #ebeef5;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
           transition: all 0.3s ease;
 
+          .dark & {
+            background: #111b2d;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+            &.lab-access .access-icon {
+              background: linear-gradient(135deg, #2e1065, #4c1d95);
+            }
+
+            &.competition-access .access-icon {
+              background: linear-gradient(135deg, #451a03, #78350f);
+            }
+
+            &.course-access .access-icon {
+              background: linear-gradient(135deg, #064e3b, #065f46);
+            }
+
+            &.cloud-access .access-icon {
+              background: linear-gradient(135deg, #0c4a6e, #075985);
+            }
+          }
+
           &:hover {
-            box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
-            transform: translateY(-4px) scale(1.02);
-          }
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
 
-          .course-thumb {
-            position: relative;
-            flex-shrink: 0;
-            width: 64px;
-            height: 64px;
-            overflow: hidden;
-            border-radius: 6px;
-
-            .thumb-image {
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-            }
-
-            .el-tag {
-              position: absolute;
-              top: 4px;
-              right: 4px;
-              z-index: 1;
+            .access-arrow {
+              transform: translateX(4px);
+              opacity: 1;
             }
           }
 
-          .course-content {
+          .access-icon {
             display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            font-size: 28px;
+            border-radius: 14px;
+          }
+
+          .access-info {
             flex: 1;
-            flex-direction: column;
-            gap: 4px;
             min-width: 0;
 
-            .course-name {
-              @include text-ellipsis;
-
-              font-size: 14px;
+            h4 {
+              margin: 0 0 4px;
+              font-size: 16px;
               font-weight: 600;
               color: #333;
+
+              .dark & {
+                color: #f1f5f9;
+              }
             }
 
-            .course-time {
-              font-size: 13px;
-              color: #606266;
+            p {
+              margin: 0;
+              font-size: 12px;
+              color: #999;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+
+              .dark & {
+                color: #94a3b8;
+              }
             }
+          }
+
+          .access-arrow {
+            font-size: 20px;
+            font-weight: bold;
+            color: #999;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+
+            .dark & {
+              color: #38bdf8;
+              opacity: 1;
+            }
+          }
+
+          &.lab-access .access-icon {
+            background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+          }
+
+          &.competition-access .access-icon {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+          }
+
+          &.course-access .access-icon {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+          }
+
+          &.cloud-access .access-icon {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
           }
         }
       }
-    }
-  }
-}
 
-.course-list {
-  .course-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, #dce2f7, #c8d4f0);
-    border-radius: 12px;
+      .card {
+        padding: 24px;
+        margin-bottom: 24px;
+        background-color: #fff;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
 
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .course-filter {
-      :deep(.el-select) {
-        .el-select__wrapper {
-          background: #c8d4f0;
-          border: none;
-          border-radius: 8px;
-          box-shadow: none;
+        .dark & {
+          background-color: #111b2d;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
-        .el-select__placeholder {
-          color: #333 !important;
-        }
+        .reminder {
+          margin-bottom: 20px;
 
-        .el-select__suffix {
-          color: #000 !important;
-          
-          .el-icon {
-            color: #000 !important;
-          }
-        }
-      }
-    }
-  }
-
-  .course-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px;
-    margin-bottom: 24px;
-
-    .course-item {
-      overflow: hidden;
-      cursor: pointer;
-      background-color: #fff;
-      border: 1px solid rgb(220 226 247 / 60%);
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgb(220 226 247 / 40%);
-      transition: all 0.3s ease;
-
-      &:hover {
-        border-color: #c8d4f0;
-        box-shadow: 0 8px 24px rgb(200 212 240 / 50%);
-        transform: translateY(-6px);
-      }
-
-      .course-cover {
-        position: relative;
-        width: 100%;
-        padding-top: 56.25%; // 16:9
-        background: linear-gradient(135deg, rgb(220 226 247 / 30%), rgb(200 212 240 / 20%));
-
-        .cover-image {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .course-status {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          z-index: 1;
-        }
-      }
-
-      .course-info {
-        padding: 14px;
-        background: linear-gradient(180deg, #fff, rgb(220 226 247 / 15%));
-
-        h4 {
-          @include text-ellipsis;
-
-          margin: 0 0 8px;
-          font-size: 15px;
-          font-weight: 600;
-          color: #333;
-        }
-
-        p {
-          height: 32px;
-          margin: 0 0 8px;
-          font-size: 13px;
-          line-height: 1.4;
-          color: #606266;
-        }
-
-        .course-meta {
-          display: flex;
-          justify-content: space-between;
-          font-size: 12px;
-          color: #7a8bb8;
-
-          span {
+          :deep(.el-carousel__item) {
             display: flex;
             align-items: center;
+          }
+
+          .reminder-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 0 16px;
+            font-size: 14px;
+            color: #5a6b8a;
+            background-color: rgb(220 226 247 / 30%);
+            border: 1px solid rgb(220 226 247 / 60%);
+            border-radius: 12px;
+
+            .dark & {
+              color: #38bdf8;
+              background-color: rgba(56, 189, 248, 0.05);
+              border-color: rgba(56, 189, 248, 0.2);
+            }
 
             .el-icon {
-              margin-right: 4px;
-              font-size: 14px;
-              color: #a8b8e8;
+              margin-right: 12px;
+              font-size: 20px;
+              color: #7a8bb8;
+            }
+
+            .notice-text {
+              flex: 1;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+          }
+        }
+
+        .info-section {
+          display: flex;
+          gap: 24px;
+
+          .course-info {
+            flex: 0.7;
+
+            h3 {
+              margin: 0 0 16px;
+              font-size: 18px;
+              font-weight: 600;
+              color: #333;
+
+              .dark & {
+                color: #f1f5f9;
+              }
+            }
+
+            .course-card {
+              min-height: 50vh;
+              padding: 16px;
+              background-color: #f7f8fc;
+              border: 1px solid #eef0f5;
+              border-radius: 12px;
+
+              .dark & {
+                background-color: #0f172a;
+                border-color: #1e293b;
+              }
+
+              .course-section {
+                margin-bottom: 16px;
+
+                &:last-child {
+                  margin-bottom: 0;
+                }
+
+                h4 {
+                  margin: 0 0 8px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #666;
+
+                  .dark & {
+                    color: #cbd5e1;
+                  }
+                }
+
+                .mini-course-list {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                  gap: 12px;
+                }
+
+                .mini-course-item {
+                  cursor: pointer;
+                  display: flex;
+                  gap: 12px;
+                  align-items: center;
+                  padding: 12px;
+                  background: #fff;
+                  border: 1px solid #ebeef5;
+                  border-radius: 12px;
+                  box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
+                  transition: all 0.3s ease;
+
+                  .dark & {
+                    background: #1e293b;
+                    border-color: #334155;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+                    &:hover {
+                      background: #334155;
+                      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+                    }
+                  }
+
+                  &:hover {
+                    box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
+                    transform: translateY(-4px) scale(1.02);
+                  }
+
+                  .course-thumb {
+                    position: relative;
+                    flex-shrink: 0;
+                    width: 64px;
+                    height: 64px;
+                    overflow: hidden;
+                    border-radius: 8px;
+
+                    .thumb-image {
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      width: 100%;
+                      height: 100%;
+                      object-fit: cover;
+                    }
+
+                    .el-tag {
+                      position: absolute;
+                      top: 4px;
+                      right: 4px;
+                      z-index: 1;
+                    }
+                  }
+
+                  .course-content {
+                    display: flex;
+                    flex: 1;
+                    flex-direction: column;
+                    gap: 4px;
+                    min-width: 0;
+
+                    .course-name {
+                      @include text-ellipsis;
+                      font-size: 14px;
+                      font-weight: 600;
+                      color: #333;
+
+                      .dark & {
+                        color: #f1f5f9;
+                      }
+                    }
+
+                    .course-time {
+                      font-size: 13px;
+                      color: #606266;
+
+                      .dark & {
+                        color: #94a3b8;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          .ai-summary {
+            position: relative;
+            flex: 0.3;
+
+            h3 {
+              margin: 0 0 16px;
+              font-size: 18px;
+              font-weight: 600;
+              color: #333;
+
+              .dark & {
+                color: #f1f5f9;
+              }
+            }
+
+            .summary-card {
+              position: absolute;
+              inset: 45px 0 0;
+              padding: 16px;
+              overflow: hidden;
+              color: #333;
+              background: linear-gradient(135deg, #dce2f7, #c8d4f0);
+              border-radius: 12px;
+              box-shadow: 0 4px 12px rgb(220 226 247 / 60%);
+
+              .dark & {
+                background: linear-gradient(135deg, #1e293b, #0f172a);
+                color: #cbd5e1;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(56, 189, 248, 0.2);
+              }
+
+              p {
+                margin: 0 0 12px;
+                font-size: 14px;
+                font-weight: 500;
+              }
+
+              ul {
+                height: calc(100% - 32px);
+                padding-left: 0;
+                margin: 0;
+                overflow-y: auto;
+                list-style: none;
+
+                &::-webkit-scrollbar {
+                  width: 4px;
+                }
+
+                &::-webkit-scrollbar-thumb {
+                  background-color: rgb(255 255 255 / 50%);
+                  border-radius: 2px;
+                }
+
+                li {
+                  position: relative;
+                  padding-left: 16px;
+                  margin-bottom: 8px;
+                  font-size: 14px;
+                  line-height: 1.6;
+
+                  &:last-child {
+                    margin-bottom: 0;
+                  }
+
+                  &::before {
+                    content: "";
+                    position: absolute;
+                    top: 0.9em;
+                    left: 0;
+                    width: 6px;
+                    height: 6px;
+                    background: #fff;
+                    border-radius: 50%;
+                    transform: translateY(-50%);
+                    opacity: 0.9;
+                  }
+
+                  &.typing-cursor {
+                    color: #94a3b8;
+
+                    &::before {
+                      display: none;
+                    }
+                  }
+                }
+              }
             }
           }
         }
       }
-    }
-  }
+
+      .course-list {
+        .course-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
+          padding: 16px 20px;
+          background: linear-gradient(135deg, #dce2f7, #c8d4f0);
+          border-radius: 12px;
+
+          .dark & {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+          }
+
+          h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+
+            .dark & {
+              color: #f1f5f9;
+            }
+          }
+
+          .course-filter {
+            :deep(.el-select) {
+              .el-select__wrapper {
+                background: #c8d4f0;
+                border: none;
+                border-radius: 8px;
+                box-shadow: none;
+
+                .dark & {
+                  background: #334155;
+                }
+              }
+
+              .el-select__placeholder {
+                color: #333;
+
+                .dark & {
+                  color: #f1f5f9;
+                }
+              }
+
+              .el-select__suffix {
+                color: #000;
+
+                .dark & {
+                  color: #f1f5f9;
+                }
+
+                .el-icon {
+                  color: #000;
+
+                  .dark & {
+                    color: #f1f5f9;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        .course-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 20px;
+          margin-bottom: 24px;
+
+          .course-item {
+            overflow: hidden;
+            cursor: pointer;
+            background-color: #fff;
+            border: 1px solid rgb(220 226 247 / 60%);
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgb(220 226 247 / 40%);
+            transition: all 0.3s ease;
+
+            .dark & {
+              background-color: #111b2d;
+              border-color: #1e293b;
+              box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+
+              &:hover {
+                border-color: #38bdf8;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+              }
+            }
+
+            &:hover {
+              border-color: #c8d4f0;
+              box-shadow: 0 8px 24px rgb(200 212 240 / 50%);
+              transform: translateY(-6px);
+            }
+
+            .course-cover {
+              position: relative;
+              width: 100%;
+              padding-top: 56.25%; // 16:9
+              background: linear-gradient(
+                135deg,
+                rgb(220 226 247 / 30%),
+                rgb(200 212 240 / 20%)
+              );
+
+              .cover-image {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              }
+
+              .course-status {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                z-index: 1;
+              }
+            }
+
+            .course-info {
+              padding: 14px;
+              background: linear-gradient(180deg, #fff, rgb(220 226 247 / 15%));
+
+              .dark & {
+                background: linear-gradient(
+                  180deg,
+                  #111b2d,
+                  rgba(56, 189, 248, 0.05)
+                );
+              }
+
+              h4 {
+                @include text-ellipsis;
+                margin: 0 0 8px;
+                font-size: 15px;
+                font-weight: 600;
+                color: #333;
+
+                .dark & {
+                  color: #f1f5f9;
+                }
+              }
+
+              p {
+                height: 32px;
+                margin: 0 0 8px;
+                font-size: 13px;
+                line-height: 1.4;
+                color: #606266;
+
+                .dark & {
+                  color: #94a3b8;
+                }
+              }
+
+              .course-meta {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                color: #7a8bb8;
+
+                .dark & {
+                  color: #64748b;
+                }
+
+                span {
+                  display: flex;
+                  align-items: center;
+
+                  .el-icon {
+                    margin-right: 4px;
+                    font-size: 14px;
+                    color: #a8b8e8;
+                  }
+                }
+              }
+            }
+          }
+        }
 
   .pagination {
     display: flex;
@@ -1628,24 +2078,138 @@ onUnmounted(() => {
     margin-top: 16px;
     border-top: 1px solid rgb(220 226 247 / 60%);
 
+    .dark & {
+      border-top-color: #1e293b;
+    }
+
     .page-info {
       min-width: 60px;
       padding: 4px 12px;
       font-size: 14px;
       color: #5a6b8a;
       text-align: center;
-      background: linear-gradient(135deg, rgb(220 226 247 / 40%), rgb(200 212 240 / 30%));
-      border-radius: 8px;
+      background: linear-gradient(
+        135deg,
+        rgb(220 226 247 / 40%),
+        rgb(200 212 240 / 30%)
+      );
+      border-radius: 10px;
+
+      .dark & {
+        color: #38bdf8;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+      }
     }
   }
 }
+}
+}
+}
 
-.thumb-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* 图标动画关键帧 */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes iconBounce {
+  0%,
+  100% {
+    transform: scale(1.2) translateY(0);
+  }
+  30% {
+    transform: scale(1.2) translateY(-6px);
+  }
+  50% {
+    transform: scale(1.2) translateY(0);
+  }
+  70% {
+    transform: scale(1.2) translateY(-3px);
+  }
+}
+
+@keyframes iconFlip {
+  0% {
+    transform: scale(1.2) rotateY(0);
+  }
+  50% {
+    transform: scale(1.2) rotateY(180deg);
+  }
+  100% {
+    transform: scale(1.2) rotateY(360deg);
+  }
+}
+
+/* 个人资料 - 心跳/呼吸效果 */
+@keyframes iconHeartbeat {
+  0% {
+    transform: scale(1.2);
+  }
+  15% {
+    transform: scale(1.35);
+  }
+  30% {
+    transform: scale(1.2);
+  }
+  45% {
+    transform: scale(1.3);
+  }
+  60%,
+  100% {
+    transform: scale(1.2);
+  }
+}
+
+/* 学习云盘 - 上浮到云端效果 */
+@keyframes iconFloat {
+  0% {
+    transform: scale(1.2) translateY(0);
+  }
+  50% {
+    transform: scale(1.2) translateY(-8px);
+  }
+  100% {
+    transform: scale(1.2) translateY(0);
+  }
+}
+
+@keyframes iconRing {
+  0% {
+    transform: scale(1.2) rotate(0);
+  }
+  10% {
+    transform: scale(1.2) rotate(20deg);
+  }
+  20% {
+    transform: scale(1.2) rotate(-15deg);
+  }
+  30% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  40% {
+    transform: scale(1.2) rotate(-10deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  60%,
+  100% {
+    transform: scale(1.2) rotate(0);
+  }
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
 }
 </style>

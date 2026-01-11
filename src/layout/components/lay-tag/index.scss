@@ -25,56 +25,131 @@
   width: 100%;
   font-size: 14px;
   color: var(--el-text-color-primary);
-  background: #fff;
-  box-shadow: 0 0 1px #888;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(40px);
+  backdrop-filter: blur(40px);
+  /* 与Navbar呼应的毛玻璃 */
+  box-shadow: 0 8px 10px -5px rgba(0, 0, 0, 0.02);
+  padding: 10px 16px 6px;
+  /* 增加内边距 */
+  height: auto;
+  min-height: 48px;
+  z-index: 999;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  :global(html.dark) & {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+
+    .scroll-item {
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f8fafc;
+      }
+
+      &.is-active {
+        color: #ffffff !important;
+        background: var(--el-color-primary);
+
+        .tag-title {
+          color: #ffffff !important;
+        }
+      }
+    }
+  }
 
   .scroll-item {
     position: relative;
-    display: inline-block;
-    height: 34px;
-    padding-left: 6px;
-    line-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 10px 0 14px;
+    margin-right: 8px;
+    line-height: 32px;
     cursor: pointer;
-    transition: all 0.4s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 10px;
+    /* 圆角矩形 */
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid transparent;
+    font-weight: 500;
+    color: var(--el-text-color-regular);
 
-    &:not(:first-child) {
-      padding-right: 24px;
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+      transform: translateY(-1px);
+    }
+
+    /* 选中状态美化 */
+    &.is-active {
+      color: #fff;
+      background: var(--el-color-primary);
+      box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.35);
+      /* 漂亮的投影 */
+      font-weight: 600;
+
+      .el-icon-close {
+        color: rgba(255, 255, 255, 0.8);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+          color: #fff;
+        }
+      }
+
+      /* 进度条样式覆盖 */
+      .schedule-active {
+        background: rgba(255, 255, 255, 0.3) !important;
+        bottom: 0px !important;
+        height: 2px !important;
+      }
     }
 
     &.chrome-item {
-      padding-right: 0;
-      padding-left: 0;
+      /* 保持 chrome 模式的兼容性，但建议使用上面的胶囊样式 */
+      background: transparent;
+      padding: 0 20px;
       margin-right: -18px;
-      box-shadow: none;
+      border-radius: 0;
+
+      &.is-active {
+        background: transparent;
+        color: var(--el-color-primary);
+        box-shadow: none;
+      }
     }
 
     .el-icon-close {
-      position: absolute;
-      top: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 18px;
-      height: 18px;
-      color: var(--el-color-primary);
-      cursor: pointer;
-      border-radius: 4px;
-      transform: translate(0, -50%);
-      transition:
-        background-color 0.12s,
-        color 0.12s;
+      width: 16px;
+      height: 16px;
+      margin-left: 6px;
+      border-radius: 50%;
+      font-size: 10px;
+      transition: all 0.2s;
+      color: var(--el-text-color-secondary);
 
       &:hover {
-        color: rgb(0 0 0 / 88%) !important;
-        background-color: rgb(0 0 0 / 6%);
+        color: #fff;
+        background-color: var(--el-color-danger);
       }
     }
   }
 
   .tag-title {
-    padding: 0 4px;
-    color: var(--el-text-color-primary);
-    text-decoration: none;
+    max-width: 120px;
+    /* 限制最大宽度，防止太长 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .scroll-container {
@@ -87,7 +162,7 @@
       padding-top: 4px;
 
       .fixed-tag {
-        padding: 0 !important;
+        padding: 0;
       }
     }
 
@@ -99,55 +174,78 @@
       list-style: none;
 
       .scroll-item {
-        transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
-
         &:nth-child(1) {
-          padding: 0 12px;
+          margin-left: 0;
         }
-
-        &.chrome-item {
-          &:nth-child(1) {
-            padding: 0;
-          }
-        }
-      }
-
-      .fixed-tag {
-        padding: 0 12px;
       }
     }
+  }
+
+  /* 箭头样式优化 */
+  .arrow-left,
+  .arrow-right,
+  .arrow-down {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: var(--el-text-color-regular);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--el-color-primary);
+    }
+  }
+
+  .arrow-down {
+    margin-left: 8px;
   }
 
   /* 右键菜单 */
   .contextmenu {
     position: absolute;
-    padding: 5px 0;
+    padding: 6px;
     margin: 0;
     font-size: 13px;
-    font-weight: normal;
     color: var(--el-text-color-primary);
     white-space: nowrap;
-    outline: 0;
     list-style-type: none;
-    background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+    background: rgba(255, 255, 255, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    z-index: 3000;
+
+    :global(html.dark) & {
+      background: rgba(30, 30, 35, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e5e7eb;
+    }
 
     li {
       display: flex;
       align-items: center;
       width: 100%;
-      padding: 7px 12px;
+      padding: 8px 12px;
       margin: 0;
       cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
 
       &:hover {
         color: var(--el-color-primary);
+        background: rgba(var(--el-color-primary-rgb), 0.1);
       }
 
       svg {
-        display: block;
-        margin-right: 0.5em;
+        margin-right: 8px;
+        font-size: 16px;
       }
     }
   }
@@ -199,18 +297,18 @@
   }
 
   .chrome-tab__bg {
-    color: var(--el-color-primary-light-9) !important;
+    color: var(--el-color-primary);
   }
 
   .tag-title {
-    color: var(--el-color-primary) !important;
+    color: #fff !important;
   }
 
   .chrome-close-btn {
-    color: var(--el-color-primary);
+    color: #fff !important;
 
     &:hover {
-      background-color: var(--el-color-primary);
+      background-color: rgba(255, 255, 255, 0.2) !important;
     }
   }
 

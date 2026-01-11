@@ -7,13 +7,19 @@ html.dark {
   $color-white: #fff;
 
   /* 自定义深色背景颜色 */
-  // --el-bg-color: #020409;
+  --el-bg-color: #1a1a1a;
+  --el-bg-color-overlay: #242424;
 
   /* 常用border-color 需要时可取用 */
   --pure-border-color: rgb(253 253 253 / 12%);
 
   /* switch关闭状态下的color 需要时可取用 */
   --pure-switch-off-color: #ffffff3f;
+
+  /* Element Plus 文本颜色深色适配变量 */
+  --el-text-color-primary: #ffffff;
+  --el-text-color-regular: #d4d4d8;
+  --el-text-color-placeholder: #888888;
 
   /* vxe-table */
   --vxe-form-background-color: #151515;
@@ -76,22 +82,23 @@ html.dark {
     $lightness: 15%
   );
 
-  .navbar,
-  .tags-view,
   .contextmenu,
   .double-left,
   .double-sidebar,
   .sidebar-container,
-  .horizontal-header,
-  .sidebar-logo-container,
-  .horizontal-header .el-sub-menu__title,
-  .horizontal-header .submenu-title-noDropdown {
-    background: var(--el-bg-color) !important;
+  .sidebar-logo-container {
+    background: var(--el-bg-color);
+  }
+
+  .horizontal-header {
+    background: rgba(26, 26, 26, 0.6) !important;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
   }
 
   .app-main,
   .app-main-nofixed-header {
-    background: #020409 !important;
+    background: #020409;
   }
 
   .logic-flow-view,
@@ -114,7 +121,7 @@ html.dark {
     .scroll-item {
       .el-icon-close {
         &:hover {
-          color: rgb(255 255 255 / 85%) !important;
+          color: rgb(255 255 255 / 85%);
           background-color: rgb(255 255 255 / 12%);
         }
       }
@@ -156,7 +163,7 @@ html.dark {
     .widget-form-list,
     .el-aside,
     .widget-view {
-      background: var(--el-bg-color) !important;
+      background: var(--el-bg-color);
     }
 
     .form-edit-widget-label a {
@@ -199,11 +206,11 @@ html.dark {
     &.el-message-box__close,
     &.el-notification__closeBtn {
       &:hover {
-        color: rgb(255 255 255 / 85%) !important;
+        color: rgb(255 255 255 / 85%);
         background-color: rgb(255 255 255 / 12%);
 
         .pure-dialog-svg {
-          color: rgb(255 255 255 / 85%) !important;
+          color: rgb(255 255 255 / 85%);
         }
       }
     }
@@ -211,17 +218,17 @@ html.dark {
 
   /* 克隆并自定义 ElMessage 样式，不会影响 ElMessage 原本样式，在 src/utils/message.ts 中调用自定义样式 ElMessage 方法即可，整体浅色风格在 src/style/element-plus.scss 文件进行了适配 */
   .pure-message {
-    background-color: rgb(36 37 37) !important;
-    background-image: initial !important;
+    background-color: rgb(36 37 37);
+    background-image: initial;
     box-shadow:
       rgb(13 13 13 / 12%) 0 3px 6px -4px,
       rgb(13 13 13 / 8%) 0 6px 16px 0,
-      rgb(13 13 13 / 5%) 0 9px 28px 8px !important;
+      rgb(13 13 13 / 5%) 0 9px 28px 8px;
 
     & .el-message__content {
-      color: $color-white !important;
-      pointer-events: all !important;
-      background-image: initial !important;
+      color: $color-white;
+      pointer-events: all;
+      background-image: initial;
     }
 
     & .el-message__closeBtn {
@@ -286,6 +293,233 @@ html.dark {
 
     ::-webkit-scrollbar-thumb:hover {
       background: rgb(92 93 96);
+    }
+  }
+
+  /* 通用深色模式补丁：针对 Dialog、Descriptions、表单组件 */
+  .el-dialog {
+    background-color: var(--el-bg-color-overlay);
+    --el-dialog-bg-color: var(--el-bg-color-overlay);
+    border: 1px solid #333;
+
+    .el-dialog__header, .el-dialog__footer {
+      background-color: var(--el-bg-color-overlay);
+    }
+    .el-dialog__title, .el-dialog__body {
+      color: #e0e0e0;
+    }
+  }
+
+  .el-descriptions__body {
+    background-color: var(--el-bg-color);
+    color: #e0e0e0;
+  }
+  .el-descriptions__label {
+    background-color: #2a2a2a;
+    color: #aaa;
+    border-color: #444;
+  }
+  .el-descriptions__content {
+    background-color: var(--el-bg-color);
+    color: #e0e0e0;
+    border-color: #444;
+  }
+  .el-descriptions--border {
+    border-color: #444;
+  }
+
+  .el-radio, .el-checkbox {
+    color: #e0e0e0;
+    --el-radio-text-color: #e0e0e0;
+    --el-checkbox-text-color: #e0e0e0;
+  }
+  
+  .el-input__inner, .el-textarea__inner {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+
+  .el-empty__description p {
+    color: #888;
+  }
+
+  /* MessageBox 深色适配 */
+  .el-message-box {
+    background-color: var(--el-bg-color-overlay);
+    border: 1px solid #333;
+    --el-messagebox-title-color: #e0e0e0;
+    --el-messagebox-content-color: #e0e0e0;
+
+    .el-message-box__title,
+    .el-message-box__content {
+      color: #e0e0e0;
+    }
+  }
+
+  /* 针对详情页中的 Radio/Checkbox 文字颜色加强 */
+  .el-radio__label,
+  .el-checkbox__label {
+    color: #e0e0e0;
+  }
+
+  /* 针对详情页中的 Card 头部文字 */
+  .el-card__header {
+    color: #e0e0e0;
+  }
+
+  /* 针对详情页中的 Skeleton 背景 */
+  .el-skeleton {
+    --el-skeleton-color: #2a2a2a;
+    --el-skeleton-to-color: #333;
+  }
+
+  /* Tabs 深色适配 */
+  .el-tabs__item {
+    color: #aaa;
+    &.is-active {
+      color: var(--el-color-primary);
+    }
+  }
+  .el-tabs__nav-wrap::after {
+    background-color: #333;
+  }
+  .el-tabs__active-bar {
+    background-color: var(--el-color-primary);
+  }
+
+  /* Input/Textarea 深色适配加固 */
+  .el-input__wrapper {
+    background-color: #2a2a2a;
+    box-shadow: 0 0 0 1px #444 inset;
+    &.is-focus {
+      box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+    }
+  }
+  .el-input__inner,
+  .el-textarea__inner {
+    background-color: transparent;
+    color: #e0e0e0;
+  }
+  .el-textarea__inner {
+    background-color: #2a2a2a;
+    box-shadow: 0 0 0 1px #444 inset;
+    &:focus {
+      box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+    }
+  }
+
+  /* Radio/Checkbox 内部图标适配 */
+  .el-radio__inner,
+  .el-checkbox__inner {
+    background-color: #2a2a2a;
+    border-color: #444;
+  }
+  .el-radio.is-checked .el-radio__inner,
+  .el-checkbox.is-checked .el-checkbox__inner {
+    background-color: var(--el-color-primary);
+    border-color: var(--el-color-primary);
+  }
+  .el-checkbox__inner::after {
+    border-color: #fff;
+  }
+
+  /* Alert 深色适配 */
+  .el-alert {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    .el-alert__title,
+    .el-alert__description {
+      color: #e0e0e0;
+    }
+  }
+
+  /* Result 深色适配 */
+  .el-result {
+    .el-result__title p {
+      color: #e0e0e0;
+    }
+    .el-result__sub-title p {
+      color: #aaa;
+    }
+  }
+
+  /* Loading 深色适配 */
+  .el-loading-mask {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+
+  /* Select/Dropdown 深色适配 */
+  .el-select-dropdown {
+    background-color: var(--el-bg-color-overlay);
+    border: 1px solid #444;
+  }
+  .el-select-dropdown__item {
+    color: #e0e0e0;
+    &.hover, &:hover {
+      background-color: #333;
+    }
+    &.selected {
+      color: var(--el-color-primary);
+    }
+  }
+
+  /* DatePicker 弹窗深色适配 */
+  .el-picker-panel {
+    background-color: var(--el-bg-color-overlay);
+    color: #e0e0e0;
+    border: 1px solid #444;
+    --el-datepicker-text-color: #e0e0e0;
+    --el-datepicker-off-text-color: #666;
+    --el-datepicker-header-text-color: #e0e0e0;
+    --el-datepicker-border-color: #444;
+
+    .el-date-table th {
+      border-bottom: 1px solid #444;
+      color: #aaa;
+    }
+    .el-picker-panel__footer {
+      background-color: var(--el-bg-color-overlay);
+      border-top: 1px solid #444;
+    }
+  }
+
+  /* Pagination 深色适配 */
+  .el-pagination {
+    --el-pagination-bg-color: transparent;
+    --el-pagination-text-color: #e0e0e0;
+    --el-pagination-button-color: #e0e0e0;
+    --el-pagination-button-bg-color: #2a2a2a;
+    --el-pagination-button-disabled-bg-color: #1a1a1a;
+    --el-pagination-hover-color: var(--el-color-primary);
+
+    button {
+      background-color: #2a2a2a;
+      color: #e0e0e0;
+      &:disabled {
+        background-color: #1a1a1a;
+        color: #555;
+      }
+    }
+    .el-pager li {
+      background-color: #2a2a2a;
+      color: #e0e0e0;
+      &.is-active {
+        background-color: var(--el-color-primary);
+        color: #fff;
+      }
+    }
+  }
+
+  /* 通用按钮深色适配补丁 (针对默认按钮) */
+  .el-button--default:not(.is-text):not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger) {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+    &:hover {
+      background-color: #333;
+      border-color: var(--el-color-primary);
+      color: var(--el-color-primary);
     }
   }
 }

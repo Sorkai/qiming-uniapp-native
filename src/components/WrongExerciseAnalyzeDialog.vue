@@ -4,6 +4,7 @@
     :title="titleText"
     width="70%"
     :before-close="handleClose"
+    class="custom-analyze-dialog"
   >
     <div class="wea-body" v-loading="loading">
       <section class="orig">
@@ -145,7 +146,8 @@ const toggleExplain = (idx: number) => {
 <style scoped>
 .wea-body {
   max-height: 70vh;
-  overflow: auto;
+  overflow-y: auto;
+  padding: 0;
 }
 .section-title {
   margin: 0 0 10px;
@@ -184,4 +186,91 @@ const toggleExplain = (idx: number) => {
 .explain { margin-top: 8px; background: #f9fafb; padding: 10px; border-radius: 6px; }
 .prewrap { white-space: pre-wrap; }
 .mr8 { margin-right: 8px; }
+</style>
+
+<style lang="scss">
+.custom-analyze-dialog {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+
+  .el-dialog__header {
+    padding: 24px 40px !important;
+    margin-right: 0 !important;
+    border-bottom: 1px solid var(--el-border-color-lighter) !important;
+  }
+
+  .el-dialog__body {
+    padding: 32px 40px 40px !important;
+  }
+
+  .el-dialog__footer {
+    padding: 16px 40px 24px !important;
+    border-top: 1px solid var(--el-border-color-lighter) !important;
+  }
+}
+
+/* 深色模式适配 */
+html.dark .custom-analyze-dialog {
+  --el-dialog-bg-color: #1a1a1a;
+  background-color: var(--el-dialog-bg-color);
+  border: 1px solid #333;
+
+  .el-dialog__header {
+    border-bottom: 1px solid #333 !important;
+  }
+
+  .el-dialog__title {
+    color: #e0e0e0;
+  }
+
+  .el-dialog__footer {
+    border-top: 1px solid #333 !important;
+  }
+
+  .section-title {
+    color: #e0e0e0;
+  }
+
+  .orig .stem {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid #3e3e3e;
+  }
+
+  .answer-line {
+    color: #aaa;
+  }
+
+  .exercise-item {
+    border-color: #3e3e3e;
+    background: #2a2a2a;
+    color: #e0e0e0;
+  }
+
+  .explain {
+    background: #333;
+    color: #e0e0e0;
+  }
+
+  /* 描述列表适配 */
+  .el-descriptions__body {
+    background-color: #252525;
+  }
+
+  .el-descriptions__label {
+    background-color: #333;
+    color: #aaa;
+    border-color: #444;
+  }
+
+  .el-descriptions__content {
+    background-color: #252525;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+
+  .el-descriptions--border {
+    border-color: #444;
+  }
+}
 </style>

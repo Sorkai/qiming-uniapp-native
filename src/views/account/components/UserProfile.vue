@@ -1,5 +1,5 @@
 <template>
-  <div class="user-profile">
+  <div class="user-profile" :class="currentTheme">
     <!-- 顶部自定义横幅图片区域 -->
     <div class="profile-banner" v-if="extraInfo.bannerUrl || defaultBanner" :style="bannerStyle">
       <div class="banner-overlay">
@@ -71,13 +71,13 @@
               {{ formattedRegisterTime }}
             </div>
           </div>
-            <div class="info-item">
-              <div class="label">最后登录</div>
-              <div class="value time-value">
-                <el-icon><Calendar /></el-icon>
-                {{ formattedLastLoginTime }}
-              </div>
+          <div class="info-item">
+            <div class="label">最后登录</div>
+            <div class="value time-value">
+              <el-icon><Calendar /></el-icon>
+              {{ formattedLastLoginTime }}
             </div>
+          </div>
         </div>
       </div>
     </div>
@@ -117,13 +117,39 @@
         <el-form-item label="横幅图" prop="bannerUrl">
           <el-input
             v-model="form.bannerUrl"
-            placeholder="请输入横幅图片地址（留空使用默认图）"
+            placeholder="请输入地址或点击右侧箭头选择"
             clearable
+            @input="val => (bannerPreviewUrl = val)"
+          >
+            <template #suffix>
+              <el-dropdown trigger="click" @command="handleBannerCommand">
+                <el-icon class="el-input__icon cursor-pointer" style="margin-right: 8px">
+                  <ArrowDown />
+                </el-icon>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="preset">选择预设图片</el-dropdown-item>
+                    <el-dropdown-item command="upload">上传自定义图片</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+          </el-input>
+          <input
+            ref="bannerInputRef"
+            type="file"
+            hidden
+            accept="image/*"
+            @change="handleBannerFileChange"
           />
         </el-form-item>
-        <el-form-item v-if="form.bannerUrl" label="预览">
+        <el-form-item v-if="bannerPreviewUrl" label="预览">
           <div class="banner-preview">
-            <img :src="form.bannerUrl" alt="banner" />
+            <img
+              :src="bannerPreviewUrl"
+              alt="banner"
+              crossorigin="anonymous"
+            />
           </div>
         </el-form-item>
         <el-form-item label="性别">
@@ -148,6 +174,66 @@
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="loading" @click="submitForm">
           保存
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 预设背景图选择弹窗 -->
+    <el-dialog
+      v-model="presetDialogVisible"
+      title="选择预设背景图"
+      width="600px"
+      append-to-body
+    >
+      <div class="preset-banners-grid">
+        <div
+          v-for="url in presetBanners"
+          :key="url"
+          class="preset-item"
+          @click="handleSelectPreset(url)"
+        >
+          <img :src="url" alt="preset" />
+          <div class="preset-overlay">
+            <el-icon><Plus /></el-icon>
+            <span>点击裁剪</span>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 图片裁剪弹窗 -->
+    <el-dialog
+      v-model="cropperDialogVisible"
+      :title="currentCroppingType === 'avatar' ? '裁剪头像' : '裁剪横幅图'"
+      width="800px"
+      append-to-body
+      destroy-on-close
+    >
+      <div v-if="cropperDialogVisible" class="cropper-container">
+        <ReCropper
+          ref="cropperRef"
+          :src="croppingImage"
+          :realTimePreview="false"
+          crossorigin="anonymous"
+          :options="{
+            aspectRatio: currentCroppingType === 'avatar' ? 1 : 5,
+            viewMode: 1,
+            guides: true,
+            checkCrossOrigin: true
+          }"
+          height="400px"
+          @cropper="handleCropperResult"
+          @error="handleCropperError"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="cropperDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="loading"
+          @click="handleConfirmCrop"
+        >
+          确认裁剪
         </el-button>
       </template>
     </el-dialog>
@@ -208,21 +294,53 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
-import { Edit, Plus, Lock, Calendar, Message } from "@element-plus/icons-vue";
+import {
+  Edit,
+  Plus,
+  Lock,
+  Calendar,
+  Message,
+  Check,
+  ArrowDown
+} from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
+import ReCropper from "@/components/ReCropper";
 import { storageLocal } from "@pureadmin/utils";
-import { userKey, removeToken } from "@/utils/auth";
+import { userKey, removeToken, getToken, setToken } from "@/utils/auth";
 import type { DataInfo } from "@/utils/auth";
-import { updateFrontendUserInfo, updateFrontendUserPassword } from "@/api/frontend/user";
+import {
+  updateFrontendUserInfo,
+  updateFrontendUserPassword,
+  type UpdateUserInfoParams
+} from "@/api/frontend/user";
 import { uploadFile, getUserDetail } from "@/api/user";
 import dayjs from "dayjs";
+
+const props = defineProps<{
+  currentTheme?: string;
+}>();
 
 const router = useRouter();
 const defaultAvatar = "/src/assets/user.jpg";
 const dialogVisible = ref(false);
 const loading = ref(false);
 const userInfo = ref<DataInfo<number> | any>(storageLocal().getItem(userKey));
+
+// 动态加载预设背景图
+const presetImages = import.meta.glob(
+  "@/assets/publicbackgroundpreset/*.{jpg,jpeg,png,heif,heic,HEIC,HEIF}",
+  { eager: true, as: "url" }
+);
+const presetBanners = Object.values(presetImages);
+
+// 弹窗与加载状态
+const presetDialogVisible = ref(false);
+const cropperDialogVisible = ref(false);
+const currentCroppingType = ref<"avatar" | "banner">("avatar");
+const croppingImage = ref("");
+const cropperRef = ref();
+const bannerInputRef = ref<HTMLInputElement>();
 
 // 修改密码相关
 const passwordDialogVisible = ref(false);
@@ -236,6 +354,7 @@ const passwordForm = reactive({
 
 const formRef = ref<FormInstance>();
 const avatarUrl = ref("");
+const bannerPreviewUrl = ref("");
 
 // 表单数据
 const form = reactive({
@@ -348,16 +467,66 @@ const getSexLabel = computed(() => {
 const fetchUserDetail = async () => {
   try {
     const res = await getUserDetail();
-    if (res.code === 200) {
-      userInfo.value = res.data.userInfo; // 修改这里，从res.data.userInfo获取
-      storageLocal().setItem(userKey, res.data.userInfo); // 更新缓存
-      // ElMessage.success("用户信息已更新"); // 移除此行
+    // 兼容多种 Mock 响应格式
+    const isSuccess = res && (res.code === 200 || (res as any).success);
+    const detailData =
+      res?.data?.userInfo || (res as any)?.userInfo || res?.data;
+
+    if (isSuccess && detailData) {
+      const newUserInfo = detailData;
+
+      // 增量更新用户信息，必须确保认证元数据（refreshToken, expires, accessToken）绝对不丢失
+      const tokenData = getToken();
+      const localData = (storageLocal().getItem(userKey) as any) || {};
+
+      // 深度合并新老数据，确保不丢失已有的认证字段
+      const mergedUserInfo: any = {
+        ...localData,
+        ...newUserInfo
+      };
+
+      // 强行恢复可能被覆盖的关键认证字段
+      if (tokenData) {
+        mergedUserInfo.accessToken =
+          (tokenData as any).accessToken || localData.accessToken;
+        mergedUserInfo.refreshToken =
+          (tokenData as any).refreshToken || localData.refreshToken;
+        mergedUserInfo.expires =
+          (tokenData as any).expires || localData.expires;
+      }
+
+      // 补全必要的默认权限（Mock 环境常备）
+      mergedUserInfo.permissions = mergedUserInfo.permissions || ["*:*:*"];
+      mergedUserInfo.roles = mergedUserInfo.roles || ["admin"];
+
+      // 更新响应式数据
+      userInfo.value = mergedUserInfo;
+
+      // 只要有 accessToken 就走 setToken 链路进行同步
+      if (mergedUserInfo.accessToken) {
+        setToken({
+          ...mergedUserInfo,
+          // 统一 expires 格式为 Date 供 setToken 内部使用
+          expires: mergedUserInfo.expires
+            ? new Date(mergedUserInfo.expires)
+            : new Date(Date.now() + 86400000)
+        } as any);
+      } else {
+        storageLocal().setItem(userKey, mergedUserInfo);
+      }
+
+      // 通知全局 UI 更新
+      window.dispatchEvent(
+        new CustomEvent("userInfoUpdated", { detail: mergedUserInfo })
+      );
+      return true;
     } else {
-      ElMessage.error(res.msg || "获取用户信息失败");
+      console.warn("获取用户详情失败，响应无效:", res);
+      return false;
     }
   } catch (error) {
-    ElMessage.error("获取用户信息失败");
-    console.error("获取用户信息失败", error);
+    console.error("同步用户信息出错:", error);
+    return false;
   }
 };
 
@@ -368,43 +537,103 @@ const openEditDialog = () => {
     form.sex = userInfo.value.sex || 0;
     form.info = userInfo.value.info || "";
     form.email = extraInfo.email || "";
-    form.bannerUrl = extraInfo.bannerUrl || "";
+    form.bannerUrl = userInfo.value.bannerUrl || extraInfo.bannerUrl || "";
+    bannerPreviewUrl.value = form.bannerUrl;
     avatarUrl.value = userInfo.value.avatar || defaultAvatar;
   }
   dialogVisible.value = true;
 };
 
 // 处理头像变更
-const handleAvatarChange = async file => {
-  const isJPG = file.type === "image/jpeg";
-  const isPNG = file.type === "image/png";
+const handleAvatarChange = file => {
   const isLt2M = file.size / 1024 / 1024 < 2;
-
   if (!isLt2M) {
     ElMessage.error("头像图片大小不能超过 2MB!");
     return false;
   }
+  currentCroppingType.value = "avatar";
+  croppingImage.value = URL.createObjectURL(file.raw);
+  cropperDialogVisible.value = true;
+};
 
-  // 本地预览
-  avatarUrl.value = URL.createObjectURL(file.raw);
+// 处理横幅图操作指令
+const handleBannerCommand = (command: string) => {
+  if (command === "preset") {
+    presetDialogVisible.value = true;
+  } else if (command === "upload") {
+    bannerInputRef.value?.click();
+  }
+};
 
+// 处理自定义横幅图上传
+const handleBannerFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) {
+    currentCroppingType.value = "banner";
+    croppingImage.value = URL.createObjectURL(file);
+    cropperDialogVisible.value = true;
+    (e.target as HTMLInputElement).value = "";
+  }
+};
+
+// 处理选择预设图
+const handleSelectPreset = (url: string) => {
+  currentCroppingType.value = "banner";
+  croppingImage.value = url;
+  cropperDialogVisible.value = true;
+};
+
+// 处理裁剪错误
+const handleCropperError = (error: any) => {
+  console.error("裁剪组件发生错误:", error);
+  ElMessage.error(`图片处理失败: ${error.message || "未知错误"}`);
+  loading.value = false;
+  cropperDialogVisible.value = false;
+};
+
+// 确认裁剪
+const handleConfirmCrop = () => {
+  if (cropperRef.value) {
+    loading.value = true;
+    cropperRef.value.croppered();
+  }
+};
+
+// 接收裁剪结果
+const handleCropperResult = async ({ blob, base64 }) => {
   try {
-    // 使用FormData上传文件
     const formData = new FormData();
-    formData.append("file", file.raw);
+    formData.append("file", blob, `crop_${Date.now()}.png`);
 
-    // 上传头像
-    const { code, msg, data } = await uploadFile(formData);
+    const res = await uploadFile(formData);
 
-    if (code === 200 && data?.url) {
-      form.avatar = data.url;
-      ElMessage.success("头像上传成功");
+    if (res.code === 200 && res.data?.url) {
+      // 在 Mock 环境下，由于上传接口返回的是随机图片地址，会导致裁切效果失效。
+      // 为了演示效果，如果是 Mock 地址（包含 picsum.photos），我们优先使用裁切后的 base64。
+      const finalUrl =
+        res.data.url.includes("picsum.photos") ||
+        res.data.url.includes("placeholder")
+          ? base64
+          : res.data.url;
+
+      if (currentCroppingType.value === "avatar") {
+        form.avatar = finalUrl;
+        avatarUrl.value = base64;
+      } else {
+        form.bannerUrl = finalUrl;
+        bannerPreviewUrl.value = base64;
+      }
+      cropperDialogVisible.value = false;
+      presetDialogVisible.value = false;
+      ElMessage.success("图片处理成功");
     } else {
-      ElMessage.error(msg || "头像上传失败");
+      ElMessage.error(res.msg || "图片上传失败");
     }
-  } catch (error) {
-    console.error("上传头像失败:", error);
-    ElMessage.error("上传头像失败，请稍后重试");
+  } catch (error: any) {
+    console.error("处理裁剪图片失败:", error);
+    ElMessage.error(`图片处理失败: ${error.message || "未知错误"}`);
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -417,39 +646,38 @@ const submitForm = async () => {
       try {
         loading.value = true;
 
-        // 构建要更新的数据
-        const updateData: {
-          nickname: string;
-          sex: number;
-          info: string;
-          avatar?: string;
-        } = {
+        const updateData: UpdateUserInfoParams = {
           nickname: form.nickname,
           sex: form.sex,
-          info: form.info
+          info: form.info,
+          bannerUrl: form.bannerUrl
         };
 
-        // 如果头像有更新
         if (form.avatar) {
           updateData.avatar = form.avatar;
         }
 
-  const { code, msg } = await updateFrontendUserInfo(updateData);
+        const res = await updateFrontendUserInfo(updateData);
+        // 兼容不同的响应格式 (code 200 或 success true)
+        const isSuccess = res && (res.code === 200 || (res as any).success);
 
-        if (code === 200) {
-          // 前端模拟保存邮箱
-            extraInfo.email = form.email || "";
-            extraInfo.bannerUrl = form.bannerUrl || "";
-            persistExtra();
+        if (isSuccess) {
+          extraInfo.email = form.email || "";
+          extraInfo.bannerUrl = form.bannerUrl || "";
+          persistExtra();
+          
+          // 等待用户信息同步完成，确保本地存储和 UI 状态一致
+          const syncSuccess = await fetchUserDetail();
+          if (syncSuccess) {
             ElMessage.success("资料修改成功");
             dialogVisible.value = false;
-            fetchUserDetail(); // 重新获取用户信息
+          }
         } else {
-          ElMessage.error(msg || "资料修改失败");
+          ElMessage.error(res?.msg || "资料修改失败");
         }
       } catch (error) {
         console.error("更新个人资料失败:", error);
-        ElMessage.error("系统错误，请稍后重试");
+        ElMessage.error("更新资料时发生错误，请检查网络后重试");
       } finally {
         loading.value = false;
       }
@@ -483,18 +711,13 @@ const submitPasswordForm = async () => {
           ElMessage.success("密码修改成功，即将退出登录");
           passwordDialogVisible.value = false;
 
-          // 延迟1.5秒后退出登录，让用户看到成功提示
           setTimeout(() => {
-            // 清除登录信息
             removeToken();
-            // 跳转到首页
             router.push("/home");
           }, 1500);
         } else {
-          // 处理特定错误码
           if (code === 100001) {
             ElMessage.error("原密码错误，请重新输入");
-            // 清空原密码输入框，便于用户重新输入
             passwordForm.oldPassword = "";
           } else {
             ElMessage.error(msg || "密码修改失败，请稍后重试");
@@ -502,17 +725,7 @@ const submitPasswordForm = async () => {
         }
       } catch (error) {
         console.error("修改密码失败:", error);
-        // 检查是否包含特定错误信息
-        if (
-          error.response?.data?.code === 100001 ||
-          (typeof error === "object" &&
-            error.toString().includes("原密码新信息错误"))
-        ) {
-          ElMessage.error("原密码错误，请重新输入");
-          passwordForm.oldPassword = "";
-        } else {
-          ElMessage.error("系统错误，请稍后重试");
-        }
+        ElMessage.error("系统错误，请稍后重试");
       } finally {
         passwordLoading.value = false;
       }
@@ -520,8 +733,6 @@ const submitPasswordForm = async () => {
   });
 };
 
-// 组件挂载时获取最新用户信息
-// 时间与展示格式化
 const formattedRegisterTime = computed(() =>
   extraInfo.registrationTime ? dayjs(extraInfo.registrationTime).format("YYYY-MM-DD HH:mm:ss") : "-"
 );
@@ -529,10 +740,9 @@ const formattedLastLoginTime = computed(() =>
   extraInfo.lastLoginTime ? dayjs(extraInfo.lastLoginTime).format("YYYY-MM-DD HH:mm:ss") : "-"
 );
 
-// 横幅默认图片与样式
-const defaultBanner = '/src/assets/course/cover-default.jpg';
+const defaultBanner = "/src/assets/course/cover-default.jpg";
 const bannerStyle = computed(() => {
-  const url = extraInfo.bannerUrl || defaultBanner;
+  const url = userInfo.value?.bannerUrl || extraInfo.bannerUrl || defaultBanner;
   return { backgroundImage: `url(${url})` };
 });
 
@@ -580,6 +790,10 @@ onMounted(() => {
       font-size: 18px;
       font-weight: 600;
       color: #333;
+      
+      .dark & {
+        color: #f1f5f9;
+      }
     }
 
     .action-buttons {
@@ -640,6 +854,10 @@ onMounted(() => {
     text-align: center;
     background-color: #f9f9f9;
     border-radius: 8px;
+    
+    .dark & {
+      background-color: #111b2d;
+    }
 
     .el-avatar {
       margin-bottom: 16px;
@@ -651,6 +869,10 @@ onMounted(() => {
       font-size: 18px;
       font-weight: 600;
       color: #333;
+      
+      .dark & {
+        color: #f1f5f9;
+      }
     }
 
     .user-role {
@@ -679,6 +901,12 @@ onMounted(() => {
       backdrop-filter: blur(4px);
       transition: box-shadow .25s, transform .25s;
 
+      .dark & {
+        background: linear-gradient(145deg, #111b2d, #1e293b);
+        border-color: #1e293b;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
       &:hover {
         box-shadow: 0 8px 22px -4px rgba(0,0,0,0.08);
         transform: translateY(-2px);
@@ -686,6 +914,10 @@ onMounted(() => {
 
       &.timeline {
         background: linear-gradient(135deg,#fdfbfb,#ebedee);
+        
+        .dark & {
+          background: linear-gradient(135deg, #0f172a, #111b2d);
+        }
       }
 
       .group-title {
@@ -695,6 +927,11 @@ onMounted(() => {
         margin-bottom: 14px;
         position: relative;
         padding-left: 10px;
+        
+        .dark & {
+          color: #f1f5f9;
+        }
+
         &::before {
           content: '';
           position: absolute;
@@ -717,6 +954,10 @@ onMounted(() => {
           width: 72px;
           color: #6b7280;
           font-weight: 500;
+          
+          .dark & {
+            color: #94a3b8;
+          }
         }
         .value {
           flex: 1;
@@ -725,6 +966,10 @@ onMounted(() => {
           align-items: center;
           gap: 6px;
           word-break: break-all;
+          
+          .dark & {
+            color: #e2e8f0;
+          }
         }
         &.signature .value {
           line-height: 1.4;
@@ -793,8 +1038,68 @@ onMounted(() => {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 10px -2px rgba(0,0,0,0.06);
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.06);
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.preset-banners-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 8px;
+
+  .preset-item {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+
+    &:hover {
+      transform: scale(1.02);
+      .preset-overlay {
+        opacity: 1;
+      }
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .preset-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      opacity: 0;
+      transition: opacity 0.3s;
+      gap: 8px;
+
+      .el-icon {
+        font-size: 24px;
+      }
+    }
+  }
+}
+
+.cropper-container {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
 }
 
 @media (max-width: 768px) {

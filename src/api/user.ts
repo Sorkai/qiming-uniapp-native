@@ -76,6 +76,7 @@ export type UserCenterDetailResult = {
       avatar: string;
       info: string;
       roleType: number;
+      bannerUrl: string;
     };
   };
 };
@@ -180,10 +181,7 @@ export const getUserDetail = () => {
 /** 文件上传 */
 export const uploadFile = (data: FormData) => {
   return http.request<UploadResult>("post", "/edu/v1/user/upload", {
-    data,
-    headers: {
-      "Content-Type": "multipart/form-data"
-    }
+    data
   });
 };
 

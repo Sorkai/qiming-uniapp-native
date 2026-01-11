@@ -7,7 +7,6 @@
           <img :src="logo" alt="Logo" class="app-logo-img" />
           <div class="logo-text-group">
             <span class="logo-text">启明智教</span>
-            <span class="logo-text-en">Intelledu</span>
           </div>
         </div>
         <nav class="nav-links">
@@ -48,7 +47,7 @@
             v-else
             type="primary"
             class="login-btn"
-            @click="showLoginDialog = true"
+            @click="handleEntry"
             >登录</el-button
           >
         </div>
@@ -57,14 +56,6 @@
 
     <!-- 英雄区域 - 星空背景 -->
     <div class="banner">
-      <!-- 星空背景层 -->
-      <div class="starfield">
-        <div v-for="i in 40" :key="'star-'+i" class="star" :style="getStarStyle(i)"></div>
-        <div v-for="i in 3" :key="'shooting-'+i" class="shooting-star" :style="getShootingStarStyle(i)"></div>
-      </div>
-      <div class="hero-particles">
-        <div v-for="i in 8" :key="i" class="particle" :style="getParticleStyle(i)"></div>
-      </div>
       <el-carousel
         height="100vh"
         :interval="5000"
@@ -77,16 +68,34 @@
             class="carousel-content"
             :style="{ backgroundImage: `url(${item.background})` }"
           >
+            <!-- 背景效果移入内容层，确保层级正确且不干扰交互 -->
+            <div class="starfield">
+              <div v-for="i in 40" :key="'star-'+i" class="star" :style="getStarStyle(i)"></div>
+              <div v-for="i in 3" :key="'shooting-'+i" class="shooting-star" :style="getShootingStarStyle(i)"></div>
+            </div>
+            <div class="hero-particles">
+              <div v-for="i in 8" :key="i" class="particle" :style="getParticleStyle(i)"></div>
+            </div>
+
             <div class="carousel-text">
               <div class="hero-badge">AI 深度融合的智慧教育平台</div>
               <h2 class="main-title">{{ item.title }}</h2>
               <p class="sub-title">{{ item.subtitle }}</p>
               <p class="hero-desc">{{ item.description }}</p>
               <div class="hero-buttons">
-                <el-button type="primary" size="large" class="hero-btn primary" @click="showLoginDialog = true">
+                <el-button 
+                  type="primary" 
+                  size="large" 
+                  class="hero-btn primary" 
+                  @click="handleEntry"
+                >
                   立即体验
                 </el-button>
-                <el-button size="large" class="hero-btn secondary" @click="scrollToSection('features')">
+                <el-button 
+                  size="large" 
+                  class="hero-btn secondary" 
+                  @click="scrollToSection('features')"
+                >
                   了解更多
                 </el-button>
               </div>
@@ -153,14 +162,43 @@
         <div class="transition-text">
           <h2>让每一位学习者<br/>都能发光发亮</h2>
           <p>基于 AI 技术的个性化学习路径规划，因材施教，让知识触手可及</p>
+          <div class="transition-stats">
+            <div class="stat-item">
+              <span class="stat-number">98%</span>
+              <span class="stat-label">学习效率提升</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">50万+</span>
+              <span class="stat-label">活跃学习者</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">1000+</span>
+              <span class="stat-label">精品课程</span>
+            </div>
+          </div>
         </div>
         <div class="transition-visual">
-          <div class="floating-cards">
-            <div class="float-card card-1">📚</div>
-            <div class="float-card card-2">🎯</div>
-            <div class="float-card card-3">💡</div>
-            <div class="float-card card-4">🚀</div>
+          <div class="visual-grid">
+            <div class="grid-card card-large">
+              <div class="card-icon">🎓</div>
+              <div class="card-title">智能学习</div>
+              <div class="card-desc">AI 驱动的个性化学习路径</div>
+            </div>
+            <div class="grid-card card-medium card-top-right">
+              <div class="card-icon">📊</div>
+              <div class="card-title">数据分析</div>
+            </div>
+            <div class="grid-card card-medium card-bottom-left">
+              <div class="card-icon">🏆</div>
+              <div class="card-title">成就系统</div>
+            </div>
+            <div class="grid-card card-small card-1">📚</div>
+            <div class="grid-card card-small card-2">🚀</div>
+            <div class="grid-card card-small card-3">💡</div>
+            <div class="grid-card card-small card-4">🎯</div>
+            <div class="grid-card card-small card-5">⚡</div>
           </div>
+          <div class="visual-glow"></div>
         </div>
       </div>
     </div>
@@ -284,15 +322,28 @@
         <h2>开启智慧学习之旅</h2>
         <p>立即加入，体验 AI 驱动的全新教育模式</p>
         <div class="cta-buttons">
-          <el-button type="primary" size="large" @click="showLoginDialog = true">
-            免费试用
+          <el-button 
+            type="primary" 
+            size="large" 
+            @click="handleEntry"
+          >
+            立即试用
           </el-button>
-          <el-button size="large" plain>
+          <el-button 
+            size="large" 
+            plain
+          >
             联系我们
           </el-button>
         </div>
       </div>
     </div>
+
+    <!-- 登录弹窗 -->
+    <LoginDialog 
+      v-model:visible="showLoginDialog" 
+      @login-success="handleLoginSuccess"
+    />
 
     <!-- 底部信息 -->
     <footer class="footer-section">
@@ -301,7 +352,7 @@
           <div class="footer-brand">
             <img :src="logo" alt="Logo" class="footer-logo" />
             <p class="footer-desc">
-              启明智教 Intelledu 是基于人工智能深度融合的智慧教育平台，致力于为教育者和学习者提供
+              启明智教是基于人工智能深度融合的智慧教育平台，致力于为教育者和学习者提供
               个性化、智能化的教学与学习体验，让每个人都能发现学习的乐趣。
             </p>
             <div class="social-links">
@@ -338,16 +389,10 @@
         <div class="footer-bottom">
           <p class="company-info">吉林省云创迅捷软件开发有限公司</p>
           <p><a href="https://www.intelledu.cn" target="_blank" class="website-link">www.intelledu.cn</a></p>
-          <p>© {{ new Date().getFullYear() }} 启明智教 Intelledu. All rights reserved.</p>
+          <p>© {{ new Date().getFullYear() }} 启明智教. All rights reserved.</p>
         </div>
       </div>
     </footer>
-
-    <!-- 登录弹窗 -->
-    <login-dialog
-      v-model:visible="showLoginDialog"
-      @login-success="handleLoginSuccess"
-    />
   </div>
 </template>
 
@@ -364,11 +409,11 @@ import {
   Setting,
   Check
 } from "@element-plus/icons-vue";
-import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
-import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
+import { userKey, removeToken, getToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
+import { initRouter } from "@/router/utils";
 
 // 导入图片资源
 import banner1 from "@/assets/home/banner1.jpg";
@@ -377,23 +422,75 @@ import card1 from "@/assets/home/card1.jpg";
 import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
+import LoginDialog from "@/components/LoginDialog.vue";
 
 const router = useRouter();
 const isScrolled = ref(false);
-const showLoginDialog = ref(false);
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
-// 检查用户是否有管理权限（教师或管理员）
+// 登录弹窗显示状态
+const showLoginDialog = ref(false);
+
+/**
+ * 立即体验/立即试用/登录处理
+ */
+const handleEntry = () => {
+  // 获取最新的登录状态和用户信息
+  const token = getToken();
+  const info = storageLocal().getItem<DataInfo<number>>(userKey);
+  
+  // 判断是否已登录：只要 token 对象存在且包含识别信息，或者本地存储有用户信息，就视为已登录
+  // 注意：某些情况下 LocalStorage 中的 info 对象可能不包含 accessToken
+  const isLogged = !!(token?.accessToken || token?.refreshToken || info);
+
+  if (isLogged) {
+    // 获取角色信息：优先从 info 中获取，因为 Cookie 里的 token 可能不含此字段
+    const roleType = info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
+    
+    // 角色类型判断：2:教师 3:管理员，跳转到管理后台；其他跳转到个人中心
+    if (roleType === 2 || roleType === 3) {
+      router.push("/welcome/index");
+    } else {
+      router.push("/account");
+    }
+  } else {
+    // 未登录则显示登录弹窗
+    showLoginDialog.value = true;
+  }
+};
+
+const handleLoginSuccess = async () => {
+  // 首先初始化路由，确保菜单数据正确加载
+  await initRouter();
+  
+  userInfo.value = storageLocal().getItem(userKey);
+  if (userInfo.value && (userInfo.value.roleType === 2 || userInfo.value.roleType === 3)) {
+    router.push("/welcome/index");
+  } else {
+    router.push("/account");
+  }
+};
+
 const hasAdminAccess = computed(() => {
-  return hasManageAccess();
+  if (!userInfo.value) return false;
+  return userInfo.value.roleType === 2 || userInfo.value.roleType === 3;
 });
 
-// 监听滚动事件
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
 };
 
-// 滚动动画观察器
+const handleMouseMove = (e: MouseEvent) => {
+  const elements = document.querySelectorAll('.stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .testimonial-card, .hero-btn, .cta-buttons .el-button');
+  elements.forEach((el: any) => {
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    el.style.setProperty("--mouse-x", `${x}px`);
+    el.style.setProperty("--mouse-y", `${y}px`);
+  });
+};
+
 const initScrollAnimations = () => {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -406,7 +503,6 @@ const initScrollAnimations = () => {
     { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
   );
 
-  // 观察所有需要动画的元素
   document.querySelectorAll('.stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .testimonial-card, .section-header').forEach((el) => {
     el.classList.add('scroll-animate');
     observer.observe(el);
@@ -415,15 +511,15 @@ const initScrollAnimations = () => {
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
-  // 延迟初始化滚动动画，确保DOM已渲染
+  window.addEventListener("mousemove", handleMouseMove);
   setTimeout(initScrollAnimations, 100);
 });
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener("mousemove", handleMouseMove);
 });
 
-// 滚动到指定区域
 const scrollToSection = (id: string) => {
   const element = document.getElementById(id);
   if (element) {
@@ -431,7 +527,6 @@ const scrollToSection = (id: string) => {
   }
 };
 
-// 星星样式
 const getStarStyle = (index: number) => {
   const size = Math.random() * 3 + 1;
   return {
@@ -444,7 +539,6 @@ const getStarStyle = (index: number) => {
   };
 };
 
-// 流星样式 - 从右上角出现，斜向左下落
 const getShootingStarStyle = (index: number) => {
   return {
     left: `${50 + Math.random() * 50}%`,
@@ -454,7 +548,6 @@ const getShootingStarStyle = (index: number) => {
   };
 };
 
-// 粒子样式
 const getParticleStyle = (index: number) => {
   const size = Math.random() * 6 + 2;
   return {
@@ -467,7 +560,6 @@ const getParticleStyle = (index: number) => {
   };
 };
 
-// CTA区域星星样式
 const getCtaStarStyle = (index: number) => {
   const size = Math.random() * 2 + 1;
   return {
@@ -480,10 +572,9 @@ const getCtaStarStyle = (index: number) => {
   };
 };
 
-// 轮播图数据
 const carouselItems = ref([
   {
-    title: "启明智教 Intelledu",
+    title: "启明智教",
     subtitle: "智慧教育新纪元",
     description: "基于人工智能深度融合的智慧教育平台，为每位学习者打造专属学习路径",
     background: banner1
@@ -496,7 +587,6 @@ const carouselItems = ref([
   }
 ]);
 
-// 统计数据
 const statsData = ref([
   { icon: "👨‍🎓", number: "1,000+", label: "预计注册学员" },
   { icon: "👩‍🏫", number: "50+", label: "预计优秀教师" },
@@ -504,7 +594,6 @@ const statsData = ref([
   { icon: "⭐", number: "98%+", label: "预计学员满意度" }
 ]);
 
-// AI 赋能特性
 const aiFeatures = ref([
   {
     icon: "🧠",
@@ -528,7 +617,6 @@ const aiFeatures = ref([
   }
 ]);
 
-// 平台特性数据
 const features = ref([
   {
     icon: "Monitor",
@@ -550,7 +638,6 @@ const features = ref([
   }
 ]);
 
-// 核心服务
 const services = ref([
   {
     icon: "📖",
@@ -578,7 +665,6 @@ const services = ref([
   }
 ]);
 
-// 技术栈
 const techStack = ref([
   { icon: "🧠", name: "多模态 AI", version: "大语言模型" },
   { icon: "🔮", name: "深度学习", version: "神经网络" },
@@ -590,7 +676,6 @@ const techStack = ref([
   { icon: "🌐", name: "边缘计算", version: "低延迟响应" }
 ]);
 
-// 用户评价
 const testimonials = ref([
   {
     content: "启明智教帮助我找到了学习的薄弱点，针对性练习后成绩提升了很多，特别是错题分析功能太实用了！",
@@ -612,11 +697,9 @@ const testimonials = ref([
   }
 ]);
 
-// 处理下拉菜单命令
 const handleCommand = (command: string) => {
   switch (command) {
     case "space":
-      // 检查用户权限，只允许教师和管理员进入空间
       if (hasAdminAccess.value) {
         router.push("/welcome/index");
       } else {
@@ -633,14 +716,6 @@ const handleCommand = (command: string) => {
       ElMessage.success("退出登录成功");
       break;
   }
-};
-
-// 登录成功处理
-const handleLoginSuccess = () => {
-  userInfo.value = storageLocal().getItem(userKey);
-  showLoginDialog.value = false;
-  // 刷新当前页面
-  window.location.reload();
 };
 </script>
 
@@ -688,7 +763,7 @@ const handleLoginSuccess = () => {
         height: 48px;
         padding: 4px;
         background: #fff;
-        border-radius: 8px;
+        border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
 
@@ -723,12 +798,13 @@ const handleLoginSuccess = () => {
         color: rgba(255, 255, 255, 0.8);
         text-decoration: none;
         transition: all 0.3s;
+        cursor: pointer;
 
         &:hover { color: #60a5fa; }
       }
     }
 
-    .login-btn {
+    .login-btn.el-button {
       height: 42px;
       padding: 0 32px;
       font-size: 15px;
@@ -736,8 +812,9 @@ const handleLoginSuccess = () => {
       color: #0a0a1a;
       background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
       border: none;
-      border-radius: 21px;
+      border-radius: 24px;
       transition: all 0.3s ease;
+      cursor: pointer;
 
       &:hover {
         transform: translateY(-2px);
@@ -778,6 +855,7 @@ const handleLoginSuccess = () => {
     inset: 0;
     z-index: 1;
     opacity: 0.3;
+    pointer-events: none;
 
     .star {
       position: absolute;
@@ -849,12 +927,15 @@ const handleLoginSuccess = () => {
   height: 100%;
   background-size: cover;
   background-position: center;
+  position: relative;
 
   &::before {
     position: absolute;
     inset: 0;
     content: "";
     background: linear-gradient(135deg, rgba(10, 10, 26, 0.5) 0%, rgba(10, 10, 26, 0.3) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
 
   .carousel-text {
@@ -908,37 +989,86 @@ const handleLoginSuccess = () => {
     .hero-buttons {
       display: flex;
       gap: 16px;
+      position: relative;
+      z-index: 100;
+      pointer-events: auto;
 
       .hero-btn {
-        height: 52px;
-        padding: 0 36px;
-        font-size: 15px;
-        font-weight: 500;
+        position: relative;
+        z-index: 101;
+        height: 54px;
+        padding: 0 38px;
+        font-size: 16px;
+        font-weight: 600;
         letter-spacing: 1px;
-        border-radius: 26px;
-        transition: all 0.3s ease;
+        border-radius: 30px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        pointer-events: auto;
 
-        &.primary {
-          color: #fff;
-          background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);
-          border: none;
-          box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        :deep(span) {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+        }
+
+        &:hover {
+          transform: translateY(-6px) scale(1.05);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        &.primary.el-button--primary {
+          color: #0a0a1a;
+          background: 
+            radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.5), transparent),
+            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+          box-shadow: 0 4px 15px rgba(96, 165, 250, 0.4);
+
+          &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+              90deg,
+              transparent,
+              rgba(255, 255, 255, 0.4),
+              transparent
+            );
+            transition: 0.6s;
+            z-index: 1;
+            pointer-events: none;
+          }
 
           &:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.5);
+            box-shadow: 0 12px 30px rgba(96, 165, 250, 0.6);
+            &::before { left: 100%; }
           }
         }
 
-        &.secondary {
-          color: rgba(255, 255, 255, 0.9);
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+        &.secondary.el-button {
+          color: #fff;
+          background: 
+            radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.3), transparent),
+            rgba(255, 255, 255, 0.1);
+          border: 2px solid rgba(255, 255, 255, 0.3);
           backdrop-filter: blur(10px);
 
           &:hover { 
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: 
+              radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.4), transparent),
+              rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
           }
         }
       }
@@ -975,31 +1105,55 @@ const handleLoginSuccess = () => {
 
   .stats-container {
     display: flex;
-    justify-content: center;
+    justify-content: stretch;
     gap: 30px;
-    max-width: 1200px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 60px;
+    box-sizing: border-box;
     perspective: 1000px;
   }
 
   .stat-card {
+    position: relative;
     flex: 1;
-    max-width: 260px;
+    max-width: none;
     padding: 40px 30px;
     text-align: center;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    border-radius: 24px;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     cursor: pointer;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.06),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
 
     &:hover {
       transform: translateY(-12px) scale(1.03);
       border-color: rgba(96, 165, 250, 0.5);
       box-shadow: 0 20px 40px rgba(96, 165, 250, 0.15);
       background: linear-gradient(145deg, rgba(30, 30, 60, 0.5) 0%, rgba(20, 20, 45, 0.7) 100%);
+
+      &::before { opacity: 1; }
+    }
+
+    .stat-icon, .stat-number, .stat-label {
+      position: relative;
+      z-index: 1;
     }
 
     .stat-icon { 
@@ -1047,17 +1201,41 @@ const handleLoginSuccess = () => {
     padding: 40px 30px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    border-radius: 24px;
     text-align: center;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     transform-style: preserve-3d;
     cursor: pointer;
 
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.08),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
+
     &:hover {
       transform: translateY(-12px) rotateX(5deg) scale(1.02);
       border-color: rgba(96, 165, 250, 0.6);
       box-shadow: 0 25px 50px rgba(96, 165, 250, 0.2), 0 10px 20px rgba(0, 0, 0, 0.3);
+
+      &::before { opacity: 1; }
+    }
+
+    .ai-icon, h3, p, .ai-glow {
+      position: relative;
+      z-index: 1;
+    }
+
+    &:hover {
       background: linear-gradient(145deg, rgba(30, 30, 60, 0.6) 0%, rgba(20, 20, 45, 0.8) 100%);
       .ai-glow { opacity: 1; }
     }
@@ -1126,53 +1304,144 @@ const handleLoginSuccess = () => {
 }
 
 .transition-image-section {
-  padding: 50px 0;
+  padding: 80px 0;
   background: linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%);
+  overflow: hidden;
 
   .transition-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1200px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 0 40px;
+    padding: 0 60px;
+    box-sizing: border-box;
+    gap: 60px;
   }
 
   .transition-text {
-    flex: 1;
-    max-width: 500px;
+    flex: 0 0 45%;
+    max-width: 550px;
 
-    h2 { font-size: 48px; font-weight: 700; color: #fff; margin-bottom: 24px; }
-    p { font-size: 18px; color: rgba(255, 255, 255, 0.6); }
+    h2 { font-size: 48px; font-weight: 700; color: #fff; margin-bottom: 24px; line-height: 1.3; }
+    p { font-size: 18px; color: rgba(255, 255, 255, 0.6); margin-bottom: 40px; }
+
+    .transition-stats {
+      display: flex;
+      gap: 40px;
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+
+        .stat-number {
+          font-size: 32px;
+          font-weight: 700;
+          color: #60a5fa;
+          margin-bottom: 4px;
+        }
+
+        .stat-label {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.5);
+        }
+      }
+    }
   }
 
   .transition-visual {
-    flex: 1;
+    flex: 0 0 50%;
+    position: relative;
     display: flex;
     justify-content: center;
+    align-items: center;
+    min-height: 400px;
 
-    .floating-cards {
-      position: relative;
+    .visual-glow {
+      position: absolute;
       width: 300px;
       height: 300px;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(40px);
+      z-index: 0;
+    }
 
-      .float-card {
+    .visual-grid {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      height: 380px;
+      z-index: 1;
+
+      .grid-card {
         position: absolute;
-        width: 80px;
-        height: 80px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 36px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        animation: floatCard 4s ease-in-out infinite;
+        transition: all 0.3s ease;
 
-        &.card-1 { top: 0; left: 50%; transform: translateX(-50%); }
-        &.card-2 { top: 50%; right: 0; transform: translateY(-50%); animation-delay: 1s; }
-        &.card-3 { bottom: 0; left: 50%; transform: translateX(-50%); animation-delay: 2s; }
-        &.card-4 { top: 50%; left: 0; transform: translateY(-50%); animation-delay: 3s; }
+        &:hover {
+          transform: translateY(-5px);
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(96, 165, 250, 0.3);
+        }
+
+        .card-icon { font-size: 36px; margin-bottom: 8px; }
+        .card-title { font-size: 14px; font-weight: 600; color: #fff; }
+        .card-desc { font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 4px; text-align: center; padding: 0 10px; }
+
+        &.card-large {
+          width: 180px;
+          height: 160px;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+          border-color: rgba(96, 165, 250, 0.2);
+          z-index: 3;
+
+          .card-icon { font-size: 48px; }
+          .card-title { font-size: 16px; }
+
+          &:hover { transform: translate(-50%, -55%); }
+        }
+
+        &.card-medium {
+          width: 130px;
+          height: 110px;
+        }
+
+        &.card-top-right {
+          top: 20px;
+          right: 30px;
+          animation: floatCard 5s ease-in-out infinite;
+        }
+
+        &.card-bottom-left {
+          bottom: 20px;
+          left: 30px;
+          animation: floatCard 5s ease-in-out infinite 1.5s;
+        }
+
+        &.card-small {
+          width: 60px;
+          height: 60px;
+          font-size: 28px;
+          animation: floatCard 4s ease-in-out infinite;
+
+          &.card-1 { top: 10px; left: 60px; animation-delay: 0s; }
+          &.card-2 { top: 60px; right: 20px; animation-delay: 0.5s; }
+          &.card-3 { bottom: 60px; right: 50px; animation-delay: 1s; }
+          &.card-4 { bottom: 10px; left: 50%; transform: translateX(-50%); animation-delay: 1.5s; }
+          &.card-5 { top: 50%; left: 10px; transform: translateY(-50%); animation-delay: 2s; }
+        }
       }
     }
   }
@@ -1180,13 +1449,15 @@ const handleLoginSuccess = () => {
 
 @keyframes floatCard {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
+  50% { transform: translateY(-10px); }
 }
 
 .section-container {
-  max-width: 1300px;
-  padding: 0 40px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 60px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .section-header {
@@ -1223,7 +1494,7 @@ const handleLoginSuccess = () => {
 .platform-intro {
   position: relative;
   padding: 50px 0;
-  background: linear-gradient(180deg, #0a0a1a 0%, #12122a 50%, #0a0a1a 100%);
+  background: linear-gradient(180deg, #0a0a1a 0%, #12122a 50%, #1a1a2e 100%);
 
   .feature-list {
     display: grid;
@@ -1235,16 +1506,34 @@ const handleLoginSuccess = () => {
   .feature-item {
     position: relative;
     overflow: hidden;
-    border-radius: 20px;
+    border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
+    cursor: pointer;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.1),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 2;
+      pointer-events: none;
+    }
 
     &:hover {
       transform: translateY(-15px) rotateX(5deg);
       border-color: rgba(96, 165, 250, 0.5);
       box-shadow: 0 30px 60px rgba(96, 165, 250, 0.2), 0 15px 30px rgba(0, 0, 0, 0.4);
+
+      &::before { opacity: 1; }
 
       .feature-image img { transform: scale(1.15); }
       
@@ -1286,7 +1575,7 @@ const handleLoginSuccess = () => {
   .parallax-bg {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%);
+    background: #1a1a2e;
   }
 
   .transition-overlay {
@@ -1311,7 +1600,7 @@ const handleLoginSuccess = () => {
 
 .services-section {
   padding: 50px 0;
-  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 100%);
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
 
   .services-grid {
     display: grid;
@@ -1321,19 +1610,43 @@ const handleLoginSuccess = () => {
   }
 
   .service-card {
+    position: relative;
     padding: 40px 30px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    border-radius: 24px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     backface-visibility: hidden;
+    overflow: hidden;
+    cursor: pointer;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.08),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
 
     &:hover {
       background: linear-gradient(145deg, rgba(30, 30, 60, 0.8) 0%, rgba(20, 20, 45, 0.9) 100%);
       border-color: rgba(96, 165, 250, 0.5);
       transform: translateY(-10px) scale(1.02);
       box-shadow: 0 20px 40px rgba(96, 165, 250, 0.15), 0 10px 20px rgba(0, 0, 0, 0.3);
+
+      &::before { opacity: 1; }
+    }
+
+    .service-icon, h3, p {
+      position: relative;
+      z-index: 1;
     }
 
     .service-icon { 
@@ -1388,20 +1701,43 @@ const handleLoginSuccess = () => {
   }
 
   .tech-card {
+    position: relative;
     padding: 30px 20px;
     text-align: center;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    border-radius: 20px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     cursor: pointer;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.08),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
 
     &:hover {
       transform: translateY(-8px) rotateY(10deg);
       border-color: rgba(96, 165, 250, 0.5);
       background: linear-gradient(145deg, rgba(96, 165, 250, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
       box-shadow: 0 15px 30px rgba(96, 165, 250, 0.2);
+
+      &::before { opacity: 1; }
+    }
+
+    .tech-icon, .tech-name, .tech-version {
+      position: relative;
+      z-index: 1;
     }
 
     .tech-icon { 
@@ -1431,18 +1767,42 @@ const handleLoginSuccess = () => {
   }
 
   .testimonial-card {
+    position: relative;
     padding: 40px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    border-radius: 24px;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
+    overflow: hidden;
+    cursor: pointer;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.08),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 0;
+    }
 
     &:hover { 
       background: linear-gradient(145deg, rgba(30, 30, 60, 0.6) 0%, rgba(20, 20, 45, 0.8) 100%); 
       transform: translateY(-10px) rotateX(3deg); 
       box-shadow: 0 25px 50px rgba(96, 165, 250, 0.15);
       border-color: rgba(167, 139, 250, 0.4);
+
+      &::before { opacity: 1; }
+    }
+
+    .quote-icon, .testimonial-content, .user-profile {
+      position: relative;
+      z-index: 1;
     }
 
     .quote-icon { 
@@ -1517,26 +1877,62 @@ const handleLoginSuccess = () => {
       display: flex;
       justify-content: center;
       gap: 20px;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
 
       .el-button {
-        height: 52px;
-        padding: 0 40px;
+        position: relative;
+        height: 54px;
+        padding: 0 42px;
         font-size: 16px;
         font-weight: 600;
-        border-radius: 26px;
+        border-radius: 30px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        pointer-events: auto;
 
-        &--primary {
-          background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-          color: #0a0a1a;
-          border: none;
+        :deep(span) {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
         }
 
-        &.is-plain {
+        &:hover {
+          transform: translateY(-6px) scale(1.05);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        &.el-button--primary {
+          background: 
+            radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.5), transparent),
+            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+          color: #0a0a1a;
+          border: none;
+          box-shadow: 0 4px 15px rgba(96, 165, 250, 0.4);
+
+          &:hover {
+            box-shadow: 0 12px 30px rgba(96, 165, 250, 0.6);
+          }
+        }
+
+        &.is-plain.el-button {
           color: #fff;
-          background: transparent;
+          background: 
+            radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.3), transparent),
+            transparent;
           border: 2px solid rgba(255, 255, 255, 0.3);
 
-          &:hover { background: rgba(255, 255, 255, 0.1); }
+          &:hover { 
+            background: 
+              radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.4), transparent),
+              rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+          }
         }
       }
     }
@@ -1813,9 +2209,7 @@ const handleLoginSuccess = () => {
 
 .hero-desc {
   display: inline-block;
-  border-right: 2px solid #60a5fa;
   padding-right: 8px;
-  animation: blink-cursor 1s step-end infinite;
 }
 
 /* 悬停时图标旋转 */
@@ -1910,7 +2304,7 @@ const handleLoginSuccess = () => {
 
 /* 页脚社交链接悬停 */
 .social-link {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   &:hover {
     transform: translateY(-3px);
@@ -1918,4 +2312,3 @@ const handleLoginSuccess = () => {
   }
 }
 </style>
-

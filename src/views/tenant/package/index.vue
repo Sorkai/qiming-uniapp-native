@@ -99,7 +99,7 @@ onMounted(() => {
           v-model="form.name"
           placeholder="请输入套餐名称"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         />
       </el-form-item>
       <el-form-item label="状态：" prop="status">
@@ -107,7 +107,7 @@ onMounted(() => {
           v-model="form.status"
           placeholder="请选择状态"
           clearable
-          class="w-[180px]!"
+          class="w-[180px]"
         >
           <el-option label="已启用" value="1" />
           <el-option label="已停用" value="0" />
@@ -133,7 +133,7 @@ onMounted(() => {
       :class="['flex', deviceDetection() ? 'flex-wrap' : '']"
     >
       <PureTableBar
-        :class="[isShow && !deviceDetection() ? 'w-[60vw]!' : 'w-full']"
+        :class="[isShow && !deviceDetection() ? 'w-[60vw]' : 'w-full']"
         style="transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1)"
         title="租户套餐（仅演示，操作后不生效）"
         :columns="columns"
@@ -283,9 +283,6 @@ onMounted(() => {
   margin: 0;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
 
 .search-form {
   :deep(.el-form-item) {

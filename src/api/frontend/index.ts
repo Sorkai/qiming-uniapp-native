@@ -8,4 +8,7 @@ export * from './user';
 export * from './work';
 
 // AI聊天相关API
-export * from './chat'; 
+export * from './chat';
+
+// 实验室与赛事场相关API
+export * from './extra';

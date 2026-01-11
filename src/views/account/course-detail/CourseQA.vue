@@ -13,7 +13,7 @@
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
@@ -235,7 +235,7 @@ const props = defineProps<{
 // Emits
 const emit = defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
   (e: "send-message", content: string): void;
@@ -311,23 +311,23 @@ watch(
 <style scoped>
 /* 课程问答样式 */
 .course-qa-wrapper {
-  height: 100vh;
+  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
-  padding-top: 80px;
-  background-color: #ffffff;
+  padding-top: 0;
+  background-color: transparent; /* 背景透明，由父布局控制，防止“蒙一层” */
   box-sizing: border-box;
   position: relative;
 }
 
 .course-qa-wrapper.dark {
-  background-color: #1a1a1a;
+  background-color: transparent;
 }
 
 .course-qa-container {
   flex: 1;
-  padding: 20px 20px 20px 10px;
+  padding: 80px 32px 24px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -445,6 +445,12 @@ watch(
 .qa-chat-header h3 { margin: 0 0 4px 0; font-size: 18px; color: #303133; font-weight: 700; }
 .dark .qa-chat-header h3 { color: #ffffff; }
 .qa-chat-header p { margin: 0; font-size: 13px; color: #909399; }
+
+.dark .qa-empty-history svg,
+.dark .qa-empty-chat svg {
+  filter: brightness(0.7);
+  opacity: 0.6;
+}
 
 .qa-chat-body { flex: 1; padding: 24px; overflow-y: auto; background-color: #ffffff; display: flex; flex-direction: column; }
 .dark .qa-chat-body { background-color: #16161a; }

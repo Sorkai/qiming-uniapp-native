@@ -1,129 +1,266 @@
 <template>
-  <div class="ai-animation-page">
-    <el-card class="toolbar-card">
-      <template #header>
-        <div class="toolbar">
-          <div class="selectors">
-            <el-select
-              v-model="selectedCourseId"
-              filterable
-              remote
-              clearable
-              placeholder="选择课程"
-              :remote-method="searchCourses"
-              :loading="courseLoading"
-              style="width:260px"
-              @change="handleCourseChange"
-            >
-              <el-option
-                v-for="c in courseOptions"
-                :key="c.courseId"
-                :label="c.title"
-                :value="c.courseId"
-              />
-            </el-select>
-            <el-select
-              v-model="selectedChapterId"
-              :disabled="!selectedCourseId"
-              placeholder="选择章节"
-              clearable
-              filterable
-              style="width:220px;margin-left:12px"
-              @change="handleChapterChange"
-            >
-              <el-option
-                v-for="ch in chapterOptions"
-                :key="ch.chapterId"
-                :label="ch.name"
-                :value="ch.chapterId"
-              />
-            </el-select>
+  <div class="ai-animation-container h-[calc(100vh-140px)] m-3 flex gap-3 overflow-hidden font-sans">
+    <!-- 左侧课程选择 -->
+    <div class="sidebar-card w-72 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] flex flex-col shrink-0 overflow-hidden transition-all duration-300 hover:shadow-lg">
+      <div class="header-section p-5 border-b border-[var(--el-border-color-light)] bg-[var(--el-fill-color-light)]/30">
+        <h3 class="font-bold flex items-center text-lg">
+          <div class="icon-box w-10 h-10 bg-gradient-to-br from-[var(--el-color-primary)] to-[var(--el-color-primary-dark-2)] rounded-xl mr-3 shadow-lg flex items-center justify-center transition-transform duration-300">
+            <el-icon class="text-white text-lg"><Film /></el-icon>
           </div>
-          <div class="actions">
-            <el-button type="primary" :disabled="!canGenerate" :loading="generateLoading" @click="onGenerate">生成动画</el-button>
-            <el-button :disabled="!selectedChapterId" @click="refreshList">刷新</el-button>
-            <el-button type="warning" :disabled="!latestCompletedVersion" @click="setDisplayLatest">设展示=最新</el-button>
-            <el-button type="success" :loading="syncLoading" @click="onForceSync">强制同步</el-button>
-            <el-button v-if="polling" type="danger" @click="stopPolling">停止轮询</el-button>
+          智能动画中心
+        </h3>
+        <p class="text-xs text-[var(--el-text-color-placeholder)] mt-2 ml-[52px]">AI 辅助生成教学动画与演示</p>
+      </div>
+
+      <div class="p-5 space-y-5 flex-1 overflow-auto custom-scrollbar">
+        <div class="space-y-2">
+          <label class="text-sm font-semibold text-[var(--el-text-color-secondary)] flex items-center">
+            <el-icon class="mr-1.5 text-[var(--el-color-primary)]"><Reading /></el-icon> 目标课程
+          </label>
+          <el-select
+            v-model="selectedCourseId"
+            filterable
+            remote
+            clearable
+            placeholder="搜索或选择课程..."
+            :remote-method="searchCourses"
+            :loading="courseLoading"
+            class="w-full !rounded-xl"
+            size="large"
+            @change="handleCourseChange"
+          >
+            <el-option
+              v-for="c in courseOptions"
+              :key="c.courseId"
+              :label="c.title"
+              :value="c.courseId"
+            />
+          </el-select>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-semibold text-[var(--el-text-color-secondary)] flex items-center">
+            <el-icon class="mr-1.5 text-[var(--el-color-primary)]"><Management /></el-icon> 对应章节
+          </label>
+          <el-select
+            v-model="selectedChapterId"
+            :disabled="!selectedCourseId"
+            placeholder="请选择课程内的章节..."
+            clearable
+            filterable
+            class="w-full !rounded-xl"
+            size="large"
+            @change="handleChapterChange"
+          >
+            <el-option
+              v-for="ch in chapterOptions"
+              :key="ch.chapterId"
+              :label="ch.name"
+              :value="ch.chapterId"
+            />
+          </el-select>
+        </div>
+
+        <!-- 状态面板 - 始终显示 -->
+        <div class="status-panel mt-6 p-4 bg-[var(--el-fill-color-light)] rounded-xl border border-[var(--el-border-color-lighter)] transition-all duration-300 hover:shadow-md">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-semibold text-[var(--el-text-color-primary)]">任务状态</span>
+            <el-icon class="text-[var(--el-text-color-placeholder)] transition-transform duration-300 hover:rotate-180"><DataAnalysis /></el-icon>
+          </div>
+          <div class="space-y-2">
+            <div class="status-item flex items-center justify-between py-2.5 px-3 bg-[var(--el-bg-color)] rounded-lg cursor-pointer transition-all duration-200 hover:bg-[var(--el-color-success-light-9)] hover:translate-x-1 hover:shadow-sm">
+              <div class="flex items-center">
+                <span class="w-2.5 h-2.5 rounded-full bg-[var(--el-color-success)] mr-2.5 transition-transform duration-200"></span>
+                <span class="text-sm text-[var(--el-text-color-secondary)]">已完成</span>
+              </div>
+              <span class="text-lg font-bold text-[var(--el-color-success)] transition-transform duration-200">{{ stats.completed }}</span>
+            </div>
+            <div class="status-item flex items-center justify-between py-2.5 px-3 bg-[var(--el-bg-color)] rounded-lg cursor-pointer transition-all duration-200 hover:bg-[var(--el-color-warning-light-9)] hover:translate-x-1 hover:shadow-sm">
+              <div class="flex items-center">
+                <span class="w-2.5 h-2.5 rounded-full bg-[var(--el-color-warning)] mr-2.5 animate-pulse"></span>
+                <span class="text-sm text-[var(--el-text-color-secondary)]">处理中</span>
+              </div>
+              <span class="text-lg font-bold text-[var(--el-color-warning)] transition-transform duration-200">{{ stats.processing }}</span>
+            </div>
+            <div class="status-item flex items-center justify-between py-2.5 px-3 bg-[var(--el-bg-color)] rounded-lg cursor-pointer transition-all duration-200 hover:bg-[var(--el-color-danger-light-9)] hover:translate-x-1 hover:shadow-sm">
+              <div class="flex items-center">
+                <span class="w-2.5 h-2.5 rounded-full bg-[var(--el-color-danger)] mr-2.5"></span>
+                <span class="text-sm text-[var(--el-text-color-secondary)]">失败</span>
+              </div>
+              <span class="text-lg font-bold text-[var(--el-color-danger)] transition-transform duration-200">{{ stats.failed }}</span>
+            </div>
           </div>
         </div>
-        <div v-if="displayVersionResolved" class="display-info">
-          展示版本: <el-tag size="small" type="success">{{ displayVersionResolved }}<span v-if="displayVersionRaw==='latest'"> (latest)</span></el-tag>
-          <span class="divider" />
-          <span v-if="latestSuccessTime">最近成功: {{ latestSuccessTime }}</span>
-          <span class="divider" />
-          <span>统计: 成功 {{ stats.completed }} / 进行中 {{ stats.processing }} / 失败 {{ stats.failed }}</span>
-          <span v-if="polling" class="polling-indicator">
-            <el-icon class="is-loading" style="margin-left:6px"><loading /></el-icon>轮询中...
-          </span>
-        </div>
-      </template>
-
-      <div v-if="!selectedChapterId" class="empty-block">
-        <el-empty description="请选择课程与章节以查看动画任务" />
       </div>
-      <div v-else>
-        <div class="filter-row">
-          <el-radio-group v-model="statusFilter" size="small" @change="applyFilter">
-            <el-radio-button label="all">全部</el-radio-button>
-            <el-radio-button label="completed">成功</el-radio-button>
-            <el-radio-button label="processing">进行中</el-radio-button>
-            <el-radio-button label="failed">失败</el-radio-button>
-          </el-radio-group>
-          <el-input v-model="keyword" placeholder="搜索文件名" clearable size="small" style="width:220px" @input="applyFilter" />
-        </div>
-        <el-table :data="filteredTasks" v-loading="listLoading" size="small" style="width:100%" :row-class-name="rowClassName">
-          <el-table-column prop="version" label="版本" width="80">
-            <template #default="{ row }">
-              <el-tag v-if="row.status==='completed'" type="success" size="small">v{{ row.version }}</el-tag>
-              <el-tag v-else size="small" type="info">--</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" width="110">
-            <template #default="{ row }">
-              <el-tag v-if="row.status==='completed'" type="success" size="small">完成</el-tag>
-              <el-tag v-else-if="row.status==='processing'" type="warning" size="small">进行中</el-tag>
-              <el-tag v-else-if="row.status==='failed'" type="danger" size="small">失败</el-tag>
-              <el-tag v-else size="small">{{ row.status }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="fileName" label="文件名" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="fileSize" label="大小" width="100">
-            <template #default="{ row }">{{ formatSize(row.fileSize) }}</template>
-          </el-table-column>
-          <el-table-column prop="createdAt" label="创建时间" width="170" />
-          <el-table-column prop="completedAt" label="完成时间" width="170">
-            <template #default="{ row }">{{ row.completedAt || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="展示" width="90">
-            <template #default="{ row }">
-              <el-tag v-if="isDisplayVersion(row)" type="success" size="small">展示</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="错误" min-width="160">
-            <template #default="{ row }">
-              <span v-if="row.status==='failed' && row.errorMessage" class="error-text" v-title="row.errorMessage">{{ truncate(row.errorMessage,32) }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="260" fixed="right">
-            <template #default="{ row }">
-              <el-button size="small" type="primary" :disabled="row.status!=='completed'" @click="openPreview(row)">预览</el-button>
-              <el-button size="small" :disabled="row.status!=='completed' || isDisplayVersion(row)" @click="setDisplay(row)">设为展示</el-button>
-              <el-button size="small" :disabled="row.status!=='completed'" @click="copyUrl(row)">复制URL</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-    </el-card>
+    </div>
 
-    <el-dialog v-model="previewVisible" title="动画预览" width="80%" top="5vh">
-      <div v-if="previewUrl" class="preview-wrapper">
-        <iframe :src="previewUrl" frameborder="0" class="preview-iframe" />
+    <!-- 右侧内容区域 -->
+    <div class="flex-1 flex flex-col min-w-0">
+      <!-- 顶部操作栏 -->
+      <div class="bg-[var(--el-bg-color-overlay)] p-4 rounded-2xl shadow-sm border border-[var(--el-border-color-light)] mb-3 flex justify-between items-center transition-all hover:shadow-md">
+        <div class="flex items-center space-x-6">
+          <div v-if="displayVersionResolved" class="flex items-center gap-3 px-4 py-2 bg-[var(--el-color-success-light-9)] rounded-xl border border-[var(--el-color-success-light-5)]">
+            <div class="flex items-center">
+              <div class="w-2 h-2 bg-[var(--el-color-success)] rounded-full mr-2 shadow-lg shadow-[var(--el-color-success-light-5)] animate-pulse" />
+              <span class="text-xs text-[var(--el-color-success)] font-bold uppercase tracking-wide">Active</span>
+            </div>
+            <span class="text-[var(--el-color-success)] font-bold">v{{ displayVersionResolved }}</span>
+          </div>
+          <div v-if="polling" class="flex items-center text-[var(--el-color-primary)] text-xs font-semibold px-3 py-1.5 bg-[var(--el-color-primary-light-9)] rounded-lg">
+            <el-icon class="mr-1.5 animate-spin"><Loading /></el-icon>
+            监听中...
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <el-button
+            type="primary"
+            :disabled="!canGenerate"
+            :loading="generateLoading"
+            class="!rounded-xl !h-10 shadow-lg shadow-[var(--el-color-primary-light-8)] !px-5 !font-semibold"
+            @click="onGenerate"
+          >
+            AI 生成
+          </el-button>
+          <el-button
+            :disabled="!selectedChapterId"
+            class="!h-10 !w-10 !rounded-xl !p-0 border-[var(--el-border-color-light)] hover:text-[var(--el-color-primary)] bg-[var(--el-bg-color)]"
+            @click="refreshList"
+            :icon="Refresh"
+          />
+          <el-button
+            type="success"
+            plain
+            :loading="syncLoading"
+            class="!rounded-xl !h-10 !border-[var(--el-color-success-light-5)] !text-[var(--el-color-success)] hover:!bg-[var(--el-color-success-light-9)] bg-[var(--el-bg-color)] !font-semibold"
+            @click="onForceSync"
+            :icon="Upload"
+          >
+            同步
+          </el-button>
+        </div>
+      </div>
+
+      <div class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] p-5 overflow-hidden flex flex-col">
+        <div v-if="!selectedChapterId" class="flex-1 flex flex-col items-center justify-center">
+          <div class="text-center">
+            <el-icon class="text-5xl text-[var(--el-text-color-placeholder)]/50 mb-4"><Film /></el-icon>
+            <p class="text-[var(--el-text-color-secondary)] font-medium">请选择课程与章节</p>
+            <p class="text-[var(--el-text-color-placeholder)] text-sm mt-1">以查看和管理 AI 动画任务</p>
+          </div>
+        </div>
+        <div v-else class="flex-1 flex flex-col overflow-hidden">
+          <div class="flex justify-between items-center mb-4 pb-4 border-b border-[var(--el-border-color-lighter)]">
+            <el-radio-group v-model="statusFilter" size="default" @change="applyFilter" class="animation-filter-group">
+              <el-radio-button label="all">
+                <span class="flex items-center gap-1.5 text-sm">
+                  <span class="w-2 h-2 rounded-full bg-[var(--el-text-color-placeholder)]"></span>
+                  全部
+                </span>
+              </el-radio-button>
+              <el-radio-button label="completed">
+                <span class="flex items-center gap-1.5 text-sm">
+                  <span class="w-2 h-2 rounded-full bg-[var(--el-color-success)]"></span>
+                  成功
+                </span>
+              </el-radio-button>
+              <el-radio-button label="processing">
+                <span class="flex items-center gap-1.5 text-sm">
+                  <span class="w-2 h-2 rounded-full bg-[var(--el-color-warning)] animate-pulse"></span>
+                  进行中
+                </span>
+              </el-radio-button>
+              <el-radio-button label="failed">
+                <span class="flex items-center gap-1.5 text-sm">
+                  <span class="w-2 h-2 rounded-full bg-[var(--el-color-danger)]"></span>
+                  失败
+                </span>
+              </el-radio-button>
+            </el-radio-group>
+            <el-input v-model="keyword" placeholder="搜索文件名..." clearable size="default" class="!w-64 !rounded-xl" @input="applyFilter">
+              <template #prefix><el-icon class="text-[var(--el-text-color-placeholder)]"><Search /></el-icon></template>
+            </el-input>
+          </div>
+          
+          <div class="flex-1 overflow-auto custom-scrollbar">
+            <el-table :data="filteredTasks" v-loading="listLoading" class="animation-table" :row-class-name="rowClassName" header-cell-class-name="!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-semibold !text-sm !py-3">
+              <el-table-column prop="version" label="版本" width="100" align="center">
+                <template #default="{ row }">
+                  <div class="flex items-center justify-center">
+                    <el-icon v-if="isDisplayVersion(row)" class="text-[var(--el-color-success)] mr-1.5"><StarFilled /></el-icon>
+                    <el-tag v-if="row.status==='completed'" type="success" size="default" effect="plain" class="!bg-[var(--el-color-success-light-9)] !font-bold !rounded-lg">v{{ row.version }}</el-tag>
+                    <span v-else class="text-[var(--el-text-color-placeholder)]">--</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" width="120" align="center">
+                <template #default="{ row }">
+                  <div class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold"
+                       :class="{
+                         'bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)]': row.status==='completed',
+                         'bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning)]': row.status==='processing',
+                         'bg-[var(--el-color-danger-light-9)] text-[var(--el-color-danger)]': row.status==='failed',
+                         'bg-[var(--el-fill-color-light)] text-[var(--el-text-color-secondary)]': !['completed','processing','failed'].includes(row.status)
+                       }">
+                    <span class="w-2 h-2 rounded-full mr-2"
+                          :class="{
+                            'bg-[var(--el-color-success)]': row.status==='completed',
+                            'bg-[var(--el-color-warning)] animate-pulse': row.status==='processing',
+                            'bg-[var(--el-color-danger)]': row.status==='failed',
+                            'bg-[var(--el-text-color-placeholder)]': !['completed','processing','failed'].includes(row.status)
+                          }"></span>
+                    {{ row.status==='completed'? '完成': row.status==='processing'? '处理中': row.status==='failed'? '失败': row.status }}
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="fileName" label="文件名" min-width="200" show-overflow-tooltip>
+                <template #default="{ row }">
+                  <span class="text-[var(--el-text-color-primary)] font-medium text-sm">{{ row.fileName }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="fileSize" label="大小" width="100" align="center">
+                <template #default="{ row }">
+                  <span class="text-[var(--el-text-color-secondary)] text-sm font-mono">{{ formatSize(row.fileSize) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="createdAt" label="创建时间" width="170" align="center">
+                <template #default="{ row }">
+                  <span class="text-[var(--el-text-color-secondary)] text-sm">{{ row.createdAt }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="280" fixed="right" align="center">
+                <template #default="{ row }">
+                  <div class="flex gap-2 justify-center">
+                    <el-button size="default" type="primary" plain class="!rounded-lg" :disabled="row.status!=='completed'" @click="openPreview(row)">
+                      <el-icon class="mr-1"><View /></el-icon>预览
+                    </el-button>
+                    <el-button size="default" type="success" plain class="!rounded-lg" :disabled="row.status!=='completed' || isDisplayVersion(row)" @click="setDisplay(row)">
+                      <el-icon class="mr-1"><StarFilled /></el-icon>展示
+                    </el-button>
+                    <el-button size="default" type="info" plain class="!rounded-lg" :disabled="row.status!=='completed'" @click="copyUrl(row)">
+                      <el-icon class="mr-1"><DocumentCopy /></el-icon>URL
+                    </el-button>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 预览弹窗 -->
+    <el-dialog v-model="previewVisible" title="动画渲染预览" width="85%" top="4vh" class="!rounded-2xl overflow-hidden shadow-2xl">
+      <div v-if="previewUrl" class="h-[75vh] bg-black rounded-xl overflow-hidden border border-[var(--el-border-color-light)]">
+        <iframe :src="previewUrl" frameborder="0" class="w-full h-full" />
       </div>
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="openInNewWindow" :disabled="!previewUrl">新窗口打开</el-button>
-          <el-button type="primary" @click="previewVisible=false">关闭</el-button>
+        <div class="flex justify-between items-center px-4 py-2">
+           <span class="text-xs text-[var(--el-text-color-placeholder)] font-mono">DEBUG MODE</span>
+          <div class="space-x-4">
+            <el-button @click="openInNewWindow" :icon="FullScreen" class="!rounded-xl">全屏查看</el-button>
+            <el-button type="primary" @click="previewVisible=false" class="!rounded-xl px-8">完成</el-button>
+          </div>
         </div>
       </template>
     </el-dialog>
@@ -131,14 +268,47 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { getCourseList, getCourseHoursList } from '@/api/course';
-import { generateHtmlAnimation, getHtmlAnimationList, setHtmlAnimationDisplay, forceSyncHtmlAnimation, type HtmlAnimationTask } from '@/api/htmlAnimation';
-import { Loading } from '@element-plus/icons-vue';
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { getCourseList, getCourseHoursList } from "@/api/course";
+import {
+  generateHtmlAnimation,
+  getHtmlAnimationList,
+  setHtmlAnimationDisplay,
+  forceSyncHtmlAnimation,
+  getHtmlAnimationDisplay,
+  type HtmlAnimationTask
+} from "@/api/htmlAnimation";
+import {
+  VideoPlay,
+  Loading,
+  Cpu,
+  Refresh,
+  Upload,
+  Search,
+  Document,
+  Promotion,
+  View,
+  More,
+  Download,
+  Delete,
+  Reading,
+  Management,
+  Calendar,
+  DocumentCopy,
+  FullScreen,
+  StarFilled,
+  Film,
+  Setting,
+  DataAnalysis
+} from "@element-plus/icons-vue";
 
-const selectedCourseId = ref<number|null>(null);
-const selectedChapterId = ref<number|null>(null);
+defineOptions({
+  name: "CourseAnimation"
+});
+
+const selectedCourseId = ref<number | null>(null);
+const selectedChapterId = ref<number | null>(null);
 const courseOptions = ref<any[]>([]);
 const chapterOptions = ref<any[]>([]);
 const courseLoading = ref(false);
@@ -149,23 +319,24 @@ const polling = ref(false);
 let pollTimer: any = null;
 
 const tasks = ref<HtmlAnimationTask[]>([]);
-const displayVersionRaw = ref('');
-const displayVersionResolved = ref('');
+const displayVersionRaw = ref("");
+const displayVersionResolved = ref("");
 
-const statusFilter = ref('all');
-const keyword = ref('');
+const statusFilter = ref("all");
+const keyword = ref("");
 
 const previewVisible = ref(false);
-const previewUrl = ref('');
+const previewUrl = ref("");
 
 // 统计
-const stats = computed(()=>{
+const stats = computed(() => {
   return {
-    completed: tasks.value.filter(t=>t.status==='completed').length,
-    processing: tasks.value.filter(t=>t.status==='processing').length,
-    failed: tasks.value.filter(t=>t.status==='failed').length
+    completed: tasks.value.filter(t => t.status === "completed").length,
+    processing: tasks.value.filter(t => t.status === "processing").length,
+    failed: tasks.value.filter(t => t.status === "failed").length
   };
 });
+
 
 const latestCompletedVersion = computed(()=>{
   const versions = tasks.value.filter(t=>t.status==='completed').map(t=>t.version).filter(v=>v>0);
@@ -373,8 +544,174 @@ onMounted(()=>{
 .empty-block { padding:60px 0; }
 .filter-row { display:flex; justify-content:space-between; align-items:center; margin:10px 0 14px; }
 .preview-wrapper { height:70vh; }
-.preview-iframe { width:100%; height:100%; border:1px solid #e5e5e5; border-radius:4px; }
-.error-text { color:#f56c6c; cursor:help; }
-:deep(.row-display) { background: #f0fff4; }
-:deep(.row-failed) { background: #fff5f5; }
+.preview-iframe { width:100%; height:100%; border:1px solid var(--el-border-color-light); border-radius:var(--el-border-radius-base); }
+.error-text { color:var(--el-color-danger); cursor:help; }
+
+// 表格行样式
+:deep(.row-display) { 
+  background: var(--el-color-success-light-9) !important;
+  &:hover > td { background: var(--el-color-success-light-8) !important; }
+}
+:deep(.row-failed) { 
+  background: var(--el-color-danger-light-9) !important;
+  &:hover > td { background: var(--el-color-danger-light-8) !important; }
+}
+
+// 表格美化
+.animation-table {
+  :deep(.el-table__inner-wrapper) {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  :deep(.el-table__header-wrapper) {
+    th {
+      border-bottom: none !important;
+    }
+  }
+  :deep(.el-table__body-wrapper) {
+    tr {
+      transition: all 0.2s ease;
+      td {
+        border-bottom: 1px solid var(--el-border-color-lighter) !important;
+        padding: 12px 0;
+      }
+      &:last-child td {
+        border-bottom: none !important;
+      }
+    }
+  }
+}
+
+// 筛选按钮组美化
+.animation-filter-group {
+  :deep(.el-radio-button__inner) {
+    border-radius: 8px !important;
+    border: 1px solid var(--el-border-color-light) !important;
+    margin-right: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    &:hover {
+      color: var(--el-color-primary);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  :deep(.el-radio-button:first-child .el-radio-button__inner) {
+    border-left: 1px solid var(--el-border-color-light) !important;
+    border-radius: 8px !important;
+  }
+  :deep(.el-radio-button:last-child .el-radio-button__inner) {
+    border-radius: 8px !important;
+  }
+  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+    background: var(--el-color-primary-light-9) !important;
+    border-color: var(--el-color-primary-light-5) !important;
+    color: var(--el-color-primary) !important;
+    box-shadow: 0 2px 8px var(--el-color-primary-light-8) !important;
+    transform: translateY(-1px);
+  }
+}
+
+// 状态面板动效
+// 状态面板动效
+.status-panel {
+  .status-item {
+    &:hover {
+      span:first-child {
+        transform: scale(1.3);
+      }
+      span:last-child {
+        transform: scale(1.1);
+      }
+    }
+  }
+}
+
+// 表格行动效增强
+.animation-table {
+  :deep(.el-table__body-wrapper) {
+    tr {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      &:hover {
+        transform: scale(1.005);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        z-index: 1;
+        position: relative;
+      }
+    }
+  }
+  :deep(.el-button) {
+    transition: all 0.2s ease;
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  }
+}
+
+// 侧边栏卡片动效
+.sidebar-card {
+  .header-section:hover .icon-box {
+    transform: rotate(-5deg) scale(1.05);
+  }
+}
+
+// 输入框聚焦动效
+:deep(.el-select),
+:deep(.el-input) {
+  .el-input__wrapper {
+    transition: all 0.25s ease;
+    &:hover {
+      box-shadow: 0 0 0 1px var(--el-color-primary-light-5) inset;
+    }
+    &.is-focus {
+      box-shadow: 0 0 0 1px var(--el-color-primary) inset, 0 4px 12px var(--el-color-primary-light-8);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// 自定义滚动条
+.custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--el-border-color);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+    &:hover {
+      background: var(--el-border-color-darker);
+    }
+  }
+}
+
+// 淡入动画
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-panel {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+
 </style>

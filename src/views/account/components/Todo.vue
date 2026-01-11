@@ -1,5 +1,5 @@
 <template>
-  <div class="todo-container">
+  <div class="todo-container" :class="currentTheme">
     <div class="todo-header card">
       <div class="header-left">
         <h3>待办事项</h3>
@@ -124,6 +124,10 @@ import {
   User,
   Clock
 } from "@element-plus/icons-vue";
+
+defineProps<{
+  currentTheme?: string;
+}>();
 
 interface TodoItem {
   id: number;
@@ -306,17 +310,22 @@ const toggleStatus = (row: TodoItem) => {
 </script>
 
 <style lang="scss" scoped>
-.card {
-  padding: 24px;
-  margin-bottom: 24px;
-  background-color: #fff;
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
-  transition: all 0.3s ease;
-}
-
 .todo-container {
+  .card {
+    padding: 24px;
+    margin-bottom: 24px;
+    background-color: #fff;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+    transition: all 0.3s ease;
+  }
+
+  &.dark .card {
+    background-color: #1e293b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
   .todo-header {
     display: flex;
     align-items: center;
@@ -337,9 +346,36 @@ const toggleStatus = (row: TodoItem) => {
     }
   }
 
+  &.dark .todo-header {
+    .header-left {
+      h3 {
+        color: #f1f5f9;
+      }
+      p {
+        color: #94a3b8;
+      }
+    }
+  }
+
   .todo-controls {
     display: flex;
     justify-content: flex-end;
+  }
+
+  &.dark .todo-controls {
+    :deep(.el-radio-group) {
+      .el-radio-button__inner {
+        background-color: #0f172a;
+        border-color: #334155;
+        color: #94a3b8;
+      }
+      
+      .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        color: #fff;
+      }
+    }
   }
 
   .todo-list {
@@ -364,11 +400,12 @@ const toggleStatus = (row: TodoItem) => {
     }
 
     &.completed {
+      background-color: #f7f8fc;
+
       .item-title {
         text-decoration: line-through;
         color: #909399;
       }
-      background-color: #f7f8fc;
     }
 
     .item-content {
@@ -415,6 +452,35 @@ const toggleStatus = (row: TodoItem) => {
     .item-actions {
       display: flex;
       gap: 10px;
+    }
+  }
+
+  // 深色模式样式
+  &.dark {
+    .todo-item {
+      &:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      }
+
+      &.completed {
+        background-color: #0f172a;
+
+        .item-title {
+          color: #64748b;
+        }
+      }
+
+      .item-header .item-title {
+        color: #f1f5f9;
+      }
+
+      .item-details {
+        color: #cbd5e1;
+      }
+
+      .item-footer {
+        color: #64748b;
+      }
     }
   }
 }

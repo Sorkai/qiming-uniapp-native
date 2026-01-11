@@ -77,6 +77,6 @@ const onAddItem = () => {
         </el-button>
       </template>
     </pure-table>
-    <el-button class="w-full mt-4!" @click="onAddItem"> Add Item </el-button>
+    <el-button class="w-full mt-4" @click="onAddItem"> Add Item </el-button>
   </div>
 </template>

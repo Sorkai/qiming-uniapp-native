@@ -22,6 +22,20 @@ export default defineFakeRoute([
             expires: "2030/10/30 00:00:00"
           }
         };
+      } else if (body.username === "teacher") {
+        return {
+          success: true,
+          data: {
+            avatar: "https://avatars.githubusercontent.com/u/52823142",
+            username: "teacher",
+            nickname: "教师张老师",
+            roles: ["admin", "teacher"],
+            permissions: ["*:*:*"], // 给教师所有权限以便调试
+            accessToken: "eyJhbGciOiJIUzUxMiJ9.teacher",
+            refreshToken: "eyJhbGciOiJIUzUxMiJ9.teacherRefresh",
+            expires: "2030/10/30 00:00:00"
+          }
+        };
       } else {
         return {
           success: true,

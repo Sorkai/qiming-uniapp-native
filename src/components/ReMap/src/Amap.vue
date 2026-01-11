@@ -131,6 +131,6 @@ onUnmounted(() => {
 }
 
 :deep(.amap-marker-label) {
-  border: none !important;
+  border: none;
 }
 </style>

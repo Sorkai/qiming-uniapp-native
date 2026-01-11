@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { router } from "@/router";
 import { useRoute } from "vue-router";
 import { emitter } from "@/utils/mitt";
@@ -24,6 +25,9 @@ const showLogo = ref(
   )?.showLogo ?? true
 );
 
+// 使用 storeToRefs 正确获取响应式的 wholeMenus
+const { wholeMenus } = storeToRefs(usePermissionStoreHook());
+
 const {
   title,
   pureApp,
@@ -39,7 +43,7 @@ const curActive = ref(0);
 const childMenu = ref([]);
 const subMenuData = ref([]);
 
-const menuData = computed(() => usePermissionStoreHook().wholeMenus);
+const menuData = computed(() => wholeMenus.value);
 
 const defaultActive = computed(() =>
   !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
@@ -52,12 +56,12 @@ function getSubMenuData() {
   // path的上级路由组成的数组
   const parentPathArr = getParentPaths(
     path,
-    usePermissionStoreHook().wholeMenus
+    wholeMenus.value
   );
   // 当前路由的父级路由信息
   const parenetRoute = findRouteByPath(
     parentPathArr[0] || path,
-    usePermissionStoreHook().wholeMenus
+    wholeMenus.value
   );
   if (!parenetRoute?.children) return;
   subMenuData.value = parenetRoute?.children;
@@ -82,12 +86,13 @@ function handleChildMenu(menu, index) {
 }
 
 watch(
-  () => [route.path, usePermissionStoreHook().wholeMenus],
+  () => [route.path, wholeMenus.value],
   () => {
     if (route.path.includes("/redirect")) return;
     getSubMenuData();
     menuSelect(route.path);
-  }
+  },
+  { immediate: true, deep: true }
 );
 
 onMounted(() => {
@@ -105,11 +110,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="w-[290px]">
+  <div class="w-[320px]">
     <div
       :class="[
         'double-left',
-        'w-[80px]',
+        'w-[110px]',
         'h-full',
         showLogo ? 'has-logo' : 'no-logo'
       ]"
@@ -137,7 +142,7 @@ onBeforeUnmount(() => {
               :tippyProps="{
                 theme: tooltipEffect
               }"
-              class="w-full! text-inherit! text-xs!"
+              class="w-full text-inherit text-xs"
             >
               {{ transformI18n(menu.meta.title) }}
             </ReText>

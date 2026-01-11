@@ -1,6 +1,7 @@
 import Cookies from "js-cookie";
 import { useUserStoreHook } from "@/store/modules/user";
 import { storageLocal, isString, isIncludeAllChildren } from "@pureadmin/utils";
+import { responsiveStorageNameSpace, getConfig } from "@/config";
 
 export interface DataInfo<T> {
   /** token */
@@ -127,6 +128,41 @@ export function removeToken() {
   Cookies.remove(TokenKey);
   Cookies.remove(multipleTabsKey);
   storageLocal().removeItem(userKey);
+
+  // 清除持久化的 UI 状态
+  storageLocal().removeItem("account_active_menu");
+  // 清除所有课程详情页的持久化状态
+  const keys = Object.keys(localStorage);
+  keys.forEach(key => {
+    if (
+      key.includes("course_detail_active_") ||
+      key.includes("account_active_menu")
+    ) {
+      localStorage.removeItem(key);
+    }
+  });
+
+  // 重置主题设置为默认浅色模式，防止不同角色之间主题状态残留
+  resetThemeToDefault();
+}
+
+/** 重置主题设置为默认浅色模式 */
+export function resetThemeToDefault() {
+  const layoutKey = `${responsiveStorageNameSpace()}layout`;
+  const layout = storageLocal().getItem<StorageConfigs>(layoutKey);
+
+  if (layout) {
+    // 重置为默认浅色主题
+    layout.darkMode = false;
+    layout.overallStyle = "light";
+    layout.theme = getConfig().Theme || "light";
+    layout.epThemeColor = getConfig().EpThemeColor || "#409EFF";
+    storageLocal().setItem(layoutKey, layout);
+  }
+
+  // 移除 DOM 上的 dark 类
+  document.documentElement.classList.remove("dark");
+  document.documentElement.setAttribute("data-theme", "light");
 }
 
 /** 格式化token（jwt格式） */

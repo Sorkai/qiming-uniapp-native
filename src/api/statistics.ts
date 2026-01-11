@@ -57,6 +57,18 @@ interface EfficientIndexResult {
     planWorkTime: number; // 作业设计耗时(分钟)
     correctPlanWorkTime: number; // 作业设计修正耗时(分钟)
     optimizeDirection?: string; // 优化方向建议
+    expectedEffect?: string; // 预期效果
+    difficulty?: string; // 执行难度
+  }>;
+}
+
+export interface PlatformStatsResult {
+  stats: Array<{
+    title: string;
+    value: string | number;
+    unit: string;
+    trend: number;
+    icon: string;
   }>;
 }
 
@@ -123,5 +135,15 @@ export const getEfficientIndex = () => {
   return http.request<ApiResponse<EfficientIndexResult>>(
     "get",
     "/edu/backend/v1/statistics/efficient/index"
+  );
+};
+
+/**
+ * 获取平台概览数据统计（顶部四个卡片）
+ */
+export const getPlatformStats = () => {
+  return http.request<ApiResponse<PlatformStatsResult>>(
+    "get",
+    "/edu/backend/v1/statistics/platform/overview"
   );
 };

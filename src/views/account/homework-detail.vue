@@ -18,9 +18,9 @@
           <div class="card-header">
             <h3>{{ homework.title }}</h3>
             <div class="meta-info">
-              <span>总题数：{{ homework.questionCount }} 题</span>
-              <span>总分值：{{ homework.totalScore }} 分</span>
-              <span>截止日期：{{ formatDate(homework.deadline) }}</span>
+              <span>总题数：{{ homework.questionNum }} 题</span>
+              <span>总分值：{{ homework.totalPoints }} 分</span>
+              <span>截止日期：{{ formatDate(homework.dueDate) }}</span>
             </div>
           </div>
         </template>
@@ -34,11 +34,11 @@
 
           <!-- 问题列表 -->
           <div
-            v-if="homework.questions && homework.questions.length > 0"
+            v-if="homework.questionList && homework.questionList.length > 0"
             class="questions-list"
           >
             <div
-              v-for="(question, index) in homework.questions"
+              v-for="(question, index) in homework.questionList"
               :key="question.questionId"
               class="question-item"
               :class="{ dark: currentTheme === 'dark' }"
@@ -48,19 +48,19 @@
                   <span class="question-number">{{ index + 1 }}.</span>
                   <span>{{ question.title }}</span>
                   <span class="question-type">{{
-                    getQuestionType(question.type)
+                    getQuestionType(question.questionType)
                   }}</span>
-                  <span class="question-score">{{ question.score }} 分</span>
+                  <span class="question-score">{{ question.points }} 分</span>
                 </div>
               </div>
 
-              <div class="question-content" v-html="question.content" />
+              <div class="question-content" v-html="question.stem" />
 
               <!-- 选项 - 单选题 -->
-              <div v-if="question.type === 1" class="options">
+              <div v-if="question.questionType === 1" class="options">
                 <el-radio-group v-model="answers[question.questionId]">
                   <el-radio
-                    v-for="option in question.options"
+                    v-for="option in parseOptions(question.options)"
                     :key="option.optionId"
                     :label="option.optionId"
                     :disabled="submitting"
@@ -71,10 +71,10 @@
               </div>
 
               <!-- 选项 - 多选题 -->
-              <div v-else-if="question.type === 2" class="options">
+              <div v-else-if="question.questionType === 2" class="options">
                 <el-checkbox-group v-model="answers[question.questionId]">
                   <el-checkbox
-                    v-for="option in question.options"
+                    v-for="option in parseOptions(question.options)"
                     :key="option.optionId"
                     :label="option.optionId"
                     :disabled="submitting"
@@ -85,7 +85,7 @@
               </div>
 
               <!-- 判断题 -->
-              <div v-else-if="question.type === 3" class="options">
+              <div v-else-if="question.questionType === 3" class="options">
                 <el-radio-group v-model="answers[question.questionId]">
                   <el-radio label="1" :disabled="submitting">正确</el-radio>
                   <el-radio label="0" :disabled="submitting">错误</el-radio>
@@ -93,7 +93,7 @@
               </div>
 
               <!-- 填空题 -->
-              <div v-else-if="question.type === 4" class="options">
+              <div v-else-if="question.questionType === 4" class="options">
                 <el-input
                   v-model="answers[question.questionId]"
                   type="text"
@@ -103,7 +103,7 @@
               </div>
 
               <!-- 简答题 -->
-              <div v-else-if="question.type === 5" class="options">
+              <div v-else-if="question.questionType === 5" class="options">
                 <el-input
                   v-model="answers[question.questionId]"
                   type="textarea"
@@ -114,7 +114,7 @@
               </div>
 
               <!-- 代码题 -->
-              <div v-else-if="question.type === 6" class="options">
+              <div v-else-if="question.questionType === 6" class="options">
                 <el-input
                   v-model="answers[question.questionId]"
                   type="textarea"
@@ -172,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ArrowLeft } from "@element-plus/icons-vue";
@@ -186,19 +186,37 @@ import {
 
 const route = useRoute();
 const router = useRouter();
-const currentTheme = ref("light"); // 保留变量但不提供切换功能
+const currentTheme = ref((route.query.theme as string) || "light");
 
 // 作业相关数据
 const loading = ref(true);
 const submitting = ref(false);
 const homework = ref<HomeworkDetailResult>({} as HomeworkDetailResult);
-const answers = reactive<Record<number, string | string[]>>({});
+const answers = reactive<Record<number, any>>({});
 
 // 提交结果相关
 const showResultDialog = ref(false);
 const resultDialogTitle = ref("作业提交结果");
 const resultDialogMessage = ref("");
 const submissionResult = ref<HomeworkAnswerResult | null>(null);
+
+// 解析选项
+const parseOptions = (optionsStr: string | null) => {
+  if (!optionsStr || optionsStr === "null") return [];
+  try {
+    const options = JSON.parse(optionsStr);
+    if (Array.isArray(options)) {
+      return options.map((opt, index) => ({
+        optionId: String.fromCharCode(65 + index),
+        content: opt
+      }));
+    }
+    return [];
+  } catch (e) {
+    console.error("解析选项出错", e);
+    return [];
+  }
+};
 
 // 获取作业详情
 const fetchHomeworkDetail = async () => {
@@ -219,43 +237,7 @@ const fetchHomeworkDetail = async () => {
     });
 
     if (response.code === 200 && response.data) {
-      // 适配返回的数据结构
-      homework.value = {
-        homeworkId: response.data.homeworkId,
-        title: response.data.title,
-        description: response.data.description,
-        questionCount: response.data.questionNum,
-        totalScore: response.data.totalPoints,
-        deadline: response.data.dueDate,
-        questions: response.data.questionList
-          .map(item => {
-            // 处理选项，将JSON字符串解析为数组
-            let options = [];
-            if (item.options && item.options !== "null") {
-              try {
-                options = JSON.parse(item.options).map((opt, index) => {
-                  return {
-                    optionId: String.fromCharCode(65 + index), // 使用A, B, C, D作为选项ID
-                    content: opt
-                  };
-                });
-              } catch (e) {
-                console.error("解析选项出错", e);
-              }
-            }
-
-            return {
-              questionId: item.questionId,
-              title: item.title,
-              content: item.stem || item.title,
-              type: item.questionType,
-              score: item.points,
-              options,
-              sortOrder: item.sortOrder
-            };
-          })
-          .sort((a, b) => a.sortOrder - b.sortOrder) // 根据sortOrder排序
-      };
+      homework.value = response.data;
     } else {
       ElMessage.error(response.msg || "获取作业详情失败");
     }
@@ -287,8 +269,9 @@ const submitHomework = async () => {
 
       // 如果是代码题，添加语言信息
       if (
-        homework.value.questions.find(q => q.questionId === Number(questionId))
-          ?.type === 6
+        homework.value.questionList.find(
+          q => q.questionId === Number(questionId)
+        )?.questionType === 6
       ) {
         formattedAnswer = Array.isArray(answer)
           ? answer.join("")
@@ -319,10 +302,10 @@ const submitHomework = async () => {
       if (response.code === 0 || response.code === 200) {
         submissionResult.value = {
           score: response.data.score,
-          totalScore: homework.value.totalScore
+          totalScore: homework.value.totalPoints
         };
         resultDialogTitle.value = "作业提交成功";
-        resultDialogMessage.value = `您的得分为 ${response.data.score}/${homework.value.totalScore}`;
+        resultDialogMessage.value = `您的得分为 ${response.data.score}/${homework.value.totalPoints}`;
         showResultDialog.value = true;
       } else {
         ElMessage.error(response.msg || "提交作业失败");
@@ -371,6 +354,20 @@ const goBack = () => {
 
 onMounted(() => {
   fetchHomeworkDetail();
+  const theme = currentTheme.value;
+  const other = theme === "dark" ? "light" : "dark";
+  document.documentElement.classList.remove(other);
+  document.documentElement.classList.add(theme);
+  document.body.classList.remove(other);
+  document.body.classList.add(theme);
+  document.body.classList.add("homework-page");
+});
+
+onBeforeUnmount(() => {
+  document.body.classList.remove("homework-page");
+  // 退出时移除可能存在的主题类名，防止污染主站
+  document.documentElement.classList.remove("light", "dark");
+  document.body.classList.remove("light", "dark");
 });
 </script>
 
@@ -407,7 +404,7 @@ onMounted(() => {
       align-items: center;
       justify-content: space-between;
       height: 100%;
-      padding: 0 20px;
+      padding: 0 32px;
       max-width: 1200px;
       margin: 0 auto;
 
@@ -437,15 +434,19 @@ onMounted(() => {
   }
 
   .main-content {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 32px;
 
     &.dark {
-      .el-card {
+      :deep(.el-card) {
         background-color: #252525;
         color: #e0e0e0;
         border: 1px solid #333;
+
+        .el-card__header {
+          border-bottom: 1px solid #333;
+        }
       }
     }
 
@@ -463,6 +464,10 @@ onMounted(() => {
         font-size: 14px;
         color: #666;
         justify-content: center;
+
+        .dark & {
+          color: #aaa;
+        }
       }
     }
 
@@ -484,6 +489,7 @@ onMounted(() => {
 
         .dark & {
           background-color: #333;
+          color: #e0e0e0;
         }
       }
 
@@ -498,6 +504,7 @@ onMounted(() => {
           &.dark {
             background-color: #333;
             box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.15);
+            color: #e0e0e0;
           }
 
           .question-header {
@@ -519,6 +526,10 @@ onMounted(() => {
                 font-size: 14px;
                 color: #606266;
                 font-weight: normal;
+
+                .dark & {
+                  color: #aaa;
+                }
               }
             }
           }
@@ -526,6 +537,12 @@ onMounted(() => {
           .question-content {
             margin-bottom: 15px;
             line-height: 1.6;
+
+            .dark & {
+              :deep(*) {
+                color: #e0e0e0;
+              }
+            }
           }
 
           .options {

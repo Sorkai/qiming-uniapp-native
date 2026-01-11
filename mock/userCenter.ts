@@ -11,7 +11,8 @@ const mockUsers = {
     sex: 1,
     avatar: "https://avatars.githubusercontent.com/u/44761321",
     info: "我是一名学生",
-    roleType: 1 // 学生
+    roleType: 1, // 学生
+    bannerUrl: ""
   },
   // 教师账号
   teacher: {
@@ -21,7 +22,8 @@ const mockUsers = {
     sex: 1,
     avatar: "https://avatars.githubusercontent.com/u/52823142",
     info: "我是一名教师",
-    roleType: 2 // 教师
+    roleType: 2, // 教师
+    bannerUrl: ""
   },
   // 管理员账号
   admin: {
@@ -31,7 +33,8 @@ const mockUsers = {
     sex: 1,
     avatar: "https://avatars.githubusercontent.com/u/44761321",
     info: "我是管理员",
-    roleType: 3 // 管理员
+    roleType: 3, // 管理员
+    bannerUrl: ""
   }
 };
 
@@ -61,22 +64,24 @@ export default defineFakeRoute([
     url: "/edu/v1/user/login",
     method: "post",
     response: ({ body }) => {
-      const { mobile, password } = body;
+      const { mobile } = body;
 
       // 简单验证（mock 模式下密码任意即可）
       if (!mobile) {
         return {
+          success: false,
           code: 400,
           msg: "手机号不能为空",
           data: null
         };
       }
 
-      // 保存当前用户
-      currentUser = getUserByMobile(mobile);
+      // 保存当前用户 (使用副本避免污染原始数据)
+      currentUser = { ...getUserByMobile(mobile) };
 
       return {
-        code: 0,
+        success: true,
+        code: 200,
         msg: "登录成功",
         data: {
           accessToken: `mock_token_${Date.now()}_${currentUser.roleType}`,
@@ -95,6 +100,7 @@ export default defineFakeRoute([
 
       if (!mobile || !password) {
         return {
+          success: false,
           code: 400,
           msg: "手机号和密码不能为空",
           data: null
@@ -102,7 +108,8 @@ export default defineFakeRoute([
       }
 
       return {
-        code: 0,
+        success: true,
+        code: 200,
         msg: "注册成功",
         data: {
           accessToken: `mock_token_${Date.now()}_1`,
@@ -118,15 +125,60 @@ export default defineFakeRoute([
     method: "post",
     response: () => {
       if (!currentUser) {
-        // 默认返回学生
-        currentUser = mockUsers.student;
+        currentUser = { ...mockUsers.student };
       }
 
       return {
-        code: 0,
+        success: true,
+        code: 200,
         msg: "获取成功",
         data: {
           userInfo: currentUser
+        }
+      };
+    }
+  },
+  // 更新用户信息
+  {
+    url: "/edu/frontend/v1/user/update",
+    method: "post",
+    response: ({ body }) => {
+      if (!currentUser) {
+        currentUser = { ...mockUsers.student };
+      }
+      // 兼容可能存在的 data 层级包裹，并确保解析逻辑健壮
+      const updateData = body?.data || body || {};
+
+      // 增量合并用户信息，模拟后端持久化
+      currentUser = {
+        ...currentUser,
+        ...updateData
+      };
+
+      return {
+        success: true,
+        code: 200,
+        msg: "更新成功",
+        data: {
+          userInfo: currentUser
+        }
+      };
+    }
+  },
+  // 文件上传 mock
+  {
+    url: "/edu/v1/user/upload",
+    method: "post",
+    response: () => {
+      // 随机返回一个图片地址，避免固定的头像地址导致横幅预览混淆
+      const randomId = Math.floor(Math.random() * 1000);
+      return {
+        success: true,
+        code: 200,
+        msg: "上传成功",
+        data: {
+          url: `https://picsum.photos/seed/${randomId}/1200/400`,
+          fileId: Date.now()
         }
       };
     }

@@ -35,12 +35,12 @@ const defaultProps = {
 };
 const buttonClass = computed(() => {
   return [
-    "h-[20px]!",
-    "text-sm!",
+    "h-[20px]",
+    "text-sm",
     "reset-margin",
-    "text-(--el-text-color-regular)!",
-    "dark:text-white!",
-    "dark:hover:text-primary!"
+    "text-(--el-text-color-regular)",
+    "dark:text-white",
+    "dark:hover:text-primary"
   ];
 });
 
@@ -190,7 +190,7 @@ defineExpose({ onTreeReset });
                     : Dept
               "
             />
-            <span class="w-[120px]! truncate!" :title="node.label">
+            <span class="w-[120px] truncate" :title="node.label">
               {{ node.label }}
             </span>
           </div>

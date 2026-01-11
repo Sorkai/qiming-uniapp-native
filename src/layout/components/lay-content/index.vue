@@ -52,24 +52,24 @@ const getMainWidth = computed(() => {
 
 const getSectionStyle = computed(() => {
   return [
-    hideTabs.value && layout ? "padding-top: 48px;" : "",
+    hideTabs.value && layout ? "padding-top: 72px;" : "",
     !hideTabs.value && layout
       ? showModel.value == "chrome"
-        ? "padding-top: 85px;"
-        : "padding-top: 81px;"
+        ? "padding-top: 116px;" // 略微增加以适配 Chrome 模式
+        : "padding-top: 112px;" // 胶囊模式
       : "",
-    hideTabs.value && !layout.value ? "padding-top: 48px;" : "",
+    hideTabs.value && !layout.value ? "padding-top: 72px;" : "",
     !hideTabs.value && !layout.value
       ? showModel.value == "chrome"
-        ? "padding-top: 85px;"
-        : "padding-top: 81px;"
+        ? "padding-top: 116px;"
+        : "padding-top: 112px;"
       : "",
     props.fixedHeader
       ? ""
       : `padding-top: 0;${
           hideTabs.value
-            ? "min-height: calc(100vh - 48px);"
-            : "min-height: calc(100vh - 86px);"
+            ? "min-height: calc(100vh - 72px);"
+            : "min-height: calc(100vh - 116px);"
         }`
   ];
 });

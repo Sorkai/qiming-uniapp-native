@@ -71,6 +71,10 @@ export const constantMenus: Array<RouteComponent> = ascending(
   routes.flat(Infinity)
 ).concat(...remainingRouter);
 
+// 调试输出
+console.log("[Router Init] 静态路由 constantMenus:", constantMenus);
+console.log("[Router Init] constantMenus 数量:", constantMenus.length);
+
 /** 不参与菜单的路由 */
 export const remainingPaths = Object.keys(remainingRouter).map(v => {
   return remainingRouter[v].path;
@@ -152,10 +156,32 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     }
   }
   if (Cookies.get(multipleTabsKey) && userInfo) {
-    // 无权限跳转403页面
-    if (to.meta?.roles && !isOneOfArray(to.meta?.roles, userInfo?.roles)) {
-      next({ path: "/error/403" });
+    // 管理端默认权限白名单（这些路由任何已登录用户都可以访问）
+    const publicRoutes = ["/home", "/error/403", "/error/404", "/error/500", "/account"];
+    const isPublicRoute = publicRoutes.some(route => to.path.startsWith(route));
+
+    // 权限检查逻辑：
+    // 1. 如果路由明确指定了 roles，检查用户是否有对应角色
+    // 2. 如果路由没有指定 roles 且不是公开路由，默认需要 admin 或 teacher 角色
+    const userRoles = userInfo?.roles ?? [];
+    const requiredRoles = to.meta?.roles;
+
+    if (requiredRoles) {
+      // 路由明确指定了权限要求
+      if (!isOneOfArray(requiredRoles, userRoles)) {
+        next({ path: "/error/403" });
+        return;
+      }
+    } else if (!isPublicRoute) {
+      // 路由没有指定权限，但不是公开路由，需要 admin 或 teacher 权限
+      const hasAdminAccess = isOneOfArray(["admin", "teacher"], userRoles);
+      if (!hasAdminAccess) {
+        console.warn(`[Router] 用户角色 ${userRoles} 无权访问管理端路由: ${to.path}`);
+        next({ path: "/error/403" });
+        return;
+      }
     }
+
     // 开启隐藏首页后在浏览器地址栏手动输入首页welcome路由则跳转到404页面
     if (VITE_HIDE_HOME === "true" && to.fullPath === "/welcome") {
       next({ path: "/error/404" });

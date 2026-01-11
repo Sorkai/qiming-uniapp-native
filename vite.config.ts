@@ -26,7 +26,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
       proxy: {
         "/api": {
-          target: "https://aiedu-api.lehinet.com",
+          target: "https://aiedu-api.intelledu.cn",
           changeOrigin: true,
           rewrite: path => path.replace(/^\/api/, "")
         }

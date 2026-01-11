@@ -194,6 +194,8 @@ menus:
   cloudDisk: 教学云盘
   systemNotification: 系统通知
   todo: 待办
+  virtualLab: 虚拟实验室
+  competition: 赛事场
   pureMenuOverflow: 目录超出显示 Tooltip 文字提示
   pureChildMenuOverflow: 菜单超出显示 Tooltip 文字提示
   aiPPT: AI生成课件

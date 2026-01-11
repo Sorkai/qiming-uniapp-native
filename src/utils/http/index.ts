@@ -18,8 +18,8 @@ import { useUserStoreHook } from "@/store/modules/user";
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间，上传大文件时设置为0表示不超时
   timeout: 0,
-  // 设置基础URL（开发环境注释掉以使用 mock 数据）
-  // baseURL: "https://aiedu-api.lehinet.com",
+  // 设置基础URL（使用真实后端 API）
+  baseURL: "https://aiedu-api.intelledu.cn",
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
@@ -80,9 +80,12 @@ class PureHttp {
           ? config
           : new Promise(resolve => {
             const data = getToken();
-            if (data) {
+            if (data && data.accessToken) {
               const now = new Date().getTime();
-              const expired = parseInt(data.expires) - now <= 0;
+              const expiresTime = Number(data.expires);
+              // 只有在 expiresTime 有效且已过期时才尝试刷新
+              // 增加对 NaN 的防御性处理，如果 expires 损坏则视为过期
+              const expired = isNaN(expiresTime) || expiresTime - now <= 0;
               if (expired) {
                 if (!PureHttp.isRefreshing) {
                   PureHttp.isRefreshing = true;
@@ -90,9 +93,19 @@ class PureHttp {
                   useUserStoreHook()
                     .handRefreshToken({ refreshToken: data.refreshToken })
                     .then(res => {
-                      const token = res.data.accessToken;
-                      config.headers["Authorization"] = formatToken(token);
-                      PureHttp.requests.forEach(cb => cb(token));
+                      const token = res?.data?.accessToken;
+                      if (token) {
+                        config.headers["Authorization"] = formatToken(token);
+                        PureHttp.requests.forEach(cb => cb(token));
+                      } else {
+                        PureHttp.requests.forEach(cb => cb(""));
+                      }
+                      PureHttp.requests = [];
+                    })
+                    .catch(err => {
+                      console.error("Token refresh failed:", err);
+                      // 刷新失败则直接执行，让后端返回401
+                      PureHttp.requests.forEach(cb => cb(""));
                       PureHttp.requests = [];
                     })
                     .finally(() => {
@@ -107,6 +120,7 @@ class PureHttp {
                 resolve(config);
               }
             } else {
+              // 无 Token 或 Token 损坏时直接发送请求，由后端/拦截器处理 401
               resolve(config);
             }
           });
@@ -168,7 +182,7 @@ class PureHttp {
     return new Promise((resolve, reject) => {
       PureHttp.axiosInstance
         .request(config)
-        .then((response: undefined) => {
+        .then((response: any) => {
           resolve(response);
         })
         .catch(error => {

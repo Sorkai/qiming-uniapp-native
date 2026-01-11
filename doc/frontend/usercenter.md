@@ -17,6 +17,24 @@
 
 - **响应参数**：无
 
+## 获取学习总结(AI)
+
+- **接口地址**：`/edu/frontend/v1/user/learning/summary`
+- **请求方式**：GET
+- **请求参数**：无
+- **响应参数**：
+
+```json
+{
+  "code": 200,
+  "msg": "成功",
+  "data": {
+    "title": "string",       // 总结标题
+    "items": ["string"]      // 总结条目列表
+  }
+}
+```
+
 ## 修改密码
 
 - **接口地址**：`/edu/frontend/v1/user/update/password`

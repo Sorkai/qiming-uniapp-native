@@ -21,9 +21,9 @@ export function useLayout() {
       useI18n().locale.value = $config?.Locale ?? "zh";
     }
     /** 导航 */
-    if (!$storage.layout) {
+    if (!$storage.layout || $storage.layout.layout === "double") {
       $storage.layout = {
-        layout: $config?.Layout ?? "vertical",
+        layout: $config?.Layout === "double" ? "vertical" : ($config?.Layout ?? "vertical"),
         theme: $config?.Theme ?? "light",
         darkMode: $config?.DarkMode ?? false,
         sidebarStatus: $config?.SidebarStatus ?? true,

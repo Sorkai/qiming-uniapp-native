@@ -1,4 +1,6 @@
-.rightTreeWarp {
+.course-page .rightTreeWarp,
+.homework-page .rightTreeWarp,
+.exam-page .rightTreeWarp {
   width: 23.95833vw;
   border-radius: 0.83333vw;
   background: hsla(0, 0%, 100%, 0.05);
@@ -9,7 +11,9 @@
   top: 17.91667vw;
 }
 
-.rightTreeWarp .top-title {
+.course-page .rightTreeWarp .top-title,
+.homework-page .rightTreeWarp .top-title,
+.exam-page .rightTreeWarp .top-title {
   line-height: 1.5625vw;
   font-size: 1.04167vw;
   color: #fff;
@@ -19,22 +23,30 @@
   font-family: AlibabaPuHuiTi-Bold;
 }
 
-.rightTreeWarp .chapterList-box {
+.course-page .rightTreeWarp .chapterList-box,
+.homework-page .rightTreeWarp .chapterList-box,
+.exam-page .rightTreeWarp .chapterList-box {
   padding: 1.04167vw 1.25vw;
   position: relative;
   box-sizing: border-box;
 }
 
-.rightTreeWarp .chapterList-box .inner-li {
+.course-page .rightTreeWarp .chapterList-box .inner-li,
+.homework-page .rightTreeWarp .chapterList-box .inner-li,
+.exam-page .rightTreeWarp .chapterList-box .inner-li {
   padding: 0.26042vw 0;
 }
 
-.rightTreeWarp .chapterList-box .list {
+.course-page .rightTreeWarp .chapterList-box .list,
+.homework-page .rightTreeWarp .chapterList-box .list,
+.exam-page .rightTreeWarp .chapterList-box .list {
   position: relative;
   padding-bottom: 1.04167vw;
 }
 
-.rightTreeWarp .chapterList-box .list .position_first_bg {
+.course-page .rightTreeWarp .chapterList-box .list .position_first_bg,
+.homework-page .rightTreeWarp .chapterList-box .list .position_first_bg,
+.exam-page .rightTreeWarp .chapterList-box .list .position_first_bg {
   position: absolute;
   z-index: 1;
   left: 3.54167vw;
@@ -44,7 +56,9 @@
   width: 0.10417vw;
 }
 
-.rightTreeWarp .chapterList-box .list li {
+.course-page .rightTreeWarp .chapterList-box .list li,
+.homework-page .rightTreeWarp .chapterList-box .list li,
+.exam-page .rightTreeWarp .chapterList-box .list li {
   padding: 0.625vw;
   font-family: Tahoma;
   width: 100%;
@@ -57,7 +71,9 @@
   cursor: pointer;
 }
 
-.rightTreeWarp .chapterList-box .list li:after {
+.course-page .rightTreeWarp .chapterList-box .list li:after,
+.homework-page .rightTreeWarp .chapterList-box .list li:after,
+.exam-page .rightTreeWarp .chapterList-box .list li:after {
   content: "";
   display: block;
   width: 0;
@@ -70,28 +86,40 @@
   z-index: 30;
 }
 
-.rightTreeWarp .chapterList-box .list li:hover {
+.course-page .rightTreeWarp .chapterList-box .list li:hover,
+.homework-page .rightTreeWarp .chapterList-box .list li:hover,
+.exam-page .rightTreeWarp .chapterList-box .list li:hover {
   background: hsla(0, 0%, 100%, 0.05);
 }
 
-.rightTreeWarp .chapterList-box .list li:hover .progress {
+.course-page .rightTreeWarp .chapterList-box .list li:hover .progress,
+.homework-page .rightTreeWarp .chapterList-box .list li:hover .progress,
+.exam-page .rightTreeWarp .chapterList-box .list li:hover .progress {
   background-color: rgba(96, 79, 253, 0.5);
 }
 
-.rightTreeWarp .chapterList-box .list li:hover .Sectionmark-em {
+.course-page .rightTreeWarp .chapterList-box .list li:hover .Sectionmark-em,
+.homework-page .rightTreeWarp .chapterList-box .list li:hover .Sectionmark-em,
+.exam-page .rightTreeWarp .chapterList-box .list li:hover .Sectionmark-em {
   background-image: url(../images/sectionmark-hover.png);
   z-index: 33;
 }
 
-.rightTreeWarp .chapterList-box .list li.last-child:after {
+.course-page .rightTreeWarp .chapterList-box .list li.last-child:after,
+.homework-page .rightTreeWarp .chapterList-box .list li.last-child:after,
+.exam-page .rightTreeWarp .chapterList-box .list li.last-child:after {
   top: -1.04167vw;
 }
 
-.rightTreeWarp .chapterList-box .list li.last-child-num:after {
+.course-page .rightTreeWarp .chapterList-box .list li.last-child-num:after,
+.homework-page .rightTreeWarp .chapterList-box .list li.last-child-num:after,
+.exam-page .rightTreeWarp .chapterList-box .list li.last-child-num:after {
   top: -2.34375vw !important;
 }
 
-.rightTreeWarp .chapterList-box .list li .catalogue_title3 {
+.course-page .rightTreeWarp .chapterList-box .list li .catalogue_title3,
+.homework-page .rightTreeWarp .chapterList-box .list li .catalogue_title3,
+.exam-page .rightTreeWarp .chapterList-box .list li .catalogue_title3 {
   font-size: 0.72917vw;
   color: hsla(0, 0%, 100%, 0.65);
   line-height: 1.14583vw;
@@ -104,12 +132,16 @@
   display: inline-block;
 }
 
-.rightTreeWarp .chapterList-box .list li .resource-box {
+.course-page .rightTreeWarp .chapterList-box .list li .resource-box,
+.homework-page .rightTreeWarp .chapterList-box .list li .resource-box,
+.exam-page .rightTreeWarp .chapterList-box .list li .resource-box {
   width: 16.14583vw;
   margin-top: 0.26042vw;
 }
 
-.rightTreeWarp .chapterList-box .list li .resource-box .resource-text {
+.course-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text,
+.homework-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text,
+.exam-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text {
   color: hsla(0, 0%, 100%, 0.65);
   font-family: Poppins;
   font-size: 0.72917vw;
@@ -122,7 +154,9 @@
   font-family: AlibabaPuHuiTi-3\.0;
 }
 
-.rightTreeWarp .chapterList-box .list li .resource-box .resource-text span {
+.course-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span,
+.homework-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span,
+.exam-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span {
   color: #47ffff;
   text-align: center;
   font-family: Poppins;
@@ -133,13 +167,32 @@
   font-family: AlibabaPuHuiTi-Bold;
 }
 
-.rightTreeWarp .chapterList-box .list li .resource-box .resource-bar {
+.course-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-bar,
+.homework-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-bar,
+.exam-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-bar {
   width: 68%;
   float: left;
   margin-top: 0.10417vw;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .list
   li
@@ -156,7 +209,24 @@
   margin: 0;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress__text,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress__text,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .list
   li
@@ -166,7 +236,24 @@
   display: none;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__outer,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__outer,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .list
   li
@@ -179,7 +266,24 @@
   height: 0.41667vw !important;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__inner,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__inner,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .list
   li
@@ -190,7 +294,9 @@
   background: #47ffff;
 }
 
-.rightTreeWarp .chapterList-box .list li .Sectionmark-em {
+.course-page .rightTreeWarp .chapterList-box .list li .Sectionmark-em,
+.homework-page .rightTreeWarp .chapterList-box .list li .Sectionmark-em,
+.exam-page .rightTreeWarp .chapterList-box .list li .Sectionmark-em {
   background-image: url(../images/sectionmark-normal.png);
   background-repeat: no-repeat;
   background-size: 100% 100%;
@@ -204,28 +310,44 @@
   z-index: 33;
 }
 
-.rightTreeWarp .chapterList-box .list li .icon-box {
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box {
   position: absolute;
   right: 0.52083vw;
   display: flex;
 }
 
-.rightTreeWarp .chapterList-box .list li .icon-box .freeExam,
-.rightTreeWarp .chapterList-box .list li .icon-box .haveDone,
-.rightTreeWarp .chapterList-box .list li .icon-box .isFinish {
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam,
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone,
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish {
   width: 1.04167vw;
   height: 1.04167vw;
   margin-left: 0.52083vw;
 }
 
-.rightTreeWarp .chapterList-box .list li .icon-box .freeExam img,
-.rightTreeWarp .chapterList-box .list li .icon-box .haveDone img,
-.rightTreeWarp .chapterList-box .list li .icon-box .isFinish img {
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam img,
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone img,
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish img,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam img,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone img,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish img,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam img,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone img,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish img {
   width: 100%;
   height: 100%;
 }
 
-.rightTreeWarp .chapterList-box .list li .catalogue_title {
+.course-page .rightTreeWarp .chapterList-box .list li .catalogue_title,
+.homework-page .rightTreeWarp .chapterList-box .list li .catalogue_title,
+.exam-page .rightTreeWarp .chapterList-box .list li .catalogue_title {
   font-size: 0.83333vw;
   font-weight: 700;
   color: #fff;
@@ -239,47 +361,67 @@
   margin-left: 0.26042vw;
 }
 
-.rightTreeWarp .chapterList-box .list .forbidClick:hover {
+.course-page .rightTreeWarp .chapterList-box .list .forbidClick:hover,
+.homework-page .rightTreeWarp .chapterList-box .list .forbidClick:hover,
+.exam-page .rightTreeWarp .chapterList-box .list .forbidClick:hover {
   background: none !important;
   cursor: auto;
 }
 
-.rightTreeWarp .chapterList-box .list .forbidClick:hover .progress {
+.course-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .progress,
+.homework-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .progress,
+.exam-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .progress {
   background-color: rgba(96, 79, 253, 0.5);
 }
 
-.rightTreeWarp .chapterList-box .list .forbidClick:hover .Sectionmark-em {
+.course-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .Sectionmark-em,
+.homework-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .Sectionmark-em,
+.exam-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .Sectionmark-em {
   background-image: url(../images/sectionmark-normal.png);
   z-index: 33;
 }
 
-.rightTreeWarp .chapterList-box .list .chapter {
+.course-page .rightTreeWarp .chapterList-box .list .chapter,
+.homework-page .rightTreeWarp .chapterList-box .list .chapter,
+.exam-page .rightTreeWarp .chapterList-box .list .chapter {
   cursor: auto;
 }
 
-.rightTreeWarp .chapterList-box .list .chapter:hover {
+.course-page .rightTreeWarp .chapterList-box .list .chapter:hover,
+.homework-page .rightTreeWarp .chapterList-box .list .chapter:hover,
+.exam-page .rightTreeWarp .chapterList-box .list .chapter:hover {
   background-color: transparent;
 }
 
-.rightTreeWarp .chapterList-box .list .chapter:after {
+.course-page .rightTreeWarp .chapterList-box .list .chapter:after,
+.homework-page .rightTreeWarp .chapterList-box .list .chapter:after,
+.exam-page .rightTreeWarp .chapterList-box .list .chapter:after {
   top: 1.5625vw;
 }
 
-.rightTreeWarp .chapterList-box .list .activeNode {
+.course-page .rightTreeWarp .chapterList-box .list .activeNode,
+.homework-page .rightTreeWarp .chapterList-box .list .activeNode,
+.exam-page .rightTreeWarp .chapterList-box .list .activeNode {
   background: hsla(0, 0%, 100%, 0.05);
   border-radius: 0.83333vw;
 }
 
-.rightTreeWarp .chapterList-box .list .activeNode .progress {
+.course-page .rightTreeWarp .chapterList-box .list .activeNode .progress,
+.homework-page .rightTreeWarp .chapterList-box .list .activeNode .progress,
+.exam-page .rightTreeWarp .chapterList-box .list .activeNode .progress {
   background-color: rgba(96, 79, 253, 0.5);
 }
 
-.rightTreeWarp .chapterList-box .list .activeNode .Sectionmark-em {
+.course-page .rightTreeWarp .chapterList-box .list .activeNode .Sectionmark-em,
+.homework-page .rightTreeWarp .chapterList-box .list .activeNode .Sectionmark-em,
+.exam-page .rightTreeWarp .chapterList-box .list .activeNode .Sectionmark-em {
   background-image: url(../images/sectionmark-hover.png);
   z-index: 33;
 }
 
-.rightTreeWarp .chapterList-box .list-bg-line {
+.course-page .rightTreeWarp .chapterList-box .list-bg-line,
+.homework-page .rightTreeWarp .chapterList-box .list-bg-line,
+.exam-page .rightTreeWarp .chapterList-box .list-bg-line {
   position: absolute;
   z-index: 1;
   left: 20.6%;
@@ -291,16 +433,35 @@
   margin-top: 0.26042vw;
 }
 
-.rightTreeWarp .chapterList-box .chapter-list .chapter-item {
+.course-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item,
+.homework-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item,
+.exam-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item {
   margin-bottom: 0.41667vw;
   padding: 0.625vw;
 }
 
-.rightTreeWarp .chapterList-box .chapter-list .chapter-item .chapter-name-box {
+.course-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item .chapter-name-box,
+.homework-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item .chapter-name-box,
+.exam-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item .chapter-name-box {
   display: flex;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-num,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-num,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .chapter-list
   .chapter-item
@@ -313,7 +474,22 @@
   text-align: right;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .icon-c,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .icon-c,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .chapter-list
   .chapter-item
@@ -328,7 +504,22 @@
   padding-top: 3%;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-all,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-all,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .chapter-list
   .chapter-item
@@ -340,7 +531,22 @@
   margin-left: 1.04167vw;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-qa,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-qa,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .chapter-list
   .chapter-item
@@ -352,7 +558,22 @@
   margin-left: 1.04167vw;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-name,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-name,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .chapter-list
   .chapter-item
@@ -367,7 +588,22 @@
   text-overflow: ellipsis;
 }
 
-.rightTreeWarp
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .bigName,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .bigName,
+.exam-page
+  .rightTreeWarp
   .chapterList-box
   .chapter-list
   .chapter-item
@@ -376,12 +612,16 @@
   font-size: 0.9375vw;
 }
 
-.rightTreeWarp .chapterList-box .chapter-list .activeNode {
+.course-page .rightTreeWarp .chapterList-box .chapter-list .activeNode,
+.homework-page .rightTreeWarp .chapterList-box .chapter-list .activeNode,
+.exam-page .rightTreeWarp .chapterList-box .chapter-list .activeNode {
   border-radius: 0.625vw;
   background: hsla(0, 0%, 100%, 0.05);
 }
 
-.rightTreeWarp .chapterList-box .chapter-list .activeNode .icon-c {
+.course-page .rightTreeWarp .chapterList-box .chapter-list .activeNode .icon-c,
+.homework-page .rightTreeWarp .chapterList-box .chapter-list .activeNode .icon-c,
+.exam-page .rightTreeWarp .chapterList-box .chapter-list .activeNode .icon-c {
   width: 0.625vw;
   height: 0.625vw;
   background: url(../images/icon-c-active.png)
@@ -448,7 +688,9 @@
   background-image: url(../images/sectionmark-light.png);
 }
 
-.resource-warp {
+.course-page .resource-warp,
+.homework-page .resource-warp,
+.exam-page .resource-warp {
   width: 100%;
   padding: 1.25vw 1.66667vw;
   box-sizing: border-box;
@@ -462,18 +704,24 @@
   margin-top: 1.66667vw;
 }
 
-.resource-warp .resource-tab {
+.course-page .resource-warp .resource-tab,
+.homework-page .resource-warp .resource-tab,
+.exam-page .resource-warp .resource-tab {
   display: flex;
   margin-bottom: 1.25vw;
 }
 
-.resource-warp .resource-tab .tab-item {
+.course-page .resource-warp .resource-tab .tab-item,
+.homework-page .resource-warp .resource-tab .tab-item,
+.exam-page .resource-warp .resource-tab .tab-item {
   display: flex;
   margin-right: 3.02083vw;
   cursor: pointer;
 }
 
-.resource-warp .resource-tab .tab-item i {
+.course-page .resource-warp .resource-tab .tab-item i,
+.homework-page .resource-warp .resource-tab .tab-item i,
+.exam-page .resource-warp .resource-tab .tab-item i {
   display: block;
   width: 1.66667vw;
   height: 1.66667vw;
@@ -481,7 +729,9 @@
     no-repeat 50%;
 }
 
-.resource-warp .resource-tab .tab-item span {
+.course-page .resource-warp .resource-tab .tab-item span,
+.homework-page .resource-warp .resource-tab .tab-item span,
+.exam-page .resource-warp .resource-tab .tab-item span {
   font-size: 1.04167vw;
   font-style: normal;
   font-weight: 700;
@@ -491,7 +741,9 @@
   font-family: AlibabaPuHuiTi-Bold;
 }
 
-.resource-warp .resource-tab .botton-box-down {
+.course-page .resource-warp .resource-tab .botton-box-down,
+.homework-page .resource-warp .resource-tab .botton-box-down,
+.exam-page .resource-warp .resource-tab .botton-box-down {
   position: absolute;
   right: 1.66667vw;
   width: 2.08333vw;
@@ -502,33 +754,43 @@
   cursor: pointer;
 }
 
-.resource-warp .resource-tab .botton-box-down img {
+.course-page .resource-warp .resource-tab .botton-box-down img,
+.homework-page .resource-warp .resource-tab .botton-box-down img,
+.exam-page .resource-warp .resource-tab .botton-box-down img {
   width: 1.25vw;
   height: 1.25vw;
   margin-left: 0.41667vw;
   margin-top: 0.41667vw;
 }
 
-.resource-warp .resource-tab .active span {
+.course-page .resource-warp .resource-tab .active span,
+.homework-page .resource-warp .resource-tab .active span,
+.exam-page .resource-warp .resource-tab .active span {
   background-image: linear-gradient(90deg, #47ffff, #d1ff86 50%, #fdd74f);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.resource-warp .resource-tab .active i {
+.course-page .resource-warp .resource-tab .active i,
+.homework-page .resource-warp .resource-tab .active i,
+.exam-page .resource-warp .resource-tab .active i {
   background: url(../images/resource-tab-active.png)
     no-repeat 50%;
 }
 
-.resource-warp .label-list {
+.course-page .resource-warp .label-list,
+.homework-page .resource-warp .label-list,
+.exam-page .resource-warp .label-list {
   display: flex;
   margin-bottom: 1.25vw;
   flex-wrap: wrap;
   height: auto;
 }
 
-.resource-warp .label-list .label-name {
+.course-page .resource-warp .label-list .label-name,
+.homework-page .resource-warp .label-list .label-name,
+.exam-page .resource-warp .label-list .label-name {
   height: 2.08333vw;
   border-radius: 0.41667vw;
   margin-right: 0.83333vw;
@@ -541,12 +803,16 @@
   font-family: "Alibaba PuHuiTi 3.0";
 }
 
-.resource-warp .label-list .label-name .name-box {
+.course-page .resource-warp .label-list .label-name .name-box,
+.homework-page .resource-warp .label-list .label-name .name-box,
+.exam-page .resource-warp .label-list .label-name .name-box {
   display: flex;
   line-height: 2.08333vw;
 }
 
-.resource-warp .label-list .label-name .name-box .lab-number {
+.course-page .resource-warp .label-list .label-name .name-box .lab-number,
+.homework-page .resource-warp .label-list .label-name .name-box .lab-number,
+.exam-page .resource-warp .label-list .label-name .name-box .lab-number {
   padding: 0;
   font-family: Poppins;
   font-size: 0.83333vw;
@@ -555,7 +821,9 @@
   line-height: 2.1875vw;
 }
 
-.resource-warp .label-list .label-name span {
+.course-page .resource-warp .label-list .label-name span,
+.homework-page .resource-warp .label-list .label-name span,
+.exam-page .resource-warp .label-list .label-name span {
   display: block;
   line-height: 2.08333vw;
   padding: 0 1.25vw;
@@ -563,25 +831,33 @@
   color: #fff;
 }
 
-.resource-warp .label-list .active {
+.course-page .resource-warp .label-list .active,
+.homework-page .resource-warp .label-list .active,
+.exam-page .resource-warp .label-list .active {
   border: 1px solid hsla(0, 0%, 100%, 0.08);
   background: rgba(230, 225, 255, 0.2);
   font-weight: 700 !important;
   font-family: AlibabaPuHuiTi-Bold;
 }
 
-.resource-warp .label-over {
+.course-page .resource-warp .label-over,
+.homework-page .resource-warp .label-over,
+.exam-page .resource-warp .label-over {
   height: 8.33333vw;
   overflow: hidden;
   transition: height 0.3s ease-out;
 }
 
-.resource-warp .resources-list {
+.course-page .resource-warp .resources-list,
+.homework-page .resource-warp .resources-list,
+.exam-page .resource-warp .resources-list {
   display: flex;
   margin-bottom: 1.5625vw;
 }
 
-.resource-warp .resources-list .resources-item {
+.course-page .resource-warp .resources-list .resources-item,
+.homework-page .resource-warp .resources-list .resources-item,
+.exam-page .resource-warp .resources-list .resources-item {
   padding: 0.625vw;
   border-radius: 1.25vw;
   border: 1px rgba(0, 0, 0, 0.08);
@@ -591,17 +867,36 @@
   margin-right: 0.625vw;
 }
 
-.resource-warp .resources-list .resources-item.active,
-.resource-warp .resources-list .resources-item:hover {
+.course-page .resource-warp .resources-list .resources-item.active,
+.course-page .resource-warp .resources-list .resources-item:hover,
+.homework-page .resource-warp .resources-list .resources-item.active,
+.homework-page .resource-warp .resources-list .resources-item:hover,
+.exam-page .resource-warp .resources-list .resources-item.active,
+.exam-page .resource-warp .resources-list .resources-item:hover {
   border: 1px solid hsla(0, 0%, 100%, 0.08);
 }
 
-.resource-warp .resources-list .basic-info-video-card-container .video-wrap {
+.course-page .resource-warp .resources-list .basic-info-video-card-container .video-wrap,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .video-wrap,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .video-wrap {
   width: 100%;
   height: 9.375vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -611,7 +906,22 @@
   position: relative;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  img,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  img,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -623,7 +933,22 @@
   border-radius: 0.625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -636,7 +961,24 @@
   height: 1.5625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -649,13 +991,43 @@
   display: block;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
   .video-img-bg
   .bofang,
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -672,14 +1044,48 @@
   background: hsla(0, 0%, 100%, 0.2);
 }
 
-.resource-warp
+.course-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
   .video-img-bg
   .bofang
   img,
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive
+  img,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang
+  img,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive
+  img,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang
+  img,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -690,7 +1096,22 @@
   height: 100%;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .video-time,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .video-time,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -709,7 +1130,22 @@
   border-radius: 0.20833vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -719,7 +1155,22 @@
   background: none;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -728,7 +1179,24 @@
   position: absolute;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -740,7 +1208,22 @@
   background-size: 1.5625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -762,7 +1245,24 @@
   padding: 0.20833vw 0.26042vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh
+  img,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh
+  img,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -773,7 +1273,24 @@
   height: 0.83333vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-word
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-word
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -785,7 +1302,24 @@
   background-size: 1.5625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-excel
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-excel
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -797,7 +1331,24 @@
   background-size: 1.5625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-img
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-img
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -809,7 +1360,24 @@
   background-size: 1.5625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-music
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-music
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -821,7 +1389,24 @@
   background-size: 1.5625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-ppt
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-ppt
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -833,7 +1418,24 @@
   background-size: 1.5625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-swf
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-swf
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -845,7 +1447,24 @@
   background-size: 1.5625vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-other
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-other
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .video-wrap
@@ -857,17 +1476,34 @@
   background-size: 1.5625vw;
 }
 
-.resource-warp .resources-list .basic-info-video-card-container .video-info {
+.course-page .resource-warp .resources-list .basic-info-video-card-container .video-info,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .video-info,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .video-info {
   margin-top: 0.625vw;
 }
 
-.resource-warp .resources-list .basic-info-video-card-container .file-ppt i {
+.course-page .resource-warp .resources-list .basic-info-video-card-container .file-ppt i,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .file-ppt i,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .file-ppt i {
   background: url(../images/file-ppt-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-word
@@ -875,7 +1511,22 @@
   background: #5e79ff;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-word
@@ -886,7 +1537,20 @@
   background-size: 1.04167vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-img
@@ -894,7 +1558,22 @@
   background: #00ca8e;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-img
@@ -905,7 +1584,20 @@
   background-size: 1.04167vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-html
@@ -913,7 +1605,22 @@
   background: #00ca8e;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-html
@@ -924,7 +1631,20 @@
   background-size: 1.04167vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-music
@@ -932,7 +1652,22 @@
   background: #8269ff;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-music
@@ -943,13 +1678,28 @@
   background-size: 1.04167vw;
 }
 
-.resource-warp .resources-list .basic-info-video-card-container .file-video i {
+.course-page .resource-warp .resources-list .basic-info-video-card-container .file-video i,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .file-video i,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .file-video i {
   background: url(../images/file-video-small.png)
     no-repeat 50%;
   background-size: 1.04167vw;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-swf
@@ -957,7 +1707,22 @@
   background: #ff7a7a;
 }
 
-.resource-warp
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
   .resources-list
   .basic-info-video-card-container
   .file-swf
@@ -968,7 +1733,9 @@
   background-size: 1.04167vw;
 }
 
-.resource-warp .resources-list .basic-info-video-card-container .file-name {
+.course-page .resource-warp .resources-list .basic-info-video-card-container .file-name,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .file-name,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .file-name {
   font-size: 0.9375vw;
   font-style: normal;
   font-weight: 700;
@@ -1295,12 +2062,15 @@
   max-width: 100%;
 }
 
-.kgDescribe-warp {
+.course-page .kgDescribe-warp,
+.homework-page .kgDescribe-warp,
+.exam-page .kgDescribe-warp {
   padding: 1.25vw 1.66667vw;
   width: 100%;
   border-radius: 0.83333vw;
   border: 1px solid hsla(0, 0%, 100%, 0.08);
   background: hsla(0, 0%, 100%, 0.05);
+  -webkit-backdrop-filter: blur(3.125vw);
   backdrop-filter: blur(3.125vw);
   box-sizing: border-box;
   margin-top: 1.66667vw;
@@ -1308,7 +2078,9 @@
   overflow: hidden;
 }
 
-.kgDescribe-warp .botton-box-down {
+.course-page .kgDescribe-warp .botton-box-down,
+.homework-page .kgDescribe-warp .botton-box-down,
+.exam-page .kgDescribe-warp .botton-box-down {
   position: absolute;
   right: 1.66667vw;
   width: 2.08333vw;
@@ -1319,7 +2091,9 @@
   cursor: pointer;
 }
 
-.kgDescribe-warp .botton-box-down:after {
+.course-page .kgDescribe-warp .botton-box-down:after,
+.homework-page .kgDescribe-warp .botton-box-down:after,
+.exam-page .kgDescribe-warp .botton-box-down:after {
   display: block;
   content: "";
   position: absolute;
@@ -1335,22 +2109,30 @@
   transform: rotate(180deg);
 }
 
-.kgDescribe-warp .botton-box-down.close-status:after {
+.course-page .kgDescribe-warp .botton-box-down.close-status:after,
+.homework-page .kgDescribe-warp .botton-box-down.close-status:after,
+.exam-page .kgDescribe-warp .botton-box-down.close-status:after {
   transform: rotate(0);
 }
 
-.kgDescribe-warp .top-test {
+.course-page .kgDescribe-warp .top-test,
+.homework-page .kgDescribe-warp .top-test,
+.exam-page .kgDescribe-warp .top-test {
   height: 1.66667vw;
   display: flex;
   margin-bottom: 1.04167vw;
 }
 
-.kgDescribe-warp .top-test img {
+.course-page .kgDescribe-warp .top-test img,
+.homework-page .kgDescribe-warp .top-test img,
+.exam-page .kgDescribe-warp .top-test img {
   width: 1.66667vw;
   height: 1.66667vw;
 }
 
-.kgDescribe-warp .top-test span {
+.course-page .kgDescribe-warp .top-test span,
+.homework-page .kgDescribe-warp .top-test span,
+.exam-page .kgDescribe-warp .top-test span {
   font-size: 1.04167vw;
   line-height: 1.66667vw;
   background-image: linear-gradient(90deg, #47ffff, #d1ff86 50%, #fdd74f);
@@ -1362,13 +2144,17 @@
   font-family: AlibabaPuHuiTi-Bold;
 }
 
-.kgDescribe-warp .label-list {
+.course-page .kgDescribe-warp .label-list,
+.homework-page .kgDescribe-warp .label-list,
+.exam-page .kgDescribe-warp .label-list {
   display: flex;
   flex-wrap: wrap;
   height: auto;
 }
 
-.kgDescribe-warp .label-list .lab-item {
+.course-page .kgDescribe-warp .label-list .lab-item,
+.homework-page .kgDescribe-warp .label-list .lab-item,
+.exam-page .kgDescribe-warp .label-list .lab-item {
   border-radius: 0.41667vw;
   background: hsla(0, 0%, 100%, 0.05);
   margin-right: 0.83333vw;
@@ -1376,7 +2162,9 @@
   cursor: pointer;
 }
 
-.kgDescribe-warp .label-list .lab-item span {
+.course-page .kgDescribe-warp .label-list .lab-item span,
+.homework-page .kgDescribe-warp .label-list .lab-item span,
+.exam-page .kgDescribe-warp .label-list .lab-item span {
   font-size: 0.9375vw;
   font-style: normal;
   font-weight: 700;
@@ -1387,21 +2175,29 @@
   font-family: AlibabaPuHuiTi-Bold;
 }
 
-.kgDescribe-warp .label-list .lab-item:hover {
+.course-page .kgDescribe-warp .label-list .lab-item:hover,
+.homework-page .kgDescribe-warp .label-list .lab-item:hover,
+.exam-page .kgDescribe-warp .label-list .lab-item:hover {
   background: hsla(0, 0%, 100%, 0.15);
 }
 
-.kgDescribe-warp .label-list .active {
+.course-page .kgDescribe-warp .label-list .active,
+.homework-page .kgDescribe-warp .label-list .active,
+.exam-page .kgDescribe-warp .label-list .active {
   background: #6b8cdb;
 }
 
-.kgDescribe-warp .label-over {
+.course-page .kgDescribe-warp .label-over,
+.homework-page .kgDescribe-warp .label-over,
+.exam-page .kgDescribe-warp .label-over {
   height: 10.9375vw;
   overflow: hidden;
   transition: height 0.3s ease-out;
 }
 
-.kgDescribe-warp .introduce-div {
+.course-page .kgDescribe-warp .introduce-div,
+.homework-page .kgDescribe-warp .introduce-div,
+.exam-page .kgDescribe-warp .introduce-div {
   text-align: justify;
   font-family: AlibabaPuHuiTi-3\.0;
   font-size: 0.9375vw;
@@ -1431,18 +2227,22 @@
   word-break: break-all;
 }
 
-body,
-html {
+body.course-page,
+body.course-page #app {
   width: 100%;
   height: 100%;
 }
 
-.aloneMapCourrseWarp {
+.course-page .aloneMapCourrseWarp,
+.homework-page .aloneMapCourrseWarp,
+.exam-page .aloneMapCourrseWarp {
   display: flex;
   min-width: 62.5vw;
 }
 
-.aloneMapCourrseWarp .left-warp {
+.course-page .aloneMapCourrseWarp .left-warp,
+.homework-page .aloneMapCourrseWarp .left-warp,
+.exam-page .aloneMapCourrseWarp .left-warp {
   flex: 1;
   margin-right: 1.66667vw;
   min-width: 26.04167vw;
@@ -1450,11 +2250,15 @@ html {
   position: relative;
 }
 
-.aloneMapCourrseWarp .left-warp .left-scroll .el-scrollbar__wrap {
+.course-page .aloneMapCourrseWarp .left-warp .left-scroll .el-scrollbar__wrap,
+.homework-page .aloneMapCourrseWarp .left-warp .left-scroll .el-scrollbar__wrap,
+.exam-page .aloneMapCourrseWarp .left-warp .left-scroll .el-scrollbar__wrap {
   padding-right: 1.5625vw;
 }
 
-.aloneMapCourrseWarp .left-warp .courseMsg-box .small-text {
+.course-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text,
+.homework-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text,
+.exam-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text {
   display: flex;
   font-size: 0.83333vw;
   font-style: normal;
@@ -1465,7 +2269,9 @@ html {
   color: #fff;
 }
 
-.aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i {
+.course-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i,
+.homework-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i,
+.exam-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i {
   width: 1.04167vw;
   height: 1.04167vw;
   background: url(../images/kg-icon-dark.png)
@@ -1473,7 +2279,9 @@ html {
   margin-right: 0.10417vw;
 }
 
-.aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name {
+.course-page .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name,
+.homework-page .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name,
+.exam-page .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name {
   font-size: 1.25vw;
   font-style: normal;
   font-weight: 900;
@@ -1483,7 +2291,9 @@ html {
   font-family: AlibabaPuHuiTi-Heavy;
 }
 
-.aloneMapCourrseWarp .rigth-warp {
+.course-page .aloneMapCourrseWarp .rigth-warp,
+.homework-page .aloneMapCourrseWarp .rigth-warp,
+.exam-page .aloneMapCourrseWarp .rigth-warp {
   height: auto;
   width: 23.95833vw;
   margin-right: 2.08333vw;
@@ -1496,7 +2306,9 @@ html {
   margin-right: 1.14583vw;
 }
 
-.aloneMapCourrseWarp .aberrant {
+.course-page .aloneMapCourrseWarp .aberrant,
+.homework-page .aloneMapCourrseWarp .aberrant,
+.exam-page .aloneMapCourrseWarp .aberrant {
   position: absolute;
   transform: translate(-50%, -50%);
   -webkit-transform: translate(-50%, -50%);
@@ -1513,7 +2325,9 @@ html {
   z-index: 101;
 }
 
-.aloneMapCourrseWarp .aberrant .title {
+.course-page .aloneMapCourrseWarp .aberrant .title,
+.homework-page .aloneMapCourrseWarp .aberrant .title,
+.exam-page .aloneMapCourrseWarp .aberrant .title {
   line-height: 1.5625vw;
   color: #ededed;
   font-size: 0.9375vw;
@@ -1522,7 +2336,9 @@ html {
   padding: 0 2.08333vw;
 }
 
-.aloneMapCourrseWarp .aberrant .limit-tips {
+.course-page .aloneMapCourrseWarp .aberrant .limit-tips,
+.homework-page .aloneMapCourrseWarp .aberrant .limit-tips,
+.exam-page .aloneMapCourrseWarp .aberrant .limit-tips {
   line-height: 1.04167vw;
   margin-top: 1.04167vw;
   color: #bfbfbf;
@@ -1530,19 +2346,25 @@ html {
   text-align: center;
 }
 
-.aloneMapCourrseWarp .aberrant ul {
+.course-page .aloneMapCourrseWarp .aberrant ul,
+.homework-page .aloneMapCourrseWarp .aberrant ul,
+.exam-page .aloneMapCourrseWarp .aberrant ul {
   margin-top: 0.26042vw;
   margin-bottom: 1.04167vw;
 }
 
-.aloneMapCourrseWarp .aberrant ul li {
+.course-page .aloneMapCourrseWarp .aberrant ul li,
+.homework-page .aloneMapCourrseWarp .aberrant ul li,
+.exam-page .aloneMapCourrseWarp .aberrant ul li {
   line-height: 2.5vw;
   color: #fff;
   font-size: 1.25vw;
   text-align: center;
 }
 
-.aloneMapCourrseWarp .aberrant a {
+.course-page .aloneMapCourrseWarp .aberrant a,
+.homework-page .aloneMapCourrseWarp .aberrant a,
+.exam-page .aloneMapCourrseWarp .aberrant a {
   display: block;
   background: #6b8cdb;
   width: 7.8125vw;

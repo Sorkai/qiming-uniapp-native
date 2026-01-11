@@ -18,6 +18,7 @@ import LoginUpdate from "./components/LoginUpdate.vue";
 import LoginQrCode from "./components/LoginQrCode.vue";
 import ParticlesBg from "./components/ParticlesBg.vue";
 import { useUserStoreHook } from "@/store/modules/user";
+import ReInvisibleInk from "@/components/ReInvisibleInk/index.vue";
 import { initRouter, getTopMenu } from "@/router/utils";
 import { bg, avatar, illustration } from "./utils/static";
 import { ReImageVerify } from "@/components/ReImageVerify";
@@ -25,11 +26,14 @@ import { ref, toRaw, reactive, watch, computed, onMounted } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { resetThemeToDefault } from "@/utils/auth";
 
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
 import globalization from "@/assets/svg/globalization.svg?component";
 import Lock from "~icons/ri/lock-fill";
+import Eye from "~icons/ri/eye-line";
+import EyeOff from "~icons/ri/eye-off-line";
 import Check from "~icons/ep/check";
 import User from "~icons/ri/user-3-fill";
 import Info from "~icons/ri/information-line";
@@ -47,6 +51,11 @@ const loading = ref(false);
 const checked = ref(false);
 const disabled = ref(false);
 const ruleFormRef = ref<FormInstance>();
+const isTenantFocused = ref(false);
+const isUsernameFocused = ref(false);
+const isPasswordFocused = ref(false);
+const isVerifyCodeFocused = ref(false);
+const passwordVisible = ref(false);
 const currentPage = computed(() => {
   return useUserStoreHook().currentPage;
 });
@@ -62,7 +71,11 @@ onMounted(() => {
 
 const { t } = useI18n();
 const { initStorage } = useLayout();
+
+// 管理员/教师端登录页：强制重置为浅色主题，防止从学生端残留深色模式
+resetThemeToDefault();
 initStorage();
+
 const { dataTheme, overallStyle, dataThemeChange } = useDataThemeChange();
 dataThemeChange(overallStyle.value);
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
@@ -197,16 +210,16 @@ watch(loginDay, value => {
         />
         <!-- 国际化 -->
         <el-dropdown trigger="click">
-          <globalization
-            class="hover:text-primary hover:bg-[transparent]! w-[20px] h-[20px] ml-3 cursor-pointer outline-hidden duration-300"
-          />
-          <template #dropdown>
-            <el-dropdown-menu class="translation">
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'zh')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
-                @click="translationCh"
-              >
+        <globalization
+          class="hover:text-primary hover:bg-transparent w-[20px] h-[20px] ml-3 cursor-pointer outline-hidden duration-300"
+        />
+        <template #dropdown>
+          <el-dropdown-menu class="translation">
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'zh')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'zh')]"
+              @click="translationCh"
+            >
                 <IconifyIconOffline
                   v-show="locale === 'zh'"
                   class="check-btn"
@@ -214,11 +227,11 @@ watch(loginDay, value => {
                 />
                 简体中文
               </el-dropdown-item>
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'tw')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'tw')]"
-                @click="translationTw"
-              >
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'tw')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'tw')]"
+              @click="translationTw"
+            >
                 <IconifyIconOffline
                   v-show="locale === 'tw'"
                   class="check-btn"
@@ -226,31 +239,31 @@ watch(loginDay, value => {
                 />
                 繁體中文
               </el-dropdown-item>
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'en')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
-                @click="translationEn"
-              >
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'en')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'en')]"
+              @click="translationEn"
+            >
                 <span v-show="locale === 'en'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
                 English
               </el-dropdown-item>
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'ja')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'ja')]"
-                @click="translationJa"
-              >
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'ja')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ja')]"
+              @click="translationJa"
+            >
                 <span v-show="locale === 'ja'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
                 日本語
               </el-dropdown-item>
-              <el-dropdown-item
-                :style="getDropdownItemStyle(locale, 'ko')"
-                :class="['dark:text-white!', getDropdownItemClass(locale, 'ko')]"
-                @click="translationKo"
-              >
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'ko')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ko')]"
+              @click="translationKo"
+            >
                 <span v-show="locale === 'ko'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
@@ -346,13 +359,18 @@ watch(loginDay, value => {
                   }
                 ]"
                 prop="tenant"
+                class="floating-label-item"
+                :class="{ 'has-value': !!ruleForm.tenant, 'is-focused': isTenantFocused }"
               >
                 <el-input
                   v-model="ruleForm.tenant"
                   clearable
-                  :placeholder="t('login.pureTenant')"
+                  placeholder=""
                   :prefix-icon="useRenderIcon(Tenant)"
+                  @focus="isTenantFocused = true"
+                  @blur="isTenantFocused = false"
                 />
+                <label class="floating-label">{{ t('login.pureTenant') }}</label>
               </el-form-item>
             </Motion>
 
@@ -366,40 +384,72 @@ watch(loginDay, value => {
                   }
                 ]"
                 prop="username"
+                class="floating-label-item"
+                :class="{ 'has-value': !!ruleForm.username, 'is-focused': isUsernameFocused }"
               >
                 <el-input
                   v-model="ruleForm.username"
                   clearable
-                  :placeholder="t('login.pureUsername')"
+                  placeholder=""
                   :prefix-icon="useRenderIcon(User)"
+                  @focus="isUsernameFocused = true"
+                  @blur="isUsernameFocused = false"
                 />
+                <label class="floating-label">{{ t('login.pureUsername') }}</label>
               </el-form-item>
             </Motion>
 
             <Motion :delay="150">
-              <el-form-item prop="password">
-                <el-input
-                  v-model="ruleForm.password"
-                  clearable
-                  show-password
-                  :placeholder="t('login.purePassword')"
-                  :prefix-icon="useRenderIcon(Lock)"
-                />
+              <el-form-item 
+                prop="password"
+                class="floating-label-item"
+                :class="{ 'has-value': !!ruleForm.password, 'is-focused': isPasswordFocused }"
+              >
+                <ReInvisibleInk
+                  :active="!passwordVisible && !!ruleForm.password"
+                  class="flex-1"
+                >
+                  <el-input
+                    v-model="ruleForm.password"
+                    clearable
+                    :type="passwordVisible ? 'text' : 'password'"
+                    placeholder=""
+                    :prefix-icon="useRenderIcon(Lock)"
+                    @focus="isPasswordFocused = true"
+                    @blur="isPasswordFocused = false"
+                  >
+                    <template #suffix>
+                      <IconifyIconOffline
+                        :icon="passwordVisible ? Eye : EyeOff"
+                        class="cursor-pointer"
+                        @click="passwordVisible = !passwordVisible"
+                      />
+                    </template>
+                  </el-input>
+                </ReInvisibleInk>
+                <label class="floating-label">{{ t('login.purePassword') }}</label>
               </el-form-item>
             </Motion>
 
             <Motion :delay="200">
-              <el-form-item prop="verifyCode">
+              <el-form-item 
+                prop="verifyCode"
+                class="floating-label-item"
+                :class="{ 'has-value': !!ruleForm.verifyCode, 'is-focused': isVerifyCodeFocused }"
+              >
                 <el-input
                   v-model="ruleForm.verifyCode"
                   clearable
-                  :placeholder="t('login.pureVerifyCode')"
+                  placeholder=""
                   :prefix-icon="useRenderIcon(Keyhole)"
+                  @focus="isVerifyCodeFocused = true"
+                  @blur="isVerifyCodeFocused = false"
                 >
                   <template v-slot:append>
                     <ReImageVerify v-model:code="imgCode" />
                   </template>
                 </el-input>
+                <label class="floating-label">{{ t('login.pureVerifyCode') }}</label>
               </el-form-item>
             </Motion>
 
@@ -441,14 +491,14 @@ watch(loginDay, value => {
                     {{ t("login.pureForget") }}
                   </el-button>
                 </div>
-                <el-button
-                  class="w-full mt-4! login-btn"
-                  size="default"
-                  type="primary"
-                  :loading="loading"
-                  :disabled="disabled"
-                  @click="onLogin(ruleFormRef)"
-                >
+              <el-button
+                class="w-full mt-4 login-btn"
+                size="default"
+                type="primary"
+                :loading="loading"
+                :disabled="disabled"
+                @click="onLogin(ruleFormRef)"
+              >
                   {{ t("login.pureLogin") }}
                 </el-button>
               </el-form-item>
@@ -460,7 +510,7 @@ watch(loginDay, value => {
                   <el-button
                     v-for="(item, index) in operates"
                     :key="index"
-                    class="w-full mt-4!"
+                    class="w-full mt-4"
                     size="default"
                     @click="useUserStoreHook().SET_CURRENTPAGE(index + 1)"
                   >
@@ -805,9 +855,37 @@ watch(loginDay, value => {
 }
 
 .login-form {
-  :deep(.el-input__wrapper) {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  .floating-label-item {
+    position: relative;
+    
+    :deep(.el-input__wrapper) {
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      height: 48px;
+    }
+
+    .floating-label {
+      position: absolute;
+      left: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #bfc3c7;
+      font-size: 15px;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+
+    &.is-focused .floating-label,
+    &.has-value .floating-label {
+      top: 0;
+      font-size: 12px;
+      color: #667eea;
+      background: #fff;
+      padding: 0 4px;
+      left: 12px;
+      z-index: 10;
+    }
   }
 
   :deep(.el-button--primary) {
@@ -975,7 +1053,7 @@ watch(loginDay, value => {
 }
 
 .translation {
-  ::v-deep(.el-dropdown-menu__item) {
+  :deep(.el-dropdown-menu__item) {
     padding: 5px 40px;
   }
 

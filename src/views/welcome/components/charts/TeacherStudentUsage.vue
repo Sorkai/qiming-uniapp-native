@@ -55,15 +55,31 @@ const renderChart = () => {
     tooltip: {
       trigger: "axis",
       axisPointer: {
-        type: "shadow"
+        type: "line",
+        lineStyle: {
+          color: "#2563eb",
+          width: 1,
+          type: "dashed"
+        }
+      },
+      backgroundColor: isDark.value ? "rgba(30, 30, 35, 0.9)" : "rgba(255, 255, 255, 0.9)",
+      borderColor: isDark.value ? "#334155" : "#f1f5f9",
+      borderWidth: 1,
+      textStyle: {
+        color: isDark.value ? "#fafafa" : "#1e293b"
       }
     },
     legend: {
-      data: ["老师使用次数", "学生使用次数"],
-      bottom: 0
+      data: ["教研活动", "学生学习"],
+      bottom: 0,
+      icon: "circle",
+      itemGap: 24,
+      textStyle: {
+        color: isDark.value ? "#fafafa" : "#4b5563"
+      }
     },
     grid: {
-      top: 10,
+      top: 30,
       left: 40,
       right: 20,
       bottom: 50
@@ -72,38 +88,82 @@ const renderChart = () => {
       {
         type: "category",
         data: dates,
+        boundaryGap: false,
+        axisLine: {
+          lineStyle: {
+            color: isDark.value ? "#334155" : "#f1f5f9"
+          }
+        },
         axisLabel: {
-          fontSize: "0.875rem"
+          color: isDark.value ? "#cbd5e1" : "#94a3b8",
+          fontSize: 11
+        },
+        axisTick: {
+          show: false
         }
       }
     ],
     yAxis: [
       {
         type: "value",
-        name: "使用次数",
+        splitLine: {
+          lineStyle: {
+            color: isDark.value ? "#334155" : "#f1f5f9",
+            type: "dashed"
+          }
+        },
         axisLabel: {
-          fontSize: "0.875rem"
+          color: isDark.value ? "#cbd5e1" : "#94a3b8",
+          fontSize: 11
         }
       }
     ],
     series: [
       {
-        name: "老师使用次数",
-        type: "bar",
-        barWidth: 10,
-        itemStyle: {
-          color: "#41b6ff",
-          borderRadius: [10, 10, 0, 0]
+        name: "教研活动",
+        type: "line",
+        smooth: true,
+        showSymbol: false,
+        lineStyle: {
+          width: 3,
+          color: "#2563eb"
+        },
+        areaStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(37, 99, 235, 0.2)" },
+              { offset: 1, color: "rgba(37, 99, 235, 0)" }
+            ]
+          }
         },
         data: teacherUsage
       },
       {
-        name: "学生使用次数",
-        type: "bar",
-        barWidth: 10,
-        itemStyle: {
-          color: "#e85f33",
-          borderRadius: [10, 10, 0, 0]
+        name: "学生学习",
+        type: "line",
+        smooth: true,
+        showSymbol: false,
+        lineStyle: {
+          width: 3,
+          color: "#06b6d4"
+        },
+        areaStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(6, 182, 212, 0.2)" },
+              { offset: 1, color: "rgba(6, 182, 212, 0)" }
+            ]
+          }
         },
         data: studentUsage
       }
@@ -119,6 +179,16 @@ watch(
   { deep: true }
 );
 
+// 监听主题变化，重新渲染图表
+watch(
+  () => isDark.value,
+  () => {
+    if (!loading.value && (teacherData.value.length > 0 || studentData.value.length > 0)) {
+      renderChart();
+    }
+  }
+);
+
 onMounted(() => {
   fetchData();
 });
@@ -132,4 +202,4 @@ onMounted(() => {
       </template>
     </el-skeleton>
   </div>
-</template> 
+</template>

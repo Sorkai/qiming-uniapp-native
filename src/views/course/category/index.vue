@@ -246,8 +246,14 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .main {
+  padding: 12px;
+  
   .box-card {
     margin-bottom: 16px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--el-border-color-light);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 
     .card-header {
       display: flex;
@@ -273,6 +279,10 @@ onMounted(() => {
   }
 }
 
+:deep(.el-card__header) {
+  border-radius: 16px 16px 0 0;
+}
+
 :deep(.el-card__body) {
   padding: 16px;
 }
@@ -280,5 +290,19 @@ onMounted(() => {
 :deep(.el-table) {
   --el-table-header-padding: 8px 0;
   --el-table-cell-padding: 8px 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.el-dialog) {
+  border-radius: 16px;
+}
+
+:deep(.el-button) {
+  border-radius: 8px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
 }
 </style>

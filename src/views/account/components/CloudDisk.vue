@@ -1,5 +1,5 @@
 <template>
-  <div class="cloud-disk-container">
+  <div class="cloud-disk-container" :class="currentTheme">
     <div class="disk-header">
       <h3>学习云盘</h3>
       <div class="actions">
@@ -21,6 +21,7 @@
       style="width: 100%"
       v-loading="loading"
       :row-style="{ cursor: 'pointer' }"
+      class="disk-table"
     >
       <el-table-column prop="name" label="文件名" min-width="250">
         <template #default="{ row }">
@@ -79,6 +80,10 @@ import {
   VideoCamera,
   Headset
 } from "@element-plus/icons-vue";
+
+defineProps<{
+  currentTheme?: string;
+}>();
 
 // 文件类型定义
 type FileType = "folder" | "doc" | "image" | "video" | "audio" | "other";
@@ -301,6 +306,11 @@ const handleDelete = (file: CloudFile) => {
       margin: 0;
       font-size: 18px;
       font-weight: 600;
+      color: #333;
+      
+      .dark & {
+        color: #f1f5f9;
+      }
     }
 
     .actions {
@@ -310,6 +320,49 @@ const handleDelete = (file: CloudFile) => {
 
     .search-input {
       width: 240px;
+      
+      :deep(.el-input__wrapper) {
+        .dark & {
+          background-color: #1e293b;
+          box-shadow: 0 0 0 1px #334155 inset;
+        }
+      }
+      
+      :deep(.el-input__inner) {
+        .dark & {
+          color: #f1f5f9;
+          &::placeholder {
+            color: #64748b;
+          }
+        }
+      }
+    }
+  }
+
+  .disk-table {
+    :deep(.el-table__header-wrapper) {
+      th {
+        .dark & {
+          background-color: #0f172a;
+          color: #94a3b8;
+          border-bottom-color: #1e293b;
+        }
+      }
+    }
+    
+    :deep(.el-table__row) {
+      .dark & {
+        background-color: #1e293b;
+        color: #f1f5f9;
+        
+        td {
+          border-bottom-color: #0f172a;
+        }
+        
+        &:hover > td {
+          background-color: #334155;
+        }
+      }
     }
   }
 
@@ -320,6 +373,10 @@ const handleDelete = (file: CloudFile) => {
 
     .file-icon {
       color: #606266;
+      
+      .dark & {
+        color: #94a3b8;
+      }
     }
   }
 

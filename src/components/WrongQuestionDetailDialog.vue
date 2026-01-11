@@ -4,6 +4,7 @@
     :title="wrongQuestion?.sourceName || '错题详情'"
     width="60%"
     :before-close="handleClose"
+    class="custom-wrong-detail-dialog"
   >
     <div class="wrong-question-detail">
       <h3 class="question-title">{{ wrongQuestion?.title }}</h3>
@@ -164,7 +165,9 @@ const isOptionCorrect = (optionId: string) => {
 
 <style scoped>
 .wrong-question-detail {
-  padding: 10px;
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .question-title {
@@ -221,5 +224,68 @@ const isOptionCorrect = (optionId: string) => {
   line-height: 1.6;
   color: #666;
   white-space: pre-wrap; /* Preserve whitespace and breaks */
+}
+</style>
+
+<style lang="scss">
+.custom-wrong-detail-dialog {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+
+  .el-dialog__header {
+    padding: 24px 40px !important;
+    margin-right: 0 !important;
+    border-bottom: 1px solid var(--el-border-color-lighter) !important;
+  }
+
+  .el-dialog__body {
+    padding: 32px 40px 40px !important;
+  }
+
+  .el-dialog__footer {
+    padding: 16px 40px 24px !important;
+    border-top: 1px solid var(--el-border-color-lighter) !important;
+  }
+}
+
+/* 深色模式适配 */
+html.dark .custom-wrong-detail-dialog {
+  --el-dialog-bg-color: #1a1a1a;
+  background-color: var(--el-dialog-bg-color);
+  border: 1px solid #333;
+
+  .el-dialog__header {
+    border-bottom: 1px solid #333 !important;
+  }
+
+  .el-dialog__title {
+    color: #e0e0e0;
+  }
+
+  .el-dialog__footer {
+    border-top: 1px solid #333 !important;
+  }
+
+  .question-title {
+    color: #e0e0e0;
+  }
+
+  .question-stem {
+    color: #bbb;
+  }
+
+  .question-options h4,
+  .question-answers h4 {
+    color: #e0e0e0;
+  }
+
+  .question-options li {
+    border-bottom-color: #333;
+    color: #aaa;
+  }
+
+  .question-answers p {
+    color: #aaa;
+  }
 }
 </style>

@@ -36,7 +36,7 @@
 }
 ```
 
-## 获取获取教学效率指数【管理端统计】
+## 获取教学效率指数【管理端统计】
 
 - **接口地址**：`/edu/backend/v1/statistics/efficient/index`
 - **请求方式**：GET
@@ -45,18 +45,20 @@
 
 ```json
 {
-  "efficientIndexList": [ // 教学效率指数列表
-    {
-        "courseId": "int64",  //课程ID
-        "courseName": "string", // 课程名称
-        "planTime": "int64", // 备课耗时（分钟）
-        "correctPlanTime": "int64",// 备课修正耗时（分钟）
-        "planWorkTime": "int64",// 课后练习设计耗时（分钟）
-        "correctPlanWorkTime": "int64",//课后练习设计修正耗时（分钟）
-        "isShowTime": "int64", // 是否展示时间 0:否 1：是
-        "optimizeDirection": "string" //优化方向建议
-    }
-  ]
+  "code": 200,
+  "msg": "成功",
+  "data": {
+    "efficientIndexList": [ // 教学效率指数列表
+      {
+          "courseName": "string", // 课程名称
+          "planTime": 120, // 备课耗时（分钟）
+          "correctPlanTime": 30,// 备课修正耗时（分钟）
+          "planWorkTime": 60,// 作业设计耗时（分钟）
+          "correctPlanWorkTime": 15,// 作业设计修正耗时（分钟）
+          "optimizeDirection": "string" // 优化方向建议
+      }
+    ]
+  }
 }
 ```
 

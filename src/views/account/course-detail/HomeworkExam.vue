@@ -13,7 +13,7 @@
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
@@ -106,7 +106,7 @@
         </el-tab-pane>
         <!-- 随练标签页：嵌入新版随练组件 -->
         <el-tab-pane label="随练" name="practice">
-          <WrongExercise :embedded="true" :course-id="courseId" />
+          <WrongExercise :embedded="true" :course-id="courseId" :current-theme="currentTheme" />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -136,7 +136,7 @@ const props = defineProps<{
 // Emits
 defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();
@@ -203,7 +203,8 @@ const viewHomework = (homework: any) => {
         path: `/account/homework-detail`,
         query: {
           homeworkId: homework.homeworkId,
-          courseId: props.courseId.toString()
+          courseId: props.courseId.toString(),
+          theme: props.currentTheme
         }
       });
     } else {
@@ -220,7 +221,8 @@ const viewExam = (exam: any) => {
         path: `/account/exam-detail`,
         query: {
           examId: exam.examId,
-          courseId: props.courseId.toString()
+          courseId: props.courseId.toString(),
+          theme: props.currentTheme
         }
       });
     } else {
@@ -237,32 +239,36 @@ const viewExam = (exam: any) => {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: #ffffff;
+  background-color: transparent; /* 背景透明，由父布局控制 */
 }
 
 .homework-exam-wrapper.dark {
-  background-color: #1a1a1a;
+  background-color: transparent;
 }
 
 .homework-container {
-  padding: 80px 20px 20px;
+  padding: 80px 32px 24px;
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  background-color: #ffffff;
+  background-color: transparent;
   display: flex;
   flex-direction: column;
-  align-items: center;
   box-sizing: border-box;
 }
 
+.dark :deep(.el-empty__image img),
+.dark :deep(.el-empty__image svg) {
+  filter: brightness(0.7);
+  opacity: 0.8;
+}
+
 .homework-container.dark {
-  background-color: #1a1a1a;
+  background-color: transparent;
 }
 
 .homework-tabs {
-  width: 90%;
-  max-width: 1400px;
+  width: 100%;
 }
 
 .homework-list,
@@ -279,7 +285,7 @@ const viewExam = (exam: any) => {
   display: flex;
   align-items: center;
   border: 1px solid #ebeef5;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
   background-color: #fff;
   transition: all 0.3s;
@@ -289,7 +295,7 @@ const viewExam = (exam: any) => {
 
 .homework-item.dark,
 .exam-item.dark {
-  background-color: #1a1a1a;
+  background-color: #2a2a2a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
@@ -364,6 +370,32 @@ const viewExam = (exam: any) => {
 :deep(.homework-tabs .el-tabs__item) {
   font-size: 18px;
   font-weight: 600;
+  color: #303133;
+  margin-right: 24px;
+}
+
+:deep(.homework-tabs .el-tabs__item:last-child) {
+  margin-right: 0;
+}
+
+.dark :deep(.homework-tabs .el-tabs__item) {
+  color: #e0e0e0;
+}
+
+.dark :deep(.homework-tabs .el-tabs__item.is-active) {
+  color: #409eff;
+}
+
+.dark :deep(.homework-tabs .el-tabs__item:hover) {
+  color: #409eff;
+}
+
+.dark :deep(.homework-tabs .el-tabs__active-bar) {
+  background-color: #409eff;
+}
+
+.dark :deep(.homework-tabs .el-tabs__nav-wrap::after) {
+  background-color: #3e3e3e;
 }
 
 /* 查看按钮加大 */
@@ -395,12 +427,11 @@ const viewExam = (exam: any) => {
 
 /* 页面宽度全屏适配 */
 .homework-container {
-  padding-left: 2vw;
-  padding-right: 2vw;
+  padding-left: 32px;
+  padding-right: 32px;
 }
 
 .homework-tabs {
   width: 100%;
-  max-width: 100%;
 }
 </style>

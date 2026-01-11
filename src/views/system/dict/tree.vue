@@ -152,17 +152,17 @@ watch(searchValue, val => {
         <template #default="{ node, data }">
           <ReText
             :class="[
-              'w-full!',
-              'p-1!',
-              'mt-2!',
-              'mr-2!',
+              'w-full',
+              'p-1',
+              'mt-2',
+              'mr-2',
               'rounded',
               'select-none',
               'hover:text-primary',
               searchValue.trim().length > 0 &&
                 `${node.label}（${data.code}）`.includes(searchValue) &&
-                'text-red-500!',
-              highlightMap[node.id]?.highlight ? 'dark:text-primary!' : ''
+                'text-red-500',
+              highlightMap[node.id]?.highlight ? 'dark:text-primary' : ''
             ]"
             :style="{
               color: highlightMap[node.id]?.highlight

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { isAllEmpty } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import { transformI18n } from "@/plugins/i18n";
@@ -21,6 +22,9 @@ import Check from "~icons/ep/check";
 
 const menuRef = ref();
 const defaultActive = ref(null);
+
+// 使用 storeToRefs 正确获取响应式的 wholeMenus
+const { wholeMenus } = storeToRefs(usePermissionStoreHook());
 
 const {
   t,
@@ -47,12 +51,11 @@ const {
 } = useNav();
 
 function getDefaultActive(routePath) {
-  const wholeMenus = usePermissionStoreHook().wholeMenus;
   /** 当前路由的父级路径 */
-  const parentRoutes = getParentPaths(routePath, wholeMenus)[0];
+  const parentRoutes = getParentPaths(routePath, wholeMenus.value)[0];
   defaultActive.value = !isAllEmpty(route.meta?.activePath)
     ? route.meta.activePath
-    : findRouteByPath(parentRoutes, wholeMenus)?.children[0]?.path;
+    : findRouteByPath(parentRoutes, wholeMenus.value)?.children[0]?.path;
 }
 
 onMounted(() => {
@@ -64,17 +67,18 @@ nextTick(() => {
 });
 
 watch(
-  () => [route.path, usePermissionStoreHook().wholeMenus],
+  () => [route.path, wholeMenus.value],
   () => {
     getDefaultActive(route.path);
-  }
+  },
+  { immediate: true, deep: true }
 );
 </script>
 
 <template>
   <div
     v-if="device !== 'mobile'"
-    v-loading="usePermissionStoreHook().wholeMenus.length === 0"
+    v-loading="wholeMenus.length === 0"
     class="horizontal-header"
   >
     <el-menu
@@ -86,7 +90,7 @@ watch(
       :default-active="defaultActive"
     >
       <el-menu-item
-        v-for="route in usePermissionStoreHook().wholeMenus"
+        v-for="route in wholeMenus"
         :key="route.path"
         :index="resolvePath(route) || route.redirect"
       >
@@ -114,13 +118,13 @@ watch(
       <!-- 国际化 -->
       <el-dropdown id="header-translation" trigger="click">
         <GlobalizationIcon
-          class="navbar-bg-hover w-[40px] h-[48px] p-[11px] cursor-pointer outline-hidden"
+          class="navbar-bg-hover w-[40px] h-[64px] p-[18px] cursor-pointer outline-hidden"
         />
         <template #dropdown>
           <el-dropdown-menu class="translation">
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'zh')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'zh')]"
               @click="translationCh"
             >
               <IconifyIconOffline
@@ -132,7 +136,7 @@ watch(
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'tw')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'tw')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'tw')]"
               @click="translationTw"
             >
               <IconifyIconOffline
@@ -144,7 +148,7 @@ watch(
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'en')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'en')]"
               @click="translationEn"
             >
               <span v-show="locale === 'en'" class="check-btn">
@@ -154,7 +158,7 @@ watch(
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'ja')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'ja')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ja')]"
               @click="translationJa"
             >
               <span v-show="locale === 'ja'" class="check-btn">
@@ -164,7 +168,7 @@ watch(
             </el-dropdown-item>
             <el-dropdown-item
               :style="getDropdownItemStyle(locale, 'ko')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'ko')]"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ko')]"
               @click="translationKo"
             >
               <span v-show="locale === 'ko'" class="check-btn">
@@ -183,9 +187,9 @@ watch(
       <LayNotice id="header-notice" />
       <!-- 退出登录 -->
       <el-dropdown trigger="click">
-        <span class="el-dropdown-link navbar-bg-hover select-none">
-          <img :src="userAvatar" :style="avatarsStyle" />
-          <p v-if="username" class="dark:text-white">{{ username }}</p>
+        <span class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10">
+          <img :src="userAvatar" :style="avatarsStyle" class="ring-2 ring-white dark:ring-gray-800" />
+          <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">{{ username }}</p>
         </span>
         <template #dropdown>
           <el-dropdown-item @click="toAccountSettings">
@@ -223,7 +227,7 @@ watch(
 }
 
 .translation {
-  ::v-deep(.el-dropdown-menu__item) {
+  :deep(.el-dropdown-menu__item) {
     padding: 5px 40px;
   }
 
@@ -236,7 +240,7 @@ watch(
 .logout {
   width: 120px;
 
-  ::v-deep(.el-dropdown-menu__item) {
+  :deep(.el-dropdown-menu__item) {
     display: inline-flex;
     flex-wrap: wrap;
     min-width: 100%;

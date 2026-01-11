@@ -1,5 +1,73 @@
 # 通用接口
 
+## 系统登录
+
+- **接口地址**：`/login`
+- **请求方式**：POST
+- **请求参数**：
+```json
+{
+  "username": "admin",
+  "password": "password"
+}
+```
+- **响应参数**：
+```json
+{
+  "success": true,
+  "data": {
+    "avatar": "string",
+    "username": "string",
+    "nickname": "string",
+    "roles": ["string"],
+    "permissions": ["string"],
+    "accessToken": "string",
+    "refreshToken": "string",
+    "expires": "string"
+  }
+}
+```
+
+## 刷新 Token
+
+- **接口地址**：`/refresh-token`
+- **请求方式**：POST
+- **请求参数**：
+```json
+{
+  "refreshToken": "string"
+}
+```
+- **响应参数**：
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "string",
+    "refreshToken": "string",
+    "expires": "string"
+  }
+}
+```
+
+## 获取 PPT Token
+
+- **接口地址**：`/edu/v1/user/get/ppt/token`
+- **请求方式**：POST
+- **请求参数**：无
+- **响应参数**：
+
+```json
+{
+  "code": 200,
+  "msg": "成功",
+  "data": {
+    "token": "string",    // PPT生成token
+    "expire": 1734870000   // 过期时间戳
+  }
+}
+```
+
 ## 用户注册
 
 - **接口地址**：`/edu/v1/user/register`

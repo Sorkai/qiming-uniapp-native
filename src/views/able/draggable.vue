@@ -225,6 +225,6 @@ onMounted(() => {
 }
 
 .chosen {
-  border: solid 2px #3089dc !important;
+  border: solid 2px #3089dc;
 }
 </style>

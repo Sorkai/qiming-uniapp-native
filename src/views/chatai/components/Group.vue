@@ -20,17 +20,8 @@ onMounted(() => {
   <deep-chat
     ref="chatRef"
     auxiliaryStyle="
-    .deep-chat-top-message .message-bubble {
-        border-top-left-radius: 5px !important;
-        border-top-right-radius: 5px !important;
-    }
     .deep-chat-middle-message .message-bubble {
         margin-top: 0px;
-    }
-    .deep-chat-bottom-message .message-bubble {
-        margin-top: 0px;
-        border-bottom-left-radius: 5px !important;
-        border-bottom-right-radius: 5px !important;
     }
     .deep-chat-top-message.deep-chat-bottom-message .message-bubble {
       margin-top: 10px;
@@ -40,6 +31,26 @@ onMounted(() => {
         shared: {
           bubble: {
             borderRadius: '0px'
+          }
+        }
+      },
+      user: {
+        shared: {
+          bubble: {
+            borderTopLeftRadius: '5px',
+            borderTopRightRadius: '5px',
+            borderBottomLeftRadius: '5px',
+            borderBottomRightRadius: '5px'
+          }
+        }
+      },
+      ai: {
+        shared: {
+          bubble: {
+            borderTopLeftRadius: '5px',
+            borderTopRightRadius: '5px',
+            borderBottomLeftRadius: '5px',
+            borderBottomRightRadius: '5px'
           }
         }
       }

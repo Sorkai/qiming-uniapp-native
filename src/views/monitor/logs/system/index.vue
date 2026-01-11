@@ -49,7 +49,7 @@ const {
           v-model="form.module"
           placeholder="请输入所属模块"
           clearable
-          class="w-[170px]!"
+          class="w-[170px]"
         />
       </el-form-item>
       <el-form-item label="请求时间" prop="requestTime">
@@ -110,7 +110,7 @@ const {
           </div>
           <el-popconfirm title="是否确认删除?" @confirm="onbatchDel">
             <template #reference>
-              <el-button type="danger" text class="mr-1!"> 批量删除 </el-button>
+              <el-button type="danger" text class="mr-1"> 批量删除 </el-button>
             </template>
           </el-popconfirm>
         </div>
@@ -137,7 +137,7 @@ const {
         >
           <template #operation="{ row }">
             <el-button
-              class="reset-margin outline-hidden!"
+              class="reset-margin outline-hidden"
               link
               type="primary"
               :size="size"
@@ -158,9 +158,6 @@ const {
   margin: 0;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
 
 .search-form {
   :deep(.el-form-item) {

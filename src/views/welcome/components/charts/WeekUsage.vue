@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { getWeekUsage } from "@/api/statistics";
 
@@ -50,43 +50,60 @@ const renderChart = () => {
     legend: {
       orient: "horizontal",
       bottom: 0,
-      data: ["学生使用", "老师使用"]
+      data: ["学生使用", "老师使用"],
+      textStyle: {
+        color: isDark.value ? "#ffffff" : "#4b5563"
+      }
     },
     title: {
-      text: `总计: ${total}`,
+      text: `总次: ${total}`,
       left: "center",
       top: "center",
       textStyle: {
-        fontSize: 16,
-        color: isDark.value ? "#fff" : "#333"
+        fontSize: 18,
+        fontWeight: "bold",
+        color: isDark.value ? "#ffffff" : "#1e293b"
       }
     },
     series: [
       {
-        name: "使用情况",
+        name: "使用分析",
         type: "pie",
-        radius: ["40%", "70%"],
-        avoidLabelOverlap: false,
+        radius: ["50%", "75%"],
+        avoidLabelOverlap: true,
         itemStyle: {
-          borderRadius: 10,
+          borderRadius: 12,
           borderColor: isDark.value ? "#1d1e1f" : "#fff",
-          borderWidth: 2
+          borderWidth: 4
         },
         label: {
           show: true,
-          formatter: "{b}: {c} ({d}%)"
+          formatter: "{b}\n{d}%",
+          color: isDark.value ? "#ffffff" : "#4b5563",
+          fontSize: 12,
+          fontWeight: 500
         },
         labelLine: {
           show: true
         },
         data: [
-          { value: studentTotalNum, name: "学生使用", itemStyle: { color: "#41b6ff" } },
-          { value: teacherTotalNum, name: "老师使用", itemStyle: { color: "#e85f33" } }
+          { value: studentTotalNum, name: "学生使用", itemStyle: { color: "#5B8FF9" } },
+          { value: teacherTotalNum, name: "老师使用", itemStyle: { color: "#F6BD16" } }
         ]
       }
     ]
   });
 };
+
+// 监听主题变化，重新渲染图表
+watch(
+  () => isDark.value,
+  () => {
+    if (!loading.value) {
+      renderChart();
+    }
+  }
+);
 
 onMounted(() => {
   fetchData();

@@ -1,165 +1,77 @@
 <template>
-  <div class="main">
-    <el-card class="box-card">
-      <template #header>
-        <div class="card-header">
-          <span>课程列表</span>
-          <el-button type="primary" @click="openCreateDialog"
-            >创建课程</el-button
-          >
-        </div>
-      </template>
+  <div class="main p-4">
+    <!-- 统计概览 -->
+    <CourseStats :stats="courseStats" />
 
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="课程名称">
-          <el-input
-            v-model="searchForm.courseName"
-            placeholder="请输入课程名称"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <el-table
-        v-loading="loading"
-        :data="courseList"
-        stripe
-        style="width: 100%"
-      >
-        <el-table-column prop="courseId" label="ID" width="60" />
-        <el-table-column label="封面" width="120">
-          <template #default="scope">
-            <el-image
-              style="width: 80px; height: 80px"
-              :src="scope.row.thumbUrl"
-              fit="cover"
-              :preview-src-list="[scope.row.thumbUrl]"
-              :initial-index="0"
-              teleported
-              preview-teleported
+    <el-card shadow="never" class="mb-4 search-card">
+      <div class="flex justify-between items-center flex-wrap gap-4">
+        <el-form :inline="true" :model="searchForm" class="!mb-[-18px]">
+          <el-form-item label="课程名称">
+            <el-input
+              v-model="searchForm.courseName"
+              placeholder="请输入课程名称"
+              clearable
+              class="!w-[280px]"
+              @keyup.enter="handleSearch"
             >
-              <template #error>
-                <div class="image-placeholder">无图片</div>
+              <template #prefix>
+                <el-icon><Search /></el-icon>
               </template>
-            </el-image>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="title"
-          label="课程标题"
-          min-width="120"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          prop="shortDesc"
-          label="课程简介"
-          min-width="150"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          prop="categoryDesc"
-          label="分类描述"
-          min-width="100"
-          show-overflow-tooltip
-        />
-        <el-table-column label="分类列表" min-width="120">
-          <template #default="scope">
-            <div
-              v-if="scope.row.categoryList && scope.row.categoryList.length > 0"
-              class="category-tags"
-            >
-              <el-tag
-                v-for="category in scope.row.categoryList"
-                :key="category.categoryId"
-                size="small"
-                class="category-tag"
-              >
-                {{ category.name }}
-              </el-tag>
-            </div>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="必修/选修" width="90">
-          <template #default="scope">
-            <el-tag
-              :type="scope.row.isRequired === 1 ? 'danger' : 'info'"
-              size="small"
-            >
-              {{ scope.row.isRequired === 1 ? "必修" : "选修" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="userName" label="创建人" width="100" />
-        <el-table-column prop="startTime" label="开始时间" width="150" />
-        <el-table-column prop="endTime" label="结束时间" width="150" />
-        <el-table-column label="操作" width="130" fixed="right">
-          <template #default="scope">
-            <div class="action-buttons">
-              <div class="button-row">
-                <!-- <el-button size="small" @click="viewCourse(scope.row)"
-                  >查看</el-button
-                > -->
-                <el-button
-                  size="small"
-                  type="primary"
-                  @click="editCourse(scope.row)"
-                  >编辑</el-button
-                >
-                <el-button
-                  size="small"
-                  type="success"
-                  @click="showAllocationDialog(scope.row)"
-                  >分配</el-button
-                >
-              </div>
-              <div class="button-row">
-                <el-button size="small" @click="viewHours(scope.row)"
-                  >课时</el-button
-                >
-                <el-button size="small" @click="viewAttrs(scope.row)"
-                  >附件</el-button
-                >
-              </div>
-              <div class="button-row">
-                <el-button
-                  size="small"
-                  type="warning"
-                  @click="showStudyStatusDialog(scope.row)"
-                  >学习情况</el-button
-                >
-              </div>
-              <div class="button-row">
-                <el-button
-                  size="small"
-                  type="danger"
-                  @click="confirmDelete(scope.row)"
-                  >删除</el-button
-                >
-              </div>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 30, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-button @click="resetSearch">重置</el-button>
+          </el-form-item>
+        </el-form>
+        
+        <el-button type="primary" :icon="Plus" @click="openCreateDialog">
+          创建课程
+        </el-button>
       </div>
     </el-card>
 
+    <div v-loading="loading">
+      <div v-if="courseList.length > 0">
+        <el-row :gutter="20">
+          <el-col
+            v-for="course in courseList"
+            :key="course.courseId"
+            :xs="24"
+            :sm="12"
+            :md="8"
+            :lg="6"
+            class="mb-5"
+          >
+            <CourseCard
+              :course="course"
+              @edit="editCourse"
+              @delete="confirmDelete"
+              @view-hours="viewHours"
+              @view-attrs="viewAttrs"
+              @allocation="showAllocationDialog"
+              @study-status="showStudyStatusDialog"
+            />
+          </el-col>
+        </el-row>
+
+        <div class="pagination-container flex justify-end mt-4">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[12, 24, 36, 48]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
+      </div>
+      <el-empty v-else description="暂无课程数据" />
+    </div>
+
     <!-- 课程详情弹窗 -->
+
     <el-dialog v-model="detailDialogVisible" title="课程详情" width="70%">
       <div v-loading="detailLoading">
         <div v-if="!detailLoading && !courseDetail" class="empty-state">
@@ -765,7 +677,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted, reactive, computed } from "vue";
 import { ElMessage, ElMessageBox, ElForm } from "element-plus";
 import {
   getCourseList,
@@ -783,7 +695,17 @@ import {
   createCourseChapter
 } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
-import { Plus, Loading } from "@element-plus/icons-vue";
+import CourseCard from "./components/CourseCard.vue";
+import CourseStats from "./components/CourseStats.vue";
+import { Plus, Loading, Search } from "@element-plus/icons-vue";
+
+// 统计数据
+const courseStats = reactive({
+  totalCourses: 0,
+  totalStudents: 0,
+  totalHours: 0,
+  completionRate: "0%"
+});
 
 const courseFormRef = ref<InstanceType<typeof ElForm>>();
 
@@ -988,6 +910,12 @@ const fetchCourseList = async () => {
     if (res && res.code === 200 && res.data) {
       courseList.value = res.data.courseList || [];
       total.value = res.data.total || 0;
+      
+      // 模拟更新统计数据
+      courseStats.totalCourses = total.value;
+      courseStats.totalStudents = courseList.value.reduce((acc, curr) => acc + (curr.studentCount || 10), 0);
+      courseStats.totalHours = courseList.value.length * 15;
+      courseStats.completionRate = "78%";
     } else {
       courseList.value = [];
       total.value = 0;
@@ -1621,7 +1549,7 @@ onMounted(() => {
 
 .empty-state {
   text-align: center;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   padding: 40px 0;
   font-size: 16px;
 }
@@ -1633,6 +1561,8 @@ onMounted(() => {
 
 .course-thumb {
   margin-right: 20px;
+  border-radius: var(--el-border-radius-base);
+  overflow: hidden;
 }
 
 .course-info {
@@ -1641,10 +1571,11 @@ onMounted(() => {
   h2 {
     margin-top: 0;
     margin-bottom: 10px;
+    color: var(--el-text-color-primary);
   }
 
   .course-desc {
-    color: #606266;
+    color: var(--el-text-color-regular);
     margin-bottom: 15px;
   }
 }
@@ -1657,9 +1588,10 @@ onMounted(() => {
 .meta-item {
   margin-right: 20px;
   margin-bottom: 10px;
+  color: var(--el-text-color-primary);
 
   label {
-    color: #909399;
+    color: var(--el-text-color-secondary);
     margin-right: 5px;
   }
 }
@@ -1671,7 +1603,7 @@ onMounted(() => {
   h3 {
     margin-top: 0;
     font-size: 16px;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -1696,6 +1628,8 @@ onMounted(() => {
 
 .upload-preview {
   position: relative;
+  border-radius: var(--el-border-radius-base);
+  overflow: hidden;
 
   .upload-actions {
     position: absolute;
@@ -1707,16 +1641,17 @@ onMounted(() => {
 .upload-trigger {
   height: 120px;
   width: 200px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  background-color: var(--el-fill-color-blank);
 
   .upload-hint {
-    color: #909399;
+    color: var(--el-text-color-placeholder);
     font-size: 12px;
     margin-top: 10px;
   }
@@ -1761,18 +1696,19 @@ onMounted(() => {
 .allocation-header {
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 
   h3 {
     margin-top: 0;
     margin-bottom: 8px;
     font-size: 18px;
     font-weight: bold;
+    color: var(--el-text-color-primary);
   }
 
   p {
     margin: 0;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -1780,12 +1716,13 @@ onMounted(() => {
 .chapter-title {
   margin-bottom: 8px;
   padding-left: 8px;
-  border-left: 3px solid #409eff;
+  border-left: 3px solid var(--el-color-primary);
   font-weight: bold;
   font-size: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: var(--el-text-color-primary);
 }
 
 // 新增章节相关样式
@@ -1821,7 +1758,7 @@ onMounted(() => {
 
 .empty-placeholder {
   text-align: center;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   padding: 20px 0;
 }
 
@@ -1835,12 +1772,13 @@ onMounted(() => {
 
 .hour-card {
   padding: 10px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border: 1px solid var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
+  background: var(--el-fill-color-blank);
 }
 
 .required-mark {
-  color: #f56c6c;
+  color: var(--el-color-danger);
   margin-left: 5px;
 }
 
@@ -1853,9 +1791,9 @@ onMounted(() => {
   position: relative;
   width: 100%;
   height: 150px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  background-color: #fbfdff;
+  border: 1px dashed var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
+  background-color: var(--el-fill-color-blank);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1875,7 +1813,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #8c939d;
+  color: var(--el-text-color-placeholder);
   width: 100%;
   height: 100%;
   cursor: pointer;
@@ -1918,7 +1856,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--el-mask-color-extra-light);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1931,5 +1869,10 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+.search-card {
+  border: none;
+  border-radius: var(--el-border-radius-base);
 }
 </style>

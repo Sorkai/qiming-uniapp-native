@@ -14,7 +14,7 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
       },
       // layout模式以及主题
       layout: Storage.getData("layout", nameSpace) ?? {
-        layout: config.Layout ?? "double",
+        layout: config.Layout ?? "vertical",
         theme: config.Theme ?? "light",
         darkMode: config.DarkMode ?? false,
         sidebarStatus: config.SidebarStatus ?? true,
@@ -36,9 +36,9 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
     },
     config.MultiTagsCache
       ? {
-          // 默认显示顶级菜单tag
-          tags: Storage.getData("tags", nameSpace) ?? routerArrays
-        }
+        // 默认显示顶级菜单tag
+        tags: Storage.getData("tags", nameSpace) ?? routerArrays
+      }
       : {}
   );
 

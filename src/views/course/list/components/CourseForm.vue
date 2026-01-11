@@ -1017,16 +1017,17 @@ defineExpose({
 .upload-trigger {
   height: 120px;
   width: 200px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  background-color: var(--el-fill-color-blank);
 
   &:hover {
-    border-color: #409eff;
+    border-color: var(--el-color-primary);
   }
 }
 
@@ -1039,7 +1040,7 @@ defineExpose({
 
   .el-icon {
     font-size: 28px;
-    color: #8c939d;
+    color: var(--el-text-color-placeholder);
   }
 }
 
@@ -1053,8 +1054,8 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  border: 1px solid var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
 
   .resource-info {
     display: flex;
@@ -1075,14 +1076,15 @@ defineExpose({
 .resource-upload {
   width: 100%;
   height: 60px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 4px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--el-fill-color-blank);
 
   &:hover {
-    border-color: #409eff;
+    border-color: var(--el-color-primary);
   }
 
   .upload-icon-container {
@@ -1093,7 +1095,7 @@ defineExpose({
     .el-icon {
       font-size: 22px;
       margin-bottom: 8px;
-      color: #8c939d;
+      color: var(--el-text-color-placeholder);
     }
 
     span {

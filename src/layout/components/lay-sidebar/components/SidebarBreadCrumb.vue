@@ -105,12 +105,12 @@ watch(
 </script>
 
 <template>
-  <el-breadcrumb class="leading-[50px]! select-none" separator="/">
+  <el-breadcrumb class="app-breadcrumb select-none" separator="/">
     <transition-group name="breadcrumb">
       <el-breadcrumb-item
         v-for="item in levelList"
         :key="item.path"
-        class="inline! items-stretch!"
+        class="inline items-stretch"
       >
         <a @click.prevent="handleLink(item)">
           {{ transformI18n(item.meta.title) }}
@@ -119,3 +119,45 @@ watch(
     </transition-group>
   </el-breadcrumb>
 </template>
+
+<style lang="scss" scoped>
+.app-breadcrumb {
+  display: inline-block;
+  font-size: 14px;
+  margin-left: 8px;
+
+  /* 使用 CSS 变量适配深浅色模式 */
+  :deep(.el-breadcrumb__inner) {
+    color: var(--el-text-color-regular) !important;
+    font-weight: 500;
+    transition: color 0.2s;
+
+    a {
+      font-weight: normal;
+      color: var(--el-text-color-regular) !important;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--el-color-primary) !important;
+      }
+    }
+  }
+
+  :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+    color: var(--el-text-color-primary) !important;
+    font-weight: 600;
+
+    a {
+      color: var(--el-text-color-primary) !important;
+      &:hover {
+        color: var(--el-text-color-primary) !important;
+        cursor: text;
+      }
+    }
+  }
+
+  :deep(.el-breadcrumb__separator) {
+    color: var(--el-text-color-placeholder) !important;
+  }
+}
+</style>

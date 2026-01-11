@@ -46,7 +46,7 @@ const {
           v-model="form.module"
           placeholder="请输入所属模块"
           clearable
-          class="w-[170px]!"
+          class="w-[170px]"
         />
       </el-form-item>
       <el-form-item label="操作状态" prop="status">
@@ -54,7 +54,7 @@ const {
           v-model="form.status"
           placeholder="请选择"
           clearable
-          class="w-[150px]!"
+          class="w-[150px]"
         >
           <el-option label="成功" value="1" />
           <el-option label="失败" value="0" />
@@ -118,7 +118,7 @@ const {
           </div>
           <el-popconfirm title="是否确认删除?" @confirm="onbatchDel">
             <template #reference>
-              <el-button type="danger" text class="mr-1!"> 批量删除 </el-button>
+              <el-button type="danger" text class="mr-1"> 批量删除 </el-button>
             </template>
           </el-popconfirm>
         </div>
@@ -152,9 +152,6 @@ const {
   margin: 0;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
 
 .search-form {
   :deep(.el-form-item) {

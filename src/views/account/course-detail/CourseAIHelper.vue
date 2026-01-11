@@ -1,17 +1,7 @@
 <template>
   <div class="ai-helper-sections" :class="currentTheme">
     <!-- AI 助教入口框 -->
-    <div
-      class="out-ai-showbox-pro"
-      style="
-        position: fixed;
-        top: 5.83333vw;
-        right: 1vw !important;
-        width: 25vw !important;
-        height: 10.4167vw;
-        z-index: 100;
-      "
-    >
+    <div class="out-ai-showbox-pro">
       <div class="out-ai-pro-talk-box glow-border">
         <div class="inset-div">
           <div class="photo">
@@ -46,15 +36,6 @@
         v-if="isAiDialogVisible"
         ref="aiDialogRef"
         class="ai-draggable-dialog auto"
-        style="
-          width: 25vw !important;
-          right: 1vw !important;
-          top: calc(5.83333vw + 10.4167vw + 0.5vw) !important;
-          height: 600px !important;
-          z-index: 999;
-          display: flex;
-          flex-direction: column;
-        "
       >
         <div class="ai-dialog-header-bar">
           <div class="header-left">
@@ -78,8 +59,8 @@
           </div>
         </div>
 
-        <div class="ai-fill-bg" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; border: none !important; background: transparent !important;">
-          <div class="dialog-content" style="flex: 1; overflow: hidden;">
+        <div class="ai-fill-bg">
+          <div class="dialog-content">
             <div class="ai-talk-box">
               <el-scrollbar ref="scrollbarRef" style="height: 100%; box-sizing: border-box">
                 <div class="header-tips-box">
@@ -107,8 +88,7 @@
                         <div :class="message.role === 'user' ? 'question-container_2GfLA' : 'answer-box-wrapper_1QYRS'">
                           <div :class="message.role === 'user' ? 'question-content_1e1fE' : 'answer-content-box_2Pu7S'">
                             <div v-if="message.role === 'user'">{{ message.content }}</div>
-                            <div v-else class="markdown-content">
-                              <p class="result" v-html="parseMarkdown(message.content)" />
+                            <div v-else class="markdown-content"><p class="result" v-html="parseMarkdown(message.content)" />
                             </div>
                           </div>
                         </div>
@@ -126,7 +106,7 @@
                                 <span class="typing-dot">.</span>
                                 <span class="typing-dot">.</span>
                                 <span class="typing-dot">.</span>
-                              </p>
+                </p>
                             </div>
                           </div>
                         </div>
@@ -147,15 +127,10 @@
                         placeholder="请输入您的问题"
                         maxlength="300"
                         class="el-textarea__inner"
-                        :style="
-                          currentMessage.trim()
-                            ? 'min-height: 40px; line-height: 1.5; padding-right: 40px !important;'
-                            : 'min-height: 40px; height: 40px; line-height: 40px; padding-top: 0 !important; padding-bottom: 0 !important; padding-right: 40px !important;'
-                        "
+                        :class="{ 'has-content': currentMessage.trim() }"
                         @keydown.enter.prevent="sendMessage"
                       />
-                    </div>
-                  </div>
+                    </div></div>
                   <div
                     class="add-new-talk"
                     :class="{ 'not-allowed': !currentMessage.trim() }"
@@ -205,7 +180,7 @@ const conversationId = ref("");
 const previousChapterId = ref<number | null>(null);
 const cancelStreamRequest = ref<any>(null);
 
-// 监听聊天记录变化，自动滚动到底部
+//监听聊天记录变化，自动滚动到底部
 watch(() => chatMessages.value, () => {
   nextTick(() => {
     scrollToBottom();
@@ -237,17 +212,15 @@ const openAiDialog = () => {
 };
 
 const closeAiDialog = () => {
-  isAiDialogVisible.value = false;
-  if (cancelStreamRequest.value) {
-    cancelStreamRequest.value();
-    cancelStreamRequest.value = null;
+  isAiDialogVisible.value = false;if (cancelStreamRequest.value) {
+    cancelStreamRequest.value();cancelStreamRequest.value = null;
   }
 };
 
 const handleClickOutside = (event: MouseEvent) => {
   if (!aiDialogRef.value) return;
   const target = event.target as HTMLElement;
-  if (aiDialogRef.value && !(aiDialogRef.value as any).contains(target) && !target.closest(".out-ai-showbox-pro")) {
+  if (aiDialogRef.value &&!(aiDialogRef.value as any).contains(target) && !target.closest(".out-ai-showbox-pro")) {
     closeAiDialog();
   }
 };
@@ -284,8 +257,7 @@ const sendMessage = async () => {
   if (currentChapterId !== null && previousChapterId.value !== null && currentChapterId !== previousChapterId.value) {
     conversationId.value = Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${props.courseId}`, conversationId.value);
-    chatMessages.value = [];
-  }
+    chatMessages.value = [];}
 
   previousChapterId.value = currentChapterId;
 
@@ -319,8 +291,7 @@ const sendMessage = async () => {
         if (data.delta) {
           if (!aiMessageAdded) {
             isTyping.value = false;
-            aiMessageAdded = true;
-            currentResponseIndex = chatMessages.value.length;
+            aiMessageAdded = true;currentResponseIndex = chatMessages.value.length;
             chatMessages.value.push({
               role: "ai",
               content: data.delta,
@@ -354,8 +325,7 @@ const parseMarkdown = (text: string) => {
   if (!text) return "";
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/
-/g, "<br>");
+    .replace(/\\n/g, "<br>");
 };
 
 const clearChat = () => {
@@ -388,50 +358,96 @@ defineExpose({
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 包含必要的 AI 相关样式 */
 .ai-helper-sections {
   position: relative;
-}
 
-.out-ai-pro-talk-box {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border-radius: 12px !important;
-  background: rgba(255, 255, 255, 0.05);
-}
+  .out-ai-showbox-pro {
+    position: fixed;
+    top: 5.83333vw;
+    right: 1vw;
+    width: 25vw;
+    height: 10.4167vw;
+    z-index: 100;
+  }
 
-.out-ai-pro-talk-box::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
-  background-size: 200% 100%;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  animation: ai-border-marquee 3s linear infinite;
-  pointer-events: none;
+  .out-ai-pro-talk-box {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.5px;
+      background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+      background-size: 200% 100%;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      animation: ai-border-marquee 3s linear infinite;
+      pointer-events: none;
+    }
+  }
+
+  .ai-draggable-dialog {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    width: 25vw;
+    right: 1vw;
+    top: calc(5.83333vw + 10.4167vw + 0.5vw);
+    height: 600px;
+    z-index: 999;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(25px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+
+    &.dark {
+      background: rgba(30, 30, 30, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .ai-fill-bg {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    background: transparent;
+
+    .dialog-content {
+      flex: 1;
+      overflow: hidden;
+    }
+  }
+
+  .el-textarea__inner {
+    min-height: 40px;
+    height: 40px;
+    line-height: 40px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-right: 40px;
+
+    &.has-content {
+      min-height: 40px;
+      line-height: 1.5;
+      padding-right: 40px;
+    }
+  }
 }
 
 @keyframes ai-border-marquee {
   0% { background-position: 0% 0%; }
   100% { background-position: 200% 0%; }
-}
-
-.ai-draggable-dialog {
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1) !important;
-  backdrop-filter: blur(25px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  background: rgba(255, 255, 255, 0.6) !important;
-  border-radius: 20px !important;
-}
-
-.dark .ai-draggable-dialog {
-  background: rgba(30, 30, 30, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .ai-dialog-header-bar {
@@ -450,7 +466,7 @@ defineExpose({
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(64, 158, 255, 0.2);
   position: absolute;
   left: -45px;
@@ -485,22 +501,22 @@ defineExpose({
 }
 
 .question-content_1e1fE {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-  color: white !important;
-  border-radius: 18px 18px 2px 18px !important;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border-radius: 18px 18px 2px 18px;
   padding: 12px 16px;
 }
 
 .answer-content-box_2Pu7S {
-  background: #f4f7f9 !important;
-  border-radius: 18px 18px 18px 2px !important;
-  border: 1px solid #eef2f5 !important;
+  background: #f4f7f9;
+  border-radius: 18px 18px 18px 2px;
+  border: 1px solid #eef2f5;
   padding: 12px 16px;
-}
 
-.dark .answer-content-box_2Pu7S {
-  background: #2c2c2c !important;
-  border-color: #444 !important;
-  color: #e0e0e0;
+  &.dark {
+    background: #2c2c2c;
+    border-color: #444;
+    color: #e0e0e0;
+  }
 }
 </style>

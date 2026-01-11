@@ -13,7 +13,7 @@
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
@@ -56,7 +56,9 @@
           </div>
         </div>
       </div>
-      <el-empty v-else description="暂无课程资料" />
+      <div v-else class="empty-wrapper">
+        <el-empty description="暂无课程资料" />
+      </div>
     </div>
   </div>
 </template>
@@ -77,7 +79,7 @@ const props = defineProps<{
 // Emits
 defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();
@@ -109,34 +111,31 @@ const viewMaterial = (material: any) => {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: #ffffff;
-}
-
-.course-materials-wrapper.dark {
-  background-color: #1a1a1a;
+  background-color: transparent;
 }
 
 .materials-container {
-  padding: 100px 20px 20px;
+  padding: 80px 32px 24px;
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  background-color: #ffffff;
+  background-color: transparent;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
   box-sizing: border-box;
-  padding-left: 2vw;
-  padding-right: 2vw;
 }
 
-.materials-container.dark {
-  background-color: #1a1a1a;
+.empty-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.materials-container.light {
-  background-color: #ffffff;
+.dark :deep(.el-empty__image img),
+.dark :deep(.el-empty__image svg) {
+  filter: brightness(0.7);
+  opacity: 0.8;
 }
 
 .materials-title {
@@ -157,7 +156,7 @@ const viewMaterial = (material: any) => {
   display: flex;
   align-items: center;
   border: 1px solid #ebeef5;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
   background-color: #fff;
   transition: all 0.3s;
@@ -167,7 +166,7 @@ const viewMaterial = (material: any) => {
 }
 
 .material-item.dark {
-  background-color: #1a1a1a;
+  background-color: #2a2a2a;
   border-color: #3e3e3e;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }

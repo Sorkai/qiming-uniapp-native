@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import type { ApiResponse } from "./types";
 
 export interface CourseListResult {
   list: Array<{
@@ -76,11 +77,37 @@ export interface CourseStudyEffectResult {
   }>;
 }
 
-export interface ApiResponse<T = any> {
-  code: number;
-  msg: string;
-  data: T;
+/** 课程成绩详情列表项 */
+export interface CourseGradeItem {
+  name: string;
+  type: string;
+  score: number;
+  submitTime: string;
+  gradedTime: string;
+  comment: string;
 }
+
+/** 课程成绩详情列表结果 */
+export interface CourseGradesListResult {
+  list: CourseGradeItem[];
+}
+
+/** 课程成绩统计概览结果 */
+export interface CourseGradesStatisticsResult {
+  totalAssignments: number;
+  completedAssignments: number;
+  averageScore: number;
+  highestScore: number;
+  completionRate: number;
+}
+
+/** 成绩班级对比数据结果 */
+export interface CourseGradesClassComparisonResult {
+  categories: string[];
+  personalScores: number[];
+  classAverages: number[];
+}
+
 
 /**
  * 获取课程列表
@@ -155,6 +182,42 @@ export const getFrontendCourseList = (params: {
   return http.request<ApiResponse<CourseListResult>>(
     "get",
     "/edu/frontend/v1/course/list",
+    { params }
+  );
+};
+
+/**
+ * 获取课程成绩详情列表
+ *包含每个作业/考试的得分、提交时间、评语等
+ */
+export const getCourseGradesList = (params: { courseId: number }) => {
+  return http.request<ApiResponse<CourseGradesListResult>>(
+    "get",
+    "/edu/frontend/v1/course/grades/list",
+    { params }
+  );
+};
+
+/**
+ * 获取课程成绩统计概览
+ * 包含总作业数、完成数、平均分、最高分等指标
+ */
+export const getCourseGradesStatistics = (params: { courseId: number }) => {
+  return http.request<ApiResponse<CourseGradesStatisticsResult>>(
+    "get",
+    "/edu/frontend/v1/course/grades/statistics",
+    { params }
+  );
+};
+
+/**
+ * 获取成绩班级对比数据
+ * 用于展示个人得分与班级平均分的对比图表
+ */
+export const getCourseGradesClassComparison = (params: { courseId: number }) => {
+  return http.request<ApiResponse<CourseGradesClassComparisonResult>>(
+    "get",
+    "/edu/frontend/v1/course/grades/class-comparison",
     { params }
   );
 };

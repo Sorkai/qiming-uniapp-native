@@ -32,7 +32,6 @@ const { isDark } = useDark();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 const mixRef = ref();
-const doubleRef = ref();
 const verticalRef = ref();
 const horizontalRef = ref();
 
@@ -190,7 +189,7 @@ const getThemeColor = computed(() => {
 });
 
 const pClass = computed(() => {
-  return ["mb-[12px]!", "font-medium", "text-sm", "dark:text-white"];
+  return ["mb-[12px]", "font-medium", "text-sm", "dark:text-white"];
 });
 
 const themeOptions = computed<Array<OptionsType>>(() => {
@@ -275,12 +274,6 @@ watch($storage, ({ layout }) => {
       debounce(setFalse([horizontalRef]), 50);
       debounce(setFalse([doubleRef]), 50);
       break;
-    case "double":
-      toggleClass(true, "is-select", unref(doubleRef));
-      debounce(setFalse([verticalRef]), 50);
-      debounce(setFalse([horizontalRef]), 50);
-      debounce(setFalse([mixRef]), 50);
-      break;
   }
 });
 
@@ -345,7 +338,7 @@ onUnmounted(() => removeMatchMedia);
         "
       />
 
-      <p :class="['mt-5!', pClass]">{{ t("panel.pureThemeColor") }}</p>
+      <p :class="['mt-5', pClass]">{{ t("panel.pureThemeColor") }}</p>
       <ul class="theme-color">
         <li
           v-for="(item, index) in themeColors"
@@ -364,7 +357,7 @@ onUnmounted(() => removeMatchMedia);
         </li>
       </ul>
 
-      <p :class="['mt-5!', pClass]">{{ t("panel.pureLayoutModel") }}</p>
+      <p :class="['mt-5', pClass]">{{ t("panel.pureLayoutModel") }}</p>
       <ul class="pure-theme">
         <li
           ref="verticalRef"
@@ -404,24 +397,10 @@ onUnmounted(() => removeMatchMedia);
           <div />
           <div />
         </li>
-        <li
-          v-if="device !== 'mobile'"
-          ref="doubleRef"
-          v-tippy="{
-            content: t('panel.pureDoubleTip'),
-            zIndex: 41000
-          }"
-          :class="layoutTheme.layout === 'double' ? 'is-select' : ''"
-          @click="setLayoutModel('double')"
-        >
-          <div />
-          <div />
-          <div />
-        </li>
       </ul>
 
       <span v-if="useAppStoreHook().getViewportWidth > 1280">
-        <p :class="['mt-5!', pClass]">{{ t("panel.pureStretch") }}</p>
+        <p :class="['mt-5', pClass]">{{ t("panel.pureStretch") }}</p>
         <Segmented
           resize
           class="mb-2 select-none"
@@ -462,7 +441,7 @@ onUnmounted(() => removeMatchMedia);
         </button>
       </span>
 
-      <p :class="['mt-4!', pClass]">{{ t("panel.pureTagsStyle") }}</p>
+      <p :class="['mt-4', pClass]">{{ t("panel.pureTagsStyle") }}</p>
       <Segmented
         resize
         class="select-none"
@@ -471,7 +450,7 @@ onUnmounted(() => removeMatchMedia);
         @change="onChange"
       />
 
-      <p class="mt-5! font-medium text-sm dark:text-white">
+      <p class="mt-5 font-medium text-sm dark:text-white">
         {{ t("panel.pureInterfaceDisplay") }}
       </p>
       <ul class="setting">

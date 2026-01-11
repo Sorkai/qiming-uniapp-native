@@ -1,62 +1,55 @@
 <template>
-  <div class="app-container">
-    <el-card>
+  <div class="main">
+    <el-card class="box-card">
       <template #header>
         <div class="card-header">
           <span>在线云盘</span>
+          <el-button type="primary" :icon="Upload" @click="handleUpload">
+            上传文件
+          </el-button>
         </div>
       </template>
 
-      <div class="filter-container">
-        <el-input
-          v-model="listQuery.name"
-          placeholder="文件名"
-          style="width: 200px"
-          class="filter-item"
-          :prefix-icon="Search"
-          @keyup.enter="handleFilter"
-        />
-        <el-button
-          class="filter-item"
-          type="primary"
-          :icon="Search"
-          @click="handleFilter"
-        >
-          搜索
-        </el-button>
-        <el-button
-          class="filter-item"
-          type="primary"
-          :icon="Upload"
-          @click="handleUpload"
-        >
-          上传文件
-        </el-button>
-      </div>
+      <el-form :inline="true" :model="listQuery" class="search-form">
+        <el-form-item label="文件名">
+          <el-input
+            v-model="listQuery.name"
+            placeholder="请输入文件名"
+            clearable
+            @keyup.enter="handleFilter"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleFilter">
+            搜索
+          </el-button>
+          <el-button @click="resetSearch">重置</el-button>
+        </el-form-item>
+      </el-form>
 
       <el-table
         :data="filteredList"
-        style="width: 100%; margin-top: 20px"
-        border
+        stripe
+        style="width: 100%"
       >
-        <el-table-column label="文件名" prop="name" sortable>
+        <el-table-column label="文件名" prop="name" align="left" min-width="250">
           <template #default="{ row }">
             <div class="file-name-cell">
               <el-icon :size="20" class="file-icon">
                 <component :is="getFileIcon(row.name)" />
               </el-icon>
-              <span style="margin-left: 10px">{{ row.name }}</span>
+              <span>{{ row.name }}</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="大小" prop="size" sortable width="120" />
+        <el-table-column label="大小" prop="size" align="center" width="120" />
         <el-table-column
           label="创建时间"
           prop="createTime"
-          sortable
+          align="center"
           width="180"
         />
-        <el-table-column label="操作" width="200" align="center">
+        <el-table-column label="操作" width="220" align="center">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleDownload(row)"
               >下载</el-button
@@ -165,6 +158,10 @@ const handleFilter = () => {
   // The list is already filtered by computed property, this is for the enter keyup
 };
 
+const resetSearch = () => {
+  listQuery.value.name = "";
+};
+
 const handleUpload = () => {
   ElMessage.info("请实名认证后上传文件");
 };
@@ -193,22 +190,51 @@ const handleDelete = row => {
 };
 </script>
 
-<style scoped>
-.app-container {
-  padding: 20px;
+<style lang="scss" scoped>
+.main {
+  padding: 12px;
+
+  .box-card {
+    margin-bottom: 16px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--el-border-color-light);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .search-form {
+      margin-bottom: 16px;
+    }
+  }
+
+  .file-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .file-icon {
+    color: #606266;
+  }
 }
-.filter-container {
-  margin-bottom: 20px;
+
+:deep(.el-card__header) {
+  border-radius: 16px 16px 0 0;
 }
-.filter-item {
-  margin-right: 10px;
+
+:deep(.el-card__body) {
+  padding: 16px;
 }
-.file-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.file-icon {
-  color: #606266;
+
+:deep(.el-table) {
+  --el-table-header-padding: 8px 0;
+  --el-table-cell-padding: 8px 0;
+  border-radius: 12px;
+  overflow: hidden;
 }
 </style>

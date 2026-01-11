@@ -2,8 +2,6 @@
   <!-- 知识点 -->
   <div
     v-show="visible"
-    data-v-487e2460=""
-    data-v-2cf49992=""
     class="mastery-page-content"
     :class="currentTheme"
   >
@@ -14,17 +12,16 @@
       :user-avatar="userAvatar"
       :user-nickname="userNickname"
       @go-back="$emit('go-back')"
-      @toggle-theme="$emit('toggle-theme')"
+      @toggle-theme="e => $emit('toggle-theme', e)"
       @go-to-account="$emit('go-to-account')"
       @logout="$emit('logout')"
     />
 
     <div
-      data-v-487e2460=""
       class="mastery-content-left"
       style="width: 100%"
     >
-      <div data-v-487e2460="" class="left-scroll">
+      <div class="left-scroll">
         <div class="mastery-summary-wrapper">
           <div class="mastery-summary-left">
             <div class="summary-card" :class="currentTheme">
@@ -315,7 +312,9 @@
         </div>
 
         <!-- 如果没有章节数据，显示无数据提示 -->
-        <div v-else class="no-data">暂无学习效果数据</div>
+        <div v-else class="empty-wrapper">
+          <el-empty description="暂无学习效果数据" />
+        </div>
       </div>
     </div>
   </div>
@@ -344,7 +343,7 @@ const props = defineProps<{
 // Emits
 defineEmits<{
   (e: "go-back"): void;
-  (e: "toggle-theme"): void;
+  (e: "toggle-theme", event: MouseEvent): void;
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();
@@ -561,7 +560,7 @@ const updateMasterySummaryChart = () => {
     props.studyEffectData.difficultPointNum || 0,
     props.studyEffectData.conceptNum || 0
   ];
-  const maxVal = Math.max(...dataValues, 10);
+  const maxVal = Math.max(...dataValues);
   
   masterySummaryChart.setOption({
     grid: { left: "15%", right: "5%", top: "15%", bottom: "15%" },
@@ -585,7 +584,8 @@ const updateMasterySummaryChart = () => {
     yAxis: {
       type: "value",
       min: 0,
-      max: Math.ceil(maxVal * 1.2),
+      max: maxVal > 0 ? Math.ceil(maxVal * 1.2) : undefined,
+      minInterval: 1,
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: { lineStyle: { color: borderColor, type: "solid" } },
@@ -612,7 +612,7 @@ const updateMasterySummaryChart = () => {
         }),
         barWidth: 28,
         showBackground: false,
-        label: { show: true, position: "top", distance: 10, color: isDark ? "#fff" : "#303133", fontWeight: "bold", fontSize: 14 }
+        label: { show: true, position: "top", distance: 5, color: isDark ? "#fff" : "#303133", fontWeight: "bold", fontSize: 14 }
       }
     ]
   });
@@ -671,147 +671,158 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .mastery-page-content {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  padding-top: 60px !important;
-  margin-left: 5px !important;
-  width: calc(100% - 5px) !important;
-  height: 100vh !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-  background: transparent !important;
-  position: relative;
-}
-
-.mastery-content-left {
-  width: 100% !important;
-  max-width: 100% !important;
-  padding: 0 !important;
-  height: 100% !important;
-}
-
-.left-scroll {
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 100% !important;
-  overflow-y: auto !important;
-  padding: 20px 24px 100px !important;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.left-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.mastery-summary-wrapper {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 32px;
-  align-items: stretch;
-  flex-wrap: wrap;
-}
-
-.mastery-summary-left {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
-  gap: 16px;
-  flex: 1 1 380px;
-  max-width: 520px;
-  padding: 20px;
-}
-
-.summary-card {
-  border-radius: 20px;
-  padding: 24px;
-  border: 1px solid rgba(220, 226, 247, 0.3) !important;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background: transparent;
-}
-
-.summary-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 40px -15px rgba(96, 79, 253, 0.35);
-  border-color: #604ffd !important;
-}
-
-.summary-card.dark {
-  background: #1e1e26;
-  border-color: rgba(61, 63, 85, 0.8) !important;
-}
-
-.summary-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #909399;
-  margin-bottom: 12px;
-  z-index: 1;
-}
-
-.dark .summary-title {
-  color: #b4b4c7;
-}
-
-.summary-value {
-  font-size: 48px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -1px;
-  background: linear-gradient(135deg, #409eff, #604ffd);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  z-index: 1;
-}
-
-.mastery-summary-charts {
-  flex: 1.5 1 600px;
-  display: flex;
-  gap: 24px;
-  border-radius: 20px;
-  padding: 24px;
-  border: 1px solid rgba(220, 226, 247, 0.3) !important;
-  background: transparent;
-}
-
-.mastery-summary-charts.dark {
-  border-color: rgba(61, 63, 85, 0.5) !important;
-}
-
-.chart-box {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 280px;
-}
-
-.summary-chart-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-}
-
-.summary-chart-title::before {
-  content: "";
-  width: 4px; height: 16px; background: #409eff; border-radius: 2px; margin-right: 8px;
-}
-
-.dark .summary-chart-title { color: #4facfe !important; }
-
-.summary-chart-bar,
-.summary-chart-pie {
+  padding: 0;
+  margin: 0;
   width: 100%;
-  height: 320px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto; /* 关键：允许纵向滚动 */
+  overflow-x: hidden;
+  background: transparent;
+  position: relative;
+
+  .mastery-content-left {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    height: 100%;
+  }
+
+  .left-scroll {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 80px 32px 24px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .mastery-summary-wrapper {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .mastery-summary-left {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    gap: 16px;
+    flex: 1 1 380px;
+    max-width: 520px;
+    padding: 20px;
+    background: #f3f0ff;
+    border-radius: 24px;
+  }
+
+  &.dark .mastery-summary-left {
+    background: rgba(106, 90, 205, 0.1);
+  }
+
+  .summary-card {
+    border-radius: 20px;
+    padding: 24px;
+    border: 1px solid rgba(220, 226, 247, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #fff;
+
+    &:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px -15px rgba(96, 79, 253, 0.35);
+      border-color: #604ffd;
+    }
+
+    &.dark {
+      background: #2a2a2a;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .summary-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #909399;
+    margin-bottom: 12px;
+    z-index: 1;
+  }
+
+  &.dark .summary-title {
+    color: #b4b4c7;
+  }
+
+  .summary-value {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #409eff, #604ffd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    z-index: 1;
+  }
+
+  .mastery-summary-charts {
+    flex: 1.5 1 600px;
+    display: flex;
+    gap: 24px;
+    border-radius: 20px;
+    padding: 24px;
+    border: 1px solid rgba(220, 226, 247, 0.3);
+    background: transparent;
+
+    &.dark {
+      border-color: rgba(61, 63, 85, 0.5);
+
+      .summary-chart-title {
+        color: #4facfe;
+      }
+    }
+  }
+
+  .chart-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 280px;
+  }
+
+  .summary-chart-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+
+    &::before {
+      content: "";
+      width: 4px;
+      height: 16px;
+      background: #409eff;
+      border-radius: 2px;
+      margin-right: 8px;
+    }
+  }
+
+  .summary-chart-bar,
+  .summary-chart-pie {
+    width: 100%;
+    height: 320px;
+  }
 }
 
 .chapters-grid {
@@ -839,8 +850,8 @@ onUnmounted(() => {
 }
 
 .dark .chapter-section {
-  background: #1e1e26;
-  border-color: rgba(61, 63, 85, 0.8);
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
 }
 
@@ -929,6 +940,20 @@ onUnmounted(() => {
   opacity: 0; transition: opacity 0.3s; pointer-events: none;
 }
 .spotlight-button:hover::before { opacity: 1; }
+
+.empty-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  width: 100%;
+}
+
+.dark :deep(.el-empty__image img),
+.dark :deep(.el-empty__image svg) {
+  filter: brightness(0.7);
+  opacity: 0.8;
+}
 
 .no-data { text-align: center; padding: 40px 0; color: #909399; font-size: 14px; }
 </style>

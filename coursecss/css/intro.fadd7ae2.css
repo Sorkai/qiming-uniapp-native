@@ -54,7 +54,7 @@
   }
 }
 
-.introjs-overlay {
+.course-page .introjs-overlay {
   position: absolute;
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
@@ -65,17 +65,17 @@
   transition: all 0.3s ease-out;
 }
 
-.introjs-showElement {
+.course-page .introjs-showElement {
   z-index: 9999999 !important;
 }
 
-tr.introjs-showElement > td,
-tr.introjs-showElement > th {
+.course-page tr.introjs-showElement > td,
+.course-page tr.introjs-showElement > th {
   z-index: 9999999 !important;
   position: relative;
 }
 
-.introjs-disableInteraction {
+.course-page .introjs-disableInteraction {
   z-index: 99999999 !important;
   position: absolute;
   background-color: #fff;
@@ -83,11 +83,11 @@ tr.introjs-showElement > th {
   filter: alpha(opacity=0);
 }
 
-.introjs-relativePosition {
+.course-page .introjs-relativePosition {
   position: relative;
 }
 
-.introjs-helperLayer {
+.course-page .introjs-helperLayer {
   position: absolute;
   z-index: 9999998;
   border-radius: 0.20833vw;
@@ -96,16 +96,16 @@ tr.introjs-showElement > th {
   transition: all 0.3s ease-out;
 }
 
-.introjs-helperLayer,
-.introjs-helperLayer *,
-.introjs-helperLayer :after,
-.introjs-helperLayer :before,
-.introjs-tooltipReferenceLayer {
+.course-page .introjs-helperLayer,
+.course-page .introjs-helperLayer *,
+.course-page .introjs-helperLayer :after,
+.course-page .introjs-helperLayer :before,
+.course-page .introjs-tooltipReferenceLayer {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
 }
 
-.introjs-tooltipReferenceLayer {
+.course-page .introjs-tooltipReferenceLayer {
   position: absolute;
   visibility: hidden;
   z-index: 100000000;
@@ -115,9 +115,9 @@ tr.introjs-showElement > th {
   transition: all 0.3s ease-out;
 }
 
-.introjs-helperNumberLayer,
-.introjs-tooltipReferenceLayer,
-.introjs-tooltipReferenceLayer * {
+.course-page .introjs-helperNumberLayer,
+.course-page .introjs-tooltipReferenceLayer,
+.course-page .introjs-tooltipReferenceLayer * {
   font-family:
     Helvetica Neue,
     Inter,
@@ -128,82 +128,82 @@ tr.introjs-showElement > th {
     sans-serif;
 }
 
-.introjs-helperNumberLayer {
+.course-page .introjs-helperNumberLayer {
   color: #9e9e9e;
   text-align: center;
   padding-top: 0.52083vw;
   padding-bottom: 0.52083vw;
 }
 
-.introjs-arrow {
+.course-page .introjs-arrow {
   border: 0.26042vw solid transparent;
   content: "";
   position: absolute;
 }
 
-.introjs-arrow.top {
+.course-page .introjs-arrow.top {
   top: -0.52083vw;
   left: 0.52083vw;
   border-bottom-color: #fff;
 }
 
-.introjs-arrow.top-right {
+.course-page .introjs-arrow.top-right {
   top: -0.52083vw;
   right: 0.52083vw;
   border-bottom-color: #fff;
 }
 
-.introjs-arrow.top-middle {
+.course-page .introjs-arrow.top-middle {
   top: -0.52083vw;
   left: 50%;
   margin-left: -0.26042vw;
   border-bottom-color: #fff;
 }
 
-.introjs-arrow.right {
+.course-page .introjs-arrow.right {
   right: -0.52083vw;
   top: 0.52083vw;
   border-left-color: #fff;
 }
 
-.introjs-arrow.right-bottom {
+.course-page .introjs-arrow.right-bottom {
   bottom: 0.52083vw;
   right: -0.52083vw;
   border-left-color: #fff;
 }
 
-.introjs-arrow.bottom {
+.course-page .introjs-arrow.bottom {
   bottom: -0.52083vw;
   left: 0.52083vw;
   border-top-color: #fff;
 }
 
-.introjs-arrow.bottom-right {
+.course-page .introjs-arrow.bottom-right {
   bottom: -0.52083vw;
   right: 0.52083vw;
   border-top-color: #fff;
 }
 
-.introjs-arrow.bottom-middle {
+.course-page .introjs-arrow.bottom-middle {
   bottom: -0.52083vw;
   left: 50%;
   margin-left: -0.26042vw;
   border-top-color: #fff;
 }
 
-.introjs-arrow.left {
+.course-page .introjs-arrow.left {
   left: -0.52083vw;
   top: 0.52083vw;
   border-right-color: #fff;
 }
 
-.introjs-arrow.left-bottom {
+.course-page .introjs-arrow.left-bottom {
   left: -0.52083vw;
   bottom: 0.52083vw;
   border-right-color: #fff;
 }
 
-.introjs-tooltip {
+.course-page .introjs-tooltip {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
   position: absolute;
@@ -219,11 +219,11 @@ tr.introjs-showElement > th {
   transition: opacity 0.1s ease-out;
 }
 
-.introjs-tooltiptext {
+.course-page .introjs-tooltiptext {
   padding: 1.04167vw;
 }
 
-.introjs-tooltip-title {
+.course-page .introjs-tooltip-title {
   font-size: 0.9375vw;
   margin: 0;
   padding: 0;
@@ -232,13 +232,13 @@ tr.introjs-showElement > th {
   line-height: 1.66667vw;
 }
 
-.introjs-tooltip-header {
+.course-page .introjs-tooltip-header {
   padding-left: 1.04167vw;
   padding-right: 1.04167vw;
   padding-top: 0.52083vw;
 }
 
-.introjs-tooltip-header:after {
+.course-page .introjs-tooltip-header:after {
   content: ".";
   visibility: hidden;
   display: block;
@@ -246,14 +246,14 @@ tr.introjs-showElement > th {
   clear: both;
 }
 
-.introjs-tooltipbuttons {
+.course-page .introjs-tooltipbuttons {
   border-top: 1px solid #e0e0e0;
   padding: 0.52083vw;
   text-align: right;
   white-space: nowrap;
 }
 
-.introjs-tooltipbuttons:after {
+.course-page .introjs-tooltipbuttons:after {
   content: "";
   visibility: hidden;
   display: block;
@@ -261,7 +261,7 @@ tr.introjs-showElement > th {
   clear: both;
 }
 
-.introjs-button {
+.course-page .introjs-button {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
   position: relative;
@@ -278,30 +278,28 @@ tr.introjs-showElement > th {
   outline: none;
   background-color: #f4f4f4;
   border-radius: 0.2em;
-  zoom: 1;
-  *display: inline;
 }
 
-.introjs-button:hover {
+.course-page .introjs-button:hover {
   border-color: #9e9e9e;
   background-color: #e0e0e0;
 }
 
-.introjs-button:focus,
-.introjs-button:hover {
+.course-page .introjs-button:focus,
+.course-page .introjs-button:hover {
   outline: none;
   text-decoration: none;
   color: #212121;
 }
 
-.introjs-button:focus {
+.course-page .introjs-button:focus {
   background-color: #eee;
   -webkit-box-shadow: 0 0 0 0.2rem hsla(0, 0%, 62%, 0.5);
   box-shadow: 0 0 0 0.2rem hsla(0, 0%, 62%, 0.5);
   border: 1px solid #616161;
 }
 
-.introjs-button:active {
+.course-page .introjs-button:active {
   outline: none;
   text-decoration: none;
   background-color: #e0e0e0;
@@ -309,12 +307,12 @@ tr.introjs-showElement > th {
   color: #212121;
 }
 
-.introjs-button::-moz-focus-inner {
+.course-page .introjs-button::-moz-focus-inner {
   padding: 0;
   border: 0;
 }
 
-.introjs-skipbutton {
+.course-page .introjs-skipbutton {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
   color: #616161;
@@ -327,24 +325,24 @@ tr.introjs-showElement > th {
   padding: 0.36458vw 0.52083vw;
 }
 
-.introjs-skipbutton:focus,
-.introjs-skipbutton:hover {
+.course-page .introjs-skipbutton:focus,
+.course-page .introjs-skipbutton:hover {
   color: #212121;
   outline: none;
   text-decoration: none;
 }
 
-.introjs-prevbutton {
+.course-page .introjs-prevbutton {
   float: left;
 }
 
-.introjs-nextbutton {
+.course-page .introjs-nextbutton {
   float: right;
 }
 
-.introjs-disabled,
-.introjs-disabled:focus,
-.introjs-disabled:hover {
+.course-page .introjs-disabled,
+.course-page .introjs-disabled:focus,
+.course-page .introjs-disabled:hover {
   color: #9e9e9e;
   border-color: #bdbdbd;
   -webkit-box-shadow: none;
@@ -355,36 +353,36 @@ tr.introjs-showElement > th {
   text-decoration: none;
 }
 
-.introjs-hidden {
+.course-page .introjs-hidden {
   display: none;
 }
 
-.introjs-bullets {
+.course-page .introjs-bullets {
   text-align: center;
   padding-top: 0.52083vw;
   padding-bottom: 0.52083vw;
 }
 
-.introjs-bullets ul {
+.course-page .introjs-bullets ul {
   clear: both;
   margin: 0 auto 0;
   padding: 0;
   display: inline-block;
 }
 
-.introjs-bullets ul,
-.introjs-bullets ul li {
+.course-page .introjs-bullets ul,
+.course-page .introjs-bullets ul li {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
 }
 
-.introjs-bullets ul li {
+.course-page .introjs-bullets ul li {
   list-style: none;
   float: left;
   margin: 0 0.10417vw;
 }
 
-.introjs-bullets ul li a {
+.course-page .introjs-bullets ul li a {
   -webkit-transition: width 0.1s ease-in;
   -o-transition: width 0.1s ease-in;
   transition: width 0.1s ease-in;
@@ -399,20 +397,20 @@ tr.introjs-showElement > th {
   cursor: pointer;
 }
 
-.introjs-bullets ul li a:focus,
-.introjs-bullets ul li a:hover {
+.course-page .introjs-bullets ul li a:focus,
+.course-page .introjs-bullets ul li a:hover {
   width: 0.78125vw;
   background: #999;
   text-decoration: none;
   outline: none;
 }
 
-.introjs-bullets ul li a.active {
+.course-page .introjs-bullets ul li a.active {
   width: 0.78125vw;
   background: #999;
 }
 
-.introjs-progress {
+.course-page .introjs-progress {
   overflow: hidden;
   height: 0.52083vw;
   margin: 0.52083vw;
@@ -420,13 +418,13 @@ tr.introjs-showElement > th {
   background-color: #e0e0e0;
 }
 
-.introjs-progress,
-.introjs-progressbar {
+.course-page .introjs-progress,
+.course-page .introjs-progressbar {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
 }
 
-.introjs-progressbar {
+.course-page .introjs-progressbar {
   float: left;
   width: 0;
   height: 100%;
@@ -436,7 +434,7 @@ tr.introjs-showElement > th {
   background-color: #08c;
 }
 
-.introjsFloatingElement {
+.course-page .introjsFloatingElement {
   position: absolute;
   height: 0;
   width: 0;
@@ -444,11 +442,11 @@ tr.introjs-showElement > th {
   top: 50%;
 }
 
-.introjs-fixedTooltip {
+.course-page .introjs-fixedTooltip {
   position: fixed;
 }
 
-.introjs-hint {
+.course-page .introjs-hint {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
   position: absolute;
@@ -458,24 +456,24 @@ tr.introjs-showElement > th {
   cursor: pointer;
 }
 
-.introjs-hint:focus {
+.course-page .introjs-hint:focus {
   border: 0;
   outline: 0;
 }
 
-.introjs-hint:hover > .introjs-hint-pulse {
+.course-page .introjs-hint:hover > .introjs-hint-pulse {
   border: 0.26042vw solid rgba(60, 60, 60, 0.57);
 }
 
-.introjs-hidehint {
+.course-page .introjs-hidehint {
   display: none;
 }
 
-.introjs-fixedhint {
+.course-page .introjs-fixedhint {
   position: fixed;
 }
 
-.introjs-hint-pulse {
+.course-page .introjs-hint-pulse {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
   width: 0.52083vw;
@@ -490,12 +488,12 @@ tr.introjs-showElement > th {
   transition: all 0.2s ease-out;
 }
 
-.introjs-hint-no-anim .introjs-hint-dot {
+.course-page .introjs-hint-no-anim .introjs-hint-dot {
   -webkit-animation: none;
   animation: none;
 }
 
-.introjs-hint-dot {
+.course-page .introjs-hint-dot {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
   border: 0.52083vw solid hsla(0, 0%, 57.3%, 0.36);
