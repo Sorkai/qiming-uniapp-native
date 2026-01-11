@@ -2,6 +2,7 @@
 import { onMounted, ref, watch, computed, nextTick } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { message } from "@/utils/message";
+import ClipboardIcon from "@/assets/new-release/clipboard-note-document-report-paper-list-data-svgrepo-com.svg?component";
 import { utils, writeFile } from "xlsx";
 import {
   getCourseUsersProgress,
@@ -558,7 +559,7 @@ onMounted(() => {
             >
               <div class="flex items-center gap-4 shrink-0">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                  <IconifyIconOnline icon="ri:bar-chart-box-fill" class="text-2xl" />
+                  <ClipboardIcon class="w-6 h-6" />
                 </div>
                 <div class="flex flex-col">
                   <span class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow">分析课程数据</span>

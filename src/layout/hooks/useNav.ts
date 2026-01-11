@@ -41,9 +41,27 @@ export function useNav() {
 
   /** 头像（如果头像为空则使用 src/assets/user.jpg ） */
   const userAvatar = computed(() => {
-    return isAllEmpty(useUserStoreHook()?.avatar)
-      ? Avatar
-      : useUserStoreHook()?.avatar;
+    const avatar = useUserStoreHook()?.avatar;
+    if (!avatar || avatar === "null" || avatar === "undefined") {
+      return Avatar;
+    }
+    // 如果是相对路径，且不是以 http 或 data: 开头，则尝试拼接 API 前缀
+    if (
+      typeof avatar === "string" &&
+      !avatar.startsWith("http") &&
+      !avatar.startsWith("data:") &&
+      !avatar.startsWith("/")
+    ) {
+      return "/api/" + avatar;
+    } else if (
+      typeof avatar === "string" &&
+      avatar.startsWith("/") &&
+      !avatar.startsWith("/api") &&
+      !avatar.startsWith("/src")
+    ) {
+      return "/api" + avatar;
+    }
+    return avatar;
   });
 
   /** 昵称（如果昵称为空则显示用户名） */

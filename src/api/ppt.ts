@@ -12,6 +12,9 @@ interface PptTokenResponse {
 // 获取AI PPT生成token
 export const getPptToken = () => {
   return http.request<PptTokenResponse>("post", "/edu/v1/user/get/ppt/token", {
-    baseURL: "https://aiedu-api.lehinet.com"
+    data: {}, // 某些后端 POST 必须传空对象
+    headers: {
+      "Api-Key": import.meta.env.VITE_DOCMEE_API_KEY
+    }
   });
 }; 

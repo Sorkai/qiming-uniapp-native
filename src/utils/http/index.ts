@@ -18,8 +18,8 @@ import { useUserStoreHook } from "@/store/modules/user";
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间，上传大文件时设置为0表示不超时
   timeout: 0,
-  // 设置基础URL（使用真实后端 API）
-  baseURL: "https://aiedu-api.intelledu.cn",
+  // 设置基础URL（使用由 vite.config.ts 定义的代理前缀）
+  baseURL: "/api",
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",

@@ -5,7 +5,7 @@ import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
 import LayNotice from "../lay-notice/index.vue";
 import { responsiveStorageNameSpace } from "@/config";
-import { ref, nextTick, computed, onMounted } from "vue";
+import { ref, watch, nextTick, computed, onMounted } from "vue";
 import { storageLocal, isAllEmpty } from "@pureadmin/utils";
 import { useTranslationLang } from "../../hooks/useTranslationLang";
 import { usePermissionStoreHook } from "@/store/modules/permission";
@@ -18,6 +18,7 @@ import AccountSettingsIcon from "~icons/ri/user-settings-line";
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
 import Check from "~icons/ep/check";
+import DefaultAvatar from "@/assets/user.jpg";
 
 const menuRef = ref();
 const showLogo = ref(
@@ -52,6 +53,18 @@ const {
   getDropdownItemStyle,
   getDropdownItemClass
 } = useNav();
+
+// 头像加载失败时使用默认头像
+const avatarSrc = ref(userAvatar.value);
+watch(
+  () => userAvatar.value,
+  val => {
+    avatarSrc.value = val;
+  }
+);
+const handleAvatarError = () => {
+  avatarSrc.value = DefaultAvatar;
+};
 
 const defaultActive = computed(() =>
   !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
@@ -167,7 +180,7 @@ onMounted(() => {
       <!-- 退出登录 -->
       <el-dropdown trigger="click">
         <span class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10">
-          <img :src="userAvatar" :style="avatarsStyle" class="ring-2 ring-white dark:ring-gray-800" />
+          <img :src="avatarSrc" :style="avatarsStyle" class="ring-2 ring-white dark:ring-gray-800" @error="handleAvatarError" />
           <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">{{ username }}</p>
         </span>
         <template #dropdown>

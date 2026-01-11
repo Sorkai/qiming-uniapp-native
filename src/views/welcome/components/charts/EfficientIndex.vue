@@ -10,6 +10,7 @@ import {
   ElButton,
   ElPagination
 } from "element-plus";
+import ChartIcon from "@/assets/new-release/graph-chart-data-analytics-statistic-report-analysis-svgrepo-com.svg?component";
 
 defineOptions({
   name: "EfficientIndex"
@@ -283,7 +284,7 @@ onMounted(() => {
               <div
                 class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
               >
-                <IconifyIconOnline icon="ri:filter-3-fill" class="text-2xl" />
+                <ChartIcon class="w-7 h-7" />
               </div>
               <div class="flex flex-col">
                 <span

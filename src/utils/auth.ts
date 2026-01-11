@@ -72,7 +72,7 @@ export function setToken(data: DataInfo<Date>) {
   );
 
   function setUserKey({ avatar, username, nickname, roles, permissions, roleType }) {
-    useUserStoreHook().SET_AVATAR(avatar);
+    useUserStoreHook().SET_AVATAR(avatar || "");
     useUserStoreHook().SET_USERNAME(username);
     useUserStoreHook().SET_NICKNAME(nickname);
     useUserStoreHook().SET_ROLES(roles);
@@ -80,7 +80,7 @@ export function setToken(data: DataInfo<Date>) {
     storageLocal().setItem(userKey, {
       refreshToken,
       expires,
-      avatar,
+      avatar: avatar || "",
       username,
       nickname,
       roles,

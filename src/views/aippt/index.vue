@@ -11,9 +11,13 @@ const docmeeUI = shallowRef<any>(null);
 async function initAiPPT() {
   try {
     loading.value = true;
-    // 获取token
-    const res = await getPptToken();
-    if (res?.data?.token) {
+    console.log("正在请求 PPT Token...");
+    const res: any = await getPptToken();
+    console.log("PPT Token 响应结果:", res);
+
+    // 兼容多种状态码：0 或 200 都视为成功
+    if (res && (res.code === 0 || res.code === 200) && res.data?.token) {
+      console.log("Token 获取成功，正在初始化 DocmeeUI...");
       docmeeUI.value = new DocmeeUI({
         container: "aippt-container", // 挂载 iframe 容器元素ID
         page: "creator", // 固定使用creator页面
@@ -25,7 +29,7 @@ async function initAiPPT() {
           type: CreatorType.AI_GEN,
         },
         isMobile: false, // 移动端模式
-        padding: "40px 20px 0px",
+        padding: "20px 20px 0px",
         background: "linear-gradient(-157deg,#f57bb0, #867dea)", // 自定义背景
         mode: "light", // light 亮色模式, dark 暗色模式
         lang: "zh", // 国际化
@@ -97,17 +101,19 @@ onMounted(() => {
 <style scoped>
 .aippt-page {
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 115px);
   padding: 0;
+  margin: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .aippt-container-wrapper {
   flex: 1;
-  height: 100vh;
-  min-height: 600px;
+  width: 100%;
+  height: 100%;
 }
 
 #aippt-container {
@@ -115,7 +121,7 @@ onMounted(() => {
   height: 100%;
   margin: 0 auto;
   padding: 0;
-  border-radius: 0;
+  border-radius: 8px;
   overflow: hidden;
   background: linear-gradient(-157deg, #f57bb0, #867dea);
   color: white;

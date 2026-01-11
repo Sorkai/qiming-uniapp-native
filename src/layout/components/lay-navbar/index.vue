@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import { useNav } from "@/layout/hooks/useNav";
@@ -18,6 +18,7 @@ import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
 import Check from "~icons/ep/check";
 import ArrowDown from "~icons/ep/arrow-down";
+import DefaultAvatar from "@/assets/user.jpg";
 
 const {
   layout,
@@ -33,6 +34,18 @@ const {
   getDropdownItemStyle,
   getDropdownItemClass
 } = useNav();
+
+// 头像加载失败时使用默认头像
+const avatarSrc = ref(userAvatar.value);
+watch(
+  () => userAvatar.value,
+  val => {
+    avatarSrc.value = val;
+  }
+);
+const handleAvatarError = () => {
+  avatarSrc.value = DefaultAvatar;
+};
 
 const visible = ref(false);
 
@@ -108,7 +121,7 @@ const {
         <span
           class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10"
         >
-          <img :src="userAvatar" class="w-[24px] h-[24px] rounded-full ring-2 ring-white dark:ring-gray-800" />
+          <img :src="avatarSrc" class="w-[24px] h-[24px] rounded-full ring-2 ring-white dark:ring-gray-800 object-cover" @error="handleAvatarError" />
         <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">
           {{ username }}
         </p>

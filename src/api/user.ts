@@ -180,9 +180,16 @@ export const getUserDetail = () => {
 
 /** 文件上传 */
 export const uploadFile = (data: FormData) => {
-  return http.request<UploadResult>("post", "/edu/v1/user/upload", {
-    data
-  });
+  return http.request<UploadResult>(
+    "post",
+    "/edu/v1/user/upload",
+    { data },
+    {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    }
+  );
 };
 
 /** 获取文件列表 */
