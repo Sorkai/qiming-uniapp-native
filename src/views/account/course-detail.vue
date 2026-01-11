@@ -614,24 +614,41 @@ const fetchExamList = async () => {
 const fetchHtmlAnimations = async () => {
   if (!courseDetail.value) return;
   htmlAnimationLoading.value = true;
-  htmlAnimationList.value = [];
   try {
     const chapters = courseDetail.value.courseChapterList || [];
-    const promises = chapters.map(async (ch: any) => {
-      try {
-        const { data } = await getHtmlAnimationDisplay({ courseId: courseDetail.value.courseId, chapterId: ch.chapterId });
-        if (data?.url) {
-          htmlAnimationList.value.push({
-            chapterId: ch.chapterId,
-            chapterName: ch.name,
-            version: data.version,
-            url: data.url,
-            previewUrl: data.previewUrl
+    const results = await Promise.all(
+      chapters.map(async (ch: any) => {
+        try {
+          const { data } = await getHtmlAnimationDisplay({
+            courseId: courseDetail.value.courseId,
+            chapterId: ch.chapterId
           });
+          if (data?.url) {
+            return {
+              chapterId: ch.chapterId,
+              chapterName: ch.name,
+              version: data.version,
+              url: data.url,
+              previewUrl: data.previewUrl
+            };
+          }
+        } catch (e) {
+          return null;
         }
-      } catch (e) {}
+        return null;
+      })
+    );
+
+    // 过滤掉空值并进行去重（根据 chapterId），防止后端数据重复或并发引起的重复
+    const animationData = results.filter(item => item !== null);
+    const uniqueMap = new Map();
+    animationData.forEach(item => {
+      if (!uniqueMap.has(item.chapterId)) {
+        uniqueMap.set(item.chapterId, item);
+      }
     });
-    await Promise.all(promises);
+
+    htmlAnimationList.value = Array.from(uniqueMap.values());
   } finally {
     htmlAnimationLoading.value = false;
   }
