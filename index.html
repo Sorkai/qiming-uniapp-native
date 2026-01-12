@@ -29,6 +29,36 @@
 
     gtag('config', 'G-TQ7GPZDL9X');
   </script>
+  <script>
+    (function () {
+      var reloadFlag = localStorage.getItem("THEME_SWITCH_RELOAD");
+      if (reloadFlag === "true") {
+        var targetMode = localStorage.getItem("THEME_SWITCH_MODE");
+        var color = targetMode === "dark" ? "#121212" : "#ffffff";
+        document.documentElement.style.background = color;
+        var style = document.createElement("style");
+        style.id = "theme-refresh-mask-style";
+        style.innerHTML = ".loader { display: none !important; } #app { visibility: hidden !important; } body { background: " + color + " !important; } #theme-instant-mask { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2147483647; background: " + color + "; opacity: 1; transition: opacity 0.5s ease; }";
+        document.head.appendChild(style);
+        var mask = document.createElement("div");
+        mask.id = "theme-instant-mask";
+        document.documentElement.appendChild(mask);
+        window.addEventListener("load", function () {
+          setTimeout(function () {
+            mask.style.opacity = "0";
+            var appStyle = document.createElement("style");
+            appStyle.innerHTML = "#app { visibility: visible !important; }";
+            document.head.appendChild(appStyle);
+            setTimeout(function () {
+              if (mask.parentNode) mask.parentNode.removeChild(mask);
+              localStorage.removeItem("THEME_SWITCH_RELOAD");
+              localStorage.removeItem("THEME_SWITCH_MODE");
+            }, 500);
+          }, 200);
+        });
+      }
+    })();
+  </script>
 </head>
 
 <body>

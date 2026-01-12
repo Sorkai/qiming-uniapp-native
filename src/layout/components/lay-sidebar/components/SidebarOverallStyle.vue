@@ -71,26 +71,27 @@ const onToggle = async (event: MouseEvent) => {
       overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
     });
 
-    // 3. 在扩散到一半或完成时切换真实主题
+    // 3. 高性能刷新方案：
+    // 当扩散动画执行到一半以上（400ms），用户视野已完全被纯色填充时，直接更新状态并强制刷新
     setTimeout(async () => {
       try {
+        // 先触发主题切换（同步 localStorage）
         toggleTheme();
-        await nextTick();
+        
+        // 设置刷新标识和模式，供 index.html 拦截使用
+        localStorage.setItem("THEME_SWITCH_RELOAD", "true");
+        localStorage.setItem("THEME_SWITCH_MODE", isToDark ? "dark" : "light");
 
-        // 4. 主题切换后，让遮罩层淡出
-        overlay.style.transition = "opacity 500ms ease, clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1)";
-        overlay.style.opacity = "0";
-
-        setTimeout(() => {
-          clearTimeout(safetyTimeout);
-          cleanup();
-        }, 500);
+        // 立即刷新
+        // 此时 overlay 还在 DOM 中且 z-index 最高，刷新会瞬间中断当前 JS 
+        // 随后 index.html 中的脚本会接力，显示颜色完全一致的 mask
+        window.location.reload();
       } catch (error) {
-        console.error("主题切换失败:", error);
-        clearTimeout(safetyTimeout);
+        console.error("刷新准备失败:", error);
         cleanup();
+        clearTimeout(safetyTimeout);
       }
-    }, 500);
+    }, 450);
   } catch (error) {
     console.error("扩散动画失败:", error);
     clearTimeout(safetyTimeout);
