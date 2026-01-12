@@ -26,7 +26,8 @@ import { ref, toRaw, reactive, watch, computed, onMounted } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
-import { resetThemeToDefault } from "@/utils/auth";
+import { resetThemeToDefault, setToken, getToken } from "@/utils/auth";
+import { getUserDetail } from "@/api/user";
 
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
@@ -128,6 +129,40 @@ const statistics = [
   { number: "24/7", label: "技术支持" }
 ];
 
+// 获取用户详细信息（包括头像）
+const fetchUserDetail = async () => {
+  try {
+    const res = await getUserDetail();
+    if (res && res.data && res.data.userInfo) {
+      const userInfo = res.data.userInfo;
+      const userStore = useUserStoreHook();
+      // 直接使用后端返回的头像
+      userStore.SET_NICKNAME(userInfo.nickname || "");
+      userStore.SET_AVATAR(userInfo.avatar || "");
+
+      setToken({
+        accessToken: getToken()?.accessToken || "",
+        refreshToken: getToken()?.refreshToken || "",
+        expires: getToken()?.expires ? new Date(getToken().expires) : new Date(),
+        username: userInfo.mobile,
+        nickname: userInfo.nickname,
+        avatar: userInfo.avatar || "",
+        roles: ["admin"],
+        permissions: ["*:*:*"],
+        roleType: userInfo.roleType
+      });
+
+      localStorage.setItem("userId", userInfo.id.toString());
+      localStorage.setItem("userMobile", userInfo.mobile);
+      localStorage.setItem("userSex", userInfo.sex.toString());
+      localStorage.setItem("userInfo", userInfo.info || "");
+      localStorage.setItem("userRoleType", userInfo.roleType.toString());
+    }
+  } catch (error) {
+    console.error("获取用户详细信息出错:", error);
+  }
+};
+
 const onLogin = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   await formEl.validate(valid => {
@@ -138,8 +173,10 @@ const onLogin = async (formEl: FormInstance | undefined) => {
           username: ruleForm.username,
           password: ruleForm.password
         })
-        .then(res => {
+        .then(async res => {
           if (res.success) {
+            // 获取用户详细信息（包括头像）
+            await fetchUserDetail();
             // 获取后端路由
             return initRouter().then(() => {
               disabled.value = true;

@@ -8,16 +8,16 @@
         </div>
         <div class="header-stats">
           <div class="stat-item">
-            <span class="stat-value">{{ stats.totalLabs }}</span>
-            <span class="stat-label">实验总数</span>
+            <span class="stat-value">{{ stats.totalTasks }}</span>
+            <span class="stat-label">任务总数</span>
           </div>
           <div class="stat-item">
-            <span class="stat-value">{{ stats.activeLabs }}</span>
-            <span class="stat-label">已上线</span>
+            <span class="stat-value">{{ stats.completedTasks }}</span>
+            <span class="stat-label">已完成</span>
           </div>
           <div class="stat-item">
-            <span class="stat-value">{{ stats.totalViews }}</span>
-            <span class="stat-label">总访问量</span>
+            <span class="stat-value">{{ stats.processingTasks }}</span>
+            <span class="stat-label">进行中</span>
           </div>
         </div>
       </div>
@@ -26,192 +26,194 @@
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
-          <span>实验列表</span>
-          <el-button type="primary" @click="handleOpenDialog()">
-            创建实验
+          <span>HTML 动画任务列表</span>
+          <el-button type="success" :loading="syncLoading" @click="handleForceSync">
+            <el-icon class="mr-1"><Refresh /></el-icon>
+            强制同步
           </el-button>
         </div>
       </template>
 
       <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="实验名称">
-          <el-input
-            v-model="searchForm.title"
-            placeholder="请输入实验名称"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="分类">
+        <el-form-item label="选择课程">
           <el-select
-            v-model="searchForm.category"
-            placeholder="请选择分类"
+            v-model="searchForm.courseId"
+            placeholder="请选择课程"
+            filterable
             clearable
+            style="width: 240px"
+            @change="handleCourseChange"
           >
-            <el-option label="HTML动画" value="animation" />
-            <el-option label="AI小游戏" value="game" />
-            <el-option label="模拟实验" value="simulation" />
+            <el-option
+              v-for="course in courseList"
+              :key="course.courseId"
+              :label="course.title"
+              :value="course.courseId"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="选择章节">
           <el-select
-            v-model="searchForm.status"
-            placeholder="请选择状态"
+            v-model="searchForm.chapterId"
+            placeholder="请选择章节"
+            filterable
             clearable
+            :disabled="!searchForm.courseId"
+            style="width: 240px"
+            @change="handleSearch"
           >
-            <el-option label="已上线" :value="1" />
-            <el-option label="已下线" :value="0" />
+            <el-option
+              v-for="chapter in chapterList"
+              :key="chapter.chapterId"
+              :label="chapter.name"
+              :value="chapter.chapterId"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" :disabled="!searchForm.courseId || !searchForm.chapterId" @click="handleSearch">
+            查询
+          </el-button>
           <el-button @click="resetSearch">重置</el-button>
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
-        <el-table-column prop="labId" label="ID" align="center" width="80" />
-        <el-table-column prop="title" label="实验名称" align="left" min-width="180">
+      <!-- 当前章节信息 -->
+      <div v-if="currentAnimationData" class="chapter-info">
+        <el-descriptions :column="3" border>
+          <el-descriptions-item label="当前展示版本">
+            <el-tag v-if="currentAnimationData.displayVersionResolved" type="success">
+              {{ currentAnimationData.displayVersionRaw === 'latest' ? `latest (v${currentAnimationData.displayVersionResolved})` : `v${currentAnimationData.displayVersionResolved}` }}
+            </el-tag>
+            <el-tag v-else type="info">未设置</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="课程ID">{{ currentAnimationData.courseId }}</el-descriptions-item>
+          <el-descriptions-item label="章节ID">{{ currentAnimationData.chapterId }}</el-descriptions-item>
+        </el-descriptions>
+
+        <div class="action-bar">
+          <el-button type="primary" :loading="generateLoading" @click="handleGenerate">
+            <el-icon class="mr-1"><VideoPlay /></el-icon>
+            生成新版本
+          </el-button>
+          <el-button type="warning" @click="showSetVersionDialog = true">
+            <el-icon class="mr-1"><Setting /></el-icon>
+            设置展示版本
+          </el-button>
+        </div>
+      </div>
+
+      <!-- 空状态提示 -->
+      <el-empty v-if="!searchForm.courseId || !searchForm.chapterId" description="请先选择课程和章节" />
+
+      <!-- 任务列表 -->
+      <el-table v-else v-loading="loading" :data="taskList" stripe style="width: 100%">
+        <el-table-column prop="version" label="版本" align="center" width="80">
           <template #default="{ row }">
-            <div class="lab-title-cell">
-              <span class="lab-icon">{{ row.icon }}</span>
-              <span>{{ row.title }}</span>
-            </div>
+            <el-tag v-if="row.version > 0" :type="row.version.toString() === currentAnimationData?.displayVersionResolved ? 'success' : 'info'">
+              v{{ row.version }}
+            </el-tag>
+            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="category" label="分类" align="center" width="120">
+        <el-table-column prop="taskId" label="任务ID" align="left" min-width="280">
           <template #default="{ row }">
-            <el-tag :type="getCategoryTagType(row.category)">
-              {{ getCategoryLabel(row.category) }}
+            <el-tooltip :content="row.taskId" placement="top">
+              <span class="task-id">{{ row.taskId.slice(0, 8) }}...{{ row.taskId.slice(-8) }}</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" align="center" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getStatusTagType(row.status)">
+              {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="difficulty" label="难度" align="center" width="100">
+        <el-table-column prop="fileName" label="文件名" align="left" min-width="200">
           <template #default="{ row }">
-            <el-tag :type="getDifficultyTagType(row.difficulty)" size="small">
-              {{ getDifficultyLabel(row.difficulty) }}
-            </el-tag>
+            <span v-if="row.fileName">{{ row.fileName }}</span>
+            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="duration" label="时长" align="center" width="100" />
-        <el-table-column prop="viewCount" label="访问量" align="center" width="100" />
-        <el-table-column prop="status" label="状态" align="center" width="100">
+        <el-table-column prop="fileSize" label="文件大小" align="center" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'">
-              {{ row.status === 1 ? '已上线' : '已下线' }}
-            </el-tag>
+            <span v-if="row.fileSize > 0">{{ formatFileSize(row.fileSize) }}</span>
+            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" align="center" width="160" />
-        <el-table-column label="操作" align="center" width="220">
+        <el-table-column prop="createdAt" label="创建时间" align="center" width="170" />
+        <el-table-column prop="completedAt" label="完成时间" align="center" width="170">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handlePreview(row)">
+            <span v-if="row.completedAt">{{ row.completedAt }}</span>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" align="center" width="200">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.status === 'completed' && row.fileUrl"
+              type="primary"
+              size="small"
+              @click="handlePreview(row)"
+            >
               预览
             </el-button>
-            <el-button type="warning" size="small" @click="handleOpenDialog(row)">
-              编辑
+            <el-button
+              v-if="row.status === 'completed' && row.version > 0"
+              type="success"
+              size="small"
+              @click="handleSetVersion(row.version.toString())"
+            >
+              设为展示
             </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-tag v-if="row.status === 'failed'" type="danger" size="small">
+              {{ row.errorMessage || '生成失败' }}
+            </el-tag>
           </template>
         </el-table-column>
       </el-table>
-
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="queryParams.pageNum"
-          v-model:page-size="queryParams.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
     </el-card>
 
-    <!-- 实验表单弹窗 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="formData.labId ? '编辑实验' : '创建实验'"
-      width="600px"
-      destroy-on-close
-    >
-      <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="formRules"
-        label-width="100px"
-      >
-        <el-form-item label="实验名称" prop="title">
-          <el-input v-model="formData.title" placeholder="请输入实验名称" />
-        </el-form-item>
-        <el-form-item label="图标" prop="icon">
-          <el-input v-model="formData.icon" placeholder="请输入Emoji图标，如：🧪" />
-        </el-form-item>
-        <el-form-item label="简介" prop="description">
-          <el-input
-            v-model="formData.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入实验简介"
-          />
-        </el-form-item>
-        <el-form-item label="分类" prop="category">
-          <el-select v-model="formData.category" placeholder="请选择分类">
-            <el-option label="HTML动画" value="animation" />
-            <el-option label="AI小游戏" value="game" />
-            <el-option label="模拟实验" value="simulation" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="难度" prop="difficulty">
-          <el-select v-model="formData.difficulty" placeholder="请选择难度">
-            <el-option label="简单" value="easy" />
-            <el-option label="中等" value="medium" />
-            <el-option label="困难" value="hard" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="预计时长" prop="duration">
-          <el-input v-model="formData.duration" placeholder="如：15分钟" />
-        </el-form-item>
-        <el-form-item label="实验链接" prop="url">
-          <el-input v-model="formData.url" placeholder="请输入实验页面URL" />
-        </el-form-item>
-        <el-form-item label="渐变色" prop="gradient">
-          <el-input
-            v-model="formData.gradient"
-            placeholder="如：linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-          />
-        </el-form-item>
-        <el-form-item label="精选推荐" prop="featured">
-          <el-switch v-model="formData.featured" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="formData.status">
-            <el-radio :value="1">上线</el-radio>
-            <el-radio :value="0">下线</el-radio>
+    <!-- 设置展示版本弹窗 -->
+    <el-dialog v-model="showSetVersionDialog" title="设置展示版本" width="400px">
+      <el-form label-width="100px">
+        <el-form-item label="版本选择">
+          <el-radio-group v-model="setVersionForm.versionType">
+            <el-radio value="latest">最新版本 (latest)</el-radio>
+            <el-radio value="specific">指定版本</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="setVersionForm.versionType === 'specific'" label="版本号">
+          <el-select v-model="setVersionForm.version" placeholder="请选择版本">
+            <el-option
+              v-for="task in completedTasks"
+              :key="task.version"
+              :label="`v${task.version}`"
+              :value="task.version.toString()"
+            />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
-        </div>
+        <el-button @click="showSetVersionDialog = false">取消</el-button>
+        <el-button type="primary" :loading="setVersionLoading" @click="confirmSetVersion">
+          确定
+        </el-button>
       </template>
     </el-dialog>
 
     <!-- 预览弹窗 -->
     <el-dialog
       v-model="previewDialogVisible"
-      :title="currentLab?.title"
+      :title="`HTML 动画预览 - v${currentPreviewTask?.version || ''}`"
       width="90%"
       class="lab-dialog"
     >
       <div class="lab-iframe-container">
         <iframe
-          v-if="currentLab"
-          :src="currentLab.url"
+          v-if="currentPreviewTask"
+          :src="currentPreviewTask.fileUrl"
           frameborder="0"
           allowfullscreen
           class="lab-iframe"
@@ -222,240 +224,267 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from "vue";
-import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
+import { ref, reactive, computed, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import { Refresh, VideoPlay, Setting } from "@element-plus/icons-vue";
+import { getCourseList, getCourseHoursList } from "@/api/course";
 import {
-  getLabList,
-  upsertLab,
-  deleteLab,
-  getLabStats
-} from "@/api/virtualLab";
+  getHtmlAnimationList,
+  generateHtmlAnimation,
+  setHtmlAnimationDisplay,
+  forceSyncHtmlAnimation,
+  type HtmlAnimationTask,
+  type HtmlAnimationListResult
+} from "@/api/htmlAnimation";
 
 defineOptions({
   name: "VirtualLabManage"
 });
 
-interface LabItem {
-  labId: number;
+interface CourseItem {
+  courseId: number;
   title: string;
-  icon: string;
-  description: string;
-  category: "animation" | "game" | "simulation";
-  difficulty: "easy" | "medium" | "hard";
-  duration: string;
-  url: string;
-  gradient: string;
-  featured: boolean;
-  status: number;
-  viewCount: number;
-  createTime: string;
+}
+
+interface ChapterItem {
+  chapterId: number;
+  name: string;
 }
 
 const loading = ref(false);
-const tableData = ref<LabItem[]>([]);
-const total = ref(0);
+const generateLoading = ref(false);
+const syncLoading = ref(false);
+const setVersionLoading = ref(false);
 
-const stats = ref({
-  totalLabs: 0,
-  activeLabs: 0,
-  totalViews: 0
+// 课程和章节数据
+const courseList = ref<CourseItem[]>([]);
+const chapterList = ref<ChapterItem[]>([]);
+
+// 当前动画数据
+const currentAnimationData = ref<HtmlAnimationListResult | null>(null);
+const taskList = ref<HtmlAnimationTask[]>([]);
+
+// 统计数据
+const stats = computed(() => {
+  const total = taskList.value.length;
+  const completed = taskList.value.filter(t => t.status === "completed").length;
+  const processing = taskList.value.filter(t => t.status === "pending" || t.status === "processing").length;
+  return {
+    totalTasks: total,
+    completedTasks: completed,
+    processingTasks: processing
+  };
 });
 
-const queryParams = reactive({
-  pageNum: 1,
-  pageSize: 20
+// 已完成的任务（用于版本选择）
+const completedTasks = computed(() => {
+  return taskList.value.filter(t => t.status === "completed" && t.version > 0);
 });
 
 const searchForm = reactive({
-  title: "",
-  category: "",
-  status: ""
+  courseId: null as number | null,
+  chapterId: null as number | null
 });
 
-const handleSearch = () => {
-  queryParams.pageNum = 1;
-  loadTableData();
+// 设置版本表单
+const showSetVersionDialog = ref(false);
+const setVersionForm = reactive({
+  versionType: "latest",
+  version: ""
+});
+
+// 预览相关
+const previewDialogVisible = ref(false);
+const currentPreviewTask = ref<HtmlAnimationTask | null>(null);
+
+// 加载课程列表
+const loadCourseList = async () => {
+  try {
+    const res = await getCourseList({ pageNum: 1, pageSize: 1000 });
+    courseList.value = res.data.courseList.map(c => ({
+      courseId: c.courseId,
+      title: c.title
+    }));
+  } catch (error) {
+    console.error("获取课程列表失败", error);
+    ElMessage.error("获取课程列表失败");
+  }
 };
 
-const resetSearch = () => {
-  searchForm.title = "";
-  searchForm.category = "";
-  searchForm.status = "";
-  queryParams.pageNum = 1;
-  loadTableData();
+// 课程变化时加载章节
+const handleCourseChange = async (courseId: number | null) => {
+  searchForm.chapterId = null;
+  chapterList.value = [];
+  currentAnimationData.value = null;
+  taskList.value = [];
+
+  if (!courseId) return;
+
+  try {
+    const res = await getCourseHoursList({ courseId });
+    chapterList.value = res.data.courseChapters.map(c => ({
+      chapterId: c.chapterId,
+      name: c.name
+    }));
+  } catch (error) {
+    console.error("获取章节列表失败", error);
+    ElMessage.error("获取章节列表失败");
+  }
 };
 
-const loadTableData = async () => {
+// 查询动画任务列表
+const handleSearch = async () => {
+  if (!searchForm.courseId || !searchForm.chapterId) {
+    currentAnimationData.value = null;
+    taskList.value = [];
+    return;
+  }
+
   loading.value = true;
   try {
-    const params = {
-      ...queryParams,
-      ...searchForm
-    };
-    const { data } = await getLabList(params);
-    tableData.value = data.labList;
-    total.value = data.total;
+    const res = await getHtmlAnimationList({
+      courseId: searchForm.courseId,
+      chapterId: searchForm.chapterId
+    });
+    currentAnimationData.value = res.data;
+    taskList.value = res.data.tasks || [];
   } catch (error) {
-    console.error("获取实验列表失败", error);
-    ElMessage.error("获取实验列表失败");
+    console.error("获取动画任务列表失败", error);
+    ElMessage.error("获取动画任务列表失败");
+    currentAnimationData.value = null;
+    taskList.value = [];
   } finally {
     loading.value = false;
   }
 };
 
-const loadStats = async () => {
+const resetSearch = () => {
+  searchForm.courseId = null;
+  searchForm.chapterId = null;
+  chapterList.value = [];
+  currentAnimationData.value = null;
+  taskList.value = [];
+};
+
+// 生成新版本
+const handleGenerate = async () => {
+  if (!searchForm.courseId || !searchForm.chapterId) return;
+
+  generateLoading.value = true;
   try {
-    const { data } = await getLabStats();
-    stats.value = data;
+    const res = await generateHtmlAnimation({
+      courseId: searchForm.courseId,
+      chapterId: searchForm.chapterId
+    });
+    ElMessage.success(res.data.message || "生成任务已启动");
+    // 重新加载列表
+    setTimeout(() => handleSearch(), 1000);
   } catch (error) {
-    console.error("获取统计数据失败", error);
+    console.error("生成动画失败", error);
+    ElMessage.error("生成动画失败");
+  } finally {
+    generateLoading.value = false;
   }
 };
 
-const handleSizeChange = (val: number) => {
-  queryParams.pageSize = val;
-  loadTableData();
-};
-
-const handleCurrentChange = (val: number) => {
-  queryParams.pageNum = val;
-  loadTableData();
-};
-
-// 表单相关
-const dialogVisible = ref(false);
-const formRef = ref<FormInstance>();
-const formData = reactive({
-  labId: 0,
-  title: "",
-  icon: "",
-  description: "",
-  category: "",
-  difficulty: "",
-  duration: "",
-  url: "",
-  gradient: "",
-  featured: false,
-  status: 1
-});
-
-const formRules = {
-  title: [{ required: true, message: "请输入实验名称", trigger: "blur" }],
-  icon: [{ required: true, message: "请输入图标", trigger: "blur" }],
-  description: [{ required: true, message: "请输入实验简介", trigger: "blur" }],
-  category: [{ required: true, message: "请选择分类", trigger: "change" }],
-  difficulty: [{ required: true, message: "请选择难度", trigger: "change" }],
-  duration: [{ required: true, message: "请输入预计时长", trigger: "blur" }],
-  url: [{ required: true, message: "请输入实验链接", trigger: "blur" }]
-};
-
-const handleOpenDialog = (row?: LabItem) => {
-  dialogVisible.value = true;
-  
-  // 重置表单
-  formData.labId = 0;
-  formData.title = "";
-  formData.icon = "";
-  formData.description = "";
-  formData.category = "";
-  formData.difficulty = "";
-  formData.duration = "";
-  formData.url = "";
-  formData.gradient = "";
-  formData.featured = false;
-  formData.status = 1;
-  
-  if (row) {
-    Object.assign(formData, row);
-  }
-};
-
-const handleSubmit = async () => {
-  formRef.value?.validate(async valid => {
-    if (!valid) return;
-
-    try {
-      await upsertLab(formData);
-      ElMessage.success(formData.labId ? "编辑成功" : "新增成功");
-      dialogVisible.value = false;
-      loadTableData();
-      loadStats();
-    } catch (error) {
-      console.error("保存实验失败", error);
-      ElMessage.error("保存失败，请重试");
+// 强制同步
+const handleForceSync = async () => {
+  syncLoading.value = true;
+  try {
+    const res = await forceSyncHtmlAnimation();
+    ElMessage.success(`同步完成：共 ${res.data.totalChapters} 章节，成功 ${res.data.successChapters} 章节`);
+    // 如果当前有选中章节，刷新数据
+    if (searchForm.courseId && searchForm.chapterId) {
+      handleSearch();
     }
-  });
+  } catch (error) {
+    console.error("同步失败", error);
+    ElMessage.error("同步失败");
+  } finally {
+    syncLoading.value = false;
+  }
 };
 
-const handleDelete = (row: LabItem) => {
-  ElMessageBox.confirm(`确定要删除实验 "${row.title}" 吗？`, "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-    .then(async () => {
-      try {
-        await deleteLab({ labId: row.labId });
-        ElMessage.success("删除成功");
-        loadTableData();
-        loadStats();
-      } catch (error) {
-        console.error("删除实验失败", error);
-        ElMessage.error("删除失败，请重试");
-      }
-    })
-    .catch(() => {});
+// 设置展示版本
+const handleSetVersion = async (version: string) => {
+  if (!searchForm.courseId || !searchForm.chapterId) return;
+
+  try {
+    await setHtmlAnimationDisplay({
+      courseId: searchForm.courseId,
+      chapterId: searchForm.chapterId,
+      version
+    });
+    ElMessage.success("设置成功");
+    handleSearch();
+  } catch (error) {
+    console.error("设置展示版本失败", error);
+    ElMessage.error("设置展示版本失败");
+  }
 };
 
-// 预览相关
-const previewDialogVisible = ref(false);
-const currentLab = ref<LabItem | null>(null);
+const confirmSetVersion = async () => {
+  if (!searchForm.courseId || !searchForm.chapterId) return;
 
-const handlePreview = (row: LabItem) => {
-  currentLab.value = row;
+  const version = setVersionForm.versionType === "latest" ? "latest" : setVersionForm.version;
+  if (setVersionForm.versionType === "specific" && !setVersionForm.version) {
+    ElMessage.warning("请选择版本号");
+    return;
+  }
+
+  setVersionLoading.value = true;
+  try {
+    await setHtmlAnimationDisplay({
+      courseId: searchForm.courseId,
+      chapterId: searchForm.chapterId,
+      version
+    });
+    ElMessage.success("设置成功");
+    showSetVersionDialog.value = false;
+    handleSearch();
+  } catch (error) {
+    console.error("设置展示版本失败", error);
+    ElMessage.error("设置展示版本失败");
+  } finally {
+    setVersionLoading.value = false;
+  }
+};
+
+// 预览
+const handlePreview = (task: HtmlAnimationTask) => {
+  currentPreviewTask.value = task;
   previewDialogVisible.value = true;
 };
 
 // 工具函数
-const getCategoryLabel = (category: string) => {
+const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
-    animation: "HTML动画",
-    game: "AI小游戏",
-    simulation: "模拟实验"
+    pending: "等待中",
+    processing: "生成中",
+    completed: "已完成",
+    failed: "失败"
   };
-  return labels[category] || category;
+  return labels[status] || status;
 };
 
-const getCategoryTagType = (category: string): "primary" | "success" | "info" => {
-  const types: Record<string, "primary" | "success" | "info"> = {
-    animation: "primary",
-    game: "success",
-    simulation: "info"
+const getStatusTagType = (status: string): "info" | "warning" | "success" | "danger" => {
+  const types: Record<string, "info" | "warning" | "success" | "danger"> = {
+    pending: "info",
+    processing: "warning",
+    completed: "success",
+    failed: "danger"
   };
-  return types[category] || "info";
+  return types[status] || "info";
 };
 
-const getDifficultyLabel = (difficulty: string) => {
-  const labels: Record<string, string> = {
-    easy: "简单",
-    medium: "中等",
-    hard: "困难"
-  };
-  return labels[difficulty] || difficulty;
-};
-
-const getDifficultyTagType = (difficulty: string): "success" | "warning" | "danger" => {
-  const types: Record<string, "success" | "warning" | "danger"> = {
-    easy: "success",
-    medium: "warning",
-    hard: "danger"
-  };
-  return types[difficulty] || "warning";
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 };
 
 onMounted(() => {
-  loadTableData();
-  loadStats();
+  loadCourseList();
 });
 </script>
 
@@ -465,10 +494,24 @@ onMounted(() => {
 
   .header-card {
     margin-bottom: 16px;
-    border-radius: 16px;
+    border-radius: 24px;
     overflow: hidden;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border: 1px solid #e2e8f0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    html.dark & {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgb(255 255 255 / 10%);
+    }
+
+    &:hover {
+      box-shadow: 0 20px 40px -10px rgba(148, 163, 184, 0.1);
+
+      html.dark & {
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+      }
+    }
 
     .header-content {
       display: flex;
@@ -482,13 +525,21 @@ onMounted(() => {
         margin: 0 0 8px;
         font-size: 24px;
         font-weight: 600;
-        color: #fff;
+        color: #1e293b;
+
+        html.dark & {
+          color: #fff;
+        }
       }
 
       p {
         margin: 0;
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
+        color: #64748b;
+
+        html.dark & {
+          color: rgba(255, 255, 255, 0.75);
+        }
       }
     }
 
@@ -503,14 +554,22 @@ onMounted(() => {
           display: block;
           font-size: 28px;
           font-weight: 700;
-          color: #fff;
+          color: #1e293b;
+
+          html.dark & {
+            color: #fff;
+          }
         }
 
         .stat-label {
           display: block;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.75);
+          color: #64748b;
           margin-top: 4px;
+
+          html.dark & {
+            color: rgba(255, 255, 255, 0.6);
+          }
         }
       }
     }
@@ -534,33 +593,38 @@ onMounted(() => {
     }
   }
 
-  .lab-title-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .chapter-info {
+    margin-bottom: 16px;
+    padding: 16px;
+    background: #f5f7fa;
+    border-radius: 12px;
 
-    .lab-icon {
-      font-size: 20px;
+    .action-bar {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
     }
   }
 
-  .pagination-container {
-    margin-top: 16px;
-    display: flex;
-    justify-content: flex-end;
+  .task-id {
+    font-family: monospace;
+    font-size: 12px;
+    color: #606266;
   }
 
-  .dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 16px;
+  .text-gray-400 {
+    color: #c0c4cc;
+  }
+
+  .mr-1 {
+    margin-right: 4px;
   }
 }
 
 .lab-iframe-container {
   width: 100%;
   height: 70vh;
-  
+
   .lab-iframe {
     width: 100%;
     height: 100%;
@@ -598,5 +662,9 @@ onMounted(() => {
 
 :deep(.header-card .el-card__body) {
   padding: 24px;
+}
+
+:deep(.el-descriptions) {
+  --el-descriptions-item-bordered-label-background: #fafafa;
 }
 </style>

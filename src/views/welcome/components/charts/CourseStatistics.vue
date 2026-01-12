@@ -2,12 +2,16 @@
 import { onMounted, ref, watch, computed, nextTick } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { message } from "@/utils/message";
+import ClipboardIcon from "@/assets/new-release/clipboard-note-document-report-paper-list-data-svgrepo-com.svg?component";
 import { utils, writeFile } from "xlsx";
 import {
   getCourseUsersProgress,
   getCourseUsersExamInfo
 } from "@/api/statistics";
 import { getCourseList } from "@/api/course";
+import { getHomeworkList } from "@/api/homework";
+import { getExamList } from "@/api/exam";
+import { isAdmin } from "@/utils/auth";
 import {
   ElPagination,
   ElSelect,
@@ -109,15 +113,20 @@ const fetchCourseList = async () => {
   loading.value = true;
   try {
     const res = await getCourseList({ pageNum: 1, pageSize: 100 });
+    console.log("课程列表API响应:", res);
     if (res?.data?.courseList) {
       courseOptions.value = res.data.courseList.map(course => ({
         value: course.courseId,
         label: course.title
       }));
+      console.log("解析后的课程选项:", courseOptions.value);
 
       if (courseOptions.value.length > 0) {
         selectedCourse.value = courseOptions.value[0].value;
+        console.log("默认选中课程ID:", selectedCourse.value);
       }
+    } else {
+      console.warn("课程列表为空或格式不正确:", res);
     }
   } catch (error) {
     console.error("获取课程列表失败:", error);
@@ -126,47 +135,192 @@ const fetchCourseList = async () => {
   }
 };
 
-// 获取所有课程数据（只调用一次）
+// 获取所有课程数据（每次进入调用）
 const fetchAllData = async () => {
   progressLoading.value = true;
   examLoading.value = true;
   try {
-    // 并行请求三个接口（模拟增加作业和小测数据）
-    const [progressRes, examRes] = await Promise.all([
+    console.log("开始获取所有课程数据...");
+    // 分开处理，防止一个接口失败导致全部失败
+    const [progressRes, examRes, homeworkRes, examListRes] = await Promise.allSettled([
       getCourseUsersProgress(),
-      getCourseUsersExamInfo()
+      getCourseUsersExamInfo(),
+      getHomeworkList({ pageNum: 1, pageSize: 1000 }),
+      getExamList({ pageNum: 1, pageSize: 1000 })
     ]);
 
+    console.log("API调用结果:", { progressRes, examRes, homeworkRes, examListRes });
+
     // 缓存所有课程的进度数据
-    if (progressRes?.data?.courseUsersProgress) {
-      allProgressData.value = progressRes.data.courseUsersProgress;
+    if (progressRes.status === "fulfilled") {
+      console.log("=== 进度API调试信息 ===");
+      console.log("进度API原始响应完整结构:", JSON.stringify(progressRes.value, null, 2));
+      console.log("progressRes.value:", progressRes.value);
+      console.log("progressRes.value?.data:", progressRes.value?.data);
+      console.log("progressRes.value?.data?.courseUsersProgress:", progressRes.value?.data?.courseUsersProgress);
+      
+      // 尝试多种可能的数据路径
+      let progressData = null;
+      if (progressRes.value?.data?.courseUsersProgress) {
+        progressData = progressRes.value.data.courseUsersProgress;
+        console.log("使用路径: data.courseUsersProgress");
+      } else if (progressRes.value?.data?.list) {
+        progressData = progressRes.value.data.list;
+        console.log("使用路径: data.list");
+      } else if (progressRes.value?.data && Array.isArray(progressRes.value.data)) {
+        progressData = progressRes.value.data;
+        console.log("使用路径: data (直接数组)");
+      } else if (progressRes.value?.list) {
+        progressData = progressRes.value.list;
+        console.log("使用路径: list");
+      } else if (Array.isArray(progressRes.value)) {
+        progressData = progressRes.value;
+        console.log("使用路径: 直接数组");
+      }
+      
+      console.log("解析后的progressData:", progressData);
+      console.log("progressData类型:", typeof progressData);
+      console.log("progressData是否为数组:", Array.isArray(progressData));
+      
+      if (Array.isArray(progressData) && progressData.length > 0) {
+        allProgressData.value = progressData;
+        console.log("进度数据已缓存，数量:", allProgressData.value.length);
+        console.log("第一条进度数据结构:", JSON.stringify(allProgressData.value[0], null, 2));
+      } else {
+        console.warn("进度数据为空或格式不正确");
+        allProgressData.value = [];
+      }
+    } else if (progressRes.status === "rejected") {
+      console.error("获取进度数据失败:", progressRes.reason);
+      allProgressData.value = [];
     }
 
-    // 缓存所有课程的考试数据
-    if (examRes?.data?.courseUsersExamInfoList) {
-      // 模拟扩展：为每个考试数据添加类型标识
-      allExamData.value = examRes.data.courseUsersExamInfoList.flatMap(item => {
-        // 原始考试数据
-        const exam = { ...item, type: "exam" };
-        // 模拟生成作业数据
-        const homework = {
+    // 获取作业列表数据
+    let homeworkList: any[] = [];
+    if (homeworkRes.status === "fulfilled" && homeworkRes.value?.data?.homeworkList) {
+      homeworkList = homeworkRes.value.data.homeworkList;
+      console.log("作业列表:", homeworkList);
+    }
+
+    // 获取考试列表数据
+    let examList: any[] = [];
+    if (examListRes.status === "fulfilled" && examListRes.value?.data?.examList) {
+      examList = examListRes.value.data.examList;
+      console.log("考试列表:", examList);
+    }
+
+    // 缓存所有课程的考试/作业成绩数据
+    if (examRes.status === "fulfilled") {
+      console.log("=== 考试成绩API调试信息 ===");
+      console.log("考试成绩API原始响应完整结构:", JSON.stringify(examRes.value, null, 2));
+      console.log("examRes.value:", examRes.value);
+      console.log("examRes.value?.data:", examRes.value?.data);
+      console.log("examRes.value?.data?.courseUsersExamInfoList:", examRes.value?.data?.courseUsersExamInfoList);
+      
+      // 尝试多种可能的数据路径
+      let examData = null;
+      if (examRes.value?.data?.courseUsersExamInfoList) {
+        examData = examRes.value.data.courseUsersExamInfoList;
+        console.log("使用路径: data.courseUsersExamInfoList");
+      } else if (examRes.value?.data?.list) {
+        examData = examRes.value.data.list;
+        console.log("使用路径: data.list");
+      } else if (examRes.value?.data && Array.isArray(examRes.value.data)) {
+        examData = examRes.value.data;
+        console.log("使用路径: data (直接数组)");
+      } else if (examRes.value?.list) {
+        examData = examRes.value.list;
+        console.log("使用路径: list");
+      } else if (Array.isArray(examRes.value)) {
+        examData = examRes.value;
+        console.log("使用路径: 直接数组");
+      }
+      
+      console.log("解析后的examData:", examData);
+      console.log("examData类型:", typeof examData);
+      console.log("examData是否为数组:", Array.isArray(examData));
+      
+      if (Array.isArray(examData) && examData.length > 0) {
+        // 使用真实的考试成绩数据
+        allExamData.value = examData.map(item => ({
           ...item,
-          examId: item.examId + 1000,
-          examName: item.examName.replace("考试", "作业"),
-          type: "homework"
-        };
-        // 模拟生成小测数据
-        const quiz = {
-          ...item,
-          examId: item.examId + 2000,
-          examName: item.examName.replace("考试", "小测"),
-          type: "quiz"
-        };
-        return [exam, homework, quiz];
-      });
+          type: "exam"
+        }));
+        console.log("考试成绩数据已缓存，数量:", allExamData.value.length);
+        console.log("第一条考试数据结构:", JSON.stringify(allExamData.value[0], null, 2));
+      } else {
+        console.warn("考试成绩数据为空或格式不正确，尝试从作业和考试列表获取");
+        // 从作业和考试列表构建数据（使用真实数据，不是模拟数据）
+        const combinedData: any[] = [];
+        
+        // 从作业列表构建数据 - 使用真实的作业信息
+        console.log("=== 作业列表调试信息 ===");
+        console.log("作业列表数量:", homeworkList.length);
+        if (homeworkList.length > 0) {
+          console.log("第一条作业数据结构:", JSON.stringify(homeworkList[0], null, 2));
+        }
+        
+        // 按课程分组作业数据
+        const homeworkByCourse = new Map<number, any[]>();
+        homeworkList.forEach(hw => {
+          if (!homeworkByCourse.has(hw.courseId)) {
+            homeworkByCourse.set(hw.courseId, []);
+          }
+          homeworkByCourse.get(hw.courseId)?.push(hw);
+        });
+        
+        // 为每个作业创建条目（即使没有成绩统计数据也添加，以便在下拉框中显示）
+        homeworkList.forEach(hw => {
+          combinedData.push({
+            courseId: hw.courseId,
+            courseName: hw.courseName,
+            examId: hw.homeworkId,
+            examName: `[作业] ${hw.title || "未命名作业"}`,
+            type: "homework",
+            // 保留基本信息字段，用于在没有成绩分布时展示
+            questionNum: hw.questionNum,
+            totalPoints: hw.totalPoints,
+            // 如果有成绩统计数据则使用，否则使用空数组
+            examInfo: hw.scoreDistribution || hw.examInfo || []
+          });
+        });
+        
+        // 从考试列表构建数据 - 使用真实的考试信息
+        console.log("=== 考试列表调试信息 ===");
+        console.log("考试列表数量:", examList.length);
+        if (examList.length > 0) {
+          console.log("第一条考试数据结构:", JSON.stringify(examList[0], null, 2));
+        }
+        
+        // 为每个考试创建条目（即使没有成绩统计数据也添加）
+        examList.forEach(exam => {
+          combinedData.push({
+            courseId: exam.courseId,
+            courseName: exam.courseName,
+            examId: exam.examId,
+            examName: `[考试] ${exam.title || "未命名考试"}`,
+            type: "exam",
+            // 保留基本信息字段，用于在没有成绩分布时展示
+            questionNum: exam.questionNum,
+            totalPoints: exam.totalPoints,
+            timeLimit: exam.timeLimit,
+            // 如果有成绩统计数据则使用，否则使用空数组
+            examInfo: exam.scoreDistribution || exam.examInfo || []
+          });
+        });
+        
+        allExamData.value = combinedData;
+        console.log("从作业/考试列表构建的数据，数量:", allExamData.value.length);
+        if (combinedData.length > 0) {
+          console.log("第一条构建的数据:", JSON.stringify(combinedData[0], null, 2));
+        }
+      }
+    } else if (examRes.status === "rejected") {
+      console.error("获取考试数据失败:", examRes.reason);
+      allExamData.value = [];
     }
   } catch (error) {
-    console.error("获取课程数据失败:", error);
+    console.error("获取课程数据中发生错误:", error);
     renderEmptyProgressChart();
     renderEmptyExamChart();
   } finally {
@@ -182,10 +336,15 @@ const fetchAllData = async () => {
 
 // 根据选择的课程ID渲染对应的数据
 const renderCourseData = (courseId: number) => {
+  console.log("=== renderCourseData 调试信息 ===");
+  console.log("当前选择的课程ID:", courseId);
+  console.log("allExamData 总数量:", allExamData.value.length);
+  console.log("allExamData 中的所有 courseId:", [...new Set(allExamData.value.map(item => item.courseId))]);
+  
   try {
     // 从缓存中查找对应课程的进度数据
     const progressData = allProgressData.value.find(
-      item => item.courseId === courseId
+      item => Number(item.courseId) === Number(courseId)
     );
     if (progressData) {
       renderProgressChart(progressData);
@@ -195,8 +354,13 @@ const renderCourseData = (courseId: number) => {
 
     // 从缓存中查找对应课程的所有考试数据
     const courseExamData = allExamData.value.filter(
-      item => item.courseId === courseId
+      item => Number(item.courseId) === Number(courseId)
     );
+    console.log("过滤后的 courseExamData 数量:", courseExamData.length);
+    if (courseExamData.length > 0) {
+      console.log("第一条 courseExamData:", JSON.stringify(courseExamData[0], null, 2));
+    }
+    
     if (courseExamData && courseExamData.length > 0) {
       // 更新考试选项
       examOptions.value = courseExamData.map(item => ({
@@ -210,7 +374,7 @@ const renderCourseData = (courseId: number) => {
       if (examOptions.value.length > 0) {
         selectedExam.value = examOptions.value[0].value;
         const selectedExamData = courseExamData.find(
-          item => item.examId === selectedExam.value
+          item => Number(item.examId) === Number(selectedExam.value)
         );
         if (selectedExamData) {
           renderExamChart(selectedExamData);
@@ -236,9 +400,11 @@ const renderSelectedExamChart = (examId: number) => {
   if (!selectedCourse.value || !examId) return;
 
   const courseExamData = allExamData.value.filter(
-    item => item.courseId === selectedCourse.value
+    item => Number(item.courseId) === Number(selectedCourse.value)
   );
-  const selectedExamData = courseExamData.find(item => item.examId === examId);
+  const selectedExamData = courseExamData.find(
+    item => Number(item.examId) === Number(examId)
+  );
 
   if (selectedExamData) {
     renderExamChart(selectedExamData);
@@ -251,8 +417,9 @@ const renderSelectedExamChart = (examId: number) => {
 const currentCourseUsers = computed(() => {
   if (!selectedCourse.value) return [];
   const courseData = allProgressData.value.find(
-    item => item.courseId === selectedCourse.value
+    item => Number(item.courseId) === Number(selectedCourse.value)
   );
+  console.log("currentCourseUsers - selectedCourse:", selectedCourse.value, "找到的课程数据:", courseData);
   return courseData?.usersProgress || [];
 });
 
@@ -364,7 +531,14 @@ const renderProgressChart = courseData => {
     renderEmptyProgressChart("该课程暂无学生进度数据");
     return;
   }
-  updateProgressChart(pagedUsers.value);
+  // 直接使用传入的数据进行渲染，避免 computed 属性的时序问题
+  const usersToRender = courseData.usersProgress.slice(0, progressPageSize.value);
+  console.log("renderProgressChart - 准备渲染的用户数据:", usersToRender);
+  if (usersToRender.length > 0) {
+    updateProgressChart(usersToRender);
+  } else {
+    renderEmptyProgressChart("该课程暂无学生进度数据");
+  }
 };
 
 // 渲染空的进度图表
@@ -388,96 +562,208 @@ const renderEmptyProgressChart = (message = "暂无课程进度数据") => {
 
 // 渲染考试成绩图表
 const renderExamChart = courseData => {
-  // 如果没有考试信息或者考试信息为空数组，显示空图表
-  if (!courseData.examInfo || courseData.examInfo.length === 0) {
-    renderEmptyExamChart("该课程暂无考试成绩数据");
+  console.log("=== renderExamChart 调试信息 ===");
+  console.log("传入的 courseData:", JSON.stringify(courseData, null, 2));
+  console.log("questionNum:", courseData.questionNum, "类型:", typeof courseData.questionNum);
+  console.log("totalPoints:", courseData.totalPoints, "类型:", typeof courseData.totalPoints);
+  console.log("examInfo:", courseData.examInfo, "长度:", courseData.examInfo?.length);
+  
+  // 如果有成绩分布数据，显示饼图
+  if (courseData.examInfo && courseData.examInfo.length > 0) {
+    // 转换等级为文字说明
+    const levelTexts = {
+      1: "差",
+      2: "中等",
+      3: "良好",
+      4: "优秀"
+    };
+
+    const levels = courseData.examInfo.map(
+      item => levelTexts[item.level] || `等级${item.level}`
+    );
+    const counts = courseData.examInfo.map(item => item.levelNum);
+
+    setExamOptions({
+      title: {
+        text: courseData.examName,
+        left: "center",
+        top: 10,
+        textStyle: {
+          fontSize: 16,
+          fontWeight: "bold",
+          color: isDark.value ? "#ffffff" : "#1e293b"
+        }
+      },
+      tooltip: {
+        trigger: "item",
+        formatter: "{b}: {c}人 ({d}%)"
+      },
+      legend: {
+        bottom: "5%",
+        itemGap: 20,
+        data: levels,
+        textStyle: {
+          color: isDark.value ? "#fafafa" : "#334155",
+          fontSize: 13
+        }
+      },
+      series: [
+        {
+          name: "成绩分布",
+          type: "pie",
+          radius: ["40%", "65%"],
+          center: ["50%", "50%"],
+          avoidLabelOverlap: true,
+          itemStyle: {
+            borderRadius: 12,
+            borderColor: isDark.value ? "#1d1e1f" : "#fff",
+            borderWidth: 4
+          },
+          data: levels.map((level, index) => ({
+            name: level,
+            value: counts[index],
+            itemStyle: {
+              color: [
+                "#E8684A", 
+                "#F6BD16", 
+                "#5B8FF9", 
+                "#5AD8A6"
+              ][index % 4]
+            }
+          })),
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: "rgba(0, 0, 0, 0.5)"
+            }
+          },
+          label: {
+            show: true,
+            formatter: "{b}: {c}人",
+            color: isDark.value ? "#ffffff" : "#334155",
+            fontSize: 12,
+            fontWeight: 500
+          },
+          labelLine: {
+            show: true,
+            lineStyle: {
+              color: isDark.value ? "#cbd5e1" : "#cbd5e1"
+            }
+          }
+        }
+      ]
+    });
     return;
   }
 
-  // 转换等级为文字说明
-  const levelTexts = {
-    1: "差",
-    2: "中等",
-    3: "良好",
-    4: "优秀"
-  };
+  // 如果没有成绩分布数据，但有基本信息（questionNum, totalPoints），显示基本信息图表
+  if (courseData.questionNum !== undefined || courseData.totalPoints !== undefined) {
+    const chartData = [];
+    const colors = ["#5B8FF9", "#5AD8A6", "#F6BD16", "#E8684A"];
+    
+    if (courseData.questionNum !== undefined && courseData.questionNum > 0) {
+      chartData.push({
+        name: "题目数量",
+        value: courseData.questionNum,
+        itemStyle: { color: colors[0] }
+      });
+    }
+    if (courseData.totalPoints !== undefined && courseData.totalPoints > 0) {
+      chartData.push({
+        name: "总分",
+        value: courseData.totalPoints,
+        itemStyle: { color: colors[1] }
+      });
+    }
+    if (courseData.timeLimit !== undefined && courseData.timeLimit > 0) {
+      chartData.push({
+        name: "时限(分钟)",
+        value: courseData.timeLimit,
+        itemStyle: { color: colors[2] }
+      });
+    }
 
-  const levels = courseData.examInfo.map(
-    item => levelTexts[item.level] || `等级${item.level}`
-  );
-  const counts = courseData.examInfo.map(item => item.levelNum);
+    if (chartData.length > 0) {
+      setExamOptions({
+        title: {
+          text: courseData.examName,
+          subtext: "基本信息统计",
+          left: "center",
+          top: 10,
+          textStyle: {
+            fontSize: 16,
+            fontWeight: "bold",
+            color: isDark.value ? "#ffffff" : "#1e293b"
+          },
+          subtextStyle: {
+            fontSize: 12,
+            color: isDark.value ? "#94a3b8" : "#64748b"
+          }
+        },
+        tooltip: {
+          trigger: "axis",
+          axisPointer: {
+            type: "shadow"
+          }
+        },
+        grid: {
+          left: 20,
+          right: 40,
+          top: 80,
+          bottom: 40,
+          containLabel: true
+        },
+        xAxis: {
+          type: "category",
+          data: chartData.map(item => item.name),
+          axisLabel: {
+            color: isDark.value ? "#cbd5e1" : "#64748b",
+            fontSize: 13
+          },
+          axisLine: {
+            lineStyle: {
+              color: isDark.value ? "#475569" : "#e5e7eb"
+            }
+          }
+        },
+        yAxis: {
+          type: "value",
+          axisLabel: {
+            color: isDark.value ? "#cbd5e1" : "#64748b"
+          },
+          splitLine: {
+            lineStyle: {
+              color: isDark.value ? "#475569" : "#f1f5f9",
+              type: "dashed"
+            }
+          }
+        },
+        series: [
+          {
+            name: "数值",
+            type: "bar",
+            data: chartData,
+            barMaxWidth: 60,
+            label: {
+              show: true,
+              position: "top",
+              color: isDark.value ? "#ffffff" : "#4b5563",
+              fontWeight: "bold",
+              fontSize: 14
+            },
+            itemStyle: {
+              borderRadius: [6, 6, 0, 0]
+            }
+          }
+        ]
+      });
+      return;
+    }
+  }
 
-  setExamOptions({
-    title: {
-      text: courseData.examName,
-      left: "center",
-      top: 10,
-      textStyle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: isDark.value ? "#ffffff" : "#1e293b"
-      }
-    },
-    tooltip: {
-      trigger: "item",
-      formatter: "{b}: {c}人 ({d}%)"
-    },
-    legend: {
-      bottom: "5%",
-      itemGap: 20,
-      data: levels,
-      textStyle: {
-        color: isDark.value ? "#fafafa" : "#334155",
-        fontSize: 13
-      }
-    },
-    series: [
-      {
-        name: "成绩分布",
-        type: "pie",
-        radius: ["40%", "65%"],
-        center: ["50%", "50%"],
-        avoidLabelOverlap: true,
-        itemStyle: {
-          borderRadius: 12,
-          borderColor: isDark.value ? "#1d1e1f" : "#fff",
-          borderWidth: 4
-        },
-        data: levels.map((level, index) => ({
-          name: level,
-          value: counts[index],
-          itemStyle: {
-            color: [
-              "#E8684A", 
-              "#F6BD16", 
-              "#5B8FF9", 
-              "#5AD8A6"
-            ][index % 4]
-          }
-        })),
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: "rgba(0, 0, 0, 0.5)"
-          }
-        },
-        label: {
-          show: true,
-          formatter: "{b}: {c}人",
-          color: isDark.value ? "#ffffff" : "#334155",
-          fontSize: 12,
-          fontWeight: 500
-        },
-        labelLine: {
-          show: true,
-          lineStyle: {
-            color: isDark.value ? "#cbd5e1" : "#cbd5e1"
-          }
-        }
-      }
-    ]
-  });
+  // 如果什么数据都没有，显示空图表
+  renderEmptyExamChart("该考试暂无成绩数据");
 };
 
 // 渲染空的考试图表
@@ -501,10 +787,8 @@ const renderEmptyExamChart = (message = "暂无考试成绩数据") => {
 watch(
   () => selectedCourse.value,
   newCourseId => {
-    if (
-      newCourseId &&
-      (allProgressData.value.length > 0 || allExamData.value.length > 0)
-    ) {
+    if (newCourseId) {
+      // 无论是否有数据都尝试渲染，renderCourseData 会处理空数据情况
       renderCourseData(newCourseId);
     }
   }
@@ -539,9 +823,17 @@ watch(
   }
 );
 
-onMounted(() => {
-  fetchCourseList();
-  fetchAllData();
+onMounted(async () => {
+  // 先获取课程列表，再获取统计数据
+  await fetchCourseList();
+  await fetchAllData();
+  
+  // 确保在数据加载完成后渲染
+  if (selectedCourse.value) {
+    nextTick(() => {
+      renderCourseData(selectedCourse.value);
+    });
+  }
 });
 </script>
 
@@ -558,7 +850,7 @@ onMounted(() => {
             >
               <div class="flex items-center gap-4 shrink-0">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                  <IconifyIconOnline icon="ri:bar-chart-box-fill" class="text-2xl" />
+                  <ClipboardIcon class="w-6 h-6" />
                 </div>
                 <div class="flex flex-col">
                   <span class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow">分析课程数据</span>

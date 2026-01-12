@@ -20,10 +20,10 @@
         </el-form-item>
       </el-form>
       <el-table v-loading="loading" :data="userList" stripe style="width: 100%">
-        <el-table-column prop="id" label="用户ID" width="100" />
-        <el-table-column prop="mobile" label="手机号" width="180" />
-        <el-table-column prop="nickname" label="昵称" width="180" />
-        <el-table-column prop="sex" label="性别" width="80">
+        <el-table-column prop="id" label="用户ID" width="100" sortable />
+        <el-table-column prop="mobile" label="手机号" width="180" sortable />
+        <el-table-column prop="nickname" label="昵称" width="180" sortable />
+        <el-table-column prop="sex" label="性别" width="100" sortable>
           <template #default="scope">
             {{
               scope.row.sex === 1 ? "男" : scope.row.sex === 2 ? "女" : "未知"
@@ -37,7 +37,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="info" label="个性签名" />
-        <el-table-column prop="roleType" label="角色类型" width="100">
+        <el-table-column prop="roleType" label="角色类型" width="120" sortable>
           <template #default="scope">
             {{ getRoleTypeName(scope.row.roleType) }}
           </template>

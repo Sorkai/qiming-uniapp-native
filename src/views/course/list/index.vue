@@ -414,7 +414,7 @@
             stripe
             style="width: 100%"
           >
-            <el-table-column prop="userId" label="ID" width="80" />
+            <el-table-column prop="userId" label="ID" width="80" sortable />
             <el-table-column label="头像" width="80">
               <template #default="scope">
                 <el-avatar :size="40" :src="scope.row.avatar">
@@ -422,14 +422,20 @@
                 </el-avatar>
               </template>
             </el-table-column>
-            <el-table-column prop="userName" label="用户名" />
+            <el-table-column prop="userName" label="用户名" min-width="150" />
             <el-table-column prop="totalHours" label="总课时数" width="100" />
             <el-table-column
               prop="finishedHours"
               label="已完成课时数"
-              width="120"
+              width="140"
+              sortable
             />
-            <el-table-column label="完成率" width="100">
+            <el-table-column
+              label="完成率"
+              width="220"
+              sortable
+              :sort-method="sortProgress"
+            >
               <template #default="scope">
                 <el-progress
                   :percentage="
@@ -445,12 +451,14 @@
             <el-table-column
               prop="startStudyTime"
               label="开始学习时间"
-              width="170"
+              width="180"
+              sortable
             />
             <el-table-column
               prop="finishedStudyTime"
               label="完成学习时间"
-              width="170"
+              width="180"
+              sortable
             >
               <template #default="scope">
                 {{ scope.row.finishedStudyTime || "-" }}
@@ -824,11 +832,12 @@ const submitCourseForm = async () => {
 
       if (isEdit.value) {
         // 编辑模式，移除不需要的字段
-        const { thumb_url, hourList, chapterList, attrList, ...updateData } =
+        const { thumb_url, hourList, chapterList, attrList, isChapter, thumb, ...updateData } =
           formData;
         submitData = {
           ...updateData,
-          thumbUrl: thumb_url // 字段名转换
+          thumbUrl: thumb_url, // 字段名转换
+          categoryIds: [...formData.categoryIds] // 确保是普通数组而非 Proxy
         };
 
         // 调用更新接口
@@ -1245,6 +1254,13 @@ const calculateProgress = (finished: number, total: number) => {
   if (!total) return 0;
   const percentage = (finished / total) * 100;
   return parseFloat(percentage.toFixed(1));
+};
+
+// 完成率排序方法
+const sortProgress = (a: any, b: any) => {
+  const progressA = calculateProgress(a.finishedHours, a.totalHours);
+  const progressB = calculateProgress(b.finishedHours, b.totalHours);
+  return progressA - progressB;
 };
 
 // 格式化百分比显示

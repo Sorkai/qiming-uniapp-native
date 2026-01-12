@@ -19,6 +19,9 @@ import EducationAnimation from "@/animation/Education.json";
 import OnlineLearningAnimation from "@/animation/Online Learning Platform.json";
 import AITrainingAnimation from "@/animation/AI training.json";
 
+// 导入图标
+import MarkdownIcon from "@/assets/new-release/markdown-svgrepo-com.svg?component";
+
 defineOptions({
   name: "Welcome"
 });
@@ -89,7 +92,7 @@ watchEffect(() => {
   <div class="welcome-container p-4">
     <!-- Modern Welcome Header -->
     <div 
-      class="welcome-header mb-6 px-6 py-5 rounded-[24px] relative overflow-hidden flex flex-col md:flex-row justify-between items-center text-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]"
+      class="welcome-header mb-6 px-6 py-5 rounded-[24px] relative overflow-hidden flex flex-col md:flex-row justify-between items-center text-slate-800 dark:text-white shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.01]"
     >
       <div class="z-10 text-center md:text-left group">
         <h1 class="text-4xl md:text-5xl font-extrabold mb-4 leading-tight transition-transform duration-300 group-hover:translate-x-2 min-h-[60px] flex items-center tracking-tight">
@@ -97,32 +100,41 @@ watchEffect(() => {
           <span v-if="isTyping" class="cursor-blink ml-1">|</span>
           <span v-else class="wave ml-2">👋</span>
         </h1>
-        <p class="text-xl md:text-2xl font-medium leading-relaxed text-blue-50 opacity-90 max-w-2xl transition-all duration-300 group-hover:opacity-100 mb-8">
+        <p class="text-xl md:text-2xl font-medium leading-relaxed text-slate-600 dark:text-blue-50 opacity-90 max-w-2xl transition-all duration-300 group-hover:opacity-100 mb-8">
           欢迎回到智慧教学平台。您的 AI 助手已经为您准备好了今天的课程方案和学生进度报告。
         </p>
-        <div class="mt-8 flex flex-wrap gap-4 justify-center md:justify-start">
+        <div class="mt-8 flex flex-wrap gap-4 justify-center md:justify-start items-center">
           <el-button
-            :color="isDark ? '#4f46e5' : '#ffffff'"
-            :style="{ color: isDark ? '#ffffff' : '#5B8FF9' }"
+            :color="isDark ? '#a5b4fc' : '#ffffff'"
+            :style="{ 
+              color: isDark ? '#ffffff' : '#a5b4fc',
+              border: isDark ? 'none' : '1px solid #e2e8f0'
+            }"
             round
             size="large"
-            class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-md"
+            class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
             @click="router.push('/course/teacherplan')"
           >
-            <IconifyIconOnline icon="ep:plus" class="mr-1" /> 开始新教案
+            <div class="flex items-center">
+              <IconifyIconOnline icon="ep:plus" class="mr-2 text-xl" />
+              <span class="relative top-[-1px]">开始新教案</span>
+            </div>
           </el-button>
           <el-button
-            :color="isDark ? 'transparent' : '#ffffff'"
+            :color="isDark ? '#a5b4fc' : '#ffffff'"
             round
             size="large"
-            class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-md"
+            class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
             :style="{
-              color: isDark ? '#ffffff' : '#5B8FF9',
-              border: isDark ? '1px solid rgb(255 255 255 / 20%)' : 'none'
+              color: isDark ? '#ffffff' : '#a5b4fc',
+              border: isDark ? 'none' : '1px solid #e2e8f0'
             }"
             @click="handleViewReport"
           >
-            <IconifyIconOnline icon="ep:view" class="mr-1" /> 查看报告
+            <div class="flex items-center">
+              <MarkdownIcon class="mr-2 w-[1.2rem] h-[1.2rem] flex-shrink-0" />
+              <span class="relative top-[-1px]">查看报告</span>
+            </div>
           </el-button>
         </div>
       </div>
@@ -131,20 +143,20 @@ watchEffect(() => {
         <div class="header-illustration relative w-80 h-80 flex items-center justify-center">
           <!-- Lottie 动画 - 默认显示 -->
           <div class="opacity-90 transition-opacity duration-300">
-            <div class="circle-decoration absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-            <div class="circle-decoration absolute -bottom-10 -left-10 w-32 h-32 bg-blue-400/20 rounded-full blur-xl"></div>
+            <div class="circle-decoration absolute -top-10 -right-10 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl"></div>
+            <div class="circle-decoration absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl"></div>
             <LottieAnimation 
               :animation-data="selectedAnimation"
               :width="400"
               :height="350"
-              class="drop-shadow-2xl"
+              class="drop-shadow-xl brightness-110 saturate-[0.8]"
             />
           </div>
         </div>
       </div>
       
       <!-- Abstract BG patterns -->
-      <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-white/10 to-transparent skew-x-12 transform origin-top"></div>
+      <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-100/20 to-transparent skew-x-12 transform origin-top dark:from-white/5"></div>
     </div>
 
     <!-- Statistics Grid -->
@@ -261,7 +273,8 @@ watchEffect(() => {
 }
 
 .welcome-header {
-  background: linear-gradient(135deg, #5b8ff9 0%, #5ad8a6 100%);
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border: 1px solid #e2e8f0;
   border-radius: 24px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -271,8 +284,11 @@ watchEffect(() => {
   }
 
   &:hover {
-    box-shadow: 0 20px 40px -10px rgba(91, 143, 249, 0.4);
-    transform: scale(1.02);
+    box-shadow: 0 20px 40px -10px rgba(148, 163, 184, 0.1);
+    
+    html.dark & {
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    }
     
     .wave {
       animation: wave-animation 0.6s ease-in-out;
@@ -333,6 +349,10 @@ watchEffect(() => {
   display: inline-block;
   font-weight: 300;
   animation: blink 1s step-end infinite;
-  color: rgba(255, 255, 255, 0.8);
+  color: #1f2225;
+
+  html.dark & {
+    color: rgba(255, 255, 255, 0.8);
+  }
 }
 </style>
