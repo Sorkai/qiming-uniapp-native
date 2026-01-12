@@ -3,7 +3,7 @@
     <!-- 统计概览 -->
     <CourseStats :stats="courseStats" />
 
-    <el-card shadow="never" class="mb-4 search-card">
+    <el-card shadow="always" class="mb-4 search-card" :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }">
       <div class="flex justify-between items-center flex-wrap gap-4">
         <el-form :inline="true" :model="searchForm" class="!mb-[-18px]">
           <el-form-item label="课程名称">
@@ -1888,9 +1888,10 @@ onMounted(() => {
 }
 
 .search-card {
-  border: none;
+  border: none !important;
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
 :deep(.el-dialog) {

@@ -1,7 +1,7 @@
 <template>
   <el-row :gutter="20" class="mb-6">
     <el-col :xs="24" :sm="12" :md="6" v-for="(item, index) in statsItems" :key="index">
-      <el-card shadow="never" class="stats-card">
+      <el-card shadow="always" class="stats-card" :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }">
         <div class="flex items-center">
           <div :class="['icon-wrapper', item.colorClass]">
             <el-icon :size="32"><component :is="item.icon" /></el-icon>
@@ -40,15 +40,16 @@ const statsItems = computed(() => [
 
 <style scoped lang="scss">
 .stats-card {
-  border: none;
+  border: none !important;
   background: var(--el-bg-color-overlay);
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
   }
   
   .icon-wrapper {
