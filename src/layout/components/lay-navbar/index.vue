@@ -42,7 +42,6 @@ const avatarSrc = ref(userAvatar.value);
 watch(
   () => userAvatar.value,
   val => {
-    console.log("[LayNavbar] userAvatar 变更为:", val);
     avatarSrc.value = val;
   }
 );
@@ -71,19 +70,15 @@ onMounted(() => {
 
   // 这里的逻辑修改为：无论 store 中是否有头像，都强制刷新一次用户信息，确保是最新的
   // 增加 console.log 方便调试
-  console.log("[LayNavbar] 组件挂载，准备获取用户信息...");
   const userStore = useUserStoreHook();
   
   getUserDetail().then(res => {
-      console.log("[LayNavbar] 获取用户信息接口响应:", res);
       // 兼容两种响应结构
       const data = res.data || res;
       if (data && data.userInfo) {
-        console.log("[LayNavbar] 获取到用户信息:", data.userInfo);
         const userInfo = data.userInfo;
         // 只要返回了信息就更新 store
         if (userInfo.avatar !== undefined) {
-             console.log("[LayNavbar] 更新头像:", userInfo.avatar);
              userStore.SET_AVATAR(userInfo.avatar);
         }
         if (userInfo.nickname) {
@@ -204,12 +199,6 @@ const {
     padding: 0 20px;
     cursor: pointer;
     color: #64748b;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &:hover {
-      background: rgba(59, 130, 246, 0.08);
-      color: #3b82f6;
-    }
   }
 
   .el-dropdown-link {
@@ -235,11 +224,6 @@ const {
 :global(html.dark) {
   .navbar {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    
-    .navbar-item:hover {
-      background: rgba(255, 255, 255, 0.05);
-      color: #60a5fa;
-    }
     
     .navbar-item {
       color: #e5e7eb;

@@ -561,55 +561,9 @@ watch(
   { immediate: true }
 );
 
-const isAnimating = ref(false);
-const toggleTheme = (event: MouseEvent) => {
-  if (isAnimating.value) return;
-  isAnimating.value = true;
-
-  const x = event.clientX;
-  const y = event.clientY;
-  const endRadius = Math.hypot(
-    Math.max(x, window.innerWidth - x),
-    Math.max(y, window.innerHeight - y)
-  );
-
-  // 1. 创建扩散层
-  const overlay = document.createElement("div");
-  const isToDark = currentTheme.value === "light";
-
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 2147483647;
-    pointer-events: none;
-    background: ${isToDark ? "#0b1120" : "#f7f8fc"};
-    clip-path: circle(0px at ${x}px ${y}px);
-    transition: clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1);
-  `;
-  document.body.appendChild(overlay);
-
-  // 2. 触发扩散动画
-  requestAnimationFrame(() => {
-    overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
-  });
-
-  // 3. 切换实际主题
-  setTimeout(() => {
-    currentTheme.value = isToDark ? "dark" : "light";
-
-    // 4. 让遮罩层淡出
-    overlay.style.transition =
-      "opacity 500ms ease, clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1)";
-    overlay.style.opacity = "0";
-
-    setTimeout(() => {
-      overlay.remove();
-      isAnimating.value = false;
-    }, 500);
-  }, 500);
+// 主题切换 - 简单直接，不使用遮罩动画
+const toggleTheme = () => {
+  currentTheme.value = currentTheme.value === "light" ? "dark" : "light";
 };
 
 // 当前激活的菜单项
@@ -1074,14 +1028,14 @@ onUnmounted(() => {
           height: 28px;
           padding: 4px;
           cursor: pointer;
-          background-color: rgba(255, 255, 255, 0.4);
+          background-color: #e2e8f0;
           border-radius: 100px;
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 
           &:hover {
             transform: scale(1.05);
-            background-color: rgba(255, 255, 255, 0.6);
+            background-color: #cbd5e0;
           }
 
           &.is-dark {

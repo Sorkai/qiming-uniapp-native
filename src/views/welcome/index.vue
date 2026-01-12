@@ -167,7 +167,6 @@ watchEffect(() => {
       <!-- 只有管理员才能看到这两个图表 -->
       <template v-if="isAdminUser">
       <re-col
-        v-motion
         class="mb-[24px]"
           :value="12"
           :md="12"
@@ -191,7 +190,6 @@ watchEffect(() => {
       </re-col>
 
       <re-col
-        v-motion
         class="mb-[24px]"
           :value="12"
           :md="12"
@@ -216,7 +214,6 @@ watchEffect(() => {
       
       <!-- 教学效率指数图表（所有用户可见） -->
       <re-col
-        v-motion
         id="efficient-index-report"
         class="mb-[24px]"
         :value="24"
@@ -241,7 +238,6 @@ watchEffect(() => {
 
       <!-- 所有用户(包括教师)都可以看到课程统计 -->
       <re-col
-        v-motion
         class="mb-[24px]"
         :value="24"
         :md="14"
@@ -311,11 +307,14 @@ watchEffect(() => {
   border: none;
   border-radius: 24px;
   background: var(--el-bg-color-overlay);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  /* 优化：避免使用 all 以防止 Safari 和 Edge 下的 canvas 渲染问题 */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.15), 0 10px 15px -6px rgba(0, 0, 0, 0.1);
   }
 
   :deep(.el-card__header) {

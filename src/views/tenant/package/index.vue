@@ -256,9 +256,9 @@ onMounted(() => {
           @input="onQueryChanged"
         />
         <div class="flex flex-wrap">
-          <el-checkbox v-model="isExpandAll" label="展开/折叠" />
-          <el-checkbox v-model="isSelectAll" label="全选/全不选" />
-          <el-checkbox v-model="isLinkage" label="父子联动" />
+          <el-checkbox v-model="isExpandAll">展开/折叠</el-checkbox>
+          <el-checkbox v-model="isSelectAll">全选/全不选</el-checkbox>
+          <el-checkbox v-model="isLinkage">父子联动</el-checkbox>
         </div>
         <el-tree-v2
           ref="treeRef"

@@ -23,16 +23,16 @@
       <el-col :span="12">
         <el-form-item label="是否必修" prop="isRequired">
           <el-radio-group v-model="formData.isRequired">
-            <el-radio :label="1">必修</el-radio>
-            <el-radio :label="0">选修</el-radio>
+            <el-radio :value="1">必修</el-radio>
+            <el-radio :value="0">选修</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-col>
       <el-col v-if="!isEdit" :span="12">
         <el-form-item label="是否章节" prop="isChapter">
           <el-radio-group v-model="formData.isChapter">
-            <el-radio :label="1">是</el-radio>
-            <el-radio :label="0">否</el-radio>
+            <el-radio :value="1">是</el-radio>
+            <el-radio :value="0">否</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-col>
@@ -616,12 +616,10 @@ const categoryOptions = ref([]);
 const loadCategories = async () => {
   try {
     const res = await getCategoryList({ pageNum: 1, pageSize: 100 });
-    console.log("分类数据:", res);
 
     // 修正：从res.data中获取categoryList
     if (res && res.data && res.data.categoryList) {
       categoryOptions.value = res.data.categoryList;
-      console.log("成功加载分类数据:", categoryOptions.value);
     } else {
       console.warn("无法从API响应中获取分类数据");
       categoryOptions.value = []; // 设置为空数组，没有就显示空
@@ -887,7 +885,6 @@ const validate = async () => {
 
 // 初始化
 onMounted(() => {
-  console.log("组件挂载，开始加载分类数据");
   loadCategories();
 });
 

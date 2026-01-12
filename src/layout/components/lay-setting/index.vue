@@ -260,19 +260,16 @@ watch($storage, ({ layout }) => {
       toggleClass(true, "is-select", unref(verticalRef));
       debounce(setFalse([horizontalRef]), 50);
       debounce(setFalse([mixRef]), 50);
-      debounce(setFalse([doubleRef]), 50);
       break;
     case "horizontal":
       toggleClass(true, "is-select", unref(horizontalRef));
       debounce(setFalse([verticalRef]), 50);
       debounce(setFalse([mixRef]), 50);
-      debounce(setFalse([doubleRef]), 50);
       break;
     case "mix":
       toggleClass(true, "is-select", unref(mixRef));
       debounce(setFalse([verticalRef]), 50);
       debounce(setFalse([horizontalRef]), 50);
-      debounce(setFalse([doubleRef]), 50);
       break;
   }
 });

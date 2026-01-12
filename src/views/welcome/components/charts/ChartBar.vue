@@ -18,16 +18,23 @@ const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
 const chartRef = ref();
-const { setOptions } = useECharts(chartRef, {
+const { setOptions, resize, getInstance } = useECharts(chartRef, {
   theme
 });
 
-// 监听主题变化，重新渲染图表
+// 监听主题变化，增加更长的延迟并在过渡结束后再次执行 resize，解决 Safari 和 Edge 下的渲染顽疾
 watch(
   () => isDark.value,
   async () => {
     await nextTick();
     updateChart();
+
+    setTimeout(() => {
+      getInstance()?.resize();
+      updateChart();
+      resize();
+      window.dispatchEvent(new Event("resize"));
+    }, 600);
   }
 );
 

@@ -12,13 +12,10 @@ const docmeeUI = shallowRef<any>(null);
 async function initAiPPT() {
   try {
     loading.value = true;
-    console.log("正在请求 PPT Token...");
     const res: any = await getPptToken();
-    console.log("PPT Token 响应结果:", res);
 
     // 兼容多种状态码：0 或 200 都视为成功
     if (res && (res.code === 0 || res.code === 200) && res.data?.token) {
-      console.log("Token 获取成功，正在初始化 DocmeeUI...");
       docmeeUI.value = new DocmeeUI({
         container: "aippt-container", // 挂载 iframe 容器元素ID
         page: "creator", // 固定使用creator页面
@@ -229,10 +226,8 @@ async function initAiPPT() {
           }
         `,
         onMessage: (message) => {
-          console.log(message);
           if (message.type === "invalid-token") {
             // 在token失效时触发
-            console.log("token 认证错误");
             ElMessage.error("token认证失败，请刷新页面重试");
             // 更换新的 token
             initAiPPT();
@@ -240,11 +235,9 @@ async function initAiPPT() {
             const { subtype, fields } = message.data;
             if (subtype === "outline") {
               // 生成大纲前触发
-              console.log("即将生成ppt大纲", fields);
               return true;
             } else if (subtype === "ppt") {
               // 生成PPT前触发
-              console.log("即将生成ppt", fields);
               docmeeUI.value.sendMessage({
                 type: "success",
                 content: "继续生成PPT",

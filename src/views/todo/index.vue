@@ -14,9 +14,9 @@
 
     <div class="todo-controls card">
       <el-radio-group v-model="filterStatus" size="large">
-        <el-radio-button label="all">全部</el-radio-button>
-        <el-radio-button label="pending">待处理</el-radio-button>
-        <el-radio-button label="completed">已完成</el-radio-button>
+        <el-radio-button value="all">全部</el-radio-button>
+        <el-radio-button value="pending">待处理</el-radio-button>
+        <el-radio-button value="completed">已完成</el-radio-button>
       </el-radio-group>
     </div>
 

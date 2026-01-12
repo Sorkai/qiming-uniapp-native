@@ -546,7 +546,6 @@ const deleteQuestion = row => {
   })
     .then(async () => {
       try {
-        console.log("要删除的试题:", row);
         await deleteWorkQuestion({
           deleteType: 1, // 1表示试卷
           sourceId: currentExam.value.examId,

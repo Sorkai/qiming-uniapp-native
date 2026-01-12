@@ -96,17 +96,15 @@ const handleInputConfirm = () => {
 
     <div class="mb-2">基础按钮</div>
     <el-radio-group v-model="baseTag" class="mb-3">
-      <el-radio label="dark" value="dark" />
-      <el-radio label="light" value="light" />
-      <el-radio label="plain" value="plain" />
+      <el-radio value="dark" />
+      <el-radio value="light" />
+      <el-radio value="plain" />
     </el-radio-group>
     <br />
     <el-space class="mb-3">
-      <el-checkbox
-        v-if="tagList.length > 0"
-        v-model="checked1"
-        label="可移除"
-      />
+      <el-checkbox v-if="tagList.length > 0" v-model="checked1">
+        可移除
+      </el-checkbox>
       <el-button v-else size="small" text bg class="mr-6" @click="onReset">
         重置
       </el-button>
@@ -120,7 +118,7 @@ const handleInputConfirm = () => {
       >
         移除全部
       </el-button>
-      <el-checkbox v-model="checked2" label="圆形" />
+      <el-checkbox v-model="checked2">圆形</el-checkbox>
     </el-space>
     <br />
     <el-space wrap>
