@@ -8,37 +8,6 @@ import { getPlatformStats } from "@/api/statistics";
 const { isDark } = useDark();
 const loading = ref(true);
 
-// 鼠标追随阴影效果
-const cardRefs = ref<HTMLElement[]>([]);
-const shadowStyles = ref<Record<number, string>>({});
-
-const handleMouseMove = (event: MouseEvent, index: number) => {
-  const card = cardRefs.value[index];
-  if (!card) return;
-  
-  const rect = card.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  const centerX = rect.width / 2;
-  const centerY = rect.height / 2;
-  
-  // 计算阴影偏移（鼠标位置相对于中心的偏移）
-  const offsetX = (x - centerX) / centerX * 15;
-  const offsetY = (y - centerY) / centerY * 15;
-  
-  shadowStyles.value[index] = `${-offsetX}px ${-offsetY}px 30px rgba(0, 0, 0, 0.15)`;
-};
-
-const handleMouseLeave = (index: number) => {
-  shadowStyles.value[index] = '';
-};
-
-const setCardRef = (el: any, index: number) => {
-  if (el) {
-    cardRefs.value[index] = el;
-  }
-};
-
 interface StatItem {
   title: string;
   value: string | number;
@@ -82,11 +51,7 @@ onMounted(async () => {
   <el-row :gutter="20" v-loading="loading">
     <el-col v-for="(item, index) in stats" :key="index" :xs="24" :sm="12" :md="6">
       <div 
-        :ref="(el) => setCardRef(el, index)"
-        class="stat-card p-6 bg-white dark:bg-[var(--el-bg-color-overlay)] rounded-[24px] border border-gray-100 dark:border-transparent mb-4 transition-all duration-300 hover:-translate-y-2 group"
-        :style="{ boxShadow: shadowStyles[index] || '0 8px 24px rgba(0, 0, 0, 0.12)' }"
-        @mousemove="handleMouseMove($event, index)"
-        @mouseleave="handleMouseLeave(index)"
+        class="stat-card p-6 bg-white dark:bg-[var(--el-bg-color-overlay)] rounded-[24px] shadow-sm border border-gray-100 dark:border-transparent mb-4 transition-all duration-500 hover:shadow-xl hover:-translate-y-2 group"
       >
         <!-- 背景装饰 -->
         <div class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-10 transition-transform duration-700 group-hover:scale-150" :style="{ backgroundColor: item.color }"></div>

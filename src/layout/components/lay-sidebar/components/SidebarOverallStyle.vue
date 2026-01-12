@@ -1,19 +1,100 @@
 <script setup lang="ts">
 import { useGlobal } from "@pureadmin/utils";
-import { computed } from "vue";
+import { computed, ref, nextTick } from "vue";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { dataTheme, dataThemeChange } = useDataThemeChange();
 const overallStyle = computed(() => $storage?.layout?.overallStyle);
 
-const onToggle = () => {
-  if (dataTheme.value) {
-    dataTheme.value = false;
-    dataThemeChange("light");
-  } else {
+const isAnimating = ref(false);
+
+function toggleTheme() {
+  if (overallStyle.value === "light") {
     dataTheme.value = true;
     dataThemeChange("dark");
+  } else {
+    dataTheme.value = false;
+    dataThemeChange("light");
+  }
+}
+
+/**
+ * 通用圆形扩散方案：
+ * 不依赖实验性 API，通过动态插入全屏遮罩层并利用 clip-path 动画实现。
+ * 确保在所有现代浏览器（Chrome, Firefox, Safari）中均有完美表现。
+ */
+const onToggle = async (event: MouseEvent) => {
+  if (isAnimating.value) return;
+  isAnimating.value = true;
+
+  const x = event.clientX;
+  const y = event.clientY;
+  const endRadius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y)
+  );
+
+  // 1. 创建扩散层
+  const overlay = document.createElement("div");
+  const isToDark = overallStyle.value === "light";
+  
+  // 扩散层样式：绝对置顶，初始半径为0
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    pointer-events: none;
+    background: ${isToDark ? "#121212" : "#ffffff"};
+    clip-path: circle(0px at ${x}px ${y}px);
+    transition: clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  `;
+  document.body.appendChild(overlay);
+
+  // 清理函数，确保遮罩层一定会被移除
+  const cleanup = () => {
+    if (overlay.parentNode) {
+      overlay.remove();
+    }
+    isAnimating.value = false;
+  };
+
+  // 安全网：最多 2 秒后强制清理
+  const safetyTimeout = setTimeout(cleanup, 2000);
+
+  try {
+    // 2. 触发扩散动画
+    requestAnimationFrame(() => {
+      overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
+    });
+
+    // 3. 在扩散到一半或完成时切换真实主题
+    setTimeout(async () => {
+      try {
+        toggleTheme();
+        await nextTick();
+
+        // 4. 主题切换后，让遮罩层淡出
+        overlay.style.transition = "opacity 500ms ease, clip-path 600ms cubic-bezier(0.4, 0, 0.2, 1)";
+        overlay.style.opacity = "0";
+
+        setTimeout(() => {
+          clearTimeout(safetyTimeout);
+          cleanup();
+        }, 500);
+      } catch (error) {
+        console.error("主题切换失败:", error);
+        clearTimeout(safetyTimeout);
+        cleanup();
+      }
+    }, 500);
+  } catch (error) {
+    console.error("扩散动画失败:", error);
+    clearTimeout(safetyTimeout);
+    cleanup();
   }
 };
 </script>
@@ -148,8 +229,13 @@ const onToggle = () => {
 </style>
 
 <style lang="scss">
-/* 强制关闭所有默认的主题切换过渡 */
+/* 强制关闭所有默认的主题切换过渡，由我们的扩散层接管 */
 html {
   transition: none;
+}
+
+/* 确保扩散动画在最顶层 */
+.pure-theme-overlay {
+  will-change: clip-path;
 }
 </style>

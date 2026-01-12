@@ -1,0 +1,2535 @@
+.course-page .rightTreeWarp,
+.homework-page .rightTreeWarp,
+.exam-page .rightTreeWarp {
+  width: 23.95833vw;
+  border-radius: 0.83333vw;
+  background: hsla(0, 0%, 100%, 0.05);
+  height: calc(100% - 19.79167vw);
+  border-radius: 16px;
+  margin-right: 2.08333vw;
+  position: fixed;
+  top: 17.91667vw;
+}
+
+.course-page .rightTreeWarp .top-title,
+.homework-page .rightTreeWarp .top-title,
+.exam-page .rightTreeWarp .top-title {
+  line-height: 1.5625vw;
+  font-size: 1.04167vw;
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: 0.41667vw;
+  padding: 1.25vw 1.04167vw 0 1.04167vw;
+  font-family: AlibabaPuHuiTi-Bold;
+}
+
+.course-page .rightTreeWarp .chapterList-box,
+.homework-page .rightTreeWarp .chapterList-box,
+.exam-page .rightTreeWarp .chapterList-box {
+  padding: 1.04167vw 1.25vw;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.course-page .rightTreeWarp .chapterList-box .inner-li,
+.homework-page .rightTreeWarp .chapterList-box .inner-li,
+.exam-page .rightTreeWarp .chapterList-box .inner-li {
+  padding: 0.26042vw 0;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list,
+.homework-page .rightTreeWarp .chapterList-box .list,
+.exam-page .rightTreeWarp .chapterList-box .list {
+  position: relative;
+  padding-bottom: 1.04167vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .position_first_bg,
+.homework-page .rightTreeWarp .chapterList-box .list .position_first_bg,
+.exam-page .rightTreeWarp .chapterList-box .list .position_first_bg {
+  position: absolute;
+  z-index: 1;
+  left: 3.54167vw;
+  top: -0.57292vw;
+  display: inline-block;
+  height: 1.04167vw;
+  width: 0.10417vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li,
+.homework-page .rightTreeWarp .chapterList-box .list li,
+.exam-page .rightTreeWarp .chapterList-box .list li {
+  padding: 0.625vw;
+  font-family: Tahoma;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0.83333vw;
+  color: #fff;
+  font-size: 0.83333vw;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li:after,
+.homework-page .rightTreeWarp .chapterList-box .list li:after,
+.exam-page .rightTreeWarp .chapterList-box .list li:after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 100%;
+  position: absolute;
+  left: 3.95833vw;
+  top: 0;
+  border-right: 0.10417vw dashed hsla(0, 0%, 100%, 0.2);
+  visibility: visible;
+  z-index: 30;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li:hover,
+.homework-page .rightTreeWarp .chapterList-box .list li:hover,
+.exam-page .rightTreeWarp .chapterList-box .list li:hover {
+  background: hsla(0, 0%, 100%, 0.05);
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li:hover .progress,
+.homework-page .rightTreeWarp .chapterList-box .list li:hover .progress,
+.exam-page .rightTreeWarp .chapterList-box .list li:hover .progress {
+  background-color: rgba(96, 79, 253, 0.5);
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li:hover .Sectionmark-em,
+.homework-page .rightTreeWarp .chapterList-box .list li:hover .Sectionmark-em,
+.exam-page .rightTreeWarp .chapterList-box .list li:hover .Sectionmark-em {
+  background-image: url(../images/sectionmark-hover.png);
+  z-index: 33;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li.last-child:after,
+.homework-page .rightTreeWarp .chapterList-box .list li.last-child:after,
+.exam-page .rightTreeWarp .chapterList-box .list li.last-child:after {
+  top: -1.04167vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li.last-child-num:after,
+.homework-page .rightTreeWarp .chapterList-box .list li.last-child-num:after,
+.exam-page .rightTreeWarp .chapterList-box .list li.last-child-num:after {
+  top: -2.34375vw !important;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .catalogue_title3,
+.homework-page .rightTreeWarp .chapterList-box .list li .catalogue_title3,
+.exam-page .rightTreeWarp .chapterList-box .list li .catalogue_title3 {
+  font-size: 0.72917vw;
+  color: hsla(0, 0%, 100%, 0.65);
+  line-height: 1.14583vw;
+  height: 1.14583vw;
+  text-align: right;
+  width: 2.91667vw;
+  padding-right: 0.72917vw;
+  overflow: hidden;
+  position: relative;
+  display: inline-block;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .resource-box,
+.homework-page .rightTreeWarp .chapterList-box .list li .resource-box,
+.exam-page .rightTreeWarp .chapterList-box .list li .resource-box {
+  width: 16.14583vw;
+  margin-top: 0.26042vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text,
+.homework-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text,
+.exam-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text {
+  color: hsla(0, 0%, 100%, 0.65);
+  font-family: Poppins;
+  font-size: 0.72917vw;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.14583vw;
+  margin-left: 0.26042vw;
+  width: 25%;
+  float: left;
+  font-family: AlibabaPuHuiTi-3\.0;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span,
+.homework-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span,
+.exam-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-text span {
+  color: #47ffff;
+  text-align: center;
+  font-family: Poppins;
+  font-size: 0.83333vw;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.14583vw;
+  font-family: AlibabaPuHuiTi-Bold;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-bar,
+.homework-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-bar,
+.exam-page .rightTreeWarp .chapterList-box .list li .resource-box .resource-bar {
+  width: 68%;
+  float: left;
+  margin-top: 0.10417vw;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar {
+  height: 0.41667vw;
+  border-radius: 0.20833vw;
+  background: hsla(0, 0%, 100%, 0.12);
+  margin-left: 1.14583vw;
+  margin-top: 0.41667vw;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress__text,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress__text,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress__text {
+  display: none;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__outer,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__outer,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__outer {
+  border-radius: 0.20833vw;
+  background: hsla(0, 0%, 100%, 0.12);
+  width: 100%;
+  height: 0.41667vw !important;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__inner,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__inner,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__inner {
+  border-radius: 0.20833vw;
+  background: #47ffff;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .Sectionmark-em,
+.homework-page .rightTreeWarp .chapterList-box .list li .Sectionmark-em,
+.exam-page .rightTreeWarp .chapterList-box .list li .Sectionmark-em {
+  background-image: url(../images/sectionmark-normal.png);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position: 0 0;
+  width: 0.625vw;
+  height: 0.625vw;
+  display: inline-block;
+  position: absolute;
+  left: 3.69792vw;
+  top: 0.9375vw;
+  z-index: 33;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box {
+  position: absolute;
+  right: 0.52083vw;
+  display: flex;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam,
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone,
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish {
+  width: 1.04167vw;
+  height: 1.04167vw;
+  margin-left: 0.52083vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam img,
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone img,
+.course-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish img,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam img,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone img,
+.homework-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish img,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .freeExam img,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .haveDone img,
+.exam-page .rightTreeWarp .chapterList-box .list li .icon-box .isFinish img {
+  width: 100%;
+  height: 100%;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list li .catalogue_title,
+.homework-page .rightTreeWarp .chapterList-box .list li .catalogue_title,
+.exam-page .rightTreeWarp .chapterList-box .list li .catalogue_title {
+  font-size: 0.83333vw;
+  font-weight: 700;
+  color: #fff;
+  font-family: AlibabaPuHuiTi-Bold;
+  line-height: 1.14583vw;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 13.54167vw;
+  margin-left: 0.26042vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .forbidClick:hover,
+.homework-page .rightTreeWarp .chapterList-box .list .forbidClick:hover,
+.exam-page .rightTreeWarp .chapterList-box .list .forbidClick:hover {
+  background: none !important;
+  cursor: auto;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .progress,
+.homework-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .progress,
+.exam-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .progress {
+  background-color: rgba(96, 79, 253, 0.5);
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .Sectionmark-em,
+.homework-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .Sectionmark-em,
+.exam-page .rightTreeWarp .chapterList-box .list .forbidClick:hover .Sectionmark-em {
+  background-image: url(../images/sectionmark-normal.png);
+  z-index: 33;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .chapter,
+.homework-page .rightTreeWarp .chapterList-box .list .chapter,
+.exam-page .rightTreeWarp .chapterList-box .list .chapter {
+  cursor: auto;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .chapter:hover,
+.homework-page .rightTreeWarp .chapterList-box .list .chapter:hover,
+.exam-page .rightTreeWarp .chapterList-box .list .chapter:hover {
+  background-color: transparent;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .chapter:after,
+.homework-page .rightTreeWarp .chapterList-box .list .chapter:after,
+.exam-page .rightTreeWarp .chapterList-box .list .chapter:after {
+  top: 1.5625vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .activeNode,
+.homework-page .rightTreeWarp .chapterList-box .list .activeNode,
+.exam-page .rightTreeWarp .chapterList-box .list .activeNode {
+  background: hsla(0, 0%, 100%, 0.05);
+  border-radius: 0.83333vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .activeNode .progress,
+.homework-page .rightTreeWarp .chapterList-box .list .activeNode .progress,
+.exam-page .rightTreeWarp .chapterList-box .list .activeNode .progress {
+  background-color: rgba(96, 79, 253, 0.5);
+}
+
+.course-page .rightTreeWarp .chapterList-box .list .activeNode .Sectionmark-em,
+.homework-page .rightTreeWarp .chapterList-box .list .activeNode .Sectionmark-em,
+.exam-page .rightTreeWarp .chapterList-box .list .activeNode .Sectionmark-em {
+  background-image: url(../images/sectionmark-hover.png);
+  z-index: 33;
+}
+
+.course-page .rightTreeWarp .chapterList-box .list-bg-line,
+.homework-page .rightTreeWarp .chapterList-box .list-bg-line,
+.exam-page .rightTreeWarp .chapterList-box .list-bg-line {
+  position: absolute;
+  z-index: 1;
+  left: 20.6%;
+  top: 1.04167vw;
+  border: none;
+  border-left: 0.10417vw dashed hsla(0, 0%, 100%, 0.2);
+  width: 0;
+  height: 100%;
+  margin-top: 0.26042vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item,
+.homework-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item,
+.exam-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item {
+  margin-bottom: 0.41667vw;
+  padding: 0.625vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item .chapter-name-box,
+.homework-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item .chapter-name-box,
+.exam-page .rightTreeWarp .chapterList-box .chapter-list .chapter-item .chapter-name-box {
+  display: flex;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-num,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-num,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-num {
+  font-size: 0.72917vw;
+  color: hsla(0, 0%, 100%, 0.65);
+  line-height: 1.35417vw;
+  width: 12%;
+  text-align: right;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .icon-c,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .icon-c,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .icon-c {
+  width: 0.625vw;
+  height: 0.625vw;
+  background: url(../images/icon-c-normal.png)
+    no-repeat 50%;
+  margin: 0 2%;
+  position: relative;
+  padding-top: 3%;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-all,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-all,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-all {
+  width: 1.04167vw;
+  height: 1.04167vw;
+  margin-top: 0.10417vw;
+  margin-left: 1.04167vw;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-qa,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-qa,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .learn-qa {
+  width: 0.83333vw;
+  height: 0.83333vw;
+  margin-top: 0.20833vw;
+  margin-left: 1.04167vw;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-name,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-name,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .chapter-name {
+  font-size: 0.83333vw;
+  line-height: 1.35417vw;
+  color: #fff;
+  width: 70%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.course-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .bigName,
+.homework-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .bigName,
+.exam-page
+  .rightTreeWarp
+  .chapterList-box
+  .chapter-list
+  .chapter-item
+  .chapter-name-box
+  .bigName {
+  font-size: 0.9375vw;
+}
+
+.course-page .rightTreeWarp .chapterList-box .chapter-list .activeNode,
+.homework-page .rightTreeWarp .chapterList-box .chapter-list .activeNode,
+.exam-page .rightTreeWarp .chapterList-box .chapter-list .activeNode {
+  border-radius: 0.625vw;
+  background: hsla(0, 0%, 100%, 0.05);
+}
+
+.course-page .rightTreeWarp .chapterList-box .chapter-list .activeNode .icon-c,
+.homework-page .rightTreeWarp .chapterList-box .chapter-list .activeNode .icon-c,
+.exam-page .rightTreeWarp .chapterList-box .chapter-list .activeNode .icon-c {
+  width: 0.625vw;
+  height: 0.625vw;
+  background: url(../images/icon-c-active.png)
+    no-repeat 50% !important;
+  margin: 0 2%;
+  position: relative;
+  padding-top: 3%;
+}
+
+.rightTreeWarp .el-scrollbar .el-scrollbar__wrap {
+  overflow-x: hidden;
+}
+
+.rightTreeWarp .el-scrollbar .el-scrollbar__bar {
+  right: 0.52083vw;
+}
+
+.light .rightTreeWarp {
+  background: #fff;
+}
+
+.light .rightTreeWarp .chapterList-box .list li .catalogue_title,
+.light .rightTreeWarp .top-title {
+  color: #000;
+}
+
+.light .rightTreeWarp .chapterList-box .list .activeNode,
+.light .rightTreeWarp .chapterList-box .list li:hover {
+  background: #efedff;
+}
+
+.light .rightTreeWarp .chapterList-box .list li:after {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light .rightTreeWarp .chapterList-box .list li .catalogue_title3,
+.light .rightTreeWarp .chapterList-box .list li .resource-box .resource-text {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.light
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-text
+  span {
+  color: #6b8cdb;
+}
+
+.light
+  .rightTreeWarp
+  .chapterList-box
+  .list
+  li
+  .resource-box
+  .resource-bar
+  .el-progress-bar__inner {
+  background: #6b8cdb;
+}
+
+.light .rightTreeWarp .chapterList-box .list li .Sectionmark-em {
+  background-image: url(../images/sectionmark-light.png);
+}
+
+.course-page .resource-warp,
+.homework-page .resource-warp,
+.exam-page .resource-warp {
+  width: 100%;
+  padding: 1.25vw 1.66667vw;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.83333vw;
+  border: 1px solid hsla(0, 0%, 100%, 0.08);
+  background: hsla(0, 0%, 100%, 0.05);
+  -webkit-backdrop-filter: blur(3.125vw);
+  backdrop-filter: blur(3.125vw);
+  margin-top: 1.66667vw;
+}
+
+.course-page .resource-warp .resource-tab,
+.homework-page .resource-warp .resource-tab,
+.exam-page .resource-warp .resource-tab {
+  display: flex;
+  margin-bottom: 1.25vw;
+}
+
+.course-page .resource-warp .resource-tab .tab-item,
+.homework-page .resource-warp .resource-tab .tab-item,
+.exam-page .resource-warp .resource-tab .tab-item {
+  display: flex;
+  margin-right: 3.02083vw;
+  cursor: pointer;
+}
+
+.course-page .resource-warp .resource-tab .tab-item i,
+.homework-page .resource-warp .resource-tab .tab-item i,
+.exam-page .resource-warp .resource-tab .tab-item i {
+  display: block;
+  width: 1.66667vw;
+  height: 1.66667vw;
+  background: url(../images/resource-tab-normal.png)
+    no-repeat 50%;
+}
+
+.course-page .resource-warp .resource-tab .tab-item span,
+.homework-page .resource-warp .resource-tab .tab-item span,
+.exam-page .resource-warp .resource-tab .tab-item span {
+  font-size: 1.04167vw;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.5625vw;
+  color: hsla(0, 0%, 100%, 0.45);
+  margin-left: 0.41667vw;
+  font-family: AlibabaPuHuiTi-Bold;
+}
+
+.course-page .resource-warp .resource-tab .botton-box-down,
+.homework-page .resource-warp .resource-tab .botton-box-down,
+.exam-page .resource-warp .resource-tab .botton-box-down {
+  position: absolute;
+  right: 1.66667vw;
+  width: 2.08333vw;
+  height: 2.08333vw;
+  border-radius: 50%;
+  background: hsla(0, 0%, 100%, 0.1);
+  margin: auto;
+  cursor: pointer;
+}
+
+.course-page .resource-warp .resource-tab .botton-box-down img,
+.homework-page .resource-warp .resource-tab .botton-box-down img,
+.exam-page .resource-warp .resource-tab .botton-box-down img {
+  width: 1.25vw;
+  height: 1.25vw;
+  margin-left: 0.41667vw;
+  margin-top: 0.41667vw;
+}
+
+.course-page .resource-warp .resource-tab .active span,
+.homework-page .resource-warp .resource-tab .active span,
+.exam-page .resource-warp .resource-tab .active span {
+  background-image: linear-gradient(90deg, #47ffff, #d1ff86 50%, #fdd74f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.course-page .resource-warp .resource-tab .active i,
+.homework-page .resource-warp .resource-tab .active i,
+.exam-page .resource-warp .resource-tab .active i {
+  background: url(../images/resource-tab-active.png)
+    no-repeat 50%;
+}
+
+.course-page .resource-warp .label-list,
+.homework-page .resource-warp .label-list,
+.exam-page .resource-warp .label-list {
+  display: flex;
+  margin-bottom: 1.25vw;
+  flex-wrap: wrap;
+  height: auto;
+}
+
+.course-page .resource-warp .label-list .label-name,
+.homework-page .resource-warp .label-list .label-name,
+.exam-page .resource-warp .label-list .label-name {
+  height: 2.08333vw;
+  border-radius: 0.41667vw;
+  margin-right: 0.83333vw;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px rgba(223, 220, 255, 0.2);
+  background: hsla(0, 0%, 100%, 0.08);
+  margin-bottom: 0.83333vw;
+  border: 1px solid hsla(0, 0%, 100%, 0.08);
+  font-family: "Alibaba PuHuiTi 3.0";
+}
+
+.course-page .resource-warp .label-list .label-name .name-box,
+.homework-page .resource-warp .label-list .label-name .name-box,
+.exam-page .resource-warp .label-list .label-name .name-box {
+  display: flex;
+  line-height: 2.08333vw;
+}
+
+.course-page .resource-warp .label-list .label-name .name-box .lab-number,
+.homework-page .resource-warp .label-list .label-name .name-box .lab-number,
+.exam-page .resource-warp .label-list .label-name .name-box .lab-number {
+  padding: 0;
+  font-family: Poppins;
+  font-size: 0.83333vw;
+  font-style: normal;
+  padding-left: 0.20833vw;
+  line-height: 2.1875vw;
+}
+
+.course-page .resource-warp .label-list .label-name span,
+.homework-page .resource-warp .label-list .label-name span,
+.exam-page .resource-warp .label-list .label-name span {
+  display: block;
+  line-height: 2.08333vw;
+  padding: 0 1.25vw;
+  font-size: 0.83333vw;
+  color: #fff;
+}
+
+.course-page .resource-warp .label-list .active,
+.homework-page .resource-warp .label-list .active,
+.exam-page .resource-warp .label-list .active {
+  border: 1px solid hsla(0, 0%, 100%, 0.08);
+  background: rgba(230, 225, 255, 0.2);
+  font-weight: 700 !important;
+  font-family: AlibabaPuHuiTi-Bold;
+}
+
+.course-page .resource-warp .label-over,
+.homework-page .resource-warp .label-over,
+.exam-page .resource-warp .label-over {
+  height: 8.33333vw;
+  overflow: hidden;
+  transition: height 0.3s ease-out;
+}
+
+.course-page .resource-warp .resources-list,
+.homework-page .resource-warp .resources-list,
+.exam-page .resource-warp .resources-list {
+  display: flex;
+  margin-bottom: 1.5625vw;
+}
+
+.course-page .resource-warp .resources-list .resources-item,
+.homework-page .resource-warp .resources-list .resources-item,
+.exam-page .resource-warp .resources-list .resources-item {
+  padding: 0.625vw;
+  border-radius: 1.25vw;
+  border: 1px rgba(0, 0, 0, 0.08);
+  background: hsla(0, 0%, 100%, 0.05);
+  border: 1px solid hsla(0, 0%, 100%, 0);
+  width: 16.66667vw;
+  margin-right: 0.625vw;
+}
+
+.course-page .resource-warp .resources-list .resources-item.active,
+.course-page .resource-warp .resources-list .resources-item:hover,
+.homework-page .resource-warp .resources-list .resources-item.active,
+.homework-page .resource-warp .resources-list .resources-item:hover,
+.exam-page .resource-warp .resources-list .resources-item.active,
+.exam-page .resource-warp .resources-list .resources-item:hover {
+  border: 1px solid hsla(0, 0%, 100%, 0.08);
+}
+
+.course-page .resource-warp .resources-list .basic-info-video-card-container .video-wrap,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .video-wrap,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .video-wrap {
+  width: 100%;
+  height: 9.375vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  img,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  img,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type {
+  position: absolute;
+  right: 0.52083vw;
+  bottom: 0.52083vw;
+  width: 1.5625vw;
+  height: 1.5625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-type
+  i {
+  width: 1.5625vw;
+  height: 1.5625vw;
+  margin-top: 0.20833vw;
+  display: block;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang,
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive {
+  width: 2.60417vw;
+  height: 2.60417vw;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -1.30208vw;
+  margin-left: -1.30208vw;
+  border-radius: 50%;
+  background: hsla(0, 0%, 100%, 0.2);
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang
+  img,
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive
+  img,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang
+  img,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive
+  img,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .bofang
+  img,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive
+  img {
+  width: 100%;
+  height: 100%;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .video-time,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .video-time,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .video-time {
+  position: absolute;
+  left: 0.625vw;
+  bottom: 0.625vw;
+  padding: 0 0.20833vw;
+  height: 1.04167vw;
+  line-height: 1.04167vw;
+  font-size: 0.72917vw;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  text-align: center;
+  border-radius: 0.20833vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isActive {
+  border-radius: 0;
+  background: none;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video {
+  position: absolute;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-video
+  i {
+  background: url(../images/file-video-icon.png)
+    no-repeat 50%;
+  background-size: 1.5625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh {
+  display: flex;
+  height: 0.83333vw;
+  line-height: 0.83333vw;
+  font-size: 0.72917vw;
+  font-style: normal;
+  font-weight: 400;
+  font-family: AlibabaPuHuiTi-3\.0;
+  border-radius: 0.3125vw;
+  background: rgba(0, 0, 0, 0.4);
+  position: absolute;
+  left: 0.41667vw;
+  top: 0.41667vw;
+  color: #fff;
+  padding: 0.20833vw 0.26042vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh
+  img,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh
+  img,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .isFinsh
+  img {
+  width: 0.83333vw;
+  height: 0.83333vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-word
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-word
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-word
+  i {
+  background: url(../images/file-word-icon.png)
+    no-repeat 50%;
+  background-size: 1.5625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-excel
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-excel
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-excel
+  i {
+  background: url(../images/file-excel-icon.png)
+    no-repeat 50%;
+  background-size: 1.5625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-img
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-img
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-img
+  i {
+  background: url(../images/file-img-icon.png)
+    no-repeat 50%;
+  background-size: 1.5625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-music
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-music
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-music
+  i {
+  background: url(../images/file-music-icon.png)
+    no-repeat 50%;
+  background-size: 1.5625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-ppt
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-ppt
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-ppt
+  i {
+  background: url(../images/file-ppt-icon.png)
+    no-repeat 50%;
+  background-size: 1.5625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-swf
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-swf
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-swf
+  i {
+  background: url(../images/file-swf-icon.png)
+    no-repeat 50%;
+  background-size: 1.5625vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-other
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-other
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .video-wrap
+  .video-img-bg
+  .file-other
+  i {
+  background: url(../images/file-other-icon.png)
+    no-repeat 50%;
+  background-size: 1.5625vw;
+}
+
+.course-page .resource-warp .resources-list .basic-info-video-card-container .video-info,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .video-info,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .video-info {
+  margin-top: 0.625vw;
+}
+
+.course-page .resource-warp .resources-list .basic-info-video-card-container .file-ppt i,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .file-ppt i,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .file-ppt i {
+  background: url(../images/file-ppt-small.png)
+    no-repeat 50%;
+  background-size: 1.04167vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn {
+  background: #5e79ff;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-word
+  .type-btn
+  i {
+  background: url(../images/file-word-small.png)
+    no-repeat 50%;
+  background-size: 1.04167vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn {
+  background: #00ca8e;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-img
+  .type-btn
+  i {
+  background: url(../images/file-img-small.png)
+    no-repeat 50%;
+  background-size: 1.04167vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn {
+  background: #00ca8e;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-html
+  .type-btn
+  i {
+  background: url(../images/file-html-small.png)
+    no-repeat 50%;
+  background-size: 1.04167vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn {
+  background: #8269ff;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-music
+  .type-btn
+  i {
+  background: url(../images/file-music-small.png)
+    no-repeat 50%;
+  background-size: 1.04167vw;
+}
+
+.course-page .resource-warp .resources-list .basic-info-video-card-container .file-video i,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .file-video i,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .file-video i {
+  background: url(../images/file-video-small.png)
+    no-repeat 50%;
+  background-size: 1.04167vw;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn {
+  background: #ff7a7a;
+}
+
+.course-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn
+  i,
+.homework-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn
+  i,
+.exam-page
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-swf
+  .type-btn
+  i {
+  background: url(../images/file-swf-small.png)
+    no-repeat 50%;
+  background-size: 1.04167vw;
+}
+
+.course-page .resource-warp .resources-list .basic-info-video-card-container .file-name,
+.homework-page .resource-warp .resources-list .basic-info-video-card-container .file-name,
+.exam-page .resource-warp .resources-list .basic-info-video-card-container .file-name {
+  font-size: 0.9375vw;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.5625vw;
+  color: #fff;
+  width: 16.66667vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.41667vw;
+  font-family: AlibabaPuHuiTi-Bold;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #f5f5f5, #dbdbdb);
+  box-shadow:
+    inset 1px 1px 0.26042vw rgba(0, 0, 0, 0.2),
+    1px 1px 0.26042vw rgba(0, 0, 0, 0.2);
+  border-radius: 0.26042vw;
+}
+
+.light .resource-warp .resource-tab .tab-item.active i {
+  background: url(../images/resource-tab-active-light.png)
+    no-repeat 50%;
+  background-size: 100%;
+}
+
+.light .resource-warp .resource-tab .tab-item i {
+  background: url(../images/resource-tab-normal-light.png)
+    no-repeat 50%;
+  background-size: 100%;
+}
+
+.light .resource-warp .resource-tab .tab-item span {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.light .resource-warp .label-list .active {
+  border-radius: 0.41667vw;
+  background: #6b8cdb;
+}
+
+.light .resource-warp .resources-item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.light .resource-warp .resources-item.active {
+  border-color: #6b8cdb;
+}
+
+.light
+  .resource-warp
+  .resources-list
+  .basic-info-video-card-container
+  .file-name {
+  color: #000;
+}
+
+.ppt-preview-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  border: 0.10417vw solid #999;
+  border-radius: 0.625vw;
+  box-sizing: border-box;
+  background: #f3f3f3;
+}
+
+.ppt-preview-container .catalogue-container {
+  width: 8.64583vw;
+  height: 100%;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border-right: 1px solid #bfbfbf;
+}
+
+.ppt-preview-container .catalogue-container .div-img-container {
+  opacity: 0.9;
+  border: 0.26042vw solid transparent;
+  margin: 0.41667vw;
+  padding: 0 0.10417vw;
+  border-radius: 0.57292vw;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.ppt-preview-container .catalogue-container .div-img-container .page-show {
+  position: absolute;
+  background: #ababb8;
+  color: #fff;
+  font-size: 0.625vw;
+  font-weight: 600;
+  bottom: 0.20833vw;
+  left: 0.20833vw;
+  height: 0.83333vw;
+  line-height: 0.83333vw;
+  text-align: center;
+  width: 1.45833vw;
+  border-radius: 0.20833vw;
+}
+
+.ppt-preview-container .catalogue-container .div-img-container img {
+  width: 7.23958vw;
+  height: 4.0625vw;
+  border-radius: 0.3125vw;
+  margin: 0.15625vw auto;
+}
+
+.ppt-preview-container .catalogue-container .div-img-container:hover {
+  border-color: #5b5adf !important;
+}
+
+.ppt-preview-container .catalogue-container .hightLight {
+  box-shadow: 0 0.20833vw 0.3125vw 0 rgba(0, 0, 0, 0.1);
+  border-color: #afa09b;
+}
+
+.ppt-preview-container .catalogue-container .hightLight .page-show {
+  background: #5b5adf;
+}
+
+.ppt-preview-container .catalogue-container .choose {
+  border-color: #5b5adf !important;
+}
+
+.ppt-preview-container .catalogue-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.ppt-preview-container .ppt-content-container {
+  flex: 1;
+  height: 100%;
+  overflow-y: scroll;
+  align-self: center;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  box-sizing: border-box;
+  padding: 1.04167vw;
+  position: relative;
+}
+
+.ppt-preview-container .ppt-content-container img {
+  width: 100%;
+  display: block;
+  margin: auto;
+}
+
+.ppt-preview-container .ppt-content-container .ppt-container-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.ppt-preview-container .ppt-content-container .ppt-container-inner canvas,
+.ppt-preview-container .ppt-content-container .ppt-container-inner div {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.ppt-preview-container .ppt-content-container .ppt-btn-outer-container {
+  width: calc(100% - 2.08333vw);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.08333vw;
+  position: absolute;
+  bottom: 2.60417vw;
+}
+
+.ppt-preview-container
+  .ppt-content-container
+  .ppt-btn-outer-container
+  .ppt-btn-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.08333vw;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 2.08333vw;
+  padding: 0 0.3125vw;
+  box-shadow: 0 0.20833vw 0.3125vw 0 rgba(0, 0, 0, 0.1);
+}
+
+.ppt-preview-container
+  .ppt-content-container
+  .ppt-btn-outer-container
+  .ppt-btn-container
+  .little-btn {
+  width: 1.45833vw;
+  height: 1.45833vw;
+  background: hsla(0, 0%, 100%, 0.1);
+  opacity: 1;
+  margin: 0 0.15625vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.ppt-preview-container
+  .ppt-content-container
+  .ppt-btn-outer-container
+  .ppt-btn-container
+  .little-btn
+  .ppt-btn {
+  width: 0.83333vw;
+}
+
+.ppt-preview-container
+  .ppt-content-container
+  .ppt-btn-outer-container
+  .ppt-btn-container
+  .little-btn
+  .ppt-btn::selection {
+  background: transparent;
+}
+
+.ppt-preview-container
+  .ppt-content-container
+  .ppt-btn-outer-container
+  .ppt-btn-container
+  .little-btn:hover {
+  background: hsla(0, 0%, 100%, 0.3);
+}
+
+.ppt-preview-container
+  .ppt-content-container
+  .ppt-btn-outer-container
+  .ppt-btn-container
+  .page-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.15625vw;
+  background: hsla(0, 0%, 100%, 0.1);
+  border-radius: 0.83333vw 0.83333vw 0.83333vw 0.83333vw;
+  opacity: 1;
+  height: 1.45833vw;
+  padding: 0 0.41667vw;
+  font-size: 0.72917vw;
+  font-family:
+    PingFang SC-Semibold,
+    PingFang SC;
+  font-weight: 600;
+  color: hsla(0, 0%, 100%, 0.5);
+}
+
+.ppt-preview-container
+  .ppt-content-container
+  .ppt-btn-outer-container
+  .ppt-btn-container
+  .page-content
+  .page-current {
+  color: #fff;
+}
+
+.ppt-preview-container .full-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  right: 0;
+  bottom: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ppt-preview-container .full-screen img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+}
+
+.ppt-preview-container .full-screen .old-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: 98%;
+}
+
+.ppt-preview-container .ppt-content-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.preview-warp {
+  width: 100%;
+  height: 31.25vw;
+  background: #000;
+  border-radius: 0.83333vw;
+}
+
+.preview-warp .doc-box,
+.preview-warp .images-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  border-radius: 0.83333vw;
+}
+
+.preview-warp .ppt-box {
+  border-radius: 0.83333vw;
+}
+
+.preview-warp .images-wrap img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  max-height: 100%;
+  max-width: 100%;
+}
+
+.course-page .kgDescribe-warp,
+.homework-page .kgDescribe-warp,
+.exam-page .kgDescribe-warp {
+  padding: 1.25vw 1.66667vw;
+  width: 100%;
+  border-radius: 0.83333vw;
+  border: 1px solid hsla(0, 0%, 100%, 0.08);
+  background: hsla(0, 0%, 100%, 0.05);
+  -webkit-backdrop-filter: blur(3.125vw);
+  backdrop-filter: blur(3.125vw);
+  box-sizing: border-box;
+  margin-top: 1.66667vw;
+  height: auto;
+  overflow: hidden;
+}
+
+.course-page .kgDescribe-warp .botton-box-down,
+.homework-page .kgDescribe-warp .botton-box-down,
+.exam-page .kgDescribe-warp .botton-box-down {
+  position: absolute;
+  right: 1.66667vw;
+  width: 2.08333vw;
+  height: 2.08333vw;
+  border-radius: 50%;
+  background: hsla(0, 0%, 100%, 0.1);
+  margin: auto;
+  cursor: pointer;
+}
+
+.course-page .kgDescribe-warp .botton-box-down:after,
+.homework-page .kgDescribe-warp .botton-box-down:after,
+.exam-page .kgDescribe-warp .botton-box-down:after {
+  display: block;
+  content: "";
+  position: absolute;
+  left: 0.41667vw;
+  top: 0.41667vw;
+  width: 1.25vw;
+  height: 1.25vw;
+  background-image: url(../images/botton-down-icon.png);
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 100% 100%;
+  transition: all 0.2s ease;
+  transform: rotate(180deg);
+}
+
+.course-page .kgDescribe-warp .botton-box-down.close-status:after,
+.homework-page .kgDescribe-warp .botton-box-down.close-status:after,
+.exam-page .kgDescribe-warp .botton-box-down.close-status:after {
+  transform: rotate(0);
+}
+
+.course-page .kgDescribe-warp .top-test,
+.homework-page .kgDescribe-warp .top-test,
+.exam-page .kgDescribe-warp .top-test {
+  height: 1.66667vw;
+  display: flex;
+  margin-bottom: 1.04167vw;
+}
+
+.course-page .kgDescribe-warp .top-test img,
+.homework-page .kgDescribe-warp .top-test img,
+.exam-page .kgDescribe-warp .top-test img {
+  width: 1.66667vw;
+  height: 1.66667vw;
+}
+
+.course-page .kgDescribe-warp .top-test span,
+.homework-page .kgDescribe-warp .top-test span,
+.exam-page .kgDescribe-warp .top-test span {
+  font-size: 1.04167vw;
+  line-height: 1.66667vw;
+  background-image: linear-gradient(90deg, #47ffff, #d1ff86 50%, #fdd74f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  margin-left: 0.41667vw;
+  font-family: AlibabaPuHuiTi-Bold;
+}
+
+.course-page .kgDescribe-warp .label-list,
+.homework-page .kgDescribe-warp .label-list,
+.exam-page .kgDescribe-warp .label-list {
+  display: flex;
+  flex-wrap: wrap;
+  height: auto;
+}
+
+.course-page .kgDescribe-warp .label-list .lab-item,
+.homework-page .kgDescribe-warp .label-list .lab-item,
+.exam-page .kgDescribe-warp .label-list .lab-item {
+  border-radius: 0.41667vw;
+  background: hsla(0, 0%, 100%, 0.05);
+  margin-right: 0.83333vw;
+  margin-bottom: 0.83333vw;
+  cursor: pointer;
+}
+
+.course-page .kgDescribe-warp .label-list .lab-item span,
+.homework-page .kgDescribe-warp .label-list .lab-item span,
+.exam-page .kgDescribe-warp .label-list .lab-item span {
+  font-size: 0.9375vw;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.5625vw;
+  color: #fff;
+  padding: 0.41667vw 1.66667vw;
+  display: block;
+  font-family: AlibabaPuHuiTi-Bold;
+}
+
+.course-page .kgDescribe-warp .label-list .lab-item:hover,
+.homework-page .kgDescribe-warp .label-list .lab-item:hover,
+.exam-page .kgDescribe-warp .label-list .lab-item:hover {
+  background: hsla(0, 0%, 100%, 0.15);
+}
+
+.course-page .kgDescribe-warp .label-list .active,
+.homework-page .kgDescribe-warp .label-list .active,
+.exam-page .kgDescribe-warp .label-list .active {
+  background: #6b8cdb;
+}
+
+.course-page .kgDescribe-warp .label-over,
+.homework-page .kgDescribe-warp .label-over,
+.exam-page .kgDescribe-warp .label-over {
+  height: 10.9375vw;
+  overflow: hidden;
+  transition: height 0.3s ease-out;
+}
+
+.course-page .kgDescribe-warp .introduce-div,
+.homework-page .kgDescribe-warp .introduce-div,
+.exam-page .kgDescribe-warp .introduce-div {
+  text-align: justify;
+  font-family: AlibabaPuHuiTi-3\.0;
+  font-size: 0.9375vw;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5625vw;
+  color: #fff;
+  margin-top: 1.04167vw;
+}
+
+.kgDescribe-warp .introduce-div img {
+  max-width: 100%;
+  height: auto;
+}
+
+.kgDescribe-warp .introduce-div embed {
+  background: hsla(0, 0%, 100%, 0.9);
+}
+
+.kgDescribe-warp .introduce-div a {
+  color: #5546fd;
+}
+
+.kgDescribe-warp .introduce-div h1,
+.kgDescribe-warp .introduce-div h2,
+.kgDescribe-warp .introduce-div p {
+  word-break: break-all;
+}
+
+body.course-page,
+body.course-page #app {
+  width: 100%;
+  height: 100%;
+}
+
+.course-page .aloneMapCourrseWarp,
+.homework-page .aloneMapCourrseWarp,
+.exam-page .aloneMapCourrseWarp {
+  display: flex;
+  min-width: 62.5vw;
+}
+
+.course-page .aloneMapCourrseWarp .left-warp,
+.homework-page .aloneMapCourrseWarp .left-warp,
+.exam-page .aloneMapCourrseWarp .left-warp {
+  flex: 1;
+  margin-right: 1.66667vw;
+  min-width: 26.04167vw;
+  padding-top: 4.16667vw;
+  position: relative;
+}
+
+.course-page .aloneMapCourrseWarp .left-warp .left-scroll .el-scrollbar__wrap,
+.homework-page .aloneMapCourrseWarp .left-warp .left-scroll .el-scrollbar__wrap,
+.exam-page .aloneMapCourrseWarp .left-warp .left-scroll .el-scrollbar__wrap {
+  padding-right: 1.5625vw;
+}
+
+.course-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text,
+.homework-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text,
+.exam-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text {
+  display: flex;
+  font-size: 0.83333vw;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.04167vw;
+  font-family: AlibabaPuHuiTi-Bold;
+  margin-top: 1.66667vw;
+  color: #fff;
+}
+
+.course-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i,
+.homework-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i,
+.exam-page .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i {
+  width: 1.04167vw;
+  height: 1.04167vw;
+  background: url(../images/kg-icon-dark.png)
+    no-repeat 50%;
+  margin-right: 0.10417vw;
+}
+
+.course-page .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name,
+.homework-page .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name,
+.exam-page .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name {
+  font-size: 1.25vw;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1.875vw;
+  color: #fff;
+  margin: 0.625vw 0 1.25vw 1.25vw;
+  font-family: AlibabaPuHuiTi-Heavy;
+}
+
+.course-page .aloneMapCourrseWarp .rigth-warp,
+.homework-page .aloneMapCourrseWarp .rigth-warp,
+.exam-page .aloneMapCourrseWarp .rigth-warp {
+  height: auto;
+  width: 23.95833vw;
+  margin-right: 2.08333vw;
+  position: relative;
+  box-sizing: border-box;
+  margin: 0 1.66667vw;
+  margin-left: 0;
+  padding-right: 0.52083vw;
+  padding-bottom: 1.04167vw;
+  margin-right: 1.14583vw;
+}
+
+.course-page .aloneMapCourrseWarp .aberrant,
+.homework-page .aloneMapCourrseWarp .aberrant,
+.exam-page .aloneMapCourrseWarp .aberrant {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+  background: rgba(42, 42, 42, 0.95);
+  border-radius: 1.5625vw;
+  border-radius: 30px;
+  width: 32.8125vw;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  z-index: 101;
+}
+
+.course-page .aloneMapCourrseWarp .aberrant .title,
+.homework-page .aloneMapCourrseWarp .aberrant .title,
+.exam-page .aloneMapCourrseWarp .aberrant .title {
+  line-height: 1.5625vw;
+  color: #ededed;
+  font-size: 0.9375vw;
+  text-align: center;
+  margin-top: 1.5625vw;
+  padding: 0 2.08333vw;
+}
+
+.course-page .aloneMapCourrseWarp .aberrant .limit-tips,
+.homework-page .aloneMapCourrseWarp .aberrant .limit-tips,
+.exam-page .aloneMapCourrseWarp .aberrant .limit-tips {
+  line-height: 1.04167vw;
+  margin-top: 1.04167vw;
+  color: #bfbfbf;
+  font-size: 0.72917vw;
+  text-align: center;
+}
+
+.course-page .aloneMapCourrseWarp .aberrant ul,
+.homework-page .aloneMapCourrseWarp .aberrant ul,
+.exam-page .aloneMapCourrseWarp .aberrant ul {
+  margin-top: 0.26042vw;
+  margin-bottom: 1.04167vw;
+}
+
+.course-page .aloneMapCourrseWarp .aberrant ul li,
+.homework-page .aloneMapCourrseWarp .aberrant ul li,
+.exam-page .aloneMapCourrseWarp .aberrant ul li {
+  line-height: 2.5vw;
+  color: #fff;
+  font-size: 1.25vw;
+  text-align: center;
+}
+
+.course-page .aloneMapCourrseWarp .aberrant a,
+.homework-page .aloneMapCourrseWarp .aberrant a,
+.exam-page .aloneMapCourrseWarp .aberrant a {
+  display: block;
+  background: #6b8cdb;
+  width: 7.8125vw;
+  line-height: 2.8125vw;
+  text-align: center;
+  color: #fff;
+  border: 0;
+  border-radius: 0;
+  margin: 0 auto;
+  margin-bottom: 1.04167vw;
+  line-height: 54px;
+  cursor: pointer;
+  z-index: 20;
+  font-size: 0.9375vw;
+  border-radius: 0.83333vw;
+}
+
+.light .aloneMapCourrseWarp .left-warp .courseMsg-box .kg-name,
+.light .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text {
+  color: #000;
+}
+
+.light .aloneMapCourrseWarp .left-warp .courseMsg-box .small-text i {
+  background: url(../images/kg-icon-light.png)
+    no-repeat 50%;
+  background-size: 100%;
+}
+
+.light .ai-ability-box,
+.light .kgDescribe-warp,
+.light .resource-warp {
+  background: #fff;
+}
+
+.light .ai-ability-box .botton-box-down,
+.light .kgDescribe-warp .botton-box-down,
+.light .resource-warp .botton-box-down {
+  background: rgba(96, 79, 253, 0.1);
+}
+
+.light .ai-ability-box .botton-box-down:after,
+.light .kgDescribe-warp .botton-box-down:after,
+.light .resource-warp .botton-box-down:after {
+  background: url(../images/down-arrow-icon.png)
+    no-repeat 50%;
+  background-size: 100%;
+}
+
+.light .ai-ability-box .text-list .text-item,
+.light .kgDescribe-warp .text-list .text-item,
+.light .resource-warp .text-list .text-item {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.light .ai-ability-box .text-list .text-item .inner-box:after,
+.light .kgDescribe-warp .text-list .text-item .inner-box:after,
+.light .resource-warp .text-list .text-item .inner-box:after {
+  background: url(../images/down-arrow-icon.png)
+    no-repeat 50%;
+  background-size: 100%;
+}
+
+.light .ai-ability-box .text-list .text-item .label-list .lab-item:hover,
+.light .kgDescribe-warp .text-list .text-item .label-list .lab-item:hover,
+.light .resource-warp .text-list .text-item .label-list .lab-item:hover {
+  background: #6b8cdb !important;
+  color: #fff !important;
+}
+
+.light .ai-ability-box .top-box .title,
+.light .kgDescribe-warp .top-test span,
+.light .resource-warp .resource-tab .active span {
+  background: linear-gradient(90deg, #6b8cdb, #00f0ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.light .ai-ability-box .text-list .text-item,
+.light .ai-ability-box .text-list .text-item .inner-box,
+.light .ai-ability-box .text-list .text-item .time,
+.light .kgDescribe-warp .introduce-div,
+.light .kgDescribe-warp .introduce-div .inner-box,
+.light .kgDescribe-warp .introduce-div .time {
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.light .ai-ability-box .text-list .text-item span.active,
+.light .kgDescribe-warp .introduce-div span.active {
+  color: #6b8cdb;
+}
+
+.study-mode[data-v-cebc91e2] {
+  display: flex;
+  width: 17.5vw;
+  align-items: center;
+  border-radius: 0.52083vw;
+  color: #fff;
+  font-size: 0.72917vw;
+  background-color: hsla(0, 0%, 100%, 0.03);
+  height: 2.5vw;
+}
+
+.study-mode .mode-item[data-v-cebc91e2] {
+  width: 50%;
+  height: 2.5vw;
+  line-height: 2.5vw;
+  text-align: center;
+  border-radius: 0.83333vw;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: hsla(0, 0%, 100%, 0.65);
+  font-family: "Alibaba PuHuiTi 3.0";
+  font-size: 1.04167vw;
+  font-style: normal;
+  font-weight: 400;
+  box-sizing: border-box;
+}
+
+.study-mode .mode-item.active[data-v-cebc91e2] {
+  color: #fff;
+  line-height: 2.5vw;
+  font-weight: bolder;
+  background-color: #6b8cdb;
+  font-weight: 1000;
+  font-family: AlibabaPuHuiTi-Black;
+}
+
+.study-container[data-v-cebc91e2] {
+  padding-left: 7.5vw;
+}
+
+.light[data-v-cebc91e2] {
+  color: #fff;
+  background-color: #f5f8fc;
+}
+
+.light .study-mode[data-v-cebc91e2] {
+  color: #6b8cdb;
+  background: rgba(96, 79, 253, 0.1);
+  border-radius: 0.83333vw !important;
+  overflow: hidden !important;
+}
+
+.light .study-mode .mode-item[data-v-cebc91e2] {
+  color: #6b8cdb;
+}
+
+.light .study-mode .mode-item.active[data-v-cebc91e2] {
+  color: #fff;
+  border-radius: 0.625vw !important;
+}
+
+.dark[data-v-cebc91e2] {
+  color: #000;
+}
+
+.dark .study-mode[data-v-cebc91e2] {
+  color: #fff;
+  background-color: hsla(0, 0%, 100%, 0.03);
+}
+
+.dark .study-mode .mode-item[data-v-cebc91e2] {
+  color: hsla(0, 0%, 100%, 0.65);
+}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch, nextTick } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { getEfficientIndex } from "@/api/statistics";
 import {
@@ -27,13 +27,9 @@ const pageSize = ref(5);
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
-// 用于强制重新渲染图表的 key
-const chartKey = ref(0);
-
 const chartRef = ref();
 const { setOptions } = useECharts(chartRef, {
-  theme,
-  renderer: "svg" // 使用 SVG 渲染器，在 Safari 和 Firefox 上更稳定
+  theme
 });
 
 // 获取教学效率指数数据
@@ -74,16 +70,7 @@ watch([currentPage, pageSize, selectedCourses], () => {
 });
 
 // 渲染图表
-const renderChart = async () => {
-  // 确保 DOM 已更新
-  await nextTick();
-  
-  // 确保图表容器存在
-  if (!chartRef.value) {
-    console.warn("图表容器不存在，等待 DOM 渲染...");
-    return;
-  }
-  
+const renderChart = () => {
   if (!pagedData.value.length) {
     setOptions({
       xAxis: { data: [] },
@@ -268,30 +255,11 @@ watch(
   { deep: true }
 );
 
-// 监听主题变化，强制重新渲染图表
+// 监听主题变化，重新渲染图表
 watch(
   () => isDark.value,
-  async () => {
-    // 强制重新渲染图表容器（通过改变 key 让 Vue 销毁并重建 DOM）
-    chartKey.value++;
-    
-    // 等待 DOM 更新和 CSS 动画完成
-    await nextTick();
-    setTimeout(() => {
-      if (!loading.value && pagedData.value.length > 0) {
-        renderChart();
-      }
-    }, 300); // 延时确保 CSS 动画完成
-  }
-);
-
-// 监听 loading 状态变化，确保图表在 DOM 渲染后初始化
-watch(
-  () => loading.value,
-  async (newLoading, oldLoading) => {
-    if (oldLoading && !newLoading && efficientData.value.length > 0) {
-      // loading 从 true 变为 false，DOM 已渲染，重新渲染图表
-      await nextTick();
+  () => {
+    if (!loading.value && pagedData.value.length > 0) {
       renderChart();
     }
   }
@@ -361,7 +329,6 @@ onMounted(() => {
           >
             <div
               ref="chartRef"
-              :key="chartKey"
               class="chart-container"
               style="width: 100%; height: 600px"
             ></div>

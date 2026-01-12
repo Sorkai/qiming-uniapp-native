@@ -353,6 +353,7 @@ const isShaking = ref(false);
 
 // 触发晃动
 const triggerShake = () => {
+  console.log('触发晃动！');
   isShaking.value = false;
   // 强制重绘
   void document.body.offsetHeight;

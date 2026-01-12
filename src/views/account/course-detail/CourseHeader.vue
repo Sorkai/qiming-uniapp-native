@@ -22,33 +22,53 @@
           </svg>
         </div>
         <span class="header-date">{{ currentDate }}</span>
-        <!-- 切换主框架同款按钮 -->
         <div
-          class="theme-btn-premium"
+          class="theme-toggle-premium"
           :class="{ 'is-dark': currentTheme === 'dark' }"
           @click="$emit('toggle-theme', $event)"
         >
-          <div class="sun-moon-wrapper">
-            <div class="icon sun">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="5"></circle>
-                <line x1="12" y1="1" x2="12" y2="3"></line>
-                <line x1="12" y1="21" x2="12" y2="23"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="1" y1="12" x2="3" y2="12"></line>
-                <line x1="21" y1="12" x2="23" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-              </svg>
-            </div>
-            <div class="icon moon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
+          <div class="toggle-handle">
+            <div class="handle-inner">
+              <div class="toggle-icon sun-icon">
+                <svg viewBox="0 0 24 24" class="sun-svg">
+                  <defs>
+                    <radialGradient id="sun-core-v3" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#FFF9C4" />
+                      <stop offset="60%" stop-color="#FFD54F" />
+                      <stop offset="100%" stop-color="#F57C00" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="12" cy="12" r="5.5" fill="url(#sun-core-v3)" />
+                  <g class="sun-rays-v3">
+                    <rect x="11" y="1" width="2" height="4" rx="1" fill="#F57C00" />
+                    <rect x="11" y="19" width="2" height="4" rx="1" fill="#F57C00" />
+                    <rect x="1" y="11" width="4" height="2" rx="1" fill="#F57C00" />
+                    <rect x="19" y="11" width="4" height="2" rx="1" fill="#F57C00" />
+                    <g transform="rotate(45 12 12)">
+                      <rect x="11" y="1" width="2" height="4" rx="1" fill="#F57C00" />
+                      <rect x="11" y="19" width="2" height="4" rx="1" fill="#F57C00" />
+                      <rect x="1" y="11" width="4" height="2" rx="1" fill="#F57C00" />
+                      <rect x="19" y="11" width="4" height="2" rx="1" fill="#F57C00" />
+                    </g>
+                  </g>
+                </svg>
+              </div>
+              <div class="toggle-icon moon-icon">
+                <svg viewBox="0 0 24 24" class="moon-svg-v3">
+                  <defs>
+                    <linearGradient id="moon-grad-v3" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#F1F5F9" />
+                      <stop offset="100%" stop-color="#94A3B8" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 3C10.1 3 8.3 3.6 6.8 4.7C10.5 5.5 13 8.6 13 12C13 15.4 10.5 18.5 6.8 19.3C8.3 20.4 10.1 21 12 21C16.9 21 21 16.9 21 12C21 7.1 16.9 3 12 3Z" fill="url(#moon-grad-v3)" />
+                  <circle cx="15.5" cy="9.5" r="1.2" fill="rgba(100, 116, 139, 0.2)" />
+                  <circle cx="17.5" cy="14.5" r="0.8" fill="rgba(100, 116, 139, 0.2)" />
+                  <circle cx="14" cy="15" r="0.6" fill="rgba(100, 116, 139, 0.2)" />
+                </svg>
+              </div>
             </div>
           </div>
-          <div class="switch-dot"></div>
         </div>
       </div>
 
@@ -222,93 +242,116 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 /* 主题切换按钮 */
-.theme-btn-premium {
-  position: relative;
-  width: 52px;
-  height: 28px;
-  padding: 4px;
+.theme-toggle-premium {
+  --w: 56px;
+  --h: 28px;
+  --s: 22px;
+  --p: 3px;
   margin-left: 18px;
+  width: var(--w);
+  height: var(--h);
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 30px;
+  position: relative;
   cursor: pointer;
-  background-color: #e2e8f0;
-  border-radius: 100px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
 
-  &:hover {
-    transform: scale(1.05);
-    background-color: #cbd5e0;
-  }
+.layout-header.dark .theme-toggle-premium {
+  background: rgba(255, 255, 255, 0.15);
+}
 
-  &.is-dark {
-    background-color: #2d3748;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+.toggle-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  opacity: 0;
+}
 
-    .switch-dot {
-      transform: translateX(24px);
-      background-color: #1a202c;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    }
+.sun-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 4px rgba(245, 124, 0, 0.4));
+}
 
-    .sun {
-      transform: translateY(20px) scale(0);
-      opacity: 0;
-    }
+.sun-rays-v3 {
+  transform-origin: center;
+  animation: rotate-sun 15s linear infinite;
+}
 
-    .moon {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-      color: #f6e05e;
-    }
-  }
+@keyframes rotate-sun {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
-  .sun-moon-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-  }
+.moon-svg-v3 {
+  width: 90%;
+  height: 90%;
+  filter: drop-shadow(0 0 3px rgba(148, 163, 184, 0.5));
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
-  .icon {
-    position: absolute;
-    top: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+.is-dark .moon-svg-v3 {
+  transform: rotate(15deg) scale(1.1);
+}
 
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-  }
+.theme-toggle-premium:not(.is-dark) .sun-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
 
-  .sun {
-    left: 0;
-    color: #f6ad55;
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+.theme-toggle-premium:not(.is-dark) .moon-icon {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.5) rotate(-45deg);
+}
 
-  .moon {
-    right: 0;
-    color: #718096;
-    transform: translateY(-20px) scale(0);
-    opacity: 0;
-  }
+.is-dark .moon-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
 
-  .switch-dot {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    width: 20px;
-    height: 20px;
-    background-color: #ffffff;
-    border-radius: 50%;
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
+.is-dark .sun-icon {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.5) rotate(45deg);
+}
+
+.toggle-handle {
+  position: absolute;
+  top: var(--p);
+  left: var(--p);
+  width: var(--s);
+  height: var(--s);
+  background: #fff;
+  border-radius: 50%;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  overflow: hidden;
+}
+
+.handle-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  transition: all 0.5s ease;
+}
+
+.is-dark .toggle-handle {
+  transform: translateX(calc(var(--w) - var(--s) - var(--p) * 2));
+}
+
+.is-dark .handle-inner {
+  background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
 }
 
 /* 中间标题区域 */

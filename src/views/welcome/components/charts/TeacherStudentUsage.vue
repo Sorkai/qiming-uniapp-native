@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch, nextTick } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { getTeacherUsage, getStudentUsage } from "@/api/statistics";
 
@@ -15,28 +15,9 @@ const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
 const chartRef = ref();
-const { setOptions, resize, getInstance } = useECharts(chartRef, {
+const { setOptions } = useECharts(chartRef, {
   theme
 });
-
-// 监听主题变化，增加更长的延迟并强制 resize，解决 Safari 和 Edge 下的渲染顽疾
-watch(
-  () => isDark.value,
-  async () => {
-    await nextTick();
-    // 第一次尝试渲染
-    renderChart();
-    
-    // 延迟 600ms 等待 CSS 过渡结束，再次强制 resize 和渲染
-    setTimeout(() => {
-      getInstance()?.resize();
-      renderChart();
-      resize();
-      // 触发全局 resize 以确保万无一失
-      window.dispatchEvent(new Event("resize"));
-    }, 600);
-  }
-);
 
 // 获取教师和学生使用情况数据
 const fetchData = async () => {

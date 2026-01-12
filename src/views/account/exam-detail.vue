@@ -114,10 +114,10 @@
                   v-model="answers[question.questionId]"
                   :disabled="!examStarted || examCompleted"
                 >
-                  <el-radio value="1" :disabled="!examStarted || examCompleted"
+                  <el-radio label="1" :disabled="!examStarted || examCompleted"
                     >正确</el-radio
                   >
-                  <el-radio value="0" :disabled="!examStarted || examCompleted"
+                  <el-radio label="0" :disabled="!examStarted || examCompleted"
                     >错误</el-radio
                   >
                 </el-radio-group>
@@ -355,6 +355,8 @@ const fetchExamDetail = async () => {
         examStatus.value = 2; // 进行中
       }
 
+      console.log("处理后的考试数据:", exam.value);
+      console.log("计算出的考试状态:", examStatus.value);
     } else {
       ElMessage.error(response.msg || "获取考试详情失败");
     }

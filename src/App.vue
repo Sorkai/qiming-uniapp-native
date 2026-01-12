@@ -34,9 +34,6 @@ export default defineComponent({
     ReDrawer,
     ReFloatButton
   },
-  data() {
-    return {};
-  },
   computed: {
     currentLocale() {
       switch (this.$storage.locale?.locale) {
@@ -75,35 +72,6 @@ export default defineComponent({
           show: false
         }
       ];
-    }
-  },
-  mounted() {
-    // 恢复主题切换前保存的滚动位置
-    this.restoreScrollPosition();
-  },
-  methods: {
-    restoreScrollPosition() {
-      const savedScrollY = sessionStorage.getItem("theme-switch-scroll-y");
-      if (savedScrollY) {
-        const scrollY = parseInt(savedScrollY, 10);
-        sessionStorage.removeItem("theme-switch-scroll-y");
-        
-        // 使用多次延迟尝试恢复滚动位置，确保页面内容已完全渲染
-        const tryScroll = (attempts: number) => {
-          if (attempts <= 0) return;
-          
-          setTimeout(() => {
-            window.scrollTo(0, scrollY);
-            // 如果滚动位置没有正确设置，继续尝试
-            if (Math.abs(window.scrollY - scrollY) > 10 && attempts > 1) {
-              tryScroll(attempts - 1);
-            }
-          }, 100);
-        };
-        
-        // 尝试多次，间隔100ms
-        tryScroll(10);
-      }
     }
   },
   beforeCreate() {

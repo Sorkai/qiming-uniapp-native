@@ -90,8 +90,10 @@ const handleSubmitImage = () => {
 const onSubmit = async (formEl: FormInstance) => {
   await formEl.validate((valid, fields) => {
     if (valid) {
+      console.log(userInfos);
       message("更新信息成功", { type: "success" });
     } else {
+      console.log("error submit!", fields);
     }
   });
 };

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type PropType, ref, computed, watch, onMounted, nextTick } from "vue";
+import { type PropType, ref, computed, watch, onMounted } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 
 const props = defineProps({
@@ -18,7 +18,7 @@ const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
 const chartRef = ref();
-const { setOptions, resize, getInstance } = useECharts(chartRef, {
+const { setOptions } = useECharts(chartRef, {
   theme,
   renderer: "svg"
 });
@@ -58,19 +58,11 @@ const renderChart = () => {
   });
 };
 
-// 监听主题变化，增加延迟及强制 resize 处理 Safari/Edge 兼容性
+// 监听主题变化，重新渲染图表
 watch(
   () => isDark.value,
-  async () => {
-    await nextTick();
+  () => {
     renderChart();
-    
-    setTimeout(() => {
-      getInstance()?.resize();
-      renderChart();
-      resize();
-      window.dispatchEvent(new Event("resize"));
-    }, 600);
   }
 );
 

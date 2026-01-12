@@ -152,25 +152,25 @@
         <div v-else class="flex-1 flex flex-col overflow-hidden">
           <div class="flex justify-between items-center mb-4 pb-4 border-b border-[var(--el-border-color-lighter)]">
             <el-radio-group v-model="statusFilter" size="default" @change="applyFilter" class="animation-filter-group">
-              <el-radio-button value="all">
+              <el-radio-button label="all">
                 <span class="flex items-center gap-1.5 text-sm">
                   <span class="w-2 h-2 rounded-full bg-[var(--el-text-color-placeholder)]"></span>
                   全部
                 </span>
               </el-radio-button>
-              <el-radio-button value="completed">
+              <el-radio-button label="completed">
                 <span class="flex items-center gap-1.5 text-sm">
                   <span class="w-2 h-2 rounded-full bg-[var(--el-color-success)]"></span>
                   成功
                 </span>
               </el-radio-button>
-              <el-radio-button value="processing">
+              <el-radio-button label="processing">
                 <span class="flex items-center gap-1.5 text-sm">
                   <span class="w-2 h-2 rounded-full bg-[var(--el-color-warning)] animate-pulse"></span>
                   进行中
                 </span>
               </el-radio-button>
-              <el-radio-button value="failed">
+              <el-radio-button label="failed">
                 <span class="flex items-center gap-1.5 text-sm">
                   <span class="w-2 h-2 rounded-full bg-[var(--el-color-danger)]"></span>
                   失败

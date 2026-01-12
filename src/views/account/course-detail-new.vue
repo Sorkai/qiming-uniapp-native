@@ -461,6 +461,13 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
+@import "@/../coursecss/css/chunk-b3e9f934.1c00050a.css";
+@import "@/../coursecss/css/chunk-8cf7ce30.92e48af1.css";
+@import "@/../coursecss/css/chunk-3cf64ec0.4f07a253.css";
+@import "@/../coursecss/css/chunk-3248eec0.130a3cd9.css";
+@import "@/../coursecss/css/app.a5f91bbb.css";
+@import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
+
 .course-detail-root {
   width: 100%;
   min-height: 100vh;

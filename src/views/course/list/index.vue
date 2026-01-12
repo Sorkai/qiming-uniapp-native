@@ -1891,7 +1891,6 @@ onMounted(() => {
   border: none;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 :deep(.el-dialog) {

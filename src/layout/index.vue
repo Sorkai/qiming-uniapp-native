@@ -212,7 +212,6 @@ const LayHeader = defineComponent({
   position: relative;
   width: 100%;
   height: 100%;
-  background: var(--el-bg-color);
 
   &::after {
     clear: both;

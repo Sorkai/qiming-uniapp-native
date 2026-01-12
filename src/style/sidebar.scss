@@ -49,8 +49,7 @@
     height: 100vh;
     min-height: 100%;
     margin-left: $sideBarWidth;
-    background: var(--el-bg-color, #f0f2f5);
-    box-shadow: -20px 0 0 var(--el-bg-color), 20px 0 0 var(--el-bg-color); // 左右延伸黑色背景覆盖白边
+    background: #f0f2f5;
 
     /* main-content 属性动画 */
     transition: margin-left var(--pure-transition-duration);
@@ -67,8 +66,6 @@
     right: 0;
     z-index: 998;
     width: calc(100% - #{$sideBarWidth});
-    background: var(--el-bg-color, #f0f2f5);
-    box-shadow: -20px 0 0 var(--el-bg-color), 20px 0 0 var(--el-bg-color); // 延伸黑色背景覆盖白边
 
     /* fixed-header 属性左上角动画 */
     transition: width var(--pure-transition-duration);
@@ -94,11 +91,10 @@
     z-index: 1001;
     width: $sideBarWidth;
     height: 100%;
-    overflow: hidden;
+    overflow: visible;
     font-size: 0;
     background: var(--pure-theme-menu-bg);
-    border-radius: 0;
-    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
+    border-right: 1px solid var(--pure-border-color);
 
     /* 展开动画 */
     transition: width var(--pure-transition-duration);
@@ -295,7 +291,7 @@
     overflow: visible;
     font-size: 0;
     background: var(--pure-theme-menu-bg);
-    border-right: none;
+    border-right: 1px solid var(--pure-border-color);
 
     /* 展开动画 */
     transition: width var(--pure-transition-duration);
@@ -476,7 +472,7 @@
     left: 0;
     z-index: 1001;
     background: var(--pure-theme-menu-bg);
-    border-right: none;
+    border-right: 1px solid var(--pure-border-color);
     box-shadow: 1px 0 8px rgba(0, 0, 0, 0.03);
     transition: all 0.3s;
 
@@ -910,9 +906,10 @@ body[layout="vertical"] {
   }
 
   .sidebar-logo-container {
-    background: transparent;
+    background: var(--pure-theme-sidebar-logo);
     padding: 16px 0 !important;
     height: 80px !important;
+    border-bottom: 1px solid rgba(var(--el-color-primary-rgb), 0.05);
   }
 
   .hideSidebar {

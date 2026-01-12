@@ -602,6 +602,7 @@ const deleteQuestion = row => {
   })
     .then(async () => {
       try {
+        console.log("要删除的试题:", row);
         await deleteWorkQuestion({
           deleteType: 2, // 2表示作业
           sourceId: currentHomework.value.homeworkId,

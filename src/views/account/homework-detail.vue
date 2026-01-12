@@ -87,8 +87,8 @@
               <!-- 判断题 -->
               <div v-else-if="question.questionType === 3" class="options">
                 <el-radio-group v-model="answers[question.questionId]">
-                  <el-radio value="1" :disabled="submitting">正确</el-radio>
-                  <el-radio value="0" :disabled="submitting">错误</el-radio>
+                  <el-radio label="1" :disabled="submitting">正确</el-radio>
+                  <el-radio label="0" :disabled="submitting">错误</el-radio>
                 </el-radio-group>
               </div>
 
