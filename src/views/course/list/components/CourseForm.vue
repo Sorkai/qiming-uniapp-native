@@ -543,7 +543,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, defineProps, defineEmits, watch, onMounted } from "vue";
+import { ref, reactive, watch, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { uploadFile } from "@/api/user";
 import { getCategoryList } from "@/api/category";
@@ -592,7 +592,7 @@ const formRules = {
   categoryIds: [
     {
       required: true,
-      type: "array",
+      type: "array" as const,
       min: 1,
       message: "请选择课程分类",
       trigger: "change"
@@ -906,36 +906,55 @@ defineExpose({
 
 :deep(.el-form-item__label) {
   font-weight: 500;
+  font-size: 14px;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner),
+:deep(.el-select__wrapper),
+:deep(.el-date-editor) {
+  border-radius: 10px !important;
+}
+
+:deep(.el-checkbox__label) {
+  font-size: 14px;
+}
+
+:deep(.el-radio__label) {
+  font-size: 14px;
 }
 
 .form-section {
-  margin-top: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 16px;
-  margin-bottom: 20px;
+  margin-top: 24px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  background: var(--el-fill-color-blank);
 
   .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 
     h3 {
       margin: 0;
-      font-size: 16px;
-      font-weight: bold;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
     }
   }
 }
 
 .empty-placeholder {
   text-align: center;
-  color: #909399;
-  padding: 20px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 4px;
+  color: var(--el-text-color-secondary);
+  padding: 24px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 12px;
   margin-bottom: 16px;
+  font-size: 14px;
 }
 
 .chapter-header,
@@ -978,10 +997,11 @@ defineExpose({
 
 .hour-card,
 .attr-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
+  padding: 20px;
   position: relative;
+  background: var(--el-fill-color-lighter);
 }
 
 .hour-actions,
@@ -1018,16 +1038,18 @@ defineExpose({
   height: 120px;
   width: 200px;
   border: 1px dashed var(--el-border-color);
-  border-radius: var(--el-border-radius-base);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   background-color: var(--el-fill-color-blank);
+  transition: all 0.3s ease;
 
   &:hover {
     border-color: var(--el-color-primary);
+    background-color: var(--el-color-primary-light-9);
   }
 }
 
@@ -1053,9 +1075,10 @@ defineExpose({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  border: 1px solid var(--el-border-color);
-  border-radius: var(--el-border-radius-base);
+  padding: 12px 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 10px;
+  background: var(--el-fill-color-lighter);
 
   .resource-info {
     display: flex;
@@ -1075,16 +1098,18 @@ defineExpose({
 
 .resource-upload {
   width: 100%;
-  height: 60px;
+  height: 70px;
   border: 1px dashed var(--el-border-color);
-  border-radius: var(--el-border-radius-base);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--el-fill-color-blank);
+  transition: all 0.3s ease;
 
   &:hover {
     border-color: var(--el-color-primary);
+    background-color: var(--el-color-primary-light-9);
   }
 
   .upload-icon-container {
@@ -1116,13 +1141,13 @@ defineExpose({
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.85);
+    background-color: rgba(255, 255, 255, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
-    border-radius: 4px;
-    border: 1px dashed #d9d9d9;
+    border-radius: 10px;
+    border: 1px dashed var(--el-border-color);
   }
 
   .uploading-indicator {
@@ -1184,8 +1209,29 @@ defineExpose({
 
 :deep(.el-collapse-item__header) {
   padding: 0 16px;
-  height: 40px;
-  border-bottom: 1px solid #ebeef5;
-  font-size: 14px;
+  height: 48px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  font-size: 15px;
+  border-radius: 10px;
+}
+
+:deep(.el-collapse-item__wrap) {
+  border-radius: 0 0 10px 10px;
+}
+
+:deep(.el-collapse) {
+  border-radius: 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  overflow: hidden;
+}
+
+:deep(.el-collapse-item) {
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+:deep(.el-button) {
+  border-radius: 8px;
 }
 </style>

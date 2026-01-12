@@ -24,12 +24,12 @@
   }
 
   .sub-menu-icon {
-    margin-right: 5px;
-    font-size: 18px;
+    margin-right: 8px;
+    font-size: 22px;
 
     svg {
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
     }
   }
 
@@ -148,9 +148,11 @@
 
     .el-menu-item,
     .el-sub-menu__title {
-      height: 48px;
+      height: 56px;
       margin: 8px 12px;
-      line-height: 48px;
+      line-height: 56px;
+      font-size: 18px;
+      font-weight: 500;
       border-radius: 12px;
       color: var(--pure-theme-menu-text);
       background-color: transparent;
@@ -185,18 +187,18 @@
       i,
       svg,
       .iconify {
-        font-size: 18px;
-        margin-right: 12px;
+        font-size: 22px;
+        margin-right: 14px;
         color: #64748b; // Muted color for inactive icons
         transition: all 0.3s;
       }
 
       div,
       span {
-        height: 48px;
-        line-height: 48px;
+        height: 56px;
+        line-height: 56px;
         font-weight: 500;
-        font-size: 16px;
+        font-size: 18px;
         letter-spacing: 0.05em;
       }
     }
@@ -400,7 +402,9 @@
     .el-menu .el-menu--inline .el-sub-menu__title,
     & .el-sub-menu .el-menu-item {
       min-width: $sideBarWidth;
-      font-size: 14px;
+      height: 50px;
+      line-height: 50px;
+      font-size: 15px;
       background-color: var(--pure-theme-sub-menu-bg);
     }
 
@@ -486,7 +490,7 @@
       height: 82px;
       margin: 10px 8px;
       padding: 10px 2px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 500;
       line-height: 1.4;
       color: var(--pure-theme-menu-text);
@@ -564,7 +568,7 @@
 
       .el-menu-item {
         span {
-          font-size: 14px;
+          font-size: 16px;
         }
       }
     }
@@ -589,7 +593,7 @@
     /* 子菜单中还有子菜单 */
     .el-menu .el-sub-menu__title {
       min-width: $sideBarWidth;
-      font-size: 14px;
+      font-size: 16px;
       background-color: var(--pure-theme-sub-menu-bg);
     }
 
@@ -661,7 +665,7 @@
         background-color: var(--pure-theme-sub-menu-bg);
 
         span {
-          font-size: 14px;
+          font-size: 16px;
         }
       }
 
@@ -673,7 +677,7 @@
     /* 子菜单中还有子菜单 */
     .el-menu .el-sub-menu__title {
       min-width: $sideBarWidth;
-      font-size: 14px;
+      font-size: 16px;
       background-color: var(--pure-theme-sub-menu-bg);
 
       &:hover {
@@ -811,7 +815,7 @@
         cursor: pointer;
 
         p {
-          font-size: 14px;
+          font-size: 16px;
         }
 
         img {

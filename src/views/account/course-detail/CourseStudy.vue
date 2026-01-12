@@ -64,7 +64,7 @@
           </div>
 
           <div class="content-grid">
-            <div class="knowledge-card glass-card">
+            <div ref="knowledgeCardRef" class="knowledge-card glass-card">
               <div class="card-header">
                 <div class="header-icon knowledge-icon">
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -75,11 +75,13 @@
                 <h3 class="card-title">知识点描述</h3>
               </div>
               <div class="card-body">
-                <div class="knowledge-content" v-html="courseContentHtml"></div>
+                <el-scrollbar>
+                  <div ref="knowledgeContentRef" class="knowledge-content" v-html="courseContentHtml"></div>
+                </el-scrollbar>
               </div>
             </div>
 
-            <div class="summary-card glass-card">
+            <div ref="summaryCardRef" class="summary-card glass-card">
               <div class="card-header">
                 <div class="header-icon summary-icon">
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -93,12 +95,14 @@
                 <span class="ai-badge">AI 生成</span>
               </div>
               <div class="card-body">
-                <ul class="summary-list">
-                  <li v-for="(item, index) in mockSummary" :key="index" class="summary-item">
-                    <span class="item-number">{{ index + 1 }}</span>
-                    <span class="item-text">{{ item }}</span>
-                  </li>
-                </ul>
+                <el-scrollbar>
+                  <ul ref="summaryContentRef" class="summary-list">
+                    <li v-for="(item, index) in mockSummary" :key="index" class="summary-item">
+                      <span class="item-number">{{ index + 1 }}</span>
+                      <span class="item-text">{{ item }}</span>
+                    </li>
+                  </ul>
+                </el-scrollbar>
               </div>
             </div>
           </div>
@@ -295,7 +299,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, onMounted, onUnmounted, computed } from "vue";
 import CourseHeader from "./CourseHeader.vue";
 import aiPeopleAvatar from "@/assets/aipeople.jpg";
 
@@ -334,6 +338,86 @@ const emit = defineEmits([
 const internalMsg = ref("");
 const videoPlayerRef = ref(null);
 const catalogScrollRef = ref(null);
+
+// 卡片高度同步相关
+const knowledgeCardRef = ref<HTMLElement | null>(null);
+const summaryCardRef = ref<HTMLElement | null>(null);
+const knowledgeContentRef = ref<HTMLElement | null>(null);
+const summaryContentRef = ref<HTMLElement | null>(null);
+const cardBodyHeight = ref<number>(0);
+
+// 响应式最小高度：使用 vh 单位，最小 15vh，确保在不同设备上都有合适的高度
+const MIN_CARD_BODY_HEIGHT_VH = 15; // 最小高度为视口高度的 15%
+
+// 计算同步后的卡片高度
+const syncedCardHeight = computed(() => {
+  if (cardBodyHeight.value > 0) {
+    return `${cardBodyHeight.value}px`;
+  }
+  return 'auto';
+});
+
+// 计算两个内容区域的高度，取较小值作为统一高度
+const calculateSyncedHeight = () => {
+  nextTick(() => {
+    const knowledgeContent = knowledgeContentRef.value;
+    const summaryContent = summaryContentRef.value;
+    
+    if (!knowledgeContent || !summaryContent) return;
+    
+    // 获取内容的实际高度
+    const knowledgeHeight = knowledgeContent.scrollHeight;
+    const summaryHeight = summaryContent.scrollHeight;
+    
+    // 取较小值
+    let minHeight = Math.min(knowledgeHeight, summaryHeight);
+    
+    // 计算响应式最小高度（基于视口高度）
+    const viewportHeight = window.innerHeight;
+    const minHeightVh = viewportHeight * (MIN_CARD_BODY_HEIGHT_VH / 100);
+    
+    // 确保不小于最小高度
+    minHeight = Math.max(minHeight, minHeightVh);
+    
+    // 加上 card-header 的高度（约 81px）和 padding
+    const headerHeight = 81;
+    const paddingHeight = 40; // 上下 padding 各 20px
+    
+    cardBodyHeight.value = minHeight + headerHeight + paddingHeight;
+  });
+};
+
+// 监听窗口大小变化，重新计算高度
+const handleResize = () => {
+  calculateSyncedHeight();
+};
+
+// 监听内容变化
+watch(
+  () => props.courseContentHtml,
+  () => {
+    calculateSyncedHeight();
+  }
+);
+
+// 监听组件可见性
+watch(
+  () => props.visible,
+  (val) => {
+    if (val) {
+      calculateSyncedHeight();
+    }
+  }
+);
+
+onMounted(() => {
+  calculateSyncedHeight();
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
 
 // 监听 activeNode 变化，自动滚动到当前课时
 watch(
@@ -581,28 +665,38 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  margin-bottom: 32px; /* 增加底部间距 */
+  flex: 1; /* 填充剩余空间，使底部与右侧章节目录对齐 */
+  min-height: 0; /* 允许收缩 */
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: $radius-xl;
-  box-shadow: $shadow-lg;
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: all 0.3s ease;
-  min-height: 300px; /* 改为最小高度，让卡片随内容撑开 */
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  /* 响应式最小高度：增加到 25vh，确保卡片有足够的高度 */
+  min-height: clamp(25vh, 30vh, 500px);
+  /* 让卡片填充 grid 单元格的全部高度 */
+  height: 100%;
 
   &:hover {
-    box-shadow: $shadow-xl;transform: translateY(-2px);
+    box-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.15), 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
   }
 
   .dark & {
-    background: rgba(40, 40, 40, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(40, 40, 40, 0.9);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.3), 0 2px 8px -2px rgba(0, 0, 0, 0.2);
+    
+    &:hover {
+      box-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.4), 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+    }
   }
 }
 
@@ -667,7 +761,42 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
 .card-body {
   flex: 1;
-  padding: 20px 24px;
+  padding: 0; /* 移除 padding，让 scrollbar 占满 */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  
+  :deep(.el-scrollbar) {
+    flex: 1;
+    
+    .el-scrollbar__wrap {
+      padding: 20px 24px;
+    }
+    
+    /* 显示美化的滚动条 */
+    .el-scrollbar__bar {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    &:hover .el-scrollbar__bar {
+      opacity: 1;
+    }
+    
+    .el-scrollbar__bar.is-vertical {
+      width: 6px;
+      right: 4px;
+      
+      .el-scrollbar__thumb {
+        background: rgba(99, 102, 241, 0.3);
+        border-radius: 3px;
+        
+        &:hover {
+          background: rgba(99, 102, 241, 0.5);
+        }
+      }
+    }
+  }
 }
 
 .knowledge-content {
@@ -730,7 +859,12 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   flex-direction: column;
   gap: 20px;
   flex-shrink: 0;
-  height: 100%;
+  /* 让右侧栏从视频区域下方开始，与左侧卡片对齐 */
+  align-self: flex-start;
+  /* 设置最大高度，让章节目录可以滚动 */
+  max-height: calc(100vh - 120px);
+  position: sticky;
+  top: 100px;
   z-index: 10;
 }
 
@@ -849,7 +983,9 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
 .chapter-catalog {
   flex: 1;
-  min-height: 0;
+  min-height: 300px;
+  max-height: calc(100vh - 280px);
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
 
   .catalog-header {
     display: flex;

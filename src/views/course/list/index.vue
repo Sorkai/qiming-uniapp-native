@@ -3,7 +3,7 @@
     <!-- 统计概览 -->
     <CourseStats :stats="courseStats" />
 
-    <el-card shadow="never" class="mb-4 search-card">
+    <el-card shadow="always" class="mb-4 search-card" :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }">
       <div class="flex justify-between items-center flex-wrap gap-4">
         <el-form :inline="true" :model="searchForm" class="!mb-[-18px]">
           <el-form-item label="课程名称">
@@ -1888,21 +1888,55 @@ onMounted(() => {
 }
 
 .search-card {
-  border: none;
+  border: none !important;
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
 :deep(.el-dialog) {
-  border-radius: 16px;
+  border-radius: 20px;
+  overflow: hidden;
+  
+  .el-dialog__header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    
+    .el-dialog__title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+  }
+  
+  .el-dialog__body {
+    padding: 24px;
+  }
+  
+  .el-dialog__footer {
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
 }
 
 :deep(.el-button) {
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 14px;
 }
 
 :deep(.el-input__wrapper) {
-  border-radius: 8px;
+  border-radius: 10px;
+}
+
+:deep(.el-textarea__inner) {
+  border-radius: 10px;
+}
+
+:deep(.el-select__wrapper) {
+  border-radius: 10px;
+}
+
+:deep(.el-date-editor) {
+  border-radius: 10px;
 }
 
 :deep(.el-table) {
@@ -1917,5 +1951,27 @@ onMounted(() => {
 
 :deep(.el-card__header) {
   border-radius: 16px 16px 0 0;
+}
+
+:deep(.el-form-item__label) {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+:deep(.el-checkbox__label),
+:deep(.el-radio__label) {
+  font-size: 14px;
+}
+
+:deep(.el-collapse) {
+  border-radius: 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  overflow: hidden;
+}
+
+:deep(.el-collapse-item__header) {
+  font-size: 15px;
+  padding: 0 16px;
+  height: 48px;
 }
 </style>

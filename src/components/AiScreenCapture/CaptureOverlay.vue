@@ -144,24 +144,9 @@ onUnmounted(() => {
         <div class="ripple ripple-2" />
       </div>
       
-      <!-- 屏幕边缘浮光效果 -->
-      <div v-show="rippleComplete" class="edge-glow">
-        <!-- 顶部浮光 -->
-        <div class="glow-edge glow-top">
-          <div class="glow-particle glow-cyan" v-for="i in 4" :key="`top-${i}`" :style="{ '--delay': `${i * 0.5}s`, '--offset': `${i * 25}%` }" />
-        </div>
-        <!-- 右侧浮光 -->
-        <div class="glow-edge glow-right">
-          <div class="glow-particle glow-indigo" v-for="i in 3" :key="`right-${i}`" :style="{ '--delay': `${i * 0.6}s`, '--offset': `${i * 33}%` }" />
-        </div>
-        <!-- 底部浮光 -->
-        <div class="glow-edge glow-bottom">
-          <div class="glow-particle glow-violet" v-for="i in 4" :key="`bottom-${i}`" :style="{ '--delay': `${i * 0.5}s`, '--offset': `${i * 25}%` }" />
-        </div>
-        <!-- 左侧浮光 -->
-        <div class="glow-edge glow-left">
-          <div class="glow-particle glow-pink" v-for="i in 3" :key="`left-${i}`" :style="{ '--delay': `${i * 0.6}s`, '--offset': `${i * 33}%` }" />
-        </div>
+      <!-- 屏幕边缘流动边框 -->
+      <div v-show="rippleComplete" class="screen-border">
+        <div class="border-glow" />
       </div>
       
       <!-- 提示文字 -->
@@ -193,6 +178,11 @@ onUnmounted(() => {
         
         <!-- 选区光晕边框 -->
         <div class="selection-glow" />
+        
+        <!-- 白色粒子飞溅特效 -->
+        <div class="particles-container">
+          <div class="particle" v-for="i in 20" :key="`particle-${i}`" :style="{ '--i': i }" />
+        </div>
       </div>
       
       <!-- 取消按钮 -->
@@ -268,7 +258,7 @@ onUnmounted(() => {
   -webkit-mask: radial-gradient(transparent 45%, #fff 50%, #fff 55%, transparent 60%);
   mask: radial-gradient(transparent 45%, #fff 50%, #fff 55%, transparent 60%);
   
-  filter: blur(3px);
+  filter: blur(8px);
 }
 
 .ripple-1 {
@@ -276,6 +266,9 @@ onUnmounted(() => {
 }
 
 .ripple-2 {
+  /* 第二个涟漪边框变窄 */
+  -webkit-mask: radial-gradient(transparent 47%, #fff 49%, #fff 51%, transparent 53%);
+  mask: radial-gradient(transparent 47%, #fff 49%, #fff 51%, transparent 53%);
   animation: ripple-expand 2s ease-out 0.4s forwards;
 }
 
@@ -294,212 +287,67 @@ onUnmounted(() => {
   }
 }
 
-/* 屏幕边缘光晕 */
-.edge-glow {
+/* 定义屏幕边框角度变量 */
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* 屏幕边缘流动边框 */
+.screen-border {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  animation: edge-fade-in 0.5s ease-out forwards;
+  animation: border-fade-in 0.5s ease-out forwards;
 }
 
-@keyframes edge-fade-in {
+@keyframes border-fade-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
   }
   to {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
-.glow-edge {
+/* 流动光晕边框 */
+.border-glow {
   position: absolute;
-  display: flex;
-  overflow: hidden;
-}
-
-.glow-top {
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
-  justify-content: space-around;
-}
-
-.glow-bottom {
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
-  justify-content: space-around;
-}
-
-.glow-left {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 80px;
-  flex-direction: column;
-  justify-content: space-around;
-}
-
-.glow-right {
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 80px;
-  flex-direction: column;
-  justify-content: space-around;
-}
-
-/* 浮光粒子 - 更柔和更大的模糊效果 */
-.glow-particle {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0;
-  animation: float-glow 4s ease-in-out infinite;
-  animation-delay: var(--delay, 0s);
-}
-
-/* 青色浮光 - Cyan - 更高饱和度 */
-.glow-cyan {
-  background: radial-gradient(circle, 
-    rgba(0, 255, 255, 1) 0%, 
-    rgba(0, 220, 255, 0.8) 30%,
-    rgba(0, 180, 220, 0.4) 60%,
-    transparent 85%
+  inset: 0;
+  padding: 6px;
+  border-radius: 16px;
+  pointer-events: none;
+  
+  /* 使用 mask 只显示边框 */
+  -webkit-mask: 
+     linear-gradient(#fff 0 0) content-box, 
+     linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  
+  /* 流动渐变背景 */
+  background: conic-gradient(
+    from var(--border-angle), 
+    #00f2fe,
+    #4facfe,
+    #7928ca,
+    #ff0080,
+    #ff6b6b,
+    #feca57,
+    #48dbfb,
+    #00f2fe
   );
+  
+  filter: blur(6px);
+  opacity: 1;
+  
+  animation: border-spin 3s linear infinite;
 }
 
-/* 蓝紫色浮光 - Indigo - 更高饱和度 */
-.glow-indigo {
-  background: radial-gradient(circle, 
-    rgba(99, 102, 241, 1) 0%, 
-    rgba(79, 70, 229, 0.8) 30%,
-    rgba(67, 56, 202, 0.4) 60%,
-    transparent 85%
-  );
-}
-
-/* 亮紫色浮光 - Violet - 更高饱和度 */
-.glow-violet {
-  background: radial-gradient(circle, 
-    rgba(167, 139, 250, 1) 0%, 
-    rgba(139, 92, 246, 0.8) 30%,
-    rgba(124, 58, 237, 0.4) 60%,
-    transparent 85%
-  );
-}
-
-/* 暖粉色浮光 - Hot Pink - 更高饱和度 */
-.glow-pink {
-  background: radial-gradient(circle, 
-    rgba(255, 0, 128, 0.9) 0%, 
-    rgba(236, 72, 153, 0.6) 30%,
-    rgba(219, 39, 119, 0.3) 60%,
-    transparent 85%
-  );
-}
-
-.glow-top .glow-particle {
-  width: 280px;
-  height: 160px;
-  top: -60px;
-  left: var(--offset, 25%);
-}
-
-.glow-bottom .glow-particle {
-  width: 280px;
-  height: 160px;
-  bottom: -60px;
-  left: var(--offset, 25%);
-}
-
-.glow-left .glow-particle {
-  width: 160px;
-  height: 280px;
-  left: -60px;
-  top: var(--offset, 25%);
-}
-
-.glow-right .glow-particle {
-  width: 160px;
-  height: 280px;
-  right: -60px;
-  top: var(--offset, 25%);
-}
-
-@keyframes float-glow {
-  0%, 100% {
-    opacity: 0.5;
-    transform: scale(0.95) translateY(0);
-  }
-  25% {
-    opacity: 0.9;
-    transform: scale(1.1) translateY(-5px);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.05) translateY(5px);
-  }
-  75% {
-    opacity: 1;
-    transform: scale(1.15) translateY(-3px);
-  }
-}
-
-/* 浮光漂移动画 - 更缓慢更优雅 */
-.glow-top .glow-particle {
-  animation: float-glow 4s ease-in-out infinite, drift-horizontal 12s ease-in-out infinite;
-}
-
-.glow-bottom .glow-particle {
-  animation: float-glow 4s ease-in-out infinite, drift-horizontal-reverse 12s ease-in-out infinite;
-}
-
-.glow-left .glow-particle {
-  animation: float-glow 4s ease-in-out infinite, drift-vertical 12s ease-in-out infinite;
-}
-
-.glow-right .glow-particle {
-  animation: float-glow 4s ease-in-out infinite, drift-vertical-reverse 12s ease-in-out infinite;
-}
-
-@keyframes drift-horizontal {
-  0%, 100% {
-    transform: translateX(-30px) scale(1);
-  }
-  50% {
-    transform: translateX(30px) scale(1.1);
-  }
-}
-
-@keyframes drift-horizontal-reverse {
-  0%, 100% {
-    transform: translateX(30px) scale(1);
-  }
-  50% {
-    transform: translateX(-30px) scale(1.1);
-  }
-}
-
-@keyframes drift-vertical {
-  0%, 100% {
-    transform: translateY(-30px) scale(1);
-  }
-  50% {
-    transform: translateY(30px) scale(1.1);
-  }
-}
-
-@keyframes drift-vertical-reverse {
-  0%, 100% {
-    transform: translateY(30px) scale(1);
-  }
-  50% {
-    transform: translateY(-30px) scale(1.1);
+@keyframes border-spin {
+  to {
+    --border-angle: 360deg;
   }
 }
 
@@ -609,6 +457,45 @@ onUnmounted(() => {
     animation: selection-spin 2s linear infinite;
   }
   
+  /* 白色粒子容器 */
+  .particles-container {
+    position: absolute;
+    inset: -20px;
+    pointer-events: none;
+    overflow: visible;
+  }
+  
+  /* 白色粒子 */
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 3px 1px rgba(255, 255, 255, 0.6);
+    opacity: 0;
+    animation: particle-fly 2.5s ease-out infinite;
+    animation-delay: calc(var(--i) * 0.12s);
+    
+    /* 随机分布在边框周围 */
+    &:nth-child(4n+1) {
+      top: 20px;
+      left: calc(var(--i) * 5%);
+    }
+    &:nth-child(4n+2) {
+      bottom: 20px;
+      left: calc(var(--i) * 5%);
+    }
+    &:nth-child(4n+3) {
+      left: 20px;
+      top: calc(var(--i) * 5%);
+    }
+    &:nth-child(4n) {
+      right: 20px;
+      top: calc(var(--i) * 5%);
+    }
+  }
+  
   /* 选区内部边框 */
   &::before {
     content: '';
@@ -623,6 +510,24 @@ onUnmounted(() => {
 @keyframes selection-spin {
   to {
     --selection-angle: 360deg;
+  }
+}
+
+@keyframes particle-fly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0);
+  }
+  30% {
+    opacity: 0.7;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(
+      calc((var(--i) - 10) * 0.8px),
+      calc((var(--i) - 10) * -1.2px)
+    ) scale(0.3);
   }
 }
 

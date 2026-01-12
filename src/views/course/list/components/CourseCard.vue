@@ -1,5 +1,5 @@
 <template>
-  <el-card shadow="hover" class="course-card">
+  <el-card shadow="always" class="course-card" :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)' }">
     <div class="course-thumb-container">
       <el-image
         :src="course.thumbUrl"
@@ -71,14 +71,15 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
   display: flex;
   flex-direction: column;
   transition: all 0.3s;
-  border: none;
+  border: none !important;
   overflow: hidden;
   border-radius: 16px;
   background: var(--el-bg-color-overlay);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18) !important;
     
     .course-actions-overlay {
       opacity: 1;
