@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, shallowRef } from "vue";
+import { ref, onMounted, shallowRef, nextTick } from "vue";
 import { getPptToken } from "@/api/ppt";
 import { ElMessage } from "element-plus";
 import { DocmeeUI, CreatorType } from "@docmee/sdk-ui";
 
 const loading = ref(true);
+const iframeReady = ref(false); // 控制 iframe 显示，避免紫色闪烁
 const container = ref<HTMLDivElement>();
 const docmeeUI = shallowRef<any>(null);
 
@@ -33,6 +34,200 @@ async function initAiPPT() {
         background: "linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)", // 与 welcome banner 一致的背景色
         mode: "light", // light 亮色模式, dark 暗色模式
         lang: "zh", // 国际化
+        // 自定义 CSS 样式 - 使用平台统一蓝色 #409EFF
+        // DaisyUI 主题色覆盖：#409EFF 转 HSL = 210 100% 62%
+        css: `
+          /* ========== DaisyUI 主题色覆盖 - 平台统一蓝色 #409EFF ========== */
+          
+          /* 覆盖 DaisyUI CSS 变量 - 这是关键！ */
+          *, *::before, *::after,
+          :root, [data-theme], #docmee_SdkContainer {
+            --p: 210 100% 62% !important;
+            --pf: 210 100% 56% !important;
+            --pc: 0 0% 100% !important;
+            --primary: #409EFF !important;
+            --primary-focus: #3a8ee6 !important;
+            --primary-content: #ffffff !important;
+            
+            --s: 210 100% 62% !important;
+            --sf: 210 100% 56% !important;
+            --sc: 0 0% 100% !important;
+            --secondary: #409EFF !important;
+            
+            --a: 210 100% 62% !important;
+            --af: 210 100% 56% !important;
+            --ac: 0 0% 100% !important;
+            --accent: #409EFF !important;
+            
+            --in: 210 100% 62% !important;
+            --info: #409EFF !important;
+          }
+          
+          /* ===== 对话气泡 - chat-bubble ===== */
+          .chat-bubble,
+          .chat-bubble-primary,
+          .chat-bubble.chat-bubble-primary {
+            background-color: #409EFF !important;
+            --tw-bg-opacity: 1 !important;
+            color: white !important;
+          }
+          
+          /* ===== 主要按钮 ===== */
+          .btn-primary,
+          .btn.btn-primary {
+            background-color: #409EFF !important;
+            border-color: #409EFF !important;
+            color: white !important;
+            --tw-bg-opacity: 1 !important;
+          }
+          
+          .btn-primary:hover,
+          .btn.btn-primary:hover {
+            background-color: #66b1ff !important;
+            border-color: #66b1ff !important;
+          }
+          
+          /* ===== 修复"立即创作"按钮 - 移除灰色覆盖 ===== */
+          .btn.btn-primary[class*="bg-base-200"],
+          .btn.btn-primary.\!bg-base-200 {
+            background-color: #409EFF !important;
+            background: #409EFF !important;
+            color: white !important;
+          }
+          
+          .btn.btn-primary[class*="text-base-300"],
+          .btn.btn-primary.\!text-base-300 {
+            color: white !important;
+          }
+          
+          /* ===== 选中的功能卡片（AI智能创作等）- 蓝色背景白色文字 ===== */
+          .\\!bg-primary,
+          [class*="!bg-primary"] {
+            background-color: #409EFF !important;
+          }
+          
+          /* 选中状态：卡片内部所有文字都是白色（包括子元素） */
+          .\\!bg-primary,
+          .\\!bg-primary *,
+          .\\!bg-primary .text-primary,
+          [class*="!bg-primary"],
+          [class*="!bg-primary"] *,
+          [class*="!bg-primary"] .text-primary,
+          .\\!text-primary-content,
+          [class*="!text-primary-content"] {
+            color: white !important;
+          }
+          
+          /* ===== 未选中状态的文字颜色 - 蓝色 ===== */
+          /* 只有不在选中卡片内的 .text-primary 才是蓝色 */
+          .bg-base-100 .text-primary,
+          .bg-base-200 .text-primary,
+          div:not([class*="!bg-primary"]) > .text-primary {
+            color: #409EFF !important;
+          }
+          
+          /* ===== 边框颜色 ===== */
+          .border-primary,
+          .border-primary\/10,
+          [class*="border-primary"] {
+            border-color: #409EFF !important;
+          }
+          
+          .focus-within\:border-primary-focus\/20:focus-within {
+            border-color: rgba(64, 158, 255, 0.2) !important;
+          }
+          
+          /* ===== 背景色 ===== */
+          .bg-primary,
+          .bg-primary\/10,
+          [class*="bg-primary"] {
+            background-color: #409EFF !important;
+          }
+          
+          .hover\:bg-primary\/10:hover {
+            background-color: rgba(64, 158, 255, 0.1) !important;
+          }
+          
+          .hover\:text-primary:hover {
+            color: #409EFF !important;
+          }
+          
+          /* ===== 阴影 ===== */
+          .shadow-primary-focus\/20,
+          .\!shadow-primary-focus\/20,
+          [class*="shadow-primary"] {
+            --tw-shadow-color: rgba(64, 158, 255, 0.2) !important;
+          }
+          
+          .hover\:shadow-primary\/10:hover {
+            --tw-shadow-color: rgba(64, 158, 255, 0.1) !important;
+          }
+          
+          /* ===== 开关 ===== */
+          .hdd-switch-checked,
+          .hdd-switch[aria-checked="true"] {
+            background-color: #409EFF !important;
+          }
+          
+          /* ===== 选择框选中项 ===== */
+          .hdd-select-item-option-selected {
+            background-color: rgba(64, 158, 255, 0.1) !important;
+            color: #409EFF !important;
+          }
+          
+          /* ===== 链接 ===== */
+          a, .link {
+            color: #409EFF !important;
+          }
+          
+          a:hover, .link:hover {
+            color: #66b1ff !important;
+          }
+          
+          /* ===== 输入框聚焦 - 移除蓝色轮廓线 ===== */
+          input:focus, textarea:focus,
+          input:focus-visible, textarea:focus-visible,
+          .input:focus, .input:focus-visible,
+          .textarea:focus, .textarea:focus-visible {
+            outline: none !important;
+            outline-width: 0 !important;
+            box-shadow: none !important;
+            border-color: #dcdfe6 !important;
+          }
+          
+          /* 移除所有元素的聚焦轮廓 */
+          *:focus, *:focus-visible {
+            outline: none !important;
+            outline-width: 0 !important;
+          }
+          
+          /* DaisyUI 输入框聚焦样式重置 */
+          .input:focus, .input:focus-within,
+          .textarea:focus, .textarea:focus-within,
+          [class*="input"]:focus, [class*="input"]:focus-within {
+            outline: none !important;
+            outline-offset: 0 !important;
+            box-shadow: none !important;
+          }
+          
+          /* ===== 进度条 ===== */
+          .progress-primary::-webkit-progress-value {
+            background-color: #409EFF !important;
+          }
+          
+          /* ===== 强制覆盖内联样式 ===== */
+          [style*="--p: 249"] {
+            --p: 210 100% 62% !important;
+          }
+          
+          [style*="--pf: 249"] {
+            --pf: 210 100% 56% !important;
+          }
+          
+          [style*="--s: 249"] {
+            --s: 210 100% 62% !important;
+          }
+        `,
         onMessage: (message) => {
           console.log(message);
           if (message.type === "invalid-token") {
@@ -72,6 +267,10 @@ async function initAiPPT() {
           }
         },
       });
+      // SDK 初始化后，延迟显示 iframe，让自定义 CSS 有时间生效
+      setTimeout(() => {
+        iframeReady.value = true;
+      }, 300); // 300ms 延迟，确保 CSS 注入生效
     } else {
       ElMessage.error("获取token失败");
     }
@@ -93,7 +292,10 @@ onMounted(() => {
   <div class="aippt-page">
     <!-- iframe容器 -->
     <div v-loading="loading" class="aippt-container-wrapper">
-      <div id="aippt-container"></div>
+      <div 
+        id="aippt-container" 
+        :class="{ 'iframe-ready': iframeReady }"
+      ></div>
     </div>
   </div>
 </template>
@@ -125,5 +327,17 @@ onMounted(() => {
   overflow: hidden;
   background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
   color: #1f2937;
+  /* 初始隐藏，避免紫色闪烁 */
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+}
+
+#aippt-container.iframe-ready {
+  opacity: 1;
+}
+
+/* iframe 内部样式立即生效 */
+#aippt-container :deep(iframe) {
+  opacity: inherit;
 }
 </style>
