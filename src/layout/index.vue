@@ -31,6 +31,7 @@ import LaySetting from "./components/lay-setting/index.vue";
 import NavVertical from "./components/lay-sidebar/NavVertical.vue";
 import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
+import AiScreenCapture from "@/components/AiScreenCapture/index.vue";
 
 const { t } = useI18n();
 const appWrapperRef = ref();
@@ -201,6 +202,8 @@ const LayHeader = defineComponent({
     </div>
     <!-- 系统设置 -->
     <LaySetting />
+    <!-- AI识屏助手 -->
+    <AiScreenCapture />
   </div>
 </template>
 
