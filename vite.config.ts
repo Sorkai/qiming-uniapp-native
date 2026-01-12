@@ -37,12 +37,12 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         },
         // 图片服务器代理，解决开发环境防盗链/跨域问题
         "/file-proxy": {
-          target: "https://aiedu-api.intelledu.cn",
+          target: "https://aiedu-api.lehinet.com",
           changeOrigin: true,
           rewrite: path => path.replace(/^\/file-proxy/, "")
         },
         "/ai-edu-bucket": {
-          target: "https://aiedu-api.intelledu.cn",
+          target: "https://aiedu-api.lehinet.com",
           changeOrigin: true
         }
       },

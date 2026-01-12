@@ -4,9 +4,9 @@
       <el-card shadow="never" class="stats-card">
         <div class="flex items-center">
           <div :class="['icon-wrapper', item.colorClass]">
-            <el-icon :size="24"><component :is="item.icon" /></el-icon>
+            <el-icon :size="32"><component :is="item.icon" /></el-icon>
           </div>
-          <div class="ml-4">
+          <div class="ml-4 stats-content">
             <div class="stats-label">{{ item.label }}</div>
             <div class="stats-value">{{ item.value }}</div>
           </div>
@@ -42,32 +42,59 @@ const statsItems = computed(() => [
 .stats-card {
   border: none;
   background: var(--el-bg-color-overlay);
-  border-radius: var(--el-border-radius-base);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
   
   .icon-wrapper {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--el-border-radius-base);
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     
-    &.blue { background: var(--el-color-primary-light-9); color: var(--el-color-primary); }
-    &.green { background: var(--el-color-success-light-9); color: var(--el-color-success); }
-    &.orange { background: var(--el-color-warning-light-9); color: var(--el-color-warning); }
-    &.purple { background: var(--el-color-danger-light-9); color: var(--el-color-danger); }
+    &.blue { 
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.15) 0%, rgba(64, 158, 255, 0.08) 100%); 
+      color: var(--el-color-primary); 
+    }
+    &.green { 
+      background: linear-gradient(135deg, rgba(103, 194, 58, 0.15) 0%, rgba(103, 194, 58, 0.08) 100%); 
+      color: var(--el-color-success); 
+    }
+    &.orange { 
+      background: linear-gradient(135deg, rgba(230, 162, 60, 0.15) 0%, rgba(230, 162, 60, 0.08) 100%); 
+      color: var(--el-color-warning); 
+    }
+    &.purple { 
+      background: linear-gradient(135deg, rgba(145, 70, 255, 0.15) 0%, rgba(145, 70, 255, 0.08) 100%); 
+      color: #9146ff; 
+    }
+  }
+
+  .stats-content {
+    flex: 1;
+    min-width: 0;
   }
 
   .stats-label {
     font-size: 14px;
     color: var(--el-text-color-secondary);
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    font-weight: 500;
   }
 
   .stats-value {
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 28px;
+    font-weight: 700;
     color: var(--el-text-color-primary);
+    line-height: 1.2;
   }
 }
 </style>

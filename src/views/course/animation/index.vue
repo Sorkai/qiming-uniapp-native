@@ -9,7 +9,7 @@
           </div>
           智能动画中心
         </h3>
-        <p class="text-xs text-[var(--el-text-color-placeholder)] mt-2 ml-[52px]">AI 辅助生成教学动画与演示</p>
+        <p class="text-xs text-[var(--el-text-color-placeholder)] mt-4 ml-[52px]">AI 辅助生成教学动画与演示</p>
       </div>
 
       <div class="p-5 space-y-5 flex-1 overflow-auto custom-scrollbar">
@@ -613,7 +613,6 @@ onMounted(()=>{
     border-color: var(--el-color-primary-light-5) !important;
     color: var(--el-color-primary) !important;
     box-shadow: 0 2px 8px var(--el-color-primary-light-8) !important;
-    transform: translateY(-1px);
   }
 }
 
