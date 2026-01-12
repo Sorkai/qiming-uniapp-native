@@ -18,11 +18,11 @@
         </el-tag>
       </div>
       <div class="course-actions-overlay">
-        <el-button type="primary" size="small" circle @click="$emit('edit', course)">
-          <el-icon><Edit /></el-icon>
+        <el-button type="primary" size="default" circle @click="$emit('edit', course)">
+          <el-icon :size="18"><Edit /></el-icon>
         </el-button>
-        <el-button type="danger" size="small" circle @click="$emit('delete', course)">
-          <el-icon><Delete /></el-icon>
+        <el-button type="danger" size="default" circle @click="$emit('delete', course)">
+          <el-icon :size="18"><Delete /></el-icon>
         </el-button>
       </div>
     </div>
@@ -42,13 +42,13 @@
       </div>
 
       <div class="course-footer">
-        <el-button-group class="w-full flex">
-          <el-button size="small" class="flex-1" @click="$emit('view-hours', course)">章节课时</el-button>
-          <el-button size="small" class="flex-1" @click="$emit('view-attrs', course)">附件资源</el-button>
-        </el-button-group>
-        <div class="mt-2 flex gap-2">
-          <el-button size="small" type="success" class="flex-1" @click="$emit('allocation', course)">学员分配</el-button>
-          <el-button size="small" type="warning" class="flex-1" @click="$emit('study-status', course)">学习情况</el-button>
+        <div class="button-row">
+          <el-button size="default" class="action-btn" @click="$emit('view-hours', course)">章节课时</el-button>
+          <el-button size="default" class="action-btn" @click="$emit('view-attrs', course)">附件资源</el-button>
+        </div>
+        <div class="button-row mt-2">
+          <el-button size="default" type="success" class="action-btn" @click="$emit('allocation', course)">学员分配</el-button>
+          <el-button size="default" type="warning" class="action-btn" @click="$emit('study-status', course)">学习情况</el-button>
         </div>
       </div>
     </div>
@@ -73,12 +73,12 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
   transition: all 0.3s;
   border: none;
   overflow: hidden;
-  border-radius: var(--el-border-radius-base);
+  border-radius: 16px;
   background: var(--el-bg-color-overlay);
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: var(--el-box-shadow-lighter) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1) !important;
     
     .course-actions-overlay {
       opacity: 1;
@@ -95,7 +95,7 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
 
 .course-thumb-container {
   position: relative;
-  height: 160px;
+  height: 180px;
   width: 100%;
   overflow: hidden;
 
@@ -189,18 +189,24 @@ defineEmits(['edit', 'delete', 'view-hours', 'view-attrs', 'allocation', 'study-
 .course-footer {
   margin-top: auto;
 
-  .el-button-group {
-    .el-button {
-      border-radius: var(--el-border-radius-base);
-      &:first-child {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-      }
-      &:last-child {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-      }
-    }
+  .button-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn {
+    flex: 1;
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 8px 12px;
+    height: 36px;
+  }
+}
+
+.course-actions-overlay {
+  .el-button {
+    width: 40px;
+    height: 40px;
   }
 }
 </style>

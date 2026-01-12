@@ -74,6 +74,7 @@
       title="修改用户角色"
       width="30%"
       :close-on-click-modal="false"
+      align-center
     >
       <el-form ref="roleFormRef" :model="roleForm" label-width="100px">
         <el-form-item label="当前用户">
@@ -268,6 +269,32 @@ onMounted(() => {
 <style lang="scss" scoped>
 .main {
   margin: 10px;
+}
+
+.box-card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+:deep(.el-card__header) {
+  border-radius: 16px 16px 0 0;
+}
+
+:deep(.el-table) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.el-dialog) {
+  border-radius: 16px;
+}
+
+:deep(.el-button) {
+  border-radius: 8px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
 }
 
 .pagination-container {

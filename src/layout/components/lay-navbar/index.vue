@@ -11,6 +11,8 @@ import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vu
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
 import LaySidebarTopCollapse from "../lay-sidebar/components/SidebarTopCollapse.vue";
 import LaySidebarOverallStyle from "../lay-sidebar/components/SidebarOverallStyle.vue";
+import { getUserDetail } from "@/api/user";
+import { useUserStoreHook } from "@/store/modules/user";
 
 import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
 import AccountSettingsIcon from "~icons/ri/user-settings-line";
@@ -40,10 +42,12 @@ const avatarSrc = ref(userAvatar.value);
 watch(
   () => userAvatar.value,
   val => {
+    console.log("[LayNavbar] userAvatar 变更为:", val);
     avatarSrc.value = val;
   }
 );
 const handleAvatarError = () => {
+  console.warn("[LayNavbar] 头像加载失败，回退到默认头像。当前尝试加载的地址:", avatarSrc.value);
   avatarSrc.value = DefaultAvatar;
 };
 
@@ -64,6 +68,31 @@ let timer: ReturnType<typeof setInterval>;
 onMounted(() => {
   updateTime();
   timer = setInterval(updateTime, 1000);
+
+  // 这里的逻辑修改为：无论 store 中是否有头像，都强制刷新一次用户信息，确保是最新的
+  // 增加 console.log 方便调试
+  console.log("[LayNavbar] 组件挂载，准备获取用户信息...");
+  const userStore = useUserStoreHook();
+  
+  getUserDetail().then(res => {
+      console.log("[LayNavbar] 获取用户信息接口响应:", res);
+      // 兼容两种响应结构
+      const data = res.data || res;
+      if (data && data.userInfo) {
+        console.log("[LayNavbar] 获取到用户信息:", data.userInfo);
+        const userInfo = data.userInfo;
+        // 只要返回了信息就更新 store
+        if (userInfo.avatar !== undefined) {
+             console.log("[LayNavbar] 更新头像:", userInfo.avatar);
+             userStore.SET_AVATAR(userInfo.avatar);
+        }
+        if (userInfo.nickname) {
+             userStore.SET_NICKNAME(userInfo.nickname);
+        }
+      }
+    }).catch(err => {
+        console.error("[LayNavbar] 获取用户信息失败:", err);
+    });
 });
 
 onUnmounted(() => {
@@ -121,7 +150,7 @@ const {
         <span
           class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10"
         >
-          <img :src="avatarSrc" class="w-[24px] h-[24px] rounded-full ring-2 ring-white dark:ring-gray-800 object-cover" @error="handleAvatarError" />
+          <img :src="avatarSrc" referrerpolicy="no-referrer" class="w-[24px] h-[24px] rounded-full ring-2 ring-white dark:ring-gray-800 object-cover" @error="handleAvatarError" />
         <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">
           {{ username }}
         </p>

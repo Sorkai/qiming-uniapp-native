@@ -274,9 +274,9 @@
         </div>
         <el-table v-else :data="courseAttrs" stripe style="width: 100%">
           <el-table-column prop="attrId" label="ID" width="80" />
-          <el-table-column prop="title" label="附件标题" />
-          <el-table-column prop="rType" label="类型" width="100" />
-          <el-table-column label="操作" width="120">
+          <el-table-column prop="title" label="附件标题" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="rType" label="类型" width="120" />
+          <el-table-column label="操作" width="100">
             <template #default="scope">
               <el-button
                 v-if="scope.row.fileUrl"
@@ -1889,6 +1889,33 @@ onMounted(() => {
 
 .search-card {
   border: none;
-  border-radius: var(--el-border-radius-base);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+:deep(.el-dialog) {
+  border-radius: 16px;
+}
+
+:deep(.el-button) {
+  border-radius: 8px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
+}
+
+:deep(.el-table) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.el-card) {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+:deep(.el-card__header) {
+  border-radius: 16px 16px 0 0;
 }
 </style>

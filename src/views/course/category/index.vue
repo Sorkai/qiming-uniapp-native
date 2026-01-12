@@ -77,6 +77,7 @@
       :title="formData.categoryId ? '编辑分类' : '创建分类'"
       width="500px"
       destroy-on-close
+      align-center
     >
       <el-form
         ref="formRef"

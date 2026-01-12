@@ -76,6 +76,7 @@
       v-model="dialogVisible"
       :title="isEdit ? '编辑作业' : '创建作业'"
       width="600px"
+      align-center
     >
       <el-form
         ref="formRef"

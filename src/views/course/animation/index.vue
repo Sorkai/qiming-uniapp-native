@@ -5,11 +5,11 @@
       <div class="header-section p-5 border-b border-[var(--el-border-color-light)] bg-[var(--el-fill-color-light)]/30">
         <h3 class="font-bold flex items-center text-lg">
           <div class="icon-box w-10 h-10 bg-gradient-to-br from-[var(--el-color-primary)] to-[var(--el-color-primary-dark-2)] rounded-xl mr-3 shadow-lg flex items-center justify-center transition-transform duration-300">
-            <el-icon class="text-white text-lg"><Film /></el-icon>
+            <img :src="htmlIconSvg" class="w-6 h-6 brightness-0 invert" alt="智能动画中心" />
           </div>
           智能动画中心
         </h3>
-        <p class="text-xs text-[var(--el-text-color-placeholder)] mt-2 ml-[52px]">AI 辅助生成教学动画与演示</p>
+        <p class="text-xs text-[var(--el-text-color-placeholder)] mt-4 ml-[52px]">AI 辅助生成教学动画与演示</p>
       </div>
 
       <div class="p-5 space-y-5 flex-1 overflow-auto custom-scrollbar">
@@ -302,6 +302,7 @@ import {
   Setting,
   DataAnalysis
 } from "@element-plus/icons-vue";
+import htmlIconSvg from "@/assets/new-release/html-file-type-svgrepo-com.svg?url";
 
 defineOptions({
   name: "CourseAnimation"
@@ -612,7 +613,6 @@ onMounted(()=>{
     border-color: var(--el-color-primary-light-5) !important;
     color: var(--el-color-primary) !important;
     box-shadow: 0 2px 8px var(--el-color-primary-light-8) !important;
-    transform: translateY(-1px);
   }
 }
 
