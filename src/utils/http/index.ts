@@ -18,8 +18,8 @@ import { useUserStoreHook } from "@/store/modules/user";
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间，上传大文件时设置为0表示不超时
   timeout: 0,
-  // 设置基础URL（使用由 vite.config.ts 定义的代理前缀）
-  baseURL: "/api",
+  // 设置基础URL（从环境变量读取，开发环境使用代理前缀，生产环境使用完整后端地址）
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
