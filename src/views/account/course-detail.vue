@@ -589,9 +589,23 @@ const handleSendMessage = async (content: string) => {
 };
 
 const clearChat = () => {
-  ElMessageBox.confirm("确定清空聊天记录？", "提示", { type: "warning" }).then(() => {
+  ElMessageBox.confirm("确定清空聊天记录？", "清空对话", {
+    confirmButtonText: "确定清空",
+    cancelButtonText: "取消",
+    type: "warning",
+    customClass: "clear-chat-confirm-dialog",
+    confirmButtonClass: "clear-chat-confirm-btn",
+    cancelButtonClass: "clear-chat-cancel-btn",
+    showClose: true,
+    closeOnClickModal: true,
+    closeOnPressEscape: true,
+    center: true,
+    draggable: true,
+    icon: "Delete"
+  }).then(() => {
     chatMessages.value = [];
-  });
+    ElMessage.success("聊天记录已清空");
+  }).catch(() => {});
 };
 
 // 数据获取方法
@@ -782,6 +796,126 @@ onBeforeUnmount(() => {
 
     &.dark {
       background-color: #1a1a1a;
+    }
+  }
+}
+
+/* 清空对话 确认框美化 */
+.clear-chat-confirm-dialog {
+  border-radius: 20px !important;
+  padding: 8px;
+  overflow: hidden;
+  border: none !important;
+  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.15) !important;
+  max-width: 400px !important;
+
+  .el-message-box__header {
+    padding-top: 25px;
+    padding-bottom: 5px;
+    
+    .el-message-box__title {
+      font-weight: 600;
+      font-size: 18px;
+      color: #303133;
+    }
+
+    .el-message-box__headerbtn {
+      top: 15px;
+      right: 15px;
+      font-size: 20px;
+    }
+  }
+
+  .el-message-box__content {
+    padding: 15px 30px 25px;
+    
+    .el-message-box__container {
+      margin-left: 0;
+      justify-content: center;
+    }
+    
+    .el-message-box__status {
+      display: none;
+    }
+    
+    .el-message-box__message {
+      font-size: 15px;
+      color: #606266;
+      font-weight: 500;
+    }
+  }
+
+  .el-message-box__btns {
+    padding: 0 20px 25px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+
+    button {
+      height: 42px;
+      width: 120px;
+      padding: 0;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin: 0 !important;
+    }
+  }
+}
+
+.clear-chat-cancel-btn {
+  background: #f4f7f9 !important;
+  border: 1px solid #e4e7ed !important;
+  color: #909399 !important;
+
+  &:hover {
+    background: #eef2f5 !important;
+    color: #606266 !important;
+    border-color: #dcdfe6 !important;
+  }
+}
+
+.clear-chat-confirm-btn {
+  background: linear-gradient(135deg, #409eff 0%, #604ffd 100%) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+    opacity: 0.9;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* 深色模式适配 */
+html.dark {
+  .clear-chat-confirm-dialog {
+    background-color: #1a1a24 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+    .el-message-box__title {
+      color: #e0e0e0 !important;
+    }
+
+    .el-message-box__message {
+      color: #c0c4cc !important;
+    }
+  }
+
+  .clear-chat-cancel-btn {
+    background: #2a2a3a !important;
+    border-color: #3a3a4a !important;
+    color: #909399 !important;
+
+    &:hover {
+      background: #3a3a4a !important;
+      color: #e0e0e0 !important;
     }
   }
 }

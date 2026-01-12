@@ -328,11 +328,11 @@ const loading = ref(false);
 const userInfo = ref<DataInfo<number> | any>(storageLocal().getItem(userKey));
 
 // 动态加载预设背景图
-const presetImages = import.meta.glob(
+const presetImages = import.meta.glob<string>(
   "@/assets/publicbackgroundpreset/*.{jpg,jpeg,png,heif,heic,HEIC,HEIF}",
-  { eager: true, as: "url" }
+  { eager: true, query: "?url", import: "default" }
 );
-const presetBanners = Object.values(presetImages);
+const presetBanners = Object.values(presetImages) as string[];
 
 // 弹窗与加载状态
 const presetDialogVisible = ref(false);

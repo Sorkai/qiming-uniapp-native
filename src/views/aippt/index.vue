@@ -30,7 +30,7 @@ async function initAiPPT() {
         },
         isMobile: false, // 移动端模式
         padding: "20px 20px 0px",
-        background: "linear-gradient(-157deg,#f57bb0, #867dea)", // 自定义背景
+        background: "linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)", // 与 welcome banner 一致的背景色
         mode: "light", // light 亮色模式, dark 暗色模式
         lang: "zh", // 国际化
         onMessage: (message) => {
@@ -123,7 +123,7 @@ onMounted(() => {
   padding: 0;
   border-radius: 8px;
   overflow: hidden;
-  background: linear-gradient(-157deg, #f57bb0, #867dea);
-  color: white;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  color: #1f2937;
 }
-</style> 
+</style>

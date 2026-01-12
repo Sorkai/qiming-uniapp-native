@@ -67,6 +67,22 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         input: {
           index: pathResolve("./index.html", import.meta.url)
         },
+        // 抑制特定警告
+        onwarn(warning, warn) {
+          // 忽略 eval 警告（来自 lottie-web）
+          if (warning.code === "EVAL" && warning.id?.includes("lottie-web")) {
+            return;
+          }
+          // 忽略动态导入和静态导入混合的警告
+          if (
+            warning.code === "PLUGIN_WARNING" &&
+            warning.message?.includes("dynamically imported")
+          ) {
+            return;
+          }
+          // 其他警告正常输出
+          warn(warning);
+        },
         // 静态资源分类打包
         output: {
           chunkFileNames: "static/js/[name]-[hash].js",
