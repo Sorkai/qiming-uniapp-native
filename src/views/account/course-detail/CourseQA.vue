@@ -129,13 +129,13 @@
                   :class="message.role"
                 >
                   <div class="qa-message-avatar">
-                    <img
+                    <el-avatar
+                      :size="40"
                       :src="
                         message.role === 'user'
-                          ? userAvatar
-                          : aiPeopleAvatar
+                          ? formatAvatar(userAvatar)
+                          : formatAvatar(aiPeopleAvatar)
                       "
-                      alt="Avatar"
                     />
                   </div>
                   <div class="qa-message-content">
@@ -213,6 +213,7 @@
 import { ref, watch, nextTick } from "vue";
 import CourseHeader from "./CourseHeader.vue";
 import aiPeopleAvatar from "@/assets/aipeople.jpg";
+import { formatAvatar } from "@/utils/avatar";
 import SendIcon from "@/assets/course-icons/send-icon.svg?component";
 
 // Props

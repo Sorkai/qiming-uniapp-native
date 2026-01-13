@@ -37,20 +37,6 @@ const {
   getDropdownItemClass
 } = useNav();
 
-// 头像加载失败时使用默认头像
-const avatarSrc = ref(userAvatar.value);
-watch(
-  () => userAvatar.value,
-  val => {
-    console.log("[LayNavbar] userAvatar 变更为:", val);
-    avatarSrc.value = val;
-  }
-);
-const handleAvatarError = () => {
-  console.warn("[LayNavbar] 头像加载失败，回退到默认头像。当前尝试加载的地址:", avatarSrc.value);
-  avatarSrc.value = DefaultAvatar;
-};
-
 const visible = ref(false);
 
 const currentTime = ref("");
@@ -150,7 +136,13 @@ const {
         <span
           class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10"
         >
-          <img :src="avatarSrc" referrerpolicy="no-referrer" class="w-[24px] h-[24px] rounded-full ring-2 ring-white dark:ring-gray-800 object-cover" @error="handleAvatarError" />
+          <el-avatar
+            :size="24"
+            :src="userAvatar"
+            class="ring-2 ring-white dark:ring-gray-800 object-cover"
+          >
+            {{ username?.charAt(0) || "U" }}
+          </el-avatar>
         <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">
           {{ username }}
         </p>

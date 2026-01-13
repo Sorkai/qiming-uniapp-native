@@ -32,8 +32,7 @@
         </el-table-column>
         <el-table-column prop="avatar" label="头像" width="100">
           <template #default="scope">
-            <el-avatar v-if="scope.row.avatar" :src="scope.row.avatar" />
-            <el-avatar v-else icon="UserFilled" />
+            <el-avatar :src="formatAvatar(scope.row.avatar)" />
           </template>
         </el-table-column>
         <el-table-column prop="info" label="个性签名" />
@@ -105,6 +104,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, reactive, computed } from "vue";
+import { formatAvatar } from "@/utils/avatar";
 import { getUserList, updateUserRole } from "@/api/user";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { isAdmin } from "@/utils/auth";

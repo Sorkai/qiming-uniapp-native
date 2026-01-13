@@ -296,7 +296,7 @@
             <span v-if="index < 3" class="rank-medal">{{ ['🥇', '🥈', '🥉'][index] }}</span>
             <span v-else class="rank-number">{{ index + 1 }}</span>
           </div>
-          <el-avatar :size="40" :src="user.avatar" />
+          <el-avatar :size="40" :src="formatAvatar(user.avatar)" />
           <div class="user-info">
             <span class="username">{{ user.username }}</span>
             <span class="class-name">{{ user.className }}</span>
@@ -311,6 +311,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from "vue";
+import { formatAvatar } from "@/utils/avatar";
 import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
 import {
   getEventList,

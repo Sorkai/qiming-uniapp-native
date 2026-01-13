@@ -9,6 +9,7 @@ import type { routeMetaType } from "../types";
 import { transformI18n } from "@/plugins/i18n";
 import { router, remainingPaths } from "@/router";
 import { computed, type CSSProperties } from "vue";
+import { formatAvatar } from "@/utils/avatar";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useGlobal, isAllEmpty } from "@pureadmin/utils";
@@ -41,36 +42,7 @@ export function useNav() {
 
   /** 头像（如果头像为空则使用 src/assets/user.jpg ） */
   const userAvatar = computed(() => {
-    const avatar = useUserStoreHook()?.avatar;
-    // console.log("[Debug] Store中的原始头像:", avatar);
-
-    if (!avatar || avatar === "null" || avatar === "undefined") {
-      return Avatar;
-    }
-
-    // [关键修复] 开发环境下，将远程图片地址替换为本地代理地址，解决防盗链问题
-    // 注意：必须重启项目 (重新运行 npm run dev) 才能使 /file-proxy 代理生效
-    if (typeof avatar === "string" && avatar.includes("aiedu-file.lehinet.com")) {
-      return avatar.replace("https://aiedu-file.lehinet.com", "/file-proxy");
-    }
-
-    // 如果是相对路径，且不是以 http 或 data: 开头，则尝试拼接 API 前缀
-    if (
-      typeof avatar === "string" &&
-      !avatar.startsWith("http") &&
-      !avatar.startsWith("data:") &&
-      !avatar.startsWith("/")
-    ) {
-      return "/api/" + avatar;
-    } else if (
-      typeof avatar === "string" &&
-      avatar.startsWith("/") &&
-      !avatar.startsWith("/api") &&
-      !avatar.startsWith("/src")
-    ) {
-      return "/api" + avatar;
-    }
-    return avatar;
+    return formatAvatar(useUserStoreHook()?.avatar);
   });
 
   /** 昵称（如果昵称为空则显示用户名） */

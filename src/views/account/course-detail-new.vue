@@ -136,6 +136,7 @@ import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
+import { formatAvatar } from "@/utils/avatar";
 import { userKey } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 
@@ -212,10 +213,12 @@ watch(
 );
 
 // 用户信息
-const userInfo = storageLocal().getItem(userKey) || {};
-const userAvatar = ref((userInfo as any)?.avatar || avatarDefault);
-const userNickname = ref(
-  (userInfo as any)?.nickname || (userInfo as any)?.username || "用户"
+const userStore = useUserStoreHook();
+const userAvatar = computed(() =>
+  formatAvatar(userStore.avatar, avatarDefault)
+);
+const userNickname = computed(() => 
+  userStore.nickname || userStore.username || "用户"
 );
 
 // 课程资料

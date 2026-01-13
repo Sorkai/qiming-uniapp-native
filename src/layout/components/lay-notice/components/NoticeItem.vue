@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ListItem } from "../data";
 import { ref, PropType, nextTick } from "vue";
+import { formatAvatar } from "@/utils/avatar";
 import { useNav } from "@/layout/hooks/useNav";
 import { deviceDetection } from "@pureadmin/utils";
 
@@ -54,7 +55,7 @@ function hoverDescription(event, description) {
     <el-avatar
       v-if="noticeItem.avatar"
       :size="30"
-      :src="noticeItem.avatar"
+      :src="formatAvatar(noticeItem.avatar)"
       class="notice-container-avatar"
     />
     <div class="notice-container-text">

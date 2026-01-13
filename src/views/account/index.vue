@@ -55,7 +55,7 @@
           <template v-if="userInfo">
             <el-dropdown trigger="hover" @command="handleCommand">
               <div class="user-info">
-                <el-avatar :size="32" :src="userInfo.avatar" />
+                <el-avatar :size="32" :src="formatAvatar(userInfo.avatar)" />
                 <span class="nickname">{{
                   userInfo.nickname || userInfo.username
                 }}</span>
@@ -95,7 +95,7 @@
       <div class="account-sidebar">
         <div class="user-info-card">
           <div class="avatar-wrapper">
-            <el-avatar :size="80" :src="userInfo?.avatar" />
+            <el-avatar :size="80" :src="formatAvatar(userInfo?.avatar)" />
             <div class="avatar-ring"></div>
           </div>
           <h3>{{ userInfo?.nickname || userInfo?.username }}</h3>
@@ -520,6 +520,7 @@ import {
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
+import { formatAvatar } from "@/utils/avatar";
 import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";

@@ -71,6 +71,7 @@ declare global {
     VITE_HIDE_HOME: string;
     VITE_ENABLE_TENANT: string;
     VITE_COMPRESSION: ViteCompression;
+    VITE_PROXY_TARGET: string;
   }
 
   /**

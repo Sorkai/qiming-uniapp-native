@@ -157,7 +157,7 @@
             <span v-if="index < 3" class="rank-medal">{{ ['🥇', '🥈', '🥉'][index] }}</span>
             <span v-else class="rank-number">{{ index + 1 }}</span>
           </div>
-          <el-avatar :size="40" :src="user.avatar" />
+          <el-avatar :size="40" :src="formatAvatar(user.avatar)" />
           <div class="user-info">
             <span class="username">{{ user.username }}</span>
             <span class="solved">{{ user.solved }} 题</span>
@@ -350,6 +350,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { formatAvatar } from "@/utils/avatar";
 import { Clock, User, CircleCheck, Warning } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 

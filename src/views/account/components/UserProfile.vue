@@ -25,7 +25,7 @@
 
     <div class="profile-content">
       <div class="profile-avatar">
-        <el-avatar :size="100" :src="userInfo?.avatar" />
+        <el-avatar :size="100" :src="formatAvatar(userInfo?.avatar)" />
         <div class="user-name">
           {{ userInfo?.nickname || userInfo?.username }}
         </div>
@@ -307,6 +307,7 @@ import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
 import ReCropper from "@/components/ReCropper";
 import { storageLocal } from "@pureadmin/utils";
+import { formatAvatar } from "@/utils/avatar";
 import { userKey, removeToken, getToken, setToken } from "@/utils/auth";
 import type { DataInfo } from "@/utils/auth";
 import {

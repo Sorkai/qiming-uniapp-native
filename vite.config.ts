@@ -10,8 +10,13 @@ import {
 } from "./build/utils";
 
 export default ({ mode }: ConfigEnv): UserConfigExport => {
-  const { VITE_CDN, VITE_PORT, VITE_COMPRESSION, VITE_PUBLIC_PATH } =
-    wrapperEnv(loadEnv(mode, root));
+  const {
+    VITE_CDN,
+    VITE_PORT,
+    VITE_COMPRESSION,
+    VITE_PUBLIC_PATH,
+    VITE_PROXY_TARGET
+  } = wrapperEnv(loadEnv(mode, root));
   return {
     base: VITE_PUBLIC_PATH,
     root,
@@ -26,24 +31,10 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
       proxy: {
         "/api": {
-          target: "https://aiedu-api.intelledu.cn",
+          target: VITE_PROXY_TARGET,
           changeOrigin: true,
+          secure: false,
           rewrite: path => path.replace(/^\/api/, "")
-        },
-        "/lehinet": {
-          target: "https://aiedu-api.lehinet.com",
-          changeOrigin: true,
-          rewrite: path => path.replace(/^\/lehinet/, "")
-        },
-        // 图片服务器代理，解决开发环境防盗链/跨域问题
-        "/file-proxy": {
-          target: "https://aiedu-api.lehinet.com",
-          changeOrigin: true,
-          rewrite: path => path.replace(/^\/file-proxy/, "")
-        },
-        "/ai-edu-bucket": {
-          target: "https://aiedu-api.lehinet.com",
-          changeOrigin: true
         }
       },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布
