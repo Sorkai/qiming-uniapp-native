@@ -19,7 +19,7 @@
           <template v-if="userInfo">
             <el-dropdown trigger="hover" @command="handleCommand">
               <div class="user-info">
-                <el-avatar :size="32" :src="userInfo.avatar" />
+                <el-avatar :size="32" :src="formatAvatar(userInfo.avatar)" />
                 <span class="nickname">{{
                   userInfo.nickname || userInfo.username
                 }}</span>
@@ -419,6 +419,7 @@ import {
   Check
 } from "@element-plus/icons-vue";
 import { storageLocal } from "@pureadmin/utils";
+import { formatAvatar } from "@/utils/avatar";
 import { userKey, removeToken, getToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
@@ -435,7 +436,18 @@ import LoginDialog from "@/components/LoginDialog.vue";
 
 const router = useRouter();
 const isScrolled = ref(false);
-const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
+import { useUserStoreHook } from "@/store/modules/user";
+
+const userStore = useUserStoreHook();
+const userInfo = computed(() => {
+  const info = storageLocal().getItem<DataInfo<number>>(userKey);
+  return {
+    avatar: userStore.avatar || info?.avatar,
+    nickname: userStore.nickname || info?.nickname,
+    username: userStore.username || info?.username,
+    roleType: info?.roleType
+  };
+});
 
 // 登录弹窗显示状态
 const showLoginDialog = ref(false);
@@ -472,12 +484,7 @@ const handleLoginSuccess = async () => {
   // 首先初始化路由，确保菜单数据正确加载
   await initRouter();
   
-  userInfo.value = storageLocal().getItem(userKey);
-  if (userInfo.value && (userInfo.value.roleType === 2 || userInfo.value.roleType === 3)) {
-    router.push("/welcome/index");
-  } else {
-    router.push("/account");
-  }
+  // 只要刷新页面或者路由，computed userInfo 会自动更新
 };
 
 const hasAdminAccess = computed(() => {
@@ -721,7 +728,6 @@ const handleCommand = (command: string) => {
     case "logout":
       removeToken();
       storageLocal().removeItem(userKey);
-      userInfo.value = null;
       ElMessage.success("退出登录成功");
       break;
   }

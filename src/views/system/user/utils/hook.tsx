@@ -6,6 +6,7 @@ import { zxcvbn } from "@zxcvbn-ts/core";
 import { handleTree } from "@/utils/tree";
 import { message } from "@/utils/message";
 import userAvatar from "@/assets/user.jpg";
+import { formatAvatar } from "@/utils/avatar";
 import { usePublicHooks } from "../../hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { PaginationProps } from "@pureadmin/table";
@@ -86,8 +87,8 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         <el-image
           fit="cover"
           preview-teleported={true}
-          src={row.avatar || userAvatar}
-          preview-src-list={Array.of(row.avatar || userAvatar)}
+          src={formatAvatar(row.avatar)}
+          preview-src-list={Array.of(formatAvatar(row.avatar))}
           class="w-[24px] h-[24px] rounded-full align-middle"
         />
       ),
@@ -187,10 +188,8 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
 
   function onChange({ row, index }) {
     ElMessageBox.confirm(
-      `确认要<strong>${
-        row.status === 0 ? "停用" : "启用"
-      }</strong><strong style='color:var(--el-color-primary)'>${
-        row.username
+      `确认要<strong>${row.status === 0 ? "停用" : "启用"
+      }</strong><strong style='color:var(--el-color-primary)'>${row.username
       }</strong>用户吗?`,
       "系统提示",
       {

@@ -89,7 +89,7 @@
           popper-class="course-user-dropdown"
         >
           <div class="user-capsule">
-            <img :src="userAvatar" class="user-avatar" />
+            <el-avatar :size="24" :src="userAvatar" class="user-avatar" />
             <span v-if="userNickname" class="user-name">
               {{ userNickname }}
             </span>
@@ -406,11 +406,9 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .user-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
+  margin-right: 0;
   flex-shrink: 0;
+  background: #f0f2f5;
 }
 
 .user-name {

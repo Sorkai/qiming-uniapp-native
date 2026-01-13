@@ -33,7 +33,7 @@ const onToggle = async (event: MouseEvent) => {
   const endRadius = Math.hypot(
     Math.max(x, window.innerWidth - x),
     Math.max(y, window.innerHeight - y)
-  );
+  ) * 1.2; // 增加 20% 冗余量，确保在 reload 触发前圆圈已完全覆盖屏幕角落（如左下角）
 
   // 1. 创建扩散层
   const overlay = document.createElement("div");
@@ -44,8 +44,8 @@ const onToggle = async (event: MouseEvent) => {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     z-index: 2147483647;
     pointer-events: none;
     background: ${isToDark ? "#121212" : "#ffffff"};

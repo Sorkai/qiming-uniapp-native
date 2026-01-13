@@ -86,37 +86,37 @@ const fileList = ref([
     name: "教案、教学设计.docx",
     size: "23.6 KB",
     createTime: "2023-10-01 10:00",
-    url: "https://aiedu-file.lehinet.com/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E6%95%99%E6%A1%88%E3%80%81%E6%95%99%E5%AD%A6%E8%AE%BE%E8%AE%A1.docx"
+    url: "https://aiedu-api.intelledu.cn/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E6%95%99%E6%A1%88%E3%80%81%E6%95%99%E5%AD%A6%E8%AE%BE%E8%AE%A1.docx"
   },
   {
     name: "学生名单.docx",
     size: "12.9 KB",
     createTime: "2023-10-02 14:30",
-    url: "https://aiedu-file.lehinet.com/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E5%AD%A6%E7%94%9F%E5%90%8D%E5%8D%95.docx"
+    url: "https://aiedu-api.intelledu.cn/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E5%AD%A6%E7%94%9F%E5%90%8D%E5%8D%95.docx"
   },
   {
     name: "参与的教研活动资料.docx",
     size: "14.3 KB",
     createTime: "2023-10-05 09:00",
-    url: "https://aiedu-file.lehinet.com/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E5%8F%82%E4%B8%8E%E7%9A%84%E6%95%99%E7%A0%94%E6%B4%BB%E5%8A%A8%E8%B5%84%E6%96%99.docx"
+    url: "https://aiedu-api.intelledu.cn/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E5%8F%82%E4%B8%8E%E7%9A%84%E6%95%99%E7%A0%94%E6%B4%BB%E5%8A%A8%E8%B5%84%E6%96%99.docx"
   },
   {
     name: "作业评分标准和标准答案.docx",
     size: "3.1 MB",
     createTime: "2023-10-10 16:45",
-    url: "https://aiedu-file.lehinet.com/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E4%BD%9C%E4%B8%9A%E8%AF%84%E5%88%86%E6%A0%87%E5%87%86%E5%92%8C%E6%A0%87%E5%87%86%E7%AD%94%E6%A1%88.docx"
+    url: "https://aiedu-api.intelledu.cn/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E4%BD%9C%E4%B8%9A%E8%AF%84%E5%88%86%E6%A0%87%E5%87%86%E5%92%8C%E6%A0%87%E5%87%86%E7%AD%94%E6%A1%88.docx"
   },
   {
     name: "个人学术论文.docx",
     size: "14.3 KB",
     createTime: "2023-10-12 11:20",
-    url: "https://aiedu-file.lehinet.com/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E4%B8%AA%E4%BA%BA%E5%AD%A6%E6%9C%AF%E8%AE%BA%E6%96%87.docx"
+    url: "https://aiedu-api.intelledu.cn/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E4%B8%AA%E4%BA%BA%E5%AD%A6%E6%9C%AF%E8%AE%BA%E6%96%87.docx"
   },
   {
     name: "与学生或家长的沟通记录.docx",
     size: "14.6 KB",
     createTime: "2023-10-15 18:00",
-    url: "https://aiedu-file.lehinet.com/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E4%B8%8E%E5%AD%A6%E7%94%9F%E6%88%96%E5%AE%B6%E9%95%BF%E7%9A%84%E6%B2%9F%E9%80%9A%E8%AE%B0%E5%BD%95.docx"
+    url: "https://aiedu-api.intelledu.cn/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E4%B8%8E%E5%AD%A6%E7%94%9F%E6%88%96%E5%AE%B6%E9%95%BF%E7%9A%84%E6%B2%9F%E9%80%9A%E8%AE%B0%E5%BD%95.docx"
   }
 ]);
 

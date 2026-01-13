@@ -349,7 +349,7 @@
             <el-table-column prop="userId" label="ID" width="80" />
             <el-table-column label="头像" width="80">
               <template #default="scope">
-                <el-avatar :size="40" :src="scope.row.avatar">
+                <el-avatar :size="40" :src="formatAvatar(scope.row.avatar)">
                   {{ scope.row.userName?.charAt(0) || "U" }}
                 </el-avatar>
               </template>
@@ -417,7 +417,7 @@
             <el-table-column prop="userId" label="ID" width="80" sortable />
             <el-table-column label="头像" width="80">
               <template #default="scope">
-                <el-avatar :size="40" :src="scope.row.avatar">
+                <el-avatar :size="40" :src="formatAvatar(scope.row.avatar)">
                   {{ scope.row.userName?.charAt(0) || "U" }}
                 </el-avatar>
               </template>
@@ -686,6 +686,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, reactive, computed } from "vue";
+import { formatAvatar } from "@/utils/avatar";
 import { ElMessage, ElMessageBox, ElForm } from "element-plus";
 import {
   getCourseList,
