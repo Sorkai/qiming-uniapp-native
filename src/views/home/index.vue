@@ -441,10 +441,19 @@ import { useUserStoreHook } from "@/store/modules/user";
 const userStore = useUserStoreHook();
 const userInfo = computed(() => {
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
+  const avatar = userStore.avatar || info?.avatar;
+  const nickname = userStore.nickname || info?.nickname;
+  const username = userStore.username || info?.username;
+  
+  // 如果没有任何用户标识信息，返回 null 表示未登录
+  if (!avatar && !nickname && !username) {
+    return null;
+  }
+  
   return {
-    avatar: userStore.avatar || info?.avatar,
-    nickname: userStore.nickname || info?.nickname,
-    username: userStore.username || info?.username,
+    avatar,
+    nickname,
+    username,
     roleType: info?.roleType
   };
 });
@@ -484,7 +493,17 @@ const handleLoginSuccess = async () => {
   // 首先初始化路由，确保菜单数据正确加载
   await initRouter();
   
-  // 只要刷新页面或者路由，computed userInfo 会自动更新
+  // 登录成功后自动跳转到相应页面
+  // 重新获取最新的用户信息
+  const info = storageLocal().getItem<DataInfo<number>>(userKey);
+  const roleType = info?.roleType;
+  
+  // 角色类型判断：2:教师 3:管理员，跳转到管理后台；其他跳转到个人中心
+  if (roleType === 2 || roleType === 3) {
+    router.push("/welcome/index");
+  } else {
+    router.push("/account");
+  }
 };
 
 const hasAdminAccess = computed(() => {
@@ -728,6 +747,10 @@ const handleCommand = (command: string) => {
     case "logout":
       removeToken();
       storageLocal().removeItem(userKey);
+      // 重置 userStore 状态，确保 UI 正确显示未登录状态
+      userStore.SET_AVATAR("");
+      userStore.SET_USERNAME("");
+      userStore.SET_NICKNAME("");
       ElMessage.success("退出登录成功");
       break;
   }

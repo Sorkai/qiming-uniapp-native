@@ -284,7 +284,7 @@ onMounted(() => {
               <div
                 class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
               >
-                <ChartIcon class="w-7 h-7" />
+                <ChartIcon class="w-7 h-7 [&_path]:!fill-white" />
               </div>
               <div class="flex flex-col">
                 <span

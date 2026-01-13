@@ -850,7 +850,7 @@ onMounted(async () => {
             >
               <div class="flex items-center gap-4 shrink-0">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                  <ClipboardIcon class="w-6 h-6" />
+                  <ClipboardIcon class="w-6 h-6 [&_path]:!fill-white" />
                 </div>
                 <div class="flex flex-col">
                   <span class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow">分析课程数据</span>
