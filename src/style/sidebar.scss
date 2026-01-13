@@ -901,7 +901,7 @@
 }
 
 body[layout="vertical"] {
-  $sideBarWidth: 240px;
+  $sideBarWidth: 360px;
 
   @include merge-style($sideBarWidth);
 
@@ -1002,7 +1002,7 @@ body[layout="horizontal"] {
 }
 
 body[layout="mix"] {
-  $sideBarWidth: 240px;
+  $sideBarWidth: 300px;
 
   @include merge-style($sideBarWidth);
 
@@ -1053,7 +1053,7 @@ body[layout="mix"] {
 }
 
 body[layout="double"] {
-  $sideBarWidth: 210px;
+  $sideBarWidth: 260px;
 
   @include merge-style($sideBarWidth);
 
@@ -1062,7 +1062,7 @@ body[layout="double"] {
   }
 
   .double-show.main-container {
-    margin-left: 320px;
+    margin-left: 370px;
 
     .fixed-header {
       width: calc(100% - #{$sideBarWidth} - 110px);

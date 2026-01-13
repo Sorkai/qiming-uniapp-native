@@ -3,8 +3,8 @@
     <el-card class="box-card header-card">
       <div class="header-content">
         <div class="header-left">
-          <h2>🏆 赛事管理</h2>
-          <p>管理在线编程竞赛、题库训练与作文批改等赛事活动</p>
+          <h2>🏆 综合赛事管理</h2>
+          <p>管理各类综合竞赛活动，包括编程竞赛、知识竞赛、作文比赛等</p>
         </div>
         <div class="header-stats">
           <div class="stat-item">
@@ -22,106 +22,6 @@
         </div>
       </div>
     </el-card>
-
-    <!-- 大屏概览统计卡片 -->
-    <el-row :gutter="20" class="overview-cards">
-      <el-col :span="6">
-        <el-card class="overview-card coding-card" shadow="always">
-          <div class="card-bg-icon">💻</div>
-          <div class="card-content">
-            <div class="card-header">
-              <span class="card-icon">💻</span>
-              <span class="card-title">编程竞赛</span>
-            </div>
-            <div class="card-stats">
-              <div class="stat-main">
-                <span class="stat-number">{{ ojStats.totalProblems }}</span>
-                <span class="stat-unit">道题目</span>
-              </div>
-              <div class="stat-sub">
-                <span class="stat-label">累计提交</span>
-                <span class="stat-value">{{ ojStats.submissions }}</span>
-              </div>
-            </div>
-            <div class="card-footer">
-              <span class="trend-up">在线编程判题系统</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="overview-card quiz-card" shadow="always">
-          <div class="card-bg-icon">🥇</div>
-          <div class="card-content">
-            <div class="card-header">
-              <span class="card-icon">🥇</span>
-              <span class="card-title">知识竞赛</span>
-            </div>
-            <div class="card-stats">
-              <div class="stat-main">
-                <span class="stat-number">{{ trainingStats.questions }}</span>
-                <span class="stat-unit">道题目</span>
-              </div>
-              <div class="stat-sub">
-                <span class="stat-label">题库分类</span>
-                <span class="stat-value">{{ trainingStats.categories }}</span>
-              </div>
-            </div>
-            <div class="card-footer">
-              <span class="trend-up">题库训练与竞赛</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="overview-card essay-card" shadow="always">
-          <div class="card-bg-icon">📄</div>
-          <div class="card-content">
-            <div class="card-header">
-              <span class="card-icon">📄</span>
-              <span class="card-title">作文比赛</span>
-            </div>
-            <div class="card-stats">
-              <div class="stat-main">
-                <span class="stat-number">{{ essayStats.totalEssays }}</span>
-                <span class="stat-unit">篇作文</span>
-              </div>
-              <div class="stat-sub">
-                <span class="stat-label">平均分数</span>
-                <span class="stat-value">{{ essayStats.avgScore }}</span>
-              </div>
-            </div>
-            <div class="card-footer">
-              <span class="trend-up">AI智能批改评分</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="overview-card comprehensive-card" shadow="always">
-          <div class="card-bg-icon">🏆</div>
-          <div class="card-content">
-            <div class="card-header">
-              <span class="card-icon">🏆</span>
-              <span class="card-title">综合竞赛</span>
-            </div>
-            <div class="card-stats">
-              <div class="stat-main">
-                <span class="stat-number">{{ comprehensiveStats.totalEvents }}</span>
-                <span class="stat-unit">场赛事</span>
-              </div>
-              <div class="stat-sub">
-                <span class="stat-label">平均得分</span>
-                <span class="stat-value">{{ comprehensiveStats.avgScore }}</span>
-              </div>
-            </div>
-            <div class="card-footer">
-              <span class="trend-up">多类型综合赛事</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
 
     <el-card class="box-card">
       <template #header>
@@ -379,14 +279,11 @@ import {
   deleteEvent,
   getEventStats,
   getEventParticipants,
-  getEventRankings,
-  getOJStats,
-  getQuestionBankStats,
-  getEssayStats
+  getEventRankings
 } from "@/api/competition";
 
 defineOptions({
-  name: "CompetitionManage"
+  name: "EventManage"
 });
 
 interface EventItem {
@@ -412,11 +309,6 @@ const stats = ref({
   ongoingEvents: 0,
   totalParticipants: 0
 });
-
-const ojStats = ref({ totalProblems: 0, submissions: 0 });
-const trainingStats = ref({ categories: 0, questions: 0 });
-const essayStats = ref({ totalEssays: 0, avgScore: 0 });
-const comprehensiveStats = ref({ totalEvents: 0, avgScore: 0 });
 
 const queryParams = reactive({
   pageNum: 1,
@@ -467,47 +359,6 @@ const loadStats = async () => {
   } catch (error) {
     console.error("获取统计数据失败", error);
   }
-};
-
-const loadModuleStats = async () => {
-  try {
-    // 加载 OJ 统计
-    const ojRes = await getOJStats();
-    ojStats.value = {
-      totalProblems: ojRes.data.totalProblems,
-      submissions: ojRes.data.totalSubmissions
-    };
-  } catch (error) {
-    console.error("获取OJ统计失败", error);
-  }
-
-  try {
-    // 加载题库统计
-    const qbRes = await getQuestionBankStats();
-    trainingStats.value = {
-      categories: qbRes.data.totalCategories,
-      questions: qbRes.data.totalQuestions
-    };
-  } catch (error) {
-    console.error("获取题库统计失败", error);
-  }
-
-  try {
-    // 加载作文统计
-    const essayRes = await getEssayStats();
-    essayStats.value = {
-      totalEssays: essayRes.data.totalEssays,
-      avgScore: essayRes.data.avgScore
-    };
-  } catch (error) {
-    console.error("获取作文统计失败", error);
-  }
-
-  // 综合竞赛统计使用赛事统计数据
-  comprehensiveStats.value = {
-    totalEvents: stats.value.totalEvents,
-    avgScore: 82
-  };
 };
 
 const handleSizeChange = (val: number) => {
@@ -682,7 +533,6 @@ const getStatusTagType = (status: string): "primary" | "success" | "info" => {
 onMounted(() => {
   loadTableData();
   loadStats();
-  loadModuleStats();
 });
 </script>
 
@@ -694,7 +544,7 @@ onMounted(() => {
     margin-bottom: 16px;
     border-radius: 16px;
     overflow: hidden;
-    background: linear-gradient(135deg, #fcd9b6 0%, #f9a8d4 100%);
+    background: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
     border: none;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 
@@ -716,7 +566,7 @@ onMounted(() => {
       p {
         margin: 0;
         font-size: 14px;
-        color: #4b5563;
+        color: #374151;
       }
     }
 
@@ -737,127 +587,10 @@ onMounted(() => {
         .stat-label {
           display: block;
           font-size: 12px;
-          color: #6b7280;
+          color: #4b5563;
           margin-top: 4px;
         }
       }
-    }
-  }
-
-  .overview-cards {
-    margin-bottom: 20px;
-
-    .overview-card {
-      border-radius: 16px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      border: none;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-      }
-
-      .card-bg-icon {
-        position: absolute;
-        right: -10px;
-        bottom: -10px;
-        font-size: 80px;
-        opacity: 0.1;
-        transform: rotate(-15deg);
-      }
-
-      .card-content {
-        position: relative;
-        z-index: 1;
-        padding: 8px;
-      }
-
-      .card-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 16px;
-
-        .card-icon {
-          font-size: 24px;
-        }
-
-        .card-title {
-          font-size: 16px;
-          font-weight: 600;
-          color: #1e3a5f;
-        }
-      }
-
-      .card-stats {
-        .stat-main {
-          margin-bottom: 12px;
-
-          .stat-number {
-            font-size: 36px;
-            font-weight: 700;
-            color: #1e3a5f;
-            line-height: 1;
-          }
-
-          .stat-unit {
-            font-size: 14px;
-            color: #374151;
-            margin-left: 4px;
-          }
-        }
-
-        .stat-sub {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 8px 12px;
-          background: rgba(255, 255, 255, 0.5);
-          border-radius: 8px;
-
-          .stat-label {
-            font-size: 12px;
-            color: #4b5563;
-          }
-
-          .stat-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e3a5f;
-          }
-        }
-      }
-
-      .card-footer {
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-
-        .trend-up {
-          font-size: 12px;
-          color: #4b5563;
-        }
-      }
-    }
-
-    .coding-card {
-      background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
-    }
-
-    .quiz-card {
-      background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%);
-    }
-
-    .essay-card {
-      background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
-    }
-
-    .comprehensive-card {
-      background: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
     }
   }
 

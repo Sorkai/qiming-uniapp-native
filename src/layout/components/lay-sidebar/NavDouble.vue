@@ -110,7 +110,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="w-[320px]">
+  <div class="w-[370px]">
     <div
       :class="[
         'double-left',

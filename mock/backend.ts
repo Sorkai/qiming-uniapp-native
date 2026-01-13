@@ -1689,5 +1689,29 @@ int main() {
       msg: "success",
       data: { success: 45, failed: 3 }
     })
+  },
+
+  // ==================== 积分排行榜 Mock ====================
+  {
+    url: "/edu/backend/v1/competition/leaderboard",
+    method: "get",
+    response: () => ({
+      code: 200,
+      msg: "success",
+      data: {
+        list: [
+          { userId: 1, username: "算法大神", avatar: "", points: 2580, rank: 1 },
+          { userId: 2, username: "代码狂人", avatar: "", points: 2340, rank: 2 },
+          { userId: 3, username: "编程小王子", avatar: "", points: 2120, rank: 3 },
+          { userId: 4, username: "刷题达人", avatar: "", points: 1980, rank: 4 },
+          { userId: 5, username: "技术新星", avatar: "", points: 1850, rank: 5 },
+          { userId: 6, username: "学霸小明", avatar: "", points: 1720, rank: 6 },
+          { userId: 7, username: "努力的小红", avatar: "", points: 1650, rank: 7 },
+          { userId: 8, username: "进步青年", avatar: "", points: 1580, rank: 8 },
+          { userId: 9, username: "勤奋学子", avatar: "", points: 1490, rank: 9 },
+          { userId: 10, username: "追梦人", avatar: "", points: 1420, rank: 10 }
+        ]
+      }
+    })
   }
 ]);

@@ -782,8 +782,9 @@ onMounted(() => {
   .header-card {
     margin-bottom: 16px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
     border: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 
     .header-content {
       display: flex;
@@ -797,13 +798,13 @@ onMounted(() => {
         margin: 0 0 8px;
         font-size: 24px;
         font-weight: 600;
-        color: #fff;
+        color: #1e3a5f;
       }
 
       p {
         margin: 0;
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
+        color: #374151;
       }
     }
 
@@ -818,13 +819,13 @@ onMounted(() => {
           display: block;
           font-size: 28px;
           font-weight: 700;
-          color: #fff;
+          color: #1e3a5f;
         }
 
         .stat-label {
           display: block;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.75);
+          color: #4b5563;
           margin-top: 4px;
         }
       }

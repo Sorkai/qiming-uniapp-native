@@ -567,3 +567,24 @@ export const importQuestions = (data: FormData) => {
     data: { success: number; failed: number };
   }>("post", "/edu/backend/v1/question-bank/question/import", { data });
 };
+
+// ==================== 排行榜 ====================
+
+/**
+ * 获取积分排行榜
+ */
+export const getLeaderboard = (params: { type: "total" | "weekly" | "monthly" }) => {
+  return http.request<{
+    code: number;
+    msg: string;
+    data: {
+      list: Array<{
+        userId: number;
+        username: string;
+        avatar: string;
+        points: number;
+        rank: number;
+      }>;
+    };
+  }>("get", "/edu/backend/v1/competition/leaderboard", { params });
+};

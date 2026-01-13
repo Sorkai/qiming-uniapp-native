@@ -572,13 +572,13 @@ const formatTime = (seconds: number) => {
   .competition-banner {
     padding: 28px 32px;
     margin-bottom: 24px;
-    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    background: linear-gradient(135deg, #fcd9b6 0%, #f9a8d4 100%);
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgb(245 158 11 / 30%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     
     .dark & {
-      background: linear-gradient(135deg, #7c2d12 0%, #450a0a 100%);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      background: linear-gradient(135deg, #92400e 0%, #831843 100%);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     }
 
     .banner-content {
@@ -592,13 +592,13 @@ const formatTime = (seconds: number) => {
         margin: 0 0 8px;
         font-size: 28px;
         font-weight: 700;
-        color: #fff;
+        color: #1f2937;
       }
 
       p {
         margin: 0;
         font-size: 14px;
-        color: rgb(255 255 255 / 85%);
+        color: #4b5563;
       }
     }
 
@@ -612,7 +612,7 @@ const formatTime = (seconds: number) => {
         gap: 12px;
         align-items: center;
         padding: 12px 20px;
-        background: rgb(255 255 255 / 15%);
+        background: rgb(255 255 255 / 50%);
         border-radius: 12px;
 
         .rank-icon,
@@ -628,14 +628,14 @@ const formatTime = (seconds: number) => {
           .rank-label,
           .points-label {
             font-size: 12px;
-            color: rgb(255 255 255 / 70%);
+            color: #6b7280;
           }
 
           .rank-value,
           .points-value {
             font-size: 20px;
             font-weight: 700;
-            color: #fff;
+            color: #1f2937;
           }
         }
       }
@@ -735,30 +735,30 @@ const formatTime = (seconds: number) => {
     }
 
     &.oj-card .card-icon {
-      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+      background: linear-gradient(135deg, #93c5fd, #60a5fa);
       .dark & {
-        background: linear-gradient(135deg, #4c1d95, #2e1065);
+        background: linear-gradient(135deg, #1e40af, #1d4ed8);
       }
     }
 
     &.training-card .card-icon {
-      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      background: linear-gradient(135deg, #c4b5fd, #a78bfa);
       .dark & {
-        background: linear-gradient(135deg, #064e3b, #065f46);
+        background: linear-gradient(135deg, #5b21b6, #6d28d9);
       }
     }
 
     &.essay-card .card-icon {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      background: linear-gradient(135deg, #fcd34d, #fbbf24);
       .dark & {
-        background: linear-gradient(135deg, #78350f, #92400e);
+        background: linear-gradient(135deg, #92400e, #b45309);
       }
     }
 
     &.security-card .card-icon {
-      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      background: linear-gradient(135deg, #6ee7b7, #34d399);
       .dark & {
-        background: linear-gradient(135deg, #7f1d1d, #991b1b);
+        background: linear-gradient(135deg, #065f46, #047857);
       }
     }
   }

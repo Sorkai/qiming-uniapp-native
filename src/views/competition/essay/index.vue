@@ -4,7 +4,7 @@
     <el-card class="box-card header-card">
       <div class="header-content">
         <div class="header-left">
-          <h2>✍️ 作文批改管理</h2>
+          <h2>📄 作文批改管理</h2>
           <p>查看学生作文、AI智能批改与评分反馈</p>
         </div>
         <div class="header-stats">
@@ -596,7 +596,7 @@ onMounted(() => {
   .header-card {
     margin-bottom: 16px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
     border: none;
 
     .header-content {
@@ -611,13 +611,13 @@ onMounted(() => {
         margin: 0 0 8px;
         font-size: 24px;
         font-weight: 600;
-        color: #fff;
+        color: #1f2937;
       }
 
       p {
         margin: 0;
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
+        color: #4b5563;
       }
     }
 
@@ -632,13 +632,13 @@ onMounted(() => {
           display: block;
           font-size: 28px;
           font-weight: 700;
-          color: #fff;
+          color: #1f2937;
         }
 
         .stat-label {
           display: block;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.75);
+          color: #6b7280;
           margin-top: 4px;
         }
       }

@@ -2,7 +2,7 @@ import { $t } from "@/plugins/i18n";
 
 export default {
   path: "/competition",
-  redirect: "/competition/event",
+  redirect: "/competition/overview",
   meta: {
     icon: "ri:trophy-line",
     title: $t("menus.competition"),
@@ -11,12 +11,12 @@ export default {
   },
   children: [
     {
-      path: "/competition/event",
-      name: "CompetitionEvent",
-      component: () => import("@/views/competition/index.vue"),
+      path: "/competition/overview",
+      name: "CompetitionOverview",
+      component: () => import("@/views/competition/overview/index.vue"),
       meta: {
-        icon: "ri:calendar-event-line",
-        title: "赛事管理"
+        icon: "ri:dashboard-3-line",
+        title: "大屏概览"
       }
     },
     {
@@ -25,16 +25,7 @@ export default {
       component: () => import("@/views/competition/oj/index.vue"),
       meta: {
         icon: "ri:code-s-slash-line",
-        title: "OJ题目管理"
-      }
-    },
-    {
-      path: "/competition/essay",
-      name: "CompetitionEssay",
-      component: () => import("@/views/competition/essay/index.vue"),
-      meta: {
-        icon: "ri:file-text-line",
-        title: "作文批改"
+        title: "编程竞赛(OJ)"
       }
     },
     {
@@ -43,7 +34,25 @@ export default {
       component: () => import("@/views/competition/question-bank/index.vue"),
       meta: {
         icon: "ri:questionnaire-line",
-        title: "题库管理"
+        title: "知识竞赛题库"
+      }
+    },
+    {
+      path: "/competition/essay",
+      name: "CompetitionEssay",
+      component: () => import("@/views/competition/essay/index.vue"),
+      meta: {
+        icon: "ri:file-text-line",
+        title: "作文比赛"
+      }
+    },
+    {
+      path: "/competition/event-manage",
+      name: "CompetitionEventManage",
+      component: () => import("@/views/competition/event-manage/index.vue"),
+      meta: {
+        icon: "ri:calendar-event-line",
+        title: "综合赛事管理"
       }
     }
   ]

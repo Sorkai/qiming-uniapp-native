@@ -77,12 +77,13 @@ const textClass = computed(() => {
 });
 
 const expandCloseIcon = computed(() => {
-  if (!getConfig()?.MenuArrowIconNoTransition) return "";
+  // 默认使用不同的图标来表示展开/收起状态，而不是旋转同一个图标
+  // 收起时显示向右箭头，展开时显示向下箭头，这样更符合直觉
   return {
-    "expand-close-icon": useRenderIcon(EpArrowDown),
-    "expand-open-icon": useRenderIcon(ArrowUp),
+    "expand-close-icon": useRenderIcon(ArrowRight),
+    "expand-open-icon": useRenderIcon(EpArrowDown),
     "collapse-close-icon": useRenderIcon(ArrowRight),
-    "collapse-open-icon": useRenderIcon(ArrowLeft)
+    "collapse-open-icon": useRenderIcon(EpArrowDown)
   };
 });
 
