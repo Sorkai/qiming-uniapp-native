@@ -5,79 +5,56 @@
         <h3>待办事项</h3>
         <p>共 {{ totalTodos }} 项，已完成 {{ completedTodos }} 项</p>
       </div>
-      <div class="header-right">
+      <div class="header-right flex items-center gap-4">
+        <el-radio-group v-model="filterStatus" size="default">
+          <el-radio-button label="all">全部</el-radio-button>
+          <el-radio-button label="pending">待处理</el-radio-button>
+          <el-radio-button label="completed">已完成</el-radio-button>
+        </el-radio-group>
         <el-button type="primary" :icon="Plus" @click="openAddDialog" round
           >添加待办</el-button
         >
       </div>
     </div>
 
-    <div class="todo-controls card">
-      <el-radio-group v-model="filterStatus" size="large">
-        <el-radio-button label="all">全部</el-radio-button>
-        <el-radio-button label="pending">待处理</el-radio-button>
-        <el-radio-button label="completed">已完成</el-radio-button>
-      </el-radio-group>
-    </div>
-
-    <transition-group name="todo-list" tag="div" class="todo-list">
+    <div class="todo-list mt-8">
       <div
         v-for="todo in filteredTodos"
         :key="todo.id"
-        class="todo-item card"
-        :class="{ completed: todo.completed }"
+        class="todo-row card mb-4 flex items-center justify-between"
       >
-        <div class="item-content">
-          <div class="item-header">
-            <span class="item-title">{{ todo.title }}</span>
-            <el-tag :type="todo.completed ? 'success' : 'warning'" size="small">
-              {{ todo.completed ? "已完成" : "待处理" }}
-            </el-tag>
+        <div class="todo-info flex items-center gap-6 flex-1">
+          <div class="status-icon">
+            <el-checkbox 
+              :model-value="todo.completed" 
+              @change="toggleStatus(todo)"
+              size="large"
+            />
           </div>
-          <p class="item-details">{{ todo.details }}</p>
-          <div class="item-footer">
-            <span class="item-publisher">
-              <el-icon><User /></el-icon> {{ todo.publisher }}
-            </span>
-            <span class="item-time">
-              <el-icon><Clock /></el-icon> {{ todo.time }}
-            </span>
+          <div class="text-content">
+            <div class="title-row flex items-center gap-3">
+              <span :class="['title', { 'is-completed': todo.completed }]">
+                {{ todo.title }}
+              </span>
+              <el-tag :type="todo.completed ? 'success' : 'warning'" size="default">
+                {{ todo.completed ? "已完成" : "待处理" }}
+              </el-tag>
+            </div>
+            <div class="meta-row mt-2 text-gray-500 text-base flex gap-6">
+              <span><el-icon class="relative top-[2px]"><User /></el-icon> {{ todo.publisher }}</span>
+              <span><el-icon class="relative top-[2px]"><Clock /></el-icon> {{ todo.time }}</span>
+            </div>
           </div>
         </div>
-        <div class="item-actions">
-          <el-tooltip
-            :content="todo.completed ? '标记为未完成' : '标记为已完成'"
-            placement="top"
-          >
-            <el-button
-              :type="todo.completed ? 'warning' : 'success'"
-              :icon="todo.completed ? Refresh : Check"
-              @click="toggleStatus(todo)"
-              circle
-            />
-          </el-tooltip>
-          <el-tooltip content="编辑" placement="top">
-            <el-button
-              type="primary"
-              :icon="Edit"
-              @click="openEditDialog(todo)"
-              circle
-            />
-          </el-tooltip>
-          <el-tooltip content="删除" placement="top">
-            <el-button
-              type="danger"
-              :icon="Delete"
-              @click="deleteTodo(todo)"
-              circle
-            />
-          </el-tooltip>
+        <div class="todo-actions flex gap-4">
+          <el-button link type="primary" size="large" @click="openEditDialog(todo)">编辑</el-button>
+          <el-button link type="danger" size="large" @click="deleteTodo(todo)">删除</el-button>
         </div>
       </div>
-    </transition-group>
+    </div>
 
     <el-empty
-      v-if="filteredTodos.length === 0"
+      v-if="filteredTodos.length === 0 && !loading"
       description="暂无待办事项"
       class="card"
     />
@@ -312,35 +289,36 @@ const toggleStatus = (row: TodoItem) => {
 <style lang="scss" scoped>
 .todo-container {
   .card {
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 24px 30px;
+    margin-bottom: 20px;
     background-color: #fff;
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 5%);
     transition: all 0.3s ease;
   }
 
   &.dark .card {
     background-color: #1e293b;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   }
 
   .todo-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 15px;
 
     .header-left {
       h3 {
         margin: 0 0 8px;
-        font-size: 22px;
-        font-weight: 600;
+        font-size: 26px;
+        font-weight: 700;
         color: #333;
       }
       p {
         margin: 0;
-        font-size: 14px;
+        font-size: 15px;
         color: #909399;
       }
     }
@@ -378,125 +356,45 @@ const toggleStatus = (row: TodoItem) => {
     }
   }
 
-  .todo-list {
-    position: relative;
-    padding: 0;
-  }
-
-  .todo-item {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 20px;
-    opacity: 1;
-    transition:
-      transform 0.4s ease,
-      opacity 0.4s ease,
-      background-color 0.3s;
+  .todo-row {
+    padding: 20px 30px;
+    margin-bottom: 15px;
+    background-color: var(--el-bg-color);
+    border-radius: 16px;
+    transition: all 0.3s ease;
 
     &:hover {
-      transform: translateY(-5px) scale(1.01);
-      box-shadow: 0 8px 25px rgb(0 0 0 / 10%);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
     }
 
-    &.completed {
-      background-color: #f7f8fc;
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
 
-      .item-title {
+      &.is-completed {
         text-decoration: line-through;
-        color: #909399;
+        color: var(--el-text-color-placeholder);
       }
-    }
-
-    .item-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .item-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-
-      .item-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: #303133;
-        transition: color 0.3s;
-      }
-    }
-
-    .item-details {
-      margin: 0 0 12px;
-      font-size: 14px;
-      color: #606266;
-      line-height: 1.6;
-    }
-
-    .item-footer {
-      display: flex;
-      gap: 24px;
-      font-size: 13px;
-      color: #909399;
-
-      span {
-        display: flex;
-        align-items: center;
-        .el-icon {
-          margin-right: 6px;
-        }
-      }
-    }
-
-    .item-actions {
-      display: flex;
-      gap: 10px;
     }
   }
 
-  // 深色模式样式
-  &.dark {
-    .todo-item {
-      &:hover {
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-      }
-
-      &.completed {
-        background-color: #0f172a;
-
-        .item-title {
-          color: #64748b;
-        }
-      }
-
-      .item-header .item-title {
-        color: #f1f5f9;
-      }
-
-      .item-details {
-        color: #cbd5e1;
-      }
-
-      .item-footer {
+  &.dark .todo-row {
+    background-color: #1e293b;
+    
+    .title {
+      color: #f1f5f9;
+      
+      &.is-completed {
         color: #64748b;
       }
     }
   }
 }
 
-// Transition-group animations
-.todo-list-enter-active,
-.todo-list-leave-active {
-  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
-}
-.todo-list-enter-from,
-.todo-list-leave-to {
-  opacity: 0;
-  transform: scale(0.95) translateY(20px);
-}
-.todo-list-leave-active {
-  position: absolute;
-  width: calc(100% - 48px);
+// Table transitions
+:deep(.el-table__row) {
+  transition: all 0.3s ease;
 }
 </style>
