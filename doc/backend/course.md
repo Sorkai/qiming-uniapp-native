@@ -2,7 +2,7 @@
 
 ## 获取课程统计数据
 
-- **接口地址**：`/edu/backend/v1/course/stats`
+- **接口地址**：`/edu/backend/v1/course/overview`
 - **请求方式**：GET
 - **请求参数**：
 

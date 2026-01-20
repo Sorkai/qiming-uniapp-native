@@ -341,7 +341,7 @@ export const getCourseStats = (params?: {
 }) => {
   return http.request<ApiResponse<CourseStatsResult>>(
     "get",
-    "/edu/backend/v1/course/stats",
+    "/edu/backend/v1/course/overview",
     { params }
   );
 };
