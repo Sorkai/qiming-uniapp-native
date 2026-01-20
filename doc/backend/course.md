@@ -11,14 +11,20 @@
 | startDate | string | 否 | 开始日期 yyyy-MM-dd |
 | endDate | string | 否 | 结束日期 yyyy-MM-dd |
 
-> **⚠️ 日期范围筛选说明（方案A）**
+> **📊 统计口径说明**
 >
-> 日期参数作用于**学习关系/学习行为**，而非课程创建时间：
+> **日期范围规则：**
 >
-> - `activeStudents`（在学人数）：时间段内有学习记录的用户数
-> - `completionRate`（完成率）：时间段内完成课程的比率
-> - `totalCourses`（课程总数）：**不受日期过滤影响**，显示总数
-> - `totalHours`（累计课时）：**不受日期过滤影响**，显示总课时
+> - 日期范围用于过滤学习记录（`user_course_records.created_at`）
+> - 仅传 `startDate` 或 `endDate` 时按单日处理，范围为 `[startDate, endDate+1)`
+> - 日期范围最大支持5年，允许未来日期
+>
+> **各字段说明：**
+>
+> - `totalCourses`（课程总数）：日期范围内有学习记录的课程数；**未传日期时统计教师所有课程**
+> - `totalHours`（累计课时）：范围内有学习记录课程的课时总和（单位：分钟，从秒转换）
+> - `activeStudents`（在学人数）：**固定为近7天**有学习记录的去重学生数（⚠️ 与日期筛选参数无关）
+> - `completionRate`（平均完成率）：加权完成率 = 完成记录数 ÷ 总学习记录数 × 100
 
 - **响应参数**：
 
@@ -27,10 +33,10 @@
   "code": 200,
   "msg": "成功",
   "data": {
-    "totalCourses": 150,      // 课程总数（不受日期影响）
-    "totalHours": 1200,       // 累计课时（不受日期影响）
-    "activeStudents": 856,    // 该时段有学习行为的人数
-    "completionRate": 72.5    // 该时段的完成率（百分比数值）
+    "totalCourses": 150,      // 日期范围内有学习记录的课程数
+    "totalHours": 1200,       // 范围内课程的总课时（分钟）
+    "activeStudents": 856,    // 近7天有学习记录的学生数（固定）
+    "completionRate": 72.5    // 加权完成率（百分比）
   }
 }
 ```

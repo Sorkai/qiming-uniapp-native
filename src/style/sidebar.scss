@@ -901,7 +901,7 @@
 }
 
 body[layout="vertical"] {
-  $sideBarWidth: 360px;
+  $sideBarWidth: 240px;
 
   @include merge-style($sideBarWidth);
 

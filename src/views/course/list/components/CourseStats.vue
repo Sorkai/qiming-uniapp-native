@@ -4,7 +4,7 @@
     <div class="date-filter-row mb-4 flex items-center justify-between">
       <div class="filter-hint">
         <el-icon class="mr-1"><InfoFilled /></el-icon>
-        <span>日期范围筛选「在学人数」和「完成率」的学习行为数据</span>
+        <span>日期范围筛选「课程总数」「累计课时」和「完成率」，「在学人数」固定统计近7天</span>
       </div>
       <div class="flex items-center gap-3">
         <el-date-picker
@@ -113,10 +113,10 @@ const handleReset = () => {
 };
 
 const statsItems = computed(() => [
-  { label: '课程总数', value: props.stats.totalCourses, icon: Notebook, colorClass: 'blue', hint: '不受日期筛选影响' },
-  { label: '在学人数', value: props.stats.totalStudents, icon: User, colorClass: 'green', hint: '该时段内有学习记录的用户数' },
-  { label: '累计课时', value: props.stats.totalHours, icon: Timer, colorClass: 'orange', hint: '不受日期筛选影响' },
-  { label: '平均完成率', value: props.stats.completionRate, icon: Trophy, colorClass: 'purple', hint: '该时段内的课程完成比率' }
+  { label: '课程总数', value: props.stats.totalCourses, icon: Notebook, colorClass: 'blue', hint: '日期范围内有学习记录的课程数，不选日期则显示全部课程' },
+  { label: '在学人数', value: props.stats.totalStudents, icon: User, colorClass: 'green', hint: '近7天有学习记录的学生数（不受日期筛选影响）' },
+  { label: '累计课时', value: props.stats.totalHours, icon: Timer, colorClass: 'orange', hint: '日期范围内有学习记录课程的总课时（单位：分钟）' },
+  { label: '平均完成率', value: props.stats.completionRate, icon: Trophy, colorClass: 'purple', hint: '日期范围内 完成记录数÷总学习记录数×100%' }
 ]);
 </script>
 

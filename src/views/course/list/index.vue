@@ -941,21 +941,24 @@ const fetchCourseList = async () => {
 const fetchCourseStats = async () => {
   try {
     const res = await getCourseStats(statsDateFilter.value);
+    console.log("=== 课程统计API调试 ===");
+    console.log("完整响应:", JSON.stringify(res, null, 2));
+    console.log("res.data:", res?.data);
+    console.log("========================");
+    
     if (res && res.code === 200 && res.data) {
-      // 课程总数和累计课时不受日期影响
-      courseStats.totalCourses = res.data.totalCourses;
-      courseStats.totalHours = res.data.totalHours;
-      // 在学人数和完成率受日期筛选影响（方案A：作用于学习行为）
-      courseStats.totalStudents = res.data.activeStudents;
-      courseStats.completionRate = `${res.data.completionRate}%`;
+      // 课程总数、累计课时、完成率 受日期筛选影响
+      courseStats.totalCourses = res.data.totalCourses ?? 0;
+      courseStats.totalHours = res.data.totalHours ?? 0;
+      const rate = res.data.completionRate ?? 0;
+      courseStats.completionRate = `${rate}%`;
+      // 在学人数固定为近7天，不受日期筛选影响
+      courseStats.totalStudents = res.data.activeStudents ?? 0;
+    } else {
+      console.warn("课程统计API返回数据异常:", res);
     }
   } catch (error) {
     console.error("获取课程统计失败:", error);
-    // 失败时使用模拟数据
-    courseStats.totalCourses = total.value;
-    courseStats.totalStudents = courseList.value.reduce((acc, curr) => acc + (curr.studentCount || 10), 0);
-    courseStats.totalHours = courseList.value.length * 15;
-    courseStats.completionRate = "78%";
   }
 };
 
@@ -1535,9 +1538,11 @@ const submitNewChapter = async () => {
 };
 
 // 页面加载时获取数据
-onMounted(() => {
-  fetchCourseList();
-  fetchCourseStats();
+onMounted(async () => {
+  // 先加载课程列表
+  await fetchCourseList();
+  // 再加载统计数据（这样如果统计API失败，可以用课程列表数据做备用）
+  await fetchCourseStats();
 });
 </script>
 

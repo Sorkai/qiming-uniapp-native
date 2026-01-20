@@ -319,21 +319,25 @@ export const generateTeacherPlan = (data: { course_id: number; chapter_id: numbe
 
 /**
  * 课程统计数据结果
+ * 
+ * 统计口径说明：
+ * - 日期范围用于过滤学习记录(user_course_records.created_at)
+ * - 仅传startDate或endDate时按单日处理，范围为[startDate, endDate+1)
+ * - 日期范围最大支持5年，允许未来日期
  */
 export interface CourseStatsResult {
-  totalCourses: number;      // 课程总数（不受日期影响）
-  totalHours: number;        // 累计课时（不受日期影响）
-  activeStudents: number;    // 时段内在学人数（受日期影响）
-  completionRate: number;    // 时段内完成率（受日期影响）
+  totalCourses: number;      // 日期范围内有学习记录的课程数，未传日期则统计教师所有课程
+  totalHours: number;        // 范围内有学习记录课程的课时总和（单位：分钟）
+  activeStudents: number;    // 近7天有学习记录的去重学生数（固定，与日期筛选无关）
+  completionRate: number;    // 加权完成率：完成记录数/总学习记录数×100
 }
 
 /**
  * 获取课程统计数据
- * @param params 日期范围参数（作用于学习行为）
- * - startDate/endDate 过滤学习关系/学习行为
- * - 在学人数：时段内有学习记录的用户数
- * - 完成率：时段内完成课程的比率
- * - 课程总数/累计课时：不受日期过滤影响
+ * @param params 日期范围参数
+ * - startDate/endDate 过滤学习记录时间
+ * - totalCourses/totalHours/completionRate 受日期筛选影响
+ * - activeStudents 固定为近7天数据，不受日期筛选影响
  */
 export const getCourseStats = (params?: {
   startDate?: string;  // 开始日期 yyyy-MM-dd
@@ -341,7 +345,7 @@ export const getCourseStats = (params?: {
 }) => {
   return http.request<ApiResponse<CourseStatsResult>>(
     "get",
-    "/edu/backend/v1/course/overview",
+    "/edu/backend/v1/course/stats/overview",
     { params }
   );
 };
