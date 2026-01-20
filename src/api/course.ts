@@ -318,6 +318,35 @@ export const generateTeacherPlan = (data: { course_id: number; chapter_id: numbe
 };
 
 /**
+ * 课程统计数据结果
+ */
+export interface CourseStatsResult {
+  totalCourses: number;      // 课程总数（不受日期影响）
+  totalHours: number;        // 累计课时（不受日期影响）
+  activeStudents: number;    // 时段内在学人数（受日期影响）
+  completionRate: number;    // 时段内完成率（受日期影响）
+}
+
+/**
+ * 获取课程统计数据
+ * @param params 日期范围参数（作用于学习行为）
+ * - startDate/endDate 过滤学习关系/学习行为
+ * - 在学人数：时段内有学习记录的用户数
+ * - 完成率：时段内完成课程的比率
+ * - 课程总数/累计课时：不受日期过滤影响
+ */
+export const getCourseStats = (params?: {
+  startDate?: string;  // 开始日期 yyyy-MM-dd
+  endDate?: string;    // 结束日期 yyyy-MM-dd
+}) => {
+  return http.request<ApiResponse<CourseStatsResult>>(
+    "get",
+    "/edu/backend/v1/course/stats",
+    { params }
+  );
+};
+
+/**
  * 获取教案列表
  * @param params 分页参数
  */

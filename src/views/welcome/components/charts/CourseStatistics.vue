@@ -222,6 +222,10 @@ const fetchAllData = async () => {
       if (examRes.value?.data?.courseUsersExamInfoList) {
         examData = examRes.value.data.courseUsersExamInfoList;
         console.log("使用路径: data.courseUsersExamInfoList");
+      } else if (examRes.value?.data?.courseUsersExamInfo) {
+        // 兼容后端返回字段名不带 List 后缀的情况
+        examData = examRes.value.data.courseUsersExamInfo;
+        console.log("使用路径: data.courseUsersExamInfo");
       } else if (examRes.value?.data?.list) {
         examData = examRes.value.data.list;
         console.log("使用路径: data.list");
@@ -248,6 +252,34 @@ const fetchAllData = async () => {
         }));
         console.log("考试成绩数据已缓存，数量:", allExamData.value.length);
         console.log("第一条考试数据结构:", JSON.stringify(allExamData.value[0], null, 2));
+        
+        // 从考试数据中提取课程信息，补充到课程选项列表中（解决课程ID不匹配问题）
+        const existingCourseIds = new Set(courseOptions.value.map(c => Number(c.value)));
+        const coursesFromExamData = new Map<number, string>();
+        examData.forEach(item => {
+          const cid = Number(item.courseId);
+          if (!existingCourseIds.has(cid) && !coursesFromExamData.has(cid)) {
+            coursesFromExamData.set(cid, item.courseName);
+          }
+        });
+        
+        // 将考试数据中的课程添加到课程选项
+        if (coursesFromExamData.size > 0) {
+          console.log("发现考试数据中有额外课程，正在补充:", [...coursesFromExamData.entries()]);
+          coursesFromExamData.forEach((name, id) => {
+            courseOptions.value.push({
+              value: id,
+              label: name
+            });
+          });
+          
+          // 如果当前没有选中课程或选中的课程没有考试数据，选择第一个有考试数据的课程
+          if (!selectedCourse.value || !examData.some(item => Number(item.courseId) === Number(selectedCourse.value))) {
+            const firstExamCourseId = Number(examData[0].courseId);
+            selectedCourse.value = firstExamCourseId;
+            console.log("自动切换到有考试数据的课程ID:", firstExamCourseId);
+          }
+        }
       } else {
         console.warn("考试成绩数据为空或格式不正确，尝试从作业和考试列表获取");
         // 从作业和考试列表构建数据（使用真实数据，不是模拟数据）

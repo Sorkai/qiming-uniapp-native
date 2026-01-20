@@ -1,7 +1,7 @@
 <template>
   <div class="main p-4">
     <!-- 统计概览 -->
-    <CourseStats :stats="courseStats" />
+    <CourseStats :stats="courseStats" @date-change="handleStatsDateChange" />
 
     <el-card shadow="always" class="mb-4 search-card" :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }">
       <div class="flex justify-between items-center flex-wrap gap-4">
@@ -701,7 +701,8 @@ import {
   deleteCourse,
   deleteChapter,
   deleteHour,
-  createCourseChapter
+  createCourseChapter,
+  getCourseStats
 } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
 import CourseCard from "./components/CourseCard.vue";
@@ -715,6 +716,9 @@ const courseStats = reactive({
   totalHours: 0,
   completionRate: "0%"
 });
+
+// 统计筛选日期
+const statsDateFilter = ref<{ startDate?: string; endDate?: string }>({});
 
 const courseFormRef = ref<InstanceType<typeof ElForm>>();
 
@@ -920,12 +924,6 @@ const fetchCourseList = async () => {
     if (res && res.code === 200 && res.data) {
       courseList.value = res.data.courseList || [];
       total.value = res.data.total || 0;
-      
-      // 模拟更新统计数据
-      courseStats.totalCourses = total.value;
-      courseStats.totalStudents = courseList.value.reduce((acc, curr) => acc + (curr.studentCount || 10), 0);
-      courseStats.totalHours = courseList.value.length * 15;
-      courseStats.completionRate = "78%";
     } else {
       courseList.value = [];
       total.value = 0;
@@ -937,6 +935,34 @@ const fetchCourseList = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// 获取课程统计数据（支持日期筛选学习行为）
+const fetchCourseStats = async () => {
+  try {
+    const res = await getCourseStats(statsDateFilter.value);
+    if (res && res.code === 200 && res.data) {
+      // 课程总数和累计课时不受日期影响
+      courseStats.totalCourses = res.data.totalCourses;
+      courseStats.totalHours = res.data.totalHours;
+      // 在学人数和完成率受日期筛选影响（方案A：作用于学习行为）
+      courseStats.totalStudents = res.data.activeStudents;
+      courseStats.completionRate = `${res.data.completionRate}%`;
+    }
+  } catch (error) {
+    console.error("获取课程统计失败:", error);
+    // 失败时使用模拟数据
+    courseStats.totalCourses = total.value;
+    courseStats.totalStudents = courseList.value.reduce((acc, curr) => acc + (curr.studentCount || 10), 0);
+    courseStats.totalHours = courseList.value.length * 15;
+    courseStats.completionRate = "78%";
+  }
+};
+
+// 处理统计日期筛选变化
+const handleStatsDateChange = (dateFilter: { startDate?: string; endDate?: string }) => {
+  statsDateFilter.value = dateFilter;
+  fetchCourseStats();
 };
 
 // 打开创建课程弹窗
@@ -1511,6 +1537,7 @@ const submitNewChapter = async () => {
 // 页面加载时获取数据
 onMounted(() => {
   fetchCourseList();
+  fetchCourseStats();
 });
 </script>
 

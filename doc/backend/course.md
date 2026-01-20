@@ -1,5 +1,42 @@
 # 后端课程管理接口
 
+## 获取课程统计数据
+
+- **接口地址**：`/edu/backend/v1/course/stats`
+- **请求方式**：GET
+- **请求参数**：
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| startDate | string | 否 | 开始日期 yyyy-MM-dd |
+| endDate | string | 否 | 结束日期 yyyy-MM-dd |
+
+> **⚠️ 日期范围筛选说明（方案A）**
+>
+> 日期参数作用于**学习关系/学习行为**，而非课程创建时间：
+>
+> - `activeStudents`（在学人数）：时间段内有学习记录的用户数
+> - `completionRate`（完成率）：时间段内完成课程的比率
+> - `totalCourses`（课程总数）：**不受日期过滤影响**，显示总数
+> - `totalHours`（累计课时）：**不受日期过滤影响**，显示总课时
+
+- **响应参数**：
+
+```json
+{
+  "code": 200,
+  "msg": "成功",
+  "data": {
+    "totalCourses": 150,      // 课程总数（不受日期影响）
+    "totalHours": 1200,       // 累计课时（不受日期影响）
+    "activeStudents": 856,    // 该时段有学习行为的人数
+    "completionRate": 72.5    // 该时段的完成率（百分比数值）
+  }
+}
+```
+
+---
+
 ## 创建课程信息
 
 - **接口地址**：`/edu/backend/v1/course/create`
@@ -310,13 +347,16 @@ pageSize: int64    // 每页数量，默认20
 - **接口地址**：`/edu/backend/v1/course/generate/teacher/plan`
 - **请求方式**：POST
 - **请求参数**：
+
 ```json
 {
   "course_id": 1,
   "chapter_id": 1
 }
 ```
+
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -332,9 +372,10 @@ pageSize: int64    // 每页数量，默认20
 - **接口地址**：`/edu/backend/v1/course/teacher/plan/list`
 - **请求方式**：GET
 - **请求参数**：
-  - `pageNum`: number
-  - `pageSize`: number (可选)
+    - `pageNum`: number
+    - `pageSize`: number (可选)
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -359,8 +400,9 @@ pageSize: int64    // 每页数量，默认20
 - **接口地址**：`/edu/backend/v1/course/teacher/plan/progress`
 - **请求方式**：GET
 - **请求参数**：
-  - `teacherPlanId`: number
+    - `teacherPlanId`: number
 - **响应参数**：
+
 ```json
 {
   "code": 200,

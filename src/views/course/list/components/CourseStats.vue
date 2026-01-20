@@ -1,24 +1,54 @@
 <template>
-  <el-row :gutter="20" class="mb-6">
-    <el-col :xs="24" :sm="12" :md="6" v-for="(item, index) in statsItems" :key="index">
-      <el-card shadow="always" class="stats-card" :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }">
-        <div class="flex items-center">
-          <div :class="['icon-wrapper', item.colorClass]">
-            <el-icon :size="32"><component :is="item.icon" /></el-icon>
+  <div class="mb-6">
+    <!-- 日期筛选区域 -->
+    <div class="date-filter-row mb-4 flex items-center justify-between">
+      <div class="filter-hint">
+        <el-icon class="mr-1"><InfoFilled /></el-icon>
+        <span>日期范围筛选「在学人数」和「完成率」的学习行为数据</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          :shortcuts="dateShortcuts"
+          @change="handleDateChange"
+          clearable
+        />
+        <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+      </div>
+    </div>
+    <!-- 统计卡片 -->
+    <el-row :gutter="20">
+      <el-col :xs="24" :sm="12" :md="6" v-for="(item, index) in statsItems" :key="index">
+        <el-card shadow="always" class="stats-card" :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }">
+          <div class="flex items-center">
+            <div :class="['icon-wrapper', item.colorClass]">
+              <el-icon :size="32"><component :is="item.icon" /></el-icon>
+            </div>
+            <div class="ml-4 stats-content">
+              <div class="stats-label">
+                {{ item.label }}
+                <el-tooltip v-if="item.hint" :content="item.hint" placement="top">
+                  <el-icon class="hint-icon"><QuestionFilled /></el-icon>
+                </el-tooltip>
+              </div>
+              <div class="stats-value">{{ item.value }}</div>
+            </div>
           </div>
-          <div class="ml-4 stats-content">
-            <div class="stats-label">{{ item.label }}</div>
-            <div class="stats-value">{{ item.value }}</div>
-          </div>
-        </div>
-      </el-card>
-    </el-col>
-  </el-row>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Notebook, User, Timer, Trophy } from "@element-plus/icons-vue";
+import { ref, computed } from 'vue';
+import { Notebook, User, Timer, Trophy, Refresh, InfoFilled, QuestionFilled } from "@element-plus/icons-vue";
 
 const props = defineProps<{
   stats: {
@@ -29,11 +59,64 @@ const props = defineProps<{
   };
 }>();
 
+const emit = defineEmits<{
+  (e: 'date-change', value: { startDate?: string; endDate?: string }): void;
+}>();
+
+// 日期范围
+const dateRange = ref<[string, string] | null>(null);
+
+// 日期快捷选项
+const dateShortcuts = [
+  {
+    text: '最近一周',
+    value: () => {
+      const end = new Date();
+      const start = new Date();
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+      return [start, end];
+    }
+  },
+  {
+    text: '最近一个月',
+    value: () => {
+      const end = new Date();
+      const start = new Date();
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+      return [start, end];
+    }
+  },
+  {
+    text: '最近三个月',
+    value: () => {
+      const end = new Date();
+      const start = new Date();
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+      return [start, end];
+    }
+  }
+];
+
+// 日期变化处理
+const handleDateChange = (val: [string, string] | null) => {
+  if (val) {
+    emit('date-change', { startDate: val[0], endDate: val[1] });
+  } else {
+    emit('date-change', {});
+  }
+};
+
+// 重置日期
+const handleReset = () => {
+  dateRange.value = null;
+  emit('date-change', {});
+};
+
 const statsItems = computed(() => [
-  { label: '课程总数', value: props.stats.totalCourses, icon: Notebook, colorClass: 'blue' },
-  { label: '在学人数', value: props.stats.totalStudents, icon: User, colorClass: 'green' },
-  { label: '累计课时', value: props.stats.totalHours, icon: Timer, colorClass: 'orange' },
-  { label: '平均完成率', value: props.stats.completionRate, icon: Trophy, colorClass: 'purple' }
+  { label: '课程总数', value: props.stats.totalCourses, icon: Notebook, colorClass: 'blue', hint: '不受日期筛选影响' },
+  { label: '在学人数', value: props.stats.totalStudents, icon: User, colorClass: 'green', hint: '该时段内有学习记录的用户数' },
+  { label: '累计课时', value: props.stats.totalHours, icon: Timer, colorClass: 'orange', hint: '不受日期筛选影响' },
+  { label: '平均完成率', value: props.stats.completionRate, icon: Trophy, colorClass: 'purple', hint: '该时段内的课程完成比率' }
 ]);
 </script>
 
@@ -97,5 +180,31 @@ const statsItems = computed(() => [
     color: var(--el-text-color-primary);
     line-height: 1.2;
   }
+}
+
+.date-filter-row {
+  padding: 12px 16px;
+  background: var(--el-bg-color-overlay);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  
+  .filter-hint {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
+    
+    .el-icon {
+      color: var(--el-color-primary);
+    }
+  }
+}
+
+.hint-icon {
+  margin-left: 4px;
+  font-size: 14px;
+  color: var(--el-text-color-placeholder);
+  cursor: help;
+  vertical-align: middle;
 }
 </style>
