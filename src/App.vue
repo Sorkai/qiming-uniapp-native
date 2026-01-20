@@ -3,6 +3,7 @@
     <router-view />
     <ReDialog />
     <ReDrawer />
+    <ReAccountSettings />
     <ReFloatButton :floatBtns="floatBtns" />
   </el-config-provider>
 </template>
@@ -13,6 +14,7 @@ import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
 import { ReDialog } from "@/components/ReDialog";
 import { ReDrawer } from "@/components/ReDrawer";
+import ReAccountSettings from "@/components/ReAccountSettings/index.vue";
 import en from "element-plus/es/locale/lang/en";
 import ja from "element-plus/es/locale/lang/ja";
 import ko from "element-plus/es/locale/lang/ko";
@@ -32,6 +34,7 @@ export default defineComponent({
     [ElConfigProvider.name]: ElConfigProvider,
     ReDialog,
     ReDrawer,
+    ReAccountSettings,
     ReFloatButton
   },
   computed: {

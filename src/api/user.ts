@@ -214,3 +214,28 @@ export const updateUserRole = (data: { targetUserId: number; roleType: number })
     { data }
   );
 };
+
+/** 学生学习统计数据类型 */
+export type StudentStatsResult = {
+  code: number;
+  msg: string;
+  data: {
+    /** 入驻日期 */
+    joinDate: string;
+    /** 作业均分 */
+    avgScore: number | string;
+    /** 累计学时 */
+    totalHours?: number;
+    /** 总体进度 */
+    totalProgress?: number;
+  };
+};
+
+/** 获取学生学习统计数据（入驻日期、作业均分等） */
+export const getStudentStats = () => {
+  return http.request<StudentStatsResult>(
+    "get",
+    "/edu/v1/user/stats",
+    {}
+  );
+};

@@ -9,6 +9,8 @@ type Events = {
   tagViewsChange: string;
   changLayoutRoute: string;
   tagViewsShowModel: string;
+  openEditProfile: void;
+  openChangePassword: void;
   imageInfo: {
     img: HTMLImageElement;
     height: number;

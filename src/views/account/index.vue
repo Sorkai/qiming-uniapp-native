@@ -62,14 +62,18 @@
                 <el-icon class="el-icon--right"><arrow-down /></el-icon>
               </div>
               <template #dropdown>
-                <el-dropdown-menu>
+                <el-dropdown-menu class="logout-menu">
                   <el-dropdown-item v-if="hasAdminAccess" command="space">
                     <el-icon><User /></el-icon>
                     进入空间
                   </el-dropdown-item>
-                  <el-dropdown-item command="account">
-                    <el-icon><Setting /></el-icon>
-                    账号管理
+                  <el-dropdown-item command="editProfile">
+                    <el-icon><Edit /></el-icon>
+                    修改资料
+                  </el-dropdown-item>
+                  <el-dropdown-item command="changePassword">
+                    <el-icon><Lock /></el-icon>
+                    修改密码
                   </el-dropdown-item>
                   <el-dropdown-item command="logout" divided>
                     <el-icon><SwitchButton /></el-icon>
@@ -114,10 +118,10 @@
             <el-icon><Reading /></el-icon>
             <span>课程</span>
           </el-menu-item>
-          <el-menu-item index="profile">
+          <!-- <el-menu-item index="profile">
             <el-icon><User /></el-icon>
             <span>个人资料</span>
-          </el-menu-item>
+          </el-menu-item> -->
           <el-menu-item index="cloud-disk">
             <el-icon><Folder /></el-icon>
             <span>学习云盘</span>
@@ -496,6 +500,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { emitter } from "@/utils/mitt";
 import {
   User,
   SwitchButton,
@@ -506,6 +511,7 @@ import {
   Document,
   Folder,
   Edit,
+  Lock,
   Clock,
   Calendar,
   InfoFilled,
@@ -797,8 +803,11 @@ const handleCommand = (command: string) => {
         ElMessage.warning("您没有权限访问管理空间");
       }
       break;
-    case "account":
-      router.push("/account");
+    case "editProfile":
+      emitter.emit("openEditProfile");
+      break;
+    case "changePassword":
+      emitter.emit("openChangePassword");
       break;
     case "logout":
       removeToken();
@@ -2211,6 +2220,100 @@ onUnmounted(() => {
   }
   50% {
     transform: scale(1.25);
+  }
+}
+</style>
+
+<style lang="scss">
+/* 全局样式 - 下拉菜单圆角 */
+/* 针对 el-popper 容器（dropdown 的外层包装） */
+.el-popper:has(.logout-menu) {
+  border-radius: 16px !important;
+  overflow: hidden !important;background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  /*隐藏箭头 */
+  .el-popper__arrow {
+    display: none !important;
+  }
+}
+
+.logout-menu {
+  padding: 8px !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(40px);
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(220, 226, 247, 0.6) !important;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden !important;margin: 0 !important;
+
+  /* 清除默认的 margin/padding 可能造成的衬底 */
+  &::before,
+  &::after {
+    display: none !important;
+  }
+
+  .el-dropdown-menu__item {
+    border-radius: 10px;
+    margin-bottom: 4px;
+    padding: 10px 18px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      background-color: rgba(200, 212, 240, 0.4) !important;
+      color: #333 !important;
+    }
+
+    .el-icon {
+      margin-right: 8px;
+    }
+  }
+
+  /* 退出登录项 - 红色 */
+  .el-dropdown-menu__item:last-child {
+    color: #f56c6c;
+
+    &:hover {
+      background-color: rgba(245, 108, 108, 0.1) !important;
+      color: #f56c6c !important;
+    }
+  }
+}
+
+/* 深色模式适配 */
+html.dark .el-popper:has(.logout-menu),
+.dark .el-popper:has(.logout-menu) {
+  background: transparent !important;
+}
+
+html.dark .logout-menu,
+.dark .logout-menu {
+  background-color: rgba(17, 27, 45, 0.98) !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.4) !important;
+
+  .el-dropdown-menu__item {
+    color: #e2e8f0;
+
+    &:hover {
+      background-color: rgba(56, 189, 248, 0.15) !important;
+      color: #f1f5f9 !important;
+    }
+  }
+
+  .el-dropdown-menu__item:last-child {
+    color: #f87171;
+
+    &:hover {
+      background-color: rgba(248, 113, 113, 0.15) !important;
+      color: #f87171 !important;
+    }
   }
 }
 </style>
