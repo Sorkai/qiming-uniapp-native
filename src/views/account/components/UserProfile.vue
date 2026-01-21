@@ -694,6 +694,23 @@ const openPasswordDialog = () => {
   passwordDialogVisible.value = true;
 };
 
+// 根据错误码获取友好的错误提示
+const getPasswordErrorMessage = (code: number, msg?: string): string => {
+  const errorMessages: Record<number, string> = {
+    400: msg || "请求参数错误，请检查输入",
+    401: "登录已过期，请重新登录后再试",
+    429: "操作过于频繁，请稍后再试",
+    500: "服务器繁忙，请稍后重试"
+  };
+  
+  // 优先使用后端返回的具体错误信息
+  if (msg && msg !== "系统错误" && msg !== "error" && msg.length > 0) {
+    return msg;
+  }
+  
+  return errorMessages[code] || msg || "密码修改失败，请稍后重试";
+};
+
 // 提交密码修改表单
 const submitPasswordForm = async () => {
   if (!passwordFormRef.value) return;
@@ -717,16 +734,35 @@ const submitPasswordForm = async () => {
             router.push("/home");
           }, 1500);
         } else {
-          if (code === 100001) {
-            ElMessage.error("原密码错误，请重新输入");
+          const errorMsg = getPasswordErrorMessage(code, msg);
+          ElMessage.error(errorMsg);
+          
+          // 如果是原密码错误，清空原密码输入框方便用户重新输入
+          if (code === 400 && (msg?.includes("原密码") || code === 100001)) {
             passwordForm.oldPassword = "";
-          } else {
-            ElMessage.error(msg || "密码修改失败，请稍后重试");
+          }
+          // 如果是登录过期，提示用户重新登录
+          if (code === 401) {
+            setTimeout(() => {
+              removeToken();
+              router.push("/home");
+            }, 1500);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("修改密码失败:", error);
-        ElMessage.error("系统错误，请稍后重试");
+        // 优先从响应中获取错误信息
+        const responseData = error.response?.data;
+        const code = responseData?.code || error.code || 500;
+        const msg = responseData?.msg || error.msg || error.message;
+        
+        // 网络错误特殊处理
+        if (error.message?.includes("Network Error") || error.message?.includes("timeout")) {
+          ElMessage.error("网络连接失败，请检查网络后重试");
+        } else {
+          const errorMsg = getPasswordErrorMessage(code, msg);
+          ElMessage.error(errorMsg);
+        }
       } finally {
         passwordLoading.value = false;
       }

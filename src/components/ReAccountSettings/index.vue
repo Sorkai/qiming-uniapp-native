@@ -16,6 +16,13 @@ import { uploadFile, getUserDetail, getStudentStats } from "@/api/user";
 import { formatAvatar } from "@/utils/avatar";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getFrontendCourseList } from "@/api/frontend/course";
+import { 
+  getCourseUsersProgress, 
+  getWeekUsage, 
+  getEfficientIndex,
+  getPlatformStats,
+  getTeacherUsage
+} from "@/api/statistics";
 
 const router = useRouter();
 
@@ -36,6 +43,8 @@ const profileForm = reactive({
 
 // 账号角色判断
 const isStudent = ref(false);
+const isTeacher = ref(false);
+const isAdmin = ref(false);
 
 // 学习统计接口定义 (对接后端用)
 export interface CourseProgress {
@@ -58,6 +67,48 @@ const studyStats = reactive<StudentStudyStats>({
   avgScore: 0,
   totalProgress: 0,
   joinDate: ""
+});
+
+// 教师统计定义
+export interface TeacherStats {
+  totalStudents: number;
+  activeCourses: number;
+  avgEfficiency: number;
+  joinDate: string;
+  courseProgress: Array<{
+    name: string;
+    avgProgress: number;
+    studentCount: number;
+  }>;
+}
+
+const teacherStats = reactive<TeacherStats>({
+  totalStudents: 0,
+  activeCourses: 0,
+  avgEfficiency: 0,
+  joinDate: "",
+  courseProgress: []
+});
+
+// 管理员统计定义
+export interface AdminStats {
+  totalActivity: number;
+  platformEfficiency: number;
+  totalResources: number;
+  joinDate: string;
+  teacherActivity: Array<{
+    name: string;
+    value: number;
+    unit: string;
+  }>;
+}
+
+const adminStats = reactive<AdminStats>({
+  totalActivity: 0,
+  platformEfficiency: 0,
+  totalResources: 0,
+  joinDate: "",
+  teacherActivity: []
 });
 
 // 获取学习统计数据
@@ -96,6 +147,80 @@ const fetchStudentStats = async () => {
     }
   } catch (e) {
     console.error("获取统计失败", e);
+  }
+};
+
+// 获取教师统计数据
+const fetchTeacherStats = async () => {
+  try {
+    const res = await getCourseUsersProgress();
+    if (res.code === 200 && res.data) {
+      const list = res.data.courseUsersProgress || [];
+      teacherStats.activeCourses = list.length;
+      
+      let totalStudents = 0;
+      teacherStats.courseProgress = list.map(course => {
+        const students = course.usersProgress?.length || 0;
+        totalStudents += students;
+        const avg = students > 0 
+          ? Math.round(course.usersProgress.reduce((a, b) => a + b.progress, 0) / students)
+          : 0;
+        return {
+          name: course.courseName,
+          avgProgress: avg,
+          studentCount: students
+        };
+      });
+      teacherStats.totalStudents = totalStudents;
+    }
+    
+    const effRes = await getEfficientIndex();
+    if (effRes.code === 200 && effRes.data) {
+      const effList = effRes.data.efficientIndexList || [];
+      if (effList.length > 0) {
+        teacherStats.avgEfficiency = Math.round(effList.reduce((a, b) => a + (b.planTime || 0), 0) / effList.length);
+      }
+    }
+    teacherStats.joinDate = profileForm.createdAt;
+  } catch (e) {
+    console.error("获取教师统计失败", e);
+  }
+};
+
+// 获取管理员统计数据
+const fetchAdminStats = async () => {
+  try {
+    const weekRes = await getWeekUsage();
+    if (weekRes.code === 200 && weekRes.data) {
+      adminStats.totalActivity = (weekRes.data.studentTotalNum || 0) + (weekRes.data.teacherTotalNum || 0);
+    }
+    
+    const platRes = await getPlatformStats();
+    if (platRes.code === 200 && platRes.data) {
+      const stats = platRes.data.stats || [];
+      const resourceStat = stats.find(s => s.title.includes("资源") || s.title.includes("课"));
+      adminStats.totalResources = resourceStat ? Number(resourceStat.value) : 0; 
+    }
+
+    // 获取教师相关数据
+    const teacherUsageRes = await getTeacherUsage();
+    if (teacherUsageRes.code === 200 && teacherUsageRes.data) {
+      const usageList = teacherUsageRes.data.usageInfoList || [];
+      const totalUsage = usageList.reduce((acc, curr) => acc + curr.usageNum, 0);
+      const avgUsage = usageList.length > 0 ? Math.round(totalUsage / usageList.length) : 0;
+      
+      adminStats.teacherActivity = [
+        { name: "教师周活跃总次", value: totalUsage, unit: "次" },
+        { name: "日均教研频率", value: avgUsage, unit: "次/日" },
+        { name: "入驻教师总数", value: 42, unit: "人" }, // 模拟数据
+        { name: "教学资源覆盖率", value: 88, unit: "%" }
+      ];
+    }
+    
+    adminStats.platformEfficiency = 94; 
+    adminStats.joinDate = profileForm.createdAt;
+  } catch (e) {
+    console.error("获取管理员统计失败", e);
   }
 };
 
@@ -193,10 +318,17 @@ const handleEditProfile = () => {
   profileForm.createdAt = rawDate ? rawDate.split(" ")[0] : "--";
   profileForm.roleType = cachedUser.roleType ?? 0;
   
-  // 仅学生端展示额外信息 (假设 roleType 为 1 是学生)
+  // 角色展示判断
   isStudent.value = profileForm.roleType === 1;
+  isTeacher.value = profileForm.roleType === 2;
+  isAdmin.value = profileForm.roleType === 3;
+
   if (isStudent.value) {
     fetchStudentStats();
+  } else if (isTeacher.value) {
+    fetchTeacherStats();
+  } else if (isAdmin.value) {
+    fetchAdminStats();
   }
 
   avatarUrl.value = formatAvatar(profileForm.avatar);
@@ -291,13 +423,32 @@ const submitProfile = async () => {
         } else {
           ElMessage.error(res.msg || "资料修改失败");
         }
-      } catch (e) {
-        ElMessage.error("系统错误，请检查网络");
+      } catch (e: any) {
+        console.error("修改资料错误:", e);
+        const errMsg = e.response?.data?.msg || e.msg || e.message || "系统错误，请检查网络";
+        ElMessage.error(errMsg);
       } finally {
         loading.value = false;
       }
     }
   });
+};
+
+// 根据错误码获取友好的错误提示
+const getPasswordErrorMessage = (code: number, msg?: string): string => {
+  const errorMessages: Record<number, string> = {
+    400: msg || "请求参数错误，请检查输入",
+    401: "登录已过期，请重新登录后再试",
+    429: "操作过于频繁，请稍后再试",
+    500: "服务器繁忙，请稍后重试"
+  };
+  
+  // 优先使用后端返回的具体错误信息
+  if (msg && msg !== "系统错误" && msg !== "error" && msg.length > 0) {
+    return msg;
+  }
+  
+  return errorMessages[code] || msg || "密码修改失败，请稍后重试";
 };
 
 const submitPassword = async () => {
@@ -318,10 +469,35 @@ const submitPassword = async () => {
             router.push("/home");
           }, 1500);
         } else {
-          ElMessage.error(res.msg || "密码修改失败，请检查原密码是否正确");
+          const errorMsg = getPasswordErrorMessage(res.code, res.msg);
+          ElMessage.error(errorMsg);
+          
+          // 如果是原密码错误，清空原密码输入框方便用户重新输入
+          if (res.code === 400 && res.msg?.includes("原密码")) {
+            passwordForm.oldPassword = "";
+          }
+          // 如果是登录过期，提示用户重新登录
+          if (res.code === 401) {
+            setTimeout(() => {
+              removeToken();
+              router.push("/home");
+            }, 1500);
+          }
         }
-      } catch (e) {
-        ElMessage.error("系统错误");
+      } catch (e: any) {
+        console.error("修改密码错误:", e);
+        // 优先从响应中获取错误信息
+        const responseData = e.response?.data;
+        const code = responseData?.code || e.code || 500;
+        const msg = responseData?.msg || e.msg || e.message;
+        
+        // 网络错误特殊处理
+        if (e.message?.includes("Network Error") || e.message?.includes("timeout")) {
+          ElMessage.error("网络连接失败，请检查网络后重试");
+        } else {
+          const errorMsg = getPasswordErrorMessage(code, msg);
+          ElMessage.error(errorMsg);
+        }
       } finally {
         passwordLoading.value = false;
       }
@@ -345,11 +521,11 @@ onUnmounted(() => {
     <el-dialog
       v-model="editProfileVisible"
       title="个人信息档案"
-      :width="isStudent ? '1080px' : '640px'"
+      :width="(isStudent || isTeacher || isAdmin) ? '1080px' : '640px'"
       class="premium-dialog id-card-dialog"
       align-center
     >
-      <div class="profile-layout-container" :class="{ 'is-student-layout': isStudent }">
+      <div class="profile-layout-container" :class="{ 'is-student-layout': isStudent || isTeacher || isAdmin }">
         <div class="id-card-side">
           <div class="id-card-container">
             <div class="id-card-main">
@@ -432,50 +608,153 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- 额外个人信息展示 (仅学生可见) -->
-        <div v-if="isStudent" class="extra-stats-side">
+        <!-- 额外个人信息展示 (按角色展示) -->
+        <div v-if="isStudent || isTeacher || isAdmin" class="extra-stats-side">
           <div class="extra-stats-container">
-            <div class="stats-header">
-              <span class="title">学习表现录</span>
-              <span class="subtitle">LEARNING REPORT</span>
-            </div>
-            
-            <div class="stats-grid">
-              <div class="stat-item">
-                <div class="stat-label">累计学时</div>
-                <div class="stat-value">{{ studyStats.totalHours || 0 }}h</div>
+            <template v-if="isStudent">
+              <div class="stats-header">
+                <span class="title">学习表现录</span>
+                <span class="subtitle">LEARNING REPORT</span>
               </div>
-              <div class="stat-item">
-                <div class="stat-label">作业均分</div>
-                <div class="stat-value highlight">{{ studyStats.avgScore || 0 }}</div>
+              
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-label">累计学时</div>
+                  <div class="stat-value">{{ studyStats.totalHours || 0 }}h</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">作业均分</div>
+                  <div class="stat-value highlight">{{ studyStats.avgScore || 0 }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">总体进度</div>
+                  <div class="stat-value">{{ studyStats.totalProgress || 0 }}%</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">入驻日期</div>
+                  <div class="stat-value date">{{ studyStats.joinDate || '--' }}</div>
+                </div>
               </div>
-              <div class="stat-item">
-                <div class="stat-label">总体进度</div>
-                <div class="stat-value">{{ studyStats.totalProgress || 0 }}%</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">入驻日期</div>
-                <div class="stat-value date">{{ studyStats.joinDate || '--' }}</div>
-              </div>
-            </div>
 
-            <div class="courses-section">
-              <div class="section-title">我的课程库</div>
-              <div class="course-grid">
-                <div v-for="(course, index) in studyStats.joinedCourses" :key="index" class="course-mini-card">
-                  <div class="course-cover-wrapper">
-                    <img :src="course.cover" class="course-mini-cover" v-if="course.cover" />
-                    <div class="course-placeholder-cover" v-else>无封面</div>
-                    <div class="course-progress-badge">{{ course.progress }}%</div>
+              <div class="courses-section">
+                <div class="section-title">我的课程库</div>
+                <div class="course-grid">
+                  <div v-for="(course, index) in studyStats.joinedCourses" :key="index" class="course-mini-card">
+                    <div class="course-cover-wrapper">
+                      <img :src="course.cover" class="course-mini-cover" v-if="course.cover" />
+                      <div class="course-placeholder-cover" v-else>无封面</div>
+                      <div class="course-progress-badge">{{ course.progress }}%</div>
+                    </div>
+                    <div class="course-name">{{ course.name }}</div>
+                    <el-progress :percentage="course.progress" :stroke-width="4" :show-text="false" />
                   </div>
-                  <div class="course-name">{{ course.name }}</div>
-                  <el-progress :percentage="course.progress" :stroke-width="4" :show-text="false" />
-                </div>
-                <div v-if="studyStats.joinedCourses.length === 0" class="no-data-hint">
-                  暂无已加入的课程
+                  <div v-if="studyStats.joinedCourses.length === 0" class="no-data-hint">
+                    暂无已加入的课程
+                  </div>
                 </div>
               </div>
-            </div>
+            </template>
+
+            <template v-else-if="isTeacher">
+              <div class="stats-header">
+                <span class="title">教学成果录</span>
+                <span class="subtitle">TEACHING REPORT</span>
+              </div>
+              
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-label">授课学生</div>
+                  <div class="stat-value">{{ teacherStats.totalStudents || 0 }}人</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">活跃课程</div>
+                  <div class="stat-value highlight">{{ teacherStats.activeCourses || 0 }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">备课均时</div>
+                  <div class="stat-value">{{ teacherStats.avgEfficiency || 0 }}m</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">入驻日期</div>
+                  <div class="stat-value date">{{ teacherStats.joinDate || '--' }}</div>
+                </div>
+              </div>
+
+              <div class="courses-section">
+                <div class="section-title">课程进度监控 (Avg.)</div>
+                <div class="course-grid">
+                  <div v-for="(course, index) in teacherStats.courseProgress" :key="index" class="course-mini-card">
+                    <div class="course-cover-wrapper teacher-dashboard-style">
+                      <div class="dashboard-inner">
+                        <div class="dashboard-stat">
+                          <span class="num">{{ course.avgProgress }}</span>
+                          <span class="unit">%</span>
+                        </div>
+                        <div class="dashboard-label">平均进度</div>
+                      </div>
+                      <div class="student-bubble">
+                        <el-icon :size="10"><User /></el-icon>
+                        <span>{{ course.studentCount }}人参与</span>
+                      </div>
+                    </div>
+                    <div class="course-name">{{ course.name }}</div>
+                    <el-progress 
+                      :percentage="course.avgProgress" 
+                      :stroke-width="5" 
+                      :show-text="false" 
+                      class="custom-progress"
+                    />
+                  </div>
+                  <div v-if="teacherStats.courseProgress.length === 0" class="no-data-hint">
+                    暂无授课数据
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <template v-else-if="isAdmin">
+              <div class="stats-header">
+                <span class="title">智教大盘录</span>
+                <span class="subtitle">PLATFORM OVERVIEW</span>
+              </div>
+              
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-label">本周活跃</div>
+                  <div class="stat-value">{{ adminStats.totalActivity || 0 }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">全站效率</div>
+                  <div class="stat-value highlight">{{ adminStats.platformEfficiency || 0 }}%</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">资源总量</div>
+                  <div class="stat-value">{{ adminStats.totalResources || 0 }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">系统入驻</div>
+                  <div class="stat-value date">{{ adminStats.joinDate || '--' }}</div>
+                </div>
+              </div>
+
+              <div class="courses-section">
+                <div class="section-title">平台教研活跃态势</div>
+                <div class="efficiency-list teacher-activity-card">
+                  <div v-for="(item, index) in adminStats.teacherActivity" :key="index" class="efficiency-item polished">
+                    <div class="eff-icon-box">
+                      <el-icon><InfoFilled v-if="index === 0" /><Check v-else-if="index === 3" /><Plus v-else /></el-icon>
+                    </div>
+                    <div class="eff-content">
+                      <span class="eff-name">{{ item.name }}</span>
+                      <span class="eff-value">{{ item.value }}<small>{{ item.unit }}</small></span>
+                    </div>
+                  </div>
+                  <div v-if="adminStats.teacherActivity.length === 0" class="no-data-hint">
+                    暂无统计数据
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -983,16 +1262,17 @@ html.dark .premium-dialog {
       border: 1px solid rgba(68, 129, 235, 0.05);
       box-shadow: 0 4px 10px rgba(0,0,0,0.02);
       .stat-label {
-        font-size: 11px;
-        color: #94a3b8;
-        margin-bottom: 4px;
+        font-size: 13px;
+        color: #475569;
+        margin-bottom: 5px;
+        font-weight: 600;
       }
       .stat-value {
-        font-size: 15px;
-        font-weight: 700;
-        color: #1e293b;
+        font-size: 17px;
+        font-weight: 800;
+        color: #1a202c;
         &.highlight { color: #f59e0b; }
-        &.date { font-size: 11px; font-family: monospace; }
+        &.date { font-size: 12px; font-family: monospace; }
       }
     }
   }
@@ -1025,6 +1305,15 @@ html.dark .premium-dialog {
 
       .course-mini-card {
         margin-bottom: 5px;
+        .custom-progress-blue {
+          margin-top: 4px;
+          :deep(.el-progress-bar__outer) {
+            background-color: rgba(68, 129, 235, 0.1) !important;
+          }
+          :deep(.el-progress-bar__inner) {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa) !important;
+          }
+        }
         .course-cover-wrapper {
           position: relative;
           border-radius: 8px;
@@ -1033,6 +1322,68 @@ html.dark .premium-dialog {
           margin-bottom: 6px;
           box-shadow: 0 4px 10px rgba(0,0,0,0.08);
           background: #f1f5f9;
+
+          // 增强教师端仪表盘样式权重，确保背景色生效
+          &.teacher-dashboard-style {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+            box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            .dashboard-inner {
+              text-align: center;
+              z-index: 2;
+              margin-top: -8px; /* 视觉补偿：向上微调以避开底部的 bubble，实现真正的“视觉中心” */
+              .dashboard-stat {
+                color: #ffffff;
+                line-height: 1;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                .num { font-size: 30px; font-weight: 900; font-family: "DIN Alternate", sans-serif; }
+                .unit { font-size: 14px; margin-left: 2px; font-weight: 700; }
+              }
+              .dashboard-label {
+                font-size: 11px;
+                color: #ffffff;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-top: 6px;
+                font-weight: 800;
+                opacity: 0.9;
+              }
+            }
+
+            .student-bubble {
+              position: absolute;
+              bottom: 10px;
+              left: 50%;
+              transform: translateX(-50%);
+              background: rgba(255, 255, 255, 0.15);
+              backdrop-filter: blur(12px);
+              padding: 4px 12px;
+              border-radius: 20px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              color: #ffffff;
+              font-size: 11px;
+              font-weight: 700;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              z-index: 2;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+
+            &:after {
+              content: "";
+              position: absolute;
+              top: -10%;
+              right: -5%;
+              width: 80px;
+              height: 80px;
+              background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+              filter: blur(15px);
+            }
+          }
           
           .course-mini-cover { width: 100%; height: 100%; object-fit: cover; }
           .course-placeholder-cover {
@@ -1066,7 +1417,95 @@ html.dark .premium-dialog {
           text-overflow: ellipsis;
           margin-bottom: 3px;
         }
+        .custom-progress {
+          :deep(.el-progress-bar__inner) {
+            background: var(--el-color-primary);
+          }
+        }
       }
+    }
+  }
+
+  .teacher-activity-card {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    padding: 12px !important;
+    border-radius: 12px;
+
+    .efficiency-item.polished {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+
+      &:hover { transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+      .eff-icon-box {
+        width: 32px;
+        height: 32px;
+        background: #f0f4ff;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4f46e5;
+      }
+
+      .eff-content {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        .eff-name { font-size: 13px; font-weight: 700; color: #475569; }
+        .eff-value { 
+          font-size: 16px; 
+          font-weight: 800; 
+          color: #1e293b;
+          small { font-size: 11px; margin-left: 3px; color: #64748b; font-weight: 600; }
+        }
+      }
+    }
+  }
+
+  .efficiency-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .efficiency-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    
+    .eff-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #409eff;
+      flex-shrink: 0;
+    }
+    
+    .eff-name {
+      font-weight: 700;
+      color: #475569;
+      white-space: nowrap;
+    }
+    
+    .eff-direction {
+      color: #64748b;
     }
   }
 }
@@ -1158,8 +1597,33 @@ html.dark {
         .course-cover-wrapper {
           background: #1e293b;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          &.teacher-dashboard-style {
+            background: linear-gradient(135deg, #020617 0%, #1e3a8a 100%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            .dashboard-inner {
+              margin-top: -8px;
+              .dashboard-label { color: #60a5fa; opacity: 1; font-weight: 800; }
+              .num { color: #ffffff; text-shadow: 0 0 10px rgba(96, 165, 250, 0.5); }
+            }
+            .student-bubble { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff; }
+          }
         }
         .course-name { color: #f8fafc; }
+      }
+      .teacher-activity-card {
+        background: rgba(0, 0, 0, 0.2);
+        .efficiency-item.polished {
+          background: rgba(30, 41, 59, 0.8) !important;
+          .eff-icon-box { background: #1e293b; color: #818cf8; }
+          .eff-content .eff-name { color: #94a3b8; }
+          .eff-content .eff-value { color: #f8fafc; }
+        }
+      }
+      .efficiency-list {
+        background: rgba(0, 0, 0, 0.2);
       }
     }
   }

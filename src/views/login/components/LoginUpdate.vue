@@ -49,20 +49,51 @@ const repeatPasswordRule = [
   }
 ];
 
+// 根据错误码获取友好的错误提示
+const getPasswordErrorMessage = (code: number, msg?: string): string => {
+  const errorMessages: Record<number, string> = {
+    400: msg || "请求参数错误，请检查输入",
+    401: "登录已过期，请重新登录后再试",
+    429: "操作过于频繁，请稍后再试",
+    500: "服务器繁忙，请稍后重试"
+  };
+  
+  // 优先使用后端返回的具体错误信息
+  if (msg && msg !== "系统错误" && msg !== "error" && msg.length > 0) {
+    return msg;
+  }
+  
+  return errorMessages[code] || msg || "密码修改失败，请稍后重试";
+};
+
 const onUpdate = async (formEl: FormInstance | undefined) => {
-  loading.value = true;
   if (!formEl) return;
-  await formEl.validate(valid => {
+  await formEl.validate(async valid => {
     if (valid) {
-      // 模拟请求，需根据实际开发进行修改
-      setTimeout(() => {
+      loading.value = true;
+      try {
+        // 模拟请求，需根据实际开发进行修改
+        await new Promise(resolve => setTimeout(resolve, 2000));
         message(transformI18n($t("login.purePassWordUpdateReg")), {
           type: "success"
         });
+      } catch (error: any) {
+        console.error("修改密码失败:", error);
+        // 优先从响应中获取错误信息
+        const responseData = error.response?.data;
+        const code = responseData?.code || error.code || 500;
+        const msg = responseData?.msg || error.msg || error.message;
+        
+        // 网络错误特殊处理
+        if (error.message?.includes("Network Error") || error.message?.includes("timeout")) {
+          message("网络连接失败，请检查网络后重试", { type: "error" });
+        } else {
+          const errorMsg = getPasswordErrorMessage(code, msg);
+          message(errorMsg, { type: "error" });
+        }
+      } finally {
         loading.value = false;
-      }, 2000);
-    } else {
-      loading.value = false;
+      }
     }
   });
 };

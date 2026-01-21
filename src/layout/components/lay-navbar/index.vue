@@ -17,6 +17,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 
 import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
 import AccountSettingsIcon from "~icons/ri/user-settings-line";
+import LockPasswordLine from "~icons/ri/lock-password-line";
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
 import Check from "~icons/ep/check";
@@ -166,7 +167,7 @@ const {
             </el-dropdown-item>
             <el-dropdown-item @click="() => emitter.emit('openChangePassword')">
               <IconifyIconOffline
-                icon="ri:lock-password-line"
+                :icon="LockPasswordLine"
                 class="mr-2 text-lg"
               />
               修改密码
