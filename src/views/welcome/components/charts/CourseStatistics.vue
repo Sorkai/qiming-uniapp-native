@@ -958,9 +958,9 @@ onMounted(async () => {
                   <div class="flex items-center gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
                     <span class="text-xs text-gray-500 font-medium">排序:</span>
                     <el-radio-group v-model="progressSortOrder" size="small" class="custom-radio-group">
-                      <el-radio-button label="none">默认</el-radio-button>
-                      <el-radio-button label="desc">进度降序</el-radio-button>
-                      <el-radio-button label="asc">进度升序</el-radio-button>
+                      <el-radio-button value="none">默认</el-radio-button>
+                      <el-radio-button value="desc">进度降序</el-radio-button>
+                      <el-radio-button value="asc">进度升序</el-radio-button>
                     </el-radio-group>
                   </div>
                 </div>

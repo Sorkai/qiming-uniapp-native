@@ -114,10 +114,10 @@
                   v-model="answers[question.questionId]"
                   :disabled="!examStarted || examCompleted"
                 >
-                  <el-radio label="1" :disabled="!examStarted || examCompleted"
+                  <el-radio value="1" :disabled="!examStarted || examCompleted"
                     >正确</el-radio
                   >
-                  <el-radio label="0" :disabled="!examStarted || examCompleted"
+                  <el-radio value="0" :disabled="!examStarted || examCompleted"
                     >错误</el-radio
                   >
                 </el-radio-group>

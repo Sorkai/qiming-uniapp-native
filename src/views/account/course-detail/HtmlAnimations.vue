@@ -45,9 +45,23 @@
             }
           }"
           @click="openHtmlAnimation(item)"
+          @mouseenter="hoveredChapterId = item.chapterId"
+          @mouseleave="hoveredChapterId = null"
         >
           <div class="card-preview">
-            <img :src="item.previewUrl || getPlaceholder(item.chapterId)" alt="预览图" />
+            <template v-if="item.previewVideoUrl && hoveredChapterId === item.chapterId">
+              <video
+                :src="item.previewVideoUrl"
+                autoplay
+                loop
+                muted
+                playsinline
+                class="hover-video"
+              />
+            </template>
+            <template v-else>
+              <img :src="item.previewUrl || getPlaceholder(item.chapterId)" alt="预览图" />
+            </template>
             <div class="play-overlay">
               <el-icon size="48">
                 <component :is="VideoPlay" />
@@ -78,6 +92,11 @@
           <span class="title">HTML动画预览</span>
         </div>
         <div class="header-actions">
+          <!-- 管理员预览时可见的快照按钮 (示例) -->
+          <div class="action-btn capture-btn" @click="captureAndUpload" title="截取当前画面为封面">
+            <el-icon size="18"><component :is="Camera" /></el-icon>
+            <span class="btn-text">设为封面</span>
+          </div>
           <div class="action-btn" @click="openHtmlAnimInNew" title="新窗口打开">
             <el-icon size="18"><component :is="ExternalLink" /></el-icon>
           </div>
@@ -109,6 +128,7 @@ import VideoPlay from "~icons/ep/video-play";
 import Close from "~icons/ep/close";
 import ExternalLink from "~icons/ep/link";
 import Loading from "~icons/ep/loading";
+import Camera from "~icons/ep/camera";
 
 // 动画卡片占位图（根据 chapterId 循环使用）
 const placeholders = [
@@ -135,6 +155,7 @@ const props = defineProps<{
     version: string;
     url: string;
     previewUrl?: string;
+    previewVideoUrl?: string;
   }>;
   userAvatar: string;
   userNickname: string;
@@ -149,6 +170,7 @@ defineEmits<{
 }>();
 
 // 内部状态
+const hoveredChapterId = ref<number | null>(null);
 const htmlAnimPreviewVisible = ref(false);
 const htmlAnimPreviewUrl = ref("");
 const iframeLoading = ref(true);
@@ -157,6 +179,16 @@ const iframeLoading = ref(true);
 watch(htmlAnimPreviewVisible, (val) => {
   if (val) iframeLoading.value = true;
 });
+
+// 模拟快照采集（实际开发中需通过 iframe postMessage 获取或画布截取）
+const captureAndUpload = () => {
+  const chapter = props.animationList.find(a => a.url === htmlAnimPreviewUrl.value);
+  if (!chapter) return;
+  
+  // 这里可以具体扩展为调用 html2canvas 或后端接口
+  console.log(`正在为章节 ${chapter.chapterName} 采集画面并设为封面...`);
+  // 后续对接：ElMessage.success("快照已提交，正在生成新封面...");
+};
 
 // 打开 HTML 动画预览
 const openHtmlAnimation = (item: { url: string }) => {
@@ -247,14 +279,16 @@ const openHtmlAnimInNew = () => {
   position: relative;
 }
 
-.card-preview img {
+.card-preview img,
+.hover-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.8s ease;
 }
 
-.animation-card:hover .card-preview img {
+.animation-card:hover .card-preview img,
+.animation-card:hover .hover-video {
   transform: scale(1.1);
 }
 
@@ -460,9 +494,33 @@ const openHtmlAnimInNew = () => {
   color: #475569;
 }
 
+.action-btn.capture-btn {
+  width: auto;
+  padding: 0 12px;
+  gap: 6px;
+  background: rgba(64, 158, 255, 0.1);
+  color: #409eff;
+  border: 1px solid rgba(64, 158, 255, 0.2);
+}
+
+.action-btn.capture-btn .btn-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.action-btn.capture-btn:hover {
+  background: #409eff;
+  color: white;
+}
+
 .dark .action-btn {
   background: rgba(255, 255, 255, 0.06);
   color: #cbd5e1;
+}
+
+.dark .action-btn.capture-btn {
+  background: rgba(64, 158, 255, 0.15);
+  border-color: rgba(64, 158, 255, 0.3);
 }
 
 .action-btn:hover {

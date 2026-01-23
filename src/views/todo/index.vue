@@ -8,9 +8,9 @@
       </div>
       <div class="header-right flex items-center gap-4">
         <el-radio-group v-model="filterStatus" size="default">
-          <el-radio-button label="all">全部</el-radio-button>
-          <el-radio-button label="pending">待处理</el-radio-button>
-          <el-radio-button label="completed">已完成</el-radio-button>
+          <el-radio-button value="all">全部</el-radio-button>
+          <el-radio-button value="pending">待处理</el-radio-button>
+          <el-radio-button value="completed">已完成</el-radio-button>
         </el-radio-group>
         <el-button type="primary" :icon="Plus" round @click="openAddDialog"
           >添加待办</el-button

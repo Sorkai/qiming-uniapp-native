@@ -387,8 +387,8 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p><a href="https://www.intelledu.cn" target="_blank" class="website-link">www.intelledu.cn</a></p>
-          <p style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 15px;">
+          <p class="school-info">长春工业大学 吉林省长春市宽城区北远达大街 3000 号 计算机学院 启明智教项目 <span class="domain">Intelledu.com</span></p>
+          <p style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 8px;">
             <a href="https://beian.miit.gov.cn/" target="_blank"
               style="color: rgba(255, 255, 255, 0.4); text-decoration: none;">吉ICP备2025035820号-1</a>
             <a href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511" rel="noreferrer"
@@ -398,7 +398,7 @@
                 alt="备案图标">吉公网安备22017302000511号
             </a>
           </p>
-          <p>© {{ new Date().getFullYear() }} 吉林省云创迅捷软件开发有限公司 版权所有</p>
+          <p>Copyright (c) 2024 Est. 吉林省云创迅捷软件开发有限公司 All Rights Reserved</p>
         </div>
       </div>
     </footer>
@@ -2038,6 +2038,18 @@ const handleCommand = (command: string) => {
       font-size: 14px;
       color: rgba(255, 255, 255, 0.5);
       margin-bottom: 8px;
+    }
+
+    .school-info {
+      font-size: 14px !important;
+      color: rgba(255, 255, 255, 0.6) !important;
+      margin-bottom: 12px !important;
+
+      .domain {
+        margin-left: 10px;
+        color: #60a5fa;
+        font-weight: 500;
+      }
     }
 
     .website-link {

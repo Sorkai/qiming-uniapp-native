@@ -118,10 +118,10 @@
             <el-icon><CourseIcon /></el-icon>
             <span>课程</span>
           </el-menu-item>
-          <!-- <el-menu-item index="profile">
+          <el-menu-item index="profile">
             <el-icon><User /></el-icon>
             <span>个人资料</span>
-          </el-menu-item> -->
+          </el-menu-item>
           <el-menu-item index="cloud-disk">
             <el-icon><CloudIcon /></el-icon>
             <span>学习云盘</span>
@@ -508,6 +508,9 @@
       v-model:visible="showLoginDialog"
       @login-success="handleLoginSuccess"
     />
+
+    <!-- 页尾版权信息 -->
+    <LayFooter />
   </div>
 </template>
 
@@ -558,6 +561,7 @@ import CloudIcon from "@/new student interface icons/file-svgrepo-com.svg?compon
 import HomeIcon from "@/side bar new icons/school-svgrepo-com.svg?component";
 import NotificationIcon from "@/side bar new icons/notification-unread-lines-svgrepo-com.svg?component";
 import TodoIcon from "@/side bar new icons/list-tasks-svgrepo-com.svg?component";
+import LayFooter from "@/layout/components/lay-footer/index.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -1695,6 +1699,8 @@ onUnmounted(() => {
             flex: 0.7;
 
             h3 {
+              display: flex;
+              align-items: center;
               margin: 0 0 16px;
               font-size: 18px;
               font-weight: 600;
@@ -1934,6 +1940,8 @@ onUnmounted(() => {
           }
 
           h3 {
+            display: flex;
+            align-items: center;
             margin: 0;
             font-size: 18px;
             font-weight: 600;

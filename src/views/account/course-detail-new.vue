@@ -378,7 +378,8 @@ const fetchHtmlAnimations = async () => {
             chapterName: ch.name || ch.chapterName,
             version: data.version,
             url: data.url,
-            previewUrl: data.previewUrl
+            previewUrl: data.previewUrl,
+            previewVideoUrl: data.previewVideoUrl
           });
         }
       } catch (e) {

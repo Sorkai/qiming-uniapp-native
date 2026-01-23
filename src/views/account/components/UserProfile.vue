@@ -58,7 +58,7 @@
           <div class="info-item signature">
             <div class="label">个性签名</div>
             <div class="value">
-              {{ userInfo?.info || "这个人很懒，什么都没留下" }}
+              {{ displaySignature }}
             </div>
           </div>
         </div>
@@ -76,6 +76,50 @@
             <div class="value time-value">
               <el-icon><Calendar /></el-icon>
               {{ formattedLastLoginTime }}
+            </div>
+          </div>
+        </div>
+        <div class="info-group stats" v-show="showStats">
+          <div class="group-title">学习统计</div>
+          <div :class="['stats-content', { 'is-loading-effect': isFetchingStats && studyStats.totalHours === null }]">
+            <div class="info-item">
+              <div class="label">入驻日期</div>
+              <div class="value">
+                <el-icon><Calendar /></el-icon>
+                <span>{{ studyStats.joinDate }}</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="label">作业均分</div>
+              <div class="value">
+                <el-icon><Check /></el-icon>
+                <span class="score-value">{{ studyStats.avgScore }}</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="label">累计学时</div>
+              <div class="value">
+                <el-icon><Clock /></el-icon>
+                <template v-if="studyStats.totalHours !== null">
+                  <span class="number-solid">{{ studyStats.totalHours }}</span> 小时
+                </template>
+                <span v-else class="loading-placeholder">计算中...</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="label">总体进度</div>
+              <div class="value progress-value">
+                <template v-if="studyStats.totalProgress !== null">
+                  <el-progress 
+                    :percentage="sanitizeProgress(studyStats.totalProgress)" 
+                    :format="val => val + '%'"
+                    :stroke-width="10"
+                    striped
+                    striped-flow
+                  />
+                </template>
+                <div v-else class="loading-placeholder" style="width: 100%; height: 10px; background: #eee; border-radius: 5px;"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -154,9 +198,9 @@
         </el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="form.sex">
-            <el-radio :label="1">男</el-radio>
-            <el-radio :label="2">女</el-radio>
-            <el-radio :label="0">保密</el-radio>
+            <el-radio :value="1">男</el-radio>
+            <el-radio :value="2">女</el-radio>
+            <el-radio :value="0">保密</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="个性签名" prop="info">
@@ -292,7 +336,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from "vue";
+import { ref, computed, onMounted, reactive, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
   Edit,
@@ -301,7 +345,8 @@ import {
   Calendar,
   Message,
   Check,
-  ArrowDown
+  ArrowDown,
+  Clock
 } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
@@ -315,7 +360,15 @@ import {
   updateFrontendUserPassword,
   type UpdateUserInfoParams
 } from "@/api/frontend/user";
-import { uploadFile, getUserDetail } from "@/api/user";
+import {
+  uploadFile,
+  getUserDetail,
+  getStudentStats,
+
+  type StudentStatsResult,
+  type UserStatusResult
+} from "@/api/user";
+import { getFrontendCourseList } from "@/api/frontend/course";
 import dayjs from "dayjs";
 
 const props = defineProps<{
@@ -382,6 +435,108 @@ const extraInfo = reactive<ExtraInfo>({
   bannerUrl: ""
 });
 
+const everBeenStudent = ref(false);
+
+// 签名兜底：优先展示用户详情里的 info，缺失时尝试从其他接口补齐
+const signatureFallback = ref("");
+const displaySignature = computed(
+  () => userInfo.value?.info || signatureFallback.value || "这个人很懒，什么都没留下"
+);
+
+// 学习统计数据：入驻/均分取自 /user/study，学时/进度取自 /user/status，失败时回落到课程列表计算
+// 学习统计持久化 Key
+const STATS_STORAGE_KEY = "userStudyStatsCache";
+
+// 必杀技 1：从缓存初始化，实现“秒开”不闪烁
+const getInitialStats = () => {
+  const cached = storageLocal().getItem(STATS_STORAGE_KEY) as any;
+  // 核心改进：显式标记 null，区分“初始状态”和“数值为0”
+  return {
+    joinDate: cached?.joinDate || "--",
+    avgScore: cached?.avgScore || "--",
+    totalHours: cached?.totalHours !== undefined ? cached.totalHours : null,
+    totalProgress: cached?.totalProgress !== undefined ? cached.totalProgress : null
+  };
+};
+
+const studyStats = reactive(getInitialStats());
+
+const sanitizeProgress = (val: any) => {
+  const num = Number(val);
+  return isNaN(num) || num < 0 ? 0 : Math.min(num, 100);
+};
+
+const normalizeProgress = (value?: number) => {
+  const num = Number(value ?? 0);
+  if (Number.isNaN(num)) return 0;
+  if (num <= 1) return Math.round(num * 100);
+  return Math.round(Math.min(num, 100));
+};
+
+// 已废弃 fillStatsFromCourses，统一由 fetchStudyStats 管理数据源
+
+const isFetchingStats = ref(false);
+const fetchStudyStats = async () => {
+  // 严格锁：正在加载或角色不对直接退出
+  if (userRole.value !== "学生" || isFetchingStats.value) return;
+  
+  isFetchingStats.value = true;
+  
+  try {
+    // 【核心修复】直接从课程列表计算学时和进度，这是唯一可靠的数据源
+    const courseRes = await getFrontendCourseList({ pageNum: 1, pageSize: 100 }).catch(() => null);
+    
+    if (courseRes?.code === 200 && courseRes.data?.list) {
+      const list = courseRes.data.list;
+      
+      if (list.length > 0) {
+        // 计算累计学时
+        const totalHours = list.reduce(
+          (acc, curr) => acc + (curr.finishedHours || 0),
+          0
+        );
+        
+        // 计算总体进度（百分比）
+        const totalProg = list.reduce((acc, curr) => {
+          const finished = curr.finishedHours || 0;
+          const total = curr.totalHours || 0;
+          return acc + (total > 0 ? finished / total : 0);
+        }, 0);
+        const totalProgress = Math.round((totalProg / list.length) * 100);
+        
+        // 直接更新，因为这是从可靠数据源计算出来的
+        studyStats.totalHours = totalHours;
+        studyStats.totalProgress = totalProgress;
+        
+        // 持久化缓存
+        storageLocal().setItem(STATS_STORAGE_KEY, { ...studyStats });
+      }
+    }
+    
+    // 尝试获取入驻日期和均分（这些接口可能没有 mock）
+    const statsRes = await getStudentStats().catch(() => null);
+    if (statsRes?.code === 200 && statsRes.data) {
+      const stats = statsRes.data;
+      if (stats.avgScore && stats.avgScore !== "暂无" && stats.avgScore !== "--") {
+        studyStats.avgScore = stats.avgScore;
+      }
+      if (stats.joinDate && stats.joinDate !== "--") {
+        studyStats.joinDate = stats.joinDate;
+      }
+      const sig = stats.signature || stats.info || "";
+      if (sig && !signatureFallback.value) {
+        signatureFallback.value = sig;
+      }
+      // 更新缓存
+      storageLocal().setItem(STATS_STORAGE_KEY, { ...studyStats });
+    }
+  } catch (error) {
+    console.error("获取学习统计失败:", error);
+  } finally {
+    isFetchingStats.value = false;
+  }
+};
+
 const loadExtraInfo = () => {
   try {
     const cached = storageLocal().getItem(EXTRA_KEY) as ExtraInfo | null;
@@ -446,7 +601,9 @@ const passwordRules = {
 // 计算属性：用户角色展示
 const userRole = computed(() => {
   const roleType = userInfo.value?.roleType;
-  switch (roleType) {
+  if (roleType === undefined || roleType === null) return "普通用户";
+  const rt = Number(roleType);
+  switch (rt) {
     case 1:
       return "学生";
     case 2:
@@ -457,6 +614,22 @@ const userRole = computed(() => {
       return "普通用户";
   }
 });
+
+// 监听角色变化，一旦是学生就记住
+watch(
+  userRole,
+  val => {
+    if (val === "学生") {
+      everBeenStudent.value = true;
+    }
+  },
+  { immediate: true }
+);
+
+const showStats = computed(() => {
+  return userRole.value === "学生" || everBeenStudent.value;
+});
+
 
 // 计算属性：性别显示
 const getSexLabel = computed(() => {
@@ -475,6 +648,11 @@ const fetchUserDetail = async () => {
 
     if (isSuccess && detailData) {
       const newUserInfo = detailData;
+
+      // 验证关键字段，防止被后端空值覆盖导致 UI 闪烁
+      if (newUserInfo.roleType === undefined || newUserInfo.roleType === null) {
+        newUserInfo.roleType = userInfo.value?.roleType;
+      }
 
       // 增量更新用户信息，必须确保认证元数据（refreshToken, expires, accessToken）绝对不丢失
       const tokenData = getToken();
@@ -738,7 +916,7 @@ const submitPasswordForm = async () => {
           ElMessage.error(errorMsg);
           
           // 如果是原密码错误，清空原密码输入框方便用户重新输入
-          if (code === 400 && (msg?.includes("原密码") || code === 100001)) {
+          if ((code === 400 || code === 100001) && msg?.includes("原密码")) {
             passwordForm.oldPassword = "";
           }
           // 如果是登录过期，提示用户重新登录
@@ -783,9 +961,16 @@ const bannerStyle = computed(() => {
   return { backgroundImage: `url(${url})` };
 });
 
-onMounted(() => {
+onMounted(async () => {
   loadExtraInfo();
-  fetchUserDetail();
+  
+  // 先同步用户信息
+  await fetchUserDetail();
+  
+  // 确认是学生后，获取学习统计（只调用一次，避免竞态）
+  if (userRole.value === "学生") {
+    await fetchStudyStats();
+  }
 });
 </script>
 
@@ -1018,9 +1203,61 @@ onMounted(() => {
         .email-value {
           .el-icon { color: #10b981; }
         }
+        .score-value {
+          font-weight: 600;
+          color: #f59e0b;
+        }
+        .progress-value {
+          flex: 1;
+          margin-left: 8px;
+          max-width: 180px;
+        }
+      }
+    }
+    .info-group.stats {
+      background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+      .dark & {
+        background: linear-gradient(145deg, #064e3b, #022c22);
+      }
+      &::before {
+        background: linear-gradient(180deg, #10b981, #059669);
+      }
+    }
+    
+    .stats-content {
+      position: relative;
+      &.is-loading-effect {
+        &::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(255, 255, 255, 0.3);
+          z-index: 1;
+          pointer-events: none;
+        }
+      }
+      
+      .number-solid {
+        font-weight: bold;
+        display: inline-block;
+        min-width: 12px;
+      }
+
+      .loading-placeholder {
+        color: #999;
+        animation: pulse 1.5s infinite;
       }
     }
   }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
 }
 
 .avatar-uploader {

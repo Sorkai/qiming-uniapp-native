@@ -23,16 +23,16 @@
       <el-col :span="12">
         <el-form-item label="是否必修" prop="isRequired">
           <el-radio-group v-model="formData.isRequired">
-            <el-radio :label="1">必修</el-radio>
-            <el-radio :label="0">选修</el-radio>
+            <el-radio :value="1">必修</el-radio>
+            <el-radio :value="0">选修</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-col>
       <el-col v-if="!isEdit" :span="12">
         <el-form-item label="是否章节" prop="isChapter">
           <el-radio-group v-model="formData.isChapter">
-            <el-radio :label="1">是</el-radio>
-            <el-radio :label="0">否</el-radio>
+            <el-radio :value="1">是</el-radio>
+            <el-radio :value="0">否</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-col>

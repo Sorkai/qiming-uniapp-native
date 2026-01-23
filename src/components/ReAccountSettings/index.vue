@@ -124,26 +124,26 @@ const fetchStudentStats = async () => {
         progress: item.totalHours > 0 ? Math.round((item.finishedHours / item.totalHours) * 100) : 0
       }));
       
-      studyStats.totalHours = list.reduce((acc, curr) => acc + curr.finishedHours, 0);
+      // 从课程列表计算累计学时和总体进度（这是可靠的数据源）
+      const calculatedHours = list.reduce((acc, curr) => acc + (curr.finishedHours || 0), 0);
       const totalProg = list.reduce((acc, curr) => {
         const p = curr.totalHours > 0 ? (curr.finishedHours / curr.totalHours) : 0;
         return acc + p;
       }, 0);
-      studyStats.totalProgress = list.length > 0 ? Math.round((totalProg / list.length) * 100) : 0;
+      const calculatedProgress = list.length > 0 ? Math.round((totalProg / list.length) * 100) : 0;
+      
+      // 直接使用计算值，不再被后续接口覆盖
+      studyStats.totalHours = calculatedHours;
+      studyStats.totalProgress = calculatedProgress;
     }
     
     // 获取入驻日期和作业均分（通过新接口）
-    const statsRes = await getStudentStats();
-    if (statsRes.code === 200 && statsRes.data) {
+    const statsRes = await getStudentStats().catch(() => null);
+    if (statsRes?.code === 200 && statsRes.data) {
       studyStats.avgScore = statsRes.data.avgScore ?? "暂无";
       studyStats.joinDate = statsRes.data.joinDate || "--";
-      // 如果接口也返回了累计学时和总体进度，可以覆盖
-      if (statsRes.data.totalHours !== undefined) {
-        studyStats.totalHours = statsRes.data.totalHours;
-      }
-      if (statsRes.data.totalProgress !== undefined) {
-        studyStats.totalProgress = statsRes.data.totalProgress;
-      }
+      // 【修复】不再用接口返回的 totalHours/totalProgress 覆盖课程列表计算的值
+      // 因为 getStudentStats 接口没有 mock，返回的值不可靠
     }
   } catch (e) {
     console.error("获取统计失败", e);
@@ -580,9 +580,9 @@ onUnmounted(() => {
                   <el-form-item label="性别" class="id-form-item">
                     <div class="id-radio-box">
                       <el-radio-group v-model="profileForm.sex" class="id-radio-group">
-                        <el-radio :label="1">男</el-radio>
-                        <el-radio :label="2">女</el-radio>
-                        <el-radio :label="0">保密</el-radio>
+                        <el-radio :value="1">男</el-radio>
+                        <el-radio :value="2">女</el-radio>
+                        <el-radio :value="0">保密</el-radio>
                       </el-radio-group>
                     </div>
                   </el-form-item>

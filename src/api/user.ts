@@ -224,10 +224,9 @@ export type StudentStatsResult = {
     joinDate: string;
     /** 作业均分 */
     avgScore: number | string;
-    /** 累计学时 */
-    totalHours?: number;
-    /** 总体进度 */
-    totalProgress?: number;
+    /** 个性签名（可选，部分接口返回） */
+    signature?: string;
+    info?: string;
   };
 };
 
@@ -235,7 +234,30 @@ export type StudentStatsResult = {
 export const getStudentStats = () => {
   return http.request<StudentStatsResult>(
     "get",
-    "/edu/v1/user/stats",
+    "/edu/frontend/v1/user/study",
+    {}
+  );
+};
+
+export type UserStatusResult = {
+  code: number;
+  msg: string;
+  data: {
+    /** 累计学时 */
+    totalHours?: number;
+    /** 总体进度（百分比或小数，前端做归一化） */
+    totalProgress?: number;
+    /** 兜底签名字段（如后端返回） */
+    signature?: string;
+    info?: string;
+  };
+};
+
+/** 获取学生状态数据（累计学时、总体进度等） */
+export const getUserStatus = () => {
+  return http.request<UserStatusResult>(
+    "get",
+    "/edu/frontend/v1/user/status",
     {}
   );
 };
