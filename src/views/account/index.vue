@@ -111,11 +111,11 @@
           @select="handleMenuSelect"
         >
           <el-menu-item index="home">
-            <el-icon><HomeFilled /></el-icon>
+            <el-icon><HomeIcon /></el-icon>
             <span>首页</span>
           </el-menu-item>
           <el-menu-item index="course">
-            <el-icon><Reading /></el-icon>
+            <el-icon><CourseIcon /></el-icon>
             <span>课程</span>
           </el-menu-item>
           <!-- <el-menu-item index="profile">
@@ -123,23 +123,23 @@
             <span>个人资料</span>
           </el-menu-item> -->
           <el-menu-item index="cloud-disk">
-            <el-icon><Folder /></el-icon>
+            <el-icon><CloudIcon /></el-icon>
             <span>学习云盘</span>
           </el-menu-item>
           <el-menu-item index="notification">
-            <el-icon><Bell /></el-icon>
+            <el-icon><NotificationIcon /></el-icon>
             <span>系统通知</span>
           </el-menu-item>
           <el-menu-item index="todo">
-            <el-icon><Tickets /></el-icon>
+            <el-icon><TodoIcon /></el-icon>
             <span>待办事项</span>
           </el-menu-item>
           <el-menu-item index="virtual-lab">
-            <el-icon><Cpu /></el-icon>
+            <el-icon><LabIcon /></el-icon>
             <span>虚拟实验室</span>
           </el-menu-item>
           <el-menu-item index="competition">
-            <el-icon><Trophy /></el-icon>
+            <el-icon><CompetitionIcon /></el-icon>
             <span>赛事场</span>
           </el-menu-item>
         </el-menu>
@@ -167,7 +167,9 @@
           <!-- 快速入口卡片 -->
           <div class="quick-access-section">
             <div class="quick-access-card lab-access" @click="activeMenu = 'virtual-lab'">
-              <div class="access-icon">🧪</div>
+              <div class="access-icon">
+                <LabIcon style="width: 32px; height: 32px;" />
+              </div>
               <div class="access-info">
                 <h4>虚拟实验室</h4>
                 <p>探索 HTML 动画与 AI 小游戏</p>
@@ -175,7 +177,9 @@
               <div class="access-arrow">→</div>
             </div>
             <div class="quick-access-card competition-access" @click="activeMenu = 'competition'">
-              <div class="access-icon">🏆</div>
+              <div class="access-icon">
+                <CompetitionIcon style="width: 32px; height: 32px;" />
+              </div>
               <div class="access-info">
                 <h4>赛事场</h4>
                 <p>在线 OJ、题库训练、作文批改</p>
@@ -183,7 +187,9 @@
               <div class="access-arrow">→</div>
             </div>
             <div class="quick-access-card course-access" @click="activeMenu = 'course'">
-              <div class="access-icon">📚</div>
+              <div class="access-icon">
+                <CourseIcon style="width: 32px; height: 32px;" />
+              </div>
               <div class="access-info">
                 <h4>我的课程</h4>
                 <p>查看全部课程学习进度</p>
@@ -191,7 +197,9 @@
               <div class="access-arrow">→</div>
             </div>
             <div class="quick-access-card cloud-access" @click="activeMenu = 'cloud-disk'">
-              <div class="access-icon">☁️</div>
+              <div class="access-icon">
+                <CloudIcon style="width: 32px; height: 32px;" />
+              </div>
               <div class="access-info">
                 <h4>学习云盘</h4>
                 <p>管理你的学习资料</p>
@@ -223,7 +231,10 @@
             <!-- 课程信息和AI总结 -->
             <div class="info-section">
               <div class="course-info">
-                <h3>课程信息</h3>
+                <h3>
+                  <CourseIcon style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;" />
+                  课程信息
+                </h3>
                 <div class="course-card">
                   <!-- 加载状态 -->
                   <div v-if="loading" class="loading-container">
@@ -382,7 +393,10 @@
           <!-- 课程列表卡片 -->
           <div class="card course-list" :class="currentTheme">
             <div class="course-header" :class="currentTheme">
-              <h3>我的课程</h3>
+              <h3>
+                <CourseIcon style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;" />
+                我的课程
+              </h3>
               <div class="course-filter">
                 <el-select v-model="courseFilter" placeholder="课程状态">
                   <el-option label="全部" value="all" />
@@ -533,6 +547,17 @@ import type { DataInfo } from "@/utils/auth";
 import { UserProfile, SystemNotification, Todo, VirtualLab, Competition } from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
+
+// 导入新图标
+import LabIcon from "@/new student interface icons/lab-medical-test-svgrepo-com.svg?component";
+import CompetitionIcon from "@/new student interface icons/trophy-prize-medal-3-svgrepo-com.svg?component";
+import CourseIcon from "@/new student interface icons/books-and-people-svgrepo-com.svg?component";
+import CloudIcon from "@/new student interface icons/file-svgrepo-com.svg?component";
+
+// 导入侧边栏新图标
+import HomeIcon from "@/side bar new icons/school-svgrepo-com.svg?component";
+import NotificationIcon from "@/side bar new icons/notification-unread-lines-svgrepo-com.svg?component";
+import TodoIcon from "@/side bar new icons/list-tasks-svgrepo-com.svg?component";
 
 const router = useRouter();
 const route = useRoute();

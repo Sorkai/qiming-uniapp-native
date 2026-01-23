@@ -4,7 +4,10 @@
     <div class="competition-banner">
       <div class="banner-content">
         <div class="banner-left">
-          <h2>🏆 赛事场</h2>
+          <h2>
+            <CompetitionIcon style="width: 28px; height: 28px; vertical-align: middle; margin-right: 8px;" />
+            赛事场
+          </h2>
           <p>在线编程挑战、题库训练、作文批改，全方位提升你的能力！</p>
         </div>
         <div class="banner-right">
@@ -353,6 +356,7 @@ import { ref } from "vue";
 import { formatAvatar } from "@/utils/avatar";
 import { Clock, User, CircleCheck, Warning } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
+import CompetitionIcon from "@/new student interface icons/trophy-prize-medal-3-svgrepo-com.svg?component";
 
 defineProps<{
   currentTheme?: string;

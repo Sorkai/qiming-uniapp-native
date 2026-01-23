@@ -4,7 +4,10 @@
     <div class="lab-header">
       <div class="header-content">
         <div class="header-left">
-          <h2>🧪 虚拟实验室</h2>
+          <h2>
+            <LabIcon style="width: 28px; height: 28px; vertical-align: middle; margin-right: 8px;" />
+            虚拟实验室
+          </h2>
           <p>探索 HTML 动画与 AI 生成的互动小游戏，让学习更有趣！</p>
         </div>
         <div class="header-stats">
@@ -102,6 +105,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { Star, Clock, ArrowRight } from "@element-plus/icons-vue";
+import LabIcon from "@/new student interface icons/lab-medical-test-svgrepo-com.svg?component";
 
 defineProps<{
   currentTheme?: string;

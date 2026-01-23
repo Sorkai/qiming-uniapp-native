@@ -1,7 +1,10 @@
 <template>
   <div class="cloud-disk-container" :class="currentTheme">
     <div class="disk-header">
-      <h3>学习云盘</h3>
+      <h3>
+        <CloudIcon style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;" />
+        学习云盘
+      </h3>
       <div class="actions">
         <el-input
           v-model="searchQuery"
@@ -80,6 +83,7 @@ import {
   VideoCamera,
   Headset
 } from "@element-plus/icons-vue";
+import CloudIcon from "@/new student interface icons/file-svgrepo-com.svg?component";
 
 defineProps<{
   currentTheme?: string;
