@@ -140,6 +140,17 @@ const fetchUserDetail = async () => {
       userStore.SET_NICKNAME(userInfo.nickname || "");
       userStore.SET_AVATAR(userInfo.avatar || "");
 
+      // 根据 roleType 设置正确的角色
+      // roleType: 1=学生, 2=教师, 3=管理员
+      let roles: string[] = [];
+      if (userInfo.roleType === 3) {
+        roles = ["admin"];
+      } else if (userInfo.roleType === 2) {
+        roles = ["teacher"];
+      } else {
+        roles = ["common"];
+      }
+
       setToken({
         accessToken: getToken()?.accessToken || "",
         refreshToken: getToken()?.refreshToken || "",
@@ -147,7 +158,7 @@ const fetchUserDetail = async () => {
         username: userInfo.mobile,
         nickname: userInfo.nickname,
         avatar: userInfo.avatar || "",
-        roles: ["admin"],
+        roles: roles,
         permissions: ["*:*:*"],
         roleType: userInfo.roleType
       });

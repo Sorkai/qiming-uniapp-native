@@ -82,10 +82,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    v-loading="wholeMenus.length === 0"
-    class="horizontal-header"
-  >
+  <div v-loading="wholeMenus.length === 0" class="horizontal-header">
     <div v-if="showLogo" class="horizontal-header-left" @click="backTopMenu">
       <img :src="getLogo()" alt="logo" class="app-logo-img" />
       <span>{{ title }}</span>
@@ -179,9 +176,21 @@ onMounted(() => {
       <LayNotice id="header-notice" />
       <!-- 退出登录 -->
       <el-dropdown trigger="click">
-        <span class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10">
-          <img :src="avatarSrc" :style="avatarsStyle" class="ring-2 ring-white dark:ring-gray-800" @error="handleAvatarError" />
-          <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">{{ username }}</p>
+        <span
+          class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10"
+        >
+          <img
+            :src="avatarSrc"
+            :style="avatarsStyle"
+            class="ring-2 ring-white dark:ring-gray-800"
+            @error="handleAvatarError"
+          />
+          <p
+            v-if="username"
+            class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900"
+          >
+            {{ username }}
+          </p>
         </span>
         <template #dropdown>
           <el-dropdown-item @click="toAccountSettings">

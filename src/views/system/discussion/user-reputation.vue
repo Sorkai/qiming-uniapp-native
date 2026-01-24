@@ -584,6 +584,25 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .user-reputation-page {
+  :deep(.el-card) {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.3s;
+
+    html.dark & {
+      box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    &:hover {
+      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.1);
+
+      html.dark & {
+        box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.4);
+      }
+    }
+  }
+
   .search-form {
     :deep(.el-form-item) {
       margin-bottom: 0;

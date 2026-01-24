@@ -15,6 +15,8 @@ export default defineFakeRoute([
             nickname: "小铭",
             // 一个用户可能有多个角色
             roles: ["admin"],
+            // 角色类型 1:学生 2:教师 3:管理员
+            roleType: 3,
             // 按钮级别权限
             permissions: ["*:*:*"],
             accessToken: "eyJhbGciOiJIUzUxMiJ9.admin",
@@ -29,7 +31,9 @@ export default defineFakeRoute([
             avatar: "https://avatars.githubusercontent.com/u/52823142",
             username: "teacher",
             nickname: "教师张老师",
-            roles: ["admin", "teacher"],
+            roles: ["teacher"],
+            // 角色类型 1:学生 2:教师 3:管理员
+            roleType: 2,
             permissions: ["*:*:*"], // 给教师所有权限以便调试
             accessToken: "eyJhbGciOiJIUzUxMiJ9.teacher",
             refreshToken: "eyJhbGciOiJIUzUxMiJ9.teacherRefresh",
@@ -44,6 +48,8 @@ export default defineFakeRoute([
             username: "common",
             nickname: "小林",
             roles: ["common"],
+            // 角色类型 1:学生 2:教师 3:管理员
+            roleType: 1,
             permissions: ["permission:btn:add", "permission:btn:edit"],
             accessToken: "eyJhbGciOiJIUzUxMiJ9.common",
             refreshToken: "eyJhbGciOiJIUzUxMiJ9.commonRefresh",

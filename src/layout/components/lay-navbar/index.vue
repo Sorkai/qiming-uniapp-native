@@ -61,8 +61,9 @@ onMounted(() => {
   // 增加 console.log 方便调试
   console.log("[LayNavbar] 组件挂载，准备获取用户信息...");
   const userStore = useUserStoreHook();
-  
-  getUserDetail().then(res => {
+
+  getUserDetail()
+    .then(res => {
       console.log("[LayNavbar] 获取用户信息接口响应:", res);
       // 兼容两种响应结构
       const data = res.data || res;
@@ -71,15 +72,16 @@ onMounted(() => {
         const userInfo = data.userInfo;
         // 只要返回了信息就更新 store
         if (userInfo.avatar !== undefined) {
-             console.log("[LayNavbar] 更新头像:", userInfo.avatar);
-             userStore.SET_AVATAR(userInfo.avatar);
+          console.log("[LayNavbar] 更新头像:", userInfo.avatar);
+          userStore.SET_AVATAR(userInfo.avatar);
         }
         if (userInfo.nickname) {
-             userStore.SET_NICKNAME(userInfo.nickname);
+          userStore.SET_NICKNAME(userInfo.nickname);
         }
       }
-    }).catch(err => {
-        console.error("[LayNavbar] 获取用户信息失败:", err);
+    })
+    .catch(err => {
+      console.error("[LayNavbar] 获取用户信息失败:", err);
     });
 });
 
@@ -99,7 +101,9 @@ const {
 </script>
 
 <template>
-    <div class="navbar bg-white/10 dark:bg-white/[0.03] backdrop-blur-[20px] dark:backdrop-blur-[20px] border-b border-white/20 dark:border-white/10 transition-all duration-700">
+  <div
+    class="navbar bg-white/10 dark:bg-white/[0.03] backdrop-blur-[20px] dark:backdrop-blur-[20px] border-b border-white/20 dark:border-white/10 transition-all duration-700"
+  >
     <div class="flex items-center h-full flex-1 min-w-0 px-8">
       <LaySidebarTopCollapse
         v-if="device === 'mobile'"
@@ -109,14 +113,17 @@ const {
       />
 
       <div v-if="device !== 'mobile'" class="flex items-center ml-4">
-        <span class="text-xl font-black italic tracking-tighter text-blue-600/80 uppercase">Intelledu</span>
-        <div class="h-4 w-[1px] bg-gray-300 mx-4"></div>
+        <span
+          class="text-xl font-black italic tracking-tighter text-blue-600/80 uppercase"
+          >Intelledu</span
+        >
+        <div class="h-4 w-[1px] bg-gray-300 mx-4" />
         <span
           class="text-sm font-medium text-gray-500/80 dark:text-gray-400/80 font-mono tracking-tight mr-4 whitespace-nowrap"
         >
           {{ currentTime }}
         </span>
-        <div class="h-4 w-[1px] bg-gray-300 mr-4"></div>
+        <div class="h-4 w-[1px] bg-gray-300 mr-4" />
       </div>
 
       <LaySidebarBreadCrumb
@@ -127,14 +134,21 @@ const {
 
     <LayNavMix v-if="layout === 'mix'" />
 
-    <div v-if="/vertical|double/.test(layout)" class="vertical-header-right flex items-center justify-end px-4 h-full shrink-0">
+    <div
+      v-if="/vertical|double/.test(layout)"
+      class="vertical-header-right flex items-center justify-end px-4 h-full shrink-0"
+    >
       <!-- 全屏 -->
       <LaySidebarFullScreen id="full-screen" class="navbar-item" />
       <!-- 整体风格 (含夜间模式) -->
       <LaySidebarOverallStyle id="header-overall" class="navbar-item" />
-      
+
       <!-- 退出登录 -->
-      <el-dropdown trigger="click" @visible-change="v => (visible = v)" class="ml-2">
+      <el-dropdown
+        trigger="click"
+        class="ml-2"
+        @visible-change="v => (visible = v)"
+      >
         <span
           class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10"
         >
@@ -145,9 +159,12 @@ const {
           >
             {{ username?.charAt(0) || "U" }}
           </el-avatar>
-        <p v-if="username" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900">
-          {{ username }}
-        </p>
+          <p
+            v-if="username"
+            class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900"
+          >
+            {{ username }}
+          </p>
           <IconifyIconOffline
             :icon="ArrowDown"
             :class="[
@@ -172,7 +189,10 @@ const {
               />
               修改密码
             </el-dropdown-item>
-            <el-dropdown-item @click="logout" class="text-red-500 hover:text-red-600">
+            <el-dropdown-item
+              class="text-red-500 hover:text-red-600"
+              @click="logout"
+            >
               <IconifyIconOffline
                 :icon="LogoutCircleRLine"
                 class="mr-2 text-lg"
@@ -236,18 +256,17 @@ const {
 :global(html.dark) {
   .navbar {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    
+
     .navbar-item:hover {
       background: rgba(255, 255, 255, 0.05);
       color: #60a5fa;
     }
-    
+
     .navbar-item {
       color: #e5e7eb;
     }
   }
 }
-
 </style>
 
 <style lang="scss">
@@ -255,7 +274,8 @@ const {
 /* 针对 el-popper 容器 */
 .el-popper:has(.logout-menu) {
   border-radius: 16px !important;
-  overflow: hidden !important;background: transparent !important;
+  overflow: hidden !important;
+  background: transparent !important;
   border: none !important;
   box-shadow: none !important;
 
@@ -271,7 +291,9 @@ const {
   backdrop-filter: blur(40px);
   background-color: rgba(255, 255, 255, 0.95) !important;
   border: 1px solid rgba(220, 226, 247, 0.6) !important;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  box-shadow:
+    0 10px 25px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
   overflow: hidden !important;
   margin: 0 !important;
 
