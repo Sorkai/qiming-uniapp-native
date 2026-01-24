@@ -290,7 +290,7 @@ const getStrengthInfo = (score: number) => {
     { text: "很弱", color: "#f56c6c" },
     { text: "一般", color: "#e6a23c" },
     { text: "安全", color: "#67c23a" },
-    { text: "非常安全", color: "#409eff" }
+    { text: "非常安全", color: "#97b4f7" }
   ];
   return levels[score - 1] || { text: "", color: "#eee" };
 };
@@ -1494,7 +1494,7 @@ html.dark .premium-dialog {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #409eff;
+      background: #97b4f7;
       flex-shrink: 0;
     }
     

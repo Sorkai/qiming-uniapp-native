@@ -399,7 +399,7 @@ watch(
   height: 40px;
   border-radius: 10px;
   background-color: rgba(64, 158, 255, 0.1);
-  color: #409eff;
+  color: #97b4f7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -423,7 +423,7 @@ watch(
 .qa-history-item { background-color: #ffffff; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.3s ease; border: 1px solid #eef2f7; margin-bottom: 8px; }
 .dark .qa-history-item { background-color: #2a2a2a; border-color: #3a3a3a; }
 .qa-history-item:hover { background-color: #f5f9ff; border-color: #d0e5ff; transform: translateX(4px); }
-.qa-history-item.active { background-color: #ecf5ff; border-color: #409eff; border-left: 4px solid #409eff; }
+.qa-history-item.active { background-color: #ecf5ff; border-color: #97b4f7; border-left: 4px solid #97b4f7; }
 .qa-history-title { font-size: 14px; margin-bottom: 6px; color: #303133; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 .dark .qa-history-title { color: #e0e0e0; }
 .qa-history-time { font-size: 12px; color: #909399; }
@@ -503,7 +503,7 @@ watch(
 }
 
 .qa-input-wrapper:focus-within {
-  border-color: #409eff;
+  border-color: #97b4f7;
   background-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
 }
@@ -566,5 +566,5 @@ watch(
 /* 浅色模式颜色优化 */
 :deep(.light .qa-data-ul .text) { color: #604ffd; }
 :deep(.light .qa-section-title), :deep(.light .qa-chat-header h3), :deep(.light .qa-history-title) { color: #1a73e8; }
-:deep(.light .qa-message-time), :deep(.light .qa-chat-header p) { color: #409eff; }
+:deep(.light .qa-message-time), :deep(.light .qa-chat-header p) { color: #97b4f7; }
 </style>

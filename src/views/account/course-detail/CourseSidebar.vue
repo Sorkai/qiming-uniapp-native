@@ -90,7 +90,7 @@ const sidebarMenuItems = [
     inset: 0;
     border-radius: 24px;
     padding: 1.5px;
-    background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+    background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
     background-size: 200% 100%;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
@@ -147,7 +147,7 @@ const sidebarMenuItems = [
 
     &.active {
       .hover-box {
-        background: #409eff;
+        background: #97b4f7;
         box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
 
         .side-name {
@@ -176,7 +176,7 @@ const sidebarMenuItems = [
     position: relative;
 
     &.active {
-      background: #409eff;
+      background: #97b4f7;
       box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
 
       .side-name {
@@ -200,7 +200,7 @@ const sidebarMenuItems = [
       }
 
       svg {
-        color: #409eff;
+        color: #97b4f7;
       }
     }
 

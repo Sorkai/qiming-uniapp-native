@@ -261,7 +261,7 @@ const handleClose = () => (visible.value = false);
 }
 .options .label {
   margin-right: 12px;
-  color: #409eff;
+  color: #97b4f7;
   font-weight: bold;
 }
 .wrap.dark .options .label {
@@ -283,7 +283,7 @@ const handleClose = () => (visible.value = false);
   border-color: #444;
 }
 .uans {
-  color: #409eff;
+  color: #97b4f7;
 }
 .cans {
   color: #67c23a;
@@ -332,7 +332,7 @@ const handleClose = () => (visible.value = false);
   padding: 16px;
   border-radius: 10px;
   font-size: 14px;
-  border-left: 4px solid #409eff;
+  border-left: 4px solid #97b4f7;
 }
 .wrap.dark .exp {
   background: #333;

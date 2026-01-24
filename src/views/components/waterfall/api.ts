@@ -4,7 +4,7 @@ export function randomID(length = 6) {
   ).toString(36);
 }
 
-const COLORS = ["#409EFF", "#67C23A", "#E6A23C", "#F56C6C", "#909399"];
+const COLORS = ["#97b4f7", "#67C23A", "#E6A23C", "#F56C6C", "#909399"];
 
 function getRandomNum(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;

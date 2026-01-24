@@ -27,7 +27,7 @@ export function useLayout() {
         theme: $config?.Theme ?? "light",
         darkMode: $config?.DarkMode ?? false,
         sidebarStatus: $config?.SidebarStatus ?? true,
-        epThemeColor: $config?.EpThemeColor ?? "#409EFF",
+        epThemeColor: $config?.EpThemeColor ?? "#97b4f7",
         themeColor: $config?.Theme ?? "light",
         overallStyle: $config?.OverallStyle ?? "light"
       };

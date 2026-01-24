@@ -198,7 +198,7 @@ const initGradesChart = () => {
           {
             value: props.courseScores.courseScore,
             name: "课时成绩",
-            itemStyle: { color: "#409eff" }
+            itemStyle: { color: "#97b4f7" }
           },
           {
             value: props.courseScores.workScore,
@@ -348,7 +348,7 @@ const initClassChart = () => {
         borderColor: "transparent",
         backgroundColor: props.currentTheme === "dark" ? "#333" : "#f4f4f4",
         fillerColor: "rgba(64, 158, 255, 0.2)",
-        handleStyle: { color: "#409eff" }
+        handleStyle: { color: "#97b4f7" }
       }
     ],
     series: [
@@ -356,7 +356,7 @@ const initClassChart = () => {
         name: "个人得分",
         type: "bar",
         data: classComparisonData.value.personalScores,
-        itemStyle: { color: "#409eff", borderRadius: [4, 4, 0, 0] }
+        itemStyle: { color: "#97b4f7", borderRadius: [4, 4, 0, 0] }
       },
       {
         name: "班级平均",
@@ -780,7 +780,7 @@ onUnmounted(() => {
   &:hover {
     box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
     transform: translateY(-5px);
-    border-color: #409eff;
+    border-color: #97b4f7;
   }
 
   .grades-card-header {
@@ -791,7 +791,7 @@ onUnmounted(() => {
 
     .el-icon {
       font-size: 24px;
-      color: #409eff;
+      color: #97b4f7;
     }
 
     h3 {
@@ -1036,10 +1036,10 @@ onUnmounted(() => {
 
       .teacher-comment {
         background: #f0f9ff;
-        border-left: 3px solid #409eff;
+        border-left: 3px solid #97b4f7;
         padding: 12px 16px;
         border-radius: 4px;
-        .comment-label { color: #409eff; font-weight: 600; margin-bottom: 4px; }
+        .comment-label { color: #97b4f7; font-weight: 600; margin-bottom: 4px; }
       }
     }
   }

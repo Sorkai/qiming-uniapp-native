@@ -262,7 +262,7 @@ const openHtmlAnimInNew = () => {
 
 .animation-card:hover {
   transform: translateY(-10px);
-  /* 统一使用系统标准蓝色 #409eff */
+  /* 统一使用系统标准蓝色 #97b4f7 */
   box-shadow: 0 20px 40px rgba(64, 158, 255, 0.2);
   border-color: rgba(64, 158, 255, 0.4);
 }
@@ -499,7 +499,7 @@ const openHtmlAnimInNew = () => {
   padding: 0 12px;
   gap: 6px;
   background: rgba(64, 158, 255, 0.1);
-  color: #409eff;
+  color: #97b4f7;
   border: 1px solid rgba(64, 158, 255, 0.2);
 }
 
@@ -509,7 +509,7 @@ const openHtmlAnimInNew = () => {
 }
 
 .action-btn.capture-btn:hover {
-  background: #409eff;
+  background: #97b4f7;
   color: white;
 }
 
@@ -559,7 +559,7 @@ const openHtmlAnimInNew = () => {
   justify-content: center;
   background: inherit;
   z-index: 10;
-  color: #409eff;
+  color: #97b4f7;
 }
 
 .preview-iframe {

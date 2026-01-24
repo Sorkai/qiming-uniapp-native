@@ -23,7 +23,7 @@ defineOptions({
     <ReNormalCountTo
       prefix="$"
       :duration="1000"
-      :color="'#409EFF'"
+      :color="'#97b4f7'"
       :fontSize="'2em'"
       :startVal="1"
       :endVal="1000"

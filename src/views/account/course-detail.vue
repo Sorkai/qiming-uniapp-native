@@ -876,7 +876,7 @@ onBeforeUnmount(() => {
 }
 
 .clear-chat-confirm-btn {
-  background: linear-gradient(135deg, #409eff 0%, #604ffd 100%) !important;
+  background: linear-gradient(135deg, #97b4f7 0%, #604ffd 100%) !important;
   border: none !important;
   color: white !important;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
@@ -989,7 +989,7 @@ html.dark {
         transition: all 0.3s ease;
 
         &:focus {
-          border-color: #409eff;
+          border-color: #97b4f7;
           box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
         }
       }
@@ -1005,7 +1005,7 @@ html.dark {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+      background: linear-gradient(135deg, #97b4f7 0%, #66b1ff 100%);
       border-radius: 50%;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -1048,7 +1048,7 @@ html.dark {
       inset: -2px;
       border-radius: 22px;
       padding: 2px;
-      background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+      background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
       background-size: 200% 100%;
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       mask-composite: exclude;
@@ -1072,7 +1072,7 @@ html.dark {
       inset: 0;
       border-radius: 20px;
       padding: 1.5px;
-      background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+      background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
       background-size: 200% 100%;
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       mask-composite: exclude;
@@ -1225,7 +1225,7 @@ html.dark {
         transition: all 0.3s ease;
 
         &:focus {
-          border-color: #409eff;
+          border-color: #97b4f7;
           box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
         }
       }
@@ -1237,7 +1237,7 @@ html.dark {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+      background: linear-gradient(135deg, #97b4f7 0%, #66b1ff 100%);
       border-radius: 12px;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -1307,7 +1307,7 @@ html.dark {
       inset: 0;
       border-radius: 16px;
       padding: 1.5px;
-      background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+      background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
       background-size: 200% 100%;
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       mask-composite: exclude;
@@ -1343,7 +1343,7 @@ html.dark {
       .catalogue_title3 {
         font-size: 13px;
         font-weight: 600;
-        color: #409eff;
+        color: #97b4f7;
         margin-right: 8px;
       }
 
@@ -1422,7 +1422,7 @@ html.dark {
     }
 
     .el-progress-bar__inner {
-      background: linear-gradient(90deg, #409eff, #66b1ff);
+      background: linear-gradient(90deg, #97b4f7, #66b1ff);
       border-radius: 4px;
     }
   }

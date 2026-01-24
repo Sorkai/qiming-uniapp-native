@@ -163,7 +163,7 @@ const toggleExplain = (idx: number) => {
   color: #666;
 }
 .answer-line .answer {
-  color: #409eff;
+  color: #97b4f7;
 }
 .answer-line .correct {
   color: #67c23a;

@@ -488,7 +488,7 @@ const updateMasteryPieChart = () => {
   const chartData = rawData.filter(d => d.value > 0);
   const colors = isDark 
     ? ["#4facfe", "#00f2fe", "#2ecc71", "#f1c40f"]
-    : ["#409eff", "#67c23a", "#e6a23c", "#f56c6c"];
+    : ["#97b4f7", "#67c23a", "#e6a23c", "#f56c6c"];
 
   masteryPieChart.setOption({
     tooltip: {
@@ -597,8 +597,8 @@ const updateMasterySummaryChart = () => {
         type: "bar",
         data: dataValues.map((v, i) => {
           const colors = isDark 
-            ? [["#4facfe", "#00f2fe"], ["#72D5FF", "#4facfe"], ["#a8b8e8", "#72D5FF"], ["#c8d4f0", "#a8b8e8"]]
-            : [["#409eff", "#72D5FF"], ["#604ffd", "#409eff"], ["#72D5FF", "#CFD8F0"], ["#CFD8F0", "#a8b8e8"]];
+            ? [["#4facfe", "#00f2fe"], ["#72D5FF", "#4facfe"], ["#a8b8e8", "#72D5FF"], ["#97b4f7", "#a8b8e8"]]
+            : [["#97b4f7", "#72D5FF"], ["#604ffd", "#97b4f7"], ["#72D5FF", "#CFD8F0"], ["#CFD8F0", "#a8b8e8"]];
           const [c1, c2] = colors[i];
           return {
             value: v,
@@ -768,7 +768,7 @@ onUnmounted(() => {
     font-weight: 800;
     line-height: 1;
     letter-spacing: -1px;
-    background: linear-gradient(135deg, #409eff, #604ffd);
+    background: linear-gradient(135deg, #97b4f7, #604ffd);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -812,7 +812,7 @@ onUnmounted(() => {
       content: "";
       width: 4px;
       height: 16px;
-      background: #409eff;
+      background: #97b4f7;
       border-radius: 2px;
       margin-right: 8px;
     }
@@ -846,7 +846,7 @@ onUnmounted(() => {
 .chapter-section:hover {
   transform: translateY(-6px) scale(1.01);
   box-shadow: 0 20px 40px -15px rgba(90, 107, 138, 0.25);
-  border-color: #409eff;
+  border-color: #97b4f7;
 }
 
 .dark .chapter-section {
@@ -890,7 +890,7 @@ onUnmounted(() => {
 }
 
 .point-section > .collapsible-header.is-expanded {
-  border-color: #409eff;
+  border-color: #97b4f7;
   box-shadow: 0 10px 30px -10px rgba(64, 158, 255, 0.3);
 }
 
@@ -904,7 +904,7 @@ onUnmounted(() => {
   transition: transform 0.3s;
 }
 
-.point-item:hover { transform: translateX(8px); border-color: #409eff; background: #fff; }
+.point-item:hover { transform: translateX(8px); border-color: #97b4f7; background: #fff; }
 
 .dark .point-item { background: rgba(42, 42, 53, 0.4); border-color: rgba(61, 63, 85, 0.5); }
 
@@ -915,7 +915,7 @@ onUnmounted(() => {
 
 .count-badge {
   padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold;
-  background: rgba(64, 158, 255, 0.1); color: #409eff; margin-right: 12px;
+  background: rgba(64, 158, 255, 0.1); color: #97b4f7; margin-right: 12px;
 }
 
 .dark .count-badge { background: rgba(79, 172, 254, 0.1); color: #4facfe; }

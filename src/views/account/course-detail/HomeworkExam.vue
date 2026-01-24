@@ -383,15 +383,15 @@ const viewExam = (exam: any) => {
 }
 
 .dark :deep(.homework-tabs .el-tabs__item.is-active) {
-  color: #409eff;
+  color: #97b4f7;
 }
 
 .dark :deep(.homework-tabs .el-tabs__item:hover) {
-  color: #409eff;
+  color: #97b4f7;
 }
 
 .dark :deep(.homework-tabs .el-tabs__active-bar) {
-  background-color: #409eff;
+  background-color: #97b4f7;
 }
 
 .dark :deep(.homework-tabs .el-tabs__nav-wrap::after) {
@@ -416,7 +416,7 @@ const viewExam = (exam: any) => {
 /* 浅色模式次要信息颜色优化 */
 :deep(.light .homework-meta),
 :deep(.light .exam-meta) {
-  color: #409eff;
+  color: #97b4f7;
 }
 
 :deep(.light .homework-title),

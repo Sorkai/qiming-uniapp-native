@@ -40,7 +40,7 @@
         <div class="ai-dialog-header-bar">
           <div class="header-left">
             <div class="header-back-btn spotlight-button" @click="closeAiDialog">
-              <svg viewBox="0 0 24 24" width="18" height="18" stroke="#409eff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="#97b4f7" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </div>
           </div>
           <div class="header-title-wrap">
@@ -385,7 +385,7 @@ defineExpose({
       inset: 0;
       border-radius: inherit;
       padding: 1.5px;
-      background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+      background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
       background-size: 200% 100%;
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       mask-composite: exclude;
@@ -487,7 +487,7 @@ defineExpose({
   display: inline-block;
   animation: dot-pulse 1.5s infinite;
   margin: 0 2px;
-  color: #409eff;
+  color: #97b4f7;
   font-weight: bold;
 }
 @keyframes dot-pulse {

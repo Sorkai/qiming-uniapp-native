@@ -844,7 +844,7 @@ onBeforeUnmount(() => {
     .score {
       font-size: 36px;
       font-weight: bold;
-      color: #409eff;
+      color: #97b4f7;
     }
 
     .total-score {

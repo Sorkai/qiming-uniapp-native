@@ -34,10 +34,10 @@ async function initAiPPT() {
         background: "linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)", // 与 welcome banner 一致的背景色
         mode: "light", // light 亮色模式, dark 暗色模式
         lang: "zh", // 国际化
-        // 自定义 CSS 样式 - 使用平台统一蓝色 #409EFF
-        // DaisyUI 主题色覆盖：#409EFF 转 HSL = 210 100% 62%
+        // 自定义 CSS 样式 - 使用平台统一蓝色 #97b4f7
+        // DaisyUI 主题色覆盖：#97b4f7 转 HSL = 210 100% 62%
         css: `
-          /* ========== DaisyUI 主题色覆盖 - 平台统一蓝色 #409EFF ========== */
+          /* ========== DaisyUI 主题色覆盖 - 平台统一蓝色 #97b4f7 ========== */
           
           /* 覆盖 DaisyUI CSS 变量 - 这是关键！ */
           *, *::before, *::after,
@@ -45,29 +45,29 @@ async function initAiPPT() {
             --p: 210 100% 62% !important;
             --pf: 210 100% 56% !important;
             --pc: 0 0% 100% !important;
-            --primary: #409EFF !important;
+            --primary: #97b4f7 !important;
             --primary-focus: #3a8ee6 !important;
             --primary-content: #ffffff !important;
             
             --s: 210 100% 62% !important;
             --sf: 210 100% 56% !important;
             --sc: 0 0% 100% !important;
-            --secondary: #409EFF !important;
+            --secondary: #97b4f7 !important;
             
             --a: 210 100% 62% !important;
             --af: 210 100% 56% !important;
             --ac: 0 0% 100% !important;
-            --accent: #409EFF !important;
+            --accent: #97b4f7 !important;
             
             --in: 210 100% 62% !important;
-            --info: #409EFF !important;
+            --info: #97b4f7 !important;
           }
           
           /* ===== 对话气泡 - chat-bubble ===== */
           .chat-bubble,
           .chat-bubble-primary,
           .chat-bubble.chat-bubble-primary {
-            background-color: #409EFF !important;
+            background-color: #97b4f7 !important;
             --tw-bg-opacity: 1 !important;
             color: white !important;
           }
@@ -75,8 +75,8 @@ async function initAiPPT() {
           /* ===== 主要按钮 ===== */
           .btn-primary,
           .btn.btn-primary {
-            background-color: #409EFF !important;
-            border-color: #409EFF !important;
+            background-color: #97b4f7 !important;
+            border-color: #97b4f7 !important;
             color: white !important;
             --tw-bg-opacity: 1 !important;
           }
@@ -90,8 +90,8 @@ async function initAiPPT() {
           /* ===== 修复"立即创作"按钮 - 移除灰色覆盖 ===== */
           .btn.btn-primary[class*="bg-base-200"],
           .btn.btn-primary.\!bg-base-200 {
-            background-color: #409EFF !important;
-            background: #409EFF !important;
+            background-color: #97b4f7 !important;
+            background: #97b4f7 !important;
             color: white !important;
           }
           
@@ -103,7 +103,7 @@ async function initAiPPT() {
           /* ===== 选中的功能卡片（AI智能创作等）- 蓝色背景白色文字 ===== */
           .\\!bg-primary,
           [class*="!bg-primary"] {
-            background-color: #409EFF !important;
+            background-color: #97b4f7 !important;
           }
           
           /* 选中状态：卡片内部所有文字都是白色（包括子元素） */
@@ -123,14 +123,14 @@ async function initAiPPT() {
           .bg-base-100 .text-primary,
           .bg-base-200 .text-primary,
           div:not([class*="!bg-primary"]) > .text-primary {
-            color: #409EFF !important;
+            color: #97b4f7 !important;
           }
           
           /* ===== 边框颜色 ===== */
           .border-primary,
           .border-primary\/10,
           [class*="border-primary"] {
-            border-color: #409EFF !important;
+            border-color: #97b4f7 !important;
           }
           
           .focus-within\:border-primary-focus\/20:focus-within {
@@ -141,7 +141,7 @@ async function initAiPPT() {
           .bg-primary,
           .bg-primary\/10,
           [class*="bg-primary"] {
-            background-color: #409EFF !important;
+            background-color: #97b4f7 !important;
           }
           
           .hover\:bg-primary\/10:hover {
@@ -149,7 +149,7 @@ async function initAiPPT() {
           }
           
           .hover\:text-primary:hover {
-            color: #409EFF !important;
+            color: #97b4f7 !important;
           }
           
           /* ===== 阴影 ===== */
@@ -166,18 +166,18 @@ async function initAiPPT() {
           /* ===== 开关 ===== */
           .hdd-switch-checked,
           .hdd-switch[aria-checked="true"] {
-            background-color: #409EFF !important;
+            background-color: #97b4f7 !important;
           }
           
           /* ===== 选择框选中项 ===== */
           .hdd-select-item-option-selected {
             background-color: rgba(64, 158, 255, 0.1) !important;
-            color: #409EFF !important;
+            color: #97b4f7 !important;
           }
           
           /* ===== 链接 ===== */
           a, .link {
-            color: #409EFF !important;
+            color: #97b4f7 !important;
           }
           
           a:hover, .link:hover {
@@ -212,7 +212,7 @@ async function initAiPPT() {
           
           /* ===== 进度条 ===== */
           .progress-primary::-webkit-progress-value {
-            background-color: #409EFF !important;
+            background-color: #97b4f7 !important;
           }
           
           /* ===== 强制覆盖内联样式 ===== */

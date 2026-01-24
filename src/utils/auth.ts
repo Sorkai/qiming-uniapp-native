@@ -156,7 +156,7 @@ export function resetThemeToDefault() {
     layout.darkMode = false;
     layout.overallStyle = "light";
     layout.theme = getConfig().Theme || "light";
-    layout.epThemeColor = getConfig().EpThemeColor || "#409EFF";
+    layout.epThemeColor = getConfig().EpThemeColor || "#97b4f7";
     storageLocal().setItem(layoutKey, layout);
   }
 

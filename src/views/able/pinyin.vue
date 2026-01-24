@@ -30,7 +30,7 @@ defineOptions({
 .custom {
   /* 汉字的样式 */
   :deep(.py-chinese-item) {
-    color: #409eff;
+    color: #97b4f7;
   }
 
   /* 拼音的样式 */

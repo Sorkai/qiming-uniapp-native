@@ -1158,13 +1158,13 @@ defineExpose({
 
     .el-icon {
       font-size: 24px;
-      color: #409eff;
+      color: #97b4f7;
       margin-bottom: 8px;
     }
 
     span {
       font-size: 14px;
-      color: #409eff;
+      color: #97b4f7;
     }
   }
 }

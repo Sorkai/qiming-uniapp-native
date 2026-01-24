@@ -188,7 +188,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   cursor: pointer;
   background: rgba(64, 158, 255, 0.12);
   border-radius: 12px;
-  color: #409eff;
+  color: #97b4f7;
   transition: all 0.3s ease;
 }
 
@@ -201,7 +201,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   margin-left: 20px;
   font-size: 20px;
   font-weight: 700;
-  color: #409eff;
+  color: #97b4f7;
   white-space: nowrap;
 }
 

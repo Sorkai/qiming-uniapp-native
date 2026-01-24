@@ -575,7 +575,7 @@ onBeforeUnmount(() => {
     inset: 0;
     border-radius: 24px;
     padding: 1.5px;
-    background: linear-gradient(90deg, #409eff, #604ffd, #409eff);
+    background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
     background-size: 200% 100%;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;

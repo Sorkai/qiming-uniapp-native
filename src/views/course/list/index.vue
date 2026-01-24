@@ -1574,7 +1574,7 @@ onMounted(async () => {
 .chapter-title {
   margin-bottom: 8px;
   padding-left: 8px;
-  border-left: 3px solid #409eff;
+  border-left: 3px solid #97b4f7;
   font-weight: bold;
   font-size: 16px;
 }

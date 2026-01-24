@@ -8,7 +8,7 @@ defineOptions({
 
 const local = ref();
 const preventLocal = ref();
-const color = ref("#409EFF");
+const color = ref("#97b4f7");
 const value = ref("vue-pure-admin");
 const { setWatermark, clear } = useWatermark();
 const { setWatermark: setLocalWatermark, clear: clearLocal } =

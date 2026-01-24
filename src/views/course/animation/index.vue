@@ -542,7 +542,7 @@ onMounted(()=>{
 .actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .display-info { margin-top:6px; font-size:12px; color:#606266; display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 .display-info .divider { width:1px; height:14px; background:#dcdfe6; display:inline-block; }
-.polling-indicator { color:#409eff; }
+.polling-indicator { color:#97b4f7; }
 .empty-block { padding:60px 0; }
 .filter-row { display:flex; justify-content:space-between; align-items:center; margin:10px 0 14px; }
 .preview-wrapper { height:70vh; }

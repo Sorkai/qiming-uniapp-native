@@ -1039,7 +1039,7 @@ onUnmounted(() => {
     left: 0;
     z-index: 1000;
     height: 64px;
-    background: linear-gradient(45deg, #c8d4f0, #dce2f7);
+    background: linear-gradient(45deg, #97b4f7, #dce2f7);
     box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: all 0.3s ease;
 
@@ -1288,7 +1288,7 @@ onUnmounted(() => {
           .avatar-ring {
             position: absolute;
             inset: -6px;
-            border: 2px dashed #c8d4f0;
+            border: 2px dashed #97b4f7;
             border-radius: 50%;
             transition: all 0.4s ease;
             animation: rotate 12s linear infinite;
@@ -1359,7 +1359,7 @@ onUnmounted(() => {
             top: 50%;
             width: 4px;
             height: 0;
-            background: linear-gradient(180deg, #c8d4f0, #dce2f7);
+            background: linear-gradient(180deg, #97b4f7, #dce2f7);
             border-radius: 0 4px 4px 0;
             transform: translateY(-50%);
             transition: height 0.3s ease;
@@ -1413,7 +1413,7 @@ onUnmounted(() => {
 
             &::before {
               height: 70%;
-              background: linear-gradient(180deg, #a8b8e8, #c8d4f0);
+              background: linear-gradient(180deg, #a8b8e8, #97b4f7);
 
               .dark & {
                 background: linear-gradient(180deg, #38bdf8, #0ea5e9);
@@ -1853,7 +1853,7 @@ onUnmounted(() => {
               padding: 16px;
               overflow: hidden;
               color: #333;
-              background: linear-gradient(135deg, #dce2f7, #c8d4f0);
+              background: linear-gradient(135deg, #dce2f7, #97b4f7);
               border-radius: 12px;
               box-shadow: 0 4px 12px rgb(220 226 247 / 60%);
 
@@ -1931,7 +1931,7 @@ onUnmounted(() => {
           justify-content: space-between;
           margin-bottom: 20px;
           padding: 16px 20px;
-          background: linear-gradient(135deg, #dce2f7, #c8d4f0);
+          background: linear-gradient(135deg, #dce2f7, #97b4f7);
           border-radius: 12px;
 
           .dark & {
@@ -1955,7 +1955,7 @@ onUnmounted(() => {
           .course-filter {
             :deep(.el-select) {
               .el-select__wrapper {
-                background: #c8d4f0;
+                background: #97b4f7;
                 border: none;
                 border-radius: 8px;
                 box-shadow: none;
@@ -2019,7 +2019,7 @@ onUnmounted(() => {
             }
 
             &:hover {
-              border-color: #c8d4f0;
+              border-color: #97b4f7;
               box-shadow: 0 8px 24px rgb(200 212 240 / 50%);
               transform: translateY(-6px);
             }
