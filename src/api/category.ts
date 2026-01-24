@@ -17,7 +17,7 @@ export const getCategoryList = (params: {
         categoryId: number;
         name: string;
       }>;
-    }
+    };
   }>("get", "/edu/backend/v1/course/category/list", { params });
 };
 

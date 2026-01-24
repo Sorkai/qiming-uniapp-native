@@ -5,7 +5,14 @@
       <div class="header-content">
         <div class="header-left">
           <h2>
-            <LabIcon style="width: 28px; height: 28px; vertical-align: middle; margin-right: 8px;" />
+            <LabIcon
+              style="
+                width: 28px;
+                height: 28px;
+                margin-right: 8px;
+                vertical-align: middle;
+              "
+            />
             虚拟实验室
           </h2>
           <p>探索 HTML 动画与 AI 生成的互动小游戏，让学习更有趣！</p>
@@ -51,7 +58,10 @@
           <el-tag v-if="item.featured" type="warning" class="featured-tag">
             精选
           </el-tag>
-          <el-tag :type="getCategoryTagType(item.category) as 'success' | 'primary' | 'warning' | 'info' | 'danger'" class="category-tag">
+          <el-tag
+            :type="getCategoryTagType(item.category)"
+            class="category-tag"
+          >
             {{ getCategoryLabel(item.category) }}
           </el-tag>
         </div>
@@ -79,7 +89,10 @@
     </div>
 
     <!-- 空状态 -->
-    <el-empty v-if="filteredItems.length === 0" description="暂无相关实验内容" />
+    <el-empty
+      v-if="filteredItems.length === 0"
+      description="暂无相关实验内容"
+    />
 
     <!-- 实验室弹窗 -->
     <el-dialog
@@ -96,7 +109,7 @@
           frameborder="0"
           allowfullscreen
           class="lab-iframe"
-        ></iframe>
+        />
       </div>
     </el-dialog>
   </div>
@@ -281,10 +294,10 @@ const handleDialogClose = () => {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgb(102 126 234 / 30%);
-    
+
     .dark & {
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 32px rgb(0 0 0 / 40%);
     }
 
     .header-content {
@@ -339,11 +352,11 @@ const handleDialogClose = () => {
           padding: 12px 24px;
           font-size: 14px;
           border-radius: 20px;
-          
+
           .dark & {
+            color: #94a3b8;
             background-color: #1e293b;
             border-color: #334155;
-            color: #94a3b8;
           }
         }
 
@@ -363,9 +376,9 @@ const handleDialogClose = () => {
 
       .el-radio-button__orig-radio:checked + .el-radio-button__inner {
         .dark & {
+          color: #fff;
           background-color: #3b82f6;
           border-color: #3b82f6;
-          color: #fff;
           box-shadow: -1px 0 0 0 #3b82f6;
         }
       }
@@ -385,18 +398,18 @@ const handleDialogClose = () => {
     border-radius: 16px;
     box-shadow: 0 4px 20px rgb(0 0 0 / 8%);
     transition: all 0.3s ease;
-    
+
     .dark & {
       background: #1e293b;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
     }
 
     &:hover {
       box-shadow: 0 12px 40px rgb(0 0 0 / 15%);
       transform: translateY(-8px);
-      
+
       .dark & {
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 12px 40px rgb(0 0 0 / 50%);
       }
 
       .card-preview .preview-icon {
@@ -414,7 +427,7 @@ const handleDialogClose = () => {
       align-items: center;
       justify-content: center;
       height: 140px;
-      
+
       .dark & {
         opacity: 0.9;
       }
@@ -445,7 +458,7 @@ const handleDialogClose = () => {
         font-size: 16px;
         font-weight: 600;
         color: #333;
-        
+
         .dark & {
           color: #f1f5f9;
         }
@@ -457,7 +470,7 @@ const handleDialogClose = () => {
         font-size: 13px;
         line-height: 1.5;
         color: #666;
-        
+
         .dark & {
           color: #94a3b8;
         }
@@ -468,23 +481,25 @@ const handleDialogClose = () => {
         gap: 16px;
         font-size: 12px;
         color: #999;
-        
+
         .dark & {
           color: #64748b;
         }
 
         span {
           display: flex;
-          align-items: center;
           gap: 4px;
+          align-items: center;
 
           &.difficulty {
             &.easy {
               color: #10b981;
             }
+
             &.medium {
               color: #f59e0b;
             }
+
             &.hard {
               color: #ef4444;
             }

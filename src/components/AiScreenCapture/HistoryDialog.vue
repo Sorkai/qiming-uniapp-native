@@ -17,18 +17,13 @@ const emit = defineEmits<{
   (e: "load", session: ChatSession): void;
 }>();
 
-const {
-  historyList,
-  historyTotal,
-  fetchHistory,
-  removeHistory,
-  loadSession
-} = useAiChat();
+const { historyList, historyTotal, fetchHistory, removeHistory, loadSession } =
+  useAiChat();
 
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit("update:visible", val)
+  set: val => emit("update:visible", val)
 });
 
 // 分页
@@ -83,19 +78,19 @@ const formatTime = (timestamp: number) => {
   const date = new Date(timestamp);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
-  
+
   // 今天
   if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
     return `今天 ${date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`;
   }
-  
+
   // 昨天
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   if (date.getDate() === yesterday.getDate()) {
     return `昨天 ${date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`;
   }
-  
+
   // 其他
   return date.toLocaleDateString("zh-CN", {
     month: "2-digit",
@@ -114,11 +109,14 @@ onMounted(() => {
 
 // 监听可见性变化
 import { watch } from "vue";
-watch(() => props.visible, (val) => {
-  if (val) {
-    loadHistory();
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      loadHistory();
+    }
   }
-});
+);
 </script>
 
 <template>
@@ -163,14 +161,18 @@ watch(() => props.visible, (val) => {
         >
           <div class="item-content">
             <div class="item-header">
-              <span class="item-title">{{ session.title || "未命名会话" }}</span>
+              <span class="item-title">{{
+                session.title || "未命名会话"
+              }}</span>
               <span class="item-time">{{ formatTime(session.updatedAt) }}</span>
             </div>
             <div class="item-preview">
               {{ session.messages[0]?.content?.slice(0, 50) || "无内容" }}...
             </div>
             <div class="item-meta">
-              <span class="message-count">{{ session.messages.length }} 条消息</span>
+              <span class="message-count"
+                >{{ session.messages.length }} 条消息</span
+              >
             </div>
           </div>
           <div class="item-actions">
@@ -214,15 +216,15 @@ watch(() => props.visible, (val) => {
 
 .dialog-header {
   display: flex;
-  align-items: center;
   gap: 10px;
+  align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
   color: #334155;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
 
   html.dark & {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     color: #e2e8f0;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   }
 
   .history-icon {
@@ -311,12 +313,12 @@ watch(() => props.visible, (val) => {
 }
 
 .item-preview {
-  font-size: 13px;
-  color: var(--el-text-color-regular);
+  margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
   white-space: nowrap;
-  margin-bottom: 8px;
 }
 
 .item-meta {

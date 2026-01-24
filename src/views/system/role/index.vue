@@ -332,7 +332,6 @@ onMounted(() => {
   margin: 0;
 }
 
-
 .search-form {
   :deep(.el-form-item) {
     margin-bottom: 12px;

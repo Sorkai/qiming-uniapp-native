@@ -95,7 +95,12 @@
       </div>
 
       <!-- 作文列表 -->
-      <el-table v-loading="loading" :data="essayList" stripe style="width: 100%">
+      <el-table
+        v-loading="loading"
+        :data="essayList"
+        stripe
+        style="width: 100%"
+      >
         <el-table-column prop="essayId" label="ID" width="80" align="center" />
         <el-table-column prop="studentName" label="学生姓名" width="120" />
         <el-table-column prop="className" label="班级" width="120" />
@@ -106,8 +111,18 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="wordCount" label="字数" width="80" align="center" />
-        <el-table-column prop="aiScore" label="AI评分" width="100" align="center">
+        <el-table-column
+          prop="wordCount"
+          label="字数"
+          width="80"
+          align="center"
+        />
+        <el-table-column
+          prop="aiScore"
+          label="AI评分"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             <span v-if="row.aiScore" :class="getScoreClass(row.aiScore)">
               {{ row.aiScore }}
@@ -115,9 +130,17 @@
             <span v-else class="text-gray">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="teacherScore" label="教师评分" width="100" align="center">
+        <el-table-column
+          prop="teacherScore"
+          label="教师评分"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
-            <span v-if="row.teacherScore" :class="getScoreClass(row.teacherScore)">
+            <span
+              v-if="row.teacherScore"
+              :class="getScoreClass(row.teacherScore)"
+            >
               {{ row.teacherScore }}
             </span>
             <span v-else class="text-gray">-</span>
@@ -130,13 +153,28 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="submitTime" label="提交时间" width="160" align="center" />
+        <el-table-column
+          prop="submitTime"
+          label="提交时间"
+          width="160"
+          align="center"
+        />
         <el-table-column label="操作" width="180" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" link @click="viewEssayDetail(row)">
+            <el-button
+              type="primary"
+              size="small"
+              link
+              @click="viewEssayDetail(row)"
+            >
               查看详情
             </el-button>
-            <el-button type="success" size="small" link @click="openReviewDialog(row)">
+            <el-button
+              type="success"
+              size="small"
+              link
+              @click="openReviewDialog(row)"
+            >
               批改
             </el-button>
           </template>
@@ -163,14 +201,22 @@
       width="900px"
       destroy-on-close
     >
-      <div class="essay-detail" v-if="currentEssay">
+      <div v-if="currentEssay" class="essay-detail">
         <!-- 基本信息 -->
         <div class="essay-meta">
           <el-descriptions :column="4" border size="small">
-            <el-descriptions-item label="学生姓名">{{ currentEssay.studentName }}</el-descriptions-item>
-            <el-descriptions-item label="班级">{{ currentEssay.className }}</el-descriptions-item>
-            <el-descriptions-item label="字数">{{ currentEssay.wordCount }}</el-descriptions-item>
-            <el-descriptions-item label="提交时间">{{ currentEssay.submitTime }}</el-descriptions-item>
+            <el-descriptions-item label="学生姓名">{{
+              currentEssay.studentName
+            }}</el-descriptions-item>
+            <el-descriptions-item label="班级">{{
+              currentEssay.className
+            }}</el-descriptions-item>
+            <el-descriptions-item label="字数">{{
+              currentEssay.wordCount
+            }}</el-descriptions-item>
+            <el-descriptions-item label="提交时间">{{
+              currentEssay.submitTime
+            }}</el-descriptions-item>
           </el-descriptions>
         </div>
 
@@ -183,7 +229,7 @@
         </div>
 
         <!-- AI批改结果 -->
-        <div class="ai-review-section" v-if="currentEssay.aiReview">
+        <div v-if="currentEssay.aiReview" class="ai-review-section">
           <h4>🤖 AI智能批改</h4>
           <div class="score-display">
             <div class="total-score">
@@ -191,7 +237,11 @@
               <span class="score-label">综合得分</span>
             </div>
             <div class="dimension-scores">
-              <div class="dimension-item" v-for="(score, key) in currentEssay.aiReview.dimensions" :key="key">
+              <div
+                v-for="(score, key) in currentEssay.aiReview.dimensions"
+                :key="key"
+                class="dimension-item"
+              >
                 <span class="dim-label">{{ getDimensionLabel(key) }}</span>
                 <el-progress
                   :percentage="score"
@@ -201,12 +251,15 @@
               </div>
             </div>
           </div>
-          
+
           <div class="ai-feedback">
             <div class="feedback-section">
               <h5>✅ 优点</h5>
               <ul>
-                <li v-for="(item, idx) in currentEssay.aiReview.strengths" :key="idx">
+                <li
+                  v-for="(item, idx) in currentEssay.aiReview.strengths"
+                  :key="idx"
+                >
                   {{ item }}
                 </li>
               </ul>
@@ -214,7 +267,10 @@
             <div class="feedback-section">
               <h5>⚠️ 待改进</h5>
               <ul>
-                <li v-for="(item, idx) in currentEssay.aiReview.weaknesses" :key="idx">
+                <li
+                  v-for="(item, idx) in currentEssay.aiReview.weaknesses"
+                  :key="idx"
+                >
                   {{ item }}
                 </li>
               </ul>
@@ -227,7 +283,7 @@
         </div>
 
         <!-- 教师评语 -->
-        <div class="teacher-review-section" v-if="currentEssay.teacherReview">
+        <div v-if="currentEssay.teacherReview" class="teacher-review-section">
           <h4>👨‍🏫 教师评语</h4>
           <div class="teacher-score">
             <span>教师评分：</span>
@@ -247,7 +303,7 @@
       width="800px"
       destroy-on-close
     >
-      <div class="review-form" v-if="reviewEssay">
+      <div v-if="reviewEssay" class="review-form">
         <div class="essay-preview">
           <h4>{{ reviewEssay.title }}</h4>
           <div class="essay-text">{{ reviewEssay.content }}</div>
@@ -255,7 +311,12 @@
 
         <el-divider />
 
-        <el-form ref="reviewFormRef" :model="reviewForm" :rules="reviewRules" label-width="100px">
+        <el-form
+          ref="reviewFormRef"
+          :model="reviewForm"
+          :rules="reviewRules"
+          label-width="100px"
+        >
           <el-form-item label="教师评分" prop="score">
             <el-input-number
               v-model="reviewForm.score"
@@ -274,7 +335,11 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="success" @click="requestAIReview" :loading="aiReviewLoading">
+            <el-button
+              type="success"
+              :loading="aiReviewLoading"
+              @click="requestAIReview"
+            >
               🤖 请求AI批改
             </el-button>
           </el-form-item>
@@ -293,7 +358,12 @@
       width="600px"
       destroy-on-close
     >
-      <el-form ref="topicFormRef" :model="topicForm" :rules="topicRules" label-width="100px">
+      <el-form
+        ref="topicFormRef"
+        :model="topicForm"
+        :rules="topicRules"
+        label-width="100px"
+      >
         <el-form-item label="题目" prop="title">
           <el-input v-model="topicForm.title" placeholder="请输入作文题目" />
         </el-form-item>
@@ -306,9 +376,17 @@
           </el-select>
         </el-form-item>
         <el-form-item label="字数要求" prop="wordLimit">
-          <el-input-number v-model="topicForm.minWords" :min="100" :max="5000" />
+          <el-input-number
+            v-model="topicForm.minWords"
+            :min="100"
+            :max="5000"
+          />
           <span class="mx-2">-</span>
-          <el-input-number v-model="topicForm.maxWords" :min="100" :max="5000" />
+          <el-input-number
+            v-model="topicForm.maxWords"
+            :min="100"
+            :max="5000"
+          />
           <span class="ml-2">字</span>
         </el-form-item>
         <el-form-item label="题目要求" prop="requirement">
@@ -428,7 +506,9 @@ const topicRules = {
   type: [{ required: true, message: "请选择类型", trigger: "change" }],
   requirement: [{ required: true, message: "请输入题目要求", trigger: "blur" }],
   deadline: [{ required: true, message: "请选择截止时间", trigger: "change" }],
-  targetClasses: [{ required: true, message: "请选择目标班级", trigger: "change" }]
+  targetClasses: [
+    { required: true, message: "请选择目标班级", trigger: "change" }
+  ]
 };
 
 const loadStats = async () => {
@@ -502,7 +582,7 @@ const requestAIReview = async () => {
 };
 
 const submitReview = async () => {
-  reviewFormRef.value?.validate(async (valid) => {
+  reviewFormRef.value?.validate(async valid => {
     if (!valid) return;
     try {
       await submitTeacherReview(reviewForm);
@@ -528,7 +608,7 @@ const openTopicDialog = () => {
 };
 
 const publishTopic = async () => {
-  topicFormRef.value?.validate(async (valid) => {
+  topicFormRef.value?.validate(async valid => {
     if (!valid) return;
     try {
       await publishEssayTopic(topicForm);
@@ -595,9 +675,9 @@ onMounted(() => {
 
   .header-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
     border: none;
+    border-radius: 16px;
 
     .header-content {
       display: flex;
@@ -637,9 +717,9 @@ onMounted(() => {
 
         .stat-label {
           display: block;
+          margin-top: 4px;
           font-size: 12px;
           color: #6b7280;
-          margin-top: 4px;
         }
       }
     }
@@ -650,8 +730,8 @@ onMounted(() => {
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
 
     .toolbar {
@@ -660,9 +740,9 @@ onMounted(() => {
   }
 
   .pagination-container {
-    margin-top: 16px;
     display: flex;
     justify-content: flex-end;
+    margin-top: 16px;
   }
 
   .text-gray {
@@ -670,23 +750,23 @@ onMounted(() => {
   }
 
   .score-excellent {
-    color: #10b981;
     font-weight: 600;
+    color: #10b981;
   }
 
   .score-good {
-    color: #3b82f6;
     font-weight: 600;
+    color: #3b82f6;
   }
 
   .score-pass {
-    color: #f59e0b;
     font-weight: 600;
+    color: #f59e0b;
   }
 
   .score-fail {
-    color: #ef4444;
     font-weight: 600;
+    color: #ef4444;
   }
 }
 
@@ -707,19 +787,19 @@ onMounted(() => {
 
     .essay-content {
       padding: 16px;
-      background: var(--el-fill-color-light);
-      border-radius: 8px;
-      line-height: 1.8;
       font-size: 15px;
+      line-height: 1.8;
       text-indent: 2em;
       white-space: pre-wrap;
+      background: var(--el-fill-color-light);
+      border-radius: 8px;
     }
   }
 
   .ai-review-section,
   .teacher-review-section {
-    margin-bottom: 24px;
     padding: 16px;
+    margin-bottom: 24px;
     background: var(--el-fill-color-lighter);
     border-radius: 12px;
 
@@ -736,11 +816,11 @@ onMounted(() => {
     margin-bottom: 20px;
 
     .total-score {
-      text-align: center;
       padding: 16px 24px;
+      color: #fff;
+      text-align: center;
       background: linear-gradient(135deg, #10b981, #059669);
       border-radius: 12px;
-      color: #fff;
 
       .score-value {
         display: block;
@@ -755,17 +835,17 @@ onMounted(() => {
     }
 
     .dimension-scores {
-      flex: 1;
       display: grid;
+      flex: 1;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
 
       .dimension-item {
         .dim-label {
           display: block;
+          margin-bottom: 4px;
           font-size: 12px;
           color: var(--el-text-color-secondary);
-          margin-bottom: 4px;
         }
       }
     }
@@ -782,8 +862,8 @@ onMounted(() => {
       }
 
       ul {
-        margin: 0;
         padding-left: 20px;
+        margin: 0;
 
         li {
           margin-bottom: 4px;
@@ -805,19 +885,19 @@ onMounted(() => {
     font-size: 14px;
 
     .score-value {
+      margin-left: 8px;
       font-size: 24px;
       font-weight: 700;
       color: #3b82f6;
-      margin-left: 8px;
     }
   }
 
   .teacher-comment {
     padding: 12px;
-    background: #fff;
-    border-radius: 8px;
     font-size: 14px;
     line-height: 1.6;
+    background: #fff;
+    border-radius: 8px;
   }
 }
 
@@ -834,13 +914,13 @@ onMounted(() => {
 
     .essay-text {
       max-height: 200px;
-      overflow-y: auto;
       padding: 12px;
-      background: var(--el-fill-color-light);
-      border-radius: 8px;
+      overflow-y: auto;
       font-size: 14px;
       line-height: 1.8;
       text-indent: 2em;
+      background: var(--el-fill-color-light);
+      border-radius: 8px;
     }
   }
 }

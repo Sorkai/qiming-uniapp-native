@@ -62,18 +62,26 @@ export const upsertEvent = (data: {
   totalScore?: number;
   status: string;
 }) => {
-  return http.request<void>("post", "/edu/backend/v1/competition/event/upsert", {
-    data
-  });
+  return http.request<void>(
+    "post",
+    "/edu/backend/v1/competition/event/upsert",
+    {
+      data
+    }
+  );
 };
 
 /**
  * 删除赛事
  */
 export const deleteEvent = (data: { eventId: number }) => {
-  return http.request<void>("post", "/edu/backend/v1/competition/event/delete", {
-    data
-  });
+  return http.request<void>(
+    "post",
+    "/edu/backend/v1/competition/event/delete",
+    {
+      data
+    }
+  );
 };
 
 /**
@@ -208,14 +216,18 @@ export const upsertProblem = (data: {
   testCases: Array<{ input: string; output: string }>;
   status: string;
 }) => {
-  return http.request<void>("post", "/edu/backend/v1/oj/problem/upsert", { data });
+  return http.request<void>("post", "/edu/backend/v1/oj/problem/upsert", {
+    data
+  });
 };
 
 /**
  * 删除OJ题目
  */
 export const deleteProblem = (data: { problemId: number }) => {
-  return http.request<void>("post", "/edu/backend/v1/oj/problem/delete", { data });
+  return http.request<void>("post", "/edu/backend/v1/oj/problem/delete", {
+    data
+  });
 };
 
 /**
@@ -241,7 +253,14 @@ export const getSubmissionList = (params: {
         userId: number;
         username: string;
         language: string;
-        status: "accepted" | "wrong_answer" | "time_limit" | "memory_limit" | "runtime_error" | "compile_error" | "pending";
+        status:
+          | "accepted"
+          | "wrong_answer"
+          | "time_limit"
+          | "memory_limit"
+          | "runtime_error"
+          | "compile_error"
+          | "pending";
         runTime: number;
         memory: number;
         submitTime: string;
@@ -352,11 +371,21 @@ export const getEssayDetail = (params: { essayId: number }) => {
       submitTime: string;
       aiResult: {
         score: number;
-        dimensions: Array<{ name: string; score: number; maxScore: number; comment: string }>;
+        dimensions: Array<{
+          name: string;
+          score: number;
+          maxScore: number;
+          comment: string;
+        }>;
         strengths: string[];
         weaknesses: string[];
         suggestions: string[];
-        corrections: Array<{ original: string; corrected: string; type: string; reason: string }>;
+        corrections: Array<{
+          original: string;
+          corrected: string;
+          type: string;
+          reason: string;
+        }>;
       } | null;
       teacherResult: {
         score: number;
@@ -382,7 +411,9 @@ export const submitTeacherReview = (data: {
  * 请求AI批改
  */
 export const requestAIReview = (data: { essayId: number }) => {
-  return http.request<void>("post", "/edu/backend/v1/essay/ai-review", { data });
+  return http.request<void>("post", "/edu/backend/v1/essay/ai-review", {
+    data
+  });
 };
 
 /**
@@ -396,7 +427,9 @@ export const publishEssayTopic = (data: {
   deadline: string;
   classIds: number[];
 }) => {
-  return http.request<void>("post", "/edu/backend/v1/essay/topic/publish", { data });
+  return http.request<void>("post", "/edu/backend/v1/essay/topic/publish", {
+    data
+  });
 };
 
 /**
@@ -463,14 +496,22 @@ export const upsertCategory = (data: {
   name: string;
   parentId?: number;
 }) => {
-  return http.request<void>("post", "/edu/backend/v1/question-bank/category/upsert", { data });
+  return http.request<void>(
+    "post",
+    "/edu/backend/v1/question-bank/category/upsert",
+    { data }
+  );
 };
 
 /**
  * 删除分类
  */
 export const deleteCategory = (data: { categoryId: number }) => {
-  return http.request<void>("post", "/edu/backend/v1/question-bank/category/delete", { data });
+  return http.request<void>(
+    "post",
+    "/edu/backend/v1/question-bank/category/delete",
+    { data }
+  );
 };
 
 /**
@@ -540,21 +581,33 @@ export const upsertQuestion = (data: {
   answer: any;
   analysis: string;
 }) => {
-  return http.request<void>("post", "/edu/backend/v1/question-bank/question/upsert", { data });
+  return http.request<void>(
+    "post",
+    "/edu/backend/v1/question-bank/question/upsert",
+    { data }
+  );
 };
 
 /**
  * 删除题目
  */
 export const deleteQuestion = (data: { questionId: number }) => {
-  return http.request<void>("post", "/edu/backend/v1/question-bank/question/delete", { data });
+  return http.request<void>(
+    "post",
+    "/edu/backend/v1/question-bank/question/delete",
+    { data }
+  );
 };
 
 /**
  * 批量删除题目
  */
 export const batchDeleteQuestions = (data: { questionIds: number[] }) => {
-  return http.request<void>("post", "/edu/backend/v1/question-bank/question/batch-delete", { data });
+  return http.request<void>(
+    "post",
+    "/edu/backend/v1/question-bank/question/batch-delete",
+    { data }
+  );
 };
 
 /**
@@ -573,7 +626,9 @@ export const importQuestions = (data: FormData) => {
 /**
  * 获取积分排行榜
  */
-export const getLeaderboard = (params: { type: "total" | "weekly" | "monthly" }) => {
+export const getLeaderboard = (params: {
+  type: "total" | "weekly" | "monthly";
+}) => {
   return http.request<{
     code: number;
     msg: string;

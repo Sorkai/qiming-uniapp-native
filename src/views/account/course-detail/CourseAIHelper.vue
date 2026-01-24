@@ -18,7 +18,7 @@
                 autocomplete="off"
                 placeholder="输入您的问题，与AI助教互动问答..."
                 class="el-input__inner"
-                style="padding-left: 10px; padding-right: 40px; font-size: 14px"
+                style="padding-right: 40px; padding-left: 10px; font-size: 14px"
                 @click="openAiDialog"
               />
             </div>
@@ -39,22 +39,36 @@
       >
         <div class="ai-dialog-header-bar">
           <div class="header-left">
-            <div class="header-back-btn spotlight-button" @click="closeAiDialog">
-              <svg viewBox="0 0 24 24" width="18" height="18" stroke="#97b4f7" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <div
+              class="header-back-btn spotlight-button"
+              @click="closeAiDialog"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                stroke="#97b4f7"
+                stroke-width="4"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </div>
           </div>
           <div class="header-title-wrap">
-            <span class="status-dot"></span>
+            <span class="status-dot" />
             <span class="header-title">AI 智能助教</span>
           </div>
           <div class="header-right">
             <el-tooltip content="清空对话" placement="top">
               <div class="header-action-btn" @click="clearChat">
-                <i class="el-icon-delete"></i>
+                <i class="el-icon-delete" />
               </div>
             </el-tooltip>
             <div class="header-action-btn close-btn" @click="closeAiDialog">
-              <i class="el-icon-close"></i>
+              <i class="el-icon-close" />
             </div>
           </div>
         </div>
@@ -62,13 +76,23 @@
         <div class="ai-fill-bg">
           <div class="dialog-content">
             <div class="ai-talk-box">
-              <el-scrollbar ref="scrollbarRef" style="height: 100%; box-sizing: border-box">
+              <el-scrollbar
+                ref="scrollbarRef"
+                style="box-sizing: border-box; height: 100%"
+              >
                 <div class="header-tips-box">
                   <div class="robbot-icon">
-                    <img :src="aiPeopleAvatar" alt="" style="transform: scaleX(-1)" />
+                    <img
+                      :src="aiPeopleAvatar"
+                      alt=""
+                      style="transform: scaleX(-1)"
+                    />
                   </div>
                   <div class="code-icon">
-                    <img src="@/assets/course-detail-images/course-detail-icon2.png" alt="" />
+                    <img
+                      src="@/assets/course-detail-images/course-detail-icon2.png"
+                      alt=""
+                    />
                   </div>
                   <p class="code-hello">Hi～我是您的AI助教</p>
                   <div class="ai-heler-header-tips">
@@ -76,19 +100,43 @@
                   </div>
                 </div>
 
-                <transition-group name="chat-list" tag="div" class="chat-messages-list">
+                <transition-group
+                  name="chat-list"
+                  tag="div"
+                  class="chat-messages-list"
+                >
                   <div
                     v-for="(message, index) in chatMessages"
                     :key="index"
                     class="chat-message-item"
-                    :class="message.role === 'user' ? 'user-message' : 'ai-message'"
+                    :class="
+                      message.role === 'user' ? 'user-message' : 'ai-message'
+                    "
                   >
                     <div class="ai-chat-share-container_nVXTe">
                       <div class="chat-common_3Wk2t margin-bottom-16">
-                        <div :class="message.role === 'user' ? 'question-container_2GfLA' : 'answer-box-wrapper_1QYRS'">
-                          <div :class="message.role === 'user' ? 'question-content_1e1fE' : 'answer-content-box_2Pu7S'">
-                            <div v-if="message.role === 'user'">{{ message.content }}</div>
-                            <div v-else class="markdown-content"><p class="result" v-html="parseMarkdown(message.content)" />
+                        <div
+                          :class="
+                            message.role === 'user'
+                              ? 'question-container_2GfLA'
+                              : 'answer-box-wrapper_1QYRS'
+                          "
+                        >
+                          <div
+                            :class="
+                              message.role === 'user'
+                                ? 'question-content_1e1fE'
+                                : 'answer-content-box_2Pu7S'
+                            "
+                          >
+                            <div v-if="message.role === 'user'">
+                              {{ message.content }}
+                            </div>
+                            <div v-else class="markdown-content">
+                              <p
+                                class="result"
+                                v-html="parseMarkdown(message.content)"
+                              />
                             </div>
                           </div>
                         </div>
@@ -99,14 +147,18 @@
                   <div v-if="isTyping" key="typing">
                     <div class="ai-chat-share-container_nVXTe">
                       <div class="chat-common_3Wk2t margin-bottom-16">
-                        <div class="answer-box-wrapper_1QYRS full-line_3ITtH chat-ans_1oSN6">
-                          <div class="answer-content-box_2Pu7S chat-answer-content-box">
+                        <div
+                          class="answer-box-wrapper_1QYRS full-line_3ITtH chat-ans_1oSN6"
+                        >
+                          <div
+                            class="answer-content-box_2Pu7S chat-answer-content-box"
+                          >
                             <div class="markdown-content">
                               <p class="result">
                                 <span class="typing-dot">.</span>
                                 <span class="typing-dot">.</span>
                                 <span class="typing-dot">.</span>
-                </p>
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -130,7 +182,8 @@
                         :class="{ 'has-content': currentMessage.trim() }"
                         @keydown.enter.prevent="sendMessage"
                       />
-                    </div></div>
+                    </div>
+                  </div>
                   <div
                     class="add-new-talk"
                     :class="{ 'not-allowed': !currentMessage.trim() }"
@@ -139,10 +192,16 @@
                   </div>
                 </div>
                 <div
-                  :class="currentMessage.trim() && !sendingMessage ? 'send-btn' : 'not-send-btn'"
+                  :class="
+                    currentMessage.trim() && !sendingMessage
+                      ? 'send-btn'
+                      : 'not-send-btn'
+                  "
                   @click="sendMessage"
                 >
-                  <NotSendBtnIcon v-if="!currentMessage.trim() || sendingMessage" />
+                  <NotSendBtnIcon
+                    v-if="!currentMessage.trim() || sendingMessage"
+                  />
                   <SendIcon v-else />
                 </div>
               </div>
@@ -161,7 +220,10 @@ import SendIcon from "@/assets/course-icons/send-icon.svg?component";
 import AddNewTalkIcon from "@/assets/course-icons/add-new-talk-icon.svg?component";
 import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
 import aiPeopleAvatar from "@/assets/aipeople.jpg";
-import { courseAIChatStream, getConversationHistory } from "@/api/frontend/chat";
+import {
+  courseAIChatStream,
+  getConversationHistory
+} from "@/api/frontend/chat";
 
 const props = defineProps<{
   courseId: number;
@@ -172,7 +234,9 @@ const props = defineProps<{
 const isAiDialogVisible = ref(false);
 const aiDialogRef = ref(null);
 const scrollbarRef = ref(null);
-const chatMessages = ref<Array<{ role: string; content: string; timestamp: string }>>([]);
+const chatMessages = ref<
+  Array<{ role: string; content: string; timestamp: string }>
+>([]);
 const currentMessage = ref("");
 const sendingMessage = ref(false);
 const isTyping = ref(false);
@@ -181,14 +245,18 @@ const previousChapterId = ref<number | null>(null);
 const cancelStreamRequest = ref<any>(null);
 
 //监听聊天记录变化，自动滚动到底部
-watch(() => chatMessages.value, () => {
-  nextTick(() => {
-    scrollToBottom();
-  });
-}, { deep: true });
+watch(
+  () => chatMessages.value,
+  () => {
+    nextTick(() => {
+      scrollToBottom();
+    });
+  },
+  { deep: true }
+);
 
 // 监听对话框显示，添加外部点击监听
-watch(isAiDialogVisible, (newVal) => {
+watch(isAiDialogVisible, newVal => {
   if (newVal) {
     nextTick(() => {
       document.addEventListener("click", handleClickOutside);
@@ -200,7 +268,9 @@ watch(isAiDialogVisible, (newVal) => {
 
 const scrollToBottom = () => {
   if (scrollbarRef.value) {
-    const scrollEl = (scrollbarRef.value as any).$el.querySelector(".el-scrollbar__wrap");
+    const scrollEl = (scrollbarRef.value as any).$el.querySelector(
+      ".el-scrollbar__wrap"
+    );
     if (scrollEl) {
       scrollEl.scrollTop = scrollEl.scrollHeight;
     }
@@ -212,15 +282,21 @@ const openAiDialog = () => {
 };
 
 const closeAiDialog = () => {
-  isAiDialogVisible.value = false;if (cancelStreamRequest.value) {
-    cancelStreamRequest.value();cancelStreamRequest.value = null;
+  isAiDialogVisible.value = false;
+  if (cancelStreamRequest.value) {
+    cancelStreamRequest.value();
+    cancelStreamRequest.value = null;
   }
 };
 
 const handleClickOutside = (event: MouseEvent) => {
   if (!aiDialogRef.value) return;
   const target = event.target as HTMLElement;
-  if (aiDialogRef.value &&!(aiDialogRef.value as any).contains(target) && !target.closest(".out-ai-showbox-pro")) {
+  if (
+    aiDialogRef.value &&
+    !(aiDialogRef.value as any).contains(target) &&
+    !target.closest(".out-ai-showbox-pro")
+  ) {
     closeAiDialog();
   }
 };
@@ -231,7 +307,8 @@ const initChat = () => {
     conversationId.value = storedConversationId;
     loadChatHistory();
   } else {
-    conversationId.value = Date.now().toString() + Math.random().toString(36).substring(2);
+    conversationId.value =
+      Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${props.courseId}`, conversationId.value);
     previousChapterId.value = props.chapterId;
   }
@@ -240,7 +317,12 @@ const initChat = () => {
 const loadChatHistory = async () => {
   try {
     const response = await getConversationHistory(conversationId.value);
-    if (response && response.code === 200 && response.data && response.data.history) {
+    if (
+      response &&
+      response.code === 200 &&
+      response.data &&
+      response.data.history
+    ) {
       chatMessages.value = response.data.history;
     }
   } catch (error) {
@@ -254,10 +336,16 @@ const sendMessage = async () => {
   const userMessage = currentMessage.value.trim();
   const currentChapterId = props.chapterId;
 
-  if (currentChapterId !== null && previousChapterId.value !== null && currentChapterId !== previousChapterId.value) {
-    conversationId.value = Date.now().toString() + Math.random().toString(36).substring(2);
+  if (
+    currentChapterId !== null &&
+    previousChapterId.value !== null &&
+    currentChapterId !== previousChapterId.value
+  ) {
+    conversationId.value =
+      Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${props.courseId}`, conversationId.value);
-    chatMessages.value = [];}
+    chatMessages.value = [];
+  }
 
   previousChapterId.value = currentChapterId;
 
@@ -282,7 +370,7 @@ const sendMessage = async () => {
         message: userMessage,
         chapter_id: currentChapterId
       },
-      (data) => {
+      data => {
         if (data.conversation_id) {
           conversationId.value = data.conversation_id;
           localStorage.setItem(`chat_${props.courseId}`, conversationId.value);
@@ -291,7 +379,8 @@ const sendMessage = async () => {
         if (data.delta) {
           if (!aiMessageAdded) {
             isTyping.value = false;
-            aiMessageAdded = true;currentResponseIndex = chatMessages.value.length;
+            aiMessageAdded = true;
+            currentResponseIndex = chatMessages.value.length;
             chatMessages.value.push({
               role: "ai",
               content: data.delta,
@@ -333,10 +422,12 @@ const clearChat = () => {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
-  }).then(() => {
-    chatMessages.value = [];
-    ElMessage.success("聊天记录已清空");
-  }).catch(() => {});
+  })
+    .then(() => {
+      chatMessages.value = [];
+      ElMessage.success("聊天记录已清空");
+    })
+    .catch(() => {});
 };
 
 onMounted(() => {
@@ -359,69 +450,93 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-/* 包含必要的 AI 相关样式 */
+@keyframes ai-border-marquee {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+
 .ai-helper-sections {
   position: relative;
 
   .out-ai-showbox-pro {
     position: fixed;
-    top: 5.83333vw;
+    top: 5.8333vw;
     right: 1vw;
+    z-index: 100;
     width: 25vw;
     height: 10.4167vw;
-    z-index: 100;
   }
 
   .out-ai-pro-talk-box {
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    background: rgb(255 255 255 / 5%);
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
 
     &::after {
-      content: "";
       position: absolute;
       inset: 0;
-      border-radius: inherit;
       padding: 1.5px;
+      pointer-events: none;
+      content: "";
       background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
       background-size: 200% 100%;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      border-radius: inherit;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
       mask-composite: exclude;
       animation: ai-border-marquee 3s linear infinite;
-      pointer-events: none;
     }
   }
 
   .ai-draggable-dialog {
+    position: fixed;
+    top: calc(5.8333vw + 10.4167vw + 0.5vw);
+    right: 1vw;
+    z-index: 999;
     display: flex;
     flex-direction: column;
-    position: fixed;
     width: 25vw;
-    right: 1vw;
-    top: calc(5.83333vw + 10.4167vw + 0.5vw);
     height: 600px;
-    z-index: 999;
-    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(25px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.6);
+    background: rgb(255 255 255 / 60%);
+    border: 1px solid rgb(255 255 255 / 30%);
     border-radius: 20px;
+    box-shadow: -10px 0 40px rgb(0 0 0 / 10%);
+    backdrop-filter: blur(25px) saturate(150%);
 
     &.dark {
-      background: rgba(30, 30, 30, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgb(30 30 30 / 70%);
+      border: 1px solid rgb(255 255 255 / 10%);
     }
   }
 
   .ai-fill-bg {
-    flex: 1;
-    overflow: hidden;
     display: flex;
+    flex: 1;
     flex-direction: column;
-    border: none;
+    overflow: hidden;
     background: transparent;
+    border: none;
 
     .dialog-content {
       flex: 1;
@@ -430,69 +545,63 @@ defineExpose({
   }
 
   .el-textarea__inner {
-    min-height: 40px;
     height: 40px;
-    line-height: 40px;
+    min-height: 40px;
     padding-top: 0;
-    padding-bottom: 0;
     padding-right: 40px;
+    padding-bottom: 0;
+    line-height: 40px;
 
     &.has-content {
       min-height: 40px;
-      line-height: 1.5;
       padding-right: 40px;
+      line-height: 1.5;
     }
   }
 }
 
-@keyframes ai-border-marquee {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 200% 0%; }
-}
-
 .ai-dialog-header-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgb(0 0 0 / 5%);
 }
 
 .header-back-btn {
-  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  left: -45px;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
+  cursor: pointer;
+  background: rgb(255 255 255 / 90%);
+  border: 1px solid rgb(64 158 255 / 20%);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(64, 158, 255, 0.2);
-  position: absolute;
-  left: -45px;
-  top: 50%;
+  box-shadow: -4px 4px 12px rgb(0 0 0 / 10%);
   transform: translateY(-50%);
-  box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.ai-slide-enter-active, .ai-slide-leave-active {
+.ai-slide-enter-active,
+.ai-slide-leave-active {
   transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.ai-slide-enter-from, .ai-slide-leave-to {
-  transform: translateX(100%) scale(0.9);
+
+.ai-slide-enter-from,
+.ai-slide-leave-to {
   opacity: 0;
+  transform: translateX(100%) scale(0.9);
 }
 
 .typing-dot {
   display: inline-block;
-  animation: dot-pulse 1.5s infinite;
   margin: 0 2px;
-  color: #97b4f7;
   font-weight: bold;
-}
-@keyframes dot-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.3); }
+  color: #97b4f7;
+  animation: dot-pulse 1.5s infinite;
 }
 
 .markdown-content {
@@ -501,22 +610,24 @@ defineExpose({
 }
 
 .question-content_1e1fE {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
-  border-radius: 18px 18px 2px 18px;
   padding: 12px 16px;
+  color: white;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 18px 18px 2px;
 }
 
 .answer-content-box_2Pu7S {
-  background: #f4f7f9;
-  border-radius: 18px 18px 18px 2px;
-  border: 1px solid #eef2f5;
   padding: 12px 16px;
+  background: #f4f7f9;
+  border: 1px solid #eef2f5;
+  border-radius: 18px 18px 18px 2px;
 
   &.dark {
+    color: #e0e0e0;
     background: #2c2c2c;
     border-color: #444;
-    color: #e0e0e0;
   }
 }
+
+/* 包含必要的 AI 相关样式 */
 </style>

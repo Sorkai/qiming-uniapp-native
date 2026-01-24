@@ -1023,14 +1023,71 @@ const filterByTag = (tagName: string) => {
 </script>
 
 <style scoped>
-/* 主容器样式 */
+/* 响应式 */
+@media (width <= 1200px) {
+  .board-right-panel {
+    width: 300px;
+  }
+}
+
+@media (width <= 992px) {
+  .board-main-content {
+    flex-direction: column-reverse;
+  }
+
+  .board-right-panel {
+    flex-flow: row wrap;
+    width: 100%;
+  }
+
+  .post-composer {
+    flex: 1;
+    min-width: 300px;
+  }
+
+  .stats-card,
+  .hot-tags-card,
+  .rules-card {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+@media (width <= 768px) {
+  .message-board-container {
+    padding: 80px 16px 16px;
+  }
+
+  .filter-tabs {
+    flex-wrap: nowrap;
+    padding-bottom: 8px;
+    overflow-x: auto;
+  }
+
+  .filter-tab {
+    white-space: nowrap;
+  }
+
+  .message-card {
+    padding: 16px;
+  }
+
+  .pinned-badge,
+  .status-badge {
+    top: 8px;
+    right: 12px;
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+}
+
 .message-board-wrapper {
-  height: 100%;
-  width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
   background-color: transparent;
-  box-sizing: border-box;
 }
 
 .message-board-wrapper.dark {
@@ -1038,43 +1095,43 @@ const filterByTag = (tagName: string) => {
 }
 
 .message-board-container {
+  box-sizing: border-box;
+  display: flex;
   flex: 1;
-  padding: 80px 32px 24px;
-  overflow-y: auto;
+  flex-direction: column;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  padding: 80px 32px 24px;
+  overflow-y: auto;
 }
 
 .board-main-content {
   display: flex;
+  flex: 1;
   gap: 32px;
   width: 100%;
   margin: 0;
-  flex: 1;
 }
 
 /* 左侧面板 */
 .board-left-panel {
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 20px;
 }
 
 /* 工具栏 */
 .board-toolbar {
+  padding: 20px;
   background: #fff;
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 5%);
 }
 
 .dark .board-toolbar {
   background: #242428;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
 }
 
 .search-box {
@@ -1082,54 +1139,54 @@ const filterByTag = (tagName: string) => {
 }
 
 .search-box :deep(.el-input__wrapper) {
-  border-radius: 12px;
   padding: 8px 16px;
+  border-radius: 12px;
 }
 
 .filter-tabs {
   display: flex;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
 }
 
 .filter-tab {
   display: inline-flex;
+  flex-shrink: 0;
+  gap: 8px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 18px;
   height: 38px;
+  padding: 0 18px;
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
+  cursor: pointer;
+  background: #f5f7fa;
   border: none;
   border-radius: 10px;
-  background: #f5f7fa;
-  color: #606266;
-  font-size: 14px;
-  cursor: pointer;
   transition: all 0.3s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .dark .filter-tab {
-  background: #333;
   color: #a0a0a0;
+  background: #333;
 }
 
 .filter-tab:hover {
-  background: #e8f4ff;
   color: #409eff;
+  background: #e8f4ff;
 }
 
 .dark .filter-tab:hover {
-  background: #3a3a4a;
   color: #79bbff;
+  background: #3a3a4a;
 }
 
 .filter-tab.active {
-  background: linear-gradient(135deg, #409eff 0%, #79bbff 100%);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  background: linear-gradient(135deg, #409eff 0%, #79bbff 100%);
+  box-shadow: 0 4px 12px rgb(64 158 255 / 30%);
 }
 
 .tab-icon {
@@ -1137,14 +1194,14 @@ const filterByTag = (tagName: string) => {
 }
 
 .tab-count {
-  background: rgba(0, 0, 0, 0.05);
   padding: 2px 6px;
-  border-radius: 8px;
   font-size: 11px;
+  background: rgb(0 0 0 / 5%);
+  border-radius: 8px;
 }
 
 .filter-tab.active .tab-count {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(255 255 255 / 20%);
 }
 
 /* 消息列表 */
@@ -1156,33 +1213,33 @@ const filterByTag = (tagName: string) => {
 
 /* 消息卡片 */
 .message-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   position: relative;
-  transition: all 0.3s ease;
+  padding: 24px;
+  background: #fff;
   border: 1px solid transparent;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgb(0 0 0 / 5%);
+  transition: all 0.3s ease;
 }
 
 .dark .message-card {
   background: #242428;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
 }
 
 .message-card:hover {
+  border-color: rgb(64 158 255 / 20%);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 10%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  border-color: rgba(64, 158, 255, 0.2);
 }
 
 .dark .message-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 40%);
 }
 
 .message-card.pinned {
-  border-left: 4px solid #409eff;
   background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%);
+  border-left: 4px solid #409eff;
 }
 
 .dark .message-card.pinned {
@@ -1190,13 +1247,13 @@ const filterByTag = (tagName: string) => {
 }
 
 .message-card.pending {
-  opacity: 0.7;
   border-left: 4px solid #e6a23c;
+  opacity: 0.7;
 }
 
 .message-card.rejected {
-  opacity: 0.5;
   border-left: 4px solid #f56c6c;
+  opacity: 0.5;
 }
 
 /* 置顶和状态标签 */
@@ -1206,34 +1263,34 @@ const filterByTag = (tagName: string) => {
   top: 12px;
   right: 60px;
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
   padding: 4px 12px;
-  border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+  border-radius: 12px;
 }
 
 .pinned-badge {
-  background: linear-gradient(135deg, #409eff 0%, #79bbff 100%);
   color: #fff;
+  background: linear-gradient(135deg, #409eff 0%, #79bbff 100%);
 }
 
 .status-badge.pending {
-  background: linear-gradient(135deg, #e6a23c 0%, #f5d18f 100%);
   color: #fff;
+  background: linear-gradient(135deg, #e6a23c 0%, #f5d18f 100%);
 }
 
 .status-badge.rejected {
-  background: linear-gradient(135deg, #f56c6c 0%, #fab6b6 100%);
   color: #fff;
+  background: linear-gradient(135deg, #f56c6c 0%, #fab6b6 100%);
 }
 
 /* 消息头部 */
 .message-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 16px;
 }
 
@@ -1245,7 +1302,7 @@ const filterByTag = (tagName: string) => {
 
 .author-avatar {
   border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
 
 .author-details {
@@ -1256,11 +1313,11 @@ const filterByTag = (tagName: string) => {
 
 .author-name {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
+  font-size: 15px;
   font-weight: 600;
   color: #303133;
-  font-size: 15px;
 }
 
 .dark .author-name {
@@ -1268,55 +1325,55 @@ const filterByTag = (tagName: string) => {
 }
 
 .role-tag {
-  font-size: 10px;
-  padding: 0 6px;
   height: 18px;
+  padding: 0 6px;
+  font-size: 10px;
   line-height: 18px;
 }
 
 .role-tag.mini {
-  font-size: 9px;
-  padding: 0 4px;
   height: 16px;
+  padding: 0 4px;
+  font-size: 9px;
   line-height: 16px;
 }
 
 .post-meta {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
   font-size: 12px;
   color: #909399;
 }
 
 .post-time {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
 }
 
 .edited-mark {
-  color: #c0c4cc;
   font-style: italic;
+  color: #c0c4cc;
 }
 
 .more-actions-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: #909399;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #909399;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
   transition: all 0.3s ease;
 }
 
 .more-actions-btn:hover {
-  background: #f5f7fa;
   color: #409eff;
+  background: #f5f7fa;
 }
 
 .dark .more-actions-btn:hover {
@@ -1329,11 +1386,11 @@ const filterByTag = (tagName: string) => {
 }
 
 .message-title {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
   line-height: 1.4;
+  color: #303133;
 }
 
 .dark .message-title {
@@ -1352,18 +1409,18 @@ const filterByTag = (tagName: string) => {
 }
 
 .message-content.collapsed {
+  position: relative;
   max-height: 120px;
   overflow: hidden;
-  position: relative;
 }
 
 .message-content.collapsed::after {
-  content: "";
   position: absolute;
+  right: 0;
   bottom: 0;
   left: 0;
-  right: 0;
   height: 40px;
+  content: "";
   background: linear-gradient(transparent, #fff);
 }
 
@@ -1372,29 +1429,29 @@ const filterByTag = (tagName: string) => {
 }
 
 .message-content :deep(code) {
-  background: #f5f7fa;
   padding: 2px 6px;
-  border-radius: 4px;
-  font-family: "Monaco", monospace;
+  font-family: Monaco, monospace;
   font-size: 13px;
   color: #d63384;
+  background: #f5f7fa;
+  border-radius: 4px;
 }
 
 .dark .message-content :deep(code) {
-  background: #333;
   color: #ff79c6;
+  background: #333;
 }
 
 .expand-btn {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
   padding: 8px 0;
-  border: none;
-  background: transparent;
-  color: #409eff;
   font-size: 13px;
+  color: #409eff;
   cursor: pointer;
+  background: transparent;
+  border: none;
 }
 
 .expand-btn:hover {
@@ -1420,8 +1477,8 @@ const filterByTag = (tagName: string) => {
 /* 消息底部 */
 .message-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding-top: 16px;
   border-top: 1px solid #f0f2f5;
 }
@@ -1437,21 +1494,21 @@ const filterByTag = (tagName: string) => {
 
 .action-btn {
   display: flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
   padding: 8px 12px;
+  font-size: 13px;
+  color: #909399;
+  cursor: pointer;
+  background: transparent;
   border: none;
   border-radius: 20px;
-  background: transparent;
-  color: #909399;
-  font-size: 13px;
-  cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .action-btn:hover {
-  background: #f5f7fa;
   color: #409eff;
+  background: #f5f7fa;
 }
 
 .dark .action-btn:hover {
@@ -1464,16 +1521,16 @@ const filterByTag = (tagName: string) => {
 
 .view-count {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
   font-size: 12px;
   color: #c0c4cc;
 }
 
 /* 回复区域 */
 .replies-section {
-  margin-top: 16px;
   padding-top: 16px;
+  margin-top: 16px;
   border-top: 1px dashed #e4e7ed;
 }
 
@@ -1505,15 +1562,15 @@ const filterByTag = (tagName: string) => {
 
 .reply-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
   flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .reply-author {
-  font-weight: 600;
   font-size: 13px;
+  font-weight: 600;
   color: #303133;
 }
 
@@ -1531,9 +1588,9 @@ const filterByTag = (tagName: string) => {
 }
 
 .reply-time {
+  margin-left: auto;
   font-size: 12px;
   color: #c0c4cc;
-  margin-left: auto;
 }
 
 .reply-text {
@@ -1554,14 +1611,14 @@ const filterByTag = (tagName: string) => {
 
 .reply-action-btn {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
   padding: 4px 8px;
-  border: none;
-  background: transparent;
-  color: #909399;
   font-size: 12px;
+  color: #909399;
   cursor: pointer;
+  background: transparent;
+  border: none;
   border-radius: 4px;
   transition: all 0.2s ease;
 }
@@ -1578,26 +1635,26 @@ const filterByTag = (tagName: string) => {
 .load-more-btn {
   width: 100%;
   padding: 10px;
+  font-size: 13px;
+  color: #909399;
+  cursor: pointer;
+  background: transparent;
   border: 1px dashed #dcdfe6;
   border-radius: 8px;
-  background: transparent;
-  color: #909399;
-  font-size: 13px;
-  cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .load-more-btn:hover {
-  border-color: #409eff;
   color: #409eff;
+  border-color: #409eff;
 }
 
 /* 快速回复框 */
 .quick-reply-box {
   display: flex;
   gap: 12px;
-  margin-top: 16px;
   padding: 16px;
+  margin-top: 16px;
   background: #fafbfc;
   border-radius: 12px;
 }
@@ -1607,8 +1664,8 @@ const filterByTag = (tagName: string) => {
 }
 
 .reply-input-wrapper {
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 8px;
 }
@@ -1619,8 +1676,8 @@ const filterByTag = (tagName: string) => {
 
 .reply-input-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .reply-input-actions .hint {
@@ -1634,17 +1691,17 @@ const filterByTag = (tagName: string) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
   padding: 60px 20px;
   color: #909399;
+  text-align: center;
 }
 
 .empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 20px;
   color: #dcdfe6;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .dark .empty-icon {
@@ -1652,7 +1709,7 @@ const filterByTag = (tagName: string) => {
 }
 
 .empty-state h3 {
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   font-size: 18px;
   color: #606266;
 }
@@ -1668,11 +1725,11 @@ const filterByTag = (tagName: string) => {
 
 /* 加载更多 */
 .load-more-section {
-  text-align: center;
-  padding: 32px 0;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+  text-align: center;
 }
 
 .load-more-btn-link {
@@ -1686,18 +1743,18 @@ const filterByTag = (tagName: string) => {
 }
 
 .no-more-data {
-  font-size: 13px;
-  color: #c0c4cc;
   position: relative;
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
+  font-size: 13px;
+  color: #c0c4cc;
 
   &::before,
   &::after {
-    content: "";
     width: 40px;
     height: 1px;
+    content: "";
     background: #e4e7ed;
   }
 
@@ -1709,32 +1766,32 @@ const filterByTag = (tagName: string) => {
 
 /* 右侧面板 */
 .board-right-panel {
-  width: 380px;
-  flex-shrink: 0;
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
   gap: 20px;
+  width: 380px;
 }
 
 /* 发帖卡片 */
 .post-composer {
+  padding: 24px;
   background: #fff;
   border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 5%);
 }
 
 .dark .post-composer {
   background: #242428;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
 }
 
 .composer-header {
   display: flex;
   gap: 12px;
   align-items: center;
-  margin-bottom: 20px;
   padding-bottom: 16px;
+  margin-bottom: 20px;
   border-bottom: 1px solid #f0f2f5;
 }
 
@@ -1743,7 +1800,7 @@ const filterByTag = (tagName: string) => {
 }
 
 .composer-title h3 {
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   font-size: 16px;
   color: #303133;
 }
@@ -1765,8 +1822,8 @@ const filterByTag = (tagName: string) => {
 }
 
 .title-input :deep(.el-input__wrapper) {
-  border-radius: 10px;
   padding: 6px 16px;
+  border-radius: 10px;
 }
 
 .content-editor {
@@ -1774,8 +1831,8 @@ const filterByTag = (tagName: string) => {
 }
 
 .content-editor :deep(.el-textarea__inner) {
-  border-radius: 10px;
   padding: 12px 16px 48px;
+  border-radius: 10px;
 }
 
 .editor-toolbar {
@@ -1787,28 +1844,28 @@ const filterByTag = (tagName: string) => {
 }
 
 .toolbar-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background: #f5f7fa;
-  color: #606266;
-  font-size: 12px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  color: #606266;
+  cursor: pointer;
+  background: #f5f7fa;
+  border: none;
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
 .dark .toolbar-btn {
-  background: #333;
   color: #a0a0a0;
+  background: #333;
 }
 
 .toolbar-btn:hover {
-  background: #e8f4ff;
   color: #409eff;
+  background: #e8f4ff;
 }
 
 .tags-select {
@@ -1816,56 +1873,56 @@ const filterByTag = (tagName: string) => {
 }
 
 .tags-select :deep(.el-select__wrapper) {
-  border-radius: 10px;
-  padding-left: 16px;
   padding-right: 16px;
+  padding-left: 16px;
+  border-radius: 10px;
 }
 
 .post-notice {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
   padding: 10px 12px;
-  background: #fff7e6;
-  border-radius: 8px;
   font-size: 12px;
   color: #e6a23c;
+  background: #fff7e6;
+  border-radius: 8px;
 }
 
 .dark .post-notice {
-  background: rgba(230, 162, 60, 0.1);
+  background: rgb(230 162 60 / 10%);
 }
 
 .submit-btn {
   width: 100%;
   height: 44px;
-  border-radius: 12px;
   font-size: 15px;
   font-weight: 500;
+  border-radius: 12px;
 }
 
 /* 统计卡片 */
 .stats-card,
 .hot-tags-card,
 .rules-card {
+  padding: 20px;
   background: #fff;
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 5%);
 }
 
 .dark .stats-card,
 .dark .hot-tags-card,
 .dark .rules-card {
   background: #242428;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
 }
 
 .card-title {
   display: flex;
-  align-items: center;
   gap: 8px;
-  margin: 0 0 16px 0;
+  align-items: center;
+  margin: 0 0 16px;
   font-size: 15px;
   font-weight: 600;
   color: #303133;
@@ -1895,33 +1952,33 @@ const filterByTag = (tagName: string) => {
 }
 
 .stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 36px;
+  height: 36px;
   font-size: 18px;
+  border-radius: 8px;
 }
 
 .stat-icon.primary {
-  background: rgba(64, 158, 255, 0.1);
   color: #409eff;
+  background: rgb(64 158 255 / 10%);
 }
 
 .stat-icon.success {
-  background: rgba(103, 194, 58, 0.1);
   color: #67c23a;
+  background: rgb(103 194 58 / 10%);
 }
 
 .stat-icon.warning {
-  background: rgba(230, 162, 60, 0.1);
   color: #e6a23c;
+  background: rgb(230 162 60 / 10%);
 }
 
 .stat-icon.info {
-  background: rgba(144, 147, 153, 0.1);
   color: #909399;
+  background: rgb(144 147 153 / 10%);
 }
 
 .stat-info {
@@ -1932,8 +1989,8 @@ const filterByTag = (tagName: string) => {
 .stat-value {
   font-size: 18px;
   font-weight: 700;
-  color: #303133;
   line-height: 1.2;
+  color: #303133;
 }
 
 .dark .stat-value {
@@ -1968,15 +2025,15 @@ const filterByTag = (tagName: string) => {
 
 /* 社区规范 */
 .rules-list {
-  margin: 0;
   padding: 0 0 0 20px;
+  margin: 0;
   list-style: disc;
 }
 
 .rules-list li {
   font-size: 13px;
-  color: #606266;
   line-height: 2;
+  color: #606266;
 }
 
 .dark .rules-list li {
@@ -2010,62 +2067,5 @@ const filterByTag = (tagName: string) => {
   transform: translateY(-10px);
 }
 
-/* 响应式 */
-@media (max-width: 1200px) {
-  .board-right-panel {
-    width: 300px;
-  }
-}
-
-@media (max-width: 992px) {
-  .board-main-content {
-    flex-direction: column-reverse;
-  }
-
-  .board-right-panel {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .post-composer {
-    flex: 1;
-    min-width: 300px;
-  }
-
-  .stats-card,
-  .hot-tags-card,
-  .rules-card {
-    flex: 1;
-    min-width: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .message-board-container {
-    padding: 80px 16px 16px;
-  }
-
-  .filter-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 8px;
-  }
-
-  .filter-tab {
-    white-space: nowrap;
-  }
-
-  .message-card {
-    padding: 16px;
-  }
-
-  .pinned-badge,
-  .status-badge {
-    right: 12px;
-    top: 8px;
-    font-size: 10px;
-    padding: 2px 8px;
-  }
-}
+/* 主容器样式 */
 </style>

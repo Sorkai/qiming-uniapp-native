@@ -122,7 +122,10 @@ export interface ReviewParams {
  * @param courseId 课程ID
  * @param params 查询参数
  */
-export function getDiscussions(courseId: string, params?: GetDiscussionsParams) {
+export function getDiscussions(
+  courseId: string,
+  params?: GetDiscussionsParams
+) {
   return http.request<{
     list: DiscussionPost[];
     pagination: Pagination;
@@ -142,7 +145,10 @@ export function getDiscussionDetail(postId: string) {
  * @param courseId 课程ID
  * @param data 帖子数据
  */
-export function createDiscussion(courseId: string, data: CreateDiscussionParams) {
+export function createDiscussion(
+  courseId: string,
+  data: CreateDiscussionParams
+) {
   return http.request<{
     id: string;
     status: PostStatus;
@@ -278,7 +284,11 @@ export function reportPost(postId: string, data: ReportParams) {
  * @param replyId 回复ID
  * @param data 举报数据
  */
-export function reportReply(postId: string, replyId: string, data: ReportParams) {
+export function reportReply(
+  postId: string,
+  replyId: string,
+  data: ReportParams
+) {
   return http.request<{ success: boolean }>(
     "post",
     `/api/v1/discussions/${postId}/replies/${replyId}/report`,

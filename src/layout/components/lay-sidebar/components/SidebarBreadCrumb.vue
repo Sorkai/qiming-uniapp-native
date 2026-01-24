@@ -123,13 +123,13 @@ watch(
 <style lang="scss" scoped>
 .app-breadcrumb {
   display: inline-block;
-  font-size: 14px;
   margin-left: 8px;
+  font-size: 14px;
 
   /* 使用 CSS 变量适配深浅色模式 */
   :deep(.el-breadcrumb__inner) {
-    color: var(--el-text-color-regular) !important;
     font-weight: 500;
+    color: var(--el-text-color-regular) !important;
     transition: color 0.2s;
 
     a {
@@ -144,11 +144,12 @@ watch(
   }
 
   :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-    color: var(--el-text-color-primary) !important;
     font-weight: 600;
+    color: var(--el-text-color-primary) !important;
 
     a {
       color: var(--el-text-color-primary) !important;
+
       &:hover {
         color: var(--el-text-color-primary) !important;
         cursor: text;

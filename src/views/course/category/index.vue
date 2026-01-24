@@ -248,18 +248,18 @@ onMounted(() => {
 <style lang="scss" scoped>
 .main {
   padding: 12px;
-  
+
   .box-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--el-border-color-light);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 4%);
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
 
     .search-form {
@@ -268,9 +268,9 @@ onMounted(() => {
   }
 
   .pagination-container {
-    margin-top: 16px;
     display: flex;
     justify-content: flex-end;
+    margin-top: 16px;
   }
 
   .dialog-footer {
@@ -291,8 +291,9 @@ onMounted(() => {
 :deep(.el-table) {
   --el-table-header-padding: 8px 0;
   --el-table-cell-padding: 8px 0;
-  border-radius: 12px;
+
   overflow: hidden;
+  border-radius: 12px;
 }
 
 :deep(.el-dialog) {

@@ -2,7 +2,14 @@
   <div class="cloud-disk-container" :class="currentTheme">
     <div class="disk-header">
       <h3>
-        <CloudIcon style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;" />
+        <CloudIcon
+          style="
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            vertical-align: middle;
+          "
+        />
         学习云盘
       </h3>
       <div class="actions">
@@ -20,9 +27,9 @@
     </div>
 
     <el-table
+      v-loading="loading"
       :data="filteredFiles"
       style="width: 100%"
-      v-loading="loading"
       :row-style="{ cursor: 'pointer' }"
       class="disk-table"
     >
@@ -104,7 +111,6 @@ interface CloudFile {
 
 const searchQuery = ref("");
 const loading = ref(false);
-
 
 const files = ref<CloudFile[]>([
   {
@@ -261,7 +267,7 @@ const handleDownload = (file: CloudFile) => {
     return;
   }
   ElMessage.success(`开始下载文件: ${file.name}`);
-  window.open(file.url, '_blank');
+  window.open(file.url, "_blank");
 };
 
 // 文件分享
@@ -283,11 +289,15 @@ const handleShare = (file: CloudFile) => {
 
 // 模拟删除
 const handleDelete = (file: CloudFile) => {
-  ElMessageBox.confirm(`确定要删除 "${file.name}" 吗？此操作不可恢复。`, "警告", {
-    confirmButtonText: "删除",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
+  ElMessageBox.confirm(
+    `确定要删除 "${file.name}" 吗？此操作不可恢复。`,
+    "警告",
+    {
+      confirmButtonText: "删除",
+      cancelButtonText: "取消",
+      type: "warning"
+    }
+  )
     .then(() => {
       files.value = files.value.filter(f => f.id !== file.id);
       ElMessage.success(`文件 "${file.name}" 已删除`);
@@ -300,10 +310,26 @@ const handleDelete = (file: CloudFile) => {
 
 <style lang="scss" scoped>
 .cloud-disk-container {
+  box-sizing: border-box;
+  width: calc(100% - 2px);
+  min-width: 0;
+  max-width: 100%;
+  padding: 16px;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 4%);
+
+  .dark & {
+    background-color: #1e293b;
+    border-color: #334155;
+  }
+
   .disk-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 20px;
 
     h3 {
@@ -311,7 +337,7 @@ const handleDelete = (file: CloudFile) => {
       font-size: 18px;
       font-weight: 600;
       color: #333;
-      
+
       .dark & {
         color: #f1f5f9;
       }
@@ -324,17 +350,18 @@ const handleDelete = (file: CloudFile) => {
 
     .search-input {
       width: 240px;
-      
+
       :deep(.el-input__wrapper) {
         .dark & {
           background-color: #1e293b;
           box-shadow: 0 0 0 1px #334155 inset;
         }
       }
-      
+
       :deep(.el-input__inner) {
         .dark & {
           color: #f1f5f9;
+
           &::placeholder {
             color: #64748b;
           }
@@ -344,25 +371,34 @@ const handleDelete = (file: CloudFile) => {
   }
 
   .disk-table {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 12px;
+
+    :deep(.el-table__inner-wrapper) {
+      overflow-x: auto;
+    }
+
     :deep(.el-table__header-wrapper) {
       th {
         .dark & {
-          background-color: #0f172a;
           color: #94a3b8;
+          background-color: #0f172a;
           border-bottom-color: #1e293b;
         }
       }
     }
-    
+
     :deep(.el-table__row) {
       .dark & {
-        background-color: #1e293b;
         color: #f1f5f9;
-        
+        background-color: #1e293b;
+
         td {
           border-bottom-color: #0f172a;
         }
-        
+
         &:hover > td {
           background-color: #334155;
         }
@@ -372,12 +408,12 @@ const handleDelete = (file: CloudFile) => {
 
   .file-name-cell {
     display: flex;
-    align-items: center;
     gap: 8px;
+    align-items: center;
 
     .file-icon {
       color: #606266;
-      
+
       .dark & {
         color: #94a3b8;
       }

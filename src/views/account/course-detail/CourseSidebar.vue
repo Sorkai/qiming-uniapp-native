@@ -59,42 +59,50 @@ const sidebarMenuItems = [
 </script>
 
 <style scoped lang="scss">
-/* 侧边栏样式优化 - 独立显示，与左右保持距离 */
+@keyframes sidebar-glow-border {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
 .layout-sidebar {
-  width: 80px;
-  min-width: 80px;
-  left: 10px;
-  top: 80px;
-  height: auto;
-  max-height: calc(100vh - 97px);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2);
-  border: 1px solid rgba(64, 158, 255, 0.2);
-  z-index: 100;
   position: fixed;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 15px 0;
+  top: 80px;
+  left: 10px;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 80px;
+  min-width: 80px;
+  height: auto;
+  max-height: calc(100vh - 97px);
+  padding: 15px 0;
+  overflow: hidden auto;
+  background: rgb(255 255 255 / 80%);
+  border: 1px solid rgb(64 158 255 / 20%);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px -4px rgb(64 158 255 / 20%);
+  backdrop-filter: blur(20px) saturate(180%);
 
   &::after {
-    content: "";
     position: absolute;
     inset: 0;
-    border-radius: 24px;
     padding: 1.5px;
+    pointer-events: none;
+    content: "";
     background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
     background-size: 200% 100%;
-    -webkit-mask:
+    border-radius: 24px;
+    mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
     mask-composite: exclude;
     animation: sidebar-glow-border 3s linear infinite;
-    pointer-events: none;
   }
 
   &.light {
@@ -103,8 +111,8 @@ const sidebarMenuItems = [
 
   &.dark {
     background: #1a1a1a; /* 与深色模式背景完全统一 */
-    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgb(255 255 255 / 5%);
+    box-shadow: 0 8px 32px -4px rgb(0 0 0 / 40%);
 
     .side-name {
       color: #a8b8e8;
@@ -112,16 +120,16 @@ const sidebarMenuItems = [
 
     .item.active .hover-box {
       background: #4a5a7a;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
     }
 
     .line {
       background: linear-gradient(
         90deg,
         transparent,
-        rgba(79, 172, 254, 0.4),
-        rgba(151, 180, 247, 0.5),
-        rgba(79, 172, 254, 0.4),
+        rgb(79 172 254 / 40%),
+        rgb(151 180 247 / 50%),
+        rgb(79 172 254 / 40%),
         transparent
       );
     }
@@ -133,11 +141,11 @@ const sidebarMenuItems = [
 
       &:hover {
         .side-name {
-          color: #ffffff;
+          color: #fff;
         }
 
         svg {
-          color: #ffffff;
+          color: #fff;
         }
       }
     }
@@ -145,24 +153,24 @@ const sidebarMenuItems = [
 
   /* 侧边栏菜单项样式调整 */
   .item {
-    padding: 6px 10px;
-    width: 100%;
+    box-sizing: border-box;
     display: flex;
     justify-content: center;
-    box-sizing: border-box;
+    width: 100%;
+    padding: 6px 10px;
 
     &.active {
       .hover-box {
         background: #97b4f7;
-        box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
+        box-shadow: 0 6px 16px rgb(64 158 255 / 30%);
 
         .side-name {
-          color: #ffffff;
           font-weight: bold;
+          color: #fff;
         }
 
         svg {
-          color: #ffffff;
+          color: #fff;
           filter: none;
         }
       }
@@ -170,35 +178,35 @@ const sidebarMenuItems = [
   }
 
   .hover-box {
-    width: 100%;
-    padding: 12px 0;
-    border-radius: 16px;
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    position: relative;
+    width: 100%;
+    padding: 12px 0;
     overflow: hidden;
+    cursor: pointer;
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &.active {
       background: #97b4f7;
-      box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
+      box-shadow: 0 6px 16px rgb(64 158 255 / 30%);
 
       .side-name {
-        color: #ffffff;
         font-weight: bold;
+        color: #fff;
       }
 
       svg {
-        color: #ffffff;
+        color: #fff;
         filter: none;
       }
     }
 
     &:hover {
-      background: rgba(207, 216, 240, 0.4);
+      background: rgb(207 216 240 / 40%);
       transform: translateY(-2px) scale(1.05);
 
       .side-name {
@@ -217,24 +225,24 @@ const sidebarMenuItems = [
       transition: all 0.3s ease;
 
       :deep(*) {
-        fill: currentColor;
-        stroke: currentColor;
+        fill: currentcolor;
+        stroke: currentcolor;
       }
     }
   }
 
   .side-name {
+    display: inline-block;
+    max-width: 100%;
+    margin-top: 4px;
     font-size: 12px;
     font-weight: 600;
-    margin-top: 4px;
     color: #5a6b8a;
+    text-align: center;
     white-space: nowrap;
     transition:
       transform 0.2s ease-in-out,
       color 0.3s;
-    display: inline-block;
-    max-width: 100%;
-    text-align: center;
   }
 
   /* 侧边栏分割线样式 */
@@ -245,9 +253,9 @@ const sidebarMenuItems = [
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(96, 79, 253, 0.4),
-      rgba(151, 180, 247, 0.6),
-      rgba(96, 79, 253, 0.4),
+      rgb(96 79 253 / 40%),
+      rgb(151 180 247 / 60%),
+      rgb(96 79 253 / 40%),
       transparent
     );
     border-radius: 1px;
@@ -258,12 +266,5 @@ const sidebarMenuItems = [
   }
 }
 
-@keyframes sidebar-glow-border {
-  0% {
-    background-position: 0% 0%;
-  }
-  100% {
-    background-position: 200% 0%;
-  }
-}
+/* 侧边栏样式优化 - 独立显示，与左右保持距离 */
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <canvas ref="canvasRef" class="particles-canvas"></canvas>
+  <canvas ref="canvasRef" class="particles-canvas" />
 </template>
 
 <script setup lang="ts">
@@ -123,9 +123,9 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   left: 0;
+  z-index: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
   pointer-events: none;
 }
 </style>

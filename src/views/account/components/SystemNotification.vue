@@ -68,18 +68,18 @@ const notificationList = ref([
     .dark & {
       background-color: transparent;
       border: none;
-      
+
       :deep(.el-card__header) {
-        border-bottom-color: #1e293b;
         color: #f1f5f9;
+        border-bottom-color: #1e293b;
       }
     }
   }
 
   .card-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     font-weight: 600;
   }
 
@@ -91,21 +91,21 @@ const notificationList = ref([
     }
 
     .content-card {
-      transition: all 0.3s ease-in-out;
       cursor: pointer;
-      
+      transition: all 0.3s ease-in-out;
+
       .dark & {
         background-color: #1e293b;
         border-color: #334155;
       }
 
       &:hover {
+        box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
         transform: translateY(-5px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        
+
         .dark & {
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
           background-color: #334155;
+          box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
         }
       }
     }
@@ -115,7 +115,7 @@ const notificationList = ref([
     margin: 0 0 10px;
     font-size: 16px;
     font-weight: 600;
-    
+
     .dark & {
       color: #f1f5f9;
     }
@@ -124,17 +124,19 @@ const notificationList = ref([
   p {
     margin: 0 0 5px;
     font-size: 14px;
-    
+
     &.publisher {
       color: #909399;
+
       .dark & {
         color: #94a3b8;
       }
     }
-    
+
     &.content {
-      color: #606266;
       line-height: 1.6;
+      color: #606266;
+
       .dark & {
         color: #cbd5e1;
       }

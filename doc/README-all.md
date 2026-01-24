@@ -23,7 +23,7 @@
 
 ## 项目结构
 
-```
+````text
 ├── app                 # 应用代码
 │   ├── api             # API服务
 │   │   ├── desc        # API描述文件
@@ -55,8 +55,8 @@
     ├── tool            # 工具函数
     ├── uniqueid        # 唯一ID生成
     └── xerr            # 错误处理
-```
 
+```text
 ## 核心功能模块
 
 ### 1. 用户中心
@@ -111,8 +111,8 @@
 
 ```bash
 go mod tidy
-```
 
+```text
 ### 快速启动
 
 1. 克隆代码库
@@ -120,28 +120,28 @@ go mod tidy
 ```bash
 git clone [仓库地址]
 cd ai-edu
-```
 
+```text
 2. 配置环境
 
-修改 `app/api/etc/aieduapi.yaml` 配置文件，设置数据库、Redis和MinIO连接信息。
+修改 `app/api/etc/aieduapi.yaml`配置文件，设置数据库、Redis和MinIO连接信息。
 
 3. 初始化数据库
 
 ```bash
 # 使用deploy/script/mysql目录下的SQL脚本初始化数据库
 mysql -u用户名 -p密码 < deploy/script/mysql/init.sql
-```
 
+```text
 4. 使用Docker Compose启动服务
 
 ```bash
 docker-compose up -d
-```
 
+```text
 5. 访问服务
 
-API服务默认运行在 http://localhost:1004
+API服务默认运行在 <http://localhost:1004>
 
 ## API文档
 
@@ -158,24 +158,22 @@ API服务默认运行在 http://localhost:1004
 
 ## 部署
 
-- 参考部署指南：`doc/DEPLOYMENT.md`
-
-## 开发指南
+- 参考部署指南：`doc/DEPLOYMENT.md`## 开发指南
 
 ### 代码生成
 
-使用 `deploy/script/gencode` 目录下的脚本生成数据模型代码。
+使用`deploy/script/gencode`目录下的脚本生成数据模型代码。
 
 ### 添加新API
 
-1. 在 `app/api/desc` 目录下添加API描述文件
+1. 在`app/api/desc`目录下添加API描述文件
 2. 使用go-zero工具生成API代码
 3. 实现API逻辑
 
 ### 版本号注入与查看
 
 - 后端在启动时会输出版本信息（版本、提交、构建日期）。
-- 版本信息定义在 `pkg/version` 包中，可通过 `-ldflags` 在构建时注入：
+- 版本信息定义在`pkg/version`包中，可通过`-ldflags`在构建时注入：
 
 示例（PowerShell）：
 
@@ -185,35 +183,29 @@ $version = "v1.0.0"
 $commit  = $(git rev-parse --short HEAD)
 $date    = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssK')
 
-go build `
-    -ldflags "-X aiedu/pkg/version.Version=$version -X aiedu/pkg/version.Commit=$commit -X aiedu/pkg/version.Date=$date" `
-    -o bin/aiedu-api.exe `
-    ./app/api
+go build `-ldflags "-X aiedu/pkg/version.Version=$version -X aiedu/pkg/version.Commit=$commit -X aiedu/pkg/version.Date=$date"`-o bin/aiedu-api.exe`./app/api
 
 # 运行后将打印类似：
 # AiEdu backend version=v1.0.0 commit=abc1234 date=2025-08-22T10:20:30+08:00
-./bin/aiedu-api.exe -f app/api/etc/aieduapi.yaml
-```
+./bin/aiedu-api.exe -f app/api/etc/aieduapi.yaml```text
+Docker 打包时也可通过 `--build-arg`或 CI 注入相同的 ldflags。若未注入，默认输出为`version=dev commit=unknown date=unknown`。
 
-Docker 打包时也可通过 `--build-arg` 或 CI 注入相同的 ldflags。若未注入，默认输出为 `version=dev commit=unknown date=unknown`。
+#### `/version`API
 
-#### `/version` API
-
-- 无需鉴权，GET `http://<host>:<port>/edu/v1/version`
-- 返回示例：
+- 无需鉴权，GET`<http://<host>:<port>/edu/v1/version`-> 返回示例：
 
 ```json
 {
-    "code": 0,
-    "msg": "",
-    "data": {
-        "version": "v1.0.0",
-        "commit": "abc1234",
-        "date": "2025-08-22T10:20:30+08:00"
-    }
+  "code": 0,
+  "msg": "",
+  "data": {
+    "version": "v1.0.0",
+    "commit": "abc1234",
+    "date": "2025-08-22T10:20:30+08:00"
+  }
 }
-```
 
+```text
 #### Docker/CI 注入示例
 
 - Dockerfile 中可使用构建参数并传递给 `go build`：
@@ -228,7 +220,9 @@ RUN go build -ldflags "-s -w \
     -X aiedu/pkg/version.Commit=${APP_COMMIT} \
     -X aiedu/pkg/version.Date=${APP_DATE}" \
     -o /app/aiedu-api ./app/api
-```
+
+```text
+
 
 - 构建命令（PowerShell）：
 
@@ -237,21 +231,11 @@ $version = "v1.0.0"
 $commit  = $(git rev-parse --short HEAD)
 $date    = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssK')
 
-docker build `
-    --build-arg APP_VERSION=$version `
-    --build-arg APP_COMMIT=$commit `
-    --build-arg APP_DATE=$date `
-    -t aiedu/api:$version `
-    -f docker/api/Dockerfile `
-    .
-```
+docker build `--build-arg APP_VERSION=$version`--build-arg APP_COMMIT=$commit`--build-arg APP_DATE=$date`-t aiedu/api:$version`-f docker/api/Dockerfile`.```####`/healthz`API
 
-    #### `/healthz` API
+    - 无需鉴权，GET`<http://<host>:<port>/edu/v1/healthz`-> 返回示例：
 
-    - 无需鉴权，GET `http://<host>:<port>/edu/v1/healthz`
-    - 返回示例：
-
-    ```json
+   ```json
     {
         "code": 0,
         "msg": "",
@@ -262,13 +246,11 @@ docker build `
             "date": "2025-08-22T10:20:30+08:00"
         }
     }
-    ```
+    ```#### docker-compose 构建注入
 
-    #### docker-compose 构建注入
+   `docker-compose.yml`已添加构建参数透传，使用方式（PowerShell）：
 
-    `docker-compose.yml` 已添加构建参数透传，使用方式（PowerShell）：
-
-    ```powershell
+   ```powershell
     $env:APP_VERSION = "v1.0.0"
     $env:APP_COMMIT  = $(git rev-parse --short HEAD)
     $env:APP_DATE    = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssK')
@@ -277,7 +259,7 @@ docker build `
     docker compose up -d api
 
     # 验证
-    curl http://localhost:1004/edu/v1/version
-    curl http://localhost:1004/edu/v1/healthz
+    curl <http://localhost:1004/edu/v1/version>
+    curl <http://localhost:1004/edu/v1/healthz>
     ```
-
+````

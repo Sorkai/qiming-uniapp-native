@@ -27,7 +27,11 @@
       <template #header>
         <div class="card-header">
           <span>HTML 动画任务列表</span>
-          <el-button type="success" :loading="syncLoading" @click="handleForceSync">
+          <el-button
+            type="success"
+            :loading="syncLoading"
+            @click="handleForceSync"
+          >
             <el-icon class="mr-1"><Refresh /></el-icon>
             强制同步
           </el-button>
@@ -71,7 +75,11 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :disabled="!searchForm.courseId || !searchForm.chapterId" @click="handleSearch">
+          <el-button
+            type="primary"
+            :disabled="!searchForm.courseId || !searchForm.chapterId"
+            @click="handleSearch"
+          >
             查询
           </el-button>
           <el-button @click="resetSearch">重置</el-button>
@@ -82,17 +90,32 @@
       <div v-if="currentAnimationData" class="chapter-info">
         <el-descriptions :column="3" border>
           <el-descriptions-item label="当前展示版本">
-            <el-tag v-if="currentAnimationData.displayVersionResolved" type="success">
-              {{ currentAnimationData.displayVersionRaw === 'latest' ? `latest (v${currentAnimationData.displayVersionResolved})` : `v${currentAnimationData.displayVersionResolved}` }}
+            <el-tag
+              v-if="currentAnimationData.displayVersionResolved"
+              type="success"
+            >
+              {{
+                currentAnimationData.displayVersionRaw === "latest"
+                  ? `latest (v${currentAnimationData.displayVersionResolved})`
+                  : `v${currentAnimationData.displayVersionResolved}`
+              }}
             </el-tag>
             <el-tag v-else type="info">未设置</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="课程ID">{{ currentAnimationData.courseId }}</el-descriptions-item>
-          <el-descriptions-item label="章节ID">{{ currentAnimationData.chapterId }}</el-descriptions-item>
+          <el-descriptions-item label="课程ID">{{
+            currentAnimationData.courseId
+          }}</el-descriptions-item>
+          <el-descriptions-item label="章节ID">{{
+            currentAnimationData.chapterId
+          }}</el-descriptions-item>
         </el-descriptions>
 
         <div class="action-bar">
-          <el-button type="primary" :loading="generateLoading" @click="handleGenerate">
+          <el-button
+            type="primary"
+            :loading="generateLoading"
+            @click="handleGenerate"
+          >
             <el-icon class="mr-1"><VideoPlay /></el-icon>
             生成新版本
           </el-button>
@@ -104,22 +127,46 @@
       </div>
 
       <!-- 空状态提示 -->
-      <el-empty v-if="!searchForm.courseId || !searchForm.chapterId" description="请先选择课程和章节" />
+      <el-empty
+        v-if="!searchForm.courseId || !searchForm.chapterId"
+        description="请先选择课程和章节"
+      />
 
       <!-- 任务列表 -->
-      <el-table v-else v-loading="loading" :data="taskList" stripe style="width: 100%">
+      <el-table
+        v-else
+        v-loading="loading"
+        :data="taskList"
+        stripe
+        style="width: 100%"
+      >
         <el-table-column prop="version" label="版本" align="center" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.version > 0" :type="row.version.toString() === currentAnimationData?.displayVersionResolved ? 'success' : 'info'">
+            <el-tag
+              v-if="row.version > 0"
+              :type="
+                row.version.toString() ===
+                currentAnimationData?.displayVersionResolved
+                  ? 'success'
+                  : 'info'
+              "
+            >
               v{{ row.version }}
             </el-tag>
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="taskId" label="任务ID" align="left" min-width="280">
+        <el-table-column
+          prop="taskId"
+          label="任务ID"
+          align="left"
+          min-width="280"
+        >
           <template #default="{ row }">
             <el-tooltip :content="row.taskId" placement="top">
-              <span class="task-id">{{ row.taskId.slice(0, 8) }}...{{ row.taskId.slice(-8) }}</span>
+              <span class="task-id"
+                >{{ row.taskId.slice(0, 8) }}...{{ row.taskId.slice(-8) }}</span
+              >
             </el-tooltip>
           </template>
         </el-table-column>
@@ -130,20 +177,42 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="fileName" label="文件名" align="left" min-width="200">
+        <el-table-column
+          prop="fileName"
+          label="文件名"
+          align="left"
+          min-width="200"
+        >
           <template #default="{ row }">
             <span v-if="row.fileName">{{ row.fileName }}</span>
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="fileSize" label="文件大小" align="center" width="100">
+        <el-table-column
+          prop="fileSize"
+          label="文件大小"
+          align="center"
+          width="100"
+        >
           <template #default="{ row }">
-            <span v-if="row.fileSize > 0">{{ formatFileSize(row.fileSize) }}</span>
+            <span v-if="row.fileSize > 0">{{
+              formatFileSize(row.fileSize)
+            }}</span>
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" align="center" width="170" />
-        <el-table-column prop="completedAt" label="完成时间" align="center" width="170">
+        <el-table-column
+          prop="createdAt"
+          label="创建时间"
+          align="center"
+          width="170"
+        />
+        <el-table-column
+          prop="completedAt"
+          label="完成时间"
+          align="center"
+          width="170"
+        >
           <template #default="{ row }">
             <span v-if="row.completedAt">{{ row.completedAt }}</span>
             <span v-else class="text-gray-400">-</span>
@@ -168,7 +237,7 @@
               设为展示
             </el-button>
             <el-tag v-if="row.status === 'failed'" type="danger" size="small">
-              {{ row.errorMessage || '生成失败' }}
+              {{ row.errorMessage || "生成失败" }}
             </el-tag>
           </template>
         </el-table-column>
@@ -176,7 +245,11 @@
     </el-card>
 
     <!-- 设置展示版本弹窗 -->
-    <el-dialog v-model="showSetVersionDialog" title="设置展示版本" width="400px">
+    <el-dialog
+      v-model="showSetVersionDialog"
+      title="设置展示版本"
+      width="400px"
+    >
       <el-form label-width="100px">
         <el-form-item label="版本选择">
           <el-radio-group v-model="setVersionForm.versionType">
@@ -184,7 +257,10 @@
             <el-radio value="specific">指定版本</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="setVersionForm.versionType === 'specific'" label="版本号">
+        <el-form-item
+          v-if="setVersionForm.versionType === 'specific'"
+          label="版本号"
+        >
           <el-select v-model="setVersionForm.version" placeholder="请选择版本">
             <el-option
               v-for="task in completedTasks"
@@ -197,7 +273,11 @@
       </el-form>
       <template #footer>
         <el-button @click="showSetVersionDialog = false">取消</el-button>
-        <el-button type="primary" :loading="setVersionLoading" @click="confirmSetVersion">
+        <el-button
+          type="primary"
+          :loading="setVersionLoading"
+          @click="confirmSetVersion"
+        >
           确定
         </el-button>
       </template>
@@ -268,7 +348,9 @@ const taskList = ref<HtmlAnimationTask[]>([]);
 const stats = computed(() => {
   const total = taskList.value.length;
   const completed = taskList.value.filter(t => t.status === "completed").length;
-  const processing = taskList.value.filter(t => t.status === "pending" || t.status === "processing").length;
+  const processing = taskList.value.filter(
+    t => t.status === "pending" || t.status === "processing"
+  ).length;
   return {
     totalTasks: total,
     completedTasks: completed,
@@ -392,7 +474,9 @@ const handleForceSync = async () => {
   syncLoading.value = true;
   try {
     const res = await forceSyncHtmlAnimation();
-    ElMessage.success(`同步完成：共 ${res.data.totalChapters} 章节，成功 ${res.data.successChapters} 章节`);
+    ElMessage.success(
+      `同步完成：共 ${res.data.totalChapters} 章节，成功 ${res.data.successChapters} 章节`
+    );
     // 如果当前有选中章节，刷新数据
     if (searchForm.courseId && searchForm.chapterId) {
       handleSearch();
@@ -426,7 +510,8 @@ const handleSetVersion = async (version: string) => {
 const confirmSetVersion = async () => {
   if (!searchForm.courseId || !searchForm.chapterId) return;
 
-  const version = setVersionForm.versionType === "latest" ? "latest" : setVersionForm.version;
+  const version =
+    setVersionForm.versionType === "latest" ? "latest" : setVersionForm.version;
   if (setVersionForm.versionType === "specific" && !setVersionForm.version) {
     ElMessage.warning("请选择版本号");
     return;
@@ -467,7 +552,9 @@ const getStatusLabel = (status: string) => {
   return labels[status] || status;
 };
 
-const getStatusTagType = (status: string): "info" | "warning" | "success" | "danger" => {
+const getStatusTagType = (
+  status: string
+): "info" | "warning" | "success" | "danger" => {
   const types: Record<string, "info" | "warning" | "success" | "danger"> = {
     pending: "info",
     processing: "warning",
@@ -494,10 +581,10 @@ onMounted(() => {
 
   .header-card {
     margin-bottom: 16px;
-    border-radius: 24px;
     overflow: hidden;
     background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
     border: 1px solid #e2e8f0;
+    border-radius: 24px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     html.dark & {
@@ -506,10 +593,10 @@ onMounted(() => {
     }
 
     &:hover {
-      box-shadow: 0 20px 40px -10px rgba(148, 163, 184, 0.1);
+      box-shadow: 0 20px 40px -10px rgb(148 163 184 / 10%);
 
       html.dark & {
-        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 20px 40px -10px rgb(0 0 0 / 50%);
       }
     }
 
@@ -538,7 +625,7 @@ onMounted(() => {
         color: #64748b;
 
         html.dark & {
-          color: rgba(255, 255, 255, 0.75);
+          color: rgb(255 255 255 / 75%);
         }
       }
     }
@@ -563,12 +650,12 @@ onMounted(() => {
 
         .stat-label {
           display: block;
+          margin-top: 4px;
           font-size: 12px;
           color: #64748b;
-          margin-top: 4px;
 
           html.dark & {
-            color: rgba(255, 255, 255, 0.6);
+            color: rgb(255 255 255 / 60%);
           }
         }
       }
@@ -577,15 +664,15 @@ onMounted(() => {
 
   .box-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--el-border-color-light);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 4%);
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
 
     .search-form {
@@ -594,15 +681,15 @@ onMounted(() => {
   }
 
   .chapter-info {
-    margin-bottom: 16px;
     padding: 16px;
+    margin-bottom: 16px;
     background: #f5f7fa;
     border-radius: 12px;
 
     .action-bar {
-      margin-top: 16px;
       display: flex;
       gap: 12px;
+      margin-top: 16px;
     }
   }
 
@@ -628,8 +715,8 @@ onMounted(() => {
   .lab-iframe {
     width: 100%;
     height: 100%;
-    border-radius: 12px;
     background: #f5f7fa;
+    border-radius: 12px;
   }
 }
 
@@ -644,8 +731,9 @@ onMounted(() => {
 :deep(.el-table) {
   --el-table-header-padding: 8px 0;
   --el-table-cell-padding: 8px 0;
-  border-radius: 12px;
+
   overflow: hidden;
+  border-radius: 12px;
 }
 
 :deep(.el-dialog) {

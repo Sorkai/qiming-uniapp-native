@@ -7,7 +7,6 @@ import { buildHierarchyTree } from "@/utils/tree";
 import remainingRouter from "./modules/remaining";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import { useUserStoreHook } from "@/store/modules/user";
 import {
   isUrl,
   openLink,
@@ -38,7 +37,6 @@ import {
   removeToken,
   multipleTabsKey
 } from "@/utils/auth";
-import { ElMessage } from "element-plus";
 
 /** 自动导入全部静态路由，无需再手动引入！匹配 src/router/modules 目录（任何嵌套级别）中具有 .ts 扩展名的所有文件，除了 remaining.ts 文件
  * 如何匹配所有文件请看：https://github.com/mrmlnc/fast-glob#basic-syntax
@@ -157,7 +155,13 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   }
   if (Cookies.get(multipleTabsKey) && userInfo) {
     // 管理端默认权限白名单（这些路由任何已登录用户都可以访问）
-    const publicRoutes = ["/home", "/error/403", "/error/404", "/error/500", "/account"];
+    const publicRoutes = [
+      "/home",
+      "/error/403",
+      "/error/404",
+      "/error/500",
+      "/account"
+    ];
     const isPublicRoute = publicRoutes.some(route => to.path.startsWith(route));
 
     // 权限检查逻辑：
@@ -176,7 +180,9 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       // 路由没有指定权限，但不是公开路由，需要 admin 或 teacher 权限
       const hasAdminAccess = isOneOfArray(["admin", "teacher"], userRoles);
       if (!hasAdminAccess) {
-        console.warn(`[Router] 用户角色 ${userRoles} 无权访问管理端路由: ${to.path}`);
+        console.warn(
+          `[Router] 用户角色 ${userRoles} 无权访问管理端路由: ${to.path}`
+        );
         next({ path: "/error/403" });
         return;
       }

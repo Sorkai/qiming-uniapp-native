@@ -4,13 +4,15 @@
 
 ## 1. 获取展示版本
 
-- **接口地址**：`/html-animation/display`
-- **请求方式**：GET
+- **接口地址**：`/html-animation/display`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number (课程ID)
-  - `chapterId`: number (章节ID)
+
+    -`courseId`: number (课程ID)
+
+    - `chapterId`: number (章节ID)
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -19,7 +21,8 @@
     "courseId": 1,
     "chapterId": 1,
     "version": "1",
-    "url": "https://example.com/animations/course_1_chapter_1.html"
+    "url": "<https://example.com/animations/course_1_chapter_1.html">
   }
 }
+
 ```

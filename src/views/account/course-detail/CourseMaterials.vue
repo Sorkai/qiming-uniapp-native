@@ -33,16 +33,8 @@
         >
           <div class="material-icon">
             <img v-if="item.rType === 'IMAGE'" :src="logo" alt="图片" />
-            <img
-              v-else-if="item.rType === 'VIDEO'"
-              :src="logo"
-              alt="视频"
-            />
-            <img
-              v-else-if="item.rType === 'DOCUMENT'"
-              :src="logo"
-              alt="文档"
-            />
+            <img v-else-if="item.rType === 'VIDEO'" :src="logo" alt="视频" />
+            <img v-else-if="item.rType === 'DOCUMENT'" :src="logo" alt="文档" />
             <img v-else :src="logo" alt="资源" />
           </div>
           <div class="material-info">
@@ -109,38 +101,38 @@ const viewMaterial = (material: any) => {
 .course-materials-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
+  height: 100%;
   background-color: transparent;
 }
 
 .materials-container {
-  padding: 80px 32px 24px;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  background-color: transparent;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 80px 32px 24px;
+  overflow-y: auto;
+  background-color: transparent;
 }
 
 .empty-wrapper {
-  flex: 1;
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
 }
 
 .dark :deep(.el-empty__image img),
 .dark :deep(.el-empty__image svg) {
-  filter: brightness(0.7);
   opacity: 0.8;
+  filter: brightness(0.7);
 }
 
 .materials-title {
-  font-size: 18px;
   margin-bottom: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--el-text-color-primary);
 }
@@ -155,28 +147,28 @@ const viewMaterial = (material: any) => {
 .material-item {
   display: flex;
   align-items: center;
+  width: 100%;
+  padding: 20px;
+  cursor: pointer;
+  background-color: #fff;
   border: 1px solid #ebeef5;
   border-radius: 12px;
-  padding: 20px;
-  background-color: #fff;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 5%);
   transition: all 0.3s;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  width: 100%;
 }
 
 .material-item.dark {
   background-color: #2a2a2a;
   border-color: #3e3e3e;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
 }
 
 .material-item:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
 }
 
 .material-item.dark:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 30%);
 }
 
 .material-icon {
@@ -196,13 +188,13 @@ const viewMaterial = (material: any) => {
 }
 
 .material-info .material-title {
-  font-size: 18px;
-  font-weight: 600;
   margin-bottom: 5px;
-  color: #303133;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  white-space: nowrap;
 }
 
 .material-item.dark .material-info .material-title {
@@ -224,7 +216,7 @@ const viewMaterial = (material: any) => {
 }
 
 .material-action .el-button {
-  font-size: 15px;
   padding: 10px 20px;
+  font-size: 15px;
 }
 </style>

@@ -153,4 +153,4 @@ export const linuxCourseContent = `
     </ul>
   </li>
 </ul>
-`; 
+`;

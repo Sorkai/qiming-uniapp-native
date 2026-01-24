@@ -37,4 +37,4 @@ export const addRandomWorkQuestion = (data: AddRandomQuestionParams) => {
     "/edu/backend/v1/work/round/add/question",
     { data }
   );
-}; 
+};

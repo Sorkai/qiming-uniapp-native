@@ -54,10 +54,7 @@ function getSubMenuData() {
   path = defaultActive.value;
   subMenuData.value = [];
   // path的上级路由组成的数组
-  const parentPathArr = getParentPaths(
-    path,
-    wholeMenus.value
-  );
+  const parentPathArr = getParentPaths(path, wholeMenus.value);
   // 当前路由的父级路由信息
   const parenetRoute = findRouteByPath(
     parentPathArr[0] || path,

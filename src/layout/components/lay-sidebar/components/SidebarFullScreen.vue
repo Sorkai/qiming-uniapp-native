@@ -9,8 +9,8 @@ const { isFullscreen, toggle } = useNav();
   <div class="fullscreen-wrapper">
     <span
       class="fullscreen-icon select-none flex items-center justify-center cursor-pointer transition-all duration-200"
-      @click="toggle"
       :title="isFullscreen ? '退出全屏' : '全屏'"
+      @click="toggle"
     >
       <FullScreenIcon class="w-[28px] h-[28px] outline-none" />
     </span>
@@ -27,16 +27,16 @@ const { isFullscreen, toggle } = useNav();
 
 .fullscreen-icon {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: #374151;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fullscreen-icon:hover {
-  transform: scale(1.1);
   color: #3b82f6;
+  transform: scale(1.1);
 }
 
 :global(html.dark) .fullscreen-icon {

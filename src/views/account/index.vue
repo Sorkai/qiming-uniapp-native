@@ -24,15 +24,15 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                   </svg>
                 </div>
                 <div class="icon moon">
@@ -44,11 +44,11 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                   </svg>
                 </div>
               </div>
-              <div class="switch-dot"></div>
+              <div class="switch-dot" />
             </div>
           </div>
 
@@ -100,7 +100,7 @@
         <div class="user-info-card">
           <div class="avatar-wrapper">
             <el-avatar :size="80" :src="formatAvatar(userInfo?.avatar)" />
-            <div class="avatar-ring"></div>
+            <div class="avatar-ring" />
           </div>
           <h3>{{ userInfo?.nickname || userInfo?.username }}</h3>
           <p class="user-role">学生</p>
@@ -166,9 +166,12 @@
         <div v-else-if="activeMenu === 'home'">
           <!-- 快速入口卡片 -->
           <div class="quick-access-section">
-            <div class="quick-access-card lab-access" @click="activeMenu = 'virtual-lab'">
+            <div
+              class="quick-access-card lab-access"
+              @click="activeMenu = 'virtual-lab'"
+            >
               <div class="access-icon">
-                <LabIcon style="width: 32px; height: 32px;" />
+                <LabIcon style="width: 32px; height: 32px" />
               </div>
               <div class="access-info">
                 <h4>虚拟实验室</h4>
@@ -176,9 +179,12 @@
               </div>
               <div class="access-arrow">→</div>
             </div>
-            <div class="quick-access-card competition-access" @click="activeMenu = 'competition'">
+            <div
+              class="quick-access-card competition-access"
+              @click="activeMenu = 'competition'"
+            >
               <div class="access-icon">
-                <CompetitionIcon style="width: 32px; height: 32px;" />
+                <CompetitionIcon style="width: 32px; height: 32px" />
               </div>
               <div class="access-info">
                 <h4>赛事场</h4>
@@ -186,9 +192,12 @@
               </div>
               <div class="access-arrow">→</div>
             </div>
-            <div class="quick-access-card course-access" @click="activeMenu = 'course'">
+            <div
+              class="quick-access-card course-access"
+              @click="activeMenu = 'course'"
+            >
               <div class="access-icon">
-                <CourseIcon style="width: 32px; height: 32px;" />
+                <CourseIcon style="width: 32px; height: 32px" />
               </div>
               <div class="access-info">
                 <h4>我的课程</h4>
@@ -196,9 +205,12 @@
               </div>
               <div class="access-arrow">→</div>
             </div>
-            <div class="quick-access-card cloud-access" @click="activeMenu = 'cloud-disk'">
+            <div
+              class="quick-access-card cloud-access"
+              @click="activeMenu = 'cloud-disk'"
+            >
               <div class="access-icon">
-                <CloudIcon style="width: 32px; height: 32px;" />
+                <CloudIcon style="width: 32px; height: 32px" />
               </div>
               <div class="access-info">
                 <h4>学习云盘</h4>
@@ -220,7 +232,10 @@
                 indicator-position="none"
                 arrow="never"
               >
-                <el-carousel-item v-for="(notice, index) in notices" :key="index">
+                <el-carousel-item
+                  v-for="(notice, index) in notices"
+                  :key="index"
+                >
                   <div class="reminder-content">
                     <el-icon><InfoFilled /></el-icon>
                     <span class="notice-text">{{ notice }}</span>
@@ -232,7 +247,14 @@
             <div class="info-section">
               <div class="course-info">
                 <h3>
-                  <CourseIcon style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;" />
+                  <CourseIcon
+                    style="
+                      width: 24px;
+                      height: 24px;
+                      margin-right: 8px;
+                      vertical-align: middle;
+                    "
+                  />
                   课程信息
                 </h3>
                 <div class="course-card">
@@ -382,7 +404,11 @@
                     <li v-for="(item, idx) in displayedSummary" :key="idx">
                       {{ item }}
                     </li>
-                    <li v-if="isTyping" class="typing-cursor">正在生成中<span class="dot" v-for="n in 3" :key="n">.</span></li>
+                    <li v-if="isTyping" class="typing-cursor">
+                      正在生成中<span v-for="n in 3" :key="n" class="dot"
+                        >.</span
+                      >
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -394,7 +420,14 @@
           <div class="card course-list" :class="currentTheme">
             <div class="course-header" :class="currentTheme">
               <h3>
-                <CourseIcon style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;" />
+                <CourseIcon
+                  style="
+                    width: 24px;
+                    height: 24px;
+                    margin-right: 8px;
+                    vertical-align: middle;
+                  "
+                />
                 我的课程
               </h3>
               <div class="course-filter">
@@ -547,7 +580,13 @@ import { formatAvatar } from "@/utils/avatar";
 import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
-import { UserProfile, SystemNotification, Todo, VirtualLab, Competition } from "./components";
+import {
+  UserProfile,
+  SystemNotification,
+  Todo,
+  VirtualLab,
+  Competition
+} from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
@@ -573,7 +612,9 @@ const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 // 主题相关
 const currentTheme = ref(
   (storageLocal().getItem("course_theme") as string) ||
-    ((storageLocal().getItem("responsive-layout") as any)?.darkMode ? "dark" : "light")
+    ((storageLocal().getItem("responsive-layout") as any)?.darkMode
+      ? "dark"
+      : "light")
 );
 
 // 监听主题变化
@@ -1015,11 +1056,135 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-// 添加文本省略混入
 @mixin text-ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 图标动画关键帧 */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes icon-bounce {
+  0%,
+  100% {
+    transform: scale(1.2) translateY(0);
+  }
+
+  30% {
+    transform: scale(1.2) translateY(-6px);
+  }
+
+  50% {
+    transform: scale(1.2) translateY(0);
+  }
+
+  70% {
+    transform: scale(1.2) translateY(-3px);
+  }
+}
+
+@keyframes icon-flip {
+  0% {
+    transform: scale(1.2) rotateY(0);
+  }
+
+  50% {
+    transform: scale(1.2) rotateY(180deg);
+  }
+
+  100% {
+    transform: scale(1.2) rotateY(360deg);
+  }
+}
+
+/* 个人资料 - 心跳/呼吸效果 */
+@keyframes icon-heartbeat {
+  0% {
+    transform: scale(1.2);
+  }
+
+  15% {
+    transform: scale(1.35);
+  }
+
+  30% {
+    transform: scale(1.2);
+  }
+
+  45% {
+    transform: scale(1.3);
+  }
+
+  60%,
+  100% {
+    transform: scale(1.2);
+  }
+}
+
+/* 学习云盘 - 上浮到云端效果 */
+@keyframes icon-float {
+  0% {
+    transform: scale(1.2) translateY(0);
+  }
+
+  50% {
+    transform: scale(1.2) translateY(-8px);
+  }
+
+  100% {
+    transform: scale(1.2) translateY(0);
+  }
+}
+
+@keyframes icon-ring {
+  0% {
+    transform: scale(1.2) rotate(0);
+  }
+
+  10% {
+    transform: scale(1.2) rotate(20deg);
+  }
+
+  20% {
+    transform: scale(1.2) rotate(-15deg);
+  }
+
+  30% {
+    transform: scale(1.2) rotate(10deg);
+  }
+
+  40% {
+    transform: scale(1.2) rotate(-10deg);
+  }
+
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+
+  60%,
+  100% {
+    transform: scale(1.2) rotate(0);
+  }
+}
+
+@keyframes icon-pulse {
+  0%,
+  100% {
+    transform: scale(1.1);
+  }
+
+  50% {
+    transform: scale(1.25);
+  }
 }
 
 .account-container {
@@ -1028,8 +1193,8 @@ onUnmounted(() => {
   transition: background-color 0.3s ease;
 
   &.dark {
-    background-color: #0b1120;
     color: #f1f5f9;
+    background-color: #0b1120;
   }
 
   .header {
@@ -1059,7 +1224,7 @@ onUnmounted(() => {
 
     .dark & {
       background: linear-gradient(45deg, #1e293b, #0f172a);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgb(255 255 255 / 5%);
 
       &.header-scrolled {
         background: #111b2d;
@@ -1067,7 +1232,7 @@ onUnmounted(() => {
 
       .theme-toggle {
         color: #38bdf8;
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: rgb(255 255 255 / 5%);
       }
     }
 
@@ -1113,35 +1278,35 @@ onUnmounted(() => {
           height: 28px;
           padding: 4px;
           cursor: pointer;
-          background-color: rgba(255, 255, 255, 0.4);
+          background-color: rgb(255 255 255 / 40%);
           border-radius: 100px;
+          box-shadow: inset 0 2px 4px rgb(0 0 0 / 10%);
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 
           &:hover {
+            background-color: rgb(255 255 255 / 60%);
             transform: scale(1.05);
-            background-color: rgba(255, 255, 255, 0.6);
           }
 
           &.is-dark {
             background-color: #2d3748;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: inset 0 2px 4px rgb(0 0 0 / 30%);
 
             .switch-dot {
-              transform: translateX(24px);
               background-color: #1a202c;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+              box-shadow: 0 2px 4px rgb(0 0 0 / 40%);
+              transform: translateX(24px);
             }
 
             .sun {
-              transform: translateY(20px) scale(0);
               opacity: 0;
+              transform: translateY(20px) scale(0);
             }
 
             .moon {
-              transform: translateY(0) scale(1);
-              opacity: 1;
               color: #f6e05e;
+              opacity: 1;
+              transform: translateY(0) scale(1);
             }
           }
 
@@ -1171,15 +1336,15 @@ onUnmounted(() => {
           .sun {
             left: 0;
             color: #f6ad55;
-            transform: translateY(0) scale(1);
             opacity: 1;
+            transform: translateY(0) scale(1);
           }
 
           .moon {
             right: 0;
             color: #718096;
-            transform: translateY(-20px) scale(0);
             opacity: 0;
+            transform: translateY(-20px) scale(0);
           }
 
           .switch-dot {
@@ -1188,10 +1353,10 @@ onUnmounted(() => {
             left: 4px;
             width: 20px;
             height: 20px;
-            background-color: #ffffff;
+            background-color: #fff;
             border-radius: 50%;
+            box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
             transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
           }
         }
 
@@ -1262,12 +1427,12 @@ onUnmounted(() => {
         transition: all 0.3s ease;
 
         &:hover {
-          transform: translateY(-2px);
           box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
+          transform: translateY(-2px);
 
           .avatar-ring {
-            transform: scale(1.05);
             border-color: #dce2f7;
+            transform: scale(1.05);
           }
         }
 
@@ -1307,8 +1472,8 @@ onUnmounted(() => {
         }
 
         .user-role {
-          margin: 0;
           padding: 4px 12px;
+          margin: 0;
           font-size: 12px;
           color: #666;
           background: linear-gradient(135deg, #e8edf8, #dce2f7);
@@ -1316,13 +1481,13 @@ onUnmounted(() => {
 
           .dark & {
             color: #38bdf8;
-            background: rgba(56, 189, 248, 0.1);
+            background: rgb(56 189 248 / 10%);
           }
         }
 
         .dark & {
           background: linear-gradient(145deg, #111b2d, #1e293b);
-          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 4px 24px rgb(0 0 0 / 30%);
 
           .avatar-ring {
             border-color: #334155;
@@ -1339,26 +1504,26 @@ onUnmounted(() => {
 
         .dark & {
           background: linear-gradient(145deg, #111b2d, #0f172a);
-          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 4px 24px rgb(0 0 0 / 30%);
         }
 
         :deep(.el-menu-item) {
           position: relative;
           height: 48px;
           margin-bottom: 6px;
+          overflow: hidden;
           line-height: 48px;
           color: #555;
           border-radius: 12px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          overflow: hidden;
 
           &::before {
-            content: "";
             position: absolute;
-            left: 0;
             top: 50%;
+            left: 0;
             width: 4px;
             height: 0;
+            content: "";
             background: linear-gradient(180deg, #97b4f7, #dce2f7);
             border-radius: 0 4px 4px 0;
             transform: translateY(-50%);
@@ -1381,8 +1546,8 @@ onUnmounted(() => {
             }
 
             .el-icon {
-              transform: scale(1.2);
               color: #5a6b8a;
+              transform: scale(1.2);
             }
 
             span {
@@ -1405,10 +1570,10 @@ onUnmounted(() => {
               color: #f1f5f9;
               background: linear-gradient(
                 90deg,
-                rgba(56, 189, 248, 0.15),
+                rgb(56 189 248 / 15%),
                 transparent
               );
-              box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.2);
+              box-shadow: inset 0 0 0 1px rgb(56 189 248 / 20%);
             }
 
             &::before {
@@ -1421,9 +1586,9 @@ onUnmounted(() => {
             }
 
             .el-icon {
-              transform: scale(1.1);
               color: #5a6b8a;
-              animation: iconPulse 1.5s ease-in-out infinite;
+              transform: scale(1.1);
+              animation: icon-pulse 1.5s ease-in-out infinite;
 
               .dark & {
                 color: #38bdf8;
@@ -1438,7 +1603,7 @@ onUnmounted(() => {
               color: #f1f5f9;
               background: linear-gradient(
                 90deg,
-                rgba(56, 189, 248, 0.1),
+                rgb(56 189 248 / 10%),
                 transparent
               );
 
@@ -1457,19 +1622,23 @@ onUnmounted(() => {
 
           /* 每个菜单项不同的悬停动画 */
           &:nth-child(1):hover .el-icon {
-            animation: iconBounce 0.5s ease;
+            animation: icon-bounce 0.5s ease;
           }
+
           &:nth-child(2):hover .el-icon {
-            animation: iconFlip 0.6s ease;
+            animation: icon-flip 0.6s ease;
           }
+
           &:nth-child(3):hover .el-icon {
-            animation: iconHeartbeat 0.8s ease;
+            animation: icon-heartbeat 0.8s ease;
           }
+
           &:nth-child(4):hover .el-icon {
-            animation: iconFloat 0.8s ease;
+            animation: icon-float 0.8s ease;
           }
+
           &:nth-child(5):hover .el-icon {
-            animation: iconRing 0.6s ease;
+            animation: icon-ring 0.6s ease;
           }
 
           /* 待办事项 - 红色打勾效果 */
@@ -1480,17 +1649,17 @@ onUnmounted(() => {
             }
 
             .el-icon::after {
-              content: "";
               position: absolute;
-              bottom: -0.6px;
               right: -1.2px;
+              bottom: -0.6px;
               width: 0;
               height: 0;
-              border-bottom: 2px solid #e53935;
+              content: "";
               border-right: 2px solid #e53935;
-              border-radius: 0 0 2px 0;
-              transform: rotate(45deg);
+              border-bottom: 2px solid #e53935;
+              border-radius: 0 0 2px;
               opacity: 0;
+              transform: rotate(45deg);
               transition: all 0.3s ease;
             }
           }
@@ -1537,7 +1706,7 @@ onUnmounted(() => {
 
           .dark & {
             background: #111b2d;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 20px rgb(0 0 0 / 20%);
 
             &.lab-access .access-icon {
               background: linear-gradient(135deg, #2e1065, #4c1d95);
@@ -1557,12 +1726,12 @@ onUnmounted(() => {
           }
 
           &:hover {
-            transform: translateY(-4px);
             box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
+            transform: translateY(-4px);
 
             .access-arrow {
-              transform: translateX(4px);
               opacity: 1;
+              transform: translateX(4px);
             }
           }
 
@@ -1594,10 +1763,10 @@ onUnmounted(() => {
 
             p {
               margin: 0;
-              font-size: 12px;
-              color: #999;
               overflow: hidden;
               text-overflow: ellipsis;
+              font-size: 12px;
+              color: #999;
               white-space: nowrap;
 
               .dark & {
@@ -1647,7 +1816,7 @@ onUnmounted(() => {
 
         .dark & {
           background-color: #111b2d;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
         }
 
         .reminder {
@@ -1672,8 +1841,8 @@ onUnmounted(() => {
 
             .dark & {
               color: #38bdf8;
-              background-color: rgba(56, 189, 248, 0.05);
-              border-color: rgba(56, 189, 248, 0.2);
+              background-color: rgb(56 189 248 / 5%);
+              border-color: rgb(56 189 248 / 20%);
             }
 
             .el-icon {
@@ -1748,11 +1917,11 @@ onUnmounted(() => {
                 }
 
                 .mini-course-item {
-                  cursor: pointer;
                   display: flex;
                   gap: 12px;
                   align-items: center;
                   padding: 12px;
+                  cursor: pointer;
                   background: #fff;
                   border: 1px solid #ebeef5;
                   border-radius: 12px;
@@ -1762,11 +1931,11 @@ onUnmounted(() => {
                   .dark & {
                     background: #1e293b;
                     border-color: #334155;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                    box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
 
                     &:hover {
                       background: #334155;
-                      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+                      box-shadow: 0 6px 16px rgb(0 0 0 / 40%);
                     }
                   }
 
@@ -1809,6 +1978,7 @@ onUnmounted(() => {
 
                     .course-name {
                       @include text-ellipsis;
+
                       font-size: 14px;
                       font-weight: 600;
                       color: #333;
@@ -1858,10 +2028,10 @@ onUnmounted(() => {
               box-shadow: 0 4px 12px rgb(220 226 247 / 60%);
 
               .dark & {
-                background: linear-gradient(135deg, #1e293b, #0f172a);
                 color: #cbd5e1;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-                border: 1px solid rgba(56, 189, 248, 0.2);
+                background: linear-gradient(135deg, #1e293b, #0f172a);
+                border: 1px solid rgb(56 189 248 / 20%);
+                box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
               }
 
               p {
@@ -1898,16 +2068,16 @@ onUnmounted(() => {
                   }
 
                   &::before {
-                    content: "";
                     position: absolute;
                     top: 0.9em;
                     left: 0;
                     width: 6px;
                     height: 6px;
+                    content: "";
                     background: #fff;
                     border-radius: 50%;
-                    transform: translateY(-50%);
                     opacity: 0.9;
+                    transform: translateY(-50%);
                   }
 
                   &.typing-cursor {
@@ -1929,14 +2099,14 @@ onUnmounted(() => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 20px;
           padding: 16px 20px;
+          margin-bottom: 20px;
           background: linear-gradient(135deg, #dce2f7, #97b4f7);
           border-radius: 12px;
 
           .dark & {
             background: linear-gradient(135deg, #1e293b, #0f172a);
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            border: 1px solid rgb(56 189 248 / 20%);
           }
 
           h3 {
@@ -2010,11 +2180,11 @@ onUnmounted(() => {
             .dark & {
               background-color: #111b2d;
               border-color: #1e293b;
-              box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+              box-shadow: 0 2px 12px rgb(0 0 0 / 30%);
 
               &:hover {
                 border-color: #38bdf8;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+                box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
               }
             }
 
@@ -2059,12 +2229,13 @@ onUnmounted(() => {
                 background: linear-gradient(
                   180deg,
                   #111b2d,
-                  rgba(56, 189, 248, 0.05)
+                  rgb(56 189 248 / 5%)
                 );
               }
 
               h4 {
                 @include text-ellipsis;
+
                 margin: 0 0 8px;
                 font-size: 15px;
                 font-weight: 600;
@@ -2112,161 +2283,57 @@ onUnmounted(() => {
           }
         }
 
-  .pagination {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: center;
-    padding-top: 16px;
-    margin-top: 16px;
-    border-top: 1px solid rgb(220 226 247 / 60%);
+        .pagination {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          justify-content: center;
+          padding-top: 16px;
+          margin-top: 16px;
+          border-top: 1px solid rgb(220 226 247 / 60%);
 
-    .dark & {
-      border-top-color: #1e293b;
-    }
+          .dark & {
+            border-top-color: #1e293b;
+          }
 
-    .page-info {
-      min-width: 60px;
-      padding: 4px 12px;
-      font-size: 14px;
-      color: #5a6b8a;
-      text-align: center;
-      background: linear-gradient(
-        135deg,
-        rgb(220 226 247 / 40%),
-        rgb(200 212 240 / 30%)
-      );
-      border-radius: 10px;
+          .page-info {
+            min-width: 60px;
+            padding: 4px 12px;
+            font-size: 14px;
+            color: #5a6b8a;
+            text-align: center;
+            background: linear-gradient(
+              135deg,
+              rgb(220 226 247 / 40%),
+              rgb(200 212 240 / 30%)
+            );
+            border-radius: 10px;
 
-      .dark & {
-        color: #38bdf8;
-        background: linear-gradient(135deg, #1e293b, #0f172a);
-        border: 1px solid rgba(56, 189, 248, 0.2);
+            .dark & {
+              color: #38bdf8;
+              background: linear-gradient(135deg, #1e293b, #0f172a);
+              border: 1px solid rgb(56 189 248 / 20%);
+            }
+          }
+        }
       }
     }
   }
-}
-}
-}
-}
-
-/* 图标动画关键帧 */
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes iconBounce {
-  0%,
-  100% {
-    transform: scale(1.2) translateY(0);
-  }
-  30% {
-    transform: scale(1.2) translateY(-6px);
-  }
-  50% {
-    transform: scale(1.2) translateY(0);
-  }
-  70% {
-    transform: scale(1.2) translateY(-3px);
-  }
-}
-
-@keyframes iconFlip {
-  0% {
-    transform: scale(1.2) rotateY(0);
-  }
-  50% {
-    transform: scale(1.2) rotateY(180deg);
-  }
-  100% {
-    transform: scale(1.2) rotateY(360deg);
-  }
-}
-
-/* 个人资料 - 心跳/呼吸效果 */
-@keyframes iconHeartbeat {
-  0% {
-    transform: scale(1.2);
-  }
-  15% {
-    transform: scale(1.35);
-  }
-  30% {
-    transform: scale(1.2);
-  }
-  45% {
-    transform: scale(1.3);
-  }
-  60%,
-  100% {
-    transform: scale(1.2);
-  }
-}
-
-/* 学习云盘 - 上浮到云端效果 */
-@keyframes iconFloat {
-  0% {
-    transform: scale(1.2) translateY(0);
-  }
-  50% {
-    transform: scale(1.2) translateY(-8px);
-  }
-  100% {
-    transform: scale(1.2) translateY(0);
-  }
-}
-
-@keyframes iconRing {
-  0% {
-    transform: scale(1.2) rotate(0);
-  }
-  10% {
-    transform: scale(1.2) rotate(20deg);
-  }
-  20% {
-    transform: scale(1.2) rotate(-15deg);
-  }
-  30% {
-    transform: scale(1.2) rotate(10deg);
-  }
-  40% {
-    transform: scale(1.2) rotate(-10deg);
-  }
-  50% {
-    transform: scale(1.2) rotate(5deg);
-  }
-  60%,
-  100% {
-    transform: scale(1.2) rotate(0);
-  }
-}
-
-@keyframes iconPulse {
-  0%,
-  100% {
-    transform: scale(1.1);
-  }
-  50% {
-    transform: scale(1.25);
-  }
-}
+} // 添加文本省略混入
 </style>
 
 <style lang="scss">
 /* 全局样式 - 下拉菜单圆角 */
+
 /* 针对 el-popper 容器（dropdown 的外层包装） */
 .el-popper:has(.logout-menu) {
-  border-radius: 16px !important;
-  overflow: hidden !important;background: transparent !important;
+  overflow: hidden !important;
+  background: transparent !important;
   border: none !important;
+  border-radius: 16px !important;
   box-shadow: none !important;
 
-  /*隐藏箭头 */
+  /* 隐藏箭头 */
   .el-popper__arrow {
     display: none !important;
   }
@@ -2274,12 +2341,15 @@ onUnmounted(() => {
 
 .logout-menu {
   padding: 8px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background-color: rgb(255 255 255 / 95%) !important;
+  border: 1px solid rgb(220 226 247 / 60%) !important;
   border-radius: 16px !important;
+  box-shadow:
+    0 10px 25px -3px rgb(0 0 0 / 10%),
+    0 4px 6px -2px rgb(0 0 0 / 5%) !important;
   backdrop-filter: blur(40px);
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(220, 226, 247, 0.6) !important;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-  overflow: hidden !important;margin: 0 !important;
 
   /* 清除默认的 margin/padding 可能造成的衬底 */
   &::before,
@@ -2288,33 +2358,29 @@ onUnmounted(() => {
   }
 
   .el-dropdown-menu__item {
-    border-radius: 10px;
-    margin-bottom: 4px;
     padding: 10px 18px;
+    margin-bottom: 4px;
     font-weight: 500;
+    border-radius: 10px;
     transition: all 0.2s ease;
 
     &:last-child {
       margin-bottom: 0;
+      color: #f56c6c;
+
+      &:hover {
+        color: #f56c6c !important;
+        background-color: rgb(245 108 108 / 10%) !important;
+      }
     }
 
     &:hover {
-      background-color: rgba(200, 212, 240, 0.4) !important;
       color: #333 !important;
+      background-color: rgb(200 212 240 / 40%) !important;
     }
 
     .el-icon {
       margin-right: 8px;
-    }
-  }
-
-  /* 退出登录项 - 红色 */
-  .el-dropdown-menu__item:last-child {
-    color: #f56c6c;
-
-    &:hover {
-      background-color: rgba(245, 108, 108, 0.1) !important;
-      color: #f56c6c !important;
     }
   }
 }
@@ -2327,16 +2393,16 @@ html.dark .el-popper:has(.logout-menu),
 
 html.dark .logout-menu,
 .dark .logout-menu {
-  background-color: rgba(17, 27, 45, 0.98) !important;
-  border: 1px solid rgba(56, 189, 248, 0.2) !important;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.4) !important;
+  background-color: rgb(17 27 45 / 98%) !important;
+  border: 1px solid rgb(56 189 248 / 20%) !important;
+  box-shadow: 0 10px 25px -3px rgb(0 0 0 / 40%) !important;
 
   .el-dropdown-menu__item {
     color: #e2e8f0;
 
     &:hover {
-      background-color: rgba(56, 189, 248, 0.15) !important;
       color: #f1f5f9 !important;
+      background-color: rgb(56 189 248 / 15%) !important;
     }
   }
 
@@ -2344,8 +2410,8 @@ html.dark .logout-menu,
     color: #f87171;
 
     &:hover {
-      background-color: rgba(248, 113, 113, 0.15) !important;
       color: #f87171 !important;
+      background-color: rgb(248 113 113 / 15%) !important;
     }
   }
 }

@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, reactive, onMounted, onUnmounted } from "vue";
 import { ElMessage, type FormInstance } from "element-plus";
-import { Plus, Camera, User, Lock, Key, Check, InfoFilled } from "@element-plus/icons-vue";
+import {
+  Plus,
+  Camera,
+  User,
+  Lock,
+  Key,
+  Check,
+  InfoFilled
+} from "@element-plus/icons-vue";
 import { emitter } from "@/utils/mitt";
 import { storageLocal } from "@pureadmin/utils";
 import { userKey, removeToken } from "@/utils/auth";
@@ -16,9 +24,9 @@ import { uploadFile, getUserDetail, getStudentStats } from "@/api/user";
 import { formatAvatar } from "@/utils/avatar";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getFrontendCourseList } from "@/api/frontend/course";
-import { 
-  getCourseUsersProgress, 
-  getWeekUsage, 
+import {
+  getCourseUsersProgress,
+  getWeekUsage,
   getEfficientIndex,
   getPlatformStats,
   getTeacherUsage
@@ -121,22 +129,30 @@ const fetchStudentStats = async () => {
       studyStats.joinedCourses = list.map(item => ({
         name: item.courseName,
         cover: item.thumbUrl,
-        progress: item.totalHours > 0 ? Math.round((item.finishedHours / item.totalHours) * 100) : 0
+        progress:
+          item.totalHours > 0
+            ? Math.round((item.finishedHours / item.totalHours) * 100)
+            : 0
       }));
-      
+
       // 从课程列表计算累计学时和总体进度（这是可靠的数据源）
-      const calculatedHours = list.reduce((acc, curr) => acc + (curr.finishedHours || 0), 0);
+      const calculatedHours = list.reduce(
+        (acc, curr) => acc + (curr.finishedHours || 0),
+        0
+      );
       const totalProg = list.reduce((acc, curr) => {
-        const p = curr.totalHours > 0 ? (curr.finishedHours / curr.totalHours) : 0;
+        const p =
+          curr.totalHours > 0 ? curr.finishedHours / curr.totalHours : 0;
         return acc + p;
       }, 0);
-      const calculatedProgress = list.length > 0 ? Math.round((totalProg / list.length) * 100) : 0;
-      
+      const calculatedProgress =
+        list.length > 0 ? Math.round((totalProg / list.length) * 100) : 0;
+
       // 直接使用计算值，不再被后续接口覆盖
       studyStats.totalHours = calculatedHours;
       studyStats.totalProgress = calculatedProgress;
     }
-    
+
     // 获取入驻日期和作业均分（通过新接口）
     const statsRes = await getStudentStats().catch(() => null);
     if (statsRes?.code === 200 && statsRes.data) {
@@ -157,14 +173,18 @@ const fetchTeacherStats = async () => {
     if (res.code === 200 && res.data) {
       const list = res.data.courseUsersProgress || [];
       teacherStats.activeCourses = list.length;
-      
+
       let totalStudents = 0;
       teacherStats.courseProgress = list.map(course => {
         const students = course.usersProgress?.length || 0;
         totalStudents += students;
-        const avg = students > 0 
-          ? Math.round(course.usersProgress.reduce((a, b) => a + b.progress, 0) / students)
-          : 0;
+        const avg =
+          students > 0
+            ? Math.round(
+                course.usersProgress.reduce((a, b) => a + b.progress, 0) /
+                  students
+              )
+            : 0;
         return {
           name: course.courseName,
           avgProgress: avg,
@@ -173,12 +193,14 @@ const fetchTeacherStats = async () => {
       });
       teacherStats.totalStudents = totalStudents;
     }
-    
+
     const effRes = await getEfficientIndex();
     if (effRes.code === 200 && effRes.data) {
       const effList = effRes.data.efficientIndexList || [];
       if (effList.length > 0) {
-        teacherStats.avgEfficiency = Math.round(effList.reduce((a, b) => a + (b.planTime || 0), 0) / effList.length);
+        teacherStats.avgEfficiency = Math.round(
+          effList.reduce((a, b) => a + (b.planTime || 0), 0) / effList.length
+        );
       }
     }
     teacherStats.joinDate = profileForm.createdAt;
@@ -192,23 +214,31 @@ const fetchAdminStats = async () => {
   try {
     const weekRes = await getWeekUsage();
     if (weekRes.code === 200 && weekRes.data) {
-      adminStats.totalActivity = (weekRes.data.studentTotalNum || 0) + (weekRes.data.teacherTotalNum || 0);
+      adminStats.totalActivity =
+        (weekRes.data.studentTotalNum || 0) +
+        (weekRes.data.teacherTotalNum || 0);
     }
-    
+
     const platRes = await getPlatformStats();
     if (platRes.code === 200 && platRes.data) {
       const stats = platRes.data.stats || [];
-      const resourceStat = stats.find(s => s.title.includes("资源") || s.title.includes("课"));
-      adminStats.totalResources = resourceStat ? Number(resourceStat.value) : 0; 
+      const resourceStat = stats.find(
+        s => s.title.includes("资源") || s.title.includes("课")
+      );
+      adminStats.totalResources = resourceStat ? Number(resourceStat.value) : 0;
     }
 
     // 获取教师相关数据
     const teacherUsageRes = await getTeacherUsage();
     if (teacherUsageRes.code === 200 && teacherUsageRes.data) {
       const usageList = teacherUsageRes.data.usageInfoList || [];
-      const totalUsage = usageList.reduce((acc, curr) => acc + curr.usageNum, 0);
-      const avgUsage = usageList.length > 0 ? Math.round(totalUsage / usageList.length) : 0;
-      
+      const totalUsage = usageList.reduce(
+        (acc, curr) => acc + curr.usageNum,
+        0
+      );
+      const avgUsage =
+        usageList.length > 0 ? Math.round(totalUsage / usageList.length) : 0;
+
       adminStats.teacherActivity = [
         { name: "教师周活跃总次", value: totalUsage, unit: "次" },
         { name: "日均教研频率", value: avgUsage, unit: "次/日" },
@@ -216,8 +246,8 @@ const fetchAdminStats = async () => {
         { name: "教学资源覆盖率", value: 88, unit: "%" }
       ];
     }
-    
-    adminStats.platformEfficiency = 94; 
+
+    adminStats.platformEfficiency = 94;
     adminStats.joinDate = profileForm.createdAt;
   } catch (e) {
     console.error("获取管理员统计失败", e);
@@ -307,17 +337,22 @@ const handleEditProfile = () => {
     ElMessage.warning("请先登录");
     return;
   }
-  
+
   profileForm.nickname = cachedUser.nickname || cachedUser.username || "";
   profileForm.avatar = cachedUser.avatar || "";
   profileForm.info = cachedUser.info || "";
   profileForm.username = cachedUser.username || "ID: 未知";
   profileForm.sex = cachedUser.sex ?? 0;
   // 增强日期获取兼容性
-  const rawDate = cachedUser.createtime || cachedUser.createdAt || cachedUser.createTime || cachedUser["create-time"] || "";
+  const rawDate =
+    cachedUser.createtime ||
+    cachedUser.createdAt ||
+    cachedUser.createTime ||
+    cachedUser["create-time"] ||
+    "";
   profileForm.createdAt = rawDate ? rawDate.split(" ")[0] : "--";
   profileForm.roleType = cachedUser.roleType ?? 0;
-  
+
   // 角色展示判断
   isStudent.value = profileForm.roleType === 1;
   isTeacher.value = profileForm.roleType === 2;
@@ -342,15 +377,15 @@ const handleChangePassword = () => {
   changePasswordVisible.value = true;
 };
 
-const handleAvatarChange = (file) => {
+const handleAvatarChange = file => {
   const isLt2M = file.raw.size / 1024 / 1024 < 2;
   if (!isLt2M) {
     ElMessage.error("头像大小不能超过 2MB!");
     return;
   }
-  
+
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = e => {
     croppingImage.value = e.target.result as string;
     cropperDialogVisible.value = true;
   };
@@ -358,25 +393,27 @@ const handleAvatarChange = (file) => {
 };
 
 const handleConfirmCrop = () => {
-  cropperRef.value.getBlob((blob) => {
+  cropperRef.value.getBlob(blob => {
     const formData = new FormData();
     formData.append("file", blob, `avatar_${Date.now()}.png`);
     loading.value = true;
-    
-    uploadFile(formData).then(res => {
-      const data = (res.data || res) as any;
-      if (res.code === 200 || (res as any).success) {
-        const url = data.url;
-        profileForm.avatar = url;
-        avatarUrl.value = url;
-        cropperDialogVisible.value = false;
-        ElMessage.success("头像上传成功，保存后生效");
-      } else {
-        ElMessage.error(res.msg || "上传失败");
-      }
-    }).finally(() => {
-      loading.value = false;
-    });
+
+    uploadFile(formData)
+      .then(res => {
+        const data = (res.data || res) as any;
+        if (res.code === 200 || (res as any).success) {
+          const url = data.url;
+          profileForm.avatar = url;
+          avatarUrl.value = url;
+          cropperDialogVisible.value = false;
+          ElMessage.success("头像上传成功，保存后生效");
+        } else {
+          ElMessage.error(res.msg || "上传失败");
+        }
+      })
+      .finally(() => {
+        loading.value = false;
+      });
   });
 };
 
@@ -425,7 +462,8 @@ const submitProfile = async () => {
         }
       } catch (e: any) {
         console.error("修改资料错误:", e);
-        const errMsg = e.response?.data?.msg || e.msg || e.message || "系统错误，请检查网络";
+        const errMsg =
+          e.response?.data?.msg || e.msg || e.message || "系统错误，请检查网络";
         ElMessage.error(errMsg);
       } finally {
         loading.value = false;
@@ -442,18 +480,18 @@ const getPasswordErrorMessage = (code: number, msg?: string): string => {
     429: "操作过于频繁，请稍后再试",
     500: "服务器繁忙，请稍后重试"
   };
-  
+
   // 优先使用后端返回的具体错误信息
   if (msg && msg !== "系统错误" && msg !== "error" && msg.length > 0) {
     return msg;
   }
-  
+
   return errorMessages[code] || msg || "密码修改失败，请稍后重试";
 };
 
 const submitPassword = async () => {
   if (!passwordFormRef.value) return;
-  await passwordFormRef.value.validate(async (valid) => {
+  await passwordFormRef.value.validate(async valid => {
     if (valid) {
       passwordLoading.value = true;
       try {
@@ -471,7 +509,7 @@ const submitPassword = async () => {
         } else {
           const errorMsg = getPasswordErrorMessage(res.code, res.msg);
           ElMessage.error(errorMsg);
-          
+
           // 如果是原密码错误，清空原密码输入框方便用户重新输入
           if (res.code === 400 && res.msg?.includes("原密码")) {
             passwordForm.oldPassword = "";
@@ -490,9 +528,12 @@ const submitPassword = async () => {
         const responseData = e.response?.data;
         const code = responseData?.code || e.code || 500;
         const msg = responseData?.msg || e.msg || e.message;
-        
+
         // 网络错误特殊处理
-        if (e.message?.includes("Network Error") || e.message?.includes("timeout")) {
+        if (
+          e.message?.includes("Network Error") ||
+          e.message?.includes("timeout")
+        ) {
           ElMessage.error("网络连接失败，请检查网络后重试");
         } else {
           const errorMsg = getPasswordErrorMessage(code, msg);
@@ -521,11 +562,14 @@ onUnmounted(() => {
     <el-dialog
       v-model="editProfileVisible"
       title="个人信息档案"
-      :width="(isStudent || isTeacher || isAdmin) ? '1080px' : '640px'"
+      :width="isStudent || isTeacher || isAdmin ? '1080px' : '640px'"
       class="premium-dialog id-card-dialog"
       align-center
     >
-      <div class="profile-layout-container" :class="{ 'is-student-layout': isStudent || isTeacher || isAdmin }">
+      <div
+        class="profile-layout-container"
+        :class="{ 'is-student-layout': isStudent || isTeacher || isAdmin }"
+      >
         <div class="id-card-side">
           <div class="id-card-container">
             <div class="id-card-main">
@@ -573,13 +617,23 @@ onUnmounted(() => {
                   label-width="60px"
                   class="id-card-form-body"
                 >
-                  <el-form-item label="姓名" prop="nickname" class="id-form-item">
-                    <el-input v-model="profileForm.nickname" placeholder="请输入姓名" />
+                  <el-form-item
+                    label="姓名"
+                    prop="nickname"
+                    class="id-form-item"
+                  >
+                    <el-input
+                      v-model="profileForm.nickname"
+                      placeholder="请输入姓名"
+                    />
                   </el-form-item>
 
                   <el-form-item label="性别" class="id-form-item">
                     <div class="id-radio-box">
-                      <el-radio-group v-model="profileForm.sex" class="id-radio-group">
+                      <el-radio-group
+                        v-model="profileForm.sex"
+                        class="id-radio-group"
+                      >
                         <el-radio :value="1">男</el-radio>
                         <el-radio :value="2">女</el-radio>
                         <el-radio :value="0">保密</el-radio>
@@ -616,39 +670,64 @@ onUnmounted(() => {
                 <span class="title">学习表现录</span>
                 <span class="subtitle">LEARNING REPORT</span>
               </div>
-              
+
               <div class="stats-grid">
                 <div class="stat-item">
                   <div class="stat-label">累计学时</div>
-                  <div class="stat-value">{{ studyStats.totalHours || 0 }}h</div>
+                  <div class="stat-value">
+                    {{ studyStats.totalHours || 0 }}h
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">作业均分</div>
-                  <div class="stat-value highlight">{{ studyStats.avgScore || 0 }}</div>
+                  <div class="stat-value highlight">
+                    {{ studyStats.avgScore || 0 }}
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">总体进度</div>
-                  <div class="stat-value">{{ studyStats.totalProgress || 0 }}%</div>
+                  <div class="stat-value">
+                    {{ studyStats.totalProgress || 0 }}%
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">入驻日期</div>
-                  <div class="stat-value date">{{ studyStats.joinDate || '--' }}</div>
+                  <div class="stat-value date">
+                    {{ studyStats.joinDate || "--" }}
+                  </div>
                 </div>
               </div>
 
               <div class="courses-section">
                 <div class="section-title">我的课程库</div>
                 <div class="course-grid">
-                  <div v-for="(course, index) in studyStats.joinedCourses" :key="index" class="course-mini-card">
+                  <div
+                    v-for="(course, index) in studyStats.joinedCourses"
+                    :key="index"
+                    class="course-mini-card"
+                  >
                     <div class="course-cover-wrapper">
-                      <img :src="course.cover" class="course-mini-cover" v-if="course.cover" />
-                      <div class="course-placeholder-cover" v-else>无封面</div>
-                      <div class="course-progress-badge">{{ course.progress }}%</div>
+                      <img
+                        v-if="course.cover"
+                        :src="course.cover"
+                        class="course-mini-cover"
+                      />
+                      <div v-else class="course-placeholder-cover">无封面</div>
+                      <div class="course-progress-badge">
+                        {{ course.progress }}%
+                      </div>
                     </div>
                     <div class="course-name">{{ course.name }}</div>
-                    <el-progress :percentage="course.progress" :stroke-width="4" :show-text="false" />
+                    <el-progress
+                      :percentage="course.progress"
+                      :stroke-width="4"
+                      :show-text="false"
+                    />
                   </div>
-                  <div v-if="studyStats.joinedCourses.length === 0" class="no-data-hint">
+                  <div
+                    v-if="studyStats.joinedCourses.length === 0"
+                    class="no-data-hint"
+                  >
                     暂无已加入的课程
                   </div>
                 </div>
@@ -660,30 +739,42 @@ onUnmounted(() => {
                 <span class="title">教学成果录</span>
                 <span class="subtitle">TEACHING REPORT</span>
               </div>
-              
+
               <div class="stats-grid">
                 <div class="stat-item">
                   <div class="stat-label">授课学生</div>
-                  <div class="stat-value">{{ teacherStats.totalStudents || 0 }}人</div>
+                  <div class="stat-value">
+                    {{ teacherStats.totalStudents || 0 }}人
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">活跃课程</div>
-                  <div class="stat-value highlight">{{ teacherStats.activeCourses || 0 }}</div>
+                  <div class="stat-value highlight">
+                    {{ teacherStats.activeCourses || 0 }}
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">备课均时</div>
-                  <div class="stat-value">{{ teacherStats.avgEfficiency || 0 }}m</div>
+                  <div class="stat-value">
+                    {{ teacherStats.avgEfficiency || 0 }}m
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">入驻日期</div>
-                  <div class="stat-value date">{{ teacherStats.joinDate || '--' }}</div>
+                  <div class="stat-value date">
+                    {{ teacherStats.joinDate || "--" }}
+                  </div>
                 </div>
               </div>
 
               <div class="courses-section">
                 <div class="section-title">课程进度监控 (Avg.)</div>
                 <div class="course-grid">
-                  <div v-for="(course, index) in teacherStats.courseProgress" :key="index" class="course-mini-card">
+                  <div
+                    v-for="(course, index) in teacherStats.courseProgress"
+                    :key="index"
+                    class="course-mini-card"
+                  >
                     <div class="course-cover-wrapper teacher-dashboard-style">
                       <div class="dashboard-inner">
                         <div class="dashboard-stat">
@@ -698,14 +789,17 @@ onUnmounted(() => {
                       </div>
                     </div>
                     <div class="course-name">{{ course.name }}</div>
-                    <el-progress 
-                      :percentage="course.avgProgress" 
-                      :stroke-width="5" 
-                      :show-text="false" 
+                    <el-progress
+                      :percentage="course.avgProgress"
+                      :stroke-width="5"
+                      :show-text="false"
                       class="custom-progress"
                     />
                   </div>
-                  <div v-if="teacherStats.courseProgress.length === 0" class="no-data-hint">
+                  <div
+                    v-if="teacherStats.courseProgress.length === 0"
+                    class="no-data-hint"
+                  >
                     暂无授课数据
                   </div>
                 </div>
@@ -717,39 +811,59 @@ onUnmounted(() => {
                 <span class="title">智教大盘录</span>
                 <span class="subtitle">PLATFORM OVERVIEW</span>
               </div>
-              
+
               <div class="stats-grid">
                 <div class="stat-item">
                   <div class="stat-label">本周活跃</div>
-                  <div class="stat-value">{{ adminStats.totalActivity || 0 }}</div>
+                  <div class="stat-value">
+                    {{ adminStats.totalActivity || 0 }}
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">全站效率</div>
-                  <div class="stat-value highlight">{{ adminStats.platformEfficiency || 0 }}%</div>
+                  <div class="stat-value highlight">
+                    {{ adminStats.platformEfficiency || 0 }}%
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">资源总量</div>
-                  <div class="stat-value">{{ adminStats.totalResources || 0 }}</div>
+                  <div class="stat-value">
+                    {{ adminStats.totalResources || 0 }}
+                  </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">系统入驻</div>
-                  <div class="stat-value date">{{ adminStats.joinDate || '--' }}</div>
+                  <div class="stat-value date">
+                    {{ adminStats.joinDate || "--" }}
+                  </div>
                 </div>
               </div>
 
               <div class="courses-section">
                 <div class="section-title">平台教研活跃态势</div>
                 <div class="efficiency-list teacher-activity-card">
-                  <div v-for="(item, index) in adminStats.teacherActivity" :key="index" class="efficiency-item polished">
+                  <div
+                    v-for="(item, index) in adminStats.teacherActivity"
+                    :key="index"
+                    class="efficiency-item polished"
+                  >
                     <div class="eff-icon-box">
-                      <el-icon><InfoFilled v-if="index === 0" /><Check v-else-if="index === 3" /><Plus v-else /></el-icon>
+                      <el-icon
+                        ><InfoFilled v-if="index === 0" /><Check
+                          v-else-if="index === 3" /><Plus v-else
+                      /></el-icon>
                     </div>
                     <div class="eff-content">
                       <span class="eff-name">{{ item.name }}</span>
-                      <span class="eff-value">{{ item.value }}<small>{{ item.unit }}</small></span>
+                      <span class="eff-value"
+                        >{{ item.value }}<small>{{ item.unit }}</small></span
+                      >
                     </div>
                   </div>
-                  <div v-if="adminStats.teacherActivity.length === 0" class="no-data-hint">
+                  <div
+                    v-if="adminStats.teacherActivity.length === 0"
+                    class="no-data-hint"
+                  >
                     暂无统计数据
                   </div>
                 </div>
@@ -760,13 +874,13 @@ onUnmounted(() => {
       </div>
       <template #footer>
         <div class="premium-footer">
-          <el-button @click="editProfileVisible = false" round>取消</el-button>
+          <el-button round @click="editProfileVisible = false">取消</el-button>
           <el-button
             type="primary"
             :loading="loading"
-            @click="submitProfile"
             round
             class="btn-gradient"
+            @click="submitProfile"
             >保存同步</el-button
           >
         </div>
@@ -819,16 +933,24 @@ onUnmounted(() => {
             <!-- 密码强度显示 -->
             <div class="strength-meter">
               <div class="strength-bars">
-                <div 
-                  v-for="i in 4" 
-                  :key="i" 
-                  class="bar-item" 
+                <div
+                  v-for="i in 4"
+                  :key="i"
+                  class="bar-item"
                   :class="{ active: passwordStrength >= i }"
-                  :style="{ backgroundColor: passwordStrength >= i ? getStrengthInfo(passwordStrength).color : '' }"
-                ></div>
+                  :style="{
+                    backgroundColor:
+                      passwordStrength >= i
+                        ? getStrengthInfo(passwordStrength).color
+                        : ''
+                  }"
+                />
               </div>
-              <div class="strength-text" v-if="passwordStrength">
-                强度：<span :style="{ color: getStrengthInfo(passwordStrength).color }">{{ getStrengthInfo(passwordStrength).text }}</span>
+              <div v-if="passwordStrength" class="strength-text">
+                强度：<span
+                  :style="{ color: getStrengthInfo(passwordStrength).color }"
+                  >{{ getStrengthInfo(passwordStrength).text }}</span
+                >
               </div>
             </div>
           </el-form-item>
@@ -848,13 +970,15 @@ onUnmounted(() => {
       </div>
       <template #footer>
         <div class="premium-footer">
-          <el-button @click="changePasswordVisible = false" round>取消</el-button>
+          <el-button round @click="changePasswordVisible = false"
+            >取消</el-button
+          >
           <el-button
             type="primary"
             :loading="passwordLoading"
-            @click="submitPassword"
             round
             class="btn-gradient"
+            @click="submitPassword"
             >立即更新密码</el-button
           >
         </div>
@@ -879,8 +1003,14 @@ onUnmounted(() => {
       </div>
       <template #footer>
         <div class="premium-footer">
-          <el-button @click="cropperDialogVisible = false" round>取消</el-button>
-          <el-button type="primary" @click="handleConfirmCrop" round class="btn-gradient"
+          <el-button round @click="cropperDialogVisible = false"
+            >取消</el-button
+          >
+          <el-button
+            type="primary"
+            round
+            class="btn-gradient"
+            @click="handleConfirmCrop"
             >确认裁剪并上传</el-button
           >
         </div>
@@ -891,19 +1021,20 @@ onUnmounted(() => {
 
 <style lang="scss">
 .premium-dialog {
-  border-radius: 24px !important;
   overflow: hidden;
+  background-color: rgb(255 255 255 / 45%) !important;
+  border: 1px solid rgb(255 255 255 / 50%) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 40px 80px -12px rgb(0 0 0 / 25%) !important;
   backdrop-filter: blur(35px) saturate(200%);
-  background-color: rgba(255, 255, 255, 0.45) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  box-shadow: 0 40px 80px -12px rgba(0, 0, 0, 0.25) !important;
 
   .el-dialog__header {
-    margin-right: 0;
     padding: 24px 24px 0;
+    margin-right: 0;
+
     .el-dialog__title {
-      font-weight: 800;
       font-size: 22px;
+      font-weight: 800;
       color: #1a202c;
       letter-spacing: 1px;
     }
@@ -915,13 +1046,21 @@ onUnmounted(() => {
 }
 
 html.dark .premium-dialog {
-  background-color: rgba(15, 23, 42, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background-color: rgb(15 23 42 / 85%) !important;
+  border: 1px solid rgb(255 255 255 / 15%) !important;
+
   .el-dialog__header {
-    background: transparent !important;}
-  .el-dialog__title { color: #f8fafc; }.el-dialog__body {
     background: transparent !important;
   }
+
+  .el-dialog__title {
+    color: #f8fafc;
+  }
+
+  .el-dialog__body {
+    background: transparent !important;
+  }
+
   .el-dialog__footer {
     background: transparent !important;
   }
@@ -929,175 +1068,193 @@ html.dark .premium-dialog {
 
 .premium-footer {
   display: flex;
-  justify-content: flex-end;
   gap: 12px;
+  justify-content: flex-end;
   padding: 0 0 10px;
 
   .btn-gradient {
+    padding-right: 25px;
+    padding-left: 25px;
+    font-weight: 600;
     background: linear-gradient(135deg, #4481eb 0%, #04befe 100%);
     border: none;
-    padding-left: 25px;
-    padding-right: 25px;
-    font-weight: 600;
     transition: all 0.3s ease;
+
     &:hover {
+      box-shadow: 0 10px 20px -5px rgb(68 129 235 / 50%);
       transform: translateY(-2px);
-      box-shadow: 0 10px 20px -5px rgba(68, 129, 235, 0.5);
     }
-    &:active { transform: translateY(0); }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 </style>
 
 <style lang="scss" scoped>
-.id-card-container {
-  perspective: 1000px;
-}
-
 .profile-layout-container {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  
+
   &.is-student-layout {
     flex-direction: row;
-    align-items: stretch; 
+    align-items: stretch;
     justify-content: space-between;
     height: 430px; // 显式设置高度，确保左右对齐及触发滚动
-    
+
     .id-card-side {
+      display: flex;
       flex: 0 0 540px;
-      height: 100%;
-      display: flex;
       flex-direction: column;
+      height: 100%;
     }
+
     .extra-stats-side {
-      flex: 1;
-      min-width: 0;
-      padding-left: 15px;
       display: flex;
+      flex: 1;
       flex-direction: column;
+      min-width: 0;
       height: 100%;
+      padding-left: 15px;
       overflow: hidden; // 确保内部滚动不溢出
     }
   }
 }
 
 .id-card-container {
-  perspective: 1000px;
-  height: 100%;
   flex: 1;
+  height: 100%;
+  perspective: 1000px;
 }
 
 .id-card-main {
   position: relative;
-  width: 100%;
-  height: 100%; 
-  background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(240,244,255,0.5) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.8);
-  padding: 20px;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 130px 1fr;
   grid-template-rows: auto 1fr auto;
+  grid-template-columns: 130px 1fr;
   gap: 15px;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
   overflow: hidden;
-  box-shadow: inset 0 0 20px rgba(255,255,255,0.5);
+  background: linear-gradient(
+    135deg,
+    rgb(255 255 255 / 70%) 0%,
+    rgb(240 244 255 / 50%) 100%
+  );
+  border: 1px solid rgb(255 255 255 / 80%);
+  border-radius: 16px;
+  box-shadow: inset 0 0 20px rgb(255 255 255 / 50%);
 
   .card-brand {
-    grid-column: 2;
-    text-align: right;
     display: flex;
     flex-direction: column;
+    grid-column: 2;
     align-items: flex-end;
+    text-align: right;
+
     .brand-en {
-      font-family: "Impact", sans-serif;
+      font-family: Impact, sans-serif;
       font-size: 24px;
-      color: #3b82f6;
-      font-weight: 900;
       font-style: italic;
+      font-weight: 900;
       line-height: 1;
+      color: #3b82f6;
     }
+
     .brand-cn {
-      font-size: 14px;
-      color: #64748b;
-      font-weight: 600;
-      letter-spacing: 4px;
       margin-top: 2px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748b;
+      letter-spacing: 4px;
     }
   }
 
   .card-avatar-section {
-    grid-row: 1 / 3;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    grid-row: 1 / 3;
     gap: 15px;
+    align-items: center;
 
     .id-avatar-wrapper {
       position: relative;
-      cursor: pointer;
-      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+      cursor: pointer;
       border: 3px solid #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgb(0 0 0 / 20%);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      .id-avatar-img { display: block; border-radius: 8px; }
+
+      .id-avatar-img {
+        display: block;
+        border-radius: 8px;
+      }
+
       .id-placeholder-avatar {
-        width: 110px;
-        height: 110px;
-        background: #f1f5f9;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 110px;
+        height: 110px;
         font-size: 40px;
         color: #94a3b8;
+        background: #f1f5f9;
       }
+
       .id-upload-mask {
         position: absolute;
         inset: 0;
-        background: rgba(0,0,0,0.4);
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 28px;
         color: #fff;
+        background: rgb(0 0 0 / 40%);
         opacity: 0;
         transition: opacity 0.3s;
-        font-size: 28px;
       }
+
       &:hover {
         transform: scale(1.02);
-        .id-upload-mask { opacity: 1; }
+
+        .id-upload-mask {
+          opacity: 1;
+        }
       }
     }
 
     .card-security-btn {
       display: flex;
-      align-items: center;
       gap: 6px;
+      align-items: center;
       padding: 6px 12px;
-      border-radius: 20px;
-      background: rgba(68, 129, 235, 0.1);
-      color: #3b82f6;
       font-size: 12px;
       font-weight: 600;
+      color: #3b82f6;
       cursor: pointer;
+      background: rgb(68 129 235 / 10%);
+      border-radius: 20px;
       transition: all 0.3s ease;
+
       &:hover {
-        background: #3b82f6;
         color: #fff;
+        background: #3b82f6;
         transform: translateY(-2px);
       }
     }
   }
 
   .card-info-form {
-    grid-column: 2;
-    grid-row: 2;
     display: flex;
-    justify-content: flex-end;
+    grid-row: 2;
+    grid-column: 2;
     align-items: center;
+    justify-content: flex-end;
     padding-left: 10px;
 
     .id-card-form-body {
@@ -1106,92 +1263,101 @@ html.dark .premium-dialog {
     }
 
     .id-form-item {
-      margin-bottom: 12px; 
+      margin-bottom: 12px;
+
       :deep(.el-form-item__label) {
-        font-family: "KaiTi", "STKaiti", serif;
-        color: #3b82f6;
-        font-size: 16px;
-        font-weight: bold;
-        padding-right: 12px;
-        height: 38px;
         display: flex;
         align-items: center;
         justify-content: flex-end;
+        height: 38px;
+        padding-right: 12px;
+        font-family: KaiTi, STKaiti, serif;
+        font-size: 16px;
+        font-weight: bold;
+        color: #3b82f6;
       }
-      
-      :deep(.el-input__wrapper), 
+
+      :deep(.el-input__wrapper),
       .id-radio-box,
       :deep(.el-textarea__inner) {
         box-sizing: border-box;
         background: #fff !important;
-        border: 1px solid rgba(68, 129, 235, 0.1) !important;
+        border: 1px solid rgb(68 129 235 / 10%) !important;
         border-radius: 8px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0 2px 8px rgb(0 0 0 / 4%) !important;
         transition: all 0.3s ease;
+
         &:hover {
           border-color: #3b82f6 !important;
-          box-shadow: 0 4px 12px rgba(68, 129, 235, 0.1) !important;
+          box-shadow: 0 4px 12px rgb(68 129 235 / 10%) !important;
         }
       }
 
       :deep(.el-input__wrapper) {
-        padding: 0 12px;
         width: 100%;
+        padding: 0 12px;
       }
 
       :deep(.el-input__inner) {
+        height: 38px;
         font-family: "Microsoft YaHei", sans-serif;
         font-size: 16px;
         font-weight: 600;
         color: #1e293b;
-        height: 38px;
       }
 
       .id-radio-box {
-        padding: 0 15px;
-        height: 38px;
         display: flex;
         align-items: center;
         width: 100%;
+        height: 38px;
+        padding: 0 15px;
       }
 
       :deep(.el-textarea__inner) {
+        height: 80px;
+        padding: 8px 12px !important;
         font-family: inherit;
         font-size: 14px;
         font-weight: 500;
-        color: #64748b;
         line-height: 1.6;
-        padding: 8px 12px !important;
+        color: #64748b;
         resize: none;
         border: none !important;
-        height: 80px; 
       }
     }
 
     .id-radio-group {
-      width: 100%;
       display: flex;
       justify-content: space-around;
+      width: 100%;
+
       :deep(.el-radio) {
         margin-right: 0;
-        .el-radio__label { font-weight: 600; font-size: 14px; }
+
+        .el-radio__label {
+          font-size: 14px;
+          font-weight: 600;
+        }
       }
     }
   }
 
   .card-id-number {
-    grid-column: 1 / 3;
-    grid-row: 3;
     display: flex;
     flex-direction: column;
+    grid-row: 3;
+    grid-column: 1 / 3;
     margin-top: 2px;
+
     .label {
+      margin-bottom: 2px;
       font-size: 10px;
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 2px;
-      margin-bottom: 2px;
     }
+
     .number {
       font-family: "Courier New", Courier, monospace;
       font-size: 30px;
@@ -1200,79 +1366,90 @@ html.dark .premium-dialog {
       letter-spacing: 4px;
       background: linear-gradient(90deg, #1e293b 0%, #64748b 100%);
       background-clip: text;
-      -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
   }
 }
 
 .extra-stats-container {
-  height: 100%;
-  flex: 1;
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 20px;
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.05);
   display: flex;
+  flex: 1;
   flex-direction: column;
+  height: 100%;
+  padding: 18px;
+
+  /* 增加底部内边距，确保最下面内容可完全滚出 */
+  padding-bottom: 30px;
   overflow-y: auto; // 启用纵向滚动
-  
+
   /* 隐藏滚动条但保留功能 */
   scrollbar-width: none;
+  background: rgb(255 255 255 / 40%);
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: 20px;
+  box-shadow: 0 15px 35px -10px rgb(0 0 0 / 5%);
   -ms-overflow-style: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
 
-  /* 增加底部内边距，确保最下面内容可完全滚出 */
-  padding-bottom: 30px;
-
   .stats-header {
-    margin-bottom: 15px;
-    flex-shrink: 0;
     display: flex;
+    flex-shrink: 0;
     flex-direction: column;
+    margin-bottom: 15px;
+
     .title {
       font-size: 16px;
       font-weight: 800;
       color: #1a202c;
       letter-spacing: 1px;
     }
+
     .subtitle {
+      margin-top: 1px;
       font-size: 9px;
       color: #94a3b8;
       letter-spacing: 1.5px;
-      margin-top: 1px;
     }
   }
 
   .stats-grid {
     display: grid;
+    flex-shrink: 0; // 防止头部被压缩导致无法滚动
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     margin-bottom: 20px;
-    flex-shrink: 0; // 防止头部被压缩导致无法滚动
 
     .stat-item {
-      background: #fff;
       padding: 12px 10px;
-      border-radius: 12px;
       text-align: center;
-      border: 1px solid rgba(68, 129, 235, 0.05);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      background: #fff;
+      border: 1px solid rgb(68 129 235 / 5%);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgb(0 0 0 / 2%);
+
       .stat-label {
-        font-size: 13px;
-        color: #475569;
         margin-bottom: 5px;
+        font-size: 13px;
         font-weight: 600;
+        color: #475569;
       }
+
       .stat-value {
         font-size: 17px;
         font-weight: 800;
         color: #1a202c;
-        &.highlight { color: #f59e0b; }
-        &.date { font-size: 12px; font-family: monospace; }
+
+        &.highlight {
+          color: #f59e0b;
+        }
+
+        &.date {
+          font-family: monospace;
+          font-size: 12px;
+        }
       }
     }
   }
@@ -1281,18 +1458,19 @@ html.dark .premium-dialog {
     flex-shrink: 0; // 核心：防止容器内部被压缩，溢出父级触发滚动
 
     .section-title {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
       font-size: 13px;
       font-weight: 700;
       color: #475569;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      &:before {
-        content: "";
+
+      &::before {
         width: 3px;
         height: 12px;
-        background: #3b82f6;
         margin-right: 6px;
+        content: "";
+        background: #3b82f6;
         border-radius: 10px;
       }
     }
@@ -1305,50 +1483,70 @@ html.dark .premium-dialog {
 
       .course-mini-card {
         margin-bottom: 5px;
+
         .custom-progress-blue {
           margin-top: 4px;
+
           :deep(.el-progress-bar__outer) {
-            background-color: rgba(68, 129, 235, 0.1) !important;
+            background-color: rgb(68 129 235 / 10%) !important;
           }
+
           :deep(.el-progress-bar__inner) {
             background: linear-gradient(90deg, #3b82f6, #60a5fa) !important;
           }
         }
+
         .course-cover-wrapper {
           position: relative;
-          border-radius: 8px;
-          overflow: hidden;
           aspect-ratio: 1.6 / 1;
           margin-bottom: 6px;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+          overflow: hidden;
           background: #f1f5f9;
+          border-radius: 8px;
+          box-shadow: 0 4px 10px rgb(0 0 0 / 8%);
 
           // 增强教师端仪表盘样式权重，确保背景色生效
           &.teacher-dashboard-style {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
-            box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            
+            background: linear-gradient(
+              135deg,
+              #1e40af 0%,
+              #3b82f6 100%
+            ) !important;
+            box-shadow: 0 10px 15px -3px rgb(30 64 175 / 30%);
+
             .dashboard-inner {
-              text-align: center;
               z-index: 2;
               margin-top: -8px; /* 视觉补偿：向上微调以避开底部的 bubble，实现真正的“视觉中心” */
+              text-align: center;
+
               .dashboard-stat {
-                color: #ffffff;
                 line-height: 1;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                .num { font-size: 30px; font-weight: 900; font-family: "DIN Alternate", sans-serif; }
-                .unit { font-size: 14px; margin-left: 2px; font-weight: 700; }
+                color: #fff;
+                text-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+
+                .num {
+                  font-family: "DIN Alternate", sans-serif;
+                  font-size: 30px;
+                  font-weight: 900;
+                }
+
+                .unit {
+                  margin-left: 2px;
+                  font-size: 14px;
+                  font-weight: 700;
+                }
               }
+
               .dashboard-label {
+                margin-top: 6px;
                 font-size: 11px;
-                color: #ffffff;
+                font-weight: 800;
+                color: #fff;
                 text-transform: uppercase;
                 letter-spacing: 1px;
-                margin-top: 6px;
-                font-weight: 800;
                 opacity: 0.9;
               }
             }
@@ -1357,66 +1555,78 @@ html.dark .premium-dialog {
               position: absolute;
               bottom: 10px;
               left: 50%;
-              transform: translateX(-50%);
-              background: rgba(255, 255, 255, 0.15);
-              backdrop-filter: blur(12px);
-              padding: 4px 12px;
-              border-radius: 20px;
+              z-index: 2;
               display: flex;
-              align-items: center;
               gap: 6px;
-              color: #ffffff;
+              align-items: center;
+              padding: 4px 12px;
               font-size: 11px;
               font-weight: 700;
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              z-index: 2;
-              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+              color: #fff;
+              background: rgb(255 255 255 / 15%);
+              border: 1px solid rgb(255 255 255 / 20%);
+              border-radius: 20px;
+              box-shadow: 0 4px 6px rgb(0 0 0 / 10%);
+              backdrop-filter: blur(12px);
+              transform: translateX(-50%);
             }
 
-            &:after {
-              content: "";
+            &::after {
               position: absolute;
               top: -10%;
               right: -5%;
               width: 80px;
               height: 80px;
-              background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+              content: "";
+              background: radial-gradient(
+                circle,
+                rgb(255 255 255 / 25%) 0%,
+                transparent 70%
+              );
               filter: blur(15px);
             }
           }
-          
-          .course-mini-cover { width: 100%; height: 100%; object-fit: cover; }
-          .course-placeholder-cover {
+
+          .course-mini-cover {
             width: 100%;
             height: 100%;
+            object-fit: cover;
+          }
+
+          .course-placeholder-cover {
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
+            height: 100%;
             font-size: 10px;
             color: #94a3b8;
           }
+
           .course-progress-badge {
             position: absolute;
             top: 4px;
             right: 4px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            color: #fff;
-            font-size: 9px;
             padding: 1px 4px;
-            border-radius: 20px;
+            font-size: 9px;
             font-weight: 600;
+            color: #fff;
+            background: rgb(0 0 0 / 60%);
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
           }
         }
+
         .course-name {
+          margin-bottom: 3px;
+          overflow: hidden;
+          text-overflow: ellipsis;
           font-size: 11px;
           font-weight: 600;
           color: #1e293b;
           white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          margin-bottom: 3px;
         }
+
         .custom-progress {
           :deep(.el-progress-bar__inner) {
             background: var(--el-color-primary);
@@ -1427,46 +1637,61 @@ html.dark .premium-dialog {
   }
 
   .teacher-activity-card {
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(10px);
     padding: 12px !important;
+    background: rgb(255 255 255 / 40%);
     border-radius: 12px;
+    backdrop-filter: blur(10px);
 
     .efficiency-item.polished {
       display: flex;
-      align-items: center;
       gap: 12px;
-      background: #fff;
+      align-items: center;
       padding: 10px;
-      border-radius: 10px;
       margin-bottom: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgb(0 0 0 / 5%);
       transition: all 0.3s ease;
 
-      &:hover { transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+      &:hover {
+        box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+        transform: translateX(5px);
+      }
 
       .eff-icon-box {
-        width: 32px;
-        height: 32px;
-        background: #f0f4ff;
-        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 32px;
+        height: 32px;
         color: #4f46e5;
+        background: #f0f4ff;
+        border-radius: 8px;
       }
 
       .eff-content {
-        flex: 1;
         display: flex;
-        justify-content: space-between;
+        flex: 1;
         align-items: center;
-        .eff-name { font-size: 13px; font-weight: 700; color: #475569; }
-        .eff-value { 
-          font-size: 16px; 
-          font-weight: 800; 
+        justify-content: space-between;
+
+        .eff-name {
+          font-size: 13px;
+          font-weight: 700;
+          color: #475569;
+        }
+
+        .eff-value {
+          font-size: 16px;
+          font-weight: 800;
           color: #1e293b;
-          small { font-size: 11px; margin-left: 3px; color: #64748b; font-weight: 600; }
+
+          small {
+            margin-left: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+          }
         }
       }
     }
@@ -1476,34 +1701,34 @@ html.dark .premium-dialog {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 12px;
     max-height: 200px;
+    padding: 10px;
     overflow-y: auto;
+    background: rgb(255 255 255 / 40%);
+    border-radius: 12px;
   }
 
   .efficiency-item {
     display: flex;
-    align-items: center;
     gap: 10px;
+    align-items: center;
     font-size: 12px;
     line-height: 1.4;
-    
+
     .eff-dot {
+      flex-shrink: 0;
       width: 6px;
       height: 6px;
-      border-radius: 50%;
       background: #97b4f7;
-      flex-shrink: 0;
+      border-radius: 50%;
     }
-    
+
     .eff-name {
       font-weight: 700;
       color: #475569;
       white-space: nowrap;
     }
-    
+
     .eff-direction {
       color: #64748b;
     }
@@ -1512,118 +1737,194 @@ html.dark .premium-dialog {
 
 .strength-meter {
   margin-top: 10px;
+
   .strength-bars {
     display: flex;
     gap: 4px;
     height: 4px;
     margin-bottom: 6px;
+
     .bar-item {
       flex: 1;
       height: 100%;
       background: #eee;
       border-radius: 2px;
       transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      &.active { transform: scaleY(1.2); }
+
+      &.active {
+        transform: scaleY(1.2);
+      }
     }
   }
+
   .strength-text {
     font-size: 12px;
     color: #94a3b8;
-    span { font-weight: bold; }
+
+    span {
+      font-weight: bold;
+    }
   }
 }
 
 .no-data-hint {
   grid-column: 1 / -1;
-  text-align: center;
   padding: 20px 0;
-  color: #94a3b8;
   font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
 }
 
 html.dark {
   .id-card-main {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(
+      135deg,
+      rgb(30 41 59 / 80%) 0%,
+      rgb(15 23 42 / 60%) 100%
+    );
+    border-color: rgb(255 255 255 / 10%);
+    box-shadow: inset 0 0 20px rgb(0 0 0 / 30%);
 
-    .card-brand .brand-cn { color: #94a3b8; }
+    .card-brand .brand-cn {
+      color: #94a3b8;
+    }
 
     .id-avatar-wrapper {
-      border-color: rgba(255, 255, 255, 0.1);
-      .id-placeholder-avatar { background: #1e293b; color: #475569; }
+      border-color: rgb(255 255 255 / 10%);
+
+      .id-placeholder-avatar {
+        color: #475569;
+        background: #1e293b;
+      }
     }
 
     .card-info-form .id-form-item {
-      :deep(.el-input__wrapper), 
+      :deep(.el-input__wrapper),
       .id-radio-box,
       :deep(.el-textarea__inner) {
-        background: rgba(15, 23, 42, 0.8) !important;
-        border-color: rgba(255, 255, 255, 0.1) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+        background: rgb(15 23 42 / 80%) !important;
+        border-color: rgb(255 255 255 / 10%) !important;
+        box-shadow: 0 2px 8px rgb(0 0 0 / 20%) !important;
       }
-      :deep(.el-input__inner) { color: #f8fafc !important; }
-      :deep(.el-textarea__inner) { color: #cbd5e1 !important; }
-      
-      .id-radio-group :deep(.el-radio__label) { color: #94a3b8; }
-      .id-radio-group :deep(.is-checked .el-radio__label) { color: #3b82f6; }
+
+      :deep(.el-input__inner) {
+        color: #f8fafc !important;
+      }
+
+      :deep(.el-textarea__inner) {
+        color: #cbd5e1 !important;
+      }
+
+      .id-radio-group :deep(.el-radio__label) {
+        color: #94a3b8;
+      }
+
+      .id-radio-group :deep(.is-checked .el-radio__label) {
+        color: #3b82f6;
+      }
     }
 
     .card-id-number .number {
       background: linear-gradient(90deg, #f8fafc 0%, #64748b 100%);
       background-clip: text;
-      -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
   }
-  
-  .extra-stats-container {
-    background: rgba(15, 23, 42, 0.4);
-    border-color: rgba(255, 255, 255, 0.05);
 
-    .stats-header .title { color: #f8fafc; }
+  .extra-stats-container {
+    background: rgb(15 23 42 / 40%);
+    border-color: rgb(255 255 255 / 5%);
+
+    .stats-header .title {
+      color: #f8fafc;
+    }
 
     .stats-grid .stat-item {
-      background: rgba(30, 41, 59, 0.7);
-      border-color: rgba(255, 255, 255, 0.05);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      .stat-value { color: #f8fafc; }
-      .stat-label { color: #64748b; }
+      background: rgb(30 41 59 / 70%);
+      border-color: rgb(255 255 255 / 5%);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+
+      .stat-value {
+        color: #f8fafc;
+      }
+
+      .stat-label {
+        color: #64748b;
+      }
     }
 
     .courses-section {
-      .section-title { color: #cbd5e1; }
+      .section-title {
+        color: #cbd5e1;
+      }
+
       .course-grid .course-mini-card {
         .course-cover-wrapper {
           background: #1e293b;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+
           &.teacher-dashboard-style {
-            background: linear-gradient(135deg, #020617 0%, #1e3a8a 100%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(
+              135deg,
+              #020617 0%,
+              #1e3a8a 100%
+            ) !important;
+            border: 1px solid rgb(255 255 255 / 10%);
+
             .dashboard-inner {
               margin-top: -8px;
-              .dashboard-label { color: #60a5fa; opacity: 1; font-weight: 800; }
-              .num { color: #ffffff; text-shadow: 0 0 10px rgba(96, 165, 250, 0.5); }
+
+              .dashboard-label {
+                font-weight: 800;
+                color: #60a5fa;
+                opacity: 1;
+              }
+
+              .num {
+                color: #fff;
+                text-shadow: 0 0 10px rgb(96 165 250 / 50%);
+              }
             }
-            .student-bubble { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff; }
+
+            .student-bubble {
+              color: #fff;
+              background: rgb(255 255 255 / 10%);
+              border-color: rgb(255 255 255 / 20%);
+            }
           }
         }
-        .course-name { color: #f8fafc; }
-      }
-      .teacher-activity-card {
-        background: rgba(0, 0, 0, 0.2);
-        .efficiency-item.polished {
-          background: rgba(30, 41, 59, 0.8) !important;
-          .eff-icon-box { background: #1e293b; color: #818cf8; }
-          .eff-content .eff-name { color: #94a3b8; }
-          .eff-content .eff-value { color: #f8fafc; }
+
+        .course-name {
+          color: #f8fafc;
         }
       }
+
+      .teacher-activity-card {
+        background: rgb(0 0 0 / 20%);
+
+        .efficiency-item.polished {
+          background: rgb(30 41 59 / 80%) !important;
+
+          .eff-icon-box {
+            color: #818cf8;
+            background: #1e293b;
+          }
+
+          .eff-content .eff-name {
+            color: #94a3b8;
+          }
+
+          .eff-content .eff-value {
+            color: #f8fafc;
+          }
+        }
+      }
+
       .efficiency-list {
-        background: rgba(0, 0, 0, 0.2);
+        background: rgb(0 0 0 / 20%);
       }
     }
   }
@@ -1633,43 +1934,57 @@ html.dark {
   }
 
   .password-desc {
-    background: rgba(230, 162, 60, 0.1);
     color: #e6a23c;
-    border-color: rgba(230, 162, 60, 0.2);
+    background: rgb(230 162 60 / 10%);
+    border-color: rgb(230 162 60 / 20%);
   }
 
   .beautified-form {
-    :deep(.el-form-item__label) { color: #cbd5e1; }
+    :deep(.el-form-item__label) {
+      color: #cbd5e1;
+    }
+
     :deep(.el-input__wrapper) {
       background-color: #0f172a;
       border-color: #1e293b;
-      .el-input__inner { color: #f8fafc; }
+
+      .el-input__inner {
+        color: #f8fafc;
+      }
     }
   }
 }
 
 .password-desc {
   display: flex;
-  align-items: center;
   gap: 8px;
-  background: #fff9e6;
+  align-items: center;
   padding: 12px 16px;
-  border-radius: 12px;
   margin-bottom: 24px;
   font-size: 13px;
   color: #856404;
+  background: #fff9e6;
   border: 1px solid #ffeeba;
+  border-radius: 12px;
 }
 
 .beautified-form {
-  :deep(.el-form-item__label) { font-weight: 600; color: #4b5563; }
+  :deep(.el-form-item__label) {
+    font-weight: 600;
+    color: #4b5563;
+  }
+
   :deep(.el-input__wrapper) {
     background-color: #f9fafb;
-    border-radius: 12px;
     border: 1px solid #e5e7eb;
+    border-radius: 12px;
     box-shadow: none !important;
   }
 }
 
-.cropper-box { background: #000; border-radius: 12px; overflow: hidden; }
+.cropper-box {
+  overflow: hidden;
+  background: #000;
+  border-radius: 12px;
+}
 </style>

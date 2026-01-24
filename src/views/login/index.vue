@@ -154,7 +154,9 @@ const fetchUserDetail = async () => {
       setToken({
         accessToken: getToken()?.accessToken || "",
         refreshToken: getToken()?.refreshToken || "",
-        expires: getToken()?.expires ? new Date(getToken().expires) : new Date(),
+        expires: getToken()?.expires
+          ? new Date(getToken().expires)
+          : new Date(),
         username: userInfo.mobile,
         nickname: userInfo.nickname,
         avatar: userInfo.avatar || "",
@@ -239,7 +241,7 @@ watch(loginDay, value => {
     <ParticlesBg />
 
     <!-- 渐变背景 -->
-    <div class="gradient-bg"></div>
+    <div class="gradient-bg" />
 
     <!-- 顶部工具栏 -->
     <div class="top-toolbar">
@@ -258,16 +260,16 @@ watch(loginDay, value => {
         />
         <!-- 国际化 -->
         <el-dropdown trigger="click">
-        <globalization
-          class="hover:text-primary hover:bg-transparent w-[20px] h-[20px] ml-3 cursor-pointer outline-hidden duration-300"
-        />
-        <template #dropdown>
-          <el-dropdown-menu class="translation">
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'zh')"
-              :class="['dark:text-white', getDropdownItemClass(locale, 'zh')]"
-              @click="translationCh"
-            >
+          <globalization
+            class="hover:text-primary hover:bg-transparent w-[20px] h-[20px] ml-3 cursor-pointer outline-hidden duration-300"
+          />
+          <template #dropdown>
+            <el-dropdown-menu class="translation">
+              <el-dropdown-item
+                :style="getDropdownItemStyle(locale, 'zh')"
+                :class="['dark:text-white', getDropdownItemClass(locale, 'zh')]"
+                @click="translationCh"
+              >
                 <IconifyIconOffline
                   v-show="locale === 'zh'"
                   class="check-btn"
@@ -275,11 +277,11 @@ watch(loginDay, value => {
                 />
                 简体中文
               </el-dropdown-item>
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'tw')"
-              :class="['dark:text-white', getDropdownItemClass(locale, 'tw')]"
-              @click="translationTw"
-            >
+              <el-dropdown-item
+                :style="getDropdownItemStyle(locale, 'tw')"
+                :class="['dark:text-white', getDropdownItemClass(locale, 'tw')]"
+                @click="translationTw"
+              >
                 <IconifyIconOffline
                   v-show="locale === 'tw'"
                   class="check-btn"
@@ -287,31 +289,31 @@ watch(loginDay, value => {
                 />
                 繁體中文
               </el-dropdown-item>
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'en')"
-              :class="['dark:text-white', getDropdownItemClass(locale, 'en')]"
-              @click="translationEn"
-            >
+              <el-dropdown-item
+                :style="getDropdownItemStyle(locale, 'en')"
+                :class="['dark:text-white', getDropdownItemClass(locale, 'en')]"
+                @click="translationEn"
+              >
                 <span v-show="locale === 'en'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
                 English
               </el-dropdown-item>
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'ja')"
-              :class="['dark:text-white', getDropdownItemClass(locale, 'ja')]"
-              @click="translationJa"
-            >
+              <el-dropdown-item
+                :style="getDropdownItemStyle(locale, 'ja')"
+                :class="['dark:text-white', getDropdownItemClass(locale, 'ja')]"
+                @click="translationJa"
+              >
                 <span v-show="locale === 'ja'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
                 日本語
               </el-dropdown-item>
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'ko')"
-              :class="['dark:text-white', getDropdownItemClass(locale, 'ko')]"
-              @click="translationKo"
-            >
+              <el-dropdown-item
+                :style="getDropdownItemStyle(locale, 'ko')"
+                :class="['dark:text-white', getDropdownItemClass(locale, 'ko')]"
+                @click="translationKo"
+              >
                 <span v-show="locale === 'ko'" class="check-btn">
                   <IconifyIconOffline :icon="Check" />
                 </span>
@@ -335,7 +337,8 @@ watch(loginDay, value => {
             <span class="sub-title">新一代企业级管理平台</span>
           </h1>
           <p class="hero-desc">
-            基于 Vue 3.0 + TypeScript + Vite + Element Plus 构建的企业级后台管理系统，
+            基于 Vue 3.0 + TypeScript + Vite + Element Plus
+            构建的企业级后台管理系统，
             提供丰富的组件和功能模块，助力企业数字化转型。
           </p>
         </div>
@@ -408,7 +411,10 @@ watch(loginDay, value => {
                 ]"
                 prop="tenant"
                 class="floating-label-item"
-                :class="{ 'has-value': !!ruleForm.tenant, 'is-focused': isTenantFocused }"
+                :class="{
+                  'has-value': !!ruleForm.tenant,
+                  'is-focused': isTenantFocused
+                }"
               >
                 <el-input
                   v-model="ruleForm.tenant"
@@ -418,7 +424,9 @@ watch(loginDay, value => {
                   @focus="isTenantFocused = true"
                   @blur="isTenantFocused = false"
                 />
-                <label class="floating-label">{{ t('login.pureTenant') }}</label>
+                <label class="floating-label">{{
+                  t("login.pureTenant")
+                }}</label>
               </el-form-item>
             </Motion>
 
@@ -433,7 +441,10 @@ watch(loginDay, value => {
                 ]"
                 prop="username"
                 class="floating-label-item"
-                :class="{ 'has-value': !!ruleForm.username, 'is-focused': isUsernameFocused }"
+                :class="{
+                  'has-value': !!ruleForm.username,
+                  'is-focused': isUsernameFocused
+                }"
               >
                 <el-input
                   v-model="ruleForm.username"
@@ -443,15 +454,20 @@ watch(loginDay, value => {
                   @focus="isUsernameFocused = true"
                   @blur="isUsernameFocused = false"
                 />
-                <label class="floating-label">{{ t('login.pureUsername') }}</label>
+                <label class="floating-label">{{
+                  t("login.pureUsername")
+                }}</label>
               </el-form-item>
             </Motion>
 
             <Motion :delay="150">
-              <el-form-item 
+              <el-form-item
                 prop="password"
                 class="floating-label-item"
-                :class="{ 'has-value': !!ruleForm.password, 'is-focused': isPasswordFocused }"
+                :class="{
+                  'has-value': !!ruleForm.password,
+                  'is-focused': isPasswordFocused
+                }"
               >
                 <ReInvisibleInk
                   :active="!passwordVisible && !!ruleForm.password"
@@ -475,15 +491,20 @@ watch(loginDay, value => {
                     </template>
                   </el-input>
                 </ReInvisibleInk>
-                <label class="floating-label">{{ t('login.purePassword') }}</label>
+                <label class="floating-label">{{
+                  t("login.purePassword")
+                }}</label>
               </el-form-item>
             </Motion>
 
             <Motion :delay="200">
-              <el-form-item 
+              <el-form-item
                 prop="verifyCode"
                 class="floating-label-item"
-                :class="{ 'has-value': !!ruleForm.verifyCode, 'is-focused': isVerifyCodeFocused }"
+                :class="{
+                  'has-value': !!ruleForm.verifyCode,
+                  'is-focused': isVerifyCodeFocused
+                }"
               >
                 <el-input
                   v-model="ruleForm.verifyCode"
@@ -497,7 +518,9 @@ watch(loginDay, value => {
                     <ReImageVerify v-model:code="imgCode" />
                   </template>
                 </el-input>
-                <label class="floating-label">{{ t('login.pureVerifyCode') }}</label>
+                <label class="floating-label">{{
+                  t("login.pureVerifyCode")
+                }}</label>
               </el-form-item>
             </Motion>
 
@@ -539,14 +562,14 @@ watch(loginDay, value => {
                     {{ t("login.pureForget") }}
                   </el-button>
                 </div>
-              <el-button
-                class="w-full mt-4 login-btn"
-                size="default"
-                type="primary"
-                :loading="loading"
-                :disabled="disabled"
-                @click="onLogin(ruleFormRef)"
-              >
+                <el-button
+                  class="w-full mt-4 login-btn"
+                  size="default"
+                  type="primary"
+                  :loading="loading"
+                  :disabled="disabled"
+                  @click="onLogin(ruleFormRef)"
+                >
                   {{ t("login.pureLogin") }}
                 </el-button>
               </el-form-item>
@@ -617,12 +640,43 @@ watch(loginDay, value => {
         <a href="#">隐私政策</a>
       </div>
       <p class="copyright">
-        © {{ new Date().getFullYear() }} 吉林省云创迅捷软件开发有限公司 版权所有
+        © {{ new Date().getFullYear() }} 吉林省云创迅捷软件开发有限公司
+        版权所有
       </p>
-      <p class="beian" style="margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 12px; color: #888;">
-        <a href="https://beian.miit.gov.cn/" target="_blank" style="color: inherit; text-decoration: none;">吉ICP备2025035820号-1</a>
-        <a href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511" rel="noreferrer" target="_blank" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center;">
-          <img src="https://jsd.kai233.top/web/img/batb.png" style="margin-right: 3px; width: 16px;" alt="备案图标">吉公网安备22017302000511号
+      <p
+        class="beian"
+        style="
+          display: flex;
+          gap: 15px;
+          align-items: center;
+          justify-content: center;
+          margin-top: 5px;
+          font-size: 12px;
+          color: #888;
+        "
+      >
+        <a
+          href="https://beian.miit.gov.cn/"
+          target="_blank"
+          style="color: inherit; text-decoration: none"
+          >吉ICP备2025035820号-1</a
+        >
+        <a
+          href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511"
+          rel="noreferrer"
+          target="_blank"
+          style="
+            display: inline-flex;
+            align-items: center;
+            color: inherit;
+            text-decoration: none;
+          "
+        >
+          <img
+            src="https://jsd.kai233.top/web/img/batb.png"
+            style="width: 16px; margin-right: 3px"
+            alt="备案图标"
+          />吉公网安备22017302000511号
         </a>
       </p>
     </div>
@@ -634,399 +688,35 @@ watch(loginDay, value => {
 </style>
 
 <style lang="scss" scoped>
-.login-page {
-  position: relative;
-  min-height: 100vh;
-  overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-}
-
-.gradient-bg {
-  position: fixed;
-  inset: 0;
-  background: 
-    radial-gradient(ellipse at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(255, 119, 198, 0.2) 0%, transparent 40%),
-    radial-gradient(ellipse at 40% 80%, rgba(120, 200, 255, 0.2) 0%, transparent 40%);
-  z-index: 0;
-}
-
-.top-toolbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  z-index: 100;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-logo {
-  width: 40px;
-  height: 40px;
-}
-
-.brand-name {
-  font-size: 24px;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.main-content {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 480px;
-  min-height: 100vh;
-  padding: 100px 60px 80px;
-  gap: 60px;
-  z-index: 1;
-}
-
-.showcase-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  opacity: 0;
-  transform: translateX(-30px);
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-
-  &.loaded {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.hero-section {
-  margin-bottom: 40px;
-}
-
-.hero-title {
-  font-size: 56px;
-  font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 24px;
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none;
-}
-
-.sub-title {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 32px;
-  font-weight: 600;
-}
-
-.hero-desc {
-  font-size: 18px;
-  line-height: 1.8;
-  color: rgba(255, 255, 255, 0.8);
-  max-width: 600px;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
-.feature-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-  animation: fadeInUp 0.6s ease forwards;
-  opacity: 0;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  }
-}
-
-@keyframes fadeInUp {
+@keyframes fade-in-up {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.feature-icon {
-  font-size: 32px;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-}
-
-.feature-content {
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 6px;
-  }
-
-  p {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0;
-  }
-}
-
-.statistics-bar {
-  display: flex;
-  gap: 40px;
-  padding: 30px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  margin-bottom: 40px;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 36px;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1;
-  margin-bottom: 8px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.illustration-wrapper {
-  display: flex;
-  justify-content: center;
-  
-  .main-illustration {
-    width: 100%;
-    max-width: 500px;
-    height: auto;
-    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.2));
-    animation: float 6s ease-in-out infinite;
-  }
-}
-
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }
 }
 
-.login-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: translateX(30px);
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  transition-delay: 0.2s;
-
-  &.loaded {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.login-card {
-  width: 100%;
-  max-width: 420px;
-  padding: 40px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.login-avatar {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 16px;
-}
-
-.login-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 8px;
-}
-
-.login-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.login-form {
-  .floating-label-item {
-    position: relative;
-    
-    :deep(.el-input__wrapper) {
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      height: 48px;
-    }
-
-    .floating-label {
-      position: absolute;
-      left: 40px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #bfc3c7;
-      font-size: 15px;
-      pointer-events: none;
-      transition: all 0.2s ease;
-      z-index: 10;
-    }
-
-    &.is-focused .floating-label,
-    &.has-value .floating-label {
-      top: 0;
-      font-size: 12px;
-      color: #667eea;
-      background: #fff;
-      padding: 0 4px;
-      left: 12px;
-      z-index: 10;
-    }
-  }
-
-  :deep(.el-button--primary) {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 12px;
-    height: 48px;
-    font-size: 16px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-    }
-  }
-}
-
-.third-party-icons {
-  margin-top: 16px;
-}
-
-.third-party-item {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f3f4f6;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  color: #6b7280;
-
-  &:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-  }
-}
-
-.footer-info {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 20px;
-  text-align: center;
-  z-index: 10;
-  backdrop-filter: blur(10px);
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.footer-links {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 8px;
-
-  a {
-    color: rgba(255, 255, 255, 0.8);
-    text-decoration: none;
-    font-size: 14px;
-    transition: color 0.3s;
-
-    &:hover {
-      color: #fff;
-    }
-  }
-
-  .divider {
-    color: rgba(255, 255, 255, 0.4);
-  }
-}
-
-.copyright {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0;
-}
-
 // 响应式设计
-@media screen and (max-width: 1200px) {
+@media screen and (width <= 1200px) {
   .main-content {
     grid-template-columns: 1fr;
-    padding: 100px 40px 100px;
     gap: 40px;
+    padding: 100px 40px;
   }
 
   .showcase-section {
@@ -1059,7 +749,7 @@ watch(loginDay, value => {
   }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (width <= 768px) {
   .top-toolbar {
     padding: 16px 20px;
   }
@@ -1100,6 +790,384 @@ watch(loginDay, value => {
   .stat-number {
     font-size: 28px;
   }
+}
+
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+.gradient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      ellipse at 20% 50%,
+      rgb(120 119 198 / 30%) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 20%,
+      rgb(255 119 198 / 20%) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse at 40% 80%,
+      rgb(120 200 255 / 20%) 0%,
+      transparent 40%
+    );
+}
+
+.top-toolbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  background: rgb(255 255 255 / 10%);
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+}
+
+.brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.main-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  gap: 60px;
+  min-height: 100vh;
+  padding: 100px 60px 80px;
+}
+
+.showcase-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.loaded {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.hero-section {
+  margin-bottom: 40px;
+}
+
+.hero-title {
+  margin-bottom: 24px;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.gradient-text {
+  text-shadow: none;
+  background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sub-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: rgb(255 255 255 / 90%);
+}
+
+.hero-desc {
+  max-width: 600px;
+  font-size: 18px;
+  line-height: 1.8;
+  color: rgb(255 255 255 / 80%);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.feature-card {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px;
+  background: rgb(255 255 255 / 10%);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 16px;
+  opacity: 0;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  animation: fade-in-up 0.6s ease forwards;
+
+  &:hover {
+    background: rgb(255 255 255 / 15%);
+    box-shadow: 0 20px 40px rgb(0 0 0 / 10%);
+    transform: translateY(-4px);
+  }
+}
+
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  font-size: 32px;
+  background: rgb(255 255 255 / 20%);
+  border-radius: 12px;
+}
+
+.feature-content {
+  h3 {
+    margin-bottom: 6px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: rgb(255 255 255 / 70%);
+  }
+}
+
+.statistics-bar {
+  display: flex;
+  gap: 40px;
+  padding: 30px 0;
+  margin-bottom: 40px;
+  border-top: 1px solid rgb(255 255 255 / 20%);
+  border-bottom: 1px solid rgb(255 255 255 / 20%);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  margin-bottom: 8px;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: rgb(255 255 255 / 70%);
+}
+
+.illustration-wrapper {
+  display: flex;
+  justify-content: center;
+
+  .main-illustration {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    filter: drop-shadow(0 20px 40px rgb(0 0 0 / 20%));
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+.login-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(30px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.2s;
+
+  &.loaded {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  background: rgb(255 255 255 / 95%);
+  border-radius: 24px;
+  box-shadow:
+    0 25px 50px rgb(0 0 0 / 15%),
+    0 0 0 1px rgb(255 255 255 / 20%);
+  backdrop-filter: blur(20px);
+}
+
+.login-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.login-avatar {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 16px;
+}
+
+.login-title {
+  margin-bottom: 8px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.login-form {
+  .floating-label-item {
+    position: relative;
+
+    :deep(.el-input__wrapper) {
+      height: 48px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+    }
+
+    .floating-label {
+      position: absolute;
+      top: 50%;
+      left: 40px;
+      z-index: 10;
+      font-size: 15px;
+      color: #bfc3c7;
+      pointer-events: none;
+      transform: translateY(-50%);
+      transition: all 0.2s ease;
+    }
+
+    &.is-focused .floating-label,
+    &.has-value .floating-label {
+      top: 0;
+      left: 12px;
+      z-index: 10;
+      padding: 0 4px;
+      font-size: 12px;
+      color: #667eea;
+      background: #fff;
+    }
+  }
+
+  :deep(.el-button--primary) {
+    height: 48px;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 10px 30px rgb(102 126 234 / 40%);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.third-party-icons {
+  margin-top: 16px;
+}
+
+.third-party-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 10px 20px rgb(102 126 234 / 30%);
+    transform: translateY(-4px);
+  }
+}
+
+.footer-info {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  padding: 20px;
+  text-align: center;
+  background: rgb(0 0 0 / 10%);
+  backdrop-filter: blur(10px);
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 8px;
+
+  a {
+    font-size: 14px;
+    color: rgb(255 255 255 / 80%);
+    text-decoration: none;
+    transition: color 0.3s;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .divider {
+    color: rgb(255 255 255 / 40%);
+  }
+}
+
+.copyright {
+  margin: 0;
+  font-size: 12px;
+  color: rgb(255 255 255 / 60%);
 }
 
 :deep(.el-input-group__append, .el-input-group__prepend) {

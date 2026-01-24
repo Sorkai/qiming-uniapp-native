@@ -208,14 +208,14 @@ const {
 
 <style lang="scss" scoped>
 .navbar {
-  width: 100%;
-  height: 72px; // 增加到 72px 让视觉更通透
+  position: relative;
+  z-index: 1001; // 确保压过标签栏
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
-  z-index: 1001; // 确保压过标签栏
-  position: relative;
+  width: 100%;
+  height: 72px; // 增加到 72px 让视觉更通透
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 4%);
 
   .navbar-item {
     display: inline-flex;
@@ -223,13 +223,13 @@ const {
     justify-content: center;
     height: 100%;
     padding: 0 20px;
-    cursor: pointer;
     color: #64748b;
+    cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
-      background: rgba(59, 130, 246, 0.08);
       color: #3b82f6;
+      background: rgb(59 130 246 / 8%);
     }
   }
 
@@ -238,8 +238,9 @@ const {
       p {
         color: #111827 !important;
       }
+
       .rotate-180,
-      IconifyIconOffline {
+      .iconify-icon-offline {
         color: #4b5563 !important;
       }
     }
@@ -255,11 +256,11 @@ const {
 /* 适配深色模式 */
 :global(html.dark) {
   .navbar {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 40%);
 
     .navbar-item:hover {
-      background: rgba(255, 255, 255, 0.05);
       color: #60a5fa;
+      background: rgb(255 255 255 / 5%);
     }
 
     .navbar-item {
@@ -271,15 +272,16 @@ const {
 
 <style lang="scss">
 /* 全局样式 - 下拉菜单圆角（教师端/管理员端） */
+
 /* 针对 el-popper 容器 */
 .el-popper:has(.logout-menu) {
-  border-radius: 16px !important;
   overflow: hidden !important;
   background: transparent !important;
   border: none !important;
+  border-radius: 16px !important;
   box-shadow: none !important;
 
-  /*隐藏箭头 */
+  /* 隐藏箭头 */
   .el-popper__arrow {
     display: none !important;
   }
@@ -287,15 +289,15 @@ const {
 
 .logout-menu {
   padding: 8px !important;
-  border-radius: 16px !important;
-  backdrop-filter: blur(40px);
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(220, 226, 247, 0.6) !important;
-  box-shadow:
-    0 10px 25px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-  overflow: hidden !important;
   margin: 0 !important;
+  overflow: hidden !important;
+  background-color: rgb(255 255 255 / 95%) !important;
+  border: 1px solid rgb(220 226 247 / 60%) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 10px 25px -3px rgb(0 0 0 / 10%),
+    0 4px 6px -2px rgb(0 0 0 / 5%) !important;
+  backdrop-filter: blur(40px);
 
   /* 清除伪元素 */
   &::before,
@@ -304,33 +306,29 @@ const {
   }
 
   .el-dropdown-menu__item {
-    border-radius: 10px;
-    margin-bottom: 4px;
     padding: 10px 18px;
+    margin-bottom: 4px;
     font-weight: 500;
+    border-radius: 10px;
     transition: all 0.2s ease;
 
     &:last-child {
       margin-bottom: 0;
+      color: #f56c6c;
+
+      &:hover {
+        color: #f56c6c !important;
+        background-color: rgb(245 108 108 / 10%) !important;
+      }
     }
 
     &:hover {
-      background-color: rgba(200, 212, 240, 0.4) !important;
       color: #333 !important;
+      background-color: rgb(200 212 240 / 40%) !important;
     }
 
     .mr-2 {
       margin-right: 8px;
-    }
-  }
-
-  /* 退出登录项 - 红色 */
-  .el-dropdown-menu__item:last-child {
-    color: #f56c6c;
-
-    &:hover {
-      background-color: rgba(245, 108, 108, 0.1) !important;
-      color: #f56c6c !important;
     }
   }
 }
@@ -341,16 +339,16 @@ html.dark .el-popper:has(.logout-menu) {
 }
 
 html.dark .logout-menu {
-  background-color: rgba(17, 27, 45, 0.98) !important;
-  border: 1px solid rgba(56, 189, 248, 0.2) !important;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.4) !important;
+  background-color: rgb(17 27 45 / 98%) !important;
+  border: 1px solid rgb(56 189 248 / 20%) !important;
+  box-shadow: 0 10px 25px -3px rgb(0 0 0 / 40%) !important;
 
   .el-dropdown-menu__item {
     color: #e2e8f0;
 
     &:hover {
-      background-color: rgba(56, 189, 248, 0.15) !important;
       color: #f1f5f9 !important;
+      background-color: rgb(56 189 248 / 15%) !important;
     }
   }
 
@@ -358,8 +356,8 @@ html.dark .logout-menu {
     color: #f87171;
 
     &:hover {
-      background-color: rgba(248, 113, 113, 0.15) !important;
       color: #f87171 !important;
+      background-color: rgb(248 113 113 / 15%) !important;
     }
   }
 }

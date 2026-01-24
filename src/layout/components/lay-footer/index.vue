@@ -10,11 +10,13 @@ const TITLE = getConfig("Title");
   >
     <div class="footer-container">
       <div class="line1">
-        长春工业大学 吉林省长春市宽城区北远达大街 3000 号 计算机学院 启明智教项目
+        长春工业大学 吉林省长春市宽城区北远达大街 3000 号 计算机学院
+        启明智教项目
         <span class="domain">Intelledu.com</span>
       </div>
       <div class="line2">
-        Copyright (c) 2024 Est. 吉林省云创迅捷软件开发有限公司 All Rights Reserved
+        Copyright (c) 2024 Est. 吉林省云创迅捷软件开发有限公司 All Rights
+        Reserved
       </div>
     </div>
   </footer>

@@ -1,11 +1,13 @@
 <template>
   <div class="homework-management">
-    <div class="mb-5 flex justify-between items-center bg-[var(--el-fill-color-light)] p-4 rounded-lg">
+    <div
+      class="mb-5 flex justify-between items-center bg-[var(--el-fill-color-light)] p-4 rounded-lg"
+    >
       <div class="text-[var(--el-text-color-regular)] font-medium">
         <el-icon class="mr-1 mt-0.5"><Notebook /></el-icon>
         作业列表 ({{ total }})
       </div>
-      <el-button type="primary" @click="showCreateDialog" :icon="Plus" round>
+      <el-button type="primary" :icon="Plus" round @click="showCreateDialog">
         添加作业
       </el-button>
     </div>
@@ -22,24 +24,53 @@
       <el-table-column prop="homeworkId" label="ID" width="80" align="center" />
       <el-table-column prop="title" label="作业标题" min-width="180">
         <template #default="{ row }">
-          <span class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline" @click="showQuestionDialog(row)">{{ row.title }}</span>
+          <span
+            class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline"
+            @click="showQuestionDialog(row)"
+            >{{ row.title }}</span
+          >
         </template>
       </el-table-column>
-      <el-table-column prop="chapterName" label="所属章节" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="hourName" label="所属课时" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="questionNum" label="题量" width="80" align="center">
+      <el-table-column
+        prop="chapterName"
+        label="所属章节"
+        min-width="150"
+        show-overflow-tooltip
+      />
+      <el-table-column
+        prop="hourName"
+        label="所属课时"
+        min-width="150"
+        show-overflow-tooltip
+      />
+      <el-table-column
+        prop="questionNum"
+        label="题量"
+        width="80"
+        align="center"
+      >
         <template #default="{ row }">
-          <el-badge :value="row.questionNum" :type="row.questionNum > 0 ? 'primary' : 'info'" />
+          <el-badge
+            :value="row.questionNum"
+            :type="row.questionNum > 0 ? 'primary' : 'info'"
+          />
         </template>
       </el-table-column>
-      <el-table-column prop="totalPoints" label="总分" width="80" align="center" />
-      <el-table-column prop="dueDate" label="截止日期" width="170" align="center" />
+      <el-table-column
+        prop="totalPoints"
+        label="总分"
+        width="80"
+        align="center"
+      />
+      <el-table-column
+        prop="dueDate"
+        label="截止日期"
+        width="170"
+        align="center"
+      />
       <el-table-column label="操作" width="220" fixed="right" align="center">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            @click="showQuestionDialog(scope.row)"
+          <el-button link type="primary" @click="showQuestionDialog(scope.row)"
             >试题管理</el-button
           >
           <el-divider direction="vertical" />
@@ -47,16 +78,12 @@
             >编辑</el-button
           >
           <el-divider direction="vertical" />
-          <el-button
-            link
-            type="danger"
-            @click="confirmDelete(scope.row)"
+          <el-button link type="danger" @click="confirmDelete(scope.row)"
             >删除</el-button
           >
         </template>
       </el-table-column>
     </el-table>
-
 
     <!-- 分页 -->
     <div class="pagination-container">
@@ -699,9 +726,9 @@ onMounted(() => {
 }
 
 .pagination-container {
-  margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+  margin-top: 20px;
 }
 
 .question-dialog-header {
@@ -714,8 +741,8 @@ onMounted(() => {
   }
 
   p {
-    color: var(--el-text-color-regular);
     margin: 0;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -729,8 +756,8 @@ onMounted(() => {
   }
 
   .analysis-content {
-    white-space: pre-wrap;
     line-height: 1.5;
+    white-space: pre-wrap;
   }
 }
 </style>

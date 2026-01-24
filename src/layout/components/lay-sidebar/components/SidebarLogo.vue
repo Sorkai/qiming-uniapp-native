@@ -6,12 +6,7 @@ const { title, getLogo } = useNav();
 
 <template>
   <div class="sidebar-logo-container">
-    <router-link
-      key="expand"
-      :title="title"
-      class="sidebar-logo-link"
-      to="/"
-    >
+    <router-link key="expand" :title="title" class="sidebar-logo-link" to="/">
       <img :src="getLogo()" alt="logo" class="app-logo-img" />
       <span class="sidebar-title">{{ title }}</span>
     </router-link>
@@ -21,12 +16,12 @@ const { title, getLogo } = useNav();
 <style lang="scss" scoped>
 .sidebar-logo-container {
   position: relative;
-  width: 100%;
-  height: 80px;
-  overflow: hidden;
-  padding: 0;
   display: flex;
   align-items: center;
+  width: 100%;
+  height: 80px;
+  padding: 0;
+  overflow: hidden;
 
   .sidebar-logo-link {
     display: flex;
@@ -51,13 +46,17 @@ const { title, getLogo } = useNav();
       font-size: 24px;
       font-weight: 900;
       line-height: 40px;
-      letter-spacing: 0.05em;
       color: var(--el-color-primary);
-      background: linear-gradient(135deg, var(--el-color-primary) 0%, color-mix(in srgb, var(--el-color-primary), #4facfe 100%) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.05em;
       white-space: nowrap;
+      background: linear-gradient(
+        135deg,
+        var(--el-color-primary) 0%,
+        color-mix(in srgb, var(--el-color-primary), #4facfe 100%) 100%
+      );
+      background-clip: text;
       transition: all 0.3s;
+      -webkit-text-fill-color: transparent;
     }
   }
 }

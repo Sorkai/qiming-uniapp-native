@@ -22,7 +22,7 @@ export function useCourseTheme() {
     document.body.classList.add(newTheme);
 
     currentTheme.value = newTheme;
-    
+
     // 更新侧边栏图标颜色
     updateSidebarColors(newTheme);
   };
@@ -35,7 +35,9 @@ export function useCourseTheme() {
       const parentElement = svg.closest(".hover-box");
       const menuItem = parentElement?.closest(".item");
       const currentMenuName = menuItem?.getAttribute("data-menu");
-      const isCurrentActive = activeMenu ? currentMenuName === activeMenu : parentElement?.classList.contains("active");
+      const isCurrentActive = activeMenu
+        ? currentMenuName === activeMenu
+        : parentElement?.classList.contains("active");
 
       const activeColor = theme === "dark" ? "white" : "white";
       const inactiveColor = theme === "dark" ? "#B4B4C7" : "#5a6b8a";
@@ -58,7 +60,9 @@ export function useCourseTheme() {
       const element = name as HTMLElement;
       const menuItem = element.closest(".item");
       const currentMenuName = menuItem?.getAttribute("data-menu");
-      const isCurrentActive = activeMenu ? currentMenuName === activeMenu : element.closest(".hover-box")?.classList.contains("active");
+      const isCurrentActive = activeMenu
+        ? currentMenuName === activeMenu
+        : element.closest(".hover-box")?.classList.contains("active");
 
       if (isCurrentActive) {
         element.style.color = "white";

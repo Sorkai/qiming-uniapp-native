@@ -14,22 +14,22 @@ AI识屏回答功能允许用户通过框选截图的方式，将屏幕内容发
 
 ### 1. 分析截图
 
-分析用户截取的屏幕图片，返回AI的初步分析结果。
+分析用户截取的屏幕图片，返回 AI 的初步分析结果。
 
-**请求**
+#### 请求
 
-```
+```text
 POST /api/ai-assistant/analyze
 ```
 
-**请求头**
+#### 请求头
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| Authorization | string | 是 | Bearer {token} |
-| Content-Type | string | 是 | application/json |
+| 参数          | 类型   | 必填 | 说明             |
+| ------------- | ------ | ---- | ---------------- |
+| Authorization | string | 是   | Bearer {token}   |
+| Content-Type  | string | 是   | application/json |
 
-**请求体**
+#### 请求体
 
 ```json
 {
@@ -38,12 +38,12 @@ POST /api/ai-assistant/analyze
 }
 ```
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| image | string | 是 | Base64编码的图片数据，支持PNG/JPEG格式，建议压缩后大小不超过1MB |
-| sessionId | string | 否 | 会话ID，如果提供则继续该会话，否则创建新会话 |
+| 参数      | 类型   | 必填 | 说明                                                            |
+| --------- | ------ | ---- | --------------------------------------------------------------- |
+| image     | string | 是   | Base64 编码的图片数据，支持 PNG/JPEG 格式，建议压缩后大小不超过 1MB |
+| sessionId | string | 否   | 会话 ID，如果提供则继续该会话，否则创建新会话                    |
 
-**响应**
+#### 响应
 
 ```json
 {
@@ -60,24 +60,24 @@ POST /api/ai-assistant/analyze
     "messageId": "msg-001"
   }
 }
-```
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| sessionId | string | 会话ID，用于后续对话 |
-| analysis | string | AI对截图的分析结果 |
+```text
+| 参数        | 类型     | 说明                                |
+| ----------- | -------- | ----------------------------------- |
+| sessionId   | string   | 会话ID，用于后续对话                |
+| analysis    | string   | AI对截图的分析结果                  |
 | suggestions | string[] | 建议的后续问题列表（可选，最多5个） |
-| messageId | string | 消息ID，用于追踪 |
+| messageId   | string   | 消息ID，用于追踪                    |
 
 **错误码**
 
-| code | message | 说明 |
-|------|---------|------|
-| 0 | success | 成功 |
-| 401 | Unauthorized | 未登录或token过期 |
-| 400 | Invalid image format | 图片格式不正确 |
-| 413 | Image too large | 图片过大（超过5MB） |
-| 500 | AI service error | AI服务异常 |
+| code | message              | 说明                |
+| ---- | -------------------- | ------------------- |
+| 0    | success              | 成功                |
+| 401  | Unauthorized         | 未登录或token过期   |
+| 400  | Invalid image format | 图片格式不正确      |
+| 413  | Image too large      | 图片过大（超过5MB） |
+| 500  | AI service error     | AI服务异常          |
 
 ---
 
@@ -87,16 +87,16 @@ POST /api/ai-assistant/analyze
 
 **请求**
 
-```
+```text
 POST /api/ai-assistant/chat
-```
 
+```text
 **请求头**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| Authorization | string | 是 | Bearer {token} |
-| Content-Type | string | 是 | application/json |
+| 参数          | 类型   | 必填 | 说明             |
+| ------------- | ------ | ---- | ---------------- |
+| Authorization | string | 是   | Bearer {token}   |
+| Content-Type  | string | 是   | application/json |
 
 **请求体**
 
@@ -108,14 +108,14 @@ POST /api/ai-assistant/chat
     "screenshot": "data:image/png;base64,..."
   }
 }
-```
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| sessionId | string | 是 | 会话ID |
-| message | string | 是 | 用户发送的消息内容 |
-| context | object | 否 | 上下文信息 |
-| context.screenshot | string | 否 | 当前截图的Base64数据（用于AI参考） |
+```text
+| 参数               | 类型   | 必填 | 说明                               |
+| ------------------ | ------ | ---- | ---------------------------------- |
+| sessionId          | string | 是   | 会话ID                             |
+| message            | string | 是   | 用户发送的消息内容                 |
+| context            | object | 否   | 上下文信息                         |
+| context.screenshot | string | 否   | 当前截图的Base64数据（用于AI参考） |
 
 **响应**
 
@@ -125,31 +125,28 @@ POST /api/ai-assistant/chat
   "message": "success",
   "data": {
     "reply": "这段代码是一个Vue 3组件，使用了Composition API...",
-    "suggestions": [
-      "如何添加错误处理？",
-      "有没有更好的实现方式？"
-    ],
+    "suggestions": ["如何添加错误处理？", "有没有更好的实现方式？"],
     "messageId": "msg-002"
   }
 }
-```
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| reply | string | AI的回复内容，支持Markdown格式 |
-| suggestions | string[] | 建议的后续问题列表（可选） |
-| messageId | string | 消息ID |
+```text
+| 参数        | 类型     | 说明                           |
+| ----------- | -------- | ------------------------------ |
+| reply       | string   | AI的回复内容，支持Markdown格式 |
+| suggestions | string[] | 建议的后续问题列表（可选）     |
+| messageId   | string   | 消息ID                         |
 
 **错误码**
 
-| code | message | 说明 |
-|------|---------|------|
-| 0 | success | 成功 |
-| 401 | Unauthorized | 未登录或token过期 |
-| 404 | Session not found | 会话不存在或已过期 |
-| 400 | Message is required | 消息内容为空 |
-| 429 | Rate limit exceeded | 请求频率过高 |
-| 500 | AI service error | AI服务异常 |
+| code | message             | 说明               |
+| ---- | ------------------- | ------------------ |
+| 0    | success             | 成功               |
+| 401  | Unauthorized        | 未登录或token过期  |
+| 404  | Session not found   | 会话不存在或已过期 |
+| 400  | Message is required | 消息内容为空       |
+| 429  | Rate limit exceeded | 请求频率过高       |
+| 500  | AI service error    | AI服务异常         |
 
 ---
 
@@ -159,22 +156,22 @@ POST /api/ai-assistant/chat
 
 **请求**
 
-```
+```text
 GET /api/ai-assistant/history
-```
 
+```text
 **请求头**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| Authorization | string | 是 | Bearer {token} |
+| 参数          | 类型   | 必填 | 说明           |
+| ------------- | ------ | ---- | -------------- |
+| Authorization | string | 是   | Bearer {token} |
 
 **查询参数**
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| page | number | 否 | 1 | 页码 |
-| pageSize | number | 否 | 10 | 每页数量，最大50 |
+| 参数     | 类型   | 必填 | 默认值 | 说明             |
+| -------- | ------ | ---- | ------ | ---------------- |
+| page     | number | 否   | 1      | 页码             |
+| pageSize | number | 否   | 10     | 每页数量，最大50 |
 
 **响应**
 
@@ -199,21 +196,21 @@ GET /api/ai-assistant/history
     "pageSize": 10
   }
 }
-```
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| list | array | 会话列表 |
-| list[].sessionId | string | 会话ID |
-| list[].title | string | 会话标题（可由AI自动生成或取第一条消息摘要） |
-| list[].preview | string | 预览内容（最后一条消息的前100字符） |
-| list[].messageCount | number | 消息数量 |
-| list[].screenshot | string | 截图缩略图（可选，建议压缩后返回） |
-| list[].createdAt | number | 创建时间戳（毫秒） |
-| list[].updatedAt | number | 最后更新时间戳（毫秒） |
-| total | number | 总数量 |
-| page | number | 当前页码 |
-| pageSize | number | 每页数量 |
+```text
+| 参数                | 类型   | 说明                                         |
+| ------------------- | ------ | -------------------------------------------- |
+| list                | array  | 会话列表                                     |
+| list[].sessionId    | string | 会话ID                                       |
+| list[].title        | string | 会话标题（可由AI自动生成或取第一条消息摘要） |
+| list[].preview      | string | 预览内容（最后一条消息的前100字符）          |
+| list[].messageCount | number | 消息数量                                     |
+| list[].screenshot   | string | 截图缩略图（可选，建议压缩后返回）           |
+| list[].createdAt    | number | 创建时间戳（毫秒）                           |
+| list[].updatedAt    | number | 最后更新时间戳（毫秒）                       |
+| total               | number | 总数量                                       |
+| page                | number | 当前页码                                     |
+| pageSize            | number | 每页数量                                     |
 
 ---
 
@@ -223,21 +220,21 @@ GET /api/ai-assistant/history
 
 **请求**
 
-```
+```text
 GET /api/ai-assistant/history/:sessionId
-```
 
+```text
 **请求头**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| Authorization | string | 是 | Bearer {token} |
+| 参数          | 类型   | 必填 | 说明           |
+| ------------- | ------ | ---- | -------------- |
+| Authorization | string | 是   | Bearer {token} |
 
 **路径参数**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| sessionId | string | 是 | 会话ID |
+| 参数      | 类型   | 必填 | 说明   |
+| --------- | ------ | ---- | ------ |
+| sessionId | string | 是   | 会话ID |
 
 **响应**
 
@@ -283,30 +280,30 @@ GET /api/ai-assistant/history/:sessionId
     "updatedAt": 1704960065000
   }
 }
-```
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| sessionId | string | 会话ID |
-| title | string | 会话标题 |
-| screenshot | string | 原始截图（Base64） |
-| messages | array | 消息列表 |
-| messages[].id | string | 消息ID |
-| messages[].role | string | 角色：`user` 或 `assistant` |
-| messages[].type | string | 消息类型：`text` 或 `image` |
-| messages[].content | string | 消息内容（文本或Base64图片） |
-| messages[].timestamp | number | 消息时间戳（毫秒） |
-| createdAt | number | 创建时间戳 |
-| updatedAt | number | 最后更新时间戳 |
+```text
+| 参数                 | 类型   | 说明                         |
+| -------------------- | ------ | ---------------------------- |
+| sessionId            | string | 会话ID                       |
+| title                | string | 会话标题                     |
+| screenshot           | string | 原始截图（Base64）           |
+| messages             | array  | 消息列表                     |
+| messages[].id        | string | 消息ID                       |
+| messages[].role      | string | 角色：`user`或`assistant`  |
+| messages[].type      | string | 消息类型：`text`或`image`|
+| messages[].content   | string | 消息内容（文本或Base64图片） |
+| messages[].timestamp | number | 消息时间戳（毫秒）           |
+| createdAt            | number | 创建时间戳                   |
+| updatedAt            | number | 最后更新时间戳               |
 
 **错误码**
 
-| code | message | 说明 |
-|------|---------|------|
-| 0 | success | 成功 |
-| 401 | Unauthorized | 未登录或token过期 |
-| 404 | Session not found | 会话不存在 |
-| 403 | Forbidden | 无权访问该会话 |
+| code | message           | 说明              |
+| ---- | ----------------- | ----------------- |
+| 0    | success           | 成功              |
+| 401  | Unauthorized      | 未登录或token过期 |
+| 404  | Session not found | 会话不存在        |
+| 403  | Forbidden         | 无权访问该会话    |
 
 ---
 
@@ -316,21 +313,21 @@ GET /api/ai-assistant/history/:sessionId
 
 **请求**
 
-```
+```text
 DELETE /api/ai-assistant/history/:sessionId
-```
 
+```text
 **请求头**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| Authorization | string | 是 | Bearer {token} |
+| 参数          | 类型   | 必填 | 说明           |
+| ------------- | ------ | ---- | -------------- |
+| Authorization | string | 是   | Bearer {token} |
 
 **路径参数**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| sessionId | string | 是 | 会话ID |
+| 参数      | 类型   | 必填 | 说明   |
+| --------- | ------ | ---- | ------ |
+| sessionId | string | 是   | 会话ID |
 
 **响应**
 
@@ -340,16 +337,16 @@ DELETE /api/ai-assistant/history/:sessionId
   "message": "success",
   "data": null
 }
-```
 
+```text
 **错误码**
 
-| code | message | 说明 |
-|------|---------|------|
-| 0 | success | 成功 |
-| 401 | Unauthorized | 未登录或token过期 |
-| 404 | Session not found | 会话不存在 |
-| 403 | Forbidden | 无权删除该会话 |
+| code | message           | 说明              |
+| ---- | ----------------- | ----------------- |
+| 0    | success           | 成功              |
+| 401  | Unauthorized      | 未登录或token过期 |
+| 404  | Session not found | 会话不存在        |
+| 403  | Forbidden         | 无权删除该会话    |
 
 ---
 
@@ -359,28 +356,28 @@ DELETE /api/ai-assistant/history/:sessionId
 
 ```typescript
 interface ChatSession {
-  sessionId: string;      // 会话唯一标识（UUID）
-  userId: string;         // 用户ID
-  title: string;          // 会话标题
-  screenshot: string;     // 原始截图（Base64）
+  sessionId: string; // 会话唯一标识（UUID）
+  userId: string; // 用户ID
+  title: string; // 会话标题
+  screenshot: string; // 原始截图（Base64）
   messages: ChatMessage[]; // 消息列表
-  createdAt: number;      // 创建时间戳
-  updatedAt: number;      // 更新时间戳
+  createdAt: number; // 创建时间戳
+  updatedAt: number; // 更新时间戳
 }
-```
 
+```text
 ### ChatMessage（消息）
 
 ```typescript
 interface ChatMessage {
-  id: string;             // 消息唯一标识
-  role: 'user' | 'assistant'; // 角色
-  type: 'text' | 'image'; // 消息类型
-  content: string;        // 消息内容
-  timestamp: number;      // 时间戳
+  id: string; // 消息唯一标识
+  role: "user" | "assistant"; // 角色
+  type: "text" | "image"; // 消息类型
+  content: string; // 消息内容
+  timestamp: number; // 时间戳
 }
-```
 
+```text
 ---
 
 ## 实现建议
@@ -449,7 +446,10 @@ export const chatWithContext = (data: {
 };
 
 // 获取历史会话列表
-export const getChatHistory = (params: { page?: number; pageSize?: number }) => {
+export const getChatHistory = (params: {
+  page?: number;
+  pageSize?: number;
+}) => {
   return http.request<{
     list: ChatSession[];
     total: number;
@@ -467,12 +467,13 @@ export const getChatSession = (sessionId: string) => {
 export const deleteChatHistory = (sessionId: string) => {
   return http.request("delete", `/ai-assistant/history/${sessionId}`);
 };
-```
+
+````
 
 ---
 
 ## 更新日志
 
-| 版本 | 日期 | 说明 |
-|------|------|------|
+| 版本  | 日期       | 说明     |
+| ----- | ---------- | -------- |
 | 1.0.0 | 2026-01-12 | 初始版本 |

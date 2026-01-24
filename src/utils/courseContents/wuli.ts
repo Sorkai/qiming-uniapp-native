@@ -186,4 +186,4 @@ export const wuliCourseContent = `
 </li>
 
 </ol>
-`; 
+`;

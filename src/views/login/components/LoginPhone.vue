@@ -50,7 +50,7 @@ function onBack() {
 <template>
   <el-form ref="ruleFormRef" :model="ruleForm" :rules="phoneRules" size="large">
     <Motion>
-      <el-form-item 
+      <el-form-item
         prop="phone"
         class="floating-label-item"
         :class="{ 'has-value': !!ruleForm.phone, 'is-focused': isPhoneFocused }"
@@ -63,15 +63,18 @@ function onBack() {
           @focus="isPhoneFocused = true"
           @blur="isPhoneFocused = false"
         />
-        <label class="floating-label">{{ t('login.purePhone') }}</label>
+        <label class="floating-label">{{ t("login.purePhone") }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="100">
-      <el-form-item 
+      <el-form-item
         prop="verifyCode"
         class="floating-label-item"
-        :class="{ 'has-value': !!ruleForm.verifyCode, 'is-focused': isVerifyCodeFocused }"
+        :class="{
+          'has-value': !!ruleForm.verifyCode,
+          'is-focused': isVerifyCodeFocused
+        }"
       >
         <div class="w-full flex justify-between">
           <el-input
@@ -82,7 +85,9 @@ function onBack() {
             @focus="isVerifyCodeFocused = true"
             @blur="isVerifyCodeFocused = false"
           />
-          <label class="floating-label">{{ t('login.pureSmsVerifyCode') }}</label>
+          <label class="floating-label">{{
+            t("login.pureSmsVerifyCode")
+          }}</label>
           <el-button
             :disabled="isDisabled"
             class="ml-2"
@@ -125,34 +130,34 @@ function onBack() {
 <style lang="scss" scoped>
 .floating-label-item {
   position: relative;
-  
+
   :deep(.el-input__wrapper) {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     height: 48px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
   }
 
   .floating-label {
     position: absolute;
-    left: 40px;
     top: 50%;
-    transform: translateY(-50%);
-    color: #bfc3c7;
-    font-size: 15px;
-    pointer-events: none;
-    transition: all 0.2s ease;
+    left: 40px;
     z-index: 10;
+    font-size: 15px;
+    color: #bfc3c7;
+    pointer-events: none;
+    transform: translateY(-50%);
+    transition: all 0.2s ease;
   }
 
   &.is-focused .floating-label,
   &.has-value .floating-label {
     top: 0;
+    left: 12px;
+    z-index: 10;
+    padding: 0 4px;
     font-size: 12px;
     color: #667eea;
     background: #fff;
-    padding: 0 4px;
-    left: 12px;
-    z-index: 10;
   }
 }
 </style>

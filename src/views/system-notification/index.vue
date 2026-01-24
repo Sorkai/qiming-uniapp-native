@@ -67,15 +67,15 @@ const notificationList = ref([
 
   .box-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--el-border-color-light);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 4%);
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
   }
 
@@ -84,15 +84,15 @@ const notificationList = ref([
   }
 
   .notification-card {
-    border-radius: 12px;
-    transition: all 0.3s ease-in-out;
     cursor: pointer;
     border: 1px solid var(--el-border-color-lighter);
+    border-radius: 12px;
+    transition: all 0.3s ease-in-out;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       border-color: var(--el-color-primary-light-5);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+      transform: translateY(-2px);
     }
 
     h4 {
@@ -105,24 +105,24 @@ const notificationList = ref([
     p {
       margin: 0 0 5px;
       font-size: 14px;
-      color: var(--el-text-color-regular);
       line-height: 1.6;
+      color: var(--el-text-color-regular);
     }
 
     .publisher {
-      font-size: 12px;
-      color: var(--el-text-color-secondary);
-      margin-bottom: 10px;
       display: flex;
       align-items: center;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
 
       &::before {
-        content: "";
         display: inline-block;
         width: 4px;
         height: 12px;
-        background: var(--el-color-primary);
         margin-right: 8px;
+        content: "";
+        background: var(--el-color-primary);
         border-radius: 2px;
       }
     }

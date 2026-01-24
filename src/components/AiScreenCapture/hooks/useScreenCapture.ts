@@ -57,16 +57,18 @@ export function useScreenCapture() {
         scale: window.devicePixelRatio || 1,
         logging: false,
         // 忽略某些元素
-        ignoreElements: (element) => {
-          return element.classList.contains("capture-overlay") ||
-                 element.classList.contains("ai-float-button");
+        ignoreElements: element => {
+          return (
+            element.classList.contains("capture-overlay") ||
+            element.classList.contains("ai-float-button")
+          );
         }
       });
 
       // 裁剪指定区域
       const croppedCanvas = document.createElement("canvas");
       const ctx = croppedCanvas.getContext("2d");
-      
+
       if (!ctx) {
         throw new Error("无法创建Canvas上下文");
       }
@@ -82,11 +84,7 @@ export function useScreenCapture() {
       croppedCanvas.height = height;
 
       // 裁剪图片
-      ctx.drawImage(
-        canvas,
-        x, y, width, height,
-        0, 0, width, height
-      );
+      ctx.drawImage(canvas, x, y, width, height, 0, 0, width, height);
 
       // 转换为base64
       const base64 = croppedCanvas.toDataURL("image/png");
@@ -136,14 +134,14 @@ export function useScreenCapture() {
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-        
+
         if (!ctx) {
           reject(new Error("无法创建Canvas上下文"));
           return;
         }
 
         let { width, height } = img;
-        
+
         // 如果宽度超过最大值，等比缩放
         if (width > maxWidth) {
           height = (height * maxWidth) / width;

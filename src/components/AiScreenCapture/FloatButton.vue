@@ -44,41 +44,47 @@ const handleMouseDown = (e: MouseEvent) => {
     x: e.clientX,
     y: e.clientY
   };
-  
+
   const handleMouseMove = (moveEvent: MouseEvent) => {
     const deltaX = moveEvent.clientX - dragStart.value.x;
     const deltaY = moveEvent.clientY - dragStart.value.y;
-    
+
     // 如果移动距离超过5px，认为是拖拽
     if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
       isDragging.value = true;
     }
-    
+
     if (isDragging.value) {
       position.value.right -= deltaX;
       position.value.bottom -= deltaY;
-      
+
       // 限制范围
-      position.value.right = Math.max(10, Math.min(window.innerWidth - 70, position.value.right));
-      position.value.bottom = Math.max(10, Math.min(window.innerHeight - 70, position.value.bottom));
-      
+      position.value.right = Math.max(
+        10,
+        Math.min(window.innerWidth - 70, position.value.right)
+      );
+      position.value.bottom = Math.max(
+        10,
+        Math.min(window.innerHeight - 70, position.value.bottom)
+      );
+
       dragStart.value = {
         x: moveEvent.clientX,
         y: moveEvent.clientY
       };
     }
   };
-  
+
   const handleMouseUp = () => {
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-    
+
     // 延迟重置拖拽状态，防止触发点击
     setTimeout(() => {
       isDragging.value = false;
     }, 100);
   };
-  
+
   document.addEventListener("mousemove", handleMouseMove);
   document.addEventListener("mouseup", handleMouseUp);
 };
@@ -113,11 +119,7 @@ defineExpose({
       @mousedown="handleMouseDown"
       @click="handleClick"
     >
-      <el-tooltip
-        content="AI识屏助手"
-        placement="left"
-        :disabled="isDragging"
-      >
+      <el-tooltip content="AI识屏助手" placement="left" :disabled="isDragging">
         <div class="button-inner">
           <AiHubIcon class="ai-icon" />
         </div>
@@ -136,7 +138,7 @@ defineExpose({
   user-select: none;
   transition: transform 0.2s ease;
 
-  &:hover:not(.disabled):not(.dragging) {
+  &:hover:not(.disabled, .dragging) {
     transform: scale(1.1);
   }
 
@@ -162,20 +164,20 @@ defineExpose({
     background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
     border: 1px solid #e2e8f0;
     border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);
+    box-shadow: 0 4px 15px rgb(148 163 184 / 30%);
     transition: all 0.3s ease;
 
     &:hover {
-      box-shadow: 0 6px 20px rgba(148, 163, 184, 0.5);
+      box-shadow: 0 6px 20px rgb(148 163 184 / 50%);
     }
 
     html.dark & {
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgb(255 255 255 / 10%);
+      box-shadow: 0 4px 15px rgb(0 0 0 / 30%);
 
       &:hover {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 6px 20px rgb(0 0 0 / 50%);
       }
     }
   }

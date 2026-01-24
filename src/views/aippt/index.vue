@@ -27,7 +27,7 @@ async function initAiPPT() {
         creatorData: {
           text: "",
           creatorNow: true,
-          type: CreatorType.AI_GEN,
+          type: CreatorType.AI_GEN
         },
         isMobile: false, // 移动端模式
         padding: "20px 20px 0px",
@@ -228,7 +228,7 @@ async function initAiPPT() {
             --s: 210 100% 62% !important;
           }
         `,
-        onMessage: (message) => {
+        onMessage: message => {
           console.log(message);
           if (message.type === "invalid-token") {
             // 在token失效时触发
@@ -247,7 +247,7 @@ async function initAiPPT() {
               console.log("即将生成ppt", fields);
               docmeeUI.value.sendMessage({
                 type: "success",
-                content: "继续生成PPT",
+                content: "继续生成PPT"
               });
               return true;
             }
@@ -265,7 +265,7 @@ async function initAiPPT() {
               ElMessage.error("发生错误：" + message.data.message);
             }
           }
-        },
+        }
       });
       // SDK 初始化后，延迟显示 iframe，让自定义 CSS 有时间生效
       setTimeout(() => {
@@ -292,23 +292,20 @@ onMounted(() => {
   <div class="aippt-page">
     <!-- iframe容器 -->
     <div v-loading="loading" class="aippt-container-wrapper">
-      <div 
-        id="aippt-container" 
-        :class="{ 'iframe-ready': iframeReady }"
-      ></div>
+      <div id="aippt-container" :class="{ 'iframe-ready': iframeReady }" />
     </div>
   </div>
 </template>
 
 <style scoped>
 .aippt-page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: calc(100vh - 115px);
   padding: 0;
   margin: 0;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
 
@@ -321,12 +318,13 @@ onMounted(() => {
 #aippt-container {
   width: 100%;
   height: 100%;
-  margin: 0 auto;
   padding: 0;
-  border-radius: 8px;
+  margin: 0 auto;
   overflow: hidden;
-  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
   color: #1f2937;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border-radius: 8px;
+
   /* 初始隐藏，避免紫色闪烁 */
   opacity: 0;
   transition: opacity 0.15s ease-in-out;

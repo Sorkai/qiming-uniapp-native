@@ -27,12 +27,13 @@
         </el-form-item>
       </el-form>
 
-      <el-table
-        :data="filteredList"
-        stripe
-        style="width: 100%"
-      >
-        <el-table-column label="文件名" prop="name" align="left" min-width="250">
+      <el-table :data="filteredList" stripe style="width: 100%">
+        <el-table-column
+          label="文件名"
+          prop="name"
+          align="left"
+          min-width="250"
+        >
           <template #default="{ row }">
             <div class="file-name-cell">
               <el-icon :size="20" class="file-icon">
@@ -65,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Upload,
@@ -76,12 +77,14 @@ import {
   Tickets,
   Present
 } from "@element-plus/icons-vue";
+import { getFileList } from "@/api/user";
 
 defineOptions({
   name: "OnlineDisk"
 });
 
-const fileList = ref([
+// 默认数据，当API请求失败时使用
+const defaultFileList = [
   {
     name: "教案、教学设计.docx",
     size: "23.6 KB",
@@ -118,7 +121,54 @@ const fileList = ref([
     createTime: "2023-10-15 18:00",
     url: "https://aiedu-api.intelledu.cn/files/mdih93h4tg8hgsxbb893jdfw8r3hghsdkqq/%E4%B8%8E%E5%AD%A6%E7%94%9F%E6%88%96%E5%AE%B6%E9%95%BF%E7%9A%84%E6%B2%9F%E9%80%9A%E8%AE%B0%E5%BD%95.docx"
   }
-]);
+];
+
+const fileList = ref<any[]>(defaultFileList);
+const loading = ref(false);
+
+// 格式化文件大小
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+};
+
+// 从API获取文件列表
+const fetchFileList = async () => {
+  loading.value = true;
+  try {
+    const res = await getFileList({ pageNum: 1, pageSize: 100 });
+    // 支持多种响应格式：{ fileList: [...] } 或 { data: { fileList: [...] } }
+    const fileListData = res?.fileList || res?.data?.fileList;
+    if (fileListData && fileListData.length > 0) {
+      fileList.value = fileListData.map(file => ({
+        name: file.fileName,
+        size: formatFileSize(file.size),
+        createTime: new Date().toLocaleString("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }),
+        url: file.fileUrl
+      }));
+    }
+    // 如果API返回空数据，保持默认数据不变（fileList已初始化为defaultFileList）
+  } catch (error) {
+    console.error("获取文件列表失败:", error);
+    // API请求失败时保持默认数据不变
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchFileList();
+});
 
 const listQuery = ref({
   name: ""
@@ -192,49 +242,73 @@ const handleDelete = row => {
 
 <style lang="scss" scoped>
 .main {
-  padding: 12px;
+  padding: 24px;
 
   .box-card {
-    margin-bottom: 16px;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--el-border-color-light);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 5%);
+    transition: all 0.3s;
+
+    &:hover {
+      box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+    }
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+
+      span {
+        font-size: 18px;
+        font-weight: 600;
+      }
     }
 
     .search-form {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+
+      :deep(.el-input__wrapper) {
+        border-radius: 12px;
+      }
     }
   }
 
   .file-name-cell {
     display: flex;
+    gap: 12px;
     align-items: center;
-    gap: 8px;
   }
 
   .file-icon {
-    color: #606266;
+    color: #409eff;
   }
 }
 
 :deep(.el-card__header) {
-  border-radius: 16px 16px 0 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 :deep(.el-card__body) {
-  padding: 16px;
+  padding: 24px;
 }
 
 :deep(.el-table) {
-  --el-table-header-padding: 8px 0;
-  --el-table-cell-padding: 8px 0;
-  border-radius: 12px;
+  --el-table-header-padding: 12px 0;
+  --el-table-cell-padding: 12px 0;
+
   overflow: hidden;
+  border-radius: 16px;
+}
+
+:deep(.el-button) {
+  border-radius: 10px;
+  padding: 8px 16px;
+}
+
+:deep(.el-button--small) {
+  border-radius: 8px;
+  padding: 5px 12px;
 }
 </style>

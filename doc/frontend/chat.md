@@ -4,37 +4,38 @@
 
 ## 1. AI 聊天流式接口
 
-- **接口地址**：`/ai/chat/stream`
-- **请求方式**：POST
+- **接口地址**：`/ai/chat/stream`- **请求方式**：POST
 - **Content-Type**: application/json
 - **鉴权**：需要（JWT）
 
 **请求参数**：
-```json
+
+````json
 {
-  "course_id": 1,         // 课程ID（可选）
-  "conversation_id": "string",   // 会话ID（可选）
-  "message": "string",            // 消息内容
+  "course_id": 1, // 课程ID（可选）
+  "conversation_id": "string", // 会话ID（可选）
+  "message": "string", // 消息内容
   "chapter_id": 1 // 章节ID（可选）
 }
-```
 
+```text
 **响应参数** (SSE流式)：
+
 ```json
 {
-  "conversation_id": "string",  // 会话ID
-  "delta": "string",            // 增量内容
-  "finished": true        // 是否完成
+  "conversation_id": "string", // 会话ID
+  "delta": "string", // 增量内容
+  "finished": true // 是否完成
 }
-```
 
+```text
 ## 2. 获取会话历史
 
-- **接口地址**：`/ai/get/conversations`
-- **请求方式**：GET
+- **接口地址**：`/ai/get/conversations`- **请求方式**：GET
 - **请求参数**：
-  - `conversation_id`: string (会话ID)
+    -`conversation_id`: string (会话ID)
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -42,45 +43,49 @@
   "data": {
     "messages": [
       {
-        "role": "user",     // 角色 user/assistant
-        "content": "string"  // 消息内容
+        "role": "user", // 角色 user/assistant
+        "content": "string" // 消息内容
       }
     ]
   }
 }
-```
 
+```text
 ## 3. 作文批改分析
 
-- **接口地址**：`/ai/essay/analyze`
-- **请求方式**：POST
+- **接口地址**：`/ai/essay/analyze`- **请求方式**：POST
 - **请求参数**：
+
 ```json
 {
   "essayType": "chinese", // chinese | english
   "content": "string"
 }
-```
+
+```text
+
+
 - **响应参数**：
+
 ```json
 {
   "code": 200,
   "msg": "成功",
   "data": {
-    "score": 85,       // 总分
-    "content": "string",     // 内容评价
-    "structure": "string",   // 结构评价
-    "language": "string",    // 语言评价
+    "score": 85, // 总分
+    "content": "string", // 内容评价
+    "structure": "string", // 结构评价
+    "language": "string", // 语言评价
     "suggestions": "string" // 改进建议
   }
 }
-```
 
+```text
 ## 4. 错题分析
 
-- **接口地址**：`/ai/wrong-exercise/analyze`
-- **请求方式**：POST
+- **接口地址**：`/ai/wrong-exercise/analyze`- **请求方式**：POST
 - **请求参数**：
+
 ```json
 {
   "course_id": 1001,
@@ -89,8 +94,12 @@
   "student_answer": "20",
   "correct_answer": "14"
 }
-```
+
+```text
+
+
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -115,17 +124,17 @@
     ]
   }
 }
-```
 
+```text
 ## 5. 错题分析历史
 
-- **接口地址**：`/ai/wrong-exercise/history`
-- **请求方式**：GET
+- **接口地址**：`/ai/wrong-exercise/history`- **请求方式**：GET
 - **请求参数**：
-  - `course_id`: int64 (可选)
-  - `page`: int (默认1)
-  - `page_size`: int (默认10)
+    -`course_id`: int64 (可选)
+    - `page`: int (默认1)
+    - `page_size`: int (默认10)
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -151,4 +160,5 @@
     ]
   }
 }
-```
+
+````

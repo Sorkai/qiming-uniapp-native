@@ -147,8 +147,8 @@ getMine().then(res => {
     height: 50px;
 
     &:hover {
-      transition: all 0.2s;
       font-size: var(--el-font-size-base);
+      transition: all 0.2s;
     }
   }
 

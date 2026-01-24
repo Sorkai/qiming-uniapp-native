@@ -88,7 +88,12 @@
             stripe
             style="width: 100%"
           >
-            <el-table-column prop="problemId" label="ID" width="80" align="center" />
+            <el-table-column
+              prop="problemId"
+              label="ID"
+              width="80"
+              align="center"
+            />
             <el-table-column prop="title" label="题目名称" min-width="200">
               <template #default="{ row }">
                 <el-link type="primary" @click="viewProblemDetail(row)">
@@ -96,7 +101,12 @@
                 </el-link>
               </template>
             </el-table-column>
-            <el-table-column prop="difficulty" label="难度" width="100" align="center">
+            <el-table-column
+              prop="difficulty"
+              label="难度"
+              width="100"
+              align="center"
+            >
               <template #default="{ row }">
                 <el-tag :type="getDifficultyType(row.difficulty)" size="small">
                   {{ getDifficultyLabel(row.difficulty) }}
@@ -115,31 +125,74 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="submitCount" label="提交数" width="100" align="center" />
-            <el-table-column prop="acceptCount" label="通过数" width="100" align="center" />
-            <el-table-column prop="acceptRate" label="通过率" width="100" align="center">
+            <el-table-column
+              prop="submitCount"
+              label="提交数"
+              width="100"
+              align="center"
+            />
+            <el-table-column
+              prop="acceptCount"
+              label="通过数"
+              width="100"
+              align="center"
+            />
+            <el-table-column
+              prop="acceptRate"
+              label="通过率"
+              width="100"
+              align="center"
+            >
               <template #default="{ row }">
                 <span :class="getAcceptRateClass(row.acceptRate)">
                   {{ row.acceptRate }}%
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="100" align="center">
+            <el-table-column
+              prop="status"
+              label="状态"
+              width="100"
+              align="center"
+            >
               <template #default="{ row }">
-                <el-tag :type="row.status === 'published' ? 'success' : 'info'" size="small">
-                  {{ row.status === 'published' ? '已发布' : '草稿' }}
+                <el-tag
+                  :type="row.status === 'published' ? 'success' : 'info'"
+                  size="small"
+                >
+                  {{ row.status === "published" ? "已发布" : "草稿" }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="200" align="center" fixed="right">
+            <el-table-column
+              label="操作"
+              width="200"
+              align="center"
+              fixed="right"
+            >
               <template #default="{ row }">
-                <el-button type="primary" size="small" link @click="openProblemDialog(row)">
+                <el-button
+                  type="primary"
+                  size="small"
+                  link
+                  @click="openProblemDialog(row)"
+                >
                   编辑
                 </el-button>
-                <el-button type="success" size="small" link @click="viewSubmissions(row)">
+                <el-button
+                  type="success"
+                  size="small"
+                  link
+                  @click="viewSubmissions(row)"
+                >
                   提交记录
                 </el-button>
-                <el-button type="danger" size="small" link @click="deleteProblem(row)">
+                <el-button
+                  type="danger"
+                  size="small"
+                  link
+                  @click="deleteProblem(row)"
+                >
                   删除
                 </el-button>
               </template>
@@ -162,7 +215,11 @@
         <el-tab-pane label="提交记录" name="submissions">
           <!-- 提交记录搜索 -->
           <div class="toolbar">
-            <el-form :inline="true" :model="submissionSearch" class="search-form">
+            <el-form
+              :inline="true"
+              :model="submissionSearch"
+              class="search-form"
+            >
               <el-form-item label="题目ID">
                 <el-input
                   v-model="submissionSearch.problemId"
@@ -208,7 +265,9 @@
                 </el-select>
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" @click="loadSubmissions">搜索</el-button>
+                <el-button type="primary" @click="loadSubmissions"
+                  >搜索</el-button
+                >
                 <el-button @click="resetSubmissionSearch">重置</el-button>
               </el-form-item>
             </el-form>
@@ -221,36 +280,81 @@
             stripe
             style="width: 100%"
           >
-            <el-table-column prop="submissionId" label="提交ID" width="100" align="center" />
-            <el-table-column prop="problemId" label="题目ID" width="100" align="center" />
-            <el-table-column prop="problemTitle" label="题目名称" min-width="180" />
+            <el-table-column
+              prop="submissionId"
+              label="提交ID"
+              width="100"
+              align="center"
+            />
+            <el-table-column
+              prop="problemId"
+              label="题目ID"
+              width="100"
+              align="center"
+            />
+            <el-table-column
+              prop="problemTitle"
+              label="题目名称"
+              min-width="180"
+            />
             <el-table-column prop="username" label="用户" width="120" />
-            <el-table-column prop="result" label="结果" width="150" align="center">
+            <el-table-column
+              prop="result"
+              label="结果"
+              width="150"
+              align="center"
+            >
               <template #default="{ row }">
                 <el-tag :type="getResultType(row.result)" size="small">
                   {{ row.result }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="language" label="语言" width="100" align="center">
+            <el-table-column
+              prop="language"
+              label="语言"
+              width="100"
+              align="center"
+            >
               <template #default="{ row }">
                 {{ getLanguageLabel(row.language) }}
               </template>
             </el-table-column>
-            <el-table-column prop="time" label="用时" width="100" align="center">
-              <template #default="{ row }">
-                {{ row.time }} ms
-              </template>
+            <el-table-column
+              prop="time"
+              label="用时"
+              width="100"
+              align="center"
+            >
+              <template #default="{ row }"> {{ row.time }} ms </template>
             </el-table-column>
-            <el-table-column prop="memory" label="内存" width="100" align="center">
-              <template #default="{ row }">
-                {{ row.memory }} KB
-              </template>
+            <el-table-column
+              prop="memory"
+              label="内存"
+              width="100"
+              align="center"
+            >
+              <template #default="{ row }"> {{ row.memory }} KB </template>
             </el-table-column>
-            <el-table-column prop="submitTime" label="提交时间" width="180" align="center" />
-            <el-table-column label="操作" width="120" align="center" fixed="right">
+            <el-table-column
+              prop="submitTime"
+              label="提交时间"
+              width="180"
+              align="center"
+            />
+            <el-table-column
+              label="操作"
+              width="120"
+              align="center"
+              fixed="right"
+            >
               <template #default="{ row }">
-                <el-button type="primary" size="small" link @click="viewCode(row)">
+                <el-button
+                  type="primary"
+                  size="small"
+                  link
+                  @click="viewCode(row)"
+                >
                   查看代码
                 </el-button>
               </template>
@@ -288,12 +392,18 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="题目名称" prop="title">
-              <el-input v-model="problemForm.title" placeholder="请输入题目名称" />
+              <el-input
+                v-model="problemForm.title"
+                placeholder="请输入题目名称"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="难度" prop="difficulty">
-              <el-select v-model="problemForm.difficulty" placeholder="请选择难度">
+              <el-select
+                v-model="problemForm.difficulty"
+                placeholder="请选择难度"
+              >
                 <el-option label="简单" value="easy" />
                 <el-option label="中等" value="medium" />
                 <el-option label="困难" value="hard" />
@@ -415,18 +525,28 @@
       :title="currentProblem?.title"
       width="800px"
     >
-      <div class="problem-detail" v-if="currentProblem">
+      <div v-if="currentProblem" class="problem-detail">
         <div class="problem-meta">
-          <el-tag :type="getDifficultyType(currentProblem.difficulty)" size="small">
+          <el-tag
+            :type="getDifficultyType(currentProblem.difficulty)"
+            size="small"
+          >
             {{ getDifficultyLabel(currentProblem.difficulty) }}
           </el-tag>
-          <span class="meta-item">时间限制: {{ currentProblem.timeLimit }}ms</span>
-          <span class="meta-item">内存限制: {{ currentProblem.memoryLimit }}MB</span>
+          <span class="meta-item"
+            >时间限制: {{ currentProblem.timeLimit }}ms</span
+          >
+          <span class="meta-item"
+            >内存限制: {{ currentProblem.memoryLimit }}MB</span
+          >
         </div>
         <el-divider />
         <div class="section">
           <h4>题目描述</h4>
-          <div class="content" v-html="renderMarkdown(currentProblem.description)" />
+          <div
+            class="content"
+            v-html="renderMarkdown(currentProblem.description)"
+          />
         </div>
         <div class="section">
           <h4>输入格式</h4>
@@ -453,7 +573,7 @@
             </el-col>
           </el-row>
         </div>
-        <div class="section" v-if="currentProblem.hint">
+        <div v-if="currentProblem.hint" class="section">
           <h4>提示</h4>
           <div class="content">{{ currentProblem.hint }}</div>
         </div>
@@ -461,18 +581,23 @@
     </el-dialog>
 
     <!-- 代码查看弹窗 -->
-    <el-dialog
-      v-model="codeDialogVisible"
-      title="提交代码"
-      width="800px"
-    >
-      <div class="code-info" v-if="currentSubmission">
+    <el-dialog v-model="codeDialogVisible" title="提交代码" width="800px">
+      <div v-if="currentSubmission" class="code-info">
         <el-descriptions :column="4" border size="small">
-          <el-descriptions-item label="提交ID">{{ currentSubmission.submissionId }}</el-descriptions-item>
-          <el-descriptions-item label="用户">{{ currentSubmission.username }}</el-descriptions-item>
-          <el-descriptions-item label="语言">{{ getLanguageLabel(currentSubmission.language) }}</el-descriptions-item>
+          <el-descriptions-item label="提交ID">{{
+            currentSubmission.submissionId
+          }}</el-descriptions-item>
+          <el-descriptions-item label="用户">{{
+            currentSubmission.username
+          }}</el-descriptions-item>
+          <el-descriptions-item label="语言">{{
+            getLanguageLabel(currentSubmission.language)
+          }}</el-descriptions-item>
           <el-descriptions-item label="结果">
-            <el-tag :type="getResultType(currentSubmission.result)" size="small">
+            <el-tag
+              :type="getResultType(currentSubmission.result)"
+              size="small"
+            >
               {{ currentSubmission.result }}
             </el-tag>
           </el-descriptions-item>
@@ -514,9 +639,24 @@ const stats = ref({
 
 // 标签选项
 const tagOptions = ref([
-  "数组", "字符串", "链表", "树", "图", "动态规划",
-  "贪心", "回溯", "分治", "排序", "搜索", "数学",
-  "位运算", "栈", "队列", "哈希表", "双指针", "滑动窗口"
+  "数组",
+  "字符串",
+  "链表",
+  "树",
+  "图",
+  "动态规划",
+  "贪心",
+  "回溯",
+  "分治",
+  "排序",
+  "搜索",
+  "数学",
+  "位运算",
+  "栈",
+  "队列",
+  "哈希表",
+  "双指针",
+  "滑动窗口"
 ]);
 
 // 题目相关
@@ -562,7 +702,9 @@ const problemRules = {
   difficulty: [{ required: true, message: "请选择难度", trigger: "change" }],
   description: [{ required: true, message: "请输入题目描述", trigger: "blur" }],
   inputFormat: [{ required: true, message: "请输入输入格式", trigger: "blur" }],
-  outputFormat: [{ required: true, message: "请输入输出格式", trigger: "blur" }],
+  outputFormat: [
+    { required: true, message: "请输入输出格式", trigger: "blur" }
+  ],
   sampleInput: [{ required: true, message: "请输入示例输入", trigger: "blur" }],
   sampleOutput: [{ required: true, message: "请输入示例输出", trigger: "blur" }]
 };
@@ -660,7 +802,7 @@ const openProblemDialog = (row?: any) => {
 };
 
 const saveProblem = async () => {
-  problemFormRef.value?.validate(async (valid) => {
+  problemFormRef.value?.validate(async valid => {
     if (!valid) return;
     try {
       await upsertProblem(problemForm);
@@ -677,16 +819,18 @@ const saveProblem = async () => {
 const deleteProblem = (row: any) => {
   ElMessageBox.confirm(`确定删除题目 "${row.title}" 吗？`, "提示", {
     type: "warning"
-  }).then(async () => {
-    try {
-      await deleteProblemApi({ problemId: row.problemId });
-      ElMessage.success("删除成功");
-      loadProblems();
-      loadStats();
-    } catch (error) {
-      ElMessage.error("删除失败");
-    }
-  }).catch(() => {});
+  })
+    .then(async () => {
+      try {
+        await deleteProblemApi({ problemId: row.problemId });
+        ElMessage.success("删除成功");
+        loadProblems();
+        loadStats();
+      } catch (error) {
+        ElMessage.error("删除失败");
+      }
+    })
+    .catch(() => {});
 };
 
 const viewProblemDetail = (row: any) => {
@@ -702,7 +846,9 @@ const viewSubmissions = (row: any) => {
 
 const viewCode = async (row: any) => {
   try {
-    const { data } = await getSubmissionDetail({ submissionId: row.submissionId });
+    const { data } = await getSubmissionDetail({
+      submissionId: row.submissionId
+    });
     currentSubmission.value = data;
     codeDialogVisible.value = true;
   } catch (error) {
@@ -781,10 +927,10 @@ onMounted(() => {
 
   .header-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
     border: none;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
 
     .header-content {
       display: flex;
@@ -824,9 +970,9 @@ onMounted(() => {
 
         .stat-label {
           display: block;
+          margin-top: 4px;
           font-size: 12px;
           color: #4b5563;
-          margin-top: 4px;
         }
       }
     }
@@ -837,11 +983,11 @@ onMounted(() => {
 
     .toolbar {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 16px;
       flex-wrap: wrap;
       gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
     }
   }
 
@@ -851,24 +997,24 @@ onMounted(() => {
   }
 
   .rate-high {
-    color: #10b981;
     font-weight: 600;
+    color: #10b981;
   }
 
   .rate-medium {
-    color: #f59e0b;
     font-weight: 600;
+    color: #f59e0b;
   }
 
   .rate-low {
-    color: #ef4444;
     font-weight: 600;
+    color: #ef4444;
   }
 
   .pagination-container {
-    margin-top: 16px;
     display: flex;
     justify-content: flex-end;
+    margin-top: 16px;
   }
 
   .unit {
@@ -881,8 +1027,8 @@ onMounted(() => {
 .problem-detail {
   .problem-meta {
     display: flex;
-    align-items: center;
     gap: 16px;
+    align-items: center;
 
     .meta-item {
       font-size: 14px;
@@ -908,22 +1054,22 @@ onMounted(() => {
   }
 
   .sample-box {
+    overflow: hidden;
     background: var(--el-fill-color-light);
     border-radius: 8px;
-    overflow: hidden;
 
     .sample-label {
       padding: 8px 12px;
-      background: var(--el-fill-color);
       font-size: 12px;
       font-weight: 600;
       color: var(--el-text-color-secondary);
+      background: var(--el-fill-color);
     }
 
     pre {
-      margin: 0;
       padding: 12px;
-      font-family: "Consolas", monospace;
+      margin: 0;
+      font-family: Consolas, monospace;
       font-size: 14px;
       white-space: pre-wrap;
     }
@@ -936,17 +1082,17 @@ onMounted(() => {
 }
 
 .code-container {
+  max-height: 500px;
+  padding: 16px;
+  overflow: auto;
   background: #1e1e1e;
   border-radius: 8px;
-  padding: 16px;
-  max-height: 500px;
-  overflow: auto;
 
   pre {
     margin: 0;
 
     code {
-      font-family: "Consolas", "Monaco", monospace;
+      font-family: Consolas, Monaco, monospace;
       font-size: 14px;
       line-height: 1.5;
       color: #d4d4d4;

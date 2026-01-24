@@ -23,12 +23,12 @@ const loadLottie = async () => {
   try {
     // 动态加载 lottie-web
     const lottie = await import("lottie-web");
-    
+
     if (containerRef.value) {
       if (animationInstance) {
         animationInstance.destroy();
       }
-      
+
       animationInstance = lottie.default.loadAnimation({
         container: containerRef.value,
         renderer: "svg",
@@ -46,9 +46,12 @@ onMounted(() => {
   loadLottie();
 });
 
-watch(() => props.animationData, () => {
-  loadLottie();
-});
+watch(
+  () => props.animationData,
+  () => {
+    loadLottie();
+  }
+);
 </script>
 
 <template>
@@ -58,7 +61,7 @@ watch(() => props.animationData, () => {
       width: typeof width === 'number' ? `${width}px` : width,
       height: typeof height === 'number' ? `${height}px` : height
     }"
-  ></div>
+  />
 </template>
 
 <style scoped>

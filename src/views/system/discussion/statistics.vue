@@ -503,20 +503,20 @@ export default {
 <style lang="scss" scoped>
 .statistics-page {
   :deep(.el-card) {
-    border-radius: 12px;
     border: none;
-    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%);
     transition: all 0.3s;
 
     html.dark & {
-      box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px 0 rgb(0 0 0 / 20%);
     }
 
     &:hover {
-      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 24px 0 rgb(0 0 0 / 10%);
 
       html.dark & {
-        box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.4);
+        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 40%);
       }
     }
   }
@@ -524,16 +524,16 @@ export default {
   .stat-card {
     .stat-content {
       display: flex;
-      align-items: center;
       gap: 16px;
+      align-items: center;
 
       .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
       }
 
       .stat-info {
@@ -544,24 +544,24 @@ export default {
         }
 
         .stat-label {
+          margin-top: 2px;
           font-size: 13px;
           color: #909399;
-          margin-top: 2px;
         }
 
         .stat-change {
-          font-size: 12px;
           margin-top: 4px;
+          font-size: 12px;
         }
       }
     }
   }
 
   .chart-placeholder {
-    height: 280px;
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 280px;
 
     .chart-content {
       width: 100%;
@@ -583,9 +583,9 @@ export default {
 
         .trend-value {
           width: 40px;
-          text-align: right;
           font-size: 13px;
           font-weight: 500;
+          text-align: right;
         }
       }
     }
@@ -613,21 +613,21 @@ export default {
       }
 
       .rank-number {
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
-        background: #f0f0f0;
-        color: #909399;
-        font-size: 12px;
-        font-weight: 500;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 24px;
+        height: 24px;
         margin-right: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #909399;
+        background: #f0f0f0;
+        border-radius: 6px;
 
         &.top-three {
-          background: linear-gradient(135deg, #f6d365, #fda085);
           color: white;
+          background: linear-gradient(135deg, #f6d365, #fda085);
         }
       }
 
@@ -637,11 +637,11 @@ export default {
       }
 
       .rank-value {
+        display: flex;
+        gap: 4px;
+        align-items: center;
         font-size: 13px;
         color: #909399;
-        display: flex;
-        align-items: center;
-        gap: 4px;
       }
     }
   }

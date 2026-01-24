@@ -172,7 +172,9 @@ const LayHeader = defineComponent({
     <NavVertical
       v-show="
         !pureSetting.hiddenSideBar &&
-        (layout.includes('vertical') || layout.includes('mix') || layout.includes('double'))
+        (layout.includes('vertical') ||
+          layout.includes('mix') ||
+          layout.includes('double'))
       "
     />
     <div

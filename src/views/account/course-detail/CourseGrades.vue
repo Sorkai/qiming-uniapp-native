@@ -40,14 +40,16 @@ defineEmits<{
 }>();
 
 // 成绩列表数据（从API获取）
-const gradesList = ref<Array<{
-  name: string;
-  type: string;
-  score: number;
-  submitTime: string;
-  gradedTime: string;
-  comment: string;
-}>>([]);
+const gradesList = ref<
+  Array<{
+    name: string;
+    type: string;
+    score: number;
+    submitTime: string;
+    gradedTime: string;
+    comment: string;
+  }>
+>([]);
 
 // 统计数据（从API获取）
 const statistics = ref({
@@ -98,7 +100,9 @@ const fetchStatistics = async () => {
 const fetchClassComparison = async () => {
   if (!props.courseId) return;
   try {
-    const res = await getCourseGradesClassComparison({ courseId: props.courseId });
+    const res = await getCourseGradesClassComparison({
+      courseId: props.courseId
+    });
     if (res?.code === 200 && res?.data) {
       classComparisonData.value = res.data;
     }
@@ -120,10 +124,14 @@ const loadAllData = async () => {
 
 // 获取成绩等级
 const getGradeLevel = (score: number) => {
-  if (score >= 90) return { label: "优秀", type: "success" as const, color: "#67c23a" };
-  if (score >= 80) return { label: "良好", type: "success" as const, color: "#95d475" };
-  if (score >= 70) return { label: "中等", type: "warning" as const, color: "#e6a23c" };
-  if (score >= 60) return { label: "及格", type: "warning" as const, color: "#f0ad4e" };
+  if (score >= 90)
+    return { label: "优秀", type: "success" as const, color: "#67c23a" };
+  if (score >= 80)
+    return { label: "良好", type: "success" as const, color: "#95d475" };
+  if (score >= 70)
+    return { label: "中等", type: "warning" as const, color: "#e6a23c" };
+  if (score >= 60)
+    return { label: "及格", type: "warning" as const, color: "#f0ad4e" };
   return { label: "不及格", type: "danger" as const, color: "#f56c6c" };
 };
 
@@ -262,7 +270,10 @@ const initTrendChart = () => {
       {
         type: "slider",
         show: gradesList.value.length > 5,
-        start: gradesList.value.length > 5 ? ((gradesList.value.length - 5) / gradesList.value.length) * 100 : 0,
+        start:
+          gradesList.value.length > 5
+            ? ((gradesList.value.length - 5) / gradesList.value.length) * 100
+            : 0,
         end: 100,
         height: 15,
         bottom: 5,
@@ -341,7 +352,12 @@ const initClassChart = () => {
       {
         type: "slider",
         show: classComparisonData.value.categories.length > 5,
-        start: classComparisonData.value.categories.length > 5 ? ((classComparisonData.value.categories.length - 5) / classComparisonData.value.categories.length) * 100 : 0,
+        start:
+          classComparisonData.value.categories.length > 5
+            ? ((classComparisonData.value.categories.length - 5) /
+                classComparisonData.value.categories.length) *
+              100
+            : 0,
         end: 100,
         height: 15,
         bottom: 0,
@@ -467,7 +483,7 @@ watch(
 // 监听 courseId 变化
 watch(
   () => props.courseId,
-  async (newId) => {
+  async newId => {
     if (newId && props.visible) {
       await loadAllData();
       nextTick(() => {
@@ -579,7 +595,9 @@ onUnmounted(() => {
                 <el-icon :size="32"><Trophy /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ statistics.completedAssignments }}</div>
+                <div class="stat-value">
+                  {{ statistics.completedAssignments }}
+                </div>
                 <div class="stat-label">已完成</div>
               </div>
             </div>
@@ -648,7 +666,12 @@ onUnmounted(() => {
         </div>
 
         <!-- 成绩列表详情 -->
-        <el-card ref="gradesListCardRef" class="grades-list-card" shadow="never" :class="currentTheme">
+        <el-card
+          ref="gradesListCardRef"
+          class="grades-list-card"
+          shadow="never"
+          :class="currentTheme"
+        >
           <template #header>
             <div class="card-header">
               <span class="header-title">
@@ -662,24 +685,41 @@ onUnmounted(() => {
           </div>
 
           <div v-else class="grades-list" :class="currentTheme">
-            <div v-for="(item, index) in gradesList" :key="index" class="grade-item">
+            <div
+              v-for="(item, index) in gradesList"
+              :key="index"
+              class="grade-item"
+            >
               <div class="grade-item-header">
                 <div class="item-title">
                   <el-icon class="item-icon" :size="20">
                     <component :is="getAssignmentIcon(item.type)" />
                   </el-icon>
                   <span class="item-name">{{ item.name }}</span>
-                  <el-tag v-if="item.type" size="small" class="item-type-tag" effect="plain">
+                  <el-tag
+                    v-if="item.type"
+                    size="small"
+                    class="item-type-tag"
+                    effect="plain"
+                  >
                     {{ item.type }}
                   </el-tag>
                 </div>
                 <div class="item-score-section">
                   <div v-if="item.score !== null" class="score-display">
-                    <div class="score-number" :style="{ color: getGradeLevel(item.score).color }">
+                    <div
+                      class="score-number"
+                      :style="{ color: getGradeLevel(item.score).color }"
+                    >
                       {{ item.score }}
                     </div>
                     <div class="score-total">/ 100</div>
-                    <el-tag :type="getGradeLevel(item.score).type" size="small" class="grade-tag" effect="dark">
+                    <el-tag
+                      :type="getGradeLevel(item.score).type"
+                      size="small"
+                      class="grade-tag"
+                      effect="dark"
+                    >
                       {{ getGradeLevel(item.score).label }}
                     </el-tag>
                   </div>
@@ -726,8 +766,8 @@ onUnmounted(() => {
 .course-grades-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
+  height: 100%;
   background-color: transparent;
 
   &.dark {
@@ -736,15 +776,15 @@ onUnmounted(() => {
 }
 
 .course-grades-container {
-  padding: 80px 32px 24px;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  background-color: transparent;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 80px 32px 24px;
+  overflow-y: auto;
+  background-color: transparent;
 
   &.dark {
     background-color: transparent;
@@ -764,30 +804,30 @@ onUnmounted(() => {
 }
 
 .grades-card {
-  background-color: #fff;
-  border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
-  transition: all 0.3s;
+  background-color: #fff;
   border: 1px solid #c6e2ff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgb(64 158 255 / 10%);
+  transition: all 0.3s;
 
   &.dark {
     background-color: #2a2a2a;
     border-color: #3e3e3e;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
   }
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
-    transform: translateY(-5px);
     border-color: #97b4f7;
+    box-shadow: 0 8px 24px rgb(64 158 255 / 20%);
+    transform: translateY(-5px);
   }
 
   .grades-card-header {
     display: flex;
+    gap: 12px;
     align-items: center;
     margin-bottom: 20px;
-    gap: 12px;
 
     .el-icon {
       font-size: 24px;
@@ -795,10 +835,10 @@ onUnmounted(() => {
     }
 
     h3 {
+      margin: 0;
       font-size: 18px;
       font-weight: bold;
       color: #1a1a1a;
-      margin: 0;
     }
   }
 
@@ -848,24 +888,43 @@ onUnmounted(() => {
 
   .stat-content {
     display: flex;
-    align-items: center;
     gap: 16px;
+    align-items: center;
   }
 
   .stat-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
     width: 64px;
     height: 64px;
     border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
 
-    &.total { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-    &.completed { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
-    &.average { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
-    &.highest { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
-    &.completion { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
+    &.total {
+      color: white;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    &.completed {
+      color: white;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    &.average {
+      color: white;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    &.highest {
+      color: white;
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    &.completion {
+      color: white;
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
   }
 
   .completion-circle {
@@ -876,8 +935,8 @@ onUnmounted(() => {
   .stat-value {
     font-size: 28px;
     font-weight: bold;
-    color: #303133;
     line-height: 1.2;
+    color: #303133;
   }
 
   .stat-label {
@@ -887,34 +946,36 @@ onUnmounted(() => {
 }
 
 .grades-charts-section {
-  background-color: #fff;
-  border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
   margin-bottom: 30px;
+  background-color: #fff;
   border: 1px solid #c6e2ff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgb(64 158 255 / 10%);
 
   &.dark {
     background-color: #2a2a2a;
     border-color: #3e3e3e;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
 
-    .section-header h3 { color: #e0e0e0; }
+    .section-header h3 {
+      color: #e0e0e0;
+    }
   }
 
   .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 15px;
     margin-bottom: 25px;
     border-bottom: 1px solid #f0f2f5;
-    padding-bottom: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 
     h3 {
+      margin: 0;
       font-size: 20px;
       font-weight: bold;
       color: #1a1a1a;
-      margin: 0;
     }
   }
 
@@ -923,20 +984,20 @@ onUnmounted(() => {
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 20px;
 
-    @media (max-width: 992px) {
+    @media (width <= 992px) {
       grid-template-columns: 1fr;
     }
   }
 
   .chart-item-wrapper {
-    background: #fcfcfd;
-    border-radius: 8px;
-    padding: 16px;
-    border: 1px solid #f0f2f5;
     height: 380px;
+    padding: 16px;
+    background: #fcfcfd;
+    border: 1px solid #f0f2f5;
+    border-radius: 8px;
 
     &.dark {
-      background: #333333;
+      background: #333;
       border-color: #444;
     }
   }
@@ -954,37 +1015,55 @@ onUnmounted(() => {
     background-color: #2a2a2a;
     border-color: #3e3e3e;
 
-    :deep(.el-card__header) { border-bottom-color: #3e3e3e; }
-    .card-header .header-title { color: #e0e0e0; }
+    :deep(.el-card__header) {
+      border-bottom-color: #3e3e3e;
+    }
+
+    .card-header .header-title {
+      color: #e0e0e0;
+    }
 
     :deep(.el-empty__image img),
     :deep(.el-empty__image svg) {
-      filter: brightness(0.7);
       opacity: 0.8;
+      filter: brightness(0.7);
     }
   }
 
   .card-header {
     display: flex;
-    align-items: center;
     gap: 8px;
+    align-items: center;
     font-size: 18px;
     font-weight: 600;
   }
 
-  :deep(.el-card__body) { padding: 0; }
+  :deep(.el-card__body) {
+    padding: 0;
+  }
 }
 
 .grades-list {
   &.dark {
     .grade-item {
       border-bottom-color: #3e3e3e;
-      &:hover { background: #333; }
-      .item-name { color: #e0e0e0; }
-      .score-total, .meta-item { color: #a0a0a0; }
+
+      &:hover {
+        background: #333;
+      }
+
+      .item-name {
+        color: #e0e0e0;
+      }
+
+      .score-total,
+      .meta-item {
+        color: #a0a0a0;
+      }
+
       .grade-item-footer .teacher-comment {
-        background: #2a2a2a;
         color: #cbd5e1;
+        background: #2a2a2a;
       }
     }
   }
@@ -994,66 +1073,92 @@ onUnmounted(() => {
     border-bottom: 1px solid #ebeef5;
     transition: all 0.3s ease;
 
-    &:last-child { border-bottom: none; }
-    &:hover { background: #f5f7fa; }
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: #f5f7fa;
+    }
 
     .grade-item-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 16px;
     }
 
     .item-title {
       display: flex;
-      align-items: center;
       gap: 12px;
-      .item-name { font-size: 16px; font-weight: 600; }
+      align-items: center;
+
+      .item-name {
+        font-size: 16px;
+        font-weight: 600;
+      }
     }
 
     .score-display {
       display: flex;
-      align-items: baseline;
       gap: 4px;
-      .score-number { font-size: 32px; font-weight: bold; }
+      align-items: baseline;
+
+      .score-number {
+        font-size: 32px;
+        font-weight: bold;
+      }
     }
 
     .grade-item-body {
-      .item-progress { margin-bottom: 12px; }
+      .item-progress {
+        margin-bottom: 12px;
+      }
+
       .item-meta {
         display: flex;
         gap: 24px;
         font-size: 14px;
         color: #666;
-        .meta-item { display: flex; align-items: center; gap: 6px; }
+
+        .meta-item {
+          display: flex;
+          gap: 6px;
+          align-items: center;
+        }
       }
     }
 
     .grade-item-footer {
-      margin-top: 16px;
       padding-top: 16px;
+      margin-top: 16px;
       border-top: 1px dashed #e4e7ed;
 
       .teacher-comment {
+        padding: 12px 16px;
         background: #f0f9ff;
         border-left: 3px solid #97b4f7;
-        padding: 12px 16px;
         border-radius: 4px;
-        .comment-label { color: #97b4f7; font-weight: 600; margin-bottom: 4px; }
+
+        .comment-label {
+          margin-bottom: 4px;
+          font-weight: 600;
+          color: #97b4f7;
+        }
       }
     }
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .statistics-cards {
     grid-template-columns: 1fr 1fr;
   }
 
   .grade-item-header {
     flex-direction: column;
-    align-items: flex-start;
     gap: 12px;
+    align-items: flex-start;
   }
 }
 </style>

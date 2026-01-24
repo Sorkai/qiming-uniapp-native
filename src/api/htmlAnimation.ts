@@ -51,26 +51,59 @@ export interface ApiResponse<T = any> {
 }
 
 // 生成动画
-export const generateHtmlAnimation = (data: { courseId: number; chapterId: number }) => {
-  return http.request<ApiResponse<HtmlAnimationGenerateResult>>("post", "/edu/backend/v1/html-animation/generate", { data });
+export const generateHtmlAnimation = (data: {
+  courseId: number;
+  chapterId: number;
+}) => {
+  return http.request<ApiResponse<HtmlAnimationGenerateResult>>(
+    "post",
+    "/edu/backend/v1/html-animation/generate",
+    { data }
+  );
 };
 
 // 动画任务列表
-export const getHtmlAnimationList = (params: { courseId: number; chapterId: number }) => {
-  return http.request<ApiResponse<HtmlAnimationListResult>>("get", "/edu/backend/v1/html-animation/list", { params });
+export const getHtmlAnimationList = (params: {
+  courseId: number;
+  chapterId: number;
+}) => {
+  return http.request<ApiResponse<HtmlAnimationListResult>>(
+    "get",
+    "/edu/backend/v1/html-animation/list",
+    { params }
+  );
 };
 
 // 设置展示版本
-export const setHtmlAnimationDisplay = (data: { courseId: number; chapterId: number; version: string }) => {
-  return http.request<ApiResponse>("post", "/edu/backend/v1/html-animation/display/set", { data });
+export const setHtmlAnimationDisplay = (data: {
+  courseId: number;
+  chapterId: number;
+  version: string;
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/html-animation/display/set",
+    { data }
+  );
 };
 
 // 强制同步
 export const forceSyncHtmlAnimation = () => {
-  return http.request<ApiResponse<HtmlAnimationSyncResult>>("post", "/edu/backend/v1/html-animation/sync", { data: {} });
+  return http.request<ApiResponse<HtmlAnimationSyncResult>>(
+    "post",
+    "/edu/backend/v1/html-animation/sync",
+    { data: {} }
+  );
 };
 
 // 获取展示版本（前台显示用，可选）
-export const getHtmlAnimationDisplay = (params: { courseId: number; chapterId: number }) => {
-  return http.request<ApiResponse<HtmlAnimationDisplayResult>>("get", "/edu/frontend/v1/html-animation/display", { params });
+export const getHtmlAnimationDisplay = (params: {
+  courseId: number;
+  chapterId: number;
+}) => {
+  return http.request<ApiResponse<HtmlAnimationDisplayResult>>(
+    "get",
+    "/edu/frontend/v1/html-animation/display",
+    { params }
+  );
 };

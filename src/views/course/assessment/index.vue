@@ -1,58 +1,110 @@
 <template>
-  <div class="assessment-management flex h-[calc(100vh-120px)] overflow-hidden m-4 gap-4">
+  <div
+    class="assessment-management flex h-[calc(100vh-120px)] overflow-hidden m-4 gap-4"
+  >
     <!-- 左侧课程选择侧边栏 -->
-    <div class="course-sidebar w-[300px] flex flex-col bg-[var(--el-bg-color-overlay)] rounded-lg shadow-sm border border-[var(--el-border-color-light)] overflow-hidden">
-      <div class="p-4 border-b border-[var(--el-border-color-light)] bg-[var(--el-fill-color-light)]">
-        <h3 class="text-lg font-bold text-[var(--el-text-color-primary)] mb-3 ml-1">课程中心</h3>
+    <div
+      class="course-sidebar w-[300px] flex flex-col bg-[var(--el-bg-color-overlay)] rounded-lg shadow-sm border border-[var(--el-border-color-light)] overflow-hidden"
+    >
+      <div
+        class="p-4 border-b border-[var(--el-border-color-light)] bg-[var(--el-fill-color-light)]"
+      >
+        <h3
+          class="text-lg font-bold text-[var(--el-text-color-primary)] mb-3 ml-1"
+        >
+          课程中心
+        </h3>
         <el-input
           v-model="courseSearchQuery"
           placeholder="搜索课程..."
           clearable
-          @input="handleCourseSearch"
           class="!w-full"
+          @input="handleCourseSearch"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
       </div>
-      
-      <div v-loading="courseLoading" class="flex-1 overflow-y-auto custom-scrollbar p-2">
-        <div 
-          v-for="course in courseOptions" 
+
+      <div
+        v-loading="courseLoading"
+        class="flex-1 overflow-y-auto custom-scrollbar p-2"
+      >
+        <div
+          v-for="course in courseOptions"
           :key="course.courseId"
-          :class="['course-item', selectedCourseId === course.courseId ? 'active' : '']"
+          :class="[
+            'course-item',
+            selectedCourseId === course.courseId ? 'active' : ''
+          ]"
           @click="selectCourse(course)"
         >
-          <el-image :src="course.thumbUrl" class="w-12 h-9 rounded object-cover mr-3 bg-[var(--el-fill-color-light)]">
-            <template #error><div class="flex items-center justify-center w-full h-full text-xs text-[var(--el-text-color-placeholder)]">无图</div></template>
+          <el-image
+            :src="course.thumbUrl"
+            class="w-12 h-9 rounded object-cover mr-3 bg-[var(--el-fill-color-light)]"
+          >
+            <template #error
+              ><div
+                class="flex items-center justify-center w-full h-full text-xs text-[var(--el-text-color-placeholder)]"
+              >
+                无图
+              </div></template
+            >
           </el-image>
           <div class="flex-1 overflow-hidden">
-            <div class="course-name truncate text-sm font-medium text-[var(--el-text-color-primary)]">{{ course.title }}</div>
-            <div class="course-meta text-[11px] text-[var(--el-text-color-placeholder)] mt-0.5">{{ course.isRequired === 1 ? '必修' : '选修' }} · {{ course.userName }}</div>
+            <div
+              class="course-name truncate text-sm font-medium text-[var(--el-text-color-primary)]"
+            >
+              {{ course.title }}
+            </div>
+            <div
+              class="course-meta text-[11px] text-[var(--el-text-color-placeholder)] mt-0.5"
+            >
+              {{ course.isRequired === 1 ? "必修" : "选修" }} ·
+              {{ course.userName }}
+            </div>
           </div>
         </div>
-        <el-empty v-if="courseOptions.length === 0" description="未找到匹配课程" :image-size="60" />
+        <el-empty
+          v-if="courseOptions.length === 0"
+          description="未找到匹配课程"
+          :image-size="60"
+        />
       </div>
     </div>
 
     <!-- 右侧内容管理区 -->
-    <div class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-lg shadow-sm border border-[var(--el-border-color-light)] flex flex-col overflow-hidden">
+    <div
+      class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-lg shadow-sm border border-[var(--el-border-color-light)] flex flex-col overflow-hidden"
+    >
       <template v-if="selectedCourseId">
-        <div class="p-5 border-b border-[var(--el-border-color-light)] flex justify-between items-center bg-[var(--el-bg-color-overlay)]">
+        <div
+          class="p-5 border-b border-[var(--el-border-color-light)] flex justify-between items-center bg-[var(--el-bg-color-overlay)]"
+        >
           <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold text-[var(--el-text-color-primary)]">{{ currentCourse?.title }}</h2>
-            <el-tag :type="currentCourse?.isRequired === 1 ? 'danger' : 'success'" effect="plain" round size="small">
-              {{ currentCourse?.isRequired === 1 ? '必修' : '选修' }}
+            <h2 class="text-xl font-bold text-[var(--el-text-color-primary)]">
+              {{ currentCourse?.title }}
+            </h2>
+            <el-tag
+              :type="currentCourse?.isRequired === 1 ? 'danger' : 'success'"
+              effect="plain"
+              round
+              size="small"
+            >
+              {{ currentCourse?.isRequired === 1 ? "必修" : "选修" }}
             </el-tag>
           </div>
           <div class="flex gap-4 text-sm text-[var(--el-text-color-secondary)]">
-             <span>创建人: {{ currentCourse?.userName }}</span>
+            <span>创建人: {{ currentCourse?.userName }}</span>
           </div>
         </div>
 
         <div class="flex-1 overflow-hidden flex flex-col p-5">
-          <el-tabs v-model="activeTab" class="assessment-tabs flex-1 flex flex-col">
+          <el-tabs
+            v-model="activeTab"
+            class="assessment-tabs flex-1 flex flex-col"
+          >
             <el-tab-pane label="课程作业" name="homework">
               <homework-management :course-id="selectedCourseId" />
             </el-tab-pane>
@@ -63,8 +115,14 @@
         </div>
       </template>
 
-      <div v-else class="flex-1 flex flex-col items-center justify-center bg-[var(--el-fill-color-light)]">
-        <el-empty description="请从左侧选择一个课程开始管理" :image-size="120" />
+      <div
+        v-else
+        class="flex-1 flex flex-col items-center justify-center bg-[var(--el-fill-color-light)]"
+      >
+        <el-empty
+          description="请从左侧选择一个课程开始管理"
+          :image-size="120"
+        />
       </div>
     </div>
   </div>
@@ -98,7 +156,7 @@ const handleCourseSearch = async () => {
       courseName: courseSearchQuery.value
     });
     courseOptions.value = data.courseList;
-    
+
     // 如果没有选中课程且列表有数据，默认选第一个
     if (!selectedCourseId.value && courseOptions.value.length > 0) {
       // selectCourse(courseOptions.value[0]);
@@ -144,10 +202,10 @@ onMounted(() => {
   align-items: center;
   padding: 10px 12px;
   margin-bottom: 4px;
-  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
   border: 1px solid transparent;
+  border-radius: 8px;
+  transition: all 0.2s;
 
   &:hover {
     background-color: var(--el-fill-color-light);
@@ -156,7 +214,7 @@ onMounted(() => {
   &.active {
     background-color: var(--el-color-primary-light-9);
     border-color: var(--el-color-primary-light-8);
-    
+
     .course-name {
       color: var(--el-color-primary);
     }
@@ -166,10 +224,10 @@ onMounted(() => {
 .assessment-tabs {
   :deep(.el-tabs__content) {
     flex: 1;
-    overflow-y: auto;
     padding-top: 15px;
+    overflow-y: auto;
   }
-  
+
   :deep(.el-tabs__header) {
     margin-bottom: 0;
   }
@@ -179,13 +237,14 @@ onMounted(() => {
   &::-webkit-scrollbar {
     width: 6px;
   }
+
   &::-webkit-scrollbar-thumb {
     background: var(--el-border-color-lighter);
     border-radius: 10px;
   }
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
 }
 </style>
- 

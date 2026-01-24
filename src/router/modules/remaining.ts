@@ -98,6 +98,6 @@ export default [
       showLink: false,
       rank: 108
     }
-  },
+  }
   // 嵌入到课程详情中的随练页面已不再需要独立路由
 ] satisfies Array<RouteConfigsTable>;

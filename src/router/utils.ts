@@ -123,25 +123,42 @@ function filterNoPermissionTree(data: RouteComponent[]) {
   // 在这种情况下，不进行权限过滤，保留所有没有明确 roles 限制的菜单
   const newTree = cloneDeep(data).filter((v: any) => {
     // 如果路由没有定义 roles 限制，则允许访问
-    if (!v.meta?.roles || !Array.isArray(v.meta.roles) || v.meta.roles.length === 0) {
+    if (
+      !v.meta?.roles ||
+      !Array.isArray(v.meta.roles) ||
+      v.meta.roles.length === 0
+    ) {
       return true;
     }
     // 如果用户角色为空，但路由有 roles 限制，则过滤掉
     if (currentRoles.length === 0) {
-      console.log("[Router] 用户角色为空，过滤掉有权限限制的菜单:", v.path, "需要角色:", v.meta?.roles);
+      console.log(
+        "[Router] 用户角色为空，过滤掉有权限限制的菜单:",
+        v.path,
+        "需要角色:",
+        v.meta?.roles
+      );
       return false;
     }
     // 正常的权限检查
     const hasPermission = isOneOfArray(v.meta?.roles, currentRoles);
     if (!hasPermission) {
-      console.log("[Router] 过滤掉无权限菜单:", v.path, "需要角色:", v.meta?.roles);
+      console.log(
+        "[Router] 过滤掉无权限菜单:",
+        v.path,
+        "需要角色:",
+        v.meta?.roles
+      );
     }
     return hasPermission;
   });
   newTree.forEach(
     (v: any) => v.children && (v.children = filterNoPermissionTree(v.children))
   );
-  console.log("[Router] filterNoPermissionTree - 过滤后菜单数量:", newTree.length);
+  console.log(
+    "[Router] filterNoPermissionTree - 过滤后菜单数量:",
+    newTree.length
+  );
   return filterChildrenTree(newTree);
 }
 
@@ -233,7 +250,10 @@ function handleAsyncRoutes(routeList) {
     );
     usePermissionStoreHook().handleWholeMenus(routeList);
   }
-  console.log("[Router] handleAsyncRoutes 处理完成, wholeMenus:", usePermissionStoreHook().wholeMenus);
+  console.log(
+    "[Router] handleAsyncRoutes 处理完成, wholeMenus:",
+    usePermissionStoreHook().wholeMenus
+  );
   if (!useMultiTagsStoreHook().getMultiTagsCache) {
     useMultiTagsStoreHook().handleTags("equal", [
       ...routerArrays,
@@ -257,7 +277,7 @@ function initRouter() {
         resolve(router);
       });
     } else {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         getAsyncRoutes()
           .then(res => {
             console.log("[Router] 获取动态路由响应:", res);
@@ -275,7 +295,7 @@ function initRouter() {
       });
     }
   } else {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       getAsyncRoutes()
         .then(res => {
           console.log("[Router] 获取动态路由响应:", res);

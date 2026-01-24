@@ -4,29 +4,27 @@
 
 ## 1. 获取实验室统计数据
 
-- **接口地址**：`/lab/stats`
-- **请求方式**：GET
+- **接口地址**：`/lab/stats`- **请求方式**：GET
 - **请求参数**：无
 - **响应参数**：
 
-```json
+````json
 {
   "code": 200,
   "msg": "成功",
   "data": {
-    "animations": 12,  // 动画数量
-    "games": 8,       // 游戏数量
-    "completed": 5   // 已完成数量
+    "animations": 12, // 动画数量
+    "games": 8, // 游戏数量
+    "completed": 5 // 已完成数量
   }
 }
-```
 
+```text
 ## 2. 获取实验项目列表
 
-- **接口地址**：`/lab/list`
-- **请求方式**：GET
+- **接口地址**：`/lab/list`- **请求方式**：GET
 - **请求参数**：
-  - `category`: string (可选, animation | game | simulation | all)
+    -`category`: string (可选, animation | game | simulation | all)
 - **响应参数**：
 
 ```json
@@ -50,4 +48,5 @@
     ]
   }
 }
-```
+
+````

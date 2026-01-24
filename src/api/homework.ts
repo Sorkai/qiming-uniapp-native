@@ -145,10 +145,12 @@ export const deleteHomework = (data: HomeworkDeleteParams) => {
 /**
  * 批量添加课程作业试题
  */
-export const batchAddHomeworkQuestions = (data: HomeworkQuestionBatchAddParams) => {
+export const batchAddHomeworkQuestions = (
+  data: HomeworkQuestionBatchAddParams
+) => {
   return http.request<ApiResponse>(
     "post",
     "/edu/backend/v1/homework/question/batch/add",
     { data }
   );
-}; 
+};

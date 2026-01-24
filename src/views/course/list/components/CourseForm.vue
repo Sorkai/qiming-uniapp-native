@@ -905,8 +905,8 @@ defineExpose({
 }
 
 :deep(.el-form-item__label) {
-  font-weight: 500;
   font-size: 14px;
+  font-weight: 500;
 }
 
 :deep(.el-input__wrapper),
@@ -925,17 +925,17 @@ defineExpose({
 }
 
 .form-section {
-  margin-top: 24px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 16px;
   padding: 20px;
+  margin-top: 24px;
   margin-bottom: 24px;
   background: var(--el-fill-color-blank);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
 
   .section-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 20px;
 
     h3 {
@@ -948,13 +948,13 @@ defineExpose({
 }
 
 .empty-placeholder {
-  text-align: center;
-  color: var(--el-text-color-secondary);
   padding: 24px;
-  border: 1px dashed var(--el-border-color);
-  border-radius: 12px;
   margin-bottom: 16px;
   font-size: 14px;
+  color: var(--el-text-color-secondary);
+  text-align: center;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 12px;
 }
 
 .chapter-header,
@@ -980,8 +980,8 @@ defineExpose({
 
 .hour-list-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin: 16px 0;
 
   h4 {
@@ -997,11 +997,11 @@ defineExpose({
 
 .hour-card,
 .attr-card {
+  position: relative;
+  padding: 20px;
+  background: var(--el-fill-color-lighter);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 12px;
-  padding: 20px;
-  position: relative;
-  background: var(--el-fill-color-lighter);
 }
 
 .hour-actions,
@@ -1029,36 +1029,36 @@ defineExpose({
 
   .upload-actions {
     position: absolute;
-    bottom: 5px;
     right: 5px;
+    bottom: 5px;
   }
 }
 
 .upload-trigger {
-  height: 120px;
-  width: 200px;
-  border: 1px dashed var(--el-border-color);
-  border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 200px;
+  height: 120px;
   cursor: pointer;
   background-color: var(--el-fill-color-blank);
+  border: 1px dashed var(--el-border-color);
+  border-radius: 12px;
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: var(--el-color-primary);
     background-color: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary);
   }
 }
 
 .upload-icon-container {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
 
   .el-icon {
     font-size: 28px;
@@ -1067,18 +1067,18 @@ defineExpose({
 }
 
 .upload-with-preview {
-  width: 100%;
   position: relative;
+  width: 100%;
 }
 
 .resource-preview {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
+  background: var(--el-fill-color-lighter);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 10px;
-  background: var(--el-fill-color-lighter);
 
   .resource-info {
     display: flex;
@@ -1097,19 +1097,19 @@ defineExpose({
 }
 
 .resource-upload {
-  width: 100%;
-  height: 70px;
-  border: 1px dashed var(--el-border-color);
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 70px;
   background-color: var(--el-fill-color-blank);
+  border: 1px dashed var(--el-border-color);
+  border-radius: 10px;
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: var(--el-color-primary);
     background-color: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary);
   }
 
   .upload-icon-container {
@@ -1118,8 +1118,8 @@ defineExpose({
     align-items: center;
 
     .el-icon {
-      font-size: 22px;
       margin-bottom: 8px;
+      font-size: 22px;
       color: var(--el-text-color-placeholder);
     }
 
@@ -1129,25 +1129,22 @@ defineExpose({
     }
 
     .upload-tip {
+      margin-top: 5px;
       font-size: 14px;
       color: #606266;
-      margin-top: 5px;
     }
   }
 
   .uploading-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.9);
+    inset: 0;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
-    border-radius: 10px;
+    background-color: rgb(255 255 255 / 90%);
     border: 1px dashed var(--el-border-color);
+    border-radius: 10px;
   }
 
   .uploading-indicator {
@@ -1157,9 +1154,9 @@ defineExpose({
     justify-content: center;
 
     .el-icon {
+      margin-bottom: 8px;
       font-size: 24px;
       color: #97b4f7;
-      margin-bottom: 8px;
     }
 
     span {
@@ -1189,14 +1186,14 @@ defineExpose({
 }
 
 .required-mark {
-  color: #f56c6c;
   margin-left: 4px;
+  color: #f56c6c;
 }
 
 .required-hint {
-  color: #f56c6c;
-  font-size: 12px;
   margin-left: 5px;
+  font-size: 12px;
+  color: #f56c6c;
 }
 
 .hour-content {
@@ -1208,10 +1205,10 @@ defineExpose({
 }
 
 :deep(.el-collapse-item__header) {
-  padding: 0 16px;
   height: 48px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  padding: 0 16px;
   font-size: 15px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
   border-radius: 10px;
 }
 
@@ -1220,9 +1217,9 @@ defineExpose({
 }
 
 :deep(.el-collapse) {
-  border-radius: 12px;
-  border: 1px solid var(--el-border-color-lighter);
   overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
 }
 
 :deep(.el-collapse-item) {

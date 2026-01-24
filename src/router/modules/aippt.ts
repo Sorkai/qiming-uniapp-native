@@ -9,4 +9,4 @@ export default {
     rank: 12,
     icon: "ri:presentation-fill"
   }
-}; 
+};

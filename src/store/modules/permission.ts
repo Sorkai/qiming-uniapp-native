@@ -30,9 +30,7 @@ export const usePermissionStore = defineStore("pure-permission", {
       console.log("[Permission] constantMenus:", this.constantMenus);
       const combined = this.constantMenus.concat(routes);
       console.log("[Permission] 合并后的路由:", combined);
-      this.wholeMenus = filterNoPermissionTree(
-        filterTree(ascending(combined))
-      );
+      this.wholeMenus = filterNoPermissionTree(filterTree(ascending(combined)));
       console.log("[Permission] 过滤后的 wholeMenus:", this.wholeMenus);
       this.flatteningRoutes = formatFlatteningRoutes(
         this.constantMenus.concat(routes) as any

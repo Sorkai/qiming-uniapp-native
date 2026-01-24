@@ -1,4 +1,4 @@
-import { ref, reactive } from "vue";
+import { ref } from "vue";
 import { ElMessage } from "element-plus";
 import type { ChatMessage, ChatSession } from "../types";
 import {
@@ -83,10 +83,10 @@ export function useAiChat() {
    */
   const analyzeScreenshot = async (image: string, question?: string) => {
     loading.value = true;
-    
+
     // 添加用户消息
     addUserMessage(question || "请分析这张截图", image);
-    
+
     // 添加加载中的AI消息
     const loadingMsg = addLoadingMessage();
 
@@ -105,7 +105,10 @@ export function useAiChat() {
         // 更新建议问题
         suggestions.value = response.data.suggestions || [];
       } else {
-        updateAssistantMessage(loadingMsg.id, response.msg || "分析失败，请重试");
+        updateAssistantMessage(
+          loadingMsg.id,
+          response.msg || "分析失败，请重试"
+        );
       }
     } catch (error) {
       console.error("AI分析失败:", error);
@@ -127,10 +130,10 @@ export function useAiChat() {
     }
 
     loading.value = true;
-    
+
     // 添加用户消息
     addUserMessage(message);
-    
+
     // 添加加载中的AI消息
     const loadingMsg = addLoadingMessage();
 
@@ -146,7 +149,10 @@ export function useAiChat() {
         // 更新建议问题
         suggestions.value = response.data.suggestions || [];
       } else {
-        updateAssistantMessage(loadingMsg.id, response.msg || "回复失败，请重试");
+        updateAssistantMessage(
+          loadingMsg.id,
+          response.msg || "回复失败，请重试"
+        );
       }
     } catch (error) {
       console.error("发送消息失败:", error);

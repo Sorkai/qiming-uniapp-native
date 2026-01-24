@@ -150,4 +150,4 @@ export const batchAddExamQuestions = (data: ExamQuestionBatchAddParams) => {
     "/edu/backend/v1/exam/question/batch/add",
     { data }
   );
-}; 
+};

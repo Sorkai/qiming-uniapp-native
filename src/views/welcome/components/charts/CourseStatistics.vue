@@ -70,7 +70,9 @@ const handleExport = () => {
     return;
   }
 
-  const course = courseOptions.value.find(c => c.value === selectedCourse.value);
+  const course = courseOptions.value.find(
+    c => c.value === selectedCourse.value
+  );
   const courseName = course?.label || "课程";
 
   // 1. 学生进度数据
@@ -142,23 +144,35 @@ const fetchAllData = async () => {
   try {
     console.log("开始获取所有课程数据...");
     // 分开处理，防止一个接口失败导致全部失败
-    const [progressRes, examRes, homeworkRes, examListRes] = await Promise.allSettled([
-      getCourseUsersProgress(),
-      getCourseUsersExamInfo(),
-      getHomeworkList({ pageNum: 1, pageSize: 1000 }),
-      getExamList({ pageNum: 1, pageSize: 1000 })
-    ]);
+    const [progressRes, examRes, homeworkRes, examListRes] =
+      await Promise.allSettled([
+        getCourseUsersProgress(),
+        getCourseUsersExamInfo(),
+        getHomeworkList({ pageNum: 1, pageSize: 1000 }),
+        getExamList({ pageNum: 1, pageSize: 1000 })
+      ]);
 
-    console.log("API调用结果:", { progressRes, examRes, homeworkRes, examListRes });
+    console.log("API调用结果:", {
+      progressRes,
+      examRes,
+      homeworkRes,
+      examListRes
+    });
 
     // 缓存所有课程的进度数据
     if (progressRes.status === "fulfilled") {
       console.log("=== 进度API调试信息 ===");
-      console.log("进度API原始响应完整结构:", JSON.stringify(progressRes.value, null, 2));
+      console.log(
+        "进度API原始响应完整结构:",
+        JSON.stringify(progressRes.value, null, 2)
+      );
       console.log("progressRes.value:", progressRes.value);
       console.log("progressRes.value?.data:", progressRes.value?.data);
-      console.log("progressRes.value?.data?.courseUsersProgress:", progressRes.value?.data?.courseUsersProgress);
-      
+      console.log(
+        "progressRes.value?.data?.courseUsersProgress:",
+        progressRes.value?.data?.courseUsersProgress
+      );
+
       // 尝试多种可能的数据路径
       let progressData = null;
       if (progressRes.value?.data?.courseUsersProgress) {
@@ -167,7 +181,10 @@ const fetchAllData = async () => {
       } else if (progressRes.value?.data?.list) {
         progressData = progressRes.value.data.list;
         console.log("使用路径: data.list");
-      } else if (progressRes.value?.data && Array.isArray(progressRes.value.data)) {
+      } else if (
+        progressRes.value?.data &&
+        Array.isArray(progressRes.value.data)
+      ) {
         progressData = progressRes.value.data;
         console.log("使用路径: data (直接数组)");
       } else if (progressRes.value?.list) {
@@ -177,15 +194,18 @@ const fetchAllData = async () => {
         progressData = progressRes.value;
         console.log("使用路径: 直接数组");
       }
-      
+
       console.log("解析后的progressData:", progressData);
       console.log("progressData类型:", typeof progressData);
       console.log("progressData是否为数组:", Array.isArray(progressData));
-      
+
       if (Array.isArray(progressData) && progressData.length > 0) {
         allProgressData.value = progressData;
         console.log("进度数据已缓存，数量:", allProgressData.value.length);
-        console.log("第一条进度数据结构:", JSON.stringify(allProgressData.value[0], null, 2));
+        console.log(
+          "第一条进度数据结构:",
+          JSON.stringify(allProgressData.value[0], null, 2)
+        );
       } else {
         console.warn("进度数据为空或格式不正确");
         allProgressData.value = [];
@@ -197,14 +217,20 @@ const fetchAllData = async () => {
 
     // 获取作业列表数据
     let homeworkList: any[] = [];
-    if (homeworkRes.status === "fulfilled" && homeworkRes.value?.data?.homeworkList) {
+    if (
+      homeworkRes.status === "fulfilled" &&
+      homeworkRes.value?.data?.homeworkList
+    ) {
       homeworkList = homeworkRes.value.data.homeworkList;
       console.log("作业列表:", homeworkList);
     }
 
     // 获取考试列表数据
     let examList: any[] = [];
-    if (examListRes.status === "fulfilled" && examListRes.value?.data?.examList) {
+    if (
+      examListRes.status === "fulfilled" &&
+      examListRes.value?.data?.examList
+    ) {
       examList = examListRes.value.data.examList;
       console.log("考试列表:", examList);
     }
@@ -212,11 +238,17 @@ const fetchAllData = async () => {
     // 缓存所有课程的考试/作业成绩数据
     if (examRes.status === "fulfilled") {
       console.log("=== 考试成绩API调试信息 ===");
-      console.log("考试成绩API原始响应完整结构:", JSON.stringify(examRes.value, null, 2));
+      console.log(
+        "考试成绩API原始响应完整结构:",
+        JSON.stringify(examRes.value, null, 2)
+      );
       console.log("examRes.value:", examRes.value);
       console.log("examRes.value?.data:", examRes.value?.data);
-      console.log("examRes.value?.data?.courseUsersExamInfoList:", examRes.value?.data?.courseUsersExamInfoList);
-      
+      console.log(
+        "examRes.value?.data?.courseUsersExamInfoList:",
+        examRes.value?.data?.courseUsersExamInfoList
+      );
+
       // 尝试多种可能的数据路径
       let examData = null;
       if (examRes.value?.data?.courseUsersExamInfoList) {
@@ -239,11 +271,11 @@ const fetchAllData = async () => {
         examData = examRes.value;
         console.log("使用路径: 直接数组");
       }
-      
+
       console.log("解析后的examData:", examData);
       console.log("examData类型:", typeof examData);
       console.log("examData是否为数组:", Array.isArray(examData));
-      
+
       if (Array.isArray(examData) && examData.length > 0) {
         // 使用真实的考试成绩数据
         allExamData.value = examData.map(item => ({
@@ -251,10 +283,15 @@ const fetchAllData = async () => {
           type: "exam"
         }));
         console.log("考试成绩数据已缓存，数量:", allExamData.value.length);
-        console.log("第一条考试数据结构:", JSON.stringify(allExamData.value[0], null, 2));
-        
+        console.log(
+          "第一条考试数据结构:",
+          JSON.stringify(allExamData.value[0], null, 2)
+        );
+
         // 从考试数据中提取课程信息，补充到课程选项列表中（解决课程ID不匹配问题）
-        const existingCourseIds = new Set(courseOptions.value.map(c => Number(c.value)));
+        const existingCourseIds = new Set(
+          courseOptions.value.map(c => Number(c.value))
+        );
         const coursesFromExamData = new Map<number, string>();
         examData.forEach(item => {
           const cid = Number(item.courseId);
@@ -262,19 +299,26 @@ const fetchAllData = async () => {
             coursesFromExamData.set(cid, item.courseName);
           }
         });
-        
+
         // 将考试数据中的课程添加到课程选项
         if (coursesFromExamData.size > 0) {
-          console.log("发现考试数据中有额外课程，正在补充:", [...coursesFromExamData.entries()]);
+          console.log("发现考试数据中有额外课程，正在补充:", [
+            ...coursesFromExamData.entries()
+          ]);
           coursesFromExamData.forEach((name, id) => {
             courseOptions.value.push({
               value: id,
               label: name
             });
           });
-          
+
           // 如果当前没有选中课程或选中的课程没有考试数据，选择第一个有考试数据的课程
-          if (!selectedCourse.value || !examData.some(item => Number(item.courseId) === Number(selectedCourse.value))) {
+          if (
+            !selectedCourse.value ||
+            !examData.some(
+              item => Number(item.courseId) === Number(selectedCourse.value)
+            )
+          ) {
             const firstExamCourseId = Number(examData[0].courseId);
             selectedCourse.value = firstExamCourseId;
             console.log("自动切换到有考试数据的课程ID:", firstExamCourseId);
@@ -284,14 +328,17 @@ const fetchAllData = async () => {
         console.warn("考试成绩数据为空或格式不正确，尝试从作业和考试列表获取");
         // 从作业和考试列表构建数据（使用真实数据，不是模拟数据）
         const combinedData: any[] = [];
-        
+
         // 从作业列表构建数据 - 使用真实的作业信息
         console.log("=== 作业列表调试信息 ===");
         console.log("作业列表数量:", homeworkList.length);
         if (homeworkList.length > 0) {
-          console.log("第一条作业数据结构:", JSON.stringify(homeworkList[0], null, 2));
+          console.log(
+            "第一条作业数据结构:",
+            JSON.stringify(homeworkList[0], null, 2)
+          );
         }
-        
+
         // 按课程分组作业数据
         const homeworkByCourse = new Map<number, any[]>();
         homeworkList.forEach(hw => {
@@ -300,7 +347,7 @@ const fetchAllData = async () => {
           }
           homeworkByCourse.get(hw.courseId)?.push(hw);
         });
-        
+
         // 为每个作业创建条目（即使没有成绩统计数据也添加，以便在下拉框中显示）
         homeworkList.forEach(hw => {
           combinedData.push({
@@ -316,14 +363,17 @@ const fetchAllData = async () => {
             examInfo: hw.scoreDistribution || hw.examInfo || []
           });
         });
-        
+
         // 从考试列表构建数据 - 使用真实的考试信息
         console.log("=== 考试列表调试信息 ===");
         console.log("考试列表数量:", examList.length);
         if (examList.length > 0) {
-          console.log("第一条考试数据结构:", JSON.stringify(examList[0], null, 2));
+          console.log(
+            "第一条考试数据结构:",
+            JSON.stringify(examList[0], null, 2)
+          );
         }
-        
+
         // 为每个考试创建条目（即使没有成绩统计数据也添加）
         examList.forEach(exam => {
           combinedData.push({
@@ -340,11 +390,17 @@ const fetchAllData = async () => {
             examInfo: exam.scoreDistribution || exam.examInfo || []
           });
         });
-        
+
         allExamData.value = combinedData;
-        console.log("从作业/考试列表构建的数据，数量:", allExamData.value.length);
+        console.log(
+          "从作业/考试列表构建的数据，数量:",
+          allExamData.value.length
+        );
         if (combinedData.length > 0) {
-          console.log("第一条构建的数据:", JSON.stringify(combinedData[0], null, 2));
+          console.log(
+            "第一条构建的数据:",
+            JSON.stringify(combinedData[0], null, 2)
+          );
         }
       }
     } else if (examRes.status === "rejected") {
@@ -371,8 +427,10 @@ const renderCourseData = (courseId: number) => {
   console.log("=== renderCourseData 调试信息 ===");
   console.log("当前选择的课程ID:", courseId);
   console.log("allExamData 总数量:", allExamData.value.length);
-  console.log("allExamData 中的所有 courseId:", [...new Set(allExamData.value.map(item => item.courseId))]);
-  
+  console.log("allExamData 中的所有 courseId:", [
+    ...new Set(allExamData.value.map(item => item.courseId))
+  ]);
+
   try {
     // 从缓存中查找对应课程的进度数据
     const progressData = allProgressData.value.find(
@@ -390,9 +448,12 @@ const renderCourseData = (courseId: number) => {
     );
     console.log("过滤后的 courseExamData 数量:", courseExamData.length);
     if (courseExamData.length > 0) {
-      console.log("第一条 courseExamData:", JSON.stringify(courseExamData[0], null, 2));
+      console.log(
+        "第一条 courseExamData:",
+        JSON.stringify(courseExamData[0], null, 2)
+      );
     }
-    
+
     if (courseExamData && courseExamData.length > 0) {
       // 更新考试选项
       examOptions.value = courseExamData.map(item => ({
@@ -451,7 +512,12 @@ const currentCourseUsers = computed(() => {
   const courseData = allProgressData.value.find(
     item => Number(item.courseId) === Number(selectedCourse.value)
   );
-  console.log("currentCourseUsers - selectedCourse:", selectedCourse.value, "找到的课程数据:", courseData);
+  console.log(
+    "currentCourseUsers - selectedCourse:",
+    selectedCourse.value,
+    "找到的课程数据:",
+    courseData
+  );
   return courseData?.usersProgress || [];
 });
 
@@ -505,30 +571,30 @@ const updateProgressChart = users => {
       type: "value",
       name: "完成进度(%)",
       max: 100,
-        axisLabel: {
-          formatter: "{value}%",
-          color: isDark.value ? "#cbd5e1" : "#64748b"
-        },
-        splitLine: {
-          lineStyle: {
-            color: isDark.value ? "#475569" : "#f1f5f9",
-            type: "dashed"
-          }
-        }
+      axisLabel: {
+        formatter: "{value}%",
+        color: isDark.value ? "#cbd5e1" : "#64748b"
       },
-      yAxis: {
-        type: "category",
-        data: userNames,
-        axisLabel: {
-          fontSize: 12,
-          color: isDark.value ? "#fafafa" : "#475569"
-        },
-        axisLine: {
-          lineStyle: {
-            color: isDark.value ? "#475569" : "#e5e7eb"
-          }
+      splitLine: {
+        lineStyle: {
+          color: isDark.value ? "#475569" : "#f1f5f9",
+          type: "dashed"
         }
+      }
+    },
+    yAxis: {
+      type: "category",
+      data: userNames,
+      axisLabel: {
+        fontSize: 12,
+        color: isDark.value ? "#fafafa" : "#475569"
       },
+      axisLine: {
+        lineStyle: {
+          color: isDark.value ? "#475569" : "#e5e7eb"
+        }
+      }
+    },
     series: [
       {
         name: "完成进度",
@@ -564,7 +630,10 @@ const renderProgressChart = courseData => {
     return;
   }
   // 直接使用传入的数据进行渲染，避免 computed 属性的时序问题
-  const usersToRender = courseData.usersProgress.slice(0, progressPageSize.value);
+  const usersToRender = courseData.usersProgress.slice(
+    0,
+    progressPageSize.value
+  );
   console.log("renderProgressChart - 准备渲染的用户数据:", usersToRender);
   if (usersToRender.length > 0) {
     updateProgressChart(usersToRender);
@@ -596,10 +665,25 @@ const renderEmptyProgressChart = (message = "暂无课程进度数据") => {
 const renderExamChart = courseData => {
   console.log("=== renderExamChart 调试信息 ===");
   console.log("传入的 courseData:", JSON.stringify(courseData, null, 2));
-  console.log("questionNum:", courseData.questionNum, "类型:", typeof courseData.questionNum);
-  console.log("totalPoints:", courseData.totalPoints, "类型:", typeof courseData.totalPoints);
-  console.log("examInfo:", courseData.examInfo, "长度:", courseData.examInfo?.length);
-  
+  console.log(
+    "questionNum:",
+    courseData.questionNum,
+    "类型:",
+    typeof courseData.questionNum
+  );
+  console.log(
+    "totalPoints:",
+    courseData.totalPoints,
+    "类型:",
+    typeof courseData.totalPoints
+  );
+  console.log(
+    "examInfo:",
+    courseData.examInfo,
+    "长度:",
+    courseData.examInfo?.length
+  );
+
   // 如果有成绩分布数据，显示饼图
   if (courseData.examInfo && courseData.examInfo.length > 0) {
     // 转换等级为文字说明
@@ -655,12 +739,7 @@ const renderExamChart = courseData => {
             name: level,
             value: counts[index],
             itemStyle: {
-              color: [
-                "#E8684A", 
-                "#F6BD16", 
-                "#5B8FF9", 
-                "#5AD8A6"
-              ][index % 4]
+              color: ["#E8684A", "#F6BD16", "#5B8FF9", "#5AD8A6"][index % 4]
             }
           })),
           emphasis: {
@@ -690,10 +769,13 @@ const renderExamChart = courseData => {
   }
 
   // 如果没有成绩分布数据，但有基本信息（questionNum, totalPoints），显示基本信息图表
-  if (courseData.questionNum !== undefined || courseData.totalPoints !== undefined) {
+  if (
+    courseData.questionNum !== undefined ||
+    courseData.totalPoints !== undefined
+  ) {
     const chartData = [];
     const colors = ["#5B8FF9", "#5AD8A6", "#F6BD16", "#E8684A"];
-    
+
     if (courseData.questionNum !== undefined && courseData.questionNum > 0) {
       chartData.push({
         name: "题目数量",
@@ -859,7 +941,7 @@ onMounted(async () => {
   // 先获取课程列表，再获取统计数据
   await fetchCourseList();
   await fetchAllData();
-  
+
   // 确保在数据加载完成后渲染
   if (selectedCourse.value) {
     nextTick(() => {
@@ -881,18 +963,30 @@ onMounted(async () => {
               class="flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 w-full"
             >
               <div class="flex items-center gap-4 shrink-0">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
+                >
                   <ClipboardIcon class="w-6 h-6 [&_path]:!fill-white" />
                 </div>
                 <div class="flex flex-col">
-                  <span class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow">分析课程数据</span>
-                  <span class="text-xs text-blue-400 dark:text-blue-300/60 font-medium mt-0.5">STATISTICS & GROWTH</span>
+                  <span
+                    class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
+                    >分析课程数据</span
+                  >
+                  <span
+                    class="text-xs text-blue-400 dark:text-blue-300/60 font-medium mt-0.5"
+                    >STATISTICS & GROWTH</span
+                  >
                 </div>
               </div>
-              
-              <div class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-blue-200/50 to-transparent dark:via-blue-500/20 mx-2"></div>
 
-              <div class="flex items-center gap-3 flex-1 w-full max-lg:max-w-none max-w-lg">
+              <div
+                class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-blue-200/50 to-transparent dark:via-blue-500/20 mx-2"
+              />
+
+              <div
+                class="flex items-center gap-3 flex-1 w-full max-lg:max-w-none max-w-lg"
+              >
                 <el-select
                   v-model="selectedCourse"
                   placeholder="请选择需要分析的课程"
@@ -901,7 +995,10 @@ onMounted(async () => {
                   :disabled="courseOptions.length === 0"
                 >
                   <template #prefix>
-                    <IconifyIconOnline icon="ep:reading" class="text-blue-500" />
+                    <IconifyIconOnline
+                      icon="ep:reading"
+                      class="text-blue-500"
+                    />
                   </template>
                   <el-option
                     v-for="item in courseOptions"
@@ -914,10 +1011,10 @@ onMounted(async () => {
             </div>
 
             <div class="flex items-center gap-3 shrink-0 self-end md:self-auto">
-              <el-button 
-                color="#6366f1" 
+              <el-button
+                color="#6366f1"
                 size="large"
-                class="!rounded-xl shadow-md shadow-blue-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all" 
+                class="!rounded-xl shadow-md shadow-blue-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all"
                 @click="fetchAllData"
               >
                 <template #icon>
@@ -947,17 +1044,27 @@ onMounted(async () => {
             >
               <div class="flex justify-between items-center mb-6 px-2">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <div
+                    class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400"
+                  >
                     <IconifyIconOnline icon="ep:user" />
                   </div>
-                  <span class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                  <span
+                    class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center"
+                  >
                     学生个人进度报告
                   </span>
                 </div>
                 <div class="flex items-center gap-4">
-                  <div class="flex items-center gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                  <div
+                    class="flex items-center gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700"
+                  >
                     <span class="text-xs text-gray-500 font-medium">排序:</span>
-                    <el-radio-group v-model="progressSortOrder" size="small" class="custom-radio-group">
+                    <el-radio-group
+                      v-model="progressSortOrder"
+                      size="small"
+                      class="custom-radio-group"
+                    >
                       <el-radio-button value="none">默认</el-radio-button>
                       <el-radio-button value="desc">进度降序</el-radio-button>
                       <el-radio-button value="asc">进度升序</el-radio-button>
@@ -969,9 +1076,12 @@ onMounted(async () => {
                 ref="progressChartRef"
                 class="chart-container"
                 style="width: 100%; height: 550px"
-              ></div>
+              />
               <!-- 学生进度分页器 -->
-              <div v-if="sortedUsers.length > progressPageSize" class="mt-6 flex justify-center">
+              <div
+                v-if="sortedUsers.length > progressPageSize"
+                class="mt-6 flex justify-center"
+              >
                 <el-pagination
                   v-model:current-page="progressPage"
                   :page-size="progressPageSize"
@@ -989,10 +1099,14 @@ onMounted(async () => {
             >
               <div class="flex justify-between items-center mb-6 px-2">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <div
+                    class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400"
+                  >
                     <IconifyIconOnline icon="ep:document-checked" />
                   </div>
-                  <span class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                  <span
+                    class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center"
+                  >
                     成绩分布深度分析
                   </span>
                 </div>
@@ -1018,7 +1132,7 @@ onMounted(async () => {
                 ref="examChartRef"
                 class="chart-container"
                 style="width: 100%; height: 550px"
-              ></div>
+              />
             </div>
           </div>
         </div>
@@ -1027,24 +1141,23 @@ onMounted(async () => {
   </div>
 </template>
 
-
 <style scoped>
 .text-glow {
-  text-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+  text-shadow: 0 0 10px rgb(37 99 235 / 20%);
 }
 
 :deep(.custom-select-high) {
   .el-input__wrapper {
-    background-color: var(--el-bg-color) !important;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
-    border-radius: 12px !important;
     padding: 2px 12px;
+    background-color: var(--el-bg-color) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgb(37 99 235 / 8%) !important;
+    backdrop-filter: blur(4px);
     transition: all 0.3s;
 
     &:hover,
     &.is-focus {
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.15) !important;
+      box-shadow: 0 4px 15px rgb(37 99 235 / 15%) !important;
     }
   }
 

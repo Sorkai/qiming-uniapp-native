@@ -43,8 +43,8 @@
         </el-table-column>
         <el-table-column v-if="isAdminUser" label="操作" width="180">
           <template #default="scope">
-            <el-button 
-              type="primary" 
+            <el-button
+              type="primary"
               size="small"
               @click="handleEditRole(scope.row)"
             >
@@ -93,7 +93,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="roleDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="roleUpdateLoading" @click="submitRoleChange">
+          <el-button
+            type="primary"
+            :loading="roleUpdateLoading"
+            @click="submitRoleChange"
+          >
             确认
           </el-button>
         </span>
@@ -172,7 +176,7 @@ const resetSearch = () => {
 };
 
 // 打开修改角色对话框
-const handleEditRole = (user) => {
+const handleEditRole = user => {
   if (!isAdminUser.value) {
     ElMessage.warning("只有管理员可以修改用户角色");
     return;
@@ -272,8 +276,8 @@ onMounted(() => {
 }
 
 .box-card {
-  border-radius: 16px;
   overflow: hidden;
+  border-radius: 16px;
 }
 
 :deep(.el-card__header) {
@@ -281,8 +285,8 @@ onMounted(() => {
 }
 
 :deep(.el-table) {
-  border-radius: 12px;
   overflow: hidden;
+  border-radius: 12px;
 }
 
 :deep(.el-dialog) {
@@ -298,8 +302,8 @@ onMounted(() => {
 }
 
 .pagination-container {
-  margin-top: 15px;
   display: flex;
   justify-content: flex-end;
+  margin-top: 15px;
 }
 </style>

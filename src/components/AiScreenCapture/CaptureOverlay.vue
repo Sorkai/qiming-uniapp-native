@@ -32,12 +32,12 @@ const selectionStyle = computed(() => {
   if (!isSelecting.value && startPoint.value.x === 0) {
     return { display: "none" };
   }
-  
+
   const x = Math.min(startPoint.value.x, endPoint.value.x);
   const y = Math.min(startPoint.value.y, endPoint.value.y);
   const width = Math.abs(endPoint.value.x - startPoint.value.x);
   const height = Math.abs(endPoint.value.y - startPoint.value.y);
-  
+
   return {
     left: `${x}px`,
     top: `${y}px`,
@@ -57,7 +57,7 @@ const selectionSize = computed(() => {
 const handleMouseDown = (e: MouseEvent) => {
   // 忽略右键
   if (e.button !== 0) return;
-  
+
   isSelecting.value = true;
   startPoint.value = { x: e.clientX, y: e.clientY };
   endPoint.value = { x: e.clientX, y: e.clientY };
@@ -72,18 +72,18 @@ const handleMouseMove = (e: MouseEvent) => {
 // 结束选择
 const handleMouseUp = (e: MouseEvent) => {
   if (!isSelecting.value) return;
-  
+
   isSelecting.value = false;
-  
+
   const width = Math.abs(endPoint.value.x - startPoint.value.x);
   const height = Math.abs(endPoint.value.y - startPoint.value.y);
-  
+
   // 如果选区太小，视为取消
   if (width < 10 || height < 10) {
     resetSelection();
     return;
   }
-  
+
   // 计算选区
   const area: CaptureArea = {
     x: Math.min(startPoint.value.x, endPoint.value.x),
@@ -91,7 +91,7 @@ const handleMouseUp = (e: MouseEvent) => {
     width,
     height
   };
-  
+
   emit("capture", area);
 };
 
@@ -136,19 +136,19 @@ onUnmounted(() => {
       @mouseup="handleMouseUp"
     >
       <!-- 从按钮扩散的涟漪效果 -->
-      <div 
+      <div
         class="ripple-container"
         :style="{ '--origin-x': `${originX}px`, '--origin-y': `${originY}px` }"
       >
         <div class="ripple ripple-1" />
         <div class="ripple ripple-2" />
       </div>
-      
+
       <!-- 屏幕边缘流动边框 -->
       <div v-show="rippleComplete" class="screen-border">
         <div class="border-glow" />
       </div>
-      
+
       <!-- 提示文字 -->
       <div class="capture-tip">
         <div class="tip-icon">
@@ -158,13 +158,19 @@ onUnmounted(() => {
               stroke="currentColor"
               stroke-width="1.5"
             />
-            <circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5" />
+            <circle
+              cx="12"
+              cy="13"
+              r="3"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
           </svg>
         </div>
         <span class="tip-text">拖动鼠标框选需要识别的区域</span>
         <span class="tip-sub">按 ESC 取消</span>
       </div>
-      
+
       <!-- 选区 -->
       <div
         v-show="isSelecting || startPoint.x !== 0"
@@ -175,16 +181,21 @@ onUnmounted(() => {
         <div v-if="isSelecting" class="size-tip">
           {{ selectionSize }}
         </div>
-        
+
         <!-- 选区光晕边框 -->
         <div class="selection-glow" />
-        
+
         <!-- 白色粒子飞溅特效 -->
         <div class="particles-container">
-          <div class="particle" v-for="i in 20" :key="`particle-${i}`" :style="{ '--i': i }" />
+          <div
+            v-for="i in 20"
+            :key="`particle-${i}`"
+            class="particle"
+            :style="{ '--i': i }"
+          />
         </div>
       </div>
-      
+
       <!-- 取消按钮 -->
       <button class="cancel-btn" @click.stop="handleCancel">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -202,147 +213,51 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
-/* 定义自定义属性，允许动画过渡 */
 @property --angle {
-  syntax: '<angle>';
+  syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
 }
 
 @property --selection-angle {
-  syntax: '<angle>';
+  syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
 }
 
-.capture-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  cursor: crosshair;
-  background: transparent;
-  overflow: hidden;
-}
-
-/* 涟漪容器 */
-.ripple-container {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-/* 从按钮扩散的涟漪 */
-.ripple {
-  position: absolute;
-  left: var(--origin-x);
-  top: var(--origin-y);
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  
-  /* 渐变边框效果 */
-  background: conic-gradient(
-    from 0deg,
-    #00f2fe,
-    #4facfe,
-    #7928ca,
-    #ff0080,
-    #4facfe,
-    #00f2fe
-  );
-  
-  /* 只显示边框 */
-  -webkit-mask: radial-gradient(transparent 45%, #fff 50%, #fff 55%, transparent 60%);
-  mask: radial-gradient(transparent 45%, #fff 50%, #fff 55%, transparent 60%);
-  
-  filter: blur(8px);
-}
-
-.ripple-1 {
-  animation: ripple-expand 2s ease-out forwards;
-}
-
-.ripple-2 {
-  /* 第二个涟漪边框变窄 */
-  -webkit-mask: radial-gradient(transparent 47%, #fff 49%, #fff 51%, transparent 53%);
-  mask: radial-gradient(transparent 47%, #fff 49%, #fff 51%, transparent 53%);
-  animation: ripple-expand 2s ease-out 0.4s forwards;
-}
-
 @keyframes ripple-expand {
   0% {
-    transform: translate(-50%, -50%) scale(0);
     opacity: 1;
+    transform: translate(-50%, -50%) scale(0);
   }
+
   70% {
     opacity: 0.8;
   }
+
   100% {
+    opacity: 0;
+
     /* 扩散到足够大以覆盖整个屏幕 */
     transform: translate(-50%, -50%) scale(80);
-    opacity: 0;
   }
 }
 
 /* 定义屏幕边框角度变量 */
 @property --border-angle {
-  syntax: '<angle>';
+  syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
-}
-
-/* 屏幕边缘流动边框 */
-.screen-border {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  animation: border-fade-in 0.5s ease-out forwards;
 }
 
 @keyframes border-fade-in {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
-}
-
-/* 流动光晕边框 */
-.border-glow {
-  position: absolute;
-  inset: 0;
-  padding: 6px;
-  border-radius: 16px;
-  pointer-events: none;
-  
-  /* 使用 mask 只显示边框 */
-  -webkit-mask: 
-     linear-gradient(#fff 0 0) content-box, 
-     linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  
-  /* 流动渐变背景 */
-  background: conic-gradient(
-    from var(--border-angle), 
-    #00f2fe,
-    #4facfe,
-    #7928ca,
-    #ff0080,
-    #ff6b6b,
-    #feca57,
-    #48dbfb,
-    #00f2fe
-  );
-  
-  filter: blur(6px);
-  opacity: 1;
-  
-  animation: border-spin 3s linear infinite;
 }
 
 @keyframes border-spin {
@@ -351,159 +266,15 @@ onUnmounted(() => {
   }
 }
 
-.capture-tip {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  transform: translateX(-50%);
-  pointer-events: none;
-  animation: tip-fade-in 0.5s ease-out 0.3s both;
-  
-  .tip-icon {
-    width: 20px;
-    height: 20px;
-    color: rgba(255, 255, 255, 0.8);
-    
-    svg {
-      width: 100%;
-      height: 100%;
-    }
-  }
-
-  .tip-text {
-    font-size: 13px;
-    font-weight: 400;
-  }
-
-  .tip-sub {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-    margin-left: 4px;
-    padding-left: 8px;
-    border-left: 1px solid rgba(255, 255, 255, 0.2);
-  }
-}
-
 @keyframes tip-fade-in {
   from {
     opacity: 0;
     transform: translateX(-50%) translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
-  }
-}
-
-.selection-area {
-  position: absolute;
-  background: transparent;
-  border-radius: 8px;
-  overflow: visible;
-
-  .size-tip {
-    position: absolute;
-    bottom: -36px;
-    left: 50%;
-    padding: 6px 16px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #fff;
-    white-space: nowrap;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
-    border-radius: 8px;
-    transform: translateX(-50%);
-  }
-  
-  /* 选区光晕边框 */
-  .selection-glow {
-    position: absolute;
-    inset: -3px;
-    padding: 3px;
-    border-radius: 12px;
-    pointer-events: none;
-    
-    -webkit-mask: 
-       linear-gradient(#fff 0 0) content-box, 
-       linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    
-    background: conic-gradient(
-      from var(--selection-angle), 
-      #00f2fe,
-      #4facfe,
-      #7928ca,
-      #ff0080,
-      #4facfe,
-      #00f2fe
-    );
-    
-    filter: blur(8px);
-    opacity: 1;
-    
-    animation: selection-spin 2s linear infinite;
-  }
-  
-  /* 白色粒子容器 */
-  .particles-container {
-    position: absolute;
-    inset: -20px;
-    pointer-events: none;
-    overflow: visible;
-  }
-  
-  /* 白色粒子 */
-  .particle {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 0 3px 1px rgba(255, 255, 255, 0.6);
-    opacity: 0;
-    animation: particle-fly 2.5s ease-out infinite;
-    animation-delay: calc(var(--i) * 0.12s);
-    
-    /* 随机分布在边框周围 */
-    &:nth-child(4n+1) {
-      top: 20px;
-      left: calc(var(--i) * 5%);
-    }
-    &:nth-child(4n+2) {
-      bottom: 20px;
-      left: calc(var(--i) * 5%);
-    }
-    &:nth-child(4n+3) {
-      left: 20px;
-      top: calc(var(--i) * 5%);
-    }
-    &:nth-child(4n) {
-      right: 20px;
-      top: calc(var(--i) * 5%);
-    }
-  }
-  
-  /* 选区内部边框 */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    border-radius: 8px;
-    pointer-events: none;
   }
 }
 
@@ -518,16 +289,257 @@ onUnmounted(() => {
     opacity: 0;
     transform: translate(0, 0) scale(0);
   }
+
   30% {
     opacity: 0.7;
     transform: translate(0, 0) scale(1);
   }
+
   100% {
     opacity: 0;
     transform: translate(
-      calc((var(--i) - 10) * 0.8px),
-      calc((var(--i) - 10) * -1.2px)
-    ) scale(0.3);
+        calc((var(--i) - 10) * 0.8px),
+        calc((var(--i) - 10) * -1.2px)
+      )
+      scale(0.3);
+  }
+}
+
+.capture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  cursor: crosshair;
+  background: transparent;
+}
+
+/* 涟漪容器 */
+.ripple-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 从按钮扩散的涟漪 */
+.ripple {
+  position: absolute;
+  top: var(--origin-y);
+  left: var(--origin-x);
+  width: 60px;
+  height: 60px;
+
+  /* 渐变边框效果 */
+  background: conic-gradient(
+    from 0deg,
+    #00f2fe,
+    #4facfe,
+    #7928ca,
+    #ff0080,
+    #4facfe,
+    #00f2fe
+  );
+  border-radius: 50%;
+  opacity: 0;
+  filter: blur(8px);
+
+  /* 只显示边框 */
+  mask: radial-gradient(transparent 45%, #fff 50%, #fff 55%, transparent 60%);
+  transform: translate(-50%, -50%) scale(0);
+}
+
+.ripple-1 {
+  animation: ripple-expand 2s ease-out forwards;
+}
+
+.ripple-2 {
+  /* 第二个涟漪边框变窄 */
+  mask: radial-gradient(transparent 47%, #fff 49%, #fff 51%, transparent 53%);
+  animation: ripple-expand 2s ease-out 0.4s forwards;
+}
+
+/* 屏幕边缘流动边框 */
+.screen-border {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: border-fade-in 0.5s ease-out forwards;
+}
+
+/* 流动光晕边框 */
+.border-glow {
+  position: absolute;
+  inset: 0;
+  padding: 6px;
+  pointer-events: none;
+
+  /* 流动渐变背景 */
+  background: conic-gradient(
+    from var(--border-angle),
+    #00f2fe,
+    #4facfe,
+    #7928ca,
+    #ff0080,
+    #ff6b6b,
+    #feca57,
+    #48dbfb,
+    #00f2fe
+  );
+  border-radius: 16px;
+  opacity: 1;
+  filter: blur(6px);
+
+  /* 使用 mask 只显示边框 */
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  mask-composite: exclude;
+  animation: border-spin 3s linear infinite;
+}
+
+.capture-tip {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 20px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 50%);
+  pointer-events: none;
+  background: rgb(0 0 0 / 50%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  transform: translateX(-50%);
+  animation: tip-fade-in 0.5s ease-out 0.3s both;
+
+  .tip-icon {
+    width: 20px;
+    height: 20px;
+    color: rgb(255 255 255 / 80%);
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .tip-text {
+    font-size: 13px;
+    font-weight: 400;
+  }
+
+  .tip-sub {
+    padding-left: 8px;
+    margin-left: 4px;
+    font-size: 12px;
+    color: rgb(255 255 255 / 50%);
+    border-left: 1px solid rgb(255 255 255 / 20%);
+  }
+}
+
+.selection-area {
+  position: absolute;
+  overflow: visible;
+  background: transparent;
+  border-radius: 8px;
+
+  .size-tip {
+    position: absolute;
+    bottom: -36px;
+    left: 50%;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    background: rgb(0 0 0 / 70%);
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+    transform: translateX(-50%);
+  }
+
+  /* 选区光晕边框 */
+  .selection-glow {
+    position: absolute;
+    inset: -3px;
+    padding: 3px;
+    pointer-events: none;
+    background: conic-gradient(
+      from var(--selection-angle),
+      #00f2fe,
+      #4facfe,
+      #7928ca,
+      #ff0080,
+      #4facfe,
+      #00f2fe
+    );
+    border-radius: 12px;
+    opacity: 1;
+    filter: blur(8px);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    mask-composite: exclude;
+    animation: selection-spin 2s linear infinite;
+  }
+
+  /* 白色粒子容器 */
+  .particles-container {
+    position: absolute;
+    inset: -20px;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  /* 白色粒子 */
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 3px 1px rgb(255 255 255 / 60%);
+    opacity: 0;
+    animation: particle-fly 2.5s ease-out infinite;
+    animation-delay: calc(var(--i) * 0.12s);
+
+    /* 随机分布在边框周围 */
+    &:nth-child(4n + 1) {
+      top: 20px;
+      left: calc(var(--i) * 5%);
+    }
+
+    &:nth-child(4n + 2) {
+      bottom: 20px;
+      left: calc(var(--i) * 5%);
+    }
+
+    &:nth-child(4n + 3) {
+      top: calc(var(--i) * 5%);
+      left: 20px;
+    }
+
+    &:nth-child(4n) {
+      top: calc(var(--i) * 5%);
+      right: 20px;
+    }
+  }
+
+  /* 选区内部边框 */
+  &::before {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    content: "";
+    border: 2px solid rgb(255 255 255 / 50%);
+    border-radius: 8px;
   }
 }
 
@@ -542,15 +554,15 @@ onUnmounted(() => {
   height: 48px;
   color: #fff;
   cursor: pointer;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgb(0 0 0 / 50%);
+  border: 1px solid rgb(255 255 255 / 10%);
   border-radius: 50%;
+  backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(239, 68, 68, 0.8);
-    border-color: rgba(239, 68, 68, 0.5);
+    background: rgb(239 68 68 / 80%);
+    border-color: rgb(239 68 68 / 50%);
     transform: scale(1.1);
   }
 
@@ -559,4 +571,6 @@ onUnmounted(() => {
     height: 24px;
   }
 }
+
+/* 定义自定义属性，允许动画过渡 */
 </style>

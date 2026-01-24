@@ -57,12 +57,12 @@ const getPasswordErrorMessage = (code: number, msg?: string): string => {
     429: "操作过于频繁，请稍后再试",
     500: "服务器繁忙，请稍后重试"
   };
-  
+
   // 优先使用后端返回的具体错误信息
   if (msg && msg !== "系统错误" && msg !== "error" && msg.length > 0) {
     return msg;
   }
-  
+
   return errorMessages[code] || msg || "密码修改失败，请稍后重试";
 };
 
@@ -83,9 +83,12 @@ const onUpdate = async (formEl: FormInstance | undefined) => {
         const responseData = error.response?.data;
         const code = responseData?.code || error.code || 500;
         const msg = responseData?.msg || error.msg || error.message;
-        
+
         // 网络错误特殊处理
-        if (error.message?.includes("Network Error") || error.message?.includes("timeout")) {
+        if (
+          error.message?.includes("Network Error") ||
+          error.message?.includes("timeout")
+        ) {
           message("网络连接失败，请检查网络后重试", { type: "error" });
         } else {
           const errorMsg = getPasswordErrorMessage(code, msg);
@@ -112,7 +115,7 @@ function onBack() {
     size="large"
   >
     <Motion>
-      <el-form-item 
+      <el-form-item
         prop="phone"
         class="floating-label-item"
         :class="{ 'has-value': !!ruleForm.phone, 'is-focused': isPhoneFocused }"
@@ -125,15 +128,18 @@ function onBack() {
           @focus="isPhoneFocused = true"
           @blur="isPhoneFocused = false"
         />
-        <label class="floating-label">{{ t('login.purePhone') }}</label>
+        <label class="floating-label">{{ t("login.purePhone") }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="100">
-      <el-form-item 
+      <el-form-item
         prop="verifyCode"
         class="floating-label-item"
-        :class="{ 'has-value': !!ruleForm.verifyCode, 'is-focused': isVerifyCodeFocused }"
+        :class="{
+          'has-value': !!ruleForm.verifyCode,
+          'is-focused': isVerifyCodeFocused
+        }"
       >
         <div class="w-full flex justify-between">
           <el-input
@@ -144,7 +150,9 @@ function onBack() {
             @focus="isVerifyCodeFocused = true"
             @blur="isVerifyCodeFocused = false"
           />
-          <label class="floating-label">{{ t('login.pureSmsVerifyCode') }}</label>
+          <label class="floating-label">{{
+            t("login.pureSmsVerifyCode")
+          }}</label>
           <el-button
             :disabled="isDisabled"
             class="ml-2"
@@ -161,10 +169,13 @@ function onBack() {
     </Motion>
 
     <Motion :delay="150">
-      <el-form-item 
+      <el-form-item
         prop="password"
         class="floating-label-item"
-        :class="{ 'has-value': !!ruleForm.password, 'is-focused': isPasswordFocused }"
+        :class="{
+          'has-value': !!ruleForm.password,
+          'is-focused': isPasswordFocused
+        }"
       >
         <ReInvisibleInk
           :active="!passwordVisible && !!ruleForm.password"
@@ -188,16 +199,19 @@ function onBack() {
             </template>
           </el-input>
         </ReInvisibleInk>
-        <label class="floating-label">{{ t('login.purePassword') }}</label>
+        <label class="floating-label">{{ t("login.purePassword") }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="200">
-      <el-form-item 
-        :rules="repeatPasswordRule" 
+      <el-form-item
+        :rules="repeatPasswordRule"
         prop="repeatPassword"
         class="floating-label-item"
-        :class="{ 'has-value': !!ruleForm.repeatPassword, 'is-focused': isRepeatPasswordFocused }"
+        :class="{
+          'has-value': !!ruleForm.repeatPassword,
+          'is-focused': isRepeatPasswordFocused
+        }"
       >
         <ReInvisibleInk
           :active="!repeatPasswordVisible && !!ruleForm.repeatPassword"
@@ -221,7 +235,7 @@ function onBack() {
             </template>
           </el-input>
         </ReInvisibleInk>
-        <label class="floating-label">{{ t('login.pureSure') }}</label>
+        <label class="floating-label">{{ t("login.pureSure") }}</label>
       </el-form-item>
     </Motion>
 
@@ -252,34 +266,34 @@ function onBack() {
 <style lang="scss" scoped>
 .floating-label-item {
   position: relative;
-  
+
   :deep(.el-input__wrapper) {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     height: 48px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
   }
 
   .floating-label {
     position: absolute;
-    left: 40px;
     top: 50%;
-    transform: translateY(-50%);
-    color: #bfc3c7;
-    font-size: 15px;
-    pointer-events: none;
-    transition: all 0.2s ease;
+    left: 40px;
     z-index: 10;
+    font-size: 15px;
+    color: #bfc3c7;
+    pointer-events: none;
+    transform: translateY(-50%);
+    transition: all 0.2s ease;
   }
 
   &.is-focused .floating-label,
   &.has-value .floating-label {
     top: 0;
+    left: 12px;
+    z-index: 10;
+    padding: 0 4px;
     font-size: 12px;
     color: #667eea;
     background: #fff;
-    padding: 0 4px;
-    left: 12px;
-    z-index: 10;
   }
 }
 </style>

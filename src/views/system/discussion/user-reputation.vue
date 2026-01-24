@@ -585,20 +585,20 @@ onMounted(() => {
 <style lang="scss" scoped>
 .user-reputation-page {
   :deep(.el-card) {
-    border-radius: 12px;
     border: none;
-    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%);
     transition: all 0.3s;
 
     html.dark & {
-      box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px 0 rgb(0 0 0 / 20%);
     }
 
     &:hover {
-      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 24px 0 rgb(0 0 0 / 10%);
 
       html.dark & {
-        box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.4);
+        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 40%);
       }
     }
   }
@@ -612,8 +612,8 @@ onMounted(() => {
 
 .user-detail {
   .stat-item {
-    text-align: center;
     padding: 16px;
+    text-align: center;
     background: #f5f7fa;
     border-radius: 8px;
 
@@ -624,9 +624,9 @@ onMounted(() => {
     }
 
     .stat-label {
+      margin-top: 4px;
       font-size: 14px;
       color: #909399;
-      margin-top: 4px;
     }
   }
 }

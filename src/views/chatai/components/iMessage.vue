@@ -19,11 +19,7 @@ onMounted(() => {
 <template>
   <deep-chat
     ref="chatRef"
-    style="
-      border-radius: 10px;
-      font-size: 16px;
-      font-family: inherit;
-    "
+    style="font-family: inherit; font-size: 16px; border-radius: 10px"
     :messageStyles="{
       default: {
         shared: {

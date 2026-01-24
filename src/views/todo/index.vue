@@ -2,91 +2,108 @@
   <div class="todo-page main p-4">
     <div class="todo-container">
       <div class="todo-header card">
-      <div class="header-left">
-        <h3>待办事项</h3>
-        <p>共 {{ totalTodos }} 项，已完成 {{ completedTodos }} 项</p>
+        <div class="header-left">
+          <h3>待办事项</h3>
+          <p>共 {{ totalTodos }} 项，已完成 {{ completedTodos }} 项</p>
+        </div>
+        <div class="header-right flex items-center gap-4">
+          <el-radio-group v-model="filterStatus" size="default">
+            <el-radio-button value="all">全部</el-radio-button>
+            <el-radio-button value="pending">待处理</el-radio-button>
+            <el-radio-button value="completed">已完成</el-radio-button>
+          </el-radio-group>
+          <el-button type="primary" :icon="Plus" round @click="openAddDialog"
+            >添加待办</el-button
+          >
+        </div>
       </div>
-      <div class="header-right flex items-center gap-4">
-        <el-radio-group v-model="filterStatus" size="default">
-          <el-radio-button value="all">全部</el-radio-button>
-          <el-radio-button value="pending">待处理</el-radio-button>
-          <el-radio-button value="completed">已完成</el-radio-button>
-        </el-radio-group>
-        <el-button type="primary" :icon="Plus" round @click="openAddDialog"
-          >添加待办</el-button
+
+      <div class="todo-list mt-6">
+        <div
+          v-for="todo in filteredTodos"
+          :key="todo.id"
+          class="todo-row card mb-4 flex items-center justify-between"
         >
-      </div>
-    </div>
-
-    <div class="todo-list mt-6">
-      <div
-        v-for="todo in filteredTodos"
-        :key="todo.id"
-        class="todo-row card mb-4 flex items-center justify-between"
-      >
-        <div class="todo-info flex items-center gap-4 flex-1">
-          <div class="status-icon">
-            <el-checkbox 
-              :model-value="todo.completed" 
-              @change="toggleStatus(todo)"
+          <div class="todo-info flex items-center gap-4 flex-1">
+            <div class="status-icon">
+              <el-checkbox
+                :model-value="todo.completed"
+                size="large"
+                @change="toggleStatus(todo)"
+              />
+            </div>
+            <div class="text-content">
+              <div class="title-row flex items-center gap-2">
+                <span :class="['title', { 'is-completed': todo.completed }]">
+                  {{ todo.title }}
+                </span>
+                <el-tag
+                  :type="todo.completed ? 'success' : 'warning'"
+                  size="small"
+                >
+                  {{ todo.completed ? "已完成" : "待处理" }}
+                </el-tag>
+              </div>
+              <div class="meta-row mt-2 text-gray-500 text-base flex gap-6">
+                <span
+                  ><el-icon class="relative top-[2px]"><User /></el-icon>
+                  {{ todo.publisher }}</span
+                >
+                <span
+                  ><el-icon class="relative top-[2px]"><Clock /></el-icon>
+                  {{ todo.time }}</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="todo-actions flex gap-4">
+            <el-button
+              link
+              type="primary"
               size="large"
-            />
+              @click="openEditDialog(todo)"
+              >编辑</el-button
+            >
+            <el-button link type="danger" size="large" @click="deleteTodo(todo)"
+              >删除</el-button
+            >
           </div>
-          <div class="text-content">
-            <div class="title-row flex items-center gap-2">
-              <span :class="['title', { 'is-completed': todo.completed }]">
-                {{ todo.title }}
-              </span>
-              <el-tag :type="todo.completed ? 'success' : 'warning'" size="small">
-                {{ todo.completed ? "已完成" : "待处理" }}
-              </el-tag>
-            </div>
-            <div class="meta-row mt-2 text-gray-500 text-base flex gap-6">
-              <span><el-icon class="relative top-[2px]"><User /></el-icon> {{ todo.publisher }}</span>
-              <span><el-icon class="relative top-[2px]"><Clock /></el-icon> {{ todo.time }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="todo-actions flex gap-4">
-          <el-button link type="primary" size="large" @click="openEditDialog(todo)">编辑</el-button>
-          <el-button link type="danger" size="large" @click="deleteTodo(todo)">删除</el-button>
         </div>
       </div>
-    </div>
 
-    <el-empty
-      v-if="filteredTodos.length === 0 && !loading"
-      description="暂无待办事项"
-      class="card"
-    />
+      <el-empty
+        v-if="filteredTodos.length === 0 && !loading"
+        description="暂无待办事项"
+        class="card"
+      />
 
-    <!-- 添加/编辑待办对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="isEditMode ? '编辑待办' : '添加待办'"
-      width="500px"
-      @close="resetForm"
-    >
-      <el-form ref="formRef" :model="form" label-width="80px">
-        <el-form-item label="标题" prop="title" required>
-          <el-input v-model="form.title" placeholder="请输入标题" />
-        </el-form-item>
-        <el-form-item label="发布者" prop="publisher" required>
-          <el-input v-model="form.publisher" placeholder="请输入发布者" />
-        </el-form-item>
-        <el-form-item label="详细信息" prop="details">
-          <el-input
-            v-model="form.details"
-            type="textarea"
-            placeholder="请输入详细信息"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
-      </template>
-    </el-dialog>
+      <!-- 添加/编辑待办对话框 -->
+      <el-dialog
+        v-model="dialogVisible"
+        :title="isEditMode ? '编辑待办' : '添加待办'"
+        width="500px"
+        @close="resetForm"
+      >
+        <el-form ref="formRef" :model="form" label-width="80px">
+          <el-form-item label="标题" prop="title" required>
+            <el-input v-model="form.title" placeholder="请输入标题" />
+          </el-form-item>
+          <el-form-item label="发布者" prop="publisher" required>
+            <el-input v-model="form.publisher" placeholder="请输入发布者" />
+          </el-form-item>
+          <el-form-item label="详细信息" prop="details">
+            <el-input
+              v-model="form.details"
+              type="textarea"
+              placeholder="请输入详细信息"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -300,10 +317,10 @@ const toggleStatus = (row: TodoItem) => {
   padding-top: 15px;
 
   .todo-header {
-    margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 10px;
 
     .header-left {
       h3 {
@@ -312,6 +329,7 @@ const toggleStatus = (row: TodoItem) => {
         font-weight: 700;
         color: var(--el-text-color-primary);
       }
+
       p {
         margin: 0;
         font-size: 15px;
@@ -328,7 +346,7 @@ const toggleStatus = (row: TodoItem) => {
     transition: all 0.3s ease;
 
     &:hover {
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      box-shadow: 0 6px 18px rgb(0 0 0 / 8%);
       transform: translateY(-2px);
     }
 
@@ -338,8 +356,8 @@ const toggleStatus = (row: TodoItem) => {
       color: var(--el-text-color-primary);
 
       &.is-completed {
-        text-decoration: line-through;
         color: var(--el-text-color-placeholder);
+        text-decoration: line-through;
       }
     }
   }

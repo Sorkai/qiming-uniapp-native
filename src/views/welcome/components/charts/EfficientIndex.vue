@@ -37,13 +37,13 @@ const fetchData = async () => {
   loading.value = true;
   try {
     const response = await getEfficientIndex();
-    
+
     if (response?.data?.efficientIndexList) {
       efficientData.value = response.data.efficientIndexList;
       // 默认选中所有课程
       selectedCourses.value = efficientData.value.map((_, index) => index);
     }
-    
+
     renderChart();
   } catch (error) {
     console.error("获取教学效率指数数据失败:", error);
@@ -78,20 +78,22 @@ const renderChart = () => {
     });
     return;
   }
-  
+
   const courseNames = pagedData.value.map(item => item.courseName);
   const planTimeData = pagedData.value.map(item => item.planTime);
   const correctPlanTimeData = pagedData.value.map(item => item.correctPlanTime);
   const planWorkTimeData = pagedData.value.map(item => item.planWorkTime);
-  const correctPlanWorkTimeData = pagedData.value.map(item => item.correctPlanWorkTime);
-  
+  const correctPlanWorkTimeData = pagedData.value.map(
+    item => item.correctPlanWorkTime
+  );
+
   setOptions({
     tooltip: {
       trigger: "axis",
       axisPointer: {
         type: "shadow"
       },
-      formatter: (params) => {
+      formatter: params => {
         const idx = params[0].dataIndex;
         const item = pagedData.value[idx];
         let html = `<div style="font-weight:bold">${item.courseName}</div>`;
@@ -102,7 +104,7 @@ const renderChart = () => {
             <span>${param.seriesName}：${param.value} 分钟</span>
           </div>`;
         });
-        
+
         return html;
       }
     },
@@ -227,7 +229,8 @@ const handleCoursesChange = () => {
 
 // 提供优化建议显示
 const optimizeSuggestions = computed(() => {
-  return efficientData.value.filter(item => item.optimizeDirection?.trim())
+  return efficientData.value
+    .filter(item => item.optimizeDirection?.trim())
     .map(item => ({
       courseName: item.courseName,
       optimizeDirection: item.optimizeDirection,
@@ -300,13 +303,13 @@ onMounted(() => {
 
             <div
               class="hidden md:block h-12 w-[1px] bg-gradient-to-b from-transparent via-blue-200/50 to-transparent dark:via-blue-500/20 mx-2"
-            ></div>
+            />
 
             <div class="flex-1 w-full overflow-hidden">
               <el-checkbox-group
                 v-model="selectedCourses"
-                @change="handleCoursesChange"
                 class="flex flex-wrap gap-x-10 gap-y-4"
+                @change="handleCoursesChange"
               >
                 <el-checkbox
                   v-for="(item, index) in efficientData"
@@ -331,10 +334,13 @@ onMounted(() => {
               ref="chartRef"
               class="chart-container"
               style="width: 100%; height: 600px"
-            ></div>
-            
+            />
+
             <!-- 分页部件 -->
-            <div v-if="totalFilteredData.length > pageSize" class="flex justify-center mt-6">
+            <div
+              v-if="totalFilteredData.length > pageSize"
+              class="flex justify-center mt-6"
+            >
               <el-pagination
                 v-model:current-page="currentPage"
                 :page-size="pageSize"
@@ -346,23 +352,30 @@ onMounted(() => {
           </div>
 
           <!-- 智能建议板块 -->
-          <div v-if="optimizeSuggestions.length" class="optimize-suggestions mt-4">
+          <div
+            v-if="optimizeSuggestions.length"
+            class="optimize-suggestions mt-4"
+          >
             <div class="flex items-center justify-between mb-6">
-              <h3 class="flex items-center text-lg font-bold text-gray-800 dark:text-gray-200">
-                <span class="w-2 h-6 bg-gradient-to-b from-blue-500 to-sky-500 rounded-full mr-3"></span>
+              <h3
+                class="flex items-center text-lg font-bold text-gray-800 dark:text-gray-200"
+              >
+                <span
+                  class="w-2 h-6 bg-gradient-to-b from-blue-500 to-sky-500 rounded-full mr-3"
+                />
                 AI 提效建议报告
               </h3>
-              <el-button 
-                type="primary" 
-                plain 
-                round 
+              <el-button
+                type="primary"
+                plain
+                round
                 size="small"
                 @click="showOptimizePanel = !showOptimizePanel"
               >
-                {{ showOptimizePanel ? '关闭报告' : '展开报告' }}
+                {{ showOptimizePanel ? "关闭报告" : "展开报告" }}
               </el-button>
             </div>
-            
+
             <el-collapse-transition>
               <div v-show="showOptimizePanel">
                 <el-row :gutter="20" class="suggestion-row">
@@ -379,25 +392,37 @@ onMounted(() => {
                     >
                       <div>
                         <div class="flex items-center gap-2 mb-4">
-                          <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                          <div
+                            class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400"
+                          >
                             <IconifyIconOnline icon="ep:opportunity" />
                           </div>
-                          <span class="font-bold text-gray-800 dark:text-gray-200 truncate">{{ item.courseName }}</span>
+                          <span
+                            class="font-bold text-gray-800 dark:text-gray-200 truncate"
+                            >{{ item.courseName }}</span
+                          >
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-4 leading-relaxed italic mb-4">
+                        <p
+                          class="text-sm text-gray-500 dark:text-gray-400 line-clamp-4 leading-relaxed italic mb-4"
+                        >
                           "{{ item.optimizeDirection }}"
                         </p>
                       </div>
-                      <div class="flex justify-end pt-3 border-t border-gray-50 dark:border-gray-800 text-right">
-                        <el-button 
-                          type="primary" 
-                          link 
-                          size="small" 
+                      <div
+                        class="flex justify-end pt-3 border-t border-gray-50 dark:border-gray-800 text-right"
+                      >
+                        <el-button
+                          type="primary"
+                          link
+                          size="small"
                           class="group"
                           @click="showDetails(item)"
                         >
-                          深度解析 
-                          <IconifyIconOnline icon="ep:arrow-right" class="ml-1 transition-transform group-hover:translate-x-1" />
+                          深度解析
+                          <IconifyIconOnline
+                            icon="ep:arrow-right"
+                            class="ml-1 transition-transform group-hover:translate-x-1"
+                          />
                         </el-button>
                       </div>
                     </div>
@@ -418,33 +443,59 @@ onMounted(() => {
           append-to-body
         >
           <div class="p-4">
-            <div class="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-5 border border-blue-100 dark:border-blue-500/20 mb-6">
-              <h4 class="font-bold text-blue-700 dark:text-blue-400 flex items-center mb-2">
+            <div
+              class="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-5 border border-blue-100 dark:border-blue-500/20 mb-6"
+            >
+              <h4
+                class="font-bold text-blue-700 dark:text-blue-400 flex items-center mb-2"
+              >
                 <IconifyIconOnline icon="ep:magic-stick" class="mr-2" />
                 AI 诊断核心方向
               </h4>
-              <p class="text-blue-600 dark:text-blue-300 leading-relaxed">{{ selectedSuggestion?.optimizeDirection }}</p>
+              <p class="text-blue-600 dark:text-blue-300 leading-relaxed">
+                {{ selectedSuggestion?.optimizeDirection }}
+              </p>
             </div>
             <div class="space-y-4">
               <div class="flex gap-3">
-                <div class="text-emerald-500 mt-1"><IconifyIconOnline icon="ep:circle-check" /></div>
+                <div class="text-emerald-500 mt-1">
+                  <IconifyIconOnline icon="ep:circle-check" />
+                </div>
                 <div>
-                  <h5 class="text-sm font-bold text-gray-700 dark:text-gray-300">预期效果</h5>
-                  <p class="text-xs text-gray-500 dark:text-gray-500">{{ selectedSuggestion?.expectedEffect || '暂无数据' }}</p>
+                  <h5
+                    class="text-sm font-bold text-gray-700 dark:text-gray-300"
+                  >
+                    预期效果
+                  </h5>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">
+                    {{ selectedSuggestion?.expectedEffect || "暂无数据" }}
+                  </p>
                 </div>
               </div>
               <div class="flex gap-3">
-                <div class="text-amber-500 mt-1"><IconifyIconOnline icon="ep:warning" /></div>
+                <div class="text-amber-500 mt-1">
+                  <IconifyIconOnline icon="ep:warning" />
+                </div>
                 <div>
-                  <h5 class="text-sm font-bold text-gray-700 dark:text-gray-300">执行难度</h5>
-                  <p class="text-xs text-gray-500 dark:text-gray-500">{{ selectedSuggestion?.difficulty || '暂无数据' }}</p>
+                  <h5
+                    class="text-sm font-bold text-gray-700 dark:text-gray-300"
+                  >
+                    执行难度
+                  </h5>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">
+                    {{ selectedSuggestion?.difficulty || "暂无数据" }}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
           <template #footer>
             <div class="px-6 pb-6">
-              <el-button type="primary" class="w-full h-11 rounded-xl" @click="dialogVisible = false">
+              <el-button
+                type="primary"
+                class="w-full h-11 rounded-xl"
+                @click="dialogVisible = false"
+              >
                 我知道了
               </el-button>
             </div>
@@ -461,34 +512,34 @@ onMounted(() => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 4%);
     transform: translateY(-2px);
   }
 }
 
 .text-glow {
-  text-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+  text-shadow: 0 0 10px rgb(37 99 235 / 20%);
 }
 
 :deep(.el-checkbox) {
-  margin-right: 0;
   height: 32px;
+  margin-right: 0;
 }
 
 :deep(.el-checkbox__label) {
-  color: #64748b;
   font-weight: 500;
+  color: #64748b;
 }
 
 :deep(.el-checkbox.is-checked .el-checkbox__label) {
-  color: #5B8FF9;
+  color: #5b8ff9;
 }
 
 .line-clamp-4 {
   display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
   overflow: hidden;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
 }
 
 .chart-container {

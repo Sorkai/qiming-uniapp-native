@@ -87,7 +87,7 @@ export type UploadResult = {
   data: {
     url: string;
     fileId: number;
-  }
+  };
 };
 
 export type FileListResult = {
@@ -153,20 +153,16 @@ export const getMineLogs = (data?: object) => {
 
 /** 用户注册 */
 export const userRegister = (data: { mobile: string; password: string }) => {
-  return http.request<UserCenterLoginResult>(
-    "post",
-    "/edu/v1/user/register",
-    { data }
-  );
+  return http.request<UserCenterLoginResult>("post", "/edu/v1/user/register", {
+    data
+  });
 };
 
 /** 用户登录 */
 export const userLogin = (data: { mobile: string; password: string }) => {
-  return http.request<UserCenterLoginResult>(
-    "post",
-    "/edu/v1/user/login",
-    { data }
-  );
+  return http.request<UserCenterLoginResult>("post", "/edu/v1/user/login", {
+    data
+  });
 };
 
 /** 获取用户信息 */
@@ -200,14 +196,21 @@ export const getFileList = (params: { pageNum: number; pageSize?: number }) => {
 };
 
 /** 获取用户列表 */
-export const getUserList = (params: { pageNum: number; pageSize?: number; mobile?: string }) => {
+export const getUserList = (params: {
+  pageNum: number;
+  pageSize?: number;
+  mobile?: string;
+}) => {
   return http.request<UserListResult>("get", "/edu/backend/v1/user/list", {
     params
   });
 };
 
 /** 修改用户角色 */
-export const updateUserRole = (data: { targetUserId: number; roleType: number }) => {
+export const updateUserRole = (data: {
+  targetUserId: number;
+  roleType: number;
+}) => {
   return http.request<{ code: number; msg: string; data: any }>(
     "post",
     "/edu/backend/v1/user/update/role",

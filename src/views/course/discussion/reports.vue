@@ -568,28 +568,28 @@ onMounted(() => {
 <style lang="scss" scoped>
 .report-manage {
   :deep(.el-card) {
-    border-radius: 12px;
     border: none;
-    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%);
     transition: all 0.3s;
 
     html.dark & {
-      box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px 0 rgb(0 0 0 / 20%);
     }
 
     &:hover {
-      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 24px 0 rgb(0 0 0 / 10%);
 
       html.dark & {
-        box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.4);
+        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 40%);
       }
     }
   }
 
   .stat-card {
     .stat-content {
-      text-align: center;
       padding: 10px 0;
+      text-align: center;
 
       .stat-number {
         font-size: 28px;
@@ -597,9 +597,9 @@ onMounted(() => {
       }
 
       .stat-label {
+        margin-top: 8px;
         font-size: 14px;
         color: #909399;
-        margin-top: 8px;
       }
     }
   }

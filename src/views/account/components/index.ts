@@ -4,10 +4,4 @@ import Todo from "./Todo.vue";
 import VirtualLab from "./VirtualLab.vue";
 import Competition from "./Competition.vue";
 
-export {
-  UserProfile,
-  SystemNotification,
-  Todo,
-  VirtualLab,
-  Competition
-};
+export { UserProfile, SystemNotification, Todo, VirtualLab, Competition };

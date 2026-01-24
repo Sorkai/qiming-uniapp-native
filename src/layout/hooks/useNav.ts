@@ -2,8 +2,6 @@ import { storeToRefs } from "pinia";
 import { getConfig } from "@/config";
 import { useRouter } from "vue-router";
 import { emitter } from "@/utils/mitt";
-import Avatar from "@/assets/user.jpg";
-import { getTopMenu } from "@/router/utils";
 import { useFullscreen } from "@vueuse/core";
 import type { routeMetaType } from "../types";
 import { transformI18n } from "@/plugins/i18n";
@@ -111,7 +109,10 @@ export function useNav() {
 
   function toAccountSettings() {
     // 根据角色跳转：管理员/教师跳转至管理后台首页，学生跳转至个人中心
-    if (useUserStoreHook().roles?.includes("admin") || useUserStoreHook().roles?.includes("teacher")) {
+    if (
+      useUserStoreHook().roles?.includes("admin") ||
+      useUserStoreHook().roles?.includes("teacher")
+    ) {
       router.push("/welcome");
     } else {
       router.push("/account");

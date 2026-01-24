@@ -133,7 +133,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  nextTick,
+  watch,
+  onBeforeUnmount
+} from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
@@ -182,15 +189,21 @@ const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
-const currentTheme = ref(storageLocal().getItem("course_theme") as string || "light");
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) || "light"
+);
 const activeMenu = ref(
-  (storageLocal().getItem(`course_detail_active_menu_${route.params.id}`) as string) ||
-    "course-learn"
+  (storageLocal().getItem(
+    `course_detail_active_menu_${route.params.id}`
+  ) as string) || "course-learn"
 );
 
 // 监听菜单变化并持久化
 watch(activeMenu, newVal => {
-  storageLocal().setItem(`course_detail_active_menu_${route.params.id}`, newVal);
+  storageLocal().setItem(
+    `course_detail_active_menu_${route.params.id}`,
+    newVal
+  );
   // 切换菜单时加载对应数据
   if (newVal === "homework-exam") {
     fetchHomeworkList();
@@ -246,19 +259,27 @@ watch(
 
 // 用户信息
 const userStore = useUserStoreHook();
-const userAvatar = computed(() => formatAvatar(userStore.avatar, avatarDefault));
-const userNickname = computed(() => userStore.nickname || userStore.username || "用户");
+const userAvatar = computed(() =>
+  formatAvatar(userStore.avatar, avatarDefault)
+);
+const userNickname = computed(
+  () => userStore.nickname || userStore.username || "用户"
+);
 
 // 课程学习相关
 const courseStudyRef = ref(null);
 const currentHour = ref(null);
 const currentVideoUrl = ref("");
 const activeNode = ref(
-  (storageLocal().getItem(`course_detail_active_node_${route.params.id}`) as string) || "1.1"
+  (storageLocal().getItem(
+    `course_detail_active_node_${route.params.id}`
+  ) as string) || "1.1"
 );
 const autoPlayOnLoad = ref(false);
 const courseContentHtml = computed(() => {
-  return courseDetail.value ? getCourseContentByName(courseDetail.value.courseName) : "加载中...";
+  return courseDetail.value
+    ? getCourseContentByName(courseDetail.value.courseName)
+    : "加载中...";
 });
 
 // AI 聊天相关
@@ -362,21 +383,25 @@ const performThemeToggle = () => {
 };
 
 // 监听主题变化
-watch(currentTheme, (val) => {
-  storageLocal().setItem("course_theme", val);
-  const other = val === "light" ? "dark" : "light";
-  document.documentElement.classList.remove(other);
-  document.documentElement.classList.add(val);
-  document.body.classList.remove(other);
-  document.body.classList.add(val);
+watch(
+  currentTheme,
+  val => {
+    storageLocal().setItem("course_theme", val);
+    const other = val === "light" ? "dark" : "light";
+    document.documentElement.classList.remove(other);
+    document.documentElement.classList.add(val);
+    document.body.classList.remove(other);
+    document.body.classList.add(val);
 
-  // 同步到管理后台主题设置
-  const layout = storageLocal().getItem("responsive-layout") as any;
-  if (layout) {
-    layout.darkMode = val === "dark";
-    storageLocal().setItem("responsive-layout", layout);
-  }
-}, { immediate: true });
+    // 同步到管理后台主题设置
+    const layout = storageLocal().getItem("responsive-layout") as any;
+    if (layout) {
+      layout.darkMode = val === "dark";
+      storageLocal().setItem("responsive-layout", layout);
+    }
+  },
+  { immediate: true }
+);
 
 // 菜单切换
 const handleMenuClick = (menuName: string) => {
@@ -436,7 +461,9 @@ const fetchCourseDetail = async () => {
   if (!courseId.value) return;
   loading.value = true;
   try {
-    const { code, data, msg } = await getCourseDetail({ courseId: courseId.value });
+    const { code, data, msg } = await getCourseDetail({
+      courseId: courseId.value
+    });
     if (code === 200 && data) {
       courseDetail.value = data;
       if (data.courseAttrList) courseAttrList.value = data.courseAttrList;
@@ -495,7 +522,10 @@ const videoLoaded = () => {
 const videoEnded = async () => {
   if (currentHour.value && currentHour.value.finished !== 1) {
     try {
-      await reportCourseLesson({ courseId: courseId.value, hourId: currentHour.value.hourId });
+      await reportCourseLesson({
+        courseId: courseId.value,
+        hourId: currentHour.value.hourId
+      });
       currentHour.value.finished = 1;
       if (courseDetail.value) courseDetail.value.finishedHours += 1;
       ElMessage.success("学习进度已更新");
@@ -549,29 +579,48 @@ const handleSendMessage = async (content: string) => {
   const userMsg = content.trim();
   const currentChapterId = getCurrentChapterId();
 
-  if (currentChapterId !== null && previousChapterId.value !== null && currentChapterId !== previousChapterId.value) {
-    conversationId.value = Date.now().toString() + Math.random().toString(36).substring(2);
+  if (
+    currentChapterId !== null &&
+    previousChapterId.value !== null &&
+    currentChapterId !== previousChapterId.value
+  ) {
+    conversationId.value =
+      Date.now().toString() + Math.random().toString(36).substring(2);
     chatMessages.value = [];
   }
   previousChapterId.value = currentChapterId;
 
-  chatMessages.value.push({ role: "user", content: userMsg, timestamp: new Date().toISOString() });
+  chatMessages.value.push({
+    role: "user",
+    content: userMsg,
+    timestamp: new Date().toISOString()
+  });
   sendingMessage.value = true;
   isTyping.value = true;
 
   try {
     let aiMessageAdded = false;
     cancelStreamRequest.value = courseAIChatStream(
-      { course_id: courseId.value, conversation_id: conversationId.value, message: userMsg, chapter_id: currentChapterId },
-      (data) => {
+      {
+        course_id: courseId.value,
+        conversation_id: conversationId.value,
+        message: userMsg,
+        chapter_id: currentChapterId
+      },
+      data => {
         if (data.conversation_id) conversationId.value = data.conversation_id;
         if (data.delta) {
           if (!aiMessageAdded) {
             isTyping.value = false;
             aiMessageAdded = true;
-            chatMessages.value.push({ role: "ai", content: data.delta, timestamp: new Date().toISOString() });
+            chatMessages.value.push({
+              role: "ai",
+              content: data.delta,
+              timestamp: new Date().toISOString()
+            });
           } else {
-            chatMessages.value[chatMessages.value.length - 1].content += data.delta;
+            chatMessages.value[chatMessages.value.length - 1].content +=
+              data.delta;
           }
         }
         if (data.finished) {
@@ -601,17 +650,21 @@ const clearChat = () => {
     center: true,
     draggable: true,
     icon: "Delete"
-  }).then(() => {
-    chatMessages.value = [];
-    ElMessage.success("聊天记录已清空");
-  }).catch(() => {});
+  })
+    .then(() => {
+      chatMessages.value = [];
+      ElMessage.success("聊天记录已清空");
+    })
+    .catch(() => {});
 };
 
 // 数据获取方法
 const fetchHomeworkList = async () => {
   if (!courseId.value) return;
   try {
-    const { code, data } = await getUserCourseHomeworkList({ courseId: courseId.value });
+    const { code, data } = await getUserCourseHomeworkList({
+      courseId: courseId.value
+    });
     if (code === 200) homeworkList.value = (data as any).list || [];
   } catch (e) {}
 };
@@ -619,7 +672,9 @@ const fetchHomeworkList = async () => {
 const fetchExamList = async () => {
   if (!courseId.value) return;
   try {
-    const { code, data } = await getUserCourseExamList({ courseId: courseId.value });
+    const { code, data } = await getUserCourseExamList({
+      courseId: courseId.value
+    });
     if (code === 200) examList.value = (data as any).list || [];
   } catch (e) {}
 };
@@ -687,17 +742,20 @@ const initQAHistory = () => {
   qaHistoryList.value = [
     {
       question: "这门课程的考核方式是什么？",
-      answer: "本课程采用线上考试的方式进行考核，总成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。",
+      answer:
+        "本课程采用线上考试的方式进行考核，总成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。",
       timestamp: "2025-08-13T16:30:00Z"
     },
     {
       question: "这门课程的成绩构成是怎么样的？",
-      answer: "课程成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。平时作业包括每周的课后练习和项目作业，课堂表现包括课堂参与度和小组讨论。",
+      answer:
+        "课程成绩由平时作业（30%）、课堂表现（20%）和期末考试（50%）三部分构成。平时作业包括每周的课后练习和项目作业，课堂表现包括课堂参与度和小组讨论。",
       timestamp: "2025-08-13T15:45:00Z"
     },
     {
       question: "期末考试的范围是什么？",
-      answer: "期末考试范围包括课程的所有章节内容，特别关注第3、4、7章的核心概念和应用案例。考试形式为线上闭卷，时间为90分钟。",
+      answer:
+        "期末考试范围包括课程的所有章节内容，特别关注第3、4、7章的核心概念和应用案例。考试形式为线上闭卷，时间为90分钟。",
       timestamp: "2025-08-12T09:15:00Z"
     }
   ];
@@ -733,7 +791,8 @@ onMounted(async () => {
       if (res?.code === 200) chatMessages.value = res.data.history || [];
     } catch (e) {}
   } else {
-    conversationId.value = Date.now().toString() + Math.random().toString(36).substring(2);
+    conversationId.value =
+      Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
   }
 });
@@ -744,12 +803,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
-@import "@/../coursecss/css/chunk-b3e9f934.1c00050a.css";
-@import "@/../coursecss/css/chunk-8cf7ce30.92e48af1.css";
-@import "@/../coursecss/css/chunk-3cf64ec0.4f07a253.css";
-@import "@/../coursecss/css/chunk-3248eec0.130a3cd9.css";
-@import "@/../coursecss/css/app.a5f91bbb.css";
-@import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
+@import url("@/../coursecss/css/chunk-b3e9f934.1c00050a.css");
+@import url("@/../coursecss/css/chunk-8cf7ce30.92e48af1.css");
+@import url("@/../coursecss/css/chunk-3cf64ec0.4f07a253.css");
+@import url("@/../coursecss/css/chunk-3248eec0.130a3cd9.css");
+@import url("@/../coursecss/css/app.a5f91bbb.css");
+@import url("@/../coursecss/css/chunk-b4b575b6.fcb08796.css");
 
 .course-detail-root {
   width: 100%;
@@ -763,9 +822,9 @@ onBeforeUnmount(() => {
 
   .layout-container {
     position: relative;
+    display: flex;
     width: 100%;
     min-height: 100vh;
-    display: flex;
     background-color: #f5f7fa;
     transition: background-color 0.3s ease;
 
@@ -786,11 +845,11 @@ onBeforeUnmount(() => {
   .layout-inner-content {
     position: relative;
     flex: 1;
-    margin: 20px 15px 15px 90px;
     height: calc(100vh - 35px);
-    border-radius: 24px;
+    margin: 20px 15px 15px 90px;
     overflow: hidden; /* 容器层级不滚动，由子页面内部滚动 */
     background-color: #f5f7fa;
+    border-radius: 24px;
     transition: all 0.3s ease;
 
     &.dark {
@@ -801,20 +860,20 @@ onBeforeUnmount(() => {
 
 /* 清空对话 确认框美化 */
 .clear-chat-confirm-dialog {
-  border-radius: 20px !important;
+  max-width: 400px !important;
   padding: 8px;
   overflow: hidden;
   border: none !important;
-  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.15) !important;
-  max-width: 400px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 32px 4px rgb(0 0 0 / 15%) !important;
 
   .el-message-box__header {
     padding-top: 25px;
     padding-bottom: 5px;
-    
+
     .el-message-box__title {
-      font-weight: 600;
       font-size: 18px;
+      font-weight: 600;
       color: #303133;
     }
 
@@ -827,64 +886,64 @@ onBeforeUnmount(() => {
 
   .el-message-box__content {
     padding: 15px 30px 25px;
-    
+
     .el-message-box__container {
-      margin-left: 0;
       justify-content: center;
+      margin-left: 0;
     }
-    
+
     .el-message-box__status {
       display: none;
     }
-    
+
     .el-message-box__message {
       font-size: 15px;
-      color: #606266;
       font-weight: 500;
+      color: #606266;
     }
   }
 
   .el-message-box__btns {
-    padding: 0 20px 25px;
     display: flex;
-    justify-content: center;
     gap: 16px;
+    justify-content: center;
+    padding: 0 20px 25px;
 
     button {
-      height: 42px;
       width: 120px;
+      height: 42px;
       padding: 0;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       margin: 0 !important;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 }
 
 .clear-chat-cancel-btn {
+  color: #909399 !important;
   background: #f4f7f9 !important;
   border: 1px solid #e4e7ed !important;
-  color: #909399 !important;
 
   &:hover {
-    background: #eef2f5 !important;
     color: #606266 !important;
+    background: #eef2f5 !important;
     border-color: #dcdfe6 !important;
   }
 }
 
 .clear-chat-confirm-btn {
+  color: white !important;
   background: linear-gradient(135deg, #97b4f7 0%, #604ffd 100%) !important;
   border: none !important;
-  color: white !important;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 4px 12px rgb(64 158 255 / 30%);
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+    box-shadow: 0 6px 16px rgb(64 158 255 / 40%);
     opacity: 0.9;
+    transform: translateY(-2px);
   }
 
   &:active {
@@ -896,7 +955,7 @@ onBeforeUnmount(() => {
 html.dark {
   .clear-chat-confirm-dialog {
     background-color: #1a1a24 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgb(255 255 255 / 10%) !important;
 
     .el-message-box__title {
       color: #e0e0e0 !important;
@@ -908,47 +967,73 @@ html.dark {
   }
 
   .clear-chat-cancel-btn {
+    color: #909399 !important;
     background: #2a2a3a !important;
     border-color: #3a3a4a !important;
-    color: #909399 !important;
 
     &:hover {
-      background: #3a3a4a !important;
       color: #e0e0e0 !important;
+      background: #3a3a4a !important;
     }
   }
 }
 </style>
 
 <style scoped lang="scss">
-/* ==================== 2. AI 对话窗口样式修复 ==================== */
+@keyframes ai-glow-border {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+}
+
 .course-detail-root {
   :deep(.ai-helper-sections) {
     position: relative;
   }
 
   :deep(.out-ai-pro-talk-box) {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 247, 250, 0.9) 100%);
-    backdrop-filter: blur(20px) saturate(180%);
-    border-radius: 20px;
-    border: 1px solid rgba(64, 158, 255, 0.2);
-    box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2);
     padding: 16px;
+    background: linear-gradient(
+      135deg,
+      rgb(255 255 255 / 90%) 0%,
+      rgb(245 247 250 / 90%) 100%
+    );
+    border: 1px solid rgb(64 158 255 / 20%);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px -4px rgb(64 158 255 / 20%);
+    backdrop-filter: blur(20px) saturate(180%);
     transition: all 0.3s ease;
 
     .inset-div {
       display: flex;
-      align-items: center;
       gap: 12px;
+      align-items: center;
     }
 
     .photo {
+      flex-shrink: 0;
       width: 48px;
       height: 48px;
-      border-radius: 50%;
       overflow: hidden;
-      flex-shrink: 0;
-      border: 2px solid rgba(64, 158, 255, 0.3);
+      border: 2px solid rgb(64 158 255 / 30%);
+      border-radius: 50%;
 
       img {
         width: 100%;
@@ -963,10 +1048,10 @@ html.dark {
     }
 
     .people-name {
+      margin-bottom: 4px;
       font-size: 14px;
       font-weight: 600;
       color: #303133;
-      margin-bottom: 4px;
     }
 
     .init-talk-cotent {
@@ -980,39 +1065,39 @@ html.dark {
 
       .el-input__inner {
         height: 40px;
-        border-radius: 20px;
-        border: 1px solid #dcdfe6;
-        background: #fff;
-        padding-left: 16px;
         padding-right: 44px;
+        padding-left: 16px;
         font-size: 13px;
+        background: #fff;
+        border: 1px solid #dcdfe6;
+        border-radius: 20px;
         transition: all 0.3s ease;
 
         &:focus {
           border-color: #97b4f7;
-          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+          box-shadow: 0 0 0 2px rgb(64 158 255 / 20%);
         }
       }
     }
 
     .mock-send-btn {
       position: absolute;
-      right: 8px;
       top: 50%;
-      transform: translateY(-50%);
-      width: 28px;
-      height: 28px;
+      right: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
       background: linear-gradient(135deg, #97b4f7 0%, #66b1ff 100%);
       border-radius: 50%;
-      cursor: pointer;
+      transform: translateY(-50%);
       transition: all 0.3s ease;
 
       &:hover {
+        box-shadow: 0 4px 12px rgb(64 158 255 / 40%);
         transform: translateY(-50%) scale(1.1);
-        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
       }
 
       svg {
@@ -1024,18 +1109,22 @@ html.dark {
   }
 
   &.dark :deep(.out-ai-pro-talk-box) {
-    background: linear-gradient(135deg, rgba(40, 40, 50, 0.9) 0%, rgba(30, 30, 40, 0.9) 100%);
-    border: 1px solid rgba(64, 158, 255, 0.3);
-    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(
+      135deg,
+      rgb(40 40 50 / 90%) 0%,
+      rgb(30 30 40 / 90%) 100%
+    );
+    border: 1px solid rgb(64 158 255 / 30%);
+    box-shadow: 0 8px 32px -4px rgb(0 0 0 / 40%);
 
     .people-name {
       color: #e0e0e0;
     }
 
     .ai-hepler-pro-input .el-input__inner {
+      color: #e0e0e0;
       background: #2c2c2c;
       border-color: #444;
-      color: #e0e0e0;
     }
   }
 
@@ -1043,48 +1132,52 @@ html.dark {
     position: relative;
 
     &::before {
-      content: "";
       position: absolute;
       inset: -2px;
-      border-radius: 22px;
       padding: 2px;
+      pointer-events: none;
+      content: "";
       background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
       background-size: 200% 100%;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      border-radius: 22px;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
       mask-composite: exclude;
       animation: ai-glow-border 3s linear infinite;
-      pointer-events: none;
     }
   }
 
   :deep(.ai-draggable-dialog) {
     position: fixed;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(25px) saturate(150%);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 20px 60px -10px rgba(64, 158, 255, 0.25);
     overflow: hidden;
+    background: rgb(255 255 255 / 95%);
+    border: 1px solid rgb(255 255 255 / 30%);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px -10px rgb(64 158 255 / 25%);
+    backdrop-filter: blur(25px) saturate(150%);
 
     &::after {
-      content: "";
       position: absolute;
       inset: 0;
-      border-radius: 20px;
       padding: 1.5px;
+      pointer-events: none;
+      content: "";
       background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
       background-size: 200% 100%;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      border-radius: 20px;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
       mask-composite: exclude;
       animation: ai-glow-border 3s linear infinite;
-      pointer-events: none;
     }
   }
 
   &.dark :deep(.ai-draggable-dialog) {
-    background: rgba(30, 30, 40, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.5);
+    background: rgb(30 30 40 / 95%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    box-shadow: 0 20px 60px -10px rgb(0 0 0 / 50%);
   }
 
   :deep(.ai-dialog-header-bar) {
@@ -1092,20 +1185,24 @@ html.dark {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: linear-gradient(135deg, rgba(64, 158, 255, 0.1) 0%, rgba(96, 79, 253, 0.1) 100%);
-    border-bottom: 1px solid rgba(64, 158, 255, 0.1);
+    background: linear-gradient(
+      135deg,
+      rgb(64 158 255 / 10%) 0%,
+      rgb(96 79 253 / 10%) 100%
+    );
+    border-bottom: 1px solid rgb(64 158 255 / 10%);
 
     .header-title-wrap {
       display: flex;
-      align-items: center;
       gap: 8px;
+      align-items: center;
     }
 
     .status-dot {
       width: 8px;
       height: 8px;
-      border-radius: 50%;
       background: #67c23a;
+      border-radius: 50%;
       animation: pulse-dot 2s ease-in-out infinite;
     }
 
@@ -1118,24 +1215,24 @@ html.dark {
     .header-left,
     .header-right {
       display: flex;
-      align-items: center;
       gap: 8px;
+      align-items: center;
     }
 
     .header-back-btn,
     .header-action-btn {
-      width: 32px;
-      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
       cursor: pointer;
+      background: rgb(64 158 255 / 10%);
+      border-radius: 8px;
       transition: all 0.3s ease;
-      background: rgba(64, 158, 255, 0.1);
 
       &:hover {
-        background: rgba(64, 158, 255, 0.2);
+        background: rgb(64 158 255 / 20%);
         transform: scale(1.05);
       }
     }
@@ -1148,11 +1245,19 @@ html.dark {
   }
 
   :deep(.ai-fill-bg) {
-    background: linear-gradient(180deg, rgba(245, 247, 250, 0.5) 0%, rgba(255, 255, 255, 0.8) 100%);
+    background: linear-gradient(
+      180deg,
+      rgb(245 247 250 / 50%) 0%,
+      rgb(255 255 255 / 80%) 100%
+    );
   }
 
   &.dark :deep(.ai-fill-bg) {
-    background: linear-gradient(180deg, rgba(30, 30, 40, 0.5) 0%, rgba(40, 40, 50, 0.8) 100%);
+    background: linear-gradient(
+      180deg,
+      rgb(30 30 40 / 50%) 0%,
+      rgb(40 40 50 / 80%) 100%
+    );
   }
 
   :deep(.ai-talk-box) {
@@ -1165,16 +1270,16 @@ html.dark {
   }
 
   :deep(.header-tips-box) {
-    text-align: center;
     padding: 20px;
+    text-align: center;
 
     .robbot-icon {
       width: 60px;
       height: 60px;
       margin: 0 auto 12px;
-      border-radius: 50%;
       overflow: hidden;
-      border: 3px solid rgba(64, 158, 255, 0.3);
+      border: 3px solid rgb(64 158 255 / 30%);
+      border-radius: 50%;
 
       img {
         width: 100%;
@@ -1184,16 +1289,16 @@ html.dark {
     }
 
     .code-hello {
+      margin: 12px 0 8px;
       font-size: 16px;
       font-weight: 600;
       color: #303133;
-      margin: 12px 0 8px;
     }
 
     .ai-heler-header-tips {
       font-size: 13px;
-      color: #909399;
       line-height: 1.6;
+      color: #909399;
     }
   }
 
@@ -1203,49 +1308,49 @@ html.dark {
 
   :deep(.talk-input-box) {
     padding: 12px 16px;
-    border-top: 1px solid rgba(64, 158, 255, 0.1);
-    background: rgba(255, 255, 255, 0.8);
+    background: rgb(255 255 255 / 80%);
+    border-top: 1px solid rgb(64 158 255 / 10%);
 
     .input-box {
       display: flex;
-      align-items: flex-end;
       gap: 12px;
+      align-items: flex-end;
     }
 
     .ai-pro-content-edit-box {
       flex: 1;
 
       .el-textarea__inner {
-        border-radius: 16px;
-        border: 1px solid #dcdfe6;
+        max-height: 120px;
         padding: 10px 16px;
         font-size: 14px;
         resize: none;
-        max-height: 120px;
+        border: 1px solid #dcdfe6;
+        border-radius: 16px;
         transition: all 0.3s ease;
 
         &:focus {
           border-color: #97b4f7;
-          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+          box-shadow: 0 0 0 2px rgb(64 158 255 / 20%);
         }
       }
     }
 
     .send-btn {
-      width: 40px;
-      height: 40px;
       display: flex;
+      flex-shrink: 0;
       align-items: center;
       justify-content: center;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
       background: linear-gradient(135deg, #97b4f7 0%, #66b1ff 100%);
       border-radius: 12px;
-      cursor: pointer;
       transition: all 0.3s ease;
-      flex-shrink: 0;
 
       &:hover {
+        box-shadow: 0 4px 166px rgb(64 158 255 / 40%);
         transform: scale(1.05);
-        box-shadow: 0 4px 166px rgba(64, 158, 255, 0.4);
       }
 
       svg {
@@ -1256,14 +1361,14 @@ html.dark {
     }
 
     .not-send-btn {
-      width: 40px;
-      height: 40px;
       display: flex;
+      flex-shrink: 0;
       align-items: center;
       justify-content: center;
+      width: 40px;
+      height: 40px;
       background: #e4e7ed;
       border-radius: 12px;
-      flex-shrink: 0;
 
       svg {
         width: 20px;
@@ -1274,13 +1379,13 @@ html.dark {
   }
 
   &.dark :deep(.talk-input-box) {
-    background: rgba(30, 30, 40, 0.8);
-    border-top-color: rgba(255, 255, 255, 0.1);
+    background: rgb(30 30 40 / 80%);
+    border-top-color: rgb(255 255 255 / 10%);
 
     .ai-pro-content-edit-box .el-textarea__inner {
+      color: #e0e0e0;
       background: #2c2c2c;
       border-color: #444;
-      color: #e0e0e0;
     }
 
     .not-send-btn {
@@ -1291,28 +1396,30 @@ html.dark {
   /* ====================3. 目录样式修复 ==================== */
   :deep(.rightTreeWarp) {
     position: fixed;
-    width: 25vw;
     right: 1vw;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(20px) saturate(180%);
-    border-radius: 16px;
-    border: 1px solid rgba(64, 158, 255, 0.15);
-    box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.15);
+    width: 25vw;
     overflow: hidden;
+    background: rgb(255 255 255 / 90%);
+    border: 1px solid rgb(64 158 255 / 15%);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px -4px rgb(64 158 255 / 15%);
+    backdrop-filter: blur(20px) saturate(180%);
     transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     &::after {
-      content: "";
       position: absolute;
       inset: 0;
-      border-radius: 16px;
       padding: 1.5px;
+      pointer-events: none;
+      content: "";
       background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
       background-size: 200% 100%;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      border-radius: 16px;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
       mask-composite: exclude;
       animation: ai-glow-border 3s linear infinite;
-      pointer-events: none;
     }
 
     .top-title {
@@ -1320,8 +1427,12 @@ html.dark {
       font-size: 16px;
       font-weight: 600;
       color: #303133;
-      border-bottom: 1px solid rgba(64, 158, 255, 0.1);
-      background: linear-gradient(135deg, rgba(64, 158, 255, 0.05) 0%, rgba(96, 79, 253, 0.05) 100%);
+      background: linear-gradient(
+        135deg,
+        rgb(64 158 255 / 5%) 0%,
+        rgb(96 79 253 / 5%) 100%
+      );
+      border-bottom: 1px solid rgb(64 158 255 / 10%);
     }
 
     .chapterList-box {
@@ -1329,22 +1440,26 @@ html.dark {
     }
 
     .list {
-      list-style: none;
-      margin: 0;
       padding: 0;
+      margin: 0;
+      list-style: none;
     }
 
     .chapter {
       padding: 12px 16px;
       margin-bottom: 8px;
+      background: linear-gradient(
+        135deg,
+        rgb(64 158 255 / 8%) 0%,
+        rgb(96 79 253 / 8%) 100%
+      );
       border-radius: 10px;
-      background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(96, 79, 253, 0.08) 100%);
 
       .catalogue_title3 {
+        margin-right: 8px;
         font-size: 13px;
         font-weight: 600;
         color: #97b4f7;
-        margin-right: 8px;
       }
 
       .catalogue_title {
@@ -1361,37 +1476,41 @@ html.dark {
     .video {
       padding: 10px 12px;
       margin-bottom: 4px;
-      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
       border: 1px solid transparent;
+      border-radius: 8px;
+      transition: all 0.3s ease;
 
       &:hover {
-        background: rgba(64, 158, 255, 0.08);
-        border-color: rgba(64, 158, 255, 0.2);
+        background: rgb(64 158 255 / 8%);
+        border-color: rgb(64 158 255 / 20%);
       }
 
       &.activeNode {
-        background: linear-gradient(135deg, rgba(64, 158, 255, 0.15) 0%, rgba(96, 79, 253, 0.15) 100%);
-        border-color: rgba(64, 158, 255, 0.3);
+        background: linear-gradient(
+          135deg,
+          rgb(64 158 255 / 15%) 0%,
+          rgb(96 79 253 / 15%) 100%
+        );
+        border-color: rgb(64 158 255 / 30%);
       }
 
       .catalogue_title3 {
+        margin-right: 8px;
         font-size: 12px;
         color: #909399;
-        margin-right: 8px;
       }
 
       .catalogue_title {
         font-size: 13px;
-        color: #606266;
         line-height: 1.4;
+        color: #606266;
       }
 
       .resource-box {
         display: flex;
-        align-items: center;
         gap: 8px;
+        align-items: center;
         margin-top: 6px;
       }
 
@@ -1428,13 +1547,13 @@ html.dark {
   }
 
   &.dark :deep(.rightTreeWarp) {
-    background: rgba(30, 30, 40, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.4);
+    background: rgb(30 30 40 / 90%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    box-shadow: 0 8px 32px -4px rgb(0 0 0 / 40%);
 
     .top-title {
       color: #e0e0e0;
-      border-bottom-color: rgba(255, 255, 255, 0.1);
+      border-bottom-color: rgb(255 255 255 / 10%);
     }
 
     .chapter .catalogue_title {
@@ -1451,13 +1570,5 @@ html.dark {
   }
 }
 
-@keyframes ai-glow-border {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 200% 0%; }
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.8); }
-}
+/* ==================== 2. AI 对话窗口样式修复 ==================== */
 </style>

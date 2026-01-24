@@ -28,7 +28,12 @@ export function formatAvatar(
   }
 
   // 3. 处理本地资源路径
-  if (result.startsWith("/src") || result.startsWith("/@") || result.includes("assets/") || result.includes("static/")) {
+  if (
+    result.startsWith("/src") ||
+    result.startsWith("/@") ||
+    result.includes("assets/") ||
+    result.includes("static/")
+  ) {
     return result;
   }
 
@@ -49,7 +54,10 @@ export function formatAvatar(
     if (baseUrl.startsWith("http")) {
       return baseUrl + (result.startsWith("/") ? result : "/" + result);
     } else {
-      return (baseUrl === "/" ? "" : baseUrl) + (result.startsWith("/") ? result : "/" + result);
+      return (
+        (baseUrl === "/" ? "" : baseUrl) +
+        (result.startsWith("/") ? result : "/" + result)
+      );
     }
   }
 }

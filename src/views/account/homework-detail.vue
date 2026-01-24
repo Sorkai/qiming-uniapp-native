@@ -140,7 +140,7 @@
         </div>
 
         <el-empty
-          v-else-if="!loading && !homework"
+          v-else-if="!homework || Object.keys(homework).length === 0"
           description="未找到作业或作业已过期"
         />
       </el-card>
@@ -379,41 +379,41 @@ onBeforeUnmount(() => {
   transition: background-color 0.3s;
 
   &.dark {
-    background-color: #1a1a1a;
     color: #e0e0e0;
+    background-color: #1a1a1a;
   }
 
   .header {
     position: fixed;
     top: 0;
-    left: 0;
     right: 0;
+    left: 0;
+    z-index: 1000;
     height: 60px;
     background-color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: background-color 0.3s;
 
     &.dark {
       background-color: #252525;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
     }
 
     .header-content {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      max-width: 1200px;
       height: 100%;
       padding: 0 32px;
-      max-width: 1200px;
       margin: 0 auto;
 
       .back-btn {
         display: flex;
         align-items: center;
-        cursor: pointer;
-        font-size: 14px;
         min-width: 60px;
+        font-size: 14px;
+        cursor: pointer;
 
         .el-icon {
           margin-right: 5px;
@@ -421,9 +421,9 @@ onBeforeUnmount(() => {
       }
 
       .title {
+        flex: 1;
         font-size: 18px;
         font-weight: bold;
-        flex: 1;
         text-align: center;
       }
 
@@ -435,13 +435,13 @@ onBeforeUnmount(() => {
 
   .main-content {
     max-width: 1200px;
-    margin: 0 auto;
     padding: 0 32px;
+    margin: 0 auto;
 
     &.dark {
       :deep(.el-card) {
-        background-color: #252525;
         color: #e0e0e0;
+        background-color: #252525;
         border: 1px solid #333;
 
         .el-card__header {
@@ -461,9 +461,9 @@ onBeforeUnmount(() => {
         display: flex;
         flex-wrap: wrap;
         gap: 15px;
+        justify-content: center;
         font-size: 14px;
         color: #666;
-        justify-content: center;
 
         .dark & {
           color: #aaa;
@@ -473,14 +473,14 @@ onBeforeUnmount(() => {
 
     .questions-container {
       .description {
-        margin-bottom: 20px;
         padding: 15px;
+        margin-bottom: 20px;
         background-color: #f8f9fa;
         border-radius: 4px;
 
         .label {
-          font-weight: bold;
           margin-bottom: 10px;
+          font-weight: bold;
         }
 
         .content {
@@ -488,23 +488,23 @@ onBeforeUnmount(() => {
         }
 
         .dark & {
-          background-color: #333;
           color: #e0e0e0;
+          background-color: #333;
         }
       }
 
       .questions-list {
         .question-item {
-          margin-bottom: 30px;
           padding: 20px;
-          border-radius: 6px;
+          margin-bottom: 30px;
           background-color: #fff;
-          box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+          border-radius: 6px;
+          box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
 
           &.dark {
-            background-color: #333;
-            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.15);
             color: #e0e0e0;
+            background-color: #333;
+            box-shadow: 0 2px 12px 0 rgb(0 0 0 / 15%);
           }
 
           .question-header {
@@ -524,8 +524,8 @@ onBeforeUnmount(() => {
               .question-score {
                 margin-left: 10px;
                 font-size: 14px;
-                color: #606266;
                 font-weight: normal;
+                color: #606266;
 
                 .dark & {
                   color: #aaa;
@@ -578,9 +578,9 @@ onBeforeUnmount(() => {
     }
 
     .total-score {
+      margin-left: 5px;
       font-size: 18px;
       color: #606266;
-      margin-left: 5px;
     }
   }
 

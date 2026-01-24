@@ -23,7 +23,10 @@ export function useLayout() {
     /** 导航 */
     if (!$storage.layout || $storage.layout.layout === "double") {
       $storage.layout = {
-        layout: $config?.Layout === "double" ? "vertical" : ($config?.Layout ?? "vertical"),
+        layout:
+          $config?.Layout === "double"
+            ? "vertical"
+            : ($config?.Layout ?? "vertical"),
         theme: $config?.Theme ?? "light",
         darkMode: $config?.DarkMode ?? false,
         sidebarStatus: $config?.SidebarStatus ?? true,

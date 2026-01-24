@@ -41,11 +41,9 @@ export type CommonResult = {
  * @param data 包含截图base64和可选问题
  */
 export const analyzeScreen = (data: ScreenAnalyzeRequest) => {
-  return http.request<AnalyzeResult>(
-    "post",
-    "/edu/v1/ai/screen/analyze",
-    { data }
-  );
+  return http.request<AnalyzeResult>("post", "/edu/v1/ai/screen/analyze", {
+    data
+  });
 };
 
 /**
@@ -53,11 +51,7 @@ export const analyzeScreen = (data: ScreenAnalyzeRequest) => {
  * @param data 包含会话ID和用户消息
  */
 export const chatWithContext = (data: ChatRequest) => {
-  return http.request<ChatResult>(
-    "post",
-    "/edu/v1/ai/screen/chat",
-    { data }
-  );
+  return http.request<ChatResult>("post", "/edu/v1/ai/screen/chat", { data });
 };
 
 /**
@@ -65,11 +59,9 @@ export const chatWithContext = (data: ChatRequest) => {
  * @param params 分页参数
  */
 export const getChatHistory = (params: HistoryRequest) => {
-  return http.request<HistoryResult>(
-    "get",
-    "/edu/v1/ai/screen/history",
-    { params }
-  );
+  return http.request<HistoryResult>("get", "/edu/v1/ai/screen/history", {
+    params
+  });
 };
 
 /**
@@ -106,9 +98,5 @@ export const getSessionDetail = (sessionId: string) => {
       createdAt: number;
       updatedAt: number;
     };
-  }>(
-    "get",
-    `/edu/v1/ai/screen/session/${sessionId}`,
-    {}
-  );
+  }>("get", `/edu/v1/ai/screen/session/${sessionId}`, {});
 };

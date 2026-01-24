@@ -102,7 +102,10 @@ function onBack() {
         ]"
         prop="username"
         class="floating-label-item"
-        :class="{ 'has-value': !!ruleForm.username, 'is-focused': isUsernameFocused }"
+        :class="{
+          'has-value': !!ruleForm.username,
+          'is-focused': isUsernameFocused
+        }"
       >
         <el-input
           v-model="ruleForm.username"
@@ -112,12 +115,12 @@ function onBack() {
           @focus="isUsernameFocused = true"
           @blur="isUsernameFocused = false"
         />
-        <label class="floating-label">{{ t('login.pureUsername') }}</label>
+        <label class="floating-label">{{ t("login.pureUsername") }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="100">
-      <el-form-item 
+      <el-form-item
         prop="phone"
         class="floating-label-item"
         :class="{ 'has-value': !!ruleForm.phone, 'is-focused': isPhoneFocused }"
@@ -130,15 +133,18 @@ function onBack() {
           @focus="isPhoneFocused = true"
           @blur="isPhoneFocused = false"
         />
-        <label class="floating-label">{{ t('login.purePhone') }}</label>
+        <label class="floating-label">{{ t("login.purePhone") }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="150">
-      <el-form-item 
+      <el-form-item
         prop="verifyCode"
         class="floating-label-item"
-        :class="{ 'has-value': !!ruleForm.verifyCode, 'is-focused': isVerifyCodeFocused }"
+        :class="{
+          'has-value': !!ruleForm.verifyCode,
+          'is-focused': isVerifyCodeFocused
+        }"
       >
         <div class="w-full flex justify-between">
           <el-input
@@ -161,15 +167,18 @@ function onBack() {
             }}
           </el-button>
         </div>
-        <label class="floating-label">{{ t('login.pureSmsVerifyCode') }}</label>
+        <label class="floating-label">{{ t("login.pureSmsVerifyCode") }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="200">
-      <el-form-item 
+      <el-form-item
         prop="password"
         class="floating-label-item"
-        :class="{ 'has-value': !!ruleForm.password, 'is-focused': isPasswordFocused }"
+        :class="{
+          'has-value': !!ruleForm.password,
+          'is-focused': isPasswordFocused
+        }"
       >
         <ReInvisibleInk
           :active="!passwordVisible && !!ruleForm.password"
@@ -193,16 +202,19 @@ function onBack() {
             </template>
           </el-input>
         </ReInvisibleInk>
-        <label class="floating-label">{{ t('login.purePassword') }}</label>
+        <label class="floating-label">{{ t("login.purePassword") }}</label>
       </el-form-item>
     </Motion>
 
     <Motion :delay="250">
-      <el-form-item 
-        :rules="repeatPasswordRule" 
+      <el-form-item
+        :rules="repeatPasswordRule"
         prop="repeatPassword"
         class="floating-label-item"
-        :class="{ 'has-value': !!ruleForm.repeatPassword, 'is-focused': isRepeatPasswordFocused }"
+        :class="{
+          'has-value': !!ruleForm.repeatPassword,
+          'is-focused': isRepeatPasswordFocused
+        }"
       >
         <ReInvisibleInk
           :active="!repeatPasswordVisible && !!ruleForm.repeatPassword"
@@ -226,7 +238,7 @@ function onBack() {
             </template>
           </el-input>
         </ReInvisibleInk>
-        <label class="floating-label">{{ t('login.pureSure') }}</label>
+        <label class="floating-label">{{ t("login.pureSure") }}</label>
       </el-form-item>
     </Motion>
 

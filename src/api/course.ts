@@ -241,11 +241,9 @@ export const getStudyUserList = (params: {
  * @param data 包含课程ID的数据对象
  */
 export const deleteCourse = (data: { courseId: number }) => {
-  return http.request<ApiResponse>(
-    "post",
-    "/edu/backend/v1/course/delete",
-    { data }
-  );
+  return http.request<ApiResponse>("post", "/edu/backend/v1/course/delete", {
+    data
+  });
 };
 
 /**
@@ -309,7 +307,10 @@ export const deleteHour = (data: {
  * 生成教案
  * @param data 包含课程ID和章节ID的数据对象
  */
-export const generateTeacherPlan = (data: { course_id: number; chapter_id: number }) => {
+export const generateTeacherPlan = (data: {
+  course_id: number;
+  chapter_id: number;
+}) => {
   return http.request<ApiResponse>(
     "post",
     "/edu/backend/v1/course/generate/teacher/plan",
@@ -319,17 +320,17 @@ export const generateTeacherPlan = (data: { course_id: number; chapter_id: numbe
 
 /**
  * 课程统计数据结果
- * 
+ *
  * 统计口径说明：
  * - 日期范围用于过滤学习记录(user_course_records.created_at)
  * - 仅传startDate或endDate时按单日处理，范围为[startDate, endDate+1)
  * - 日期范围最大支持5年，允许未来日期
  */
 export interface CourseStatsResult {
-  totalCourses: number;      // 日期范围内有学习记录的课程数，未传日期则统计教师所有课程
-  totalHours: number;        // 范围内有学习记录课程的课时总和（单位：分钟）
-  activeStudents: number;    // 近7天有学习记录的去重学生数（固定，与日期筛选无关）
-  completionRate: number;    // 加权完成率：完成记录数/总学习记录数×100
+  totalCourses: number; // 日期范围内有学习记录的课程数，未传日期则统计教师所有课程
+  totalHours: number; // 范围内有学习记录课程的课时总和（单位：分钟）
+  activeStudents: number; // 近7天有学习记录的去重学生数（固定，与日期筛选无关）
+  completionRate: number; // 加权完成率：完成记录数/总学习记录数×100
 }
 
 /**
@@ -340,8 +341,8 @@ export interface CourseStatsResult {
  * - activeStudents 固定为近7天数据，不受日期筛选影响
  */
 export const getCourseStats = (params?: {
-  startDate?: string;  // 开始日期 yyyy-MM-dd
-  endDate?: string;    // 结束日期 yyyy-MM-dd
+  startDate?: string; // 开始日期 yyyy-MM-dd
+  endDate?: string; // 结束日期 yyyy-MM-dd
 }) => {
   return http.request<ApiResponse<CourseStatsResult>>(
     "get",
@@ -354,17 +355,22 @@ export const getCourseStats = (params?: {
  * 获取教案列表
  * @param params 分页参数
  */
-export const getTeacherPlanList = (params: { pageNum: number; pageSize?: number }) => {
-  return http.request<ApiResponse<{
-    total: number;
-    teacherPlanList: Array<{
-      teacherPlanId: number;
-      courseId: number;
-      chapterId: number;
-      courseName: string;
-      chapterName: string;
-    }>;
-  }>>("get", "/edu/backend/v1/course/teacher/plan/list", { params });
+export const getTeacherPlanList = (params: {
+  pageNum: number;
+  pageSize?: number;
+}) => {
+  return http.request<
+    ApiResponse<{
+      total: number;
+      teacherPlanList: Array<{
+        teacherPlanId: number;
+        courseId: number;
+        chapterId: number;
+        courseName: string;
+        chapterName: string;
+      }>;
+    }>
+  >("get", "/edu/backend/v1/course/teacher/plan/list", { params });
 };
 
 /**
@@ -372,8 +378,10 @@ export const getTeacherPlanList = (params: { pageNum: number; pageSize?: number 
  * @param params 包含教案ID的参数对象
  */
 export const getTeacherPlanProgress = (params: { teacherPlanId: number }) => {
-  return http.request<ApiResponse<{
-    progress: number;
-    downloadUrl?: string;
-  }>>("get", "/edu/backend/v1/course/teacher/plan/progress", { params });
+  return http.request<
+    ApiResponse<{
+      progress: number;
+      downloadUrl?: string;
+    }>
+  >("get", "/edu/backend/v1/course/teacher/plan/progress", { params });
 };

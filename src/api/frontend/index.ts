@@ -1,14 +1,14 @@
 // 课程相关API
-export * from './course';
+export * from "./course";
 
 // 用户相关API
-export * from './user';
+export * from "./user";
 
 // 作业与考试相关API
-export * from './work';
+export * from "./work";
 
 // AI聊天相关API
-export * from './chat';
+export * from "./chat";
 
 // 实验室与赛事场相关API
-export * from './extra';
+export * from "./extra";

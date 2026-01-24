@@ -1,7 +1,11 @@
 <template>
   <div class="user-profile" :class="currentTheme">
     <!-- 顶部自定义横幅图片区域 -->
-    <div class="profile-banner" v-if="extraInfo.bannerUrl || defaultBanner" :style="bannerStyle">
+    <div
+      v-if="extraInfo.bannerUrl || defaultBanner"
+      class="profile-banner"
+      :style="bannerStyle"
+    >
       <div class="banner-overlay">
         <div class="banner-text">
           <div class="banner-title">个人中心</div>
@@ -12,11 +16,19 @@
     <div class="profile-header">
       <h3>个人资料</h3>
       <div class="action-buttons">
-        <el-button class="btn-elevated info" size="small" @click="openEditDialog">
+        <el-button
+          class="btn-elevated info"
+          size="small"
+          @click="openEditDialog"
+        >
           <el-icon><Edit /></el-icon>
           <span>修改资料</span>
         </el-button>
-        <el-button class="btn-elevated warn" size="small" @click="openPasswordDialog">
+        <el-button
+          class="btn-elevated warn"
+          size="small"
+          @click="openPasswordDialog"
+        >
           <el-icon><Lock /></el-icon>
           <span>修改密码</span>
         </el-button>
@@ -37,7 +49,9 @@
           <div class="group-title">基本信息</div>
           <div class="info-item">
             <div class="label">用户名</div>
-            <div class="value">{{ userInfo?.username || userInfo?.mobile || "-" }}</div>
+            <div class="value">
+              {{ userInfo?.username || userInfo?.mobile || "-" }}
+            </div>
           </div>
           <div class="info-item">
             <div class="label">昵称</div>
@@ -48,7 +62,13 @@
             <div class="value email-value">
               <el-icon v-if="extraInfo.email"><Message /></el-icon>
               {{ extraInfo.email || "未设置" }}
-              <el-tag v-if="!extraInfo.email" size="small" type="info" effect="plain">建议尽快完善</el-tag>
+              <el-tag
+                v-if="!extraInfo.email"
+                size="small"
+                type="info"
+                effect="plain"
+                >建议尽快完善</el-tag
+              >
             </div>
           </div>
           <div class="info-item">
@@ -79,9 +99,17 @@
             </div>
           </div>
         </div>
-        <div class="info-group stats" v-show="showStats">
+        <div v-show="showStats" class="info-group stats">
           <div class="group-title">学习统计</div>
-          <div :class="['stats-content', { 'is-loading-effect': isFetchingStats && studyStats.totalHours === null }]">
+          <div
+            :class="[
+              'stats-content',
+              {
+                'is-loading-effect':
+                  isFetchingStats && studyStats.totalHours === null
+              }
+            ]"
+          >
             <div class="info-item">
               <div class="label">入驻日期</div>
               <div class="value">
@@ -101,7 +129,8 @@
               <div class="value">
                 <el-icon><Clock /></el-icon>
                 <template v-if="studyStats.totalHours !== null">
-                  <span class="number-solid">{{ studyStats.totalHours }}</span> 小时
+                  <span class="number-solid">{{ studyStats.totalHours }}</span>
+                  小时
                 </template>
                 <span v-else class="loading-placeholder">计算中...</span>
               </div>
@@ -110,15 +139,24 @@
               <div class="label">总体进度</div>
               <div class="value progress-value">
                 <template v-if="studyStats.totalProgress !== null">
-                  <el-progress 
-                    :percentage="sanitizeProgress(studyStats.totalProgress)" 
+                  <el-progress
+                    :percentage="sanitizeProgress(studyStats.totalProgress)"
                     :format="val => val + '%'"
                     :stroke-width="10"
                     striped
                     striped-flow
                   />
                 </template>
-                <div v-else class="loading-placeholder" style="width: 100%; height: 10px; background: #eee; border-radius: 5px;"></div>
+                <div
+                  v-else
+                  class="loading-placeholder"
+                  style="
+                    width: 100%;
+                    height: 10px;
+                    background: #eee;
+                    border-radius: 5px;
+                  "
+                />
               </div>
             </div>
           </div>
@@ -167,13 +205,20 @@
           >
             <template #suffix>
               <el-dropdown trigger="click" @command="handleBannerCommand">
-                <el-icon class="el-input__icon cursor-pointer" style="margin-right: 8px">
+                <el-icon
+                  class="el-input__icon cursor-pointer"
+                  style="margin-right: 8px"
+                >
                   <ArrowDown />
                 </el-icon>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="preset">选择预设图片</el-dropdown-item>
-                    <el-dropdown-item command="upload">上传自定义图片</el-dropdown-item>
+                    <el-dropdown-item command="preset"
+                      >选择预设图片</el-dropdown-item
+                    >
+                    <el-dropdown-item command="upload"
+                      >上传自定义图片</el-dropdown-item
+                    >
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -189,11 +234,7 @@
         </el-form-item>
         <el-form-item v-if="bannerPreviewUrl" label="预览">
           <div class="banner-preview">
-            <img
-              :src="bannerPreviewUrl"
-              alt="banner"
-              crossorigin="anonymous"
-            />
+            <img :src="bannerPreviewUrl" alt="banner" crossorigin="anonymous" />
           </div>
         </el-form-item>
         <el-form-item label="性别">
@@ -272,11 +313,7 @@
       </div>
       <template #footer>
         <el-button @click="cropperDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="loading"
-          @click="handleConfirmCrop"
-        >
+        <el-button type="primary" :loading="loading" @click="handleConfirmCrop">
           确认裁剪
         </el-button>
       </template>
@@ -364,7 +401,6 @@ import {
   uploadFile,
   getUserDetail,
   getStudentStats,
-
   type StudentStatsResult,
   type UserStatusResult
 } from "@/api/user";
@@ -440,7 +476,10 @@ const everBeenStudent = ref(false);
 // 签名兜底：优先展示用户详情里的 info，缺失时尝试从其他接口补齐
 const signatureFallback = ref("");
 const displaySignature = computed(
-  () => userInfo.value?.info || signatureFallback.value || "这个人很懒，什么都没留下"
+  () =>
+    userInfo.value?.info ||
+    signatureFallback.value ||
+    "这个人很懒，什么都没留下"
 );
 
 // 学习统计数据：入驻/均分取自 /user/study，学时/进度取自 /user/status，失败时回落到课程列表计算
@@ -455,7 +494,8 @@ const getInitialStats = () => {
     joinDate: cached?.joinDate || "--",
     avgScore: cached?.avgScore || "--",
     totalHours: cached?.totalHours !== undefined ? cached.totalHours : null,
-    totalProgress: cached?.totalProgress !== undefined ? cached.totalProgress : null
+    totalProgress:
+      cached?.totalProgress !== undefined ? cached.totalProgress : null
   };
 };
 
@@ -479,23 +519,26 @@ const isFetchingStats = ref(false);
 const fetchStudyStats = async () => {
   // 严格锁：正在加载或角色不对直接退出
   if (userRole.value !== "学生" || isFetchingStats.value) return;
-  
+
   isFetchingStats.value = true;
-  
+
   try {
     // 【核心修复】直接从课程列表计算学时和进度，这是唯一可靠的数据源
-    const courseRes = await getFrontendCourseList({ pageNum: 1, pageSize: 100 }).catch(() => null);
-    
+    const courseRes = await getFrontendCourseList({
+      pageNum: 1,
+      pageSize: 100
+    }).catch(() => null);
+
     if (courseRes?.code === 200 && courseRes.data?.list) {
       const list = courseRes.data.list;
-      
+
       if (list.length > 0) {
         // 计算累计学时
         const totalHours = list.reduce(
           (acc, curr) => acc + (curr.finishedHours || 0),
           0
         );
-        
+
         // 计算总体进度（百分比）
         const totalProg = list.reduce((acc, curr) => {
           const finished = curr.finishedHours || 0;
@@ -503,21 +546,25 @@ const fetchStudyStats = async () => {
           return acc + (total > 0 ? finished / total : 0);
         }, 0);
         const totalProgress = Math.round((totalProg / list.length) * 100);
-        
+
         // 直接更新，因为这是从可靠数据源计算出来的
         studyStats.totalHours = totalHours;
         studyStats.totalProgress = totalProgress;
-        
+
         // 持久化缓存
         storageLocal().setItem(STATS_STORAGE_KEY, { ...studyStats });
       }
     }
-    
+
     // 尝试获取入驻日期和均分（这些接口可能没有 mock）
     const statsRes = await getStudentStats().catch(() => null);
     if (statsRes?.code === 200 && statsRes.data) {
       const stats = statsRes.data;
-      if (stats.avgScore && stats.avgScore !== "暂无" && stats.avgScore !== "--") {
+      if (
+        stats.avgScore &&
+        stats.avgScore !== "暂无" &&
+        stats.avgScore !== "--"
+      ) {
         studyStats.avgScore = stats.avgScore;
       }
       if (stats.joinDate && stats.joinDate !== "--") {
@@ -541,7 +588,9 @@ const loadExtraInfo = () => {
   try {
     const cached = storageLocal().getItem(EXTRA_KEY) as ExtraInfo | null;
     if (cached && cached.registrationTime) {
-      Object.assign(extraInfo, cached, { lastLoginTime: dayjs().toISOString() });
+      Object.assign(extraInfo, cached, {
+        lastLoginTime: dayjs().toISOString()
+      });
     } else {
       extraInfo.registrationTime = dayjs().toISOString();
       extraInfo.lastLoginTime = dayjs().toISOString();
@@ -559,7 +608,8 @@ const persistExtra = () => {
 // 表单验证规则
 const emailValidator = (rule, value, callback) => {
   if (!value) return callback();
-  const emailRegex = /^(?:[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*)@(?:[A-Z0-9-]+\.)+[A-Z]{2,}$/i;
+  const emailRegex =
+    /^(?:[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*)@(?:[A-Z0-9-]+\.)+[A-Z]{2,}$/i;
   if (!emailRegex.test(value)) callback(new Error("邮箱格式不正确"));
   else callback();
 };
@@ -629,7 +679,6 @@ watch(
 const showStats = computed(() => {
   return userRole.value === "学生" || everBeenStudent.value;
 });
-
 
 // 计算属性：性别显示
 const getSexLabel = computed(() => {
@@ -844,7 +893,7 @@ const submitForm = async () => {
           extraInfo.email = form.email || "";
           extraInfo.bannerUrl = form.bannerUrl || "";
           persistExtra();
-          
+
           // 等待用户信息同步完成，确保本地存储和 UI 状态一致
           const syncSuccess = await fetchUserDetail();
           if (syncSuccess) {
@@ -880,12 +929,12 @@ const getPasswordErrorMessage = (code: number, msg?: string): string => {
     429: "操作过于频繁，请稍后再试",
     500: "服务器繁忙，请稍后重试"
   };
-  
+
   // 优先使用后端返回的具体错误信息
   if (msg && msg !== "系统错误" && msg !== "error" && msg.length > 0) {
     return msg;
   }
-  
+
   return errorMessages[code] || msg || "密码修改失败，请稍后重试";
 };
 
@@ -914,7 +963,7 @@ const submitPasswordForm = async () => {
         } else {
           const errorMsg = getPasswordErrorMessage(code, msg);
           ElMessage.error(errorMsg);
-          
+
           // 如果是原密码错误，清空原密码输入框方便用户重新输入
           if ((code === 400 || code === 100001) && msg?.includes("原密码")) {
             passwordForm.oldPassword = "";
@@ -933,9 +982,12 @@ const submitPasswordForm = async () => {
         const responseData = error.response?.data;
         const code = responseData?.code || error.code || 500;
         const msg = responseData?.msg || error.msg || error.message;
-        
+
         // 网络错误特殊处理
-        if (error.message?.includes("Network Error") || error.message?.includes("timeout")) {
+        if (
+          error.message?.includes("Network Error") ||
+          error.message?.includes("timeout")
+        ) {
           ElMessage.error("网络连接失败，请检查网络后重试");
         } else {
           const errorMsg = getPasswordErrorMessage(code, msg);
@@ -949,10 +1001,14 @@ const submitPasswordForm = async () => {
 };
 
 const formattedRegisterTime = computed(() =>
-  extraInfo.registrationTime ? dayjs(extraInfo.registrationTime).format("YYYY-MM-DD HH:mm:ss") : "-"
+  extraInfo.registrationTime
+    ? dayjs(extraInfo.registrationTime).format("YYYY-MM-DD HH:mm:ss")
+    : "-"
 );
 const formattedLastLoginTime = computed(() =>
-  extraInfo.lastLoginTime ? dayjs(extraInfo.lastLoginTime).format("YYYY-MM-DD HH:mm:ss") : "-"
+  extraInfo.lastLoginTime
+    ? dayjs(extraInfo.lastLoginTime).format("YYYY-MM-DD HH:mm:ss")
+    : "-"
 );
 
 const defaultBanner = "/src/assets/course/cover-default.jpg";
@@ -963,10 +1019,10 @@ const bannerStyle = computed(() => {
 
 onMounted(async () => {
   loadExtraInfo();
-  
+
   // 先同步用户信息
   await fetchUserDetail();
-  
+
   // 确认是学生后，获取学习统计（只调用一次，避免竞态）
   if (userRole.value === "学生") {
     await fetchStudyStats();
@@ -978,29 +1034,48 @@ onMounted(async () => {
 .user-profile {
   .profile-banner {
     position: relative;
+    display: flex;
+    align-items: flex-end;
     width: 100%;
     height: 180px;
     margin: 0 0 24px;
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 6px 18px -4px rgba(0,0,0,0.12);
-    display: flex;
-    align-items: flex-end;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px -4px rgb(0 0 0 / 12%);
+
     .banner-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.55));
       display: flex;
       align-items: flex-end;
       padding: 18px 24px;
+      background: linear-gradient(
+        to bottom,
+        rgb(0 0 0 / 15%),
+        rgb(0 0 0 / 55%)
+      );
     }
-    .banner-text { color: #fff; }
-    .banner-title { font-size: 20px; font-weight: 600; letter-spacing: .5px; }
-    .banner-sub { font-size: 12px; opacity: .85; margin-top: 4px; }
+
+    .banner-text {
+      color: #fff;
+    }
+
+    .banner-title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .banner-sub {
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: 0.85;
+    }
   }
+
   .profile-header {
     display: flex;
     align-items: center;
@@ -1012,7 +1087,7 @@ onMounted(async () => {
       font-size: 18px;
       font-weight: 600;
       color: #333;
-      
+
       .dark & {
         color: #f1f5f9;
       }
@@ -1023,34 +1098,40 @@ onMounted(async () => {
       gap: 12px;
 
       .btn-elevated {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 6px 14px;
-        font-weight: 500;
-        border: none;
         position: relative;
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+        padding: 6px 14px;
         overflow: hidden;
-        border-radius: 6px;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        font-weight: 500;
         color: #fff;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
-        transition: transform 0.2s, box-shadow 0.2s;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border: none;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgb(99 102 241 / 35%);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
 
         &.warn {
           background: linear-gradient(135deg, #f59e0b, #f97316);
-          box-shadow: 0 4px 12px rgba(251, 146, 60, 0.35);
+          box-shadow: 0 4px 12px rgb(251 146 60 / 35%);
         }
+
         &.info {
           background: linear-gradient(135deg, #3b82f6, #6366f1);
         }
+
         &:hover {
+          box-shadow: 0 6px 16px rgb(99 102 241 / 45%);
           transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+
           &.warn {
-            box-shadow: 0 6px 16px rgba(251, 146, 60, 0.45);
+            box-shadow: 0 6px 16px rgb(251 146 60 / 45%);
           }
         }
+
         &:active {
           transform: translateY(0);
         }
@@ -1062,7 +1143,7 @@ onMounted(async () => {
     display: flex;
     gap: 40px;
 
-    @media (max-width: 768px) {
+    @media (width <= 768px) {
       flex-direction: column;
       gap: 20px;
     }
@@ -1076,14 +1157,14 @@ onMounted(async () => {
     text-align: center;
     background-color: #f9f9f9;
     border-radius: 8px;
-    
+
     .dark & {
       background-color: #111b2d;
     }
 
     .el-avatar {
       margin-bottom: 16px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 10px rgb(0 0 0 / 10%);
     }
 
     .user-name {
@@ -1091,7 +1172,7 @@ onMounted(async () => {
       font-size: 18px;
       font-weight: 600;
       color: #333;
-      
+
       .dark & {
         color: #f1f5f9;
       }
@@ -1107,143 +1188,157 @@ onMounted(async () => {
   }
 
   .profile-info {
-    flex: 1;
     display: flex;
-    gap: 32px;
+    flex: 1;
     flex-wrap: wrap;
+    gap: 32px;
 
     .info-group {
+      position: relative;
       flex: 1 1 320px;
-      background: linear-gradient(145deg, #ffffff, #f3f4f6);
+      padding: 18px 22px 8px;
+      background: linear-gradient(145deg, #fff, #f3f4f6);
       border: 1px solid #eef0f4;
       border-radius: 12px;
-      padding: 18px 22px 8px;
-      position: relative;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 4%);
       backdrop-filter: blur(4px);
-      transition: box-shadow .25s, transform .25s;
+      transition:
+        box-shadow 0.25s,
+        transform 0.25s;
 
       .dark & {
         background: linear-gradient(145deg, #111b2d, #1e293b);
         border-color: #1e293b;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 12px rgb(0 0 0 / 30%);
       }
 
       &:hover {
-        box-shadow: 0 8px 22px -4px rgba(0,0,0,0.08);
+        box-shadow: 0 8px 22px -4px rgb(0 0 0 / 8%);
         transform: translateY(-2px);
       }
 
       &.timeline {
-        background: linear-gradient(135deg,#fdfbfb,#ebedee);
-        
+        background: linear-gradient(135deg, #fdfbfb, #ebedee);
+
         .dark & {
           background: linear-gradient(135deg, #0f172a, #111b2d);
         }
       }
 
       .group-title {
+        position: relative;
+        padding-left: 10px;
+        margin-bottom: 14px;
         font-size: 15px;
         font-weight: 600;
         color: #374151;
-        margin-bottom: 14px;
-        position: relative;
-        padding-left: 10px;
-        
+
         .dark & {
           color: #f1f5f9;
         }
 
         &::before {
-          content: '';
           position: absolute;
-          left: 0;
           top: 3px;
+          left: 0;
           width: 4px;
           height: 14px;
+          content: "";
+          background: linear-gradient(180deg, #6366f1, #8b5cf6);
           border-radius: 2px;
-          background: linear-gradient(180deg,#6366f1,#8b5cf6);
         }
       }
 
       .info-item {
         display: flex;
-        margin-bottom: 14px;
-        line-height: 20px;
-        font-size: 13px;
         align-items: flex-start;
+        margin-bottom: 14px;
+        font-size: 13px;
+        line-height: 20px;
+
         .label {
           width: 72px;
-          color: #6b7280;
           font-weight: 500;
-          
+          color: #6b7280;
+
           .dark & {
             color: #94a3b8;
           }
         }
+
         .value {
-          flex: 1;
-          color: #1f2937;
           display: flex;
-          align-items: center;
+          flex: 1;
           gap: 6px;
+          align-items: center;
+          color: #1f2937;
           word-break: break-all;
-          
+
           .dark & {
             color: #e2e8f0;
           }
         }
+
         &.signature .value {
           line-height: 1.4;
           white-space: pre-wrap;
         }
+
         .time-value {
-          .el-icon { color: #6366f1; }
+          .el-icon {
+            color: #6366f1;
+          }
         }
+
         .email-value {
-          .el-icon { color: #10b981; }
+          .el-icon {
+            color: #10b981;
+          }
         }
+
         .score-value {
           font-weight: 600;
           color: #f59e0b;
         }
+
         .progress-value {
           flex: 1;
-          margin-left: 8px;
           max-width: 180px;
+          margin-left: 8px;
         }
       }
     }
+
     .info-group.stats {
       background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+
       .dark & {
         background: linear-gradient(145deg, #064e3b, #022c22);
       }
+
       &::before {
         background: linear-gradient(180deg, #10b981, #059669);
       }
     }
-    
+
     .stats-content {
       position: relative;
+
       &.is-loading-effect {
         &::after {
-          content: "";
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(255, 255, 255, 0.3);
+          inset: 0;
           z-index: 1;
           pointer-events: none;
+          content: "";
+          background: rgb(255 255 255 / 30%);
         }
       }
-      
+
       .number-solid {
-        font-weight: bold;
         display: inline-block;
         min-width: 12px;
+        font-weight: bold;
       }
 
       .loading-placeholder {
@@ -1255,9 +1350,17 @@ onMounted(async () => {
 }
 
 @keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
 }
 
 .avatar-uploader {
@@ -1297,7 +1400,7 @@ onMounted(async () => {
       color: #fff;
       background-color: #97b4f7;
       border-radius: 50%;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 6px rgb(0 0 0 / 15%);
 
       .el-icon {
         font-size: 14px;
@@ -1309,15 +1412,16 @@ onMounted(async () => {
 .banner-preview {
   width: 100%;
   max-height: 120px;
+  overflow: hidden;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 10px -2px rgb(0 0 0 / 6%);
+
   img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
   }
 }
 
@@ -1330,38 +1434,39 @@ onMounted(async () => {
   .preset-item {
     position: relative;
     aspect-ratio: 16 / 9;
-    border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: transform 0.3s;
 
     &:hover {
       transform: scale(1.02);
+
       .preset-overlay {
         opacity: 1;
       }
     }
 
     img {
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
     }
 
     .preset-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
       display: flex;
       flex-direction: column;
+      gap: 8px;
       align-items: center;
       justify-content: center;
       color: #fff;
+      background: rgb(0 0 0 / 40%);
       opacity: 0;
       transition: opacity 0.3s;
-      gap: 8px;
 
       .el-icon {
         font-size: 24px;
@@ -1371,14 +1476,16 @@ onMounted(async () => {
 }
 
 .cropper-container {
-  background: #f8f9fa;
   padding: 20px;
+  background: #f8f9fa;
   border-radius: 8px;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .user-profile {
-    .profile-info { flex-direction: column; }
+    .profile-info {
+      flex-direction: column;
+    }
   }
 }
 </style>

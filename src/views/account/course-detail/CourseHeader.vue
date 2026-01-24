@@ -162,25 +162,25 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 .layout-header {
   position: fixed;
   top: 15px;
-  left: 90px;
   right: 15px;
-  height: 56px;
+  left: 90px;
   z-index: 1000;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
+  height: 56px;
   padding: 0 32px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
+  background: rgb(255 255 255 / 70%);
+  border: 1px solid rgb(255 255 255 / 30%);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  box-sizing: border-box;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 6%);
+  backdrop-filter: blur(12px);
   transition: all 0.3s ease;
 
   &.dark {
-    background: rgba(30, 30, 35, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    background: rgb(30 30 35 / 70%);
+    border: 1px solid rgb(255 255 255 / 8%);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 30%);
   }
 }
 
@@ -194,26 +194,26 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 /* 左侧区域 */
 .header-left {
-  flex: 1;
   display: flex;
+  flex: 1;
   align-items: center;
 }
 
 .back-btn {
-  width: 38px;
-  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  background: rgba(64, 158, 255, 0.12);
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
   color: #97b4f7;
+  cursor: pointer;
+  background: rgb(64 158 255 / 12%);
+  border-radius: 12px;
   transition: all 0.3s ease;
 }
 
 .back-btn:hover {
-  background: rgba(64, 158, 255, 0.2);
+  background: rgb(64 158 255 / 20%);
   transform: scale(1.05);
 }
 
@@ -230,12 +230,12 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .layout-header.dark .back-btn {
-  background: #262626;
   color: #4facfe;
-  border: 1px solid rgba(79, 172, 254, 0.3);
+  background: #262626;
+  border: 1px solid rgb(79 172 254 / 30%);
 
   &:hover {
-    background: #333333;
+    background: #333;
     border-color: #4facfe;
   }
 }
@@ -250,33 +250,33 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   cursor: pointer;
   background-color: #e2e8f0;
   border-radius: 100px;
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 10%);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    transform: scale(1.05);
     background-color: #cbd5e0;
+    transform: scale(1.05);
   }
 
   &.is-dark {
     background-color: #2d3748;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 30%);
 
     .switch-dot {
-      transform: translateX(24px);
       background-color: #fff;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 40%);
+      transform: translateX(24px);
     }
 
     .sun {
-      transform: translateY(20px) scale(0);
       opacity: 0;
+      transform: translateY(20px) scale(0);
     }
 
     .moon {
-      transform: translateY(0) scale(1);
-      opacity: 1;
       color: #f6e05e;
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
   }
 
@@ -290,12 +290,12 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   .icon {
     position: absolute;
     top: 50%;
-    margin-top: -10px;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 20px;
     height: 20px;
+    margin-top: -10px;
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     svg {
@@ -307,28 +307,28 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   .sun {
     left: 0;
     color: #f6ad55;
-    transform: translateY(0) scale(1);
     opacity: 1;
+    transform: translateY(0) scale(1);
   }
 
   .moon {
     right: 0;
     color: #718096;
-    transform: translateY(-20px) scale(0);
     opacity: 0;
+    transform: translateY(-20px) scale(0);
   }
 
   .switch-dot {
     position: absolute;
     top: 4px;
     left: 4px;
+    z-index: 2;
     width: 20px;
     height: 20px;
-    background-color: #ffffff;
+    background-color: #fff;
     border-radius: 50%;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    z-index: 2;
   }
 }
 
@@ -338,14 +338,14 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .title-capsule {
-  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
-  color: white;
   padding: 10px 32px;
-  border-radius: 16px;
   font-size: 24px;
   font-weight: 700;
-  box-shadow: 0 4px 15px rgba(74, 0, 224, 0.25);
+  color: white;
   white-space: nowrap;
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgb(74 0 224 / 25%);
 }
 
 .layout-header.dark .title-capsule {
@@ -354,8 +354,8 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 /* 右侧区域 - 像素级复刻主页面 */
 .header-right {
-  flex: 1;
   display: flex;
+  flex: 1;
   justify-content: flex-end;
 }
 
@@ -364,28 +364,28 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   align-items: center;
   height: 34px;
   padding: 0 12px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 17px;
   cursor: pointer;
-  transition: all 0.2s ease;
   user-select: none;
+  background: rgb(0 0 0 / 5%);
+  border-radius: 17px;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgb(0 0 0 / 10%);
   }
 }
 
 .layout-header.dark .user-capsule {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgb(255 255 255 / 15%);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgb(255 255 255 / 25%);
   }
 }
 
 .user-avatar {
-  margin-right: 0;
   flex-shrink: 0;
+  margin-right: 0;
   background: #f0f2f5;
 }
 
@@ -402,11 +402,11 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .dropdown-arrow {
+  display: inline-block;
   margin-left: 4px;
   font-size: 12px;
   color: #000000d9;
   transition: transform 0.3s ease;
-  display: inline-block;
 
   &.rotate-180 {
     transform: rotate(180deg);
@@ -424,17 +424,17 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 .spotlight-button::before {
-  content: "";
   position: absolute;
   inset: 0;
+  pointer-events: none;
+  content: "";
   background: radial-gradient(
     circle at var(--x, 50%) var(--y, 50%),
-    rgba(64, 158, 255, 0.4) 0%,
+    rgb(64 158 255 / 40%) 0%,
     transparent 70%
   );
   opacity: 0;
   transition: opacity 0.3s;
-  pointer-events: none;
 }
 
 .spotlight-button:hover::before {
@@ -447,10 +447,10 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 .course-user-dropdown {
   z-index: 9999 !important;
   padding: 0 !important;
-  border-radius: 8px !important;
-  border: 1px solid #ebeef5 !important;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1) !important;
   background: #fff !important;
+  border: 1px solid #ebeef5 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%) !important;
 
   .el-dropdown-menu {
     padding: 0;
@@ -464,12 +464,12 @@ const handleButtonMouseMove = (e: MouseEvent) => {
       min-width: 120px;
       padding: 8px 16px;
       font-size: 14px;
-      color: #606266;
       line-height: 22px;
+      color: #606266;
 
       &:hover {
-        background-color: #f5f7fa;
         color: var(--el-color-primary);
+        background-color: #f5f7fa;
       }
 
       &.is-divided {

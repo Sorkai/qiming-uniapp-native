@@ -197,17 +197,21 @@ const handleDelete = row => {
 .app-container {
   padding: 20px;
 }
+
 .filter-container {
   margin-bottom: 20px;
 }
+
 .filter-item {
   margin-right: 10px;
 }
+
 .file-name-cell {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
 }
+
 .file-icon {
   color: #606266;
 }

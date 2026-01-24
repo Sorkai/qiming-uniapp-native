@@ -29,14 +29,14 @@ const messageListRef = ref<HTMLElement>();
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit("update:visible", val)
+  set: val => emit("update:visible", val)
 });
 
 // 发送消息
 const handleSend = () => {
   const message = inputMessage.value.trim();
   if (!message || props.loading) return;
-  
+
   emit("send", message);
   inputMessage.value = "";
 };
@@ -57,9 +57,12 @@ const scrollToBottom = () => {
 };
 
 // 监听消息变化，自动滚动
-watch(() => props.messages.length, () => {
-  scrollToBottom();
-});
+watch(
+  () => props.messages.length,
+  () => {
+    scrollToBottom();
+  }
+);
 
 // 格式化时间
 const formatTime = (timestamp: number) => {
@@ -163,8 +166,8 @@ const handleClose = () => {
             <div class="message-text">
               <template v-if="msg.loading">
                 <div class="typing-indicator">
-                  <span></span>
-                  <span></span>
+                  <span />
+                  <span />
                 </div>
               </template>
               <template v-else>
@@ -239,13 +242,13 @@ const handleClose = () => {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
   .header-left {
     display: flex;
-    align-items: center;
     gap: 10px;
+    align-items: center;
 
     .ai-icon {
       width: 24px;
@@ -263,11 +266,11 @@ const handleClose = () => {
     gap: 4px;
 
     .el-button {
-      color: rgba(255, 255, 255, 0.9);
+      color: rgb(255 255 255 / 90%);
 
       &:hover {
         color: #fff;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgb(255 255 255 / 10%);
       }
     }
   }
@@ -288,7 +291,7 @@ const handleClose = () => {
     max-width: 100%;
     max-height: 120px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
   }
 
   .screenshot-label {
@@ -300,8 +303,8 @@ const handleClose = () => {
 
 .message-list {
   flex: 1;
-  overflow-y: auto;
   padding: 16px;
+  overflow-y: auto;
 
   .message-item {
     display: flex;
@@ -316,32 +319,32 @@ const handleClose = () => {
       }
 
       .message-text {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: #fff;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       }
 
       .message-avatar {
-        background: var(--el-color-primary-light-7);
         color: var(--el-color-primary);
+        background: var(--el-color-primary-light-7);
       }
     }
 
     &.assistant {
       .message-avatar {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: #fff;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       }
 
       .message-text {
-        background: var(--el-fill-color-light);
         color: var(--el-text-color-primary);
+        background: var(--el-fill-color-light);
       }
     }
   }
 
   .message-avatar {
-    flex-shrink: 0;
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
     width: 36px;
@@ -371,10 +374,10 @@ const handleClose = () => {
 
   .message-text {
     padding: 10px 14px;
-    border-radius: 12px;
     font-size: 14px;
     line-height: 1.5;
     word-break: break-word;
+    border-radius: 12px;
   }
 
   .message-time {
@@ -392,7 +395,7 @@ const handleClose = () => {
   span {
     width: 8px;
     height: 8px;
-    background: currentColor;
+    background: currentcolor;
     border-radius: 50%;
     opacity: 0.4;
     animation: typing 1.4s infinite ease-in-out both;
@@ -411,20 +414,20 @@ const handleClose = () => {
   0%,
   80%,
   100% {
-    transform: scale(0.6);
     opacity: 0.4;
+    transform: scale(0.6);
   }
 
   40% {
-    transform: scale(1);
     opacity: 1;
+    transform: scale(1);
   }
 }
 
 .suggestions {
   padding: 12px 16px;
-  border-top: 1px solid var(--el-border-color-lighter);
   background: var(--el-fill-color-lighter);
+  border-top: 1px solid var(--el-border-color-lighter);
 
   .suggestions-label {
     margin-bottom: 8px;
@@ -443,9 +446,9 @@ const handleClose = () => {
     transition: all 0.2s;
 
     &:hover {
+      color: var(--el-color-primary);
       background: var(--el-color-primary-light-9);
       border-color: var(--el-color-primary);
-      color: var(--el-color-primary);
     }
   }
 }

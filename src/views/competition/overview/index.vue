@@ -27,7 +27,11 @@
     <!-- 四大模块统计卡片 -->
     <el-row :gutter="20" class="overview-cards">
       <el-col :span="6">
-        <el-card class="overview-card coding-card" shadow="always" @click="goToModule('oj')">
+        <el-card
+          class="overview-card coding-card"
+          shadow="always"
+          @click="goToModule('oj')"
+        >
           <div class="card-bg-icon">💻</div>
           <div class="card-content">
             <div class="card-header">
@@ -51,7 +55,11 @@
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="overview-card quiz-card" shadow="always" @click="goToModule('quiz-bank')">
+        <el-card
+          class="overview-card quiz-card"
+          shadow="always"
+          @click="goToModule('quiz-bank')"
+        >
           <div class="card-bg-icon">🥇</div>
           <div class="card-content">
             <div class="card-header">
@@ -75,7 +83,11 @@
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="overview-card essay-card" shadow="always" @click="goToModule('essay')">
+        <el-card
+          class="overview-card essay-card"
+          shadow="always"
+          @click="goToModule('essay')"
+        >
           <div class="card-bg-icon">📄</div>
           <div class="card-content">
             <div class="card-header">
@@ -99,7 +111,11 @@
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="overview-card event-card" shadow="always" @click="goToModule('event-manage')">
+        <el-card
+          class="overview-card event-card"
+          shadow="always"
+          @click="goToModule('event-manage')"
+        >
           <div class="card-bg-icon">🏆</div>
           <div class="card-content">
             <div class="card-header">
@@ -131,7 +147,11 @@
           <template #header>
             <div class="card-header">
               <span>📅 近期赛事</span>
-              <el-button type="primary" link @click="goToModule('event-manage')">
+              <el-button
+                type="primary"
+                link
+                @click="goToModule('event-manage')"
+              >
                 查看全部 →
               </el-button>
             </div>
@@ -145,16 +165,36 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="type" label="类型" width="120" align="center">
+            <el-table-column
+              prop="type"
+              label="类型"
+              width="120"
+              align="center"
+            >
               <template #default="{ row }">
                 <el-tag :type="getTypeTagType(row.type)" size="small">
                   {{ getTypeLabel(row.type) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="startTime" label="开始时间" width="160" align="center" />
-            <el-table-column prop="participants" label="参与人数" width="100" align="center" />
-            <el-table-column prop="status" label="状态" width="100" align="center">
+            <el-table-column
+              prop="startTime"
+              label="开始时间"
+              width="160"
+              align="center"
+            />
+            <el-table-column
+              prop="participants"
+              label="参与人数"
+              width="100"
+              align="center"
+            />
+            <el-table-column
+              prop="status"
+              label="状态"
+              width="100"
+              align="center"
+            >
               <template #default="{ row }">
                 <el-tag :type="getStatusTagType(row.status)" size="small">
                   {{ getStatusLabel(row.status) }}
@@ -179,7 +219,9 @@
               :class="{ 'is-top3': index < 3 }"
             >
               <div class="rank">
-                <span v-if="index < 3" class="rank-medal">{{ ['🥇', '🥈', '🥉'][index] }}</span>
+                <span v-if="index < 3" class="rank-medal">{{
+                  ["🥇", "🥈", "🥉"][index]
+                }}</span>
                 <span v-else class="rank-number">{{ index + 1 }}</span>
               </div>
               <el-avatar :size="32" :src="formatAvatar(user.avatar)" />
@@ -322,7 +364,9 @@ const getTypeIcon = (type: string) => {
   return icons[type] || "🎯";
 };
 
-const getTypeTagType = (type: string): "primary" | "success" | "warning" | "danger" => {
+const getTypeTagType = (
+  type: string
+): "primary" | "success" | "warning" | "danger" => {
   const types: Record<string, "primary" | "success" | "warning" | "danger"> = {
     coding: "primary",
     quiz: "danger",
@@ -364,11 +408,11 @@ onMounted(() => {
 
   .header-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     overflow: hidden;
     background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
     border: none;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
 
     .header-content {
       display: flex;
@@ -388,7 +432,7 @@ onMounted(() => {
       p {
         margin: 0;
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
+        color: rgb(255 255 255 / 85%);
       }
     }
 
@@ -408,9 +452,9 @@ onMounted(() => {
 
         .stat-label {
           display: block;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.75);
           margin-top: 4px;
+          font-size: 12px;
+          color: rgb(255 255 255 / 75%);
         }
       }
     }
@@ -420,17 +464,17 @@ onMounted(() => {
     margin-bottom: 20px;
 
     .overview-card {
-      border-radius: 16px;
+      position: relative;
       overflow: hidden;
       cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
       border: none;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+      transition: all 0.3s ease;
 
       &:hover {
+        box-shadow: 0 12px 24px rgb(0 0 0 / 15%);
         transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
       }
 
       .card-bg-icon {
@@ -450,8 +494,8 @@ onMounted(() => {
 
       .card-header {
         display: flex;
-        align-items: center;
         gap: 8px;
+        align-items: center;
         margin-bottom: 16px;
 
         .card-icon {
@@ -472,23 +516,23 @@ onMounted(() => {
           .stat-number {
             font-size: 36px;
             font-weight: 700;
-            color: #1e3a5f;
             line-height: 1;
+            color: #1e3a5f;
           }
 
           .stat-unit {
+            margin-left: 4px;
             font-size: 14px;
             color: #374151;
-            margin-left: 4px;
           }
         }
 
         .stat-sub {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
           padding: 8px 12px;
-          background: rgba(255, 255, 255, 0.5);
+          background: rgb(255 255 255 / 50%);
           border-radius: 8px;
 
           .stat-label {
@@ -505,9 +549,9 @@ onMounted(() => {
       }
 
       .card-footer {
-        margin-top: 12px;
         padding-top: 12px;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        margin-top: 12px;
+        border-top: 1px solid rgb(0 0 0 / 10%);
 
         .trend-up {
           font-size: 12px;
@@ -535,22 +579,22 @@ onMounted(() => {
 
   .box-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--el-border-color-light);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
   }
 
   .event-title-cell {
     display: flex;
-    align-items: center;
     gap: 8px;
+    align-items: center;
 
     .event-icon {
       font-size: 20px;
@@ -561,13 +605,13 @@ onMounted(() => {
 .bottom-row {
   .events-card,
   .rankings-card {
-    height: 100%;
     display: flex;
     flex-direction: column;
+    height: 100%;
 
     :deep(.el-card__body) {
-      flex: 1;
       display: flex;
+      flex: 1;
       flex-direction: column;
       overflow: hidden;
     }
@@ -576,9 +620,9 @@ onMounted(() => {
   .rankings-card {
     .rankings-list {
       flex: 1;
-      overflow-y: auto;
       min-height: 280px;
       max-height: 320px;
+      overflow-y: auto;
     }
   }
 }
@@ -588,9 +632,9 @@ onMounted(() => {
     display: flex;
     align-items: center;
     padding: 10px 12px;
-    border-radius: 10px;
     margin-bottom: 8px;
     background: var(--el-fill-color-light);
+    border-radius: 10px;
     transition: all 0.3s ease;
 
     &:hover {
@@ -598,7 +642,11 @@ onMounted(() => {
     }
 
     &.is-top3 {
-      background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+      background: linear-gradient(
+        135deg,
+        rgb(251 191 36 / 10%) 0%,
+        rgb(245 158 11 / 5%) 100%
+      );
     }
 
     .rank {
@@ -621,9 +669,9 @@ onMounted(() => {
       margin-left: 10px;
 
       .username {
+        font-size: 14px;
         font-weight: 500;
         color: var(--el-text-color-primary);
-        font-size: 14px;
       }
     }
 

@@ -3,7 +3,11 @@
     <!-- 统计概览 -->
     <CourseStats :stats="courseStats" @date-change="handleStatsDateChange" />
 
-    <el-card shadow="always" class="mb-4 search-card" :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }">
+    <el-card
+      shadow="always"
+      class="mb-4 search-card"
+      :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }"
+    >
       <div class="flex justify-between items-center flex-wrap gap-4">
         <el-form :inline="true" :model="searchForm" class="!mb-[-18px]">
           <el-form-item label="课程名称">
@@ -24,7 +28,7 @@
             <el-button @click="resetSearch">重置</el-button>
           </el-form-item>
         </el-form>
-        
+
         <el-button type="primary" :icon="Plus" @click="openCreateDialog">
           创建课程
         </el-button>
@@ -274,7 +278,12 @@
         </div>
         <el-table v-else :data="courseAttrs" stripe style="width: 100%">
           <el-table-column prop="attrId" label="ID" width="80" />
-          <el-table-column prop="title" label="附件标题" min-width="200" show-overflow-tooltip />
+          <el-table-column
+            prop="title"
+            label="附件标题"
+            min-width="200"
+            show-overflow-tooltip
+          />
           <el-table-column prop="rType" label="类型" width="120" />
           <el-table-column label="操作" width="100">
             <template #default="scope">
@@ -837,8 +846,15 @@ const submitCourseForm = async () => {
 
       if (isEdit.value) {
         // 编辑模式，移除不需要的字段
-        const { thumb_url, hourList, chapterList, attrList, isChapter, thumb, ...updateData } =
-          formData;
+        const {
+          thumb_url,
+          hourList,
+          chapterList,
+          attrList,
+          isChapter,
+          thumb,
+          ...updateData
+        } = formData;
         submitData = {
           ...updateData,
           thumbUrl: thumb_url, // 字段名转换
@@ -945,7 +961,7 @@ const fetchCourseStats = async () => {
     console.log("完整响应:", JSON.stringify(res, null, 2));
     console.log("res.data:", res?.data);
     console.log("========================");
-    
+
     if (res && res.code === 200 && res.data) {
       // 课程总数、累计课时、完成率 受日期筛选影响
       courseStats.totalCourses = res.data.totalCourses ?? 0;
@@ -963,7 +979,10 @@ const fetchCourseStats = async () => {
 };
 
 // 处理统计日期筛选变化
-const handleStatsDateChange = (dateFilter: { startDate?: string; endDate?: string }) => {
+const handleStatsDateChange = (dateFilter: {
+  startDate?: string;
+  endDate?: string;
+}) => {
   statsDateFilter.value = dateFilter;
   fetchCourseStats();
 };
@@ -1553,8 +1572,8 @@ onMounted(async () => {
 
 .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .search-form {
@@ -1562,9 +1581,9 @@ onMounted(async () => {
 }
 
 .pagination-container {
-  margin-top: 15px;
   display: flex;
   justify-content: flex-end;
+  margin-top: 15px;
 }
 
 .chapter-item {
@@ -1572,35 +1591,35 @@ onMounted(async () => {
 }
 
 .chapter-title {
-  margin-bottom: 8px;
   padding-left: 8px;
-  border-left: 3px solid #97b4f7;
-  font-weight: bold;
+  margin-bottom: 8px;
   font-size: 16px;
+  font-weight: bold;
+  border-left: 3px solid #97b4f7;
 }
 
 .empty-text {
-  text-align: center;
-  color: #909399;
   padding: 20px 0;
+  color: #909399;
+  text-align: center;
 }
 
 .image-placeholder {
-  width: 80px;
-  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f7fa;
-  color: #909399;
+  width: 80px;
+  height: 50px;
   font-size: 12px;
+  color: #909399;
+  background-color: #f5f7fa;
 }
 
 .empty-state {
-  text-align: center;
-  color: var(--el-text-color-secondary);
   padding: 40px 0;
   font-size: 16px;
+  color: var(--el-text-color-secondary);
+  text-align: center;
 }
 
 .course-header {
@@ -1610,8 +1629,8 @@ onMounted(async () => {
 
 .course-thumb {
   margin-right: 20px;
-  border-radius: var(--el-border-radius-base);
   overflow: hidden;
+  border-radius: var(--el-border-radius-base);
 }
 
 .course-info {
@@ -1624,8 +1643,8 @@ onMounted(async () => {
   }
 
   .course-desc {
-    color: var(--el-text-color-regular);
     margin-bottom: 15px;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -1640,8 +1659,8 @@ onMounted(async () => {
   color: var(--el-text-color-primary);
 
   label {
-    color: var(--el-text-color-secondary);
     margin-right: 5px;
+    color: var(--el-text-color-secondary);
   }
 }
 
@@ -1677,32 +1696,32 @@ onMounted(async () => {
 
 .upload-preview {
   position: relative;
-  border-radius: var(--el-border-radius-base);
   overflow: hidden;
+  border-radius: var(--el-border-radius-base);
 
   .upload-actions {
     position: absolute;
-    bottom: 5px;
     right: 5px;
+    bottom: 5px;
   }
 }
 
 .upload-trigger {
-  height: 120px;
-  width: 200px;
-  border: 1px dashed var(--el-border-color);
-  border-radius: var(--el-border-radius-base);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 200px;
+  height: 120px;
   cursor: pointer;
   background-color: var(--el-fill-color-blank);
+  border: 1px dashed var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
 
   .upload-hint {
-    color: var(--el-text-color-placeholder);
-    font-size: 12px;
     margin-top: 10px;
+    font-size: 12px;
+    color: var(--el-text-color-placeholder);
   }
 }
 
@@ -1737,14 +1756,14 @@ onMounted(async () => {
 .course-form-dialog {
   .dialog-content-wrapper {
     max-height: 55vh;
-    overflow-y: auto;
     padding-right: 10px;
+    overflow-y: auto;
   }
 }
 
 .allocation-header {
-  margin-bottom: 20px;
   padding-bottom: 10px;
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--el-border-color-lighter);
 
   h3 {
@@ -1763,15 +1782,15 @@ onMounted(async () => {
 
 // 章节标题样式
 .chapter-title {
-  margin-bottom: 8px;
-  padding-left: 8px;
-  border-left: 3px solid var(--el-color-primary);
-  font-weight: bold;
-  font-size: 16px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding-left: 8px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: bold;
   color: var(--el-text-color-primary);
+  border-left: 3px solid var(--el-color-primary);
 }
 
 // 新增章节相关样式
@@ -1785,14 +1804,14 @@ onMounted(async () => {
 
 .hour-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .add-hour-btn {
-  margin-top: 15px;
   display: flex;
   justify-content: center;
+  margin-top: 15px;
 }
 
 .form-section {
@@ -1801,14 +1820,14 @@ onMounted(async () => {
 
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .empty-placeholder {
-  text-align: center;
-  color: var(--el-text-color-secondary);
   padding: 20px 0;
+  color: var(--el-text-color-secondary);
+  text-align: center;
 }
 
 .hour-list {
@@ -1821,14 +1840,14 @@ onMounted(async () => {
 
 .hour-card {
   padding: 10px;
+  background: var(--el-fill-color-blank);
   border: 1px solid var(--el-border-color);
   border-radius: var(--el-border-radius-base);
-  background: var(--el-fill-color-blank);
 }
 
 .required-mark {
-  color: var(--el-color-danger);
   margin-left: 5px;
+  color: var(--el-color-danger);
 }
 
 .hour-title-actions {
@@ -1838,23 +1857,23 @@ onMounted(async () => {
 /* 上传相关样式 */
 .upload-with-preview {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 150px;
+  overflow: hidden;
+  background-color: var(--el-fill-color-blank);
   border: 1px dashed var(--el-border-color);
   border-radius: var(--el-border-radius-base);
-  background-color: var(--el-fill-color-blank);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
 }
 
 .resource-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .upload-icon-container {
@@ -1862,9 +1881,9 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--el-text-color-placeholder);
   width: 100%;
   height: 100%;
+  color: var(--el-text-color-placeholder);
   cursor: pointer;
 }
 
@@ -1874,17 +1893,17 @@ onMounted(async () => {
 }
 
 .resource-preview {
-  width: 100%;
   display: flex;
-  padding: 10px 15px;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 15px;
 }
 
 .resource-info {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
   max-width: 70%;
 }
 
@@ -1903,48 +1922,48 @@ onMounted(async () => {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
   background: var(--el-mask-color-extra-light);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
 }
 
 .uploading-indicator {
   display: flex;
   flex-direction: column;
+  gap: 10px;
   align-items: center;
   justify-content: center;
-  gap: 10px;
 }
 
 .search-card {
+  overflow: hidden;
   border: none !important;
   border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 8%) !important;
 }
 
 :deep(.el-dialog) {
-  border-radius: 20px;
   overflow: hidden;
-  
+  border-radius: 20px;
+
   .el-dialog__header {
     padding: 20px 24px 16px;
     border-bottom: 1px solid var(--el-border-color-lighter);
-    
+
     .el-dialog__title {
       font-size: 18px;
       font-weight: 600;
     }
   }
-  
+
   .el-dialog__body {
     padding: 24px;
   }
-  
+
   .el-dialog__footer {
     padding: 16px 24px 20px;
     border-top: 1px solid var(--el-border-color-lighter);
@@ -1952,8 +1971,8 @@ onMounted(async () => {
 }
 
 :deep(.el-button) {
-  border-radius: 10px;
   font-size: 14px;
+  border-radius: 10px;
 }
 
 :deep(.el-input__wrapper) {
@@ -1973,13 +1992,13 @@ onMounted(async () => {
 }
 
 :deep(.el-table) {
-  border-radius: 12px;
   overflow: hidden;
+  border-radius: 12px;
 }
 
 :deep(.el-card) {
-  border-radius: 16px;
   overflow: hidden;
+  border-radius: 16px;
 }
 
 :deep(.el-card__header) {
@@ -1997,14 +2016,14 @@ onMounted(async () => {
 }
 
 :deep(.el-collapse) {
-  border-radius: 12px;
-  border: 1px solid var(--el-border-color-lighter);
   overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
 }
 
 :deep(.el-collapse-item__header) {
-  font-size: 15px;
-  padding: 0 16px;
   height: 48px;
+  padding: 0 16px;
+  font-size: 15px;
 }
 </style>

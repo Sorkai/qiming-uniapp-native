@@ -107,12 +107,16 @@
             </div>
             <div class="card-stats">
               <div class="stat-main">
-                <span class="stat-number">{{ comprehensiveStats.totalEvents }}</span>
+                <span class="stat-number">{{
+                  comprehensiveStats.totalEvents
+                }}</span>
                 <span class="stat-unit">场赛事</span>
               </div>
               <div class="stat-sub">
                 <span class="stat-label">平均得分</span>
-                <span class="stat-value">{{ comprehensiveStats.avgScore }}</span>
+                <span class="stat-value">{{
+                  comprehensiveStats.avgScore
+                }}</span>
               </div>
             </div>
             <div class="card-footer">
@@ -170,9 +174,19 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
+      <el-table
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        style="width: 100%"
+      >
         <el-table-column prop="eventId" label="ID" align="center" width="80" />
-        <el-table-column prop="title" label="赛事名称" align="left" min-width="200">
+        <el-table-column
+          prop="title"
+          label="赛事名称"
+          align="left"
+          min-width="200"
+        >
           <template #default="{ row }">
             <div class="event-title-cell">
               <span class="event-icon">{{ getTypeIcon(row.type) }}</span>
@@ -187,9 +201,24 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="startTime" label="开始时间" align="center" width="160" />
-        <el-table-column prop="endTime" label="结束时间" align="center" width="160" />
-        <el-table-column prop="participants" label="参与人数" align="center" width="100" />
+        <el-table-column
+          prop="startTime"
+          label="开始时间"
+          align="center"
+          width="160"
+        />
+        <el-table-column
+          prop="endTime"
+          label="结束时间"
+          align="center"
+          width="160"
+        />
+        <el-table-column
+          prop="participants"
+          label="参与人数"
+          align="center"
+          width="100"
+        />
         <el-table-column prop="status" label="状态" align="center" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
@@ -205,7 +234,11 @@
             <el-button type="primary" size="small" @click="viewRankings(row)">
               排行榜
             </el-button>
-            <el-button type="warning" size="small" @click="handleOpenDialog(row)">
+            <el-button
+              type="warning"
+              size="small"
+              @click="handleOpenDialog(row)"
+            >
               编辑
             </el-button>
             <el-button type="danger" size="small" @click="handleDelete(row)">
@@ -286,11 +319,7 @@
           />
         </el-form-item>
         <el-form-item label="时间限制" prop="timeLimit">
-          <el-input-number
-            v-model="formData.timeLimit"
-            :min="10"
-            :max="300"
-          />
+          <el-input-number v-model="formData.timeLimit" :min="10" :max="300" />
           <span class="ml-2 text-gray-500">分钟</span>
         </el-form-item>
         <el-form-item label="满分" prop="totalScore">
@@ -332,7 +361,7 @@
         <el-table-column prop="status" label="状态">
           <template #default="{ row }">
             <el-tag :type="row.status === 'completed' ? 'success' : 'info'">
-              {{ row.status === 'completed' ? '已完成' : '未参与' }}
+              {{ row.status === "completed" ? "已完成" : "未参与" }}
             </el-tag>
           </template>
         </el-table-column>
@@ -340,11 +369,7 @@
     </el-dialog>
 
     <!-- 排行榜弹窗 -->
-    <el-dialog
-      v-model="rankingsDialogVisible"
-      title="排行榜"
-      width="700px"
-    >
+    <el-dialog v-model="rankingsDialogVisible" title="排行榜" width="700px">
       <div class="rankings-list">
         <div
           v-for="(user, index) in rankingsList"
@@ -353,7 +378,9 @@
           :class="{ 'is-top3': index < 3 }"
         >
           <div class="rank">
-            <span v-if="index < 3" class="rank-medal">{{ ['🥇', '🥈', '🥉'][index] }}</span>
+            <span v-if="index < 3" class="rank-medal">{{
+              ["🥇", "🥈", "🥉"][index]
+            }}</span>
             <span v-else class="rank-number">{{ index + 1 }}</span>
           </div>
           <el-avatar :size="40" :src="formatAvatar(user.avatar)" />
@@ -547,7 +574,7 @@ const formRules = {
 
 const handleOpenDialog = (row?: EventItem) => {
   dialogVisible.value = true;
-  
+
   // 重置表单
   formData.eventId = 0;
   formData.title = "";
@@ -559,7 +586,7 @@ const handleOpenDialog = (row?: EventItem) => {
   formData.timeLimit = 60;
   formData.totalScore = 100;
   formData.status = "upcoming";
-  
+
   if (row) {
     Object.assign(formData, row);
   }
@@ -651,7 +678,9 @@ const getTypeIcon = (type: string) => {
   return icons[type] || "🎯";
 };
 
-const getTypeTagType = (type: string): "primary" | "success" | "warning" | "danger" => {
+const getTypeTagType = (
+  type: string
+): "primary" | "success" | "warning" | "danger" => {
   const types: Record<string, "primary" | "success" | "warning" | "danger"> = {
     coding: "primary",
     quiz: "danger",
@@ -692,11 +721,11 @@ onMounted(() => {
 
   .header-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     overflow: hidden;
     background: linear-gradient(135deg, #fcd9b6 0%, #f9a8d4 100%);
     border: none;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
 
     .header-content {
       display: flex;
@@ -736,9 +765,9 @@ onMounted(() => {
 
         .stat-label {
           display: block;
+          margin-top: 4px;
           font-size: 12px;
           color: #6b7280;
-          margin-top: 4px;
         }
       }
     }
@@ -748,17 +777,17 @@ onMounted(() => {
     margin-bottom: 20px;
 
     .overview-card {
-      border-radius: 16px;
+      position: relative;
       overflow: hidden;
       cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
       border: none;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+      transition: all 0.3s ease;
 
       &:hover {
+        box-shadow: 0 12px 24px rgb(0 0 0 / 15%);
         transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
       }
 
       .card-bg-icon {
@@ -778,8 +807,8 @@ onMounted(() => {
 
       .card-header {
         display: flex;
-        align-items: center;
         gap: 8px;
+        align-items: center;
         margin-bottom: 16px;
 
         .card-icon {
@@ -800,23 +829,23 @@ onMounted(() => {
           .stat-number {
             font-size: 36px;
             font-weight: 700;
-            color: #1e3a5f;
             line-height: 1;
+            color: #1e3a5f;
           }
 
           .stat-unit {
+            margin-left: 4px;
             font-size: 14px;
             color: #374151;
-            margin-left: 4px;
           }
         }
 
         .stat-sub {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
           padding: 8px 12px;
-          background: rgba(255, 255, 255, 0.5);
+          background: rgb(255 255 255 / 50%);
           border-radius: 8px;
 
           .stat-label {
@@ -833,9 +862,9 @@ onMounted(() => {
       }
 
       .card-footer {
-        margin-top: 12px;
         padding-top: 12px;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        margin-top: 12px;
+        border-top: 1px solid rgb(0 0 0 / 10%);
 
         .trend-up {
           font-size: 12px;
@@ -863,15 +892,15 @@ onMounted(() => {
 
   .box-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--el-border-color-light);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
 
     .search-form {
@@ -881,8 +910,8 @@ onMounted(() => {
 
   .event-title-cell {
     display: flex;
-    align-items: center;
     gap: 8px;
+    align-items: center;
 
     .event-icon {
       font-size: 20px;
@@ -890,9 +919,9 @@ onMounted(() => {
   }
 
   .pagination-container {
-    margin-top: 16px;
     display: flex;
     justify-content: flex-end;
+    margin-top: 16px;
   }
 
   .dialog-footer {
@@ -907,9 +936,9 @@ onMounted(() => {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-radius: 12px;
     margin-bottom: 8px;
     background: var(--el-fill-color-light);
+    border-radius: 12px;
     transition: all 0.3s ease;
 
     &:hover {
@@ -917,7 +946,11 @@ onMounted(() => {
     }
 
     &.is-top3 {
-      background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+      background: linear-gradient(
+        135deg,
+        rgb(251 191 36 / 10%) 0%,
+        rgb(245 158 11 / 5%) 100%
+      );
     }
 
     .rank {
@@ -953,10 +986,10 @@ onMounted(() => {
     }
 
     .score {
+      margin-right: 20px;
       font-size: 18px;
       font-weight: 700;
       color: var(--el-color-primary);
-      margin-right: 20px;
     }
 
     .time {
@@ -977,8 +1010,9 @@ onMounted(() => {
 :deep(.el-table) {
   --el-table-header-padding: 8px 0;
   --el-table-cell-padding: 8px 0;
-  border-radius: 12px;
+
   overflow: hidden;
+  border-radius: 12px;
 }
 
 :deep(.el-dialog) {

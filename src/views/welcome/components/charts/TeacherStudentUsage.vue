@@ -8,8 +8,8 @@ defineOptions({
 });
 
 const loading = ref(true);
-const teacherData = ref<{date: string; usageNum: number}[]>([]);
-const studentData = ref<{date: string; usageNum: number}[]>([]);
+const teacherData = ref<{ date: string; usageNum: number }[]>([]);
+const studentData = ref<{ date: string; usageNum: number }[]>([]);
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
@@ -27,15 +27,15 @@ const fetchData = async () => {
       getTeacherUsage(),
       getStudentUsage()
     ]);
-    
+
     if (teacherRes?.data?.usageInfoList) {
       teacherData.value = teacherRes.data.usageInfoList;
     }
-    
+
     if (studentRes?.data?.usageInfoList) {
       studentData.value = studentRes.data.usageInfoList;
     }
-    
+
     renderChart();
   } catch (error) {
     console.error("获取使用情况数据失败:", error);
@@ -62,7 +62,9 @@ const renderChart = () => {
           type: "dashed"
         }
       },
-      backgroundColor: isDark.value ? "rgba(30, 30, 35, 0.9)" : "rgba(255, 255, 255, 0.9)",
+      backgroundColor: isDark.value
+        ? "rgba(30, 30, 35, 0.9)"
+        : "rgba(255, 255, 255, 0.9)",
       borderColor: isDark.value ? "#334155" : "#f1f5f9",
       borderWidth: 1,
       textStyle: {
@@ -183,7 +185,10 @@ watch(
 watch(
   () => isDark.value,
   () => {
-    if (!loading.value && (teacherData.value.length > 0 || studentData.value.length > 0)) {
+    if (
+      !loading.value &&
+      (teacherData.value.length > 0 || studentData.value.length > 0)
+    ) {
       renderChart();
     }
   }
@@ -198,7 +203,7 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div ref="chartRef" style="width: 100%; height: 350px"></div>
+        <div ref="chartRef" style="width: 100%; height: 350px" />
       </template>
     </el-skeleton>
   </div>

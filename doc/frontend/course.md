@@ -1,19 +1,21 @@
- # 前端课程模块接口文档
+# 前端课程模块接口文档
 
 基础前缀：`/edu/frontend/v1`
 
 ## 1. 获取课程列表
 
-- **接口地址**：`/course/list`
-- **请求方式**：GET
+- **接口地址**：`/course/list`- **请求方式**：GET
 - **请求参数**：
-  - `pageNum`: number (页码)
-  - `pageSize`: number (可选，每页数量，默认10)
-  - `queryType`: number (可选，查询类型)
-  - `status`: string (可选，状态筛选)
+
+    -`pageNum`: number (页码)
+
+    - `pageSize`: number (可选，每页数量，默认10)
+    - `queryType`: number (可选，查询类型)
+    - `status`: string (可选，状态筛选)
 
 - **响应参数**：
-```json
+
+````json
 {
   "code": 200,
   "msg": "成功",
@@ -31,16 +33,17 @@
     "total": 100
   }
 }
-```
 
+```text
 ## 2. 获取课程详情
 
-- **接口地址**：`/course/detail`
-- **请求方式**：GET
+- **接口地址**：`/course/detail`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number (课程ID)
+
+    -`courseId`: number (课程ID)
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -80,36 +83,41 @@
     ]
   }
 }
-```
 
+```text
 ## 3. 课时完成上报
 
-- **接口地址**：`/course/report/lesson`
-- **请求方式**：POST
+- **接口地址**：`/course/report/lesson`- **请求方式**：POST
 - **请求参数**：
+
 ```json
 {
   "courseId": 1,
   "hourId": 1
 }
-```
+
+```text
+
+
 - **响应参数**：
+
 ```json
 {
   "code": 200,
   "msg": "成功",
   "data": null
 }
-```
 
+```text
 ## 4. 获取课程学习效果
 
-- **接口地址**：`/course/study/effect`
-- **请求方式**：GET
+- **接口地址**：`/course/study/effect`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number
+
+    -`courseId`: number
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -132,16 +140,17 @@
     ]
   }
 }
-```
 
+```text
 ## 5. 获取课程成绩
 
-- **接口地址**：`/course/score`
-- **请求方式**：GET
+- **接口地址**：`/course/score`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number
+
+    -`courseId`: number
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -153,18 +162,19 @@
     "examScore": 78
   }
 }
-```
 
+```text
 ## 6. 获取课程成绩详情列表
 
 获取课程中每个作业/考试的得分、提交时间、评语等详细信息。
 
-- **接口地址**：`/course/grades/list`
-- **请求方式**：GET
+- **接口地址**：`/course/grades/list`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number (课程ID)
+
+    -`courseId`: number (课程ID)
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -198,18 +208,19 @@
     ]
   }
 }
-```
 
+```text
 ## 7. 获取课程成绩统计概览
 
 获取课程成绩的统计指标，包含总作业数、完成数、平均分、最高分等。
 
-- **接口地址**：`/course/grades/statistics`
-- **请求方式**：GET
+- **接口地址**：`/course/grades/statistics`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number (课程ID)
+
+    -`courseId`: number (课程ID)
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -222,8 +233,8 @@
     "completionRate": 66.7
   }
 }
-```
 
+```text
 **字段说明**：
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -237,12 +248,13 @@
 
 获取个人得分与班级平均分的对比数据，用于展示对比图表。
 
-- **接口地址**：`/course/grades/class-comparison`
-- **请求方式**：GET
+- **接口地址**：`/course/grades/class-comparison`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number (课程ID)
+
+    -`courseId`: number (课程ID)
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -262,9 +274,8 @@
     "classAverages": [80, 88, 85, 75, 82, 78, 82, 85]
   }
 }
-```
 
-**字段说明**：
+```**字段说明**：
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | categories | string[] | 比较项名称列表（作业/考试/实验名称） |
@@ -272,6 +283,8 @@
 | classAverages | number[] | 班级平均分列表（与categories一一对应） |
 
 **成绩类型说明**：
-- `作业`: 平时课后作业
+
+-`作业`: 平时课后作业
 - `考试`: 单元测验或期中期末考试
 - `实验`: 实践操作实验项目
+````

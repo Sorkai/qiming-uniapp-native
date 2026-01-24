@@ -8,7 +8,11 @@
     :append-to-body="true"
     :destroy-on-close="true"
   >
-    <div class="wrap" :class="{ dark: currentTheme === 'dark' }" v-loading="loading">
+    <div
+      v-loading="loading"
+      class="wrap"
+      :class="{ dark: currentTheme === 'dark' }"
+    >
       <!-- 原题区域 -->
       <section class="block">
         <h3 class="h3">题目</h3>
@@ -22,12 +26,22 @@
           </ul>
         </div>
         <div class="answers">
-          <el-button text type="primary" @click="toggleBase">{{ baseOpened ? '隐藏答案/解析' : '查看答案/解析' }}</el-button>
+          <el-button text type="primary" @click="toggleBase">{{
+            baseOpened ? "隐藏答案/解析" : "查看答案/解析"
+          }}</el-button>
           <el-collapse-transition>
             <div v-show="baseOpened" class="base">
-              <div class="line"><span>学生答案：</span><b class="uans">{{ wrong?.userAnswer }}</b></div>
-              <div class="line"><span>正确答案：</span><b class="cans">{{ displayCorrectAnswer }}</b></div>
-              <div v-if="wrong?.analysis" class="prewrap">{{ wrong?.analysis }}</div>
+              <div class="line">
+                <span>学生答案：</span
+                ><b class="uans">{{ wrong?.userAnswer }}</b>
+              </div>
+              <div class="line">
+                <span>正确答案：</span
+                ><b class="cans">{{ displayCorrectAnswer }}</b>
+              </div>
+              <div v-if="wrong?.analysis" class="prewrap">
+                {{ wrong?.analysis }}
+              </div>
             </div>
           </el-collapse-transition>
         </div>
@@ -42,14 +56,23 @@
             type="primary"
             :loading="analyzing"
             @click="doAnalyze"
-          >立即分析</el-button>
+            >立即分析</el-button
+          >
         </div>
 
         <div v-if="analysis" class="analysis">
           <el-descriptions :column="2" border>
-            <el-descriptions-item label="错误类型">{{ analysis.error_type }}</el-descriptions-item>
+            <el-descriptions-item label="错误类型">{{
+              analysis.error_type
+            }}</el-descriptions-item>
             <el-descriptions-item label="涉及知识点">
-              <el-tag v-for="(kp, i) in analysis.knowledge_points" :key="i" class="mr8" type="info">{{ kp }}</el-tag>
+              <el-tag
+                v-for="(kp, i) in analysis.knowledge_points"
+                :key="i"
+                class="mr8"
+                type="info"
+                >{{ kp }}</el-tag
+              >
             </el-descriptions-item>
             <el-descriptions-item :span="2" label="错误原因">
               <div class="prewrap">{{ analysis.error_reason }}</div>
@@ -63,24 +86,39 @@
       </section>
 
       <!-- 相似练习 -->
-      <section class="block" v-if="generatedExercises.length">
+      <section v-if="generatedExercises.length" class="block">
         <h3 class="h3">相似练习（{{ generatedExercises.length }}）</h3>
         <div class="sim-list">
-          <div v-for="(ex, idx) in generatedExercises" :key="ex.exercise_id || idx" class="sim-item">
-            <div class="q"><b>{{ idx + 1 }}.</b><div class="qtxt" v-html="ex.question" /></div>
+          <div
+            v-for="(ex, idx) in generatedExercises"
+            :key="ex.exercise_id || idx"
+            class="sim-item"
+          >
+            <div class="q">
+              <b>{{ idx + 1 }}.</b>
+              <div class="qtxt" v-html="ex.question" />
+            </div>
             <div v-if="ex.options && ex.options.length" class="opts">
               <ul>
                 <li v-for="(o, i2) in ex.options" :key="i2">
-                  <template v-if="needsPrefix(o)"><b>{{ abcd(i2) }}.</b> {{ stripPrefix(o) }}</template>
+                  <template v-if="needsPrefix(o)"
+                    ><b>{{ abcd(i2) }}.</b> {{ stripPrefix(o) }}</template
+                  >
                   <template v-else><span v-html="o" /></template>
                 </li>
               </ul>
             </div>
-            <el-button text type="primary" @click="toggleExplain(idx)">{{ showExplain[idx] ? '隐藏解析' : '查看解析' }}</el-button>
+            <el-button text type="primary" @click="toggleExplain(idx)">{{
+              showExplain[idx] ? "隐藏解析" : "查看解析"
+            }}</el-button>
             <el-collapse-transition>
               <div v-show="showExplain[idx]" class="exp">
-                <div v-if="ex.correct_answer" class="line">正确答案：<b>{{ ex.correct_answer }}</b></div>
-                <div v-if="ex.explanation" class="prewrap">{{ ex.explanation }}</div>
+                <div v-if="ex.correct_answer" class="line">
+                  正确答案：<b>{{ ex.correct_answer }}</b>
+                </div>
+                <div v-if="ex.explanation" class="prewrap">
+                  {{ ex.explanation }}
+                </div>
               </div>
             </el-collapse-transition>
           </div>
@@ -95,9 +133,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { ElMessage } from 'element-plus';
-import { analyzeWrongExercise, type WrongExerciseAnalyzeResponse, type GeneratedExercise } from '@/api/frontend/wrong-exercise';
+import { ref, computed, watch } from "vue";
+import { ElMessage } from "element-plus";
+import {
+  analyzeWrongExercise,
+  type WrongExerciseAnalyzeResponse,
+  type GeneratedExercise
+} from "@/api/frontend/wrong-exercise";
 
 export interface NormalizedWrongQuestion {
   id: number | string;
@@ -119,17 +161,27 @@ const props = defineProps<{
   initialAnalysis?: WrongExerciseAnalyzeResponse | null;
 }>();
 
-const emit = defineEmits(['update:modelValue', 'analyzed']);
+const emit = defineEmits(["update:modelValue", "analyzed"]);
 
 const visible = ref<boolean>(props.modelValue);
 const loading = ref(false);
 const analyzing = ref(false);
 const baseOpened = ref(false);
-const analysis = ref<WrongExerciseAnalyzeResponse['analysis'] | null>(props.initialAnalysis?.analysis || null);
-const generatedExercises = ref<GeneratedExercise[]>(props.initialAnalysis?.generated_exercises || []);
+const analysis = ref<WrongExerciseAnalyzeResponse["analysis"] | null>(
+  props.initialAnalysis?.analysis || null
+);
+const generatedExercises = ref<GeneratedExercise[]>(
+  props.initialAnalysis?.generated_exercises || []
+);
 
-watch(() => props.modelValue, v => (visible.value = v));
-watch(() => visible.value, v => emit('update:modelValue', v));
+watch(
+  () => props.modelValue,
+  v => (visible.value = v)
+);
+watch(
+  () => visible.value,
+  v => emit("update:modelValue", v)
+);
 watch(
   () => props.initialAnalysis,
   v => {
@@ -138,22 +190,28 @@ watch(
   }
 );
 
-const titleText = computed(() => props.wrong?.title || '错题详情');
-const isChoice = computed(() => props.wrong?.questionType === 1 || props.wrong?.questionType === 2);
+const titleText = computed(() => props.wrong?.title || "错题详情");
+const isChoice = computed(
+  () => props.wrong?.questionType === 1 || props.wrong?.questionType === 2
+);
 
 const parsedOptions = computed(() => {
   const raw = props.wrong?.options;
   const out: Array<{ optionId: string; content: string }> = [];
   if (!raw || !isChoice.value) return out;
   try {
-    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (Array.isArray(parsed)) {
-      return parsed.map((c: any, i: number) => ({ optionId: String.fromCharCode(65 + i), content: String(c) }));
+      return parsed.map((c: any, i: number) => ({
+        optionId: String.fromCharCode(65 + i),
+        content: String(c)
+      }));
     }
-    if (parsed && typeof parsed === 'object') {
+    if (parsed && typeof parsed === "object") {
       // { "A": "...", "B": "..." }
       const keys = Object.keys(parsed).sort();
-      for (const k of keys) out.push({ optionId: k, content: String(parsed[k]) });
+      for (const k of keys)
+        out.push({ optionId: k, content: String(parsed[k]) });
       return out;
     }
     return out;
@@ -164,10 +222,10 @@ const parsedOptions = computed(() => {
 
 const displayCorrectAnswer = computed(() => {
   const ans = props.wrong?.answer;
-  if (!ans) return '';
+  if (!ans) return "";
   try {
     const parsed = JSON.parse(ans);
-    return Array.isArray(parsed) ? parsed.join(', ') : String(parsed);
+    return Array.isArray(parsed) ? parsed.join(", ") : String(parsed);
   } catch {
     return String(ans);
   }
@@ -177,30 +235,33 @@ const toggleBase = () => (baseOpened.value = !baseOpened.value);
 const abcd = (i: number) => String.fromCharCode(65 + i);
 // 判断是否需要我们加前缀（如果后端已经带 'A.' 或 'A、' 等就不再加）
 const needsPrefix = (o: string) => !/^\s*[A-D][\.|、]/.test(o);
-const stripPrefix = (o: string) => o.replace(/^\s*[A-D][\.|、]\s*/, '');
+const stripPrefix = (o: string) => o.replace(/^\s*[A-D][\.|、]\s*/, "");
 const showExplain = ref<Record<number, boolean>>({});
-const toggleExplain = (i: number) => (showExplain.value[i] = !showExplain.value[i]);
+const toggleExplain = (i: number) =>
+  (showExplain.value[i] = !showExplain.value[i]);
 
 const doAnalyze = async () => {
   if (!props.wrong) return;
   analyzing.value = true;
   try {
-    const original_exercise_id = String(props.wrong.questionId || props.wrong.id);
+    const original_exercise_id = String(
+      props.wrong.questionId || props.wrong.id
+    );
     const { data } = await analyzeWrongExercise({
       course_id: props.courseId,
       original_exercise_id,
       original_exercise_content: props.wrong.stem,
-      student_answer: props.wrong.userAnswer || '',
-      correct_answer: props.wrong.answer || ''
+      student_answer: props.wrong.userAnswer || "",
+      correct_answer: props.wrong.answer || ""
     });
     if (data) {
       analysis.value = data.analysis;
       generatedExercises.value = data.generated_exercises || [];
-      emit('analyzed', { key: original_exercise_id, response: data });
-      ElMessage.success('分析完成');
+      emit("analyzed", { key: original_exercise_id, response: data });
+      ElMessage.success("分析完成");
     }
   } catch (e) {
-    ElMessage.error('分析失败');
+    ElMessage.error("分析失败");
   } finally {
     analyzing.value = false;
   }
@@ -215,130 +276,156 @@ const handleClose = () => (visible.value = false);
   max-height: 75vh;
   overflow-y: auto;
 }
+
 .wrap.dark {
   color: #e0e0e0;
 }
+
 .block {
   margin-bottom: 32px;
 }
+
 .h3 {
   margin: 0 0 16px;
-  font-weight: 600;
   font-size: 20px;
+  font-weight: 600;
   color: var(--el-text-color-primary);
 }
+
 .stem {
-  background: #f7f8fa;
   padding: 16px 20px;
-  border-radius: 12px;
-  color: #333;
-  line-height: 1.7;
   margin-bottom: 16px;
   font-size: 16px;
+  line-height: 1.7;
+  color: #333;
+  background: #f7f8fa;
+  border-radius: 12px;
 }
+
 .wrap.dark .stem {
-  background: #2a2a2a;
   color: #e0e0e0;
+  background: #2a2a2a;
   border: 1px solid #3e3e3e;
 }
+
 .wrap.dark .stem :deep(*) {
   color: #e0e0e0;
 }
+
 .options ul {
-  list-style: none;
   padding: 0;
   margin: 12px 0 0;
+  list-style: none;
 }
+
 .options li {
-  padding: 10px 0;
   display: flex;
   align-items: flex-start;
-  color: #333;
+  padding: 10px 0;
   font-size: 15px;
+  color: #333;
 }
+
 .wrap.dark .options li {
   color: #e0e0e0;
 }
+
 .options .label {
   margin-right: 12px;
-  color: #97b4f7;
   font-weight: bold;
+  color: #97b4f7;
 }
+
 .wrap.dark .options .label {
   color: #4facfe;
 }
+
 .answers {
   margin-top: 16px;
 }
+
 .base {
+  padding: 20px;
   margin-top: 16px;
   background: #f9fafb;
-  padding: 20px;
-  border-radius: 12px;
   border: 1px solid #eee;
+  border-radius: 12px;
 }
+
 .wrap.dark .base {
-  background: #252525;
   color: #e0e0e0;
+  background: #252525;
   border-color: #444;
 }
+
 .uans {
   color: #97b4f7;
 }
+
 .cans {
   color: #67c23a;
 }
+
 .ai-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
 }
+
 .prewrap {
-  white-space: pre-wrap;
   line-height: 1.7;
+  white-space: pre-wrap;
 }
+
 .sim-list {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
 .sim-item {
   padding: 20px;
+  color: #333;
+  background: #fff;
   border: 1px solid #f0f0f0;
   border-radius: 12px;
-  background: #fff;
-  color: #333;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 2%);
 }
+
 .wrap.dark .sim-item {
-  border-color: #3e3e3e;
-  background: #2a2a2a;
   color: #e0e0e0;
+  background: #2a2a2a;
+  border-color: #3e3e3e;
 }
+
 .q {
   display: flex;
   gap: 10px;
   margin-bottom: 12px;
-  font-weight: 600;
   font-size: 16px;
+  font-weight: 600;
 }
+
 .qtxt {
   flex: 1;
 }
+
 .exp {
-  margin-top: 16px;
-  background: #f9fafb;
   padding: 16px;
-  border-radius: 10px;
+  margin-top: 16px;
   font-size: 14px;
+  background: #f9fafb;
   border-left: 4px solid #97b4f7;
+  border-radius: 10px;
 }
+
 .wrap.dark .exp {
-  background: #333;
   color: #e0e0e0;
+  background: #333;
   border-left-color: #4facfe;
 }
+
 .mr8 {
   margin-right: 8px;
 }
@@ -347,8 +434,8 @@ const handleClose = () => (visible.value = false);
 <style>
 /* 彻底加固弹窗样式（处理 Portal 渲染） */
 .custom-ai-detail-dialog .el-dialog {
-  border-radius: 16px !important;
   overflow: hidden !important;
+  border-radius: 16px !important;
 }
 
 .custom-ai-detail-dialog .el-dialog__header {
@@ -373,9 +460,10 @@ const handleClose = () => (visible.value = false);
 .custom-ai-detail-dialog.dark .el-dialog,
 html.dark .custom-ai-detail-dialog .el-dialog {
   --el-dialog-bg-color: #1a1a1a;
+
   background-color: var(--el-dialog-bg-color);
   border: 1px solid #333;
-  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 32px 4px rgb(0 0 0 / 40%);
 }
 
 .custom-ai-detail-dialog.dark .el-dialog__header,
@@ -391,8 +479,8 @@ html.dark .custom-ai-detail-dialog .el-dialog__title {
 
 .custom-ai-detail-dialog.dark .el-dialog__body,
 html.dark .custom-ai-detail-dialog .el-dialog__body {
-  background-color: #1a1a1a;
   color: #e0e0e0;
+  background-color: #1a1a1a;
 }
 
 .custom-ai-detail-dialog.dark .el-dialog__footer,
@@ -409,15 +497,15 @@ html.dark .custom-ai-detail-dialog .el-descriptions__body {
 
 .custom-ai-detail-dialog.dark .el-descriptions__label,
 html.dark .custom-ai-detail-dialog .el-descriptions__label {
-  background-color: #333;
   color: #aaa;
+  background-color: #333;
   border-color: #444;
 }
 
 .custom-ai-detail-dialog.dark .el-descriptions__content,
 html.dark .custom-ai-detail-dialog .el-descriptions__content {
-  background-color: #252525;
   color: #e0e0e0;
+  background-color: #252525;
   border-color: #444;
 }
 
@@ -429,9 +517,9 @@ html.dark .custom-ai-detail-dialog .el-descriptions--border {
 /* 按钮和空状态加固 */
 .custom-ai-detail-dialog.dark .el-button--default:not(.is-text),
 html.dark .custom-ai-detail-dialog .el-button--default:not(.is-text) {
+  color: #e0e0e0;
   background-color: #333;
   border-color: #444;
-  color: #e0e0e0;
 }
 
 .custom-ai-detail-dialog.dark .el-empty__description p,

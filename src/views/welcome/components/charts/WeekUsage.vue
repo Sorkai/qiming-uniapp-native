@@ -41,7 +41,7 @@ const fetchData = async () => {
 const renderChart = () => {
   const { studentTotalNum, teacherTotalNum } = weekData.value;
   const total = studentTotalNum + teacherTotalNum;
-  
+
   setOptions({
     tooltip: {
       trigger: "item",
@@ -87,8 +87,16 @@ const renderChart = () => {
           show: true
         },
         data: [
-          { value: studentTotalNum, name: "学生使用", itemStyle: { color: "#5B8FF9" } },
-          { value: teacherTotalNum, name: "老师使用", itemStyle: { color: "#F6BD16" } }
+          {
+            value: studentTotalNum,
+            name: "学生使用",
+            itemStyle: { color: "#5B8FF9" }
+          },
+          {
+            value: teacherTotalNum,
+            name: "老师使用",
+            itemStyle: { color: "#F6BD16" }
+          }
         ]
       }
     ]
@@ -114,8 +122,8 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div ref="chartRef" style="width: 100%; height: 350px"></div>
+        <div ref="chartRef" style="width: 100%; height: 350px" />
       </template>
     </el-skeleton>
   </div>
-</template> 
+</template>

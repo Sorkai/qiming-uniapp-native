@@ -325,7 +325,8 @@ export default defineFakeRoute([
     method: "get",
     response: ({ query }) => {
       const courseId = parseInt(getQueryParam(query, "courseId"));
-      const course = mockCourseList.find(c => c.courseId === courseId) || mockCourseList[0];
+      const course =
+        mockCourseList.find(c => c.courseId === courseId) || mockCourseList[0];
       return {
         code: 200,
         msg: "success",
@@ -419,8 +420,22 @@ export default defineFakeRoute([
               chapterId: 1,
               name: "第一章：Python 环境搭建",
               hourList: [
-                { resourceId: 1, duration: 600, title: "1.1 安装 Python", rType: "video", hourId: 1, fileUrl: "http://example.com/v1.mp4" },
-                { resourceId: 2, duration: 800, title: "1.2 第一个程序", rType: "video", hourId: 2, fileUrl: "http://example.com/v2.mp4" }
+                {
+                  resourceId: 1,
+                  duration: 600,
+                  title: "1.1 安装 Python",
+                  rType: "video",
+                  hourId: 1,
+                  fileUrl: "http://example.com/v1.mp4"
+                },
+                {
+                  resourceId: 2,
+                  duration: 800,
+                  title: "1.2 第一个程序",
+                  rType: "video",
+                  hourId: 2,
+                  fileUrl: "http://example.com/v2.mp4"
+                }
               ]
             }
           ]
@@ -437,7 +452,13 @@ export default defineFakeRoute([
         msg: "success",
         data: {
           courseWares: [
-            { resourceId: 101, title: "Python入门课件.pdf", rType: "pdf", attrId: 1, fileUrl: "http://example.com/doc1.pdf" }
+            {
+              resourceId: 101,
+              title: "Python入门课件.pdf",
+              rType: "pdf",
+              attrId: 1,
+              fileUrl: "http://example.com/doc1.pdf"
+            }
           ]
         }
       };
@@ -453,7 +474,13 @@ export default defineFakeRoute([
         data: {
           total: 1,
           teacherPlanList: [
-            { teacherPlanId: 1, courseId: 1, chapterId: 1, courseName: "Python 基础入门", chapterName: "第一章：Python 环境搭建" }
+            {
+              teacherPlanId: 1,
+              courseId: 1,
+              chapterId: 1,
+              courseName: "Python 基础入门",
+              chapterName: "第一章：Python 环境搭建"
+            }
           ]
         }
       };
@@ -514,7 +541,12 @@ export default defineFakeRoute([
               questionType: 1,
               title: "Python语法",
               stem: "以下哪个不是Python关键字？",
-              options: JSON.stringify([{ id: "A", content: "def" }, { id: "B", content: "class" }, { id: "C", content: "function" }, { id: "D", content: "if" }]),
+              options: JSON.stringify([
+                { id: "A", content: "def" },
+                { id: "B", content: "class" },
+                { id: "C", content: "function" },
+                { id: "D", content: "if" }
+              ]),
               correctAnswer: "C",
               analysis: "Python中使用def定义函数，function不是关键字。",
               points: 5,
@@ -646,7 +678,11 @@ export default defineFakeRoute([
     url: "/edu/backend/v1/statistics/teacher/usage",
     method: "get",
     response: () => {
-      return { code: 200, msg: "success", data: { usageInfoList: mockTeacherUsage } };
+      return {
+        code: 200,
+        msg: "success",
+        data: { usageInfoList: mockTeacherUsage }
+      };
     }
   },
   {
@@ -657,7 +693,10 @@ export default defineFakeRoute([
         code: 200,
         msg: "success",
         data: {
-          usageInfoList: mockTeacherUsage.map(i => ({ ...i, usageNum: i.usageNum * 5 }))
+          usageInfoList: mockTeacherUsage.map(i => ({
+            ...i,
+            usageNum: i.usageNum * 5
+          }))
         }
       };
     }
@@ -679,12 +718,53 @@ export default defineFakeRoute([
     response: () => {
       // 生成学生名单
       const generateStudents = (count: number) => {
-        const firstNames = ["张", "李", "王", "赵", "钱", "孙", "周", "吴", "冯", "陈", "褚", "卫", "蒋", "沈", "韩", "杨", "朱", "秦", "尤", "许"];
-        const lastNames = ["三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十"];
+        const firstNames = [
+          "张",
+          "李",
+          "王",
+          "赵",
+          "钱",
+          "孙",
+          "周",
+          "吴",
+          "冯",
+          "陈",
+          "褚",
+          "卫",
+          "蒋",
+          "沈",
+          "韩",
+          "杨",
+          "朱",
+          "秦",
+          "尤",
+          "许"
+        ];
+        const lastNames = [
+          "三",
+          "四",
+          "五",
+          "六",
+          "七",
+          "八",
+          "九",
+          "十",
+          "十一",
+          "十二",
+          "十三",
+          "十四",
+          "十五",
+          "十六",
+          "十七",
+          "十八",
+          "十九",
+          "二十"
+        ];
 
         const students = [];
         for (let i = 1; i <= count; i++) {
-          const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+          const firstName =
+            firstNames[Math.floor(Math.random() * firstNames.length)];
           const lastName = lastNames[i % lastNames.length];
           students.push({
             userId: i,
@@ -740,7 +820,14 @@ export default defineFakeRoute([
               examId: 101,
               examName: "Python 期中考试",
               examInfo: [
-                { level: 4, levelNum: 8, levelUserList: [{ userId: 3, userName: "王五" }, { userId: 6, userName: "孙八" }] },
+                {
+                  level: 4,
+                  levelNum: 8,
+                  levelUserList: [
+                    { userId: 3, userName: "王五" },
+                    { userId: 6, userName: "孙八" }
+                  ]
+                },
                 { level: 3, levelNum: 12, levelUserList: [] },
                 { level: 2, levelNum: 5, levelUserList: [] },
                 { level: 1, levelNum: 3, levelUserList: [] }
@@ -850,7 +937,8 @@ export default defineFakeRoute([
               correctPlanTime: 10,
               planWorkTime: 45,
               correctPlanWorkTime: 5,
-              optimizeDirection: "加强循环与函数章节的练习，学生在复杂控制流上耗时较多。",
+              optimizeDirection:
+                "加强循环与函数章节的练习，学生在复杂控制流上耗时较多。",
               expectedEffect: "预计备课修正耗时减少 15%",
               difficulty: "低"
             },
@@ -860,7 +948,8 @@ export default defineFakeRoute([
               correctPlanTime: 25,
               planWorkTime: 90,
               correctPlanWorkTime: 15,
-              optimizeDirection: "CSS 布局部分建议增加更多实战案例，减少理论讲解。",
+              optimizeDirection:
+                "CSS 布局部分建议增加更多实战案例，减少理论讲解。",
               expectedEffect: "预计作业设计修正耗时减少 20%",
               difficulty: "中"
             },
@@ -870,7 +959,8 @@ export default defineFakeRoute([
               correctPlanTime: 80,
               planWorkTime: 120,
               correctPlanWorkTime: 30,
-              optimizeDirection: "JVM 内存模型部分难度较大，建议拆分为两个课时进行讲解。",
+              optimizeDirection:
+                "JVM 内存模型部分难度较大，建议拆分为两个课时进行讲解。",
               expectedEffect: "预计备课时间减少 10%",
               difficulty: "高"
             },
@@ -880,7 +970,8 @@ export default defineFakeRoute([
               correctPlanTime: 15,
               planWorkTime: 60,
               correctPlanWorkTime: 10,
-              optimizeDirection: "动态规划算法是多数学生的薄弱点，可以增加 AI 生成的针对性题库。",
+              optimizeDirection:
+                "动态规划算法是多数学生的薄弱点，可以增加 AI 生成的针对性题库。",
               expectedEffect: "预计作业评改效率提高 25%",
               difficulty: "中"
             },
@@ -890,7 +981,8 @@ export default defineFakeRoute([
               correctPlanTime: 35,
               planWorkTime: 110,
               correctPlanWorkTime: 20,
-              optimizeDirection: "线性回归与逻辑回归的数学基础需要强化，建议补充线性代数内容。",
+              optimizeDirection:
+                "线性回归与逻辑回归的数学基础需要强化，建议补充线性代数内容。",
               expectedEffect: "预计备课时间减少 5%，学生掌握度提高 10%",
               difficulty: "由于涉及多门学科，难度较高"
             },
@@ -900,7 +992,8 @@ export default defineFakeRoute([
               correctPlanTime: 30,
               planWorkTime: 95,
               correctPlanWorkTime: 18,
-              optimizeDirection: "Docker 与 Kubernetes 的实操练习需要增加，提高学生的动手能力。",
+              optimizeDirection:
+                "Docker 与 Kubernetes 的实操练习需要增加，提高学生的动手能力。",
               expectedEffect: "预计实操课时占比增加 20%",
               difficulty: "中"
             }
@@ -960,7 +1053,11 @@ export default defineFakeRoute([
       return {
         code: 200,
         msg: "已提交生成任务",
-        data: { taskId: "task-" + Date.now(), status: "pending", message: "任务已进入队列" }
+        data: {
+          taskId: "task-" + Date.now(),
+          status: "pending",
+          message: "任务已进入队列"
+        }
       };
     }
   },
@@ -1000,8 +1097,22 @@ export default defineFakeRoute([
         data: {
           total: 2,
           userList: [
-            { id: 1, mobile: "13800138000", nickname: "张三", sex: 1, avatar: "", roleType: 1 },
-            { id: 2, mobile: "13900139000", nickname: "李老师", sex: 2, avatar: "", roleType: 2 }
+            {
+              id: 1,
+              mobile: "13800138000",
+              nickname: "张三",
+              sex: 1,
+              avatar: "",
+              roleType: 1
+            },
+            {
+              id: 2,
+              mobile: "13900139000",
+              nickname: "李老师",
+              sex: 2,
+              avatar: "",
+              roleType: 2
+            }
           ]
         }
       };
@@ -1016,7 +1127,15 @@ export default defineFakeRoute([
         msg: "success",
         data: {
           total: 1,
-          fileList: [{ fileId: 1, fileUrl: "http://example.com/a.png", fileName: "a.png", extension: "png", size: 1024 }]
+          fileList: [
+            {
+              fileId: 1,
+              fileUrl: "http://example.com/a.png",
+              fileName: "a.png",
+              extension: "png",
+              size: 1024
+            }
+          ]
         }
       };
     }
@@ -1044,7 +1163,9 @@ export default defineFakeRoute([
         filteredList = filteredList.filter(item => item.category === category);
       }
       if (status !== "") {
-        filteredList = filteredList.filter(item => item.status === parseInt(status));
+        filteredList = filteredList.filter(
+          item => item.status === parseInt(status)
+        );
       }
 
       const start = (pageNum - 1) * pageSize;
@@ -1066,7 +1187,10 @@ export default defineFakeRoute([
     method: "get",
     response: () => {
       const activeLabs = mockLabList.filter(item => item.status === 1).length;
-      const totalViews = mockLabList.reduce((sum, item) => sum + item.viewCount, 0);
+      const totalViews = mockLabList.reduce(
+        (sum, item) => sum + item.viewCount,
+        0
+      );
       return {
         code: 200,
         msg: "success",
@@ -1154,8 +1278,13 @@ export default defineFakeRoute([
     url: "/edu/backend/v1/competition/event/stats",
     method: "get",
     response: () => {
-      const ongoingEvents = mockEventList.filter(item => item.status === "ongoing").length;
-      const totalParticipants = mockEventList.reduce((sum, item) => sum + item.participants, 0);
+      const ongoingEvents = mockEventList.filter(
+        item => item.status === "ongoing"
+      ).length;
+      const totalParticipants = mockEventList.reduce(
+        (sum, item) => sum + item.participants,
+        0
+      );
       return {
         code: 200,
         msg: "success",
@@ -1172,7 +1301,9 @@ export default defineFakeRoute([
     method: "post",
     response: ({ body }) => {
       if (body.eventId) {
-        const index = mockEventList.findIndex(item => item.eventId === body.eventId);
+        const index = mockEventList.findIndex(
+          item => item.eventId === body.eventId
+        );
         if (index !== -1) {
           mockEventList[index] = { ...mockEventList[index], ...body };
         }
@@ -1191,7 +1322,9 @@ export default defineFakeRoute([
     url: "/edu/backend/v1/competition/event/delete",
     method: "post",
     response: ({ body }) => {
-      const index = mockEventList.findIndex(item => item.eventId === body.eventId);
+      const index = mockEventList.findIndex(
+        item => item.eventId === body.eventId
+      );
       if (index !== -1) {
         mockEventList.splice(index, 1);
       }
@@ -1207,11 +1340,46 @@ export default defineFakeRoute([
         msg: "success",
         data: {
           list: [
-            { userId: 1, username: "student001", realName: "张小明", className: "高一(1)班", registerTime: "2025-01-05 10:30:00", status: "completed" },
-            { userId: 2, username: "student002", realName: "李小红", className: "高一(1)班", registerTime: "2025-01-05 11:20:00", status: "completed" },
-            { userId: 3, username: "student003", realName: "王小刚", className: "高一(2)班", registerTime: "2025-01-05 14:15:00", status: "pending" },
-            { userId: 4, username: "student004", realName: "赵小美", className: "高一(2)班", registerTime: "2025-01-06 09:00:00", status: "pending" },
-            { userId: 5, username: "student005", realName: "刘小强", className: "高一(3)班", registerTime: "2025-01-06 10:30:00", status: "completed" }
+            {
+              userId: 1,
+              username: "student001",
+              realName: "张小明",
+              className: "高一(1)班",
+              registerTime: "2025-01-05 10:30:00",
+              status: "completed"
+            },
+            {
+              userId: 2,
+              username: "student002",
+              realName: "李小红",
+              className: "高一(1)班",
+              registerTime: "2025-01-05 11:20:00",
+              status: "completed"
+            },
+            {
+              userId: 3,
+              username: "student003",
+              realName: "王小刚",
+              className: "高一(2)班",
+              registerTime: "2025-01-05 14:15:00",
+              status: "pending"
+            },
+            {
+              userId: 4,
+              username: "student004",
+              realName: "赵小美",
+              className: "高一(2)班",
+              registerTime: "2025-01-06 09:00:00",
+              status: "pending"
+            },
+            {
+              userId: 5,
+              username: "student005",
+              realName: "刘小强",
+              className: "高一(3)班",
+              registerTime: "2025-01-06 10:30:00",
+              status: "completed"
+            }
           ]
         }
       };
@@ -1226,11 +1394,46 @@ export default defineFakeRoute([
         msg: "success",
         data: {
           list: [
-            { userId: 1, username: "算法大神", avatar: "", className: "高一(1)班", score: 98, duration: "45分32秒" },
-            { userId: 2, username: "代码狂人", avatar: "", className: "高一(2)班", score: 95, duration: "48分15秒" },
-            { userId: 3, username: "编程小王子", avatar: "", className: "高一(1)班", score: 92, duration: "52分08秒" },
-            { userId: 4, username: "刷题达人", avatar: "", className: "高一(3)班", score: 88, duration: "55分40秒" },
-            { userId: 5, username: "技术新星", avatar: "", className: "高一(2)班", score: 85, duration: "58分22秒" }
+            {
+              userId: 1,
+              username: "算法大神",
+              avatar: "",
+              className: "高一(1)班",
+              score: 98,
+              duration: "45分32秒"
+            },
+            {
+              userId: 2,
+              username: "代码狂人",
+              avatar: "",
+              className: "高一(2)班",
+              score: 95,
+              duration: "48分15秒"
+            },
+            {
+              userId: 3,
+              username: "编程小王子",
+              avatar: "",
+              className: "高一(1)班",
+              score: 92,
+              duration: "52分08秒"
+            },
+            {
+              userId: 4,
+              username: "刷题达人",
+              avatar: "",
+              className: "高一(3)班",
+              score: 88,
+              duration: "55分40秒"
+            },
+            {
+              userId: 5,
+              username: "技术新星",
+              avatar: "",
+              className: "高一(2)班",
+              score: 85,
+              duration: "58分22秒"
+            }
           ]
         }
       };
@@ -1259,13 +1462,97 @@ export default defineFakeRoute([
       const pageNum = parseInt(getQueryParam(query, "pageNum")) || 1;
       const pageSize = parseInt(getQueryParam(query, "pageSize")) || 10;
       const mockProblems = [
-        { problemId: 1, title: "两数之和", difficulty: "easy", tags: ["数组", "哈希表"], acceptCount: 1234, submitCount: 1856, acceptRate: 66.5, timeLimit: 1000, memoryLimit: 256, status: "published", createTime: "2024-01-15 10:00:00" },
-        { problemId: 2, title: "最长回文子串", difficulty: "medium", tags: ["字符串", "动态规划"], acceptCount: 856, submitCount: 1523, acceptRate: 56.2, timeLimit: 2000, memoryLimit: 256, status: "published", createTime: "2024-01-16 14:30:00" },
-        { problemId: 3, title: "合并K个升序链表", difficulty: "hard", tags: ["链表", "分治", "堆"], acceptCount: 423, submitCount: 1102, acceptRate: 38.4, timeLimit: 1000, memoryLimit: 512, status: "published", createTime: "2024-01-17 09:15:00" },
-        { problemId: 4, title: "有效的括号", difficulty: "easy", tags: ["栈", "字符串"], acceptCount: 2156, submitCount: 2789, acceptRate: 77.3, timeLimit: 1000, memoryLimit: 256, status: "published", createTime: "2024-01-18 11:00:00" },
-        { problemId: 5, title: "最大子数组和", difficulty: "medium", tags: ["数组", "动态规划"], acceptCount: 1567, submitCount: 2345, acceptRate: 66.8, timeLimit: 1000, memoryLimit: 256, status: "published", createTime: "2024-01-19 16:20:00" },
-        { problemId: 6, title: "接雨水", difficulty: "hard", tags: ["数组", "双指针", "动态规划"], acceptCount: 678, submitCount: 1890, acceptRate: 35.9, timeLimit: 1000, memoryLimit: 256, status: "published", createTime: "2024-01-20 08:45:00" },
-        { problemId: 7, title: "二分查找", difficulty: "easy", tags: ["数组", "二分查找"], acceptCount: 1890, submitCount: 2234, acceptRate: 84.6, timeLimit: 1000, memoryLimit: 256, status: "draft", createTime: "2024-01-21 10:30:00" }
+        {
+          problemId: 1,
+          title: "两数之和",
+          difficulty: "easy",
+          tags: ["数组", "哈希表"],
+          acceptCount: 1234,
+          submitCount: 1856,
+          acceptRate: 66.5,
+          timeLimit: 1000,
+          memoryLimit: 256,
+          status: "published",
+          createTime: "2024-01-15 10:00:00"
+        },
+        {
+          problemId: 2,
+          title: "最长回文子串",
+          difficulty: "medium",
+          tags: ["字符串", "动态规划"],
+          acceptCount: 856,
+          submitCount: 1523,
+          acceptRate: 56.2,
+          timeLimit: 2000,
+          memoryLimit: 256,
+          status: "published",
+          createTime: "2024-01-16 14:30:00"
+        },
+        {
+          problemId: 3,
+          title: "合并K个升序链表",
+          difficulty: "hard",
+          tags: ["链表", "分治", "堆"],
+          acceptCount: 423,
+          submitCount: 1102,
+          acceptRate: 38.4,
+          timeLimit: 1000,
+          memoryLimit: 512,
+          status: "published",
+          createTime: "2024-01-17 09:15:00"
+        },
+        {
+          problemId: 4,
+          title: "有效的括号",
+          difficulty: "easy",
+          tags: ["栈", "字符串"],
+          acceptCount: 2156,
+          submitCount: 2789,
+          acceptRate: 77.3,
+          timeLimit: 1000,
+          memoryLimit: 256,
+          status: "published",
+          createTime: "2024-01-18 11:00:00"
+        },
+        {
+          problemId: 5,
+          title: "最大子数组和",
+          difficulty: "medium",
+          tags: ["数组", "动态规划"],
+          acceptCount: 1567,
+          submitCount: 2345,
+          acceptRate: 66.8,
+          timeLimit: 1000,
+          memoryLimit: 256,
+          status: "published",
+          createTime: "2024-01-19 16:20:00"
+        },
+        {
+          problemId: 6,
+          title: "接雨水",
+          difficulty: "hard",
+          tags: ["数组", "双指针", "动态规划"],
+          acceptCount: 678,
+          submitCount: 1890,
+          acceptRate: 35.9,
+          timeLimit: 1000,
+          memoryLimit: 256,
+          status: "published",
+          createTime: "2024-01-20 08:45:00"
+        },
+        {
+          problemId: 7,
+          title: "二分查找",
+          difficulty: "easy",
+          tags: ["数组", "二分查找"],
+          acceptCount: 1890,
+          submitCount: 2234,
+          acceptRate: 84.6,
+          timeLimit: 1000,
+          memoryLimit: 256,
+          status: "draft",
+          createTime: "2024-01-21 10:30:00"
+        }
       ];
       return {
         code: 200,
@@ -1290,11 +1577,17 @@ export default defineFakeRoute([
           title: "两数之和",
           difficulty: "easy",
           tags: ["数组", "哈希表"],
-          content: "给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出和为目标值 target 的那两个整数，并返回它们的数组下标。\n\n你可以假设每种输入只会对应一个答案，且同样的元素不能被重复利用。",
-          inputFormat: "第一行包含两个整数 n 和 target，表示数组长度和目标值。\n第二行包含 n 个整数，表示数组元素。",
+          content:
+            "给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出和为目标值 target 的那两个整数，并返回它们的数组下标。\n\n你可以假设每种输入只会对应一个答案，且同样的元素不能被重复利用。",
+          inputFormat:
+            "第一行包含两个整数 n 和 target，表示数组长度和目标值。\n第二行包含 n 个整数，表示数组元素。",
           outputFormat: "输出两个整数，表示两个数的下标（从0开始）。",
           examples: [
-            { input: "4 9\n2 7 11 15", output: "0 1", explanation: "因为 nums[0] + nums[1] == 9，返回 [0, 1]" },
+            {
+              input: "4 9\n2 7 11 15",
+              output: "0 1",
+              explanation: "因为 nums[0] + nums[1] == 9，返回 [0, 1]"
+            },
             { input: "3 6\n3 2 4", output: "1 2" }
           ],
           timeLimit: 1000,
@@ -1326,21 +1619,112 @@ export default defineFakeRoute([
       const pageNum = parseInt(getQueryParam(query, "pageNum")) || 1;
       const pageSize = parseInt(getQueryParam(query, "pageSize")) || 10;
       const mockSubmissions = [
-        { submissionId: 1001, problemId: 1, problemTitle: "两数之和", userId: 1, username: "张小明", language: "cpp", status: "accepted", runTime: 4, memory: 8.2, submitTime: "2025-01-15 14:32:15" },
-        { submissionId: 1002, problemId: 2, problemTitle: "最长回文子串", userId: 2, username: "李小红", language: "python", status: "wrong_answer", runTime: 120, memory: 15.6, submitTime: "2025-01-15 14:35:22" },
-        { submissionId: 1003, problemId: 3, problemTitle: "合并K个升序链表", userId: 3, username: "王小刚", language: "java", status: "time_limit", runTime: 2000, memory: 32.4, submitTime: "2025-01-15 14:40:08" },
-        { submissionId: 1004, problemId: 1, problemTitle: "两数之和", userId: 4, username: "赵小美", language: "cpp", status: "accepted", runTime: 2, memory: 7.8, submitTime: "2025-01-15 14:45:33" },
-        { submissionId: 1005, problemId: 4, problemTitle: "有效的括号", userId: 1, username: "张小明", language: "python", status: "runtime_error", runTime: 0, memory: 0, submitTime: "2025-01-15 14:50:17" },
-        { submissionId: 1006, problemId: 5, problemTitle: "最大子数组和", userId: 5, username: "刘小强", language: "cpp", status: "accepted", runTime: 8, memory: 9.1, submitTime: "2025-01-15 15:02:45" },
-        { submissionId: 1007, problemId: 6, problemTitle: "接雨水", userId: 2, username: "李小红", language: "java", status: "memory_limit", runTime: 156, memory: 512, submitTime: "2025-01-15 15:10:28" },
-        { submissionId: 1008, problemId: 2, problemTitle: "最长回文子串", userId: 3, username: "王小刚", language: "cpp", status: "compile_error", runTime: 0, memory: 0, submitTime: "2025-01-15 15:15:33" }
+        {
+          submissionId: 1001,
+          problemId: 1,
+          problemTitle: "两数之和",
+          userId: 1,
+          username: "张小明",
+          language: "cpp",
+          status: "accepted",
+          runTime: 4,
+          memory: 8.2,
+          submitTime: "2025-01-15 14:32:15"
+        },
+        {
+          submissionId: 1002,
+          problemId: 2,
+          problemTitle: "最长回文子串",
+          userId: 2,
+          username: "李小红",
+          language: "python",
+          status: "wrong_answer",
+          runTime: 120,
+          memory: 15.6,
+          submitTime: "2025-01-15 14:35:22"
+        },
+        {
+          submissionId: 1003,
+          problemId: 3,
+          problemTitle: "合并K个升序链表",
+          userId: 3,
+          username: "王小刚",
+          language: "java",
+          status: "time_limit",
+          runTime: 2000,
+          memory: 32.4,
+          submitTime: "2025-01-15 14:40:08"
+        },
+        {
+          submissionId: 1004,
+          problemId: 1,
+          problemTitle: "两数之和",
+          userId: 4,
+          username: "赵小美",
+          language: "cpp",
+          status: "accepted",
+          runTime: 2,
+          memory: 7.8,
+          submitTime: "2025-01-15 14:45:33"
+        },
+        {
+          submissionId: 1005,
+          problemId: 4,
+          problemTitle: "有效的括号",
+          userId: 1,
+          username: "张小明",
+          language: "python",
+          status: "runtime_error",
+          runTime: 0,
+          memory: 0,
+          submitTime: "2025-01-15 14:50:17"
+        },
+        {
+          submissionId: 1006,
+          problemId: 5,
+          problemTitle: "最大子数组和",
+          userId: 5,
+          username: "刘小强",
+          language: "cpp",
+          status: "accepted",
+          runTime: 8,
+          memory: 9.1,
+          submitTime: "2025-01-15 15:02:45"
+        },
+        {
+          submissionId: 1007,
+          problemId: 6,
+          problemTitle: "接雨水",
+          userId: 2,
+          username: "李小红",
+          language: "java",
+          status: "memory_limit",
+          runTime: 156,
+          memory: 512,
+          submitTime: "2025-01-15 15:10:28"
+        },
+        {
+          submissionId: 1008,
+          problemId: 2,
+          problemTitle: "最长回文子串",
+          userId: 3,
+          username: "王小刚",
+          language: "cpp",
+          status: "compile_error",
+          runTime: 0,
+          memory: 0,
+          submitTime: "2025-01-15 15:15:33"
+        }
       ];
       return {
         code: 200,
         msg: "success",
         data: {
           total: mockSubmissions.length,
-          list: mockSubmissions.slice((pageNum - 1) * pageSize, pageNum * pageSize)
+          list: mockSubmissions.slice(
+            (pageNum - 1) * pageSize,
+            pageNum * pageSize
+          )
         }
       };
     }
@@ -1426,12 +1810,84 @@ int main() {
       const pageNum = parseInt(getQueryParam(query, "pageNum")) || 1;
       const pageSize = parseInt(getQueryParam(query, "pageSize")) || 10;
       const mockEssays = [
-        { essayId: 1, topicId: 1, topicTitle: "我的梦想", studentId: 1, studentName: "张小明", className: "高一(1)班", wordCount: 856, submitTime: "2025-01-15 09:30:00", aiScore: 85, teacherScore: 88, status: "teacher_reviewed" },
-        { essayId: 2, topicId: 1, topicTitle: "我的梦想", studentId: 2, studentName: "李小红", className: "高一(1)班", wordCount: 923, submitTime: "2025-01-15 10:15:00", aiScore: 78, teacherScore: null, status: "ai_reviewed" },
-        { essayId: 3, topicId: 1, topicTitle: "我的梦想", studentId: 3, studentName: "王小刚", className: "高一(2)班", wordCount: 756, submitTime: "2025-01-15 11:00:00", aiScore: null, teacherScore: null, status: "pending" },
-        { essayId: 4, topicId: 2, topicTitle: "春天的故事", studentId: 4, studentName: "赵小美", className: "高一(2)班", wordCount: 1024, submitTime: "2025-01-14 14:20:00", aiScore: 92, teacherScore: 90, status: "teacher_reviewed" },
-        { essayId: 5, topicId: 2, topicTitle: "春天的故事", studentId: 5, studentName: "刘小强", className: "高一(3)班", wordCount: 889, submitTime: "2025-01-14 15:45:00", aiScore: 82, teacherScore: null, status: "ai_reviewed" },
-        { essayId: 6, topicId: 3, topicTitle: "读书的意义", studentId: 1, studentName: "张小明", className: "高一(1)班", wordCount: 945, submitTime: "2025-01-13 09:00:00", aiScore: 88, teacherScore: 85, status: "teacher_reviewed" }
+        {
+          essayId: 1,
+          topicId: 1,
+          topicTitle: "我的梦想",
+          studentId: 1,
+          studentName: "张小明",
+          className: "高一(1)班",
+          wordCount: 856,
+          submitTime: "2025-01-15 09:30:00",
+          aiScore: 85,
+          teacherScore: 88,
+          status: "teacher_reviewed"
+        },
+        {
+          essayId: 2,
+          topicId: 1,
+          topicTitle: "我的梦想",
+          studentId: 2,
+          studentName: "李小红",
+          className: "高一(1)班",
+          wordCount: 923,
+          submitTime: "2025-01-15 10:15:00",
+          aiScore: 78,
+          teacherScore: null,
+          status: "ai_reviewed"
+        },
+        {
+          essayId: 3,
+          topicId: 1,
+          topicTitle: "我的梦想",
+          studentId: 3,
+          studentName: "王小刚",
+          className: "高一(2)班",
+          wordCount: 756,
+          submitTime: "2025-01-15 11:00:00",
+          aiScore: null,
+          teacherScore: null,
+          status: "pending"
+        },
+        {
+          essayId: 4,
+          topicId: 2,
+          topicTitle: "春天的故事",
+          studentId: 4,
+          studentName: "赵小美",
+          className: "高一(2)班",
+          wordCount: 1024,
+          submitTime: "2025-01-14 14:20:00",
+          aiScore: 92,
+          teacherScore: 90,
+          status: "teacher_reviewed"
+        },
+        {
+          essayId: 5,
+          topicId: 2,
+          topicTitle: "春天的故事",
+          studentId: 5,
+          studentName: "刘小强",
+          className: "高一(3)班",
+          wordCount: 889,
+          submitTime: "2025-01-14 15:45:00",
+          aiScore: 82,
+          teacherScore: null,
+          status: "ai_reviewed"
+        },
+        {
+          essayId: 6,
+          topicId: 3,
+          topicTitle: "读书的意义",
+          studentId: 1,
+          studentName: "张小明",
+          className: "高一(1)班",
+          wordCount: 945,
+          submitTime: "2025-01-13 09:00:00",
+          aiScore: 88,
+          teacherScore: 85,
+          status: "teacher_reviewed"
+        }
       ];
       return {
         code: 200,
@@ -1455,7 +1911,8 @@ int main() {
           essayId,
           topicId: 1,
           topicTitle: "我的梦想",
-          topicRequirement: "请以'我的梦想'为题，写一篇不少于800字的记叙文或议论文，要求内容真实、情感真挚、结构完整。",
+          topicRequirement:
+            "请以'我的梦想'为题，写一篇不少于800字的记叙文或议论文，要求内容真实、情感真挚、结构完整。",
           studentId: 1,
           studentName: "张小明",
           className: "高一(1)班",
@@ -1475,10 +1932,30 @@ int main() {
           aiResult: {
             score: 85,
             dimensions: [
-              { name: "内容立意", score: 22, maxScore: 25, comment: "主题明确，立意积极向上，但部分论述略显浅显" },
-              { name: "结构层次", score: 20, maxScore: 25, comment: "结构完整，层次分明，过渡自然" },
-              { name: "语言表达", score: 23, maxScore: 25, comment: "语言流畅，用词准确，有一定的文采" },
-              { name: "书写规范", score: 20, maxScore: 25, comment: "标点使用正确，段落划分合理" }
+              {
+                name: "内容立意",
+                score: 22,
+                maxScore: 25,
+                comment: "主题明确，立意积极向上，但部分论述略显浅显"
+              },
+              {
+                name: "结构层次",
+                score: 20,
+                maxScore: 25,
+                comment: "结构完整，层次分明，过渡自然"
+              },
+              {
+                name: "语言表达",
+                score: 23,
+                maxScore: 25,
+                comment: "语言流畅，用词准确，有一定的文采"
+              },
+              {
+                name: "书写规范",
+                score: 20,
+                maxScore: 25,
+                comment: "标点使用正确，段落划分合理"
+              }
             ],
             strengths: [
               "文章结构完整，开头点题，结尾呼应",
@@ -1495,13 +1972,24 @@ int main() {
               "结尾可以联系社会发展，拓宽文章视野"
             ],
             corrections: [
-              { original: "仿佛打开了一扇通往新世界的大门", corrected: "仿佛为我打开了一扇通往新世界的大门", type: "语句优化", reason: "增加主语使句子更完整" },
-              { original: "我便深深爱上了编程这门技术", corrected: "我便深深爱上了编程这门艺术", type: "用词建议", reason: "\"艺术\"更能体现对编程的热爱和追求" }
+              {
+                original: "仿佛打开了一扇通往新世界的大门",
+                corrected: "仿佛为我打开了一扇通往新世界的大门",
+                type: "语句优化",
+                reason: "增加主语使句子更完整"
+              },
+              {
+                original: "我便深深爱上了编程这门技术",
+                corrected: "我便深深爱上了编程这门艺术",
+                type: "用词建议",
+                reason: '"艺术"更能体现对编程的热爱和追求'
+              }
             ]
           },
           teacherResult: {
             score: 88,
-            comment: "这是一篇优秀的命题作文。小明同学以软件工程师的梦想为主线，通过具体的经历展现了对编程的热爱和追求。文章结构清晰，语言流畅，情感真挚。建议在今后的写作中，可以更加深入地挖掘主题的社会意义，使文章更具深度。继续加油！",
+            comment:
+              "这是一篇优秀的命题作文。小明同学以软件工程师的梦想为主线，通过具体的经历展现了对编程的热爱和追求。文章结构清晰，语言流畅，情感真挚。建议在今后的写作中，可以更加深入地挖掘主题的社会意义，使文章更具深度。继续加油！",
             reviewTime: "2025-01-15 16:30:00"
           }
         }
@@ -1531,9 +2019,24 @@ int main() {
       msg: "success",
       data: {
         list: [
-          { topicId: 1, title: "我的梦想", deadline: "2025-01-20 23:59:59", submissions: 45 },
-          { topicId: 2, title: "春天的故事", deadline: "2025-01-25 23:59:59", submissions: 32 },
-          { topicId: 3, title: "读书的意义", deadline: "2025-01-30 23:59:59", submissions: 28 }
+          {
+            topicId: 1,
+            title: "我的梦想",
+            deadline: "2025-01-20 23:59:59",
+            submissions: 45
+          },
+          {
+            topicId: 2,
+            title: "春天的故事",
+            deadline: "2025-01-25 23:59:59",
+            submissions: 32
+          },
+          {
+            topicId: 3,
+            title: "读书的意义",
+            deadline: "2025-01-30 23:59:59",
+            submissions: 28
+          }
         ]
       }
     })
@@ -1620,21 +2123,112 @@ int main() {
       const pageNum = parseInt(getQueryParam(query, "pageNum")) || 1;
       const pageSize = parseInt(getQueryParam(query, "pageSize")) || 10;
       const mockQuestions = [
-        { questionId: 1, content: "以下哪个不是Python的内置数据类型？", type: "single", difficulty: "easy", categoryId: 21, categoryName: "Python基础", score: 5, usageCount: 156, accuracy: 85.3, createTime: "2024-12-01 10:00:00" },
-        { questionId: 2, content: "在Java中，以下哪些关键字用于异常处理？", type: "multiple", difficulty: "medium", categoryId: 22, categoryName: "Java基础", score: 10, usageCount: 123, accuracy: 68.7, createTime: "2024-12-02 14:30:00" },
-        { questionId: 3, content: "TCP协议是面向连接的协议", type: "judge", difficulty: "easy", categoryId: 13, categoryName: "计算机网络", score: 5, usageCount: 234, accuracy: 92.1, createTime: "2024-12-03 09:15:00" },
-        { questionId: 4, content: "请说明OSI七层模型的各层功能", type: "essay", difficulty: "hard", categoryId: 13, categoryName: "计算机网络", score: 20, usageCount: 89, accuracy: 45.6, createTime: "2024-12-04 11:00:00" },
-        { questionId: 5, content: "快速排序的平均时间复杂度是____", type: "fill", difficulty: "medium", categoryId: 32, categoryName: "排序算法", score: 5, usageCount: 178, accuracy: 76.2, createTime: "2024-12-05 16:20:00" },
-        { questionId: 6, content: "以下哪种数据结构采用先进先出(FIFO)的原则？", type: "single", difficulty: "easy", categoryId: 31, categoryName: "基础数据结构", score: 5, usageCount: 267, accuracy: 88.9, createTime: "2024-12-06 08:45:00" },
-        { questionId: 7, content: "二叉树的遍历方式包括哪些？", type: "multiple", difficulty: "medium", categoryId: 31, categoryName: "基础数据结构", score: 10, usageCount: 198, accuracy: 72.4, createTime: "2024-12-07 10:30:00" },
-        { questionId: 8, content: "对称加密算法的密钥分发比非对称加密更安全", type: "judge", difficulty: "medium", categoryId: 41, categoryName: "密码学基础", score: 5, usageCount: 145, accuracy: 61.8, createTime: "2024-12-08 14:00:00" }
+        {
+          questionId: 1,
+          content: "以下哪个不是Python的内置数据类型？",
+          type: "single",
+          difficulty: "easy",
+          categoryId: 21,
+          categoryName: "Python基础",
+          score: 5,
+          usageCount: 156,
+          accuracy: 85.3,
+          createTime: "2024-12-01 10:00:00"
+        },
+        {
+          questionId: 2,
+          content: "在Java中，以下哪些关键字用于异常处理？",
+          type: "multiple",
+          difficulty: "medium",
+          categoryId: 22,
+          categoryName: "Java基础",
+          score: 10,
+          usageCount: 123,
+          accuracy: 68.7,
+          createTime: "2024-12-02 14:30:00"
+        },
+        {
+          questionId: 3,
+          content: "TCP协议是面向连接的协议",
+          type: "judge",
+          difficulty: "easy",
+          categoryId: 13,
+          categoryName: "计算机网络",
+          score: 5,
+          usageCount: 234,
+          accuracy: 92.1,
+          createTime: "2024-12-03 09:15:00"
+        },
+        {
+          questionId: 4,
+          content: "请说明OSI七层模型的各层功能",
+          type: "essay",
+          difficulty: "hard",
+          categoryId: 13,
+          categoryName: "计算机网络",
+          score: 20,
+          usageCount: 89,
+          accuracy: 45.6,
+          createTime: "2024-12-04 11:00:00"
+        },
+        {
+          questionId: 5,
+          content: "快速排序的平均时间复杂度是____",
+          type: "fill",
+          difficulty: "medium",
+          categoryId: 32,
+          categoryName: "排序算法",
+          score: 5,
+          usageCount: 178,
+          accuracy: 76.2,
+          createTime: "2024-12-05 16:20:00"
+        },
+        {
+          questionId: 6,
+          content: "以下哪种数据结构采用先进先出(FIFO)的原则？",
+          type: "single",
+          difficulty: "easy",
+          categoryId: 31,
+          categoryName: "基础数据结构",
+          score: 5,
+          usageCount: 267,
+          accuracy: 88.9,
+          createTime: "2024-12-06 08:45:00"
+        },
+        {
+          questionId: 7,
+          content: "二叉树的遍历方式包括哪些？",
+          type: "multiple",
+          difficulty: "medium",
+          categoryId: 31,
+          categoryName: "基础数据结构",
+          score: 10,
+          usageCount: 198,
+          accuracy: 72.4,
+          createTime: "2024-12-07 10:30:00"
+        },
+        {
+          questionId: 8,
+          content: "对称加密算法的密钥分发比非对称加密更安全",
+          type: "judge",
+          difficulty: "medium",
+          categoryId: 41,
+          categoryName: "密码学基础",
+          score: 5,
+          usageCount: 145,
+          accuracy: 61.8,
+          createTime: "2024-12-08 14:00:00"
+        }
       ];
       return {
         code: 200,
         msg: "success",
         data: {
           total: mockQuestions.length,
-          list: mockQuestions.slice((pageNum - 1) * pageSize, pageNum * pageSize)
+          list: mockQuestions.slice(
+            (pageNum - 1) * pageSize,
+            pageNum * pageSize
+          )
         }
       };
     }
@@ -1661,7 +2255,8 @@ int main() {
             { content: "dict", isAnswer: false }
           ],
           answer: 2,
-          analysis: "Python的内置数据类型包括：int, float, str, list, tuple, dict, set等。array不是Python的内置类型，需要导入array模块或使用numpy库。"
+          analysis:
+            "Python的内置数据类型包括：int, float, str, list, tuple, dict, set等。array不是Python的内置类型，需要导入array模块或使用numpy库。"
         }
       };
     }
@@ -1700,15 +2295,69 @@ int main() {
       msg: "success",
       data: {
         list: [
-          { userId: 1, username: "算法大神", avatar: "", points: 2580, rank: 1 },
-          { userId: 2, username: "代码狂人", avatar: "", points: 2340, rank: 2 },
-          { userId: 3, username: "编程小王子", avatar: "", points: 2120, rank: 3 },
-          { userId: 4, username: "刷题达人", avatar: "", points: 1980, rank: 4 },
-          { userId: 5, username: "技术新星", avatar: "", points: 1850, rank: 5 },
-          { userId: 6, username: "学霸小明", avatar: "", points: 1720, rank: 6 },
-          { userId: 7, username: "努力的小红", avatar: "", points: 1650, rank: 7 },
-          { userId: 8, username: "进步青年", avatar: "", points: 1580, rank: 8 },
-          { userId: 9, username: "勤奋学子", avatar: "", points: 1490, rank: 9 },
+          {
+            userId: 1,
+            username: "算法大神",
+            avatar: "",
+            points: 2580,
+            rank: 1
+          },
+          {
+            userId: 2,
+            username: "代码狂人",
+            avatar: "",
+            points: 2340,
+            rank: 2
+          },
+          {
+            userId: 3,
+            username: "编程小王子",
+            avatar: "",
+            points: 2120,
+            rank: 3
+          },
+          {
+            userId: 4,
+            username: "刷题达人",
+            avatar: "",
+            points: 1980,
+            rank: 4
+          },
+          {
+            userId: 5,
+            username: "技术新星",
+            avatar: "",
+            points: 1850,
+            rank: 5
+          },
+          {
+            userId: 6,
+            username: "学霸小明",
+            avatar: "",
+            points: 1720,
+            rank: 6
+          },
+          {
+            userId: 7,
+            username: "努力的小红",
+            avatar: "",
+            points: 1650,
+            rank: 7
+          },
+          {
+            userId: 8,
+            username: "进步青年",
+            avatar: "",
+            points: 1580,
+            rank: 8
+          },
+          {
+            userId: 9,
+            username: "勤奋学子",
+            avatar: "",
+            points: 1490,
+            rank: 9
+          },
           { userId: 10, username: "追梦人", avatar: "", points: 1420, rank: 10 }
         ]
       }

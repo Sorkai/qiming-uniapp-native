@@ -699,20 +699,20 @@ onMounted(() => {
 <style lang="scss" scoped>
 .review-queue {
   :deep(.el-card) {
-    border-radius: 12px;
     border: none;
-    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%);
     transition: all 0.3s;
 
     html.dark & {
-      box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px 0 rgb(0 0 0 / 20%);
     }
 
     &:hover {
-      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 24px 0 rgb(0 0 0 / 10%);
 
       html.dark & {
-        box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.4);
+        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 40%);
       }
     }
   }
@@ -720,18 +720,18 @@ onMounted(() => {
   .stat-card {
     .stat-content {
       display: flex;
-      align-items: center;
       gap: 16px;
+      align-items: center;
       padding: 8px 0;
 
       .stat-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 56px;
+        height: 56px;
         color: #fff;
+        border-radius: 12px;
 
         &.warning {
           background: linear-gradient(135deg, #e6a23c, #f5c76e);
@@ -754,9 +754,9 @@ onMounted(() => {
         }
 
         .stat-label {
+          margin-top: 4px;
           font-size: 14px;
           color: #909399;
-          margin-top: 4px;
         }
       }
     }
@@ -794,16 +794,16 @@ onMounted(() => {
         }
 
         :deep(code) {
-          background: #e8e8e8;
           padding: 2px 6px;
+          background: #e8e8e8;
           border-radius: 4px;
         }
 
         :deep(pre) {
-          background: #e8e8e8;
           padding: 12px;
-          border-radius: 8px;
           overflow-x: auto;
+          background: #e8e8e8;
+          border-radius: 8px;
         }
       }
     }

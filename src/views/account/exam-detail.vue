@@ -223,8 +223,8 @@
       <el-button
         type="primary"
         size="large"
-        @click="submitExam"
         :loading="submitting"
+        @click="submitExam"
       >
         提交考试
       </el-button>
@@ -572,41 +572,41 @@ onBeforeUnmount(() => {
   transition: background-color 0.3s;
 
   &.dark {
-    background-color: #1a1a1a;
     color: #e0e0e0;
+    background-color: #1a1a1a;
   }
 
   .header {
     position: fixed;
     top: 0;
-    left: 0;
     right: 0;
+    left: 0;
+    z-index: 1000;
     height: 60px;
     background-color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: background-color 0.3s;
 
     &.dark {
       background-color: #252525;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
     }
 
     .header-content {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      max-width: 1200px;
       height: 100%;
       padding: 0 32px;
-      max-width: 1200px;
       margin: 0 auto;
 
       .back-btn {
         display: flex;
         align-items: center;
-        cursor: pointer;
-        font-size: 14px;
         min-width: 60px;
+        font-size: 14px;
+        cursor: pointer;
 
         .el-icon {
           margin-right: 5px;
@@ -614,17 +614,17 @@ onBeforeUnmount(() => {
       }
 
       .title {
+        flex: 1;
         font-size: 18px;
         font-weight: bold;
-        flex: 1;
         text-align: center;
       }
 
       .timer {
+        min-width: 100px;
         font-size: 16px;
         font-weight: bold;
         color: #f56c6c;
-        min-width: 100px;
         text-align: right;
       }
     }
@@ -632,13 +632,13 @@ onBeforeUnmount(() => {
 
   .main-content {
     max-width: 1200px;
-    margin: 0 auto;
     padding: 0 32px;
+    margin: 0 auto;
 
     &.dark {
       :deep(.el-card) {
-        background-color: #252525;
         color: #e0e0e0;
+        background-color: #252525;
         border: 1px solid #333;
 
         .el-card__header {
@@ -658,20 +658,20 @@ onBeforeUnmount(() => {
         display: flex;
         flex-wrap: wrap;
         gap: 15px;
-        font-size: 14px;
-        color: #666;
         justify-content: center;
         margin-bottom: 20px;
+        font-size: 14px;
+        color: #666;
 
         .dark & {
           color: #aaa;
         }
 
         .exam-status {
-          font-weight: bold;
           padding: 4px 8px;
-          border-radius: 4px;
           font-size: 12px;
+          font-weight: bold;
+          border-radius: 4px;
         }
 
         .completed {
@@ -680,8 +680,8 @@ onBeforeUnmount(() => {
           border: 1px solid #e1f3d8;
 
           .dark & {
-            background-color: rgba(103, 194, 58, 0.2);
-            border-color: rgba(103, 194, 58, 0.3);
+            background-color: rgb(103 194 58 / 20%);
+            border-color: rgb(103 194 58 / 30%);
           }
         }
 
@@ -691,8 +691,8 @@ onBeforeUnmount(() => {
           border: 1px solid #fde2e2;
 
           .dark & {
-            background-color: rgba(245, 108, 108, 0.2);
-            border-color: rgba(245, 108, 108, 0.3);
+            background-color: rgb(245 108 108 / 20%);
+            border-color: rgb(245 108 108 / 30%);
           }
         }
 
@@ -702,8 +702,8 @@ onBeforeUnmount(() => {
           border: 1px solid #e9e9eb;
 
           .dark & {
-            background-color: rgba(144, 147, 153, 0.2);
-            border-color: rgba(144, 147, 153, 0.3);
+            background-color: rgb(144 147 153 / 20%);
+            border-color: rgb(144 147 153 / 30%);
           }
         }
 
@@ -713,8 +713,8 @@ onBeforeUnmount(() => {
           border: 1px solid #faecd8;
 
           .dark & {
-            background-color: rgba(230, 162, 60, 0.2);
-            border-color: rgba(230, 162, 60, 0.3);
+            background-color: rgb(230 162 60 / 20%);
+            border-color: rgb(230 162 60 / 30%);
           }
         }
       }
@@ -726,14 +726,14 @@ onBeforeUnmount(() => {
 
     .questions-container {
       .description {
-        margin-bottom: 20px;
         padding: 15px;
+        margin-bottom: 20px;
         background-color: #f8f9fa;
         border-radius: 4px;
 
         .label {
-          font-weight: bold;
           margin-bottom: 10px;
+          font-weight: bold;
         }
 
         .content {
@@ -741,23 +741,23 @@ onBeforeUnmount(() => {
         }
 
         .dark & {
-          background-color: #333;
           color: #e0e0e0;
+          background-color: #333;
         }
       }
 
       .questions-list {
         .question-item {
-          margin-bottom: 30px;
           padding: 20px;
-          border-radius: 6px;
+          margin-bottom: 30px;
           background-color: #fff;
-          box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+          border-radius: 6px;
+          box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
 
           &.dark {
-            background-color: #333;
-            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.15);
             color: #e0e0e0;
+            background-color: #333;
+            box-shadow: 0 2px 12px 0 rgb(0 0 0 / 15%);
           }
 
           .question-header {
@@ -777,8 +777,8 @@ onBeforeUnmount(() => {
               .question-score {
                 margin-left: 10px;
                 font-size: 14px;
-                color: #606266;
                 font-weight: normal;
+                color: #606266;
 
                 .dark & {
                   color: #aaa;
@@ -811,11 +811,11 @@ onBeforeUnmount(() => {
         margin: 30px 0;
 
         p {
-          margin-top: 10px;
-          color: #909399;
-          font-size: 14px;
-          text-align: center;
           max-width: 400px;
+          margin-top: 10px;
+          font-size: 14px;
+          color: #909399;
+          text-align: center;
         }
       }
 
@@ -848,9 +848,9 @@ onBeforeUnmount(() => {
     }
 
     .total-score {
+      margin-left: 5px;
       font-size: 18px;
       color: #606266;
-      margin-left: 5px;
     }
   }
 
@@ -862,22 +862,22 @@ onBeforeUnmount(() => {
 
 .footer-actions {
   position: fixed;
+  right: 0;
   bottom: 0;
   left: 0;
-  right: 0;
-  height: 60px;
-  background-color: #fff;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
   z-index: 999;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  height: 60px;
   padding: 0 20px;
+  background-color: #fff;
+  box-shadow: 0 -2px 8px rgb(0 0 0 / 10%);
   transition: background-color 0.3s;
 
   &.dark {
     background-color: #252525;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 -2px 8px rgb(0 0 0 / 30%);
   }
 }
 </style>

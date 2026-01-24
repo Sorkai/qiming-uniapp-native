@@ -7,6 +7,7 @@
 ### 功能概述
 
 课程讨论区为学生和教师提供课程相关问题的交流平台，支持：
+
 - 📝 发布讨论帖子（支持 Markdown）
 - 💬 多级回复（支持楼中楼）
 - 👍 点赞互动
@@ -23,32 +24,32 @@
 
 ### 角色定义
 
-| 角色 | 标识 | 说明 |
-|------|------|------|
-| 学生 | `student` | 普通学生用户，可发帖、回复、点赞、举报 |
-| 教师 | `teacher` | 课程教师，额外拥有置顶、审核本课程讨论的权限 |
-| 管理员 | `admin` | 系统管理员，拥有全局管理权限 |
+| 角色   | 标识      | 说明                                         |
+| ------ | --------- | -------------------------------------------- |
+| 学生   | `student` | 普通学生用户，可发帖、回复、点赞、举报       |
+| 教师   | `teacher` | 课程教师，额外拥有置顶、审核本课程讨论的权限 |
+| 管理员 | `admin`   | 系统管理员，拥有全局管理权限                 |
 
 ### 权限矩阵
 
-| 功能 | 学生 | 教师 | 管理员 |
-|------|:----:|:----:|:------:|
-| 查看讨论列表 | ✅ | ✅ | ✅ |
-| 发布讨论 | ✅ | ✅ | ✅ |
-| 编辑自己的讨论 | ✅ | ✅ | ✅ |
-| 删除自己的讨论 | ✅ | ✅ | ✅ |
-| 发布/删除回复 | ✅ | ✅ | ✅ |
-| 点赞/取消点赞 | ✅ | ✅ | ✅ |
-| 举报内容 | ✅ | ✅ | ✅ |
-| 置顶/取消置顶 | ❌ | ✅ | ✅ |
-| 审核内容 | ❌ | ✅ | ✅ |
-| 删除他人讨论/回复 | ❌ | ✅ | ✅ |
-| 查看审核队列 | ❌ | ✅ | ✅ |
-| 查看举报列表 | ❌ | ✅ | ✅ |
-| 管理敏感词 | ❌ | ❌ | ✅ |
-| 查看全局统计 | ❌ | ❌ | ✅ |
-| 管理用户信誉 | ❌ | ❌ | ✅ |
-| 批量操作 | ❌ | ❌ | ✅ |
+| 功能              | 学生 | 教师 | 管理员 |
+| ----------------- | :--: | :--: | :----: |
+| 查看讨论列表      |  ✅  |  ✅  |   ✅   |
+| 发布讨论          |  ✅  |  ✅  |   ✅   |
+| 编辑自己的讨论    |  ✅  |  ✅  |   ✅   |
+| 删除自己的讨论    |  ✅  |  ✅  |   ✅   |
+| 发布/删除回复     |  ✅  |  ✅  |   ✅   |
+| 点赞/取消点赞     |  ✅  |  ✅  |   ✅   |
+| 举报内容          |  ✅  |  ✅  |   ✅   |
+| 置顶/取消置顶     |  ❌  |  ✅  |   ✅   |
+| 审核内容          |  ❌  |  ✅  |   ✅   |
+| 删除他人讨论/回复 |  ❌  |  ✅  |   ✅   |
+| 查看审核队列      |  ❌  |  ✅  |   ✅   |
+| 查看举报列表      |  ❌  |  ✅  |   ✅   |
+| 管理敏感词        |  ❌  |  ❌  |   ✅   |
+| 查看全局统计      |  ❌  |  ❌  |   ✅   |
+| 管理用户信誉      |  ❌  |  ❌  |   ✅   |
+| 批量操作          |  ❌  |  ❌  |   ✅   |
 
 ---
 
@@ -56,47 +57,47 @@
 
 ### 学生端页面
 
-| 页面路径 | 文件位置 | 说明 | 状态 |
-|---------|---------|------|------|
+| 页面路径 | 文件位置                                       | 说明           | 状态      |
+| -------- | ---------------------------------------------- | -------------- | --------- |
 | 课程问答 | `src/views/account/course-detail/CourseQA.vue` | 课程问答主页面 | ✅ 已完成 |
 
 ### 教师端页面
 
-| 页面路径 | 文件位置 | 说明 | 状态 |
-|---------|-------------|------|------|
-| 课程讨论管理 | `src/views/course/discussion/index.vue` | 教师管理所授课程的讨论，含统计卡片、搜索、批量操作、数据表格 | ✅ 已完成 |
-| 内容审核队列 | `src/views/course/discussion/review.vue` | 审核待审核内容，显示风险等级、敏感词匹配，支持批量审核 | ✅ 已完成 |
-| 举报处理 | `src/views/course/discussion/reports.vue` | 处理学生举报的内容，支持快速忽略/删除、详细处理 | ✅ 已完成 |
+| 页面路径     | 文件位置                                  | 说明                                                         | 状态      |
+| ------------ | ----------------------------------------- | ------------------------------------------------------------ | --------- |
+| 课程讨论管理 | `src/views/course/discussion/index.vue`   | 教师管理所授课程的讨论，含统计卡片、搜索、批量操作、数据表格 | ✅ 已完成 |
+| 内容审核队列 | `src/views/course/discussion/review.vue`  | 审核待审核内容，显示风险等级、敏感词匹配，支持批量审核       | ✅ 已完成 |
+| 举报处理     | `src/views/course/discussion/reports.vue` | 处理学生举报的内容，支持快速忽略/删除、详细处理              | ✅ 已完成 |
 
 ### 管理员端页面
 
-| 页面路径 | 文件位置 | 说明 | 状态 |
-|---------|-------------|------|------|
-| 敏感词管理 | `src/views/system/discussion/sensitive-words.vue` | 敏感词库管理，支持添加、编辑、删除、批量导入导出 | ✅ 已完成 |
-| 用户信誉管理 | `src/views/system/discussion/user-reputation.vue` | 用户信誉分管理，含信誉分调整、禁言/解禁功能 | ✅ 已完成 |
-| 讨论统计 | `src/views/system/discussion/statistics.vue` | 全平台讨论数据统计仪表盘，含趋势图、排行榜 | ✅ 已完成 |
-| 全局讨论管理 | `src/views/system/discussion/index.vue` | 全局讨论管理（可复用教师端） | 🔴 待开发 |
-| 审计日志 | `src/views/system/discussion/audit-logs.vue` | 操作审计日志 | 🔴 待开发 |
+| 页面路径     | 文件位置                                          | 说明                                             | 状态      |
+| ------------ | ------------------------------------------------- | ------------------------------------------------ | --------- |
+| 敏感词管理   | `src/views/system/discussion/sensitive-words.vue` | 敏感词库管理，支持添加、编辑、删除、批量导入导出 | ✅ 已完成 |
+| 用户信誉管理 | `src/views/system/discussion/user-reputation.vue` | 用户信誉分管理，含信誉分调整、禁言/解禁功能      | ✅ 已完成 |
+| 讨论统计     | `src/views/system/discussion/statistics.vue`      | 全平台讨论数据统计仪表盘，含趋势图、排行榜       | ✅ 已完成 |
+| 全局讨论管理 | `src/views/system/discussion/index.vue`           | 全局讨论管理（可复用教师端）                     | 🔴 待开发 |
+| 审计日志     | `src/views/system/discussion/audit-logs.vue`      | 操作审计日志                                     | 🔴 待开发 |
 
 ### 前端 API 文件
 
-| 文件路径 | 说明 | 状态 |
-|---------|------|------|
-| `src/api/discussion.ts` | 学生端讨论 API | ✅ 已完成 |
+| 文件路径                      | 说明                                                       | 状态      |
+| ----------------------------- | ---------------------------------------------------------- | --------- |
+| `src/api/discussion.ts`       | 学生端讨论 API                                             | ✅ 已完成 |
 | `src/api/discussion-admin.ts` | 管理端讨论 API，含审核、举报、敏感词、用户信誉、统计等接口 | ✅ 已完成 |
 
 ---
 
 ## 目录
 
-1. [数据模型](#数据模型)
-2. [API 接口清单](#api-接口清单)
-3. [API 接口详情](#api-接口详情)
-4. [敏感词检测](#敏感词检测)
-5. [内容审核机制](#内容审核机制)
-6. [安全防护](#安全防护)
-7. [错误码定义](#错误码定义)
-8. [数据库表设计](#数据库表设计参考)
+- [数据模型](#数据模型)
+- [API 接口清单](#api-接口清单)
+- [API接口详情](#api接口详情)
+- [敏感词检测](#敏感词检测)
+- [内容审核机制](#内容审核机制)
+- [安全防护](#安全防护)
+- [错误码定义](#错误码定义)
+- [数据库表设计](#数据库表设计参考)
 
 ---
 
@@ -104,58 +105,58 @@
 
 ### 学生端接口
 
-| 序号 | 接口名称 | 方法 | 路径 | 权限 | 状态 |
-|------|---------|------|------|------|------|
-| 1 | [获取讨论列表](#1-获取讨论列表) | GET | `/api/v1/courses/{courseId}/discussions` | 登录用户 | 🔴 待开发 |
-| 2 | [获取讨论详情](#2-获取讨论详情) | GET | `/api/v1/discussions/{postId}` | 登录用户 | 🔴 待开发 |
-| 3 | [发布讨论](#3-发布讨论) | POST | `/api/v1/courses/{courseId}/discussions` | 登录用户 | 🔴 待开发 |
-| 4 | [编辑讨论](#4-编辑讨论) | PUT | `/api/v1/discussions/{postId}` | 作者/管理员 | 🔴 待开发 |
-| 5 | [删除讨论](#5-删除讨论) | DELETE | `/api/v1/discussions/{postId}` | 作者/管理员 | 🔴 待开发 |
-| 6 | [获取回复列表](#6-获取回复列表) | GET | `/api/v1/discussions/{postId}/replies` | 登录用户 | 🔴 待开发 |
-| 7 | [发布回复](#7-发布回复) | POST | `/api/v1/discussions/{postId}/replies` | 登录用户 | 🔴 待开发 |
-| 8 | [删除回复](#8-删除回复) | DELETE | `/api/v1/discussions/{postId}/replies/{replyId}` | 作者/管理员 | 🔴 待开发 |
-| 9 | [点赞帖子](#9-点赞帖子) | POST | `/api/v1/discussions/{postId}/like` | 登录用户 | 🔴 待开发 |
-| 10 | [取消点赞帖子](#10-取消点赞帖子) | DELETE | `/api/v1/discussions/{postId}/like` | 登录用户 | 🔴 待开发 |
-| 11 | [点赞回复](#11-点赞回复) | POST | `/api/v1/discussions/{postId}/replies/{replyId}/like` | 登录用户 | 🔴 待开发 |
-| 12 | [取消点赞回复](#12-取消点赞回复) | DELETE | `/api/v1/discussions/{postId}/replies/{replyId}/like` | 登录用户 | 🔴 待开发 |
-| 13 | [举报帖子](#13-举报帖子) | POST | `/api/v1/discussions/{postId}/report` | 登录用户 | 🔴 待开发 |
-| 14 | [举报回复](#14-举报回复) | POST | `/api/v1/discussions/{postId}/replies/{replyId}/report` | 登录用户 | 🔴 待开发 |
-| 18 | [获取统计数据](#18-获取统计数据) | GET | `/api/v1/courses/{courseId}/discussions/stats` | 登录用户 | 🔴 待开发 |
-| 19 | [获取热门标签](#19-获取热门标签) | GET | `/api/v1/courses/{courseId}/discussions/tags` | 登录用户 | 🔴 待开发 |
+| 序号 | 接口名称                      | 方法   | 路径                                                    | 权限        | 状态      |
+| ---- | ----------------------------- | ------ | ------------------------------------------------------- | ----------- | --------- |
+| 1    | [获取讨论列表](#获取讨论列表) | GET    | `/api/v1/courses/{courseId}/discussions`                | 登录用户    | 🔴 待开发 |
+| 2    | [获取讨论详情](#获取讨论详情) | GET    | `/api/v1/discussions/{postId}`                          | 登录用户    | 🔴 待开发 |
+| 3    | [发布讨论](#发布讨论)         | POST   | `/api/v1/courses/{courseId}/discussions`                | 登录用户    | 🔴 待开发 |
+| 4    | [编辑讨论](#编辑讨论)         | PUT    | `/api/v1/discussions/{postId}`                          | 作者/管理员 | 🔴 待开发 |
+| 5    | [删除讨论](#删除讨论)         | DELETE | `/api/v1/discussions/{postId}`                          | 作者/管理员 | 🔴 待开发 |
+| 6    | [获取回复列表](#获取回复列表) | GET    | `/api/v1/discussions/{postId}/replies`                  | 登录用户    | 🔴 待开发 |
+| 7    | [发布回复](#发布回复)         | POST   | `/api/v1/discussions/{postId}/replies`                  | 登录用户    | 🔴 待开发 |
+| 8    | [删除回复](#删除回复)         | DELETE | `/api/v1/discussions/{postId}/replies/{replyId}`        | 作者/管理员 | 🔴 待开发 |
+| 9    | [点赞帖子](#点赞帖子)         | POST   | `/api/v1/discussions/{postId}/like`                     | 登录用户    | 🔴 待开发 |
+| 10   | [取消点赞帖子](#取消点赞帖子) | DELETE | `/api/v1/discussions/{postId}/like`                     | 登录用户    | 🔴 待开发 |
+| 11   | [点赞回复](#点赞回复)         | POST   | `/api/v1/discussions/{postId}/replies/{replyId}/like`   | 登录用户    | 🔴 待开发 |
+| 12   | [取消点赞回复](#取消点赞回复) | DELETE | `/api/v1/discussions/{postId}/replies/{replyId}/like`   | 登录用户    | 🔴 待开发 |
+| 13   | [举报帖子](#举报帖子)         | POST   | `/api/v1/discussions/{postId}/report`                   | 登录用户    | 🔴 待开发 |
+| 14   | [举报回复](#举报回复)         | POST   | `/api/v1/discussions/{postId}/replies/{replyId}/report` | 登录用户    | 🔴 待开发 |
+| 18   | [获取统计数据](#获取统计数据) | GET    | `/api/v1/courses/{courseId}/discussions/stats`          | 登录用户    | 🔴 待开发 |
+| 19   | [获取热门标签](#获取热门标签) | GET    | `/api/v1/courses/{courseId}/discussions/tags`           | 登录用户    | 🔴 待开发 |
 
 ### 教师端专属接口
 
-| 序号 | 接口名称 | 方法 | 路径 | 权限 | 状态 |
-|------|---------|------|------|------|------|
-| T1 | [获取教师课程讨论列表](#t1-获取教师课程讨论列表) | GET | `/api/v1/teacher/discussions` | 教师 | 🔴 待开发 |
-| T2 | [获取教师课程统计](#t2-获取教师课程统计) | GET | `/api/v1/teacher/discussions/stats` | 教师 | 🔴 待开发 |
+| 序号 | 接口名称                                         | 方法 | 路径                                | 权限 | 状态      |
+| ---- | ------------------------------------------------ | ---- | ----------------------------------- | ---- | --------- |
+| T1   | [获取教师课程讨论列表](#t1-获取教师课程讨论列表) | GET  | `/api/v1/teacher/discussions`       | 教师 | 🔴 待开发 |
+| T2   | [获取教师课程统计](#t2-获取教师课程统计)         | GET  | `/api/v1/teacher/discussions/stats` | 教师 | 🔴 待开发 |
 
 ### 教师/管理员端接口
 
-| 序号 | 接口名称 | 方法 | 路径 | 权限 | 状态 |
-|------|---------|------|------|------|------|
-| 15 | [置顶帖子](#15-置顶帖子) | POST | `/api/v1/discussions/{postId}/pin` | 教师/管理员 | 🔴 待开发 |
-| 16 | [取消置顶](#16-取消置顶) | DELETE | `/api/v1/discussions/{postId}/pin` | 教师/管理员 | 🔴 待开发 |
-| 17 | [审核帖子](#17-审核帖子) | POST | `/api/v1/discussions/{postId}/review` | 教师/管理员 | 🔴 待开发 |
-| 20 | [获取审核队列](#20-获取审核队列) | GET | `/api/v1/admin/discussions/review-queue` | 教师/管理员 | 🔴 待开发 |
-| 21 | [获取举报列表](#21-获取举报列表) | GET | `/api/v1/admin/discussions/reports` | 教师/管理员 | 🔴 待开发 |
-| 22 | [处理举报](#22-处理举报) | POST | `/api/v1/admin/discussions/reports/{reportId}/handle` | 教师/管理员 | 🔴 待开发 |
-| 23 | [批量审核](#23-批量审核) | POST | `/api/v1/admin/discussions/batch-review` | 教师/管理员 | 🔴 待开发 |
-| 24 | [批量删除](#24-批量删除) | POST | `/api/v1/admin/discussions/batch-delete` | 教师/管理员 | 🔴 待开发 |
+| 序号 | 接口名称                      | 方法   | 路径                                                  | 权限        | 状态      |
+| ---- | ----------------------------- | ------ | ----------------------------------------------------- | ----------- | --------- |
+| 15   | [置顶帖子](#置顶帖子)         | POST   | `/api/v1/discussions/{postId}/pin`                    | 教师/管理员 | 🔴 待开发 |
+| 16   | [取消置顶](#取消置顶)         | DELETE | `/api/v1/discussions/{postId}/pin`                    | 教师/管理员 | 🔴 待开发 |
+| 17   | [审核帖子](#审核帖子)         | POST   | `/api/v1/discussions/{postId}/review`                 | 教师/管理员 | 🔴 待开发 |
+| 20   | [获取审核队列](#获取审核队列) | GET    | `/api/v1/admin/discussions/review-queue`              | 教师/管理员 | 🔴 待开发 |
+| 21   | [获取举报列表](#获取举报列表) | GET    | `/api/v1/admin/discussions/reports`                   | 教师/管理员 | 🔴 待开发 |
+| 22   | [处理举报](#处理举报)         | POST   | `/api/v1/admin/discussions/reports/{reportId}/handle` | 教师/管理员 | 🔴 待开发 |
+| 23   | [批量审核](#批量审核)         | POST   | `/api/v1/admin/discussions/batch-review`              | 教师/管理员 | 🔴 待开发 |
+| 24   | [批量删除](#批量删除)         | POST   | `/api/v1/admin/discussions/batch-delete`              | 教师/管理员 | 🔴 待开发 |
 
 ### 管理员专属接口
 
-| 序号 | 接口名称 | 方法 | 路径 | 权限 | 状态 |
-|------|---------|------|------|------|------|
-| 25 | [获取敏感词列表](#25-获取敏感词列表) | GET | `/api/v1/admin/sensitive-words` | 管理员 | 🔴 待开发 |
-| 26 | [添加敏感词](#26-添加敏感词) | POST | `/api/v1/admin/sensitive-words` | 管理员 | 🔴 待开发 |
-| 27 | [编辑敏感词](#27-编辑敏感词) | PUT | `/api/v1/admin/sensitive-words/{wordId}` | 管理员 | 🔴 待开发 |
-| 28 | [删除敏感词](#28-删除敏感词) | DELETE | `/api/v1/admin/sensitive-words/{wordId}` | 管理员 | 🔴 待开发 |
-| 29 | [批量导入敏感词](#29-批量导入敏感词) | POST | `/api/v1/admin/sensitive-words/import` | 管理员 | 🔴 待开发 |
-| 30 | [获取用户信誉列表](#30-获取用户信誉列表) | GET | `/api/v1/admin/user-reputation` | 管理员 | 🔴 待开发 |
-| 31 | [调整用户信誉](#31-调整用户信誉) | PUT | `/api/v1/admin/user-reputation/{userId}` | 管理员 | 🔴 待开发 |
-| 32 | [获取审计日志](#32-获取审计日志) | GET | `/api/v1/admin/discussions/audit-logs` | 管理员 | 🔴 待开发 |
-| 33 | [获取全局统计](#33-获取全局统计) | GET | `/api/v1/admin/discussions/statistics` | 管理员 | 🔴 待开发 |
+| 序号 | 接口名称                              | 方法   | 路径                                     | 权限   | 状态      |
+| ---- | ------------------------------------- | ------ | ---------------------------------------- | ------ | --------- |
+| 25   | [获取敏感词列表](#获取敏感词列表)     | GET    | `/api/v1/admin/sensitive-words`          | 管理员 | 🔴 待开发 |
+| 26   | [添加敏感词](#添加敏感词)             | POST   | `/api/v1/admin/sensitive-words`          | 管理员 | 🔴 待开发 |
+| 27   | [编辑敏感词](#编辑敏感词)             | PUT    | `/api/v1/admin/sensitive-words/{wordId}` | 管理员 | 🔴 待开发 |
+| 28   | [删除敏感词](#删除敏感词)             | DELETE | `/api/v1/admin/sensitive-words/{wordId}` | 管理员 | 🔴 待开发 |
+| 29   | [批量导入敏感词](#批量导入敏感词)     | POST   | `/api/v1/admin/sensitive-words/import`   | 管理员 | 🔴 待开发 |
+| 30   | [获取用户信誉列表](#获取用户信誉列表) | GET    | `/api/v1/admin/user-reputation`          | 管理员 | 🔴 待开发 |
+| 31   | [调整用户信誉](#调整用户信誉)         | PUT    | `/api/v1/admin/user-reputation/{userId}` | 管理员 | 🔴 待开发 |
+| 32   | [获取审计日志](#获取审计日志)         | GET    | `/api/v1/admin/discussions/audit-logs`   | 管理员 | 🔴 待开发 |
+| 33   | [获取全局统计](#获取全局统计)         | GET    | `/api/v1/admin/discussions/statistics`   | 管理员 | 🔴 待开发 |
 
 > 图例：🟢 已完成 | 🟡 开发中 | 🔴 待开发
 
@@ -165,109 +166,105 @@
 
 ### 讨论帖子 (Discussion Post)
 
-```typescript
+````typescript
 interface DiscussionPost {
-  id: string;                    // 帖子唯一ID
-  courseId: string;              // 所属课程ID
-  authorId: string;              // 作者用户ID
-  title?: string;                // 标题（可选）
-  content: string;               // 内容（支持 Markdown）
-  contentHtml: string;           // 渲染后的 HTML（后端处理 XSS）
-  tags: string[];                // 标签列表
-  status: PostStatus;            // 审核状态
-  reviewNote?: string;           // 审核备注（拒绝原因）
-  isPinned: boolean;             // 是否置顶
-  likeCount: number;             // 点赞数
-  replyCount: number;            // 回复数
-  viewCount: number;             // 浏览数
-  createdAt: string;             // 创建时间(ISO 8601)
-  updatedAt: string;             // 更新时间
-  editedAt?: string;             // 最后编辑时间
-  deletedAt?: string;            // 软删除时间
+  id: string; // 帖子唯一ID
+  courseId: string; // 所属课程ID
+  authorId: string; // 作者用户ID
+  title?: string; // 标题（可选）
+  content: string; // 内容（支持 Markdown）
+  contentHtml: string; // 渲染后的 HTML（后端处理 XSS）
+  tags: string[]; // 标签列表
+  status: PostStatus; // 审核状态
+  reviewNote?: string; // 审核备注（拒绝原因）
+  isPinned: boolean; // 是否置顶
+  likeCount: number; // 点赞数
+  replyCount: number; // 回复数
+  viewCount: number; // 浏览数
+  createdAt: string; // 创建时间(ISO 8601)
+  updatedAt: string; // 更新时间
+  editedAt?: string; // 最后编辑时间
+  deletedAt?: string; // 软删除时间
 }
 
 enum PostStatus {
-  PENDING = 'pending',           // 待审核
-  APPROVED = 'approved',         // 已通过
-  REJECTED = 'rejected',         // 已拒绝
-  AUTO_APPROVED = 'auto_approved' // 自动通过（可信用户）
+  PENDING = "pending", // 待审核
+  APPROVED = "approved", // 已通过
+  REJECTED = "rejected", // 已拒绝
+  AUTO_APPROVED = "auto_approved" // 自动通过（可信用户）
 }
-```
 
+```text
 ### 回复 (Reply)
 
 ```typescript
 interface Reply {
-  id: string;                    // 回复唯一ID
-  postId: string;                // 所属帖子ID
-  authorId: string;              // 作者用户ID
-  parentReplyId?: string;        // 父回复ID（用于嵌套回复）
-  replyToUserId?: string;        // 回复目标用户ID
-  content: string;               // 内容
-  contentHtml: string;           // 渲染后的 HTML
-  status: PostStatus;            // 审核状态
-  likeCount: number;             // 点赞数
+  id: string; // 回复唯一ID
+  postId: string; // 所属帖子ID
+  authorId: string; // 作者用户ID
+  parentReplyId?: string; // 父回复ID（用于嵌套回复）
+  replyToUserId?: string; // 回复目标用户ID
+  content: string; // 内容
+  contentHtml: string; // 渲染后的 HTML
+  status: PostStatus; // 审核状态
+  likeCount: number; // 点赞数
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
 }
-```
 
+```text
 ### 用户互动记录 (UserInteraction)
 
 ```typescript
 interface UserInteraction {
   id: string;
   userId: string;
-  targetType: 'post' | 'reply';
+  targetType: "post" | "reply";
   targetId: string;
-  interactionType: 'like' | 'report';
-  reportReason?: string;         // 举报原因
+  interactionType: "like" | "report";
+  reportReason?: string; // 举报原因
   createdAt: string;
 }
-```
 
+```text
 ### 审核记录 (AuditLog)
 
 ```typescript
 interface AuditLog {
   id: string;
-  targetType: 'post' | 'reply';
+  targetType: "post" | "reply";
   targetId: string;
-  action: 'approve' | 'reject' | 'delete' | 'pin' | 'unpin';
-  operatorId: string;            // 操作人ID
-  operatorRole: 'system' | 'admin' | 'teacher';
+  action: "approve" | "reject" | "delete" | "pin" | "unpin";
+  operatorId: string; // 操作人ID
+  operatorRole: "system" | "admin" | "teacher";
   reason?: string;
   previousStatus?: PostStatus;
   newStatus?: PostStatus;
   createdAt: string;
 }
-```
 
+```text
 ---
 
-## API 接口详情
+## API接口详情
 
-### 1. 获取讨论列表
+### 获取讨论列表
 
-**GET** `/api/v1/courses/{courseId}/discussions`
-
-**前端调用位置**: `src/api/discussion.ts` - `getDiscussions()`
-
-**使用场景**: 进入课程问答页面时加载讨论列表，支持分页、搜索、筛选
+**GET** `/api/v1/courses/{courseId}/discussions`**前端调用位置**:`src/api/discussion.ts`-`getDiscussions()`**使用场景**: 进入课程问答页面时加载讨论列表，支持分页、搜索、筛选
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| courseId | string | ✅ 是 | - | 课程ID (路径参数) |
-| page | number | 否 | 1 | 页码，从1开始 |
-| pageSize | number | 否 | 20 | 每页数量，最大50 |
-| sort | string | 否 | `latest` | 排序方式：`latest`(最新)/`hot`(热门)/`unanswered`(待回复) |
-| keyword | string | 否 | - | 搜索关键词（搜索标题和内容） |
-| tag | string | 否 | - | 标签筛选 |
-| status | string | 否 | - | 状态筛选（仅管理员/教师可用）：`pending`/`approved`/`rejected` |
-| authorId | string | 否 | - | 按作者筛选（用于"我的帖子"） |
+| 参数     | 类型   | 必填  | 默认值   | 说明                                                           |
+| -------- | ------ | ----- | -------- | -------------------------------------------------------------- |
+| courseId | string | ✅ 是 | -        | 课程ID (路径参数)                                              |
+| page     | number | 否    | 1        | 页码，从1开始                                                  |
+| pageSize | number | 否    | 20       | 每页数量，最大50                                               |
+| sort     | string | 否    |`latest` | 排序方式：`latest`(最新)/`hot`(热门)/`unanswered`(待回复)      |
+| keyword  | string | 否    | -        | 搜索关键词（搜索标题和内容）                                   |
+| tag      | string | 否    | -        | 标签筛选                                                       |
+| status   | string | 否    | -        | 状态筛选（仅管理员/教师可用）：`pending`/`approved`/`rejected`|
+| authorId | string | 否    | -        | 按作者筛选（用于"我的帖子"）                                   |
 
 #### 响应示例
 
@@ -285,7 +282,7 @@ interface AuditLog {
         "author": {
           "id": "user_456",
           "name": "张同学",
-          "avatar": "https://example.com/avatar/user_456.jpg",
+          "avatar": "<https://example.com/avatar/user_456.jpg",>
           "isTeacher": false,
           "isAdmin": false
         },
@@ -308,33 +305,29 @@ interface AuditLog {
     }
   }
 }
-```
 
+```text
 #### 业务逻辑
 
-1. **普通学生**：只能看到 `status = approved` 或 `status = auto_approved` 的帖子
-2. **教师/管理员**：可以看到所有状态的帖子，支持 `status` 参数筛选
+1. **普通学生**：只能看到 `status = approved`或`status = auto_approved`的帖子
+2. **教师/管理员**：可以看到所有状态的帖子，支持`status`参数筛选
 3. **排序规则**：
-   - `latest`：按创建时间降序
-   - `hot`：按 `(likeCount * 2 + replyCount * 3 + viewCount)` 降序
-   - `unanswered`：仅显示 `replyCount = 0` 的帖子，按创建时间降序
+   -`latest`：按创建时间降序
+   - `hot`：按 `(likeCount * 2 + replyCount * 3 + viewCount)`降序
+   -`unanswered`：仅显示 `replyCount = 0`的帖子，按创建时间降序
 4. **置顶帖子始终排在最前面**
-5. `isLiked` 字段需要根据当前登录用户查询是否已点赞
+5.`isLiked`字段需要根据当前登录用户查询是否已点赞
 
 ---
 
-### 2. 获取讨论详情
+### 获取讨论详情
 
-**GET** `/api/v1/discussions/{postId}`
-
-**前端调用位置**: `src/api/discussion.ts` - `getDiscussionDetail()`
-
-**使用场景**: 点击帖子查看详情（如果需要详情页展示）
+**GET**`/api/v1/discussions/{postId}`**前端调用位置**:`src/api/discussion.ts`-`getDiscussionDetail()`**使用场景**: 点击帖子查看详情（如果需要详情页展示）
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
+| 参数   | 类型   | 必填  | 说明              |
+| ------ | ------ | ----- | ----------------- |
 | postId | string | ✅ 是 | 帖子ID (路径参数) |
 
 #### 响应示例
@@ -351,7 +344,7 @@ interface AuditLog {
     "author": {
       "id": "user_456",
       "name": "张同学",
-      "avatar": "https://example.com/avatar/user_456.jpg",
+      "avatar": "<https://example.com/avatar/user_456.jpg",>
       "isTeacher": false,
       "isAdmin": false
     },
@@ -370,7 +363,7 @@ interface AuditLog {
         "author": {
           "id": "teacher_001",
           "name": "李老师",
-          "avatar": "https://example.com/avatar/teacher_001.jpg",
+          "avatar": "<https://example.com/avatar/teacher_001.jpg",>
           "isTeacher": true
         },
         "content": "好问题！这个问题的关键在于...",
@@ -384,32 +377,28 @@ interface AuditLog {
     "hasMoreReplies": true
   }
 }
-```
 
+```text
 #### 业务逻辑
 
-1. 访问详情页时，`viewCount` 自增1
-2. 默认返回前5条回复，如需更多调用 [获取回复列表](#6-获取回复列表) 接口
+1. 访问详情页时，`viewCount`自增1
+2. 默认返回前5条回复，如需更多调用 [获取回复列表](#获取回复列表) 接口
 3. 非公开（未通过审核）的帖子只有作者本人、教师、管理员可查看
 
 ---
 
-### 3. 发布讨论
+### 发布讨论
 
-**POST** `/api/v1/courses/{courseId}/discussions`
-
-**前端调用位置**: `src/api/discussion.ts` - `createDiscussion()`
-
-**使用场景**: 用户在问答区发布新的讨论帖子
+**POST**`/api/v1/courses/{courseId}/discussions`**前端调用位置**:`src/api/discussion.ts`-`createDiscussion()`**使用场景**: 用户在问答区发布新的讨论帖子
 
 #### 请求头
 
-| 头部 | 必填 | 说明 |
-|------|------|------|
-| Authorization | ✅ 是 | Bearer {token} |
-| Content-Type | ✅ 是 | application/json |
-| X-Request-ID | 否 | 请求唯一ID（用于幂等性，防止重复提交） |
-| X-Client-Fingerprint | 否 | 客户端指纹（用于风控） |
+| 头部                 | 必填  | 说明                                   |
+| -------------------- | ----- | -------------------------------------- |
+| Authorization        | ✅ 是 | Bearer {token}                         |
+| Content-Type         | ✅ 是 | application/json                       |
+| X-Request-ID         | 否    | 请求唯一ID（用于幂等性，防止重复提交） |
+| X-Client-Fingerprint | 否    | 客户端指纹（用于风控）                 |
 
 #### 请求体
 
@@ -419,17 +408,18 @@ interface AuditLog {
   "content": "老师您好，我在做第三章的作业时遇到了一个问题...",
   "tags": ["作业问题", "技术讨论"]
 }
-```
 
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|------|------|------|
-| title | string | 否 | 0-100字符 | 标题（可选） |
-| content | string | ✅ 是 | 1-5000字符 | 内容，支持Markdown格式 |
-| tags | string[] | 否 | 0-5个，每个≤20字符 | 标签列表 |
+```text
+| 字段    | 类型     | 必填  | 约束               | 说明                   |
+| ------- | -------- | ----- | ------------------ | ---------------------- |
+| title   | string   | 否    | 0-100字符          | 标题（可选）           |
+| content | string   | ✅ 是 | 1-5000字符         | 内容，支持Markdown格式 |
+| tags    | string[] | 否    | 0-5个，每个≤20字符 | 标签列表               |
 
 #### 响应示例
 
 **成功（待审核）**:
+
 ```json
 {
   "code": 0,
@@ -440,9 +430,10 @@ interface AuditLog {
     "estimatedReviewTime": "24小时内"
   }
 }
-```
 
+```text
 **成功（自动通过，教师/管理员/高信誉用户）**:
+
 ```json
 {
   "code": 0,
@@ -453,35 +444,40 @@ interface AuditLog {
     "estimatedReviewTime": null
   }
 }
-```
 
+```text
 **失败（内容违规）**:
+
 ```json
 {
   "code": 4001,
   "message": "内容包含违规词汇，请修改后重新提交",
   "data": null
 }
-```
 
+```text
 #### 业务逻辑
 
 1. **内容校验**
+
    - 标题长度：0-100字符
    - 内容长度：1-5000字符
    - 标签数量：0-5个，每个标签≤20字符
    - 内容不能为空或纯空白
 
 2. **Markdown 渲染**
+
    - 后端将 `content`（Markdown）渲染为 `contentHtml`（HTML）
    - 渲染时进行 XSS 过滤（详见安全防护章节）
 
 3. **敏感词检测**（详见敏感词检测章节）
+
    - 低风险：自动通过
    - 中风险：进入人工审核队列
    - 高风险：直接拒绝并提示用户
 
 4. **审核流程**
+
    - **可信用户**（教师/管理员/信誉分≥80的学生）：`status = auto_approved`，直接显示
    - **普通用户**：`status = pending`，进入待审核队列
    - **触发敏感词**：标记为高优先级人工审核
@@ -491,13 +487,9 @@ interface AuditLog {
 
 ---
 
-### 4. 编辑讨论
+### 编辑讨论
 
-**PUT** `/api/v1/discussions/{postId}`
-
-**前端调用位置**: `src/api/discussion.ts` - `updateDiscussion()`
-
-**使用场景**: 作者编辑自己的帖子内容
+**PUT** `/api/v1/discussions/{postId}`**前端调用位置**:`src/api/discussion.ts`-`updateDiscussion()`**使用场景**: 作者编辑自己的帖子内容
 
 #### 请求体
 
@@ -507,13 +499,13 @@ interface AuditLog {
   "content": "更新后的内容...",
   "tags": ["作业问题"]
 }
-```
 
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|------|------|------|
-| title | string | 否 | 0-100字符 | 新标题 |
-| content | string | 否 | 1-5000字符 | 新内容 |
-| tags | string[] | 否 | 0-5个 | 新标签 |
+```text
+| 字段    | 类型     | 必填 | 约束       | 说明   |
+| ------- | -------- | ---- | ---------- | ------ |
+| title   | string   | 否   | 0-100字符  | 新标题 |
+| content | string   | 否   | 1-5000字符 | 新内容 |
+| tags    | string[] | 否   | 0-5个      | 新标签 |
 
 #### 响应示例
 
@@ -525,26 +517,22 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 #### 业务逻辑
 
 1. **权限校验**：仅作者本人或管理员可编辑
 2. **重新审核**：
-   - 普通用户编辑后，`status` 改为 `pending`，需重新审核
-   - 管理员/教师编辑后，保持 `auto_approved` 状态
-3. **编辑记录**：更新 `editedAt` 字段，可选记录编辑历史
+   - 普通用户编辑后，`status`改为`pending`，需重新审核
+   - 管理员/教师编辑后，保持 `auto_approved`状态
+3. **编辑记录**：更新`editedAt`字段，可选记录编辑历史
 4. **敏感词检测**：编辑内容同样需要敏感词检测
 
 ---
 
-### 5. 删除讨论
+### 删除讨论
 
-**DELETE** `/api/v1/discussions/{postId}`
-
-**前端调用位置**: `src/api/discussion.ts` - `deleteDiscussion()`
-
-**使用场景**: 作者或管理员删除帖子
+**DELETE**`/api/v1/discussions/{postId}`**前端调用位置**:`src/api/discussion.ts`-`deleteDiscussion()`**使用场景**: 作者或管理员删除帖子
 
 #### 响应示例
 
@@ -556,32 +544,28 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 #### 业务逻辑
 
 1. **权限校验**：仅作者本人或管理员/教师可删除
-2. **软删除**：设置 `deletedAt` 字段，不物理删除数据
+2. **软删除**：设置 `deletedAt`字段，不物理删除数据
 3. **级联处理**：帖子下的回复也标记为软删除
 4. **审计日志**：记录删除操作及原因
 
 ---
 
-### 6. 获取回复列表
+### 获取回复列表
 
-**GET** `/api/v1/discussions/{postId}/replies`
-
-**前端调用位置**: `src/api/discussion.ts` - `getReplies()`
-
-**使用场景**: 展开帖子查看更多回复，或分页加载回复
+**GET**`/api/v1/discussions/{postId}/replies`**前端调用位置**:`src/api/discussion.ts`-`getReplies()`**使用场景**: 展开帖子查看更多回复，或分页加载回复
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| postId | string | ✅ 是 | - | 帖子ID (路径参数) |
-| page | number | 否 | 1 | 页码 |
-| pageSize | number | 否 | 10 | 每页数量，最大50 |
+| 参数     | 类型   | 必填  | 默认值 | 说明              |
+| -------- | ------ | ----- | ------ | ----------------- |
+| postId   | string | ✅ 是 | -      | 帖子ID (路径参数) |
+| page     | number | 否    | 1      | 页码              |
+| pageSize | number | 否    | 10     | 每页数量，最大50  |
 
 #### 响应示例
 
@@ -596,7 +580,7 @@ interface AuditLog {
         "author": {
           "id": "teacher_001",
           "name": "李老师",
-          "avatar": "https://example.com/avatar/teacher_001.jpg",
+          "avatar": "<https://example.com/avatar/teacher_001.jpg",>
           "isTeacher": true,
           "isAdmin": false
         },
@@ -613,7 +597,7 @@ interface AuditLog {
         "author": {
           "id": "user_456",
           "name": "张同学",
-          "avatar": "https://example.com/avatar/user_456.jpg",
+          "avatar": "<https://example.com/avatar/user_456.jpg",>
           "isTeacher": false,
           "isAdmin": false
         },
@@ -634,24 +618,20 @@ interface AuditLog {
     }
   }
 }
-```
 
+```text
 #### 业务逻辑
 
-1. 按 `createdAt` 升序排列（最早的回复在前）
-2. `replyTo` 字段显示被回复者的昵称（如果是楼中楼回复）
-3. 仅返回 `status = approved` 或 `auto_approved` 的回复
-4. `isLiked` 根据当前用户查询
+1. 按 `createdAt`升序排列（最早的回复在前）
+2.`replyTo`字段显示被回复者的昵称（如果是楼中楼回复）
+3. 仅返回`status = approved`或`auto_approved`的回复
+4.`isLiked`根据当前用户查询
 
 ---
 
-### 7. 发布回复
+### 发布回复
 
-**POST** `/api/v1/discussions/{postId}/replies`
-
-**前端调用位置**: `src/api/discussion.ts` - `createReply()`
-
-**使用场景**: 用户回复帖子或回复他人的回复（楼中楼）
+**POST**`/api/v1/discussions/{postId}/replies`**前端调用位置**:`src/api/discussion.ts`-`createReply()`**使用场景**: 用户回复帖子或回复他人的回复（楼中楼）
 
 #### 请求体
 
@@ -661,13 +641,13 @@ interface AuditLog {
   "parentReplyId": "reply_789",
   "replyToUserId": "user_456"
 }
-```
 
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|------|------|------|
-| content | string | ✅ 是 | 1-2000字符 | 回复内容，支持Markdown |
-| parentReplyId | string | 否 | - | 父回复ID（楼中楼回复时填写） |
-| replyToUserId | string | 否 | - | 被回复用户ID（楼中楼回复时填写） |
+```text
+| 字段          | 类型   | 必填  | 约束       | 说明                             |
+| ------------- | ------ | ----- | ---------- | -------------------------------- |
+| content       | string | ✅ 是 | 1-2000字符 | 回复内容，支持Markdown           |
+| parentReplyId | string | 否    | -          | 父回复ID（楼中楼回复时填写）     |
+| replyToUserId | string | 否    | -          | 被回复用户ID（楼中楼回复时填写） |
 
 #### 响应示例
 
@@ -680,33 +660,29 @@ interface AuditLog {
     "status": "pending"
   }
 }
-```
 
+```text
 #### 业务逻辑
 
 1. **内容校验**：1-2000字符
 2. **敏感词检测**：同帖子发布
 3. **审核流程**：同帖子发布
-4. **计数更新**：帖子的 `replyCount` 自增（仅在审核通过后）
+4. **计数更新**：帖子的 `replyCount`自增（仅在审核通过后）
 5. **通知触发**（可选）：
    - 通知帖子作者有新回复
    - 楼中楼回复时通知被回复者
 
 ---
 
-### 8. 删除回复
+### 删除回复
 
-**DELETE** `/api/v1/discussions/{postId}/replies/{replyId}`
-
-**前端调用位置**: `src/api/discussion.ts` - `deleteReply()`
-
-**使用场景**: 作者或管理员删除回复
+**DELETE**`/api/v1/discussions/{postId}/replies/{replyId}`**前端调用位置**:`src/api/discussion.ts`-`deleteReply()`**使用场景**: 作者或管理员删除回复
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| postId | string | ✅ 是 | 帖子ID (路径参数) |
+| 参数    | 类型   | 必填  | 说明              |
+| ------- | ------ | ----- | ----------------- |
+| postId  | string | ✅ 是 | 帖子ID (路径参数) |
 | replyId | string | ✅ 是 | 回复ID (路径参数) |
 
 #### 响应示例
@@ -719,23 +695,18 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 #### 业务逻辑
 
 1. 仅回复作者本人或管理员/教师可删除
-2. 软删除，设置 `deletedAt`
-3. 帖子的 `replyCount` 自减
+2. 软删除，设置 `deletedAt`3. 帖子的`replyCount`自减
 
 ---
 
-### 9. 点赞帖子
+### 点赞帖子
 
-**POST** `/api/v1/discussions/{postId}/like`
-
-**前端调用位置**: `src/api/discussion.ts` - `likePost()`
-
-**使用场景**: 用户点赞帖子
+**POST**`/api/v1/discussions/{postId}/like`**前端调用位置**:`src/api/discussion.ts`-`likePost()`**使用场景**: 用户点赞帖子
 
 #### 响应示例
 
@@ -748,23 +719,19 @@ interface AuditLog {
     "likeCount": 13
   }
 }
-```
 
+```text
 #### 业务逻辑
 
 1. 每个用户对同一帖子只能点赞一次
 2. 重复点赞返回当前状态，不报错
-3. 返回最新的 `likeCount` 用于前端实时更新
+3. 返回最新的 `likeCount`用于前端实时更新
 
 ---
 
-### 10. 取消点赞帖子
+### 取消点赞帖子
 
-**DELETE** `/api/v1/discussions/{postId}/like`
-
-**前端调用位置**: `src/api/discussion.ts` - `unlikePost()`
-
-**使用场景**: 用户取消点赞
+**DELETE**`/api/v1/discussions/{postId}/like`**前端调用位置**:`src/api/discussion.ts`-`unlikePost()`**使用场景**: 用户取消点赞
 
 #### 响应示例
 
@@ -777,23 +744,19 @@ interface AuditLog {
     "likeCount": 12
   }
 }
-```
 
+```text
 ---
 
-### 11. 点赞回复
+### 点赞回复
 
-**POST** `/api/v1/discussions/{postId}/replies/{replyId}/like`
-
-**前端调用位置**: `src/api/discussion.ts` - `likeReply()`
-
-**使用场景**: 用户点赞回复
+**POST** `/api/v1/discussions/{postId}/replies/{replyId}/like`**前端调用位置**:`src/api/discussion.ts`-`likeReply()`**使用场景**: 用户点赞回复
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| postId | string | ✅ 是 | 帖子ID (路径参数) |
+| 参数    | 类型   | 必填  | 说明              |
+| ------- | ------ | ----- | ----------------- |
+| postId  | string | ✅ 是 | 帖子ID (路径参数) |
 | replyId | string | ✅ 是 | 回复ID (路径参数) |
 
 #### 响应示例
@@ -807,17 +770,13 @@ interface AuditLog {
     "likeCount": 9
   }
 }
-```
 
+```text
 ---
 
-### 12. 取消点赞回复
+### 取消点赞回复
 
-**DELETE** `/api/v1/discussions/{postId}/replies/{replyId}/like`
-
-**前端调用位置**: `src/api/discussion.ts` - `unlikeReply()`
-
-**使用场景**: 用户取消对回复的点赞
+**DELETE** `/api/v1/discussions/{postId}/replies/{replyId}/like`**前端调用位置**:`src/api/discussion.ts`-`unlikeReply()`**使用场景**: 用户取消对回复的点赞
 
 #### 响应示例
 
@@ -830,17 +789,13 @@ interface AuditLog {
     "likeCount": 8
   }
 }
-```
 
+```text
 ---
 
-### 13. 举报帖子
+### 举报帖子
 
-**POST** `/api/v1/discussions/{postId}/report`
-
-**前端调用位置**: `src/api/discussion.ts` - `reportPost()`
-
-**使用场景**: 用户举报违规帖子
+**POST** `/api/v1/discussions/{postId}/report`**前端调用位置**:`src/api/discussion.ts`-`reportPost()`**使用场景**: 用户举报违规帖子
 
 #### 请求体
 
@@ -849,23 +804,23 @@ interface AuditLog {
   "reason": "spam",
   "description": "这是广告内容，推销课外辅导"
 }
-```
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| reason | string | ✅ 是 | 举报原因枚举值（见下表） |
-| description | string | 否 | 详细说明，最大500字符 |
+```text
+| 字段        | 类型   | 必填  | 说明                     |
+| ----------- | ------ | ----- | ------------------------ |
+| reason      | string | ✅ 是 | 举报原因枚举值（见下表） |
+| description | string | 否    | 详细说明，最大500字符    |
 
-**举报原因枚举**
+#### 举报原因枚举
 
-| 值 | 说明 |
-|------|------|
-| `spam` | 垃圾广告 |
-| `inappropriate` | 不当内容 |
-| `harassment` | 骚扰/攻击 |
-| `misinformation` | 虚假信息 |
-| `copyright` | 侵权内容 |
-| `other` | 其他（需填写description） |
+| 值               | 说明                      |
+| ---------------- | ------------------------- |
+| `spam`| 垃圾广告                  |
+|`inappropriate`| 不当内容                  |
+|`harassment`| 骚扰/攻击                 |
+|`misinformation`| 虚假信息                  |
+|`copyright`| 侵权内容                  |
+|`other`| 其他（需填写description） |
 
 #### 响应示例
 
@@ -877,42 +832,34 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 #### 业务逻辑
 
 1. 每个用户对同一内容只能举报一次
-2. 举报记录存入 `user_interactions` 表
+2. 举报记录存入 `user_interactions`表
 3. 当举报数达到阈值（如3次），自动将帖子标记为待审核
 4. 通知管理员审核
 
 ---
 
-### 14. 举报回复
+### 举报回复
 
-**POST** `/api/v1/discussions/{postId}/replies/{replyId}/report`
-
-**前端调用位置**: `src/api/discussion.ts` - `reportReply()`
-
-**使用场景**: 用户举报违规回复
+**POST**`/api/v1/discussions/{postId}/replies/{replyId}/report`**前端调用位置**:`src/api/discussion.ts`-`reportReply()`**使用场景**: 用户举报违规回复
 
 #### 请求体
 
-同 [举报帖子](#13-举报帖子)
+同 [举报帖子](#举报帖子)
 
 #### 响应示例
 
-同 [举报帖子](#13-举报帖子)
+同 [举报帖子](#举报帖子)
 
 ---
 
-### 15. 置顶帖子
+### 置顶帖子
 
-**POST** `/api/v1/discussions/{postId}/pin`
-
-**前端调用位置**: `src/api/discussion.ts` - `pinPost()`
-
-**使用场景**: 教师/管理员将重要帖子置顶
+**POST**`/api/v1/discussions/{postId}/pin`**前端调用位置**:`src/api/discussion.ts`-`pinPost()`**使用场景**: 教师/管理员将重要帖子置顶
 
 **权限要求**: 教师或管理员
 
@@ -926,23 +873,18 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 #### 业务逻辑
 
-1. 设置 `isPinned = true`
-2. 记录审计日志
+1. 设置 `isPinned = true`2. 记录审计日志
 3. 同一课程置顶帖子建议限制数量（如最多5个）
 
 ---
 
-### 16. 取消置顶
+### 取消置顶
 
-**DELETE** `/api/v1/discussions/{postId}/pin`
-
-**前端调用位置**: `src/api/discussion.ts` - `unpinPost()`
-
-**使用场景**: 教师/管理员取消帖子置顶
+**DELETE**`/api/v1/discussions/{postId}/pin`**前端调用位置**:`src/api/discussion.ts`-`unpinPost()`**使用场景**: 教师/管理员取消帖子置顶
 
 **权限要求**: 教师或管理员
 
@@ -956,17 +898,13 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 ---
 
-### 17. 审核帖子
+### 审核帖子
 
-**POST** `/api/v1/discussions/{postId}/review`
-
-**前端调用位置**: `src/api/discussion.ts` - `reviewPost()`
-
-**使用场景**: 教师/管理员审核待审核的帖子
+**POST** `/api/v1/discussions/{postId}/review`**前端调用位置**:`src/api/discussion.ts`-`reviewPost()`**使用场景**: 教师/管理员审核待审核的帖子
 
 **权限要求**: 教师或管理员
 
@@ -977,16 +915,17 @@ interface AuditLog {
   "action": "approve",
   "note": "内容符合规范"
 }
-```
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
+```text
+| 字段   | 类型   | 必填  | 说明                              |
+| ------ | ------ | ----- | --------------------------------- |
 | action | string | ✅ 是 | `approve`(通过) 或 `reject`(拒绝) |
-| note | string | 否 | 审核备注（拒绝时建议填写原因） |
+| note   | string | 否    | 审核备注（拒绝时建议填写原因）    |
 
 #### 响应示例
 
 **通过**:
+
 ```json
 {
   "code": 0,
@@ -995,9 +934,10 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 **拒绝**:
+
 ```json
 {
   "code": 0,
@@ -1006,24 +946,20 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 #### 业务逻辑
 
-1. **通过**：`status` 改为 `approved`，帖子对所有人可见
-2. **拒绝**：`status` 改为 `rejected`，`reviewNote` 存储拒绝原因
-3. 记录审计日志到 `audit_logs` 表
+1. **通过**：`status`改为`approved`，帖子对所有人可见
+2. **拒绝**：`status`改为`rejected`，`reviewNote`存储拒绝原因
+3. 记录审计日志到`audit_logs`表
 4. 可选：通知作者审核结果
 
 ---
 
-### 18. 获取统计数据
+### 获取统计数据
 
-**GET** `/api/v1/courses/{courseId}/discussions/stats`
-
-**前端调用位置**: `src/api/discussion.ts` - `getDiscussionStats()`
-
-**使用场景**: 在问答页面右侧展示统计面板
+**GET**`/api/v1/courses/{courseId}/discussions/stats`**前端调用位置**:`src/api/discussion.ts`-`getDiscussionStats()`**使用场景**: 在问答页面右侧展示统计面板
 
 #### 响应示例
 
@@ -1044,26 +980,22 @@ interface AuditLog {
     ]
   }
 }
-```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| totalPosts | number | 帖子总数（已通过审核） |
-| totalReplies | number | 回复总数 |
-| activeUsers | number | 活跃用户数（近30天发帖/回复的用户） |
-| resolvedRate | string | 已回复帖子占比 |
-| pendingReviewCount | number | 待审核数量（仅教师/管理员可见） |
-| hotTags | array | 热门标签列表 |
+```text
+| 字段               | 类型   | 说明                                |
+| ------------------ | ------ | ----------------------------------- |
+| totalPosts         | number | 帖子总数（已通过审核）              |
+| totalReplies       | number | 回复总数                            |
+| activeUsers        | number | 活跃用户数（近30天发帖/回复的用户） |
+| resolvedRate       | string | 已回复帖子占比                      |
+| pendingReviewCount | number | 待审核数量（仅教师/管理员可见）     |
+| hotTags            | array  | 热门标签列表                        |
 
 ---
 
-### 19. 获取热门标签
+### 获取热门标签
 
-**GET** `/api/v1/courses/{courseId}/discussions/tags`
-
-**前端调用位置**: `src/api/discussion.ts` - `getHotTags()`
-
-**使用场景**: 展示热门标签供用户筛选
+**GET** `/api/v1/courses/{courseId}/discussions/tags`**前端调用位置**:`src/api/discussion.ts`-`getHotTags()`**使用场景**: 展示热门标签供用户筛选
 
 #### 响应示例
 
@@ -1079,8 +1011,8 @@ interface AuditLog {
     { "name": "学习方法", "count": 21 }
   ]
 }
-```
 
+```text
 #### 业务逻辑
 
 1. 按使用次数降序排列
@@ -1089,11 +1021,9 @@ interface AuditLog {
 
 ---
 
-### T1. 获取教师课程讨论列表
+### 获取教师课程讨论列表
 
-**GET** `/api/v1/teacher/discussions`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `getTeacherDiscussions()`
+**GET** `/api/v1/teacher/discussions`**前端调用位置**:`src/api/discussion-admin.ts`-`getTeacherDiscussions()`
 
 **使用场景**: 教师端讨论管理页面，获取所教课程的所有讨论内容
 
@@ -1101,13 +1031,13 @@ interface AuditLog {
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| courseId | string | 否 | - | 课程ID，不传则获取所有所教课程的讨论 |
-| status | string | 否 | - | 状态筛选：`pending`/`approved`/`rejected`/`auto_approved` |
-| keyword | string | 否 | - | 搜索关键词（搜索标题和内容） |
-| page | number | 否 | 1 | 页码，从1开始 |
-| pageSize | number | 否 | 20 | 每页数量，最大50 |
+| 参数     | 类型   | 必填 | 默认值 | 说明                                                      |
+| -------- | ------ | ---- | ------ | --------------------------------------------------------- |
+| courseId | string | 否   | -      | 课程ID，不传则获取所有所教课程的讨论                      |
+| status   | string | 否   | -      | 状态筛选：`pending`/`approved`/`rejected`/`auto_approved`|
+| keyword  | string | 否   | -      | 搜索关键词（搜索标题和内容）                              |
+| page     | number | 否   | 1      | 页码，从1开始                                             |
+| pageSize | number | 否   | 20     | 每页数量，最大50                                          |
 
 #### 响应示例
 
@@ -1125,7 +1055,7 @@ interface AuditLog {
         "author": {
           "id": "user_456",
           "name": "张同学",
-          "avatar": "https://example.com/avatar/user_456.jpg",
+          "avatar": "<https://example.com/avatar/user_456.jpg",>
           "isTeacher": false,
           "isAdmin": false
         },
@@ -1152,18 +1082,18 @@ interface AuditLog {
     }
   }
 }
-```
 
+```text
 #### 响应字段说明
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| list | array | 讨论列表 |
-| list[].riskLevel | string | 风险等级：`low`/`medium`/`high`/`critical` |
-| list[].matchedWords | string[] | 匹配到的敏感词列表 |
-| list[].priority | string | 审核优先级：`high`/`medium`/`low` |
-| list[].courseName | string | 课程名称 |
-| pagination | object | 分页信息 |
+| 字段                | 类型     | 说明                                       |
+| ------------------- | -------- | ------------------------------------------ |
+| list                | array    | 讨论列表                                   |
+| list[].riskLevel    | string   | 风险等级：`low`/`medium`/`high`/`critical` |
+| list[].matchedWords | string[] | 匹配到的敏感词列表                         |
+| list[].priority     | string   | 审核优先级：`high`/`medium`/`low`|
+| list[].courseName   | string   | 课程名称                                   |
+| pagination          | object   | 分页信息                                   |
 
 #### 业务逻辑
 
@@ -1175,21 +1105,17 @@ interface AuditLog {
 
 ---
 
-### T2. 获取教师课程统计
+### 获取教师课程统计
 
-**GET** `/api/v1/teacher/discussions/stats`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `getTeacherCourseStats()`
-
-**使用场景**: 教师端讨论管理页面顶部的统计卡片展示
+**GET**`/api/v1/teacher/discussions/stats`**前端调用位置**:`src/api/discussion-admin.ts`-`getTeacherCourseStats()`**使用场景**: 教师端讨论管理页面顶部的统计卡片展示
 
 **权限要求**: 教师
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| courseId | string | 否 | - | 课程ID，不传则获取所有所教课程的汇总统计 |
+| 参数     | 类型   | 必填 | 默认值 | 说明                                     |
+| -------- | ------ | ---- | ------ | ---------------------------------------- |
+| courseId | string | 否   | -      | 课程ID，不传则获取所有所教课程的汇总统计 |
 
 #### 响应示例
 
@@ -1220,38 +1146,36 @@ interface AuditLog {
     ]
   }
 }
-```
 
+```text
 #### 响应字段说明
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| totalPosts | number | 帖子总数（所有状态） |
-| totalReplies | number | 回复总数 |
-| pendingReview | number | 待审核帖子数 |
-| pendingReports | number | 待处理举报数 |
-| todayPosts | number | 今日新增帖子数 |
-| weekPosts | number | 本周新增帖子数 |
-| courses | array | 各课程统计明细 |
-| courses[].courseId | string | 课程ID |
-| courses[].courseName | string | 课程名称 |
-| courses[].postCount | number | 该课程帖子总数 |
-| courses[].pendingCount | number | 该课程待审核帖子数 |
+| 字段                   | 类型   | 说明                 |
+| ---------------------- | ------ | -------------------- |
+| totalPosts             | number | 帖子总数（所有状态） |
+| totalReplies           | number | 回复总数             |
+| pendingReview          | number | 待审核帖子数         |
+| pendingReports         | number | 待处理举报数         |
+| todayPosts             | number | 今日新增帖子数       |
+| weekPosts              | number | 本周新增帖子数       |
+| courses                | array  | 各课程统计明细       |
+| courses[].courseId     | string | 课程ID               |
+| courses[].courseName   | string | 课程名称             |
+| courses[].postCount    | number | 该课程帖子总数       |
+| courses[].pendingCount | number | 该课程待审核帖子数   |
 
 #### 业务逻辑
 
 1. 仅统计当前教师所教授课程的数据
-2. `courses` 数组用于教师端筛选下拉框，显示各课程及待审核数量
-3. `pendingCount > 0` 的课程在下拉框中显示角标提醒
+2. `courses`数组用于教师端筛选下拉框，显示各课程及待审核数量
+3.`pendingCount > 0`的课程在下拉框中显示角标提醒
 4. 统计数据实时计算或使用缓存（建议缓存5分钟）
 
 ---
 
-### 20. 获取审核队列
+### 获取审核队列
 
-**GET** `/api/v1/admin/discussions/review-queue`
-
-**前端调用位置**: `src/api/discussion.ts` - `getReviewQueue()`
+**GET**`/api/v1/admin/discussions/review-queue`**前端调用位置**:`src/api/discussion.ts`-`getReviewQueue()`
 
 **使用场景**: 管理员/教师查看待审核内容列表
 
@@ -1259,12 +1183,12 @@ interface AuditLog {
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| priority | string | 否 | - | 优先级筛选：`high`/`medium`/`low` |
-| courseId | string | 否 | - | 按课程筛选 |
-| page | number | 否 | 1 | 页码 |
-| pageSize | number | 否 | 20 | 每页数量 |
+| 参数     | 类型   | 必填 | 默认值 | 说明                              |
+| -------- | ------ | ---- | ------ | --------------------------------- |
+| priority | string | 否   | -      | 优先级筛选：`high`/`medium`/`low`|
+| courseId | string | 否   | -      | 按课程筛选                        |
+| page     | number | 否   | 1      | 页码                              |
+| pageSize | number | 否   | 20     | 每页数量                          |
 
 #### 响应示例
 
@@ -1282,7 +1206,7 @@ interface AuditLog {
         "author": {
           "id": "user_789",
           "name": "王同学",
-          "avatar": "https://example.com/avatar/user_789.jpg"
+          "avatar": "<https://example.com/avatar/user_789.jpg">
         },
         "tags": [],
         "status": "pending",
@@ -1303,21 +1227,19 @@ interface AuditLog {
     }
   }
 }
-```
 
-| 额外字段 | 类型 | 说明 |
-|---------|------|------|
-| riskLevel | string | 风险等级：`low`/`medium`/`high`/`critical` |
-| matchedWords | string[] | 匹配到的敏感词列表 |
-| priority | string | 审核优先级：`high`/`medium`/`low` |
+```text
+| 额外字段     | 类型     | 说明                                       |
+| ------------ | -------- | ------------------------------------------ |
+| riskLevel    | string   | 风险等级：`low`/`medium`/`high`/`critical` |
+| matchedWords | string[] | 匹配到的敏感词列表                         |
+| priority     | string   | 审核优先级：`high`/`medium`/`low`|
 
 ---
 
-### 21. 获取举报列表
+### 获取举报列表
 
-**GET** `/api/v1/admin/discussions/reports`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `getReportList()`（待开发）
+**GET**`/api/v1/admin/discussions/reports`**前端调用位置**:`src/api/discussion-admin.ts`-`getReportList()`（待开发）
 
 **使用场景**: 教师/管理员查看被举报的内容列表
 
@@ -1325,13 +1247,13 @@ interface AuditLog {
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| status | string | 否 | `pending` | 状态筛选：`pending`(待处理)/`resolved`(已处理)/`dismissed`(已忽略) |
-| reason | string | 否 | - | 举报原因筛选 |
-| courseId | string | 否 | - | 按课程筛选（教师只能看到自己课程的举报） |
-| page | number | 否 | 1 | 页码 |
-| pageSize | number | 否 | 20 | 每页数量 |
+| 参数     | 类型   | 必填 | 默认值    | 说明                                                               |
+| -------- | ------ | ---- | --------- | ------------------------------------------------------------------ |
+| status   | string | 否   | `pending` | 状态筛选：`pending`(待处理)/`resolved`(已处理)/`dismissed`(已忽略) |
+| reason   | string | 否   | -         | 举报原因筛选                                                       |
+| courseId | string | 否   | -         | 按课程筛选（教师只能看到自己课程的举报）                           |
+| page     | number | 否   | 1         | 页码                                                               |
+| pageSize | number | 否   | 20        | 每页数量                                                           |
 
 #### 响应示例
 
@@ -1378,15 +1300,13 @@ interface AuditLog {
     }
   }
 }
-```
 
+```text
 ---
 
-### 22. 处理举报
+### 处理举报
 
-**POST** `/api/v1/admin/discussions/reports/{reportId}/handle`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `handleReport()`（待开发）
+**POST** `/api/v1/admin/discussions/reports/{reportId}/handle`**前端调用位置**:`src/api/discussion-admin.ts`-`handleReport()`（待开发）
 
 **使用场景**: 教师/管理员处理举报
 
@@ -1401,14 +1321,14 @@ interface AuditLog {
   "punishUser": true,
   "punishType": "warning"
 }
-```
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| action | string | ✅ 是 | 处理方式：`delete`(删除内容)/`dismiss`(忽略举报)/`warn`(警告作者) |
-| note | string | 否 | 处理备注 |
-| punishUser | boolean | 否 | 是否处罚用户 |
-| punishType | string | 否 | 处罚类型：`warning`(警告)/`restrict`(限制发帖)/`ban`(禁言) |
+```text
+| 字段       | 类型    | 必填  | 说明                                                              |
+| ---------- | ------- | ----- | ----------------------------------------------------------------- |
+| action     | string  | ✅ 是 | 处理方式：`delete`(删除内容)/`dismiss`(忽略举报)/`warn`(警告作者) |
+| note       | string  | 否    | 处理备注                                                          |
+| punishUser | boolean | 否    | 是否处罚用户                                                      |
+| punishType | string  | 否    | 处罚类型：`warning`(警告)/`restrict`(限制发帖)/`ban`(禁言)        |
 
 #### 响应示例
 
@@ -1420,15 +1340,13 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 ---
 
-### 23. 批量审核
+### 批量审核
 
-**POST** `/api/v1/admin/discussions/batch-review`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `batchReview()`（待开发）
+**POST** `/api/v1/admin/discussions/batch-review`**前端调用位置**:`src/api/discussion-admin.ts`-`batchReview()`（待开发）
 
 **使用场景**: 管理员批量通过或拒绝内容
 
@@ -1442,13 +1360,13 @@ interface AuditLog {
   "action": "approve",
   "note": "批量审核通过"
 }
-```
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| postIds | string[] | ✅ 是 | 帖子ID列表，最多50个 |
-| action | string | ✅ 是 | `approve`(通过) / `reject`(拒绝) |
-| note | string | 否 | 审核备注 |
+```text
+| 字段    | 类型     | 必填  | 说明                             |
+| ------- | -------- | ----- | -------------------------------- |
+| postIds | string[] | ✅ 是 | 帖子ID列表，最多50个             |
+| action  | string   | ✅ 是 | `approve`(通过) / `reject`(拒绝) |
+| note    | string   | 否    | 审核备注                         |
 
 #### 响应示例
 
@@ -1466,15 +1384,13 @@ interface AuditLog {
     ]
   }
 }
-```
 
+```text
 ---
 
-### 24. 批量删除
+### 批量删除
 
-**POST** `/api/v1/admin/discussions/batch-delete`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `batchDelete()`（待开发）
+**POST** `/api/v1/admin/discussions/batch-delete`**前端调用位置**:`src/api/discussion-admin.ts`-`batchDelete()`（待开发）
 
 **使用场景**: 管理员批量删除违规内容
 
@@ -1487,8 +1403,8 @@ interface AuditLog {
   "postIds": ["post_123", "post_124"],
   "reason": "内容违规"
 }
-```
 
+```text
 #### 响应示例
 
 ```json
@@ -1500,15 +1416,13 @@ interface AuditLog {
     "failed": 0
   }
 }
-```
 
+```text
 ---
 
-### 25. 获取敏感词列表
+### 获取敏感词列表
 
-**GET** `/api/v1/admin/sensitive-words`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `getSensitiveWords()`（待开发）
+**GET** `/api/v1/admin/sensitive-words`**前端调用位置**:`src/api/discussion-admin.ts`-`getSensitiveWords()`（待开发）
 
 **使用场景**: 管理员查看和管理敏感词库
 
@@ -1516,13 +1430,13 @@ interface AuditLog {
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| category | string | 否 | - | 分类筛选：`blacklist`/`graylist`/`whitelist` |
-| keyword | string | 否 | - | 搜索关键词 |
-| isActive | boolean | 否 | - | 是否启用 |
-| page | number | 否 | 1 | 页码 |
-| pageSize | number | 否 | 50 | 每页数量 |
+| 参数     | 类型    | 必填 | 默认值 | 说明                                         |
+| -------- | ------- | ---- | ------ | -------------------------------------------- |
+| category | string  | 否   | -      | 分类筛选：`blacklist`/`graylist`/`whitelist`|
+| keyword  | string  | 否   | -      | 搜索关键词                                   |
+| isActive | boolean | 否   | -      | 是否启用                                     |
+| page     | number  | 否   | 1      | 页码                                         |
+| pageSize | number  | 否   | 50     | 每页数量                                     |
 
 #### 响应示例
 
@@ -1556,15 +1470,13 @@ interface AuditLog {
     }
   }
 }
-```
 
+```text
 ---
 
-### 26. 添加敏感词
+### 添加敏感词
 
-**POST** `/api/v1/admin/sensitive-words`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `addSensitiveWord()`（待开发）
+**POST** `/api/v1/admin/sensitive-words`**前端调用位置**:`src/api/discussion-admin.ts`-`addSensitiveWord()`（待开发）
 
 **使用场景**: 管理员添加新的敏感词
 
@@ -1578,13 +1490,13 @@ interface AuditLog {
   "category": "graylist",
   "riskLevel": "medium"
 }
-```
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| word | string | ✅ 是 | 敏感词内容，1-100字符 |
-| category | string | ✅ 是 | 分类：`blacklist`/`graylist`/`whitelist` |
-| riskLevel | string | 否 | 风险等级：`low`/`medium`/`high`/`critical`，默认`medium` |
+```text
+| 字段      | 类型   | 必填  | 说明                                                     |
+| --------- | ------ | ----- | -------------------------------------------------------- |
+| word      | string | ✅ 是 | 敏感词内容，1-100字符                                    |
+| category  | string | ✅ 是 | 分类：`blacklist`/`graylist`/`whitelist`                 |
+| riskLevel | string | 否    | 风险等级：`low`/`medium`/`high`/`critical`，默认`medium`|
 
 #### 响应示例
 
@@ -1600,15 +1512,13 @@ interface AuditLog {
     "isActive": true
   }
 }
-```
 
+```text
 ---
 
-### 27. 编辑敏感词
+### 编辑敏感词
 
-**PUT** `/api/v1/admin/sensitive-words/{wordId}`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `updateSensitiveWord()`（待开发）
+**PUT** `/api/v1/admin/sensitive-words/{wordId}`**前端调用位置**:`src/api/discussion-admin.ts`-`updateSensitiveWord()`（待开发）
 
 **使用场景**: 管理员修改敏感词配置
 
@@ -1622,8 +1532,8 @@ interface AuditLog {
   "riskLevel": "high",
   "isActive": true
 }
-```
 
+```text
 #### 响应示例
 
 ```json
@@ -1634,15 +1544,13 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 ---
 
-### 28. 删除敏感词
+### 删除敏感词
 
-**DELETE** `/api/v1/admin/sensitive-words/{wordId}`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `deleteSensitiveWord()`（待开发）
+**DELETE** `/api/v1/admin/sensitive-words/{wordId}`**前端调用位置**:`src/api/discussion-admin.ts`-`deleteSensitiveWord()`（待开发）
 
 **使用场景**: 管理员删除敏感词
 
@@ -1658,15 +1566,13 @@ interface AuditLog {
     "success": true
   }
 }
-```
 
+```text
 ---
 
-### 29. 批量导入敏感词
+### 批量导入敏感词
 
-**POST** `/api/v1/admin/sensitive-words/import`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `importSensitiveWords()`（待开发）
+**POST** `/api/v1/admin/sensitive-words/import`**前端调用位置**:`src/api/discussion-admin.ts`-`importSensitiveWords()`（待开发）
 
 **使用场景**: 管理员批量导入敏感词
 
@@ -1682,12 +1588,12 @@ interface AuditLog {
   ],
   "overwrite": false
 }
-```
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| words | array | ✅ 是 | 敏感词列表，最多1000条 |
-| overwrite | boolean | 否 | 遇到重复时是否覆盖，默认false |
+```text
+| 字段      | 类型    | 必填  | 说明                          |
+| --------- | ------- | ----- | ----------------------------- |
+| words     | array   | ✅ 是 | 敏感词列表，最多1000条        |
+| overwrite | boolean | 否    | 遇到重复时是否覆盖，默认false |
 
 #### 响应示例
 
@@ -1701,15 +1607,13 @@ interface AuditLog {
     "errors": []
   }
 }
-```
 
+```text
 ---
 
-### 30. 获取用户信誉列表
+### 获取用户信誉列表
 
-**GET** `/api/v1/admin/user-reputation`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `getUserReputationList()`（待开发）
+**GET** `/api/v1/admin/user-reputation`**前端调用位置**:`src/api/discussion-admin.ts`-`getUserReputationList()`（待开发）
 
 **使用场景**: 管理员查看用户信誉情况
 
@@ -1717,14 +1621,14 @@ interface AuditLog {
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| level | string | 否 | - | 信誉等级筛选：`trusted`/`normal`/`restricted` |
-| keyword | string | 否 | - | 搜索用户名 |
-| sortBy | string | 否 | `score` | 排序字段：`score`/`rejectedPosts`/`reportedCount` |
-| sortOrder | string | 否 | `desc` | 排序方式：`asc`/`desc` |
-| page | number | 否 | 1 | 页码 |
-| pageSize | number | 否 | 20 | 每页数量 |
+| 参数      | 类型   | 必填 | 默认值  | 说明                                              |
+| --------- | ------ | ---- | ------- | ------------------------------------------------- |
+| level     | string | 否   | -       | 信誉等级筛选：`trusted`/`normal`/`restricted`|
+| keyword   | string | 否   | -       | 搜索用户名                                        |
+| sortBy    | string | 否   |`score` | 排序字段：`score`/`rejectedPosts`/`reportedCount`|
+| sortOrder | string | 否   |`desc`  | 排序方式：`asc`/`desc`|
+| page      | number | 否   | 1       | 页码                                              |
+| pageSize  | number | 否   | 20      | 每页数量                                          |
 
 #### 响应示例
 
@@ -1737,7 +1641,7 @@ interface AuditLog {
       {
         "userId": "user_123",
         "userName": "张同学",
-        "avatar": "https://example.com/avatar/user_123.jpg",
+        "avatar": "<https://example.com/avatar/user_123.jpg",>
         "score": 35,
         "level": "restricted",
         "totalPosts": 50,
@@ -1761,15 +1665,13 @@ interface AuditLog {
     }
   }
 }
-```
 
+```text
 ---
 
-### 31. 调整用户信誉
+### 调整用户信誉
 
-**PUT** `/api/v1/admin/user-reputation/{userId}`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `updateUserReputation()`（待开发）
+**PUT** `/api/v1/admin/user-reputation/{userId}`**前端调用位置**:`src/api/discussion-admin.ts`-`updateUserReputation()`（待开发）
 
 **使用场景**: 管理员手动调整用户信誉分
 
@@ -1783,13 +1685,13 @@ interface AuditLog {
   "reason": "发布违规内容",
   "newLevel": "restricted"
 }
-```
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| scoreChange | number | 否 | 分数变化量（可为负数） |
-| reason | string | ✅ 是 | 调整原因 |
-| newLevel | string | 否 | 直接设置新等级：`trusted`/`normal`/`restricted` |
+```text
+| 字段        | 类型   | 必填  | 说明                                            |
+| ----------- | ------ | ----- | ----------------------------------------------- |
+| scoreChange | number | 否    | 分数变化量（可为负数）                          |
+| reason      | string | ✅ 是 | 调整原因                                        |
+| newLevel    | string | 否    | 直接设置新等级：`trusted`/`normal`/`restricted`|
 
 #### 响应示例
 
@@ -1805,15 +1707,13 @@ interface AuditLog {
     "newLevel": "restricted"
   }
 }
-```
 
+```text
 ---
 
-### 32. 获取审计日志
+### 获取审计日志
 
-**GET** `/api/v1/admin/discussions/audit-logs`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `getAuditLogs()`（待开发）
+**GET** `/api/v1/admin/discussions/audit-logs`**前端调用位置**:`src/api/discussion-admin.ts`-`getAuditLogs()`（待开发）
 
 **使用场景**: 管理员查看操作审计日志
 
@@ -1821,15 +1721,15 @@ interface AuditLog {
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| targetType | string | 否 | - | 目标类型：`post`/`reply` |
-| action | string | 否 | - | 操作类型：`approve`/`reject`/`delete`/`pin`/`unpin` |
-| operatorId | string | 否 | - | 操作人ID |
-| startDate | string | 否 | - | 开始日期（ISO 8601） |
-| endDate | string | 否 | - | 结束日期（ISO 8601） |
-| page | number | 否 | 1 | 页码 |
-| pageSize | number | 否 | 50 | 每页数量 |
+| 参数       | 类型   | 必填 | 默认值 | 说明                                                |
+| ---------- | ------ | ---- | ------ | --------------------------------------------------- |
+| targetType | string | 否   | -      | 目标类型：`post`/`reply`                            |
+| action     | string | 否   | -      | 操作类型：`approve`/`reject`/`delete`/`pin`/`unpin`|
+| operatorId | string | 否   | -      | 操作人ID                                            |
+| startDate  | string | 否   | -      | 开始日期（ISO 8601）                                |
+| endDate    | string | 否   | -      | 结束日期（ISO 8601）                                |
+| page       | number | 否   | 1      | 页码                                                |
+| pageSize   | number | 否   | 50     | 每页数量                                            |
 
 #### 响应示例
 
@@ -1864,15 +1764,13 @@ interface AuditLog {
     }
   }
 }
-```
 
+```text
 ---
 
-### 33. 获取全局统计
+### 获取全局统计
 
-**GET** `/api/v1/admin/discussions/statistics`
-
-**前端调用位置**: `src/api/discussion-admin.ts` - `getGlobalStatistics()`（待开发）
+**GET** `/api/v1/admin/discussions/statistics`**前端调用位置**:`src/api/discussion-admin.ts`-`getGlobalStatistics()`（待开发）
 
 **使用场景**: 管理员查看全平台讨论统计数据
 
@@ -1880,11 +1778,11 @@ interface AuditLog {
 
 #### 请求参数
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| startDate | string | 否 | 30天前 | 统计开始日期 |
-| endDate | string | 否 | 今天 | 统计结束日期 |
-| groupBy | string | 否 | `day` | 分组方式：`day`/`week`/`month` |
+| 参数      | 类型   | 必填 | 默认值 | 说明                           |
+| --------- | ------ | ---- | ------ | ------------------------------ |
+| startDate | string | 否   | 30天前 | 统计开始日期                   |
+| endDate   | string | 否   | 今天   | 统计结束日期                   |
+| groupBy   | string | 否   | `day`  | 分组方式：`day`/`week`/`month`|
 
 #### 响应示例
 
@@ -1916,8 +1814,18 @@ interface AuditLog {
       ]
     },
     "topCourses": [
-      { "courseId": "course_001", "courseName": "Python入门", "postCount": 520, "replyCount": 2300 },
-      { "courseId": "course_002", "courseName": "Java基础", "postCount": 480, "replyCount": 2100 }
+      {
+        "courseId": "course_001",
+        "courseName": "Python入门",
+        "postCount": 520,
+        "replyCount": 2300
+      },
+      {
+        "courseId": "course_002",
+        "courseName": "Java基础",
+        "postCount": 480,
+        "replyCount": 2100
+      }
     ],
     "contentQuality": {
       "approvalRate": "92.5%",
@@ -1933,17 +1841,19 @@ interface AuditLog {
     }
   }
 }
-```
 
-| 字段 | 说明 |
-|------|------|
-| overview | 总览数据 |
-| trends | 趋势数据（按日期分组） |
-| topCourses | 讨论最活跃的课程排行 |
-| contentQuality | 内容质量统计 |
-| userBehavior | 用户行为统计 |
+```text
+| 字段           | 说明                   |
+| -------------- | ---------------------- |
+| overview       | 总览数据               |
+| trends         | 趋势数据（按日期分组） |
+| topCourses     | 讨论最活跃的课程排行   |
+| contentQuality | 内容质量统计           |
+| userBehavior   | 用户行为统计           |
 
 ---
+
+## 敏感词检测
 
 ### 检测策略
 
@@ -1955,22 +1865,22 @@ interface AuditLog {
 interface SensitiveWordConfig {
   //黑名单词库（直接拒绝）
   blacklist: string[];
-  
+
   //灰名单词库（需人工审核）
   graylist: string[];
-  
+
   // 白名单词库（允许通过，用于排除误判）
   whitelist: string[];
 }
-```
 
+```text
 #### 第二层：正则表达式匹配
 
 检测变体形式：
-- 拼音替代：`政治` → `zhengzhi`
-- 谐音替代：`死` → `4`
-- 符号分隔：`敏感词` → `敏*感*词`
-- 繁简转换
+
+- 拼音替代：`政治`→`zhengzhi`
+- 谐音替代：`死`→`4`
+- 符号分隔：`敏感词`→`敏*感*词`- 繁简转换
 
 #### 第三层：AI 语义分析（可选）
 
@@ -1978,9 +1888,7 @@ interface SensitiveWordConfig {
 
 ### 检测 API（内部使用）
 
-**POST** `/api/internal/content/check`
-
-#### 请求体
+**POST**`/api/internal/content/check`#### 请求体
 
 ```json
 {
@@ -1988,8 +1896,8 @@ interface SensitiveWordConfig {
   "contentType": "discussion",
   "userId": "user_123"
 }
-```
 
+```text
 #### 响应示例
 
 ```json
@@ -2010,15 +1918,15 @@ interface SensitiveWordConfig {
     "confidence": 0.75
   }
 }
-```
 
+```text
 ### 风险等级
 
-| 等级 | 说明 | 处理方式 |
-|------|------|----------|
-| low | 低风险 | 自动通过 |
-| medium | 中风险 | 人工审核 |
-| high | 高风险 | 自动拒绝 |
+| 等级     | 说明     | 处理方式            |
+| -------- | -------- | ------------------- |
+| low      | 低风险   | 自动通过            |
+| medium   | 中风险   | 人工审核            |
+| high     | 高风险   | 自动拒绝            |
 | critical | 严重违规 | 自动拒绝 + 账号警告 |
 
 ---
@@ -2027,7 +1935,7 @@ interface SensitiveWordConfig {
 
 ### 审核流程
 
-```
+```text
 用户提交内容↓
 敏感词检测
     ↓
@@ -2045,19 +1953,19 @@ interface SensitiveWordConfig {
 │ 通过 → 发布内容                      │
 │ 拒绝 → 通知用户，说明原因            │
 └─────────────────────────────────────┘
-```
 
+```text
 ### 审核队列 API
 
 **GET** `/api/v1/admin/discussions/review-queue`
 
 #### 请求参数
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| priority | string | 优先级筛选：`high`/`medium`/`low` |
-| courseId | string | 课程筛选 |
-| page | number | 页码 |
+| 参数     | 类型   | 说明                              |
+| -------- | ------ | --------------------------------- |
+| priority | string | 优先级筛选：`high`/`medium`/`low`|
+| courseId | string | 课程筛选                          |
+| page     | number | 页码                              |
 
 #### 响应示例
 
@@ -2083,57 +1991,69 @@ interface SensitiveWordConfig {
     }
   }
 }
-```
 
+```text
 ### 用户信誉系统
 
 ```typescript
 interface UserReputation {
   userId: string;
-  score: number;              // 信誉分 0-100
-  level: 'trusted' | 'normal' | 'restricted';
+  score: number; // 信誉分 0-100
+  level: "trusted" | "normal" | "restricted";
   totalPosts: number;
   approvedPosts: number;
   rejectedPosts: number;
-  reportedCount: number;      // 被举报次数
-  warningCount: number;       // 警告次数
+  reportedCount: number; // 被举报次数
+  warningCount: number; // 警告次数
 }
-```
 
+```text
 #### 信誉等级
 
-| 等级 | 分数范围 | 权限 |
-|------|----------|------|
-| trusted | 80-100 | 内容自动通过 |
-| normal | 40-79 | 需要审核 |
-| restricted | 0-39 | 限制发帖频率 |
+| 等级       | 分数范围 | 权限         |
+| ---------- | -------- | ------------ |
+| trusted    | 80-100   | 内容自动通过 |
+| normal     | 40-79    | 需要审核     |
+| restricted | 0-39     | 限制发帖频率 |
 
 ---
 
 ## 安全防护
 
-### 1. XSS 防护
+### XSS 防护
 
 #### 后端处理
 
 ```typescript
 // 使用 DOMPurify 或类似库清理 HTML
-import DOMPurify from 'isomorphic-dompurify';
+import DOMPurify from "isomorphic-dompurify";
 
 function sanitizeContent(markdown: string): string {
   // 1. 将Markdown 转换为 HTML
   const html = markdownToHtml(markdown);
-  
+
   // 2. 清理危险标签和属性
   const clean = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'code', 'pre', 'ul', 'ol', 'li', 'a', 'blockquote'],
-    ALLOWED_ATTR: ['href', 'class'],
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "em",
+      "code",
+      "pre",
+      "ul",
+      "ol",
+      "li",
+      "a",
+      "blockquote"
+    ],
+    ALLOWED_ATTR: ["href", "class"],
     ALLOW_DATA_ATTR: false,
-    ADD_ATTR: ['target', 'rel'],
-    FORBID_TAGS: ['script', 'style', 'iframe', 'form', 'input'],
-    FORBID_ATTR: ['onerror', 'onclick', 'onload', 'style']
+    ADD_ATTR: ["target", "rel"],
+    FORBID_TAGS: ["script", "style", "iframe", "form", "input"],
+    FORBID_ATTR: ["onerror", "onclick", "onload", "style"]
   });
-  
+
   // 3. 链接安全处理
   return sanitizeLinks(clean);
 }
@@ -2142,8 +2062,8 @@ function sanitizeLinks(html: string): string {
   // 所有外部链接添加 rel="noopener noreferrer" 和 target="_blank"
   // 检查链接是否在白名单域名内
 }
-```
 
+```text
 #### 前端处理
 
 ```vue
@@ -2152,41 +2072,41 @@ function sanitizeLinks(html: string): string {
 
 <!-- 或使用安全的渲染组件 -->
 <SafeHtml :content="post.content" />
-```
 
-### 2. CSRF 防护
+```text
+### CSRF 防护
 
 ```typescript
 // 所有写操作需要 CSRF Token
 headers: {
   'X-CSRF-Token': getCsrfToken()
 }
-```
 
-### 3. 请求频率限制
+```text
+### 请求频率限制
 
 ```typescript
 interface RateLimitConfig {
   // 发帖限制
   post: {
-    maxPerMinute: 2,
-    maxPerHour: 10,
-    maxPerDay: 30
-  },
+    maxPerMinute: 2;
+    maxPerHour: 10;
+    maxPerDay: 30;
+  };
   // 回复限制
   reply: {
-    maxPerMinute: 5,
-    maxPerHour: 30,
-    maxPerDay: 100
-  },
+    maxPerMinute: 5;
+    maxPerHour: 30;
+    maxPerDay: 100;
+  };
   // 点赞限制
   like: {
-    maxPerMinute: 20,
-    maxPerHour: 200
-  }
+    maxPerMinute: 20;
+    maxPerHour: 200;
+  };
 }
-```
 
+```text
 #### 限流响应
 
 ```json
@@ -2200,25 +2120,25 @@ interface RateLimitConfig {
     "resetAt": "2026-01-24T12:01:00Z"
   }
 }
-```
 
-### 4. SQL 注入防护
+```text
+### SQL 注入防护
 
 - 使用参数化查询
 - ORM 框架自动转义
 - 输入验证和类型检查
 
-### 5. 内容长度限制
+### 内容长度限制
 
-| 字段 | 最大长度 |
-|------|----------|
-| title | 100 字符 |
-| content | 5000 字符 |
-| tag | 20 字符 |
-| tags数量 | 5 个 |
+| 字段          | 最大长度  |
+| ------------- | --------- |
+| title         | 100 字符  |
+| content       | 5000 字符 |
+| tag           | 20 字符   |
+| tags数量      | 5 个      |
 | reply content | 2000 字符 |
 
-### 6. 文件上传安全（如支持图片）
+### 文件上传安全（如支持图片）
 
 ```typescript
 interface UploadConfig {
@@ -2228,9 +2148,9 @@ interface UploadConfig {
   scanForMalware: true,
   generateThumbnail: true
 }
-```
 
-### 7. 日志记录
+```text
+### 日志记录
 
 ```typescript
 interface SecurityLog {
@@ -2243,11 +2163,12 @@ interface SecurityLog {
   riskScore: number;
   details: object;
 }
-```
 
-### 8. 异常行为检测
+```text
+### 异常行为检测
 
 监控以下异常行为：
+
 - 短时间内大量发帖
 - 内容高度相似（复制粘贴）
 - 频繁触发敏感词
@@ -2258,25 +2179,25 @@ interface SecurityLog {
 
 ## 错误码定义
 
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|-------------|------|
-| 0 | 200 | 成功 |
-| 1001 | 400 | 参数错误 |
-| 1002 | 400 | 内容为空 |
-| 1003 | 400 | 内容过长 |
-| 1004 | 400 | 标签数量超限 |
-| 2001 | 401 | 未登录 |
-| 2002 | 403 | 无权限 |
-| 2003 | 403 | 账号被限制 |
-| 3001 | 404 | 帖子不存在 |
-| 3002 | 404 | 回复不存在 |
-| 4001 | 422 | 内容包含违规词汇 |
-| 4002 | 422 | 内容需要审核 |
-| 4003 | 422 | 重复提交 |
-| 5001 | 429 | 请求过于频繁 |
-| 5002 | 429 | 今日发帖已达上限 |
-| 9001 | 500 | 服务器内部错误 |
-| 9002 | 503 | 服务暂时不可用 |
+| 错误码 | HTTP 状态码 | 说明             |
+| ------ | ----------- | ---------------- |
+| 0      | 200         | 成功             |
+| 1001   | 400         | 参数错误         |
+| 1002   | 400         | 内容为空         |
+| 1003   | 400         | 内容过长         |
+| 1004   | 400         | 标签数量超限     |
+| 2001   | 401         | 未登录           |
+| 2002   | 403         | 无权限           |
+| 2003   | 403         | 账号被限制       |
+| 3001   | 404         | 帖子不存在       |
+| 3002   | 404         | 回复不存在       |
+| 4001   | 422         | 内容包含违规词汇 |
+| 4002   | 422         | 内容需要审核     |
+| 4003   | 422         | 重复提交         |
+| 5001   | 429         | 请求过于频繁     |
+| 5002   | 429         | 今日发帖已达上限 |
+| 9001   | 500         | 服务器内部错误   |
+| 9002   | 503         | 服务暂时不可用   |
 
 ---
 
@@ -2302,15 +2223,15 @@ CREATE TABLE discussion_posts (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   edited_at TIMESTAMP NULL COMMENT '最后编辑时间',
   deleted_at TIMESTAMP NULL COMMENT '软删除时间',
-  
+
   INDEX idx_course_status (course_id, status),
   INDEX idx_author (author_id),
   INDEX idx_created_at (created_at),
   INDEX idx_is_pinned (is_pinned),
   FULLTEXT INDEX idx_content (title, content)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='讨论帖子表';
-```
 
+```text
 ### discussion_replies 表
 
 ```sql
@@ -2327,15 +2248,15 @@ CREATE TABLE discussion_replies (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   deleted_at TIMESTAMP NULL COMMENT '软删除时间',
-  
+
   INDEX idx_post (post_id),
   INDEX idx_author (author_id),
   INDEX idx_parent_reply (parent_reply_id),
   INDEX idx_created_at (created_at),
   FOREIGN KEY (post_id) REFERENCES discussion_posts(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='讨论回复表';
-```
 
+```text
 ### discussion_tags 表
 
 ```sql
@@ -2344,14 +2265,14 @@ CREATE TABLE discussion_tags (
   post_id VARCHAR(32) NOT NULL COMMENT '帖子ID',
   tag_name VARCHAR(20) NOT NULL COMMENT '标签名称',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  
+
   INDEX idx_post (post_id),
   INDEX idx_tag (tag_name),
   UNIQUE INDEX idx_post_tag (post_id, tag_name),
   FOREIGN KEY (post_id) REFERENCES discussion_posts(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子标签关联表';
-```
 
+```text
 ### user_interactions 表
 
 ```sql
@@ -2364,13 +2285,13 @@ CREATE TABLE user_interactions (
   report_reason VARCHAR(50) COMMENT '举报原因',
   report_description VARCHAR(500) COMMENT '举报详细说明',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  
+
   UNIQUE INDEX idx_unique_interaction (user_id, target_type, target_id, interaction_type),
   INDEX idx_target (target_type, target_id),
   INDEX idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户互动记录表';
-```
 
+```text
 ### audit_logs 表
 
 ```sql
@@ -2385,13 +2306,13 @@ CREATE TABLE audit_logs (
   previous_status VARCHAR(20) COMMENT '操作前状态',
   new_status VARCHAR(20) COMMENT '操作后状态',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
-  
+
   INDEX idx_target (target_type, target_id),
   INDEX idx_operator (operator_id),
   INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审计日志表';
-```
 
+```text
 ### sensitive_words 表
 
 ```sql
@@ -2403,13 +2324,13 @@ CREATE TABLE sensitive_words (
   is_active BOOLEAN DEFAULT TRUE COMMENT '是否启用',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  
+
   UNIQUE INDEX idx_word (word),
   INDEX idx_category (category),
   INDEX idx_is_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='敏感词表';
-```
 
+```text
 ### user_reputation 表（可选，用于信誉系统）
 
 ```sql
@@ -2424,13 +2345,12 @@ CREATE TABLE user_reputation (
   warning_count INT DEFAULT 0 COMMENT '警告次数',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  
+
   INDEX idx_level (level),
   INDEX idx_score (score)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信誉表';
-```
 
----
+```---
 
 ## 实现优先级建议
 
@@ -2440,14 +2360,14 @@ CREATE TABLE user_reputation (
 
 **目标**：完成学生端基本功能，支持上线使用
 
-| 序号 | 接口 | 说明 |
-|------|------|------|
-| 1 | 获取讨论列表 | 页面主要数据来源 |
-| 3 | 发布讨论 | 核心交互功能 |
-| 7 | 发布回复 | 核心交互功能 |
-| 6 | 获取回复列表 | 展示回复内容 |
-| 18 | 获取统计数据 | 右侧统计面板 |
-| 19 | 获取热门标签 | 标签筛选功能 |
+| 序号 | 接口         | 说明             |
+| ---- | ------------ | ---------------- |
+| 1    | 获取讨论列表 | 页面主要数据来源 |
+| 3    | 发布讨论     | 核心交互功能     |
+| 7    | 发布回复     | 核心交互功能     |
+| 6    | 获取回复列表 | 展示回复内容     |
+| 18   | 获取统计数据 | 右侧统计面板     |
+| 19   | 获取热门标签 | 标签筛选功能     |
 
 **预计工时**：3-5 天
 
@@ -2457,14 +2377,14 @@ CREATE TABLE user_reputation (
 
 **目标**：完善学生端互动体验
 
-| 序号 | 接口 | 说明 |
-|------|------|------|
-| 9 | 点赞帖子 | 互动功能 |
-| 10 | 取消点赞帖子 | 互动功能 |
-| 5 | 删除讨论 | 用户管理自己的内容 |
-| 8 | 删除回复 | 用户管理自己的内容 |
-| 4 | 编辑讨论 | 用户修改自己的内容 |
-| 2 | 获取讨论详情 | 详情页（可选） |
+| 序号 | 接口         | 说明               |
+| ---- | ------------ | ------------------ |
+| 9    | 点赞帖子     | 互动功能           |
+| 10   | 取消点赞帖子 | 互动功能           |
+| 5    | 删除讨论     | 用户管理自己的内容 |
+| 8    | 删除回复     | 用户管理自己的内容 |
+| 4    | 编辑讨论     | 用户修改自己的内容 |
+| 2    | 获取讨论详情 | 详情页（可选）     |
 
 **预计工时**：2-3 天
 
@@ -2474,21 +2394,22 @@ CREATE TABLE user_reputation (
 
 **目标**：教师可以管理本课程的讨论内容
 
-| 序号 | 接口 | 说明 |
-|------|------|------|
-| 15 | 置顶帖子 | 教师管理功能 |
-| 16 | 取消置顶 | 教师管理功能 |
-| 17 | 审核帖子 | 内容审核 |
-| 20 | 获取审核队列 | 待审核列表 |
-| 21 | 获取举报列表 | 查看举报内容 |
-| 22 | 处理举报 | 处理学生举报 |
+| 序号 | 接口         | 说明         |
+| ---- | ------------ | ------------ |
+| 15   | 置顶帖子     | 教师管理功能 |
+| 16   | 取消置顶     | 教师管理功能 |
+| 17   | 审核帖子     | 内容审核     |
+| 20   | 获取审核队列 | 待审核列表   |
+| 21   | 获取举报列表 | 查看举报内容 |
+| 22   | 处理举报     | 处理学生举报 |
 
 **预计工时**：3-4 天
 
 **前端页面**：
-- `src/views/course/discussion/index.vue` - 讨论管理
-- `src/views/course/discussion/review.vue` - 内容审核
-- `src/views/course/discussion/reports.vue` - 举报处理
+
+-`src/views/course/discussion/index.vue`- 讨论管理
+-`src/views/course/discussion/review.vue`- 内容审核
+-`src/views/course/discussion/reports.vue`- 举报处理
 
 ---
 
@@ -2496,12 +2417,12 @@ CREATE TABLE user_reputation (
 
 **目标**：完善互动和安全机制
 
-| 序号 | 接口 | 说明 |
-|------|------|------|
-| 11 | 点赞回复 | 回复互动 |
-| 12 | 取消点赞回复 | 回复互动 |
-| 13 | 举报帖子 | 安全机制 |
-| 14 | 举报回复 | 安全机制 |
+| 序号 | 接口         | 说明     |
+| ---- | ------------ | -------- |
+| 11   | 点赞回复     | 回复互动 |
+| 12   | 取消点赞回复 | 回复互动 |
+| 13   | 举报帖子     | 安全机制 |
+| 14   | 举报回复     | 安全机制 |
 
 **预计工时**：1-2 天
 
@@ -2511,21 +2432,22 @@ CREATE TABLE user_reputation (
 
 **目标**：管理员拥有全局管理能力
 
-| 序号 | 接口 | 说明 |
-|------|------|------|
-| 23 | 批量审核 | 提高审核效率 |
-| 24 | 批量删除 | 批量处理违规内容 |
-| 25 | 获取敏感词列表 | 敏感词管理 |
-| 26 | 添加敏感词 | 敏感词管理 |
-| 27 | 编辑敏感词 | 敏感词管理 |
-| 28 | 删除敏感词 | 敏感词管理 |
-| 29 | 批量导入敏感词 | 敏感词管理 |
+| 序号 | 接口           | 说明             |
+| ---- | -------------- | ---------------- |
+| 23   | 批量审核       | 提高审核效率     |
+| 24   | 批量删除       | 批量处理违规内容 |
+| 25   | 获取敏感词列表 | 敏感词管理       |
+| 26   | 添加敏感词     | 敏感词管理       |
+| 27   | 编辑敏感词     | 敏感词管理       |
+| 28   | 删除敏感词     | 敏感词管理       |
+| 29   | 批量导入敏感词 | 敏感词管理       |
 
 **预计工时**：3-4 天
 
 **前端页面**：
-- `src/views/system/discussion/index.vue` - 全局讨论管理
-- `src/views/system/discussion/sensitive-words.vue` - 敏感词管理
+
+-`src/views/system/discussion/index.vue`- 全局讨论管理
+-`src/views/system/discussion/sensitive-words.vue`- 敏感词管理
 
 ---
 
@@ -2533,42 +2455,43 @@ CREATE TABLE user_reputation (
 
 **目标**：数据分析和用户管理
 
-| 序号 | 接口 | 说明 |
-|------|------|------|
-| 30 | 获取用户信誉列表 | 用户信誉管理 |
-| 31 | 调整用户信誉 | 用户信誉管理 |
-| 32 | 获取审计日志 | 操作追溯 |
-| 33 | 获取全局统计 | 数据分析 |
+| 序号 | 接口             | 说明         |
+| ---- | ---------------- | ------------ |
+| 30   | 获取用户信誉列表 | 用户信誉管理 |
+| 31   | 调整用户信誉     | 用户信誉管理 |
+| 32   | 获取审计日志     | 操作追溯     |
+| 33   | 获取全局统计     | 数据分析     |
 
 **预计工时**：2-3 天
 
 **前端页面**：
-- `src/views/system/discussion/user-reputation.vue` - 用户信誉管理
-- `src/views/system/discussion/audit-logs.vue` - 审计日志
-- `src/views/system/discussion/statistics.vue` - 数据统计
+
+-`src/views/system/discussion/user-reputation.vue`- 用户信誉管理
+-`src/views/system/discussion/audit-logs.vue`- 审计日志
+-`src/views/system/discussion/statistics.vue` - 数据统计
 
 ---
 
 ### 总工时估算
 
-| 阶段 | 内容 | 后端工时 | 前端工时 |
-|------|------|---------|---------|
-| 第一阶段 | 学生端核心 | 3-5 天 | 已完成 |
-| 第二阶段 | 学生端互动 | 2-3 天 | 已完成 |
-| 第三阶段 | 教师端管理 | 3-4 天 | 3-4 天 |
-| 第四阶段 | 学生端增强 | 1-2 天 | 1 天 |
-| 第五阶段 | 管理员后台 | 3-4 天 | 4-5 天 |
-| 第六阶段 | 高级管理 | 2-3 天 | 3-4 天 |
-| **总计** | | **14-21 天** | **11-14 天** |
+| 阶段     | 内容       | 后端工时     | 前端工时     |
+| -------- | ---------- | ------------ | ------------ |
+| 第一阶段 | 学生端核心 | 3-5 天       | 已完成       |
+| 第二阶段 | 学生端互动 | 2-3 天       | 已完成       |
+| 第三阶段 | 教师端管理 | 3-4 天       | 3-4 天       |
+| 第四阶段 | 学生端增强 | 1-2 天       | 1 天         |
+| 第五阶段 | 管理员后台 | 3-4 天       | 4-5 天       |
+| 第六阶段 | 高级管理   | 2-3 天       | 3-4 天       |
+| **总计** |            | **14-21 天** | **11-14 天** |
 
 ---
 
 ## 版本历史
 
-| 版本 | 日期 | 说明 |
-|------|------|------|
-| 1.0.0 | 2026-01-24 | 初始版本 |
-| 1.1.0 | 2026-01-24 | 完善接口详情，添加接口清单和优先级建议 |
+| 版本  | 日期       | 说明                                      |
+| ----- | ---------- | ----------------------------------------- |
+| 1.0.0 | 2026-01-24 | 初始版本                                  |
+| 1.1.0 | 2026-01-24 | 完善接口详情，添加接口清单和优先级建议    |
 | 2.0.0 | 2026-01-24 | 新增管理员/教师端接口，完善全平台功能文档 |
 
 ---
@@ -2576,3 +2499,4 @@ CREATE TABLE user_reputation (
 ## 联系方式
 
 如有问题，请联系后端开发团队。
+````

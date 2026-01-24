@@ -61,14 +61,14 @@ const handleCapture = async (area: CaptureArea) => {
   try {
     // 执行截图
     const base64 = await captureScreen(area);
-    
+
     // 压缩图片
     const compressedImage = await compressImage(base64);
-    
+
     // 进入对话模式
     enterChatMode();
     chatDialogVisible.value = true;
-    
+
     // 发送截图进行分析
     await analyzeScreenshot(compressedImage);
   } catch (error) {
@@ -108,17 +108,17 @@ const handleViewHistory = () => {
 const handleLoadHistory = (session: ChatSession) => {
   // 关闭历史弹窗
   historyDialogVisible.value = false;
-  
+
   // 加载会话到对话框
   const { loadSession } = useAiChat();
   loadSession(session);
-  
+
   // 打开对话框
   chatDialogVisible.value = true;
 };
 
 // 监听对话框关闭
-watch(chatDialogVisible, (visible) => {
+watch(chatDialogVisible, visible => {
   if (!visible) {
     // 对话框关闭时重置状态
     resetCapture();

@@ -11,7 +11,7 @@
           <el-radio-button value="pending">待处理</el-radio-button>
           <el-radio-button value="completed">已完成</el-radio-button>
         </el-radio-group>
-        <el-button type="primary" :icon="Plus" @click="openAddDialog" round
+        <el-button type="primary" :icon="Plus" round @click="openAddDialog"
           >添加待办</el-button
         >
       </div>
@@ -25,10 +25,10 @@
       >
         <div class="todo-info flex items-center gap-6 flex-1">
           <div class="status-icon">
-            <el-checkbox 
-              :model-value="todo.completed" 
-              @change="toggleStatus(todo)"
+            <el-checkbox
+              :model-value="todo.completed"
               size="large"
+              @change="toggleStatus(todo)"
             />
           </div>
           <div class="text-content">
@@ -36,19 +36,36 @@
               <span :class="['title', { 'is-completed': todo.completed }]">
                 {{ todo.title }}
               </span>
-              <el-tag :type="todo.completed ? 'success' : 'warning'" size="default">
+              <el-tag
+                :type="todo.completed ? 'success' : 'warning'"
+                size="default"
+              >
                 {{ todo.completed ? "已完成" : "待处理" }}
               </el-tag>
             </div>
             <div class="meta-row mt-2 text-gray-500 text-base flex gap-6">
-              <span><el-icon class="relative top-[2px]"><User /></el-icon> {{ todo.publisher }}</span>
-              <span><el-icon class="relative top-[2px]"><Clock /></el-icon> {{ todo.time }}</span>
+              <span
+                ><el-icon class="relative top-[2px]"><User /></el-icon>
+                {{ todo.publisher }}</span
+              >
+              <span
+                ><el-icon class="relative top-[2px]"><Clock /></el-icon>
+                {{ todo.time }}</span
+              >
             </div>
           </div>
         </div>
         <div class="todo-actions flex gap-4">
-          <el-button link type="primary" size="large" @click="openEditDialog(todo)">编辑</el-button>
-          <el-button link type="danger" size="large" @click="deleteTodo(todo)">删除</el-button>
+          <el-button
+            link
+            type="primary"
+            size="large"
+            @click="openEditDialog(todo)"
+            >编辑</el-button
+          >
+          <el-button link type="danger" size="large" @click="deleteTodo(todo)"
+            >删除</el-button
+          >
         </div>
       </div>
     </div>
@@ -66,7 +83,7 @@
       width="500px"
       @close="resetForm"
     >
-      <el-form :model="form" ref="formRef" label-width="80px">
+      <el-form ref="formRef" :model="form" label-width="80px">
         <el-form-item label="标题" prop="title" required>
           <el-input v-model="form.title" placeholder="请输入标题" />
         </el-form-item>
@@ -75,8 +92,8 @@
         </el-form-item>
         <el-form-item label="详细信息" prop="details">
           <el-input
-            type="textarea"
             v-model="form.details"
+            type="textarea"
             placeholder="请输入详细信息"
           />
         </el-form-item>
@@ -300,7 +317,7 @@ const toggleStatus = (row: TodoItem) => {
 
   &.dark .card {
     background-color: #1e293b;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px rgb(0 0 0 / 20%);
   }
 
   .todo-header {
@@ -316,6 +333,7 @@ const toggleStatus = (row: TodoItem) => {
         font-weight: 700;
         color: #333;
       }
+
       p {
         margin: 0;
         font-size: 15px;
@@ -329,6 +347,7 @@ const toggleStatus = (row: TodoItem) => {
       h3 {
         color: #f1f5f9;
       }
+
       p {
         color: #94a3b8;
       }
@@ -343,15 +362,15 @@ const toggleStatus = (row: TodoItem) => {
   &.dark .todo-controls {
     :deep(.el-radio-group) {
       .el-radio-button__inner {
+        color: #94a3b8;
         background-color: #0f172a;
         border-color: #334155;
-        color: #94a3b8;
       }
-      
+
       .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+        color: #fff;
         background-color: #3b82f6;
         border-color: #3b82f6;
-        color: #fff;
       }
     }
   }
@@ -364,7 +383,7 @@ const toggleStatus = (row: TodoItem) => {
     transition: all 0.3s ease;
 
     &:hover {
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      box-shadow: 0 6px 18px rgb(0 0 0 / 8%);
       transform: translateY(-2px);
     }
 
@@ -374,18 +393,18 @@ const toggleStatus = (row: TodoItem) => {
       color: var(--el-text-color-primary);
 
       &.is-completed {
-        text-decoration: line-through;
         color: var(--el-text-color-placeholder);
+        text-decoration: line-through;
       }
     }
   }
 
   &.dark .todo-row {
     background-color: #1e293b;
-    
+
     .title {
       color: #f1f5f9;
-      
+
       &.is-completed {
         color: #64748b;
       }

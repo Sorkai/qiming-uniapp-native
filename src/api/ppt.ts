@@ -17,4 +17,4 @@ export const getPptToken = () => {
       "Api-Key": import.meta.env.VITE_DOCMEE_API_KEY
     }
   });
-}; 
+};

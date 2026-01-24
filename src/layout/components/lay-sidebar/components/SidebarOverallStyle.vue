@@ -30,15 +30,16 @@ const onToggle = async (event: MouseEvent) => {
 
   const x = event.clientX;
   const y = event.clientY;
-  const endRadius = Math.hypot(
-    Math.max(x, window.innerWidth - x),
-    Math.max(y, window.innerHeight - y)
-  ) * 1.2; // 增加 20% 冗余量，确保在 reload 触发前圆圈已完全覆盖屏幕角落（如左下角）
+  const endRadius =
+    Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    ) * 1.2; // 增加 20% 冗余量，确保在 reload 触发前圆圈已完全覆盖屏幕角落（如左下角）
 
   // 1. 创建扩散层
   const overlay = document.createElement("div");
   const isToDark = overallStyle.value === "light";
-  
+
   // 扩散层样式：绝对置顶，初始半径为0
   overlay.style.cssText = `
     position: fixed;
@@ -77,13 +78,13 @@ const onToggle = async (event: MouseEvent) => {
       try {
         // 先触发主题切换（同步 localStorage）
         toggleTheme();
-        
+
         // 设置刷新标识和模式，供 index.html 拦截使用
         localStorage.setItem("THEME_SWITCH_RELOAD", "true");
         localStorage.setItem("THEME_SWITCH_MODE", isToDark ? "dark" : "light");
 
         // 立即刷新
-        // 此时 overlay 还在 DOM 中且 z-index 最高，刷新会瞬间中断当前 JS 
+        // 此时 overlay 还在 DOM 中且 z-index 最高，刷新会瞬间中断当前 JS
         // 随后 index.html 中的脚本会接力，显示颜色完全一致的 mask
         window.location.reload();
       } catch (error) {
@@ -109,25 +110,39 @@ const onToggle = async (event: MouseEvent) => {
     >
       <div class="sun-moon-wrapper">
         <div class="icon sun">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
           </svg>
         </div>
         <div class="icon moon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
           </svg>
         </div>
       </div>
-      <div class="switch-dot"></div>
+      <div class="switch-dot" />
     </div>
   </div>
 </template>
@@ -148,33 +163,33 @@ const onToggle = async (event: MouseEvent) => {
   cursor: pointer;
   background-color: #e2e8f0;
   border-radius: 100px;
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 10%);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    transform: scale(1.05);
     background-color: #cbd5e0;
+    transform: scale(1.05);
   }
 
   &.is-dark {
     background-color: #2d3748;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 30%);
 
     .switch-dot {
-      transform: translateX(24px);
       background-color: #1a202c;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 40%);
+      transform: translateX(24px);
     }
 
     .sun {
-      transform: translateY(20px) scale(0);
       opacity: 0;
+      transform: translateY(20px) scale(0);
     }
 
     .moon {
-      transform: translateY(0) scale(1);
-      opacity: 1;
       color: #f6e05e;
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
   }
 
@@ -204,15 +219,15 @@ const onToggle = async (event: MouseEvent) => {
   .sun {
     left: 0;
     color: #f6ad55;
-    transform: translateY(0) scale(1);
     opacity: 1;
+    transform: translateY(0) scale(1);
   }
 
   .moon {
     right: 0;
     color: #718096;
-    transform: translateY(-20px) scale(0);
     opacity: 0;
+    transform: translateY(-20px) scale(0);
   }
 
   .switch-dot {
@@ -221,10 +236,10 @@ const onToggle = async (event: MouseEvent) => {
     left: 4px;
     width: 20px;
     height: 20px;
-    background-color: #ffffff;
+    background-color: #fff;
     border-radius: 50%;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 }
 </style>

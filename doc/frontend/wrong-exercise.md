@@ -4,10 +4,10 @@
 
 ## 1. 错题分析
 
-- **接口地址**：`/ai/wrong-exercise/analyze`
-- **请求方式**：POST
+- **接口地址**：`/ai/wrong-exercise/analyze`- **请求方式**：POST
 - **请求参数**：
-```json
+
+````json
 {
   "course_id": 1001,
   "original_exercise_id": "exercise_001",
@@ -15,8 +15,12 @@
   "student_answer": "20",
   "correct_answer": "14"
 }
-```
+
+```text
+
+
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -41,17 +45,17 @@
     ]
   }
 }
-```
 
+```text
 ## 2. 错题分析历史
 
-- **接口地址**：`/ai/wrong-exercise/history`
-- **请求方式**：GET
+- **接口地址**：`/ai/wrong-exercise/history`- **请求方式**：GET
 - **请求参数**：
-  - `course_id`: int64 (可选)
-  - `page`: int (默认1)
-  - `page_size`: int (默认10)
+    -`course_id`: int64 (可选)
+    - `page`: int (默认1)
+    - `page_size`: int (默认10)
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -77,4 +81,5 @@
     ]
   }
 }
-```
+
+````

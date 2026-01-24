@@ -1,4 +1,5 @@
-.<script setup lang="ts">
+.
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from "vue";
 
 const props = defineProps({
@@ -56,10 +57,10 @@ class Particle {
     ctx.save();
     ctx.globalAlpha = this.opacity;
     ctx.fillStyle = this.color;
-    
+
     // 增加一点随机性，让粒子看起来更像流动的墨水
     const currentSize = this.size * (Math.sin(this.angle) * 0.2 + 1);
-    
+
     ctx.beginPath();
     ctx.arc(this.x, this.y, currentSize, 0, Math.PI * 2);
     ctx.closePath();
@@ -92,7 +93,7 @@ class Particle {
       const force = (maxDistance - distance) / maxDistance;
       const directionX = dx / distance;
       const directionY = dy / distance;
-      
+
       this.x -= directionX * force * 10;
       this.y -= directionY * force * 10;
       this.opacity = 0.1; // 几乎透明
@@ -105,10 +106,10 @@ const initParticles = () => {
   const canvas = canvasRef.value;
   const container = containerRef.value;
   const rect = container.getBoundingClientRect();
-  
+
   canvas.width = rect.width;
   canvas.height = rect.height;
-  
+
   particles = [];
   // 降低粒子密度，使其更轻盈
   const numberOfParticles = (canvas.width * canvas.height) / 20;
@@ -155,20 +156,28 @@ onUnmounted(() => {
   window.removeEventListener("resize", initParticles);
 });
 
-watch(() => props.active, (val) => {
-  if (val) {
-    animate();
-  } else {
-    cancelAnimationFrame(animationFrameId);
+watch(
+  () => props.active,
+  val => {
+    if (val) {
+      animate();
+    } else {
+      cancelAnimationFrame(animationFrameId);
+    }
   }
-});
+);
 </script>
 
 <template>
-  <div ref="containerRef" class="invisible-ink-container" @mousemove="handleMouseMove" @mouseleave="handleMouseLeave">
-    <canvas v-show="active" ref="canvasRef" class="ink-canvas"></canvas>
+  <div
+    ref="containerRef"
+    class="invisible-ink-container"
+    @mousemove="handleMouseMove"
+    @mouseleave="handleMouseLeave"
+  >
+    <canvas v-show="active" ref="canvasRef" class="ink-canvas" />
     <div class="content-slot" :class="{ 'is-active': active }">
-      <slot></slot>
+      <slot />
     </div>
   </div>
 </template>
@@ -187,9 +196,9 @@ watch(() => props.active, (val) => {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 2;
   width: 100%;
   height: 100%;
-  z-index: 2;
   pointer-events: none;
 }
 
@@ -202,6 +211,7 @@ watch(() => props.active, (val) => {
 
 .content-slot.is-active {
   /* 当特效激活时，内容本身可以稍微模糊一点，配合 Canvas 效果更好 */
+
   /* filter: blur(1px); */
 }
 </style>

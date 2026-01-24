@@ -1,11 +1,13 @@
 <template>
   <div class="exam-management">
-    <div class="mb-5 flex justify-between items-center bg-[var(--el-fill-color-light)] p-4 rounded-lg">
+    <div
+      class="mb-5 flex justify-between items-center bg-[var(--el-fill-color-light)] p-4 rounded-lg"
+    >
       <div class="text-[var(--el-text-color-regular)] font-medium">
         <el-icon class="mr-1 mt-0.5"><Reading /></el-icon>
         考试列表 ({{ total }})
       </div>
-      <el-button type="primary" @click="showCreateDialog" :icon="Plus" round>
+      <el-button type="primary" :icon="Plus" round @click="showCreateDialog">
         创建考试
       </el-button>
     </div>
@@ -22,29 +24,43 @@
       <el-table-column prop="examId" label="ID" width="80" align="center" />
       <el-table-column prop="title" label="考试名称" min-width="200">
         <template #default="{ row }">
-          <span class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline" @click="showQuestionDialog(row)">{{ row.title }}</span>
+          <span
+            class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline"
+            @click="showQuestionDialog(row)"
+            >{{ row.title }}</span
+          >
         </template>
       </el-table-column>
       <el-table-column prop="timeLimit" label="时长" width="100" align="center">
         <template #default="{ row }">
-          <span class="text-[var(--el-text-color-regular)]">{{ row.timeLimit }} 分钟</span>
+          <span class="text-[var(--el-text-color-regular)]"
+            >{{ row.timeLimit }} 分钟</span
+          >
         </template>
       </el-table-column>
-      <el-table-column prop="totalPoints" label="总分" width="80" align="center" />
+      <el-table-column
+        prop="totalPoints"
+        label="总分"
+        width="80"
+        align="center"
+      />
       <el-table-column label="有效时间" min-width="220" align="center">
         <template #default="scope">
           <div class="text-xs text-[var(--el-text-color-secondary)]">
-            <div><span class="text-[var(--el-color-success)]">从:</span> {{ scope.row.availableFrom }}</div>
-            <div><span class="text-[var(--el-color-danger)]">至:</span> {{ scope.row.availableTo }}</div>
+            <div>
+              <span class="text-[var(--el-color-success)]">从:</span>
+              {{ scope.row.availableFrom }}
+            </div>
+            <div>
+              <span class="text-[var(--el-color-danger)]">至:</span>
+              {{ scope.row.availableTo }}
+            </div>
           </div>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="220" fixed="right" align="center">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            @click="showQuestionDialog(scope.row)"
+          <el-button link type="primary" @click="showQuestionDialog(scope.row)"
             >试题管理</el-button
           >
           <el-divider direction="vertical" />
@@ -52,16 +68,12 @@
             >编辑</el-button
           >
           <el-divider direction="vertical" />
-          <el-button
-            link
-            type="danger"
-            @click="confirmDelete(scope.row)"
+          <el-button link type="danger" @click="confirmDelete(scope.row)"
             >删除</el-button
           >
         </template>
       </el-table-column>
     </el-table>
-
 
     <!-- 分页 -->
     <div class="pagination-container">
@@ -642,9 +654,9 @@ onMounted(() => {
 }
 
 .pagination-container {
-  margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+  margin-top: 20px;
 }
 
 .question-dialog-header {
@@ -657,8 +669,8 @@ onMounted(() => {
   }
 
   p {
-    color: var(--el-text-color-regular);
     margin: 0;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -672,8 +684,8 @@ onMounted(() => {
   }
 
   .analysis-content {
-    white-space: pre-wrap;
     line-height: 1.5;
+    white-space: pre-wrap;
   }
 }
 </style>

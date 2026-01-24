@@ -108,7 +108,6 @@ export interface CourseGradesClassComparisonResult {
   classAverages: number[];
 }
 
-
 /**
  * 获取课程列表
  */
@@ -214,7 +213,9 @@ export const getCourseGradesStatistics = (params: { courseId: number }) => {
  * 获取成绩班级对比数据
  * 用于展示个人得分与班级平均分的对比图表
  */
-export const getCourseGradesClassComparison = (params: { courseId: number }) => {
+export const getCourseGradesClassComparison = (params: {
+  courseId: number;
+}) => {
   return http.request<ApiResponse<CourseGradesClassComparisonResult>>(
     "get",
     "/edu/frontend/v1/course/grades/class-comparison",

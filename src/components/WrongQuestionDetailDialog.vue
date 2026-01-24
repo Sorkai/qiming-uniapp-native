@@ -8,7 +8,7 @@
   >
     <div class="wrong-question-detail">
       <h3 class="question-title">{{ wrongQuestion?.title }}</h3>
-      <div class="question-stem" v-html="wrongQuestion?.stem"></div>
+      <div class="question-stem" v-html="wrongQuestion?.stem" />
 
       <div v-if="isChoiceQuestion" class="question-options">
         <h4>选项:</h4>
@@ -21,7 +21,7 @@
             }"
           >
             <span class="option-label">{{ option.optionId }}.</span>
-            <span v-html="option.content"></span>
+            <span v-html="option.content" />
           </li>
         </ul>
       </div>
@@ -32,7 +32,7 @@
 
         <div v-if="wrongQuestion?.analysis">
           <h4>解析:</h4>
-          <div v-html="wrongQuestion.analysis"></div>
+          <div v-html="wrongQuestion.analysis" />
         </div>
       </div>
     </div>
@@ -165,15 +165,15 @@ const isOptionCorrect = (optionId: string) => {
 
 <style scoped>
 .wrong-question-detail {
-  padding: 0;
   max-height: 70vh;
+  padding: 0;
   overflow-y: auto;
 }
 
 .question-title {
+  margin-bottom: 15px;
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 15px;
   color: #333;
 }
 
@@ -185,23 +185,23 @@ const isOptionCorrect = (optionId: string) => {
 
 .question-options h4,
 .question-answers h4 {
-  font-size: 16px;
   margin-top: 20px;
   margin-bottom: 10px;
+  font-size: 16px;
   color: #333;
 }
 
 .question-options ul {
-  list-style: none;
   padding: 0;
+  list-style: none;
 }
 
 .question-options li {
-  padding: 8px 0;
-  border-bottom: 1px dashed #eee;
   display: flex;
   align-items: flex-start;
+  padding: 8px 0;
   color: #666;
+  border-bottom: 1px dashed #eee;
 }
 
 .question-options li:last-child {
@@ -209,14 +209,14 @@ const isOptionCorrect = (optionId: string) => {
 }
 
 .option-label {
-  font-weight: bold;
-  margin-right: 8px;
   flex-shrink: 0;
+  margin-right: 8px;
+  font-weight: bold;
 }
 
 .question-options li.is-correct {
-  color: #67c23a; /* Green for correct options */
   font-weight: bold;
+  color: #67c23a; /* Green for correct options */
 }
 
 .question-answers p {
@@ -229,8 +229,8 @@ const isOptionCorrect = (optionId: string) => {
 
 <style lang="scss">
 .custom-wrong-detail-dialog {
-  border-radius: 16px !important;
   overflow: hidden !important;
+  border-radius: 16px !important;
 
   .el-dialog__header {
     padding: 24px 40px !important;
@@ -251,6 +251,7 @@ const isOptionCorrect = (optionId: string) => {
 /* 深色模式适配 */
 html.dark .custom-wrong-detail-dialog {
   --el-dialog-bg-color: #1a1a1a;
+
   background-color: var(--el-dialog-bg-color);
   border: 1px solid #333;
 
@@ -280,8 +281,8 @@ html.dark .custom-wrong-detail-dialog {
   }
 
   .question-options li {
-    border-bottom-color: #333;
     color: #aaa;
+    border-bottom-color: #333;
   }
 
   .question-answers p {

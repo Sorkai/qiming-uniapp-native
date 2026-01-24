@@ -4,13 +4,14 @@
 
 ## 1. 获取用户课程考试列表
 
-- **接口地址**：`/course/exam/list`
-- **请求方式**：GET
+- **接口地址**：`/course/exam/list`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number
+
+    -`courseId`: number
 
 - **响应参数**：
-```json
+
+````json
 {
   "code": 200,
   "msg": "成功",
@@ -29,17 +30,18 @@
     }
   ]
 }
-```
 
+```text
 ## 2. 获取考试详情
 
-- **接口地址**：`/exam/detail`
-- **请求方式**：GET
+- **接口地址**：`/exam/detail`- **请求方式**：GET
 - **请求参数**：
-  - `examId`: number
-  - `courseId`: number
+
+    -`examId`: number
+    - `courseId`: number
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -60,30 +62,30 @@
         "content": "string",
         "type": 1, // 1:单选 2:多选 3:判断 4:填空 5:简答
         "score": 20,
-        "options": [
-          { "optionId": "A", "content": "string" }
-        ]
+        "options": [{ "optionId": "A", "content": "string" }]
       }
     ]
   }
 }
-```
 
+```text
 ## 3. 提交考试答案
 
-- **接口地址**：`/exam/submit`
-- **请求方式**：POST
+- **接口地址**：`/exam/submit`- **请求方式**：POST
 - **请求参数**：
+
 ```json
 {
   "examId": 1,
   "courseId": 1,
-  "answers": [
-    { "questionId": 1, "answer": "A" }
-  ]
+  "answers": [{ "questionId": 1, "answer": "A" }]
 }
-```
+
+```text
+
+
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -93,16 +95,17 @@
     "totalScore": 100
   }
 }
-```
 
+```text
 ## 4. 获取用户课程作业列表
 
-- **接口地址**：`/course/homework/list`
-- **请求方式**：GET
+- **接口地址**：`/course/homework/list`- **请求方式**：GET
 - **请求参数**：
-  - `courseId`: number
+
+    -`courseId`: number
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -120,17 +123,18 @@
     }
   ]
 }
-```
 
+```text
 ## 5. 获取作业详情
 
-- **接口地址**：`/homework/detail`
-- **请求方式**：GET
+- **接口地址**：`/homework/detail`- **请求方式**：GET
 - **请求参数**：
-  - `homeworkId`: number
-  - `courseId`: number
+
+    -`homeworkId`: number
+    - `courseId`: number
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -154,23 +158,25 @@
     ]
   }
 }
-```
 
+```text
 ## 6. 提交作业答案
 
-- **接口地址**：`/homework/submit`
-- **请求方式**：POST
+- **接口地址**：`/homework/submit`- **请求方式**：POST
 - **请求参数**：
+
 ```json
 {
   "homeworkId": 1,
   "courseId": 1,
-  "answers": [
-    { "questionId": 1, "answer": "string" }
-  ]
+  "answers": [{ "questionId": 1, "answer": "string" }]
 }
-```
+
+```text
+
+
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -180,19 +186,20 @@
     "totalScore": 100
   }
 }
-```
 
+```text
 ## 7. 获取用户错题列表
 
-- **接口地址**：`/wrong/question/list`
-- **请求方式**：GET
+- **接口地址**：`/wrong/question/list`- **请求方式**：GET
 - **请求参数**：
-  - `pageNum`: number
-  - `pageSize`: number
-  - `sourceType`: number (1:作业 2:考试 3:自测题)
-  - `courseId`: number (可选)
+
+    -`pageNum`: number
+    - `pageSize`: number
+    - `sourceType`: number (1:作业 2:考试 3:自测题)
+    - `courseId`: number (可选)
 
 - **响应参数**：
+
 ```json
 {
   "code": 200,
@@ -219,4 +226,5 @@
     ]
   }
 }
-```
+
+````

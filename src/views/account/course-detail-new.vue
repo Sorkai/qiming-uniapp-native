@@ -67,9 +67,12 @@
 
         <!-- 课程学习、知识点、课程问答 - 保持原有结构，后续可继续拆分 -->
         <!-- 这些模块较复杂，包含 AI 助教等交互功能，暂时保留在主文件中 -->
-        
+
         <!-- 课程学习占位 -->
-        <div v-show="activeMenu === 'course-learn'" class="course-learn-placeholder">
+        <div
+          v-show="activeMenu === 'course-learn'"
+          class="course-learn-placeholder"
+        >
           <CourseHeader
             :current-theme="currentTheme"
             title="章节模式"
@@ -173,12 +176,14 @@ const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
-const currentTheme = ref(storageLocal().getItem("course_theme") as string || "light");
-const activeMenu = ref(
-  (storageLocal().getItem(`course_detail_active_menu_${route.params.id}`) as string) ||
-    "course-learn"
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) || "light"
 );
-
+const activeMenu = ref(
+  (storageLocal().getItem(
+    `course_detail_active_menu_${route.params.id}`
+  ) as string) || "course-learn"
+);
 
 // 监听路由参数变化，处理课程切换
 watch(
@@ -217,8 +222,8 @@ const userStore = useUserStoreHook();
 const userAvatar = computed(() =>
   formatAvatar(userStore.avatar, avatarDefault)
 );
-const userNickname = computed(() => 
-  userStore.nickname || userStore.username || "用户"
+const userNickname = computed(
+  () => userStore.nickname || userStore.username || "用户"
 );
 
 // 课程资料
@@ -278,7 +283,10 @@ const goBack = () => {
 
 // 跳转账号管理
 const goToAccount = () => {
-  if (useUserStoreHook().roles?.includes("admin") || useUserStoreHook().roles?.includes("teacher")) {
+  if (
+    useUserStoreHook().roles?.includes("admin") ||
+    useUserStoreHook().roles?.includes("teacher")
+  ) {
     router.push("/welcome");
   } else {
     router.push("/account");
@@ -363,7 +371,7 @@ const fetchHtmlAnimations = async () => {
   if (!courseDetail.value) return;
   htmlAnimationLoading.value = true;
   htmlAnimationList.value = [];
-  
+
   try {
     const chapters = courseDetail.value.courseChapterList || [];
     const promises = chapters.map(async (ch: any) => {
@@ -428,7 +436,10 @@ onMounted(async () => {
 
 // 监听菜单变化并持久化
 watch(activeMenu, newVal => {
-  storageLocal().setItem(`course_detail_active_menu_${route.params.id}`, newVal);
+  storageLocal().setItem(
+    `course_detail_active_menu_${route.params.id}`,
+    newVal
+  );
   // 加载对应数据
   if (newVal === "homework-exam") {
     fetchHomeworkList();
@@ -441,21 +452,25 @@ watch(activeMenu, newVal => {
 });
 
 // 监听主题变化
-watch(currentTheme, (val) => {
-  storageLocal().setItem("course_theme", val);
-  const other = val === "light" ? "dark" : "light";
-  document.documentElement.classList.remove(other);
-  document.documentElement.classList.add(val);
-  document.body.classList.remove(other);
-  document.body.classList.add(val);
+watch(
+  currentTheme,
+  val => {
+    storageLocal().setItem("course_theme", val);
+    const other = val === "light" ? "dark" : "light";
+    document.documentElement.classList.remove(other);
+    document.documentElement.classList.add(val);
+    document.body.classList.remove(other);
+    document.body.classList.add(val);
 
-  // 同步到管理后台主题设置
-  const layout = storageLocal().getItem("responsive-layout") as any;
-  if (layout) {
-    layout.darkMode = val === "dark";
-    storageLocal().setItem("responsive-layout", layout);
-  }
-}, { immediate: true });
+    // 同步到管理后台主题设置
+    const layout = storageLocal().getItem("responsive-layout") as any;
+    if (layout) {
+      layout.darkMode = val === "dark";
+      storageLocal().setItem("responsive-layout", layout);
+    }
+  },
+  { immediate: true }
+);
 
 onBeforeUnmount(() => {
   document.body.classList.remove("course-page");
@@ -465,17 +480,17 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
-@import "@/../coursecss/css/chunk-b3e9f934.1c00050a.css";
-@import "@/../coursecss/css/chunk-8cf7ce30.92e48af1.css";
-@import "@/../coursecss/css/chunk-3cf64ec0.4f07a253.css";
-@import "@/../coursecss/css/chunk-3248eec0.130a3cd9.css";
-@import "@/../coursecss/css/app.a5f91bbb.css";
-@import "@/../coursecss/css/chunk-b4b575b6.fcb08796.css";
+@import url("@/../coursecss/css/chunk-b3e9f934.1c00050a.css");
+@import url("@/../coursecss/css/chunk-8cf7ce30.92e48af1.css");
+@import url("@/../coursecss/css/chunk-3cf64ec0.4f07a253.css");
+@import url("@/../coursecss/css/chunk-3248eec0.130a3cd9.css");
+@import url("@/../coursecss/css/app.a5f91bbb.css");
+@import url("@/../coursecss/css/chunk-b4b575b6.fcb08796.css");
 
 .course-detail-root {
   width: 100%;
   min-height: 100vh;
-  background-color: #ffffff;
+  background-color: #fff;
 
   &.dark {
     background-color: #1a1a1a;
@@ -483,9 +498,9 @@ onBeforeUnmount(() => {
 
   .layout-container {
     position: relative;
+    display: flex;
     width: 100%;
     min-height: 100vh;
-    display: flex;
 
     &.dark {
       background-color: #1a1a1a;
@@ -495,38 +510,47 @@ onBeforeUnmount(() => {
   .layout-inner-content {
     position: relative;
     flex: 1;
-    margin: 20px 15px 15px 90px;
     height: calc(100vh - 35px);
-    border-radius: 24px;
+    margin: 20px 15px 15px 90px;
     overflow: hidden;
     background-color: #f5f7fa;
-    box-shadow: 0 10px 40px -10px rgba(64, 158, 255, 0.1);
     border: 1px solid #eef2f7;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px -10px rgb(64 158 255 / 10%);
     transition: all 0.3s ease;
 
     &.dark {
       background-color: #1a1a1a;
-      border: 1px solid rgba(60, 60, 80, 0.8);
-      box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgb(60 60 80 / 80%);
+      box-shadow: 0 8px 32px -4px rgb(0 0 0 / 60%);
     }
   }
 }
 </style>
 
 <style scoped lang="scss">
-/* 占位内容样式 */
+@keyframes sidebar-glow-border {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
 .course-learn-placeholder,
 .mastery-placeholder,
 .course-qa-placeholder {
-  height: 100%;
-  width: 100%;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
 }
 
 .placeholder-content {
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -550,66 +574,64 @@ onBeforeUnmount(() => {
 
 /* 侧边栏样式 */
 :deep(.layout-sidebar) {
-  width: 80px;
-  min-width: 80px;
-  left: 10px;
-  top: 20px;
-  height: calc(100vh - 35px);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: 0 8px 32px -4px rgba(64, 158, 255, 0.2);
-  border: 1px solid rgba(64, 158, 255, 0.2);
-  z-index: 100;
   position: fixed;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 15px 0;
+  top: 20px;
+  left: 10px;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 80px;
+  min-width: 80px;
+  height: calc(100vh - 35px);
+  padding: 15px 0;
+  overflow: hidden auto;
+  background: rgb(255 255 255 / 80%);
+  border: 1px solid rgb(64 158 255 / 20%);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px -4px rgb(64 158 255 / 20%);
+  backdrop-filter: blur(20px) saturate(180%);
 
   &::after {
-    content: "";
     position: absolute;
     inset: 0;
-    border-radius: 24px;
     padding: 1.5px;
+    pointer-events: none;
+    content: "";
     background: linear-gradient(90deg, #97b4f7, #604ffd, #97b4f7);
     background-size: 200% 100%;
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    border-radius: 24px;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     mask-composite: exclude;
     animation: sidebar-glow-border 3s linear infinite;
-    pointer-events: none;
   }
 
   &.dark {
-    background: rgba(30, 30, 40, 0.9);
-    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgb(30 30 40 / 90%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    box-shadow: 0 8px 32px -4px rgb(0 0 0 / 60%);
   }
-}
-
-@keyframes sidebar-glow-border {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 200% 0%; }
 }
 
 :deep(.layout-header) {
-  left: 95px;
   top: 20px;
-  width: calc(100% - 110px);
-  border-radius: 20px;
+  left: 95px;
   z-index: 150;
-  background: rgba(255, 255, 255, 0.9);
+  width: calc(100% - 110px);
+  background: rgb(255 255 255 / 90%);
+  border: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   &.dark {
-    background: rgba(26, 26, 26, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background: rgb(26 26 26 / 90%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 30%);
   }
 }
+
+/* 占位内容样式 */
 </style>

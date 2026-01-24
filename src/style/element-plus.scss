@@ -5,7 +5,7 @@
   --el-border-radius-round: 20px;
 }
 
-.el-button:not(.is-round):not(.is-circle) {
+.el-button:not(.is-round, .is-circle) {
   border-radius: var(--el-border-radius-base);
 }
 
@@ -21,7 +21,6 @@
 .el-breadcrumb__inner a {
   font-weight: 400;
 }
-
 
 .el-dropdown-menu {
   padding: 0;
@@ -179,10 +178,12 @@
 
 /* 仿 el-scrollbar 滚动条样式，支持大多数浏览器，如Chrome、Edge、Firefox、Safari等。整体暗色风格在 src/style/dark.scss 文件进行了适配 */
 .pure-scrollbar {
-  scrollbar-color: rgb(221 222 224) transparent; /* 滑块颜色、轨道颜色 */
+  /* Firefox 及支持 scrollbar-color/scrollbar-width 的浏览器 */
+  @supports (scrollbar-color: auto) {
+    scrollbar-color: rgb(221 222 224) transparent; /* 滑块颜色、轨道颜色 */
+    scrollbar-width: thin; /* 可选值为 'auto', 'thin', 'none' */
+  }
 
-  /* Firefox */
-  scrollbar-width: thin; /* 可选值为 'auto', 'thin', 'none' */
   ::-webkit-scrollbar {
     width: 6px; /* 滚动条宽度 */
   }

@@ -1,9 +1,5 @@
 <template>
-  <div
-    v-show="visible"
-    class="course-study-root"
-    :class="currentTheme"
-  >
+  <div v-show="visible" class="course-study-root" :class="currentTheme">
     <CourseHeader
       :current-theme="currentTheme"
       title="章节模式"
@@ -22,23 +18,42 @@
             <div class="video-info-bar">
               <div class="video-meta">
                 <span class="lesson-badge">{{ activeNode }}</span>
-                <h2 class="lesson-title">{{ currentHour?.title || "加载中..." }}</h2>
+                <h2 class="lesson-title">
+                  {{ currentHour?.title || "加载中..." }}
+                </h2>
               </div>
               <div class="video-actions">
                 <button class="action-btn" title="收藏">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"
+                    />
                   </svg>
                 </button>
                 <button class="action-btn" title="分享">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="18" cy="5" r="3"></circle>
-                    <circle cx="6" cy="12" r="3"></circle>
-                    <circle cx="18" cy="19" r="3"></circle>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                   </svg>
-                </button></div>
+                </button>
+              </div>
             </div>
             <div class="video-player-wrapper">
               <video
@@ -53,8 +68,15 @@
               <div v-else class="video-placeholder">
                 <div class="placeholder-content">
                   <div class="placeholder-icon">
-                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="48"
+                      height="48"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    >
+                      <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
                   </div>
                   <span>{{ loading ? "视频加载中..." : "暂无视频内容" }}</span>
@@ -67,16 +89,27 @@
             <div ref="knowledgeCardRef" class="knowledge-card glass-card">
               <div class="card-header">
                 <div class="header-icon knowledge-icon">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
                   </svg>
                 </div>
                 <h3 class="card-title">知识点描述</h3>
               </div>
               <div class="card-body">
                 <el-scrollbar>
-                  <div ref="knowledgeContentRef" class="knowledge-content" v-html="courseContentHtml"></div>
+                  <div
+                    ref="knowledgeContentRef"
+                    class="knowledge-content"
+                    v-html="courseContentHtml"
+                  />
                 </el-scrollbar>
               </div>
             </div>
@@ -84,11 +117,20 @@
             <div ref="summaryCardRef" class="summary-card glass-card">
               <div class="card-header">
                 <div class="header-icon summary-icon">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
                   </svg>
                 </div>
                 <h3 class="card-title">AI 视频纪要</h3>
@@ -97,7 +139,11 @@
               <div class="card-body">
                 <el-scrollbar>
                   <ul ref="summaryContentRef" class="summary-list">
-                    <li v-for="(item, index) in mockSummary" :key="index" class="summary-item">
+                    <li
+                      v-for="(item, index) in mockSummary"
+                      :key="index"
+                      class="summary-item"
+                    >
                       <span class="item-number">{{ index + 1 }}</span>
                       <span class="item-text">{{ item }}</span>
                     </li>
@@ -110,22 +156,29 @@
 
         <div class="right-sidebar">
           <div class="ai-assistant-widget" @click="$emit('open-ai')">
-            <div class="ai-glow"></div>
+            <div class="ai-glow" />
             <div class="ai-content">
               <div class="ai-avatar">
                 <img :src="aiPeopleAvatar" alt="AI" />
-                <div class="pulse-ring"></div>
+                <div class="pulse-ring" />
               </div>
               <div class="ai-info">
                 <span class="ai-title">AI 智能助教</span>
                 <span class="ai-status">
-                  <span class="status-dot"></span>
+                  <span class="status-dot" />
                   在线 · 随时为您解答
                 </span>
               </div>
               <div class="ai-arrow">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="9 18 15 12 9 6"></polyline>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="9 18 15 12 9 6" />
                 </svg>
               </div>
             </div>
@@ -134,13 +187,20 @@
           <div class="chapter-catalog glass-card">
             <div class="catalog-header">
               <h3 class="catalog-title">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="8" y1="6" x2="21" y2="6"></line>
-                  <line x1="8" y1="12" x2="21" y2="12"></line>
-                  <line x1="8" y1="18" x2="21" y2="18"></line>
-                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
                 </svg>
                 章节目录
               </h3>
@@ -155,8 +215,10 @@
                     class="chapter-node"
                   >
                     <div class="chapter-title-row">
-                      <div class="chapter-indicator"></div>
-                      <span class="chapter-label">第{{ Number(cIndex) + 1 }}章</span>
+                      <div class="chapter-indicator" />
+                      <span class="chapter-label"
+                        >第{{ Number(cIndex) + 1 }}章</span
+                      >
                       <span class="chapter-name">{{ chapter.name }}</span>
                     </div>
                     <div class="lessons-container">
@@ -165,28 +227,62 @@
                         :key="hour.hourId"
                         class="lesson-node"
                         :class="{
-                          active: activeNode === `${Number(cIndex) + 1}.${Number(hIndex) + 1}`,
-                          completed: hour.finished ===1
+                          active:
+                            activeNode ===
+                            `${Number(cIndex) + 1}.${Number(hIndex) + 1}`,
+                          completed: hour.finished === 1
                         }"
-                        @click="$emit('node-click', `${Number(cIndex) + 1}.${Number(hIndex) + 1}`, hour)"
+                        @click="
+                          $emit(
+                            'node-click',
+                            `${Number(cIndex) + 1}.${Number(hIndex) + 1}`,
+                            hour
+                          )
+                        "
                       >
                         <div class="lesson-left">
                           <div class="lesson-icon">
-                            <svg v-if="hour.finished === 1" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            <svg
+                              v-if="hour.finished === 1"
+                              viewBox="0 0 24 24"
+                              width="14"
+                              height="14"
+                              fill="currentColor"
+                            >
+                              <path
+                                d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                              />
                             </svg>
-                            <svg v-else viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            <svg
+                              v-else
+                              viewBox="0 0 24 24"
+                              width="14"
+                              height="14"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <polygon points="5 3 19 12 5 21 5 3" />
                             </svg>
                           </div>
                           <div class="lesson-info">
-                            <span class="lesson-num">{{ Number(cIndex) + 1 }}.{{ Number(hIndex) + 1 }}</span>
+                            <span class="lesson-num"
+                              >{{ Number(cIndex) + 1 }}.{{
+                                Number(hIndex) + 1
+                              }}</span
+                            >
                             <span class="lesson-name">{{ hour.title }}</span>
                           </div>
                         </div>
                         <div class="lesson-right">
-                          <div v-if="activeNode === `${Number(cIndex) + 1}.${Number(hIndex) + 1}`" class="playing-indicator">
-                            <span></span><span></span><span></span>
+                          <div
+                            v-if="
+                              activeNode ===
+                              `${Number(cIndex) + 1}.${Number(hIndex) + 1}`
+                            "
+                            class="playing-indicator"
+                          >
+                            <span /><span /><span />
                           </div>
                         </div>
                       </div>
@@ -201,7 +297,11 @@
     </div>
 
     <transition name="ai-dialog">
-      <div v-if="isAiDialogVisible" class="ai-dialog-overlay" @click.self="$emit('close-ai')">
+      <div
+        v-if="isAiDialogVisible"
+        class="ai-dialog-overlay"
+        @click.self="$emit('close-ai')"
+      >
         <div class="ai-dialog">
           <div class="dialog-header">
             <div class="header-left">
@@ -211,22 +311,42 @@
               <div class="header-info">
                 <span class="header-title">AI 智能助教</span>
                 <span class="header-status">
-                  <span class="online-indicator"></span>
+                  <span class="online-indicator" />
                   在线
                 </span>
               </div>
             </div>
             <div class="header-actions">
-              <button class="header-btn" @click="$emit('clear-chat')" title="清空对话">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <button
+                class="header-btn"
+                title="清空对话"
+                @click="$emit('clear-chat')"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path
+                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                  />
                 </svg>
               </button>
               <button class="header-btn close-btn" @click="$emit('close-ai')">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
@@ -242,8 +362,18 @@
                   <h3>Hi～我是您的 AI 助教</h3>
                   <p>课程学习中欢迎随时提问，我将全力为您答疑解惑！</p>
                   <div class="quick-questions">
-                    <button class="quick-btn" @click="handleQuickQuestion('这节课的重点是什么？')">这节课的重点是什么？</button>
-                    <button class="quick-btn" @click="handleQuickQuestion('帮我总结一下知识点')">帮我总结一下知识点</button>
+                    <button
+                      class="quick-btn"
+                      @click="handleQuickQuestion('这节课的重点是什么？')"
+                    >
+                      这节课的重点是什么？
+                    </button>
+                    <button
+                      class="quick-btn"
+                      @click="handleQuickQuestion('帮我总结一下知识点')"
+                    >
+                      帮我总结一下知识点
+                    </button>
                   </div>
                 </div>
 
@@ -255,13 +385,20 @@
                     :class="message.role"
                   >
                     <div class="message-content">
-                      <div v-if="message.role === 'user'" class="message-text">{{ message.content }}</div>
-                      <div v-else class="message-text ai-text" v-html="parseMarkdown(message.content)"></div>
-                    </div></div>
+                      <div v-if="message.role === 'user'" class="message-text">
+                        {{ message.content }}
+                      </div>
+                      <div
+                        v-else
+                        class="message-text ai-text"
+                        v-html="parseMarkdown(message.content)"
+                      />
+                    </div>
+                  </div>
                   <div v-if="isTyping" class="message-row ai">
                     <div class="message-content">
                       <div class="typing-indicator">
-                        <span></span><span></span><span></span>
+                        <span /><span /><span />
                       </div>
                     </div>
                   </div>
@@ -275,7 +412,7 @@
               <el-input
                 v-model="internalMsg"
                 type="textarea"
-                :autosize="{ minRows: 1, maxRows: 4}"
+                :autosize="{ minRows: 1, maxRows: 4 }"
                 placeholder="输入您的问题..."
                 @keydown.enter.exact.prevent="handleSend"
               />
@@ -285,9 +422,16 @@
                 :disabled="!internalMsg.trim() || sendingMessage"
                 @click="handleSend"
               >
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="22" y1="2" x2="11" y2="13"></line>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
                 </svg>
               </button>
             </div>
@@ -354,7 +498,7 @@ const syncedCardHeight = computed(() => {
   if (cardBodyHeight.value > 0) {
     return `${cardBodyHeight.value}px`;
   }
-  return 'auto';
+  return "auto";
 });
 
 // 计算两个内容区域的高度，取较小值作为统一高度
@@ -362,27 +506,27 @@ const calculateSyncedHeight = () => {
   nextTick(() => {
     const knowledgeContent = knowledgeContentRef.value;
     const summaryContent = summaryContentRef.value;
-    
+
     if (!knowledgeContent || !summaryContent) return;
-    
+
     // 获取内容的实际高度
     const knowledgeHeight = knowledgeContent.scrollHeight;
     const summaryHeight = summaryContent.scrollHeight;
-    
+
     // 取较小值
     let minHeight = Math.min(knowledgeHeight, summaryHeight);
-    
+
     // 计算响应式最小高度（基于视口高度）
     const viewportHeight = window.innerHeight;
     const minHeightVh = viewportHeight * (MIN_CARD_BODY_HEIGHT_VH / 100);
-    
+
     // 确保不小于最小高度
     minHeight = Math.max(minHeight, minHeightVh);
-    
+
     // 加上 card-header 的高度（约 81px）和 padding
     const headerHeight = 81;
     const paddingHeight = 40; // 上下 padding 各 20px
-    
+
     cardBodyHeight.value = minHeight + headerHeight + paddingHeight;
   });
 };
@@ -403,7 +547,7 @@ watch(
 // 监听组件可见性
 watch(
   () => props.visible,
-  (val) => {
+  val => {
     if (val) {
       calculateSyncedHeight();
     }
@@ -412,11 +556,11 @@ watch(
 
 onMounted(() => {
   calculateSyncedHeight();
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener("resize", handleResize);
 });
 
 // 监听 activeNode 变化，自动滚动到当前课时
@@ -437,7 +581,7 @@ watch(
 // 当组件变为可见时，也触发一次滚动
 watch(
   () => props.visible,
-  (val) => {
+  val => {
     if (val) {
       nextTick(() => {
         const activeEl = document.querySelector(".lesson-node.active");
@@ -465,7 +609,8 @@ const getTotalLessons = () => {
 
 const handleSend = () => {
   if (internalMsg.value.trim() && !props.sendingMessage) {
-    emit("send-message", internalMsg.value);}
+    emit("send-message", internalMsg.value);
+  }
 };
 
 const handleQuickQuestion = (question: string) => {
@@ -475,7 +620,7 @@ const handleQuickQuestion = (question: string) => {
 
 watch(
   () => props.sendingMessage,
-  (newVal) => {
+  newVal => {
     if (!newVal) internalMsg.value = "";
   }
 );
@@ -514,16 +659,70 @@ $radius-md: 12px;
 $radius-lg: 16px;
 $radius-xl: 24px;
 
-$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-$shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-$shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-$shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
+$shadow-md:
+  0 4px 6px -1px rgb(0 0 0 / 10%),
+  0 2px 4px -2px rgb(0 0 0 / 10%);
+$shadow-lg:
+  0 10px 15px -3px rgb(0 0 0 / 10%),
+  0 4px 6px -4px rgb(0 0 0 / 10%);
+$shadow-xl:
+  0 20px 25px -5px rgb(0 0 0 / 10%),
+  0 8px 10px -6px rgb(0 0 0 / 10%);
+
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes playing {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  50% {
+    transform: scaleY(0.5);
+  }
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+}
 
 .course-study-root {
   width: 100%;
   height: 100%;
-  background: transparent;
   overflow: hidden; /* 禁止根容器滚动，改为局部滚动 */
+  background: transparent;
 
   &.dark {
     background: transparent;
@@ -531,30 +730,30 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .study-container {
-  padding: 80px 32px 24px;
   box-sizing: border-box;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding: 80px 32px 24px;
 }
 
 .main-layout {
   display: flex;
-  gap: 32px;
   flex: 1;
-  min-height: 0; /* 允许 flex 子项在溢出时收缩 */
+  gap: 32px;
   align-items: stretch;
+  min-height: 0; /* 允许 flex 子项在溢出时收缩 */
 }
 
 .left-main {
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 24px;
   min-width: 0;
-  overflow-y: auto; /* 左侧内容独立滚动 */
   padding-right: 0; /* 移除右边距，因为滚动条隐藏了 */
-  
+  overflow-y: auto; /* 左侧内容独立滚动 */
+
   /* 隐藏滚动条但保持滚动功能 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
@@ -564,11 +763,11 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .video-section {
+  flex-shrink: 0; /* 视频区域不收缩 */
+  overflow: hidden;
   background: #000;
   border-radius: $radius-xl;
-  overflow: hidden;
   box-shadow: $shadow-xl;
-  flex-shrink: 0; /* 视频区域不收缩 */
 }
 
 .video-player-wrapper {
@@ -577,25 +776,26 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   aspect-ratio: 16 / 9;
 
   .video-player {
+    display: block;
     width: 100%;
     height: 100%;
-    display: block;
   }
 
   .video-placeholder {
-    width: 100%;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(135deg, $gray-800 0%, $gray-900 100%);
 
     .placeholder-content {
-      text-align: center;
       color: $gray-400;
+      text-align: center;
 
       .placeholder-icon {
-        margin-bottom: 16px;opacity: 0.5;
+        margin-bottom: 16px;
+        opacity: 0.5;
       }
 
       span {
@@ -608,31 +808,31 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
 .video-info-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 20px 24px;
   background: linear-gradient(135deg, $gray-800 0%, $gray-900 100%);
 
   .video-meta {
     display: flex;
-    align-items: center;
     gap: 16px;
+    align-items: center;
 
     .lesson-badge {
-      background: $primary;
-      color: #fff;
       padding: 6px 14px;
-      border-radius: 20px;
       font-size: 13px;
       font-weight: 700;
+      color: #fff;
       letter-spacing: 0.5px;
+      background: $primary;
+      border-radius: 20px;
     }
 
     .lesson-title {
+      margin: 0;
       font-size: 18px;
       font-weight: 600;
       color: #fff;
-      margin: 0;
     }
   }
 
@@ -641,21 +841,21 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     gap: 8px;
 
     .action-btn {
-      width: 40px;
-      height: 40px;
-      border: none;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: $radius-md;
-      color: $gray-300;
-      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 40px;
+      height: 40px;
+      color: $gray-300;
+      cursor: pointer;
+      background: rgb(255 255 255 / 10%);
+      border: none;
+      border-radius: $radius-md;
       transition: all 0.2s ease;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.2);
         color: #fff;
+        background: rgb(255 255 255 / 20%);
       }
     }
   }
@@ -663,86 +863,107 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
 .content-grid {
   display: grid;
+  flex: 1; /* 填充剩余空间，使底部与右侧章节目录对齐 */
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  flex: 1; /* 填充剩余空间，使底部与右侧章节目录对齐 */
   min-height: 0; /* 允许收缩 */
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: $radius-xl;
-  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-  /* 响应式最小高度：增加到 25vh，确保卡片有足够的高度 */
-  min-height: clamp(25vh, 30vh, 500px);
+
   /* 让卡片填充 grid 单元格的全部高度 */
   height: 100%;
 
+  /* 响应式最小高度：增加到 25vh，确保卡片有足够的高度 */
+  min-height: clamp(25vh, 30vh, 500px);
+  overflow: hidden;
+  background: rgb(255 255 255 / 90%);
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: $radius-xl;
+  box-shadow:
+    0 4px 20px -4px rgb(0 0 0 / 10%),
+    0 2px 8px -2px rgb(0 0 0 / 6%);
+  backdrop-filter: blur(20px);
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+
   &:hover {
-    box-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.15), 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 8px 30px -6px rgb(0 0 0 / 15%),
+      0 4px 12px -4px rgb(0 0 0 / 10%);
     transform: translateY(-2px);
   }
 
   .dark & {
-    background: rgba(40, 40, 40, 0.9);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.3), 0 2px 8px -2px rgba(0, 0, 0, 0.2);
-    
+    background: rgb(40 40 40 / 90%);
+    border-color: rgb(255 255 255 / 15%);
+    box-shadow:
+      0 4px 20px -4px rgb(0 0 0 / 30%),
+      0 2px 8px -2px rgb(0 0 0 / 20%);
+
     &:hover {
-      box-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.4), 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+      box-shadow:
+        0 8px 30px -6px rgb(0 0 0 / 40%),
+        0 4px 12px -4px rgb(0 0 0 / 30%);
     }
   }
 }
 
 .card-header {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgb(0 0 0 / 5%);
 
   .dark & {
-    border-bottom-color: rgba(255, 255, 255, 0.05);
+    border-bottom-color: rgb(255 255 255 / 5%);
   }
 
   .header-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: $radius-md;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: $radius-md;
 
     &.knowledge-icon {
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
       color: $primary;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
 
       .dark & {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0.1) 100%);
+        background: linear-gradient(
+          135deg,
+          rgb(99 102 241 / 20%) 0%,
+          rgb(99 102 241 / 10%) 100%
+        );
       }
     }
 
     &.summary-icon {
-      background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
       color: $accent;
+      background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
 
       .dark & {
-        background: linear-gradient(135deg, rgba(244, 63, 94, 0.2) 0%, rgba(244, 63, 94, 0.1) 100%);
+        background: linear-gradient(
+          135deg,
+          rgb(244 63 94 / 20%) 0%,
+          rgb(244 63 94 / 10%) 100%
+        );
       }
     }
   }
 
   .card-title {
+    flex: 1;
+    margin: 0;
     font-size: 16px;
     font-weight: 700;
     color: $gray-800;
-    margin: 0;flex: 1;
 
     .dark & {
       color: #fff;
@@ -750,49 +971,49 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   .ai-badge {
+    padding: 4px 10px;
     font-size: 11px;
     font-weight: 600;
     color: $accent;
-    background: rgba(244, 63, 94, 0.1);
-    padding: 4px 10px;
-    border-radius:20px;
+    background: rgb(244 63 94 / 10%);
+    border-radius: 20px;
   }
 }
 
 .card-body {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   padding: 0; /* 移除 padding，让 scrollbar 占满 */
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  
+
   :deep(.el-scrollbar) {
     flex: 1;
-    
+
     .el-scrollbar__wrap {
       padding: 20px 24px;
     }
-    
+
     /* 显示美化的滚动条 */
     .el-scrollbar__bar {
       opacity: 0;
       transition: opacity 0.3s ease;
     }
-    
+
     &:hover .el-scrollbar__bar {
       opacity: 1;
     }
-    
+
     .el-scrollbar__bar.is-vertical {
-      width: 6px;
       right: 4px;
-      
+      width: 6px;
+
       .el-scrollbar__thumb {
-        background: rgba(99, 102, 241, 0.3);
+        background: rgb(99 102 241 / 30%);
         border-radius: 3px;
-        
+
         &:hover {
-          background: rgba(99, 102, 241, 0.5);
+          background: rgb(99 102 241 / 50%);
         }
       }
     }
@@ -810,19 +1031,19 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .summary-list {
-  list-style: none;
   padding: 0;
   margin: 0;
+  list-style: none;
 }
 
 .summary-item {
   display: flex;
   gap: 14px;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgb(0 0 0 / 5%);
 
   .dark & {
-    border-bottom-color: rgba(255, 255, 255, 0.05);
+    border-bottom-color: rgb(255 255 255 / 5%);
   }
 
   &:last-child {
@@ -830,17 +1051,18 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   .item-number {
-    width: 24px;
-    height: 24px;
-    background: linear-gradient(135deg, $primary 0%, $primary-light 100%);
-    color: #fff;
-    border-radius: 50%;
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
+    width: 24px;
+    height: 24px;
     font-size: 12px;
     font-weight: 700;
-    flex-shrink: 0;}
+    color: #fff;
+    background: linear-gradient(135deg, $primary 0%, $primary-light 100%);
+    border-radius: 50%;
+  }
 
   .item-text {
     font-size: 14px;
@@ -854,32 +1076,34 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .right-sidebar {
-  width: 380px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  flex-shrink: 0;
-  /* 让右侧栏从视频区域下方开始，与左侧卡片对齐 */
-  align-self: flex-start;
-  /* 设置最大高度，让章节目录可以滚动 */
-  max-height: calc(100vh - 120px);
   position: sticky;
   top: 100px;
   z-index: 10;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 20px;
+
+  /* 让右侧栏从视频区域下方开始，与左侧卡片对齐 */
+  align-self: flex-start;
+  width: 380px;
+
+  /* 设置最大高度，让章节目录可以滚动 */
+  max-height: calc(100vh - 120px);
 }
 
 .ai-assistant-widget {
   position: relative;
+  padding: 24px;
+  overflow: hidden;
+  cursor: pointer;
   background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
   border-radius: $radius-xl;
-  padding: 24px;
-  cursor: pointer;
-  overflow: hidden;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
   &:hover {
+    box-shadow: 0 20px 40px -10px rgb(99 102 241 / 40%);
     transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.4);
 
     .ai-arrow {
       transform: translateX(4px);
@@ -896,16 +1120,20 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     right: -50%;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
     pointer-events: none;
+    background: radial-gradient(
+      circle,
+      rgb(255 255 255 / 20%) 0%,
+      transparent 70%
+    );
   }
 
   .ai-content {
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 16px;
     z-index: 1;
+    display: flex;
+    gap: 16px;
+    align-items: center;
   }
 
   .ai-avatar {
@@ -916,23 +1144,23 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     img {
       width: 100%;
       height: 100%;
-      border-radius: 16px;
       object-fit: cover;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgb(255 255 255 / 30%);
+      border-radius: 16px;
     }
 
     .pulse-ring {
       position: absolute;
       inset: -4px;
-      border: 2px solid rgba(255, 255, 255, 0.5);
+      border: 2px solid rgb(255 255 255 / 50%);
       border-radius: 20px;
       opacity: 0;
     }
   }
 
   .ai-info {
-    flex: 1;
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 4px;
 
@@ -944,10 +1172,10 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
     .ai-status {
       display: flex;
-      align-items: center;
       gap: 6px;
+      align-items: center;
       font-size: 13px;
-      color: rgba(255, 255, 255, 0.8);
+      color: rgb(255 255 255 / 80%);
 
       .status-dot {
         width: 8px;
@@ -960,68 +1188,58 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   .ai-arrow {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgb(255 255 255 / 80%);
     transition: transform 0.3s ease;
   }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1.3);
-    opacity: 0;
-  }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
 }
 
 .chapter-catalog {
   flex: 1;
   min-height: 300px;
   max-height: calc(100vh - 280px);
-  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 20px -4px rgb(0 0 0 / 10%),
+    0 2px 8px -2px rgb(0 0 0 / 6%);
 
   .catalog-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     padding: 20px 24px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgb(0 0 0 / 5%);
 
     .dark & {
-      border-bottom-color: rgba(255, 255, 255, 0.05);
+      border-bottom-color: rgb(255 255 255 / 5%);
     }
 
     .catalog-title {
       display: flex;
-      align-items: center;
       gap: 10px;
+      align-items: center;
+      margin: 0;
       font-size: 16px;
       font-weight: 700;
       color: $gray-800;
-      margin: 0;
 
-      svg { color: $primary; }
+      svg {
+        color: $primary;
+      }
 
-      .dark & { color: #fff; }
+      .dark & {
+        color: #fff;
+      }
     }
 
     .chapter-count {
+      padding: 4px 12px;
       font-size: 13px;
       color: $gray-500;
       background: $gray-100;
-      padding: 4px 12px;
       border-radius: 20px;
 
       .dark & {
-        background: rgba(255, 255, 255, 0.1);
         color: $gray-400;
+        background: rgb(255 255 255 / 10%);
       }
     }
   }
@@ -1033,16 +1251,17 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
     :deep(.el-scrollbar) {
       height: 100%;
-      
+
       /* 隐藏 Element Plus 滚动条轨道和滑块 */
       .el-scrollbar__bar {
         display: none;
       }
-      
+
       /* 确保原生滚动条也被隐藏（以防万一） */
       .el-scrollbar__wrap {
         scrollbar-width: none;
         -ms-overflow-style: none;
+
         &::-webkit-scrollbar {
           display: none;
         }
@@ -1060,14 +1279,16 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 .chapter-node {
   .chapter-title-row {
     display: flex;
-    align-items: center;
     gap: 12px;
+    align-items: center;
     padding: 12px 16px;
+    margin-bottom: 8px;
     background: $gray-50;
     border-radius: $radius-md;
-    margin-bottom: 8px;
 
-    .dark & { background: rgba(255, 255, 255, 0.05); }
+    .dark & {
+      background: rgb(255 255 255 / 5%);
+    }
 
     .chapter-indicator {
       width: 4px;
@@ -1077,11 +1298,11 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     }
 
     .chapter-label {
+      padding: 2px 8px;
       font-size: 12px;
       font-weight: 600;
       color: $primary;
-      background: rgba(99, 102, 241, 0.1);
-      padding: 2px 8px;
+      background: rgb(99 102 241 / 10%);
       border-radius: 4px;
     }
 
@@ -1090,7 +1311,9 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
       font-weight: 600;
       color: $gray-700;
 
-      .dark & { color: $gray-200; }
+      .dark & {
+        color: $gray-200;
+      }
     }
   }
 
@@ -1107,46 +1330,65 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-radius: $radius-md;
   cursor: pointer;
-  transition: all 0.2s ease;
   border: 1px solid transparent;
+  border-radius: $radius-md;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(99, 102, 241, 0.05);
-    border-color: rgba(99, 102, 241, 0.1);
+    background: rgb(99 102 241 / 5%);
+    border-color: rgb(99 102 241 / 10%);
   }
 
   &.active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
-    border-color: rgba(99, 102, 241, 0.2);
+    background: linear-gradient(
+      135deg,
+      rgb(99 102 241 / 10%) 0%,
+      rgb(99 102 241 / 5%) 100%
+    );
+    border-color: rgb(99 102 241 / 20%);
 
-    .lesson-icon { background: $primary; color: #fff; }
-    .lesson-num { color: $primary; }
+    .lesson-icon {
+      color: #fff;
+      background: $primary;
+    }
+
+    .lesson-num {
+      color: $primary;
+    }
   }
 
   &.completed {
-    .lesson-icon { background: $success; color: #fff; }}
+    .lesson-icon {
+      color: #fff;
+      background: $success;
+    }
+  }
 
   .lesson-left {
     display: flex;
-    align-items: center;
+    flex: 1;
     gap: 12px;
-    flex: 1;min-width: 0;
+    align-items: center;
+    min-width: 0;
   }
 
   .lesson-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: $gray-100;
-    color: $gray-500;
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+    color: $gray-500;
+    background: $gray-100;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 
-    .dark & { background: rgba(255, 255, 255, 0.1); color: $gray-400; }
+    .dark & {
+      color: $gray-400;
+      background: rgb(255 255 255 / 10%);
+    }
   }
 
   .lesson-info {
@@ -1162,23 +1404,27 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     }
 
     .lesson-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
       font-size: 13px;
       color: $gray-600;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
 
-      .dark & { color: $gray-300; }
+      .dark & {
+        color: $gray-300;
+      }
     }
   }
 
-  .lesson-right { flex-shrink: 0; }
+  .lesson-right {
+    flex-shrink: 0;
+  }
 }
 
 .playing-indicator {
   display: flex;
-  align-items: flex-end;
   gap: 2px;
+  align-items: flex-end;
   height: 16px;
 
   span {
@@ -1187,57 +1433,67 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     border-radius: 2px;
     animation: playing 0.8s ease-in-out infinite;
 
-    &:nth-child(1) { height: 8px; animation-delay: 0s; }
-    &:nth-child(2) { height: 12px; animation-delay: 0.2s; }
-    &:nth-child(3) { height: 6px; animation-delay: 0.4s; }
-  }
-}
+    &:nth-child(1) {
+      height: 8px;
+      animation-delay: 0s;
+    }
 
-@keyframes playing {
-  0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(0.5); }
+    &:nth-child(2) {
+      height: 12px;
+      animation-delay: 0.2s;
+    }
+
+    &:nth-child(3) {
+      height: 6px;
+      animation-delay: 0.4s;
+    }
+  }
 }
 
 .ai-dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
   padding: 40px;
+  background: rgb(0 0 0 / 50%);
+  backdrop-filter: blur(4px);
 }
 
 .ai-dialog {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 560px;
   height: 80vh;
   max-height: 700px;
+  overflow: hidden;
   background: #fff;
   border-radius: $radius-xl;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
 
-  .dark & { background: $gray-800; }
+  .dark & {
+    background: $gray-800;
+  }
 }
 
 .dialog-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 1px solid $gray-100;
 
-  .dark & { border-bottom-color: rgba(255, 255, 255, 0.1); }
+  .dark & {
+    border-bottom-color: rgb(255 255 255 / 10%);
+  }
 
   .header-left {
     display: flex;
-    align-items: center;
     gap: 14px;
+    align-items: center;
 
     .ai-dialog-avatar {
       width: 44px;
@@ -1246,8 +1502,8 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
       img {
         width: 100%;
         height: 100%;
-        border-radius: 12px;
         object-fit: cover;
+        border-radius: 12px;
       }
     }
 
@@ -1261,13 +1517,15 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         font-weight: 700;
         color: $gray-800;
 
-        .dark & { color: #fff; }
+        .dark & {
+          color: #fff;
+        }
       }
 
       .header-status {
         display: flex;
-        align-items: center;
         gap: 6px;
+        align-items: center;
         font-size: 12px;
         color: $gray-500;
 
@@ -1286,25 +1544,36 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     gap: 8px;
 
     .header-btn {
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: $gray-100;
-      border-radius: $radius-sm;
-      color: $gray-500;
-      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 36px;
+      height: 36px;
+      color: $gray-500;
+      cursor: pointer;
+      background: $gray-100;
+      border: none;
+      border-radius: $radius-sm;
       transition: all 0.2s ease;
 
-      &:hover { background: $gray-200; color: $gray-700; }&.close-btn:hover { background: rgba(244, 63, 94, 0.1); color: $accent; }
+      &:hover {
+        color: $gray-700;
+        background: $gray-200;
+      }
+
+      &.close-btn:hover {
+        color: $accent;
+        background: rgb(244 63 94 / 10%);
+      }
 
       .dark & {
-        background: rgba(255, 255, 255, 0.1);
         color: $gray-400;
+        background: rgb(255 255 255 / 10%);
 
-        &:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+        &:hover {
+          color: #fff;
+          background: rgb(255 255 255 / 15%);
+        }
       }
     }
   }
@@ -1314,14 +1583,18 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   flex: 1;
   overflow: hidden;
 
-  :deep(.el-scrollbar) { height: 100%; }
+  :deep(.el-scrollbar) {
+    height: 100%;
+  }
 
-  .chat-container { padding: 24px; }
+  .chat-container {
+    padding: 24px;
+  }
 }
 
 .welcome-section {
-  text-align: center;
   padding: 32px 24px;
+  text-align: center;
 
   .welcome-avatar {
     width: 72px;
@@ -1331,24 +1604,26 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     img {
       width: 100%;
       height: 100%;
-      border-radius: 20px;
       object-fit: cover;
+      border-radius: 20px;
     }
   }
 
   h3 {
+    margin: 0 0 8px;
     font-size: 18px;
     font-weight: 700;
     color: $gray-800;
-    margin: 0 0 8px;
 
-    .dark & { color: #fff; }
+    .dark & {
+      color: #fff;
+    }
   }
 
   p {
+    margin: 0 0 24px;
     font-size: 14px;
     color: $gray-500;
-    margin: 0 0 24px;
   }
 
   .quick-questions {
@@ -1359,29 +1634,29 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
     .quick-btn {
       padding: 10px 18px;
-      background: $gray-50;
-      border: 1px solid $gray-200;
-      border-radius: 20px;
       font-size: 13px;
       color: $gray-600;
       cursor: pointer;
+      background: $gray-50;
+      border: 1px solid $gray-200;
+      border-radius: 20px;
       transition: all 0.2s ease;
 
       &:hover {
-        background: rgba(99, 102, 241, 0.1);
-        border-color: $primary;
         color: $primary;
+        background: rgb(99 102 241 / 10%);
+        border-color: $primary;
       }
 
       .dark & {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
         color: $gray-300;
+        background: rgb(255 255 255 / 5%);
+        border-color: rgb(255 255 255 / 10%);
 
         &:hover {
-          background: rgba(99, 102, 241, 0.2);
-          border-color: $primary;
           color: $primary-light;
+          background: rgb(99 102 241 / 20%);
+          border-color: $primary;
         }
       }
     }
@@ -1401,8 +1676,8 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     justify-content: flex-end;
 
     .message-content {
-      background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
       color: #fff;
+      background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
       border-radius: $radius-lg $radius-lg 4px $radius-lg;
     }
   }
@@ -1411,11 +1686,14 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     justify-content: flex-start;
 
     .message-content {
-      background: $gray-100;
       color: $gray-700;
+      background: $gray-100;
       border-radius: $radius-lg $radius-lg $radius-lg 4px;
 
-      .dark & { background: rgba(255, 255, 255, 0.1); color: $gray-200; }
+      .dark & {
+        color: $gray-200;
+        background: rgb(255 255 255 / 10%);
+      }
     }
   }
 
@@ -1428,7 +1706,10 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
       line-height: 1.6;
 
       &.ai-text {
-        :deep(strong) { font-weight: 600; color: $primary; }
+        :deep(strong) {
+          font-weight: 600;
+          color: $primary;
+        }
       }
     }
   }
@@ -1446,84 +1727,88 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     border-radius: 50%;
     animation: typing 1.4s ease-in-out infinite;
 
-    &:nth-child(2) { animation-delay: 0.2s; }
-    &:nth-child(3) { animation-delay: 0.4s; }
-  }
-}
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
 
-@keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-6px); opacity: 1; }
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  }
 }
 
 .dialog-footer {
   padding: 16px 24px 24px;
   border-top: 1px solid $gray-100;
 
-  .dark & { border-top-color: rgba(255, 255, 255, 0.1); }
+  .dark & {
+    border-top-color: rgb(255 255 255 / 10%);
+  }
 
   .input-wrapper {
     display: flex;
-    align-items: flex-end;
     gap: 12px;
+    align-items: flex-end;
+    padding: 12px 16px;
     background: $gray-50;
     border: 1px solid $gray-200;
     border-radius: $radius-lg;
-    padding: 12px 16px;
     transition: all 0.2s ease;
 
     &:focus-within {
       border-color: $primary;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
     }
 
     .dark & {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.1);
+      background: rgb(255 255 255 / 5%);
+      border-color: rgb(255 255 255 / 10%);
     }
 
     :deep(.el-textarea) {
       flex: 1;
 
       .el-textarea__inner {
-        background: transparent;
-        border: none;
-        box-shadow: none;
         padding: 0;
         font-size: 14px;
         resize: none;
+        background: transparent;
+        border: none;
+        box-shadow: none;
 
-        &::placeholder { color: $gray-400; }
+        &::placeholder {
+          color: $gray-400;
+        }
       }
     }
 
     .send-button {
-      width: 40px;
-      height: 40px;
-      border: none;
-      background: $gray-200;
-      border-radius: $radius-md;
-      color: $gray-400;
-      cursor: not-allowed;
       display: flex;
+      flex-shrink: 0;
       align-items: center;
       justify-content: center;
+      width: 40px;
+      height: 40px;
+      color: $gray-400;
+      cursor: not-allowed;
+      background: $gray-200;
+      border: none;
+      border-radius: $radius-md;
       transition: all 0.2s ease;
-      flex-shrink: 0;
 
       &.active {
-        background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
         color: #fff;
         cursor: pointer;
+        background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
 
         &:hover {
+          box-shadow: 0 4px 12px rgb(99 102 241 / 40%);
           transform: scale(1.05);
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
       }
 
       .dark & {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgb(255 255 255 / 10%);
 
         &.active {
           background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
@@ -1547,8 +1832,8 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   opacity: 0;
 
   .ai-dialog {
-    transform: scale(0.9) translateY(20px);
     opacity: 0;
+    transform: scale(0.9) translateY(20px);
   }
 }
 </style>

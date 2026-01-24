@@ -11,7 +11,7 @@ export function getCourseContentByName(courseName: string): string {
   const courseMap: Record<string, string> = {
     高等数学: mathCourseContent,
     嵌入式Linux开发实践教程: linuxCourseContent,
-    物理先导课: wuliCourseContent,
+    物理先导课: wuliCourseContent
     // 可以继续添加更多课程内容
   };
 

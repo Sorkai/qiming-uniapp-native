@@ -31,7 +31,12 @@
           <template #header>
             <div class="card-header">
               <span>题目分类</span>
-              <el-button type="primary" size="small" link @click="openCategoryDialog()">
+              <el-button
+                type="primary"
+                size="small"
+                link
+                @click="openCategoryDialog()"
+              >
                 <el-icon><Plus /></el-icon>
               </el-button>
             </div>
@@ -60,7 +65,10 @@
         <el-card class="box-card">
           <template #header>
             <div class="card-header">
-              <span>题目列表 {{ selectedCategory ? `- ${selectedCategory.name}` : '' }}</span>
+              <span
+                >题目列表
+                {{ selectedCategory ? `- ${selectedCategory.name}` : "" }}</span
+              >
               <div class="header-actions">
                 <el-button type="success" @click="batchImport">
                   <el-icon><Upload /></el-icon>
@@ -112,7 +120,9 @@
                 </el-select>
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" @click="loadQuestionList">搜索</el-button>
+                <el-button type="primary" @click="loadQuestionList"
+                  >搜索</el-button
+                >
                 <el-button @click="resetSearch">重置</el-button>
               </el-form-item>
             </el-form>
@@ -127,40 +137,96 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="50" />
-            <el-table-column prop="questionId" label="ID" width="80" align="center" />
+            <el-table-column
+              prop="questionId"
+              label="ID"
+              width="80"
+              align="center"
+            />
             <el-table-column prop="content" label="题目内容" min-width="300">
               <template #default="{ row }">
-                <el-tooltip :content="row.content" placement="top" :show-after="500">
-                  <span class="question-content">{{ truncateText(row.content, 60) }}</span>
+                <el-tooltip
+                  :content="row.content"
+                  placement="top"
+                  :show-after="500"
+                >
+                  <span class="question-content">{{
+                    truncateText(row.content, 60)
+                  }}</span>
                 </el-tooltip>
               </template>
             </el-table-column>
-            <el-table-column prop="type" label="题型" width="100" align="center">
+            <el-table-column
+              prop="type"
+              label="题型"
+              width="100"
+              align="center"
+            >
               <template #default="{ row }">
                 <el-tag :type="getTypeTagType(row.type)" size="small">
                   {{ getTypeLabel(row.type) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="difficulty" label="难度" width="80" align="center">
+            <el-table-column
+              prop="difficulty"
+              label="难度"
+              width="80"
+              align="center"
+            >
               <template #default="{ row }">
                 <el-tag :type="getDifficultyType(row.difficulty)" size="small">
                   {{ getDifficultyLabel(row.difficulty) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="score" label="分值" width="80" align="center" />
-            <el-table-column prop="usedCount" label="使用次数" width="100" align="center" />
-            <el-table-column prop="createTime" label="创建时间" width="160" align="center" />
-            <el-table-column label="操作" width="180" align="center" fixed="right">
+            <el-table-column
+              prop="score"
+              label="分值"
+              width="80"
+              align="center"
+            />
+            <el-table-column
+              prop="usedCount"
+              label="使用次数"
+              width="100"
+              align="center"
+            />
+            <el-table-column
+              prop="createTime"
+              label="创建时间"
+              width="160"
+              align="center"
+            />
+            <el-table-column
+              label="操作"
+              width="180"
+              align="center"
+              fixed="right"
+            >
               <template #default="{ row }">
-                <el-button type="primary" size="small" link @click="viewQuestion(row)">
+                <el-button
+                  type="primary"
+                  size="small"
+                  link
+                  @click="viewQuestion(row)"
+                >
                   查看
                 </el-button>
-                <el-button type="warning" size="small" link @click="openQuestionDialog(row)">
+                <el-button
+                  type="warning"
+                  size="small"
+                  link
+                  @click="openQuestionDialog(row)"
+                >
                   编辑
                 </el-button>
-                <el-button type="danger" size="small" link @click="deleteQuestion(row)">
+                <el-button
+                  type="danger"
+                  size="small"
+                  link
+                  @click="deleteQuestion(row)"
+                >
                   删除
                 </el-button>
               </template>
@@ -168,7 +234,7 @@
           </el-table>
 
           <div class="table-footer">
-            <div class="batch-actions" v-if="selectedQuestions.length > 0">
+            <div v-if="selectedQuestions.length > 0" class="batch-actions">
               <el-button type="danger" size="small" @click="batchDelete">
                 批量删除 ({{ selectedQuestions.length }})
               </el-button>
@@ -209,7 +275,11 @@
               <el-tree-select
                 v-model="questionForm.categoryId"
                 :data="categoryTree"
-                :props="{ label: 'name', value: 'categoryId', children: 'children' }"
+                :props="{
+                  label: 'name',
+                  value: 'categoryId',
+                  children: 'children'
+                }"
                 placeholder="请选择分类"
                 check-strictly
                 style="width: 100%"
@@ -218,7 +288,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="题型" prop="type">
-              <el-select v-model="questionForm.type" placeholder="请选择题型" @change="handleTypeChange">
+              <el-select
+                v-model="questionForm.type"
+                placeholder="请选择题型"
+                @change="handleTypeChange"
+              >
                 <el-option label="单选题" value="single" />
                 <el-option label="多选题" value="multiple" />
                 <el-option label="判断题" value="judge" />
@@ -260,7 +334,9 @@
                 :model-value="questionForm.answer"
                 @change="questionForm.answer = index"
               />
-              <span class="option-label">{{ String.fromCharCode(65 + index) }}.</span>
+              <span class="option-label"
+                >{{ String.fromCharCode(65 + index) }}.</span
+              >
               <el-input v-model="option.content" placeholder="请输入选项内容" />
               <el-button
                 v-if="questionForm.options.length > 2"
@@ -286,7 +362,11 @@
         </el-form-item>
 
         <!-- 判断题答案 -->
-        <el-form-item v-if="questionForm.type === 'judge'" label="答案" prop="answer">
+        <el-form-item
+          v-if="questionForm.type === 'judge'"
+          label="答案"
+          prop="answer"
+        >
           <el-radio-group v-model="questionForm.answer">
             <el-radio :value="true">正确</el-radio>
             <el-radio :value="false">错误</el-radio>
@@ -310,7 +390,10 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="难度" prop="difficulty">
-              <el-select v-model="questionForm.difficulty" placeholder="请选择难度">
+              <el-select
+                v-model="questionForm.difficulty"
+                placeholder="请选择难度"
+              >
                 <el-option label="简单" value="easy" />
                 <el-option label="中等" value="medium" />
                 <el-option label="困难" value="hard" />
@@ -319,7 +402,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="分值" prop="score">
-              <el-input-number v-model="questionForm.score" :min="1" :max="100" />
+              <el-input-number
+                v-model="questionForm.score"
+                :min="1"
+                :max="100"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -340,17 +427,16 @@
     </el-dialog>
 
     <!-- 题目详情弹窗 -->
-    <el-dialog
-      v-model="questionDetailVisible"
-      title="题目详情"
-      width="700px"
-    >
-      <div class="question-detail" v-if="currentQuestion">
+    <el-dialog v-model="questionDetailVisible" title="题目详情" width="700px">
+      <div v-if="currentQuestion" class="question-detail">
         <div class="question-meta">
           <el-tag :type="getTypeTagType(currentQuestion.type)" size="small">
             {{ getTypeLabel(currentQuestion.type) }}
           </el-tag>
-          <el-tag :type="getDifficultyType(currentQuestion.difficulty)" size="small">
+          <el-tag
+            :type="getDifficultyType(currentQuestion.difficulty)"
+            size="small"
+          >
             {{ getDifficultyLabel(currentQuestion.difficulty) }}
           </el-tag>
           <span class="score">{{ currentQuestion.score }} 分</span>
@@ -361,7 +447,10 @@
           <p>{{ currentQuestion.content }}</p>
         </div>
 
-        <div class="options-section" v-if="['single', 'multiple'].includes(currentQuestion.type)">
+        <div
+          v-if="['single', 'multiple'].includes(currentQuestion.type)"
+          class="options-section"
+        >
           <h4>选项</h4>
           <div
             v-for="(option, index) in currentQuestion.options"
@@ -369,9 +458,14 @@
             class="option-display"
             :class="{ 'is-answer': isCorrectOption(currentQuestion, index) }"
           >
-            <span class="option-letter">{{ String.fromCharCode(65 + index) }}</span>
+            <span class="option-letter">{{
+              String.fromCharCode(65 + index)
+            }}</span>
             <span>{{ option.content }}</span>
-            <el-icon v-if="isCorrectOption(currentQuestion, index)" class="check-icon">
+            <el-icon
+              v-if="isCorrectOption(currentQuestion, index)"
+              class="check-icon"
+            >
               <Check />
             </el-icon>
           </div>
@@ -382,7 +476,7 @@
           <p class="answer-text">{{ formatAnswer(currentQuestion) }}</p>
         </div>
 
-        <div class="analysis-section" v-if="currentQuestion.analysis">
+        <div v-if="currentQuestion.analysis" class="analysis-section">
           <h4>解析</h4>
           <p>{{ currentQuestion.analysis }}</p>
         </div>
@@ -409,7 +503,11 @@
           <el-tree-select
             v-model="categoryForm.parentId"
             :data="categoryTree"
-            :props="{ label: 'name', value: 'categoryId', children: 'children' }"
+            :props="{
+              label: 'name',
+              value: 'categoryId',
+              children: 'children'
+            }"
             placeholder="请选择上级分类（可选）"
             check-strictly
             clearable
@@ -427,18 +525,9 @@
     </el-dialog>
 
     <!-- 批量导入弹窗 -->
-    <el-dialog
-      v-model="importDialogVisible"
-      title="批量导入题目"
-      width="600px"
-    >
+    <el-dialog v-model="importDialogVisible" title="批量导入题目" width="600px">
       <div class="import-content">
-        <el-alert
-          title="导入说明"
-          type="info"
-          :closable="false"
-          class="mb-4"
-        >
+        <el-alert title="导入说明" type="info" :closable="false" class="mb-4">
           <template #default>
             <p>支持Excel文件（.xlsx）导入，请按照模板格式填写题目信息。</p>
           </template>
@@ -453,20 +542,24 @@
           :on-change="handleFileChange"
         >
           <el-icon class="el-icon--upload"><Upload /></el-icon>
-          <div class="el-upload__text">
-            将文件拖到此处，或<em>点击上传</em>
-          </div>
+          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
           <template #tip>
             <div class="el-upload__tip">
               只能上传 xlsx/xls 文件
-              <el-button type="primary" link @click="downloadTemplate">下载模板</el-button>
+              <el-button type="primary" link @click="downloadTemplate"
+                >下载模板</el-button
+              >
             </div>
           </template>
         </el-upload>
       </div>
       <template #footer>
         <el-button @click="importDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmImport" :loading="importLoading">
+        <el-button
+          type="primary"
+          :loading="importLoading"
+          @click="confirmImport"
+        >
           确认导入
         </el-button>
       </template>
@@ -670,7 +763,7 @@ const removeOption = (index: number) => {
 };
 
 const saveQuestion = async () => {
-  questionFormRef.value?.validate(async (valid) => {
+  questionFormRef.value?.validate(async valid => {
     if (!valid) return;
     try {
       await upsertQuestion(questionForm);
@@ -702,20 +795,26 @@ const deleteQuestion = (row: any) => {
 };
 
 const batchDelete = () => {
-  ElMessageBox.confirm(`确定删除选中的 ${selectedQuestions.value.length} 道题目吗？`, "提示", {
-    type: "warning"
-  }).then(async () => {
-    try {
-      const ids = selectedQuestions.value.map(q => q.questionId);
-      await batchDeleteQuestions({ questionIds: ids });
-      ElMessage.success("批量删除成功");
-      loadQuestionList();
-      loadStats();
-      loadCategoryTree();
-    } catch (error) {
-      ElMessage.error("删除失败");
+  ElMessageBox.confirm(
+    `确定删除选中的 ${selectedQuestions.value.length} 道题目吗？`,
+    "提示",
+    {
+      type: "warning"
     }
-  }).catch(() => {});
+  )
+    .then(async () => {
+      try {
+        const ids = selectedQuestions.value.map(q => q.questionId);
+        await batchDeleteQuestions({ questionIds: ids });
+        ElMessage.success("批量删除成功");
+        loadQuestionList();
+        loadStats();
+        loadCategoryTree();
+      } catch (error) {
+        ElMessage.error("删除失败");
+      }
+    })
+    .catch(() => {});
 };
 
 const batchMove = () => {
@@ -740,7 +839,7 @@ const openCategoryDialog = (row?: any) => {
 };
 
 const saveCategory = async () => {
-  categoryFormRef.value?.validate(async (valid) => {
+  categoryFormRef.value?.validate(async valid => {
     if (!valid) return;
     try {
       await upsertCategory(categoryForm);
@@ -806,7 +905,10 @@ const getTypeLabel = (type: string) => {
 };
 
 const getTypeTagType = (type: string) => {
-  const types: Record<string, "primary" | "success" | "warning" | "danger" | "info"> = {
+  const types: Record<
+    string,
+    "primary" | "success" | "warning" | "danger" | "info"
+  > = {
     single: "primary",
     multiple: "success",
     judge: "warning",
@@ -848,7 +950,9 @@ const formatAnswer = (question: any) => {
     return String.fromCharCode(65 + question.answer);
   } else if (question.type === "multiple") {
     return question.options
-      .map((opt: any, idx: number) => (opt.isAnswer ? String.fromCharCode(65 + idx) : null))
+      .map((opt: any, idx: number) =>
+        opt.isAnswer ? String.fromCharCode(65 + idx) : null
+      )
       .filter(Boolean)
       .join(", ");
   } else if (question.type === "judge") {
@@ -870,9 +974,9 @@ onMounted(() => {
 
   .header-card {
     margin-bottom: 16px;
-    border-radius: 16px;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     border: none;
+    border-radius: 16px;
 
     .header-content {
       display: flex;
@@ -892,7 +996,7 @@ onMounted(() => {
       p {
         margin: 0;
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
+        color: rgb(255 255 255 / 85%);
       }
     }
 
@@ -912,9 +1016,9 @@ onMounted(() => {
 
         .stat-label {
           display: block;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.75);
           margin-top: 4px;
+          font-size: 12px;
+          color: rgb(255 255 255 / 75%);
         }
       }
     }
@@ -927,14 +1031,14 @@ onMounted(() => {
   .category-card {
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
 
     .tree-node {
       display: flex;
-      align-items: center;
       gap: 4px;
+      align-items: center;
 
       .count {
         font-size: 12px;
@@ -945,8 +1049,8 @@ onMounted(() => {
 
   .card-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
     .header-actions {
       display: flex;
@@ -964,8 +1068,8 @@ onMounted(() => {
 
   .table-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-top: 16px;
 
     .batch-actions {
@@ -979,8 +1083,8 @@ onMounted(() => {
 .options-editor {
   .option-item {
     display: flex;
-    align-items: center;
     gap: 8px;
+    align-items: center;
     margin-bottom: 12px;
 
     .option-label {
@@ -998,8 +1102,8 @@ onMounted(() => {
 .question-detail {
   .question-meta {
     display: flex;
-    align-items: center;
     gap: 12px;
+    align-items: center;
     margin-bottom: 20px;
 
     .score {
@@ -1030,23 +1134,23 @@ onMounted(() => {
 
   .option-display {
     display: flex;
-    align-items: center;
     gap: 8px;
+    align-items: center;
     padding: 8px 12px;
     margin-bottom: 8px;
     background: var(--el-fill-color-light);
     border-radius: 6px;
 
     .option-letter {
-      width: 24px;
-      height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+      font-weight: 600;
       background: var(--el-fill-color);
       border-radius: 50%;
-      font-weight: 600;
-      font-size: 12px;
     }
 
     &.is-answer {
@@ -1054,8 +1158,8 @@ onMounted(() => {
       border: 1px solid #10b981;
 
       .option-letter {
-        background: #10b981;
         color: #fff;
+        background: #10b981;
       }
     }
 
@@ -1066,8 +1170,8 @@ onMounted(() => {
   }
 
   .answer-text {
-    color: #10b981;
     font-weight: 600;
+    color: #10b981;
   }
 }
 

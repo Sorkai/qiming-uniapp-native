@@ -1,10 +1,6 @@
 <template>
   <!-- HTML 动画列表 -->
-  <div
-    v-show="visible"
-    class="course-materials-wrapper"
-    :class="currentTheme"
-  >
+  <div v-show="visible" class="course-materials-wrapper" :class="currentTheme">
     <!-- 头部 -->
     <CourseHeader
       :current-theme="currentTheme"
@@ -22,16 +18,19 @@
       <div v-if="loading" class="materials-list empty-state">
         <el-empty description="加载中..." />
       </div>
-      <div v-else-if="animationList.length === 0" class="materials-list empty-state">
+      <div
+        v-else-if="animationList.length === 0"
+        class="materials-list empty-state"
+      >
         <el-empty description="暂无可展示的章节动画" />
       </div>
       <div v-else class="materials-list album-grid">
         <div
           v-for="(item, index) in animationList"
           :key="item.chapterId"
+          v-motion
           class="animation-card"
           :class="{ dark: currentTheme === 'dark' }"
-          v-motion
           :initial="{ opacity: 0, y: 20, scale: 0.95 }"
           :visible-once="{
             opacity: 1,
@@ -49,7 +48,9 @@
           @mouseleave="hoveredChapterId = null"
         >
           <div class="card-preview">
-            <template v-if="item.previewVideoUrl && hoveredChapterId === item.chapterId">
+            <template
+              v-if="item.previewVideoUrl && hoveredChapterId === item.chapterId"
+            >
               <video
                 :src="item.previewVideoUrl"
                 autoplay
@@ -60,7 +61,10 @@
               />
             </template>
             <template v-else>
-              <img :src="item.previewUrl || getPlaceholder(item.chapterId)" alt="预览图" />
+              <img
+                :src="item.previewUrl || getPlaceholder(item.chapterId)"
+                alt="预览图"
+              />
             </template>
             <div class="play-overlay">
               <el-icon size="48">
@@ -93,26 +97,36 @@
         </div>
         <div class="header-actions">
           <!-- 管理员预览时可见的快照按钮 (示例) -->
-          <div class="action-btn capture-btn" @click="captureAndUpload" title="截取当前画面为封面">
+          <div
+            class="action-btn capture-btn"
+            title="截取当前画面为封面"
+            @click="captureAndUpload"
+          >
             <el-icon size="18"><component :is="Camera" /></el-icon>
             <span class="btn-text">设为封面</span>
           </div>
-          <div class="action-btn" @click="openHtmlAnimInNew" title="新窗口打开">
+          <div class="action-btn" title="新窗口打开" @click="openHtmlAnimInNew">
             <el-icon size="18"><component :is="ExternalLink" /></el-icon>
           </div>
-          <div class="action-btn close" @click="htmlAnimPreviewVisible = false" title="关闭">
+          <div
+            class="action-btn close"
+            title="关闭"
+            @click="htmlAnimPreviewVisible = false"
+          >
             <el-icon size="18"><component :is="Close" /></el-icon>
           </div>
         </div>
       </div>
       <div v-if="htmlAnimPreviewUrl" class="preview-wrapper-immersive">
         <div v-if="iframeLoading" class="loading-overlay">
-          <el-icon class="is-loading" size="40"><component :is="Loading" /></el-icon>
+          <el-icon class="is-loading" size="40"
+            ><component :is="Loading"
+          /></el-icon>
         </div>
-        <iframe 
-          :src="htmlAnimPreviewUrl" 
-          frameborder="0" 
-          class="preview-iframe" 
+        <iframe
+          :src="htmlAnimPreviewUrl"
+          frameborder="0"
+          class="preview-iframe"
           @load="iframeLoading = false"
         />
       </div>
@@ -176,15 +190,17 @@ const htmlAnimPreviewUrl = ref("");
 const iframeLoading = ref(true);
 
 // 监听弹窗打开，重置加载状态
-watch(htmlAnimPreviewVisible, (val) => {
+watch(htmlAnimPreviewVisible, val => {
   if (val) iframeLoading.value = true;
 });
 
 // 模拟快照采集（实际开发中需通过 iframe postMessage 获取或画布截取）
 const captureAndUpload = () => {
-  const chapter = props.animationList.find(a => a.url === htmlAnimPreviewUrl.value);
+  const chapter = props.animationList.find(
+    a => a.url === htmlAnimPreviewUrl.value
+  );
   if (!chapter) return;
-  
+
   // 这里可以具体扩展为调用 html2canvas 或后端接口
   console.log(`正在为章节 ${chapter.chapterName} 采集画面并设为封面...`);
   // 后续对接：ElMessage.success("快照已提交，正在生成新封面...");
@@ -209,8 +225,8 @@ const openHtmlAnimInNew = () => {
 .course-materials-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
+  height: 100%;
   background: transparent; /* 背景透明，防止侧边栏色差 */
 
   &.dark {
@@ -218,20 +234,21 @@ const openHtmlAnimInNew = () => {
   }
 
   .materials-container {
-    /* 顶部 80px 偏移以避开 Header，左右 32px 保持对齐 */
-    padding: 80px 32px 24px;
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+
+    /* 顶部 80px 偏移以避开 Header，左右 32px 保持对齐 */
+    padding: 80px 32px 24px;
+    overflow-y: auto;
   }
 }
 
 .materials-list.empty-state {
-  flex: 1;
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   width: 100%;
@@ -247,36 +264,38 @@ const openHtmlAnimInNew = () => {
 
 .animation-card {
   position: relative;
-  height: 240px;
   width: 100%;
-  border-radius: 24px;
+  height: 240px;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
-  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background-color: rgb(255 255 255 / 80%);
+  border: 1px solid rgb(255 255 255 / 50%);
+  border-radius: 24px;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 8%);
+
   /* 强制开启 GPU 加速，修复毛玻璃边缘渲染 Bug */
   transform: translateZ(0);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .animation-card:hover {
-  transform: translateY(-10px);
+  border-color: rgb(64 158 255 / 40%);
+
   /* 统一使用系统标准蓝色 #97b4f7 */
-  box-shadow: 0 20px 40px rgba(64, 158, 255, 0.2);
-  border-color: rgba(64, 158, 255, 0.4);
+  box-shadow: 0 20px 40px rgb(64 158 255 / 20%);
+  transform: translateY(-10px);
 }
 
 .animation-card.dark {
-  background-color: rgba(40, 40, 40, 0.8);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  background-color: rgb(40 40 40 / 80%);
+  border-color: rgb(255 255 255 / 10%);
+  box-shadow: 0 10px 25px rgb(0 0 0 / 30%);
 }
 
 .card-preview {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
 }
 
 .card-preview img,
@@ -295,13 +314,13 @@ const openHtmlAnimInNew = () => {
 .play-overlay {
   position: absolute;
   inset: 0;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 184, 212, 0.1);
+  background: rgb(0 184 212 / 10%);
   opacity: 0;
   transition: all 0.4s ease;
-  z-index: 5;
 }
 
 .animation-card:hover .play-overlay {
@@ -311,33 +330,33 @@ const openHtmlAnimInNew = () => {
 .play-overlay .el-icon {
   font-size: 56px;
   color: #fff;
-  filter: drop-shadow(0 0 10px rgba(0, 184, 212, 0.6));
+  filter: drop-shadow(0 0 10px rgb(0 184 212 / 60%));
 }
 
 /* 优化的平滑毛玻璃过渡：由于 mask-image 实现模糊渐变更加优雅 */
 .card-info-glass {
   position: absolute;
+  right: -1px;
   bottom: -1px;
   left: -1px;
-  right: -1px;
-  padding: 80px 32px 24px;
-  /* 降低背景颜色遮挡，使其更透明 */
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 40%,
-    rgba(255, 255, 255, 0.6) 100%
-  );
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  /* 调整 mask 渐变，确保底部完全不透明以修复边缘缝隙 */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60%, black 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, black 60%, black 100%);
-  border-radius: 0 0 24px 24px;
   z-index: 3;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  padding: 80px 32px 24px;
+
+  /* 降低背景颜色遮挡，使其更透明 */
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgb(255 255 255 / 10%) 40%,
+    rgb(255 255 255 / 60%) 100%
+  );
+  border-radius: 0 0 24px 24px;
+  backdrop-filter: blur(12px) saturate(180%);
+
+  /* 调整 mask 渐变，确保底部完全不透明以修复边缘缝隙 */
+  mask-image: linear-gradient(to bottom, transparent 0%, black 60%, black 100%);
   transition: all 0.4s ease;
 }
 
@@ -345,8 +364,8 @@ const openHtmlAnimInNew = () => {
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(0, 0, 0, 0.2) 40%,
-    rgba(0, 0, 0, 0.8) 100%
+    rgb(0 0 0 / 20%) 40%,
+    rgb(0 0 0 / 80%) 100%
   );
 }
 
@@ -355,47 +374,49 @@ const openHtmlAnimInNew = () => {
 }
 
 .card-title {
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 18px;
   font-weight: 700;
   color: #1d1d1f;
-  margin-bottom: 6px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgb(255 255 255 / 50%);
   transition: color 0.3s ease;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
 .animation-card:hover .card-title {
   color: #00b8d4;
+
   /* 增加白色描边，确保在各种背景图上都能看清 */
-  text-shadow: 
-    -1px -1px 0 #fff,  
-     1px -1px 0 #fff,
-    -1px  1px 0 #fff,
-     1px  1px 0 #fff,
-     0 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow:
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px 1px 0 #fff,
+    1px 1px 0 #fff,
+    0 2px 4px rgb(0 0 0 / 20%);
 }
 
 .dark .card-title {
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 50%);
 }
 
 .dark .animation-card:hover .card-title {
   color: #00b8d4;
+
   /* 深色模式下同样使用白色描边，配合青色文字会有很强的霓虹感 */
-  text-shadow: 
-    -1px -1px 0 #fff,  
-     1px -1px 0 #fff,
-    -1px  1px 0 #fff,
-     1px  1px 0 #fff;
+  text-shadow:
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px 1px 0 #fff,
+    1px 1px 0 #fff;
 }
 
 .card-version {
   font-size: 13px;
-  color: #1d1d1f;
   font-weight: 700;
+  color: #1d1d1f;
   letter-spacing: 0.5px;
 }
 
@@ -405,24 +426,23 @@ const openHtmlAnimInNew = () => {
 
 .dark :deep(.el-empty__image img),
 .dark :deep(.el-empty__image svg) {
-  filter: brightness(0.7);
   opacity: 0.8;
+  filter: brightness(0.7);
 }
 
 /* 预览弹窗样式统一 */
 .course-materials-wrapper {
   :deep(.immersive-dialog) {
-    background: rgba(248, 250, 252, 0.8);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-radius: 32px;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25);
     overflow: hidden;
+    background: rgb(248 250 252 / 80%);
+    border: 1px solid rgb(255 255 255 / 50%);
+    border-radius: 32px;
+    box-shadow: 0 30px 60px -12px rgb(0 0 0 / 25%);
+    backdrop-filter: blur(20px) saturate(180%);
 
     &.dark {
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgb(15 23 42 / 90%);
+      border: 1px solid rgb(255 255 255 / 8%);
     }
 
     .el-dialog__header {
@@ -441,28 +461,28 @@ const openHtmlAnimInNew = () => {
   justify-content: space-between;
   padding: 12px 20px;
   margin: 20px 20px 16px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  background: rgb(255 255 255 / 60%);
+  border: 1px solid rgb(255 255 255 / 50%);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 5%);
+  backdrop-filter: blur(10px);
 }
 
 .dark .dialog-header-custom {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  background: rgb(30 41 59 / 70%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 20%);
 }
 
 .header-info {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
 }
 
 .header-info .el-icon {
-  color: #00b8d4;
   font-size: 20px;
+  color: #00b8d4;
 }
 
 .header-info .title {
@@ -482,25 +502,25 @@ const openHtmlAnimInNew = () => {
 }
 
 .action-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(0, 0, 0, 0.03);
+  width: 36px;
+  height: 36px;
   color: #475569;
+  cursor: pointer;
+  background: rgb(0 0 0 / 3%);
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-btn.capture-btn {
+  gap: 6px;
   width: auto;
   padding: 0 12px;
-  gap: 6px;
-  background: rgba(64, 158, 255, 0.1);
   color: #97b4f7;
-  border: 1px solid rgba(64, 158, 255, 0.2);
+  background: rgb(64 158 255 / 10%);
+  border: 1px solid rgb(64 158 255 / 20%);
 }
 
 .action-btn.capture-btn .btn-text {
@@ -509,64 +529,64 @@ const openHtmlAnimInNew = () => {
 }
 
 .action-btn.capture-btn:hover {
-  background: #97b4f7;
   color: white;
+  background: #97b4f7;
 }
 
 .dark .action-btn {
-  background: rgba(255, 255, 255, 0.06);
   color: #cbd5e1;
+  background: rgb(255 255 255 / 6%);
 }
 
 .dark .action-btn.capture-btn {
-  background: rgba(64, 158, 255, 0.15);
-  border-color: rgba(64, 158, 255, 0.3);
+  background: rgb(64 158 255 / 15%);
+  border-color: rgb(64 158 255 / 30%);
 }
 
 .action-btn:hover {
-  background: rgba(0, 184, 212, 0.15);
   color: #00b8d4;
+  background: rgb(0 184 212 / 15%);
   transform: translateY(-2px);
 }
 
 .action-btn.close:hover {
-  background: rgba(244, 63, 94, 0.15);
   color: #f43f5e;
+  background: rgb(244 63 94 / 15%);
 }
 
 .preview-wrapper-immersive {
+  position: relative;
   width: calc(100% - 40px);
   height: 80vh;
   margin: 0 20px 20px;
-  position: relative;
-  background: #f8fafc;
-  border-radius: 20px;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #f8fafc;
+  border: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 20px;
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 5%);
 }
 
 .dark .preview-wrapper-immersive {
   background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgb(255 255 255 / 5%);
 }
 
 .loading-overlay {
   position: absolute;
   inset: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: inherit;
-  z-index: 10;
   color: #97b4f7;
+  background: inherit;
 }
 
 .preview-iframe {
+  display: block;
   width: 100%;
   height: 100%;
   border: none;
-  display: block;
 }
 
 /* 统一配色方案 */

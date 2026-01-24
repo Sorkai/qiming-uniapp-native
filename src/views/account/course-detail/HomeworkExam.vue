@@ -59,7 +59,11 @@
           </div>
           <el-empty v-else description="暂无作业">
             <template #image>
-              <img :src="homeworkEmptyImg" alt="暂无作业" style="width: 120px; height: 120px;" />
+              <img
+                :src="homeworkEmptyImg"
+                alt="暂无作业"
+                style="width: 120px; height: 120px"
+              />
             </template>
           </el-empty>
         </el-tab-pane>
@@ -81,19 +85,12 @@
                   <span>题目数量: {{ item.questionNum }}</span>
                   <span>总分: {{ item.totalPoints }}</span>
                   <span>时间限制: {{ item.timeLimit }}分钟</span>
-                  <span
-                    >开始时间: {{ formatDate(item.availableFrom) }}</span
-                  >
-                  <span
-                    >结束时间: {{ formatDate(item.availableTo) }}</span
-                  >
+                  <span>开始时间: {{ formatDate(item.availableFrom) }}</span>
+                  <span>结束时间: {{ formatDate(item.availableTo) }}</span>
                 </div>
               </div>
               <div class="exam-status">
-                <el-tag
-                  :type="getExamStatusType(item.status)"
-                  effect="plain"
-                >
+                <el-tag :type="getExamStatusType(item.status)" effect="plain">
                   {{ getExamStatusText(item.status) }}
                 </el-tag>
               </div>
@@ -106,7 +103,11 @@
         </el-tab-pane>
         <!-- 随练标签页：嵌入新版随练组件 -->
         <el-tab-pane label="随练" name="practice">
-          <WrongExercise :embedded="true" :course-id="courseId" :current-theme="currentTheme" />
+          <WrongExercise
+            :embedded="true"
+            :course-id="courseId"
+            :current-theme="currentTheme"
+          />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -153,7 +154,10 @@ const formatDate = (dateString: string) => {
 
 // 获取作业状态类型
 const getHomeworkStatusType = (status: number) => {
-  const typeMap: Record<number, "info" | "warning" | "success" | "danger" | "primary"> = {
+  const typeMap: Record<
+    number,
+    "info" | "warning" | "success" | "danger" | "primary"
+  > = {
     1: "info", // 未开始
     2: "warning", // 进行中
     3: "success", // 已完成
@@ -175,7 +179,10 @@ const getHomeworkStatusText = (status: number) => {
 
 // 获取考试状态类型
 const getExamStatusType = (status: number) => {
-  const typeMap: Record<number, "info" | "warning" | "success" | "danger" | "primary"> = {
+  const typeMap: Record<
+    number,
+    "info" | "warning" | "success" | "danger" | "primary"
+  > = {
     1: "info", // 未开始
     2: "warning", // 进行中
     3: "success", // 已完成
@@ -208,7 +215,9 @@ const viewHomework = (homework: any) => {
         }
       });
     } else {
-      ElMessage.warning(`${getHomeworkStatusText(homework.status)}状态的作业不可查看`);
+      ElMessage.warning(
+        `${getHomeworkStatusText(homework.status)}状态的作业不可查看`
+      );
     }
   }
 };
@@ -237,8 +246,8 @@ const viewExam = (exam: any) => {
 .homework-exam-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
+  height: 100%;
   background-color: transparent; /* 背景透明，由父布局控制 */
 }
 
@@ -247,20 +256,20 @@ const viewExam = (exam: any) => {
 }
 
 .homework-container {
-  padding: 80px 32px 24px;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  background-color: transparent;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 80px 32px 24px;
+  overflow-y: auto;
+  background-color: transparent;
 }
 
 .dark :deep(.el-empty__image img),
 .dark :deep(.el-empty__image svg) {
-  filter: brightness(0.7);
   opacity: 0.8;
+  filter: brightness(0.7);
 }
 
 .homework-container.dark {
@@ -284,30 +293,30 @@ const viewExam = (exam: any) => {
 .exam-item {
   display: flex;
   align-items: center;
+  padding: 20px;
+  cursor: pointer;
+  background-color: #fff;
   border: 1px solid #ebeef5;
   border-radius: 12px;
-  padding: 20px;
-  background-color: #fff;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 5%);
   transition: all 0.3s;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .homework-item.dark,
 .exam-item.dark {
   background-color: #2a2a2a;
   border-color: #3e3e3e;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
 }
 
 .homework-item:hover,
 .exam-item:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
 }
 
 .homework-item.dark:hover,
 .exam-item.dark:hover {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 30%);
 }
 
 .homework-icon,
@@ -331,9 +340,9 @@ const viewExam = (exam: any) => {
 
 .homework-title,
 .exam-title {
+  margin-bottom: 8px;
   font-size: 20px;
   font-weight: 600;
-  margin-bottom: 8px;
   color: #303133;
 }
 
@@ -368,10 +377,10 @@ const viewExam = (exam: any) => {
 
 /* 标签页字体加大 */
 :deep(.homework-tabs .el-tabs__item) {
+  margin-right: 24px;
   font-size: 18px;
   font-weight: 600;
   color: #303133;
-  margin-right: 24px;
 }
 
 :deep(.homework-tabs .el-tabs__item:last-child) {
@@ -402,15 +411,15 @@ const viewExam = (exam: any) => {
 .material-action .el-button,
 .homework-action .el-button,
 .exam-action .el-button {
-  font-size: 15px;
   padding: 10px 20px;
+  font-size: 15px;
 }
 
 /* 状态标签加大 */
 .homework-status .el-tag,
 .exam-status .el-tag {
-  font-size: 14px;
   padding: 6px 12px;
+  font-size: 14px;
 }
 
 /* 浅色模式次要信息颜色优化 */
@@ -421,17 +430,7 @@ const viewExam = (exam: any) => {
 
 :deep(.light .homework-title),
 :deep(.light .exam-title) {
-  color: #1a1a1a;
   font-weight: bold;
-}
-
-/* 页面宽度全屏适配 */
-.homework-container {
-  padding-left: 32px;
-  padding-right: 32px;
-}
-
-.homework-tabs {
-  width: 100%;
+  color: #1a1a1a;
 }
 </style>

@@ -5,7 +5,14 @@
       <div class="banner-content">
         <div class="banner-left">
           <h2>
-            <CompetitionIcon style="width: 28px; height: 28px; vertical-align: middle; margin-right: 8px;" />
+            <CompetitionIcon
+              style="
+                width: 28px;
+                height: 28px;
+                margin-right: 8px;
+                vertical-align: middle;
+              "
+            />
             赛事场
           </h2>
           <p>在线编程挑战、题库训练、作文批改，全方位提升你的能力！</p>
@@ -38,8 +45,12 @@
           <h3>在线 OJ</h3>
           <p>算法编程在线评测，实时反馈结果</p>
           <div class="card-stats">
-            <span><strong>{{ ojStats.total }}</strong> 道题目</span>
-            <span><strong>{{ ojStats.solved }}</strong> 已通过</span>
+            <span
+              ><strong>{{ ojStats.total }}</strong> 道题目</span
+            >
+            <span
+              ><strong>{{ ojStats.solved }}</strong> 已通过</span
+            >
           </div>
         </div>
         <div class="card-action">
@@ -54,8 +65,12 @@
           <h3>题库训练集</h3>
           <p>海量题目分类训练，巩固知识点</p>
           <div class="card-stats">
-            <span><strong>{{ trainingStats.categories }}</strong> 个分类</span>
-            <span><strong>{{ trainingStats.questions }}</strong> 道题目</span>
+            <span
+              ><strong>{{ trainingStats.categories }}</strong> 个分类</span
+            >
+            <span
+              ><strong>{{ trainingStats.questions }}</strong> 道题目</span
+            >
           </div>
         </div>
         <div class="card-action">
@@ -85,7 +100,9 @@
           <h3>国家安全知识竞赛</h3>
           <p>学习国家安全知识，参与在线竞赛</p>
           <div class="card-stats">
-            <span><strong>{{ securityStats.participants }}</strong> 人参与</span>
+            <span
+              ><strong>{{ securityStats.participants }}</strong> 人参与</span
+            >
           </div>
         </div>
         <div class="card-action">
@@ -132,7 +149,13 @@
               :disabled="event.status === 'ended'"
               size="small"
             >
-              {{ event.status === 'upcoming' ? '立即报名' : event.status === 'ongoing' ? '进入比赛' : '已结束' }}
+              {{
+                event.status === "upcoming"
+                  ? "立即报名"
+                  : event.status === "ongoing"
+                    ? "进入比赛"
+                    : "已结束"
+              }}
             </el-button>
           </div>
         </div>
@@ -157,7 +180,9 @@
           :class="{ 'is-top3': index < 3 }"
         >
           <div class="rank">
-            <span v-if="index < 3" class="rank-medal">{{ ['🥇', '🥈', '🥉'][index] }}</span>
+            <span v-if="index < 3" class="rank-medal">{{
+              ["🥇", "🥈", "🥉"][index]
+            }}</span>
             <span v-else class="rank-number">{{ index + 1 }}</span>
           </div>
           <el-avatar :size="40" :src="formatAvatar(user.avatar)" />
@@ -171,7 +196,12 @@
     </div>
 
     <!-- OJ 模态框 -->
-    <el-dialog v-model="ojDialogVisible" title="在线 OJ" width="90%" class="oj-dialog">
+    <el-dialog
+      v-model="ojDialogVisible"
+      title="在线 OJ"
+      width="90%"
+      class="oj-dialog"
+    >
       <div class="oj-content">
         <!-- 题目分类筛选 -->
         <div class="oj-filters">
@@ -187,7 +217,12 @@
             <el-option label="树" value="tree" />
             <el-option label="图" value="graph" />
           </el-select>
-          <el-input v-model="ojFilter.keyword" placeholder="搜索题目..." clearable style="width: 200px" />
+          <el-input
+            v-model="ojFilter.keyword"
+            placeholder="搜索题目..."
+            clearable
+            style="width: 200px"
+          />
         </div>
         <!-- 题目列表 -->
         <el-table :data="ojProblems" stripe style="width: 100%">
@@ -203,8 +238,14 @@
           <el-table-column prop="acceptance" label="通过率" width="100" />
           <el-table-column prop="status" label="状态" width="100">
             <template #default="{ row }">
-              <el-icon v-if="row.status === 'solved'" class="solved-icon"><CircleCheck /></el-icon>
-              <el-icon v-else-if="row.status === 'attempted'" class="attempted-icon"><Warning /></el-icon>
+              <el-icon v-if="row.status === 'solved'" class="solved-icon"
+                ><CircleCheck
+              /></el-icon>
+              <el-icon
+                v-else-if="row.status === 'attempted'"
+                class="attempted-icon"
+                ><Warning
+              /></el-icon>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -255,11 +296,20 @@
           v-model="essayContent"
           type="textarea"
           :rows="12"
-          :placeholder="essayType === 'chinese' ? '请输入中文作文内容...' : 'Please enter your English essay...'"
+          :placeholder="
+            essayType === 'chinese'
+              ? '请输入中文作文内容...'
+              : 'Please enter your English essay...'
+          "
         />
         <div class="essay-actions">
-          <el-button type="primary" size="large" :loading="essayAnalyzing" @click="analyzeEssay">
-            {{ essayAnalyzing ? 'AI 分析中...' : '开始批改' }}
+          <el-button
+            type="primary"
+            size="large"
+            :loading="essayAnalyzing"
+            @click="analyzeEssay"
+          >
+            {{ essayAnalyzing ? "AI 分析中..." : "开始批改" }}
           </el-button>
         </div>
         <div v-if="essayResult" class="essay-result">
@@ -293,12 +343,18 @@
     </el-dialog>
 
     <!-- 国家安全竞赛模态框 -->
-    <el-dialog v-model="securityDialogVisible" title="国家安全知识竞赛" width="70%">
+    <el-dialog
+      v-model="securityDialogVisible"
+      title="国家安全知识竞赛"
+      width="70%"
+    >
       <div class="security-content">
         <div v-if="!securityQuizStarted" class="security-intro">
           <div class="intro-icon">🛡️</div>
           <h3>国家安全教育知识竞赛</h3>
-          <p>测试你对国家安全知识的了解程度，每次竞赛 10 道题目，限时 10 分钟</p>
+          <p>
+            测试你对国家安全知识的了解程度，每次竞赛 10 道题目，限时 10 分钟
+          </p>
           <div class="intro-stats">
             <div class="stat">
               <span class="value">10</span>
@@ -313,11 +369,15 @@
               <span class="label">满分</span>
             </div>
           </div>
-          <el-button type="primary" size="large" @click="startSecurityQuiz">开始答题</el-button>
+          <el-button type="primary" size="large" @click="startSecurityQuiz"
+            >开始答题</el-button
+          >
         </div>
         <div v-else class="security-quiz">
           <div class="quiz-header">
-            <span class="question-num">第 {{ currentQuestionIndex + 1 }} / 10 题</span>
+            <span class="question-num"
+              >第 {{ currentQuestionIndex + 1 }} / 10 题</span
+            >
             <span class="timer">
               <el-icon><Clock /></el-icon>
               {{ formatTime(remainingTime) }}
@@ -342,7 +402,7 @@
               :disabled="selectedAnswer === null"
               @click="nextQuestion"
             >
-              {{ currentQuestionIndex === 9 ? '提交答案' : '下一题' }}
+              {{ currentQuestionIndex === 9 ? "提交答案" : "下一题" }}
             </el-button>
           </div>
         </div>
@@ -410,11 +470,41 @@ const leaderboard = ref([
 const ojDialogVisible = ref(false);
 const ojFilter = ref({ difficulty: "", category: "", keyword: "" });
 const ojProblems = ref([
-  { id: 1, title: "两数之和", difficulty: "easy", acceptance: "45.2%", status: "solved" },
-  { id: 2, title: "无重复字符的最长子串", difficulty: "medium", acceptance: "32.1%", status: "attempted" },
-  { id: 3, title: "寻找两个正序数组的中位数", difficulty: "hard", acceptance: "18.5%", status: "" },
-  { id: 4, title: "最长回文子串", difficulty: "medium", acceptance: "28.7%", status: "" },
-  { id: 5, title: "正则表达式匹配", difficulty: "hard", acceptance: "22.3%", status: "" }
+  {
+    id: 1,
+    title: "两数之和",
+    difficulty: "easy",
+    acceptance: "45.2%",
+    status: "solved"
+  },
+  {
+    id: 2,
+    title: "无重复字符的最长子串",
+    difficulty: "medium",
+    acceptance: "32.1%",
+    status: "attempted"
+  },
+  {
+    id: 3,
+    title: "寻找两个正序数组的中位数",
+    difficulty: "hard",
+    acceptance: "18.5%",
+    status: ""
+  },
+  {
+    id: 4,
+    title: "最长回文子串",
+    difficulty: "medium",
+    acceptance: "28.7%",
+    status: ""
+  },
+  {
+    id: 5,
+    title: "正则表达式匹配",
+    difficulty: "hard",
+    acceptance: "22.3%",
+    status: ""
+  }
 ]);
 
 // 训练相关
@@ -468,7 +558,10 @@ const securityQuestions = ref([
 const currentQuestion = ref(securityQuestions.value[0]);
 
 const getEventStatusType = (status: string) => {
-  const types: Record<string, "success" | "primary" | "info" | "warning" | "danger"> = {
+  const types: Record<
+    string,
+    "success" | "primary" | "info" | "warning" | "danger"
+  > = {
     upcoming: "primary",
     ongoing: "success",
     ended: "info"
@@ -555,7 +648,8 @@ const nextQuestion = () => {
     currentQuestionIndex.value++;
     selectedAnswer.value = null;
     if (currentQuestionIndex.value < securityQuestions.value.length) {
-      currentQuestion.value = securityQuestions.value[currentQuestionIndex.value];
+      currentQuestion.value =
+        securityQuestions.value[currentQuestionIndex.value];
     }
   } else {
     ElMessage.success("答题完成！");
@@ -578,11 +672,11 @@ const formatTime = (seconds: number) => {
     margin-bottom: 24px;
     background: linear-gradient(135deg, #fcd9b6 0%, #f9a8d4 100%);
     border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    
+    box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+
     .dark & {
       background: linear-gradient(135deg, #92400e 0%, #831843 100%);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
     }
 
     .banner-content {
@@ -663,18 +757,18 @@ const formatTime = (seconds: number) => {
     border-radius: 16px;
     box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
     transition: all 0.3s ease;
-    
+
     .dark & {
       background: #1e293b;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
     }
 
     &:hover {
       box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
       transform: translateY(-4px);
-      
+
       .dark & {
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 8px 32px rgb(0 0 0 / 50%);
       }
     }
 
@@ -688,7 +782,7 @@ const formatTime = (seconds: number) => {
       font-size: 32px;
       background: #f3f4f6;
       border-radius: 16px;
-      
+
       .dark & {
         background: #334155;
       }
@@ -702,7 +796,7 @@ const formatTime = (seconds: number) => {
         font-size: 18px;
         font-weight: 600;
         color: #333;
-        
+
         .dark & {
           color: #f1f5f9;
         }
@@ -712,7 +806,7 @@ const formatTime = (seconds: number) => {
         margin: 0 0 8px;
         font-size: 13px;
         color: #666;
-        
+
         .dark & {
           color: #94a3b8;
         }
@@ -723,14 +817,14 @@ const formatTime = (seconds: number) => {
         gap: 16px;
         font-size: 12px;
         color: #999;
-        
+
         .dark & {
           color: #64748b;
         }
 
         strong {
           color: #333;
-          
+
           .dark & {
             color: #e2e8f0;
           }
@@ -740,6 +834,7 @@ const formatTime = (seconds: number) => {
 
     &.oj-card .card-icon {
       background: linear-gradient(135deg, #93c5fd, #60a5fa);
+
       .dark & {
         background: linear-gradient(135deg, #1e40af, #1d4ed8);
       }
@@ -747,6 +842,7 @@ const formatTime = (seconds: number) => {
 
     &.training-card .card-icon {
       background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+
       .dark & {
         background: linear-gradient(135deg, #5b21b6, #6d28d9);
       }
@@ -754,6 +850,7 @@ const formatTime = (seconds: number) => {
 
     &.essay-card .card-icon {
       background: linear-gradient(135deg, #fcd34d, #fbbf24);
+
       .dark & {
         background: linear-gradient(135deg, #92400e, #b45309);
       }
@@ -761,6 +858,7 @@ const formatTime = (seconds: number) => {
 
     &.security-card .card-icon {
       background: linear-gradient(135deg, #6ee7b7, #34d399);
+
       .dark & {
         background: linear-gradient(135deg, #065f46, #047857);
       }
@@ -774,10 +872,10 @@ const formatTime = (seconds: number) => {
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
-    
+
     .dark & {
       background: #1e293b;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
     }
 
     .section-header {
@@ -791,7 +889,7 @@ const formatTime = (seconds: number) => {
         font-size: 18px;
         font-weight: 600;
         color: #333;
-        
+
         .dark & {
           color: #f1f5f9;
         }
@@ -813,7 +911,7 @@ const formatTime = (seconds: number) => {
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       transition: all 0.3s ease;
-      
+
       .dark & {
         background: #0f172a;
         border-color: #334155;
@@ -822,7 +920,7 @@ const formatTime = (seconds: number) => {
       &:hover {
         background: #f3f4f6;
         border-color: #d1d5db;
-        
+
         .dark & {
           background: #1e293b;
           border-color: #475569;
@@ -830,7 +928,11 @@ const formatTime = (seconds: number) => {
       }
 
       &.is-ongoing {
-        background: linear-gradient(135deg, rgb(16 185 129 / 5%), rgb(16 185 129 / 10%));
+        background: linear-gradient(
+          135deg,
+          rgb(16 185 129 / 5%),
+          rgb(16 185 129 / 10%)
+        );
         border-color: #10b981;
       }
 
@@ -846,7 +948,7 @@ const formatTime = (seconds: number) => {
           font-size: 15px;
           font-weight: 600;
           color: #333;
-          
+
           .dark & {
             color: #f1f5f9;
           }
@@ -856,7 +958,7 @@ const formatTime = (seconds: number) => {
           margin: 0 0 8px;
           font-size: 13px;
           color: #666;
-          
+
           .dark & {
             color: #94a3b8;
           }
@@ -867,7 +969,7 @@ const formatTime = (seconds: number) => {
           gap: 20px;
           font-size: 12px;
           color: #999;
-          
+
           .dark & {
             color: #64748b;
           }
@@ -893,6 +995,7 @@ const formatTime = (seconds: number) => {
 
       &:hover {
         background: #f9fafb;
+
         .dark & {
           background: #0f172a;
         }
@@ -914,7 +1017,7 @@ const formatTime = (seconds: number) => {
           font-size: 16px;
           font-weight: 600;
           color: #666;
-          
+
           .dark & {
             color: #94a3b8;
           }
@@ -930,7 +1033,7 @@ const formatTime = (seconds: number) => {
           font-size: 14px;
           font-weight: 600;
           color: #333;
-          
+
           .dark & {
             color: #f1f5f9;
           }
@@ -939,7 +1042,7 @@ const formatTime = (seconds: number) => {
         .solved {
           font-size: 12px;
           color: #999;
-          
+
           .dark & {
             color: #64748b;
           }
@@ -988,7 +1091,7 @@ const formatTime = (seconds: number) => {
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       transition: all 0.3s ease;
-      
+
       .dark & {
         background: #0f172a;
         border-color: #334155;
@@ -998,7 +1101,7 @@ const formatTime = (seconds: number) => {
         background: #f3f4f6;
         border-color: #d1d5db;
         transform: translateY(-2px);
-        
+
         .dark & {
           background: #1e293b;
           border-color: #475569;
@@ -1018,7 +1121,7 @@ const formatTime = (seconds: number) => {
           font-size: 16px;
           font-weight: 600;
           color: #333;
-          
+
           .dark & {
             color: #f1f5f9;
           }
@@ -1028,7 +1131,7 @@ const formatTime = (seconds: number) => {
           margin: 0;
           font-size: 12px;
           color: #999;
-          
+
           .dark & {
             color: #94a3b8;
           }
@@ -1051,11 +1154,11 @@ const formatTime = (seconds: number) => {
   }
 
   .essay-result {
-    margin-top: 24px;
     padding: 20px;
+    margin-top: 24px;
     background: #f9fafb;
     border-radius: 12px;
-    
+
     .dark & {
       background: #0f172a;
     }
@@ -1065,7 +1168,7 @@ const formatTime = (seconds: number) => {
       font-size: 16px;
       font-weight: 600;
       color: #333;
-      
+
       .dark & {
         color: #f1f5f9;
       }
@@ -1103,7 +1206,7 @@ const formatTime = (seconds: number) => {
       .detail-item {
         padding: 12px 0;
         border-bottom: 1px solid #e5e7eb;
-        
+
         .dark & {
           border-color: #334155;
         }
@@ -1115,7 +1218,7 @@ const formatTime = (seconds: number) => {
         .label {
           font-weight: 600;
           color: #333;
-          
+
           .dark & {
             color: #e2e8f0;
           }
@@ -1123,7 +1226,7 @@ const formatTime = (seconds: number) => {
 
         .value {
           color: #666;
-          
+
           .dark & {
             color: #94a3b8;
           }
@@ -1149,7 +1252,7 @@ const formatTime = (seconds: number) => {
       font-size: 24px;
       font-weight: 600;
       color: #333;
-      
+
       .dark & {
         color: #f1f5f9;
       }
@@ -1159,7 +1262,7 @@ const formatTime = (seconds: number) => {
       margin: 0 0 24px;
       font-size: 14px;
       color: #666;
-      
+
       .dark & {
         color: #94a3b8;
       }
@@ -1167,8 +1270,8 @@ const formatTime = (seconds: number) => {
 
     .intro-stats {
       display: flex;
-      justify-content: center;
       gap: 48px;
+      justify-content: center;
       margin-bottom: 32px;
 
       .stat {
@@ -1184,7 +1287,7 @@ const formatTime = (seconds: number) => {
         .label {
           font-size: 12px;
           color: #999;
-          
+
           .dark & {
             color: #64748b;
           }
@@ -1202,7 +1305,7 @@ const formatTime = (seconds: number) => {
       margin-bottom: 24px;
       background: #f3f4f6;
       border-radius: 8px;
-      
+
       .dark & {
         background: #1e293b;
       }
@@ -1211,7 +1314,7 @@ const formatTime = (seconds: number) => {
         font-size: 14px;
         font-weight: 600;
         color: #333;
-        
+
         .dark & {
           color: #f1f5f9;
         }
@@ -1236,7 +1339,7 @@ const formatTime = (seconds: number) => {
         font-weight: 600;
         line-height: 1.6;
         color: #333;
-        
+
         .dark & {
           color: #f1f5f9;
         }
@@ -1253,17 +1356,17 @@ const formatTime = (seconds: number) => {
           border: 1px solid #e5e7eb;
           border-radius: 8px;
           transition: all 0.2s;
-          
+
           .dark & {
+            color: #f1f5f9;
             background: #0f172a;
             border-color: #334155;
-            color: #f1f5f9;
-            
+
             &:hover {
               background: #1e293b;
               border-color: #475569;
             }
-            
+
             :deep(.el-radio__label) {
               color: #f1f5f9;
             }
