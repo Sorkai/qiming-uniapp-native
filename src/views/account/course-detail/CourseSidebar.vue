@@ -119,7 +119,9 @@ const sidebarMenuItems = [
       background: linear-gradient(
         90deg,
         transparent,
-        rgba(100, 100, 120, 0.4),
+        rgba(79, 172, 254, 0.4),
+        rgba(151, 180, 247, 0.5),
+        rgba(79, 172, 254, 0.4),
         transparent
       );
     }
@@ -237,15 +239,18 @@ const sidebarMenuItems = [
 
   /* 侧边栏分割线样式 */
   .line {
-    width: calc(100% - 20px);
-    height: 1px;
-    margin: 8px 8px;
+    width: calc(100% - 16px);
+    height: 2px;
+    margin: 10px 8px;
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(207, 216, 240, 0.5),
+      rgba(96, 79, 253, 0.4),
+      rgba(151, 180, 247, 0.6),
+      rgba(96, 79, 253, 0.4),
       transparent
     );
+    border-radius: 1px;
 
     &:last-child {
       display: none;
