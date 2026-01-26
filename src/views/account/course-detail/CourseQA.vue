@@ -162,7 +162,7 @@
                     :class="{
                       collapsed: message.isCollapsed && !message.expanded
                     }"
-                    v-html="parseMarkdownContent(message.content)"
+                    v-html="message.contentHtml || parseMarkdownContent(message.content)"
                   />
                   <button
                     v-if="message.isCollapsed"
@@ -259,7 +259,7 @@
                           </div>
                           <div
                             class="reply-text"
-                            v-html="parseMarkdownContent(reply.content)"
+                            v-html="reply.contentHtml || parseMarkdownContent(reply.content)"
                           />
                           <div class="reply-actions">
                             <button
@@ -826,9 +826,13 @@ const formatRelativeTime = (dateString: string) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
+/**
+ * 前端简易Markdown 解析（作为后端未返回 contentHtml 时的回退方案）
+ * 后端已实现完整的 Markdown 渲染，会返回 contentHtml 字段，更安全
+ */
 const parseMarkdownContent = (text: string) => {
   if (!text) return "";
-  // 这里可以换成真正的 markdown 解析库，如 marked
+  // 简易的前端 markdown 解析，作为后端未返回 contentHtml 时的回退
   let formatted = text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
