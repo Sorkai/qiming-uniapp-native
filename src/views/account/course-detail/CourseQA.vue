@@ -162,7 +162,10 @@
                     :class="{
                       collapsed: message.isCollapsed && !message.expanded
                     }"
-                    v-html="message.contentHtml || parseMarkdownContent(message.content)"
+                    v-html="
+                      message.contentHtml ||
+                      parseMarkdownContent(message.content)
+                    "
                   />
                   <button
                     v-if="message.isCollapsed"
@@ -259,7 +262,10 @@
                           </div>
                           <div
                             class="reply-text"
-                            v-html="reply.contentHtml || parseMarkdownContent(reply.content)"
+                            v-html="
+                              reply.contentHtml ||
+                              parseMarkdownContent(reply.content)
+                            "
                           />
                           <div class="reply-actions">
                             <button
@@ -642,8 +648,14 @@ const props = defineProps<{
   userId?: string;
   isTeacher?: boolean;
   isAdmin?: boolean;
-  courseId: string; // 确保是必填的
+  courseId: string | number; // 支持字符串或数字类型
 }>();
+
+// 将 courseId 转换为字符串，确保 API 调用时使用正确的类型
+const normalizedCourseId = computed(() => {
+  if (props.courseId === null || props.courseId === undefined) return "";
+  return String(props.courseId);
+});
 
 // Emits
 const emit = defineEmits<{
@@ -678,6 +690,9 @@ const filterTabs = computed(() => [
 // 热门标签
 const hotTags = ref<Array<{ name: string; count: number; type?: any }>>([]);
 
+// 可用标签（用于发帖时选择）
+const availableTags = computed(() => hotTags.value.map(tag => tag.name));
+
 // 统计数据
 const stats = ref<DiscussionStats>({
   totalPosts: 0,
@@ -704,16 +719,23 @@ const editingContent = ref({
 // 消息列表
 const messages = ref<Message[]>([]);
 
-// 初始化加载
-onMounted(() => {
-  if (props.courseId) {
-    refreshData();
-  }
-});
+// 统一监听 visible 和 courseId，只要两者都准备好且 visible 为 true 就加载
+watch(
+  [() => props.visible, () => normalizedCourseId.value],
+  ([newVisible, newCourseId]) => {
+    console.log("[CourseQA] Status check:", { newVisible, newCourseId });
+    if (newVisible && newCourseId) {
+      refreshData();
+    }
+  },
+  { immediate: true }
+);
 
 // 监听 tab 切换
 watch(activeFilter, () => {
-  refreshData();
+  if (normalizedCourseId.value && props.visible) {
+    refreshData();
+  }
 });
 
 // 监听搜索
@@ -728,8 +750,20 @@ const refreshData = async () => {
   await Promise.all([fetchDiscussions(), fetchStats(), fetchTags()]);
 };
 
+defineExpose({
+  refreshData
+});
+
 const fetchDiscussions = async (append = false) => {
-  if (!props.courseId) return;
+  if (!normalizedCourseId.value) {
+    console.log("[CourseQA] fetchDiscussions skipped - no courseId");
+    return;
+  }
+
+  console.log(
+    "[CourseQA] fetchDiscussions - courseId:",
+    normalizedCourseId.value
+  );
 
   if (append) {
     isLoadingMore.value = true;
@@ -752,18 +786,23 @@ const fetchDiscussions = async (append = false) => {
       params.authorId = props.userId;
     }
 
-    const { data } = await getDiscussions(props.courseId, params);
+    const { data } = await getDiscussions(normalizedCourseId.value, params);
 
-    const newMessages = data.list.map(item => ({
-      ...item,
-      isCollapsed: item.content.length > 200,
-      expanded: false,
-      showReplies: false,
-      showReplyInput: false,
-      replyContent: "",
-      replyPlaceholder: "",
-      replies: item.replies || []
-    }));
+    const newMessages = data.list.map(item => {
+      const safeContent = item.content || "";
+      return {
+        ...item,
+        content: safeContent,
+        contentHtml: item.contentHtml || safeContent,
+        isCollapsed: safeContent.length > 200,
+        expanded: false,
+        showReplies: false,
+        showReplyInput: false,
+        replyContent: "",
+        replyPlaceholder: "",
+        replies: item.replies || []
+      };
+    });
 
     if (append) {
       messages.value = [...messages.value, ...newMessages];
@@ -782,14 +821,14 @@ const fetchDiscussions = async (append = false) => {
 
 const fetchStats = async () => {
   try {
-    const { data } = await getDiscussionStats(props.courseId);
+    const { data } = await getDiscussionStats(normalizedCourseId.value);
     stats.value = data;
   } catch (error) {}
 };
 
 const fetchTags = async () => {
   try {
-    const { data } = await getHotTags(props.courseId);
+    const { data } = await getHotTags(normalizedCourseId.value);
     const types = ["primary", "success", "warning", "info", "danger"];
     hotTags.value = data.map((tag, index) => ({
       ...tag,
@@ -848,13 +887,13 @@ const canManageMessage = (message: Message) => {
 const handleLike = async (message: Message) => {
   try {
     if (message.isLiked) {
-      const { data } = await unlikePost(message.id);
+      const result = await unlikePost(message.id);
       message.isLiked = false;
-      message.likeCount = data.likeCount;
+      message.likeCount = result.likeCount;
     } else {
-      const { data } = await likePost(message.id);
+      const result = await likePost(message.id);
       message.isLiked = true;
-      message.likeCount = data.likeCount;
+      message.likeCount = result.likeCount;
     }
   } catch (error) {}
 };
@@ -863,8 +902,8 @@ const handleShowReplies = async (message: Message) => {
   message.showReplies = !message.showReplies;
   if (message.showReplies && message.replies.length === 0) {
     try {
-      const { data } = await getReplies(message.id);
-      message.replies = data.list;
+      const result = await getReplies(message.id);
+      message.replies = result.list;
     } catch (error) {}
   }
 };
@@ -902,9 +941,10 @@ const handleLikeReply = async (reply: Reply) => {
 const loadMoreReplies = async (message: Message) => {
   try {
     const page = Math.floor(message.replies.length / 5) + 1;
-    const { data } = await getReplies(message.id, { page, pageSize: 5 });
-    message.replies = [...message.replies, ...data.list];
-    message.hasMoreReplies = data.pagination.page < data.pagination.totalPages;
+    const result = await getReplies(message.id, { page, pageSize: 5 });
+    message.replies = [...message.replies, ...result.list];
+    message.hasMoreReplies =
+      result.pagination.page < result.pagination.totalPages;
   } catch (error) {}
 };
 
@@ -1004,7 +1044,7 @@ const handleSubmitPost = async () => {
   isSubmitting.value = true;
 
   try {
-    await createDiscussion(props.courseId, {
+    await createDiscussion(normalizedCourseId.value, {
       title: newPost.value.title,
       content: newPost.value.content,
       tags: newPost.value.tags

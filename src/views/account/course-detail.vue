@@ -56,19 +56,19 @@
 
         <!-- 课程问答 -->
         <CourseQA
+          ref="courseQARef"
           :visible="activeMenu === 'course-qa'"
           :current-theme="currentTheme"
+          :course-id="courseId"
+          :user-id="userStore.userId"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
-          :qa-stats="qaStats"
-          :qa-history-list="qaHistoryList"
-          :chat-messages="chatMessages"
-          :is-typing="isTyping"
+          :is-teacher="userStore.isTeacher"
+          :is-admin="userStore.isAdmin"
           @go-back="goBack"
           @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
           @logout="handleLogout"
-          @send-message="handleSendMessage"
         />
 
         <!-- 作业考试 -->
@@ -214,6 +214,12 @@ watch(activeMenu, newVal => {
     fetchHtmlAnimations();
   } else if (newVal === "mastery") {
     fetchCourseStudyEffect();
+  } else if (newVal === "course-qa") {
+    nextTick(() => {
+      if (courseId.value) {
+        courseQARef.value?.refreshData?.();
+      }
+    });
   }
 });
 
@@ -268,6 +274,7 @@ const userNickname = computed(
 
 // 课程学习相关
 const courseStudyRef = ref(null);
+const courseQARef = ref<any>(null);
 const currentHour = ref(null);
 const currentVideoUrl = ref("");
 const activeNode = ref(
@@ -425,6 +432,12 @@ const handleMenuClick = (menuName: string) => {
     fetchHtmlAnimations();
   } else if (menuName === "mastery") {
     fetchCourseStudyEffect();
+  } else if (menuName === "course-qa") {
+    nextTick(() => {
+      if (courseId.value) {
+        courseQARef.value?.refreshData?.();
+      }
+    });
   }
 };
 
@@ -779,6 +792,12 @@ onMounted(async () => {
       fetchHtmlAnimations();
     } else if (menuName === "mastery") {
       fetchCourseStudyEffect();
+    } else if (menuName === "course-qa") {
+      nextTick(() => {
+        if (courseId.value) {
+          courseQARef.value?.refreshData?.();
+        }
+      });
     }
   }
 

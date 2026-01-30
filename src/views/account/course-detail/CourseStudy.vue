@@ -1089,7 +1089,8 @@ $shadow-xl:
   width: 380px;
 
   /* 设置最大高度，让章节目录可以滚动 */
-  max-height: calc(100vh - 120px);
+  height: calc(100vh - 120px);
+  min-height: 0;
 }
 
 .ai-assistant-widget {
@@ -1194,9 +1195,12 @@ $shadow-xl:
 }
 
 .chapter-catalog {
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  min-height: 300px;
-  max-height: calc(100vh - 280px);
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
   box-shadow:
     0 4px 20px -4px rgb(0 0 0 / 10%),
     0 2px 8px -2px rgb(0 0 0 / 6%);
@@ -1245,26 +1249,44 @@ $shadow-xl:
   }
 
   .catalog-body {
+    display: flex;
     flex: 1;
+    flex-direction: column;
+    min-height: 0;
     padding: 16px;
     overflow: hidden;
 
     :deep(.el-scrollbar) {
       height: 100%;
 
-      /* 隐藏 Element Plus 滚动条轨道和滑块 */
-      .el-scrollbar__bar {
-        display: none;
+      .el-scrollbar__wrap {
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
       }
 
-      /* 确保原生滚动条也被隐藏（以防万一） */
-      .el-scrollbar__wrap {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
+      .el-scrollbar__view {
+        height: auto;
+      }
 
-        &::-webkit-scrollbar {
-          display: none;
+      .el-scrollbar__bar.is-vertical {
+        right: 2px;
+        width: 6px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+
+        .el-scrollbar__thumb {
+          background: rgb(99 102 241 / 30%);
+          border-radius: 3px;
+
+          &:hover {
+            background: rgb(99 102 241 / 50%);
+          }
         }
+      }
+
+      &:hover .el-scrollbar__bar.is-vertical {
+        opacity: 1;
       }
     }
   }

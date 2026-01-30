@@ -69,15 +69,46 @@ export interface DiscussionStats {
   hotTags: Array<{ name: string; count: number }>;
 }
 
-/** 获取讨论列表参数 */
+/** 获取讨论列表参数（前端使用） */
 export interface GetDiscussionsParams {
   page?: number;
   pageSize?: number;
-  sort?: "latest" | "hot" | "unanswered";
+  sort?: "latest" | "hot" | "unanswered" | "most_replies";
   keyword?: string;
   tag?: string;
   status?: PostStatus;
   authorId?: string;
+}
+
+/** 后端API期望的参数格式 */
+interface BackendDiscussionsParams {
+  pageNum: number;
+  pageSize?: number;
+  sortBy?: "latest" | "hot" | "most_replies";
+  tag?: string;
+}
+
+/** 后端返回的帖子列表项 */
+interface BackendPostListItem {
+  postId: number;
+  title: string;
+  content: string;
+  authorId: number;
+  authorName: string;
+  authorAvatar: string;
+  tags: string[];
+  likeCount: number;
+  replyCount: number;
+  viewCount: number;
+  isPinned: boolean;
+  isLiked: boolean;
+  createTime: string;
+}
+
+/** 后端返回的列表响应 */
+interface BackendListResponse {
+  total: number;
+  list: BackendPostListItem[];
 }
 
 /** 发布讨论参数 */
@@ -122,14 +153,104 @@ export interface ReviewParams {
  * @param courseId 课程ID
  * @param params 查询参数
  */
-export function getDiscussions(
+export async function getDiscussions(
   courseId: string,
   params?: GetDiscussionsParams
-) {
-  return http.request<{
-    list: DiscussionPost[];
-    pagination: Pagination;
-  }>("get", `/api/v1/courses/${courseId}/discussions`, { params });
+): Promise<{ data: { list: DiscussionPost[]; pagination: Pagination } }> {
+  // 转换参数名：前端 page -> 后端 pageNum，前端 sort -> 后端 sortBy
+  const backendParams: BackendDiscussionsParams = {
+    pageNum: params?.page || 1,
+    pageSize: params?.pageSize || 20
+  };
+
+  // 转换排序参数
+  if (params?.sort && params.sort !== "unanswered") {
+    backendParams.sortBy = params.sort as "latest" | "hot" | "most_replies";
+  }
+
+  if (params?.tag) {
+    backendParams.tag = params.tag;
+  }
+
+  console.log(
+    "[API] getDiscussions - courseId:",
+    courseId,
+    "params:",
+    backendParams
+  );
+
+  try {
+    const response = await http.request<
+      | {
+          code: number;
+          msg: string;
+          data: BackendListResponse;
+        }
+      | BackendListResponse
+    >("get", `/edu/frontend/v1/courses/${courseId}/discussions`, {
+      params: backendParams
+    });
+
+    console.log("[API] getDiscussions success:", response);
+
+    // 兼容后端是否包裹 data 字段
+    const backendData = (response as { data?: BackendListResponse }).data
+      ? (response as { data: BackendListResponse }).data
+      : (response as BackendListResponse);
+    const total = backendData?.total || 0;
+    const pageSize = backendParams.pageSize || 20;
+    const currentPage = backendParams.pageNum;
+    const totalPages = Math.ceil(total / pageSize);
+
+    // 转换列表项格式
+    const list: DiscussionPost[] = (backendData?.list || []).map(item => ({
+      id: String(item.postId),
+      title: item.title,
+      content: item.content,
+      contentHtml: item.content, // 后端可能未返回HTML格式，使用原始内容
+      author: {
+        id: String(item.authorId),
+        name: item.authorName,
+        avatar: item.authorAvatar,
+        isTeacher: false,
+        isAdmin: false
+      },
+      tags: item.tags || [],
+      status: "approved" as PostStatus,
+      isPinned: item.isPinned,
+      likeCount: item.likeCount,
+      replyCount: item.replyCount,
+      viewCount: item.viewCount,
+      isLiked: item.isLiked,
+      createdAt: item.createTime
+    }));
+
+    return {
+      data: {
+        list,
+        pagination: {
+          page: currentPage,
+          pageSize,
+          total,
+          totalPages
+        }
+      }
+    };
+  } catch (error) {
+    console.error("获取讨论列表失败:", error);
+    // 返回空数据，避免页面崩溃
+    return {
+      data: {
+        list: [],
+        pagination: {
+          page: 1,
+          pageSize: 20,
+          total: 0,
+          totalPages: 0
+        }
+      }
+    };
+  }
 }
 
 /**
@@ -137,7 +258,10 @@ export function getDiscussions(
  * @param postId 帖子ID
  */
 export function getDiscussionDetail(postId: string) {
-  return http.request<DiscussionPost>("get", `/api/v1/discussions/${postId}`);
+  return http.request<DiscussionPost>(
+    "get",
+    `/edu/frontend/v1/discussions/${postId}`
+  );
 }
 
 /**
@@ -153,7 +277,7 @@ export function createDiscussion(
     id: string;
     status: PostStatus;
     estimatedReviewTime: string;
-  }>("post", `/api/v1/courses/${courseId}/discussions`, { data });
+  }>("post", `/edu/frontend/v1/courses/${courseId}/discussions`, { data });
 }
 
 /**
@@ -164,7 +288,7 @@ export function createDiscussion(
 export function updateDiscussion(postId: string, data: CreateDiscussionParams) {
   return http.request<{ success: boolean }>(
     "put",
-    `/api/v1/discussions/${postId}`,
+    `/edu/frontend/v1/discussions/${postId}`,
     { data }
   );
 }
@@ -176,7 +300,7 @@ export function updateDiscussion(postId: string, data: CreateDiscussionParams) {
 export function deleteDiscussion(postId: string) {
   return http.request<{ success: boolean }>(
     "delete",
-    `/api/v1/discussions/${postId}`
+    `/edu/frontend/v1/discussions/${postId}`
   );
 }
 
@@ -192,7 +316,7 @@ export function getReplies(
   return http.request<{
     list: Reply[];
     pagination: Pagination;
-  }>("get", `/api/v1/discussions/${postId}/replies`, { params });
+  }>("get", `/edu/frontend/v1/discussions/${postId}/replies`, { params });
 }
 
 /**
@@ -204,7 +328,7 @@ export function createReply(postId: string, data: CreateReplyParams) {
   return http.request<{
     id: string;
     status: PostStatus;
-  }>("post", `/api/v1/discussions/${postId}/replies`, { data });
+  }>("post", `/edu/frontend/v1/discussions/${postId}/replies`, { data });
 }
 
 /**
@@ -215,7 +339,7 @@ export function createReply(postId: string, data: CreateReplyParams) {
 export function deleteReply(postId: string, replyId: string) {
   return http.request<{ success: boolean }>(
     "delete",
-    `/api/v1/discussions/${postId}/replies/${replyId}`
+    `/edu/frontend/v1/discussions/${postId}/replies/${replyId}`
   );
 }
 
@@ -226,7 +350,7 @@ export function deleteReply(postId: string, replyId: string) {
 export function likePost(postId: string) {
   return http.request<{ success: boolean; likeCount: number }>(
     "post",
-    `/api/v1/discussions/${postId}/like`
+    `/edu/frontend/v1/discussions/${postId}/like`
   );
 }
 
@@ -237,7 +361,7 @@ export function likePost(postId: string) {
 export function unlikePost(postId: string) {
   return http.request<{ success: boolean; likeCount: number }>(
     "delete",
-    `/api/v1/discussions/${postId}/like`
+    `/edu/frontend/v1/discussions/${postId}/like`
   );
 }
 
@@ -249,7 +373,7 @@ export function unlikePost(postId: string) {
 export function likeReply(postId: string, replyId: string) {
   return http.request<{ success: boolean; likeCount: number }>(
     "post",
-    `/api/v1/discussions/${postId}/replies/${replyId}/like`
+    `/edu/frontend/v1/discussions/${postId}/replies/${replyId}/like`
   );
 }
 
@@ -261,7 +385,7 @@ export function likeReply(postId: string, replyId: string) {
 export function unlikeReply(postId: string, replyId: string) {
   return http.request<{ success: boolean; likeCount: number }>(
     "delete",
-    `/api/v1/discussions/${postId}/replies/${replyId}/like`
+    `/edu/frontend/v1/discussions/${postId}/replies/${replyId}/like`
   );
 }
 
@@ -273,7 +397,7 @@ export function unlikeReply(postId: string, replyId: string) {
 export function reportPost(postId: string, data: ReportParams) {
   return http.request<{ success: boolean }>(
     "post",
-    `/api/v1/discussions/${postId}/report`,
+    `/edu/frontend/v1/discussions/${postId}/report`,
     { data }
   );
 }
@@ -291,7 +415,7 @@ export function reportReply(
 ) {
   return http.request<{ success: boolean }>(
     "post",
-    `/api/v1/discussions/${postId}/replies/${replyId}/report`,
+    `/edu/frontend/v1/discussions/${postId}/replies/${replyId}/report`,
     { data }
   );
 }
@@ -303,7 +427,7 @@ export function reportReply(
 export function pinPost(postId: string) {
   return http.request<{ success: boolean }>(
     "post",
-    `/api/v1/discussions/${postId}/pin`
+    `/edu/frontend/v1/discussions/${postId}/pin`
   );
 }
 
@@ -314,7 +438,7 @@ export function pinPost(postId: string) {
 export function unpinPost(postId: string) {
   return http.request<{ success: boolean }>(
     "delete",
-    `/api/v1/discussions/${postId}/pin`
+    `/edu/frontend/v1/discussions/${postId}/pin`
   );
 }
 
@@ -326,20 +450,32 @@ export function unpinPost(postId: string) {
 export function reviewPost(postId: string, data: ReviewParams) {
   return http.request<{ success: boolean }>(
     "post",
-    `/api/v1/discussions/${postId}/review`,
+    `/edu/frontend/v1/discussions/${postId}/review`,
     { data }
   );
 }
 
 /**
  * 获取讨论统计数据
- * @param courseId 课程ID
+ * @param _courseId 课程ID
+ * @description 后端暂未提供此接口，使用mock数据
  */
-export function getDiscussionStats(courseId: string) {
-  return http.request<DiscussionStats>(
-    "get",
-    `/api/v1/courses/${courseId}/discussions/stats`
-  );
+export function getDiscussionStats(_courseId: string) {
+  // Mock数据 - 后端接口暂未实现
+  const mockStats: DiscussionStats = {
+    totalPosts: 128,
+    totalReplies: 456,
+    activeUsers: 89,
+    resolvedRate: "76%",
+    pendingReviewCount: 5,
+    hotTags: [
+      { name: "作业问题", count: 45 },
+      { name: "课程内容", count: 38 },
+      { name: "考试相关", count: 25 },
+      { name: "学习方法", count: 20 }
+    ]
+  };
+  return Promise.resolve({ data: mockStats });
 }
 
 /**
@@ -370,11 +506,18 @@ export function getReviewQueue(params?: {
 
 /**
  * 获取热门标签
- * @param courseId 课程ID
+ * @param _courseId 课程ID
+ * @description 后端暂未提供此接口，使用mock数据
  */
-export function getHotTags(courseId: string) {
-  return http.request<Array<{ name: string; count: number; type?: string }>>(
-    "get",
-    `/api/v1/courses/${courseId}/discussions/tags`
-  );
+export function getHotTags(_courseId: string) {
+  // Mock数据 - 后端接口暂未实现
+  const mockTags: Array<{ name: string; count: number; type?: string }> = [
+    { name: "作业问题", count: 45 },
+    { name: "课程内容", count: 38 },
+    { name: "考试相关", count: 25 },
+    { name: "学习方法", count: 20 },
+    { name: "实验报告", count: 15 },
+    { name: "资料分享", count: 12 }
+  ];
+  return Promise.resolve({ data: mockTags });
 }
