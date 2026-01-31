@@ -553,24 +553,61 @@
     <!-- 编辑对话框 -->
     <el-dialog
       v-model="editDialogVisible"
-      title="编辑内容"
+      title="编辑讨论"
       width="600px"
       :close-on-click-modal="false"
+      class="edit-dialog"
     >
-      <el-input
-        v-model="editingContent.title"
-        placeholder="标题（可选）"
-        class="mb-4"
-      />
-      <el-input
-        v-model="editingContent.content"
-        type="textarea"
-        :autosize="{ minRows: 6, maxRows: 15 }"
-        placeholder="内容"
-      />
+      <div class="edit-form">
+        <div class="edit-form-item">
+          <label class="edit-label">标题（可选）</label>
+          <el-input
+            v-model="editingContent.title"
+            placeholder="请输入标题"
+            maxlength="100"
+            show-word-limit
+          />
+        </div>
+        <div class="edit-form-item">
+          <label class="edit-label">内容 <span class="required">*</span></label>
+          <el-input
+            v-model="editingContent.content"
+            type="textarea"
+            :autosize="{ minRows: 6, maxRows: 15 }"
+            placeholder="请输入内容，支持 Markdown 语法"
+            maxlength="5000"
+            show-word-limit
+          />
+        </div>
+        <div class="edit-form-item">
+          <label class="edit-label">标签（可选）</label>
+          <el-select
+            v-model="editingContent.tags"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择或输入标签"
+            class="edit-tags-select"
+          >
+            <el-option
+              v-for="tag in availableTags"
+              :key="tag"
+              :label="tag"
+              :value="tag"
+            />
+          </el-select>
+        </div>
+      </div>
       <template #footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveEdit">保存</el-button>
+        <el-button
+          type="primary"
+          :disabled="!editingContent.content?.trim()"
+          @click="handleSaveEdit"
+        >
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -713,7 +750,8 @@ const newPost = ref({
 const editingContent = ref({
   id: "",
   title: "",
-  content: ""
+  content: "",
+  tags: [] as string[]
 });
 
 // 消息列表
@@ -952,16 +990,22 @@ const handleEditMessage = (message: Message) => {
   editingContent.value = {
     id: message.id,
     title: message.title || "",
-    content: message.content
+    content: message.content,
+    tags: message.tags || []
   };
   editDialogVisible.value = true;
 };
 
 const handleSaveEdit = async () => {
+  if (!editingContent.value.content?.trim()) {
+    ElMessage.warning("内容不能为空");
+    return;
+  }
   try {
     await updateDiscussion(editingContent.value.id, {
       title: editingContent.value.title,
-      content: editingContent.value.content
+      content: editingContent.value.content,
+      tags: editingContent.value.tags
     });
     ElMessage.success("已保存，审核通过后生效");
     editDialogVisible.value = false;
@@ -1305,7 +1349,8 @@ const filterByTag = (tagName: string) => {
 .status-badge {
   position: absolute;
   top: 12px;
-  right: 60px;
+  right: 70px;
+  z-index: 5;
   display: flex;
   gap: 4px;
   align-items: center;
@@ -1402,17 +1447,24 @@ const filterByTag = (tagName: string) => {
 }
 
 .more-actions-btn {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  color: #909399;
+  color: #606266;
   cursor: pointer;
-  background: transparent;
+  background: #f5f7fa;
   border: none;
   border-radius: 8px;
   transition: all 0.3s ease;
+}
+
+.dark .more-actions-btn {
+  color: #a0a0a0;
+  background: #333;
 }
 
 .more-actions-btn:hover {
@@ -2112,4 +2164,69 @@ const filterByTag = (tagName: string) => {
 }
 
 /* 主容器样式 */
+
+/* 编辑对话框样式 */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.edit-form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.dark .edit-label {
+  color: #e0e0e0;
+}
+
+.edit-label .required {
+  margin-left: 4px;
+  color: #f56c6c;
+}
+
+.edit-tags-select {
+  width: 100%;
+}
+
+.edit-tags-select :deep(.el-select__wrapper) {
+  padding-right: 16px;
+  padding-left: 16px;
+  border-radius: 10px;
+}
+
+:deep(.edit-dialog) {
+  border-radius: 16px;
+}
+
+:deep(.edit-dialog .el-dialog__header) {
+  padding: 20px 24px 16px;
+  margin-right: 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.dark :deep(.edit-dialog .el-dialog__header) {
+  border-bottom-color: #333;
+}
+
+:deep(.edit-dialog .el-dialog__body) {
+  padding: 24px;
+}
+
+:deep(.edit-dialog .el-dialog__footer) {
+  padding: 16px 24px 20px;
+  border-top: 1px solid #f0f2f5;
+}
+
+.dark :deep(.edit-dialog .el-dialog__footer) {
+  border-top-color: #333;
+}
 </style>

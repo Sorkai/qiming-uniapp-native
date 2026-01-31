@@ -22,6 +22,8 @@ export interface DataInfo<T> {
   permissions?: Array<string>;
   /** 角色类型 1:学生 2:教师 3:管理员 */
   roleType?: number;
+  /** 用户ID */
+  userId?: number;
 }
 
 export const userKey = "user-info";

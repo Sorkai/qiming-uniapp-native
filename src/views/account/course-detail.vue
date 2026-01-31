@@ -60,11 +60,11 @@
           :visible="activeMenu === 'course-qa'"
           :current-theme="currentTheme"
           :course-id="courseId"
-          :user-id="userStore.userId"
+          :user-id="userIdStr"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
-          :is-teacher="userStore.isTeacher"
-          :is-admin="userStore.isAdmin"
+          :is-teacher="isTeacher"
+          :is-admin="isAdmin"
           @go-back="goBack"
           @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
@@ -155,6 +155,7 @@ import {
   getCourseScore,
   getCourseStudyEffect
 } from "@/api/frontend/course";
+import { getUserDetail } from "@/api/user";
 import { getCourseContentByName } from "@/utils/courseContents";
 import {
   courseAIChatStream,
@@ -271,6 +272,18 @@ const userAvatar = computed(() =>
 const userNickname = computed(
   () => userStore.nickname || userStore.username || "用户"
 );
+// 将userId 转换为字符串（CourseQA 期望字符串类型）
+const userIdStr = computed(() => {
+  if (userStore.userId === null || userStore.userId === undefined) return "";
+  return String(userStore.userId);
+});
+// 从 localStorage 获取 roleType判断是否是教师/管理员
+const userRoleType = computed(() => {
+  const userInfo = storageLocal().getItem<any>(userKey);
+  return userInfo?.roleType ??0;
+});
+const isTeacher = computed(() => userRoleType.value === 2);
+const isAdmin = computed(() => userRoleType.value === 3);
 
 // 课程学习相关
 const courseStudyRef = ref(null);
@@ -777,6 +790,22 @@ const initQAHistory = () => {
 onMounted(async () => {
   document.body.classList.add("course-page");
   baseCourseId.value = Number(route.params.id);
+  
+  // 获取用户ID（如果还没有）
+  if (!userStore.userId) {
+    try {
+      const { code, data } = await getUserDetail();
+      if (code === 200 && data?.userInfo?.id) {
+        userStore.SET_USERID(data.userInfo.id);
+        // 同时更新 localStorage
+        const userInfo = storageLocal().getItem(userKey) || {};
+        storageLocal().setItem(userKey, { ...userInfo, userId: data.userInfo.id });
+      }
+    } catch (error) {
+      console.error("获取用户信息失败:", error);
+    }
+  }
+  
   await fetchCourseDetail();
   initQAHistory();
 
