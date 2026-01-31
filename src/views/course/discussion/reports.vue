@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
  * 教师端 - 举报处理
- * 教师可以处理所授课程中被举报的内容
+ *教师可以处理所授课程中被举报的内容
  */
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Search,
@@ -11,7 +11,8 @@ import {
   Check,
   Delete,
   View,
-  Warning
+  Warning,
+  MoreFilled
 } from "@element-plus/icons-vue";
 import {
   getReportList,
@@ -24,6 +25,9 @@ import {
 defineOptions({
   name: "TeacherReportManage"
 });
+
+// 类型定义
+type TagType = "warning" | "success" | "info" | "primary" | "danger";
 
 // 状态
 const loading = ref(false);
@@ -92,29 +96,29 @@ const punishOptions = [
 ];
 
 // 状态标签样式
-const statusTagType = computed(() => (status: ReportStatus) => {
-  const map: Record<string, string> = {
+const getStatusTagType = (status: ReportStatus): TagType => {
+  const map: Record<string, TagType> = {
     pending: "warning",
     resolved: "success",
     dismissed: "info"
   };
   return map[status] || "info";
-});
+};
 
-const statusText = computed(() => (status: ReportStatus) => {
+const getStatusText = (status: ReportStatus): string => {
   const map: Record<string, string> = {
     pending: "待处理",
     resolved: "已处理",
     dismissed: "已忽略"
   };
   return map[status] || status;
-});
+};
 
 // 举报原因文本
-const reasonText = computed(() => (reason: ReportReason) => {
+const getReasonText = (reason: ReportReason): string => {
   const opt = reasonOptions.find(o => o.value === reason);
   return opt?.label || reason;
-});
+};
 
 // 加载数据
 const fetchData = async () => {
@@ -127,10 +131,10 @@ const fetchData = async () => {
     if (searchForm.status) params.status = searchForm.status;
     if (searchForm.reason) params.reason = searchForm.reason;
 
-    const { data } = await getReportList(params);
-    reports.value = data.list;
-    pagination.total = data.pagination.total;
-    stats.value = data.stats;
+    const res = await getReportList(params);
+    reports.value = res.list;
+    pagination.total = res.pagination.total;
+    stats.value = res.stats;
   } catch (error) {
     console.error("加载举报列表失败", error);
   } finally {
@@ -339,7 +343,7 @@ onMounted(() => {
         <el-table-column label="举报原因" width="120" align="center">
           <template #default="{ row }">
             <el-tag type="danger" size="small">
-              {{ reasonText(row.reason) }}
+              {{ getReasonText(row.reason) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -361,49 +365,56 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="状态" width="90" align="center">
           <template #default="{ row }">
-            <el-tag :type="statusTagType(row.status)" size="small">
-              {{ statusText(row.status) }}
+            <el-tag :type="getStatusTagType(row.status)" size="small">
+              {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="举报时间" width="160" align="center">
-          <template #default="{ row }">
-            <span class="text-sm text-gray-500">
+          <template #default="{ row }"
+            ><span class="text-sm text-gray-500">
               {{ formatTime(row.createdAt) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" align="center" fixed="right">
+        <el-table-column label="操作" width="160" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button
-              link
-              type="primary"
-              :icon="View"
-              @click="viewDetail(row)"
-            >
-              查看
-            </el-button>
-            <template v-if="row.status === 'pending'">
-              <el-button
-                link
-                type="success"
-                :icon="Check"
-                @click="quickDismiss(row)"
-              >
-                忽略
-              </el-button>
-              <el-button
-                link
-                type="danger"
-                :icon="Delete"
-                @click="quickDelete(row)"
-              >
-                删除
-              </el-button>
-              <el-button link type="warning" @click="openHandleDialog(row)">
-                处理
-              </el-button>
-            </template>
+            <div class="action-btns">
+              <el-tooltip content="查看详情" placement="top">
+                <el-button
+                  link
+                  type="primary"
+                  :icon="View"
+                  @click="viewDetail(row)"
+                />
+              </el-tooltip>
+              <template v-if="row.status === 'pending'">
+                <el-tooltip content="忽略举报" placement="top">
+                  <el-button
+                    link
+                    type="success"
+                    :icon="Check"
+                    @click="quickDismiss(row)"
+                  />
+                </el-tooltip>
+                <el-tooltip content="删除内容" placement="top">
+                  <el-button
+                    link
+                    type="danger"
+                    :icon="Delete"
+                    @click="quickDelete(row)"
+                  />
+                </el-tooltip>
+                <el-tooltip content="更多处理" placement="top">
+                  <el-button
+                    link
+                    type="warning"
+                    :icon="MoreFilled"
+                    @click="openHandleDialog(row)"
+                  />
+                </el-tooltip>
+              </template>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -436,14 +447,14 @@ onMounted(() => {
           </el-descriptions-item>
           <el-descriptions-item label="举报原因">
             <el-tag type="danger" size="small">
-              {{ reasonText(currentReport.reason) }}
+              {{ getReasonText(currentReport.reason) }}
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="举报人">
             {{ currentReport.reporter?.name }}
           </el-descriptions-item>
-          <el-descriptions-item label="举报次数">
-            <el-badge :value="currentReport.reportCount" type="danger" />
+          <el-descriptions-item label="举报次数"
+            ><el-badge :value="currentReport.reportCount" type="danger" />
           </el-descriptions-item>
           <el-descriptions-item label="举报时间" :span="2">
             {{ formatTime(currentReport.createdAt) }}
@@ -471,8 +482,11 @@ onMounted(() => {
           <el-divider>处理结果</el-divider>
           <el-descriptions :column="2" border>
             <el-descriptions-item label="处理状态">
-              <el-tag :type="statusTagType(currentReport.status)" size="small">
-                {{ statusText(currentReport.status) }}
+              <el-tag
+                :type="getStatusTagType(currentReport.status)"
+                size="small"
+              >
+                {{ getStatusText(currentReport.status) }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="处理人">
@@ -498,9 +512,8 @@ onMounted(() => {
                 detailDialogVisible = false;
               "
             >
-              忽略举报
-            </el-button>
-            <el-button
+              忽略举报 </el-button
+            ><el-button
               type="danger"
               @click="
                 quickDelete(currentReport!);
@@ -621,6 +634,21 @@ onMounted(() => {
       .content-text {
         line-height: 1.8;
         color: #303133;
+      }
+    }
+  }
+
+  .action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    :deep(.el-button) {
+      padding: 4px 6px;
+
+      .el-icon {
+        font-size: 16px;
       }
     }
   }

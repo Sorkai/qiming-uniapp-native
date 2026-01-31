@@ -12,6 +12,53 @@ import type {
   Author
 } from "./discussion";
 
+// ==================== 后端返回类型定义 ====================
+
+/** 后端返回的帖子列表项 */
+interface BackendPostListItem {
+  postId: number;
+  title: string;
+  content: string;
+  authorId: number;
+  authorName: string;
+  authorAvatar: string;
+  tags: string[];
+  likeCount: number;
+  replyCount: number;
+  viewCount: number;
+  isPinned: boolean;
+  isLiked: boolean;
+  createTime: string;
+}
+
+/** 后端返回的列表响应 */
+interface BackendListResponse {
+  total: number;
+  list: BackendPostListItem[];
+}
+
+/** 后端返回的帖子详情 */
+interface BackendPostDetail {
+  postId: number;
+  courseId: string;
+  courseName: string;
+  title: string;
+  content: string;
+  contentHtml: string;
+  authorId: number;
+  authorName: string;
+  authorAvatar: string;
+  tags: string[];
+  likeCount: number;
+  replyCount: number;
+  viewCount: number;
+  isPinned: boolean;
+  isLiked: boolean;
+  isOwner: boolean;
+  createTime: string;
+  editedAt?: string;
+}
+
 // ==================== 类型定义 ====================
 
 /** 举报状态 */
@@ -171,7 +218,7 @@ export function getReviewQueue(params?: {
       highPriority: number;
       avgWaitTime: string;
     };
-  }>("get", "/api/v1/admin/discussions/review-queue", { params });
+  }>("get", "/edu/backend/v1/discussions/review-queue", { params });
 }
 
 /**
@@ -560,6 +607,191 @@ export async function getTeacherDiscussions(params?: {
         }
       }
     };
+  }
+}
+
+/**
+ * 获取管理端/教师端讨论列表
+ * @param courseId 课程ID
+ * @param params 查询参数
+ * @description 对应后端接口 GET /edu/frontend/v1/courses/{courseId}/discussions
+ *使用管理员或教师的token进行身份验证
+ */
+export async function getAdminDiscussions(
+  courseId: string,
+  params?: {
+    page?: number;
+    pageSize?: number;
+    sortBy?: "latest" | "hot" | "most_replies";
+    tag?: string;
+  }
+): Promise<{
+  data: {
+    list: DiscussionPost[];
+    pagination: Pagination;
+  };
+}> {
+  // 转换参数名：前端 page -> 后端 pageNum
+  const backendParams = {
+    pageNum: params?.page || 1,
+    pageSize: params?.pageSize || 20,
+    sortBy: params?.sortBy,
+    tag: params?.tag
+  };
+
+  console.log(
+    "[API] getAdminDiscussions - courseId:",
+    courseId,
+    "params:",
+    backendParams
+  );
+
+  try {
+    const response = await http.request<
+      | {
+          code: number;
+          msg: string;
+          data: BackendListResponse;
+        }
+      | BackendListResponse
+    >("get", `/edu/frontend/v1/courses/${courseId}/discussions`, {
+      params: backendParams
+    });
+
+    console.log("[API] getAdminDiscussions success:", response);
+
+    // 兼容后端是否包裹 data 字段
+    const backendData = (response as { data?: BackendListResponse }).data
+      ? (response as { data: BackendListResponse }).data
+      : (response as BackendListResponse);
+    const total = backendData?.total || 0;
+    const pageSize = backendParams.pageSize || 20;
+    const currentPage = backendParams.pageNum;
+    const totalPages = Math.ceil(total / pageSize);
+
+    // 转换列表项格式
+    const list: DiscussionPost[] = (backendData?.list || []).map(item => ({
+      id: String(item.postId),
+      title: item.title,
+      content: item.content,
+      contentHtml: item.content,
+      author: {
+        id: String(item.authorId),
+        name: item.authorName,
+        avatar: item.authorAvatar,
+        isTeacher: false,
+        isAdmin: false
+      },
+      tags: item.tags || [],
+      status: "approved" as PostStatus,
+      isPinned: item.isPinned,
+      likeCount: item.likeCount,
+      replyCount: item.replyCount,
+      viewCount: item.viewCount,
+      isLiked: item.isLiked,
+      createdAt: item.createTime
+    }));
+
+    return {
+      data: {
+        list,
+        pagination: {
+          page: currentPage,
+          pageSize,
+          total,
+          totalPages
+        }
+      }
+    };
+  } catch (error) {
+    console.error("获取管理端讨论列表失败:", error);
+    return {
+      data: {
+        list: [],
+        pagination: {
+          page: 1,
+          pageSize: 20,
+          total: 0,
+          totalPages: 0
+        }
+      }
+    };
+  }
+}
+
+/**
+ * 获取管理端/教师端讨论详情
+ * @param postId 帖子ID
+ * @description 对应后端接口 GET /edu/frontend/v1/discussions/{postId}
+ * 使用管理员或教师的token进行身份验证
+ */
+export async function getAdminDiscussionDetail(
+  postId: string | number
+): Promise<{
+  data: DiscussionPost & {
+    courseId: string;
+    courseName: string;
+    isOwner: boolean;
+  };
+} | null> {
+  console.log("[API] getAdminDiscussionDetail - postId:", postId);
+
+  try {
+    const response = await http.request<
+      | {
+          code: number;
+          msg: string;
+          data: BackendPostDetail;
+        }
+      | BackendPostDetail
+    >("get", `/edu/frontend/v1/discussions/${postId}`);
+
+    console.log("[API] getAdminDiscussionDetail success:", response);
+
+    // 兼容后端是否包裹 data 字段
+    const backendData = (response as { data?: BackendPostDetail }).data
+      ? (response as { data: BackendPostDetail }).data
+      : (response as BackendPostDetail);
+
+    if (!backendData) {
+      return null;
+    }
+
+    // 转换为前端格式
+    const detail: DiscussionPost & {
+      courseId: string;
+      courseName: string;
+      isOwner: boolean;
+    } = {
+      id: String(backendData.postId),
+      title: backendData.title,
+      content: backendData.content,
+      contentHtml: backendData.contentHtml || backendData.content,
+      author: {
+        id: String(backendData.authorId),
+        name: backendData.authorName,
+        avatar: backendData.authorAvatar,
+        isTeacher: false,
+        isAdmin: false
+      },
+      tags: backendData.tags || [],
+      status: "approved" as PostStatus,
+      isPinned: backendData.isPinned,
+      likeCount: backendData.likeCount,
+      replyCount: backendData.replyCount,
+      viewCount: backendData.viewCount,
+      isLiked: backendData.isLiked,
+      createdAt: backendData.createTime,
+      editedAt: backendData.editedAt,
+      courseId: backendData.courseId,
+      courseName: backendData.courseName,
+      isOwner: backendData.isOwner
+    };
+
+    return { data: detail };
+  } catch (error) {
+    console.error("获取管理端讨论详情失败:", error);
+    return null;
   }
 }
 
