@@ -56,6 +56,26 @@ export interface ReviewQueueItem extends DiscussionPost {
   courseName?: string;
 }
 
+/** 待审核项（后端返回格式） */
+export interface PendingItem {
+  id: number;
+  type: "post" | "reply";
+  courseId: string;
+  courseName: string;
+  postId?: number;
+  postTitle?: string;
+  content: string;
+  authorId: number;
+  authorName: string;
+  createTime: string;
+}
+
+/** 待审核列表响应 */
+export interface PendingListResponse {
+  total: number;
+  list: PendingItem[];
+}
+
 /** 敏感词 */
 export interface SensitiveWord {
   id: string;
@@ -160,12 +180,33 @@ export function getReviewQueue(params?: {
  * @param data 审核数据
  */
 export function reviewPost(
-  postId: string,
-  data: { action: "approve" | "reject"; note?: string }
+  postId: string | number,
+  data: { action: "approve" | "reject"; reason?: string; note?: string }
 ) {
-  return http.request<{ success: boolean }>(
+  // 兼容旧的参数名 note，转换为新的参数名 reason
+  const requestData = {
+    action: data.action,
+    reason: data.reason || data.note
+  };
+  return http.request<{ code: number; msg: string; data: object }>(
     "post",
-    `/api/v1/discussions/${postId}/review`,
+    `/edu/backend/v1/discussions/${postId}/review`,
+    { data: requestData }
+  );
+}
+
+/**
+ * 审核回复
+ * @param replyId 回复ID
+ * @param data 审核数据
+ */
+export function reviewReply(
+  replyId: string | number,
+  data: { action: "approve" | "reject"; reason?: string }
+) {
+  return http.request<{ code: number; msg: string; data: object }>(
+    "post",
+    `/edu/backend/v1/discussions/replies/${replyId}/review`,
     { data }
   );
 }
@@ -410,20 +451,116 @@ export function getGlobalStatistics(params?: {
 }
 
 /**
+ * 获取待审核列表（管理员/教师）
+ * @param params 查询参数
+ * @description 对应后端接口 GET /edu/backend/v1/discussions/pending
+ */
+export function getPendingList(params?: {
+  courseId?: string;
+  type?: "all" | "post" | "reply";
+  pageNum: number;
+  pageSize?: number;
+}) {
+  return http.request<{
+    code: number;
+    msg: string;
+    data: PendingListResponse;
+  }>("get", "/edu/backend/v1/discussions/pending", { params });
+}
+
+/**
  * 获取教师课程讨论列表（教师专用，获取所教课程的所有讨论）
  * @param params 查询参数
  */
-export function getTeacherDiscussions(params?: {
+export async function getTeacherDiscussions(params?: {
   courseId?: string;
   status?: PostStatus;
   keyword?: string;
   page?: number;
   pageSize?: number;
-}) {
-  return http.request<{
+}): Promise<{
+  data: {
     list: ReviewQueueItem[];
     pagination: Pagination;
-  }>("get", "/api/v1/teacher/discussions", { params });
+  };
+}> {
+  // 转换参数名：前端 page -> 后端 pageNum
+  const backendParams = {
+    courseId: params?.courseId,
+    pageNum: params?.page || 1,
+    pageSize: params?.pageSize || 20
+  };
+
+  try {
+    const response = await http.request<{
+      code: number;
+      msg: string;
+      data: PendingListResponse;
+    }>("get", "/edu/backend/v1/discussions/pending", { params: backendParams });
+
+    //兼容后端返回格式，转换为前端期望的格式
+    const backendData = (response as any)?.data || response;
+    const total = backendData?.total || 0;
+    const pageSize = backendParams.pageSize || 20;
+    const currentPage = backendParams.pageNum;
+    const totalPages = Math.ceil(total / pageSize);
+
+    // 转换列表项格式
+    const list: ReviewQueueItem[] = (backendData?.list || []).map(
+      (item: PendingItem) =>
+        ({
+          id: String(item.id),
+          title: item.postTitle || "",
+          content: item.content,
+          contentHtml: item.content,
+          author: {
+            id: String(item.authorId),
+            name: item.authorName,
+            avatar: "",
+            isTeacher: false,
+            isAdmin: false
+          },
+          tags: [],
+          status: "pending" as PostStatus,
+          isPinned: false,
+          likeCount: 0,
+          replyCount: 0,
+          viewCount: 0,
+          isLiked: false,
+          createdAt: item.createTime,
+          courseName: item.courseName,
+          riskLevel: "low",
+          matchedWords: [],
+          priority: "medium"
+        }) as ReviewQueueItem
+    );
+
+    return {
+      data: {
+        list,
+        pagination: {
+          page: currentPage,
+          pageSize,
+          total,
+          totalPages
+        }
+      }
+    };
+  } catch (error) {
+    console.error("获取讨论列表失败:", error);
+    // 返回空数据，避免页面崩溃
+    return {
+      data: {
+        list: [],
+        pagination: {
+          page: 1,
+          pageSize: 20,
+          total: 0,
+          totalPages: 0
+        }
+      }
+    };
+  }
 }
 
 /**
