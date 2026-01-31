@@ -3,7 +3,8 @@
  * 教师端- 课程讨论管理
  *教师可以管理所授课程的讨论内容，包括审核、置顶、删除等操作
  */
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, onActivated, watch } from "vue";
+import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Search,
@@ -403,9 +404,56 @@ const formatTime = (dateStr: string) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 };
 
+// 数据是否已加载的标志
+const dataLoaded = ref(false);
+
+// 初始化加载数据
+const initData = async () => {
+  // 防止重复加载
+  if (loading.value) return;
+  
+  console.log("[review.vue] initData 开始执行");
+  dataLoaded.value = false;
+  await fetchStats();
+  await fetchData();
+  dataLoaded.value = true;
+  console.log("[review.vue] initData 执行完成");
+};
+
+const route = useRoute();
+
+// 使用 watch 监听路由 name，确保路由完全初始化后才加载数据
+// 这是解决页面刷新时数据不加载的关键：
+// vue-pure-admin 在页面刷新时会异步初始化动态路由，
+// 只有当 route.name 存在时，路由才完全初始化完成
+watch(
+  () => route.name,
+  newName => {
+    console.log("[review.vue] 路由 name 变化:", newName);
+    // 当路由 name 匹配且数据未加载时，加载数据
+    if (newName === "CourseDiscussionReview" && !dataLoaded.value) {
+      initData();
+    }
+  },
+  { immediate: true }
+);
+
+// 备用方案：如果 watch 没有触发，在 onMounted 中延迟加载
 onMounted(() => {
-  fetchData();
-  fetchStats();
+  console.log("[review.vue] onMounted 触发, route.name:", route.name);
+  // 延迟执行，等待路由完全初始化
+  setTimeout(() => {
+    if (!dataLoaded.value && route.name === "CourseDiscussionReview") {
+      console.log("[review.vue] onMounted 延迟加载数据");
+      initData();
+    }
+  }, 100);
+});
+
+// 当组件从 keep-alive 缓存中被激活时重新加载数据
+onActivated(() => {
+  console.log("[review.vue] onActivated 触发");
+  initData();
 });
 </script>
 
@@ -530,7 +578,7 @@ onMounted(() => {
             已选择 {{ selectedIds.length }} 项
           </span>
         </div>
-        <el-button :icon="Refresh" @click="fetchData">刷新</el-button>
+        <el-button :icon="Refresh" @click="initData">刷新</el-button>
       </div>
     </el-card>
 

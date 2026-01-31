@@ -137,6 +137,7 @@ import {
   ref,
   computed,
   onMounted,
+  onActivated,
   nextTick,
   watch,
   onBeforeUnmount
@@ -842,6 +843,16 @@ onMounted(async () => {
     conversationId.value =
       Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
+  }
+});
+
+// 当组件从keep-alive缓存中被激活时重新加载当前菜单数据
+onActivated(() => {
+  // 如果当前是课程问答页面，刷新数据
+  if (activeMenu.value === "course-qa" && courseId.value) {
+    nextTick(() => {
+      courseQARef.value?.refreshData?.();
+    });
   }
 });
 
