@@ -2608,8 +2608,12 @@ const filterByTag = (tagName: string) => {
 }
 
 :global(.custom-message-box .el-message-box__status) {
-  top: 50% !important;
-  transform: translateY(-50%) !important;
+  margin-right: 12px !important;
+  font-size: 24px !important;
+}
+
+:global(.custom-message-box .el-message-box__message) {
+  padding-left: 0 !important;
 }
 
 :global(.custom-message-box .el-message-box__btns) {
@@ -2649,13 +2653,17 @@ const filterByTag = (tagName: string) => {
   color: #a0a0a0 !important;
 }
 
-:global(.dark) :global(.custom-message-box .el-button--default:not(.el-button--primary)) {
+:global(.dark)
+  :global(.custom-message-box .el-button--default:not(.el-button--primary)) {
   color: #cfd3dc !important;
   background-color: #333 !important;
   border-color: #434343 !important;
 }
 
-:global(.dark) :global(.custom-message-box .el-button--default:not(.el-button--primary):hover) {
+:global(.dark)
+  :global(
+    .custom-message-box .el-button--default:not(.el-button--primary):hover
+  ) {
   color: #409eff !important;
   background-color: #3d3d42 !important;
   border-color: #409eff !important;
