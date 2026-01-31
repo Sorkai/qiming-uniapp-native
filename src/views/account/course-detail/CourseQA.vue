@@ -1025,7 +1025,11 @@ const handleSaveEdit = async () => {
 const handleDeleteMessage = async (message: Message) => {
   try {
     await ElMessageBox.confirm("确定要删除这条内容吗？", "提示", {
-      type: "warning"
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+      draggable: true,
+      customClass: "custom-message-box"
     });
     await deleteDiscussion(message.id);
     messages.value = messages.value.filter(m => m.id !== message.id);
@@ -2576,5 +2580,88 @@ const filterByTag = (tagName: string) => {
 :global(.more-actions-dropdown .el-dropdown-menu__item .el-icon) {
   margin-right: 0 !important;
   font-size: 16px !important;
+}
+
+/* 自定义确认框样式 */
+:global(.custom-message-box) {
+  padding-bottom: 8px !important;
+  border: none !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+:global(.custom-message-box .el-message-box__header) {
+  padding: 24px 24px 12px !important;
+}
+
+:global(.custom-message-box .el-message-box__title) {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #303133 !important;
+}
+
+:global(.custom-message-box .el-message-box__content) {
+  padding: 12px 24px 24px !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: #606266 !important;
+}
+
+:global(.custom-message-box .el-message-box__status) {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+:global(.custom-message-box .el-message-box__btns) {
+  padding: 8px 24px 24px !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button) {
+  height: 40px !important;
+  padding: 0 24px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button--primary) {
+  padding: 0 28px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3) !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button:active) {
+  transform: scale(0.96) !important;
+}
+
+/* 深色模式适配 */
+:global(.dark) :global(.custom-message-box) {
+  background-color: #242428 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-message-box__title) {
+  color: #e0e0e0 !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-message-box__content) {
+  color: #a0a0a0 !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-button--default:not(.el-button--primary)) {
+  color: #cfd3dc !important;
+  background-color: #333 !important;
+  border-color: #434343 !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-button--default:not(.el-button--primary):hover) {
+  color: #409eff !important;
+  background-color: #3d3d42 !important;
+  border-color: #409eff !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-button--primary) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 </style>
