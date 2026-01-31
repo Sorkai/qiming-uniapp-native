@@ -15,12 +15,14 @@ import {
   Clock
 } from "@element-plus/icons-vue";
 import {
-  getReviewQueue,
+  getAdminDiscussions,
+  getAdminDiscussionDetail,
   reviewPost,
   batchReview,
   getTeacherCourseStats,
   type ReviewQueueItem
 } from "@/api/discussion-admin";
+import { getCourseList } from "@/api/course";
 
 defineOptions({
   name: "TeacherReviewQueue"
@@ -45,7 +47,8 @@ const stats = ref({
     courseId: string;
     courseName: string;
     postCount: number;
-    pendingCount: number;}>
+    pendingCount: number;
+  }>
 });
 
 // 搜索表单
@@ -113,18 +116,65 @@ const riskLevelText = (level: string): string => {
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: any = {
-      page: pagination.page,
-      pageSize: pagination.pageSize
-    };
-    if (searchForm.courseId) params.courseId = searchForm.courseId;
-    if (searchForm.priority) params.priority = searchForm.priority;
+    // 如果选择了课程，直接获取该课程的讨论列表
+    if (searchForm.courseId) {
+      const res = await getAdminDiscussions(searchForm.courseId, {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        sortBy: "latest"
+      });
+      // 转换为 ReviewQueueItem 格式
+      reviewItems.value = res.data.list.map(item => ({
+        ...item,
+        riskLevel: "low" as const,
+        matchedWords: [],
+        priority: "medium" as const,
+        courseName:
+          stats.value.courses.find(c => c.courseId === searchForm.courseId)
+            ?.courseName || ""
+      })) as ReviewQueueItem[];
+      pagination.total = res.data.pagination.total;
+      stats.value.pending = res.data.pagination.total;
+    } else {
+      // 没有选择课程，获取所有课程的讨论列表
+      const allItems: ReviewQueueItem[] = [];
+      let totalCount = 0;
 
-    const res = await getReviewQueue(params);
-    reviewItems.value = res.list;
-    stats.value.pending = res.stats.pending;
-    stats.value.highPriority = res.stats.highPriority;
-    stats.value.avgWaitTime = res.stats.avgWaitTime;} catch (error) {
+      // 先确保课程列表已加载
+      if (stats.value.courses.length === 0) {
+        await fetchCourses();
+      }
+
+      // 遍历所有课程获取讨论
+      for (const course of stats.value.courses) {
+        try {
+          const res = await getAdminDiscussions(course.courseId, {
+            page: 1,
+            pageSize: 100,
+            sortBy: "latest"
+          });
+          const items = res.data.list.map(item => ({
+            ...item,
+            riskLevel: "low" as const,
+            matchedWords: [],
+            priority: "medium" as const,
+            courseName: course.courseName
+          })) as ReviewQueueItem[];
+          allItems.push(...items);
+          totalCount += res.data.pagination.total;
+        } catch (err) {
+          console.error(`获取课程 ${course.courseId} 讨论失败:`, err);
+        }
+      }
+
+      // 分页处理
+      const startIndex = (pagination.page - 1) * pagination.pageSize;
+      const endIndex = startIndex + pagination.pageSize;
+      reviewItems.value = allItems.slice(startIndex, endIndex);
+      pagination.total = totalCount;
+      stats.value.pending = totalCount;
+    }
+  } catch (error) {
     console.error("加载审核队列失败", error);
   } finally {
     loading.value = false;
@@ -135,9 +185,32 @@ const fetchData = async () => {
 const fetchCourses = async () => {
   try {
     const res = await getTeacherCourseStats();
-    stats.value.courses = res.courses;
+    if (res?.courses && res.courses.length > 0) {
+      stats.value.courses = res.courses;
+      return;
+    }
   } catch (error) {
-    console.error("加载课程列表失败", error);
+    console.error("getTeacherCourseStats 失败，尝试备用方案", error);
+  }
+
+  // 备用方案：使用 getCourseList 获取课程列表
+  try {
+    console.log("使用 getCourseList 作为备用方案获取课程列表");
+    const courseRes = await getCourseList({ pageNum: 1, pageSize: 100 });
+    const courseData = (courseRes as any)?.data || courseRes;
+    if (courseData?.courseList && courseData.courseList.length > 0) {
+      stats.value.courses = courseData.courseList.map((course: any) => ({
+        courseId: String(course.courseId),
+        courseName: course.title,
+        postCount: 0,
+        pendingCount: 0
+      }));
+      console.log("备用方案获取课程列表成功:", stats.value.courses);
+    } else {
+      console.warn("备用方案也没有获取到课程列表");
+    }
+  } catch (backupError) {
+    console.error("备用方案获取课程列表也失败", backupError);
   }
 };
 
@@ -172,9 +245,30 @@ const handleSelectionChange = (rows: ReviewQueueItem[]) => {
 };
 
 // 查看详情
-const viewDetail = (row: ReviewQueueItem) => {
-  currentDetail.value = row;
-  detailDialogVisible.value = true;
+const viewDetail = async (row: ReviewQueueItem) => {
+  try {
+    // 调用详情接口获取完整信息
+    const res = await getAdminDiscussionDetail(row.id);
+    if (res && res.data) {
+      // 转换为 ReviewQueueItem 格式
+      currentDetail.value = {
+        ...res.data,
+        riskLevel: "low" as const,
+        matchedWords: [],
+        priority: "medium" as const,
+        courseName: res.data.courseName
+      } as ReviewQueueItem;
+    } else {
+      // 如果获取详情失败，使用列表中的数据
+      currentDetail.value = row;
+    }
+    detailDialogVisible.value = true;
+  } catch (error) {
+    console.error("获取讨论详情失败:", error);
+    // 出错时使用列表中的数据
+    currentDetail.value = row;
+    detailDialogVisible.value = true;
+  }
 };
 
 // 审核通过
@@ -372,7 +466,7 @@ onMounted(() => {
               :key="course.courseId"
               :label="course.courseName"
               :value="course.courseId"
-            ><span>{{ course.courseName }}</span>
+              ><span>{{ course.courseName }}</span>
               <el-badge
                 v-if="course.pendingCount > 0"
                 :value="course.pendingCount"
@@ -459,7 +553,8 @@ onMounted(() => {
                   <el-avatar :size="18" :src="row.author?.avatar" />
                   {{ row.author?.name }}
                 </span>
-                <span>{{ row.courseName || "未知课程" }}</span><span>{{ formatTime(row.createdAt) }}</span>
+                <span>{{ row.courseName || "未知课程" }}</span
+                ><span>{{ formatTime(row.createdAt) }}</span>
               </div>
             </div>
           </template>
@@ -501,7 +596,8 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column label="等待时间" width="120" align="center">
-          <template #default="{ row }"><span
+          <template #default="{ row }"
+            ><span
               class="text-sm"
               :class="{
                 'text-red-500': getWaitTime(row.createdAt).includes('天')
@@ -572,8 +668,10 @@ onMounted(() => {
           <template #default>
             <div>
               该内容被标记为高风险，请仔细审核。
-              <span v-if="currentDetail.matchedWords?.length">匹配敏感词：{{ currentDetail.matchedWords.join("、") }}
-              </span></div>
+              <span v-if="currentDetail.matchedWords?.length"
+                >匹配敏感词：{{ currentDetail.matchedWords.join("、") }}
+              </span>
+            </div>
           </template>
         </el-alert>
 
@@ -634,7 +732,8 @@ onMounted(() => {
         <!-- 标签 -->
         <div v-if="currentDetail.tags?.length" class="mt-4">
           <div class="section-title text-gray-600 mb-2">标签</div>
-          <div class="flex flex-wrap gap-2"><el-tag v-for="tag in currentDetail.tags" :key="tag" size="small">
+          <div class="flex flex-wrap gap-2">
+            <el-tag v-for="tag in currentDetail.tags" :key="tag" size="small">
               {{ tag }}
             </el-tag>
           </div>

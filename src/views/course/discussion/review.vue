@@ -16,13 +16,16 @@ import {
   MoreFilled
 } from "@element-plus/icons-vue";
 import {
-  getTeacherDiscussions,
+  getAdminDiscussions,
+  getAdminDiscussionDetail,
   getTeacherCourseStats,
   reviewPost,
   batchReview,
   batchDelete,
   type ReviewQueueItem
 } from "@/api/discussion-admin";
+import { getCourseList } from "@/api/course";
+import type { DiscussionPost } from "@/api/discussion";
 import { pinPost, unpinPost, deleteDiscussion } from "@/api/discussion";
 
 defineOptions({
@@ -124,17 +127,62 @@ const riskLevelText = (level: string): string => {
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: any = {
-      page: pagination.page,
-      pageSize: pagination.pageSize
-    };
-    if (searchForm.courseId) params.courseId = searchForm.courseId;
-    if (searchForm.status) params.status = searchForm.status;
-    if (searchForm.keyword) params.keyword = searchForm.keyword;
+    // 如果选择了课程，直接获取该课程的讨论列表
+    if (searchForm.courseId) {
+      const res = await getAdminDiscussions(searchForm.courseId, {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        sortBy: "latest"
+      });
+      // 转换为 ReviewQueueItem 格式
+      discussions.value = res.data.list.map(item => ({
+        ...item,
+        riskLevel: "low" as const,
+        matchedWords: [],
+        priority: "medium" as const,
+        courseName:
+          stats.value.courses.find(c => c.courseId === searchForm.courseId)
+            ?.courseName || ""
+      })) as ReviewQueueItem[];
+      pagination.total = res.data.pagination.total;
+    } else {
+      // 没有选择课程，获取所有课程的讨论列表
+      const allDiscussions: ReviewQueueItem[] = [];
+      let totalCount = 0;
 
-    const res = await getTeacherDiscussions(params);
-    discussions.value = res.data.list;
-    pagination.total = res.data.pagination.total;
+      // 先确保课程列表已加载
+      if (stats.value.courses.length === 0) {
+        await fetchStats();
+      }
+
+      // 遍历所有课程获取讨论
+      for (const course of stats.value.courses) {
+        try {
+          const res = await getAdminDiscussions(course.courseId, {
+            page: 1,
+            pageSize: 100,
+            sortBy: "latest"
+          });
+          const items = res.data.list.map(item => ({
+            ...item,
+            riskLevel: "low" as const,
+            matchedWords: [],
+            priority: "medium" as const,
+            courseName: course.courseName
+          })) as ReviewQueueItem[];
+          allDiscussions.push(...items);
+          totalCount += res.data.pagination.total;
+        } catch (err) {
+          console.error(`获取课程 ${course.courseId} 讨论失败:`, err);
+        }
+      }
+
+      // 分页处理
+      const startIndex = (pagination.page - 1) * pagination.pageSize;
+      const endIndex = startIndex + pagination.pageSize;
+      discussions.value = allDiscussions.slice(startIndex, endIndex);
+      pagination.total = totalCount;
+    }
   } catch (error) {
     console.error("加载讨论列表失败", error);
   } finally {
@@ -146,9 +194,32 @@ const fetchData = async () => {
 const fetchStats = async () => {
   try {
     const res = await getTeacherCourseStats();
-    stats.value = res;
+    if (res?.courses && res.courses.length > 0) {
+      stats.value = res;
+      return;
+    }
   } catch (error) {
-    console.error("加载统计数据失败", error);
+    console.error("getTeacherCourseStats 失败，尝试备用方案", error);
+  }
+
+  // 备用方案：使用 getCourseList 获取课程列表
+  try {
+    console.log("使用 getCourseList 作为备用方案获取课程列表");
+    const courseRes = await getCourseList({ pageNum: 1, pageSize: 100 });
+    const courseData = (courseRes as any)?.data || courseRes;
+    if (courseData?.courseList && courseData.courseList.length > 0) {
+      stats.value.courses = courseData.courseList.map((course: any) => ({
+        courseId: String(course.courseId),
+        courseName: course.title,
+        postCount: 0,
+        pendingCount: 0
+      }));
+      console.log("备用方案获取课程列表成功:", stats.value.courses);
+    } else {
+      console.warn("备用方案也没有获取到课程列表");
+    }
+  } catch (backupError) {
+    console.error("备用方案获取课程列表也失败", backupError);
   }
 };
 
@@ -184,9 +255,30 @@ const handleSelectionChange = (rows: ReviewQueueItem[]) => {
 };
 
 // 查看详情
-const viewDetail = (row: ReviewQueueItem) => {
-  currentDetail.value = row;
-  detailDialogVisible.value = true;
+const viewDetail = async (row: ReviewQueueItem) => {
+  try {
+    // 调用详情接口获取完整信息
+    const res = await getAdminDiscussionDetail(row.id);
+    if (res && res.data) {
+      // 转换为 ReviewQueueItem 格式
+      currentDetail.value = {
+        ...res.data,
+        riskLevel: "low" as const,
+        matchedWords: [],
+        priority: "medium" as const,
+        courseName: res.data.courseName
+      } as ReviewQueueItem;
+    } else {
+      // 如果获取详情失败，使用列表中的数据
+      currentDetail.value = row;
+    }
+    detailDialogVisible.value = true;
+  } catch (error) {
+    console.error("获取讨论详情失败:", error);
+    // 出错时使用列表中的数据
+    currentDetail.value = row;
+    detailDialogVisible.value = true;
+  }
 };
 
 // 审核通过
@@ -354,7 +446,8 @@ onMounted(() => {
             <div class="stat-label">今日新增</div>
           </div>
         </el-card>
-      </el-col></el-row>
+      </el-col></el-row
+    >
 
     <!-- 搜索栏 -->
     <el-card shadow="never" class="mb-4">
@@ -371,7 +464,7 @@ onMounted(() => {
               :key="course.courseId"
               :label="course.courseName"
               :value="course.courseId"
-            ><span>{{ course.courseName }}</span>
+              ><span>{{ course.courseName }}</span>
               <el-badge
                 v-if="course.pendingCount > 0"
                 :value="course.pendingCount"
@@ -432,8 +525,8 @@ onMounted(() => {
             :disabled="selectedIds.length === 0"
             @click="handleBatchDelete"
           >
-            批量删除
-          </el-button><span v-if="selectedIds.length > 0" class="ml-4text-gray-500">
+            批量删除 </el-button
+          ><span v-if="selectedIds.length > 0" class="ml-4text-gray-500">
             已选择 {{ selectedIds.length }} 项
           </span>
         </div>
@@ -460,9 +553,10 @@ onMounted(() => {
                   type="danger"
                   effect="dark"
                   class="pin-tag"
-                ><el-icon class="mr-1"><Top /></el-icon>置顶
+                  ><el-icon class="mr-1"><Top /></el-icon>置顶
                 </el-tag>
-                <span class="post-title">{{ row.title || "(无标题)" }}</span></div>
+                <span class="post-title">{{ row.title || "(无标题)" }}</span>
+              </div>
               <div class="post-excerpt">
                 {{ row.content.substring(0, 80) }}...
               </div>
@@ -506,7 +600,9 @@ onMounted(() => {
           <template #default="{ row }">
             <div class="stats-info">
               <span class="stat-item" title="点赞">👍 {{ row.likeCount }}</span>
-              <span class="stat-item" title="回复">💬 {{ row.replyCount }}</span>
+              <span class="stat-item" title="回复"
+                >💬 {{ row.replyCount }}</span
+              >
             </div>
           </template>
         </el-table-column>
@@ -734,7 +830,8 @@ onMounted(() => {
       font-size: 13px;
       color: #606266;
       line-height: 1.5;
-      margin-bottom: 8px;display: -webkit-box;
+      margin-bottom: 8px;
+      display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
@@ -766,7 +863,8 @@ onMounted(() => {
       }
 
       .meta-time {
-        flex-shrink: 0;}
+        flex-shrink: 0;
+      }
 
       :deep(.el-divider--vertical) {
         margin: 0 8px;

@@ -1,18 +1,17 @@
 /**
- * 课程讨论区管理端 API
- * 对应后端接口文档: doc/backend/course-discussion-api.md
+ * 课程讨论区管理端API
+ * 对应后端接口文档:doc/backend/course-discussion-api.md
  * 供教师端和管理员端使用
  */
 
 import { http } from "@/utils/http";
-import type {
-  DiscussionPost,
+import type {DiscussionPost,
   Pagination,
   PostStatus,
   Author
 } from "./discussion";
 
-// ==================== 后端返回类型定义 ====================
+//==================== 后端返回类型定义 ====================
 
 /** 后端返回的帖子列表项 */
 interface BackendPostListItem {
@@ -123,7 +122,7 @@ export interface PendingListResponse {
   list: PendingItem[];
 }
 
-/** 敏感词 */
+/**敏感词 */
 export interface SensitiveWord {
   id: string;
   word: string;
@@ -204,21 +203,130 @@ export interface GlobalStatistics {
 /**
  * 获取审核队列
  * @param params 查询参数
+ * @description 使用前端讨论列表接口，通过status=pending筛选待审核内容
+ *对应后端接口 GET /edu/frontend/v1/courses/{courseId}/discussions
  */
-export function getReviewQueue(params?: {
+export async function getReviewQueue(params?: {
   priority?: "high" | "medium" | "low";
   courseId?: string;
   page?: number;
   pageSize?: number;
-}) {
-  return http.request<{
-    list: ReviewQueueItem[];
-    stats: {
-      pending: number;
-      highPriority: number;
-      avgWaitTime: string;
+}): Promise<{
+  list: ReviewQueueItem[];
+  stats: {
+    pending: number;
+    highPriority: number;
+    avgWaitTime: string;
+  };
+}> {
+  // 如果没有提供courseId，尝试获取教师的课程列表
+  if (!params?.courseId) {
+    // 先获取教师课程统计，获取课程列表
+    try {
+      const statsRes = await getTeacherCourseStats();
+      const courses = statsRes?.courses || [];
+
+      if (courses.length === 0) {
+        // 没有课程，返回空数据
+        return {
+          list: [],
+          stats: {
+            pending: 0,
+            highPriority: 0,
+            avgWaitTime: "0小时"
+          }
+        };
+      }
+
+      // 获取所有课程的待审核内容
+      const allItems: ReviewQueueItem[] = [];
+      let totalPending = 0;
+
+      for (const course of courses) {
+        try {
+          const result = await getAdminDiscussions(course.courseId, {
+            page: 1,
+            pageSize: 100 // 获取较多数据
+          });
+
+          // 转换为ReviewQueueItem格式，并添加课程名称
+          const items = result.data.list.map(item => ({
+            ...item,
+            courseName: course.courseName,
+            riskLevel: "low" as const,
+            matchedWords: [],
+            priority: "medium" as const
+          }));
+
+          allItems.push(...items);
+          totalPending += course.pendingCount || 0;
+        } catch (error) {
+          console.error(`获取课程 ${course.courseId} 讨论列表失败:`, error);
+        }
+      }
+
+      // 分页处理
+      const page = params?.page || 1;
+      const pageSize = params?.pageSize || 20;
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const pagedItems = allItems.slice(startIndex, endIndex);
+
+      return {
+        list: pagedItems,
+        stats: {
+          pending: totalPending,
+          highPriority: 0,
+          avgWaitTime: "0小时"
+        }
+      };
+    } catch (error) {
+      console.error("获取审核队列失败:", error);
+      return {
+        list: [],
+        stats: {
+          pending: 0,
+          highPriority: 0,
+          avgWaitTime: "0小时"
+        }
+      };
+    }
+  }
+
+  // 有courseId，直接获取该课程的讨论列表
+  try {
+    const result = await getAdminDiscussions(params.courseId, {
+      page: params.page || 1,
+      pageSize: params.pageSize || 20
+    });
+
+    // 转换为ReviewQueueItem格式
+    const items: ReviewQueueItem[] = result.data.list.map(item => ({
+      ...item,
+      riskLevel: "low" as const,
+      matchedWords: [],
+      priority: "medium" as const
+    }));
+
+    return {
+      list: items,
+      stats: {
+        pending: result.data.pagination.total,
+        highPriority: 0,
+        avgWaitTime: "0小时"
+      }
     };
-  }>("get", "/edu/backend/v1/discussions/review-queue", { params });
+  } catch (error) {
+    console.error("获取审核队列失败:", error);
+    return {
+      list: [],
+      stats: {
+        pending: 0,
+        highPriority: 0,
+        avgWaitTime: "0小时"
+      }
+    };
+  }
 }
 
 /**
@@ -230,7 +338,7 @@ export function reviewPost(
   postId: string | number,
   data: { action: "approve" | "reject"; reason?: string; note?: string }
 ) {
-  // 兼容旧的参数名 note，转换为新的参数名 reason
+  // 兼容旧的参数名note，转换为新的参数名 reason
   const requestData = {
     action: data.action,
     reason: data.reason || data.note
@@ -271,7 +379,7 @@ export function batchReview(data: {
     success: number;
     failed: number;
     results: Array<{ postId: string; success: boolean; error?: string }>;
-  }>("post", "/api/v1/admin/discussions/batch-review", { data });
+  }>("post", "/edu/backend/v1/discussions/batch-review", { data });
 }
 
 /**
@@ -281,7 +389,7 @@ export function batchReview(data: {
 export function batchDelete(data: { postIds: string[]; reason?: string }) {
   return http.request<{ success: number; failed: number }>(
     "post",
-    "/api/v1/admin/discussions/batch-delete",
+    "/edu/backend/v1/discussions/batch-delete",
     { data }
   );
 }
@@ -305,7 +413,7 @@ export function getReportList(params?: {
       resolvedToday: number;
       totalReports: number;
     };
-  }>("get", "/api/v1/admin/discussions/reports", { params });
+  }>("get", "/edu/backend/v1/discussions/reports", { params });
 }
 
 /**
@@ -324,7 +432,7 @@ export function handleReport(
 ) {
   return http.request<{ success: boolean }>(
     "post",
-    `/api/v1/admin/discussions/reports/${reportId}/handle`,
+    `/edu/backend/v1/discussions/reports/${reportId}/handle`,
     { data }
   );
 }
@@ -350,7 +458,7 @@ export function getSensitiveWords(params?: {
       graylist: number;
       whitelist: number;
     };
-  }>("get", "/api/v1/admin/sensitive-words", { params });
+  }>("get", "/edu/backend/v1/sensitive-words", { params });
 }
 
 /**
@@ -362,9 +470,11 @@ export function addSensitiveWord(data: {
   category: "blacklist" | "graylist" | "whitelist";
   riskLevel?: "low" | "medium" | "high" | "critical";
 }) {
-  return http.request<SensitiveWord>("post", "/api/v1/admin/sensitive-words", {
-    data
-  });
+  return http.request<SensitiveWord>(
+    "post",
+    "/edu/backend/v1/sensitive-words",
+    { data }
+  );
 }
 
 /**
@@ -382,7 +492,7 @@ export function updateSensitiveWord(
 ) {
   return http.request<{ success: boolean }>(
     "put",
-    `/api/v1/admin/sensitive-words/${wordId}`,
+    `/edu/backend/v1/sensitive-words/${wordId}`,
     { data }
   );
 }
@@ -394,7 +504,7 @@ export function updateSensitiveWord(
 export function deleteSensitiveWord(wordId: string) {
   return http.request<{ success: boolean }>(
     "delete",
-    `/api/v1/admin/sensitive-words/${wordId}`
+    `/edu/backend/v1/sensitive-words/${wordId}`
   );
 }
 
@@ -414,7 +524,7 @@ export function importSensitiveWords(data: {
     imported: number;
     skipped: number;
     errors: string[];
-  }>("post", "/api/v1/admin/sensitive-words/import", { data });
+  }>("post", "/edu/backend/v1/sensitive-words/import", { data });
 }
 
 /**
@@ -437,7 +547,7 @@ export function getUserReputationList(params?: {
       normal: number;
       restricted: number;
     };
-  }>("get", "/api/v1/admin/user-reputation", { params });
+  }>("get", "/edu/backend/v1/user-reputation", { params });
 }
 
 /**
@@ -458,8 +568,7 @@ export function updateUserReputation(
     previousScore: number;
     newScore: number;
     previousLevel: string;
-    newLevel: string;
-  }>("put", `/api/v1/admin/user-reputation/${userId}`, { data });
+    newLevel: string;}>("put", `/edu/backend/v1/user-reputation/${userId}`, { data });
 }
 
 /**
@@ -478,7 +587,7 @@ export function getAuditLogs(params?: {
   return http.request<{
     list: AuditLog[];
     pagination: Pagination;
-  }>("get", "/api/v1/admin/discussions/audit-logs", { params });
+  }>("get", "/edu/backend/v1/discussions/audit-logs", { params });
 }
 
 /**
@@ -492,7 +601,7 @@ export function getGlobalStatistics(params?: {
 }) {
   return http.request<GlobalStatistics>(
     "get",
-    "/api/v1/admin/discussions/statistics",
+    "/edu/backend/v1/discussions/statistics",
     { params }
   );
 }
@@ -531,7 +640,7 @@ export async function getTeacherDiscussions(params?: {
     pagination: Pagination;
   };
 }> {
-  // 转换参数名：前端 page -> 后端 pageNum
+  // 转换参数名：前端 page ->后端 pageNum
   const backendParams = {
     courseId: params?.courseId,
     pageNum: params?.page || 1,
@@ -813,7 +922,7 @@ export function getTeacherCourseStats(courseId?: string) {
       postCount: number;
       pendingCount: number;
     }>;
-  }>("get", "/api/v1/teacher/discussions/stats", {
+  }>("get", "/edu/backend/v1/teacher/discussions/stats", {
     params: courseId ? { courseId } : undefined
   });
 }

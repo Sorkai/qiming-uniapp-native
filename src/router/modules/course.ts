@@ -52,7 +52,7 @@ export default [
   {
     path: "/course/discussion",
     name: "CourseDiscussion",
-    redirect: "/course/discussion/index",
+    redirect: "/course/discussion/review",
     meta: {
       icon: "ri:discuss-line",
       title: "讨论管理",
@@ -61,22 +61,22 @@ export default [
     },
     children: [
       {
-        path: "/course/discussion/index",
-        name: "CourseDiscussionIndex",
-        component: () => import("@/views/course/discussion/index.vue"),
-        meta: {
-          icon: "ri:chat-3-line",
-          title: "讨论列表",
-          roles: ["admin", "teacher"]
-        }
-      },
-      {
         path: "/course/discussion/review",
         name: "CourseDiscussionReview",
         component: () => import("@/views/course/discussion/review.vue"),
         meta: {
           icon: "ri:checkbox-circle-line",
           title: "内容审核",
+          roles: ["admin", "teacher"]
+        }
+      },
+      {
+        path: "/course/discussion/index",
+        name: "CourseDiscussionIndex",
+        component: () => import("@/views/course/discussion/index.vue"),
+        meta: {
+          icon: "ri:chat-3-line",
+          title: "讨论列表",
           roles: ["admin", "teacher"]
         }
       },
