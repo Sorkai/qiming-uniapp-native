@@ -306,7 +306,7 @@
                 <!-- 快速回复输入框 -->
                 <Transition name="fade-slide">
                   <div v-if="message.showReplyInput" class="quick-reply-box">
-                    <el-avatar :size="32" :src="formatAvatar(userAvatar)" />
+                    <el-avatar :size="36" :src="formatAvatar(userAvatar)" />
                     <div class="reply-input-wrapper">
                       <el-input
                         v-model="message.replyContent"
@@ -321,7 +321,7 @@
                         <span class="hint">Ctrl + Enter 发送</span>
                         <el-button
                           type="primary"
-                          size="small"
+                          class="submit-reply-btn"
                           :disabled="!message.replyContent?.trim()"
                           @click="submitReply(message)"
                         >
@@ -1840,39 +1840,46 @@ const filterByTag = (tagName: string) => {
 /* 快速回复框 */
 .quick-reply-box {
   display: flex;
-  gap: 12px;
-  padding: 16px;
-  margin-top: 16px;
-  background: #fafbfc;
-  border-radius: 12px;
+  gap: 16px;
+  padding: 20px;
+  margin: 16px 0;
+  background: #f8f9fb;
+  border-radius: 16px;
+  border: 1px solid #f0f3f7;
 }
 
 .dark .quick-reply-box {
   background: #1e1e22;
+  border-color: #333;
 }
 
 .reply-input-wrapper {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .reply-input-wrapper :deep(.el-textarea__inner) {
-  border-radius: 8px;
-  box-shadow: none !important;
+  padding: 12px 16px;
+  font-size: 14px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 2%) !important;
   transition: all 0.3s ease;
   outline: none !important;
+  border-color: #e4e7ed;
 }
 
 .reply-input-wrapper :deep(.el-textarea__inner:focus) {
   background-color: #fff !important;
   box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
   outline: none !important;
+  border-color: #409eff;
 }
 
 .dark .reply-input-wrapper :deep(.el-textarea__inner:focus) {
   background-color: #1e1e22 !important;
+  border-color: #409eff;
 }
 
 .reply-input-actions {
@@ -1882,8 +1889,21 @@ const filterByTag = (tagName: string) => {
 }
 
 .reply-input-actions .hint {
-  font-size: 14px;
+  font-size: 13px;
   color: #909399;
+}
+
+.submit-reply-btn {
+  padding: 0 24px !important;
+  height: 36px;
+  font-weight: 500;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.submit-reply-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgb(64 158 255 / 30%);
 }
 
 /* 空状态 */
