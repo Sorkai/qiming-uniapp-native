@@ -65,13 +65,6 @@
         </div>
       </div>
 
-      <!-- 中间区域：紫色渐变标题底衬 -->
-      <div class="header-center">
-        <div class="title-capsule">
-          {{ title }}
-        </div>
-      </div>
-
       <!-- 右侧区域：像素级复刻主导航栏的用户胶囊 -->
       <div class="header-right">
         <el-dropdown
@@ -123,9 +116,9 @@ import ArrowDown from "~icons/ep/arrow-down";
 import Setting from "~icons/ri/user-settings-line";
 import LogoutIcon from "~icons/ri/logout-circle-r-line";
 
-const props = defineProps<{
+defineProps<{
   currentTheme: string;
-  title: string;
+  title?: string;
   userAvatar: string;
   userNickname: string;
 }>();
@@ -332,26 +325,6 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   }
 }
 
-/* 中间标题区域 */
-.header-center {
-  flex: 0 0 auto;
-}
-
-.title-capsule {
-  padding: 10px 32px;
-  font-size: 24px;
-  font-weight: 700;
-  color: white;
-  white-space: nowrap;
-  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgb(74 0 224 / 25%);
-}
-
-.layout-header.dark .title-capsule {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
 /* 右侧区域 - 像素级复刻主页面 */
 .header-right {
   display: flex;
@@ -442,7 +415,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 </style>
 
-<!-- 非 scoped 样式，确保下拉菜单正确显示 -->
+<!-- 非scoped 样式，确保下拉菜单正确显示 -->
 <style lang="scss">
 .course-user-dropdown {
   z-index: 9999 !important;
