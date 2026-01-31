@@ -126,7 +126,11 @@
                       </div>
                     </div>
                   </div>
-                  <el-dropdown v-if="canManageMessage(message)" trigger="click">
+                  <el-dropdown
+                    v-if="canManageMessage(message)"
+                    trigger="click"
+                    popper-class="more-actions-dropdown"
+                  >
                     <button class="more-actions-btn">
                       <el-icon><MoreFilled /></el-icon>
                     </button>
@@ -219,7 +223,7 @@
                     </button>
                   </div>
                   <div class="view-count">
-                    <el-icon><View /></el-icon>
+                    <el-icon><TrendCharts /></el-icon>
                     {{ message.viewCount || 0 }} 次浏览
                   </div>
                 </div>
@@ -437,6 +441,7 @@
                   default-first-option
                   placeholder="添加标签（可选）"
                   class="tags-select"
+                  popper-class="tag-select-popper"
                 >
                   <el-option
                     v-for="tag in availableTags"
@@ -589,6 +594,7 @@
             default-first-option
             placeholder="选择或输入标签"
             class="edit-tags-select"
+            popper-class="tag-select-popper"
           >
             <el-option
               v-for="tag in availableTags"
@@ -627,6 +633,7 @@ import {
   StarFilled,
   ChatDotRound,
   Position,
+  TrendCharts,
   View,
   ArrowUp,
   ArrowDown,
@@ -1193,6 +1200,42 @@ const filterByTag = (tagName: string) => {
   overflow-y: auto;
 }
 
+.message-board-container :deep(.el-input__wrapper.is-focus),
+.message-board-container :deep(.el-textarea__inner:focus),
+.message-board-container :deep(.el-select__wrapper.is-focused),
+:deep(.edit-dialog) :deep(.el-input__wrapper.is-focus),
+:deep(.edit-dialog) :deep(.el-textarea__inner:focus),
+:deep(.edit-dialog) :deep(.el-select__wrapper.is-focused) {
+  border-color: #409eff !important;
+  box-shadow: 0 0 0 3px rgb(64 158 255 / 15%) !important;
+}
+
+/* 彻底移除所有输入控件的默认聚焦蓝框 */
+.message-board-container :deep(input),
+.message-board-container :deep(textarea),
+.message-board-container :deep(.el-input__wrapper),
+.message-board-container :deep(.el-textarea__inner),
+.message-board-container :deep(.el-input__inner),
+.message-board-container :deep(.el-select__wrapper),
+:deep(.edit-dialog) :deep(input),
+:deep(.edit-dialog) :deep(textarea),
+:deep(.edit-dialog) :deep(.el-input__wrapper),
+:deep(.edit-dialog) :deep(.el-textarea__inner),
+:deep(.edit-dialog) :deep(.el-input__inner),
+:deep(.edit-dialog) :deep(.el-select__wrapper) {
+  outline: none !important;
+}
+
+/* 移除 Element Plus 默认的 inset box-shadow */
+.message-board-container :deep(.el-input__wrapper),
+.message-board-container :deep(.el-textarea__inner),
+.message-board-container :deep(.el-select__wrapper),
+:deep(.edit-dialog) :deep(.el-input__wrapper),
+:deep(.edit-dialog) :deep(.el-textarea__inner),
+:deep(.edit-dialog) :deep(.el-select__wrapper) {
+  box-shadow: none !important;
+}
+
 .board-main-content {
   display: flex;
   flex: 1;
@@ -1228,7 +1271,28 @@ const filterByTag = (tagName: string) => {
 
 .search-box :deep(.el-input__wrapper) {
   padding: 8px 16px;
+  background-color: #f5f7fa;
   border-radius: 12px;
+  box-shadow: none !important;
+  transition: all 0.3s ease;
+}
+
+.search-box :deep(.el-input__inner) {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.dark .search-box :deep(.el-input__wrapper) {
+  background-color: #1e1e22;
+}
+
+.search-box :deep(.el-input__wrapper.is-focus) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
+}
+
+.dark .search-box :deep(.el-input__wrapper.is-focus) {
+  background-color: #242428 !important;
 }
 
 .filter-tabs {
@@ -1414,24 +1478,26 @@ const filterByTag = (tagName: string) => {
 }
 
 .role-tag {
-  height: 18px;
-  padding: 0 6px;
-  font-size: 10px;
-  line-height: 18px;
+  height: 22px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 22px;
+  border-radius: 6px;
 }
 
 .role-tag.mini {
-  height: 16px;
-  padding: 0 4px;
-  font-size: 9px;
-  line-height: 16px;
+  height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+  line-height: 20px;
+  border-radius: 4px;
 }
 
 .post-meta {
   display: flex;
   gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
 }
 
@@ -1562,7 +1628,12 @@ const filterByTag = (tagName: string) => {
 }
 
 .tag-item {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 13px;
+  line-height: 26px;
   cursor: pointer;
+  border-radius: 6px;
   transition: all 0.3s ease;
 }
 
@@ -1590,11 +1661,11 @@ const filterByTag = (tagName: string) => {
 
 .action-btn {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #909399;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #606266;
   cursor: pointer;
   background: transparent;
   border: none;
@@ -1602,12 +1673,21 @@ const filterByTag = (tagName: string) => {
   transition: all 0.3s ease;
 }
 
+.action-btn .el-icon {
+  font-size: 18px;
+}
+
 .action-btn:hover {
   color: #409eff;
   background: #f5f7fa;
 }
 
+.dark .action-btn {
+  color: #909399;
+}
+
 .dark .action-btn:hover {
+  color: #409eff;
   background: #333;
 }
 
@@ -1617,10 +1697,10 @@ const filterByTag = (tagName: string) => {
 
 .view-count {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
-  font-size: 12px;
-  color: #c0c4cc;
+  font-size: 14px;
+  color: #909399;
 }
 
 /* 回复区域 */
@@ -1685,12 +1765,12 @@ const filterByTag = (tagName: string) => {
 
 .reply-time {
   margin-left: auto;
-  font-size: 12px;
-  color: #c0c4cc;
+  font-size: 14px;
+  color: #909399;
 }
 
 .reply-text {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   color: #606266;
 }
@@ -1701,27 +1781,35 @@ const filterByTag = (tagName: string) => {
 
 .reply-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 16px;
+  margin-top: 10px;
 }
 
 .reply-action-btn {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 6px 12px;
+  font-size: 14px;
   color: #909399;
   cursor: pointer;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.2s ease;
+}
+
+.reply-action-btn .el-icon {
+  font-size: 18px;
 }
 
 .reply-action-btn:hover {
   color: #409eff;
   background: #f0f7ff;
+}
+
+.dark .reply-action-btn:hover {
+  background: #333;
 }
 
 .reply-action-btn.active {
@@ -1768,6 +1856,19 @@ const filterByTag = (tagName: string) => {
 
 .reply-input-wrapper :deep(.el-textarea__inner) {
   border-radius: 8px;
+  box-shadow: none !important;
+  transition: all 0.3s ease;
+  outline: none !important;
+}
+
+.reply-input-wrapper :deep(.el-textarea__inner:focus) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
+  outline: none !important;
+}
+
+.dark .reply-input-wrapper :deep(.el-textarea__inner:focus) {
+  background-color: #1e1e22 !important;
 }
 
 .reply-input-actions {
@@ -1777,8 +1878,8 @@ const filterByTag = (tagName: string) => {
 }
 
 .reply-input-actions .hint {
-  font-size: 12px;
-  color: #c0c4cc;
+  font-size: 14px;
+  color: #909399;
 }
 
 /* 空状态 */
@@ -1873,7 +1974,7 @@ const filterByTag = (tagName: string) => {
 .post-composer {
   padding: 24px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 20px;
   box-shadow: 0 4px 20px rgb(0 0 0 / 5%);
 }
 
@@ -1897,7 +1998,8 @@ const filterByTag = (tagName: string) => {
 
 .composer-title h3 {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 600;
   color: #303133;
 }
 
@@ -1907,19 +2009,40 @@ const filterByTag = (tagName: string) => {
 
 .composer-title p {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
 }
 
 .composer-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .title-input :deep(.el-input__wrapper) {
-  padding: 6px 16px;
-  border-radius: 10px;
+  padding: 8px 16px;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: none !important;
+  transition: all 0.3s ease;
+}
+
+.title-input :deep(.el-input__inner) {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.dark .title-input :deep(.el-input__wrapper) {
+  background-color: #1e1e22;
+}
+
+.title-input :deep(.el-input__wrapper.is-focus) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
+}
+
+.dark .title-input :deep(.el-input__wrapper.is-focus) {
+  background-color: #242428 !important;
 }
 
 .content-editor {
@@ -1928,7 +2051,26 @@ const filterByTag = (tagName: string) => {
 
 .content-editor :deep(.el-textarea__inner) {
   padding: 12px 16px 48px;
-  border-radius: 10px;
+  font-size: 14px;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: none !important;
+  transition: all 0.3s ease;
+  outline: none !important;
+}
+
+.dark .content-editor :deep(.el-textarea__inner) {
+  background-color: #1e1e22;
+}
+
+.content-editor :deep(.el-textarea__inner:focus) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
+  outline: none !important;
+}
+
+.dark .content-editor :deep(.el-textarea__inner:focus) {
+  background-color: #242428 !important;
 }
 
 .editor-toolbar {
@@ -1936,21 +2078,21 @@ const filterByTag = (tagName: string) => {
   bottom: 8px;
   left: 12px;
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .toolbar-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  font-size: 12px;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
   color: #606266;
   cursor: pointer;
   background: #f5f7fa;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
@@ -1969,20 +2111,39 @@ const filterByTag = (tagName: string) => {
 }
 
 .tags-select :deep(.el-select__wrapper) {
+  min-height: 40px;
   padding-right: 16px;
   padding-left: 16px;
-  border-radius: 10px;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: none !important;
+  transition: all 0.3s ease;
+  outline: none !important;
+}
+
+.dark .tags-select :deep(.el-select__wrapper) {
+  background-color: #1e1e22;
+}
+
+.tags-select :deep(.el-select__wrapper.is-focused) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
+  outline: none !important;
+}
+
+.dark .tags-select :deep(.el-select__wrapper.is-focused) {
+  background-color: #242428 !important;
 }
 
 .post-notice {
   display: flex;
   gap: 8px;
   align-items: center;
-  padding: 10px 12px;
-  font-size: 12px;
+  padding: 12px 16px;
+  font-size: 13px;
   color: #e6a23c;
   background: #fff7e6;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .dark .post-notice {
@@ -1991,10 +2152,10 @@ const filterByTag = (tagName: string) => {
 
 .submit-btn {
   width: 100%;
-  height: 44px;
-  font-size: 15px;
-  font-weight: 500;
-  border-radius: 12px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 14px;
 }
 
 /* 统计卡片 */
@@ -2106,7 +2267,12 @@ const filterByTag = (tagName: string) => {
 }
 
 .cloud-tag {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 28px;
   cursor: pointer;
+  border-radius: 8px;
   transition: all 0.3s ease;
 }
 
@@ -2178,6 +2344,51 @@ const filterByTag = (tagName: string) => {
   gap: 8px;
 }
 
+.edit-form-item :deep(.el-input__wrapper) {
+  padding: 8px 16px;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: none !important;
+  transition: all 0.3s ease;
+}
+
+.dark .edit-form-item :deep(.el-input__wrapper) {
+  background-color: #1e1e22;
+}
+
+.edit-form-item :deep(.el-input__wrapper.is-focus) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
+  outline: none !important;
+}
+
+.dark .edit-form-item :deep(.el-input__wrapper.is-focus) {
+  background-color: #242428 !important;
+}
+
+.edit-form-item :deep(.el-textarea__inner) {
+  padding: 12px 16px;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: none !important;
+  transition: all 0.3s ease;
+  outline: none !important;
+}
+
+.dark .edit-form-item :deep(.el-textarea__inner) {
+  background-color: #1e1e22;
+}
+
+.edit-form-item :deep(.el-textarea__inner:focus) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
+  outline: none !important;
+}
+
+.dark .edit-form-item :deep(.el-textarea__inner:focus) {
+  background-color: #242428 !important;
+}
+
 .edit-label {
   font-size: 14px;
   font-weight: 500;
@@ -2198,17 +2409,38 @@ const filterByTag = (tagName: string) => {
 }
 
 .edit-tags-select :deep(.el-select__wrapper) {
+  min-height: 40px;
   padding-right: 16px;
   padding-left: 16px;
-  border-radius: 10px;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: none !important;
+  transition: all 0.3s ease;
+  outline: none !important;
+}
+
+.dark .edit-tags-select :deep(.el-select__wrapper) {
+  background-color: #1e1e22;
+}
+
+.edit-tags-select :deep(.el-select__wrapper.is-focused) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px rgb(64 158 255 / 10%) !important;
+  outline: none !important;
+}
+
+.dark .edit-tags-select :deep(.el-select__wrapper.is-focused) {
+  background-color: #242428 !important;
 }
 
 :deep(.edit-dialog) {
-  border-radius: 16px;
+  overflow: hidden;
+  border: none !important;
+  border-radius: 20px !important;
 }
 
 :deep(.edit-dialog .el-dialog__header) {
-  padding: 20px 24px 16px;
+  padding: 24px 24px 20px;
   margin-right: 0;
   border-bottom: 1px solid #f0f2f5;
 }
@@ -2222,11 +2454,127 @@ const filterByTag = (tagName: string) => {
 }
 
 :deep(.edit-dialog .el-dialog__footer) {
-  padding: 16px 24px 20px;
+  padding: 16px 24px 24px;
   border-top: 1px solid #f0f2f5;
+}
+
+:deep(.edit-dialog .el-dialog__footer .el-button) {
+  height: 40px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 10px;
+}
+
+:deep(.edit-dialog .el-dialog__footer .el-button--primary) {
+  padding: 0 28px;
+  font-weight: 600;
 }
 
 .dark :deep(.edit-dialog .el-dialog__footer) {
   border-top-color: #333;
+}
+
+/* 下拉菜单 R 角 */
+:global(.tag-select-popper) {
+  padding: 4px !important;
+  border-radius: 12px !important;
+}
+
+:global(.tag-select-popper .el-select-dropdown__wrap) {
+  border-radius: 12px !important;
+}
+
+:global(.tag-select-popper .el-select-dropdown__list) {
+  padding: 4px !important;
+}
+
+:global(.tag-select-popper .el-select-dropdown__item) {
+  margin: 2px 0;
+  border-radius: 8px;
+}
+
+/* 更多操作下拉菜单样式 */
+:global(.more-actions-dropdown) {
+  padding: 4px !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e4e7ed !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 12%) !important;
+}
+
+:global(.more-actions-dropdown .el-popper__arrow::before) {
+  background-color: #ffffff !important;
+  border: 1px solid #e4e7ed !important;
+}
+
+:global(.more-actions-dropdown .el-dropdown-menu) {
+  padding: 0 !important;
+  background-color: #ffffff !important;
+  border: none !important;
+}
+
+:global(.more-actions-dropdown .el-dropdown-menu__item) {
+  gap: 10px !important;
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #606266 !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+:global(.more-actions-dropdown .el-dropdown-menu__item:hover),
+:global(.more-actions-dropdown .el-dropdown-menu__item:focus),
+:global(.more-actions-dropdown .el-dropdown-menu__item.is-focus) {
+  color: #409eff !important;
+  background-color: #f5f7fa !important;
+  outline: none !important;
+}
+
+/* 适配深色模式 */
+:global(.dark-mode) :global(.more-actions-dropdown),
+:global(.dark) :global(.more-actions-dropdown) {
+  background-color: #242428 !important;
+  border-color: #434343 !important;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 40%) !important;
+}
+
+:global(.dark-mode) :global(.more-actions-dropdown .el-popper__arrow::before),
+:global(.dark) :global(.more-actions-dropdown .el-popper__arrow::before) {
+  background-color: #242428 !important;
+  border-color: #434343 !important;
+}
+
+:global(.dark-mode) :global(.more-actions-dropdown .el-dropdown-menu),
+:global(.dark) :global(.more-actions-dropdown .el-dropdown-menu) {
+  background-color: #242428 !important;
+}
+
+:global(.dark-mode) :global(.more-actions-dropdown .el-dropdown-menu__item),
+:global(.dark) :global(.more-actions-dropdown .el-dropdown-menu__item) {
+  color: #cfd3dc !important;
+}
+
+:global(.dark-mode)
+  :global(.more-actions-dropdown .el-dropdown-menu__item:hover),
+:global(.dark-mode)
+  :global(.more-actions-dropdown .el-dropdown-menu__item:focus),
+:global(.dark) :global(.more-actions-dropdown .el-dropdown-menu__item:hover),
+:global(.dark) :global(.more-actions-dropdown .el-dropdown-menu__item:focus) {
+  color: #409eff !important;
+  background-color: #333 !important;
+}
+
+/* 移除 Element Plus 默认的焦点蓝色背景 */
+:global(.more-actions-dropdown .el-dropdown-menu__item--divided:before) {
+  display: none !important;
+}
+
+:global(.more-actions-dropdown .el-dropdown-menu__item .el-icon) {
+  margin-right: 0 !important;
+  font-size: 16px !important;
 }
 </style>
