@@ -4,7 +4,7 @@
  *教师可以管理所授课程的讨论内容，包括审核、置顶、删除等操作
  */
 import { ref, reactive, onMounted, onActivated, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Search,
@@ -410,41 +410,33 @@ const dataLoaded = ref(false);
 // 初始化加载数据
 const initData = async () => {
   // 防止重复加载
-  if (loading.value) return;
+  if (loading.value || dataLoaded.value) {
+    console.log("[review.vue] initData 跳过, loading:", loading.value, "dataLoaded:", dataLoaded.value);
+    return;
+  }
   
   console.log("[review.vue] initData 开始执行");
-  dataLoaded.value = false;
   await fetchStats();
+  console.log("[review.vue] fetchStats 完成,课程数量:", stats.value.courses.length);
   await fetchData();
+  console.log("[review.vue] fetchData 完成, 讨论数量:", discussions.value.length);
   dataLoaded.value = true;
   console.log("[review.vue] initData 执行完成");
 };
 
 const route = useRoute();
 
-// 使用 watch 监听路由 name，确保路由完全初始化后才加载数据
-// 这是解决页面刷新时数据不加载的关键：
-// vue-pure-admin 在页面刷新时会异步初始化动态路由，
-// 只有当 route.name 存在时，路由才完全初始化完成
-watch(
-  () => route.name,
-  newName => {
-    console.log("[review.vue] 路由 name 变化:", newName);
-    // 当路由 name 匹配且数据未加载时，加载数据
-    if (newName === "CourseDiscussionReview" && !dataLoaded.value) {
-      initData();
-    }
-  },
-  { immediate: true }
-);
+// 生成唯一的组件实例 ID，用于调试
+const instanceId = Math.random().toString(36).substring(7);
+console.log("[review.vue] 组件实例创建, instanceId:", instanceId);
 
-// 备用方案：如果 watch 没有触发，在 onMounted 中延迟加载
+// 使用 onMounted 确保组件已挂载后再加载数据
 onMounted(() => {
-  console.log("[review.vue] onMounted 触发, route.name:", route.name);
-  // 延迟执行，等待路由完全初始化
+  console.log("[review.vue] onMounted 触发, instanceId:", instanceId);
+  // 使用 setTimeout 延迟加载，确保路由完全稳定
   setTimeout(() => {
-    if (!dataLoaded.value && route.name === "CourseDiscussionReview") {
-      console.log("[review.vue] onMounted 延迟加载数据");
+    console.log("[review.vue] setTimeout 回调, dataLoaded:", dataLoaded.value);
+    if (!dataLoaded.value) {
       initData();
     }
   }, 100);
@@ -452,7 +444,8 @@ onMounted(() => {
 
 // 当组件从 keep-alive 缓存中被激活时重新加载数据
 onActivated(() => {
-  console.log("[review.vue] onActivated 触发");
+  console.log("[review.vue] onActivated 触发, instanceId:", instanceId);
+  dataLoaded.value = false; // 重置标志以允许重新加载
   initData();
 });
 </script>

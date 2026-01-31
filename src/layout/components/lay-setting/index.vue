@@ -34,6 +34,7 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const mixRef = ref();
 const verticalRef = ref();
 const horizontalRef = ref();
+const doubleRef = ref();
 
 const {
   dataTheme,
