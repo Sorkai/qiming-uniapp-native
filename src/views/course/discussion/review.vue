@@ -12,6 +12,7 @@ import {
   Check,
   Close,
   Delete,
+  Edit,
   Top,
   MoreFilled
 } from "@element-plus/icons-vue";
@@ -24,7 +25,13 @@ import {
   type ReviewQueueItem
 } from "@/api/discussion-admin";
 import { getCourseList } from "@/api/course";
-import { getReplies } from "@/api/discussion";
+import {
+  getReplies,
+  updateReply,
+  deleteReply,
+  updateDiscussion,
+  deleteDiscussion
+} from "@/api/discussion";
 import type { DiscussionPost } from "@/api/discussion";
 import HeartIcon from "@/assets/commentareasrelatedsvgs/heart-svgrepo-com.svg?component";
 import CommentIcon from "@/assets/commentareasrelatedsvgs/comment-lines-svgrepo-com.svg?component";
@@ -528,6 +535,74 @@ const handleBatchReject = async () => {
   }
 };
 
+// 编辑相关
+const editDialogVisible = ref(false);
+const editForm = reactive({
+  id: "",
+  type: "post" as "post" | "reply",
+  content: "",
+  title: ""
+});
+
+const handleEdit = (row: ReviewQueueItem) => {
+  editForm.id = row.id;
+  editForm.type = row.itemType || "post";
+  editForm.content = row.content;
+  editForm.title = row.title || "";
+  editDialogVisible.value = true;
+};
+
+const submitEdit = async () => {
+  if (!editForm.content.trim()) {
+    ElMessage.warning("内容不能为空");
+    return;
+  }
+  try {
+    if (editForm.type === "reply") {
+      await updateReply(editForm.id, { content: editForm.content });
+    } else {
+      await updateDiscussion(editForm.id, {
+        title: editForm.title,
+        content: editForm.content
+      });
+    }
+    ElMessage.success("编辑成功");
+    editDialogVisible.value = false;
+    fetchData();
+  } catch (error) {
+    console.error("编辑失败:", error);
+    ElMessage.error("编辑失败");
+  }
+};
+
+const handleDelete = async (row: ReviewQueueItem) => {
+  try {
+    await ElMessageBox.confirm(
+      "确定要删除这条内容吗？此操作不可恢复！",
+      "删除确认",
+      {
+        confirmButtonText: "确定删除",
+        cancelButtonText: "取消",
+        type: "warning",
+        customClass: "custom-message-box",
+        draggable: true
+      }
+    );
+
+    if (row.itemType === "reply") {
+      await deleteReply(row.id);
+    } else {
+      await deleteDiscussion(row.id);
+    }
+    ElMessage.success("已删除");
+    fetchData();
+  } catch (error) {
+    if (error !== "cancel") {
+      ElMessage.error("删除失败");
+    }
+  }
+};
+
 // 格式化时间
 const formatTime = (dateStr: string) => {
   if (!dateStr) return "-";
@@ -865,6 +940,27 @@ onActivated(() => {
                   </div>
                 </el-tooltip>
               </template>
+
+              <!-- 编辑与删除 (更多操作) -->
+              <el-dropdown trigger="click" popper-class="modern-dropdown">
+                <div class="btn-icon-wrapper more">
+                  <el-icon :size="20"><MoreFilled /></el-icon>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item :icon="Edit" @click="handleEdit(row)">
+                      编辑内容
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      :icon="Delete"
+                      class="delete-item"
+                      @click="handleDelete(row)"
+                    >
+                      删除该条
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
           </template>
         </el-table-column>
@@ -883,6 +979,37 @@ onActivated(() => {
         />
       </div>
     </el-card>
+
+    <!-- 编辑弹窗 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      :title="editForm.type === 'post' ? '编辑帖子' : '编辑回复'"
+      width="600px"
+      destroy-on-close
+      class="custom-dialog"
+    >
+      <el-form :model="editForm" label-position="top" class="p-4">
+        <el-form-item v-if="editForm.type === 'post'" label="帖子标题">
+          <el-input v-model="editForm.title" placeholder="请输入标题" />
+        </el-form-item>
+        <el-form-item label="正文内容">
+          <el-input
+            v-model="editForm.content"
+            type="textarea"
+            :rows="8"
+            placeholder="请输入内容..."
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div
+          class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3"
+        >
+          <el-button @click="editDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitEdit">保存修改</el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <!-- 详情弹窗 -->
     <el-dialog

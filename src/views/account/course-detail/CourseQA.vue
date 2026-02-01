@@ -710,6 +710,7 @@ import {
   deleteDiscussion,
   getReplies,
   createReply,
+  updateReply,
   deleteReply,
   likePost,
   unlikePost,
