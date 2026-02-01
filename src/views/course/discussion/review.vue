@@ -13,7 +13,6 @@ import {
   Close,
   Delete,
   Top,
-  View,
   MoreFilled
 } from "@element-plus/icons-vue";
 import {
@@ -28,6 +27,10 @@ import {
 import { getCourseList } from "@/api/course";
 import type { DiscussionPost } from "@/api/discussion";
 import { pinPost, unpinPost, deleteDiscussion } from "@/api/discussion";
+import HeartIcon from "@/assets/commentareasrelatedsvgs/heart-svgrepo-com.svg?component";
+import CommentIcon from "@/assets/commentareasrelatedsvgs/comment-lines-svgrepo-com.svg?component";
+import TrendIcon from "@/assets/commentareasrelatedsvgs/trend-up-svgrepo-com.svg?component";
+import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
 
 defineOptions({
   name: "TeacherDiscussionManage"
@@ -672,11 +675,11 @@ onActivated(() => {
           <template #default="{ row }">
             <div class="stats-info">
               <div class="stat-item" title="认可度">
-                <span class="text-xs">👍</span>
+                <el-icon class="mr-1 text-red-500"><HeartIcon /></el-icon>
                 <span>{{ row.likeCount }}</span>
               </div>
               <div class="stat-item" title="研讨数">
-                <span class="text-xs">💬</span>
+                <el-icon class="mr-1 text-blue-500"><CommentIcon /></el-icon>
                 <span>{{ row.replyCount }}</span>
               </div>
             </div>
@@ -687,7 +690,7 @@ onActivated(() => {
             <div class="action-btns">
               <el-tooltip content="审阅详情" placement="top">
                 <div class="btn-icon-wrapper view" @click="viewDetail(row)">
-                  <el-icon :size="18"><View /></el-icon>
+                  <el-icon :size="18"><InfoIcon /></el-icon>
                 </div>
               </el-tooltip>
 
@@ -801,9 +804,18 @@ onActivated(() => {
                 <div
                   class="flex items-center gap-6 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-lg"
                 >
-                  <span>👍 {{ currentDetail.likeCount || 0 }} 认可</span>
-                  <span>💬 {{ currentDetail.replyCount || 0 }} 研讨</span>
-                  <span>👁 {{ currentDetail.viewCount || 0 }} 浏览</span>
+                  <span class="flex items-center gap-1">
+                    <el-icon class="text-red-500"><HeartIcon /></el-icon>
+                    {{ currentDetail.likeCount || 0 }} 认可
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <el-icon class="text-blue-500"><CommentIcon /></el-icon>
+                    {{ currentDetail.replyCount || 0 }} 研讨
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <el-icon class="text-orange-500"><TrendIcon /></el-icon>
+                    {{ currentDetail.viewCount || 0 }} 浏览
+                  </span>
                 </div>
                 <div v-if="currentDetail.tags?.length" class="flex gap-2">
                   <el-tag

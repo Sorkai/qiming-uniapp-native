@@ -11,7 +11,6 @@ import {
   Refresh,
   Check,
   Close,
-  View,
   Warning,
   Clock
 } from "@element-plus/icons-vue";
@@ -24,6 +23,7 @@ import {
   type ReviewQueueItem
 } from "@/api/discussion-admin";
 import { getCourseList } from "@/api/course";
+import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
 
 defineOptions({
   name: "TeacherReviewQueue"
@@ -598,7 +598,7 @@ onActivated(() => {
                   </span>
                 </div>
                 <div class="meta-item">
-                  <el-icon><View /></el-icon>
+                  <el-icon><InfoIcon /></el-icon>
                   <span>{{ row.courseName || "未知课程" }}</span>
                 </div>
                 <div class="meta-item">
@@ -679,7 +679,7 @@ onActivated(() => {
             <div class="action-btns">
               <el-tooltip content="进入详情审核" placement="top">
                 <div class="btn-icon-wrapper view" @click="viewDetail(row)">
-                  <el-icon :size="18"><View /></el-icon>
+                  <el-icon :size="18"><InfoIcon /></el-icon>
                 </div>
               </el-tooltip>
               <el-tooltip content="直接通过" placement="top">

@@ -11,7 +11,6 @@ import {
   Refresh,
   Check,
   Delete,
-  View,
   Warning,
   MoreFilled
 } from "@element-plus/icons-vue";
@@ -22,6 +21,7 @@ import {
   type ReportStatus,
   type ReportReason
 } from "@/api/discussion-admin";
+import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
 
 defineOptions({
   name: "TeacherReportManage"
@@ -420,7 +420,7 @@ onActivated(() => {
                 <el-button
                   link
                   type="primary"
-                  :icon="View"
+                  :icon="InfoIcon"
                   @click="viewDetail(row)"
                 />
               </el-tooltip>

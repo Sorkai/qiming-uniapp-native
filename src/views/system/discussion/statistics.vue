@@ -11,13 +11,15 @@ import {
   DataLine,
   Warning,
   User,
-  Document,
-  ChatDotRound
+  Document
 } from "@element-plus/icons-vue";
 import {
   getGlobalStatistics,
   type GlobalStatistics
 } from "@/api/discussion-admin";
+import HeartIcon from "@/assets/commentareasrelatedsvgs/heart-svgrepo-com.svg?component";
+import CommentIcon from "@/assets/commentareasrelatedsvgs/comment-lines-svgrepo-com.svg?component";
+import TrendIcon from "@/assets/commentareasrelatedsvgs/trend-up-svgrepo-com.svg?component";
 
 defineOptions({
   name: "DiscussionStatistics"
@@ -167,7 +169,7 @@ onMounted(() => {
           <div class="stat-content">
             <div class="stat-icon bg-green-100">
               <el-icon class="text-green-500" :size="24"
-                ><ChatDotRound
+                ><CommentIcon
               /></el-icon>
             </div>
             <div class="stat-info">
@@ -413,7 +415,7 @@ onMounted(() => {
                 {{ item.title }}
               </span>
               <span class="rank-value">
-                <el-icon class="text-orange-500"><Star /></el-icon>
+                <el-icon class="text-red-500"><HeartIcon /></el-icon>
                 {{ item.likes }}
               </span>
             </div>
@@ -492,13 +494,6 @@ onMounted(() => {
     </el-row>
   </div>
 </template>
-
-<script lang="ts">
-import { Star } from "@element-plus/icons-vue";
-export default {
-  components: { Star }
-};
-</script>
 
 <style lang="scss" scoped>
 .statistics-page {

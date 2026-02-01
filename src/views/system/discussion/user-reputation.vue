@@ -5,12 +5,13 @@
  */
 import { ref, reactive, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Refresh, Edit, View, Warning } from "@element-plus/icons-vue";
+import { Search, Refresh, Edit, Warning } from "@element-plus/icons-vue";
 import {
   getUserReputationList,
   updateUserReputation,
   type UserReputation
 } from "@/api/discussion-admin";
+import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
 
 defineOptions({
   name: "UserReputationManage"
@@ -370,7 +371,7 @@ onMounted(() => {
             <el-button
               link
               type="primary"
-              :icon="View"
+              :icon="InfoIcon"
               @click="viewDetail(row)"
             >
               详情
