@@ -631,7 +631,7 @@ onActivated(() => {
               </div>
               <div class="post-meta">
                 <div class="meta-item">
-                  <el-avatar :size="18" :src="row.author?.avatar" />
+                  <el-avatar :size="20" :src="row.author?.avatar" />
                   <span class="meta-author">{{ row.author?.name }}</span>
                 </div>
                 <el-divider direction="vertical" />
@@ -640,7 +640,7 @@ onActivated(() => {
                 </div>
                 <el-divider direction="vertical" />
                 <div class="meta-item">
-                  <el-icon :size="12"><Clock /></el-icon>
+                  <el-icon :size="14"><Clock /></el-icon>
                   <span>{{ formatTime(row.createdAt) }}</span>
                 </div>
               </div>
@@ -926,14 +926,6 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .discussion-manage {
-  padding: 24px;
-  background-color: #f8fafc;
-  min-height: calc(100vh - 88px);
-
-  html.dark & {
-    background-color: #1a1a1a;
-  }
-
   :deep(.el-card) {
     border: none;
     border-radius: 16px;
@@ -1027,7 +1019,7 @@ onActivated(() => {
       }
 
       .post-title {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 600;
         color: #1e293b;
         overflow: hidden;
@@ -1041,7 +1033,7 @@ onActivated(() => {
     }
 
     .post-excerpt {
-      font-size: 13px;
+      font-size: 14px;
       color: #64748b;
       line-height: 1.6;
       margin-bottom: 10px;
@@ -1059,7 +1051,7 @@ onActivated(() => {
       display: flex;
       align-items: center;
       gap: 12px;
-      font-size: 12px;
+      font-size: 13px;
       color: #94a3b8;
 
       .meta-item {
@@ -1079,7 +1071,7 @@ onActivated(() => {
 
       :deep(.el-divider--vertical) {
         margin: 0;
-        height: 10px;
+        height: 12px;
         border-color: #e2e8f0;
 
         html.dark & {

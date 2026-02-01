@@ -616,14 +616,6 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .report-manage {
-  padding: 24px;
-  background-color: #f8fafc;
-  min-height: calc(100vh - 88px);
-
-  html.dark & {
-    background-color: #1a1a1a;
-  }
-
   :deep(.el-card) {
     border: none;
     border-radius: 16px;

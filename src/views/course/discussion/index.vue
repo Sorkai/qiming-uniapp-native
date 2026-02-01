@@ -443,7 +443,7 @@ onActivated(() => {
 </script>
 
 <template>
-  <div class="review-queue p-4">
+  <div class="review-queue">
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="mb-6">
       <el-col :xs="8" :sm="8" :md="8">
@@ -898,14 +898,6 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .review-queue {
-  padding: 24px;
-  background-color: #f8fafc;
-  min-height: calc(100vh - 88px);
-
-  html.dark & {
-    background-color: #1a1a1a;
-  }
-
   :deep(.el-card) {
     border: none;
     border-radius: 16px;
