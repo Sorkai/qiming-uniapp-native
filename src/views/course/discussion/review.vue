@@ -61,7 +61,8 @@ const stats = ref({
 const searchForm = reactive({
   courseId: "",
   status: "" as "" | "pending" | "approved" | "rejected",
-  keyword: ""
+  keyword: "",
+  type: "all" as "all" | "post" | "reply" // 类型筛选：全部/帖子/回复
 });
 
 // 分页
@@ -77,6 +78,13 @@ const statusOptions = [
   { label: "待审核", value: "pending" },
   { label: "已通过", value: "approved" },
   { label: "已拒绝", value: "rejected" }
+];
+
+// 类型选项（帖子/回复）
+const typeOptions = [
+  { label: "全部", value: "all" },
+  { label: "帖子", value: "post" },
+  { label: "回复", value: "reply" }
 ];
 
 // 状态标签样式
@@ -122,12 +130,12 @@ const riskLevelText = (level: string): string => {
   return map[level] || level;
 };
 
-// 加载数据
+// 加载数据- 使用 getAdminDiscussions 获取已发布的讨论列表
 const fetchData = async () => {
   loading.value = true;
   try {
-    // 如果选择了课程，直接获取该课程的讨论列表
     if (searchForm.courseId) {
+      // 如果选择了课程，直接获取该课程的讨论列表
       const res = await getAdminDiscussions(searchForm.courseId, {
         page: pagination.page,
         pageSize: pagination.pageSize,
@@ -233,6 +241,7 @@ const resetSearch = () => {
   searchForm.courseId = "";
   searchForm.status = "";
   searchForm.keyword = "";
+  searchForm.type = "all";
   handleSearch();
 };
 

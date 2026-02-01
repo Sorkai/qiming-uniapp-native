@@ -20,7 +20,9 @@ import {
   reviewPost,
   batchReview,
   getTeacherCourseStats,
-  type ReviewQueueItem
+  getPendingList,
+  type ReviewQueueItem,
+  type PendingItem
 } from "@/api/discussion-admin";
 import { getCourseList } from "@/api/course";
 import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
@@ -113,68 +115,55 @@ const riskLevelText = (level: string): string => {
   return map[level] || level;
 };
 
-// 加载数据
+// 加载数据- 使用 getPendingList获取待审核内容（包括帖子和回复）
 const fetchData = async () => {
   loading.value = true;
   try {
-    // 如果选择了课程，直接获取该课程的讨论列表
-    if (searchForm.courseId) {
-      const res = await getAdminDiscussions(searchForm.courseId, {
-        page: pagination.page,
-        pageSize: pagination.pageSize,
-        sortBy: "latest"
-      });
-      // 转换为 ReviewQueueItem 格式
-      reviewItems.value = res.data.list.map(item => ({
-        ...item,
-        riskLevel: "low" as const,
-        matchedWords: [],
-        priority: "medium" as const,
-        courseName:
-          stats.value.courses.find(c => c.courseId === searchForm.courseId)
-            ?.courseName || ""
-      })) as ReviewQueueItem[];
-      pagination.total = res.data.pagination.total;
-      stats.value.pending = res.data.pagination.total;
-    } else {
-      // 没有选择课程，获取所有课程的讨论列表
-      const allItems: ReviewQueueItem[] = [];
-      let totalCount = 0;
+    // 使用待审核列表接口获取待审核内容
+    const res = await getPendingList({
+      courseId: searchForm.courseId || undefined,
+      type: "all", // 获取所有类型（帖子和回复）
+      pageNum: pagination.page,
+      pageSize: pagination.pageSize
+    });
 
-      // 先确保课程列表已加载
-      if (stats.value.courses.length === 0) {
-        await fetchCourses();
-      }
+    // 兼容后端返回格式
+    const responseData = (res as any)?.data || res;
+    const list = responseData?.list || [];
+    const total = responseData?.total || 0;
 
-      // 遍历所有课程获取讨论
-      for (const course of stats.value.courses) {
-        try {
-          const res = await getAdminDiscussions(course.courseId, {
-            page: 1,
-            pageSize: 100,
-            sortBy: "latest"
-          });
-          const items = res.data.list.map(item => ({
-            ...item,
-            riskLevel: "low" as const,
-            matchedWords: [],
-            priority: "medium" as const,
-            courseName: course.courseName
-          })) as ReviewQueueItem[];
-          allItems.push(...items);
-          totalCount += res.data.pagination.total;
-        } catch (err) {
-          console.error(`获取课程 ${course.courseId} 讨论失败:`, err);
-        }
-      }
+    // 转换 PendingItem 为 ReviewQueueItem 格式
+    reviewItems.value = list.map((item: PendingItem) => ({
+      id: String(item.id),
+      title: item.postTitle || (item.type === "reply" ? "[回复]" : ""),
+      content: item.content,
+      contentHtml: item.content,
+      author: {
+        id: String(item.authorId),
+        name: item.authorName,
+        avatar: "",
+        isTeacher: false,
+        isAdmin: false
+      },
+      tags: [],
+      status: "pending" as const,
+      isPinned: false,
+      likeCount: 0,
+      replyCount: 0,
+      viewCount: 0,
+      isLiked: false,
+      createdAt: item.createTime,
+      courseName: item.courseName,
+      riskLevel: "low" as const,
+      matchedWords: [],
+      priority: "medium" as const,
+      // 额外字段用于区分类型
+      itemType: item.type,
+      postId: item.postId
+    })) as ReviewQueueItem[];
 
-      // 分页处理
-      const startIndex = (pagination.page - 1) * pagination.pageSize;
-      const endIndex = startIndex + pagination.pageSize;
-      reviewItems.value = allItems.slice(startIndex, endIndex);
-      pagination.total = totalCount;
-      stats.value.pending = totalCount;
-    }
+    pagination.total = total;
+    stats.value.pending = total;
   } catch (error) {
     console.error("加载审核队列失败", error);
   } finally {
