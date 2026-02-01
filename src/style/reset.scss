@@ -96,6 +96,12 @@ textarea {
   color: inherit;
 }
 
+/* 隐藏 Edge 浏览器的密码查看图标 */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+
 button,
 select {
   text-transform: none;
