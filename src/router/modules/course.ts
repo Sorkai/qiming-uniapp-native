@@ -65,8 +65,8 @@ export default [
         name: "CourseDiscussionReview",
         component: () => import("@/views/course/discussion/review.vue"),
         meta: {
-          icon: "ri:checkbox-circle-line",
-          title: "内容审核",
+          icon: "ri:chat-3-line",
+          title: "讨论列表",
           roles: ["admin", "teacher"]
         }
       },
@@ -75,8 +75,8 @@ export default [
         name: "CourseDiscussionIndex",
         component: () => import("@/views/course/discussion/index.vue"),
         meta: {
-          icon: "ri:chat-3-line",
-          title: "讨论列表",
+          icon: "ri:checkbox-circle-line",
+          title: "内容审核",
           roles: ["admin", "teacher"]
         }
       },
