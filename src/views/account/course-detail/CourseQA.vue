@@ -1020,11 +1020,19 @@ const handleLike = async (message: Message) => {
 
 const handleShowReplies = async (message: Message) => {
   message.showReplies = !message.showReplies;
-  if (message.showReplies && message.replies.length === 0) {
+  if (message.showReplies) {
     try {
       const result = await getReplies(message.id);
       message.replies = result.data.list;
-    } catch (error) {}
+      // 关键：点开时同步真实的回复总数，解决后端列表接口返回数量不准的问题
+      if (result?.data && typeof result.data.total === "number") {
+        message.replyCount = result.data.total;
+      }
+      message.hasMoreReplies =
+        message.replies.length < (result.data.total || 0);
+    } catch (error) {
+      console.error("获取回复列表失败:", error);
+    }
   }
 };
 
@@ -1089,6 +1097,11 @@ const loadMoreReplies = async (message: Message) => {
     const result = await getReplies(message.id, { page, pageSize: 5 });
     message.replies = [...message.replies, ...result.data.list];
     message.hasMoreReplies = message.replies.length < result.data.total;
+
+    // 同步回复总数
+    if (result?.data && typeof result.data.total === "number") {
+      message.replyCount = result.data.total;
+    }
   } catch (error) {}
 };
 
