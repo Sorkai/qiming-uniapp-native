@@ -445,42 +445,42 @@ onActivated(() => {
 <template>
   <div class="review-queue p-4">
     <!-- 统计卡片 -->
-    <el-row :gutter="16" class="mb-4">
+    <el-row :gutter="20" class="mb-6">
       <el-col :xs="8" :sm="8" :md="8">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card pending">
           <div class="stat-content">
             <div class="stat-icon warning">
-              <el-icon :size="28"><Clock /></el-icon>
+              <el-icon :size="30"><Clock /></el-icon>
             </div>
             <div class="stat-info">
               <div class="stat-number">{{ stats.pending }}</div>
-              <div class="stat-label">待审核</div>
+              <div class="stat-label">待审核内容</div>
             </div>
           </div>
         </el-card>
       </el-col>
       <el-col :xs="8" :sm="8" :md="8">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card high">
           <div class="stat-content">
             <div class="stat-icon danger">
-              <el-icon :size="28"><Warning /></el-icon>
+              <el-icon :size="30"><Warning /></el-icon>
             </div>
             <div class="stat-info">
               <div class="stat-number">{{ stats.highPriority }}</div>
-              <div class="stat-label">高优先级</div>
+              <div class="stat-label">高风险预警</div>
             </div>
           </div>
         </el-card>
       </el-col>
       <el-col :xs="8" :sm="8" :md="8">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card avg">
           <div class="stat-content">
             <div class="stat-icon info">
-              <el-icon :size="28"><Clock /></el-icon>
+              <el-icon :size="30"><Clock /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-number text-sm">{{ stats.avgWaitTime }}</div>
-              <div class="stat-label">平均等待</div>
+              <div class="stat-number">{{ stats.avgWaitTime }}</div>
+              <div class="stat-label">平均处理时效</div>
             </div>
           </div>
         </el-card>
@@ -488,36 +488,42 @@ onActivated(() => {
     </el-row>
 
     <!-- 搜索栏 -->
-    <el-card shadow="never" class="mb-4">
+    <el-card shadow="never" class="mb-4 search-card">
       <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="课程">
+        <el-form-item label="所属课程">
           <el-select
             v-model="searchForm.courseId"
-            placeholder="全部课程"
+            placeholder="筛选课程"
             clearable
-            style="width: 200px"
+            style="width: 220px"
           >
             <el-option
               v-for="course in stats.courses"
               :key="course.courseId"
               :label="course.courseName"
               :value="course.courseId"
-              ><span>{{ course.courseName }}</span>
-              <el-badge
-                v-if="course.pendingCount > 0"
-                :value="course.pendingCount"
-                class="ml-2"
-                type="warning"
-              />
+            >
+              <div class="flex justify-between items-center">
+                <span>{{ course.courseName }}</span>
+                <el-tag
+                  v-if="course.pendingCount > 0"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                  round
+                >
+                  {{ course.pendingCount }}
+                </el-tag>
+              </div>
             </el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="优先级">
           <el-select
             v-model="searchForm.priority"
-            placeholder="全部优先级"
+            placeholder="内容优先级"
             clearable
-            style="width: 140px"
+            style="width: 150px"
           >
             <el-option
               v-for="opt in priorityOptions"
@@ -529,17 +535,17 @@ onActivated(() => {
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">
-            搜索
+            查询审核
           </el-button>
-          <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
+          <el-button :icon="Refresh" @click="resetSearch">重置条件</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 操作栏 -->
-    <el-card shadow="never" class="mb-4">
+    <el-card shadow="never" class="mb-4 action-bar">
       <div class="flex justify-between items-center">
-        <div class="flex gap-2">
+        <div class="flex gap-4 items-center">
           <el-button
             type="success"
             :icon="Check"
@@ -556,110 +562,138 @@ onActivated(() => {
           >
             批量拒绝
           </el-button>
-          <span v-if="selectedIds.length > 0" class="ml-4text-gray-500">
-            已选择 {{ selectedIds.length }} 项
-          </span>
+          <div v-if="selectedIds.length > 0" class="batch-info animate-pulse">
+            <el-icon class="mr-1"><Warning /></el-icon>
+            已选中 {{ selectedIds.length }} 个待审项
+          </div>
         </div>
-        <el-button :icon="Refresh" @click="initData">刷新</el-button>
+        <el-button :icon="Refresh" plain @click="initData">同步数据</el-button>
       </div>
     </el-card>
 
     <!-- 数据表格 -->
-    <el-card shadow="never">
+    <el-card shadow="never" class="data-card">
       <el-table
         v-loading="loading"
         :data="reviewItems"
-        stripe
+        row-class-name="review-table-row"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="50" />
-        <el-table-column label="内容" min-width="350">
+        <el-table-column type="selection" width="55" />
+        <el-table-column label="讨论内容" min-width="400">
           <template #default="{ row }">
             <div class="review-content">
-              <div class="content-title font-medium">
+              <div class="content-title">
                 {{ row.title || "(无标题)" }}
               </div>
-              <div class="content-excerpt text-gray-500text-sm mt-1">
-                {{ row.content.substring(0, 120) }}...
+              <div class="content-excerpt">
+                {{ row.content.substring(0, 150)
+                }}{{ row.content.length > 150 ? "..." : "" }}
               </div>
-              <div
-                class="content-meta text-gray-400 text-xs mt-2flex items-center gap-3"
-              >
-                <span class="flex items-center gap-1">
-                  <el-avatar :size="18" :src="row.author?.avatar" />
-                  {{ row.author?.name }}
-                </span>
-                <span>{{ row.courseName || "未知课程" }}</span
-                ><span>{{ formatTime(row.createdAt) }}</span>
+              <div class="content-meta">
+                <div class="meta-item">
+                  <el-avatar :size="20" :src="row.author?.avatar" />
+                  <span class="font-medium text-gray-700 dark:text-gray-300">
+                    {{ row.author?.name }}
+                  </span>
+                </div>
+                <div class="meta-item">
+                  <el-icon><View /></el-icon>
+                  <span>{{ row.courseName || "未知课程" }}</span>
+                </div>
+                <div class="meta-item">
+                  <el-icon><Clock /></el-icon>
+                  <span>{{ formatTime(row.createdAt) }}</span>
+                </div>
               </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="优先级" width="90" align="center">
+        <el-table-column label="优先级" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="priorityTagType(row.priority)" size="small">
+            <el-tag :type="priorityTagType(row.priority)" effect="light" round>
               {{ priorityText(row.priority) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="风险等级" width="100" align="center">
+        <el-table-column label="风险评估" width="110" align="center">
           <template #default="{ row }">
-            <el-tag :type="riskLevelType(row.riskLevel)" size="small">
+            <el-tag
+              :type="riskLevelType(row.riskLevel)"
+              effect="dark"
+              round
+              size="small"
+            >
               {{ riskLevelText(row.riskLevel) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="敏感词" width="150">
+        <el-table-column label="命词词库" width="160">
           <template #default="{ row }">
             <div v-if="row.matchedWords?.length" class="flex flex-wrap gap-1">
               <el-tag
-                v-for="word in row.matchedWords.slice(0, 3)"
+                v-for="word in row.matchedWords.slice(0, 2)"
                 :key="word"
                 type="danger"
                 size="small"
+                effect="plain"
               >
                 {{ word }}
               </el-tag>
-              <el-tag
-                v-if="row.matchedWords.length > 3"
-                type="info"
-                size="small"
+              <el-tooltip
+                v-if="row.matchedWords.length > 2"
+                :content="row.matchedWords.slice(2).join(', ')"
               >
-                +{{ row.matchedWords.length - 3 }}
-              </el-tag>
+                <el-tag type="info" size="small" effect="plain">
+                  +{{ row.matchedWords.length - 2 }}
+                </el-tag>
+              </el-tooltip>
             </div>
-            <span v-else class="text-gray-400">-</span>
+            <span v-else class="text-gray-300">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="等待时间" width="120" align="center">
-          <template #default="{ row }"
-            ><span
-              class="text-sm"
+        <el-table-column label="等待已久" width="120" align="center">
+          <template #default="{ row }">
+            <div
+              class="flex flex-col items-center"
               :class="{
-                'text-red-500': getWaitTime(row.createdAt).includes('天')
+                'text-red-500 font-bold': getWaitTime(row.createdAt).includes(
+                  '天'
+                )
               }"
             >
-              {{ getWaitTime(row.createdAt) }}
-            </span>
+              <span class="text-xs text-gray-400 mb-1">已等待</span>
+              <span class="text-sm">
+                {{ getWaitTime(row.createdAt) }}
+              </span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140" align="center" fixed="right">
+        <el-table-column
+          label="审核操作"
+          width="160"
+          align="center"
+          fixed="right"
+        >
           <template #default="{ row }">
             <div class="action-btns">
-              <el-tooltip content="查看详情" placement="top">
-                <el-button link type="primary" @click="viewDetail(row)">
-                  <el-icon><View /></el-icon>
-                </el-button>
+              <el-tooltip content="进入详情审核" placement="top">
+                <div class="btn-icon-wrapper view" @click="viewDetail(row)">
+                  <el-icon :size="18"><View /></el-icon>
+                </div>
               </el-tooltip>
-              <el-tooltip content="通过" placement="top">
-                <el-button link type="success" @click="handleApprove(row)">
-                  <el-icon><Check /></el-icon>
-                </el-button>
+              <el-tooltip content="直接通过" placement="top">
+                <div
+                  class="btn-icon-wrapper approve"
+                  @click="handleApprove(row)"
+                >
+                  <el-icon :size="18"><Check /></el-icon>
+                </div>
               </el-tooltip>
-              <el-tooltip content="拒绝" placement="top">
-                <el-button link type="danger" @click="handleReject(row)">
-                  <el-icon><Close /></el-icon>
-                </el-button>
+              <el-tooltip content="违规拒绝" placement="top">
+                <div class="btn-icon-wrapper reject" @click="handleReject(row)">
+                  <el-icon :size="18"><Close /></el-icon>
+                </div>
               </el-tooltip>
             </div>
           </template>
@@ -683,11 +717,13 @@ onActivated(() => {
     <!-- 详情弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="内容审核"
-      width="700px"
+      title="内容审核详情"
+      width="800px"
       destroy-on-close
+      border-radius="16px"
+      class="custom-dialog"
     >
-      <div v-if="currentDetail" class="review-detail">
+      <div v-if="currentDetail" class="review-detail px-2">
         <!-- 风险提示 -->
         <el-alert
           v-if="
@@ -696,116 +732,164 @@ onActivated(() => {
           "
           type="error"
           :closable="false"
-          class="mb-4"
+          show-icon
+          class="mb-6 rounded-xl"
         >
           <template #title>
-            <span class="font-medium">⚠️ 高风险内容</span>
+            <span class="font-bold text-base">系统预警：检测到高风险内容</span>
           </template>
           <template #default>
-            <div>
-              该内容被标记为高风险，请仔细审核。
-              <span v-if="currentDetail.matchedWords?.length"
-                >匹配敏感词：{{ currentDetail.matchedWords.join("、") }}
-              </span>
+            <div class="mt-1">
+              该内容已被系统算法标记为高风险，请审慎阅读并严格把关。
+              <div v-if="currentDetail.matchedWords?.length" class="mt-2">
+                <span class="font-medium opacity-80">命中敏感词：</span>
+                <el-tag
+                  v-for="word in currentDetail.matchedWords"
+                  :key="word"
+                  type="danger"
+                  size="small"
+                  class="mr-1"
+                >
+                  {{ word }}
+                </el-tag>
+              </div>
             </div>
           </template>
         </el-alert>
 
-        <!-- 基本信息 -->
-        <el-descriptions :column="2" border class="mb-4">
-          <el-descriptions-item label="作者">
-            <div class="flex items-center gap-2">
-              <el-avatar :size="24" :src="currentDetail.author?.avatar" />
-              <span>{{ currentDetail.author?.name }}</span>
+        <div class="grid grid-cols-3 gap-6 mb-6">
+          <div class="col-span-2">
+            <!-- 内容 -->
+            <div class="content-section">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">
+                  讨论正文
+                </h3>
+                <el-tag
+                  :type="priorityTagType(currentDetail.priority)"
+                  effect="dark"
+                >
+                  {{ priorityText(currentDetail.priority) }} 优先级
+                </el-tag>
+              </div>
+              <div
+                class="content-box p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm"
+              >
+                <h4
+                  v-if="currentDetail.title"
+                  class="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100"
+                >
+                  {{ currentDetail.title }}
+                </h4>
+                <div
+                  class="content-html prose dark:prose-invert max-w-none text-gray-700 leading-relaxed"
+                  v-html="currentDetail.contentHtml || currentDetail.content"
+                />
+              </div>
             </div>
-          </el-descriptions-item>
-          <el-descriptions-item label="课程">
-            {{ currentDetail.courseName || "未知课程" }}
-          </el-descriptions-item>
-          <el-descriptions-item label="提交时间">
-            {{ formatTime(currentDetail.createdAt) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="等待时间">
-            <span
-              :class="{
-                'text-red-500': getWaitTime(currentDetail.createdAt).includes(
-                  '天'
-                )
-              }"
-            >
-              {{ getWaitTime(currentDetail.createdAt) }}
-            </span>
-          </el-descriptions-item>
-          <el-descriptions-item label="优先级">
-            <el-tag
-              :type="priorityTagType(currentDetail.priority)"
-              size="small"
-            >
-              {{ priorityText(currentDetail.priority) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="风险等级">
-            <el-tag :type="riskLevelType(currentDetail.riskLevel)" size="small">
-              {{ riskLevelText(currentDetail.riskLevel) }}
-            </el-tag>
-          </el-descriptions-item>
-        </el-descriptions>
+          </div>
 
-        <!-- 内容 -->
-        <div class="content-section">
-          <div class="section-title text-gray-600 mb-2">内容详情</div>
-          <div class="content-box p-4 bg-gray-50 rounded">
-            <h4 v-if="currentDetail.title" class="font-medium mb-2">
-              {{ currentDetail.title }}
-            </h4>
+          <div class="col-span-1 space-y-6">
+            <!-- 侧边栏信息 -->
+            <div class="info-card p-5 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+              <h4
+                class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4"
+              >
+                发布者信息
+              </h4>
+              <div class="flex items-center gap-3 mb-4">
+                <el-avatar :size="48" :src="currentDetail.author?.avatar" />
+                <div>
+                  <div class="font-bold text-gray-900 dark:text-gray-100">
+                    {{ currentDetail.author?.name }}
+                  </div>
+                  <div class="text-xs text-gray-500">
+                    UID: {{ currentDetail.author?.id?.substring(0, 8) }}
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">所属课程</span>
+                  <span class="font-medium truncate ml-2">{{
+                    currentDetail.courseName || "未知课程"
+                  }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">发布时间</span>
+                  <span class="font-medium">{{
+                    formatTime(currentDetail.createdAt)
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
             <div
-              class="content-html prose max-w-none"
-              v-html="currentDetail.contentHtml || currentDetail.content"
-            />
-          </div>
-        </div>
-
-        <!-- 标签 -->
-        <div v-if="currentDetail.tags?.length" class="mt-4">
-          <div class="section-title text-gray-600 mb-2">标签</div>
-          <div class="flex flex-wrap gap-2">
-            <el-tag v-for="tag in currentDetail.tags" :key="tag" size="small">
-              {{ tag }}
-            </el-tag>
-          </div>
-        </div>
-
-        <!-- 敏感词匹配 -->
-        <div v-if="currentDetail.matchedWords?.length" class="mt-4">
-          <div class="section-title text-gray-600 mb-2">匹配敏感词</div>
-          <div class="flex flex-wrap gap-2">
-            <el-tag
-              v-for="word in currentDetail.matchedWords"
-              :key="word"
-              type="danger"
-              size="small"
+              class="info-card p-5 bg-orange-50 dark:bg-orange-950/20 rounded-2xl border border-orange-100 dark:border-orange-900/30"
             >
-              {{ word }}
-            </el-tag>
+              <h4
+                class="text-sm font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-4"
+              >
+                审核状态
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <div class="text-xs text-orange-600/70 mb-1">等待时长</div>
+                  <div
+                    class="text-lg font-bold"
+                    :class="{
+                      'text-red-500': getWaitTime(
+                        currentDetail.createdAt
+                      ).includes('天')
+                    }"
+                  >
+                    {{ getWaitTime(currentDetail.createdAt) }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-orange-600/70 mb-1">风险等级</div>
+                  <el-tag
+                    :type="riskLevelType(currentDetail.riskLevel)"
+                    effect="dark"
+                  >
+                    {{ riskLevelText(currentDetail.riskLevel) }}
+                  </el-tag>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <template #footer>
-        <div class="flex justify-between">
-          <div class="flex gap-2">
+        <div
+          class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 -mx-5 -mb-5 px-6 py-4 rounded-b-2xl"
+        >
+          <div class="text-sm text-gray-500 italic">
+            请确认内容符合社区准则后再予以通过
+          </div>
+          <div class="flex gap-3">
+            <el-button size="large" @click="detailDialogVisible = false">
+              暂时跳过
+            </el-button>
+            <el-button
+              type="danger"
+              size="large"
+              plain
+              :icon="Close"
+              @click="handleDetailReject"
+            >
+              违规屏蔽
+            </el-button>
             <el-button
               type="success"
+              size="large"
               :icon="Check"
               @click="handleDetailApprove"
             >
-              审核通过
-            </el-button>
-            <el-button type="danger" :icon="Close" @click="handleDetailReject">
-              审核拒绝
+              准予通过
             </el-button>
           </div>
-          <el-button @click="detailDialogVisible = false">关闭</el-button>
         </div>
       </template>
     </el-dialog>
@@ -814,84 +898,229 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .review-queue {
+  padding: 24px;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 88px);
+
+  html.dark & {
+    background-color: #1a1a1a;
+  }
+
   :deep(.el-card) {
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%);
-    transition: all 0.3s;
+    border-radius: 16px;
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 
     html.dark & {
-      box-shadow: 0 4px 12px 0 rgb(0 0 0 / 20%);
+      background-color: #242424;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
     }
 
     &:hover {
-      box-shadow: 0 8px 24px 0 rgb(0 0 0 / 10%);
+      transform: translateY(-2px);
+      box-shadow:
+        0 10px 15px -3px rgb(0 0 0 / 0.1),
+        0 4px 6px -4px rgb(0 0 0 / 0.1);
 
       html.dark & {
-        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 40%);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
       }
     }
   }
 
   .stat-card {
+    position: relative;
+    border-left: 4px solid transparent;
+
+    &.pending {
+      border-left-color: #e6a23c;
+    }
+    &.high {
+      border-left-color: #f56c6c;
+    }
+    &.avg {
+      border-left-color: #409eff;
+    }
+
     .stat-content {
       display: flex;
-      gap: 16px;
+      gap: 20px;
       align-items: center;
-      padding: 8px 0;
+      padding: 12px 4px;
 
       .stat-icon {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 56px;
-        height: 56px;
+        width: 60px;
+        height: 60px;
         color: #fff;
-        border-radius: 12px;
+        border-radius: 18px;
+        box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.1);
+        transition: transform 0.3s;
 
         &.warning {
-          background: linear-gradient(135deg, #e6a23c, #f5c76e);
+          background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
         }
 
         &.danger {
-          background: linear-gradient(135deg, #f56c6c, #f89898);
+          background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
         }
 
         &.info {
-          background: linear-gradient(135deg, #909399, #b1b3b8);
+          background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
         }
       }
 
       .stat-info {
         .stat-number {
-          font-size: 24px;
-          font-weight: 600;
-          color: #303133;
+          font-size: 28px;
+          font-weight: 700;
+          color: #1e293b;
+          line-height: 1.2;
+
+          html.dark & {
+            color: #f1f5f9;
+          }
         }
 
         .stat-label {
           margin-top: 4px;
           font-size: 14px;
-          color: #909399;
+          font-weight: 500;
+          color: #64748b;
+
+          html.dark & {
+            color: #94a3b8;
+          }
+        }
+      }
+
+      &:hover .stat-icon {
+        transform: scale(1.1) rotate(5deg);
+      }
+    }
+  }
+
+  .search-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+
+    html.dark & {
+      background: rgba(36, 36, 36, 0.8);
+    }
+  }
+
+  .search-form {
+    padding: 4px 8px;
+    :deep(.el-form-item) {
+      margin-bottom: 0;
+      margin-right: 24px;
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      border-radius: 8px;
+      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+  }
+
+  .action-bar {
+    .batch-info {
+      display: flex;
+      align-items: center;
+      padding: 4px 12px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #475569;
+
+      html.dark & {
+        background: #334155;
+        color: #cbd5e1;
+      }
+    }
+  }
+
+  .data-card {
+    :deep(.el-table) {
+      --el-table-header-bg-color: #f8fafc;
+      --el-table-row-hover-bg-color: #f1f5f9;
+      border-radius: 12px;
+
+      html.dark & {
+        --el-table-header-bg-color: #1e1e1e;
+        --el-table-row-hover-bg-color: #2c2c2c;
+      }
+
+      .el-table__header {
+        th {
+          font-weight: 600;
+          color: #475569;
+          height: 50px;
+
+          html.dark & {
+            color: #94a3b8;
+          }
+        }
+      }
+
+      .el-table__row {
+        height: 80px;
+        transition: all 0.2s;
+
+        &:hover {
+          td {
+            background-color: var(--el-table-row-hover-bg-color) !important;
+          }
         }
       }
     }
   }
 
-  .search-form {
-    :deep(.el-form-item) {
-      margin-bottom: 0;
-    }
-  }
-
   .review-content {
     .content-title {
-      color: #303133;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+
+      html.dark & {
+        color: #f1f5f9;
+      }
     }
 
     .content-excerpt {
-      max-width: 400px;
-      line-height: 1.5;
+      max-width: 500px;
+      line-height: 1.6;
+      color: #64748b;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+
+      html.dark & {
+        color: #94a3b8;
+      }
+    }
+
+    .content-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #94a3b8;
+        font-size: 12px;
+      }
     }
   }
 
@@ -899,45 +1128,75 @@ onActivated(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 8px;
 
-    :deep(.el-button) {
-      padding: 4px 6px;
+    .btn-icon-wrapper {
+      padding: 8px;
+      border-radius: 10px;
+      transition: all 0.2s;
+      cursor: pointer;
 
-      .el-icon {
-        font-size: 16px;
+      &:hover {
+        background: rgba(0, 0, 0, 0.05);
+        transform: scale(1.1);
+      }
+
+      &.approve:hover {
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+      }
+      &.reject:hover {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+      }
+      &.view:hover {
+        color: #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
       }
     }
   }
 
   .review-detail {
-    .section-title {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
     .content-box {
-      .content-html {
-        line-height: 1.8;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      transition: all 0.3s;
 
-        :deep(p) {
-          margin-bottom: 1em;
-        }
+      html.dark & {
+        border-color: #334155;
+        background: #1e1e1e;
+      }
 
-        :deep(code) {
-          padding: 2px 6px;
-          background: #e8e8e8;
-          border-radius: 4px;
-        }
-
-        :deep(pre) {
-          padding: 12px;
-          overflow-x: auto;
-          background: #e8e8e8;
-          border-radius: 8px;
-        }
+      &:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
       }
     }
   }
+}
+
+/* 按钮点击波纹效果增强 */
+.el-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 10px;
+
+  &:not(.is-disabled):active {
+    transform: scale(0.95);
+  }
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 </style>

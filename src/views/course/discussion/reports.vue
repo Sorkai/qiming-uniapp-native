@@ -616,60 +616,120 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .report-manage {
+  padding: 24px;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 88px);
+
+  html.dark & {
+    background-color: #1a1a1a;
+  }
+
   :deep(.el-card) {
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%);
-    transition: all 0.3s;
+    border-radius: 16px;
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 
     html.dark & {
-      box-shadow: 0 4px 12px 0 rgb(0 0 0 / 20%);
+      background-color: #242424;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
     }
 
     &:hover {
-      box-shadow: 0 8px 24px 0 rgb(0 0 0 / 10%);
+      transform: translateY(-2px);
+      box-shadow:
+        0 10px 15px -3px rgb(0 0 0 / 0.1),
+        0 4px 6px -4px rgb(0 0 0 / 0.1);
 
       html.dark & {
-        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 40%);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
       }
     }
   }
 
   .stat-card {
     .stat-content {
-      padding: 10px 0;
+      padding: 12px 0;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
 
       .stat-number {
-        font-size: 28px;
-        font-weight: 600;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 8px;
+
+        &.text-warning {
+          color: #f59e0b;
+        }
+        &.text-success {
+          color: #10b981;
+        }
+        &.text-info {
+          color: #3b82f6;
+        }
       }
 
       .stat-label {
-        margin-top: 8px;
         font-size: 14px;
-        color: #909399;
+        font-weight: 500;
+        color: #64748b;
+
+        html.dark & {
+          color: #94a3b8;
+        }
       }
     }
   }
 
   .search-form {
+    padding: 4px 8px;
     :deep(.el-form-item) {
       margin-bottom: 0;
+      margin-right: 24px;
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      border-radius: 8px;
+      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
   }
 
   .report-content {
-    .content-text {
-      color: #606266;
-    }
-  }
+    .report-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
 
-  .report-detail {
-    .reported-content {
-      .content-text {
-        line-height: 1.8;
-        color: #303133;
+      .post-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1e293b;
+
+        html.dark & {
+          color: #f1f5f9;
+        }
+      }
+    }
+
+    .report-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: #94a3b8;
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
       }
     }
   }
@@ -678,15 +738,39 @@ onActivated(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 8px;
 
-    :deep(.el-button) {
-      padding: 4px 6px;
+    .btn-icon-wrapper {
+      padding: 8px;
+      border-radius: 10px;
+      transition: all 0.2s;
+      cursor: pointer;
+      color: #64748b;
 
-      .el-icon {
-        font-size: 16px;
+      &:hover {
+        background: rgba(0, 0, 0, 0.05);
+        transform: scale(1.1);
+      }
+
+      &.handle:hover {
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+      }
+      &.view:hover {
+        color: #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
       }
     }
+  }
+}
+
+/* 按钮点击波纹效果增强 */
+.el-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 10px;
+
+  &:not(.is-disabled):active {
+    transform: scale(0.95);
   }
 }
 </style>
