@@ -286,19 +286,21 @@ const formatTime = (dateStr: string) => {
 const dataLoaded = ref(false);
 
 // 初始化加载数据
-const initData = async () => {
+const initData = async (force = false) => {
   // 防止重复加载
-  if (loading.value || dataLoaded.value) {
+  if (loading.value || (dataLoaded.value && !force)) {
     console.log(
       "[review.vue] initData 跳过, loading:",
       loading.value,
       "dataLoaded:",
-      dataLoaded.value
+      dataLoaded.value,
+      "force:",
+      force
     );
     return;
   }
 
-  console.log("[review.vue] initData 开始执行");
+  console.log("[review.vue] initData 开始执行, force:", force);
   await fetchStats();
   console.log(
     "[review.vue] fetchStats 完成,课程数量:",
@@ -450,7 +452,9 @@ onActivated(() => {
     <!-- 数据表格 -->
     <el-card shadow="never">
       <div class="flex justify-end mb-4">
-        <el-button :icon="Refresh" link @click="initData">同步状态</el-button>
+        <el-button :icon="Refresh" link @click="initData(true)"
+          >同步状态</el-button
+        >
       </div>
       <el-table
         v-loading="loading"
