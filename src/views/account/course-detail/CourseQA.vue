@@ -221,6 +221,10 @@
                       <el-icon><Position /></el-icon>
                       <span>回复</span>
                     </button>
+                    <button class="action-btn" @click="handleReport(message)">
+                      <el-icon><Warning /></el-icon>
+                      <span>举报</span>
+                    </button>
                   </div>
                   <div class="view-count">
                     <el-icon><TrendCharts /></el-icon>
@@ -286,6 +290,13 @@
                             >
                               <el-icon><Position /></el-icon>
                               回复
+                            </button>
+                            <button
+                              class="reply-action-btn"
+                              @click="handleReportReply(message, reply)"
+                            >
+                              <el-icon><Warning /></el-icon>
+                              举报
                             </button>
                             <button
                               v-if="reply.isOwner"
@@ -665,11 +676,53 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 举报弹窗 -->
+    <el-dialog
+      v-model="reportDialogVisible"
+      title="举报违规内容"
+      width="400px"
+      destroy-on-close
+      :append-to-body="true"
+      class="custom-report-dialog"
+    >
+      <el-form :model="reportForm" label-position="top">
+        <el-form-item label="举报原因" required>
+          <el-radio-group v-model="reportForm.reason">
+            <el-radio label="spam">垃圾广告</el-radio>
+            <el-radio label="abuse">恶意攻击</el-radio>
+            <el-radio label="inappropriate">不当言论</el-radio>
+            <el-radio label="other">其他</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="详细说明">
+          <el-input
+            v-model="reportForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请描述具体违规情况（可选）"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="reportDialogVisible = false">取 消</el-button>
+          <el-button
+            type="primary"
+            :loading="submittingReport"
+            @click="confirmReport"
+          >
+            <el-icon class="mr-1"><Position /></el-icon>
+            提交举报
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, reactive, computed, watch, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Search,
@@ -716,11 +769,14 @@ import {
   unlikePost,
   likeReply,
   unlikeReply,
+  reportPost,
+  reportReply,
   pinPost,
   unpinPost,
   DiscussionPost,
   Reply,
-  DiscussionStats
+  DiscussionStats,
+  ReportParams
 } from "@/api/discussion";
 
 // 为了兼容原有模板，我们可以扩展类型或者使用 API 返回的类型
@@ -809,6 +865,16 @@ const editingContent = ref({
   title: "",
   content: "",
   tags: [] as string[]
+});
+
+// 举报相关的状态
+const reportDialogVisible = ref(false);
+const submittingReport = ref(false);
+const reportForm = reactive({
+  type: "post", // 'post' or 'reply'
+  targetId: "",
+  reason: "inappropriate" as any,
+  description: ""
 });
 
 const editReplyDialogVisible = ref(false);
@@ -1074,9 +1140,9 @@ const handleLikeReply = async (message: Message, reply: Reply) => {
   try {
     let result: any;
     if (oldIsLiked) {
-      result = await unlikeReply(message.id, reply.id);
+      result = await unlikeReply(reply.id);
     } else {
-      result = await likeReply(message.id, reply.id);
+      result = await likeReply(reply.id);
     }
 
     // 如果后端返回了新的数量，以此为准同步
@@ -1153,10 +1219,11 @@ const submitEditReply = async () => {
 
 const handleDeleteReply = async (message: Message, reply: Reply) => {
   try {
-    await ElMessageBox.confirm("确定要删除这条回复吗？", "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
+    await ElMessageBox.confirm("确定要删除这条回复吗？", "提 示", {
+      confirmButtonText: "确 定",
+      cancelButtonText: "取 消",
+      type: "warning",
+      customClass: "custom-message-box"
     });
 
     await deleteReply(reply.id);
@@ -1169,6 +1236,49 @@ const handleDeleteReply = async (message: Message, reply: Reply) => {
     if (error !== "cancel") {
       ElMessage.error("删除失败");
     }
+  }
+};
+
+const handleReport = (message: Message) => {
+  reportForm.type = "post";
+  reportForm.targetId = message.id;
+  reportForm.reason = "inappropriate";
+  reportForm.description = "";
+  reportDialogVisible.value = true;
+};
+
+const handleReportReply = (message: Message, reply: Reply) => {
+  reportForm.type = "reply";
+  reportForm.targetId = reply.id;
+  reportForm.reason = "inappropriate";
+  reportForm.description = "";
+  reportDialogVisible.value = true;
+};
+
+const confirmReport = async () => {
+  if (!reportForm.reason) {
+    ElMessage.warning("请选择举报原因");
+    return;
+  }
+  submittingReport.value = true;
+  try {
+    const params: ReportParams = {
+      reason: reportForm.reason,
+      description: reportForm.description
+    };
+
+    if (reportForm.type === "post") {
+      await reportPost(reportForm.targetId, params);
+    } else {
+      await reportReply(reportForm.targetId, params);
+    }
+
+    ElMessage.success("举报已提交，我们将尽快处理");
+    reportDialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error("举报提交失败");
+  } finally {
+    submittingReport.value = false;
   }
 };
 
@@ -1193,9 +1303,9 @@ const handleSaveEdit = async () => {
 
 const handleDeleteMessage = async (message: Message) => {
   try {
-    await ElMessageBox.confirm("确定要删除这条内容吗？", "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
+    await ElMessageBox.confirm("确定要删除这条内容吗？", "提 示", {
+      confirmButtonText: "确 定",
+      cancelButtonText: "取 消",
       type: "warning",
       draggable: true,
       customClass: "custom-message-box"
@@ -2806,22 +2916,33 @@ const filterByTag = (tagName: string) => {
 }
 
 :global(.custom-message-box .el-message-box__btns) {
-  padding: 8px 24px 24px !important;
+  padding: 12px 32px 32px !important;
 }
 
 :global(.custom-message-box .el-message-box__btns .el-button) {
-  height: 40px !important;
-  padding: 0 24px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  border-radius: 10px !important;
-  transition: all 0.2s ease !important;
+  height: 46px !important;
+  padding: 0 36px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border-radius: 14px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin-left: 16px !important;
+  letter-spacing: 0.5px !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button:first-child) {
+  margin-left: 0 !important;
 }
 
 :global(.custom-message-box .el-message-box__btns .el-button--primary) {
-  padding: 0 28px !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3) !important;
+  background: linear-gradient(135deg, #409eff 0%, #2a7fdf 100%) !important;
+  border: none !important;
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35) !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button--primary:hover) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4) !important;
 }
 
 :global(.custom-message-box .el-message-box__btns .el-button:active) {
@@ -2860,5 +2981,200 @@ const filterByTag = (tagName: string) => {
 
 :global(.dark) :global(.custom-message-box .el-button--primary) {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 举报弹窗自定义样式 */
+:global(.custom-report-dialog) {
+  border-radius: 24px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+:global(.custom-report-dialog .el-dialog__header) {
+  margin-right: 0 !important;
+  padding: 28px 32px 20px !important;
+  background: linear-gradient(to right, #f8faff, #ffffff);
+  border-bottom: 1px solid #f0f2f5 !important;
+}
+
+:global(.custom-report-dialog .el-dialog__title) {
+  font-weight: 700 !important;
+  font-size: 20px !important;
+  color: #1d1d1f !important;
+  letter-spacing: -0.02em !important;
+}
+
+:global(.custom-report-dialog .el-dialog__headerbtn) {
+  top: 24px !important;
+  right: 24px !important;
+  font-size: 20px !important;
+}
+
+:global(.custom-report-dialog .el-dialog__body) {
+  padding: 32px !important;
+}
+
+:global(.custom-report-dialog .el-form-item__label) {
+  font-weight: 600 !important;
+  color: #1d1d1f !important;
+  margin-bottom: 12px !important;
+  font-size: 15px !important;
+}
+
+:global(.custom-report-dialog .el-radio-group) {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+:global(.custom-report-dialog .el-radio) {
+  margin-right: 0 !important;
+  padding: 12px 16px !important;
+  border: 1px solid #e3e8f0 !important;
+  border-radius: 12px !important;
+  height: auto !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:global(.custom-report-dialog .el-radio.is-checked) {
+  background-color: rgba(64, 158, 255, 0.08) !important;
+  border-color: #409eff !important;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15) !important;
+}
+
+:global(.custom-report-dialog .el-radio__inner) {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+:global(.custom-report-dialog .el-radio__label) {
+  font-size: 14px !important;
+  padding-left: 8px !important;
+  color: #4a5568 !important;
+}
+
+:global(.custom-report-dialog .el-radio.is-checked .el-radio__label) {
+  color: #409eff !important;
+  font-weight: 600 !important;
+}
+
+:global(.custom-report-dialog .el-textarea__inner) {
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  border: 1px solid #e3e8f0 !important;
+  background-color: #f8fafc !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+}
+
+:global(.custom-report-dialog .el-textarea__inner:focus) {
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1) !important;
+}
+
+:global(.custom-report-dialog .el-dialog__footer) {
+  padding: 20px 32px 32px !important;
+  border-top: 1px solid #f0f2f5 !important;
+  background-color: #fafbfc !important;
+}
+
+:global(.custom-report-dialog .dialog-footer) {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+
+:global(.custom-report-dialog .el-button) {
+  height: 46px !important;
+  padding: 0 36px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border-radius: 14px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  letter-spacing: 0.5px !important;
+}
+
+:global(.custom-report-dialog .el-button--default:not(.el-button--primary)) {
+  background-color: #ffffff !important;
+  border: 1px solid #e3e8f0 !important;
+  color: #4a5568 !important;
+}
+
+:global(
+  .custom-report-dialog .el-button--default:not(.el-button--primary):hover
+) {
+  color: #1d1d1f !important;
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+:global(.custom-report-dialog .el-button--primary) {
+  background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(64, 158, 255, 0.35) !important;
+}
+
+:global(.custom-report-dialog .el-button--primary:hover) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.45) !important;
+}
+
+:global(.custom-report-dialog .el-button--primary:active) {
+  transform: translateY(1px) !important;
+}
+
+/* 深色模式适配 - 举报弹窗 */
+:global(.dark) :global(.custom-report-dialog) {
+  background-color: #1d1d1f !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
+}
+
+:global(.dark) :global(.custom-report-dialog .el-dialog__header) {
+  background: linear-gradient(to right, #242428, #1d1d1f) !important;
+  border-bottom-color: #2d2d2f !important;
+}
+
+:global(.dark) :global(.custom-report-dialog .el-dialog__title) {
+  color: #e0e0e0 !important;
+}
+
+:global(.dark) :global(.custom-report-dialog .el-form-item__label) {
+  color: #e0e0e0 !important;
+}
+
+:global(.dark) :global(.custom-report-dialog .el-radio) {
+  border-color: #333335 !important;
+  background-color: #242428 !important;
+}
+
+:global(.dark) :global(.custom-report-dialog .el-radio.is-checked) {
+  background-color: rgba(64, 158, 255, 0.1) !important;
+  border-color: #409eff !important;
+}
+
+:global(.dark) :global(.custom-report-dialog .el-radio__label) {
+  color: #a0a0a2 !important;
+}
+
+:global(.dark) :global(.custom-report-dialog .el-textarea__inner) {
+  background-color: #161618 !important;
+  border-color: #333335 !important;
+  color: #e0e0e0 !important;
+}
+
+:global(.dark) :global(.custom-report-dialog .el-dialog__footer) {
+  background-color: #1d1d1f !important;
+  border-top-color: #2d2d2f !important;
+}
+
+:global(.dark)
+  :global(.custom-report-dialog .el-button--default:not(.el-button--primary)) {
+  background-color: #2d2d2f !important;
+  border-color: #3d3d3f !important;
+  color: #e0e0e0 !important;
 }
 </style>

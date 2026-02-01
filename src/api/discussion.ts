@@ -152,13 +152,7 @@ export interface CreateReplyParams {
 }
 
 /** 举报原因 */
-export type ReportReason =
-  | "spam"
-  | "inappropriate"
-  | "harassment"
-  | "misinformation"
-  | "copyright"
-  | "other";
+export type ReportReason = "spam" | "abuse" | "inappropriate" | "other";
 
 /** 举报参数 */
 export interface ReportParams {
@@ -458,25 +452,23 @@ export function unlikePost(postId: string) {
 
 /**
  * 点赞回复
- * @param postId 帖子ID
  * @param replyId 回复ID
  */
-export function likeReply(postId: string, replyId: string) {
+export function likeReply(replyId: string) {
   return http.request<{ success: boolean; likeCount: number }>(
     "post",
-    `/edu/frontend/v1/discussions/${postId}/replies/${replyId}/like`
+    `/edu/frontend/v1/discussions/replies/${replyId}/like`
   );
 }
 
 /**
  * 取消点赞回复
- * @param postId 帖子ID
  * @param replyId 回复ID
  */
-export function unlikeReply(postId: string, replyId: string) {
+export function unlikeReply(replyId: string) {
   return http.request<{ success: boolean; likeCount: number }>(
     "delete",
-    `/edu/frontend/v1/discussions/${postId}/replies/${replyId}/like`
+    `/edu/frontend/v1/discussions/replies/${replyId}/like`
   );
 }
 
@@ -495,18 +487,13 @@ export function reportPost(postId: string, data: ReportParams) {
 
 /**
  * 举报回复
- * @param postId 帖子ID
  * @param replyId 回复ID
  * @param data 举报数据
  */
-export function reportReply(
-  postId: string,
-  replyId: string,
-  data: ReportParams
-) {
+export function reportReply(replyId: string, data: ReportParams) {
   return http.request<{ success: boolean }>(
     "post",
-    `/edu/frontend/v1/discussions/${postId}/replies/${replyId}/report`,
+    `/edu/frontend/v1/discussions/replies/${replyId}/report`,
     { data }
   );
 }
