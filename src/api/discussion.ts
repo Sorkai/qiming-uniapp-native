@@ -178,7 +178,7 @@ export async function getDiscussions(
   params?: GetDiscussionsParams
 ): Promise<{ data: { list: DiscussionPost[]; pagination: Pagination } }> {
   // 转换参数名：前端 page -> 后端 pageNum，前端 sort -> 后端 sortBy
-const backendParams: any = {
+  const backendParams: any = {
     pageNum: params?.page || 1,
     pageSize: params?.pageSize || 20,
     _t: Date.now() // 添加时间戳防止缓存
