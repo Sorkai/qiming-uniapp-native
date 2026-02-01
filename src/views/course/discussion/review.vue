@@ -37,6 +37,7 @@ import HeartIcon from "@/assets/commentareasrelatedsvgs/heart-svgrepo-com.svg?co
 import CommentIcon from "@/assets/commentareasrelatedsvgs/comment-lines-svgrepo-com.svg?component";
 import TrendIcon from "@/assets/commentareasrelatedsvgs/trend-up-svgrepo-com.svg?component";
 import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
+import { formatAvatar } from "@/utils/avatar";
 
 defineOptions({
   name: "TeacherDiscussionManage"
@@ -330,9 +331,9 @@ const viewDetail = async (row: ReviewQueueItem) => {
       // 转换为 ReviewQueueItem 格式
       currentDetail.value = {
         ...res.data,
-        riskLevel: "low" as const,
-        matchedWords: [],
-        priority: "medium" as const,
+        riskLevel: row.riskLevel || "low",
+        matchedWords: (res.data as any).matchedWords || [],
+        priority: row.priority || "medium",
         itemType: (res.data as any).type || row.itemType,
         courseName: res.data.courseName
       } as ReviewQueueItem;
@@ -847,7 +848,10 @@ onActivated(() => {
               </div>
               <div class="post-meta">
                 <div class="meta-item">
-                  <el-avatar :size="20" :src="row.author?.avatar" />
+                  <el-avatar
+                    :size="20"
+                    :src="formatAvatar(row.author?.avatar)"
+                  />
                   <span class="meta-author">{{ row.author?.name }}</span>
                 </div>
                 <el-divider direction="vertical" />
@@ -1014,146 +1018,130 @@ onActivated(() => {
     <!-- 详情弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="讨论详情审阅"
-      width="800px"
+      title="内容审核详情"
+      width="920px"
       destroy-on-close
-      class="custom-dialog"
+      class="custom-review-dialog"
     >
-      <div v-if="currentDetail" class="detail-content">
-        <div class="grid grid-cols-3 gap-6 mb-6">
-          <div class="col-span-2">
-            <!-- 标题与内容 -->
-            <div class="detail-main">
-              <div class="flex items-center gap-3 mb-4">
-                <el-tag
-                  :type="statusTagType(currentDetail.status)"
-                  effect="dark"
-                  round
-                >
-                  {{ statusText(currentDetail.status) }}
-                </el-tag>
-                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-                  {{ currentDetail.title || "(无标题)" }}
-                </h3>
-              </div>
-
-              <div
-                class="content-body p-6 rounded-lg border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm"
+      <div v-if="currentDetail" class="review-detail-body">
+        <div class="flex gap-8 items-stretch">
+          <!-- 左侧：主要内容区域 -->
+          <div class="flex-1 min-w-0 flex flex-col">
+            <div class="mb-5 flex justify-between items-center">
+              <h3
+                class="text-2xl font-black text-slate-800 dark:text-slate-100 italic tracking-tight"
               >
-                <div
-                  class="content-html prose dark:prose-invert max-w-none text-gray-700 leading-relaxed"
-                  v-html="currentDetail.contentHtml || currentDetail.content"
-                />
-              </div>
+                讨论正文
+              </h3>
+              <el-tag
+                v-if="currentDetail.priority"
+                :color="
+                  currentDetail.priority === 'high' ? '#ef4444' : '#f59e0b'
+                "
+                effect="dark"
+                class="border-none font-bold px-3 rounded-lg text-white"
+              >
+                {{ currentDetail.priority === "high" ? "高" : "中" }} 优先级
+              </el-tag>
+            </div>
 
-              <!-- 统计与标签 -->
-              <div class="flex flex-wrap items-center gap-4 mt-6">
-                <div
-                  class="flex items-center gap-8 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50 px-6 py-3 rounded-lg"
-                >
-                  <span class="flex items-center gap-2">
-                    <el-icon :size="24" class="text-red-500"
-                      ><HeartIcon
-                    /></el-icon>
-                    <span
-                      class="font-medium text-base text-gray-900 dark:text-gray-100"
-                      >{{ currentDetail.likeCount || 0 }}</span
-                    >
-                    认可
-                  </span>
-                  <span class="flex items-center gap-2">
-                    <el-icon :size="24" class="text-blue-500"
-                      ><CommentIcon
-                    /></el-icon>
-                    <span
-                      class="font-medium text-base text-gray-900 dark:text-gray-100"
-                      >{{ currentDetail.replyCount || 0 }}</span
-                    >
-                    研讨
-                  </span>
-                  <span class="flex items-center gap-2">
-                    <el-icon :size="24" class="text-orange-500"
-                      ><TrendIcon
-                    /></el-icon>
-                    <span
-                      class="font-medium text-base text-gray-900 dark:text-gray-100"
-                      >{{ currentDetail.viewCount || 0 }}</span
-                    >
-                    浏览
-                  </span>
-                </div>
-                <div v-if="currentDetail.tags?.length" class="flex gap-2">
-                  <el-tag
-                    v-for="tag in currentDetail.tags"
-                    :key="tag"
-                    size="small"
-                    effect="plain"
-                  >
-                    {{ tag }}
-                  </el-tag>
-                </div>
+            <div
+              class="content-container flex-1 bg-slate-50 dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 p-8 overflow-y-auto max-h-[500px]"
+            >
+              <div
+                class="content-header border-b border-slate-100 dark:border-slate-800 mb-6 pb-4"
+              >
+                <h4 class="text-3xl font-bold text-slate-900 dark:text-white">
+                  {{ currentDetail.title || "无标题" }}
+                </h4>
               </div>
+              <div
+                class="content-text text-lg text-slate-600 dark:text-slate-400"
+                v-html="currentDetail.contentHtml || currentDetail.content"
+              />
             </div>
           </div>
 
-          <div class="col-span-1 space-y-4">
-            <!-- 侧边栏卡片 -->
-            <div class="info-card p-5 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <!-- 右侧：栏目卡片 -->
+          <div class="w-[320px] flex flex-col gap-6">
+            <!-- 发布者信息 -->
+            <div
+              class="info-card p-6 bg-slate-50 dark:bg-slate-800/40 rounded-[24px]"
+            >
               <h4
-                class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-tighter"
+                class="text-[11px] font-bold text-slate-400 uppercase mb-5 tracking-[0.2em]"
               >
                 发布者信息
               </h4>
-              <div class="flex items-center gap-3 mb-4">
-                <el-avatar :size="40" :src="currentDetail.author?.avatar" />
-                <div>
+              <div class="flex items-center gap-4 mb-6">
+                <el-avatar
+                  :size="64"
+                  :src="formatAvatar(currentDetail.author?.avatar)"
+                  class="shadow-sm"
+                />
+                <div class="flex-1 min-w-0">
                   <div
-                    class="font-bold text-sm text-gray-900 dark:text-gray-100"
+                    class="font-extrabold text-xl text-slate-900 dark:text-white truncate mb-0.5"
                   >
                     {{ currentDetail.author?.name }}
                   </div>
-                  <div class="text-xs text-gray-400">
-                    ID: {{ currentDetail.author?.id?.substring(0, 8) }}
+                  <div class="text-xs font-bold text-slate-400">
+                    UID: {{ currentDetail.author?.id?.substring(0, 8) || "2" }}
                   </div>
                 </div>
               </div>
+
               <div
-                class="text-xs text-gray-500 space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700"
+                class="grid grid-cols-1 gap-4 pt-6 border-t border-slate-200/60 dark:border-slate-700/50"
               >
-                <div class="flex justify-between">
-                  <span>所属课程</span>
-                  <span class="text-gray-700 dark:text-gray-300 font-medium">{{
-                    currentDetail.courseName || "未知"
-                  }}</span>
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-slate-400">所属课程</span>
+                  <span
+                    class="text-sm font-bold text-slate-600 dark:text-slate-300"
+                    >{{ currentDetail.courseName || "未知课程" }}</span
+                  >
                 </div>
-                <div class="flex justify-between">
-                  <span>发布于</span>
-                  <span class="text-gray-700 dark:text-gray-300">{{
-                    formatTime(currentDetail.createdAt)
-                  }}</span>
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-slate-400">发布时间</span>
+                  <span
+                    class="text-sm font-bold text-slate-600 dark:text-slate-300"
+                    >{{ formatTime(currentDetail.createdAt) }}</span
+                  >
                 </div>
               </div>
             </div>
 
-            <!-- 风险预警卡片 -->
+            <!-- 审核状态卡片 -->
             <div
-              v-if="currentDetail.matchedWords?.length"
-              class="info-card p-5 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-100 dark:border-red-900/30"
+              class="info-card p-8 bg-[#fffbeb] dark:bg-orange-950/20 rounded-[24px] border border-orange-100/50 dark:border-orange-900/10"
             >
               <h4
-                class="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-3"
+                class="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase mb-6 tracking-[0.2em]"
               >
-                AI 敏感词预警
+                审核状态
               </h4>
-              <div class="flex flex-wrap gap-1">
-                <el-tag
-                  v-for="word in currentDetail.matchedWords"
-                  :key="word"
-                  type="danger"
-                  size="small"
+              <div class="flex flex-col">
+                <div class="text-xs font-bold text-orange-400 mb-2">
+                  等待时长
+                </div>
+                <div
+                  class="text-4xl font-black text-rose-500 mb-8 tracking-tighter"
                 >
-                  {{ word }}
-                </el-tag>
+                  2天3小时
+                </div>
+
+                <div class="text-xs font-bold text-orange-400 mb-4">
+                  风险等级
+                </div>
+                <div>
+                  <el-tag
+                    :type="riskLevelType(currentDetail.riskLevel || 'low')"
+                    effect="dark"
+                    class="border-none font-black px-5 h-9 rounded-xl text-white"
+                  >
+                    {{ riskLevelText(currentDetail.riskLevel || "low") }}
+                  </el-tag>
+                </div>
               </div>
             </div>
           </div>
@@ -1162,25 +1150,29 @@ onActivated(() => {
 
       <template #footer>
         <div
-          class="flex justify-end items-center bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-100 dark:border-gray-700 gap-3"
+          class="review-footer flex justify-between items-center px-10 py-5 border-t border-slate-50 dark:border-slate-800"
         >
-          <template v-if="currentDetail.status === 'pending'">
+          <div class="instruction text-sm font-medium text-slate-400 italic">
+            请确认内容符合社区准则后再予以通过
+          </div>
+          <div class="footer-actions flex gap-3">
+            <el-button
+              class="rounded-xl px-6 h-12 text-slate-500 font-bold border-slate-200 hover:bg-slate-50"
+              @click="detailDialogVisible = false"
+              >暂时跳过</el-button
+            >
+            <el-button
+              class="rounded-xl px-6 h-12 text-rose-500 font-bold border-rose-100 bg-rose-50 hover:bg-rose-100"
+              @click="handleReject(currentDetail)"
+              >违规屏蔽</el-button
+            >
             <el-button
               type="success"
-              :icon="Check"
+              class="rounded-xl px-10 h-12 font-black !bg-[#67c23a] border-none shadow-lg shadow-green-200 dark:shadow-none hover:!bg-[#5daf34]"
               @click="handleApprove(currentDetail)"
-              >审核通过</el-button
+              >准予通过</el-button
             >
-            <el-button
-              type="danger"
-              :icon="Close"
-              @click="handleReject(currentDetail)"
-              >拒绝发布</el-button
-            >
-          </template>
-          <el-button size="large" @click="detailDialogVisible = false"
-            >关闭</el-button
-          >
+          </div>
         </div>
       </template>
     </el-dialog>
@@ -1520,8 +1512,47 @@ onActivated(() => {
 
 <style lang="scss">
 /* 详情弹窗样式 */
+.custom-review-dialog {
+  border-radius: 28px !important;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+
+  .el-dialog__header {
+    margin-right: 0;
+    padding: 24px 32px;
+    border-bottom: 1px solid #f8fafc;
+
+    html.dark & {
+      border-bottom-color: #1e293b;
+    }
+
+    .el-dialog__title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+
+      html.dark & {
+        color: #f8fafc;
+      }
+    }
+  }
+
+  .el-dialog__body {
+    padding: 32px 40px !important;
+    background: white;
+
+    html.dark & {
+      background: #0f172a;
+    }
+  }
+
+  .el-dialog__footer {
+    padding: 0 !important;
+  }
+}
+
 .custom-dialog {
-  border-radius: 12px !important;
+  border-radius: 20px !important;
   overflow: hidden;
 
   .el-dialog__header {

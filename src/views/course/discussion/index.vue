@@ -22,10 +22,12 @@ import {
   batchReview,
   getTeacherCourseStats,
   getPendingList,
+  getUserAvatars,
   type ReviewQueueItem,
   type PendingItem
 } from "@/api/discussion-admin";
 import { getCourseList } from "@/api/course";
+import { formatAvatar } from "@/utils/avatar";
 import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
 
 defineOptions({
@@ -123,7 +125,7 @@ const fetchData = async () => {
   if (loading.value && reviewItems.value.length === 0) return;
 
   loading.value = true;
-  reviewItems.value = []; // 清空当前列表，防止筛选后由于加载慢导致“没动弹”的错觉
+  reviewItems.value = []; // 清空当前列表，防止筛选后由于加载慢导致"没动弹"的错觉
   try {
     // 使用待审核列表接口获取待审核内容
     const res = await getPendingList({
@@ -138,6 +140,18 @@ const fetchData = async () => {
     const list = responseData?.list || [];
     const total = responseData?.total || 0;
 
+    // 提取所有用户 ID，获取用户头像
+    const userIds = list.map((item: PendingItem) => item.authorId);
+    let avatarMap = new Map<number, string>();
+    if (userIds.length > 0) {
+      try {
+        avatarMap = await getUserAvatars(userIds);
+        console.log("[fetchData] 获取用户头像成功:", avatarMap);
+      } catch (avatarError) {
+        console.error("[fetchData] 获取用户头像失败:", avatarError);
+      }
+    }
+
     // 转换 PendingItem 为 ReviewQueueItem 格式
     reviewItems.value = list.map((item: PendingItem) => ({
       id: String(item.id),
@@ -147,7 +161,8 @@ const fetchData = async () => {
       author: {
         id: String(item.authorId),
         name: item.authorName,
-        avatar: "",
+        // 优先使用从用户列表获取的头像，其次使用后端返回的头像
+        avatar: avatarMap.get(item.authorId) || item.authorAvatar || "",
         isTeacher: false,
         isAdmin: false
       },
@@ -241,30 +256,11 @@ const handleSelectionChange = (rows: ReviewQueueItem[]) => {
 };
 
 // 查看详情
-const viewDetail = async (row: ReviewQueueItem) => {
-  try {
-    // 调用详情接口获取完整信息
-    const res = await getAdminDiscussionDetail(row.id);
-    if (res && res.data) {
-      // 转换为 ReviewQueueItem 格式
-      currentDetail.value = {
-        ...res.data,
-        riskLevel: "low" as const,
-        matchedWords: [],
-        priority: "medium" as const,
-        courseName: res.data.courseName
-      } as ReviewQueueItem;
-    } else {
-      // 如果获取详情失败，使用列表中的数据
-      currentDetail.value = row;
-    }
-    detailDialogVisible.value = true;
-  } catch (error) {
-    console.error("获取讨论详情失败:", error);
-    // 出错时使用列表中的数据
-    currentDetail.value = row;
-    detailDialogVisible.value = true;
-  }
+const viewDetail = (row: ReviewQueueItem) => {
+  // 待审核内容直接使用列表中的数据显示详情
+  // 因为前端接口 /edu/frontend/v1/discussions/{postId} 可能无法获取 pending 状态的帖子
+  currentDetail.value = row;
+  detailDialogVisible.value = true;
 };
 
 // 审核通过
@@ -682,7 +678,10 @@ onActivated(() => {
               </div>
               <div class="content-meta">
                 <div class="meta-item">
-                  <el-avatar :size="20" :src="row.author?.avatar" />
+                  <el-avatar
+                    :size="20"
+                    :src="formatAvatar(row.author?.avatar)"
+                  />
                   <span class="font-medium text-gray-700 dark:text-gray-300">
                     {{ row.author?.name }}
                   </span>
@@ -888,7 +887,10 @@ onActivated(() => {
                 发布者信息
               </h4>
               <div class="flex items-center gap-3 mb-4">
-                <el-avatar :size="48" :src="currentDetail.author?.avatar" />
+                <el-avatar
+                  :size="48"
+                  :src="formatAvatar(currentDetail.author?.avatar)"
+                />
                 <div>
                   <div class="font-bold text-gray-900 dark:text-gray-100">
                     {{ currentDetail.author?.name }}

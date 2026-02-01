@@ -5,6 +5,50 @@
  */
 
 import { http } from "@/utils/http";
+import { getUserList } from "./user";
+
+//==================== 用户头像缓存 ====================
+
+/** 用户头像缓存 */
+const userAvatarCache = new Map<number, string>();
+
+/**
+ * 获取用户头像映射
+ * @param userIds 用户 ID 列表
+ * @returns 用户 ID 到头像的映射
+ */
+export async function getUserAvatars(
+  userIds: number[]
+): Promise<Map<number, string>> {
+  // 过滤出缓存中没有的用户 ID
+  const uncachedIds = userIds.filter(id => !userAvatarCache.has(id));
+
+  if (uncachedIds.length > 0) {
+    try {
+      // 获取用户列表（设置较大的 pageSize 以获取更多用户）
+      const res = await getUserList({ pageNum: 1, pageSize: 1000 });
+      const userList = res?.userList || [];
+
+      // 更新缓存
+      for (const user of userList) {
+        userAvatarCache.set(user.id, user.avatar || "");
+      }
+      console.log(
+        "[API] getUserAvatars - 缓存更新完成，用户数量:",
+        userList.length
+      );
+    } catch (error) {
+      console.error("获取用户列表失败:", error);
+    }
+  }
+
+  // 返回请求的用户头像
+  const result = new Map<number, string>();
+  for (const id of userIds) {
+    result.set(id, userAvatarCache.get(id) || "");
+  }
+  return result;
+}
 import type {
   DiscussionPost,
   Pagination,
@@ -102,6 +146,7 @@ export interface ReviewQueueItem extends DiscussionPost {
   priority: "high" | "medium" | "low";
   courseName?: string;
   itemType?: "post" | "reply";
+  postId?: number; // 回复所属的帖子ID
 }
 
 /** 待审核项（后端返回格式） */
@@ -115,6 +160,7 @@ export interface PendingItem {
   content: string;
   authorId: number;
   authorName: string;
+  authorAvatar?: string; // 用户头像
   createTime: string;
 }
 
@@ -618,17 +664,31 @@ export function getGlobalStatistics(params?: {
  * @param params 查询参数
  * @description 对应后端接口 GET /edu/backend/v1/discussions/pending
  */
-export function getPendingList(params?: {
+export async function getPendingList(params?: {
   courseId?: string;
   type?: "all" | "post" | "reply";
   pageNum: number;
   pageSize?: number;
 }) {
-  return http.request<{
+  const response = await http.request<{
     code: number;
     msg: string;
     data: PendingListResponse;
   }>("get", "/edu/backend/v1/discussions/pending", { params });
+
+  //调试：打印后端返回的数据，检查 authorAvatar 字段
+  const responseData = (response as any)?.data || response;
+  console.log("[API] getPendingList -后端返回数据:", responseData);
+  console.log(
+    "[API] getPendingList - authorAvatar 字段检查:",
+    (responseData?.list || []).map((item: PendingItem) => ({
+      id: item.id,
+      authorName: item.authorName,
+      authorAvatar: item.authorAvatar
+    }))
+  );
+
+  return response;
 }
 
 /**
@@ -679,7 +739,7 @@ export async function getTeacherDiscussions(params?: {
           author: {
             id: String(item.authorId),
             name: item.authorName,
-            avatar: "",
+            avatar: item.authorAvatar || "",
             isTeacher: false,
             isAdmin: false
           },
@@ -785,6 +845,16 @@ export async function getAdminDiscussions(
     const currentPage = backendParams.pageNum;
     const totalPages = Math.ceil(total / pageSize);
 
+    // 调试：打印原始数据中的 authorAvatar 字段
+    console.log(
+      "[API] getAdminDiscussions - authorAvatar values:",
+      (backendData?.list || []).map((item: BackendPostListItem) => ({
+        postId: item.postId,
+        authorName: item.authorName,
+        authorAvatar: item.authorAvatar
+      }))
+    );
+
     // 转换列表项格式
     const list: DiscussionPost[] = (backendData?.list || []).map(item => ({
       id: String(item.postId),
@@ -794,7 +864,7 @@ export async function getAdminDiscussions(
       author: {
         id: String(item.authorId),
         name: item.authorName,
-        avatar: item.authorAvatar,
+        avatar: item.authorAvatar || "", // 确保空值时使用空字符串
         isTeacher: false,
         isAdmin: false
       },
