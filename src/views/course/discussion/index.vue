@@ -666,34 +666,44 @@ onActivated(() => {
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column label="讨论内容" min-width="400">
+        <el-table-column label="讨论内容" min-width="450">
           <template #default="{ row }">
-            <div class="review-content">
-              <div class="content-title">
-                {{ row.title || "(无标题)" }}
+            <div class="discussion-item-classic">
+              <!-- 第一行：标题 -->
+              <div v-if="row.title" class="item-title">
+                {{ row.title }}
               </div>
-              <div class="content-excerpt">
-                {{ row.content.substring(0, 150)
-                }}{{ row.content.length > 150 ? "..." : "" }}
+
+              <!-- 第二行：正文预览 -->
+              <div class="item-excerpt">
+                {{ row.content }}
               </div>
-              <div class="content-meta">
-                <div class="meta-item">
+
+              <!-- 第三行：元数据行 -->
+              <div class="item-footer">
+                <div class="author-box">
                   <el-avatar
-                    :size="20"
+                    :size="24"
                     :src="formatAvatar(row.author?.avatar)"
+                    class="author-avatar"
                   />
-                  <span class="font-medium text-gray-700 dark:text-gray-300">
-                    {{ row.author?.name }}
-                  </span>
+                  <span class="author-name">{{ row.author?.name }}</span>
                 </div>
-                <div class="meta-item">
-                  <el-icon :size="16"><InfoIcon /></el-icon>
-                  <span>{{ row.courseName || "未知课程" }}</span>
-                </div>
-                <div class="meta-item">
-                  <el-icon :size="16"><Clock /></el-icon>
-                  <span>{{ formatTime(row.createdAt) }}</span>
-                </div>
+                <span class="separator">|</span>
+                <span class="course-name">{{
+                  row.courseName || "未知课程"
+                }}</span>
+                <span class="separator">|</span>
+                <span class="post-time">{{ formatTime(row.createdAt) }}</span>
+
+                <el-tag
+                  v-if="row.itemType === 'reply'"
+                  size="small"
+                  class="ml-2 type-tag"
+                  effect="plain"
+                >
+                  回复
+                </el-tag>
               </div>
             </div>
           </template>
@@ -806,182 +816,51 @@ onActivated(() => {
     <!-- 详情弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="内容审核详情"
-      width="800px"
+      title="内容审核"
+      width="520px"
       destroy-on-close
-      border-radius="16px"
-      class="custom-dialog"
+      class="simple-review-dialog"
     >
-      <div v-if="currentDetail" class="review-detail px-2">
-        <!-- 风险提示 -->
-        <el-alert
-          v-if="
-            currentDetail.riskLevel === 'high' ||
-            currentDetail.riskLevel === 'critical'
-          "
-          type="error"
-          :closable="false"
-          show-icon
-          class="mb-6 rounded-xl"
-        >
-          <template #title>
-            <span class="font-bold text-base">系统预警：检测到高风险内容</span>
-          </template>
-          <template #default>
-            <div class="mt-1">
-              该内容已被系统算法标记为高风险，请审慎阅读并严格把关。
-              <div v-if="currentDetail.matchedWords?.length" class="mt-2">
-                <span class="font-medium opacity-80">命中敏感词：</span>
-                <el-tag
-                  v-for="word in currentDetail.matchedWords"
-                  :key="word"
-                  type="danger"
-                  size="small"
-                  class="mr-1"
-                >
-                  {{ word }}
-                </el-tag>
-              </div>
-            </div>
-          </template>
-        </el-alert>
-
-        <div class="grid grid-cols-3 gap-6 mb-6">
-          <div class="col-span-2">
-            <!-- 内容 -->
-            <div class="content-section">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">
-                  讨论正文
-                </h3>
-                <el-tag
-                  :type="priorityTagType(currentDetail.priority)"
-                  effect="dark"
-                >
-                  {{ priorityText(currentDetail.priority) }} 优先级
-                </el-tag>
-              </div>
-              <div
-                class="content-box p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm"
-              >
-                <h4
-                  v-if="currentDetail.title"
-                  class="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100"
-                >
-                  {{ currentDetail.title }}
-                </h4>
-                <div
-                  class="content-html prose dark:prose-invert max-w-none text-gray-700 leading-relaxed"
-                  v-html="currentDetail.contentHtml || currentDetail.content"
-                />
-              </div>
-            </div>
+      <div v-if="currentDetail" class="review-detail">
+        <!-- 作者信息 -->
+        <div class="author-row">
+          <el-avatar
+            :size="36"
+            :src="formatAvatar(currentDetail.author?.avatar)"
+          />
+          <div class="author-info">
+            <span class="author-name">{{ currentDetail.author?.name }}</span>
+            <span class="meta">
+              {{ currentDetail.courseName || "未知课程" }} ·
+              {{ formatTime(currentDetail.createdAt) }}
+            </span>
           </div>
+          <el-tag size="small" :type="riskLevelType(currentDetail.riskLevel)">
+            {{ riskLevelText(currentDetail.riskLevel) }}
+          </el-tag>
+        </div>
 
-          <div class="col-span-1 space-y-6">
-            <!-- 侧边栏信息 -->
-            <div class="info-card p-5 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-              <h4
-                class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4"
-              >
-                发布者信息
-              </h4>
-              <div class="flex items-center gap-3 mb-4">
-                <el-avatar
-                  :size="48"
-                  :src="formatAvatar(currentDetail.author?.avatar)"
-                />
-                <div>
-                  <div class="font-bold text-gray-900 dark:text-gray-100">
-                    {{ currentDetail.author?.name }}
-                  </div>
-                  <div class="text-xs text-gray-500">
-                    UID: {{ currentDetail.author?.id?.substring(0, 8) }}
-                  </div>
-                </div>
-              </div>
-              <div class="space-y-3">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-500">所属课程</span>
-                  <span class="font-medium truncate ml-2">{{
-                    currentDetail.courseName || "未知课程"
-                  }}</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-500">发布时间</span>
-                  <span class="font-medium">{{
-                    formatTime(currentDetail.createdAt)
-                  }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div
-              class="info-card p-5 bg-orange-50 dark:bg-orange-950/20 rounded-2xl border border-orange-100 dark:border-orange-900/30"
-            >
-              <h4
-                class="text-sm font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-4"
-              >
-                审核状态
-              </h4>
-              <div class="space-y-4">
-                <div>
-                  <div class="text-xs text-orange-600/70 mb-1">等待时长</div>
-                  <div
-                    class="text-lg font-bold"
-                    :class="{
-                      'text-red-500': getWaitTime(
-                        currentDetail.createdAt
-                      ).includes('天')
-                    }"
-                  >
-                    {{ getWaitTime(currentDetail.createdAt) }}
-                  </div>
-                </div>
-                <div>
-                  <div class="text-xs text-orange-600/70 mb-1">风险等级</div>
-                  <el-tag
-                    :type="riskLevelType(currentDetail.riskLevel)"
-                    effect="dark"
-                  >
-                    {{ riskLevelText(currentDetail.riskLevel) }}
-                  </el-tag>
-                </div>
-              </div>
-            </div>
+        <!-- 内容区域 -->
+        <div class="content-area">
+          <div v-if="currentDetail.title" class="content-title">
+            {{ currentDetail.title }}
           </div>
+          <div
+            class="content-body"
+            v-html="currentDetail.contentHtml || currentDetail.content"
+          />
         </div>
       </div>
 
       <template #footer>
-        <div
-          class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 -mx-5 -mb-5 px-6 py-4 rounded-b-2xl"
-        >
-          <div class="text-sm text-gray-500 italic">
-            请确认内容符合社区准则后再予以通过
-          </div>
-          <div class="flex gap-3">
-            <el-button size="large" @click="detailDialogVisible = false">
-              暂时跳过
-            </el-button>
-            <el-button
-              type="danger"
-              size="large"
-              plain
-              :icon="Close"
-              @click="handleDetailReject"
-            >
-              违规屏蔽
-            </el-button>
-            <el-button
-              type="success"
-              size="large"
-              :icon="Check"
-              @click="handleDetailApprove"
-            >
-              准予通过
-            </el-button>
-          </div>
+        <div class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">跳过</el-button>
+          <el-button type="danger" plain @click="handleDetailReject"
+            >拒绝</el-button
+          >
+          <el-button type="primary" @click="handleDetailApprove"
+            >通过</el-button
+          >
         </div>
       </template>
     </el-dialog>
@@ -992,80 +871,68 @@ onActivated(() => {
 .review-queue {
   :deep(.el-card) {
     border: none;
-    border-radius: 16px;
-    box-shadow:
-      0 4px 6px -1px rgb(0 0 0 / 0.1),
-      0 2px 4px -2px rgb(0 0 0 / 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    box-shadow: none !important;
+    transition: all 0.2s;
     overflow: hidden;
 
     html.dark & {
-      background-color: #242424;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+      background-color: #1d1d1d;
     }
+  }
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow:
-        0 10px 15px -3px rgb(0 0 0 / 0.1),
-        0 4px 6px -4px rgb(0 0 0 / 0.1);
-
-      html.dark & {
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
-      }
+  /* 移除固定列自带的阴影 bug */
+  :deep(.el-table__fixed-right) {
+    box-shadow: none !important;
+    background: transparent !important;
+    &::before {
+      display: none !important;
     }
+  }
+
+  :deep(.el-table__fixed-column--left-is-scrolled),
+  :deep(.el-table__fixed-column--right-is-scrolled) {
+    box-shadow: none !important;
   }
 
   .stat-card {
     position: relative;
-    border-left: 4px solid transparent;
-
-    &.pending {
-      border-left-color: #e6a23c;
-    }
-    &.high {
-      border-left-color: #f56c6c;
-    }
-    &.avg {
-      border-left-color: #409eff;
-    }
+    border: none;
 
     .stat-content {
       display: flex;
-      gap: 20px;
+      gap: 16px;
       align-items: center;
-      padding: 12px 4px;
+      padding: 8px 4px;
 
       .stat-icon {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 60px;
-        height: 60px;
+        width: 48px;
+        height: 48px;
         color: #fff;
-        border-radius: 18px;
-        box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.1);
-        transition: transform 0.3s;
+        border-radius: 10px;
+        transition: transform 0.2s;
 
         &.warning {
-          background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+          background: #f59e0b;
         }
 
         &.danger {
-          background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+          background: #ef4444;
         }
 
         &.info {
-          background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+          background: #3b82f6;
         }
       }
 
       .stat-info {
         .stat-number {
-          font-size: 28px;
-          font-weight: 700;
+          font-size: 24px;
+          font-weight: 600;
           color: #1e293b;
-          line-height: 1.2;
 
           html.dark & {
             color: #f1f5f9;
@@ -1073,9 +940,7 @@ onActivated(() => {
         }
 
         .stat-label {
-          margin-top: 4px;
-          font-size: 14px;
-          font-weight: 500;
+          font-size: 13px;
           color: #64748b;
 
           html.dark & {
@@ -1083,242 +948,314 @@ onActivated(() => {
           }
         }
       }
-
-      &:hover .stat-icon {
-        transform: scale(1.1) rotate(5deg);
-      }
-    }
-  }
-
-  .search-card {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-
-    html.dark & {
-      background: rgba(36, 36, 36, 0.8);
     }
   }
 
   .search-form {
-    padding: 4px 8px;
+    padding: 0;
     :deep(.el-form-item) {
       margin-bottom: 0;
-      margin-right: 24px;
+      margin-right: 16px;
     }
 
     :deep(.el-input__wrapper),
     :deep(.el-select__wrapper) {
-      border-radius: 8px;
-      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    }
-  }
-
-  .action-bar {
-    .batch-info {
-      display: flex;
-      align-items: center;
-      padding: 4px 12px;
-      background: #f1f5f9;
-      border-radius: 8px;
-      font-size: 13px;
-      color: #475569;
-
-      html.dark & {
-        background: #334155;
-        color: #cbd5e1;
-      }
+      border-radius: 6px;
     }
   }
 
   .data-card {
     :deep(.el-table) {
-      --el-table-header-bg-color: #f8fafc;
-      --el-table-row-hover-bg-color: #f1f5f9;
-      border-radius: 12px;
+      border-radius: 8px;
+      --el-table-row-hover-bg-color: #f8fafc;
+      border: none !important;
 
       html.dark & {
-        --el-table-header-bg-color: #1e1e1e;
-        --el-table-row-hover-bg-color: #2c2c2c;
-      }
-
-      .el-table__header {
-        th {
-          font-weight: 600;
-          color: #475569;
-          height: 50px;
-
-          html.dark & {
-            color: #94a3b8;
-          }
-        }
+        --el-table-row-hover-bg-color: #262626;
       }
 
       .el-table__row {
-        height: 80px;
-        transition: all 0.2s;
+        height: auto;
+      }
 
-        &:hover {
-          td {
-            background-color: var(--el-table-row-hover-bg-color) !important;
-          }
+      /* 彻底消除固定列阴影和各种残留线条 */
+      .el-table__fixed-right,
+      .el-table__fixed {
+        box-shadow: none !important;
+        border-left: none !important;
+        &::before {
+          display: none !important;
+        }
+      }
+
+      .el-table__fixed-column--right-is-scrolled,
+      .el-table__fixed-column--left-is-scrolled {
+        box-shadow: none !important;
+      }
+
+      /* 移除单元格可能存在的阴影 */
+      .el-table__cell {
+        border-bottom: 1px solid #f1f5f9 !important;
+        box-shadow: none !important;
+
+        html.dark & {
+          border-bottom-color: #333 !important;
         }
       }
     }
-  }
 
-  .review-content {
-    .content-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #1e293b;
-      margin-bottom: 4px;
-
-      html.dark & {
-        color: #f1f5f9;
-      }
-    }
-
-    .content-excerpt {
-      max-width: 500px;
-      line-height: 1.6;
-      color: #64748b;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-
-      html.dark & {
-        color: #94a3b8;
-      }
-    }
-
-    .content-meta {
+    .discussion-item-classic {
+      padding: 2px 0;
       display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 8px;
+      flex-direction: column;
+      gap: 4px;
 
-      .meta-item {
+      .item-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #334155;
+        line-height: 1.3;
+
+        html.dark & {
+          color: #e2e8f0;
+        }
+      }
+
+      .item-excerpt {
+        font-size: 13.5px;
+        color: #64748b;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-all;
+
+        html.dark & {
+          color: #94a3b8;
+        }
+      }
+
+      .item-footer {
         display: flex;
         align-items: center;
-        gap: 4px;
-        color: #94a3b8;
         font-size: 12px;
+        color: #94a3b8;
+        margin-top: 2px;
+
+        .author-box {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-right: 8px;
+
+          .author-name {
+            font-weight: 500;
+            color: #475569;
+
+            html.dark & {
+              color: #cbd5e1;
+            }
+          }
+        }
+
+        .separator {
+          color: #cbd5e1;
+          margin: 0 8px;
+          opacity: 0.5;
+
+          html.dark & {
+            color: #334155;
+          }
+        }
+
+        .course-name,
+        .post-time {
+          color: #94a3b8;
+        }
+
+        .type-tag {
+          margin-left: 8px;
+          font-size: 10px;
+          border-radius: 4px;
+          opacity: 0.7;
+          height: 18px;
+          padding: 0 4px;
+          line-height: 16px;
+        }
       }
     }
-  }
 
-  .action-btns {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    .action-btns {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
 
-    .btn-icon-wrapper {
-      padding: 8px;
-      border-radius: 10px;
-      transition: all 0.2s;
-      cursor: pointer;
+      .btn-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.2s;
+        background: transparent;
+        color: #94a3b8;
+        outline: none !important;
+        box-shadow: none !important;
 
-      &:hover {
-        background: rgba(0, 0, 0, 0.05);
-        transform: scale(1.1);
-      }
+        html.dark & {
+          color: #64748b;
+        }
 
-      &.approve:hover {
-        color: #10b981;
-        background: rgba(16, 185, 129, 0.1);
-      }
-      &.reject:hover {
-        color: #ef4444;
-        background: rgba(239, 68, 68, 0.1);
-      }
-      &.view:hover {
-        color: #3b82f6;
-        background: rgba(59, 130, 246, 0.1);
+        &:hover {
+          transform: translateY(-2px);
+          background: #f1f5f9;
+        }
+
+        &.view:hover {
+          background: #e0f2fe;
+          color: #0ea5e9;
+        }
+
+        &.approve:hover {
+          background: #f0fdf4;
+          color: #22c55e;
+        }
+
+        &.reject:hover {
+          background: #fef2f2;
+          color: #ef4444;
+        }
       }
     }
   }
 
   .review-detail {
-    .content-box {
-      border: 1px solid #e2e8f0;
-      background: #ffffff;
-      transition: all 0.3s;
+    .author-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+
+      .author-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        .author-name {
+          font-weight: 600;
+          color: #303133;
+
+          html.dark & {
+            color: #e5e7eb;
+          }
+        }
+
+        .meta {
+          font-size: 12px;
+          color: #909399;
+        }
+      }
+    }
+
+    .content-area {
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 8px;
+      min-height: 100px;
+      max-height: 400px;
+      overflow-y: auto;
 
       html.dark & {
-        border-color: #334155;
-        background: #1e1e1e;
+        background: #262626;
       }
 
-      &:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+      .content-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #303133;
+        margin-bottom: 8px;
+
+        html.dark & {
+          color: #e5e7eb;
+        }
+      }
+
+      .content-body {
+        font-size: 14px;
+        line-height: 1.6;
+        color: #606266;
+        word-break: break-word;
+
+        html.dark & {
+          color: #d1d5db;
+        }
       }
     }
   }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+/* 全局弹窗简约化 */
+:deep(.el-dialog) {
+  border-radius: 12px !important;
+  overflow: hidden;
 }
 
 /* 自定义确认框样式 */
 :global(.custom-message-box) {
   padding-bottom: 8px !important;
   border: none !important;
-  border-radius: 20px !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1) !important;
-}
-
-:global(.custom-message-box .el-message-box__header) {
-  padding: 24px 24px 12px !important;
-}
-
-:global(.custom-message-box .el-message-box__title) {
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  color: #303133 !important;
-}
-
-:global(.custom-message-box .el-message-box__content) {
-  padding: 12px 24px 24px !important;
-  font-size: 15px !important;
-  line-height: 1.6 !important;
-  color: #606266 !important;
-}
-
-:global(.custom-message-box .el-message-box__status) {
-  margin-right: 12px !important;
-  font-size: 24px !important;
-}
-
-:global(.custom-message-box .el-message-box__message) {
-  padding-left: 0 !important;
-}
-
-:global(.custom-message-box .el-message-box__btns) {
-  padding: 8px 24px 24px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
 }
 
 :global(.custom-message-box .el-message-box__btns .el-button) {
-  height: 40px !important;
-  padding: 0 24px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  border-radius: 10px !important;
-  transition: all 0.2s ease !important;
+  border-radius: 6px !important;
 }
 
-:global(.custom-message-box .el-message-box__btns .el-button--primary) {
-  padding: 0 28px !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3) !important;
+/* 按钮 R 角统一 */
+.el-button {
+  border-radius: 6px !important;
+  box-shadow: none !important;
 }
 
-:global(.custom-message-box .el-message-box__btns .el-button:active) {
-  transform: scale(0.96) !important;
+/* 彻底消除所有可能的阴影 bug */
+:deep(*) {
+  box-shadow: none !important;
 }
 
-/* 深色模式适配 */
+/* 恢复弹窗和特定组件的阴影，否则没法看 */
+:deep(.el-dialog),
+:deep(.el-message-box),
+:deep(.el-dropdown-menu) {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 深色模式下的 MessageBox 自定义样式 */
 :global(.dark) :global(.custom-message-box) {
-  background-color: #242428 !important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
@@ -1358,20 +1295,5 @@ onActivated(() => {
   &:not(.is-disabled):active {
     transform: scale(0.95);
   }
-}
-
-/* 滚动条美化 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
 }
 </style>

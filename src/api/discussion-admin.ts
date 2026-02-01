@@ -27,7 +27,9 @@ export async function getUserAvatars(
     try {
       // 获取用户列表（设置较大的 pageSize 以获取更多用户）
       const res = await getUserList({ pageNum: 1, pageSize: 1000 });
-      const userList = res?.userList || [];
+      // 兼容后端返回格式：{ code, msg, data: { total, userList } }
+      const responseData = (res as any)?.data || res;
+      const userList = responseData?.userList || [];
 
       // 更新缓存
       for (const user of userList) {
@@ -35,7 +37,9 @@ export async function getUserAvatars(
       }
       console.log(
         "[API] getUserAvatars - 缓存更新完成，用户数量:",
-        userList.length
+        userList.length,
+        "用户头像示例:",
+        userList.slice(0, 3).map((u: any) => ({ id: u.id, avatar: u.avatar }))
       );
     } catch (error) {
       console.error("获取用户列表失败:", error);
