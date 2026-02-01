@@ -357,7 +357,9 @@ const handleReject = async (row: ReviewQueueItem) => {
     const { value } = await ElMessageBox.prompt("请输入拒绝原因", "拒绝审核", {
       confirmButtonText: "确定",
       cancelButtonText: "取消",
-      inputPlaceholder: "请输入拒绝原因（选填）"
+      inputPlaceholder: "请输入拒绝原因（选填）",
+      customClass: "custom-message-box",
+      draggable: true
     });
     if (row.itemType === "reply") {
       await reviewReply(row.id, { action: "reject", note: value });
@@ -650,13 +652,13 @@ onActivated(() => {
           <template #default="{ row }">
             <div class="stats-info">
               <div class="stat-item" title="认可度">
-                <el-icon :size="18" class="mr-1 text-red-500"
+                <el-icon :size="22" class="mr-1 text-red-500"
                   ><HeartIcon
                 /></el-icon>
                 <span>{{ row.likeCount }}</span>
               </div>
               <div class="stat-item" title="研讨数">
-                <el-icon :size="18" class="mr-1 text-blue-500"
+                <el-icon :size="22" class="mr-1 text-blue-500"
                   ><CommentIcon
                 /></el-icon>
                 <span>{{ row.replyCount }}</span>
@@ -669,7 +671,7 @@ onActivated(() => {
             <div class="action-btns">
               <el-tooltip content="查看详情" placement="top">
                 <div class="btn-icon-wrapper view" @click="viewDetail(row)">
-                  <el-icon :size="18"><InfoIcon /></el-icon>
+                  <el-icon :size="22"><InfoIcon /></el-icon>
                 </div>
               </el-tooltip>
               <template v-if="row.status === 'pending'">
@@ -750,7 +752,7 @@ onActivated(() => {
                   class="flex items-center gap-8 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50 px-6 py-3 rounded-lg"
                 >
                   <span class="flex items-center gap-2">
-                    <el-icon :size="20" class="text-red-500"
+                    <el-icon :size="24" class="text-red-500"
                       ><HeartIcon
                     /></el-icon>
                     <span
@@ -760,7 +762,7 @@ onActivated(() => {
                     认可
                   </span>
                   <span class="flex items-center gap-2">
-                    <el-icon :size="20" class="text-blue-500"
+                    <el-icon :size="24" class="text-blue-500"
                       ><CommentIcon
                     /></el-icon>
                     <span
@@ -770,7 +772,7 @@ onActivated(() => {
                     研讨
                   </span>
                   <span class="flex items-center gap-2">
-                    <el-icon :size="20" class="text-orange-500"
+                    <el-icon :size="24" class="text-orange-500"
                       ><TrendIcon
                     /></el-icon>
                     <span
@@ -1335,5 +1337,96 @@ onActivated(() => {
       display: none !important;
     }
   }
+}
+
+/* 自定义确认框样式 */
+:global(.custom-message-box) {
+  padding-bottom: 8px !important;
+  border: none !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+:global(.custom-message-box .el-message-box__header) {
+  padding: 24px 24px 12px !important;
+}
+
+:global(.custom-message-box .el-message-box__title) {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #303133 !important;
+}
+
+:global(.custom-message-box .el-message-box__content) {
+  padding: 12px 24px 24px !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: #606266 !important;
+}
+
+:global(.custom-message-box .el-message-box__status) {
+  margin-right: 12px !important;
+  font-size: 24px !important;
+}
+
+:global(.custom-message-box .el-message-box__message) {
+  padding-left: 0 !important;
+}
+
+:global(.custom-message-box .el-message-box__btns) {
+  padding: 8px 24px 24px !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button) {
+  height: 40px !important;
+  padding: 0 24px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button--primary) {
+  padding: 0 28px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3) !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button:active) {
+  transform: scale(0.96) !important;
+}
+
+/* 深色模式适配 */
+:global(.dark) :global(.custom-message-box) {
+  background-color: #242428 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-message-box__title) {
+  color: #e0e0e0 !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-message-box__content) {
+  color: #a0a0a0 !important;
+}
+
+:global(.dark)
+  :global(.custom-message-box .el-button--default:not(.el-button--primary)) {
+  color: #cfd3dc !important;
+  background-color: #333 !important;
+  border-color: #434343 !important;
+}
+
+:global(.dark)
+  :global(
+    .custom-message-box .el-button--default:not(.el-button--primary):hover
+  ) {
+  color: #409eff !important;
+  background-color: #3d3d42 !important;
+  border-color: #409eff !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-button--primary) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 </style>

@@ -275,7 +275,7 @@
                             <button
                               class="reply-action-btn"
                               :class="{ active: reply.isLiked }"
-                              @click="handleLikeReply(reply)"
+                              @click="handleLikeReply(message, reply)"
                             >
                               <el-icon><Star /></el-icon>
                               {{ reply.likeCount || 0 }}
@@ -986,17 +986,36 @@ const canManageMessage = (message: Message) => {
 };
 
 const handleLike = async (message: Message) => {
+  // 保存当前状态用于失败回滚
+  const oldIsLiked = message.isLiked;
+  const oldLikeCount = message.likeCount || 0;
+
+  // 立即更新 UI (乐观更新)
+  message.isLiked = !message.isLiked;
+  message.likeCount = message.isLiked
+    ? oldLikeCount + 1
+    : Math.max(0, oldLikeCount - 1);
+
   try {
-    if (message.isLiked) {
-      const result = await unlikePost(message.id);
-      message.isLiked = false;
-      message.likeCount = result.likeCount;
+    let result: any;
+    if (oldIsLiked) {
+      result = await unlikePost(message.id);
     } else {
-      const result = await likePost(message.id);
-      message.isLiked = true;
-      message.likeCount = result.likeCount;
+      result = await likePost(message.id);
     }
-  } catch (error) {}
+
+    // 如果后端返回了新的数量，以此为准同步，否则保持乐观更新的数量
+    // 兼容可能的不同返回结构
+    const newCount = result?.likeCount ?? result?.data?.likeCount;
+    if (typeof newCount === "number") {
+      message.likeCount = newCount;
+    }
+  } catch (error) {
+    // 失败时回滚
+    message.isLiked = oldIsLiked;
+    message.likeCount = oldLikeCount;
+    console.error("点赞操作失败:", error);
+  }
 };
 
 const handleShowReplies = async (message: Message) => {
@@ -1032,11 +1051,36 @@ const submitReply = async (message: Message) => {
   }
 };
 
-const handleLikeReply = async (reply: Reply) => {
-  // 原组件接口定义中没传入 postId 到 handleLikeReply，API 需要 postId
-  // 这里假设我们可以直接从 reply 或上下文中获取，或者调整 API
-  // 暂时用一个假设的 postId 或者通过 message 传递
-  // 这里简化处理
+const handleLikeReply = async (message: Message, reply: Reply) => {
+  // 保存当前状态用于失败回滚
+  const oldIsLiked = reply.isLiked;
+  const oldLikeCount = reply.likeCount || 0;
+
+  // 立即更新 UI (乐观更新)
+  reply.isLiked = !reply.isLiked;
+  reply.likeCount = reply.isLiked
+    ? oldLikeCount + 1
+    : Math.max(0, oldLikeCount - 1);
+
+  try {
+    let result: any;
+    if (oldIsLiked) {
+      result = await unlikeReply(message.id, reply.id);
+    } else {
+      result = await likeReply(message.id, reply.id);
+    }
+
+    // 如果后端返回了新的数量，以此为准同步
+    const newCount = result?.likeCount ?? result?.data?.likeCount;
+    if (typeof newCount === "number") {
+      reply.likeCount = newCount;
+    }
+  } catch (error) {
+    // 失败时回滚
+    reply.isLiked = oldIsLiked;
+    reply.likeCount = oldLikeCount;
+    console.error("回复点赞操作失败:", error);
+  }
 };
 
 const loadMoreReplies = async (message: Message) => {

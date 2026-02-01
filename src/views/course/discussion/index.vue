@@ -272,10 +272,13 @@ const handleApprove = async (row: ReviewQueueItem) => {
     } else {
       await reviewPost(row.id, { action: "approve" });
     }
-    ElMessage.success("审核通过");
+    ElMessage.success({
+      message: "审核通过",
+      type: "success"
+    });
     fetchData();
   } catch (error) {
-    ElMessage.error("操作失败");
+    ElMessage.error("审核操作失败，请重试");
   }
 };
 
@@ -285,18 +288,20 @@ const handleReject = async (row: ReviewQueueItem) => {
     const { value } = await ElMessageBox.prompt("请输入拒绝原因", "拒绝审核", {
       confirmButtonText: "确定",
       cancelButtonText: "取消",
-      inputPlaceholder: "请输入拒绝原因（选填）"
+      inputPlaceholder: "请输入拒绝原因（选填）",
+      customClass: "custom-message-box",
+      draggable: true
     });
     if (row.itemType === "reply") {
       await reviewReply(row.id, { action: "reject", note: value });
     } else {
       await reviewPost(row.id, { action: "reject", note: value });
     }
-    ElMessage.success("已拒绝");
+    ElMessage.success("已成功拒绝该内容");
     fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
-      ElMessage.error("操作失败");
+      ElMessage.error("操作失败，请检查网络");
     }
   }
 };
@@ -304,128 +309,117 @@ const handleReject = async (row: ReviewQueueItem) => {
 // 批量审核通过
 const handleBatchApprove = async () => {
   if (selectedIds.value.length === 0) {
-    ElMessage.warning("请选择要审核的内容");
+    ElMessage.warning("请先勾选需要审核的内容");
     return;
   }
   try {
     await ElMessageBox.confirm(
-      `确定要批量通过 ${selectedIds.value.length} 条内容吗？`,
-      "批量审核",
-      { type: "info" }
+      `确定要批量通过选中的 ${selectedIds.value.length} 条内容吗？`,
+      "批量审核确认",
+      {
+        confirmButtonText: "立即通过",
+        cancelButtonText: "取消",
+        type: "info",
+        customClass: "custom-message-box",
+        draggable: true
+      }
     );
 
-    // 将选中的 ID 分为帖子和回复
-    const postIds: string[] = [];
-    const replyIds: string[] = [];
-
-    selectedIds.value.forEach(id => {
-      const item = reviewItems.value.find(i => i.id === id);
-      if (item?.itemType === "reply") {
-        replyIds.push(id);
-      } else {
-        postIds.push(id);
-      }
-    });
-
+    loading.value = true;
     let successCount = 0;
     let failedCount = 0;
 
-    // 处理帖子批量审核
-    if (postIds.length > 0) {
-      const res = await batchReview({
-        postIds,
-        action: "approve"
-      });
-      successCount += res.success;
-      failedCount += res.failed;
-    }
-
-    // 处理回复批量审核 (由于后端可能没有回复的批量接口，暂时循环循环调用)
-    if (replyIds.length > 0) {
-      for (const id of replyIds) {
-        try {
+    // 遍历执行单次操作以确保稳定性（如用户所建议）
+    for (const id of selectedIds.value) {
+      const item = reviewItems.value.find(i => i.id === id);
+      try {
+        if (item?.itemType === "reply") {
           await reviewReply(id, { action: "approve" });
-          successCount++;
-        } catch (err) {
-          failedCount++;
+        } else {
+          await reviewPost(id, { action: "approve" });
         }
+        successCount++;
+      } catch (err) {
+        console.error(`ID ${id} 审核失败:`, err);
+        failedCount++;
       }
     }
 
-    ElMessage.success(`成功通过 ${successCount} 条，失败 ${failedCount} 条`);
+    if (failedCount === 0) {
+      ElMessage.success(`操作成功：已全部通过 ${successCount} 条内容`);
+    } else {
+      ElMessage.warning(
+        `批量操作完成：成功 ${successCount} 条，失败 ${failedCount} 条`
+      );
+    }
+
     selectedIds.value = [];
-    fetchData();
+    await fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
-      ElMessage.error("批量审核产生错误");
+      ElMessage.error("批量操作过程中产生错误");
     }
+  } finally {
+    loading.value = false;
   }
 };
 
 // 批量审核拒绝
 const handleBatchReject = async () => {
   if (selectedIds.value.length === 0) {
-    ElMessage.warning("请选择要审核的内容");
+    ElMessage.warning("请先勾选需要拒绝的内容");
     return;
   }
   try {
     const { value } = await ElMessageBox.prompt(
-      `确定要批量拒绝 ${selectedIds.value.length} 条内容吗？`,
-      "批量拒绝",
+      `确定要批量拒绝选中的 ${selectedIds.value.length} 条内容吗？`,
+      "批量驳回确认",
       {
-        confirmButtonText: "确定",
+        confirmButtonText: "确定拒绝",
         cancelButtonText: "取消",
-        inputPlaceholder: "请输入拒绝原因（选填）",
-        type: "warning"
+        inputPlaceholder: "请输入统一的拒绝原因（选填）",
+        type: "warning",
+        customClass: "custom-message-box",
+        draggable: true
       }
     );
 
-    // 将选中的 ID 分为帖子和回复
-    const postIds: string[] = [];
-    const replyIds: string[] = [];
-
-    selectedIds.value.forEach(id => {
-      const item = reviewItems.value.find(i => i.id === id);
-      if (item?.itemType === "reply") {
-        replyIds.push(id);
-      } else {
-        postIds.push(id);
-      }
-    });
-
+    loading.value = true;
     let successCount = 0;
     let failedCount = 0;
 
-    // 处理帖子批量审核
-    if (postIds.length > 0) {
-      const res = await batchReview({
-        postIds,
-        action: "reject",
-        note: value
-      });
-      successCount += res.success;
-      failedCount += res.failed;
-    }
-
-    // 处理回复批量审核
-    if (replyIds.length > 0) {
-      for (const id of replyIds) {
-        try {
+    // 遍历执行单次操作以保证成功率
+    for (const id of selectedIds.value) {
+      const item = reviewItems.value.find(i => i.id === id);
+      try {
+        if (item?.itemType === "reply") {
           await reviewReply(id, { action: "reject", note: value });
-          successCount++;
-        } catch (err) {
-          failedCount++;
+        } else {
+          await reviewPost(id, { action: "reject", note: value });
         }
+        successCount++;
+      } catch (err) {
+        console.error(`ID ${id} 拒绝失败:`, err);
+        failedCount++;
       }
     }
 
-    ElMessage.success(`成功拒绝 ${successCount} 条，失败 ${failedCount} 条`);
+    if (failedCount === 0) {
+      ElMessage.success(`操作成功：已批量拒绝 ${successCount} 条内容`);
+    } else {
+      ElMessage.warning(
+        `批量操作完成：成功 ${successCount} 条，失败 ${failedCount} 条`
+      );
+    }
+
     selectedIds.value = [];
-    fetchData();
+    await fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
-      ElMessage.error("批量审核产生错误");
+      ElMessage.error("批量操作失败");
     }
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -1237,6 +1231,97 @@ onActivated(() => {
       }
     }
   }
+}
+
+/* 自定义确认框样式 */
+:global(.custom-message-box) {
+  padding-bottom: 8px !important;
+  border: none !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+:global(.custom-message-box .el-message-box__header) {
+  padding: 24px 24px 12px !important;
+}
+
+:global(.custom-message-box .el-message-box__title) {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #303133 !important;
+}
+
+:global(.custom-message-box .el-message-box__content) {
+  padding: 12px 24px 24px !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: #606266 !important;
+}
+
+:global(.custom-message-box .el-message-box__status) {
+  margin-right: 12px !important;
+  font-size: 24px !important;
+}
+
+:global(.custom-message-box .el-message-box__message) {
+  padding-left: 0 !important;
+}
+
+:global(.custom-message-box .el-message-box__btns) {
+  padding: 8px 24px 24px !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button) {
+  height: 40px !important;
+  padding: 0 24px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button--primary) {
+  padding: 0 28px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3) !important;
+}
+
+:global(.custom-message-box .el-message-box__btns .el-button:active) {
+  transform: scale(0.96) !important;
+}
+
+/* 深色模式适配 */
+:global(.dark) :global(.custom-message-box) {
+  background-color: #242428 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-message-box__title) {
+  color: #e0e0e0 !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-message-box__content) {
+  color: #a0a0a0 !important;
+}
+
+:global(.dark)
+  :global(.custom-message-box .el-button--default:not(.el-button--primary)) {
+  color: #cfd3dc !important;
+  background-color: #333 !important;
+  border-color: #434343 !important;
+}
+
+:global(.dark)
+  :global(
+    .custom-message-box .el-button--default:not(.el-button--primary):hover
+  ) {
+  color: #409eff !important;
+  background-color: #3d3d42 !important;
+  border-color: #409eff !important;
+}
+
+:global(.dark) :global(.custom-message-box .el-button--primary) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* 按钮点击波纹效果增强 */
