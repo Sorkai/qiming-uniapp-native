@@ -47,6 +47,17 @@
                 {{ tab.label }}
                 <span v-if="tab.count" class="tab-count">{{ tab.count }}</span>
               </button>
+
+              <div style="flex: 1" />
+              <el-tooltip content="刷新列表" placement="top">
+                <el-button
+                  :icon="Refresh"
+                  circle
+                  class="board-refresh-btn"
+                  :loading="isLoading"
+                  @click="refreshData"
+                />
+              </el-tooltip>
             </div>
           </div>
 
@@ -689,10 +700,10 @@
       <el-form :model="reportForm" label-position="top">
         <el-form-item label="举报原因" required>
           <el-radio-group v-model="reportForm.reason">
-            <el-radio label="spam">垃圾广告</el-radio>
-            <el-radio label="abuse">恶意攻击</el-radio>
-            <el-radio label="inappropriate">不当言论</el-radio>
-            <el-radio label="other">其他</el-radio>
+            <el-radio value="spam">垃圾广告</el-radio>
+            <el-radio value="abuse">恶意攻击</el-radio>
+            <el-radio value="inappropriate">不当言论</el-radio>
+            <el-radio value="other">其他</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="详细说明">
@@ -1085,8 +1096,13 @@ const handleLike = async (message: Message) => {
   }
 };
 
-const handleShowReplies = async (message: Message) => {
-  message.showReplies = !message.showReplies;
+const handleShowReplies = async (message: Message, force = false) => {
+  if (force) {
+    message.showReplies = true;
+  } else {
+    message.showReplies = !message.showReplies;
+  }
+
   if (message.showReplies) {
     try {
       const result = await getReplies(message.id);
@@ -1118,9 +1134,13 @@ const submitReply = async (message: Message) => {
 
   try {
     await createReply(message.id, { content: message.replyContent });
-    ElMessage.success("回复已提交，等待审核");
+    ElMessage.success("回复已提交，内容将在审核后显示");
     message.replyContent = "";
     message.showReplyInput = false;
+    // 提交回复后强制重新获取该帖子的回复列表
+    await handleShowReplies(message, true);
+    // 同时也刷新一下全局统计数据
+    fetchStats();
   } catch (error) {
     ElMessage.error("提交失败");
   }
@@ -1263,9 +1283,17 @@ const confirmReport = async () => {
   submittingReport.value = true;
   try {
     const params: ReportParams = {
-      reason: reportForm.reason,
-      description: reportForm.description
+      reason: reportForm.reason
     };
+    if (reportForm.description && reportForm.description.trim()) {
+      params.description = reportForm.description.trim();
+    }
+
+    console.log("[Report] Submitting:", {
+      type: reportForm.type,
+      targetId: reportForm.targetId,
+      params
+    });
 
     if (reportForm.type === "post") {
       await reportPost(reportForm.targetId, params);
@@ -1275,8 +1303,14 @@ const confirmReport = async () => {
 
     ElMessage.success("举报已提交，我们将尽快处理");
     reportDialogVisible.value = false;
-  } catch (error) {
-    ElMessage.error("举报提交失败");
+  } catch (error: any) {
+    console.error("[Report] Detailed Error:", error);
+    if (error.response) {
+      console.error("[Report] Response Data:", error.response.data);
+      console.error("[Report] Response Status:", error.response.status);
+    }
+    const msg = error.response?.data?.msg || "举报提交失败";
+    ElMessage.error(msg);
   } finally {
     submittingReport.value = false;
   }

@@ -178,9 +178,10 @@ export async function getDiscussions(
   params?: GetDiscussionsParams
 ): Promise<{ data: { list: DiscussionPost[]; pagination: Pagination } }> {
   // 转换参数名：前端 page -> 后端 pageNum，前端 sort -> 后端 sortBy
-  const backendParams: BackendDiscussionsParams = {
+const backendParams: any = {
     pageNum: params?.page || 1,
-    pageSize: params?.pageSize || 20
+    pageSize: params?.pageSize || 20,
+    _t: Date.now() // 添加时间戳防止缓存
   };
 
   // 转换排序参数
@@ -334,9 +335,10 @@ export async function getReplies(
   params?: { page?: number; pageSize?: number }
 ): Promise<{ data: { list: Reply[]; total: number } }> {
   try {
-    const backendParams = {
+    const backendParams: any = {
       pageNum: params?.page || 1,
-      pageSize: params?.pageSize || 20
+      pageSize: params?.pageSize || 20,
+      _t: Date.now() // 添加时间戳防止缓存
     };
 
     const response = await http.request<
@@ -477,10 +479,11 @@ export function unlikeReply(replyId: string) {
  * @param postId 帖子ID
  * @param data 举报数据
  */
-export function reportPost(postId: string, data: ReportParams) {
+export function reportPost(postId: string | number, data: ReportParams) {
+  const id = typeof postId === "string" ? parseInt(postId, 10) : postId;
   return http.request<{ success: boolean }>(
     "post",
-    `/edu/frontend/v1/discussions/${postId}/report`,
+    `/edu/frontend/v1/discussions/${id}/report`,
     { data }
   );
 }
@@ -490,10 +493,11 @@ export function reportPost(postId: string, data: ReportParams) {
  * @param replyId 回复ID
  * @param data 举报数据
  */
-export function reportReply(replyId: string, data: ReportParams) {
+export function reportReply(replyId: string | number, data: ReportParams) {
+  const id = typeof replyId === "string" ? parseInt(replyId, 10) : replyId;
   return http.request<{ success: boolean }>(
     "post",
-    `/edu/frontend/v1/discussions/replies/${replyId}/report`,
+    `/edu/frontend/v1/discussions/replies/${id}/report`,
     { data }
   );
 }
