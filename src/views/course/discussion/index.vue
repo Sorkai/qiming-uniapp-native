@@ -118,7 +118,9 @@ const riskLevelText = (level: string): string => {
 
 // 加载数据- 使用 getPendingList获取待审核内容（包括帖子和回复）
 const fetchData = async () => {
+  if (loading.value) return;
   loading.value = true;
+  reviewItems.value = []; // 清空当前列表，防止筛选后由于加载慢导致“没动弹”的错觉
   try {
     // 使用待审核列表接口获取待审核内容
     const res = await getPendingList({
@@ -564,6 +566,7 @@ onActivated(() => {
             placeholder="筛选课程"
             clearable
             style="width: 220px"
+            @change="handleSearch"
           >
             <el-option
               v-for="course in stats.courses"
@@ -592,6 +595,7 @@ onActivated(() => {
             placeholder="内容优先级"
             clearable
             style="width: 150px"
+            @change="handleSearch"
           >
             <el-option
               v-for="opt in priorityOptions"

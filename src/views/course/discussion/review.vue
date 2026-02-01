@@ -135,7 +135,9 @@ const riskLevelText = (level: string): string => {
 
 // 加载数据- 使用 getAdminDiscussions 获取已发布的讨论列表，同时获取回复
 const fetchData = async () => {
+  if (loading.value) return; // 防止重复加载
   loading.value = true;
+  discussions.value = []; // 清空当前视图
   try {
     const params: any = {
       page: pagination.page,
@@ -486,6 +488,7 @@ onActivated(() => {
             placeholder="筛选对应课程"
             clearable
             style="width: 220px"
+            @change="handleSearch"
           >
             <el-option
               v-for="course in stats.courses"
@@ -513,6 +516,7 @@ onActivated(() => {
             v-model="searchForm.type"
             placeholder="类型筛选"
             style="width: 120px"
+            @change="handleSearch"
           >
             <el-option
               v-for="opt in typeOptions"
@@ -528,6 +532,7 @@ onActivated(() => {
             placeholder="状态筛选"
             clearable
             style="width: 140px"
+            @change="handleSearch"
           >
             <el-option
               v-for="opt in statusOptions"
