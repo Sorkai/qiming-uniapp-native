@@ -19,14 +19,10 @@ import {
   getAdminDiscussions,
   getAdminDiscussionDetail,
   getTeacherCourseStats,
-  reviewPost,
-  batchReview,
-  batchDelete,
   type ReviewQueueItem
 } from "@/api/discussion-admin";
 import { getCourseList } from "@/api/course";
 import type { DiscussionPost } from "@/api/discussion";
-import { pinPost, unpinPost, deleteDiscussion } from "@/api/discussion";
 import HeartIcon from "@/assets/commentareasrelatedsvgs/heart-svgrepo-com.svg?component";
 import CommentIcon from "@/assets/commentareasrelatedsvgs/comment-lines-svgrepo-com.svg?component";
 import TrendIcon from "@/assets/commentareasrelatedsvgs/trend-up-svgrepo-com.svg?component";
@@ -42,7 +38,6 @@ type TagType = "danger" | "warning" | "info" | "success" | "primary";
 // 状态
 const loading = ref(false);
 const discussions = ref<ReviewQueueItem[]>([]);
-const selectedIds = ref<string[]>([]);
 const detailDialogVisible = ref(false);
 const currentDetail = ref<ReviewQueueItem | null>(null);
 
@@ -253,11 +248,6 @@ const handleSizeChange = (size: number) => {
   fetchData();
 };
 
-// 选择变化
-const handleSelectionChange = (rows: ReviewQueueItem[]) => {
-  selectedIds.value = rows.map(r => r.id);
-};
-
 // 查看详情
 const viewDetail = async (row: ReviewQueueItem) => {
   try {
@@ -282,121 +272,6 @@ const viewDetail = async (row: ReviewQueueItem) => {
     // 出错时使用列表中的数据
     currentDetail.value = row;
     detailDialogVisible.value = true;
-  }
-};
-
-// 审核通过
-const handleApprove = async (row: ReviewQueueItem) => {
-  try {
-    await reviewPost(row.id, { action: "approve" });
-    ElMessage.success("审核通过");
-    fetchData();
-    fetchStats();
-  } catch (error) {
-    ElMessage.error("操作失败");
-  }
-};
-
-// 审核拒绝
-const handleReject = async (row: ReviewQueueItem) => {
-  try {
-    const { value } = await ElMessageBox.prompt("请输入拒绝原因", "拒绝审核", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      inputPlaceholder: "请输入拒绝原因（选填）"
-    });
-    await reviewPost(row.id, { action: "reject", note: value });
-    ElMessage.success("已拒绝");
-    fetchData();
-    fetchStats();
-  } catch (error: any) {
-    if (error !== "cancel") {
-      ElMessage.error("操作失败");
-    }
-  }
-};
-
-// 置顶/取消置顶
-const handleTogglePin = async (row: ReviewQueueItem) => {
-  try {
-    if (row.isPinned) {
-      await unpinPost(row.id);
-      ElMessage.success("已取消置顶");
-    } else {
-      await pinPost(row.id);
-      ElMessage.success("已置顶");
-    }
-    fetchData();
-  } catch (error) {
-    ElMessage.error("操作失败");
-  }
-};
-
-// 删除
-const handleDelete = async (row: ReviewQueueItem) => {
-  try {
-    await ElMessageBox.confirm("确定要删除这条讨论吗？", "提示", {
-      type: "warning"
-    });
-    await deleteDiscussion(row.id);
-    ElMessage.success("删除成功");
-    fetchData();
-    fetchStats();
-  } catch (error: any) {
-    if (error !== "cancel") {
-      ElMessage.error("删除失败");
-    }
-  }
-};
-
-// 批量审核通过
-const handleBatchApprove = async () => {
-  if (selectedIds.value.length === 0) {
-    ElMessage.warning("请选择要审核的内容");
-    return;
-  }
-  try {
-    await ElMessageBox.confirm(
-      `确定要批量通过 ${selectedIds.value.length} 条内容吗？`,
-      "批量审核",
-      { type: "info" }
-    );
-    const res = await batchReview({
-      postIds: selectedIds.value,
-      action: "approve"
-    });
-    ElMessage.success(`成功通过 ${res.success} 条，失败 ${res.failed} 条`);
-    selectedIds.value = [];
-    fetchData();
-    fetchStats();
-  } catch (error: any) {
-    if (error !== "cancel") {
-      ElMessage.error("批量审核失败");
-    }
-  }
-};
-
-// 批量删除
-const handleBatchDelete = async () => {
-  if (selectedIds.value.length === 0) {
-    ElMessage.warning("请选择要删除的内容");
-    return;
-  }
-  try {
-    await ElMessageBox.confirm(
-      `确定要批量删除 ${selectedIds.value.length} 条内容吗？此操作不可恢复！`,
-      "批量删除",
-      { type: "warning" }
-    );
-    const res = await batchDelete({ postIds: selectedIds.value });
-    ElMessage.success(`成功删除 ${res.success} 条，失败 ${res.failed} 条`);
-    selectedIds.value = [];
-    fetchData();
-    fetchStats();
-  } catch (error: any) {
-    if (error !== "cancel") {
-      ElMessage.error("批量删除失败");
-    }
   }
 };
 
@@ -572,47 +447,16 @@ onActivated(() => {
       </el-form>
     </el-card>
 
-    <!-- 操作栏 -->
-    <el-card shadow="never" class="mb-4">
-      <div class="flex justify-between items-center">
-        <div class="flex gap-3 items-center">
-          <el-button
-            type="success"
-            :icon="Check"
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchApprove"
-          >
-            批量准予
-          </el-button>
-          <el-button
-            type="danger"
-            :icon="Delete"
-            plain
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchDelete"
-          >
-            彻底移除
-          </el-button>
-          <div
-            v-if="selectedIds.length > 0"
-            class="text-xs text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full border border-gray-100 dark:border-gray-700"
-          >
-            已选中 {{ selectedIds.length }} 个记录
-          </div>
-        </div>
-        <el-button :icon="Refresh" link @click="initData">同步状态</el-button>
-      </div>
-    </el-card>
-
     <!-- 数据表格 -->
     <el-card shadow="never">
+      <div class="flex justify-end mb-4">
+        <el-button :icon="Refresh" link @click="initData">同步状态</el-button>
+      </div>
       <el-table
         v-loading="loading"
         :data="discussions"
         row-class-name="discussion-table-row"
-        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" />
         <el-table-column label="讨论详情" min-width="350">
           <template #default="{ row }">
             <div class="post-content">
@@ -685,66 +529,14 @@ onActivated(() => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column label="详情" width="100" align="center" fixed="right">
           <template #default="{ row }">
             <div class="action-btns">
-              <el-tooltip content="审阅详情" placement="top">
+              <el-tooltip content="查看详情" placement="top">
                 <div class="btn-icon-wrapper view" @click="viewDetail(row)">
                   <el-icon :size="18"><InfoIcon /></el-icon>
                 </div>
               </el-tooltip>
-
-              <template v-if="row.status === 'pending'">
-                <el-tooltip content="准予发布" placement="top">
-                  <div
-                    class="btn-icon-wrapper approve"
-                    @click="handleApprove(row)"
-                  >
-                    <el-icon :size="18"><Check /></el-icon>
-                  </div>
-                </el-tooltip>
-                <el-tooltip content="驳回内容" placement="top">
-                  <div
-                    class="btn-icon-wrapper reject"
-                    @click="handleReject(row)"
-                  >
-                    <el-icon :size="18"><Close /></el-icon>
-                  </div>
-                </el-tooltip>
-              </template>
-
-              <el-dropdown trigger="click" popper-class="modern-dropdown">
-                <div class="btn-icon-wrapper more">
-                  <el-icon :size="18"><MoreFilled /></el-icon>
-                </div>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="handleTogglePin(row)">
-                      <el-icon
-                        :class="
-                          row.isPinned ? 'text-amber-500' : 'text-blue-500'
-                        "
-                        ><Top
-                      /></el-icon>
-                      <span
-                        :class="
-                          row.isPinned ? 'text-amber-500' : 'text-blue-500'
-                        "
-                      >
-                        {{ row.isPinned ? "取消置顶" : "设为精选置顶" }}
-                      </span>
-                    </el-dropdown-item>
-                    <el-dropdown-item
-                      divided
-                      class="delete-item"
-                      @click="handleDelete(row)"
-                    >
-                      <el-icon class="text-red-500"><Delete /></el-icon>
-                      <span class="text-red-500">移除此讨论</span>
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
             </div>
           </template>
         </el-table-column>
@@ -897,37 +689,10 @@ onActivated(() => {
 
       <template #footer>
         <div
-          class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-100 dark:border-gray-700"
+          class="flex justify-end items-center bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-100 dark:border-gray-700"
         >
-          <div class="flex gap-2">
-            <el-button
-              v-if="currentDetail?.status === 'pending'"
-              type="success"
-              size="large"
-              :icon="Check"
-              @click="
-                handleApprove(currentDetail!);
-                detailDialogVisible = false;
-              "
-            >
-              通过审核
-            </el-button>
-            <el-button
-              v-if="currentDetail?.status === 'pending'"
-              type="warning"
-              size="large"
-              plain
-              :icon="Close"
-              @click="
-                handleReject(currentDetail!);
-                detailDialogVisible = false;
-              "
-            >
-              驳回发布
-            </el-button>
-          </div>
           <el-button size="large" @click="detailDialogVisible = false"
-            >返回列表</el-button
+            >关闭</el-button
           >
         </div>
       </template>
