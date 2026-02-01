@@ -598,11 +598,11 @@ onActivated(() => {
                   </span>
                 </div>
                 <div class="meta-item">
-                  <el-icon><InfoIcon /></el-icon>
+                  <el-icon :size="16"><InfoIcon /></el-icon>
                   <span>{{ row.courseName || "未知课程" }}</span>
                 </div>
                 <div class="meta-item">
-                  <el-icon><Clock /></el-icon>
+                  <el-icon :size="16"><Clock /></el-icon>
                   <span>{{ formatTime(row.createdAt) }}</span>
                 </div>
               </div>

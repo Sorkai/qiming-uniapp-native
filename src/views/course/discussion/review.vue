@@ -472,7 +472,7 @@ onActivated(() => {
                   effect="dark"
                   class="pin-tag"
                 >
-                  <el-icon class="mr-1"><Top /></el-icon>精选置顶
+                  <el-icon :size="12" class="mr-1"><Top /></el-icon>精选置顶
                 </el-tag>
                 <span class="post-title">{{ row.title || "(无标题)" }}</span>
               </div>
@@ -491,7 +491,7 @@ onActivated(() => {
                 </div>
                 <el-divider direction="vertical" />
                 <div class="meta-item">
-                  <el-icon :size="14"><Clock /></el-icon>
+                  <el-icon :size="16"><Clock /></el-icon>
                   <span>{{ formatTime(row.createdAt) }}</span>
                 </div>
               </div>
@@ -519,15 +519,19 @@ onActivated(() => {
             <span v-else class="text-gray-300">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="内容热度" width="140" align="center">
+        <el-table-column label="内容热度" width="160" align="center">
           <template #default="{ row }">
             <div class="stats-info">
               <div class="stat-item" title="认可度">
-                <el-icon class="mr-1 text-red-500"><HeartIcon /></el-icon>
+                <el-icon :size="18" class="mr-1 text-red-500"
+                  ><HeartIcon
+                /></el-icon>
                 <span>{{ row.likeCount }}</span>
               </div>
               <div class="stat-item" title="研讨数">
-                <el-icon class="mr-1 text-blue-500"><CommentIcon /></el-icon>
+                <el-icon :size="18" class="mr-1 text-blue-500"
+                  ><CommentIcon
+                /></el-icon>
                 <span>{{ row.replyCount }}</span>
               </div>
             </div>
@@ -598,19 +602,37 @@ onActivated(() => {
               <!-- 统计与标签 -->
               <div class="flex flex-wrap items-center gap-4 mt-6">
                 <div
-                  class="flex items-center gap-6 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-lg"
+                  class="flex items-center gap-8 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50 px-6 py-3 rounded-lg"
                 >
-                  <span class="flex items-center gap-1">
-                    <el-icon class="text-red-500"><HeartIcon /></el-icon>
-                    {{ currentDetail.likeCount || 0 }} 认可
+                  <span class="flex items-center gap-2">
+                    <el-icon :size="20" class="text-red-500"
+                      ><HeartIcon
+                    /></el-icon>
+                    <span
+                      class="font-medium text-base text-gray-900 dark:text-gray-100"
+                      >{{ currentDetail.likeCount || 0 }}</span
+                    >
+                    认可
                   </span>
-                  <span class="flex items-center gap-1">
-                    <el-icon class="text-blue-500"><CommentIcon /></el-icon>
-                    {{ currentDetail.replyCount || 0 }} 研讨
+                  <span class="flex items-center gap-2">
+                    <el-icon :size="20" class="text-blue-500"
+                      ><CommentIcon
+                    /></el-icon>
+                    <span
+                      class="font-medium text-base text-gray-900 dark:text-gray-100"
+                      >{{ currentDetail.replyCount || 0 }}</span
+                    >
+                    研讨
                   </span>
-                  <span class="flex items-center gap-1">
-                    <el-icon class="text-orange-500"><TrendIcon /></el-icon>
-                    {{ currentDetail.viewCount || 0 }} 浏览
+                  <span class="flex items-center gap-2">
+                    <el-icon :size="20" class="text-orange-500"
+                      ><TrendIcon
+                    /></el-icon>
+                    <span
+                      class="font-medium text-base text-gray-900 dark:text-gray-100"
+                      >{{ currentDetail.viewCount || 0 }}</span
+                    >
+                    浏览
                   </span>
                 </div>
                 <div v-if="currentDetail.tags?.length" class="flex gap-2">
@@ -869,12 +891,12 @@ onActivated(() => {
     .stat-item {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
+      gap: 8px;
+      padding: 6px 14px;
       background: #f1f5f9;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 500;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
       color: #475569;
       transition: all 0.2s;
 
@@ -884,8 +906,9 @@ onActivated(() => {
       }
 
       &:hover {
-        transform: scale(1.05);
+        transform: translateY(-1px);
         background: #e2e8f0;
+        box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.06);
 
         html.dark & {
           background: #475569;
