@@ -5,7 +5,8 @@
  */
 
 import { http } from "@/utils/http";
-import type {DiscussionPost,
+import type {
+  DiscussionPost,
   Pagination,
   PostStatus,
   Author
@@ -100,6 +101,7 @@ export interface ReviewQueueItem extends DiscussionPost {
   matchedWords: string[];
   priority: "high" | "medium" | "low";
   courseName?: string;
+  itemType?: "post" | "reply";
 }
 
 /** 待审核项（后端返回格式） */
@@ -357,12 +359,16 @@ export function reviewPost(
  */
 export function reviewReply(
   replyId: string | number,
-  data: { action: "approve" | "reject"; reason?: string }
+  data: { action: "approve" | "reject"; reason?: string; note?: string }
 ) {
+  const requestData = {
+    action: data.action,
+    reason: data.reason || data.note
+  };
   return http.request<{ code: number; msg: string; data: object }>(
     "post",
     `/edu/backend/v1/discussions/replies/${replyId}/review`,
-    { data }
+    { data: requestData }
   );
 }
 
@@ -568,7 +574,8 @@ export function updateUserReputation(
     previousScore: number;
     newScore: number;
     previousLevel: string;
-    newLevel: string;}>("put", `/edu/backend/v1/user-reputation/${userId}`, { data });
+    newLevel: string;
+  }>("put", `/edu/backend/v1/user-reputation/${userId}`, { data });
 }
 
 /**

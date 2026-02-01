@@ -24,7 +24,10 @@ export interface Reply {
   contentHtml: string;
   likeCount: number;
   isLiked: boolean;
+  isOwner?: boolean;
   replyTo?: string;
+  replyToId?: string;
+  parentReplyId?: string;
   createdAt: string;
 }
 
@@ -105,10 +108,33 @@ interface BackendPostListItem {
   createTime: string;
 }
 
+/** 后端返回的回复列表项 */
+interface BackendReplyListItem {
+  replyId: number;
+  content: string;
+  contentHtml: string;
+  authorId: number;
+  authorName: string;
+  authorAvatar: string;
+  parentReplyId: number;
+  replyToUserId: number;
+  replyToUserName: string;
+  likeCount: number;
+  isLiked: boolean;
+  isOwner: boolean;
+  createTime: string;
+}
+
 /** 后端返回的列表响应 */
 interface BackendListResponse {
   total: number;
   list: BackendPostListItem[];
+}
+
+/** 后端回复列表响应 */
+interface BackendReplyListResponse {
+  total: number;
+  list: BackendReplyListItem[];
 }
 
 /** 发布讨论参数 */
@@ -309,14 +335,67 @@ export function deleteDiscussion(postId: string) {
  * @param postId 帖子ID
  * @param params 分页参数
  */
-export function getReplies(
+export async function getReplies(
   postId: string,
   params?: { page?: number; pageSize?: number }
-) {
-  return http.request<{
-    list: Reply[];
-    pagination: Pagination;
-  }>("get", `/edu/frontend/v1/discussions/${postId}/replies`, { params });
+): Promise<{ data: { list: Reply[]; total: number } }> {
+  try {
+    const backendParams = {
+      pageNum: params?.page || 1,
+      pageSize: params?.pageSize || 20
+    };
+
+    const response = await http.request<
+      | {
+          code: number;
+          msg: string;
+          data: BackendReplyListResponse;
+        }
+      | BackendReplyListResponse
+    >("get", `/edu/frontend/v1/discussions/${postId}/replies`, {
+      params: backendParams
+    });
+
+    // 兼容后端是否包裹 data 字段
+    const backendData = (response as { data?: BackendReplyListResponse }).data
+      ? (response as { data: BackendReplyListResponse }).data
+      : (response as BackendReplyListResponse);
+
+    const list: Reply[] = (backendData?.list || []).map(item => ({
+      id: String(item.replyId),
+      author: {
+        id: String(item.authorId),
+        name: item.authorName,
+        avatar: item.authorAvatar,
+        isTeacher: false, // 后端若有此字段可对应映射
+        isAdmin: false
+      },
+      content: item.content,
+      contentHtml: item.contentHtml || item.content,
+      likeCount: item.likeCount,
+      isLiked: item.isLiked,
+      isOwner: item.isOwner,
+      replyTo: item.replyToUserName,
+      replyToId: String(item.replyToUserId),
+      parentReplyId: String(item.parentReplyId),
+      createdAt: item.createTime
+    }));
+
+    return {
+      data: {
+        list,
+        total: backendData?.total || 0
+      }
+    };
+  } catch (error) {
+    console.error("获取回复列表失败:", error);
+    return {
+      data: {
+        list: [],
+        total: 0
+      }
+    };
+  }
 }
 
 /**
@@ -332,14 +411,26 @@ export function createReply(postId: string, data: CreateReplyParams) {
 }
 
 /**
+ * 编辑回复
+ * @param replyId 回复ID
+ * @param data 更新数据
+ */
+export function updateReply(replyId: string, data: { content: string }) {
+  return http.request<{ success: boolean }>(
+    "put",
+    `/edu/frontend/v1/discussions/replies/${replyId}`,
+    { data }
+  );
+}
+
+/**
  * 删除回复
- * @param postId 帖子ID
  * @param replyId 回复ID
  */
-export function deleteReply(postId: string, replyId: string) {
+export function deleteReply(replyId: string) {
   return http.request<{ success: boolean }>(
     "delete",
-    `/edu/frontend/v1/discussions/${postId}/replies/${replyId}`
+    `/edu/frontend/v1/discussions/replies/${replyId}`
   );
 }
 

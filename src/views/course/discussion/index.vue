@@ -18,6 +18,7 @@ import {
   getAdminDiscussions,
   getAdminDiscussionDetail,
   reviewPost,
+  reviewReply,
   batchReview,
   getTeacherCourseStats,
   getPendingList,
@@ -264,7 +265,11 @@ const viewDetail = async (row: ReviewQueueItem) => {
 // 审核通过
 const handleApprove = async (row: ReviewQueueItem) => {
   try {
-    await reviewPost(row.id, { action: "approve" });
+    if (row.itemType === "reply") {
+      await reviewReply(row.id, { action: "approve" });
+    } else {
+      await reviewPost(row.id, { action: "approve" });
+    }
     ElMessage.success("审核通过");
     fetchData();
   } catch (error) {
@@ -280,7 +285,11 @@ const handleReject = async (row: ReviewQueueItem) => {
       cancelButtonText: "取消",
       inputPlaceholder: "请输入拒绝原因（选填）"
     });
-    await reviewPost(row.id, { action: "reject", note: value });
+    if (row.itemType === "reply") {
+      await reviewReply(row.id, { action: "reject", note: value });
+    } else {
+      await reviewPost(row.id, { action: "reject", note: value });
+    }
     ElMessage.success("已拒绝");
     fetchData();
   } catch (error: any) {
@@ -302,16 +311,51 @@ const handleBatchApprove = async () => {
       "批量审核",
       { type: "info" }
     );
-    const res = await batchReview({
-      postIds: selectedIds.value,
-      action: "approve"
+
+    // 将选中的 ID 分为帖子和回复
+    const postIds: string[] = [];
+    const replyIds: string[] = [];
+
+    selectedIds.value.forEach(id => {
+      const item = reviewItems.value.find(i => i.id === id);
+      if (item?.itemType === "reply") {
+        replyIds.push(id);
+      } else {
+        postIds.push(id);
+      }
     });
-    ElMessage.success(`成功通过 ${res.success} 条，失败 ${res.failed} 条`);
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    // 处理帖子批量审核
+    if (postIds.length > 0) {
+      const res = await batchReview({
+        postIds,
+        action: "approve"
+      });
+      successCount += res.success;
+      failedCount += res.failed;
+    }
+
+    // 处理回复批量审核 (由于后端可能没有回复的批量接口，暂时循环循环调用)
+    if (replyIds.length > 0) {
+      for (const id of replyIds) {
+        try {
+          await reviewReply(id, { action: "approve" });
+          successCount++;
+        } catch (err) {
+          failedCount++;
+        }
+      }
+    }
+
+    ElMessage.success(`成功通过 ${successCount} 条，失败 ${failedCount} 条`);
     selectedIds.value = [];
     fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
-      ElMessage.error("批量审核失败");
+      ElMessage.error("批量审核产生错误");
     }
   }
 };
@@ -333,17 +377,52 @@ const handleBatchReject = async () => {
         type: "warning"
       }
     );
-    const res = await batchReview({
-      postIds: selectedIds.value,
-      action: "reject",
-      note: value
+
+    // 将选中的 ID 分为帖子和回复
+    const postIds: string[] = [];
+    const replyIds: string[] = [];
+
+    selectedIds.value.forEach(id => {
+      const item = reviewItems.value.find(i => i.id === id);
+      if (item?.itemType === "reply") {
+        replyIds.push(id);
+      } else {
+        postIds.push(id);
+      }
     });
-    ElMessage.success(`成功拒绝 ${res.success} 条，失败 ${res.failed} 条`);
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    // 处理帖子批量审核
+    if (postIds.length > 0) {
+      const res = await batchReview({
+        postIds,
+        action: "reject",
+        note: value
+      });
+      successCount += res.success;
+      failedCount += res.failed;
+    }
+
+    // 处理回复批量审核
+    if (replyIds.length > 0) {
+      for (const id of replyIds) {
+        try {
+          await reviewReply(id, { action: "reject", note: value });
+          successCount++;
+        } catch (err) {
+          failedCount++;
+        }
+      }
+    }
+
+    ElMessage.success(`成功拒绝 ${successCount} 条，失败 ${failedCount} 条`);
     selectedIds.value = [];
     fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
-      ElMessage.error("批量审核失败");
+      ElMessage.error("批量审核产生错误");
     }
   }
 };

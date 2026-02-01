@@ -287,6 +287,22 @@
                               <el-icon><Position /></el-icon>
                               回复
                             </button>
+                            <button
+                              v-if="reply.isOwner"
+                              class="reply-action-btn"
+                              @click="handleEditReply(message, reply)"
+                            >
+                              <el-icon><Edit /></el-icon>
+                              编辑
+                            </button>
+                            <button
+                              v-if="reply.isOwner"
+                              class="reply-action-btn"
+                              @click="handleDeleteReply(message, reply)"
+                            >
+                              <el-icon><Delete /></el-icon>
+                              删除
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -616,6 +632,39 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 编辑回复对话框 -->
+    <el-dialog
+      v-model="editReplyDialogVisible"
+      title="编辑回复"
+      width="500px"
+      :close-on-click-modal="false"
+      class="edit-dialog"
+    >
+      <div class="edit-form">
+        <div class="edit-form-item">
+          <label class="edit-label">内容 <span class="required">*</span></label>
+          <el-input
+            v-model="editingReply.content"
+            type="textarea"
+            :autosize="{ minRows: 4, maxRows: 10 }"
+            placeholder="请输入内容"
+            maxlength="2000"
+            show-word-limit
+          />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="editReplyDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="!editingReply.content?.trim()"
+          @click="submitEditReply"
+        >
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -759,6 +808,13 @@ const editingContent = ref({
   title: "",
   content: "",
   tags: [] as string[]
+});
+
+const editReplyDialogVisible = ref(false);
+const editingReply = ref({
+  id: "",
+  content: "",
+  messageId: "" // 所属帖子ID
 });
 
 // 消息列表
@@ -948,7 +1004,7 @@ const handleShowReplies = async (message: Message) => {
   if (message.showReplies && message.replies.length === 0) {
     try {
       const result = await getReplies(message.id);
-      message.replies = result.list;
+      message.replies = result.data.list;
     } catch (error) {}
   }
 };
@@ -987,9 +1043,8 @@ const loadMoreReplies = async (message: Message) => {
   try {
     const page = Math.floor(message.replies.length / 5) + 1;
     const result = await getReplies(message.id, { page, pageSize: 5 });
-    message.replies = [...message.replies, ...result.list];
-    message.hasMoreReplies =
-      result.pagination.page < result.pagination.totalPages;
+    message.replies = [...message.replies, ...result.data.list];
+    message.hasMoreReplies = message.replies.length < result.data.total;
   } catch (error) {}
 };
 
@@ -1001,6 +1056,60 @@ const handleEditMessage = (message: Message) => {
     tags: message.tags || []
   };
   editDialogVisible.value = true;
+};
+
+const handleEditReply = (message: Message, reply: Reply) => {
+  editingReply.value = {
+    id: reply.id,
+    content: reply.content,
+    messageId: message.id
+  };
+  editReplyDialogVisible.value = true;
+};
+
+const submitEditReply = async () => {
+  if (!editingReply.value.content?.trim()) return;
+
+  try {
+    await updateReply(editingReply.value.id, {
+      content: editingReply.value.content
+    });
+    ElMessage.success("回复已更新");
+    editReplyDialogVisible.value = false;
+
+    // 更新本地数据
+    const message = messages.value.find(m => m.id === editingReply.value.messageId);
+    if (message) {
+      const reply = message.replies.find(r => r.id === editingReply.value.id);
+      if (reply) {
+        reply.content = editingReply.value.content;
+        reply.contentHtml = editingReply.value.content;
+      }
+    }
+  } catch (error) {
+    ElMessage.error("更新失败");
+  }
+};
+
+const handleDeleteReply = async (message: Message, reply: Reply) => {
+  try {
+    await ElMessageBox.confirm("确定要删除这条回复吗？", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    });
+
+    await deleteReply(reply.id);
+    ElMessage.success("删除成功");
+
+    // 从本地数据中移除
+    message.replies = message.replies.filter(r => r.id !== reply.id);
+    message.replyCount--;
+  } catch (error) {
+    if (error !== "cancel") {
+      ElMessage.error("删除失败");
+    }
+  }
 };
 
 const handleSaveEdit = async () => {

@@ -19,9 +19,12 @@ import {
   getAdminDiscussions,
   getAdminDiscussionDetail,
   getTeacherCourseStats,
+  reviewPost,
+  reviewReply,
   type ReviewQueueItem
 } from "@/api/discussion-admin";
 import { getCourseList } from "@/api/course";
+import { getReplies } from "@/api/discussion";
 import type { DiscussionPost } from "@/api/discussion";
 import HeartIcon from "@/assets/commentareasrelatedsvgs/heart-svgrepo-com.svg?component";
 import CommentIcon from "@/assets/commentareasrelatedsvgs/comment-lines-svgrepo-com.svg?component";
@@ -130,66 +133,112 @@ const riskLevelText = (level: string): string => {
   return map[level] || level;
 };
 
-// 加载数据- 使用 getAdminDiscussions 获取已发布的讨论列表
+// 加载数据- 使用 getAdminDiscussions 获取已发布的讨论列表，同时获取回复
 const fetchData = async () => {
   loading.value = true;
   try {
-    if (searchForm.courseId) {
-      // 如果选择了课程，直接获取该课程的讨论列表
-      const res = await getAdminDiscussions(searchForm.courseId, {
-        page: pagination.page,
-        pageSize: pagination.pageSize,
-        sortBy: "latest"
-      });
-      // 转换为 ReviewQueueItem 格式
-      discussions.value = res.data.list.map(item => ({
-        ...item,
-        riskLevel: "low" as const,
-        matchedWords: [],
-        priority: "medium" as const,
-        courseName:
-          stats.value.courses.find(c => c.courseId === searchForm.courseId)
-            ?.courseName || ""
-      })) as ReviewQueueItem[];
-      pagination.total = res.data.pagination.total;
-    } else {
-      // 没有选择课程，获取所有课程的讨论列表
-      const allDiscussions: ReviewQueueItem[] = [];
-      let totalCount = 0;
+    const params: any = {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      sortBy: "latest"
+    };
 
-      // 先确保课程列表已加载
-      if (stats.value.courses.length === 0) {
-        await fetchStats();
-      }
+    if (searchForm.status) params.status = searchForm.status;
+    if (searchForm.keyword) params.keyword = searchForm.keyword;
 
-      // 遍历所有课程获取讨论
-      for (const course of stats.value.courses) {
-        try {
-          const res = await getAdminDiscussions(course.courseId, {
-            page: 1,
-            pageSize: 100,
-            sortBy: "latest"
-          });
-          const items = res.data.list.map(item => ({
+    // 先确保课程列表已加载
+    if (stats.value.courses.length === 0) {
+      await fetchStats();
+    }
+
+    const allItems: ReviewQueueItem[] = [];
+    let totalCount = 0;
+
+    // 确定要获取的课程列表
+    const coursesToFetch = searchForm.courseId
+      ? stats.value.courses.filter(c => c.courseId === searchForm.courseId)
+      : stats.value.courses;
+
+    // 遍历课程获取帖子和回复
+    for (const course of coursesToFetch) {
+      try {
+        // 获取帖子列表
+        const postRes = await getAdminDiscussions(course.courseId, {
+          ...params,
+          page: 1,
+          pageSize: 100 // 获取较多帖子
+        });
+
+        // 如果需要显示帖子（type为 all或 post）
+        if (searchForm.type === "all" || searchForm.type === "post") {
+          const postItems = postRes.data.list.map(item => ({
             ...item,
             riskLevel: "low" as const,
             matchedWords: [],
             priority: "medium" as const,
+            itemType: "post" as const,
             courseName: course.courseName
           })) as ReviewQueueItem[];
-          allDiscussions.push(...items);
-          totalCount += res.data.pagination.total;
-        } catch (err) {
-          console.error(`获取课程 ${course.courseId} 讨论失败:`, err);
+          allItems.push(...postItems);
+          totalCount += postRes.data.pagination.total;
         }
-      }
 
-      // 分页处理
-      const startIndex = (pagination.page - 1) * pagination.pageSize;
-      const endIndex = startIndex + pagination.pageSize;
-      discussions.value = allDiscussions.slice(startIndex, endIndex);
-      pagination.total = totalCount;
+        // 如果需要显示回复（type 为 all 或 reply）
+        if (searchForm.type === "all" || searchForm.type === "reply") {
+          //遍历帖子获取回复
+          for (const post of postRes.data.list) {
+            try {
+              const replyRes = await getReplies(post.id, {
+                page: 1,
+                pageSize: 50
+              });
+
+              if (replyRes.data.list && replyRes.data.list.length > 0) {
+                const replyItems = replyRes.data.list.map(reply => ({
+                  id: reply.id,
+                  title: `[回复] ${post.title || "(无标题帖子)"}`,
+                  content: reply.content,
+                  contentHtml: reply.contentHtml || reply.content,
+                  author: reply.author,
+                  tags: [],
+                  status: "approved" as const,
+                  isPinned: false,
+                  likeCount: reply.likeCount,
+                  replyCount: 0,
+                  viewCount: 0,
+                  isLiked: reply.isLiked,
+                  createdAt: reply.createdAt,
+                  riskLevel: "low" as const,
+                  matchedWords: [],
+                  priority: "medium" as const,
+                  itemType: "reply" as const,
+                  courseName: course.courseName,
+                  postId: post.id
+                })) as ReviewQueueItem[];
+                allItems.push(...replyItems);
+                totalCount += replyRes.data.total;
+              }
+            } catch (replyErr) {
+              console.error(`获取帖子 ${post.id} 的回复失败:`, replyErr);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`获取课程 ${course.courseId} 讨论失败:`, err);
+      }
     }
+
+    // 按创建时间排序（最新的在前）
+    allItems.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    // 分页处理
+    const startIndex = (pagination.page - 1) * pagination.pageSize;
+    const endIndex = startIndex + pagination.pageSize;
+    discussions.value = allItems.slice(startIndex, endIndex);
+    pagination.total = allItems.length;
   } catch (error) {
     console.error("加载讨论列表失败", error);
   } finally {
@@ -269,6 +318,7 @@ const viewDetail = async (row: ReviewQueueItem) => {
         riskLevel: "low" as const,
         matchedWords: [],
         priority: "medium" as const,
+        itemType: (res.data as any).type || row.itemType,
         courseName: res.data.courseName
       } as ReviewQueueItem;
     } else {
@@ -281,6 +331,43 @@ const viewDetail = async (row: ReviewQueueItem) => {
     // 出错时使用列表中的数据
     currentDetail.value = row;
     detailDialogVisible.value = true;
+  }
+};
+
+// 审核通过
+const handleApprove = async (row: ReviewQueueItem) => {
+  try {
+    if (row.itemType === "reply") {
+      await reviewReply(row.id, { action: "approve" });
+    } else {
+      await reviewPost(row.id, { action: "approve" });
+    }
+    ElMessage.success("审核通过");
+    fetchData();
+  } catch (error) {
+    ElMessage.error("操作失败");
+  }
+};
+
+// 审核拒绝
+const handleReject = async (row: ReviewQueueItem) => {
+  try {
+    const { value } = await ElMessageBox.prompt("请输入拒绝原因", "拒绝审核", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      inputPlaceholder: "请输入拒绝原因（选填）"
+    });
+    if (row.itemType === "reply") {
+      await reviewReply(row.id, { action: "reject", note: value });
+    } else {
+      await reviewPost(row.id, { action: "reject", note: value });
+    }
+    ElMessage.success("已拒绝");
+    fetchData();
+  } catch (error: any) {
+    if (error !== "cancel") {
+      ElMessage.error("操作失败");
+    }
   }
 };
 
@@ -421,6 +508,20 @@ onActivated(() => {
             </el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="内容类型">
+          <el-select
+            v-model="searchForm.type"
+            placeholder="类型筛选"
+            style="width: 120px"
+          >
+            <el-option
+              v-for="opt in typeOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="审核状态">
           <el-select
             v-model="searchForm.status"
@@ -507,6 +608,18 @@ onActivated(() => {
             </div>
           </template>
         </el-table-column>
+        <el-table-column label="类型" width="80" align="center">
+          <template #default="{ row }">
+            <el-tag
+              :type="row.itemType === 'reply' ? 'info' : 'primary'"
+              effect="plain"
+              size="small"
+              round
+            >
+              {{ row.itemType === "reply" ? "回复" : "帖子" }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)" effect="light" round>
@@ -546,7 +659,7 @@ onActivated(() => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="详情" width="100" align="center" fixed="right">
+        <el-table-column label="详情" width="160" align="center" fixed="right">
           <template #default="{ row }">
             <div class="action-btns">
               <el-tooltip content="查看详情" placement="top">
@@ -554,6 +667,24 @@ onActivated(() => {
                   <el-icon :size="18"><InfoIcon /></el-icon>
                 </div>
               </el-tooltip>
+              <template v-if="row.status === 'pending'">
+                <el-tooltip content="通过" placement="top">
+                  <div
+                    class="btn-icon-wrapper approve"
+                    @click="handleApprove(row)"
+                  >
+                    <el-icon :size="18"><Check /></el-icon>
+                  </div>
+                </el-tooltip>
+                <el-tooltip content="拒绝" placement="top">
+                  <div
+                    class="btn-icon-wrapper reject"
+                    @click="handleReject(row)"
+                  >
+                    <el-icon :size="18"><Close /></el-icon>
+                  </div>
+                </el-tooltip>
+              </template>
             </div>
           </template>
         </el-table-column>
@@ -724,8 +855,22 @@ onActivated(() => {
 
       <template #footer>
         <div
-          class="flex justify-end items-center bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-100 dark:border-gray-700"
+          class="flex justify-end items-center bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-100 dark:border-gray-700 gap-3"
         >
+          <template v-if="currentDetail.status === 'pending'">
+            <el-button
+              type="success"
+              :icon="Check"
+              @click="handleApprove(currentDetail)"
+              >审核通过</el-button
+            >
+            <el-button
+              type="danger"
+              :icon="Close"
+              @click="handleReject(currentDetail)"
+              >拒绝发布</el-button
+            >
+          </template>
           <el-button size="large" @click="detailDialogVisible = false"
             >关闭</el-button
           >
