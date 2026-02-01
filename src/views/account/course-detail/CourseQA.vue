@@ -1078,7 +1078,9 @@ const submitEditReply = async () => {
     editReplyDialogVisible.value = false;
 
     // 更新本地数据
-    const message = messages.value.find(m => m.id === editingReply.value.messageId);
+    const message = messages.value.find(
+      m => m.id === editingReply.value.messageId
+    );
     if (message) {
       const reply = message.replies.find(r => r.id === editingReply.value.id);
       if (reply) {
