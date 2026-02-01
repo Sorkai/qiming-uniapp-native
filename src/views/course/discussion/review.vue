@@ -767,10 +767,9 @@ onActivated(() => {
       title="讨论详情审阅"
       width="800px"
       destroy-on-close
-      border-radius="16px"
       class="custom-dialog"
     >
-      <div v-if="currentDetail" class="detail-content px-2">
+      <div v-if="currentDetail" class="detail-content">
         <div class="grid grid-cols-3 gap-6 mb-6">
           <div class="col-span-2">
             <!-- 标题与内容 -->
@@ -789,7 +788,7 @@ onActivated(() => {
               </div>
 
               <div
-                class="content-body p-6 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm"
+                class="content-body p-6 rounded-lg border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm"
               >
                 <div
                   class="content-html prose dark:prose-invert max-w-none text-gray-700 leading-relaxed"
@@ -800,7 +799,7 @@ onActivated(() => {
               <!-- 统计与标签 -->
               <div class="flex flex-wrap items-center gap-4 mt-6">
                 <div
-                  class="flex items-center gap-6 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-full"
+                  class="flex items-center gap-6 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-lg"
                 >
                   <span>👍 {{ currentDetail.likeCount || 0 }} 认可</span>
                   <span>💬 {{ currentDetail.replyCount || 0 }} 研讨</span>
@@ -822,7 +821,7 @@ onActivated(() => {
 
           <div class="col-span-1 space-y-4">
             <!-- 侧边栏卡片 -->
-            <div class="info-card p-5 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+            <div class="info-card p-5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <h4
                 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-tighter"
               >
@@ -862,7 +861,7 @@ onActivated(() => {
             <!-- 风险预警卡片 -->
             <div
               v-if="currentDetail.matchedWords?.length"
-              class="info-card p-5 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/30"
+              class="info-card p-5 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-100 dark:border-red-900/30"
             >
               <h4
                 class="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-3"
@@ -886,7 +885,7 @@ onActivated(() => {
 
       <template #footer>
         <div
-          class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 -mx-5 -mb-5 px-6 py-4 rounded-b-2xl"
+          class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-100 dark:border-gray-700"
         >
           <div class="flex gap-2">
             <el-button
@@ -928,10 +927,10 @@ onActivated(() => {
 .discussion-manage {
   :deep(.el-card) {
     border: none;
-    border-radius: 16px;
+    border-radius: 8px;
     box-shadow:
-      0 4px 6px -1px rgb(0 0 0 / 0.1),
-      0 2px 4px -2px rgb(0 0 0 / 0.1);
+      0 1px 3px 0 rgb(0 0 0 / 0.1),
+      0 1px 2px -1px rgb(0 0 0 / 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
 
@@ -1092,7 +1091,7 @@ onActivated(() => {
       gap: 6px;
       padding: 4px 10px;
       background: #f1f5f9;
-      border-radius: 20px;
+      border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
       color: #475569;
@@ -1168,10 +1167,10 @@ onActivated(() => {
   }
 }
 
-/* 按钮点击波纹效果增强 */
+/* 按钮样式修正 */
 .el-button {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 10px;
+  border-radius: 6px;
 
   &:not(.is-disabled):active {
     transform: scale(0.95);
@@ -1255,6 +1254,35 @@ onActivated(() => {
 </style>
 
 <style lang="scss">
+/* 详情弹窗样式 */
+.custom-dialog {
+  border-radius: 12px !important;
+  overflow: hidden;
+
+  .el-dialog__header {
+    margin-right: 0;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+
+    html.dark & {
+      border-bottom-color: #334155;
+    }
+
+    .el-dialog__title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px !important;
+  }
+
+  .el-dialog__footer {
+    padding: 0 !important;
+  }
+}
+
 /* 全局下拉菜单样式修正 */
 .el-popper.modern-dropdown {
   border-radius: 12px !important;
