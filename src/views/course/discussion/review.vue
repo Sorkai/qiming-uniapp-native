@@ -477,7 +477,7 @@ onActivated(() => {
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-success">{{ stats.totalReplies }}</div>
-            <div class="stat-label">学子互动回复</div>
+            <div class="stat-label">学生互动回复</div>
           </div>
         </el-card>
       </el-col>
@@ -487,7 +487,7 @@ onActivated(() => {
             <div class="stat-number text-warning">
               {{ stats.pendingReview }}
             </div>
-            <div class="stat-label">当前待处理审</div>
+            <div class="stat-label">当前待处理审查</div>
           </div>
         </el-card>
       </el-col>
