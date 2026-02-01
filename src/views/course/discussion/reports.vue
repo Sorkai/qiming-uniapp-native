@@ -188,9 +188,16 @@ const openHandleDialog = (row: ReportRecord) => {
 const quickDismiss = async (row: ReportRecord) => {
   try {
     await ElMessageBox.confirm("确定要忽略这条举报吗？", "提示", {
-      type: "info"
+      type: "info",
+      customClass: "custom-message-box",
+      draggable: true
     });
     await handleReport(row.id, { action: "dismiss", note: "内容无问题" });
+
+    // 本地移除
+    const idx = reports.value.findIndex(r => r.id === row.id);
+    if (idx > -1) reports.value.splice(idx, 1);
+
     ElMessage.success("已忽略");
     fetchData();
   } catch (error: any) {
@@ -206,9 +213,18 @@ const quickDelete = async (row: ReportRecord) => {
     await ElMessageBox.confirm(
       "确定要删除被举报的内容吗？此操作不可恢复！",
       "警告",
-      { type: "warning" }
+      {
+        type: "warning",
+        customClass: "custom-message-box",
+        draggable: true
+      }
     );
     await handleReport(row.id, { action: "delete", note: "内容违规" });
+
+    // 本地移除
+    const idx = reports.value.findIndex(r => r.id === row.id);
+    if (idx > -1) reports.value.splice(idx, 1);
+
     ElMessage.success("已删除");
     fetchData();
   } catch (error: any) {
@@ -229,6 +245,11 @@ const submitHandle = async () => {
       punishUser: handleForm.punishUser,
       punishType: handleForm.punishUser ? handleForm.punishType : undefined
     });
+
+    // 本地移除
+    const idx = reports.value.findIndex(r => r.id === currentReport.value.id);
+    if (idx > -1) reports.value.splice(idx, 1);
+
     ElMessage.success("处理成功");
     handleDialogVisible.value = false;
     fetchData();

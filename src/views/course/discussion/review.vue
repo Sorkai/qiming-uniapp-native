@@ -41,6 +41,7 @@ type TagType = "danger" | "warning" | "info" | "success" | "primary";
 // 状态
 const loading = ref(false);
 const discussions = ref<ReviewQueueItem[]>([]);
+const selectedIds = ref<string[]>([]);
 const detailDialogVisible = ref(false);
 const currentDetail = ref<ReviewQueueItem | null>(null);
 
@@ -135,9 +136,9 @@ const riskLevelText = (level: string): string => {
 
 // 加载数据- 使用 getAdminDiscussions 获取已发布的讨论列表，同时获取回复
 const fetchData = async () => {
-  if (loading.value) return; // 防止重复加载
+  if (loading.value && discussions.value.length === 0) return; // 修改：如果是在刷新（已有数据），允许继续
   loading.value = true;
-  discussions.value = []; // 清空当前视图
+  // discussions.value = []; // 注释掉：防止闪烁
   try {
     const params: any = {
       page: pagination.page,
@@ -287,6 +288,11 @@ const handleSearch = () => {
   fetchData();
 };
 
+// 选择变化
+const handleSelectionChange = (rows: ReviewQueueItem[]) => {
+  selectedIds.value = rows.map(r => r.id);
+};
+
 // 重置搜索
 const resetSearch = () => {
   searchForm.courseId = "";
@@ -345,6 +351,17 @@ const handleApprove = async (row: ReviewQueueItem) => {
       await reviewPost(row.id, { action: "approve" });
     }
     ElMessage.success("审核通过");
+
+    // 本地立即移除或更新状态，增强即时感
+    const idx = discussions.value.findIndex(d => d.id === row.id);
+    if (idx > -1) {
+      if (searchForm.status === "pending") {
+        discussions.value.splice(idx, 1);
+      } else {
+        discussions.value[idx].status = "approved";
+      }
+    }
+
     fetchData();
   } catch (error) {
     ElMessage.error("操作失败");
@@ -367,11 +384,147 @@ const handleReject = async (row: ReviewQueueItem) => {
       await reviewPost(row.id, { action: "reject", note: value });
     }
     ElMessage.success("已拒绝");
+
+    // 本地立即移除或更新状态
+    const idx = discussions.value.findIndex(d => d.id === row.id);
+    if (idx > -1) {
+      if (searchForm.status === "pending") {
+        discussions.value.splice(idx, 1);
+      } else {
+        discussions.value[idx].status = "rejected";
+      }
+    }
+
     fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("操作失败");
     }
+  }
+};
+
+// 批量审核通过
+const handleBatchApprove = async () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning("请先勾选需要审核的内容");
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确定要批量通过选中的 ${selectedIds.value.length} 条内容吗？`,
+      "批量通过确认",
+      {
+        confirmButtonText: "确定通过",
+        cancelButtonText: "取消",
+        type: "success",
+        customClass: "custom-message-box",
+        draggable: true
+      }
+    );
+
+    loading.value = true;
+    let successCount = 0;
+    let failedCount = 0;
+
+    const idsToProcess = [...selectedIds.value];
+
+    for (const id of idsToProcess) {
+      const item = discussions.value.find(i => i.id === id);
+      try {
+        if (item?.itemType === "reply") {
+          await reviewReply(id, { action: "approve" });
+        } else {
+          await reviewPost(id, { action: "approve" });
+        }
+        successCount++;
+        // 本地移除
+        const idx = discussions.value.findIndex(i => i.id === id);
+        if (idx > -1) discussions.value.splice(idx, 1);
+      } catch (err) {
+        console.error(`ID ${id} 审核失败:`, err);
+        failedCount++;
+      }
+    }
+
+    if (failedCount === 0) {
+      ElMessage.success(`操作成功：已全部通过 ${successCount} 条内容`);
+    } else {
+      ElMessage.warning(
+        `批量操作完成：成功 ${successCount} 条，失败 ${failedCount} 条`
+      );
+    }
+
+    selectedIds.value = [];
+    fetchData();
+  } catch (error: any) {
+    if (error !== "cancel") {
+      ElMessage.error("批量操作过程中产生错误");
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 批量审核拒绝
+const handleBatchReject = async () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning("请先勾选需要拒绝的内容");
+    return;
+  }
+  try {
+    const { value } = await ElMessageBox.prompt(
+      `确定要批量拒绝选中的 ${selectedIds.value.length} 条内容吗？`,
+      "批量驳回确认",
+      {
+        confirmButtonText: "确定拒绝",
+        cancelButtonText: "取消",
+        inputPlaceholder: "请输入统一的拒绝原因（选填）",
+        type: "warning",
+        customClass: "custom-message-box",
+        draggable: true
+      }
+    );
+
+    loading.value = true;
+    let successCount = 0;
+    let failedCount = 0;
+
+    const idsToProcess = [...selectedIds.value];
+
+    for (const id of idsToProcess) {
+      const item = discussions.value.find(i => i.id === id);
+      try {
+        if (item?.itemType === "reply") {
+          await reviewReply(id, { action: "reject", note: value });
+        } else {
+          await reviewPost(id, { action: "reject", note: value });
+        }
+        successCount++;
+        // 本地移除
+        const idx = discussions.value.findIndex(i => i.id === id);
+        if (idx > -1) discussions.value.splice(idx, 1);
+      } catch (err) {
+        console.error(`ID ${id} 拒绝失败:`, err);
+        failedCount++;
+      }
+    }
+
+    if (failedCount === 0) {
+      ElMessage.success(`操作成功：已批量拒绝 ${successCount} 条内容`);
+    } else {
+      ElMessage.warning(
+        `批量操作完成：成功 ${successCount} 条，失败 ${failedCount} 条`
+      );
+    }
+
+    selectedIds.value = [];
+    fetchData();
+  } catch (error: any) {
+    if (error !== "cancel") {
+      ElMessage.error("批量操作失败");
+    }
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -568,7 +721,25 @@ onActivated(() => {
 
     <!-- 数据表格 -->
     <el-card shadow="never">
-      <div class="flex justify-end mb-4">
+      <div class="flex justify-between items-center mb-4">
+        <div class="batch-actions">
+          <el-button
+            v-if="selectedIds.length > 0"
+            type="success"
+            :icon="Check"
+            @click="handleBatchApprove"
+          >
+            批量通过 ({{ selectedIds.length }})
+          </el-button>
+          <el-button
+            v-if="selectedIds.length > 0"
+            type="danger"
+            :icon="Close"
+            @click="handleBatchReject"
+          >
+            批量拒绝
+          </el-button>
+        </div>
         <el-button :icon="Refresh" link @click="initData(true)"
           >同步状态</el-button
         >
@@ -577,7 +748,9 @@ onActivated(() => {
         v-loading="loading"
         :data="discussions"
         row-class-name="discussion-table-row"
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" align="center" />
         <el-table-column label="讨论详情" min-width="350">
           <template #default="{ row }">
             <div class="post-content">

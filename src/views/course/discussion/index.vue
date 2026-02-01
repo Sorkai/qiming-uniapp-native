@@ -118,7 +118,10 @@ const riskLevelText = (level: string): string => {
 
 // 加载数据- 使用 getPendingList获取待审核内容（包括帖子和回复）
 const fetchData = async () => {
-  if (loading.value) return;
+  // 注意：批量操作时 loading 己由外部设置，此处不要重复判断 return
+  // 如果是普通加载且正在加载中，则跳过
+  if (loading.value && reviewItems.value.length === 0) return;
+
   loading.value = true;
   reviewItems.value = []; // 清空当前列表，防止筛选后由于加载慢导致“没动弹”的错觉
   try {
@@ -272,6 +275,11 @@ const handleApprove = async (row: ReviewQueueItem) => {
     } else {
       await reviewPost(row.id, { action: "approve" });
     }
+
+    // 从本地立即移除，解决列表残留问题
+    const idx = reviewItems.value.findIndex(i => i.id === row.id);
+    if (idx > -1) reviewItems.value.splice(idx, 1);
+
     ElMessage.success({
       message: "审核通过",
       type: "success"
@@ -297,6 +305,11 @@ const handleReject = async (row: ReviewQueueItem) => {
     } else {
       await reviewPost(row.id, { action: "reject", note: value });
     }
+
+    // 从本地立即移除
+    const idx = reviewItems.value.findIndex(i => i.id === row.id);
+    if (idx > -1) reviewItems.value.splice(idx, 1);
+
     ElMessage.success("已成功拒绝该内容");
     fetchData();
   } catch (error: any) {
@@ -329,8 +342,11 @@ const handleBatchApprove = async () => {
     let successCount = 0;
     let failedCount = 0;
 
+    // 复制一份 ID 列表以防遍历时干扰
+    const idsToProcess = [...selectedIds.value];
+
     // 遍历执行单次操作以确保稳定性（如用户所建议）
-    for (const id of selectedIds.value) {
+    for (const id of idsToProcess) {
       const item = reviewItems.value.find(i => i.id === id);
       try {
         if (item?.itemType === "reply") {
@@ -339,6 +355,9 @@ const handleBatchApprove = async () => {
           await reviewPost(id, { action: "approve" });
         }
         successCount++;
+        // 本地实时移除
+        const idx = reviewItems.value.findIndex(i => i.id === id);
+        if (idx > -1) reviewItems.value.splice(idx, 1);
       } catch (err) {
         console.error(`ID ${id} 审核失败:`, err);
         failedCount++;
@@ -388,8 +407,10 @@ const handleBatchReject = async () => {
     let successCount = 0;
     let failedCount = 0;
 
+    const idsToProcess = [...selectedIds.value];
+
     // 遍历执行单次操作以保证成功率
-    for (const id of selectedIds.value) {
+    for (const id of idsToProcess) {
       const item = reviewItems.value.find(i => i.id === id);
       try {
         if (item?.itemType === "reply") {
@@ -398,6 +419,9 @@ const handleBatchReject = async () => {
           await reviewPost(id, { action: "reject", note: value });
         }
         successCount++;
+        // 本地实时移除
+        const idx = reviewItems.value.findIndex(i => i.id === id);
+        if (idx > -1) reviewItems.value.splice(idx, 1);
       } catch (err) {
         console.error(`ID ${id} 拒绝失败:`, err);
         failedCount++;
