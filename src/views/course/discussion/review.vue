@@ -614,9 +614,13 @@ const handlePin = async (row: ReviewQueueItem) => {
   try {
     loading.value = true;
     await pinPost(row.id);
+    // 乐观更新：先设置状态，防止 fetchData 刷新前的小闪烁
     row.isPinned = true;
     ElMessage.success("成功设为置顶");
-    fetchData();
+    // 延时刷新，确保后端数据已同步且避开可能的缓存
+    setTimeout(() => {
+      fetchData();
+    }, 800);
   } catch (error) {
     console.error("置顶操作失败:", error);
     ElMessage.error("置顶操作失败");
@@ -630,9 +634,12 @@ const handleUnpin = async (row: ReviewQueueItem) => {
   try {
     loading.value = true;
     await unpinPost(row.id);
+    // 乐观更新
     row.isPinned = false;
     ElMessage.success("已取消置顶");
-    fetchData();
+    setTimeout(() => {
+      fetchData();
+    }, 800);
   } catch (error) {
     console.error("取消置顶操作失败:", error);
     ElMessage.error("取消置顶操作失败");
@@ -871,7 +878,7 @@ onActivated(() => {
                 <el-tag
                   v-if="row.isPinned"
                   size="small"
-                  type="danger"
+                  type="warning"
                   effect="dark"
                   class="pin-tag"
                 >

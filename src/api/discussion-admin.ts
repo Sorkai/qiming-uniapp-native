@@ -864,7 +864,8 @@ export async function getAdminDiscussions(
     pageNum: params?.page || 1,
     pageSize: params?.pageSize || 20,
     sortBy: params?.sortBy,
-    tag: params?.tag
+    tag: params?.tag,
+    _t: Date.now() // 添加时间戳防止缓存，解决状态切换后刷新过快导致的状态闪烁
   };
 
   console.log(

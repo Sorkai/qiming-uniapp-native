@@ -503,24 +503,24 @@ export function reportReply(replyId: string | number, data: ReportParams) {
 }
 
 /**
- * 置顶帖子（管理员/教师）
+ * 置顶帖子（管理员/教师专用）
  * @param postId 帖子ID
  */
-export function pinPost(postId: string) {
-  return http.request<{ success: boolean }>(
+export function pinPost(postId: string | number) {
+  return http.request<{ code: number; msg: string; data: object }>(
     "post",
-    `/edu/frontend/v1/discussions/${postId}/pin`
+    `/edu/backend/v1/discussions/${postId}/pin`
   );
 }
 
 /**
- * 取消置顶帖子（管理员/教师）
+ * 取消置顶帖子（管理员/教师专用）
  * @param postId 帖子ID
  */
-export function unpinPost(postId: string) {
-  return http.request<{ success: boolean }>(
+export function unpinPost(postId: string | number) {
+  return http.request<{ code: number; msg: string; data: object }>(
     "delete",
-    `/edu/frontend/v1/discussions/${postId}/pin`
+    `/edu/backend/v1/discussions/${postId}/pin`
   );
 }
 

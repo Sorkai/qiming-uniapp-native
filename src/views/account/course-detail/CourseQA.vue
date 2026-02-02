@@ -1019,7 +1019,18 @@ const fetchTags = async () => {
 // 计算属性
 const isTeacherOrAdmin = computed(() => props.isTeacher || props.isAdmin);
 
-const filteredMessages = computed(() => messages.value);
+const filteredMessages = computed(() => {
+  if (!messages.value) return [];
+  // 复制数组并排序：置顶的永远排在最前面，其余按时间降序
+  return [...messages.value].sort((a, b) => {
+    // 置顶权重
+    const aPin = a.isPinned ? 1 : 0;
+    const bPin = b.isPinned ? 1 : 0;
+    if (aPin !== bPin) return bPin - aPin;
+    // 时间降序
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+});
 
 // 方法
 const handleSearch = () => {
@@ -1707,43 +1718,47 @@ const filterByTag = (tagName: string) => {
 }
 
 .message-card.pinned {
-  background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%);
-  border-left: 4px solid #409eff;
+  background: linear-gradient(135deg, #fff 0%, #fff9f0 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-left: 5px solid #f59e0b;
 }
 
 .dark .message-card.pinned {
-  background: linear-gradient(135deg, #242428 0%, #2a3040 100%);
+  background: linear-gradient(135deg, #242428 0%, #3a3020 100%);
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .message-card.pending {
   border-left: 4px solid #e6a23c;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 .message-card.rejected {
   border-left: 4px solid #f56c6c;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 /* 置顶和状态标签 */
 .pinned-badge,
 .status-badge {
   position: absolute;
-  top: 12px;
-  right: 70px;
-  z-index: 5;
+  top: 16px;
+  right: 60px;
+  z-index: 10;
   display: flex;
   gap: 4px;
   align-items: center;
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 12px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  letter-spacing: 1px;
 }
 
 .pinned-badge {
   color: #fff;
-  background: linear-gradient(135deg, #409eff 0%, #79bbff 100%);
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 }
 
 .status-badge.pending {

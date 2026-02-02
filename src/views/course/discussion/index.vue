@@ -325,7 +325,9 @@ const handlePin = async (row: ReviewQueueItem) => {
     await pinPost(row.id);
     row.isPinned = true;
     ElMessage.success("成功设为置顶");
-    fetchData();
+    setTimeout(() => {
+      fetchData();
+    }, 800);
   } catch (error) {
     console.error("置顶操作失败:", error);
     ElMessage.error("置顶操作失败");
@@ -341,7 +343,9 @@ const handleUnpin = async (row: ReviewQueueItem) => {
     await unpinPost(row.id);
     row.isPinned = false;
     ElMessage.success("已取消置顶");
-    fetchData();
+    setTimeout(() => {
+      fetchData();
+    }, 800);
   } catch (error) {
     console.error("取消置顶操作失败:", error);
     ElMessage.error("取消置顶操作失败");
