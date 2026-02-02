@@ -630,11 +630,11 @@ const handlePin = async (row: ReviewQueueItem) => {
     // HTTP 200 OK 即为成功
     row.isPinned = true;
     ElMessage.success("成功设为置顶");
-    // 延迟刷新以确保后端数据同步
-    setTimeout(() => fetchData(), 1000);
+    // 不自动刷新列表，本地状态已更新，避免后端同步延迟导致状态被覆盖
   } catch (error) {
     console.error("置顶操作失败:", error);
     ElMessage.error("置顶操作失败");
+  } finally {
     loading.value = false;
   }
 };
@@ -647,10 +647,11 @@ const handleUnpin = async (row: ReviewQueueItem) => {
     // HTTP 200 OK 即为成功
     row.isPinned = false;
     ElMessage.success("已取消置顶");
-    setTimeout(() => fetchData(), 1000);
+    // 不自动刷新列表，本地状态已更新，避免后端同步延迟导致状态被覆盖
   } catch (error) {
     console.error("取消置顶操作失败:", error);
     ElMessage.error("取消置顶操作失败");
+  } finally {
     loading.value = false;
   }
 };
