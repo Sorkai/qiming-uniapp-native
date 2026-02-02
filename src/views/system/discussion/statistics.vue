@@ -492,49 +492,31 @@ watch(theme, () => {
 
 <template>
   <div class="statistics-container p-4">
-    <!-- 顶部标题栏 -->
-    <div class="flex justify-between items-center mb-6">
-      <div class="flex items-center">
-        <div
-          class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-3 shadow-lg"
-        >
-          <el-icon class="text-white" :size="26"><TrendCharts /></el-icon>
-        </div>
-        <div>
-          <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">
-            讨论区统计与审计面板
-          </h2>
-          <p class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-2">
-            <el-icon :size="12"><Timer /></el-icon>
-            数据同步于: {{ lastUpdateTime }}
-          </p>
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <el-select
-          v-model="selectedCourse"
-          placeholder="全部课程"
-          clearable
-          filterable
-          class="!w-[200px]"
-          @change="handleCourseChange"
-        >
-          <el-option
-            v-for="item in courses"
-            :key="item.courseId"
-            :label="item.title"
-            :value="item.courseId.toString()"
-          />
-        </el-select>
-        <el-button
-          type="primary"
-          :icon="Refresh"
-          :loading="loading"
-          @click="handleRefresh"
-        >
-          同步最新数据
-        </el-button>
-      </div>
+    <!-- 操作栏 -->
+    <div class="flex justify-end items-center mb-6 gap-3">
+      <el-select
+        v-model="selectedCourse"
+        placeholder="全部课程"
+        clearable
+        filterable
+        class="!w-[200px]"
+        @change="handleCourseChange"
+      >
+        <el-option
+          v-for="item in courses"
+          :key="item.courseId"
+          :label="item.title"
+          :value="item.courseId.toString()"
+        />
+      </el-select>
+      <el-button
+        type="primary"
+        :icon="Refresh"
+        :loading="loading"
+        @click="handleRefresh"
+      >
+        同步最新数据
+      </el-button>
     </div>
 
     <!-- 核心数据总览 - 9个字段全部展示 -->
