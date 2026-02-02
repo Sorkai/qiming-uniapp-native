@@ -338,25 +338,80 @@ const initCharts = async () => {
     const sData = studentRes.data.usageInfoList || [];
 
     setUsageOptions({
-      tooltip: { trigger: "axis" },
-      legend: { data: ["教师使用量", "学生使用量"], bottom: 0 },
-      xAxis: {
-        type: "category",
-        data: tData.map(i => i.date)
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        confine: true
       },
-      yAxis: { type: "value" },
+      legend: {
+        data: ["教师使用量", "学生使用量"],
+        top: 0,
+        itemWidth: 12,
+        itemHeight: 12,
+        textStyle: { fontSize: 12 }
+      },
+      grid: [
+        { left: "10%", right: "5%", top: "15%", height: "32%" },
+        { left: "10%", right: "5%", top: "54%", height: "32%" }
+      ],
+      xAxis: [
+        {
+          type: "category",
+          gridIndex: 0,
+          data: tData.map(i => i.date),
+          axisLabel: { show: false },
+          axisTick: { show: false },
+          axisLine: { lineStyle: { color: isDark.value ? "#333" : "#eee" } }
+        },
+        {
+          type: "category",
+          gridIndex: 1,
+          data: sData.map(i => i.date),
+          axisLabel: {
+            fontSize: 10,
+            color: isDark.value ? "#999" : "#666",
+            hideOverlap: true,
+            interval: "auto"
+          },
+          axisLine: { lineStyle: { color: isDark.value ? "#333" : "#eee" } }
+        }
+      ],
+      yAxis: [
+        {
+          type: "value",
+          gridIndex: 0,
+          splitLine: { show: true, lineStyle: { type: "dashed" } },
+          axisLabel: { fontSize: 10 },
+          minInterval: 1
+        },
+        {
+          type: "value",
+          gridIndex: 1,
+          splitLine: { show: true, lineStyle: { type: "dashed" } },
+          axisLabel: { fontSize: 10 },
+          minInterval: 1
+        }
+      ],
       series: [
         {
           name: "教师使用量",
           type: "bar",
+          xAxisIndex: 0,
+          yAxisIndex: 0,
           data: tData.map(i => i.usageNum),
-          color: "#409eff"
+          color: "#409eff",
+          barWidth: "45%",
+          itemStyle: { borderRadius: [4, 4, 0, 0] }
         },
         {
           name: "学生使用量",
           type: "bar",
+          xAxisIndex: 1,
+          yAxisIndex: 1,
           data: sData.map(i => i.usageNum),
-          color: "#67c23a"
+          color: "#67c23a",
+          barWidth: "45%",
+          itemStyle: { borderRadius: [4, 4, 0, 0] }
         }
       ]
     });
@@ -811,7 +866,7 @@ watch(theme, () => {
               <span class="font-bold">平台角色活跃分布</span>
             </div>
           </template>
-          <div ref="usageChartRef" class="h-[280px]" />
+          <div ref="usageChartRef" class="h-[320px]" />
         </el-card>
       </el-col>
       <el-col :xs="24" :lg="16">
