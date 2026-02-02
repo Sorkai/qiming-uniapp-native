@@ -62,6 +62,13 @@ import type {
 
 //==================== 后端返回类型定义 ====================
 
+/** 后端通用返回结构 */
+export interface CommonResponse<T = any> {
+  code: number;
+  msg: string;
+  data: T;
+}
+
 /** 后端返回的帖子列表项 */
 interface BackendPostListItem {
   postId: number;
@@ -661,10 +668,12 @@ export function getAuditLogs(params?: {
   pageNum: number;
   pageSize?: number;
 }) {
-  return http.request<{
-    total: number;
-    list: AuditLog[];
-  }>("get", "/edu/backend/v1/discussions/audit-logs", { params });
+  return http.request<
+    CommonResponse<{
+      total: number;
+      list: AuditLog[];
+    }>
+  >("get", "/edu/backend/v1/discussions/audit-logs", { params });
 }
 
 /**
@@ -672,7 +681,7 @@ export function getAuditLogs(params?: {
  * @param params 查询参数
  */
 export function getGlobalStatistics(params?: { courseId?: string }) {
-  return http.request<GlobalStatistics>(
+  return http.request<CommonResponse<GlobalStatistics>>(
     "get",
     "/edu/backend/v1/discussions/statistics",
     { params }
@@ -690,11 +699,11 @@ export async function getPendingList(params?: {
   pageNum: number;
   pageSize?: number;
 }) {
-  const response = await http.request<{
-    code: number;
-    msg: string;
-    data: PendingListResponse;
-  }>("get", "/edu/backend/v1/discussions/pending", { params });
+  const response = await http.request<CommonResponse<PendingListResponse>>(
+    "get",
+    "/edu/backend/v1/discussions/pending",
+    { params }
+  );
 
   //调试：打印后端返回的数据，检查 authorAvatar 字段
   const responseData = (response as any)?.data || response;

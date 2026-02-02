@@ -72,7 +72,7 @@ const statCards = computed(() => {
   if (!stats.value) return [];
   return [
     {
-      label: "数据概览",
+      label: "核心数据",
       children: [
         {
           label: "总帖子数",
@@ -105,7 +105,7 @@ const statCards = computed(() => {
       ]
     },
     {
-      label: "今日动向",
+      label: "今日实时",
       children: [
         {
           label: "今日新帖数",
@@ -128,7 +128,7 @@ const statCards = computed(() => {
   ];
 });
 
-// 待处理指标
+// 待处理指标卡片
 const pendingCards = computed(() => {
   if (!stats.value) return [];
   return [
@@ -137,24 +137,27 @@ const pendingCards = computed(() => {
       value: stats.value.pendingPosts,
       icon: Warning,
       color: "#e6a23c",
-      bg: "rgba(230, 162, 60, 0.08)",
-      unit: "条"
+      bg: "rgba(230, 162, 60, 0.1)",
+      unit: "条",
+      tip: "需要尽快完成内容审核"
     },
     {
       label: "待审核回复数",
       value: stats.value.pendingReplies,
       icon: Warning,
       color: "#e6a23c",
-      bg: "rgba(230, 162, 60, 0.08)",
-      unit: "条"
+      bg: "rgba(230, 162, 60, 0.1)",
+      unit: "条",
+      tip: "需要尽快完成回复审核"
     },
     {
       label: "待处理举报数",
       value: stats.value.pendingReports,
       icon: Warning,
       color: "#f56c6c",
-      bg: "rgba(245, 108, 108, 0.08)",
-      unit: "个"
+      bg: "rgba(245, 108, 108, 0.1)",
+      unit: "个",
+      tip: "用户发起的违规举报"
     }
   ];
 });
@@ -488,35 +491,50 @@ watch(theme, () => {
           :sm="8"
           class="mb-4"
         >
-          <div
-            class="p-4 rounded-xl border border-dashed flex items-center justify-between group transition-all"
-            :style="{ borderColor: item.color, backgroundColor: item.bg }"
+          <el-card
+            shadow="hover"
+            class="!border-none transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+            :style="{ backgroundColor: item.bg }"
           >
-            <div class="flex items-center">
-              <el-icon
-                :size="20"
-                :color="item.color"
-                class="mr-3 group-hover:rotate-12 transition-transform"
-              >
-                <component :is="item.icon" />
-              </el-icon>
-              <span
-                class="text-sm font-medium"
-                :style="{ color: item.color }"
-                >{{ item.label }}</span
-              >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div
+                  class="w-10 h-10 rounded-xl flex items-center justify-center mr-3"
+                  :style="{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }"
+                >
+                  <el-icon :size="22" :color="item.color">
+                    <component :is="item.icon" />
+                  </el-icon>
+                </div>
+                <div>
+                  <div
+                    class="text-xs mb-0.5 font-bold"
+                    :style="{ color: item.color }"
+                  >
+                    {{ item.label }}
+                  </div>
+                  <div
+                    class="text-[10px] opacity-60"
+                    :style="{ color: item.color }"
+                  >
+                    {{ item.tip }}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-baseline gap-1">
+                <span
+                  class="text-2xl font-black"
+                  :style="{ color: item.color }"
+                  >{{ item.value || 0 }}</span
+                >
+                <span
+                  class="text-[10px] font-bold"
+                  :style="{ color: item.color }"
+                  >{{ item.unit }}</span
+                >
+              </div>
             </div>
-            <div class="flex items-baseline gap-1">
-              <span class="text-xl font-black" :style="{ color: item.color }">{{
-                item.value || 0
-              }}</span>
-              <span
-                class="text-[10px] opacity-60"
-                :style="{ color: item.color }"
-                >{{ item.unit }}</span
-              >
-            </div>
-          </div>
+          </el-card>
         </el-col>
       </el-row>
     </div>
