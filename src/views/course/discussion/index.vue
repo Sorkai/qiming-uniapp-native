@@ -326,35 +326,33 @@ const handleReject = async (row: ReviewQueueItem) => {
 
 // 置顶逻辑
 const handlePin = async (row: ReviewQueueItem) => {
+  loading.value = true;
   try {
-    const res: any = await pinPost(row.id);
-    if (res?.code === 0) {
-      row.isPinned = true;
-      ElMessage.success("成功设为置顶");
-      setTimeout(() => fetchData(), 500);
-    } else {
-      ElMessage.error(res?.msg || "操作失败");
-    }
+    await pinPost(row.id);
+    // HTTP 200 OK 即为成功
+    row.isPinned = true;
+    ElMessage.success("成功设为置顶");
+    setTimeout(() => fetchData(), 1000);
   } catch (error) {
     console.error("置顶操作失败:", error);
     ElMessage.error("置顶操作失败");
+    loading.value = false;
   }
 };
 
 // 取消置顶逻辑
 const handleUnpin = async (row: ReviewQueueItem) => {
+  loading.value = true;
   try {
-    const res: any = await unpinPost(row.id);
-    if (res?.code === 0) {
-      row.isPinned = false;
-      ElMessage.success("已取消置顶");
-      setTimeout(() => fetchData(), 500);
-    } else {
-      ElMessage.error(res?.msg || "操作失败");
-    }
+    await unpinPost(row.id);
+    // HTTP 200 OK 即为成功
+    row.isPinned = false;
+    ElMessage.success("已取消置顶");
+    setTimeout(() => fetchData(), 1000);
   } catch (error) {
     console.error("取消置顶操作失败:", error);
     ElMessage.error("取消置顶操作失败");
+    loading.value = false;
   }
 };
 
