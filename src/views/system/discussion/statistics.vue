@@ -526,9 +526,6 @@ watch(theme, () => {
           class="w-1.5 h-5 bg-gradient-to-b from-blue-500 to-blue-400 mr-3 rounded-full"
         />
         <span class="text-base font-bold">核心数据指标</span>
-        <el-tag size="small" type="info" class="ml-3"
-          >API: /discussions/statistics</el-tag
-        >
       </div>
 
       <!-- 第一行: 内容统计 (3卡片) -->
@@ -923,9 +920,6 @@ watch(theme, () => {
             </div>
             <div>
               <span class="font-bold">全平台操作审计日志</span>
-              <el-tag size="small" type="info" class="ml-3"
-                >API: /discussions/audit-logs</el-tag
-              >
             </div>
           </div>
           <el-tag type="warning" effect="plain" round
