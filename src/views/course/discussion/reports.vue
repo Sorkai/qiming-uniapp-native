@@ -379,7 +379,7 @@ onActivated(() => {
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column label="操作" width="240" align="center" fixed="right">
           <template #default="{ row }">
             <div class="action-btns">
               <el-tooltip content="查看详情" placement="top">
@@ -559,10 +559,13 @@ onActivated(() => {
   font-size: 16px; // 整体文字变大
 
   :deep(.el-table) {
-    font-size: 15px; // 表格内文字变大
+    font-size: 16px; // 进一步增大
     .el-table__header {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: bold;
+    }
+    .el-table__row {
+      height: 80px; // 增加行高，容纳大按钮
     }
   }
 
