@@ -171,7 +171,7 @@ const fetchData = async () => {
       },
       tags: [],
       status: "pending" as const,
-      isPinned: false,
+      isPinned: (item as any).isPinned === true || (item as any).isPinned === 1,
       likeCount: 0,
       replyCount: 0,
       viewCount: 0,

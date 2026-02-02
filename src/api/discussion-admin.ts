@@ -440,7 +440,8 @@ export function pinPost(postId: string | number) {
 export function unpinPost(postId: string | number) {
   return http.request<{ code: number; msg: string; data: object }>(
     "delete",
-    `/edu/backend/v1/discussions/${postId}/pin`
+    `/edu/backend/v1/discussions/${postId}/pin`,
+    { params: { _t: Date.now() } }
   );
 }
 
@@ -797,7 +798,7 @@ export async function getTeacherDiscussions(params?: {
           },
           tags: [],
           status: "pending" as PostStatus,
-          isPinned: false,
+          isPinned: (item as any).isPinned === true || (item as any).isPinned === 1 as any).isPinned === true || (item as any).isPinned === 1,
           likeCount: 0,
           replyCount: 0,
           viewCount: 0,
@@ -923,7 +924,7 @@ export async function getAdminDiscussions(
       },
       tags: item.tags || [],
       status: "approved" as PostStatus,
-      isPinned: item.isPinned,
+      isPinned: !!item.isPinned,
       likeCount: item.likeCount,
       replyCount: item.replyCount,
       viewCount: item.viewCount,
@@ -1015,7 +1016,7 @@ export async function getAdminDiscussionDetail(
       },
       tags: backendData.tags || [],
       status: "approved" as PostStatus,
-      isPinned: backendData.isPinned,
+      isPinned: !!backendData.isPinned,
       likeCount: backendData.likeCount,
       replyCount: backendData.replyCount,
       viewCount: backendData.viewCount,
