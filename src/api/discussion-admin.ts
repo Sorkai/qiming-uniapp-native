@@ -198,51 +198,42 @@ export interface UserReputation {
 
 /** 审计日志 */
 export interface AuditLog {
-  id: string;
+  id: number;
   targetType: "post" | "reply";
-  targetId: string;
-  targetTitle?: string;
-  action: "approve" | "reject" | "delete" | "pin" | "unpin";
-  operator: Author & { role: string };
-  reason?: string;
-  previousStatus?: string;
-  newStatus?: string;
-  createdAt: string;
+  targetId: number;
+  action: string;
+  operatorId: number;
+  operatorName: string;
+  operatorRole: string;
+  reason: string;
+  previousStatus: string;
+  newStatus: string;
+  createTime: string;
 }
 
 /** 全局统计数据 */
 export interface GlobalStatistics {
-  overview: {
-    totalPosts: number;
-    totalReplies: number;
-    totalUsers: number;
-    activeUsersToday: number;
-    pendingReview: number;
-    pendingReports: number;
-  };
-  trends: {
+  totalPosts: number;
+  totalReplies: number;
+  totalLikes: number;
+  pendingPosts: number;
+  pendingReplies: number;
+  pendingReports: number;
+  activeUsers: number;
+  todayPosts: number;
+  todayReplies: number;
+  // 保持趋势数据，用于图表展示
+  trends?: {
     posts: Array<{ date: string; count: number }>;
     replies: Array<{ date: string; count: number }>;
     activeUsers: Array<{ date: string; count: number }>;
   };
-  topCourses: Array<{
+  topCourses?: Array<{
     courseId: string;
     courseName: string;
     postCount: number;
     replyCount: number;
   }>;
-  contentQuality: {
-    approvalRate: string;
-    rejectionRate: string;
-    pendingRate: string;
-    avgReviewTime: string;
-  };
-  userBehavior: {
-    avgPostsPerUser: number;
-    avgRepliesPerPost: number;
-    avgLikesPerPost: number;
-    reportRate: string;
-  };
 }
 
 // ==================== 教师/管理员接口 ====================
@@ -663,16 +654,16 @@ export function updateUserReputation(
  */
 export function getAuditLogs(params?: {
   targetType?: "post" | "reply";
-  action?: "approve" | "reject" | "delete" | "pin" | "unpin";
-  operatorId?: string;
-  startDate?: string;
-  endDate?: string;
-  page?: number;
+  action?: string;
+  operatorId?: number;
+  startTime?: string;
+  endTime?: string;
+  pageNum: number;
   pageSize?: number;
 }) {
   return http.request<{
+    total: number;
     list: AuditLog[];
-    pagination: Pagination;
   }>("get", "/edu/backend/v1/discussions/audit-logs", { params });
 }
 
@@ -680,11 +671,7 @@ export function getAuditLogs(params?: {
  * 获取全局统计
  * @param params 查询参数
  */
-export function getGlobalStatistics(params?: {
-  startDate?: string;
-  endDate?: string;
-  groupBy?: "day" | "week" | "month";
-}) {
+export function getGlobalStatistics(params?: { courseId?: string }) {
   return http.request<GlobalStatistics>(
     "get",
     "/edu/backend/v1/discussions/statistics",
