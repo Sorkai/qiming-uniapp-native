@@ -17,9 +17,8 @@ import {
 import {
   getReportList,
   handleReport,
-  type ReportRecord,
-  type ReportStatus,
-  type ReportReason
+  type ReportItem,
+  type ReportStatus
 } from "@/api/discussion-admin";
 import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
 
@@ -32,10 +31,10 @@ type TagType = "warning" | "success" | "info" | "primary" | "danger";
 
 // 状态
 const loading = ref(false);
-const reports = ref<ReportRecord[]>([]);
+const reports = ref<ReportItem[]>([]);
 const detailDialogVisible = ref(false);
 const handleDialogVisible = ref(false);
-const currentReport = ref<ReportRecord | null>(null);
+const currentReport = ref<ReportItem | null>(null);
 
 // 统计数据
 const stats = ref({
@@ -46,16 +45,13 @@ const stats = ref({
 
 // 搜索表单
 const searchForm = reactive({
-  status: "pending" as ReportStatus | "",
-  reason: "" as ReportReason | ""
+  status: "pending" as ReportStatus | ""
 });
 
 // 处理表单
 const handleForm = reactive({
-  action: "dismiss" as "delete" | "dismiss" | "warn",
-  note: "",
-  punishUser: false,
-  punishType: "warning" as "warning" | "restrict" | "ban"
+  action: "reject" as "accept" | "reject",
+  note: ""
 });
 
 // 分页
@@ -68,40 +64,27 @@ const pagination = reactive({
 // 状态选项
 const statusOptions = [
   { label: "待处理", value: "pending" },
-  { label: "已处理", value: "resolved" },
-  { label: "已忽略", value: "dismissed" }
+  { label: "已报送", value: "accepted" },
+  { label: "已驳回", value: "rejected" }
 ];
 
-// 举报原因选项
-const reasonOptions = [
-  { label: "垃圾广告", value: "spam" },
-  { label: "不当内容", value: "inappropriate" },
-  { label: "骚扰攻击", value: "harassment" },
-  { label: "虚假信息", value: "misinformation" },
-  { label: "侵权内容", value: "copyright" },
-  { label: "其他", value: "other" }
-];
+// 举报原因选项 (根据需要保留或调整，后端返回的是 string)
+const getReasonText = (reason: string): string => {
+  return reason || "未知原因";
+};
 
 // 处理方式选项
 const actionOptions = [
-  { label: "忽略举报（内容无问题）", value: "dismiss" },
-  { label: "删除内容", value: "delete" },
-  { label: "警告作者", value: "warn" }
-];
-
-// 处罚类型选项
-const punishOptions = [
-  { label: "警告", value: "warning" },
-  { label: "限制发帖", value: "restrict" },
-  { label: "禁言", value: "ban" }
+  { label: "驳回举报（内容无问题）", value: "reject" },
+  { label: "接受举报（内容受处理）", value: "accept" }
 ];
 
 // 状态标签样式
 const getStatusTagType = (status: ReportStatus): TagType => {
   const map: Record<string, TagType> = {
     pending: "warning",
-    resolved: "success",
-    dismissed: "info"
+    accepted: "success",
+    rejected: "info"
   };
   return map[status] || "info";
 };
@@ -109,16 +92,10 @@ const getStatusTagType = (status: ReportStatus): TagType => {
 const getStatusText = (status: ReportStatus): string => {
   const map: Record<string, string> = {
     pending: "待处理",
-    resolved: "已处理",
-    dismissed: "已忽略"
+    accepted: "已接受",
+    rejected: "已驳回"
   };
   return map[status] || status;
-};
-
-// 举报原因文本
-const getReasonText = (reason: ReportReason): string => {
-  const opt = reasonOptions.find(o => o.value === reason);
-  return opt?.label || reason;
 };
 
 // 加载数据
@@ -126,16 +103,22 @@ const fetchData = async () => {
   loading.value = true;
   try {
     const params: any = {
-      page: pagination.page,
+      pageNum: pagination.page,
       pageSize: pagination.pageSize
     };
     if (searchForm.status) params.status = searchForm.status;
-    if (searchForm.reason) params.reason = searchForm.reason;
 
     const res = await getReportList(params);
-    reports.value = res.list;
-    pagination.total = res.pagination.total;
-    stats.value = res.stats;
+    const responseData = (res as any).data || res;
+    reports.value = responseData.list || [];
+    pagination.total = responseData.total || 0;
+    // stats 暂时从列表计算或固定
+    stats.value = {
+      pending: (responseData.list || []).filter((r: any) => r.status === "pending")
+        .length,
+      resolvedToday: 0,
+      totalReports: responseData.total || 0
+    };
   } catch (error) {
     console.error("加载举报列表失败", error);
   } finally {
@@ -152,7 +135,6 @@ const handleSearch = () => {
 // 重置
 const resetSearch = () => {
   searchForm.status = "pending";
-  searchForm.reason = "";
   handleSearch();
 };
 
@@ -169,36 +151,30 @@ const handleSizeChange = (size: number) => {
 };
 
 // 查看详情
-const viewDetail = (row: ReportRecord) => {
+const viewDetail = (row: ReportItem) => {
   currentReport.value = row;
   detailDialogVisible.value = true;
 };
 
 // 打开处理弹窗
-const openHandleDialog = (row: ReportRecord) => {
+const openHandleDialog = (row: ReportItem) => {
   currentReport.value = row;
-  handleForm.action = "dismiss";
+  handleForm.action = "reject";
   handleForm.note = "";
-  handleForm.punishUser = false;
-  handleForm.punishType = "warning";
   handleDialogVisible.value = true;
 };
 
-// 快速忽略
-const quickDismiss = async (row: ReportRecord) => {
+// 快速驳回
+const quickDismiss = async (row: ReportItem) => {
   try {
-    await ElMessageBox.confirm("确定要忽略这条举报吗？", "提示", {
+    await ElMessageBox.confirm("确定要驳回这条举报吗？", "提示", {
       type: "info",
       customClass: "custom-message-box",
       draggable: true
     });
-    await handleReport(row.id, { action: "dismiss", note: "内容无问题" });
+    await handleReport(row.reportId, { action: "reject", note: "内容无问题" });
 
-    // 本地移除
-    const idx = reports.value.findIndex(r => r.id === row.id);
-    if (idx > -1) reports.value.splice(idx, 1);
-
-    ElMessage.success("已忽略");
+    ElMessage.success("已驳回");
     fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
@@ -207,25 +183,17 @@ const quickDismiss = async (row: ReportRecord) => {
   }
 };
 
-// 快速删除
-const quickDelete = async (row: ReportRecord) => {
+// 快速接受
+const quickDelete = async (row: ReportItem) => {
   try {
-    await ElMessageBox.confirm(
-      "确定要删除被举报的内容吗？此操作不可恢复！",
-      "警告",
-      {
-        type: "warning",
-        customClass: "custom-message-box",
-        draggable: true
-      }
-    );
-    await handleReport(row.id, { action: "delete", note: "内容违规" });
+    await ElMessageBox.confirm("确定要接受这条举报吗？", "警告", {
+      type: "warning",
+      customClass: "custom-message-box",
+      draggable: true
+    });
+    await handleReport(row.reportId, { action: "accept", note: "内容违规" });
 
-    // 本地移除
-    const idx = reports.value.findIndex(r => r.id === row.id);
-    if (idx > -1) reports.value.splice(idx, 1);
-
-    ElMessage.success("已删除");
+    ElMessage.success("已接受");
     fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
@@ -239,16 +207,10 @@ const submitHandle = async () => {
   if (!currentReport.value) return;
 
   try {
-    await handleReport(currentReport.value.id, {
+    await handleReport(currentReport.value.reportId, {
       action: handleForm.action,
-      note: handleForm.note,
-      punishUser: handleForm.punishUser,
-      punishType: handleForm.punishUser ? handleForm.punishType : undefined
+      note: handleForm.note
     });
-
-    // 本地移除
-    const idx = reports.value.findIndex(r => r.id === currentReport.value.id);
-    if (idx > -1) reports.value.splice(idx, 1);
 
     ElMessage.success("处理成功");
     handleDialogVisible.value = false;
@@ -355,21 +317,6 @@ onActivated(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="举报原因">
-          <el-select
-            v-model="searchForm.reason"
-            placeholder="全部原因"
-            clearable
-            style="width: 140px"
-          >
-            <el-option
-              v-for="opt in reasonOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">
             搜索
@@ -389,10 +336,7 @@ onActivated(() => {
                 {{ row.targetType === "post" ? "帖子" : "回复" }}
               </el-tag>
               <div class="content-text text-sm mt-1">
-                {{ row.target?.content?.substring(0, 100) }}...
-              </div>
-              <div class="text-gray-400 text-xs mt-1">
-                作者：{{ row.target?.author?.name }}
+                {{ row.targetContent?.substring(0, 100) }}...
               </div>
             </div>
           </template>
@@ -407,17 +351,8 @@ onActivated(() => {
         <el-table-column label="举报人" width="120">
           <template #default="{ row }">
             <div class="flex items-center gap-2">
-              <el-avatar :size="24" :src="row.reporter?.avatar" />
-              <span class="text-sm">{{ row.reporter?.name }}</span>
+              <span class="text-sm">{{ row.reporterName }}</span>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="举报次数" width="90" align="center">
-          <template #default="{ row }">
-            <el-badge
-              :value="row.reportCount"
-              :type="row.reportCount >= 3 ? 'danger' : 'info'"
-            />
           </template>
         </el-table-column>
         <el-table-column label="状态" width="90" align="center">
@@ -430,7 +365,7 @@ onActivated(() => {
         <el-table-column label="举报时间" width="160" align="center">
           <template #default="{ row }"
             ><span class="text-sm text-gray-500">
-              {{ formatTime(row.createdAt) }}
+              {{ formatTime(row.createTime) }}
             </span>
           </template>
         </el-table-column>
@@ -446,7 +381,7 @@ onActivated(() => {
                 />
               </el-tooltip>
               <template v-if="row.status === 'pending'">
-                <el-tooltip content="忽略举报" placement="top">
+                <el-tooltip content="驳回举报" placement="top">
                   <el-button
                     link
                     type="success"
@@ -454,7 +389,7 @@ onActivated(() => {
                     @click="quickDismiss(row)"
                   />
                 </el-tooltip>
-                <el-tooltip content="删除内容" placement="top">
+                <el-tooltip content="接受举报" placement="top">
                   <el-button
                     link
                     type="danger"
@@ -508,13 +443,10 @@ onActivated(() => {
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="举报人">
-            {{ currentReport.reporter?.name }}
-          </el-descriptions-item>
-          <el-descriptions-item label="举报次数"
-            ><el-badge :value="currentReport.reportCount" type="danger" />
+            {{ currentReport.reporterName }}
           </el-descriptions-item>
           <el-descriptions-item label="举报时间" :span="2">
-            {{ formatTime(currentReport.createdAt) }}
+            {{ formatTime(currentReport.createTime) }}
           </el-descriptions-item>
           <el-descriptions-item label="举报说明" :span="2">
             {{ currentReport.description || "无" }}
@@ -524,20 +456,14 @@ onActivated(() => {
         <el-divider>被举报内容</el-divider>
 
         <div class="reported-content p-4 bg-gray-50 rounded">
-          <div class="flex items-center gap-2 mb-2">
-            <el-avatar :size="32" :src="currentReport.target?.author?.avatar" />
-            <span class="font-medium">{{
-              currentReport.target?.author?.name
-            }}</span>
-          </div>
           <div class="content-text">
-            {{ currentReport.target?.content }}
+            {{ currentReport.targetContent }}
           </div>
         </div>
 
         <template v-if="currentReport.status !== 'pending'">
           <el-divider>处理结果</el-divider>
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="1" border>
             <el-descriptions-item label="处理状态">
               <el-tag
                 :type="getStatusTagType(currentReport.status)"
@@ -545,15 +471,6 @@ onActivated(() => {
               >
                 {{ getStatusText(currentReport.status) }}
               </el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item label="处理人">
-              {{ currentReport.handledBy?.name || "-" }}
-            </el-descriptions-item>
-            <el-descriptions-item label="处理时间" :span="2">
-              {{ formatTime(currentReport.handledAt || "") }}
-            </el-descriptions-item>
-            <el-descriptions-item label="处理备注" :span="2">
-              {{ currentReport.handleNote || "无" }}
             </el-descriptions-item>
           </el-descriptions>
         </template>
@@ -569,7 +486,7 @@ onActivated(() => {
                 detailDialogVisible = false;
               "
             >
-              忽略举报 </el-button
+              驳回举报 </el-button
             ><el-button
               type="danger"
               @click="
@@ -577,7 +494,7 @@ onActivated(() => {
                 detailDialogVisible = false;
               "
             >
-              删除内容
+              接受举报
             </el-button>
           </div>
           <el-button @click="detailDialogVisible = false">关闭</el-button>
@@ -611,19 +528,6 @@ onActivated(() => {
             :rows="3"
             placeholder="请输入处理备注（选填）"
           />
-        </el-form-item>
-        <el-form-item v-if="handleForm.action !== 'dismiss'" label="处罚用户">
-          <el-switch v-model="handleForm.punishUser" />
-        </el-form-item>
-        <el-form-item v-if="handleForm.punishUser" label="处罚类型">
-          <el-select v-model="handleForm.punishType" style="width: 200px">
-            <el-option
-              v-for="opt in punishOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
         </el-form-item>
       </el-form>
 

@@ -110,37 +110,32 @@ interface BackendPostDetail {
 // ==================== 类型定义 ====================
 
 /** 举报状态 */
-export type ReportStatus = "pending" | "resolved" | "dismissed";
-
-/** 举报原因 */
-export type ReportReason =
-  | "spam"
-  | "inappropriate"
-  | "harassment"
-  | "misinformation"
-  | "copyright"
-  | "other";
+export type ReportStatus = "pending" | "accepted" | "rejected";
 
 /** 举报记录 */
-export interface ReportRecord {
-  id: string;
+export interface ReportItem {
+  reportId: number;
   targetType: "post" | "reply";
-  targetId: string;
-  target: {
-    id: string;
-    title?: string;
-    content: string;
-    author: Author;
-  };
-  reporter: Author;
-  reason: ReportReason;
-  description?: string;
+  targetId: number;
+  targetContent: string;
+  reporterId: number;
+  reporterName: string;
+  reason: string;
+  description: string;
   status: ReportStatus;
-  reportCount: number;
-  createdAt: string;
-  handledAt?: string;
-  handledBy?: Author;
-  handleNote?: string;
+  createTime: string;
+}
+
+/** 举报列表响应结构 */
+export interface ReportListResponse {
+  total: number;
+  list: ReportItem[];
+}
+
+/** 处理举报请求 */
+export interface HandleReportRequest {
+  action: "accept" | "reject";
+  note?: string;
 }
 
 /** 审核队列项（扩展帖子信息） */
@@ -501,41 +496,26 @@ export function batchDelete(data: { postIds: string[]; reason?: string }) {
 
 /**
  * 获取举报列表
- * @param params 查询参数
+ * GET /edu/backend/v1/discussions/reports
  */
-export function getReportList(params?: {
+export function getReportList(params: {
   status?: ReportStatus;
-  reason?: ReportReason;
-  courseId?: string;
-  page?: number;
+  pageNum: number;
   pageSize?: number;
 }) {
-  return http.request<{
-    list: ReportRecord[];
-    pagination: Pagination;
-    stats: {
-      pending: number;
-      resolvedToday: number;
-      totalReports: number;
-    };
-  }>("get", "/edu/backend/v1/discussions/reports", { params });
+  return http.request<ReportListResponse>(
+    "get",
+    "/edu/backend/v1/discussions/reports",
+    { params }
+  );
 }
 
 /**
  * 处理举报
- * @param reportId 举报ID
- * @param data 处理数据
+ * POST /edu/backend/v1/discussions/reports/{reportId}/handle
  */
-export function handleReport(
-  reportId: string,
-  data: {
-    action: "delete" | "dismiss" | "warn";
-    note?: string;
-    punishUser?: boolean;
-    punishType?: "warning" | "restrict" | "ban";
-  }
-) {
-  return http.request<{ success: boolean }>(
+export function handleReport(reportId: number, data: HandleReportRequest) {
+  return http.request<any>(
     "post",
     `/edu/backend/v1/discussions/reports/${reportId}/handle`,
     { data }
