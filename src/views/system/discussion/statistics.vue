@@ -2,6 +2,10 @@
 /**
  * 管理员端 - 讨论区统计与审计面板
  * 展示讨论区核心指标、趋势图表以及操作审计日志
+ *
+ * 接口对接：
+ * - GET /edu/backend/v1/discussions/statistics - 获取讨论统计数据
+ * - GET /edu/backend/v1/discussions/audit-logs - 获取审计日志
  */
 import { ref, reactive, onMounted, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
@@ -16,7 +20,14 @@ import {
   Star,
   Timer,
   Operation,
-  Search
+  Search,
+  Message,
+  Bell,
+  PieChart,
+  Histogram,
+  Flag,
+  Check,
+  Clock
 } from "@element-plus/icons-vue";
 import {
   getGlobalStatistics,
@@ -24,11 +35,7 @@ import {
   type GlobalStatistics,
   type AuditLog
 } from "@/api/discussion-admin";
-import {
-  getTeacherUsage,
-  getStudentUsage,
-  getPlatformStats
-} from "@/api/statistics";
+import { getTeacherUsage, getStudentUsage } from "@/api/statistics";
 import { getCourseList } from "@/api/course";
 import { useECharts, useDark } from "@pureadmin/utils";
 
@@ -45,7 +52,6 @@ const loading = ref(false);
 const stats = ref<GlobalStatistics | null>(null);
 const selectedCourse = ref("");
 const courses = ref([]);
-const platformOverview = ref([]);
 
 // 获取课程列表用于过滤
 const fetchCourses = async () => {
@@ -57,114 +63,140 @@ const fetchCourses = async () => {
   }
 };
 
-// 获取平台概览数据
-const fetchPlatformOverview = async () => {
-  try {
-    const { data } = await getPlatformStats();
-    platformOverview.value = data.stats || [];
-  } catch (error) {
-    console.error("加载平台概览失败", error);
-  }
-};
+// 所有统计字段的卡片配置
+const allStatCards = computed(() => {
+  if (!stats.value) return [];
+  return [
+    {
+      label: "总帖子数",
+      value: stats.value.totalPosts,
+      icon: Document,
+      color: "#409eff",
+      bg: "linear-gradient(135deg, rgba(64, 158, 255, 0.15) 0%, rgba(64, 158, 255, 0.05) 100%)",
+      borderColor: "rgba(64, 158, 255, 0.3)",
+      tip: "全站累计发布的讨论帖总数",
+      category: "content"
+    },
+    {
+      label: "总回复数",
+      value: stats.value.totalReplies,
+      icon: ChatLineRound,
+      color: "#67c23a",
+      bg: "linear-gradient(135deg, rgba(103, 194, 58, 0.15) 0%, rgba(103, 194, 58, 0.05) 100%)",
+      borderColor: "rgba(103, 194, 58, 0.3)",
+      tip: "全站累计产生的回复与评论",
+      category: "content"
+    },
+    {
+      label: "总点赞数",
+      value: stats.value.totalLikes,
+      icon: Star,
+      color: "#f59e0b",
+      bg: "linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)",
+      borderColor: "rgba(245, 158, 11, 0.3)",
+      tip: "互动产生的认可与点赞总量",
+      category: "engagement"
+    },
+    {
+      label: "活跃用户数",
+      value: stats.value.activeUsers,
+      icon: User,
+      color: "#8b5cf6",
+      bg: "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%)",
+      borderColor: "rgba(139, 92, 246, 0.3)",
+      tip: "最近24小时内参与互动的用户",
+      category: "user"
+    },
+    {
+      label: "今日新帖",
+      value: stats.value.todayPosts,
+      icon: Clock,
+      color: "#06b6d4",
+      bg: "linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(6, 182, 212, 0.05) 100%)",
+      borderColor: "rgba(6, 182, 212, 0.3)",
+      tip: "今日 00:00 至今新增的发帖",
+      isNew: true,
+      category: "today"
+    },
+    {
+      label: "今日新回复",
+      value: stats.value.todayReplies,
+      icon: Message,
+      color: "#10b981",
+      bg: "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)",
+      borderColor: "rgba(16, 185, 129, 0.3)",
+      tip: "今日 00:00 至今新增的回复",
+      isNew: true,
+      category: "today"
+    },
+    {
+      label: "待审核帖子",
+      value: stats.value.pendingPosts,
+      icon: Flag,
+      color: "#f97316",
+      bg: "linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.05) 100%)",
+      borderColor: "rgba(249, 115, 22, 0.3)",
+      tip: "需要尽快完成内容审核",
+      isPending: true,
+      category: "pending"
+    },
+    {
+      label: "待审核回复",
+      value: stats.value.pendingReplies,
+      icon: Bell,
+      color: "#eab308",
+      bg: "linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(234, 179, 8, 0.05) 100%)",
+      borderColor: "rgba(234, 179, 8, 0.3)",
+      tip: "需要尽快完成回复审核",
+      isPending: true,
+      category: "pending"
+    },
+    {
+      label: "待处理举报",
+      value: stats.value.pendingReports,
+      icon: Warning,
+      color: "#ef4444",
+      bg: "linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%)",
+      borderColor: "rgba(239, 68, 68, 0.3)",
+      tip: "用户发起的违规举报",
+      isPending: true,
+      category: "pending"
+    }
+  ];
+});
 
+// 分组统计卡片
 const statCards = computed(() => {
   if (!stats.value) return [];
   return [
     {
-      label: "数据资产",
-      children: [
-        {
-          label: "总帖子数",
-          value: stats.value.totalPosts,
-          icon: Document,
-          color: "#409eff",
-          bg: "rgba(64, 158, 255, 0.1)",
-          tip: "全站累计发布的讨论帖总数"
-        },
-        {
-          label: "总回复数",
-          value: stats.value.totalReplies,
-          icon: ChatLineRound,
-          color: "#67c23a",
-          bg: "rgba(103, 194, 58, 0.1)",
-          tip: "全站累计产生的回复与评论"
-        },
-        {
-          label: "总点赞数",
-          value: stats.value.totalLikes,
-          icon: Star,
-          color: "#e6a23c",
-          bg: "rgba(230, 162, 60, 0.1)",
-          tip: "互动产生的认可与点赞总量"
-        },
-        {
-          label: "活跃用户数",
-          value: stats.value.activeUsers,
-          icon: User,
-          color: "#909399",
-          bg: "rgba(144, 147, 153, 0.1)",
-          tip: "最近24小时内参与互动的用户"
-        }
-      ]
+      label: "内容统计",
+      icon: Document,
+      color: "#409eff",
+      children: allStatCards.value.filter(c => c.category === "content")
     },
     {
-      label: "实时动态",
-      children: [
-        {
-          label: "今日新帖",
-          value: stats.value.todayPosts,
-          icon: Timer,
-          color: "#f56c6c",
-          bg: "rgba(245, 108, 108, 0.1)",
-          isNew: true,
-          tip: "今日 00:00 至今新增的发帖"
-        },
-        {
-          label: "今日回复",
-          value: stats.value.todayReplies,
-          icon: Timer,
-          color: "#00ced1",
-          bg: "rgba(0, 206, 209, 0.1)",
-          isNew: true,
-          tip: "今日 00:00 至今新增的回复"
-        }
-      ]
+      label: "今日动态",
+      icon: Clock,
+      color: "#06b6d4",
+      children: allStatCards.value.filter(c => c.category === "today")
     }
   ];
 });
 
 // 待处理指标卡片
 const pendingCards = computed(() => {
+  if (!stats.value)
+    return allStatCards.value.filter(c => c.category === "pending");
+  return allStatCards.value.filter(c => c.category === "pending");
+});
+
+// 用户与互动统计卡片
+const engagementCards = computed(() => {
   if (!stats.value) return [];
-  return [
-    {
-      label: "待审核帖子数",
-      value: stats.value.pendingPosts,
-      icon: Warning,
-      color: "#e6a23c",
-      bg: "rgba(230, 162, 60, 0.1)",
-      unit: "条",
-      tip: "需要尽快完成内容审核"
-    },
-    {
-      label: "待审核回复数",
-      value: stats.value.pendingReplies,
-      icon: Warning,
-      color: "#e6a23c",
-      bg: "rgba(230, 162, 60, 0.1)",
-      unit: "条",
-      tip: "需要尽快完成回复审核"
-    },
-    {
-      label: "待处理举报数",
-      value: stats.value.pendingReports,
-      icon: Warning,
-      color: "#f56c6c",
-      bg: "rgba(245, 108, 108, 0.1)",
-      unit: "个",
-      tip: "用户发起的违规举报"
-    }
-  ];
+  return allStatCards.value.filter(
+    c => c.category === "engagement" || c.category === "user"
+  );
 });
 
 // ==================== 图表逻辑 ====================
@@ -172,9 +204,13 @@ const pendingCards = computed(() => {
 const trendChartRef = ref();
 const ratioChartRef = ref();
 const usageChartRef = ref();
+const summaryChartRef = ref();
 const { setOptions: setTrendOptions } = useECharts(trendChartRef, { theme });
 const { setOptions: setRatioOptions } = useECharts(ratioChartRef, { theme });
 const { setOptions: setUsageOptions } = useECharts(usageChartRef, { theme });
+const { setOptions: setSummaryOptions } = useECharts(summaryChartRef, {
+  theme
+});
 
 const initCharts = async () => {
   // 趋势图 (Line Chart) - 使用 mock 或 backend 数据
@@ -237,10 +273,57 @@ const initCharts = async () => {
         },
         labelLine: { show: false },
         data: [
-          { value: stats.value?.totalPosts || 0, name: "帖子" },
-          { value: stats.value?.totalReplies || 0, name: "回复" },
-          { value: stats.value?.totalLikes || 0, name: "点赞" }
+          {
+            value: stats.value?.totalPosts || 0,
+            name: "帖子",
+            itemStyle: { color: "#409eff" }
+          },
+          {
+            value: stats.value?.totalReplies || 0,
+            name: "回复",
+            itemStyle: { color: "#67c23a" }
+          },
+          {
+            value: stats.value?.totalLikes || 0,
+            name: "点赞",
+            itemStyle: { color: "#f59e0b" }
+          }
         ]
+      }
+    ]
+  });
+
+  // 待处理统计图 (Bar Chart)
+  setSummaryOptions({
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
+    xAxis: {
+      type: "category",
+      data: ["待审核帖子", "待审核回复", "待处理举报"]
+    },
+    yAxis: { type: "value" },
+    series: [
+      {
+        name: "待处理数量",
+        type: "bar",
+        barWidth: "50%",
+        data: [
+          {
+            value: stats.value?.pendingPosts || 0,
+            itemStyle: { color: "#f97316" }
+          },
+          {
+            value: stats.value?.pendingReplies || 0,
+            itemStyle: { color: "#eab308" }
+          },
+          {
+            value: stats.value?.pendingReports || 0,
+            itemStyle: { color: "#ef4444" }
+          }
+        ],
+        itemStyle: {
+          borderRadius: [6, 6, 0, 0]
+        }
       }
     ]
   });
@@ -319,9 +402,13 @@ const fetchAuditLogs = async () => {
       params.startTime = timeRange.value[0];
       params.endTime = timeRange.value[1];
     }
-    const { data } = await getAuditLogs(params);
-    auditLogs.value = data.list || [];
-    total.value = data.total || 0;
+    const response = await getAuditLogs(params);
+    console.log("[AuditLogs] API响应:", response);
+    // 兼容不同的响应格式
+    const responseData = (response as any)?.data || response;
+    auditLogs.value = responseData?.list || [];
+    total.value = responseData?.total || 0;
+    console.log("[AuditLogs] 审计日志:", auditLogs.value, "总数:", total.value);
   } catch (error) {
     console.error("加载审计日志失败", error);
   } finally {
@@ -367,8 +454,12 @@ const fetchData = async () => {
   try {
     const params: any = {};
     if (selectedCourse.value) params.courseId = selectedCourse.value;
-    const { data } = await getGlobalStatistics(params);
-    stats.value = data;
+    const response = await getGlobalStatistics(params);
+    console.log("[Statistics] API响应:", response);
+    // 兼容不同的响应格式
+    const responseData = (response as any)?.data || response;
+    stats.value = responseData;
+    console.log("[Statistics] 统计数据:", stats.value);
     lastUpdateTime.value = new Date().toLocaleString();
     initCharts();
   } catch (error) {
@@ -392,7 +483,6 @@ onMounted(() => {
   fetchCourses();
   fetchData();
   fetchAuditLogs();
-  fetchPlatformOverview();
 });
 
 watch(theme, () => {
@@ -402,14 +492,20 @@ watch(theme, () => {
 
 <template>
   <div class="statistics-container p-4">
+    <!-- 顶部标题栏 -->
     <div class="flex justify-between items-center mb-6">
       <div class="flex items-center">
-        <el-icon class="mr-2 text-primary" :size="24"><TrendCharts /></el-icon>
+        <div
+          class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-3 shadow-lg"
+        >
+          <el-icon class="text-white" :size="26"><TrendCharts /></el-icon>
+        </div>
         <div>
           <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">
-            讨论区业务统计与审计面板
+            讨论区统计与审计面板
           </h2>
-          <p class="text-[10px] text-gray-400 mt-0.5">
+          <p class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-2">
+            <el-icon :size="12"><Timer /></el-icon>
             数据同步于: {{ lastUpdateTime }}
           </p>
         </div>
@@ -430,195 +526,339 @@ watch(theme, () => {
             :value="item.courseId.toString()"
           />
         </el-select>
-        <el-button :icon="Refresh" :loading="loading" @click="handleRefresh">
+        <el-button
+          type="primary"
+          :icon="Refresh"
+          :loading="loading"
+          @click="handleRefresh"
+        >
           同步最新数据
         </el-button>
       </div>
     </div>
 
-    <!-- 核心指标卡片 -->
-    <div v-for="group in statCards" :key="group.label" class="mb-6">
-      <div class="flex items-center mb-3">
-        <div class="w-1 h-4 bg-primary mr-2 rounded-full" />
-        <span class="text-sm font-bold opacity-70">{{ group.label }}</span>
-      </div>
-      <el-row :gutter="16">
-        <el-col
-          v-for="item in group.children"
-          :key="item.label"
-          :xs="12"
-          :sm="group.children.length === 2 ? 12 : 6"
-          :md="group.children.length === 2 ? 6 : 6"
-          class="mb-4"
+    <!-- 核心数据总览 - 9个字段全部展示 -->
+    <div class="mb-8">
+      <div class="flex items-center mb-4">
+        <div
+          class="w-1.5 h-5 bg-gradient-to-b from-blue-500 to-blue-400 mr-3 rounded-full"
+        />
+        <span class="text-base font-bold">核心数据指标</span>
+        <el-tag size="small" type="info" class="ml-3"
+          >API: /discussions/statistics</el-tag
         >
-          <el-card
-            shadow="hover"
-            class="stat-card !border-none transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+      </div>
+
+      <!-- 第一行: 内容统计 (3卡片) -->
+      <el-row :gutter="16" class="mb-4">
+        <el-col
+          v-for="item in allStatCards.filter(c => c.category === 'content')"
+          :key="item.label"
+          :xs="24"
+          :sm="12"
+          :md="8"
+        >
+          <div
+            class="stat-card-modern p-5 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+            :style="{
+              background: item.bg,
+              border: `1px solid ${item.borderColor}`
+            }"
           >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <div
-                  class="w-12 h-12 rounded-2xl flex items-center justify-center mr-4"
-                  :style="{ backgroundColor: item.bg }"
-                >
-                  <el-icon :size="26" :color="item.color">
-                    <component :is="item.icon" />
-                  </el-icon>
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <el-tooltip :content="item.tip" placement="top">
+                    <span
+                      class="text-sm text-gray-500 dark:text-gray-400 font-medium"
+                      >{{ item.label }}</span
+                    >
+                  </el-tooltip>
                 </div>
-                <div>
-                  <div class="text-gray-400 text-xs mb-1 font-medium">
-                    {{ item.label }}
-                  </div>
-                  <div class="text-2xl font-bold tracking-tight">
-                    {{ item.value || 0 }}
-                  </div>
+                <div
+                  class="text-3xl font-black tracking-tight"
+                  :style="{ color: item.color }"
+                >
+                  {{ item.value?.toLocaleString() || 0 }}
                 </div>
               </div>
-              <div v-if="item.isNew" class="self-start">
-                <el-tag
-                  size="small"
-                  type="danger"
-                  effect="dark"
-                  round
-                  class="scale-90 animate-pulse"
-                  >NEW</el-tag
-                >
+              <div
+                class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm"
+                :style="{ backgroundColor: `${item.color}15` }"
+              >
+                <el-icon :size="28" :color="item.color">
+                  <component :is="item.icon" />
+                </el-icon>
               </div>
             </div>
-          </el-card>
+          </div>
+        </el-col>
+      </el-row>
+
+      <!-- 第二行: 互动与用户 (2卡片) + 今日动态 (2卡片) -->
+      <el-row :gutter="16" class="mb-4">
+        <el-col
+          v-for="item in engagementCards"
+          :key="item.label"
+          :xs="12"
+          :sm="6"
+        >
+          <div
+            class="stat-card-modern p-4 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+            :style="{
+              background: item.bg,
+              border: `1px solid ${item.borderColor}`
+            }"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <el-tooltip :content="item.tip" placement="top">
+                  <span
+                    class="text-xs text-gray-500 dark:text-gray-400 font-medium"
+                    >{{ item.label }}</span
+                  >
+                </el-tooltip>
+                <div
+                  class="text-2xl font-bold mt-1"
+                  :style="{ color: item.color }"
+                >
+                  {{ item.value?.toLocaleString() || 0 }}
+                </div>
+              </div>
+              <div
+                class="w-11 h-11 rounded-xl flex items-center justify-center"
+                :style="{ backgroundColor: `${item.color}15` }"
+              >
+                <el-icon :size="22" :color="item.color">
+                  <component :is="item.icon" />
+                </el-icon>
+              </div>
+            </div>
+          </div>
+        </el-col>
+        <el-col
+          v-for="item in allStatCards.filter(c => c.category === 'today')"
+          :key="item.label"
+          :xs="12"
+          :sm="6"
+        >
+          <div
+            class="stat-card-modern p-4 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+            :style="{
+              background: item.bg,
+              border: `1px solid ${item.borderColor}`
+            }"
+          >
+            <div v-if="item.isNew" class="absolute top-2 right-2">
+              <el-tag
+                size="small"
+                type="danger"
+                effect="dark"
+                round
+                class="scale-75 animate-pulse"
+                >NEW</el-tag
+              >
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <el-tooltip :content="item.tip" placement="top">
+                  <span
+                    class="text-xs text-gray-500 dark:text-gray-400 font-medium"
+                    >{{ item.label }}</span
+                  >
+                </el-tooltip>
+                <div
+                  class="text-2xl font-bold mt-1"
+                  :style="{ color: item.color }"
+                >
+                  {{ item.value?.toLocaleString() || 0 }}
+                </div>
+              </div>
+              <div
+                class="w-11 h-11 rounded-xl flex items-center justify-center"
+                :style="{ backgroundColor: `${item.color}15` }"
+              >
+                <el-icon :size="22" :color="item.color">
+                  <component :is="item.icon" />
+                </el-icon>
+              </div>
+            </div>
+          </div>
         </el-col>
       </el-row>
     </div>
 
-    <!-- 异常与待处理提醒 -->
+    <!-- 待处理任务预警 -->
     <div class="mb-8">
-      <div class="flex items-center mb-3">
-        <div class="w-1 h-4 bg-orange-500 mr-2 rounded-full" />
-        <span class="text-sm font-bold opacity-70">风险预警与待处理任务</span>
+      <div class="flex items-center mb-4">
+        <div
+          class="w-1.5 h-5 bg-gradient-to-b from-orange-500 to-red-500 mr-3 rounded-full"
+        />
+        <span class="text-base font-bold">待处理任务预警</span>
+        <el-badge
+          :value="
+            (stats?.pendingPosts || 0) +
+            (stats?.pendingReplies || 0) +
+            (stats?.pendingReports || 0)
+          "
+          :max="99"
+          class="ml-3"
+        />
       </div>
       <el-row :gutter="16">
-        <el-col
-          v-for="item in pendingCards"
-          :key="item.label"
-          :xs="24"
-          :sm="8"
-          class="mb-4"
-        >
-          <el-card
-            shadow="hover"
-            class="!border-none transition-all duration-300 hover:shadow-md hover:-translate-y-1"
-            :style="{ backgroundColor: item.bg }"
+        <el-col v-for="item in pendingCards" :key="item.label" :xs="24" :sm="8">
+          <div
+            class="pending-card p-5 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+            :style="{
+              background: item.bg,
+              border: `1px solid ${item.borderColor}`
+            }"
           >
-            <div class="flex items-center justify-between">
+            <!-- 背景装饰 -->
+            <div
+              class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-10"
+              :style="{ backgroundColor: item.color }"
+            />
+
+            <div class="flex items-center justify-between relative z-10">
               <div class="flex items-center">
                 <div
-                  class="w-10 h-10 rounded-xl flex items-center justify-center mr-3"
-                  :style="{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }"
+                  class="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
+                  :style="{ backgroundColor: `${item.color}20` }"
                 >
-                  <el-icon :size="22" :color="item.color">
+                  <el-icon :size="24" :color="item.color">
                     <component :is="item.icon" />
                   </el-icon>
                 </div>
                 <div>
                   <div
-                    class="text-xs mb-0.5 font-bold"
+                    class="text-sm font-bold mb-0.5"
                     :style="{ color: item.color }"
                   >
                     {{ item.label }}
                   </div>
-                  <div
-                    class="text-[10px] opacity-60"
-                    :style="{ color: item.color }"
-                  >
-                    {{ item.tip }}
-                  </div>
+                  <div class="text-[11px] text-gray-500">{{ item.tip }}</div>
                 </div>
               </div>
-              <div class="flex items-baseline gap-1">
+              <div class="flex flex-col items-end">
                 <span
-                  class="text-2xl font-black"
+                  class="text-3xl font-black"
                   :style="{ color: item.color }"
-                  >{{ item.value || 0 }}</span
                 >
-                <span
-                  class="text-[10px] font-bold"
-                  :style="{ color: item.color }"
-                  >{{ item.unit }}</span
-                >
+                  {{ item.value || 0 }}
+                </span>
+                <span class="text-[10px] text-gray-400">件待处理</span>
               </div>
             </div>
-          </el-card>
+          </div>
         </el-col>
       </el-row>
     </div>
 
     <!-- 图表展示 -->
-    <el-row :gutter="16" class="mb-6">
-      <el-col :xs="24" :lg="12">
+    <el-row :gutter="16" class="mb-8">
+      <el-col :xs="24" :lg="14">
         <el-card
           shadow="never"
-          class="!rounded-xl border-none shadow-sm h-full"
+          class="!rounded-2xl border-none shadow-sm h-full"
         >
           <template #header>
             <div class="flex items-center">
-              <el-icon class="mr-2 text-blue-500"><DataLine /></el-icon>
+              <div
+                class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mr-3"
+              >
+                <el-icon class="text-blue-500" :size="18"><DataLine /></el-icon>
+              </div>
               <span class="font-bold">近七日讨论活跃度趋势</span>
             </div>
           </template>
           <div ref="trendChartRef" class="h-[300px]" />
         </el-card>
       </el-col>
-      <el-col :xs="24" :lg="6">
+      <el-col :xs="24" :sm="12" :lg="5">
         <el-card
           shadow="never"
-          class="!rounded-xl border-none shadow-sm h-full"
+          class="!rounded-2xl border-none shadow-sm h-full"
         >
           <template #header>
             <div class="flex items-center">
-              <el-icon class="mr-2 text-orange-500"><TrendCharts /></el-icon>
-              <span class="font-bold">内容构成比例</span>
+              <div
+                class="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center mr-3"
+              >
+                <el-icon class="text-orange-500" :size="18"
+                  ><PieChart
+                /></el-icon>
+              </div>
+              <span class="font-bold">内容构成</span>
             </div>
           </template>
           <div ref="ratioChartRef" class="h-[300px]" />
         </el-card>
       </el-col>
-      <el-col :xs="24" :lg="6">
+      <el-col :xs="24" :sm="12" :lg="5">
         <el-card
           shadow="never"
-          class="!rounded-xl border-none shadow-sm h-full"
+          class="!rounded-2xl border-none shadow-sm h-full"
         >
           <template #header>
             <div class="flex items-center">
-              <el-icon class="mr-2 text-green-500"><User /></el-icon>
-              <span class="font-bold">平台角色活跃分布</span>
+              <div
+                class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center mr-3"
+              >
+                <el-icon class="text-red-500" :size="18"><Histogram /></el-icon>
+              </div>
+              <span class="font-bold">待处理分布</span>
             </div>
           </template>
-          <div ref="usageChartRef" class="h-[300px]" />
+          <div ref="summaryChartRef" class="h-[300px]" />
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 课程讨论排行与平台指标 -->
-    <el-row :gutter="16" class="mb-6">
+    <!-- 平台角色活跃与课程排行 -->
+    <el-row :gutter="16" class="mb-8">
+      <el-col :xs="24" :lg="8">
+        <el-card
+          shadow="never"
+          class="!rounded-2xl border-none shadow-sm h-full"
+        >
+          <template #header>
+            <div class="flex items-center">
+              <div
+                class="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center mr-3"
+              >
+                <el-icon class="text-green-500" :size="18"><User /></el-icon>
+              </div>
+              <span class="font-bold">平台角色活跃分布</span>
+            </div>
+          </template>
+          <div ref="usageChartRef" class="h-[280px]" />
+        </el-card>
+      </el-col>
       <el-col :xs="24" :lg="16">
         <el-card
           shadow="never"
-          class="!rounded-xl border-none shadow-sm h-full"
+          class="!rounded-2xl border-none shadow-sm h-full"
         >
           <template #header>
             <div class="flex items-center justify-between">
               <div class="flex items-center">
-                <el-icon class="mr-2 text-indigo-500"
-                  ><ChatLineRound
-                /></el-icon>
+                <div
+                  class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mr-3"
+                >
+                  <el-icon class="text-indigo-500" :size="18"
+                    ><ChatLineRound
+                  /></el-icon>
+                </div>
                 <span class="font-bold">热门课程讨论排行</span>
               </div>
               <el-button
                 type="primary"
                 link
                 @click="$router.push('/course/list')"
-                >查看更多</el-button
               >
+                查看更多
+              </el-button>
             </div>
           </template>
           <el-table
@@ -631,7 +871,24 @@ watch(theme, () => {
               label="排名"
               width="80"
               align="center"
-            />
+            >
+              <template #default="{ $index }">
+                <div
+                  v-if="$index < 3"
+                  class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white mx-auto"
+                  :class="{
+                    'bg-gradient-to-br from-yellow-400 to-yellow-600':
+                      $index === 0,
+                    'bg-gradient-to-br from-gray-300 to-gray-500': $index === 1,
+                    'bg-gradient-to-br from-orange-300 to-orange-500':
+                      $index === 2
+                  }"
+                >
+                  {{ $index + 1 }}
+                </div>
+                <span v-else class="text-gray-400">{{ $index + 1 }}</span>
+              </template>
+            </el-table-column>
             <el-table-column
               prop="courseName"
               label="课程名称"
@@ -662,68 +919,47 @@ watch(theme, () => {
           </el-table>
           <div
             v-if="!stats?.topCourses?.length"
-            class="flex flex-col items-center justify-center py-10 text-gray-400"
+            class="flex flex-col items-center justify-center py-8 text-gray-400"
           >
             <el-empty :image-size="60" description="暂无热门课程数据" />
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <el-card
-          shadow="never"
-          class="!rounded-xl border-none shadow-sm h-full"
-        >
-          <template #header>
-            <div class="flex items-center">
-              <el-icon class="mr-2 text-pink-500"><TrendCharts /></el-icon>
-              <span class="font-bold">平台运营指标概览</span>
-            </div>
-          </template>
-          <div class="grid grid-cols-2 gap-4">
-            <div
-              v-for="item in platformOverview"
-              :key="item.title"
-              class="p-3 bg-gray-50 dark:bg-white/5 rounded-lg"
-            >
-              <div class="text-[10px] text-gray-400 mb-1 leading-tight">
-                {{ item.title }}
-              </div>
-              <div class="flex items-baseline gap-1">
-                <span class="text-lg font-bold">{{ item.value }}</span>
-                <span class="text-[10px] text-gray-500">{{ item.unit }}</span>
-              </div>
-              <div
-                class="text-[10px] mt-1"
-                :class="item.trend > 0 ? 'text-green-500' : 'text-red-500'"
-              >
-                {{ item.trend > 0 ? "↑" : "↓" }} {{ Math.abs(item.trend) }}%
-              </div>
-            </div>
           </div>
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 审计日志 -->
-    <el-card shadow="never" class="!rounded-xl border-none">
+    <el-card shadow="never" class="!rounded-2xl border-none">
       <template #header>
         <div class="flex justify-between items-center">
           <div class="flex items-center">
-            <el-icon class="mr-2 text-purple-500"><Operation /></el-icon>
-            <span class="font-bold">全平台操作审计日志</span>
+            <div
+              class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center mr-3"
+            >
+              <el-icon class="text-purple-500" :size="18"
+                ><Operation
+              /></el-icon>
+            </div>
+            <div>
+              <span class="font-bold">全平台操作审计日志</span>
+              <el-tag size="small" type="info" class="ml-3"
+                >API: /discussions/audit-logs</el-tag
+              >
+            </div>
           </div>
-          <el-tag type="info">共 {{ total }} 条记录</el-tag>
+          <el-tag type="warning" effect="plain" round
+            >共 {{ total }} 条记录</el-tag
+          >
         </div>
       </template>
 
       <!-- 搜索栏 -->
-      <div class="bg-gray-50 dark:bg-black/20 p-4 rounded-lg mb-6">
+      <div class="bg-gray-50 dark:bg-black/20 p-4 rounded-xl mb-6">
         <el-form
           :inline="true"
           :model="queryForm"
           class="flex flex-wrap gap-y-2"
         >
-          <el-form-item label="类型">
+          <el-form-item label="目标类型">
             <el-select
               v-model="queryForm.targetType"
               placeholder="全部类型"
@@ -734,7 +970,7 @@ watch(theme, () => {
               <el-option label="回复" value="reply" />
             </el-select>
           </el-form-item>
-          <el-form-item label="操作">
+          <el-form-item label="操作动作">
             <el-input
               v-model="queryForm.action"
               placeholder="审批/删除等"
@@ -747,10 +983,10 @@ watch(theme, () => {
               v-model="timeRange"
               type="datetimerange"
               range-separator="至"
-              start-placeholder="开始"
-              end-placeholder="结束"
-              value-format="YYYY-MM-DD HH:mm:ss"
-              class="!w-[340px]"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+              class="!w-[360px]"
             />
           </el-form-item>
           <el-form-item>
@@ -769,22 +1005,30 @@ watch(theme, () => {
         border
         stripe
         style="width: 100%"
-        class="!rounded-lg overflow-hidden"
+        class="!rounded-xl overflow-hidden"
       >
+        <el-table-column prop="id" label="ID" width="80" align="center">
+          <template #default="{ row }">
+            <span class="text-xs text-gray-400">#{{ row.id }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="操作时间" width="180">
           <template #default="{ row }">
             <div class="flex items-center text-xs">
-              <el-icon class="mr-1 text-blue-400"><Timer /></el-icon>
+              <el-icon class="mr-1.5 text-blue-400"><Timer /></el-icon>
               {{ new Date(row.createTime).toLocaleString() }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作者" width="180">
+        <el-table-column label="操作者" width="200">
           <template #default="{ row }">
             <div class="flex items-center">
-              <el-avatar :size="24" class="mr-2">{{
-                row.operatorName?.charAt(0)
-              }}</el-avatar>
+              <el-avatar
+                :size="28"
+                class="mr-2 bg-gradient-to-br from-blue-400 to-purple-500"
+              >
+                {{ row.operatorName?.charAt(0) }}
+              </el-avatar>
               <div class="flex flex-col">
                 <span class="font-bold text-xs">{{ row.operatorName }}</span>
                 <span class="text-[10px] text-gray-400"
@@ -794,14 +1038,27 @@ watch(theme, () => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="operatorRole" label="身份" width="100">
+        <el-table-column prop="operatorRole" label="身份角色" width="100">
           <template #default="{ row }">
             <el-tag
               size="small"
-              :type="row.operatorRole === 'admin' ? 'danger' : 'info'"
+              :type="
+                row.operatorRole === 'admin'
+                  ? 'danger'
+                  : row.operatorRole === 'teacher'
+                    ? 'warning'
+                    : 'info'
+              "
               effect="plain"
+              round
             >
-              {{ row.operatorRole }}
+              {{
+                row.operatorRole === "admin"
+                  ? "管理员"
+                  : row.operatorRole === "teacher"
+                    ? "教师"
+                    : row.operatorRole
+              }}
             </el-tag>
           </template>
         </el-table-column>
@@ -820,35 +1077,42 @@ watch(theme, () => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="action" label="动作" width="100">
+        <el-table-column prop="action" label="操作动作" width="120">
           <template #default="{ row }">
             <span class="font-medium text-blue-600 dark:text-blue-400">{{
               row.action
             }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态演变" width="220">
+        <el-table-column label="状态变化" width="240">
           <template #default="{ row }">
             <div class="flex items-center gap-2 overflow-hidden">
               <span
-                class="truncate text-[11px] px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-500"
-                >{{ row.previousStatus || "-" }}</span
+                class="truncate text-[11px] px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-500 max-w-[80px]"
+                >{{ row.previousStatus || "无" }}</span
               >
-              <el-icon class="text-gray-300"><TrendCharts /></el-icon>
+              <el-icon class="text-gray-300 flex-shrink-0"
+                ><TrendCharts
+              /></el-icon>
               <span
-                class="truncate text-[11px] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded"
-                >{{ row.newStatus || "-" }}</span
+                class="truncate text-[11px] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded max-w-[80px]"
+                >{{ row.newStatus || "无" }}</span
               >
             </div>
           </template>
         </el-table-column>
-
         <el-table-column
           prop="reason"
-          label="备注/原因"
-          min-width="150"
+          label="操作原因"
+          min-width="180"
           show-overflow-tooltip
-        />
+        >
+          <template #default="{ row }">
+            <span class="text-gray-600 dark:text-gray-300">{{
+              row.reason || "-"
+            }}</span>
+          </template>
+        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -869,14 +1133,22 @@ watch(theme, () => {
 </template>
 
 <style scoped lang="scss">
-.stat-card {
-  border: none !important;
-  background: var(--el-bg-color);
+.statistics-container {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.stat-card-modern {
+  backdrop-filter: blur(10px);
+}
+
+.pending-card {
+  backdrop-filter: blur(10px);
 }
 
 :deep(.el-card__header) {
   border-bottom: 1px solid var(--el-border-color-lighter);
-  padding: 15px 20px;
+  padding: 16px 20px;
 }
 
 :deep(.el-table) {
@@ -884,10 +1156,30 @@ watch(theme, () => {
   font-size: 13px;
 }
 
+:deep(.el-table th.el-table__cell) {
+  background-color: var(--el-fill-color-lighter);
+  font-weight: 600;
+}
+
 .search-form {
   :deep(.el-form-item) {
     margin-bottom: 0;
     margin-right: 20px;
   }
+}
+
+// 动画效果
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse {
+  animation: pulse-slow 2s ease-in-out infinite;
 }
 </style>
