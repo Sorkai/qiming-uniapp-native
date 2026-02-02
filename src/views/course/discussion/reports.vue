@@ -114,8 +114,9 @@ const fetchData = async () => {
     pagination.total = responseData.total || 0;
     // stats 暂时从列表计算或固定
     stats.value = {
-      pending: (responseData.list || []).filter((r: any) => r.status === "pending")
-        .length,
+      pending: (responseData.list || []).filter(
+        (r: any) => r.status === "pending"
+      ).length,
       resolvedToday: 0,
       totalReports: responseData.total || 0
     };
