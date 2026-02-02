@@ -612,11 +612,15 @@ const handleDelete = async (row: ReviewQueueItem) => {
 // 置顶逻辑
 const handlePin = async (row: ReviewQueueItem) => {
   try {
-    await pinPost(row.id);
-    // 乐观更新：立即修改本地状态，保证 UI 即时响应
-    row.isPinned = true;
-    ElMessage.success("成功设为置顶");
-    // 不再自动触发 fetchData，防止后端数据同步延迟导致的状态回弹（闪烁）
+    const res: any = await pinPost(row.id);
+    if (res?.code === 0) {
+      row.isPinned = true;
+      ElMessage.success("成功设为置顶");
+      // 延迟刷新以确保后端数据已入库
+      setTimeout(() => fetchData(), 500);
+    } else {
+      ElMessage.error(res?.msg || "操作失败");
+    }
   } catch (error) {
     console.error("置顶操作失败:", error);
     ElMessage.error("置顶操作失败");
@@ -626,10 +630,15 @@ const handlePin = async (row: ReviewQueueItem) => {
 // 取消置顶逻辑
 const handleUnpin = async (row: ReviewQueueItem) => {
   try {
-    await unpinPost(row.id);
-    // 乐观更新
-    row.isPinned = false;
-    ElMessage.success("已取消置顶");
+    const res: any = await unpinPost(row.id);
+    if (res?.code === 0) {
+      row.isPinned = false;
+      ElMessage.success("已取消置顶");
+      // 延迟刷新以确保后端数据已入库
+      setTimeout(() => fetchData(), 500);
+    } else {
+      ElMessage.error(res?.msg || "操作失败");
+    }
   } catch (error) {
     console.error("取消置顶操作失败:", error);
     ElMessage.error("取消置顶操作失败");

@@ -798,7 +798,11 @@ export async function getTeacherDiscussions(params?: {
           },
           tags: [],
           status: "pending" as PostStatus,
-          isPinned: (item as any).isPinned === true || (item as any).isPinned === 1 as any).isPinned === true || (item as any).isPinned === 1,
+          isPinned:
+            (item as any).isPinned === true ||
+            (item as any).isPinned === 1 ||
+            String((item as any).isPinned) === "true" ||
+            String((item as any).isPinned) === "1",
           likeCount: 0,
           replyCount: 0,
           viewCount: 0,
@@ -924,7 +928,11 @@ export async function getAdminDiscussions(
       },
       tags: item.tags || [],
       status: "approved" as PostStatus,
-      isPinned: !!item.isPinned,
+      isPinned:
+        item.isPinned === true ||
+        item.isPinned === 1 ||
+        String(item.isPinned) === "true" ||
+        String(item.isPinned) === "1",
       likeCount: item.likeCount,
       replyCount: item.replyCount,
       viewCount: item.viewCount,
@@ -1016,7 +1024,11 @@ export async function getAdminDiscussionDetail(
       },
       tags: backendData.tags || [],
       status: "approved" as PostStatus,
-      isPinned: !!backendData.isPinned,
+      isPinned:
+        backendData.isPinned === true ||
+        backendData.isPinned === 1 ||
+        String(backendData.isPinned) === "true" ||
+        String(backendData.isPinned) === "1",
       likeCount: backendData.likeCount,
       replyCount: backendData.replyCount,
       viewCount: backendData.viewCount,

@@ -238,7 +238,11 @@ export async function getDiscussions(
       },
       tags: item.tags || [],
       status: "approved" as PostStatus,
-      isPinned: !!item.isPinned,
+      isPinned:
+        item.isPinned === true ||
+        item.isPinned === 1 ||
+        String(item.isPinned) === "true" ||
+        String(item.isPinned) === "1",
       likeCount: item.likeCount,
       replyCount: item.replyCount,
       viewCount: item.viewCount,
