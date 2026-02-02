@@ -612,39 +612,27 @@ const handleDelete = async (row: ReviewQueueItem) => {
 // 置顶逻辑
 const handlePin = async (row: ReviewQueueItem) => {
   try {
-    loading.value = true;
     await pinPost(row.id);
-    // 乐观更新：先设置状态，防止 fetchData 刷新前的小闪烁
+    // 乐观更新：立即修改本地状态，保证 UI 即时响应
     row.isPinned = true;
     ElMessage.success("成功设为置顶");
-    // 延时刷新，确保后端数据已同步且避开可能的缓存
-    setTimeout(() => {
-      fetchData();
-    }, 800);
+    // 不再自动触发 fetchData，防止后端数据同步延迟导致的状态回弹（闪烁）
   } catch (error) {
     console.error("置顶操作失败:", error);
     ElMessage.error("置顶操作失败");
-  } finally {
-    loading.value = false;
   }
 };
 
 // 取消置顶逻辑
 const handleUnpin = async (row: ReviewQueueItem) => {
   try {
-    loading.value = true;
     await unpinPost(row.id);
     // 乐观更新
     row.isPinned = false;
     ElMessage.success("已取消置顶");
-    setTimeout(() => {
-      fetchData();
-    }, 800);
   } catch (error) {
     console.error("取消置顶操作失败:", error);
     ElMessage.error("取消置顶操作失败");
-  } finally {
-    loading.value = false;
   }
 };
 

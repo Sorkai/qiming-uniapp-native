@@ -74,28 +74,6 @@
                   rejected: message.status === 'rejected'
                 }"
               >
-                <!-- 置顶标签 -->
-                <div v-if="message.isPinned" class="pinned-badge">
-                  <el-icon><Top /></el-icon>
-                  置顶
-                </div>
-
-                <!-- 审核状态标签 -->
-                <div
-                  v-if="message.status === 'pending'"
-                  class="status-badge pending"
-                >
-                  <el-icon><Clock /></el-icon>
-                  审核中
-                </div>
-                <div
-                  v-if="message.status === 'rejected'"
-                  class="status-badge rejected"
-                >
-                  <el-icon><CircleClose /></el-icon>
-                  未通过
-                </div>
-
                 <!-- 消息头部 -->
                 <div class="message-header">
                   <div class="author-info">
@@ -137,34 +115,61 @@
                       </div>
                     </div>
                   </div>
-                  <el-dropdown
-                    v-if="canManageMessage(message)"
-                    trigger="click"
-                    popper-class="more-actions-dropdown"
-                  >
-                    <button class="more-actions-btn">
-                      <el-icon><MoreFilled /></el-icon>
-                    </button>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="handleEditMessage(message)">
-                          <el-icon><Edit /></el-icon>
-                          编辑
-                        </el-dropdown-item>
-                        <el-dropdown-item @click="handleDeleteMessage(message)">
-                          <el-icon><Delete /></el-icon>
-                          删除
-                        </el-dropdown-item>
-                        <el-dropdown-item
-                          v-if="isTeacherOrAdmin"
-                          @click="handleTogglePin(message)"
-                        >
-                          <el-icon><Top /></el-icon>
-                          {{ message.isPinned ? "取消置顶" : "置顶" }}
-                        </el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
+
+                  <div class="header-right-actions">
+                    <!-- 置顶标签 -->
+                    <div v-if="message.isPinned" class="pinned-badge">
+                      <el-icon><Top /></el-icon>
+                      置顶
+                    </div>
+
+                    <!-- 审核状态标签 -->
+                    <div
+                      v-if="message.status === 'pending'"
+                      class="status-badge pending"
+                    >
+                      <el-icon><Clock /></el-icon>
+                      审核中
+                    </div>
+                    <div
+                      v-if="message.status === 'rejected'"
+                      class="status-badge rejected"
+                    >
+                      <el-icon><CircleClose /></el-icon>
+                      未通过
+                    </div>
+
+                    <el-dropdown
+                      v-if="canManageMessage(message)"
+                      trigger="click"
+                      popper-class="more-actions-dropdown"
+                    >
+                      <button class="more-actions-btn">
+                        <el-icon><MoreFilled /></el-icon>
+                      </button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item @click="handleEditMessage(message)">
+                            <el-icon><Edit /></el-icon>
+                            编辑
+                          </el-dropdown-item>
+                          <el-dropdown-item
+                            @click="handleDeleteMessage(message)"
+                          >
+                            <el-icon><Delete /></el-icon>
+                            删除
+                          </el-dropdown-item>
+                          <el-dropdown-item
+                            v-if="isTeacherOrAdmin"
+                            @click="handleTogglePin(message)"
+                          >
+                            <el-icon><Top /></el-icon>
+                            {{ message.isPinned ? "取消置顶" : "置顶" }}
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
                 </div>
 
                 <!-- 消息内容 -->
@@ -1720,7 +1725,6 @@ const filterByTag = (tagName: string) => {
 .message-card.pinned {
   background: linear-gradient(135deg, #fff 0%, #fff9f0 100%);
   border: 1px solid rgba(245, 158, 11, 0.3);
-  border-left: 5px solid #f59e0b;
 }
 
 .dark .message-card.pinned {
@@ -1729,22 +1733,24 @@ const filterByTag = (tagName: string) => {
 }
 
 .message-card.pending {
-  border-left: 4px solid #e6a23c;
+  border: 1px solid rgba(230, 162, 60, 0.3);
   opacity: 0.8;
 }
 
 .message-card.rejected {
-  border-left: 4px solid #f56c6c;
+  border: 1px solid rgba(245, 108, 108, 0.3);
   opacity: 0.6;
 }
 
 /* 置顶和状态标签 */
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .pinned-badge,
 .status-badge {
-  position: absolute;
-  top: 16px;
-  right: 60px;
-  z-index: 10;
   display: flex;
   gap: 4px;
   align-items: center;
