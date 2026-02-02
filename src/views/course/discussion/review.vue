@@ -368,7 +368,8 @@ const handleApprove = async (row: ReviewQueueItem) => {
       }
     }
 
-    fetchData();
+    // 延迟刷新以确保后端数据同步
+    setTimeout(() => fetchData(), 1000);
   } catch (error) {
     ElMessage.error("操作失败");
   }
@@ -401,7 +402,8 @@ const handleReject = async (row: ReviewQueueItem) => {
       }
     }
 
-    fetchData();
+    // 延迟刷新以确保后端数据同步
+    setTimeout(() => fetchData(), 1000);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("操作失败");
@@ -461,7 +463,8 @@ const handleBatchApprove = async () => {
     }
 
     selectedIds.value = [];
-    fetchData();
+    // 延迟同步数据，解决后端同步延迟问题
+    setTimeout(() => fetchData(), 1000);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("批量操作过程中产生错误");
@@ -524,7 +527,8 @@ const handleBatchReject = async () => {
     }
 
     selectedIds.value = [];
-    fetchData();
+    // 延迟同步数据，解决后端同步延迟问题
+    setTimeout(() => fetchData(), 1000);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("批量操作失败");
@@ -597,8 +601,17 @@ const handleDelete = async (row: ReviewQueueItem) => {
     } else {
       await forceDeletePost(row.id, result.value);
     }
+
+    // 乐观更新：立即从当前列表中移除该项，不再等待 fetchData 刷新
+    const idx = discussions.value.findIndex(i => i.id === row.id);
+    if (idx > -1) {
+      discussions.value.splice(idx, 1);
+      pagination.total -= 1;
+    }
+
     ElMessage.success("已强制删除并记录日志");
-    fetchData();
+    // 延迟同步最新数据
+    setTimeout(() => fetchData(), 500);
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);

@@ -1265,9 +1265,14 @@ const handleDeleteReply = async (message: Message, reply: Reply) => {
     await deleteReply(reply.id);
     ElMessage.success("删除成功");
 
-    // 从本地数据中移除
+    // 从本地数据中移除，保证界面立即更新
     message.replies = message.replies.filter(r => r.id !== reply.id);
     message.replyCount--;
+
+    // 延迟静默刷新，确保后端同步
+    setTimeout(() => {
+      fetchDiscussions(false); // 刷新当前页
+    }, 1000);
   } catch (error) {
     if (error !== "cancel") {
       ElMessage.error("删除失败");
@@ -1361,8 +1366,14 @@ const handleDeleteMessage = async (message: Message) => {
       customClass: "custom-message-box"
     });
     await deleteDiscussion(message.id);
+    // 从本地立即移除
     messages.value = messages.value.filter(m => m.id !== message.id);
     ElMessage.success("已删除");
+
+    // 延迟刷新以同步后端状态
+    setTimeout(() => {
+      fetchDiscussions(false);
+    }, 1000);
   } catch {
     // 取消删除
   }

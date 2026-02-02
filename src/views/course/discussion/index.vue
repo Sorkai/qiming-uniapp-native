@@ -287,7 +287,8 @@ const handleApprove = async (row: ReviewQueueItem) => {
       message: "审核通过",
       type: "success"
     });
-    fetchData();
+    // 增加延迟刷新，防止后端同步延迟
+    setTimeout(() => fetchData(), 800);
   } catch (error) {
     ElMessage.error("审核操作失败，请重试");
   }
@@ -314,7 +315,8 @@ const handleReject = async (row: ReviewQueueItem) => {
     if (idx > -1) reviewItems.value.splice(idx, 1);
 
     ElMessage.success("已成功拒绝该内容");
-    fetchData();
+    // 增加延迟刷新
+    setTimeout(() => fetchData(), 800);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("操作失败，请检查网络");
@@ -410,7 +412,8 @@ const handleBatchApprove = async () => {
     }
 
     selectedIds.value = [];
-    await fetchData();
+    // 增加延迟同步，防止后端数据刷新延迟导致 404
+    setTimeout(() => fetchData(), 1000);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("批量操作过程中产生错误");
@@ -474,7 +477,8 @@ const handleBatchReject = async () => {
     }
 
     selectedIds.value = [];
-    await fetchData();
+    // 增加延迟同步，防止后端数据刷新延迟导致 404
+    setTimeout(() => fetchData(), 1000);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("批量操作失败");
