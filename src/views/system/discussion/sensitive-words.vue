@@ -56,7 +56,7 @@ const searchForm = reactive({
 // 表单数据
 const formData = reactive({
   word: "",
-  level: "medium" as SensitiveWordLevel,
+  level: 2 as SensitiveWordLevel,
   category: "",
   replacement: "***",
   isEnabled: true
@@ -65,7 +65,7 @@ const formData = reactive({
 // 导入数据
 const importData = reactive({
   content: "",
-  level: "medium" as SensitiveWordLevel,
+  level: 2 as SensitiveWordLevel,
   category: ""
 });
 
@@ -78,9 +78,9 @@ const pagination = reactive({
 
 // 级别选项
 const levelOptions = [
-  { label: "高风险", value: "high", type: "danger" },
-  { label: "中风险", value: "medium", type: "warning" },
-  { label: "低风险", value: "low", type: "info" }
+  { label: "高风险", value: 3, type: "danger" },
+  { label: "中风险", value: 2, type: "warning" },
+  { label: "低风险", value: 1, type: "info" }
 ];
 
 // 分类选项
@@ -96,19 +96,19 @@ const categoryOptions = [
 
 // 级别标签样式
 const getLevelType = (level: SensitiveWordLevel) => {
-  const map: Record<string, string> = {
-    high: "danger",
-    medium: "warning",
-    low: "info"
+  const map: Record<number, string> = {
+    3: "danger",
+    2: "warning",
+    1: "info"
   };
   return map[level] || "info";
 };
 
 const getLevelText = (level: SensitiveWordLevel) => {
-  const map: Record<string, string> = {
-    high: "高风险",
-    medium: "中风险",
-    low: "低风险"
+  const map: Record<number, string> = {
+    3: "高风险",
+    2: "中风险",
+    1: "低风险"
   };
   return map[level] || level;
 };
@@ -118,21 +118,56 @@ const fetchData = async () => {
   loading.value = true;
   try {
     const params: any = {
-      page: pagination.page,
+      pageNum: pagination.page,
       pageSize: pagination.pageSize
     };
     if (searchForm.keyword) params.keyword = searchForm.keyword;
     if (searchForm.level) params.level = searchForm.level;
     if (searchForm.category) params.category = searchForm.category;
-    if (searchForm.isEnabled !== undefined)
-      params.isEnabled = searchForm.isEnabled;
 
-    const { data } = await getSensitiveWords(params);
-    words.value = data.list;
-    pagination.total = data.pagination.total;
-    stats.value = data.stats;
+    // isEnabled 映射: undefined -> -1 (全部), true -> 1 (启用), false -> 0 (禁用)
+    if (searchForm.isEnabled === true) {
+      params.isEnabled = 1;
+    } else if (searchForm.isEnabled === false) {
+      params.isEnabled = 0;
+    } else {
+      params.isEnabled = -1;
+    }
+
+    console.log("[SensitiveWords] Fetching with params:", params);
+    const res = await getSensitiveWords(params);
+    console.log("[SensitiveWords] Raw response:", res);
+
+    // 兼容后端返回格式
+    const resData = (res as any).data || res;
+    
+    // 防御性处理：检查 data 字段结构
+    if (resData && typeof resData === "object") {
+      if (Array.isArray(resData.list)) {
+        words.value = resData.list;
+        pagination.total = resData.total || resData.list.length;
+      } else if (Array.isArray(resData)) {
+        words.value = resData;
+        pagination.total = resData.length;
+      } else {
+        words.value = [];
+        pagination.total = 0;
+      }
+    } else {
+      words.value = [];
+      pagination.total = 0;
+    }
+
+    // 统计功能根据当前数据计算
+    stats.value = {
+      total: pagination.total,
+      high: words.value.filter((w: any) => w.level === 3).length,
+      medium: words.value.filter((w: any) => w.level === 2).length,
+      low: words.value.filter((w: any) => w.level === 1).length
+    };
   } catch (error) {
     console.error("加载敏感词失败", error);
+    ElMessage.error("加载数据失败，请检查控制台");
   } finally {
     loading.value = false;
   }
@@ -175,7 +210,7 @@ const openAddDialog = () => {
   isEdit.value = false;
   currentWord.value = null;
   formData.word = "";
-  formData.level = "medium";
+  formData.level = 2; // 默认中风险
   formData.category = "";
   formData.replacement = "***";
   formData.isEnabled = true;
@@ -202,28 +237,44 @@ const submitForm = async () => {
   }
 
   try {
-    if (isEdit.value && currentWord.value) {
-      await updateSensitiveWord(currentWord.value.id, {
-        word: formData.word,
-        level: formData.level,
-        category: formData.category || undefined,
-        replacement: formData.replacement,
-        isEnabled: formData.isEnabled
-      });
-      ElMessage.success("更新成功");
-    } else {
-      await addSensitiveWord({
-        word: formData.word,
-        level: formData.level,
-        category: formData.category || undefined,
-        replacement: formData.replacement,
-        isEnabled: formData.isEnabled
-      });
-      ElMessage.success("添加成功");
+    const isEditMode = isEdit.value && currentWord.value;
+    
+    // 根据文档，添加接口不包含 isEnabled，编辑接口包含
+    const payload: any = {
+      word: formData.word,
+      level: formData.level,
+      category: formData.category || undefined,
+      replacement: formData.replacement
+    };
+
+    if (isEditMode) {
+      payload.isEnabled = formData.isEnabled ? 1 : 0;
     }
-    dialogVisible.value = false;
-    fetchData();
+
+    console.log("[SensitiveWords] Submitting payload:", payload);
+
+    if (isEditMode) {
+      const res = await updateSensitiveWord(currentWord.value.id, payload);
+      // 兼容后端返回 {} 或 {"code": 0} 等情况，只要 http 状态码为 200 且 code 不为非零值即视为成功
+      if ((res as any)?.code === 0 || (res && typeof (res as any)?.code === "undefined")) {
+        ElMessage.success("更新成功");
+        dialogVisible.value = false;
+        fetchData();
+      } else {
+        ElMessage.error((res as any).msg || "更新失败");
+      }
+    } else {
+      const res = await addSensitiveWord(payload);
+      if ((res as any)?.code === 0 || (res && typeof (res as any)?.code === "undefined")) {
+        ElMessage.success("添加成功");
+        dialogVisible.value = false;
+        fetchData();
+      } else {
+        ElMessage.error((res as any).msg || "添加失败");
+      }
+    }
   } catch (error) {
+    console.error("操作失败:", error);
     ElMessage.error(isEdit.value ? "更新失败" : "添加失败");
   }
 };
@@ -234,9 +285,13 @@ const handleDelete = async (row: SensitiveWord) => {
     await ElMessageBox.confirm(`确定要删除敏感词「${row.word}」吗？`, "提示", {
       type: "warning"
     });
-    await deleteSensitiveWord(row.id);
-    ElMessage.success("删除成功");
-    fetchData();
+    const res = await deleteSensitiveWord(row.id);
+    if ((res as any)?.code === 0 || (res && typeof (res as any)?.code === "undefined")) {
+      ElMessage.success("删除成功");
+      fetchData();
+    } else {
+      ElMessage.error((res as any).msg || "删除失败");
+    }
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("删除失败");
@@ -271,19 +326,29 @@ const batchDelete = async () => {
 
 // 切换启用状态
 const toggleEnabled = async (row: SensitiveWord) => {
+  const oldStatus = row.isEnabled;
   try {
-    await updateSensitiveWord(row.id, { isEnabled: !row.isEnabled });
-    row.isEnabled = !row.isEnabled;
-    ElMessage.success(row.isEnabled ? "已启用" : "已禁用");
-  } catch (error) {
-    ElMessage.error("操作失败");
+    const newStatus = !row.isEnabled;
+    // 乐观更新 UI
+    row.isEnabled = newStatus;
+    const res = await updateSensitiveWord(row.id, { isEnabled: newStatus ? 1 : 0 });
+    
+    if ((res as any)?.code === 0 || (res && typeof (res as any)?.code === "undefined")) {
+      ElMessage.success(row.isEnabled ? "已启用" : "已禁用");
+    } else {
+      throw new Error((res as any).msg || "操作失败");
+    }
+  } catch (error: any) {
+    // 失败则回滚状态
+    row.isEnabled = oldStatus;
+    ElMessage.error(error.message || "操作失败");
   }
 };
 
 // 打开导入弹窗
 const openImportDialog = () => {
   importData.content = "";
-  importData.level = "medium";
+  importData.level = 2;
   importData.category = "";
   importDialogVisible.value = true;
 };
@@ -296,23 +361,25 @@ const submitImport = async () => {
   }
 
   try {
-    const wordsToImport = importData.content
+    const wordsToImportArr = importData.content
       .split("\n")
       .map(w => w.trim())
       .filter(w => w);
 
-    if (wordsToImport.length === 0) {
+    if (wordsToImportArr.length === 0) {
       ElMessage.warning("没有有效的敏感词");
       return;
     }
 
     await importSensitiveWords({
-      words: wordsToImport,
-      level: importData.level,
-      category: importData.category || undefined
+      words: wordsToImportArr.map(word => ({
+        word,
+        level: importData.level,
+        category: importData.category || undefined
+      }))
     });
 
-    ElMessage.success(`成功导入 ${wordsToImport.length} 个敏感词`);
+    ElMessage.success(`导入完成`);
     importDialogVisible.value = false;
     fetchData();
   } catch (error) {
@@ -532,7 +599,7 @@ onMounted(() => {
         <el-table-column label="创建时间" width="120" align="center">
           <template #default="{ row }">
             <span class="text-sm text-gray-500">
-              {{ formatTime(row.createdAt) }}
+              {{ formatTime(row.createTime) }}
             </span>
           </template>
         </el-table-column>

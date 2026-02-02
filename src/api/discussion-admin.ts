@@ -176,16 +176,20 @@ export interface PendingListResponse {
   list: PendingItem[];
 }
 
+/** 敏感词风险等级 (1-低, 2-中, 3-高) */
+export type SensitiveWordLevel = number;
+
 /**敏感词 */
 export interface SensitiveWord {
-  id: string;
+  id: number;
   word: string;
-  category: "blacklist" | "graylist" | "whitelist";
-  riskLevel: "low" | "medium" | "high" | "critical";
-  isActive: boolean;
+  category: string;
+  level: SensitiveWordLevel;
+  replacement: string;
+  isEnabled: boolean;
   hitCount: number;
-  createdAt: string;
-  updatedAt: string;
+  createTime: string;
+  updateTime: string;
 }
 
 /** 用户信誉 */
@@ -526,22 +530,20 @@ export function handleReport(reportId: number, data: HandleReportRequest) {
  * 获取敏感词列表
  * @param params 查询参数
  */
-export function getSensitiveWords(params?: {
-  category?: "blacklist" | "graylist" | "whitelist";
+export function getSensitiveWords(params: {
+  category?: string;
+  level?: number;
+  isEnabled?: number; // -1表示全部, 0/1
   keyword?: string;
-  isActive?: boolean;
-  page?: number;
+  pageNum: number;
   pageSize?: number;
 }) {
-  return http.request<{
-    list: SensitiveWord[];
-    pagination: Pagination;
-    stats: {
-      blacklist: number;
-      graylist: number;
-      whitelist: number;
-    };
-  }>("get", "/edu/backend/v1/sensitive-words", { params });
+  return http.request<
+    CommonResponse<{
+      total: number;
+      list: SensitiveWord[];
+    }>
+  >("get", "/edu/backend/v1/admin/sensitive-words", { params });
 }
 
 /**
@@ -550,12 +552,13 @@ export function getSensitiveWords(params?: {
  */
 export function addSensitiveWord(data: {
   word: string;
-  category: "blacklist" | "graylist" | "whitelist";
-  riskLevel?: "low" | "medium" | "high" | "critical";
+  category?: string;
+  level?: number;
+  replacement?: string;
 }) {
-  return http.request<SensitiveWord>(
+  return http.request<CommonResponse<{ id: number }>>(
     "post",
-    "/edu/backend/v1/sensitive-words",
+    "/edu/backend/v1/admin/sensitive-words",
     { data }
   );
 }
@@ -566,16 +569,18 @@ export function addSensitiveWord(data: {
  * @param data 更新数据
  */
 export function updateSensitiveWord(
-  wordId: string,
+  wordId: number | string,
   data: {
-    category?: "blacklist" | "graylist" | "whitelist";
-    riskLevel?: "low" | "medium" | "high" | "critical";
-    isActive?: boolean;
+    word?: string;
+    category?: string;
+    level?: number;
+    replacement?: string;
+    isEnabled?: number; // 是否启用（可选，0/1）
   }
 ) {
-  return http.request<{ success: boolean }>(
+  return http.request<CommonResponse<object>>(
     "put",
-    `/edu/backend/v1/sensitive-words/${wordId}`,
+    `/edu/backend/v1/admin/sensitive-words/${wordId}`,
     { data }
   );
 }
@@ -584,10 +589,10 @@ export function updateSensitiveWord(
  * 删除敏感词
  * @param wordId 敏感词ID
  */
-export function deleteSensitiveWord(wordId: string) {
-  return http.request<{ success: boolean }>(
+export function deleteSensitiveWord(wordId: number | string) {
+  return http.request<CommonResponse<object>>(
     "delete",
-    `/edu/backend/v1/sensitive-words/${wordId}`
+    `/edu/backend/v1/admin/sensitive-words/${wordId}`
   );
 }
 
@@ -598,16 +603,17 @@ export function deleteSensitiveWord(wordId: string) {
 export function importSensitiveWords(data: {
   words: Array<{
     word: string;
-    category: "blacklist" | "graylist" | "whitelist";
-    riskLevel?: "low" | "medium" | "high" | "critical";
+    category?: string;
+    level?: number;
+    replacement?: string;
   }>;
-  overwrite?: boolean;
 }) {
-  return http.request<{
-    imported: number;
-    skipped: number;
-    errors: string[];
-  }>("post", "/edu/backend/v1/sensitive-words/import", { data });
+  return http.request<
+    CommonResponse<{
+      successCount: number;
+      failCount: number;
+    }>
+  >("post", "/edu/backend/v1/admin/sensitive-words/import", { data });
 }
 
 /**
@@ -859,10 +865,10 @@ export async function getAdminDiscussions(
   try {
     const response = await http.request<
       | {
-          code: number;
-          msg: string;
-          data: BackendListResponse;
-        }
+        code: number;
+        msg: string;
+        data: BackendListResponse;
+      }
       | BackendListResponse
     >("get", `/edu/frontend/v1/courses/${courseId}/discussions`, {
       params: backendParams
@@ -963,10 +969,10 @@ export async function getAdminDiscussionDetail(
   try {
     const response = await http.request<
       | {
-          code: number;
-          msg: string;
-          data: BackendPostDetail;
-        }
+        code: number;
+        msg: string;
+        data: BackendPostDetail;
+      }
       | BackendPostDetail
     >("get", `/edu/frontend/v1/discussions/${postId}`);
 
