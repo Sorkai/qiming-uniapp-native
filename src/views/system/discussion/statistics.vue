@@ -67,61 +67,66 @@ const fetchPlatformOverview = async () => {
   }
 };
 
-// 核心指标配置
 const statCards = computed(() => {
   if (!stats.value) return [];
   return [
     {
-      label: "核心数据",
+      label: "数据资产",
       children: [
         {
           label: "总帖子数",
           value: stats.value.totalPosts,
           icon: Document,
           color: "#409eff",
-          bg: "rgba(64, 158, 255, 0.1)"
+          bg: "rgba(64, 158, 255, 0.1)",
+          tip: "全站累计发布的讨论帖总数"
         },
         {
           label: "总回复数",
           value: stats.value.totalReplies,
           icon: ChatLineRound,
           color: "#67c23a",
-          bg: "rgba(103, 194, 58, 0.1)"
+          bg: "rgba(103, 194, 58, 0.1)",
+          tip: "全站累计产生的回复与评论"
         },
         {
           label: "总点赞数",
           value: stats.value.totalLikes,
           icon: Star,
           color: "#e6a23c",
-          bg: "rgba(230, 162, 60, 0.1)"
+          bg: "rgba(230, 162, 60, 0.1)",
+          tip: "互动产生的认可与点赞总量"
         },
         {
           label: "活跃用户数",
           value: stats.value.activeUsers,
           icon: User,
           color: "#909399",
-          bg: "rgba(144, 147, 153, 0.1)"
+          bg: "rgba(144, 147, 153, 0.1)",
+          tip: "最近24小时内参与互动的用户"
         }
       ]
     },
     {
-      label: "今日实时",
+      label: "实时动态",
       children: [
         {
-          label: "今日新帖数",
+          label: "今日新帖",
           value: stats.value.todayPosts,
           icon: Timer,
           color: "#f56c6c",
           bg: "rgba(245, 108, 108, 0.1)",
-          isNew: true
+          isNew: true,
+          tip: "今日 00:00 至今新增的发帖"
         },
         {
-          label: "今日新回复数",
+          label: "今日回复",
           value: stats.value.todayReplies,
           icon: Timer,
           color: "#00ced1",
           bg: "rgba(0, 206, 209, 0.1)",
-          isNew: true
+          isNew: true,
+          tip: "今日 00:00 至今新增的回复"
         }
       ]
     }
@@ -355,6 +360,8 @@ const handleCurrentChange = (val: number) => {
 
 // ==================== 数据加载 ====================
 
+const lastUpdateTime = ref(new Date().toLocaleString());
+
 const fetchData = async () => {
   loading.value = true;
   try {
@@ -362,6 +369,7 @@ const fetchData = async () => {
     if (selectedCourse.value) params.courseId = selectedCourse.value;
     const { data } = await getGlobalStatistics(params);
     stats.value = data;
+    lastUpdateTime.value = new Date().toLocaleString();
     initCharts();
   } catch (error) {
     console.error("加载统计数据失败", error);
@@ -397,9 +405,14 @@ watch(theme, () => {
     <div class="flex justify-between items-center mb-6">
       <div class="flex items-center">
         <el-icon class="mr-2 text-primary" :size="24"><TrendCharts /></el-icon>
-        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">
-          讨论区业务统计与审计面板
-        </h2>
+        <div>
+          <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">
+            讨论区业务统计与审计面板
+          </h2>
+          <p class="text-[10px] text-gray-400 mt-0.5">
+            数据同步于: {{ lastUpdateTime }}
+          </p>
+        </div>
       </div>
       <div class="flex items-center gap-3">
         <el-select

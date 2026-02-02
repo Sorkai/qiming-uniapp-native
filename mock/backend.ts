@@ -1045,6 +1045,92 @@ export default defineFakeRoute([
     }
   },
 
+  // 课程讨论全局统计
+  {
+    url: "/edu/backend/v1/discussions/statistics",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          totalPosts: 456,
+          totalReplies: 1205,
+          totalLikes: 3580,
+          pendingPosts: 12,
+          pendingReplies: 25,
+          pendingReports: 3,
+          activeUsers: 89,
+          todayPosts: 15,
+          todayReplies: 42,
+          trends: {
+            posts: [
+              { date: "01-27", count: 20 },
+              { date: "01-28", count: 35 },
+              { date: "01-29", count: 15 },
+              { date: "01-30", count: 42 },
+              { date: "01-31", count: 38 },
+              { date: "02-01", count: 25 },
+              { date: "02-02", count: 18 }
+            ],
+            replies: [
+              { date: "01-27", count: 80 },
+              { date: "01-28", count: 120 },
+              { date: "01-29", count: 65 },
+              { date: "01-30", count: 150 },
+              { date: "01-31", count: 130 },
+              { date: "02-01", count: 95 },
+              { date: "02-02", count: 70 }
+            ]
+          }
+        }
+      };
+    }
+  },
+
+  // 课程讨论审计日志
+  {
+    url: "/edu/backend/v1/discussions/audit-logs",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          total: 100,
+          list: [
+            {
+              id: 1,
+              targetType: "post",
+              targetId: 101,
+              action: "审核通过",
+              operatorId: 1,
+              operatorName: "管理员A",
+              operatorRole: "admin",
+              reason: "内容符合社区规范",
+              previousStatus: "pending",
+              newStatus: "approved",
+              createTime: new Date().toISOString()
+            },
+            {
+              id: 2,
+              targetType: "reply",
+              targetId: 205,
+              action: "违规删除",
+              operatorId: 2,
+              operatorName: "助教B",
+              operatorRole: "teacher",
+              reason: "包含不当言论",
+              previousStatus: "approved",
+              newStatus: "deleted",
+              createTime: new Date().toISOString()
+            }
+          ]
+        }
+      };
+    }
+  },
+
   // 11. 后端HTML动画模块
   {
     url: "/edu/backend/v1/html-animation/generate",
