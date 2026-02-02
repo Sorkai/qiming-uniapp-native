@@ -10,6 +10,7 @@ import {
   Search,
   Refresh,
   Check,
+  Close,
   Delete,
   Warning,
   MoreFilled
@@ -382,20 +383,20 @@ onActivated(() => {
                 />
               </el-tooltip>
               <template v-if="row.status === 'pending'">
-                <el-tooltip content="驳回举报" placement="top">
+                <el-tooltip content="接受举报" placement="top">
                   <el-button
                     link
                     type="success"
                     :icon="Check"
-                    @click="quickDismiss(row)"
+                    @click="quickDelete(row)"
                   />
                 </el-tooltip>
-                <el-tooltip content="接受举报" placement="top">
+                <el-tooltip content="驳回举报" placement="top">
                   <el-button
                     link
                     type="danger"
-                    :icon="Delete"
-                    @click="quickDelete(row)"
+                    :icon="Close"
+                    @click="quickDismiss(row)"
                   />
                 </el-tooltip>
                 <el-tooltip content="更多处理" placement="top">
@@ -483,19 +484,20 @@ onActivated(() => {
             <el-button
               type="success"
               @click="
-                quickDismiss(currentReport!);
-                detailDialogVisible = false;
-              "
-            >
-              驳回举报 </el-button
-            ><el-button
-              type="danger"
-              @click="
                 quickDelete(currentReport!);
                 detailDialogVisible = false;
               "
             >
               接受举报
+            </el-button>
+            <el-button
+              type="danger"
+              @click="
+                quickDismiss(currentReport!);
+                detailDialogVisible = false;
+              "
+            >
+              驳回举报
             </el-button>
           </div>
           <el-button @click="detailDialogVisible = false">关闭</el-button>
