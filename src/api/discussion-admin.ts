@@ -423,6 +423,54 @@ export function reviewReply(
 }
 
 /**
+ * 置顶帖子
+ * @param postId 帖子ID
+ */
+export function pinPost(postId: string | number) {
+  return http.request<{ code: number; msg: string; data: object }>(
+    "post",
+    `/edu/backend/v1/discussions/${postId}/pin`
+  );
+}
+
+/**
+ * 取消置顶
+ * @param postId 帖子ID
+ */
+export function unpinPost(postId: string | number) {
+  return http.request<{ code: number; msg: string; data: object }>(
+    "delete",
+    `/edu/backend/v1/discussions/${postId}/pin`
+  );
+}
+
+/**
+ * 强制删除帖子
+ * @param postId 帖子ID
+ * @param reason 删除原因
+ */
+export function forceDeletePost(postId: string | number, reason?: string) {
+  return http.request<{ code: number; msg: string; data: object }>(
+    "delete",
+    `/edu/backend/v1/discussions/${postId}/force`,
+    { data: { reason } }
+  );
+}
+
+/**
+ * 强制删除回复
+ * @param replyId 回复ID
+ * @param reason 删除原因
+ */
+export function forceDeleteReply(replyId: string | number, reason?: string) {
+  return http.request<{ code: number; msg: string; data: object }>(
+    "delete",
+    `/edu/backend/v1/discussions/replies/${replyId}/force`,
+    { data: { reason } }
+  );
+}
+
+/**
  * 批量审核
  * @param data 批量审核数据
  */

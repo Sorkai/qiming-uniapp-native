@@ -12,7 +12,8 @@ import {
   Check,
   Close,
   Warning,
-  Clock
+  Clock,
+  Top
 } from "@element-plus/icons-vue";
 import {
   getAdminDiscussions,
@@ -20,6 +21,8 @@ import {
   reviewPost,
   reviewReply,
   batchReview,
+  pinPost,
+  unpinPost,
   getTeacherCourseStats,
   getPendingList,
   getUserAvatars,
@@ -312,6 +315,38 @@ const handleReject = async (row: ReviewQueueItem) => {
     if (error !== "cancel") {
       ElMessage.error("操作失败，请检查网络");
     }
+  }
+};
+
+// 置顶逻辑
+const handlePin = async (row: ReviewQueueItem) => {
+  try {
+    loading.value = true;
+    await pinPost(row.id);
+    row.isPinned = true;
+    ElMessage.success("成功设为置顶");
+    fetchData();
+  } catch (error) {
+    console.error("置顶操作失败:", error);
+    ElMessage.error("置顶操作失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 取消置顶逻辑
+const handleUnpin = async (row: ReviewQueueItem) => {
+  try {
+    loading.value = true;
+    await unpinPost(row.id);
+    row.isPinned = false;
+    ElMessage.success("已取消置顶");
+    fetchData();
+  } catch (error) {
+    console.error("取消置顶操作失败:", error);
+    ElMessage.error("取消置顶操作失败");
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -770,7 +805,7 @@ onActivated(() => {
         </el-table-column>
         <el-table-column
           label="审核操作"
-          width="160"
+          width="200"
           align="center"
           fixed="right"
         >
@@ -794,6 +829,22 @@ onActivated(() => {
                   <el-icon :size="18"><Close /></el-icon>
                 </div>
               </el-tooltip>
+
+              <!-- 置顶操作 -->
+              <template v-if="row.itemType === 'post'">
+                <el-tooltip
+                  :content="row.isPinned ? '取消置顶' : '设为置顶'"
+                  placement="top"
+                >
+                  <div
+                    class="btn-icon-wrapper pin"
+                    :class="{ 'is-active': row.isPinned }"
+                    @click="row.isPinned ? handleUnpin(row) : handlePin(row)"
+                  >
+                    <el-icon :size="18"><Top /></el-icon>
+                  </div>
+                </el-tooltip>
+              </template>
             </div>
           </template>
         </el-table-column>
@@ -1127,6 +1178,16 @@ onActivated(() => {
         &.reject:hover {
           background: #fef2f2;
           color: #ef4444;
+        }
+
+        &.pin:hover {
+          background: #fef3c7;
+          color: #f59e0b;
+        }
+
+        &.pin.is-active {
+          background: #fef3c7;
+          color: #f59e0b;
         }
       }
     }

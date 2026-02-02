@@ -22,16 +22,14 @@ import {
   getTeacherCourseStats,
   reviewPost,
   reviewReply,
+  pinPost,
+  unpinPost,
+  forceDeletePost,
+  forceDeleteReply,
   type ReviewQueueItem
 } from "@/api/discussion-admin";
 import { getCourseList } from "@/api/course";
-import {
-  getReplies,
-  updateReply,
-  deleteReply,
-  updateDiscussion,
-  deleteDiscussion
-} from "@/api/discussion";
+import { getReplies, updateReply, updateDiscussion } from "@/api/discussion";
 import type { DiscussionPost } from "@/api/discussion";
 import HeartIcon from "@/assets/commentareasrelatedsvgs/heart-svgrepo-com.svg?component";
 import CommentIcon from "@/assets/commentareasrelatedsvgs/comment-lines-svgrepo-com.svg?component";
@@ -578,29 +576,68 @@ const submitEdit = async () => {
 
 const handleDelete = async (row: ReviewQueueItem) => {
   try {
-    await ElMessageBox.confirm(
-      "确定要删除这条内容吗？此操作不可恢复！",
+    // 管理员删除，支持输入原因以供审计
+    const result = await ElMessageBox.prompt(
+      "确定要删除这条内容吗？此操作不可恢复。请输入删除理由（可选）：",
       "删除确认",
       {
         confirmButtonText: "确定删除",
         cancelButtonText: "取消",
+        inputType: "text",
+        inputPlaceholder: "输入删除理由...",
         type: "warning",
-        customClass: "custom-message-box",
-        draggable: true
+        draggable: true,
+        customClass: "custom-message-box"
       }
     );
 
+    loading.value = true;
     if (row.itemType === "reply") {
-      await deleteReply(row.id);
+      await forceDeleteReply(row.id, result.value);
     } else {
-      await deleteDiscussion(row.id);
+      await forceDeletePost(row.id, result.value);
     }
-    ElMessage.success("已删除");
+    ElMessage.success("已强制删除并记录日志");
     fetchData();
   } catch (error) {
     if (error !== "cancel") {
+      console.error("删除失败:", error);
       ElMessage.error("删除失败");
     }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 置顶逻辑
+const handlePin = async (row: ReviewQueueItem) => {
+  try {
+    loading.value = true;
+    await pinPost(row.id);
+    row.isPinned = true;
+    ElMessage.success("成功设为置顶");
+    fetchData();
+  } catch (error) {
+    console.error("置顶操作失败:", error);
+    ElMessage.error("置顶操作失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 取消置顶逻辑
+const handleUnpin = async (row: ReviewQueueItem) => {
+  try {
+    loading.value = true;
+    await unpinPost(row.id);
+    row.isPinned = false;
+    ElMessage.success("已取消置顶");
+    fetchData();
+  } catch (error) {
+    console.error("取消置顶操作失败:", error);
+    ElMessage.error("取消置顶操作失败");
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -918,7 +955,7 @@ onActivated(() => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="详情" width="160" align="center" fixed="right">
+        <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="{ row }">
             <div class="action-btns">
               <el-tooltip content="查看详情" placement="top">
@@ -945,6 +982,22 @@ onActivated(() => {
                 </el-tooltip>
               </template>
 
+              <!-- 置顶操作按钮 -->
+              <template v-if="row.itemType === 'post'">
+                <el-tooltip
+                  :content="row.isPinned ? '取消置顶' : '设为置顶'"
+                  placement="top"
+                >
+                  <div
+                    class="btn-icon-wrapper pin"
+                    :class="{ 'is-active': row.isPinned }"
+                    @click="row.isPinned ? handleUnpin(row) : handlePin(row)"
+                  >
+                    <el-icon :size="20"><Top /></el-icon>
+                  </div>
+                </el-tooltip>
+              </template>
+
               <!-- 编辑与删除 (更多操作) -->
               <el-dropdown trigger="click" popper-class="modern-dropdown">
                 <div class="btn-icon-wrapper more">
@@ -954,6 +1007,20 @@ onActivated(() => {
                   <el-dropdown-menu>
                     <el-dropdown-item :icon="Edit" @click="handleEdit(row)">
                       编辑内容
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      v-if="row.itemType === 'post' && !row.isPinned"
+                      :icon="Top"
+                      @click="handlePin(row)"
+                    >
+                      设为置顶
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      v-if="row.itemType === 'post' && row.isPinned"
+                      :icon="Top"
+                      @click="handleUnpin(row)"
+                    >
+                      取消置顶
                     </el-dropdown-item>
                     <el-dropdown-item
                       :icon="Delete"
@@ -1018,161 +1085,51 @@ onActivated(() => {
     <!-- 详情弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="内容审核详情"
-      width="920px"
+      title="内容审核"
+      width="520px"
       destroy-on-close
-      class="custom-review-dialog"
+      class="simple-review-dialog"
     >
-      <div v-if="currentDetail" class="review-detail-body">
-        <div class="flex gap-8 items-stretch">
-          <!-- 左侧：主要内容区域 -->
-          <div class="flex-1 min-w-0 flex flex-col">
-            <div class="mb-5 flex justify-between items-center">
-              <h3
-                class="text-2xl font-black text-slate-800 dark:text-slate-100 italic tracking-tight"
-              >
-                讨论正文
-              </h3>
-              <el-tag
-                v-if="currentDetail.priority"
-                :color="
-                  currentDetail.priority === 'high' ? '#ef4444' : '#f59e0b'
-                "
-                effect="dark"
-                class="border-none font-bold px-3 rounded-lg text-white"
-              >
-                {{ currentDetail.priority === "high" ? "高" : "中" }} 优先级
-              </el-tag>
-            </div>
-
-            <div
-              class="content-container flex-1 bg-slate-50 dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 p-8 overflow-y-auto max-h-[500px]"
-            >
-              <div
-                class="content-header border-b border-slate-100 dark:border-slate-800 mb-6 pb-4"
-              >
-                <h4 class="text-3xl font-bold text-slate-900 dark:text-white">
-                  {{ currentDetail.title || "无标题" }}
-                </h4>
-              </div>
-              <div
-                class="content-text text-lg text-slate-600 dark:text-slate-400"
-                v-html="currentDetail.contentHtml || currentDetail.content"
-              />
-            </div>
+      <div v-if="currentDetail" class="review-detail">
+        <!-- 作者信息 -->
+        <div class="author-row">
+          <el-avatar
+            :size="36"
+            :src="formatAvatar(currentDetail.author?.avatar)"
+          />
+          <div class="author-info">
+            <span class="author-name">{{ currentDetail.author?.name }}</span>
+            <span class="meta">
+              {{ currentDetail.courseName || "未知课程" }} ·
+              {{ formatTime(currentDetail.createdAt) }}
+            </span>
           </div>
+          <el-tag size="small" :type="riskLevelType(currentDetail.riskLevel)">
+            {{ riskLevelText(currentDetail.riskLevel) }}
+          </el-tag>
+        </div>
 
-          <!-- 右侧：栏目卡片 -->
-          <div class="w-[320px] flex flex-col gap-6">
-            <!-- 发布者信息 -->
-            <div
-              class="info-card p-6 bg-slate-50 dark:bg-slate-800/40 rounded-[24px]"
-            >
-              <h4
-                class="text-[11px] font-bold text-slate-400 uppercase mb-5 tracking-[0.2em]"
-              >
-                发布者信息
-              </h4>
-              <div class="flex items-center gap-4 mb-6">
-                <el-avatar
-                  :size="64"
-                  :src="formatAvatar(currentDetail.author?.avatar)"
-                  class="shadow-sm"
-                />
-                <div class="flex-1 min-w-0">
-                  <div
-                    class="font-extrabold text-xl text-slate-900 dark:text-white truncate mb-0.5"
-                  >
-                    {{ currentDetail.author?.name }}
-                  </div>
-                  <div class="text-xs font-bold text-slate-400">
-                    UID: {{ currentDetail.author?.id?.substring(0, 8) || "2" }}
-                  </div>
-                </div>
-              </div>
-
-              <div
-                class="grid grid-cols-1 gap-4 pt-6 border-t border-slate-200/60 dark:border-slate-700/50"
-              >
-                <div class="flex justify-between items-center">
-                  <span class="text-xs font-bold text-slate-400">所属课程</span>
-                  <span
-                    class="text-sm font-bold text-slate-600 dark:text-slate-300"
-                    >{{ currentDetail.courseName || "未知课程" }}</span
-                  >
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-xs font-bold text-slate-400">发布时间</span>
-                  <span
-                    class="text-sm font-bold text-slate-600 dark:text-slate-300"
-                    >{{ formatTime(currentDetail.createdAt) }}</span
-                  >
-                </div>
-              </div>
-            </div>
-
-            <!-- 审核状态卡片 -->
-            <div
-              class="info-card p-8 bg-[#fffbeb] dark:bg-orange-950/20 rounded-[24px] border border-orange-100/50 dark:border-orange-900/10"
-            >
-              <h4
-                class="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase mb-6 tracking-[0.2em]"
-              >
-                审核状态
-              </h4>
-              <div class="flex flex-col">
-                <div class="text-xs font-bold text-orange-400 mb-2">
-                  等待时长
-                </div>
-                <div
-                  class="text-4xl font-black text-rose-500 mb-8 tracking-tighter"
-                >
-                  2天3小时
-                </div>
-
-                <div class="text-xs font-bold text-orange-400 mb-4">
-                  风险等级
-                </div>
-                <div>
-                  <el-tag
-                    :type="riskLevelType(currentDetail.riskLevel || 'low')"
-                    effect="dark"
-                    class="border-none font-black px-5 h-9 rounded-xl text-white"
-                  >
-                    {{ riskLevelText(currentDetail.riskLevel || "low") }}
-                  </el-tag>
-                </div>
-              </div>
-            </div>
+        <!-- 内容区域 -->
+        <div class="content-area">
+          <div v-if="currentDetail.title" class="content-title">
+            {{ currentDetail.title }}
           </div>
+          <div
+            class="content-body"
+            v-html="currentDetail.contentHtml || currentDetail.content"
+          />
         </div>
       </div>
 
       <template #footer>
-        <div
-          class="review-footer flex justify-between items-center px-10 py-5 border-t border-slate-50 dark:border-slate-800"
-        >
-          <div class="instruction text-sm font-medium text-slate-400 italic">
-            请确认内容符合社区准则后再予以通过
-          </div>
-          <div class="footer-actions flex gap-3">
-            <el-button
-              class="rounded-xl px-6 h-12 text-slate-500 font-bold border-slate-200 hover:bg-slate-50"
-              @click="detailDialogVisible = false"
-              >暂时跳过</el-button
-            >
-            <el-button
-              class="rounded-xl px-6 h-12 text-rose-500 font-bold border-rose-100 bg-rose-50 hover:bg-rose-100"
-              @click="handleReject(currentDetail)"
-              >违规屏蔽</el-button
-            >
-            <el-button
-              type="success"
-              class="rounded-xl px-10 h-12 font-black !bg-[#67c23a] border-none shadow-lg shadow-green-200 dark:shadow-none hover:!bg-[#5daf34]"
-              @click="handleApprove(currentDetail)"
-              >准予通过</el-button
-            >
-          </div>
+        <div class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">跳过</el-button>
+          <el-button type="danger" plain @click="handleReject(currentDetail)"
+            >拒绝</el-button
+          >
+          <el-button type="primary" @click="handleApprove(currentDetail)"
+            >通过</el-button
+          >
         </div>
       </template>
     </el-dialog>
@@ -1404,6 +1361,18 @@ onActivated(() => {
         color: #6366f1;
         background: rgba(99, 102, 241, 0.1);
       }
+
+      &.pin {
+        &:hover {
+          color: #f59e0b;
+          background: rgba(245, 158, 11, 0.1);
+        }
+
+        &.is-active {
+          color: #f59e0b;
+          background: rgba(245, 158, 11, 0.15);
+        }
+      }
     }
   }
 
@@ -1494,6 +1463,76 @@ onActivated(() => {
   }
 }
 
+.review-detail {
+  .author-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .author-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      .author-name {
+        font-weight: 600;
+        color: #303133;
+
+        html.dark & {
+          color: #e5e7eb;
+        }
+      }
+
+      .meta {
+        font-size: 12px;
+        color: #909399;
+      }
+    }
+  }
+
+  .content-area {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    min-height: 100px;
+    max-height: 400px;
+    overflow-y: auto;
+
+    html.dark & {
+      background: #262626;
+    }
+
+    .content-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 8px;
+
+      html.dark & {
+        color: #e5e7eb;
+      }
+    }
+
+    .content-body {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #606266;
+      word-break: break-word;
+
+      html.dark & {
+        color: #d1d5db;
+      }
+    }
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 /* 滚动条美化 */
 ::-webkit-scrollbar {
   width: 6px;
@@ -1512,42 +1551,47 @@ onActivated(() => {
 
 <style lang="scss">
 /* 详情弹窗样式 */
-.custom-review-dialog {
-  border-radius: 28px !important;
+.simple-review-dialog {
+  border-radius: 12px !important;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2) !important;
 
   .el-dialog__header {
     margin-right: 0;
-    padding: 24px 32px;
-    border-bottom: 1px solid #f8fafc;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
 
     html.dark & {
-      border-bottom-color: #1e293b;
+      border-bottom-color: #334155;
     }
 
     .el-dialog__title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #0f172a;
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
 
       html.dark & {
-        color: #f8fafc;
+        color: #e5e7eb;
       }
     }
   }
 
   .el-dialog__body {
-    padding: 32px 40px !important;
+    padding: 20px !important;
     background: white;
 
     html.dark & {
-      background: #0f172a;
+      background: #1d1d1d;
     }
   }
 
   .el-dialog__footer {
-    padding: 0 !important;
+    padding: 16px 20px !important;
+    border-top: 1px solid #f1f5f9;
+
+    html.dark & {
+      border-top-color: #334155;
+    }
   }
 }
 
