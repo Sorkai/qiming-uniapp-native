@@ -71,7 +71,15 @@ const statusOptions = [
 
 // 举报原因选项 (根据需要保留或调整，后端返回的是 string)
 const getReasonText = (reason: string): string => {
-  return reason || "未知原因";
+  const map: Record<string, string> = {
+    spam: "垃圾广告",
+    inappropriate: "不当内容",
+    harassment: "骚扰攻击",
+    misinformation: "虚假信息",
+    copyright: "侵权内容",
+    other: "其他原因"
+  };
+  return map[reason] || reason || "未知原因";
 };
 
 // 处理方式选项
@@ -371,13 +379,14 @@ onActivated(() => {
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="160" align="center" fixed="right">
+        <el-table-column label="操作" width="180" align="center" fixed="right">
           <template #default="{ row }">
             <div class="action-btns">
               <el-tooltip content="查看详情" placement="top">
                 <el-button
                   link
                   type="primary"
+                  size="large"
                   :icon="InfoIcon"
                   @click="viewDetail(row)"
                 />
@@ -387,6 +396,7 @@ onActivated(() => {
                   <el-button
                     link
                     type="success"
+                    size="large"
                     :icon="Check"
                     @click="quickDelete(row)"
                   />
@@ -395,6 +405,7 @@ onActivated(() => {
                   <el-button
                     link
                     type="danger"
+                    size="large"
                     :icon="Close"
                     @click="quickDismiss(row)"
                   />
@@ -403,6 +414,7 @@ onActivated(() => {
                   <el-button
                     link
                     type="warning"
+                    size="large"
                     :icon="MoreFilled"
                     @click="openHandleDialog(row)"
                   />
@@ -544,6 +556,16 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .report-manage {
+  font-size: 16px; // 整体文字变大
+
+  :deep(.el-table) {
+    font-size: 15px; // 表格内文字变大
+    .el-table__header {
+      font-size: 16px;
+      font-weight: bold;
+    }
+  }
+
   :deep(.el-card) {
     border: none;
     border-radius: 16px;
@@ -658,7 +680,12 @@ onActivated(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 12px; // 间距变大
+
+    :deep(.el-button) {
+      font-size: 20px; // 图标变大
+      padding: 8px;
+    }
 
     .btn-icon-wrapper {
       padding: 8px;
