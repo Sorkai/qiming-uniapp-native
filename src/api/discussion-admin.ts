@@ -194,16 +194,14 @@ export interface SensitiveWord {
 
 /** 用户信誉 */
 export interface UserReputation {
-  userId: string;
-  userName: string;
+  userId: number;
+  nickname: string;
   avatar: string;
-  score: number;
+  reputationScore: number;
   level: "trusted" | "normal" | "restricted";
-  totalPosts: number;
-  approvedPosts: number;
-  rejectedPosts: number;
+  postCount: number;
+  replyCount: number;
   reportedCount: number;
-  warningCount: number;
   lastActiveAt: string;
 }
 
@@ -621,22 +619,26 @@ export function importSensitiveWords(data: {
  * @param params 查询参数
  */
 export function getUserReputationList(params?: {
-  level?: "trusted" | "normal" | "restricted";
-  keyword?: string;
-  sortBy?: "score" | "rejectedPosts" | "reportedCount";
-  sortOrder?: "asc" | "desc";
   page?: number;
   pageSize?: number;
+  level?: "trusted" | "normal" | "restricted";
+  keyword?: string;
+  sortBy?: "score" | "postCount" | "replyCount" | "reportCount";
+  sortOrder?: "asc" | "desc";
 }) {
   return http.request<{
     list: UserReputation[];
-    pagination: Pagination;
+    pagination: {
+      pageNum: number;
+      pageSize: number;
+      total: number;
+    };
     stats: {
       trusted: number;
       normal: number;
       restricted: number;
     };
-  }>("get", "/edu/backend/v1/user-reputation", { params });
+  }>("get", "/edu/backend/v1/admin/users/reputations", { params });
 }
 
 /**
@@ -647,18 +649,15 @@ export function getUserReputationList(params?: {
 export function updateUserReputation(
   userId: string,
   data: {
-    scoreChange?: number;
+    reputationScore: number;
     reason: string;
-    newLevel?: "trusted" | "normal" | "restricted";
   }
 ) {
-  return http.request<{
-    userId: string;
-    previousScore: number;
-    newScore: number;
-    previousLevel: string;
-    newLevel: string;
-  }>("put", `/edu/backend/v1/user-reputation/${userId}`, { data });
+  return http.request<void>(
+    "put",
+    `/edu/backend/v1/admin/users/${userId}/reputation`,
+    { data }
+  );
 }
 
 /**
@@ -865,10 +864,10 @@ export async function getAdminDiscussions(
   try {
     const response = await http.request<
       | {
-        code: number;
-        msg: string;
-        data: BackendListResponse;
-      }
+          code: number;
+          msg: string;
+          data: BackendListResponse;
+        }
       | BackendListResponse
     >("get", `/edu/frontend/v1/courses/${courseId}/discussions`, {
       params: backendParams
@@ -969,10 +968,10 @@ export async function getAdminDiscussionDetail(
   try {
     const response = await http.request<
       | {
-        code: number;
-        msg: string;
-        data: BackendPostDetail;
-      }
+          code: number;
+          msg: string;
+          data: BackendPostDetail;
+        }
       | BackendPostDetail
     >("get", `/edu/frontend/v1/discussions/${postId}`);
 

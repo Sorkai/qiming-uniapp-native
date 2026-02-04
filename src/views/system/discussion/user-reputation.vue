@@ -27,16 +27,15 @@ const currentUser = ref<UserReputation | null>(null);
 // 搜索表单
 const searchForm = reactive({
   keyword: "",
-  status: "" as "" | "normal" | "restricted" | "banned",
-  minScore: undefined as number | undefined,
-  maxScore: undefined as number | undefined
+  level: "" as "" | "trusted" | "normal" | "restricted",
+  sortBy: "score" as "score" | "postCount" | "replyCount" | "reportCount",
+  sortOrder: "desc" as "asc" | "desc"
 });
 
 // 调整表单
 const adjustForm = reactive({
-  scoreChange: 0,
-  reason: "",
-  action: "adjust" as "adjust" | "restrict" | "unrestrict" | "ban" | "unban"
+  reputationScore: 0,
+  reason: ""
 });
 
 // 分页
@@ -46,47 +45,53 @@ const pagination = reactive({
   total: 0
 });
 
-// 状态选项
-const statusOptions = [
-  { label: "正常", value: "normal" },
-  { label: "限制发帖", value: "restricted" },
-  { label: "已禁言", value: "banned" }
+// 状态统计
+const stats = ref({
+  trusted: 0,
+  normal: 0,
+  restricted: 0
+});
+
+// 等级选项
+const levelOptions = [
+  { label: "信誉良好", value: "trusted" },
+  { label: "信誉普通", value: "normal" },
+  { label: "信誉受限", value: "restricted" }
 ];
 
-// 调整操作选项
-const actionOptions = [
-  { label: "仅调整分数", value: "adjust" },
-  { label: "限制发帖", value: "restrict" },
-  { label: "解除限制", value: "unrestrict" },
-  { label: "禁言", value: "ban" },
-  { label: "解除禁言", value: "unban" }
+// 排序字段选项
+const sortByOptions = [
+  { label: "信誉分", value: "score" },
+  { label: "发帖数", value: "postCount" },
+  { label: "回复数", value: "replyCount" },
+  { label: "被举报数", value: "reportCount" }
 ];
 
 // 信誉分颜色
-const getScoreColor = computed(() => (score: number) => {
+const getScoreColor = (score: number) => {
   if (score >= 80) return "#67c23a"; // 绿色
   if (score >= 60) return "#409eff"; // 蓝色
   if (score >= 40) return "#e6a23c"; // 橙色
   return "#f56c6c"; // 红色
-});
-
-// 状态标签样式
-const getStatusType = (status: string) => {
-  const map: Record<string, string> = {
-    normal: "success",
-    restricted: "warning",
-    banned: "danger"
-  };
-  return map[status] || "info";
 };
 
-const getStatusText = (status: string) => {
+// 等级标签样式
+const getLevelType = (level: string) => {
   const map: Record<string, string> = {
-    normal: "正常",
-    restricted: "限制发帖",
-    banned: "已禁言"
+    trusted: "success",
+    normal: "primary",
+    restricted: "warning"
   };
-  return map[status] || status;
+  return map[level] || "info";
+};
+
+const getLevelText = (level: string) => {
+  const map: Record<string, string> = {
+    trusted: "良好",
+    normal: "普通",
+    restricted: "受限"
+  };
+  return map[level] || level;
 };
 
 // 加载数据
@@ -95,18 +100,20 @@ const fetchData = async () => {
   try {
     const params: any = {
       page: pagination.page,
-      pageSize: pagination.pageSize
+      pageSize: pagination.pageSize,
+      sortBy: searchForm.sortBy,
+      sortOrder: searchForm.sortOrder
     };
     if (searchForm.keyword) params.keyword = searchForm.keyword;
-    if (searchForm.status) params.status = searchForm.status;
-    if (searchForm.minScore !== undefined)
-      params.minScore = searchForm.minScore;
-    if (searchForm.maxScore !== undefined)
-      params.maxScore = searchForm.maxScore;
+    if (searchForm.level) params.level = searchForm.level;
 
-    const { data } = await getUserReputationList(params);
-    users.value = data.list;
-    pagination.total = data.pagination.total;
+    const res: any = await getUserReputationList(params);
+    const data = res.data;
+    users.value = data.list || [];
+    pagination.total = data.pagination?.total || 0;
+    if (data.stats) {
+      stats.value = data.stats;
+    }
   } catch (error) {
     console.error("加载用户信誉列表失败", error);
   } finally {
@@ -123,9 +130,9 @@ const handleSearch = () => {
 // 重置
 const resetSearch = () => {
   searchForm.keyword = "";
-  searchForm.status = "";
-  searchForm.minScore = undefined;
-  searchForm.maxScore = undefined;
+  searchForm.level = "";
+  searchForm.sortBy = "score";
+  searchForm.sortOrder = "desc";
   handleSearch();
 };
 
@@ -150,73 +157,23 @@ const viewDetail = (row: UserReputation) => {
 // 打开调整弹窗
 const openAdjustDialog = (row: UserReputation) => {
   currentUser.value = row;
-  adjustForm.scoreChange = 0;
+  adjustForm.reputationScore = row.reputationScore;
   adjustForm.reason = "";
-  adjustForm.action = "adjust";
   adjustDialogVisible.value = true;
-};
-
-// 快速禁言
-const quickBan = async (row: UserReputation) => {
-  try {
-    await ElMessageBox.prompt(
-      "请输入禁言原因",
-      `禁言用户「${row.user.name}」`,
-      {
-        confirmButtonText: "确认禁言",
-        cancelButtonText: "取消",
-        inputPlaceholder: "输入禁言原因",
-        type: "warning"
-      }
-    ).then(async ({ value }) => {
-      await updateUserReputation(row.userId, {
-        action: "ban",
-        reason: value || "违规操作"
-      });
-      ElMessage.success("禁言成功");
-      fetchData();
-    });
-  } catch {
-    // 用户取消
-  }
-};
-
-// 解除禁言
-const quickUnban = async (row: UserReputation) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要解除用户「${row.user.name}」的禁言吗？`,
-      "提示"
-    );
-    await updateUserReputation(row.userId, {
-      action: "unban",
-      reason: "解除禁言"
-    });
-    ElMessage.success("解除禁言成功");
-    fetchData();
-  } catch {
-    // 用户取消
-  }
 };
 
 // 提交调整
 const submitAdjust = async () => {
   if (!currentUser.value) return;
 
-  if (adjustForm.action === "adjust" && adjustForm.scoreChange === 0) {
-    ElMessage.warning("请输入分数变化值");
-    return;
-  }
   if (!adjustForm.reason.trim()) {
     ElMessage.warning("请输入调整原因");
     return;
   }
 
   try {
-    await updateUserReputation(currentUser.value.userId, {
-      action: adjustForm.action,
-      scoreChange:
-        adjustForm.action === "adjust" ? adjustForm.scoreChange : undefined,
+    await updateUserReputation(currentUser.value.userId.toString(), {
+      reputationScore: adjustForm.reputationScore,
       reason: adjustForm.reason
     });
     ElMessage.success("操作成功");
@@ -247,170 +204,234 @@ onMounted(() => {
         <el-form-item label="搜索用户">
           <el-input
             v-model="searchForm.keyword"
-            placeholder="用户名/学号/手机号"
+            placeholder="搜索昵称"
             clearable
-            style="width: 180px"
+            style="width: 220px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="信誉等级">
           <el-select
-            v-model="searchForm.status"
-            placeholder="全部状态"
+            v-model="searchForm.level"
+            placeholder="全部等级"
             clearable
-            style="width: 120px"
+            style="width: 140px"
           >
             <el-option
-              v-for="opt in statusOptions"
+              v-for="opt in levelOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="信誉分">
-          <el-input-number
-            v-model="searchForm.minScore"
-            :min="0"
-            :max="100"
-            placeholder="最低"
-            style="width: 100px"
-            controls-position="right"
-          />
-          <span class="mx-2">-</span>
-          <el-input-number
-            v-model="searchForm.maxScore"
-            :min="0"
-            :max="100"
-            placeholder="最高"
-            style="width: 100px"
-            controls-position="right"
-          />
+        <el-form-item label="排序字段">
+          <el-select
+            v-model="searchForm.sortBy"
+            placeholder="排序字段"
+            style="width: 140px"
+          >
+            <el-option
+              v-for="opt in sortByOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="排序方向">
+          <el-select v-model="searchForm.sortOrder" style="width: 120px">
+            <el-option label="降序" value="desc" />
+            <el-option label="升序" value="asc" />
+          </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">
+          <el-button
+            type="primary"
+            :icon="Search"
+            style="padding: 12px 24px; font-size: 15px"
+            @click="handleSearch"
+          >
             搜索
           </el-button>
-          <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
+          <el-button
+            :icon="Refresh"
+            style="padding: 12px 24px; font-size: 15px"
+            @click="resetSearch"
+          >
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
+    <!-- 统计信息 -->
+    <el-row :gutter="20" class="mb-4">
+      <el-col :span="8">
+        <el-card shadow="hover" class="status-card">
+          <div class="flex items-center justify-between p-2">
+            <div class="text-gray-500">良好用户</div>
+            <div class="text-3xl font-bold text-success">
+              {{ stats.trusted }}
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card shadow="hover" class="status-card">
+          <div class="flex items-center justify-between p-2">
+            <div class="text-gray-500">普通用户</div>
+            <div class="text-3xl font-bold text-primary">
+              {{ stats.normal }}
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card shadow="hover" class="status-card">
+          <div class="flex items-center justify-between p-2">
+            <div class="text-gray-500">受限用户</div>
+            <div class="text-3xl font-bold text-warning">
+              {{ stats.restricted }}
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 数据表格 -->
     <el-card shadow="never">
-      <el-table v-loading="loading" :data="users" stripe>
-        <el-table-column label="用户" min-width="200">
+      <el-table
+        v-loading="loading"
+        :data="users"
+        stripe
+        class="reputation-table"
+      >
+        <el-table-column label="用户" min-width="220">
           <template #default="{ row }">
-            <div class="flex items-center gap-3">
-              <el-avatar :size="40" :src="row.user.avatar" />
+            <div class="flex items-center gap-4 h-[72px]">
+              <el-avatar :size="60" :src="row.avatar" />
               <div>
-                <div class="font-medium">{{ row.user.name }}</div>
-                <div class="text-xs text-gray-400">
-                  {{ row.user.studentId }}
+                <div class="text-[18px] font-bold leading-tight">
+                  {{ row.nickname }}
+                </div>
+                <div class="text-[14px] text-gray-400">
+                  ID: {{ row.userId }}
                 </div>
               </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="信誉分" width="150" align="center">
+        <el-table-column label="信誉分" width="130" align="center">
           <template #default="{ row }">
-            <div class="flex items-center justify-center gap-2">
-              <el-progress
-                type="circle"
-                :percentage="row.score"
-                :width="50"
-                :color="getScoreColor(row.score)"
+            <div class="flex justify-center items-center h-[72px]">
+              <div
+                class="relative flex items-center justify-center"
+                style="width: 64px; height: 64px"
+              >
+                <el-progress
+                  type="circle"
+                  :percentage="row.reputationScore"
+                  :width="64"
+                  :stroke-width="6"
+                  :show-text="false"
+                  :color="getScoreColor(row.reputationScore)"
+                />
+                <span
+                  class="absolute inset-0 flex items-center justify-center text-[20px] font-bold"
+                  :style="{ color: getScoreColor(row.reputationScore) }"
+                >
+                  {{ row.reputationScore }}
+                </span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="等级" width="130" align="center">
+          <template #default="{ row }">
+            <div class="flex justify-center items-center h-[72px]">
+              <el-tag
+                :type="getLevelType(row.level)"
+                size="large"
+                class="reputation-tag"
+              >
+                {{ getLevelText(row.level) }}
+              </el-tag>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="发帖数" width="110" align="center">
+          <template #default="{ row }">
+            <div class="flex justify-center items-center h-[72px]">
+              <span class="text-[18px] font-medium">{{ row.postCount }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="回复数" width="110" align="center">
+          <template #default="{ row }">
+            <div class="flex justify-center items-center h-[72px]">
+              <span class="text-[18px] font-medium">{{ row.replyCount }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="被举报" width="120" align="center">
+          <template #default="{ row }">
+            <div class="flex justify-center items-center h-[72px]">
+              <el-badge
+                :value="row.reportedCount"
+                :type="row.reportedCount > 0 ? 'warning' : 'info'"
+                :max="999"
+                class="large-badge"
               />
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="110" align="center">
+        <el-table-column label="最后活跃" width="180" align="center">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
-              {{ getStatusText(row.status) }}
-            </el-tag>
+            <div class="flex justify-center items-center h-[72px]">
+              <span class="text-[16px] text-gray-500">
+                {{ formatTime(row.lastActiveAt) }}
+              </span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column
-          label="发帖数"
-          prop="postCount"
-          width="90"
-          align="center"
-        />
-        <el-table-column
-          label="被赞数"
-          prop="likeCount"
-          width="90"
-          align="center"
-        />
-        <el-table-column label="违规次数" width="100" align="center">
+        <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="{ row }">
-            <el-badge
-              :value="row.violationCount"
-              :type="row.violationCount > 0 ? 'danger' : 'info'"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="被举报次数" width="110" align="center">
-          <template #default="{ row }">
-            <el-badge
-              :value="row.reportedCount"
-              :type="row.reportedCount > 0 ? 'warning' : 'info'"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="最后活跃" width="140" align="center">
-          <template #default="{ row }">
-            <span class="text-sm text-gray-500">
-              {{ formatTime(row.lastActiveAt) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" align="center" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              link
-              type="primary"
-              :icon="InfoIcon"
-              @click="viewDetail(row)"
-            >
-              详情
-            </el-button>
-            <el-button
-              link
-              type="warning"
-              :icon="Edit"
-              @click="openAdjustDialog(row)"
-            >
-              调整
-            </el-button>
-            <template v-if="row.status === 'banned'">
-              <el-button link type="success" @click="quickUnban(row)">
-                解禁
-              </el-button>
-            </template>
-            <template v-else>
+            <div class="flex justify-center items-center h-[72px] gap-4">
               <el-button
                 link
-                type="danger"
-                :icon="Warning"
-                @click="quickBan(row)"
+                type="primary"
+                :size="'default'"
+                :icon="InfoIcon"
+                class="text-[22px] !m-0"
+                @click="viewDetail(row)"
               >
-                禁言
+                详情
               </el-button>
-            </template>
+              <el-button
+                link
+                type="primary"
+                :size="'default'"
+                :icon="Edit"
+                class="text-[22px] !m-0"
+                @click="openAdjustDialog(row)"
+              >
+                调整
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
-      <div class="flex justify-end mt-4">
+      <div class="flex justify-end mt-6">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[20, 50, 100]"
           layout="total, sizes, prev, pager, next"
+          class="large-pagination"
           @current-change="handlePageChange"
           @size-change="handleSizeChange"
         />
@@ -421,25 +442,25 @@ onMounted(() => {
     <el-dialog
       v-model="detailDialogVisible"
       title="用户信誉详情"
-      width="700px"
+      width="600px"
       destroy-on-close
     >
       <div v-if="currentUser" class="user-detail">
         <!-- 基本信息 -->
         <div class="flex items-center gap-4 mb-6">
-          <el-avatar :size="64" :src="currentUser.user.avatar" />
+          <el-avatar :size="64" :src="currentUser.avatar" />
           <div>
-            <div class="text-lg font-medium">{{ currentUser.user.name }}</div>
+            <div class="text-lg font-medium">{{ currentUser.nickname }}</div>
             <div class="text-sm text-gray-500">
-              {{ currentUser.user.studentId }}
+              用户 ID: {{ currentUser.userId }}
             </div>
           </div>
           <div class="ml-auto text-center">
             <el-progress
               type="dashboard"
-              :percentage="currentUser.score"
+              :percentage="currentUser.reputationScore"
               :width="100"
-              :color="getScoreColor(currentUser.score)"
+              :color="getScoreColor(currentUser.reputationScore)"
             />
             <div class="text-sm text-gray-500 mt-1">信誉分</div>
           </div>
@@ -447,55 +468,42 @@ onMounted(() => {
 
         <!-- 统计数据 -->
         <el-row :gutter="16" class="mb-6">
-          <el-col :span="6">
+          <el-col :span="8">
             <div class="stat-item">
               <div class="stat-value">{{ currentUser.postCount }}</div>
-              <div class="stat-label">发帖数</div>
+              <div class="stat-label">总发帖数</div>
             </div>
           </el-col>
-          <el-col :span="6">
+          <el-col :span="8">
             <div class="stat-item">
               <div class="stat-value">{{ currentUser.replyCount }}</div>
-              <div class="stat-label">回复数</div>
+              <div class="stat-label">总回复数</div>
             </div>
           </el-col>
-          <el-col :span="6">
+          <el-col :span="8">
             <div class="stat-item">
-              <div class="stat-value text-success">
-                {{ currentUser.likeCount }}
+              <div class="stat-value text-warning">
+                {{ currentUser.reportedCount }}
               </div>
-              <div class="stat-label">获赞数</div>
-            </div>
-          </el-col>
-          <el-col :span="6">
-            <div class="stat-item">
-              <div class="stat-value text-danger">
-                {{ currentUser.violationCount }}
-              </div>
-              <div class="stat-label">违规次数</div>
+              <div class="stat-label">被举报次数</div>
             </div>
           </el-col>
         </el-row>
 
-        <!-- 信誉记录 -->
-        <div class="reputation-history">
-          <div class="text-base font-medium mb-3">信誉变更记录</div>
-          <el-table :data="currentUser.history" max-height="300" size="small">
-            <el-table-column label="时间" prop="createdAt" width="160">
-              <template #default="{ row }">
-                {{ formatTime(row.createdAt) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="变化" width="100" align="center">
-              <template #default="{ row }">
-                <span :class="row.change > 0 ? 'text-success' : 'text-danger'">
-                  {{ row.change > 0 ? "+" : "" }}{{ row.change }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column label="原因" prop="reason" />
-            <el-table-column label="操作人" prop="operator" width="100" />
-          </el-table>
+        <!-- 更多信息 -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <div class="flex justify-between mb-2">
+            <span class="text-gray-500">信誉等级</span>
+            <el-tag :type="getLevelType(currentUser.level)" size="default">
+              {{ getLevelText(currentUser.level) }}
+            </el-tag>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">最后活跃</span>
+            <span class="text-gray-700">{{
+              formatTime(currentUser.lastActiveAt)
+            }}</span>
+          </div>
         </div>
       </div>
 
@@ -522,47 +530,24 @@ onMounted(() => {
     >
       <div v-if="currentUser" class="adjust-form">
         <div class="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded">
-          <el-avatar :size="40" :src="currentUser.user.avatar" />
+          <el-avatar :size="40" :src="currentUser.avatar" />
           <div>
-            <div class="font-medium">{{ currentUser.user.name }}</div>
+            <div class="font-medium">{{ currentUser.nickname }}</div>
             <div class="text-sm text-gray-500">
-              当前信誉分：{{ currentUser.score }}
+              当前信誉分：{{ currentUser.reputationScore }}
             </div>
           </div>
         </div>
 
         <el-form :model="adjustForm" label-width="100px">
-          <el-form-item label="操作类型" required>
-            <el-radio-group v-model="adjustForm.action">
-              <el-radio
-                v-for="opt in actionOptions"
-                :key="opt.value"
-                :label="opt.value"
-              >
-                {{ opt.label }}
-              </el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item
-            v-if="adjustForm.action === 'adjust'"
-            label="分数变化"
-            required
-          >
+          <el-form-item label="信誉分" required>
             <el-input-number
-              v-model="adjustForm.scoreChange"
-              :min="-100"
+              v-model="adjustForm.reputationScore"
+              :min="0"
               :max="100"
-              :step="5"
               style="width: 200px"
             />
-            <span class="ml-2 text-sm text-gray-500">
-              调整后：{{
-                Math.max(
-                  0,
-                  Math.min(100, currentUser.score + adjustForm.scoreChange)
-                )
-              }}
-            </span>
+            <div class="mt-1 text-xs text-gray-400">设置范围：0 - 100</div>
           </el-form-item>
           <el-form-item label="原因" required>
             <el-input
@@ -604,10 +589,82 @@ onMounted(() => {
     }
   }
 
+  .reputation-table {
+    :deep(.el-table__header-wrapper) {
+      th {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        background-color: #f8f9fb;
+      }
+    }
+
+    :deep(.el-table__body-wrapper) {
+      td {
+        font-size: 16px;
+        padding: 16px 0;
+      }
+    }
+  }
+
+  .reputation-tag {
+    font-size: 15px;
+    padding: 12px 16px;
+    height: auto;
+  }
+
+  .large-badge {
+    :deep(.el-badge__content) {
+      font-size: 15px;
+      height: 24px;
+      line-height: 24px;
+      padding: 0 10px;
+      border-radius: 12px;
+    }
+  }
+
+  .large-pagination {
+    :deep(.btn-prev),
+    :deep(.btn-next),
+    :deep(.el-pager li),
+    :deep(.el-pagination__total),
+    :deep(.el-pagination__sizes .el-input__wrapper) {
+      font-size: 15px;
+      height: 36px;
+      line-height: 36px;
+      min-width: 36px;
+    }
+
+    :deep(.el-select__wrapper) {
+      font-size: 15px;
+      height: 36px;
+    }
+  }
+
   .search-form {
     :deep(.el-form-item) {
       margin-bottom: 0;
+
+      .el-form-item__label {
+        font-size: 16px;
+      }
+
+      .el-input__wrapper,
+      .el-select__wrapper {
+        font-size: 16px;
+        height: 40px;
+      }
     }
+  }
+}
+
+.status-card {
+  .text-gray-500 {
+    font-size: 18px;
+  }
+
+  .text-2xl {
+    font-size: 36px;
   }
 }
 
