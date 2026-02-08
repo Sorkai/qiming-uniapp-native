@@ -164,6 +164,89 @@
       </div>
     </div>
 
+    <!-- 最近学习与学习动态 -->
+    <div class="profile-extra-sections">
+      <div class="extra-section recent-courses">
+        <div class="section-header">
+          <div class="section-title">
+            <el-icon><CollectionTag /></el-icon>
+            <span>最近学习的课程</span>
+          </div>
+          <el-button link type="primary" @click="emit('to-course')"
+            >查看全部</el-button
+          >
+        </div>
+        <div v-if="recentCourses.length > 0" class="course-grid">
+          <div
+            v-for="course in recentCourses"
+            :key="course.courseId"
+            class="course-mini-card"
+            @click="
+              router.push({
+                path: '/account/course-detail',
+                query: { courseId: course.courseId }
+              })
+            "
+          >
+            <div class="course-thumb">
+              <img :src="course.thumbUrl" v-if="course.thumbUrl" />
+              <div v-else class="thumb-placeholder">
+                {{ course.courseName.charAt(0) }}
+              </div>
+              <div
+                class="course-type-tag"
+                :class="course.isRequired ? 'required' : 'elective'"
+              >
+                {{ course.isRequired ? "必修" : "选修" }}
+              </div>
+            </div>
+            <div class="course-mini-info">
+              <div class="course-name">{{ course.courseName }}</div>
+              <div class="course-progress">
+                <el-progress
+                  :percentage="
+                    normalizeProgress(course.finishedHours / course.totalHours)
+                  "
+                  :show-text="false"
+                  :stroke-width="4"
+                />
+                <span class="progress-text"
+                  >已学
+                  {{
+                    normalizeProgress(course.finishedHours / course.totalHours)
+                  }}%</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无学习记录" :image-size="60" />
+      </div>
+
+      <div class="extra-section learning-dynamics">
+        <div class="section-header">
+          <div class="section-title">
+            <el-icon><TrendCharts /></el-icon>
+            <span>学习动态</span>
+          </div>
+        </div>
+        <div class="dynamics-timeline">
+          <el-timeline>
+            <el-timeline-item
+              v-for="activity in learningActivities"
+              :key="activity.id"
+              :timestamp="activity.timestamp"
+              :type="activity.type"
+              :icon="activity.icon"
+              size="large"
+            >
+              {{ activity.content }}
+            </el-timeline-item>
+          </el-timeline>
+        </div>
+      </div>
+    </div>
+
     <!-- 编辑资料弹窗 -->
     <el-dialog
       v-model="dialogVisible"
@@ -383,7 +466,10 @@ import {
   Message,
   Check,
   ArrowDown,
-  Clock
+  Clock,
+  VideoPlay,
+  TrendCharts,
+  CollectionTag
 } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
@@ -410,6 +496,8 @@ import dayjs from "dayjs";
 const props = defineProps<{
   currentTheme?: string;
 }>();
+
+const emit = defineEmits(["to-course"]);
 
 const router = useRouter();
 const defaultAvatar = "/src/assets/user.jpg";
@@ -501,6 +589,40 @@ const getInitialStats = () => {
 
 const studyStats = reactive(getInitialStats());
 
+// 最近学习课程
+const recentCourses = ref([]);
+// 学习动态
+const learningActivities = ref([
+  {
+    id: 1,
+    content: "完成了《Python 基础入门》第三章的学习",
+    timestamp: "10分钟前",
+    type: "success",
+    icon: Check
+  },
+  {
+    id: 2,
+    content: "提交了《Web 前端开发》的中期作业",
+    timestamp: "2小时前",
+    type: "primary",
+    icon: Message
+  },
+  {
+    id: 3,
+    content: "开始学习新课程《人工智能导论》",
+    timestamp: "昨天",
+    type: "warning",
+    icon: VideoPlay
+  },
+  {
+    id: 4,
+    content: "《数据结构与算法》课程进度达到 60%",
+    timestamp: "2天前",
+    type: "info",
+    icon: TrendCharts
+  }
+]);
+
 const sanitizeProgress = (val: any) => {
   const num = Number(val);
   return isNaN(num) || num < 0 ? 0 : Math.min(num, 100);
@@ -550,6 +672,9 @@ const fetchStudyStats = async () => {
         // 直接更新，因为这是从可靠数据源计算出来的
         studyStats.totalHours = totalHours;
         studyStats.totalProgress = totalProgress;
+
+        // 设置最近学习的课程（取前3个）
+        recentCourses.value = list.slice(0, 3);
 
         // 持久化缓存
         storageLocal().setItem(STATS_STORAGE_KEY, { ...studyStats });
@@ -1486,6 +1611,162 @@ onMounted(async () => {
     .profile-info {
       flex-direction: column;
     }
+  }
+}
+
+/* 最近学习与学习动态样式 */
+.profile-extra-sections {
+  display: flex;
+  gap: 20px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+
+  .extra-section {
+    flex: 1;
+    padding: 24px;
+    background: var(--el-bg-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px -4px rgb(0 0 0 / 8%);
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+
+        .el-icon {
+          color: var(--el-color-primary);
+        }
+      }
+    }
+  }
+
+  .course-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .course-mini-card {
+    display: flex;
+    gap: 16px;
+    padding: 12px;
+    background: var(--el-fill-color-light);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--el-fill-color);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+      transform: translateY(-2px);
+    }
+
+    .course-thumb {
+      position: relative;
+      flex-shrink: 0;
+      width: 100px;
+      height: 60px;
+      overflow: hidden;
+      border-radius: 6px;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .thumb-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--el-color-primary);
+        background: var(--el-color-primary-light-8);
+      }
+
+      .course-type-tag {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        padding: 2px 6px;
+        font-size: 10px;
+        color: #fff;
+        border-radius: 4px;
+
+        &.required {
+          background: var(--el-color-danger);
+        }
+
+        &.elective {
+          background: var(--el-color-success);
+        }
+      }
+    }
+
+    .course-mini-info {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: space-between;
+
+      .course-name {
+        display: -webkit-box;
+        overflow: hidden;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--el-text-color-primary);
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+      }
+
+      .course-progress {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .el-progress {
+          flex: 1;
+        }
+
+        .progress-text {
+          font-size: 12px;
+          color: var(--el-text-color-secondary);
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+
+  .dynamics-timeline {
+    padding-top: 10px;
+
+    :deep(.el-timeline-item__content) {
+      font-size: 14px;
+      color: var(--el-text-color-regular);
+    }
+  }
+}
+
+/* 暗色模式适配 */
+.dark .profile-extra-sections .extra-section {
+  box-shadow: 0 4px 16px -4px rgb(0 0 0 / 30%);
+}
+
+@media (width <= 1200px) {
+  .profile-extra-sections {
+    flex-direction: column;
   }
 }
 </style>

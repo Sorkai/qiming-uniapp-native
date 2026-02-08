@@ -146,7 +146,10 @@
       </div>
       <div class="account-main">
         <div v-if="activeMenu === 'profile'">
-          <user-profile :current-theme="currentTheme" />
+          <user-profile
+            :current-theme="currentTheme"
+            @to-course="activeMenu = 'course'"
+          />
         </div>
         <div v-else-if="activeMenu === 'cloud-disk'">
           <cloud-disk :current-theme="currentTheme" />
