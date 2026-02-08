@@ -169,7 +169,7 @@
       <div class="extra-section recent-courses">
         <div class="section-header">
           <div class="section-title">
-            <el-icon><CollectionTag /></el-icon>
+            <el-icon><DeskIcon /></el-icon>
             <span>最近学习的课程</span>
           </div>
           <el-button link type="primary" @click="emit('to-course')"
@@ -226,7 +226,7 @@
       <div class="extra-section learning-dynamics">
         <div class="section-header">
           <div class="section-title">
-            <el-icon><TrendCharts /></el-icon>
+            <el-icon><TrendIcon /></el-icon>
             <span>学习动态</span>
           </div>
         </div>
@@ -466,10 +466,7 @@ import {
   Message,
   Check,
   ArrowDown,
-  Clock,
-  VideoPlay,
-  TrendCharts,
-  CollectionTag
+  Clock
 } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
@@ -492,6 +489,13 @@ import {
 } from "@/api/user";
 import { getFrontendCourseList } from "@/api/frontend/course";
 import dayjs from "dayjs";
+
+// 导入新图标
+import CheckIcon from "@/assets/newicon/check-correct-svgrepo-com.svg?component";
+import EmailIcon from "@/assets/newicon/email-svgrepo-com.svg?component";
+import PlayIcon from "@/assets/newicon/play-svgrepo-com.svg?component";
+import TrendIcon from "@/assets/newicon/trend-up-svgrepo-com.svg?component";
+import DeskIcon from "@/assets/newicon/desk-computer-svgrepo-com.svg?component";
 
 const props = defineProps<{
   currentTheme?: string;
@@ -598,28 +602,28 @@ const learningActivities = ref([
     content: "完成了《Python 基础入门》第三章的学习",
     timestamp: "10分钟前",
     type: "success",
-    icon: Check
+    icon: CheckIcon
   },
   {
     id: 2,
     content: "提交了《Web 前端开发》的中期作业",
     timestamp: "2小时前",
     type: "primary",
-    icon: Message
+    icon: EmailIcon
   },
   {
     id: 3,
     content: "开始学习新课程《人工智能导论》",
     timestamp: "昨天",
     type: "warning",
-    icon: VideoPlay
+    icon: PlayIcon
   },
   {
     id: 4,
     content: "《数据结构与算法》课程进度达到 60%",
     timestamp: "2天前",
     type: "info",
-    icon: TrendCharts
+    icon: TrendIcon
   }
 ]);
 
@@ -1644,6 +1648,16 @@ onMounted(async () => {
 
         .el-icon {
           color: var(--el-color-primary);
+
+          svg {
+            fill: currentColor;
+            stroke: currentColor;
+
+            path {
+              fill: currentColor;
+              stroke: currentColor;
+            }
+          }
         }
       }
     }
@@ -1751,6 +1765,24 @@ onMounted(async () => {
 
   .dynamics-timeline {
     padding-top: 10px;
+
+    :deep(.el-timeline-item__icon) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+        stroke: currentColor;
+
+        path {
+          fill: currentColor;
+          stroke: currentColor;
+        }
+      }
+    }
 
     :deep(.el-timeline-item__content) {
       font-size: 14px;
