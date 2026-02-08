@@ -484,8 +484,10 @@ import {
   uploadFile,
   getUserDetail,
   getStudentStats,
+  getUserActivities,
   type StudentStatsResult,
-  type UserStatusResult
+  type UserStatusResult,
+  type UserActivity
 } from "@/api/user";
 import { getFrontendCourseList } from "@/api/frontend/course";
 import dayjs from "dayjs";
@@ -595,6 +597,16 @@ const studyStats = reactive(getInitialStats());
 
 // 最近学习课程
 const recentCourses = ref([]);
+
+// 图标映射
+const iconMap = {
+  CheckIcon,
+  EmailIcon,
+  PlayIcon,
+  TrendIcon,
+  DeskIcon
+};
+
 // 学习动态
 const learningActivities = ref([
   {
@@ -626,6 +638,20 @@ const learningActivities = ref([
     icon: TrendIcon
   }
 ]);
+
+const fetchActivities = async () => {
+  try {
+    const res = await getUserActivities().catch(() => null);
+    if (res?.code === 200 && res.data?.list) {
+      learningActivities.value = res.data.list.map(item => ({
+        ...item,
+        icon: iconMap[item.iconName] || TrendIcon
+      }));
+    }
+  } catch (error) {
+    console.error("获取学习动态失败:", error);
+  }
+};
 
 const sanitizeProgress = (val: any) => {
   const num = Number(val);
@@ -706,6 +732,9 @@ const fetchStudyStats = async () => {
       // 更新缓存
       storageLocal().setItem(STATS_STORAGE_KEY, { ...studyStats });
     }
+
+    // 获取学习动态
+    await fetchActivities();
   } catch (error) {
     console.error("获取学习统计失败:", error);
   } finally {

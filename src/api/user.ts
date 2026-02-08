@@ -264,3 +264,29 @@ export const getUserStatus = () => {
     {}
   );
 };
+
+/** 学习动态数据类型 */
+export type UserActivity = {
+  id: number;
+  content: string;
+  timestamp: string;
+  type: "success" | "primary" | "warning" | "info" | "danger";
+  iconName: string;
+};
+
+export type UserActivitiesResult = {
+  code: number;
+  msg: string;
+  data: {
+    list: Array<UserActivity>;
+  };
+};
+
+/** 获取学习动态列表 */
+export const getUserActivities = () => {
+  return http.request<UserActivitiesResult>(
+    "get",
+    "/edu/frontend/v1/user/activities",
+    {}
+  );
+};

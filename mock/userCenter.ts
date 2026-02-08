@@ -182,5 +182,49 @@ export default defineFakeRoute([
         }
       };
     }
+  },
+  // 获取学习动态 mock
+  {
+    url: "/edu/frontend/v1/user/activities",
+    method: "get",
+    response: () => {
+      return {
+        success: true,
+        code: 200,
+        msg: "获取成功",
+        data: {
+          list: [
+            {
+              id: 1,
+              content: "完成了《Python 基础入门》第三章的学习",
+              timestamp: "10分钟前",
+              type: "success",
+              iconName: "CheckIcon"
+            },
+            {
+              id: 2,
+              content: "提交了《Web 前端开发》的中期作业",
+              timestamp: "2小时前",
+              type: "primary",
+              iconName: "EmailIcon"
+            },
+            {
+              id: 3,
+              content: "开始学习新课程《人工智能导论》",
+              timestamp: "昨天",
+              type: "warning",
+              iconName: "PlayIcon"
+            },
+            {
+              id: 4,
+              content: "《数据结构与算法》课程进度达到 60%",
+              timestamp: "2天前",
+              type: "info",
+              iconName: "TrendIcon"
+            }
+          ]
+        }
+      };
+    }
   }
 ]);
