@@ -772,7 +772,7 @@ function createPodium(parent, D) {
 }
 
 /**
- * 学生课桌椅
+ * 学生课桌椅 (使用实例化渲染大幅提升性能)
  */
 function createDesksAndChairs(parent, D) {
   const loader = new THREE.TextureLoader();
@@ -792,193 +792,177 @@ function createDesksAndChairs(parent, D) {
 
   const columns = 3;
   const rows = 4;
+  const totalDesks = columns * rows;
   const spacingX = 2.5;
   const spacingZ = 1.6;
-  const startX = (-(columns - 1) * spacingX) / 2;
+  const startX = -((columns - 1) * spacingX) / 2;
   const startZ = -D + 3.5;
+
+  // 1. 创建实例化网格
+  const desktopInst = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.9, 0.03, 0.5),
+    deskMat,
+    totalDesks
+  );
+  const cavityBottomInst = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.86, 0.02, 0.46),
+    deskMat,
+    totalDesks
+  );
+  const cavityBackInst = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.86, 0.12, 0.02),
+    deskMat,
+    totalDesks
+  );
+  const cavitySideInst = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.02, 0.12, 0.46),
+    deskMat,
+    totalDesks * 2
+  );
+  const deskLegInst = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.02, 0.02, 0.72, 8),
+    legMat,
+    totalDesks * 4
+  );
+  const chairSeatInst = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.4, 0.03, 0.4),
+    chairMat,
+    totalDesks
+  );
+  const chairLegInst = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.015, 0.015, 0.42, 8),
+    legMat,
+    totalDesks * 4
+  );
+  const chairBackInst = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.4, 0.35, 0.03),
+    chairMat,
+    totalDesks
+  );
+
+  const dummy = new THREE.Object3D();
+  let idx = 0;
 
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
       const x = startX + col * spacingX;
       const z = startZ + row * spacingZ;
-      createSingleDesk(parent, x, z, deskMat, legMat, chairMat);
+
+      // 桌面
+      dummy.position.set(x, 0.72, z);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      desktopInst.setMatrixAt(idx, dummy.matrix);
+
+      // 书桌堂底板
+      dummy.position.set(x, 0.585, z);
+      dummy.updateMatrix();
+      cavityBottomInst.setMatrixAt(idx, dummy.matrix);
+
+      // 背板
+      dummy.position.set(x, 0.645, z - 0.22);
+      dummy.updateMatrix();
+      cavityBackInst.setMatrixAt(idx, dummy.matrix);
+
+      // 侧板
+      dummy.position.set(x - 0.42, 0.645, z);
+      dummy.updateMatrix();
+      cavitySideInst.setMatrixAt(idx * 2, dummy.matrix);
+      dummy.position.set(x + 0.42, 0.645, z);
+      dummy.updateMatrix();
+      cavitySideInst.setMatrixAt(idx * 2 + 1, dummy.matrix);
+
+      // 桌腿
+      const legPositions = [
+        [x - 0.4, 0.36, z - 0.2],
+        [x + 0.4, 0.36, z - 0.2],
+        [x - 0.4, 0.36, z + 0.2],
+        [x + 0.4, 0.36, z + 0.2]
+      ];
+      legPositions.forEach((pos, i) => {
+        dummy.position.set(...pos);
+        dummy.updateMatrix();
+        deskLegInst.setMatrixAt(idx * 4 + i, dummy.matrix);
+      });
+
+      // 椅子
+      dummy.position.set(x, 0.42, z + 0.5);
+      dummy.updateMatrix();
+      chairSeatInst.setMatrixAt(idx, dummy.matrix);
+
+      const chairLegPos = [
+        [x - 0.17, 0.21, z + 0.33],
+        [x + 0.17, 0.21, z + 0.33],
+        [x - 0.17, 0.21, z + 0.67],
+        [x + 0.17, 0.21, z + 0.67]
+      ];
+      chairLegPos.forEach((pos, i) => {
+        dummy.position.set(...pos);
+        dummy.updateMatrix();
+        chairLegInst.setMatrixAt(idx * 4 + i, dummy.matrix);
+      });
+
+      dummy.position.set(x, 0.62, z + 0.68);
+      dummy.updateMatrix();
+      chairBackInst.setMatrixAt(idx, dummy.matrix);
+
+      // 文具依然使用普通 Mesh（因为比较少且有随机性）
+      addStationeryToDeskManual(parent, x, z, 0.735);
+
+      idx++;
     }
   }
-}
 
-function createSingleDesk(parent, x, z, deskMat, legMat, chairMat) {
-  const group = new THREE.Group();
-
-  // 桌面
-  const desktop = new THREE.Mesh(
-    new THREE.BoxGeometry(0.9, 0.03, 0.5),
-    deskMat
+  parent.add(
+    desktopInst,
+    cavityBottomInst,
+    cavityBackInst,
+    cavitySideInst,
+    deskLegInst,
+    chairSeatInst,
+    chairLegInst,
+    chairBackInst
   );
-  desktop.position.set(0, 0.72, 0);
-  desktop.castShadow = true;
-  desktop.receiveShadow = true;
-  group.add(desktop);
-
-  // 书桌堂（桌面下的储物槽）
-  const cavityH = 0.12; // 储物槽高度
-  const cavityLowerY = 0.705 - cavityH; // 桌面下边缘 y - 高度
-
-  // 底板
-  const cavityBottom = new THREE.Mesh(
-    new THREE.BoxGeometry(0.86, 0.02, 0.46),
-    deskMat
-  );
-  cavityBottom.position.set(0, cavityLowerY, 0);
-  group.add(cavityBottom);
-
-  // 背板
-  const cavityBack = new THREE.Mesh(
-    new THREE.BoxGeometry(0.86, cavityH, 0.02),
-    deskMat
-  );
-  cavityBack.position.set(0, cavityLowerY + cavityH / 2, -0.22);
-  group.add(cavityBack);
-
-  // 左侧板
-  const cavityLeft = new THREE.Mesh(
-    new THREE.BoxGeometry(0.02, cavityH, 0.46),
-    deskMat
-  );
-  cavityLeft.position.set(-0.42, cavityLowerY + cavityH / 2, 0);
-  group.add(cavityLeft);
-
-  // 右侧板
-  const cavityRight = new THREE.Mesh(
-    new THREE.BoxGeometry(0.02, cavityH, 0.46),
-    deskMat
-  );
-  cavityRight.position.set(0.42, cavityLowerY + cavityH / 2, 0);
-  group.add(cavityRight);
-
-  // 桌腿（4条）
-  const legGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.72);
-  const positions = [
-    [-0.4, 0.36, -0.2],
-    [0.4, 0.36, -0.2],
-    [-0.4, 0.36, 0.2],
-    [0.4, 0.36, 0.2]
-  ];
-  positions.forEach(([lx, ly, lz]) => {
-    const leg = new THREE.Mesh(legGeo, legMat);
-    leg.position.set(lx, ly, lz);
-    group.add(leg);
-  });
-
-  // 椅子（在桌后方）
-  // 椅面
-  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.03, 0.4), chairMat);
-  seat.position.set(0, 0.42, 0.5);
-  seat.castShadow = true;
-  seat.receiveShadow = true;
-  group.add(seat);
-
-  // 椅腿
-  const chairLegGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.42);
-  const chairLegPos = [
-    [-0.17, 0.21, 0.33],
-    [0.17, 0.21, 0.33],
-    [-0.17, 0.21, 0.67],
-    [0.17, 0.21, 0.67]
-  ];
-  chairLegPos.forEach(([lx, ly, lz]) => {
-    const leg = new THREE.Mesh(chairLegGeo, legMat);
-    leg.position.set(lx, ly, lz);
-    group.add(leg);
-  });
-
-  // 椅背
-  const backrest = new THREE.Mesh(
-    new THREE.BoxGeometry(0.4, 0.35, 0.03),
-    chairMat
-  );
-  backrest.position.set(0, 0.62, 0.68);
-  backrest.castShadow = true;
-  group.add(backrest);
-
-  group.position.set(x, 0, z);
-  parent.add(group);
-
-  // 在桌面上随机添加一些文具
-  addStationeryToDesk(group, 0.735); // desktop.y(0.72) + thickness/2(0.015)
 }
 
 /**
- * 在桌面上添加文具：书、草稿纸、卷纸等
- * @param {THREE.Group} group
- * @param {number} surfaceY
+ * 优化文具加载：仅在离摄像机近的座点加载详细文具
  */
-function addStationeryToDesk(group, surfaceY) {
+function addStationeryToDeskManual(parent, x, z, surfaceY) {
+  // 仅在主要视线范围或离固定点近的桌子上放文具 (示例逻辑)
+  if (z > -4.0 && Math.abs(x) > 3) return;
+
   const items = new THREE.Group();
+  items.position.set(x, 0, z);
 
-  // 1. 书本 (左侧区域)
   const bookColors = [0x1a5fb4, 0x26a269, 0xc64600, 0x613583];
-  const numBooks = Math.floor(Math.random() * 2) + 1; // 1-2本书
+  const numBooks = Math.floor(Math.random() * 2) + 1;
   for (let i = 0; i < numBooks; i++) {
-    const bookGeo = new THREE.BoxGeometry(0.18, 0.02, 0.24);
-    const bookMat = new THREE.MeshStandardMaterial({
-      color: bookColors[Math.floor(Math.random() * bookColors.length)]
-    });
-    const book = new THREE.Mesh(bookGeo, bookMat);
-
-    // 固定在左侧，堆叠或稍微错位
-    const stackY = surfaceY + 0.01 + i * 0.021; // 增加 Y 偏移防止重叠
+    const book = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 0.02, 0.24),
+      new THREE.MeshStandardMaterial({
+        color: bookColors[Math.floor(Math.random() * bookColors.length)]
+      })
+    );
     book.position.set(
       -0.25 + Math.random() * 0.05,
-      stackY,
+      surfaceY + 0.01 + i * 0.021,
       (Math.random() - 0.5) * 0.1
     );
     book.rotation.y = (Math.random() - 0.5) * 0.2;
     items.add(book);
   }
 
-  // 2. 草稿纸 (中间区域)
-  const numPapers = Math.floor(Math.random() * 2) + 1;
-  for (let i = 0; i < numPapers; i++) {
-    const paperGeo = new THREE.PlaneGeometry(0.21, 0.28);
-    const paperMat = new THREE.MeshStandardMaterial({
-      color: 0xfafafa,
-      side: THREE.DoubleSide
-    });
-    const paper = new THREE.Mesh(paperGeo, paperMat);
-    paper.rotation.x = -Math.PI / 2;
-    paper.position.set(0.1, surfaceY + 0.002 + i * 0.002, 0.05);
-    paper.rotation.z = (Math.random() - 0.5) * 0.3;
-    items.add(paper);
-  }
-
-  // 3. 纸抽 (抽纸盒 - 右侧后方)
-  if (Math.random() > 0.4) {
-    const boxGeo = new THREE.BoxGeometry(0.12, 0.08, 0.12);
-    const boxMat = new THREE.MeshStandardMaterial({ color: 0xe5e7eb }); // 浅灰白色
-    const tissueBox = new THREE.Mesh(boxGeo, boxMat);
-    tissueBox.position.set(0.3, surfaceY + 0.04, -0.1);
-    items.add(tissueBox);
-
-    // 顶部露出的纸巾
-    const tissueGeo = new THREE.BoxGeometry(0.06, 0.02, 0.01);
-    const tissuePaper = new THREE.Mesh(
-      tissueGeo,
-      new THREE.MeshStandardMaterial({ color: 0xffffff })
-    );
-    tissuePaper.position.set(0.3, surfaceY + 0.08, -0.1);
-    items.add(tissuePaper);
-  }
-
-  // 4. 笔 (靠近纸张或书本)
-  const penGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.15);
-  const penMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-  const pen = new THREE.Mesh(penGeo, penMat);
+  const pen = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.005, 0.005, 0.15, 6),
+    new THREE.MeshStandardMaterial({ color: 0x222222 })
+  );
   pen.rotation.x = Math.PI / 2;
   pen.rotation.z = 1.2;
   pen.position.set(0.15, surfaceY + 0.005, 0.2);
   items.add(pen);
 
-  group.add(items);
+  parent.add(items);
 }
 
 /**

@@ -366,8 +366,26 @@ loadVRM(
 
 const clock = new THREE.Clock();
 let lastFrameTime = 0;
-const targetFPS = 30; // 限制 60 帧，防止高刷屏导致 GPU 爆载
+const targetFPS = 60; // 限制 60 帧，防止高刷屏导致 GPU 爆载
 const frameInterval = 1 / targetFPS;
+
+// 视锥体剔除工具
+const frustum = new THREE.Frustum();
+const projScreenMatrix = new THREE.Matrix4();
+
+/**
+ * 检查模型是否在视野内（手动剔除以节省 CPU）
+ */
+function isVisible(vrm) {
+  if (!vrm || !vrm.scene) return false;
+  camera.updateMatrixWorld();
+  projScreenMatrix.multiplyMatrices(
+    camera.projectionMatrix,
+    camera.matrixWorldInverse
+  );
+  frustum.setFromProjectionMatrix(projScreenMatrix);
+  return frustum.intersectsObject(vrm.scene);
+}
 
 /**
  * 简单的待机动画逻辑
@@ -415,39 +433,49 @@ function animate() {
     // 始终以固定座点为基准
     camera.position.copy(fixedCameraPos);
 
-    // 为了实现缩放效果，我们将“视角目标”推远或拉近
-    // 在 PerspectiveCamera 中，虽然相机不动，但改变 OrbitControls 的渲染目标并正确设置 offset
-    // 其实更好的办法是允许相机在座点附近小范围前后移动（模拟靠前看）
-
     const defaultDist = 5.0;
     const zoomFactor = defaultDist / dist; // 缩放倍数
 
-    // 方案：调整相机 FOV 来实现真正的光学缩放感，而不移动位置
+    // 优化：仅在 FOV 需要变化时才更新投影矩阵，减少 CPU 计算
     const targetFOV = 65 / zoomFactor;
-    camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.1);
-    camera.updateProjectionMatrix();
+    if (Math.abs(camera.fov - targetFOV) > 0.01) {
+      camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.1);
+      camera.updateProjectionMatrix();
+    }
 
     // 更新目标点锁定旋转
     controls.target.copy(fixedCameraPos).sub(offset.multiplyScalar(dist));
   } else {
     // 锁定模式：重置 FOV 和位置
-    camera.fov = THREE.MathUtils.lerp(camera.fov, 65, 0.1);
-    camera.updateProjectionMatrix();
+    if (Math.abs(camera.fov - 65) > 0.01) {
+      camera.fov = THREE.MathUtils.lerp(camera.fov, 65, 0.1);
+      camera.updateProjectionMatrix();
+    }
     camera.position.copy(fixedCameraPos);
     controls.target.set(0, 1.15, -10);
   }
   controls.update();
 
-  // 更新老师动画
+  // 更新老师动画（仅在视野范围内更新以节省 CPU）
   if (teacherVRM) {
-    teacherVRM.update(deltaTime);
-    applyIdleAnimation(teacherVRM, time);
+    if (isVisible(teacherVRM)) {
+      teacherVRM.scene.visible = true;
+      teacherVRM.update(deltaTime);
+      applyIdleAnimation(teacherVRM, time);
+    } else {
+      teacherVRM.scene.visible = false;
+    }
   }
 
-  // 更新学生动画
+  // 更新学生动画（仅在视野范围内更新以节省 CPU）
   studentVRMs.forEach(vrm => {
-    vrm.update(deltaTime);
-    applyIdleAnimation(vrm, time);
+    if (isVisible(vrm)) {
+      vrm.scene.visible = true;
+      vrm.update(deltaTime);
+      applyIdleAnimation(vrm, time);
+    } else {
+      vrm.scene.visible = false;
+    }
   });
 
   composer.render();

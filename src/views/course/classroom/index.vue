@@ -28,6 +28,9 @@ let composer: EffectComposer;
 let smaaPass: SMAAPass;
 let clock: THREE.Clock;
 let animationId: number;
+let lastFrameTime = 0;
+const frustum = new THREE.Frustum();
+const projScreenMatrix = new THREE.Matrix4();
 
 let teacherVRM: VRM | null = null;
 const studentVRMs: VRM[] = [];
@@ -117,8 +120,11 @@ function loadVRM(
             : [mesh.material];
           materials.forEach(mat => {
             if ((mat as any).map) {
-              (mat as any).map.anisotropy =
-                renderer.capabilities.getMaxAnisotropy();
+              // 再次降低各项异性过滤到 4x，进一步压缩渲染开销
+              (mat as any).map.anisotropy = Math.min(
+                renderer.capabilities.getMaxAnisotropy(),
+                4
+              );
               (mat as any).map.minFilter = THREE.LinearMipmapLinearFilter;
             }
           });
@@ -171,7 +177,9 @@ function initScene() {
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(width, height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // 优化：将像素比限制为 1.0 (等同于 1080p 级别清晰度)
+  // 在 Retina 屏幕上渲染 2.0 倍像素非常消耗 GPU，1.0 倍足矣
+  renderer.setPixelRatio(1.0); 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -207,14 +215,14 @@ function initScene() {
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
   directionalLight.position.set(5, 12, 8);
   directionalLight.castShadow = true;
-  directionalLight.shadow.mapSize.set(4096, 4096);
+  directionalLight.shadow.mapSize.set(1024, 1024); // 降低阴影分辨率 (M4 芯片不需要 4096)
   directionalLight.shadow.camera.left = -15;
   directionalLight.shadow.camera.right = 15;
   directionalLight.shadow.camera.top = 15;
   directionalLight.shadow.camera.bottom = -15;
   directionalLight.shadow.bias = -0.0003;
   directionalLight.shadow.normalBias = 0.02;
-  directionalLight.shadow.radius = 3;
+  directionalLight.shadow.radius = 2; // 稍微降低阴影模糊半径
   scene.add(directionalLight);
 
   createClassroom(scene);
@@ -223,14 +231,7 @@ function initScene() {
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
 
-  const saoPass = new SAOPass(scene, camera);
-  saoPass.params.output = SAOPass.OUTPUT.Default;
-  saoPass.params.saoBias = 1.0;
-  saoPass.params.saoIntensity = 0.008;
-  saoPass.params.saoScale = 5;
-  saoPass.params.saoKernelRadius = 8;
-  saoPass.params.saoMinResolution = 0.005;
-  composer.addPass(saoPass);
+  // 移除了消耗巨大的 SAOPass
 
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(width, height),
@@ -240,10 +241,8 @@ function initScene() {
   );
   composer.addPass(bloomPass);
 
-  smaaPass = new SMAAPass(
-    width * window.devicePixelRatio,
-    height * window.devicePixelRatio
-  );
+  // SMAA 采样也改为 1.0 倍率
+  smaaPass = new SMAAPass(width, height);
   composer.addPass(smaaPass);
 
   const outputPass = new OutputPass();
@@ -273,11 +272,25 @@ function initScene() {
   animate();
 }
 
+function isVisible(object: THREE.Object3D) {
+  projScreenMatrix.multiplyMatrices(
+    camera.projectionMatrix,
+    camera.matrixWorldInverse
+  );
+  frustum.setFromProjectionMatrix(projScreenMatrix);
+  const box = new THREE.Box3().setFromObject(object);
+  return frustum.intersectsBox(box);
+}
+
 function animate() {
   animationId = requestAnimationFrame(animate);
 
-  const deltaTime = clock.getDelta();
-  const time = clock.elapsedTime;
+  const time = clock.getElapsedTime();
+  const deltaTime = time - lastFrameTime;
+
+  // 限制 60 FPS，减少 M4 芯片在高刷新率屏幕下的无效负载
+  if (deltaTime < 1 / 60) return;
+  lastFrameTime = time;
 
   if (!isLocked.value) {
     controls.update();
@@ -300,14 +313,23 @@ function animate() {
   }
   controls.update();
 
+  // 视锥剔除优化：只有看向模型时才更新骨骼动画
   if (teacherVRM) {
-    teacherVRM.update(deltaTime);
-    applyIdleAnimation(teacherVRM, time);
+    const visible = isVisible(teacherVRM.scene);
+    teacherVRM.scene.visible = visible;
+    if (visible) {
+      teacherVRM.update(deltaTime);
+      applyIdleAnimation(teacherVRM, time);
+    }
   }
 
   studentVRMs.forEach(vrm => {
-    vrm.update(deltaTime);
-    applyIdleAnimation(vrm, time);
+    const visible = isVisible(vrm.scene);
+    vrm.scene.visible = visible;
+    if (visible) {
+      vrm.update(deltaTime);
+      applyIdleAnimation(vrm, time);
+    }
   });
 
   composer.render();
@@ -317,12 +339,12 @@ const handleResize = () => {
   if (!containerRef.value) return;
   const width = containerRef.value.clientWidth;
   const height = containerRef.value.clientHeight;
-  const pixelRatio = Math.min(window.devicePixelRatio, 2);
+  // 保持 1.0 像素比
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
   renderer.setSize(width, height);
   composer.setSize(width, height);
-  smaaPass.setSize(width * pixelRatio, height * pixelRatio);
+  smaaPass.setSize(width, height);
 };
 
 const toggleLock = () => {
