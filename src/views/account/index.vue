@@ -118,8 +118,12 @@
             <el-icon><CourseIcon /></el-icon>
             <span>课程</span>
           </el-menu-item>
+          <el-menu-item index="classroom">
+            <el-icon><ClassroomIcon /></el-icon>
+            <span>3D虚拟教室</span>
+          </el-menu-item>
           <el-menu-item index="profile">
-            <el-icon><User /></el-icon>
+            <el-icon><StudentIcon /></el-icon>
             <span>个人资料</span>
           </el-menu-item>
           <el-menu-item index="cloud-disk">
@@ -165,6 +169,9 @@
         </div>
         <div v-else-if="activeMenu === 'competition'">
           <competition :current-theme="currentTheme" />
+        </div>
+        <div v-else-if="activeMenu === 'classroom'">
+          <classroom-3d />
         </div>
         <div v-else-if="activeMenu === 'home'">
           <!-- 快速入口卡片 -->
@@ -591,6 +598,7 @@ import {
   Competition
 } from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
+import Classroom3D from "@/views/course/classroom/index.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
 // 导入新图标
@@ -598,6 +606,8 @@ import LabIcon from "@/new student interface icons/lab-medical-test-svgrepo-com.
 import CompetitionIcon from "@/new student interface icons/trophy-prize-medal-3-svgrepo-com.svg?component";
 import CourseIcon from "@/new student interface icons/books-and-people-svgrepo-com.svg?component";
 import CloudIcon from "@/new student interface icons/file-svgrepo-com.svg?component";
+import ClassroomIcon from "@/assets/newicon/classroom-teacher-svgrepo-com.svg?component";
+import StudentIcon from "@/assets/newicon/student-svgrepo-com.svg?component";
 
 // 导入侧边栏新图标
 import HomeIcon from "@/side bar new icons/school-svgrepo-com.svg?component";
@@ -834,6 +844,7 @@ const loadCoursePageData = async () => {
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
   activeMenu.value = index;
+  storageLocal().setItem("account_active_menu", index);
 };
 
 // 监听滚动事件
@@ -1063,131 +1074,6 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* 图标动画关键帧 */
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes icon-bounce {
-  0%,
-  100% {
-    transform: scale(1.2) translateY(0);
-  }
-
-  30% {
-    transform: scale(1.2) translateY(-6px);
-  }
-
-  50% {
-    transform: scale(1.2) translateY(0);
-  }
-
-  70% {
-    transform: scale(1.2) translateY(-3px);
-  }
-}
-
-@keyframes icon-flip {
-  0% {
-    transform: scale(1.2) rotateY(0);
-  }
-
-  50% {
-    transform: scale(1.2) rotateY(180deg);
-  }
-
-  100% {
-    transform: scale(1.2) rotateY(360deg);
-  }
-}
-
-/* 个人资料 - 心跳/呼吸效果 */
-@keyframes icon-heartbeat {
-  0% {
-    transform: scale(1.2);
-  }
-
-  15% {
-    transform: scale(1.35);
-  }
-
-  30% {
-    transform: scale(1.2);
-  }
-
-  45% {
-    transform: scale(1.3);
-  }
-
-  60%,
-  100% {
-    transform: scale(1.2);
-  }
-}
-
-/* 学习云盘 - 上浮到云端效果 */
-@keyframes icon-float {
-  0% {
-    transform: scale(1.2) translateY(0);
-  }
-
-  50% {
-    transform: scale(1.2) translateY(-8px);
-  }
-
-  100% {
-    transform: scale(1.2) translateY(0);
-  }
-}
-
-@keyframes icon-ring {
-  0% {
-    transform: scale(1.2) rotate(0);
-  }
-
-  10% {
-    transform: scale(1.2) rotate(20deg);
-  }
-
-  20% {
-    transform: scale(1.2) rotate(-15deg);
-  }
-
-  30% {
-    transform: scale(1.2) rotate(10deg);
-  }
-
-  40% {
-    transform: scale(1.2) rotate(-10deg);
-  }
-
-  50% {
-    transform: scale(1.2) rotate(5deg);
-  }
-
-  60%,
-  100% {
-    transform: scale(1.2) rotate(0);
-  }
-}
-
-@keyframes icon-pulse {
-  0%,
-  100% {
-    transform: scale(1.1);
-  }
-
-  50% {
-    transform: scale(1.25);
-  }
 }
 
 .account-container {
@@ -1534,23 +1420,15 @@ onUnmounted(() => {
           }
 
           &:hover {
-            padding-left: 24px;
             color: #333;
             background: linear-gradient(
               90deg,
               rgb(220 226 247 / 40%),
               transparent
             );
-            transform: scale(1.05);
-            transform-origin: left center;
 
             &::before {
               height: 60%;
-            }
-
-            .el-icon {
-              color: #5a6b8a;
-              transform: scale(1.2);
             }
 
             span {
@@ -1559,7 +1437,6 @@ onUnmounted(() => {
           }
 
           &.is-active {
-            padding-left: 24px;
             font-weight: 600;
             color: #333;
             background: linear-gradient(
@@ -1590,8 +1467,6 @@ onUnmounted(() => {
 
             .el-icon {
               color: #5a6b8a;
-              transform: scale(1.1);
-              animation: icon-pulse 1.5s ease-in-out infinite;
 
               .dark & {
                 color: #38bdf8;
@@ -1618,61 +1493,9 @@ onUnmounted(() => {
 
           .el-icon {
             margin-right: 12px;
-            font-size: 18px;
+            font-size: 24px;
             color: #888;
             transition: all 0.3s ease;
-          }
-
-          /* 每个菜单项不同的悬停动画 */
-          &:nth-child(1):hover .el-icon {
-            animation: icon-bounce 0.5s ease;
-          }
-
-          &:nth-child(2):hover .el-icon {
-            animation: icon-flip 0.6s ease;
-          }
-
-          &:nth-child(3):hover .el-icon {
-            animation: icon-heartbeat 0.8s ease;
-          }
-
-          &:nth-child(4):hover .el-icon {
-            animation: icon-float 0.8s ease;
-          }
-
-          &:nth-child(5):hover .el-icon {
-            animation: icon-ring 0.6s ease;
-          }
-
-          /* 待办事项 - 红色打勾效果 */
-          &:nth-child(6) {
-            .el-icon {
-              position: relative;
-              overflow: visible;
-            }
-
-            .el-icon::after {
-              position: absolute;
-              right: -1.2px;
-              bottom: -0.6px;
-              width: 0;
-              height: 0;
-              content: "";
-              border-right: 2px solid #e53935;
-              border-bottom: 2px solid #e53935;
-              border-radius: 0 0 2px;
-              opacity: 0;
-              transform: rotate(45deg);
-              transition: all 0.3s ease;
-            }
-          }
-
-          &:nth-child(6):hover {
-            .el-icon::after {
-              width: 8px;
-              height: 14px;
-              opacity: 1;
-            }
           }
 
           span {

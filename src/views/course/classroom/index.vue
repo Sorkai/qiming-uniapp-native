@@ -249,12 +249,7 @@ function initScene() {
   const outputPass = new OutputPass();
   composer.addPass(outputPass);
 
-  loadVRM(
-    selectedModel.value,
-    new THREE.Vector3(0, 0.25, -9.0),
-    Math.PI,
-    true
-  );
+  loadVRM(selectedModel.value, new THREE.Vector3(0, 0.25, -9.0), Math.PI, true);
   loadVRM(
     "/models/AliciaSolid_vrm-0.51.vrm",
     new THREE.Vector3(-2.5, 0.55, -6.0),
@@ -378,8 +373,8 @@ onUnmounted(() => {
     <button
       class="lock-btn"
       :class="{ unlocked: !isLocked }"
-      @click="toggleLock"
       title="锁定/解锁视角"
+      @click="toggleLock"
     >
       <svg v-if="isLocked" class="icon" viewBox="0 0 24 24">
         <path
@@ -398,14 +393,26 @@ onUnmounted(() => {
         <label>选择角色：</label>
         <el-select
           v-model="selectedModel"
-          @change="onModelChange"
           placeholder="请选择角色"
           style="width: 150px"
+          @change="onModelChange"
         >
-          <el-option label="Alicia (默认)" value="/models/AliciaSolid_vrm-0.51.vrm" />
-          <el-option label="Twist Sample" value="/models/VRM1_Constraint_Twist_Sample.vrm" />
-          <el-option label="虚拟角色 A" value="/models/2307020555850481813.vrm.glb" />
-          <el-option label="虚拟角色 B" value="/models/3003548679065420654.vrm.glb" />
+          <el-option
+            label="Alicia (默认)"
+            value="/models/AliciaSolid_vrm-0.51.vrm"
+          />
+          <el-option
+            label="Twist Sample"
+            value="/models/VRM1_Constraint_Twist_Sample.vrm"
+          />
+          <el-option
+            label="虚拟角色 A"
+            value="/models/2307020555850481813.vrm.glb"
+          />
+          <el-option
+            label="虚拟角色 B"
+            value="/models/3003548679065420654.vrm.glb"
+          />
         </el-select>
       </div>
       <div class="ui-row" style="margin-top: 10px">
