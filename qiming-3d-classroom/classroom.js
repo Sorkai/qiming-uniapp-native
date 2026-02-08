@@ -227,12 +227,8 @@ function addCeilingLamps(parent, W, H, D) {
       dummyObject.updateMatrix();
       lightInst.setMatrixAt(idx, dummyObject.matrix);
 
-      // 每排只放一个点光源以减少计算压力
-      if (c === 0) {
-        const pLight = new THREE.PointLight(0xffffff, 0.1, 10);
-        pLight.position.set(0, H - 0.2, lz);
-        lampGroup.add(pLight);
-      }
+      // 极致优化：移除所有点光源。点光源每帧都会对场景中所有物体进行光照计算。
+      // 教室亮度通过调整 AmbientLight 和 HemisphereLight 补偿。
 
       idx++;
     }
@@ -929,37 +925,35 @@ function createDesksAndChairs(parent, D) {
  * 优化文具加载：仅在离摄像机近的座点加载详细文具
  */
 function addStationeryToDeskManual(parent, x, z, surfaceY) {
-  // 仅在主要视线范围或离固定点近的桌子上放文具 (示例逻辑)
-  if (z > -4.0 && Math.abs(x) > 3) return;
+  // 性能优化：仅在靠近摄像机视野的特定几个座位放置文具，大幅减少 Mesh 数量
+  if (z > -4.5) return;
+  if (Math.abs(x) > 1.0) return;
 
   const items = new THREE.Group();
   items.position.set(x, 0, z);
 
-  const bookColors = [0x1a5fb4, 0x26a269, 0xc64600, 0x613583];
-  const numBooks = Math.floor(Math.random() * 2) + 1;
+  const bookColors = [0x1a5fb4, 0x26a269, 0xc64600];
+  // 减少书籍数量
+  const numBooks = 1;
   for (let i = 0; i < numBooks; i++) {
     const book = new THREE.Mesh(
       new THREE.BoxGeometry(0.18, 0.02, 0.24),
       new THREE.MeshStandardMaterial({
-        color: bookColors[Math.floor(Math.random() * bookColors.length)]
+        color: bookColors[Math.floor(Math.random() * bookColors.length)],
+        roughness: 0.8
       })
     );
-    book.position.set(
-      -0.25 + Math.random() * 0.05,
-      surfaceY + 0.01 + i * 0.021,
-      (Math.random() - 0.5) * 0.1
-    );
-    book.rotation.y = (Math.random() - 0.5) * 0.2;
+    book.position.set(-0.2, surfaceY + 0.01, 0.05);
     items.add(book);
   }
 
+  // 笔使用极简几何体
   const pen = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.005, 0.005, 0.15, 6),
+    new THREE.BoxGeometry(0.01, 0.01, 0.15),
     new THREE.MeshStandardMaterial({ color: 0x222222 })
   );
-  pen.rotation.x = Math.PI / 2;
-  pen.rotation.z = 1.2;
-  pen.position.set(0.15, surfaceY + 0.005, 0.2);
+  pen.rotation.z = 0.5;
+  pen.position.set(0.1, surfaceY + 0.01, 0.15);
   items.add(pen);
 
   parent.add(items);
@@ -970,15 +964,12 @@ function addStationeryToDeskManual(parent, x, z, surfaceY) {
  */
 function createLeftWallWithWindows(parent, W, H, D, wallMat) {
   const group = new THREE.Group();
-  const windowMat = new THREE.MeshPhysicalMaterial({
+  const windowMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
-    metalness: 0,
-    roughness: 0,
-    transmission: 1.0, // 实体玻璃透光性
-    thickness: 0.1, // 玻璃折射厚度
     transparent: true,
-    opacity: 0.3,
-    envMapIntensity: 1.0
+    opacity: 0.15, // 降低不透明度，使玻璃更轻薄
+    roughness: 0.1,
+    metalness: 0
   });
   const frameMat = new THREE.MeshStandardMaterial({
     color: 0xf0f0f0,
@@ -1350,30 +1341,11 @@ function createWindowLights(scene, W, H, D) {
   // 模拟从左侧窗户射入的阳光
   const sunLight = new THREE.DirectionalLight(0xfff5e1, 0.4);
   sunLight.position.set(-15, 10, -5);
-  sunLight.castShadow = true;
-  sunLight.shadow.mapSize.width = 1024;
-  sunLight.shadow.mapSize.height = 1024;
-  sunLight.shadow.camera.left = -10;
-  sunLight.shadow.camera.right = 10;
-  sunLight.shadow.camera.top = 10;
-  sunLight.shadow.camera.bottom = -10;
+  // 关键优化：一个场景中过多的实时阴影灯极其消耗 GPU，这里禁用窗户光的阴影，保留主灯阴影即可
+  sunLight.castShadow = false;
   scene.add(sunLight);
 
-  for (let i = 0; i < windowCount; i++) {
-    const winZ = -(i + 1) * winSpacing;
-    // 光源放在窗外（墙壁外侧），对准窗口正中心
-    const light = new THREE.PointLight(0xffffee, 0.4, 12);
-    light.position.set(-W / 2 - 0.5, 1.9, winZ);
-    scene.add(light);
-  }
-}
-
-/**
- * 创建左侧窗户射入的阳光光束 (God Rays / Tyndall Effect)
- * 通过半透明渐变几何体模拟真实的光路效果
- */
-function createSunBeams(parent, W, H, D) {
-  const beamCount = 3;
+  // 极致优化：移除窗台处的点光源，改用 DirectionalLight 模拟大范围漫射。
   const winSpacing = D / (beamCount + 1);
   const winY = 1.9; // 窗户中心高度
 

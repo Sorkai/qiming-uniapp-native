@@ -36,15 +36,19 @@ const camera = new THREE.PerspectiveCamera(
 // 设置初始视角在教室内，看向 Z=0 墙面的黑板
 camera.position.set(0, 1.15, -4.9);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({
+  antialias: false,
+  alpha: true,
+  powerPreference: "high-performance"
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
-// 限制像素比最大为 2，防止高分屏下过度锐化导致远端闪烁
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// 极致优化：统一像素比为 1.0，大幅减轻 GPU 填充率压力
+renderer.setPixelRatio(1.0);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 软阴影
-renderer.toneMapping = THREE.ACESFilmicToneMapping; // 电影级色调映射
-renderer.toneMappingExposure = 1.0; // 降低曝光度回到标准水平
+// 彻底关闭实时阴影，改为依靠光照颜色区分明暗，这是降低 GPU 占用最有效的手段
+renderer.shadowMap.enabled = false;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -64,36 +68,25 @@ const fixedCameraPos = new THREE.Vector3(0, 1.2, -4.4);
 let isLocked = true; // 视角锁定状态
 
 // 灯光设置
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.2); // 大幅降低环境光强度，改用半球光
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); // 提高环境光强度以补偿移除的点光源
 scene.add(ambientLight);
 
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6); // 增加半球光模拟天空散射
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8); // 提高半球光模拟天空散射
 hemiLight.position.set(0, 20, 0);
 scene.add(hemiLight);
 
 // 窗户侧补光（模拟窗外散射光，增加真实室内光照层次）
-const fillLight = new THREE.DirectionalLight(0xfff0dd, 0.3);
+const fillLight = new THREE.DirectionalLight(0xfff0dd, 0.4);
 fillLight.position.set(-8, 6, -5);
 fillLight.castShadow = false; // 补光不投射阴影
 scene.add(fillLight);
 
-// 教室内微弱暖色调补光（模拟间接光反射）
-const bounceLight = new THREE.PointLight(0xffe8d0, 0.15, 20);
-bounceLight.position.set(0, 0.3, -5); // 地面反弹光
-scene.add(bounceLight);
+// 极致优化：移除了教室内所有点光源 (PointLight) 和点光源补光。
+// 它们对 GPU 负载贡献很大。
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2); // 增强主灯
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // 调整主灯强度
 directionalLight.position.set(5, 12, 8);
-directionalLight.castShadow = true;
-// 优化阴影质量：降低分辨率以提升性能，1024 或 2048 通常足够
-directionalLight.shadow.mapSize.set(1024, 1024);
-directionalLight.shadow.camera.left = -15;
-directionalLight.shadow.camera.right = 15;
-directionalLight.shadow.camera.top = 15;
-directionalLight.shadow.camera.bottom = -15;
-directionalLight.shadow.bias = -0.0003;
-directionalLight.shadow.normalBias = 0.02;
-directionalLight.shadow.radius = 3;
+directionalLight.castShadow = false; // 彻底关闭阴影计算
 scene.add(directionalLight);
 
 // --- 创建教室背景 ---
@@ -230,12 +223,10 @@ function loadVRM(
             : [obj.material];
           materials.forEach(mat => {
             if (mat.map) {
-              // 限制各向异性过滤倍数，16x 太耗性能，4-8x 足够
-              mat.map.anisotropy = Math.min(
-                renderer.capabilities.getMaxAnisotropy(),
-                8
-              );
-              mat.map.minFilter = THREE.LinearMipmapLinearFilter;
+              // 极简优化：完全关闭各向异性过滤
+              mat.map.anisotropy = 1;
+              mat.map.minFilter = THREE.LinearFilter;
+              mat.map.magFilter = THREE.LinearFilter;
             }
           });
         }
@@ -292,44 +283,8 @@ if (lockBtn) {
 }
 
 // --- 后期处理设置 ---
-const composer = new EffectComposer(renderer);
-
-// 1. 基础渲染通道
-const renderPass = new RenderPass(scene, camera);
-composer.addPass(renderPass);
-
-// 2. 环境光遮蔽 (SAO) - 增加角落和接触面的深度感
-// 注意：SAO 会消耗大量 GPU 显存和算力，若电脑发热严重请保持关闭
-/*
-const saoPass = new SAOPass(scene, camera);
-saoPass.params.output = SAOPass.OUTPUT.Default;
-saoPass.params.saoBias = 1.0;
-saoPass.params.saoIntensity = 0.008; 
-saoPass.params.saoScale = 5;
-saoPass.params.saoKernelRadius = 8; 
-saoPass.params.saoMinResolution = 0.005; 
-composer.addPass(saoPass);
-*/
-
-// 3. 泛光通道 (Bloom) - 柔和自然的光晕效果
-const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.15, // 大幅降低强度，减少圆形光晕
-  0.8, // 增大半径使光晕更分散柔和
-  0.98 // 极高阈值，只让最亮处产生微弱光晕
-);
-composer.addPass(bloomPass);
-
-// 3. 抗锯齿通道 (SMAA) - 解决开启后期处理后直线变毛刺/分断的问题
-const smaaPass = new SMAAPass(
-  window.innerWidth * window.devicePixelRatio,
-  window.innerHeight * window.devicePixelRatio
-);
-composer.addPass(smaaPass);
-
-// 4. 输出通道 (必须放在最后，处理颜色空间转换)
-const outputPass = new OutputPass();
-composer.addPass(outputPass);
+// 极致优化：完全关闭后期处理。EffectComposer 和多重渲染 Pass 是极大的 GPU 开销。
+// 如果需要基本的色彩校正，直接使用 WebGLRenderer 的 toneMapping。
 
 // 初始默认加载第一个模型 (做老师)
 // Math.PI 让老师转身面向学生 (VRM 0.x 经 rotateVRM0 后默认朝 -Z，需要翻转)
@@ -366,7 +321,7 @@ loadVRM(
 
 const clock = new THREE.Clock();
 let lastFrameTime = 0;
-const targetFPS = 30; // 限制 60 帧，防止高刷屏导致 GPU 爆载
+const targetFPS = 20; // 极致优化：限制在 20 帧，大幅减少每秒刷新频率，是降低 GPU 并发计算的关键
 const frameInterval = 1 / targetFPS;
 
 // 视锥体剔除工具
@@ -478,7 +433,7 @@ function animate() {
     }
   });
 
-  composer.render();
+  renderer.render(scene, camera);
 }
 
 animate();
@@ -486,13 +441,7 @@ animate();
 // --- 5. 窗口尺寸适配 ---
 
 window.addEventListener("resize", () => {
-  const pixelRatio = Math.min(window.devicePixelRatio, 2);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  composer.setSize(window.innerWidth, window.innerHeight);
-  smaaPass.setSize(
-    window.innerWidth * pixelRatio,
-    window.innerHeight * pixelRatio
-  );
 });
