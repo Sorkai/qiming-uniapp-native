@@ -61,7 +61,9 @@
       <div class="banner-overlay">
         <div class="carousel-text">
           <div class="hero-badge">AI 深度融合的智慧教育平台</div>
-          <h2 class="main-title">启明智教</h2>
+          <h2 class="main-title">
+            启明智教<img :src="artisticText" class="art-logo-img" alt="Intelledu" />
+          </h2>
           <p class="sub-title">智慧教育新纪元</p>
           <p class="hero-desc">
             基于人工智能深度融合的智慧教育平台，为每位学习者打造专属学习路径
@@ -100,7 +102,7 @@
       <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
         <path
           d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,80 1440,60 L1440,120 L0,120 Z"
-          fill="#0a0a1a"
+          fill="#000"
         />
       </svg>
     </div>
@@ -118,24 +120,38 @@
 
     <!-- AI 赋能区域 -->
     <div id="ai-power" class="ai-power-section">
-      <div class="section-container">
-        <div class="section-header light">
-          <span class="section-badge">AI POWERED</span>
-          <h2 class="section-title">AI 深度赋能教育</h2>
-          <p class="section-desc">
-            人工智能与教育的完美融合，开启智慧学习新时代
-          </p>
+      <div class="section-container ai-power-container">
+        <!-- 左侧视频 -->
+        <div class="ai-video-left">
+          <video
+            :src="chipsetVideo"
+            autoplay
+            muted
+            loop
+            playsinline
+            class="chipset-video"
+          />
         </div>
-        <div class="ai-features-grid">
-          <div
-            v-for="(item, index) in aiFeatures"
-            :key="index"
-            class="ai-feature-card"
-          >
-            <div class="ai-icon">{{ item.icon }}</div>
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.description }}</p>
-            <div class="ai-glow" />
+        <!-- 右侧内容 -->
+        <div class="ai-content-right">
+          <div class="section-header light">
+            <span class="section-badge">AI POWERED</span>
+            <h2 class="section-title">AI 深度赋能教育</h2>
+            <p class="section-desc">
+              人工智能与教育的完美融合，开启智慧学习新时代
+            </p>
+          </div>
+          <div class="ai-features-grid">
+            <div
+              v-for="(item, index) in aiFeatures"
+              :key="index"
+              class="ai-feature-card"
+            >
+              <div class="ai-icon">{{ item.icon }}</div>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.description }}</p>
+              <div class="ai-glow" />
+            </div>
           </div>
         </div>
       </div>
@@ -320,24 +336,39 @@
       </div>
     </div>
 
-    <!-- CTA 区域 -->
-    <div class="cta-section">
-      <div class="cta-stars">
+    <!-- CTA 区域 - 非对称左右布局 -->
+    <div class="cta-section-new">
+      <!-- 背景星星 -->
+      <div class="cta-bg-stars">
         <div
-          v-for="i in 50"
+          v-for="i in 80"
           :key="'cta-star-' + i"
           class="cta-star"
           :style="getCtaStarStyle(i)"
         />
       </div>
-      <div class="cta-content">
-        <h2>开启智慧学习之旅</h2>
-        <p>立即加入，体验 AI 驱动的全新教育模式</p>
-        <div class="cta-buttons">
-          <el-button type="primary" size="large" @click="handleEntry">
-            立即试用
-          </el-button>
-          <el-button size="large" plain> 联系我们 </el-button>
+      <!-- 左右布局容器 -->
+      <div class="cta-layout">
+        <!-- 左侧文字内容 -->
+        <div class="cta-content-left">
+          <div class="cta-badge">✨ 开启新篇章</div>
+          <h2>开启智慧学习之旅</h2>
+          <p>立即加入，体验 AI 驱动的全新教育模式</p>
+          <div class="cta-buttons">
+            <el-button type="primary" size="large" @click="handleEntry">
+              立即试用
+            </el-button>
+            <el-button size="large" plain> 联系我们 </el-button>
+          </div>
+          <div class="cta-features">
+            <span><i>🚀</i> 快速上手</span>
+            <span><i>🎯</i> 精准学习</span>
+            <span><i>💡</i> 智能推荐</span>
+          </div>
+        </div>
+        <!-- 右侧星光汇聚 Logo -->
+        <div class="starlight-logo-wrapper">
+          <canvas ref="starlightCanvas" class="starlight-canvas" />
         </div>
       </div>
     </div>
@@ -472,10 +503,13 @@ import card1 from "@/assets/home/card1.jpg";
 import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
+import artisticText from "@/assets/816438ed-a33a-4477-b57e-e273e15c03aa.png";
+import chipsetVideo from "@/assets/chipset.mp4";
 import LoginDialog from "@/components/LoginDialog.vue";
 
 const router = useRouter();
 const isScrolled = ref(false);
+const starlightCanvas = ref<HTMLCanvasElement | null>(null);
 import { useUserStoreHook } from "@/store/modules/user";
 
 const userStore = useUserStoreHook();
@@ -591,6 +625,174 @@ const initScrollAnimations = () => {
     });
 };
 
+// 星光粒子动画相关
+interface Particle {
+  x: number;
+  y: number;
+  targetX: number;
+  targetY: number;
+  size: number;
+  color: string;
+  speed: number;
+  alpha: number;
+  delay: number;
+}
+
+let starlightAnimationId: number | null = null;
+let starlightParticles: Particle[] = [];
+
+const initStarlightAnimation = () => {
+  const canvas = starlightCanvas.value;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  // 设置 canvas尺寸
+  const resizeCanvas = () => {
+    const container = canvas.parentElement;
+    if (container) {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+    }
+  };
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  // 加载 logo 图片并采样像素
+  const logoImg = new Image();
+  logoImg.crossOrigin = "anonymous";
+  logoImg.src = logo;
+
+  logoImg.onload = () => {
+    // 创建临时 canvas 来采样图片像素
+    const tempCanvas = document.createElement("canvas");
+    const tempCtx = tempCanvas.getContext("2d");
+    if (!tempCtx) return;
+
+    const logoSize = Math.min(canvas.width * 0.4, 200);
+    const scale = logoSize / Math.max(logoImg.width, logoImg.height);
+    const scaledWidth = logoImg.width * scale;
+    const scaledHeight = logoImg.height * scale;
+
+    tempCanvas.width = scaledWidth;
+    tempCanvas.height = scaledHeight;
+    tempCtx.drawImage(logoImg, 0, 0, scaledWidth, scaledHeight);
+
+    // 采样像素点
+    const imageData = tempCtx.getImageData(0, 0, scaledWidth, scaledHeight);
+    const pixels = imageData.data;
+    const targetPoints: { x: number; y: number; color: string }[] = [];
+
+    // 每隔几个像素采样一次
+    const sampleRate = 3;
+    for (let y = 0; y < scaledHeight; y += sampleRate) {
+      for (let x = 0; x < scaledWidth; x += sampleRate) {
+        const i = (y * scaledWidth + x) * 4;
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        const a = pixels[i + 3];
+
+        // 只采样不透明的像素
+        if (a > 128) {
+          targetPoints.push({
+            x: x,
+            y: y,
+            color: `rgba(${r}, ${g}, ${b}, 1)`
+          });
+        }
+      }
+    }
+
+    // 计算 logo 在 canvas 中的居中位置
+    const offsetX = (canvas.width - scaledWidth) / 2;
+    const offsetY = (canvas.height - scaledHeight) / 2 - 30;
+
+    // 创建粒子
+    starlightParticles = targetPoints.map((point, index) => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      targetX: point.x + offsetX,
+      targetY: point.y + offsetY,
+      size: Math.random() * 2 + 1,
+      color: point.color,
+      speed: 0.02 + Math.random() * 0.03,
+      alpha: 0,
+      delay: Math.random() * 2000
+    }));
+
+    // 动画开始时间
+    const startTime = Date.now();
+
+    // 动画循环
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const currentTime = Date.now();
+      const elapsed = currentTime - startTime;
+
+      starlightParticles.forEach(particle => {
+        // 延迟启动
+        if (elapsed < particle.delay) {
+          //绘制闪烁的星星
+          particle.alpha = Math.random() * 0.5;
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${particle.alpha})`;
+          ctx.fill();
+          return;
+        }
+
+        //缓动移动到目标位置
+        const dx = particle.targetX - particle.x;
+        const dy = particle.targetY - particle.y;
+        particle.x += dx * particle.speed;
+        particle.y += dy * particle.speed;
+
+        //渐变透明度
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 5) {
+          particle.alpha = Math.min(1, particle.alpha + 0.05);
+        } else {
+          particle.alpha = Math.min(0.8, particle.alpha + 0.02);
+        }
+
+        // 绘制粒子
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+
+        // 使用渐变色
+        const gradient = ctx.createRadialGradient(
+          particle.x,
+          particle.y,
+          0,
+          particle.x,
+          particle.y,
+          particle.size * 2
+        );
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${particle.alpha})`);
+        gradient.addColorStop(
+          0.5,
+          particle.color.replace("1)", `${particle.alpha})`)
+        );
+        gradient.addColorStop(1, "rgba(96, 165, 250, 0)");
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // 添加发光效果
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#60a5fa";
+      });
+
+      starlightAnimationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+  };
+};
+
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("mousemove", handleMouseMove);
@@ -602,6 +804,23 @@ onMounted(() => {
     if (canvas) {
       const app = new Application(canvas);
       app.load("https://prod.spline.design/l75l8JHhRQVSloLP/scene.splinecode");
+    }
+
+    // 使用 IntersectionObserver 延迟加载星光汇聚动画
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            initStarlightAnimation();
+            observer.disconnect(); // 只加载一次
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (starlightCanvas.value) {
+      observer.observe(starlightCanvas.value);
     }
   });
 });
@@ -779,26 +998,6 @@ const handleCommand = (command: string) => {
   50% {
     opacity: 0.6;
     transform: scale(1.1);
-  }
-}
-
-@keyframes shooting {
-  0% {
-    opacity: 0;
-    transform: rotate(135deg) translateX(0);
-  }
-
-  5% {
-    opacity: 0.6;
-  }
-
-  60% {
-    opacity: 0.3;
-  }
-
-  100% {
-    opacity: 0;
-    transform: rotate(135deg) translateX(400px);
   }
 }
 
@@ -1000,8 +1199,14 @@ const handleCommand = (command: string) => {
     }
   }
 
-  .ai-power-section .ai-features-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .ai-power-section {
+    .ai-power-container {
+      gap: 30px;
+    }
+
+    .ai-features-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .services-section .services-grid {
@@ -1066,8 +1271,28 @@ const handleCommand = (command: string) => {
     }
   }
 
-  .ai-power-section .ai-features-grid {
-    grid-template-columns: 1fr;
+  .ai-power-section {
+    .ai-power-container {
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .ai-video-left {
+      flex: 1;
+      width: 100%;
+    }
+
+    .ai-content-right .section-header {
+      text-align: center;
+
+      .section-desc {
+        margin: 0 auto;
+      }
+    }
+
+    .ai-features-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .transition-image-section .transition-content {
@@ -1132,7 +1357,7 @@ const handleCommand = (command: string) => {
   width: 100%;
   min-height: 100vh;
   color: #fff;
-  background-color: #0a0a1a;
+  background-color: #000;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -1153,7 +1378,7 @@ const handleCommand = (command: string) => {
     box-shadow 0.3s ease;
 
   &.header-scrolled {
-    background: rgb(10 10 26 / 95%);
+    background: rgb(0 0 0 / 95%);
     box-shadow: 0 2px 20px rgb(0 0 0 / 30%);
     backdrop-filter: blur(10px);
   }
@@ -1288,8 +1513,8 @@ const handleCommand = (command: string) => {
     pointer-events: none;
     background: linear-gradient(
       135deg,
-      rgba(10, 10, 26, 0.45) 0%,
-      rgba(10, 10, 26, 0) 100%
+      rgba(0, 0, 0, 0.45) 0%,
+      rgba(0, 0, 0, 0) 100%
     );
 
     .carousel-text {
@@ -1483,7 +1708,7 @@ const handleCommand = (command: string) => {
 
 .stats-section {
   padding: 30px 0;
-  background: #0a0a1a;
+  background: #000;
 
   .stats-container {
     box-sizing: border-box;
@@ -1527,8 +1752,8 @@ const handleCommand = (command: string) => {
     &:hover {
       background: linear-gradient(
         145deg,
-        rgb(30 30 60 / 50%) 0%,
-        rgb(20 20 45 / 70%) 100%
+        rgb(20 20 20 / 50%) 0%,
+        rgb(10 10 10 / 70%) 100%
       );
       border-color: rgb(96 165 250 / 50%);
       box-shadow: 0 20px 40px rgb(96 165 250 / 15%);
@@ -1578,13 +1803,51 @@ const handleCommand = (command: string) => {
 
 .ai-power-section {
   position: relative;
-  padding: 50px 0;
+  padding: 80px 0;
   overflow: hidden;
-  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 100%);
+  background: #000;
+
+  .ai-power-container {
+    display: flex;
+    gap: 60px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ai-video-left {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 45%;
+    max-width: 550px;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  }
+
+  .ai-content-right {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+
+    .section-header {
+      text-align: left;
+      margin-bottom: 40px;
+
+      .section-desc {
+        margin-left: 0;
+      }
+    }
+  }
 
   .ai-features-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 24px;
   }
 
@@ -1617,8 +1880,8 @@ const handleCommand = (command: string) => {
     &:hover {
       background: linear-gradient(
         145deg,
-        rgb(30 30 60 / 60%) 0%,
-        rgb(20 20 45 / 80%) 100%
+        rgb(20 20 20 / 60%) 0%,
+        rgb(10 10 10 / 80%) 100%
       );
       border-color: rgb(96 165 250 / 60%);
       box-shadow:
@@ -1721,7 +1984,7 @@ const handleCommand = (command: string) => {
 .transition-image-section {
   padding: 80px 0;
   overflow: hidden;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%);
+  background: #000;
 
   .transition-content {
     box-sizing: border-box;
@@ -1995,7 +2258,7 @@ const handleCommand = (command: string) => {
 .platform-intro {
   position: relative;
   padding: 50px 0;
-  background: linear-gradient(180deg, #0a0a1a 0%, #12122a 50%, #1a1a2e 100%);
+  background: #000;
 
   .feature-list {
     display: grid;
@@ -2048,7 +2311,7 @@ const handleCommand = (command: string) => {
         background: linear-gradient(
           180deg,
           transparent 30%,
-          rgb(10 10 26 / 95%) 100%
+          rgb(0 0 0 / 95%) 100%
         );
       }
     }
@@ -2080,7 +2343,7 @@ const handleCommand = (command: string) => {
       background: linear-gradient(
         180deg,
         transparent 40%,
-        rgb(10 10 26 / 85%) 100%
+        rgb(0 0 0 / 85%) 100%
       );
       transition: background 0.5s ease;
 
@@ -2108,7 +2371,7 @@ const handleCommand = (command: string) => {
   .parallax-bg {
     position: absolute;
     inset: 0;
-    background: #1a1a2e;
+    background: #000;
   }
 
   .transition-overlay {
@@ -2148,7 +2411,7 @@ const handleCommand = (command: string) => {
 
 .services-section {
   padding: 50px 0;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+  background: #000;
 
   .services-grid {
     display: grid;
@@ -2186,8 +2449,8 @@ const handleCommand = (command: string) => {
     &:hover {
       background: linear-gradient(
         145deg,
-        rgb(30 30 60 / 80%) 0%,
-        rgb(20 20 45 / 90%) 100%
+        rgb(20 20 20 / 80%) 0%,
+        rgb(10 10 10 / 90%) 100%
       );
       border-color: rgb(96 165 250 / 50%);
       box-shadow:
@@ -2264,7 +2527,7 @@ const handleCommand = (command: string) => {
 .tech-section {
   position: relative;
   padding: 50px 0;
-  background: linear-gradient(180deg, #1a1a2e 0%, #12122a 50%, #0a0a1a 100%);
+  background: #000;
 
   .tech-grid {
     display: grid;
@@ -2347,7 +2610,7 @@ const handleCommand = (command: string) => {
 
 .testimonials-section {
   padding: 50px 0;
-  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 100%);
+  background: #000;
 
   .testimonials-grid {
     display: grid;
@@ -2384,8 +2647,8 @@ const handleCommand = (command: string) => {
     &:hover {
       background: linear-gradient(
         145deg,
-        rgb(30 30 60 / 60%) 0%,
-        rgb(20 20 45 / 80%) 100%
+        rgb(20 20 20 / 60%) 0%,
+        rgb(10 10 10 / 80%) 100%
       );
       border-color: rgb(167 139 250 / 40%);
       box-shadow: 0 25px 50px rgb(96 165 250 / 15%);
@@ -2461,7 +2724,7 @@ const handleCommand = (command: string) => {
   padding: 40px 0;
   overflow: hidden;
   text-align: center;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%);
+  background: #000;
 
   .cta-stars {
     position: absolute;
@@ -2573,7 +2836,7 @@ const handleCommand = (command: string) => {
 
 .footer-section {
   padding: 50px 0 30px;
-  background: #050510;
+  background: #000;
 
   .footer-container {
     max-width: 1300px;
@@ -2877,6 +3140,13 @@ const handleCommand = (command: string) => {
   background-size: 300% 300%;
   animation: gradientFlow 6s ease infinite;
   will-change: background-position;
+
+  .art-logo-img {
+    height: 1.2em;
+    margin-left: 24px;
+    vertical-align: middle;
+    filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.6));
+  }
 }
 
 /* 图标缩放效果 */
@@ -2903,15 +3173,15 @@ const handleCommand = (command: string) => {
 .service-card {
   background: linear-gradient(
     145deg,
-    rgb(30 30 60 / 90%) 0%,
-    rgb(20 20 40 / 95%) 100%
+    rgb(20 20 20 / 90%) 0%,
+    rgb(10 10 10 / 95%) 100%
   );
 
   &:hover {
     background: linear-gradient(
       145deg,
-      rgb(40 40 80 / 95%) 0%,
-      rgb(25 25 50 / 98%) 100%
+      rgb(30 30 30 / 95%) 0%,
+      rgb(20 20 20 / 98%) 100%
     );
   }
 }
@@ -2978,6 +3248,254 @@ const handleCommand = (command: string) => {
   &:hover {
     box-shadow: 0 5px 15px rgb(96 165 250 / 40%);
     transform: translateY(-3px);
+  }
+}
+
+/* 星光汇聚 Logo 区域 */
+.starlight-logo-section {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+  background: #000;
+}
+
+.starlight-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.starlight-text {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  text-align: center;
+  transform: translateX(-50%);
+
+  p {
+    margin: 0;
+    font-size: 18px;
+    color: rgb(255 255 255 / 60%);
+    letter-spacing: 2px;
+  }
+}
+
+/* 新版CTA 区域 - 非对称左右布局 */
+.cta-section-new {
+  position: relative;
+  min-height: 500px;
+  padding: 80px 0;
+  overflow: hidden;
+  background: #000;
+
+  .cta-bg-stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    .cta-star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle ease-in-out infinite;
+    }
+  }
+
+  .cta-layout {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 60px;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1400px;
+    padding: 0 80px;
+    margin: 0 auto;
+  }
+
+  .cta-content-left {
+    flex: 0 0 45%;
+    max-width: 500px;
+    text-align: left;
+
+    .cta-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: #a78bfa;
+      background: rgb(167 139 250 / 10%);
+      border: 1px solid rgb(167 139 250 / 30%);
+      border-radius: 30px;
+      animation: float-shadow 3s ease-in-out infinite;
+    }
+
+    h2 {
+      margin-bottom: 16px;
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #fff;background: linear-gradient(135deg, #fff0%, #60a5fa 50%, #a78bfa 100%);
+      background-clip: text;
+      -webkit-text-fill-color: transparent;}
+
+    p {
+      margin-bottom: 32px;
+      font-size: 18px;
+      line-height: 1.6;
+      color: rgb(255 255 255 / 70%);
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 40px;
+
+      .el-button {
+        height: 54px;
+        padding: 0 36px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 30px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+          transform: translateY(-4px);
+        }
+
+        &.el-button--primary {
+          color: #0a0a1a;
+          background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+          border: none;
+          box-shadow: 0 8px 25px rgb(96 165 250 / 40%);
+
+          &:hover {
+            box-shadow: 0 12px 35px rgb(96 165 250 / 60%);
+          }
+        }
+
+        &.is-plain {
+          color: #fff;
+          background: transparent;
+          border: 2px solid rgb(255 255 255 / 30%);
+
+          &:hover {
+            background: rgb(255 255 255 / 10%);
+            border-color: rgb(255 255 255 / 50%);
+          }
+        }
+      }
+    }
+
+    .cta-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+
+      span {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 14px;
+        color: rgb(255 255 255 / 60%);
+        transition: all 0.3s;
+
+        i {
+          font-size: 18px;
+          font-style: normal;
+        }
+
+        &:hover {
+          color: #60a5fa;transform: translateX(5px);
+        }
+      }
+    }
+  }
+
+  .starlight-logo-wrapper {
+    position: relative;
+    flex: 0 0 50%;
+    min-height: 400px;
+    background: radial-gradient(
+      ellipse at center,
+      rgb(96 165 250 / 5%) 0%,
+      transparent 70%
+    );
+    border-radius: 24px;
+
+    .starlight-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .starlight-text {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      text-align: center;
+      transform: translateX(-50%);
+
+      p {
+        margin: 0;
+        font-size: 16px;
+        color: rgb(255 255 255 / 50%);
+        letter-spacing: 3px;
+      }
+    }
+  }
+}
+
+/* 响应式适配 */
+@media screen and (width <= 1200px) {
+  .cta-section-new {
+    .cta-layout {
+      padding: 0 40px;
+    }
+
+    .cta-content-left h2 {
+      font-size: 36px;
+    }
+  }
+}
+
+@media screen and (width <= 768px) {
+  .cta-section-new {
+    .cta-layout {
+      flex-direction: column;
+      gap: 40px;
+      padding: 0 20px;
+    }
+
+    .cta-content-left {
+      flex: 1;
+      max-width: 100%;
+      text-align: center;
+
+      h2 {
+        font-size: 28px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .cta-features {
+        justify-content: center;
+      }
+    }
+
+    .starlight-logo-wrapper {
+      flex: 1;
+      width: 100%;
+      min-height: 300px;
+    }
   }
 }
 </style>
