@@ -172,14 +172,14 @@ function initScene() {
   const width = containerRef.value.clientWidth;
   const height = containerRef.value.clientHeight;
 
-  camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 100.0);
+  camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100.0);
   camera.position.set(0, 1.15, -4.9);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(width, height);
   // 优化：将像素比限制为 1.0 (等同于 1080p 级别清晰度)
   // 在 Retina 屏幕上渲染 2.0 倍像素非常消耗 GPU，1.0 倍足矣
-  renderer.setPixelRatio(1.0); 
+  renderer.setPixelRatio(1.0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -301,12 +301,12 @@ function animate() {
     camera.position.copy(fixedCameraPos);
     const defaultDist = 5.0;
     const zoomFactor = defaultDist / dist;
-    const targetFOV = 65 / zoomFactor;
+    const targetFOV = 50 / zoomFactor;
     camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.1);
     camera.updateProjectionMatrix();
     controls.target.copy(fixedCameraPos).sub(offset.multiplyScalar(dist));
   } else {
-    camera.fov = THREE.MathUtils.lerp(camera.fov, 65, 0.1);
+    camera.fov = THREE.MathUtils.lerp(camera.fov, 50, 0.1);
     camera.updateProjectionMatrix();
     camera.position.copy(fixedCameraPos);
     controls.target.set(0, 1.15, -10);
@@ -448,9 +448,11 @@ onUnmounted(() => {
 .classroom-container {
   position: relative;
   width: 100%;
-  height: calc(100vh - 110px);
+  height: calc(100vh - 230px);
   background-color: #f0f0f0;
   overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   .canvas-container {
     width: 100%;

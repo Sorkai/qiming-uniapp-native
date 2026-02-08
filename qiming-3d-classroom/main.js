@@ -366,7 +366,7 @@ loadVRM(
 
 const clock = new THREE.Clock();
 let lastFrameTime = 0;
-const targetFPS = 60; // 限制 60 帧，防止高刷屏导致 GPU 爆载
+const targetFPS = 30; // 限制 60 帧，防止高刷屏导致 GPU 爆载
 const frameInterval = 1 / targetFPS;
 
 // 视锥体剔除工具
