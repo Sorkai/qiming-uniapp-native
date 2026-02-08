@@ -54,70 +54,37 @@
       </div>
     </div>
 
-    <!-- 英雄区域 - 星空背景 -->
+    <!-- 英雄区域 - Spline 3D 背景 (boxes_hover) -->
     <div class="banner">
-      <el-carousel
-        height="100vh"
-        :interval="5000"
-        :duration="1000"
-        :indicator-position="'none'"
-        :arrow="'never'"
-      >
-        <el-carousel-item v-for="(item, index) in carouselItems" :key="index">
-          <div
-            class="carousel-content"
-            :style="{ backgroundImage: `url(${item.background})` }"
-          >
-            <!-- 背景效果移入内容层，确保层级正确且不干扰交互 -->
-            <div class="starfield">
-              <div
-                v-for="i in 40"
-                :key="'star-' + i"
-                class="star"
-                :style="getStarStyle(i)"
-              />
-              <div
-                v-for="i in 3"
-                :key="'shooting-' + i"
-                class="shooting-star"
-                :style="getShootingStarStyle(i)"
-              />
-            </div>
-            <div class="hero-particles">
-              <div
-                v-for="i in 8"
-                :key="i"
-                class="particle"
-                :style="getParticleStyle(i)"
-              />
-            </div>
+      <canvas id="canvas3d" class="spline-canvas" />
 
-            <div class="carousel-text">
-              <div class="hero-badge">AI 深度融合的智慧教育平台</div>
-              <h2 class="main-title">{{ item.title }}</h2>
-              <p class="sub-title">{{ item.subtitle }}</p>
-              <p class="hero-desc">{{ item.description }}</p>
-              <div class="hero-buttons">
-                <el-button
-                  type="primary"
-                  size="large"
-                  class="hero-btn primary"
-                  @click="handleEntry"
-                >
-                  立即体验
-                </el-button>
-                <el-button
-                  size="large"
-                  class="hero-btn secondary"
-                  @click="scrollToSection('features')"
-                >
-                  了解更多
-                </el-button>
-              </div>
-            </div>
+      <div class="banner-overlay">
+        <div class="carousel-text">
+          <div class="hero-badge">AI 深度融合的智慧教育平台</div>
+          <h2 class="main-title">启明智教</h2>
+          <p class="sub-title">智慧教育新纪元</p>
+          <p class="hero-desc">
+            基于人工智能深度融合的智慧教育平台，为每位学习者打造专属学习路径
+          </p>
+          <div class="hero-buttons">
+            <el-button
+              type="primary"
+              size="large"
+              class="hero-btn primary"
+              @click="handleEntry"
+            >
+              立即体验
+            </el-button>
+            <el-button
+              size="large"
+              class="hero-btn secondary"
+              @click="scrollToSection('features')"
+            >
+              了解更多
+            </el-button>
           </div>
-        </el-carousel-item>
-      </el-carousel>
+        </div>
+      </div>
 
       <!-- 下滑提示 -->
       <div class="scroll-hint">
@@ -480,8 +447,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import { Application } from "@splinetool/runtime";
 import {
   Monitor,
   Connection,
@@ -500,8 +468,6 @@ import type { DataInfo } from "@/utils/auth";
 import { initRouter } from "@/router/utils";
 
 // 导入图片资源
-import banner1 from "@/assets/home/banner1.jpg";
-import banner2 from "@/assets/home/banner2.jpg";
 import card1 from "@/assets/home/card1.jpg";
 import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
@@ -629,6 +595,15 @@ onMounted(() => {
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("mousemove", handleMouseMove);
   setTimeout(initScrollAnimations, 100);
+
+  // 初始化 Spline 3D 背景
+  nextTick(() => {
+    const canvas = document.getElementById("canvas3d") as HTMLCanvasElement;
+    if (canvas) {
+      const app = new Application(canvas);
+      app.load("https://prod.spline.design/l75l8JHhRQVSloLP/scene.splinecode");
+    }
+  });
 });
 
 onUnmounted(() => {
@@ -643,39 +618,6 @@ const scrollToSection = (id: string) => {
   }
 };
 
-const getStarStyle = (index: number) => {
-  const size = Math.random() * 3 + 1;
-  return {
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    width: `${size}px`,
-    height: `${size}px`,
-    animationDelay: `${Math.random() * 3}s`,
-    animationDuration: `${Math.random() * 2 + 1}s`
-  };
-};
-
-const getShootingStarStyle = (index: number) => {
-  return {
-    left: `${50 + Math.random() * 50}%`,
-    top: `${Math.random() * 30}%`,
-    animationDelay: `${index * 15 + Math.random() * 10}s`,
-    animationDuration: `${1.5 + Math.random() * 0.5}s`
-  };
-};
-
-const getParticleStyle = (index: number) => {
-  const size = Math.random() * 6 + 2;
-  return {
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    width: `${size}px`,
-    height: `${size}px`,
-    animationDelay: `${Math.random() * 5}s`,
-    animationDuration: `${Math.random() * 10 + 10}s`
-  };
-};
-
 const getCtaStarStyle = (index: number) => {
   const size = Math.random() * 2 + 1;
   return {
@@ -687,23 +629,6 @@ const getCtaStarStyle = (index: number) => {
     animationDuration: `${Math.random() * 2 + 1}s`
   };
 };
-
-const carouselItems = ref([
-  {
-    title: "启明智教",
-    subtitle: "智慧教育新纪元",
-    description:
-      "基于人工智能深度融合的智慧教育平台，为每位学习者打造专属学习路径",
-    background: banner1
-  },
-  {
-    title: "因材施教",
-    subtitle: "个性化学习体验",
-    description:
-      "AI 精准分析学情，智能推荐课程，让每一次学习都更高效、更有针对性",
-    background: banner2
-  }
-]);
 
 const statsData = ref([
   { icon: "👨‍🎓", number: "1,000+", label: "预计注册学员" },
@@ -1208,6 +1133,10 @@ const handleCommand = (command: string) => {
   min-height: 100vh;
   color: #fff;
   background-color: #0a0a1a;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .header {
@@ -1216,7 +1145,7 @@ const handleCommand = (command: string) => {
   right: 0;
   left: 0;
   z-index: 1000;
-  width: 100vw;
+  width: 100%;
   height: 70px;
   background: transparent;
   transition:
@@ -1249,7 +1178,8 @@ const handleCommand = (command: string) => {
         padding: 4px;
         background: #fff;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        image-rendering: -webkit-optimize-contrast;
       }
 
       .logo-text-group {
@@ -1333,237 +1263,192 @@ const handleCommand = (command: string) => {
 
 .banner {
   position: relative;
+  width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
-  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
+  background-color: #000;
 
-  .starfield {
+  .spline-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100% !important;
+    display: block;
+    outline: none;
+  }
+
+  .banner-overlay {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 5;
+    display: flex;
+    align-items: center;
     pointer-events: none;
-    opacity: 0.3;
-
-    .star {
-      position: absolute;
-      background: #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 4px 1px rgb(255 255 255 / 20%);
-      animation: twinkle ease-in-out infinite;
-    }
-
-    .shooting-star {
-      position: absolute;
-      width: 60px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        rgb(255 255 255 / 60%),
-        rgb(255 255 255 / 20%),
-        transparent
-      );
-      opacity: 0;
-      transform: rotate(135deg);
-      animation: shooting ease-out infinite;
-    }
-  }
-
-  .hero-particles {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    opacity: 0.25;
-
-    .particle {
-      position: absolute;
-      background: rgb(255 255 255 / 40%);
-      border-radius: 50%;
-      animation: floatParticle linear infinite;
-    }
-  }
-
-  :deep(.el-carousel),
-  :deep(.el-carousel__container) {
-    height: 100vh;
-  }
-
-  :deep(.el-carousel__item) {
-    overflow: hidden;
-  }
-}
-
-.carousel-content {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  background-position: center;
-  background-size: cover;
-
-  &::before {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    content: "";
     background: linear-gradient(
       135deg,
-      rgb(10 10 26 / 50%) 0%,
-      rgb(10 10 26 / 30%) 100%
+      rgba(10, 10, 26, 0.45) 0%,
+      rgba(10, 10, 26, 0) 100%
     );
-  }
 
-  .carousel-text {
-    position: relative;
-    z-index: 3;
-    max-width: 800px;
-    padding: 0 80px;
-
-    .hero-badge {
-      display: inline-block;
-      padding: 8px 20px;
-      margin-bottom: 24px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #60a5fa;
-      letter-spacing: 0.5px;
-      background: rgb(96 165 250 / 10%);
-      border: 1px solid rgb(96 165 250 / 30%);
-      border-radius: 30px;
-    }
-
-    .main-title {
-      margin: 0 0 16px;
-      font-size: 68px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 4px;
-      text-shadow: 0 4px 20px rgb(0 0 0 / 30%);
-    }
-
-    .sub-title {
-      margin: 0 0 20px;
-      font-size: 42px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      background: linear-gradient(
-        135deg,
-        #5dade2 0%,
-        #85c1e9 50%,
-        #aed6f1 100%
-      );
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-desc {
-      margin: 0 0 32px;
-      font-size: 17px;
-      font-weight: 400;
-      line-height: 1.7;
-      color: rgb(255 255 255 / 75%);
-      letter-spacing: 0.5px;
-    }
-
-    .hero-buttons {
+    .carousel-text {
       position: relative;
-      z-index: 100;
-      display: flex;
-      gap: 16px;
+      z-index: 3;
+      width: 100%;
+      max-width: 1000px;
+      padding: 0 80px;
       pointer-events: auto;
 
-      .hero-btn {
-        position: relative;
-        z-index: 101;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 54px;
-        padding: 0 38px;
-        overflow: hidden;
-        font-size: 16px;
-        font-weight: 600;
-        letter-spacing: 1px;
-        pointer-events: auto;
-        cursor: pointer;
-        border: none;
+      .hero-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #60a5fa;
+        letter-spacing: 0.5px;
+        background: rgb(96 165 250 / 10%);
+        border: 1px solid rgb(96 165 250 / 30%);
         border-radius: 30px;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(4px);
+      }
 
-        :deep(span) {
+      .main-title {
+        margin: 0 0 16px;
+        font-size: 72px;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.1;
+        letter-spacing: 4px;
+        text-shadow: 0 10px 30px rgb(0 0 0 / 50%);
+      }
+
+      .sub-title {
+        margin: 0 0 20px;
+        font-size: 42px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        background: linear-gradient(
+          135deg,
+          #5dade2 0%,
+          #85c1e9 50%,
+          #aed6f1 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .hero-desc {
+        margin: 0 0 32px;
+        font-size: 17px;
+        font-weight: 400;
+        line-height: 1.7;
+        color: rgb(255 255 255 / 75%);
+        letter-spacing: 0.5px;
+      }
+
+      .hero-buttons {
+        position: relative;
+        z-index: 100;
+        display: flex;
+        gap: 16px;
+        pointer-events: auto;
+
+        .hero-btn {
           position: relative;
-          z-index: 2;
+          z-index: 101;
           display: flex;
-          gap: 8px;
           align-items: center;
+          justify-content: center;
+          height: 54px;
+          padding: 0 38px;
+          overflow: hidden;
+          font-size: 16px;
+          font-weight: 600;
+          letter-spacing: 1px;
+          pointer-events: auto;
           cursor: pointer;
-        }
+          border: none;
+          border-radius: 30px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
-        &:hover {
-          box-shadow: 0 20px 40px rgb(0 0 0 / 40%);
-          transform: translateY(-6px) scale(1.05);
-        }
-
-        &.primary.el-button--primary {
-          color: #0a0a1a;
-          background:
-            radial-gradient(
-              circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-              rgb(255 255 255 / 50%),
-              transparent
-            ),
-            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-          box-shadow: 0 4px 15px rgb(96 165 250 / 40%);
-
-          &::before {
-            position: absolute;
-            top: 0;
-            left: -100%;
-            z-index: 1;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            content: "";
-            background: linear-gradient(
-              90deg,
-              transparent,
-              rgb(255 255 255 / 40%),
-              transparent
-            );
-            transition: 0.6s;
+          :deep(span) {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            cursor: pointer;
           }
 
           &:hover {
-            box-shadow: 0 12px 30px rgb(96 165 250 / 60%);
-
-            &::before {
-              left: 100%;
-            }
+            box-shadow: 0 20px 40px rgb(0 0 0 / 40%);
+            transform: translateY(-6px) scale(1.05);
           }
-        }
 
-        &.secondary.el-button {
-          color: #fff;
-          background:
-            radial-gradient(
-              circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-              rgb(255 255 255 / 30%),
-              transparent
-            ),
-            rgb(255 255 255 / 10%);
-          border: 2px solid rgb(255 255 255 / 30%);
-          backdrop-filter: blur(10px);
-
-          &:hover {
+          &.primary.el-button--primary {
+            color: #0a0a1a;
             background:
               radial-gradient(
                 circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-                rgb(255 255 255 / 40%),
+                rgb(255 255 255 / 50%),
                 transparent
               ),
-              rgb(255 255 255 / 20%);
-            border-color: rgb(255 255 255 / 60%);
+              linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            box-shadow: 0 4px 15px rgb(96 165 250 / 40%);
+
+            &::before {
+              position: absolute;
+              top: 0;
+              left: -100%;
+              z-index: 1;
+              width: 100%;
+              height: 100%;
+              pointer-events: none;
+              content: "";
+              background: linear-gradient(
+                90deg,
+                transparent,
+                rgb(255 255 255 / 40%),
+                transparent
+              );
+              transition: 0.6s;
+            }
+
+            &:hover {
+              box-shadow: 0 12px 30px rgb(96 165 250 / 60%);
+
+              &::before {
+                left: 100%;
+              }
+            }
+          }
+
+          &.secondary.el-button {
+            color: #fff;
+            background:
+              radial-gradient(
+                circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgb(255 255 255 / 30%),
+                transparent
+              ),
+              rgb(255 255 255 / 10%);
+            border: 2px solid rgb(255 255 255 / 30%);
+            backdrop-filter: blur(10px);
+
+            &:hover {
+              background:
+                radial-gradient(
+                  circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                  rgb(255 255 255 / 40%),
+                  transparent
+                ),
+                rgb(255 255 255 / 20%);
+              border-color: rgb(255 255 255 / 60%);
+            }
           }
         }
       }
@@ -2977,18 +2862,21 @@ const handleCommand = (command: string) => {
 
 .section-title {
   color: transparent;
-  background: linear-gradient(270deg, #60a5fa, #a78bfa, #f472b6, #60a5fa);
+  -webkit-background-clip: text;
   background-clip: text;
+  background-image: linear-gradient(270deg, #60a5fa, #a78bfa, #f472b6, #60a5fa);
   background-size: 300% 300%;
   animation: gradientFlow 8s ease infinite;
 }
 
 .main-title {
   color: transparent;
-  background: linear-gradient(270deg, #fff, #60a5fa, #a78bfa, #fff);
+  -webkit-background-clip: text;
   background-clip: text;
+  background-image: linear-gradient(270deg, #fff, #60a5fa, #a78bfa, #fff);
   background-size: 300% 300%;
   animation: gradientFlow 6s ease infinite;
+  will-change: background-position;
 }
 
 /* 图标缩放效果 */
