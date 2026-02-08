@@ -171,7 +171,18 @@
           <competition :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'classroom'">
-          <classroom-3d />
+          <div
+            style="
+              padding: 20px;
+              background: red;
+              color: white;
+              position: relative;
+              z-index: 9999;
+            "
+          >
+            Testing Classroom Render: activeMenu is {{ activeMenu }}
+          </div>
+          <Classroom3D />
         </div>
         <div v-else-if="activeMenu === 'home'">
           <!-- 快速入口卡片 -->
