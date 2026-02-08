@@ -22,8 +22,9 @@ const envTexture = textureLoader.load(
     tex.mapping = THREE.EquirectangularReflectionMapping;
     tex.colorSpace = THREE.SRGBColorSpace;
     scene.background = tex;
-    scene.environment = tex;
-    scene.backgroundBlurriness = 0.05; // 轻微模糊背景突出主体
+    // 极致优化：移除了 scene.environment = tex;
+    // 不再让场景内所有物体实时采样环境图，大幅降低着色器计算压力
+    scene.backgroundBlurriness = 0; // 关闭背景模糊
   }
 );
 
@@ -38,8 +39,9 @@ camera.position.set(0, 1.15, -4.9);
 
 const renderer = new THREE.WebGLRenderer({
   antialias: false,
-  alpha: true,
-  powerPreference: "high-performance"
+  alpha: false, // 极致优化：关闭 Alpha 通道，减少合成开销
+  powerPreference: "high-performance",
+  precision: "lowp" // 强制低精度着色器计算
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 // 极致优化：统一像素比为 1.0，大幅减轻 GPU 填充率压力
@@ -67,27 +69,15 @@ controls.update();
 const fixedCameraPos = new THREE.Vector3(0, 1.2, -4.4);
 let isLocked = true; // 视角锁定状态
 
-// 灯光设置
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); // 提高环境光强度以补偿移除的点光源
+// 灯光设置 - 极致性能优化：
+// 由于教室内所有物体已切换为 MeshBasicMaterial，不再受灯光影响。
+// 仅保留最基础的灯光供 VRM 模型（如果它们使用标准材质）使用。
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // 提高强度到 1.0
 scene.add(ambientLight);
 
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8); // 提高半球光模拟天空散射
-hemiLight.position.set(0, 20, 0);
-scene.add(hemiLight);
-
-// 窗户侧补光（模拟窗外散射光，增加真实室内光照层次）
-const fillLight = new THREE.DirectionalLight(0xfff0dd, 0.4);
-fillLight.position.set(-8, 6, -5);
-fillLight.castShadow = false; // 补光不投射阴影
-scene.add(fillLight);
-
-// 极致优化：移除了教室内所有点光源 (PointLight) 和点光源补光。
-// 它们对 GPU 负载贡献很大。
-
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // 调整主灯强度
-directionalLight.position.set(5, 12, 8);
-directionalLight.castShadow = false; // 彻底关闭阴影计算
-scene.add(directionalLight);
+// 彻底移除了 HemisphereLight, DirectionalLight 等复杂光源
+// 这能显著减少 WebGL 内部的光照循环计算压力
 
 // --- 创建教室背景 ---
 createClassroom(scene);
@@ -321,7 +311,7 @@ loadVRM(
 
 const clock = new THREE.Clock();
 let lastFrameTime = 0;
-const targetFPS = 20; // 极致优化：限制在 20 帧，大幅减少每秒刷新频率，是降低 GPU 并发计算的关键
+const targetFPS = 18; // 进一步降低帧率至 18，最大限度降低 GPU 活跃时长
 const frameInterval = 1 / targetFPS;
 
 // 视锥体剔除工具
@@ -329,16 +319,11 @@ const frustum = new THREE.Frustum();
 const projScreenMatrix = new THREE.Matrix4();
 
 /**
- * 检查模型是否在视野内（手动剔除以节省 CPU）
+ * 检查模型是否在视野内（手动剔除以节省 CPU/GPU）
+ * 优化：不再重复更新矩阵，使用外部传入的矩阵
  */
-function isVisible(vrm) {
+function isVisible(vrm, frustum) {
   if (!vrm || !vrm.scene) return false;
-  camera.updateMatrixWorld();
-  projScreenMatrix.multiplyMatrices(
-    camera.projectionMatrix,
-    camera.matrixWorldInverse
-  );
-  frustum.setFromProjectionMatrix(projScreenMatrix);
   return frustum.intersectsObject(vrm.scene);
 }
 
@@ -409,24 +394,34 @@ function animate() {
     camera.position.copy(fixedCameraPos);
     controls.target.set(0, 1.15, -10);
   }
-  controls.update();
+  // 极致优化：全由上面逻辑控制，移除外部重复调用
+  // controls.update();
 
-  // 更新老师动画（仅在视野范围内更新以节省 CPU）
+  // 预计算视锥体（每一帧只计算一次）
+  camera.updateMatrixWorld();
+  projScreenMatrix.multiplyMatrices(
+    camera.projectionMatrix,
+    camera.matrixWorldInverse
+  );
+  frustum.setFromProjectionMatrix(projScreenMatrix);
+
+  // 更新老师动画（仅在视野范围内更新）
   if (teacherVRM) {
-    if (isVisible(teacherVRM)) {
+    if (isVisible(teacherVRM, frustum)) {
       teacherVRM.scene.visible = true;
-      teacherVRM.update(deltaTime);
+      // 极致优化：不再调用 vrm.update(deltaTime)，因为它会处理极其吃资源的 SpringBone 物理
+      // 如果需要表情更新，可以手动调用表情管理器，否则直接跳过物理。
       applyIdleAnimation(teacherVRM, time);
     } else {
       teacherVRM.scene.visible = false;
     }
   }
 
-  // 更新学生动画（仅在视野范围内更新以节省 CPU）
+  // 更新学生动画（仅在视野范围内更新）
   studentVRMs.forEach(vrm => {
-    if (isVisible(vrm)) {
+    if (isVisible(vrm, frustum)) {
       vrm.scene.visible = true;
-      vrm.update(deltaTime);
+      // 同样跳过 vrm.update(deltaTime)
       applyIdleAnimation(vrm, time);
     } else {
       vrm.scene.visible = false;

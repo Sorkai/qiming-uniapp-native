@@ -14,11 +14,9 @@ export function createClassroom(scene) {
   const H = 3.5; // 高度 (Y)
 
   // ====== 材质定义 ======
-  const wallMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    side: THREE.DoubleSide,
-    roughness: 0.9, // 哑光墙面
-    metalness: 0.0
+  const wallMat = new THREE.MeshBasicMaterial({
+    color: 0xf5f5f5, // 稍微调低纯白，模拟灯光感
+    side: THREE.FrontSide
   }); // 白色墙壁
   const floorMat = createFloorMaterial(); // 带网格的地板
 
@@ -26,7 +24,8 @@ export function createClassroom(scene) {
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, 0, -D / 2);
-  floor.receiveShadow = true;
+  // renderer.shadowMap.enabled 为 false 时，这里的 shadow 属性无效，但显式清理更好
+  floor.receiveShadow = false;
   floor.castShadow = false;
   classroom.add(floor);
 
@@ -67,8 +66,8 @@ export function createClassroom(scene) {
   // ====== 窗户光照效果 ======
   createWindowLights(scene, W, H, D);
 
-  // ====== 阳光光束 (God Rays) ======
-  createSunBeams(classroom, W, H, D);
+  // ====== 阳光光束 (God Rays) 已移除以节省流量/GPU ======
+  // createSunBeams(classroom, W, H, D);
 
   // ====== 柜子（右墙靠后方） ======
   createCabinet(classroom, W, D);
@@ -106,6 +105,12 @@ export function createClassroom(scene) {
   // ====== 360度天空围幕（已移除，改为 main.js 中的 scene.background/environment） ======
   // createSkySurround(classroom, W, D);
 
+  // 极致性能优化：教室内所有物体都是静态的，关闭它们的矩阵自动更新
+  classroom.traverse(obj => {
+    obj.matrixAutoUpdate = false;
+    obj.updateMatrix();
+  });
+
   scene.add(classroom);
   return classroom;
 }
@@ -135,7 +140,7 @@ function createSkySurround(parent, W, D) {
     tex.colorSpace = THREE.SRGBColorSpace;
     const plane = new THREE.Mesh(
       new THREE.PlaneGeometry(skyW, skyH),
-      new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
+      new THREE.MeshBasicMaterial({ map: tex, side: THREE.FrontSide })
     );
     plane.rotation.y = s.ry;
     plane.position.set(s.px, s.py, s.pz);
@@ -156,7 +161,7 @@ function addBaseboards(parent, W, H, D) {
   barkTex.wrapT = THREE.RepeatWrapping;
   barkTex.repeat.set(12, 1);
 
-  const bbMat = new THREE.MeshStandardMaterial({
+  const bbMat = new THREE.MeshBasicMaterial({
     map: barkTex,
     color: 0x4d3227,
     roughness: 0.8,
@@ -184,12 +189,12 @@ function addBaseboards(parent, W, H, D) {
  */
 function addCeilingLamps(parent, W, H, D) {
   const lampGroup = new THREE.Group();
-  const lampMat = new THREE.MeshStandardMaterial({
+  const lampMat = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     emissive: 0xffffff,
     emissiveIntensity: 0.8
   });
-  const housingMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  const housingMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
 
   const rows = 3;
   const cols = 2;
@@ -251,12 +256,11 @@ function createFloorMaterial() {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(6, 5);
+  texture.anisotropy = 1;
 
-  return new THREE.MeshStandardMaterial({
+  return new THREE.MeshBasicMaterial({
     map: texture,
-    roughness: 0.15, // 降低粗糙度，增加大理石质感和反射
-    metalness: 0.2, // 略微增加金属属性以增强环境贴图反射
-    emissive: 0x000000 // 移除自发光，靠光照渲染
+    color: 0xeeeeee // 稍微降低亮度
   });
 }
 
@@ -276,21 +280,21 @@ function createCeilingTiles(parent, W, H, D) {
   );
   texB.colorSpace = THREE.SRGBColorSpace;
 
-  const matA = new THREE.MeshStandardMaterial({
+  const matA = new THREE.MeshBasicMaterial({
     map: texA,
     color: 0xffffff,
     emissive: 0x444444, // 降低自发光以提升性能
     roughness: 0.85,
     metalness: 0.0,
-    side: THREE.DoubleSide
+    side: THREE.FrontSide
   });
-  const matB = new THREE.MeshStandardMaterial({
+  const matB = new THREE.MeshBasicMaterial({
     map: texB,
     color: 0xffffff,
     emissive: 0x444444,
     roughness: 0.85,
     metalness: 0.0,
-    side: THREE.DoubleSide
+    side: THREE.FrontSide
   });
 
   const tileSize = 0.6;
@@ -356,13 +360,13 @@ function createCeilingMaterial() {
   // 减少重复次数，让格子的纹理更明显
   texture.repeat.set(4, 4);
 
-  return new THREE.MeshStandardMaterial({
+  return new THREE.MeshBasicMaterial({
     map: texture,
     color: 0xcccccc, // 降低基础亮度，防止过曝
     emissive: 0x111111, // 大幅降低自发光，仅保留阴影处的可见性
     roughness: 0.8,
     metalness: 0.2,
-    side: THREE.DoubleSide
+    side: THREE.FrontSide
   });
 }
 
@@ -436,8 +440,8 @@ function createBlackboard(parent, D) {
   frameWoodTex.wrapT = THREE.RepeatWrapping;
   frameWoodTex.repeat.set(4, 1);
 
-  const boardMat = new THREE.MeshStandardMaterial({ color: 0x2d5016 }); // 深绿色
-  const frameMat = new THREE.MeshStandardMaterial({
+  const boardMat = new THREE.MeshBasicMaterial({ color: 0x2d5016 }); // 深绿色
+  const frameMat = new THREE.MeshBasicMaterial({
     map: frameWoodTex,
     color: 0x8b7355,
     roughness: 0.6,
@@ -485,7 +489,7 @@ function createBlackboard(parent, D) {
 
       const texPlane = new THREE.Mesh(
         new THREE.PlaneGeometry(texW, texH),
-        new THREE.MeshStandardMaterial({
+        new THREE.MeshBasicMaterial({
           map: texture,
           transparent: true,
           roughness: 0.8
@@ -549,7 +553,7 @@ function createBlackboard(parent, D) {
   const widgetW = widgetH * (404 / 603);
   const widgetPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(widgetW, widgetH),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshBasicMaterial({
       map: scheduleTex,
       transparent: true,
       roughness: 0.8
@@ -594,7 +598,7 @@ function createSmartDisplay(parent, D) {
   const centerX = 0;
 
   // 屏幕外壳
-  const shellMat = new THREE.MeshStandardMaterial({
+  const shellMat = new THREE.MeshBasicMaterial({
     color: 0x111111,
     roughness: 0.2,
     metalness: 0.8
@@ -612,9 +616,9 @@ function createSmartDisplay(parent, D) {
     "/textures/ac1f6785-8a67-40b3-8283-b0d9f4479b8e.png"
   );
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 16;
-
-  const screenMat = new THREE.MeshStandardMaterial({
+  texture.anisotropy = 1; // 降低各向异性过滤
+  texture.minFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false; // 极致优化：不生成 Mipmaps，减少显存占用和生成开销
     map: texture,
     emissive: 0xffffff,
     emissiveMap: texture,
@@ -642,7 +646,7 @@ function createPodium(parent, D) {
   podWoodTex.wrapT = THREE.RepeatWrapping;
   podWoodTex.repeat.set(2, 2);
 
-  const podMat = new THREE.MeshStandardMaterial({
+  const podMat = new THREE.MeshBasicMaterial({
     map: podWoodTex,
     color: 0xf2ead3,
     roughness: 0.6,
@@ -655,7 +659,7 @@ function createPodium(parent, D) {
   platformBarkTex.wrapT = THREE.RepeatWrapping;
   platformBarkTex.repeat.set(8, 2);
 
-  const platformMat = new THREE.MeshStandardMaterial({
+  const platformMat = new THREE.MeshBasicMaterial({
     map: platformBarkTex,
     color: 0x8b4513,
     roughness: 0.8,
@@ -759,7 +763,7 @@ function createPodium(parent, D) {
   const bigBookGeo = new THREE.BoxGeometry(0.25, 0.08, 0.35);
   const bigBook = new THREE.Mesh(
     bigBookGeo,
-    new THREE.MeshStandardMaterial({ color: 0x8b0000 })
+    new THREE.MeshBasicMaterial({ color: 0x8b0000 })
   );
   bigBook.position.set(-0.4, 0.04, 0);
   podiumStuff.add(bigBook);
@@ -778,13 +782,13 @@ function createDesksAndChairs(parent, D) {
   woodTex.wrapT = THREE.RepeatWrapping;
   woodTex.repeat.set(2, 2);
 
-  const deskMat = new THREE.MeshStandardMaterial({
+  const deskMat = new THREE.MeshBasicMaterial({
     map: woodTex,
     roughness: 0.6,
     metalness: 0.05
   });
-  const legMat = new THREE.MeshStandardMaterial({ color: 0x888888 }); // 金属灰
-  const chairMat = new THREE.MeshStandardMaterial({ color: 0x4a90d9 }); // 蓝色椅面
+  const legMat = new THREE.MeshBasicMaterial({ color: 0x888888 }); // 金属灰
+  const chairMat = new THREE.MeshBasicMaterial({ color: 0x4a90d9 }); // 蓝色椅面
 
   const columns = 3;
   const rows = 4;
@@ -816,7 +820,7 @@ function createDesksAndChairs(parent, D) {
     totalDesks * 2
   );
   const deskLegInst = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(0.02, 0.02, 0.72, 8),
+    new THREE.BoxGeometry(0.04, 0.72, 0.04), // 将圆柱腿改为方腿，减少顶点数
     legMat,
     totalDesks * 4
   );
@@ -826,7 +830,7 @@ function createDesksAndChairs(parent, D) {
     totalDesks
   );
   const chairLegInst = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(0.015, 0.015, 0.42, 8),
+    new THREE.BoxGeometry(0.03, 0.42, 0.03), // 将圆柱腿改为方腿
     legMat,
     totalDesks * 4
   );
@@ -902,8 +906,8 @@ function createDesksAndChairs(parent, D) {
       dummy.updateMatrix();
       chairBackInst.setMatrixAt(idx, dummy.matrix);
 
-      // 文具依然使用普通 Mesh（因为比较少且有随机性）
-      addStationeryToDeskManual(parent, x, z, 0.735);
+      // 极致优化：移除了所有小物件（文具、书籍等）以减少渲染批次
+      // addStationeryToDeskManual(parent, x, z, 0.735);
 
       idx++;
     }
@@ -938,7 +942,7 @@ function addStationeryToDeskManual(parent, x, z, surfaceY) {
   for (let i = 0; i < numBooks; i++) {
     const book = new THREE.Mesh(
       new THREE.BoxGeometry(0.18, 0.02, 0.24),
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshBasicMaterial({
         color: bookColors[Math.floor(Math.random() * bookColors.length)],
         roughness: 0.8
       })
@@ -950,7 +954,7 @@ function addStationeryToDeskManual(parent, x, z, surfaceY) {
   // 笔使用极简几何体
   const pen = new THREE.Mesh(
     new THREE.BoxGeometry(0.01, 0.01, 0.15),
-    new THREE.MeshStandardMaterial({ color: 0x222222 })
+    new THREE.MeshBasicMaterial({ color: 0x222222 })
   );
   pen.rotation.z = 0.5;
   pen.position.set(0.1, surfaceY + 0.01, 0.15);
@@ -964,14 +968,14 @@ function addStationeryToDeskManual(parent, x, z, surfaceY) {
  */
 function createLeftWallWithWindows(parent, W, H, D, wallMat) {
   const group = new THREE.Group();
-  const windowMat = new THREE.MeshStandardMaterial({
+  const windowMat = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     transparent: true,
     opacity: 0.15, // 降低不透明度，使玻璃更轻薄
     roughness: 0.1,
     metalness: 0
   });
-  const frameMat = new THREE.MeshStandardMaterial({
+  const frameMat = new THREE.MeshBasicMaterial({
     color: 0xf0f0f0,
     roughness: 0.2,
     metalness: 0.8
@@ -1021,7 +1025,7 @@ function createLeftWallWithWindows(parent, W, H, D, wallMat) {
     new THREE.MeshBasicMaterial({
       map: landTex,
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide
     })
   );
   landPlane.rotation.y = Math.PI / 2;
@@ -1064,7 +1068,7 @@ function createLeftWallWithWindows(parent, W, H, D, wallMat) {
   sillTex.wrapS = THREE.RepeatWrapping;
   sillTex.wrapT = THREE.RepeatWrapping;
   sillTex.repeat.set(2, 1);
-  const sillMat = new THREE.MeshStandardMaterial({
+  const sillMat = new THREE.MeshBasicMaterial({
     map: sillTex,
     roughness: 0.2,
     metalness: 0.1
@@ -1110,7 +1114,7 @@ function createLeftWallWithWindows(parent, W, H, D, wallMat) {
     for (let j = 0; j < colCount; j++) {
       const col = new THREE.Mesh(
         new THREE.BoxGeometry(0.08, radH, 0.08),
-        new THREE.MeshStandardMaterial({ color: 0xffffff })
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
       );
       col.position.z = (j - (colCount - 1) / 2) * (radW / colCount);
       radiatorGroup.add(col);
@@ -1152,13 +1156,13 @@ function createRightWall(parent, W, H, D, wallMat) {
     "/textures/DF1A392A-2EBA-4432-BFEB-762A09D3F832_4_5005_c.jpeg"
   );
   doorTex.colorSpace = THREE.SRGBColorSpace;
-  const doorMat = new THREE.MeshStandardMaterial({
+  const doorMat = new THREE.MeshBasicMaterial({
     map: doorTex,
     roughness: 0.6,
     metalness: 0.05
   });
-  const frameMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
-  const glassMat = new THREE.MeshStandardMaterial({
+  const frameMat = new THREE.MeshBasicMaterial({ color: 0xf0f0f0 });
+  const glassMat = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     transparent: true,
     opacity: 0.15,
@@ -1229,7 +1233,7 @@ function createRightWall(parent, W, H, D, wallMat) {
   sillTex.wrapT = THREE.RepeatWrapping;
   sillTex.repeat.set(3, 1);
 
-  const sillMat = new THREE.MeshStandardMaterial({
+  const sillMat = new THREE.MeshBasicMaterial({
     map: sillTex,
     roughness: 0.2,
     metalness: 0.1
@@ -1256,7 +1260,7 @@ function createRightWall(parent, W, H, D, wallMat) {
   sideGlass2.position.z = -5.0 - winW / 2;
   group.add(sideGlass2);
 
-  const winExtenMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
+  const winExtenMat = new THREE.MeshBasicMaterial({ color: 0xeeeeee });
   const winTop = new THREE.Mesh(
     new THREE.BoxGeometry(winDepth + 0.01, 0.05, winW + 0.01),
     winExtenMat
@@ -1293,7 +1297,7 @@ function createRightWall(parent, W, H, D, wallMat) {
     new THREE.MeshBasicMaterial({
       map: landTexR,
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide
     })
   );
   landPlaneR.rotation.y = -Math.PI / 2;
@@ -1394,7 +1398,7 @@ function createWindowLights(scene, W, H, D) {
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    side: THREE.DoubleSide
+    side: THREE.FrontSide
   });
 
   const beamH = 8.0;
@@ -1470,7 +1474,7 @@ function createCabinet(parent, W, D) {
   texBase.wrapS = THREE.RepeatWrapping;
   texBase.wrapT = THREE.RepeatWrapping;
   texBase.repeat.set(8, 2);
-  const baseMat = new THREE.MeshStandardMaterial({
+  const baseMat = new THREE.MeshBasicMaterial({
     map: texBase,
     color: 0xddccbb,
     roughness: 0.7
@@ -1482,19 +1486,19 @@ function createCabinet(parent, W, D) {
   texDoor.wrapS = THREE.RepeatWrapping;
   texDoor.wrapT = THREE.RepeatWrapping;
   texDoor.repeat.set(1, 1);
-  const doorMat = new THREE.MeshStandardMaterial({
+  const doorMat = new THREE.MeshBasicMaterial({
     map: texDoor,
     color: 0xffffff,
     roughness: 0.45,
-    side: THREE.DoubleSide
+    side: THREE.FrontSide
   });
 
-  const lockMat = new THREE.MeshStandardMaterial({
+  const lockMat = new THREE.MeshBasicMaterial({
     color: 0x95a5a6,
     metalness: 0.3,
     roughness: 0.5
   });
-  const frameMat = new THREE.MeshStandardMaterial({
+  const frameMat = new THREE.MeshBasicMaterial({
     color: 0x665544,
     roughness: 0.8
   });
@@ -1588,7 +1592,7 @@ function createBackBlackboard(parent, W, D) {
   const boardH = 1.2;
   const boardY = 2.4; // 位于柜子 (max H=1.8) 之上
 
-  const frameMat = new THREE.MeshStandardMaterial({
+  const frameMat = new THREE.MeshBasicMaterial({
     color: 0x8b7355,
     roughness: 0.6
   }); // 木质边框
@@ -1618,7 +1622,7 @@ function createBackBlackboard(parent, W, D) {
 
   const boardBgTex = new THREE.CanvasTexture(boardBgCanvas);
 
-  const boardMat = new THREE.MeshStandardMaterial({
+  const boardMat = new THREE.MeshBasicMaterial({
     map: boardBgTex,
     roughness: 0.9
   });
@@ -1663,11 +1667,11 @@ function createBackBlackboard(parent, W, D) {
   const titleTex = new THREE.CanvasTexture(titleCanvas);
   const titlePlane = new THREE.Mesh(
     new THREE.PlaneGeometry(2.2, 0.35),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshBasicMaterial({
       map: titleTex,
       transparent: true,
       roughness: 0.8,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide
     })
   );
   titlePlane.position.set(0, boardY + boardH / 2 - 0.25, -0.035);
@@ -1733,11 +1737,11 @@ function createBackBlackboard(parent, W, D) {
   const dutyTex = new THREE.CanvasTexture(dutyCanvas);
   const dutyPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(0.9, 0.9),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshBasicMaterial({
       map: dutyTex,
       transparent: true,
       roughness: 0.8,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide
     })
   );
   dutyPlane.position.set(-3.0, boardY - 0.1, -0.035);
@@ -1753,7 +1757,7 @@ function createBackBlackboard(parent, W, D) {
     [-2.6, boardY - 0.5]
   ];
   pinPositions.forEach(([px, py], idx) => {
-    const pinMat = new THREE.MeshStandardMaterial({
+    const pinMat = new THREE.MeshBasicMaterial({
       color: pinColors[idx % pinColors.length],
       metalness: 0.3,
       roughness: 0.4
@@ -1810,11 +1814,11 @@ function createBackBlackboard(parent, W, D) {
   const honorTex = new THREE.CanvasTexture(honorCanvas);
   const honorPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(0.9, 0.9),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshBasicMaterial({
       map: honorTex,
       transparent: true,
       roughness: 0.8,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide
     })
   );
   honorPlane.position.set(-1.5, boardY - 0.1, -0.035);
@@ -1828,7 +1832,7 @@ function createBackBlackboard(parent, W, D) {
   ].forEach(([px, py], idx) => {
     const pin = new THREE.Mesh(
       new THREE.SphereGeometry(0.025, 8, 8),
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshBasicMaterial({
         color: pinColors[(idx + 2) % pinColors.length],
         metalness: 0.3,
         roughness: 0.4
@@ -1944,11 +1948,11 @@ function createBackBlackboard(parent, W, D) {
   const artTex = new THREE.CanvasTexture(artCanvas);
   const artPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(0.9, 0.9),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshBasicMaterial({
       map: artTex,
       transparent: true,
       roughness: 0.8,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide
     })
   );
   artPlane.position.set(1.5, boardY - 0.1, -0.035);
@@ -1962,7 +1966,7 @@ function createBackBlackboard(parent, W, D) {
   ].forEach(([px, py], idx) => {
     const pin = new THREE.Mesh(
       new THREE.SphereGeometry(0.025, 8, 8),
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshBasicMaterial({
         color: pinColors[(idx + 1) % pinColors.length],
         metalness: 0.3,
         roughness: 0.4
@@ -2016,11 +2020,11 @@ function createBackBlackboard(parent, W, D) {
   const noticeTex = new THREE.CanvasTexture(noticeCanvas);
   const noticePlane = new THREE.Mesh(
     new THREE.PlaneGeometry(0.9, 0.9),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshBasicMaterial({
       map: noticeTex,
       transparent: true,
       roughness: 0.8,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide
     })
   );
   noticePlane.position.set(3.0, boardY - 0.1, -0.035);
@@ -2036,7 +2040,7 @@ function createBackBlackboard(parent, W, D) {
   ].forEach(([px, py], idx) => {
     const pin = new THREE.Mesh(
       new THREE.SphereGeometry(0.025, 8, 8),
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshBasicMaterial({
         color: pinColors[idx % pinColors.length],
         metalness: 0.3,
         roughness: 0.4
@@ -2084,11 +2088,11 @@ function createBackBlackboard(parent, W, D) {
   const decorTex = new THREE.CanvasTexture(decorCanvas);
   const decorPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(boardW - 0.2, 0.12),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshBasicMaterial({
       map: decorTex,
       transparent: true,
       roughness: 0.8,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide
     })
   );
   decorPlane.position.set(0, boardY + boardH / 2 - 0.08, -0.035);
@@ -2151,25 +2155,25 @@ function createSinglePlant() {
   const group = new THREE.Group();
 
   // 花盆
-  const potMat = new THREE.MeshStandardMaterial({ color: 0xb5651d });
+  const potMat = new THREE.MeshBasicMaterial({ color: 0xb5651d });
   const pot = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, 0.14, 0.3, 8),
+    new THREE.CylinderGeometry(0.18, 0.14, 0.3, 5), // 降低段数
     potMat
   );
   pot.position.y = 0.15;
   group.add(pot);
 
   // 泥土
-  const soilMat = new THREE.MeshStandardMaterial({ color: 0x5a3a1a });
+  const soilMat = new THREE.MeshBasicMaterial({ color: 0x5a3a1a });
   const soil = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.17, 0.17, 0.04, 8),
+    new THREE.CylinderGeometry(0.17, 0.17, 0.04, 5), // 降低段数
     soilMat
   );
   soil.position.y = 0.31;
   group.add(soil);
 
-  // 叶子（使用几个球体模拟卡通绿植球）
-  const leafMat = new THREE.MeshStandardMaterial({ color: 0x3a8c3f });
+  // 叶子（极致简化：使用四面体模拟绿植）
+  const leafMat = new THREE.MeshBasicMaterial({ color: 0x3a8c3f });
   const leafPositions = [
     [0, 0.55, 0, 0.18],
     [-0.1, 0.48, 0.08, 0.12],
@@ -2177,7 +2181,7 @@ function createSinglePlant() {
     [0, 0.65, 0.05, 0.1]
   ];
   leafPositions.forEach(([lx, ly, lz, r]) => {
-    const leaf = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), leafMat);
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(r, 5, 4), leafMat); // 极致简化面数
     leaf.position.set(lx, ly, lz);
     group.add(leaf);
   });
@@ -2194,13 +2198,13 @@ function createDutyRoster(parent, W, D) {
   const zPos = -2.5; // 挪到后门与飘窗之间的实墙上，避免挂在玻璃上
 
   // 值日表底板
-  const boardMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  const boardMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const board = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.7, 0.5), boardMat);
   board.position.set(wallX, 1.6, zPos);
   group.add(board);
 
   // 标题区域（红色横条）
-  const titleMat = new THREE.MeshStandardMaterial({ color: 0xcc3333 });
+  const titleMat = new THREE.MeshBasicMaterial({ color: 0xcc3333 });
   const title = new THREE.Mesh(
     new THREE.BoxGeometry(0.05, 0.1, 0.48),
     titleMat
@@ -2209,7 +2213,7 @@ function createDutyRoster(parent, W, D) {
   group.add(title);
 
   // 表格线条（横线）
-  const lineMat = new THREE.MeshStandardMaterial({ color: 0x999999 });
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0x999999 });
   for (let i = 0; i < 5; i++) {
     const line = new THREE.Mesh(
       new THREE.BoxGeometry(0.052, 0.005, 0.48),
@@ -2233,7 +2237,7 @@ function createClock(parent, D) {
   const clockZ = -D + 0.03;
 
   // 钟面
-  const faceMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  const faceMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const face = new THREE.Mesh(
     new THREE.CylinderGeometry(0.25, 0.25, 0.03, 32),
     faceMat
@@ -2243,7 +2247,7 @@ function createClock(parent, D) {
   group.add(face);
 
   // 钟框
-  const rimMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  const rimMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
   const rim = new THREE.Mesh(
     new THREE.TorusGeometry(0.25, 0.02, 8, 32),
     rimMat
@@ -2252,7 +2256,7 @@ function createClock(parent, D) {
   group.add(rim);
 
   // 指针材质
-  const handMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+  const handMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
 
   // 时针
   const hourGeom = new THREE.BoxGeometry(0.02, 0.12, 0.01);
@@ -2271,13 +2275,13 @@ function createClock(parent, D) {
   // 秒针
   const secondGeom = new THREE.BoxGeometry(0.005, 0.22, 0.005);
   secondGeom.translate(0, 0.11, 0);
-  const secondMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+  const secondMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
   const second = new THREE.Mesh(secondGeom, secondMat);
   second.position.set(centerX, centerY, clockZ + 0.04);
   group.add(second);
 
   // 中心点
-  const centerMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  const centerMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
   const center = new THREE.Mesh(
     new THREE.SphereGeometry(0.02, 8, 8),
     centerMat
@@ -2347,7 +2351,7 @@ function createSchoolMotto(parent, D) {
 
     for (let i = 0; i < layers; i++) {
       const isFront = i === layers - 1;
-      const material = new THREE.MeshStandardMaterial({
+      const material = new THREE.MeshBasicMaterial({
         map: texture,
         transparent: true,
         color: isFront ? 0xffffff : 0x880000,
@@ -2385,7 +2389,7 @@ function createBookshelf(parent, W, D) {
   shelfWoodTex.wrapT = THREE.RepeatWrapping;
   shelfWoodTex.repeat.set(1, 2);
 
-  const shelfMat = new THREE.MeshStandardMaterial({
+  const shelfMat = new THREE.MeshBasicMaterial({
     map: shelfWoodTex,
     color: 0xeeeeee,
     roughness: 0.5,
@@ -2472,7 +2476,7 @@ function fillShelfWithBooks(group, yPos, shelfW, shelfD) {
 
   for (let i = 0; i < bookCount; i++) {
     const color = colors[Math.floor(Math.random() * colors.length)];
-    const bookMat = new THREE.MeshStandardMaterial({
+    const bookMat = new THREE.MeshBasicMaterial({
       color: color,
       roughness: 0.7, // 降低反光，增加纸质感
       metalness: 0.1
@@ -2491,7 +2495,7 @@ function fillShelfWithBooks(group, yPos, shelfW, shelfD) {
     group.add(book);
 
     // 书脊加一个深金色的标签，模拟烫金工艺
-    const spineMat = new THREE.MeshStandardMaterial({
+    const spineMat = new THREE.MeshBasicMaterial({
       color: 0xc5a059, // 深金色/古铜色
       metalness: 0.5,
       roughness: 0.3
@@ -2511,8 +2515,8 @@ function fillShelfWithBooks(group, yPos, shelfW, shelfD) {
  */
 function addBroadcasters(parent, W, D) {
   const group = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0 }); // 浅灰色外壳
-  const grillMat = new THREE.MeshStandardMaterial({ color: 0x444444 }); // 深灰色网罩
+  const bodyMat = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 }); // 浅灰色外壳
+  const grillMat = new THREE.MeshBasicMaterial({ color: 0x444444 }); // 深灰色网罩
 
   const createSpeaker = x => {
     const sGroup = new THREE.Group();
@@ -2558,7 +2562,7 @@ function createWaterDispenser(parent, D) {
   const group = new THREE.Group();
 
   // 1. 底座柜子
-  const baseMat = new THREE.MeshStandardMaterial({
+  const baseMat = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     roughness: 0.3
   });
@@ -2609,7 +2613,7 @@ function createWaterDispenser(parent, D) {
   group.add(ring2);
 
   // 4. 出水口和接水槽
-  const grayMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+  const grayMat = new THREE.MeshBasicMaterial({ color: 0xcccccc });
   const tray = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.02, 0.15), grayMat);
   tray.position.set(0, 1.0, 0.15);
   group.add(tray);
