@@ -50,13 +50,23 @@ export default [
     }
   },
   {
+    path: "/course/classroom",
+    name: "CourseClassroom",
+    component: () => import("@/views/course/classroom/index.vue"),
+    meta: {
+      icon: "ri:community-line",
+      title: "3D虚拟教室",
+      rank: 8
+    }
+  },
+  {
     path: "/course/discussion",
     name: "CourseDiscussion",
     redirect: "/course/discussion/review",
     meta: {
       icon: "ri:discuss-line",
       title: "讨论管理",
-      rank: 8,
+      rank: 9,
       roles: ["admin", "teacher"]
     },
     children: [
