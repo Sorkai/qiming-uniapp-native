@@ -906,25 +906,25 @@ const features = ref([
 
 const services = ref([
   {
-    icon: "书",
+    icon: IconBook,
     title: "精品课程",
     description: "名师打造的系统化课程体系，覆盖K12全学科",
     features: ["名师授课", "体系完整", "实时更新", "互动练习"]
   },
   {
-    icon: "AI",
+    icon: IconRobot,
     title: "AI 辅导",
     description: "智能 AI 助教 24 小时在线，随时解答学习疑惑",
     features: ["即时答疑", "错题分析", "知识讲解", "学习规划"]
   },
   {
-    icon: "作",
+    icon: IconEdit,
     title: "智能作业",
     description: "AI 智能批改作业，秒出结果，精准定位问题",
     features: ["自动批改", "错因分析", "针对训练", "进度追踪"]
   },
   {
-    icon: "档",
+    icon: IconGraduation,
     title: "成长档案",
     description: "全程记录学习轨迹，见证每一步成长",
     features: ["学习记录", "能力图谱", "成长报告", "荣誉勋章"]
