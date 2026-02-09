@@ -1118,7 +1118,7 @@ const handleCommand = (command: string) => {
   }
 
   50% {
-    box-shadow: 0 25px 50px rgb(167 139 250 / 25%);
+    box-shadow: 0 25px 50px rgb(96 165 250 / 25%);
     transform: translateY(-8px);
   }
 }
@@ -1196,7 +1196,7 @@ const handleCommand = (command: string) => {
   }
 
   50% {
-    filter: drop-shadow(0 0 15px rgb(167 139 250 / 80%));
+    filter: drop-shadow(0 0 15px rgb(96 165 250 / 80%));
   }
 }
 
@@ -1211,8 +1211,8 @@ const handleCommand = (command: string) => {
 
   50% {
     box-shadow:
-      0 0 15px #a78bfa,
-      0 0 30px #a78bfa;
+      0 0 15px #60a5fa,
+      0 0 30px #60a5fa;
   }
 }
 
@@ -1849,9 +1849,7 @@ const handleCommand = (command: string) => {
     .stat-number {
       font-size: 36px;
       font-weight: 800;
-      background: #60a5fa;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #60a5fa;
       transition: transform 0.3s;
     }
 
@@ -2163,7 +2161,7 @@ const handleCommand = (command: string) => {
           background: linear-gradient(
             135deg,
             rgb(96 165 250 / 10%) 0%,
-            rgb(139 92 246 / 10%) 100%
+            rgb(96 165 250 / 5%) 100%
           );
           border-color: rgb(96 165 250 / 20%);
           transform: translate(-50%, -50%);
@@ -2615,7 +2613,7 @@ const handleCommand = (command: string) => {
       background: linear-gradient(
         145deg,
         rgb(96 165 250 / 10%) 0%,
-        rgb(167 139 250 / 10%) 100%
+        rgb(96 165 250 / 5%) 100%
       );
       border-color: rgb(96 165 250 / 50%);
       box-shadow: 0 15px 30px rgb(96 165 250 / 20%);
@@ -2699,7 +2697,7 @@ const handleCommand = (command: string) => {
         rgb(20 20 20 / 60%) 0%,
         rgb(10 10 10 / 80%) 100%
       );
-      border-color: rgb(167 139 250 / 40%);
+      border-color: rgb(96 165 250 / 40%);
       box-shadow: 0 25px 50px rgb(96 165 250 / 15%);
       transform: translateY(-10px) rotateX(3deg);
 
@@ -2725,7 +2723,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover .quote-icon {
-      color: #a78bfa;
+      color: #60a5fa;
       opacity: 1;
       transform: scale(1.1);
     }
@@ -3173,22 +3171,11 @@ const handleCommand = (command: string) => {
 }
 
 .section-title {
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  background-image: linear-gradient(270deg, #60a5fa, #a78bfa, #f472b6, #60a5fa);
-  background-size: 300% 300%;
-  animation: gradientFlow 8s ease infinite;
+  color: #60a5fa;
 }
 
 .main-title {
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  background-image: linear-gradient(270deg, #fff, #60a5fa, #a78bfa, #fff);
-  background-size: 300% 300%;
-  animation: gradientFlow 6s ease infinite;
-  will-change: background-position;
+  color: #fff;
 
   .art-logo-img {
     height: 1.2em;
@@ -3272,7 +3259,7 @@ const handleCommand = (command: string) => {
     width: 0;
     height: 2px;
     content: "";
-    background: linear-gradient(90deg, #60a5fa, #a78bfa);
+    background: #60a5fa;
     transform: translateX(-50%);
     transition: all 0.3s ease;
   }
@@ -3375,9 +3362,9 @@ const handleCommand = (command: string) => {
       padding: 8px 20px;
       margin-bottom: 24px;
       font-size: 14px;
-      color: #a78bfa;
-      background: rgb(167 139 250 / 10%);
-      border: 1px solid rgb(167 139 250 / 30%);
+      color: #60a5fa;
+      background: rgb(96 165 250 / 10%);
+      border: 1px solid rgb(96 165 250 / 30%);
       border-radius: 30px;
       
     }
