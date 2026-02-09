@@ -59,14 +59,16 @@ export function setToken(data: DataInfo<Date>) {
 
   expires > 0
     ? Cookies.set(TokenKey, cookieString, {
-        expires: (expires - Date.now()) / 86400000
+        expires: (expires - Date.now()) / 86400000,
+        path: "/"
       })
-    : Cookies.set(TokenKey, cookieString);
+    : Cookies.set(TokenKey, cookieString, { path: "/" });
 
   // 确保 multipleTabsKey cookie 总是被设置，默认7天过期
   // 这样可以避免登录后立即被路由守卫检测到状态不一致而退出
   Cookies.set(multipleTabsKey, "true", {
-    expires: isRemembered ? loginDay : 7
+    expires: isRemembered ? loginDay : 7,
+    path: "/"
   });
 
   function setUserKey({
@@ -130,8 +132,8 @@ export function setToken(data: DataInfo<Date>) {
 
 /** 删除`token`以及key值为`user-info`的localStorage信息 */
 export function removeToken() {
-  Cookies.remove(TokenKey);
-  Cookies.remove(multipleTabsKey);
+  Cookies.remove(TokenKey, { path: "/" });
+  Cookies.remove(multipleTabsKey, { path: "/" });
   storageLocal().removeItem(userKey);
 
   // 清除持久化的 UI 状态

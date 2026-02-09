@@ -517,7 +517,6 @@ import IconTrophy from "@/assets/home-icons/trophy.svg?component";
 import IconGraduation from "@/assets/home-icons/graduation.svg?component";
 import IconCrystal from "@/assets/home-icons/crystal.svg?component";
 
-
 const router = useRouter();
 const isScrolled = ref(false);
 const starlightCanvas = ref<HTMLCanvasElement | null>(null);
@@ -580,12 +579,18 @@ const handleLoginSuccess = async () => {
   await initRouter();
 
   // 登录成功后自动跳转到相应页面
-  // 重新获取最新的用户信息
+  // 获取最新的登录状态和用户信息
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
-  const roleType = info?.roleType;
+  const token = getToken();
+
+  // 获取角色信息：优先从 info 中获取
+  const roleType =
+    info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
+
+  console.log("[Login Success] 登录成功，正在准备跳转, roleType:", roleType);
 
   // 角色类型判断：2:教师 3:管理员，跳转到管理后台；其他跳转到个人中心
-  if (roleType === 2 || roleType === 3) {
+  if (Number(roleType) === 2 || Number(roleType) === 3) {
     router.push("/welcome/index");
   } else {
     router.push("/account");
@@ -797,7 +802,7 @@ const initStarlightAnimation = () => {
         ctx.shadowColor = "#60a5fa";
       });
 
-      starlightAnimationId = requestAnimationFrame(animate);
+      // starlightAnimationId = requestAnimationFrame(animate);
     };
 
     animate();
@@ -1784,7 +1789,7 @@ const handleCommand = (command: string) => {
   transform: translateX(-50%);
 
   .scroll-arrow .el-icon.animated {
-    animation: bounce 2s infinite;
+    /* animation: bounce 2s infinite; */
   }
 }
 
@@ -2036,7 +2041,7 @@ const handleCommand = (command: string) => {
       position: absolute;
       border: 1px solid rgb(96 165 250 / 10%);
       border-radius: 50%;
-      animation: rotateOrbit 20s linear infinite;
+      /* animation: rotateOrbit 20s linear infinite; */
 
       &.orbit-1 {
         inset: 0;
@@ -2044,13 +2049,13 @@ const handleCommand = (command: string) => {
 
       &.orbit-2 {
         inset: 50px;
-        animation-duration: 25s;
+        /* animation-duration: 25s; */
         animation-direction: reverse;
       }
 
       &.orbit-3 {
         inset: 100px;
-        animation-duration: 30s;
+        /* animation-duration: 30s; */
       }
     }
   }
@@ -2807,7 +2812,7 @@ const handleCommand = (command: string) => {
       position: absolute;
       background: #fff;
       border-radius: 50%;
-      animation: twinkle ease-in-out infinite;
+      /* animation: twinkle ease-in-out infinite; */
     }
   }
 
@@ -3355,7 +3360,7 @@ const handleCommand = (command: string) => {
       position: absolute;
       background: #fff;
       border-radius: 50%;
-      animation: twinkle ease-in-out infinite;
+      /* animation: twinkle ease-in-out infinite; */
     }
   }
 
@@ -3584,5 +3589,4 @@ const handleCommand = (command: string) => {
 .tech-icon {
   color: #60a5fa;
 }
-
 </style>
