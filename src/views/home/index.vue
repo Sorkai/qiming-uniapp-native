@@ -54,10 +54,15 @@
       </div>
     </div>
 
-    <!-- 英雄区域 - Spline 3D 背景 (boxes_hover) -->
+    <!-- 英雄区域 - 背景图片 -->
     <div class="banner">
-      <canvas id="canvas3d" class="spline-canvas" />
-
+      <div class="banner-bg" :style="{ backgroundImage: `url(${bannerPhoto})` }" />
+      <!-- 右下角署名 -->
+      <div class="banner-signature">
+        <p>长春工业大学</p>
+        <p>计算机科学与工程学院</p>
+        <p>吉林省云创迅捷软件开发有限公司</p>
+      </div>
       <div class="banner-overlay">
         <div class="carousel-text">
           <div class="hero-badge">AI 深度融合的智慧教育平台</div>
@@ -102,7 +107,7 @@
       <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
         <path
           d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,80 1440,60 L1440,120 L0,120 Z"
-          fill="#000"
+          fill="#0f172a"
         />
       </svg>
     </div>
@@ -457,7 +462,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
-import { Application } from "@splinetool/runtime";
 import {
   Monitor,
   Connection,
@@ -481,6 +485,7 @@ import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
 import artisticText from "@/assets/816438ed-a33a-4477-b57e-e273e15c03aa.png";
+import bannerPhoto from "@/assets/bannerphoto.png";
 import LoginDialog from "@/components/LoginDialog.vue";
 
 const router = useRouter();
@@ -774,15 +779,8 @@ onMounted(() => {
   window.addEventListener("mousemove", handleMouseMove);
   setTimeout(initScrollAnimations, 100);
 
-  // 初始化 Spline 3D 背景
+  // 使用 IntersectionObserver 延迟加载星光汇聚动画
   nextTick(() => {
-    const canvas = document.getElementById("canvas3d") as HTMLCanvasElement;
-    if (canvas) {
-      const app = new Application(canvas);
-      app.load("https://prod.spline.design/l75l8JHhRQVSloLP/scene.splinecode");
-    }
-
-    // 使用 IntersectionObserver 延迟加载星光汇聚动画
     const observer = new IntersectionObserver(
       entries => {
         entries.forEach(entry => {
@@ -1397,7 +1395,7 @@ const handleCommand = (command: string) => {
   width: 100%;
   min-height: 100vh;
   color: #fff;
-  background-color: #000;
+  background: linear-gradient(180deg, #000 0%, #0f172a 15%, #1e293b 100%);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -1475,7 +1473,7 @@ const handleCommand = (command: string) => {
       .nav-link {
         font-size: 15px;
         font-weight: 500;
-        color: rgb(255 255 255 / 80%);
+        color: #000;
         text-decoration: none;
         cursor: pointer;
         transition: all 0.3s;
@@ -1532,16 +1530,35 @@ const handleCommand = (command: string) => {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background-color: #000;
+  background: linear-gradient(180deg, #000 0%, #0f172a 15%, #1e293b 100%);
 
-  .spline-canvas {
+  .banner-bg {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100vw !important;
-    height: 100% !important;
-    display: block;
-    outline: none;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .banner-signature {
+    position: absolute;
+    right: 40px;
+    bottom: 80px;
+    z-index: 10;
+    text-align: right;
+    font-family: "FangSong", "仿宋", STFangsong, serif;
+
+    p {
+      margin: 0;
+      padding: 4px 0;
+      font-size: 16px;
+      color: rgb(255 255 255 / 80%);
+      text-shadow: 0 2px 4px rgb(0 0 0 / 50%);
+      letter-spacing: 2px;
+    }
   }
 
   .banner-overlay {
@@ -1560,10 +1577,17 @@ const handleCommand = (command: string) => {
     .carousel-text {
       position: relative;
       z-index: 3;
-      width: 100%;
-      max-width: 1000px;
-      padding: 0 80px;
+      display: inline-block;
+      width: auto;
+      max-width: fit-content;
+      padding: 32px 48px;
       pointer-events: auto;
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 
       .hero-badge {
         display: inline-block;
@@ -1748,7 +1772,7 @@ const handleCommand = (command: string) => {
 
 .stats-section {
   padding: 30px 0;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .stats-container {
     box-sizing: border-box;
@@ -1845,7 +1869,7 @@ const handleCommand = (command: string) => {
   position: relative;
   padding: 80px 0;
   overflow: hidden;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .ai-power-container {
     display: flex;
@@ -2008,7 +2032,7 @@ const handleCommand = (command: string) => {
 .transition-image-section {
   padding: 80px 0;
   overflow: hidden;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .transition-content {
     box-sizing: border-box;
@@ -2282,7 +2306,7 @@ const handleCommand = (command: string) => {
 .platform-intro {
   position: relative;
   padding: 50px 0;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .feature-list {
     display: grid;
@@ -2395,7 +2419,7 @@ const handleCommand = (command: string) => {
   .parallax-bg {
     position: absolute;
     inset: 0;
-    background: #000;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
   }
 
   .transition-overlay {
@@ -2435,7 +2459,7 @@ const handleCommand = (command: string) => {
 
 .services-section {
   padding: 50px 0;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .services-grid {
     display: grid;
@@ -2551,7 +2575,7 @@ const handleCommand = (command: string) => {
 .tech-section {
   position: relative;
   padding: 50px 0;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .tech-grid {
     display: grid;
@@ -2634,7 +2658,7 @@ const handleCommand = (command: string) => {
 
 .testimonials-section {
   padding: 50px 0;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .testimonials-grid {
     display: grid;
@@ -2748,7 +2772,7 @@ const handleCommand = (command: string) => {
   padding: 40px 0;
   overflow: hidden;
   text-align: center;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .cta-stars {
     position: absolute;
@@ -2860,7 +2884,7 @@ const handleCommand = (command: string) => {
 
 .footer-section {
   padding: 50px 0 30px;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .footer-container {
     max-width: 1300px;
@@ -3281,7 +3305,7 @@ const handleCommand = (command: string) => {
   width: 100%;
   height: 400px;
   overflow: hidden;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 }
 
 .starlight-canvas {
@@ -3313,7 +3337,7 @@ const handleCommand = (command: string) => {
   min-height: 500px;
   padding: 80px 0;
   overflow: hidden;
-  background: #000;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .cta-bg-stars {
     position: absolute;
