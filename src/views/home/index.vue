@@ -56,7 +56,10 @@
 
     <!-- 英雄区域 - 背景图片 -->
     <div class="banner">
-      <div class="banner-bg" :style="{ backgroundImage: `url(${bannerPhoto})` }" />
+      <div
+        class="banner-bg"
+        :style="{ backgroundImage: `url(${bannerPhoto})` }"
+      />
       <!-- 右下角署名 -->
       <div class="banner-signature">
         <p>长春工业大学</p>
@@ -67,7 +70,11 @@
         <div class="carousel-text">
           <div class="hero-badge">AI 深度融合的智慧教育平台</div>
           <h2 class="main-title">
-            启明智教<img :src="artisticText" class="art-logo-img" alt="Intelledu" />
+            启明智教<img
+              :src="artisticText"
+              class="art-logo-img"
+              alt="Intelledu"
+            />
           </h2>
           <p class="sub-title">智慧教育新纪元</p>
           <p class="hero-desc">
@@ -116,7 +123,7 @@
     <div id="stats" class="stats-section">
       <div class="stats-container">
         <div v-for="(stat, index) in statsData" :key="index" class="stat-card">
-          <div class="stat-icon">{{ stat.icon }}</div>
+          <div class="stat-icon"><component :is="stat.icon" /></div>
           <div class="stat-number">{{ stat.number }}</div>
           <div class="stat-label">{{ stat.label }}</div>
         </div>
@@ -141,7 +148,7 @@
               :key="index"
               class="ai-feature-card"
             >
-              <div class="ai-icon">{{ item.icon }}</div>
+              <div class="ai-icon"><component :is="item.icon" /></div>
               <h3>{{ item.title }}</h3>
               <p>{{ item.description }}</p>
               <div class="ai-glow" />
@@ -252,7 +259,7 @@
             :key="index"
             class="service-card"
           >
-            <div class="service-icon">{{ service.icon }}</div>
+            <div class="service-icon"><component :is="service.icon" /></div>
             <h3 class="service-title">{{ service.title }}</h3>
             <p class="service-desc">{{ service.description }}</p>
             <ul class="service-features">
@@ -282,7 +289,7 @@
             :key="index"
             class="tech-card"
           >
-            <div class="tech-icon">{{ tech.icon }}</div>
+            <div class="tech-icon"><component :is="tech.icon" /></div>
             <div class="tech-name">{{ tech.name }}</div>
             <div class="tech-version">{{ tech.version }}</div>
           </div>
@@ -470,7 +477,8 @@ import {
   User,
   SwitchButton,
   Setting,
-  Check,Close
+  Check,
+  Close
 } from "@element-plus/icons-vue";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
@@ -487,6 +495,28 @@ import logo from "@/assets/logo.png";
 import artisticText from "@/assets/816438ed-a33a-4477-b57e-e273e15c03aa.png";
 import bannerPhoto from "@/assets/bannerphoto.png";
 import LoginDialog from "@/components/LoginDialog.vue";
+// 导入 SVG 图标组件
+import IconStudent from "@/assets/home-icons/student.svg?component";
+import IconTeacher from "@/assets/home-icons/teacher.svg?component";
+import IconBook from "@/assets/home-icons/book.svg?component";
+import IconStar from "@/assets/home-icons/star.svg?component";
+import IconBrain from "@/assets/home-icons/brain.svg?component";
+import IconTarget from "@/assets/home-icons/target.svg?component";
+import IconMessage from "@/assets/home-icons/message.svg?component";
+import IconChart from "@/assets/home-icons/chart.svg?component";
+import IconRobot from "@/assets/home-icons/robot.svg?component";
+import IconEdit from "@/assets/home-icons/edit.svg?component";
+import IconTrending from "@/assets/home-icons/trending.svg?component";
+import IconZap from "@/assets/home-icons/zap.svg?component";
+import IconRocket from "@/assets/home-icons/rocket.svg?component";
+import IconShield from "@/assets/home-icons/shield.svg?component";
+import IconSmartphone from "@/assets/home-icons/smartphone.svg?component";
+import IconGlobe from "@/assets/home-icons/globe.svg?component";
+import IconLightbulb from "@/assets/home-icons/lightbulb.svg?component";
+import IconTrophy from "@/assets/home-icons/trophy.svg?component";
+import IconGraduation from "@/assets/home-icons/graduation.svg?component";
+import IconCrystal from "@/assets/home-icons/crystal.svg?component";
+
 
 const router = useRouter();
 const isScrolled = ref(false);
@@ -824,30 +854,30 @@ const getCtaStarStyle = (index: number) => {
 };
 
 const statsData = ref([
-  { icon: "学", number: "1,000+", label: "预计注册学员" },
-  { icon: "师", number: "50+", label: "预计优秀教师" },
-  { icon: "课", number: "100+", label: "预计上线精品课程" },
-  { icon: "★", number: "98%+", label: "预计学员满意度" }
+  { icon: IconStudent, number: "1,000+", label: "预计注册学员" },
+  { icon: IconTeacher, number: "50+", label: "预计优秀教师" },
+  { icon: IconBook, number: "100+", label: "预计上线精品课程" },
+  { icon: IconStar, number: "98%+", label: "预计学员满意度" }
 ]);
 
 const aiFeatures = ref([
   {
-    icon: "AI",
+    icon: IconBrain,
     title: "智能学情分析",
     description: "AI 深度分析学习数据，精准定位知识薄弱点，生成个性化学习报告"
   },
   {
-    icon: "◎",
+    icon: IconTarget,
     title: "精准推荐系统",
     description: "基于深度学习算法，智能推荐最适合的学习内容和练习题目"
   },
   {
-    icon: "问",
+    icon: IconMessage,
     title: "AI 智能助教",
     description: "24小时在线答疑，智能解析错题，提供个性化学习建议"
   },
   {
-    icon: "图",
+    icon: IconChart,
     title: "实时学习追踪",
     description: "全方位追踪学习进度，可视化数据呈现，家长老师随时掌握"
   }
@@ -902,14 +932,14 @@ const services = ref([
 ]);
 
 const techStack = ref([
-  { icon: "AI", name: "多模态 AI", version: "大语言模型" },
-  { icon: "DL", name: "深度学习", version: "神经网络" },
-  { icon: "图", name: "知识图谱", version: "智能推荐" },
-  { icon: "V3", name: "Vue 3", version: "前端框架" },
-  { icon: "云", name: "云原生", version: "微服务架构" },
-  { icon: "安", name: "数据安全", version: "隐私保护" },
-  { icon: "端", name: "多端适配", version: "全平台覆盖" },
-  { icon: "边", name: "边缘计算", version: "低延迟响应" }
+  { icon: IconBrain, name: "多模态 AI", version: "大语言模型" },
+  { icon: IconCrystal, name: "深度学习", version: "神经网络" },
+  { icon: IconChart, name: "知识图谱", version: "智能推荐" },
+  { icon: IconZap, name: "Vue 3", version: "前端框架" },
+  { icon: IconRocket, name: "云原生", version: "微服务架构" },
+  { icon: IconShield, name: "数据安全", version: "隐私保护" },
+  { icon: IconSmartphone, name: "多端适配", version: "全平台覆盖" },
+  { icon: IconGlobe, name: "边缘计算", version: "低延迟响应" }
 ]);
 
 const testimonials = ref([
@@ -935,8 +965,6 @@ const testimonials = ref([
     avatar: "李"
   }
 ]);
-
-
 
 const competitors = ref([
   {
@@ -2187,20 +2215,17 @@ const handleCommand = (command: string) => {
         &.card-top-right {
           top: 20px;
           right: 30px;
-          
         }
 
         &.card-bottom-left {
           bottom: 20px;
           left: 30px;
-          
         }
 
         &.card-small {
           width: 60px;
           height: 60px;
           font-size: 28px;
-          
 
           &.card-1 {
             top: 10px;
@@ -3201,7 +3226,6 @@ const handleCommand = (command: string) => {
 .feature-item:hover,
 .service-card:hover,
 .testimonial-card:hover {
-  
 }
 
 /* 光标跟随光效 - 卡片上的光晕 */
@@ -3229,7 +3253,6 @@ const handleCommand = (command: string) => {
 
 /* 悬停时图标旋转 */
 .tech-card:hover .tech-icon {
-  
 }
 
 /* 轨道上的点发光 */
@@ -3241,11 +3264,9 @@ const handleCommand = (command: string) => {
 }
 
 .stat-card:hover .stat-number {
-  
 }
 
 .testimonial-card .quote-icon {
-  
 }
 
 /* 导航链接下划线动画 */
@@ -3270,11 +3291,9 @@ const handleCommand = (command: string) => {
 }
 
 .logo-img {
-  
 }
 
 .cta-section .el-button--primary {
-  
 }
 
 /* 页脚社交链接悬停 */
@@ -3366,7 +3385,6 @@ const handleCommand = (command: string) => {
       background: rgb(96 165 250 / 10%);
       border: 1px solid rgb(96 165 250 / 30%);
       border-radius: 30px;
-      
     }
 
     h2 {
@@ -3535,4 +3553,35 @@ const handleCommand = (command: string) => {
     }
   }
 }
+
+/* SVG 图标样式 */
+.stat-icon svg,
+.ai-icon svg,
+.service-icon svg,
+.tech-icon svg {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stat-icon {
+  color: #60a5fa;
+}
+
+.ai-icon {
+  color: #60a5fa;
+}
+
+.service-icon {
+  color: #60a5fa;
+}
+
+.tech-icon {
+  color: #60a5fa;
+}
+
 </style>
