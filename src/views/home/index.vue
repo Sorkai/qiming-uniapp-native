@@ -1553,11 +1553,12 @@ const handleCommand = (command: string) => {
 
     p {
       margin: 0;
-      padding: 4px 0;
-      font-size: 16px;
-      color: rgb(255 255 255 / 80%);
-      text-shadow: 0 2px 4px rgb(0 0 0 / 50%);
-      letter-spacing: 2px;
+      padding: 6px 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: #000;
+      text-shadow: none;
+      letter-spacing: 3px;
     }
   }
 
