@@ -121,18 +121,7 @@
     <!-- AI 赋能区域 -->
     <div id="ai-power" class="ai-power-section">
       <div class="section-container ai-power-container">
-        <!-- 左侧视频 -->
-        <div class="ai-video-left">
-          <video
-            :src="chipsetVideo"
-            autoplay
-            muted
-            loop
-            playsinline
-            class="chipset-video"
-          />
-        </div>
-        <!-- 右侧内容 -->
+        <!-- 内容区域 -->
         <div class="ai-content-right">
           <div class="section-header light">
             <span class="section-badge">AI POWERED</span>
@@ -238,18 +227,6 @@
               </div>
             </a>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 过渡区域2 -->
-    <div class="transition-section-2">
-      <div class="parallax-bg" />
-      <div class="transition-overlay">
-        <div class="big-quote">
-          <span class="quote-mark">"</span>
-          <p>教育的本质是点燃火焰，而非填满容器</p>
-          <span class="quote-author">—— 苏格拉底</span>
         </div>
       </div>
     </div>
@@ -489,7 +466,7 @@ import {
   User,
   SwitchButton,
   Setting,
-  Check
+  Check,Close
 } from "@element-plus/icons-vue";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
@@ -504,7 +481,6 @@ import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
 import artisticText from "@/assets/816438ed-a33a-4477-b57e-e273e15c03aa.png";
-import chipsetVideo from "@/assets/chipset.mp4";
 import LoginDialog from "@/components/LoginDialog.vue";
 
 const router = useRouter();
@@ -960,6 +936,70 @@ const testimonials = ref([
     title: "学生家长",
     avatar: "李"
   }
+]);
+
+
+
+const competitors = ref([
+  {
+    logo: "🏫",
+    name: "传统网校A",
+    isUs: false,
+    features: [
+      { name: "AI智能推荐", status: "no" },
+      { name: "个性化学习路径", status: "no" },
+      { name: "实时学情分析", status: "partial", value: "基础" },
+      { name: "智能错题本", status: "no" },
+      { name: "AI助教答疑", status: "no" }
+    ],
+    price: "¥2999/年"
+  },
+  {
+    logo: "📱",
+    name: "在线教育B",
+    isUs: false,
+    features: [
+      { name: "AI智能推荐", status: "partial", value: "基础" },
+      { name: "个性化学习路径", status: "no" },
+      { name: "实时学情分析", status: "yes" },
+      { name: "智能错题本", status: "partial", value: "手动" },
+      { name: "AI助教答疑", status: "no" }
+    ],
+    price: "¥1999/年"
+  },
+  {
+    logo: "✨",
+    name: "启明智教",
+    isUs: true,
+    features: [
+      { name: "AI智能推荐", status: "yes" },
+      { name: "个性化学习路径", status: "yes" },
+      { name: "实时学情分析", status: "yes" },
+      { name: "智能错题本", status: "yes" },
+      { name: "AI助教答疑", status: "yes" }
+    ],
+    price: "¥999/年"
+  },
+  {
+    logo: "🎓",
+    name: "教育平台C",
+    isUs: false,
+    features: [
+      { name: "AI智能推荐", status: "partial", value: "有限" },
+      { name: "个性化学习路径", status: "partial", value: "模板" },
+      { name: "实时学情分析", status: "yes" },
+      { name: "智能错题本", status: "yes" },
+      { name: "AI助教答疑", status: "partial", value: "机器人" }
+    ],
+    price: "¥2499/年"
+  }
+]);
+
+const advantages = ref([
+  { icon: "🚀", title: "性价比最高", desc: "同等功能，价格仅为竞品的1/3" },
+  { icon: "🧠", title: "AI深度融合", desc: "全链路AI赋能，真正的智能学习" },
+  { icon: "📊", title: "数据驱动", desc: "实时学情分析，精准定位问题" },
+  { icon: "💡", title: "个性化体验", desc: "千人千面，专属学习路径" }
 ]);
 
 const handleCommand = (command: string) => {
@@ -1812,22 +1852,6 @@ const handleCommand = (command: string) => {
     gap: 60px;
     align-items: center;
     justify-content: space-between;
-  }
-
-  .ai-video-left {
-    position: relative;
-    z-index: 2;
-    flex: 0 0 45%;
-    max-width: 550px;
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-
-    video {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
   }
 
   .ai-content-right {
@@ -3338,9 +3362,11 @@ const handleCommand = (command: string) => {
       font-size: 48px;
       font-weight: 700;
       line-height: 1.2;
-      color: #fff;background: linear-gradient(135deg, #fff0%, #60a5fa 50%, #a78bfa 100%);
+      color: #fff;
+      background: linear-gradient(135deg, #fff 0%, #60a5fa 50%, #a78bfa 100%);
       background-clip: text;
-      -webkit-text-fill-color: transparent;}
+      -webkit-text-fill-color: transparent;
+    }
 
     p {
       margin-bottom: 32px;
@@ -3409,7 +3435,8 @@ const handleCommand = (command: string) => {
         }
 
         &:hover {
-          color: #60a5fa;transform: translateX(5px);
+          color: #60a5fa;
+          transform: translateX(5px);
         }
       }
     }
