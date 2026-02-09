@@ -181,23 +181,23 @@
         <div class="transition-visual">
           <div class="visual-grid">
             <div class="grid-card card-large">
-              <div class="card-icon">🎓</div>
+              <div class="card-icon">学</div>
               <div class="card-title">智能学习</div>
               <div class="card-desc">AI 驱动的个性化学习路径</div>
             </div>
             <div class="grid-card card-medium card-top-right">
-              <div class="card-icon">📊</div>
+              <div class="card-icon">图</div>
               <div class="card-title">数据分析</div>
             </div>
             <div class="grid-card card-medium card-bottom-left">
-              <div class="card-icon">🏆</div>
+              <div class="card-icon">奖</div>
               <div class="card-title">成就系统</div>
             </div>
-            <div class="grid-card card-small card-1">📚</div>
-            <div class="grid-card card-small card-2">🚀</div>
-            <div class="grid-card card-small card-3">💡</div>
-            <div class="grid-card card-small card-4">🎯</div>
-            <div class="grid-card card-small card-5">⚡</div>
+            <div class="grid-card card-small card-1">书</div>
+            <div class="grid-card card-small card-2">速</div>
+            <div class="grid-card card-small card-3">智</div>
+            <div class="grid-card card-small card-4">准</div>
+            <div class="grid-card card-small card-5">快</div>
           </div>
           <div class="visual-glow" />
         </div>
@@ -333,7 +333,7 @@
       <div class="cta-layout">
         <!-- 左侧文字内容 -->
         <div class="cta-content-left">
-          <div class="cta-badge">✨ 开启新篇章</div>
+          <div class="cta-badge">开启新篇章</div>
           <h2>开启智慧学习之旅</h2>
           <p>立即加入，体验 AI 驱动的全新教育模式</p>
           <div class="cta-buttons">
@@ -343,9 +343,9 @@
             <el-button size="large" plain> 联系我们 </el-button>
           </div>
           <div class="cta-features">
-            <span><i>🚀</i> 快速上手</span>
-            <span><i>🎯</i> 精准学习</span>
-            <span><i>💡</i> 智能推荐</span>
+            <span><i>→</i> 快速上手</span>
+            <span><i>→</i> 精准学习</span>
+            <span><i>→</i> 智能推荐</span>
           </div>
         </div>
         <!-- 右侧星光汇聚 Logo -->
@@ -824,30 +824,30 @@ const getCtaStarStyle = (index: number) => {
 };
 
 const statsData = ref([
-  { icon: "👨‍🎓", number: "1,000+", label: "预计注册学员" },
-  { icon: "👩‍🏫", number: "50+", label: "预计优秀教师" },
-  { icon: "📚", number: "100+", label: "预计上线精品课程" },
-  { icon: "⭐", number: "98%+", label: "预计学员满意度" }
+  { icon: "学", number: "1,000+", label: "预计注册学员" },
+  { icon: "师", number: "50+", label: "预计优秀教师" },
+  { icon: "课", number: "100+", label: "预计上线精品课程" },
+  { icon: "★", number: "98%+", label: "预计学员满意度" }
 ]);
 
 const aiFeatures = ref([
   {
-    icon: "🧠",
+    icon: "AI",
     title: "智能学情分析",
     description: "AI 深度分析学习数据，精准定位知识薄弱点，生成个性化学习报告"
   },
   {
-    icon: "🎯",
+    icon: "◎",
     title: "精准推荐系统",
     description: "基于深度学习算法，智能推荐最适合的学习内容和练习题目"
   },
   {
-    icon: "💬",
+    icon: "问",
     title: "AI 智能助教",
     description: "24小时在线答疑，智能解析错题，提供个性化学习建议"
   },
   {
-    icon: "📊",
+    icon: "图",
     title: "实时学习追踪",
     description: "全方位追踪学习进度，可视化数据呈现，家长老师随时掌握"
   }
@@ -876,25 +876,25 @@ const features = ref([
 
 const services = ref([
   {
-    icon: "📖",
+    icon: "书",
     title: "精品课程",
     description: "名师打造的系统化课程体系，覆盖K12全学科",
     features: ["名师授课", "体系完整", "实时更新", "互动练习"]
   },
   {
-    icon: "🤖",
+    icon: "AI",
     title: "AI 辅导",
     description: "智能 AI 助教 24 小时在线，随时解答学习疑惑",
     features: ["即时答疑", "错题分析", "知识讲解", "学习规划"]
   },
   {
-    icon: "📝",
+    icon: "作",
     title: "智能作业",
     description: "AI 智能批改作业，秒出结果，精准定位问题",
     features: ["自动批改", "错因分析", "针对训练", "进度追踪"]
   },
   {
-    icon: "📈",
+    icon: "档",
     title: "成长档案",
     description: "全程记录学习轨迹，见证每一步成长",
     features: ["学习记录", "能力图谱", "成长报告", "荣誉勋章"]
@@ -902,14 +902,14 @@ const services = ref([
 ]);
 
 const techStack = ref([
-  { icon: "🧠", name: "多模态 AI", version: "大语言模型" },
-  { icon: "🔮", name: "深度学习", version: "神经网络" },
-  { icon: "📊", name: "知识图谱", version: "智能推荐" },
-  { icon: "⚡", name: "Vue 3", version: "前端框架" },
-  { icon: "🚀", name: "云原生", version: "微服务架构" },
-  { icon: "🔐", name: "数据安全", version: "隐私保护" },
-  { icon: "📱", name: "多端适配", version: "全平台覆盖" },
-  { icon: "🌐", name: "边缘计算", version: "低延迟响应" }
+  { icon: "AI", name: "多模态 AI", version: "大语言模型" },
+  { icon: "DL", name: "深度学习", version: "神经网络" },
+  { icon: "图", name: "知识图谱", version: "智能推荐" },
+  { icon: "V3", name: "Vue 3", version: "前端框架" },
+  { icon: "云", name: "云原生", version: "微服务架构" },
+  { icon: "安", name: "数据安全", version: "隐私保护" },
+  { icon: "端", name: "多端适配", version: "全平台覆盖" },
+  { icon: "边", name: "边缘计算", version: "低延迟响应" }
 ]);
 
 const testimonials = ref([
@@ -940,7 +940,7 @@ const testimonials = ref([
 
 const competitors = ref([
   {
-    logo: "🏫",
+    logo: "A",
     name: "传统网校A",
     isUs: false,
     features: [
@@ -953,7 +953,7 @@ const competitors = ref([
     price: "¥2999/年"
   },
   {
-    logo: "📱",
+    logo: "B",
     name: "在线教育B",
     isUs: false,
     features: [
@@ -966,7 +966,7 @@ const competitors = ref([
     price: "¥1999/年"
   },
   {
-    logo: "✨",
+    logo: "★",
     name: "启明智教",
     isUs: true,
     features: [
@@ -979,7 +979,7 @@ const competitors = ref([
     price: "¥999/年"
   },
   {
-    logo: "🎓",
+    logo: "C",
     name: "教育平台C",
     isUs: false,
     features: [
@@ -994,10 +994,10 @@ const competitors = ref([
 ]);
 
 const advantages = ref([
-  { icon: "🚀", title: "性价比最高", desc: "同等功能，价格仅为竞品的1/3" },
-  { icon: "🧠", title: "AI深度融合", desc: "全链路AI赋能，真正的智能学习" },
-  { icon: "📊", title: "数据驱动", desc: "实时学情分析，精准定位问题" },
-  { icon: "💡", title: "个性化体验", desc: "千人千面，专属学习路径" }
+  { icon: "→", title: "性价比最高", desc: "同等功能，价格仅为竞品的1/3" },
+  { icon: "AI", title: "AI深度融合", desc: "全链路AI赋能，真正的智能学习" },
+  { icon: "图", title: "数据驱动", desc: "实时学情分析，精准定位问题" },
+  { icon: "→", title: "个性化体验", desc: "千人千面，专属学习路径" }
 ]);
 
 const handleCommand = (command: string) => {
@@ -1491,7 +1491,7 @@ const handleCommand = (command: string) => {
       font-weight: 600;
       color: #0a0a1a;
       cursor: pointer;
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      background: #60a5fa;
       border: none;
       border-radius: 24px;
       transition: all 0.3s ease;
@@ -1687,7 +1687,7 @@ const handleCommand = (command: string) => {
                 rgb(255 255 255 / 50%),
                 transparent
               ),
-              linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+              #60a5fa;
             box-shadow: 0 4px 15px rgb(96 165 250 / 40%);
 
             &::before {
@@ -1843,13 +1843,13 @@ const handleCommand = (command: string) => {
     }
 
     &:hover .stat-icon {
-      transform: scale(1.3) rotateZ(15deg);
+      transform: scale(1.1);
     }
 
     .stat-number {
       font-size: 36px;
       font-weight: 800;
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      background: #60a5fa;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       transition: transform 0.3s;
@@ -1962,7 +1962,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover .ai-icon {
-      transform: scale(1.25) rotateY(20deg);
+      transform: scale(1.1);
     }
 
     h3 {
@@ -1973,7 +1973,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover h3 {
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      background: #60a5fa;
       background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -2189,20 +2189,20 @@ const handleCommand = (command: string) => {
         &.card-top-right {
           top: 20px;
           right: 30px;
-          animation: floatCard 5s ease-in-out infinite;
+          
         }
 
         &.card-bottom-left {
           bottom: 20px;
           left: 30px;
-          animation: floatCard 5s ease-in-out infinite 1.5s;
+          
         }
 
         &.card-small {
           width: 60px;
           height: 60px;
           font-size: 28px;
-          animation: floatCard 4s ease-in-out infinite;
+          
 
           &.card-1 {
             top: 10px;
@@ -2640,7 +2640,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover .tech-icon {
-      transform: scale(1.3) rotateY(180deg);
+      transform: scale(1.1);
     }
 
     .tech-name {
@@ -2750,7 +2750,7 @@ const handleCommand = (command: string) => {
         font-size: 20px;
         font-weight: 600;
         color: #0a0a1a;
-        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        background: #60a5fa;
         border-radius: 50%;
       }
 
@@ -2847,7 +2847,7 @@ const handleCommand = (command: string) => {
               rgb(255 255 255 / 50%),
               transparent
             ),
-            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            #60a5fa;
           border: none;
           box-shadow: 0 4px 15px rgb(96 165 250 / 40%);
 
@@ -3214,7 +3214,7 @@ const handleCommand = (command: string) => {
 .feature-item:hover,
 .service-card:hover,
 .testimonial-card:hover {
-  animation: float-shadow 3s ease-in-out infinite;
+  
 }
 
 /* 光标跟随光效 - 卡片上的光晕 */
@@ -3242,7 +3242,7 @@ const handleCommand = (command: string) => {
 
 /* 悬停时图标旋转 */
 .tech-card:hover .tech-icon {
-  animation: iconSpin 0.6s ease;
+  
 }
 
 /* 轨道上的点发光 */
@@ -3254,11 +3254,11 @@ const handleCommand = (command: string) => {
 }
 
 .stat-card:hover .stat-number {
-  animation: numberPop 0.4s ease;
+  
 }
 
 .testimonial-card .quote-icon {
-  animation: quoteFloat 4s ease-in-out infinite;
+  
 }
 
 /* 导航链接下划线动画 */
@@ -3283,11 +3283,11 @@ const handleCommand = (command: string) => {
 }
 
 .logo-img {
-  animation: logoBreathe 3s ease-in-out infinite;
+  
 }
 
 .cta-section .el-button--primary {
-  animation: borderGlow 2s ease-in-out infinite;
+  
 }
 
 /* 页脚社交链接悬停 */
@@ -3379,7 +3379,7 @@ const handleCommand = (command: string) => {
       background: rgb(167 139 250 / 10%);
       border: 1px solid rgb(167 139 250 / 30%);
       border-radius: 30px;
-      animation: float-shadow 3s ease-in-out infinite;
+      
     }
 
     h2 {
@@ -3388,9 +3388,7 @@ const handleCommand = (command: string) => {
       font-weight: 700;
       line-height: 1.2;
       color: #fff;
-      background: linear-gradient(135deg, #fff 0%, #60a5fa 50%, #a78bfa 100%);
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #fff;
     }
 
     p {
@@ -3419,7 +3417,7 @@ const handleCommand = (command: string) => {
 
         &.el-button--primary {
           color: #0a0a1a;
-          background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+          background: #60a5fa;
           border: none;
           box-shadow: 0 8px 25px rgb(96 165 250 / 40%);
 
