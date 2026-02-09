@@ -188,23 +188,23 @@
         <div class="transition-visual">
           <div class="visual-grid">
             <div class="grid-card card-large">
-              <div class="card-icon">学</div>
+              <div class="card-icon"><IconGraduation /></div>
               <div class="card-title">智能学习</div>
               <div class="card-desc">AI 驱动的个性化学习路径</div>
             </div>
             <div class="grid-card card-medium card-top-right">
-              <div class="card-icon">图</div>
+              <div class="card-icon"><IconChart /></div>
               <div class="card-title">数据分析</div>
             </div>
             <div class="grid-card card-medium card-bottom-left">
-              <div class="card-icon">奖</div>
+              <div class="card-icon"><IconTrophy /></div>
               <div class="card-title">成就系统</div>
             </div>
-            <div class="grid-card card-small card-1">书</div>
-            <div class="grid-card card-small card-2">速</div>
-            <div class="grid-card card-small card-3">智</div>
-            <div class="grid-card card-small card-4">准</div>
-            <div class="grid-card card-small card-5">快</div>
+            <div class="grid-card card-small card-1"><IconBook /></div>
+            <div class="grid-card card-small card-2"><IconZap /></div>
+            <div class="grid-card card-small card-3"><IconBrain /></div>
+            <div class="grid-card card-small card-4"><IconTarget /></div>
+            <div class="grid-card card-small card-5"><IconRocket /></div>
           </div>
           <div class="visual-glow" />
         </div>
@@ -3558,7 +3558,8 @@ const handleCommand = (command: string) => {
 .stat-icon svg,
 .ai-icon svg,
 .service-icon svg,
-.tech-icon svg {
+.tech-icon svg,
+.card-icon svg {
   width: 1em;
   height: 1em;
   fill: none;
