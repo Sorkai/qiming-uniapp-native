@@ -53,6 +53,15 @@ export default {
       }
     },
     {
+      path: "/exam-paper/question-bank",
+      name: "ExamPaperQuestionBank",
+      component: () => import("@/views/exam-paper/question-bank/index.vue"),
+      meta: {
+        title: "题库管理",
+        icon: "ri:database-2-line"
+      }
+    },
+    {
       path: "/exam-paper/editor",
       name: "ExamPaperEditor",
       component: () => import("@/views/exam-paper/editor/index.vue"),
