@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from "vue";
+import { ref, reactive, watch } from "vue";
 import { ElMessage } from "element-plus";
+import {
+  searchQuestionBank,
+  aiGenerateQuestion,
+  type QuestionBankItem
+} from "@/api/examPaper";
 
 const props = defineProps<{
   visible: boolean;
@@ -26,41 +31,25 @@ const aiSettings = reactive({
   polishMode: false
 });
 
-// Mock question bank data
-const questionBankList = ref([
-  {
-    id: 1,
-    type: "radio",
-    stem: "下列函数中,哪个是偶函数?",
-    options: [
-      { key: "A", content: "f(x) = x" },
-      { key: "B", content: "f(x) = x²" },
-      { key: "C", content: "f(x) = x³" },
-      { key: "D", content: "f(x) = 1/x" }
-    ],
-    correctAnswer: "B",
-    analysis: "偶函数满足 f(-x) = f(x),只有 f(x) = x² 满足此条件。",
-    knowledgePoints: ["函数", "偶函数"],
-    difficulty: "easy",
-    points: 5
-  }
-]);
+const questionBankList = ref<QuestionBankItem[]>([]);
+const questionBankLoading = ref(false);
 
-const filteredQuestionBank = computed(() => {
-  let list = questionBankList.value;
-  if (props.questionType) {
-    list = list.filter(q => q.type === props.questionType);
+const fetchQuestions = async () => {
+  questionBankLoading.value = true;
+  try {
+    const res = await searchQuestionBank({
+      keyword: searchKeyword.value,
+      type: props.questionType,
+      pageNum: 1,
+      pageSize: 50
+    });
+    if (res.code === 0) {
+      questionBankList.value = res.data.list;
+    }
+  } finally {
+    questionBankLoading.value = false;
   }
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase();
-    list = list.filter(
-      q =>
-        q.stem.toLowerCase().includes(keyword) ||
-        q.knowledgePoints?.some(kp => kp.toLowerCase().includes(keyword))
-    );
-  }
-  return list;
-});
+};
 
 const selectedQuestions = ref<number[]>([]);
 const aiGenerating = ref(false);
@@ -87,6 +76,7 @@ watch(
       selectedQuestions.value = [];
       aiGeneratedQuestions.value = [];
       aiSettings.polishMode = false;
+      fetchQuestions(); // 加载题库
 
       if (props.currentQuestion?.stem) {
         knowledgeInput.value = props.currentQuestion.stem;
@@ -101,6 +91,10 @@ watch(
     }
   }
 );
+
+watch(searchKeyword, () => {
+  fetchQuestions();
+});
 
 const getTypeName = (type: string) => {
   const types: Record<string, string> = {
@@ -160,47 +154,20 @@ const generateWithAI = async () => {
   aiGenerating.value = true;
   aiGeneratedQuestions.value = [];
   try {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    const generatedQuestions: any[] = [];
-    for (let i = 0; i < aiSettings.count; i++) {
-      const question: any = {
-        id: Date.now() + i,
-        type: aiSettings.questionType,
-        stem: `关于"${knowledgeInput.value}",以下说法正确的是?`,
-        analysis: "",
-        difficulty: aiSettings.difficulty
-      };
-      if (aiSettings.questionType === "radio") {
-        question.options = [
-          { key: "A", content: "选项A的内容" },
-          { key: "B", content: "选项B的内容" },
-          { key: "C", content: "选项C的内容" },
-          { key: "D", content: "选项D的内容" }
-        ];
-        question.correctAnswer = "A";
-        if (aiSettings.includeAnalysis) {
-          question.analysis = `本题考查${knowledgeInput.value}的相关知识点。`;
-        }
-      } else if (aiSettings.questionType === "checkbox") {
-        question.stem = `关于"${knowledgeInput.value}",以下说法正确的有?(多选)`;
-        question.options = [
-          { key: "A", content: "选项A的内容" },
-          { key: "B", content: "选项B的内容" },
-          { key: "C", content: "选项C的内容" },
-          { key: "D", content: "选项D的内容" }
-        ];
-        question.correctAnswers = ["A", "B"];
-      } else if (aiSettings.questionType === "input") {
-        question.stem = `请填写关于"${knowledgeInput.value}"的答案:____`;
-        question.blanks = [{ answer: "参考答案" }];
-      } else if (aiSettings.questionType === "textarea") {
-        question.stem = `请简述${knowledgeInput.value}的主要内容。`;
-        question.referenceAnswer = `${knowledgeInput.value}的主要内容包括...`;
-      }
-      generatedQuestions.push(question);
+    const res = await aiGenerateQuestion({
+      knowledgePoints: knowledgeInput.value,
+      questionType: aiSettings.questionType,
+      difficulty: aiSettings.difficulty,
+      count: aiSettings.count,
+      includeAnalysis: aiSettings.includeAnalysis,
+      polishMode: aiSettings.polishMode,
+      originalContent: aiSettings.polishMode ? knowledgeInput.value : undefined
+    });
+
+    if (res.code === 0) {
+      aiGeneratedQuestions.value = res.data;
+      ElMessage.success(`成功生成 ${res.data.length} 道题目`);
     }
-    aiGeneratedQuestions.value = generatedQuestions;
-    ElMessage.success(`成功生成 ${generatedQuestions.length} 道题目`);
   } catch {
     ElMessage.error("AI 生成失败,请重试");
   } finally {
@@ -282,9 +249,9 @@ const applyAllAIQuestions = () => {
             />
           </div>
 
-          <div class="question-list">
+          <div v-loading="questionBankLoading" class="question-list">
             <div
-              v-for="question in filteredQuestionBank"
+              v-for="question in questionBankList"
               :key="question.id"
               class="question-item"
               :class="{ selected: selectedQuestions.includes(question.id) }"
@@ -333,7 +300,10 @@ const applyAllAIQuestions = () => {
               </div>
             </div>
 
-            <div v-if="filteredQuestionBank.length === 0" class="empty-list">
+            <div
+              v-if="questionBankList.length === 0 && !questionBankLoading"
+              class="empty-list"
+            >
               <el-empty description="没有找到匹配的题目" :image-size="80" />
             </div>
           </div>

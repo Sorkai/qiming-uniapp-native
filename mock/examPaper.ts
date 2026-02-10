@@ -1,4 +1,4 @@
-import { MockMethod } from "vite-plugin-mock";
+import type { MockMethod } from "vite-plugin-mock";
 
 // 试卷状态枚举
 const PaperStatus = {
@@ -305,7 +305,8 @@ const mockPaperDetail = {
           questionType: QuestionType.ESSAY,
           title: "微分中值定理",
           stem: "请阐述拉格朗日中值定理的内容，并给出几何意义的解释。",
-          referenceAnswer: "拉格朗日中值定理：如果函数f(x)在闭区间[a,b]上连续，在开区间(a,b)内可导，则至少存在一点ξ∈(a,b)，使得f'(ξ) = [f(b)-f(a)]/(b-a)。",
+          referenceAnswer:
+            "拉格朗日中值定理：如果函数f(x)在闭区间[a,b]上连续，在开区间(a,b)内可导，则至少存在一点ξ∈(a,b)，使得f'(ξ) = [f(b)-f(a)]/(b-a)。",
           analysis: "需要完整阐述定理条件、结论和几何意义",
           points: 15,
           difficulty: 4,
@@ -326,14 +327,54 @@ const mockClasses = [
 
 // 模拟学生列表
 const mockStudents = [
-  { studentId: 1001, studentName: "张三", studentNo: "2021001001", className: "计算机科学2021级1班" },
-  { studentId: 1002, studentName: "李四", studentNo: "2021001002", className: "计算机科学2021级1班" },
-  { studentId: 1003, studentName: "王五", studentNo: "2021001003", className: "计算机科学2021级1班" },
-  { studentId: 1004, studentName: "赵六", studentNo: "2021001004", className: "计算机科学2021级2班" },
-  { studentId: 1005, studentName: "钱七", studentNo: "2021001005", className: "计算机科学2021级2班" },
-  { studentId: 1006, studentName: "孙八", studentNo: "2021002001", className: "软件工程2021级1班" },
-  { studentId: 1007, studentName: "周九", studentNo: "2021002002", className: "软件工程2021级1班" },
-  { studentId: 1008, studentName: "吴十", studentNo: "2021002003", className: "软件工程2021级2班" }
+  {
+    studentId: 1001,
+    studentName: "张三",
+    studentNo: "2021001001",
+    className: "计算机科学2021级1班"
+  },
+  {
+    studentId: 1002,
+    studentName: "李四",
+    studentNo: "2021001002",
+    className: "计算机科学2021级1班"
+  },
+  {
+    studentId: 1003,
+    studentName: "王五",
+    studentNo: "2021001003",
+    className: "计算机科学2021级1班"
+  },
+  {
+    studentId: 1004,
+    studentName: "赵六",
+    studentNo: "2021001004",
+    className: "计算机科学2021级2班"
+  },
+  {
+    studentId: 1005,
+    studentName: "钱七",
+    studentNo: "2021001005",
+    className: "计算机科学2021级2班"
+  },
+  {
+    studentId: 1006,
+    studentName: "孙八",
+    studentNo: "2021002001",
+    className: "软件工程2021级1班"
+  },
+  {
+    studentId: 1007,
+    studentName: "周九",
+    studentNo: "2021002002",
+    className: "软件工程2021级1班"
+  },
+  {
+    studentId: 1008,
+    studentName: "吴十",
+    studentNo: "2021002003",
+    className: "软件工程2021级2班"
+  }
 ];
 
 // 模拟答卷列表
@@ -631,7 +672,14 @@ export default [
     url: "/edu/backend/v1/paper/submission/list",
     method: "get",
     response: ({ query }: { query: any }) => {
-      const { pageNum = 1, pageSize = 10, paperId, submitStatus, gradeStatus, keyword } = query;
+      const {
+        pageNum = 1,
+        pageSize = 10,
+        paperId,
+        submitStatus,
+        gradeStatus,
+        keyword
+      } = query;
       let list = [...mockSubmissions];
       if (paperId) {
         list = list.filter(item => item.paperId === Number(paperId));
@@ -670,16 +718,32 @@ export default [
       return {
         code: 0,
         msg: "success",
-        data: submission? {
+        data: submission
+          ? {
               ...submission,
               answers: [
                 { questionId: 101, answer: "B", score: 4, isCorrect: true },
                 { questionId: 102, answer: "C", score: 4, isCorrect: true },
-                { questionId: 201, answer: ["A", "B", "D"], score: 5, isCorrect: true },
+                {
+                  questionId: 201,
+                  answer: ["A", "B", "D"],
+                  score: 5,
+                  isCorrect: true
+                },
                 { questionId: 301, answer: "A", score: 3, isCorrect: true },
                 { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
-                { questionId: 501, answer: "解题过程...", score: 8, comment: "正确" },
-                { questionId: 601, answer: "拉格朗日...", score: 12, comment: "完整" }
+                {
+                  questionId: 501,
+                  answer: "解题过程...",
+                  score: 8,
+                  comment: "正确"
+                },
+                {
+                  questionId: 601,
+                  answer: "拉格朗日...",
+                  score: 12,
+                  comment: "完整"
+                }
               ]
             }
           : null
@@ -730,7 +794,7 @@ export default [
     url: "/edu/frontend/v1/exam/list",
     method: "get",
     response: ({ query }: { query: any }) => {
-      const { pageNum = 1, pageSize = 10} = query;
+      const { pageNum = 1, pageSize = 10 } = query;
       const list = mockStudentExamList;
       const start = (pageNum - 1) * pageSize;
       const end = start + Number(pageSize);
@@ -774,7 +838,11 @@ export default [
     url: "/edu/frontend/v1/exam/submit",
     method: "post",
     response: () => {
-      return { code: 0, msg: "提交成功", data: { score: null, showScore: false } };
+      return {
+        code: 0,
+        msg: "提交成功",
+        data: { score: null, showScore: false }
+      };
     }
   },
 
@@ -789,18 +857,35 @@ export default [
       return {
         code: 0,
         msg: "success",
-        data: submission ? {
-          ...submission,
-          answers: [
-            { questionId: 101, answer: "B", score: 4, isCorrect: true },
-            { questionId: 102, answer: "C", score: 4, isCorrect: true },
-            { questionId: 201, answer: ["A", "B", "D"], score: 5, isCorrect: true },
-            { questionId: 301, answer: "A", score: 3, isCorrect: true },
-            { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
-            { questionId: 501, answer: "解题过程...", score: 8, comment: "正确" },
-            { questionId: 601, answer: "拉格朗日...", score: 12, comment: "完整" }
-          ]
-        } : null
+        data: submission
+          ? {
+              ...submission,
+              answers: [
+                { questionId: 101, answer: "B", score: 4, isCorrect: true },
+                { questionId: 102, answer: "C", score: 4, isCorrect: true },
+                {
+                  questionId: 201,
+                  answer: ["A", "B", "D"],
+                  score: 5,
+                  isCorrect: true
+                },
+                { questionId: 301, answer: "A", score: 3, isCorrect: true },
+                { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
+                {
+                  questionId: 501,
+                  answer: "解题过程...",
+                  score: 8,
+                  comment: "正确"
+                },
+                {
+                  questionId: 601,
+                  answer: "拉格朗日...",
+                  score: 12,
+                  comment: "完整"
+                }
+              ]
+            }
+          : null
       };
     }
   },
@@ -850,11 +935,41 @@ export default [
             { date: "2024-04", avgScore: 80, passRate: 88 }
           ],
           studentRanking: [
-            { rank: 1, name: "张三", studentId: "2024001", score: 98, trend: "up" },
-            { rank: 2, name: "李四", studentId: "2024002", score: 95, trend: "same" },
-            { rank: 3, name: "王五", studentId: "2024003", score: 93, trend: "up" },
-            { rank: 4, name: "赵六", studentId: "2024004", score: 91, trend: "down" },
-            { rank: 5, name: "钱七", studentId: "2024005", score: 89, trend: "up" }
+            {
+              rank: 1,
+              name: "张三",
+              studentId: "2024001",
+              score: 98,
+              trend: "up"
+            },
+            {
+              rank: 2,
+              name: "李四",
+              studentId: "2024002",
+              score: 95,
+              trend: "same"
+            },
+            {
+              rank: 3,
+              name: "王五",
+              studentId: "2024003",
+              score: 93,
+              trend: "up"
+            },
+            {
+              rank: 4,
+              name: "赵六",
+              studentId: "2024004",
+              score: 91,
+              trend: "down"
+            },
+            {
+              rank: 5,
+              name: "钱七",
+              studentId: "2024005",
+              score: 89,
+              trend: "up"
+            }
           ]
         }
       };
@@ -875,6 +990,396 @@ export default [
           { id: 3, name: "概率论" },
           { id: 4, name: "数据结构" },
           { id: 5, name: "算法设计与分析" }
+        ]
+      };
+    }
+  },
+
+  // ==================== 题目助手API ====================
+
+  // 搜索题库题目
+  {
+    url: "/edu/backend/v1/question-bank/search",
+    method: "get",
+    response: ({ query }: { query: any }) => {
+      const {
+        pageNum = 1,
+        pageSize = 10,
+        keyword,
+        type,
+        difficulty,
+        knowledgePoint
+      } = query;
+      const allQuestions = [
+        {
+          id: 1001,
+          type: "single_choice",
+          typeName: "单选题",
+          stem: "求极限 lim(x→0) sin(x)/x 的值为：",
+          options: [
+            { key: "A", content: "0" },
+            { key: "B", content: "1" },
+            { key: "C", content: "∞" },
+            { key: "D", content: "不存在" }
+          ],
+          correctAnswer: "B",
+          analysis: "这是一个重要极限，lim(x→0) sin(x)/x = 1",
+          knowledgePoints: ["极限与连续", "重要极限"],
+          difficulty: "easy",
+          difficultyName: "简单",
+          points: 4,
+          createTime: "2024-03-15 10:00:00",
+          useCount: 12
+        },
+        {
+          id: 1002,
+          type: "single_choice",
+          typeName: "单选题",
+          stem: "函数 f(x) = x³ 的导数 f'(x) 为：",
+          options: [
+            { key: "A", content: "x²" },
+            { key: "B", content: "2x²" },
+            { key: "C", content: "3x²" },
+            { key: "D", content: "3x" }
+          ],
+          correctAnswer: "C",
+          analysis: "根据幂函数求导公式，(x³)' = 3x²",
+          knowledgePoints: ["导数与微分", "求导公式"],
+          difficulty: "easy",
+          difficultyName: "简单",
+          points: 4,
+          createTime: "2024-03-16 14:00:00",
+          useCount: 8
+        },
+        {
+          id: 1003,
+          type: "multiple_choice",
+          typeName: "多选题",
+          stem: "下列关于连续函数的说法正确的是：",
+          options: [
+            { key: "A", content: "连续函数的和仍是连续函数" },
+            { key: "B", content: "连续函数的积仍是连续函数" },
+            { key: "C", content: "连续函数的商一定是连续函数" },
+            { key: "D", content: "连续函数的复合仍是连续函数" }
+          ],
+          correctAnswers: ["A", "B", "D"],
+          analysis: "连续函数的和、积、复合都是连续函数，但商在分母为0处不连续",
+          knowledgePoints: ["极限与连续", "连续函数"],
+          difficulty: "medium",
+          difficultyName: "中等",
+          points: 5,
+          createTime: "2024-03-17 09:00:00",
+          useCount: 6
+        },
+        {
+          id: 1004,
+          type: "true_false",
+          typeName: "判断题",
+          stem: "可导函数一定连续。",
+          options: [
+            { key: "A", content: "正确" },
+            { key: "B", content: "错误" }
+          ],
+          correctAnswer: "A",
+          analysis: "可导必连续，但连续不一定可导",
+          knowledgePoints: ["导数与微分", "可导与连续"],
+          difficulty: "easy",
+          difficultyName: "简单",
+          points: 3,
+          createTime: "2024-03-18 11:00:00",
+          useCount: 15
+        },
+        {
+          id: 1005,
+          type: "fill_blank",
+          typeName: "填空题",
+          stem: "∫x²dx = ______ + C",
+          blanks: [{ answer: "x³/3" }],
+          correctAnswer: "x³/3",
+          analysis: "根据积分公式 ∫xⁿdx = xⁿ⁺¹/(n+1) + C",
+          knowledgePoints: ["积分计算", "不定积分"],
+          difficulty: "easy",
+          difficultyName: "简单",
+          points: 4,
+          createTime: "2024-03-19 15:00:00",
+          useCount: 10
+        },
+        {
+          id: 1006,
+          type: "short_answer",
+          typeName: "简答题",
+          stem: "求函数 f(x) = x³ - 3x + 2 的极值点和极值。",
+          referenceAnswer:
+            "f'(x) = 3x² - 3 = 0，得 x = ±1。f''(x) = 6x，f''(-1) = -6 < 0，所以 x = -1 是极大值点，极大值 f(-1) = 4；f''(1) = 6 > 0，所以 x = 1 是极小值点，极小值 f(1) = 0。",
+          analysis: "先求导，令导数为0求驻点，再用二阶导数判断极值类型",
+          knowledgePoints: ["导数与微分", "极值问题"],
+          difficulty: "medium",
+          difficultyName: "中等",
+          points: 10,
+          createTime: "2024-03-20 10:00:00",
+          useCount: 5
+        },
+        {
+          id: 1007,
+          type: "single_choice",
+          typeName: "单选题",
+          stem: "设 f(x) 在 [a,b] 上连续，在 (a,b) 内可导，且 f(a) = f(b)，则至少存在一点 ξ∈(a,b)，使得 f'(ξ) = 0。这是哪个定理？",
+          options: [
+            { key: "A", content: "罗尔定理" },
+            { key: "B", content: "拉格朗日中值定理" },
+            { key: "C", content: "柯西中值定理" },
+            { key: "D", content: "泰勒定理" }
+          ],
+          correctAnswer: "A",
+          analysis: "罗尔定理的条件是函数在闭区间连续、开区间可导、端点值相等",
+          knowledgePoints: ["导数与微分", "中值定理"],
+          difficulty: "medium",
+          difficultyName: "中等",
+          points: 4,
+          createTime: "2024-03-21 08:00:00",
+          useCount: 9
+        },
+        {
+          id: 1008,
+          type: "single_choice",
+          typeName: "单选题",
+          stem: "级数 Σ(1/n²) (n=1到∞) 是：",
+          options: [
+            { key: "A", content: "发散的" },
+            { key: "B", content: "条件收敛的" },
+            { key: "C", content: "绝对收敛的" },
+            { key: "D", content: "无法判断" }
+          ],
+          correctAnswer: "C",
+          analysis: "p级数当p>1时收敛，这里p=2>1，所以绝对收敛",
+          knowledgePoints: ["级数理论", "正项级数"],
+          difficulty: "medium",
+          difficultyName: "中等",
+          points: 4,
+          createTime: "2024-03-22 16:00:00",
+          useCount: 7
+        },
+        {
+          id: 1009,
+          type: "short_answer",
+          typeName: "简答题",
+          stem: "证明：若 f(x) 在 [a,b] 上连续，则 f(x) 在 [a,b] 上有最大值和最小值。",
+          referenceAnswer:
+            "这是最值定理（魏尔斯特拉斯定理）的内容。证明需要用到有界性定理和确界原理...",
+          analysis:
+            "需要利用有界性定理证明函数有界，再利用确界原理证明上确界可以取到",
+          knowledgePoints: ["极限与连续", "连续函数性质"],
+          difficulty: "hard",
+          difficultyName: "困难",
+          points: 12,
+          createTime: "2024-03-23 09:00:00",
+          useCount: 3
+        },
+        {
+          id: 1010,
+          type: "single_choice",
+          typeName: "单选题",
+          stem: "二重积分 ∬_D dxdy 的几何意义是：",
+          options: [
+            { key: "A", content: "区域D的面积" },
+            { key: "B", content: "区域D的周长" },
+            { key: "C", content: "曲面的面积" },
+            { key: "D", content: "体积" }
+          ],
+          correctAnswer: "A",
+          analysis: "当被积函数为1时，二重积分的值等于积分区域的面积",
+          knowledgePoints: ["多元函数", "重积分"],
+          difficulty: "easy",
+          difficultyName: "简单",
+          points: 4,
+          createTime: "2024-03-24 14:00:00",
+          useCount: 11
+        }
+      ];
+
+      let filtered = [...allQuestions];
+      if (keyword) {
+        filtered = filtered.filter(
+          q =>
+            q.stem.includes(keyword) ||
+            q.knowledgePoints.some(kp => kp.includes(keyword))
+        );
+      }
+      if (type) {
+        filtered = filtered.filter(q => q.type === type);
+      }
+      if (difficulty) {
+        filtered = filtered.filter(q => q.difficulty === difficulty);
+      }
+      if (knowledgePoint) {
+        filtered = filtered.filter(q =>
+          q.knowledgePoints.some(kp => kp.includes(knowledgePoint))
+        );
+      }
+      const start = (Number(pageNum) - 1) * Number(pageSize);
+      const end = start + Number(pageSize);
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          total: filtered.length,
+          list: filtered.slice(start, end)
+        }
+      };
+    }
+  },
+
+  // AI 生成题目
+  {
+    url: "/edu/backend/v1/ai/generate-question",
+    method: "post",
+    response: ({ body }: { body: any }) => {
+      const { questionType, count = 1, knowledgePoints, difficulty } = body;
+      const generated = [];
+      for (let i = 0; i < Math.min(count, 5); i++) {
+        const id = Date.now() + i;
+        if (questionType === "single_choice") {
+          generated.push({
+            id,
+            type: "single_choice",
+            stem: `[AI生成] 关于${knowledgePoints || "数学"}的单选题 ${i + 1}：以下哪个说法是正确的？`,
+            options: [
+              { key: "A", content: "选项A的内容" },
+              { key: "B", content: "选项B的内容" },
+              { key: "C", content: "选项C的内容（正确答案）" },
+              { key: "D", content: "选项D的内容" }
+            ],
+            correctAnswer: "C",
+            analysis: "AI生成的解析：选项C是正确的，因为...",
+            difficulty: difficulty || "medium",
+            knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
+          });
+        } else if (questionType === "multiple_choice") {
+          generated.push({
+            id,
+            type: "multiple_choice",
+            stem: `[AI生成] 关于${knowledgePoints || "数学"}的多选题 ${i + 1}：以下哪些说法是正确的？`,
+            options: [
+              { key: "A", content: "正确选项A" },
+              { key: "B", content: "正确选项B" },
+              { key: "C", content: "错误选项C" },
+              { key: "D", content: "正确选项D" }
+            ],
+            correctAnswers: ["A", "B", "D"],
+            analysis: "AI生成的解析：A、B、D都是正确的...",
+            difficulty: difficulty || "medium",
+            knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
+          });
+        } else if (questionType === "true_false") {
+          generated.push({
+            id,
+            type: "true_false",
+            stem: `[AI生成] 关于${knowledgePoints || "数学"}的判断题 ${i + 1}：该命题是否正确？`,
+            options: [
+              { key: "A", content: "正确" },
+              { key: "B", content: "错误" }
+            ],
+            correctAnswer: "A",
+            analysis: "AI生成的解析：该命题是正确的，因为...",
+            difficulty: difficulty || "easy",
+            knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
+          });
+        } else if (questionType === "fill_blank") {
+          generated.push({
+            id,
+            type: "fill_blank",
+            stem: `[AI生成] 关于${knowledgePoints || "数学"}的填空题 ${i + 1}：请填写 ______。`,
+            blanks: [{ answer: "参考答案" }],
+            correctAnswer: "参考答案",
+            analysis: "AI生成的解析：答案是...",
+            difficulty: difficulty || "medium",
+            knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
+          });
+        } else {
+          generated.push({
+            id,
+            type: questionType || "short_answer",
+            stem: `[AI生成] 关于${knowledgePoints || "数学"}的简答题 ${i + 1}：请详细阐述相关概念。`,
+            referenceAnswer: "AI生成的参考答案：...",
+            analysis: "AI生成的解析：需要从以下几个方面回答...",
+            difficulty: difficulty || "medium",
+            knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
+          });
+        }
+      }
+      return {
+        code: 0,
+        msg: "success",
+        data: generated
+      };
+    }
+  },
+
+  // 获取知识点列表
+  {
+    url: "/edu/backend/v1/knowledge-points",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: [
+          {
+            id: 1,
+            name: "极限与连续",
+            questionCount: 45,
+            children: [
+              { id: 11, name: "数列极限", parentId: 1, questionCount: 12 },
+              { id: 12, name: "函数极限", parentId: 1, questionCount: 15 },
+              { id: 13, name: "重要极限", parentId: 1, questionCount: 8 },
+              { id: 14, name: "连续函数", parentId: 1, questionCount: 10 }
+            ]
+          },
+          {
+            id: 2,
+            name: "导数与微分",
+            questionCount: 62,
+            children: [
+              { id: 21, name: "求导公式", parentId: 2, questionCount: 18 },
+              { id: 22, name: "复合函数求导", parentId: 2, questionCount: 14 },
+              { id: 23, name: "隐函数求导", parentId: 2, questionCount: 10 },
+              { id: 24, name: "中值定理", parentId: 2, questionCount: 12 },
+              { id: 25, name: "极值问题", parentId: 2, questionCount: 8 }
+            ]
+          },
+          {
+            id: 3,
+            name: "积分计算",
+            questionCount: 58,
+            children: [
+              { id: 31, name: "不定积分", parentId: 3, questionCount: 20 },
+              { id: 32, name: "定积分", parentId: 3, questionCount: 18 },
+              { id: 33, name: "换元积分法", parentId: 3, questionCount: 12 },
+              { id: 34, name: "分部积分法", parentId: 3, questionCount: 8 }
+            ]
+          },
+          {
+            id: 4,
+            name: "级数理论",
+            questionCount: 35,
+            children: [
+              { id: 41, name: "正项级数", parentId: 4, questionCount: 12 },
+              { id: 42, name: "交错级数", parentId: 4, questionCount: 8 },
+              { id: 43, name: "幂级数", parentId: 4, questionCount: 10 },
+              { id: 44, name: "傅里叶级数", parentId: 4, questionCount: 5 }
+            ]
+          },
+          {
+            id: 5,
+            name: "多元函数",
+            questionCount: 42,
+            children: [
+              { id: 51, name: "偏导数", parentId: 5, questionCount: 15 },
+              { id: 52, name: "全微分", parentId: 5, questionCount: 10 },
+              { id: 53, name: "重积分", parentId: 5, questionCount: 12 },
+              { id: 54, name: "曲线积分", parentId: 5, questionCount: 5 }
+            ]
+          }
         ]
       };
     }

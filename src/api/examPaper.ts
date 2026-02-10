@@ -722,6 +722,40 @@ export const getCourseList = () => {
   );
 };
 
+// ==================== 题库和题目助手API ====================
+
+/**
+ * 搜索题库题目
+ */
+export const searchQuestionBank = (params: SearchQuestionBankParams) => {
+  return http.request<ApiResponse<PageResult<QuestionBankItem>>>(
+    "get",
+    "/edu/backend/v1/question-bank/search",
+    { params }
+  );
+};
+
+/**
+ * AI 生成题目
+ */
+export const aiGenerateQuestion = (data: AIGenerateQuestionParams) => {
+  return http.request<ApiResponse<AIGeneratedQuestion[]>>(
+    "post",
+    "/edu/backend/v1/ai/generate-question",
+    { data }
+  );
+};
+
+/**
+ * 获取知识点列表
+ */
+export const getKnowledgePoints = () => {
+  return http.request<ApiResponse<KnowledgePoint[]>>(
+    "get",
+    "/edu/backend/v1/knowledge-points"
+  );
+};
+
 // ==================== 学生端API ====================
 
 /**
