@@ -1,7 +1,26 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  getQuestionBankList,
+  getQuestionBankStatistics,
+  getQuestionFolders,
+  getKnowledgePoints,
+  createQuestion,
+  updateQuestion,
+  deleteQuestion as deleteQuestionApi,
+  batchDeleteQuestions,
+  importQuestions,
+  exportQuestions,
+  createQuestionFolder,
+  updateQuestionFolder,
+  deleteQuestionFolder,
+  moveQuestionsToFolder,
+  type QuestionBankFullItem,
+  type QuestionFolder,
+  type KnowledgePoint
+} from "@/api/examPaper";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -19,7 +38,8 @@ const { isDark } = useDark();
 const searchQuery = ref("");
 const selectedType = ref("");
 const selectedDifficulty = ref("");
-const selectedSubject = ref("");
+const selectedKnowledgePoint = ref("");
+const selectedFolderId = ref<number | null>(null);
 
 // 题目类型选项
 const questionTypes = [
@@ -39,148 +59,51 @@ const difficultyOptions = [
   { value: "hard", label: "困难" }
 ];
 
-// 科目选项
-const subjectOptions = ref([
-  { value: "", label: "全部科目" },
-  { value: "math", label: "高等数学" },
-  { value: "physics", label: "大学物理" },
-  { value: "english", label: "大学英语" },
-  { value: "programming", label: "程序设计" },
-  { value: "database", label: "数据库原理" }
-]);
+// 知识点列表
+const knowledgePointList = ref<KnowledgePoint[]>([]);
+const knowledgePointOptions = computed(() => {
+  const options: Array<{ value: string; label: string }> = [
+    { value: "", label: "全部知识点" }
+  ];
+  const flatten = (points: KnowledgePoint[], prefix = "") => {
+    points.forEach(p => {
+      options.push({ value: p.name, label: prefix + p.name });
+      if (p.children && p.children.length > 0) {
+        flatten(p.children, prefix + "  ");
+      }
+    });
+  };
+  flatten(knowledgePointList.value);
+  return options;
+});
+
+// 文件夹列表
+const folderList = ref<QuestionFolder[]>([]);
+const folderTreeData = computed(() => {
+  return [
+    { id: 0, name: "全部题目", questionCount: statistics.value.total },
+    ...folderList.value
+  ];
+});
 
 // 统计数据
 const statistics = ref({
-  total: 156,
-  radio: 45,
-  checkbox: 28,
-  textarea: 32
+  total: 0,
+  radio: 0,
+  checkbox: 0,
+  judge: 0,
+  input: 0,
+  textarea: 0
 });
 
 // 题库数据
-const questions = ref([
-  {
-    id: 1,
-    type: "radio",
-    typeName: "单选题",
-    subject: "math",
-    subjectName: "高等数学",
-    difficulty: "easy",
-    difficultyName: "简单",
-    stem: "函数 f(x) = x²在 x = 0 处的导数是？",
-    options: [
-      { key: "A", content: "0" },
-      { key: "B", content: "1" },
-      { key: "C", content: "2" },
-      { key: "D", content: "不存在" }
-    ],
-    correctAnswer: "A",
-    analysis: "根据导数定义，f'(x) = 2x，当 x = 0 时，f'(0) = 0",
-    points: 5,
-    usageCount: 15,
-    createTime: "2026-01-15",
-    updateTime: "2026-01-20"
-  },
-  {
-    id: 2,
-    type: "checkbox",
-    typeName: "多选题",
-    subject: "programming",
-    subjectName: "程序设计",
-    difficulty: "medium",
-    difficultyName: "中等",
-    stem: "以下哪些是 JavaScript 的基本数据类型？",
-    options: [
-      { key: "A", content: "String" },
-      { key: "B", content: "Number" },
-      { key: "C", content: "Array" },
-      { key: "D", content: "Boolean" }
-    ],
-    correctAnswers: ["A", "B", "D"],
-    analysis:
-      "JavaScript 的基本数据类型包括 String、Number、Boolean、Undefined、Null、Symbol 和 BigInt。Array 是引用类型。",
-    points: 10,
-    usageCount: 8,
-    createTime: "2026-01-18",
-    updateTime: "2026-01-25"
-  },
-  {
-    id: 3,
-    type: "input",
-    typeName: "填空题",
-    subject: "physics",
-    subjectName: "大学物理",
-    difficulty: "medium",
-    difficultyName: "中等",
-    stem: "光在真空中的传播速度约为 ______ m/s。",
-    correctAnswer: "3×10^8",
-    analysis:
-      "光速是物理学中的基本常数，约为 299,792,458 m/s，通常近似为 3×10^8 m/s。",
-    points: 5,
-    usageCount: 22,
-    createTime: "2026-01-10",
-    updateTime: "2026-01-10"
-  },
-  {
-    id: 4,
-    type: "textarea",
-    typeName: "简答题",
-    subject: "database",
-    subjectName: "数据库原理",
-    difficulty: "hard",
-    difficultyName: "困难",
-    stem: "请简述数据库事务的 ACID 特性，并举例说明。",
-    referenceAnswer:
-      "ACID 是数据库事务的四个基本特性：\n1. 原子性(Atomicity)：事务中的所有操作要么全部完成，要么全部不完成。\n2. 一致性(Consistency)：事务执行前后，数据库的完整性约束没有被破坏。\n3. 隔离性(Isolation)：多个事务并发执行时，一个事务的执行不应影响其他事务。\n4. 持久性(Durability)：事务完成后，对数据库的修改是永久性的。",
-    points: 15,
-    usageCount: 5,
-    createTime: "2026-01-22",
-    updateTime: "2026-01-28"
-  },
-  {
-    id: 5,
-    type: "judge",
-    typeName: "判断题",
-    subject: "english",
-    subjectName: "大学英语",
-    difficulty: "easy",
-    difficultyName: "简单",
-    stem: "The word 'beautiful' is an adjective.",
-    correctAnswer: "true",
-    analysis: "'Beautiful' 是一个形容词，用于描述名词的特征。",
-    points: 3,
-    usageCount: 30,
-    createTime: "2026-01-05",
-    updateTime: "2026-01-05"
-  }
-]);
+const questions = ref<QuestionBankFullItem[]>([]);
+const loading = ref(false);
 
 // 分页
 const currentPage = ref(1);
 const pageSize = ref(10);
-const total = computed(() => filteredQuestions.value.length);
-
-// 筛选后的题目
-const filteredQuestions = computed(() => {
-  return questions.value.filter(q => {
-    const matchSearch =
-      !searchQuery.value ||
-      q.stem.toLowerCase().includes(searchQuery.value.toLowerCase());
-    const matchType = !selectedType.value || q.type === selectedType.value;
-    const matchDifficulty =
-      !selectedDifficulty.value || q.difficulty === selectedDifficulty.value;
-    const matchSubject =
-      !selectedSubject.value || q.subject === selectedSubject.value;
-    return matchSearch && matchType && matchDifficulty && matchSubject;
-  });
-});
-
-// 分页后的题目
-const paginatedQuestions = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredQuestions.value.slice(start, end);
-});
+const total = ref(0);
 
 // 选中的题目
 const selectedQuestions = ref<number[]>([]);
@@ -190,15 +113,94 @@ const editDialogVisible = ref(false);
 const editingQuestion = ref<any>(null);
 const isNewQuestion = ref(false);
 
+// 文件夹对话框
+const folderDialogVisible = ref(false);
+const editingFolder = ref<{ id?: number; name: string; parentId?: number }>({
+  name: ""
+});
+const isNewFolder = ref(false);
+
+// 移动到文件夹对话框
+const moveDialogVisible = ref(false);
+const targetFolderId = ref<number | null>(null);
+
+// 导入对话框
+const importDialogVisible = ref(false);
+const importFileList = ref<any[]>([]);
+const importTargetFolderId = ref<number | null>(null);
+const importLoading = ref(false);
+
+// 导出对话框
+const exportDialogVisible = ref(false);
+const exportFormat = ref<"excel" | "word" | "json">("excel");
+const exportScope = ref<"all" | "selected" | "folder">("all");
+const exportLoading = ref(false);
+
+// 加载题库列表
+const fetchQuestions = async () => {
+  loading.value = true;
+  try {
+    const res = await getQuestionBankList({
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
+      keyword: searchQuery.value || undefined,
+      type: selectedType.value || undefined,
+      difficulty: selectedDifficulty.value || undefined,
+      knowledgePoint: selectedKnowledgePoint.value || undefined,
+      folderId: selectedFolderId.value || undefined
+    });
+    if (res.code === 0) {
+      questions.value = res.data.list;
+      total.value = res.data.total;
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 加载统计数据
+const fetchStatistics = async () => {
+  try {
+    const res = await getQuestionBankStatistics();
+    if (res.code === 0) {
+      statistics.value = res.data;
+    }
+  } catch (e) {
+    console.error("加载统计数据失败", e);
+  }
+};
+
+// 加载文件夹列表
+const fetchFolders = async () => {
+  try {
+    const res = await getQuestionFolders();
+    if (res.code === 0) {
+      folderList.value = res.data;
+    }
+  } catch (e) {
+    console.error("加载文件夹失败", e);
+  }
+};
+
+// 加载知识点列表
+const fetchKnowledgePoints = async () => {
+  try {
+    const res = await getKnowledgePoints();
+    if (res.code === 0) {
+      knowledgePointList.value = res.data;
+    }
+  } catch (e) {
+    console.error("加载知识点失败", e);
+  }
+};
+
 // 打开新建题目对话框
 const openNewQuestionDialog = () => {
   isNewQuestion.value = true;
   editingQuestion.value = {
-    id: Date.now(),
+    id: 0,
     type: "radio",
     typeName: "单选题",
-    subject: "",
-    subjectName: "",
     difficulty: "medium",
     difficultyName: "中等",
     stem: "",
@@ -212,23 +214,24 @@ const openNewQuestionDialog = () => {
     correctAnswers: [],
     analysis: "",
     referenceAnswer: "",
+    knowledgePoints: [],
     points: 5,
-    usageCount: 0,
+    useCount: 0,
     createTime: new Date().toISOString().split("T")[0],
-    updateTime: new Date().toISOString().split("T")[0]
+    folderId: selectedFolderId.value
   };
   editDialogVisible.value = true;
 };
 
 // 打开编辑题目对话框
-const openEditDialog = (question: any) => {
+const openEditDialog = (question: QuestionBankFullItem) => {
   isNewQuestion.value = false;
   editingQuestion.value = JSON.parse(JSON.stringify(question));
   editDialogVisible.value = true;
 };
 
 // 保存题目
-const saveQuestion = () => {
+const saveQuestion = async () => {
   if (!editingQuestion.value.stem) {
     ElMessage.warning("请输入题目内容");
     return;
@@ -244,31 +247,30 @@ const saveQuestion = () => {
   );
   editingQuestion.value.difficultyName = diffInfo?.label || "";
 
-  const subjectInfo = subjectOptions.value.find(
-    s => s.value === editingQuestion.value.subject
-  );
-  editingQuestion.value.subjectName = subjectInfo?.label || "";
-
-  editingQuestion.value.updateTime = new Date().toISOString().split("T")[0];
-
-  if (isNewQuestion.value) {
-    questions.value.unshift(editingQuestion.value);
-    ElMessage.success("题目创建成功");
-  } else {
-    const index = questions.value.findIndex(
-      q => q.id === editingQuestion.value.id
-    );
-    if (index !== -1) {
-      questions.value[index] = editingQuestion.value;
+  try {
+    if (isNewQuestion.value) {
+      const res = await createQuestion(editingQuestion.value);
+      if (res.code === 0) {
+        ElMessage.success("题目创建成功");
+        editDialogVisible.value = false;
+        fetchQuestions();
+        fetchStatistics();
+      }
+    } else {
+      const res = await updateQuestion(editingQuestion.value);
+      if (res.code === 0) {
+        ElMessage.success("题目更新成功");
+        editDialogVisible.value = false;
+        fetchQuestions();
+      }
     }
-    ElMessage.success("题目更新成功");
+  } catch (e) {
+    ElMessage.error("保存失败");
   }
-
-  editDialogVisible.value = false;
 };
 
 // 删除题目
-const deleteQuestion = (question: any) => {
+const handleDeleteQuestion = (question: QuestionBankFullItem) => {
   ElMessageBox.confirm(
     `确定要删除题目"${question.stem.substring(0, 30)}..."吗？`,
     "删除确认",
@@ -278,18 +280,23 @@ const deleteQuestion = (question: any) => {
       type: "warning"
     }
   )
-    .then(() => {
-      const index = questions.value.findIndex(q => q.id === question.id);
-      if (index !== -1) {
-        questions.value.splice(index, 1);
-        ElMessage.success("删除成功");
+    .then(async () => {
+      try {
+        const res = await deleteQuestionApi(question.id);
+        if (res.code === 0) {
+          ElMessage.success("删除成功");
+          fetchQuestions();
+          fetchStatistics();
+        }
+      } catch (e) {
+        ElMessage.error("删除失败");
       }
     })
     .catch(() => {});
 };
 
 // 批量删除
-const batchDelete = () => {
+const handleBatchDelete = () => {
   if (selectedQuestions.value.length === 0) {
     ElMessage.warning("请先选择要删除的题目");
     return;
@@ -304,12 +311,18 @@ const batchDelete = () => {
       type: "warning"
     }
   )
-    .then(() => {
-      questions.value = questions.value.filter(
-        q => !selectedQuestions.value.includes(q.id)
-      );
-      selectedQuestions.value = [];
-      ElMessage.success("批量删除成功");
+    .then(async () => {
+      try {
+        const res = await batchDeleteQuestions(selectedQuestions.value);
+        if (res.code === 0) {
+          ElMessage.success(res.msg || "批量删除成功");
+          selectedQuestions.value = [];
+          fetchQuestions();
+          fetchStatistics();
+        }
+      } catch (e) {
+        ElMessage.error("批量删除失败");
+      }
     })
     .catch(() => {});
 };
@@ -333,18 +346,251 @@ const removeOption = (index: number) => {
   });
 };
 
-// 导入题目
-const importQuestions = () => {
-  ElMessage.info("导入功能开发中");
+// 打开导入对话框
+const openImportDialog = () => {
+  importFileList.value = [];
+  importTargetFolderId.value = selectedFolderId.value;
+  importDialogVisible.value = true;
 };
 
-// 导出题目
-const exportQuestions = () => {
-  ElMessage.info("导出功能开发中");
+// 文件变化处理
+const handleImportFileChange = (file: any) => {
+  const allowedTypes = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+    "application/json",
+    "text/csv"
+  ];
+  const allowedExtensions = [".xlsx", ".xls", ".json", ".csv"];
+  const fileName = file.name || "";
+  const ext = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+
+  if (
+    !allowedTypes.includes(file.raw?.type) &&
+    !allowedExtensions.includes(ext)
+  ) {
+    ElMessage.error("仅支持 Excel (.xlsx/.xls)、JSON、CSV 格式文件");
+    return false;
+  }
+
+  if (file.raw?.size > 10 * 1024 * 1024) {
+    ElMessage.error("文件大小不能超过 10MB");
+    return false;
+  }
+
+  importFileList.value = [file];
+  return true;
+};
+
+// 移除文件
+const handleImportFileRemove = () => {
+  importFileList.value = [];
+};
+
+// 确认导入
+const confirmImport = async () => {
+  if (importFileList.value.length === 0) {
+    ElMessage.warning("请先选择要导入的文件");
+    return;
+  }
+
+  importLoading.value = true;
+  try {
+    const res = await importQuestions({
+      file: importFileList.value[0]?.raw,
+      folderId: importTargetFolderId.value || undefined
+    });
+    if (res.code === 0) {
+      ElMessage.success(
+        `导入成功：${res.data.importedCount} 道，失败：${res.data.failedCount} 道`
+      );
+      importDialogVisible.value = false;
+      fetchQuestions();
+      fetchStatistics();
+    }
+  } catch (e) {
+    ElMessage.error("导入失败，请检查文件格式是否正确");
+  } finally {
+    importLoading.value = false;
+  }
+};
+
+// 打开导出对话框
+const openExportDialog = () => {
+  exportFormat.value = "excel";
+  if (selectedQuestions.value.length > 0) {
+    exportScope.value = "selected";
+  } else if (selectedFolderId.value) {
+    exportScope.value = "folder";
+  } else {
+    exportScope.value = "all";
+  }
+  exportDialogVisible.value = true;
+};
+
+// 确认导出
+const confirmExport = async () => {
+  exportLoading.value = true;
+  try {
+    const params: {
+      ids?: number[];
+      folderId?: number;
+      format: "json" | "excel" | "word";
+    } = {
+      format: exportFormat.value
+    };
+
+    if (
+      exportScope.value === "selected" &&
+      selectedQuestions.value.length > 0
+    ) {
+      params.ids = selectedQuestions.value;
+    } else if (exportScope.value === "folder" && selectedFolderId.value) {
+      params.folderId = selectedFolderId.value;
+    }
+
+    const res = await exportQuestions(params);
+    if (res.code === 0) {
+      ElMessage.success("导出成功，文件即将开始下载");
+      // 模拟下载
+      if (res.data.downloadUrl) {
+        const link = document.createElement("a");
+        link.href = res.data.downloadUrl;
+        link.download = `题库导出_${new Date().toLocaleDateString()}.${exportFormat.value === "excel" ? "xlsx" : exportFormat.value}`;
+        link.click();
+      }
+      exportDialogVisible.value = false;
+    }
+  } catch (e) {
+    ElMessage.error("导出失败");
+  } finally {
+    exportLoading.value = false;
+  }
+};
+
+// 下载导入模板
+const downloadImportTemplate = () => {
+  ElMessage.info("正在下载导入模板...");
+  // 实际项目中这里应该调用后端接口下载模板
+};
+
+// 文件夹相关操作
+const openNewFolderDialog = () => {
+  isNewFolder.value = true;
+  editingFolder.value = { name: "", parentId: undefined };
+  folderDialogVisible.value = true;
+};
+
+const openEditFolderDialog = (folder: any) => {
+  isNewFolder.value = false;
+  editingFolder.value = { id: folder.id, name: folder.name };
+  folderDialogVisible.value = true;
+};
+
+const saveFolder = async () => {
+  if (!editingFolder.value.name.trim()) {
+    ElMessage.warning("请输入文件夹名称");
+    return;
+  }
+
+  try {
+    if (isNewFolder.value) {
+      const res = await createQuestionFolder({
+        name: editingFolder.value.name,
+        parentId: editingFolder.value.parentId
+      });
+      if (res.code === 0) {
+        ElMessage.success("文件夹创建成功");
+        folderDialogVisible.value = false;
+        fetchFolders();
+      }
+    } else {
+      const res = await updateQuestionFolder({
+        id: editingFolder.value.id!,
+        name: editingFolder.value.name
+      });
+      if (res.code === 0) {
+        ElMessage.success("文件夹更新成功");
+        folderDialogVisible.value = false;
+        fetchFolders();
+      }
+    }
+  } catch (e) {
+    ElMessage.error("保存失败");
+  }
+};
+
+const handleDeleteFolder = (folder: any) => {
+  ElMessageBox.confirm(
+    `确定要删除文件夹"${folder.name}"吗？文件夹内的题目不会被删除。`,
+    "删除确认",
+    {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    }
+  )
+    .then(async () => {
+      try {
+        const res = await deleteQuestionFolder(folder.id);
+        if (res.code === 0) {
+          ElMessage.success("删除成功");
+          if (selectedFolderId.value === folder.id) {
+            selectedFolderId.value = null;
+          }
+          fetchFolders();
+        }
+      } catch (e) {
+        ElMessage.error("删除失败");
+      }
+    })
+    .catch(() => {});
+};
+
+const selectFolder = (folderId: number | string | null) => {
+  const id = Number(folderId);
+  selectedFolderId.value = id === 0 ? null : id;
+  currentPage.value = 1;
+  fetchQuestions();
+};
+
+// 移动题目到文件夹
+const openMoveDialog = () => {
+  if (selectedQuestions.value.length === 0) {
+    ElMessage.warning("请先选择要移动的题目");
+    return;
+  }
+  targetFolderId.value = null;
+  moveDialogVisible.value = true;
+};
+
+const handleMoveToFolder = async () => {
+  if (targetFolderId.value === null) {
+    ElMessage.warning("请选择目标文件夹");
+    return;
+  }
+
+  try {
+    const res = await moveQuestionsToFolder({
+      questionIds: selectedQuestions.value,
+      folderId: targetFolderId.value
+    });
+    if (res.code === 0) {
+      ElMessage.success("移动成功");
+      moveDialogVisible.value = false;
+      selectedQuestions.value = [];
+      fetchQuestions();
+      fetchFolders();
+    }
+  } catch (e) {
+    ElMessage.error("移动失败");
+  }
 };
 
 // 获取难度标签类型
-const getDifficultyType = (difficulty: string) => {
+const getDifficultyType = (
+  difficulty: string
+): "success" | "warning" | "danger" | "info" => {
   switch (difficulty) {
     case "easy":
       return "success";
@@ -358,7 +604,9 @@ const getDifficultyType = (difficulty: string) => {
 };
 
 // 获取题型标签类型
-const getTypeTagType = (type: string) => {
+const getTypeTagType = (
+  type: string
+): "primary" | "success" | "warning" | "danger" | "info" => {
   switch (type) {
     case "radio":
       return "primary";
@@ -374,6 +622,25 @@ const getTypeTagType = (type: string) => {
       return "primary";
   }
 };
+
+// 搜索和筛选变化时重新加载
+const handleSearch = () => {
+  currentPage.value = 1;
+  fetchQuestions();
+};
+
+// 分页变化
+const handlePageChange = () => {
+  fetchQuestions();
+};
+
+// 初始化
+onMounted(() => {
+  fetchQuestions();
+  fetchStatistics();
+  fetchFolders();
+  fetchKnowledgePoints();
+});
 </script>
 
 <template>
@@ -391,15 +658,21 @@ const getTypeTagType = (type: string) => {
           </p>
         </div>
       </div>
-      <el-button
-        type="primary"
-        size="large"
-        class="create-btn"
-        @click="openNewQuestionDialog"
-      >
-        <el-icon class="mr-2"><Plus /></el-icon>
-        新建题目
-      </el-button>
+      <div class="header-actions">
+        <el-button @click="openNewFolderDialog">
+          <el-icon class="mr-1"><FolderAdd /></el-icon>
+          新建文件夹
+        </el-button>
+        <el-button
+          type="primary"
+          size="large"
+          class="create-btn"
+          @click="openNewQuestionDialog"
+        >
+          <el-icon class="mr-2"><Plus /></el-icon>
+          新建题目
+        </el-button>
+      </div>
     </div>
 
     <!-- 统计卡片 -->
@@ -442,157 +715,236 @@ const getTypeTagType = (type: string) => {
       </div>
     </div>
 
-    <!-- 搜索和工具栏 -->
-    <div class="toolbar-card">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <el-input
-            v-model="searchQuery"
-            placeholder="搜索题目内容..."
-            prefix-icon="Search"
-            clearable
-            style="width: 250px"
-          />
-          <el-select
-            v-model="selectedType"
-            placeholder="题型"
-            style="width: 120px"
-          >
-            <el-option
-              v-for="type in questionTypes"
-              :key="type.value"
-              :label="type.label"
-              :value="type.value"
-            />
-          </el-select>
-          <el-select
-            v-model="selectedDifficulty"
-            placeholder="难度"
-            style="width: 120px"
-          >
-            <el-option
-              v-for="diff in difficultyOptions"
-              :key="diff.value"
-              :label="diff.label"
-              :value="diff.value"
-            />
-          </el-select>
-          <el-select
-            v-model="selectedSubject"
-            placeholder="科目"
-            style="width: 140px"
-          >
-            <el-option
-              v-for="subject in subjectOptions"
-              :key="subject.value"
-              :label="subject.label"
-              :value="subject.value"
-            />
-          </el-select>
+    <div class="main-content">
+      <!-- 左侧文件夹树 -->
+      <div class="folder-sidebar">
+        <div class="folder-header">
+          <span class="folder-title">题库分类</span>
         </div>
-        <div class="toolbar-right">
-          <el-button @click="importQuestions">
-            <el-icon class="mr-1"><Upload /></el-icon>
-            导入
-          </el-button>
-          <el-button @click="exportQuestions">
-            <el-icon class="mr-1"><Download /></el-icon>
-            导出
-          </el-button>
-          <el-button
-            type="danger"
-            :disabled="selectedQuestions.length === 0"
-            @click="batchDelete"
+        <div class="folder-tree">
+          <div
+            v-for="folder in folderTreeData"
+            :key="folder.id"
+            class="folder-item"
+            :class="{
+              active: selectedFolderId === (folder.id === 0 ? null : folder.id)
+            }"
+            @click="selectFolder(folder.id)"
           >
-            <el-icon class="mr-1"><Delete /></el-icon>
-            批量删除
-          </el-button>
+            <el-icon><Folder /></el-icon>
+            <span class="folder-name">{{ folder.name }}</span>
+            <span class="folder-count">{{ folder.questionCount }}</span>
+            <div v-if="folder.id !== 0" class="folder-actions" @click.stop>
+              <el-button
+                link
+                size="small"
+                @click="openEditFolderDialog(folder)"
+              >
+                <el-icon><Edit /></el-icon>
+              </el-button>
+              <el-button
+                link
+                size="small"
+                type="danger"
+                @click="handleDeleteFolder(folder)"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 题目列表 -->
-    <div class="list-card">
-      <el-table
-        :data="paginatedQuestions"
-        style="width: 100%"
-        class="question-table"
-        @selection-change="
-          (val: any[]) => (selectedQuestions = val.map(v => v.id))
-        "
-      >
-        <el-table-column type="selection" width="55" />
-        <el-table-column label="题型" width="100">
-          <template #default="{ row }">
-            <el-tag
-              :type="getTypeTagType(row.type)"
-              size="small"
-              effect="light"
-            >
-              {{ row.typeName }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="题目内容" min-width="300">
-          <template #default="{ row }">
-            <div class="question-stem">{{ row.stem }}</div>
-          </template>
-        </el-table-column>
-        <el-table-column label="科目" width="120">
-          <template #default="{ row }">
-            <span class="subject-badge">{{ row.subjectName }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="难度" width="100">
-          <template #default="{ row }">
-            <el-tag
-              :type="getDifficultyType(row.difficulty)"
-              size="small"
-              effect="light"
-            >
-              {{ row.difficultyName }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="分值" width="80" align="center">
-          <template #default="{ row }">
-            <span class="points-badge">{{ row.points }}分</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="使用次数" width="100" align="center">
-          <template #default="{ row }">
-            <span class="usage-badge">{{ row.usageCount }}次</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="更新时间" width="120">
-          <template #default="{ row }">
-            <span>{{ row.updateTime }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="openEditDialog(row)">
-              <el-icon class="mr-1"><Edit /></el-icon>
-              编辑
-            </el-button>
-            <el-button link type="danger" @click="deleteQuestion(row)">
-              <el-icon class="mr-1"><Delete /></el-icon>
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 右侧内容区 -->
+      <div class="content-area">
+        <!-- 搜索和工具栏 -->
+        <div class="toolbar-card">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <el-input
+                v-model="searchQuery"
+                placeholder="搜索题目内容..."
+                prefix-icon="Search"
+                clearable
+                style="width: 250px"
+                @change="handleSearch"
+                @clear="handleSearch"
+              />
+              <el-select
+                v-model="selectedType"
+                placeholder="题型"
+                style="width: 120px"
+                @change="handleSearch"
+              >
+                <el-option
+                  v-for="type in questionTypes"
+                  :key="type.value"
+                  :label="type.label"
+                  :value="type.value"
+                />
+              </el-select>
+              <el-select
+                v-model="selectedDifficulty"
+                placeholder="难度"
+                style="width: 120px"
+                @change="handleSearch"
+              >
+                <el-option
+                  v-for="diff in difficultyOptions"
+                  :key="diff.value"
+                  :label="diff.label"
+                  :value="diff.value"
+                />
+              </el-select>
+              <el-select
+                v-model="selectedKnowledgePoint"
+                placeholder="知识点"
+                style="width: 160px"
+                clearable
+                filterable
+                @change="handleSearch"
+              >
+                <el-option
+                  v-for="kp in knowledgePointOptions"
+                  :key="kp.value"
+                  :label="kp.label"
+                  :value="kp.value"
+                />
+              </el-select>
+            </div>
+            <div class="toolbar-right">
+              <el-button @click="openImportDialog">
+                <el-icon class="mr-1"><Upload /></el-icon>
+                导入
+              </el-button>
+              <el-button @click="openExportDialog">
+                <el-icon class="mr-1"><Download /></el-icon>
+                导出
+              </el-button>
+              <el-button @click="openMoveDialog">
+                <el-icon class="mr-1"><FolderOpened /></el-icon>
+                移动
+              </el-button>
+              <el-button
+                type="danger"
+                :disabled="selectedQuestions.length === 0"
+                @click="handleBatchDelete"
+              >
+                <el-icon class="mr-1"><Delete /></el-icon>
+                批量删除
+              </el-button>
+            </div>
+          </div>
+        </div>
 
-      <!-- 分页 -->
-      <div class="pagination-wrapper">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-        />
+        <!-- 题目列表 -->
+        <div class="list-card">
+          <el-table
+            v-loading="loading"
+            :data="questions"
+            style="width: 100%"
+            class="question-table"
+            @selection-change="
+              (val: any[]) => (selectedQuestions = val.map(v => v.id))
+            "
+          >
+            <el-table-column type="selection" width="55" />
+            <el-table-column label="题型" width="100">
+              <template #default="{ row }">
+                <el-tag
+                  :type="getTypeTagType(row.type)"
+                  size="small"
+                  effect="light"
+                >
+                  {{ row.typeName }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="题目内容" min-width="300">
+              <template #default="{ row }">
+                <div class="question-stem">{{ row.stem }}</div>
+              </template>
+            </el-table-column>
+            <el-table-column label="知识点" width="180">
+              <template #default="{ row }">
+                <div class="knowledge-tags">
+                  <el-tag
+                    v-for="kp in (row.knowledgePoints || []).slice(0, 2)"
+                    :key="kp"
+                    size="small"
+                    type="info"
+                    effect="plain"
+                    class="kp-tag"
+                  >
+                    {{ kp }}
+                  </el-tag>
+                  <span
+                    v-if="(row.knowledgePoints || []).length > 2"
+                    class="more-kp"
+                  >
+                    +{{ row.knowledgePoints.length - 2 }}
+                  </span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="难度" width="100">
+              <template #default="{ row }">
+                <el-tag
+                  :type="getDifficultyType(row.difficulty)"
+                  size="small"
+                  effect="light"
+                >
+                  {{ row.difficultyName }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="分值" width="80" align="center">
+              <template #default="{ row }">
+                <span class="points-badge">{{ row.points }}分</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="使用次数" width="100" align="center">
+              <template #default="{ row }">
+                <span class="usage-badge">{{ row.useCount }}次</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="所属文件夹" width="120">
+              <template #default="{ row }">
+                <span class="folder-badge">{{ row.folderName || "-" }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="150" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" @click="openEditDialog(row)">
+                  <el-icon class="mr-1"><Edit /></el-icon>
+                  编辑
+                </el-button>
+                <el-button
+                  link
+                  type="danger"
+                  @click="handleDeleteQuestion(row)"
+                >
+                  <el-icon class="mr-1"><Delete /></el-icon>
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="total"
+              layout="total, sizes, prev, pager, next, jumper"
+              background
+              @size-change="handlePageChange"
+              @current-change="handlePageChange"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -622,18 +974,6 @@ const getTypeTagType = (type: string) => {
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="科目">
-              <el-select v-model="editingQuestion.subject" style="width: 100%">
-                <el-option
-                  v-for="subject in subjectOptions.filter(s => s.value)"
-                  :key="subject.value"
-                  :label="subject.label"
-                  :value="subject.value"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
             <el-form-item label="难度">
               <el-select
                 v-model="editingQuestion.difficulty"
@@ -646,16 +986,18 @@ const getTypeTagType = (type: string) => {
                   :value="diff.value"
                 />
               </el-select>
-            </el-form-item> </el-col
-        ></el-row>
-
-        <el-form-item label="分值">
-          <el-input-number
-            v-model="editingQuestion.points"
-            :min="1"
-            :max="100"
-          />
-        </el-form-item>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="分值">
+              <el-input-number
+                v-model="editingQuestion.points"
+                :min="1"
+                :max="100"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
         <el-form-item label="题目内容">
           <el-input
@@ -699,8 +1041,9 @@ const getTypeTagType = (type: string) => {
                 <el-icon><Plus /></el-icon>
                 添加选项
               </el-button>
-            </div> </el-form-item
-          ><el-form-item label="正确答案">
+            </div>
+          </el-form-item>
+          <el-form-item label="正确答案">
             <el-radio-group
               v-if="editingQuestion.type === 'radio'"
               v-model="editingQuestion.correctAnswer"
@@ -725,6 +1068,16 @@ const getTypeTagType = (type: string) => {
           </el-form-item>
         </template>
 
+        <!-- 判断题答案 -->
+        <template v-else-if="editingQuestion.type === 'judge'">
+          <el-form-item label="正确答案">
+            <el-radio-group v-model="editingQuestion.correctAnswer">
+              <el-radio value="T">正确</el-radio>
+              <el-radio value="F">错误</el-radio>
+            </el-radio-group>
+          </el-form-item>
+        </template>
+
         <!-- 填空题答案 -->
         <template v-else-if="editingQuestion.type === 'input'">
           <el-form-item label="正确答案">
@@ -732,16 +1085,6 @@ const getTypeTagType = (type: string) => {
               v-model="editingQuestion.correctAnswer"
               placeholder="请输入正确答案"
             />
-          </el-form-item>
-        </template>
-
-        <!-- 判断题答案 -->
-        <template v-else-if="editingQuestion.type === 'judge'">
-          <el-form-item label="正确答案">
-            <el-radio-group v-model="editingQuestion.correctAnswer">
-              <el-radio value="true">正确</el-radio>
-              <el-radio value="false">错误</el-radio>
-            </el-radio-group>
           </el-form-item>
         </template>
 
@@ -772,109 +1115,258 @@ const getTypeTagType = (type: string) => {
         <el-button type="primary" @click="saveQuestion">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 文件夹对话框 -->
+    <el-dialog
+      v-model="folderDialogVisible"
+      :title="isNewFolder ? '新建文件夹' : '编辑文件夹'"
+      width="400px"
+    >
+      <el-form :model="editingFolder" label-width="80px">
+        <el-form-item label="名称">
+          <el-input
+            v-model="editingFolder.name"
+            placeholder="请输入文件夹名称"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="folderDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveFolder">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 导入题目对话框 -->
+    <el-dialog
+      v-model="importDialogVisible"
+      title="导入题目"
+      width="600px"
+      destroy-on-close
+    >
+      <div class="import-dialog-content">
+        <!-- 上传区域 -->
+        <el-upload
+          class="import-upload"
+          drag
+          action=""
+          :auto-upload="false"
+          :limit="1"
+          :file-list="importFileList"
+          :on-change="handleImportFileChange"
+          :on-remove="handleImportFileRemove"
+          accept=".xlsx,.xls,.json,.csv"
+        >
+          <div class="upload-area">
+            <el-icon class="upload-icon"><Upload /></el-icon>
+            <div class="upload-text">
+              将文件拖到此处，或
+              <em>点击上传</em>
+            </div>
+            <div class="upload-hint">
+              支持 Excel (.xlsx/.xls)、JSON、CSV 格式，文件大小不超过 10MB
+            </div>
+          </div>
+        </el-upload>
+
+        <!-- 导入设置 -->
+        <div class="import-settings">
+          <el-form label-width="100px">
+            <el-form-item label="目标文件夹">
+              <el-select
+                v-model="importTargetFolderId"
+                placeholder="默认不分类"
+                clearable
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="folder in folderList"
+                  :key="folder.id"
+                  :label="folder.name"
+                  :value="folder.id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 模板下载提示 -->
+        <div class="import-tips">
+          <el-alert type="info" :closable="false" show-icon>
+            <template #title>
+              <span>
+                首次导入？请先
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  @click="downloadImportTemplate"
+                >
+                  下载导入模板
+                </el-link>
+                ，按照模板格式填写后上传
+              </span>
+            </template>
+          </el-alert>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="importDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="importLoading"
+          :disabled="importFileList.length === 0"
+          @click="confirmImport"
+        >
+          {{ importLoading ? "导入中..." : "确认导入" }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 导出题目对话框 -->
+    <el-dialog
+      v-model="exportDialogVisible"
+      title="导出题目"
+      width="500px"
+      destroy-on-close
+    >
+      <div class="export-dialog-content">
+        <el-form label-width="100px">
+          <el-form-item label="导出范围">
+            <el-radio-group v-model="exportScope">
+              <el-radio value="all">全部题目</el-radio>
+              <el-radio
+                value="selected"
+                :disabled="selectedQuestions.length === 0"
+              >
+                已选题目
+                <span v-if="selectedQuestions.length > 0" class="export-count">
+                  ({{ selectedQuestions.length }}道)
+                </span>
+              </el-radio>
+              <el-radio value="folder" :disabled="!selectedFolderId">
+                当前文件夹
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="导出格式">
+            <el-radio-group v-model="exportFormat">
+              <el-radio-button value="excel">
+                <el-icon class="mr-1"><Document /></el-icon>
+                Excel
+              </el-radio-button>
+              <el-radio-button value="word">
+                <el-icon class="mr-1"><Document /></el-icon>
+                Word
+              </el-radio-button>
+              <el-radio-button value="json">
+                <el-icon class="mr-1"><Document /></el-icon>
+                JSON
+              </el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+
+        <div class="export-tips">
+          <el-alert type="info" :closable="false" show-icon>
+            <template #title>
+              <span v-if="exportFormat === 'excel'">
+                Excel 格式适合打印和编辑，包含题目完整信息
+              </span>
+              <span v-else-if="exportFormat === 'word'">
+                Word 格式适合打印试卷，排版更美观
+              </span>
+              <span v-else> JSON 格式适合数据备份和系统间迁移 </span>
+            </template>
+          </el-alert>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="exportDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="exportLoading"
+          @click="confirmExport"
+        >
+          {{ exportLoading ? "导出中..." : "确认导出" }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 移动到文件夹对话框 -->
+    <el-dialog v-model="moveDialogVisible" title="移动到文件夹" width="400px">
+      <el-form label-width="80px">
+        <el-form-item label="目标文件夹">
+          <el-select
+            v-model="targetFolderId"
+            placeholder="请选择目标文件夹"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="folder in folderList"
+              :key="folder.id"
+              :label="folder.name"
+              :value="folder.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="moveDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleMoveToFolder">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style lang="scss" scoped>
-/*浅色模式变量 */
 $light-bg: #f5f7fa;
 $light-card-bg: #fff;
 $light-text-primary: #1f2937;
 $light-text-secondary: #6b7280;
-$light-text-muted: #9ca3af;
 $light-border: #e5e7eb;
 $light-shadow:
   0 4px 6px -1px rgb(0 0 0 / 10%),
   0 2px 4px -2px rgb(0 0 0 / 10%);
-$light-shadow-lg:
-  0 10px 15px -3px rgb(0 0 0 / 10%),
-  0 4px 6px -4px rgb(0 0 0 / 10%);
 
-/* 深色模式变量 */
 $dark-bg: #0f172a;
 $dark-card-bg: rgba(30, 41, 59, 0.8);
 $dark-text-primary: #f1f5f9;
 $dark-text-secondary: #94a3b8;
-$dark-text-muted: #64748b;
 $dark-border: rgba(255, 255, 255, 0.1);
 $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
-$dark-shadow-lg:
-  0 10px 15px -3px rgb(0 0 0 / 40%),
-  0 4px 6px -4px rgb(0 0 0 / 40%);
 
-/* 主色调 */
 $primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 $success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-$info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
 $danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 
-/* 统一圆角 */
-$radius-sm: 8px;
 $radius-md: 12px;
 $radius-lg: 16px;
-$radius-xl: 20px;
 
 .question-bank {
   min-height: 100%;
-  transition: all 0.3s ease;
 
   &.is-dark {
-    .page-header {
+    .page-header,
+    .stat-card,
+    .toolbar-card,
+    .list-card,
+    .folder-sidebar {
       background: $dark-card-bg;
       border-color: $dark-border;
-
-      .page-title {
-        color: $dark-text-primary;
-      }
-
-      .page-desc {
-        color: $dark-text-secondary;
-      }
-
-      .header-icon {
-        background: rgba(59, 130, 246, 0.2);
-      }
     }
 
-    .stat-card {
-      background: $dark-card-bg;
-      border-color: $dark-border;
-      box-shadow: $dark-shadow;
-
-      .stat-info {
-        .stat-value {
-          color: $dark-text-primary;
-        }
-
-        .stat-label {
-          color: $dark-text-secondary;
-        }
-      }
+    .page-title,
+    .stat-value {
+      color: $dark-text-primary;
     }
 
-    .toolbar-card {
-      background: $dark-card-bg;
-      border-color: $dark-border;
-      box-shadow: $dark-shadow;
-    }
-
-    .list-card {
-      background: $dark-card-bg;
-      border-color: $dark-border;
-      box-shadow: $dark-shadow;
-
-      .question-stem {
-        color: $dark-text-primary;
-      }
-
-      .subject-badge,
-      .points-badge,
-      .usage-badge {
-        color: $dark-text-secondary;
-      }
+    .page-desc,
+    .stat-label {
+      color: $dark-text-secondary;
     }
   }
 
@@ -899,7 +1391,7 @@ $radius-xl: 20px;
       width: 56px;
       height: 56px;
       border-radius: $radius-md;
-      background: $info-gradient;
+      background: $primary-gradient;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -911,25 +1403,22 @@ $radius-xl: 20px;
       }
     }
 
-    .header-info {
-      .page-title {
-        font-size: 24px;
-        font-weight: 700;
-        color: $light-text-primary;
-        margin: 0 0 4px;
-      }
-
-      .page-desc {
-        font-size: 14px;
-        color: $light-text-secondary;
-        margin: 0;
-      }
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: $light-text-primary;
+      margin: 0 0 4px;
     }
 
-    .create-btn {
-      border-radius: $radius-md;
-      padding: 12px 24px;
-      font-weight: 600;
+    .page-desc {
+      font-size: 14px;
+      color: $light-text-secondary;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
     }
   }
 
@@ -938,14 +1427,6 @@ $radius-xl: 20px;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     margin-bottom: 24px;
-
-    @media (max-width: 1200px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-    }
   }
 
   .stat-card {
@@ -957,12 +1438,6 @@ $radius-xl: 20px;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
     border: 1px solid $light-border;
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: $light-shadow-lg;
-    }
 
     .stat-icon {
       width: 48px;
@@ -976,11 +1451,9 @@ $radius-xl: 20px;
       &.radio {
         background: $success-gradient;
       }
-
       &.checkbox {
         background: $warning-gradient;
       }
-
       &.textarea {
         background: $danger-gradient;
       }
@@ -992,20 +1465,86 @@ $radius-xl: 20px;
       }
     }
 
-    .stat-info {
-      .stat-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: $light-text-primary;
-        line-height: 1.2;
-      }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: $light-text-primary;
+    }
 
-      .stat-label {
-        font-size: 14px;
-        color: $light-text-secondary;
-        margin-top: 4px;
+    .stat-label {
+      font-size: 14px;
+      color: $light-text-secondary;
+    }
+  }
+
+  .main-content {
+    display: flex;
+    gap: 20px;
+  }
+
+  .folder-sidebar {
+    width: 240px;
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    border: 1px solid $light-border;
+    padding: 16px;
+
+    .folder-header {
+      padding-bottom: 12px;
+      border-bottom: 1px solid $light-border;
+      margin-bottom: 12px;
+
+      .folder-title {
+        font-weight: 600;
+        color: $light-text-primary;
       }
     }
+
+    .folder-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: rgba(0, 191, 165, 0.05);
+      }
+
+      &.active {
+        background: rgba(0, 191, 165, 0.1);
+        color: #00bfa5;
+      }
+
+      &.child {
+        padding-left: 32px;
+      }
+
+      .folder-name {
+        flex: 1;
+        font-size: 14px;
+      }
+
+      .folder-count {
+        font-size: 12px;
+        color: $light-text-secondary;
+      }
+
+      .folder-actions {
+        display: none;
+      }
+
+      &:hover .folder-actions {
+        display: flex;
+      }
+    }
+  }
+
+  .content-area {
+    flex: 1;
   }
 
   .toolbar-card {
@@ -1014,7 +1553,7 @@ $radius-xl: 20px;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
     border: 1px solid $light-border;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 
     .toolbar {
       display: flex;
@@ -1029,7 +1568,6 @@ $radius-xl: 20px;
       display: flex;
       align-items: center;
       gap: 12px;
-      flex-wrap: wrap;
     }
   }
 
@@ -1040,12 +1578,7 @@ $radius-xl: 20px;
     border: 1px solid $light-border;
     overflow: hidden;
 
-    .question-table {
-      border-radius: $radius-lg;
-    }
-
     .question-stem {
-      color: $light-text-primary;
       font-size: 14px;
       line-height: 1.5;
       overflow: hidden;
@@ -1055,16 +1588,19 @@ $radius-xl: 20px;
       -webkit-box-orient: vertical;
     }
 
-    .subject-badge {
-      color: $light-text-secondary;
-      font-size: 13px;
-    }
+    .knowledge-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
 
-    .points-badge,
-    .usage-badge {
-      color: $light-text-secondary;
-      font-size: 13px;
-      font-weight: 500;
+      .kp-tag {
+        border-radius: 4px;
+      }
+
+      .more-kp {
+        font-size: 12px;
+        color: $light-text-secondary;
+      }
     }
 
     .pagination-wrapper {
@@ -1086,9 +1622,90 @@ $radius-xl: 20px;
 
       .option-key {
         font-weight: 600;
-        color: $light-text-primary;
         min-width: 24px;
       }
+    }
+  }
+
+  // 导入对话框样式
+  .import-dialog-content {
+    .import-upload {
+      :deep(.el-upload) {
+        width: 100%;
+      }
+
+      :deep(.el-upload-dragger) {
+        width: 100%;
+        padding: 40px 20px;
+        border-radius: $radius-md;
+        border: 2px dashed $light-border;
+        transition: all 0.3s;
+
+        &:hover {
+          border-color: #667eea;
+          background: rgba(102, 126, 234, 0.02);
+        }
+      }
+    }
+
+    .upload-area {
+      text-align: center;
+
+      .upload-icon {
+        font-size: 48px;
+        color: #667eea;
+        margin-bottom: 12px;
+      }
+
+      .upload-text {
+        font-size: 16px;
+        color: $light-text-primary;
+        margin-bottom: 8px;
+
+        em {
+          color: #667eea;
+          font-style: normal;
+          cursor: pointer;
+        }
+      }
+
+      .upload-hint {
+        font-size: 13px;
+        color: $light-text-secondary;
+      }
+    }
+
+    .import-settings {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid $light-border;
+    }
+
+    .import-tips {
+      margin-top: 16px;
+    }
+  }
+
+  // 导出对话框样式
+  .export-dialog-content {
+    .export-count {
+      color: #667eea;
+      font-size: 12px;
+    }
+
+    .export-tips {
+      margin-top: 16px;
+    }
+
+    :deep(.el-radio-group) {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    :deep(.el-form-item:last-child .el-radio-group) {
+      flex-direction: row;
+      gap: 0;
     }
   }
 }

@@ -2,7 +2,7 @@
 import { ref, reactive, watch } from "vue";
 import { ElMessage } from "element-plus";
 import {
-  searchQuestionBank,
+  getQuestionBankList,
   aiGenerateQuestion,
   type QuestionBankItem
 } from "@/api/examPaper";
@@ -34,17 +34,29 @@ const aiSettings = reactive({
 const questionBankList = ref<QuestionBankItem[]>([]);
 const questionBankLoading = ref(false);
 
+// 题型映射：前端类型 -> 后端类型
+const typeMapping: Record<string, string> = {
+  radio: "radio",
+  checkbox: "checkbox",
+  judge: "judge",
+  input: "input",
+  textarea: "textarea"
+};
+
 const fetchQuestions = async () => {
   questionBankLoading.value = true;
   try {
-    const res = await searchQuestionBank({
-      keyword: searchKeyword.value,
-      type: props.questionType,
+    // 使用与题库管理页面相同的 getQuestionBankList 接口，确保数据源一致
+    const res = await getQuestionBankList({
+      keyword: searchKeyword.value || undefined,
       pageNum: 1,
       pageSize: 50
     });
     if (res.code === 0) {
-      questionBankList.value = res.data.list;
+      questionBankList.value = res.data.list.map(q => ({
+        ...q,
+        type: q.type
+      }));
     }
   } finally {
     questionBankLoading.value = false;

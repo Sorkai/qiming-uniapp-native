@@ -133,7 +133,7 @@ const switchQuestion = (index: number) => {
   if (currentQuestion.value) {
     leaveQuestion(currentQuestion.value.questionId);
   }
-  
+
   // 切换到新题目
   currentQuestionIndex.value = index;
   
@@ -191,7 +191,7 @@ const handleSubmit = async () => {
   }
 
   const unansweredCount = allQuestions.value.length - answeredCount.value;
-  
+
   let confirmMessage = "确定要提交试卷吗？";
   if (unansweredCount > 0) {
     confirmMessage = `还有 ${unansweredCount} 道题未作答，确定要提交吗？`;

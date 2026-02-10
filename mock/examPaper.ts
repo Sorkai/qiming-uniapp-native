@@ -997,7 +997,7 @@ export default [
 
   // ==================== 题目助手API ====================
 
-  // 搜索题库题目
+  // 搜索题库题目（与列表共享同一数据源）
   {
     url: "/edu/backend/v1/question-bank/search",
     method: "get",
@@ -1010,10 +1010,97 @@ export default [
         difficulty,
         knowledgePoint
       } = query;
+      // 统一数据源：包含题库管理列表中的所有题目 + 额外题目
       const allQuestions = [
         {
-          id: 1001,
-          type: "single_choice",
+          id: 1,
+          type: "radio",
+          typeName: "单选题",
+          stem: "函数 f(x) = x²在 x = 0 处的导数是？",
+          options: [
+            { key: "A", content: "0" },
+            { key: "B", content: "1" },
+            { key: "C", content: "2" },
+            { key: "D", content: "不存在" }
+          ],
+          correctAnswer: "A",
+          analysis: "根据导数定义，f'(x) = 2x，当 x = 0 时，f'(0) = 0",
+          knowledgePoints: ["导数与微分", "求导公式"],
+          difficulty: "easy",
+          difficultyName: "简单",
+          points: 5,
+          createTime: "2026-01-15",
+          useCount: 15
+        },
+        {
+          id: 2,
+          type: "checkbox",
+          typeName: "多选题",
+          stem: "以下哪些是 JavaScript 的基本数据类型？",
+          options: [
+            { key: "A", content: "String" },
+            { key: "B", content: "Number" },
+            { key: "C", content: "Array" },
+            { key: "D", content: "Boolean" }
+          ],
+          correctAnswers: ["A", "B", "D"],
+          analysis: "JavaScript 的基本数据类型包括 String、Number、Boolean、Undefined、Null、Symbol 和 BigInt。Array 是引用类型。",
+          knowledgePoints: ["JavaScript基础", "数据类型"],
+          difficulty: "medium",
+          difficultyName: "中等",
+          points: 10,
+          createTime: "2026-01-18",
+          useCount: 8
+        },
+        {
+          id: 3,
+          type: "input",
+          typeName: "填空题",
+          stem: "光在真空中的传播速度约为 ______ m/s。",
+          blanks: [{ answer: "3×10^8" }],
+          correctAnswer: "3×10^8",
+          analysis: "光速是物理学中的基本常数，约为 299,792,458 m/s，通常近似为 3×10^8 m/s。",
+          knowledgePoints: ["光学", "物理常数"],
+          difficulty: "medium",
+          difficultyName: "中等",
+          points: 5,
+          createTime: "2026-01-10",
+          useCount: 22
+        },
+        {
+          id: 4,
+          type: "textarea",
+          typeName: "简答题",
+          stem: "请简述数据库事务的 ACID 特性，并举例说明。",
+          referenceAnswer: "ACID 是数据库事务的四个基本特性...",
+          knowledgePoints: ["事务管理", "ACID"],
+          difficulty: "hard",
+          difficultyName: "困难",
+          points: 15,
+          createTime: "2026-01-22",
+          useCount: 5
+        },
+        {
+          id: 5,
+          type: "judge",
+          typeName: "判断题",
+          stem: "The word 'beautiful' is an adjective.",
+          options: [
+            { key: "T", content: "正确" },
+            { key: "F", content: "错误" }
+          ],
+          correctAnswer: "T",
+          analysis: "'Beautiful' 是一个形容词，用于描述名词的特征。",
+          knowledgePoints: ["词性", "形容词"],
+          difficulty: "easy",
+          difficultyName: "简单",
+          points: 3,
+          createTime: "2026-01-05",
+          useCount: 30
+        },
+        {
+          id: 6,
+          type: "radio",
           typeName: "单选题",
           stem: "求极限 lim(x→0) sin(x)/x 的值为：",
           options: [
@@ -1025,15 +1112,15 @@ export default [
           correctAnswer: "B",
           analysis: "这是一个重要极限，lim(x→0) sin(x)/x = 1",
           knowledgePoints: ["极限与连续", "重要极限"],
-          difficulty: "easy",
-          difficultyName: "简单",
+          difficulty: "medium",
+          difficultyName: "中等",
           points: 4,
-          createTime: "2024-03-15 10:00:00",
+          createTime: "2026-01-20",
           useCount: 12
         },
         {
           id: 1002,
-          type: "single_choice",
+          type: "radio",
           typeName: "单选题",
           stem: "函数 f(x) = x³ 的导数 f'(x) 为：",
           options: [
@@ -1053,7 +1140,7 @@ export default [
         },
         {
           id: 1003,
-          type: "multiple_choice",
+          type: "checkbox",
           typeName: "多选题",
           stem: "下列关于连续函数的说法正确的是：",
           options: [
@@ -1073,14 +1160,14 @@ export default [
         },
         {
           id: 1004,
-          type: "true_false",
+          type: "judge",
           typeName: "判断题",
           stem: "可导函数一定连续。",
           options: [
-            { key: "A", content: "正确" },
-            { key: "B", content: "错误" }
+            { key: "T", content: "正确" },
+            { key: "F", content: "错误" }
           ],
-          correctAnswer: "A",
+          correctAnswer: "T",
           analysis: "可导必连续，但连续不一定可导",
           knowledgePoints: ["导数与微分", "可导与连续"],
           difficulty: "easy",
@@ -1091,7 +1178,7 @@ export default [
         },
         {
           id: 1005,
-          type: "fill_blank",
+          type: "input",
           typeName: "填空题",
           stem: "∫x²dx = ______ + C",
           blanks: [{ answer: "x³/3" }],
@@ -1106,7 +1193,7 @@ export default [
         },
         {
           id: 1006,
-          type: "short_answer",
+          type: "textarea",
           typeName: "简答题",
           stem: "求函数 f(x) = x³ - 3x + 2 的极值点和极值。",
           referenceAnswer:
@@ -1121,7 +1208,7 @@ export default [
         },
         {
           id: 1007,
-          type: "single_choice",
+          type: "radio",
           typeName: "单选题",
           stem: "设 f(x) 在 [a,b] 上连续，在 (a,b) 内可导，且 f(a) = f(b)，则至少存在一点 ξ∈(a,b)，使得 f'(ξ) = 0。这是哪个定理？",
           options: [
@@ -1141,7 +1228,7 @@ export default [
         },
         {
           id: 1008,
-          type: "single_choice",
+          type: "radio",
           typeName: "单选题",
           stem: "级数 Σ(1/n²) (n=1到∞) 是：",
           options: [
@@ -1161,7 +1248,7 @@ export default [
         },
         {
           id: 1009,
-          type: "short_answer",
+          type: "textarea",
           typeName: "简答题",
           stem: "证明：若 f(x) 在 [a,b] 上连续，则 f(x) 在 [a,b] 上有最大值和最小值。",
           referenceAnswer:
@@ -1177,7 +1264,7 @@ export default [
         },
         {
           id: 1010,
-          type: "single_choice",
+          type: "radio",
           typeName: "单选题",
           stem: "二重积分 ∬_D dxdy 的几何意义是：",
           options: [
@@ -1234,14 +1321,14 @@ export default [
     url: "/edu/backend/v1/ai/generate-question",
     method: "post",
     response: ({ body }: { body: any }) => {
-      const { questionType, count = 1, knowledgePoints, difficulty } = body;
+      const { questionType, count = 1, knowledgePoints, difficulty, includeAnalysis = true } = body;
       const generated = [];
-      for (let i = 0; i < Math.min(count, 5); i++) {
+      for (let i = 0; i < Math.min(count, 10); i++) {
         const id = Date.now() + i;
-        if (questionType === "single_choice") {
+        if (questionType === "radio") {
           generated.push({
             id,
-            type: "single_choice",
+            type: "radio",
             stem: `[AI生成] 关于${knowledgePoints || "数学"}的单选题 ${i + 1}：以下哪个说法是正确的？`,
             options: [
               { key: "A", content: "选项A的内容" },
@@ -1250,14 +1337,14 @@ export default [
               { key: "D", content: "选项D的内容" }
             ],
             correctAnswer: "C",
-            analysis: "AI生成的解析：选项C是正确的，因为...",
+            analysis: includeAnalysis ? "AI生成的解析：选项C是正确的，因为..." : "",
             difficulty: difficulty || "medium",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
-        } else if (questionType === "multiple_choice") {
+        } else if (questionType === "checkbox") {
           generated.push({
             id,
-            type: "multiple_choice",
+            type: "checkbox",
             stem: `[AI生成] 关于${knowledgePoints || "数学"}的多选题 ${i + 1}：以下哪些说法是正确的？`,
             options: [
               { key: "A", content: "正确选项A" },
@@ -1266,42 +1353,42 @@ export default [
               { key: "D", content: "正确选项D" }
             ],
             correctAnswers: ["A", "B", "D"],
-            analysis: "AI生成的解析：A、B、D都是正确的...",
+            analysis: includeAnalysis ? "AI生成的解析：A、B、D都是正确的..." : "",
             difficulty: difficulty || "medium",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
-        } else if (questionType === "true_false") {
+        } else if (questionType === "judge") {
           generated.push({
             id,
-            type: "true_false",
+            type: "judge",
             stem: `[AI生成] 关于${knowledgePoints || "数学"}的判断题 ${i + 1}：该命题是否正确？`,
             options: [
-              { key: "A", content: "正确" },
-              { key: "B", content: "错误" }
+              { key: "T", content: "正确" },
+              { key: "F", content: "错误" }
             ],
-            correctAnswer: "A",
-            analysis: "AI生成的解析：该命题是正确的，因为...",
+            correctAnswer: "T",
+            analysis: includeAnalysis ? "AI生成的解析：该命题是正确的，因为..." : "",
             difficulty: difficulty || "easy",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
-        } else if (questionType === "fill_blank") {
+        } else if (questionType === "input") {
           generated.push({
             id,
-            type: "fill_blank",
+            type: "input",
             stem: `[AI生成] 关于${knowledgePoints || "数学"}的填空题 ${i + 1}：请填写 ______。`,
             blanks: [{ answer: "参考答案" }],
             correctAnswer: "参考答案",
-            analysis: "AI生成的解析：答案是...",
+            analysis: includeAnalysis ? "AI生成的解析：答案是..." : "",
             difficulty: difficulty || "medium",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
         } else {
           generated.push({
             id,
-            type: questionType || "short_answer",
+            type: "textarea",
             stem: `[AI生成] 关于${knowledgePoints || "数学"}的简答题 ${i + 1}：请详细阐述相关概念。`,
             referenceAnswer: "AI生成的参考答案：...",
-            analysis: "AI生成的解析：需要从以下几个方面回答...",
+            analysis: includeAnalysis ? "AI生成的解析：需要从以下几个方面回答..." : "",
             difficulty: difficulty || "medium",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
@@ -1311,6 +1398,459 @@ export default [
         code: 0,
         msg: "success",
         data: generated
+      };
+    }
+  },
+
+  // 获取题库列表
+  {
+    url: "/edu/backend/v1/question-bank/list",
+    method: "get",
+    response: ({ query }: { query: any }) => {
+      const {
+        pageNum = 1,
+        pageSize = 10,
+        keyword,
+        type,
+        difficulty,
+        knowledgePoint,
+        folderId
+      } = query;
+      const allQuestions = [
+        {
+          id: 1,
+          type: "radio",
+          typeName: "单选题",
+          subject: "math",
+          subjectName: "高等数学",
+          difficulty: "easy",
+          difficultyName: "简单",
+          stem: "函数 f(x) = x²在 x = 0 处的导数是？",
+          options: [
+            { key: "A", content: "0" },
+            { key: "B", content: "1" },
+            { key: "C", content: "2" },
+            { key: "D", content: "不存在" }
+          ],
+          correctAnswer: "A",
+          analysis: "根据导数定义，f'(x) = 2x，当 x = 0 时，f'(0) = 0",
+          knowledgePoints: ["导数与微分", "求导公式"],
+          points: 5,
+          useCount: 15,
+          createTime: "2026-01-15",
+          folderId: 1,
+          folderName: "高等数学"
+        },
+        {
+          id: 2,
+          type: "checkbox",
+          typeName: "多选题",
+          subject: "programming",
+          subjectName: "程序设计",
+          difficulty: "medium",
+          difficultyName: "中等",
+          stem: "以下哪些是 JavaScript 的基本数据类型？",
+          options: [
+            { key: "A", content: "String" },
+            { key: "B", content: "Number" },
+            { key: "C", content: "Array" },
+            { key: "D", content: "Boolean" }
+          ],
+          correctAnswers: ["A", "B", "D"],
+          analysis:
+            "JavaScript 的基本数据类型包括 String、Number、Boolean、Undefined、Null、Symbol 和 BigInt。Array 是引用类型。",
+          knowledgePoints: ["JavaScript基础", "数据类型"],
+          points: 10,
+          useCount: 8,
+          createTime: "2026-01-18",
+          folderId: 2,
+          folderName: "程序设计"
+        },
+        {
+          id: 3,
+          type: "input",
+          typeName: "填空题",
+          subject: "physics",
+          subjectName: "大学物理",
+          difficulty: "medium",
+          difficultyName: "中等",
+          stem: "光在真空中的传播速度约为 ______ m/s。",
+          correctAnswer: "3×10^8",
+          blanks: [{ answer: "3×10^8" }],
+          analysis:
+            "光速是物理学中的基本常数，约为 299,792,458 m/s，通常近似为 3×10^8 m/s。",
+          knowledgePoints: ["光学", "物理常数"],
+          points: 5,
+          useCount: 22,
+          createTime: "2026-01-10",
+          folderId: 3,
+          folderName: "大学物理"
+        },
+        {
+          id: 4,
+          type: "textarea",
+          typeName: "简答题",
+          subject: "database",
+          subjectName: "数据库原理",
+          difficulty: "hard",
+          difficultyName: "困难",
+          stem: "请简述数据库事务的 ACID 特性，并举例说明。",
+          referenceAnswer:
+            "ACID 是数据库事务的四个基本特性：\\n1. 原子性(Atomicity)：事务中的所有操作要么全部完成，要么全部不完成。\\n2. 一致性(Consistency)：事务执行前后，数据库的完整性约束没有被破坏。\\n3. 隔离性(Isolation)：多个事务并发执行时，一个事务的执行不应影响其他事务。\\n4. 持久性(Durability)：事务完成后，对数据库的修改是永久性的。",
+          knowledgePoints: ["事务管理", "ACID"],
+          points: 15,
+          useCount: 5,
+          createTime: "2026-01-22",
+          folderId: 2,
+          folderName: "程序设计"
+        },
+        {
+          id: 5,
+          type: "judge",
+          typeName: "判断题",
+          subject: "english",
+          subjectName: "大学英语",
+          difficulty: "easy",
+          difficultyName: "简单",
+          stem: "The word 'beautiful' is an adjective.",
+          options: [
+            { key: "T", content: "正确" },
+            { key: "F", content: "错误" }
+          ],
+          correctAnswer: "T",
+          analysis: "'Beautiful' 是一个形容词，用于描述名词的特征。",
+          knowledgePoints: ["词性", "形容词"],
+          points: 3,
+          useCount: 30,
+          createTime: "2026-01-05",
+          folderId: 4,
+          folderName: "大学英语"
+        },
+        {
+          id: 6,
+          type: "radio",
+          typeName: "单选题",
+          subject: "math",
+          subjectName: "高等数学",
+          difficulty: "medium",
+          difficultyName: "中等",
+          stem: "求极限 lim(x→0) sin(x)/x 的值为：",
+          options: [
+            { key: "A", content: "0" },
+            { key: "B", content: "1" },
+            { key: "C", content: "∞" },
+            { key: "D", content: "不存在" }
+          ],
+          correctAnswer: "B",
+          analysis: "这是一个重要极限，lim(x→0) sin(x)/x = 1",
+          knowledgePoints: ["极限与连续", "重要极限"],
+          points: 4,
+          useCount: 12,
+          createTime: "2026-01-20",
+          folderId: 1,
+          folderName: "高等数学"
+        }
+      ];
+
+      let filtered = [...allQuestions];
+      if (keyword) {
+        filtered = filtered.filter(
+          q =>
+            q.stem.includes(keyword) ||
+            q.knowledgePoints.some(kp => kp.includes(keyword))
+        );
+      }
+      if (type) {
+        filtered = filtered.filter(q => q.type === type);
+      }
+      if (difficulty) {
+        filtered = filtered.filter(q => q.difficulty === difficulty);
+      }
+      if (knowledgePoint) {
+        filtered = filtered.filter(q =>
+          q.knowledgePoints.some(kp => kp.includes(knowledgePoint))
+        );
+      }
+      if (folderId) {
+        filtered = filtered.filter(q => q.folderId === Number(folderId));
+      }
+      const start = (Number(pageNum) - 1) * Number(pageSize);
+      const end = start + Number(pageSize);
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          total: filtered.length,
+          list: filtered.slice(start, end)
+        }
+      };
+    }
+  },
+
+  // 获取题库统计数据
+  {
+    url: "/edu/backend/v1/question-bank/statistics",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          total: 156,
+          radio: 45,
+          checkbox: 28,
+          judge: 20,
+          input: 31,
+          textarea: 32
+        }
+      };
+    }
+  },
+
+  // 创建题目
+  {
+    url: "/edu/backend/v1/question-bank/create",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "创建成功", data: { id: Date.now() } };
+    }
+  },
+
+  // 更新题目
+  {
+    url: "/edu/backend/v1/question-bank/update",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "更新成功", data: null };
+    }
+  },
+
+  // 删除题目
+  {
+    url: "/edu/backend/v1/question-bank/delete",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "删除成功", data: null };
+    }
+  },
+
+  // 批量删除题目
+  {
+    url: "/edu/backend/v1/question-bank/batch-delete",
+    method: "post",
+    response: ({ body }: { body: any }) => {
+      const { ids } = body;
+      return {
+        code: 0,
+        msg: `成功删除 ${ids?.length || 0} 道题目`,
+        data: null
+      };
+    }
+  },
+
+  // 导入题目
+  {
+    url: "/edu/backend/v1/question-bank/import",
+    method: "post",
+    response: () => {
+      return {
+        code: 0,
+        msg: "导入成功",
+        data: { importedCount: 10, failedCount: 0 }
+      };
+    }
+  },
+
+  // 导出题目
+  {
+    url: "/edu/backend/v1/question-bank/export",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: { downloadUrl: "/api/download/questions.xlsx" }
+      };
+    }
+  },
+
+  // 获取题库文件夹列表
+  {
+    url: "/edu/backend/v1/question-bank/folders",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: [
+          {
+            id: 1,
+            name: "高等数学",
+            parentId: null,
+            questionCount: 45,
+            createTime: "2026-01-01",
+            children: [
+              {
+                id: 11,
+                name: "极限与连续",
+                parentId: 1,
+                questionCount: 15,
+                createTime: "2026-01-02"
+              },
+              {
+                id: 12,
+                name: "导数与微分",
+                parentId: 1,
+                questionCount: 20,
+                createTime: "2026-01-02"
+              },
+              {
+                id: 13,
+                name: "积分计算",
+                parentId: 1,
+                questionCount: 10,
+                createTime: "2026-01-02"
+              }
+            ]
+          },
+          {
+            id: 2,
+            name: "程序设计",
+            parentId: null,
+            questionCount: 38,
+            createTime: "2026-01-01",
+            children: [
+              {
+                id: 21,
+                name: "JavaScript",
+                parentId: 2,
+                questionCount: 18,
+                createTime: "2026-01-03"
+              },
+              {
+                id: 22,
+                name: "数据库",
+                parentId: 2,
+                questionCount: 20,
+                createTime: "2026-01-03"
+              }
+            ]
+          },
+          {
+            id: 3,
+            name: "大学物理",
+            parentId: null,
+            questionCount: 32,
+            createTime: "2026-01-01"
+          },
+          {
+            id: 4,
+            name: "大学英语",
+            parentId: null,
+            questionCount: 41,
+            createTime: "2026-01-01"
+          }
+        ]
+      };
+    }
+  },
+
+  // 创建题库文件夹
+  {
+    url: "/edu/backend/v1/question-bank/folders/create",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "创建成功", data: { id: Date.now() } };
+    }
+  },
+
+  // 更新题库文件夹
+  {
+    url: "/edu/backend/v1/question-bank/folders/update",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "更新成功", data: null };
+    }
+  },
+
+  // 删除题库文件夹
+  {
+    url: "/edu/backend/v1/question-bank/folders/delete",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "删除成功", data: null };
+    }
+  },
+
+  // 移动题目到文件夹
+  {
+    url: "/edu/backend/v1/question-bank/move-to-folder",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "移动成功", data: null };
+    }
+  },
+
+  // 发布试卷（高级配置）
+  {
+    url: "/edu/backend/v1/paper/publish-advanced",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "发布成功", data: null };
+    }
+  },
+
+  // 保存为模板
+  {
+    url: "/edu/backend/v1/paper/save-as-template",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "保存模板成功", data: { templateId: Date.now() } };
+    }
+  },
+
+  // 获取模板详情
+  {
+    url: "/edu/backend/v1/paper/template/:templateId",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          title: "模板试卷",
+          description: "这是一个模板试卷",
+          timeLimit: 90,
+          questionGroups: []
+        }
+      };
+    }
+  },
+
+  // 归档题目到题库
+  {
+    url: "/edu/backend/v1/question-bank/archive",
+    method: "post",
+    response: ({ body }: { body: any }) => {
+      const count = body?.questions?.length || 1;
+      return {
+        code: 0,
+        msg: `成功归档 ${count} 道题目到题库`,
+        data: { archivedCount: count }
+      };
+    }
+  },
+
+  // 批量归档题目到题库
+  {
+    url: "/edu/backend/v1/question-bank/batch-archive",
+    method: "post",
+    response: ({ body }: { body: any }) => {
+      const count = body?.questions?.length || 0;
+      return {
+        code: 0,
+        msg: `成功归档 ${count} 道题目到题库`,
+        data: { archivedCount: count }
       };
     }
   },

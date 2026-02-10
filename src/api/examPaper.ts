@@ -756,6 +756,300 @@ export const getKnowledgePoints = () => {
   );
 };
 
+// ==================== 题库管理API ====================
+
+/** 题库文件夹 */
+export interface QuestionFolder {
+  id: number;
+  name: string;
+  parentId?: number;
+  questionCount: number;
+  createTime: string;
+  children?: QuestionFolder[];
+}
+
+/** 获取题库列表参数 */
+export interface GetQuestionBankListParams extends PageParams {
+  keyword?: string;
+  type?: string;
+  difficulty?: string;
+  knowledgePoint?: string;
+  folderId?: number;
+}
+
+/** 题库题目完整信息 */
+export interface QuestionBankFullItem extends QuestionBankItem {
+  folderId?: number;
+  folderName?: string;
+  subject?: string;
+  subjectName?: string;
+}
+
+/** 题库统计数据 */
+export interface QuestionBankStatistics {
+  total: number;
+  radio: number;
+  checkbox: number;
+  judge: number;
+  input: number;
+  textarea: number;
+}
+
+/**
+ * 获取题库列表
+ */
+export const getQuestionBankList = (params: GetQuestionBankListParams) => {
+  return http.request<ApiResponse<PageResult<QuestionBankFullItem>>>(
+    "get",
+    "/edu/backend/v1/question-bank/list",
+    { params }
+  );
+};
+
+/**
+ * 获取题库统计数据
+ */
+export const getQuestionBankStatistics = () => {
+  return http.request<ApiResponse<QuestionBankStatistics>>(
+    "get",
+    "/edu/backend/v1/question-bank/statistics"
+  );
+};
+
+/**
+ * 创建题目
+ */
+export const createQuestion = (data: Partial<QuestionBankFullItem>) => {
+  return http.request<ApiResponse<{ id: number }>>(
+    "post",
+    "/edu/backend/v1/question-bank/create",
+    { data }
+  );
+};
+
+/**
+ * 更新题目
+ */
+export const updateQuestion = (data: Partial<QuestionBankFullItem>) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/question-bank/update",
+    { data }
+  );
+};
+
+/**
+ * 删除题目
+ */
+export const deleteQuestion = (id: number) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/question-bank/delete",
+    { data: { id } }
+  );
+};
+
+/**
+ * 批量删除题目
+ */
+export const batchDeleteQuestions = (ids: number[]) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/question-bank/batch-delete",
+    { data: { ids } }
+  );
+};
+
+/**
+ * 导入题目
+ */
+export const importQuestions = (data: {
+  file?: File;
+  questions?: Partial<QuestionBankFullItem>[];
+  folderId?: number;
+}) => {
+  return http.request<
+    ApiResponse<{ importedCount: number; failedCount: number }>
+  >("post", "/edu/backend/v1/question-bank/import", { data });
+};
+
+/**
+ * 导出题目
+ */
+export const exportQuestions = (params: {
+  ids?: number[];
+  folderId?: number;
+  format?: "json" | "excel" | "word";
+}) => {
+  return http.request<ApiResponse<{ downloadUrl: string }>>(
+    "get",
+    "/edu/backend/v1/question-bank/export",
+    { params }
+  );
+};
+
+/**
+ * 获取题库文件夹列表
+ */
+export const getQuestionFolders = () => {
+  return http.request<ApiResponse<QuestionFolder[]>>(
+    "get",
+    "/edu/backend/v1/question-bank/folders"
+  );
+};
+
+/**
+ * 创建题库文件夹
+ */
+export const createQuestionFolder = (data: {
+  name: string;
+  parentId?: number;
+}) => {
+  return http.request<ApiResponse<{ id: number }>>(
+    "post",
+    "/edu/backend/v1/question-bank/folders/create",
+    { data }
+  );
+};
+
+/**
+ * 更新题库文件夹
+ */
+export const updateQuestionFolder = (data: { id: number; name: string }) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/question-bank/folders/update",
+    { data }
+  );
+};
+
+/**
+ * 删除题库文件夹
+ */
+export const deleteQuestionFolder = (id: number) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/question-bank/folders/delete",
+    { data: { id } }
+  );
+};
+
+/**
+ * 移动题目到文件夹
+ */
+export const moveQuestionsToFolder = (data: {
+  questionIds: number[];
+  folderId: number;
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/question-bank/move-to-folder",
+    { data }
+  );
+};
+
+/**
+ * 归档题目到题库
+ */
+export const archiveQuestionToBank = (data: {
+  questions: Array<Partial<QuestionBankFullItem>>;
+}) => {
+  return http.request<ApiResponse<{ archivedCount: number }>>(
+    "post",
+    "/edu/backend/v1/question-bank/archive",
+    { data }
+  );
+};
+
+/**
+ * 批量归档题目到题库
+ */
+export const batchArchiveToBank = (data: {
+  questions: Array<Partial<QuestionBankFullItem>>;
+}) => {
+  return http.request<ApiResponse<{ archivedCount: number }>>(
+    "post",
+    "/edu/backend/v1/question-bank/batch-archive",
+    { data }
+  );
+};
+
+/**
+ * 保存为模板
+ */
+export const saveAsTemplate = (data: {
+  name: string;
+  description?: string;
+  questionGroups: any[];
+}) => {
+  return http.request<ApiResponse<{ templateId: number }>>(
+    "post",
+    "/edu/backend/v1/paper/save-as-template",
+    { data }
+  );
+};
+
+/**
+ * 获取模板详情
+ */
+export const getTemplateDetail = (templateId: string) => {
+  return http.request<ApiResponse<any>>(
+    "get",
+    `/edu/backend/v1/paper/template/${templateId}`
+  );
+};
+
+// ==================== 试卷发布高级配置 ====================
+
+/** 试卷高级发布配置 */
+export interface AdvancedPublishConfig extends PublishConfig {
+  /** 防作弊设置 */
+  antiCheat?: {
+    /** 是否启用IP限制（同一IP只能答一次） */
+    ipRestriction?: boolean;
+    /** 是否启用浏览器指纹检测 */
+    browserFingerprint?: boolean;
+    /** 是否禁止切换窗口 */
+    preventWindowSwitch?: boolean;
+    /** 切换窗口警告次数上限 */
+    maxWindowSwitchWarnings?: number;
+  };
+  /** 补考设置 */
+  retake?: {
+    /** 是否允许补考 */
+    allowRetake?: boolean;
+    /** 最大补考次数 */
+    maxRetakeCount?: number;
+    /** 补考开始时间 */
+    retakeStartTime?: string;
+    /** 补考结束时间 */
+    retakeEndTime?: string;
+    /** 补考是否使用原题 */
+    useOriginalQuestions?: boolean;
+  };
+  /** 成绩设置 */
+  scoring?: {
+    /** 及格分数线 */
+    passScore?: number;
+    /** 是否取最高分（多次考试） */
+    useHighestScore?: boolean;
+  };
+}
+
+/**
+ * 发布试卷（高级配置）
+ */
+export const publishPaperAdvanced = (data: {
+  paperId: number;
+  config: AdvancedPublishConfig;
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/publish-advanced",
+    { data }
+  );
+};
+
 // ==================== 学生端API ====================
 
 /**

@@ -12,6 +12,17 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { onBeforeRouteLeave } from "vue-router";
 import draggable from "vuedraggable";
 import QuestionAssistant from "./components/QuestionAssistant.vue";
+import {
+  createPaper,
+  updatePaper,
+  getPaperDetail,
+  publishPaperAdvanced,
+  saveAsTemplate as saveAsTemplateApi,
+  getTemplateDetail,
+  archiveQuestionToBank as archiveQuestionToBankApi,
+  batchArchiveToBank,
+  getCourseList
+} from "@/api/examPaper";
 
 defineOptions({
   name: "ExamPaperEditor"
@@ -94,6 +105,9 @@ const isEditMode = computed(() => !!paperId.value);
 // 是否有未保存的更改
 const hasUnsavedChanges = ref(false);
 
+// 课程列表
+const courseOptions = ref<Array<{ id: number; name: string }>>([]);
+
 // 试卷数据 - 新建时为空白
 const paper = reactive({
   title: "",
@@ -102,14 +116,36 @@ const paper = reactive({
   timeLimit: 90,
   totalPoints: 0,
   totalQuestions: 0,
+  startTime: "" as string,
+  endTime: "" as string,
   questionGroups: [] as any[],
   settings: {
     shuffleQuestions: false,
     shuffleOptions: false,
     showScore: true,
     allowReview: true
+  },
+  antiCheat: {
+    ipRestriction: false,
+    browserFingerprint: false,
+    preventWindowSwitch: false,
+    maxWindowSwitchWarnings: 3
+  },
+  retake: {
+    allowRetake: false,
+    maxRetakeCount: 1,
+    retakeStartTime: "" as string,
+    retakeEndTime: "" as string,
+    useOriginalQuestions: true
+  },
+  scoring: {
+    passScore: 60,
+    useHighestScore: false
   }
 });
+
+// 设置面板是否展开
+const settingsPanelVisible = ref(false);
 
 // 自动保存状态
 const autoSaveStatus = ref<"idle" | "saving" | "saved" | "error">("idle");
@@ -399,7 +435,31 @@ const savePaper = async (isAutoSave = false) => {
 
   autoSaveStatus.value = "saving";
   try {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const paperData = {
+      title: paper.title,
+      description: paper.description,
+      courseId: paper.courseId || 0,
+      timeLimit: paper.timeLimit,
+      startTime: paper.startTime,
+      endTime: paper.endTime,
+      questionGroups: paper.questionGroups,
+      settings: paper.settings,
+      antiCheat: paper.antiCheat,
+      retake: paper.retake,
+      scoring: paper.scoring
+    };
+
+    if (isEditMode.value) {
+      await updatePaper({
+        paperId: Number(paperId.value),
+        ...paperData
+      } as any);
+    } else {
+      const res = await createPaper(paperData as any);
+      if (res.code === 0 && res.data?.paperId) {
+        // 创建成功后可以更新URL
+      }
+    }
     autoSaveStatus.value = "saved";
     hasUnsavedChanges.value = false;
     resetAutoSaveCountdown();
@@ -429,7 +489,7 @@ const printPaper = () => {
 };
 
 // 发布试卷
-const publishPaper = () => {
+const publishPaperHandler = async () => {
   if (!paper.title.trim()) {
     ElMessage.warning("请输入试卷标题");
     return;
@@ -438,15 +498,43 @@ const publishPaper = () => {
     ElMessage.warning("请至少添加一道题目");
     return;
   }
-  ElMessageBox.confirm("确定要发布这份试卷吗？", "发布确认", {
-    confirmButtonText: "确定发布",
-    cancelButtonText: "取消",
-    type: "info"
-  })
-    .then(() => {
+  if (!paper.startTime || !paper.endTime) {
+    ElMessage.warning("请设置考试起止时间");
+    settingsPanelVisible.value = true;
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm("确定要发布这份试卷吗？", "发布确认", {
+      confirmButtonText: "确定发布",
+      cancelButtonText: "取消",
+      type: "info"
+    });
+
+    const res = await publishPaperAdvanced({
+      paperId: Number(paperId.value) || Date.now(),
+      config: {
+        targetType: 1,
+        startTime: paper.startTime,
+        endTime: paper.endTime,
+        shuffleQuestions: paper.settings.shuffleQuestions,
+        shuffleOptions: paper.settings.shuffleOptions,
+        showAnalysis: paper.settings.showScore,
+        showCorrectAnswer: paper.settings.allowReview,
+        antiCheat: paper.antiCheat,
+        retake: paper.retake,
+        scoring: paper.scoring
+      }
+    });
+
+    if (res.code === 0) {
       ElMessage.success("试卷发布成功！");
-    })
-    .catch(() => {});
+    } else {
+      ElMessage.error(res.msg || "发布失败");
+    }
+  } catch {
+    // 用户取消
+  }
 };
 
 // 保存为模板对话框
@@ -477,21 +565,16 @@ const saveAsTemplate = async () => {
   }
 
   try {
-    const response = await fetch("/edu/backend/v1/paper/save-as-template", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: templateForm.value.name,
-        description: templateForm.value.description,
-        questionGroups: paper.questionGroups
-      })
+    const res = await saveAsTemplateApi({
+      name: templateForm.value.name,
+      description: templateForm.value.description,
+      questionGroups: paper.questionGroups
     });
-    const result = await response.json();
-    if (result.code === 0) {
+    if (res.code === 0) {
       ElMessage.success("已保存为私有模板");
       saveAsTemplateDialogVisible.value = false;
     } else {
-      ElMessage.error(result.msg || "保存失败");
+      ElMessage.error(res.msg || "保存失败");
     }
   } catch (error) {
     console.error("保存模板失败:", error);
@@ -593,7 +676,7 @@ const openQuestionAssistant = (question?: any, groupId?: number) => {
 // 应用题目助手的结果
 const applyQuestionAssistantResult = (data: any) => {
   const { type, questions } = data;
-  
+
   if (questions && questions.length > 0) {
     const sourceQuestion = questions[0];
     
@@ -703,11 +786,10 @@ const applyQuestionAssistantResult = (data: any) => {
 };
 
 // 归档题目到题库
-const archiveQuestionToBank = async (question: any, groupId: number) => {
+const archiveQuestionHandler = async (question: any, groupId: number) => {
   const group = paper.questionGroups.find(g => g.groupId === groupId);
   if (!group) return;
   
-  // 构建题目数据
   const questionData = {
     type: question.questionType,
     typeName: group.groupName,
@@ -724,9 +806,14 @@ const archiveQuestionToBank = async (question: any, groupId: number) => {
   };
   
   try {
-    // 模拟 API 调用
-    await new Promise(resolve => setTimeout(resolve, 500));
-    ElMessage.success("题目已归档到题库");
+    const res = await archiveQuestionToBankApi({
+      questions: [questionData as any]
+    });
+    if (res.code === 0) {
+      ElMessage.success("题目已归档到题库");
+    } else {
+      ElMessage.error(res.msg || "归档失败");
+    }
   } catch (error) {
     console.error("归档失败:", error);
     ElMessage.error("归档失败");
@@ -740,8 +827,18 @@ const archiveAllQuestionsToBank = async () => {
     group.questions.forEach((q: any) => {
       if (q.stem && q.stem.trim()) {
         allQuestions.push({
-          ...q,
-          groupName: group.groupName
+          type: q.questionType,
+          typeName: group.groupName,
+          stem: q.stem,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          correctAnswers: q.correctAnswers,
+          blanks: q.blanks,
+          referenceAnswer: q.referenceAnswer,
+          analysis: q.analysis,
+          points: q.points,
+          difficulty: "medium",
+          difficultyName: "中等"
         });
       }
     });
@@ -752,26 +849,26 @@ const archiveAllQuestionsToBank = async () => {
     return;
   }
   
-  ElMessageBox.confirm(
-    `确定要将试卷中的 ${allQuestions.length} 道题目归档到题库吗？`,
-    "批量归档确认",
-    {
-      confirmButtonText: "确定归档",
-      cancelButtonText: "取消",
-      type: "info"
-    }
-  )
-    .then(async () => {
-      try {
-        // 模拟 API 调用
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        ElMessage.success(`已成功归档 ${allQuestions.length} 道题目到题库`);
-      } catch (error) {
-        console.error("批量归档失败:", error);
-        ElMessage.error("批量归档失败");
+  try {
+    await ElMessageBox.confirm(
+      `确定要将试卷中的 ${allQuestions.length} 道题目归档到题库吗？`,
+      "批量归档确认",
+      {
+        confirmButtonText: "确定归档",
+        cancelButtonText: "取消",
+        type: "info"
       }
-    })
-    .catch(() => {});
+    );
+
+    const res = await batchArchiveToBank({ questions: allQuestions });
+    if (res.code === 0) {
+      ElMessage.success(`已成功归档 ${allQuestions.length} 道题目到题库`);
+    } else {
+      ElMessage.error(res.msg || "批量归档失败");
+    }
+  } catch {
+    // 用户取消
+  }
 };
 
 // 键盘快捷键
@@ -840,12 +937,9 @@ onBeforeRouteLeave((to, from, next) => {
 // 加载模板数据
 const loadTemplate = async (templateId: string) => {
   try {
-    const response = await fetch(
-      `/edu/backend/v1/paper/template/${templateId}`
-    );
-    const result = await response.json();
-    if (result.code === 0 && result.data) {
-      const template = result.data;
+    const res = await getTemplateDetail(templateId);
+    if (res.code === 0 && res.data) {
+      const template = res.data;
       paper.title = template.title || "";
       paper.description = template.description || "";
       paper.timeLimit = template.timeLimit || 90;
@@ -862,17 +956,52 @@ const loadTemplate = async (templateId: string) => {
   }
 };
 
+// 加载课程列表
+const fetchCourseList = async () => {
+  try {
+    const res = await getCourseList();
+    if (res.code === 0) {
+      courseOptions.value = res.data;
+    }
+  } catch (e) {
+    console.error("加载课程列表失败", e);
+  }
+};
+
+// 加载试卷详情（编辑模式）
+const loadPaperDetail = async () => {
+  try {
+    const res = await getPaperDetail(Number(paperId.value));
+    if (res.code === 0 && res.data) {
+      const data = res.data;
+      paper.title = data.title || "";
+      paper.description = data.description || "";
+      paper.courseId = data.courseId || null;
+      paper.timeLimit = data.timeLimit || 90;
+      paper.startTime = data.startTime || "";
+      paper.endTime = data.endTime || "";
+      paper.questionGroups = data.questionGroups || [];
+      updateTotals();
+      hasUnsavedChanges.value = false;
+    }
+  } catch (error) {
+    console.error("加载试卷失败:", error);
+    ElMessage.error("加载试卷失败");
+  }
+};
+
 onMounted(() => {
   document.addEventListener("keydown", handleKeydown);
   document.addEventListener("keydown", handleKeydownForAssistant);
   startAutoSave();
+  fetchCourseList();
 
   // 检查是否有模板参数
   const templateId = route.query.template as string;
   if (templateId) {
     loadTemplate(templateId);
   } else if (isEditMode.value) {
-    // TODO: 从API加载试卷数据
+    loadPaperDetail();
   }
 });
 
@@ -926,7 +1055,7 @@ onBeforeUnmount(() => {
             <el-icon><DocumentChecked /></el-icon>
             保存
           </el-button>
-          <el-button type="primary" @click="publishPaper">
+          <el-button type="primary" @click="publishPaperHandler">
             <el-icon><Promotion /></el-icon>
             发布
           </el-button>
@@ -1187,6 +1316,104 @@ onBeforeUnmount(() => {
             />
           </div>
 
+          <!-- 考试设置面板 -->
+          <div class="settings-panel">
+            <div class="settings-toggle" @click="settingsPanelVisible = !settingsPanelVisible">
+              <el-icon><Setting /></el-icon>
+              <span>考试设置</span>
+              <el-icon class="toggle-arrow" :class="{ expanded: settingsPanelVisible }"><ArrowDown /></el-icon>
+            </div>
+            <el-collapse-transition>
+              <div v-show="settingsPanelVisible" class="settings-content">
+                <el-form label-width="120px" size="default">
+                  <!-- 基本设置 -->
+                  <div class="settings-section">
+                    <h4 class="section-title">基本设置</h4>
+                    <el-row :gutter="20">
+                      <el-col :span="12">
+                        <el-form-item label="考试开始时间">
+                          <el-date-picker v-model="paper.startTime" type="datetime" placeholder="选择开始时间" style="width: 100%" value-format="YYYY-MM-DD HH:mm:ss" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="12">
+                        <el-form-item label="考试结束时间">
+                          <el-date-picker v-model="paper.endTime" type="datetime" placeholder="选择结束时间" style="width: 100%" value-format="YYYY-MM-DD HH:mm:ss" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row :gutter="20">
+                      <el-col :span="8">
+                        <el-form-item label="考试时长(分钟)">
+                          <el-input-number v-model="paper.timeLimit" :min="1" :max="600" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="及格分数">
+                          <el-input-number v-model="paper.scoring.passScore" :min="0" :max="paper.totalPoints" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="所属课程">
+                          <el-select v-model="paper.courseId" placeholder="选择课程" style="width: 100%" clearable>
+                            <el-option v-for="c in courseOptions" :key="c.id" :label="c.name" :value="c.id" />
+                          </el-select>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row :gutter="20">
+                      <el-col :span="6"><el-form-item label="打乱题序"><el-switch v-model="paper.settings.shuffleQuestions" /></el-form-item></el-col>
+                      <el-col :span="6"><el-form-item label="打乱选项"><el-switch v-model="paper.settings.shuffleOptions" /></el-form-item></el-col>
+                      <el-col :span="6"><el-form-item label="显示成绩"><el-switch v-model="paper.settings.showScore" /></el-form-item></el-col>
+                      <el-col :span="6"><el-form-item label="允许查看"><el-switch v-model="paper.settings.allowReview" /></el-form-item></el-col>
+                    </el-row>
+                  </div>
+
+                  <!-- 防作弊设置 -->
+                  <div class="settings-section">
+                    <h4 class="section-title">防作弊设置</h4>
+                    <el-row :gutter="20">
+                      <el-col :span="6"><el-form-item label="IP限制"><el-switch v-model="paper.antiCheat.ipRestriction" /><div class="setting-hint">同一IP只能答一次</div></el-form-item></el-col>
+                      <el-col :span="6"><el-form-item label="浏览器指纹"><el-switch v-model="paper.antiCheat.browserFingerprint" /></el-form-item></el-col>
+                      <el-col :span="6"><el-form-item label="禁止切屏"><el-switch v-model="paper.antiCheat.preventWindowSwitch" /></el-form-item></el-col>
+                      <el-col :span="6">
+                        <el-form-item label="切屏警告上限">
+                          <el-input-number v-model="paper.antiCheat.maxWindowSwitchWarnings" :min="1" :max="10" :disabled="!paper.antiCheat.preventWindowSwitch" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                  </div>
+
+                  <!-- 补考设置 -->
+                  <div class="settings-section">
+                    <h4 class="section-title">补考设置</h4>
+                    <el-row :gutter="20">
+                      <el-col :span="6"><el-form-item label="允许补考"><el-switch v-model="paper.retake.allowRetake" /></el-form-item></el-col>
+                      <el-col :span="6">
+                        <el-form-item label="最大补考次数">
+                          <el-input-number v-model="paper.retake.maxRetakeCount" :min="1" :max="5" :disabled="!paper.retake.allowRetake" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="6"><el-form-item label="使用原题"><el-switch v-model="paper.retake.useOriginalQuestions" :disabled="!paper.retake.allowRetake" /></el-form-item></el-col>
+                      <el-col :span="6"><el-form-item label="取最高分"><el-switch v-model="paper.scoring.useHighestScore" :disabled="!paper.retake.allowRetake" /></el-form-item></el-col>
+                    </el-row>
+                    <el-row v-if="paper.retake.allowRetake" :gutter="20">
+                      <el-col :span="12">
+                        <el-form-item label="补考开始时间">
+                          <el-date-picker v-model="paper.retake.retakeStartTime" type="datetime" placeholder="选择补考开始时间" style="width: 100%" value-format="YYYY-MM-DD HH:mm:ss" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="12">
+                        <el-form-item label="补考结束时间">
+                          <el-date-picker v-model="paper.retake.retakeEndTime" type="datetime" placeholder="选择补考结束时间" style="width: 100%" value-format="YYYY-MM-DD HH:mm:ss" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                  </div>
+                </el-form>
+              </div>
+            </el-collapse-transition>
+          </div>
+
           <!-- 空状态提示 -->
           <div v-if="paper.questionGroups.length === 0" class="empty-hint">
             <el-empty
@@ -1252,7 +1479,7 @@ onBeforeUnmount(() => {
                       size="small"
                       title="归档到题库"
                       @click.stop="
-                        archiveQuestionToBank(question, group.groupId)
+                        archiveQuestionHandler(question, group.groupId)
                       "
                       ><el-icon><Collection /></el-icon
                     ></el-button>
@@ -1682,6 +1909,34 @@ onBeforeUnmount(() => {
   }
   .paper-description {
     margin-bottom: 20px;
+  }
+  .settings-panel {
+    margin-bottom: 20px;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    overflow: hidden;
+    .settings-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #fafafa;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #303133;
+      &:hover { background: #f0f0f0; }
+      .toggle-arrow { transition: transform 0.3s; margin-left: auto; &.expanded { transform: rotate(180deg); } }
+    }
+    .settings-content {
+      padding: 20px;
+      .settings-section {
+        margin-bottom: 20px;
+        &:last-child { margin-bottom: 0; }
+        .section-title { font-size: 14px; font-weight: 600; color: #00bfa5; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e4e7ed; }
+      }
+      .setting-hint { font-size: 12px; color: #909399; margin-top: 4px; }
+    }
   }
   .empty-hint {
     padding: 60px 0;
