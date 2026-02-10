@@ -82,6 +82,28 @@ export default {
         showParent: false,
         hiddenTag: true
       }
+    },
+    {
+      path: "/exam-paper/grading/:id",
+      name: "ExamPaperGradingDetail",
+      component: () => import("@/views/exam-paper/grading/detail.vue"),
+      meta: {
+        title: "阅卷详情",
+        showLink: false,
+        showParent: false,
+        hiddenTag: true
+      }
+    },
+    {
+      path: "/exam-paper/grading/:id/detail",
+      name: "ExamPaperGradingView",
+      component: () => import("@/views/exam-paper/grading/detail.vue"),
+      meta: {
+        title: "查看阅卷",
+        showLink: false,
+        showParent: false,
+        hiddenTag: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;

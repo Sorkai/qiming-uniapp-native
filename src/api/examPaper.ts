@@ -564,6 +564,95 @@ export const getPaperStatistics = (paperId: number) => {
   );
 };
 
+// ==================== 学情分析相关类型 ====================
+
+/** 学情分析总览数据 */
+export interface LearningAnalyticsOverview {
+  /** 考试总数 */
+  totalExams: number;
+  /** 参与学生数 */
+  totalStudents: number;
+  /** 平均分 */
+  avgScore: number;
+  /** 及格率 */
+  passRate: number;
+}
+
+/** 成绩分布项 */
+export interface ScoreDistributionItem {
+  range: string;
+  count: number;
+  percentage: number;
+}
+
+/** 知识点掌握情况 */
+export interface KnowledgePointMastery {
+  name: string;
+  mastery: number;
+  questionCount: number;
+}
+
+/** 题型统计 */
+export interface QuestionTypeStatItem {
+  type: string;
+  correctRate: number;
+  avgTime: number;
+}
+
+/** 考试趋势 */
+export interface ExamTrendItem {
+  date: string;
+  avgScore: number;
+  passRate: number;
+}
+
+/** 学生排名 */
+export interface StudentRankingItem {
+  rank: number;
+  name: string;
+  studentId: string;
+  score: number;
+  trend: "up" | "down" | "same";
+}
+
+/** 学情分析完整数据 */
+export interface LearningAnalyticsData {
+  overview: LearningAnalyticsOverview;
+  scoreDistribution: ScoreDistributionItem[];
+  knowledgePoints: KnowledgePointMastery[];
+  questionTypeStats: QuestionTypeStatItem[];
+  examTrends: ExamTrendItem[];
+  studentRanking: StudentRankingItem[];
+}
+
+/** 获取学情分析参数 */
+export interface GetLearningAnalyticsParams {
+  courseId?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+/**
+ * 获取学情分析数据
+ */
+export const getLearningAnalytics = (params?: GetLearningAnalyticsParams) => {
+  return http.request<ApiResponse<LearningAnalyticsData>>(
+    "get",
+    "/edu/backend/v1/paper/learning-analytics",
+    { params }
+  );
+};
+
+/**
+ * 获取课程列表（用于筛选）
+ */
+export const getCourseList = () => {
+  return http.request<ApiResponse<Array<{ id: number; name: string }>>>(
+    "get",
+    "/edu/backend/v1/course/list"
+  );
+};
+
 // ==================== 学生端API ====================
 
 /**

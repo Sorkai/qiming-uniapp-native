@@ -803,5 +803,80 @@ export default [
         } : null
       };
     }
+  },
+
+  // ==================== 学情分析API ====================
+
+  // 获取学情分析数据
+  {
+    url: "/edu/backend/v1/paper/learning-analytics",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          overview: {
+            totalExams: 28,
+            totalStudents: 156,
+            avgScore: 78.5,
+            passRate: 85.2
+          },
+          scoreDistribution: [
+            { range: "0-59", count: 12, percentage: 7.7 },
+            { range: "60-69", count: 18, percentage: 11.5 },
+            { range: "70-79", count: 45, percentage: 28.8 },
+            { range: "80-89", count: 52, percentage: 33.3 },
+            { range: "90-100", count: 29, percentage: 18.6 }
+          ],
+          knowledgePoints: [
+            { name: "极限与连续", mastery: 85, questionCount: 45 },
+            { name: "导数与微分", mastery: 78, questionCount: 62 },
+            { name: "积分计算", mastery: 72, questionCount: 58 },
+            { name: "级数理论", mastery: 65, questionCount: 35 },
+            { name: "多元函数", mastery: 70, questionCount: 42 }
+          ],
+          questionTypeStats: [
+            { type: "单选题", correctRate: 82, avgTime: 45 },
+            { type: "多选题", correctRate: 68, avgTime: 72 },
+            { type: "判断题", correctRate: 88, avgTime: 25 },
+            { type: "填空题", correctRate: 75, avgTime: 90 },
+            { type: "简答题", correctRate: 70, avgTime: 180 }
+          ],
+          examTrends: [
+            { date: "2024-01", avgScore: 72, passRate: 78 },
+            { date: "2024-02", avgScore: 75, passRate: 82 },
+            { date: "2024-03", avgScore: 78, passRate: 85 },
+            { date: "2024-04", avgScore: 80, passRate: 88 }
+          ],
+          studentRanking: [
+            { rank: 1, name: "张三", studentId: "2024001", score: 98, trend: "up" },
+            { rank: 2, name: "李四", studentId: "2024002", score: 95, trend: "same" },
+            { rank: 3, name: "王五", studentId: "2024003", score: 93, trend: "up" },
+            { rank: 4, name: "赵六", studentId: "2024004", score: 91, trend: "down" },
+            { rank: 5, name: "钱七", studentId: "2024005", score: 89, trend: "up" }
+          ]
+        }
+      };
+    }
+  },
+
+  // 获取课程列表
+  {
+    url: "/edu/backend/v1/course/list",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: [
+          { id: 1, name: "高等数学" },
+          { id: 2, name: "线性代数" },
+          { id: 3, name: "概率论" },
+          { id: 4, name: "数据结构" },
+          { id: 5, name: "算法设计与分析" }
+        ]
+      };
+    }
   }
 ] as MockMethod[];

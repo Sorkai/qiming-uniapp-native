@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
 import { useDark } from "@pureadmin/utils";
+import { ElMessage } from "element-plus";
+import {
+  getLearningAnalytics,
+  getCourseList,
+  type LearningAnalyticsOverview,
+  type ScoreDistributionItem,
+  type KnowledgePointMastery,
+  type QuestionTypeStatItem,
+  type ExamTrendItem,
+  type StudentRankingItem
+} from "@/api/examPaper";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -15,6 +26,9 @@ defineOptions({
 
 const { isDark } = useDark();
 
+// 加载状态
+const loading = ref(false);
+
 // 时间范围
 const dateRange = ref<[Date, Date] | null>(null);
 
@@ -22,63 +36,30 @@ const dateRange = ref<[Date, Date] | null>(null);
 const selectedCourse = ref<number | null>(null);
 
 // 课程列表
-const courseList = ref([
-  { id: 1, name: "高等数学" },
-  { id: 2, name: "线性代数" },
-  { id: 3, name: "概率论" }
-]);
+const courseList = ref<Array<{ id: number; name: string }>>([]);
 
 // 总体统计数据
-const overviewStats = reactive({
-  totalExams: 28,
-  totalStudents: 156,
-  avgScore: 78.5,
-  passRate: 85.2
+const overviewStats = reactive<LearningAnalyticsOverview>({
+  totalExams: 0,
+  totalStudents: 0,
+  avgScore: 0,
+  passRate: 0
 });
 
 // 成绩分布数据
-const scoreDistribution = ref([
-  { range: "0-59", count: 12, percentage: 7.7 },
-  { range: "60-69", count: 18, percentage: 11.5 },
-  { range: "70-79", count: 45, percentage: 28.8 },
-  { range: "80-89", count: 52, percentage: 33.3 },
-  { range: "90-100", count: 29, percentage: 18.6 }
-]);
+const scoreDistribution = ref<ScoreDistributionItem[]>([]);
 
 // 知识点掌握情况
-const knowledgePoints = ref([
-  { name: "极限与连续", mastery: 85, questionCount: 45 },
-  { name: "导数与微分", mastery: 78, questionCount: 62 },
-  { name: "积分计算", mastery: 72, questionCount: 58 },
-  { name: "级数理论", mastery: 65, questionCount: 35 },
-  { name: "多元函数", mastery: 70, questionCount: 42 }
-]);
+const knowledgePoints = ref<KnowledgePointMastery[]>([]);
 
 // 题型正确率
-const questionTypeStats = ref([
-  { type: "单选题", correctRate: 82, avgTime: 45 },
-  { type: "多选题", correctRate: 68, avgTime: 72 },
-  { type: "判断题", correctRate: 88, avgTime: 25 },
-  { type: "填空题", correctRate: 75, avgTime: 90 },
-  { type: "简答题", correctRate: 70, avgTime: 180 }
-]);
+const questionTypeStats = ref<QuestionTypeStatItem[]>([]);
 
 // 近期考试趋势
-const examTrends = ref([
-  { date: "2024-01", avgScore: 72, passRate: 78 },
-  { date: "2024-02", avgScore: 75, passRate: 82 },
-  { date: "2024-03", avgScore: 78, passRate: 85 },
-  { date: "2024-04", avgScore: 80, passRate: 88 }
-]);
+const examTrends = ref<ExamTrendItem[]>([]);
 
 // 学生排名
-const studentRanking = ref([
-  { rank: 1, name: "张三", score: 98, trend: "up" },
-  { rank: 2, name: "李四", score: 95, trend: "same" },
-  { rank: 3, name: "王五", score: 93, trend: "up" },
-  { rank: 4, name: "赵六", score: 91, trend: "down" },
-  { rank: 5, name: "钱七", score: 89, trend: "up" }
-]);
+const studentRanking = ref<StudentRankingItem[]>([]);
 
 // 获取趋势图标
 const getTrendIcon = (trend: string) => {
@@ -107,18 +88,76 @@ const getMasteryStatus = (mastery: number) => {
   return "exception";
 };
 
+// 加载课程列表
+const loadCourseList = async () => {
+  try {
+    const res = await getCourseList();
+    if (res.code === 0 && res.data) {
+      courseList.value = res.data;
+    }
+  } catch (error) {
+    console.error("加载课程列表失败:", error);
+  }
+};
+
+// 加载学情分析数据
+const loadAnalyticsData = async () => {
+  loading.value = true;
+  try {
+    const params: any = {};
+    if (selectedCourse.value) {
+      params.courseId = selectedCourse.value;
+    }
+    if (dateRange.value && dateRange.value.length === 2) {
+      params.startDate = dateRange.value[0].toISOString().split("T")[0];
+      params.endDate = dateRange.value[1].toISOString().split("T")[0];
+    }
+
+    const res = await getLearningAnalytics(params);
+    if (res.code === 0 && res.data) {
+      const data = res.data;
+
+      // 更新总览数据
+      Object.assign(overviewStats, data.overview);
+
+      // 更新成绩分布
+      scoreDistribution.value = data.scoreDistribution || [];
+
+      // 更新知识点掌握情况
+      knowledgePoints.value = data.knowledgePoints || [];
+
+      // 更新题型正确率
+      questionTypeStats.value = data.questionTypeStats || [];
+
+      // 更新考试趋势
+      examTrends.value = data.examTrends || [];
+
+      // 更新学生排名
+      studentRanking.value = data.studentRanking || [];
+    } else {
+      ElMessage.error("加载学情分析数据失败");
+    }
+  } catch (error) {
+    console.error("加载学情分析数据失败:", error);
+    ElMessage.error("加载学情分析数据失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
 // 刷新数据
 const refreshData = () => {
-  console.log("刷新数据", dateRange.value, selectedCourse.value);
+  loadAnalyticsData();
 };
 
 // 导出报告
 const exportReport = () => {
-  console.log("导出报告");
+  ElMessage.info("导出报告功能开发中");
 };
 
 onMounted(() => {
-  // 初始化图表等
+  loadCourseList();
+  loadAnalyticsData();
 });
 </script>
 

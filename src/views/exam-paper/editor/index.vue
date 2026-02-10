@@ -11,6 +11,7 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { onBeforeRouteLeave } from "vue-router";
 import draggable from "vuedraggable";
+import QuestionAssistant from "./components/QuestionAssistant.vue";
 
 defineOptions({
   name: "ExamPaperEditor"
@@ -573,11 +574,242 @@ const onDragLeave = (event: DragEvent) => {
   }
 };
 
+// 题目助手相关
+const questionAssistantVisible = ref(false);
+const currentEditingQuestion = ref<any>(null);
+const currentEditingGroupId = ref<number | null>(null);
+
+// 双击 Ctrl/Command 键检测
+let lastCtrlKeyTime = 0;
+const DOUBLE_CLICK_THRESHOLD = 300; // 双击间隔阈值（毫秒）
+
+// 打开题目助手
+const openQuestionAssistant = (question?: any, groupId?: number) => {
+  currentEditingQuestion.value = question || null;
+  currentEditingGroupId.value = groupId || null;
+  questionAssistantVisible.value = true;
+};
+
+// 应用题目助手的结果
+const applyQuestionAssistantResult = (data: any) => {
+  const { type, questions } = data;
+  
+  if (questions && questions.length > 0) {
+    const sourceQuestion = questions[0];
+    
+    // 如果有当前编辑的题目，则填充到当前题目
+    if (currentEditingQuestion.value && currentEditingGroupId.value) {
+      const group = paper.questionGroups.find(g => g.groupId === currentEditingGroupId.value);
+      if (group) {
+        const targetQuestion = group.questions.find(
+          (q: any) => q.questionId === currentEditingQuestion.value.questionId
+        );
+        if (targetQuestion) {
+          // 填充题干
+          targetQuestion.stem = sourceQuestion.stem || targetQuestion.stem;
+          
+          // 填充选项（如果有）
+          if (sourceQuestion.options && targetQuestion.options) {
+            targetQuestion.options = sourceQuestion.options.map((opt: any, index: number) => ({
+              key: ["A", "B", "C", "D", "E", "F", "G", "H"][index] || `选项${index + 1}`,
+              content: opt.content || ""
+            }));
+          }
+          
+          // 填充答案
+          if (sourceQuestion.correctAnswer !== undefined) {
+            targetQuestion.correctAnswer = sourceQuestion.correctAnswer;
+          }
+          if (sourceQuestion.correctAnswers !== undefined) {
+            targetQuestion.correctAnswers = sourceQuestion.correctAnswers;
+          }
+          if (sourceQuestion.blanks !== undefined) {
+            targetQuestion.blanks = sourceQuestion.blanks;
+          }
+          if (sourceQuestion.referenceAnswer !== undefined) {
+            targetQuestion.referenceAnswer = sourceQuestion.referenceAnswer;
+          }
+          
+          // 填充解析
+          if (sourceQuestion.analysis) {
+            targetQuestion.analysis = sourceQuestion.analysis;
+          }
+          
+          ElMessage.success(type === "ai" ? "AI 生成的题目已应用" : "题库题目已应用");
+        }
+      }
+    } else {
+      // 如果没有当前编辑的题目，则添加新题目
+      questions.forEach((q: any) => {
+        // 查找或创建对应题型的分组
+        let group = paper.questionGroups.find(g => g.questionType === q.type);
+        if (!group) {
+          const typeInfo = questionTypes.find(t => t.id === q.type);
+          const groupId = Date.now();
+          group = {
+            groupId,
+            groupName: typeInfo?.label || "题目组",
+            questionType: q.type,
+            questions: [],
+            sortOrder: paper.questionGroups.length
+          };
+          paper.questionGroups.push(group);
+        }
+        
+        // 添加题目
+        const questionId = Date.now() + Math.random();
+        const newQuestion: any = {
+          questionId,
+          questionType: q.type,
+          stem: q.stem || "",
+          points: q.points || 5,
+          analysis: q.analysis || "",
+          sortOrder: group.questions.length
+        };
+        
+        // 根据题型设置选项和答案
+        if (q.type === "radio" || q.type === "checkbox") {
+          newQuestion.options = q.options || [
+            { key: "A", content: "" },
+            { key: "B", content: "" },
+            { key: "C", content: "" },
+            { key: "D", content: "" }
+          ];
+          if (q.type === "radio") {
+            newQuestion.correctAnswer = q.correctAnswer || "";
+          } else {
+            newQuestion.correctAnswers = q.correctAnswers || [];
+          }
+        } else if (q.type === "judge") {
+          newQuestion.options = [
+            { key: "T", content: "正确" },
+            { key: "F", content: "错误" }
+          ];
+          newQuestion.correctAnswer = q.correctAnswer || "";
+        } else if (q.type === "input") {
+          newQuestion.blanks = q.blanks || [{ answer: "" }];
+        } else if (q.type === "textarea") {
+          newQuestion.referenceAnswer = q.referenceAnswer || "";
+        }
+        
+        group.questions.push(newQuestion);
+        activeQuestionId.value = questionId;
+      });
+      
+      updateTotals();
+      ElMessage.success(`已添加 ${questions.length} 道题目`);
+    }
+  }
+};
+
+// 归档题目到题库
+const archiveQuestionToBank = async (question: any, groupId: number) => {
+  const group = paper.questionGroups.find(g => g.groupId === groupId);
+  if (!group) return;
+  
+  // 构建题目数据
+  const questionData = {
+    type: question.questionType,
+    typeName: group.groupName,
+    stem: question.stem,
+    options: question.options,
+    correctAnswer: question.correctAnswer,
+    correctAnswers: question.correctAnswers,
+    blanks: question.blanks,
+    referenceAnswer: question.referenceAnswer,
+    analysis: question.analysis,
+    points: question.points,
+    difficulty: "medium",
+    difficultyName: "中等"
+  };
+  
+  try {
+    // 模拟 API 调用
+    await new Promise(resolve => setTimeout(resolve, 500));
+    ElMessage.success("题目已归档到题库");
+  } catch (error) {
+    console.error("归档失败:", error);
+    ElMessage.error("归档失败");
+  }
+};
+
+// 批量归档试卷中的题目到题库
+const archiveAllQuestionsToBank = async () => {
+  const allQuestions: any[] = [];
+  paper.questionGroups.forEach(group => {
+    group.questions.forEach((q: any) => {
+      if (q.stem && q.stem.trim()) {
+        allQuestions.push({
+          ...q,
+          groupName: group.groupName
+        });
+      }
+    });
+  });
+  
+  if (allQuestions.length === 0) {
+    ElMessage.warning("没有可归档的题目");
+    return;
+  }
+  
+  ElMessageBox.confirm(
+    `确定要将试卷中的 ${allQuestions.length} 道题目归档到题库吗？`,
+    "批量归档确认",
+    {
+      confirmButtonText: "确定归档",
+      cancelButtonText: "取消",
+      type: "info"
+    }
+  )
+    .then(async () => {
+      try {
+        // 模拟 API 调用
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        ElMessage.success(`已成功归档 ${allQuestions.length} 道题目到题库`);
+      } catch (error) {
+        console.error("批量归档失败:", error);
+        ElMessage.error("批量归档失败");
+      }
+    })
+    .catch(() => {});
+};
+
 // 键盘快捷键
 const handleKeydown = (event: KeyboardEvent) => {
   if ((event.ctrlKey || event.metaKey) && event.key === "s") {
     event.preventDefault();
     savePaper();
+  }
+};
+
+// 处理 Ctrl/Command 键的按下事件（用于双击检测）
+const handleKeydownForAssistant = (event: KeyboardEvent) => {
+  // 检测 Ctrl 或 Command 键
+  if (event.key === "Control" || event.key === "Meta") {
+    const currentTime = Date.now();
+    if (currentTime - lastCtrlKeyTime < DOUBLE_CLICK_THRESHOLD) {
+      // 双击检测成功，打开题目助手
+      event.preventDefault();
+      
+      // 如果有当前选中的题目，则传递给助手
+      if (activeQuestionId.value) {
+        for (const group of paper.questionGroups) {
+          const question = group.questions.find(
+            (q: any) => q.questionId === activeQuestionId.value
+          );
+          if (question) {
+            openQuestionAssistant(question, group.groupId);
+            break;
+          }
+        }
+      } else {
+        openQuestionAssistant();
+      }
+      
+      lastCtrlKeyTime = 0; // 重置
+    } else {
+      lastCtrlKeyTime = currentTime;
+    }
   }
 };
 
@@ -632,6 +864,7 @@ const loadTemplate = async (templateId: string) => {
 
 onMounted(() => {
   document.addEventListener("keydown", handleKeydown);
+  document.addEventListener("keydown", handleKeydownForAssistant);
   startAutoSave();
 
   // 检查是否有模板参数
@@ -645,6 +878,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener("keydown", handleKeydown);
+  document.removeEventListener("keydown", handleKeydownForAssistant);
   if (autoSaveCountdown) {
     clearInterval(autoSaveCountdown);
   }
@@ -699,6 +933,10 @@ onBeforeUnmount(() => {
           <el-button @click="openSaveAsTemplateDialog">
             <el-icon><FolderAdd /></el-icon>
             存为模板
+          </el-button>
+          <el-button @click="archiveAllQuestionsToBank">
+            <el-icon><Collection /></el-icon>
+            归档到题库
           </el-button>
         </div>
       </div>
@@ -1002,6 +1240,25 @@ onBeforeUnmount(() => {
                     <el-button
                       link
                       size="small"
+                      type="primary"
+                      title="AI 助手 (双击 Ctrl/Command)"
+                      @click.stop="
+                        openQuestionAssistant(question, group.groupId)
+                      "
+                      ><el-icon><MagicStick /></el-icon
+                    ></el-button>
+                    <el-button
+                      link
+                      size="small"
+                      title="归档到题库"
+                      @click.stop="
+                        archiveQuestionToBank(question, group.groupId)
+                      "
+                      ><el-icon><Collection /></el-icon
+                    ></el-button>
+                    <el-button
+                      link
+                      size="small"
                       type="danger"
                       @click.stop="
                         deleteQuestion(group.groupId, question.questionId)
@@ -1012,10 +1269,13 @@ onBeforeUnmount(() => {
                 </div>
                 <!-- 题干 -->
                 <div class="question-stem">
+                  <div class="stem-header">
+                    <span class="stem-hint">双击 Ctrl/Command 键可快速唤起 AI 助手</span>
+                  </div>
                   <el-input
                     v-model="question.stem"
                     type="textarea"
-                    placeholder="请输入题目内容"
+                    placeholder="请输入题目内容（双击 Ctrl/Command 唤起 AI 助手）"
                     :rows="2"
                     maxlength="2000"
                   />
@@ -1168,6 +1428,14 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
+
+    <!-- 题目助手对话框 -->
+    <QuestionAssistant
+      v-model:visible="questionAssistantVisible"
+      :current-question="currentEditingQuestion"
+      :question-type="currentEditingQuestion?.questionType"
+      @apply="applyQuestionAssistantResult"
+    />
   </div>
 </template>
 
