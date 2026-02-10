@@ -63,7 +63,8 @@ const getSubMenuIconStyle = computed((): CSSProperties => {
 
 const textClass = computed(() => {
   const item = props.item;
-  const baseClass = "w-full text-inherit";
+  const baseClass =
+    "flex-1 text-inherit overflow-hidden text-ellipsis whitespace-nowrap mr-2 min-w-0";
   if (
     layout.value !== "horizontal" &&
     isCollapse.value &&

@@ -140,7 +140,7 @@ const fetchData = async () => {
 
     // 兼容后端返回格式
     const resData = (res as any).data || res;
-    
+
     // 防御性处理：检查 data 字段结构
     if (resData && typeof resData === "object") {
       if (Array.isArray(resData.list)) {
@@ -238,7 +238,7 @@ const submitForm = async () => {
 
   try {
     const isEditMode = isEdit.value && currentWord.value;
-    
+
     // 根据文档，添加接口不包含 isEnabled，编辑接口包含
     const payload: any = {
       word: formData.word,
@@ -256,7 +256,10 @@ const submitForm = async () => {
     if (isEditMode) {
       const res = await updateSensitiveWord(currentWord.value.id, payload);
       // 兼容后端返回 {} 或 {"code": 0} 等情况，只要 http 状态码为 200 且 code 不为非零值即视为成功
-      if ((res as any)?.code === 0 || (res && typeof (res as any)?.code === "undefined")) {
+      if (
+        (res as any)?.code === 0 ||
+        (res && typeof (res as any)?.code === "undefined")
+      ) {
         ElMessage.success("更新成功");
         dialogVisible.value = false;
         fetchData();
@@ -265,7 +268,10 @@ const submitForm = async () => {
       }
     } else {
       const res = await addSensitiveWord(payload);
-      if ((res as any)?.code === 0 || (res && typeof (res as any)?.code === "undefined")) {
+      if (
+        (res as any)?.code === 0 ||
+        (res && typeof (res as any)?.code === "undefined")
+      ) {
         ElMessage.success("添加成功");
         dialogVisible.value = false;
         fetchData();
@@ -286,7 +292,10 @@ const handleDelete = async (row: SensitiveWord) => {
       type: "warning"
     });
     const res = await deleteSensitiveWord(row.id);
-    if ((res as any)?.code === 0 || (res && typeof (res as any)?.code === "undefined")) {
+    if (
+      (res as any)?.code === 0 ||
+      (res && typeof (res as any)?.code === "undefined")
+    ) {
       ElMessage.success("删除成功");
       fetchData();
     } else {
@@ -331,9 +340,14 @@ const toggleEnabled = async (row: SensitiveWord) => {
     const newStatus = !row.isEnabled;
     // 乐观更新 UI
     row.isEnabled = newStatus;
-    const res = await updateSensitiveWord(row.id, { isEnabled: newStatus ? 1 : 0 });
-    
-    if ((res as any)?.code === 0 || (res && typeof (res as any)?.code === "undefined")) {
+    const res = await updateSensitiveWord(row.id, {
+      isEnabled: newStatus ? 1 : 0
+    });
+
+    if (
+      (res as any)?.code === 0 ||
+      (res && typeof (res as any)?.code === "undefined")
+    ) {
       ElMessage.success(row.isEnabled ? "已启用" : "已禁用");
     } else {
       throw new Error((res as any).msg || "操作失败");

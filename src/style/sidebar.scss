@@ -149,8 +149,11 @@
     .el-menu-item,
     .el-sub-menu__title {
       position: relative;
+      display: flex;
+      align-items: center;
       height: 56px;
       margin: 8px 12px;
+      padding-right: 40px; /* 右侧间距，为箭头图标留出空间 */
       font-size: 18px;
       font-weight: 500;
       line-height: 56px;
@@ -191,6 +194,14 @@
         font-size: 22px;
         color: #64748b; // Muted color for inactive icons
         transition: all 0.3s;
+      }
+
+      /* 子菜单展开/收起箭头图标样式 */
+      .el-sub-menu__icon-arrow {
+        position: absolute;
+        right: 12px;
+        margin-right: 0;
+        font-size: 14px;
       }
 
       div,

@@ -116,6 +116,7 @@ const whiteList = ["/login", "/home"];
 const { VITE_HIDE_HOME } = import.meta.env;
 
 router.beforeEach((to: ToRouteType, _from, next) => {
+  console.log(`[Router Guard] ${to.path} <- ${_from.path}`);
   if (to.meta?.keepAlive) {
     handleAliveRoute(to, "add");
     // 页面整体刷新和点击标签页刷新
@@ -124,14 +125,20 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     }
   }
   const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
+  console.log(
+    "[Router Guard] 用户信息:",
+    userInfo ? "已登录" : "未登录",
+    "roleType:",
+    userInfo?.roleType
+  );
   NProgress.start();
 
   // 注意：在没有后端的开发环境下，跳过 cookie 检查
   // 如果 userInfo 存在但 cookie 不存在，尝试恢复 cookie 而不是强制退出
   if (userInfo && !Cookies.get(multipleTabsKey)) {
     // 尝试恢复 multipleTabsKey cookie，而不是清理登录状态
-    Cookies.set(multipleTabsKey, "true");
-    console.log("[Router] 检测到登录状态不一致，已自动恢复 cookie");
+    Cookies.set(multipleTabsKey, "true", { path: "/" });
+    console.log("[Router Guard] 检测到登录状态不一致，已自动恢复 cookie");
   }
 
   const externalLink = isUrl(to?.name as string);
@@ -144,8 +151,10 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       else document.title = transformI18n(item.meta.title);
     });
   }
+
   /** 如果已经登录并存在登录信息后不能跳转到路由白名单，而是继续保持在当前页面 */
   function toCorrectRoute() {
+    console.log("[Router Guard] 执行 toCorrectRoute, to:", to.path);
     // 登录后允许访问 /home
     if (to.fullPath === "/home") {
       next();
@@ -153,7 +162,9 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();
     }
   }
+
   if (Cookies.get(multipleTabsKey) && userInfo) {
+    console.log("[Router Guard] 登录状态校验通过");
     // 管理端默认权限白名单（这些路由任何已登录用户都可以访问）
     const publicRoutes = [
       "/home",
@@ -235,16 +246,25 @@ router.beforeEach((to: ToRouteType, _from, next) => {
             }
           }
           // 确保动态路由完全加入路由列表并且不影响静态路由（注意：动态路由刷新时router.beforeEach可能会触发两次，第一次触发动态路由还未完全添加，第二次动态路由才完全添加到路由列表，如果需要在router.beforeEach做一些判断可以在to.name存在的条件下去判断，这样就只会触发一次）
-          if (isAllEmpty(to.name)) router.push(to.fullPath);
+          if (isAllEmpty(to.name)) {
+            router.push(to.fullPath);
+          } else {
+            next({ ...to, replace: true });
+          }
         });
+        return;
       }
       toCorrectRoute();
     }
   } else {
+    console.log("[Router Guard] 未登录或 Cookie 缺失，跳转到 home 或 login");
     if (to.path !== "/login") {
       if (whiteList.indexOf(to.path) !== -1) {
         next();
       } else {
+        console.warn(
+          "[Router Guard] 拒绝访问非白名单页面，清除 token 并回退到首页"
+        );
         removeToken();
         next({ path: "/home" });
       }

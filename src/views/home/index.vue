@@ -54,70 +54,51 @@
       </div>
     </div>
 
-    <!-- 英雄区域 - 星空背景 -->
+    <!-- 英雄区域 - 背景图片 -->
     <div class="banner">
-      <el-carousel
-        height="100vh"
-        :interval="5000"
-        :duration="1000"
-        :indicator-position="'none'"
-        :arrow="'never'"
-      >
-        <el-carousel-item v-for="(item, index) in carouselItems" :key="index">
-          <div
-            class="carousel-content"
-            :style="{ backgroundImage: `url(${item.background})` }"
-          >
-            <!-- 背景效果移入内容层，确保层级正确且不干扰交互 -->
-            <div class="starfield">
-              <div
-                v-for="i in 40"
-                :key="'star-' + i"
-                class="star"
-                :style="getStarStyle(i)"
-              />
-              <div
-                v-for="i in 3"
-                :key="'shooting-' + i"
-                class="shooting-star"
-                :style="getShootingStarStyle(i)"
-              />
-            </div>
-            <div class="hero-particles">
-              <div
-                v-for="i in 8"
-                :key="i"
-                class="particle"
-                :style="getParticleStyle(i)"
-              />
-            </div>
-
-            <div class="carousel-text">
-              <div class="hero-badge">AI 深度融合的智慧教育平台</div>
-              <h2 class="main-title">{{ item.title }}</h2>
-              <p class="sub-title">{{ item.subtitle }}</p>
-              <p class="hero-desc">{{ item.description }}</p>
-              <div class="hero-buttons">
-                <el-button
-                  type="primary"
-                  size="large"
-                  class="hero-btn primary"
-                  @click="handleEntry"
-                >
-                  立即体验
-                </el-button>
-                <el-button
-                  size="large"
-                  class="hero-btn secondary"
-                  @click="scrollToSection('features')"
-                >
-                  了解更多
-                </el-button>
-              </div>
-            </div>
+      <div
+        class="banner-bg"
+        :style="{ backgroundImage: `url(${bannerPhoto})` }"
+      />
+      <!-- 右下角署名 -->
+      <div class="banner-signature">
+        <p>长春工业大学</p>
+        <p>计算机科学与工程学院</p>
+        <p>吉林省云创迅捷软件开发有限公司</p>
+      </div>
+      <div class="banner-overlay">
+        <div class="carousel-text">
+          <div class="hero-badge">AI 深度融合的智慧教育平台</div>
+          <h2 class="main-title">
+            启明智教<img
+              :src="artisticText"
+              class="art-logo-img"
+              alt="Intelledu"
+            />
+          </h2>
+          <p class="sub-title">智慧教育新纪元</p>
+          <p class="hero-desc">
+            基于人工智能深度融合的智慧教育平台，为每位学习者打造专属学习路径
+          </p>
+          <div class="hero-buttons">
+            <el-button
+              type="primary"
+              size="large"
+              class="hero-btn primary"
+              @click="handleEntry"
+            >
+              立即体验
+            </el-button>
+            <el-button
+              size="large"
+              class="hero-btn secondary"
+              @click="scrollToSection('features')"
+            >
+              了解更多
+            </el-button>
           </div>
-        </el-carousel-item>
-      </el-carousel>
+        </div>
+      </div>
 
       <!-- 下滑提示 -->
       <div class="scroll-hint">
@@ -133,7 +114,7 @@
       <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
         <path
           d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,80 1440,60 L1440,120 L0,120 Z"
-          fill="#0a0a1a"
+          fill="#0f172a"
         />
       </svg>
     </div>
@@ -142,7 +123,7 @@
     <div id="stats" class="stats-section">
       <div class="stats-container">
         <div v-for="(stat, index) in statsData" :key="index" class="stat-card">
-          <div class="stat-icon">{{ stat.icon }}</div>
+          <div class="stat-icon"><component :is="stat.icon" /></div>
           <div class="stat-number">{{ stat.number }}</div>
           <div class="stat-label">{{ stat.label }}</div>
         </div>
@@ -151,24 +132,27 @@
 
     <!-- AI 赋能区域 -->
     <div id="ai-power" class="ai-power-section">
-      <div class="section-container">
-        <div class="section-header light">
-          <span class="section-badge">AI POWERED</span>
-          <h2 class="section-title">AI 深度赋能教育</h2>
-          <p class="section-desc">
-            人工智能与教育的完美融合，开启智慧学习新时代
-          </p>
-        </div>
-        <div class="ai-features-grid">
-          <div
-            v-for="(item, index) in aiFeatures"
-            :key="index"
-            class="ai-feature-card"
-          >
-            <div class="ai-icon">{{ item.icon }}</div>
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.description }}</p>
-            <div class="ai-glow" />
+      <div class="section-container ai-power-container">
+        <!-- 内容区域 -->
+        <div class="ai-content-right">
+          <div class="section-header light">
+            <span class="section-badge">AI POWERED</span>
+            <h2 class="section-title">AI 深度赋能教育</h2>
+            <p class="section-desc">
+              人工智能与教育的完美融合，开启智慧学习新时代
+            </p>
+          </div>
+          <div class="ai-features-grid">
+            <div
+              v-for="(item, index) in aiFeatures"
+              :key="index"
+              class="ai-feature-card"
+            >
+              <div class="ai-icon"><component :is="item.icon" /></div>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.description }}</p>
+              <div class="ai-glow" />
+            </div>
           </div>
         </div>
       </div>
@@ -204,23 +188,23 @@
         <div class="transition-visual">
           <div class="visual-grid">
             <div class="grid-card card-large">
-              <div class="card-icon">🎓</div>
+              <div class="card-icon"><IconGraduation /></div>
               <div class="card-title">智能学习</div>
               <div class="card-desc">AI 驱动的个性化学习路径</div>
             </div>
             <div class="grid-card card-medium card-top-right">
-              <div class="card-icon">📊</div>
+              <div class="card-icon"><IconChart /></div>
               <div class="card-title">数据分析</div>
             </div>
             <div class="grid-card card-medium card-bottom-left">
-              <div class="card-icon">🏆</div>
+              <div class="card-icon"><IconTrophy /></div>
               <div class="card-title">成就系统</div>
             </div>
-            <div class="grid-card card-small card-1">📚</div>
-            <div class="grid-card card-small card-2">🚀</div>
-            <div class="grid-card card-small card-3">💡</div>
-            <div class="grid-card card-small card-4">🎯</div>
-            <div class="grid-card card-small card-5">⚡</div>
+            <div class="grid-card card-small card-1"><IconBook /></div>
+            <div class="grid-card card-small card-2"><IconZap /></div>
+            <div class="grid-card card-small card-3"><IconBrain /></div>
+            <div class="grid-card card-small card-4"><IconTarget /></div>
+            <div class="grid-card card-small card-5"><IconRocket /></div>
           </div>
           <div class="visual-glow" />
         </div>
@@ -259,18 +243,6 @@
       </div>
     </div>
 
-    <!-- 过渡区域2 -->
-    <div class="transition-section-2">
-      <div class="parallax-bg" />
-      <div class="transition-overlay">
-        <div class="big-quote">
-          <span class="quote-mark">"</span>
-          <p>教育的本质是点燃火焰，而非填满容器</p>
-          <span class="quote-author">—— 苏格拉底</span>
-        </div>
-      </div>
-    </div>
-
     <!-- 核心服务区域 -->
     <div id="services" class="services-section">
       <div class="section-container">
@@ -287,7 +259,7 @@
             :key="index"
             class="service-card"
           >
-            <div class="service-icon">{{ service.icon }}</div>
+            <div class="service-icon"><component :is="service.icon" /></div>
             <h3 class="service-title">{{ service.title }}</h3>
             <p class="service-desc">{{ service.description }}</p>
             <ul class="service-features">
@@ -317,7 +289,7 @@
             :key="index"
             class="tech-card"
           >
-            <div class="tech-icon">{{ tech.icon }}</div>
+            <div class="tech-icon"><component :is="tech.icon" /></div>
             <div class="tech-name">{{ tech.name }}</div>
             <div class="tech-version">{{ tech.version }}</div>
           </div>
@@ -353,24 +325,39 @@
       </div>
     </div>
 
-    <!-- CTA 区域 -->
-    <div class="cta-section">
-      <div class="cta-stars">
+    <!-- CTA 区域 - 非对称左右布局 -->
+    <div class="cta-section-new">
+      <!-- 背景星星 -->
+      <div class="cta-bg-stars">
         <div
-          v-for="i in 50"
+          v-for="i in 80"
           :key="'cta-star-' + i"
           class="cta-star"
           :style="getCtaStarStyle(i)"
         />
       </div>
-      <div class="cta-content">
-        <h2>开启智慧学习之旅</h2>
-        <p>立即加入，体验 AI 驱动的全新教育模式</p>
-        <div class="cta-buttons">
-          <el-button type="primary" size="large" @click="handleEntry">
-            立即试用
-          </el-button>
-          <el-button size="large" plain> 联系我们 </el-button>
+      <!-- 左右布局容器 -->
+      <div class="cta-layout">
+        <!-- 左侧文字内容 -->
+        <div class="cta-content-left">
+          <div class="cta-badge">开启新篇章</div>
+          <h2>开启智慧学习之旅</h2>
+          <p>立即加入，体验 AI 驱动的全新教育模式</p>
+          <div class="cta-buttons">
+            <el-button type="primary" size="large" @click="handleEntry">
+              立即试用
+            </el-button>
+            <el-button size="large" plain> 联系我们 </el-button>
+          </div>
+          <div class="cta-features">
+            <span><i>→</i> 快速上手</span>
+            <span><i>→</i> 精准学习</span>
+            <span><i>→</i> 智能推荐</span>
+          </div>
+        </div>
+        <!-- 右侧星光汇聚 Logo -->
+        <div class="starlight-logo-wrapper">
+          <canvas ref="starlightCanvas" class="starlight-canvas" />
         </div>
       </div>
     </div>
@@ -480,7 +467,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import {
   Monitor,
@@ -490,7 +477,8 @@ import {
   User,
   SwitchButton,
   Setting,
-  Check
+  Check,
+  Close
 } from "@element-plus/icons-vue";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
@@ -500,16 +488,38 @@ import type { DataInfo } from "@/utils/auth";
 import { initRouter } from "@/router/utils";
 
 // 导入图片资源
-import banner1 from "@/assets/home/banner1.jpg";
-import banner2 from "@/assets/home/banner2.jpg";
 import card1 from "@/assets/home/card1.jpg";
 import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
+import artisticText from "@/assets/816438ed-a33a-4477-b57e-e273e15c03aa.png";
+import bannerPhoto from "@/assets/bannerphoto.png";
 import LoginDialog from "@/components/LoginDialog.vue";
+// 导入 SVG 图标组件
+import IconStudent from "@/assets/home-icons/student.svg?component";
+import IconTeacher from "@/assets/home-icons/teacher.svg?component";
+import IconBook from "@/assets/home-icons/book.svg?component";
+import IconStar from "@/assets/home-icons/star.svg?component";
+import IconBrain from "@/assets/home-icons/brain.svg?component";
+import IconTarget from "@/assets/home-icons/target.svg?component";
+import IconMessage from "@/assets/home-icons/message.svg?component";
+import IconChart from "@/assets/home-icons/chart.svg?component";
+import IconRobot from "@/assets/home-icons/robot.svg?component";
+import IconEdit from "@/assets/home-icons/edit.svg?component";
+import IconTrending from "@/assets/home-icons/trending.svg?component";
+import IconZap from "@/assets/home-icons/zap.svg?component";
+import IconRocket from "@/assets/home-icons/rocket.svg?component";
+import IconShield from "@/assets/home-icons/shield.svg?component";
+import IconSmartphone from "@/assets/home-icons/smartphone.svg?component";
+import IconGlobe from "@/assets/home-icons/globe.svg?component";
+import IconLightbulb from "@/assets/home-icons/lightbulb.svg?component";
+import IconTrophy from "@/assets/home-icons/trophy.svg?component";
+import IconGraduation from "@/assets/home-icons/graduation.svg?component";
+import IconCrystal from "@/assets/home-icons/crystal.svg?component";
 
 const router = useRouter();
 const isScrolled = ref(false);
+const starlightCanvas = ref<HTMLCanvasElement | null>(null);
 import { useUserStoreHook } from "@/store/modules/user";
 
 const userStore = useUserStoreHook();
@@ -569,12 +579,18 @@ const handleLoginSuccess = async () => {
   await initRouter();
 
   // 登录成功后自动跳转到相应页面
-  // 重新获取最新的用户信息
+  // 获取最新的登录状态和用户信息
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
-  const roleType = info?.roleType;
+  const token = getToken();
+
+  // 获取角色信息：优先从 info 中获取
+  const roleType =
+    info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
+
+  console.log("[Login Success] 登录成功，正在准备跳转, roleType:", roleType);
 
   // 角色类型判断：2:教师 3:管理员，跳转到管理后台；其他跳转到个人中心
-  if (roleType === 2 || roleType === 3) {
+  if (Number(roleType) === 2 || Number(roleType) === 3) {
     router.push("/welcome/index");
   } else {
     router.push("/account");
@@ -625,10 +641,197 @@ const initScrollAnimations = () => {
     });
 };
 
+// 星光粒子动画相关
+interface Particle {
+  x: number;
+  y: number;
+  targetX: number;
+  targetY: number;
+  size: number;
+  color: string;
+  speed: number;
+  alpha: number;
+  delay: number;
+}
+
+let starlightAnimationId: number | null = null;
+let starlightParticles: Particle[] = [];
+
+const initStarlightAnimation = () => {
+  const canvas = starlightCanvas.value;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  // 设置 canvas尺寸
+  const resizeCanvas = () => {
+    const container = canvas.parentElement;
+    if (container) {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+    }
+  };
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  // 加载 logo 图片并采样像素
+  const logoImg = new Image();
+  logoImg.crossOrigin = "anonymous";
+  logoImg.src = logo;
+
+  logoImg.onload = () => {
+    // 创建临时 canvas 来采样图片像素
+    const tempCanvas = document.createElement("canvas");
+    const tempCtx = tempCanvas.getContext("2d");
+    if (!tempCtx) return;
+
+    const logoSize = Math.min(canvas.width * 0.4, 200);
+    const scale = logoSize / Math.max(logoImg.width, logoImg.height);
+    const scaledWidth = logoImg.width * scale;
+    const scaledHeight = logoImg.height * scale;
+
+    tempCanvas.width = scaledWidth;
+    tempCanvas.height = scaledHeight;
+    tempCtx.drawImage(logoImg, 0, 0, scaledWidth, scaledHeight);
+
+    // 采样像素点
+    const imageData = tempCtx.getImageData(0, 0, scaledWidth, scaledHeight);
+    const pixels = imageData.data;
+    const targetPoints: { x: number; y: number; color: string }[] = [];
+
+    // 每隔几个像素采样一次
+    const sampleRate = 3;
+    for (let y = 0; y < scaledHeight; y += sampleRate) {
+      for (let x = 0; x < scaledWidth; x += sampleRate) {
+        const i = (y * scaledWidth + x) * 4;
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        const a = pixels[i + 3];
+
+        // 只采样不透明的像素
+        if (a > 128) {
+          targetPoints.push({
+            x: x,
+            y: y,
+            color: `rgba(${r}, ${g}, ${b}, 1)`
+          });
+        }
+      }
+    }
+
+    // 计算 logo 在 canvas 中的居中位置
+    const offsetX = (canvas.width - scaledWidth) / 2;
+    const offsetY = (canvas.height - scaledHeight) / 2 - 30;
+
+    // 创建粒子
+    starlightParticles = targetPoints.map((point, index) => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      targetX: point.x + offsetX,
+      targetY: point.y + offsetY,
+      size: Math.random() * 2 + 1,
+      color: point.color,
+      speed: 0.02 + Math.random() * 0.03,
+      alpha: 0,
+      delay: Math.random() * 2000
+    }));
+
+    // 动画开始时间
+    const startTime = Date.now();
+
+    // 动画循环
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const currentTime = Date.now();
+      const elapsed = currentTime - startTime;
+
+      starlightParticles.forEach(particle => {
+        // 延迟启动
+        if (elapsed < particle.delay) {
+          //绘制闪烁的星星
+          particle.alpha = Math.random() * 0.5;
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${particle.alpha})`;
+          ctx.fill();
+          return;
+        }
+
+        //缓动移动到目标位置
+        const dx = particle.targetX - particle.x;
+        const dy = particle.targetY - particle.y;
+        particle.x += dx * particle.speed;
+        particle.y += dy * particle.speed;
+
+        //渐变透明度
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 5) {
+          particle.alpha = Math.min(1, particle.alpha + 0.05);
+        } else {
+          particle.alpha = Math.min(0.8, particle.alpha + 0.02);
+        }
+
+        // 绘制粒子
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+
+        // 使用渐变色
+        const gradient = ctx.createRadialGradient(
+          particle.x,
+          particle.y,
+          0,
+          particle.x,
+          particle.y,
+          particle.size * 2
+        );
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${particle.alpha})`);
+        gradient.addColorStop(
+          0.5,
+          particle.color.replace("1)", `${particle.alpha})`)
+        );
+        gradient.addColorStop(1, "rgba(96, 165, 250, 0)");
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // 添加发光效果
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#60a5fa";
+      });
+
+      // starlightAnimationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+  };
+};
+
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("mousemove", handleMouseMove);
   setTimeout(initScrollAnimations, 100);
+
+  // 使用 IntersectionObserver 延迟加载星光汇聚动画
+  nextTick(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            initStarlightAnimation();
+            observer.disconnect(); // 只加载一次
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (starlightCanvas.value) {
+      observer.observe(starlightCanvas.value);
+    }
+  });
 });
 
 onUnmounted(() => {
@@ -643,39 +846,6 @@ const scrollToSection = (id: string) => {
   }
 };
 
-const getStarStyle = (index: number) => {
-  const size = Math.random() * 3 + 1;
-  return {
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    width: `${size}px`,
-    height: `${size}px`,
-    animationDelay: `${Math.random() * 3}s`,
-    animationDuration: `${Math.random() * 2 + 1}s`
-  };
-};
-
-const getShootingStarStyle = (index: number) => {
-  return {
-    left: `${50 + Math.random() * 50}%`,
-    top: `${Math.random() * 30}%`,
-    animationDelay: `${index * 15 + Math.random() * 10}s`,
-    animationDuration: `${1.5 + Math.random() * 0.5}s`
-  };
-};
-
-const getParticleStyle = (index: number) => {
-  const size = Math.random() * 6 + 2;
-  return {
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    width: `${size}px`,
-    height: `${size}px`,
-    animationDelay: `${Math.random() * 5}s`,
-    animationDuration: `${Math.random() * 10 + 10}s`
-  };
-};
-
 const getCtaStarStyle = (index: number) => {
   const size = Math.random() * 2 + 1;
   return {
@@ -688,48 +858,31 @@ const getCtaStarStyle = (index: number) => {
   };
 };
 
-const carouselItems = ref([
-  {
-    title: "启明智教",
-    subtitle: "智慧教育新纪元",
-    description:
-      "基于人工智能深度融合的智慧教育平台，为每位学习者打造专属学习路径",
-    background: banner1
-  },
-  {
-    title: "因材施教",
-    subtitle: "个性化学习体验",
-    description:
-      "AI 精准分析学情，智能推荐课程，让每一次学习都更高效、更有针对性",
-    background: banner2
-  }
-]);
-
 const statsData = ref([
-  { icon: "👨‍🎓", number: "1,000+", label: "预计注册学员" },
-  { icon: "👩‍🏫", number: "50+", label: "预计优秀教师" },
-  { icon: "📚", number: "100+", label: "预计上线精品课程" },
-  { icon: "⭐", number: "98%+", label: "预计学员满意度" }
+  { icon: IconStudent, number: "1,000+", label: "预计注册学员" },
+  { icon: IconTeacher, number: "50+", label: "预计优秀教师" },
+  { icon: IconBook, number: "100+", label: "预计上线精品课程" },
+  { icon: IconStar, number: "98%+", label: "预计学员满意度" }
 ]);
 
 const aiFeatures = ref([
   {
-    icon: "🧠",
+    icon: IconBrain,
     title: "智能学情分析",
     description: "AI 深度分析学习数据，精准定位知识薄弱点，生成个性化学习报告"
   },
   {
-    icon: "🎯",
+    icon: IconTarget,
     title: "精准推荐系统",
     description: "基于深度学习算法，智能推荐最适合的学习内容和练习题目"
   },
   {
-    icon: "💬",
+    icon: IconMessage,
     title: "AI 智能助教",
     description: "24小时在线答疑，智能解析错题，提供个性化学习建议"
   },
   {
-    icon: "📊",
+    icon: IconChart,
     title: "实时学习追踪",
     description: "全方位追踪学习进度，可视化数据呈现，家长老师随时掌握"
   }
@@ -758,25 +911,25 @@ const features = ref([
 
 const services = ref([
   {
-    icon: "📖",
+    icon: IconBook,
     title: "精品课程",
     description: "名师打造的系统化课程体系，覆盖K12全学科",
     features: ["名师授课", "体系完整", "实时更新", "互动练习"]
   },
   {
-    icon: "🤖",
+    icon: IconRobot,
     title: "AI 辅导",
     description: "智能 AI 助教 24 小时在线，随时解答学习疑惑",
     features: ["即时答疑", "错题分析", "知识讲解", "学习规划"]
   },
   {
-    icon: "📝",
+    icon: IconEdit,
     title: "智能作业",
     description: "AI 智能批改作业，秒出结果，精准定位问题",
     features: ["自动批改", "错因分析", "针对训练", "进度追踪"]
   },
   {
-    icon: "📈",
+    icon: IconGraduation,
     title: "成长档案",
     description: "全程记录学习轨迹，见证每一步成长",
     features: ["学习记录", "能力图谱", "成长报告", "荣誉勋章"]
@@ -784,14 +937,14 @@ const services = ref([
 ]);
 
 const techStack = ref([
-  { icon: "🧠", name: "多模态 AI", version: "大语言模型" },
-  { icon: "🔮", name: "深度学习", version: "神经网络" },
-  { icon: "📊", name: "知识图谱", version: "智能推荐" },
-  { icon: "⚡", name: "Vue 3", version: "前端框架" },
-  { icon: "🚀", name: "云原生", version: "微服务架构" },
-  { icon: "🔐", name: "数据安全", version: "隐私保护" },
-  { icon: "📱", name: "多端适配", version: "全平台覆盖" },
-  { icon: "🌐", name: "边缘计算", version: "低延迟响应" }
+  { icon: IconBrain, name: "多模态 AI", version: "大语言模型" },
+  { icon: IconCrystal, name: "深度学习", version: "神经网络" },
+  { icon: IconChart, name: "知识图谱", version: "智能推荐" },
+  { icon: IconZap, name: "Vue 3", version: "前端框架" },
+  { icon: IconRocket, name: "云原生", version: "微服务架构" },
+  { icon: IconShield, name: "数据安全", version: "隐私保护" },
+  { icon: IconSmartphone, name: "多端适配", version: "全平台覆盖" },
+  { icon: IconGlobe, name: "边缘计算", version: "低延迟响应" }
 ]);
 
 const testimonials = ref([
@@ -816,6 +969,68 @@ const testimonials = ref([
     title: "学生家长",
     avatar: "李"
   }
+]);
+
+const competitors = ref([
+  {
+    logo: "A",
+    name: "传统网校A",
+    isUs: false,
+    features: [
+      { name: "AI智能推荐", status: "no" },
+      { name: "个性化学习路径", status: "no" },
+      { name: "实时学情分析", status: "partial", value: "基础" },
+      { name: "智能错题本", status: "no" },
+      { name: "AI助教答疑", status: "no" }
+    ],
+    price: "¥2999/年"
+  },
+  {
+    logo: "B",
+    name: "在线教育B",
+    isUs: false,
+    features: [
+      { name: "AI智能推荐", status: "partial", value: "基础" },
+      { name: "个性化学习路径", status: "no" },
+      { name: "实时学情分析", status: "yes" },
+      { name: "智能错题本", status: "partial", value: "手动" },
+      { name: "AI助教答疑", status: "no" }
+    ],
+    price: "¥1999/年"
+  },
+  {
+    logo: "★",
+    name: "启明智教",
+    isUs: true,
+    features: [
+      { name: "AI智能推荐", status: "yes" },
+      { name: "个性化学习路径", status: "yes" },
+      { name: "实时学情分析", status: "yes" },
+      { name: "智能错题本", status: "yes" },
+      { name: "AI助教答疑", status: "yes" }
+    ],
+    price: "¥999/年"
+  },
+  {
+    logo: "C",
+    name: "教育平台C",
+    isUs: false,
+    features: [
+      { name: "AI智能推荐", status: "partial", value: "有限" },
+      { name: "个性化学习路径", status: "partial", value: "模板" },
+      { name: "实时学情分析", status: "yes" },
+      { name: "智能错题本", status: "yes" },
+      { name: "AI助教答疑", status: "partial", value: "机器人" }
+    ],
+    price: "¥2499/年"
+  }
+]);
+
+const advantages = ref([
+  { icon: "→", title: "性价比最高", desc: "同等功能，价格仅为竞品的1/3" },
+  { icon: "AI", title: "AI深度融合", desc: "全链路AI赋能，真正的智能学习" },
+  { icon: "图", title: "数据驱动", desc: "实时学情分析，精准定位问题" },
+  { icon: "→", title: "个性化体验", desc: "千人千面，专属学习路径" }
 ]);
 
 const handleCommand = (command: string) => {
@@ -854,26 +1069,6 @@ const handleCommand = (command: string) => {
   50% {
     opacity: 0.6;
     transform: scale(1.1);
-  }
-}
-
-@keyframes shooting {
-  0% {
-    opacity: 0;
-    transform: rotate(135deg) translateX(0);
-  }
-
-  5% {
-    opacity: 0.6;
-  }
-
-  60% {
-    opacity: 0.3;
-  }
-
-  100% {
-    opacity: 0;
-    transform: rotate(135deg) translateX(400px);
   }
 }
 
@@ -956,7 +1151,7 @@ const handleCommand = (command: string) => {
   }
 
   50% {
-    box-shadow: 0 25px 50px rgb(167 139 250 / 25%);
+    box-shadow: 0 25px 50px rgb(96 165 250 / 25%);
     transform: translateY(-8px);
   }
 }
@@ -1034,7 +1229,7 @@ const handleCommand = (command: string) => {
   }
 
   50% {
-    filter: drop-shadow(0 0 15px rgb(167 139 250 / 80%));
+    filter: drop-shadow(0 0 15px rgb(96 165 250 / 80%));
   }
 }
 
@@ -1049,8 +1244,8 @@ const handleCommand = (command: string) => {
 
   50% {
     box-shadow:
-      0 0 15px #a78bfa,
-      0 0 30px #a78bfa;
+      0 0 15px #60a5fa,
+      0 0 30px #60a5fa;
   }
 }
 
@@ -1075,8 +1270,14 @@ const handleCommand = (command: string) => {
     }
   }
 
-  .ai-power-section .ai-features-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .ai-power-section {
+    .ai-power-container {
+      gap: 30px;
+    }
+
+    .ai-features-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .services-section .services-grid {
@@ -1141,8 +1342,28 @@ const handleCommand = (command: string) => {
     }
   }
 
-  .ai-power-section .ai-features-grid {
-    grid-template-columns: 1fr;
+  .ai-power-section {
+    .ai-power-container {
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .ai-video-left {
+      flex: 1;
+      width: 100%;
+    }
+
+    .ai-content-right .section-header {
+      text-align: center;
+
+      .section-desc {
+        margin: 0 auto;
+      }
+    }
+
+    .ai-features-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .transition-image-section .transition-content {
@@ -1207,7 +1428,11 @@ const handleCommand = (command: string) => {
   width: 100%;
   min-height: 100vh;
   color: #fff;
-  background-color: #0a0a1a;
+  background: linear-gradient(180deg, #000 0%, #0f172a 15%, #1e293b 100%);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .header {
@@ -1216,7 +1441,7 @@ const handleCommand = (command: string) => {
   right: 0;
   left: 0;
   z-index: 1000;
-  width: 100vw;
+  width: 100%;
   height: 70px;
   background: transparent;
   transition:
@@ -1224,7 +1449,7 @@ const handleCommand = (command: string) => {
     box-shadow 0.3s ease;
 
   &.header-scrolled {
-    background: rgb(10 10 26 / 95%);
+    background: rgb(0 0 0 / 95%);
     box-shadow: 0 2px 20px rgb(0 0 0 / 30%);
     backdrop-filter: blur(10px);
   }
@@ -1249,7 +1474,8 @@ const handleCommand = (command: string) => {
         padding: 4px;
         background: #fff;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        image-rendering: -webkit-optimize-contrast;
       }
 
       .logo-text-group {
@@ -1280,7 +1506,7 @@ const handleCommand = (command: string) => {
       .nav-link {
         font-size: 15px;
         font-weight: 500;
-        color: rgb(255 255 255 / 80%);
+        color: #000;
         text-decoration: none;
         cursor: pointer;
         transition: all 0.3s;
@@ -1298,7 +1524,7 @@ const handleCommand = (command: string) => {
       font-weight: 600;
       color: #0a0a1a;
       cursor: pointer;
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      background: #60a5fa;
       border: none;
       border-radius: 24px;
       transition: all 0.3s ease;
@@ -1333,237 +1559,219 @@ const handleCommand = (command: string) => {
 
 .banner {
   position: relative;
+  width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
-  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
+  background: linear-gradient(180deg, #000 0%, #0f172a 15%, #1e293b 100%);
 
-  .starfield {
+  .banner-bg {
     position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    opacity: 0.3;
-
-    .star {
-      position: absolute;
-      background: #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 4px 1px rgb(255 255 255 / 20%);
-      animation: twinkle ease-in-out infinite;
-    }
-
-    .shooting-star {
-      position: absolute;
-      width: 60px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        rgb(255 255 255 / 60%),
-        rgb(255 255 255 / 20%),
-        transparent
-      );
-      opacity: 0;
-      transform: rotate(135deg);
-      animation: shooting ease-out infinite;
-    }
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 
-  .hero-particles {
+  .banner-signature {
     position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    opacity: 0.25;
+    right: 40px;
+    bottom: 80px;
+    z-index: 10;
+    text-align: right;
+    font-family: "FangSong", "仿宋", STFangsong, serif;
 
-    .particle {
-      position: absolute;
-      background: rgb(255 255 255 / 40%);
-      border-radius: 50%;
-      animation: floatParticle linear infinite;
+    p {
+      margin: 0;
+      padding: 6px 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: #000;
+      text-shadow: none;
+      letter-spacing: 3px;
     }
   }
 
-  :deep(.el-carousel),
-  :deep(.el-carousel__container) {
-    height: 100vh;
-  }
-
-  :deep(.el-carousel__item) {
-    overflow: hidden;
-  }
-}
-
-.carousel-content {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  background-position: center;
-  background-size: cover;
-
-  &::before {
+  .banner-overlay {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 5;
+    display: flex;
+    align-items: center;
     pointer-events: none;
-    content: "";
     background: linear-gradient(
       135deg,
-      rgb(10 10 26 / 50%) 0%,
-      rgb(10 10 26 / 30%) 100%
+      rgba(0, 0, 0, 0.45) 0%,
+      rgba(0, 0, 0, 0) 100%
     );
-  }
 
-  .carousel-text {
-    position: relative;
-    z-index: 3;
-    max-width: 800px;
-    padding: 0 80px;
-
-    .hero-badge {
-      display: inline-block;
-      padding: 8px 20px;
-      margin-bottom: 24px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #60a5fa;
-      letter-spacing: 0.5px;
-      background: rgb(96 165 250 / 10%);
-      border: 1px solid rgb(96 165 250 / 30%);
-      border-radius: 30px;
-    }
-
-    .main-title {
-      margin: 0 0 16px;
-      font-size: 68px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 4px;
-      text-shadow: 0 4px 20px rgb(0 0 0 / 30%);
-    }
-
-    .sub-title {
-      margin: 0 0 20px;
-      font-size: 42px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      background: linear-gradient(
-        135deg,
-        #5dade2 0%,
-        #85c1e9 50%,
-        #aed6f1 100%
-      );
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-desc {
-      margin: 0 0 32px;
-      font-size: 17px;
-      font-weight: 400;
-      line-height: 1.7;
-      color: rgb(255 255 255 / 75%);
-      letter-spacing: 0.5px;
-    }
-
-    .hero-buttons {
+    .carousel-text {
       position: relative;
-      z-index: 100;
-      display: flex;
-      gap: 16px;
+      z-index: 3;
+      display: inline-block;
+      width: auto;
+      max-width: fit-content;
+      padding: 32px 48px;
       pointer-events: auto;
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 
-      .hero-btn {
-        position: relative;
-        z-index: 101;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 54px;
-        padding: 0 38px;
-        overflow: hidden;
-        font-size: 16px;
-        font-weight: 600;
-        letter-spacing: 1px;
-        pointer-events: auto;
-        cursor: pointer;
-        border: none;
+      .hero-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #60a5fa;
+        letter-spacing: 0.5px;
+        background: rgb(96 165 250 / 10%);
+        border: 1px solid rgb(96 165 250 / 30%);
         border-radius: 30px;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(4px);
+      }
 
-        :deep(span) {
+      .main-title {
+        margin: 0 0 16px;
+        font-size: 72px;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.1;
+        letter-spacing: 4px;
+        text-shadow: 0 10px 30px rgb(0 0 0 / 50%);
+      }
+
+      .sub-title {
+        margin: 0 0 20px;
+        font-size: 42px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        background: linear-gradient(
+          135deg,
+          #5dade2 0%,
+          #85c1e9 50%,
+          #aed6f1 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .hero-desc {
+        margin: 0 0 32px;
+        font-size: 17px;
+        font-weight: 400;
+        line-height: 1.7;
+        color: rgb(255 255 255 / 75%);
+        letter-spacing: 0.5px;
+      }
+
+      .hero-buttons {
+        position: relative;
+        z-index: 100;
+        display: flex;
+        gap: 16px;
+        pointer-events: auto;
+
+        .hero-btn {
           position: relative;
-          z-index: 2;
+          z-index: 101;
           display: flex;
-          gap: 8px;
           align-items: center;
+          justify-content: center;
+          height: 54px;
+          padding: 0 38px;
+          overflow: hidden;
+          font-size: 16px;
+          font-weight: 600;
+          letter-spacing: 1px;
+          pointer-events: auto;
           cursor: pointer;
-        }
+          border: none;
+          border-radius: 30px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
-        &:hover {
-          box-shadow: 0 20px 40px rgb(0 0 0 / 40%);
-          transform: translateY(-6px) scale(1.05);
-        }
-
-        &.primary.el-button--primary {
-          color: #0a0a1a;
-          background:
-            radial-gradient(
-              circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-              rgb(255 255 255 / 50%),
-              transparent
-            ),
-            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-          box-shadow: 0 4px 15px rgb(96 165 250 / 40%);
-
-          &::before {
-            position: absolute;
-            top: 0;
-            left: -100%;
-            z-index: 1;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            content: "";
-            background: linear-gradient(
-              90deg,
-              transparent,
-              rgb(255 255 255 / 40%),
-              transparent
-            );
-            transition: 0.6s;
+          :deep(span) {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            cursor: pointer;
           }
 
           &:hover {
-            box-shadow: 0 12px 30px rgb(96 165 250 / 60%);
-
-            &::before {
-              left: 100%;
-            }
+            box-shadow: 0 20px 40px rgb(0 0 0 / 40%);
+            transform: translateY(-6px) scale(1.05);
           }
-        }
 
-        &.secondary.el-button {
-          color: #fff;
-          background:
-            radial-gradient(
-              circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-              rgb(255 255 255 / 30%),
-              transparent
-            ),
-            rgb(255 255 255 / 10%);
-          border: 2px solid rgb(255 255 255 / 30%);
-          backdrop-filter: blur(10px);
-
-          &:hover {
+          &.primary.el-button--primary {
+            color: #0a0a1a;
             background:
               radial-gradient(
                 circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-                rgb(255 255 255 / 40%),
+                rgb(255 255 255 / 50%),
                 transparent
               ),
-              rgb(255 255 255 / 20%);
-            border-color: rgb(255 255 255 / 60%);
+              #60a5fa;
+            box-shadow: 0 4px 15px rgb(96 165 250 / 40%);
+
+            &::before {
+              position: absolute;
+              top: 0;
+              left: -100%;
+              z-index: 1;
+              width: 100%;
+              height: 100%;
+              pointer-events: none;
+              content: "";
+              background: linear-gradient(
+                90deg,
+                transparent,
+                rgb(255 255 255 / 40%),
+                transparent
+              );
+              transition: 0.6s;
+            }
+
+            &:hover {
+              box-shadow: 0 12px 30px rgb(96 165 250 / 60%);
+
+              &::before {
+                left: 100%;
+              }
+            }
+          }
+
+          &.secondary.el-button {
+            color: #fff;
+            background:
+              radial-gradient(
+                circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgb(255 255 255 / 30%),
+                transparent
+              ),
+              rgb(255 255 255 / 10%);
+            border: 2px solid rgb(255 255 255 / 30%);
+            backdrop-filter: blur(10px);
+
+            &:hover {
+              background:
+                radial-gradient(
+                  circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                  rgb(255 255 255 / 40%),
+                  transparent
+                ),
+                rgb(255 255 255 / 20%);
+              border-color: rgb(255 255 255 / 60%);
+            }
           }
         }
       }
@@ -1581,7 +1789,7 @@ const handleCommand = (command: string) => {
   transform: translateX(-50%);
 
   .scroll-arrow .el-icon.animated {
-    animation: bounce 2s infinite;
+    /* animation: bounce 2s infinite; */
   }
 }
 
@@ -1598,7 +1806,7 @@ const handleCommand = (command: string) => {
 
 .stats-section {
   padding: 30px 0;
-  background: #0a0a1a;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .stats-container {
     box-sizing: border-box;
@@ -1642,8 +1850,8 @@ const handleCommand = (command: string) => {
     &:hover {
       background: linear-gradient(
         145deg,
-        rgb(30 30 60 / 50%) 0%,
-        rgb(20 20 45 / 70%) 100%
+        rgb(20 20 20 / 50%) 0%,
+        rgb(10 10 10 / 70%) 100%
       );
       border-color: rgb(96 165 250 / 50%);
       box-shadow: 0 20px 40px rgb(96 165 250 / 15%);
@@ -1668,15 +1876,13 @@ const handleCommand = (command: string) => {
     }
 
     &:hover .stat-icon {
-      transform: scale(1.3) rotateZ(15deg);
+      transform: scale(1.1);
     }
 
     .stat-number {
       font-size: 36px;
       font-weight: 800;
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #60a5fa;
       transition: transform 0.3s;
     }
 
@@ -1693,13 +1899,35 @@ const handleCommand = (command: string) => {
 
 .ai-power-section {
   position: relative;
-  padding: 50px 0;
+  padding: 80px 0;
   overflow: hidden;
-  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+
+  .ai-power-container {
+    display: flex;
+    gap: 60px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ai-content-right {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+
+    .section-header {
+      text-align: left;
+      margin-bottom: 40px;
+
+      .section-desc {
+        margin-left: 0;
+      }
+    }
+  }
 
   .ai-features-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 24px;
   }
 
@@ -1732,8 +1960,8 @@ const handleCommand = (command: string) => {
     &:hover {
       background: linear-gradient(
         145deg,
-        rgb(30 30 60 / 60%) 0%,
-        rgb(20 20 45 / 80%) 100%
+        rgb(20 20 20 / 60%) 0%,
+        rgb(10 10 10 / 80%) 100%
       );
       border-color: rgb(96 165 250 / 60%);
       box-shadow:
@@ -1765,7 +1993,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover .ai-icon {
-      transform: scale(1.25) rotateY(20deg);
+      transform: scale(1.1);
     }
 
     h3 {
@@ -1776,7 +2004,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover h3 {
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      background: #60a5fa;
       background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -1813,7 +2041,7 @@ const handleCommand = (command: string) => {
       position: absolute;
       border: 1px solid rgb(96 165 250 / 10%);
       border-radius: 50%;
-      animation: rotateOrbit 20s linear infinite;
+      /* animation: rotateOrbit 20s linear infinite; */
 
       &.orbit-1 {
         inset: 0;
@@ -1821,13 +2049,13 @@ const handleCommand = (command: string) => {
 
       &.orbit-2 {
         inset: 50px;
-        animation-duration: 25s;
+        /* animation-duration: 25s; */
         animation-direction: reverse;
       }
 
       &.orbit-3 {
         inset: 100px;
-        animation-duration: 30s;
+        /* animation-duration: 30s; */
       }
     }
   }
@@ -1836,7 +2064,7 @@ const handleCommand = (command: string) => {
 .transition-image-section {
   padding: 80px 0;
   overflow: hidden;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .transition-content {
     box-sizing: border-box;
@@ -1966,7 +2194,7 @@ const handleCommand = (command: string) => {
           background: linear-gradient(
             135deg,
             rgb(96 165 250 / 10%) 0%,
-            rgb(139 92 246 / 10%) 100%
+            rgb(96 165 250 / 5%) 100%
           );
           border-color: rgb(96 165 250 / 20%);
           transform: translate(-50%, -50%);
@@ -1992,20 +2220,17 @@ const handleCommand = (command: string) => {
         &.card-top-right {
           top: 20px;
           right: 30px;
-          animation: floatCard 5s ease-in-out infinite;
         }
 
         &.card-bottom-left {
           bottom: 20px;
           left: 30px;
-          animation: floatCard 5s ease-in-out infinite 1.5s;
         }
 
         &.card-small {
           width: 60px;
           height: 60px;
           font-size: 28px;
-          animation: floatCard 4s ease-in-out infinite;
 
           &.card-1 {
             top: 10px;
@@ -2110,7 +2335,7 @@ const handleCommand = (command: string) => {
 .platform-intro {
   position: relative;
   padding: 50px 0;
-  background: linear-gradient(180deg, #0a0a1a 0%, #12122a 50%, #1a1a2e 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .feature-list {
     display: grid;
@@ -2163,7 +2388,7 @@ const handleCommand = (command: string) => {
         background: linear-gradient(
           180deg,
           transparent 30%,
-          rgb(10 10 26 / 95%) 100%
+          rgb(0 0 0 / 95%) 100%
         );
       }
     }
@@ -2195,7 +2420,7 @@ const handleCommand = (command: string) => {
       background: linear-gradient(
         180deg,
         transparent 40%,
-        rgb(10 10 26 / 85%) 100%
+        rgb(0 0 0 / 85%) 100%
       );
       transition: background 0.5s ease;
 
@@ -2223,7 +2448,7 @@ const handleCommand = (command: string) => {
   .parallax-bg {
     position: absolute;
     inset: 0;
-    background: #1a1a2e;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
   }
 
   .transition-overlay {
@@ -2263,7 +2488,7 @@ const handleCommand = (command: string) => {
 
 .services-section {
   padding: 50px 0;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .services-grid {
     display: grid;
@@ -2301,8 +2526,8 @@ const handleCommand = (command: string) => {
     &:hover {
       background: linear-gradient(
         145deg,
-        rgb(30 30 60 / 80%) 0%,
-        rgb(20 20 45 / 90%) 100%
+        rgb(20 20 20 / 80%) 0%,
+        rgb(10 10 10 / 90%) 100%
       );
       border-color: rgb(96 165 250 / 50%);
       box-shadow:
@@ -2379,7 +2604,7 @@ const handleCommand = (command: string) => {
 .tech-section {
   position: relative;
   padding: 50px 0;
-  background: linear-gradient(180deg, #1a1a2e 0%, #12122a 50%, #0a0a1a 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .tech-grid {
     display: grid;
@@ -2418,7 +2643,7 @@ const handleCommand = (command: string) => {
       background: linear-gradient(
         145deg,
         rgb(96 165 250 / 10%) 0%,
-        rgb(167 139 250 / 10%) 100%
+        rgb(96 165 250 / 5%) 100%
       );
       border-color: rgb(96 165 250 / 50%);
       box-shadow: 0 15px 30px rgb(96 165 250 / 20%);
@@ -2443,7 +2668,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover .tech-icon {
-      transform: scale(1.3) rotateY(180deg);
+      transform: scale(1.1);
     }
 
     .tech-name {
@@ -2462,7 +2687,7 @@ const handleCommand = (command: string) => {
 
 .testimonials-section {
   padding: 50px 0;
-  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .testimonials-grid {
     display: grid;
@@ -2499,10 +2724,10 @@ const handleCommand = (command: string) => {
     &:hover {
       background: linear-gradient(
         145deg,
-        rgb(30 30 60 / 60%) 0%,
-        rgb(20 20 45 / 80%) 100%
+        rgb(20 20 20 / 60%) 0%,
+        rgb(10 10 10 / 80%) 100%
       );
-      border-color: rgb(167 139 250 / 40%);
+      border-color: rgb(96 165 250 / 40%);
       box-shadow: 0 25px 50px rgb(96 165 250 / 15%);
       transform: translateY(-10px) rotateX(3deg);
 
@@ -2528,7 +2753,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover .quote-icon {
-      color: #a78bfa;
+      color: #60a5fa;
       opacity: 1;
       transform: scale(1.1);
     }
@@ -2553,7 +2778,7 @@ const handleCommand = (command: string) => {
         font-size: 20px;
         font-weight: 600;
         color: #0a0a1a;
-        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        background: #60a5fa;
         border-radius: 50%;
       }
 
@@ -2576,7 +2801,7 @@ const handleCommand = (command: string) => {
   padding: 40px 0;
   overflow: hidden;
   text-align: center;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .cta-stars {
     position: absolute;
@@ -2587,7 +2812,7 @@ const handleCommand = (command: string) => {
       position: absolute;
       background: #fff;
       border-radius: 50%;
-      animation: twinkle ease-in-out infinite;
+      /* animation: twinkle ease-in-out infinite; */
     }
   }
 
@@ -2650,7 +2875,7 @@ const handleCommand = (command: string) => {
               rgb(255 255 255 / 50%),
               transparent
             ),
-            linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            #60a5fa;
           border: none;
           box-shadow: 0 4px 15px rgb(96 165 250 / 40%);
 
@@ -2688,7 +2913,7 @@ const handleCommand = (command: string) => {
 
 .footer-section {
   padding: 50px 0 30px;
-  background: #050510;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 
   .footer-container {
     max-width: 1300px;
@@ -2976,19 +3201,18 @@ const handleCommand = (command: string) => {
 }
 
 .section-title {
-  color: transparent;
-  background: linear-gradient(270deg, #60a5fa, #a78bfa, #f472b6, #60a5fa);
-  background-clip: text;
-  background-size: 300% 300%;
-  animation: gradientFlow 8s ease infinite;
+  color: #60a5fa;
 }
 
 .main-title {
-  color: transparent;
-  background: linear-gradient(270deg, #fff, #60a5fa, #a78bfa, #fff);
-  background-clip: text;
-  background-size: 300% 300%;
-  animation: gradientFlow 6s ease infinite;
+  color: #fff;
+
+  .art-logo-img {
+    height: 1.2em;
+    margin-left: 24px;
+    vertical-align: middle;
+    filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.6));
+  }
 }
 
 /* 图标缩放效果 */
@@ -3007,7 +3231,6 @@ const handleCommand = (command: string) => {
 .feature-item:hover,
 .service-card:hover,
 .testimonial-card:hover {
-  animation: float-shadow 3s ease-in-out infinite;
 }
 
 /* 光标跟随光效 - 卡片上的光晕 */
@@ -3015,15 +3238,15 @@ const handleCommand = (command: string) => {
 .service-card {
   background: linear-gradient(
     145deg,
-    rgb(30 30 60 / 90%) 0%,
-    rgb(20 20 40 / 95%) 100%
+    rgb(20 20 20 / 90%) 0%,
+    rgb(10 10 10 / 95%) 100%
   );
 
   &:hover {
     background: linear-gradient(
       145deg,
-      rgb(40 40 80 / 95%) 0%,
-      rgb(25 25 50 / 98%) 100%
+      rgb(30 30 30 / 95%) 0%,
+      rgb(20 20 20 / 98%) 100%
     );
   }
 }
@@ -3035,7 +3258,6 @@ const handleCommand = (command: string) => {
 
 /* 悬停时图标旋转 */
 .tech-card:hover .tech-icon {
-  animation: iconSpin 0.6s ease;
 }
 
 /* 轨道上的点发光 */
@@ -3047,11 +3269,9 @@ const handleCommand = (command: string) => {
 }
 
 .stat-card:hover .stat-number {
-  animation: numberPop 0.4s ease;
 }
 
 .testimonial-card .quote-icon {
-  animation: quoteFloat 4s ease-in-out infinite;
 }
 
 /* 导航链接下划线动画 */
@@ -3065,7 +3285,7 @@ const handleCommand = (command: string) => {
     width: 0;
     height: 2px;
     content: "";
-    background: linear-gradient(90deg, #60a5fa, #a78bfa);
+    background: #60a5fa;
     transform: translateX(-50%);
     transition: all 0.3s ease;
   }
@@ -3076,11 +3296,9 @@ const handleCommand = (command: string) => {
 }
 
 .logo-img {
-  animation: logoBreathe 3s ease-in-out infinite;
 }
 
 .cta-section .el-button--primary {
-  animation: borderGlow 2s ease-in-out infinite;
 }
 
 /* 页脚社交链接悬停 */
@@ -3091,5 +3309,284 @@ const handleCommand = (command: string) => {
     box-shadow: 0 5px 15px rgb(96 165 250 / 40%);
     transform: translateY(-3px);
   }
+}
+
+/* 星光汇聚 Logo 区域 */
+.starlight-logo-section {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+}
+
+.starlight-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.starlight-text {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  text-align: center;
+  transform: translateX(-50%);
+
+  p {
+    margin: 0;
+    font-size: 18px;
+    color: rgb(255 255 255 / 60%);
+    letter-spacing: 2px;
+  }
+}
+
+/* 新版CTA 区域 - 非对称左右布局 */
+.cta-section-new {
+  position: relative;
+  min-height: 500px;
+  padding: 80px 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+
+  .cta-bg-stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    .cta-star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      /* animation: twinkle ease-in-out infinite; */
+    }
+  }
+
+  .cta-layout {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 60px;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1400px;
+    padding: 0 80px;
+    margin: 0 auto;
+  }
+
+  .cta-content-left {
+    flex: 0 0 45%;
+    max-width: 500px;
+    text-align: left;
+
+    .cta-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: #60a5fa;
+      background: rgb(96 165 250 / 10%);
+      border: 1px solid rgb(96 165 250 / 30%);
+      border-radius: 30px;
+    }
+
+    h2 {
+      margin-bottom: 16px;
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #fff;
+      color: #fff;
+    }
+
+    p {
+      margin-bottom: 32px;
+      font-size: 18px;
+      line-height: 1.6;
+      color: rgb(255 255 255 / 70%);
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 40px;
+
+      .el-button {
+        height: 54px;
+        padding: 0 36px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 30px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+          transform: translateY(-4px);
+        }
+
+        &.el-button--primary {
+          color: #0a0a1a;
+          background: #60a5fa;
+          border: none;
+          box-shadow: 0 8px 25px rgb(96 165 250 / 40%);
+
+          &:hover {
+            box-shadow: 0 12px 35px rgb(96 165 250 / 60%);
+          }
+        }
+
+        &.is-plain {
+          color: #fff;
+          background: transparent;
+          border: 2px solid rgb(255 255 255 / 30%);
+
+          &:hover {
+            background: rgb(255 255 255 / 10%);
+            border-color: rgb(255 255 255 / 50%);
+          }
+        }
+      }
+    }
+
+    .cta-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+
+      span {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 14px;
+        color: rgb(255 255 255 / 60%);
+        transition: all 0.3s;
+
+        i {
+          font-size: 18px;
+          font-style: normal;
+        }
+
+        &:hover {
+          color: #60a5fa;
+          transform: translateX(5px);
+        }
+      }
+    }
+  }
+
+  .starlight-logo-wrapper {
+    position: relative;
+    flex: 0 0 50%;
+    min-height: 400px;
+    background: radial-gradient(
+      ellipse at center,
+      rgb(96 165 250 / 5%) 0%,
+      transparent 70%
+    );
+    border-radius: 24px;
+
+    .starlight-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .starlight-text {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      text-align: center;
+      transform: translateX(-50%);
+
+      p {
+        margin: 0;
+        font-size: 16px;
+        color: rgb(255 255 255 / 50%);
+        letter-spacing: 3px;
+      }
+    }
+  }
+}
+
+/* 响应式适配 */
+@media screen and (width <= 1200px) {
+  .cta-section-new {
+    .cta-layout {
+      padding: 0 40px;
+    }
+
+    .cta-content-left h2 {
+      font-size: 36px;
+    }
+  }
+}
+
+@media screen and (width <= 768px) {
+  .cta-section-new {
+    .cta-layout {
+      flex-direction: column;
+      gap: 40px;
+      padding: 0 20px;
+    }
+
+    .cta-content-left {
+      flex: 1;
+      max-width: 100%;
+      text-align: center;
+
+      h2 {
+        font-size: 28px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .cta-features {
+        justify-content: center;
+      }
+    }
+
+    .starlight-logo-wrapper {
+      flex: 1;
+      width: 100%;
+      min-height: 300px;
+    }
+  }
+}
+
+/* SVG 图标样式 */
+.stat-icon svg,
+.ai-icon svg,
+.service-icon svg,
+.tech-icon svg,
+.card-icon svg {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stat-icon {
+  color: #60a5fa;
+}
+
+.ai-icon {
+  color: #60a5fa;
+}
+
+.service-icon {
+  color: #60a5fa;
+}
+
+.tech-icon {
+  color: #60a5fa;
 }
 </style>
