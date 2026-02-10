@@ -1,14 +1,24 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useDark } from "@pureadmin/utils";
+import { ElMessage, ElMessageBox } from "element-plus";
+
+// 导入 SVG 图标组件
+import IconDocument from "@/assets/home-icons/document.svg?component";
+import IconFolder from "@/assets/home-icons/folder.svg?component";
+import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
+import IconEdit from "@/assets/home-icons/edit.svg?component";
+import IconClock from "@/assets/home-icons/clock.svg?component";
 
 defineOptions({
   name: "ExamPaperMyPapers"
 });
 
 const router = useRouter();
+const { isDark } = useDark();
 
-//搜索表单
+// 搜索表单
 const searchForm = reactive({
   keyword: "",
   status: "",
@@ -19,7 +29,7 @@ const searchForm = reactive({
 const pagination = reactive({
   page: 1,
   pageSize: 10,
-  total: 0
+  total: 3
 });
 
 // 试卷列表
@@ -28,7 +38,7 @@ const paperList = ref([
     id: 1,
     title: "2024年春季期中考试",
     courseName: "高等数学",
-    createTime: "2024-03-1009:00",
+    createTime: "2024-03-10 09:00",
     updateTime: "2024-03-15 14:30",
     status: 1,
     questionCount: 25,
@@ -67,6 +77,14 @@ const courseList = ref([
   { id: 2, name: "线性代数" },
   { id: 3, name: "概率论" }
 ]);
+
+// 统计数据
+const statistics = ref({
+  total: 12,
+  published: 8,
+  draft: 4,
+  recent: 3
+});
 
 // 搜索
 const handleSearch = () => {
@@ -150,9 +168,66 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="my-papers-page">
+  <div class="my-papers-page" :class="{ 'is-dark': isDark }">
+    <!-- 页面标题区域 -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <IconFolder />
+        </div>
+        <div class="header-info">
+          <h1 class="page-title">我的试卷</h1>
+          <p class="page-desc">管理您创建的所有试卷，支持编辑、发布和删除操作</p>
+        </div>
+      </div>
+      <el-button type="primary" size="large" class="create-btn" @click="createPaper">
+        <el-icon class="mr-2"><Plus /></el-icon>
+        新建试卷
+      </el-button>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <IconDocument />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.total }}</div>
+          <div class="stat-label">试卷总数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon published">
+          <IconCheckCircle />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.published }}</div>
+          <div class="stat-label">已发布</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon draft">
+          <IconEdit />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.draft }}</div>
+          <div class="stat-label">草稿</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon recent">
+          <IconClock />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.recent }}</div>
+          <div class="stat-label">近7天创建</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 搜索区域 -->
-    <el-card class="search-card" shadow="never">
+    <div class="search-card">
       <el-form :model="searchForm" inline>
         <el-form-item label="关键词">
           <el-input
@@ -189,8 +264,8 @@ onMounted(() => {
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch"
-            ><el-icon class="mr-1"><Search /></el-icon>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon class="mr-1"><Search /></el-icon>
             搜索
           </el-button>
           <el-button @click="handleReset">
@@ -199,42 +274,49 @@ onMounted(() => {
           </el-button>
         </el-form-item>
       </el-form>
-    </el-card>
-
-    <!-- 操作栏 -->
-    <div class="action-bar">
-      <el-button type="primary" @click="createPaper">
-        <el-icon class="mr-1"><Plus /></el-icon>
-        新建试卷
-      </el-button>
     </div>
 
     <!-- 试卷列表 -->
-    <el-card shadow="never">
-      <el-table v-loading="loading" :data="paperList" stripe>
+    <div class="list-card">
+      <el-table v-loading="loading" :data="paperList" class="paper-table">
         <el-table-column prop="title" label="试卷标题" min-width="200">
           <template #default="{ row }">
-            <el-link type="primary" @click="editPaper(row)">
-              {{ row.title }}
-            </el-link>
+            <div class="paper-title-cell">
+              <div class="paper-icon">
+                <IconDocument />
+              </div>
+              <div class="paper-info">
+                <el-link type="primary" @click="editPaper(row)">
+                  {{ row.title }}
+                </el-link>
+                <span class="paper-course">{{ row.courseName }}</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="courseName" label="所属课程" width="120" />
         <el-table-column
           prop="questionCount"
           label="题目数"
-          width="80"
+          width="100"
           align="center"
-        />
+        >
+          <template #default="{ row }">
+            <span class="count-badge">{{ row.questionCount }}题</span>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="totalPoints"
           label="总分"
-          width="80"
+          width="100"
           align="center"
-        />
+        >
+          <template #default="{ row }">
+            <span class="score-badge">{{ row.totalPoints }}分</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
+            <el-tag :type="getStatusType(row.status)" size="small" effect="light">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
@@ -246,20 +328,23 @@ onMounted(() => {
           align="center"
         />
         <el-table-column prop="updateTime" label="更新时间" width="160" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="editPaper(row)">
+              <el-icon class="mr-1"><Edit /></el-icon>
               编辑
             </el-button>
             <el-button
-              type="primary"
+              type="success"
               link
               size="small"
               @click="publishPaper(row)"
             >
+              <el-icon class="mr-1"><Upload /></el-icon>
               发布
             </el-button>
-            <el-button type="primary" link size="small" @click="copyPaper(row)">
+            <el-button type="warning" link size="small" @click="copyPaper(row)">
+              <el-icon class="mr-1"><CopyDocument /></el-icon>
               复制
             </el-button>
             <el-button
@@ -268,6 +353,7 @@ onMounted(() => {
               size="small"
               @click="deletePaper(row)"
             >
+              <el-icon class="mr-1"><Delete /></el-icon>
               删除
             </el-button>
           </template>
@@ -282,31 +368,351 @@ onMounted(() => {
           :total="pagination.total"
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next, jumper"
+          background
           @change="handlePageChange"
         />
       </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+/* 浅色模式变量 */
+$light-bg: #f5f7fa;
+$light-card-bg: #fff;
+$light-text-primary: #1f2937;
+$light-text-secondary: #6b7280;
+$light-text-muted: #9ca3af;
+$light-border: #e5e7eb;
+$light-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
+$light-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%),
+  0 4px 6px -4px rgb(0 0 0 / 10%);
+
+/* 深色模式变量 */
+$dark-bg: #0f172a;
+$dark-card-bg: rgba(30, 41, 59, 0.8);
+$dark-text-primary: #f1f5f9;
+$dark-text-secondary: #94a3b8;
+$dark-text-muted: #64748b;
+$dark-border: rgba(255, 255, 255, 0.1);
+$dark-shadow: 0 4px 6px -1px rgb(0 0 0 / 30%), 0 2px 4px -2px rgb(0 0 0 / 30%);
+$dark-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 40%),
+  0 4px 6px -4px rgb(0 0 0 / 40%);
+
+/* 主色调 */
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+$warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+$info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+
+/* 统一圆角 */
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 20px;
+
 .my-papers-page {
-  padding: 20px;
+  min-height: 100%;
+  padding: 24px;
+  background: $light-bg;
+  transition: all 0.3s ease;
+
+  &.is-dark {
+    background: $dark-bg;
+
+    .page-header {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+
+      .page-title {
+        color: $dark-text-primary;
+      }
+
+      .page-desc {
+        color: $dark-text-secondary;
+      }
+
+      .header-icon {
+        background: rgba(102, 126, 234, 0.15);
+        color: #818cf8;
+      }
+    }
+
+    .stat-card {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+      box-shadow: $dark-shadow;
+
+      &:hover {
+        box-shadow: $dark-shadow-lg;
+      }
+
+      .stat-value {
+        color: $dark-text-primary;
+      }
+
+      .stat-label {
+        color: $dark-text-secondary;
+      }
+    }
+
+    .search-card {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+      box-shadow: $dark-shadow;
+    }
+
+    .list-card {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+      box-shadow: $dark-shadow;
+
+      .paper-title-cell {
+        .paper-icon {
+          background: rgba(102, 126, 234, 0.15);
+          color: #818cf8;
+        }
+
+        .paper-course {
+          color: $dark-text-muted;
+        }
+      }
+
+      .count-badge,
+      .score-badge {
+        background: rgba(255, 255, 255, 0.05);
+        color: $dark-text-secondary;
+      }
+    }
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  margin-bottom: 24px;
+  background: $light-card-bg;
+  border: 1px solid $light-border;
+  border-radius: $radius-lg;
+  box-shadow: $light-shadow;
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    color: #fff;
+    background: $primary-gradient;
+    border-radius: $radius-md;
+
+    svg {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  .header-info {
+    .page-title {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+      color: $light-text-primary;
+    }
+
+    .page-desc {
+      margin: 0;
+      font-size: 14px;
+      color: $light-text-secondary;
+    }
+  }
+
+  .create-btn {
+    height: 48px;
+    padding: 0 28px;
+    font-size: 15px;
+    font-weight: 600;
+    background: $primary-gradient;
+    border: none;
+    border-radius: 24px;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 12px 28px rgba(102, 126, 234, 0.4);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+
+  @media (width <= 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (width <= 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding: 24px;
+    cursor: pointer;
+    background: $light-card-bg;
+    border: 1px solid $light-border;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: $light-shadow-lg;
+      transform: translateY(-4px);
+    }
+
+    .stat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      color: #fff;
+      background: $primary-gradient;
+      border-radius: $radius-md;
+
+      &.published {
+        background: $success-gradient;
+      }
+
+      &.draft {
+        background: $warning-gradient;
+      }
+
+      &.recent {
+        background: $info-gradient;
+      }
+
+      svg {
+        width: 26px;
+        height: 26px;
+      }
+    }
+
+    .stat-info {
+      .stat-value {
+        margin-bottom: 4px;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        color: $light-text-primary;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: $light-text-secondary;
+      }
+    }
+  }
 }
 
 .search-card {
-  margin-bottom: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  background: $light-card-bg;
+  border: 1px solid $light-border;
+  border-radius: $radius-lg;
+  box-shadow: $light-shadow;
+
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+  }
 }
 
-.action-bar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
+.list-card {
+  padding: 24px;
+  background: $light-card-bg;
+  border: 1px solid $light-border;
+  border-radius: $radius-lg;
+  box-shadow: $light-shadow;
+
+  .paper-table {
+    :deep(.el-table__header th) {
+      background: #f8fafc;
+      font-weight: 600;
+    }
+  }
+
+  .paper-title-cell {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+
+    .paper-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      color: #7c3aed;
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border-radius: $radius-sm;
+
+      svg {
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    .paper-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .paper-course {
+        font-size: 12px;
+        color: $light-text-muted;
+      }
+    }
+  }
+
+  .count-badge,
+  .score-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: $light-text-secondary;
+    background: #f1f5f9;
+    border-radius: 6px;
+  }
+
+  .pagination-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
 }
 
-.pagination-wrapper {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
+/* SVG 图标样式 */
+:deep(svg) {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 </style>

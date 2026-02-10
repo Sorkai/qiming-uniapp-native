@@ -1,10 +1,19 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
+import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
+
+// 导入 SVG 图标组件
+import IconDocument from "@/assets/home-icons/document.svg?component";
+import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
+import IconEdit from "@/assets/home-icons/edit.svg?component";
+import IconGrid from "@/assets/home-icons/grid.svg?component";
 
 defineOptions({
   name: "QuestionBank"
 });
+
+const { isDark } = useDark();
 
 // 搜索和筛选
 const searchQuery = ref("");
@@ -40,6 +49,14 @@ const subjectOptions = ref([
   { value: "database", label: "数据库原理" }
 ]);
 
+// 统计数据
+const statistics = ref({
+  total: 156,
+  radio: 45,
+  checkbox: 28,
+  textarea: 32
+});
+
 // 题库数据
 const questions = ref([
   {
@@ -50,7 +67,7 @@ const questions = ref([
     subjectName: "高等数学",
     difficulty: "easy",
     difficultyName: "简单",
-    stem: "函数 f(x) = x² 在 x = 0 处的导数是？",
+    stem: "函数 f(x) = x²在 x = 0 处的导数是？",
     options: [
       { key: "A", content: "0" },
       { key: "B", content: "1" },
@@ -217,19 +234,16 @@ const saveQuestion = () => {
     return;
   }
 
-  // 更新题型名称
   const typeInfo = questionTypes.find(
     t => t.value === editingQuestion.value.type
   );
   editingQuestion.value.typeName = typeInfo?.label || "";
 
-  // 更新难度名称
   const diffInfo = difficultyOptions.find(
     d => d.value === editingQuestion.value.difficulty
   );
   editingQuestion.value.difficultyName = diffInfo?.label || "";
 
-  // 更新科目名称
   const subjectInfo = subjectOptions.value.find(
     s => s.value === editingQuestion.value.subject
   );
@@ -238,8 +252,7 @@ const saveQuestion = () => {
   editingQuestion.value.updateTime = new Date().toISOString().split("T")[0];
 
   if (isNewQuestion.value) {
-    questions.value.unshift(editingQuestion.value);
-    ElMessage.success("题目创建成功");
+    questions.value.unshift(editingQuestion.value);ElMessage.success("题目创建成功");
   } else {
     const index = questions.value.findIndex(
       q => q.id === editingQuestion.value.id
@@ -267,8 +280,7 @@ const deleteQuestion = (question: any) => {
     .then(() => {
       const index = questions.value.findIndex(q => q.id === question.id);
       if (index !== -1) {
-        questions.value.splice(index, 1);
-        ElMessage.success("删除成功");
+        questions.value.splice(index, 1);ElMessage.success("删除成功");
       }
     })
     .catch(() => {});
@@ -314,7 +326,6 @@ const removeOption = (index: number) => {
   if (!editingQuestion.value || editingQuestion.value.options.length <= 2)
     return;
   editingQuestion.value.options.splice(index, 1);
-  // 重新排列选项键
   editingQuestion.value.options.forEach((opt: any, i: number) => {
     opt.key = String.fromCharCode(65 + i);
   });
@@ -348,7 +359,7 @@ const getDifficultyType = (difficulty: string) => {
 const getTypeTagType = (type: string) => {
   switch (type) {
     case "radio":
-      return "";
+      return "primary";
     case "checkbox":
       return "success";
     case "input":
@@ -358,23 +369,79 @@ const getTypeTagType = (type: string) => {
     case "judge":
       return "info";
     default:
-      return "";
+      return "primary";
   }
 };
 </script>
 
 <template>
-  <div class="question-bank">
-    <!-- 页面标题 -->
+  <div class="question-bank" :class="{ 'is-dark': isDark }">
+    <!-- 页面标题区域 -->
     <div class="page-header">
-      <h1 class="page-title">题库管理</h1>
-      <p class="page-description">
-        管理和维护题目，支持创建、编辑、删除和批量操作
-      </p>
+      <div class="header-content">
+        <div class="header-icon">
+          <IconGrid />
+        </div>
+        <div class="header-info">
+          <h1 class="page-title">题库管理</h1>
+          <p class="page-desc">
+            管理和维护题目，支持创建、编辑、删除和批量操作
+          </p>
+        </div>
+      </div>
+      <el-button
+        type="primary"
+        size="large"
+        class="create-btn"
+        @click="openNewQuestionDialog"
+      >
+        <el-icon class="mr-2"><Plus /></el-icon>
+        新建题目
+      </el-button>
     </div>
 
-    <!-- 工具栏 -->
-    <el-card class="toolbar-card" shadow="never">
+    <!-- 统计卡片 -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <IconDocument />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.total }}</div>
+          <div class="stat-label">题目总数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon radio">
+          <IconCheckCircle />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.radio }}</div>
+          <div class="stat-label">单选题</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon checkbox">
+          <IconCheckCircle />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.checkbox }}</div>
+          <div class="stat-label">多选题</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon textarea">
+          <IconEdit />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.textarea }}</div>
+          <div class="stat-label">简答题</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 搜索和工具栏 -->
+    <div class="toolbar-card">
       <div class="toolbar">
         <div class="toolbar-left">
           <el-input
@@ -423,11 +490,11 @@ const getTypeTagType = (type: string) => {
         </div>
         <div class="toolbar-right">
           <el-button @click="importQuestions">
-            <el-icon><Upload /></el-icon>
+            <el-icon class="mr-1"><Upload /></el-icon>
             导入
           </el-button>
           <el-button @click="exportQuestions">
-            <el-icon><Download /></el-icon>
+            <el-icon class="mr-1"><Download /></el-icon>
             导出
           </el-button>
           <el-button
@@ -435,76 +502,19 @@ const getTypeTagType = (type: string) => {
             :disabled="selectedQuestions.length === 0"
             @click="batchDelete"
           >
-            <el-icon><Delete /></el-icon>
+            <el-icon class="mr-1"><Delete /></el-icon>
             批量删除
-          </el-button>
-          <el-button type="primary" @click="openNewQuestionDialog">
-            <el-icon><Plus /></el-icon>
-            新建题目
           </el-button>
         </div>
       </div>
-    </el-card>
-
-    <!-- 统计信息 -->
-    <div class="stats-row">
-      <el-card class="stat-card" shadow="never">
-        <div class="stat-content">
-          <div class="stat-icon" style="background: #e6f7ff; color: #1890ff">
-            <el-icon><Document /></el-icon>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">{{ questions.length }}</div>
-            <div class="stat-label">题目总数</div>
-          </div>
-        </div>
-      </el-card>
-      <el-card class="stat-card" shadow="never">
-        <div class="stat-content">
-          <div class="stat-icon" style="background: #f6ffed; color: #52c41a">
-            <el-icon><CircleCheck /></el-icon>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">
-              {{ questions.filter(q => q.type === "radio").length }}
-            </div>
-            <div class="stat-label">单选题</div>
-          </div>
-        </div>
-      </el-card>
-      <el-card class="stat-card" shadow="never">
-        <div class="stat-content">
-          <div class="stat-icon" style="background: #fff7e6; color: #fa8c16">
-            <el-icon><Checked /></el-icon>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">
-              {{ questions.filter(q => q.type === "checkbox").length }}
-            </div>
-            <div class="stat-label">多选题</div>
-          </div>
-        </div>
-      </el-card>
-      <el-card class="stat-card" shadow="never">
-        <div class="stat-content">
-          <div class="stat-icon" style="background: #fff1f0; color: #f5222d">
-            <el-icon><Edit /></el-icon>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">
-              {{ questions.filter(q => q.type === "textarea").length }}
-            </div>
-            <div class="stat-label">简答题</div>
-          </div>
-        </div>
-      </el-card>
     </div>
 
     <!-- 题目列表 -->
-    <el-card class="question-list-card" shadow="never">
+    <div class="list-card">
       <el-table
         :data="paginatedQuestions"
         style="width: 100%"
+        class="question-table"
         @selection-change="
           (val: any[]) => (selectedQuestions = val.map(v => v.id))
         "
@@ -512,7 +522,11 @@ const getTypeTagType = (type: string) => {
         <el-table-column type="selection" width="55" />
         <el-table-column label="题型" width="100">
           <template #default="{ row }">
-            <el-tag :type="getTypeTagType(row.type)" size="small">
+            <el-tag
+              :type="getTypeTagType(row.type)"
+              size="small"
+              effect="light"
+            >
               {{ row.typeName }}
             </el-tag>
           </template>
@@ -524,24 +538,28 @@ const getTypeTagType = (type: string) => {
         </el-table-column>
         <el-table-column label="科目" width="120">
           <template #default="{ row }">
-            <span>{{ row.subjectName }}</span>
+            <span class="subject-badge">{{ row.subjectName }}</span>
           </template>
         </el-table-column>
         <el-table-column label="难度" width="100">
           <template #default="{ row }">
-            <el-tag :type="getDifficultyType(row.difficulty)" size="small">
+            <el-tag
+              :type="getDifficultyType(row.difficulty)"
+              size="small"
+              effect="light"
+            >
               {{ row.difficultyName }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="分值" width="80" align="center">
           <template #default="{ row }">
-            <span>{{ row.points }}分</span>
+            <span class="points-badge">{{ row.points }}分</span>
           </template>
         </el-table-column>
         <el-table-column label="使用次数" width="100" align="center">
           <template #default="{ row }">
-            <span>{{ row.usageCount }}次</span>
+            <span class="usage-badge">{{ row.usageCount }}次</span>
           </template>
         </el-table-column>
         <el-table-column label="更新时间" width="120">
@@ -552,9 +570,11 @@ const getTypeTagType = (type: string) => {
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEditDialog(row)">
+              <el-icon class="mr-1"><Edit /></el-icon>
               编辑
             </el-button>
             <el-button link type="danger" @click="deleteQuestion(row)">
+              <el-icon class="mr-1"><Delete /></el-icon>
               删除
             </el-button>
           </template>
@@ -572,7 +592,7 @@ const getTypeTagType = (type: string) => {
           background
         />
       </div>
-    </el-card>
+    </div>
 
     <!-- 编辑对话框 -->
     <el-dialog
@@ -625,15 +645,13 @@ const getTypeTagType = (type: string) => {
                 />
               </el-select>
             </el-form-item>
-          </el-col>
-        </el-row>
+          </el-col></el-row>
 
         <el-form-item label="分值">
           <el-input-number
             v-model="editingQuestion.points"
             :min="1"
-            :max="100"
-          />
+            :max="100"/>
         </el-form-item>
 
         <el-form-item label="题目内容">
@@ -679,9 +697,7 @@ const getTypeTagType = (type: string) => {
                 添加选项
               </el-button>
             </div>
-          </el-form-item>
-
-          <el-form-item label="正确答案">
+          </el-form-item><el-form-item label="正确答案">
             <el-radio-group
               v-if="editingQuestion.type === 'radio'"
               v-model="editingQuestion.correctAnswer"
@@ -757,141 +773,323 @@ const getTypeTagType = (type: string) => {
 </template>
 
 <style lang="scss" scoped>
+/*浅色模式变量 */
+$light-bg: #f5f7fa;
+$light-card-bg: #fff;
+$light-text-primary: #1f2937;
+$light-text-secondary: #6b7280;
+$light-text-muted: #9ca3af;
+$light-border: #e5e7eb;
+$light-shadow:
+  0 4px 6px -1px rgb(0 0 0 / 10%),
+  0 2px 4px -2px rgb(0 0 0 / 10%);
+$light-shadow-lg:
+  0 10px 15px -3px rgb(0 0 0 / 10%),
+  0 4px 6px -4px rgb(0 0 0 / 10%);
+
+/* 深色模式变量 */
+$dark-bg: #0f172a;
+$dark-card-bg: rgba(30, 41, 59, 0.8);
+$dark-text-primary: #f1f5f9;
+$dark-text-secondary: #94a3b8;
+$dark-text-muted: #64748b;
+$dark-border: rgba(255, 255, 255, 0.1);
+$dark-shadow:
+  0 4px 6px -1px rgb(0 0 0 / 30%),
+  0 2px 4px -2px rgb(0 0 0 / 30%);
+$dark-shadow-lg:
+  0 10px 15px -3px rgb(0 0 0 / 40%),
+  0 4px 6px -4px rgb(0 0 0 / 40%);
+
+/* 主色调 */
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+$warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+$info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+$danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+
+/* 统一圆角 */
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 20px;
+
 .question-bank {
-  padding: 20px;
-  background: #f5f7fa;
   min-height: 100%;
-}
+  padding: 24px;
+  background: $light-bg;
+  transition: all 0.3s ease;
 
-.page-header {
-  margin-bottom: 20px;
+  &.is-dark {
+    background: $dark-bg;
 
-  .page-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: #303133;
-    margin: 0 0 8px 0;
-  }
+    .page-header {
+      background: $dark-card-bg;
+      border-color: $dark-border;
 
-  .page-description {
-    font-size: 14px;
-    color: #909399;
-    margin: 0;
-  }
-}
-
-.toolbar-card {
-  margin-bottom: 20px;
-
-  .toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-
-    .toolbar-left {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .toolbar-right {
-      display: flex;
-      gap: 10px;
-    }
-  }
-}
-
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 20px;
-
-  .stat-card {
-    .stat-content {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-
-      .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
+      .page-title {
+        color: $dark-text-primary;
       }
+
+      .page-desc {
+        color: $dark-text-secondary;
+      }
+
+      .header-icon {
+        background: rgba(59, 130, 246, 0.2);
+      }
+    }
+
+    .stat-card {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+      box-shadow: $dark-shadow;
 
       .stat-info {
         .stat-value {
-          font-size: 24px;
-          font-weight: 600;
-          color: #303133;
+          color: $dark-text-primary;
         }
 
         .stat-label {
-          font-size: 14px;
-          color: #909399;
+          color: $dark-text-secondary;
         }
       }
     }
-  }
-}
 
-.question-list-card {
-  .question-stem {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 400px;
-  }
+    .toolbar-card {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+      box-shadow: $dark-shadow;
+    }
 
-  .pagination-wrapper {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-  }
-}
+    .list-card {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+      box-shadow: $dark-shadow;
 
-.options-editor {
-  width: 100%;
+      .question-stem {
+        color: $dark-text-primary;
+      }
 
-  .option-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-
-    .option-key {
-      font-weight: 600;
-      color: #606266;
-      width: 24px;
+      .subject-badge,
+      .points-badge,
+      .usage-badge {
+        color: $dark-text-secondary;
+      }
     }
   }
-}
 
-@media (max-width: 1200px) {
-  .stats-row {
-    grid-template-columns: repeat(2, 1fr);
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    margin-bottom: 24px;
+    border: 1px solid $light-border;
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: $radius-md;
+      background: $info-gradient;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      :deep(svg) {
+        width: 28px;
+        height: 28px;
+        color: #fff;
+      }
+    }
+
+    .header-info {
+      .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: $light-text-primary;
+        margin: 0 0 4px;
+      }
+
+      .page-desc {
+        font-size: 14px;
+        color: $light-text-secondary;
+        margin: 0;
+      }
+    }
+
+    .create-btn {
+      border-radius: $radius-md;
+      padding: 12px 24px;
+      font-weight: 600;
+    }
   }
-}
 
-@media (max-width: 768px) {
-  .stats-row {
-    grid-template-columns: 1fr;
+  .stats-section {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
   }
 
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch !important;
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    border: 1px solid $light-border;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $light-shadow-lg;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: $radius-md;
+      background: $primary-gradient;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &.radio {
+        background: $success-gradient;
+      }
+
+      &.checkbox {
+        background: $warning-gradient;
+      }
+
+      &.textarea {
+        background: $danger-gradient;
+      }
+
+      :deep(svg) {
+        width: 24px;
+        height: 24px;
+        color: #fff;
+      }
+    }
+
+    .stat-info {
+      .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: $light-text-primary;
+        line-height: 1.2;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: $light-text-secondary;
+        margin-top: 4px;
+      }
+    }
+  }
+
+  .toolbar-card {
+    padding: 16px 20px;
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    border: 1px solid $light-border;
+    margin-bottom: 24px;
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
 
     .toolbar-left,
     .toolbar-right {
-      width: 100%;
-      justify-content: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  }
+
+  .list-card {
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    border: 1px solid $light-border;
+    overflow: hidden;
+
+    .question-table {
+      border-radius: $radius-lg;
+    }
+
+    .question-stem {
+      color: $light-text-primary;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .subject-badge {
+      color: $light-text-secondary;
+      font-size: 13px;
+    }
+
+    .points-badge,
+    .usage-badge {
+      color: $light-text-secondary;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .pagination-wrapper {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid $light-border;
+    }
+  }
+
+  .options-editor {
+    width: 100%;
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+
+      .option-key {
+        font-weight: 600;
+        color: $light-text-primary;
+        min-width: 24px;
+      }
     }
   }
 }
