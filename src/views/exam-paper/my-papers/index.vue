@@ -177,10 +177,17 @@ onMounted(() => {
         </div>
         <div class="header-info">
           <h1 class="page-title">我的试卷</h1>
-          <p class="page-desc">管理您创建的所有试卷，支持编辑、发布和删除操作</p>
+          <p class="page-desc">
+            管理您创建的所有试卷，支持编辑、发布和删除操作
+          </p>
         </div>
       </div>
-      <el-button type="primary" size="large" class="create-btn" @click="createPaper">
+      <el-button
+        type="primary"
+        size="large"
+        class="create-btn"
+        @click="createPaper"
+      >
         <el-icon class="mr-2"><Plus /></el-icon>
         新建试卷
       </el-button>
@@ -316,7 +323,11 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small" effect="light">
+            <el-tag
+              :type="getStatusType(row.status)"
+              size="small"
+              effect="light"
+            >
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
@@ -384,8 +395,11 @@ $light-text-primary: #1f2937;
 $light-text-secondary: #6b7280;
 $light-text-muted: #9ca3af;
 $light-border: #e5e7eb;
-$light-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
-$light-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%),
+$light-shadow:
+  0 4px 6px -1px rgb(0 0 0 / 10%),
+  0 2px 4px -2px rgb(0 0 0 / 10%);
+$light-shadow-lg:
+  0 10px 15px -3px rgb(0 0 0 / 10%),
   0 4px 6px -4px rgb(0 0 0 / 10%);
 
 /* 深色模式变量 */
@@ -395,8 +409,11 @@ $dark-text-primary: #f1f5f9;
 $dark-text-secondary: #94a3b8;
 $dark-text-muted: #64748b;
 $dark-border: rgba(255, 255, 255, 0.1);
-$dark-shadow: 0 4px 6px -1px rgb(0 0 0 / 30%), 0 2px 4px -2px rgb(0 0 0 / 30%);
-$dark-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 40%),
+$dark-shadow:
+  0 4px 6px -1px rgb(0 0 0 / 30%),
+  0 2px 4px -2px rgb(0 0 0 / 30%);
+$dark-shadow-lg:
+  0 10px 15px -3px rgb(0 0 0 / 40%),
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
@@ -413,13 +430,9 @@ $radius-xl: 20px;
 
 .my-papers-page {
   min-height: 100%;
-  padding: 24px;
-  background: $light-bg;
   transition: all 0.3s ease;
 
   &.is-dark {
-    background: $dark-bg;
-
     .page-header {
       background: $dark-card-bg;
       border-color: $dark-border;

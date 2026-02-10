@@ -104,6 +104,17 @@ export default {
         showParent: false,
         hiddenTag: true
       }
+    },
+    {
+      path: "/exam-paper/do/:id",
+      name: "ExamPaperDo",
+      component: () => import("@/views/exam-paper/do/index.vue"),
+      meta: {
+        title: "参加考试",
+        showLink: false,
+        showParent: false,
+        hiddenTag: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;

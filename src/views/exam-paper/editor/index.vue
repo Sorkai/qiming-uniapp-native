@@ -1270,7 +1270,7 @@ onBeforeUnmount(() => {
                 <!-- 题干 -->
                 <div class="question-stem">
                   <div class="stem-header">
-                    <span class="stem-hint">双击 Ctrl/Command 键可快速唤起 AI 助手</span>
+                    <span class="stem-hint">题目</span>
                   </div>
                   <el-input
                     v-model="question.stem"

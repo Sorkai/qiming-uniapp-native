@@ -324,7 +324,6 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .templates-page {
-  padding: 20px;
 }
 
 .page-header {

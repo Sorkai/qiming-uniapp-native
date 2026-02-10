@@ -694,12 +694,13 @@ export const startExam = (paperId: number) => {
 };
 
 /**
- * 保存答案（自动保存）
+ * 保存答案（自动保存，包含答题时长）
  */
 export const saveAnswer = (data: {
   submissionId: number;
   questionId: number;
   answer: string | string[];
+  duration?: number; // 该题累计答题时长（秒）
 }) => {
   return http.request<ApiResponse>("post", "/edu/frontend/v1/exam/save", {
     data

@@ -39,7 +39,7 @@ const recentPapers = ref([
     title: "2024年春季期中考试",
     courseName: "高等数学",
     updateTime: "2024-03-15 14:30",
-    status:1,
+    status: 1,
     questionCount: 25,
     totalPoints: 100
   },
@@ -103,6 +103,37 @@ const learningStats = ref({
   participantCount: 156
 });
 
+// 课程筛选器数据
+const selectedCourse = ref("all");
+const courseOptions = [
+  { value: "all", label: "全部课程" },
+  { value: "math", label: "高等数学" },
+  { value: "linear", label: "线性代数" },
+  { value: "prob", label: "概率论" }
+];
+
+// 处理课程切换
+const handleCourseChange = (val: string) => {
+  console.log("切换课程:", val);
+  // 这里可以根据课程 ID 加载对应的统计数据
+  // 模拟数据更新
+  if (val === "all") {
+    learningStats.value = {
+      passRate: 85,
+      excellentRate: 32,
+      averageScore: 78.5,
+      participantCount: 156
+    };
+  } else {
+    learningStats.value = {
+      passRate: Math.floor(Math.random() * 20) + 70,
+      excellentRate: Math.floor(Math.random() * 15) + 20,
+      averageScore: Math.floor(Math.random() * 10) + 75,
+      participantCount: Math.floor(Math.random() * 50) + 100
+    };
+  }
+};
+
 // 创建新试卷
 const createNewPaper = () => {
   router.push("/exam-paper/editor");
@@ -152,7 +183,8 @@ onMounted(() => {
         <h1 class="welcome-title">题目组卷器</h1>
         <p class="welcome-desc">
           创建、编辑和管理您的试卷，支持多种题型和智能AI辅助
-        </p></div>
+        </p>
+      </div>
       <div class="quick-actions">
         <el-button
           type="primary"
@@ -280,7 +312,8 @@ onMounted(() => {
                   <span>{{ paper.questionCount }}题</span>
                   <span class="divider">|</span>
                   <span>{{ paper.totalPoints }}分</span>
-                </div><div class="paper-time">{{ paper.updateTime }}</div>
+                </div>
+                <div class="paper-time">{{ paper.updateTime }}</div>
               </div>
               <div class="paper-status">
                 <el-tag :type="getStatusType(paper.status)" size="small">
@@ -301,7 +334,22 @@ onMounted(() => {
                 <IconTrending />
               </div>
               <span>学情概览</span>
-            </div></div>
+            </div>
+            <el-select
+              v-model="selectedCourse"
+              placeholder="选择课程"
+              size="small"
+              class="course-filter"
+              @change="handleCourseChange"
+            >
+              <el-option
+                v-for="item in courseOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </div>
           <div class="learning-stats">
             <div class="stat-item">
               <div class="stat-label">及格率</div>
@@ -333,14 +381,14 @@ onMounted(() => {
                 <span class="stat-unit">人</span>
               </div>
             </div>
-          <el-button
-            type="primary"
-            class="view-detail-btn"
-            @click="router.push('/exam-paper/statistics')"
-          >
-            查看详细分析
-          </el-button>
-        </div>
+            <el-button
+              type="primary"
+              class="view-detail-btn"
+              @click="router.push('/exam-paper/statistics')"
+            >
+              查看详细分析
+            </el-button>
+          </div>
         </div>
 
         <!-- 快捷入口 -->
@@ -405,8 +453,11 @@ $light-text-primary: #1f2937;
 $light-text-secondary: #6b7280;
 $light-text-muted: #9ca3af;
 $light-border: #e5e7eb;
-$light-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
-$light-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%),
+$light-shadow:
+  0 4px 6px -1px rgb(0 0 0 / 10%),
+  0 2px 4px -2px rgb(0 0 0 / 10%);
+$light-shadow-lg:
+  0 10px 15px -3px rgb(0 0 0 / 10%),
   0 4px 6px -4px rgb(0 0 0 / 10%);
 
 /* 深色模式变量 */
@@ -416,8 +467,11 @@ $dark-text-primary: #f1f5f9;
 $dark-text-secondary: #94a3b8;
 $dark-text-muted: #64748b;
 $dark-border: rgba(255, 255, 255, 0.1);
-$dark-shadow: 0 4px 6px -1px rgb(0 0 0 / 30%), 0 2px 4px -2px rgb(0 0 0 / 30%);
-$dark-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 40%),
+$dark-shadow:
+  0 4px 6px -1px rgb(0 0 0 / 30%),
+  0 2px 4px -2px rgb(0 0 0 / 30%);
+$dark-shadow-lg:
+  0 10px 15px -3px rgb(0 0 0 / 40%),
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
@@ -434,13 +488,9 @@ $radius-xl: 20px;
 
 .exam-paper-index {
   min-height: 100%;
-  padding: 24px;
-  background: $light-bg;
   transition: all 0.3s ease;
 
   &.is-dark {
-    background: $dark-bg;
-
     .stat-card {
       background: $dark-card-bg;
       border-color: $dark-border;
@@ -820,7 +870,8 @@ $radius-xl: 20px;
   .template-arrow {
     color: $light-text-muted;
     opacity: 0;
-    transition: all 0.3s ease;transform: translateX(-8px);
+    transition: all 0.3s ease;
+    transform: translateX(-8px);
   }
 }
 
@@ -890,6 +941,17 @@ $radius-xl: 20px;
 }
 
 .learning-stats-card {
+  .section-header {
+    border-bottom: 1px solid
+      v-bind('isDark ? "rgba(255, 255, 255, 0.1)" : "#f1f5f9"');
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .course-filter {
+    width: 120px;
+  }
+
   .learning-stats {
     .stat-item {
       margin-bottom: 20px;

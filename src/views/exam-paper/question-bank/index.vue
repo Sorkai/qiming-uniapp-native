@@ -816,12 +816,9 @@ $radius-xl: 20px;
 
 .question-bank {
   min-height: 100%;
-  padding: 24px;
-  background: $light-bg;
   transition: all 0.3s ease;
 
   &.is-dark {
-    background: $dark-bg;
 
     .page-header {
       background: $dark-card-bg;
