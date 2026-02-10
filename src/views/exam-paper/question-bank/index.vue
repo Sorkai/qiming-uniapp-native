@@ -252,7 +252,8 @@ const saveQuestion = () => {
   editingQuestion.value.updateTime = new Date().toISOString().split("T")[0];
 
   if (isNewQuestion.value) {
-    questions.value.unshift(editingQuestion.value);ElMessage.success("题目创建成功");
+    questions.value.unshift(editingQuestion.value);
+    ElMessage.success("题目创建成功");
   } else {
     const index = questions.value.findIndex(
       q => q.id === editingQuestion.value.id
@@ -280,7 +281,8 @@ const deleteQuestion = (question: any) => {
     .then(() => {
       const index = questions.value.findIndex(q => q.id === question.id);
       if (index !== -1) {
-        questions.value.splice(index, 1);ElMessage.success("删除成功");
+        questions.value.splice(index, 1);
+        ElMessage.success("删除成功");
       }
     })
     .catch(() => {});
@@ -644,14 +646,15 @@ const getTypeTagType = (type: string) => {
                   :value="diff.value"
                 />
               </el-select>
-            </el-form-item>
-          </el-col></el-row>
+            </el-form-item> </el-col
+        ></el-row>
 
         <el-form-item label="分值">
           <el-input-number
             v-model="editingQuestion.points"
             :min="1"
-            :max="100"/>
+            :max="100"
+          />
         </el-form-item>
 
         <el-form-item label="题目内容">
@@ -696,8 +699,8 @@ const getTypeTagType = (type: string) => {
                 <el-icon><Plus /></el-icon>
                 添加选项
               </el-button>
-            </div>
-          </el-form-item><el-form-item label="正确答案">
+            </div> </el-form-item
+          ><el-form-item label="正确答案">
             <el-radio-group
               v-if="editingQuestion.type === 'radio'"
               v-model="editingQuestion.correctAnswer"
@@ -819,7 +822,6 @@ $radius-xl: 20px;
   transition: all 0.3s ease;
 
   &.is-dark {
-
     .page-header {
       background: $dark-card-bg;
       border-color: $dark-border;

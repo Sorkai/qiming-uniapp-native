@@ -1275,7 +1275,7 @@ onBeforeUnmount(() => {
                   <el-input
                     v-model="question.stem"
                     type="textarea"
-                    placeholder="请输入题目内容（双击 Ctrl/Command 唤起 AI 助手）"
+                    placeholder="请输入题目内容（双击 Ctrl/Command 唤起 AI 助手/本地题库）"
                     :rows="2"
                     maxlength="2000"
                   />

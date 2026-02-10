@@ -117,7 +117,9 @@ const createTemplate = async () => {
       ElMessage.success("模板创建成功");
       createDialogVisible.value = false;
       // 跳转到编辑器编辑新模板
-      router.push(`/exam-paper/editor?template=my-${result.data.templateId}&edit=true`);
+      router.push(
+        `/exam-paper/editor?template=my-${result.data.templateId}&edit=true`
+      );
     } else {
       ElMessage.error(result.msg || "创建失败");
     }
@@ -216,7 +218,9 @@ onMounted(() => {
               </div>
               <div class="template-stats">
                 <span>{{ template.totalQuestions }}题</span>
-                <span v-if="template.totalPoints">{{ template.totalPoints }}分</span>
+                <span v-if="template.totalPoints"
+                  >{{ template.totalPoints }}分</span
+                >
                 <span>{{ template.useCount }}人使用</span>
               </div>
             </div>
@@ -252,7 +256,9 @@ onMounted(() => {
             </div>
             <div class="template-info">
               <h3 class="template-name">{{ template.name }}</h3>
-              <p class="template-desc">{{ template.description || "暂无描述" }}</p>
+              <p class="template-desc">
+                {{ template.description || "暂无描述" }}
+              </p>
               <div class="template-tags">
                 <el-tag
                   v-for="type in (template.questionTypes || []).slice(0, 3)"
@@ -265,12 +271,17 @@ onMounted(() => {
               </div>
               <div class="template-stats">
                 <span>{{ template.totalQuestions || 0 }}题</span>
-                <span v-if="template.totalPoints">{{ template.totalPoints }}分</span>
+                <span v-if="template.totalPoints"
+                  >{{ template.totalPoints }}分</span
+                >
                 <span>创建于 {{ template.createTime }}</span>
               </div>
             </div>
             <div class="template-actions">
-              <el-button type="primary" @click="useTemplate(template.id, false)">
+              <el-button
+                type="primary"
+                @click="useTemplate(template.id, false)"
+              >
                 使用模板
               </el-button>
               <el-button @click="editMyTemplate(template.id)">编辑</el-button>

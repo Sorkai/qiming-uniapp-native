@@ -123,8 +123,77 @@ export interface Question {
   points: number;
   /** 难度等级(1-5) */
   difficulty?: number;
+  /** 知识点标签 */
+  knowledgePoints?: string[];
   /** 排序 */
   sortOrder: number;
+}
+
+// ==================== 题库相关类型 ====================
+
+/** 题库题目 */
+export interface QuestionBankItem {
+  id: number;
+  type: string;
+  typeName: string;
+  stem: string;
+  options?: QuestionOption[];
+  correctAnswer?: string;
+  correctAnswers?: string[];
+  blanks?: Array<{ answer: string }>;
+  referenceAnswer?: string;
+  analysis?: string;
+  knowledgePoints: string[];
+  difficulty: string;
+  difficultyName: string;
+  points: number;
+  createTime: string;
+  useCount: number;
+}
+
+/** 搜索题库参数 */
+export interface SearchQuestionBankParams {
+  keyword?: string;
+  type?: string;
+  difficulty?: string;
+  knowledgePoint?: string;
+  pageNum?: number;
+  pageSize?: number;
+}
+
+/** AI 出题参数 */
+export interface AIGenerateQuestionParams {
+  knowledgePoints: string;
+  questionType: string;
+  difficulty: string;
+  count: number;
+  includeAnalysis: boolean;
+  polishMode?: boolean;
+  originalContent?: string;
+}
+
+/** AI 生成的题目 */
+export interface AIGeneratedQuestion {
+  id: number;
+  type: string;
+  stem: string;
+  options?: QuestionOption[];
+  correctAnswer?: string;
+  correctAnswers?: string[];
+  blanks?: Array<{ answer: string }>;
+  referenceAnswer?: string;
+  analysis?: string;
+  difficulty: string;
+  knowledgePoints: string[];
+}
+
+/** 知识点 */
+export interface KnowledgePoint {
+  id: number;
+  name: string;
+  parentId?: number;
+  questionCount: number;
+  children?: KnowledgePoint[];
 }
 
 /** 题目分组 */
