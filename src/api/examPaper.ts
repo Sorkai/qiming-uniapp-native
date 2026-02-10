@@ -442,44 +442,36 @@ export const createPaper = (data: CreatePaperParams) => {
  * 更新试卷
  */
 export const updatePaper = (data: UpdatePaperParams) => {
-  return http.request<ApiResponse>(
-    "post",
-    "/edu/backend/v1/paper/update",
-    { data }
-  );
+  return http.request<ApiResponse>("post", "/edu/backend/v1/paper/update", {
+    data
+  });
 };
 
 /**
  * 删除试卷
  */
 export const deletePaper = (paperId: number) => {
-  return http.request<ApiResponse>(
-    "post",
-    "/edu/backend/v1/paper/delete",
-    { data: { paperId } }
-  );
+  return http.request<ApiResponse>("post", "/edu/backend/v1/paper/delete", {
+    data: { paperId }
+  });
 };
 
 /**
  * 发布试卷
  */
 export const publishPaper = (data: PublishPaperParams) => {
-  return http.request<ApiResponse>(
-    "post",
-    "/edu/backend/v1/paper/publish",
-    { data }
-  );
+  return http.request<ApiResponse>("post", "/edu/backend/v1/paper/publish", {
+    data
+  });
 };
 
 /**
  * 撤回发布
  */
 export const unpublishPaper = (paperId: number) => {
-  return http.request<ApiResponse>(
-    "post",
-    "/edu/backend/v1/paper/unpublish",
-    { data: { paperId } }
-  );
+  return http.request<ApiResponse>("post", "/edu/backend/v1/paper/unpublish", {
+    data: { paperId }
+  });
 };
 
 /**
@@ -578,40 +570,38 @@ export const getPaperStatistics = (paperId: number) => {
  * 获取学生考试列表
  */
 export const getStudentExamList = (params: GetStudentExamListParams) => {
-  return http.request<ApiResponse<PageResult<{
-    paperId: number;
-    paperTitle: string;
-    courseName: string;
-    timeLimit: number;
-    totalPoints: number;
-    startTime: string;
-    endTime: string;
-    /** 状态：0-待考试 1-进行中 2-已结束 */
-    status: number;
-    /** 是否已提交 */
-    submitted: boolean;
-    /** 得分（成绩发布后） */
-    score?: number;
-  }>>>(
-    "get",
-    "/edu/frontend/v1/exam/list",
-    { params }
-  );
+  return http.request<
+    ApiResponse<
+      PageResult<{
+        paperId: number;
+        paperTitle: string;
+        courseName: string;
+        timeLimit: number;
+        totalPoints: number;
+        startTime: string;
+        endTime: string;
+        /** 状态：0-待考试 1-进行中 2-已结束 */
+        status: number;
+        /** 是否已提交 */
+        submitted: boolean;
+        /** 得分（成绩发布后） */
+        score?: number;
+      }>
+    >
+  >("get", "/edu/frontend/v1/exam/list", { params });
 };
 
 /**
  * 开始考试
  */
 export const startExam = (paperId: number) => {
-  return http.request<ApiResponse<{
-    submissionId: number;
-    paper: Paper;
-    remainingTime: number;
-  }>>(
-    "post",
-    "/edu/frontend/v1/exam/start",
-    { data: { paperId } }
-  );
+  return http.request<
+    ApiResponse<{
+      submissionId: number;
+      paper: Paper;
+      remainingTime: number;
+    }>
+  >("post", "/edu/frontend/v1/exam/start", { data: { paperId } });
 };
 
 /**
@@ -622,25 +612,21 @@ export const saveAnswer = (data: {
   questionId: number;
   answer: string | string[];
 }) => {
-  return http.request<ApiResponse>(
-    "post",
-    "/edu/frontend/v1/exam/save",
-    { data }
-  );
+  return http.request<ApiResponse>("post", "/edu/frontend/v1/exam/save", {
+    data
+  });
 };
 
 /**
  * 提交试卷
  */
 export const submitExam = (submissionId: number) => {
-  return http.request<ApiResponse<{
-    score?: number;
-    showScore: boolean;
-  }>>(
-    "post",
-    "/edu/frontend/v1/exam/submit",
-    { data: { submissionId } }
-  );
+  return http.request<
+    ApiResponse<{
+      score?: number;
+      showScore: boolean;
+    }>
+  >("post", "/edu/frontend/v1/exam/submit", { data: { submissionId } });
 };
 
 /**
@@ -663,8 +649,10 @@ export const getPaperStatusText = (status: PaperStatus): string => {
     [PaperStatus.DRAFT]: "草稿",
     [PaperStatus.PUBLISHED]: "已发布",
     [PaperStatus.IN_PROGRESS]: "考试中",
-    [PaperStatus.ENDED]: "已结束",[PaperStatus.GRADING]: "批改中",
-    [PaperStatus.GRADED]: "已批改",[PaperStatus.SCORE_RELEASED]: "已发布成绩"
+    [PaperStatus.ENDED]: "已结束",
+    [PaperStatus.GRADING]: "批改中",
+    [PaperStatus.GRADED]: "已批改",
+    [PaperStatus.SCORE_RELEASED]: "已发布成绩"
   };
   return statusMap[status] || "未知";
 };
@@ -722,8 +710,5 @@ export const isObjectiveQuestion = (type: QuestionType): boolean => {
  * 判断是否为主观题（需人工批改）
  */
 export const isSubjectiveQuestion = (type: QuestionType): boolean => {
-  return [
-    QuestionType.SHORT_ANSWER,
-    QuestionType.ESSAY
-  ].includes(type);
+  return [QuestionType.SHORT_ANSWER, QuestionType.ESSAY].includes(type);
 };

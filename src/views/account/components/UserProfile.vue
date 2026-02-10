@@ -189,7 +189,7 @@
             "
           >
             <div class="course-thumb">
-              <img :src="course.thumbUrl" v-if="course.thumbUrl" />
+              <img v-if="course.thumbUrl" :src="course.thumbUrl" />
               <div v-else class="thumb-placeholder">
                 {{ course.courseName.charAt(0) }}
               </div>

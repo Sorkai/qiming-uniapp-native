@@ -187,7 +187,8 @@ const handlePageChange = (page: number) => {
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch"><el-icon><Search /></el-icon>
+          <el-button type="primary" @click="handleSearch"
+            ><el-icon><Search /></el-icon>
             搜索
           </el-button>
           <el-button @click="handleReset">
@@ -225,8 +226,8 @@ const handlePageChange = (page: number) => {
         <div class="stat-info">
           <div class="stat-value">15</div>
           <div class="stat-label">已完成</div>
-        </div>
-      </el-card><el-card class="stat-card" shadow="never">
+        </div> </el-card
+      ><el-card class="stat-card" shadow="never">
         <div class="stat-icon total">
           <el-icon><Document /></el-icon>
         </div>
@@ -239,7 +240,7 @@ const handlePageChange = (page: number) => {
 
     <!-- 阅卷列表 -->
     <el-card class="list-card" shadow="never">
-      <el-table :data="gradingList" v-loading="loading" stripe>
+      <el-table v-loading="loading" :data="gradingList" stripe>
         <el-table-column prop="paperTitle" label="试卷名称" min-width="200">
           <template #default="{ row }">
             <div class="paper-info">
@@ -248,7 +249,12 @@ const handlePageChange = (page: number) => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="studentCount" label="答卷数" width="100" align="center" />
+        <el-table-column
+          prop="studentCount"
+          label="答卷数"
+          width="100"
+          align="center"
+        />
         <el-table-column label="阅卷进度" width="200">
           <template #default="{ row }">
             <div class="progress-info">
@@ -270,8 +276,18 @@ const handlePageChange = (page: number) => {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="deadline" label="截止时间" width="120" align="center" />
-        <el-table-column prop="publishTime" label="发布时间" width="160" align="center" />
+        <el-table-column
+          prop="deadline"
+          label="截止时间"
+          width="120"
+          align="center"
+        />
+        <el-table-column
+          prop="publishTime"
+          label="发布时间"
+          width="160"
+          align="center"
+        />
         <el-table-column label="操作" width="180" align="center" fixed="right">
           <template #default="{ row }">
             <el-button
@@ -424,7 +440,8 @@ const handlePageChange = (page: number) => {
 
     .progress-text {
       font-size: 12px;
-      color: #909399;white-space: nowrap;
+      color: #909399;
+      white-space: nowrap;
     }
   }
 

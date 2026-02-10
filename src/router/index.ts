@@ -125,7 +125,12 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     }
   }
   const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
-  console.log("[Router Guard] 用户信息:", userInfo ? "已登录" : "未登录", "roleType:", userInfo?.roleType);
+  console.log(
+    "[Router Guard] 用户信息:",
+    userInfo ? "已登录" : "未登录",
+    "roleType:",
+    userInfo?.roleType
+  );
   NProgress.start();
 
   // 注意：在没有后端的开发环境下，跳过 cookie 检查
@@ -257,7 +262,9 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       if (whiteList.indexOf(to.path) !== -1) {
         next();
       } else {
-        console.warn("[Router Guard] 拒绝访问非白名单页面，清除 token 并回退到首页");
+        console.warn(
+          "[Router Guard] 拒绝访问非白名单页面，清除 token 并回退到首页"
+        );
         removeToken();
         next({ path: "/home" });
       }

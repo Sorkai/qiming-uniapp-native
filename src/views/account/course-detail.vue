@@ -281,7 +281,7 @@ const userIdStr = computed(() => {
 // 从 localStorage 获取 roleType判断是否是教师/管理员
 const userRoleType = computed(() => {
   const userInfo = storageLocal().getItem<any>(userKey);
-  return userInfo?.roleType ??0;
+  return userInfo?.roleType ?? 0;
 });
 const isTeacher = computed(() => userRoleType.value === 2);
 const isAdmin = computed(() => userRoleType.value === 3);
@@ -791,7 +791,7 @@ const initQAHistory = () => {
 onMounted(async () => {
   document.body.classList.add("course-page");
   baseCourseId.value = Number(route.params.id);
-  
+
   // 获取用户ID（如果还没有）
   if (!userStore.userId) {
     try {
@@ -800,13 +800,16 @@ onMounted(async () => {
         userStore.SET_USERID(data.userInfo.id);
         // 同时更新 localStorage
         const userInfo = storageLocal().getItem(userKey) || {};
-        storageLocal().setItem(userKey, { ...userInfo, userId: data.userInfo.id });
+        storageLocal().setItem(userKey, {
+          ...userInfo,
+          userId: data.userInfo.id
+        });
       }
     } catch (error) {
       console.error("获取用户信息失败:", error);
     }
   }
-  
+
   await fetchCourseDetail();
   initQAHistory();
 

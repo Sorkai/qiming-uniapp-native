@@ -329,7 +329,8 @@ onMounted(() => {
             <div class="trend-stats">
               <span class="trend-score">平均分: {{ item.avgScore }}</span>
               <span class="trend-pass">及格率: {{ item.passRate }}%</span>
-            </div></div>
+            </div>
+          </div>
         </div>
       </el-card>
     </div>

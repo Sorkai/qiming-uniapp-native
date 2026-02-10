@@ -211,7 +211,7 @@ onMounted(() => {
 
     <!-- 试卷列表 -->
     <el-card shadow="never">
-      <el-table :data="paperList" v-loading="loading" stripe>
+      <el-table v-loading="loading" :data="paperList" stripe>
         <el-table-column prop="title" label="试卷标题" min-width="200">
           <template #default="{ row }">
             <el-link type="primary" @click="editPaper(row)">
@@ -239,20 +239,35 @@ onMounted(() => {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="publishCount" label="发布次数" width="100" align="center" />
+        <el-table-column
+          prop="publishCount"
+          label="发布次数"
+          width="100"
+          align="center"
+        />
         <el-table-column prop="updateTime" label="更新时间" width="160" />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="editPaper(row)">
               编辑
             </el-button>
-            <el-button type="primary" link size="small" @click="publishPaper(row)">
+            <el-button
+              type="primary"
+              link
+              size="small"
+              @click="publishPaper(row)"
+            >
               发布
             </el-button>
             <el-button type="primary" link size="small" @click="copyPaper(row)">
               复制
             </el-button>
-            <el-button type="danger" link size="small" @click="deletePaper(row)">
+            <el-button
+              type="danger"
+              link
+              size="small"
+              @click="deletePaper(row)"
+            >
               删除
             </el-button>
           </template>

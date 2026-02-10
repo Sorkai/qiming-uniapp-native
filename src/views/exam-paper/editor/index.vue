@@ -203,7 +203,8 @@ const addQuestion = (groupId: number) => {
         { key: "B", content: "" },
         { key: "C", content: "" },
         { key: "D", content: "" }
-      ];newQuestion.correctAnswer = "";
+      ];
+      newQuestion.correctAnswer = "";
     } else if (group.questionType === "checkbox") {
       newQuestion.options = [
         { key: "A", content: "" },
@@ -224,7 +225,8 @@ const addQuestion = (groupId: number) => {
       newQuestion.referenceAnswer = "";
     }
 
-    group.questions.push(newQuestion);activeQuestionId.value = questionId;
+    group.questions.push(newQuestion);
+    activeQuestionId.value = questionId;
     updateTotals();
   }
 };
@@ -235,7 +237,8 @@ const deleteQuestion = (groupId: number, questionId: number) => {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
-  }).then(() => {
+  })
+    .then(() => {
       const group = paper.questionGroups.find(g => g.groupId === groupId);
       if (group) {
         const index = group.questions.findIndex(
@@ -246,7 +249,8 @@ const deleteQuestion = (groupId: number, questionId: number) => {
           if (activeQuestionId.value === questionId) {
             activeQuestionId.value = null;
           }
-          updateTotals();ElMessage.success("删除成功");
+          updateTotals();
+          ElMessage.success("删除成功");
         }
       }
     })
@@ -283,7 +287,8 @@ const addOption = (question: any) => {
 // 删除选项
 const removeOption = (question: any, index: number) => {
   if (question.options.length > 2) {
-    question.options.splice(index, 1);const keys = ["A", "B", "C", "D", "E", "F", "G", "H"];
+    question.options.splice(index, 1);
+    const keys = ["A", "B", "C", "D", "E", "F", "G", "H"];
     question.options.forEach((opt: any, i: number) => {
       opt.key = keys[i] || `选项${i + 1}`;
     });
@@ -443,6 +448,56 @@ const publishPaper = () => {
     .catch(() => {});
 };
 
+// 保存为模板对话框
+const saveAsTemplateDialogVisible = ref(false);
+const templateForm = ref({
+  name: "",
+  description: ""
+});
+
+// 打开保存为模板对话框
+const openSaveAsTemplateDialog = () => {
+  if (paper.questionGroups.length === 0) {
+    ElMessage.warning("请先添加题目再保存为模板");
+    return;
+  }
+  templateForm.value = {
+    name: paper.title || "",
+    description: paper.description || ""
+  };
+  saveAsTemplateDialogVisible.value = true;
+};
+
+// 保存为模板
+const saveAsTemplate = async () => {
+  if (!templateForm.value.name.trim()) {
+    ElMessage.warning("请输入模板名称");
+    return;
+  }
+
+  try {
+    const response = await fetch("/edu/backend/v1/paper/save-as-template", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: templateForm.value.name,
+        description: templateForm.value.description,
+        questionGroups: paper.questionGroups
+      })
+    });
+    const result = await response.json();
+    if (result.code === 0) {
+      ElMessage.success("已保存为私有模板");
+      saveAsTemplateDialogVisible.value = false;
+    } else {
+      ElMessage.error(result.msg || "保存失败");
+    }
+  } catch (error) {
+    console.error("保存模板失败:", error);
+    ElMessage.error("保存模板失败");
+  }
+};
+
 // 返回
 const goBack = () => {
   if (hasUnsavedChanges.value) {
@@ -489,7 +544,8 @@ const onDrop = (event: DragEvent) => {
 
   const typeId = event.dataTransfer?.getData("text/plain");
   if (typeId) {
-    addQuestionGroup(typeId);const typeName = questionTypes.find(t => t.id === typeId)?.label || "题目";
+    addQuestionGroup(typeId);
+    const typeName = questionTypes.find(t => t.id === typeId)?.label || "题目";
     ElMessage.success(`已添加${typeName}`);
   }
 };
@@ -549,11 +605,40 @@ onBeforeRouteLeave((to, from, next) => {
   }
 });
 
+// 加载模板数据
+const loadTemplate = async (templateId: string) => {
+  try {
+    const response = await fetch(
+      `/edu/backend/v1/paper/template/${templateId}`
+    );
+    const result = await response.json();
+    if (result.code === 0 && result.data) {
+      const template = result.data;
+      paper.title = template.title || "";
+      paper.description = template.description || "";
+      paper.timeLimit = template.timeLimit || 90;
+      paper.questionGroups = template.questionGroups || [];
+      updateTotals();
+      hasUnsavedChanges.value = false;
+      ElMessage.success(`已加载模板：${template.title}`);
+    } else {
+      ElMessage.error("模板加载失败");
+    }
+  } catch (error) {
+    console.error("加载模板失败:", error);
+    ElMessage.error("模板加载失败");
+  }
+};
+
 onMounted(() => {
   document.addEventListener("keydown", handleKeydown);
   startAutoSave();
 
-  if (isEditMode.value) {
+  // 检查是否有模板参数
+  const templateId = route.query.template as string;
+  if (templateId) {
+    loadTemplate(templateId);
+  } else if (isEditMode.value) {
     // TODO: 从API加载试卷数据
   }
 });
@@ -587,7 +672,8 @@ onBeforeUnmount(() => {
           />
         </div>
         <div class="header-right">
-          <span class="auto-save-status"><template v-if="autoSaveEnabled && hasUnsavedChanges">
+          <span class="auto-save-status"
+            ><template v-if="autoSaveEnabled && hasUnsavedChanges">
               <el-icon v-if="autoSaveStatus === 'saving'" class="is-loading">
                 <Loading />
               </el-icon>
@@ -596,7 +682,8 @@ onBeforeUnmount(() => {
             <template v-else-if="autoSaveStatus === 'saved'">
               <el-icon><Check /></el-icon>
               已保存
-            </template></span>
+            </template></span
+          >
           <el-button @click="previewPaper">
             <el-icon><View /></el-icon>
             预览
@@ -608,6 +695,10 @@ onBeforeUnmount(() => {
           <el-button type="primary" @click="publishPaper">
             <el-icon><Promotion /></el-icon>
             发布
+          </el-button>
+          <el-button @click="openSaveAsTemplateDialog">
+            <el-icon><FolderAdd /></el-icon>
+            存为模板
           </el-button>
         </div>
       </div>
@@ -675,7 +766,7 @@ onBeforeUnmount(() => {
           :class="[`paper-${previewPaperSize.toLowerCase()}`]"
           :style="{ transform: `scale(${previewScale / 100})` }"
         >
-          <h1class="preview-paper-title">{{ paper.title || "未命名试卷" }}</h1>
+          <h1 class="preview-paper-title">{{ paper.title || "未命名试卷" }}</h1>
           <p v-if="paper.description" class="preview-paper-desc">
             {{ paper.description }}
           </p>
@@ -697,7 +788,8 @@ onBeforeUnmount(() => {
                   <span class="preview-question-index">
                     {{ getGlobalQuestionIndex(groupIndex, qIndex) }}.
                   </span>
-                  <span class="preview-question-type">[{{ group.groupName }}]</span
+                  <span class="preview-question-type"
+                    >[{{ group.groupName }}]</span
                   >
                   <span class="preview-question-points">
                     ({{ question.points }}分)
@@ -734,14 +826,54 @@ onBeforeUnmount(() => {
                   v-if="question.questionType === 'textarea'"
                   class="preview-textarea"
                 >
-                  <div class="preview-answer-area"></div>
+                  <div class="preview-answer-area" />
                 </div>
               </div>
             </template>
           </div>
-        </div>
-      </div>
-    </el-dialog><div class="editor-main">
+        </div></div
+    ></el-dialog>
+
+    <!-- 保存为模板对话框 -->
+    <el-dialog
+      v-model="saveAsTemplateDialogVisible"
+      title="保存为私有模板"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="templateForm" label-width="80px">
+        <el-form-item label="模板名称" required>
+          <el-input
+            v-model="templateForm.name"
+            placeholder="请输入模板名称"
+            maxlength="50"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="模板描述">
+          <el-input
+            v-model="templateForm.description"
+            type="textarea"
+            placeholder="请输入模板描述（选填）"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="包含内容">
+          <div class="template-preview-info">
+            <span>{{ paper.totalQuestions }} 道题目</span>
+            <span>{{ paper.totalPoints }} 分</span>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="saveAsTemplateDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveAsTemplate">保存模板</el-button>
+      </template>
+    </el-dialog>
+
+    <div class="editor-main">
       <!-- 左侧大纲 -->
       <div class="editor-outline" :class="{ collapsed: outlineCollapsed }">
         <div class="outline-header">
@@ -826,4 +958,730 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- 题目列表 -->
-          <div class="questions-
+          <div class="questions-container">
+            <template
+              v-for="(group, groupIndex) in paper.questionGroups"
+              :key="group.groupId"
+            >
+              <div
+                v-for="(question, qIndex) in group.questions"
+                :id="`question-${question.questionId}`"
+                :key="question.questionId"
+                class="question-card"
+                :class="{ active: activeQuestionId === question.questionId }"
+                @click="activeQuestionId = question.questionId"
+              >
+                <!-- 题目头部 -->
+                <div class="question-header">
+                  <div class="question-info">
+                    <span class="question-index"
+                      >第{{
+                        getGlobalQuestionIndex(groupIndex, qIndex)
+                      }}题</span
+                    >
+                    <span class="question-type-tag">{{ group.groupName }}</span>
+                  </div>
+                  <div class="question-actions">
+                    <el-input-number
+                      v-model="question.points"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      controls-position="right"
+                      style="width: 100px"
+                    />
+                    <span class="points-label">分</span>
+                    <el-button
+                      link
+                      size="small"
+                      @click.stop="
+                        copyQuestion(group.groupId, question.questionId)
+                      "
+                      ><el-icon><CopyDocument /></el-icon
+                    ></el-button>
+                    <el-button
+                      link
+                      size="small"
+                      type="danger"
+                      @click.stop="
+                        deleteQuestion(group.groupId, question.questionId)
+                      "
+                      ><el-icon><Delete /></el-icon>删除</el-button
+                    >
+                  </div>
+                </div>
+                <!-- 题干 -->
+                <div class="question-stem">
+                  <el-input
+                    v-model="question.stem"
+                    type="textarea"
+                    placeholder="请输入题目内容"
+                    :rows="2"
+                    maxlength="2000"
+                  />
+                </div>
+                <!-- 选项 -->
+                <div
+                  v-if="question.options && question.options.length > 0"
+                  class="question-options"
+                >
+                  <div class="options-header">
+                    <span class="options-title">选项</span>
+                    <el-button
+                      v-if="question.questionType !== 'judge'"
+                      link
+                      size="small"
+                      type="primary"
+                      @click="addOption(question)"
+                      ><el-icon><Plus /></el-icon>添加选项</el-button
+                    >
+                  </div>
+                  <div
+                    v-for="(option, optIndex) in question.options"
+                    :key="option.key"
+                    class="option-item"
+                  >
+                    <div class="option-correct">
+                      <el-radio
+                        v-if="
+                          question.questionType === 'radio' ||
+                          question.questionType === 'judge'
+                        "
+                        v-model="question.correctAnswer"
+                        :value="option.key"
+                        class="correct-mark"
+                      />
+                      <el-checkbox
+                        v-else-if="question.questionType === 'checkbox'"
+                        v-model="question.correctAnswers"
+                        :value="option.key"
+                        class="correct-mark"
+                      />
+                    </div>
+                    <span class="option-key">{{ option.key }}.</span>
+                    <el-input
+                      v-model="option.content"
+                      :placeholder="`请输入选项${option.key}的内容`"
+                      class="option-input"
+                      :disabled="question.questionType === 'judge'"
+                    />
+                    <el-button
+                      v-if="question.questionType !== 'judge'"
+                      link
+                      size="small"
+                      type="danger"
+                      @click="removeOption(question, optIndex)"
+                      ><el-icon><Delete /></el-icon>删除</el-button
+                    >
+                  </div>
+                  <div class="correct-answer-hint">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span
+                      v-if="
+                        question.questionType === 'radio' ||
+                        question.questionType === 'judge'
+                      "
+                      >点击选项前的圆圈设置正确答案</span
+                    >
+                    <span v-else>点击选项前的复选框设置正确答案（可多选）</span>
+                  </div>
+                </div>
+                <!-- 填空题 -->
+                <div
+                  v-if="question.questionType === 'input'"
+                  class="question-blanks"
+                >
+                  <div class="blanks-header">
+                    <span class="blanks-title">填空答案</span>
+                    <el-button
+                      link
+                      size="small"
+                      type="primary"
+                      @click="addBlank(question)"
+                      ><el-icon><Plus /></el-icon>添加填空</el-button
+                    >
+                  </div>
+                  <div
+                    v-for="(blank, blankIndex) in question.blanks"
+                    :key="blankIndex"
+                    class="blank-item"
+                  >
+                    <span class="blank-index">第{{ blankIndex + 1 }}空：</span>
+                    <el-input
+                      v-model="blank.answer"
+                      placeholder="请输入正确答案"
+                      class="blank-input"
+                    />
+                    <el-button
+                      link
+                      size="small"
+                      type="danger"
+                      @click="removeBlank(question, blankIndex)"
+                      ><el-icon><Delete /></el-icon>删除</el-button
+                    >
+                  </div>
+                </div>
+                <!-- 简答题 -->
+                <div
+                  v-if="question.questionType === 'textarea'"
+                  class="question-reference"
+                >
+                  <div class="reference-header">
+                    <span class="reference-title">参考答案</span>
+                  </div>
+                  <el-input
+                    v-model="question.referenceAnswer"
+                    type="textarea"
+                    placeholder="请输入参考答案"
+                    :rows="4"
+                    maxlength="5000"
+                  />
+                </div>
+                <!-- 解析 -->
+                <div class="question-analysis">
+                  <el-collapse>
+                    <el-collapse-item title="题目解析" name="analysis">
+                      <el-input
+                        v-model="question.analysis"
+                        type="textarea"
+                        placeholder="请输入题目解析（选填）"
+                        :rows="3"
+                        maxlength="2000"
+                      />
+                    </el-collapse-item>
+                  </el-collapse>
+                </div>
+              </div> </template
+            ><!-- 添加更多题目按钮 -->
+            <div
+              v-for="group in paper.questionGroups"
+              :key="`add-${group.groupId}`"
+              class="add-question-btn"
+            >
+              <el-button type="primary" link @click="addQuestion(group.groupId)"
+                ><el-icon><Plus /></el-icon>继续添加{{
+                  group.groupName
+                }}</el-button
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.exam-paper-editor {
+  min-height: 100vh;
+  background: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+}
+.editor-fixed-top {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e4e7ed;
+  .header-left .logo {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      margin-right: 8px;
+    }
+    .logo-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #00bfa5;
+    }
+  }
+  .header-center {
+    flex: 1;
+    max-width: 400px;
+    margin: 0 20px;
+    .title-input :deep(.el-input__wrapper) {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    .auto-save-status {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: #909399;
+    }
+  }
+}
+.question-toolbar {
+  padding: 12px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #e4e7ed;
+  .toolbar-hint {
+    font-size: 13px;
+    color: #909399;
+    margin-bottom: 10px;
+  }
+  .toolbar-items {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    .type-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid #e4e7ed;
+      border-radius: 8px;
+      cursor: grab;
+      transition: all 0.2s;
+      &:hover {
+        border-color: #00bfa5;
+        box-shadow: 0 2px 8px rgba(0, 191, 165, 0.2);
+      }
+      &:active {
+        cursor: grabbing;
+      }
+      .type-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 191, 165, 0.1);
+        border-radius: 8px;
+        margin-bottom: 6px;
+        .type-icon {
+          width: 20px;
+          height: 20px;
+          color: #00bfa5;
+        }
+      }
+      .type-label {
+        font-size: 13px;
+        color: #606266;
+      }
+    }
+  }
+}
+.editor-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.editor-outline {
+  width: 260px;
+  background: rgba(255, 255, 255, 0.6);
+  border-right: 1px solid #e4e7ed;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s;
+  &.collapsed {
+    width: 50px;
+  }
+  .outline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e4e7ed;
+    min-height: 44px;
+    .outline-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #303133;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 8px;
+    }
+  }
+  &.collapsed .outline-header {
+    justify-content: center;
+    padding: 12px 8px;
+    .outline-title {
+      display: none;
+    }
+  }
+  .outline-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    .outline-summary {
+      font-size: 13px;
+      color: #909399;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e4e7ed;
+    }
+    .outline-list .outline-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:hover {
+        background: #f5f7fa;
+      }
+      &.active {
+        background: rgba(0, 191, 165, 0.1);
+        color: #00bfa5;
+      }
+      .drag-handle {
+        cursor: grab;
+        margin-right: 8px;
+        color: #c0c4cc;
+        .drag-icon {
+          width: 14px;
+          height: 14px;
+        }
+      }
+      .item-index {
+        font-size: 13px;
+        margin-right: 6px;
+        color: #909399;
+      }
+      .item-title {
+        flex: 1;
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .item-points {
+        font-size: 12px;
+        color: #909399;
+        margin-left: 8px;
+      }
+    }
+    .ghost-item {
+      opacity: 0.5;
+      background: #e4e7ed;
+    }
+  }
+}
+.editor-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  transition: background 0.3s;
+  background-image: url("@/assets/306618229cda20061635920333.png");
+  background-repeat: repeat;
+  background-size: 400px;
+  background-position: center;
+  &.drag-over {
+    background-color: rgba(0, 191, 165, 0.05);
+  }
+  &.is-dragging::after {
+    content: "释放鼠标添加题目";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px 40px;
+    background: rgba(0, 191, 165, 0.9);
+    color: #fff;
+    font-size: 16px;
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 1000;
+  }
+  .paper-canvas {
+    max-width: 100%;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+  }
+  .paper-description {
+    margin-bottom: 20px;
+  }
+  .empty-hint {
+    padding: 60px 0;
+  }
+}
+.questions-container {
+  .question-card {
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid #e4e7ed;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: all 0.2s;
+    &:hover {
+      border-color: #c0c4cc;
+    }
+    &.active {
+      border-color: #00bfa5;
+      box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.1);
+    }
+    .question-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e4e7ed;
+      .question-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        .question-index {
+          font-size: 15px;
+          font-weight: 600;
+          color: #303133;
+        }
+        .question-type-tag {
+          font-size: 12px;
+          padding: 2px 8px;
+          background: rgba(0, 191, 165, 0.1);
+          color: #00bfa5;
+          border-radius: 4px;
+        }
+      }
+      .question-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        .points-label {
+          font-size: 13px;
+          color: #606266;
+          margin-right: 8px;
+        }
+      }
+    }
+    .question-stem {
+      margin-bottom: 16px;
+    }
+    .question-options {
+      margin-bottom: 16px;
+      .options-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        .options-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+        }
+      }
+      .option-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        .option-correct .correct-mark {
+          :deep(.el-checkbox__label),
+          :deep(.el-radio__label) {
+            display: none;
+          }
+        }
+        .option-key {
+          font-size: 14px;
+          font-weight: 500;
+          color: #303133;
+          min-width: 20px;
+        }
+        .option-input {
+          flex: 1;
+        }
+      }
+      .correct-answer-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #909399;
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: #f5f7fa;
+        border-radius: 4px;
+      }
+    }
+    .question-blanks {
+      margin-bottom: 16px;
+      .blanks-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        .blanks-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+        }
+      }
+      .blank-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        .blank-index {
+          font-size: 13px;
+          color: #606266;
+          min-width: 60px;
+        }
+        .blank-input {
+          flex: 1;
+        }
+      }
+    }
+    .question-reference {
+      margin-bottom: 16px;
+      .reference-header {
+        margin-bottom: 12px;
+        .reference-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+        }
+      }
+    }
+    .question-analysis {
+      :deep(.el-collapse) {
+        border: none;
+        .el-collapse-item__header {
+          font-size: 14px;
+          color: #909399;
+          background: #f5f7fa;
+          padding: 0 12px;
+          border-radius: 4px;
+        }
+        .el-collapse-item__wrap {
+          border: none;
+        }
+        .el-collapse-item__content {
+          padding: 12px 0 0;
+        }
+      }
+    }
+  }
+  .add-question-btn {
+    text-align: center;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+}
+.template-preview-info {
+  display: flex;
+  gap: 16px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.preview-dialog {
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    .preview-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .preview-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      .scale-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+  .preview-content {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    background: #f5f7fa;
+    min-height: 70vh;
+    overflow: auto;
+    .preview-paper {
+      background: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      transform-origin: top center;
+      &.paper-a4 {
+        width: 210mm;
+        min-height: 297mm;
+      }
+      &.paper-a3 {
+        width: 297mm;
+        min-height: 420mm;
+      }
+      .preview-paper-title {
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 16px;
+      }
+      .preview-paper-desc {
+        text-align: center;
+        color: #606266;
+        margin-bottom: 16px;
+      }
+      .preview-paper-info {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e4e7ed;
+        color: #909399;
+      }
+      .preview-question {
+        margin-bottom: 20px;
+        .preview-question-header {
+          margin-bottom: 8px;
+          .preview-question-index {
+            font-weight: 600;
+          }
+          .preview-question-type {
+            color: #909399;
+            margin: 0 8px;
+          }
+          .preview-question-points {
+            color: #909399;
+          }
+        }
+        .preview-question-stem {
+          margin-bottom: 12px;
+          line-height: 1.6;
+        }
+        .preview-option {
+          padding: 4px 0;
+          padding-left: 20px;
+        }
+        .preview-blanks .preview-blank {
+          margin-right: 20px;
+        }
+        .preview-answer-area {
+          height: 100px;
+          border: 1px solid #e4e7ed;
+          border-radius: 4px;
+        }
+      }
+    }
+  }
+}
+</style>

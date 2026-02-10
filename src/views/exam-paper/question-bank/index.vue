@@ -80,7 +80,8 @@ const questions = ref([
       { key: "D", content: "Boolean" }
     ],
     correctAnswers: ["A", "B", "D"],
-    analysis: "JavaScript 的基本数据类型包括 String、Number、Boolean、Undefined、Null、Symbol 和 BigInt。Array 是引用类型。",
+    analysis:
+      "JavaScript 的基本数据类型包括 String、Number、Boolean、Undefined、Null、Symbol 和 BigInt。Array 是引用类型。",
     points: 10,
     usageCount: 8,
     createTime: "2026-01-18",
@@ -96,7 +97,8 @@ const questions = ref([
     difficultyName: "中等",
     stem: "光在真空中的传播速度约为 ______ m/s。",
     correctAnswer: "3×10^8",
-    analysis: "光速是物理学中的基本常数，约为 299,792,458 m/s，通常近似为 3×10^8 m/s。",
+    analysis:
+      "光速是物理学中的基本常数，约为 299,792,458 m/s，通常近似为 3×10^8 m/s。",
     points: 5,
     usageCount: 22,
     createTime: "2026-01-10",
@@ -111,7 +113,8 @@ const questions = ref([
     difficulty: "hard",
     difficultyName: "困难",
     stem: "请简述数据库事务的 ACID 特性，并举例说明。",
-    referenceAnswer: "ACID 是数据库事务的四个基本特性：\n1. 原子性(Atomicity)：事务中的所有操作要么全部完成，要么全部不完成。\n2. 一致性(Consistency)：事务执行前后，数据库的完整性约束没有被破坏。\n3. 隔离性(Isolation)：多个事务并发执行时，一个事务的执行不应影响其他事务。\n4. 持久性(Durability)：事务完成后，对数据库的修改是永久性的。",
+    referenceAnswer:
+      "ACID 是数据库事务的四个基本特性：\n1. 原子性(Atomicity)：事务中的所有操作要么全部完成，要么全部不完成。\n2. 一致性(Consistency)：事务执行前后，数据库的完整性约束没有被破坏。\n3. 隔离性(Isolation)：多个事务并发执行时，一个事务的执行不应影响其他事务。\n4. 持久性(Durability)：事务完成后，对数据库的修改是永久性的。",
     points: 15,
     usageCount: 5,
     createTime: "2026-01-22",
@@ -143,11 +146,14 @@ const total = computed(() => filteredQuestions.value.length);
 // 筛选后的题目
 const filteredQuestions = computed(() => {
   return questions.value.filter(q => {
-    const matchSearch = !searchQuery.value || 
+    const matchSearch =
+      !searchQuery.value ||
       q.stem.toLowerCase().includes(searchQuery.value.toLowerCase());
     const matchType = !selectedType.value || q.type === selectedType.value;
-    const matchDifficulty = !selectedDifficulty.value || q.difficulty === selectedDifficulty.value;
-    const matchSubject = !selectedSubject.value || q.subject === selectedSubject.value;
+    const matchDifficulty =
+      !selectedDifficulty.value || q.difficulty === selectedDifficulty.value;
+    const matchSubject =
+      !selectedSubject.value || q.subject === selectedSubject.value;
     return matchSearch && matchType && matchDifficulty && matchSubject;
   });
 });
@@ -210,32 +216,40 @@ const saveQuestion = () => {
     ElMessage.warning("请输入题目内容");
     return;
   }
-  
+
   // 更新题型名称
-  const typeInfo = questionTypes.find(t => t.value === editingQuestion.value.type);
+  const typeInfo = questionTypes.find(
+    t => t.value === editingQuestion.value.type
+  );
   editingQuestion.value.typeName = typeInfo?.label || "";
-  
+
   // 更新难度名称
-  const diffInfo = difficultyOptions.find(d => d.value === editingQuestion.value.difficulty);
+  const diffInfo = difficultyOptions.find(
+    d => d.value === editingQuestion.value.difficulty
+  );
   editingQuestion.value.difficultyName = diffInfo?.label || "";
-  
+
   // 更新科目名称
-  const subjectInfo = subjectOptions.value.find(s => s.value === editingQuestion.value.subject);
+  const subjectInfo = subjectOptions.value.find(
+    s => s.value === editingQuestion.value.subject
+  );
   editingQuestion.value.subjectName = subjectInfo?.label || "";
-  
+
   editingQuestion.value.updateTime = new Date().toISOString().split("T")[0];
-  
+
   if (isNewQuestion.value) {
     questions.value.unshift(editingQuestion.value);
     ElMessage.success("题目创建成功");
   } else {
-    const index = questions.value.findIndex(q => q.id === editingQuestion.value.id);
+    const index = questions.value.findIndex(
+      q => q.id === editingQuestion.value.id
+    );
     if (index !== -1) {
       questions.value[index] = editingQuestion.value;
     }
     ElMessage.success("题目更新成功");
   }
-  
+
   editDialogVisible.value = false;
 };
 
@@ -249,13 +263,15 @@ const deleteQuestion = (question: any) => {
       cancelButtonText: "取消",
       type: "warning"
     }
-  ).then(() => {
-    const index = questions.value.findIndex(q => q.id === question.id);
-    if (index !== -1) {
-      questions.value.splice(index, 1);
-      ElMessage.success("删除成功");
-    }
-  }).catch(() => {});
+  )
+    .then(() => {
+      const index = questions.value.findIndex(q => q.id === question.id);
+      if (index !== -1) {
+        questions.value.splice(index, 1);
+        ElMessage.success("删除成功");
+      }
+    })
+    .catch(() => {});
 };
 
 // 批量删除
@@ -264,7 +280,7 @@ const batchDelete = () => {
     ElMessage.warning("请先选择要删除的题目");
     return;
   }
-  
+
   ElMessageBox.confirm(
     `确定要删除选中的 ${selectedQuestions.value.length} 道题目吗？`,
     "批量删除确认",
@@ -273,25 +289,30 @@ const batchDelete = () => {
       cancelButtonText: "取消",
       type: "warning"
     }
-  ).then(() => {
-    questions.value = questions.value.filter(
-      q => !selectedQuestions.value.includes(q.id)
-    );
-    selectedQuestions.value = [];
-    ElMessage.success("批量删除成功");
-  }).catch(() => {});
+  )
+    .then(() => {
+      questions.value = questions.value.filter(
+        q => !selectedQuestions.value.includes(q.id)
+      );
+      selectedQuestions.value = [];
+      ElMessage.success("批量删除成功");
+    })
+    .catch(() => {});
 };
 
 // 添加选项
 const addOption = () => {
   if (!editingQuestion.value) return;
-  const nextKey = String.fromCharCode(65 + editingQuestion.value.options.length);
+  const nextKey = String.fromCharCode(
+    65 + editingQuestion.value.options.length
+  );
   editingQuestion.value.options.push({ key: nextKey, content: "" });
 };
 
 // 删除选项
 const removeOption = (index: number) => {
-  if (!editingQuestion.value || editingQuestion.value.options.length <= 2) return;
+  if (!editingQuestion.value || editingQuestion.value.options.length <= 2)
+    return;
   editingQuestion.value.options.splice(index, 1);
   // 重新排列选项键
   editingQuestion.value.options.forEach((opt: any, i: number) => {
@@ -312,22 +333,32 @@ const exportQuestions = () => {
 // 获取难度标签类型
 const getDifficultyType = (difficulty: string) => {
   switch (difficulty) {
-    case "easy": return "success";
-    case "medium": return "warning";
-    case "hard": return "danger";
-    default: return "info";
+    case "easy":
+      return "success";
+    case "medium":
+      return "warning";
+    case "hard":
+      return "danger";
+    default:
+      return "info";
   }
 };
 
 // 获取题型标签类型
 const getTypeTagType = (type: string) => {
   switch (type) {
-    case "radio": return "";
-    case "checkbox": return "success";
-    case "input": return "warning";
-    case "textarea": return "danger";
-    case "judge": return "info";
-    default: return "";
+    case "radio":
+      return "";
+    case "checkbox":
+      return "success";
+    case "input":
+      return "warning";
+    case "textarea":
+      return "danger";
+    case "judge":
+      return "info";
+    default:
+      return "";
   }
 };
 </script>
@@ -337,7 +368,9 @@ const getTypeTagType = (type: string) => {
     <!-- 页面标题 -->
     <div class="page-header">
       <h1 class="page-title">题库管理</h1>
-      <p class="page-description">管理和维护题目，支持创建、编辑、删除和批量操作</p>
+      <p class="page-description">
+        管理和维护题目，支持创建、编辑、删除和批量操作
+      </p>
     </div>
 
     <!-- 工具栏 -->
@@ -351,7 +384,11 @@ const getTypeTagType = (type: string) => {
             clearable
             style="width: 250px"
           />
-          <el-select v-model="selectedType" placeholder="题型" style="width: 120px">
+          <el-select
+            v-model="selectedType"
+            placeholder="题型"
+            style="width: 120px"
+          >
             <el-option
               v-for="type in questionTypes"
               :key="type.value"
@@ -359,7 +396,11 @@ const getTypeTagType = (type: string) => {
               :value="type.value"
             />
           </el-select>
-          <el-select v-model="selectedDifficulty" placeholder="难度" style="width: 120px">
+          <el-select
+            v-model="selectedDifficulty"
+            placeholder="难度"
+            style="width: 120px"
+          >
             <el-option
               v-for="diff in difficultyOptions"
               :key="diff.value"
@@ -367,7 +408,11 @@ const getTypeTagType = (type: string) => {
               :value="diff.value"
             />
           </el-select>
-          <el-select v-model="selectedSubject" placeholder="科目" style="width: 140px">
+          <el-select
+            v-model="selectedSubject"
+            placeholder="科目"
+            style="width: 140px"
+          >
             <el-option
               v-for="subject in subjectOptions"
               :key="subject.value"
@@ -385,7 +430,11 @@ const getTypeTagType = (type: string) => {
             <el-icon><Download /></el-icon>
             导出
           </el-button>
-          <el-button type="danger" @click="batchDelete" :disabled="selectedQuestions.length === 0">
+          <el-button
+            type="danger"
+            :disabled="selectedQuestions.length === 0"
+            @click="batchDelete"
+          >
             <el-icon><Delete /></el-icon>
             批量删除
           </el-button>
@@ -401,7 +450,7 @@ const getTypeTagType = (type: string) => {
     <div class="stats-row">
       <el-card class="stat-card" shadow="never">
         <div class="stat-content">
-          <div class="stat-icon" style="background: #e6f7ff; color: #1890ff;">
+          <div class="stat-icon" style="background: #e6f7ff; color: #1890ff">
             <el-icon><Document /></el-icon>
           </div>
           <div class="stat-info">
@@ -412,33 +461,39 @@ const getTypeTagType = (type: string) => {
       </el-card>
       <el-card class="stat-card" shadow="never">
         <div class="stat-content">
-          <div class="stat-icon" style="background: #f6ffed; color: #52c41a;">
+          <div class="stat-icon" style="background: #f6ffed; color: #52c41a">
             <el-icon><CircleCheck /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ questions.filter(q => q.type === 'radio').length }}</div>
+            <div class="stat-value">
+              {{ questions.filter(q => q.type === "radio").length }}
+            </div>
             <div class="stat-label">单选题</div>
           </div>
         </div>
       </el-card>
       <el-card class="stat-card" shadow="never">
         <div class="stat-content">
-          <div class="stat-icon" style="background: #fff7e6; color: #fa8c16;">
+          <div class="stat-icon" style="background: #fff7e6; color: #fa8c16">
             <el-icon><Checked /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ questions.filter(q => q.type === 'checkbox').length }}</div>
+            <div class="stat-value">
+              {{ questions.filter(q => q.type === "checkbox").length }}
+            </div>
             <div class="stat-label">多选题</div>
           </div>
         </div>
       </el-card>
       <el-card class="stat-card" shadow="never">
         <div class="stat-content">
-          <div class="stat-icon" style="background: #fff1f0; color: #f5222d;">
+          <div class="stat-icon" style="background: #fff1f0; color: #f5222d">
             <el-icon><Edit /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ questions.filter(q => q.type === 'textarea').length }}</div>
+            <div class="stat-value">
+              {{ questions.filter(q => q.type === "textarea").length }}
+            </div>
             <div class="stat-label">简答题</div>
           </div>
         </div>
@@ -450,7 +505,9 @@ const getTypeTagType = (type: string) => {
       <el-table
         :data="paginatedQuestions"
         style="width: 100%"
-        @selection-change="(val: any[]) => selectedQuestions = val.map(v => v.id)"
+        @selection-change="
+          (val: any[]) => (selectedQuestions = val.map(v => v.id))
+        "
       >
         <el-table-column type="selection" width="55" />
         <el-table-column label="题型" width="100">
@@ -524,7 +581,11 @@ const getTypeTagType = (type: string) => {
       width="800px"
       destroy-on-close
     >
-      <el-form v-if="editingQuestion" :model="editingQuestion" label-width="100px">
+      <el-form
+        v-if="editingQuestion"
+        :model="editingQuestion"
+        label-width="100px"
+      >
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="题型">
@@ -552,7 +613,10 @@ const getTypeTagType = (type: string) => {
           </el-col>
           <el-col :span="8">
             <el-form-item label="难度">
-              <el-select v-model="editingQuestion.difficulty" style="width: 100%">
+              <el-select
+                v-model="editingQuestion.difficulty"
+                style="width: 100%"
+              >
                 <el-option
                   v-for="diff in difficultyOptions.filter(d => d.value)"
                   :key="diff.value"
@@ -565,7 +629,11 @@ const getTypeTagType = (type: string) => {
         </el-row>
 
         <el-form-item label="分值">
-          <el-input-number v-model="editingQuestion.points" :min="1" :max="100" />
+          <el-input-number
+            v-model="editingQuestion.points"
+            :min="1"
+            :max="100"
+          />
         </el-form-item>
 
         <el-form-item label="题目内容">
@@ -578,7 +646,12 @@ const getTypeTagType = (type: string) => {
         </el-form-item>
 
         <!-- 选择题选项 -->
-        <template v-if="editingQuestion.type === 'radio' || editingQuestion.type === 'checkbox'">
+        <template
+          v-if="
+            editingQuestion.type === 'radio' ||
+            editingQuestion.type === 'checkbox'
+          "
+        >
           <el-form-item label="选项">
             <div class="options-editor">
               <div
@@ -595,8 +668,8 @@ const getTypeTagType = (type: string) => {
                 <el-button
                   link
                   type="danger"
-                  @click="removeOption(index)"
                   :disabled="editingQuestion.options.length <= 2"
+                  @click="removeOption(index)"
                 >
                   <el-icon><Delete /></el-icon>
                 </el-button>
@@ -621,10 +694,7 @@ const getTypeTagType = (type: string) => {
                 {{ option.key }}
               </el-radio>
             </el-radio-group>
-            <el-checkbox-group
-              v-else
-              v-model="editingQuestion.correctAnswers"
-            >
+            <el-checkbox-group v-else v-model="editingQuestion.correctAnswers">
               <el-checkbox
                 v-for="option in editingQuestion.options"
                 :key="option.key"
