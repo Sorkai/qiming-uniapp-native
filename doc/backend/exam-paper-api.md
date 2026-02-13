@@ -1,19 +1,25 @@
 # 题目组卷器模块 API 接口文档
 
-> 教师端/管理端题目组卷器模块接口设计，共 44 个接口，方案成熟可直接交付后端开发。
+> 教师端/管理端题目组卷器模块接口设计，共 53 个接口，方案成熟可直接交付后端开发。
 
-## 一、试卷管理（8个）
+## 一、试卷管理（14个）
 
 | 序号 | 接口名称 | 方法 | 路径 | 作用 |
 |------|---------|------|------|------|
-| 1 | `getPaperList` | GET | /edu/backend/v1/paper/list | 获取试卷列表（分页、筛选） |
-| 2 | `getPaperDetail` | GET | /edu/backend/v1/paper/detail/:paperId | 获取试卷详情（含题目分组） |
-| 3 | `createPaper` | POST | /edu/backend/v1/paper/create | 创建试卷 |
-| 4 | `updatePaper` | POST | /edu/backend/v1/paper/update | 更新试卷 |
-| 5 | `deletePaper` | POST | /edu/backend/v1/paper/delete | 删除试卷 |
-| 6 | `saveAsTemplate` | POST | /edu/backend/v1/paper/save-as-template | 保存为私有模板 |
-| 7 | `getTemplateDetail` | GET | /edu/backend/v1/paper/template/:templateId | 获取模板详情 |
-| 8 | `getPaperStatistics` | GET | /edu/backend/v1/paper/statistics/:paperId | 获取试卷统计数据 |
+| 1 | `getOverviewStatistics` | GET | /edu/backend/v1/paper/overview/statistics | 获取总览统计数据（试卷总数、已发布数、待阅卷数、平均分） |
+| 2 | `getRecentPapers` | GET | /edu/backend/v1/paper/recent | 获取最近编辑的试卷列表 |
+| 3 | `getPaperList` | GET | /edu/backend/v1/paper/list | 获取试卷列表（分页、筛选） |
+| 4 | `getPaperDetail` | GET | /edu/backend/v1/paper/detail/:paperId | 获取试卷详情（含题目分组） |
+| 5 | `createPaper` | POST | /edu/backend/v1/paper/create | 创建试卷 |
+| 6 | `updatePaper` | POST | /edu/backend/v1/paper/update | 更新试卷 |
+| 7 | `deletePaper` | POST | /edu/backend/v1/paper/delete | 删除试卷 |
+| 8 | `saveAsTemplate` | POST | /edu/backend/v1/paper/save-as-template | 保存为私有模板 |
+| 9 | `getMyTemplates` | GET | /edu/backend/v1/paper/template/my | 获取我的模板列表 |
+| 10 | `getTemplateDetail` | GET | /edu/backend/v1/paper/template/:templateId | 获取模板详情 |
+| 11 | `createTemplate` | POST | /edu/backend/v1/paper/template/create | 创建空白模板 |
+| 12 | `deleteTemplate` | POST | /edu/backend/v1/paper/template/delete | 删除模板 |
+| 13 | `getPaperStatistics` | GET | /edu/backend/v1/paper/statistics/:paperId | 获取试卷统计数据 |
+| 14 | `getSystemTemplateStats` | GET | /edu/backend/v1/paper/template/system/stats | 获取系统模板统计数据（题数、分值、使用人数） |
 
 ## 二、试卷发布（5个）
 
@@ -25,15 +31,18 @@
 | 12 | `getPublishClasses` | GET | /edu/backend/v1/paper/publish/classes | 获取可发布的班级列表 |
 | 13 | `getPublishStudents` | GET | /edu/backend/v1/paper/publish/students | 获取可发布的学生列表 |
 
-## 三、阅卷批改（5个）
+## 三、阅卷批改（8个）
 
 | 序号 | 接口名称 | 方法 | 路径 | 作用 |
 |------|---------|------|------|------|
-| 14 | `getSubmissionList` | GET | /edu/backend/v1/paper/submission/list | 获取答卷列表（阅卷用） |
-| 15 | `getSubmissionDetail` | GET | /edu/backend/v1/paper/submission/detail/:submissionId | 获取答卷详情（阅卷用） |
-| 16 | `submitGrade` | POST | /edu/backend/v1/paper/grade/submit | 提交批改结果 |
-| 17 | `autoGradeObjective` | POST | /edu/backend/v1/paper/grade/auto | 批量自动批改客观题 |
-| 18 | `releaseScores` | POST | /edu/backend/v1/paper/score/release | 发布成绩 |
+| 17 | `getGradingStatistics` | GET | /edu/backend/v1/paper/grading/statistics | 获取阅卷统计（待阅卷/阅卷中/已完成/总答卷数） |
+| 18 | `getGradingPaperList` | GET | /edu/backend/v1/paper/grading/list | 获取待阅卷试卷列表（按试卷分组） |
+| 19 | `getSubmissionList` | GET | /edu/backend/v1/paper/submission/list | 获取答卷列表（阅卷用） |
+| 20 | `getSubmissionDetail` | GET | /edu/backend/v1/paper/submission/detail/:submissionId | 获取答卷详情（阅卷用） |
+| 21 | `submitGrade` | POST | /edu/backend/v1/paper/grade/submit | 提交批改结果 |
+| 22 | `autoGradeObjective` | POST | /edu/backend/v1/paper/grade/auto | 批量自动批改客观题 |
+| 23 | `releaseScores` | POST | /edu/backend/v1/paper/score/release | 发布成绩 |
+| 24 | `exportSubmissions` | GET | /edu/backend/v1/paper/submission/export | 导出答卷（Word/PDF/Excel） |
 
 ## 四、题库管理（16个）
 
@@ -87,14 +96,14 @@
 
 | 模块 | 接口数量 |
 |------|---------|
-| 试卷管理 | 8 |
+| 试卷管理 | 14 |
 | 试卷发布 | 5 |
-| 阅卷批改 | 5 |
+| 阅卷批改 | 8 |
 | 题库管理 | 16 |
 | AI 智能功能 | 3 |
 | 学情分析 | 2 |
 | 学生端 | 5 |
-| **总计** | **44** |
+| **总计** | **53** |
 
 ---
 

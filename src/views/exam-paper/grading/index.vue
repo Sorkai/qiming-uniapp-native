@@ -116,14 +116,40 @@ const handleGrade = (row: any) => {
   router.push(`/exam-paper/grading/${row.id}`);
 };
 
+// 批量自动批改客观题
+const handleAutoGrade = async (row: any) => {
+  try {
+    const response = await fetch("/edu/backend/v1/paper/grade/auto", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paperId: row.id })
+    });
+    const result = await response.json();
+    if (result.code === 0) {
+      ElMessage.success(`已自动批改 ${result.data.gradedCount} 份客观题`);
+      handleSearch();
+    } else {
+      ElMessage.error(result.msg || "自动批改失败");
+    }
+  } catch (error) {
+    console.error("自动批改失败:", error);
+    ElMessage.error("自动批改失败");
+  }
+};
+
 // 查看详情
 const handleView = (row: any) => {
   router.push(`/exam-paper/grading/${row.id}/detail`);
 };
 
 // 获取状态标签类型
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
+const getStatusType = (
+  status: string
+): "success" | "warning" | "info" | "primary" | "danger" => {
+  const types: Record<
+    string,
+    "success" | "warning" | "info" | "primary" | "danger"
+  > = {
     pending: "warning",
     grading: "primary",
     completed: "success"
@@ -326,7 +352,7 @@ const handlePageChange = (page: number) => {
           width="160"
           align="center"
         />
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column label="操作" width="280" align="center" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="row.status !== 'completed'"
@@ -336,6 +362,15 @@ const handlePageChange = (page: number) => {
             >
               <el-icon class="mr-1"><Edit /></el-icon>
               阅卷
+            </el-button>
+            <el-button
+              v-if="row.status !== 'completed'"
+              type="success"
+              size="small"
+              @click="handleAutoGrade(row)"
+            >
+              <el-icon class="mr-1"><MagicStick /></el-icon>
+              自动批改
             </el-button>
             <el-button size="small" @click="handleView(row)">
               <el-icon class="mr-1"><View /></el-icon>
