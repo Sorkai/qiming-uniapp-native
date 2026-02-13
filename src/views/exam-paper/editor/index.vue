@@ -1880,8 +1880,10 @@ onBeforeUnmount(() => {
   transition: background 0.3s;
   background-image: url("@/assets/306618229cda20061635920333.png");
   background-repeat: repeat;
-  background-size: 400px;
+  background-size: 800px;
   background-position: center;
+  background-blend-mode: overlay;
+  background-color: rgba(245, 247, 250, 0.85);
   &.drag-over {
     background-color: rgba(0, 191, 165, 0.05);
   }
