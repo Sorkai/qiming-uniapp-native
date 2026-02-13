@@ -224,7 +224,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="main-content" v-loading="loading">
+    <div class="grading-main-content" v-loading="loading">
       <div class="student-list-panel">
         <div class="panel-header">
           <h3>学生列表</h3>
@@ -386,7 +386,7 @@ $radius-lg: 16px;
   .progress-info { display: flex; align-items: center; gap: 12px; font-size: 14px; color: $light-text-secondary; }
 }
 
-.main-content {
+.grading-main-content {
   display: flex;
   flex: 1;
   gap: 20px;

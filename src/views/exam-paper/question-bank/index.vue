@@ -715,7 +715,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="main-content">
+    <div class="question-main-content">
       <!-- 左侧文件夹树 -->
       <div class="folder-sidebar">
         <div class="folder-header">
@@ -1348,6 +1348,7 @@ $radius-lg: 16px;
 
 .question-bank {
   min-height: 100%;
+  padding: 24px;
 
   &.is-dark {
     .page-header,
@@ -1477,7 +1478,7 @@ $radius-lg: 16px;
     }
   }
 
-  .main-content {
+  .question-main-content {
     display: flex;
     gap: 20px;
   }

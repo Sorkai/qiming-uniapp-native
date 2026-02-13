@@ -242,7 +242,7 @@ onMounted(() => {
 
     <div class="content-section">
       <!-- 左侧：模板和最近试卷 -->
-      <div class="main-content">
+      <div class="overview-main-content">
         <!-- 试卷模板 -->
         <div class="section-card">
           <div class="section-header">
@@ -488,6 +488,7 @@ $radius-xl: 20px;
 
 .exam-paper-index {
   min-height: 100%;
+  padding: 24px;
   transition: all 0.3s ease;
 
   &.is-dark {
@@ -736,7 +737,7 @@ $radius-xl: 20px;
   }
 }
 
-.main-content,
+.overview-main-content,
 .side-content {
   display: flex;
   flex-direction: column;
