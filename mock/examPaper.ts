@@ -1316,12 +1316,30 @@ export default [
     }
   },
 
-  // AI 生成题目
+  // AI 生成题目（支持 mode 字段：generate/recommend/polish）
   {
     url: "/edu/backend/v1/ai/generate-question",
     method: "post",
     response: ({ body }: { body: any }) => {
-      const { questionType, count = 1, knowledgePoints, difficulty, includeAnalysis = true } = body;
+      const { questionType, count = 1, knowledgePoints, difficulty, includeAnalysis = true, mode = "generate", excludeQuestionIds = [] } = body;
+      
+      // recommend 模式：从题库推荐题目
+      if (mode === "recommend") {
+        const questionBank = [
+          { id: 1, type: "radio", stem: "函数 f(x) = x²在 x = 0 处的导数是？", options: [{ key: "A", content: "0" }, { key: "B", content: "1" }, { key: "C", content: "2" }, { key: "D", content: "不存在" }], correctAnswer: "A", analysis: "根据导数定义，f'(x) = 2x，当 x = 0 时，f'(0) = 0", difficulty: "easy", knowledgePoints: ["导数与微分"] },
+          { id: 6, type: "radio", stem: "求极限 lim(x→0) sin(x)/x 的值为：", options: [{ key: "A", content: "0" }, { key: "B", content: "1" }, { key: "C", content: "∞" }, { key: "D", content: "不存在" }], correctAnswer: "B", analysis: "这是一个重要极限", difficulty: "medium", knowledgePoints: ["极限与连续"] },
+          { id: 1002, type: "radio", stem: "函数 f(x) = x³ 的导数 f'(x) 为：", options: [{ key: "A", content: "x²" }, { key: "B", content: "2x²" }, { key: "C", content: "3x²" }, { key: "D", content: "3x" }], correctAnswer: "C", analysis: "根据幂函数求导公式", difficulty: "easy", knowledgePoints: ["导数与微分"] },
+          { id: 2, type: "checkbox", stem: "以下哪些是 JavaScript 的基本数据类型？", options: [{ key: "A", content: "String" }, { key: "B", content: "Number" }, { key: "C", content: "Array" }, { key: "D", content: "Boolean" }], correctAnswers: ["A", "B", "D"], analysis: "Array 是引用类型", difficulty: "medium", knowledgePoints: ["JavaScript基础"] },
+          { id: 5, type: "judge", stem: "可导函数一定连续。", options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }], correctAnswer: "T", analysis: "可导必连续", difficulty: "easy", knowledgePoints: ["导数与微分"] },
+          { id: 3, type: "input", stem: "光在真空中的传播速度约为 ______ m/s。", blanks: [{ answer: "3×10^8" }], correctAnswer: "3×10^8", analysis: "光速常数", difficulty: "medium", knowledgePoints: ["光学"] },
+        ];
+        let filtered = questionBank.filter(q => !excludeQuestionIds.includes(q.id));
+        if (questionType) filtered = filtered.filter(q => q.type === questionType);
+        if (difficulty) filtered = filtered.filter(q => q.difficulty === difficulty);
+        if (knowledgePoints) filtered = filtered.filter(q => q.knowledgePoints.some(kp => kp.includes(knowledgePoints)));
+        return { code: 0, msg: "success", data: filtered.slice(0, count).map(q => ({ ...q, id: Date.now() + Math.random(), fromBank: true })) };
+      }
+      
       const generated = [];
       for (let i = 0; i < Math.min(count, 10); i++) {
         const id = Date.now() + i;
@@ -1851,6 +1869,32 @@ export default [
         code: 0,
         msg: `成功归档 ${count} 道题目到题库`,
         data: { archivedCount: count }
+      };
+    }
+  },
+
+  // AI 试卷分析
+  {
+    url: "/edu/backend/v1/ai/paper/analyze",
+    method: "post",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          difficulty: 3.2,
+          difficultyDescription: "中等偏难",
+          knowledgeCoverage: 85,
+          typeBalance: 78,
+          estimatedTime: 95,
+          overallScore: 82,
+          suggestions: [
+            "建议增加简单题目的比例，当前难度分布偏高",
+            "知识点覆盖较全面，但「级数理论」相关题目较少",
+            "题型分布合理，但可考虑增加填空题数量",
+            "预估答题时间接近限时，建议适当减少题量或延长考试时间"
+          ]
+        }
       };
     }
   },

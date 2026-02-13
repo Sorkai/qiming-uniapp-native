@@ -28,8 +28,15 @@ const aiSettings = reactive({
   questionType: "radio",
   count: 1,
   includeAnalysis: true,
-  polishMode: false
+  polishMode: false,
+  mode: "generate" as "generate" | "recommend" | "polish"
 });
+
+const modeOptions = [
+  { value: "generate", label: "AI 生成新题", description: "根据知识点生成全新题目" },
+  { value: "recommend", label: "题库智能推荐", description: "从题库中智能匹配相关题目" },
+  { value: "polish", label: "润色优化", description: "优化已有题目内容" }
+];
 
 const questionBankList = ref<QuestionBankItem[]>([]);
 const questionBankLoading = ref(false);
@@ -172,16 +179,19 @@ const generateWithAI = async () => {
       difficulty: aiSettings.difficulty,
       count: aiSettings.count,
       includeAnalysis: aiSettings.includeAnalysis,
+      mode: aiSettings.mode,
       polishMode: aiSettings.polishMode,
       originalContent: aiSettings.polishMode ? knowledgeInput.value : undefined
     });
 
     if (res.code === 0) {
       aiGeneratedQuestions.value = res.data;
-      ElMessage.success(`成功生成 ${res.data.length} 道题目`);
+      const modeText =
+        aiSettings.mode === "recommend" ? "推荐" : "生成";
+      ElMessage.success(`成功${modeText} ${res.data.length} 道题目`);
     }
   } catch {
-    ElMessage.error("AI 生成失败,请重试");
+    ElMessage.error("AI 操作失败,请重试");
   } finally {
     aiGenerating.value = false;
   }
@@ -347,12 +357,30 @@ const applyAllAIQuestions = () => {
           </div>
 
           <el-form label-width="80px">
+            <el-form-item label="生成模式">
+              <el-radio-group v-model="aiSettings.mode">
+                <el-radio-button
+                  v-for="opt in modeOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  <div class="mode-option">
+                    <div class="mode-label">{{ opt.label }}</div>
+                    <div class="mode-desc">{{ opt.description }}</div>
+                  </div>
+                </el-radio-button>
+              </el-radio-group>
+            </el-form-item>
             <el-form-item label="知识点">
               <el-input
                 v-model="knowledgeInput"
                 type="textarea"
                 :rows="3"
-                placeholder="请输入知识点、题目内容或关键词，AI 将根据这些信息生成题目..."
+                :placeholder="
+                  aiSettings.mode === 'recommend'
+                    ? '请输入知识点或关键词，AI 将从题库中智能推荐相关题目...'
+                    : '请输入知识点、题目内容或关键词，AI 将根据这些信息生成题目...'
+                "
               />
             </el-form-item>
             <el-form-item label="题型">
@@ -391,7 +419,13 @@ const applyAllAIQuestions = () => {
               @click="generateWithAI"
             >
               <el-icon><MagicStick /></el-icon>
-              {{ aiSettings.polishMode ? "AI 润色出题" : "AI 生成题目" }}
+              {{
+                aiSettings.mode === "recommend"
+                  ? "AI 智能推荐"
+                  : aiSettings.mode === "polish"
+                    ? "AI 润色优化"
+                    : "AI 生成题目"
+              }}
             </el-button>
           </div>
 

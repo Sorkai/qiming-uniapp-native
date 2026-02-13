@@ -170,6 +170,42 @@ export interface AIGenerateQuestionParams {
   includeAnalysis: boolean;
   polishMode?: boolean;
   originalContent?: string;
+  /** 生成模式：generate-生成新题 | recommend-从题库推荐 | polish-润色 */
+  mode?: "generate" | "recommend" | "polish";
+  /** recommend 模式下排除的题目ID */
+  excludeQuestionIds?: number[];
+}
+
+/** AI 试卷分析参数 */
+export interface AIPaperAnalyzeParams {
+  questionGroups: Array<{
+    groupName: string;
+    questionType: string;
+    questions: Array<{
+      stem: string;
+      points: number;
+      difficulty?: number;
+      knowledgePoints?: string[];
+    }>;
+  }>;
+}
+
+/** AI 试卷分析结果 */
+export interface AIPaperAnalyzeResult {
+  /** 整体难度 1-5 */
+  difficulty: number;
+  /** 难度描述 */
+  difficultyDescription: string;
+  /** 知识点覆盖率 0-100 */
+  knowledgeCoverage: number;
+  /** 题型平衡度 0-100 */
+  typeBalance: number;
+  /** 预估完成时间（分钟） */
+  estimatedTime: number;
+  /** 整体评分 0-100 */
+  overallScore: number;
+  /** 改进建议 */
+  suggestions: string[];
 }
 
 /** AI 生成的题目 */
@@ -753,6 +789,17 @@ export const getKnowledgePoints = () => {
   return http.request<ApiResponse<KnowledgePoint[]>>(
     "get",
     "/edu/backend/v1/knowledge-points"
+  );
+};
+
+/**
+ * AI 分析试卷
+ */
+export const aiAnalyzePaper = (data: AIPaperAnalyzeParams) => {
+  return http.request<ApiResponse<AIPaperAnalyzeResult>>(
+    "post",
+    "/edu/backend/v1/ai/paper/analyze",
+    { data }
   );
 };
 

@@ -21,7 +21,9 @@ import {
   getTemplateDetail,
   archiveQuestionToBank as archiveQuestionToBankApi,
   batchArchiveToBank,
-  getCourseList
+  getCourseList,
+  aiAnalyzePaper,
+  type AIPaperAnalyzeResult
 } from "@/api/examPaper";
 
 defineOptions({
@@ -146,6 +148,11 @@ const paper = reactive({
 
 // 设置面板是否展开
 const settingsPanelVisible = ref(false);
+
+// AI 分析面板
+const aiAnalysisPanelVisible = ref(false);
+const aiAnalyzing = ref(false);
+const aiAnalysisResult = ref<AIPaperAnalyzeResult | null>(null);
 
 // 自动保存状态
 const autoSaveStatus = ref<"idle" | "saving" | "saved" | "error">("idle");
@@ -820,6 +827,56 @@ const archiveQuestionHandler = async (question: any, groupId: number) => {
   }
 };
 
+// AI 分析试卷
+const analyzeWithAI = async () => {
+  if (paper.questionGroups.length === 0) {
+    ElMessage.warning("请先添加题目再进行分析");
+    return;
+  }
+
+  aiAnalyzing.value = true;
+  aiAnalysisResult.value = null;
+
+  try {
+    const questionGroups = paper.questionGroups.map(group => ({
+      groupName: group.groupName,
+      questionType: group.questionType,
+      questions: group.questions.map((q: any) => ({
+        stem: q.stem || "",
+        points: q.points || 0,
+        difficulty: q.difficulty,
+        knowledgePoints: q.knowledgePoints || []
+      }))
+    }));
+
+    const res = await aiAnalyzePaper({ questionGroups });
+    if (res.code === 0) {
+      aiAnalysisResult.value = res.data;
+      ElMessage.success("AI 分析完成");
+    } else {
+      ElMessage.error(res.msg || "分析失败");
+    }
+  } catch {
+    ElMessage.error("AI 分析失败，请重试");
+  } finally {
+    aiAnalyzing.value = false;
+  }
+};
+
+// 获取难度颜色
+const getDifficultyColor = (score: number) => {
+  if (score <= 2) return "#67c23a";
+  if (score <= 3) return "#e6a23c";
+  return "#f56c6c";
+};
+
+// 获取评分颜色
+const getScoreColor = (score: number) => {
+  if (score >= 80) return "#67c23a";
+  if (score >= 60) return "#e6a23c";
+  return "#f56c6c";
+};
+
 // 批量归档试卷中的题目到题库
 const archiveAllQuestionsToBank = async () => {
   const allQuestions: any[] = [];
@@ -1314,6 +1371,91 @@ onBeforeUnmount(() => {
               maxlength="500"
               show-word-limit
             />
+          </div>
+
+          <!-- AI 试卷分析面板 -->
+          <div class="ai-analysis-panel">
+            <div
+              class="settings-toggle"
+              @click="aiAnalysisPanelVisible = !aiAnalysisPanelVisible"
+            >
+              <el-icon><MagicStick /></el-icon>
+              <span>AI 试卷分析</span>
+              <el-icon
+                class="toggle-arrow"
+                :class="{ expanded: aiAnalysisPanelVisible }"
+                ><ArrowDown
+              /></el-icon>
+            </div>
+            <el-collapse-transition>
+              <div v-show="aiAnalysisPanelVisible" class="settings-content">
+                <div class="ai-analysis-actions">
+                  <el-button
+                    type="primary"
+                    :loading="aiAnalyzing"
+                    @click="analyzeWithAI"
+                  >
+                    <el-icon><MagicStick /></el-icon>
+                    {{ aiAnalyzing ? "分析中..." : "开始 AI 分析" }}
+                  </el-button>
+                  <span class="analysis-hint"
+                    >AI 将分析试卷难度、知识点覆盖、题型分布等</span
+                  >
+                </div>
+
+                <div v-if="aiAnalysisResult" class="ai-analysis-result">
+                  <div class="result-header">
+                    <span class="result-title">分析结果</span>
+                  </div>
+                  <div class="result-metrics">
+                    <div class="metric-item">
+                      <span class="metric-label">难度评估</span>
+                      <span
+                        class="metric-value"
+                        :style="{ color: getDifficultyColor(aiAnalysisResult.difficulty) }"
+                      >
+                        {{ aiAnalysisResult.difficultyDescription }} ({{ aiAnalysisResult.difficulty }}/5)
+                      </span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">知识点覆盖</span>
+                      <span class="metric-value">{{ aiAnalysisResult.knowledgeCoverage }}%</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">题型均衡度</span>
+                      <span class="metric-value">{{ aiAnalysisResult.typeBalance }}%</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">预估答题时间</span>
+                      <span class="metric-value">{{ aiAnalysisResult.estimatedTime }} 分钟</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">综合评分</span>
+                      <span
+                        class="metric-value"
+                        :style="{ color: getScoreColor(aiAnalysisResult.overallScore) }"
+                      >
+                        {{ aiAnalysisResult.overallScore }} 分
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    v-if="aiAnalysisResult.suggestions?.length"
+                    class="result-suggestions"
+                  >
+                    <div class="suggestions-title">优化建议</div>
+                    <ul class="suggestions-list">
+                      <li
+                        v-for="(suggestion, idx) in aiAnalysisResult.suggestions"
+                        :key="idx"
+                      >
+                        {{ suggestion }}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </el-collapse-transition>
           </div>
 
           <!-- 考试设置面板 -->
@@ -1911,6 +2053,106 @@ onBeforeUnmount(() => {
   }
   .paper-description {
     margin-bottom: 20px;
+  }
+  .ai-analysis-panel {
+    margin-bottom: 20px;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    overflow: hidden;
+    .settings-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #303133;
+      &:hover {
+        background: linear-gradient(135deg, #c8e6c9 0%, #bbdefb 100%);
+      }
+      .toggle-arrow {
+        transition: transform 0.3s;
+        margin-left: auto;
+        &.expanded {
+          transform: rotate(180deg);
+        }
+      }
+    }
+    .settings-content {
+      padding: 20px;
+      background: #fafafa;
+    }
+    .ai-analysis-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      .analysis-hint {
+        font-size: 13px;
+        color: #909399;
+      }
+    }
+    .ai-analysis-result {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid #e4e7ed;
+      .result-header {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e4e7ed;
+        .result-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #303133;
+        }
+      }
+      .result-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+        .metric-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 12px;
+          background: #f5f7fa;
+          border-radius: 6px;
+          .metric-label {
+            font-size: 12px;
+            color: #909399;
+          }
+          .metric-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+          }
+        }
+      }
+      .result-suggestions {
+        .suggestions-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+          margin-bottom: 8px;
+        }
+        .suggestions-list {
+          margin: 0;
+          padding-left: 20px;
+          li {
+            font-size: 13px;
+            color: #606266;
+            line-height: 1.8;
+            &::marker {
+              color: #00bfa5;
+            }
+          }
+        }
+      }
+    }
   }
   .settings-panel {
     margin-bottom: 20px;
