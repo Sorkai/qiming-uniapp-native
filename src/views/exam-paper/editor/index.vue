@@ -877,6 +877,38 @@ const getScoreColor = (score: number) => {
   return "#f56c6c";
 };
 
+// 饼状图颜色
+const pieColors = [
+  "#00bfa5",
+  "#409eff",
+  "#e6a23c",
+  "#f56c6c",
+  "#909399",
+  "#67c23a",
+  "#9c27b0",
+  "#ff9800"
+];
+
+// 饼状图样式（使用 conic-gradient）
+const pieChartStyle = computed(() => {
+  if (!aiAnalysisResult.value?.questionTypeDistribution?.length) {
+    return { background: "#e4e7ed" };
+  }
+  const distribution = aiAnalysisResult.value.questionTypeDistribution;
+  const gradientParts: string[] = [];
+  let currentAngle = 0;
+  distribution.forEach((item, idx) => {
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + (item.percentage / 100) * 360;
+    const color = pieColors[idx % pieColors.length];
+    gradientParts.push(`${color} ${startAngle}deg ${endAngle}deg`);
+    currentAngle = endAngle;
+  });
+  return {
+    background: `conic-gradient(${gradientParts.join(", ")})`
+  };
+});
+
 // 批量归档试卷中的题目到题库
 const archiveAllQuestionsToBank = async () => {
   const allQuestions: any[] = [];
@@ -1437,6 +1469,31 @@ onBeforeUnmount(() => {
                       >
                         {{ aiAnalysisResult.overallScore }} 分
                       </span>
+                    </div>
+                  </div>
+                  <!-- 题型分布饼状图 -->
+                  <div
+                    v-if="aiAnalysisResult.questionTypeDistribution?.length"
+                    class="result-distribution"
+                  >
+                    <div class="distribution-title">题型分布</div>
+                    <div class="distribution-chart">
+                      <div class="pie-chart" :style="pieChartStyle" />
+                      <div class="distribution-legend">
+                        <div
+                          v-for="(item, idx) in aiAnalysisResult.questionTypeDistribution"
+                          :key="idx"
+                          class="legend-item"
+                        >
+                          <span
+                            class="legend-color"
+                            :style="{ background: pieColors[idx % pieColors.length] }"
+                          />
+                          <span class="legend-name">{{ item.name }}</span>
+                          <span class="legend-count">{{ item.count }}题</span>
+                          <span class="legend-percent">{{ item.percentage }}%</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div
@@ -2129,6 +2186,53 @@ onBeforeUnmount(() => {
             font-size: 16px;
             font-weight: 600;
             color: #303133;
+          }
+        }
+      }
+      .result-distribution {
+        margin-bottom: 16px;
+        .distribution-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+          margin-bottom: 12px;
+        }
+        .distribution-chart {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          .pie-chart {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            flex-shrink: 0;
+          }
+          .distribution-legend {
+            flex: 1;
+            .legend-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 8px;
+              font-size: 13px;
+              .legend-color {
+                width: 12px;
+                height: 12px;
+                border-radius: 2px;
+                flex-shrink: 0;
+              }
+              .legend-name {
+                color: #303133;
+                min-width: 60px;
+              }
+              .legend-count {
+                color: #606266;
+                min-width: 40px;
+              }
+              .legend-percent {
+                color: #909399;
+              }
+            }
           }
         }
       }

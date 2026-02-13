@@ -190,6 +190,18 @@ export interface AIPaperAnalyzeParams {
   }>;
 }
 
+/** 题型分布项 */
+export interface QuestionTypeDistributionItem {
+  /** 题型名称 */
+  name: string;
+  /** 题型标识 */
+  type: string;
+  /** 题目数量 */
+  count: number;
+  /** 占比百分比 */
+  percentage: number;
+}
+
 /** AI 试卷分析结果 */
 export interface AIPaperAnalyzeResult {
   /** 整体难度 1-5 */
@@ -204,6 +216,8 @@ export interface AIPaperAnalyzeResult {
   estimatedTime: number;
   /** 整体评分 0-100 */
   overallScore: number;
+  /** 题型分布 */
+  questionTypeDistribution: QuestionTypeDistributionItem[];
   /** 改进建议 */
   suggestions: string[];
 }

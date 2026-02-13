@@ -1877,7 +1877,43 @@ export default [
   {
     url: "/edu/backend/v1/ai/paper/analyze",
     method: "post",
-    response: () => {
+    response: ({ body }: { body: any }) => {
+      // 根据提交的题目分组计算题型分布
+      const questionGroups = body?.questionGroups || [];
+      const typeMap: Record<string, { name: string; count: number }> = {};
+      let totalCount = 0;
+
+      questionGroups.forEach((group: any) => {
+        const type = group.questionType || "unknown";
+        const name = group.groupName || "未知题型";
+        const count = group.questions?.length || 0;
+        totalCount += count;
+
+        if (typeMap[type]) {
+          typeMap[type].count += count;
+        } else {
+          typeMap[type] = { name, count };
+        }
+      });
+
+      const questionTypeDistribution = Object.entries(typeMap).map(
+        ([type, { name, count }]) => ({
+          name,
+          type,
+          count,
+          percentage: totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
+        })
+      );
+
+      // 如果没有题目，返回默认的示例分布
+      const defaultDistribution = [
+        { name: "单选题", type: "radio", count: 10, percentage: 40 },
+        { name: "多选题", type: "checkbox", count: 5, percentage: 20 },
+        { name: "判断题", type: "judge", count: 5, percentage: 20 },
+        { name: "填空题", type: "input", count: 3, percentage: 12 },
+        { name: "简答题", type: "textarea", count: 2, percentage: 8 }
+      ];
+
       return {
         code: 0,
         msg: "success",
@@ -1888,6 +1924,10 @@ export default [
           typeBalance: 78,
           estimatedTime: 95,
           overallScore: 82,
+          questionTypeDistribution:
+            questionTypeDistribution.length > 0
+              ? questionTypeDistribution
+              : defaultDistribution,
           suggestions: [
             "建议增加简单题目的比例，当前难度分布偏高",
             "知识点覆盖较全面，但「级数理论」相关题目较少",
