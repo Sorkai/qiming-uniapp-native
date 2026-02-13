@@ -1023,10 +1023,170 @@ onBeforeRouteLeave((to, from, next) => {
   }
 });
 
+// 系统模板数据（前端硬编码）
+const systemTemplatesData: Record<string, any> = {
+  "1": {
+    title: "标准考试模板",
+    description: "包含单选、多选、判断、填空、简答题型，适合期中期末考试",
+    timeLimit: 120,
+    questionGroups: [
+      {
+        groupId: 1,
+        groupName: "单选题",
+        questionType: "radio",
+        questions: [{ questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }],
+        sortOrder: 0
+      },
+      {
+        groupId: 2,
+        groupName: "多选题",
+        questionType: "checkbox",
+        questions: [{ questionId: 201, questionType: "checkbox", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }],
+        sortOrder: 1
+      },
+      {
+        groupId: 3,
+        groupName: "判断题",
+        questionType: "judge",
+        questions: [{ questionId: 301, questionType: "judge", stem: "", points: 3, options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }], correctAnswer: "" }],
+        sortOrder: 2
+      },
+      {
+        groupId: 4,
+        groupName: "填空题",
+        questionType: "input",
+        questions: [{ questionId: 401, questionType: "input", stem: "", points: 5, blanks: [{ answer: "" }] }],
+        sortOrder: 3
+      },
+      {
+        groupId: 5,
+        groupName: "简答题",
+        questionType: "textarea",
+        questions: [{ questionId: 501, questionType: "textarea", stem: "", points: 8, referenceAnswer: "" }],
+        sortOrder: 4
+      }
+    ]
+  },
+  "2": {
+    title: "快速测验模板",
+    description: "仅包含客观题，适合课堂小测和随堂练习",
+    timeLimit: 30,
+    questionGroups: [
+      {
+        groupId: 1,
+        groupName: "单选题",
+        questionType: "radio",
+        questions: [
+          { questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" },
+          { questionId: 102, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+        ],
+        sortOrder: 0
+      },
+      {
+        groupId: 2,
+        groupName: "多选题",
+        questionType: "checkbox",
+        questions: [
+          { questionId: 201, questionType: "checkbox", stem: "", points: 10, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] },
+          { questionId: 202, questionType: "checkbox", stem: "", points: 10, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }
+        ],
+        sortOrder: 1
+      },
+      {
+        groupId: 3,
+        groupName: "判断题",
+        questionType: "judge",
+        questions: [
+          { questionId: 301, questionType: "judge", stem: "", points: 5, options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }], correctAnswer: "" }
+        ],
+        sortOrder: 2
+      }
+    ]
+  },
+  "3": {
+    title: "综合能力测试",
+    description: "包含材料分析、论述等主观题，适合综合能力评估",
+    timeLimit: 90,
+    questionGroups: [
+      {
+        groupId: 1,
+        groupName: "单选题",
+        questionType: "radio",
+        questions: [
+          { questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+        ],
+        sortOrder: 0
+      },
+      {
+        groupId: 2,
+        groupName: "简答题",
+        questionType: "textarea",
+        questions: [
+          { questionId: 201, questionType: "textarea", stem: "", points: 15, referenceAnswer: "" },
+          { questionId: 202, questionType: "textarea", stem: "", points: 20, referenceAnswer: "" },
+          { questionId: 203, questionType: "textarea", stem: "", points: 35, referenceAnswer: "" }
+        ],
+        sortOrder: 1
+      }
+    ]
+  },
+  "4": {
+    title: "学情调查问卷",
+    description: "用于学情调查，了解学生学习情况",
+    timeLimit: 30,
+    questionGroups: [
+      {
+        groupId: 1,
+        groupName: "单选题",
+        questionType: "radio",
+        questions: [
+          { questionId: 101, questionType: "radio", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" },
+          { questionId: 102, questionType: "radio", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+        ],
+        sortOrder: 0
+      },
+      {
+        groupId: 2,
+        groupName: "多选题",
+        questionType: "checkbox",
+        questions: [
+          { questionId: 201, questionType: "checkbox", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }
+        ],
+        sortOrder: 1
+      },
+      {
+        groupId: 3,
+        groupName: "简答题",
+        questionType: "textarea",
+        questions: [
+          { questionId: 301, questionType: "textarea", stem: "", points: 0, referenceAnswer: "" },
+          { questionId: 302, questionType: "textarea", stem: "", points: 0, referenceAnswer: "" }
+        ],
+        sortOrder: 2
+      }
+    ]
+  }
+};
+
 // 加载模板数据
 const loadTemplate = async (templateId: string) => {
+  // 检查是否是系统模板（ID 1-4，没有 my- 前缀）
+  if (!templateId.startsWith("my-") && systemTemplatesData[templateId]) {
+    const template = systemTemplatesData[templateId];
+    paper.title = template.title || "";
+    paper.description = template.description || "";
+    paper.timeLimit = template.timeLimit || 90;
+    paper.questionGroups = JSON.parse(JSON.stringify(template.questionGroups || []));
+    updateTotals();
+    hasUnsavedChanges.value = false;
+    ElMessage.success(`已加载系统模板：${template.title}`);
+    return;
+  }
+
+  // 私有模板从 API 获取
   try {
-    const res = await getTemplateDetail(templateId);
+    const actualId = templateId.startsWith("my-") ? templateId.slice(3) : templateId;
+    const res = await getTemplateDetail(actualId);
     if (res.code === 0 && res.data) {
       const template = res.data;
       paper.title = template.title || "";

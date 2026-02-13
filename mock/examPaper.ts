@@ -1939,6 +1939,62 @@ export default [
     }
   },
 
+  // ==================== 模板管理API ====================
+
+  // 获取我的模板列表
+  {
+    url: "/edu/backend/v1/paper/template/my",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: [
+          {
+            id: 101,
+            name: "我的数学测验模板",
+            description: "自定义的数学测验模板，包含基础题型",
+            questionTypes: ["单选题", "填空题", "简答题"],
+            totalQuestions: 10,
+            totalPoints: 50,
+            createTime: "2026-02-01"
+          },
+          {
+            id: 102,
+            name: "编程练习模板",
+            description: "用于编程课程的练习测试",
+            questionTypes: ["单选题", "多选题", "简答题"],
+            totalQuestions: 8,
+            totalPoints: 40,
+            createTime: "2026-02-05"
+          }
+        ]
+      };
+    }
+  },
+
+  // 创建模板
+  {
+    url: "/edu/backend/v1/paper/template/create",
+    method: "post",
+    response: () => {
+      return {
+        code: 0,
+        msg: "创建成功",
+        data: { templateId: Date.now() }
+      };
+    }
+  },
+
+  // 删除模板
+  {
+    url: "/edu/backend/v1/paper/template/delete",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "删除成功", data: null };
+    }
+  },
+
   // 获取知识点列表
   {
     url: "/edu/backend/v1/knowledge-points",

@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { getMyTemplates, createTemplate, deleteTemplate } from "@/api/examPaper";
 
 defineOptions({
   name: "ExamPaperTemplates"
@@ -69,8 +70,7 @@ const newTemplateForm = ref({
 // 加载我的模板
 const loadMyTemplates = async () => {
   try {
-    const response = await fetch("/edu/backend/v1/paper/template/my");
-    const result = await response.json();
+    const result = await getMyTemplates();
     if (result.code === 0 && result.data) {
       myTemplates.value = result.data;
     }
@@ -97,22 +97,17 @@ const openCreateDialog = () => {
 };
 
 // 创建新模板
-const createTemplate = async () => {
+const handleCreateTemplate = async () => {
   if (!newTemplateForm.value.name.trim()) {
     ElMessage.warning("请输入模板名称");
     return;
   }
 
   try {
-    const response = await fetch("/edu/backend/v1/paper/template/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: newTemplateForm.value.name,
-        description: newTemplateForm.value.description
-      })
+    const result = await createTemplate({
+      name: newTemplateForm.value.name,
+      description: newTemplateForm.value.description
     });
-    const result = await response.json();
     if (result.code === 0) {
       ElMessage.success("模板创建成功");
       createDialogVisible.value = false;
@@ -138,12 +133,7 @@ const deleteMyTemplate = (templateId: number, templateName: string) => {
   })
     .then(async () => {
       try {
-        const response = await fetch("/edu/backend/v1/paper/template/delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ templateId })
-        });
-        const result = await response.json();
+        const result = await deleteTemplate(templateId);
         if (result.code === 0) {
           ElMessage.success("删除成功");
           loadMyTemplates();
@@ -327,7 +317,7 @@ onMounted(() => {
       </el-form>
       <template #footer>
         <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="createTemplate">创建并编辑</el-button>
+        <el-button type="primary" @click="handleCreateTemplate">创建并编辑</el-button>
       </template>
     </el-dialog>
   </div>
