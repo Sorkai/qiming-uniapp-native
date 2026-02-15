@@ -710,12 +710,14 @@ $radius-lg: 16px;
       box-shadow: $dark-shadow;
     }
 
-    .page-title {
-      color: $dark-text-primary;
-    }
+    .page-header {
+      .page-title {
+        color: $dark-text-primary;
+      }
 
-    .page-desc {
-      color: $dark-text-secondary;
+      .page-desc {
+        color: $dark-text-secondary;
+      }
     }
 
     .stat-card {

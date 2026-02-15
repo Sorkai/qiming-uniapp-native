@@ -567,12 +567,14 @@ $radius-xl: 20px;
         box-shadow: $dark-shadow-lg;
       }
 
-      .stat-value {
-        color: $dark-text-primary;
-      }
+      .stat-info {
+        .stat-value {
+          color: $dark-text-primary;
+        }
 
-      .stat-label {
-        color: $dark-text-secondary;
+        .stat-label {
+          color: $dark-text-secondary;
+        }
       }
     }
 
@@ -623,20 +625,22 @@ $radius-xl: 20px;
         color: #818cf8;
       }
 
-      .paper-title {
-        color: $dark-text-primary;
-      }
-
-      .paper-meta {
-        color: $dark-text-secondary;
-
-        .divider {
-          color: $dark-border;
+      .paper-info {
+        .paper-title {
+          color: $dark-text-primary;
         }
-      }
 
-      .paper-time {
-        color: $dark-text-muted;
+        .paper-meta {
+          color: $dark-text-secondary;
+
+          .divider {
+            color: $dark-border;
+          }
+        }
+
+        .paper-time {
+          color: $dark-text-muted;
+        }
       }
     }
 
