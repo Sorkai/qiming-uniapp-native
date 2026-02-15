@@ -12,6 +12,9 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { onBeforeRouteLeave } from "vue-router";
 import draggable from "vuedraggable";
 import QuestionAssistant from "./components/QuestionAssistant.vue";
+import RichMediaUploader from "./components/RichMediaUploader.vue";
+import LatexEditor from "./components/LatexEditor.vue";
+import RichContent from "./components/RichContent.vue";
 import {
   createPaper,
   updatePaper,
