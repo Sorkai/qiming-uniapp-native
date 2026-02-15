@@ -391,6 +391,8 @@ const addQuestion = (groupId: number) => {
       stem: "",
       points: 5,
       analysis: "",
+      media: [],
+      latex: "",
       sortOrder: group.questions.length
     };
 
@@ -2245,6 +2247,8 @@ onBeforeUnmount(() => {
                     :rows="2"
                     maxlength="2000"
                   />
+                  <LatexEditor v-model="question.latex" />
+                  <RichMediaUploader v-model="question.media" />
                 </div>
                 <!-- 选项 -->
                 <div
