@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
+import {
+  getGradingStatistics,
+  getGradingPaperList,
+  autoGradeObjective
+} from "@/api/examPaper";
 
 // 导入 SVG 图标组件
 import IconEdit from "@/assets/home-icons/edit.svg?component";
@@ -41,48 +46,14 @@ const statusOptions = [
 
 // 统计数据
 const statistics = ref({
-  pending: 3,
-  grading: 1,
-  completed: 15,
-  total: 125
+  pending: 0,
+  grading: 0,
+  completed: 0,
+  total: 0
 });
 
 // 待阅卷列表
-const gradingList = ref([
-  {
-    id: 1,
-    paperTitle: "2024年春季期中考试",
-    courseName: "高等数学",
-    studentCount: 45,
-    gradedCount: 30,
-    pendingCount: 15,
-    status: "grading",
-    deadline: "2024-04-20",
-    publishTime: "2024-04-15 09:00"
-  },
-  {
-    id: 2,
-    paperTitle: "第三章单元测试",
-    courseName: "线性代数",
-    studentCount: 38,
-    gradedCount: 38,
-    pendingCount: 0,
-    status: "completed",
-    deadline: "2024-04-18",
-    publishTime: "2024-04-10 14:00"
-  },
-  {
-    id: 3,
-    paperTitle: "期末模拟考试",
-    courseName: "概率论",
-    studentCount: 42,
-    gradedCount: 0,
-    pendingCount: 42,
-    status: "pending",
-    deadline: "2024-04-25",
-    publishTime: "2024-04-22 10:00"
-  }
-]);
+const gradingList = ref<any[]>([]);
 
 // 分页
 const pagination = reactive({
@@ -94,13 +65,38 @@ const pagination = reactive({
 // 加载状态
 const loading = ref(false);
 
-// 搜索
-const handleSearch = () => {
+// 加载统计数据
+const loadStatistics = async () => {
+  try {
+    const res = await getGradingStatistics();
+    if (res.code === 0 && res.data) {
+      statistics.value = res.data;
+    }
+  } catch (e) {
+    console.error("获取阅卷统计失败", e);
+  }
+};
+
+// 搜索/加载列表
+const handleSearch = async () => {
   loading.value = true;
-  setTimeout(() => {
+  try {
+    const res = await getGradingPaperList({
+      pageNum: pagination.currentPage,
+      pageSize: pagination.pageSize,
+      keyword: searchForm.keyword || undefined,
+      status: (searchForm.status as any) || undefined,
+      courseId: searchForm.courseId || undefined
+    });
+    if (res.code === 0 && res.data) {
+      gradingList.value = res.data.list || [];
+      pagination.total = res.data.total || 0;
+    }
+  } catch (e) {
+    console.error("获取阅卷列表失败", e);
+  } finally {
     loading.value = false;
-    ElMessage.success("搜索完成");
-  }, 500);
+  }
 };
 
 // 重置搜索
@@ -119,17 +115,13 @@ const handleGrade = (row: any) => {
 // 批量自动批改客观题
 const handleAutoGrade = async (row: any) => {
   try {
-    const response = await fetch("/edu/backend/v1/paper/grade/auto", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ paperId: row.id })
-    });
-    const result = await response.json();
-    if (result.code === 0) {
-      ElMessage.success(`已自动批改 ${result.data.gradedCount} 份客观题`);
+    const res = await autoGradeObjective(row.id);
+    if (res.code === 0) {
+      ElMessage.success(`已自动批改 ${res.data.gradedCount} 份客观题`);
+      loadStatistics();
       handleSearch();
     } else {
-      ElMessage.error(result.msg || "自动批改失败");
+      ElMessage.error(res.msg || "自动批改失败");
     }
   } catch (error) {
     console.error("自动批改失败:", error);
@@ -178,6 +170,11 @@ const handlePageChange = (page: number) => {
   pagination.currentPage = page;
   handleSearch();
 };
+
+onMounted(() => {
+  loadStatistics();
+  handleSearch();
+});
 </script>
 
 <template>

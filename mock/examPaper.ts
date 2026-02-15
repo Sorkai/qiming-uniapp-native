@@ -584,6 +584,54 @@ export default [
     }
   },
 
+  // 获取阅卷统计数据
+  {
+    url: "/edu/backend/v1/paper/grading/statistics",
+    method: "get",
+    response: () => {
+      const pending = mockPaperList.filter(p => p.status === PaperStatus.ENDED).length;
+      const grading = mockPaperList.filter(p => p.status === PaperStatus.GRADING).length;
+      const completed = mockPaperList.filter(p => [PaperStatus.GRADED, PaperStatus.SCORE_RELEASED].includes(p.status)).length;
+      const total = mockSubmissions.length;
+      return { code: 0, msg: "success", data: { pending, grading, completed, total } };
+    }
+  },
+
+  // 获取待阅卷试卷列表
+  {
+    url: "/edu/backend/v1/paper/grading/list",
+    method: "get",
+    response: ({ query }: { query: any }) => {
+      const { pageNum = 1, pageSize = 10, keyword, status, courseId } = query;
+      // 只取状态>=3（已结束、批改中、已批改、已发布成绩）的试卷作为阅卷列表
+      let list = mockPaperList
+        .filter(p => p.status >= PaperStatus.ENDED)
+        .map(p => {
+          let s: "pending" | "grading" | "completed" = "pending";
+          if (p.status === PaperStatus.ENDED) s = "pending";
+          else if (p.status === PaperStatus.GRADING) s = "grading";
+          else s = "completed";
+          return {
+            id: p.paperId,
+            paperTitle: p.title,
+            courseName: p.courseName,
+            studentCount: p.participantCount,
+            gradedCount: p.gradedCount,
+            pendingCount: p.participantCount - p.gradedCount,
+            status: s,
+            deadline: p.endTime || "",
+            publishTime: p.startTime || p.createTime
+          };
+        });
+      if (keyword) list = list.filter(i => i.paperTitle.includes(keyword) || i.courseName.includes(keyword));
+      if (status) list = list.filter(i => i.status === status);
+      if (courseId) list = list.filter(i => i.courseName.includes(String(courseId)));
+      const start = (Number(pageNum) - 1) * Number(pageSize);
+      const end = start + Number(pageSize);
+      return { code: 0, msg: "success", data: { total: list.length, list: list.slice(start, end) } };
+    }
+  },
+
   // 获取最近编辑的试卷
   {
     url: "/edu/backend/v1/paper/recent",
