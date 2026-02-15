@@ -27,6 +27,18 @@ export default {
         showLink: false,
         activePath: "/student-exam-center"
       }
+    },
+    {
+      path: "/student-exam-center/do/:id",
+      name: "StudentExamDo",
+      component: () => import("@/views/exam-paper/do/index.vue"),
+      meta: {
+        title: "参加考试",
+        showLink: false,
+        showParent: false,
+        hiddenTag: true,
+        activePath: "/student-exam-center"
+      }
     }
   ]
 } as RouteConfigsTable;

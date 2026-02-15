@@ -104,26 +104,6 @@ export default {
         showParent: false,
         hiddenTag: true
       }
-    },
-    {
-      path: "/exam-paper/do/:id",
-      name: "ExamPaperDo",
-      component: () => import("@/views/exam-paper/do/index.vue"),
-      meta: {
-        title: "参加考试",
-        showLink: false,
-        showParent: false,
-        hiddenTag: true
-      }
-    },
-    {
-      path: "/exam-paper/student-center",
-      name: "ExamPaperStudentCenter",
-      component: () => import("@/views/exam-paper/student-center/index.vue"),
-      meta: {
-        title: "试题试卷中心",
-        icon: "ri:file-list-2-line"
-      }
     }
   ]
 } satisfies RouteConfigsTable;
