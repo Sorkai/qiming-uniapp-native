@@ -1143,12 +1143,36 @@ export default [
     }
   },
 
-  // 保存答案
+  // 保存答案（支持时间戳）
   {
     url: "/edu/frontend/v1/exam/save",
     method: "post",
-    response: () => {
+    response: ({ body }: { body: any }) => {
+      const { submissionId, questionId, answer, enterTime, leaveTime } = body;
+      
+      // 如果提供了时间戳，模拟后端计算时长
+      if (enterTime && leaveTime) {
+        const duration = Math.floor((leaveTime - enterTime) / 1000);
+        console.log(`题目 ${questionId} 答题时长: ${duration}秒`);
+        // 这里后端会累加到数据库中
+      }
+      
       return { code: 0, msg: "保存成功", data: null };
+    }
+  },
+
+  // 获取题目答题时长
+  {
+    url: "/edu/frontend/v1/exam/question-duration",
+    method: "post",
+    response: ({ body }: { body: any }) => {
+      const { submissionId, questionId } = body;
+      // 模拟返回累计时长（实际应该从数据库读取）
+      return { 
+        code: 0, 
+        msg: "success", 
+        data: { duration: 0 } // 后端返回该题的累计答题时长（秒）
+      };
     }
   },
 

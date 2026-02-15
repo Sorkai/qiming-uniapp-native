@@ -1544,7 +1544,7 @@ export const startExam = (paperId: number) => {
 };
 
 /**
- * 保存答案（自动保存，包含答题时长）
+ * 保存答案（自动保存）
  */
 export const saveAnswer = (data: {
   submissionId: number;
@@ -1555,6 +1555,36 @@ export const saveAnswer = (data: {
   return http.request<ApiResponse>("post", "/edu/frontend/v1/exam/save", {
     data
   });
+};
+
+/**
+ * 保存答题时长（使用时间戳）
+ */
+export const saveDuration = (data: {
+  submissionId: number;
+  questionId: number;
+  enterTime: number; // 进入该题的时间戳（毫秒）
+  leaveTime: number; // 离开该题的时间戳（毫秒）
+}) => {
+  return http.request<ApiResponse<{ duration: number }>>(
+    "post",
+    "/edu/frontend/v1/exam/save-duration",
+    { data }
+  );
+};
+
+/**
+ * 获取题目答题时长（用于显示实时用时）
+ */
+export const getQuestionDuration = (data: {
+  submissionId: number;
+  questionId: number;
+}) => {
+  return http.request<ApiResponse<{ duration: number }>>(
+    "post",
+    "/edu/frontend/v1/exam/question-duration",
+    { data }
+  );
 };
 
 /**

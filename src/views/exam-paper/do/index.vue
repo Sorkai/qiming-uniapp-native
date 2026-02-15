@@ -3,7 +3,7 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from "vue"
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useDark } from "@pureadmin/utils";
-import { startExam, saveAnswer, submitExam } from "@/api/examPaper";
+import { startExam, saveAnswer, saveDuration, submitExam } from "@/api/examPaper";
 import RichContent from "@/views/exam-paper/editor/components/RichContent.vue";
 
 defineOptions({
@@ -31,12 +31,12 @@ const examData = reactive({
 // 当前题目索引
 const currentQuestionIndex = ref(0);
 
-// 学生答案（包含答题时长）
+// 学生答案（使用时间戳记录）
 interface AnswerRecord {
   questionId: number;
   answer: string | string[];
-  duration: number; // 该题累计答题时长（秒）
-  lastEnterTime: number; // 最后进入该题的时间戳
+  duration: number; // 该题累计答题时长（秒，从后端获取）
+  enterTime: number; // 进入该题的时间戳（毫秒）
 }
 const answers = ref<Map<number, AnswerRecord>>(new Map());
 
@@ -104,28 +104,38 @@ const initAnswerRecords = () => {
       answers.value.set(q.questionId, {
         questionId: q.questionId,
         answer: q.questionType === 2 ? [] : "", // 多选题用数组
-        duration: 0,
-        lastEnterTime: 0
+        duration: 0, // 从后端获取
+        enterTime: 0
       });
     }
   });
 };
 
-// 进入题目（开始计时）
+// 进入题目（记录进入时间戳）
 const enterQuestion = (questionId: number) => {
   const record = answers.value.get(questionId);
   if (record) {
-    record.lastEnterTime = Date.now();
+    record.enterTime = Date.now();
   }
 };
 
-// 离开题目（停止计时，累加时长）
-const leaveQuestion = (questionId: number) => {
+// 离开题目（发送时间戳给后端）
+const leaveQuestion = async (questionId: number) => {
   const record = answers.value.get(questionId);
-  if (record && record.lastEnterTime > 0) {
-    const elapsed = Math.floor((Date.now() - record.lastEnterTime) / 1000);
-    record.duration += elapsed;
-    record.lastEnterTime = 0;
+  if (record && record.enterTime > 0) {
+    const leaveTime = Date.now();
+    // 发送时间戳给后端，后端计算并累加时长
+    try {
+      await saveDuration({
+        submissionId: examData.submissionId,
+        questionId,
+        enterTime: record.enterTime,
+        leaveTime: leaveTime
+      });
+    } catch (error) {
+      console.error("保存答题时长失败:", error);
+    }
+    record.enterTime = 0;
   }
 };
 
@@ -167,20 +177,19 @@ const updateAnswer = (value: string | string[]) => {
   const record = answers.value.get(currentQuestion.value.questionId);
   if (record) {
     record.answer = value;
-    // 自动保存答案
-    autoSaveAnswer(currentQuestion.value.questionId, value, record.duration);
+    // 自动保存答案（不需要发送时长，只在离开题目时发送时间戳）
+    autoSaveAnswer(currentQuestion.value.questionId, value);
   }
 };
 
-// 自动保存答案（带时长）
-const autoSaveAnswer = async (questionId: number, answer: string | string[], duration: number) => {
+// 自动保存答案（仅保存答案内容）
+const autoSaveAnswer = async (questionId: number, answer: string | string[]) => {
   if (!examData.submissionId) return;
   try {
     await saveAnswer({
       submissionId: examData.submissionId,
       questionId,
-      answer,
-      duration // 新增：提交答题时长
+      answer
     });
   } catch (error) {
     console.error("自动保存失败:", error);
@@ -285,9 +294,10 @@ const getCurrentQuestionDuration = computed(() => {
   questionTimerTick.value;
   
   if (!currentAnswerRecord.value) return 0;
-  let duration = currentAnswerRecord.value.duration;
-  if (currentAnswerRecord.value.lastEnterTime > 0) {
-    duration += Math.floor((Date.now() - currentAnswerRecord.value.lastEnterTime) / 1000);
+  let duration = currentAnswerRecord.value.duration; // 后端返回的累计时长
+  if (currentAnswerRecord.value.enterTime > 0) {
+    // 加上当前正在计时的部分
+    duration += Math.floor((Date.now() - currentAnswerRecord.value.enterTime) / 1000);
   }
   return duration;
 });
