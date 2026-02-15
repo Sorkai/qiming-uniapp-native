@@ -2,6 +2,12 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  getMyTemplates,
+  createTemplate,
+  deleteTemplate,
+  getSystemTemplateStats
+} from "@/api/examPaper";
 
 defineOptions({
   name: "ExamPaperTemplates"
@@ -13,42 +19,46 @@ const router = useRouter();
 const systemTemplates = ref([
   {
     id: 1,
+    templateKey: "standard",
     name: "标准考试模板",
-    description: "包含单选、多选、判断、填空、简答题型，适合期中期末考试",
-    questionTypes: ["单选题", "多选题", "判断题", "填空题", "简答题"],
-    totalQuestions: 6,
-    totalPoints: 26,
-    useCount: 156,
+    description: "单选10道·多选5道·填空5道·大题10道",
+    questionTypes: ["单选题", "多选题", "填空题", "大题"],
+    totalQuestions: 30,
+    totalPoints: 100,
+    useCount: 0,
     isSystem: true
   },
   {
     id: 2,
+    templateKey: "quick",
     name: "快速测验模板",
     description: "仅包含客观题，适合课堂小测和随堂练习",
-    questionTypes: ["单选题", "多选题", "判断题"],
-    totalQuestions: 6,
-    totalPoints: 35,
-    useCount: 89,
+    questionTypes: ["单选题", "多选题"],
+    totalQuestions: 5,
+    totalPoints: 25,
+    useCount: 0,
     isSystem: true
   },
   {
     id: 3,
+    templateKey: "comprehensive",
     name: "综合能力测试",
-    description: "包含材料分析、论述等主观题，适合综合能力评估",
+    description: "单选10道·简答5道，适合综合能力评估",
     questionTypes: ["单选题", "简答题"],
-    totalQuestions: 5,
+    totalQuestions: 15,
     totalPoints: 75,
-    useCount: 67,
+    useCount: 0,
     isSystem: true
   },
   {
     id: 4,
+    templateKey: "survey",
     name: "学情调查问卷",
-    description: "用于学情调查，了解学生学习情况",
-    questionTypes: ["单选题", "多选题", "简答题"],
-    totalQuestions: 5,
-    totalPoints: 0,
-    useCount: 45,
+    description: "单选10道·多选2道·简答5道·判断5道",
+    questionTypes: ["单选题", "多选题", "简答题", "判断题"],
+    totalQuestions: 22,
+    totalPoints: 120,
+    useCount: 0,
     isSystem: true
   }
 ]);
@@ -66,11 +76,29 @@ const newTemplateForm = ref({
   description: ""
 });
 
+// 加载系统模板统计（使用人数）
+const loadTemplateStats = async () => {
+  try {
+    const result = await getSystemTemplateStats();
+    if (result.code === 0 && result.data) {
+      result.data.forEach((stat: any) => {
+        const tpl = systemTemplates.value.find(
+          t => t.templateKey === stat.templateKey
+        );
+        if (tpl) {
+          tpl.useCount = stat.useCount;
+        }
+      });
+    }
+  } catch (error) {
+    console.error("加载模板统计失败:", error);
+  }
+};
+
 // 加载我的模板
 const loadMyTemplates = async () => {
   try {
-    const response = await fetch("/edu/backend/v1/paper/template/my");
-    const result = await response.json();
+    const result = await getMyTemplates();
     if (result.code === 0 && result.data) {
       myTemplates.value = result.data;
     }
@@ -86,8 +114,86 @@ const useTemplate = (templateId: number, isSystem: boolean) => {
 };
 
 // 预览模板
+const previewDialogVisible = ref(false);
+const previewLoading = ref(false);
+const previewData = ref<any>(null);
+
+// 系统模板预览数据（前端硬编码）
+const systemTemplatePreviewData: Record<string, any> = {
+  standard: {
+    templateKey: "standard",
+    name: "标准考试模板",
+    description: "包含单选、多选、填空、大题，适合期中期末考试",
+    totalQuestions: 30,
+    totalPoints: 100,
+    questionGroups: [
+      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 2, subtotal: 20 },
+      { groupName: "二、多选题", questionType: "checkbox", count: 5, pointsPerQuestion: 4, subtotal: 20 },
+      { groupName: "三、填空题", questionType: "input", count: 5, pointsPerQuestion: 4, subtotal: 20 },
+      { groupName: "四、简答题", questionType: "textarea", count: 10, pointsPerQuestion: 4, subtotal: 40 }
+    ]
+  },
+  quick: {
+    templateKey: "quick",
+    name: "快速测验模板",
+    description: "仅包含客观题，适合课堂小测和随堂练习",
+    totalQuestions: 5,
+    totalPoints: 25,
+    questionGroups: [
+      { groupName: "一、单选题", questionType: "radio", count: 3, pointsPerQuestion: 5, subtotal: 15 },
+      { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10 }
+    ]
+  },
+  comprehensive: {
+    templateKey: "comprehensive",
+    name: "综合能力测试",
+    description: "包含单选和简答，适合综合能力评估",
+    totalQuestions: 15,
+    totalPoints: 75,
+    questionGroups: [
+      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 3, subtotal: 30 },
+      { groupName: "二、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 9, subtotal: 45 }
+    ]
+  },
+  survey: {
+    templateKey: "survey",
+    name: "学情调查问卷",
+    description: "用于学情调查，了解学生学习情况",
+    totalQuestions: 22,
+    totalPoints: 120,
+    questionGroups: [
+      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 4, subtotal: 40 },
+      { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10 },
+      { groupName: "三、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 10, subtotal: 50 },
+      { groupName: "四、判断题", questionType: "judge", count: 5, pointsPerQuestion: 4, subtotal: 20 }
+    ]
+  }
+};
+
 const previewTemplate = (templateId: number) => {
-  ElMessage.info("预览功能开发中");
+  const tpl = systemTemplates.value.find(t => t.id === templateId);
+  if (!tpl) return;
+  previewDialogVisible.value = true;
+  previewLoading.value = false;
+  previewData.value = systemTemplatePreviewData[tpl.templateKey] || null;
+};
+
+// 使用预览中的模板
+const usePreviewTemplate = () => {
+  previewDialogVisible.value = false;
+  const tpl = systemTemplates.value.find(
+    t => t.templateKey === previewData.value?.templateKey
+  );
+  useTemplate(tpl?.id || 1, true);
+};
+
+// 题型名称映射
+const questionTypeNameMap: Record<string, string> = {
+  radio: "单选题",
+  checkbox: "多选题",
+  judge: "判断题",
+  input: "填空题",
+  textarea: "简答/大题"
 };
 
 // 打开新建模板对话框
@@ -97,22 +203,17 @@ const openCreateDialog = () => {
 };
 
 // 创建新模板
-const createTemplate = async () => {
+const handleCreateTemplate = async () => {
   if (!newTemplateForm.value.name.trim()) {
     ElMessage.warning("请输入模板名称");
     return;
   }
 
   try {
-    const response = await fetch("/edu/backend/v1/paper/template/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: newTemplateForm.value.name,
-        description: newTemplateForm.value.description
-      })
+    const result = await createTemplate({
+      name: newTemplateForm.value.name,
+      description: newTemplateForm.value.description
     });
-    const result = await response.json();
     if (result.code === 0) {
       ElMessage.success("模板创建成功");
       createDialogVisible.value = false;
@@ -138,12 +239,7 @@ const deleteMyTemplate = (templateId: number, templateName: string) => {
   })
     .then(async () => {
       try {
-        const response = await fetch("/edu/backend/v1/paper/template/delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ templateId })
-        });
-        const result = await response.json();
+        const result = await deleteTemplate(templateId);
         if (result.code === 0) {
           ElMessage.success("删除成功");
           loadMyTemplates();
@@ -164,6 +260,7 @@ const editMyTemplate = (templateId: number) => {
 };
 
 onMounted(() => {
+  loadTemplateStats();
   loadMyTemplates();
 });
 </script>
@@ -298,6 +395,73 @@ onMounted(() => {
       </el-tab-pane>
     </el-tabs>
 
+    <!-- 系统模板预览对话框 -->
+    <el-dialog
+      v-model="previewDialogVisible"
+      :title="previewData?.name || '模板预览'"
+      width="680px"
+      :close-on-click-modal="true"
+    >
+      <div v-loading="previewLoading">
+        <template v-if="previewData">
+          <div class="preview-header">
+            <p class="preview-desc">{{ previewData.description }}</p>
+            <div class="preview-summary">
+              <span>共 {{ previewData.totalQuestions }} 题</span>
+              <span>总分 {{ previewData.totalPoints }} 分</span>
+            </div>
+          </div>
+          <div class="preview-groups">
+            <div
+              v-for="(group, idx) in previewData.questionGroups"
+              :key="idx"
+              class="preview-group"
+            >
+              <div class="group-header">
+                <span class="group-name">{{ group.groupName }}</span>
+                <span class="group-meta"
+                  >{{ group.count }}题 × {{ group.pointsPerQuestion }}分 =
+                  {{ group.subtotal }}分</span
+                >
+                <el-tag size="small" type="info">{{
+                  questionTypeNameMap[group.questionType] ||
+                  group.questionType
+                }}</el-tag>
+              </div>
+              <div
+                v-if="group.sampleQuestions?.length"
+                class="sample-questions"
+              >
+                <div
+                  v-for="(sq, sqIdx) in group.sampleQuestions"
+                  :key="sqIdx"
+                  class="sample-question"
+                >
+                  <p class="sample-stem">
+                    <span class="sample-label">示例：</span>{{ sq.stem }}
+                  </p>
+                  <div v-if="sq.options?.length" class="sample-options">
+                    <span
+                      v-for="opt in sq.options"
+                      :key="opt.key"
+                      class="sample-option"
+                      >{{ opt.key }}. {{ opt.content }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+      <template #footer>
+        <el-button @click="previewDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="usePreviewTemplate"
+          >使用此模板</el-button
+        >
+      </template>
+    </el-dialog>
+
     <!-- 新建模板对话框 -->
     <el-dialog
       v-model="createDialogVisible"
@@ -327,7 +491,9 @@ onMounted(() => {
       </el-form>
       <template #footer>
         <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="createTemplate">创建并编辑</el-button>
+        <el-button type="primary" @click="handleCreateTemplate"
+          >创建并编辑</el-button
+        >
       </template>
     </el-dialog>
   </div>
@@ -335,6 +501,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .templates-page {
+  /* container */
 }
 
 .page-header {
@@ -371,6 +538,82 @@ onMounted(() => {
 .empty-state {
   padding: 60px 0;
   text-align: center;
+}
+
+/* 预览对话框样式 */
+.preview-header {
+  margin-bottom: 20px;
+
+  .preview-desc {
+    margin: 0 0 12px;
+    color: #606266;
+    font-size: 14px;
+  }
+
+  .preview-summary {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+  }
+}
+
+.preview-groups {
+  .preview-group {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f5f7fa;
+    border-radius: 6px;
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+
+      .group-name {
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .group-meta {
+        font-size: 12px;
+        color: #909399;
+      }
+    }
+
+    .sample-questions {
+      .sample-question {
+        padding: 8px 0;
+        border-top: 1px dashed #dcdfe6;
+
+        .sample-stem {
+          margin: 0 0 6px;
+          font-size: 13px;
+          color: #303133;
+
+          .sample-label {
+            color: #409eff;
+            font-size: 12px;
+            margin-right: 4px;
+          }
+        }
+
+        .sample-options {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          padding-left: 12px;
+
+          .sample-option {
+            font-size: 12px;
+            color: #606266;
+          }
+        }
+      }
+    }
+  }
 }
 
 .template-card {

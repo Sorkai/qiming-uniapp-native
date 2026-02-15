@@ -5,13 +5,17 @@ import {
   computed,
   onMounted,
   onBeforeUnmount,
-  watch
+  watch,
+  nextTick
 } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { onBeforeRouteLeave } from "vue-router";
 import draggable from "vuedraggable";
 import QuestionAssistant from "./components/QuestionAssistant.vue";
+import RichMediaUploader from "./components/RichMediaUploader.vue";
+import LatexEditor from "./components/LatexEditor.vue";
+import RichContent from "./components/RichContent.vue";
 import {
   createPaper,
   updatePaper,
@@ -21,7 +25,14 @@ import {
   getTemplateDetail,
   archiveQuestionToBank as archiveQuestionToBankApi,
   batchArchiveToBank,
-  getCourseList
+  getCourseList,
+  aiAnalyzePaper,
+  getPublishClasses,
+  getPublishStudents,
+  PublishTargetType,
+  type AIPaperAnalyzeResult,
+  type ClassInfo,
+  type PublishTargetStudent
 } from "@/api/examPaper";
 
 defineOptions({
@@ -73,6 +84,104 @@ const JudgeIcon = {
   </svg>`
 };
 
+const EssayIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <line x1="7" y1="8" x2="17" y2="8"/>
+    <line x1="7" y1="12" x2="17" y2="12"/>
+    <line x1="7" y1="16" x2="17" y2="16"/>
+  </svg>`
+};
+
+const MatrixSingleIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <circle cx="9" cy="9" r="1.5"/>
+    <circle cx="15" cy="9" r="1.5"/>
+    <circle cx="9" cy="15" r="1.5" fill="currentColor"/>
+    <circle cx="15" cy="15" r="1.5"/>
+  </svg>`
+};
+
+const MatrixMultipleIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <rect x="7" y="7" width="4" height="4" rx="0.5"/>
+    <rect x="13" y="7" width="4" height="4" rx="0.5" fill="currentColor"/>
+    <rect x="7" y="13" width="4" height="4" rx="0.5" fill="currentColor"/>
+    <rect x="13" y="13" width="4" height="4" rx="0.5" fill="currentColor"/>
+  </svg>`
+};
+
+const MatchingIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="6" cy="6" r="2"/>
+    <circle cx="6" cy="12" r="2"/>
+    <circle cx="6" cy="18" r="2"/>
+    <circle cx="18" cy="6" r="2"/>
+    <circle cx="18" cy="12" r="2"/>
+    <circle cx="18" cy="18" r="2"/>
+    <line x1="8" y1="6" x2="16" y2="12"/>
+    <line x1="8" y1="12" x2="16" y2="18"/>
+    <line x1="8" y1="18" x2="16" y2="6"/>
+  </svg>`
+};
+
+const OrderingIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="4" y1="6" x2="14" y2="6"/>
+    <line x1="4" y1="12" x2="14" y2="12"/>
+    <line x1="4" y1="18" x2="14" y2="18"/>
+    <polyline points="17 4 20 7 17 10"/>
+    <polyline points="20 14 17 17 20 20"/>
+    <line x1="20" y1="7" x2="17" y2="7"/>
+    <line x1="17" y1="17" x2="20" y2="17"/>
+  </svg>`
+};
+
+const SliderIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="3" y1="12" x2="21" y2="12"/>
+    <circle cx="14" cy="12" r="3" fill="currentColor"/>
+    <line x1="3" y1="8" x2="3" y2="16"/>
+    <line x1="21" y1="8" x2="21" y2="16"/>
+  </svg>`
+};
+
+const NpsRatingIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="2" y="8" width="20" height="8" rx="2"/>
+    <line x1="4" y1="10" x2="4" y2="14"/>
+    <line x1="6" y1="10" x2="6" y2="14"/>
+    <line x1="8" y1="10" x2="8" y2="14"/>
+    <line x1="10" y1="10" x2="10" y2="14"/>
+    <line x1="12" y1="10" x2="12" y2="14"/>
+    <line x1="14" y1="10" x2="14" y2="14"/>
+    <line x1="16" y1="10" x2="16" y2="14"/>
+    <line x1="18" y1="10" x2="18" y2="14"/>
+    <line x1="20" y1="10" x2="20" y2="14"/>
+    <text x="12" y="6" text-anchor="middle" font-size="5" fill="currentColor">NPS</text>
+  </svg>`
+};
+
+const StarRatingIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="currentColor"/>
+  </svg>`
+};
+
+const CompositeIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="2" width="18" height="8" rx="2"/>
+    <line x1="6" y1="5" x2="18" y2="5"/>
+    <line x1="6" y1="7" x2="14" y2="7"/>
+    <rect x="5" y="13" width="14" height="3" rx="1"/>
+    <rect x="5" y="18" width="14" height="3" rx="1"/>
+    <line x1="3" y1="14.5" x2="5" y2="14.5"/>
+    <line x1="3" y1="19.5" x2="5" y2="19.5"/>
+  </svg>`
+};
+
 const DragIcon = {
   template: `<svg viewBox="0 0 24 24" fill="currentColor">
     <circle cx="9" cy="6" r="1.5"/>
@@ -92,6 +201,15 @@ const iconComponents: Record<string, any> = {
   InputIcon,
   TextareaIcon,
   JudgeIcon,
+  EssayIcon,
+  MatrixSingleIcon,
+  MatrixMultipleIcon,
+  MatchingIcon,
+  OrderingIcon,
+  SliderIcon,
+  NpsRatingIcon,
+  StarRatingIcon,
+  CompositeIcon,
   DragIcon
 };
 
@@ -147,6 +265,11 @@ const paper = reactive({
 // 设置面板是否展开
 const settingsPanelVisible = ref(false);
 
+// AI 分析面板
+const aiAnalysisPanelVisible = ref(false);
+const aiAnalyzing = ref(false);
+const aiAnalysisResult = ref<AIPaperAnalyzeResult | null>(null);
+
 // 自动保存状态
 const autoSaveStatus = ref<"idle" | "saving" | "saved" | "error">("idle");
 const autoSaveSeconds = ref(30);
@@ -161,6 +284,7 @@ const outlineCollapsed = ref(false);
 
 // 预览相关
 const previewDialogVisible = ref(false);
+const previewWithAnswerDialogVisible = ref(false);
 const previewPaperSize = ref<"A4" | "A3">("A4");
 const previewScale = ref(100);
 
@@ -170,7 +294,46 @@ const questionTypes = [
   { id: "checkbox", label: "多选题", icon: "CheckboxIcon", color: "#00bfa5" },
   { id: "judge", label: "判断题", icon: "JudgeIcon", color: "#00bfa5" },
   { id: "input", label: "填空题", icon: "InputIcon", color: "#00bfa5" },
-  { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#00bfa5" }
+  { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#00bfa5" },
+  {
+    id: "textarea-essay",
+    label: "论述题",
+    icon: "EssayIcon",
+    color: "#00bfa5"
+  },
+  {
+    id: "matrix-single",
+    label: "矩阵单选",
+    icon: "MatrixSingleIcon",
+    color: "#00bfa5"
+  },
+  {
+    id: "matrix-multiple",
+    label: "矩阵多选",
+    icon: "MatrixMultipleIcon",
+    color: "#00bfa5"
+  },
+  { id: "matching", label: "连线题", icon: "MatchingIcon", color: "#00bfa5" },
+  { id: "ordering", label: "排序题", icon: "OrderingIcon", color: "#00bfa5" },
+  { id: "slider", label: "滑动评分", icon: "SliderIcon", color: "#00bfa5" },
+  {
+    id: "nps-rating",
+    label: "NPS评分",
+    icon: "NpsRatingIcon",
+    color: "#00bfa5"
+  },
+  {
+    id: "star-rating",
+    label: "星级评分",
+    icon: "StarRatingIcon",
+    color: "#00bfa5"
+  },
+  {
+    id: "composite",
+    label: "组合材料题",
+    icon: "CompositeIcon",
+    color: "#00bfa5"
+  }
 ];
 
 // 监听数据变化
@@ -205,6 +368,94 @@ const getGlobalQuestionIndex = (groupIndex: number, questionIndex: number) => {
   return index + questionIndex + 1;
 };
 
+// 将数字转换为中文数字
+const getChineseNumber = (num: number | string): string => {
+  const chineseDigits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  const numValue = typeof num === 'string' ? parseInt(num, 10) : num;
+  
+  if (numValue < 0) return String(numValue);
+  if (numValue === 0) return '零';
+  if (numValue <= 10) {
+    return ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][numValue];
+  }
+  
+  // 处理 11-99
+  if (numValue < 100) {
+    const tens = Math.floor(numValue / 10);
+    const ones = numValue % 10;
+    let result = '';
+    if (tens === 1) {
+      result = '十';
+    } else {
+      result = chineseDigits[tens] + '十';
+    }
+    if (ones > 0) {
+      result += chineseDigits[ones];
+    }
+    return result;
+  }
+  
+  // 处理 100-999
+  if (numValue < 1000) {
+    const hundreds = Math.floor(numValue / 100);
+    const remainder = numValue % 100;
+    let result = chineseDigits[hundreds] + '百';
+    if (remainder === 0) {
+      return result;
+    }
+    if (remainder < 10) {
+      result += '零' + chineseDigits[remainder];
+    } else {
+      const tens = Math.floor(remainder / 10);
+      const ones = remainder % 10;
+      if (tens === 1) {
+        result += '一十';
+      } else {
+        result += chineseDigits[tens] + '十';
+      }
+      if (ones > 0) {
+        result += chineseDigits[ones];
+      }
+    }
+    return result;
+  }
+  
+  // 处理 1000+
+  const thousands = Math.floor(numValue / 1000);
+  const remainder = numValue % 1000;
+  let result = chineseDigits[thousands] + '千';
+  if (remainder === 0) {
+    return result;
+  }
+  if (remainder < 100) {
+    result += '零';
+  }
+  if (remainder >= 100) {
+    const hundreds = Math.floor(remainder / 100);
+    result += chineseDigits[hundreds] + '百';
+    const tens = Math.floor((remainder % 100) / 10);
+    const ones = remainder % 10;
+    if (tens > 0) {
+      result += chineseDigits[tens] + '十';
+      if (ones > 0) {
+        result += chineseDigits[ones];
+      }
+    } else if (ones > 0) {
+      result += '零' + chineseDigits[ones];
+    }
+  } else if (remainder >= 10) {
+    const tens = Math.floor(remainder / 10);
+    const ones = remainder % 10;
+    result += chineseDigits[tens] + '十';
+    if (ones > 0) {
+      result += chineseDigits[ones];
+    }
+  } else {
+    result += chineseDigits[remainder];
+  }
+  return result;
+};
+
 // 添加题型分组
 const addQuestionGroup = (typeId: string) => {
   const typeInfo = questionTypes.find(t => t.id === typeId);
@@ -230,6 +481,8 @@ const addQuestion = (groupId: number) => {
       stem: "",
       points: 5,
       analysis: "",
+      media: [],
+      latex: "",
       sortOrder: group.questions.length
     };
 
@@ -260,6 +513,89 @@ const addQuestion = (groupId: number) => {
       newQuestion.blanks = [{ answer: "" }];
     } else if (group.questionType === "textarea") {
       newQuestion.referenceAnswer = "";
+    } else if (group.questionType === "textarea-essay") {
+      newQuestion.referenceAnswer = "";
+    } else if (group.questionType === "matrix-single") {
+      newQuestion.rows = [
+        { key: "R1", content: "行1" },
+        { key: "R2", content: "行2" },
+        { key: "R3", content: "行3" }
+      ];
+      newQuestion.columns = [
+        { key: "C1", content: "列1" },
+        { key: "C2", content: "列2" },
+        { key: "C3", content: "列3" }
+      ];
+      newQuestion.correctAnswers = {};
+    } else if (group.questionType === "matrix-multiple") {
+      newQuestion.rows = [
+        { key: "R1", content: "行1" },
+        { key: "R2", content: "行2" },
+        { key: "R3", content: "行3" }
+      ];
+      newQuestion.columns = [
+        { key: "C1", content: "列1" },
+        { key: "C2", content: "列2" },
+        { key: "C3", content: "列3" }
+      ];
+      newQuestion.correctAnswers = {};
+    } else if (group.questionType === "matching") {
+      newQuestion.leftItems = [
+        { key: "L1", content: "" },
+        { key: "L2", content: "" },
+        { key: "L3", content: "" }
+      ];
+      newQuestion.rightItems = [
+        { key: "R1", content: "" },
+        { key: "R2", content: "" },
+        { key: "R3", content: "" }
+      ];
+      newQuestion.correctMatches = {};
+    } else if (group.questionType === "ordering") {
+      newQuestion.items = [
+        { key: "1", content: "" },
+        { key: "2", content: "" },
+        { key: "3", content: "" },
+        { key: "4", content: "" }
+      ];
+      newQuestion.correctOrder = [];
+                } else if (group.questionType === "slider") {
+                  newQuestion.sliderMin = 0;
+                  newQuestion.sliderMax = 100;
+                  newQuestion.sliderStep = 1;
+                  newQuestion.sliderDefaultValue = 50;
+                  newQuestion.sliderLabels = { left: "最低", right: "最高" };
+                  newQuestion.points = 0;
+                } else if (group.questionType === "nps-rating") {
+                  newQuestion.npsMin = 0;
+                  newQuestion.npsMax = 10;
+                  newQuestion.npsLabels = {
+                    low: "完全不推荐",
+                    mid: "一般",
+                    high: "强烈推荐"
+                  };
+                  newQuestion.points = 0;
+                } else if (group.questionType === "star-rating") {
+                  newQuestion.starCount = 5;
+                  newQuestion.starLabels = ["很差", "较差", "一般", "较好", "很好"];
+                  newQuestion.points = 0;
+    } else if (group.questionType === "composite") {
+      newQuestion.material = "";
+      newQuestion.subQuestions = [
+        {
+          subId: Date.now() + 1,
+          questionType: "radio",
+          stem: "",
+          points: 5,
+          options: [
+            { key: "A", content: "" },
+            { key: "B", content: "" },
+            { key: "C", content: "" },
+            { key: "D", content: "" }
+          ],
+          correctAnswer: ""
+        }
+      ];
     }
 
     group.questions.push(newQuestion);
@@ -348,6 +684,91 @@ const removeBlank = (question: any, index: number) => {
   }
 };
 
+// 插入填空占位符到题干
+const insertBlankPlaceholder = (question: any) => {
+  const stemRef = stemRefs.value.get(question.questionId);
+  if (stemRef) {
+    const textarea = stemRef.$el?.querySelector("textarea") || stemRef;
+    if (textarea && textarea.selectionStart !== undefined) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = question.stem || "";
+      const placeholder = "{blank}";
+      question.stem = text.slice(0, start) + placeholder + text.slice(end);
+      nextTick(() => {
+        const newPos = start + placeholder.length;
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.focus();
+      });
+    } else {
+      question.stem = (question.stem || "") + "{blank}";
+    }
+  } else {
+    question.stem = (question.stem || "") + "{blank}";
+  }
+  // 同步更新 blanks 数组
+  syncBlanksWithStem(question);
+};
+
+// 解析题干中的占位符数量
+const parseBlankCount = (stem: string): number => {
+  if (!stem) return 0;
+  const matches = stem.match(/\{blank\}/g);
+  return matches ? matches.length : 0;
+};
+
+// 同步 blanks 数组与题干中的占位符
+const syncBlanksWithStem = (question: any) => {
+  if (question.questionType !== "input") return;
+  
+  const blankCount = parseBlankCount(question.stem);
+  const currentCount = question.blanks?.length || 0;
+  
+  if (blankCount > currentCount) {
+    // 需要添加更多空
+    for (let i = currentCount; i < blankCount; i++) {
+      question.blanks.push({ answer: "" });
+    }
+  } else if (blankCount < currentCount && blankCount > 0) {
+    // 需要减少空（保留已有答案）
+    question.blanks = question.blanks.slice(0, blankCount);
+  } else if (blankCount === 0 && currentCount === 0) {
+    // 确保至少有一个空
+    question.blanks = [{ answer: "" }];
+  }
+};
+
+// 监听填空题题干变化
+const watchBlankStemChange = (question: any) => {
+  if (question.questionType === "input") {
+    syncBlanksWithStem(question);
+  }
+};
+
+// 渲染带填空的题干（用于预览）
+const renderBlankStem = (stem: string, blanks: any[], showAnswer = false): string => {
+  if (!stem) return "未填写题目";
+  let index = 0;
+  return stem.replace(/\{blank\}/g, () => {
+    const answer = blanks?.[index]?.answer || "";
+    index++;
+    if (showAnswer && answer) {
+      return `<span class="blank-answer-inline">${answer}</span>`;
+    }
+    return '<span class="blank-placeholder">________</span>';
+  });
+};
+
+// 获取填空题占位符数量提示
+const getBlankCountHint = (question: any): string => {
+  if (question.questionType !== "input") return "";
+  const count = parseBlankCount(question.stem);
+  const blankCount = question.blanks?.length || 0;
+  if (count === 0) return "未检测到填空占位符";
+  if (count === blankCount) return `已检测到 ${count} 个填空`;
+  return `检测到 ${count} 个填空，当前 ${blankCount} 个答案`;
+};
+
 // 滚动到题目
 const scrollToQuestion = (questionId: number) => {
   activeQuestionId.value = questionId;
@@ -403,6 +824,8 @@ const outlineQuestions = computed({
 // 拖拽状态
 const isDragging = ref(false);
 const isDragOver = ref(false);
+let draggedGroupIndex: number | null = null;
+const dragOverGroupIndex = ref<number | null>(null);
 
 // 重置自动保存倒计时
 const resetAutoSaveCountdown = () => {
@@ -483,13 +906,69 @@ const previewPaper = () => {
   previewDialogVisible.value = true;
 };
 
+// 预览试卷（带答案）
+const previewPaperWithAnswer = () => {
+  if (paper.questionGroups.length === 0) {
+    ElMessage.warning("请先添加题目");
+    return;
+  }
+  previewWithAnswerDialogVisible.value = true;
+};
+
+// 获取题目答案显示文本
+const getAnswerText = (question: any) => {
+  if (question.questionType === "radio" || question.questionType === "judge") {
+    return question.correctAnswer || "未设置";
+  } else if (question.questionType === "checkbox") {
+    return question.correctAnswers?.length > 0
+      ? question.correctAnswers.join(", ")
+      : "未设置";
+  } else if (question.questionType === "input") {
+    return (
+      question.blanks
+        ?.map((b: any, i: number) => `第${i + 1}空: ${b.answer || "未设置"}`)
+        .join("; ") || "未设置"
+    );
+  } else if (
+    question.questionType === "textarea" ||
+    question.questionType === "textarea-essay"
+  ) {
+    return question.referenceAnswer || "未设置参考答案";
+  } else if (question.questionType === "ordering") {
+    return question.correctOrder || "未设置";
+  }
+  return "未设置";
+};
+
 // 打印试卷
 const printPaper = () => {
   window.print();
 };
 
-// 发布试卷
-const publishPaperHandler = async () => {
+// ========== 发布对话框相关 ==========
+const publishDialogVisible = ref(false);
+const publishTargetType = ref<number>(PublishTargetType.ALL);
+const publishSelectedCourseIds = ref<number[]>([]);
+const publishStudentList = ref<PublishTargetStudent[]>([]);
+const publishSelectedStudentIds = ref<number[]>([]);
+const publishStudentLoading = ref(false);
+const publishStudentKeyword = ref("");
+const publishFilterCourseId = ref<number | null>(null);
+const publishSubmitting = ref(false);
+
+// 过滤后的学生列表
+const filteredStudentList = computed(() => {
+  if (!publishStudentKeyword.value) return publishStudentList.value;
+  const kw = publishStudentKeyword.value.toLowerCase();
+  return publishStudentList.value.filter(
+    s =>
+      s.studentName.toLowerCase().includes(kw) ||
+      s.studentNo?.toLowerCase().includes(kw)
+  );
+});
+
+// 发布试卷 - 打开对话框
+const publishPaperHandler = () => {
   if (!paper.title.trim()) {
     ElMessage.warning("请输入试卷标题");
     return;
@@ -503,18 +982,91 @@ const publishPaperHandler = async () => {
     settingsPanelVisible.value = true;
     return;
   }
+  // 重置发布对话框状态
+  publishTargetType.value = PublishTargetType.ALL;
+  publishSelectedCourseIds.value = [];
+  publishSelectedStudentIds.value = [];
+  publishStudentList.value = [];
+  publishStudentKeyword.value = "";
+  publishFilterCourseId.value = null;
+  publishDialogVisible.value = true;
+};
 
+// 切换发布目标类型时的处理
+const onPublishTargetTypeChange = (val: number) => {
+  publishSelectedCourseIds.value = [];
+  publishSelectedStudentIds.value = [];
+  publishStudentList.value = [];
+  publishStudentKeyword.value = "";
+  publishFilterCourseId.value = null;
+  if (val === PublishTargetType.STUDENT) {
+    fetchPublishStudents();
+  }
+};
+
+// 加载学生列表
+const fetchPublishStudents = async () => {
+  publishStudentLoading.value = true;
   try {
-    await ElMessageBox.confirm("确定要发布这份试卷吗？", "发布确认", {
-      confirmButtonText: "确定发布",
-      cancelButtonText: "取消",
-      type: "info"
-    });
+    const params: any = { courseId: publishFilterCourseId.value || 0 };
+    const res = await getPublishStudents(params);
+    if (res.code === 0) {
+      publishStudentList.value = res.data || [];
+    }
+  } catch (e) {
+    console.error("加载学生列表失败", e);
+  } finally {
+    publishStudentLoading.value = false;
+  }
+};
+
+// 按课程筛选学生
+const onFilterCourseChange = () => {
+  publishSelectedStudentIds.value = [];
+  fetchPublishStudents();
+};
+
+// 全选/取消全选学生
+const toggleSelectAllStudents = () => {
+  const visible = filteredStudentList.value;
+  if (publishSelectedStudentIds.value.length === visible.length) {
+    publishSelectedStudentIds.value = [];
+  } else {
+    publishSelectedStudentIds.value = visible.map(s => s.studentId);
+  }
+};
+
+// 确认发布
+const confirmPublish = async () => {
+  if (
+    publishTargetType.value === PublishTargetType.CLASS &&
+    publishSelectedCourseIds.value.length === 0
+  ) {
+    ElMessage.warning("请选择至少一个课程");
+    return;
+  }
+  if (
+    publishTargetType.value === PublishTargetType.STUDENT &&
+    publishSelectedStudentIds.value.length === 0
+  ) {
+    ElMessage.warning("请选择至少一个学生");
+    return;
+  }
+
+  publishSubmitting.value = true;
+  try {
+    const targetIds =
+      publishTargetType.value === PublishTargetType.CLASS
+        ? publishSelectedCourseIds.value
+        : publishTargetType.value === PublishTargetType.STUDENT
+          ? publishSelectedStudentIds.value
+          : [];
 
     const res = await publishPaperAdvanced({
       paperId: Number(paperId.value) || Date.now(),
       config: {
-        targetType: 1,
+        targetType: publishTargetType.value,
+        targetIds,
         startTime: paper.startTime,
         endTime: paper.endTime,
         shuffleQuestions: paper.settings.shuffleQuestions,
@@ -529,11 +1081,14 @@ const publishPaperHandler = async () => {
 
     if (res.code === 0) {
       ElMessage.success("试卷发布成功！");
+      publishDialogVisible.value = false;
     } else {
       ElMessage.error(res.msg || "发布失败");
     }
   } catch {
-    // 用户取消
+    ElMessage.error("发布失败");
+  } finally {
+    publishSubmitting.value = false;
   }
 };
 
@@ -593,11 +1148,13 @@ const goBack = () => {
     })
       .then(() => {
         savePaper().then(() => {
+          hasUnsavedChanges.value = false;
           router.back();
         });
       })
       .catch(action => {
         if (action === "cancel") {
+          hasUnsavedChanges.value = false;
           router.back();
         }
       });
@@ -655,6 +1212,46 @@ const onDragLeave = (event: DragEvent) => {
   if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
     isDragOver.value = false;
   }
+};
+
+// 题型组拖拽排序
+const onGroupDragStart = (event: DragEvent, groupIndex: number) => {
+  draggedGroupIndex = groupIndex;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(groupIndex));
+  }
+};
+
+const onGroupDragEnd = () => {
+  draggedGroupIndex = null;
+  dragOverGroupIndex.value = null;
+};
+
+const onGroupDragOver = (event: DragEvent, groupIndex: number) => {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+  dragOverGroupIndex.value = groupIndex;
+};
+
+const onGroupDrop = (event: DragEvent, targetGroupIndex: number) => {
+  event.preventDefault();
+  event.stopPropagation();
+  
+  if (draggedGroupIndex !== null && draggedGroupIndex !== targetGroupIndex) {
+    const draggedGroup = paper.questionGroups[draggedGroupIndex];
+    paper.questionGroups.splice(draggedGroupIndex, 1);
+    
+    const insertIndex = draggedGroupIndex < targetGroupIndex ? targetGroupIndex - 1 : targetGroupIndex;
+    paper.questionGroups.splice(insertIndex, 0, draggedGroup);
+    
+    updateTotals();
+  }
+  
+  draggedGroupIndex = null;
+  dragOverGroupIndex.value = null;
 };
 
 // 题目助手相关
@@ -820,6 +1417,89 @@ const archiveQuestionHandler = async (question: any, groupId: number) => {
   }
 };
 
+// AI 分析试卷
+const analyzeWithAI = async () => {
+  if (paper.questionGroups.length === 0) {
+    ElMessage.warning("请先添加题目再进行分析");
+    return;
+  }
+
+  aiAnalyzing.value = true;
+  aiAnalysisResult.value = null;
+
+  try {
+    const questionGroups = paper.questionGroups.map(group => ({
+      groupName: group.groupName,
+      questionType: group.questionType,
+      questions: group.questions.map((q: any) => ({
+        stem: q.stem || "",
+        points: q.points || 0,
+        difficulty: q.difficulty,
+        knowledgePoints: q.knowledgePoints || []
+      }))
+    }));
+
+    const res = await aiAnalyzePaper({ questionGroups });
+    if (res.code === 0) {
+      aiAnalysisResult.value = res.data;
+      ElMessage.success("AI 分析完成");
+    } else {
+      ElMessage.error(res.msg || "分析失败");
+    }
+  } catch {
+    ElMessage.error("AI 分析失败，请重试");
+  } finally {
+    aiAnalyzing.value = false;
+  }
+};
+
+// 获取难度颜色
+const getDifficultyColor = (score: number) => {
+  if (score <= 2) return "#67c23a";
+  if (score <= 3) return "#e6a23c";
+  return "#f56c6c";
+};
+
+// 获取评分颜色
+const getScoreColor = (score: number) => {
+  if (score >= 80) return "#67c23a";
+  if (score >= 60) return "#e6a23c";
+  return "#f56c6c";
+};
+
+// 饼状图颜色
+const pieColors = [
+  "#00bfa5",
+  "#409eff",
+  "#e6a23c",
+  "#f56c6c",
+  "#909399",
+  "#67c23a",
+  "#9c27b0",
+  "#ff9800"
+];
+
+// 饼状图样式（使用 conic-gradient）
+const pieChartStyle = computed(() => {
+  if (!aiAnalysisResult.value?.questionTypeDistribution?.length) {
+    return { background: "#e4e7ed" };
+  }
+  const distribution = aiAnalysisResult.value.questionTypeDistribution;
+  const gradientParts: string[] = [];
+  let currentAngle = 0;
+  distribution.forEach((item, idx) => {
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + (item.percentage / 100) * 360;
+    const color = pieColors[idx % pieColors.length];
+    gradientParts.push(`${color} ${startAngle}deg ${endAngle}deg`);
+    currentAngle = endAngle;
+  });
+  return {
+    background: `conic-gradient(${gradientParts.join(", ")})`
+  };
+});
+
+
 // 批量归档试卷中的题目到题库
 const archiveAllQuestionsToBank = async () => {
   const allQuestions: any[] = [];
@@ -910,6 +1590,45 @@ const handleKeydownForAssistant = (event: KeyboardEvent) => {
   }
 };
 
+// 题干输入框引用映射
+const stemRefs = ref<Map<number, any>>(new Map());
+
+// 设置题干输入框引用
+const setStemRef = (questionId: number, el: any) => {
+  if (el) {
+    stemRefs.value.set(questionId, el);
+  }
+};
+
+// 插入 LaTeX 公式到题干
+const insertLatexToStem = (question: any, latex: string) => {
+  const stemRef = stemRefs.value.get(question.questionId);
+  if (stemRef) {
+    // 获取 textarea 元素
+    const textarea = stemRef.$el?.querySelector("textarea") || stemRef;
+    if (textarea && textarea.selectionStart !== undefined) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = question.stem || "";
+      // 在光标位置插入公式
+      question.stem = text.slice(0, start) + latex + text.slice(end);
+      // 设置光标位置到插入内容之后
+      nextTick(() => {
+        const newPos = start + latex.length;
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.focus();
+      });
+    } else {
+      // 如果无法获取光标位置，追加到末尾
+      question.stem = (question.stem || "") + latex;
+    }
+  } else {
+    // 如果没有引用，追加到末尾
+    question.stem = (question.stem || "") + latex;
+  }
+  ElMessage.success("公式已插入");
+};
+
 // 离开页面前确认
 onBeforeRouteLeave((to, from, next) => {
   if (hasUnsavedChanges.value) {
@@ -924,8 +1643,11 @@ onBeforeRouteLeave((to, from, next) => {
       })
       .catch(action => {
         if (action === "cancel") {
+          // 用户选择不保存，允许导航
+          hasUnsavedChanges.value = false;
           next();
         } else {
+          // 用户关闭对话框，阻止导航
           next(false);
         }
       });
@@ -934,10 +1656,170 @@ onBeforeRouteLeave((to, from, next) => {
   }
 });
 
+// 系统模板数据（前端硬编码）
+const systemTemplatesData: Record<string, any> = {
+  "1": {
+    title: "标准考试模板",
+    description: "包含单选、多选、判断、填空、简答题型，适合期中期末考试",
+    timeLimit: 120,
+    questionGroups: [
+      {
+        groupId: 1,
+        groupName: "单选题",
+        questionType: "radio",
+        questions: [{ questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }],
+        sortOrder: 0
+      },
+      {
+        groupId: 2,
+        groupName: "多选题",
+        questionType: "checkbox",
+        questions: [{ questionId: 201, questionType: "checkbox", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }],
+        sortOrder: 1
+      },
+      {
+        groupId: 3,
+        groupName: "判断题",
+        questionType: "judge",
+        questions: [{ questionId: 301, questionType: "judge", stem: "", points: 3, options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }], correctAnswer: "" }],
+        sortOrder: 2
+      },
+      {
+        groupId: 4,
+        groupName: "填空题",
+        questionType: "input",
+        questions: [{ questionId: 401, questionType: "input", stem: "", points: 5, blanks: [{ answer: "" }] }],
+        sortOrder: 3
+      },
+      {
+        groupId: 5,
+        groupName: "简答题",
+        questionType: "textarea",
+        questions: [{ questionId: 501, questionType: "textarea", stem: "", points: 8, referenceAnswer: "" }],
+        sortOrder: 4
+      }
+    ]
+  },
+  "2": {
+    title: "快速测验模板",
+    description: "仅包含客观题，适合课堂小测和随堂练习",
+    timeLimit: 30,
+    questionGroups: [
+      {
+        groupId: 1,
+        groupName: "单选题",
+        questionType: "radio",
+        questions: [
+          { questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" },
+          { questionId: 102, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+        ],
+        sortOrder: 0
+      },
+      {
+        groupId: 2,
+        groupName: "多选题",
+        questionType: "checkbox",
+        questions: [
+          { questionId: 201, questionType: "checkbox", stem: "", points: 10, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] },
+          { questionId: 202, questionType: "checkbox", stem: "", points: 10, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }
+        ],
+        sortOrder: 1
+      },
+      {
+        groupId: 3,
+        groupName: "判断题",
+        questionType: "judge",
+        questions: [
+          { questionId: 301, questionType: "judge", stem: "", points: 5, options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }], correctAnswer: "" }
+        ],
+        sortOrder: 2
+      }
+    ]
+  },
+  "3": {
+    title: "综合能力测试",
+    description: "包含材料分析、论述等主观题，适合综合能力评估",
+    timeLimit: 90,
+    questionGroups: [
+      {
+        groupId: 1,
+        groupName: "单选题",
+        questionType: "radio",
+        questions: [
+          { questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+        ],
+        sortOrder: 0
+      },
+      {
+        groupId: 2,
+        groupName: "简答题",
+        questionType: "textarea",
+        questions: [
+          { questionId: 201, questionType: "textarea", stem: "", points: 15, referenceAnswer: "" },
+          { questionId: 202, questionType: "textarea", stem: "", points: 20, referenceAnswer: "" },
+          { questionId: 203, questionType: "textarea", stem: "", points: 35, referenceAnswer: "" }
+        ],
+        sortOrder: 1
+      }
+    ]
+  },
+  "4": {
+    title: "学情调查问卷",
+    description: "用于学情调查，了解学生学习情况",
+    timeLimit: 30,
+    questionGroups: [
+      {
+        groupId: 1,
+        groupName: "单选题",
+        questionType: "radio",
+        questions: [
+          { questionId: 101, questionType: "radio", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" },
+          { questionId: 102, questionType: "radio", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+        ],
+        sortOrder: 0
+      },
+      {
+        groupId: 2,
+        groupName: "多选题",
+        questionType: "checkbox",
+        questions: [
+          { questionId: 201, questionType: "checkbox", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }
+        ],
+        sortOrder: 1
+      },
+      {
+        groupId: 3,
+        groupName: "简答题",
+        questionType: "textarea",
+        questions: [
+          { questionId: 301, questionType: "textarea", stem: "", points: 0, referenceAnswer: "" },
+          { questionId: 302, questionType: "textarea", stem: "", points: 0, referenceAnswer: "" }
+        ],
+        sortOrder: 2
+      }
+    ]
+  }
+};
+
 // 加载模板数据
 const loadTemplate = async (templateId: string) => {
+  // 检查是否是系统模板（ID 1-4，没有 my- 前缀）
+  if (!templateId.startsWith("my-") && systemTemplatesData[templateId]) {
+    const template = systemTemplatesData[templateId];
+    paper.title = template.title || "";
+    paper.description = template.description || "";
+    paper.timeLimit = template.timeLimit || 90;
+    paper.questionGroups = JSON.parse(JSON.stringify(template.questionGroups || []));
+    updateTotals();
+    hasUnsavedChanges.value = false;
+    ElMessage.success(`已加载系统模板：${template.title}`);
+    return;
+  }
+
+  // 私有模板从 API 获取
   try {
-    const res = await getTemplateDetail(templateId);
+    const actualId = templateId.startsWith("my-") ? templateId.slice(3) : templateId;
+    const res = await getTemplateDetail(actualId);
     if (res.code === 0 && res.data) {
       const template = res.data;
       paper.title = template.title || "";
@@ -1051,6 +1933,10 @@ onBeforeUnmount(() => {
             <el-icon><View /></el-icon>
             预览
           </el-button>
+          <el-button @click="previewPaperWithAnswer">
+            <el-icon><Document /></el-icon>
+            预览(带答案)
+          </el-button>
           <el-button @click="savePaper()">
             <el-icon><DocumentChecked /></el-icon>
             保存
@@ -1091,6 +1977,164 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
+
+    <!-- 预览对话框（带答案） -->
+    <el-dialog
+      v-model="previewWithAnswerDialogVisible"
+      title="试卷预览（带答案）"
+      width="90%"
+      fullscreen
+      class="preview-dialog preview-with-answer-dialog"
+    >
+      <template #header>
+        <div class="preview-header">
+          <span class="preview-title">试卷预览（带答案）</span>
+          <div class="preview-controls">
+            <el-radio-group v-model="previewPaperSize" size="small">
+              <el-radio-button value="A4">A4</el-radio-button>
+              <el-radio-button value="A3">A3</el-radio-button>
+            </el-radio-group>
+            <div class="scale-control">
+              <span>缩放：</span>
+              <el-slider
+                v-model="previewScale"
+                :min="50"
+                :max="150"
+                :step="10"
+                :format-tooltip="(val: number) => `${val}%`"
+                style="width: 120px"
+              />
+              <span>{{ previewScale }}%</span>
+            </div>
+            <el-button type="primary" size="small" @click="printPaper">
+              <el-icon><Printer /></el-icon>
+              打印
+            </el-button>
+          </div>
+        </div>
+      </template>
+      <div class="preview-content">
+        <div
+          class="preview-paper"
+          :class="[`paper-${previewPaperSize.toLowerCase()}`]"
+          :style="{ transform: `scale(${previewScale / 100})` }"
+        >
+          <h1 class="preview-paper-title">{{ paper.title || "未命名试卷" }}</h1>
+          <p v-if="paper.description" class="preview-paper-desc">
+            {{ paper.description }}
+          </p>
+          <div class="preview-paper-info">
+            <span>总分：{{ paper.totalPoints }} 分</span>
+            <span>题目数：{{ paper.totalQuestions }} 题</span>
+            <span class="answer-badge">含答案版本</span>
+          </div>
+          <div class="preview-questions">
+            <template
+              v-for="(group, groupIndex) in paper.questionGroups"
+              :key="group.groupId"
+            >
+              <!-- 题型组标题 -->
+              <div class="preview-group-title">
+                <span class="preview-group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="preview-group-name">{{ group.groupName }}</span>
+              </div>
+              <div
+                v-for="(question, qIndex) in group.questions"
+                :key="question.questionId"
+                class="preview-question"
+              >
+                <div class="preview-question-header">
+                  <span class="preview-question-index">
+                    {{ getGlobalQuestionIndex(groupIndex, qIndex) }}.
+                  </span>
+                  <span class="preview-question-type"
+                    >[{{ group.groupName }}]</span
+                  >
+                  <span class="preview-question-points">
+                    ({{ question.points }}分)
+                  </span>
+                </div>
+                <div 
+                  v-if="question.questionType === 'input'"
+                  class="preview-question-stem"
+                  v-html="renderBlankStem(question.stem, question.blanks, false)"
+                />
+                <div 
+                  v-else
+                  class="preview-question-stem"
+                >
+                  {{ question.stem || "未填写题目" }}
+                </div>
+                <div 
+                  v-if="question.questionType === 'input'"
+                  class="preview-question-stem"
+                  v-html="renderBlankStem(question.stem, question.blanks, true)"
+                />
+                <div 
+                  v-else
+                  class="preview-question-stem"
+                >
+                  {{ question.stem || "未填写题目" }}
+                </div>
+                <div
+                  v-if="question.options && question.options.length > 0"
+                  class="preview-question-options"
+                >
+                  <div
+                    v-for="option in question.options"
+                    :key="option.key"
+                    class="preview-option"
+                    :class="{
+                      'correct-option':
+                        (question.questionType === 'radio' || question.questionType === 'judge') && question.correctAnswer === option.key ||
+                        question.questionType === 'checkbox' && question.correctAnswers?.includes(option.key)
+                    }"
+                  >
+                    {{ option.key }}. {{ option.content }}
+                    <el-icon v-if="(question.questionType === 'radio' || question.questionType === 'judge') && question.correctAnswer === option.key" class="correct-icon"><Check /></el-icon>
+                    <el-icon v-if="question.questionType === 'checkbox' && question.correctAnswers?.includes(option.key)" class="correct-icon"><Check /></el-icon>
+                  </div>
+                </div>
+                <div
+                  v-if="question.questionType === 'input'"
+                  class="preview-blanks"
+                >
+                  <span
+                    v-for="(blank, i) in question.blanks"
+                    :key="i"
+                    class="preview-blank"
+                  >
+                    第{{ i + 1 }}空：<span class="blank-answer">{{ blank.answer || "未设置" }}</span>
+                  </span>
+                </div>
+                <div
+                  v-if="question.questionType === 'textarea' || question.questionType === 'textarea-essay'"
+                  class="preview-textarea"
+                >
+                  <div class="preview-answer-area" />
+                </div>
+                <!-- 答案显示区域 -->
+                <div class="preview-answer-section">
+                  <div class="answer-label">
+                    <el-icon><CircleCheck /></el-icon>
+                    <span>正确答案：</span>
+                  </div>
+                  <div class="answer-content">{{ getAnswerText(question) }}</div>
+                </div>
+                <!-- 解析显示区域 -->
+                <div v-if="question.analysis" class="preview-analysis-section">
+                  <div class="analysis-label">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>题目解析：</span>
+                  </div>
+                  <div class="analysis-content">{{ question.analysis }}</div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
 
     <!-- 预览对话框 -->
     <el-dialog
@@ -1146,6 +2190,11 @@ onBeforeUnmount(() => {
               v-for="(group, groupIndex) in paper.questionGroups"
               :key="group.groupId"
             >
+              <!-- 题型组标题 -->
+              <div class="preview-group-title">
+                <span class="preview-group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="preview-group-name">{{ group.groupName }}</span>
+              </div>
               <div
                 v-for="(question, qIndex) in group.questions"
                 :key="question.questionId"
@@ -1262,31 +2311,42 @@ onBeforeUnmount(() => {
             共{{ paper.totalQuestions }} 题，{{ paper.totalPoints }} 分
           </div>
 
-          <draggable
-            v-if="outlineQuestions.length > 0"
-            v-model="outlineQuestions"
-            item-key="questionId"
-            handle=".drag-handle"
-            ghost-class="ghost-item"
-            class="outline-list"
-          >
-            <template #item="{ element }">
-              <div
-                class="outline-item"
-                :class="{ active: activeQuestionId === element.questionId }"
-                @click="scrollToQuestion(element.questionId)"
-              >
-                <span class="drag-handle">
+          <div v-if="paper.questionGroups.length > 0" class="outline-groups">
+            <div
+              v-for="(group, groupIndex) in paper.questionGroups"
+              :key="group.groupId"
+              class="outline-group"
+              draggable="true"
+              @dragstart="onGroupDragStart($event, groupIndex)"
+              @dragend="onGroupDragEnd"
+              @dragover="onGroupDragOver($event, groupIndex)"
+              @drop="onGroupDrop($event, groupIndex)"
+            >
+              <div class="outline-group-header">
+                <span class="group-drag-handle">
                   <component :is="iconComponents.DragIcon" class="drag-icon" />
                 </span>
-                <span class="item-index">{{ element.globalIndex }}.</span>
-                <span class="item-title">
-                  {{ element.stem || "未填写题目" }}
-                </span>
-                <span class="item-points">{{ element.points }}分</span>
+                <span class="group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="group-name">{{ group.groupName }}</span>
+                <span class="group-item-count">{{ group.questions.length }}题</span>
               </div>
-            </template>
-          </draggable>
+              <div class="outline-group-items">
+                <div
+                  v-for="(question, qIndex) in group.questions"
+                  :key="question.questionId"
+                  class="outline-item"
+                  :class="{ active: activeQuestionId === question.questionId }"
+                  @click="scrollToQuestion(question.questionId)"
+                >
+                  <span class="item-index">{{ getGlobalQuestionIndex(groupIndex, qIndex) }}.</span>
+                  <span class="item-title">
+                    {{ question.stem || "未填写题目" }}
+                  </span>
+                  <span class="item-points">{{ question.points }}分</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div v-else class="outline-empty">
             <el-empty description="暂无题目" :image-size="60" />
@@ -1314,6 +2374,116 @@ onBeforeUnmount(() => {
               maxlength="500"
               show-word-limit
             />
+          </div>
+
+          <!-- AI 试卷分析面板 -->
+          <div class="ai-analysis-panel">
+            <div
+              class="settings-toggle"
+              @click="aiAnalysisPanelVisible = !aiAnalysisPanelVisible"
+            >
+              <el-icon><MagicStick /></el-icon>
+              <span>AI 试卷分析</span>
+              <el-icon
+                class="toggle-arrow"
+                :class="{ expanded: aiAnalysisPanelVisible }"
+                ><ArrowDown
+              /></el-icon>
+            </div>
+            <el-collapse-transition>
+              <div v-show="aiAnalysisPanelVisible" class="settings-content">
+                <div class="ai-analysis-actions">
+                  <el-button
+                    type="primary"
+                    :loading="aiAnalyzing"
+                    @click="analyzeWithAI"
+                  >
+                    <el-icon><MagicStick /></el-icon>
+                    {{ aiAnalyzing ? "分析中..." : "开始 AI 分析" }}
+                  </el-button>
+                  <span class="analysis-hint"
+                    >AI 将分析试卷难度、知识点覆盖、题型分布等</span
+                  >
+                </div>
+
+                <div v-if="aiAnalysisResult" class="ai-analysis-result">
+                  <div class="result-header">
+                    <span class="result-title">分析结果</span>
+                  </div>
+                  <div class="result-metrics">
+                    <div class="metric-item">
+                      <span class="metric-label">难度评估</span>
+                      <span
+                        class="metric-value"
+                        :style="{ color: getDifficultyColor(aiAnalysisResult.difficulty) }"
+                      >
+                        {{ aiAnalysisResult.difficultyDescription }} ({{ aiAnalysisResult.difficulty }}/5)
+                      </span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">知识点覆盖</span>
+                      <span class="metric-value">{{ aiAnalysisResult.knowledgeCoverage }}%</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">题型均衡度</span>
+                      <span class="metric-value">{{ aiAnalysisResult.typeBalance }}%</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">预估答题时间</span>
+                      <span class="metric-value">{{ aiAnalysisResult.estimatedTime }} 分钟</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">综合评分</span>
+                      <span
+                        class="metric-value"
+                        :style="{ color: getScoreColor(aiAnalysisResult.overallScore) }"
+                      >
+                        {{ aiAnalysisResult.overallScore }} 分
+                      </span>
+                    </div>
+                  </div>
+                  <!-- 题型分布饼状图 -->
+                  <div
+                    v-if="aiAnalysisResult.questionTypeDistribution?.length"
+                    class="result-distribution"
+                  >
+                    <div class="distribution-title">题型分布</div>
+                    <div class="distribution-chart">
+                      <div class="pie-chart" :style="pieChartStyle" />
+                      <div class="distribution-legend">
+                        <div
+                          v-for="(item, idx) in aiAnalysisResult.questionTypeDistribution"
+                          :key="idx"
+                          class="legend-item"
+                        >
+                          <span
+                            class="legend-color"
+                            :style="{ background: pieColors[idx % pieColors.length] }"
+                          />
+                          <span class="legend-name">{{ item.name }}</span>
+                          <span class="legend-count">{{ item.count }}题</span>
+                          <span class="legend-percent">{{ item.percentage }}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    v-if="aiAnalysisResult.suggestions?.length"
+                    class="result-suggestions"
+                  >
+                    <div class="suggestions-title">优化建议</div>
+                    <ul class="suggestions-list">
+                      <li
+                        v-for="(suggestion, idx) in aiAnalysisResult.suggestions"
+                        :key="idx"
+                      >
+                        {{ suggestion }}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </el-collapse-transition>
           </div>
 
           <!-- 考试设置面板 -->
@@ -1383,6 +2553,54 @@ onBeforeUnmount(() => {
                     </el-row>
                   </div>
 
+                  <!-- 发布对象设置 -->
+                  <div class="settings-section">
+                    <h4 class="section-title">发布对象</h4>
+                    <el-row :gutter="20">
+                      <el-col :span="24">
+                        <el-form-item label="发布目标">
+                          <el-radio-group v-model="publishTargetType" @change="onPublishTargetTypeChange">
+                            <el-radio :value="1">全部学生</el-radio>
+                            <el-radio :value="2">指定课程</el-radio>
+                            <el-radio :value="3">指定学生</el-radio>
+                          </el-radio-group>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row v-if="publishTargetType === 2" :gutter="20">
+                      <el-col :span="24">
+                        <el-form-item label="选择课程">
+                          <el-checkbox-group v-model="publishSelectedCourseIds">
+                            <el-checkbox v-for="c in courseOptions" :key="c.id" :value="c.id" :label="c.name" />
+                          </el-checkbox-group>
+                          <div class="setting-hint">已选 {{ publishSelectedCourseIds.length }} 个课程</div>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row v-if="publishTargetType === 3" :gutter="20">
+                      <el-col :span="24">
+                        <el-form-item label="选择学生">
+                          <div class="publish-student-toolbar">
+                            <el-select v-model="publishFilterCourseId" placeholder="按课程筛选" clearable style="width: 180px" @change="onFilterCourseChange">
+                              <el-option v-for="c in courseOptions" :key="c.id" :label="c.name" :value="c.id" />
+                            </el-select>
+                            <el-input v-model="publishStudentKeyword" placeholder="搜索姓名/学号" clearable style="width: 180px" />
+                            <el-button size="small" @click="toggleSelectAllStudents">{{ publishSelectedStudentIds.length === filteredStudentList.length && filteredStudentList.length > 0 ? '取消全选' : '全选' }}</el-button>
+                            <span class="setting-hint">已选 {{ publishSelectedStudentIds.length }} 人</span>
+                          </div>
+                          <div v-loading="publishStudentLoading" class="publish-student-list-inline">
+                            <div v-for="s in filteredStudentList" :key="s.studentId" class="publish-student-item-inline" :class="{ selected: publishSelectedStudentIds.includes(s.studentId) }" @click="publishSelectedStudentIds.includes(s.studentId) ? (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId)) : publishSelectedStudentIds.push(s.studentId)">
+                              <el-checkbox :model-value="publishSelectedStudentIds.includes(s.studentId)" @click.stop />
+                              <span class="student-name">{{ s.studentName }}</span>
+                              <span class="student-no">{{ s.studentNo }}</span>
+                            </div>
+                            <el-empty v-if="!publishStudentLoading && filteredStudentList.length === 0" description="暂无学生" :image-size="40" />
+                          </div>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                  </div>
+
                   <!-- 补考设置 -->
                   <div class="settings-section">
                     <h4 class="section-title">补考设置</h4>
@@ -1428,6 +2646,20 @@ onBeforeUnmount(() => {
               v-for="(group, groupIndex) in paper.questionGroups"
               :key="group.groupId"
             >
+              <!-- 题型组标题 -->
+              <div class="question-group-header">
+                <div class="group-title-wrapper">
+                  <span class="group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                  <el-input
+                    v-model="group.groupName"
+                    class="group-title-input"
+                    placeholder="输入题型组名称"
+                    maxlength="50"
+                  />
+                </div>
+                <span class="group-count">{{ group.questions.length }}题</span>
+              </div>
+
               <div
                 v-for="(question, qIndex) in group.questions"
                 :id="`question-${question.questionId}`"
@@ -1448,6 +2680,7 @@ onBeforeUnmount(() => {
                   </div>
                   <div class="question-actions">
                     <el-input-number
+                      v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'"
                       v-model="question.points"
                       :min="0"
                       :max="100"
@@ -1455,7 +2688,8 @@ onBeforeUnmount(() => {
                       controls-position="right"
                       style="width: 100px"
                     />
-                    <span class="points-label">分</span>
+                    <span v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'" class="points-label">分</span>
+                    <span v-else class="data-collection-label">数据收集</span>
                     <el-button
                       link
                       size="small"
@@ -1496,16 +2730,46 @@ onBeforeUnmount(() => {
                 </div>
                 <!-- 题干 -->
                 <div class="question-stem">
-                  <div class="stem-header">
-                    <span class="stem-hint">题目</span>
+                  <div class="stem-toolbar-bar">
+                    <span class="stem-label">题目</span>
+                    <div class="stem-tools">
+                      <el-tooltip v-if="question.questionType === 'input'" content="插入填空占位符 {blank}" placement="top">
+                        <el-button
+                          size="small"
+                          type="primary"
+                          plain
+                          @click="insertBlankPlaceholder(question)"
+                        >
+                          <el-icon><EditPen /></el-icon>
+                          <span>插入填空</span>
+                        </el-button>
+                      </el-tooltip>
+                      <LatexEditor @insert="(latex) => insertLatexToStem(question, latex)" />
+                    </div>
                   </div>
                   <el-input
+                    :ref="(el) => setStemRef(question.questionId, el)"
                     v-model="question.stem"
                     type="textarea"
-                    placeholder="请输入题目内容（双击 Ctrl/Command 唤起 AI 助手/本地题库）"
+                    :placeholder="question.questionType === 'input' ? '请输入题目内容，点击[插入填空]按钮添加填空' : '请输入题目内容'"
                     :rows="2"
                     maxlength="2000"
+                    @input="watchBlankStemChange(question)"
                   />
+                  <!-- 填空占位符数量提示 -->
+                  <div v-if="question.questionType === 'input' && question.stem" class="blank-count-hint">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>{{ getBlankCountHint(question) }}</span>
+                  </div>
+                  <!-- 题干预览（含填空渲染或公式渲染） -->
+                  <div v-if="question.stem && (question.questionType === 'input' || question.stem.includes('$'))" class="stem-preview-box">
+                    <div class="preview-tag">预览</div>
+                    <div v-if="question.questionType === 'input'" class="preview-body" v-html="renderBlankStem(question.stem, question.blanks, false)" />
+                    <div v-else class="preview-body">
+                      <RichContent :content="question.stem" />
+                    </div>
+                  </div>
+                  <RichMediaUploader v-model="question.media" />
                 </div>
                 <!-- 选项 -->
                 <div
@@ -1624,8 +2888,366 @@ onBeforeUnmount(() => {
                     maxlength="5000"
                   />
                 </div>
-                <!-- 解析 -->
-                <div class="question-analysis">
+                <!-- 论述题 -->
+                <div
+                  v-if="question.questionType === 'textarea-essay'"
+                  class="question-reference"
+                >
+                  <div class="reference-header">
+                    <span class="reference-title">参考答案</span>
+                  </div>
+                  <el-input
+                    v-model="question.referenceAnswer"
+                    type="textarea"
+                    placeholder="请输入论述题参考答案"
+                    :rows="6"
+                    maxlength="10000"
+                  />
+                </div>
+                <!-- 矩阵单选/矩阵多选 -->
+                <div
+                  v-if="question.questionType === 'matrix-single' || question.questionType === 'matrix-multiple'"
+                  class="question-matrix"
+                >
+                  <div class="matrix-table-wrapper">
+                    <div class="matrix-controls">
+                      <el-button size="small" type="primary" @click="question.rows.push({ key: `R${question.rows.length + 1}`, content: '' })">
+                        <el-icon><Plus /></el-icon>添加行
+                      </el-button>
+                      <el-button size="small" type="primary" @click="question.columns.push({ key: `C${question.columns.length + 1}`, content: '' })">
+                        <el-icon><Plus /></el-icon>添加列
+                      </el-button>
+                    </div>
+                    <div class="matrix-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th class="matrix-corner">
+                              <span class="corner-label">行/列</span>
+                            </th>
+                            <th v-for="(col, cIdx) in question.columns" :key="col.key" class="matrix-col-header">
+                              <div class="col-header-content">
+                                <el-input v-model="col.content" :placeholder="`列${cIdx + 1}`" size="small" />
+                                <el-button v-if="question.columns.length > 2" link size="small" type="danger" @click="question.columns.splice(cIdx, 1)">
+                                  <el-icon><Delete /></el-icon>
+                                </el-button>
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(row, rIdx) in question.rows" :key="row.key">
+                            <td class="matrix-row-header">
+                              <div class="row-header-content">
+                                <el-input v-model="row.content" :placeholder="`行${rIdx + 1}`" size="small" />
+                                <el-button v-if="question.rows.length > 2" link size="small" type="danger" @click="question.rows.splice(rIdx, 1)">
+                                  <el-icon><Delete /></el-icon>
+                                </el-button>
+                              </div>
+                            </td>
+                            <td v-for="(col, cIdx) in question.columns" :key="`${row.key}-${col.key}`" class="matrix-cell">
+                              <div class="cell-content">
+                                <el-radio
+                                  v-if="question.questionType === 'matrix-single'"
+                                  v-model="question.correctAnswers[row.key]"
+                                  :value="col.key"
+                                  class="matrix-radio"
+                                />
+                                <el-checkbox
+                                  v-else
+                                  v-model="question.correctAnswers[row.key]"
+                                  :value="col.key"
+                                  class="matrix-checkbox"
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <!-- 连线题 -->
+                <div
+                  v-if="question.questionType === 'matching'"
+                  class="question-matching"
+                >
+                  <div class="matching-side">
+                    <div class="matching-header">
+                      <span class="matching-title">左侧项</span>
+                      <el-button link size="small" type="primary" @click="question.leftItems.push({ key: `L${question.leftItems.length + 1}`, content: '' })">
+                        <el-icon><Plus /></el-icon>添加
+                      </el-button>
+                    </div>
+                    <div v-for="(item, idx) in question.leftItems" :key="item.key" class="matching-item">
+                      <span class="matching-item-key">{{ item.key }}.</span>
+                      <el-input v-model="item.content" :placeholder="`左侧项${idx + 1}`" class="matching-item-input" />
+                      <el-button v-if="question.leftItems.length > 2" link size="small" type="danger" @click="question.leftItems.splice(idx, 1)">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </div>
+                  </div>
+                  <div class="matching-side">
+                    <div class="matching-header">
+                      <span class="matching-title">右侧项</span>
+                      <el-button link size="small" type="primary" @click="question.rightItems.push({ key: `R${question.rightItems.length + 1}`, content: '' })">
+                        <el-icon><Plus /></el-icon>添加
+                      </el-button>
+                    </div>
+                    <div v-for="(item, idx) in question.rightItems" :key="item.key" class="matching-item">
+                      <span class="matching-item-key">{{ item.key }}.</span>
+                      <el-input v-model="item.content" :placeholder="`右侧项${idx + 1}`" class="matching-item-input" />
+                      <el-button v-if="question.rightItems.length > 2" link size="small" type="danger" @click="question.rightItems.splice(idx, 1)">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </div>
+                  </div>
+                  <div class="matching-answer-hint">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>设置正确连线：左侧项 → 右侧项</span>
+                  </div>
+                  <div v-for="(item, idx) in question.leftItems" :key="`match-${item.key}`" class="matching-pair">
+                    <span class="matching-pair-label">{{ item.content || item.key }} →</span>
+                    <el-select
+                      v-model="question.correctMatches[item.key]"
+                      placeholder="选择对应右侧项"
+                      clearable
+                      style="width: 200px"
+                    >
+                      <el-option
+                        v-for="right in question.rightItems"
+                        :key="right.key"
+                        :label="right.content || right.key"
+                        :value="right.key"
+                      />
+                    </el-select>
+                  </div>
+                </div>
+                <!-- 滑动评分题 -->
+                <div
+                  v-if="question.questionType === 'slider'"
+                  class="question-slider"
+                >
+                  <div class="slider-config">
+                    <div class="slider-config-header">
+                      <span class="slider-config-title">滑动条设置</span>
+                      <span class="data-collection-badge">数据收集题</span>
+                    </div>
+                    <el-row :gutter="16">
+                      <el-col :span="6">
+                        <el-form-item label="最小值">
+                          <el-input-number v-model="question.sliderMin" :min="0" :max="question.sliderMax - 1" size="small" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="6">
+                        <el-form-item label="最大值">
+                          <el-input-number v-model="question.sliderMax" :min="question.sliderMin + 1" :max="1000" size="small" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="6">
+                        <el-form-item label="步长">
+                          <el-input-number v-model="question.sliderStep" :min="1" :max="question.sliderMax" size="small" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="6">
+                        <el-form-item label="默认值">
+                          <el-input-number v-model="question.sliderDefaultValue" :min="question.sliderMin" :max="question.sliderMax" size="small" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row :gutter="16">
+                      <el-col :span="12">
+                        <el-form-item label="左侧标签">
+                          <el-input v-model="question.sliderLabels.left" placeholder="如：最低" size="small" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="12">
+                        <el-form-item label="右侧标签">
+                          <el-input v-model="question.sliderLabels.right" placeholder="如：最高" size="small" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <div class="slider-preview">
+                      <span class="slider-label-left">{{ question.sliderLabels?.left }}</span>
+                      <el-slider
+                        :model-value="question.sliderDefaultValue"
+                        :min="question.sliderMin"
+                        :max="question.sliderMax"
+                        :step="question.sliderStep"
+                        disabled
+                        style="flex: 1"
+                      />
+                      <span class="slider-label-right">{{ question.sliderLabels?.right }}</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- NPS评分题 -->
+                <div
+                  v-if="question.questionType === 'nps-rating'"
+                  class="question-nps"
+                >
+                  <div class="nps-config">
+                    <div class="nps-config-header">
+                      <span class="nps-config-title">NPS 评分设置 (0-10)</span>
+                      <span class="data-collection-badge">数据收集题</span>
+                    </div>
+                    <el-row :gutter="16">
+                      <el-col :span="8">
+                        <el-form-item label="低分标签">
+                          <el-input v-model="question.npsLabels.low" placeholder="如：完全不推荐" size="small" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="中间标签">
+                          <el-input v-model="question.npsLabels.mid" placeholder="如：一般" size="small" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="高分标签">
+                          <el-input v-model="question.npsLabels.high" placeholder="如：强烈推荐" size="small" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <div class="nps-preview">
+                      <div class="nps-scale">
+                        <div v-for="n in 11" :key="n - 1" class="nps-item" :class="{ detractor: n - 1 <= 6, passive: n - 1 >= 7 && n - 1 <= 8, promoter: n - 1 >= 9 }">
+                          {{ n - 1 }}
+                        </div>
+                      </div>
+                      <div class="nps-labels">
+                        <span class="nps-label-low">{{ question.npsLabels?.low }}</span>
+                        <span class="nps-label-mid">{{ question.npsLabels?.mid }}</span>
+                        <span class="nps-label-high">{{ question.npsLabels?.high }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 星级评分题 -->
+                <div
+                  v-if="question.questionType === 'star-rating'"
+                  class="question-star"
+                >
+                  <div class="star-config">
+                    <div class="star-config-header">
+                      <span class="star-config-title">星级评分设置</span>
+                      <span class="data-collection-badge">数据收集题</span>
+                    </div>
+                    <el-form-item label="星星数量">
+                      <el-input-number v-model="question.starCount" :min="3" :max="10" size="small" />
+                    </el-form-item>
+                    <div class="star-labels-config">
+                      <div v-for="(label, idx) in question.starLabels" :key="idx" class="star-label-item">
+                        <span class="star-label-key">{{ idx + 1 }}星：</span>
+                        <el-input v-model="question.starLabels[idx]" :placeholder="`${idx + 1}星描述`" size="small" class="star-label-input" />
+                      </div>
+                    </div>
+                    <div class="star-preview">
+                      <span v-for="n in question.starCount" :key="n" class="star-icon" :class="{ active: n <= 3 }">★</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 组合/材料题 -->
+                <div
+                  v-if="question.questionType === 'composite'"
+                  class="question-composite"
+                >
+                  <div class="composite-material">
+                    <div class="composite-material-header">
+                      <span class="composite-material-title">材料内容</span>
+                    </div>
+                    <el-input
+                      v-model="question.material"
+                      type="textarea"
+                      placeholder="请输入材料内容（文章、案例、题目背景等）"
+                      :rows="6"
+                      maxlength="20000"
+                    />
+                  </div>
+                  <div class="composite-sub-questions">
+                    <div class="composite-sub-header">
+                      <span class="composite-sub-title">子题目</span>
+                      <el-dropdown trigger="click">
+                        <el-button link size="small" type="primary">
+                          <el-icon><Plus /></el-icon>添加子题
+                        </el-button>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'radio', stem: '', points: 5, options: [{ key: 'A', content: '' }, { key: 'B', content: '' }, { key: 'C', content: '' }, { key: 'D', content: '' }], correctAnswer: '' })">单选题</el-dropdown-item>
+                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'checkbox', stem: '', points: 5, options: [{ key: 'A', content: '' }, { key: 'B', content: '' }, { key: 'C', content: '' }, { key: 'D', content: '' }], correctAnswers: [] })">多选题</el-dropdown-item>
+                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'input', stem: '', points: 5, blanks: [{ answer: '' }] })">填空题</el-dropdown-item>
+                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'textarea', stem: '', points: 10, referenceAnswer: '' })">简答题</el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
+                    </div>
+                    <div v-for="(sub, sIdx) in question.subQuestions" :key="sub.subId" class="composite-sub-item">
+                      <div class="sub-item-header">
+                        <span class="sub-item-index">子题 {{ sIdx + 1 }}</span>
+                        <span class="sub-item-type">{{ sub.questionType === 'radio' ? '单选' : sub.questionType === 'checkbox' ? '多选' : sub.questionType === 'input' ? '填空' : '简答' }}</span>
+                        <el-input-number v-model="sub.points" :min="0" :max="100" size="small" style="width: 80px" />
+                        <span class="points-label">分</span>
+                        <el-button v-if="question.subQuestions.length > 1" link size="small" type="danger" @click="question.subQuestions.splice(sIdx, 1)">
+                          <el-icon><Delete /></el-icon>
+                        </el-button>
+                      </div>
+                      <el-input v-model="sub.stem" type="textarea" placeholder="请输入子题题干" :rows="2" class="sub-item-stem" />
+                      <!-- 子题选项 -->
+                      <div v-if="sub.options" class="sub-item-options">
+                        <div v-for="(opt, oIdx) in sub.options" :key="opt.key" class="sub-option-item">
+                          <el-radio v-if="sub.questionType === 'radio'" v-model="sub.correctAnswer" :value="opt.key" />
+                          <el-checkbox v-if="sub.questionType === 'checkbox'" v-model="sub.correctAnswers" :value="opt.key" />
+                          <span>{{ opt.key }}.</span>
+                          <el-input v-model="opt.content" :placeholder="`选项${opt.key}`" size="small" />
+                        </div>
+                      </div>
+                      <!-- 子题填空 -->
+                      <div v-if="sub.blanks" class="sub-item-blanks">
+                        <div v-for="(blank, bIdx) in sub.blanks" :key="bIdx" class="sub-blank-item">
+                          <span>第{{ bIdx + 1 }}空：</span>
+                          <el-input v-model="blank.answer" placeholder="正确答案" size="small" />
+                        </div>
+                      </div>
+                      <!-- 子题简答 -->
+                      <div v-if="sub.questionType === 'textarea'" class="sub-item-ref">
+                        <el-input v-model="sub.referenceAnswer" type="textarea" placeholder="参考答案" :rows="2" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 排序题 -->
+                <div
+                  v-if="question.questionType === 'ordering'"
+                  class="question-ordering"
+                >
+                  <div class="ordering-header">
+                    <span class="ordering-title">排序项</span>
+                    <el-button link size="small" type="primary" @click="question.items.push({ key: String(question.items.length + 1), content: '' })">
+                      <el-icon><Plus /></el-icon>添加项
+                    </el-button>
+                  </div>
+                  <div v-for="(item, idx) in question.items" :key="item.key" class="ordering-item">
+                    <span class="ordering-item-key">{{ idx + 1 }}.</span>
+                    <el-input v-model="item.content" :placeholder="`排序项${idx + 1}`" class="ordering-item-input" />
+                    <el-button v-if="question.items.length > 2" link size="small" type="danger" @click="question.items.splice(idx, 1)">
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </div>
+                  <div class="ordering-answer">
+                    <div class="ordering-answer-header">
+                      <span class="ordering-answer-title">正确顺序</span>
+                    </div>
+                    <el-input
+                      v-model="question.correctOrder"
+                      placeholder="输入正确顺序，如：2,4,1,3"
+                    />
+                    <div class="ordering-answer-hint">
+                      <el-icon><InfoFilled /></el-icon>
+                      <span>用逗号分隔序号，表示正确的排列顺序</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 解析（仅显示给有答案的题型） -->
+                <div v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'" class="question-analysis">
                   <el-collapse>
                     <el-collapse-item title="题目解析" name="analysis">
                       <el-input
@@ -1638,19 +3260,17 @@ onBeforeUnmount(() => {
                     </el-collapse-item>
                   </el-collapse>
                 </div>
-              </div> </template
-            ><!-- 添加更多题目按钮 -->
-            <div
-              v-for="group in paper.questionGroups"
-              :key="`add-${group.groupId}`"
-              class="add-question-btn"
-            >
-              <el-button type="primary" link @click="addQuestion(group.groupId)"
-                ><el-icon><Plus /></el-icon>继续添加{{
-                  group.groupName
-                }}</el-button
-              >
-            </div>
+              </div>
+
+              <!-- 添加更多题目按钮 -->
+              <div class="add-question-btn">
+                <el-button type="primary" link @click="addQuestion(group.groupId)"
+                  ><el-icon><Plus /></el-icon>继续添加{{
+                    group.groupName
+                  }}</el-button
+                >
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1663,114 +3283,354 @@ onBeforeUnmount(() => {
       :question-type="currentEditingQuestion?.questionType"
       @apply="applyQuestionAssistantResult"
     />
+
+    <!-- 发布对话框 -->
+    <el-dialog
+      v-model="publishDialogVisible"
+      title="发布试卷 - 选择发布对象"
+      width="680px"
+      :close-on-click-modal="false"
+      class="publish-dialog"
+    >
+      <div class="publish-form">
+        <div class="publish-section">
+          <div class="publish-label">发布目标类型</div>
+          <el-radio-group
+            v-model="publishTargetType"
+            @change="onPublishTargetTypeChange"
+          >
+            <el-radio :value="1">全部学生</el-radio>
+            <el-radio :value="2">指定课程</el-radio>
+            <el-radio :value="3">指定学生</el-radio>
+          </el-radio-group>
+        </div>
+
+        <!-- 指定课程 -->
+        <div v-if="publishTargetType === 2" class="publish-section">
+          <div class="publish-label">
+            选择课程
+            <span class="publish-hint">
+              （已选 {{ publishSelectedCourseIds.length }} 个课程）
+            </span>
+          </div>
+          <el-checkbox-group v-model="publishSelectedCourseIds">
+            <div
+              v-for="c in courseOptions"
+              :key="c.id"
+              class="publish-course-item"
+            >
+              <el-checkbox :value="c.id" :label="c.name" />
+            </div>
+          </el-checkbox-group>
+          <el-empty
+            v-if="courseOptions.length === 0"
+            description="暂无课程数据"
+            :image-size="60"
+          />
+        </div>
+
+        <!-- 指定学生 -->
+        <div v-if="publishTargetType === 3" class="publish-section">
+          <div class="publish-label">选择学生</div>
+          <div class="publish-student-toolbar">
+            <el-select
+              v-model="publishFilterCourseId"
+              placeholder="按课程筛选"
+              clearable
+              style="width: 200px"
+              @change="onFilterCourseChange"
+            >
+              <el-option
+                v-for="c in courseOptions"
+                :key="c.id"
+                :label="c.name"
+                :value="c.id"
+              />
+            </el-select>
+            <el-input
+              v-model="publishStudentKeyword"
+              placeholder="搜索姓名/学号"
+              clearable
+              style="width: 200px"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button size="small" @click="toggleSelectAllStudents">
+              {{ publishSelectedStudentIds.length === filteredStudentList.length && filteredStudentList.length > 0 ? '取消全选' : '全选' }}
+            </el-button>
+            <span class="publish-hint">
+              已选 {{ publishSelectedStudentIds.length }} 人
+            </span>
+          </div>
+          <div v-loading="publishStudentLoading" class="publish-student-list">
+            <div
+              v-for="s in filteredStudentList"
+              :key="s.studentId"
+              class="publish-student-item"
+              :class="{ selected: publishSelectedStudentIds.includes(s.studentId) }"
+              @click="
+                publishSelectedStudentIds.includes(s.studentId)
+                  ? (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId))
+                  : publishSelectedStudentIds.push(s.studentId)
+              "
+            >
+              <el-checkbox
+                :model-value="publishSelectedStudentIds.includes(s.studentId)"
+                @click.stop
+                @change="
+                  (val: boolean) =>
+                    val
+                      ? publishSelectedStudentIds.push(s.studentId)
+                      : (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId))
+                "
+              />
+              <span class="student-name">{{ s.studentName }}</span>
+              <span class="student-no">{{ s.studentNo }}</span>
+              <span v-if="s.className" class="student-class">{{ s.className }}</span>
+            </div>
+            <el-empty
+              v-if="!publishStudentLoading && filteredStudentList.length === 0"
+              description="暂无学生数据"
+              :image-size="60"
+            />
+          </div>
+        </div>
+
+        <!-- 全部学生提示 -->
+        <div v-if="publishTargetType === 1" class="publish-section">
+          <el-alert
+            title="将发布给平台所有学生"
+            type="info"
+            :closable="false"
+            show-icon
+          />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="publishDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="publishSubmitting"
+          @click="confirmPublish"
+        >
+          确定发布
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .exam-paper-editor {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
   display: flex;
   flex-direction: column;
 }
+
 .editor-fixed-top {
   position: sticky;
-  top: 0;
+  top: 12px;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  margin: 12px 24px 24px;
+  border-radius: 16px;
+  overflow: hidden;
 }
+
 .editor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
-  border-bottom: 1px solid #e4e7ed;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+
   .header-left .logo {
     display: flex;
     align-items: center;
     cursor: pointer;
-    .logo-icon {
-      width: 32px;
-      height: 32px;
-      margin-right: 8px;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: scale(1.05);
     }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      margin-right: 12px;
+      filter: drop-shadow(0 2px 4px rgba(0, 191, 165, 0.2));
+    }
+
     .logo-text {
-      font-size: 18px;
-      font-weight: 600;
-      color: #00bfa5;
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00bfa5 0%, #00a89f 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
   }
+
   .header-center {
     flex: 1;
-    max-width: 400px;
-    margin: 0 20px;
+    max-width: 450px;
+    margin: 0 24px;
+
     .title-input :deep(.el-input__wrapper) {
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
+      background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+      border: 2px solid #e4e7ed;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #00bfa5;
+        box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.1);
+      }
+
+      &:focus-within {
+        border-color: #00bfa5;
+        box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.15);
+      }
     }
   }
+
   .header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
+
+    :deep(.el-button) {
+      border-radius: 10px;
+      height: 38px;
+      padding: 0 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    }
+
     .auto-save-status {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       font-size: 13px;
       color: #909399;
+      padding: 6px 12px;
+      background: #f5f7fa;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(0, 191, 165, 0.08);
+        color: #00bfa5;
+      }
     }
   }
 }
+
 .question-toolbar {
-  padding: 12px 20px;
-  background: #fafafa;
-  border-bottom: 1px solid #e4e7ed;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f7fa 100%);
+
   .toolbar-hint {
     font-size: 13px;
     color: #909399;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    font-weight: 500;
   }
+
   .toolbar-items {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
+
     .type-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid #e4e7ed;
-      border-radius: 8px;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 2px solid #e4e7ed;
+      border-radius: 10px;
       cursor: grab;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s;
+      }
+
       &:hover {
         border-color: #00bfa5;
-        box-shadow: 0 2px 8px rgba(0, 191, 165, 0.2);
+        box-shadow: 0 8px 24px rgba(0, 191, 165, 0.15);
+        transform: translateY(-2px);
+
+        &::before {
+          left: 100%;
+        }
       }
+
       &:active {
         cursor: grabbing;
+        transform: translateY(0);
       }
+
       .type-icon-wrapper {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 191, 165, 0.1);
-        border-radius: 8px;
-        margin-bottom: 6px;
+        background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+
         .type-icon {
-          width: 20px;
-          height: 20px;
+          width: 22px;
+          height: 22px;
           color: #00bfa5;
+          transition: transform 0.3s ease;
         }
       }
+
+      &:hover .type-icon-wrapper {
+        background: linear-gradient(135deg, rgba(0, 191, 165, 0.25) 0%, rgba(0, 191, 165, 0.15) 100%);
+        transform: scale(1.1);
+
+        .type-icon {
+          transform: scale(1.15);
+        }
+      }
+
       .type-label {
         font-size: 13px;
         color: #606266;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      &:hover .type-label {
+        color: #00bfa5;
       }
     }
   }
@@ -1781,25 +3641,30 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 .editor-outline {
-  width: 260px;
-  background: rgba(255, 255, 255, 0.6);
+  width: 280px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
   border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+
   &.collapsed {
-    width: 50px;
+    width: 60px;
   }
+
   .outline-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
-    border-bottom: 1px solid #e4e7ed;
-    min-height: 44px;
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    min-height: 50px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+
     .outline-title {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 15px;
+      font-weight: 600;
       color: #303133;
       white-space: nowrap;
       overflow: hidden;
@@ -1807,53 +3672,200 @@ onBeforeUnmount(() => {
       margin-right: 8px;
     }
   }
+
   &.collapsed .outline-header {
     justify-content: center;
     padding: 12px 8px;
+
     .outline-title {
       display: none;
     }
   }
+
   .outline-content {
     flex: 1;
     overflow-y: auto;
     padding: 12px;
+
     .outline-summary {
       font-size: 13px;
-      color: #909399;
+      color: #606266;
       margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #e4e7ed;
+      padding: 10px 12px;
+      background: rgba(0, 191, 165, 0.08);
+      border-radius: 6px;
+      font-weight: 500;
     }
+
+    .outline-groups {
+      .outline-group {
+        margin-bottom: 12px;
+        border: 1px solid #e4e7ed;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.6);
+
+        &:hover {
+          border-color: #00bfa5;
+          box-shadow: 0 2px 8px rgba(0, 191, 165, 0.1);
+        }
+
+        .outline-group-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
+          background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
+          border-bottom: 1px solid #e4e7ed;
+          cursor: grab;
+          user-select: none;
+          transition: all 0.2s ease;
+
+          &:active {
+            cursor: grabbing;
+          }
+
+          .group-drag-handle {
+            cursor: grab;
+            color: #c0c4cc;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+
+            .drag-icon {
+              width: 14px;
+              height: 14px;
+            }
+
+            &:hover {
+              color: #00bfa5;
+            }
+          }
+
+          .group-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: #00bfa5;
+            min-width: 24px;
+          }
+
+          .group-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #303133;
+            flex: 1;
+          }
+
+          .group-item-count {
+            font-size: 12px;
+            color: #909399;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 2px 8px;
+            border-radius: 4px;
+          }
+        }
+
+        .outline-group-items {
+          .outline-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px 8px 32px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.5);
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            &:hover {
+              background: rgba(0, 191, 165, 0.08);
+              transform: translateX(2px);
+            }
+
+            &.active {
+              background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+              color: #00bfa5;
+            }
+
+            .item-index {
+              font-size: 12px;
+              margin-right: 6px;
+              color: #909399;
+              font-weight: 600;
+              min-width: 20px;
+            }
+
+            .item-title {
+              flex: 1;
+              font-size: 12px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            .item-points {
+              font-size: 11px;
+              color: #909399;
+              margin-left: 8px;
+              background: #f5f7fa;
+              padding: 1px 6px;
+              border-radius: 3px;
+            }
+          }
+        }
+      }
+    }
+
     .outline-list .outline-item {
       display: flex;
       align-items: center;
-      padding: 8px 10px;
-      margin-bottom: 4px;
-      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.5);
+
       &:hover {
-        background: #f5f7fa;
+        background: rgba(0, 191, 165, 0.08);
+        border-color: rgba(0, 191, 165, 0.2);
+        transform: translateX(2px);
       }
+
       &.active {
-        background: rgba(0, 191, 165, 0.1);
+        background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+        border-color: #00bfa5;
         color: #00bfa5;
+        box-shadow: 0 2px 8px rgba(0, 191, 165, 0.1);
       }
+
       .drag-handle {
         cursor: grab;
         margin-right: 8px;
         color: #c0c4cc;
+        transition: color 0.3s ease;
+
         .drag-icon {
           width: 14px;
           height: 14px;
         }
+
+        &:hover {
+          color: #00bfa5;
+        }
       }
+
       .item-index {
         font-size: 13px;
         margin-right: 6px;
         color: #909399;
+        font-weight: 600;
       }
+
       .item-title {
         flex: 1;
         font-size: 13px;
@@ -1861,15 +3873,21 @@ onBeforeUnmount(() => {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
       .item-points {
         font-size: 12px;
         color: #909399;
         margin-left: 8px;
+        background: #f5f7fa;
+        padding: 2px 8px;
+        border-radius: 4px;
       }
     }
+
     .ghost-item {
-      opacity: 0.5;
-      background: #e4e7ed;
+      opacity: 0.6;
+      background: rgba(0, 191, 165, 0.1);
+      border: 1px dashed #00bfa5;
     }
   }
 }
@@ -1880,8 +3898,10 @@ onBeforeUnmount(() => {
   transition: background 0.3s;
   background-image: url("@/assets/306618229cda20061635920333.png");
   background-repeat: repeat;
-  background-size: 400px;
+  background-size: 800px;
   background-position: center;
+  background-blend-mode: overlay;
+  background-color: rgba(245, 247, 250, 0.85);
   &.drag-over {
     background-color: rgba(0, 191, 165, 0.05);
   }
@@ -1910,6 +3930,153 @@ onBeforeUnmount(() => {
   .paper-description {
     margin-bottom: 20px;
   }
+  .ai-analysis-panel {
+    margin-bottom: 20px;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    overflow: hidden;
+    .settings-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #303133;
+      &:hover {
+        background: linear-gradient(135deg, #c8e6c9 0%, #bbdefb 100%);
+      }
+      .toggle-arrow {
+        transition: transform 0.3s;
+        margin-left: auto;
+        &.expanded {
+          transform: rotate(180deg);
+        }
+      }
+    }
+    .settings-content {
+      padding: 20px;
+      background: #fafafa;
+    }
+    .ai-analysis-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      .analysis-hint {
+        font-size: 13px;
+        color: #909399;
+      }
+    }
+    .ai-analysis-result {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid #e4e7ed;
+      .result-header {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e4e7ed;
+        .result-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #303133;
+        }
+      }
+      .result-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+        .metric-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 12px;
+          background: #f5f7fa;
+          border-radius: 6px;
+          .metric-label {
+            font-size: 12px;
+            color: #909399;
+          }
+          .metric-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+          }
+        }
+      }
+      .result-distribution {
+        margin-bottom: 16px;
+        .distribution-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+          margin-bottom: 12px;
+        }
+        .distribution-chart {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          .pie-chart {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            flex-shrink: 0;
+          }
+          .distribution-legend {
+            flex: 1;
+            .legend-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 8px;
+              font-size: 13px;
+              .legend-color {
+                width: 12px;
+                height: 12px;
+                border-radius: 2px;
+                flex-shrink: 0;
+              }
+              .legend-name {
+                color: #303133;
+                min-width: 60px;
+              }
+              .legend-count {
+                color: #606266;
+                min-width: 40px;
+              }
+              .legend-percent {
+                color: #909399;
+              }
+            }
+          }
+        }
+      }
+      .result-suggestions {
+        .suggestions-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+          margin-bottom: 8px;
+        }
+        .suggestions-list {
+          margin: 0;
+          padding-left: 20px;
+          li {
+            font-size: 13px;
+            color: #606266;
+            line-height: 1.8;
+            &::marker {
+              color: #00bfa5;
+            }
+          }
+        }
+      }
+    }
+  }
   .settings-panel {
     margin-bottom: 20px;
     border: 1px solid #e4e7ed;
@@ -1936,6 +4103,44 @@ onBeforeUnmount(() => {
         .section-title { font-size: 14px; font-weight: 600; color: #00bfa5; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e4e7ed; }
       }
       .setting-hint { font-size: 12px; color: #909399; margin-top: 4px; }
+      .publish-student-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .publish-student-list-inline {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e4e7ed;
+        border-radius: 6px;
+        padding: 8px;
+        margin-top: 8px;
+      }
+      .publish-student-item-inline {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        &:hover {
+          background: #f5f7fa;
+        }
+        &.selected {
+          background: rgba(0, 191, 165, 0.08);
+        }
+        .student-name {
+          font-size: 13px;
+          color: #303133;
+        }
+        .student-no {
+          font-size: 12px;
+          color: #909399;
+        }
+      }
     }
   }
   .empty-hint {
@@ -1943,19 +4148,85 @@ onBeforeUnmount(() => {
   }
 }
 .questions-container {
-  .question-card {
-    background: rgba(255, 255, 255, 0.6);
-    border: 2px solid #e4e7ed;
+  .question-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    margin: 32px 0 24px 0;
+    background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
     border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 16px;
-    transition: all 0.2s;
-    &:hover {
-      border-color: #c0c4cc;
+    border: 1px solid rgba(0, 191, 165, 0.2);
+
+    .group-title-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+
+      .group-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #00bfa5;
+        min-width: 30px;
+      }
+
+      .group-title-input {
+        flex: 1;
+        max-width: 400px;
+
+        :deep(.el-input__wrapper) {
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(0, 191, 165, 0.3);
+          border-radius: 6px;
+          font-size: 16px;
+          font-weight: 600;
+          color: #303133;
+
+          &:hover {
+            border-color: #00bfa5;
+            background: rgba(255, 255, 255, 0.95);
+          }
+
+          &:focus-within {
+            border-color: #00bfa5;
+            box-shadow: 0 0 0 2px rgba(0, 191, 165, 0.1);
+          }
+        }
+      }
     }
+
+    .group-count {
+      font-size: 13px;
+      color: #909399;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+  }
+
+  .question-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    border: 2px solid #e4e7ed;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      border-color: #00bfa5;
+      box-shadow: 0 8px 24px rgba(0, 191, 165, 0.12);
+      transform: translateY(-2px);
+    }
+
     &.active {
       border-color: #00bfa5;
-      box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.1);
+      box-shadow: 0 8px 24px rgba(0, 191, 165, 0.15);
+      background: linear-gradient(135deg, rgba(0, 191, 165, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
     }
     .question-header {
       display: flex;
@@ -1994,6 +4265,49 @@ onBeforeUnmount(() => {
     }
     .question-stem {
       margin-bottom: 16px;
+      .stem-toolbar-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        .stem-label {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+        }
+        .stem-tools {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+      }
+      .blank-count-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #00bfa5;
+        margin-top: 8px;
+        padding: 6px 12px;
+        background: rgba(0, 191, 165, 0.08);
+        border-radius: 4px;
+        border-left: 3px solid #00bfa5;
+      }
+      .stem-preview-box {
+        margin-top: 8px;
+        padding: 12px;
+        background: #f5f7fa;
+        border-radius: 6px;
+        border: 1px solid #e4e7ed;
+        .preview-tag {
+          font-size: 12px;
+          color: #909399;
+          margin-bottom: 8px;
+        }
+        .preview-body {
+          line-height: 1.6;
+        }
+      }
     }
     .question-options {
       margin-bottom: 16px;
@@ -2077,6 +4391,321 @@ onBeforeUnmount(() => {
           font-size: 14px;
           font-weight: 500;
           color: #606266;
+        }
+      }
+    }
+    .question-matrix {
+      margin-bottom: 16px;
+      .matrix-section {
+        margin-bottom: 16px;
+        .matrix-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+          .matrix-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .matrix-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+          .matrix-item-key {
+            font-size: 13px;
+            color: #606266;
+            min-width: 30px;
+          }
+          .matrix-item-input {
+            flex: 1;
+          }
+        }
+      }
+    }
+    .question-matching {
+      margin-bottom: 16px;
+      .matching-side {
+        margin-bottom: 16px;
+        .matching-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+          .matching-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .matching-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+          .matching-item-key {
+            font-size: 13px;
+            color: #606266;
+            min-width: 30px;
+          }
+          .matching-item-input {
+            flex: 1;
+          }
+        }
+      }
+      .matching-answer-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #909399;
+        margin: 8px 0;
+        padding: 8px 12px;
+        background: #f5f7fa;
+        border-radius: 4px;
+      }
+      .matching-pair {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        .matching-pair-label {
+          font-size: 13px;
+          color: #303133;
+          min-width: 120px;
+        }
+      }
+    }
+    .question-slider {
+      margin-bottom: 16px;
+      .slider-config {
+        .slider-config-header {
+          margin-bottom: 12px;
+          .slider-config-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .slider-preview {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          background: #f5f7fa;
+          border-radius: 6px;
+          margin-top: 12px;
+          .slider-label-left,
+          .slider-label-right {
+            font-size: 12px;
+            color: #909399;
+            white-space: nowrap;
+          }
+        }
+      }
+    }
+    .question-nps {
+      margin-bottom: 16px;
+      .nps-config {
+        .nps-config-header {
+          margin-bottom: 12px;
+          .nps-config-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .nps-preview {
+          padding: 12px;
+          background: #f5f7fa;
+          border-radius: 6px;
+          margin-top: 12px;
+          .nps-scale {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            .nps-item {
+              flex: 1;
+              text-align: center;
+              padding: 8px 0;
+              border-radius: 4px;
+              font-size: 13px;
+              font-weight: 500;
+              cursor: default;
+              &.detractor { background: #fde2e2; color: #f56c6c; }
+              &.passive { background: #faecd8; color: #e6a23c; }
+              &.promoter { background: #e1f3d8; color: #67c23a; }
+            }
+          }
+          .nps-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #909399;
+          }
+        }
+      }
+    }
+    .question-star {
+      margin-bottom: 16px;
+      .star-config {
+        .star-config-header {
+          margin-bottom: 12px;
+          .star-config-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .star-labels-config {
+          margin-top: 12px;
+          .star-label-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            .star-label-key {
+              font-size: 13px;
+              color: #606266;
+              min-width: 40px;
+            }
+            .star-label-input { flex: 1; }
+          }
+        }
+        .star-preview {
+          display: flex;
+          gap: 4px;
+          margin-top: 12px;
+          padding: 12px;
+          background: #f5f7fa;
+          border-radius: 6px;
+          .star-icon {
+            font-size: 24px;
+            color: #dcdfe6;
+            &.active { color: #f7ba2a; }
+          }
+        }
+      }
+    }
+    .question-composite {
+      margin-bottom: 16px;
+      .composite-material {
+        margin-bottom: 16px;
+        .composite-material-header {
+          margin-bottom: 12px;
+          .composite-material-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+      }
+      .composite-sub-questions {
+        .composite-sub-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+          .composite-sub-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .composite-sub-item {
+          border: 1px solid #e4e7ed;
+          border-radius: 6px;
+          padding: 12px;
+          margin-bottom: 12px;
+          background: #fafafa;
+          .sub-item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            .sub-item-index {
+              font-size: 13px;
+              font-weight: 600;
+              color: #303133;
+            }
+            .sub-item-type {
+              font-size: 12px;
+              padding: 1px 6px;
+              background: rgba(0, 191, 165, 0.1);
+              color: #00bfa5;
+              border-radius: 3px;
+            }
+          }
+          .sub-item-stem { margin-bottom: 10px; }
+          .sub-item-options {
+            .sub-option-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 8px;
+            }
+          }
+          .sub-item-blanks {
+            .sub-blank-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 8px;
+              font-size: 13px;
+            }
+          }
+          .sub-item-ref { margin-top: 8px; }
+        }
+      }
+    }
+    .question-ordering {
+      margin-bottom: 16px;
+      .ordering-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        .ordering-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+        }
+      }
+      .ordering-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        .ordering-item-key {
+          font-size: 13px;
+          color: #606266;
+          min-width: 30px;
+        }
+        .ordering-item-input {
+          flex: 1;
+        }
+      }
+      .ordering-answer {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid #e4e7ed;
+        .ordering-answer-header {
+          margin-bottom: 8px;
+          .ordering-answer-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .ordering-answer-hint {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          color: #909399;
+          margin-top: 8px;
         }
       }
     }
@@ -2172,6 +4801,25 @@ onBeforeUnmount(() => {
         border-bottom: 1px solid #e4e7ed;
         color: #909399;
       }
+      .preview-group-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 24px 0 16px 0;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
+        border-radius: 6px;
+        .preview-group-number {
+          font-size: 18px;
+          font-weight: 700;
+          color: #00bfa5;
+        }
+        .preview-group-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #303133;
+        }
+      }
       .preview-question {
         margin-bottom: 20px;
         .preview-question-header {
@@ -2190,6 +4838,22 @@ onBeforeUnmount(() => {
         .preview-question-stem {
           margin-bottom: 12px;
           line-height: 1.6;
+          :deep(.blank-placeholder) {
+            display: inline-block;
+            min-width: 80px;
+            border-bottom: 2px solid #303133;
+            text-align: center;
+            padding: 0 4px;
+            margin: 0 4px;
+          }
+          :deep(.blank-answer-inline) {
+            display: inline-block;
+            min-width: 60px;
+            color: #303133;
+            font-weight: 500;
+            padding: 2px 8px;
+            margin: 0 4px;
+          }
         }
         .preview-option {
           padding: 4px 0;
@@ -2203,6 +4867,184 @@ onBeforeUnmount(() => {
           border: 1px solid #e4e7ed;
           border-radius: 4px;
         }
+      }
+    }
+  }
+}
+// 带答案预览对话框样式
+.preview-with-answer-dialog {
+  .answer-badge {
+    background: #67c23a;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .preview-option {
+    &.correct-option {
+      background: rgba(103, 194, 58, 0.1);
+      color: #67c23a;
+      font-weight: 500;
+      border-radius: 4px;
+      padding: 4px 8px 4px 20px;
+      .correct-icon {
+        color: #67c23a;
+        margin-left: 8px;
+      }
+    }
+  }
+  .preview-blanks .preview-blank {
+    display: block;
+    margin-bottom: 8px;
+    .blank-answer {
+      color: #67c23a;
+      font-weight: 500;
+      background: rgba(103, 194, 58, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+  }
+  .preview-question-stem {
+    :deep(.blank-placeholder) {
+      display: inline-block;
+      min-width: 80px;
+      border-bottom: 2px solid #303133;
+      text-align: center;
+      padding: 0 4px;
+      margin: 0 4px;
+    }
+    :deep(.blank-answer-inline) {
+      display: inline-block;
+      min-width: 60px;
+      color: #67c23a;
+      font-weight: 500;
+      background: rgba(103, 194, 58, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin: 0 4px;
+    }
+  }
+  .preview-answer-section {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(103, 194, 58, 0.08);
+    border-radius: 6px;
+    border-left: 3px solid #67c23a;
+    .answer-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #67c23a;
+      margin-bottom: 6px;
+    }
+    .answer-content {
+      font-size: 14px;
+      color: #303133;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+  }
+  .preview-analysis-section {
+    margin-top: 8px;
+    padding: 12px;
+    background: rgba(64, 158, 255, 0.08);
+    border-radius: 6px;
+    border-left: 3px solid #409eff;
+    .analysis-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #409eff;
+      margin-bottom: 6px;
+    }
+    .analysis-content {
+      font-size: 14px;
+      color: #606266;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+  }
+}
+
+// 发布对话框样式
+.publish-dialog {
+  .publish-form {
+    .publish-section {
+      margin-bottom: 20px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+    .publish-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #303133;
+      margin-bottom: 12px;
+    }
+    .publish-hint {
+      font-size: 12px;
+      color: #909399;
+      font-weight: normal;
+    }
+    .publish-course-item {
+      padding: 8px 12px;
+      border: 1px solid #e4e7ed;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+      &:hover {
+        border-color: #00bfa5;
+        background: rgba(0, 191, 165, 0.05);
+      }
+    }
+    .publish-student-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .publish-student-list {
+      max-height: 360px;
+      overflow-y: auto;
+      border: 1px solid #e4e7ed;
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .publish-student-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:hover {
+        background: #f5f7fa;
+      }
+      &.selected {
+        background: rgba(0, 191, 165, 0.08);
+      }
+      .student-name {
+        font-size: 14px;
+        color: #303133;
+        min-width: 80px;
+      }
+      .student-no {
+        font-size: 13px;
+        color: #909399;
+      }
+      .student-class {
+        font-size: 12px;
+        color: #909399;
+        margin-left: auto;
+        padding: 2px 8px;
+        background: #f5f7fa;
+        border-radius: 4px;
       }
     }
   }

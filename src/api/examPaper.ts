@@ -170,6 +170,56 @@ export interface AIGenerateQuestionParams {
   includeAnalysis: boolean;
   polishMode?: boolean;
   originalContent?: string;
+  /** 生成模式：generate-生成新题 | recommend-从题库推荐 | polish-润色 */
+  mode?: "generate" | "recommend" | "polish";
+  /** recommend 模式下排除的题目ID */
+  excludeQuestionIds?: number[];
+}
+
+/** AI 试卷分析参数 */
+export interface AIPaperAnalyzeParams {
+  questionGroups: Array<{
+    groupName: string;
+    questionType: string;
+    questions: Array<{
+      stem: string;
+      points: number;
+      difficulty?: number;
+      knowledgePoints?: string[];
+    }>;
+  }>;
+}
+
+/** 题型分布项 */
+export interface QuestionTypeDistributionItem {
+  /** 题型名称 */
+  name: string;
+  /** 题型标识 */
+  type: string;
+  /** 题目数量 */
+  count: number;
+  /** 占比百分比 */
+  percentage: number;
+}
+
+/** AI 试卷分析结果 */
+export interface AIPaperAnalyzeResult {
+  /** 整体难度 1-5 */
+  difficulty: number;
+  /** 难度描述 */
+  difficultyDescription: string;
+  /** 知识点覆盖率 0-100 */
+  knowledgeCoverage: number;
+  /** 题型平衡度 0-100 */
+  typeBalance: number;
+  /** 预估完成时间（分钟） */
+  estimatedTime: number;
+  /** 整体评分 0-100 */
+  overallScore: number;
+  /** 题型分布 */
+  questionTypeDistribution: QuestionTypeDistributionItem[];
+  /** 改进建议 */
+  suggestions: string[];
 }
 
 /** AI 生成的题目 */
@@ -475,6 +525,72 @@ export interface GetStudentExamListParams extends PageParams {
 
 // ==================== API接口 ====================
 
+/** 总览统计数据 */
+export interface OverviewStatistics {
+  /** 试卷总数 */
+  totalPapers: number;
+  /** 已发布数 */
+  publishedCount: number;
+  /** 待阅卷数 */
+  gradingCount: number;
+  /** 平均分 */
+  averageScore: number;
+}
+
+/** 最近编辑的试卷 */
+export interface RecentPaperItem {
+  id: number;
+  title: string;
+  courseName: string;
+  updateTime: string;
+  status: number;
+  questionCount: number;
+  totalPoints: number;
+}
+
+/** 我的试卷统计数据 */
+export interface MyPaperStatistics {
+  /** 试卷总数 */
+  total: number;
+  /** 已发布数 */
+  published: number;
+  /** 草稿数 */
+  draft: number;
+  /** 近7天创建数 */
+  recent: number;
+}
+
+/**
+ * 获取我的试卷统计数据
+ */
+export const getMyPaperStatistics = () => {
+  return http.request<ApiResponse<MyPaperStatistics>>(
+    "get",
+    "/edu/backend/v1/paper/my/statistics"
+  );
+};
+
+/**
+ * 获取总览统计数据
+ */
+export const getOverviewStatistics = () => {
+  return http.request<ApiResponse<OverviewStatistics>>(
+    "get",
+    "/edu/backend/v1/paper/overview/statistics"
+  );
+};
+
+/**
+ * 获取最近编辑的试卷
+ */
+export const getRecentPapers = (limit = 5) => {
+  return http.request<ApiResponse<RecentPaperItem[]>>(
+    "get",
+    "/edu/backend/v1/paper/recent",
+    { params: { limit } }
+  );
+};
+
 /**
  * 获取试卷列表（教师/管理员）
  */
@@ -565,6 +681,71 @@ export const getPublishStudents = (params: {
   return http.request<ApiResponse<PublishTargetStudent[]>>(
     "get",
     "/edu/backend/v1/paper/publish/students",
+    { params }
+  );
+};
+
+/** 阅卷统计数据 */
+export interface GradingStatistics {
+  /** 待阅卷试卷数 */
+  pending: number;
+  /** 阅卷中试卷数 */
+  grading: number;
+  /** 已完成试卷数 */
+  completed: number;
+  /** 总答卷数 */
+  total: number;
+}
+
+/** 待阅卷试卷列表项 */
+export interface GradingPaperItem {
+  /** 试卷ID */
+  id: number;
+  /** 试卷名称 */
+  paperTitle: string;
+  /** 课程名称 */
+  courseName: string;
+  /** 答卷数（学生数） */
+  studentCount: number;
+  /** 已批改数 */
+  gradedCount: number;
+  /** 待批改数 */
+  pendingCount: number;
+  /** 状态：pending-待阅卷 grading-阅卷中 completed-已完成 */
+  status: "pending" | "grading" | "completed";
+  /** 截止时间 */
+  deadline: string;
+  /** 发布时间 */
+  publishTime: string;
+}
+
+/** 获取待阅卷试卷列表参数 */
+export interface GetGradingPaperListParams extends PageParams {
+  /** 关键词搜索 */
+  keyword?: string;
+  /** 状态筛选 */
+  status?: "pending" | "grading" | "completed";
+  /** 课程ID */
+  courseId?: number;
+}
+
+/**
+ * 获取阅卷统计数据
+ */
+export const getGradingStatistics = () => {
+  return http.request<ApiResponse<GradingStatistics>>(
+    "get",
+    "/edu/backend/v1/paper/grading/statistics"
+  );
+};
+
+/**
+ * 获取待阅卷试卷列表（按试卷分组）
+ */
+export const getGradingPaperList = (params: GetGradingPaperListParams) => {
+  return http.request<ApiResponse<PageResult<GradingPaperItem>>>(
+    "get",
+    "/edu/backend/v1/paper/grading/list",
     { params }
   );
 };
@@ -753,6 +934,17 @@ export const getKnowledgePoints = () => {
   return http.request<ApiResponse<KnowledgePoint[]>>(
     "get",
     "/edu/backend/v1/knowledge-points"
+  );
+};
+
+/**
+ * AI 分析试卷
+ */
+export const aiAnalyzePaper = (data: AIPaperAnalyzeParams) => {
+  return http.request<ApiResponse<AIPaperAnalyzeResult>>(
+    "post",
+    "/edu/backend/v1/ai/paper/analyze",
+    { data }
   );
 };
 
@@ -974,6 +1166,78 @@ export const batchArchiveToBank = (data: {
   );
 };
 
+// ==================== 试卷文件夹管理API ====================
+
+/** 试卷文件夹 */
+export interface PaperFolder {
+  id: number;
+  name: string;
+  parentId?: number;
+  paperCount: number;
+  createTime: string;
+  children?: PaperFolder[];
+}
+
+/**
+ * 获取试卷文件夹列表
+ */
+export const getPaperFolders = () => {
+  return http.request<ApiResponse<PaperFolder[]>>(
+    "get",
+    "/edu/backend/v1/paper/folders"
+  );
+};
+
+/**
+ * 创建试卷文件夹
+ */
+export const createPaperFolder = (data: {
+  name: string;
+  parentId?: number;
+}) => {
+  return http.request<ApiResponse<{ id: number }>>(
+    "post",
+    "/edu/backend/v1/paper/folders/create",
+    { data }
+  );
+};
+
+/**
+ * 更新试卷文件夹
+ */
+export const updatePaperFolder = (data: { id: number; name: string }) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/folders/update",
+    { data }
+  );
+};
+
+/**
+ * 删除试卷文件夹
+ */
+export const deletePaperFolder = (id: number) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/folders/delete",
+    { data: { id } }
+  );
+};
+
+/**
+ * 移动试卷到文件夹
+ */
+export const movePapersToFolder = (data: {
+  paperIds: number[];
+  folderId: number;
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/move-to-folder",
+    { data }
+  );
+};
+
 /**
  * 保存为模板
  */
@@ -990,12 +1254,127 @@ export const saveAsTemplate = (data: {
 };
 
 /**
+ * 获取我的模板列表
+ */
+export const getMyTemplates = () => {
+  return http.request<ApiResponse<Array<{
+    id: number;
+    name: string;
+    description?: string;
+    questionTypes: string[];
+    totalQuestions: number;
+    totalPoints: number;
+    createTime: string;
+  }>>>(
+    "get",
+    "/edu/backend/v1/paper/template/my"
+  );
+};
+
+/**
  * 获取模板详情
  */
 export const getTemplateDetail = (templateId: string) => {
   return http.request<ApiResponse<any>>(
     "get",
     `/edu/backend/v1/paper/template/${templateId}`
+  );
+};
+
+/**
+ * 创建空白模板
+ */
+export const createTemplate = (data: {
+  name: string;
+  description?: string;
+}) => {
+  return http.request<ApiResponse<{ templateId: number }>>(
+    "post",
+    "/edu/backend/v1/paper/template/create",
+    { data }
+  );
+};
+
+/**
+ * 删除模板
+ */
+export const deleteTemplate = (templateId: number) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/template/delete",
+    { data: { templateId } }
+  );
+};
+
+/** 系统模板统计数据 */
+export interface SystemTemplateStats {
+  /** 模板标识（如 midterm, final, unit-test 等） */
+  templateKey: string;
+  /** 题目数量 */
+  questionCount: number;
+  /** 总分值 */
+  totalPoints: number;
+  /** 使用人数 */
+  useCount: number;
+}
+
+/** 系统模板预览数据 */
+export interface SystemTemplatePreview {
+  templateKey: string;
+  name: string;
+  description: string;
+  totalQuestions: number;
+  totalPoints: number;
+  questionGroups: Array<{
+    groupName: string;
+    questionType: string;
+    count: number;
+    pointsPerQuestion: number;
+    subtotal: number;
+    sampleQuestions: Array<{
+      stem: string;
+      options?: Array<{ key: string; content: string }>;
+    }>;
+  }>;
+}
+
+/**
+ * 获取系统模板预览（题目结构详情）
+ */
+export const getSystemTemplatePreview = (templateKey: string) => {
+  return http.request<ApiResponse<SystemTemplatePreview>>(
+    "get",
+    "/edu/backend/v1/paper/template/system/preview",
+    { params: { templateKey } }
+  );
+};
+
+/**
+ * 获取系统模板统计数据
+ * 系统模板的基本信息（名称、描述、图标）在前端定义
+ * 此接口仅返回动态统计数据：题数、分值、使用人数
+ */
+export const getSystemTemplateStats = () => {
+  return http.request<ApiResponse<SystemTemplateStats[]>>(
+    "get",
+    "/edu/backend/v1/paper/template/system/stats"
+  );
+};
+
+/**
+ * 导出答卷（Word/PDF）
+ */
+export const exportSubmissions = (params: {
+  paperId: number;
+  submissionIds?: number[];
+  format: "word" | "pdf" | "excel";
+  includeAnswer?: boolean;
+  includeScore?: boolean;
+}) => {
+  return http.request<ApiResponse<{ downloadUrl: string }>>(
+    "get",
+    "/edu/backend/v1/paper/submission/export",
+    { params }
   );
 };
 

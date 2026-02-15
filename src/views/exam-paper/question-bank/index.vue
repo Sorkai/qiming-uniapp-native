@@ -27,6 +27,8 @@ import IconDocument from "@/assets/home-icons/document.svg?component";
 import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
 import IconEdit from "@/assets/home-icons/edit.svg?component";
 import IconGrid from "@/assets/home-icons/grid.svg?component";
+import LatexEditor from "../editor/components/LatexEditor.vue";
+import RichMediaUploader from "../editor/components/RichMediaUploader.vue";
 
 defineOptions({
   name: "QuestionBank"
@@ -214,6 +216,8 @@ const openNewQuestionDialog = () => {
     correctAnswers: [],
     analysis: "",
     referenceAnswer: "",
+    media: [],
+    latex: "",
     knowledgePoints: [],
     points: 5,
     useCount: 0,
@@ -1006,6 +1010,8 @@ onMounted(() => {
             :rows="3"
             placeholder="请输入题目内容"
           />
+          <LatexEditor v-model="editingQuestion.latex" />
+          <RichMediaUploader v-model="editingQuestion.media" />
         </el-form-item>
 
         <!-- 选择题选项 -->

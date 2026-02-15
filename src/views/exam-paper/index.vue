@@ -2,6 +2,12 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
+import {
+  getOverviewStatistics,
+  getRecentPapers,
+  getLearningAnalytics,
+  getSystemTemplateStats
+} from "@/api/examPaper";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -26,81 +32,69 @@ const { isDark } = useDark();
 
 // 统计数据
 const statistics = ref({
-  totalPapers: 12,
-  publishedCount: 8,
-  gradingCount: 3,
-  averageScore: 78.5
+  totalPapers: 0,
+  publishedCount: 0,
+  gradingCount: 0,
+  averageScore: 0
 });
 
 // 最近编辑的试卷
-const recentPapers = ref([
-  {
-    id: 1,
-    title: "2024年春季期中考试",
-    courseName: "高等数学",
-    updateTime: "2024-03-15 14:30",
-    status: 1,
-    questionCount: 25,
-    totalPoints: 100
-  },
-  {
-    id: 2,
-    title: "第三章单元测试",
-    courseName: "线性代数",
-    updateTime: "2024-03-14 10:20",
-    status: 0,
-    questionCount: 15,
-    totalPoints: 50
-  },
-  {
-    id: 3,
-    title: "期末复习作业",
-    courseName: "概率论",
-    updateTime: "2024-03-13 16:45",
-    status: 1,
-    questionCount: 20,
-    totalPoints: 80
-  }
-]);
+const recentPapers = ref<any[]>([]);
 
-// 试卷模板
+// 试卷模板（基本信息前端定义，使用人数从后端获取）
 const templates = ref([
   {
     id: 1,
+    templateKey: "standard",
     name: "标准考试模板",
-    description: "包含单选、多选、判断、填空、简答题型",
+    description: "单选10道·多选5道·填空5道·大题10道",
     icon: IconDocument,
-    color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+    color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    questionCount: 30,
+    totalPoints: 100,
+    useCount: 0
   },
   {
     id: 2,
+    templateKey: "quick",
     name: "快速测验模板",
-    description: "仅包含客观题，适合课堂小测",
+    description: "仅包含客观题，适合课堂小测和随堂练习",
     icon: IconZap,
-    color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+    color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    questionCount: 5,
+    totalPoints: 25,
+    useCount: 0
   },
   {
     id: 3,
+    templateKey: "comprehensive",
     name: "综合能力测试",
-    description: "包含材料分析、论述等主观题",
+    description: "单选10道·简答5道，适合综合能力评估",
     icon: IconBook,
-    color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+    color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+    questionCount: 15,
+    totalPoints: 75,
+    useCount: 0
   },
   {
     id: 4,
-    name: "问卷调查模板",
-    description: "矩阵题、量表题等调查类题型",
+    templateKey: "survey",
+    name: "学情调查问卷",
+    description: "单选10道·多选2道·简答5道·判断5道",
     icon: IconClipboard,
-    color: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
+    color: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+    questionCount: 22,
+    totalPoints: 120,
+    useCount: 0
   }
 ]);
 
 // 学情概览数据
 const learningStats = ref({
-  passRate: 85,
-  excellentRate: 32,
-  averageScore: 78.5,
-  participantCount: 156
+  passRate: 0,
+  excellentRate: 0,
+  averageScore: 0,
+  participantCount: 0
 });
 
 // 课程筛选器数据
@@ -112,25 +106,40 @@ const courseOptions = [
   { value: "prob", label: "概率论" }
 ];
 
+// 加载学情概览数据
+const loadLearningStats = async (courseId?: number) => {
+  try {
+    const params = courseId ? { courseId } : undefined;
+    const res = await getLearningAnalytics(params);
+    if (res.code === 0 && res.data?.overview) {
+      const o = res.data.overview;
+      learningStats.value = {
+        passRate: o.passRate,
+        excellentRate: Math.round(
+          res.data.scoreDistribution?.find(d => d.range === "90-100")
+            ?.percentage || 0
+        ),
+        averageScore: o.avgScore,
+        participantCount: o.totalStudents
+      };
+    }
+  } catch (e) {
+    console.error("获取学情概览失败", e);
+  }
+};
+
 // 处理课程切换
 const handleCourseChange = (val: string) => {
-  console.log("切换课程:", val);
-  // 这里可以根据课程 ID 加载对应的统计数据
-  // 模拟数据更新
   if (val === "all") {
-    learningStats.value = {
-      passRate: 85,
-      excellentRate: 32,
-      averageScore: 78.5,
-      participantCount: 156
-    };
+    loadLearningStats();
   } else {
-    learningStats.value = {
-      passRate: Math.floor(Math.random() * 20) + 70,
-      excellentRate: Math.floor(Math.random() * 15) + 20,
-      averageScore: Math.floor(Math.random() * 10) + 75,
-      participantCount: Math.floor(Math.random() * 50) + 100
+    // 将课程value映射为courseId
+    const courseIdMap: Record<string, number> = {
+      math: 1,
+      linear: 2,
+      prob: 3
     };
+    loadLearningStats(courseIdMap[val]);
   }
 };
 
@@ -169,8 +178,54 @@ const getStatusText = (status: number) => {
   return status === 1 ? "已发布" : "草稿";
 };
 
+// 加载统计数据
+const loadStatistics = async () => {
+  try {
+    const res = await getOverviewStatistics();
+    if (res.code === 0 && res.data) {
+      statistics.value = res.data;
+    }
+  } catch (e) {
+    console.error("获取总览统计失败", e);
+  }
+};
+
+// 加载最近试卷
+const loadRecentPapers = async () => {
+  try {
+    const res = await getRecentPapers(5);
+    if (res.code === 0 && res.data) {
+      recentPapers.value = res.data;
+    }
+  } catch (e) {
+    console.error("获取最近试卷失败", e);
+  }
+};
+
+// 加载系统模板统计（使用人数）
+const loadTemplateStats = async () => {
+  try {
+    const res = await getSystemTemplateStats();
+    if (res.code === 0 && res.data) {
+      res.data.forEach(stat => {
+        const t = templates.value.find(
+          item => item.templateKey === stat.templateKey
+        );
+        if (t) {
+          t.useCount = stat.useCount;
+        }
+      });
+    }
+  } catch (e) {
+    console.error("获取模板统计失败", e);
+  }
+};
+
 onMounted(() => {
-  // 加载数据
+  loadStatistics();
+  loadRecentPapers();
+  loadLearningStats();
+  loadTemplateStats();
 });
 </script>
 
@@ -272,6 +327,13 @@ onMounted(() => {
               <div class="template-info">
                 <div class="template-name">{{ template.name }}</div>
                 <div class="template-desc">{{ template.description }}</div>
+                <div class="template-meta">
+                  <span>{{ template.questionCount }}题</span>
+                  <span class="meta-divider">·</span>
+                  <span>{{ template.totalPoints }}分</span>
+                  <span class="meta-divider">·</span>
+                  <span>{{ template.useCount }}人使用</span>
+                </div>
               </div>
               <div class="template-arrow">
                 <el-icon><ArrowRight /></el-icon>
@@ -602,6 +664,17 @@ $radius-xl: 20px;
   border-radius: $radius-xl;
   box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
 
+  @media (width <= 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 30px;
+
+    .create-btn {
+      width: 100%;
+    }
+  }
+
   .welcome-content {
     .welcome-badge {
       display: inline-block;
@@ -730,7 +803,7 @@ $radius-xl: 20px;
 .content-section {
   display: grid;
   grid-template-columns: 1fr 380px;
-  gap: 24px;
+  gap: 20px;
 
   @media (width <= 1200px) {
     grid-template-columns: 1fr;
@@ -865,6 +938,16 @@ $radius-xl: 20px;
       color: $light-text-secondary;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .template-meta {
+      margin-top: 4px;
+      font-size: 12px;
+      color: $light-text-muted;
+
+      .meta-divider {
+        margin: 0 4px;
+      }
     }
   }
 
