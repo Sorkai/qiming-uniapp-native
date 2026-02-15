@@ -801,15 +801,14 @@ onBeforeUnmount(() => {
     }
 
     .option-item {
-      display: flex;
-      align-items: flex-start;
-      padding: 0; // 移除默认内边距
       background: #fff;
       border-radius: 8px;
       border: 2px solid #e5e7eb;
       transition: all 0.2s;
       cursor: pointer;
-      width: 100%; // 确保所有选项框宽度一致
+      width: 100%;
+      margin: 0;
+      padding: 0;
 
       // 隐藏默认的 radio/checkbox 图标
       :deep(.el-radio__input),
@@ -817,15 +816,15 @@ onBeforeUnmount(() => {
         display: none;
       }
 
-      // 让 label 占满整个空间，垂直居中
+      // 让 label 占满整个空间
       :deep(.el-radio__label),
       :deep(.el-checkbox__label) {
-        padding: 12px 16px; // 将内边距移到 label 上
-        margin: 0; // 移除默认边距
+        padding: 12px 16px;
+        margin: 0;
         display: flex;
-        align-items: flex-start; // 恢复为顶部对齐
+        align-items: flex-start;
         width: 100%;
-        text-align: left; // 强制左对齐
+        line-height: 1.6;
       }
 
       &:hover {
@@ -847,14 +846,12 @@ onBeforeUnmount(() => {
         font-weight: 600;
         margin-right: 8px;
         flex-shrink: 0;
-        width: 20px; // 使用固定宽度而不是 min-width，确保所有选项标识宽度完全一致
-        text-align: left;
+        min-width: 24px;
       }
 
       .option-content {
         flex: 1;
-        text-align: left; // 内容左对齐
-        word-break: break-word; // 长文本自动换行
+        word-break: break-word;
       }
     }
 
