@@ -548,6 +548,28 @@ export interface RecentPaperItem {
   totalPoints: number;
 }
 
+/** 我的试卷统计数据 */
+export interface MyPaperStatistics {
+  /** 试卷总数 */
+  total: number;
+  /** 已发布数 */
+  published: number;
+  /** 草稿数 */
+  draft: number;
+  /** 近7天创建数 */
+  recent: number;
+}
+
+/**
+ * 获取我的试卷统计数据
+ */
+export const getMyPaperStatistics = () => {
+  return http.request<ApiResponse<MyPaperStatistics>>(
+    "get",
+    "/edu/backend/v1/paper/my/statistics"
+  );
+};
+
 /**
  * 获取总览统计数据
  */

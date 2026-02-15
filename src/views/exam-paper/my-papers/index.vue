@@ -3,6 +3,11 @@ import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  getMyPaperStatistics,
+  getPaperList,
+  type PaperStatus
+} from "@/api/examPaper";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -33,41 +38,7 @@ const pagination = reactive({
 });
 
 // 试卷列表
-const paperList = ref([
-  {
-    id: 1,
-    title: "2024年春季期中考试",
-    courseName: "高等数学",
-    createTime: "2024-03-10 09:00",
-    updateTime: "2024-03-15 14:30",
-    status: 1,
-    questionCount: 25,
-    totalPoints: 100,
-    publishCount: 2
-  },
-  {
-    id: 2,
-    title: "第三章单元测试",
-    courseName: "线性代数",
-    createTime: "2024-03-08 10:00",
-    updateTime: "2024-03-14 10:20",
-    status: 0,
-    questionCount: 15,
-    totalPoints: 50,
-    publishCount: 0
-  },
-  {
-    id: 3,
-    title: "期末复习作业",
-    courseName: "概率论",
-    createTime: "2024-03-05 14:00",
-    updateTime: "2024-03-13 16:45",
-    status: 1,
-    questionCount: 20,
-    totalPoints: 80,
-    publishCount: 1
-  }
-]);
+const paperList = ref<any[]>([]);
 
 const loading = ref(false);
 
@@ -80,10 +51,10 @@ const courseList = ref([
 
 // 统计数据
 const statistics = ref({
-  total: 12,
-  published: 8,
-  draft: 4,
-  recent: 3
+  total: 0,
+  published: 0,
+  draft: 0,
+  recent: 0
 });
 
 // 搜索
@@ -100,13 +71,41 @@ const handleReset = () => {
   handleSearch();
 };
 
-// 加载数据
-const loadData = () => {
+// 加载统计数据
+const loadStatistics = async () => {
+  try {
+    const res = await getMyPaperStatistics();
+    if (res.code === 0 && res.data) {
+      statistics.value = res.data;
+    }
+  } catch (e) {
+    console.error("获取统计数据失败", e);
+  }
+};
+
+// 加载试卷列表
+const loadData = async () => {
   loading.value = true;
-  // 模拟加载
-  setTimeout(() => {
+  try {
+    const res = await getPaperList({
+      pageNum: pagination.page,
+      pageSize: pagination.pageSize,
+      keyword: searchForm.keyword || undefined,
+      status:
+        searchForm.status !== ""
+          ? (Number(searchForm.status) as PaperStatus)
+          : undefined,
+      courseId: searchForm.courseId ? Number(searchForm.courseId) : undefined
+    });
+    if (res.code === 0 && res.data) {
+      paperList.value = res.data.list || [];
+      pagination.total = res.data.total || 0;
+    }
+  } catch (e) {
+    console.error("获取试卷列表失败", e);
+  } finally {
     loading.value = false;
-  }, 500);
+  }
 };
 
 // 创建新试卷
@@ -163,6 +162,7 @@ const handlePageChange = () => {
 };
 
 onMounted(() => {
+  loadStatistics();
   loadData();
 });
 </script>

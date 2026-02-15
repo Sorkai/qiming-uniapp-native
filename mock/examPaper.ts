@@ -549,6 +549,61 @@ const mockStudentExamList = [
 export default [
   //==================== 教师/管理员端API ====================
 
+  // 获取我的试卷统计数据
+  {
+    url: "/edu/backend/v1/paper/my/statistics",
+    method: "get",
+    response: () => {
+      const total = mockPaperList.length;
+      const published = mockPaperList.filter(p => p.status >= 1).length;
+      const draft = mockPaperList.filter(p => p.status === 0).length;
+      const recent = 3; // 模拟近7天创建数
+      return {
+        code: 0,
+        msg: "success",
+        data: { total, published, draft, recent }
+      };
+    }
+  },
+
+  // 获取总览统计数据
+  {
+    url: "/edu/backend/v1/paper/overview/statistics",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          totalPapers: mockPaperList.length,
+          publishedCount: mockPaperList.filter(p => p.status >= 1).length,
+          gradingCount: mockPaperList.filter(p => p.status === PaperStatus.GRADING).length,
+          averageScore: 78.5
+        }
+      };
+    }
+  },
+
+  // 获取最近编辑的试卷
+  {
+    url: "/edu/backend/v1/paper/recent",
+    method: "get",
+    response: ({ query }: { query: any }) => {
+      const limit = Number(query.limit) || 5;
+      const sorted = [...mockPaperList].sort((a, b) => b.paperId - a.paperId);
+      const list = sorted.slice(0, limit).map(p => ({
+        id: p.paperId,
+        title: p.title,
+        courseName: p.courseName,
+        updateTime: p.createTime,
+        status: p.status,
+        questionCount: p.totalQuestions,
+        totalPoints: p.totalPoints
+      }));
+      return { code: 0, msg: "success", data: list };
+    }
+  },
+
   // 获取试卷列表
   {
     url: "/edu/backend/v1/paper/list",
