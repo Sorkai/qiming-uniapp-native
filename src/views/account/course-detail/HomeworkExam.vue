@@ -33,27 +33,31 @@
               :class="{ dark: currentTheme === 'dark' }"
               @click="viewHomework(item)"
             >
-              <div class="homework-icon">
-                <img :src="logo" alt="作业" />
-              </div>
-              <div class="homework-info">
-                <div class="homework-title">{{ item.title }}</div>
-                <div class="homework-meta">
-                  <span>题目数量: {{ item.questionNum }}</span>
-                  <span>总分: {{ item.totalPoints }}</span>
-                  <span>截止日期: {{ formatDate(item.dueDate) }}</span>
+              <div class="homework-header">
+                <div class="homework-icon">
+                  <img :src="logo" alt="作业" />
+                </div>
+                <div class="homework-info">
+                  <div class="homework-title">{{ item.title }}</div>
+                  <div class="homework-meta">
+                    <span>题目数量: {{ item.questionNum }}</span>
+                    <span>总分: {{ item.totalPoints }}</span>
+                    <span>截止日期: {{ formatDate(item.dueDate) }}</span>
+                  </div>
                 </div>
               </div>
-              <div class="homework-status">
-                <el-tag
-                  :type="getHomeworkStatusType(item.status)"
-                  effect="plain"
-                >
-                  {{ getHomeworkStatusText(item.status) }}
-                </el-tag>
-              </div>
-              <div class="homework-action">
-                <el-button size="small" type="primary">查看</el-button>
+              <div class="homework-footer">
+                <div class="homework-status">
+                  <el-tag
+                    :type="getHomeworkStatusType(item.status)"
+                    effect="plain"
+                  >
+                    {{ getHomeworkStatusText(item.status) }}
+                  </el-tag>
+                </div>
+                <div class="homework-action">
+                  <el-button size="small" type="primary">查看</el-button>
+                </div>
               </div>
             </div>
           </div>
@@ -76,26 +80,30 @@
               :class="{ dark: currentTheme === 'dark' }"
               @click="viewExam(item)"
             >
-              <div class="exam-icon">
-                <img :src="logo" alt="考试" />
-              </div>
-              <div class="exam-info">
-                <div class="exam-title">{{ item.title }}</div>
-                <div class="exam-meta">
-                  <span>题目数量: {{ item.questionNum }}</span>
-                  <span>总分: {{ item.totalPoints }}</span>
-                  <span>时间限制: {{ item.timeLimit }}分钟</span>
-                  <span>开始时间: {{ formatDate(item.availableFrom) }}</span>
-                  <span>结束时间: {{ formatDate(item.availableTo) }}</span>
+              <div class="exam-header">
+                <div class="exam-icon">
+                  <img :src="logo" alt="考试" />
+                </div>
+                <div class="exam-info">
+                  <div class="exam-title">{{ item.title }}</div>
+                  <div class="exam-meta">
+                    <span>题目数量: {{ item.questionNum }}</span>
+                    <span>总分: {{ item.totalPoints }}</span>
+                    <span>时间限制: {{ item.timeLimit }}分钟</span>
+                    <span>开始时间: {{ formatDate(item.availableFrom) }}</span>
+                    <span>结束时间: {{ formatDate(item.availableTo) }}</span>
+                  </div>
                 </div>
               </div>
-              <div class="exam-status">
-                <el-tag :type="getExamStatusType(item.status)" effect="plain">
-                  {{ getExamStatusText(item.status) }}
-                </el-tag>
-              </div>
-              <div class="exam-action">
-                <el-button size="small" type="primary">查看</el-button>
+              <div class="exam-footer">
+                <div class="exam-status">
+                  <el-tag :type="getExamStatusType(item.status)" effect="plain">
+                    {{ getExamStatusText(item.status) }}
+                  </el-tag>
+                </div>
+                <div class="exam-action">
+                  <el-button size="small" type="primary">查看</el-button>
+                </div>
               </div>
             </div>
           </div>
@@ -300,6 +308,9 @@ const viewExam = (exam: any) => {
 }
 
 :deep(.homework-tabs .el-tabs__item) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-right: 8px;
   padding: 12px 24px;
   font-size: 16px;
@@ -417,16 +428,16 @@ const viewExam = (exam: any) => {
 }
 
 /* 卡片头部 */
-.homework-item > div:first-child,
-.exam-item > div:first-child {
+.homework-header,
+.exam-header {
   display: flex;
   align-items: center;
   padding: 24px;
   background: linear-gradient(135deg, rgb(220 226 247 / 20%), transparent);
 }
 
-.homework-item.dark > div:first-child,
-.exam-item.dark > div:first-child {
+.homework-item.dark .homework-header,
+.exam-item.dark .exam-header {
   background: linear-gradient(135deg, rgb(56 189 248 / 5%), transparent);
 }
 
@@ -525,8 +536,8 @@ const viewExam = (exam: any) => {
 }
 
 /* 卡片底部 */
-.homework-item > div:last-child,
-.exam-item > div:last-child {
+.homework-footer,
+.exam-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -535,8 +546,8 @@ const viewExam = (exam: any) => {
   border-top: 1px solid rgb(220 226 247 / 40%);
 }
 
-.homework-item.dark > div:last-child,
-.exam-item.dark > div:last-child {
+.homework-item.dark .homework-footer,
+.exam-item.dark .exam-footer {
   background: linear-gradient(180deg, transparent, rgb(56 189 248 / 5%));
   border-top-color: rgb(56 189 248 / 10%);
 }

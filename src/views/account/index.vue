@@ -2003,35 +2003,57 @@ onUnmounted(() => {
           margin-bottom: 24px;
 
           .course-item {
+            position: relative;
             overflow: hidden;
             cursor: pointer;
-            background-color: #fff;
+            background: linear-gradient(145deg, #fff, #f8faff);
             border: 1px solid rgb(220 226 247 / 60%);
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgb(220 226 247 / 40%);
-            transition: all 0.3s ease;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+            &::before {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 3px;
+              content: "";
+              background: linear-gradient(90deg, #97b4f7, #dce2f7);
+              opacity: 0;
+              transition: opacity 0.3s ease;
+            }
+
+            &:hover::before {
+              opacity: 1;
+            }
 
             .dark & {
-              background-color: #111b2d;
+              background: linear-gradient(145deg, #111b2d, #0f172a);
               border-color: #1e293b;
-              box-shadow: 0 2px 12px rgb(0 0 0 / 30%);
+              box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
+
+              &::before {
+                background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+              }
 
               &:hover {
                 border-color: #38bdf8;
-                box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
+                box-shadow: 0 12px 40px rgb(56 189 248 / 20%);
               }
             }
 
             &:hover {
               border-color: #97b4f7;
-              box-shadow: 0 8px 24px rgb(200 212 240 / 50%);
-              transform: translateY(-6px);
+              box-shadow: 0 12px 40px rgb(151 180 247 / 30%);
+              transform: translateY(-8px) scale(1.02);
             }
 
             .course-cover {
               position: relative;
               width: 100%;
               padding-top: 56.25%; // 16:9
+              overflow: hidden;
               background: linear-gradient(
                 135deg,
                 rgb(220 226 247 / 30%),
@@ -2045,19 +2067,34 @@ onUnmounted(() => {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
+                transition: transform 0.4s ease;
               }
 
               .course-status {
                 position: absolute;
-                top: 8px;
-                right: 8px;
+                top: 12px;
+                right: 12px;
                 z-index: 1;
+
+                .el-tag {
+                  padding: 6px 14px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  backdrop-filter: blur(8px);
+                  border: none;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+                }
               }
             }
 
+            &:hover .course-cover .cover-image {
+              transform: scale(1.08);
+            }
+
             .course-info {
-              padding: 14px;
-              background: linear-gradient(180deg, #fff, rgb(220 226 247 / 15%));
+              padding: 18px;
+              background: linear-gradient(180deg, #fff, rgb(220 226 247 / 10%));
 
               .dark & {
                 background: linear-gradient(
@@ -2070,10 +2107,12 @@ onUnmounted(() => {
               h4 {
                 @include text-ellipsis;
 
-                margin: 0 0 8px;
-                font-size: 15px;
-                font-weight: 600;
-                color: #333;
+                margin: 0 0 10px;
+                font-size: 16px;
+                font-weight: 700;
+                line-height: 1.4;
+                color: #1a1a1a;
+                letter-spacing: 0.3px;
 
                 .dark & {
                   color: #f1f5f9;
@@ -2082,10 +2121,10 @@ onUnmounted(() => {
 
               p {
                 height: 32px;
-                margin: 0 0 8px;
+                margin: 0 0 12px;
                 font-size: 13px;
-                line-height: 1.4;
-                color: #606266;
+                line-height: 1.5;
+                color: #5a6b8a;
 
                 .dark & {
                   color: #94a3b8;
@@ -2095,21 +2134,28 @@ onUnmounted(() => {
               .course-meta {
                 display: flex;
                 justify-content: space-between;
+                padding-top: 12px;
                 font-size: 12px;
                 color: #7a8bb8;
+                border-top: 1px solid rgb(220 226 247 / 40%);
 
                 .dark & {
                   color: #64748b;
+                  border-top-color: rgb(56 189 248 / 10%);
                 }
 
                 span {
                   display: flex;
                   align-items: center;
+                  gap: 4px;
 
                   .el-icon {
-                    margin-right: 4px;
                     font-size: 14px;
-                    color: #a8b8e8;
+                    color: #97b4f7;
+
+                    .dark & {
+                      color: #38bdf8;
+                    }
                   }
                 }
               }
