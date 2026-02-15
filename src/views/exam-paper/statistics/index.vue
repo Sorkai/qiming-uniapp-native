@@ -477,19 +477,11 @@ $radius-xl: 20px;
         color: $dark-text-primary;
       }
 
-      .range-label,
-      .type-name,
-      .knowledge-name,
-      .student-name,
-      .trend-date {
+      .range-label {
         color: $dark-text-primary;
       }
 
-      .count,
-      .type-time,
-      .knowledge-count,
-      .trend-score,
-      .trend-pass {
+      .count {
         color: $dark-text-muted;
       }
 
@@ -497,12 +489,45 @@ $radius-xl: 20px;
         background: rgba(255, 255, 255, 0.1);
       }
 
+      .type-item {
+        .type-name {
+          color: $dark-text-primary;
+        }
+
+        .type-time {
+          color: $dark-text-muted;
+        }
+      }
+
+      .knowledge-item {
+        .knowledge-name {
+          color: $dark-text-primary;
+        }
+
+        .knowledge-count {
+          color: $dark-text-muted;
+        }
+      }
+
       .ranking-item {
         border-color: $dark-border;
+
+        .student-name {
+          color: $dark-text-primary;
+        }
       }
 
       .trend-item {
         border-color: $dark-border;
+
+        .trend-date {
+          color: $dark-text-primary;
+        }
+
+        .trend-score,
+        .trend-pass {
+          color: $dark-text-muted;
+        }
       }
     }
   }
