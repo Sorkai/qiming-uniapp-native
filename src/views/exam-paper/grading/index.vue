@@ -488,6 +488,35 @@ $radius-xl: 20px;
       border-color: $dark-border;
       box-shadow: $dark-shadow;
 
+      .grading-table {
+        :deep(.el-table) {
+          background-color: transparent;
+          --el-table-bg-color: transparent;
+          --el-table-tr-bg-color: transparent;
+          --el-table-header-bg-color: rgba(255, 255, 255, 0.05);
+          --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.03);
+          --el-table-border-color: rgba(255, 255, 255, 0.1);
+          color: $dark-text-primary;
+        }
+
+        :deep(.el-table__header th) {
+          background-color: rgba(255, 255, 255, 0.05);
+          color: $dark-text-primary;
+          border-bottom-color: $dark-border;
+        }
+
+        :deep(.el-table__body tr) {
+          &:hover > td {
+            background-color: rgba(255, 255, 255, 0.03);
+          }
+        }
+
+        :deep(.el-table td),
+        :deep(.el-table th.is-leaf) {
+          border-bottom-color: $dark-border;
+        }
+      }
+
       .paper-info-cell {
         .paper-icon {
           background: rgba(102, 126, 234, 0.15);
