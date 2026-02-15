@@ -554,6 +554,10 @@ $radius-xl: 20px;
   transition: all 0.3s ease;
 
   &.is-dark {
+    .welcome-section {
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
     .stat-card {
       background: $dark-card-bg;
       border-color: $dark-border;
@@ -596,6 +600,14 @@ $radius-xl: 20px;
 
       .template-desc {
         color: $dark-text-secondary;
+      }
+
+      .template-meta {
+        color: $dark-text-muted;
+      }
+
+      .template-arrow {
+        color: $dark-text-muted;
       }
     }
 

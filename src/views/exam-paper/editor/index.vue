@@ -11,6 +11,7 @@ import {
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { onBeforeRouteLeave } from "vue-router";
+import { useDark } from "@pureadmin/utils";
 import draggable from "vuedraggable";
 import QuestionAssistant from "./components/QuestionAssistant.vue";
 import RichMediaUploader from "./components/RichMediaUploader.vue";
@@ -215,6 +216,7 @@ const iconComponents: Record<string, any> = {
 
 const router = useRouter();
 const route = useRoute();
+const { isDark } = useDark();
 
 // 试卷ID（编辑模式）
 const paperId = computed(() => route.params.id as string);
@@ -1897,7 +1899,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="exam-paper-editor">
+  <div class="exam-paper-editor" :class="{ 'is-dark': isDark }">
     <!--顶部固定区域 -->
     <div class="editor-fixed-top">
       <!--顶部导航 -->
@@ -3423,11 +3425,293 @@ onBeforeUnmount(() => {
 </template>
 
 <style lang="scss" scoped>
+$light-bg: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+$light-card-bg: rgba(255, 255, 255, 0.95);
+$light-text-primary: #303133;
+$light-text-secondary: #606266;
+$light-border: #e4e7ed;
+
+$dark-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+$dark-card-bg: rgba(30, 41, 59, 0.8);
+$dark-text-primary: #f1f5f9;
+$dark-text-secondary: #94a3b8;
+$dark-border: rgba(255, 255, 255, 0.1);
+
 .exam-paper-editor {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+  background: $light-bg;
   display: flex;
   flex-direction: column;
+
+  &.is-dark {
+    background: $dark-bg;
+
+    .editor-fixed-top {
+      background: rgba(30, 41, 59, 0.95);
+      border-color: $dark-border;
+    }
+
+    .editor-header {
+      border-bottom-color: $dark-border;
+
+      .logo-text {
+        background: linear-gradient(135deg, #00bfa5 0%, #00d4b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .title-input :deep(.el-input__wrapper) {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: $dark-border;
+        color: $dark-text-primary;
+
+        &:hover {
+          border-color: #00bfa5;
+        }
+      }
+
+      .auto-save-status {
+        background: rgba(15, 23, 42, 0.6);
+        color: $dark-text-secondary;
+      }
+    }
+
+    .question-toolbar {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+
+      .toolbar-hint {
+        color: $dark-text-secondary;
+      }
+
+      .type-item {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: $dark-border;
+
+        &:hover {
+          border-color: #00bfa5;
+        }
+
+        .type-label {
+          color: $dark-text-secondary;
+        }
+
+        &:hover .type-label {
+          color: #00bfa5;
+        }
+      }
+    }
+
+    .editor-outline {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+      border-right-color: $dark-border;
+
+      .outline-header {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+        border-bottom-color: $dark-border;
+
+        .outline-title {
+          color: $dark-text-primary;
+        }
+      }
+
+      .outline-summary {
+        color: $dark-text-secondary;
+        background: rgba(0, 191, 165, 0.15);
+      }
+
+      .outline-group {
+        border-color: $dark-border;
+        background: rgba(30, 41, 59, 0.6);
+
+        &:hover {
+          border-color: #00bfa5;
+        }
+
+        .outline-group-header {
+          background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+          border-bottom-color: $dark-border;
+
+          .group-name {
+            color: $dark-text-primary;
+          }
+
+          .group-item-count {
+            background: rgba(15, 23, 42, 0.6);
+            color: $dark-text-secondary;
+          }
+        }
+
+        .outline-item {
+          background: rgba(30, 41, 59, 0.5);
+          border-bottom-color: $dark-border;
+
+          &:hover {
+            background: rgba(0, 191, 165, 0.15);
+          }
+
+          &.active {
+            background: linear-gradient(135deg, rgba(0, 191, 165, 0.25) 0%, rgba(0, 191, 165, 0.15) 100%);
+          }
+
+          .item-points {
+            background: rgba(15, 23, 42, 0.6);
+          }
+        }
+      }
+    }
+
+    .editor-content {
+      background-color: rgba(15, 23, 42, 0.85);
+
+      .paper-canvas {
+        background: $dark-card-bg;
+      }
+
+      .ai-analysis-panel,
+      .settings-panel {
+        border-color: $dark-border;
+
+        .settings-toggle {
+          background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+          color: $dark-text-primary;
+
+          &:hover {
+            background: linear-gradient(135deg, rgba(0, 191, 165, 0.25) 0%, rgba(0, 191, 165, 0.15) 100%);
+          }
+        }
+
+        .settings-content {
+          background: rgba(15, 23, 42, 0.6);
+        }
+      }
+
+      .ai-analysis-result {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: $dark-border;
+
+        .result-header {
+          border-bottom-color: $dark-border;
+
+          .result-title {
+            color: $dark-text-primary;
+          }
+        }
+
+        .metric-item {
+          background: rgba(15, 23, 42, 0.6);
+
+          .metric-label {
+            color: $dark-text-secondary;
+          }
+
+          .metric-value {
+            color: $dark-text-primary;
+          }
+        }
+      }
+    }
+
+    .question-group-header {
+      background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+      border-color: rgba(0, 191, 165, 0.3);
+
+      .group-title-input :deep(.el-input__wrapper) {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: rgba(0, 191, 165, 0.3);
+        color: $dark-text-primary;
+      }
+
+      .group-count {
+        background: rgba(15, 23, 42, 0.6);
+        color: $dark-text-secondary;
+      }
+    }
+
+    .question-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+      border-color: $dark-border;
+
+      &:hover,
+      &.active {
+        border-color: #00bfa5;
+        background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(30, 41, 59, 0.95) 100%);
+      }
+
+      .question-header {
+        border-bottom-color: $dark-border;
+
+        .question-index,
+        .points-label {
+          color: $dark-text-primary;
+        }
+      }
+
+      .stem-label,
+      .options-title,
+      .blanks-title,
+      .reference-title {
+        color: $dark-text-secondary;
+      }
+
+      .blank-count-hint {
+        background: rgba(0, 191, 165, 0.15);
+        border-left-color: #00bfa5;
+      }
+
+      .stem-preview-box {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: $dark-border;
+      }
+
+      .correct-answer-hint {
+        background: rgba(15, 23, 42, 0.6);
+        color: $dark-text-secondary;
+      }
+
+      :deep(.el-collapse) {
+        .el-collapse-item__header {
+          background: rgba(15, 23, 42, 0.6);
+          color: $dark-text-secondary;
+        }
+      }
+    }
+
+    .preview-dialog {
+      :deep(.el-dialog) {
+        background: $dark-card-bg;
+      }
+
+      .preview-content {
+        background: rgba(15, 23, 42, 0.8);
+      }
+
+      .preview-paper {
+        background: $dark-card-bg;
+
+        .preview-paper-info {
+          border-bottom-color: $dark-border;
+          color: $dark-text-secondary;
+        }
+
+        .preview-group-title {
+          background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+
+          .preview-group-name {
+            color: $dark-text-primary;
+          }
+        }
+
+        .preview-question-stem {
+          color: $dark-text-primary;
+        }
+
+        .preview-answer-area {
+          border-color: $dark-border;
+        }
+      }
+    }
+  }
 }
 
 .editor-fixed-top {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getMyTemplates,
@@ -14,6 +15,7 @@ defineOptions({
 });
 
 const router = useRouter();
+const { isDark } = useDark();
 
 // 系统模板
 const systemTemplates = ref([
@@ -266,7 +268,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="templates-page">
+  <div class="templates-page" :class="{ 'is-dark': isDark }">
     <div class="page-header">
       <div class="header-left">
         <h2>试卷模板</h2>
@@ -500,8 +502,86 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+$light-text-primary: #303133;
+$light-text-secondary: #606266;
+$dark-text-primary: #f1f5f9;
+$dark-text-secondary: #94a3b8;
+$dark-border: rgba(255, 255, 255, 0.1);
+
 .templates-page {
-  /* container */
+  &.is-dark {
+    .page-header {
+      h2 {
+        color: $dark-text-primary;
+      }
+      p {
+        color: $dark-text-secondary;
+      }
+    }
+
+    .template-card {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: $dark-border;
+
+      .template-cover {
+        &.system {
+          background: linear-gradient(135deg, rgba(0, 191, 165, 0.2) 0%, rgba(0, 191, 165, 0.1) 100%);
+        }
+        &.private {
+          background: linear-gradient(135deg, rgba(64, 158, 255, 0.2) 0%, rgba(64, 158, 255, 0.1) 100%);
+        }
+      }
+
+      .template-info {
+        .template-name {
+          color: $dark-text-primary;
+        }
+        .template-desc {
+          color: $dark-text-secondary;
+        }
+        .template-stats {
+          color: $dark-text-secondary;
+        }
+      }
+
+      .template-actions {
+        border-top-color: $dark-border;
+      }
+    }
+
+    .preview-header {
+      .preview-desc {
+        color: $dark-text-secondary;
+      }
+      .preview-summary {
+        color: $dark-text-primary;
+      }
+    }
+
+    .preview-groups .preview-group {
+      background: rgba(15, 23, 42, 0.6);
+
+      .group-header {
+        .group-name {
+          color: $dark-text-primary;
+        }
+        .group-meta {
+          color: $dark-text-secondary;
+        }
+      }
+
+      .sample-question {
+        border-top-color: rgba(255, 255, 255, 0.1);
+
+        .sample-stem {
+          color: $dark-text-primary;
+        }
+        .sample-option {
+          color: $dark-text-secondary;
+        }
+      }
+    }
+  }
 }
 
 .page-header {
