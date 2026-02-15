@@ -1166,6 +1166,78 @@ export const batchArchiveToBank = (data: {
   );
 };
 
+// ==================== 试卷文件夹管理API ====================
+
+/** 试卷文件夹 */
+export interface PaperFolder {
+  id: number;
+  name: string;
+  parentId?: number;
+  paperCount: number;
+  createTime: string;
+  children?: PaperFolder[];
+}
+
+/**
+ * 获取试卷文件夹列表
+ */
+export const getPaperFolders = () => {
+  return http.request<ApiResponse<PaperFolder[]>>(
+    "get",
+    "/edu/backend/v1/paper/folders"
+  );
+};
+
+/**
+ * 创建试卷文件夹
+ */
+export const createPaperFolder = (data: {
+  name: string;
+  parentId?: number;
+}) => {
+  return http.request<ApiResponse<{ id: number }>>(
+    "post",
+    "/edu/backend/v1/paper/folders/create",
+    { data }
+  );
+};
+
+/**
+ * 更新试卷文件夹
+ */
+export const updatePaperFolder = (data: { id: number; name: string }) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/folders/update",
+    { data }
+  );
+};
+
+/**
+ * 删除试卷文件夹
+ */
+export const deletePaperFolder = (id: number) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/folders/delete",
+    { data: { id } }
+  );
+};
+
+/**
+ * 移动试卷到文件夹
+ */
+export const movePapersToFolder = (data: {
+  paperIds: number[];
+  folderId: number;
+}) => {
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/move-to-folder",
+    { data }
+  );
+};
+
 /**
  * 保存为模板
  */

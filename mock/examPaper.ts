@@ -2190,6 +2190,118 @@ export default [
     }
   },
 
+  // ==================== 试卷文件夹管理API ====================
+
+  // 获取试卷文件夹列表
+  {
+    url: "/edu/backend/v1/paper/folders",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: [
+          {
+            id: 1,
+            name: "期中考试",
+            parentId: null,
+            paperCount: 5,
+            createTime: "2026-01-01",
+            children: []
+          },
+          {
+            id: 2,
+            name: "期末考试",
+            parentId: null,
+            paperCount: 3,
+            createTime: "2026-01-01",
+            children: []
+          },
+          {
+            id: 3,
+            name: "单元测试",
+            parentId: null,
+            paperCount: 8,
+            createTime: "2026-01-05",
+            children: [
+              {
+                id: 31,
+                name: "第一单元",
+                parentId: 3,
+                paperCount: 3,
+                createTime: "2026-01-06"
+              },
+              {
+                id: 32,
+                name: "第二单元",
+                parentId: 3,
+                paperCount: 2,
+                createTime: "2026-01-06"
+              },
+              {
+                id: 33,
+                name: "第三单元",
+                parentId: 3,
+                paperCount: 3,
+                createTime: "2026-01-06"
+              }
+            ]
+          },
+          {
+            id: 4,
+            name: "随堂练习",
+            parentId: null,
+            paperCount: 12,
+            createTime: "2026-01-10"
+          },
+          {
+            id: 5,
+            name: "模拟考试",
+            parentId: null,
+            paperCount: 4,
+            createTime: "2026-01-15"
+          }
+        ]
+      };
+    }
+  },
+
+  // 创建试卷文件夹
+  {
+    url: "/edu/backend/v1/paper/folders/create",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "创建成功", data: { id: Date.now() } };
+    }
+  },
+
+  // 更新试卷文件夹
+  {
+    url: "/edu/backend/v1/paper/folders/update",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "更新成功", data: null };
+    }
+  },
+
+  // 删除试卷文件夹
+  {
+    url: "/edu/backend/v1/paper/folders/delete",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "删除成功", data: null };
+    }
+  },
+
+  // 移动试卷到文件夹
+  {
+    url: "/edu/backend/v1/paper/move-to-folder",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "移动成功", data: null };
+    }
+  },
+
   // 获取知识点列表
   {
     url: "/edu/backend/v1/knowledge-points",
