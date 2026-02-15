@@ -1391,6 +1391,14 @@ $radius-lg: 16px;
         }
       }
     }
+
+    .folder-sidebar {
+      .folder-header {
+        .folder-title {
+          color: $dark-text-primary;
+        }
+      }
+    }
   }
 
   .page-header {
