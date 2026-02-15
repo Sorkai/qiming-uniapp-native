@@ -1257,18 +1257,19 @@ export const saveAsTemplate = (data: {
  * 获取我的模板列表
  */
 export const getMyTemplates = () => {
-  return http.request<ApiResponse<Array<{
-    id: number;
-    name: string;
-    description?: string;
-    questionTypes: string[];
-    totalQuestions: number;
-    totalPoints: number;
-    createTime: string;
-  }>>>(
-    "get",
-    "/edu/backend/v1/paper/template/my"
-  );
+  return http.request<
+    ApiResponse<
+      Array<{
+        id: number;
+        name: string;
+        description?: string;
+        questionTypes: string[];
+        totalQuestions: number;
+        totalPoints: number;
+        createTime: string;
+      }>
+    >
+  >("get", "/edu/backend/v1/paper/template/my");
 };
 
 /**
@@ -1451,7 +1452,13 @@ export interface StudentPaperItem {
    * expired - 已过期（超过截止时间未提交）
    * retake - 补考中（允许补考且在补考时间内）
    */
-  status: "available" | "submitted" | "graded" | "completed" | "expired" | "retake";
+  status:
+    | "available"
+    | "submitted"
+    | "graded"
+    | "completed"
+    | "expired"
+    | "retake";
   /** 提交ID（已提交时） */
   submissionId?: number;
   /** 得分（已完成且成绩发布后） */
@@ -1469,7 +1476,13 @@ export interface StudentPaperItem {
 /** 获取学生试卷列表参数 */
 export interface GetStudentPaperListParams extends PageParams {
   /** 状态筛选 */
-  status?: "available" | "submitted" | "graded" | "completed" | "expired" | "retake";
+  status?:
+    | "available"
+    | "submitted"
+    | "graded"
+    | "completed"
+    | "expired"
+    | "retake";
   /** 课程ID */
   courseId?: number;
   /** 关键词搜索 */

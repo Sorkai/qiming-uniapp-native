@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import {
+  ref,
+  reactive,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useDark } from "@pureadmin/utils";
-import { startExam, saveAnswer, saveDuration, submitExam } from "@/api/examPaper";
+import {
+  startExam,
+  saveAnswer,
+  saveDuration,
+  submitExam
+} from "@/api/examPaper";
 import RichContent from "@/views/exam-paper/editor/components/RichContent.vue";
 
 defineOptions({
@@ -66,7 +78,9 @@ const allQuestions = computed(() => {
 });
 
 // 当前题目
-const currentQuestion = computed(() => allQuestions.value[currentQuestionIndex.value]);
+const currentQuestion = computed(
+  () => allQuestions.value[currentQuestionIndex.value]
+);
 
 // 当前题目的答案记录
 const currentAnswerRecord = computed(() => {
@@ -89,8 +103,11 @@ const formattedRemainingTime = computed(() => {
 const answeredCount = computed(() => {
   let count = 0;
   answers.value.forEach(record => {
-    if (record.answer !== "" && record.answer !== null && 
-        (Array.isArray(record.answer) ? record.answer.length > 0 : true)) {
+    if (
+      record.answer !== "" &&
+      record.answer !== null &&
+      (Array.isArray(record.answer) ? record.answer.length > 0 : true)
+    ) {
       count++;
     }
   });
@@ -142,7 +159,7 @@ const leaveQuestion = async (questionId: number) => {
 // 切换题目
 const switchQuestion = (index: number) => {
   if (index < 0 || index >= allQuestions.value.length) return;
-  
+
   // 离开当前题目
   if (currentQuestion.value) {
     leaveQuestion(currentQuestion.value.questionId);
@@ -150,7 +167,7 @@ const switchQuestion = (index: number) => {
 
   // 切换到新题目
   currentQuestionIndex.value = index;
-  
+
   // 进入新题目
   if (allQuestions.value[index]) {
     enterQuestion(allQuestions.value[index].questionId);
@@ -183,7 +200,10 @@ const updateAnswer = (value: string | string[]) => {
 };
 
 // 自动保存答案（仅保存答案内容）
-const autoSaveAnswer = async (questionId: number, answer: string | string[]) => {
+const autoSaveAnswer = async (
+  questionId: number,
+  answer: string | string[]
+) => {
   if (!examData.submissionId) return;
   try {
     await saveAnswer({
@@ -220,7 +240,11 @@ const handleSubmit = async () => {
     submitting.value = true;
 
     // 提交前保存所有答案的最终时长
-    const finalAnswers: Array<{ questionId: number; answer: string | string[]; duration: number }> = [];
+    const finalAnswers: Array<{
+      questionId: number;
+      answer: string | string[];
+      duration: number;
+    }> = [];
     answers.value.forEach(record => {
       finalAnswers.push({
         questionId: record.questionId,
@@ -231,7 +255,7 @@ const handleSubmit = async () => {
 
     // 调用提交接口
     const res = await submitExam(examData.submissionId);
-    
+
     if (res.code === 0) {
       ElMessage.success("试卷提交成功！");
       // 停止计时器
@@ -292,12 +316,14 @@ const stopTimers = () => {
 const getCurrentQuestionDuration = computed(() => {
   // 依赖 questionTimerTick 来触发每秒更新
   questionTimerTick.value;
-  
+
   if (!currentAnswerRecord.value) return 0;
   let duration = currentAnswerRecord.value.duration; // 后端返回的累计时长
   if (currentAnswerRecord.value.enterTime > 0) {
     // 加上当前正在计时的部分
-    duration += Math.floor((Date.now() - currentAnswerRecord.value.enterTime) / 1000);
+    duration += Math.floor(
+      (Date.now() - currentAnswerRecord.value.enterTime) / 1000
+    );
   }
   return duration;
 });
@@ -329,15 +355,15 @@ const loadExamData = async () => {
       examData.submissionId = res.data.submissionId;
       examData.paper = res.data.paper;
       examData.remainingTime = res.data.remainingTime;
-      
+
       // 初始化答案记录
       initAnswerRecords();
-      
+
       // 进入第一题
       if (allQuestions.value.length > 0) {
         enterQuestion(allQuestions.value[0].questionId);
       }
-      
+
       // 启动计时器
       startExamTimer();
       startQuestionTimer();
@@ -372,7 +398,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="exam-do-container" :class="{ 'is-dark': isDark }" v-loading="loading">
+  <div
+    v-loading="loading"
+    class="exam-do-container"
+    :class="{ 'is-dark': isDark }"
+  >
     <!-- 顶部信息栏 -->
     <div class="exam-header">
       <div class="header-left">
@@ -418,15 +448,15 @@ onBeforeUnmount(() => {
         </div>
         <div class="nav-legend">
           <div class="legend-item">
-            <span class="dot answered"></span>
+            <span class="dot answered" />
             <span>已答</span>
           </div>
           <div class="legend-item">
-            <span class="dot"></span>
+            <span class="dot" />
             <span>未答</span>
           </div>
           <div class="legend-item">
-            <span class="dot active"></span>
+            <span class="dot active" />
             <span>当前</span>
           </div>
         </div>
@@ -438,13 +468,23 @@ onBeforeUnmount(() => {
           <!-- 题目头部 -->
           <div class="question-header">
             <div class="question-info">
-              <span class="question-index">第 {{ currentQuestionIndex + 1 }} 题</span>
-              <el-tag size="small" type="info">{{ currentQuestion.groupName }}</el-tag>
-              <span class="question-points">（{{ currentQuestion.points }} 分）</span>
+              <span class="question-index"
+                >第 {{ currentQuestionIndex + 1 }} 题</span
+              >
+              <el-tag size="small" type="info">{{
+                currentQuestion.groupName
+              }}</el-tag>
+              <span class="question-points"
+                >（{{ currentQuestion.points }} 分）</span
+              >
             </div>
             <div class="question-timer">
               <el-icon><Timer /></el-icon>
-              <span>本题用时：{{ formatDuration(getCurrentQuestionDuration) }}</span>
+              <span
+                >本题用时：{{
+                  formatDuration(getCurrentQuestionDuration)
+                }}</span
+              >
             </div>
           </div>
 
@@ -456,18 +496,25 @@ onBeforeUnmount(() => {
           <!-- 选项区域 -->
           <div class="question-options">
             <!-- 单选题 -->
-            <template v-if="currentQuestion.questionType === 1 || currentQuestion.questionType === 3">
+            <template
+              v-if="
+                currentQuestion.questionType === 1 ||
+                currentQuestion.questionType === 3
+              "
+            >
               <el-radio-group
                 :model-value="currentAnswerRecord?.answer"
-                @update:model-value="updateAnswer"
                 class="options-group"
+                @update:model-value="updateAnswer"
               >
                 <el-radio
                   v-for="option in currentQuestion.options"
                   :key="option.key"
                   :value="option.key"
                   class="option-item"
-                  :class="{ 'is-checked': currentAnswerRecord?.answer === option.key }"
+                  :class="{
+                    'is-checked': currentAnswerRecord?.answer === option.key
+                  }"
                 >
                   <span class="option-key">{{ option.key }}.</span>
                   <span class="option-content">
@@ -481,15 +528,19 @@ onBeforeUnmount(() => {
             <template v-else-if="currentQuestion.questionType === 2">
               <el-checkbox-group
                 :model-value="currentAnswerRecord?.answer as string[]"
-                @update:model-value="updateAnswer"
                 class="options-group"
+                @update:model-value="updateAnswer"
               >
                 <el-checkbox
                   v-for="option in currentQuestion.options"
                   :key="option.key"
                   :value="option.key"
                   class="option-item"
-                  :class="{ 'is-checked': (currentAnswerRecord?.answer as string[])?.includes(option.key) }"
+                  :class="{
+                    'is-checked': (
+                      currentAnswerRecord?.answer as string[]
+                    )?.includes(option.key)
+                  }"
                 >
                   <span class="option-key">{{ option.key }}.</span>
                   <span class="option-content">
@@ -503,21 +554,26 @@ onBeforeUnmount(() => {
             <template v-else-if="currentQuestion.questionType === 4">
               <el-input
                 :model-value="currentAnswerRecord?.answer as string"
-                @update:model-value="updateAnswer"
                 placeholder="请输入答案"
                 class="fill-input"
+                @update:model-value="updateAnswer"
               />
             </template>
 
             <!-- 简答题/论述题 -->
-            <template v-else-if="currentQuestion.questionType === 5 || currentQuestion.questionType === 6">
+            <template
+              v-else-if="
+                currentQuestion.questionType === 5 ||
+                currentQuestion.questionType === 6
+              "
+            >
               <el-input
                 :model-value="currentAnswerRecord?.answer as string"
-                @update:model-value="updateAnswer"
                 type="textarea"
                 :rows="8"
                 placeholder="请输入答案"
                 class="essay-input"
+                @update:model-value="updateAnswer"
               />
             </template>
           </div>
@@ -637,8 +693,13 @@ onBeforeUnmount(() => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .exam-main {
@@ -873,4 +934,3 @@ onBeforeUnmount(() => {
   }
 }
 </style>
-

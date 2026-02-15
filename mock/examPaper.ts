@@ -586,7 +586,9 @@ export default [
         data: {
           totalPapers: mockPaperList.length,
           publishedCount: mockPaperList.filter(p => p.status >= 1).length,
-          gradingCount: mockPaperList.filter(p => p.status === PaperStatus.GRADING).length,
+          gradingCount: mockPaperList.filter(
+            p => p.status === PaperStatus.GRADING
+          ).length,
           averageScore: 78.5
         }
       };
@@ -598,11 +600,21 @@ export default [
     url: "/edu/backend/v1/paper/grading/statistics",
     method: "get",
     response: () => {
-      const pending = mockPaperList.filter(p => p.status === PaperStatus.ENDED).length;
-      const grading = mockPaperList.filter(p => p.status === PaperStatus.GRADING).length;
-      const completed = mockPaperList.filter(p => [PaperStatus.GRADED, PaperStatus.SCORE_RELEASED].includes(p.status)).length;
+      const pending = mockPaperList.filter(
+        p => p.status === PaperStatus.ENDED
+      ).length;
+      const grading = mockPaperList.filter(
+        p => p.status === PaperStatus.GRADING
+      ).length;
+      const completed = mockPaperList.filter(p =>
+        [PaperStatus.GRADED, PaperStatus.SCORE_RELEASED].includes(p.status)
+      ).length;
       const total = mockSubmissions.length;
-      return { code: 0, msg: "success", data: { pending, grading, completed, total } };
+      return {
+        code: 0,
+        msg: "success",
+        data: { pending, grading, completed, total }
+      };
     }
   },
 
@@ -632,12 +644,20 @@ export default [
             publishTime: p.startTime || p.createTime
           };
         });
-      if (keyword) list = list.filter(i => i.paperTitle.includes(keyword) || i.courseName.includes(keyword));
+      if (keyword)
+        list = list.filter(
+          i => i.paperTitle.includes(keyword) || i.courseName.includes(keyword)
+        );
       if (status) list = list.filter(i => i.status === status);
-      if (courseId) list = list.filter(i => i.courseName.includes(String(courseId)));
+      if (courseId)
+        list = list.filter(i => i.courseName.includes(String(courseId)));
       const start = (Number(pageNum) - 1) * Number(pageSize);
       const end = start + Number(pageSize);
-      return { code: 0, msg: "success", data: { total: list.length, list: list.slice(start, end) } };
+      return {
+        code: 0,
+        msg: "success",
+        data: { total: list.length, list: list.slice(start, end) }
+      };
     }
   },
 
@@ -769,9 +789,7 @@ export default [
     response: ({ query }: { query: any }) => {
       let list = [...mockStudents];
       if (query.courseId) {
-        list = list.filter(
-          s => s.courseId === Number(query.courseId)
-        );
+        list = list.filter(s => s.courseId === Number(query.courseId));
       }
       if (query.keyword) {
         list = list.filter(
@@ -912,7 +930,7 @@ export default [
     method: "get",
     response: ({ query }: { query: any }) => {
       const { pageNum = 1, pageSize = 12, status, keyword, courseId } = query;
-      
+
       // 模拟学生试卷数据
       const studentPapers = [
         {
@@ -1056,12 +1074,12 @@ export default [
       ];
 
       let filtered = [...studentPapers];
-      
+
       // 按状态筛选
       if (status) {
         filtered = filtered.filter(p => p.status === status);
       }
-      
+
       // 按关键词筛选
       if (keyword) {
         filtered = filtered.filter(
@@ -1071,7 +1089,7 @@ export default [
             p.courseName.includes(keyword)
         );
       }
-      
+
       // 按课程筛选
       if (courseId) {
         filtered = filtered.filter(p => p.courseId === Number(courseId));
@@ -1148,15 +1166,15 @@ export default [
     url: "/edu/frontend/v1/exam/save",
     method: "post",
     response: ({ body }: { body: any }) => {
-      const { submissionId, questionId, answer, enterTime, leaveTime } = body;
-      
+      const { _submissionId, questionId, _answer, enterTime, leaveTime } = body;
+
       // 如果提供了时间戳，模拟后端计算时长
       if (enterTime && leaveTime) {
         const duration = Math.floor((leaveTime - enterTime) / 1000);
         console.log(`题目 ${questionId} 答题时长: ${duration}秒`);
         // 这里后端会累加到数据库中
       }
-      
+
       return { code: 0, msg: "保存成功", data: null };
     }
   },
@@ -1166,11 +1184,11 @@ export default [
     url: "/edu/frontend/v1/exam/question-duration",
     method: "post",
     response: ({ body }: { body: any }) => {
-      const { submissionId, questionId } = body;
+      const { _submissionId, _questionId } = body;
       // 模拟返回累计时长（实际应该从数据库读取）
-      return { 
-        code: 0, 
-        msg: "success", 
+      return {
+        code: 0,
+        msg: "success",
         data: { duration: 0 } // 后端返回该题的累计答题时长（秒）
       };
     }
@@ -1387,7 +1405,8 @@ export default [
             { key: "D", content: "Boolean" }
           ],
           correctAnswers: ["A", "B", "D"],
-          analysis: "JavaScript 的基本数据类型包括 String、Number、Boolean、Undefined、Null、Symbol 和 BigInt。Array 是引用类型。",
+          analysis:
+            "JavaScript 的基本数据类型包括 String、Number、Boolean、Undefined、Null、Symbol 和 BigInt。Array 是引用类型。",
           knowledgePoints: ["JavaScript基础", "数据类型"],
           difficulty: "medium",
           difficultyName: "中等",
@@ -1402,7 +1421,8 @@ export default [
           stem: "光在真空中的传播速度约为 ______ m/s。",
           blanks: [{ answer: "3×10^8" }],
           correctAnswer: "3×10^8",
-          analysis: "光速是物理学中的基本常数，约为 299,792,458 m/s，通常近似为 3×10^8 m/s。",
+          analysis:
+            "光速是物理学中的基本常数，约为 299,792,458 m/s，通常近似为 3×10^8 m/s。",
           knowledgePoints: ["光学", "物理常数"],
           difficulty: "medium",
           difficultyName: "中等",
@@ -1664,25 +1684,125 @@ export default [
     url: "/edu/backend/v1/ai/generate-question",
     method: "post",
     response: ({ body }: { body: any }) => {
-      const { questionType, count = 1, knowledgePoints, difficulty, includeAnalysis = true, mode = "generate", excludeQuestionIds = [] } = body;
-      
+      const {
+        questionType,
+        count = 1,
+        knowledgePoints,
+        difficulty,
+        includeAnalysis = true,
+        mode = "generate",
+        excludeQuestionIds = []
+      } = body;
+
       // recommend 模式：从题库推荐题目
       if (mode === "recommend") {
         const questionBank = [
-          { id: 1, type: "radio", stem: "函数 f(x) = x²在 x = 0 处的导数是？", options: [{ key: "A", content: "0" }, { key: "B", content: "1" }, { key: "C", content: "2" }, { key: "D", content: "不存在" }], correctAnswer: "A", analysis: "根据导数定义，f'(x) = 2x，当 x = 0 时，f'(0) = 0", difficulty: "easy", knowledgePoints: ["导数与微分"] },
-          { id: 6, type: "radio", stem: "求极限 lim(x→0) sin(x)/x 的值为：", options: [{ key: "A", content: "0" }, { key: "B", content: "1" }, { key: "C", content: "∞" }, { key: "D", content: "不存在" }], correctAnswer: "B", analysis: "这是一个重要极限", difficulty: "medium", knowledgePoints: ["极限与连续"] },
-          { id: 1002, type: "radio", stem: "函数 f(x) = x³ 的导数 f'(x) 为：", options: [{ key: "A", content: "x²" }, { key: "B", content: "2x²" }, { key: "C", content: "3x²" }, { key: "D", content: "3x" }], correctAnswer: "C", analysis: "根据幂函数求导公式", difficulty: "easy", knowledgePoints: ["导数与微分"] },
-          { id: 2, type: "checkbox", stem: "以下哪些是 JavaScript 的基本数据类型？", options: [{ key: "A", content: "String" }, { key: "B", content: "Number" }, { key: "C", content: "Array" }, { key: "D", content: "Boolean" }], correctAnswers: ["A", "B", "D"], analysis: "Array 是引用类型", difficulty: "medium", knowledgePoints: ["JavaScript基础"] },
-          { id: 5, type: "judge", stem: "可导函数一定连续。", options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }], correctAnswer: "T", analysis: "可导必连续", difficulty: "easy", knowledgePoints: ["导数与微分"] },
-          { id: 3, type: "input", stem: "光在真空中的传播速度约为 ______ m/s。", blanks: [{ answer: "3×10^8" }], correctAnswer: "3×10^8", analysis: "光速常数", difficulty: "medium", knowledgePoints: ["光学"] },
+          {
+            id: 1,
+            type: "radio",
+            stem: "函数 f(x) = x²在 x = 0 处的导数是？",
+            options: [
+              { key: "A", content: "0" },
+              { key: "B", content: "1" },
+              { key: "C", content: "2" },
+              { key: "D", content: "不存在" }
+            ],
+            correctAnswer: "A",
+            analysis: "根据导数定义，f'(x) = 2x，当 x = 0 时，f'(0) = 0",
+            difficulty: "easy",
+            knowledgePoints: ["导数与微分"]
+          },
+          {
+            id: 6,
+            type: "radio",
+            stem: "求极限 lim(x→0) sin(x)/x 的值为：",
+            options: [
+              { key: "A", content: "0" },
+              { key: "B", content: "1" },
+              { key: "C", content: "∞" },
+              { key: "D", content: "不存在" }
+            ],
+            correctAnswer: "B",
+            analysis: "这是一个重要极限",
+            difficulty: "medium",
+            knowledgePoints: ["极限与连续"]
+          },
+          {
+            id: 1002,
+            type: "radio",
+            stem: "函数 f(x) = x³ 的导数 f'(x) 为：",
+            options: [
+              { key: "A", content: "x²" },
+              { key: "B", content: "2x²" },
+              { key: "C", content: "3x²" },
+              { key: "D", content: "3x" }
+            ],
+            correctAnswer: "C",
+            analysis: "根据幂函数求导公式",
+            difficulty: "easy",
+            knowledgePoints: ["导数与微分"]
+          },
+          {
+            id: 2,
+            type: "checkbox",
+            stem: "以下哪些是 JavaScript 的基本数据类型？",
+            options: [
+              { key: "A", content: "String" },
+              { key: "B", content: "Number" },
+              { key: "C", content: "Array" },
+              { key: "D", content: "Boolean" }
+            ],
+            correctAnswers: ["A", "B", "D"],
+            analysis: "Array 是引用类型",
+            difficulty: "medium",
+            knowledgePoints: ["JavaScript基础"]
+          },
+          {
+            id: 5,
+            type: "judge",
+            stem: "可导函数一定连续。",
+            options: [
+              { key: "T", content: "正确" },
+              { key: "F", content: "错误" }
+            ],
+            correctAnswer: "T",
+            analysis: "可导必连续",
+            difficulty: "easy",
+            knowledgePoints: ["导数与微分"]
+          },
+          {
+            id: 3,
+            type: "input",
+            stem: "光在真空中的传播速度约为 ______ m/s。",
+            blanks: [{ answer: "3×10^8" }],
+            correctAnswer: "3×10^8",
+            analysis: "光速常数",
+            difficulty: "medium",
+            knowledgePoints: ["光学"]
+          }
         ];
-        let filtered = questionBank.filter(q => !excludeQuestionIds.includes(q.id));
-        if (questionType) filtered = filtered.filter(q => q.type === questionType);
-        if (difficulty) filtered = filtered.filter(q => q.difficulty === difficulty);
-        if (knowledgePoints) filtered = filtered.filter(q => q.knowledgePoints.some(kp => kp.includes(knowledgePoints)));
-        return { code: 0, msg: "success", data: filtered.slice(0, count).map(q => ({ ...q, id: Date.now() + Math.random(), fromBank: true })) };
+        let filtered = questionBank.filter(
+          q => !excludeQuestionIds.includes(q.id)
+        );
+        if (questionType)
+          filtered = filtered.filter(q => q.type === questionType);
+        if (difficulty)
+          filtered = filtered.filter(q => q.difficulty === difficulty);
+        if (knowledgePoints)
+          filtered = filtered.filter(q =>
+            q.knowledgePoints.some(kp => kp.includes(knowledgePoints))
+          );
+        return {
+          code: 0,
+          msg: "success",
+          data: filtered.slice(0, count).map(q => ({
+            ...q,
+            id: Date.now() + Math.random(),
+            fromBank: true
+          }))
+        };
       }
-      
+
       const generated = [];
       for (let i = 0; i < Math.min(count, 10); i++) {
         const id = Date.now() + i;
@@ -1698,7 +1818,9 @@ export default [
               { key: "D", content: "选项D的内容" }
             ],
             correctAnswer: "C",
-            analysis: includeAnalysis ? "AI生成的解析：选项C是正确的，因为..." : "",
+            analysis: includeAnalysis
+              ? "AI生成的解析：选项C是正确的，因为..."
+              : "",
             difficulty: difficulty || "medium",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
@@ -1714,7 +1836,9 @@ export default [
               { key: "D", content: "正确选项D" }
             ],
             correctAnswers: ["A", "B", "D"],
-            analysis: includeAnalysis ? "AI生成的解析：A、B、D都是正确的..." : "",
+            analysis: includeAnalysis
+              ? "AI生成的解析：A、B、D都是正确的..."
+              : "",
             difficulty: difficulty || "medium",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
@@ -1728,7 +1852,9 @@ export default [
               { key: "F", content: "错误" }
             ],
             correctAnswer: "T",
-            analysis: includeAnalysis ? "AI生成的解析：该命题是正确的，因为..." : "",
+            analysis: includeAnalysis
+              ? "AI生成的解析：该命题是正确的，因为..."
+              : "",
             difficulty: difficulty || "easy",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
@@ -1749,7 +1875,9 @@ export default [
             type: "textarea",
             stem: `[AI生成] 关于${knowledgePoints || "数学"}的简答题 ${i + 1}：请详细阐述相关概念。`,
             referenceAnswer: "AI生成的参考答案：...",
-            analysis: includeAnalysis ? "AI生成的解析：需要从以下几个方面回答..." : "",
+            analysis: includeAnalysis
+              ? "AI生成的解析：需要从以下几个方面回答..."
+              : "",
             difficulty: difficulty || "medium",
             knowledgePoints: knowledgePoints ? [knowledgePoints] : ["数学基础"]
           });
@@ -2244,7 +2372,8 @@ export default [
           name,
           type,
           count,
-          percentage: totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
+          percentage:
+            totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
         })
       );
 
@@ -2352,10 +2481,62 @@ export default [
           totalQuestions: 30,
           totalPoints: 100,
           questionGroups: [
-            { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 2, subtotal: 20, sampleQuestions: [{ stem: "以下关于函数极限的说法，正确的是？", options: [{ key: "A", content: "选项A" }, { key: "B", content: "选项B" }, { key: "C", content: "选项C" }, { key: "D", content: "选项D" }] }] },
-            { groupName: "二、多选题", questionType: "checkbox", count: 5, pointsPerQuestion: 4, subtotal: 20, sampleQuestions: [{ stem: "下列哪些属于连续函数的性质？", options: [{ key: "A", content: "有界性" }, { key: "B", content: "最值定理" }, { key: "C", content: "介值定理" }, { key: "D", content: "可导性" }] }] },
-            { groupName: "三、填空题", questionType: "input", count: 5, pointsPerQuestion: 4, subtotal: 20, sampleQuestions: [{ stem: "函数 f(x)=x² 在 x=3 处的导数为 ______。" }] },
-            { groupName: "四、大题", questionType: "textarea", count: 10, pointsPerQuestion: 4, subtotal: 40, sampleQuestions: [{ stem: "求函数 f(x) = x³ - 3x + 2 的极值点和极值。" }] }
+            {
+              groupName: "一、单选题",
+              questionType: "radio",
+              count: 10,
+              pointsPerQuestion: 2,
+              subtotal: 20,
+              sampleQuestions: [
+                {
+                  stem: "以下关于函数极限的说法，正确的是？",
+                  options: [
+                    { key: "A", content: "选项A" },
+                    { key: "B", content: "选项B" },
+                    { key: "C", content: "选项C" },
+                    { key: "D", content: "选项D" }
+                  ]
+                }
+              ]
+            },
+            {
+              groupName: "二、多选题",
+              questionType: "checkbox",
+              count: 5,
+              pointsPerQuestion: 4,
+              subtotal: 20,
+              sampleQuestions: [
+                {
+                  stem: "下列哪些属于连续函数的性质？",
+                  options: [
+                    { key: "A", content: "有界性" },
+                    { key: "B", content: "最值定理" },
+                    { key: "C", content: "介值定理" },
+                    { key: "D", content: "可导性" }
+                  ]
+                }
+              ]
+            },
+            {
+              groupName: "三、填空题",
+              questionType: "input",
+              count: 5,
+              pointsPerQuestion: 4,
+              subtotal: 20,
+              sampleQuestions: [
+                { stem: "函数 f(x)=x² 在 x=3 处的导数为 ______。" }
+              ]
+            },
+            {
+              groupName: "四、大题",
+              questionType: "textarea",
+              count: 10,
+              pointsPerQuestion: 4,
+              subtotal: 40,
+              sampleQuestions: [
+                { stem: "求函数 f(x) = x³ - 3x + 2 的极值点和极值。" }
+              ]
+            }
           ]
         },
         quick: {
@@ -2365,8 +2546,42 @@ export default [
           totalQuestions: 5,
           totalPoints: 25,
           questionGroups: [
-            { groupName: "一、单选题", questionType: "radio", count: 3, pointsPerQuestion: 5, subtotal: 15, sampleQuestions: [{ stem: "求极限 lim(x→0) sin(x)/x 的值为：", options: [{ key: "A", content: "0" }, { key: "B", content: "1" }, { key: "C", content: "∞" }, { key: "D", content: "不存在" }] }] },
-            { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10, sampleQuestions: [{ stem: "以下哪些是基本初等函数？", options: [{ key: "A", content: "幂函数" }, { key: "B", content: "指数函数" }, { key: "C", content: "分段函数" }, { key: "D", content: "三角函数" }] }] }
+            {
+              groupName: "一、单选题",
+              questionType: "radio",
+              count: 3,
+              pointsPerQuestion: 5,
+              subtotal: 15,
+              sampleQuestions: [
+                {
+                  stem: "求极限 lim(x→0) sin(x)/x 的值为：",
+                  options: [
+                    { key: "A", content: "0" },
+                    { key: "B", content: "1" },
+                    { key: "C", content: "∞" },
+                    { key: "D", content: "不存在" }
+                  ]
+                }
+              ]
+            },
+            {
+              groupName: "二、多选题",
+              questionType: "checkbox",
+              count: 2,
+              pointsPerQuestion: 5,
+              subtotal: 10,
+              sampleQuestions: [
+                {
+                  stem: "以下哪些是基本初等函数？",
+                  options: [
+                    { key: "A", content: "幂函数" },
+                    { key: "B", content: "指数函数" },
+                    { key: "C", content: "分段函数" },
+                    { key: "D", content: "三角函数" }
+                  ]
+                }
+              ]
+            }
           ]
         },
         comprehensive: {
@@ -2376,8 +2591,34 @@ export default [
           totalQuestions: 15,
           totalPoints: 75,
           questionGroups: [
-            { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 3, subtotal: 30, sampleQuestions: [{ stem: "设 f(x) 在 [a,b] 上连续，在 (a,b) 内可导，且 f(a)=f(b)，则至少存在一点 ξ∈(a,b) 使得 f'(ξ)=0。这是哪个定理？", options: [{ key: "A", content: "罗尔定理" }, { key: "B", content: "拉格朗日中值定理" }, { key: "C", content: "柯西中值定理" }, { key: "D", content: "泰勒定理" }] }] },
-            { groupName: "二、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 9, subtotal: 45, sampleQuestions: [{ stem: "请阐述拉格朗日中值定理的内容，并给出几何意义的解释。" }] }
+            {
+              groupName: "一、单选题",
+              questionType: "radio",
+              count: 10,
+              pointsPerQuestion: 3,
+              subtotal: 30,
+              sampleQuestions: [
+                {
+                  stem: "设 f(x) 在 [a,b] 上连续，在 (a,b) 内可导，且 f(a)=f(b)，则至少存在一点 ξ∈(a,b) 使得 f'(ξ)=0。这是哪个定理？",
+                  options: [
+                    { key: "A", content: "罗尔定理" },
+                    { key: "B", content: "拉格朗日中值定理" },
+                    { key: "C", content: "柯西中值定理" },
+                    { key: "D", content: "泰勒定理" }
+                  ]
+                }
+              ]
+            },
+            {
+              groupName: "二、简答题",
+              questionType: "textarea",
+              count: 5,
+              pointsPerQuestion: 9,
+              subtotal: 45,
+              sampleQuestions: [
+                { stem: "请阐述拉格朗日中值定理的内容，并给出几何意义的解释。" }
+              ]
+            }
           ]
         },
         survey: {
@@ -2387,10 +2628,68 @@ export default [
           totalQuestions: 22,
           totalPoints: 120,
           questionGroups: [
-            { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 4, subtotal: 40, sampleQuestions: [{ stem: "你对本学期课程内容的掌握程度如何？", options: [{ key: "A", content: "非常好" }, { key: "B", content: "较好" }, { key: "C", content: "一般" }, { key: "D", content: "较差" }] }] },
-            { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10, sampleQuestions: [{ stem: "你认为哪些学习方式对你帮助最大？", options: [{ key: "A", content: "课堂讲授" }, { key: "B", content: "课后练习" }, { key: "C", content: "小组讨论" }, { key: "D", content: "在线学习" }] }] },
-            { groupName: "三、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 10, subtotal: 50, sampleQuestions: [{ stem: "请简述你在本学期学习中遇到的主要困难及解决方法。" }] },
-            { groupName: "四、判断题", questionType: "judge", count: 5, pointsPerQuestion: 4, subtotal: 20, sampleQuestions: [{ stem: "课堂上的互动环节有助于加深对知识的理解。", options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }] }] }
+            {
+              groupName: "一、单选题",
+              questionType: "radio",
+              count: 10,
+              pointsPerQuestion: 4,
+              subtotal: 40,
+              sampleQuestions: [
+                {
+                  stem: "你对本学期课程内容的掌握程度如何？",
+                  options: [
+                    { key: "A", content: "非常好" },
+                    { key: "B", content: "较好" },
+                    { key: "C", content: "一般" },
+                    { key: "D", content: "较差" }
+                  ]
+                }
+              ]
+            },
+            {
+              groupName: "二、多选题",
+              questionType: "checkbox",
+              count: 2,
+              pointsPerQuestion: 5,
+              subtotal: 10,
+              sampleQuestions: [
+                {
+                  stem: "你认为哪些学习方式对你帮助最大？",
+                  options: [
+                    { key: "A", content: "课堂讲授" },
+                    { key: "B", content: "课后练习" },
+                    { key: "C", content: "小组讨论" },
+                    { key: "D", content: "在线学习" }
+                  ]
+                }
+              ]
+            },
+            {
+              groupName: "三、简答题",
+              questionType: "textarea",
+              count: 5,
+              pointsPerQuestion: 10,
+              subtotal: 50,
+              sampleQuestions: [
+                { stem: "请简述你在本学期学习中遇到的主要困难及解决方法。" }
+              ]
+            },
+            {
+              groupName: "四、判断题",
+              questionType: "judge",
+              count: 5,
+              pointsPerQuestion: 4,
+              subtotal: 20,
+              sampleQuestions: [
+                {
+                  stem: "课堂上的互动环节有助于加深对知识的理解。",
+                  options: [
+                    { key: "T", content: "正确" },
+                    { key: "F", content: "错误" }
+                  ]
+                }
+              ]
+            }
           ]
         }
       };
@@ -2407,10 +2706,30 @@ export default [
         code: 0,
         msg: "success",
         data: [
-          { templateKey: "standard", questionCount: 30, totalPoints: 100, useCount: 128 },
-          { templateKey: "quick", questionCount: 5, totalPoints: 25, useCount: 256 },
-          { templateKey: "comprehensive", questionCount: 15, totalPoints: 75, useCount: 89 },
-          { templateKey: "survey", questionCount: 22, totalPoints: 120, useCount: 45 }
+          {
+            templateKey: "standard",
+            questionCount: 30,
+            totalPoints: 100,
+            useCount: 128
+          },
+          {
+            templateKey: "quick",
+            questionCount: 5,
+            totalPoints: 25,
+            useCount: 256
+          },
+          {
+            templateKey: "comprehensive",
+            questionCount: 15,
+            totalPoints: 75,
+            useCount: 89
+          },
+          {
+            templateKey: "survey",
+            questionCount: 22,
+            totalPoints: 120,
+            useCount: 45
+          }
         ]
       };
     }

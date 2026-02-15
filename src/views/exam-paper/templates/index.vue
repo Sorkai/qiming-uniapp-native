@@ -129,10 +129,34 @@ const systemTemplatePreviewData: Record<string, any> = {
     totalQuestions: 30,
     totalPoints: 100,
     questionGroups: [
-      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 2, subtotal: 20 },
-      { groupName: "二、多选题", questionType: "checkbox", count: 5, pointsPerQuestion: 4, subtotal: 20 },
-      { groupName: "三、填空题", questionType: "input", count: 5, pointsPerQuestion: 4, subtotal: 20 },
-      { groupName: "四、简答题", questionType: "textarea", count: 10, pointsPerQuestion: 4, subtotal: 40 }
+      {
+        groupName: "一、单选题",
+        questionType: "radio",
+        count: 10,
+        pointsPerQuestion: 2,
+        subtotal: 20
+      },
+      {
+        groupName: "二、多选题",
+        questionType: "checkbox",
+        count: 5,
+        pointsPerQuestion: 4,
+        subtotal: 20
+      },
+      {
+        groupName: "三、填空题",
+        questionType: "input",
+        count: 5,
+        pointsPerQuestion: 4,
+        subtotal: 20
+      },
+      {
+        groupName: "四、简答题",
+        questionType: "textarea",
+        count: 10,
+        pointsPerQuestion: 4,
+        subtotal: 40
+      }
     ]
   },
   quick: {
@@ -142,8 +166,20 @@ const systemTemplatePreviewData: Record<string, any> = {
     totalQuestions: 5,
     totalPoints: 25,
     questionGroups: [
-      { groupName: "一、单选题", questionType: "radio", count: 3, pointsPerQuestion: 5, subtotal: 15 },
-      { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10 }
+      {
+        groupName: "一、单选题",
+        questionType: "radio",
+        count: 3,
+        pointsPerQuestion: 5,
+        subtotal: 15
+      },
+      {
+        groupName: "二、多选题",
+        questionType: "checkbox",
+        count: 2,
+        pointsPerQuestion: 5,
+        subtotal: 10
+      }
     ]
   },
   comprehensive: {
@@ -153,8 +189,20 @@ const systemTemplatePreviewData: Record<string, any> = {
     totalQuestions: 15,
     totalPoints: 75,
     questionGroups: [
-      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 3, subtotal: 30 },
-      { groupName: "二、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 9, subtotal: 45 }
+      {
+        groupName: "一、单选题",
+        questionType: "radio",
+        count: 10,
+        pointsPerQuestion: 3,
+        subtotal: 30
+      },
+      {
+        groupName: "二、简答题",
+        questionType: "textarea",
+        count: 5,
+        pointsPerQuestion: 9,
+        subtotal: 45
+      }
     ]
   },
   survey: {
@@ -164,10 +212,34 @@ const systemTemplatePreviewData: Record<string, any> = {
     totalQuestions: 22,
     totalPoints: 120,
     questionGroups: [
-      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 4, subtotal: 40 },
-      { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10 },
-      { groupName: "三、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 10, subtotal: 50 },
-      { groupName: "四、判断题", questionType: "judge", count: 5, pointsPerQuestion: 4, subtotal: 20 }
+      {
+        groupName: "一、单选题",
+        questionType: "radio",
+        count: 10,
+        pointsPerQuestion: 4,
+        subtotal: 40
+      },
+      {
+        groupName: "二、多选题",
+        questionType: "checkbox",
+        count: 2,
+        pointsPerQuestion: 5,
+        subtotal: 10
+      },
+      {
+        groupName: "三、简答题",
+        questionType: "textarea",
+        count: 5,
+        pointsPerQuestion: 10,
+        subtotal: 50
+      },
+      {
+        groupName: "四、判断题",
+        questionType: "judge",
+        count: 5,
+        pointsPerQuestion: 4,
+        subtotal: 20
+      }
     ]
   }
 };
@@ -426,8 +498,7 @@ onMounted(() => {
                   {{ group.subtotal }}分</span
                 >
                 <el-tag size="small" type="info">{{
-                  questionTypeNameMap[group.questionType] ||
-                  group.questionType
+                  questionTypeNameMap[group.questionType] || group.questionType
                 }}</el-tag>
               </div>
               <div
@@ -525,10 +596,18 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
       .template-cover {
         &.system {
-          background: linear-gradient(135deg, rgba(0, 191, 165, 0.2) 0%, rgba(0, 191, 165, 0.1) 100%);
+          background: linear-gradient(
+            135deg,
+            rgba(0, 191, 165, 0.2) 0%,
+            rgba(0, 191, 165, 0.1) 100%
+          );
         }
         &.private {
-          background: linear-gradient(135deg, rgba(64, 158, 255, 0.2) 0%, rgba(64, 158, 255, 0.1) 100%);
+          background: linear-gradient(
+            135deg,
+            rgba(64, 158, 255, 0.2) 0%,
+            rgba(64, 158, 255, 0.1) 100%
+          );
         }
       }
 

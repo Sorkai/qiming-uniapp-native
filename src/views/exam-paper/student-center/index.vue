@@ -450,7 +450,7 @@ onMounted(() => {
             @click="startExam(paper)"
           >
             <el-icon><Edit /></el-icon>
-            {{ paper.status === 'retake' ? '开始补考' : '开始答题' }}
+            {{ paper.status === "retake" ? "开始补考" : "开始答题" }}
           </el-button>
           <el-button
             v-else-if="paper.status === 'submitted'"

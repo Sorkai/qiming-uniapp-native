@@ -33,8 +33,16 @@ const aiSettings = reactive({
 });
 
 const modeOptions = [
-  { value: "generate", label: "AI 生成新题", description: "根据知识点生成全新题目" },
-  { value: "recommend", label: "题库智能推荐", description: "从题库中智能匹配相关题目" },
+  {
+    value: "generate",
+    label: "AI 生成新题",
+    description: "根据知识点生成全新题目"
+  },
+  {
+    value: "recommend",
+    label: "题库智能推荐",
+    description: "从题库中智能匹配相关题目"
+  },
   { value: "polish", label: "润色优化", description: "优化已有题目内容" }
 ];
 
@@ -186,8 +194,7 @@ const generateWithAI = async () => {
 
     if (res.code === 0) {
       aiGeneratedQuestions.value = res.data;
-      const modeText =
-        aiSettings.mode === "recommend" ? "推荐" : "生成";
+      const modeText = aiSettings.mode === "recommend" ? "推荐" : "生成";
       ElMessage.success(`成功${modeText} ${res.data.length} 道题目`);
     }
   } catch {
