@@ -707,16 +707,64 @@ $radius-lg: 16px;
     .folder-sidebar {
       background: $dark-card-bg;
       border-color: $dark-border;
+      box-shadow: $dark-shadow;
     }
 
-    .page-title,
-    .stat-value {
+    .page-title {
       color: $dark-text-primary;
     }
 
-    .page-desc,
-    .stat-label {
+    .page-desc {
       color: $dark-text-secondary;
+    }
+
+    .stat-card {
+      .stat-info {
+        .stat-value {
+          color: $dark-text-primary;
+        }
+
+        .stat-label {
+          color: $dark-text-secondary;
+        }
+      }
+    }
+
+    .folder-sidebar {
+      .folder-header {
+        border-bottom-color: $dark-border;
+
+        .folder-title {
+          color: $dark-text-primary;
+        }
+      }
+
+      .folder-item {
+        color: $dark-text-secondary;
+
+        &:hover {
+          background: rgba(102, 126, 234, 0.1);
+        }
+
+        &.active {
+          background: rgba(102, 126, 234, 0.2);
+          color: #818cf8;
+        }
+
+        .folder-name {
+          color: inherit;
+        }
+
+        .folder-count {
+          background: rgba(255, 255, 255, 0.05);
+          color: $dark-text-secondary;
+        }
+
+        &.active .folder-count {
+          background: #818cf8;
+          color: #fff;
+        }
+      }
     }
 
     .list-card {
@@ -734,20 +782,39 @@ $radius-lg: 16px;
       .count-badge,
       .score-badge,
       .usage-badge {
-        background: #2d3748;
+        background: rgba(255, 255, 255, 0.05);
         color: $dark-text-primary;
+      }
+
+      .pagination-wrapper {
+        border-top-color: $dark-border;
       }
 
       :deep(.el-table) {
         background-color: transparent;
         --el-table-bg-color: transparent;
         --el-table-tr-bg-color: transparent;
+        --el-table-header-bg-color: rgba(255, 255, 255, 0.05);
+        --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.03);
+        --el-table-border-color: rgba(255, 255, 255, 0.1);
         color: $dark-text-primary;
       }
 
       :deep(.el-table__header th) {
         background-color: rgba(255, 255, 255, 0.05);
         color: $dark-text-primary;
+        border-bottom-color: $dark-border;
+      }
+
+      :deep(.el-table__body tr) {
+        &:hover > td {
+          background-color: rgba(255, 255, 255, 0.03);
+        }
+      }
+
+      :deep(.el-table td),
+      :deep(.el-table th.is-leaf) {
+        border-bottom-color: $dark-border;
       }
     }
   }

@@ -629,6 +629,10 @@ $radius-xl: 20px;
 
       .paper-meta {
         color: $dark-text-secondary;
+
+        .divider {
+          color: $dark-border;
+        }
       }
 
       .paper-time {
