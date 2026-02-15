@@ -46,6 +46,9 @@ let examTimer: ReturnType<typeof setInterval> | null = null;
 // 当前题目计时器（每秒更新当前题目的用时）
 let questionTimer: ReturnType<typeof setInterval> | null = null;
 
+// 用于强制刷新题目用时显示的响应式变量
+const questionTimerTick = ref(0);
+
 // 所有题目列表（扁平化）
 const allQuestions = computed(() => {
   if (!examData.paper?.questionGroups) return [];
@@ -259,8 +262,8 @@ const startExamTimer = () => {
 // 启动题目计时器（实时更新当前题目用时显示）
 const startQuestionTimer = () => {
   questionTimer = setInterval(() => {
-    // 这个计时器主要用于实时显示当前题目的用时
-    // 实际的时长累加在 leaveQuestion 时进行
+    // 每秒更新计数器，触发 computed 重新计算
+    questionTimerTick.value++;
   }, 1000);
 };
 
@@ -278,6 +281,9 @@ const stopTimers = () => {
 
 // 获取当前题目实时用时（包含正在计时的部分）
 const getCurrentQuestionDuration = computed(() => {
+  // 依赖 questionTimerTick 来触发每秒更新
+  questionTimerTick.value;
+  
   if (!currentAnswerRecord.value) return 0;
   let duration = currentAnswerRecord.value.duration;
   if (currentAnswerRecord.value.lastEnterTime > 0) {
