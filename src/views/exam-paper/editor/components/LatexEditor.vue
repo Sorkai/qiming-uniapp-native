@@ -88,9 +88,9 @@ defineExpose({ open });
   <div class="latex-editor-btn">
     <!-- 工具栏按钮 -->
     <el-tooltip content="插入 LaTeX 公式" placement="top">
-      <el-button link type="primary" @click="open">
+      <el-button size="small" type="primary" plain @click="open">
         <el-icon><EditPen /></el-icon>
-        <span>公式</span>
+        <span>插入公式</span>
       </el-button>
     </el-tooltip>
 

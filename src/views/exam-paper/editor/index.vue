@@ -284,6 +284,7 @@ const outlineCollapsed = ref(false);
 
 // 预览相关
 const previewDialogVisible = ref(false);
+const previewWithAnswerDialogVisible = ref(false);
 const previewPaperSize = ref<"A4" | "A3">("A4");
 const previewScale = ref(100);
 
@@ -725,6 +726,40 @@ const previewPaper = () => {
     return;
   }
   previewDialogVisible.value = true;
+};
+
+// 预览试卷（带答案）
+const previewPaperWithAnswer = () => {
+  if (paper.questionGroups.length === 0) {
+    ElMessage.warning("请先添加题目");
+    return;
+  }
+  previewWithAnswerDialogVisible.value = true;
+};
+
+// 获取题目答案显示文本
+const getAnswerText = (question: any) => {
+  if (question.questionType === "radio" || question.questionType === "judge") {
+    return question.correctAnswer || "未设置";
+  } else if (question.questionType === "checkbox") {
+    return question.correctAnswers?.length > 0
+      ? question.correctAnswers.join(", ")
+      : "未设置";
+  } else if (question.questionType === "input") {
+    return (
+      question.blanks
+        ?.map((b: any, i: number) => `第${i + 1}空: ${b.answer || "未设置"}`)
+        .join("; ") || "未设置"
+    );
+  } else if (
+    question.questionType === "textarea" ||
+    question.questionType === "textarea-essay"
+  ) {
+    return question.referenceAnswer || "未设置参考答案";
+  } else if (question.questionType === "ordering") {
+    return question.correctOrder || "未设置";
+  }
+  return "未设置";
 };
 
 // 打印试卷
@@ -1674,6 +1709,10 @@ onBeforeUnmount(() => {
             <el-icon><View /></el-icon>
             预览
           </el-button>
+          <el-button @click="previewPaperWithAnswer">
+            <el-icon><Document /></el-icon>
+            预览(带答案)
+          </el-button>
           <el-button @click="savePaper()">
             <el-icon><DocumentChecked /></el-icon>
             保存
@@ -1714,6 +1753,140 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
+
+    <!-- 预览对话框（带答案） -->
+    <el-dialog
+      v-model="previewWithAnswerDialogVisible"
+      title="试卷预览（带答案）"
+      width="90%"
+      fullscreen
+      class="preview-dialog preview-with-answer-dialog"
+    >
+      <template #header>
+        <div class="preview-header">
+          <span class="preview-title">试卷预览（带答案）</span>
+          <div class="preview-controls">
+            <el-radio-group v-model="previewPaperSize" size="small">
+              <el-radio-button value="A4">A4</el-radio-button>
+              <el-radio-button value="A3">A3</el-radio-button>
+            </el-radio-group>
+            <div class="scale-control">
+              <span>缩放：</span>
+              <el-slider
+                v-model="previewScale"
+                :min="50"
+                :max="150"
+                :step="10"
+                :format-tooltip="(val: number) => `${val}%`"
+                style="width: 120px"
+              />
+              <span>{{ previewScale }}%</span>
+            </div>
+            <el-button type="primary" size="small" @click="printPaper">
+              <el-icon><Printer /></el-icon>
+              打印
+            </el-button>
+          </div>
+        </div>
+      </template>
+      <div class="preview-content">
+        <div
+          class="preview-paper"
+          :class="[`paper-${previewPaperSize.toLowerCase()}`]"
+          :style="{ transform: `scale(${previewScale / 100})` }"
+        >
+          <h1 class="preview-paper-title">{{ paper.title || "未命名试卷" }}</h1>
+          <p v-if="paper.description" class="preview-paper-desc">
+            {{ paper.description }}
+          </p>
+          <div class="preview-paper-info">
+            <span>总分：{{ paper.totalPoints }} 分</span>
+            <span>题目数：{{ paper.totalQuestions }} 题</span>
+            <span class="answer-badge">含答案版本</span>
+          </div>
+          <div class="preview-questions">
+            <template
+              v-for="(group, groupIndex) in paper.questionGroups"
+              :key="group.groupId"
+            >
+              <div
+                v-for="(question, qIndex) in group.questions"
+                :key="question.questionId"
+                class="preview-question"
+              >
+                <div class="preview-question-header">
+                  <span class="preview-question-index">
+                    {{ getGlobalQuestionIndex(groupIndex, qIndex) }}.
+                  </span>
+                  <span class="preview-question-type"
+                    >[{{ group.groupName }}]</span
+                  >
+                  <span class="preview-question-points">
+                    ({{ question.points }}分)
+                  </span>
+                </div>
+                <div class="preview-question-stem">
+                  {{ question.stem || "未填写题目" }}
+                </div>
+                <div
+                  v-if="question.options && question.options.length > 0"
+                  class="preview-question-options"
+                >
+                  <div
+                    v-for="option in question.options"
+                    :key="option.key"
+                    class="preview-option"
+                    :class="{
+                      'correct-option':
+                        (question.questionType === 'radio' || question.questionType === 'judge') && question.correctAnswer === option.key ||
+                        question.questionType === 'checkbox' && question.correctAnswers?.includes(option.key)
+                    }"
+                  >
+                    {{ option.key }}. {{ option.content }}
+                    <el-icon v-if="(question.questionType === 'radio' || question.questionType === 'judge') && question.correctAnswer === option.key" class="correct-icon"><Check /></el-icon>
+                    <el-icon v-if="question.questionType === 'checkbox' && question.correctAnswers?.includes(option.key)" class="correct-icon"><Check /></el-icon>
+                  </div>
+                </div>
+                <div
+                  v-if="question.questionType === 'input'"
+                  class="preview-blanks"
+                >
+                  <span
+                    v-for="(blank, i) in question.blanks"
+                    :key="i"
+                    class="preview-blank"
+                  >
+                    第{{ i + 1 }}空：<span class="blank-answer">{{ blank.answer || "未设置" }}</span>
+                  </span>
+                </div>
+                <div
+                  v-if="question.questionType === 'textarea' || question.questionType === 'textarea-essay'"
+                  class="preview-textarea"
+                >
+                  <div class="preview-answer-area" />
+                </div>
+                <!-- 答案显示区域 -->
+                <div class="preview-answer-section">
+                  <div class="answer-label">
+                    <el-icon><CircleCheck /></el-icon>
+                    <span>正确答案：</span>
+                  </div>
+                  <div class="answer-content">{{ getAnswerText(question) }}</div>
+                </div>
+                <!-- 解析显示区域 -->
+                <div v-if="question.analysis" class="preview-analysis-section">
+                  <div class="analysis-label">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>题目解析：</span>
+                  </div>
+                  <div class="analysis-content">{{ question.analysis }}</div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
 
     <!-- 预览对话框 -->
     <el-dialog
@@ -2277,9 +2450,9 @@ onBeforeUnmount(() => {
                 </div>
                 <!-- 题干 -->
                 <div class="question-stem">
-                  <div class="stem-header">
-                    <span class="stem-hint">题目</span>
-                    <div class="stem-toolbar">
+                  <div class="stem-toolbar-bar">
+                    <span class="stem-label">题目</span>
+                    <div class="stem-tools">
                       <LatexEditor @insert="(latex) => insertLatexToStem(question, latex)" />
                     </div>
                   </div>
@@ -2292,9 +2465,11 @@ onBeforeUnmount(() => {
                     maxlength="2000"
                   />
                   <!-- 题干预览（含公式渲染） -->
-                  <div v-if="question.stem && question.stem.includes('$')" class="stem-preview">
-                    <div class="preview-label">预览：</div>
-                    <RichContent :content="question.stem" />
+                  <div v-if="question.stem && question.stem.includes('$')" class="stem-preview-box">
+                    <div class="preview-tag">预览</div>
+                    <div class="preview-body">
+                      <RichContent :content="question.stem" />
+                    </div>
                   </div>
                   <RichMediaUploader v-model="question.media" />
                 </div>
@@ -3964,6 +4139,85 @@ onBeforeUnmount(() => {
     }
   }
 }
+// 带答案预览对话框样式
+.preview-with-answer-dialog {
+  .answer-badge {
+    background: #67c23a;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .preview-option {
+    &.correct-option {
+      background: rgba(103, 194, 58, 0.1);
+      color: #67c23a;
+      font-weight: 500;
+      border-radius: 4px;
+      padding: 4px 8px 4px 20px;
+      .correct-icon {
+        color: #67c23a;
+        margin-left: 8px;
+      }
+    }
+  }
+  .preview-blanks .preview-blank {
+    display: block;
+    margin-bottom: 8px;
+    .blank-answer {
+      color: #67c23a;
+      font-weight: 500;
+      background: rgba(103, 194, 58, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+  }
+  .preview-answer-section {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(103, 194, 58, 0.08);
+    border-radius: 6px;
+    border-left: 3px solid #67c23a;
+    .answer-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #67c23a;
+      margin-bottom: 6px;
+    }
+    .answer-content {
+      font-size: 14px;
+      color: #303133;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+  }
+  .preview-analysis-section {
+    margin-top: 8px;
+    padding: 12px;
+    background: rgba(64, 158, 255, 0.08);
+    border-radius: 6px;
+    border-left: 3px solid #409eff;
+    .analysis-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #409eff;
+      margin-bottom: 6px;
+    }
+    .analysis-content {
+      font-size: 14px;
+      color: #606266;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+  }
+}
+
 // 发布对话框样式
 .publish-dialog {
   .publish-form {

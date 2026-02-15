@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed, watch, nextTick, onMounted } from "vue";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 
@@ -18,45 +18,103 @@ const props = defineProps<{
   media?: MediaItem[];
 }>();
 
-// 渲染含 LaTeX 的文本：$..$ 为行内公式，$$...$$ 为块级公式
-// 使用单次遍历正则，避免两步替换互相干扰
-const renderedContent = computed(() => {
-  if (!props.content) return "";
-  let text = props.content;
-  // 单次遍历：$$...$$ 块级 或 $...$ 行内
-  //\\$(\\$?)匹配 $ 或 $$，([\\s\\S]+?) 匹配公式内容，\\$\\1匹配对应的闭合符
-  text = text.replace(
-    /\$(\$?)([\s\S]+?)\$\1/g,
-    (_match, doubleDollar, formula) => {
-      const isBlock = doubleDollar === "$";
-      const trimmed = formula.trim();
-      if (!trimmed) return _match;
+const contentRef = ref<HTMLDivElement | null>(null);
+const latexRef = ref<HTMLDivElement | null>(null);
+
+// 解析内容，分离文本和公式部分
+const parseContent = (
+  text: string
+): Array<{ type: "text" | "inline" | "block"; value: string }> => {
+  const parts: Array<{
+    type: "text" | "inline" | "block";
+    value: string;
+  }> = [];
+  const regex = /\$(\$?)([\s\S]+?)\$\1/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: "text", value: text.slice(lastIndex, match.index) });
+    }
+    const isBlock = match[1] === "$";
+    const trimmed = match[2].trim();
+    if (trimmed) {
+      parts.push({ type: isBlock ? "block" : "inline", value: trimmed });
+    }
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ type: "text", value: text.slice(lastIndex) });
+  }
+  return parts;
+};
+
+// 使用 katex.render() 直接渲染到 DOM（避免 renderToString + v-html 的 SVG 命名空间问题）
+const renderContent = () => {
+  if (!contentRef.value) return;
+  const el = contentRef.value;
+  el.innerHTML = "";
+
+  if (!props.content) return;
+
+  const parts = parseContent(props.content);
+  parts.forEach(part => {
+    if (part.type === "text") {
+      const lines = part.value.split("\n");
+      lines.forEach((line, i) => {
+        if (i > 0) el.appendChild(document.createElement("br"));
+        if (line) el.appendChild(document.createTextNode(line));
+      });
+    } else {
+      const span = document.createElement("span");
       try {
-        return katex.renderToString(trimmed, {
+        katex.render(part.value, span, {
           throwOnError: false,
-          displayMode: isBlock
+          displayMode: part.type === "block"
         });
       } catch {
-        return `<span class="latex-error">${trimmed}</span>`;
+        span.className = "latex-error";
+        span.textContent = part.value;
       }
+      el.appendChild(span);
     }
-  );
-  // 换行转 <br>
-  text = text.replace(/\n/g, "<br>");
-  return text;
-});
+  });
+};
 
 // 独立 LaTeX 公式渲染
-const renderedLatex = computed(() => {
-  if (!props.latex) return "";
+const renderLatex = () => {
+  if (!latexRef.value) return;
+  if (!props.latex) {
+    latexRef.value.innerHTML = "";
+    return;
+  }
   try {
-    return katex.renderToString(props.latex, {
+    katex.render(props.latex, latexRef.value, {
       throwOnError: false,
       displayMode: true
     });
   } catch {
-    return `<span class="latex-error">${props.latex}</span>`;
+    latexRef.value.innerHTML = `<span class="latex-error">${props.latex}</span>`;
   }
+};
+
+watch(
+  () => props.content,
+  () => nextTick(renderContent),
+  { immediate: true }
+);
+
+watch(
+  () => props.latex,
+  () => nextTick(renderLatex),
+  { immediate: true }
+);
+
+onMounted(() => {
+  renderContent();
+  renderLatex();
 });
 
 const images = computed(
@@ -72,11 +130,11 @@ const videos = computed(
 
 <template>
   <div class="rich-content">
-    <!-- 文本内容（支持行内 LaTeX） -->
-    <div v-if="content" class="content-text" v-html="renderedContent" />
+    <!-- 文本内容（支持行内 LaTeX）- 使用 ref 直接渲染 -->
+    <div v-if="content" ref="contentRef" class="content-text" />
 
     <!-- 独立公式块 -->
-    <div v-if="latex" class="content-latex" v-html="renderedLatex" />
+    <div v-if="latex" ref="latexRef" class="content-latex" />
 
     <!-- 图片 -->
     <div v-if="images.length" class="content-images">
