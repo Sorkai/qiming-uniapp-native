@@ -2,7 +2,12 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getMyTemplates, createTemplate, deleteTemplate } from "@/api/examPaper";
+import {
+  getMyTemplates,
+  createTemplate,
+  deleteTemplate,
+  getSystemTemplateStats
+} from "@/api/examPaper";
 
 defineOptions({
   name: "ExamPaperTemplates"
@@ -14,42 +19,46 @@ const router = useRouter();
 const systemTemplates = ref([
   {
     id: 1,
+    templateKey: "standard",
     name: "标准考试模板",
-    description: "包含单选、多选、判断、填空、简答题型，适合期中期末考试",
-    questionTypes: ["单选题", "多选题", "判断题", "填空题", "简答题"],
-    totalQuestions: 6,
-    totalPoints: 26,
-    useCount: 156,
+    description: "单选10道·多选5道·填空5道·大题10道",
+    questionTypes: ["单选题", "多选题", "填空题", "大题"],
+    totalQuestions: 30,
+    totalPoints: 100,
+    useCount: 0,
     isSystem: true
   },
   {
     id: 2,
+    templateKey: "quick",
     name: "快速测验模板",
     description: "仅包含客观题，适合课堂小测和随堂练习",
-    questionTypes: ["单选题", "多选题", "判断题"],
-    totalQuestions: 6,
-    totalPoints: 35,
-    useCount: 89,
+    questionTypes: ["单选题", "多选题"],
+    totalQuestions: 5,
+    totalPoints: 25,
+    useCount: 0,
     isSystem: true
   },
   {
     id: 3,
+    templateKey: "comprehensive",
     name: "综合能力测试",
-    description: "包含材料分析、论述等主观题，适合综合能力评估",
+    description: "单选10道·简答5道，适合综合能力评估",
     questionTypes: ["单选题", "简答题"],
-    totalQuestions: 5,
+    totalQuestions: 15,
     totalPoints: 75,
-    useCount: 67,
+    useCount: 0,
     isSystem: true
   },
   {
     id: 4,
+    templateKey: "survey",
     name: "学情调查问卷",
-    description: "用于学情调查，了解学生学习情况",
-    questionTypes: ["单选题", "多选题", "简答题"],
-    totalQuestions: 5,
-    totalPoints: 0,
-    useCount: 45,
+    description: "单选10道·多选2道·简答5道·判断5道",
+    questionTypes: ["单选题", "多选题", "简答题", "判断题"],
+    totalQuestions: 22,
+    totalPoints: 120,
+    useCount: 0,
     isSystem: true
   }
 ]);
@@ -66,6 +75,25 @@ const newTemplateForm = ref({
   name: "",
   description: ""
 });
+
+// 加载系统模板统计（使用人数）
+const loadTemplateStats = async () => {
+  try {
+    const result = await getSystemTemplateStats();
+    if (result.code === 0 && result.data) {
+      result.data.forEach((stat: any) => {
+        const tpl = systemTemplates.value.find(
+          t => t.templateKey === stat.templateKey
+        );
+        if (tpl) {
+          tpl.useCount = stat.useCount;
+        }
+      });
+    }
+  } catch (error) {
+    console.error("加载模板统计失败:", error);
+  }
+};
 
 // 加载我的模板
 const loadMyTemplates = async () => {
@@ -154,6 +182,7 @@ const editMyTemplate = (templateId: number) => {
 };
 
 onMounted(() => {
+  loadTemplateStats();
   loadMyTemplates();
 });
 </script>
