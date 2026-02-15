@@ -13,6 +13,7 @@ import { visualizer } from "rollup-plugin-visualizer";
 import removeConsole from "vite-plugin-remove-console";
 import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
 import { codeInspectorPlugin } from "code-inspector-plugin";
+import { vitePluginFakeServer } from "vite-plugin-fake-server";
 
 export function getPluginsList(
   VITE_CDN: boolean,
@@ -37,7 +38,6 @@ export function getPluginsList(
      * 在页面上按住组合键时，鼠标在页面移动即会在 DOM 上出现遮罩层并显示相关信息，点击一下将自动打开 IDE 并将光标定位到元素对应的代码位置
      * Mac 默认组合键 Option + Shift
      * Windows 默认组合键 Alt + Shift
-     * 更多用法看 https://inspector.fe-dev.cn/guide/start.html
      */
     codeInspectorPlugin({
       bundler: "vite",
@@ -50,14 +50,14 @@ export function getPluginsList(
      * vite-plugin-router-warn只在开发环境下启用，只处理vue-router文件并且只在服务启动或重启时运行一次，性能消耗可忽略不计
      */
     removeNoMatch(),
-    // mock支持（已禁用，使用真实后端 API）
-    // vitePluginFakeServer({
-    //   logger: false,
-    //   include: "mock",
-    //   infixName: false,
-    //   enableProd: true,
-    //   basename: ""
-    // }),
+    // mock支持
+    vitePluginFakeServer({
+      logger: true,
+      include: "mock",
+      infixName: false,
+      enableProd: true,
+      basename: "/api"
+    }),
     // svg组件化支持
     svgLoader(),
     // 自动按需加载图标

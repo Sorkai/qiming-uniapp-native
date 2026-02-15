@@ -8,6 +8,11 @@ import {
   getPaperDetail,
   type StudentPaperItem
 } from "@/api/examPaper";
+import WaitingToCompleteIcon from "@/assets/papercentreicons/waitingtocomplete.svg?component";
+import AlreadyCompletedIcon from "@/assets/papercentreicons/alreadycompleted.svg?component";
+import AlreadyDeadlineIcon from "@/assets/papercentreicons/alreadydeadline.svg?component";
+import AverageScoreIcon from "@/assets/papercentreicons/averagescore.svg?component";
+import TestPaperCenterIcon from "@/assets/papercentreicons/TestPaperCenter.svg?component";
 
 defineOptions({
   name: "StudentExamCenter"
@@ -47,52 +52,42 @@ const statistics = ref({
   avgScore: 0
 });
 
-// 过滤后的试卷列表
-const filteredPapers = computed(() => {
-  let result = papers.value;
-
-  // 按标签页筛选
-  if (activeTab.value === "available") {
-    result = result.filter(p => p.status === "available");
-  } else if (activeTab.value === "completed") {
-    result = result.filter(p => p.status === "completed");
-  } else if (activeTab.value === "expired") {
-    result = result.filter(p => p.status === "expired");
-  }
-
-  // 按搜索关键词筛选
-  if (searchQuery.value) {
-    const keyword = searchQuery.value.toLowerCase();
-    result = result.filter(
-      p =>
-        p.title.toLowerCase().includes(keyword) ||
-        p.description?.toLowerCase().includes(keyword)
-    );
-  }
-
-  // 按课程筛选
-  if (selectedCourse.value && selectedCourse.value !== "0") {
-    result = result.filter(p => p.courseId === Number(selectedCourse.value));
-  }
-
-  return result;
-});
+// 直接使用后端返回的数据，不需要前端再次筛选
+const filteredPapers = computed(() => papers.value);
 
 // 获取试卷列表
 const fetchPapers = async () => {
   loading.value = true;
   try {
-    const res = await getStudentPaperList({
+    const params: any = {
       pageNum: currentPage.value,
       pageSize: pageSize.value,
-      status: activeTab.value,
-      keyword: searchQuery.value || undefined,
-      courseId: selectedCourse.value ? Number(selectedCourse.value) : undefined
-    });
+      status: activeTab.value
+    };
+
+    // 只有在有值时才添加可选参数
+    if (searchQuery.value) {
+      params.keyword = searchQuery.value;
+    }
+    if (selectedCourse.value && selectedCourse.value !== "0") {
+      params.courseId = Number(selectedCourse.value);
+    }
+
+    console.log("获取试卷列表参数:", params);
+    const res = await getStudentPaperList(params);
+    console.log("获取试卷列表响应:", res);
+
     if (res.code === 0) {
-      papers.value = res.data.list;
-      total.value = res.data.total;
-      statistics.value = res.data.statistics || statistics.value;
+      papers.value = res.data.list || [];
+      total.value = res.data.total || 0;
+      statistics.value = res.data.statistics || {
+        available: 0,
+        completed: 0,
+        expired: 0,
+        avgScore: 0
+      };
+    } else {
+      ElMessage.error(res.msg || "获取试卷列表失败");
     }
   } catch (error) {
     console.error("获取试卷列表失败:", error);
@@ -207,7 +202,7 @@ onMounted(() => {
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
-          <el-icon><Document /></el-icon>
+          <TestPaperCenterIcon class="custom-icon" />
         </div>
         <div class="header-info">
           <h1 class="page-title">试题试卷中心</h1>
@@ -220,7 +215,7 @@ onMounted(() => {
     <div class="stats-section">
       <div class="stat-card available">
         <div class="stat-icon">
-          <el-icon><DocumentChecked /></el-icon>
+          <WaitingToCompleteIcon class="custom-icon" />
         </div>
         <div class="stat-info">
           <div class="stat-value">{{ statistics.available }}</div>
@@ -229,7 +224,7 @@ onMounted(() => {
       </div>
       <div class="stat-card completed">
         <div class="stat-icon">
-          <el-icon><CircleCheck /></el-icon>
+          <AlreadyCompletedIcon class="custom-icon" />
         </div>
         <div class="stat-info">
           <div class="stat-value">{{ statistics.completed }}</div>
@@ -238,7 +233,7 @@ onMounted(() => {
       </div>
       <div class="stat-card expired">
         <div class="stat-icon">
-          <el-icon><Clock /></el-icon>
+          <AlreadyDeadlineIcon class="custom-icon" />
         </div>
         <div class="stat-info">
           <div class="stat-value">{{ statistics.expired }}</div>
@@ -247,7 +242,7 @@ onMounted(() => {
       </div>
       <div class="stat-card score">
         <div class="stat-icon">
-          <el-icon><TrendCharts /></el-icon>
+          <AverageScoreIcon class="custom-icon" />
         </div>
         <div class="stat-info">
           <div class="stat-value">{{ statistics.avgScore }}</div>
@@ -377,7 +372,10 @@ onMounted(() => {
           </div>
 
           <!-- 已完成显示成绩 -->
-          <div v-if="paper.status === 'completed' && paper.score !== null" class="score-display">
+          <div
+            v-if="paper.status === 'completed' && paper.score !== null"
+            class="score-display"
+          >
             <div class="score-label">得分</div>
             <div class="score-value">{{ paper.score }}</div>
           </div>
@@ -405,20 +403,11 @@ onMounted(() => {
             <el-icon><View /></el-icon>
             查看成绩
           </el-button>
-          <el-button
-            v-else
-            size="large"
-            class="action-btn"
-            disabled
-          >
+          <el-button v-else size="large" class="action-btn" disabled>
             <el-icon><Lock /></el-icon>
             已过期
           </el-button>
-          <el-button
-            link
-            type="primary"
-            @click="viewDetail(paper)"
-          >
+          <el-button link type="primary" @click="viewDetail(paper)">
             查看详情
           </el-button>
         </div>
@@ -516,6 +505,12 @@ $info-color: #6b7280;
       justify-content: center;
       font-size: 28px;
       color: #fff;
+
+      .custom-icon {
+        width: 32px;
+        height: 32px;
+        fill: currentColor;
+      }
     }
 
     .page-title {
@@ -562,6 +557,12 @@ $info-color: #6b7280;
       justify-content: center;
       font-size: 24px;
       color: #fff;
+
+      .custom-icon {
+        width: 28px;
+        height: 28px;
+        fill: currentColor;
+      }
     }
 
     &.available .stat-icon {
@@ -783,7 +784,11 @@ $info-color: #6b7280;
         justify-content: center;
         gap: 12px;
         padding: 16px;
-        background: linear-gradient(135deg, rgba($primary-color, 0.1) 0%, rgba($primary-color, 0.05) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba($primary-color, 0.1) 0%,
+          rgba($primary-color, 0.05) 100%
+        );
         border-radius: 8px;
         margin-top: 16px;
 
