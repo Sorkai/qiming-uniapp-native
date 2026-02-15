@@ -3694,7 +3694,6 @@ onBeforeUnmount(() => {
       padding: 10px 12px;
       background: rgba(0, 191, 165, 0.08);
       border-radius: 6px;
-      border-left: 3px solid #00bfa5;
       font-weight: 500;
     }
 
@@ -4829,7 +4828,6 @@ onBeforeUnmount(() => {
         margin: 24px 0 16px 0;
         padding: 12px 16px;
         background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
-        border-left: 4px solid #00bfa5;
         border-radius: 6px;
         .preview-group-number {
           font-size: 18px;
