@@ -2,7 +2,11 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
-import { getOverviewStatistics, getRecentPapers } from "@/api/examPaper";
+import {
+  getOverviewStatistics,
+  getRecentPapers,
+  getLearningAnalytics
+} from "@/api/examPaper";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -70,10 +74,10 @@ const templates = ref([
 
 // 学情概览数据
 const learningStats = ref({
-  passRate: 85,
-  excellentRate: 32,
-  averageScore: 78.5,
-  participantCount: 156
+  passRate: 0,
+  excellentRate: 0,
+  averageScore: 0,
+  participantCount: 0
 });
 
 // 课程筛选器数据
@@ -85,25 +89,40 @@ const courseOptions = [
   { value: "prob", label: "概率论" }
 ];
 
+// 加载学情概览数据
+const loadLearningStats = async (courseId?: number) => {
+  try {
+    const params = courseId ? { courseId } : undefined;
+    const res = await getLearningAnalytics(params);
+    if (res.code === 0 && res.data?.overview) {
+      const o = res.data.overview;
+      learningStats.value = {
+        passRate: o.passRate,
+        excellentRate: Math.round(
+          res.data.scoreDistribution?.find(d => d.range === "90-100")
+            ?.percentage || 0
+        ),
+        averageScore: o.avgScore,
+        participantCount: o.totalStudents
+      };
+    }
+  } catch (e) {
+    console.error("获取学情概览失败", e);
+  }
+};
+
 // 处理课程切换
 const handleCourseChange = (val: string) => {
-  console.log("切换课程:", val);
-  // 这里可以根据课程 ID 加载对应的统计数据
-  // 模拟数据更新
   if (val === "all") {
-    learningStats.value = {
-      passRate: 85,
-      excellentRate: 32,
-      averageScore: 78.5,
-      participantCount: 156
-    };
+    loadLearningStats();
   } else {
-    learningStats.value = {
-      passRate: Math.floor(Math.random() * 20) + 70,
-      excellentRate: Math.floor(Math.random() * 15) + 20,
-      averageScore: Math.floor(Math.random() * 10) + 75,
-      participantCount: Math.floor(Math.random() * 50) + 100
+    // 将课程value映射为courseId
+    const courseIdMap: Record<string, number> = {
+      math: 1,
+      linear: 2,
+      prob: 3
     };
+    loadLearningStats(courseIdMap[val]);
   }
 };
 
@@ -169,6 +188,7 @@ const loadRecentPapers = async () => {
 onMounted(() => {
   loadStatistics();
   loadRecentPapers();
+  loadLearningStats();
 });
 </script>
 
