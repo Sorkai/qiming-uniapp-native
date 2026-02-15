@@ -1443,9 +1443,16 @@ export interface StudentPaperItem {
   totalQuestions: number;
   startTime: string;
   endTime: string;
-  /** 状态：available-可答题 completed-已完成 expired-已过期 */
-  status: "available" | "completed" | "expired";
-  /** 提交ID（已完成时） */
+  /** 状态：
+   * available - 可答题（已发布/考试中）
+   * submitted - 已提交待批改（已结束/批改中）
+   * graded - 已批改待发布（已批改但成绩未发布）
+   * completed - 已完成（成绩已发布）
+   * expired - 已过期（超过截止时间未提交）
+   * retake - 补考中（允许补考且在补考时间内）
+   */
+  status: "available" | "submitted" | "graded" | "completed" | "expired" | "retake";
+  /** 提交ID（已提交时） */
   submissionId?: number;
   /** 得分（已完成且成绩发布后） */
   score?: number;
@@ -1453,12 +1460,16 @@ export interface StudentPaperItem {
   allowRetake?: boolean;
   /** 剩余补考次数 */
   remainingRetakeCount?: number;
+  /** 补考开始时间 */
+  retakeStartTime?: string;
+  /** 补考结束时间 */
+  retakeEndTime?: string;
 }
 
 /** 获取学生试卷列表参数 */
 export interface GetStudentPaperListParams extends PageParams {
   /** 状态筛选 */
-  status?: "available" | "completed" | "expired";
+  status?: "available" | "submitted" | "graded" | "completed" | "expired" | "retake";
   /** 课程ID */
   courseId?: number;
   /** 关键词搜索 */
@@ -1467,12 +1478,18 @@ export interface GetStudentPaperListParams extends PageParams {
 
 /** 学生试卷统计数据 */
 export interface StudentPaperStatistics {
-  /** 待完成数量 */
+  /** 待完成数量（可答题+补考中） */
   available: number;
-  /** 已完成数量 */
+  /** 已提交待批改数量 */
+  submitted: number;
+  /** 已批改待发布数量 */
+  graded: number;
+  /** 已完成数量（成绩已发布） */
   completed: number;
   /** 已过期数量 */
   expired: number;
+  /** 补考中数量 */
+  retake: number;
   /** 平均分 */
   avgScore: number;
 }

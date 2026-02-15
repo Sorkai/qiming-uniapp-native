@@ -22,7 +22,9 @@ const router = useRouter();
 const { isDark } = useDark();
 
 // 筛选条件
-const activeTab = ref<"available" | "completed" | "expired">("available");
+const activeTab = ref<
+  "available" | "submitted" | "graded" | "completed" | "expired" | "retake"
+>("available");
 const searchQuery = ref("");
 const selectedCourse = ref("");
 const selectedStatus = ref("");
@@ -47,8 +49,11 @@ const courseOptions = ref([
 // 统计数据
 const statistics = ref({
   available: 0,
+  submitted: 0,
+  graded: 0,
   completed: 0,
   expired: 0,
+  retake: 0,
   avgScore: 0
 });
 
@@ -82,8 +87,11 @@ const fetchPapers = async () => {
       total.value = res.data.total || 0;
       statistics.value = res.data.statistics || {
         available: 0,
+        submitted: 0,
+        graded: 0,
         completed: 0,
         expired: 0,
+        retake: 0,
         avgScore: 0
       };
     } else {
@@ -108,7 +116,7 @@ const startExam = (paper: StudentPaperItem) => {
 
 // 查看详情
 const viewDetail = (paper: StudentPaperItem) => {
-  router.push(`/exam-paper/detail/${paper.id}`);
+  router.push(`/student-exam-center/detail/${paper.id}`);
 };
 
 // 查看成绩
@@ -127,10 +135,16 @@ const getStatusType = (
   switch (status) {
     case "available":
       return "success";
-    case "completed":
+    case "submitted":
+      return "warning";
+    case "graded":
       return "info";
+    case "completed":
+      return "success";
     case "expired":
       return "danger";
+    case "retake":
+      return "warning";
     default:
       return "info";
   }
@@ -141,10 +155,16 @@ const getStatusText = (status: string): string => {
   switch (status) {
     case "available":
       return "可答题";
+    case "submitted":
+      return "待批改";
+    case "graded":
+      return "待发布";
     case "completed":
       return "已完成";
     case "expired":
       return "已过期";
+    case "retake":
+      return "补考中";
     default:
       return "未知";
   }
