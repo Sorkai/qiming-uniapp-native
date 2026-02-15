@@ -288,11 +288,50 @@ onMounted(() => {
               </span>
             </template>
           </el-tab-pane>
+          <el-tab-pane label="待批改" name="submitted">
+            <template #label>
+              <span class="tab-label">
+                <el-icon><Loading /></el-icon>
+                待批改
+                <el-badge
+                  v-if="statistics.submitted > 0"
+                  :value="statistics.submitted"
+                  class="tab-badge"
+                />
+              </span>
+            </template>
+          </el-tab-pane>
+          <el-tab-pane label="待发布" name="graded">
+            <template #label>
+              <span class="tab-label">
+                <el-icon><Check /></el-icon>
+                待发布
+                <el-badge
+                  v-if="statistics.graded > 0"
+                  :value="statistics.graded"
+                  class="tab-badge"
+                />
+              </span>
+            </template>
+          </el-tab-pane>
           <el-tab-pane label="已完成" name="completed">
             <template #label>
               <span class="tab-label">
                 <el-icon><CircleCheck /></el-icon>
                 已完成
+              </span>
+            </template>
+          </el-tab-pane>
+          <el-tab-pane label="补考中" name="retake">
+            <template #label>
+              <span class="tab-label">
+                <el-icon><RefreshRight /></el-icon>
+                补考中
+                <el-badge
+                  v-if="statistics.retake > 0"
+                  :value="statistics.retake"
+                  class="tab-badge"
+                />
               </span>
             </template>
           </el-tab-pane>
@@ -404,14 +443,32 @@ onMounted(() => {
         <!-- 卡片底部操作 -->
         <div class="card-footer">
           <el-button
-            v-if="paper.status === 'available'"
+            v-if="paper.status === 'available' || paper.status === 'retake'"
             type="primary"
             size="large"
             class="action-btn"
             @click="startExam(paper)"
           >
             <el-icon><Edit /></el-icon>
-            开始答题
+            {{ paper.status === 'retake' ? '开始补考' : '开始答题' }}
+          </el-button>
+          <el-button
+            v-else-if="paper.status === 'submitted'"
+            size="large"
+            class="action-btn"
+            disabled
+          >
+            <el-icon><Loading /></el-icon>
+            批改中
+          </el-button>
+          <el-button
+            v-else-if="paper.status === 'graded'"
+            size="large"
+            class="action-btn"
+            disabled
+          >
+            <el-icon><Check /></el-icon>
+            待发布成绩
           </el-button>
           <el-button
             v-else-if="paper.status === 'completed'"
@@ -439,9 +496,15 @@ onMounted(() => {
           :description="
             activeTab === 'available'
               ? '暂无可答题的试卷'
-              : activeTab === 'completed'
-                ? '暂无已完成的试卷'
-                : '暂无已过期的试卷'
+              : activeTab === 'submitted'
+                ? '暂无待批改的试卷'
+                : activeTab === 'graded'
+                  ? '暂无待发布的试卷'
+                  : activeTab === 'completed'
+                    ? '暂无已完成的试卷'
+                    : activeTab === 'retake'
+                      ? '暂无补考中的试卷'
+                      : '暂无已过期的试卷'
           "
           :image-size="120"
         />

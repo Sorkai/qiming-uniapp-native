@@ -999,6 +999,59 @@ export default [
           score: 92,
           allowRetake: false,
           remainingRetakeCount: 0
+        },
+        {
+          id: 7,
+          title: "数据结构期中测试",
+          description: "数据结构基础知识测试",
+          courseId: 4,
+          courseName: "数据结构",
+          timeLimit: 90,
+          totalPoints: 80,
+          totalQuestions: 20,
+          startTime: "2024-04-22 10:00:00",
+          endTime: "2024-04-22 11:30:00",
+          status: "submitted",
+          submissionId: 3,
+          score: null,
+          allowRetake: false,
+          remainingRetakeCount: 0
+        },
+        {
+          id: 8,
+          title: "计算机网络练习",
+          description: "计算机网络基础练习题",
+          courseId: 4,
+          courseName: "计算机网络",
+          timeLimit: 60,
+          totalPoints: 50,
+          totalQuestions: 15,
+          startTime: "2024-04-24 14:00:00",
+          endTime: "2024-04-24 15:00:00",
+          status: "graded",
+          submissionId: 4,
+          score: 78,
+          allowRetake: false,
+          remainingRetakeCount: 0
+        },
+        {
+          id: 9,
+          title: "大学物理补考",
+          description: "大学物理期末补考",
+          courseId: 3,
+          courseName: "大学物理",
+          timeLimit: 120,
+          totalPoints: 100,
+          totalQuestions: 25,
+          startTime: "2024-04-26 09:00:00",
+          endTime: "2024-04-26 11:00:00",
+          status: "retake",
+          submissionId: null,
+          score: null,
+          allowRetake: true,
+          remainingRetakeCount: 1,
+          retakeStartTime: "2024-04-26 09:00:00",
+          retakeEndTime: "2024-04-26 11:00:00"
         }
       ];
 
@@ -1030,8 +1083,11 @@ export default [
       // 计算统计数据
       const statistics = {
         available: studentPapers.filter(p => p.status === "available").length,
+        submitted: studentPapers.filter(p => p.status === "submitted").length,
+        graded: studentPapers.filter(p => p.status === "graded").length,
         completed: studentPapers.filter(p => p.status === "completed").length,
         expired: studentPapers.filter(p => p.status === "expired").length,
+        retake: studentPapers.filter(p => p.status === "retake").length,
         avgScore: Math.round(
           studentPapers
             .filter(p => p.score !== null)
