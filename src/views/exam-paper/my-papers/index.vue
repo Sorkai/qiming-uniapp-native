@@ -4,6 +4,18 @@ import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
+  Plus,
+  Folder,
+  MoreFilled,
+  Search,
+  Refresh,
+  Edit,
+  Upload,
+  FolderOpened,
+  CopyDocument,
+  Delete
+} from "@element-plus/icons-vue";
+import {
   getMyPaperStatistics,
   getPaperList,
   getPaperFolders,
@@ -62,6 +74,33 @@ const statistics = ref({
   draft: 0,
   recent: 0
 });
+
+const statCards = computed(() => [
+  {
+    label: "试卷总数",
+    value: statistics.value.total,
+    icon: IconDocument,
+    color: "#6366f1"
+  },
+  {
+    label: "已发布",
+    value: statistics.value.published,
+    icon: IconCheckCircle,
+    color: "#10b981"
+  },
+  {
+    label: "草稿箱",
+    value: statistics.value.draft,
+    icon: IconEdit,
+    color: "#f59e0b"
+  },
+  {
+    label: "最近编辑",
+    value: statistics.value.recent,
+    icon: IconClock,
+    color: "#3b82f6"
+  }
+]);
 
 // ==================== 文件夹相关状态 ====================
 const folderList = ref<PaperFolder[]>([]);
@@ -299,7 +338,7 @@ onMounted(() => {
 
 <template>
   <div class="my-papers-page" :class="{ 'is-dark': isDark }">
-    <!-- 页面标题区域 -->
+    <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
@@ -312,55 +351,38 @@ onMounted(() => {
           </p>
         </div>
       </div>
-      <el-button
-        type="primary"
-        size="large"
-        class="create-btn"
-        @click="createPaper"
-      >
-        <el-icon class="mr-2"><Plus /></el-icon>
-        新建试卷
-      </el-button>
+      <div class="header-actions">
+        <el-button type="primary" class="create-btn" @click="createPaper">
+          <el-icon class="mr-2"><Plus /></el-icon>
+          新建试卷
+        </el-button>
+      </div>
     </div>
 
-    <!-- 统计卡片 -->
-    <div class="stats-section">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <IconDocument />
-        </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ statistics.total }}</div>
-          <div class="stat-label">试卷总数</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon published">
-          <IconCheckCircle />
-        </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ statistics.published }}</div>
-          <div class="stat-label">已发布</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon draft">
-          <IconEdit />
-        </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ statistics.draft }}</div>
-          <div class="stat-label">草稿</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon recent">
-          <IconClock />
-        </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ statistics.recent }}</div>
-          <div class="stat-label">近7天创建</div>
-        </div>
-      </div>
+    <!-- 统计概览 -->
+    <div class="overview-stats">
+      <el-row :gutter="20">
+        <el-col
+          v-for="item in statCards"
+          :key="item.label"
+          :xs="24"
+          :sm="12"
+          :md="6"
+        >
+          <div class="stat-card">
+            <div
+              class="stat-icon"
+              :style="{ color: item.color, backgroundColor: item.color + '15' }"
+            >
+              <component :is="item.icon" />
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ item.value }}</div>
+              <div class="stat-title">{{ item.label }}</div>
+            </div>
+          </div>
+        </el-col>
+      </el-row>
     </div>
 
     <!-- 主内容区域：左侧文件夹 + 右侧列表 -->
@@ -369,40 +391,53 @@ onMounted(() => {
       <div class="folder-sidebar">
         <div class="folder-header">
           <span class="folder-title">文件夹</span>
-          <el-button type="primary" link size="small" @click="openNewFolderDialog">
+          <el-button
+            type="primary"
+            link
+            size="small"
+            @click="openNewFolderDialog"
+          >
             <el-icon><Plus /></el-icon>
             新建
           </el-button>
         </div>
         <div class="folder-list">
-          <div
-            v-for="folder in folderTreeData"
-            :key="folder.id"
-            class="folder-item"
-            :class="{ active: selectedFolderId === (folder.id === 0 ? null : folder.id) || (folder.id === 0 && selectedFolderId === null) }"
-            @click="selectFolder(folder.id)"
-          >
-            <div class="folder-item-content">
-              <el-icon class="folder-icon"><Folder /></el-icon>
-              <span class="folder-name">{{ folder.name }}</span>
-              <span class="folder-count">{{ folder.paperCount || 0 }}</span>
-            </div>
-            <div v-if="folder.id !== 0" class="folder-actions" @click.stop>
-              <el-dropdown trigger="click">
-                <el-icon class="more-icon"><MoreFilled /></el-icon>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="openEditFolderDialog(folder as PaperFolder)">
-                      <el-icon><Edit /></el-icon>
-                      重命名
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="handleDeleteFolder(folder as PaperFolder)">
-                      <el-icon><Delete /></el-icon>
-                      删除
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
+          <template v-for="folder in folderTreeData" :key="folder.id">
+            <div
+              class="folder-item"
+              :class="{
+                active:
+                  selectedFolderId === (folder.id === 0 ? null : folder.id) ||
+                  (folder.id === 0 && selectedFolderId === null)
+              }"
+              @click="selectFolder(folder.id)"
+            >
+              <div class="folder-item-content">
+                <el-icon class="folder-icon"><Folder /></el-icon>
+                <span class="folder-name">{{ folder.name }}</span>
+                <span class="folder-count">{{ folder.paperCount || 0 }}</span>
+              </div>
+              <div v-if="folder.id !== 0" class="folder-actions" @click.stop>
+                <el-dropdown trigger="click">
+                  <el-icon class="more-icon"><MoreFilled /></el-icon>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item
+                        @click="openEditFolderDialog(folder as PaperFolder)"
+                      >
+                        <el-icon><Edit /></el-icon>
+                        重命名
+                      </el-dropdown-item>
+                      <el-dropdown-item
+                        @click="handleDeleteFolder(folder as PaperFolder)"
+                      >
+                        <el-icon><Delete /></el-icon>
+                        删除
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
             </div>
             <!-- 子文件夹 -->
             <template v-if="(folder as PaperFolder).children?.length">
@@ -437,40 +472,44 @@ onMounted(() => {
                 </div>
               </div>
             </template>
-          </div>
+          </template>
         </div>
       </div>
 
       <!-- 右侧内容区域 -->
       <div class="content-area">
-        <!-- 搜索区域 -->
-        <div class="search-card">
-          <el-form :model="searchForm" inline>
-            <el-form-item label="关键词">
+        <!-- 工具栏 -->
+        <div class="toolbar-card">
+          <div class="toolbar">
+            <div class="toolbar-left">
               <el-input
                 v-model="searchForm.keyword"
-                placeholder="试卷标题"
+                placeholder="搜索试卷标题..."
+                style="width: 240px"
                 clearable
-                style="width: 200px"
-              />
-            </el-form-item>
-            <el-form-item label="状态">
+                @keyup.enter="handleSearch"
+                @clear="handleSearch"
+              >
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
+              </el-input>
               <el-select
                 v-model="searchForm.status"
-                placeholder="全部"
-                clearable
+                placeholder="试卷状态"
                 style="width: 120px"
+                clearable
+                @change="handleSearch"
               >
                 <el-option label="草稿" value="0" />
                 <el-option label="已发布" value="1" />
               </el-select>
-            </el-form-item>
-            <el-form-item label="课程">
               <el-select
                 v-model="searchForm.courseId"
-                placeholder="全部"
-                clearable
+                placeholder="所属课程"
                 style="width: 150px"
+                clearable
+                @change="handleSearch"
               >
                 <el-option
                   v-for="course in courseList"
@@ -479,24 +518,26 @@ onMounted(() => {
                   :value="course.id"
                 />
               </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="handleSearch">
-                <el-icon class="mr-1"><Search /></el-icon>
-                搜索
-              </el-button>
-              <el-button @click="handleReset">
+              <el-button @click="handleReset">重置</el-button>
+            </div>
+            <div class="toolbar-right">
+              <el-button @click="loadData">
                 <el-icon class="mr-1"><Refresh /></el-icon>
-                重置
+                刷新
               </el-button>
-            </el-form-item>
-          </el-form>
+            </div>
+          </div>
         </div>
 
         <!-- 试卷列表 -->
         <div class="list-card">
-          <el-table v-loading="loading" :data="paperList" class="paper-table">
-            <el-table-column prop="title" label="试卷标题" min-width="200">
+          <el-table
+            v-loading="loading"
+            :data="paperList"
+            class="paper-table"
+            style="width: 100%"
+          >
+            <el-table-column prop="title" label="试卷标题" min-width="240">
               <template #default="{ row }">
                 <div class="paper-title-cell">
                   <div class="paper-icon">
@@ -531,7 +572,12 @@ onMounted(() => {
                 <span class="score-badge">{{ row.totalPoints }}分</span>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="100" align="center">
+            <el-table-column
+              prop="status"
+              label="状态"
+              width="100"
+              align="center"
+            >
               <template #default="{ row }">
                 <el-tag
                   :type="getStatusType(row.status)"
@@ -551,7 +597,12 @@ onMounted(() => {
             <el-table-column prop="updateTime" label="更新时间" width="160" />
             <el-table-column label="操作" width="260" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="editPaper(row)">
+                <el-button
+                  type="primary"
+                  link
+                  size="small"
+                  @click="editPaper(row)"
+                >
                   <el-icon class="mr-1"><Edit /></el-icon>
                   编辑
                 </el-button>
@@ -573,7 +624,12 @@ onMounted(() => {
                   <el-icon class="mr-1"><FolderOpened /></el-icon>
                   移动
                 </el-button>
-                <el-button type="warning" link size="small" @click="copyPaper(row)">
+                <el-button
+                  type="warning"
+                  link
+                  size="small"
+                  @click="copyPaper(row)"
+                >
                   <el-icon class="mr-1"><CopyDocument /></el-icon>
                   复制
                 </el-button>
@@ -632,7 +688,11 @@ onMounted(() => {
     <el-dialog v-model="moveDialogVisible" title="移动到文件夹" width="400px">
       <el-form label-width="80px">
         <el-form-item label="目标文件夹">
-          <el-select v-model="targetFolderId" placeholder="请选择文件夹" style="width: 100%">
+          <el-select
+            v-model="targetFolderId"
+            placeholder="请选择文件夹"
+            style="width: 100%"
+          >
             <el-option
               v-for="folder in folderList"
               :key="folder.id"
@@ -692,103 +752,104 @@ $radius-lg: 16px;
 $radius-xl: 20px;
 
 .my-papers-page {
-  min-height: 100%;
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 84px);
   transition: all 0.3s ease;
 
   &.is-dark {
-    .page-header {
-      background: $dark-card-bg;
-      border-color: $dark-border;
+    background-color: #121212;
 
-      .page-title {
-        color: $dark-text-primary;
-      }
-
-      .page-desc {
-        color: $dark-text-secondary;
-      }
-
-      .header-icon {
-        background: rgba(102, 126, 234, 0.15);
-        color: #818cf8;
-      }
+    .page-header,
+    .stat-card,
+    .toolbar-card,
+    .list-card,
+    .folder-sidebar {
+      background: #1d1e1f;
+      border-color: #333;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    .stat-card {
-      background: $dark-card-bg;
-      border-color: $dark-border;
-      box-shadow: $dark-shadow;
+    .page-title,
+    .stat-value {
+      color: #e5eaf3;
+    }
 
-      &:hover {
-        box-shadow: $dark-shadow-lg;
-      }
+    .page-desc,
+    .stat-title {
+      color: #a3a3a3;
+    }
 
-      .stat-value {
-        color: $dark-text-primary;
-      }
-
-      .stat-label {
-        color: $dark-text-secondary;
-      }
+    .header-icon {
+      background: rgba(102, 126, 234, 0.15);
+      color: #818cf8;
     }
 
     .folder-sidebar {
-      background: $dark-card-bg;
-      border-color: $dark-border;
-
       .folder-header {
-        border-color: $dark-border;
+        border-bottom-color: #333;
 
         .folder-title {
-          color: $dark-text-primary;
+          color: #e5eaf3;
         }
       }
 
       .folder-item {
-        color: $dark-text-secondary;
+        color: #a3a3a3;
 
         &:hover {
           background: rgba(255, 255, 255, 0.05);
         }
 
         &.active {
-          background: rgba(102, 126, 234, 0.15);
+          background: rgba(99, 102, 241, 0.15);
           color: #818cf8;
+
+          .folder-icon {
+            color: #818cf8;
+          }
         }
 
         .folder-count {
-          background: rgba(255, 255, 255, 0.1);
-          color: $dark-text-muted;
+          background: #333;
+          color: #909399;
         }
       }
     }
 
-    .search-card {
-      background: $dark-card-bg;
-      border-color: $dark-border;
-      box-shadow: $dark-shadow;
-    }
-
     .list-card {
-      background: $dark-card-bg;
-      border-color: $dark-border;
-      box-shadow: $dark-shadow;
-
       .paper-title-cell {
         .paper-icon {
-          background: rgba(102, 126, 234, 0.15);
+          background: rgba(99, 102, 241, 0.15);
           color: #818cf8;
         }
 
         .paper-course {
-          color: $dark-text-muted;
+          color: #909399;
         }
       }
 
       .count-badge,
       .score-badge {
-        background: rgba(255, 255, 255, 0.05);
-        color: $dark-text-secondary;
+        background: #333;
+        color: #a3a3a3;
+      }
+
+      .paper-table {
+        :deep(.el-table) {
+          background-color: transparent;
+          color: #a3a3a3;
+        }
+
+        :deep(.el-table__header th) {
+          background-color: #262727;
+          color: #e5eaf3;
+          border-bottom-color: #333;
+        }
+
+        :deep(.el-table__row td) {
+          border-bottom-color: #333;
+        }
       }
     }
   }
@@ -796,99 +857,70 @@ $radius-xl: 20px;
 
 .page-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
-  background: $light-card-bg;
-  border: 1px solid $light-border;
-  border-radius: $radius-lg;
-  box-shadow: $light-shadow;
+  border: 1px solid #ebeef5;
 
   .header-content {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
   }
 
   .header-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
-    color: #fff;
-    background: $primary-gradient;
-    border-radius: $radius-md;
-
-    svg {
-      width: 32px;
-      height: 32px;
-    }
+    width: 48px;
+    height: 48px;
+    background: rgba(79, 70, 229, 0.1);
+    color: #4f46e5;
+    border-radius: 12px;
+    font-size: 24px;
   }
 
   .header-info {
     .page-title {
-      margin: 0 0 8px;
-      font-size: 24px;
-      font-weight: 700;
-      color: $light-text-primary;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #303133;
     }
 
     .page-desc {
-      margin: 0;
+      margin: 4px 0 0;
       font-size: 14px;
-      color: $light-text-secondary;
+      color: #909399;
     }
   }
 
   .create-btn {
-    height: 48px;
-    padding: 0 28px;
-    font-size: 15px;
-    font-weight: 600;
-    background: $primary-gradient;
-    border: none;
-    border-radius: 24px;
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-    transition: all 0.3s ease;
-
-    &:hover {
-      box-shadow: 0 12px 28px rgba(102, 126, 234, 0.4);
-      transform: translateY(-2px);
-    }
+    padding: 12px 20px;
+    font-weight: 500;
   }
 }
 
-.stats-section {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+.overview-stats {
   margin-bottom: 24px;
-
-  @media (width <= 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (width <= 768px) {
-    grid-template-columns: 1fr;
-  }
 
   .stat-card {
     display: flex;
-    gap: 20px;
     align-items: center;
     padding: 24px;
-    cursor: pointer;
-    background: $light-card-bg;
-    border: 1px solid $light-border;
-    border-radius: $radius-lg;
-    box-shadow: $light-shadow;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #ebeef5;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
 
     &:hover {
-      box-shadow: $light-shadow-lg;
-      transform: translateY(-4px);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.1);
     }
 
     .stat-icon {
@@ -897,40 +929,23 @@ $radius-xl: 20px;
       justify-content: center;
       width: 56px;
       height: 56px;
-      color: #fff;
-      background: $primary-gradient;
-      border-radius: $radius-md;
-
-      &.published {
-        background: $success-gradient;
-      }
-
-      &.draft {
-        background: $warning-gradient;
-      }
-
-      &.recent {
-        background: $info-gradient;
-      }
-
-      svg {
-        width: 26px;
-        height: 26px;
-      }
+      border-radius: 12px;
+      font-size: 28px;
+      margin-right: 16px;
     }
 
     .stat-info {
       .stat-value {
-        margin-bottom: 4px;
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 700;
-        line-height: 1;
-        color: $light-text-primary;
+        color: #303133;
+        line-height: 1.2;
       }
 
-      .stat-label {
+      .stat-title {
         font-size: 14px;
-        color: $light-text-secondary;
+        color: #909399;
+        margin-top: 4px;
       }
     }
   }
@@ -938,7 +953,7 @@ $radius-xl: 20px;
 
 .main-content {
   display: flex;
-  gap: 24px;
+  gap: 20px;
 
   @media (width <= 1024px) {
     flex-direction: column;
@@ -947,7 +962,7 @@ $radius-xl: 20px;
 
 .folder-sidebar {
   flex-shrink: 0;
-  width: 260px;
+  width: 240px;
   background: $light-card-bg;
   border: 1px solid $light-border;
   border-radius: $radius-lg;
@@ -961,7 +976,7 @@ $radius-xl: 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
+    padding: 16px;
     border-bottom: 1px solid $light-border;
 
     .folder-title {
@@ -977,10 +992,9 @@ $radius-xl: 20px;
 
   .folder-item {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: 10px 16px;
     cursor: pointer;
     transition: all 0.2s ease;
 
@@ -1002,7 +1016,7 @@ $radius-xl: 20px;
     }
 
     &.child {
-      padding-left: 44px;
+      padding-left: 36px;
     }
 
     .folder-item-content {
@@ -1057,16 +1071,27 @@ $radius-xl: 20px;
   min-width: 0;
 }
 
-.search-card {
-  padding: 20px 24px;
-  margin-bottom: 24px;
+.toolbar-card {
+  padding: 16px 20px;
+  margin-bottom: 20px;
   background: $light-card-bg;
   border: 1px solid $light-border;
   border-radius: $radius-lg;
   box-shadow: $light-shadow;
 
-  :deep(.el-form-item) {
-    margin-bottom: 0;
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .toolbar-left,
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 }
 

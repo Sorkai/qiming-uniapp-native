@@ -112,7 +112,7 @@ Array<{
   questionGroups: Array<{
     groupId: number;
     groupName: string;        // 如"一、单选题"
-    questionType: number;     // 1-单选 2-多选 3-判断 4-填空 5-简答 6-论述
+    questionType: number;     // 1-单选 2-多选 3-判断 4-填空 5-简答 6-论述 7-矩阵单选 8-矩阵多选 9-连线 10-排序 11-滑动评分 12-NPS评分 13-星级评分 14-组合材料
     sortOrder: number;
     questions: Array<Question>;
   }>;
@@ -143,6 +143,39 @@ Array<{
       points: number;
       difficulty?: number;    // 1-5
       knowledgePoints?: string[];
+      // 矩阵题专用字段 (questionType=7,8)
+      matrixRows?: Array<{ key: string; content: string }>;
+      matrixColumns?: Array<{ key: string; content: string }>;
+      // 连线题专用字段 (questionType=9)
+      matchingLeft?: Array<{ key: string; content: string }>;
+      matchingRight?: Array<{ key: string; content: string }>;
+      matchingCorrect?: Array<{ left: string; right: string }>;
+      // 排序题专用字段 (questionType=10)
+      orderItems?: Array<{ key: string; content: string }>;
+      correctOrder?: string[];
+      // 滑动评分专用字段 (questionType=11)
+      sliderMin?: number;       // 最小值，默认0
+      sliderMax?: number;       // 最大值，默认100
+      sliderStep?: number;      // 步长，默认1
+      sliderLabels?: { min: string; max: string }; // 两端标签
+      // NPS评分专用字段 (questionType=12)
+      npsMin?: number;          // 最小值，固定0
+      npsMax?: number;          // 最大值，固定10
+      npsLabels?: { min: string; max: string }; // 如"完全不推荐"/"强烈推荐"
+      // 星级评分专用字段 (questionType=13)
+      starCount?: number;       // 星星数量，默认5
+      starLabels?: string[];    // 各星级标签，如["很差","较差","一般","较好","很好"]
+      // 组合材料题专用字段 (questionType=14)
+      material?: string;        // 材料/阅读文本
+      subQuestions?: Array<{    // 子题目列表
+        subType: string;        // radio/checkbox/input/textarea
+        stem: string;
+        options?: Array<{ key: string; content: string }>;
+        correctAnswer?: string;
+        correctAnswers?: string[];
+        referenceAnswer?: string;
+        points: number;
+      }>;
     }>;
   }>;
 }
@@ -486,7 +519,7 @@ Array<{
   pageNum: number;
   pageSize?: number;
   keyword?: string;
-  type?: string;            // radio/checkbox/judge/input/textarea
+  type?: string;            // radio/checkbox/judge/input/textarea/textarea-essay/matrix-single/matrix-multiple/matching/ordering/slider/nps-rating/star-rating/composite
   difficulty?: string;      // easy/medium/hard
   knowledgePoint?: string;
   folderId?: number;
@@ -517,6 +550,39 @@ Array<{
     folderName?: string;
     subject?: string;
     subjectName?: string;
+    // 矩阵题
+    matrixRows?: Array<{ key: string; content: string }>;
+    matrixColumns?: Array<{ key: string; content: string }>;
+    // 连线题
+    matchingLeft?: Array<{ key: string; content: string }>;
+    matchingRight?: Array<{ key: string; content: string }>;
+    matchingCorrect?: Array<{ left: string; right: string }>;
+    // 排序题
+    orderItems?: Array<{ key: string; content: string }>;
+    correctOrder?: string[];
+    // 滑动评分
+    sliderMin?: number;
+    sliderMax?: number;
+    sliderStep?: number;
+    sliderLabels?: { min: string; max: string };
+    // NPS评分
+    npsMin?: number;
+    npsMax?: number;
+    npsLabels?: { min: string; max: string };
+    // 星级评分
+    starCount?: number;
+    starLabels?: string[];
+    // 组合材料题
+    material?: string;
+    subQuestions?: Array<{
+      subType: string;
+      stem: string;
+      options?: Array<{ key: string; content: string }>;
+      correctAnswer?: string;
+      correctAnswers?: string[];
+      referenceAnswer?: string;
+      points: number;
+    }>;
   }>;
 }
 ```
@@ -537,6 +603,15 @@ Array<{
   judge: number;
   input: number;
   textarea: number;
+  'textarea-essay': number;
+  'matrix-single': number;
+  'matrix-multiple': number;
+  matching: number;
+  ordering: number;
+  slider: number;
+  'nps-rating': number;
+  'star-rating': number;
+  composite: number;
 }
 ```
 
@@ -772,7 +847,7 @@ Array<{
 ```typescript
 {
   knowledgePoints: string;
-  questionType: string;       // radio/checkbox/judge/input/textarea
+  questionType: string;       // radio/checkbox/judge/input/textarea/textarea-essay/matrix-single/matrix-multiple/matching/ordering/slider/nps-rating/star-rating/composite
   difficulty: string;         // easy/medium/hard
   count: number;
   includeAnalysis: boolean;
@@ -903,11 +978,15 @@ Array<{
 | 3 | 判断题 | judge |
 | 4 | 填空题 | input |
 | 5 | 简答题 | textarea |
-| 6 | 论述题 | textarea |
+| 6 | 论述题 | textarea-essay |
 | 7 | 矩阵单选 | matrix-single |
 | 8 | 矩阵多选 | matrix-multiple |
 | 9 | 连线题 | matching |
 | 10 | 排序题 | ordering |
+| 11 | 滑动评分 | slider |
+| 12 | NPS评分 | nps-rating |
+| 13 | 星级评分 | star-rating |
+| 14 | 组合材料题 | composite |
 
 ### 难度等级
 | 值 | 含义 |

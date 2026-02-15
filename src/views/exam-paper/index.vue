@@ -664,6 +664,17 @@ $radius-xl: 20px;
   border-radius: $radius-xl;
   box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
 
+  @media (width <= 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 30px;
+
+    .create-btn {
+      width: 100%;
+    }
+  }
+
   .welcome-content {
     .welcome-badge {
       display: inline-block;
@@ -792,7 +803,7 @@ $radius-xl: 20px;
 .content-section {
   display: grid;
   grid-template-columns: 1fr 380px;
-  gap: 24px;
+  gap: 20px;
 
   @media (width <= 1200px) {
     grid-template-columns: 1fr;

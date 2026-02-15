@@ -80,6 +80,104 @@ const JudgeIcon = {
   </svg>`
 };
 
+const EssayIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <line x1="7" y1="8" x2="17" y2="8"/>
+    <line x1="7" y1="12" x2="17" y2="12"/>
+    <line x1="7" y1="16" x2="17" y2="16"/>
+  </svg>`
+};
+
+const MatrixSingleIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <circle cx="9" cy="9" r="1.5"/>
+    <circle cx="15" cy="9" r="1.5"/>
+    <circle cx="9" cy="15" r="1.5" fill="currentColor"/>
+    <circle cx="15" cy="15" r="1.5"/>
+  </svg>`
+};
+
+const MatrixMultipleIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <rect x="7" y="7" width="4" height="4" rx="0.5"/>
+    <rect x="13" y="7" width="4" height="4" rx="0.5" fill="currentColor"/>
+    <rect x="7" y="13" width="4" height="4" rx="0.5" fill="currentColor"/>
+    <rect x="13" y="13" width="4" height="4" rx="0.5" fill="currentColor"/>
+  </svg>`
+};
+
+const MatchingIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="6" cy="6" r="2"/>
+    <circle cx="6" cy="12" r="2"/>
+    <circle cx="6" cy="18" r="2"/>
+    <circle cx="18" cy="6" r="2"/>
+    <circle cx="18" cy="12" r="2"/>
+    <circle cx="18" cy="18" r="2"/>
+    <line x1="8" y1="6" x2="16" y2="12"/>
+    <line x1="8" y1="12" x2="16" y2="18"/>
+    <line x1="8" y1="18" x2="16" y2="6"/>
+  </svg>`
+};
+
+const OrderingIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="4" y1="6" x2="14" y2="6"/>
+    <line x1="4" y1="12" x2="14" y2="12"/>
+    <line x1="4" y1="18" x2="14" y2="18"/>
+    <polyline points="17 4 20 7 17 10"/>
+    <polyline points="20 14 17 17 20 20"/>
+    <line x1="20" y1="7" x2="17" y2="7"/>
+    <line x1="17" y1="17" x2="20" y2="17"/>
+  </svg>`
+};
+
+const SliderIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="3" y1="12" x2="21" y2="12"/>
+    <circle cx="14" cy="12" r="3" fill="currentColor"/>
+    <line x1="3" y1="8" x2="3" y2="16"/>
+    <line x1="21" y1="8" x2="21" y2="16"/>
+  </svg>`
+};
+
+const NpsRatingIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="2" y="8" width="20" height="8" rx="2"/>
+    <line x1="4" y1="10" x2="4" y2="14"/>
+    <line x1="6" y1="10" x2="6" y2="14"/>
+    <line x1="8" y1="10" x2="8" y2="14"/>
+    <line x1="10" y1="10" x2="10" y2="14"/>
+    <line x1="12" y1="10" x2="12" y2="14"/>
+    <line x1="14" y1="10" x2="14" y2="14"/>
+    <line x1="16" y1="10" x2="16" y2="14"/>
+    <line x1="18" y1="10" x2="18" y2="14"/>
+    <line x1="20" y1="10" x2="20" y2="14"/>
+    <text x="12" y="6" text-anchor="middle" font-size="5" fill="currentColor">NPS</text>
+  </svg>`
+};
+
+const StarRatingIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="currentColor"/>
+  </svg>`
+};
+
+const CompositeIcon = {
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="2" width="18" height="8" rx="2"/>
+    <line x1="6" y1="5" x2="18" y2="5"/>
+    <line x1="6" y1="7" x2="14" y2="7"/>
+    <rect x="5" y="13" width="14" height="3" rx="1"/>
+    <rect x="5" y="18" width="14" height="3" rx="1"/>
+    <line x1="3" y1="14.5" x2="5" y2="14.5"/>
+    <line x1="3" y1="19.5" x2="5" y2="19.5"/>
+  </svg>`
+};
+
 const DragIcon = {
   template: `<svg viewBox="0 0 24 24" fill="currentColor">
     <circle cx="9" cy="6" r="1.5"/>
@@ -99,6 +197,15 @@ const iconComponents: Record<string, any> = {
   InputIcon,
   TextareaIcon,
   JudgeIcon,
+  EssayIcon,
+  MatrixSingleIcon,
+  MatrixMultipleIcon,
+  MatchingIcon,
+  OrderingIcon,
+  SliderIcon,
+  NpsRatingIcon,
+  StarRatingIcon,
+  CompositeIcon,
   DragIcon
 };
 
@@ -182,7 +289,46 @@ const questionTypes = [
   { id: "checkbox", label: "多选题", icon: "CheckboxIcon", color: "#00bfa5" },
   { id: "judge", label: "判断题", icon: "JudgeIcon", color: "#00bfa5" },
   { id: "input", label: "填空题", icon: "InputIcon", color: "#00bfa5" },
-  { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#00bfa5" }
+  { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#00bfa5" },
+  {
+    id: "textarea-essay",
+    label: "论述题",
+    icon: "EssayIcon",
+    color: "#00bfa5"
+  },
+  {
+    id: "matrix-single",
+    label: "矩阵单选",
+    icon: "MatrixSingleIcon",
+    color: "#00bfa5"
+  },
+  {
+    id: "matrix-multiple",
+    label: "矩阵多选",
+    icon: "MatrixMultipleIcon",
+    color: "#00bfa5"
+  },
+  { id: "matching", label: "连线题", icon: "MatchingIcon", color: "#00bfa5" },
+  { id: "ordering", label: "排序题", icon: "OrderingIcon", color: "#00bfa5" },
+  { id: "slider", label: "滑动评分", icon: "SliderIcon", color: "#00bfa5" },
+  {
+    id: "nps-rating",
+    label: "NPS评分",
+    icon: "NpsRatingIcon",
+    color: "#00bfa5"
+  },
+  {
+    id: "star-rating",
+    label: "星级评分",
+    icon: "StarRatingIcon",
+    color: "#00bfa5"
+  },
+  {
+    id: "composite",
+    label: "组合材料题",
+    icon: "CompositeIcon",
+    color: "#00bfa5"
+  }
 ];
 
 // 监听数据变化
@@ -272,6 +418,86 @@ const addQuestion = (groupId: number) => {
       newQuestion.blanks = [{ answer: "" }];
     } else if (group.questionType === "textarea") {
       newQuestion.referenceAnswer = "";
+    } else if (group.questionType === "textarea-essay") {
+      newQuestion.referenceAnswer = "";
+    } else if (group.questionType === "matrix-single") {
+      newQuestion.rows = [
+        { key: "R1", content: "行1" },
+        { key: "R2", content: "行2" },
+        { key: "R3", content: "行3" }
+      ];
+      newQuestion.columns = [
+        { key: "C1", content: "列1" },
+        { key: "C2", content: "列2" },
+        { key: "C3", content: "列3" }
+      ];
+      newQuestion.correctAnswers = {};
+    } else if (group.questionType === "matrix-multiple") {
+      newQuestion.rows = [
+        { key: "R1", content: "行1" },
+        { key: "R2", content: "行2" },
+        { key: "R3", content: "行3" }
+      ];
+      newQuestion.columns = [
+        { key: "C1", content: "列1" },
+        { key: "C2", content: "列2" },
+        { key: "C3", content: "列3" }
+      ];
+      newQuestion.correctAnswers = {};
+    } else if (group.questionType === "matching") {
+      newQuestion.leftItems = [
+        { key: "L1", content: "" },
+        { key: "L2", content: "" },
+        { key: "L3", content: "" }
+      ];
+      newQuestion.rightItems = [
+        { key: "R1", content: "" },
+        { key: "R2", content: "" },
+        { key: "R3", content: "" }
+      ];
+      newQuestion.correctMatches = {};
+    } else if (group.questionType === "ordering") {
+      newQuestion.items = [
+        { key: "1", content: "" },
+        { key: "2", content: "" },
+        { key: "3", content: "" },
+        { key: "4", content: "" }
+      ];
+      newQuestion.correctOrder = [];
+    } else if (group.questionType === "slider") {
+      newQuestion.sliderMin = 0;
+      newQuestion.sliderMax = 100;
+      newQuestion.sliderStep = 1;
+      newQuestion.sliderDefaultValue = 50;
+      newQuestion.sliderLabels = { left: "最低", right: "最高" };
+    } else if (group.questionType === "nps-rating") {
+      newQuestion.npsMin = 0;
+      newQuestion.npsMax = 10;
+      newQuestion.npsLabels = {
+        low: "完全不推荐",
+        mid: "一般",
+        high: "强烈推荐"
+      };
+    } else if (group.questionType === "star-rating") {
+      newQuestion.starCount = 5;
+      newQuestion.starLabels = ["很差", "较差", "一般", "较好", "很好"];
+    } else if (group.questionType === "composite") {
+      newQuestion.material = "";
+      newQuestion.subQuestions = [
+        {
+          subId: Date.now() + 1,
+          questionType: "radio",
+          stem: "",
+          points: 5,
+          options: [
+            { key: "A", content: "" },
+            { key: "B", content: "" },
+            { key: "C", content: "" },
+            { key: "D", content: "" }
+          ],
+          correctAnswer: ""
+        }
+      ];
     }
 
     group.questions.push(newQuestion);
@@ -2134,6 +2360,334 @@ onBeforeUnmount(() => {
                     maxlength="5000"
                   />
                 </div>
+                <!-- 论述题 -->
+                <div
+                  v-if="question.questionType === 'textarea-essay'"
+                  class="question-reference"
+                >
+                  <div class="reference-header">
+                    <span class="reference-title">参考答案</span>
+                  </div>
+                  <el-input
+                    v-model="question.referenceAnswer"
+                    type="textarea"
+                    placeholder="请输入论述题参考答案"
+                    :rows="6"
+                    maxlength="10000"
+                  />
+                </div>
+                <!-- 矩阵单选/矩阵多选 -->
+                <div
+                  v-if="question.questionType === 'matrix-single' || question.questionType === 'matrix-multiple'"
+                  class="question-matrix"
+                >
+                  <div class="matrix-section">
+                    <div class="matrix-header">
+                      <span class="matrix-title">行标题</span>
+                      <el-button link size="small" type="primary" @click="question.rows.push({ key: `R${question.rows.length + 1}`, content: '' })">
+                        <el-icon><Plus /></el-icon>添加行
+                      </el-button>
+                    </div>
+                    <div v-for="(row, rIdx) in question.rows" :key="row.key" class="matrix-item">
+                      <span class="matrix-item-key">{{ row.key }}.</span>
+                      <el-input v-model="row.content" :placeholder="`行${rIdx + 1}内容`" class="matrix-item-input" />
+                      <el-button v-if="question.rows.length > 2" link size="small" type="danger" @click="question.rows.splice(rIdx, 1)">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </div>
+                  </div>
+                  <div class="matrix-section">
+                    <div class="matrix-header">
+                      <span class="matrix-title">列标题</span>
+                      <el-button link size="small" type="primary" @click="question.columns.push({ key: `C${question.columns.length + 1}`, content: '' })">
+                        <el-icon><Plus /></el-icon>添加列
+                      </el-button>
+                    </div>
+                    <div v-for="(col, cIdx) in question.columns" :key="col.key" class="matrix-item">
+                      <span class="matrix-item-key">{{ col.key }}.</span>
+                      <el-input v-model="col.content" :placeholder="`列${cIdx + 1}内容`" class="matrix-item-input" />
+                      <el-button v-if="question.columns.length > 2" link size="small" type="danger" @click="question.columns.splice(cIdx, 1)">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </div>
+                  </div>
+                </div>
+                <!-- 连线题 -->
+                <div
+                  v-if="question.questionType === 'matching'"
+                  class="question-matching"
+                >
+                  <div class="matching-side">
+                    <div class="matching-header">
+                      <span class="matching-title">左侧项</span>
+                      <el-button link size="small" type="primary" @click="question.leftItems.push({ key: `L${question.leftItems.length + 1}`, content: '' })">
+                        <el-icon><Plus /></el-icon>添加
+                      </el-button>
+                    </div>
+                    <div v-for="(item, idx) in question.leftItems" :key="item.key" class="matching-item">
+                      <span class="matching-item-key">{{ item.key }}.</span>
+                      <el-input v-model="item.content" :placeholder="`左侧项${idx + 1}`" class="matching-item-input" />
+                      <el-button v-if="question.leftItems.length > 2" link size="small" type="danger" @click="question.leftItems.splice(idx, 1)">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </div>
+                  </div>
+                  <div class="matching-side">
+                    <div class="matching-header">
+                      <span class="matching-title">右侧项</span>
+                      <el-button link size="small" type="primary" @click="question.rightItems.push({ key: `R${question.rightItems.length + 1}`, content: '' })">
+                        <el-icon><Plus /></el-icon>添加
+                      </el-button>
+                    </div>
+                    <div v-for="(item, idx) in question.rightItems" :key="item.key" class="matching-item">
+                      <span class="matching-item-key">{{ item.key }}.</span>
+                      <el-input v-model="item.content" :placeholder="`右侧项${idx + 1}`" class="matching-item-input" />
+                      <el-button v-if="question.rightItems.length > 2" link size="small" type="danger" @click="question.rightItems.splice(idx, 1)">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </div>
+                  </div>
+                  <div class="matching-answer-hint">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>设置正确连线：左侧项 → 右侧项</span>
+                  </div>
+                  <div v-for="(item, idx) in question.leftItems" :key="`match-${item.key}`" class="matching-pair">
+                    <span class="matching-pair-label">{{ item.content || item.key }} →</span>
+                    <el-select
+                      v-model="question.correctMatches[item.key]"
+                      placeholder="选择对应右侧项"
+                      clearable
+                      style="width: 200px"
+                    >
+                      <el-option
+                        v-for="right in question.rightItems"
+                        :key="right.key"
+                        :label="right.content || right.key"
+                        :value="right.key"
+                      />
+                    </el-select>
+                  </div>
+                </div>
+                <!-- 滑动评分题 -->
+                <div
+                  v-if="question.questionType === 'slider'"
+                  class="question-slider"
+                >
+                  <div class="slider-config">
+                    <div class="slider-config-header">
+                      <span class="slider-config-title">滑动条设置</span>
+                    </div>
+                    <el-row :gutter="16">
+                      <el-col :span="6">
+                        <el-form-item label="最小值">
+                          <el-input-number v-model="question.sliderMin" :min="0" :max="question.sliderMax - 1" size="small" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="6">
+                        <el-form-item label="最大值">
+                          <el-input-number v-model="question.sliderMax" :min="question.sliderMin + 1" :max="1000" size="small" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="6">
+                        <el-form-item label="步长">
+                          <el-input-number v-model="question.sliderStep" :min="1" :max="question.sliderMax" size="small" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="6">
+                        <el-form-item label="默认值">
+                          <el-input-number v-model="question.sliderDefaultValue" :min="question.sliderMin" :max="question.sliderMax" size="small" style="width: 100%" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row :gutter="16">
+                      <el-col :span="12">
+                        <el-form-item label="左侧标签">
+                          <el-input v-model="question.sliderLabels.left" placeholder="如：最低" size="small" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="12">
+                        <el-form-item label="右侧标签">
+                          <el-input v-model="question.sliderLabels.right" placeholder="如：最高" size="small" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <div class="slider-preview">
+                      <span class="slider-label-left">{{ question.sliderLabels?.left }}</span>
+                      <el-slider
+                        :model-value="question.sliderDefaultValue"
+                        :min="question.sliderMin"
+                        :max="question.sliderMax"
+                        :step="question.sliderStep"
+                        disabled
+                        style="flex: 1"
+                      />
+                      <span class="slider-label-right">{{ question.sliderLabels?.right }}</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- NPS评分题 -->
+                <div
+                  v-if="question.questionType === 'nps-rating'"
+                  class="question-nps"
+                >
+                  <div class="nps-config">
+                    <div class="nps-config-header">
+                      <span class="nps-config-title">NPS 评分设置 (0-10)</span>
+                    </div>
+                    <el-row :gutter="16">
+                      <el-col :span="8">
+                        <el-form-item label="低分标签">
+                          <el-input v-model="question.npsLabels.low" placeholder="如：完全不推荐" size="small" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="中间标签">
+                          <el-input v-model="question.npsLabels.mid" placeholder="如：一般" size="small" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="高分标签">
+                          <el-input v-model="question.npsLabels.high" placeholder="如：强烈推荐" size="small" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <div class="nps-preview">
+                      <div class="nps-scale">
+                        <div v-for="n in 11" :key="n - 1" class="nps-item" :class="{ detractor: n - 1 <= 6, passive: n - 1 >= 7 && n - 1 <= 8, promoter: n - 1 >= 9 }">
+                          {{ n - 1 }}
+                        </div>
+                      </div>
+                      <div class="nps-labels">
+                        <span class="nps-label-low">{{ question.npsLabels?.low }}</span>
+                        <span class="nps-label-mid">{{ question.npsLabels?.mid }}</span>
+                        <span class="nps-label-high">{{ question.npsLabels?.high }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 星级评分题 -->
+                <div
+                  v-if="question.questionType === 'star-rating'"
+                  class="question-star"
+                >
+                  <div class="star-config">
+                    <div class="star-config-header">
+                      <span class="star-config-title">星级评分设置</span>
+                    </div>
+                    <el-form-item label="星星数量">
+                      <el-input-number v-model="question.starCount" :min="3" :max="10" size="small" />
+                    </el-form-item>
+                    <div class="star-labels-config">
+                      <div v-for="(label, idx) in question.starLabels" :key="idx" class="star-label-item">
+                        <span class="star-label-key">{{ idx + 1 }}星：</span>
+                        <el-input v-model="question.starLabels[idx]" :placeholder="`${idx + 1}星描述`" size="small" class="star-label-input" />
+                      </div>
+                    </div>
+                    <div class="star-preview">
+                      <span v-for="n in question.starCount" :key="n" class="star-icon" :class="{ active: n <= 3 }">★</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 组合/材料题 -->
+                <div
+                  v-if="question.questionType === 'composite'"
+                  class="question-composite"
+                >
+                  <div class="composite-material">
+                    <div class="composite-material-header">
+                      <span class="composite-material-title">材料内容</span>
+                    </div>
+                    <el-input
+                      v-model="question.material"
+                      type="textarea"
+                      placeholder="请输入材料内容（文章、案例、题目背景等）"
+                      :rows="6"
+                      maxlength="20000"
+                    />
+                  </div>
+                  <div class="composite-sub-questions">
+                    <div class="composite-sub-header">
+                      <span class="composite-sub-title">子题目</span>
+                      <el-dropdown trigger="click">
+                        <el-button link size="small" type="primary">
+                          <el-icon><Plus /></el-icon>添加子题
+                        </el-button>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'radio', stem: '', points: 5, options: [{ key: 'A', content: '' }, { key: 'B', content: '' }, { key: 'C', content: '' }, { key: 'D', content: '' }], correctAnswer: '' })">单选题</el-dropdown-item>
+                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'checkbox', stem: '', points: 5, options: [{ key: 'A', content: '' }, { key: 'B', content: '' }, { key: 'C', content: '' }, { key: 'D', content: '' }], correctAnswers: [] })">多选题</el-dropdown-item>
+                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'input', stem: '', points: 5, blanks: [{ answer: '' }] })">填空题</el-dropdown-item>
+                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'textarea', stem: '', points: 10, referenceAnswer: '' })">简答题</el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
+                    </div>
+                    <div v-for="(sub, sIdx) in question.subQuestions" :key="sub.subId" class="composite-sub-item">
+                      <div class="sub-item-header">
+                        <span class="sub-item-index">子题 {{ sIdx + 1 }}</span>
+                        <span class="sub-item-type">{{ sub.questionType === 'radio' ? '单选' : sub.questionType === 'checkbox' ? '多选' : sub.questionType === 'input' ? '填空' : '简答' }}</span>
+                        <el-input-number v-model="sub.points" :min="0" :max="100" size="small" style="width: 80px" />
+                        <span class="points-label">分</span>
+                        <el-button v-if="question.subQuestions.length > 1" link size="small" type="danger" @click="question.subQuestions.splice(sIdx, 1)">
+                          <el-icon><Delete /></el-icon>
+                        </el-button>
+                      </div>
+                      <el-input v-model="sub.stem" type="textarea" placeholder="请输入子题题干" :rows="2" class="sub-item-stem" />
+                      <!-- 子题选项 -->
+                      <div v-if="sub.options" class="sub-item-options">
+                        <div v-for="(opt, oIdx) in sub.options" :key="opt.key" class="sub-option-item">
+                          <el-radio v-if="sub.questionType === 'radio'" v-model="sub.correctAnswer" :value="opt.key" />
+                          <el-checkbox v-if="sub.questionType === 'checkbox'" v-model="sub.correctAnswers" :value="opt.key" />
+                          <span>{{ opt.key }}.</span>
+                          <el-input v-model="opt.content" :placeholder="`选项${opt.key}`" size="small" />
+                        </div>
+                      </div>
+                      <!-- 子题填空 -->
+                      <div v-if="sub.blanks" class="sub-item-blanks">
+                        <div v-for="(blank, bIdx) in sub.blanks" :key="bIdx" class="sub-blank-item">
+                          <span>第{{ bIdx + 1 }}空：</span>
+                          <el-input v-model="blank.answer" placeholder="正确答案" size="small" />
+                        </div>
+                      </div>
+                      <!-- 子题简答 -->
+                      <div v-if="sub.questionType === 'textarea'" class="sub-item-ref">
+                        <el-input v-model="sub.referenceAnswer" type="textarea" placeholder="参考答案" :rows="2" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 排序题 -->
+                <div
+                  v-if="question.questionType === 'ordering'"
+                  class="question-ordering"
+                >
+                  <div class="ordering-header">
+                    <span class="ordering-title">排序项</span>
+                    <el-button link size="small" type="primary" @click="question.items.push({ key: String(question.items.length + 1), content: '' })">
+                      <el-icon><Plus /></el-icon>添加项
+                    </el-button>
+                  </div>
+                  <div v-for="(item, idx) in question.items" :key="item.key" class="ordering-item">
+                    <span class="ordering-item-key">{{ idx + 1 }}.</span>
+                    <el-input v-model="item.content" :placeholder="`排序项${idx + 1}`" class="ordering-item-input" />
+                    <el-button v-if="question.items.length > 2" link size="small" type="danger" @click="question.items.splice(idx, 1)">
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </div>
+                  <div class="ordering-answer">
+                    <div class="ordering-answer-header">
+                      <span class="ordering-answer-title">正确顺序</span>
+                    </div>
+                    <el-input
+                      v-model="question.correctOrder"
+                      placeholder="输入正确顺序，如：2,4,1,3"
+                    />
+                    <div class="ordering-answer-hint">
+                      <el-icon><InfoFilled /></el-icon>
+                      <span>用逗号分隔序号，表示正确的排列顺序</span>
+                    </div>
+                  </div>
+                </div>
                 <!-- 解析 -->
                 <div class="question-analysis">
                   <el-collapse>
@@ -2910,6 +3464,321 @@ onBeforeUnmount(() => {
           font-size: 14px;
           font-weight: 500;
           color: #606266;
+        }
+      }
+    }
+    .question-matrix {
+      margin-bottom: 16px;
+      .matrix-section {
+        margin-bottom: 16px;
+        .matrix-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+          .matrix-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .matrix-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+          .matrix-item-key {
+            font-size: 13px;
+            color: #606266;
+            min-width: 30px;
+          }
+          .matrix-item-input {
+            flex: 1;
+          }
+        }
+      }
+    }
+    .question-matching {
+      margin-bottom: 16px;
+      .matching-side {
+        margin-bottom: 16px;
+        .matching-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+          .matching-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .matching-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+          .matching-item-key {
+            font-size: 13px;
+            color: #606266;
+            min-width: 30px;
+          }
+          .matching-item-input {
+            flex: 1;
+          }
+        }
+      }
+      .matching-answer-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #909399;
+        margin: 8px 0;
+        padding: 8px 12px;
+        background: #f5f7fa;
+        border-radius: 4px;
+      }
+      .matching-pair {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        .matching-pair-label {
+          font-size: 13px;
+          color: #303133;
+          min-width: 120px;
+        }
+      }
+    }
+    .question-slider {
+      margin-bottom: 16px;
+      .slider-config {
+        .slider-config-header {
+          margin-bottom: 12px;
+          .slider-config-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .slider-preview {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          background: #f5f7fa;
+          border-radius: 6px;
+          margin-top: 12px;
+          .slider-label-left,
+          .slider-label-right {
+            font-size: 12px;
+            color: #909399;
+            white-space: nowrap;
+          }
+        }
+      }
+    }
+    .question-nps {
+      margin-bottom: 16px;
+      .nps-config {
+        .nps-config-header {
+          margin-bottom: 12px;
+          .nps-config-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .nps-preview {
+          padding: 12px;
+          background: #f5f7fa;
+          border-radius: 6px;
+          margin-top: 12px;
+          .nps-scale {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            .nps-item {
+              flex: 1;
+              text-align: center;
+              padding: 8px 0;
+              border-radius: 4px;
+              font-size: 13px;
+              font-weight: 500;
+              cursor: default;
+              &.detractor { background: #fde2e2; color: #f56c6c; }
+              &.passive { background: #faecd8; color: #e6a23c; }
+              &.promoter { background: #e1f3d8; color: #67c23a; }
+            }
+          }
+          .nps-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #909399;
+          }
+        }
+      }
+    }
+    .question-star {
+      margin-bottom: 16px;
+      .star-config {
+        .star-config-header {
+          margin-bottom: 12px;
+          .star-config-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .star-labels-config {
+          margin-top: 12px;
+          .star-label-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            .star-label-key {
+              font-size: 13px;
+              color: #606266;
+              min-width: 40px;
+            }
+            .star-label-input { flex: 1; }
+          }
+        }
+        .star-preview {
+          display: flex;
+          gap: 4px;
+          margin-top: 12px;
+          padding: 12px;
+          background: #f5f7fa;
+          border-radius: 6px;
+          .star-icon {
+            font-size: 24px;
+            color: #dcdfe6;
+            &.active { color: #f7ba2a; }
+          }
+        }
+      }
+    }
+    .question-composite {
+      margin-bottom: 16px;
+      .composite-material {
+        margin-bottom: 16px;
+        .composite-material-header {
+          margin-bottom: 12px;
+          .composite-material-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+      }
+      .composite-sub-questions {
+        .composite-sub-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+          .composite-sub-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .composite-sub-item {
+          border: 1px solid #e4e7ed;
+          border-radius: 6px;
+          padding: 12px;
+          margin-bottom: 12px;
+          background: #fafafa;
+          .sub-item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            .sub-item-index {
+              font-size: 13px;
+              font-weight: 600;
+              color: #303133;
+            }
+            .sub-item-type {
+              font-size: 12px;
+              padding: 1px 6px;
+              background: rgba(0, 191, 165, 0.1);
+              color: #00bfa5;
+              border-radius: 3px;
+            }
+          }
+          .sub-item-stem { margin-bottom: 10px; }
+          .sub-item-options {
+            .sub-option-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 8px;
+            }
+          }
+          .sub-item-blanks {
+            .sub-blank-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 8px;
+              font-size: 13px;
+            }
+          }
+          .sub-item-ref { margin-top: 8px; }
+        }
+      }
+    }
+    .question-ordering {
+      margin-bottom: 16px;
+      .ordering-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        .ordering-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+        }
+      }
+      .ordering-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        .ordering-item-key {
+          font-size: 13px;
+          color: #606266;
+          min-width: 30px;
+        }
+        .ordering-item-input {
+          flex: 1;
+        }
+      }
+      .ordering-answer {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid #e4e7ed;
+        .ordering-answer-header {
+          margin-bottom: 8px;
+          .ordering-answer-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+          }
+        }
+        .ordering-answer-hint {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          color: #909399;
+          margin-top: 8px;
         }
       }
     }
