@@ -628,9 +628,45 @@ Array<{
 
 ---
 
-## 七、模板管理
+## 七、试卷文件夹管理
 
-### 7.1 获取我的模板列表
+### 7.1 获取试卷文件夹列表
+- **接口**: `GET /paper/folders`
+- **响应**:
+```typescript
+Array<{
+  id: number;
+  name: string;
+  parentId?: number;
+  paperCount: number;
+  createTime: string;
+  children?: Array<...>;
+}>
+```
+
+### 7.2 创建试卷文件夹
+- **接口**: `POST /paper/folders/create`
+- **请求体**: `{ name: string; parentId?: number }`
+- **响应**: `{ id: number }`
+
+### 7.3 更新试卷文件夹
+- **接口**: `POST /paper/folders/update`
+- **请求体**: `{ id: number; name: string }`
+
+### 7.4 删除试卷文件夹
+- **接口**: `POST /paper/folders/delete`
+- **请求体**: `{ id: number }`
+- **说明**: 删除文件夹后，文件夹内的试卷将移至"全部试卷"（folderId 置为 null）
+
+### 7.5 移动试卷到文件夹
+- **接口**: `POST /paper/move-to-folder`
+- **请求体**: `{ paperIds: number[]; folderId: number }`
+
+---
+
+## 八、模板管理
+
+### 8.1 获取我的模板列表
 - **接口**: `GET /paper/template/my`
 - **响应**:
 ```typescript
@@ -645,7 +681,7 @@ Array<{
 }>
 ```
 
-### 7.2 获取模板详情
+### 8.2 获取模板详情
 - **接口**: `GET /paper/template/{templateId}`
 - **响应**:
 ```typescript
@@ -657,7 +693,7 @@ Array<{
 }
 ```
 
-### 7.3 保存为模板
+### 8.3 保存为模板
 - **接口**: `POST /paper/save-as-template`
 - **请求体**:
 ```typescript
@@ -669,16 +705,16 @@ Array<{
 ```
 - **响应**: `{ templateId: number }`
 
-### 7.4 创建空白模板
+### 8.4 创建空白模板
 - **接口**: `POST /paper/template/create`
 - **请求体**: `{ name: string; description?: string }`
 - **响应**: `{ templateId: number }`
 
-### 7.5 删除模板
+### 8.5 删除模板
 - **接口**: `POST /paper/template/delete`
 - **请求体**: `{ templateId: number }`
 
-### 7.6 获取系统模板统计数据
+### 8.6 获取系统模板统计数据
 - **接口**: `GET /paper/template/system/stats`
 - **说明**: 系统模板基本信息在前端定义，此接口仅返回动态统计（主要是使用人数）
 - **响应**:
@@ -700,7 +736,7 @@ Array<{
 | comprehensive | 综合能力测试 | 单选10道(3分)·简答5道(9分) | 15 | 75 |
 | survey | 学情调查问卷 | 单选10道(4分)·多选2道(5分)·简答5道(10分)·判断5道(4分) | 22 | 120 |
 
-### 7.7 获取系统模板预览（题目详情）
+### 8.7 获取系统模板预览（题目详情）
 - **接口**: `GET /paper/template/system/preview`
 - **参数**: `templateKey: string` (standard | quick | comprehensive | survey)
 - **说明**: 返回系统模板的完整题目结构，用于预览
@@ -728,9 +764,9 @@ Array<{
 
 ---
 
-## 八、AI 功能
+## 九、AI 功能
 
-### 8.1 AI 生成题目
+### 9.1 AI 生成题目
 - **接口**: `POST /ai/generate-question`
 - **请求体**:
 ```typescript
@@ -763,7 +799,7 @@ Array<{
 }>
 ```
 
-### 8.2 AI 分析试卷
+### 9.2 AI 分析试卷
 - **接口**: `POST /ai/paper/analyze`
 - **请求体**:
 ```typescript
@@ -801,9 +837,9 @@ Array<{
 
 ---
 
-## 九、知识点管理
+## 十、知识点管理
 
-### 9.1 获取知识点列表
+### 10.1 获取知识点列表
 - **接口**: `GET /knowledge-points`
 - **响应**:
 ```typescript
@@ -818,9 +854,9 @@ Array<{
 
 ---
 
-## 十、课程相关
+## 十一、课程相关
 
-### 10.1 获取课程列表
+### 11.1 获取课程列表
 - **接口**: `GET /course/list`
 - **响应**: `Array<{ id: number; name: string }>`
 

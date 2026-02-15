@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getMyPaperStatistics,
   getPaperList,
-  type PaperStatus
+  getPaperFolders,
+  createPaperFolder,
+  updatePaperFolder,
+  deletePaperFolder,
+  movePapersToFolder,
+  type PaperStatus,
+  type PaperFolder
 } from "@/api/examPaper";
 
 // 导入 SVG 图标组件
@@ -57,6 +63,24 @@ const statistics = ref({
   recent: 0
 });
 
+// ==================== 文件夹相关状态 ====================
+const folderList = ref<PaperFolder[]>([]);
+const folderTreeData = computed(() => {
+  return [
+    { id: 0, name: "全部试卷", paperCount: statistics.value.total },
+    ...folderList.value
+  ];
+});
+const selectedFolderId = ref<number | null>(null);
+const folderDialogVisible = ref(false);
+const editingFolder = ref<{ id?: number; name: string; parentId?: number }>({
+  name: ""
+});
+const isNewFolder = ref(false);
+const moveDialogVisible = ref(false);
+const targetFolderId = ref<number | null>(null);
+const selectedPaperIds = ref<number[]>([]);
+
 // 搜索
 const handleSearch = () => {
   pagination.page = 1;
@@ -105,6 +129,111 @@ const loadData = async () => {
     console.error("获取试卷列表失败", e);
   } finally {
     loading.value = false;
+  }
+};
+
+// ==================== 文件夹相关方法 ====================
+const fetchFolders = async () => {
+  try {
+    const res = await getPaperFolders();
+    if (res.code === 0 && res.data) {
+      folderList.value = res.data;
+    }
+  } catch (e) {
+    console.error("获取文件夹列表失败", e);
+  }
+};
+
+const selectFolder = (folderId: number | null) => {
+  selectedFolderId.value = folderId === 0 ? null : folderId;
+  pagination.page = 1;
+  loadData();
+};
+
+const openNewFolderDialog = () => {
+  isNewFolder.value = true;
+  editingFolder.value = { name: "" };
+  folderDialogVisible.value = true;
+};
+
+const openEditFolderDialog = (folder: PaperFolder) => {
+  isNewFolder.value = false;
+  editingFolder.value = { id: folder.id, name: folder.name };
+  folderDialogVisible.value = true;
+};
+
+const saveFolder = async () => {
+  if (!editingFolder.value.name.trim()) {
+    ElMessage.warning("请输入文件夹名称");
+    return;
+  }
+  try {
+    if (isNewFolder.value) {
+      await createPaperFolder({
+        name: editingFolder.value.name,
+        parentId: editingFolder.value.parentId
+      });
+      ElMessage.success("创建成功");
+    } else {
+      await updatePaperFolder({
+        id: editingFolder.value.id!,
+        name: editingFolder.value.name
+      });
+      ElMessage.success("更新成功");
+    }
+    folderDialogVisible.value = false;
+    fetchFolders();
+  } catch (e) {
+    console.error("保存文件夹失败", e);
+  }
+};
+
+const handleDeleteFolder = (folder: PaperFolder) => {
+  ElMessageBox.confirm(
+    `确定要删除文件夹"${folder.name}"吗？文件夹内的试卷将移至"全部试卷"`,
+    "提示",
+    {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    }
+  ).then(async () => {
+    try {
+      await deletePaperFolder(folder.id);
+      ElMessage.success("删除成功");
+      if (selectedFolderId.value === folder.id) {
+        selectedFolderId.value = null;
+      }
+      fetchFolders();
+      loadData();
+    } catch (e) {
+      console.error("删除文件夹失败", e);
+    }
+  });
+};
+
+const openMoveDialog = (paperIds: number[]) => {
+  selectedPaperIds.value = paperIds;
+  targetFolderId.value = null;
+  moveDialogVisible.value = true;
+};
+
+const handleMoveToFolder = async () => {
+  if (targetFolderId.value === null) {
+    ElMessage.warning("请选择目标文件夹");
+    return;
+  }
+  try {
+    await movePapersToFolder({
+      paperIds: selectedPaperIds.value,
+      folderId: targetFolderId.value
+    });
+    ElMessage.success("移动成功");
+    moveDialogVisible.value = false;
+    loadData();
+    fetchFolders();
+  } catch (e) {
+    console.error("移动试卷失败", e);
   }
 };
 
@@ -164,6 +293,7 @@ const handlePageChange = () => {
 onMounted(() => {
   loadStatistics();
   loadData();
+  fetchFolders();
 });
 </script>
 
@@ -233,157 +363,290 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 搜索区域 -->
-    <div class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item label="关键词">
+    <!-- 主内容区域：左侧文件夹 + 右侧列表 -->
+    <div class="main-content">
+      <!-- 左侧文件夹侧边栏 -->
+      <div class="folder-sidebar">
+        <div class="folder-header">
+          <span class="folder-title">文件夹</span>
+          <el-button type="primary" link size="small" @click="openNewFolderDialog">
+            <el-icon><Plus /></el-icon>
+            新建
+          </el-button>
+        </div>
+        <div class="folder-list">
+          <div
+            v-for="folder in folderTreeData"
+            :key="folder.id"
+            class="folder-item"
+            :class="{ active: selectedFolderId === (folder.id === 0 ? null : folder.id) || (folder.id === 0 && selectedFolderId === null) }"
+            @click="selectFolder(folder.id)"
+          >
+            <div class="folder-item-content">
+              <el-icon class="folder-icon"><Folder /></el-icon>
+              <span class="folder-name">{{ folder.name }}</span>
+              <span class="folder-count">{{ folder.paperCount || 0 }}</span>
+            </div>
+            <div v-if="folder.id !== 0" class="folder-actions" @click.stop>
+              <el-dropdown trigger="click">
+                <el-icon class="more-icon"><MoreFilled /></el-icon>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="openEditFolderDialog(folder as PaperFolder)">
+                      <el-icon><Edit /></el-icon>
+                      重命名
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="handleDeleteFolder(folder as PaperFolder)">
+                      <el-icon><Delete /></el-icon>
+                      删除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+            <!-- 子文件夹 -->
+            <template v-if="(folder as PaperFolder).children?.length">
+              <div
+                v-for="child in (folder as PaperFolder).children"
+                :key="child.id"
+                class="folder-item child"
+                :class="{ active: selectedFolderId === child.id }"
+                @click.stop="selectFolder(child.id)"
+              >
+                <div class="folder-item-content">
+                  <el-icon class="folder-icon"><Folder /></el-icon>
+                  <span class="folder-name">{{ child.name }}</span>
+                  <span class="folder-count">{{ child.paperCount || 0 }}</span>
+                </div>
+                <div class="folder-actions" @click.stop>
+                  <el-dropdown trigger="click">
+                    <el-icon class="more-icon"><MoreFilled /></el-icon>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="openEditFolderDialog(child)">
+                          <el-icon><Edit /></el-icon>
+                          重命名
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="handleDeleteFolder(child)">
+                          <el-icon><Delete /></el-icon>
+                          删除
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧内容区域 -->
+      <div class="content-area">
+        <!-- 搜索区域 -->
+        <div class="search-card">
+          <el-form :model="searchForm" inline>
+            <el-form-item label="关键词">
+              <el-input
+                v-model="searchForm.keyword"
+                placeholder="试卷标题"
+                clearable
+                style="width: 200px"
+              />
+            </el-form-item>
+            <el-form-item label="状态">
+              <el-select
+                v-model="searchForm.status"
+                placeholder="全部"
+                clearable
+                style="width: 120px"
+              >
+                <el-option label="草稿" value="0" />
+                <el-option label="已发布" value="1" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="课程">
+              <el-select
+                v-model="searchForm.courseId"
+                placeholder="全部"
+                clearable
+                style="width: 150px"
+              >
+                <el-option
+                  v-for="course in courseList"
+                  :key="course.id"
+                  :label="course.name"
+                  :value="course.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">
+                <el-icon class="mr-1"><Search /></el-icon>
+                搜索
+              </el-button>
+              <el-button @click="handleReset">
+                <el-icon class="mr-1"><Refresh /></el-icon>
+                重置
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 试卷列表 -->
+        <div class="list-card">
+          <el-table v-loading="loading" :data="paperList" class="paper-table">
+            <el-table-column prop="title" label="试卷标题" min-width="200">
+              <template #default="{ row }">
+                <div class="paper-title-cell">
+                  <div class="paper-icon">
+                    <IconDocument />
+                  </div>
+                  <div class="paper-info">
+                    <el-link type="primary" @click="editPaper(row)">
+                      {{ row.title }}
+                    </el-link>
+                    <span class="paper-course">{{ row.courseName }}</span>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="questionCount"
+              label="题目数"
+              width="100"
+              align="center"
+            >
+              <template #default="{ row }">
+                <span class="count-badge">{{ row.questionCount }}题</span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="totalPoints"
+              label="总分"
+              width="100"
+              align="center"
+            >
+              <template #default="{ row }">
+                <span class="score-badge">{{ row.totalPoints }}分</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag
+                  :type="getStatusType(row.status)"
+                  size="small"
+                  effect="light"
+                >
+                  {{ getStatusText(row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="publishCount"
+              label="发布次数"
+              width="100"
+              align="center"
+            />
+            <el-table-column prop="updateTime" label="更新时间" width="160" />
+            <el-table-column label="操作" width="260" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link size="small" @click="editPaper(row)">
+                  <el-icon class="mr-1"><Edit /></el-icon>
+                  编辑
+                </el-button>
+                <el-button
+                  type="success"
+                  link
+                  size="small"
+                  @click="publishPaper(row)"
+                >
+                  <el-icon class="mr-1"><Upload /></el-icon>
+                  发布
+                </el-button>
+                <el-button
+                  type="info"
+                  link
+                  size="small"
+                  @click="openMoveDialog([row.paperId])"
+                >
+                  <el-icon class="mr-1"><FolderOpened /></el-icon>
+                  移动
+                </el-button>
+                <el-button type="warning" link size="small" @click="copyPaper(row)">
+                  <el-icon class="mr-1"><CopyDocument /></el-icon>
+                  复制
+                </el-button>
+                <el-button
+                  type="danger"
+                  link
+                  size="small"
+                  @click="deletePaper(row)"
+                >
+                  <el-icon class="mr-1"><Delete /></el-icon>
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="pagination.page"
+              v-model:page-size="pagination.pageSize"
+              :total="pagination.total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              background
+              @change="handlePageChange"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 文件夹编辑对话框 -->
+    <el-dialog
+      v-model="folderDialogVisible"
+      :title="isNewFolder ? '新建文件夹' : '编辑文件夹'"
+      width="400px"
+    >
+      <el-form label-width="80px">
+        <el-form-item label="文件夹名">
           <el-input
-            v-model="searchForm.keyword"
-            placeholder="试卷标题"
-            clearable
-            style="width: 200px"
+            v-model="editingFolder.name"
+            placeholder="请输入文件夹名称"
+            maxlength="20"
+            show-word-limit
           />
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select
-            v-model="searchForm.status"
-            placeholder="全部"
-            clearable
-            style="width: 120px"
-          >
-            <el-option label="草稿" value="0" />
-            <el-option label="已发布" value="1" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="课程">
-          <el-select
-            v-model="searchForm.courseId"
-            placeholder="全部"
-            clearable
-            style="width: 150px"
-          >
+      </el-form>
+      <template #footer>
+        <el-button @click="folderDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveFolder">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 移动到文件夹对话框 -->
+    <el-dialog v-model="moveDialogVisible" title="移动到文件夹" width="400px">
+      <el-form label-width="80px">
+        <el-form-item label="目标文件夹">
+          <el-select v-model="targetFolderId" placeholder="请选择文件夹" style="width: 100%">
             <el-option
-              v-for="course in courseList"
-              :key="course.id"
-              :label="course.name"
-              :value="course.id"
+              v-for="folder in folderList"
+              :key="folder.id"
+              :label="folder.name"
+              :value="folder.id"
             />
           </el-select>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon class="mr-1"><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon class="mr-1"><Refresh /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
       </el-form>
-    </div>
-
-    <!-- 试卷列表 -->
-    <div class="list-card">
-      <el-table v-loading="loading" :data="paperList" class="paper-table">
-        <el-table-column prop="title" label="试卷标题" min-width="200">
-          <template #default="{ row }">
-            <div class="paper-title-cell">
-              <div class="paper-icon">
-                <IconDocument />
-              </div>
-              <div class="paper-info">
-                <el-link type="primary" @click="editPaper(row)">
-                  {{ row.title }}
-                </el-link>
-                <span class="paper-course">{{ row.courseName }}</span>
-              </div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="questionCount"
-          label="题目数"
-          width="100"
-          align="center"
-        >
-          <template #default="{ row }">
-            <span class="count-badge">{{ row.questionCount }}题</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="totalPoints"
-          label="总分"
-          width="100"
-          align="center"
-        >
-          <template #default="{ row }">
-            <span class="score-badge">{{ row.totalPoints }}分</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag
-              :type="getStatusType(row.status)"
-              size="small"
-              effect="light"
-            >
-              {{ getStatusText(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="publishCount"
-          label="发布次数"
-          width="100"
-          align="center"
-        />
-        <el-table-column prop="updateTime" label="更新时间" width="160" />
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="editPaper(row)">
-              <el-icon class="mr-1"><Edit /></el-icon>
-              编辑
-            </el-button>
-            <el-button
-              type="success"
-              link
-              size="small"
-              @click="publishPaper(row)"
-            >
-              <el-icon class="mr-1"><Upload /></el-icon>
-              发布
-            </el-button>
-            <el-button type="warning" link size="small" @click="copyPaper(row)">
-              <el-icon class="mr-1"><CopyDocument /></el-icon>
-              复制
-            </el-button>
-            <el-button
-              type="danger"
-              link
-              size="small"
-              @click="deletePaper(row)"
-            >
-              <el-icon class="mr-1"><Delete /></el-icon>
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :total="pagination.total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @change="handlePageChange"
-        />
-      </div>
-    </div>
+      <template #footer>
+        <el-button @click="moveDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleMoveToFolder">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -466,6 +729,37 @@ $radius-xl: 20px;
 
       .stat-label {
         color: $dark-text-secondary;
+      }
+    }
+
+    .folder-sidebar {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+
+      .folder-header {
+        border-color: $dark-border;
+
+        .folder-title {
+          color: $dark-text-primary;
+        }
+      }
+
+      .folder-item {
+        color: $dark-text-secondary;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        &.active {
+          background: rgba(102, 126, 234, 0.15);
+          color: #818cf8;
+        }
+
+        .folder-count {
+          background: rgba(255, 255, 255, 0.1);
+          color: $dark-text-muted;
+        }
       }
     }
 
@@ -640,6 +934,127 @@ $radius-xl: 20px;
       }
     }
   }
+}
+
+.main-content {
+  display: flex;
+  gap: 24px;
+
+  @media (width <= 1024px) {
+    flex-direction: column;
+  }
+}
+
+.folder-sidebar {
+  flex-shrink: 0;
+  width: 260px;
+  background: $light-card-bg;
+  border: 1px solid $light-border;
+  border-radius: $radius-lg;
+  box-shadow: $light-shadow;
+
+  @media (width <= 1024px) {
+    width: 100%;
+  }
+
+  .folder-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid $light-border;
+
+    .folder-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: $light-text-primary;
+    }
+  }
+
+  .folder-list {
+    padding: 12px 0;
+  }
+
+  .folder-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f8fafc;
+
+      .folder-actions {
+        opacity: 1;
+      }
+    }
+
+    &.active {
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+
+      .folder-icon {
+        color: #667eea;
+      }
+    }
+
+    &.child {
+      padding-left: 44px;
+    }
+
+    .folder-item-content {
+      display: flex;
+      flex: 1;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .folder-icon {
+      font-size: 18px;
+      color: $light-text-muted;
+    }
+
+    .folder-name {
+      flex: 1;
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .folder-count {
+      padding: 2px 8px;
+      font-size: 12px;
+      color: $light-text-muted;
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+
+    .folder-actions {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+
+      .more-icon {
+        padding: 4px;
+        font-size: 16px;
+        color: $light-text-muted;
+        cursor: pointer;
+        border-radius: 4px;
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.05);
+        }
+      }
+    }
+  }
+}
+
+.content-area {
+  flex: 1;
+  min-width: 0;
 }
 
 .search-card {
