@@ -2557,16 +2557,17 @@ onBeforeUnmount(() => {
                   <div class="stem-toolbar-bar">
                     <span class="stem-label">题目</span>
                     <div class="stem-tools">
-                      <el-button
-                        v-if="question.questionType === 'input'"
-                        link
-                        size="small"
-                        type="primary"
-                        @click="insertBlankPlaceholder(question)"
-                      >
-                        <el-icon><EditPen /></el-icon>
-                        插入填空
-                      </el-button>
+                      <el-tooltip v-if="question.questionType === 'input'" content="插入填空占位符 {blank}" placement="top">
+                        <el-button
+                          size="small"
+                          type="primary"
+                          plain
+                          @click="insertBlankPlaceholder(question)"
+                        >
+                          <el-icon><EditPen /></el-icon>
+                          <span>插入填空</span>
+                        </el-button>
+                      </el-tooltip>
                       <LatexEditor @insert="(latex) => insertLatexToStem(question, latex)" />
                     </div>
                   </div>
@@ -2574,7 +2575,7 @@ onBeforeUnmount(() => {
                     :ref="(el) => setStemRef(question.questionId, el)"
                     v-model="question.stem"
                     type="textarea"
-                    :placeholder="question.questionType === 'input' ? '请输入题目内容，点击\"插入填空\"按钮添加填空' : '请输入题目内容'"
+                    :placeholder="question.questionType === 'input' ? '请输入题目内容，点击[插入填空]按钮添加填空' : '请输入题目内容'"
                     :rows="2"
                     maxlength="2000"
                     @input="watchBlankStemChange(question)"
