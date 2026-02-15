@@ -471,23 +471,26 @@ const addQuestion = (groupId: number) => {
         { key: "4", content: "" }
       ];
       newQuestion.correctOrder = [];
-    } else if (group.questionType === "slider") {
-      newQuestion.sliderMin = 0;
-      newQuestion.sliderMax = 100;
-      newQuestion.sliderStep = 1;
-      newQuestion.sliderDefaultValue = 50;
-      newQuestion.sliderLabels = { left: "最低", right: "最高" };
-    } else if (group.questionType === "nps-rating") {
-      newQuestion.npsMin = 0;
-      newQuestion.npsMax = 10;
-      newQuestion.npsLabels = {
-        low: "完全不推荐",
-        mid: "一般",
-        high: "强烈推荐"
-      };
-    } else if (group.questionType === "star-rating") {
-      newQuestion.starCount = 5;
-      newQuestion.starLabels = ["很差", "较差", "一般", "较好", "很好"];
+                } else if (group.questionType === "slider") {
+                  newQuestion.sliderMin = 0;
+                  newQuestion.sliderMax = 100;
+                  newQuestion.sliderStep = 1;
+                  newQuestion.sliderDefaultValue = 50;
+                  newQuestion.sliderLabels = { left: "最低", right: "最高" };
+                  newQuestion.points = 0;
+                } else if (group.questionType === "nps-rating") {
+                  newQuestion.npsMin = 0;
+                  newQuestion.npsMax = 10;
+                  newQuestion.npsLabels = {
+                    low: "完全不推荐",
+                    mid: "一般",
+                    high: "强烈推荐"
+                  };
+                  newQuestion.points = 0;
+                } else if (group.questionType === "star-rating") {
+                  newQuestion.starCount = 5;
+                  newQuestion.starLabels = ["很差", "较差", "一般", "较好", "很好"];
+                  newQuestion.points = 0;
     } else if (group.questionType === "composite") {
       newQuestion.material = "";
       newQuestion.subQuestions = [
@@ -1055,11 +1058,13 @@ const goBack = () => {
     })
       .then(() => {
         savePaper().then(() => {
+          hasUnsavedChanges.value = false;
           router.back();
         });
       })
       .catch(action => {
         if (action === "cancel") {
+          hasUnsavedChanges.value = false;
           router.back();
         }
       });
@@ -1507,8 +1512,11 @@ onBeforeRouteLeave((to, from, next) => {
       })
       .catch(action => {
         if (action === "cancel") {
+          // 用户选择不保存，允许导航
+          hasUnsavedChanges.value = false;
           next();
         } else {
+          // 用户关闭对话框，阻止导航
           next(false);
         }
       });
@@ -2506,6 +2514,7 @@ onBeforeUnmount(() => {
                   </div>
                   <div class="question-actions">
                     <el-input-number
+                      v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'"
                       v-model="question.points"
                       :min="0"
                       :max="100"
@@ -2513,7 +2522,8 @@ onBeforeUnmount(() => {
                       controls-position="right"
                       style="width: 100px"
                     />
-                    <span class="points-label">分</span>
+                    <span v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'" class="points-label">分</span>
+                    <span v-else class="data-collection-label">数据收集</span>
                     <el-button
                       link
                       size="small"
@@ -2733,34 +2743,61 @@ onBeforeUnmount(() => {
                   v-if="question.questionType === 'matrix-single' || question.questionType === 'matrix-multiple'"
                   class="question-matrix"
                 >
-                  <div class="matrix-section">
-                    <div class="matrix-header">
-                      <span class="matrix-title">行标题</span>
-                      <el-button link size="small" type="primary" @click="question.rows.push({ key: `R${question.rows.length + 1}`, content: '' })">
+                  <div class="matrix-table-wrapper">
+                    <div class="matrix-controls">
+                      <el-button size="small" type="primary" @click="question.rows.push({ key: `R${question.rows.length + 1}`, content: '' })">
                         <el-icon><Plus /></el-icon>添加行
                       </el-button>
-                    </div>
-                    <div v-for="(row, rIdx) in question.rows" :key="row.key" class="matrix-item">
-                      <span class="matrix-item-key">{{ row.key }}.</span>
-                      <el-input v-model="row.content" :placeholder="`行${rIdx + 1}内容`" class="matrix-item-input" />
-                      <el-button v-if="question.rows.length > 2" link size="small" type="danger" @click="question.rows.splice(rIdx, 1)">
-                        <el-icon><Delete /></el-icon>
-                      </el-button>
-                    </div>
-                  </div>
-                  <div class="matrix-section">
-                    <div class="matrix-header">
-                      <span class="matrix-title">列标题</span>
-                      <el-button link size="small" type="primary" @click="question.columns.push({ key: `C${question.columns.length + 1}`, content: '' })">
+                      <el-button size="small" type="primary" @click="question.columns.push({ key: `C${question.columns.length + 1}`, content: '' })">
                         <el-icon><Plus /></el-icon>添加列
                       </el-button>
                     </div>
-                    <div v-for="(col, cIdx) in question.columns" :key="col.key" class="matrix-item">
-                      <span class="matrix-item-key">{{ col.key }}.</span>
-                      <el-input v-model="col.content" :placeholder="`列${cIdx + 1}内容`" class="matrix-item-input" />
-                      <el-button v-if="question.columns.length > 2" link size="small" type="danger" @click="question.columns.splice(cIdx, 1)">
-                        <el-icon><Delete /></el-icon>
-                      </el-button>
+                    <div class="matrix-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th class="matrix-corner">
+                              <span class="corner-label">行/列</span>
+                            </th>
+                            <th v-for="(col, cIdx) in question.columns" :key="col.key" class="matrix-col-header">
+                              <div class="col-header-content">
+                                <el-input v-model="col.content" :placeholder="`列${cIdx + 1}`" size="small" />
+                                <el-button v-if="question.columns.length > 2" link size="small" type="danger" @click="question.columns.splice(cIdx, 1)">
+                                  <el-icon><Delete /></el-icon>
+                                </el-button>
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(row, rIdx) in question.rows" :key="row.key">
+                            <td class="matrix-row-header">
+                              <div class="row-header-content">
+                                <el-input v-model="row.content" :placeholder="`行${rIdx + 1}`" size="small" />
+                                <el-button v-if="question.rows.length > 2" link size="small" type="danger" @click="question.rows.splice(rIdx, 1)">
+                                  <el-icon><Delete /></el-icon>
+                                </el-button>
+                              </div>
+                            </td>
+                            <td v-for="(col, cIdx) in question.columns" :key="`${row.key}-${col.key}`" class="matrix-cell">
+                              <div class="cell-content">
+                                <el-radio
+                                  v-if="question.questionType === 'matrix-single'"
+                                  v-model="question.correctAnswers[row.key]"
+                                  :value="col.key"
+                                  class="matrix-radio"
+                                />
+                                <el-checkbox
+                                  v-else
+                                  v-model="question.correctAnswers[row.key]"
+                                  :value="col.key"
+                                  class="matrix-checkbox"
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -2828,6 +2865,7 @@ onBeforeUnmount(() => {
                   <div class="slider-config">
                     <div class="slider-config-header">
                       <span class="slider-config-title">滑动条设置</span>
+                      <span class="data-collection-badge">数据收集题</span>
                     </div>
                     <el-row :gutter="16">
                       <el-col :span="6">
@@ -2885,6 +2923,7 @@ onBeforeUnmount(() => {
                   <div class="nps-config">
                     <div class="nps-config-header">
                       <span class="nps-config-title">NPS 评分设置 (0-10)</span>
+                      <span class="data-collection-badge">数据收集题</span>
                     </div>
                     <el-row :gutter="16">
                       <el-col :span="8">
@@ -2925,6 +2964,7 @@ onBeforeUnmount(() => {
                   <div class="star-config">
                     <div class="star-config-header">
                       <span class="star-config-title">星级评分设置</span>
+                      <span class="data-collection-badge">数据收集题</span>
                     </div>
                     <el-form-item label="星星数量">
                       <el-input-number v-model="question.starCount" :min="3" :max="10" size="small" />
@@ -3040,8 +3080,8 @@ onBeforeUnmount(() => {
                     </div>
                   </div>
                 </div>
-                <!-- 解析 -->
-                <div class="question-analysis">
+                <!-- 解析（仅显示给有答案的题型） -->
+                <div v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'" class="question-analysis">
                   <el-collapse>
                     <el-collapse-item title="题目解析" name="analysis">
                       <el-input
