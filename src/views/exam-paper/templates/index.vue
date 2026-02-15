@@ -6,8 +6,7 @@ import {
   getMyTemplates,
   createTemplate,
   deleteTemplate,
-  getSystemTemplateStats,
-  getSystemTemplatePreview
+  getSystemTemplateStats
 } from "@/api/examPaper";
 
 defineOptions({
@@ -119,25 +118,64 @@ const previewDialogVisible = ref(false);
 const previewLoading = ref(false);
 const previewData = ref<any>(null);
 
+// 系统模板预览数据（前端硬编码）
+const systemTemplatePreviewData: Record<string, any> = {
+  standard: {
+    templateKey: "standard",
+    name: "标准考试模板",
+    description: "包含单选、多选、填空、大题，适合期中期末考试",
+    totalQuestions: 30,
+    totalPoints: 100,
+    questionGroups: [
+      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 2, subtotal: 20 },
+      { groupName: "二、多选题", questionType: "checkbox", count: 5, pointsPerQuestion: 4, subtotal: 20 },
+      { groupName: "三、填空题", questionType: "input", count: 5, pointsPerQuestion: 4, subtotal: 20 },
+      { groupName: "四、简答题", questionType: "textarea", count: 10, pointsPerQuestion: 4, subtotal: 40 }
+    ]
+  },
+  quick: {
+    templateKey: "quick",
+    name: "快速测验模板",
+    description: "仅包含客观题，适合课堂小测和随堂练习",
+    totalQuestions: 5,
+    totalPoints: 25,
+    questionGroups: [
+      { groupName: "一、单选题", questionType: "radio", count: 3, pointsPerQuestion: 5, subtotal: 15 },
+      { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10 }
+    ]
+  },
+  comprehensive: {
+    templateKey: "comprehensive",
+    name: "综合能力测试",
+    description: "包含单选和简答，适合综合能力评估",
+    totalQuestions: 15,
+    totalPoints: 75,
+    questionGroups: [
+      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 3, subtotal: 30 },
+      { groupName: "二、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 9, subtotal: 45 }
+    ]
+  },
+  survey: {
+    templateKey: "survey",
+    name: "学情调查问卷",
+    description: "用于学情调查，了解学生学习情况",
+    totalQuestions: 22,
+    totalPoints: 120,
+    questionGroups: [
+      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 4, subtotal: 40 },
+      { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10 },
+      { groupName: "三、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 10, subtotal: 50 },
+      { groupName: "四、判断题", questionType: "judge", count: 5, pointsPerQuestion: 4, subtotal: 20 }
+    ]
+  }
+};
+
 const previewTemplate = (templateId: number) => {
   const tpl = systemTemplates.value.find(t => t.id === templateId);
   if (!tpl) return;
   previewDialogVisible.value = true;
-  previewLoading.value = true;
-  getSystemTemplatePreview(tpl.templateKey)
-    .then(result => {
-      if (result.code === 0 && result.data) {
-        previewData.value = result.data;
-      } else {
-        ElMessage.error("加载预览失败");
-      }
-    })
-    .catch(() => {
-      ElMessage.error("加载预览失败");
-    })
-    .finally(() => {
-      previewLoading.value = false;
-    });
+  previewLoading.value = false;
+  previewData.value = systemTemplatePreviewData[tpl.templateKey] || null;
 };
 
 // 使用预览中的模板
