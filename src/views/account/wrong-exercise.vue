@@ -849,12 +849,16 @@ onMounted(async () => {
 
 /* 下拉框圆角设计 */
 .filter-select :deep(.el-input__wrapper) {
-  border-radius: 12px;
+  border-radius: 12px !important;
+}
+
+.filter-select :deep(.el-input__inner) {
+  border-radius: 12px !important;
 }
 
 /* 下拉菜单面板圆角设计 */
 :deep(.el-select-dropdown) {
-  border-radius: 12px;
+  border-radius: 12px !important;
 }
 
 .filter-date {
@@ -863,12 +867,24 @@ onMounted(async () => {
 
 /* 日期选择器圆角设计 */
 .filter-date :deep(.el-input__wrapper) {
-  border-radius: 12px;
+  border-radius: 12px !important;
+}
+
+.filter-date :deep(.el-input__inner) {
+  border-radius: 12px !important;
+}
+
+.filter-date :deep(.el-range-input) {
+  border-radius: 12px !important;
 }
 
 /* 并发数输入框圆角设计 */
 .concurrency-input :deep(.el-input__wrapper) {
-  border-radius: 10px;
+  border-radius: 10px !important;
+}
+
+.concurrency-input :deep(.el-input__inner) {
+  border-radius: 10px !important;
 }
 
 /* 筛选操作按钮 */
@@ -1126,6 +1142,11 @@ onMounted(async () => {
 
   .el-select-dropdown__list {
     padding: 6px 0 !important;
+  }
+
+  /* 下拉选项内边距 */
+  .el-select-dropdown__item {
+    padding: 8px 16px !important;
   }
 
   /* 针对日期选择器的面板圆角 */
