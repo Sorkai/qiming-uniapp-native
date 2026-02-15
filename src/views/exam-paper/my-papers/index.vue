@@ -880,14 +880,15 @@ $radius-lg: 16px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    margin-bottom: 20px;
+    margin: 0 0 24px 0;
+    width: 100%;
   }
 
   .stat-card {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 20px;
+    padding: 24px;
     background: $light-card-bg;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
@@ -932,17 +933,21 @@ $radius-lg: 16px;
   }
 
   .main-content {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
+    width: 100%;
+    margin: 0;
+    align-items: start;
   }
 
   .folder-sidebar {
-    width: 240px;
+    grid-column: span 1;
     background: $light-card-bg;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
     border: 1px solid $light-border;
-    padding: 16px;
+    padding: 24px;
 
     .folder-header {
       padding-bottom: 12px;
@@ -1009,12 +1014,12 @@ $radius-lg: 16px;
   }
 
   .content-area {
-    flex: 1;
+    grid-column: span 3;
     min-width: 0;
   }
 
   .toolbar-card {
-    padding: 16px 20px;
+    padding: 24px;
     background: $light-card-bg;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
@@ -1090,7 +1095,7 @@ $radius-lg: 16px;
     }
 
     .pagination-wrapper {
-      padding: 16px 20px;
+      padding: 24px;
       display: flex;
       justify-content: flex-end;
       border-top: 1px solid $light-border;
