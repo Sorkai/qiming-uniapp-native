@@ -824,6 +824,8 @@ const outlineQuestions = computed({
 // 拖拽状态
 const isDragging = ref(false);
 const isDragOver = ref(false);
+let draggedGroupIndex: number | null = null;
+const dragOverGroupIndex = ref<number | null>(null);
 
 // 重置自动保存倒计时
 const resetAutoSaveCountdown = () => {
@@ -1210,6 +1212,46 @@ const onDragLeave = (event: DragEvent) => {
   if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
     isDragOver.value = false;
   }
+};
+
+// 题型组拖拽排序
+const onGroupDragStart = (event: DragEvent, groupIndex: number) => {
+  draggedGroupIndex = groupIndex;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(groupIndex));
+  }
+};
+
+const onGroupDragEnd = () => {
+  draggedGroupIndex = null;
+  dragOverGroupIndex.value = null;
+};
+
+const onGroupDragOver = (event: DragEvent, groupIndex: number) => {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+  dragOverGroupIndex.value = groupIndex;
+};
+
+const onGroupDrop = (event: DragEvent, targetGroupIndex: number) => {
+  event.preventDefault();
+  event.stopPropagation();
+  
+  if (draggedGroupIndex !== null && draggedGroupIndex !== targetGroupIndex) {
+    const draggedGroup = paper.questionGroups[draggedGroupIndex];
+    paper.questionGroups.splice(draggedGroupIndex, 1);
+    
+    const insertIndex = draggedGroupIndex < targetGroupIndex ? targetGroupIndex - 1 : targetGroupIndex;
+    paper.questionGroups.splice(insertIndex, 0, draggedGroup);
+    
+    updateTotals();
+  }
+  
+  draggedGroupIndex = null;
+  dragOverGroupIndex.value = null;
 };
 
 // 题目助手相关
@@ -2269,31 +2311,42 @@ onBeforeUnmount(() => {
             共{{ paper.totalQuestions }} 题，{{ paper.totalPoints }} 分
           </div>
 
-          <draggable
-            v-if="outlineQuestions.length > 0"
-            v-model="outlineQuestions"
-            item-key="questionId"
-            handle=".drag-handle"
-            ghost-class="ghost-item"
-            class="outline-list"
-          >
-            <template #item="{ element }">
-              <div
-                class="outline-item"
-                :class="{ active: activeQuestionId === element.questionId }"
-                @click="scrollToQuestion(element.questionId)"
-              >
-                <span class="drag-handle">
+          <div v-if="paper.questionGroups.length > 0" class="outline-groups">
+            <div
+              v-for="(group, groupIndex) in paper.questionGroups"
+              :key="group.groupId"
+              class="outline-group"
+              draggable="true"
+              @dragstart="onGroupDragStart($event, groupIndex)"
+              @dragend="onGroupDragEnd"
+              @dragover="onGroupDragOver($event, groupIndex)"
+              @drop="onGroupDrop($event, groupIndex)"
+            >
+              <div class="outline-group-header">
+                <span class="group-drag-handle">
                   <component :is="iconComponents.DragIcon" class="drag-icon" />
                 </span>
-                <span class="item-index">{{ element.globalIndex }}.</span>
-                <span class="item-title">
-                  {{ element.stem || "未填写题目" }}
-                </span>
-                <span class="item-points">{{ element.points }}分</span>
+                <span class="group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="group-name">{{ group.groupName }}</span>
+                <span class="group-item-count">{{ group.questions.length }}题</span>
               </div>
-            </template>
-          </draggable>
+              <div class="outline-group-items">
+                <div
+                  v-for="(question, qIndex) in group.questions"
+                  :key="question.questionId"
+                  class="outline-item"
+                  :class="{ active: activeQuestionId === question.questionId }"
+                  @click="scrollToQuestion(question.questionId)"
+                >
+                  <span class="item-index">{{ getGlobalQuestionIndex(groupIndex, qIndex) }}.</span>
+                  <span class="item-title">
+                    {{ question.stem || "未填写题目" }}
+                  </span>
+                  <span class="item-points">{{ question.points }}分</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div v-else class="outline-empty">
             <el-empty description="暂无题目" :image-size="60" />
@@ -3645,6 +3698,128 @@ onBeforeUnmount(() => {
       font-weight: 500;
     }
 
+    .outline-groups {
+      .outline-group {
+        margin-bottom: 12px;
+        border: 1px solid #e4e7ed;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.6);
+
+        &:hover {
+          border-color: #00bfa5;
+          box-shadow: 0 2px 8px rgba(0, 191, 165, 0.1);
+        }
+
+        .outline-group-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
+          background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
+          border-bottom: 1px solid #e4e7ed;
+          cursor: grab;
+          user-select: none;
+          transition: all 0.2s ease;
+
+          &:active {
+            cursor: grabbing;
+          }
+
+          .group-drag-handle {
+            cursor: grab;
+            color: #c0c4cc;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+
+            .drag-icon {
+              width: 14px;
+              height: 14px;
+            }
+
+            &:hover {
+              color: #00bfa5;
+            }
+          }
+
+          .group-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: #00bfa5;
+            min-width: 24px;
+          }
+
+          .group-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #303133;
+            flex: 1;
+          }
+
+          .group-item-count {
+            font-size: 12px;
+            color: #909399;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 2px 8px;
+            border-radius: 4px;
+          }
+        }
+
+        .outline-group-items {
+          .outline-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px 8px 32px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.5);
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            &:hover {
+              background: rgba(0, 191, 165, 0.08);
+              transform: translateX(2px);
+            }
+
+            &.active {
+              background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+              color: #00bfa5;
+            }
+
+            .item-index {
+              font-size: 12px;
+              margin-right: 6px;
+              color: #909399;
+              font-weight: 600;
+              min-width: 20px;
+            }
+
+            .item-title {
+              flex: 1;
+              font-size: 12px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            .item-points {
+              font-size: 11px;
+              color: #909399;
+              margin-left: 8px;
+              background: #f5f7fa;
+              padding: 1px 6px;
+              border-radius: 3px;
+            }
+          }
+        }
+      }
+    }
+
     .outline-list .outline-item {
       display: flex;
       align-items: center;
@@ -3716,7 +3891,6 @@ onBeforeUnmount(() => {
       border: 1px dashed #00bfa5;
     }
   }
-}
 .editor-content {
   flex: 1;
   overflow-y: auto;
@@ -3981,10 +4155,8 @@ onBeforeUnmount(() => {
     padding: 16px 24px;
     margin: 24px 0 16px 0;
     background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
-    border-left: 4px solid #00bfa5;
     border-radius: 8px;
     border: 1px solid rgba(0, 191, 165, 0.2);
-    border-left: 4px solid #00bfa5;
 
     .group-title-wrapper {
       display: flex;
