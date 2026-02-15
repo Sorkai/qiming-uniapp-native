@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useDark } from "@pureadmin/utils";
 import { startExam, saveAnswer, submitExam } from "@/api/examPaper";
+import RichContent from "@/views/exam-paper/editor/components/RichContent.vue";
 
 defineOptions({
   name: "ExamPaperDo"
@@ -433,7 +434,7 @@ onBeforeUnmount(() => {
 
           <!-- 题干 -->
           <div class="question-stem">
-            {{ currentQuestion.stem }}
+            <RichContent :content="currentQuestion.stem" />
           </div>
 
           <!-- 选项区域 -->
@@ -450,9 +451,12 @@ onBeforeUnmount(() => {
                   :key="option.key"
                   :value="option.key"
                   class="option-item"
+                  :class="{ 'is-checked': currentAnswerRecord?.answer === option.key }"
                 >
                   <span class="option-key">{{ option.key }}.</span>
-                  <span class="option-content">{{ option.content }}</span>
+                  <span class="option-content">
+                    <RichContent :content="option.content" />
+                  </span>
                 </el-radio>
               </el-radio-group>
             </template>
@@ -469,9 +473,12 @@ onBeforeUnmount(() => {
                   :key="option.key"
                   :value="option.key"
                   class="option-item"
+                  :class="{ 'is-checked': (currentAnswerRecord?.answer as string[])?.includes(option.key) }"
                 >
                   <span class="option-key">{{ option.key }}.</span>
-                  <span class="option-content">{{ option.content }}</span>
+                  <span class="option-content">
+                    <RichContent :content="option.content" />
+                  </span>
                 </el-checkbox>
               </el-checkbox-group>
             </template>
@@ -780,24 +787,58 @@ onBeforeUnmount(() => {
     .option-item {
       display: flex;
       align-items: flex-start;
-      padding: 12px 16px;
-      background: #f9fafb;
+      padding: 0; // 移除默认内边距
+      background: #fff;
       border-radius: 8px;
-      border: 1px solid #e5e7eb;
+      border: 2px solid #e5e7eb;
       transition: all 0.2s;
+      cursor: pointer;
+      width: 100%; // 确保所有选项框宽度一致
+
+      // 隐藏默认的 radio/checkbox 图标
+      :deep(.el-radio__input),
+      :deep(.el-checkbox__input) {
+        display: none;
+      }
+
+      // 让 label 占满整个空间，垂直居中
+      :deep(.el-radio__label),
+      :deep(.el-checkbox__label) {
+        padding: 12px 16px; // 将内边距移到 label 上
+        margin: 0; // 移除默认边距
+        display: flex;
+        align-items: flex-start; // 恢复为顶部对齐
+        width: 100%;
+        text-align: left; // 强制左对齐
+      }
 
       &:hover {
         border-color: #667eea;
-        background: #f0f4ff;
+        background: #f8f9ff;
+      }
+
+      // 选中状态
+      &.is-checked {
+        background: #e0e7ff;
+        border-color: #667eea;
+
+        .option-key {
+          color: #667eea;
+        }
       }
 
       .option-key {
         font-weight: 600;
         margin-right: 8px;
+        flex-shrink: 0;
+        width: 20px; // 使用固定宽度而不是 min-width，确保所有选项标识宽度完全一致
+        text-align: left;
       }
 
       .option-content {
         flex: 1;
+        text-align: left; // 内容左对齐
+        word-break: break-word; // 长文本自动换行
       }
     }
 
@@ -819,3 +860,4 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
