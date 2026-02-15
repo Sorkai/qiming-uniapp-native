@@ -3891,6 +3891,7 @@ onBeforeUnmount(() => {
       border: 1px dashed #00bfa5;
     }
   }
+}
 .editor-content {
   flex: 1;
   overflow-y: auto;
