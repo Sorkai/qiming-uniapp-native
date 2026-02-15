@@ -4153,7 +4153,7 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: space-between;
     padding: 16px 24px;
-    margin: 24px 0 16px 0;
+    margin: 32px 0 24px 0;
     background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
     border-radius: 8px;
     border: 1px solid rgba(0, 191, 165, 0.2);
@@ -4211,42 +4211,22 @@ onBeforeUnmount(() => {
     border: 2px solid #e4e7ed;
     border-radius: 12px;
     padding: 24px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #00bfa5 0%, transparent 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
     &:hover {
       border-color: #00bfa5;
       box-shadow: 0 8px 24px rgba(0, 191, 165, 0.12);
       transform: translateY(-2px);
-
-      &::before {
-        opacity: 1;
-      }
     }
 
     &.active {
       border-color: #00bfa5;
       box-shadow: 0 8px 24px rgba(0, 191, 165, 0.15);
       background: linear-gradient(135deg, rgba(0, 191, 165, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
-
-      &::before {
-        opacity: 1;
-      }
     }
     .question-header {
       display: flex;
