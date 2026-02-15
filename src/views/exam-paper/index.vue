@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
+import { getOverviewStatistics, getRecentPapers } from "@/api/examPaper";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -26,42 +27,14 @@ const { isDark } = useDark();
 
 // 统计数据
 const statistics = ref({
-  totalPapers: 12,
-  publishedCount: 8,
-  gradingCount: 3,
-  averageScore: 78.5
+  totalPapers: 0,
+  publishedCount: 0,
+  gradingCount: 0,
+  averageScore: 0
 });
 
 // 最近编辑的试卷
-const recentPapers = ref([
-  {
-    id: 1,
-    title: "2024年春季期中考试",
-    courseName: "高等数学",
-    updateTime: "2024-03-15 14:30",
-    status: 1,
-    questionCount: 25,
-    totalPoints: 100
-  },
-  {
-    id: 2,
-    title: "第三章单元测试",
-    courseName: "线性代数",
-    updateTime: "2024-03-14 10:20",
-    status: 0,
-    questionCount: 15,
-    totalPoints: 50
-  },
-  {
-    id: 3,
-    title: "期末复习作业",
-    courseName: "概率论",
-    updateTime: "2024-03-13 16:45",
-    status: 1,
-    questionCount: 20,
-    totalPoints: 80
-  }
-]);
+const recentPapers = ref<any[]>([]);
 
 // 试卷模板
 const templates = ref([
@@ -169,8 +142,33 @@ const getStatusText = (status: number) => {
   return status === 1 ? "已发布" : "草稿";
 };
 
+// 加载统计数据
+const loadStatistics = async () => {
+  try {
+    const res = await getOverviewStatistics();
+    if (res.code === 0 && res.data) {
+      statistics.value = res.data;
+    }
+  } catch (e) {
+    console.error("获取总览统计失败", e);
+  }
+};
+
+// 加载最近试卷
+const loadRecentPapers = async () => {
+  try {
+    const res = await getRecentPapers(5);
+    if (res.code === 0 && res.data) {
+      recentPapers.value = res.data;
+    }
+  } catch (e) {
+    console.error("获取最近试卷失败", e);
+  }
+};
+
 onMounted(() => {
-  // 加载数据
+  loadStatistics();
+  loadRecentPapers();
 });
 </script>
 
