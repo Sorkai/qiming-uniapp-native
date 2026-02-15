@@ -825,7 +825,7 @@ Array<{
   totalPoints: number;
   questionGroups: Array<{
     groupName: string;        // 如"一、单选题"
-    questionType: string;     // radio/checkbox/input/textarea/judge
+    questionType: string;     // radio/checkbox/input/textarea/textarea-essay/judge/matrix-single/matrix-multiple/matching/ordering/slider/nps-rating/star-rating/composite
     count: number;            // 题目数量
     pointsPerQuestion: number; // 每题分值
     subtotal: number;         // 小计分数

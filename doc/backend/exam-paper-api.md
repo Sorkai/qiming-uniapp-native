@@ -107,6 +107,27 @@
 
 ---
 
+## 支持的题型（14种）
+
+| 编号 | 题型 | 前端type | 说明 |
+|------|------|----------|------|
+| 1 | 单选题 | radio | 选项A/B/C/D，单选 |
+| 2 | 多选题 | checkbox | 选项A/B/C/D，多选 |
+| 3 | 判断题 | judge | 对/错 |
+| 4 | 填空题 | input | 支持多个填空 |
+| 5 | 简答题 | textarea | 文本作答 |
+| 6 | 论述题 | textarea-essay | 长文本作答 |
+| 7 | 矩阵单选 | matrix-single | 行×列矩阵，每行单选 |
+| 8 | 矩阵多选 | matrix-multiple | 行×列矩阵，每行多选 |
+| 9 | 连线题 | matching | 左右配对连线 |
+| 10 | 排序题 | ordering | 拖拽排序 |
+| 11 | 滑动评分 | slider | 0-100滑块评分 |
+| 12 | NPS评分 | nps-rating | 0-10推荐意愿评分 |
+| 13 | 星级评分 | star-rating | 1-5星评分 |
+| 14 | 组合材料题 | composite | 材料+多个子题目 |
+
+> 详细数据结构见 `doc/backend/exam-paper-api-complete.md`
+
 ## 技术说明
 
 - 所有接口均已定义完整的 TypeScript 类型
