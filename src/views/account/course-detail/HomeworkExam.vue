@@ -308,16 +308,31 @@ const viewExam = (exam: any) => {
 }
 
 :deep(.homework-tabs .el-tabs__item) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
-  padding: 12px 24px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-right: 12px;
+  padding: 0 !important;
+  width: 100px;
+  height: 48px !important;
+  line-height: normal !important;
   font-size: 16px;
   font-weight: 600;
   color: #606266;
-  border-radius: 12px;
+  border-radius: 14px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+:deep(.homework-tabs .el-tabs__item span) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center;
 }
 
 :deep(.homework-tabs .el-tabs__item:last-child) {
