@@ -5,7 +5,8 @@ import {
   computed,
   onMounted,
   onBeforeUnmount,
-  watch
+  watch,
+  nextTick
 } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -1333,6 +1334,45 @@ const handleKeydownForAssistant = (event: KeyboardEvent) => {
   }
 };
 
+// 题干输入框引用映射
+const stemRefs = ref<Map<number, any>>(new Map());
+
+// 设置题干输入框引用
+const setStemRef = (questionId: number, el: any) => {
+  if (el) {
+    stemRefs.value.set(questionId, el);
+  }
+};
+
+// 插入 LaTeX 公式到题干
+const insertLatexToStem = (question: any, latex: string) => {
+  const stemRef = stemRefs.value.get(question.questionId);
+  if (stemRef) {
+    // 获取 textarea 元素
+    const textarea = stemRef.$el?.querySelector("textarea") || stemRef;
+    if (textarea && textarea.selectionStart !== undefined) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = question.stem || "";
+      // 在光标位置插入公式
+      question.stem = text.slice(0, start) + latex + text.slice(end);
+      // 设置光标位置到插入内容之后
+      nextTick(() => {
+        const newPos = start + latex.length;
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.focus();
+      });
+    } else {
+      // 如果无法获取光标位置，追加到末尾
+      question.stem = (question.stem || "") + latex;
+    }
+  } else {
+    // 如果没有引用，追加到末尾
+    question.stem = (question.stem || "") + latex;
+  }
+  ElMessage.success("公式已插入");
+};
+
 // 离开页面前确认
 onBeforeRouteLeave((to, from, next) => {
   if (hasUnsavedChanges.value) {
@@ -2239,15 +2279,23 @@ onBeforeUnmount(() => {
                 <div class="question-stem">
                   <div class="stem-header">
                     <span class="stem-hint">题目</span>
+                    <div class="stem-toolbar">
+                      <LatexEditor @insert="(latex) => insertLatexToStem(question, latex)" />
+                    </div>
                   </div>
                   <el-input
+                    :ref="(el) => setStemRef(question.questionId, el)"
                     v-model="question.stem"
                     type="textarea"
                     placeholder="请输入题目内容（双击 Ctrl/Command 唤起 AI 助手/本地题库）"
                     :rows="2"
                     maxlength="2000"
                   />
-                  <LatexEditor v-model="question.latex" />
+                  <!-- 题干预览（含公式渲染） -->
+                  <div v-if="question.stem && question.stem.includes('$')" class="stem-preview">
+                    <div class="preview-label">预览：</div>
+                    <RichContent :content="question.stem" />
+                  </div>
                   <RichMediaUploader v-model="question.media" />
                 </div>
                 <!-- 选项 -->

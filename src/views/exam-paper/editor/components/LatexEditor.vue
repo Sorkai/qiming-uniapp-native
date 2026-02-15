@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from "vue";
+import { ref, watch, nextTick } from "vue";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 
 defineOptions({ name: "LatexEditor" });
 
-const props = defineProps<{
-  modelValue: string;
-}>();
-
 const emit = defineEmits<{
-  "update:modelValue": [value: string];
+  insert: [latex: string];
 }>();
 
 const visible = ref(false);
@@ -68,7 +64,7 @@ watch(latexInput, () => {
 });
 
 const open = () => {
-  latexInput.value = props.modelValue || "";
+  latexInput.value = "";
   visible.value = true;
   nextTick(renderPreview);
 };
@@ -78,40 +74,25 @@ const insertTemplate = (value: string) => {
 };
 
 const confirm = () => {
-  emit("update:modelValue", latexInput.value);
+  if (latexInput.value.trim()) {
+    // 使用 $...$ 包裹公式，方便后续解析渲染
+    emit("insert", `$${latexInput.value}$`);
+  }
   visible.value = false;
 };
-
-// 内联渲染方法
-const renderInline = (): string => {
-  if (!props.modelValue) return "";
-  try {
-    return katex.renderToString(props.modelValue, {
-      throwOnError: false,
-      displayMode: false
-    });
-  } catch {
-    return props.modelValue;
-  }
-};
-
-onMounted(() => {
-  if (props.modelValue) {
-    latexInput.value = props.modelValue;
-  }
-});
 
 defineExpose({ open });
 </script>
 
 <template>
-  <div class="latex-editor-wrapper">
-    <!-- 触发按钮 -->
-    <div class="latex-trigger" @click="open">
-      <el-icon><EditPen /></el-icon>
-      <span v-if="!modelValue">插入公式</span>
-      <span v-else class="latex-preview-inline" v-html="renderInline()" />
-    </div>
+  <div class="latex-editor-btn">
+    <!-- 工具栏按钮 -->
+    <el-tooltip content="插入 LaTeX 公式" placement="top">
+      <el-button link type="primary" @click="open">
+        <el-icon><EditPen /></el-icon>
+        <span>公式</span>
+      </el-button>
+    </el-tooltip>
 
     <!-- 编辑对话框 -->
     <el-dialog
@@ -161,7 +142,7 @@ defineExpose({ open });
           :disabled="!!errorMsg && !!latexInput.trim()"
           @click="confirm"
         >
-          确认插入
+          插入到题干
         </el-button>
       </template>
     </el-dialog>
@@ -169,32 +150,8 @@ defineExpose({ open });
 </template>
 
 <style lang="scss" scoped>
-.latex-editor-wrapper {
+.latex-editor-btn {
   display: inline-block;
-}
-
-.latex-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #606266;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: #00bfa5;
-    color: #00bfa5;
-  }
-
-  .latex-preview-inline {
-    :deep(.katex) {
-      font-size: 14px;
-    }
-  }
 }
 
 .template-section {
