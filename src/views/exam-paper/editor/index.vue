@@ -368,6 +368,94 @@ const getGlobalQuestionIndex = (groupIndex: number, questionIndex: number) => {
   return index + questionIndex + 1;
 };
 
+// 将数字转换为中文数字
+const getChineseNumber = (num: number | string): string => {
+  const chineseDigits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  const numValue = typeof num === 'string' ? parseInt(num, 10) : num;
+  
+  if (numValue < 0) return String(numValue);
+  if (numValue === 0) return '零';
+  if (numValue <= 10) {
+    return ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][numValue];
+  }
+  
+  // 处理 11-99
+  if (numValue < 100) {
+    const tens = Math.floor(numValue / 10);
+    const ones = numValue % 10;
+    let result = '';
+    if (tens === 1) {
+      result = '十';
+    } else {
+      result = chineseDigits[tens] + '十';
+    }
+    if (ones > 0) {
+      result += chineseDigits[ones];
+    }
+    return result;
+  }
+  
+  // 处理 100-999
+  if (numValue < 1000) {
+    const hundreds = Math.floor(numValue / 100);
+    const remainder = numValue % 100;
+    let result = chineseDigits[hundreds] + '百';
+    if (remainder === 0) {
+      return result;
+    }
+    if (remainder < 10) {
+      result += '零' + chineseDigits[remainder];
+    } else {
+      const tens = Math.floor(remainder / 10);
+      const ones = remainder % 10;
+      if (tens === 1) {
+        result += '一十';
+      } else {
+        result += chineseDigits[tens] + '十';
+      }
+      if (ones > 0) {
+        result += chineseDigits[ones];
+      }
+    }
+    return result;
+  }
+  
+  // 处理 1000+
+  const thousands = Math.floor(numValue / 1000);
+  const remainder = numValue % 1000;
+  let result = chineseDigits[thousands] + '千';
+  if (remainder === 0) {
+    return result;
+  }
+  if (remainder < 100) {
+    result += '零';
+  }
+  if (remainder >= 100) {
+    const hundreds = Math.floor(remainder / 100);
+    result += chineseDigits[hundreds] + '百';
+    const tens = Math.floor((remainder % 100) / 10);
+    const ones = remainder % 10;
+    if (tens > 0) {
+      result += chineseDigits[tens] + '十';
+      if (ones > 0) {
+        result += chineseDigits[ones];
+      }
+    } else if (ones > 0) {
+      result += '零' + chineseDigits[ones];
+    }
+  } else if (remainder >= 10) {
+    const tens = Math.floor(remainder / 10);
+    const ones = remainder % 10;
+    result += chineseDigits[tens] + '十';
+    if (ones > 0) {
+      result += chineseDigits[ones];
+    }
+  } else {
+    result += chineseDigits[remainder];
+  }
+  return result;
+};
+
 // 添加题型分组
 const addQuestionGroup = (typeId: string) => {
   const typeInfo = questionTypes.find(t => t.id === typeId);
@@ -2495,6 +2583,20 @@ onBeforeUnmount(() => {
               v-for="(group, groupIndex) in paper.questionGroups"
               :key="group.groupId"
             >
+              <!-- 题型组标题 -->
+              <div class="question-group-header">
+                <div class="group-title-wrapper">
+                  <span class="group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                  <el-input
+                    v-model="group.groupName"
+                    class="group-title-input"
+                    placeholder="输入题型组名称"
+                    maxlength="50"
+                  />
+                </div>
+                <span class="group-count">{{ group.questions.length }}题</span>
+              </div>
+
               <div
                 v-for="(question, qIndex) in group.questions"
                 :id="`question-${question.questionId}`"
@@ -3095,19 +3197,17 @@ onBeforeUnmount(() => {
                     </el-collapse-item>
                   </el-collapse>
                 </div>
-              </div> </template
-            ><!-- 添加更多题目按钮 -->
-            <div
-              v-for="group in paper.questionGroups"
-              :key="`add-${group.groupId}`"
-              class="add-question-btn"
-            >
-              <el-button type="primary" link @click="addQuestion(group.groupId)"
-                ><el-icon><Plus /></el-icon>继续添加{{
-                  group.groupName
-                }}</el-button
-              >
-            </div>
+              </div>
+
+              <!-- 添加更多题目按钮 -->
+              <div class="add-question-btn">
+                <el-button type="primary" link @click="addQuestion(group.groupId)"
+                  ><el-icon><Plus /></el-icon>继续添加{{
+                    group.groupName
+                  }}</el-button
+                >
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -3269,12 +3369,15 @@ onBeforeUnmount(() => {
 
 .editor-fixed-top {
   position: sticky;
-  top: 0;
+  top: 12px;
   z-index: 100;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  margin: 12px 24px 24px;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .editor-header {
@@ -3321,6 +3424,7 @@ onBeforeUnmount(() => {
       font-weight: 600;
       background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
       border: 2px solid #e4e7ed;
+      border-radius: 10px;
       transition: all 0.3s ease;
 
       &:hover {
@@ -3339,6 +3443,19 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     gap: 16px;
+
+    :deep(.el-button) {
+      border-radius: 10px;
+      height: 38px;
+      padding: 0 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    }
 
     .auto-save-status {
       display: flex;
@@ -3362,7 +3479,6 @@ onBeforeUnmount(() => {
 .question-toolbar {
   padding: 16px 24px;
   background: linear-gradient(135deg, #fafafa 0%, #f5f7fa 100%);
-  border-bottom: 1px solid #f0f0f0;
 
   .toolbar-hint {
     font-size: 13px;
@@ -3848,6 +3964,66 @@ onBeforeUnmount(() => {
   }
 }
 .questions-container {
+  .question-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    margin: 24px 0 16px 0;
+    background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
+    border-left: 4px solid #00bfa5;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 191, 165, 0.2);
+    border-left: 4px solid #00bfa5;
+
+    .group-title-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+
+      .group-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #00bfa5;
+        min-width: 30px;
+      }
+
+      .group-title-input {
+        flex: 1;
+        max-width: 400px;
+
+        :deep(.el-input__wrapper) {
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(0, 191, 165, 0.3);
+          border-radius: 6px;
+          font-size: 16px;
+          font-weight: 600;
+          color: #303133;
+
+          &:hover {
+            border-color: #00bfa5;
+            background: rgba(255, 255, 255, 0.95);
+          }
+
+          &:focus-within {
+            border-color: #00bfa5;
+            box-shadow: 0 0 0 2px rgba(0, 191, 165, 0.1);
+          }
+        }
+      }
+    }
+
+    .group-count {
+      font-size: 13px;
+      color: #909399;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+  }
+
   .question-card {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
     border: 2px solid #e4e7ed;
