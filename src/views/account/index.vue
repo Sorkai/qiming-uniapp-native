@@ -146,6 +146,10 @@
             <el-icon><CompetitionIcon /></el-icon>
             <span>赛事场</span>
           </el-menu-item>
+          <el-menu-item index="exam-center">
+            <el-icon><Document /></el-icon>
+            <span>试卷中心</span>
+          </el-menu-item>
         </el-menu>
       </div>
       <div class="account-main">
@@ -169,6 +173,9 @@
         </div>
         <div v-else-if="activeMenu === 'competition'">
           <competition :current-theme="currentTheme" />
+        </div>
+        <div v-else-if="activeMenu === 'exam-center'">
+          <student-exam-center :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'classroom'">
           <Classroom3D />
@@ -599,6 +606,7 @@ import {
 } from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
 import Classroom3D from "@/views/course/classroom/index.vue";
+import StudentExamCenter from "@/views/exam-paper/student-center/index.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
 // 导入新图标
