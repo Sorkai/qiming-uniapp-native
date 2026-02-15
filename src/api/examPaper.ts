@@ -1431,6 +1431,63 @@ export const publishPaperAdvanced = (data: {
 
 // ==================== 学生端API ====================
 
+/** 学生端试卷列表项 */
+export interface StudentPaperItem {
+  id: number;
+  title: string;
+  description?: string;
+  courseId: number;
+  courseName: string;
+  timeLimit: number;
+  totalPoints: number;
+  totalQuestions: number;
+  startTime: string;
+  endTime: string;
+  /** 状态：available-可答题 completed-已完成 expired-已过期 */
+  status: "available" | "completed" | "expired";
+  /** 提交ID（已完成时） */
+  submissionId?: number;
+  /** 得分（已完成且成绩发布后） */
+  score?: number;
+  /** 是否允许补考 */
+  allowRetake?: boolean;
+  /** 剩余补考次数 */
+  remainingRetakeCount?: number;
+}
+
+/** 获取学生试卷列表参数 */
+export interface GetStudentPaperListParams extends PageParams {
+  /** 状态筛选 */
+  status?: "available" | "completed" | "expired";
+  /** 课程ID */
+  courseId?: number;
+  /** 关键词搜索 */
+  keyword?: string;
+}
+
+/** 学生试卷统计数据 */
+export interface StudentPaperStatistics {
+  /** 待完成数量 */
+  available: number;
+  /** 已完成数量 */
+  completed: number;
+  /** 已过期数量 */
+  expired: number;
+  /** 平均分 */
+  avgScore: number;
+}
+
+/**
+ * 获取学生试卷列表（试题试卷中心）
+ */
+export const getStudentPaperList = (params: GetStudentPaperListParams) => {
+  return http.request<
+    ApiResponse<
+      PageResult<StudentPaperItem> & { statistics?: StudentPaperStatistics }
+    >
+  >("get", "/edu/frontend/v1/paper/list", { params });
+};
+
 /**
  * 获取学生考试列表
  */

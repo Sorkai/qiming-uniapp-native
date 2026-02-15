@@ -906,6 +906,152 @@ export default [
 
   // ==================== 学生端API ====================
 
+  // 获取学生试卷列表（学生试卷中心）
+  {
+    url: "/edu/frontend/v1/paper/list",
+    method: "get",
+    response: ({ query }: { query: any }) => {
+      const { pageNum = 1, pageSize = 12, status, keyword, courseId } = query;
+      
+      // 模拟学生试卷数据
+      const studentPapers = [
+        {
+          id: 1,
+          title: "2024年春季期中考试",
+          description: "本次考试涵盖第1-5章内容，请认真作答。",
+          courseId: 1,
+          courseName: "高等数学",
+          timeLimit: 120,
+          totalPoints: 100,
+          totalQuestions: 25,
+          startTime: "2024-04-15 09:00:00",
+          endTime: "2024-04-15 11:00:00",
+          status: "completed",
+          submissionId: 1,
+          score: 85,
+          allowRetake: false,
+          remainingRetakeCount: 0
+        },
+        {
+          id: 5,
+          title: "算法设计期中考试",
+          description: "考察算法设计与分析的基础知识",
+          courseId: 5,
+          courseName: "算法设计与分析",
+          timeLimit: 90,
+          totalPoints: 80,
+          totalQuestions: 20,
+          startTime: "2024-04-25 14:00:00",
+          endTime: "2024-04-25 15:30:00",
+          status: "available",
+          submissionId: null,
+          score: null,
+          allowRetake: false,
+          remainingRetakeCount: 0
+        },
+        {
+          id: 6,
+          title: "操作系统第一次测验",
+          description: "操作系统基础知识测试",
+          courseId: 4,
+          courseName: "操作系统",
+          timeLimit: 45,
+          totalPoints: 40,
+          totalQuestions: 12,
+          startTime: "2024-04-28 09:00:00",
+          endTime: "2024-04-28 09:45:00",
+          status: "available",
+          submissionId: null,
+          score: null,
+          allowRetake: false,
+          remainingRetakeCount: 0
+        },
+        {
+          id: 2,
+          title: "第三章单元测试",
+          description: "线性代数第三章测试",
+          courseId: 2,
+          courseName: "线性代数",
+          timeLimit: 60,
+          totalPoints: 50,
+          totalQuestions: 15,
+          startTime: "2024-04-10 14:00:00",
+          endTime: "2024-04-10 15:00:00",
+          status: "expired",
+          submissionId: null,
+          score: null,
+          allowRetake: false,
+          remainingRetakeCount: 0
+        },
+        {
+          id: 3,
+          title: "概率论期末考试",
+          description: "概率论与数理统计期末考试",
+          courseId: 3,
+          courseName: "概率论与数理统计",
+          timeLimit: 120,
+          totalPoints: 100,
+          totalQuestions: 30,
+          startTime: "2024-04-20 09:00:00",
+          endTime: "2024-04-20 11:00:00",
+          status: "completed",
+          submissionId: 2,
+          score: 92,
+          allowRetake: false,
+          remainingRetakeCount: 0
+        }
+      ];
+
+      let filtered = [...studentPapers];
+      
+      // 按状态筛选
+      if (status) {
+        filtered = filtered.filter(p => p.status === status);
+      }
+      
+      // 按关键词筛选
+      if (keyword) {
+        filtered = filtered.filter(
+          p =>
+            p.title.includes(keyword) ||
+            p.description?.includes(keyword) ||
+            p.courseName.includes(keyword)
+        );
+      }
+      
+      // 按课程筛选
+      if (courseId) {
+        filtered = filtered.filter(p => p.courseId === Number(courseId));
+      }
+
+      const start = (Number(pageNum) - 1) * Number(pageSize);
+      const end = start + Number(pageSize);
+
+      // 计算统计数据
+      const statistics = {
+        available: studentPapers.filter(p => p.status === "available").length,
+        completed: studentPapers.filter(p => p.status === "completed").length,
+        expired: studentPapers.filter(p => p.status === "expired").length,
+        avgScore: Math.round(
+          studentPapers
+            .filter(p => p.score !== null)
+            .reduce((sum, p) => sum + (p.score || 0), 0) /
+            studentPapers.filter(p => p.score !== null).length
+        )
+      };
+
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          total: filtered.length,
+          list: filtered.slice(start, end),
+          statistics
+        }
+      };
+    }
+  },
+
   // 获取学生考试列表
   {
     url: "/edu/frontend/v1/exam/list",

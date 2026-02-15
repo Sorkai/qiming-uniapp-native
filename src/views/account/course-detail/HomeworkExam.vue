@@ -120,7 +120,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import CourseHeader from "./CourseHeader.vue";
 import WrongExercise from "@/views/account/wrong-exercise.vue";
-import logo from "@/assets/kecheng.jpg";
+import logo from "@/assets/iconss/exam-test-checklist-online-learning-education-online-document-svgrepo-com.svg?url";
 import homeworkEmptyImg from "@/assets/new-release/homework-svgrepo-com.svg?url";
 
 // Props

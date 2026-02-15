@@ -137,7 +137,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import CourseHeader from "./CourseHeader.vue";
-import logo from "@/assets/kecheng.jpg";
 import VideoPlay from "~icons/ep/video-play";
 import Close from "~icons/ep/close";
 import ExternalLink from "~icons/ep/link";
