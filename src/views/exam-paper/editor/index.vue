@@ -1991,6 +1991,11 @@ onBeforeUnmount(() => {
               v-for="(group, groupIndex) in paper.questionGroups"
               :key="group.groupId"
             >
+              <!-- 题型组标题 -->
+              <div class="preview-group-title">
+                <span class="preview-group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="preview-group-name">{{ group.groupName }}</span>
+              </div>
               <div
                 v-for="(question, qIndex) in group.questions"
                 :key="question.questionId"
@@ -2143,6 +2148,11 @@ onBeforeUnmount(() => {
               v-for="(group, groupIndex) in paper.questionGroups"
               :key="group.groupId"
             >
+              <!-- 题型组标题 -->
+              <div class="preview-group-title">
+                <span class="preview-group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="preview-group-name">{{ group.groupName }}</span>
+              </div>
               <div
                 v-for="(question, qIndex) in group.questions"
                 :key="question.questionId"
@@ -4638,6 +4648,26 @@ onBeforeUnmount(() => {
         padding-bottom: 16px;
         border-bottom: 1px solid #e4e7ed;
         color: #909399;
+      }
+      .preview-group-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 24px 0 16px 0;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
+        border-left: 4px solid #00bfa5;
+        border-radius: 6px;
+        .preview-group-number {
+          font-size: 18px;
+          font-weight: 700;
+          color: #00bfa5;
+        }
+        .preview-group-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #303133;
+        }
       }
       .preview-question {
         margin-bottom: 20px;
