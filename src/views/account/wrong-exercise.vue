@@ -18,104 +18,171 @@
       <el-card>
         <template #header>
           <div class="card-header">
-            <h3>历史错题</h3>
-            <div class="filters">
-              <el-select
-                v-model="filterSource"
-                placeholder="来源"
-                clearable
-                size="small"
-                style="width: 110px"
-                @change="refreshList"
-              >
-                <el-option label="作业" :value="1" />
-                <el-option label="考试" :value="2" />
-                <el-option label="自测题" :value="3" />
-              </el-select>
-              <el-select
-                v-model="filterType"
-                placeholder="题型"
-                clearable
-                size="small"
-                style="width: 110px"
-              >
-                <el-option
-                  v-for="(txt, val) in questionTypeMap"
-                  :key="val"
-                  :label="txt"
-                  :value="Number(val)"
+            <h3 class="header-title">
+              历史错题
+              <span class="count-badge">{{ total }}</span>
+            </h3>
+          </div>
+          
+          <!-- 筛选区域 -->
+          <div class="filters-section" :class="{ dark: currentTheme === 'dark' }">
+            <!-- 第一行：基础筛选 -->
+            <div class="filter-row primary-filters">
+              <div class="filter-group">
+                <label class="filter-label">来源</label>
+                <el-select
+                  v-model="filterSource"
+                  placeholder=" 全部来源 "
+                  clearable
+                  size="default"
+                  class="filter-select"
+                  @change="refreshList"
+                >
+                  <el-option label="作业" :value="1" />
+                  <el-option label="考试" :value="2" />
+                  <el-option label="自测题" :value="3" />
+                </el-select>
+              </div>
+
+              <div class="filter-group">
+                <label class="filter-label">题型</label>
+                <el-select
+                  v-model="filterType"
+                  placeholder=" 全部题型 "
+                  clearable
+                  size="default"
+                  class="filter-select"
+                >
+                  <el-option
+                    v-for="(txt, val) in questionTypeMap"
+                    :key="val"
+                    :label="txt"
+                    :value="Number(val)"
+                  />
+                </el-select>
+              </div>
+
+              <div class="filter-group date-group">
+                <label class="filter-label">日期范围</label>
+                <el-date-picker
+                  v-model="filterDateRange"
+                  type="daterange"
+                  unlink-panels
+                  range-separator="至"
+                  start-placeholder="开始日期"
+                  end-placeholder="结束日期"
+                  size="default"
+                  value-format="YYYY-MM-DD"
+                  class="filter-date"
                 />
-              </el-select>
-              <el-date-picker
-                v-model="filterDateRange"
-                type="daterange"
-                unlink-panels
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                size="small"
-                value-format="YYYY-MM-DD"
-                style="width: 260px"
-              />
-              <el-button size="small" type="primary" @click="refreshList"
-                >筛选</el-button
-              >
-              <el-button size="small" @click="resetFilters">重置</el-button>
-              <el-button
-                size="small"
-                type="primary"
-                :disabled="batchAnalyzing"
-                @click="toggleSelectionMode"
-                >{{ selectionMode ? "退出多选" : "多选" }}</el-button
-              >
-              <el-button
-                v-if="selectionMode"
-                size="small"
-                :disabled="batchAnalyzing || !filteredRecords.length"
-                @click="selectAllVisible"
-                >全选</el-button
-              >
-              <el-button
-                v-if="selectionMode"
-                size="small"
-                :disabled="batchAnalyzing || !filteredRecords.length"
-                @click="invertSelectionVisible"
-                >反选</el-button
-              >
-              <el-button
-                v-if="selectionMode"
-                size="small"
-                type="success"
-                :disabled="batchAnalyzing || selectedUnAnalyzedCount === 0"
-                :loading="batchAnalyzing"
-                @click="batchAnalyzeSelected"
-                >分析所选 ({{ selectedUnAnalyzedCount }})</el-button
-              >
-              <el-button
-                v-else
-                size="small"
-                type="success"
-                :disabled="batchAnalyzing || unAnalyzedCount === 0"
-                :loading="batchAnalyzing"
-                @click="() => batchAnalyze()"
-                >批量分析 ({{ unAnalyzedCount }})</el-button
-              >
-              <el-input-number
-                v-model="concurrency"
-                :min="1"
-                :max="10"
-                size="small"
-                style="width: 110px"
-                :disabled="batchAnalyzing"
-              />
-              <span v-if="!batchAnalyzing" class="hint">并发</span>
-              <el-button
-                v-if="batchAnalyzing"
-                size="small"
-                type="danger"
-                @click="cancelBatch"
-                >取消</el-button
-              >
+              </div>
+
+              <div class="filter-actions">
+                <el-button 
+                  type="primary" 
+                  size="default"
+                  class="action-btn primary-btn"
+                  @click="refreshList"
+                >
+                  <el-icon><Search /></el-icon>
+                  筛选
+                </el-button>
+                <el-button 
+                  size="default"
+                  class="action-btn"
+                  @click="resetFilters"
+                >
+                  <el-icon><RefreshLeft /></el-icon>
+                  重置
+                </el-button>
+              </div>
+            </div>
+
+            <!-- 第二行：批量操作 -->
+            <div class="filter-row batch-operations">
+              <div class="batch-left">
+                <el-button
+                  size="default"
+                  :type="selectionMode ? 'warning' : 'primary'"
+                  :disabled="batchAnalyzing"
+                  class="action-btn"
+                  @click="toggleSelectionMode"
+                >
+                  <el-icon><Grid /></el-icon>
+                  {{ selectionMode ? "退出多选" : "多选模式" }}
+                </el-button>
+
+                <template v-if="selectionMode">
+                  <el-button
+                    size="default"
+                    :disabled="batchAnalyzing || !filteredRecords.length"
+                    class="action-btn"
+                    @click="selectAllVisible"
+                  >
+                    <el-icon><Select /></el-icon>
+                    全选
+                  </el-button>
+                  <el-button
+                    size="default"
+                    :disabled="batchAnalyzing || !filteredRecords.length"
+                    class="action-btn"
+                    @click="invertSelectionVisible"
+                  >
+                    <el-icon><Sort /></el-icon>
+                    反选
+                  </el-button>
+                </template>
+              </div>
+
+              <div class="batch-right">
+                <div v-if="!batchAnalyzing" class="concurrency-control">
+                  <label class="filter-label">并发数</label>
+                  <el-input-number
+                    v-model="concurrency"
+                    :min="1"
+                    :max="10"
+                    size="default"
+                    :disabled="batchAnalyzing"
+                    class="concurrency-input"
+                  />
+                </div>
+
+                <el-button
+                  v-if="selectionMode"
+                  size="default"
+                  type="success"
+                  :disabled="batchAnalyzing || selectedUnAnalyzedCount === 0"
+                  :loading="batchAnalyzing"
+                  class="action-btn analyze-btn"
+                  @click="batchAnalyzeSelected"
+                >
+                  <el-icon v-if="!batchAnalyzing"><MagicStick /></el-icon>
+                  分析所选 ({{ selectedUnAnalyzedCount }})
+                </el-button>
+                <el-button
+                  v-else
+                  size="default"
+                  type="success"
+                  :disabled="batchAnalyzing || unAnalyzedCount === 0"
+                  :loading="batchAnalyzing"
+                  class="action-btn analyze-btn"
+                  @click="() => batchAnalyze()"
+                >
+                  <el-icon v-if="!batchAnalyzing"><MagicStick /></el-icon>
+                  批量分析 ({{ unAnalyzedCount }})
+                </el-button>
+
+                <el-button
+                  v-if="batchAnalyzing"
+                  size="default"
+                  type="danger"
+                  class="action-btn"
+                  @click="cancelBatch"
+                >
+                  <el-icon><Close /></el-icon>
+                  取消
+                </el-button>
+              </div>
             </div>
           </div>
         </template>
@@ -214,7 +281,16 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowLeft } from "@element-plus/icons-vue";
+import {
+  ArrowLeft,
+  Search,
+  RefreshLeft,
+  Grid,
+  Select,
+  Sort,
+  MagicStick,
+  Close
+} from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import WrongQuestionDetailWithAI from "@/components/WrongQuestionDetailWithAI.vue";
 import {
@@ -665,8 +741,237 @@ onMounted(async () => {
 
 .card-header {
   display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 标题样式 */
+.header-title {
+  display: flex;
   align-items: center;
+  gap: 12px;
+  margin: 0 0 20px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.title-icon {
+  font-size: 28px;
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgb(102 126 234 / 30%);
+}
+
+/* 筛选区域 */
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9ff, #fff);
+  border: 1px solid #e8eaf6;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 4%);
+}
+
+.filters-section.dark {
+  background: linear-gradient(135deg, #1a1f2e, #252b3b);
+  border-color: #2d3548;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 20%);
+}
+
+/* 筛选行 */
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.primary-filters {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e8eaf6;
+}
+
+.filters-section.dark .primary-filters {
+  border-bottom-color: #2d3548;
+}
+
+.batch-operations {
   justify-content: space-between;
+}
+
+/* 筛选组 */
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-group {
+  flex: 1;
+  min-width: 280px;
+}
+
+.filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5a6b8a;
+  letter-spacing: 0.3px;
+}
+
+.filters-section.dark .filter-label {
+  color: #94a3b8;
+}
+
+.filter-select {
+  width: 140px;
+}
+
+/* 下拉框圆角设计 */
+.filter-select :deep(.el-input__wrapper) {
+  border-radius: 10px;
+}
+
+/* 下拉菜单面板圆角设计 */
+:deep(.el-select-dropdown) {
+  border-radius: 10px;
+}
+
+.filter-date {
+  width: 100%;
+}
+
+/* 日期选择器圆角设计 */
+.filter-date :deep(.el-input__wrapper) {
+  border-radius: 10px;
+}
+
+/* 并发数输入框圆角设计 */
+.concurrency-input :deep(.el-input__wrapper) {
+  border-radius: 10px;
+}
+
+/* 筛选操作按钮 */
+.filter-actions {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+}
+
+.primary-btn:hover {
+  background: linear-gradient(135deg, #5568d3, #6a3f8f);
+}
+
+.analyze-btn {
+  background: linear-gradient(135deg, #11998e, #38ef7d);
+  border: none;
+}
+
+.analyze-btn:hover {
+  background: linear-gradient(135deg, #0e8577, #2dd46a);
+}
+
+/* 批量操作区域 */
+.batch-left,
+.batch-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.concurrency-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.concurrency-input {
+  width: 120px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group,
+  .date-group {
+    width: 100%;
+  }
+
+  .filter-select,
+  .filter-date {
+    width: 100%;
+  }
+
+  .filter-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .batch-operations {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .batch-left,
+  .batch-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .filters-section {
+    padding: 16px;
+  }
+
+  .header-title {
+    font-size: 20px;
+  }
+
+  .action-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
 }
 
 .wrong-list {
