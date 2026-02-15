@@ -1257,18 +1257,19 @@ export const saveAsTemplate = (data: {
  * 获取我的模板列表
  */
 export const getMyTemplates = () => {
-  return http.request<ApiResponse<Array<{
-    id: number;
-    name: string;
-    description?: string;
-    questionTypes: string[];
-    totalQuestions: number;
-    totalPoints: number;
-    createTime: string;
-  }>>>(
-    "get",
-    "/edu/backend/v1/paper/template/my"
-  );
+  return http.request<
+    ApiResponse<
+      Array<{
+        id: number;
+        name: string;
+        description?: string;
+        questionTypes: string[];
+        totalQuestions: number;
+        totalPoints: number;
+        createTime: string;
+      }>
+    >
+  >("get", "/edu/backend/v1/paper/template/my");
 };
 
 /**
@@ -1431,6 +1432,92 @@ export const publishPaperAdvanced = (data: {
 
 // ==================== 学生端API ====================
 
+/** 学生端试卷列表项 */
+export interface StudentPaperItem {
+  id: number;
+  title: string;
+  description?: string;
+  courseId: number;
+  courseName: string;
+  timeLimit: number;
+  totalPoints: number;
+  totalQuestions: number;
+  startTime: string;
+  endTime: string;
+  /** 状态：
+   * available - 可答题（已发布/考试中）
+   * submitted - 已提交待批改（已结束/批改中）
+   * graded - 已批改待发布（已批改但成绩未发布）
+   * completed - 已完成（成绩已发布）
+   * expired - 已过期（超过截止时间未提交）
+   * retake - 补考中（允许补考且在补考时间内）
+   */
+  status:
+    | "available"
+    | "submitted"
+    | "graded"
+    | "completed"
+    | "expired"
+    | "retake";
+  /** 提交ID（已提交时） */
+  submissionId?: number;
+  /** 得分（已完成且成绩发布后） */
+  score?: number;
+  /** 是否允许补考 */
+  allowRetake?: boolean;
+  /** 剩余补考次数 */
+  remainingRetakeCount?: number;
+  /** 补考开始时间 */
+  retakeStartTime?: string;
+  /** 补考结束时间 */
+  retakeEndTime?: string;
+}
+
+/** 获取学生试卷列表参数 */
+export interface GetStudentPaperListParams extends PageParams {
+  /** 状态筛选 */
+  status?:
+    | "available"
+    | "submitted"
+    | "graded"
+    | "completed"
+    | "expired"
+    | "retake";
+  /** 课程ID */
+  courseId?: number;
+  /** 关键词搜索 */
+  keyword?: string;
+}
+
+/** 学生试卷统计数据 */
+export interface StudentPaperStatistics {
+  /** 待完成数量（可答题+补考中） */
+  available: number;
+  /** 已提交待批改数量 */
+  submitted: number;
+  /** 已批改待发布数量 */
+  graded: number;
+  /** 已完成数量（成绩已发布） */
+  completed: number;
+  /** 已过期数量 */
+  expired: number;
+  /** 补考中数量 */
+  retake: number;
+  /** 平均分 */
+  avgScore: number;
+}
+
+/**
+ * 获取学生试卷列表（试题试卷中心）
+ */
+export const getStudentPaperList = (params: GetStudentPaperListParams) => {
+  return http.request<
+    ApiResponse<
+      PageResult<StudentPaperItem> & { statistics?: StudentPaperStatistics }
+    >
+  >("get", "/edu/frontend/v1/paper/list", { params });
+};
+
 /**
  * 获取学生考试列表
  */
@@ -1470,7 +1557,7 @@ export const startExam = (paperId: number) => {
 };
 
 /**
- * 保存答案（自动保存，包含答题时长）
+ * 保存答案（自动保存）
  */
 export const saveAnswer = (data: {
   submissionId: number;
@@ -1481,6 +1568,36 @@ export const saveAnswer = (data: {
   return http.request<ApiResponse>("post", "/edu/frontend/v1/exam/save", {
     data
   });
+};
+
+/**
+ * 保存答题时长（使用时间戳）
+ */
+export const saveDuration = (data: {
+  submissionId: number;
+  questionId: number;
+  enterTime: number; // 进入该题的时间戳（毫秒）
+  leaveTime: number; // 离开该题的时间戳（毫秒）
+}) => {
+  return http.request<ApiResponse<{ duration: number }>>(
+    "post",
+    "/edu/frontend/v1/exam/save-duration",
+    { data }
+  );
+};
+
+/**
+ * 获取题目答题时长（用于显示实时用时）
+ */
+export const getQuestionDuration = (data: {
+  submissionId: number;
+  questionId: number;
+}) => {
+  return http.request<ApiResponse<{ duration: number }>>(
+    "post",
+    "/edu/frontend/v1/exam/question-duration",
+    { data }
+  );
 };
 
 /**

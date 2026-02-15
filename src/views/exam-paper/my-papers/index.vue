@@ -707,16 +707,66 @@ $radius-lg: 16px;
     .folder-sidebar {
       background: $dark-card-bg;
       border-color: $dark-border;
+      box-shadow: $dark-shadow;
     }
 
-    .page-title,
-    .stat-value {
-      color: $dark-text-primary;
+    .page-header {
+      .page-title {
+        color: $dark-text-primary;
+      }
+
+      .page-desc {
+        color: $dark-text-secondary;
+      }
     }
 
-    .page-desc,
-    .stat-label {
-      color: $dark-text-secondary;
+    .stat-card {
+      .stat-info {
+        .stat-value {
+          color: $dark-text-primary;
+        }
+
+        .stat-label {
+          color: $dark-text-secondary;
+        }
+      }
+    }
+
+    .folder-sidebar {
+      .folder-header {
+        border-bottom-color: $dark-border;
+
+        .folder-title {
+          color: $dark-text-primary;
+        }
+      }
+
+      .folder-item {
+        color: $dark-text-secondary;
+
+        &:hover {
+          background: rgba(102, 126, 234, 0.1);
+        }
+
+        &.active {
+          background: rgba(102, 126, 234, 0.2);
+          color: #818cf8;
+        }
+
+        .folder-name {
+          color: inherit;
+        }
+
+        .folder-count {
+          background: rgba(255, 255, 255, 0.05);
+          color: $dark-text-secondary;
+        }
+
+        &.active .folder-count {
+          background: #818cf8;
+          color: #fff;
+        }
+      }
     }
 
     .list-card {
@@ -734,20 +784,39 @@ $radius-lg: 16px;
       .count-badge,
       .score-badge,
       .usage-badge {
-        background: #2d3748;
+        background: rgba(255, 255, 255, 0.05);
         color: $dark-text-primary;
+      }
+
+      .pagination-wrapper {
+        border-top-color: $dark-border;
       }
 
       :deep(.el-table) {
         background-color: transparent;
         --el-table-bg-color: transparent;
         --el-table-tr-bg-color: transparent;
+        --el-table-header-bg-color: rgba(255, 255, 255, 0.05);
+        --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.03);
+        --el-table-border-color: rgba(255, 255, 255, 0.1);
         color: $dark-text-primary;
       }
 
       :deep(.el-table__header th) {
         background-color: rgba(255, 255, 255, 0.05);
         color: $dark-text-primary;
+        border-bottom-color: $dark-border;
+      }
+
+      :deep(.el-table__body tr) {
+        &:hover > td {
+          background-color: rgba(255, 255, 255, 0.03);
+        }
+      }
+
+      :deep(.el-table td),
+      :deep(.el-table th.is-leaf) {
+        border-bottom-color: $dark-border;
       }
     }
   }
@@ -811,14 +880,15 @@ $radius-lg: 16px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    margin-bottom: 24px;
+    margin: 0 0 24px 0;
+    width: 100%;
   }
 
   .stat-card {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 20px;
+    padding: 24px;
     background: $light-card-bg;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
@@ -863,17 +933,21 @@ $radius-lg: 16px;
   }
 
   .main-content {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
+    width: 100%;
+    margin: 0;
+    align-items: start;
   }
 
   .folder-sidebar {
-    width: 240px;
+    grid-column: span 1;
     background: $light-card-bg;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
     border: 1px solid $light-border;
-    padding: 16px;
+    padding: 24px;
 
     .folder-header {
       padding-bottom: 12px;
@@ -940,12 +1014,12 @@ $radius-lg: 16px;
   }
 
   .content-area {
-    flex: 1;
+    grid-column: span 3;
     min-width: 0;
   }
 
   .toolbar-card {
-    padding: 16px 20px;
+    padding: 24px;
     background: $light-card-bg;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
@@ -1021,7 +1095,7 @@ $radius-lg: 16px;
     }
 
     .pagination-wrapper {
-      padding: 16px 20px;
+      padding: 24px;
       display: flex;
       justify-content: flex-end;
       border-top: 1px solid $light-border;

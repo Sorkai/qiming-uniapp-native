@@ -1527,6 +1527,17 @@ const filterByTag = (tagName: string) => {
   width: 100%;
   height: 100%;
   background-color: transparent;
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .message-board-wrapper.dark {
@@ -2674,17 +2685,17 @@ const filterByTag = (tagName: string) => {
 /* 动画 */
 .message-list-enter-active,
 .message-list-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .message-list-enter-from {
   opacity: 0;
-  transform: translateY(-20px);
+  transform: translateY(20px) scale(0.98);
 }
 
 .message-list-leave-to {
   opacity: 0;
-  transform: translateX(20px);
+  transform: translateY(-10px) scale(0.98);
 }
 
 .fade-slide-enter-active,

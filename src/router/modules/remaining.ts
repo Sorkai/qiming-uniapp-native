@@ -98,6 +98,17 @@ export default [
       showLink: false,
       rank: 108
     }
+  },
+  // 学生答卷页面（全屏，无布局）
+  {
+    path: "/student-exam-center/do/:id",
+    name: "StudentExamDo",
+    component: () => import("@/views/exam-paper/do/index.vue"),
+    meta: {
+      title: "参加考试",
+      showLink: false,
+      rank: 109
+    }
   }
   // 嵌入到课程详情中的随练页面已不再需要独立路由
 ] satisfies Array<RouteConfigsTable>;

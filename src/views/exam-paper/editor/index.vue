@@ -11,6 +11,7 @@ import {
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { onBeforeRouteLeave } from "vue-router";
+import { useDark } from "@pureadmin/utils";
 import draggable from "vuedraggable";
 import QuestionAssistant from "./components/QuestionAssistant.vue";
 import RichMediaUploader from "./components/RichMediaUploader.vue";
@@ -215,6 +216,7 @@ const iconComponents: Record<string, any> = {
 
 const router = useRouter();
 const route = useRoute();
+const { isDark } = useDark();
 
 // 试卷ID（编辑模式）
 const paperId = computed(() => route.params.id as string);
@@ -370,48 +372,61 @@ const getGlobalQuestionIndex = (groupIndex: number, questionIndex: number) => {
 
 // 将数字转换为中文数字
 const getChineseNumber = (num: number | string): string => {
-  const chineseDigits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-  const numValue = typeof num === 'string' ? parseInt(num, 10) : num;
-  
+  const chineseDigits = [
+    "零",
+    "一",
+    "二",
+    "三",
+    "四",
+    "五",
+    "六",
+    "七",
+    "八",
+    "九"
+  ];
+  const numValue = typeof num === "string" ? parseInt(num, 10) : num;
+
   if (numValue < 0) return String(numValue);
-  if (numValue === 0) return '零';
+  if (numValue === 0) return "零";
   if (numValue <= 10) {
-    return ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][numValue];
+    return ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][
+      numValue
+    ];
   }
-  
+
   // 处理 11-99
   if (numValue < 100) {
     const tens = Math.floor(numValue / 10);
     const ones = numValue % 10;
-    let result = '';
+    let result = "";
     if (tens === 1) {
-      result = '十';
+      result = "十";
     } else {
-      result = chineseDigits[tens] + '十';
+      result = chineseDigits[tens] + "十";
     }
     if (ones > 0) {
       result += chineseDigits[ones];
     }
     return result;
   }
-  
+
   // 处理 100-999
   if (numValue < 1000) {
     const hundreds = Math.floor(numValue / 100);
     const remainder = numValue % 100;
-    let result = chineseDigits[hundreds] + '百';
+    let result = chineseDigits[hundreds] + "百";
     if (remainder === 0) {
       return result;
     }
     if (remainder < 10) {
-      result += '零' + chineseDigits[remainder];
+      result += "零" + chineseDigits[remainder];
     } else {
       const tens = Math.floor(remainder / 10);
       const ones = remainder % 10;
       if (tens === 1) {
-        result += '一十';
+        result += "一十";
       } else {
-        result += chineseDigits[tens] + '十';
+        result += chineseDigits[tens] + "十";
       }
       if (ones > 0) {
         result += chineseDigits[ones];
@@ -419,34 +434,34 @@ const getChineseNumber = (num: number | string): string => {
     }
     return result;
   }
-  
+
   // 处理 1000+
   const thousands = Math.floor(numValue / 1000);
   const remainder = numValue % 1000;
-  let result = chineseDigits[thousands] + '千';
+  let result = chineseDigits[thousands] + "千";
   if (remainder === 0) {
     return result;
   }
   if (remainder < 100) {
-    result += '零';
+    result += "零";
   }
   if (remainder >= 100) {
     const hundreds = Math.floor(remainder / 100);
-    result += chineseDigits[hundreds] + '百';
+    result += chineseDigits[hundreds] + "百";
     const tens = Math.floor((remainder % 100) / 10);
     const ones = remainder % 10;
     if (tens > 0) {
-      result += chineseDigits[tens] + '十';
+      result += chineseDigits[tens] + "十";
       if (ones > 0) {
         result += chineseDigits[ones];
       }
     } else if (ones > 0) {
-      result += '零' + chineseDigits[ones];
+      result += "零" + chineseDigits[ones];
     }
   } else if (remainder >= 10) {
     const tens = Math.floor(remainder / 10);
     const ones = remainder % 10;
-    result += chineseDigits[tens] + '十';
+    result += chineseDigits[tens] + "十";
     if (ones > 0) {
       result += chineseDigits[ones];
     }
@@ -559,26 +574,26 @@ const addQuestion = (groupId: number) => {
         { key: "4", content: "" }
       ];
       newQuestion.correctOrder = [];
-                } else if (group.questionType === "slider") {
-                  newQuestion.sliderMin = 0;
-                  newQuestion.sliderMax = 100;
-                  newQuestion.sliderStep = 1;
-                  newQuestion.sliderDefaultValue = 50;
-                  newQuestion.sliderLabels = { left: "最低", right: "最高" };
-                  newQuestion.points = 0;
-                } else if (group.questionType === "nps-rating") {
-                  newQuestion.npsMin = 0;
-                  newQuestion.npsMax = 10;
-                  newQuestion.npsLabels = {
-                    low: "完全不推荐",
-                    mid: "一般",
-                    high: "强烈推荐"
-                  };
-                  newQuestion.points = 0;
-                } else if (group.questionType === "star-rating") {
-                  newQuestion.starCount = 5;
-                  newQuestion.starLabels = ["很差", "较差", "一般", "较好", "很好"];
-                  newQuestion.points = 0;
+    } else if (group.questionType === "slider") {
+      newQuestion.sliderMin = 0;
+      newQuestion.sliderMax = 100;
+      newQuestion.sliderStep = 1;
+      newQuestion.sliderDefaultValue = 50;
+      newQuestion.sliderLabels = { left: "最低", right: "最高" };
+      newQuestion.points = 0;
+    } else if (group.questionType === "nps-rating") {
+      newQuestion.npsMin = 0;
+      newQuestion.npsMax = 10;
+      newQuestion.npsLabels = {
+        low: "完全不推荐",
+        mid: "一般",
+        high: "强烈推荐"
+      };
+      newQuestion.points = 0;
+    } else if (group.questionType === "star-rating") {
+      newQuestion.starCount = 5;
+      newQuestion.starLabels = ["很差", "较差", "一般", "较好", "很好"];
+      newQuestion.points = 0;
     } else if (group.questionType === "composite") {
       newQuestion.material = "";
       newQuestion.subQuestions = [
@@ -720,10 +735,10 @@ const parseBlankCount = (stem: string): number => {
 // 同步 blanks 数组与题干中的占位符
 const syncBlanksWithStem = (question: any) => {
   if (question.questionType !== "input") return;
-  
+
   const blankCount = parseBlankCount(question.stem);
   const currentCount = question.blanks?.length || 0;
-  
+
   if (blankCount > currentCount) {
     // 需要添加更多空
     for (let i = currentCount; i < blankCount; i++) {
@@ -746,7 +761,11 @@ const watchBlankStemChange = (question: any) => {
 };
 
 // 渲染带填空的题干（用于预览）
-const renderBlankStem = (stem: string, blanks: any[], showAnswer = false): string => {
+const renderBlankStem = (
+  stem: string,
+  blanks: any[],
+  showAnswer = false
+): string => {
   if (!stem) return "未填写题目";
   let index = 0;
   return stem.replace(/\{blank\}/g, () => {
@@ -1239,17 +1258,20 @@ const onGroupDragOver = (event: DragEvent, groupIndex: number) => {
 const onGroupDrop = (event: DragEvent, targetGroupIndex: number) => {
   event.preventDefault();
   event.stopPropagation();
-  
+
   if (draggedGroupIndex !== null && draggedGroupIndex !== targetGroupIndex) {
     const draggedGroup = paper.questionGroups[draggedGroupIndex];
     paper.questionGroups.splice(draggedGroupIndex, 1);
-    
-    const insertIndex = draggedGroupIndex < targetGroupIndex ? targetGroupIndex - 1 : targetGroupIndex;
+
+    const insertIndex =
+      draggedGroupIndex < targetGroupIndex
+        ? targetGroupIndex - 1
+        : targetGroupIndex;
     paper.questionGroups.splice(insertIndex, 0, draggedGroup);
-    
+
     updateTotals();
   }
-  
+
   draggedGroupIndex = null;
   dragOverGroupIndex.value = null;
 };
@@ -1276,10 +1298,12 @@ const applyQuestionAssistantResult = (data: any) => {
 
   if (questions && questions.length > 0) {
     const sourceQuestion = questions[0];
-    
+
     // 如果有当前编辑的题目，则填充到当前题目
     if (currentEditingQuestion.value && currentEditingGroupId.value) {
-      const group = paper.questionGroups.find(g => g.groupId === currentEditingGroupId.value);
+      const group = paper.questionGroups.find(
+        g => g.groupId === currentEditingGroupId.value
+      );
       if (group) {
         const targetQuestion = group.questions.find(
           (q: any) => q.questionId === currentEditingQuestion.value.questionId
@@ -1287,15 +1311,19 @@ const applyQuestionAssistantResult = (data: any) => {
         if (targetQuestion) {
           // 填充题干
           targetQuestion.stem = sourceQuestion.stem || targetQuestion.stem;
-          
+
           // 填充选项（如果有）
           if (sourceQuestion.options && targetQuestion.options) {
-            targetQuestion.options = sourceQuestion.options.map((opt: any, index: number) => ({
-              key: ["A", "B", "C", "D", "E", "F", "G", "H"][index] || `选项${index + 1}`,
-              content: opt.content || ""
-            }));
+            targetQuestion.options = sourceQuestion.options.map(
+              (opt: any, index: number) => ({
+                key:
+                  ["A", "B", "C", "D", "E", "F", "G", "H"][index] ||
+                  `选项${index + 1}`,
+                content: opt.content || ""
+              })
+            );
           }
-          
+
           // 填充答案
           if (sourceQuestion.correctAnswer !== undefined) {
             targetQuestion.correctAnswer = sourceQuestion.correctAnswer;
@@ -1309,13 +1337,15 @@ const applyQuestionAssistantResult = (data: any) => {
           if (sourceQuestion.referenceAnswer !== undefined) {
             targetQuestion.referenceAnswer = sourceQuestion.referenceAnswer;
           }
-          
+
           // 填充解析
           if (sourceQuestion.analysis) {
             targetQuestion.analysis = sourceQuestion.analysis;
           }
-          
-          ElMessage.success(type === "ai" ? "AI 生成的题目已应用" : "题库题目已应用");
+
+          ElMessage.success(
+            type === "ai" ? "AI 生成的题目已应用" : "题库题目已应用"
+          );
         }
       }
     } else {
@@ -1335,7 +1365,7 @@ const applyQuestionAssistantResult = (data: any) => {
           };
           paper.questionGroups.push(group);
         }
-        
+
         // 添加题目
         const questionId = Date.now() + Math.random();
         const newQuestion: any = {
@@ -1346,7 +1376,7 @@ const applyQuestionAssistantResult = (data: any) => {
           analysis: q.analysis || "",
           sortOrder: group.questions.length
         };
-        
+
         // 根据题型设置选项和答案
         if (q.type === "radio" || q.type === "checkbox") {
           newQuestion.options = q.options || [
@@ -1371,11 +1401,11 @@ const applyQuestionAssistantResult = (data: any) => {
         } else if (q.type === "textarea") {
           newQuestion.referenceAnswer = q.referenceAnswer || "";
         }
-        
+
         group.questions.push(newQuestion);
         activeQuestionId.value = questionId;
       });
-      
+
       updateTotals();
       ElMessage.success(`已添加 ${questions.length} 道题目`);
     }
@@ -1386,7 +1416,7 @@ const applyQuestionAssistantResult = (data: any) => {
 const archiveQuestionHandler = async (question: any, groupId: number) => {
   const group = paper.questionGroups.find(g => g.groupId === groupId);
   if (!group) return;
-  
+
   const questionData = {
     type: question.questionType,
     typeName: group.groupName,
@@ -1401,7 +1431,7 @@ const archiveQuestionHandler = async (question: any, groupId: number) => {
     difficulty: "medium",
     difficultyName: "中等"
   };
-  
+
   try {
     const res = await archiveQuestionToBankApi({
       questions: [questionData as any]
@@ -1499,7 +1529,6 @@ const pieChartStyle = computed(() => {
   };
 });
 
-
 // 批量归档试卷中的题目到题库
 const archiveAllQuestionsToBank = async () => {
   const allQuestions: any[] = [];
@@ -1523,12 +1552,12 @@ const archiveAllQuestionsToBank = async () => {
       }
     });
   });
-  
+
   if (allQuestions.length === 0) {
     ElMessage.warning("没有可归档的题目");
     return;
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要将试卷中的 ${allQuestions.length} 道题目归档到题库吗？`,
@@ -1567,7 +1596,7 @@ const handleKeydownForAssistant = (event: KeyboardEvent) => {
     if (currentTime - lastCtrlKeyTime < DOUBLE_CLICK_THRESHOLD) {
       // 双击检测成功，打开题目助手
       event.preventDefault();
-      
+
       // 如果有当前选中的题目，则传递给助手
       if (activeQuestionId.value) {
         for (const group of paper.questionGroups) {
@@ -1582,7 +1611,7 @@ const handleKeydownForAssistant = (event: KeyboardEvent) => {
       } else {
         openQuestionAssistant();
       }
-      
+
       lastCtrlKeyTime = 0; // 重置
     } else {
       lastCtrlKeyTime = currentTime;
@@ -1667,35 +1696,91 @@ const systemTemplatesData: Record<string, any> = {
         groupId: 1,
         groupName: "单选题",
         questionType: "radio",
-        questions: [{ questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }],
+        questions: [
+          {
+            questionId: 101,
+            questionType: "radio",
+            stem: "",
+            points: 5,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswer: ""
+          }
+        ],
         sortOrder: 0
       },
       {
         groupId: 2,
         groupName: "多选题",
         questionType: "checkbox",
-        questions: [{ questionId: 201, questionType: "checkbox", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }],
+        questions: [
+          {
+            questionId: 201,
+            questionType: "checkbox",
+            stem: "",
+            points: 5,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswers: []
+          }
+        ],
         sortOrder: 1
       },
       {
         groupId: 3,
         groupName: "判断题",
         questionType: "judge",
-        questions: [{ questionId: 301, questionType: "judge", stem: "", points: 3, options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }], correctAnswer: "" }],
+        questions: [
+          {
+            questionId: 301,
+            questionType: "judge",
+            stem: "",
+            points: 3,
+            options: [
+              { key: "T", content: "正确" },
+              { key: "F", content: "错误" }
+            ],
+            correctAnswer: ""
+          }
+        ],
         sortOrder: 2
       },
       {
         groupId: 4,
         groupName: "填空题",
         questionType: "input",
-        questions: [{ questionId: 401, questionType: "input", stem: "", points: 5, blanks: [{ answer: "" }] }],
+        questions: [
+          {
+            questionId: 401,
+            questionType: "input",
+            stem: "",
+            points: 5,
+            blanks: [{ answer: "" }]
+          }
+        ],
         sortOrder: 3
       },
       {
         groupId: 5,
         groupName: "简答题",
         questionType: "textarea",
-        questions: [{ questionId: 501, questionType: "textarea", stem: "", points: 8, referenceAnswer: "" }],
+        questions: [
+          {
+            questionId: 501,
+            questionType: "textarea",
+            stem: "",
+            points: 8,
+            referenceAnswer: ""
+          }
+        ],
         sortOrder: 4
       }
     ]
@@ -1710,8 +1795,32 @@ const systemTemplatesData: Record<string, any> = {
         groupName: "单选题",
         questionType: "radio",
         questions: [
-          { questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" },
-          { questionId: 102, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+          {
+            questionId: 101,
+            questionType: "radio",
+            stem: "",
+            points: 5,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswer: ""
+          },
+          {
+            questionId: 102,
+            questionType: "radio",
+            stem: "",
+            points: 5,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswer: ""
+          }
         ],
         sortOrder: 0
       },
@@ -1720,8 +1829,32 @@ const systemTemplatesData: Record<string, any> = {
         groupName: "多选题",
         questionType: "checkbox",
         questions: [
-          { questionId: 201, questionType: "checkbox", stem: "", points: 10, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] },
-          { questionId: 202, questionType: "checkbox", stem: "", points: 10, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }
+          {
+            questionId: 201,
+            questionType: "checkbox",
+            stem: "",
+            points: 10,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswers: []
+          },
+          {
+            questionId: 202,
+            questionType: "checkbox",
+            stem: "",
+            points: 10,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswers: []
+          }
         ],
         sortOrder: 1
       },
@@ -1730,7 +1863,17 @@ const systemTemplatesData: Record<string, any> = {
         groupName: "判断题",
         questionType: "judge",
         questions: [
-          { questionId: 301, questionType: "judge", stem: "", points: 5, options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }], correctAnswer: "" }
+          {
+            questionId: 301,
+            questionType: "judge",
+            stem: "",
+            points: 5,
+            options: [
+              { key: "T", content: "正确" },
+              { key: "F", content: "错误" }
+            ],
+            correctAnswer: ""
+          }
         ],
         sortOrder: 2
       }
@@ -1746,7 +1889,19 @@ const systemTemplatesData: Record<string, any> = {
         groupName: "单选题",
         questionType: "radio",
         questions: [
-          { questionId: 101, questionType: "radio", stem: "", points: 5, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+          {
+            questionId: 101,
+            questionType: "radio",
+            stem: "",
+            points: 5,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswer: ""
+          }
         ],
         sortOrder: 0
       },
@@ -1755,9 +1910,27 @@ const systemTemplatesData: Record<string, any> = {
         groupName: "简答题",
         questionType: "textarea",
         questions: [
-          { questionId: 201, questionType: "textarea", stem: "", points: 15, referenceAnswer: "" },
-          { questionId: 202, questionType: "textarea", stem: "", points: 20, referenceAnswer: "" },
-          { questionId: 203, questionType: "textarea", stem: "", points: 35, referenceAnswer: "" }
+          {
+            questionId: 201,
+            questionType: "textarea",
+            stem: "",
+            points: 15,
+            referenceAnswer: ""
+          },
+          {
+            questionId: 202,
+            questionType: "textarea",
+            stem: "",
+            points: 20,
+            referenceAnswer: ""
+          },
+          {
+            questionId: 203,
+            questionType: "textarea",
+            stem: "",
+            points: 35,
+            referenceAnswer: ""
+          }
         ],
         sortOrder: 1
       }
@@ -1773,8 +1946,32 @@ const systemTemplatesData: Record<string, any> = {
         groupName: "单选题",
         questionType: "radio",
         questions: [
-          { questionId: 101, questionType: "radio", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" },
-          { questionId: 102, questionType: "radio", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswer: "" }
+          {
+            questionId: 101,
+            questionType: "radio",
+            stem: "",
+            points: 0,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswer: ""
+          },
+          {
+            questionId: 102,
+            questionType: "radio",
+            stem: "",
+            points: 0,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswer: ""
+          }
         ],
         sortOrder: 0
       },
@@ -1783,7 +1980,19 @@ const systemTemplatesData: Record<string, any> = {
         groupName: "多选题",
         questionType: "checkbox",
         questions: [
-          { questionId: 201, questionType: "checkbox", stem: "", points: 0, options: [{ key: "A", content: "" }, { key: "B", content: "" }, { key: "C", content: "" }, { key: "D", content: "" }], correctAnswers: [] }
+          {
+            questionId: 201,
+            questionType: "checkbox",
+            stem: "",
+            points: 0,
+            options: [
+              { key: "A", content: "" },
+              { key: "B", content: "" },
+              { key: "C", content: "" },
+              { key: "D", content: "" }
+            ],
+            correctAnswers: []
+          }
         ],
         sortOrder: 1
       },
@@ -1792,8 +2001,20 @@ const systemTemplatesData: Record<string, any> = {
         groupName: "简答题",
         questionType: "textarea",
         questions: [
-          { questionId: 301, questionType: "textarea", stem: "", points: 0, referenceAnswer: "" },
-          { questionId: 302, questionType: "textarea", stem: "", points: 0, referenceAnswer: "" }
+          {
+            questionId: 301,
+            questionType: "textarea",
+            stem: "",
+            points: 0,
+            referenceAnswer: ""
+          },
+          {
+            questionId: 302,
+            questionType: "textarea",
+            stem: "",
+            points: 0,
+            referenceAnswer: ""
+          }
         ],
         sortOrder: 2
       }
@@ -1809,7 +2030,9 @@ const loadTemplate = async (templateId: string) => {
     paper.title = template.title || "";
     paper.description = template.description || "";
     paper.timeLimit = template.timeLimit || 90;
-    paper.questionGroups = JSON.parse(JSON.stringify(template.questionGroups || []));
+    paper.questionGroups = JSON.parse(
+      JSON.stringify(template.questionGroups || [])
+    );
     updateTotals();
     hasUnsavedChanges.value = false;
     ElMessage.success(`已加载系统模板：${template.title}`);
@@ -1818,7 +2041,9 @@ const loadTemplate = async (templateId: string) => {
 
   // 私有模板从 API 获取
   try {
-    const actualId = templateId.startsWith("my-") ? templateId.slice(3) : templateId;
+    const actualId = templateId.startsWith("my-")
+      ? templateId.slice(3)
+      : templateId;
     const res = await getTemplateDetail(actualId);
     if (res.code === 0 && res.data) {
       const template = res.data;
@@ -1897,7 +2122,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="exam-paper-editor">
+  <div class="exam-paper-editor" :class="{ 'is-dark': isDark }">
     <!--顶部固定区域 -->
     <div class="editor-fixed-top">
       <!--顶部导航 -->
@@ -2035,7 +2260,9 @@ onBeforeUnmount(() => {
             >
               <!-- 题型组标题 -->
               <div class="preview-group-title">
-                <span class="preview-group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="preview-group-number"
+                  >{{ getChineseNumber(groupIndex + 1) }}.</span
+                >
                 <span class="preview-group-name">{{ group.groupName }}</span>
               </div>
               <div
@@ -2054,26 +2281,22 @@ onBeforeUnmount(() => {
                     ({{ question.points }}分)
                   </span>
                 </div>
-                <div 
+                <div
                   v-if="question.questionType === 'input'"
                   class="preview-question-stem"
-                  v-html="renderBlankStem(question.stem, question.blanks, false)"
+                  v-html="
+                    renderBlankStem(question.stem, question.blanks, false)
+                  "
                 />
-                <div 
-                  v-else
-                  class="preview-question-stem"
-                >
+                <div v-else class="preview-question-stem">
                   {{ question.stem || "未填写题目" }}
                 </div>
-                <div 
+                <div
                   v-if="question.questionType === 'input'"
                   class="preview-question-stem"
                   v-html="renderBlankStem(question.stem, question.blanks, true)"
                 />
-                <div 
-                  v-else
-                  class="preview-question-stem"
-                >
+                <div v-else class="preview-question-stem">
                   {{ question.stem || "未填写题目" }}
                 </div>
                 <div
@@ -2086,13 +2309,31 @@ onBeforeUnmount(() => {
                     class="preview-option"
                     :class="{
                       'correct-option':
-                        (question.questionType === 'radio' || question.questionType === 'judge') && question.correctAnswer === option.key ||
-                        question.questionType === 'checkbox' && question.correctAnswers?.includes(option.key)
+                        ((question.questionType === 'radio' ||
+                          question.questionType === 'judge') &&
+                          question.correctAnswer === option.key) ||
+                        (question.questionType === 'checkbox' &&
+                          question.correctAnswers?.includes(option.key))
                     }"
                   >
                     {{ option.key }}. {{ option.content }}
-                    <el-icon v-if="(question.questionType === 'radio' || question.questionType === 'judge') && question.correctAnswer === option.key" class="correct-icon"><Check /></el-icon>
-                    <el-icon v-if="question.questionType === 'checkbox' && question.correctAnswers?.includes(option.key)" class="correct-icon"><Check /></el-icon>
+                    <el-icon
+                      v-if="
+                        (question.questionType === 'radio' ||
+                          question.questionType === 'judge') &&
+                        question.correctAnswer === option.key
+                      "
+                      class="correct-icon"
+                      ><Check
+                    /></el-icon>
+                    <el-icon
+                      v-if="
+                        question.questionType === 'checkbox' &&
+                        question.correctAnswers?.includes(option.key)
+                      "
+                      class="correct-icon"
+                      ><Check
+                    /></el-icon>
                   </div>
                 </div>
                 <div
@@ -2104,11 +2345,16 @@ onBeforeUnmount(() => {
                     :key="i"
                     class="preview-blank"
                   >
-                    第{{ i + 1 }}空：<span class="blank-answer">{{ blank.answer || "未设置" }}</span>
+                    第{{ i + 1 }}空：<span class="blank-answer">{{
+                      blank.answer || "未设置"
+                    }}</span>
                   </span>
                 </div>
                 <div
-                  v-if="question.questionType === 'textarea' || question.questionType === 'textarea-essay'"
+                  v-if="
+                    question.questionType === 'textarea' ||
+                    question.questionType === 'textarea-essay'
+                  "
                   class="preview-textarea"
                 >
                   <div class="preview-answer-area" />
@@ -2119,7 +2365,9 @@ onBeforeUnmount(() => {
                     <el-icon><CircleCheck /></el-icon>
                     <span>正确答案：</span>
                   </div>
-                  <div class="answer-content">{{ getAnswerText(question) }}</div>
+                  <div class="answer-content">
+                    {{ getAnswerText(question) }}
+                  </div>
                 </div>
                 <!-- 解析显示区域 -->
                 <div v-if="question.analysis" class="preview-analysis-section">
@@ -2192,7 +2440,9 @@ onBeforeUnmount(() => {
             >
               <!-- 题型组标题 -->
               <div class="preview-group-title">
-                <span class="preview-group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="preview-group-number"
+                  >{{ getChineseNumber(groupIndex + 1) }}.</span
+                >
                 <span class="preview-group-name">{{ group.groupName }}</span>
               </div>
               <div
@@ -2326,9 +2576,13 @@ onBeforeUnmount(() => {
                 <span class="group-drag-handle">
                   <component :is="iconComponents.DragIcon" class="drag-icon" />
                 </span>
-                <span class="group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                <span class="group-number"
+                  >{{ getChineseNumber(groupIndex + 1) }}.</span
+                >
                 <span class="group-name">{{ group.groupName }}</span>
-                <span class="group-item-count">{{ group.questions.length }}题</span>
+                <span class="group-item-count"
+                  >{{ group.questions.length }}题</span
+                >
               </div>
               <div class="outline-group-items">
                 <div
@@ -2338,7 +2592,9 @@ onBeforeUnmount(() => {
                   :class="{ active: activeQuestionId === question.questionId }"
                   @click="scrollToQuestion(question.questionId)"
                 >
-                  <span class="item-index">{{ getGlobalQuestionIndex(groupIndex, qIndex) }}.</span>
+                  <span class="item-index"
+                    >{{ getGlobalQuestionIndex(groupIndex, qIndex) }}.</span
+                  >
                   <span class="item-title">
                     {{ question.stem || "未填写题目" }}
                   </span>
@@ -2415,28 +2671,40 @@ onBeforeUnmount(() => {
                       <span class="metric-label">难度评估</span>
                       <span
                         class="metric-value"
-                        :style="{ color: getDifficultyColor(aiAnalysisResult.difficulty) }"
+                        :style="{
+                          color: getDifficultyColor(aiAnalysisResult.difficulty)
+                        }"
                       >
-                        {{ aiAnalysisResult.difficultyDescription }} ({{ aiAnalysisResult.difficulty }}/5)
+                        {{ aiAnalysisResult.difficultyDescription }} ({{
+                          aiAnalysisResult.difficulty
+                        }}/5)
                       </span>
                     </div>
                     <div class="metric-item">
                       <span class="metric-label">知识点覆盖</span>
-                      <span class="metric-value">{{ aiAnalysisResult.knowledgeCoverage }}%</span>
+                      <span class="metric-value"
+                        >{{ aiAnalysisResult.knowledgeCoverage }}%</span
+                      >
                     </div>
                     <div class="metric-item">
                       <span class="metric-label">题型均衡度</span>
-                      <span class="metric-value">{{ aiAnalysisResult.typeBalance }}%</span>
+                      <span class="metric-value"
+                        >{{ aiAnalysisResult.typeBalance }}%</span
+                      >
                     </div>
                     <div class="metric-item">
                       <span class="metric-label">预估答题时间</span>
-                      <span class="metric-value">{{ aiAnalysisResult.estimatedTime }} 分钟</span>
+                      <span class="metric-value"
+                        >{{ aiAnalysisResult.estimatedTime }} 分钟</span
+                      >
                     </div>
                     <div class="metric-item">
                       <span class="metric-label">综合评分</span>
                       <span
                         class="metric-value"
-                        :style="{ color: getScoreColor(aiAnalysisResult.overallScore) }"
+                        :style="{
+                          color: getScoreColor(aiAnalysisResult.overallScore)
+                        }"
                       >
                         {{ aiAnalysisResult.overallScore }} 分
                       </span>
@@ -2452,17 +2720,23 @@ onBeforeUnmount(() => {
                       <div class="pie-chart" :style="pieChartStyle" />
                       <div class="distribution-legend">
                         <div
-                          v-for="(item, idx) in aiAnalysisResult.questionTypeDistribution"
+                          v-for="(
+                            item, idx
+                          ) in aiAnalysisResult.questionTypeDistribution"
                           :key="idx"
                           class="legend-item"
                         >
                           <span
                             class="legend-color"
-                            :style="{ background: pieColors[idx % pieColors.length] }"
+                            :style="{
+                              background: pieColors[idx % pieColors.length]
+                            }"
                           />
                           <span class="legend-name">{{ item.name }}</span>
                           <span class="legend-count">{{ item.count }}题</span>
-                          <span class="legend-percent">{{ item.percentage }}%</span>
+                          <span class="legend-percent"
+                            >{{ item.percentage }}%</span
+                          >
                         </div>
                       </div>
                     </div>
@@ -2474,7 +2748,9 @@ onBeforeUnmount(() => {
                     <div class="suggestions-title">优化建议</div>
                     <ul class="suggestions-list">
                       <li
-                        v-for="(suggestion, idx) in aiAnalysisResult.suggestions"
+                        v-for="(
+                          suggestion, idx
+                        ) in aiAnalysisResult.suggestions"
                         :key="idx"
                       >
                         {{ suggestion }}
@@ -2488,10 +2764,17 @@ onBeforeUnmount(() => {
 
           <!-- 考试设置面板 -->
           <div class="settings-panel">
-            <div class="settings-toggle" @click="settingsPanelVisible = !settingsPanelVisible">
+            <div
+              class="settings-toggle"
+              @click="settingsPanelVisible = !settingsPanelVisible"
+            >
               <el-icon><Setting /></el-icon>
               <span>考试设置</span>
-              <el-icon class="toggle-arrow" :class="{ expanded: settingsPanelVisible }"><ArrowDown /></el-icon>
+              <el-icon
+                class="toggle-arrow"
+                :class="{ expanded: settingsPanelVisible }"
+                ><ArrowDown
+              /></el-icon>
             </div>
             <el-collapse-transition>
               <div v-show="settingsPanelVisible" class="settings-content">
@@ -2502,39 +2785,93 @@ onBeforeUnmount(() => {
                     <el-row :gutter="20">
                       <el-col :span="12">
                         <el-form-item label="考试开始时间">
-                          <el-date-picker v-model="paper.startTime" type="datetime" placeholder="选择开始时间" style="width: 100%" value-format="YYYY-MM-DD HH:mm:ss" />
+                          <el-date-picker
+                            v-model="paper.startTime"
+                            type="datetime"
+                            placeholder="选择开始时间"
+                            style="width: 100%"
+                            value-format="YYYY-MM-DD HH:mm:ss"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="12">
                         <el-form-item label="考试结束时间">
-                          <el-date-picker v-model="paper.endTime" type="datetime" placeholder="选择结束时间" style="width: 100%" value-format="YYYY-MM-DD HH:mm:ss" />
+                          <el-date-picker
+                            v-model="paper.endTime"
+                            type="datetime"
+                            placeholder="选择结束时间"
+                            style="width: 100%"
+                            value-format="YYYY-MM-DD HH:mm:ss"
+                          />
                         </el-form-item>
                       </el-col>
                     </el-row>
                     <el-row :gutter="20">
                       <el-col :span="8">
                         <el-form-item label="考试时长(分钟)">
-                          <el-input-number v-model="paper.timeLimit" :min="1" :max="600" style="width: 100%" />
+                          <el-input-number
+                            v-model="paper.timeLimit"
+                            :min="1"
+                            :max="600"
+                            style="width: 100%"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="8">
                         <el-form-item label="及格分数">
-                          <el-input-number v-model="paper.scoring.passScore" :min="0" :max="paper.totalPoints" style="width: 100%" />
+                          <el-input-number
+                            v-model="paper.scoring.passScore"
+                            :min="0"
+                            :max="paper.totalPoints"
+                            style="width: 100%"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="8">
                         <el-form-item label="所属课程">
-                          <el-select v-model="paper.courseId" placeholder="选择课程" style="width: 100%" clearable>
-                            <el-option v-for="c in courseOptions" :key="c.id" :label="c.name" :value="c.id" />
+                          <el-select
+                            v-model="paper.courseId"
+                            placeholder="选择课程"
+                            style="width: 100%"
+                            clearable
+                          >
+                            <el-option
+                              v-for="c in courseOptions"
+                              :key="c.id"
+                              :label="c.name"
+                              :value="c.id"
+                            />
                           </el-select>
                         </el-form-item>
                       </el-col>
                     </el-row>
                     <el-row :gutter="20">
-                      <el-col :span="6"><el-form-item label="打乱题序"><el-switch v-model="paper.settings.shuffleQuestions" /></el-form-item></el-col>
-                      <el-col :span="6"><el-form-item label="打乱选项"><el-switch v-model="paper.settings.shuffleOptions" /></el-form-item></el-col>
-                      <el-col :span="6"><el-form-item label="显示成绩"><el-switch v-model="paper.settings.showScore" /></el-form-item></el-col>
-                      <el-col :span="6"><el-form-item label="允许查看"><el-switch v-model="paper.settings.allowReview" /></el-form-item></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="打乱题序"
+                          ><el-switch
+                            v-model="
+                              paper.settings.shuffleQuestions
+                            " /></el-form-item
+                      ></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="打乱选项"
+                          ><el-switch
+                            v-model="
+                              paper.settings.shuffleOptions
+                            " /></el-form-item
+                      ></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="显示成绩"
+                          ><el-switch
+                            v-model="paper.settings.showScore" /></el-form-item
+                      ></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="允许查看"
+                          ><el-switch
+                            v-model="
+                              paper.settings.allowReview
+                            " /></el-form-item
+                      ></el-col>
                     </el-row>
                   </div>
 
@@ -2542,12 +2879,37 @@ onBeforeUnmount(() => {
                   <div class="settings-section">
                     <h4 class="section-title">防作弊设置</h4>
                     <el-row :gutter="20">
-                      <el-col :span="6"><el-form-item label="IP限制"><el-switch v-model="paper.antiCheat.ipRestriction" /><div class="setting-hint">同一IP只能答一次</div></el-form-item></el-col>
-                      <el-col :span="6"><el-form-item label="浏览器指纹"><el-switch v-model="paper.antiCheat.browserFingerprint" /></el-form-item></el-col>
-                      <el-col :span="6"><el-form-item label="禁止切屏"><el-switch v-model="paper.antiCheat.preventWindowSwitch" /></el-form-item></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="IP限制"
+                          ><el-switch v-model="paper.antiCheat.ipRestriction" />
+                          <div class="setting-hint">
+                            同一IP只能答一次
+                          </div></el-form-item
+                        ></el-col
+                      >
+                      <el-col :span="6"
+                        ><el-form-item label="浏览器指纹"
+                          ><el-switch
+                            v-model="
+                              paper.antiCheat.browserFingerprint
+                            " /></el-form-item
+                      ></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="禁止切屏"
+                          ><el-switch
+                            v-model="
+                              paper.antiCheat.preventWindowSwitch
+                            " /></el-form-item
+                      ></el-col>
                       <el-col :span="6">
                         <el-form-item label="切屏警告上限">
-                          <el-input-number v-model="paper.antiCheat.maxWindowSwitchWarnings" :min="1" :max="10" :disabled="!paper.antiCheat.preventWindowSwitch" style="width: 100%" />
+                          <el-input-number
+                            v-model="paper.antiCheat.maxWindowSwitchWarnings"
+                            :min="1"
+                            :max="10"
+                            :disabled="!paper.antiCheat.preventWindowSwitch"
+                            style="width: 100%"
+                          />
                         </el-form-item>
                       </el-col>
                     </el-row>
@@ -2559,7 +2921,10 @@ onBeforeUnmount(() => {
                     <el-row :gutter="20">
                       <el-col :span="24">
                         <el-form-item label="发布目标">
-                          <el-radio-group v-model="publishTargetType" @change="onPublishTargetTypeChange">
+                          <el-radio-group
+                            v-model="publishTargetType"
+                            @change="onPublishTargetTypeChange"
+                          >
                             <el-radio :value="1">全部学生</el-radio>
                             <el-radio :value="2">指定课程</el-radio>
                             <el-radio :value="3">指定学生</el-radio>
@@ -2571,9 +2936,16 @@ onBeforeUnmount(() => {
                       <el-col :span="24">
                         <el-form-item label="选择课程">
                           <el-checkbox-group v-model="publishSelectedCourseIds">
-                            <el-checkbox v-for="c in courseOptions" :key="c.id" :value="c.id" :label="c.name" />
+                            <el-checkbox
+                              v-for="c in courseOptions"
+                              :key="c.id"
+                              :value="c.id"
+                              :label="c.name"
+                            />
                           </el-checkbox-group>
-                          <div class="setting-hint">已选 {{ publishSelectedCourseIds.length }} 个课程</div>
+                          <div class="setting-hint">
+                            已选 {{ publishSelectedCourseIds.length }} 个课程
+                          </div>
                         </el-form-item>
                       </el-col>
                     </el-row>
@@ -2581,20 +2953,85 @@ onBeforeUnmount(() => {
                       <el-col :span="24">
                         <el-form-item label="选择学生">
                           <div class="publish-student-toolbar">
-                            <el-select v-model="publishFilterCourseId" placeholder="按课程筛选" clearable style="width: 180px" @change="onFilterCourseChange">
-                              <el-option v-for="c in courseOptions" :key="c.id" :label="c.name" :value="c.id" />
+                            <el-select
+                              v-model="publishFilterCourseId"
+                              placeholder="按课程筛选"
+                              clearable
+                              style="width: 180px"
+                              @change="onFilterCourseChange"
+                            >
+                              <el-option
+                                v-for="c in courseOptions"
+                                :key="c.id"
+                                :label="c.name"
+                                :value="c.id"
+                              />
                             </el-select>
-                            <el-input v-model="publishStudentKeyword" placeholder="搜索姓名/学号" clearable style="width: 180px" />
-                            <el-button size="small" @click="toggleSelectAllStudents">{{ publishSelectedStudentIds.length === filteredStudentList.length && filteredStudentList.length > 0 ? '取消全选' : '全选' }}</el-button>
-                            <span class="setting-hint">已选 {{ publishSelectedStudentIds.length }} 人</span>
+                            <el-input
+                              v-model="publishStudentKeyword"
+                              placeholder="搜索姓名/学号"
+                              clearable
+                              style="width: 180px"
+                            />
+                            <el-button
+                              size="small"
+                              @click="toggleSelectAllStudents"
+                              >{{
+                                publishSelectedStudentIds.length ===
+                                  filteredStudentList.length &&
+                                filteredStudentList.length > 0
+                                  ? "取消全选"
+                                  : "全选"
+                              }}</el-button
+                            >
+                            <span class="setting-hint"
+                              >已选
+                              {{ publishSelectedStudentIds.length }} 人</span
+                            >
                           </div>
-                          <div v-loading="publishStudentLoading" class="publish-student-list-inline">
-                            <div v-for="s in filteredStudentList" :key="s.studentId" class="publish-student-item-inline" :class="{ selected: publishSelectedStudentIds.includes(s.studentId) }" @click="publishSelectedStudentIds.includes(s.studentId) ? (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId)) : publishSelectedStudentIds.push(s.studentId)">
-                              <el-checkbox :model-value="publishSelectedStudentIds.includes(s.studentId)" @click.stop />
-                              <span class="student-name">{{ s.studentName }}</span>
+                          <div
+                            v-loading="publishStudentLoading"
+                            class="publish-student-list-inline"
+                          >
+                            <div
+                              v-for="s in filteredStudentList"
+                              :key="s.studentId"
+                              class="publish-student-item-inline"
+                              :class="{
+                                selected: publishSelectedStudentIds.includes(
+                                  s.studentId
+                                )
+                              }"
+                              @click="
+                                publishSelectedStudentIds.includes(s.studentId)
+                                  ? (publishSelectedStudentIds =
+                                      publishSelectedStudentIds.filter(
+                                        id => id !== s.studentId
+                                      ))
+                                  : publishSelectedStudentIds.push(s.studentId)
+                              "
+                            >
+                              <el-checkbox
+                                :model-value="
+                                  publishSelectedStudentIds.includes(
+                                    s.studentId
+                                  )
+                                "
+                                @click.stop
+                              />
+                              <span class="student-name">{{
+                                s.studentName
+                              }}</span>
                               <span class="student-no">{{ s.studentNo }}</span>
                             </div>
-                            <el-empty v-if="!publishStudentLoading && filteredStudentList.length === 0" description="暂无学生" :image-size="40" />
+                            <el-empty
+                              v-if="
+                                !publishStudentLoading &&
+                                filteredStudentList.length === 0
+                              "
+                              description="暂无学生"
+                              :image-size="40"
+                            />
                           </div>
                         </el-form-item>
                       </el-col>
@@ -2605,24 +3042,60 @@ onBeforeUnmount(() => {
                   <div class="settings-section">
                     <h4 class="section-title">补考设置</h4>
                     <el-row :gutter="20">
-                      <el-col :span="6"><el-form-item label="允许补考"><el-switch v-model="paper.retake.allowRetake" /></el-form-item></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="允许补考"
+                          ><el-switch
+                            v-model="paper.retake.allowRetake" /></el-form-item
+                      ></el-col>
                       <el-col :span="6">
                         <el-form-item label="最大补考次数">
-                          <el-input-number v-model="paper.retake.maxRetakeCount" :min="1" :max="5" :disabled="!paper.retake.allowRetake" style="width: 100%" />
+                          <el-input-number
+                            v-model="paper.retake.maxRetakeCount"
+                            :min="1"
+                            :max="5"
+                            :disabled="!paper.retake.allowRetake"
+                            style="width: 100%"
+                          />
                         </el-form-item>
                       </el-col>
-                      <el-col :span="6"><el-form-item label="使用原题"><el-switch v-model="paper.retake.useOriginalQuestions" :disabled="!paper.retake.allowRetake" /></el-form-item></el-col>
-                      <el-col :span="6"><el-form-item label="取最高分"><el-switch v-model="paper.scoring.useHighestScore" :disabled="!paper.retake.allowRetake" /></el-form-item></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="使用原题"
+                          ><el-switch
+                            v-model="paper.retake.useOriginalQuestions"
+                            :disabled="
+                              !paper.retake.allowRetake
+                            " /></el-form-item
+                      ></el-col>
+                      <el-col :span="6"
+                        ><el-form-item label="取最高分"
+                          ><el-switch
+                            v-model="paper.scoring.useHighestScore"
+                            :disabled="
+                              !paper.retake.allowRetake
+                            " /></el-form-item
+                      ></el-col>
                     </el-row>
                     <el-row v-if="paper.retake.allowRetake" :gutter="20">
                       <el-col :span="12">
                         <el-form-item label="补考开始时间">
-                          <el-date-picker v-model="paper.retake.retakeStartTime" type="datetime" placeholder="选择补考开始时间" style="width: 100%" value-format="YYYY-MM-DD HH:mm:ss" />
+                          <el-date-picker
+                            v-model="paper.retake.retakeStartTime"
+                            type="datetime"
+                            placeholder="选择补考开始时间"
+                            style="width: 100%"
+                            value-format="YYYY-MM-DD HH:mm:ss"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="12">
                         <el-form-item label="补考结束时间">
-                          <el-date-picker v-model="paper.retake.retakeEndTime" type="datetime" placeholder="选择补考结束时间" style="width: 100%" value-format="YYYY-MM-DD HH:mm:ss" />
+                          <el-date-picker
+                            v-model="paper.retake.retakeEndTime"
+                            type="datetime"
+                            placeholder="选择补考结束时间"
+                            style="width: 100%"
+                            value-format="YYYY-MM-DD HH:mm:ss"
+                          />
                         </el-form-item>
                       </el-col>
                     </el-row>
@@ -2649,7 +3122,9 @@ onBeforeUnmount(() => {
               <!-- 题型组标题 -->
               <div class="question-group-header">
                 <div class="group-title-wrapper">
-                  <span class="group-number">{{ getChineseNumber(groupIndex + 1) }}.</span>
+                  <span class="group-number"
+                    >{{ getChineseNumber(groupIndex + 1) }}.</span
+                  >
                   <el-input
                     v-model="group.groupName"
                     class="group-title-input"
@@ -2680,7 +3155,11 @@ onBeforeUnmount(() => {
                   </div>
                   <div class="question-actions">
                     <el-input-number
-                      v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'"
+                      v-if="
+                        question.questionType !== 'slider' &&
+                        question.questionType !== 'nps-rating' &&
+                        question.questionType !== 'star-rating'
+                      "
                       v-model="question.points"
                       :min="0"
                       :max="100"
@@ -2688,7 +3167,15 @@ onBeforeUnmount(() => {
                       controls-position="right"
                       style="width: 100px"
                     />
-                    <span v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'" class="points-label">分</span>
+                    <span
+                      v-if="
+                        question.questionType !== 'slider' &&
+                        question.questionType !== 'nps-rating' &&
+                        question.questionType !== 'star-rating'
+                      "
+                      class="points-label"
+                      >分</span
+                    >
                     <span v-else class="data-collection-label">数据收集</span>
                     <el-button
                       link
@@ -2733,7 +3220,11 @@ onBeforeUnmount(() => {
                   <div class="stem-toolbar-bar">
                     <span class="stem-label">题目</span>
                     <div class="stem-tools">
-                      <el-tooltip v-if="question.questionType === 'input'" content="插入填空占位符 {blank}" placement="top">
+                      <el-tooltip
+                        v-if="question.questionType === 'input'"
+                        content="插入填空占位符 {blank}"
+                        placement="top"
+                      >
                         <el-button
                           size="small"
                           type="primary"
@@ -2744,27 +3235,49 @@ onBeforeUnmount(() => {
                           <span>插入填空</span>
                         </el-button>
                       </el-tooltip>
-                      <LatexEditor @insert="(latex) => insertLatexToStem(question, latex)" />
+                      <LatexEditor
+                        @insert="latex => insertLatexToStem(question, latex)"
+                      />
                     </div>
                   </div>
                   <el-input
-                    :ref="(el) => setStemRef(question.questionId, el)"
+                    :ref="el => setStemRef(question.questionId, el)"
                     v-model="question.stem"
                     type="textarea"
-                    :placeholder="question.questionType === 'input' ? '请输入题目内容，点击[插入填空]按钮添加填空' : '请输入题目内容'"
+                    :placeholder="
+                      question.questionType === 'input'
+                        ? '请输入题目内容，点击[插入填空]按钮添加填空'
+                        : '请输入题目内容'
+                    "
                     :rows="2"
                     maxlength="2000"
                     @input="watchBlankStemChange(question)"
                   />
                   <!-- 填空占位符数量提示 -->
-                  <div v-if="question.questionType === 'input' && question.stem" class="blank-count-hint">
+                  <div
+                    v-if="question.questionType === 'input' && question.stem"
+                    class="blank-count-hint"
+                  >
                     <el-icon><InfoFilled /></el-icon>
                     <span>{{ getBlankCountHint(question) }}</span>
                   </div>
                   <!-- 题干预览（含填空渲染或公式渲染） -->
-                  <div v-if="question.stem && (question.questionType === 'input' || question.stem.includes('$'))" class="stem-preview-box">
+                  <div
+                    v-if="
+                      question.stem &&
+                      (question.questionType === 'input' ||
+                        question.stem.includes('$'))
+                    "
+                    class="stem-preview-box"
+                  >
                     <div class="preview-tag">预览</div>
-                    <div v-if="question.questionType === 'input'" class="preview-body" v-html="renderBlankStem(question.stem, question.blanks, false)" />
+                    <div
+                      v-if="question.questionType === 'input'"
+                      class="preview-body"
+                      v-html="
+                        renderBlankStem(question.stem, question.blanks, false)
+                      "
+                    />
                     <div v-else class="preview-body">
                       <RichContent :content="question.stem" />
                     </div>
@@ -2906,15 +3419,36 @@ onBeforeUnmount(() => {
                 </div>
                 <!-- 矩阵单选/矩阵多选 -->
                 <div
-                  v-if="question.questionType === 'matrix-single' || question.questionType === 'matrix-multiple'"
+                  v-if="
+                    question.questionType === 'matrix-single' ||
+                    question.questionType === 'matrix-multiple'
+                  "
                   class="question-matrix"
                 >
                   <div class="matrix-table-wrapper">
                     <div class="matrix-controls">
-                      <el-button size="small" type="primary" @click="question.rows.push({ key: `R${question.rows.length + 1}`, content: '' })">
+                      <el-button
+                        size="small"
+                        type="primary"
+                        @click="
+                          question.rows.push({
+                            key: `R${question.rows.length + 1}`,
+                            content: ''
+                          })
+                        "
+                      >
                         <el-icon><Plus /></el-icon>添加行
                       </el-button>
-                      <el-button size="small" type="primary" @click="question.columns.push({ key: `C${question.columns.length + 1}`, content: '' })">
+                      <el-button
+                        size="small"
+                        type="primary"
+                        @click="
+                          question.columns.push({
+                            key: `C${question.columns.length + 1}`,
+                            content: ''
+                          })
+                        "
+                      >
                         <el-icon><Plus /></el-icon>添加列
                       </el-button>
                     </div>
@@ -2925,10 +3459,24 @@ onBeforeUnmount(() => {
                             <th class="matrix-corner">
                               <span class="corner-label">行/列</span>
                             </th>
-                            <th v-for="(col, cIdx) in question.columns" :key="col.key" class="matrix-col-header">
+                            <th
+                              v-for="(col, cIdx) in question.columns"
+                              :key="col.key"
+                              class="matrix-col-header"
+                            >
                               <div class="col-header-content">
-                                <el-input v-model="col.content" :placeholder="`列${cIdx + 1}`" size="small" />
-                                <el-button v-if="question.columns.length > 2" link size="small" type="danger" @click="question.columns.splice(cIdx, 1)">
+                                <el-input
+                                  v-model="col.content"
+                                  :placeholder="`列${cIdx + 1}`"
+                                  size="small"
+                                />
+                                <el-button
+                                  v-if="question.columns.length > 2"
+                                  link
+                                  size="small"
+                                  type="danger"
+                                  @click="question.columns.splice(cIdx, 1)"
+                                >
                                   <el-icon><Delete /></el-icon>
                                 </el-button>
                               </div>
@@ -2936,19 +3484,38 @@ onBeforeUnmount(() => {
                           </tr>
                         </thead>
                         <tbody>
-                          <tr v-for="(row, rIdx) in question.rows" :key="row.key">
+                          <tr
+                            v-for="(row, rIdx) in question.rows"
+                            :key="row.key"
+                          >
                             <td class="matrix-row-header">
                               <div class="row-header-content">
-                                <el-input v-model="row.content" :placeholder="`行${rIdx + 1}`" size="small" />
-                                <el-button v-if="question.rows.length > 2" link size="small" type="danger" @click="question.rows.splice(rIdx, 1)">
+                                <el-input
+                                  v-model="row.content"
+                                  :placeholder="`行${rIdx + 1}`"
+                                  size="small"
+                                />
+                                <el-button
+                                  v-if="question.rows.length > 2"
+                                  link
+                                  size="small"
+                                  type="danger"
+                                  @click="question.rows.splice(rIdx, 1)"
+                                >
                                   <el-icon><Delete /></el-icon>
                                 </el-button>
                               </div>
                             </td>
-                            <td v-for="(col, cIdx) in question.columns" :key="`${row.key}-${col.key}`" class="matrix-cell">
+                            <td
+                              v-for="(col, cIdx) in question.columns"
+                              :key="`${row.key}-${col.key}`"
+                              class="matrix-cell"
+                            >
                               <div class="cell-content">
                                 <el-radio
-                                  v-if="question.questionType === 'matrix-single'"
+                                  v-if="
+                                    question.questionType === 'matrix-single'
+                                  "
                                   v-model="question.correctAnswers[row.key]"
                                   :value="col.key"
                                   class="matrix-radio"
@@ -2975,14 +3542,38 @@ onBeforeUnmount(() => {
                   <div class="matching-side">
                     <div class="matching-header">
                       <span class="matching-title">左侧项</span>
-                      <el-button link size="small" type="primary" @click="question.leftItems.push({ key: `L${question.leftItems.length + 1}`, content: '' })">
+                      <el-button
+                        link
+                        size="small"
+                        type="primary"
+                        @click="
+                          question.leftItems.push({
+                            key: `L${question.leftItems.length + 1}`,
+                            content: ''
+                          })
+                        "
+                      >
                         <el-icon><Plus /></el-icon>添加
                       </el-button>
                     </div>
-                    <div v-for="(item, idx) in question.leftItems" :key="item.key" class="matching-item">
+                    <div
+                      v-for="(item, idx) in question.leftItems"
+                      :key="item.key"
+                      class="matching-item"
+                    >
                       <span class="matching-item-key">{{ item.key }}.</span>
-                      <el-input v-model="item.content" :placeholder="`左侧项${idx + 1}`" class="matching-item-input" />
-                      <el-button v-if="question.leftItems.length > 2" link size="small" type="danger" @click="question.leftItems.splice(idx, 1)">
+                      <el-input
+                        v-model="item.content"
+                        :placeholder="`左侧项${idx + 1}`"
+                        class="matching-item-input"
+                      />
+                      <el-button
+                        v-if="question.leftItems.length > 2"
+                        link
+                        size="small"
+                        type="danger"
+                        @click="question.leftItems.splice(idx, 1)"
+                      >
                         <el-icon><Delete /></el-icon>
                       </el-button>
                     </div>
@@ -2990,14 +3581,38 @@ onBeforeUnmount(() => {
                   <div class="matching-side">
                     <div class="matching-header">
                       <span class="matching-title">右侧项</span>
-                      <el-button link size="small" type="primary" @click="question.rightItems.push({ key: `R${question.rightItems.length + 1}`, content: '' })">
+                      <el-button
+                        link
+                        size="small"
+                        type="primary"
+                        @click="
+                          question.rightItems.push({
+                            key: `R${question.rightItems.length + 1}`,
+                            content: ''
+                          })
+                        "
+                      >
                         <el-icon><Plus /></el-icon>添加
                       </el-button>
                     </div>
-                    <div v-for="(item, idx) in question.rightItems" :key="item.key" class="matching-item">
+                    <div
+                      v-for="(item, idx) in question.rightItems"
+                      :key="item.key"
+                      class="matching-item"
+                    >
                       <span class="matching-item-key">{{ item.key }}.</span>
-                      <el-input v-model="item.content" :placeholder="`右侧项${idx + 1}`" class="matching-item-input" />
-                      <el-button v-if="question.rightItems.length > 2" link size="small" type="danger" @click="question.rightItems.splice(idx, 1)">
+                      <el-input
+                        v-model="item.content"
+                        :placeholder="`右侧项${idx + 1}`"
+                        class="matching-item-input"
+                      />
+                      <el-button
+                        v-if="question.rightItems.length > 2"
+                        link
+                        size="small"
+                        type="danger"
+                        @click="question.rightItems.splice(idx, 1)"
+                      >
                         <el-icon><Delete /></el-icon>
                       </el-button>
                     </div>
@@ -3006,8 +3621,14 @@ onBeforeUnmount(() => {
                     <el-icon><InfoFilled /></el-icon>
                     <span>设置正确连线：左侧项 → 右侧项</span>
                   </div>
-                  <div v-for="(item, idx) in question.leftItems" :key="`match-${item.key}`" class="matching-pair">
-                    <span class="matching-pair-label">{{ item.content || item.key }} →</span>
+                  <div
+                    v-for="(item, idx) in question.leftItems"
+                    :key="`match-${item.key}`"
+                    class="matching-pair"
+                  >
+                    <span class="matching-pair-label"
+                      >{{ item.content || item.key }} →</span
+                    >
                     <el-select
                       v-model="question.correctMatches[item.key]"
                       placeholder="选择对应右侧项"
@@ -3036,39 +3657,73 @@ onBeforeUnmount(() => {
                     <el-row :gutter="16">
                       <el-col :span="6">
                         <el-form-item label="最小值">
-                          <el-input-number v-model="question.sliderMin" :min="0" :max="question.sliderMax - 1" size="small" style="width: 100%" />
+                          <el-input-number
+                            v-model="question.sliderMin"
+                            :min="0"
+                            :max="question.sliderMax - 1"
+                            size="small"
+                            style="width: 100%"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="6">
                         <el-form-item label="最大值">
-                          <el-input-number v-model="question.sliderMax" :min="question.sliderMin + 1" :max="1000" size="small" style="width: 100%" />
+                          <el-input-number
+                            v-model="question.sliderMax"
+                            :min="question.sliderMin + 1"
+                            :max="1000"
+                            size="small"
+                            style="width: 100%"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="6">
                         <el-form-item label="步长">
-                          <el-input-number v-model="question.sliderStep" :min="1" :max="question.sliderMax" size="small" style="width: 100%" />
+                          <el-input-number
+                            v-model="question.sliderStep"
+                            :min="1"
+                            :max="question.sliderMax"
+                            size="small"
+                            style="width: 100%"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="6">
                         <el-form-item label="默认值">
-                          <el-input-number v-model="question.sliderDefaultValue" :min="question.sliderMin" :max="question.sliderMax" size="small" style="width: 100%" />
+                          <el-input-number
+                            v-model="question.sliderDefaultValue"
+                            :min="question.sliderMin"
+                            :max="question.sliderMax"
+                            size="small"
+                            style="width: 100%"
+                          />
                         </el-form-item>
                       </el-col>
                     </el-row>
                     <el-row :gutter="16">
                       <el-col :span="12">
                         <el-form-item label="左侧标签">
-                          <el-input v-model="question.sliderLabels.left" placeholder="如：最低" size="small" />
+                          <el-input
+                            v-model="question.sliderLabels.left"
+                            placeholder="如：最低"
+                            size="small"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="12">
                         <el-form-item label="右侧标签">
-                          <el-input v-model="question.sliderLabels.right" placeholder="如：最高" size="small" />
+                          <el-input
+                            v-model="question.sliderLabels.right"
+                            placeholder="如：最高"
+                            size="small"
+                          />
                         </el-form-item>
                       </el-col>
                     </el-row>
                     <div class="slider-preview">
-                      <span class="slider-label-left">{{ question.sliderLabels?.left }}</span>
+                      <span class="slider-label-left">{{
+                        question.sliderLabels?.left
+                      }}</span>
                       <el-slider
                         :model-value="question.sliderDefaultValue"
                         :min="question.sliderMin"
@@ -3077,7 +3732,9 @@ onBeforeUnmount(() => {
                         disabled
                         style="flex: 1"
                       />
-                      <span class="slider-label-right">{{ question.sliderLabels?.right }}</span>
+                      <span class="slider-label-right">{{
+                        question.sliderLabels?.right
+                      }}</span>
                     </div>
                   </div>
                 </div>
@@ -3094,30 +3751,57 @@ onBeforeUnmount(() => {
                     <el-row :gutter="16">
                       <el-col :span="8">
                         <el-form-item label="低分标签">
-                          <el-input v-model="question.npsLabels.low" placeholder="如：完全不推荐" size="small" />
+                          <el-input
+                            v-model="question.npsLabels.low"
+                            placeholder="如：完全不推荐"
+                            size="small"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="8">
                         <el-form-item label="中间标签">
-                          <el-input v-model="question.npsLabels.mid" placeholder="如：一般" size="small" />
+                          <el-input
+                            v-model="question.npsLabels.mid"
+                            placeholder="如：一般"
+                            size="small"
+                          />
                         </el-form-item>
                       </el-col>
                       <el-col :span="8">
                         <el-form-item label="高分标签">
-                          <el-input v-model="question.npsLabels.high" placeholder="如：强烈推荐" size="small" />
+                          <el-input
+                            v-model="question.npsLabels.high"
+                            placeholder="如：强烈推荐"
+                            size="small"
+                          />
                         </el-form-item>
                       </el-col>
                     </el-row>
                     <div class="nps-preview">
                       <div class="nps-scale">
-                        <div v-for="n in 11" :key="n - 1" class="nps-item" :class="{ detractor: n - 1 <= 6, passive: n - 1 >= 7 && n - 1 <= 8, promoter: n - 1 >= 9 }">
+                        <div
+                          v-for="n in 11"
+                          :key="n - 1"
+                          class="nps-item"
+                          :class="{
+                            detractor: n - 1 <= 6,
+                            passive: n - 1 >= 7 && n - 1 <= 8,
+                            promoter: n - 1 >= 9
+                          }"
+                        >
                           {{ n - 1 }}
                         </div>
                       </div>
                       <div class="nps-labels">
-                        <span class="nps-label-low">{{ question.npsLabels?.low }}</span>
-                        <span class="nps-label-mid">{{ question.npsLabels?.mid }}</span>
-                        <span class="nps-label-high">{{ question.npsLabels?.high }}</span>
+                        <span class="nps-label-low">{{
+                          question.npsLabels?.low
+                        }}</span>
+                        <span class="nps-label-mid">{{
+                          question.npsLabels?.mid
+                        }}</span>
+                        <span class="nps-label-high">{{
+                          question.npsLabels?.high
+                        }}</span>
                       </div>
                     </div>
                   </div>
@@ -3133,16 +3817,36 @@ onBeforeUnmount(() => {
                       <span class="data-collection-badge">数据收集题</span>
                     </div>
                     <el-form-item label="星星数量">
-                      <el-input-number v-model="question.starCount" :min="3" :max="10" size="small" />
+                      <el-input-number
+                        v-model="question.starCount"
+                        :min="3"
+                        :max="10"
+                        size="small"
+                      />
                     </el-form-item>
                     <div class="star-labels-config">
-                      <div v-for="(label, idx) in question.starLabels" :key="idx" class="star-label-item">
+                      <div
+                        v-for="(label, idx) in question.starLabels"
+                        :key="idx"
+                        class="star-label-item"
+                      >
                         <span class="star-label-key">{{ idx + 1 }}星：</span>
-                        <el-input v-model="question.starLabels[idx]" :placeholder="`${idx + 1}星描述`" size="small" class="star-label-input" />
+                        <el-input
+                          v-model="question.starLabels[idx]"
+                          :placeholder="`${idx + 1}星描述`"
+                          size="small"
+                          class="star-label-input"
+                        />
                       </div>
                     </div>
                     <div class="star-preview">
-                      <span v-for="n in question.starCount" :key="n" class="star-icon" :class="{ active: n <= 3 }">★</span>
+                      <span
+                        v-for="n in question.starCount"
+                        :key="n"
+                        class="star-icon"
+                        :class="{ active: n <= 3 }"
+                        >★</span
+                      >
                     </div>
                   </div>
                 </div>
@@ -3172,44 +3876,162 @@ onBeforeUnmount(() => {
                         </el-button>
                         <template #dropdown>
                           <el-dropdown-menu>
-                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'radio', stem: '', points: 5, options: [{ key: 'A', content: '' }, { key: 'B', content: '' }, { key: 'C', content: '' }, { key: 'D', content: '' }], correctAnswer: '' })">单选题</el-dropdown-item>
-                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'checkbox', stem: '', points: 5, options: [{ key: 'A', content: '' }, { key: 'B', content: '' }, { key: 'C', content: '' }, { key: 'D', content: '' }], correctAnswers: [] })">多选题</el-dropdown-item>
-                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'input', stem: '', points: 5, blanks: [{ answer: '' }] })">填空题</el-dropdown-item>
-                            <el-dropdown-item @click="question.subQuestions.push({ subId: Date.now(), questionType: 'textarea', stem: '', points: 10, referenceAnswer: '' })">简答题</el-dropdown-item>
+                            <el-dropdown-item
+                              @click="
+                                question.subQuestions.push({
+                                  subId: Date.now(),
+                                  questionType: 'radio',
+                                  stem: '',
+                                  points: 5,
+                                  options: [
+                                    { key: 'A', content: '' },
+                                    { key: 'B', content: '' },
+                                    { key: 'C', content: '' },
+                                    { key: 'D', content: '' }
+                                  ],
+                                  correctAnswer: ''
+                                })
+                              "
+                              >单选题</el-dropdown-item
+                            >
+                            <el-dropdown-item
+                              @click="
+                                question.subQuestions.push({
+                                  subId: Date.now(),
+                                  questionType: 'checkbox',
+                                  stem: '',
+                                  points: 5,
+                                  options: [
+                                    { key: 'A', content: '' },
+                                    { key: 'B', content: '' },
+                                    { key: 'C', content: '' },
+                                    { key: 'D', content: '' }
+                                  ],
+                                  correctAnswers: []
+                                })
+                              "
+                              >多选题</el-dropdown-item
+                            >
+                            <el-dropdown-item
+                              @click="
+                                question.subQuestions.push({
+                                  subId: Date.now(),
+                                  questionType: 'input',
+                                  stem: '',
+                                  points: 5,
+                                  blanks: [{ answer: '' }]
+                                })
+                              "
+                              >填空题</el-dropdown-item
+                            >
+                            <el-dropdown-item
+                              @click="
+                                question.subQuestions.push({
+                                  subId: Date.now(),
+                                  questionType: 'textarea',
+                                  stem: '',
+                                  points: 10,
+                                  referenceAnswer: ''
+                                })
+                              "
+                              >简答题</el-dropdown-item
+                            >
                           </el-dropdown-menu>
                         </template>
                       </el-dropdown>
                     </div>
-                    <div v-for="(sub, sIdx) in question.subQuestions" :key="sub.subId" class="composite-sub-item">
+                    <div
+                      v-for="(sub, sIdx) in question.subQuestions"
+                      :key="sub.subId"
+                      class="composite-sub-item"
+                    >
                       <div class="sub-item-header">
                         <span class="sub-item-index">子题 {{ sIdx + 1 }}</span>
-                        <span class="sub-item-type">{{ sub.questionType === 'radio' ? '单选' : sub.questionType === 'checkbox' ? '多选' : sub.questionType === 'input' ? '填空' : '简答' }}</span>
-                        <el-input-number v-model="sub.points" :min="0" :max="100" size="small" style="width: 80px" />
+                        <span class="sub-item-type">{{
+                          sub.questionType === "radio"
+                            ? "单选"
+                            : sub.questionType === "checkbox"
+                              ? "多选"
+                              : sub.questionType === "input"
+                                ? "填空"
+                                : "简答"
+                        }}</span>
+                        <el-input-number
+                          v-model="sub.points"
+                          :min="0"
+                          :max="100"
+                          size="small"
+                          style="width: 80px"
+                        />
                         <span class="points-label">分</span>
-                        <el-button v-if="question.subQuestions.length > 1" link size="small" type="danger" @click="question.subQuestions.splice(sIdx, 1)">
+                        <el-button
+                          v-if="question.subQuestions.length > 1"
+                          link
+                          size="small"
+                          type="danger"
+                          @click="question.subQuestions.splice(sIdx, 1)"
+                        >
                           <el-icon><Delete /></el-icon>
                         </el-button>
                       </div>
-                      <el-input v-model="sub.stem" type="textarea" placeholder="请输入子题题干" :rows="2" class="sub-item-stem" />
+                      <el-input
+                        v-model="sub.stem"
+                        type="textarea"
+                        placeholder="请输入子题题干"
+                        :rows="2"
+                        class="sub-item-stem"
+                      />
                       <!-- 子题选项 -->
                       <div v-if="sub.options" class="sub-item-options">
-                        <div v-for="(opt, oIdx) in sub.options" :key="opt.key" class="sub-option-item">
-                          <el-radio v-if="sub.questionType === 'radio'" v-model="sub.correctAnswer" :value="opt.key" />
-                          <el-checkbox v-if="sub.questionType === 'checkbox'" v-model="sub.correctAnswers" :value="opt.key" />
+                        <div
+                          v-for="(opt, oIdx) in sub.options"
+                          :key="opt.key"
+                          class="sub-option-item"
+                        >
+                          <el-radio
+                            v-if="sub.questionType === 'radio'"
+                            v-model="sub.correctAnswer"
+                            :value="opt.key"
+                          />
+                          <el-checkbox
+                            v-if="sub.questionType === 'checkbox'"
+                            v-model="sub.correctAnswers"
+                            :value="opt.key"
+                          />
                           <span>{{ opt.key }}.</span>
-                          <el-input v-model="opt.content" :placeholder="`选项${opt.key}`" size="small" />
+                          <el-input
+                            v-model="opt.content"
+                            :placeholder="`选项${opt.key}`"
+                            size="small"
+                          />
                         </div>
                       </div>
                       <!-- 子题填空 -->
                       <div v-if="sub.blanks" class="sub-item-blanks">
-                        <div v-for="(blank, bIdx) in sub.blanks" :key="bIdx" class="sub-blank-item">
+                        <div
+                          v-for="(blank, bIdx) in sub.blanks"
+                          :key="bIdx"
+                          class="sub-blank-item"
+                        >
                           <span>第{{ bIdx + 1 }}空：</span>
-                          <el-input v-model="blank.answer" placeholder="正确答案" size="small" />
+                          <el-input
+                            v-model="blank.answer"
+                            placeholder="正确答案"
+                            size="small"
+                          />
                         </div>
                       </div>
                       <!-- 子题简答 -->
-                      <div v-if="sub.questionType === 'textarea'" class="sub-item-ref">
-                        <el-input v-model="sub.referenceAnswer" type="textarea" placeholder="参考答案" :rows="2" />
+                      <div
+                        v-if="sub.questionType === 'textarea'"
+                        class="sub-item-ref"
+                      >
+                        <el-input
+                          v-model="sub.referenceAnswer"
+                          type="textarea"
+                          placeholder="参考答案"
+                          :rows="2"
+                        />
                       </div>
                     </div>
                   </div>
@@ -3221,14 +4043,38 @@ onBeforeUnmount(() => {
                 >
                   <div class="ordering-header">
                     <span class="ordering-title">排序项</span>
-                    <el-button link size="small" type="primary" @click="question.items.push({ key: String(question.items.length + 1), content: '' })">
+                    <el-button
+                      link
+                      size="small"
+                      type="primary"
+                      @click="
+                        question.items.push({
+                          key: String(question.items.length + 1),
+                          content: ''
+                        })
+                      "
+                    >
                       <el-icon><Plus /></el-icon>添加项
                     </el-button>
                   </div>
-                  <div v-for="(item, idx) in question.items" :key="item.key" class="ordering-item">
+                  <div
+                    v-for="(item, idx) in question.items"
+                    :key="item.key"
+                    class="ordering-item"
+                  >
                     <span class="ordering-item-key">{{ idx + 1 }}.</span>
-                    <el-input v-model="item.content" :placeholder="`排序项${idx + 1}`" class="ordering-item-input" />
-                    <el-button v-if="question.items.length > 2" link size="small" type="danger" @click="question.items.splice(idx, 1)">
+                    <el-input
+                      v-model="item.content"
+                      :placeholder="`排序项${idx + 1}`"
+                      class="ordering-item-input"
+                    />
+                    <el-button
+                      v-if="question.items.length > 2"
+                      link
+                      size="small"
+                      type="danger"
+                      @click="question.items.splice(idx, 1)"
+                    >
                       <el-icon><Delete /></el-icon>
                     </el-button>
                   </div>
@@ -3247,7 +4093,14 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <!-- 解析（仅显示给有答案的题型） -->
-                <div v-if="question.questionType !== 'slider' && question.questionType !== 'nps-rating' && question.questionType !== 'star-rating'" class="question-analysis">
+                <div
+                  v-if="
+                    question.questionType !== 'slider' &&
+                    question.questionType !== 'nps-rating' &&
+                    question.questionType !== 'star-rating'
+                  "
+                  class="question-analysis"
+                >
                   <el-collapse>
                     <el-collapse-item title="题目解析" name="analysis">
                       <el-input
@@ -3264,7 +4117,10 @@ onBeforeUnmount(() => {
 
               <!-- 添加更多题目按钮 -->
               <div class="add-question-btn">
-                <el-button type="primary" link @click="addQuestion(group.groupId)"
+                <el-button
+                  type="primary"
+                  link
+                  @click="addQuestion(group.groupId)"
                   ><el-icon><Plus /></el-icon>继续添加{{
                     group.groupName
                   }}</el-button
@@ -3358,7 +4214,12 @@ onBeforeUnmount(() => {
               </template>
             </el-input>
             <el-button size="small" @click="toggleSelectAllStudents">
-              {{ publishSelectedStudentIds.length === filteredStudentList.length && filteredStudentList.length > 0 ? '取消全选' : '全选' }}
+              {{
+                publishSelectedStudentIds.length ===
+                  filteredStudentList.length && filteredStudentList.length > 0
+                  ? "取消全选"
+                  : "全选"
+              }}
             </el-button>
             <span class="publish-hint">
               已选 {{ publishSelectedStudentIds.length }} 人
@@ -3369,10 +4230,15 @@ onBeforeUnmount(() => {
               v-for="s in filteredStudentList"
               :key="s.studentId"
               class="publish-student-item"
-              :class="{ selected: publishSelectedStudentIds.includes(s.studentId) }"
+              :class="{
+                selected: publishSelectedStudentIds.includes(s.studentId)
+              }"
               @click="
                 publishSelectedStudentIds.includes(s.studentId)
-                  ? (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId))
+                  ? (publishSelectedStudentIds =
+                      publishSelectedStudentIds.filter(
+                        id => id !== s.studentId
+                      ))
                   : publishSelectedStudentIds.push(s.studentId)
               "
             >
@@ -3383,12 +4249,17 @@ onBeforeUnmount(() => {
                   (val: boolean) =>
                     val
                       ? publishSelectedStudentIds.push(s.studentId)
-                      : (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId))
+                      : (publishSelectedStudentIds =
+                          publishSelectedStudentIds.filter(
+                            id => id !== s.studentId
+                          ))
                 "
               />
               <span class="student-name">{{ s.studentName }}</span>
               <span class="student-no">{{ s.studentNo }}</span>
-              <span v-if="s.className" class="student-class">{{ s.className }}</span>
+              <span v-if="s.className" class="student-class">{{
+                s.className
+              }}</span>
             </div>
             <el-empty
               v-if="!publishStudentLoading && filteredStudentList.length === 0"
@@ -3423,11 +4294,337 @@ onBeforeUnmount(() => {
 </template>
 
 <style lang="scss" scoped>
+$light-bg: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+$light-card-bg: rgba(255, 255, 255, 0.95);
+$light-text-primary: #303133;
+$light-text-secondary: #606266;
+$light-border: #e4e7ed;
+
+$dark-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+$dark-card-bg: rgba(30, 41, 59, 0.8);
+$dark-text-primary: #f1f5f9;
+$dark-text-secondary: #94a3b8;
+$dark-border: rgba(255, 255, 255, 0.1);
+
 .exam-paper-editor {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+  background: $light-bg;
   display: flex;
   flex-direction: column;
+
+  &.is-dark {
+    background: $dark-bg;
+
+    .editor-fixed-top {
+      background: rgba(30, 41, 59, 0.95);
+      border-color: $dark-border;
+    }
+
+    .editor-header {
+      border-bottom-color: $dark-border;
+
+      .logo-text {
+        background: linear-gradient(135deg, #00bfa5 0%, #00d4b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .title-input :deep(.el-input__wrapper) {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: $dark-border;
+        color: $dark-text-primary;
+
+        &:hover {
+          border-color: #00bfa5;
+        }
+      }
+
+      .auto-save-status {
+        background: rgba(15, 23, 42, 0.6);
+        color: $dark-text-secondary;
+      }
+    }
+
+    .question-toolbar {
+      background: linear-gradient(
+        135deg,
+        rgba(15, 23, 42, 0.8) 0%,
+        rgba(30, 41, 59, 0.6) 100%
+      );
+
+      .toolbar-hint {
+        color: $dark-text-secondary;
+      }
+
+      .type-item {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: $dark-border;
+
+        &:hover {
+          border-color: #00bfa5;
+        }
+
+        .type-label {
+          color: $dark-text-secondary;
+        }
+
+        &:hover .type-label {
+          color: #00bfa5;
+        }
+      }
+    }
+
+    .editor-outline {
+      background: linear-gradient(
+        180deg,
+        rgba(30, 41, 59, 0.95) 0%,
+        rgba(30, 41, 59, 0.85) 100%
+      );
+      border-right-color: $dark-border;
+
+      .outline-header {
+        background: linear-gradient(
+          135deg,
+          rgba(15, 23, 42, 0.8) 0%,
+          rgba(30, 41, 59, 0.6) 100%
+        );
+        border-bottom-color: $dark-border;
+
+        .outline-title {
+          color: $dark-text-primary;
+        }
+      }
+
+      .outline-summary {
+        color: $dark-text-secondary;
+        background: rgba(0, 191, 165, 0.15);
+      }
+
+      .outline-group {
+        border-color: $dark-border;
+        background: rgba(30, 41, 59, 0.6);
+
+        &:hover {
+          border-color: #00bfa5;
+        }
+
+        .outline-group-header {
+          background: linear-gradient(
+            135deg,
+            rgba(0, 191, 165, 0.15) 0%,
+            rgba(0, 191, 165, 0.08) 100%
+          );
+          border-bottom-color: $dark-border;
+
+          .group-name {
+            color: $dark-text-primary;
+          }
+
+          .group-item-count {
+            background: rgba(15, 23, 42, 0.6);
+            color: $dark-text-secondary;
+          }
+        }
+
+        .outline-item {
+          background: rgba(30, 41, 59, 0.5);
+          border-bottom-color: $dark-border;
+
+          &:hover {
+            background: rgba(0, 191, 165, 0.15);
+          }
+
+          &.active {
+            background: linear-gradient(
+              135deg,
+              rgba(0, 191, 165, 0.25) 0%,
+              rgba(0, 191, 165, 0.15) 100%
+            );
+          }
+
+          .item-points {
+            background: rgba(15, 23, 42, 0.6);
+          }
+        }
+      }
+    }
+
+    .editor-content {
+      background-color: rgba(15, 23, 42, 0.85);
+
+      .paper-canvas {
+        background: $dark-card-bg;
+      }
+
+      .ai-analysis-panel,
+      .settings-panel {
+        border-color: $dark-border;
+
+        .settings-toggle {
+          background: linear-gradient(
+            135deg,
+            rgba(0, 191, 165, 0.15) 0%,
+            rgba(0, 191, 165, 0.08) 100%
+          );
+          color: $dark-text-primary;
+
+          &:hover {
+            background: linear-gradient(
+              135deg,
+              rgba(0, 191, 165, 0.25) 0%,
+              rgba(0, 191, 165, 0.15) 100%
+            );
+          }
+        }
+
+        .settings-content {
+          background: rgba(15, 23, 42, 0.6);
+        }
+      }
+
+      .ai-analysis-result {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: $dark-border;
+
+        .result-header {
+          border-bottom-color: $dark-border;
+
+          .result-title {
+            color: $dark-text-primary;
+          }
+        }
+
+        .metric-item {
+          background: rgba(15, 23, 42, 0.6);
+
+          .metric-label {
+            color: $dark-text-secondary;
+          }
+
+          .metric-value {
+            color: $dark-text-primary;
+          }
+        }
+      }
+    }
+
+    .question-group-header {
+      background: linear-gradient(
+        135deg,
+        rgba(0, 191, 165, 0.15) 0%,
+        rgba(0, 191, 165, 0.08) 100%
+      );
+      border-color: rgba(0, 191, 165, 0.3);
+
+      .group-title-input :deep(.el-input__wrapper) {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: rgba(0, 191, 165, 0.3);
+        color: $dark-text-primary;
+      }
+
+      .group-count {
+        background: rgba(15, 23, 42, 0.6);
+        color: $dark-text-secondary;
+      }
+    }
+
+    .question-card {
+      background: linear-gradient(
+        135deg,
+        rgba(30, 41, 59, 0.95) 0%,
+        rgba(30, 41, 59, 0.85) 100%
+      );
+      border-color: $dark-border;
+
+      &:hover,
+      &.active {
+        border-color: #00bfa5;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 191, 165, 0.08) 0%,
+          rgba(30, 41, 59, 0.95) 100%
+        );
+      }
+
+      .question-header {
+        border-bottom-color: $dark-border;
+
+        .question-index,
+        .points-label {
+          color: $dark-text-primary;
+        }
+      }
+
+      .stem-label,
+      .options-title,
+      .blanks-title,
+      .reference-title {
+        color: $dark-text-secondary;
+      }
+
+      .blank-count-hint {
+        background: rgba(0, 191, 165, 0.15);
+        border-left-color: #00bfa5;
+      }
+
+      .stem-preview-box {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: $dark-border;
+      }
+
+      .correct-answer-hint {
+        background: rgba(15, 23, 42, 0.6);
+        color: $dark-text-secondary;
+      }
+
+      :deep(.el-collapse) {
+        .el-collapse-item__header {
+          background: rgba(15, 23, 42, 0.6);
+          color: $dark-text-secondary;
+        }
+      }
+    }
+
+    .preview-dialog {
+      :deep(.el-dialog) {
+        background: $dark-card-bg;
+      }
+
+      .preview-content {
+        background: rgba(15, 23, 42, 0.8);
+      }
+
+      .preview-paper {
+        background: $dark-card-bg;
+
+        .preview-paper-info {
+          border-bottom-color: $dark-border;
+          color: $dark-text-secondary;
+        }
+
+        .preview-group-title {
+          background: linear-gradient(
+            135deg,
+            rgba(0, 191, 165, 0.15) 0%,
+            rgba(0, 191, 165, 0.08) 100%
+          );
+
+          .preview-group-name {
+            color: $dark-text-primary;
+          }
+        }
+
+        .preview-question-stem {
+          color: $dark-text-primary;
+        }
+
+        .preview-answer-area {
+          border-color: $dark-border;
+        }
+      }
+    }
+  }
 }
 
 .editor-fixed-top {
@@ -3569,13 +4766,18 @@ onBeforeUnmount(() => {
       overflow: hidden;
 
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
         transition: left 0.5s;
       }
 
@@ -3600,7 +4802,11 @@ onBeforeUnmount(() => {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(0, 191, 165, 0.15) 0%,
+          rgba(0, 191, 165, 0.08) 100%
+        );
         border-radius: 10px;
         margin-bottom: 8px;
         transition: all 0.3s ease;
@@ -3614,7 +4820,11 @@ onBeforeUnmount(() => {
       }
 
       &:hover .type-icon-wrapper {
-        background: linear-gradient(135deg, rgba(0, 191, 165, 0.25) 0%, rgba(0, 191, 165, 0.15) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(0, 191, 165, 0.25) 0%,
+          rgba(0, 191, 165, 0.15) 100%
+        );
         transform: scale(1.1);
 
         .type-icon {
@@ -3642,7 +4852,11 @@ onBeforeUnmount(() => {
 }
 .editor-outline {
   width: 280px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.85) 100%
+  );
   border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
@@ -3716,7 +4930,11 @@ onBeforeUnmount(() => {
           align-items: center;
           gap: 8px;
           padding: 10px 12px;
-          background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
+          background: linear-gradient(
+            135deg,
+            rgba(0, 191, 165, 0.08) 0%,
+            rgba(0, 191, 165, 0.04) 100%
+          );
           border-bottom: 1px solid #e4e7ed;
           cursor: grab;
           user-select: none;
@@ -3786,7 +5004,11 @@ onBeforeUnmount(() => {
             }
 
             &.active {
-              background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+              background: linear-gradient(
+                135deg,
+                rgba(0, 191, 165, 0.15) 0%,
+                rgba(0, 191, 165, 0.08) 100%
+              );
               color: #00bfa5;
             }
 
@@ -3837,7 +5059,11 @@ onBeforeUnmount(() => {
       }
 
       &.active {
-        background: linear-gradient(135deg, rgba(0, 191, 165, 0.15) 0%, rgba(0, 191, 165, 0.08) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(0, 191, 165, 0.15) 0%,
+          rgba(0, 191, 165, 0.08) 100%
+        );
         border-color: #00bfa5;
         color: #00bfa5;
         box-shadow: 0 2px 8px rgba(0, 191, 165, 0.1);
@@ -4092,17 +5318,38 @@ onBeforeUnmount(() => {
       font-size: 14px;
       font-weight: 500;
       color: #303133;
-      &:hover { background: #f0f0f0; }
-      .toggle-arrow { transition: transform 0.3s; margin-left: auto; &.expanded { transform: rotate(180deg); } }
+      &:hover {
+        background: #f0f0f0;
+      }
+      .toggle-arrow {
+        transition: transform 0.3s;
+        margin-left: auto;
+        &.expanded {
+          transform: rotate(180deg);
+        }
+      }
     }
     .settings-content {
       padding: 20px;
       .settings-section {
         margin-bottom: 20px;
-        &:last-child { margin-bottom: 0; }
-        .section-title { font-size: 14px; font-weight: 600; color: #00bfa5; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e4e7ed; }
+        &:last-child {
+          margin-bottom: 0;
+        }
+        .section-title {
+          font-size: 14px;
+          font-weight: 600;
+          color: #00bfa5;
+          margin: 0 0 12px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #e4e7ed;
+        }
       }
-      .setting-hint { font-size: 12px; color: #909399; margin-top: 4px; }
+      .setting-hint {
+        font-size: 12px;
+        color: #909399;
+        margin-top: 4px;
+      }
       .publish-student-toolbar {
         display: flex;
         align-items: center;
@@ -4154,7 +5401,11 @@ onBeforeUnmount(() => {
     justify-content: space-between;
     padding: 16px 24px;
     margin: 32px 0 24px 0;
-    background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(0, 191, 165, 0.08) 0%,
+      rgba(0, 191, 165, 0.04) 100%
+    );
     border-radius: 8px;
     border: 1px solid rgba(0, 191, 165, 0.2);
 
@@ -4207,7 +5458,11 @@ onBeforeUnmount(() => {
   }
 
   .question-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.85) 100%
+    );
     border: 2px solid #e4e7ed;
     border-radius: 12px;
     padding: 24px;
@@ -4226,7 +5481,11 @@ onBeforeUnmount(() => {
     &.active {
       border-color: #00bfa5;
       box-shadow: 0 8px 24px rgba(0, 191, 165, 0.15);
-      background: linear-gradient(135deg, rgba(0, 191, 165, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
+      background: linear-gradient(
+        135deg,
+        rgba(0, 191, 165, 0.05) 0%,
+        rgba(255, 255, 255, 0.95) 100%
+      );
     }
     .question-header {
       display: flex;
@@ -4534,9 +5793,18 @@ onBeforeUnmount(() => {
               font-size: 13px;
               font-weight: 500;
               cursor: default;
-              &.detractor { background: #fde2e2; color: #f56c6c; }
-              &.passive { background: #faecd8; color: #e6a23c; }
-              &.promoter { background: #e1f3d8; color: #67c23a; }
+              &.detractor {
+                background: #fde2e2;
+                color: #f56c6c;
+              }
+              &.passive {
+                background: #faecd8;
+                color: #e6a23c;
+              }
+              &.promoter {
+                background: #e1f3d8;
+                color: #67c23a;
+              }
             }
           }
           .nps-labels {
@@ -4571,7 +5839,9 @@ onBeforeUnmount(() => {
               color: #606266;
               min-width: 40px;
             }
-            .star-label-input { flex: 1; }
+            .star-label-input {
+              flex: 1;
+            }
           }
         }
         .star-preview {
@@ -4584,7 +5854,9 @@ onBeforeUnmount(() => {
           .star-icon {
             font-size: 24px;
             color: #dcdfe6;
-            &.active { color: #f7ba2a; }
+            &.active {
+              color: #f7ba2a;
+            }
           }
         }
       }
@@ -4638,7 +5910,9 @@ onBeforeUnmount(() => {
               border-radius: 3px;
             }
           }
-          .sub-item-stem { margin-bottom: 10px; }
+          .sub-item-stem {
+            margin-bottom: 10px;
+          }
           .sub-item-options {
             .sub-option-item {
               display: flex;
@@ -4656,7 +5930,9 @@ onBeforeUnmount(() => {
               font-size: 13px;
             }
           }
-          .sub-item-ref { margin-top: 8px; }
+          .sub-item-ref {
+            margin-top: 8px;
+          }
         }
       }
     }
@@ -4807,7 +6083,11 @@ onBeforeUnmount(() => {
         gap: 8px;
         margin: 24px 0 16px 0;
         padding: 12px 16px;
-        background: linear-gradient(135deg, rgba(0, 191, 165, 0.08) 0%, rgba(0, 191, 165, 0.04) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(0, 191, 165, 0.08) 0%,
+          rgba(0, 191, 165, 0.04) 100%
+        );
         border-radius: 6px;
         .preview-group-number {
           font-size: 18px;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getMyTemplates,
@@ -14,6 +15,7 @@ defineOptions({
 });
 
 const router = useRouter();
+const { isDark } = useDark();
 
 // 系统模板
 const systemTemplates = ref([
@@ -127,10 +129,34 @@ const systemTemplatePreviewData: Record<string, any> = {
     totalQuestions: 30,
     totalPoints: 100,
     questionGroups: [
-      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 2, subtotal: 20 },
-      { groupName: "二、多选题", questionType: "checkbox", count: 5, pointsPerQuestion: 4, subtotal: 20 },
-      { groupName: "三、填空题", questionType: "input", count: 5, pointsPerQuestion: 4, subtotal: 20 },
-      { groupName: "四、简答题", questionType: "textarea", count: 10, pointsPerQuestion: 4, subtotal: 40 }
+      {
+        groupName: "一、单选题",
+        questionType: "radio",
+        count: 10,
+        pointsPerQuestion: 2,
+        subtotal: 20
+      },
+      {
+        groupName: "二、多选题",
+        questionType: "checkbox",
+        count: 5,
+        pointsPerQuestion: 4,
+        subtotal: 20
+      },
+      {
+        groupName: "三、填空题",
+        questionType: "input",
+        count: 5,
+        pointsPerQuestion: 4,
+        subtotal: 20
+      },
+      {
+        groupName: "四、简答题",
+        questionType: "textarea",
+        count: 10,
+        pointsPerQuestion: 4,
+        subtotal: 40
+      }
     ]
   },
   quick: {
@@ -140,8 +166,20 @@ const systemTemplatePreviewData: Record<string, any> = {
     totalQuestions: 5,
     totalPoints: 25,
     questionGroups: [
-      { groupName: "一、单选题", questionType: "radio", count: 3, pointsPerQuestion: 5, subtotal: 15 },
-      { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10 }
+      {
+        groupName: "一、单选题",
+        questionType: "radio",
+        count: 3,
+        pointsPerQuestion: 5,
+        subtotal: 15
+      },
+      {
+        groupName: "二、多选题",
+        questionType: "checkbox",
+        count: 2,
+        pointsPerQuestion: 5,
+        subtotal: 10
+      }
     ]
   },
   comprehensive: {
@@ -151,8 +189,20 @@ const systemTemplatePreviewData: Record<string, any> = {
     totalQuestions: 15,
     totalPoints: 75,
     questionGroups: [
-      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 3, subtotal: 30 },
-      { groupName: "二、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 9, subtotal: 45 }
+      {
+        groupName: "一、单选题",
+        questionType: "radio",
+        count: 10,
+        pointsPerQuestion: 3,
+        subtotal: 30
+      },
+      {
+        groupName: "二、简答题",
+        questionType: "textarea",
+        count: 5,
+        pointsPerQuestion: 9,
+        subtotal: 45
+      }
     ]
   },
   survey: {
@@ -162,10 +212,34 @@ const systemTemplatePreviewData: Record<string, any> = {
     totalQuestions: 22,
     totalPoints: 120,
     questionGroups: [
-      { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 4, subtotal: 40 },
-      { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10 },
-      { groupName: "三、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 10, subtotal: 50 },
-      { groupName: "四、判断题", questionType: "judge", count: 5, pointsPerQuestion: 4, subtotal: 20 }
+      {
+        groupName: "一、单选题",
+        questionType: "radio",
+        count: 10,
+        pointsPerQuestion: 4,
+        subtotal: 40
+      },
+      {
+        groupName: "二、多选题",
+        questionType: "checkbox",
+        count: 2,
+        pointsPerQuestion: 5,
+        subtotal: 10
+      },
+      {
+        groupName: "三、简答题",
+        questionType: "textarea",
+        count: 5,
+        pointsPerQuestion: 10,
+        subtotal: 50
+      },
+      {
+        groupName: "四、判断题",
+        questionType: "judge",
+        count: 5,
+        pointsPerQuestion: 4,
+        subtotal: 20
+      }
     ]
   }
 };
@@ -266,7 +340,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="templates-page">
+  <div class="templates-page" :class="{ 'is-dark': isDark }">
     <div class="page-header">
       <div class="header-left">
         <h2>试卷模板</h2>
@@ -424,8 +498,7 @@ onMounted(() => {
                   {{ group.subtotal }}分</span
                 >
                 <el-tag size="small" type="info">{{
-                  questionTypeNameMap[group.questionType] ||
-                  group.questionType
+                  questionTypeNameMap[group.questionType] || group.questionType
                 }}</el-tag>
               </div>
               <div
@@ -500,8 +573,94 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+$light-text-primary: #303133;
+$light-text-secondary: #606266;
+$dark-text-primary: #f1f5f9;
+$dark-text-secondary: #94a3b8;
+$dark-border: rgba(255, 255, 255, 0.1);
+
 .templates-page {
-  /* container */
+  &.is-dark {
+    .page-header {
+      h2 {
+        color: $dark-text-primary;
+      }
+      p {
+        color: $dark-text-secondary;
+      }
+    }
+
+    .template-card {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: $dark-border;
+
+      .template-cover {
+        &.system {
+          background: linear-gradient(
+            135deg,
+            rgba(0, 191, 165, 0.2) 0%,
+            rgba(0, 191, 165, 0.1) 100%
+          );
+        }
+        &.private {
+          background: linear-gradient(
+            135deg,
+            rgba(64, 158, 255, 0.2) 0%,
+            rgba(64, 158, 255, 0.1) 100%
+          );
+        }
+      }
+
+      .template-info {
+        .template-name {
+          color: $dark-text-primary;
+        }
+        .template-desc {
+          color: $dark-text-secondary;
+        }
+        .template-stats {
+          color: $dark-text-secondary;
+        }
+      }
+
+      .template-actions {
+        border-top-color: $dark-border;
+      }
+    }
+
+    .preview-header {
+      .preview-desc {
+        color: $dark-text-secondary;
+      }
+      .preview-summary {
+        color: $dark-text-primary;
+      }
+    }
+
+    .preview-groups .preview-group {
+      background: rgba(15, 23, 42, 0.6);
+
+      .group-header {
+        .group-name {
+          color: $dark-text-primary;
+        }
+        .group-meta {
+          color: $dark-text-secondary;
+        }
+      }
+
+      .sample-question {
+        border-top-color: rgba(255, 255, 255, 0.1);
+
+        .sample-stem {
+          color: $dark-text-primary;
+        }
+        .sample-option {
+          color: $dark-text-secondary;
+        }
+      }
+    }
+  }
 }
 
 .page-header {

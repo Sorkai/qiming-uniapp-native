@@ -552,8 +552,12 @@ const handleDeleteFolder = (folder: any) => {
 };
 
 const selectFolder = (folderId: number | string | null) => {
-  const id = Number(folderId);
-  selectedFolderId.value = id === 0 ? null : id;
+  if (folderId === null) {
+    selectedFolderId.value = null;
+  } else {
+    const id = typeof folderId === "number" ? folderId : Number(folderId);
+    selectedFolderId.value = id === 0 ? null : id;
+  }
   currentPage.value = 1;
   fetchQuestions();
 };
@@ -1366,14 +1370,34 @@ $radius-lg: 16px;
       border-color: $dark-border;
     }
 
-    .page-title,
-    .stat-value {
-      color: $dark-text-primary;
+    .page-header {
+      .page-title {
+        color: $dark-text-primary;
+      }
+
+      .page-desc {
+        color: $dark-text-secondary;
+      }
     }
 
-    .page-desc,
-    .stat-label {
-      color: $dark-text-secondary;
+    .stat-card {
+      .stat-info {
+        .stat-value {
+          color: $dark-text-primary;
+        }
+
+        .stat-label {
+          color: $dark-text-secondary;
+        }
+      }
+    }
+
+    .folder-sidebar {
+      .folder-header {
+        .folder-title {
+          color: $dark-text-primary;
+        }
+      }
     }
   }
 

@@ -554,6 +554,10 @@ $radius-xl: 20px;
   transition: all 0.3s ease;
 
   &.is-dark {
+    .welcome-section {
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
     .stat-card {
       background: $dark-card-bg;
       border-color: $dark-border;
@@ -563,12 +567,14 @@ $radius-xl: 20px;
         box-shadow: $dark-shadow-lg;
       }
 
-      .stat-value {
-        color: $dark-text-primary;
-      }
+      .stat-info {
+        .stat-value {
+          color: $dark-text-primary;
+        }
 
-      .stat-label {
-        color: $dark-text-secondary;
+        .stat-label {
+          color: $dark-text-secondary;
+        }
       }
     }
 
@@ -597,6 +603,14 @@ $radius-xl: 20px;
       .template-desc {
         color: $dark-text-secondary;
       }
+
+      .template-meta {
+        color: $dark-text-muted;
+      }
+
+      .template-arrow {
+        color: $dark-text-muted;
+      }
     }
 
     .paper-item {
@@ -611,16 +625,22 @@ $radius-xl: 20px;
         color: #818cf8;
       }
 
-      .paper-title {
-        color: $dark-text-primary;
-      }
+      .paper-info {
+        .paper-title {
+          color: $dark-text-primary;
+        }
 
-      .paper-meta {
-        color: $dark-text-secondary;
-      }
+        .paper-meta {
+          color: $dark-text-secondary;
 
-      .paper-time {
-        color: $dark-text-muted;
+          .divider {
+            color: $dark-border;
+          }
+        }
+
+        .paper-time {
+          color: $dark-text-muted;
+        }
       }
     }
 

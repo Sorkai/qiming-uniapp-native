@@ -30,7 +30,11 @@ const imageAccept = "image/jpeg,image/png,image/gif,image/webp,image/svg+xml";
 const audioAccept = "audio/mpeg,audio/wav,audio/ogg,audio/mp3";
 const videoAccept = "video/mp4,video/webm,video/ogg";
 
-const acceptMap = { image: imageAccept, audio: audioAccept, video: videoAccept };
+const acceptMap = {
+  image: imageAccept,
+  audio: audioAccept,
+  video: videoAccept
+};
 const labelMap = { image: "图片", audio: "音频", video: "视频" };
 const maxSizeMap = { image: 5, audio: 20, video: 100 }; // MB
 
@@ -100,7 +104,7 @@ const toggleAudio = (url: string) => {
   <div class="rich-media-uploader">
     <div class="media-tabs">
       <div
-        v-for="tab in (['image', 'audio', 'video'] as const)"
+        v-for="tab in ['image', 'audio', 'video'] as const"
         :key="tab"
         class="media-tab"
         :class="{ active: activeTab === tab }"
@@ -208,7 +212,12 @@ const toggleAudio = (url: string) => {
             :key="idx"
             class="media-item video-item"
           >
-            <video :src="item.url" class="video-preview" controls preload="metadata" />
+            <video
+              :src="item.url"
+              class="video-preview"
+              controls
+              preload="metadata"
+            />
             <div class="video-info">
               <span class="media-name">{{ item.name }}</span>
               <span class="media-size">{{ formatSize(item.size) }}</span>

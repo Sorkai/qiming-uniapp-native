@@ -83,14 +83,6 @@ export interface GetDiscussionsParams {
   authorId?: string;
 }
 
-/** 后端API期望的参数格式 */
-interface BackendDiscussionsParams {
-  pageNum: number;
-  pageSize?: number;
-  sortBy?: "latest" | "hot" | "most_replies";
-  tag?: string;
-}
-
 /** 后端返回的帖子列表项 */
 interface BackendPostListItem {
   postId: number;

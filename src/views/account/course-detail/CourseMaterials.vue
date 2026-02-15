@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import CourseHeader from "./CourseHeader.vue";
-import logo from "@/assets/kecheng.jpg";
+import logo from "@/assets/iconss/document-add-svgrepo-com.svg?url";
 
 // Props
 const props = defineProps<{

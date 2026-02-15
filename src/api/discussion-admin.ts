@@ -53,12 +53,7 @@ export async function getUserAvatars(
   }
   return result;
 }
-import type {
-  DiscussionPost,
-  Pagination,
-  PostStatus,
-  Author
-} from "./discussion";
+import type { DiscussionPost, Pagination, PostStatus } from "./discussion";
 
 //==================== 后端返回类型定义 ====================
 

@@ -1,9 +1,22 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import {
+  ref,
+  reactive,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useDark } from "@pureadmin/utils";
-import { startExam, saveAnswer, submitExam } from "@/api/examPaper";
+import {
+  startExam,
+  saveAnswer,
+  saveDuration,
+  submitExam
+} from "@/api/examPaper";
+import RichContent from "@/views/exam-paper/editor/components/RichContent.vue";
 
 defineOptions({
   name: "ExamPaperDo"
@@ -30,12 +43,12 @@ const examData = reactive({
 // 当前题目索引
 const currentQuestionIndex = ref(0);
 
-// 学生答案（包含答题时长）
+// 学生答案（使用时间戳记录）
 interface AnswerRecord {
   questionId: number;
   answer: string | string[];
-  duration: number; // 该题累计答题时长（秒）
-  lastEnterTime: number; // 最后进入该题的时间戳
+  duration: number; // 该题累计答题时长（秒，从后端获取）
+  enterTime: number; // 进入该题的时间戳（毫秒）
 }
 const answers = ref<Map<number, AnswerRecord>>(new Map());
 
@@ -44,6 +57,9 @@ let examTimer: ReturnType<typeof setInterval> | null = null;
 
 // 当前题目计时器（每秒更新当前题目的用时）
 let questionTimer: ReturnType<typeof setInterval> | null = null;
+
+// 用于强制刷新题目用时显示的响应式变量
+const questionTimerTick = ref(0);
 
 // 所有题目列表（扁平化）
 const allQuestions = computed(() => {
@@ -62,7 +78,9 @@ const allQuestions = computed(() => {
 });
 
 // 当前题目
-const currentQuestion = computed(() => allQuestions.value[currentQuestionIndex.value]);
+const currentQuestion = computed(
+  () => allQuestions.value[currentQuestionIndex.value]
+);
 
 // 当前题目的答案记录
 const currentAnswerRecord = computed(() => {
@@ -85,8 +103,11 @@ const formattedRemainingTime = computed(() => {
 const answeredCount = computed(() => {
   let count = 0;
   answers.value.forEach(record => {
-    if (record.answer !== "" && record.answer !== null && 
-        (Array.isArray(record.answer) ? record.answer.length > 0 : true)) {
+    if (
+      record.answer !== "" &&
+      record.answer !== null &&
+      (Array.isArray(record.answer) ? record.answer.length > 0 : true)
+    ) {
       count++;
     }
   });
@@ -100,35 +121,45 @@ const initAnswerRecords = () => {
       answers.value.set(q.questionId, {
         questionId: q.questionId,
         answer: q.questionType === 2 ? [] : "", // 多选题用数组
-        duration: 0,
-        lastEnterTime: 0
+        duration: 0, // 从后端获取
+        enterTime: 0
       });
     }
   });
 };
 
-// 进入题目（开始计时）
+// 进入题目（记录进入时间戳）
 const enterQuestion = (questionId: number) => {
   const record = answers.value.get(questionId);
   if (record) {
-    record.lastEnterTime = Date.now();
+    record.enterTime = Date.now();
   }
 };
 
-// 离开题目（停止计时，累加时长）
-const leaveQuestion = (questionId: number) => {
+// 离开题目（发送时间戳给后端）
+const leaveQuestion = async (questionId: number) => {
   const record = answers.value.get(questionId);
-  if (record && record.lastEnterTime > 0) {
-    const elapsed = Math.floor((Date.now() - record.lastEnterTime) / 1000);
-    record.duration += elapsed;
-    record.lastEnterTime = 0;
+  if (record && record.enterTime > 0) {
+    const leaveTime = Date.now();
+    // 发送时间戳给后端，后端计算并累加时长
+    try {
+      await saveDuration({
+        submissionId: examData.submissionId,
+        questionId,
+        enterTime: record.enterTime,
+        leaveTime: leaveTime
+      });
+    } catch (error) {
+      console.error("保存答题时长失败:", error);
+    }
+    record.enterTime = 0;
   }
 };
 
 // 切换题目
 const switchQuestion = (index: number) => {
   if (index < 0 || index >= allQuestions.value.length) return;
-  
+
   // 离开当前题目
   if (currentQuestion.value) {
     leaveQuestion(currentQuestion.value.questionId);
@@ -136,7 +167,7 @@ const switchQuestion = (index: number) => {
 
   // 切换到新题目
   currentQuestionIndex.value = index;
-  
+
   // 进入新题目
   if (allQuestions.value[index]) {
     enterQuestion(allQuestions.value[index].questionId);
@@ -163,20 +194,22 @@ const updateAnswer = (value: string | string[]) => {
   const record = answers.value.get(currentQuestion.value.questionId);
   if (record) {
     record.answer = value;
-    // 自动保存答案
-    autoSaveAnswer(currentQuestion.value.questionId, value, record.duration);
+    // 自动保存答案（不需要发送时长，只在离开题目时发送时间戳）
+    autoSaveAnswer(currentQuestion.value.questionId, value);
   }
 };
 
-// 自动保存答案（带时长）
-const autoSaveAnswer = async (questionId: number, answer: string | string[], duration: number) => {
+// 自动保存答案（仅保存答案内容）
+const autoSaveAnswer = async (
+  questionId: number,
+  answer: string | string[]
+) => {
   if (!examData.submissionId) return;
   try {
     await saveAnswer({
       submissionId: examData.submissionId,
       questionId,
-      answer,
-      duration // 新增：提交答题时长
+      answer
     });
   } catch (error) {
     console.error("自动保存失败:", error);
@@ -207,7 +240,11 @@ const handleSubmit = async () => {
     submitting.value = true;
 
     // 提交前保存所有答案的最终时长
-    const finalAnswers: Array<{ questionId: number; answer: string | string[]; duration: number }> = [];
+    const finalAnswers: Array<{
+      questionId: number;
+      answer: string | string[];
+      duration: number;
+    }> = [];
     answers.value.forEach(record => {
       finalAnswers.push({
         questionId: record.questionId,
@@ -218,7 +255,7 @@ const handleSubmit = async () => {
 
     // 调用提交接口
     const res = await submitExam(examData.submissionId);
-    
+
     if (res.code === 0) {
       ElMessage.success("试卷提交成功！");
       // 停止计时器
@@ -258,8 +295,8 @@ const startExamTimer = () => {
 // 启动题目计时器（实时更新当前题目用时显示）
 const startQuestionTimer = () => {
   questionTimer = setInterval(() => {
-    // 这个计时器主要用于实时显示当前题目的用时
-    // 实际的时长累加在 leaveQuestion 时进行
+    // 每秒更新计数器，触发 computed 重新计算
+    questionTimerTick.value++;
   }, 1000);
 };
 
@@ -277,10 +314,16 @@ const stopTimers = () => {
 
 // 获取当前题目实时用时（包含正在计时的部分）
 const getCurrentQuestionDuration = computed(() => {
+  // 依赖 questionTimerTick 来触发每秒更新
+  questionTimerTick.value;
+
   if (!currentAnswerRecord.value) return 0;
-  let duration = currentAnswerRecord.value.duration;
-  if (currentAnswerRecord.value.lastEnterTime > 0) {
-    duration += Math.floor((Date.now() - currentAnswerRecord.value.lastEnterTime) / 1000);
+  let duration = currentAnswerRecord.value.duration; // 后端返回的累计时长
+  if (currentAnswerRecord.value.enterTime > 0) {
+    // 加上当前正在计时的部分
+    duration += Math.floor(
+      (Date.now() - currentAnswerRecord.value.enterTime) / 1000
+    );
   }
   return duration;
 });
@@ -312,15 +355,15 @@ const loadExamData = async () => {
       examData.submissionId = res.data.submissionId;
       examData.paper = res.data.paper;
       examData.remainingTime = res.data.remainingTime;
-      
+
       // 初始化答案记录
       initAnswerRecords();
-      
+
       // 进入第一题
       if (allQuestions.value.length > 0) {
         enterQuestion(allQuestions.value[0].questionId);
       }
-      
+
       // 启动计时器
       startExamTimer();
       startQuestionTimer();
@@ -355,7 +398,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="exam-do-container" :class="{ 'is-dark': isDark }" v-loading="loading">
+  <div
+    v-loading="loading"
+    class="exam-do-container"
+    :class="{ 'is-dark': isDark }"
+  >
     <!-- 顶部信息栏 -->
     <div class="exam-header">
       <div class="header-left">
@@ -401,15 +448,15 @@ onBeforeUnmount(() => {
         </div>
         <div class="nav-legend">
           <div class="legend-item">
-            <span class="dot answered"></span>
+            <span class="dot answered" />
             <span>已答</span>
           </div>
           <div class="legend-item">
-            <span class="dot"></span>
+            <span class="dot" />
             <span>未答</span>
           </div>
           <div class="legend-item">
-            <span class="dot active"></span>
+            <span class="dot active" />
             <span>当前</span>
           </div>
         </div>
@@ -421,38 +468,58 @@ onBeforeUnmount(() => {
           <!-- 题目头部 -->
           <div class="question-header">
             <div class="question-info">
-              <span class="question-index">第 {{ currentQuestionIndex + 1 }} 题</span>
-              <el-tag size="small" type="info">{{ currentQuestion.groupName }}</el-tag>
-              <span class="question-points">（{{ currentQuestion.points }} 分）</span>
+              <span class="question-index"
+                >第 {{ currentQuestionIndex + 1 }} 题</span
+              >
+              <el-tag size="small" type="info">{{
+                currentQuestion.groupName
+              }}</el-tag>
+              <span class="question-points"
+                >（{{ currentQuestion.points }} 分）</span
+              >
             </div>
             <div class="question-timer">
               <el-icon><Timer /></el-icon>
-              <span>本题用时：{{ formatDuration(getCurrentQuestionDuration) }}</span>
+              <span
+                >本题用时：{{
+                  formatDuration(getCurrentQuestionDuration)
+                }}</span
+              >
             </div>
           </div>
 
           <!-- 题干 -->
           <div class="question-stem">
-            {{ currentQuestion.stem }}
+            <RichContent :content="currentQuestion.stem" />
           </div>
 
           <!-- 选项区域 -->
           <div class="question-options">
             <!-- 单选题 -->
-            <template v-if="currentQuestion.questionType === 1 || currentQuestion.questionType === 3">
+            <template
+              v-if="
+                currentQuestion.questionType === 1 ||
+                currentQuestion.questionType === 3
+              "
+            >
               <el-radio-group
                 :model-value="currentAnswerRecord?.answer"
-                @update:model-value="updateAnswer"
                 class="options-group"
+                @update:model-value="updateAnswer"
               >
                 <el-radio
                   v-for="option in currentQuestion.options"
                   :key="option.key"
                   :value="option.key"
                   class="option-item"
+                  :class="{
+                    'is-checked': currentAnswerRecord?.answer === option.key
+                  }"
                 >
                   <span class="option-key">{{ option.key }}.</span>
-                  <span class="option-content">{{ option.content }}</span>
+                  <span class="option-content">
+                    <RichContent :content="option.content" />
+                  </span>
                 </el-radio>
               </el-radio-group>
             </template>
@@ -461,17 +528,24 @@ onBeforeUnmount(() => {
             <template v-else-if="currentQuestion.questionType === 2">
               <el-checkbox-group
                 :model-value="currentAnswerRecord?.answer as string[]"
-                @update:model-value="updateAnswer"
                 class="options-group"
+                @update:model-value="updateAnswer"
               >
                 <el-checkbox
                   v-for="option in currentQuestion.options"
                   :key="option.key"
                   :value="option.key"
                   class="option-item"
+                  :class="{
+                    'is-checked': (
+                      currentAnswerRecord?.answer as string[]
+                    )?.includes(option.key)
+                  }"
                 >
                   <span class="option-key">{{ option.key }}.</span>
-                  <span class="option-content">{{ option.content }}</span>
+                  <span class="option-content">
+                    <RichContent :content="option.content" />
+                  </span>
                 </el-checkbox>
               </el-checkbox-group>
             </template>
@@ -480,21 +554,26 @@ onBeforeUnmount(() => {
             <template v-else-if="currentQuestion.questionType === 4">
               <el-input
                 :model-value="currentAnswerRecord?.answer as string"
-                @update:model-value="updateAnswer"
                 placeholder="请输入答案"
                 class="fill-input"
+                @update:model-value="updateAnswer"
               />
             </template>
 
             <!-- 简答题/论述题 -->
-            <template v-else-if="currentQuestion.questionType === 5 || currentQuestion.questionType === 6">
+            <template
+              v-else-if="
+                currentQuestion.questionType === 5 ||
+                currentQuestion.questionType === 6
+              "
+            >
               <el-input
                 :model-value="currentAnswerRecord?.answer as string"
-                @update:model-value="updateAnswer"
                 type="textarea"
                 :rows="8"
                 placeholder="请输入答案"
                 class="essay-input"
+                @update:model-value="updateAnswer"
               />
             </template>
           </div>
@@ -614,8 +693,13 @@ onBeforeUnmount(() => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .exam-main {
@@ -778,26 +862,57 @@ onBeforeUnmount(() => {
     }
 
     .option-item {
-      display: flex;
-      align-items: flex-start;
-      padding: 12px 16px;
-      background: #f9fafb;
+      background: #fff;
       border-radius: 8px;
-      border: 1px solid #e5e7eb;
+      border: 2px solid #e5e7eb;
       transition: all 0.2s;
+      cursor: pointer;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+
+      // 隐藏默认的 radio/checkbox 图标
+      :deep(.el-radio__input),
+      :deep(.el-checkbox__input) {
+        display: none;
+      }
+
+      // 让 label 占满整个空间
+      :deep(.el-radio__label),
+      :deep(.el-checkbox__label) {
+        padding: 12px 16px;
+        margin: 0;
+        display: flex;
+        align-items: flex-start;
+        width: 100%;
+        line-height: 1.6;
+      }
 
       &:hover {
         border-color: #667eea;
-        background: #f0f4ff;
+        background: #f8f9ff;
+      }
+
+      // 选中状态
+      &.is-checked {
+        background: #e0e7ff;
+        border-color: #667eea;
+
+        .option-key {
+          color: #667eea;
+        }
       }
 
       .option-key {
         font-weight: 600;
         margin-right: 8px;
+        flex-shrink: 0;
+        min-width: 24px;
       }
 
       .option-content {
         flex: 1;
+        word-break: break-word;
       }
     }
 
