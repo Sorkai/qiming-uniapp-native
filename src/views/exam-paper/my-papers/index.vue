@@ -6,6 +6,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Plus,
   Folder,
+  FolderAdd,
   MoreFilled,
   Search,
   Refresh,
@@ -283,7 +284,7 @@ const createPaper = () => {
 
 // 编辑试卷
 const editPaper = (paper: any) => {
-  router.push(`/exam-paper/editor/${paper.id}`);
+  router.push(`/exam-paper/editor/${paper.paperId}`);
 };
 
 // 复制试卷
@@ -311,7 +312,7 @@ const deletePaper = (paper: any) => {
 
 // 发布试卷
 const publishPaper = (paper: any) => {
-  router.push(`/exam-paper/publish/${paper.id}`);
+  router.push(`/exam-paper/publish/${paper.paperId}`);
 };
 
 // 获取状态标签类型
@@ -352,6 +353,10 @@ onMounted(() => {
         </div>
       </div>
       <div class="header-actions">
+        <el-button @click="openNewFolderDialog">
+          <el-icon class="mr-1"><FolderAdd /></el-icon>
+          新建文件夹
+        </el-button>
         <el-button type="primary" class="create-btn" @click="createPaper">
           <el-icon class="mr-2"><Plus /></el-icon>
           新建试卷
@@ -360,29 +365,23 @@ onMounted(() => {
     </div>
 
     <!-- 统计概览 -->
-    <div class="overview-stats">
-      <el-row :gutter="20">
-        <el-col
-          v-for="item in statCards"
-          :key="item.label"
-          :xs="24"
-          :sm="12"
-          :md="6"
+    <div class="stats-section">
+      <div v-for="item in statCards" :key="item.label" class="stat-card">
+        <div
+          class="stat-icon"
+          :class="{
+            published: item.label === '已发布',
+            draft: item.label === '草稿箱',
+            recent: item.label === '最近编辑'
+          }"
         >
-          <div class="stat-card">
-            <div
-              class="stat-icon"
-              :style="{ color: item.color, backgroundColor: item.color + '15' }"
-            >
-              <component :is="item.icon" />
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ item.value }}</div>
-              <div class="stat-title">{{ item.label }}</div>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
+          <component :is="item.icon" />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ item.value }}</div>
+          <div class="stat-label">{{ item.label }}</div>
+        </div>
+      </div>
     </div>
 
     <!-- 主内容区域：左侧文件夹 + 右侧列表 -->
@@ -391,88 +390,40 @@ onMounted(() => {
       <div class="folder-sidebar">
         <div class="folder-header">
           <span class="folder-title">文件夹</span>
-          <el-button
-            type="primary"
-            link
-            size="small"
-            @click="openNewFolderDialog"
-          >
-            <el-icon><Plus /></el-icon>
-            新建
-          </el-button>
         </div>
-        <div class="folder-list">
-          <template v-for="folder in folderTreeData" :key="folder.id">
-            <div
-              class="folder-item"
-              :class="{
-                active:
-                  selectedFolderId === (folder.id === 0 ? null : folder.id) ||
-                  (folder.id === 0 && selectedFolderId === null)
-              }"
-              @click="selectFolder(folder.id)"
-            >
-              <div class="folder-item-content">
-                <el-icon class="folder-icon"><Folder /></el-icon>
-                <span class="folder-name">{{ folder.name }}</span>
-                <span class="folder-count">{{ folder.paperCount || 0 }}</span>
-              </div>
-              <div v-if="folder.id !== 0" class="folder-actions" @click.stop>
-                <el-dropdown trigger="click">
-                  <el-icon class="more-icon"><MoreFilled /></el-icon>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item
-                        @click="openEditFolderDialog(folder as PaperFolder)"
-                      >
-                        <el-icon><Edit /></el-icon>
-                        重命名
-                      </el-dropdown-item>
-                      <el-dropdown-item
-                        @click="handleDeleteFolder(folder as PaperFolder)"
-                      >
-                        <el-icon><Delete /></el-icon>
-                        删除
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </div>
-            <!-- 子文件夹 -->
-            <template v-if="(folder as PaperFolder).children?.length">
-              <div
-                v-for="child in (folder as PaperFolder).children"
-                :key="child.id"
-                class="folder-item child"
-                :class="{ active: selectedFolderId === child.id }"
-                @click.stop="selectFolder(child.id)"
+        <div class="folder-tree">
+          <div
+            v-for="folder in folderTreeData"
+            :key="folder.id"
+            class="folder-item"
+            :class="{
+              active:
+                selectedFolderId === (folder.id === 0 ? null : folder.id) ||
+                (folder.id === 0 && selectedFolderId === null)
+            }"
+            @click="selectFolder(folder.id)"
+          >
+            <el-icon><Folder /></el-icon>
+            <span class="folder-name">{{ folder.name }}</span>
+            <span class="folder-count">{{ folder.paperCount || 0 }}</span>
+            <div v-if="folder.id !== 0" class="folder-actions" @click.stop>
+              <el-button
+                link
+                size="small"
+                @click="openEditFolderDialog(folder as PaperFolder)"
               >
-                <div class="folder-item-content">
-                  <el-icon class="folder-icon"><Folder /></el-icon>
-                  <span class="folder-name">{{ child.name }}</span>
-                  <span class="folder-count">{{ child.paperCount || 0 }}</span>
-                </div>
-                <div class="folder-actions" @click.stop>
-                  <el-dropdown trigger="click">
-                    <el-icon class="more-icon"><MoreFilled /></el-icon>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="openEditFolderDialog(child)">
-                          <el-icon><Edit /></el-icon>
-                          重命名
-                        </el-dropdown-item>
-                        <el-dropdown-item @click="handleDeleteFolder(child)">
-                          <el-icon><Delete /></el-icon>
-                          删除
-                        </el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-            </template>
-          </template>
+                <el-icon><Edit /></el-icon>
+              </el-button>
+              <el-button
+                link
+                size="small"
+                type="danger"
+                @click="handleDeleteFolder(folder as PaperFolder)"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -486,14 +437,11 @@ onMounted(() => {
                 v-model="searchForm.keyword"
                 placeholder="搜索试卷标题..."
                 style="width: 240px"
+                prefix-icon="Search"
                 clearable
                 @keyup.enter="handleSearch"
                 @clear="handleSearch"
-              >
-                <template #prefix>
-                  <el-icon><Search /></el-icon>
-                </template>
-              </el-input>
+              />
               <el-select
                 v-model="searchForm.status"
                 placeholder="试卷状态"
@@ -518,7 +466,6 @@ onMounted(() => {
                   :value="course.id"
                 />
               </el-select>
-              <el-button @click="handleReset">重置</el-button>
             </div>
             <div class="toolbar-right">
               <el-button @click="loadData">
@@ -593,8 +540,17 @@ onMounted(() => {
               label="发布次数"
               width="100"
               align="center"
+            >
+              <template #default="{ row }">
+                <span class="usage-badge">{{ row.publishCount }}次</span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="updateTime"
+              label="更新时间"
+              width="160"
+              align="center"
             />
-            <el-table-column prop="updateTime" label="更新时间" width="160" />
             <el-table-column label="操作" width="260" fixed="right">
               <template #default="{ row }">
                 <el-button
@@ -655,7 +611,8 @@ onMounted(() => {
               :page-sizes="[10, 20, 50, 100]"
               layout="total, sizes, prev, pager, next, jumper"
               background
-              @change="handlePageChange"
+              @size-change="handlePageChange"
+              @current-change="handlePageChange"
             />
           </div>
         </div>
@@ -711,461 +668,364 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-/* 浅色模式变量 */
 $light-bg: #f5f7fa;
 $light-card-bg: #fff;
 $light-text-primary: #1f2937;
 $light-text-secondary: #6b7280;
-$light-text-muted: #9ca3af;
 $light-border: #e5e7eb;
 $light-shadow:
   0 4px 6px -1px rgb(0 0 0 / 10%),
   0 2px 4px -2px rgb(0 0 0 / 10%);
-$light-shadow-lg:
-  0 10px 15px -3px rgb(0 0 0 / 10%),
-  0 4px 6px -4px rgb(0 0 0 / 10%);
 
-/* 深色模式变量 */
 $dark-bg: #0f172a;
 $dark-card-bg: rgba(30, 41, 59, 0.8);
 $dark-text-primary: #f1f5f9;
 $dark-text-secondary: #94a3b8;
-$dark-text-muted: #64748b;
 $dark-border: rgba(255, 255, 255, 0.1);
 $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
-$dark-shadow-lg:
-  0 10px 15px -3px rgb(0 0 0 / 40%),
-  0 4px 6px -4px rgb(0 0 0 / 40%);
 
-/* 主色调 */
 $primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 $success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+$danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 $info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
 
-/* 统一圆角 */
-$radius-sm: 8px;
 $radius-md: 12px;
 $radius-lg: 16px;
-$radius-xl: 20px;
 
 .my-papers-page {
+  min-height: 100%;
   padding: 24px;
-  background-color: #f5f7fa;
-  min-height: calc(100vh - 84px);
-  transition: all 0.3s ease;
 
   &.is-dark {
-    background-color: #121212;
-
     .page-header,
     .stat-card,
     .toolbar-card,
     .list-card,
     .folder-sidebar {
-      background: #1d1e1f;
-      border-color: #333;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      background: $dark-card-bg;
+      border-color: $dark-border;
     }
 
     .page-title,
     .stat-value {
-      color: #e5eaf3;
+      color: $dark-text-primary;
     }
 
     .page-desc,
-    .stat-title {
-      color: #a3a3a3;
-    }
-
-    .header-icon {
-      background: rgba(102, 126, 234, 0.15);
-      color: #818cf8;
-    }
-
-    .folder-sidebar {
-      .folder-header {
-        border-bottom-color: #333;
-
-        .folder-title {
-          color: #e5eaf3;
-        }
-      }
-
-      .folder-item {
-        color: #a3a3a3;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.05);
-        }
-
-        &.active {
-          background: rgba(99, 102, 241, 0.15);
-          color: #818cf8;
-
-          .folder-icon {
-            color: #818cf8;
-          }
-        }
-
-        .folder-count {
-          background: #333;
-          color: #909399;
-        }
-      }
+    .stat-label {
+      color: $dark-text-secondary;
     }
 
     .list-card {
       .paper-title-cell {
         .paper-icon {
-          background: rgba(99, 102, 241, 0.15);
-          color: #818cf8;
+          background: rgba(124, 58, 237, 0.2);
+          color: #a78bfa;
         }
 
         .paper-course {
-          color: #909399;
+          color: $dark-text-secondary;
         }
       }
 
       .count-badge,
-      .score-badge {
-        background: #333;
-        color: #a3a3a3;
+      .score-badge,
+      .usage-badge {
+        background: #2d3748;
+        color: $dark-text-primary;
       }
 
-      .paper-table {
-        :deep(.el-table) {
-          background-color: transparent;
-          color: #a3a3a3;
-        }
+      :deep(.el-table) {
+        background-color: transparent;
+        --el-table-bg-color: transparent;
+        --el-table-tr-bg-color: transparent;
+        color: $dark-text-primary;
+      }
 
-        :deep(.el-table__header th) {
-          background-color: #262727;
-          color: #e5eaf3;
-          border-bottom-color: #333;
-        }
-
-        :deep(.el-table__row td) {
-          border-bottom-color: #333;
-        }
+      :deep(.el-table__header th) {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: $dark-text-primary;
       }
     }
   }
-}
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  margin-bottom: 24px;
-  border: 1px solid #ebeef5;
-
-  .header-content {
+  .page-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 16px;
-  }
+    padding: 24px;
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    margin-bottom: 24px;
+    border: 1px solid $light-border;
 
-  .header-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    background: rgba(79, 70, 229, 0.1);
-    color: #4f46e5;
-    border-radius: 12px;
-    font-size: 24px;
-  }
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-  .header-info {
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: $radius-md;
+      background: $primary-gradient;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      :deep(svg) {
+        width: 28px;
+        height: 28px;
+        color: #fff;
+      }
+    }
+
     .page-title {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 600;
-      color: #303133;
+      font-size: 24px;
+      font-weight: 700;
+      color: $light-text-primary;
+      margin: 0 0 4px;
     }
 
     .page-desc {
-      margin: 4px 0 0;
       font-size: 14px;
-      color: #909399;
+      color: $light-text-secondary;
+      margin: 0;
+    }
+
+    .create-btn {
+      height: 48px;
+      padding: 0 24px;
+      border-radius: $radius-md;
+      font-weight: 600;
+      font-size: 16px;
     }
   }
 
-  .create-btn {
-    padding: 12px 20px;
-    font-weight: 500;
+  .stats-section {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
   }
-}
-
-.overview-stats {
-  margin-bottom: 24px;
 
   .stat-card {
     display: flex;
     align-items: center;
-    padding: 24px;
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid #ebeef5;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.1);
-    }
+    gap: 16px;
+    padding: 20px;
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    border: 1px solid $light-border;
 
     .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: $radius-md;
+      background: $primary-gradient;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
+
+      &.published {
+        background: $success-gradient;
+      }
+      &.draft {
+        background: $warning-gradient;
+      }
+      &.recent {
+        background: $info-gradient;
+      }
+
+      :deep(svg) {
+        width: 24px;
+        height: 24px;
+        color: #fff;
+      }
+    }
+
+    .stat-value {
       font-size: 28px;
-      margin-right: 16px;
-    }
-
-    .stat-info {
-      .stat-value {
-        font-size: 24px;
-        font-weight: 700;
-        color: #303133;
-        line-height: 1.2;
-      }
-
-      .stat-title {
-        font-size: 14px;
-        color: #909399;
-        margin-top: 4px;
-      }
-    }
-  }
-}
-
-.main-content {
-  display: flex;
-  gap: 20px;
-
-  @media (width <= 1024px) {
-    flex-direction: column;
-  }
-}
-
-.folder-sidebar {
-  flex-shrink: 0;
-  width: 240px;
-  background: $light-card-bg;
-  border: 1px solid $light-border;
-  border-radius: $radius-lg;
-  box-shadow: $light-shadow;
-
-  @media (width <= 1024px) {
-    width: 100%;
-  }
-
-  .folder-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid $light-border;
-
-    .folder-title {
-      font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
       color: $light-text-primary;
     }
+
+    .stat-label {
+      font-size: 14px;
+      color: $light-text-secondary;
+    }
   }
 
-  .folder-list {
-    padding: 12px 0;
-  }
-
-  .folder-item {
+  .main-content {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    gap: 20px;
+  }
 
-    &:hover {
-      background: #f8fafc;
+  .folder-sidebar {
+    width: 240px;
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    border: 1px solid $light-border;
+    padding: 16px;
+
+    .folder-header {
+      padding-bottom: 12px;
+      border-bottom: 1px solid $light-border;
+      margin-bottom: 12px;
+
+      .folder-title {
+        font-weight: 600;
+        color: $light-text-primary;
+      }
+    }
+
+    .folder-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: rgba(79, 70, 229, 0.05);
+      }
+
+      &.active {
+        background: rgba(79, 70, 229, 0.1);
+        color: #4f46e5;
+      }
+
+      &.child {
+        padding-left: 32px;
+      }
+
+      .folder-name {
+        flex: 1;
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .folder-count {
+        font-size: 12px;
+        color: $light-text-secondary;
+        background: #f1f5f9;
+        padding: 2px 8px;
+        border-radius: 10px;
+      }
+
+      &.active .folder-count {
+        background: #4f46e5;
+        color: #fff;
+      }
 
       .folder-actions {
-        opacity: 1;
+        display: none;
+      }
+
+      &:hover .folder-actions {
+        display: flex;
       }
     }
+  }
 
-    &.active {
-      background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
+  .content-area {
+    flex: 1;
+    min-width: 0;
+  }
 
-      .folder-icon {
-        color: #667eea;
-      }
-    }
+  .toolbar-card {
+    padding: 16px 20px;
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    border: 1px solid $light-border;
+    margin-bottom: 20px;
 
-    &.child {
-      padding-left: 36px;
-    }
-
-    .folder-item-content {
+    .toolbar {
       display: flex;
-      flex: 1;
-      gap: 10px;
+      justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    .folder-icon {
-      font-size: 18px;
-      color: $light-text-muted;
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
+  }
 
-    .folder-name {
-      flex: 1;
-      font-size: 14px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+  .list-card {
+    background: $light-card-bg;
+    border-radius: $radius-lg;
+    box-shadow: $light-shadow;
+    border: 1px solid $light-border;
+    overflow: hidden;
 
-    .folder-count {
-      padding: 2px 8px;
-      font-size: 12px;
-      color: $light-text-muted;
-      background: #f1f5f9;
-      border-radius: 10px;
-    }
+    .paper-title-cell {
+      display: flex;
+      gap: 12px;
+      align-items: center;
 
-    .folder-actions {
-      opacity: 0;
-      transition: opacity 0.2s ease;
+      .paper-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        color: #7c3aed;
+        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+        border-radius: 8px;
 
-      .more-icon {
-        padding: 4px;
-        font-size: 16px;
-        color: $light-text-muted;
-        cursor: pointer;
-        border-radius: 4px;
+        :deep(svg) {
+          width: 22px;
+          height: 22px;
+        }
+      }
 
-        &:hover {
-          background: rgba(0, 0, 0, 0.05);
+      .paper-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .paper-course {
+          font-size: 12px;
+          color: $light-text-secondary;
         }
       }
     }
-  }
-}
 
-.content-area {
-  flex: 1;
-  min-width: 0;
-}
-
-.toolbar-card {
-  padding: 16px 20px;
-  margin-bottom: 20px;
-  background: $light-card-bg;
-  border: 1px solid $light-border;
-  border-radius: $radius-lg;
-  box-shadow: $light-shadow;
-
-  .toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .toolbar-left,
-  .toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-}
-
-.list-card {
-  padding: 24px;
-  background: $light-card-bg;
-  border: 1px solid $light-border;
-  border-radius: $radius-lg;
-  box-shadow: $light-shadow;
-
-  .paper-table {
-    :deep(.el-table__header th) {
-      background: #f8fafc;
-      font-weight: 600;
+    .count-badge,
+    .score-badge,
+    .usage-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: $light-text-secondary;
+      background: #f1f5f9;
+      border-radius: 6px;
     }
-  }
 
-  .paper-title-cell {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-
-    .paper-icon {
+    .pagination-wrapper {
+      padding: 16px 20px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-      color: #7c3aed;
-      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-      border-radius: $radius-sm;
-
-      svg {
-        width: 22px;
-        height: 22px;
-      }
-    }
-
-    .paper-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-
-      .paper-course {
-        font-size: 12px;
-        color: $light-text-muted;
-      }
+      justify-content: flex-end;
+      border-top: 1px solid $light-border;
     }
   }
-
-  .count-badge,
-  .score-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: $light-text-secondary;
-    background: #f1f5f9;
-    border-radius: 6px;
-  }
-
-  .pagination-wrapper {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 20px;
-  }
-}
-
-/* SVG 图标样式 */
-:deep(svg) {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 </style>

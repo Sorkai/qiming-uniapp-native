@@ -602,7 +602,7 @@ const insertBlankPlaceholder = (question: any) => {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const text = question.stem || "";
-      const placeholder = "{{blank}}";
+      const placeholder = "{blank}";
       question.stem = text.slice(0, start) + placeholder + text.slice(end);
       nextTick(() => {
         const newPos = start + placeholder.length;
@@ -610,10 +610,10 @@ const insertBlankPlaceholder = (question: any) => {
         textarea.focus();
       });
     } else {
-      question.stem = (question.stem || "") + "{{blank}}";
+      question.stem = (question.stem || "") + "{blank}";
     }
   } else {
-    question.stem = (question.stem || "") + "{{blank}}";
+    question.stem = (question.stem || "") + "{blank}";
   }
   // 同步更新 blanks 数组
   syncBlanksWithStem(question);
@@ -622,7 +622,7 @@ const insertBlankPlaceholder = (question: any) => {
 // 解析题干中的占位符数量
 const parseBlankCount = (stem: string): number => {
   if (!stem) return 0;
-  const matches = stem.match(/\{\{blank\}\}/g);
+  const matches = stem.match(/\{blank\}/g);
   return matches ? matches.length : 0;
 };
 
@@ -658,7 +658,7 @@ const watchBlankStemChange = (question: any) => {
 const renderBlankStem = (stem: string, blanks: any[], showAnswer = false): string => {
   if (!stem) return "未填写题目";
   let index = 0;
-  return stem.replace(/\{\{blank\}\}/g, () => {
+  return stem.replace(/\{blank\}/g, () => {
     const answer = blanks?.[index]?.answer || "";
     index++;
     if (showAnswer && answer) {
