@@ -23,9 +23,12 @@
               <span class="count-badge">{{ total }}</span>
             </h3>
           </div>
-          
+
           <!-- 筛选区域 -->
-          <div class="filters-section" :class="{ dark: currentTheme === 'dark' }">
+          <div
+            class="filters-section"
+            :class="{ dark: currentTheme === 'dark' }"
+          >
             <!-- 第一行：基础筛选 -->
             <div class="filter-row primary-filters">
               <div class="filter-group">
@@ -36,6 +39,7 @@
                   clearable
                   size="default"
                   class="filter-select"
+                  popper-class="custom-select-popper"
                   @change="refreshList"
                 >
                   <el-option label="作业" :value="1" />
@@ -52,6 +56,7 @@
                   clearable
                   size="default"
                   class="filter-select"
+                  popper-class="custom-select-popper"
                 >
                   <el-option
                     v-for="(txt, val) in questionTypeMap"
@@ -74,12 +79,13 @@
                   size="default"
                   value-format="YYYY-MM-DD"
                   class="filter-date"
+                  popper-class="custom-select-popper"
                 />
               </div>
 
               <div class="filter-actions">
-                <el-button 
-                  type="primary" 
+                <el-button
+                  type="primary"
                   size="default"
                   class="action-btn primary-btn"
                   @click="refreshList"
@@ -87,7 +93,7 @@
                   <el-icon><Search /></el-icon>
                   筛选
                 </el-button>
-                <el-button 
+                <el-button
                   size="default"
                   class="action-btn"
                   @click="resetFilters"
@@ -843,12 +849,12 @@ onMounted(async () => {
 
 /* 下拉框圆角设计 */
 .filter-select :deep(.el-input__wrapper) {
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 /* 下拉菜单面板圆角设计 */
 :deep(.el-select-dropdown) {
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .filter-date {
@@ -857,7 +863,7 @@ onMounted(async () => {
 
 /* 日期选择器圆角设计 */
 .filter-date :deep(.el-input__wrapper) {
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 /* 并发数输入框圆角设计 */
@@ -1101,5 +1107,31 @@ onMounted(async () => {
 .analyzed.new-analyzed {
   position: relative;
   animation: pop-in 1.1s ease;
+}
+</style>
+
+<style lang="scss">
+/* 全局样式，用于自定义下拉框弹出层圆角 (R 角) */
+.custom-select-popper {
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 10%),
+    0 4px 6px -4px rgb(0 0 0 / 10%) !important;
+
+  .el-select-dropdown__wrap,
+  .el-scrollbar__wrap {
+    border-radius: 12px !important;
+  }
+
+  .el-select-dropdown__list {
+    padding: 6px 0 !important;
+  }
+
+  /* 针对日期选择器的面板圆角 */
+  &.el-picker-panel,
+  .el-picker-panel__body-wrapper {
+    border-radius: 12px !important;
+  }
 }
 </style>
