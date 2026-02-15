@@ -593,6 +593,91 @@ const removeBlank = (question: any, index: number) => {
   }
 };
 
+// 插入填空占位符到题干
+const insertBlankPlaceholder = (question: any) => {
+  const stemRef = stemRefs.value.get(question.questionId);
+  if (stemRef) {
+    const textarea = stemRef.$el?.querySelector("textarea") || stemRef;
+    if (textarea && textarea.selectionStart !== undefined) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = question.stem || "";
+      const placeholder = "{{blank}}";
+      question.stem = text.slice(0, start) + placeholder + text.slice(end);
+      nextTick(() => {
+        const newPos = start + placeholder.length;
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.focus();
+      });
+    } else {
+      question.stem = (question.stem || "") + "{{blank}}";
+    }
+  } else {
+    question.stem = (question.stem || "") + "{{blank}}";
+  }
+  // 同步更新 blanks 数组
+  syncBlanksWithStem(question);
+};
+
+// 解析题干中的占位符数量
+const parseBlankCount = (stem: string): number => {
+  if (!stem) return 0;
+  const matches = stem.match(/\{\{blank\}\}/g);
+  return matches ? matches.length : 0;
+};
+
+// 同步 blanks 数组与题干中的占位符
+const syncBlanksWithStem = (question: any) => {
+  if (question.questionType !== "input") return;
+  
+  const blankCount = parseBlankCount(question.stem);
+  const currentCount = question.blanks?.length || 0;
+  
+  if (blankCount > currentCount) {
+    // 需要添加更多空
+    for (let i = currentCount; i < blankCount; i++) {
+      question.blanks.push({ answer: "" });
+    }
+  } else if (blankCount < currentCount && blankCount > 0) {
+    // 需要减少空（保留已有答案）
+    question.blanks = question.blanks.slice(0, blankCount);
+  } else if (blankCount === 0 && currentCount === 0) {
+    // 确保至少有一个空
+    question.blanks = [{ answer: "" }];
+  }
+};
+
+// 监听填空题题干变化
+const watchBlankStemChange = (question: any) => {
+  if (question.questionType === "input") {
+    syncBlanksWithStem(question);
+  }
+};
+
+// 渲染带填空的题干（用于预览）
+const renderBlankStem = (stem: string, blanks: any[], showAnswer = false): string => {
+  if (!stem) return "未填写题目";
+  let index = 0;
+  return stem.replace(/\{\{blank\}\}/g, () => {
+    const answer = blanks?.[index]?.answer || "";
+    index++;
+    if (showAnswer && answer) {
+      return `<span class="blank-answer-inline">${answer}</span>`;
+    }
+    return '<span class="blank-placeholder">________</span>';
+  });
+};
+
+// 获取填空题占位符数量提示
+const getBlankCountHint = (question: any): string => {
+  if (question.questionType !== "input") return "";
+  const count = parseBlankCount(question.stem);
+  const blankCount = question.blanks?.length || 0;
+  if (count === 0) return "未检测到填空占位符";
+  if (count === blankCount) return `已检测到 ${count} 个填空`;
+  return `检测到 ${count} 个填空，当前 ${blankCount} 个答案`;
+};
+
 // 滚动到题目
 const scrollToQuestion = (questionId: number) => {
   activeQuestionId.value = questionId;
@@ -1825,7 +1910,26 @@ onBeforeUnmount(() => {
                     ({{ question.points }}分)
                   </span>
                 </div>
-                <div class="preview-question-stem">
+                <div 
+                  v-if="question.questionType === 'input'"
+                  class="preview-question-stem"
+                  v-html="renderBlankStem(question.stem, question.blanks, false)"
+                />
+                <div 
+                  v-else
+                  class="preview-question-stem"
+                >
+                  {{ question.stem || "未填写题目" }}
+                </div>
+                <div 
+                  v-if="question.questionType === 'input'"
+                  class="preview-question-stem"
+                  v-html="renderBlankStem(question.stem, question.blanks, true)"
+                />
+                <div 
+                  v-else
+                  class="preview-question-stem"
+                >
                   {{ question.stem || "未填写题目" }}
                 </div>
                 <div
@@ -2453,6 +2557,16 @@ onBeforeUnmount(() => {
                   <div class="stem-toolbar-bar">
                     <span class="stem-label">题目</span>
                     <div class="stem-tools">
+                      <el-button
+                        v-if="question.questionType === 'input'"
+                        link
+                        size="small"
+                        type="primary"
+                        @click="insertBlankPlaceholder(question)"
+                      >
+                        <el-icon><EditPen /></el-icon>
+                        插入填空
+                      </el-button>
                       <LatexEditor @insert="(latex) => insertLatexToStem(question, latex)" />
                     </div>
                   </div>
@@ -2460,14 +2574,21 @@ onBeforeUnmount(() => {
                     :ref="(el) => setStemRef(question.questionId, el)"
                     v-model="question.stem"
                     type="textarea"
-                    placeholder="请输入题目内容（双击 Ctrl/Command 唤起 AI 助手/本地题库）"
+                    :placeholder="question.questionType === 'input' ? '请输入题目内容，点击\"插入填空\"按钮添加填空' : '请输入题目内容'"
                     :rows="2"
                     maxlength="2000"
+                    @input="watchBlankStemChange(question)"
                   />
-                  <!-- 题干预览（含公式渲染） -->
-                  <div v-if="question.stem && question.stem.includes('$')" class="stem-preview-box">
+                  <!-- 填空占位符数量提示 -->
+                  <div v-if="question.questionType === 'input' && question.stem" class="blank-count-hint">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>{{ getBlankCountHint(question) }}</span>
+                  </div>
+                  <!-- 题干预览（含填空渲染或公式渲染） -->
+                  <div v-if="question.stem && (question.questionType === 'input' || question.stem.includes('$'))" class="stem-preview-box">
                     <div class="preview-tag">预览</div>
-                    <div class="preview-body">
+                    <div v-if="question.questionType === 'input'" class="preview-body" v-html="renderBlankStem(question.stem, question.blanks, false)" />
+                    <div v-else class="preview-body">
                       <RichContent :content="question.stem" />
                     </div>
                   </div>
@@ -3611,6 +3732,49 @@ onBeforeUnmount(() => {
     }
     .question-stem {
       margin-bottom: 16px;
+      .stem-toolbar-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        .stem-label {
+          font-size: 14px;
+          font-weight: 500;
+          color: #606266;
+        }
+        .stem-tools {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+      }
+      .blank-count-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #00bfa5;
+        margin-top: 8px;
+        padding: 6px 12px;
+        background: rgba(0, 191, 165, 0.08);
+        border-radius: 4px;
+        border-left: 3px solid #00bfa5;
+      }
+      .stem-preview-box {
+        margin-top: 8px;
+        padding: 12px;
+        background: #f5f7fa;
+        border-radius: 6px;
+        border: 1px solid #e4e7ed;
+        .preview-tag {
+          font-size: 12px;
+          color: #909399;
+          margin-bottom: 8px;
+        }
+        .preview-body {
+          line-height: 1.6;
+        }
+      }
     }
     .question-options {
       margin-bottom: 16px;
@@ -4122,6 +4286,22 @@ onBeforeUnmount(() => {
         .preview-question-stem {
           margin-bottom: 12px;
           line-height: 1.6;
+          :deep(.blank-placeholder) {
+            display: inline-block;
+            min-width: 80px;
+            border-bottom: 2px solid #303133;
+            text-align: center;
+            padding: 0 4px;
+            margin: 0 4px;
+          }
+          :deep(.blank-answer-inline) {
+            display: inline-block;
+            min-width: 60px;
+            color: #303133;
+            font-weight: 500;
+            padding: 2px 8px;
+            margin: 0 4px;
+          }
         }
         .preview-option {
           padding: 4px 0;
@@ -4170,6 +4350,26 @@ onBeforeUnmount(() => {
       background: rgba(103, 194, 58, 0.1);
       padding: 2px 8px;
       border-radius: 4px;
+    }
+  }
+  .preview-question-stem {
+    :deep(.blank-placeholder) {
+      display: inline-block;
+      min-width: 80px;
+      border-bottom: 2px solid #303133;
+      text-align: center;
+      padding: 0 4px;
+      margin: 0 4px;
+    }
+    :deep(.blank-answer-inline) {
+      display: inline-block;
+      min-width: 60px;
+      color: #67c23a;
+      font-weight: 500;
+      background: rgba(103, 194, 58, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin: 0 4px;
     }
   }
   .preview-answer-section {
