@@ -680,15 +680,50 @@ Array<{
 
 ### 7.6 获取系统模板统计数据
 - **接口**: `GET /paper/template/system/stats`
-- **说明**: 系统模板基本信息在前端定义，此接口仅返回动态统计
+- **说明**: 系统模板基本信息在前端定义，此接口仅返回动态统计（主要是使用人数）
 - **响应**:
 ```typescript
 Array<{
-  templateKey: string;      // midterm/final/unit-test等
+  templateKey: string;      // standard | quick | comprehensive | survey
   questionCount: number;
   totalPoints: number;
-  useCount: number;
+  useCount: number;         // 使用人数（动态统计）
 }>
+```
+
+**系统模板 templateKey 对照表**:
+
+| templateKey | 模板名称 | 题目构成 | 题数 | 总分 |
+|---|---|---|---|---|
+| standard | 标准考试模板 | 单选10道(2分)·多选5道(4分)·填空5道(4分)·大题10道(4分) | 30 | 100 |
+| quick | 快速测验模板 | 单选3道(5分)·多选2道(5分) | 5 | 25 |
+| comprehensive | 综合能力测试 | 单选10道(3分)·简答5道(9分) | 15 | 75 |
+| survey | 学情调查问卷 | 单选10道(4分)·多选2道(5分)·简答5道(10分)·判断5道(4分) | 22 | 120 |
+
+### 7.7 获取系统模板预览（题目详情）
+- **接口**: `GET /paper/template/system/preview`
+- **参数**: `templateKey: string` (standard | quick | comprehensive | survey)
+- **说明**: 返回系统模板的完整题目结构，用于预览
+- **响应**:
+```typescript
+{
+  templateKey: string;
+  name: string;
+  description: string;
+  totalQuestions: number;
+  totalPoints: number;
+  questionGroups: Array<{
+    groupName: string;        // 如"一、单选题"
+    questionType: string;     // radio/checkbox/input/textarea/judge
+    count: number;            // 题目数量
+    pointsPerQuestion: number; // 每题分值
+    subtotal: number;         // 小计分数
+    sampleQuestions: Array<{  // 示例题目（可选，用于预览展示）
+      stem: string;
+      options?: Array<{ key: string; content: string }>;
+    }>;
+  }>;
+}
 ```
 
 ---

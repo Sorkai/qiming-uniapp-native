@@ -317,63 +317,72 @@ const mockPaperDetail = {
   ]
 };
 
-// 模拟班级列表
-const mockClasses = [
-  { classId: 1, className: "计算机科学2021级1班", studentCount: 45 },
-  { classId: 2, className: "计算机科学2021级2班", studentCount: 42 },
-  { classId: 3, className: "软件工程2021级1班", studentCount: 48 },
-  { classId: 4, className: "软件工程2021级2班", studentCount: 46 }
+// 模拟课程列表（原班级概念映射为课程）
+const mockCourses = [
+  { id: 1, name: "高等数学", studentCount: 45 },
+  { id: 2, name: "线性代数", studentCount: 42 },
+  { id: 3, name: "概率论", studentCount: 48 },
+  { id: 4, name: "数据结构", studentCount: 46 },
+  { id: 5, name: "算法设计与分析", studentCount: 35 }
 ];
 
-// 模拟学生列表
+// 模拟学生列表（关联课程）
 const mockStudents = [
   {
     studentId: 1001,
     studentName: "张三",
     studentNo: "2021001001",
-    className: "计算机科学2021级1班"
+    className: "高等数学",
+    courseId: 1
   },
   {
     studentId: 1002,
     studentName: "李四",
     studentNo: "2021001002",
-    className: "计算机科学2021级1班"
+    className: "高等数学",
+    courseId: 1
   },
   {
     studentId: 1003,
     studentName: "王五",
     studentNo: "2021001003",
-    className: "计算机科学2021级1班"
+    className: "高等数学",
+    courseId: 1
   },
   {
     studentId: 1004,
     studentName: "赵六",
     studentNo: "2021001004",
-    className: "计算机科学2021级2班"
+    className: "线性代数",
+    courseId: 2
   },
   {
     studentId: 1005,
     studentName: "钱七",
     studentNo: "2021001005",
-    className: "计算机科学2021级2班"
+    className: "线性代数",
+    courseId: 2
   },
   {
     studentId: 1006,
     studentName: "孙八",
     studentNo: "2021002001",
-    className: "软件工程2021级1班"
+    className: "概率论",
+    courseId: 3
   },
   {
     studentId: 1007,
     studentName: "周九",
     studentNo: "2021002002",
-    className: "软件工程2021级1班"
+    className: "数据结构",
+    courseId: 4
   },
   {
     studentId: 1008,
     studentName: "吴十",
     studentNo: "2021002003",
-    className: "软件工程2021级2班"
+    className: "算法设计与分析",
+    courseId: 5
   }
 ];
 
@@ -736,12 +745,20 @@ export default [
     }
   },
 
-  // 获取可发布的班级列表
+  // 获取可发布的课程列表（原班级概念映射为课程）
   {
     url: "/edu/backend/v1/paper/publish/classes",
     method: "get",
     response: () => {
-      return { code: 0, msg: "success", data: mockClasses };
+      return {
+        code: 0,
+        msg: "success",
+        data: mockCourses.map(c => ({
+          classId: c.id,
+          className: c.name,
+          studentCount: c.studentCount
+        }))
+      };
     }
   },
 
@@ -751,13 +768,10 @@ export default [
     method: "get",
     response: ({ query }: { query: any }) => {
       let list = [...mockStudents];
-      if (query.classId) {
-        const classInfo = mockClasses.find(
-          c => c.classId === Number(query.classId)
+      if (query.courseId) {
+        list = list.filter(
+          s => s.courseId === Number(query.courseId)
         );
-        if (classInfo) {
-          list = list.filter(s => s.className === classInfo.className);
-        }
       }
       if (query.keyword) {
         list = list.filter(
@@ -2095,6 +2109,66 @@ export default [
     method: "post",
     response: () => {
       return { code: 0, msg: "删除成功", data: null };
+    }
+  },
+
+  // 获取系统模板预览
+  {
+    url: "/edu/backend/v1/paper/template/system/preview",
+    method: "get",
+    response: ({ query }: { query: any }) => {
+      const { templateKey } = query;
+      const previews: Record<string, any> = {
+        standard: {
+          templateKey: "standard",
+          name: "标准考试模板",
+          description: "单选10道·多选5道·填空5道·大题10道",
+          totalQuestions: 30,
+          totalPoints: 100,
+          questionGroups: [
+            { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 2, subtotal: 20, sampleQuestions: [{ stem: "以下关于函数极限的说法，正确的是？", options: [{ key: "A", content: "选项A" }, { key: "B", content: "选项B" }, { key: "C", content: "选项C" }, { key: "D", content: "选项D" }] }] },
+            { groupName: "二、多选题", questionType: "checkbox", count: 5, pointsPerQuestion: 4, subtotal: 20, sampleQuestions: [{ stem: "下列哪些属于连续函数的性质？", options: [{ key: "A", content: "有界性" }, { key: "B", content: "最值定理" }, { key: "C", content: "介值定理" }, { key: "D", content: "可导性" }] }] },
+            { groupName: "三、填空题", questionType: "input", count: 5, pointsPerQuestion: 4, subtotal: 20, sampleQuestions: [{ stem: "函数 f(x)=x² 在 x=3 处的导数为 ______。" }] },
+            { groupName: "四、大题", questionType: "textarea", count: 10, pointsPerQuestion: 4, subtotal: 40, sampleQuestions: [{ stem: "求函数 f(x) = x³ - 3x + 2 的极值点和极值。" }] }
+          ]
+        },
+        quick: {
+          templateKey: "quick",
+          name: "快速测验模板",
+          description: "仅包含客观题，适合课堂小测和随堂练习",
+          totalQuestions: 5,
+          totalPoints: 25,
+          questionGroups: [
+            { groupName: "一、单选题", questionType: "radio", count: 3, pointsPerQuestion: 5, subtotal: 15, sampleQuestions: [{ stem: "求极限 lim(x→0) sin(x)/x 的值为：", options: [{ key: "A", content: "0" }, { key: "B", content: "1" }, { key: "C", content: "∞" }, { key: "D", content: "不存在" }] }] },
+            { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10, sampleQuestions: [{ stem: "以下哪些是基本初等函数？", options: [{ key: "A", content: "幂函数" }, { key: "B", content: "指数函数" }, { key: "C", content: "分段函数" }, { key: "D", content: "三角函数" }] }] }
+          ]
+        },
+        comprehensive: {
+          templateKey: "comprehensive",
+          name: "综合能力测试",
+          description: "单选10道·简答5道，适合综合能力评估",
+          totalQuestions: 15,
+          totalPoints: 75,
+          questionGroups: [
+            { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 3, subtotal: 30, sampleQuestions: [{ stem: "设 f(x) 在 [a,b] 上连续，在 (a,b) 内可导，且 f(a)=f(b)，则至少存在一点 ξ∈(a,b) 使得 f'(ξ)=0。这是哪个定理？", options: [{ key: "A", content: "罗尔定理" }, { key: "B", content: "拉格朗日中值定理" }, { key: "C", content: "柯西中值定理" }, { key: "D", content: "泰勒定理" }] }] },
+            { groupName: "二、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 9, subtotal: 45, sampleQuestions: [{ stem: "请阐述拉格朗日中值定理的内容，并给出几何意义的解释。" }] }
+          ]
+        },
+        survey: {
+          templateKey: "survey",
+          name: "学情调查问卷",
+          description: "单选10道·多选2道·简答5道·判断5道",
+          totalQuestions: 22,
+          totalPoints: 120,
+          questionGroups: [
+            { groupName: "一、单选题", questionType: "radio", count: 10, pointsPerQuestion: 4, subtotal: 40, sampleQuestions: [{ stem: "你对本学期课程内容的掌握程度如何？", options: [{ key: "A", content: "非常好" }, { key: "B", content: "较好" }, { key: "C", content: "一般" }, { key: "D", content: "较差" }] }] },
+            { groupName: "二、多选题", questionType: "checkbox", count: 2, pointsPerQuestion: 5, subtotal: 10, sampleQuestions: [{ stem: "你认为哪些学习方式对你帮助最大？", options: [{ key: "A", content: "课堂讲授" }, { key: "B", content: "课后练习" }, { key: "C", content: "小组讨论" }, { key: "D", content: "在线学习" }] }] },
+            { groupName: "三、简答题", questionType: "textarea", count: 5, pointsPerQuestion: 10, subtotal: 50, sampleQuestions: [{ stem: "请简述你在本学期学习中遇到的主要困难及解决方法。" }] },
+            { groupName: "四、判断题", questionType: "judge", count: 5, pointsPerQuestion: 4, subtotal: 20, sampleQuestions: [{ stem: "课堂上的互动环节有助于加深对知识的理解。", options: [{ key: "T", content: "正确" }, { key: "F", content: "错误" }] }] }
+          ]
+        }
+      };
+      return { code: 0, msg: "success", data: previews[templateKey] || null };
     }
   },
 

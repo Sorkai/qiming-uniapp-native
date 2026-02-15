@@ -23,7 +23,12 @@ import {
   batchArchiveToBank,
   getCourseList,
   aiAnalyzePaper,
-  type AIPaperAnalyzeResult
+  getPublishClasses,
+  getPublishStudents,
+  PublishTargetType,
+  type AIPaperAnalyzeResult,
+  type ClassInfo,
+  type PublishTargetStudent
 } from "@/api/examPaper";
 
 defineOptions({
@@ -495,8 +500,30 @@ const printPaper = () => {
   window.print();
 };
 
-// 发布试卷
-const publishPaperHandler = async () => {
+// ========== 发布对话框相关 ==========
+const publishDialogVisible = ref(false);
+const publishTargetType = ref<number>(PublishTargetType.ALL);
+const publishSelectedCourseIds = ref<number[]>([]);
+const publishStudentList = ref<PublishTargetStudent[]>([]);
+const publishSelectedStudentIds = ref<number[]>([]);
+const publishStudentLoading = ref(false);
+const publishStudentKeyword = ref("");
+const publishFilterCourseId = ref<number | null>(null);
+const publishSubmitting = ref(false);
+
+// 过滤后的学生列表
+const filteredStudentList = computed(() => {
+  if (!publishStudentKeyword.value) return publishStudentList.value;
+  const kw = publishStudentKeyword.value.toLowerCase();
+  return publishStudentList.value.filter(
+    s =>
+      s.studentName.toLowerCase().includes(kw) ||
+      s.studentNo?.toLowerCase().includes(kw)
+  );
+});
+
+// 发布试卷 - 打开对话框
+const publishPaperHandler = () => {
   if (!paper.title.trim()) {
     ElMessage.warning("请输入试卷标题");
     return;
@@ -510,18 +537,91 @@ const publishPaperHandler = async () => {
     settingsPanelVisible.value = true;
     return;
   }
+  // 重置发布对话框状态
+  publishTargetType.value = PublishTargetType.ALL;
+  publishSelectedCourseIds.value = [];
+  publishSelectedStudentIds.value = [];
+  publishStudentList.value = [];
+  publishStudentKeyword.value = "";
+  publishFilterCourseId.value = null;
+  publishDialogVisible.value = true;
+};
 
+// 切换发布目标类型时的处理
+const onPublishTargetTypeChange = (val: number) => {
+  publishSelectedCourseIds.value = [];
+  publishSelectedStudentIds.value = [];
+  publishStudentList.value = [];
+  publishStudentKeyword.value = "";
+  publishFilterCourseId.value = null;
+  if (val === PublishTargetType.STUDENT) {
+    fetchPublishStudents();
+  }
+};
+
+// 加载学生列表
+const fetchPublishStudents = async () => {
+  publishStudentLoading.value = true;
   try {
-    await ElMessageBox.confirm("确定要发布这份试卷吗？", "发布确认", {
-      confirmButtonText: "确定发布",
-      cancelButtonText: "取消",
-      type: "info"
-    });
+    const params: any = { courseId: publishFilterCourseId.value || 0 };
+    const res = await getPublishStudents(params);
+    if (res.code === 0) {
+      publishStudentList.value = res.data || [];
+    }
+  } catch (e) {
+    console.error("加载学生列表失败", e);
+  } finally {
+    publishStudentLoading.value = false;
+  }
+};
+
+// 按课程筛选学生
+const onFilterCourseChange = () => {
+  publishSelectedStudentIds.value = [];
+  fetchPublishStudents();
+};
+
+// 全选/取消全选学生
+const toggleSelectAllStudents = () => {
+  const visible = filteredStudentList.value;
+  if (publishSelectedStudentIds.value.length === visible.length) {
+    publishSelectedStudentIds.value = [];
+  } else {
+    publishSelectedStudentIds.value = visible.map(s => s.studentId);
+  }
+};
+
+// 确认发布
+const confirmPublish = async () => {
+  if (
+    publishTargetType.value === PublishTargetType.CLASS &&
+    publishSelectedCourseIds.value.length === 0
+  ) {
+    ElMessage.warning("请选择至少一个课程");
+    return;
+  }
+  if (
+    publishTargetType.value === PublishTargetType.STUDENT &&
+    publishSelectedStudentIds.value.length === 0
+  ) {
+    ElMessage.warning("请选择至少一个学生");
+    return;
+  }
+
+  publishSubmitting.value = true;
+  try {
+    const targetIds =
+      publishTargetType.value === PublishTargetType.CLASS
+        ? publishSelectedCourseIds.value
+        : publishTargetType.value === PublishTargetType.STUDENT
+          ? publishSelectedStudentIds.value
+          : [];
 
     const res = await publishPaperAdvanced({
       paperId: Number(paperId.value) || Date.now(),
       config: {
-        targetType: 1,
+        targetType: publishTargetType.value,
+        targetIds,
         startTime: paper.startTime,
         endTime: paper.endTime,
         shuffleQuestions: paper.settings.shuffleQuestions,
@@ -536,11 +636,14 @@ const publishPaperHandler = async () => {
 
     if (res.code === 0) {
       ElMessage.success("试卷发布成功！");
+      publishDialogVisible.value = false;
     } else {
       ElMessage.error(res.msg || "发布失败");
     }
   } catch {
-    // 用户取消
+    ElMessage.error("发布失败");
+  } finally {
+    publishSubmitting.value = false;
   }
 };
 
@@ -1742,6 +1845,54 @@ onBeforeUnmount(() => {
                     </el-row>
                   </div>
 
+                  <!-- 发布对象设置 -->
+                  <div class="settings-section">
+                    <h4 class="section-title">发布对象</h4>
+                    <el-row :gutter="20">
+                      <el-col :span="24">
+                        <el-form-item label="发布目标">
+                          <el-radio-group v-model="publishTargetType" @change="onPublishTargetTypeChange">
+                            <el-radio :value="1">全部学生</el-radio>
+                            <el-radio :value="2">指定课程</el-radio>
+                            <el-radio :value="3">指定学生</el-radio>
+                          </el-radio-group>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row v-if="publishTargetType === 2" :gutter="20">
+                      <el-col :span="24">
+                        <el-form-item label="选择课程">
+                          <el-checkbox-group v-model="publishSelectedCourseIds">
+                            <el-checkbox v-for="c in courseOptions" :key="c.id" :value="c.id" :label="c.name" />
+                          </el-checkbox-group>
+                          <div class="setting-hint">已选 {{ publishSelectedCourseIds.length }} 个课程</div>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row v-if="publishTargetType === 3" :gutter="20">
+                      <el-col :span="24">
+                        <el-form-item label="选择学生">
+                          <div class="publish-student-toolbar">
+                            <el-select v-model="publishFilterCourseId" placeholder="按课程筛选" clearable style="width: 180px" @change="onFilterCourseChange">
+                              <el-option v-for="c in courseOptions" :key="c.id" :label="c.name" :value="c.id" />
+                            </el-select>
+                            <el-input v-model="publishStudentKeyword" placeholder="搜索姓名/学号" clearable style="width: 180px" />
+                            <el-button size="small" @click="toggleSelectAllStudents">{{ publishSelectedStudentIds.length === filteredStudentList.length && filteredStudentList.length > 0 ? '取消全选' : '全选' }}</el-button>
+                            <span class="setting-hint">已选 {{ publishSelectedStudentIds.length }} 人</span>
+                          </div>
+                          <div v-loading="publishStudentLoading" class="publish-student-list-inline">
+                            <div v-for="s in filteredStudentList" :key="s.studentId" class="publish-student-item-inline" :class="{ selected: publishSelectedStudentIds.includes(s.studentId) }" @click="publishSelectedStudentIds.includes(s.studentId) ? (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId)) : publishSelectedStudentIds.push(s.studentId)">
+                              <el-checkbox :model-value="publishSelectedStudentIds.includes(s.studentId)" @click.stop />
+                              <span class="student-name">{{ s.studentName }}</span>
+                              <span class="student-no">{{ s.studentNo }}</span>
+                            </div>
+                            <el-empty v-if="!publishStudentLoading && filteredStudentList.length === 0" description="暂无学生" :image-size="40" />
+                          </div>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                  </div>
+
                   <!-- 补考设置 -->
                   <div class="settings-section">
                     <h4 class="section-title">补考设置</h4>
@@ -2022,6 +2173,142 @@ onBeforeUnmount(() => {
       :question-type="currentEditingQuestion?.questionType"
       @apply="applyQuestionAssistantResult"
     />
+
+    <!-- 发布对话框 -->
+    <el-dialog
+      v-model="publishDialogVisible"
+      title="发布试卷 - 选择发布对象"
+      width="680px"
+      :close-on-click-modal="false"
+      class="publish-dialog"
+    >
+      <div class="publish-form">
+        <div class="publish-section">
+          <div class="publish-label">发布目标类型</div>
+          <el-radio-group
+            v-model="publishTargetType"
+            @change="onPublishTargetTypeChange"
+          >
+            <el-radio :value="1">全部学生</el-radio>
+            <el-radio :value="2">指定课程</el-radio>
+            <el-radio :value="3">指定学生</el-radio>
+          </el-radio-group>
+        </div>
+
+        <!-- 指定课程 -->
+        <div v-if="publishTargetType === 2" class="publish-section">
+          <div class="publish-label">
+            选择课程
+            <span class="publish-hint">
+              （已选 {{ publishSelectedCourseIds.length }} 个课程）
+            </span>
+          </div>
+          <el-checkbox-group v-model="publishSelectedCourseIds">
+            <div
+              v-for="c in courseOptions"
+              :key="c.id"
+              class="publish-course-item"
+            >
+              <el-checkbox :value="c.id" :label="c.name" />
+            </div>
+          </el-checkbox-group>
+          <el-empty
+            v-if="courseOptions.length === 0"
+            description="暂无课程数据"
+            :image-size="60"
+          />
+        </div>
+
+        <!-- 指定学生 -->
+        <div v-if="publishTargetType === 3" class="publish-section">
+          <div class="publish-label">选择学生</div>
+          <div class="publish-student-toolbar">
+            <el-select
+              v-model="publishFilterCourseId"
+              placeholder="按课程筛选"
+              clearable
+              style="width: 200px"
+              @change="onFilterCourseChange"
+            >
+              <el-option
+                v-for="c in courseOptions"
+                :key="c.id"
+                :label="c.name"
+                :value="c.id"
+              />
+            </el-select>
+            <el-input
+              v-model="publishStudentKeyword"
+              placeholder="搜索姓名/学号"
+              clearable
+              style="width: 200px"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button size="small" @click="toggleSelectAllStudents">
+              {{ publishSelectedStudentIds.length === filteredStudentList.length && filteredStudentList.length > 0 ? '取消全选' : '全选' }}
+            </el-button>
+            <span class="publish-hint">
+              已选 {{ publishSelectedStudentIds.length }} 人
+            </span>
+          </div>
+          <div v-loading="publishStudentLoading" class="publish-student-list">
+            <div
+              v-for="s in filteredStudentList"
+              :key="s.studentId"
+              class="publish-student-item"
+              :class="{ selected: publishSelectedStudentIds.includes(s.studentId) }"
+              @click="
+                publishSelectedStudentIds.includes(s.studentId)
+                  ? (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId))
+                  : publishSelectedStudentIds.push(s.studentId)
+              "
+            >
+              <el-checkbox
+                :model-value="publishSelectedStudentIds.includes(s.studentId)"
+                @click.stop
+                @change="
+                  (val: boolean) =>
+                    val
+                      ? publishSelectedStudentIds.push(s.studentId)
+                      : (publishSelectedStudentIds = publishSelectedStudentIds.filter(id => id !== s.studentId))
+                "
+              />
+              <span class="student-name">{{ s.studentName }}</span>
+              <span class="student-no">{{ s.studentNo }}</span>
+              <span v-if="s.className" class="student-class">{{ s.className }}</span>
+            </div>
+            <el-empty
+              v-if="!publishStudentLoading && filteredStudentList.length === 0"
+              description="暂无学生数据"
+              :image-size="60"
+            />
+          </div>
+        </div>
+
+        <!-- 全部学生提示 -->
+        <div v-if="publishTargetType === 1" class="publish-section">
+          <el-alert
+            title="将发布给平台所有学生"
+            type="info"
+            :closable="false"
+            show-icon
+          />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="publishDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="publishSubmitting"
+          @click="confirmPublish"
+        >
+          确定发布
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -2444,6 +2731,44 @@ onBeforeUnmount(() => {
         .section-title { font-size: 14px; font-weight: 600; color: #00bfa5; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e4e7ed; }
       }
       .setting-hint { font-size: 12px; color: #909399; margin-top: 4px; }
+      .publish-student-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .publish-student-list-inline {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e4e7ed;
+        border-radius: 6px;
+        padding: 8px;
+        margin-top: 8px;
+      }
+      .publish-student-item-inline {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        &:hover {
+          background: #f5f7fa;
+        }
+        &.selected {
+          background: rgba(0, 191, 165, 0.08);
+        }
+        .student-name {
+          font-size: 13px;
+          color: #303133;
+        }
+        .student-no {
+          font-size: 12px;
+          color: #909399;
+        }
+      }
     }
   }
   .empty-hint {
@@ -2711,6 +3036,85 @@ onBeforeUnmount(() => {
           border: 1px solid #e4e7ed;
           border-radius: 4px;
         }
+      }
+    }
+  }
+}
+// 发布对话框样式
+.publish-dialog {
+  .publish-form {
+    .publish-section {
+      margin-bottom: 20px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+    .publish-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #303133;
+      margin-bottom: 12px;
+    }
+    .publish-hint {
+      font-size: 12px;
+      color: #909399;
+      font-weight: normal;
+    }
+    .publish-course-item {
+      padding: 8px 12px;
+      border: 1px solid #e4e7ed;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+      &:hover {
+        border-color: #00bfa5;
+        background: rgba(0, 191, 165, 0.05);
+      }
+    }
+    .publish-student-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .publish-student-list {
+      max-height: 360px;
+      overflow-y: auto;
+      border: 1px solid #e4e7ed;
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .publish-student-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:hover {
+        background: #f5f7fa;
+      }
+      &.selected {
+        background: rgba(0, 191, 165, 0.08);
+      }
+      .student-name {
+        font-size: 14px;
+        color: #303133;
+        min-width: 80px;
+      }
+      .student-no {
+        font-size: 13px;
+        color: #909399;
+      }
+      .student-class {
+        font-size: 12px;
+        color: #909399;
+        margin-left: auto;
+        padding: 2px 8px;
+        background: #f5f7fa;
+        border-radius: 4px;
       }
     }
   }

@@ -1246,6 +1246,37 @@ export interface SystemTemplateStats {
   useCount: number;
 }
 
+/** 系统模板预览数据 */
+export interface SystemTemplatePreview {
+  templateKey: string;
+  name: string;
+  description: string;
+  totalQuestions: number;
+  totalPoints: number;
+  questionGroups: Array<{
+    groupName: string;
+    questionType: string;
+    count: number;
+    pointsPerQuestion: number;
+    subtotal: number;
+    sampleQuestions: Array<{
+      stem: string;
+      options?: Array<{ key: string; content: string }>;
+    }>;
+  }>;
+}
+
+/**
+ * 获取系统模板预览（题目结构详情）
+ */
+export const getSystemTemplatePreview = (templateKey: string) => {
+  return http.request<ApiResponse<SystemTemplatePreview>>(
+    "get",
+    "/edu/backend/v1/paper/template/system/preview",
+    { params: { templateKey } }
+  );
+};
+
 /**
  * 获取系统模板统计数据
  * 系统模板的基本信息（名称、描述、图标）在前端定义

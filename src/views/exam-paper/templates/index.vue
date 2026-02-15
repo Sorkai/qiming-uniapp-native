@@ -6,7 +6,8 @@ import {
   getMyTemplates,
   createTemplate,
   deleteTemplate,
-  getSystemTemplateStats
+  getSystemTemplateStats,
+  getSystemTemplatePreview
 } from "@/api/examPaper";
 
 defineOptions({
@@ -114,8 +115,47 @@ const useTemplate = (templateId: number, isSystem: boolean) => {
 };
 
 // 预览模板
+const previewDialogVisible = ref(false);
+const previewLoading = ref(false);
+const previewData = ref<any>(null);
+
 const previewTemplate = (templateId: number) => {
-  ElMessage.info("预览功能开发中");
+  const tpl = systemTemplates.value.find(t => t.id === templateId);
+  if (!tpl) return;
+  previewDialogVisible.value = true;
+  previewLoading.value = true;
+  getSystemTemplatePreview(tpl.templateKey)
+    .then(result => {
+      if (result.code === 0 && result.data) {
+        previewData.value = result.data;
+      } else {
+        ElMessage.error("加载预览失败");
+      }
+    })
+    .catch(() => {
+      ElMessage.error("加载预览失败");
+    })
+    .finally(() => {
+      previewLoading.value = false;
+    });
+};
+
+// 使用预览中的模板
+const usePreviewTemplate = () => {
+  previewDialogVisible.value = false;
+  const tpl = systemTemplates.value.find(
+    t => t.templateKey === previewData.value?.templateKey
+  );
+  useTemplate(tpl?.id || 1, true);
+};
+
+// 题型名称映射
+const questionTypeNameMap: Record<string, string> = {
+  radio: "单选题",
+  checkbox: "多选题",
+  judge: "判断题",
+  input: "填空题",
+  textarea: "简答/大题"
 };
 
 // 打开新建模板对话框
@@ -317,6 +357,73 @@ onMounted(() => {
       </el-tab-pane>
     </el-tabs>
 
+    <!-- 系统模板预览对话框 -->
+    <el-dialog
+      v-model="previewDialogVisible"
+      :title="previewData?.name || '模板预览'"
+      width="680px"
+      :close-on-click-modal="true"
+    >
+      <div v-loading="previewLoading">
+        <template v-if="previewData">
+          <div class="preview-header">
+            <p class="preview-desc">{{ previewData.description }}</p>
+            <div class="preview-summary">
+              <span>共 {{ previewData.totalQuestions }} 题</span>
+              <span>总分 {{ previewData.totalPoints }} 分</span>
+            </div>
+          </div>
+          <div class="preview-groups">
+            <div
+              v-for="(group, idx) in previewData.questionGroups"
+              :key="idx"
+              class="preview-group"
+            >
+              <div class="group-header">
+                <span class="group-name">{{ group.groupName }}</span>
+                <span class="group-meta"
+                  >{{ group.count }}题 × {{ group.pointsPerQuestion }}分 =
+                  {{ group.subtotal }}分</span
+                >
+                <el-tag size="small" type="info">{{
+                  questionTypeNameMap[group.questionType] ||
+                  group.questionType
+                }}</el-tag>
+              </div>
+              <div
+                v-if="group.sampleQuestions?.length"
+                class="sample-questions"
+              >
+                <div
+                  v-for="(sq, sqIdx) in group.sampleQuestions"
+                  :key="sqIdx"
+                  class="sample-question"
+                >
+                  <p class="sample-stem">
+                    <span class="sample-label">示例：</span>{{ sq.stem }}
+                  </p>
+                  <div v-if="sq.options?.length" class="sample-options">
+                    <span
+                      v-for="opt in sq.options"
+                      :key="opt.key"
+                      class="sample-option"
+                      >{{ opt.key }}. {{ opt.content }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+      <template #footer>
+        <el-button @click="previewDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="usePreviewTemplate"
+          >使用此模板</el-button
+        >
+      </template>
+    </el-dialog>
+
     <!-- 新建模板对话框 -->
     <el-dialog
       v-model="createDialogVisible"
@@ -356,6 +463,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .templates-page {
+  /* container */
 }
 
 .page-header {
@@ -392,6 +500,82 @@ onMounted(() => {
 .empty-state {
   padding: 60px 0;
   text-align: center;
+}
+
+/* 预览对话框样式 */
+.preview-header {
+  margin-bottom: 20px;
+
+  .preview-desc {
+    margin: 0 0 12px;
+    color: #606266;
+    font-size: 14px;
+  }
+
+  .preview-summary {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+  }
+}
+
+.preview-groups {
+  .preview-group {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f5f7fa;
+    border-radius: 6px;
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+
+      .group-name {
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .group-meta {
+        font-size: 12px;
+        color: #909399;
+      }
+    }
+
+    .sample-questions {
+      .sample-question {
+        padding: 8px 0;
+        border-top: 1px dashed #dcdfe6;
+
+        .sample-stem {
+          margin: 0 0 6px;
+          font-size: 13px;
+          color: #303133;
+
+          .sample-label {
+            color: #409eff;
+            font-size: 12px;
+            margin-right: 4px;
+          }
+        }
+
+        .sample-options {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          padding-left: 12px;
+
+          .sample-option {
+            font-size: 12px;
+            color: #606266;
+          }
+        }
+      }
+    }
+  }
 }
 
 .template-card {
