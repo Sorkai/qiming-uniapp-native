@@ -2098,6 +2098,24 @@ export default [
     }
   },
 
+  // 获取系统模板统计数据
+  {
+    url: "/edu/backend/v1/paper/template/system/stats",
+    method: "get",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: [
+          { templateKey: "standard", questionCount: 30, totalPoints: 100, useCount: 128 },
+          { templateKey: "quick", questionCount: 5, totalPoints: 25, useCount: 256 },
+          { templateKey: "comprehensive", questionCount: 15, totalPoints: 75, useCount: 89 },
+          { templateKey: "survey", questionCount: 22, totalPoints: 120, useCount: 45 }
+        ]
+      };
+    }
+  },
+
   // 获取知识点列表
   {
     url: "/edu/backend/v1/knowledge-points",

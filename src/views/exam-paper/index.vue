@@ -5,7 +5,8 @@ import { useDark } from "@pureadmin/utils";
 import {
   getOverviewStatistics,
   getRecentPapers,
-  getLearningAnalytics
+  getLearningAnalytics,
+  getSystemTemplateStats
 } from "@/api/examPaper";
 
 // 导入 SVG 图标组件
@@ -40,35 +41,51 @@ const statistics = ref({
 // 最近编辑的试卷
 const recentPapers = ref<any[]>([]);
 
-// 试卷模板
+// 试卷模板（基本信息前端定义，使用人数从后端获取）
 const templates = ref([
   {
     id: 1,
+    templateKey: "standard",
     name: "标准考试模板",
-    description: "包含单选、多选、判断、填空、简答题型",
+    description: "单选10道·多选5道·填空5道·大题10道",
     icon: IconDocument,
-    color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+    color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    questionCount: 30,
+    totalPoints: 100,
+    useCount: 0
   },
   {
     id: 2,
+    templateKey: "quick",
     name: "快速测验模板",
-    description: "仅包含客观题，适合课堂小测",
+    description: "仅包含客观题，适合课堂小测和随堂练习",
     icon: IconZap,
-    color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+    color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    questionCount: 5,
+    totalPoints: 25,
+    useCount: 0
   },
   {
     id: 3,
+    templateKey: "comprehensive",
     name: "综合能力测试",
-    description: "包含材料分析、论述等主观题",
+    description: "单选10道·简答5道，适合综合能力评估",
     icon: IconBook,
-    color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+    color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+    questionCount: 15,
+    totalPoints: 75,
+    useCount: 0
   },
   {
     id: 4,
-    name: "问卷调查模板",
-    description: "矩阵题、量表题等调查类题型",
+    templateKey: "survey",
+    name: "学情调查问卷",
+    description: "单选10道·多选2道·简答5道·判断5道",
     icon: IconClipboard,
-    color: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
+    color: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+    questionCount: 22,
+    totalPoints: 120,
+    useCount: 0
   }
 ]);
 
@@ -185,10 +202,30 @@ const loadRecentPapers = async () => {
   }
 };
 
+// 加载系统模板统计（使用人数）
+const loadTemplateStats = async () => {
+  try {
+    const res = await getSystemTemplateStats();
+    if (res.code === 0 && res.data) {
+      res.data.forEach(stat => {
+        const t = templates.value.find(
+          item => item.templateKey === stat.templateKey
+        );
+        if (t) {
+          t.useCount = stat.useCount;
+        }
+      });
+    }
+  } catch (e) {
+    console.error("获取模板统计失败", e);
+  }
+};
+
 onMounted(() => {
   loadStatistics();
   loadRecentPapers();
   loadLearningStats();
+  loadTemplateStats();
 });
 </script>
 
@@ -290,6 +327,13 @@ onMounted(() => {
               <div class="template-info">
                 <div class="template-name">{{ template.name }}</div>
                 <div class="template-desc">{{ template.description }}</div>
+                <div class="template-meta">
+                  <span>{{ template.questionCount }}题</span>
+                  <span class="meta-divider">·</span>
+                  <span>{{ template.totalPoints }}分</span>
+                  <span class="meta-divider">·</span>
+                  <span>{{ template.useCount }}人使用</span>
+                </div>
               </div>
               <div class="template-arrow">
                 <el-icon><ArrowRight /></el-icon>
@@ -883,6 +927,16 @@ $radius-xl: 20px;
       color: $light-text-secondary;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .template-meta {
+      margin-top: 4px;
+      font-size: 12px;
+      color: $light-text-muted;
+
+      .meta-divider {
+        margin: 0 4px;
+      }
     }
   }
 
