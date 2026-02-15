@@ -686,11 +686,11 @@ $radius-xl: 20px;
 }
 
 .list-card {
-  padding: 24px;
   background: $light-card-bg;
   border: 1px solid $light-border;
   border-radius: $radius-lg;
   box-shadow: $light-shadow;
+  overflow: hidden;
 
   .grading-table {
     :deep(.el-table__header th) {
@@ -766,7 +766,8 @@ $radius-xl: 20px;
   .pagination-wrapper {
     display: flex;
     justify-content: flex-end;
-    margin-top: 20px;
+    padding: 16px 24px;
+    border-top: 1px solid $light-border;
   }
 }
 
