@@ -111,7 +111,7 @@ const startExam = (paper: StudentPaperItem) => {
     ElMessage.warning("该试卷当前不可答题");
     return;
   }
-  router.push(`/exam-paper/do/${paper.id}`);
+  router.push(`/student-exam-center/do/${paper.id}`);
 };
 
 // 查看详情

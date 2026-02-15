@@ -67,7 +67,7 @@ const goBack = () => {
 
 // 开始答题
 const startExam = () => {
-  router.push(`/exam-paper/do/${paperId.value}`);
+  router.push(`/student-exam-center/do/${paperId.value}`);
 };
 
 onMounted(() => {
