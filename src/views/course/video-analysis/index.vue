@@ -712,6 +712,18 @@ const handleVideoSelect = (fileUrl: string) => {
   }
 };
 
+/** 从完整 URL 中提取 OSS 对象键（去掉协议+域名前缀） */
+const extractObjectKey = (url: string): string => {
+  try {
+    const u = new URL(url);
+    // 去掉开头的 '/'
+    return u.pathname.replace(/^\//, "");
+  } catch {
+    // 如果本身就不是完整 URL，直接返回
+    return url;
+  }
+};
+
 const onSubmit = async () => {
   if (!submitFormRef.value) return;
   await submitFormRef.value.validate();
@@ -720,7 +732,7 @@ const onSubmit = async () => {
     const { code, msg } = await submitVideoAnalysis({
       courseId: submitForm.courseId!,
       chapterId: submitForm.chapterId,
-      filePath: submitForm.filePath,
+      filePath: extractObjectKey(submitForm.filePath),
       fileName: submitForm.fileName || undefined
     });
     if (code === 200) {
