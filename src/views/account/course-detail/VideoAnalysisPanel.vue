@@ -948,7 +948,8 @@ $radius-lg: 16px;
 
   .summary-text {
     margin: 0;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 600;
     line-height: 1.8;
     color: $gray-600;
     white-space: pre-wrap;
