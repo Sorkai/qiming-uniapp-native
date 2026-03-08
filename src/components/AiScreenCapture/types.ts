@@ -18,52 +18,16 @@ export interface ChatMessage {
   loading?: boolean;
 }
 
-// 会话信息
-export interface ChatSession {
-  sessionId: string;
-  title: string;
-  messages: ChatMessage[];
-  screenshot?: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
 // AI分析请求
 export interface ScreenAnalyzeRequest {
   image: string; // base64截图
   question?: string; // 用户问题
-  sessionId?: string; // 会话ID
 }
 
 // AI分析响应
 export interface ScreenAnalyzeResponse {
-  sessionId: string;
   answer: string;
   suggestions?: string[]; // 推荐问题
-}
-
-// 对话请求
-export interface ChatRequest {
-  sessionId: string;
-  message: string;
-}
-
-// 对话响应
-export interface ChatResponse {
-  answer: string;
-  suggestions?: string[];
-}
-
-// 历史记录请求
-export interface HistoryRequest {
-  page: number;
-  pageSize: number;
-}
-
-// 历史记录响应
-export interface HistoryResponse {
-  total: number;
-  list: ChatSession[];
 }
 
 // 组件状态

@@ -36,6 +36,7 @@
         v-if="isAiDialogVisible"
         ref="aiDialogRef"
         class="ai-draggable-dialog auto"
+        :class="{ fullscreen: isFullscreen }"
       >
         <div class="ai-dialog-header-bar">
           <div class="header-left">
@@ -62,6 +63,45 @@
             <span class="header-title">AI 智能助教</span>
           </div>
           <div class="header-right">
+            <el-tooltip
+              :content="isFullscreen ? '退出全屏' : '全屏显示'"
+              placement="top"
+            >
+              <div class="header-action-btn" @click="toggleFullscreen">
+                <svg
+                  v-if="!isFullscreen"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="15 3 21 3 21 9" />
+                  <polyline points="9 21 3 21 3 15" />
+                  <line x1="21" y1="3" x2="14" y2="10" />
+                  <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+                <svg
+                  v-else
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 3 3 3 3 9" />
+                  <polyline points="15 21 21 21 21 15" />
+                  <line x1="3" y1="3" x2="10" y2="10" />
+                  <line x1="21" y1="21" x2="14" y2="14" />
+                </svg>
+              </div>
+            </el-tooltip>
             <el-tooltip content="清空对话" placement="top">
               <div class="header-action-btn" @click="clearChat">
                 <i class="el-icon-delete" />
@@ -232,6 +272,7 @@ const props = defineProps<{
 }>();
 
 const isAiDialogVisible = ref(false);
+const isFullscreen = ref(false);
 const aiDialogRef = ref(null);
 const scrollbarRef = ref(null);
 const chatMessages = ref<
@@ -283,10 +324,24 @@ const openAiDialog = () => {
 
 const closeAiDialog = () => {
   isAiDialogVisible.value = false;
+  isFullscreen.value = false;
   if (cancelStreamRequest.value) {
     cancelStreamRequest.value();
     cancelStreamRequest.value = null;
   }
+};
+
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value;
+};
+
+const handleEscapeKey = (event: KeyboardEvent) => {
+  if (!isAiDialogVisible.value || event.key !== "Escape") return;
+  if (isFullscreen.value) {
+    isFullscreen.value = false;
+    return;
+  }
+  closeAiDialog();
 };
 
 const handleClickOutside = (event: MouseEvent) => {
@@ -432,10 +487,12 @@ const clearChat = () => {
 
 onMounted(() => {
   initChat();
+  document.addEventListener("keydown", handleEscapeKey);
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
+  document.removeEventListener("keydown", handleEscapeKey);
 });
 
 defineExpose({
@@ -528,6 +585,16 @@ defineExpose({
       background: rgb(30 30 30 / 70%);
       border: 1px solid rgb(255 255 255 / 10%);
     }
+
+    &.fullscreen {
+      top: 0;
+      right: 0;
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: blur(20px) saturate(150%);
+    }
   }
 
   .ai-fill-bg {
@@ -583,6 +650,10 @@ defineExpose({
   border-radius: 10px;
   box-shadow: -4px 4px 12px rgb(0 0 0 / 10%);
   transform: translateY(-50%);
+}
+
+.ai-draggable-dialog.fullscreen .header-back-btn {
+  display: none;
 }
 
 .ai-slide-enter-active,

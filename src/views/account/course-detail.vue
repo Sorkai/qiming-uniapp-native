@@ -130,6 +130,8 @@
         />
       </div>
     </div>
+
+    <AiScreenCapture v-if="showStudentScreenCapture" />
   </div>
 </template>
 
@@ -149,6 +151,7 @@ import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
 import { userKey } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
+import AiScreenCapture from "@/components/AiScreenCapture/index.vue";
 
 // 导入 API
 import {
@@ -285,6 +288,12 @@ const userRoleType = computed(() => {
 });
 const isTeacher = computed(() => userRoleType.value === 2);
 const isAdmin = computed(() => userRoleType.value === 3);
+const showStudentScreenCapture = computed(() => {
+  // 仅学生端课程学习页面显示截图提问小球，其他菜单全部屏蔽
+  return (
+    !isTeacher.value && !isAdmin.value && activeMenu.value === "course-learn"
+  );
+});
 
 // 课程学习相关
 const courseStudyRef = ref(null);

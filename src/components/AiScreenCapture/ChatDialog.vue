@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from "vue";
-import type { ChatMessage, ChatSession } from "./types";
+import type { ChatMessage } from "./types";
 
 defineOptions({
   name: "AiChatDialog"
@@ -19,7 +19,6 @@ const emit = defineEmits<{
   (e: "send", message: string): void;
   (e: "retry"): void;
   (e: "newCapture"): void;
-  (e: "viewHistory"): void;
 }>();
 
 // 输入框内容
@@ -102,16 +101,6 @@ const handleClose = () => {
           <span class="title">AI识屏助手</span>
         </div>
         <div class="header-actions">
-          <el-tooltip content="查看历史记录" placement="bottom">
-            <el-button text @click="emit('viewHistory')">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                <path
-                  d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
-                  fill="currentColor"
-                />
-              </svg>
-            </el-button>
-          </el-tooltip>
           <el-tooltip content="重新截图" placement="bottom">
             <el-button text @click="emit('newCapture')">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
