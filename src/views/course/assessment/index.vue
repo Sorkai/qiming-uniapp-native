@@ -155,7 +155,7 @@ const handleCourseSearch = async () => {
       pageSize: 50,
       courseName: courseSearchQuery.value
     });
-    courseOptions.value = data.courseList;
+    courseOptions.value = data?.courseList || [];
 
     // 如果没有选中课程且列表有数据，默认选第一个
     if (!selectedCourseId.value && courseOptions.value.length > 0) {
@@ -181,7 +181,7 @@ const fetchInitialCourses = async () => {
       pageNum: 1,
       pageSize: 50
     });
-    courseOptions.value = data.courseList;
+    courseOptions.value = data?.courseList || [];
   } catch (error) {
     console.error("获取课程列表失败", error);
     ElMessage.error("获取课程列表失败");
