@@ -293,13 +293,11 @@ const viewExam = (exam: any) => {
   margin-bottom: 32px;
   background: linear-gradient(135deg, #fff, #f8faff);
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
   padding: 8px;
 }
 
 .dark :deep(.homework-tabs .el-tabs__header) {
   background: linear-gradient(135deg, #111b2d, #0f172a);
-  box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
   border: 1px solid rgb(56 189 248 / 20%);
 }
 
@@ -351,7 +349,6 @@ const viewExam = (exam: any) => {
 :deep(.homework-tabs .el-tabs__item.is-active) {
   color: #333;
   background: linear-gradient(135deg, #dce2f7, #97b4f7);
-  box-shadow: 0 4px 12px rgb(151 180 247 / 40%);
 }
 
 .dark :deep(.homework-tabs .el-tabs__item) {
@@ -366,7 +363,6 @@ const viewExam = (exam: any) => {
 .dark :deep(.homework-tabs .el-tabs__item.is-active) {
   color: #f1f5f9;
   background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-  box-shadow: 0 4px 12px rgb(56 189 248 / 40%);
 }
 
 :deep(.homework-tabs .el-tabs__active-bar) {
@@ -395,51 +391,31 @@ const viewExam = (exam: any) => {
   background: linear-gradient(145deg, #fff, #f8faff);
   border: 1px solid rgb(220 226 247 / 60%);
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .homework-item::before,
 .exam-item::before {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  content: "";
-  background: linear-gradient(90deg, #97b4f7, #dce2f7);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.homework-item:hover::before,
-.exam-item:hover::before {
-  opacity: 1;
+  display: none;
 }
 
 .homework-item.dark,
 .exam-item.dark {
   background: linear-gradient(145deg, #111b2d, #0f172a);
   border-color: #1e293b;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
-}
-
-.homework-item.dark::before,
-.exam-item.dark::before {
-  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
 }
 
 .homework-item:hover,
 .exam-item:hover {
   border-color: #97b4f7;
-  box-shadow: 0 12px 40px rgb(151 180 247 / 30%);
+  box-shadow: none;
   transform: translateY(-8px) scale(1.02);
 }
 
 .homework-item.dark:hover,
 .exam-item.dark:hover {
   border-color: #38bdf8;
-  box-shadow: 0 12px 40px rgb(56 189 248 / 20%);
+  box-shadow: none;
 }
 
 /* 卡片头部 */
@@ -467,20 +443,17 @@ const viewExam = (exam: any) => {
   margin-right: 20px;
   background: linear-gradient(135deg, #dce2f7, #97b4f7);
   border-radius: 18px;
-  box-shadow: 0 4px 16px rgb(151 180 247 / 30%);
   transition: all 0.3s ease;
 }
 
 .homework-item:hover .homework-icon,
 .exam-item:hover .exam-icon {
-  box-shadow: 0 8px 24px rgb(151 180 247 / 50%);
   transform: scale(1.1) rotate(5deg);
 }
 
 .homework-item.dark .homework-icon,
 .exam-item.dark .exam-icon {
   background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-  box-shadow: 0 4px 16px rgb(56 189 248 / 30%);
 }
 
 .homework-icon img,
@@ -599,7 +572,7 @@ const viewExam = (exam: any) => {
 
 .homework-action :deep(.el-button:hover),
 .exam-action :deep(.el-button:hover) {
-  box-shadow: 0 6px 20px rgb(64 158 255 / 50%);
+  box-shadow: none;
   transform: translateY(-2px);
 }
 

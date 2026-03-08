@@ -94,166 +94,176 @@ const handleClose = () => {
 <template>
   <el-dialog
     v-model="dialogVisible"
-    width="480px"
+    width="520px"
     :close-on-click-modal="false"
     :close-on-press-escape="true"
-    class="ai-chat-dialog"
+    class="ai-chat-dialog modern-style"
     append-to-body
     destroy-on-close
     :show-close="false"
   >
     <template #header>
       <div class="dialog-header">
-        <div class="header-left">
-          <span class="title">AI 识屏助手</span>
-        </div>
-        <div class="header-actions">
-          <div class="action-item" title="重新截图" @click="emit('newCapture')">
-            <svg viewBox="0 0 24 24" width="20" height="20">
+        <div class="header-content">
+          <div class="header-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22">
               <path
-                d="M17 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7V5h10v14zm-5-6c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"
+                d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z"
                 fill="currentColor"
               />
             </svg>
           </div>
-          <div class="action-item close" title="关闭" @click="handleClose">
-            <svg viewBox="0 0 24 24" width="20" height="20">
+          <div class="header-text">
+            <span class="main-title">AI 识屏分析</span>
+            <span class="sub-title">智能助手正在为您服务</span>
+          </div>
+        </div>
+        <div class="header-ops">
+          <div class="op-btn" title="重新截图" @click="emit('newCapture')">
+            <svg viewBox="0 0 24 24" width="18" height="18">
               <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
                 fill="currentColor"
               />
+            </svg>
+          </div>
+          <div class="op-btn close" title="隐藏" @click="handleClose">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path d="M19 13H5v-2h14v2z" fill="currentColor" />
             </svg>
           </div>
         </div>
       </div>
     </template>
 
-    <div class="chat-container">
-      <!-- 截图预览 -->
-      <div v-if="screenshot" class="screenshot-preview">
-        <div class="preview-content">
-          <img :src="screenshot" alt="截图" />
-          <div class="screenshot-info">
-            <div class="info-title">当前识别的截图</div>
-            <div class="info-desc">AI 已准备好分析该内容</div>
+    <div class="chat-main">
+      <!-- 智能预览 -->
+      <div v-if="screenshot" class="preview-banner">
+        <div class="banner-inner">
+          <div class="image-box">
+            <el-image
+              :src="screenshot"
+              fit="cover"
+              :preview-src-list="[screenshot]"
+            />
+          </div>
+          <div class="info-box">
+            <div class="label">当前识别目标</div>
+            <div class="desc">您可以询问关于此内容的任何细节</div>
           </div>
         </div>
       </div>
 
       <!-- 消息列表 -->
-      <div ref="messageListRef" class="message-list">
+      <div ref="messageListRef" class="message-area">
         <div
           v-for="msg in messages"
           :key="msg.id"
-          class="message-item"
+          class="message-row"
           :class="msg.role"
         >
-          <div class="message-avatar">
-            <template v-if="msg.role === 'user'">
-              <img
-                src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
-                alt="user"
-              />
-            </template>
-            <template v-else>
-              <div class="ai-avatar-icon">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </div>
-            </template>
-          </div>
-          <div class="message-wrapper">
-            <div class="message-content">
-              <div v-if="msg.image" class="message-image">
-                <el-image
-                  :src="msg.image"
-                  :preview-src-list="[msg.image]"
-                  fit="cover"
+          <div class="avatar-col">
+            <div v-if="msg.role === 'user'" class="user-avatar">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path
+                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                  fill="currentColor"
                 />
-              </div>
-              <div class="message-text">
-                <template v-if="msg.loading">
-                  <div class="typing-indicator">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                </template>
-                <template v-else>
-                  {{ msg.content }}
-                </template>
-              </div>
+              </svg>
             </div>
-            <div class="message-time">{{ formatTime(msg.timestamp) }}</div>
+            <div v-else class="ai-avatar">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path
+                  d="M12 2L4.5 20.29L4.71 21L12 18L19.29 21L19.5 20.29L12 2Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+          </div>
+          <div class="content-col">
+            <div v-if="msg.image" class="content-image">
+              <el-image
+                :src="msg.image"
+                :preview-src-list="[msg.image]"
+                fit="cover"
+              />
+            </div>
+            <div class="bubble">
+              <template v-if="msg.loading">
+                <div class="typing">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              </template>
+              <template v-else>
+                {{ msg.content }}
+              </template>
+            </div>
+            <div class="meta">{{ formatTime(msg.timestamp) }}</div>
           </div>
         </div>
       </div>
 
-      <!-- 建议问题 (置于输入框上方) -->
-      <div v-if="suggestions && suggestions.length > 0" class="suggestions">
-        <div class="suggestions-list">
-          <div
-            v-for="(suggestion, index) in suggestions"
-            :key="index"
-            class="suggestion-item"
-            @click="useSuggestion(suggestion)"
-          >
-            {{ suggestion }}
-          </div>
+      <!-- 建议词 -->
+      <div v-if="suggestions?.length" class="suggestions-bar">
+        <div
+          v-for="(s, i) in suggestions"
+          :key="i"
+          class="suggestion-chip"
+          @click="useSuggestion(s)"
+        >
+          {{ s }}
         </div>
       </div>
     </div>
 
     <template #footer>
-      <div class="input-area">
-        <div class="input-tools">
-          <svg
-            viewBox="0 0 24 24"
-            width="24"
-            height="24"
-            class="tool-icon"
-            @click="emit('newCapture')"
-          >
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor" />
-          </svg>
+      <div class="footer-input">
+        <div class="input-container">
+          <el-input
+            ref="inputRef"
+            v-model="inputMessage"
+            type="textarea"
+            :autosize="{ minRows: 1, maxRows: 4 }"
+            placeholder="输入您的问题..."
+            :disabled="loading"
+            resize="none"
+            @keydown.enter.prevent="handleSend"
+          />
+          <div class="send-action">
+            <el-button
+              type="primary"
+              circle
+              :loading="loading"
+              :disabled="!inputMessage.trim()"
+              @click="handleSend"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <path
+                  d="M2.01 21L23 12L2.01 3L2 10l15 2l-15 2z"
+                  fill="currentColor"
+                />
+              </svg>
+            </el-button>
+          </div>
         </div>
-        <el-input
-          ref="inputRef"
-          v-model="inputMessage"
-          type="textarea"
-          :autosize="{ minRows: 1, maxRows: 4 }"
-          placeholder="请输入您的问题..."
-          :disabled="loading"
-          resize="none"
-          @keydown.enter.prevent="handleSend"
-        />
-        <el-button
-          type="success"
-          class="send-btn"
-          :loading="loading"
-          :disabled="!inputMessage.trim()"
-          @click="handleSend"
-        >
-          发送
-        </el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <style lang="scss" scoped>
-.ai-chat-dialog {
+.ai-chat-dialog.modern-style {
   :deep(.el-dialog) {
     display: flex;
     flex-direction: column;
+    height: 650px;
     padding: 0;
     overflow: hidden;
-    background: #f3f3f3;
-    border-radius: 8px;
+    background-color: var(--el-bg-color-page);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px 4px rgb(0 0 0 / 10%);
   }
 
   :deep(.el-dialog__header) {
@@ -276,95 +286,123 @@ const handleClose = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: #f3f3f3;
-  border-bottom: 1px solid #e7e7e7;
+  padding: 16px 20px;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 
-  .header-left {
-    .title {
-      font-size: 15px;
-      font-weight: 500;
-      color: #1a1a1a;
-    }
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-
-    .action-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-      color: #515151;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.2s;
-
-      &:hover {
-        background-color: #e2e2e2;
-      }
-
-      &.close:hover {
-        color: #fff;
-        background-color: #fa5151;
-      }
-    }
-  }
-}
-
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 520px;
-}
-
-.screenshot-preview {
-  padding: 16px;
-  background: #fff;
-  border-bottom: 1px solid #e7e7e7;
-
-  .preview-content {
+  .header-content {
     display: flex;
     gap: 12px;
     align-items: center;
-    padding: 12px;
-    background: #f9f9f9;
-    border: 1px solid #eee;
-    border-radius: 8px;
 
-    img {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 4px;
+    .header-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      color: #fff;
+      background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
+      border-radius: 8px;
     }
 
-    .screenshot-info {
-      .info-title {
-        font-size: 14px;
-        font-weight: 500;
-        color: #333;
+    .header-text {
+      display: flex;
+      flex-direction: column;
+
+      .main-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
       }
 
-      .info-desc {
-        margin-top: 4px;
-        font-size: 12px;
-        color: #999;
+      .sub-title {
+        font-size: 11px;
+        color: var(--el-text-color-placeholder);
+      }
+    }
+  }
+
+  .header-ops {
+    display: flex;
+    gap: 8px;
+
+    .op-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      color: var(--el-text-color-regular);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+
+      &:hover {
+        background-color: var(--el-fill-color-light);
+      }
+
+      &.close:hover {
+        color: var(--el-color-danger);
+        background-color: var(--el-color-danger-light-9);
       }
     }
   }
 }
 
-.message-list {
-  flex: 1;
-  padding: 20px 16px;
-  overflow-y: auto;
-  background: #f3f3f3;
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 
-  .message-item {
+.preview-banner {
+  padding: 12px 20px;
+  background-color: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+
+  .banner-inner {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--el-fill-color-blank);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 10px;
+
+    .image-box {
+      width: 48px;
+      height: 48px;
+      overflow: hidden;
+      border-radius: 6px;
+
+      :deep(.el-image) {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .info-box {
+      .label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--el-text-color-primary);
+      }
+
+      .desc {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+  }
+}
+
+.message-area {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+
+  .message-row {
     display: flex;
     gap: 12px;
     margin-bottom: 24px;
@@ -372,130 +410,92 @@ const handleClose = () => {
     &.user {
       flex-direction: row-reverse;
 
-      .message-wrapper {
+      .content-col {
         align-items: flex-end;
       }
 
-      .message-text {
-        color: #000;
-        background: #95ec69; // 微信用户气泡颜色
+      .bubble {
+        color: #fff;
+        background: var(--el-color-primary);
+        border-radius: 16px 4px 16px 16px;
+      }
 
-        &::after {
-          right: -10px;
-          left: auto;
-          border-right-color: transparent;
-          border-left-color: #95ec69;
-        }
+      .user-avatar {
+        color: var(--el-color-primary);
+        background: var(--el-color-primary-light-8);
       }
     }
 
     &.assistant {
-      .message-wrapper {
-        align-items: flex-start;
+      .bubble {
+        background: var(--el-bg-color);
+        border: 1px solid var(--el-border-color-lighter);
+        border-radius: 4px 16px 16px 16px;
       }
 
-      .message-text {
-        color: #000;
-        background: #fff; // 微信AI/他人气泡颜色
-
-        &::after {
-          right: auto;
-          left: -10px;
-          border-right-color: #fff;
-          border-left-color: transparent;
-        }
+      .ai-avatar {
+        color: #fff;
+        background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
       }
     }
   }
 
-  .message-avatar {
+  .avatar-col {
     flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    overflow: hidden;
-    border-radius: 4px;
 
-    img {
-      width: 100%;
-      height: 100%;
-    }
-
-    .ai-avatar-icon {
+    .user-avatar,
+    .ai-avatar {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      height: 100%;
-      color: #fff;
-      background: #07c160;
-
-      svg {
-        width: 24px;
-        height: 24px;
-      }
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
     }
   }
 
-  .message-wrapper {
+  .content-col {
     display: flex;
     flex-direction: column;
-    max-width: calc(100% - 100px);
-  }
+    max-width: 80%;
 
-  .message-content {
-    position: relative;
-  }
-
-  .message-text {
-    position: relative;
-    padding: 10px 12px;
-    font-size: 15px;
-    line-height: 1.6;
-    word-break: break-word;
-    border-radius: 6px;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-
-    &::after {
-      position: absolute;
-      top: 14px;
-      width: 0;
-      height: 0;
-      content: "";
-      border: 5px solid transparent;
+    .bubble {
+      padding: 10px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
     }
-  }
 
-  .message-image {
-    margin-bottom: 8px;
+    .content-image {
+      margin-bottom: 8px;
 
-    :deep(.el-image) {
-      max-width: 240px;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+      :deep(.el-image) {
+        max-width: 280px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+      }
     }
-  }
 
-  .message-time {
-    margin: 6px 0;
-    font-size: 11px;
-    color: #b2b2b2;
+    .meta {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--el-text-color-placeholder);
+    }
   }
 }
 
-.typing-indicator {
+.typing {
   display: flex;
   gap: 4px;
-  align-items: center;
-  height: 20px;
-  padding: 0 4px;
+  padding: 4px 0;
 
   span {
     width: 6px;
     height: 6px;
-    background: #000;
+    background: var(--el-text-color-placeholder);
     border-radius: 50%;
-    opacity: 0.3;
-    animation: typing 1.4s infinite ease-in-out both;
+    animation: bounce 1.4s infinite ease-in-out both;
 
     &:nth-child(1) {
       animation-delay: -0.32s;
@@ -504,86 +504,71 @@ const handleClose = () => {
     &:nth-child(2) {
       animation-delay: -0.16s;
     }
-
-    &:nth-child(3) {
-      animation-delay: -0.08s;
-    }
   }
 }
 
-@keyframes typing {
+@keyframes bounce {
   0%,
   80%,
   100% {
-    opacity: 0.3;
-    transform: scale(0.8);
+    transform: scale(0.6);
   }
 
   40% {
-    opacity: 0.7;
-    transform: scale(1.2);
+    transform: scale(1);
   }
 }
 
-.suggestions {
-  padding: 12px 16px;
-  background: #f3f3f3;
+.suggestions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px;
 
-  .suggestions-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-start;
-  }
-
-  .suggestion-item {
+  .suggestion-chip {
     padding: 6px 12px;
-    font-size: 13px;
-    color: #576b95; // 微信链接色
+    font-size: 12px;
+    color: var(--el-color-primary);
     cursor: pointer;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 16px;
+    background-color: var(--el-color-primary-light-9);
+    border: 1px solid var(--el-color-primary-light-8);
+    border-radius: 20px;
     transition: all 0.2s;
 
     &:hover {
-      background: #f5f5f5;
-      border-color: #ddd;
+      background-color: var(--el-color-primary-light-8);
+      transform: translateY(-1px);
     }
   }
 }
 
-.input-area {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  padding: 12px 16px 20px;
-  background: #f7f7f7;
-  border-top: 1px solid #e7e7e7;
+.footer-input {
+  padding: 16px 20px 24px;
+  background-color: var(--el-bg-color);
+  border-top: 1px solid var(--el-border-color-lighter);
 
-  .input-tools {
+  .input-container {
+    position: relative;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-bottom: 6px;
-    color: #515151;
-    cursor: pointer;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 8px;
+    background-color: var(--el-fill-color-lighter);
+    border: 1px solid var(--el-border-color);
+    border-radius: 12px;
+    transition: all 0.2s;
 
-    &:hover {
-      color: #07c160;
+    &:focus-within {
+      background-color: var(--el-bg-color);
+      border-color: var(--el-color-primary);
+      box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
     }
-  }
-
-  .el-input {
-    flex: 1;
 
     :deep(.el-textarea__inner) {
-      padding: 8px 12px;
-      font-size: 15px;
-      line-height: normal;
-      background: #fff;
+      padding: 4px 8px;
+      font-size: 14px;
+      background: transparent;
       border: none;
-      border-radius: 4px;
 
       &:focus {
         box-shadow: none;
@@ -591,20 +576,12 @@ const handleClose = () => {
     }
   }
 
-  .send-btn {
-    padding: 0 16px;
-    height: 36px;
-    font-weight: 500;
-    background: #07c160;
-    border: none;
+  .send-action {
+    flex-shrink: 0;
 
-    &:hover {
-      background: #06ae56;
-    }
-
-    &.is-disabled {
-      color: #999;
-      background: #e1e1e1;
+    .el-button {
+      width: 32px;
+      height: 32px;
     }
   }
 }
