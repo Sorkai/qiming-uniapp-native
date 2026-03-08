@@ -255,20 +255,31 @@ const handleClose = () => {
 
 <style lang="scss" scoped>
 .ai-chat-dialog.modern-style {
+  --ai-primary: var(--el-color-primary);
+  --ai-primary-strong: var(--el-color-primary-dark-2);
+  --ai-primary-mid: var(--el-color-primary-light-3);
+  --ai-primary-soft: var(--el-color-primary-light-9);
+  --ai-primary-soft-border: var(--el-color-primary-light-7);
+
   :deep(.el-dialog) {
     display: flex;
     flex-direction: column;
     height: 650px;
     padding: 0;
     overflow: hidden;
+    clip-path: inset(0 round 24px);
     background-color: var(--el-bg-color-page);
-    border-radius: 12px;
-    box-shadow: 0 12px 32px 4px rgb(0 0 0 / 10%);
+    border: 1px solid var(--ai-primary-soft-border);
+    border-radius: 24px;
+    box-shadow: 0 18px 44px rgb(0 0 0 / 16%);
   }
 
   :deep(.el-dialog__header) {
     padding: 0;
     margin: 0;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    overflow: hidden;
   }
 
   :deep(.el-dialog__body) {
@@ -279,6 +290,10 @@ const handleClose = () => {
 
   :deep(.el-dialog__footer) {
     padding: 0;
+    border-bottom-right-radius: 24px;
+    border-bottom-left-radius: 24px;
+    overflow: hidden;
+    background: var(--el-bg-color);
   }
 }
 
@@ -287,8 +302,12 @@ const handleClose = () => {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: linear-gradient(
+    180deg,
+    var(--ai-primary-soft) 0%,
+    var(--el-bg-color) 100%
+  );
+  border-bottom: 1px solid var(--ai-primary-soft-border);
 
   .header-content {
     display: flex;
@@ -302,8 +321,12 @@ const handleClose = () => {
       width: 32px;
       height: 32px;
       color: #fff;
-      background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
-      border-radius: 8px;
+      background: linear-gradient(
+        135deg,
+        var(--ai-primary-mid) 0%,
+        var(--ai-primary-strong) 100%
+      );
+      border-radius: 10px;
     }
 
     .header-text {
@@ -335,11 +358,12 @@ const handleClose = () => {
       height: 32px;
       color: var(--el-text-color-regular);
       cursor: pointer;
-      border-radius: 6px;
+      border-radius: 10px;
       transition: all 0.2s;
 
       &:hover {
-        background-color: var(--el-fill-color-light);
+        color: var(--ai-primary);
+        background-color: var(--ai-primary-soft);
       }
 
       &.close:hover {
@@ -359,7 +383,7 @@ const handleClose = () => {
 .preview-banner {
   padding: 12px 20px;
   background-color: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--ai-primary-soft-border);
 
   .banner-inner {
     display: flex;
@@ -367,14 +391,14 @@ const handleClose = () => {
     align-items: center;
     padding: 10px;
     background-color: var(--el-fill-color-blank);
-    border: 1px solid var(--el-border-color-light);
-    border-radius: 10px;
+    border: 1px solid var(--ai-primary-soft-border);
+    border-radius: 14px;
 
     .image-box {
       width: 48px;
       height: 48px;
       overflow: hidden;
-      border-radius: 6px;
+      border-radius: 10px;
 
       :deep(.el-image) {
         width: 100%;
@@ -416,8 +440,12 @@ const handleClose = () => {
 
       .bubble {
         color: #fff;
-        background: var(--el-color-primary);
-        border-radius: 16px 4px 16px 16px;
+        background: linear-gradient(
+          135deg,
+          var(--ai-primary-mid) 0%,
+          var(--ai-primary-strong) 100%
+        );
+        border-radius: 18px 8px 18px 18px;
       }
 
       .user-avatar {
@@ -428,14 +456,18 @@ const handleClose = () => {
 
     &.assistant {
       .bubble {
-        background: var(--el-bg-color);
-        border: 1px solid var(--el-border-color-lighter);
-        border-radius: 4px 16px 16px 16px;
+        background: #f7fbff;
+        border: 1px solid var(--ai-primary-soft-border);
+        border-radius: 8px 18px 18px 18px;
       }
 
       .ai-avatar {
         color: #fff;
-        background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
+        background: linear-gradient(
+          135deg,
+          var(--ai-primary-mid) 0%,
+          var(--ai-primary-strong) 100%
+        );
       }
     }
   }
@@ -545,7 +577,7 @@ const handleClose = () => {
 .footer-input {
   padding: 16px 20px 24px;
   background-color: var(--el-bg-color);
-  border-top: 1px solid var(--el-border-color-lighter);
+  border-top: 1px solid var(--ai-primary-soft-border);
 
   .input-container {
     position: relative;
@@ -554,14 +586,14 @@ const handleClose = () => {
     gap: 12px;
     padding: 8px;
     background-color: var(--el-fill-color-lighter);
-    border: 1px solid var(--el-border-color);
-    border-radius: 12px;
+    border: 1px solid var(--ai-primary-soft-border);
+    border-radius: 16px;
     transition: all 0.2s;
 
     &:focus-within {
       background-color: var(--el-bg-color);
-      border-color: var(--el-color-primary);
-      box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
+      border-color: var(--ai-primary);
+      box-shadow: 0 0 0 3px var(--el-color-primary-light-8);
     }
 
     :deep(.el-textarea__inner) {

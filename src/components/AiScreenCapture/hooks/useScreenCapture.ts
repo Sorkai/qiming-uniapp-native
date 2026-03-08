@@ -7,6 +7,144 @@ import type { CaptureArea, CaptureStatus } from "../types";
  */
 export function useScreenCapture() {
   const OKLCH_COLOR_REGEX = /oklch\([^()]*\)/gi;
+  const BLACK_PIXEL_THRESHOLD = 24;
+  const BLACK_RATIO_THRESHOLD = 0.92;
+
+  /**
+   * 粗略判断截图是否几乎全黑，用于识别视频黑帧场景。
+   */
+  const isMostlyBlackImage = (canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return false;
+
+    const { width, height } = canvas;
+    if (!width || !height) return false;
+
+    const imageData = ctx.getImageData(0, 0, width, height).data;
+    const totalPixels = width * height;
+    let blackPixels = 0;
+
+    for (let i = 0; i < imageData.length; i += 4) {
+      const alpha = imageData[i + 3];
+      if (alpha === 0) continue;
+
+      const r = imageData[i];
+      const g = imageData[i + 1];
+      const b = imageData[i + 2];
+
+      if (
+        r <= BLACK_PIXEL_THRESHOLD &&
+        g <= BLACK_PIXEL_THRESHOLD &&
+        b <= BLACK_PIXEL_THRESHOLD
+      ) {
+        blackPixels++;
+      }
+    }
+
+    return blackPixels / totalPixels >= BLACK_RATIO_THRESHOLD;
+  };
+
+  /**
+   * 使用浏览器原生屏幕捕获当前标签页，绕过 html2canvas 在视频元素上的黑屏问题。
+   */
+  const captureByDisplayMedia = async (area: CaptureArea): Promise<string> => {
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      throw new Error("当前浏览器不支持屏幕捕获");
+    }
+
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        frameRate: 30
+      },
+      audio: false
+    });
+
+    const stopStream = () => {
+      stream.getTracks().forEach(track => track.stop());
+    };
+
+    try {
+      const track = stream.getVideoTracks()[0];
+      if (!track) {
+        throw new Error("未获取到屏幕视频流");
+      }
+
+      const fullCanvas = document.createElement("canvas");
+      const fullCtx = fullCanvas.getContext("2d");
+
+      if (!fullCtx) {
+        throw new Error("无法创建Canvas上下文");
+      }
+
+      const ImageCaptureCtor = (window as any).ImageCapture as
+        | (new (track: MediaStreamTrack) => {
+          grabFrame: () => Promise<ImageBitmap>;
+        })
+        | undefined;
+
+      if (ImageCaptureCtor) {
+        const capture = new ImageCaptureCtor(track);
+        const bitmap = await capture.grabFrame();
+        fullCanvas.width = bitmap.width;
+        fullCanvas.height = bitmap.height;
+        fullCtx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+      } else {
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        video.muted = true;
+        video.playsInline = true;
+        await video.play();
+
+        // 给解码器一帧时间，确保拿到稳定画面。
+        await new Promise(resolve => setTimeout(resolve, 120));
+
+        fullCanvas.width = video.videoWidth;
+        fullCanvas.height = video.videoHeight;
+        fullCtx.drawImage(video, 0, 0, fullCanvas.width, fullCanvas.height);
+
+        video.pause();
+        video.srcObject = null;
+      }
+
+      const scaleX = fullCanvas.width / window.innerWidth;
+      const scaleY = fullCanvas.height / window.innerHeight;
+
+      const cropX = Math.max(0, Math.round(area.x * scaleX));
+      const cropY = Math.max(0, Math.round(area.y * scaleY));
+      const cropWidth = Math.max(1, Math.round(area.width * scaleX));
+      const cropHeight = Math.max(1, Math.round(area.height * scaleY));
+
+      const safeWidth = Math.min(cropWidth, fullCanvas.width - cropX);
+      const safeHeight = Math.min(cropHeight, fullCanvas.height - cropY);
+
+      const croppedCanvas = document.createElement("canvas");
+      const croppedCtx = croppedCanvas.getContext("2d");
+
+      if (!croppedCtx) {
+        throw new Error("无法创建Canvas上下文");
+      }
+
+      croppedCanvas.width = Math.max(1, safeWidth);
+      croppedCanvas.height = Math.max(1, safeHeight);
+
+      croppedCtx.drawImage(
+        fullCanvas,
+        cropX,
+        cropY,
+        croppedCanvas.width,
+        croppedCanvas.height,
+        0,
+        0,
+        croppedCanvas.width,
+        croppedCanvas.height
+      );
+
+      return croppedCanvas.toDataURL("image/png");
+    } finally {
+      stopStream();
+    }
+  };
 
   /**
    * html2canvas 对 <video> 当前帧支持不稳定，先把源页面视频帧转成图片注入克隆文档，避免截图黑屏。
@@ -259,7 +397,20 @@ export function useScreenCapture() {
       ctx.drawImage(canvas, x, y, width, height, 0, 0, width, height);
 
       // 转换为base64
-      const base64 = croppedCanvas.toDataURL("image/png");
+      let base64 = croppedCanvas.toDataURL("image/png");
+
+      // html2canvas 在视频区域返回黑帧时，自动切换到浏览器原生屏幕捕获。
+      if (isMostlyBlackImage(croppedCanvas)) {
+        try {
+          base64 = await captureByDisplayMedia(area);
+        } catch (fallbackErr) {
+          console.warn(
+            "displayMedia 截图兜底失败，继续使用原始截图",
+            fallbackErr
+          );
+        }
+      }
+
       screenshot.value = base64;
       status.value = "preview";
 
