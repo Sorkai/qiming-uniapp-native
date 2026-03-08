@@ -79,9 +79,14 @@ const handleCapture = async (area: CaptureArea) => {
     enterChatMode();
     chatDialogVisible.value = true;
 
-    await analyzeScreenshot(compressedImage);
+    // 先发送带有截图的用户消息，然后静默等待 AI 分析，而不是让 analyzeScreenshot 自动添加消息
+    // 或者我们直接调用 analyzeScreenshot，它内部会由 useAiChat 处理
+    await analyzeScreenshot(compressedImage).catch(err => {
+      console.error("AI分析启动失败:", err);
+    });
   } catch (error) {
     console.error("截图失败:", error);
+    // 只有在真正的截图插件或 canvas 转换失败时才报错
     ElMessage.error("截图失败，请重试");
     resetCapture();
   }

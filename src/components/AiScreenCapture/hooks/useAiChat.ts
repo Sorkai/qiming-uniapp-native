@@ -65,19 +65,22 @@ export function useAiChat() {
         question
       });
 
-      if (response.code === 0 && response.data) {
+      if (response && response.code === 0 && response.data) {
         updateAssistantMessage(loadingMsg.id, response.data.answer);
         suggestions.value = response.data.suggestions || [];
       } else {
         updateAssistantMessage(
           loadingMsg.id,
-          response.msg || "分析失败，请重试"
+          response?.msg || "分析失败，可能服务器忙"
         );
       }
     } catch (error) {
       console.error("AI分析失败:", error);
-      updateAssistantMessage(loadingMsg.id, "网络错误，请稍后重试");
-      ElMessage.error("AI分析失败，请稍后重试");
+      updateAssistantMessage(
+        loadingMsg.id,
+        "分析失败，请在下方直接输入您的问题"
+      );
+      // ElMessage.error("AI分析失败，请稍后重试");
     } finally {
       loading.value = false;
     }
@@ -99,13 +102,13 @@ export function useAiChat() {
         question: message
       });
 
-      if (response.code === 0 && response.data) {
+      if (response && response.code === 0 && response.data) {
         updateAssistantMessage(loadingMsg.id, response.data.answer);
         suggestions.value = response.data.suggestions || [];
       } else {
         updateAssistantMessage(
           loadingMsg.id,
-          response.msg || "回复失败，请重试"
+          response?.msg || "回复失败，请重试"
         );
       }
     } catch (error) {
