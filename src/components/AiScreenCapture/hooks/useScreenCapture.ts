@@ -6,6 +6,96 @@ import type { CaptureArea, CaptureStatus } from "../types";
  * 截图功能 Hook
  */
 export function useScreenCapture() {
+  const OKLCH_COLOR_REGEX = /oklch\([^()]*\)/gi;
+
+  /**
+   * 将不被 html2canvas 支持的 oklch() 转换为 rgb()，避免解析时报错
+   */
+  const normalizeUnsupportedColors = (clonedDoc: Document) => {
+    if (!clonedDoc.body) return;
+
+    const view = clonedDoc.defaultView || window;
+    const probe = clonedDoc.createElement("span");
+    probe.style.position = "fixed";
+    probe.style.left = "-99999px";
+    probe.style.top = "-99999px";
+    clonedDoc.body.appendChild(probe);
+
+    const toRgbColor = (colorValue: string) => {
+      probe.style.color = "";
+      probe.style.color = colorValue;
+      return probe.style.color
+        ? view.getComputedStyle(probe).color
+        : colorValue;
+    };
+
+    const replaceColorFunctions = (input: string) => {
+      if (!input.includes("oklch(")) return input;
+      OKLCH_COLOR_REGEX.lastIndex = 0;
+      return input.replace(OKLCH_COLOR_REGEX, match => toRgbColor(match));
+    };
+
+    const normalizeStyleDeclaration = (style: CSSStyleDeclaration) => {
+      for (let i = 0; i < style.length; i++) {
+        const prop = style.item(i);
+        const value = style.getPropertyValue(prop);
+        if (!value || !value.includes("oklch(")) continue;
+        const nextValue = replaceColorFunctions(value);
+        const priority = style.getPropertyPriority(prop);
+        style.setProperty(prop, nextValue, priority);
+      }
+    };
+
+    const normalizeCssRules = (rules: CSSRuleList) => {
+      for (const rule of Array.from(rules)) {
+        const styleRule = rule as CSSRule & { style?: CSSStyleDeclaration };
+        if (styleRule.style) {
+          normalizeStyleDeclaration(styleRule.style);
+        }
+
+        const groupRule = rule as CSSRule & { cssRules?: CSSRuleList };
+        if (groupRule.cssRules) {
+          normalizeCssRules(groupRule.cssRules);
+        }
+      }
+    };
+
+    // 优先处理 CSSOM，覆盖外链样式、构建产物样式和运行时注入样式
+    for (const styleSheet of Array.from(clonedDoc.styleSheets)) {
+      try {
+        normalizeCssRules(styleSheet.cssRules);
+      } catch {
+        // 跨域或只读样式表会抛错，忽略后继续处理其他样式
+      }
+    }
+
+    // 处理 style 标签中的 CSS 文本
+    const styleTags = Array.from(clonedDoc.querySelectorAll("style"));
+    styleTags.forEach(styleTag => {
+      const cssText = styleTag.textContent;
+      if (!cssText || !cssText.includes("oklch(")) return;
+      styleTag.textContent = replaceColorFunctions(cssText);
+    });
+
+    // 处理内联 style
+    const styledElements = Array.from(clonedDoc.querySelectorAll("[style]"));
+    styledElements.forEach(element => {
+      const styleAttr = element.getAttribute("style");
+      if (!styleAttr || !styleAttr.includes("oklch(")) return;
+      element.setAttribute("style", replaceColorFunctions(styleAttr));
+    });
+
+    probe.remove();
+  };
+
+  const isUnsupportedColorFunctionError = (err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    return (
+      message.includes("unsupported color function") ||
+      message.includes("Attempting to parse an unsupported color function")
+    );
+  };
+
   // 截图状态
   const status = ref<CaptureStatus>("idle");
   // 截图结果 (base64)
@@ -49,21 +139,37 @@ export function useScreenCapture() {
       // 等待DOM更新
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // 使用html2canvas截取整个页面
-      const canvas = await html2canvas(document.body, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: window.devicePixelRatio || 1,
-        logging: false,
-        // 忽略某些元素
-        ignoreElements: element => {
-          return (
-            element.classList.contains("capture-overlay") ||
-            element.classList.contains("ai-float-button")
-          );
+      const renderCanvas = (useForeignObjectRendering: boolean) =>
+        html2canvas(document.body, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          scale: window.devicePixelRatio || 1,
+          logging: false,
+          foreignObjectRendering: useForeignObjectRendering,
+          onclone: clonedDoc => {
+            normalizeUnsupportedColors(clonedDoc);
+          },
+          // 忽略某些元素
+          ignoreElements: element => {
+            return (
+              element.classList.contains("capture-overlay") ||
+              element.classList.contains("ai-float-button")
+            );
+          }
+        });
+
+      let canvas: HTMLCanvasElement;
+      try {
+        // 优先走常规渲染，性能更好
+        canvas = await renderCanvas(false);
+      } catch (firstErr) {
+        if (!isUnsupportedColorFunctionError(firstErr)) {
+          throw firstErr;
         }
-      });
+        // 命中颜色函数兼容问题时，降级到 foreignObjectRendering 再试一次
+        canvas = await renderCanvas(true);
+      }
 
       // 裁剪指定区域
       const croppedCanvas = document.createElement("canvas");

@@ -24,12 +24,25 @@ const emit = defineEmits<{
 // 输入框内容
 const inputMessage = ref("");
 const messageListRef = ref<HTMLElement>();
+const inputRef = ref<any>();
 
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
   set: val => emit("update:visible", val)
 });
+
+// 监听弹窗显示，自动聚焦
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      nextTick(() => {
+        inputRef.value?.focus();
+      });
+    }
+  }
+);
 
 // 发送消息
 const handleSend = () => {
@@ -188,6 +201,7 @@ const handleClose = () => {
     <template #footer>
       <div class="input-area">
         <el-input
+          ref="inputRef"
           v-model="inputMessage"
           placeholder="输入您的问题..."
           :disabled="loading"
