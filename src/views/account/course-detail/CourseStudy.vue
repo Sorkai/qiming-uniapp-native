@@ -639,7 +639,7 @@ $shadow-xl:
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 0;
+  gap: 16px;
   min-width: 0;
   overflow-y: auto;
 
@@ -653,11 +653,30 @@ $shadow-xl:
 }
 
 .video-section {
+  position: relative;
   flex-shrink: 0; /* 视频区域不收缩 */
   overflow: hidden;
   background: #000;
   border-radius: $radius-xl;
   box-shadow: $shadow-xl;
+
+  &::after {
+    position: absolute;
+    right: 18px;
+    bottom: -14px;
+    left: 18px;
+    height: 22px;
+    pointer-events: none;
+    content: "";
+    background: radial-gradient(
+      ellipse at center,
+      rgb(15 23 42 / 20%) 0%,
+      rgb(15 23 42 / 10%) 45%,
+      transparent 72%
+    );
+    border-radius: 999px;
+    filter: blur(4px);
+  }
 }
 
 .video-player-wrapper {
