@@ -328,6 +328,7 @@ import { ref, watch, computed, h } from "vue";
 import {
   getVideoAnalyzeTask,
   getVideoAnalyzeModules,
+  getVideoAnalyzeResult,
   type VideoAnalyzeTask,
   type VideoAnalyzeModuleResult
 } from "@/api/frontend/videoAnalysis";
@@ -500,11 +501,7 @@ const allTabs = [
 ];
 
 const availableTabs = computed(() => {
-  if (!moduleData.value?.moduleStatus) return allTabs;
-  return allTabs.filter(tab => {
-    const status = moduleData.value!.moduleStatus[tab.key];
-    return !status || status === "ready";
-  });
+  return allTabs;
 });
 
 const formatTime = (ms: number | undefined | null) => {
@@ -584,6 +581,23 @@ const fetchAnalysis = async () => {
           moduleRes.data.mindMap = { url: raw.mindMapUrl };
         }
         moduleData.value = moduleRes.data;
+      }
+
+      // 如果模块化接口未返回思维导图，尝试从完整结果接口获取
+      if (!moduleData.value?.mindMap?.url) {
+        try {
+          const fullRes = await getVideoAnalyzeResult({
+            taskId: taskRes.data.taskId
+          });
+          if (fullRes.data?.mindMapUrl) {
+            if (!moduleData.value) {
+              moduleData.value = {} as VideoAnalyzeModuleResult;
+            }
+            moduleData.value.mindMap = { url: fullRes.data.mindMapUrl };
+          }
+        } catch {
+          // 忽略回退请求失败
+        }
       }
     }
   } catch {
