@@ -289,9 +289,9 @@ const userRoleType = computed(() => {
 const isTeacher = computed(() => userRoleType.value === 2);
 const isAdmin = computed(() => userRoleType.value === 3);
 const showStudentScreenCapture = computed(() => {
-  // 仅学生端课程学习页面显示截图提问小球，其他菜单全部屏蔽
+  // 学生端仅在作业考试菜单屏蔽，其他菜单都允许使用识屏助手。
   return (
-    !isTeacher.value && !isAdmin.value && activeMenu.value === "course-learn"
+    !isTeacher.value && !isAdmin.value && activeMenu.value !== "homework-exam"
   );
 });
 

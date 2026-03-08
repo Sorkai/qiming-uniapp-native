@@ -9,6 +9,71 @@ export function useScreenCapture() {
   const OKLCH_COLOR_REGEX = /oklch\([^()]*\)/gi;
 
   /**
+   * html2canvas 对 <video> 当前帧支持不稳定，先把源页面视频帧转成图片注入克隆文档，避免截图黑屏。
+   */
+  const patchVideoFrames = (clonedDoc: Document) => {
+    const sourceVideos = Array.from(document.querySelectorAll("video"));
+    const clonedVideos = Array.from(clonedDoc.querySelectorAll("video"));
+
+    if (!sourceVideos.length || !clonedVideos.length) return;
+
+    const videoCount = Math.min(sourceVideos.length, clonedVideos.length);
+
+    for (let i = 0; i < videoCount; i++) {
+      const sourceVideo = sourceVideos[i];
+      const clonedVideo = clonedVideos[i];
+
+      if (!clonedVideo.parentElement) continue;
+      if (sourceVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) continue;
+
+      const frameWidth = sourceVideo.videoWidth || sourceVideo.clientWidth;
+      const frameHeight = sourceVideo.videoHeight || sourceVideo.clientHeight;
+
+      if (!frameWidth || !frameHeight) continue;
+
+      try {
+        const frameCanvas = document.createElement("canvas");
+        frameCanvas.width = frameWidth;
+        frameCanvas.height = frameHeight;
+
+        const frameCtx = frameCanvas.getContext("2d");
+        if (!frameCtx) continue;
+
+        frameCtx.drawImage(sourceVideo, 0, 0, frameWidth, frameHeight);
+
+        const frameImage = clonedDoc.createElement("img");
+        frameImage.src = frameCanvas.toDataURL("image/png");
+        frameImage.alt = "video-frame";
+        frameImage.className = clonedVideo.className;
+
+        const styleText = clonedVideo.getAttribute("style");
+        if (styleText) {
+          frameImage.setAttribute("style", styleText);
+        }
+
+        const displayWidth = clonedVideo.clientWidth || sourceVideo.clientWidth;
+        const displayHeight =
+          clonedVideo.clientHeight || sourceVideo.clientHeight;
+
+        if (displayWidth) {
+          frameImage.style.width = `${displayWidth}px`;
+        }
+        if (displayHeight) {
+          frameImage.style.height = `${displayHeight}px`;
+        }
+
+        if (!frameImage.style.objectFit) {
+          frameImage.style.objectFit = "cover";
+        }
+
+        clonedVideo.parentElement.replaceChild(frameImage, clonedVideo);
+      } catch {
+        // 跨域视频或受保护流会导致 drawImage/toDataURL 失败，忽略该视频并继续。
+      }
+    }
+  };
+
+  /**
    * 将不被 html2canvas 支持的 oklch() 转换为 rgb()，避免解析时报错
    */
   const normalizeUnsupportedColors = (clonedDoc: Document) => {
@@ -149,6 +214,7 @@ export function useScreenCapture() {
           foreignObjectRendering: useForeignObjectRendering,
           onclone: clonedDoc => {
             normalizeUnsupportedColors(clonedDoc);
+            patchVideoFrames(clonedDoc);
           },
           // 忽略某些元素
           ignoreElements: element => {
