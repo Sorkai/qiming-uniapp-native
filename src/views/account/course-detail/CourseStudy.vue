@@ -639,7 +639,7 @@ $shadow-xl:
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 24px;
+  gap: 0;
   min-width: 0;
   overflow-y: auto;
 
@@ -753,7 +753,12 @@ $shadow-xl:
 
 .analysis-section {
   flex-shrink: 0;
-  height: 50vh;
+  height: auto;
+}
+
+.analysis-section.glass-card {
+  height: auto;
+  min-height: unset;
 }
 
 .glass-card {
@@ -887,6 +892,15 @@ $shadow-xl:
         }
       }
     }
+  }
+}
+
+.analysis-section .card-body {
+  flex: 0 0 auto;
+  overflow: visible;
+
+  :deep(.el-scrollbar) {
+    flex: 0 0 auto;
   }
 }
 
