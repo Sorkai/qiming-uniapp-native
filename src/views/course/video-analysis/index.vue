@@ -191,13 +191,14 @@
 
       <!-- 任务列表 -->
       <div
-        class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] overflow-hidden"
+        class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] overflow-hidden pt-3"
       >
         <el-table
           :data="taskList"
           style="width: 100%"
           height="100%"
           stripe
+          class="task-table"
           :empty-text="selectedCourseId ? '暂无分析任务' : '请先选择一个课程'"
         >
           <el-table-column label="文件名" prop="fileName" min-width="200">
@@ -210,12 +211,7 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column
-            label="状态"
-            prop="status"
-            width="140"
-            align="center"
-          >
+          <el-table-column label="状态" prop="status" width="120" align="left">
             <template #default="{ row }">
               <el-tag
                 :type="statusTagType(row.status)"
@@ -243,8 +239,8 @@
               <span v-else>{{ row.progress ?? 0 }}%</span>
             </template>
           </el-table-column>
-          <el-table-column label="提交时间" prop="createdAt" width="180" />
-          <el-table-column label="完成时间" prop="completedAt" width="180">
+          <el-table-column label="提交时间" prop="createdAt" min-width="200" />
+          <el-table-column label="完成时间" prop="completedAt" min-width="200">
             <template #default="{ row }">
               {{ row.completedAt || "-" }}
             </template>
@@ -847,3 +843,22 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
+
+<style lang="scss" scoped>
+.task-table {
+  :deep(.el-table__header-wrapper) {
+    th {
+      padding: 14px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--el-text-color-secondary);
+    }
+  }
+
+  :deep(.el-table__body-wrapper) {
+    td {
+      padding: 12px 0;
+    }
+  }
+}
+</style>
