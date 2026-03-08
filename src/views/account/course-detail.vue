@@ -18,10 +18,11 @@
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
           :course-name="courseDetail?.courseName"
+          :course-id="courseId"
+          :chapter-id="currentChapterId"
           :current-hour="currentHour"
           :current-video-url="currentVideoUrl"
           :loading="loading"
-          :course-content-html="courseContentHtml"
           :is-ai-dialog-visible="isAiDialogVisible"
           :chat-messages="chatMessages"
           :is-typing="isTyping"
@@ -157,7 +158,6 @@ import {
   getCourseStudyEffect
 } from "@/api/frontend/course";
 import { getUserDetail } from "@/api/user";
-import { getCourseContentByName } from "@/utils/courseContents";
 import {
   courseAIChatStream,
   getConversationHistory
@@ -297,10 +297,14 @@ const activeNode = ref(
   ) as string) || "1.1"
 );
 const autoPlayOnLoad = ref(false);
-const courseContentHtml = computed(() => {
-  return courseDetail.value
-    ? getCourseContentByName(courseDetail.value.courseName)
-    : "加载中...";
+const currentChapterId = computed(() => {
+  if (!currentHour.value || !courseDetail.value?.courseChapterList) return 0;
+  for (const chapter of courseDetail.value.courseChapterList) {
+    if (chapter.hourList?.some(h => h.hourId === currentHour.value.hourId)) {
+      return chapter.chapterId;
+    }
+  }
+  return 0;
 });
 
 // AI 聊天相关
@@ -604,18 +608,18 @@ const getCurrentChapterId = () => {
 const handleSendMessage = async (content: string) => {
   if (!content.trim() || sendingMessage.value) return;
   const userMsg = content.trim();
-  const currentChapterId = getCurrentChapterId();
+  const chatChapterId = getCurrentChapterId();
 
   if (
-    currentChapterId !== null &&
+    chatChapterId !== null &&
     previousChapterId.value !== null &&
-    currentChapterId !== previousChapterId.value
+    chatChapterId !== previousChapterId.value
   ) {
     conversationId.value =
       Date.now().toString() + Math.random().toString(36).substring(2);
     chatMessages.value = [];
   }
-  previousChapterId.value = currentChapterId;
+  previousChapterId.value = chatChapterId;
 
   chatMessages.value.push({
     role: "user",
@@ -632,7 +636,7 @@ const handleSendMessage = async (content: string) => {
         course_id: courseId.value,
         conversation_id: conversationId.value,
         message: userMsg,
-        chapter_id: currentChapterId
+        chapter_id: chatChapterId
       },
       data => {
         if (data.conversation_id) conversationId.value = data.conversation_id;
