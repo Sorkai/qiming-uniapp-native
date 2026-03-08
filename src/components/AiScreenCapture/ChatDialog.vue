@@ -163,22 +163,26 @@ const handleClose = () => {
           :class="msg.role"
         >
           <div class="avatar-col">
-            <div v-if="msg.role === 'user'" class="user-avatar">
-              <svg viewBox="0 0 24 24" width="16" height="16">
-                <path
-                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
-            <div v-else class="ai-avatar">
-              <svg viewBox="0 0 24 24" width="16" height="16">
-                <path
-                  d="M12 2L4.5 20.29L4.71 21L12 18L19.29 21L19.5 20.29L12 2Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
+            <template v-if="msg.role === 'user'">
+              <div class="user-avatar">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+            </template>
+            <template v-else>
+              <div class="ai-avatar">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path
+                    d="M12 2L4.5 20.29L4.71 21L12 18L19.29 21L19.5 20.29L12 2Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+            </template>
           </div>
           <div class="content-col">
             <div v-if="msg.image" class="content-image">
@@ -253,7 +257,8 @@ const handleClose = () => {
   </el-dialog>
 </template>
 
-<style lang="scss" scoped>
+<!-- 非 scoped：dialog 使用 append-to-body 传送到 body，scoped 样式无法到达 -->
+<style lang="scss">
 .ai-chat-dialog.modern-style {
   --ai-primary: var(--el-color-primary);
   --ai-primary-strong: var(--el-color-primary-dark-2);
@@ -261,42 +266,43 @@ const handleClose = () => {
   --ai-primary-soft: var(--el-color-primary-light-9);
   --ai-primary-soft-border: var(--el-color-primary-light-7);
 
-  :deep(.el-dialog) {
+  .el-dialog {
     display: flex;
     flex-direction: column;
     height: 650px;
     padding: 0;
     overflow: hidden;
-    clip-path: inset(0 round 24px);
     background-color: var(--el-bg-color-page);
     border: 1px solid var(--ai-primary-soft-border);
-    border-radius: 24px;
+    border-radius: 32px;
     box-shadow: 0 18px 44px rgb(0 0 0 / 16%);
   }
 
-  :deep(.el-dialog__header) {
+  .el-dialog__header {
     padding: 0;
     margin: 0;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
+    border-top-left-radius: 32px;
+    border-top-right-radius: 32px;
     overflow: hidden;
   }
 
-  :deep(.el-dialog__body) {
+  .el-dialog__body {
     flex: 1;
     padding: 0;
     overflow: hidden;
   }
 
-  :deep(.el-dialog__footer) {
+  .el-dialog__footer {
     padding: 0;
-    border-bottom-right-radius: 24px;
-    border-bottom-left-radius: 24px;
+    border-bottom-left-radius: 32px;
+    border-bottom-right-radius: 32px;
     overflow: hidden;
     background: var(--el-bg-color);
   }
 }
+</style>
 
+<style lang="scss" scoped>
 .dialog-header {
   display: flex;
   align-items: center;
@@ -477,12 +483,18 @@ const handleClose = () => {
 
     .user-avatar,
     .ai-avatar {
-      display: flex;
+      display: flex !important; // 确保头像容器显示
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
+      width: 40px; // 增大头像尺寸
+      height: 40px;
+      border-radius: 12px;
+
+      svg {
+        width: 24px;
+        height: 24px;
+        display: block; // 确保svg显示
+      }
     }
   }
 
