@@ -85,71 +85,38 @@
             </div>
           </div>
 
-          <div class="content-grid">
-            <div ref="knowledgeCardRef" class="knowledge-card glass-card">
-              <div class="card-header">
-                <div class="header-icon knowledge-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                  </svg>
-                </div>
-                <h3 class="card-title">知识点描述</h3>
-              </div>
-              <div class="card-body">
-                <el-scrollbar>
-                  <div
-                    ref="knowledgeContentRef"
-                    class="knowledge-content"
-                    v-html="courseContentHtml"
+          <div class="analysis-section glass-card">
+            <div class="card-header">
+              <div class="header-icon summary-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
                   />
-                </el-scrollbar>
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
               </div>
+              <h3 class="card-title">AI 视频分析</h3>
+              <span class="ai-badge">AI 生成</span>
             </div>
-
-            <div ref="summaryCardRef" class="summary-card glass-card">
-              <div class="card-header">
-                <div class="header-icon summary-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                    />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                  </svg>
-                </div>
-                <h3 class="card-title">AI 视频纪要</h3>
-                <span class="ai-badge">AI 生成</span>
-              </div>
-              <div class="card-body">
-                <el-scrollbar>
-                  <ul ref="summaryContentRef" class="summary-list">
-                    <li
-                      v-for="(item, index) in mockSummary"
-                      :key="index"
-                      class="summary-item"
-                    >
-                      <span class="item-number">{{ index + 1 }}</span>
-                      <span class="item-text">{{ item }}</span>
-                    </li>
-                  </ul>
-                </el-scrollbar>
-              </div>
+            <div class="card-body">
+              <el-scrollbar>
+                <VideoAnalysisPanel
+                  :course-id="courseId"
+                  :chapter-id="chapterId"
+                  :current-theme="currentTheme"
+                  :current-hour-title="currentHour?.title"
+                  @seek-video="handleSeekVideo"
+                />
+              </el-scrollbar>
             </div>
           </div>
         </div>
@@ -443,8 +410,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted, computed } from "vue";
+import { ref, watch, nextTick } from "vue";
 import CourseHeader from "./CourseHeader.vue";
+import VideoAnalysisPanel from "./VideoAnalysisPanel.vue";
 import aiPeopleAvatar from "@/assets/aipeople.jpg";
 
 const props = defineProps<{
@@ -453,10 +421,11 @@ const props = defineProps<{
   userAvatar: string;
   userNickname: string;
   courseName: string;
+  courseId: number;
+  chapterId: number;
   currentHour: any;
   currentVideoUrl: string;
   loading: boolean;
-  courseContentHtml: string;
   isAiDialogVisible: boolean;
   chatMessages: any[];
   isTyping: boolean;
@@ -479,89 +448,17 @@ const emit = defineEmits([
   "node-click"
 ]);
 
+const handleSeekVideo = (timeMs: number) => {
+  const videoEl = videoPlayerRef.value as HTMLVideoElement | null;
+  if (videoEl) {
+    videoEl.currentTime = timeMs / 1000;
+    videoEl.play();
+  }
+};
+
 const internalMsg = ref("");
 const videoPlayerRef = ref(null);
 const catalogScrollRef = ref(null);
-
-// 卡片高度同步相关
-const knowledgeCardRef = ref<HTMLElement | null>(null);
-const summaryCardRef = ref<HTMLElement | null>(null);
-const knowledgeContentRef = ref<HTMLElement | null>(null);
-const summaryContentRef = ref<HTMLElement | null>(null);
-const cardBodyHeight = ref<number>(0);
-
-// 响应式最小高度：使用 vh 单位，最小 15vh，确保在不同设备上都有合适的高度
-const MIN_CARD_BODY_HEIGHT_VH = 15; // 最小高度为视口高度的 15%
-
-// 计算同步后的卡片高度
-const syncedCardHeight = computed(() => {
-  if (cardBodyHeight.value > 0) {
-    return `${cardBodyHeight.value}px`;
-  }
-  return "auto";
-});
-
-// 计算两个内容区域的高度，取较小值作为统一高度
-const calculateSyncedHeight = () => {
-  nextTick(() => {
-    const knowledgeContent = knowledgeContentRef.value;
-    const summaryContent = summaryContentRef.value;
-
-    if (!knowledgeContent || !summaryContent) return;
-
-    // 获取内容的实际高度
-    const knowledgeHeight = knowledgeContent.scrollHeight;
-    const summaryHeight = summaryContent.scrollHeight;
-
-    // 取较小值
-    let minHeight = Math.min(knowledgeHeight, summaryHeight);
-
-    // 计算响应式最小高度（基于视口高度）
-    const viewportHeight = window.innerHeight;
-    const minHeightVh = viewportHeight * (MIN_CARD_BODY_HEIGHT_VH / 100);
-
-    // 确保不小于最小高度
-    minHeight = Math.max(minHeight, minHeightVh);
-
-    // 加上 card-header 的高度（约 81px）和 padding
-    const headerHeight = 81;
-    const paddingHeight = 40; // 上下 padding 各 20px
-
-    cardBodyHeight.value = minHeight + headerHeight + paddingHeight;
-  });
-};
-
-// 监听窗口大小变化，重新计算高度
-const handleResize = () => {
-  calculateSyncedHeight();
-};
-
-// 监听内容变化
-watch(
-  () => props.courseContentHtml,
-  () => {
-    calculateSyncedHeight();
-  }
-);
-
-// 监听组件可见性
-watch(
-  () => props.visible,
-  val => {
-    if (val) {
-      calculateSyncedHeight();
-    }
-  }
-);
-
-onMounted(() => {
-  calculateSyncedHeight();
-  window.addEventListener("resize", handleResize);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
-});
 
 // 监听 activeNode 变化，自动滚动到当前课时
 watch(
@@ -592,13 +489,6 @@ watch(
     }
   }
 );
-
-const mockSummary = [
-  "本节课主要介绍了课程的整体目标和学习路径。",
-  "详细讲解了基础环境的搭建过程及注意事项。",
-  "演示了核心功能模块的实现逻辑。",
-  "总结了学习过程中常见的难点与解决方案。"
-];
 
 const getTotalLessons = () => {
   if (!props.chapterList) return 0;
@@ -749,25 +639,44 @@ $shadow-xl:
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   min-width: 0;
-  padding-right: 0; /* 移除右边距，因为滚动条隐藏了 */
-  overflow-y: auto; /* 左侧内容独立滚动 */
+  overflow-y: auto;
 
   /* 隐藏滚动条但保持滚动功能 */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
   &::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
+    display: none;
   }
 }
 
 .video-section {
+  position: relative;
   flex-shrink: 0; /* 视频区域不收缩 */
   overflow: hidden;
   background: #000;
   border-radius: $radius-xl;
   box-shadow: $shadow-xl;
+
+  &::after {
+    position: absolute;
+    right: 18px;
+    bottom: -14px;
+    left: 18px;
+    height: 22px;
+    pointer-events: none;
+    content: "";
+    background: radial-gradient(
+      ellipse at center,
+      rgb(15 23 42 / 20%) 0%,
+      rgb(15 23 42 / 10%) 45%,
+      transparent 72%
+    );
+    border-radius: 999px;
+    filter: blur(4px);
+  }
 }
 
 .video-player-wrapper {
@@ -861,23 +770,21 @@ $shadow-xl:
   }
 }
 
-.content-grid {
-  display: grid;
-  flex: 1; /* 填充剩余空间，使底部与右侧章节目录对齐 */
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  min-height: 0; /* 允许收缩 */
+.analysis-section {
+  flex-shrink: 0;
+  height: auto;
+}
+
+.analysis-section.glass-card {
+  height: auto;
+  min-height: unset;
 }
 
 .glass-card {
   display: flex;
   flex-direction: column;
-
-  /* 让卡片填充 grid 单元格的全部高度 */
   height: 100%;
-
-  /* 响应式最小高度：增加到 25vh，确保卡片有足够的高度 */
-  min-height: clamp(25vh, 30vh, 500px);
+  min-height: 0;
   overflow: hidden;
   background: rgb(255 255 255 / 90%);
   border: 1px solid rgb(255 255 255 / 60%);
@@ -930,19 +837,6 @@ $shadow-xl:
     width: 40px;
     height: 40px;
     border-radius: $radius-md;
-
-    &.knowledge-icon {
-      color: $primary;
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-
-      .dark & {
-        background: linear-gradient(
-          135deg,
-          rgb(99 102 241 / 20%) 0%,
-          rgb(99 102 241 / 10%) 100%
-        );
-      }
-    }
 
     &.summary-icon {
       color: $accent;
@@ -1020,58 +914,12 @@ $shadow-xl:
   }
 }
 
-.knowledge-content {
-  font-size: 14px;
-  line-height: 1.8;
-  color: $gray-600;
+.analysis-section .card-body {
+  flex: 0 0 auto;
+  overflow: visible;
 
-  .dark & {
-    color: $gray-300;
-  }
-}
-
-.summary-list {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.summary-item {
-  display: flex;
-  gap: 14px;
-  padding: 14px 0;
-  border-bottom: 1px solid rgb(0 0 0 / 5%);
-
-  .dark & {
-    border-bottom-color: rgb(255 255 255 / 5%);
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  .item-number {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(135deg, $primary 0%, $primary-light 100%);
-    border-radius: 50%;
-  }
-
-  .item-text {
-    font-size: 14px;
-    line-height: 1.6;
-    color: $gray-600;
-
-    .dark & {
-      color: $gray-300;
-    }
+  :deep(.el-scrollbar) {
+    flex: 0 0 auto;
   }
 }
 

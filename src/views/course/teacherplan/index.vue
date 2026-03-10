@@ -290,7 +290,7 @@ const handleCourseSearch = async () => {
       pageSize: 50,
       courseName: courseSearchQuery.value
     });
-    courseOptions.value = data.courseList;
+    courseOptions.value = data?.courseList || [];
   } catch (error) {
     console.error("搜索课程失败", error);
   } finally {
@@ -311,7 +311,7 @@ const fetchInitialCourses = async () => {
       pageNum: 1,
       pageSize: 50
     });
-    courseOptions.value = data.courseList;
+    courseOptions.value = data?.courseList || [];
   } catch (error) {
     console.error("获取课程列表失败", error);
     ElMessage.error("获取课程列表失败");

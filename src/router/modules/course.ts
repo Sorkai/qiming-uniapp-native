@@ -50,6 +50,17 @@ export default [
     }
   },
   {
+    path: "/course/video-analysis",
+    name: "VideoAnalysis",
+    component: () => import("@/views/course/video-analysis/index.vue"),
+    meta: {
+      icon: "ri:video-line",
+      title: "视频分析",
+      rank: 7.5,
+      roles: ["admin", "teacher"]
+    }
+  },
+  {
     path: "/course/classroom",
     name: "CourseClassroom",
     component: () => import("@/views/course/classroom/index.vue"),

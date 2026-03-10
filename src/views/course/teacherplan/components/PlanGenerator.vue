@@ -325,8 +325,8 @@ const generatePlan = async () => {
   loading.value = true;
   try {
     const res = await generateTeacherPlan({
-      courseId: props.courseId,
-      chapterId: form.chapterId
+      course_id: props.courseId,
+      chapter_id: form.chapterId
     });
 
     if (res && res.code === 200) {

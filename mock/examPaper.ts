@@ -1337,25 +1337,6 @@ export default [
     }
   },
 
-  // 获取课程列表
-  {
-    url: "/edu/backend/v1/course/list",
-    method: "get",
-    response: () => {
-      return {
-        code: 0,
-        msg: "success",
-        data: [
-          { id: 1, name: "高等数学" },
-          { id: 2, name: "线性代数" },
-          { id: 3, name: "概率论" },
-          { id: 4, name: "数据结构" },
-          { id: 5, name: "算法设计与分析" }
-        ]
-      };
-    }
-  },
-
   // ==================== 题目助手API ====================
 
   // 搜索题库题目（与列表共享同一数据源）

@@ -243,3 +243,21 @@
     }
   }
 }
+
+/* 统一图片预览工具栏按钮排布：均匀分布并保留左右留白 */
+.el-image-viewer__actions {
+  padding: 0 14px;
+}
+
+.el-image-viewer__actions__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(320px, calc(100vw - 80px));
+  padding: 0 8px;
+  column-gap: 10px;
+
+  > .el-icon {
+    margin: 0;
+  }
+}
