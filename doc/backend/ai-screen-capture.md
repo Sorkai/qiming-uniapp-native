@@ -1,479 +1,357 @@
-# AI识屏回答功能 - 后端API文档
+# AI截屏提问助手 - 后端API文档
 
-## 概述
-
-AI识屏回答功能允许用户通过框选截图的方式，将屏幕内容发送给AI进行分析和问答。本文档定义了前后端交互所需的API接口。
+> 本文档基于前端实际代码生成，供后端开发直接参考实现。
 
 ## 基础信息
 
-- **Base URL**: `/api/ai-assistant`
-- **认证方式**: Bearer Token (JWT)
+- **Base Path**: `/edu/v1/ai/screen`
+- **认证方式**: Bearer Token (JWT)，所有接口需在请求头携带 `Authorization: Bearer {token}`
 - **Content-Type**: `application/json`
+
+## 通用响应格式
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": { ... }
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| code | number | 0=成功，非0=失败 |
+| msg | string | 结果描述 |
+| data | object \| null | 业务数据，失败时为 null |
+
+### 通用错误码
+
+| code | msg | 说明 |
+|------|-----|------|
+| 400 | Bad Request | 参数错误（缺失/格式不对） |
+| 401 | Unauthorized | 未登录或 Token 过期 |
+| 403 | Forbidden | 无权操作（如访问他人会话） |
+| 413 | Image too large | 图片体积超限 |
+| 429 | Rate limit exceeded | 请求频率过高 |
+| 500 | Internal Server Error | 服务端/AI服务异常 |
+
+---
 
 ## 接口列表
 
-### 1. 分析截图
+### 1. 分析截图（核心接口）
 
-分析用户截取的屏幕图片，返回 AI 的初步分析结果。
+前端截屏后调用，发送 Base64 图片给后端，后端转发 AI 模型分析并返回结果。
 
-#### 请求
-
-```text
-POST /api/ai-assistant/analyze
 ```
-
-#### 请求头
-
-| 参数          | 类型   | 必填 | 说明             |
-| ------------- | ------ | ---- | ---------------- |
-| Authorization | string | 是   | Bearer {token}   |
-| Content-Type  | string | 是   | application/json |
+POST /edu/v1/ai/screen/analyze
+```
 
 #### 请求体
 
 ```json
 {
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
-  "sessionId": "uuid-string-optional"
+  "image": "data:image/png;base64,iVBORw0KGgoAAA...",
+  "question": "请解释这段内容",
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-| 参数      | 类型   | 必填 | 说明                                                            |
-| --------- | ------ | ---- | --------------------------------------------------------------- |
-| image     | string | 是   | Base64 编码的图片数据，支持 PNG/JPEG 格式，建议压缩后大小不超过 1MB |
-| sessionId | string | 否   | 会话 ID，如果提供则继续该会话，否则创建新会话                    |
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| image | string | **是** | PNG/JPEG，Base64 编码后 ≤ 5MB | 截屏图片 |
+| question | string | 否 | 最长 500 字符 | 用户附加问题，不传时后端可用默认 prompt |
+| sessionId | string | 否 | UUID 格式 | 传入则延续已有会话，不传则创建新会话 |
 
-#### 响应
+#### 成功响应
 
 ```json
 {
   "code": 0,
-  "message": "success",
+  "msg": "success",
   "data": {
     "sessionId": "550e8400-e29b-41d4-a716-446655440000",
-    "analysis": "这是一个Vue组件的代码截图，显示了一个表格组件的实现...",
-    "suggestions": [
-      "这段代码有什么问题？",
-      "如何优化这个组件的性能？",
-      "请解释这段代码的作用"
-    ],
-    "messageId": "msg-001"
+    "answer": "这是该截图的分析结果...",
+    "suggestions": ["这段代码有什么问题？", "如何优化这个组件？"]
   }
 }
+```
 
-```text
-| 参数        | 类型     | 说明                                |
-| ----------- | -------- | ----------------------------------- |
-| sessionId   | string   | 会话ID，用于后续对话                |
-| analysis    | string   | AI对截图的分析结果                  |
-| suggestions | string[] | 建议的后续问题列表（可选，最多5个） |
-| messageId   | string   | 消息ID，用于追踪                    |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| data.sessionId | string | 会话ID（新建或已有），前端后续对话时回传 |
+| data.answer | string | AI 分析结果，支持 Markdown 格式 |
+| data.suggestions | string[] | 推荐的后续问题，可选，无则返回 `[]` |
 
-**错误码**
+#### 错误响应示例
 
-| code | message              | 说明                |
-| ---- | -------------------- | ------------------- |
-| 0    | success              | 成功                |
-| 401  | Unauthorized         | 未登录或token过期   |
-| 400  | Invalid image format | 图片格式不正确      |
-| 413  | Image too large      | 图片过大（超过5MB） |
-| 500  | AI service error     | AI服务异常          |
+```json
+{ "code": 413, "msg": "Image too large", "data": null }
+```
 
 ---
 
-### 2. 发送对话消息
+### 2. 继续对话
 
-在已有会话中发送消息，进行多轮对话。
+在已有会话中发送文本消息，进行多轮追问。
 
-**请求**
+```
+POST /edu/v1/ai/screen/chat
+```
 
-```text
-POST /api/ai-assistant/chat
-
-```text
-**请求头**
-
-| 参数          | 类型   | 必填 | 说明             |
-| ------------- | ------ | ---- | ---------------- |
-| Authorization | string | 是   | Bearer {token}   |
-| Content-Type  | string | 是   | application/json |
-
-**请求体**
+#### 请求体
 
 ```json
 {
   "sessionId": "550e8400-e29b-41d4-a716-446655440000",
-  "message": "请详细解释这段代码的作用",
-  "context": {
-    "screenshot": "data:image/png;base64,..."
-  }
+  "message": "请详细解释第3行代码"
 }
+```
 
-```text
-| 参数               | 类型   | 必填 | 说明                               |
-| ------------------ | ------ | ---- | ---------------------------------- |
-| sessionId          | string | 是   | 会话ID                             |
-| message            | string | 是   | 用户发送的消息内容                 |
-| context            | object | 否   | 上下文信息                         |
-| context.screenshot | string | 否   | 当前截图的Base64数据（用于AI参考） |
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| sessionId | string | **是** | UUID 格式 | 会话ID，来自 analyze 接口返回 |
+| message | string | **是** | 最长 500 字符 | 用户消息 |
 
-**响应**
+#### 成功响应
 
 ```json
 {
   "code": 0,
-  "message": "success",
+  "msg": "success",
   "data": {
-    "reply": "这段代码是一个Vue 3组件，使用了Composition API...",
-    "suggestions": ["如何添加错误处理？", "有没有更好的实现方式？"],
-    "messageId": "msg-002"
+    "answer": "第3行代码的作用是...",
+    "suggestions": ["还有其他写法吗？"]
   }
 }
+```
 
-```text
-| 参数        | 类型     | 说明                           |
-| ----------- | -------- | ------------------------------ |
-| reply       | string   | AI的回复内容，支持Markdown格式 |
-| suggestions | string[] | 建议的后续问题列表（可选）     |
-| messageId   | string   | 消息ID                         |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| data.answer | string | AI 回复，支持 Markdown |
+| data.suggestions | string[] | 推荐后续问题，无则 `[]` |
 
-**错误码**
+#### 特有错误码
 
-| code | message             | 说明               |
-| ---- | ------------------- | ------------------ |
-| 0    | success             | 成功               |
-| 401  | Unauthorized        | 未登录或token过期  |
-| 404  | Session not found   | 会话不存在或已过期 |
-| 400  | Message is required | 消息内容为空       |
-| 429  | Rate limit exceeded | 请求频率过高       |
-| 500  | AI service error    | AI服务异常         |
+| code | msg | 说明 |
+|------|-----|------|
+| 404 | Session not found | 会话不存在或已过期 |
 
 ---
 
 ### 3. 获取历史会话列表
 
-获取用户的历史对话会话列表。
+分页获取当前用户的所有历史会话。
 
-**请求**
+```
+GET /edu/v1/ai/screen/history?page=1&pageSize=10
+```
 
-```text
-GET /api/ai-assistant/history
+#### Query 参数
 
-```text
-**请求头**
+| 字段 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| page | number | **是** | - | 页码，从1开始 |
+| pageSize | number | **是** | - | 每页数量，前端默认传10 |
 
-| 参数          | 类型   | 必填 | 说明           |
-| ------------- | ------ | ---- | -------------- |
-| Authorization | string | 是   | Bearer {token} |
-
-**查询参数**
-
-| 参数     | 类型   | 必填 | 默认值 | 说明             |
-| -------- | ------ | ---- | ------ | ---------------- |
-| page     | number | 否   | 1      | 页码             |
-| pageSize | number | 否   | 10     | 每页数量，最大50 |
-
-**响应**
+#### 成功响应
 
 ```json
 {
   "code": 0,
-  "message": "success",
+  "msg": "success",
   "data": {
+    "total": 25,
     "list": [
       {
-        "sessionId": "550e8400-e29b-41d4-a716-446655440000",
-        "title": "Vue组件代码分析",
-        "preview": "这是一个Vue 3组件，使用了Composition API...",
-        "messageCount": 5,
+        "sessionId": "550e8400-...",
+        "title": "Vue组件分析",
+        "messages": [
+          {
+            "id": "msg_001",
+            "role": "user",
+            "content": "请分析这张截图",
+            "image": "data:image/png;base64,...",
+            "timestamp": 1704960000000
+          },
+          {
+            "id": "msg_002",
+            "role": "assistant",
+            "content": "这是一个Vue 3组件...",
+            "timestamp": 1704960005000
+          }
+        ],
         "screenshot": "data:image/png;base64,...",
         "createdAt": 1704960000000,
         "updatedAt": 1704963600000
       }
-    ],
-    "total": 25,
-    "page": 1,
-    "pageSize": 10
+    ]
   }
 }
+```
 
-```text
-| 参数                | 类型   | 说明                                         |
-| ------------------- | ------ | -------------------------------------------- |
-| list                | array  | 会话列表                                     |
-| list[].sessionId    | string | 会话ID                                       |
-| list[].title        | string | 会话标题（可由AI自动生成或取第一条消息摘要） |
-| list[].preview      | string | 预览内容（最后一条消息的前100字符）          |
-| list[].messageCount | number | 消息数量                                     |
-| list[].screenshot   | string | 截图缩略图（可选，建议压缩后返回）           |
-| list[].createdAt    | number | 创建时间戳（毫秒）                           |
-| list[].updatedAt    | number | 最后更新时间戳（毫秒）                       |
-| total               | number | 总数量                                       |
-| page                | number | 当前页码                                     |
-| pageSize            | number | 每页数量                                     |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| data.total | number | 总会话数 |
+| data.list | ChatSession[] | 会话列表 |
+| data.list[].sessionId | string | 会话ID |
+| data.list[].title | string | 会话标题（可取首条消息摘要） |
+| data.list[].messages | ChatMessage[] | 该会话的消息列表 |
+| data.list[].screenshot | string | 原始截图 Base64（可选） |
+| data.list[].createdAt | number | 创建时间戳（毫秒） |
+| data.list[].updatedAt | number | 更新时间戳（毫秒） |
+
+> **ChatMessage 结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | string | 消息ID |
+| role | "user" \| "assistant" | 角色 |
+| content | string | 文本内容 |
+| image | string | Base64图片（仅用户截图消息有） |
+| timestamp | number | 时间戳（毫秒） |
 
 ---
 
-### 4. 获取会话详情
+### 4. 获取单个会话详情
 
 获取指定会话的完整对话记录。
 
-**请求**
+```
+GET /edu/v1/ai/screen/session/{sessionId}
+```
 
-```text
-GET /api/ai-assistant/history/:sessionId
+#### 路径参数
 
-```text
-**请求头**
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| sessionId | string | **是** | 会话ID |
 
-| 参数          | 类型   | 必填 | 说明           |
-| ------------- | ------ | ---- | -------------- |
-| Authorization | string | 是   | Bearer {token} |
-
-**路径参数**
-
-| 参数      | 类型   | 必填 | 说明   |
-| --------- | ------ | ---- | ------ |
-| sessionId | string | 是   | 会话ID |
-
-**响应**
+#### 成功响应
 
 ```json
 {
   "code": 0,
-  "message": "success",
+  "msg": "success",
   "data": {
-    "sessionId": "550e8400-e29b-41d4-a716-446655440000",
-    "title": "Vue组件代码分析",
-    "screenshot": "data:image/png;base64,...",
+    "sessionId": "550e8400-...",
+    "title": "Vue组件分析",
     "messages": [
       {
-        "id": "msg-001",
+        "id": "msg_001",
         "role": "user",
-        "type": "image",
-        "content": "data:image/png;base64,...",
+        "content": "请分析这张截图",
+        "image": "data:image/png;base64,...",
         "timestamp": 1704960000000
       },
       {
-        "id": "msg-002",
+        "id": "msg_002",
         "role": "assistant",
-        "type": "text",
-        "content": "这是一个Vue 3组件，使用了Composition API...",
+        "content": "这是一个Vue 3组件...",
         "timestamp": 1704960005000
-      },
-      {
-        "id": "msg-003",
-        "role": "user",
-        "type": "text",
-        "content": "请详细解释这段代码的作用",
-        "timestamp": 1704960060000
-      },
-      {
-        "id": "msg-004",
-        "role": "assistant",
-        "type": "text",
-        "content": "好的，让我详细解释一下...",
-        "timestamp": 1704960065000
       }
     ],
+    "screenshot": "data:image/png;base64,...",
     "createdAt": 1704960000000,
     "updatedAt": 1704960065000
   }
 }
+```
 
-```text
-| 参数                 | 类型   | 说明                         |
-| -------------------- | ------ | ---------------------------- |
-| sessionId            | string | 会话ID                       |
-| title                | string | 会话标题                     |
-| screenshot           | string | 原始截图（Base64）           |
-| messages             | array  | 消息列表                     |
-| messages[].id        | string | 消息ID                       |
-| messages[].role      | string | 角色：`user`或`assistant`  |
-| messages[].type      | string | 消息类型：`text`或`image`|
-| messages[].content   | string | 消息内容（文本或Base64图片） |
-| messages[].timestamp | number | 消息时间戳（毫秒）           |
-| createdAt            | number | 创建时间戳                   |
-| updatedAt            | number | 最后更新时间戳               |
+#### 特有错误码
 
-**错误码**
-
-| code | message           | 说明              |
-| ---- | ----------------- | ----------------- |
-| 0    | success           | 成功              |
-| 401  | Unauthorized      | 未登录或token过期 |
-| 404  | Session not found | 会话不存在        |
-| 403  | Forbidden         | 无权访问该会话    |
+| code | msg | 说明 |
+|------|-----|------|
+| 404 | Session not found | 会话不存在 |
+| 403 | Forbidden | 无权访问该会话 |
 
 ---
 
 ### 5. 删除会话
 
-删除指定的历史会话。
+删除指定的历史会话及其所有消息。
 
-**请求**
+```
+DELETE /edu/v1/ai/screen/history/{sessionId}
+```
 
-```text
-DELETE /api/ai-assistant/history/:sessionId
+#### 路径参数
 
-```text
-**请求头**
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| sessionId | string | **是** | 会话ID |
 
-| 参数          | 类型   | 必填 | 说明           |
-| ------------- | ------ | ---- | -------------- |
-| Authorization | string | 是   | Bearer {token} |
-
-**路径参数**
-
-| 参数      | 类型   | 必填 | 说明   |
-| --------- | ------ | ---- | ------ |
-| sessionId | string | 是   | 会话ID |
-
-**响应**
+#### 成功响应
 
 ```json
 {
   "code": 0,
-  "message": "success",
+  "msg": "success",
   "data": null
 }
+```
 
-```text
-**错误码**
+#### 特有错误码
 
-| code | message           | 说明              |
-| ---- | ----------------- | ----------------- |
-| 0    | success           | 成功              |
-| 401  | Unauthorized      | 未登录或token过期 |
-| 404  | Session not found | 会话不存在        |
-| 403  | Forbidden         | 无权删除该会话    |
+| code | msg | 说明 |
+|------|-----|------|
+| 404 | Session not found | 会话不存在 |
+| 403 | Forbidden | 无权删除该会话 |
 
 ---
 
-## 数据模型
-
-### ChatSession（会话）
+## 数据模型（TypeScript 参考）
 
 ```typescript
+// 会话
 interface ChatSession {
-  sessionId: string; // 会话唯一标识（UUID）
-  userId: string; // 用户ID
-  title: string; // 会话标题
-  screenshot: string; // 原始截图（Base64）
-  messages: ChatMessage[]; // 消息列表
-  createdAt: number; // 创建时间戳
-  updatedAt: number; // 更新时间戳
+  sessionId: string;      // UUID
+  title: string;          // 会话标题
+  messages: ChatMessage[];
+  screenshot?: string;    // 原始截图 Base64
+  createdAt: number;      // 毫秒时间戳
+  updatedAt: number;
 }
 
-```text
-### ChatMessage（消息）
-
-```typescript
+// 消息
 interface ChatMessage {
-  id: string; // 消息唯一标识
-  role: "user" | "assistant"; // 角色
-  type: "text" | "image"; // 消息类型
-  content: string; // 消息内容
-  timestamp: number; // 时间戳
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  image?: string;         // 仅 user 类型的截图消息
+  timestamp: number;
 }
-
-```text
----
-
-## 实现建议
-
-### 1. 图片处理
-
-- 前端会对截图进行压缩，建议后端也做大小限制（如5MB）
-- 建议将图片存储到对象存储（如OSS），数据库只存储URL
-- 历史列表返回的截图建议使用缩略图
-
-### 2. AI服务集成
-
-- 建议使用流式响应（SSE）提升用户体验
-- 需要将图片和对话历史一起发送给AI模型
-- 建议使用支持视觉能力的模型（如GPT-4V、Claude 3等）
-
-### 3. 会话管理
-
-- 会话建议设置过期时间（如30天）
-- 每个用户的会话数量建议设置上限（如100个）
-- 超出限制时自动删除最旧的会话
-
-### 4. 安全考虑
-
-- 所有接口需要验证用户登录状态
-- 用户只能访问自己的会话数据
-- 图片内容建议做敏感信息检测
-- 建议对API调用频率做限制
-
-### 5. 性能优化
-
-- 历史列表接口建议使用分页
-- 图片建议使用CDN加速
-- 考虑使用缓存减少数据库查询
+```
 
 ---
 
-## 前端API调用示例
+## 后端实现注意事项
 
-```typescript
-// src/api/aiAssistant.ts
+1. **图片处理**：前端已做压缩，后端仍需校验大小（≤5MB）和格式（PNG/JPEG）。建议将图片存对象存储，数据库只存 URL。
+2. **AI 模型**：需使用支持视觉的模型（GPT-4V / Claude 3 等），将图片+历史消息一起发送。
+3. **会话管理**：建议设置过期时间（如30天），每用户上限（如100个），超限自动清理最旧会话。
+4. **限流**：建议单用户 10 次/分钟。
+5. **超时**：AI 分析可能较慢，建议后端设置 30s 超时，超时返回 500。
+6. **安全**：用户只能访问/删除自己的会话；建议对图片做敏感内容检测；`question`/`message` 字段需防 XSS。
+7. **suggestions 为空时**：统一返回空数组 `[]`，不要返回 `null` 或不返回该字段。
 
-import { http } from "@/utils/http";
+---
 
-// 分析截图
-export const analyzeScreen = (data: { image: string; sessionId?: string }) => {
-  return http.request<{
-    sessionId: string;
-    analysis: string;
-    suggestions: string[];
-    messageId: string;
-  }>("post", "/ai-assistant/analyze", { data });
-};
+## 前端已有对应代码
 
-// 发送对话消息
-export const chatWithContext = (data: {
-  sessionId: string;
-  message: string;
-  context?: { screenshot?: string };
-}) => {
-  return http.request<{
-    reply: string;
-    suggestions: string[];
-    messageId: string;
-  }>("post", "/ai-assistant/chat", { data });
-};
-
-// 获取历史会话列表
-export const getChatHistory = (params: {
-  page?: number;
-  pageSize?: number;
-}) => {
-  return http.request<{
-    list: ChatSession[];
-    total: number;
-    page: number;
-    pageSize: number;
-  }>("get", "/ai-assistant/history", { params });
-};
-
-// 获取会话详情
-export const getChatSession = (sessionId: string) => {
-  return http.request<ChatSession>("get", `/ai-assistant/history/${sessionId}`);
-};
-
-// 删除会话
-export const deleteChatHistory = (sessionId: string) => {
-  return http.request("delete", `/ai-assistant/history/${sessionId}`);
-};
-
-````
+| 文件 | 说明 |
+|------|------|
+| `src/api/aiAssistant.ts` | 5个接口的 API 调用函数 |
+| `src/components/AiScreenCapture/types.ts` | 所有类型定义 |
+| `src/components/AiScreenCapture/hooks/useAiChat.ts` | 对话逻辑 Hook |
+| `src/components/AiScreenCapture/hooks/useScreenCapture.ts` | 截图逻辑 Hook |
+| `src/components/AiScreenCapture/index.vue` | 主组件 |
+| `src/components/AiScreenCapture/ChatDialog.vue` | 对话框组件 |
 
 ---
 
 ## 更新日志
 
-| 版本  | 日期       | 说明     |
-| ----- | ---------- | -------- |
-| 1.0.0 | 2026-01-12 | 初始版本 |
+| 版本 | 日期 | 说明 |
+|------|------|------|
+| 2.0.0 | 2026-03-10 | 基于前端代码重写，修正URL/字段/接口数量 |
