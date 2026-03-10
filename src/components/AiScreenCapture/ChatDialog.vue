@@ -68,9 +68,19 @@ const scrollToBottom = () => {
   });
 };
 
-// 监听消息变化，自动滚动
+// 监听消息变化，自动滚动（length 变化 + 流式内容追加均触发）
 watch(
   () => props.messages.length,
+  () => {
+    scrollToBottom();
+  }
+);
+
+watch(
+  () => {
+    const last = props.messages[props.messages.length - 1];
+    return last?.content?.length ?? 0;
+  },
   () => {
     scrollToBottom();
   }
