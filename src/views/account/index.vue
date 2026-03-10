@@ -120,7 +120,7 @@
           </el-menu-item>
           <el-menu-item index="classroom">
             <el-icon><ClassroomIcon /></el-icon>
-            <span>3D虚拟教室</span>
+            <span>2D虚拟校园</span>
           </el-menu-item>
           <el-menu-item index="profile">
             <el-icon><StudentIcon /></el-icon>

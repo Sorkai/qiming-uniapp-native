@@ -9,6 +9,7 @@ defineOptions({
 /** 设计稿尺寸 */
 const DESIGN_W = 1920;
 const DESIGN_H = 1080;
+const campusBgUrl = `${import.meta.env.BASE_URL}campus-2d-bg.svg`;
 
 const wrapperRef = ref<HTMLDivElement>();
 const scale = ref(1);
@@ -47,73 +48,73 @@ const buildingZones: HotZone[] = [
     id: "virtualclass",
     label: "虚拟教室",
     icon: "🏫",
-    x: 751,
-    y: 133,
-    w: 392,
-    h: 292
+    x: 660,
+    y: 110,
+    w: 390,
+    h: 280
   },
   {
     id: "competitionstate",
     label: "学科竞赛台",
     icon: "🏆",
-    x: 796,
-    y: 419,
-    w: 329,
-    h: 254
+    x: 250,
+    y: 400,
+    w: 320,
+    h: 290
   },
   {
     id: "answershop",
     label: "答疑工坊",
     icon: "❓",
-    x: 65,
-    y: 210,
-    w: 425,
-    h: 276
+    x: 1030,
+    y: 300,
+    w: 240,
+    h: 180
   },
   {
     id: "deskmate",
     label: "同桌工坊",
     icon: "👥",
-    x: 1576,
-    y: 350,
-    w: 344,
-    h: 256
+    x: 560,
+    y: 370,
+    w: 170,
+    h: 110
   },
   {
     id: "teamupclockin",
     label: "组队打卡",
     icon: "✅",
-    x: 614,
-    y: 475,
-    w: 199,
-    h: 257
+    x: 260,
+    y: 190,
+    w: 280,
+    h: 200
   },
   {
     id: "lbraries",
     label: "智教图书馆",
     icon: "📚",
-    x: 1225,
-    y: 450,
-    w: 220,
-    h: 256
+    x: 1280,
+    y: 190,
+    w: 350,
+    h: 380
   },
   {
     id: "inform",
     label: "校园公告",
     icon: "📢",
-    x: 1468,
-    y: 604,
-    w: 280,
-    h: 194
+    x: 1050,
+    y: 80,
+    w: 260,
+    h: 160
   },
   {
     id: "fountainset",
     label: "喷泉",
     icon: "⛲",
-    x: 60,
-    y: 531,
-    w: 400,
-    h: 339
+    x: 700,
+    y: 350,
+    w: 200,
+    h: 260
   }
 ];
 
@@ -122,10 +123,10 @@ const missionsZone: HotZone = {
   id: "missions",
   label: "任务栏",
   icon: "📋",
-  x: 28,
-  y: 77,
-  w: 699,
-  h: 105
+  x: 80,
+  y: 60,
+  w: 630,
+  h: 90
 };
 
 const hoveredZone = ref<string | null>(null);
@@ -150,7 +151,7 @@ function onZoneClick(zone: HotZone) {
       <!-- SVG 底图 -->
       <img
         class="campus-bg"
-        src="/qiming2dcentre.svg"
+        :src="campusBgUrl"
         alt="启明智教2D校园"
         draggable="false"
       />
@@ -292,8 +293,8 @@ function onZoneClick(zone: HotZone) {
 /* ======= 右上角操作栏 ======= */
 .rightup-bar {
   position: absolute;
-  top: 62px;
-  right: 30px;
+  top: 40px;
+  right: 440px;
   display: flex;
   gap: 12px;
   z-index: 10;
