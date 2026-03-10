@@ -283,7 +283,8 @@ export function streamCourseChat(
           conversation_id: "",
           delta: `错误: ${errorMsg}`,
           finished: true
-        });return;
+        });
+        return;
       }
       parseSimpleSSEStream(response, onEvent);
     })
