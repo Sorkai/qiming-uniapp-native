@@ -222,17 +222,17 @@ const actionZones: HotZone[] = [
     id: "Cog",
     label: "设置",
     x: 1720,
-    y: 35,
+    y: 55,
     w: 80,
-    h: 80
+    h: 75
   },
   {
     id: "Bell",
     label: "消息",
-    x: 1815,
-    y: 35,
+    x: 1830,
+    y: 55,
     w: 80,
-    h: 80
+    h: 75
   }
 ];
 
