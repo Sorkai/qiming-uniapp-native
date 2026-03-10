@@ -75,78 +75,81 @@ interface HotZone {
   h: number;
 }
 
+/** 调试模式：显示热区边框（上线前设为 false） */
+const DEBUG_ZONES = true;
+
 const buildingZones: HotZone[] = [
   {
     id: "virtualclass",
     label: "虚拟教室",
     icon: "🏫",
-    x: 660,
-    y: 110,
-    w: 390,
-    h: 280
+    x: 700,
+    y: 150,
+    w: 410,
+    h: 250
   },
   {
     id: "competitionstate",
     label: "学科竞赛台",
     icon: "🏆",
-    x: 250,
-    y: 400,
-    w: 320,
+    x: 200,
+    y: 550,
+    w: 150,
     h: 290
   },
   {
     id: "answershop",
     label: "答疑工坊",
     icon: "❓",
-    x: 1030,
-    y: 300,
-    w: 240,
-    h: 180
+    x: 1200,
+    y: 480,
+    w: 250,
+    h: 160
   },
   {
     id: "deskmate",
     label: "同桌工坊",
     icon: "👥",
-    x: 560,
-    y: 370,
+    x: 630,
+    y: 520,
     w: 170,
-    h: 110
+    h: 180
   },
   {
     id: "teamupclockin",
     label: "组队打卡",
     icon: "✅",
-    x: 260,
-    y: 190,
-    w: 280,
-    h: 200
+    x: 65,
+    y: 230,
+    w: 340,
+    h: 250
   },
   {
     id: "lbraries",
     label: "智教图书馆",
     icon: "📚",
-    x: 1280,
-    y: 190,
-    w: 350,
-    h: 380
+    x: 1600,
+    y: 400,
+    w: 310,
+    h: 200
   },
   {
     id: "inform",
     label: "校园公告",
     icon: "📢",
-    x: 1050,
-    y: 80,
-    w: 260,
-    h: 160
+    x: 1280,
+    y: 200,
+    w: 150,
+    h: 180
   },
   {
     id: "fountainset",
     label: "喷泉",
     icon: "⛲",
-    x: 700,
-    y: 350,
-    w: 200,
-    h: 260
+    x: 850,
+    y: 500,
+    w: 240,
+    h: 160
   }
 ];
 
@@ -154,10 +157,10 @@ const missionsZone: HotZone = {
   id: "missions",
   label: "任务栏",
   icon: "📋",
-  x: 80,
-  y: 60,
-  w: 630,
-  h: 90
+  x: 1450,
+  y: 650,
+  w: 275,
+  h: 120
 };
 
 const hoveredZone = ref<string | null>(null);
@@ -223,7 +226,8 @@ function onZoneClick(zone: HotZone) {
             left: missionsZone.x + 'px',
             top: missionsZone.y + 'px',
             width: missionsZone.w + 'px',
-            height: missionsZone.h + 'px'
+            height: missionsZone.h + 'px',
+            outline: DEBUG_ZONES ? '2px dashed red' : 'none'
           }"
           @mouseenter="hoveredZone = missionsZone.id"
           @mouseleave="hoveredZone = null"
@@ -244,7 +248,8 @@ function onZoneClick(zone: HotZone) {
             left: zone.x + 'px',
             top: zone.y + 'px',
             width: zone.w + 'px',
-            height: zone.h + 'px'
+            height: zone.h + 'px',
+            outline: DEBUG_ZONES ? '2px dashed red' : 'none'
           }"
           @mouseenter="hoveredZone = zone.id"
           @mouseleave="hoveredZone = null"
