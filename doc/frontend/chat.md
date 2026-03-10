@@ -1,164 +1,116 @@
-# 前端 AI 接口文档
+﻿# 前端 AI 助手开发文档（含全屏与学生端）
 
 基础前缀：`/edu/frontend/v1`
 
-## 1. AI 聊天流式接口
+## 1. 文档目标
 
-- **接口地址**：`/ai/chat/stream`- **请求方式**：POST
-- **Content-Type**: application/json
-- **鉴权**：需要（JWT）
+本文件用于统一以下能力的开发与联调规范。
 
-**请求参数**：
+- 课程内 AI 助手流式问答。
+- AI 助手面板的全屏/退出全屏交互。
+- 学生端接入同款 AI 助手并保持视觉特效一致。
 
-````json
-{
-  "course_id": 1, // 课程ID（可选）
-  "conversation_id": "string", // 会话ID（可选）
-  "message": "string", // 消息内容
-  "chapter_id": 1 // 章节ID（可选）
-}
+当前统一组件：`src/views/account/course-detail/CourseAIHelper.vue`
 
-```text
-**响应参数** (SSE流式)：
+## 2. 接口清单
 
-```json
-{
-  "conversation_id": "string", // 会话ID
-  "delta": "string", // 增量内容
-  "finished": true // 是否完成
-}
+### 2.1 截图提问通用接口
 
-```text
-## 2. 获取会话历史
+- 地址：`POST /edu/v1/ai/screen/analyze`
+- Content-Type：`application/json`
+- 鉴权：JWT（按当前后端配置）
 
-- **接口地址**：`/ai/get/conversations`- **请求方式**：GET
-- **请求参数**：
-    -`conversation_id`: string (会话ID)
-- **响应参数**：
+请求参数：
 
 ```json
 {
-  "code": 200,
-  "msg": "成功",
+  "image": "base64",
+  "question": "string"
+}
+```
+
+响应参数：
+
+```json
+{
+  "code": 0,
+  "msg": "success",
   "data": {
-    "messages": [
-      {
-        "role": "user", // 角色 user/assistant
-        "content": "string" // 消息内容
-      }
-    ]
+    "answer": "string",
+    "suggestions": ["string"]
   }
 }
+```
 
-```text
-## 3. 作文批改分析
+说明：
 
-- **接口地址**：`/ai/essay/analyze`- **请求方式**：POST
-- **请求参数**：
+- 前端当前按“单通用接口”模式实现。
+- 不在文档中维护历史记录接口。
 
-```json
-{
-  "essayType": "chinese", // chinese | english
-  "content": "string"
-}
+## 3. 全屏 AI 助手交互规范
 
-```text
+统一在 `CourseAIHelper.vue` 实现，规则如下。
 
+- 默认态：右上角悬浮入口卡片，点击后展开对话面板。
+- 全屏态：点击头部“全屏显示”按钮后，占满视口（`100vw x 100vh`）。
+- 退出全屏：再次点击按钮，或按 `Esc`。
 
-- **响应参数**：
+`Esc` 键行为：
 
-```json
-{
-  "code": 200,
-  "msg": "成功",
-  "data": {
-    "score": 85, // 总分
-    "content": "string", // 内容评价
-    "structure": "string", // 结构评价
-    "language": "string", // 语言评价
-    "suggestions": "string" // 改进建议
-  }
-}
+1. 若当前为全屏，先退出全屏。
+2. 若当前非全屏，关闭对话面板。
 
-```text
-## 4. 错题分析
+动画与特效保持：
 
-- **接口地址**：`/ai/wrong-exercise/analyze`- **请求方式**：POST
-- **请求参数**：
+- 边框跑马灯渐变特效。
+- 对话面板滑入/滑出过渡。
+- AI 打字点动画。
+- 毛玻璃背景与明暗主题适配。
 
-```json
-{
-  "course_id": 1001,
-  "original_exercise_id": "exercise_001",
-  "original_exercise_content": "计算 2 + 3 × 4 的值",
-  "student_answer": "20",
-  "correct_answer": "14"
-}
+## 4. 学生端对齐方案（仅课程页面）
 
-```text
+说明：学生端除了课程内 AI 助教对话外，额外接入了“截图提问 AI 小球”（与教师/管理端同款能力）。
 
+截图提问约定：
 
-- **响应参数**：
+- 前端只走一个通用 AI 接口，直接上传图片并附带问题。
+- 不接入错题分析历史、截图历史会话等额外流程。
 
-```json
-{
-  "code": 200,
-  "msg": "成功",
-  "data": {
-    "analysis": {
-      "error_type": "概念理解错误",
-      "error_reason": "...",
-      "knowledge_points": ["..."],
-      "learning_suggestions": "..."
-    },
-    "generated_exercises": [
-      {
-        "exercise_id": "generated_ex_001",
-        "question": "...",
-        "options": ["A. ...", "B. ..."],
-        "correct_answer": "B",
-        "explanation": "...",
-        "difficulty_level": "easy",
-        "knowledge_points": ["..."]
-      }
-    ]
-  }
-}
+### 4.1 接入页面
 
-```text
-## 5. 错题分析历史
+- 文件：`src/views/account/course-detail.vue`
+- 方式：学生端仅在课程学习页面使用 AI 助手，其他学生页面不接入。
 
-- **接口地址**：`/ai/wrong-exercise/history`- **请求方式**：GET
-- **请求参数**：
-    -`course_id`: int64 (可选)
-    - `page`: int (默认1)
-    - `page_size`: int (默认10)
-- **响应参数**：
+### 4.2 传参策略
 
-```json
-{
-  "code": 200,
-  "msg": "成功",
-  "data": {
-    "total": 1,
-    "page": 1,
-    "page_size": 10,
-    "total_pages": 1,
-    "records": [
-      {
-        "id": "string",
-        "course_id": "string",
-        "original_exercise_id": "string",
-        "original_exercise_content": "...",
-        "student_answer": "...",
-        "correct_answer": "...",
-        "analysis": {},
-        "generated_exercises": [],
-        "created_at": "string",
-        "updated_at": "string"
-      }
-    ]
-  }
-}
+- `course-id`：传当前课程 `courseId`。
+- `chapter-id`：按当前学习章节传入，可为空。
+- `current-theme`：跟随课程页面主题（`dark/light`）。
 
-````
+### 4.3 一致性要求
+
+- 与课程学习页使用同一组件、同一交互、同一特效。
+- 不允许学生端单独改动画节奏或色彩参数。
+- 如需改视觉效果，只在共享组件统一改动。
+
+### 4.4 显示与屏蔽规则
+
+- 显示：仅在学生端课程页面的 `course-learn` 菜单显示截图提问小球。
+- 屏蔽：`homework-exam`、`grades`、`html-animations`、`mastery`、`course-qa` 菜单全部不显示。
+- 角色限制：教师端和管理端课程页不显示学生端这颗小球。
+
+## 5. 代码位置
+
+- AI 接口封装：`src/api/frontend/chat.ts`
+- AI 助手组件：`src/views/account/course-detail/CourseAIHelper.vue`
+- 截图提问小球组件：`src/components/AiScreenCapture/index.vue`
+- 课程页接入：`src/views/account/course-detail.vue`
+
+## 6. 联调与验收清单
+
+1. 打开课程页 AI 助手，发送消息，确认流式回复正常。
+2. 点击全屏按钮，确认面板铺满视口，`Esc` 可退出全屏。
+3. 学生角色进入课程页 `course-learn`，确认截图提问小球可见且可截图发问。
+4. 切换到作业考试、成绩等菜单，确认截图提问小球被隐藏。
+5. 切换明暗主题，确认对话面板背景与文本对比度正常。
+6. 断网或接口失败时，确认前端有兜底提示且不阻塞页面主流程。

@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { ElMessage } from "element-plus";
+import { useRoute } from "vue-router";
+import { storageLocal } from "@pureadmin/utils";
+import { userKey } from "@/utils/auth";
 import FloatButton from "./FloatButton.vue";
 import CaptureOverlay from "./CaptureOverlay.vue";
 import ChatDialog from "./ChatDialog.vue";
-import HistoryDialog from "./HistoryDialog.vue";
 import { useScreenCapture } from "./hooks/useScreenCapture";
 import { useAiChat } from "./hooks/useAiChat";
-import type { CaptureArea, ChatSession } from "./types";
+import type { CaptureArea } from "./types";
 
 defineOptions({
   name: "AiScreenCapture"
 });
 
-// 浮动按钮引用
-const floatButtonRef = ref<InstanceType<typeof FloatButton> | null>(null);
+const route = useRoute();
 
-// 按钮中心位置（用于涟漪效果）
+const floatButtonRef = ref<InstanceType<typeof FloatButton> | null>(null);
 const buttonCenter = ref({ x: 0, y: 0 });
 
-// 截图功能
 const {
   status,
   screenshot,
@@ -32,110 +32,108 @@ const {
   compressImage
 } = useScreenCapture();
 
-// AI对话功能
 const {
   messages,
   loading,
   suggestions,
   analyzeScreenshot,
   sendMessage,
-  resetChat,
-  startNewChat
+  resetChat
 } = useAiChat();
 
-// 对话框可见性
 const chatDialogVisible = ref(false);
-const historyDialogVisible = ref(false);
 
-// 处理浮动按钮点击
+const userRoleType = computed(() => {
+  const userInfo = storageLocal().getItem<any>(userKey);
+  return userInfo?.roleType ?? 0;
+});
+
+const isStudent = computed(() => userRoleType.value === 1);
+
+const studentBlockedPathPrefixes = [
+  "/student-exam-center",
+  "/account/homework-detail",
+  "/account/exam-detail",
+  "/exam-paper"
+];
+
+const shouldShowAssistant = computed(() => {
+  if (!isStudent.value) return true;
+  return !studentBlockedPathPrefixes.some(prefix =>
+    route.path.startsWith(prefix)
+  );
+});
+
 const handleFloatButtonClick = () => {
-  // 获取按钮中心位置
   if (floatButtonRef.value) {
     buttonCenter.value = floatButtonRef.value.getButtonCenter();
   }
   startCapture();
 };
 
-// 处理截图完成
 const handleCapture = async (area: CaptureArea) => {
   try {
-    // 执行截图
     const base64 = await captureScreen(area);
-
-    // 压缩图片
     const compressedImage = await compressImage(base64);
 
-    // 进入对话模式
     enterChatMode();
     chatDialogVisible.value = true;
 
-    // 发送截图进行分析
-    await analyzeScreenshot(compressedImage);
+    // 先发送带有截图的用户消息，然后静默等待 AI 分析，而不是让 analyzeScreenshot 自动添加消息
+    // 或者我们直接调用 analyzeScreenshot，它内部会由 useAiChat 处理
+    await analyzeScreenshot(compressedImage).catch(err => {
+      console.error("AI分析启动失败:", err);
+    });
   } catch (error) {
     console.error("截图失败:", error);
+    // 只有在真正的截图插件或 canvas 转换失败时才报错
     ElMessage.error("截图失败，请重试");
     resetCapture();
   }
 };
 
-// 处理取消截图
 const handleCancelCapture = () => {
   cancelCapture();
 };
 
-// 处理发送消息
 const handleSendMessage = (message: string) => {
   sendMessage(message);
 };
 
-// 处理重新截图
 const handleNewCapture = () => {
   chatDialogVisible.value = false;
   resetChat();
   resetCapture();
-  // 延迟启动新截图，等待对话框关闭
   setTimeout(() => {
     startCapture();
   }, 300);
 };
 
-// 处理查看历史
-const handleViewHistory = () => {
-  historyDialogVisible.value = true;
-};
-
-// 处理加载历史会话
-const handleLoadHistory = (session: ChatSession) => {
-  // 关闭历史弹窗
-  historyDialogVisible.value = false;
-
-  // 加载会话到对话框
-  const { loadSession } = useAiChat();
-  loadSession(session);
-
-  // 打开对话框
-  chatDialogVisible.value = true;
-};
-
-// 监听对话框关闭
 watch(chatDialogVisible, visible => {
   if (!visible) {
-    // 对话框关闭时重置状态
+    // 用户关闭窗口后不保留任何记录
+    resetChat();
+    resetCapture();
+  }
+});
+
+watch(shouldShowAssistant, visible => {
+  if (!visible) {
+    chatDialogVisible.value = false;
+    resetChat();
     resetCapture();
   }
 });
 </script>
 
 <template>
-  <div class="ai-screen-capture">
-    <!-- 浮动按钮 -->
+  <div v-if="shouldShowAssistant" class="ai-screen-capture">
     <FloatButton
       ref="floatButtonRef"
       :disabled="status !== 'idle' || isProcessing"
       @click="handleFloatButtonClick"
     />
 
-    <!-- 截图遮罩层 -->
     <CaptureOverlay
       v-if="status === 'capturing'"
       :origin="buttonCenter"
@@ -143,7 +141,6 @@ watch(chatDialogVisible, visible => {
       @cancel="handleCancelCapture"
     />
 
-    <!-- AI对话弹窗 -->
     <ChatDialog
       v-model:visible="chatDialogVisible"
       :screenshot="screenshot"
@@ -152,19 +149,6 @@ watch(chatDialogVisible, visible => {
       :suggestions="suggestions"
       @send="handleSendMessage"
       @new-capture="handleNewCapture"
-      @view-history="handleViewHistory"
-    />
-
-    <!-- 历史记录弹窗 -->
-    <HistoryDialog
-      v-model:visible="historyDialogVisible"
-      @load="handleLoadHistory"
     />
   </div>
 </template>
-
-<style lang="scss" scoped>
-.ai-screen-capture {
-  // 容器不需要特殊样式，子组件都是fixed定位
-}
-</style>
