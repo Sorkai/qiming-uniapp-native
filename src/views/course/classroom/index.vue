@@ -68,7 +68,6 @@ onBeforeUnmount(() => {
 interface HotZone {
   id: string;
   label: string;
-  icon: string;
   x: number;
   y: number;
   w: number;
@@ -82,7 +81,6 @@ const buildingZones: HotZone[] = [
   {
     id: "virtualclass",
     label: "虚拟教室",
-    icon: "🏫",
     x: 700,
     y: 150,
     w: 410,
@@ -91,7 +89,6 @@ const buildingZones: HotZone[] = [
   {
     id: "competitionstate",
     label: "学科竞赛台",
-    icon: "🏆",
     x: 200,
     y: 550,
     w: 150,
@@ -100,7 +97,6 @@ const buildingZones: HotZone[] = [
   {
     id: "answershop",
     label: "答疑工坊",
-    icon: "❓",
     x: 1200,
     y: 480,
     w: 250,
@@ -109,7 +105,6 @@ const buildingZones: HotZone[] = [
   {
     id: "deskmate",
     label: "同桌工坊",
-    icon: "👥",
     x: 630,
     y: 520,
     w: 170,
@@ -118,7 +113,6 @@ const buildingZones: HotZone[] = [
   {
     id: "teamupclockin",
     label: "组队打卡",
-    icon: "✅",
     x: 65,
     y: 230,
     w: 340,
@@ -127,7 +121,6 @@ const buildingZones: HotZone[] = [
   {
     id: "lbraries",
     label: "智教图书馆",
-    icon: "📚",
     x: 1600,
     y: 400,
     w: 310,
@@ -136,7 +129,6 @@ const buildingZones: HotZone[] = [
   {
     id: "inform",
     label: "校园公告",
-    icon: "📢",
     x: 1280,
     y: 200,
     w: 150,
@@ -145,7 +137,6 @@ const buildingZones: HotZone[] = [
   {
     id: "fountainset",
     label: "喷泉",
-    icon: "⛲",
     x: 850,
     y: 500,
     w: 240,
@@ -156,7 +147,6 @@ const buildingZones: HotZone[] = [
 const missionsZone: HotZone = {
   id: "missions",
   label: "任务栏",
-  icon: "📋",
   x: 1450,
   y: 650,
   w: 275,
@@ -233,9 +223,7 @@ function onZoneClick(zone: HotZone) {
           @mouseleave="hoveredZone = null"
           @click.stop="onZoneClick(missionsZone)"
         >
-          <span class="zone-tip"
-            >{{ missionsZone.icon }} {{ missionsZone.label }}</span
-          >
+          <span class="zone-tip">{{ missionsZone.label }}</span>
         </div>
 
         <!-- 建筑功能区热区 -->
@@ -255,7 +243,7 @@ function onZoneClick(zone: HotZone) {
           @mouseleave="hoveredZone = null"
           @click.stop="onZoneClick(zone)"
         >
-          <span class="zone-tip">{{ zone.icon }} {{ zone.label }}</span>
+          <span class="zone-tip">{{ zone.label }}</span>
         </div>
       </div>
     </div>
