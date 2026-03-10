@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { ref, type Ref } from "vue";
 import { ElMessage } from "element-plus";
 import type { ChatMessage, SSEEventData } from "../types";
 import {
@@ -6,6 +6,14 @@ import {
   multimodalChatStream,
   continueConversationStream
 } from "@/api/frontend/aiConversation";
+import { courseAIChatStream, getConversationHistory } from "@/api/frontend/chat";
+import { askCourseQa } from "@/api/aiAssistant";
+
+/** 课程上下文（用于单课AI互动接口） */
+export interface CourseContext {
+  courseId: Ref<number | null>;
+  chapterId?: Ref<number | null>;
+}
 
 /**
  * 将 base64 数据转为 Blob，用于附件上传
@@ -25,8 +33,9 @@ function base64ToBlob(base64: string): Blob {
 /**
  * AI 对话 Hook（多模态流式模式）
  * 支持截图上传附件 → 多模态流式对话 → 连续追问
+ * 当传入课程上下文时，文字消息自动走「单课AI互动」流式接口
  */
-export function useAiChat() {
+export function useAiChat(courseCtx?: CourseContext) {
   const messages = ref<ChatMessage[]>([]);
   const loading = ref(false);
   const suggestions = ref<string[]>([]);
@@ -74,6 +83,32 @@ export function useAiChat() {
     if (msg) {
       if (fullContent !== undefined) msg.content = fullContent;
       msg.loading = false;
+    }
+  };
+
+  /** 是否处于单课AI互动模式 */
+  const isCourseMode = () =>
+    !!(courseCtx?.courseId?.value && courseCtx.courseId.value > 0);
+
+  /**
+   * 处理「单课AI互动」流式响应（简单格式）
+   */
+  const handleCourseStreamData = (
+    data: { conversation_id: string; delta: string; finished: boolean },
+    loadingMsgId: string,
+    resolve: () => void
+  ) => {
+    if (data.conversation_id) {
+      conversationId.value = data.conversation_id;
+    }
+    if (data.delta) {
+      updateAssistantDelta(loadingMsgId, data.delta);
+    }
+    if (data.finished) {
+      const msg = messages.value.find(m => m.id === loadingMsgId);
+      if (msg) msg.loading = false;
+      loading.value = false;
+      resolve();
     }
   };
 
@@ -163,15 +198,67 @@ export function useAiChat() {
   };
 
   /**
-   * 发送追问消息（在已有会话中继续流式对话）
+   * 通过「单课AI互动」流式接口发送消息
    */
-  const sendMessage = async (message: string) => {
+  const sendViaCourseStream = (
+    message: string,
+    loadingMsgId: string
+  ): Promise<void> => {
+    return new Promise<void>(resolve => {
+      cancelStream = courseAIChatStream(
+        {
+          course_id: courseCtx!.courseId.value!,
+          chapter_id: courseCtx?.chapterId?.value ?? undefined,
+          conversation_id: conversationId.value || undefined,
+          message
+        },
+        data => handleCourseStreamData(data, loadingMsgId, resolve)
+      );
+    });
+  };
+
+  /**
+   * 通过「单课问答（非流式）」接口发送消息
+   */
+  const sendCourseQa = async (message: string, loadingMsgId: string) => {
+    try {
+      const res = await askCourseQa({
+        courseId: courseCtx!.courseId.value!,
+        session_id: conversationId.value || undefined,
+        userPrompt: message
+      });
+      if (res && res.data) {
+        finalizeAssistantMessage(loadingMsgId, res.data.answer);
+      } else {
+        throw new Error("接口返回内容为空");
+      }
+    } catch (error) {
+      console.error("单课问答接口调用失败:", error);
+      finalizeAssistantMessage(loadingMsgId, "问答服务暂时不可用，请稍后重试");
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * 发送追问消息（在已有会话中继续流式对话）
+   * 当存在课程上下文时自动使用「单课AI互动」接口
+   */
+  const sendMessage = async (message: string, useNonStream = false) => {
     loading.value = true;
     addUserMessage(message);
     const loadingMsg = addLoadingMessage();
 
     try {
-      if (conversationId.value) {
+      if (isCourseMode()) {
+        if (useNonStream) {
+          // 单课问答非流式模式
+          await sendCourseQa(message, loadingMsg.id);
+        } else {
+          // 单课AI互动流式模式
+          await sendViaCourseStream(message, loadingMsg.id);
+        }
+      } else if (conversationId.value) {
         // 已有会话，继续对话
         await new Promise<void>(resolve => {
           cancelStream = continueConversationStream(
@@ -200,6 +287,32 @@ export function useAiChat() {
     }
   };
 
+  /**
+   * 加载历史记录
+   */
+  const loadHistory = async (id: string) => {
+    if (!id) return;
+    loading.value = true;
+    try {
+      const res = await getConversationHistory(id);
+      if (res && res.history) {
+        conversationId.value = res.conversation_id || id;
+        messages.value = res.history.map(item => ({
+          id: generateId(),
+          role: item.role as "user" | "assistant",
+          content: item.content,
+          timestamp: new Date(item.timestamp).getTime(),
+          loading: false
+        }));
+      }
+    } catch (error) {
+      console.error("加载历史记录失败:", error);
+      ElMessage.error("加载历史记录失败");
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const resetChat = () => {
     if (cancelStream) {
       cancelStream();
@@ -212,6 +325,21 @@ export function useAiChat() {
     loading.value = false;
   };
 
+  /** 停止当前流式生成 */
+  const stopGenerate = () => {
+    if (cancelStream) {
+      cancelStream();
+      cancelStream = null;
+    }
+    // 结束最后一条 loading 状态的消息
+    const last = messages.value[messages.value.length - 1];
+    if (last && last.role === "assistant" && last.loading) {
+      last.loading = false;
+      if (!last.content) last.content = "已停止生成";
+    }
+    loading.value = false;
+  };
+
   return {
     messages,
     loading,
@@ -219,6 +347,8 @@ export function useAiChat() {
     conversationId,
     analyzeScreenshot,
     sendMessage,
-    resetChat
+    resetChat,
+    stopGenerate,
+    loadHistory
   };
 }

@@ -12,6 +12,7 @@ const props = defineProps<{
   messages: ChatMessage[];
   loading?: boolean;
   suggestions?: string[];
+  streaming?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -19,6 +20,8 @@ const emit = defineEmits<{
   (e: "send", message: string): void;
   (e: "retry"): void;
   (e: "newCapture"): void;
+  (e: "stop"): void;
+  (e: "openChat"): void;
 }>();
 
 // 输入框内容
@@ -44,6 +47,13 @@ watch(
   }
 );
 
+// 判断是否正在流式输出（有内容但还在加载）
+const isStreaming = computed(() => {
+  if (props.streaming) return true;
+  const last = props.messages[props.messages.length - 1];
+  return last?.role === "assistant" && last?.content && props.loading;
+});
+
 // 发送消息
 const handleSend = () => {
   const message = inputMessage.value.trim();
@@ -51,6 +61,11 @@ const handleSend = () => {
 
   emit("send", message);
   inputMessage.value = "";
+};
+
+// 停止生成
+const handleStop = () => {
+  emit("stop");
 };
 
 // 使用建议问题
@@ -202,8 +217,14 @@ const handleClose = () => {
                 fit="cover"
               />
             </div>
-            <div class="bubble">
-              <template v-if="msg.loading">
+            <div
+              class="bubble"
+              :class="{
+                streaming:
+                  msg.role === 'assistant' && msg.content && msg.loading
+              }"
+            >
+              <template v-if="msg.loading && !msg.content">
                 <div class="typing">
                   <span />
                   <span />
@@ -211,7 +232,11 @@ const handleClose = () => {
                 </div>
               </template>
               <template v-else>
-                {{ msg.content }}
+                <span class="bubble-text" v-text="msg.content" />
+                <span
+                  v-if="msg.role === 'assistant' && msg.content && msg.loading"
+                  class="stream-cursor"
+                />
               </template>
             </div>
             <div class="meta">{{ formatTime(msg.timestamp) }}</div>
@@ -219,8 +244,25 @@ const handleClose = () => {
         </div>
       </div>
 
+      <!-- 停止生成按钮 -->
+      <div v-if="isStreaming" class="stop-bar">
+        <button class="stop-btn" @click="handleStop">
+          <svg viewBox="0 0 24 24" width="14" height="14">
+            <rect
+              x="6"
+              y="6"
+              width="12"
+              height="12"
+              rx="2"
+              fill="currentColor"
+            />
+          </svg>
+          停止生成
+        </button>
+      </div>
+
       <!-- 建议词 -->
-      <div v-if="suggestions?.length" class="suggestions-bar">
+      <div v-if="suggestions?.length && !isStreaming" class="suggestions-bar">
         <div
           v-for="(s, i) in suggestions"
           :key="i"
@@ -247,15 +289,28 @@ const handleClose = () => {
           />
           <div class="send-action">
             <el-button
+              v-if="!isStreaming"
               type="primary"
               circle
-              :loading="loading"
+              :loading="loading && !isStreaming"
               :disabled="!inputMessage.trim()"
               @click="handleSend"
             >
               <svg viewBox="0 0 24 24" width="18" height="18">
                 <path
                   d="M2.01 21L23 12L2.01 3L2 10l15 2l-15 2z"
+                  fill="currentColor"
+                />
+              </svg>
+            </el-button>
+            <el-button v-else type="danger" circle @click="handleStop">
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <rect
+                  x="6"
+                  y="6"
+                  width="12"
+                  height="12"
+                  rx="2"
                   fill="currentColor"
                 />
               </svg>
@@ -519,6 +574,24 @@ const handleClose = () => {
       line-height: 1.6;
       word-break: break-word;
       box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+
+      .bubble-text {
+        white-space: pre-wrap;
+      }
+
+      .stream-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1em;
+        margin-left: 2px;
+        vertical-align: text-bottom;
+        background-color: var(--ai-primary);
+        animation: blink 0.8s step-end infinite;
+      }
+
+      &.streaming {
+        min-height: 32px;
+      }
     }
 
     .content-image {
@@ -570,6 +643,43 @@ const handleClose = () => {
 
   40% {
     transform: scale(1);
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+.stop-bar {
+  display: flex;
+  justify-content: center;
+  padding: 8px 20px;
+
+  .stop-btn {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 16px;
+    font-size: 12px;
+    color: var(--el-text-color-regular);
+    cursor: pointer;
+    background-color: var(--el-fill-color-lighter);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 20px;
+    transition: all 0.2s;
+
+    &:hover {
+      color: var(--el-color-danger);
+      background-color: var(--el-color-danger-light-9);
+      border-color: var(--el-color-danger-light-5);
+    }
   }
 }
 

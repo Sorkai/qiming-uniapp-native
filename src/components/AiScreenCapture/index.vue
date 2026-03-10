@@ -20,6 +20,17 @@ const route = useRoute();
 const floatButtonRef = ref<InstanceType<typeof FloatButton> | null>(null);
 const buttonCenter = ref({ x: 0, y: 0 });
 
+/** 从路由提取课程上下文（/course/:id 页面） */
+const routeCourseId = computed<number | null>(() => {
+  if (route.name === "CourseDetail" && route.params.id) {
+    const id = Number(route.params.id);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
+  return null;
+});
+const courseIdRef = ref<number | null>(null);
+watch(routeCourseId, v => (courseIdRef.value = v), { immediate: true });
+
 const {
   status,
   screenshot,
@@ -38,10 +49,29 @@ const {
   suggestions,
   analyzeScreenshot,
   sendMessage,
-  resetChat
-} = useAiChat();
+  resetChat,
+  stopGenerate,
+  loadHistory
+} = useAiChat({ courseId: courseIdRef });
 
 const chatDialogVisible = ref(false);
+
+/** 当进入课程页面且处于聊天模式时，尝试加载已有会话历史 */
+watch(
+  [courseIdRef, chatDialogVisible],
+  ([cId, visible]) => {
+    if (
+      visible &&
+      cId &&
+      !conversationId.value &&
+      messages.value.length === 0
+    ) {
+      // 如果是在课程详情页打开，且当前没有对话记录，可以尝试从本地或后端恢复上一次的课程对话
+      // 这里可以根据实际需求决定是否自动加载，或者由父组件传入 conversation_id
+    }
+  },
+  { immediate: true }
+);
 
 const userRoleType = computed(() => {
   const userInfo = storageLocal().getItem<any>(userKey);
@@ -97,7 +127,18 @@ const handleCancelCapture = () => {
 };
 
 const handleSendMessage = (message: string) => {
-  sendMessage(message);
+  // 如果在课程详情页，默认使用非流式的单课问答接口（第三个接口对接要求）
+  const isCourseDetail = !!courseIdRef.value;
+  sendMessage(message, isCourseDetail);
+};
+
+const handleStopGenerate = () => {
+  stopGenerate();
+};
+
+/** 用户直接打开对话（不截图，纯文字对话模式） */
+const handleOpenChat = () => {
+  chatDialogVisible.value = true;
 };
 
 const handleNewCapture = () => {
@@ -148,7 +189,9 @@ watch(shouldShowAssistant, visible => {
       :loading="loading"
       :suggestions="suggestions"
       @send="handleSendMessage"
+      @stop="handleStopGenerate"
       @new-capture="handleNewCapture"
+      @open-chat="handleOpenChat"
     />
   </div>
 </template>

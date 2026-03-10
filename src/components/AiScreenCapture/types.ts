@@ -63,6 +63,65 @@ export interface ConversationInfo {
   created_at: string;
 }
 
+// 会话列表详情项
+export interface ConversationListItem {
+  conversation_id: string;
+  scene: string;
+  course_id?: number;
+  chapter_id?: number;
+  title: string;
+  summary: string;
+  last_message_preview: string;
+  last_message_at: string;
+  message_count: number;
+  attachment_count: number;
+  expire_at: string;
+  created_at: string;
+}
+
+// 创建会话响应
+export interface CreateConversationResponse {
+  conversation_id: string;
+  scene: string;
+  course_id?: number;
+  chapter_id?: number;
+  title: string;
+  expire_at: string;
+  created_at: string;
+}
+
+// 删除会话响应
+export interface DeleteConversationResponse {
+  conversation_id: string;
+  deleted: boolean;
+}
+
+// 会话详情响应
+export interface ConversationDetailResponse {
+  conversation_id: string;
+  scene: string;
+  course_id?: number;
+  chapter_id?: number;
+  title: string;
+  summary: string;
+  status: string;
+  message_count: number;
+  attachment_count: number;
+  last_message_at: string;
+  expire_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// 会话列表响应
+export interface ConversationListResponse {
+  total: number;
+  list: ConversationListItem[];
+  page: number;
+  page_size: number;
+  has_more: boolean;
+}
+
 // 会话列表查询参数
 export interface ConversationListParams {
   page?: number;
@@ -83,6 +142,13 @@ export interface AttachmentInfo {
   created_at: string;
 }
 
+// 上传附件请求参数
+export interface UploadAttachmentParams {
+  scene?: string;
+  conversation_id?: string;
+  course_id?: number;
+}
+
 // 多模态流式请求（新建会话）
 export interface MultimodalStreamReq {
   scene: AIScene;
@@ -98,6 +164,16 @@ export interface ContinueStreamReq {
   message: string;
   attachment_ids?: string[];
   metadata?: Record<string, string>;
+}
+
+/** 传统会话历史响应格式 (GET /edu/frontend/v1/ai/get/conversations) */
+export interface ConversationHistoryResponse {
+  conversation_id: string;
+  history: Array<{
+    role: string;
+    content: string;
+    timestamp: string;
+  }>;
 }
 
 // SSE 事件类型
@@ -137,4 +213,58 @@ export interface HistoryMessage {
   role: string;
   content: string;
   timestamp: string;
+}
+
+// 消息内容分段
+export interface ContentSegment {
+  type: string;
+  text?: string;
+  attachment_id?: string;
+  url?: string;
+  mime_type?: string;
+  width?: number;
+  height?: number;
+}
+
+// 消息附件
+export interface MessageAttachment {
+  attachment_id: string;
+  url: string;
+  mime_type: string;
+  width?: number;
+  height?: number;
+  file_size?: number;
+}
+
+// 会话消息详情
+export interface ConversationMessage {
+  message_id: string;
+  role: string;
+  content_text: string;
+  content_segments?: ContentSegment[];
+  attachments?: MessageAttachment[];
+  status: string;
+  tool_calls?: any[];
+  created_at: string;
+}
+
+// 会话消息列表响应
+export interface MessageListResponse {
+  total: number;
+  list: ConversationMessage[];
+  page: number;
+  page_size: number;
+  has_more: boolean;
+}
+
+// 单课问答（非流式）请求参数
+export interface CourseQARequest {
+  courseId: number;
+  session_id?: string;
+  userPrompt: string;
+}
+
+// 单课问答（非流式）响应数据
+export interface CourseQAResponse {
+  answer: string;
 }
