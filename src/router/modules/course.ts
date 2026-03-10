@@ -66,7 +66,7 @@ export default [
     component: () => import("@/views/course/classroom/index.vue"),
     meta: {
       icon: "ri:community-line",
-      title: "2D虚拟校园",
+      title: "虚拟校园",
       rank: 8
     }
   },

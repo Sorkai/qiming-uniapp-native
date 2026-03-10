@@ -1,38 +1,75 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { ElMessage } from "element-plus";
 
 defineOptions({
   name: "Qiming2DCentre"
 });
 
-/** 设计稿尺寸 */
-const DESIGN_W = 1920;
-const DESIGN_H = 1080;
 const campusBgUrl = `${import.meta.env.BASE_URL}campus-2d-bg.svg`;
 
-const wrapperRef = ref<HTMLDivElement>();
-const scale = ref(1);
+/* ─── 容器与全屏 ─── */
+const rootRef = ref<HTMLDivElement>();
+const isFullscreen = ref(false);
 
-/** 根据容器尺寸等比缩放 */
-function updateScale() {
-  if (!wrapperRef.value) return;
-  const parent = wrapperRef.value.parentElement;
-  if (!parent) return;
-  const pw = parent.clientWidth;
-  const ph = parent.clientHeight;
-  scale.value = Math.min(pw / DESIGN_W, ph / DESIGN_H);
+function toggleFullscreen() {
+  if (!rootRef.value) return;
+  if (!document.fullscreenElement) {
+    rootRef.value.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
 }
 
+function onFsChange() {
+  isFullscreen.value = !!document.fullscreenElement;
+}
+
+/* ─── 自适应居中（不可缩放、不可拖拽） ─── */
+const svgNaturalW = 1920;
+const svgNaturalH = 1080;
+
+const containerW = ref(800);
+const containerH = ref(600);
+
+/** 等比缩放使 SVG 完整填充容器 */
+const fitScale = computed(() =>
+  Math.min(containerW.value / svgNaturalW, containerH.value / svgNaturalH)
+);
+
+/** 居中偏移 */
+const offsetX = computed(
+  () => (containerW.value - svgNaturalW * fitScale.value) / 2
+);
+const offsetY = computed(
+  () => (containerH.value - svgNaturalH * fitScale.value) / 2
+);
+
+function measureContainer() {
+  if (!rootRef.value) return;
+  const el = rootRef.value.querySelector(".campus-container") as HTMLElement;
+  if (!el) return;
+  containerW.value = el.clientWidth;
+  containerH.value = el.clientHeight;
+}
+
+/* ─── 生命周期 ─── */
+const ro = ref<ResizeObserver>();
+
 onMounted(() => {
-  updateScale();
-  window.addEventListener("resize", updateScale);
-});
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", updateScale);
+  nextTick(measureContainer);
+  ro.value = new ResizeObserver(measureContainer);
+  const el = rootRef.value?.querySelector(".campus-container");
+  if (el) ro.value.observe(el);
+  document.addEventListener("fullscreenchange", onFsChange);
 });
 
-/** 校园功能区域定义 — 坐标基于 1920×1080 设计稿 */
+onBeforeUnmount(() => {
+  ro.value?.disconnect();
+  document.removeEventListener("fullscreenchange", onFsChange);
+});
+
+/* ─── 热区定义 — 坐标基于 SVG 原始 1920×1080 ─── */
 interface HotZone {
   id: string;
   label: string;
@@ -118,7 +155,6 @@ const buildingZones: HotZone[] = [
   }
 ];
 
-/** 任务栏（顶部黄色横条） */
 const missionsZone: HotZone = {
   id: "missions",
   label: "任务栏",
@@ -137,112 +173,185 @@ function onZoneClick(zone: HotZone) {
 </script>
 
 <template>
-  <div class="campus-root">
-    <div
-      ref="wrapperRef"
-      class="campus-viewport"
-      :style="{
-        width: DESIGN_W + 'px',
-        height: DESIGN_H + 'px',
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left'
-      }"
-    >
-      <!-- SVG 底图 -->
-      <img
-        class="campus-bg"
-        :src="campusBgUrl"
-        alt="启明智教2D校园"
-        draggable="false"
-      />
+  <div
+    ref="rootRef"
+    class="campus-root"
+    :class="{ 'is-fullscreen': isFullscreen }"
+  >
+    <!-- ====== 顶部工具栏 ====== -->
+    <div class="campus-toolbar">
+      <span class="toolbar-title">启明智教 · 2D 校园导览</span>
+      <div class="toolbar-actions">
+        <button
+          class="tb-btn"
+          :title="isFullscreen ? '退出全屏' : '全屏'"
+          @click="toggleFullscreen"
+        >
+          {{ isFullscreen ? "⊗" : "⛶" }}
+        </button>
+      </div>
+    </div>
 
-      <!-- 任务栏热区 -->
+    <!-- ====== SVG 容器 ====== -->
+    <div class="campus-container">
       <div
-        class="hot-zone missions-zone"
-        :class="{ hovered: hoveredZone === missionsZone.id }"
+        class="campus-viewport"
         :style="{
-          left: missionsZone.x + 'px',
-          top: missionsZone.y + 'px',
-          width: missionsZone.w + 'px',
-          height: missionsZone.h + 'px'
+          width: svgNaturalW + 'px',
+          height: svgNaturalH + 'px',
+          transform: `translate(${offsetX}px, ${offsetY}px) scale(${fitScale})`,
+
+          transformOrigin: '0 0'
         }"
-        @mouseenter="hoveredZone = missionsZone.id"
-        @mouseleave="hoveredZone = null"
-        @click="onZoneClick(missionsZone)"
       >
-        <span class="zone-tip"
-          >{{ missionsZone.icon }} {{ missionsZone.label }}</span
+        <!-- SVG 底图 — 用 object 标签可靠渲染 -->
+        <object
+          class="campus-bg"
+          :data="campusBgUrl"
+          type="image/svg+xml"
+          :width="svgNaturalW"
+          :height="svgNaturalH"
         >
-      </div>
+          <img
+            :src="campusBgUrl"
+            :width="svgNaturalW"
+            :height="svgNaturalH"
+            alt="启明智教2D校园"
+          />
+        </object>
 
-      <!-- 建筑功能区热区 -->
-      <div
-        v-for="zone in buildingZones"
-        :key="zone.id"
-        class="hot-zone building-zone"
-        :class="{ hovered: hoveredZone === zone.id }"
-        :style="{
-          left: zone.x + 'px',
-          top: zone.y + 'px',
-          width: zone.w + 'px',
-          height: zone.h + 'px'
-        }"
-        @mouseenter="hoveredZone = zone.id"
-        @mouseleave="hoveredZone = null"
-        @click="onZoneClick(zone)"
-      >
-        <span class="zone-tip">{{ zone.icon }} {{ zone.label }}</span>
-      </div>
-
-      <!-- 右上角操作栏 (设置 + 通知) -->
-      <div class="rightup-bar">
+        <!-- 任务栏热区 -->
         <div
-          class="rightup-btn"
-          title="设置"
-          @click="ElMessage.info('设置功能细化中…')"
+          class="hot-zone missions-zone"
+          :class="{ hovered: hoveredZone === missionsZone.id }"
+          :style="{
+            left: missionsZone.x + 'px',
+            top: missionsZone.y + 'px',
+            width: missionsZone.w + 'px',
+            height: missionsZone.h + 'px'
+          }"
+          @mouseenter="hoveredZone = missionsZone.id"
+          @mouseleave="hoveredZone = null"
+          @click.stop="onZoneClick(missionsZone)"
         >
-          ⚙️
+          <span class="zone-tip"
+            >{{ missionsZone.icon }} {{ missionsZone.label }}</span
+          >
         </div>
-        <div
-          class="rightup-btn"
-          title="通知"
-          @click="ElMessage.info('通知功能细化中…')"
-        >
-          🔔
-        </div>
-      </div>
 
-      <!-- 下边栏 -->
-      <div class="down-sidebar">
-        <span class="down-sidebar-text">启明智教 · 2D 校园导览</span>
+        <!-- 建筑功能区热区 -->
+        <div
+          v-for="zone in buildingZones"
+          :key="zone.id"
+          class="hot-zone building-zone"
+          :class="{ hovered: hoveredZone === zone.id }"
+          :style="{
+            left: zone.x + 'px',
+            top: zone.y + 'px',
+            width: zone.w + 'px',
+            height: zone.h + 'px'
+          }"
+          @mouseenter="hoveredZone = zone.id"
+          @mouseleave="hoveredZone = null"
+          @click.stop="onZoneClick(zone)"
+        >
+          <span class="zone-tip">{{ zone.icon }} {{ zone.label }}</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* ====== 根容器 ====== */
 .campus-root {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: calc(100vh - 86px);
-  overflow: hidden;
-  background: #8bc66a;
+  background: #d5edcc;
   position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.campus-root.is-fullscreen {
+  height: 100vh;
+  border-radius: 0;
+}
+
+/* ====== 顶部工具栏 ====== */
+.campus-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.toolbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  letter-spacing: 1px;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tb-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  color: #555;
+}
+
+.tb-btn:hover {
+  background: #f0f0f0;
+  border-color: #aaa;
+}
+
+/* ====== SVG 容器 ====== */
+.campus-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, #c8e6b8 0%, #a8d98a 100%);
 }
 
 .campus-viewport {
-  position: relative;
-  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
 }
 
 .campus-bg {
   display: block;
-  width: 1920px;
-  height: 1080px;
   pointer-events: none;
   user-select: none;
 }
 
-/* ======= 热区通用 ======= */
+/* ====== 热区通用 ====== */
 .hot-zone {
   position: absolute;
   cursor: pointer;
@@ -254,6 +363,7 @@ function onZoneClick(zone: HotZone) {
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 6px;
+  z-index: 5;
 }
 
 .hot-zone .zone-tip {
@@ -282,60 +392,11 @@ function onZoneClick(zone: HotZone) {
   box-shadow:
     0 0 0 3px rgba(255, 255, 255, 0.7),
     0 4px 24px rgba(0, 0, 0, 0.25);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .missions-zone.hovered {
   background: rgba(255, 255, 255, 0.15);
   box-shadow: 0 0 0 2px rgba(255, 200, 50, 0.6);
-}
-
-/* ======= 右上角操作栏 ======= */
-.rightup-bar {
-  position: absolute;
-  top: 40px;
-  right: 440px;
-  display: flex;
-  gap: 12px;
-  z-index: 10;
-}
-
-.rightup-btn {
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  cursor: pointer;
-  border-radius: 50%;
-  transition:
-    background 0.2s,
-    transform 0.15s;
-}
-
-.rightup-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.12);
-}
-
-/* ======= 下边栏 ======= */
-.down-sidebar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.down-sidebar-text {
-  font-size: 18px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.45);
-  letter-spacing: 2px;
 }
 </style>
