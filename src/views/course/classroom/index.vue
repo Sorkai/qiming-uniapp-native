@@ -32,15 +32,10 @@ const svgNaturalH = 1080;
 const containerW = ref(800);
 const containerH = ref(600);
 
-/** 等比缩放使 SVG 完整填充容器 */
-const fitScale = computed(() =>
-  Math.min(containerW.value / svgNaturalW, containerH.value / svgNaturalH)
-);
+/** 宽度撑满，上下居中 */
+const fitScale = computed(() => containerW.value / svgNaturalW);
 
-/** 居中偏移 */
-const offsetX = computed(
-  () => (containerW.value - svgNaturalW * fitScale.value) / 2
-);
+const offsetX = computed(() => 0);
 const offsetY = computed(
   () => (containerH.value - svgNaturalH * fitScale.value) / 2
 );
@@ -268,8 +263,8 @@ function onZoneClick(zone: HotZone) {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: calc(100vh - 86px);
-  background: #d5edcc;
+  height: calc(100vh - 50px);
+  background: #acd894;
   position: relative;
   border-radius: 8px;
   overflow: hidden;
@@ -335,7 +330,7 @@ function onZoneClick(zone: HotZone) {
   flex: 1;
   overflow: hidden;
   position: relative;
-  background: radial-gradient(circle at 50% 50%, #c8e6b8 0%, #a8d98a 100%);
+  background: #acd894;
 }
 
 .campus-viewport {
