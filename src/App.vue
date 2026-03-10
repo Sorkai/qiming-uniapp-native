@@ -5,6 +5,8 @@
     <ReDrawer />
     <ReAccountSettings />
     <ReFloatButton :floatBtns="floatBtns" />
+    <!-- AI识屏助手（全局挂载，确保学生端等独立页面也能使用） -->
+    <AiScreenCapture />
   </el-config-provider>
 </template>
 
@@ -23,6 +25,7 @@ import zhTw from "element-plus/es/locale/lang/zh-tw";
 import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import ReFloatButton from "@/components/ReFloatButton";
+import AiScreenCapture from "@/components/AiScreenCapture/index.vue";
 
 import Service from "~icons/ri/user-heart-line";
 import Book from "~icons/ri/book-open-line";
@@ -35,7 +38,8 @@ export default defineComponent({
     ReDialog,
     ReDrawer,
     ReAccountSettings,
-    ReFloatButton
+    ReFloatButton,
+    AiScreenCapture
   },
   computed: {
     currentLocale() {
