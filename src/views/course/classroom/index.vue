@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  watch
+} from "vue";
 import { ElMessage } from "element-plus";
 
 defineOptions({
@@ -10,6 +17,7 @@ const campusBgUrl = `${import.meta.env.BASE_URL}campus-2d-bg.svg`;
 
 /* ─── 容器与全屏 ─── */
 const rootRef = ref<HTMLDivElement>();
+const svgObjectRef = ref<HTMLObjectElement>();
 const isFullscreen = ref(false);
 
 function toggleFullscreen() {
@@ -48,6 +56,71 @@ function measureContainer() {
   containerH.value = el.clientHeight;
 }
 
+/* ─── SVG 内部元素动画 ─── */
+/** 热区 id → SVG 内部 id 的映射（处理拼写差异） */
+const svgIdMap: Record<string, string> = {
+  lbraries: "libraries"
+};
+
+function getSvgId(zoneId: string): string {
+  return svgIdMap[zoneId] || zoneId;
+}
+
+/** SVG 加载后注入 hover 动画样式 */
+function injectSvgStyles() {
+  const svgDoc = svgObjectRef.value?.contentDocument;
+  if (!svgDoc) return;
+
+  // 避免重复注入
+  if (svgDoc.getElementById("campus-hover-styles")) return;
+
+  const style = svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
+  style.id = "campus-hover-styles";
+  style.textContent = `
+    [id="virtualclass"],
+    [id="competitionstate"],
+    [id="answershop"],
+    [id="deskmate"],
+    [id="teamupclockin"],
+    [id="libraries"],
+    [id="inform"],
+    [id="fountainset"],
+    [id="missions"],
+    [id="Cog"],
+    [id="Bell"] {
+      transition: transform 0.3s ease;
+    }
+    .svg-zone-hovered {
+      /* 占位，如果以后需要特殊滤镜再加 */
+    }
+  `;
+  svgDoc.querySelector("svg")?.appendChild(style);
+}
+
+/** 当 hoveredZone 变化时，操作 SVG 内部元素 */
+function applySvgHover(newId: string | null, oldId: string | null) {
+  const svgDoc = svgObjectRef.value?.contentDocument;
+  if (!svgDoc) return;
+
+  // 移除旧的
+  if (oldId) {
+    const oldEl = svgDoc.getElementById(getSvgId(oldId));
+    if (oldEl) {
+      oldEl.style.transform = "";
+    }
+  }
+
+  // 添加新的
+  if (newId) {
+    const newEl = svgDoc.getElementById(getSvgId(newId));
+    if (newEl) {
+      newEl.style.transformBox = "fill-box";
+      newEl.style.transformOrigin = "center center";
+      newEl.style.transform = "scale(1.08)";
+    }
+  }
+}
+
 /* ─── 生命周期 ─── */
 const ro = ref<ResizeObserver>();
 
@@ -75,7 +148,7 @@ interface HotZone {
 }
 
 /** 调试模式：显示热区边框（上线前设为 false） */
-const DEBUG_ZONES = true;
+const DEBUG_ZONES = false;
 
 const buildingZones: HotZone[] = [
   {
@@ -144,6 +217,25 @@ const buildingZones: HotZone[] = [
   }
 ];
 
+const actionZones: HotZone[] = [
+  {
+    id: "Cog",
+    label: "设置",
+    x: 1720,
+    y: 35,
+    w: 80,
+    h: 80
+  },
+  {
+    id: "Bell",
+    label: "消息",
+    x: 1815,
+    y: 35,
+    w: 80,
+    h: 80
+  }
+];
+
 const missionsZone: HotZone = {
   id: "missions",
   label: "任务栏",
@@ -154,6 +246,10 @@ const missionsZone: HotZone = {
 };
 
 const hoveredZone = ref<string | null>(null);
+
+watch(hoveredZone, (newId, oldId) => {
+  applySvgHover(newId, oldId);
+});
 
 function onZoneClick(zone: HotZone) {
   ElMessage.info(`即将进入「${zone.label}」，功能细化中…`);
@@ -194,11 +290,13 @@ function onZoneClick(zone: HotZone) {
       >
         <!-- SVG 底图 — 用 object 标签可靠渲染 -->
         <object
+          ref="svgObjectRef"
           class="campus-bg"
           :data="campusBgUrl"
           type="image/svg+xml"
           :width="svgNaturalW"
           :height="svgNaturalH"
+          @load="injectSvgStyles"
         >
           <img
             :src="campusBgUrl"
@@ -231,6 +329,26 @@ function onZoneClick(zone: HotZone) {
           v-for="zone in buildingZones"
           :key="zone.id"
           class="hot-zone building-zone"
+          :class="{ hovered: hoveredZone === zone.id }"
+          :style="{
+            left: zone.x + 'px',
+            top: zone.y + 'px',
+            width: zone.w + 'px',
+            height: zone.h + 'px',
+            outline: DEBUG_ZONES ? '2px dashed red' : 'none'
+          }"
+          @mouseenter="hoveredZone = zone.id"
+          @mouseleave="hoveredZone = null"
+          @click.stop="onZoneClick(zone)"
+        >
+          <span class="zone-tip">{{ zone.label }}</span>
+        </div>
+
+        <!-- 顶部功能图标热区 -->
+        <div
+          v-for="zone in actionZones"
+          :key="zone.id"
+          class="hot-zone action-zone"
           :class="{ hovered: hoveredZone === zone.id }"
           :style="{
             left: zone.x + 'px',
@@ -378,18 +496,18 @@ function onZoneClick(zone: HotZone) {
 }
 
 .building-zone.hovered {
-  transform: scale(1.08);
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.7),
-    0 8px 32px rgba(0, 0, 0, 0.3);
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 10;
+}
+
+.action-zone.hovered {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
   z-index: 10;
 }
 
 .missions-zone.hovered {
-  transform: scale(1.05);
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 2px rgba(255, 200, 50, 0.6);
+  background: rgba(255, 255, 255, 0.08);
   z-index: 10;
 }
 </style>
