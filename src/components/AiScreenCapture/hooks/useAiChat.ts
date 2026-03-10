@@ -154,14 +154,14 @@ export function useAiChat(courseCtx?: CourseContext) {
   };
 
   /**
-   * 截图分析 → 创建会话 → 上传附件 → 多模态流式对话
+   * 截图分析 → 上传附件 → 创建会话 → 多模态流式对话
    */
   const analyzeScreenshot = async (image: string, question?: string) => {
     loading.value = true;
     currentImage.value = image;
 
     const userMsg = question || "请分析这张截图";
-    addUserMessage(userMsg, image);
+    const userMessage = addUserMessage(userMsg, image);
     const loadingMsg = addLoadingMessage();
 
     try {
@@ -170,18 +170,24 @@ export function useAiChat(courseCtx?: CourseContext) {
       const file = new File([blob], "screenshot.png", { type: blob.type });
       const uploadRes = await uploadChatAttachment(file, {
         scene: "general"
-        // 暂时不在此处传 conversation_id，避免后端报错“附件已绑定到其他会话”
       });
 
       const attachmentId =
         (uploadRes as any)?.data?.attachment_id ??
         (uploadRes as any)?.attachment_id;
+      const attachmentUrl =
+        (uploadRes as any)?.data?.url ?? (uploadRes as any)?.url;
 
       if (!attachmentId) {
         throw new Error("附件上传失败");
       }
 
-      // 3. 发起多模态流式对话（根据接口文档，该接口会自动创建会话，不需要传 conversation_id）
+      // 2. 上传成功后，使用服务器返回的 URL 替换 base64
+      if (attachmentUrl && userMessage) {
+        userMessage.image = attachmentUrl;
+      }
+
+      // 3. 发起多模态流式对话
       await new Promise<void>(resolve => {
         cancelStream = multimodalChatStream(
           {
