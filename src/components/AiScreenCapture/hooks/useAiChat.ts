@@ -1,13 +1,15 @@
 import { ref, type Ref } from "vue";
 import { ElMessage } from "element-plus";
-import type { ChatMessage, SSEEventData } from "../types";
+import type { ChatMessage, SSEEventData, SimpleChatStreamData } from "../types";
 import {
+  createConversation,
   uploadChatAttachment,
   multimodalChatStream,
-  continueConversationStream
+  continueConversationStream,
+  getConversationHistory,
+  streamCourseChat,
+  courseQA
 } from "@/api/frontend/aiConversation";
-import { courseAIChatStream, getConversationHistory } from "@/api/frontend/chat";
-import { askCourseQa } from "@/api/aiAssistant";
 
 /** 课程上下文（用于单课AI互动接口） */
 export interface CourseContext {
@@ -94,7 +96,7 @@ export function useAiChat(courseCtx?: CourseContext) {
    * 处理「单课AI互动」流式响应（简单格式）
    */
   const handleCourseStreamData = (
-    data: { conversation_id: string; delta: string; finished: boolean },
+    data: SimpleChatStreamData,
     loadingMsgId: string,
     resolve: () => void
   ) => {
@@ -152,7 +154,7 @@ export function useAiChat(courseCtx?: CourseContext) {
   };
 
   /**
-   * 截图分析 → 上传附件 → 多模态流式对话
+   * 截图分析 → 创建会话 → 上传附件 → 多模态流式对话
    */
   const analyzeScreenshot = async (image: string, question?: string) => {
     loading.value = true;
@@ -166,7 +168,10 @@ export function useAiChat(courseCtx?: CourseContext) {
       // 1. 将 base64 截图上传为附件
       const blob = base64ToBlob(image);
       const file = new File([blob], "screenshot.png", { type: blob.type });
-      const uploadRes = await uploadChatAttachment(file, { scene: "general" });
+      const uploadRes = await uploadChatAttachment(file, {
+        scene: "general"
+        // 暂时不在此处传 conversation_id，避免后端报错“附件已绑定到其他会话”
+      });
 
       const attachmentId =
         (uploadRes as any)?.data?.attachment_id ??
@@ -176,11 +181,12 @@ export function useAiChat(courseCtx?: CourseContext) {
         throw new Error("附件上传失败");
       }
 
-      // 2. 发起多模态流式对话
+      // 3. 发起多模态流式对话（根据接口文档，该接口会自动创建会话，不需要传 conversation_id）
       await new Promise<void>(resolve => {
         cancelStream = multimodalChatStream(
           {
             scene: "general",
+            course_id: isCourseMode() ? courseCtx!.courseId.value! : undefined,
             message: userMsg,
             attachment_ids: [attachmentId]
           },
@@ -205,7 +211,7 @@ export function useAiChat(courseCtx?: CourseContext) {
     loadingMsgId: string
   ): Promise<void> => {
     return new Promise<void>(resolve => {
-      cancelStream = courseAIChatStream(
+      cancelStream = streamCourseChat(
         {
           course_id: courseCtx!.courseId.value!,
           chapter_id: courseCtx?.chapterId?.value ?? undefined,
@@ -222,7 +228,7 @@ export function useAiChat(courseCtx?: CourseContext) {
    */
   const sendCourseQa = async (message: string, loadingMsgId: string) => {
     try {
-      const res = await askCourseQa({
+      const res = await courseQA({
         courseId: courseCtx!.courseId.value!,
         session_id: conversationId.value || undefined,
         userPrompt: message
@@ -295,9 +301,9 @@ export function useAiChat(courseCtx?: CourseContext) {
     loading.value = true;
     try {
       const res = await getConversationHistory(id);
-      if (res && res.history) {
-        conversationId.value = res.conversation_id || id;
-        messages.value = res.history.map(item => ({
+      if (res && res.data && res.data.history) {
+        conversationId.value = res.data.conversation_id || id;
+        messages.value = res.data.history.map(item => ({
           id: generateId(),
           role: item.role as "user" | "assistant",
           content: item.content,

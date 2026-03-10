@@ -47,6 +47,7 @@ const {
   messages,
   loading,
   suggestions,
+  conversationId,
   analyzeScreenshot,
   sendMessage,
   resetChat,

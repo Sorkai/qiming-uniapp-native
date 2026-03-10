@@ -268,3 +268,18 @@ export interface CourseQARequest {
 export interface CourseQAResponse {
   answer: string;
 }
+
+// 单课AI互动（流式）请求参数
+export interface StreamCourseChatReq {
+  course_id?: number;
+  chapter_id?: number;
+  conversation_id?: string;
+  message?: string;
+}
+
+// 单课AI互动（流式）SSE 返回数据（简单格式）
+export interface SimpleChatStreamData {
+  conversation_id: string;
+  delta: string;
+  finished: boolean;
+}

@@ -29,8 +29,10 @@ export function courseAIChatStream(
   const token = getToken();
   const authHeader = token ? formatToken(token.accessToken) : "";
 
+  const baseURL = import.meta.env.VITE_API_URL || "/api";
+
   // 使用fetch API发送POST请求并处理流式响应
-  fetch("/api/edu/frontend/v1/ai/chat/stream", {
+  fetch(`${baseURL}/edu/frontend/v1/ai/chat/stream`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
