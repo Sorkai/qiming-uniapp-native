@@ -1,9 +1,32 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from "vue";
+import MarkdownIt from "markdown-it";
+import hljs from "highlight.js";
+import "highlight.js/styles/github.css";
 import type { ChatMessage } from "./types";
 
 defineOptions({
   name: "AiChatDialog"
+});
+
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  highlight: (str, lang) => {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return (
+          '<pre class="hljs"><code>' +
+          hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+          "</code></pre>"
+        );
+      } catch (__) {}
+    }
+    return (
+      '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + "</code></pre>"
+    );
+  }
 });
 
 const props = defineProps<{
@@ -13,6 +36,7 @@ const props = defineProps<{
   loading?: boolean;
   suggestions?: string[];
   streaming?: boolean;
+  historyList?: any[]; // 新增：会话列表
 }>();
 
 const emit = defineEmits<{
@@ -22,6 +46,8 @@ const emit = defineEmits<{
   (e: "newCapture"): void;
   (e: "stop"): void;
   (e: "openChat"): void;
+  (e: "loadHistory", id: string): void; // 新增：切换历史
+  (e: "reset"): void; // 新增：新建会话
 }>();
 
 // 输入框内容
@@ -101,13 +127,27 @@ watch(
   }
 );
 
+// 新建会话
+const handleNewChat = () => {
+  emit("reset");
+  inputMessage.value = "";
+};
+
 // 格式化时间
 const formatTime = (timestamp: number) => {
+  if (!timestamp) return "";
   const date = new Date(timestamp);
   return date.toLocaleTimeString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit"
   });
+};
+
+// 格式化日期
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
 };
 
 // 关闭对话框
@@ -119,13 +159,13 @@ const handleClose = () => {
 <template>
   <el-dialog
     v-model="dialogVisible"
-    width="520px"
     :close-on-click-modal="false"
     :close-on-press-escape="true"
     class="ai-chat-dialog modern-style"
     append-to-body
     destroy-on-close
     :show-close="false"
+    top="0"
   >
     <template #header>
       <div class="dialog-header">
@@ -144,6 +184,14 @@ const handleClose = () => {
           </div>
         </div>
         <div class="header-ops">
+          <div class="op-btn plus" title="开启新对话" @click="handleNewChat">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path
+                d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                fill="currentColor"
+              />
+            </svg>
+          </div>
           <div class="op-btn" title="重新截图" @click="emit('newCapture')">
             <svg viewBox="0 0 24 24" width="18" height="18">
               <path
@@ -161,115 +209,154 @@ const handleClose = () => {
       </div>
     </template>
 
-    <div class="chat-main">
-      <!-- 智能预览 -->
-      <div v-if="screenshot" class="preview-banner">
-        <div class="banner-inner">
-          <div class="image-box">
-            <el-image
-              :src="screenshot"
-              fit="cover"
-              :preview-src-list="[screenshot]"
-            />
-          </div>
-          <div class="info-box">
-            <div class="label">当前识别目标</div>
-            <div class="desc">您可以询问关于此内容的任何细节</div>
+    <div class="chat-layout">
+      <!-- 左侧：历史记录 -->
+      <div v-if="historyList?.length" class="chat-sidebar">
+        <div class="sidebar-title">历史对话</div>
+        <div class="history-list">
+          <div
+            v-for="item in historyList"
+            :key="item.conversation_id"
+            class="history-item"
+            :title="item.title"
+            @click="emit('loadHistory', item.conversation_id)"
+          >
+            <div class="item-icon">
+              <svg viewBox="0 0 24 24" width="14" height="14">
+                <path
+                  d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <div class="item-body">
+              <div class="item-title text-ellipsis">{{ item.title }}</div>
+              <div class="item-date">{{ formatDate(item.created_at) }}</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 消息列表 -->
-      <div ref="messageListRef" class="message-area">
-        <div
-          v-for="msg in messages"
-          :key="msg.id"
-          class="message-row"
-          :class="msg.role"
-        >
-          <div class="avatar-col">
-            <template v-if="msg.role === 'user'">
-              <div class="user-avatar">
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                  <path
-                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </div>
-            </template>
-            <template v-else>
-              <div class="ai-avatar">
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                  <path
-                    d="M12 2L4.5 20.29L4.71 21L12 18L19.29 21L19.5 20.29L12 2Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </div>
-            </template>
-          </div>
-          <div class="content-col">
-            <div v-if="msg.image" class="content-image">
+      <!-- 右侧：主界面 -->
+      <div class="chat-main">
+        <!-- 智能预览 -->
+        <div v-if="screenshot" class="preview-banner">
+          <div class="banner-inner">
+            <div class="image-box">
               <el-image
-                :src="msg.image"
-                :preview-src-list="[msg.image]"
+                :src="screenshot"
                 fit="cover"
+                :preview-src-list="[screenshot]"
               />
             </div>
-            <div
-              class="bubble"
-              :class="{
-                streaming:
-                  msg.role === 'assistant' && msg.content && msg.loading
-              }"
-            >
-              <template v-if="msg.loading && !msg.content">
-                <div class="typing">
-                  <span />
-                  <span />
-                  <span />
+            <div class="info-box">
+              <div class="label">当前识别目标</div>
+              <div class="desc">您可以询问关于此内容的任何细节</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 消息列表 -->
+        <div ref="messageListRef" class="message-area">
+          <div
+            v-for="msg in messages"
+            :key="msg.id"
+            class="message-row"
+            :class="msg.role"
+          >
+            <div class="avatar-col">
+              <template v-if="msg.role === 'user'">
+                <div class="user-avatar">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
                 </div>
               </template>
               <template v-else>
-                <span class="bubble-text" v-text="msg.content" />
-                <span
-                  v-if="msg.role === 'assistant' && msg.content && msg.loading"
-                  class="stream-cursor"
-                />
+                <div class="ai-avatar">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path
+                      d="M12 2L4.5 20.29L4.71 21L12 18L19.29 21L19.5 20.29L12 2Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </div>
               </template>
             </div>
-            <div class="meta">{{ formatTime(msg.timestamp) }}</div>
+            <div class="content-col">
+              <div v-if="msg.image" class="content-image">
+                <el-image
+                  :src="msg.image"
+                  :preview-src-list="[msg.image]"
+                  fit="cover"
+                />
+              </div>
+              <div
+                class="bubble"
+                :class="{
+                  streaming:
+                    msg.role === 'assistant' && msg.content && msg.loading
+                }"
+              >
+                <template v-if="msg.loading && !msg.content">
+                  <div class="typing">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </template>
+                <template v-else>
+                  <div
+                    v-if="msg.role === 'assistant'"
+                    class="markdown-body"
+                    v-html="md.render(msg.content || '')"
+                  />
+                  <span v-else class="bubble-text" v-text="msg.content" />
+                  <span
+                    v-if="
+                      msg.role === 'assistant' && msg.content && msg.loading
+                    "
+                    class="stream-cursor"
+                  />
+                </template>
+              </div>
+              <div class="meta">
+                {{ formatTime(msg.timestamp) }}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 停止生成按钮 -->
-      <div v-if="isStreaming" class="stop-bar">
-        <button class="stop-btn" @click="handleStop">
-          <svg viewBox="0 0 24 24" width="14" height="14">
-            <rect
-              x="6"
-              y="6"
-              width="12"
-              height="12"
-              rx="2"
-              fill="currentColor"
-            />
-          </svg>
-          停止生成
-        </button>
-      </div>
+        <!-- 停止生成按钮 -->
+        <div v-if="isStreaming" class="stop-bar">
+          <button class="stop-btn" @click="handleStop">
+            <svg viewBox="0 0 24 24" width="14" height="14">
+              <rect
+                x="6"
+                y="6"
+                width="12"
+                height="12"
+                rx="2"
+                fill="currentColor"
+              />
+            </svg>
+            停止生成
+          </button>
+        </div>
 
-      <!-- 建议词 -->
-      <div v-if="suggestions?.length && !isStreaming" class="suggestions-bar">
-        <div
-          v-for="(s, i) in suggestions"
-          :key="i"
-          class="suggestion-chip"
-          @click="useSuggestion(s)"
-        >
-          {{ s }}
+        <!-- 建议词 -->
+        <div v-if="suggestions?.length && !isStreaming" class="suggestions-bar">
+          <div
+            v-for="(s, i) in suggestions"
+            :key="i"
+            class="suggestion-chip"
+            @click="useSuggestion(s)"
+          >
+            {{ s }}
+          </div>
         </div>
       </div>
     </div>
@@ -332,15 +419,25 @@ const handleClose = () => {
   --ai-primary-soft-border: var(--el-color-primary-light-7);
 
   .el-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
     display: flex;
     flex-direction: column;
-    height: 650px;
+    width: 80vw;
+    height: 60vw; /* 4:3 比例，即 80 * 3/4 = 60 */
+    max-width: 1000px;
+    max-height: 750px;
+    min-width: 520px;
+    min-height: 390px;
     padding: 0;
+    margin: 0;
     overflow: hidden;
     background-color: var(--el-bg-color-page);
+    transform: translate(-50%, -50%);
     border: 1px solid var(--ai-primary-soft-border);
-    border-radius: 32px;
-    box-shadow: 0 18px 44px rgb(0 0 0 / 16%);
+    border-radius: 20px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
   }
 
   .el-dialog__header {
@@ -445,10 +542,92 @@ const handleClose = () => {
   }
 }
 
+.chat-layout {
+  display: flex;
+  flex: 1;
+  height: calc(100% - 100px); // 减去底部输入框大致高度
+  overflow: hidden;
+
+  .chat-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    height: 100%;
+    background-color: var(--el-fill-color-light);
+    border-right: 1px solid var(--ai-primary-soft-border);
+    overflow: hidden; // 确保内部滚动有效
+
+    .sidebar-title {
+      flex-shrink: 0;
+      padding: 16px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--el-text-color-secondary);
+      border-bottom: 1px solid var(--ai-primary-soft-border);
+    }
+
+    .history-list {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto; // 列表滚动
+
+      .history-item {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 12px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border-radius: 12px;
+        transition: all 0.2s;
+
+        &:hover {
+          background-color: var(--el-fill-color-darker);
+        }
+
+        &.active {
+          background-color: var(--ai-primary-soft);
+          .item-title {
+            color: var(--ai-primary);
+          }
+        }
+
+        .item-icon {
+          color: var(--el-text-color-placeholder);
+        }
+
+        .item-body {
+          flex: 1;
+          overflow: hidden;
+
+          .item-title {
+            font-size: 13px;
+            color: var(--el-text-color-primary);
+          }
+
+          .item-date {
+            margin-top: 2px;
+            font-size: 11px;
+            color: var(--el-text-color-placeholder);
+          }
+        }
+      }
+    }
+  }
+}
+
 .chat-main {
   display: flex;
   flex-direction: column;
+  flex: 1;
   height: 100%;
+  overflow: hidden;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .preview-banner {
@@ -601,6 +780,62 @@ const handleClose = () => {
         max-width: 280px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+      }
+    }
+
+    .markdown-body {
+      padding: 2px 0;
+      font-size: 14px;
+      line-height: 1.6;
+      background: transparent !important;
+
+      :deep(p) {
+        margin: 0 0 10px;
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      :deep(code) {
+        padding: 2px 4px;
+        font-family: inherit;
+        background-color: var(--el-fill-color-darker);
+        border-radius: 4px;
+      }
+
+      :deep(pre) {
+        padding: 12px;
+        margin: 10px 0;
+        overflow: auto;
+        background-color: #f6f8fa;
+        border-radius: 8px;
+
+        code {
+          padding: 0;
+          background-color: transparent;
+        }
+      }
+
+      :deep(ul),
+      :deep(ol) {
+        padding-left: 20px;
+        margin-bottom: 10px;
+      }
+
+      :deep(table) {
+        width: 100%;
+        margin-bottom: 15px;
+        border-collapse: collapse;
+
+        th,
+        td {
+          padding: 6px 13px;
+          border: 1px solid var(--el-border-color);
+        }
+
+        tr:nth-child(2n) {
+          background-color: var(--el-fill-color-lighter);
+        }
       }
     }
 

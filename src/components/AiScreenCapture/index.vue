@@ -48,11 +48,13 @@ const {
   loading,
   suggestions,
   conversationId,
+  historyList,
   analyzeScreenshot,
   sendMessage,
   resetChat,
   stopGenerate,
-  loadHistory
+  loadHistory,
+  fetchConversations
 } = useAiChat({ courseId: courseIdRef });
 
 const chatDialogVisible = ref(false);
@@ -61,14 +63,16 @@ const chatDialogVisible = ref(false);
 watch(
   [courseIdRef, chatDialogVisible],
   ([cId, visible]) => {
+    if (visible) {
+      fetchConversations(); // 每次打开弹窗都刷新一下列表
+    }
     if (
       visible &&
       cId &&
       !conversationId.value &&
       messages.value.length === 0
     ) {
-      // 如果是在课程详情页打开，且当前没有对话记录，可以尝试从本地或后端恢复上一次的课程对话
-      // 这里可以根据实际需求决定是否自动加载，或者由父组件传入 conversation_id
+      // 加载课程相关历史（可选）
     }
   },
   { immediate: true }
@@ -128,9 +132,7 @@ const handleCancelCapture = () => {
 };
 
 const handleSendMessage = (message: string) => {
-  // 如果在课程详情页，默认使用非流式的单课问答接口（第三个接口对接要求）
-  const isCourseDetail = !!courseIdRef.value;
-  sendMessage(message, isCourseDetail);
+  sendMessage(message);
 };
 
 const handleStopGenerate = () => {
@@ -189,10 +191,13 @@ watch(shouldShowAssistant, visible => {
       :messages="messages"
       :loading="loading"
       :suggestions="suggestions"
+      :history-list="historyList"
       @send="handleSendMessage"
       @stop="handleStopGenerate"
       @new-capture="handleNewCapture"
       @open-chat="handleOpenChat"
+      @load-history="loadHistory"
+      @reset="resetChat"
     />
   </div>
 </template>

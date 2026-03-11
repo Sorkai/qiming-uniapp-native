@@ -3,6 +3,7 @@ import { ElMessage } from "element-plus";
 import type { ChatMessage, SSEEventData, SimpleChatStreamData } from "../types";
 import {
   createConversation,
+  getConversationList, // 新增：导入获取会话列表的方法
   uploadChatAttachment,
   multimodalChatStream,
   continueConversationStream,
@@ -42,11 +43,24 @@ export function useAiChat(courseCtx?: CourseContext) {
   const loading = ref(false);
   const suggestions = ref<string[]>([]);
   const conversationId = ref("");
+  const conversationList = ref<ChatMessage[]>([]); // 修改：为了语义化，我们这里维护一个会话列表
+  const historyList = ref<any[]>([]); // 存储会话列表
   const currentImage = ref("");
   let cancelStream: (() => void) | null = null;
 
   const generateId = () =>
     `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+
+  const fetchConversations = async (page = 1, pageSize = 20) => {
+    try {
+      const res = await getConversationList({ page, page_size: pageSize });
+      if (res && res.data) {
+        historyList.value = res.data.list || [];
+      }
+    } catch (error) {
+      console.error("获取会话列表失败:", error);
+    }
+  };
 
   const addUserMessage = (content: string, image?: string) => {
     const message: ChatMessage = {
@@ -147,7 +161,11 @@ export function useAiChat(courseCtx?: CourseContext) {
         resolve();
         break;
     }
-    if (data.finished && data.event !== "assistant.completed" && data.event !== "error") {
+    if (
+      data.finished &&
+      data.event !== "assistant.completed" &&
+      data.event !== "error"
+    ) {
       loading.value = false;
       resolve();
     }
@@ -193,8 +211,12 @@ export function useAiChat(courseCtx?: CourseContext) {
           {
             scene: "general",
             course_id: isCourseMode() ? courseCtx!.courseId.value! : undefined,
+            chapter_id: courseCtx?.chapterId?.value ?? undefined,
             message: userMsg,
-            attachment_ids: [attachmentId]
+            attachment_ids: [attachmentId],
+            metadata: {
+              enable_tools: "false"
+            }
           },
           data => handleSSEEvent(data, loadingMsg.id, resolve)
         );
@@ -254,38 +276,45 @@ export function useAiChat(courseCtx?: CourseContext) {
 
   /**
    * 发送追问消息（在已有会话中继续流式对话）
-   * 当存在课程上下文时自动使用「单课AI互动」接口
+   * 当存在会话 ID 时，优先使用「继续流式对话」接口
    */
-  const sendMessage = async (message: string, useNonStream = false) => {
+  const sendMessage = async (message: string) => {
     loading.value = true;
     addUserMessage(message);
     const loadingMsg = addLoadingMessage();
 
     try {
-      if (isCourseMode()) {
-        if (useNonStream) {
-          // 单课问答非流式模式
-          await sendCourseQa(message, loadingMsg.id);
-        } else {
-          // 单课AI互动流式模式
-          await sendViaCourseStream(message, loadingMsg.id);
-        }
-      } else if (conversationId.value) {
-        // 已有会话，继续对话
+      if (conversationId.value) {
+        // 已有会话，继续对话（多模态流式对话）
         await new Promise<void>(resolve => {
           cancelStream = continueConversationStream(
             conversationId.value,
-            { message },
+            {
+              message,
+              metadata: {
+                enable_tools: "false"
+              }
+            },
             data => handleSSEEvent(data, loadingMsg.id, resolve)
           );
         });
+      } else if (isCourseMode()) {
+        // 单课AI互动流式模式（无会话ID但有课程上下文）
+        await sendViaCourseStream(message, loadingMsg.id);
       } else {
-        // 无会话 ID，创建新会话（可能截图上传失败后直接发文字）
+        // 无会话 ID，创建新会话
         await new Promise<void>(resolve => {
           cancelStream = multimodalChatStream(
             {
               scene: "general",
-              message
+              course_id: isCourseMode()
+                ? courseCtx!.courseId.value!
+                : undefined,
+              chapter_id: courseCtx?.chapterId?.value ?? undefined,
+              message,
+              metadata: {
+                enable_tools: "false"
+              }
             },
             data => handleSSEEvent(data, loadingMsg.id, resolve)
           );
@@ -357,10 +386,12 @@ export function useAiChat(courseCtx?: CourseContext) {
     loading,
     suggestions,
     conversationId,
+    historyList,
     analyzeScreenshot,
     sendMessage,
     resetChat,
     stopGenerate,
-    loadHistory
+    loadHistory,
+    fetchConversations
   };
 }
