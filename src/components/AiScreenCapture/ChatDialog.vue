@@ -165,7 +165,6 @@ const handleClose = () => {
     append-to-body
     destroy-on-close
     :show-close="false"
-    top="0"
   >
     <template #header>
       <div class="dialog-header">
@@ -411,53 +410,60 @@ const handleClose = () => {
 
 <!-- 非 scoped：dialog 使用 append-to-body 传送到 body，scoped 样式无法到达 -->
 <style lang="scss">
-.ai-chat-dialog.modern-style {
+/*
+ * .ai-chat-dialog.modern-style 即 .el-dialog 元素本身（class 通过 v-bind="$attrs" 挂在 .el-dialog 上）
+ * 所以定位/尺寸样式直接写在此选择器下，不再嵌套 .el-dialog
+ */
+.el-dialog.ai-chat-dialog.modern-style {
   --ai-primary: var(--el-color-primary);
   --ai-primary-strong: var(--el-color-primary-dark-2);
   --ai-primary-mid: var(--el-color-primary-light-3);
   --ai-primary-soft: var(--el-color-primary-light-9);
   --ai-primary-soft-border: var(--el-color-primary-light-7);
 
-  .el-dialog {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    display: flex;
-    flex-direction: column;
-    width: 80vw;
-    height: 60vw; /* 4:3 比例，即 80 * 3/4 = 60 */
-    max-width: 1000px;
-    max-height: 750px;
-    min-width: 520px;
-    min-height: 390px;
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-    background-color: var(--el-bg-color-page);
-    transform: translate(-50%, -50%);
-    border: 1px solid var(--ai-primary-soft-border);
-    border-radius: 20px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-  }
+  /* 固定定位居中，覆盖 Element Plus 默认的 margin-top */
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+
+  /* flex 纵向布局，使 header/body/footer 各自占位 */
+  display: flex;
+  flex-direction: column;
+
+  /* 4:3 比例：宽 80vw，高 = 80vw × 3/4 = 60vw */
+  width: min(80vw, 1000px);
+  height: min(60vw, calc(100vh - 80px), 750px);
+  min-width: 520px;
+  min-height: 390px;
+
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--el-bg-color-page);
+  border: 1px solid var(--ai-primary-soft-border);
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
 
   .el-dialog__header {
+    flex-shrink: 0;
     padding: 0;
     margin: 0;
-    border-top-left-radius: 32px;
-    border-top-right-radius: 32px;
+    border-radius: 20px 20px 0 0;
     overflow: hidden;
   }
 
   .el-dialog__body {
     flex: 1;
+    min-height: 0; /* 关键：允许 flex 子元素收缩产生内部滚动 */
     padding: 0;
     overflow: hidden;
   }
 
   .el-dialog__footer {
+    flex-shrink: 0;
     padding: 0;
-    border-bottom-left-radius: 32px;
-    border-bottom-right-radius: 32px;
+    border-radius: 0 0 20px 20px;
     overflow: hidden;
     background: var(--el-bg-color);
   }
@@ -545,7 +551,8 @@ const handleClose = () => {
 .chat-layout {
   display: flex;
   flex: 1;
-  height: calc(100% - 100px); // 减去底部输入框大致高度
+  height: 100%;
+  min-height: 0; /* 允许 flex 容器收缩 */
   overflow: hidden;
 
   .chat-sidebar {
@@ -620,7 +627,7 @@ const handleClose = () => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  height: 100%;
+  min-height: 0; /* 关键：允许内部 message-area 产生滚动 */
   overflow: hidden;
 }
 
@@ -673,6 +680,7 @@ const handleClose = () => {
 
 .message-area {
   flex: 1;
+  min-height: 0; /* 关键：flex 子元素默认 min-height: auto 会阻止收缩 */
   padding: 20px;
   overflow-y: auto;
 
