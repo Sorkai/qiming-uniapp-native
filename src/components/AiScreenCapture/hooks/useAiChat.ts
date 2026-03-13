@@ -4,6 +4,8 @@ import type { ChatMessage, SSEEventData, SimpleChatStreamData } from "../types";
 import {
   createConversation,
   getConversationList, // 新增：导入获取会话列表的方法
+  getConversationDetail,
+  getMessageHistory,
   uploadChatAttachment,
   multimodalChatStream,
   continueConversationStream,
@@ -19,18 +21,66 @@ export interface CourseContext {
 }
 
 /**
- * 将 base64 数据转为 Blob，用于附件上传
+ * 将 base64 数据转为 Blob，并处理为 WebP 格式且控制大小在 6MB 以内
  */
-function base64ToBlob(base64: string): Blob {
-  const parts = base64.split(",");
-  const mime = parts[0]?.match(/:(.*?);/)?.[1] || "image/png";
-  const byteStr = atob(parts[1]);
-  const ab = new ArrayBuffer(byteStr.length);
-  const ia = new Uint8Array(ab);
-  for (let i = 0; i < byteStr.length; i++) {
-    ia[i] = byteStr.charCodeAt(i);
-  }
-  return new Blob([ab], { type: mime });
+function processImageToWebP(base64: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = base64;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("无法创建 Canvas 上下文"));
+        return;
+      }
+
+      // 设置最大尺寸，避免超大图导致性能问题或体积过大
+      const MAX_WIDTH = 2048;
+      const MAX_HEIGHT = 2048;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > MAX_WIDTH) {
+        height *= MAX_WIDTH / width;
+        width = MAX_WIDTH;
+      }
+      if (height > MAX_HEIGHT) {
+        width *= MAX_HEIGHT / height;
+        height = MAX_HEIGHT;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // 递归压缩，确保在 6MB 以内
+      const MAX_SIZE = 6 * 1024 * 1024; // 6MB
+      let quality = 0.9;
+
+      const compress = () => {
+        canvas.toBlob(
+          blob => {
+            if (!blob) {
+              reject(new Error("Canvas 转 Blob 失败"));
+              return;
+            }
+            if (blob.size > MAX_SIZE && quality > 0.1) {
+              quality -= 0.1;
+              compress();
+            } else {
+              resolve(blob);
+            }
+          },
+          "image/webp",
+          quality
+        );
+      };
+
+      compress();
+    };
+    img.onerror = () => reject(new Error("图片加载失败"));
+  });
 }
 
 /**
@@ -183,9 +233,9 @@ export function useAiChat(courseCtx?: CourseContext) {
     const loadingMsg = addLoadingMessage();
 
     try {
-      // 1. 将 base64 截图上传为附件
-      const blob = base64ToBlob(image);
-      const file = new File([blob], "screenshot.png", { type: blob.type });
+      // 1. 将 base64 截图处理为 WebP
+      const blob = await processImageToWebP(image);
+      const file = new File([blob], "screenshot.webp", { type: "image/webp" });
       const uploadRes = await uploadChatAttachment(file, {
         scene: "general"
       });
@@ -329,25 +379,119 @@ export function useAiChat(courseCtx?: CourseContext) {
   };
 
   /**
-   * 加载历史记录
+   * 上传本地图片并继续对话
+   */
+  const uploadAndContinue = async (file: File) => {
+    loading.value = true;
+    const loadingMsg = addLoadingMessage();
+
+    try {
+      // 1. 处理图片为 WebP 并且控制大小
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = e => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const webpBlob = await processImageToWebP(base64);
+      const webpFile = new File([webpBlob], "upload.webp", {
+        type: "image/webp"
+      });
+
+      // 2. 上传附件
+      const uploadRes = await uploadChatAttachment(webpFile, {
+        scene: "general",
+        conversation_id: conversationId.value || undefined
+      });
+
+      const attachmentId =
+        (uploadRes as any)?.data?.attachment_id ??
+        (uploadRes as any)?.attachment_id;
+      const attachmentUrl =
+        (uploadRes as any)?.data?.url ?? (uploadRes as any)?.url;
+
+      if (!attachmentId) throw new Error("附件上传失败");
+
+      // 3. 添加用户消息（显示图片）
+      const userMsg = "我上传了一张图片";
+      addUserMessage(userMsg, attachmentUrl || base64);
+
+      // 4. 发起对话
+      if (!conversationId.value) {
+        // 如果没有会话，先创建多模态对话
+        await new Promise<void>(resolve => {
+          cancelStream = multimodalChatStream(
+            {
+              scene: "general",
+              course_id: isCourseMode()
+                ? courseCtx!.courseId.value!
+                : undefined,
+              chapter_id: courseCtx?.chapterId?.value ?? undefined,
+              message: userMsg,
+              attachment_ids: [attachmentId]
+            },
+            data => handleSSEEvent(data, loadingMsg.id, resolve)
+          );
+        });
+      } else {
+        // 已有会话，继续多模态对话
+        await new Promise<void>(resolve => {
+          cancelStream = continueConversationStream(
+            conversationId.value,
+            {
+              message: userMsg,
+              attachment_ids: [attachmentId]
+            },
+            data => handleSSEEvent(data, loadingMsg.id, resolve)
+          );
+        });
+      }
+    } catch (error) {
+      console.error("上传图片失败:", error);
+      finalizeAssistantMessage(loadingMsg.id, "图片上传或发送失败，请重试");
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * 加载会话详情（包含消息历史）
    */
   const loadHistory = async (id: string) => {
     if (!id) return;
     loading.value = true;
     try {
-      const res = await getConversationHistory(id);
-      if (res && res.data && res.data.history) {
-        conversationId.value = res.data.conversation_id || id;
-        messages.value = res.data.history.map(item => ({
-          id: generateId(),
+      // 1. 获取会话详情 (可选，用于更新基础信息)
+      const detailRes = await getConversationDetail(id);
+      if (detailRes && detailRes.data) {
+        conversationId.value = detailRes.data.conversation_id || id;
+      }
+
+      // 2. 获取消息历史（分页获取）
+      const res = await getMessageHistory(id, { page: 1, page_size: 50 });
+      if (res && res.data && res.data.list) {
+        messages.value = res.data.list.map(item => ({
+          id: item.message_id || generateId(),
           role: item.role as "user" | "assistant",
-          content: item.content,
-          timestamp: new Date(item.timestamp).getTime(),
+          content: item.content_text,
+          image: item.attachments?.[0]?.url,
+          timestamp: new Date(item.created_at).getTime(),
           loading: false
         }));
+
+        // 3. 将第一条带有图片的 user 消息中的图片设为当前显示的顶部预览图
+        const firstImageMsg = messages.value.find(
+          m => m.role === "user" && m.image
+        );
+        if (firstImageMsg) {
+          currentImage.value = firstImageMsg.image;
+        } else {
+          currentImage.value = ""; // 如果没有图片，清空预览
+        }
       }
     } catch (error) {
-      console.error("加载历史记录失败:", error);
+      console.error("加载详情和历史记录失败:", error);
       ElMessage.error("加载历史记录失败");
     } finally {
       loading.value = false;
@@ -387,11 +531,13 @@ export function useAiChat(courseCtx?: CourseContext) {
     suggestions,
     conversationId,
     historyList,
+    currentImage,
     analyzeScreenshot,
     sendMessage,
     resetChat,
     stopGenerate,
     loadHistory,
-    fetchConversations
+    fetchConversations,
+    uploadAndContinue
   };
 }

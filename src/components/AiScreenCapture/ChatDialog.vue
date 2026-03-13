@@ -48,12 +48,14 @@ const emit = defineEmits<{
   (e: "openChat"): void;
   (e: "loadHistory", id: string): void; // 新增：切换历史
   (e: "reset"): void; // 新增：新建会话
+  (e: "uploadImage", file: File): void; // 新增：上传本地图片
 }>();
 
 // 输入框内容
 const inputMessage = ref("");
 const messageListRef = ref<HTMLElement>();
 const inputRef = ref<any>();
+const fileInputRef = ref<HTMLInputElement>();
 
 // 对话框可见性
 const dialogVisible = computed({
@@ -98,6 +100,22 @@ const handleStop = () => {
 const useSuggestion = (suggestion: string) => {
   inputMessage.value = suggestion;
   handleSend();
+};
+
+// 触发文件选择
+const triggerFileUpload = () => {
+  fileInputRef.value?.click();
+};
+
+// 处理文件选择
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    emit("uploadImage", file);
+    // 重置 input 值的以便下次选择相同文件也能触发 change
+    target.value = "";
+  }
 };
 
 // 滚动到底部
@@ -363,6 +381,27 @@ const handleClose = () => {
     <template #footer>
       <div class="footer-input">
         <div class="input-container">
+          <!-- 隐藏的文件选择器 -->
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/*"
+            style="display: none"
+            @change="handleFileChange"
+          />
+          <el-button
+            class="upload-btn"
+            :disabled="loading"
+            circle
+            @click="triggerFileUpload"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path
+                d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
+                fill="currentColor"
+              />
+            </svg>
+          </el-button>
           <el-input
             ref="inputRef"
             v-model="inputMessage"
@@ -969,6 +1008,16 @@ const handleClose = () => {
       background-color: var(--el-bg-color);
       border-color: var(--ai-primary);
       box-shadow: 0 0 0 3px var(--el-color-primary-light-8);
+    }
+
+    .upload-btn {
+      flex-shrink: 0;
+      margin-bottom: 2px;
+      color: var(--el-text-color-regular);
+      &:hover {
+        color: var(--ai-primary);
+        background-color: var(--ai-primary-soft);
+      }
     }
 
     :deep(.el-textarea__inner) {

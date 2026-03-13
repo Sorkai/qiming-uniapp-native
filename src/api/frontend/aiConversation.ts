@@ -1,6 +1,6 @@
 import { http } from "@/utils/http";
 import { getToken, formatToken } from "@/utils/auth";
-import type {
+import {
   CreateConversationReq,
   CreateConversationResponse,
   ConversationDetailResponse,

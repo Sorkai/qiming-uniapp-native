@@ -49,12 +49,14 @@ const {
   suggestions,
   conversationId,
   historyList,
+  currentImage,
   analyzeScreenshot,
   sendMessage,
   resetChat,
   stopGenerate,
   loadHistory,
-  fetchConversations
+  fetchConversations,
+  uploadAndContinue
 } = useAiChat({ courseId: courseIdRef });
 
 const chatDialogVisible = ref(false);
@@ -135,6 +137,18 @@ const handleSendMessage = (message: string) => {
   sendMessage(message);
 };
 
+const handleUploadImage = async (file: File) => {
+  try {
+    enterChatMode();
+    chatDialogVisible.value = true;
+    // 调用新封装的上传并继续对话逻辑，内部支持 WebP 转换和大小控制
+    await uploadAndContinue(file);
+  } catch (error) {
+    console.error("图片上传失败:", error);
+    ElMessage.error("图片上传失败");
+  }
+};
+
 const handleStopGenerate = () => {
   stopGenerate();
 };
@@ -187,7 +201,7 @@ watch(shouldShowAssistant, visible => {
 
     <ChatDialog
       v-model:visible="chatDialogVisible"
-      :screenshot="screenshot"
+      :screenshot="currentImage || screenshot"
       :messages="messages"
       :loading="loading"
       :suggestions="suggestions"
@@ -198,6 +212,7 @@ watch(shouldShowAssistant, visible => {
       @open-chat="handleOpenChat"
       @load-history="loadHistory"
       @reset="resetChat"
+      @upload-image="handleUploadImage"
     />
   </div>
 </template>
