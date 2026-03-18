@@ -20,6 +20,17 @@ const route = useRoute();
 const floatButtonRef = ref<InstanceType<typeof FloatButton> | null>(null);
 const buttonCenter = ref({ x: 0, y: 0 });
 
+/** 从路由提取课程上下文（/course/:id 页面） */
+const routeCourseId = computed<number | null>(() => {
+  if (route.name === "CourseDetail" && route.params.id) {
+    const id = Number(route.params.id);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
+  return null;
+});
+const courseIdRef = ref<number | null>(null);
+watch(routeCourseId, v => (courseIdRef.value = v), { immediate: true });
+
 const {
   status,
   screenshot,
@@ -36,12 +47,38 @@ const {
   messages,
   loading,
   suggestions,
+  conversationId,
+  historyList,
+  currentImage,
   analyzeScreenshot,
   sendMessage,
-  resetChat
-} = useAiChat();
+  resetChat,
+  stopGenerate,
+  loadHistory,
+  fetchConversations,
+  uploadAndContinue
+} = useAiChat({ courseId: courseIdRef });
 
 const chatDialogVisible = ref(false);
+
+/** 当进入课程页面且处于聊天模式时，尝试加载已有会话历史 */
+watch(
+  [courseIdRef, chatDialogVisible],
+  ([cId, visible]) => {
+    if (visible) {
+      fetchConversations(); // 每次打开弹窗都刷新一下列表
+    }
+    if (
+      visible &&
+      cId &&
+      !conversationId.value &&
+      messages.value.length === 0
+    ) {
+      // 加载课程相关历史（可选）
+    }
+  },
+  { immediate: true }
+);
 
 const userRoleType = computed(() => {
   const userInfo = storageLocal().getItem<any>(userKey);
@@ -100,6 +137,27 @@ const handleSendMessage = (message: string) => {
   sendMessage(message);
 };
 
+const handleUploadImage = async (file: File) => {
+  try {
+    enterChatMode();
+    chatDialogVisible.value = true;
+    // 调用新封装的上传并继续对话逻辑，内部支持 WebP 转换和大小控制
+    await uploadAndContinue(file);
+  } catch (error) {
+    console.error("图片上传失败:", error);
+    ElMessage.error("图片上传失败");
+  }
+};
+
+const handleStopGenerate = () => {
+  stopGenerate();
+};
+
+/** 用户直接打开对话（不截图，纯文字对话模式） */
+const handleOpenChat = () => {
+  chatDialogVisible.value = true;
+};
+
 const handleNewCapture = () => {
   chatDialogVisible.value = false;
   resetChat();
@@ -143,12 +201,18 @@ watch(shouldShowAssistant, visible => {
 
     <ChatDialog
       v-model:visible="chatDialogVisible"
-      :screenshot="screenshot"
+      :screenshot="currentImage || screenshot"
       :messages="messages"
       :loading="loading"
       :suggestions="suggestions"
+      :history-list="historyList"
       @send="handleSendMessage"
+      @stop="handleStopGenerate"
       @new-capture="handleNewCapture"
+      @open-chat="handleOpenChat"
+      @load-history="loadHistory"
+      @reset="resetChat"
+      @upload-image="handleUploadImage"
     />
   </div>
 </template>

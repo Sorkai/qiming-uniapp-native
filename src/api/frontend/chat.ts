@@ -1,5 +1,6 @@
 import { getToken, formatToken } from "@/utils/auth";
 import axios from "axios";
+import type { ConversationHistoryResponse } from "@/components/AiScreenCapture/types";
 
 /**
  * 单课AI互动（流式返回）
@@ -28,8 +29,10 @@ export function courseAIChatStream(
   const token = getToken();
   const authHeader = token ? formatToken(token.accessToken) : "";
 
+  const baseURL = import.meta.env.VITE_API_URL || "/api";
+
   // 使用fetch API发送POST请求并处理流式响应
-  fetch("/api/edu/frontend/v1/ai/chat/stream", {
+  fetch(`${baseURL}/edu/frontend/v1/ai/chat/stream`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -123,7 +126,9 @@ export function courseAIChatStream(
  * @param conversationId 会话ID
  * @returns 会话历史记录
  */
-export function getConversationHistory(conversationId: string) {
+export function getConversationHistory(
+  conversationId: string
+): Promise<ConversationHistoryResponse> {
   // 获取认证Token
   const token = getToken();
   const authHeader = token ? formatToken(token.accessToken) : "";

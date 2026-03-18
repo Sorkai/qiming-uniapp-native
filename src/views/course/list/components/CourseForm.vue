@@ -545,7 +545,8 @@
 <script lang="ts" setup>
 import { ref, reactive, watch, onMounted } from "vue";
 import { ElMessage } from "element-plus";
-import { uploadFile } from "@/api/user";
+import COS from "cos-js-sdk-v5";
+import { completeStsUpload, initStsUpload } from "@/api/user";
 import { getCategoryList } from "@/api/category";
 import { Plus, Loading } from "@element-plus/icons-vue";
 
@@ -651,13 +652,286 @@ watch(
   { deep: true }
 );
 
+const getCurrentCourseId = () => {
+  const courseId = Number(formData.courseId || 0);
+  return Number.isFinite(courseId) && courseId > 0 ? courseId : undefined;
+};
+
+const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
+  const pickField = (obj: any, keys: string[]) => {
+    if (!obj) return undefined;
+    for (const key of keys) {
+      if (obj[key] !== undefined && obj[key] !== null && obj[key] !== "") {
+        return obj[key];
+      }
+    }
+    return undefined;
+  };
+
+  const initRes = await initStsUpload({
+    biz_type: bizType,
+    file_name: rawFile.name,
+    content_type: rawFile.type || "application/octet-stream",
+    file_size: rawFile.size,
+    course_id: getCurrentCourseId()
+  });
+
+  const initData: any = initRes?.data?.data || initRes?.data || {};
+  const uploadToken = pickField(initData, ["upload_token", "uploadToken"]);
+  const uploadUrl = pickField(initData, ["upload_url", "uploadUrl", "uploadURL"]);
+  const credentials =
+    initData.credentials || initData.credential || initData.tmpCredentials || {};
+  const tmpSecretId = pickField(credentials, [
+    "tmp_secret_id",
+    "tmpSecretId",
+    "TmpSecretId",
+    "secretId",
+    "SecretId"
+  ]);
+  const tmpSecretKey = pickField(credentials, [
+    "tmp_secret_key",
+    "tmpSecretKey",
+    "TmpSecretKey",
+    "secretKey",
+    "SecretKey"
+  ]);
+  const securityToken = pickField(credentials, [
+    "security_token",
+    "securityToken",
+    "SecurityToken",
+    "session_token",
+    "sessionToken",
+    "SessionToken",
+    "Token"
+  ]);
+  const bucket =
+    pickField(credentials, ["bucket", "Bucket"]) ||
+    pickField(initData, ["bucket", "Bucket"]);
+  const region =
+    pickField(credentials, ["region", "Region"]) ||
+    pickField(initData, ["region", "Region"]);
+  let uploadDomain: string | undefined;
+  if (uploadUrl) {
+    try {
+      const parsedUrl = new URL(uploadUrl);
+      uploadDomain = parsedUrl.host;
+    } catch {
+      uploadDomain = undefined;
+    }
+  }
+
+  let objectKey = pickField(initData, ["object_key", "objectKey", "key", "Key"]);
+  if (!objectKey && uploadUrl) {
+    try {
+      const parsedUrl = new URL(uploadUrl);
+      const pathName = parsedUrl.pathname || "";
+      objectKey = pathName.replace(/^\//, "");
+    } catch {
+      objectKey = undefined;
+    }
+  }
+
+  const initCode = Number(initRes?.code);
+  const initSuccess = initCode === 200 || initCode === 0;
+
+  if (
+    !initSuccess ||
+    !uploadToken ||
+    !objectKey ||
+    !tmpSecretId ||
+    !tmpSecretKey ||
+    !securityToken ||
+    !bucket ||
+    !region
+  ) {
+    console.error("STS 初始化响应详情:", {
+      code: initRes?.code,
+      initData,
+      parsed: {
+        uploadToken,
+        objectKey,
+        bucket,
+        region,
+        hasTmpSecretId: Boolean(tmpSecretId),
+        hasTmpSecretKey: Boolean(tmpSecretKey),
+        hasSecurityToken: Boolean(securityToken)
+      }
+    });
+    throw new Error("STS 初始化返回信息不完整");
+  }
+
+  const cos = new COS({
+    SecretId: tmpSecretId,
+    SecretKey: tmpSecretKey,
+    SecurityToken: securityToken,
+    Protocol: "https:",
+    Domain: uploadDomain
+  });
+
+  const MULTIPART_THRESHOLD = 50 * 1024 * 1024;
+  if (rawFile.size > MULTIPART_THRESHOLD) {
+    const PART_SIZE = 5 * 1024 * 1024;
+    const initMultipartData: any = await new Promise((resolve, reject) => {
+      cos.multipartInit(
+        {
+          Bucket: bucket,
+          Region: region,
+          Key: objectKey,
+          ContentType: rawFile.type || "application/octet-stream"
+        },
+        (err, data) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(data);
+        }
+      );
+    });
+
+    const uploadId = pickField(initMultipartData, ["UploadId", "uploadId"]);
+    if (!uploadId) {
+      throw new Error("分片初始化失败：缺少 UploadId");
+    }
+
+    const parts: Array<{ PartNumber: number; ETag: string }> = [];
+
+    try {
+      for (
+        let partNumber = 1, start = 0;
+        start < rawFile.size;
+        partNumber += 1, start += PART_SIZE
+      ) {
+        const end = Math.min(start + PART_SIZE, rawFile.size);
+        const chunk = rawFile.slice(start, end);
+
+        const uploadPartData: any = await new Promise((resolve, reject) => {
+          cos.multipartUpload(
+            {
+              Bucket: bucket,
+              Region: region,
+              Key: objectKey,
+              UploadId: uploadId,
+              PartNumber: partNumber,
+              Body: chunk,
+              ContentLength: chunk.size
+            },
+            (err, data) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(data);
+            }
+          );
+        });
+
+        const etag = pickField(uploadPartData, ["ETag", "etag"]);
+        if (!etag) {
+          throw new Error(`分片上传失败：缺少 ETag(part ${partNumber})`);
+        }
+
+        parts.push({
+          PartNumber: partNumber,
+          ETag: etag
+        });
+      }
+
+      await new Promise((resolve, reject) => {
+        cos.multipartComplete(
+          {
+            Bucket: bucket,
+            Region: region,
+            Key: objectKey,
+            UploadId: uploadId,
+            Parts: parts
+          },
+          (err, data) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(data);
+          }
+        );
+      });
+    } catch (error) {
+      // 失败时尽量清理未完成的分片任务，避免残留 UploadId。
+      try {
+        await new Promise((resolve, reject) => {
+          cos.multipartAbort(
+            {
+              Bucket: bucket,
+              Region: region,
+              Key: objectKey,
+              UploadId: uploadId
+            },
+            (err, data) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(data);
+            }
+          );
+        });
+      } catch (abortError) {
+        console.warn("分片上传失败后清理 UploadId 失败:", abortError);
+      }
+
+      throw error;
+    }
+  } else {
+    await new Promise((resolve, reject) => {
+      cos.putObject(
+        {
+          Bucket: bucket,
+          Region: region,
+          Key: objectKey,
+          Body: rawFile,
+          ContentType: rawFile.type || "application/octet-stream"
+        },
+        (err, data) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(data);
+        }
+      );
+    });
+  }
+
+  const completeRes = await completeStsUpload({ upload_token: uploadToken });
+  const completeData: any = completeRes?.data?.data || completeRes?.data || {};
+  const fileId = pickField(completeData, ["fileId", "file_id"]);
+  const url = pickField(completeData, ["url", "Url"]);
+  const completeCode = Number(completeRes?.code);
+  const completeSuccess = completeCode === 200 || completeCode === 0;
+
+  if (!completeSuccess || !fileId || !url) {
+    console.error("STS 完成上传响应详情:", {
+      code: completeRes?.code,
+      completeData
+    });
+    throw new Error("STS 完成上传失败");
+  }
+
+  return {
+    code: completeRes.code,
+    msg: completeRes.msg,
+    data: {
+      fileId,
+      url,
+      objectKey: completeData.objectKey || completeData.object_key || objectKey
+    }
+  };
+};
+
 // 处理封面上传
 const handleCoverUpload = async file => {
   try {
-    const uploadFormData = new FormData();
-    uploadFormData.append("file", file.raw);
-
-    const res = await uploadFile(uploadFormData);
+    const res = await uploadWithSts(file.raw);
     if (res && res.code === 200 && res.data && res.data.url) {
       // 更新表单数据，使用thumb_url字段
       formData.thumb_url = res.data.url;
@@ -778,10 +1052,7 @@ const handleResourceUpload = async (file, list, index) => {
       originalFileName.substring(0, originalFileName.lastIndexOf(".")) ||
       originalFileName;
 
-    const formData = new FormData();
-    formData.append("file", file.raw);
-
-    const res = await uploadFile(formData);
+    const res = await uploadWithSts(file.raw);
     // 上传完成后结束上传状态
     list[index].isUploading = false;
 
@@ -848,10 +1119,7 @@ const handleAttrUpload = async (file, index) => {
       originalFileName.substring(0, originalFileName.lastIndexOf(".")) ||
       originalFileName;
 
-    const uploadData = new FormData();
-    uploadData.append("file", file.raw);
-
-    const res = await uploadFile(uploadData);
+    const res = await uploadWithSts(file.raw);
     if (
       res &&
       res.code === 200 &&

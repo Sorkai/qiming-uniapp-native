@@ -1,134 +1,255 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  watch
+} from "vue";
 import { ElMessage } from "element-plus";
 
 defineOptions({
   name: "Qiming2DCentre"
 });
 
-/** 设计稿尺寸 */
-const DESIGN_W = 1920;
-const DESIGN_H = 1080;
+const campusBgUrl = `${import.meta.env.BASE_URL}campus-2d-bg.svg`;
 
-const wrapperRef = ref<HTMLDivElement>();
-const scale = ref(1);
+/* ─── 容器与全屏 ─── */
+const rootRef = ref<HTMLDivElement>();
+const svgObjectRef = ref<HTMLObjectElement>();
+const isFullscreen = ref(false);
 
-/** 根据容器尺寸等比缩放 */
-function updateScale() {
-  if (!wrapperRef.value) return;
-  const parent = wrapperRef.value.parentElement;
-  if (!parent) return;
-  const pw = parent.clientWidth;
-  const ph = parent.clientHeight;
-  scale.value = Math.min(pw / DESIGN_W, ph / DESIGN_H);
+function toggleFullscreen() {
+  if (!rootRef.value) return;
+  if (!document.fullscreenElement) {
+    rootRef.value.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
 }
 
+function onFsChange() {
+  isFullscreen.value = !!document.fullscreenElement;
+}
+
+/* ─── 自适应居中（不可缩放、不可拖拽） ─── */
+const svgNaturalW = 1920;
+const svgNaturalH = 1080;
+
+const containerW = ref(800);
+const containerH = ref(600);
+
+/** 宽度撑满，上下居中 */
+const fitScale = computed(() => containerW.value / svgNaturalW);
+
+const offsetX = computed(() => 0);
+const offsetY = computed(
+  () => (containerH.value - svgNaturalH * fitScale.value) / 2
+);
+
+function measureContainer() {
+  if (!rootRef.value) return;
+  const el = rootRef.value.querySelector(".campus-container") as HTMLElement;
+  if (!el) return;
+  containerW.value = el.clientWidth;
+  containerH.value = el.clientHeight;
+}
+
+/* ─── SVG 内部元素动画 ─── */
+/** 热区 id → SVG 内部 id 的映射（处理拼写差异） */
+const svgIdMap: Record<string, string> = {
+  lbraries: "libraries"
+};
+
+function getSvgId(zoneId: string): string {
+  return svgIdMap[zoneId] || zoneId;
+}
+
+/** SVG 加载后注入 hover 动画样式 */
+function injectSvgStyles() {
+  const svgDoc = svgObjectRef.value?.contentDocument;
+  if (!svgDoc) return;
+
+  // 避免重复注入
+  if (svgDoc.getElementById("campus-hover-styles")) return;
+
+  const style = svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
+  style.id = "campus-hover-styles";
+  style.textContent = `
+    [id="virtualclass"],
+    [id="competitionstate"],
+    [id="answershop"],
+    [id="deskmate"],
+    [id="teamupclockin"],
+    [id="libraries"],
+    [id="inform"],
+    [id="fountainset"],
+    [id="missions"],
+    [id="Cog"],
+    [id="Bell"] {
+      transition: transform 0.3s ease;
+    }
+    .svg-zone-hovered {
+      /* 占位，如果以后需要特殊滤镜再加 */
+    }
+  `;
+  svgDoc.querySelector("svg")?.appendChild(style);
+}
+
+/** 当 hoveredZone 变化时，操作 SVG 内部元素 */
+function applySvgHover(newId: string | null, oldId: string | null) {
+  const svgDoc = svgObjectRef.value?.contentDocument;
+  if (!svgDoc) return;
+
+  // 移除旧的
+  if (oldId) {
+    const oldEl = svgDoc.getElementById(getSvgId(oldId));
+    if (oldEl) {
+      oldEl.style.transform = "";
+    }
+  }
+
+  // 添加新的
+  if (newId) {
+    const newEl = svgDoc.getElementById(getSvgId(newId));
+    if (newEl) {
+      newEl.style.transformBox = "fill-box";
+      newEl.style.transformOrigin = "center center";
+      newEl.style.transform = "scale(1.08)";
+    }
+  }
+}
+
+/* ─── 生命周期 ─── */
+const ro = ref<ResizeObserver>();
+
 onMounted(() => {
-  updateScale();
-  window.addEventListener("resize", updateScale);
-});
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", updateScale);
+  nextTick(measureContainer);
+  ro.value = new ResizeObserver(measureContainer);
+  const el = rootRef.value?.querySelector(".campus-container");
+  if (el) ro.value.observe(el);
+  document.addEventListener("fullscreenchange", onFsChange);
 });
 
-/** 校园功能区域定义 — 坐标基于 1920×1080 设计稿 */
+onBeforeUnmount(() => {
+  ro.value?.disconnect();
+  document.removeEventListener("fullscreenchange", onFsChange);
+});
+
+/* ─── 热区定义 — 坐标基于 SVG 原始 1920×1080 ─── */
 interface HotZone {
   id: string;
   label: string;
-  icon: string;
   x: number;
   y: number;
   w: number;
   h: number;
 }
 
+/** 调试模式：显示热区边框（上线前设为 false） */
+const DEBUG_ZONES = false;
+
 const buildingZones: HotZone[] = [
   {
     id: "virtualclass",
     label: "虚拟教室",
-    icon: "🏫",
-    x: 751,
-    y: 133,
-    w: 392,
-    h: 292
+    x: 700,
+    y: 150,
+    w: 410,
+    h: 250
   },
   {
     id: "competitionstate",
     label: "学科竞赛台",
-    icon: "🏆",
-    x: 796,
-    y: 419,
-    w: 329,
-    h: 254
+    x: 200,
+    y: 550,
+    w: 150,
+    h: 290
   },
   {
     id: "answershop",
     label: "答疑工坊",
-    icon: "❓",
-    x: 65,
-    y: 210,
-    w: 425,
-    h: 276
+    x: 1200,
+    y: 480,
+    w: 250,
+    h: 160
   },
   {
     id: "deskmate",
     label: "同桌工坊",
-    icon: "👥",
-    x: 1576,
-    y: 350,
-    w: 344,
-    h: 256
+    x: 630,
+    y: 520,
+    w: 170,
+    h: 180
   },
   {
     id: "teamupclockin",
     label: "组队打卡",
-    icon: "✅",
-    x: 614,
-    y: 475,
-    w: 199,
-    h: 257
+    x: 65,
+    y: 230,
+    w: 340,
+    h: 250
   },
   {
     id: "lbraries",
     label: "智教图书馆",
-    icon: "📚",
-    x: 1225,
-    y: 450,
-    w: 220,
-    h: 256
+    x: 1600,
+    y: 400,
+    w: 310,
+    h: 200
   },
   {
     id: "inform",
     label: "校园公告",
-    icon: "📢",
-    x: 1468,
-    y: 604,
-    w: 280,
-    h: 194
+    x: 1280,
+    y: 200,
+    w: 150,
+    h: 180
   },
   {
     id: "fountainset",
     label: "喷泉",
-    icon: "⛲",
-    x: 60,
-    y: 531,
-    w: 400,
-    h: 339
+    x: 850,
+    y: 500,
+    w: 240,
+    h: 160
   }
 ];
 
-/** 任务栏（顶部黄色横条） */
+const actionZones: HotZone[] = [
+  {
+    id: "Cog",
+    label: "设置",
+    x: 1720,
+    y: 55,
+    w: 80,
+    h: 75
+  },
+  {
+    id: "Bell",
+    label: "消息",
+    x: 1830,
+    y: 55,
+    w: 80,
+    h: 75
+  }
+];
+
 const missionsZone: HotZone = {
   id: "missions",
   label: "任务栏",
-  icon: "📋",
-  x: 28,
-  y: 77,
-  w: 699,
-  h: 105
+  x: 1450,
+  y: 650,
+  w: 275,
+  h: 120
 };
 
 const hoveredZone = ref<string | null>(null);
+
+watch(hoveredZone, (newId, oldId) => {
+  applySvgHover(newId, oldId);
+});
 
 function onZoneClick(zone: HotZone) {
   ElMessage.info(`即将进入「${zone.label}」，功能细化中…`);
@@ -136,123 +257,220 @@ function onZoneClick(zone: HotZone) {
 </script>
 
 <template>
-  <div class="campus-root">
-    <div
-      ref="wrapperRef"
-      class="campus-viewport"
-      :style="{
-        width: DESIGN_W + 'px',
-        height: DESIGN_H + 'px',
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left'
-      }"
-    >
-      <!-- SVG 底图 -->
-      <img
-        class="campus-bg"
-        src="/qiming2dcentre.svg"
-        alt="启明智教2D校园"
-        draggable="false"
-      />
+  <div
+    ref="rootRef"
+    class="campus-root"
+    :class="{ 'is-fullscreen': isFullscreen }"
+  >
+    <!-- ====== 顶部工具栏 ====== -->
+    <div class="campus-toolbar">
+      <span class="toolbar-title">启明智教 · 2D 校园导览</span>
+      <div class="toolbar-actions">
+        <button
+          class="tb-btn"
+          :title="isFullscreen ? '退出全屏' : '全屏'"
+          @click="toggleFullscreen"
+        >
+          {{ isFullscreen ? "⊗" : "⛶" }}
+        </button>
+      </div>
+    </div>
 
-      <!-- 任务栏热区 -->
+    <!-- ====== SVG 容器 ====== -->
+    <div class="campus-container">
       <div
-        class="hot-zone missions-zone"
-        :class="{ hovered: hoveredZone === missionsZone.id }"
+        class="campus-viewport"
         :style="{
-          left: missionsZone.x + 'px',
-          top: missionsZone.y + 'px',
-          width: missionsZone.w + 'px',
-          height: missionsZone.h + 'px'
+          width: svgNaturalW + 'px',
+          height: svgNaturalH + 'px',
+          transform: `translate(${offsetX}px, ${offsetY}px) scale(${fitScale})`,
+
+          transformOrigin: '0 0'
         }"
-        @mouseenter="hoveredZone = missionsZone.id"
-        @mouseleave="hoveredZone = null"
-        @click="onZoneClick(missionsZone)"
       >
-        <span class="zone-tip"
-          >{{ missionsZone.icon }} {{ missionsZone.label }}</span
+        <!-- SVG 底图 — 用 object 标签可靠渲染 -->
+        <object
+          ref="svgObjectRef"
+          class="campus-bg"
+          :data="campusBgUrl"
+          type="image/svg+xml"
+          :width="svgNaturalW"
+          :height="svgNaturalH"
+          @load="injectSvgStyles"
         >
-      </div>
+          <img
+            :src="campusBgUrl"
+            :width="svgNaturalW"
+            :height="svgNaturalH"
+            alt="启明智教2D校园"
+          />
+        </object>
 
-      <!-- 建筑功能区热区 -->
-      <div
-        v-for="zone in buildingZones"
-        :key="zone.id"
-        class="hot-zone building-zone"
-        :class="{ hovered: hoveredZone === zone.id }"
-        :style="{
-          left: zone.x + 'px',
-          top: zone.y + 'px',
-          width: zone.w + 'px',
-          height: zone.h + 'px'
-        }"
-        @mouseenter="hoveredZone = zone.id"
-        @mouseleave="hoveredZone = null"
-        @click="onZoneClick(zone)"
-      >
-        <span class="zone-tip">{{ zone.icon }} {{ zone.label }}</span>
-      </div>
-
-      <!-- 右上角操作栏 (设置 + 通知) -->
-      <div class="rightup-bar">
+        <!-- 任务栏热区 -->
         <div
-          class="rightup-btn"
-          title="设置"
-          @click="ElMessage.info('设置功能细化中…')"
+          class="hot-zone missions-zone"
+          :class="{ hovered: hoveredZone === missionsZone.id }"
+          :style="{
+            left: missionsZone.x + 'px',
+            top: missionsZone.y + 'px',
+            width: missionsZone.w + 'px',
+            height: missionsZone.h + 'px',
+            outline: DEBUG_ZONES ? '2px dashed red' : 'none'
+          }"
+          @mouseenter="hoveredZone = missionsZone.id"
+          @mouseleave="hoveredZone = null"
+          @click.stop="onZoneClick(missionsZone)"
         >
-          ⚙️
+          <span class="zone-tip">{{ missionsZone.label }}</span>
         </div>
-        <div
-          class="rightup-btn"
-          title="通知"
-          @click="ElMessage.info('通知功能细化中…')"
-        >
-          🔔
-        </div>
-      </div>
 
-      <!-- 下边栏 -->
-      <div class="down-sidebar">
-        <span class="down-sidebar-text">启明智教 · 2D 校园导览</span>
+        <!-- 建筑功能区热区 -->
+        <div
+          v-for="zone in buildingZones"
+          :key="zone.id"
+          class="hot-zone building-zone"
+          :class="{ hovered: hoveredZone === zone.id }"
+          :style="{
+            left: zone.x + 'px',
+            top: zone.y + 'px',
+            width: zone.w + 'px',
+            height: zone.h + 'px',
+            outline: DEBUG_ZONES ? '2px dashed red' : 'none'
+          }"
+          @mouseenter="hoveredZone = zone.id"
+          @mouseleave="hoveredZone = null"
+          @click.stop="onZoneClick(zone)"
+        >
+          <span class="zone-tip">{{ zone.label }}</span>
+        </div>
+
+        <!-- 顶部功能图标热区 -->
+        <div
+          v-for="zone in actionZones"
+          :key="zone.id"
+          class="hot-zone action-zone"
+          :class="{ hovered: hoveredZone === zone.id }"
+          :style="{
+            left: zone.x + 'px',
+            top: zone.y + 'px',
+            width: zone.w + 'px',
+            height: zone.h + 'px',
+            outline: DEBUG_ZONES ? '2px dashed red' : 'none'
+          }"
+          @mouseenter="hoveredZone = zone.id"
+          @mouseleave="hoveredZone = null"
+          @click.stop="onZoneClick(zone)"
+        >
+          <span class="zone-tip">{{ zone.label }}</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* ====== 根容器 ====== */
 .campus-root {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  height: calc(100vh - 86px);
-  overflow: hidden;
-  background: #8bc66a;
+  height: calc(100vh - 50px);
+  background: #acd894;
   position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.campus-root.is-fullscreen {
+  height: 100vh;
+  border-radius: 0;
+}
+
+/* ====== 顶部工具栏 ====== */
+.campus-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.toolbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  letter-spacing: 1px;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tb-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  color: #555;
+}
+
+.tb-btn:hover {
+  background: #f0f0f0;
+  border-color: #aaa;
+}
+
+/* ====== SVG 容器 ====== */
+.campus-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: #acd894;
 }
 
 .campus-viewport {
-  position: relative;
-  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
 }
 
 .campus-bg {
   display: block;
-  width: 1920px;
-  height: 1080px;
   pointer-events: none;
   user-select: none;
 }
 
-/* ======= 热区通用 ======= */
+/* ====== 热区通用 ====== */
 .hot-zone {
   position: absolute;
   cursor: pointer;
   border-radius: 12px;
   transition:
     box-shadow 0.25s,
-    background 0.25s;
+    background 0.25s,
+    transform 0.3s ease;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 6px;
+  z-index: 5;
 }
 
 .hot-zone .zone-tip {
@@ -278,63 +496,18 @@ function onZoneClick(zone: HotZone) {
 }
 
 .building-zone.hovered {
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.7),
-    0 4px 24px rgba(0, 0, 0, 0.25);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.missions-zone.hovered {
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 2px rgba(255, 200, 50, 0.6);
-}
-
-/* ======= 右上角操作栏 ======= */
-.rightup-bar {
-  position: absolute;
-  top: 62px;
-  right: 30px;
-  display: flex;
-  gap: 12px;
+  background: rgba(255, 255, 255, 0.08);
   z-index: 10;
 }
 
-.rightup-btn {
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  cursor: pointer;
+.action-zone.hovered {
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  transition:
-    background 0.2s,
-    transform 0.15s;
+  z-index: 10;
 }
 
-.rightup-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.12);
-}
-
-/* ======= 下边栏 ======= */
-.down-sidebar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.down-sidebar-text {
-  font-size: 18px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.45);
-  letter-spacing: 2px;
+.missions-zone.hovered {
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 10;
 }
 </style>

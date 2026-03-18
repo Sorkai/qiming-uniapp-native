@@ -375,6 +375,10 @@
                     </div>
                   </transition>
                 </div>
+
+                <div v-if="!chapterHasStudyContent(chapter)" class="chapter-empty">
+                  <el-empty description="本章暂无知识点数据" :image-size="64" />
+                </div>
               </div>
             </transition>
           </div>
@@ -452,6 +456,15 @@ const toggleSubsectionCollapse = (chapterId: number, sectionType: string) => {
 const isSubsectionExpanded = (chapterId: number, sectionType: string) => {
   const key = `${chapterId}-${sectionType}`;
   return subsectionCollapseStates.get(key) ?? false;
+};
+
+const chapterHasStudyContent = (chapter: any) => {
+  return !!(
+    chapter?.keyPointArray?.length ||
+    chapter?.difficultPointArray?.length ||
+    chapter?.knowledgeArray?.length ||
+    chapter?.ConceptArray?.length
+  );
 };
 
 // 处理按钮光效
@@ -1171,6 +1184,10 @@ onUnmounted(() => {
   justify-content: center;
   width: 100%;
   padding: 40px 0;
+}
+
+.chapter-empty {
+  padding: 20px 0;
 }
 
 .dark :deep(.el-empty__image img),

@@ -90,6 +90,55 @@ export type UploadResult = {
   };
 };
 
+export type StsUploadInitRequest = {
+  biz_type: string;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+  course_id?: number;
+};
+
+export type StsUploadCredentials = {
+  tmp_secret_id?: string;
+  tmp_secret_key?: string;
+  security_token?: string;
+  tmpSecretId?: string;
+  tmpSecretKey?: string;
+  securityToken?: string;
+  bucket?: string;
+  region?: string;
+};
+
+export type StsUploadInitResult = {
+  code: number;
+  msg: string;
+  data: {
+    upload_token?: string;
+    uploadToken?: string;
+    object_key?: string;
+    objectKey?: string;
+    upload_url?: string;
+    uploadUrl?: string;
+    credentials?: StsUploadCredentials;
+  };
+};
+
+export type StsUploadCompleteRequest = {
+  upload_token: string;
+};
+
+export type StsUploadCompleteResult = {
+  code: number;
+  msg: string;
+  data: {
+    fileId?: number;
+    file_id?: number;
+    url: string;
+    objectKey?: string;
+    object_key?: string;
+  };
+};
+
 export type FileListResult = {
   total: number;
   fileList: Array<{
@@ -185,6 +234,22 @@ export const uploadFile = (data: FormData) => {
         "Content-Type": "multipart/form-data"
       }
     }
+  );
+};
+
+/** STS 初始化上传 */
+export const initStsUpload = (data: StsUploadInitRequest) => {
+  return http.request<StsUploadInitResult>("post", "/edu/v1/user/upload/sts/init", {
+    data
+  });
+};
+
+/** STS 完成上传 */
+export const completeStsUpload = (data: StsUploadCompleteRequest) => {
+  return http.request<StsUploadCompleteResult>(
+    "post",
+    "/edu/v1/user/upload/sts/complete",
+    { data }
   );
 };
 
