@@ -416,6 +416,12 @@ const performThemeToggle = () => {
   currentTheme.value = newTheme;
 };
 
+const resolveVideoPlayerEl = () => {
+  const player = (courseStudyRef.value as any)?.videoPlayer;
+  if (!player) return null;
+  return (player as any).value ?? player;
+};
+
 // 监听主题变化
 watch(
   currentTheme,
@@ -442,30 +448,14 @@ const handleMenuClick = (menuName: string) => {
   activeMenu.value = menuName;
 
   // 如果视频正在播放且切换到了非课程学习菜单，则暂停视频
-  const videoPlayerEl = courseStudyRef.value?.videoPlayer;
+  const videoPlayerEl = resolveVideoPlayerEl();
   if (menuName !== "course-learn" && videoPlayerEl) {
-    if (!videoPlayerEl.paused) {
+    if (typeof videoPlayerEl.pause === "function" && !videoPlayerEl.paused) {
       videoPlayerEl.pause();
     }
   }
 
-  // 加载对应数据
-  if (menuName === "homework-exam") {
-    fetchHomeworkList();
-    fetchExamList();
-  } else if (menuName === "grades") {
-    fetchCourseScores();
-  } else if (menuName === "html-animations") {
-    fetchHtmlAnimations();
-  } else if (menuName === "mastery") {
-    fetchCourseStudyEffect();
-  } else if (menuName === "course-qa") {
-    nextTick(() => {
-      if (courseId.value) {
-        courseQARef.value?.refreshData?.();
-      }
-    });
-  }
+  // 数据加载统一由 watch(activeMenu) 处理，避免重复请求
 };
 
 // 返回
@@ -552,9 +542,11 @@ const fetchCourseDetail = async () => {
 
 // 视频加载与播放
 const videoLoaded = () => {
-  const videoPlayerEl = courseStudyRef.value?.videoPlayer;
+  const videoPlayerEl = resolveVideoPlayerEl();
   if (autoPlayOnLoad.value && videoPlayerEl) {
-    videoPlayerEl.play();
+    if (typeof videoPlayerEl.play === "function") {
+      videoPlayerEl.play();
+    }
     autoPlayOnLoad.value = false;
   }
 };
@@ -584,10 +576,12 @@ const handleNodeClick = (nodeId: string, hour: any) => {
     currentVideoUrl.value = hour.fileUrl;
     if (oldUrl !== hour.fileUrl) autoPlayOnLoad.value = true;
 
-    const videoPlayerEl = courseStudyRef.value?.videoPlayer;
+    const videoPlayerEl = resolveVideoPlayerEl();
     if (videoPlayerEl && oldUrl === hour.fileUrl) {
       videoPlayerEl.currentTime = 0;
-      videoPlayerEl.play();
+      if (typeof videoPlayerEl.play === "function") {
+        videoPlayerEl.play();
+      }
     }
   }
 };
@@ -770,11 +764,176 @@ const fetchCourseScores = async () => {
   } catch (e) {}
 };
 
+const normalizePointList = (input: any): Array<{ title: string; content: string }> => {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((item: any) => ({
+      title: String(item?.title ?? item?.name ?? ""),
+      content: String(item?.content ?? item?.desc ?? item?.description ?? "")
+    }))
+    .filter(item => item.title || item.content);
+};
+
+const normalizeStudyEffectData = (raw: any, cid: number) => {
+  const source = raw || {};
+  const chapters = Array.isArray(source.chapterList)
+    ? source.chapterList
+    : Array.isArray(source.chapters)
+      ? source.chapters
+      : [];
+
+  const chapterList = chapters.map((chapter: any, index: number) => {
+    return {
+      chapterId: Number(chapter?.chapterId ?? chapter?.id ?? index + 1),
+      chapterName: String(chapter?.chapterName ?? chapter?.name ?? `第${index + 1}章`),
+      keyPointArray: normalizePointList(
+        chapter?.keyPointArray ?? chapter?.keyPoints ?? chapter?.key_points
+      ),
+      difficultPointArray: normalizePointList(
+        chapter?.difficultPointArray ??
+          chapter?.difficultPoints ??
+          chapter?.difficult_points
+      ),
+      knowledgeArray: normalizePointList(
+        chapter?.knowledgeArray ?? chapter?.knowledgePoints ?? chapter?.knowledge_points
+      ),
+      ConceptArray: normalizePointList(
+        chapter?.ConceptArray ?? chapter?.conceptArray ?? chapter?.concepts
+      )
+    };
+  });
+
+  const sum = (arr: any[], key: string) =>
+    arr.reduce((total, item) => total + (item?.[key]?.length || 0), 0);
+
+  return {
+    courseId: Number(source.courseId ?? cid),
+    keyPointNum: Number(source.keyPointNum ?? sum(chapterList, "keyPointArray")),
+    difficultPointNum: Number(
+      source.difficultPointNum ?? sum(chapterList, "difficultPointArray")
+    ),
+    knowledgePointNum: Number(
+      source.knowledgePointNum ?? sum(chapterList, "knowledgeArray")
+    ),
+    conceptNum: Number(source.conceptNum ?? sum(chapterList, "ConceptArray")),
+    chapterList
+  };
+};
+
+const parseStudyEffectResponse = (response: any) => {
+  // 场景1: 统一响应体 { code, msg, data }
+  if (response && typeof response === "object" && "code" in response) {
+    return {
+      ok: Number((response as any).code) === 200,
+      msg: (response as any).msg,
+      data: (response as any).data
+    };
+  }
+
+  // 场景2: axios 风格 { data: { code, msg, data } }
+  if (
+    response?.data &&
+    typeof response.data === "object" &&
+    "code" in response.data
+  ) {
+    return {
+      ok: Number((response.data as any).code) === 200,
+      msg: (response.data as any).msg,
+      data: (response.data as any).data
+    };
+  }
+
+  // 场景3: 后端直接返回学习效果对象（无 code/msg）
+  if (
+    response &&
+    typeof response === "object" &&
+    ("chapterList" in response ||
+      "chapters" in response ||
+      "keyPointNum" in response ||
+      "knowledgePointNum" in response)
+  ) {
+    return {
+      ok: true,
+      msg: "",
+      data: response
+    };
+  }
+
+  // 场景4: axios 风格 { data: rawObject }
+  if (
+    response?.data &&
+    typeof response.data === "object" &&
+    ("chapterList" in response.data ||
+      "chapters" in response.data ||
+      "keyPointNum" in response.data ||
+      "knowledgePointNum" in response.data)
+  ) {
+    return {
+      ok: true,
+      msg: "",
+      data: response.data
+    };
+  }
+
+  return {
+    ok: false,
+    msg: "知识点接口返回格式不匹配",
+    data: null
+  };
+};
+
 const fetchCourseStudyEffect = async () => {
+  const cid = Number(courseId.value);
+  if (!cid || Number.isNaN(cid)) {
+    console.warn("[CourseDetail] skip study effect request: invalid courseId", {
+      courseId: courseId.value,
+      activeMenu: activeMenu.value
+    });
+    return;
+  }
+
+  console.info("[CourseDetail] requesting study effect", {
+    courseId: cid,
+    activeMenu: activeMenu.value
+  });
+
   try {
-    const response = await getCourseStudyEffect({ courseId: courseId.value });
-    if (response?.code === 200) studyEffectData.value = response.data;
-  } catch (e) {}
+    const response = await getCourseStudyEffect({ courseId: cid });
+    const parsed = parseStudyEffectResponse(response);
+
+    if (parsed.ok) {
+      const normalized = normalizeStudyEffectData(parsed.data, cid);
+      studyEffectData.value = normalized;
+      console.info("[CourseDetail] study effect response", {
+        code: (response as any)?.code ?? (response as any)?.data?.code ?? 200,
+        chapterCount: normalized.chapterList.length,
+        keyPointNum: normalized.keyPointNum,
+        difficultPointNum: normalized.difficultPointNum,
+        knowledgePointNum: normalized.knowledgePointNum,
+        conceptNum: normalized.conceptNum,
+        raw: parsed.data
+      });
+
+      if (
+        normalized.chapterList.length === 0 &&
+        normalized.keyPointNum === 0 &&
+        normalized.difficultPointNum === 0 &&
+        normalized.knowledgePointNum === 0 &&
+        normalized.conceptNum === 0
+      ) {
+        ElMessage.warning("当前课程暂无知识点学习效果数据");
+      }
+    } else {
+      ElMessage.warning(parsed.msg || "知识点数据为空或接口异常");
+      console.warn("[CourseDetail] study effect request not successful", {
+        parsed,
+        rawResponse: response
+      });
+    }
+  } catch (e) {
+    console.error("[CourseDetail] fetch study effect failed", e);
+    ElMessage.error("知识点数据加载失败");
+  }
 };
 
 // 初始化课程问答历史数据
