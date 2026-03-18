@@ -768,24 +768,139 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
     Domain: uploadDomain
   });
 
-  await new Promise((resolve, reject) => {
-    cos.uploadFile(
-      {
-        Bucket: bucket,
-        Region: region,
-        Key: objectKey,
-        Body: rawFile,
-        SliceSize: 5 * 1024 * 1024
-      },
-      (err, data) => {
-        if (err) {
-          reject(err);
-          return;
+  const MULTIPART_THRESHOLD = 50 * 1024 * 1024;
+  if (rawFile.size > MULTIPART_THRESHOLD) {
+    const PART_SIZE = 5 * 1024 * 1024;
+    const initMultipartData: any = await new Promise((resolve, reject) => {
+      cos.multipartInit(
+        {
+          Bucket: bucket,
+          Region: region,
+          Key: objectKey,
+          ContentType: rawFile.type || "application/octet-stream"
+        },
+        (err, data) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(data);
         }
-        resolve(data);
+      );
+    });
+
+    const uploadId = pickField(initMultipartData, ["UploadId", "uploadId"]);
+    if (!uploadId) {
+      throw new Error("分片初始化失败：缺少 UploadId");
+    }
+
+    const parts: Array<{ PartNumber: number; ETag: string }> = [];
+
+    try {
+      for (
+        let partNumber = 1, start = 0;
+        start < rawFile.size;
+        partNumber += 1, start += PART_SIZE
+      ) {
+        const end = Math.min(start + PART_SIZE, rawFile.size);
+        const chunk = rawFile.slice(start, end);
+
+        const uploadPartData: any = await new Promise((resolve, reject) => {
+          cos.multipartUpload(
+            {
+              Bucket: bucket,
+              Region: region,
+              Key: objectKey,
+              UploadId: uploadId,
+              PartNumber: partNumber,
+              Body: chunk,
+              ContentLength: chunk.size
+            },
+            (err, data) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(data);
+            }
+          );
+        });
+
+        const etag = pickField(uploadPartData, ["ETag", "etag"]);
+        if (!etag) {
+          throw new Error(`分片上传失败：缺少 ETag(part ${partNumber})`);
+        }
+
+        parts.push({
+          PartNumber: partNumber,
+          ETag: etag
+        });
       }
-    );
-  });
+
+      await new Promise((resolve, reject) => {
+        cos.multipartComplete(
+          {
+            Bucket: bucket,
+            Region: region,
+            Key: objectKey,
+            UploadId: uploadId,
+            Parts: parts
+          },
+          (err, data) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(data);
+          }
+        );
+      });
+    } catch (error) {
+      // 失败时尽量清理未完成的分片任务，避免残留 UploadId。
+      try {
+        await new Promise((resolve, reject) => {
+          cos.multipartAbort(
+            {
+              Bucket: bucket,
+              Region: region,
+              Key: objectKey,
+              UploadId: uploadId
+            },
+            (err, data) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(data);
+            }
+          );
+        });
+      } catch (abortError) {
+        console.warn("分片上传失败后清理 UploadId 失败:", abortError);
+      }
+
+      throw error;
+    }
+  } else {
+    await new Promise((resolve, reject) => {
+      cos.putObject(
+        {
+          Bucket: bucket,
+          Region: region,
+          Key: objectKey,
+          Body: rawFile,
+          ContentType: rawFile.type || "application/octet-stream"
+        },
+        (err, data) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(data);
+        }
+      );
+    });
+  }
 
   const completeRes = await completeStsUpload({ upload_token: uploadToken });
   const completeData: any = completeRes?.data?.data || completeRes?.data || {};

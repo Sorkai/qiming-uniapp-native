@@ -537,8 +537,64 @@ const formatDatetime = (dt: string | undefined | null) => {
   }
 };
 
+const normalizeLessonText = (value: string) => {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\.[a-z0-9]{2,6}$/i, "")
+    .replace(/[\s_\-—–()（）\[\]【】《》:：'"`·]/g, "")
+    .replace(/^第?\d+(\.\d+)?[章节课讲]?/, "");
+};
+
+const extractLessonIndex = (value: string): string | null => {
+  const raw = String(value || "").toLowerCase();
+
+  // 1.2 / 1-2 / 1_2
+  const pair = raw.match(/(\d{1,2})\s*[._\-]\s*(\d{1,2})/);
+  if (pair) return `${Number(pair[1])}.${Number(pair[2])}`;
+
+  // 第1章第2节
+  const zh = raw.match(/第\s*(\d{1,2})\s*章[^\d]{0,6}第\s*(\d{1,2})\s*[节课讲]/);
+  if (zh) return `${Number(zh[1])}.${Number(zh[2])}`;
+
+  return null;
+};
+
+const isLikelySameLesson = (fileName: string, hourTitle: string) => {
+  const fileIndex = extractLessonIndex(fileName);
+  const hourIndex = extractLessonIndex(hourTitle);
+
+  // 如果两边都能提取出课时序号，则必须完全一致
+  if (fileIndex && hourIndex) {
+    return fileIndex === hourIndex;
+  }
+
+  const fileNorm = normalizeLessonText(fileName);
+  const hourNorm = normalizeLessonText(hourTitle);
+  if (!fileNorm || !hourNorm) return true;
+  return fileNorm === hourNorm || fileNorm.includes(hourNorm) || hourNorm.includes(fileNorm);
+};
+
+const requestSeq = ref(0);
+
+const isStaleRequest = (
+  requestId: number,
+  requestCourseId: number,
+  requestChapterId: number
+) => {
+  return (
+    requestId !== requestSeq.value ||
+    requestCourseId !== props.courseId ||
+    requestChapterId !== props.chapterId
+  );
+};
+
 const fetchAnalysis = async () => {
   if (!props.courseId || !props.chapterId) return;
+
+  const requestCourseId = props.courseId;
+  const requestChapterId = props.chapterId;
+  const requestId = ++requestSeq.value;
 
   loading.value = true;
   taskData.value = null;
@@ -547,22 +603,47 @@ const fetchAnalysis = async () => {
   try {
     // 1. 获取任务
     const taskRes = await getVideoAnalyzeTask({
-      courseId: props.courseId,
-      chapterId: props.chapterId
+      courseId: requestCourseId,
+      chapterId: requestChapterId
     });
+
+    if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
+      return;
+    }
 
     if (!taskRes.data) {
       taskData.value = null;
       return;
     }
 
-    // 如果传入了当前课时标题，且任务文件名不匹配，则视为无分析数据
+    if (
+      taskRes.data.courseId &&
+      taskRes.data.chapterId &&
+      (taskRes.data.courseId !== requestCourseId ||
+        taskRes.data.chapterId !== requestChapterId)
+    ) {
+      console.warn("[VideoAnalysisPanel] task course/chapter mismatch", {
+        requestCourseId,
+        requestChapterId,
+        taskCourseId: taskRes.data.courseId,
+        taskChapterId: taskRes.data.chapterId,
+        taskId: taskRes.data.taskId
+      });
+      return;
+    }
+
+    // 仅做宽松一致性校验，不再因文件名格式差异直接拦截展示
     if (
       props.currentHourTitle &&
       taskRes.data.fileName &&
-      taskRes.data.fileName !== props.currentHourTitle
+      !isLikelySameLesson(taskRes.data.fileName, props.currentHourTitle)
     ) {
+      console.warn("[VideoAnalysisPanel] fileName/title mismatch", {
+        fileName: taskRes.data.fileName,
+        currentHourTitle: props.currentHourTitle
+      });
       taskData.value = null;
+      moduleData.value = null;
       return;
     }
 
@@ -574,7 +655,28 @@ const fetchAnalysis = async () => {
         taskId: taskRes.data.taskId,
         modules: "summary,chapters,qa,transcription,meeting,mindmap,ppt"
       });
+
+      if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
+        return;
+      }
+
       if (moduleRes.data) {
+        if (
+          moduleRes.data.courseId &&
+          moduleRes.data.chapterId &&
+          (moduleRes.data.courseId !== requestCourseId ||
+            moduleRes.data.chapterId !== requestChapterId)
+        ) {
+          console.warn("[VideoAnalysisPanel] modules course/chapter mismatch", {
+            requestCourseId,
+            requestChapterId,
+            moduleCourseId: moduleRes.data.courseId,
+            moduleChapterId: moduleRes.data.chapterId,
+            taskId: taskRes.data.taskId
+          });
+          return;
+        }
+
         // 兼容后端直接返回 mindMapUrl 字符串而非 mindMap 对象的情况
         const raw = moduleRes.data as any;
         if (!moduleRes.data.mindMap?.url && raw.mindMapUrl) {
@@ -589,6 +691,11 @@ const fetchAnalysis = async () => {
           const fullRes = await getVideoAnalyzeResult({
             taskId: taskRes.data.taskId
           });
+
+          if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
+            return;
+          }
+
           if (fullRes.data?.mindMapUrl) {
             if (!moduleData.value) {
               moduleData.value = {} as VideoAnalyzeModuleResult;
@@ -601,9 +708,13 @@ const fetchAnalysis = async () => {
       }
     }
   } catch {
-    taskData.value = null;
+    if (!isStaleRequest(requestId, requestCourseId, requestChapterId)) {
+      taskData.value = null;
+    }
   } finally {
-    loading.value = false;
+    if (!isStaleRequest(requestId, requestCourseId, requestChapterId)) {
+      loading.value = false;
+    }
   }
 };
 
