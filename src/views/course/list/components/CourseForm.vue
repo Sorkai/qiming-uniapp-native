@@ -710,6 +710,15 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
   const region =
     pickField(credentials, ["region", "Region"]) ||
     pickField(initData, ["region", "Region"]);
+  let uploadDomain: string | undefined;
+  if (uploadUrl) {
+    try {
+      const parsedUrl = new URL(uploadUrl);
+      uploadDomain = parsedUrl.host;
+    } catch {
+      uploadDomain = undefined;
+    }
+  }
 
   let objectKey = pickField(initData, ["object_key", "objectKey", "key", "Key"]);
   if (!objectKey && uploadUrl) {
@@ -754,7 +763,9 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
   const cos = new COS({
     SecretId: tmpSecretId,
     SecretKey: tmpSecretKey,
-    SecurityToken: securityToken
+    SecurityToken: securityToken,
+    Protocol: "https:",
+    Domain: uploadDomain
   });
 
   await new Promise((resolve, reject) => {
