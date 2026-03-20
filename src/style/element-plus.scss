@@ -11,25 +11,26 @@
 
 /* 防止页面级样式干扰按钮文字对齐，统一按钮内容居中 */
 .el-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   vertical-align: middle;
-  line-height: normal;
-}
+  line-height: 1 !important;
 
-.el-button>span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  line-height: 1.2;
-}
+  & > span {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: auto !important;
+    line-height: 1 !important;
+  }
 
-.el-button .el-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  .el-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 0 !important;
+  }
 }
 
 .el-tag:not(.is-round) {
