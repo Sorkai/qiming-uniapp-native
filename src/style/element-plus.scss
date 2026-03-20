@@ -9,6 +9,20 @@
   border-radius: var(--el-border-radius-base);
 }
 
+/* 防止页面级样式干扰按钮文字对齐，统一按钮内容居中 */
+.el-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.el-button>span {
+  display: inline-flex;
+  align-items: center;
+}
+
 .el-tag:not(.is-round) {
   border-radius: var(--el-border-radius-small);
 }
@@ -31,7 +45,7 @@
 }
 
 /* 重置 el-button 中 icon 的 margin */
-.reset-margin [class*="el-icon"] + span {
+.reset-margin [class*="el-icon"]+span {
   margin-left: 2px;
 }
 
@@ -90,6 +104,7 @@
 }
 
 .el-icon {
+
   &.el-tour__close,
   &.el-dialog__close,
   &.el-drawer__close,
@@ -146,13 +161,13 @@
 
 /* 自定义菜单搜索样式 */
 .pure-search-dialog {
-  @media screen and (width > 760px) and (width <= 940px) {
+  @media screen and (width > 760px) and (width <=940px) {
     .el-input__inner {
       font-size: 12px;
     }
   }
 
-  @media screen and (width <= 470px) {
+  @media screen and (width <=470px) {
     .el-input__inner {
       font-size: 12px;
     }
@@ -178,19 +193,24 @@
 
 /* 仿 el-scrollbar 滚动条样式，支持大多数浏览器，如Chrome、Edge、Firefox、Safari等。整体暗色风格在 src/style/dark.scss 文件进行了适配 */
 .pure-scrollbar {
+
   /* Firefox 及支持 scrollbar-color/scrollbar-width 的浏览器 */
   @supports (scrollbar-color: auto) {
-    scrollbar-color: rgb(221 222 224) transparent; /* 滑块颜色、轨道颜色 */
-    scrollbar-width: thin; /* 可选值为 'auto', 'thin', 'none' */
+    scrollbar-color: rgb(221 222 224) transparent;
+    /* 滑块颜色、轨道颜色 */
+    scrollbar-width: thin;
+    /* 可选值为 'auto', 'thin', 'none' */
   }
 
   ::-webkit-scrollbar {
-    width: 6px; /* 滚动条宽度 */
+    width: 6px;
+    /* 滚动条宽度 */
   }
 
   /* 滚动条轨道 */
   ::-webkit-scrollbar-track {
-    background: transparent; /* 轨道颜色 */
+    background: transparent;
+    /* 轨道颜色 */
   }
 
   /* 滚动条滑块 */
@@ -201,7 +221,8 @@
 
   /* 滚动条滑块：hover状态 */
   ::-webkit-scrollbar-thumb:hover {
-    background: rgb(199 201 203); /* 滑块hover颜色 */
+    background: rgb(199 201 203);
+    /* 滑块hover颜色 */
   }
 }
 
@@ -214,6 +235,7 @@
 
   .el-message-box__header {
     padding: 24px 24px 12px !important;
+
     .el-message-box__title {
       font-size: 20px !important;
       font-weight: 700 !important;
@@ -257,7 +279,7 @@
   padding: 0 8px;
   column-gap: 10px;
 
-  > .el-icon {
+  >.el-icon {
     margin: 0;
   }
 }

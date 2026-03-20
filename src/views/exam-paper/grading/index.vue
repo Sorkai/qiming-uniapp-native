@@ -351,28 +351,32 @@ onMounted(() => {
         />
         <el-table-column label="操作" width="280" align="center" fixed="right">
           <template #default="{ row }">
+            <div class="operation-actions">
             <el-button
               v-if="row.status !== 'completed'"
+              class="operation-btn"
               type="primary"
               size="small"
               @click="handleGrade(row)"
             >
-              <el-icon class="mr-1"><Edit /></el-icon>
+              <el-icon><Edit /></el-icon>
               阅卷
             </el-button>
             <el-button
               v-if="row.status !== 'completed'"
+              class="operation-btn"
               type="success"
               size="small"
               @click="handleAutoGrade(row)"
             >
-              <el-icon class="mr-1"><MagicStick /></el-icon>
+              <el-icon><MagicStick /></el-icon>
               自动批改
             </el-button>
-            <el-button size="small" @click="handleView(row)">
-              <el-icon class="mr-1"><View /></el-icon>
+            <el-button class="operation-btn" size="small" @click="handleView(row)">
+              <el-icon><View /></el-icon>
               详情
             </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -768,6 +772,38 @@ $radius-xl: 20px;
     justify-content: flex-end;
     padding: 16px 24px;
     border-top: 1px solid $light-border;
+  }
+
+  .operation-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    .operation-btn {
+      min-width: 64px;
+      height: 28px;
+      padding: 0 10px;
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      line-height: 1;
+      border-radius: 8px;
+
+      :deep(.el-icon) {
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      :deep(span) {
+        display: inline-flex;
+        align-items: center;
+      }
+    }
   }
 }
 

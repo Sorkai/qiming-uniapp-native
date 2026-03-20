@@ -22,7 +22,7 @@ export function getPluginsList(
 ): PluginOption[] {
   const lifecycle = process.env.npm_lifecycle_event;
   const mockInclude =
-    VITE_MOCK_SCOPE === "exam-paper-only" ? "mock/examPaper.ts" : "mock";
+    VITE_MOCK_SCOPE === "exam-paper-only" ? "mock/exam-paper-only" : "mock";
   return [
     tailwindcss(),
     vue({

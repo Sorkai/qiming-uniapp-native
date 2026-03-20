@@ -527,7 +527,12 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <div class="header-right">
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+        <el-button
+          type="primary"
+          class="submit-btn"
+          :loading="submitting"
+          @click="handleSubmit"
+        >
           <el-icon><Check /></el-icon>
           交卷
         </el-button>
@@ -935,6 +940,7 @@ onBeforeUnmount(() => {
           <!-- 底部导航 -->
           <div class="question-footer">
             <el-button
+              class="nav-btn"
               :disabled="currentQuestionIndex === 0"
               @click="prevQuestion"
             >
@@ -943,6 +949,7 @@ onBeforeUnmount(() => {
             </el-button>
             <el-button
               v-if="currentQuestionIndex < allQuestions.length - 1"
+              class="nav-btn"
               type="primary"
               @click="nextQuestion"
             >
@@ -951,6 +958,7 @@ onBeforeUnmount(() => {
             </el-button>
             <el-button
               v-else
+              class="nav-btn"
               type="success"
               :loading="submitting"
               @click="handleSubmit"
@@ -1029,8 +1037,10 @@ onBeforeUnmount(() => {
     .timer {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      padding: 8px 16px;
+      min-height: 42px;
+      padding: 0 16px;
       background: #f0f9ff;
       border-radius: 8px;
       font-size: 16px;
@@ -1190,10 +1200,12 @@ onBeforeUnmount(() => {
     .question-timer {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
+      min-height: 34px;
       font-size: 14px;
       color: #6b7280;
-      padding: 6px 12px;
+      padding: 0 12px;
       background: #f5f7fa;
       border-radius: 6px;
     }
@@ -1379,6 +1391,41 @@ onBeforeUnmount(() => {
     gap: 16px;
     padding-top: 20px;
     border-top: 1px solid #e5e7eb;
+
+    .nav-btn {
+      min-width: 96px;
+      height: 40px;
+      padding: 0 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      line-height: 1;
+      border-radius: 10px;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+  }
+}
+
+.header-right {
+  .submit-btn {
+    min-width: 84px;
+    height: 40px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    line-height: 1;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    background: #0f766e;
+
+    &:hover {
+      background: #0d9488;
+    }
   }
 }
 </style>
