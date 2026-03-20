@@ -950,7 +950,7 @@ export default [
 
   // 获取课程列表（筛选用）
   {
-    url: "/edu/backend/v1/course/list",
+    url: "/edu/backend/v1/paper/course/list",
     method: "get",
     response: ({ query }: { query: any }) => {
       const keyword = (query?.keyword || "").toString().trim();

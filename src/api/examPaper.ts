@@ -949,7 +949,7 @@ export const getLearningAnalytics = (params?: GetLearningAnalyticsParams) => {
 export const getCourseList = () => {
   return http.request<ApiResponse<Array<{ id: number; name: string }>>>(
     "get",
-    "/edu/backend/v1/course/list"
+    "/edu/backend/v1/paper/course/list"
   );
 };
 
