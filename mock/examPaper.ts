@@ -22,7 +22,11 @@ const QuestionType = {
   MATRIX_SINGLE: 7,
   MATRIX_MULTIPLE: 8,
   MATCHING: 9,
-  ORDERING: 10
+  ORDERING: 10,
+  SLIDER: 11,
+  NPS_RATING: 12,
+  STAR_RATING: 13,
+  COMPOSITE: 14
 };
 
 // 模拟试卷列表数据
@@ -315,6 +319,28 @@ const mockPaperDetail = {
       ]
     }
   ]
+};
+
+const sanitizeQuestionForStudent = (question: any) => {
+  const {
+    correctAnswer: _correctAnswer,
+    correctAnswers: _correctAnswers,
+    referenceAnswer: _referenceAnswer,
+    analysis: _analysis,
+    ...safeQuestion
+  } = question;
+  return safeQuestion;
+};
+
+const buildStudentPaperDetail = (paperId: number) => {
+  return {
+    ...mockPaperDetail,
+    paperId,
+    questionGroups: mockPaperDetail.questionGroups.map(group => ({
+      ...group,
+      questions: group.questions.map(sanitizeQuestionForStudent)
+    }))
+  };
 };
 
 // 模拟课程列表（原班级概念映射为课程）
@@ -855,32 +881,32 @@ export default [
         msg: "success",
         data: submission
           ? {
-              ...submission,
-              answers: [
-                { questionId: 101, answer: "B", score: 4, isCorrect: true },
-                { questionId: 102, answer: "C", score: 4, isCorrect: true },
-                {
-                  questionId: 201,
-                  answer: ["A", "B", "D"],
-                  score: 5,
-                  isCorrect: true
-                },
-                { questionId: 301, answer: "A", score: 3, isCorrect: true },
-                { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
-                {
-                  questionId: 501,
-                  answer: "解题过程...",
-                  score: 8,
-                  comment: "正确"
-                },
-                {
-                  questionId: 601,
-                  answer: "拉格朗日...",
-                  score: 12,
-                  comment: "完整"
-                }
-              ]
-            }
+            ...submission,
+            answers: [
+              { questionId: 101, answer: "B", score: 4, isCorrect: true },
+              { questionId: 102, answer: "C", score: 4, isCorrect: true },
+              {
+                questionId: 201,
+                answer: ["A", "B", "D"],
+                score: 5,
+                isCorrect: true
+              },
+              { questionId: 301, answer: "A", score: 3, isCorrect: true },
+              { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
+              {
+                questionId: 501,
+                answer: "解题过程...",
+                score: 8,
+                comment: "正确"
+              },
+              {
+                questionId: 601,
+                answer: "拉格朗日...",
+                score: 12,
+                comment: "完整"
+              }
+            ]
+          }
           : null
       };
     }
@@ -1110,7 +1136,7 @@ export default [
           studentPapers
             .filter(p => p.score !== null)
             .reduce((sum, p) => sum + (p.score || 0), 0) /
-            studentPapers.filter(p => p.score !== null).length
+          studentPapers.filter(p => p.score !== null).length
         )
       };
 
@@ -1122,6 +1148,19 @@ export default [
           list: filtered.slice(start, end),
           statistics
         }
+      };
+    }
+  },
+
+  // 获取学生试卷详情（脱敏）
+  {
+    url: "/edu/frontend/v1/paper/detail/:paperId",
+    method: "get",
+    response: ({ params }: { params: any }) => {
+      return {
+        code: 0,
+        msg: "success",
+        data: buildStudentPaperDetail(Number(params.paperId))
       };
     }
   },
@@ -1154,28 +1193,51 @@ export default [
         msg: "success",
         data: {
           submissionId: Date.now(),
-          paper: { ...mockPaperDetail, paperId },
-          remainingTime: mockPaperDetail.timeLimit * 60
+          paper: buildStudentPaperDetail(Number(paperId)),
+          remainingTime: mockPaperDetail.timeLimit * 60,
+          serverTime: Date.now()
         }
       };
     }
   },
 
-  // 保存答案（支持时间戳）
+  // 保存答案
   {
     url: "/edu/frontend/v1/exam/save",
     method: "post",
     response: ({ body }: { body: any }) => {
-      const { _submissionId, questionId, _answer, enterTime, leaveTime } = body;
+      const { _submissionId, _questionId, _answer } = body;
 
-      // 如果提供了时间戳，模拟后端计算时长
-      if (enterTime && leaveTime) {
-        const duration = Math.floor((leaveTime - enterTime) / 1000);
-        console.log(`题目 ${questionId} 答题时长: ${duration}秒`);
-        // 这里后端会累加到数据库中
-      }
+      return { code: 0, msg: "保存成功", data: { savedAt: Date.now() } };
+    }
+  },
 
-      return { code: 0, msg: "保存成功", data: null };
+  // 批量保存答案
+  {
+    url: "/edu/frontend/v1/exam/save-batch",
+    method: "post",
+    response: ({ body }: { body: any }) => {
+      const answers = Array.isArray(body.answers) ? body.answers : [];
+      return {
+        code: 0,
+        msg: "保存成功",
+        data: { savedCount: answers.length }
+      };
+    }
+  },
+
+  // 保存题目答题时长
+  {
+    url: "/edu/frontend/v1/exam/save-duration",
+    method: "post",
+    response: ({ body }: { body: any }) => {
+      const { enterTime, leaveTime } = body;
+      const duration = Math.max(
+        0,
+        Math.floor((Number(leaveTime) - Number(enterTime)) / 1000)
+      );
+
+      return { code: 0, msg: "保存成功", data: { duration } };
     }
   },
 
@@ -1191,6 +1253,49 @@ export default [
         msg: "success",
         data: { duration: 0 } // 后端返回该题的累计答题时长（秒）
       };
+    }
+  },
+
+  // 获取考试会话快照（断线恢复）
+  {
+    url: "/edu/frontend/v1/exam/session/:submissionId",
+    method: "get",
+    response: ({ params }: { params: any }) => {
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          submissionId: Number(params.submissionId),
+          remainingTime: 1800,
+          status: "in_progress",
+          answers: [
+            { questionId: 101, answer: "B", duration: 36 },
+            { questionId: 201, answer: ["A", "D"], duration: 55 }
+          ]
+        }
+      };
+    }
+  },
+
+  // 考试心跳
+  {
+    url: "/edu/frontend/v1/exam/heartbeat",
+    method: "post",
+    response: () => {
+      return {
+        code: 0,
+        msg: "success",
+        data: { serverTime: Date.now() }
+      };
+    }
+  },
+
+  // 防作弊事件上报
+  {
+    url: "/edu/frontend/v1/exam/anti-cheat/event",
+    method: "post",
+    response: () => {
+      return { code: 0, msg: "上报成功", data: null };
     }
   },
 
@@ -1220,32 +1325,32 @@ export default [
         msg: "success",
         data: submission
           ? {
-              ...submission,
-              answers: [
-                { questionId: 101, answer: "B", score: 4, isCorrect: true },
-                { questionId: 102, answer: "C", score: 4, isCorrect: true },
-                {
-                  questionId: 201,
-                  answer: ["A", "B", "D"],
-                  score: 5,
-                  isCorrect: true
-                },
-                { questionId: 301, answer: "A", score: 3, isCorrect: true },
-                { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
-                {
-                  questionId: 501,
-                  answer: "解题过程...",
-                  score: 8,
-                  comment: "正确"
-                },
-                {
-                  questionId: 601,
-                  answer: "拉格朗日...",
-                  score: 12,
-                  comment: "完整"
-                }
-              ]
-            }
+            ...submission,
+            answers: [
+              { questionId: 101, answer: "B", score: 4, isCorrect: true },
+              { questionId: 102, answer: "C", score: 4, isCorrect: true },
+              {
+                questionId: 201,
+                answer: ["A", "B", "D"],
+                score: 5,
+                isCorrect: true
+              },
+              { questionId: 301, answer: "A", score: 3, isCorrect: true },
+              { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
+              {
+                questionId: 501,
+                answer: "解题过程...",
+                score: 8,
+                comment: "正确"
+              },
+              {
+                questionId: 601,
+                answer: "拉格朗日...",
+                score: 12,
+                comment: "完整"
+              }
+            ]
+          }
           : null
       };
     }

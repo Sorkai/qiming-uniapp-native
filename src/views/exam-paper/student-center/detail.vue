@@ -4,7 +4,13 @@ import { useRoute, useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
 import { ArrowLeft } from "@element-plus/icons-vue";
-import { getPaperDetail, type Paper } from "@/api/examPaper";
+import {
+  getStudentPaperDetail,
+  getQuestionTypeName,
+  normalizeQuestionType,
+  type StudentPaperDetail,
+  type QuestionTypeLike
+} from "@/api/examPaper";
 
 defineOptions({
   name: "StudentPaperDetail"
@@ -16,13 +22,13 @@ const { isDark } = useDark();
 
 const paperId = computed(() => Number(route.params.id));
 const loading = ref(false);
-const paper = ref<Paper | null>(null);
+const paper = ref<StudentPaperDetail | null>(null);
 
 // 获取试卷详情
 const fetchPaperDetail = async () => {
   loading.value = true;
   try {
-    const res = await getPaperDetail(paperId.value);
+    const res = await getStudentPaperDetail(paperId.value);
     if (res.code === 0) {
       paper.value = res.data;
     } else {
@@ -36,22 +42,7 @@ const fetchPaperDetail = async () => {
   }
 };
 
-// 获取题型名称
-const getQuestionTypeName = (type: number): string => {
-  const typeMap: Record<number, string> = {
-    1: "单选题",
-    2: "多选题",
-    3: "判断题",
-    4: "填空题",
-    5: "简答题",
-    6: "论述题",
-    7: "矩阵单选",
-    8: "矩阵多选",
-    9: "连线题",
-    10: "排序题"
-  };
-  return typeMap[type] || "未知题型";
-};
+const getTypeCode = (type: QuestionTypeLike) => normalizeQuestionType(type) || 0;
 
 // 格式化时间
 const formatTime = (time: string): string => {
@@ -194,18 +185,74 @@ onMounted(() => {
                   </div>
 
                   <!-- 填空题提示 -->
-                  <div v-if="group.questionType === 4" class="question-hint">
+                  <div v-if="getTypeCode(group.questionType) === 4" class="question-hint">
                     <el-icon><Edit /></el-icon>
                     填空题
                   </div>
 
                   <!-- 主观题提示 -->
                   <div
-                    v-if="[5, 6].includes(group.questionType)"
+                    v-if="[5, 6].includes(getTypeCode(group.questionType))"
                     class="question-hint"
                   >
                     <el-icon><Document /></el-icon>
                     需要文字作答
+                  </div>
+
+                  <div
+                    v-if="[7, 8].includes(getTypeCode(group.questionType))"
+                    class="question-hint"
+                  >
+                    <el-icon><Document /></el-icon>
+                    矩阵题（按行作答）
+                  </div>
+
+                  <div
+                    v-if="getTypeCode(group.questionType) === 9"
+                    class="question-hint"
+                  >
+                    <el-icon><Document /></el-icon>
+                    连线题（配对作答）
+                  </div>
+
+                  <div
+                    v-if="getTypeCode(group.questionType) === 10"
+                    class="question-hint"
+                  >
+                    <el-icon><Document /></el-icon>
+                    排序题（按顺序作答）
+                  </div>
+
+                  <div
+                    v-if="getTypeCode(group.questionType) === 11"
+                    class="question-hint"
+                  >
+                    <el-icon><Document /></el-icon>
+                    滑动评分题
+                  </div>
+
+                  <div
+                    v-if="getTypeCode(group.questionType) === 12"
+                    class="question-hint"
+                  >
+                    <el-icon><Document /></el-icon>
+                    NPS评分题
+                  </div>
+
+                  <div
+                    v-if="getTypeCode(group.questionType) === 13"
+                    class="question-hint"
+                  >
+                    <el-icon><Star /></el-icon>
+                    星级评分题
+                  </div>
+
+                  <div
+                    v-if="getTypeCode(group.questionType) === 14"
+                    class="question-hint"
+                  >
+                    <el-icon><Document /></el-icon>
+                    组合材料题（含子题）
                   </div>
                 </div>
               </div>
