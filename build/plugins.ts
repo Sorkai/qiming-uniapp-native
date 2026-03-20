@@ -17,9 +17,12 @@ import { vitePluginFakeServer } from "vite-plugin-fake-server";
 
 export function getPluginsList(
   VITE_CDN: boolean,
-  VITE_COMPRESSION: ViteCompression
+  VITE_COMPRESSION: ViteCompression,
+  VITE_MOCK_SCOPE = "all"
 ): PluginOption[] {
   const lifecycle = process.env.npm_lifecycle_event;
+  const mockInclude =
+    VITE_MOCK_SCOPE === "exam-paper-only" ? "mock/examPaper.ts" : "mock";
   return [
     tailwindcss(),
     vue({
@@ -53,7 +56,7 @@ export function getPluginsList(
     // mock支持
     vitePluginFakeServer({
       logger: true,
-      include: "mock",
+      include: mockInclude,
       infixName: false,
       enableProd: true,
       basename: "/api"

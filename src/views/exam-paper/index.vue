@@ -49,7 +49,7 @@ const templates = ref([
     name: "标准考试模板",
     description: "单选10道·多选5道·填空5道·大题10道",
     icon: IconDocument,
-    color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    color: "linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%)",
     questionCount: 30,
     totalPoints: 100,
     useCount: 0
@@ -60,7 +60,7 @@ const templates = ref([
     name: "快速测验模板",
     description: "仅包含客观题，适合课堂小测和随堂练习",
     icon: IconZap,
-    color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    color: "linear-gradient(135deg, #2f855a 0%, #48bb78 100%)",
     questionCount: 5,
     totalPoints: 25,
     useCount: 0
@@ -71,7 +71,7 @@ const templates = ref([
     name: "综合能力测试",
     description: "单选10道·简答5道，适合综合能力评估",
     icon: IconBook,
-    color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+    color: "linear-gradient(135deg, #d97706 0%, #f59e0b 100%)",
     questionCount: 15,
     totalPoints: 75,
     useCount: 0
@@ -82,7 +82,7 @@ const templates = ref([
     name: "学情调查问卷",
     description: "单选10道·多选2道·简答5道·判断5道",
     icon: IconClipboard,
-    color: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+    color: "linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)",
     questionCount: 22,
     totalPoints: 120,
     useCount: 0
@@ -426,7 +426,7 @@ onMounted(() => {
               <el-progress
                 :percentage="learningStats.excellentRate"
                 :stroke-width="10"
-                color="#667eea"
+                color="#0f766e"
               />
             </div>
             <div class="stat-item">
@@ -537,10 +537,10 @@ $dark-shadow-lg:
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
-$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$primary-gradient: linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%);
 $success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-$info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+$info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
 
 /* 统一圆角 */
 $radius-sm: 8px;
@@ -621,8 +621,8 @@ $radius-xl: 20px;
       }
 
       .paper-icon {
-        background: rgba(102, 126, 234, 0.15);
-        color: #818cf8;
+        background: rgba(20, 184, 166, 0.2);
+        color: #5eead4;
       }
 
       .paper-info {
@@ -650,7 +650,7 @@ $radius-xl: 20px;
       }
 
       .stat-value-large {
-        color: #818cf8;
+        color: #5eead4;
 
         .stat-unit {
           color: $dark-text-muted;
@@ -682,7 +682,7 @@ $radius-xl: 20px;
   overflow: hidden;
   background: $primary-gradient;
   border-radius: $radius-xl;
-  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 20px 40px rgba(15, 118, 110, 0.28);
 
   @media (width <= 768px) {
     flex-direction: column;
@@ -727,7 +727,7 @@ $radius-xl: 20px;
     padding: 0 32px;
     font-size: 16px;
     font-weight: 600;
-    color: #667eea;
+    color: #0f766e;
     background: #fff;
     border: none;
     border-radius: 26px;
@@ -1004,8 +1004,8 @@ $radius-xl: 20px;
       justify-content: center;
       width: 56px;
       height: 56px;
-      color: #7c3aed;
-      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      color: #0f766e;
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
       border-radius: $radius-md;
 
       svg {
@@ -1073,7 +1073,7 @@ $radius-xl: 20px;
       .stat-value-large {
         font-size: 36px;
         font-weight: 700;
-        color: #667eea;
+        color: #0f766e;
 
         .stat-unit {
           margin-left: 4px;

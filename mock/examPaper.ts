@@ -948,6 +948,49 @@ export default [
     }
   },
 
+  // 获取课程列表（筛选用）
+  {
+    url: "/edu/backend/v1/course/list",
+    method: "get",
+    response: ({ query }: { query: any }) => {
+      const keyword = (query?.keyword || "").toString().trim();
+      const list = keyword
+        ? mockCourses
+          .filter(item => item.name.includes(keyword))
+          .map(item => ({ id: item.id, name: item.name }))
+        : mockCourses.map(item => ({ id: item.id, name: item.name }));
+      return {
+        code: 0,
+        msg: "success",
+        data: list
+      };
+    }
+  },
+
+  // 导出答卷
+  {
+    url: "/edu/backend/v1/paper/submission/export",
+    method: "get",
+    response: ({ query }: { query: any }) => {
+      const paperId = Number(query?.paperId) || 0;
+      const format = ["word", "pdf", "excel"].includes(query?.format)
+        ? query.format
+        : "pdf";
+      const extMap: Record<string, string> = {
+        word: "docx",
+        pdf: "pdf",
+        excel: "xlsx"
+      };
+      return {
+        code: 0,
+        msg: "success",
+        data: {
+          downloadUrl: `/mock-download/paper-${paperId || "all"}.${extMap[format]}`
+        }
+      };
+    }
+  },
+
   // ==================== 学生端API ====================
 
   // 获取学生试卷列表（学生试卷中心）
