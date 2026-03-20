@@ -798,12 +798,16 @@ $radius-xl: 20px;
         align-items: center;
         justify-content: center;
       }
-
-      :deep(span) {
-        display: inline-flex;
-        align-items: center;
-      }
     }
+  }
+
+  :deep(.operation-actions .operation-btn > span) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    line-height: 1.2;
+    transform: translateY(0.5px);
   }
 }
 
