@@ -15,12 +15,21 @@
   align-items: center;
   justify-content: center;
   vertical-align: middle;
-  line-height: 1;
+  line-height: normal;
 }
 
 .el-button>span {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  height: 100%;
+  line-height: 1.2;
+}
+
+.el-button .el-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .el-tag:not(.is-round) {
