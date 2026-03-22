@@ -379,6 +379,22 @@ const setVersionForm = reactive({
 const previewDialogVisible = ref(false);
 const currentPreviewTask = ref<HtmlAnimationTask | null>(null);
 
+const getRequestErrorMessage = (error: any, fallback: string) => {
+  const status = error?.response?.status;
+  const reqUrl = error?.config?.url;
+  if (status === 404) {
+    return reqUrl
+      ? `接口不存在(404): ${reqUrl}，请确认当前环境已部署HTML动画接口`
+      : "接口不存在(404)，请确认当前环境已部署HTML动画接口";
+  }
+  return (
+    error?.response?.data?.msg ||
+    error?.response?.data?.message ||
+    error?.message ||
+    fallback
+  );
+};
+
 // 加载课程列表
 const loadCourseList = async () => {
   try {
@@ -432,7 +448,7 @@ const handleSearch = async () => {
     taskList.value = res.data.tasks || [];
   } catch (error) {
     console.error("获取动画任务列表失败", error);
-    ElMessage.error("获取动画任务列表失败");
+    ElMessage.error(getRequestErrorMessage(error, "获取动画任务列表失败"));
     currentAnimationData.value = null;
     taskList.value = [];
   } finally {
