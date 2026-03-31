@@ -94,17 +94,17 @@
             <el-icon class="text-[var(--el-text-color-placeholder)] transition-transform duration-300 hover:rotate-180 cursor-pointer"><DataAnalysis /></el-icon>
           </div>
           <div class="grid grid-cols-3 gap-3">
-            <div class="stat-card bg-[var(--el-color-success-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-3xl font-black text-[var(--el-color-success)] leading-none mb-2">{{ stats.completed }}</div>
-              <div class="text-xs font-bold text-[var(--el-color-success)] opacity-70 uppercase tracking-wider">已完成</div>
+            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-2xl font-black text-[var(--el-color-success)] leading-none mb-2">{{ stats.completed }}</div>
+              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">已完成</div>
             </div>
-            <div class="stat-card bg-[var(--el-color-warning-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-3xl font-black text-[var(--el-color-warning)] leading-none mb-2">{{ stats.processing }}</div>
-              <div class="text-xs font-bold text-[var(--el-color-warning)] opacity-70 uppercase tracking-wider">处理中</div>
+            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-2xl font-black text-[var(--el-color-warning)] leading-none mb-2">{{ stats.processing }}</div>
+              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">处理中</div>
             </div>
-            <div class="stat-card bg-[var(--el-color-danger-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-3xl font-black text-[var(--el-color-danger)] leading-none mb-2">{{ stats.failed }}</div>
-              <div class="text-xs font-bold text-[var(--el-color-danger)] opacity-70 uppercase tracking-wider">失败</div>
+            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-2xl font-black text-[var(--el-color-danger)] leading-none mb-2">{{ stats.failed }}</div>
+              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">失败</div>
             </div>
           </div>
         </div>
@@ -174,11 +174,15 @@
           class="flex-1 flex flex-col items-center justify-center relative"
         >
           <!-- 装饰性背景光斑 -->
-          <div class="absolute top-[15%] left-[20%] w-28 h-28 bg-blue-200/30 rounded-full filter blur-2xl pointer-events-none" />
-          <div class="absolute bottom-[20%] right-[15%] w-36 h-36 bg-amber-200/30 rounded-full filter blur-2xl pointer-events-none" />
+          <div class="absolute top-[15%] left-[20%] w-28 h-28 bg-blue-200/30 dark:bg-blue-800/20 rounded-full filter blur-2xl pointer-events-none" />
+          <div class="absolute bottom-[20%] right-[15%] w-36 h-36 bg-amber-200/30 dark:bg-amber-800/20 rounded-full filter blur-2xl pointer-events-none" />
           <div class="text-center relative z-10">
-            <div class="mx-auto w-24 h-24 bg-[var(--el-color-primary-light-9)] rounded-3xl flex items-center justify-center mb-8 transform hover:scale-110 transition-transform">
-              <el-icon class="text-5xl text-[var(--el-color-primary)]" ><Film /></el-icon>
+            <div class="lottie-glass mx-auto mb-8">
+              <lottie-animation
+                :animation-data="CinemaAnim"
+                :width="200"
+                :height="200"
+              />
             </div>
             <h3 class="text-2xl font-black text-[var(--el-text-color-primary)] mb-3">
               选择课程与章节
@@ -186,10 +190,6 @@
             <p class="text-base text-[var(--el-text-color-secondary)] max-w-sm mx-auto leading-relaxed mb-8">
               从左侧选择目标课程和章节，即可查看和管理 AI 动画生成任务
             </p>
-            <div class="inline-flex items-center px-5 py-2.5 bg-[var(--el-fill-color-light)] rounded-full text-sm text-[var(--el-text-color-placeholder)] font-medium">
-              <el-icon class="mr-2 animate-bounce"><Promotion /></el-icon>
-              先从左侧开始配置吧
-            </div>
           </div>
         </div>
         <div v-else class="flex-1 flex flex-col overflow-hidden">
@@ -203,34 +203,22 @@
               @change="applyFilter"
             >
               <el-radio-button value="all">
-                <span class="flex items-center gap-2 text-base px-2">
-                  <span
-                    class="w-2.5 h-2.5 rounded-full bg-[var(--el-text-color-placeholder)]"
-                  />
+                <span class="flex items-center gap-2 text-sm px-1">
                   全部
                 </span>
               </el-radio-button>
               <el-radio-button value="completed">
-                <span class="flex items-center gap-2 text-base px-2">
-                  <span
-                    class="w-2.5 h-2.5 rounded-full bg-[var(--el-color-success)]"
-                  />
+                <span class="flex items-center gap-2 text-sm px-1">
                   成功
                 </span>
               </el-radio-button>
               <el-radio-button value="processing">
-                <span class="flex items-center gap-2 text-base px-2">
-                  <span
-                    class="w-2.5 h-2.5 rounded-full bg-[var(--el-color-warning)] animate-pulse"
-                  />
+                <span class="flex items-center gap-2 text-sm px-1">
                   进行中
                 </span>
               </el-radio-button>
               <el-radio-button value="failed">
-                <span class="flex items-center gap-2 text-base px-2">
-                  <span
-                    class="w-2.5 h-2.5 rounded-full bg-[var(--el-color-danger)]"
-                  />
+                <span class="flex items-center gap-2 text-sm px-1">
                   失败
                 </span>
               </el-radio-button>
@@ -499,6 +487,8 @@ import {
   DataAnalysis
 } from "@element-plus/icons-vue";
 import htmlIconSvg from "@/assets/new-release/html-file-type-svgrepo-com.svg?url";
+import LottieAnimation from "@/components/LottieAnimation.vue";
+import CinemaAnim from "@/assets/Cinema news animation.json";
 
 defineOptions({
   name: "CourseAnimation"
@@ -834,18 +824,18 @@ onMounted(() => {
   align-items: center;
   margin-top: 6px;
   font-size: 12px;
-  color: #606266;
+  color: var(--el-text-color-secondary);
 }
 
 .display-info .divider {
   display: inline-block;
   width: 1px;
   height: 14px;
-  background: #dcdfe6;
+  background: var(--el-border-color);
 }
 
 .polling-indicator {
-  color: #97b4f7;
+  color: var(--el-color-primary-light-3);
 }
 
 .empty-block {
@@ -924,38 +914,36 @@ onMounted(() => {
 // 筛选按钮组美化
 .animation-filter-group {
   :deep(.el-radio-button__inner) {
-    padding: 8px 16px;
-    margin-right: 8px;
+    padding: 6px 14px;
+    margin-right: 6px;
     font-weight: 500;
-    border: 1px solid var(--el-border-color-light) !important;
-    border-radius: 8px !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 13px;
+    border: 1px solid var(--el-border-color-lighter) !important;
+    border-radius: 20px !important;
+    background: var(--el-bg-color) !important;
+    color: var(--el-text-color-regular);
+    transition: all 0.2s ease;
 
     &:hover {
       color: var(--el-color-primary);
-      box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
-      transform: translateY(-1px);
-    }
-
-    &:active {
-      transform: translateY(0);
+      border-color: var(--el-color-primary-light-5) !important;
     }
   }
 
   :deep(.el-radio-button:first-child .el-radio-button__inner) {
-    border-left: 1px solid var(--el-border-color-light) !important;
-    border-radius: 8px !important;
+    border-left: 1px solid var(--el-border-color-lighter) !important;
+    border-radius: 20px !important;
   }
 
   :deep(.el-radio-button:last-child .el-radio-button__inner) {
-    border-radius: 8px !important;
+    border-radius: 20px !important;
   }
 
   :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-    color: var(--el-color-primary) !important;
-    background: var(--el-color-primary-light-9) !important;
-    border-color: var(--el-color-primary-light-5) !important;
-    box-shadow: 0 2px 8px var(--el-color-primary-light-8) !important;
+    color: #fff !important;
+    background: var(--el-color-primary) !important;
+    border-color: var(--el-color-primary) !important;
+    box-shadow: 0 2px 8px rgba(var(--el-color-primary-rgb), 0.3) !important;
   }
 }
 
@@ -1059,5 +1047,97 @@ onMounted(() => {
 
 .status-panel {
   animation: fadeInUp 0.4s ease-out;
+}
+
+// Lottie 毛玻璃光效容器
+.lottie-glass {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  border-radius: 2rem;
+  background: rgb(255 255 255 / 45%);
+  backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    0 8px 32px rgba(var(--el-color-primary-rgb), 0.12),
+    inset 0 0 0 1px rgb(255 255 255 / 40%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  // 将 Lottie 动画色相旋转到平台主色蓝
+  :deep(div) {
+    filter: hue-rotate(160deg) saturate(0.85) brightness(0.88);
+  }
+
+  // 四角光效
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg,
+      rgba(var(--el-color-primary-rgb), 0.5),
+      transparent 40%,
+      transparent 60%,
+      rgba(var(--el-color-primary-rgb), 0.35)
+    );
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  // 顶部高光
+  &::after {
+    content: "";
+    position: absolute;
+    top: -30%;
+    left: 10%;
+    width: 80%;
+    height: 60%;
+    background: radial-gradient(ellipse, rgb(255 255 255 / 30%) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: scale(1.04);
+    box-shadow:
+      0 12px 40px rgba(var(--el-color-primary-rgb), 0.18),
+      inset 0 0 0 1px rgb(255 255 255 / 50%);
+  }
+
+  html.dark & {
+    background: rgb(30 30 40 / 50%);
+    box-shadow:
+      0 8px 32px rgba(var(--el-color-primary-rgb), 0.15),
+      inset 0 0 0 1px rgb(255 255 255 / 8%);
+
+    &::before {
+      background: linear-gradient(
+        135deg,
+        rgba(var(--el-color-primary-rgb), 0.35),
+        transparent 40%,
+        transparent 60%,
+        rgba(var(--el-color-primary-rgb), 0.25)
+      );
+    }
+
+    &::after {
+      background: radial-gradient(ellipse, rgb(255 255 255 / 8%) 0%, transparent 70%);
+    }
+
+    &:hover {
+      box-shadow:
+        0 12px 40px rgba(var(--el-color-primary-rgb), 0.22),
+        inset 0 0 0 1px rgb(255 255 255 / 12%);
+    }
+  }
 }
 </style>

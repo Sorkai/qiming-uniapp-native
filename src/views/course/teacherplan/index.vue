@@ -228,11 +228,6 @@
 
           </div>
 
-          <!-- 引导提示 -->
-          <div class="mt-14 inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-[#202020] border-2 border-slate-100 dark:border-slate-800 rounded-full shadow-sm text-slate-500 dark:text-slate-400 font-bold hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
-            <el-icon class="animate-bounce mr-2 text-xl"><Pointer /></el-icon>
-            <span>点这里，从左侧选择一门课程开始吧</span>
-          </div>
         </div>
       </div>
     </div>

@@ -83,66 +83,27 @@
           </el-select>
         </div>
 
-        <!-- 任务统计面板 -->
-        <div
-          class="status-panel mt-8 p-5 bg-[var(--el-fill-color-light)] rounded-xl border border-[var(--el-border-color-lighter)] transition-all duration-300 hover:shadow-md"
-        >
+        <!-- 任务看板 -->
+        <div class="mt-8">
           <div class="flex items-center justify-between mb-4">
-            <span
-              class="text-base font-semibold text-[var(--el-text-color-primary)]"
-              >任务统计</span
-            >
+            <span class="text-base font-semibold text-[var(--el-text-color-primary)]">任务看板</span>
             <el-icon
               class="text-[var(--el-text-color-placeholder)] transition-transform duration-300 hover:rotate-180 cursor-pointer"
               @click="loadTaskList"
-              ><DataAnalysis
-            /></el-icon>
+            ><DataAnalysis /></el-icon>
           </div>
-          <div class="space-y-3">
-            <div
-              class="status-item flex items-center justify-between py-3 px-4 bg-[var(--el-bg-color)] rounded-lg transition-all duration-200 hover:bg-[var(--el-color-success-light-9)] hover:translate-x-1 hover:shadow-sm"
-            >
-              <div class="flex items-center">
-                <span
-                  class="w-3 h-3 rounded-full bg-[var(--el-color-success)] mr-3"
-                />
-                <span class="text-base text-[var(--el-text-color-secondary)]"
-                  >已完成</span
-                >
-              </div>
-              <span class="text-xl font-bold text-[var(--el-color-success)]">{{
-                stats.completed
-              }}</span>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-2xl font-black text-[var(--el-color-success)] leading-none mb-2">{{ stats.completed }}</div>
+              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">已完成</div>
             </div>
-            <div
-              class="status-item flex items-center justify-between py-3 px-4 bg-[var(--el-bg-color)] rounded-lg transition-all duration-200 hover:bg-[var(--el-color-warning-light-9)] hover:translate-x-1 hover:shadow-sm"
-            >
-              <div class="flex items-center">
-                <span
-                  class="w-3 h-3 rounded-full bg-[var(--el-color-warning)] mr-3 animate-pulse"
-                />
-                <span class="text-base text-[var(--el-text-color-secondary)]"
-                  >处理中</span
-                >
-              </div>
-              <span class="text-xl font-bold text-[var(--el-color-warning)]">{{
-                stats.processing
-              }}</span>
+            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-2xl font-black text-[var(--el-color-warning)] leading-none mb-2">{{ stats.processing }}</div>
+              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">处理中</div>
             </div>
-            <div
-              class="status-item flex items-center justify-between py-3 px-4 bg-[var(--el-bg-color)] rounded-lg transition-all duration-200 hover:bg-[var(--el-color-danger-light-9)] hover:translate-x-1 hover:shadow-sm"
-            >
-              <div class="flex items-center">
-                <span
-                  class="w-3 h-3 rounded-full bg-[var(--el-color-danger)] mr-3"
-                />
-                <span class="text-base text-[var(--el-text-color-secondary)]"
-                  >失败</span
-                >
-              </div>
-              <span class="text-xl font-bold text-[var(--el-color-danger)]">{{
-                stats.failed
-              }}</span>
+            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-2xl font-black text-[var(--el-color-danger)] leading-none mb-2">{{ stats.failed }}</div>
+              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">失败</div>
             </div>
           </div>
         </div>
@@ -151,55 +112,82 @@
 
     <!-- 右侧内容区域 -->
     <div class="flex-1 flex flex-col min-w-0">
-      <!-- 顶部操作栏 -->
+      <!-- 合并后的内容卡片 -->
       <div
-        class="bg-[var(--el-bg-color-overlay)] p-5 rounded-2xl shadow-sm border border-[var(--el-border-color-light)] mb-3 flex justify-between items-center transition-all hover:shadow-md"
+        class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] overflow-hidden flex flex-col"
       >
-        <div class="flex items-center space-x-4">
-          <span
-            v-if="polling"
-            class="flex items-center text-[var(--el-color-primary)] text-sm font-semibold px-4 py-2 bg-[var(--el-color-primary-light-9)] rounded-lg"
-          >
-            <el-icon class="mr-2 animate-spin"><Loading /></el-icon>
-            自动刷新中...
-          </span>
-          <span v-else class="text-[var(--el-text-color-secondary)] text-sm">
-            共 {{ taskList.length }} 个任务
-          </span>
+        <!-- 顶部操作栏（内嵌在卡片顶部） -->
+        <div
+          class="px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-fill-color-light)]/30 flex-shrink-0"
+        >
+          <div class="flex items-center space-x-4">
+            <span
+              v-if="polling"
+              class="flex items-center text-[var(--el-color-primary)] text-sm font-semibold px-4 py-2 bg-[var(--el-color-primary-light-9)] rounded-xl"
+            >
+              <el-icon class="mr-2 animate-spin"><Loading /></el-icon>
+              自动刷新中...
+            </span>
+            <span v-else class="text-[var(--el-text-color-secondary)] text-sm font-medium">
+              共 {{ taskList.length }} 个任务
+            </span>
+          </div>
+
+          <div class="flex gap-2">
+            <el-button
+              :icon="RefreshRight"
+              class="!rounded-xl !h-10 !px-4"
+              @click="loadTaskList"
+            >
+              刷新
+            </el-button>
+            <el-button
+              type="primary"
+              :disabled="!canSubmit"
+              :loading="submitLoading"
+              class="!rounded-xl !h-10 !px-6 !font-bold shadow-md"
+              @click="showSubmitDialog"
+            >
+              <el-icon class="mr-1"><VideoCamera /></el-icon>
+              提交视频分析
+            </el-button>
+          </div>
         </div>
 
-        <div class="flex gap-3">
-          <el-button
-            :icon="RefreshRight"
-            class="!rounded-xl !h-10"
-            @click="loadTaskList"
+        <!-- 内容体 -->
+        <div class="flex-1 p-6 overflow-hidden flex flex-col">
+          <!-- 空状态：未选择课程 -->
+          <div
+            v-if="!selectedCourseId"
+            class="flex-1 flex flex-col items-center justify-center relative"
           >
-            刷新
-          </el-button>
-          <el-button
-            type="primary"
-            :disabled="!canSubmit"
-            :loading="submitLoading"
-            class="!rounded-xl !h-10 !px-6 !font-semibold shadow-md"
-            @click="showSubmitDialog"
-          >
-            <el-icon class="mr-1"><VideoCamera /></el-icon>
-            提交视频分析
-          </el-button>
-        </div>
-      </div>
+            <div class="absolute top-[15%] left-[20%] w-28 h-28 bg-purple-200/30 dark:bg-purple-800/20 rounded-full filter blur-2xl pointer-events-none" />
+            <div class="absolute bottom-[20%] right-[15%] w-36 h-36 bg-teal-200/30 dark:bg-teal-800/20 rounded-full filter blur-2xl pointer-events-none" />
+            <div class="text-center relative z-10">
+              <div class="lottie-glass mx-auto mb-8">
+                <lottie-animation
+                  :animation-data="EdenAnim"
+                  :width="200"
+                  :height="200"
+                />
+              </div>
+              <h3 class="text-2xl font-black text-[var(--el-text-color-primary)] mb-3">
+                选择课程开始分析
+              </h3>
+              <p class="text-base text-[var(--el-text-color-secondary)] max-w-sm mx-auto leading-relaxed mb-8">
+                从左侧选择目标课程，即可查看和管理视频分析任务
+              </p>
+            </div>
+          </div>
 
-      <!-- 任务列表 -->
-      <div
-        class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] overflow-hidden pt-3"
-      >
+          <!-- 有课程时显示表格 -->
+          <div v-else class="flex-1 overflow-auto custom-scrollbar">
         <el-table
           :data="taskList"
           style="width: 100%"
           height="100%"
-          stripe
           class="task-table"
-          :empty-text="selectedCourseId ? '暂无分析任务' : '请先选择一个课程'"
+          header-cell-class-name="!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-bold !text-base !py-4"
         >
           <el-table-column label="文件名" prop="fileName" min-width="200">
             <template #default="{ row }">
@@ -274,6 +262,8 @@
             </template>
           </el-table-column>
         </el-table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -490,6 +480,8 @@ import {
   type VideoAnalysisStatusResult
 } from "@/api/videoAnalysis";
 import { getCourseList, getCourseHoursList } from "@/api/course";
+import LottieAnimation from "@/components/LottieAnimation.vue";
+import EdenAnim from "@/assets/eden.json";
 
 defineOptions({ name: "VideoAnalysis" });
 
@@ -845,19 +837,183 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+// 表格美化
 .task-table {
+  :deep(.el-table__inner-wrapper) {
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
   :deep(.el-table__header-wrapper) {
     th {
       padding: 14px 0;
       font-size: 14px;
       font-weight: 600;
-      color: var(--el-text-color-secondary);
+      border-bottom: none !important;
     }
   }
 
   :deep(.el-table__body-wrapper) {
-    td {
-      padding: 12px 0;
+    tr {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+      td {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--el-border-color-lighter) !important;
+      }
+
+      &:last-child td {
+        border-bottom: none !important;
+      }
+
+      &:hover {
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+        transform: scale(1.005);
+      }
+    }
+  }
+}
+
+// 侧边栏卡片动效
+.sidebar-card {
+  .header-section:hover .icon-box {
+    transform: rotate(-5deg) scale(1.05);
+  }
+
+  .header-subtitle {
+    margin-top: 8px !important;
+  }
+}
+
+// 输入框聚焦动效
+:deep(.el-select),
+:deep(.el-input) {
+  .el-input__wrapper {
+    transition: all 0.25s ease;
+
+    &:hover {
+      box-shadow: 0 0 0 1px var(--el-color-primary-light-5) inset;
+    }
+
+    &.is-focus {
+      box-shadow:
+        0 0 0 1px var(--el-color-primary) inset,
+        0 4px 12px var(--el-color-primary-light-8);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// 自定义滚动条
+.custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--el-border-color);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: var(--el-border-color-darker);
+    }
+  }
+}
+
+// Lottie 毛玻璃光效容器
+.lottie-glass {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  border-radius: 2rem;
+  background: rgb(255 255 255 / 45%);
+  backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    0 8px 32px rgba(var(--el-color-primary-rgb), 0.12),
+    inset 0 0 0 1px rgb(255 255 255 / 40%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  // 将 Lottie 动画色相旋转到平台主色蓝
+  :deep(div) {
+    filter: hue-rotate(160deg) saturate(0.85) brightness(0.88);
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg,
+      rgba(var(--el-color-primary-rgb), 0.5),
+      transparent 40%,
+      transparent 60%,
+      rgba(var(--el-color-primary-rgb), 0.35)
+    );
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: -30%;
+    left: 10%;
+    width: 80%;
+    height: 60%;
+    background: radial-gradient(ellipse, rgb(255 255 255 / 30%) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: scale(1.04);
+    box-shadow:
+      0 12px 40px rgba(var(--el-color-primary-rgb), 0.18),
+      inset 0 0 0 1px rgb(255 255 255 / 50%);
+  }
+
+  html.dark & {
+    background: rgb(30 30 40 / 50%);
+    box-shadow:
+      0 8px 32px rgba(var(--el-color-primary-rgb), 0.15),
+      inset 0 0 0 1px rgb(255 255 255 / 8%);
+
+    &::before {
+      background: linear-gradient(
+        135deg,
+        rgba(var(--el-color-primary-rgb), 0.35),
+        transparent 40%,
+        transparent 60%,
+        rgba(var(--el-color-primary-rgb), 0.25)
+      );
+    }
+
+    &::after {
+      background: radial-gradient(ellipse, rgb(255 255 255 / 8%) 0%, transparent 70%);
+    }
+
+    &:hover {
+      box-shadow:
+        0 12px 40px rgba(var(--el-color-primary-rgb), 0.22),
+        inset 0 0 0 1px rgb(255 255 255 / 12%);
     }
   }
 }
