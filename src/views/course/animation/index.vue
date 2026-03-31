@@ -87,68 +87,24 @@
           </el-select>
         </div>
 
-        <!-- 状态面板 - 始终显示 -->
-        <div
-          class="status-panel mt-8 p-5 bg-[var(--el-fill-color-light)] rounded-xl border border-[var(--el-border-color-lighter)] transition-all duration-300 hover:shadow-md"
-        >
+        <!-- 任务统计看板 -->
+        <div class="mt-8">
           <div class="flex items-center justify-between mb-4">
-            <span
-              class="text-base font-semibold text-[var(--el-text-color-primary)]"
-              >任务状态</span
-            >
-            <el-icon
-              class="text-[var(--el-text-color-placeholder)] transition-transform duration-300 hover:rotate-180"
-              ><DataAnalysis
-            /></el-icon>
+            <span class="text-base font-semibold text-[var(--el-text-color-primary)]">任务看板</span>
+            <el-icon class="text-[var(--el-text-color-placeholder)] transition-transform duration-300 hover:rotate-180 cursor-pointer"><DataAnalysis /></el-icon>
           </div>
-          <div class="space-y-3">
-            <div
-              class="status-item flex items-center justify-between py-3 px-4 bg-[var(--el-bg-color)] rounded-lg cursor-pointer transition-all duration-200 hover:bg-[var(--el-color-success-light-9)] hover:translate-x-1 hover:shadow-sm"
-            >
-              <div class="flex items-center">
-                <span
-                  class="w-3 h-3 rounded-full bg-[var(--el-color-success)] mr-3 transition-transform duration-200"
-                />
-                <span class="text-base text-[var(--el-text-color-secondary)]"
-                  >已完成</span
-                >
-              </div>
-              <span
-                class="text-xl font-bold text-[var(--el-color-success)] transition-transform duration-200"
-                >{{ stats.completed }}</span
-              >
+          <div class="grid grid-cols-3 gap-3">
+            <div class="stat-card bg-[var(--el-color-success-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-3xl font-black text-[var(--el-color-success)] leading-none mb-2">{{ stats.completed }}</div>
+              <div class="text-xs font-bold text-[var(--el-color-success)] opacity-70 uppercase tracking-wider">已完成</div>
             </div>
-            <div
-              class="status-item flex items-center justify-between py-3 px-4 bg-[var(--el-bg-color)] rounded-lg cursor-pointer transition-all duration-200 hover:bg-[var(--el-color-warning-light-9)] hover:translate-x-1 hover:shadow-sm"
-            >
-              <div class="flex items-center">
-                <span
-                  class="w-3 h-3 rounded-full bg-[var(--el-color-warning)] mr-3 animate-pulse"
-                />
-                <span class="text-base text-[var(--el-text-color-secondary)]"
-                  >处理中</span
-                >
-              </div>
-              <span
-                class="text-xl font-bold text-[var(--el-color-warning)] transition-transform duration-200"
-                >{{ stats.processing }}</span
-              >
+            <div class="stat-card bg-[var(--el-color-warning-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-3xl font-black text-[var(--el-color-warning)] leading-none mb-2">{{ stats.processing }}</div>
+              <div class="text-xs font-bold text-[var(--el-color-warning)] opacity-70 uppercase tracking-wider">处理中</div>
             </div>
-            <div
-              class="status-item flex items-center justify-between py-3 px-4 bg-[var(--el-bg-color)] rounded-lg cursor-pointer transition-all duration-200 hover:bg-[var(--el-color-danger-light-9)] hover:translate-x-1 hover:shadow-sm"
-            >
-              <div class="flex items-center">
-                <span
-                  class="w-3 h-3 rounded-full bg-[var(--el-color-danger)] mr-3"
-                />
-                <span class="text-base text-[var(--el-text-color-secondary)]"
-                  >失败</span
-                >
-              </div>
-              <span
-                class="text-xl font-bold text-[var(--el-color-danger)] transition-transform duration-200"
-                >{{ stats.failed }}</span
-              >
+            <div class="stat-card bg-[var(--el-color-danger-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+              <div class="text-3xl font-black text-[var(--el-color-danger)] leading-none mb-2">{{ stats.failed }}</div>
+              <div class="text-xs font-bold text-[var(--el-color-danger)] opacity-70 uppercase tracking-wider">失败</div>
             </div>
           </div>
         </div>
@@ -157,84 +113,83 @@
 
     <!-- 右侧内容区域 -->
     <div class="flex-1 flex flex-col min-w-0">
-      <!-- 顶部操作栏 -->
+      <!-- 合并后的内容卡片 -->
       <div
-        class="bg-[var(--el-bg-color-overlay)] p-5 rounded-2xl shadow-sm border border-[var(--el-border-color-light)] mb-3 flex justify-between items-center transition-all hover:shadow-md"
+        class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] overflow-hidden flex flex-col"
       >
-        <div class="flex items-center space-x-8">
-          <div
-            v-if="displayVersionResolved"
-            class="flex items-center gap-4 px-5 py-2.5 bg-[var(--el-color-success-light-9)] rounded-xl border border-[var(--el-color-success-light-5)]"
-          >
-            <div class="flex items-center">
-              <div
-                class="w-2.5 h-2.5 bg-[var(--el-color-success)] rounded-full mr-2.5 shadow-lg shadow-[var(--el-color-success-light-5)] animate-pulse"
-              />
-              <span
-                class="text-sm text-[var(--el-color-success)] font-bold uppercase tracking-wide"
-                >Active</span
-              >
-            </div>
-            <span class="text-lg text-[var(--el-color-success)] font-bold"
-              >v{{ displayVersionResolved }}</span
+        <!-- 顶部操作栏（内嵌在卡片顶部） -->
+        <div
+          class="px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-fill-color-light)]/30 flex-shrink-0"
+        >
+          <div class="flex items-center space-x-4">
+            <div
+              v-if="displayVersionResolved"
+              class="flex items-center gap-3 px-4 py-2 bg-[var(--el-color-success-light-9)] rounded-xl"
             >
+              <div class="w-2 h-2 bg-[var(--el-color-success)] rounded-full animate-pulse" />
+              <span class="text-sm text-[var(--el-color-success)] font-bold">Active v{{ displayVersionResolved }}</span>
+            </div>
+            <div
+              v-if="polling"
+              class="flex items-center text-[var(--el-color-primary)] text-sm font-semibold px-4 py-2 bg-[var(--el-color-primary-light-9)] rounded-xl"
+            >
+              <el-icon class="mr-2 animate-spin"><Loading /></el-icon>
+              监听中...
+            </div>
           </div>
-          <div
-            v-if="polling"
-            class="flex items-center text-[var(--el-color-primary)] text-sm font-semibold px-4 py-2 bg-[var(--el-color-primary-light-9)] rounded-lg"
-          >
-            <el-icon class="mr-2 animate-spin"><Loading /></el-icon>
-            监听中...
+
+          <div class="flex gap-2">
+            <el-button
+              :disabled="!selectedChapterId"
+              class="!rounded-xl !h-10 !px-4"
+              :icon="Refresh"
+              @click="refreshList"
+            >
+              刷新
+            </el-button>
+            <el-button
+              :loading="syncLoading"
+              class="!rounded-xl !h-10 !px-4"
+              :icon="Upload"
+              @click="onForceSync"
+            >
+              同步
+            </el-button>
+            <el-button
+              type="primary"
+              :disabled="!canGenerate"
+              :loading="generateLoading"
+              class="!rounded-xl !h-10 !px-6 !font-bold shadow-md"
+              @click="onGenerate"
+            >
+              AI 生成
+            </el-button>
           </div>
         </div>
 
-        <div class="flex gap-3">
-          <el-button
-            type="primary"
-            :disabled="!canGenerate"
-            :loading="generateLoading"
-            class="!rounded-xl !h-12 shadow-lg shadow-[var(--el-color-primary-light-8)] !px-7 !text-base !font-semibold"
-            @click="onGenerate"
-          >
-            AI 生成
-          </el-button>
-          <el-button
-            :disabled="!selectedChapterId"
-            class="!h-12 !w-12 !rounded-xl !p-0 border-[var(--el-border-color-light)] hover:text-[var(--el-color-primary)] bg-[var(--el-bg-color)]"
-            :icon="Refresh"
-            @click="refreshList"
-          />
-          <el-button
-            type="success"
-            plain
-            :loading="syncLoading"
-            class="!rounded-xl !h-12 !border-[var(--el-color-success-light-5)] !text-[var(--el-color-success)] hover:!bg-[var(--el-color-success-light-9)] bg-[var(--el-bg-color)] !px-6 !text-base !font-semibold"
-            :icon="Upload"
-            @click="onForceSync"
-          >
-            同步
-          </el-button>
-        </div>
-      </div>
-
-      <div
-        class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-2xl shadow-sm border border-[var(--el-border-color-light)] p-6 overflow-hidden flex flex-col"
-      >
+        <!-- 内容体 -->
+        <div class="flex-1 p-6 overflow-hidden flex flex-col">
         <div
           v-if="!selectedChapterId"
-          class="flex-1 flex flex-col items-center justify-center"
+          class="flex-1 flex flex-col items-center justify-center relative"
         >
-          <div class="text-center">
-            <el-icon
-              class="text-7xl text-[var(--el-text-color-placeholder)]/50 mb-6"
-              ><Film
-            /></el-icon>
-            <p class="text-xl text-[var(--el-text-color-secondary)] font-bold">
-              请选择课程与章节
+          <!-- 装饰性背景光斑 -->
+          <div class="absolute top-[15%] left-[20%] w-28 h-28 bg-blue-200/30 rounded-full filter blur-2xl pointer-events-none" />
+          <div class="absolute bottom-[20%] right-[15%] w-36 h-36 bg-amber-200/30 rounded-full filter blur-2xl pointer-events-none" />
+          <div class="text-center relative z-10">
+            <div class="mx-auto w-24 h-24 bg-[var(--el-color-primary-light-9)] rounded-3xl flex items-center justify-center mb-8 transform hover:scale-110 transition-transform">
+              <el-icon class="text-5xl text-[var(--el-color-primary)]" ><Film /></el-icon>
+            </div>
+            <h3 class="text-2xl font-black text-[var(--el-text-color-primary)] mb-3">
+              选择课程与章节
+            </h3>
+            <p class="text-base text-[var(--el-text-color-secondary)] max-w-sm mx-auto leading-relaxed mb-8">
+              从左侧选择目标课程和章节，即可查看和管理 AI 动画生成任务
             </p>
-            <p class="text-[var(--el-text-color-placeholder)] text-base mt-2">
-              以查看和管理 AI 动画任务
-            </p>
+            <div class="inline-flex items-center px-5 py-2.5 bg-[var(--el-fill-color-light)] rounded-full text-sm text-[var(--el-text-color-placeholder)] font-medium">
+              <el-icon class="mr-2 animate-bounce"><Promotion /></el-icon>
+              先从左侧开始配置吧
+            </div>
           </div>
         </div>
         <div v-else class="flex-1 flex flex-col overflow-hidden">
@@ -458,12 +413,12 @@
                     >
                       <el-icon class="mr-1"><DocumentCopy /></el-icon>URL
                     </el-button>
-                    ```
                   </div>
                 </template>
               </el-table-column>
             </el-table>
           </div>
+        </div>
         </div>
       </div>
     </div>
