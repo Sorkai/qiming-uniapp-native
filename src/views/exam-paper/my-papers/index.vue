@@ -745,11 +745,11 @@ $radius-lg: 16px;
         color: $dark-text-secondary;
 
         &:hover {
-          background: rgba(15, 118, 110, 0.18);
+          background: rgba(74, 127, 200, 0.18);
         }
 
         &.active {
-          background: rgba(15, 118, 110, 0.28);
+          background: rgba(74, 127, 200, 0.28);
           color: #80C8FA;
         }
 
@@ -772,7 +772,7 @@ $radius-lg: 16px;
     .list-card {
       .paper-title-cell {
         .paper-icon {
-          background: rgba(20, 184, 166, 0.2);
+          background: rgba(74, 127, 200, 0.2);
           color: #80C8FA;
         }
 
@@ -977,11 +977,11 @@ $radius-lg: 16px;
       transition: all 0.2s;
 
       &:hover {
-        background: rgba(15, 118, 110, 0.08);
+        background: rgba(74, 127, 200, 0.08);
       }
 
       &.active {
-        background: rgba(15, 118, 110, 0.14);
+        background: rgba(74, 127, 200, 0.14);
         color: #4A7FC8;
       }
 

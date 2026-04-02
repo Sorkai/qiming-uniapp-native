@@ -621,7 +621,7 @@ $radius-xl: 20px;
       }
 
       .paper-icon {
-        background: rgba(20, 184, 166, 0.2);
+        background: rgba(74, 127, 200, 0.2);
         color: #80C8FA;
       }
 
@@ -682,7 +682,7 @@ $radius-xl: 20px;
   overflow: hidden;
   background: $primary-gradient;
   border-radius: $radius-xl;
-  box-shadow: 0 20px 40px rgba(15, 118, 110, 0.28);
+  box-shadow: 0 20px 40px rgba(74, 127, 200, 0.28);
 
   @media (width <= 768px) {
     flex-direction: column;
