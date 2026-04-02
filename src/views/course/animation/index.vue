@@ -565,6 +565,22 @@ function applyFilter() {
   /* computed 已处理，此函数占位供事件触发刷新 */
 }
 
+function getRequestErrorMessage(error: any, fallback: string) {
+  const status = error?.response?.status;
+  const reqUrl = error?.config?.url;
+  if (status === 404) {
+    return reqUrl
+      ? `接口不存在(404): ${reqUrl}，请确认当前环境已部署HTML动画接口`
+      : "接口不存在(404)，请确认当前环境已部署HTML动画接口";
+  }
+  return (
+    error?.response?.data?.msg ||
+    error?.response?.data?.message ||
+    error?.message ||
+    fallback
+  );
+}
+
 async function searchCourses(query: string) {
   courseLoading.value = true;
   try {
@@ -629,7 +645,8 @@ async function refreshList() {
       stopPolling();
     }
   } catch (e) {
-    ElMessage.error("动画列表获取失败");
+    console.error("获取动画列表失败", e);
+    ElMessage.error(getRequestErrorMessage(e, "动画列表获取失败"));
   } finally {
     listLoading.value = false;
   }
@@ -866,20 +883,29 @@ onMounted(() => {
 }
 
 // 表格行样式
-:deep(.row-display) {
+:deep(.animation-table .el-table__body tr.row-display > td) {
   background: var(--el-color-success-light-9) !important;
-
-  &:hover > td {
-    background: var(--el-color-success-light-8) !important;
-  }
 }
 
-:deep(.row-failed) {
-  background: var(--el-color-danger-light-9) !important;
+:deep(.animation-table .el-table__body tr.row-display:hover > td) {
+  background: var(--el-color-success-light-8) !important;
+}
 
-  &:hover > td {
-    background: var(--el-color-danger-light-8) !important;
-  }
+:deep(.animation-table .el-table__body tr.row-failed > td) {
+  background: var(--el-color-danger-light-9) !important;
+}
+
+:deep(.animation-table .el-table__body tr.row-failed:hover > td) {
+  background: var(--el-color-danger-light-8) !important;
+}
+
+:deep(
+    .animation-table
+      .el-table__body
+      tr:not(.row-display):not(.row-failed):hover
+      > td
+  ) {
+  background: var(--el-fill-color-lighter) !important;
 }
 
 // 表格美化
@@ -967,13 +993,11 @@ onMounted(() => {
 .animation-table {
   :deep(.el-table__body-wrapper) {
     tr {
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: background-color 0.2s ease;
 
       &:hover {
         position: relative;
         z-index: 1;
-        box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
-        transform: scale(1.005);
       }
     }
   }

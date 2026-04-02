@@ -81,7 +81,7 @@ const statCards = computed(() => [
     label: "试卷总数",
     value: statistics.value.total,
     icon: IconDocument,
-    color: "#6366f1"
+    color: "#0f766e"
   },
   {
     label: "已发布",
@@ -99,7 +99,7 @@ const statCards = computed(() => [
     label: "最近编辑",
     value: statistics.value.recent,
     icon: IconClock,
-    color: "#3b82f6"
+    color: "#475569"
   }
 ]);
 
@@ -686,11 +686,11 @@ $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
 
-$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$primary-gradient: linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%);
 $success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
-$info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+$info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
 
 $radius-md: 12px;
 $radius-lg: 16px;
@@ -745,12 +745,12 @@ $radius-lg: 16px;
         color: $dark-text-secondary;
 
         &:hover {
-          background: rgba(102, 126, 234, 0.1);
+          background: rgba(15, 118, 110, 0.18);
         }
 
         &.active {
-          background: rgba(102, 126, 234, 0.2);
-          color: #818cf8;
+          background: rgba(15, 118, 110, 0.28);
+          color: #5eead4;
         }
 
         .folder-name {
@@ -763,7 +763,7 @@ $radius-lg: 16px;
         }
 
         &.active .folder-count {
-          background: #818cf8;
+          background: #14b8a6;
           color: #fff;
         }
       }
@@ -772,8 +772,8 @@ $radius-lg: 16px;
     .list-card {
       .paper-title-cell {
         .paper-icon {
-          background: rgba(124, 58, 237, 0.2);
-          color: #a78bfa;
+          background: rgba(20, 184, 166, 0.2);
+          color: #5eead4;
         }
 
         .paper-course {
@@ -873,6 +873,13 @@ $radius-lg: 16px;
       border-radius: $radius-md;
       font-weight: 600;
       font-size: 16px;
+      color: #fff;
+      background: $primary-gradient;
+      border: none;
+
+      &:hover {
+        opacity: 0.92;
+      }
     }
   }
 
@@ -970,12 +977,12 @@ $radius-lg: 16px;
       transition: all 0.2s;
 
       &:hover {
-        background: rgba(79, 70, 229, 0.05);
+        background: rgba(15, 118, 110, 0.08);
       }
 
       &.active {
-        background: rgba(79, 70, 229, 0.1);
-        color: #4f46e5;
+        background: rgba(15, 118, 110, 0.14);
+        color: #0f766e;
       }
 
       &.child {
@@ -999,7 +1006,7 @@ $radius-lg: 16px;
       }
 
       &.active .folder-count {
-        background: #4f46e5;
+        background: #0f766e;
         color: #fff;
       }
 
@@ -1060,8 +1067,8 @@ $radius-lg: 16px;
         justify-content: center;
         width: 44px;
         height: 44px;
-        color: #7c3aed;
-        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+        color: #0f766e;
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
         border-radius: 8px;
 
         :deep(svg) {

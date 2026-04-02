@@ -41,8 +41,36 @@ export enum QuestionType {
   /** 连线题 */
   MATCHING = 9,
   /** 排序题 */
-  ORDERING = 10
+  ORDERING = 10,
+  /** 滑动评分 */
+  SLIDER = 11,
+  /** NPS评分 */
+  NPS_RATING = 12,
+  /** 星级评分 */
+  STAR_RATING = 13,
+  /** 组合材料题 */
+  COMPOSITE = 14
 }
+
+/** 题型字符串标识（教师编辑器使用） */
+export type QuestionTypeKey =
+  | "radio"
+  | "checkbox"
+  | "judge"
+  | "input"
+  | "textarea"
+  | "textarea-essay"
+  | "matrix-single"
+  | "matrix-multiple"
+  | "matching"
+  | "ordering"
+  | "slider"
+  | "nps-rating"
+  | "star-rating"
+  | "composite";
+
+/** 兼容型题型（数字/字符串） */
+export type QuestionTypeLike = QuestionType | QuestionTypeKey;
 
 /** 用户角色枚举 */
 export enum UserRole {
@@ -96,7 +124,7 @@ export interface MatchingPair {
 /** 题目数据 */
 export interface Question {
   questionId: number;
-  questionType: QuestionType;
+  questionType: QuestionTypeLike;
   /** 题目标题（简短描述） */
   title: string;
   /** 题干内容 */
@@ -111,6 +139,28 @@ export interface Question {
   matchingPairs?: MatchingPair[];
   /** 排序题选项 */
   orderingItems?: string[];
+  /** 滑动评分范围 */
+  sliderMin?: number;
+  sliderMax?: number;
+  sliderStep?: number;
+  sliderDefaultValue?: number;
+  sliderLabels?: { left?: string; right?: string };
+  /** NPS评分范围 */
+  npsMin?: number;
+  npsMax?: number;
+  npsLabels?: { min?: string; max?: string; low?: string; mid?: string; high?: string };
+  /** 星级评分 */
+  starCount?: number;
+  starLabels?: string[];
+  /** 组合材料题 */
+  material?: string;
+  subQuestions?: Array<{
+    subId: number | string;
+    questionType: QuestionTypeLike;
+    stem: string;
+    points: number;
+    options?: QuestionOption[];
+  }>;
   /** 正确答案（单选/判断/填空） */
   correctAnswer?: string;
   /** 正确答案（多选/矩阵） */
@@ -250,7 +300,7 @@ export interface KnowledgePoint {
 export interface QuestionGroup {
   groupId: number;
   groupName: string;
-  questionType: QuestionType;
+  questionType: QuestionTypeLike;
   questions: Question[];
   sortOrder: number;
 }
@@ -369,7 +419,7 @@ export interface ClassInfo {
 /** 学生答案 */
 export interface StudentAnswer {
   questionId: number;
-  answer: string | string[];
+  answer: StudentAnswerValue;
   /** 得分（批改后） */
   score?: number;
   /** 批改评语 */
@@ -479,7 +529,7 @@ export interface CreatePaperParams {
   timeLimit: number;
   questionGroups: Array<{
     groupName: string;
-    questionType: QuestionType;
+    questionType: QuestionTypeLike;
     questions: Array<Omit<Question, "questionId" | "sortOrder">>;
   }>;
 }
@@ -493,7 +543,7 @@ export interface UpdatePaperParams {
   questionGroups?: Array<{
     groupId?: number;
     groupName: string;
-    questionType: QuestionType;
+    questionType: QuestionTypeLike;
     questions: Array<Omit<Question, "sortOrder"> & { questionId?: number }>;
   }>;
 }
@@ -899,7 +949,7 @@ export const getLearningAnalytics = (params?: GetLearningAnalyticsParams) => {
 export const getCourseList = () => {
   return http.request<ApiResponse<Array<{ id: number; name: string }>>>(
     "get",
-    "/edu/backend/v1/course/list"
+    "/edu/backend/v1/paper/course/list"
   );
 };
 
@@ -1453,12 +1503,12 @@ export interface StudentPaperItem {
    * retake - 补考中（允许补考且在补考时间内）
    */
   status:
-    | "available"
-    | "submitted"
-    | "graded"
-    | "completed"
-    | "expired"
-    | "retake";
+  | "available"
+  | "submitted"
+  | "graded"
+  | "completed"
+  | "expired"
+  | "retake";
   /** 提交ID（已提交时） */
   submissionId?: number;
   /** 得分（已完成且成绩发布后） */
@@ -1477,12 +1527,12 @@ export interface StudentPaperItem {
 export interface GetStudentPaperListParams extends PageParams {
   /** 状态筛选 */
   status?:
-    | "available"
-    | "submitted"
-    | "graded"
-    | "completed"
-    | "expired"
-    | "retake";
+  | "available"
+  | "submitted"
+  | "graded"
+  | "completed"
+  | "expired"
+  | "retake";
   /** 课程ID */
   courseId?: number;
   /** 关键词搜索 */
@@ -1507,6 +1557,53 @@ export interface StudentPaperStatistics {
   avgScore: number;
 }
 
+/** 学生端题目（脱敏，不包含标准答案） */
+export type StudentExamQuestion = Omit<
+  Question,
+  "correctAnswer" | "correctAnswers" | "referenceAnswer" | "analysis"
+>;
+
+/** 学生端题目分组（脱敏） */
+export interface StudentExamQuestionGroup
+  extends Omit<QuestionGroup, "questions"> {
+  questions: StudentExamQuestion[];
+}
+
+/** 学生端试卷详情（脱敏） */
+export interface StudentPaperDetail extends Omit<Paper, "questionGroups"> {
+  questionGroups?: StudentExamQuestionGroup[];
+}
+
+/** 开始考试响应 */
+export interface StartExamResult {
+  submissionId: number;
+  paper: StudentPaperDetail;
+  remainingTime: number;
+  /** 服务端时间戳（毫秒，用于前后端时钟校准） */
+  serverTime?: number;
+}
+
+/** 学生答案值 */
+export type StudentAnswerValue =
+  | string
+  | string[]
+  | number
+  | null
+  | Record<string, any>
+  | Array<string | number>;
+
+/** 考试会话快照（断线恢复） */
+export interface ExamSessionSnapshot {
+  submissionId: number;
+  remainingTime: number;
+  status: "in_progress" | "submitted" | "expired";
+  answers: Array<{
+    questionId: number;
+    answer: StudentAnswerValue;
+    duration?: number;
+  }>;
+}
+
 /**
  * 获取学生试卷列表（试题试卷中心）
  */
@@ -1516,6 +1613,16 @@ export const getStudentPaperList = (params: GetStudentPaperListParams) => {
       PageResult<StudentPaperItem> & { statistics?: StudentPaperStatistics }
     >
   >("get", "/edu/frontend/v1/paper/list", { params });
+};
+
+/**
+ * 获取学生试卷详情（脱敏）
+ */
+export const getStudentPaperDetail = (paperId: number) => {
+  return http.request<ApiResponse<StudentPaperDetail>>(
+    "get",
+    `/edu/frontend/v1/paper/detail/${paperId}`
+  );
 };
 
 /**
@@ -1547,13 +1654,11 @@ export const getStudentExamList = (params: GetStudentExamListParams) => {
  * 开始考试
  */
 export const startExam = (paperId: number) => {
-  return http.request<
-    ApiResponse<{
-      submissionId: number;
-      paper: Paper;
-      remainingTime: number;
-    }>
-  >("post", "/edu/frontend/v1/exam/start", { data: { paperId } });
+  return http.request<ApiResponse<StartExamResult>>(
+    "post",
+    "/edu/frontend/v1/exam/start",
+    { data: { paperId } }
+  );
 };
 
 /**
@@ -1562,12 +1667,29 @@ export const startExam = (paperId: number) => {
 export const saveAnswer = (data: {
   submissionId: number;
   questionId: number;
-  answer: string | string[];
+  answer: StudentAnswerValue;
   duration?: number; // 该题累计答题时长（秒）
 }) => {
   return http.request<ApiResponse>("post", "/edu/frontend/v1/exam/save", {
     data
   });
+};
+
+/**
+ * 批量保存答案（弱网优化）
+ */
+export const saveAnswersBatch = (data: {
+  submissionId: number;
+  answers: Array<{
+    questionId: number;
+    answer: StudentAnswerValue;
+  }>;
+}) => {
+  return http.request<ApiResponse<{ savedCount: number }>>(
+    "post",
+    "/edu/frontend/v1/exam/save-batch",
+    { data }
+  );
 };
 
 /**
@@ -1598,6 +1720,44 @@ export const getQuestionDuration = (data: {
     "/edu/frontend/v1/exam/question-duration",
     { data }
   );
+};
+
+/**
+ * 获取考试会话快照（断线恢复）
+ */
+export const getExamSession = (submissionId: number) => {
+  return http.request<ApiResponse<ExamSessionSnapshot>>(
+    "get",
+    `/edu/frontend/v1/exam/session/${submissionId}`
+  );
+};
+
+/**
+ * 考试心跳（在线状态）
+ */
+export const examHeartbeat = (data: {
+  submissionId: number;
+  clientTime: number;
+}) => {
+  return http.request<ApiResponse<{ serverTime: number }>>(
+    "post",
+    "/edu/frontend/v1/exam/heartbeat",
+    { data }
+  );
+};
+
+/**
+ * 防作弊事件上报
+ */
+export const reportAntiCheatEvent = (data: {
+  submissionId: number;
+  eventType: string;
+  eventTime: number;
+  detail?: string;
+}) => {
+  return http.request<ApiResponse>("post", "/edu/frontend/v1/exam/anti-cheat/event", {
+    data
+  });
 };
 
 /**
@@ -1657,9 +1817,41 @@ export const getPaperStatusType = (status: PaperStatus): string => {
 };
 
 /**
+ * 题型归一化（兼容数字/字符串）
+ */
+export const normalizeQuestionType = (
+  type: QuestionTypeLike | string | number | null | undefined
+): QuestionType | null => {
+  if (type === null || type === undefined) return null;
+  if (typeof type === "number") {
+    if (type >= 1 && type <= 14) return type as QuestionType;
+    return null;
+  }
+  const map: Record<string, QuestionType> = {
+    radio: QuestionType.SINGLE_CHOICE,
+    checkbox: QuestionType.MULTIPLE_CHOICE,
+    judge: QuestionType.TRUE_FALSE,
+    input: QuestionType.FILL_BLANK,
+    textarea: QuestionType.SHORT_ANSWER,
+    "textarea-essay": QuestionType.ESSAY,
+    "matrix-single": QuestionType.MATRIX_SINGLE,
+    "matrix-multiple": QuestionType.MATRIX_MULTIPLE,
+    matching: QuestionType.MATCHING,
+    ordering: QuestionType.ORDERING,
+    slider: QuestionType.SLIDER,
+    "nps-rating": QuestionType.NPS_RATING,
+    "star-rating": QuestionType.STAR_RATING,
+    composite: QuestionType.COMPOSITE
+  };
+  return map[type] ?? null;
+};
+
+/**
  * 获取题型名称
  */
-export const getQuestionTypeName = (type: QuestionType): string => {
+export const getQuestionTypeName = (type: QuestionTypeLike): string => {
+  const normalized = normalizeQuestionType(type);
+  if (!normalized) return "未知题型";
   const typeMap: Record<QuestionType, string> = {
     [QuestionType.SINGLE_CHOICE]: "单选题",
     [QuestionType.MULTIPLE_CHOICE]: "多选题",
@@ -1670,28 +1862,42 @@ export const getQuestionTypeName = (type: QuestionType): string => {
     [QuestionType.MATRIX_SINGLE]: "矩阵单选",
     [QuestionType.MATRIX_MULTIPLE]: "矩阵多选",
     [QuestionType.MATCHING]: "连线题",
-    [QuestionType.ORDERING]: "排序题"
+    [QuestionType.ORDERING]: "排序题",
+    [QuestionType.SLIDER]: "滑动评分",
+    [QuestionType.NPS_RATING]: "NPS评分",
+    [QuestionType.STAR_RATING]: "星级评分",
+    [QuestionType.COMPOSITE]: "组合材料题"
   };
-  return typeMap[type] || "未知题型";
+  return typeMap[normalized] || "未知题型";
 };
 
 /**
  * 判断是否为客观题（可自动批改）
  */
-export const isObjectiveQuestion = (type: QuestionType): boolean => {
+export const isObjectiveQuestion = (type: QuestionTypeLike): boolean => {
+  const normalized = normalizeQuestionType(type);
+  if (!normalized) return false;
   return [
     QuestionType.SINGLE_CHOICE,
     QuestionType.MULTIPLE_CHOICE,
     QuestionType.TRUE_FALSE,
     QuestionType.FILL_BLANK,
+    QuestionType.MATRIX_SINGLE,
+    QuestionType.MATRIX_MULTIPLE,
     QuestionType.MATCHING,
     QuestionType.ORDERING
-  ].includes(type);
+  ].includes(normalized);
 };
 
 /**
  * 判断是否为主观题（需人工批改）
  */
-export const isSubjectiveQuestion = (type: QuestionType): boolean => {
-  return [QuestionType.SHORT_ANSWER, QuestionType.ESSAY].includes(type);
+export const isSubjectiveQuestion = (type: QuestionTypeLike): boolean => {
+  const normalized = normalizeQuestionType(type);
+  if (!normalized) return false;
+  return [
+    QuestionType.SHORT_ANSWER,
+    QuestionType.ESSAY,
+    QuestionType.COMPOSITE
+  ].includes(normalized);
 };

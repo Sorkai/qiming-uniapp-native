@@ -274,13 +274,18 @@ onMounted(() => {
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">
+          <el-button
+            type="primary"
+            class="search-btn"
+            size="default"
+            @click="handleSearch"
+          >
             <el-icon class="mr-1"><Search /></el-icon>
-            搜索
+            <span>搜索</span>
           </el-button>
-          <el-button @click="handleReset">
+          <el-button class="reset-btn" size="default" @click="handleReset">
             <el-icon class="mr-1"><Refresh /></el-icon>
-            重置
+            <span>重置</span>
           </el-button>
         </el-form-item>
       </el-form>
@@ -351,28 +356,36 @@ onMounted(() => {
         />
         <el-table-column label="操作" width="280" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button
-              v-if="row.status !== 'completed'"
-              type="primary"
-              size="small"
-              @click="handleGrade(row)"
-            >
-              <el-icon class="mr-1"><Edit /></el-icon>
-              阅卷
-            </el-button>
-            <el-button
-              v-if="row.status !== 'completed'"
-              type="success"
-              size="small"
-              @click="handleAutoGrade(row)"
-            >
-              <el-icon class="mr-1"><MagicStick /></el-icon>
-              自动批改
-            </el-button>
-            <el-button size="small" @click="handleView(row)">
-              <el-icon class="mr-1"><View /></el-icon>
-              详情
-            </el-button>
+            <div class="operation-actions">
+              <el-button
+                v-if="row.status !== 'completed'"
+                class="operation-btn"
+                type="primary"
+                size="small"
+                @click="handleGrade(row)"
+              >
+                <el-icon><Edit /></el-icon>
+                <span>阅卷</span>
+              </el-button>
+              <el-button
+                v-if="row.status !== 'completed'"
+                class="operation-btn"
+                type="success"
+                size="small"
+                @click="handleAutoGrade(row)"
+              >
+                <el-icon><MagicStick /></el-icon>
+                <span>自动批改</span>
+              </el-button>
+              <el-button
+                class="operation-btn"
+                size="small"
+                @click="handleView(row)"
+              >
+                <el-icon><View /></el-icon>
+                <span>详情</span>
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -683,6 +696,29 @@ $radius-xl: 20px;
   :deep(.el-form-item) {
     margin-bottom: 0;
   }
+
+  /* 解决按钮文字未居中问题 */
+  .search-btn,
+  .reset-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 32px;
+    padding: 0 16px;
+    line-height: 1 !important;
+
+    :deep(span) {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      line-height: 1 !important;
+    }
+
+    :deep(.el-icon) {
+      margin-right: 4px !important;
+      line-height: 1 !important;
+    }
+  }
 }
 
 .list-card {
@@ -768,6 +804,40 @@ $radius-xl: 20px;
     justify-content: flex-end;
     padding: 16px 24px;
     border-top: 1px solid $light-border;
+  }
+
+  .operation-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    .operation-btn {
+      min-width: 64px;
+      height: 28px;
+      padding: 0 10px;
+      margin: 0;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px;
+      line-height: 1 !important;
+      border-radius: 8px;
+
+      :deep(span) {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+      }
+
+      :deep(.el-icon) {
+        margin: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+    }
   }
 }
 

@@ -4,8 +4,7 @@ import {
   reactive,
   computed,
   onMounted,
-  onBeforeUnmount,
-  watch
+  onBeforeUnmount
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -14,7 +13,9 @@ import {
   startExam,
   saveAnswer,
   saveDuration,
-  submitExam
+  submitExam,
+  normalizeQuestionType,
+  type StudentAnswerValue
 } from "@/api/examPaper";
 import RichContent from "@/views/exam-paper/editor/components/RichContent.vue";
 
@@ -46,11 +47,50 @@ const currentQuestionIndex = ref(0);
 // 学生答案（使用时间戳记录）
 interface AnswerRecord {
   questionId: number;
-  answer: string | string[];
+  answer: StudentAnswerValue;
   duration: number; // 该题累计答题时长（秒，从后端获取）
   enterTime: number; // 进入该题的时间戳（毫秒）
 }
 const answers = ref<Map<number, AnswerRecord>>(new Map());
+
+const toQuestionTypeCode = (type: unknown) =>
+  normalizeQuestionType(type as any) || 0;
+
+const getQuestionTypeCode = (question: any) =>
+  toQuestionTypeCode(question?.questionType);
+
+const isObjectAnswer = (value: StudentAnswerValue): value is Record<string, any> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isAnsweredValue = (value: StudentAnswerValue) => {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string") return value.trim() !== "";
+  if (typeof value === "number") return !Number.isNaN(value);
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") {
+    const entries = Object.entries(value);
+    if (entries.length === 0) return false;
+    return entries.some(([, entryValue]) => {
+      if (entryValue === null || entryValue === undefined) return false;
+      if (typeof entryValue === "string") return entryValue.trim() !== "";
+      if (typeof entryValue === "number") return !Number.isNaN(entryValue);
+      if (Array.isArray(entryValue)) return entryValue.length > 0;
+      if (typeof entryValue === "object") {
+        return Object.keys(entryValue).length > 0;
+      }
+      return Boolean(entryValue);
+    });
+  }
+  return false;
+};
+
+const getDefaultAnswerByType = (question: any): StudentAnswerValue => {
+  const type = getQuestionTypeCode(question);
+  if (type === 2 || type === 10) return [];
+  if ([7, 8, 9, 14].includes(type)) return {};
+  if ([11, 12, 13].includes(type)) return null;
+  return "";
+};
 
 // 考试计时器
 let examTimer: ReturnType<typeof setInterval> | null = null;
@@ -103,11 +143,7 @@ const formattedRemainingTime = computed(() => {
 const answeredCount = computed(() => {
   let count = 0;
   answers.value.forEach(record => {
-    if (
-      record.answer !== "" &&
-      record.answer !== null &&
-      (Array.isArray(record.answer) ? record.answer.length > 0 : true)
-    ) {
+    if (isAnsweredValue(record.answer)) {
       count++;
     }
   });
@@ -120,7 +156,7 @@ const initAnswerRecords = () => {
     if (!answers.value.has(q.questionId)) {
       answers.value.set(q.questionId, {
         questionId: q.questionId,
-        answer: q.questionType === 2 ? [] : "", // 多选题用数组
+        answer: getDefaultAnswerByType(q),
         duration: 0, // 从后端获取
         enterTime: 0
       });
@@ -189,7 +225,7 @@ const nextQuestion = () => {
 };
 
 // 更新答案
-const updateAnswer = (value: string | string[]) => {
+const updateAnswer = (value: StudentAnswerValue) => {
   if (!currentQuestion.value) return;
   const record = answers.value.get(currentQuestion.value.questionId);
   if (record) {
@@ -202,7 +238,7 @@ const updateAnswer = (value: string | string[]) => {
 // 自动保存答案（仅保存答案内容）
 const autoSaveAnswer = async (
   questionId: number,
-  answer: string | string[]
+  answer: StudentAnswerValue
 ) => {
   if (!examData.submissionId) return;
   try {
@@ -239,20 +275,6 @@ const handleSubmit = async () => {
 
     submitting.value = true;
 
-    // 提交前保存所有答案的最终时长
-    const finalAnswers: Array<{
-      questionId: number;
-      answer: string | string[];
-      duration: number;
-    }> = [];
-    answers.value.forEach(record => {
-      finalAnswers.push({
-        questionId: record.questionId,
-        answer: record.answer,
-        duration: record.duration
-      });
-    });
-
     // 调用提交接口
     const res = await submitExam(examData.submissionId);
 
@@ -260,8 +282,11 @@ const handleSubmit = async () => {
       ElMessage.success("试卷提交成功！");
       // 停止计时器
       stopTimers();
-      // 跳转到结果页或返回列表
-      router.push("/exam-paper");
+      if (res.data?.showScore) {
+        router.push(`/exam-paper/result/${examData.submissionId}`);
+      } else {
+        router.push("/student-exam-center/list");
+      }
     } else {
       ElMessage.error(res.msg || "提交失败");
       // 重新进入当前题目计时
@@ -340,10 +365,94 @@ const formatDuration = (seconds: number) => {
 const isQuestionAnswered = (questionId: number) => {
   const record = answers.value.get(questionId);
   if (!record) return false;
-  if (Array.isArray(record.answer)) {
-    return record.answer.length > 0;
+  return isAnsweredValue(record.answer);
+};
+
+const getMatrixRows = (question: any) => question?.matrixRows || question?.rows || [];
+const getMatrixCols = (question: any) => question?.matrixCols || question?.columns || [];
+
+const getMatchingLeftItems = (question: any) => {
+  if (question?.leftItems?.length) return question.leftItems;
+  if (question?.matchingPairs?.length) {
+    return question.matchingPairs.map((pair: any, index: number) => ({
+      key: `L${index + 1}`,
+      content: pair.left
+    }));
   }
-  return record.answer !== "" && record.answer !== null;
+  return [];
+};
+
+const getMatchingRightItems = (question: any) => {
+  if (question?.rightItems?.length) return question.rightItems;
+  if (question?.matchingPairs?.length) {
+    return question.matchingPairs.map((pair: any, index: number) => ({
+      key: `R${index + 1}`,
+      content: pair.right
+    }));
+  }
+  return [];
+};
+
+const getOrderingItems = (question: any): string[] => {
+  if (Array.isArray(question?.orderingItems)) return question.orderingItems;
+  if (Array.isArray(question?.items)) {
+    return question.items
+      .map((item: any) => item?.content || item?.key)
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const updateMatrixSingleAnswer = (rowKey: string, value: string) => {
+  if (!currentQuestion.value) return;
+  const record = answers.value.get(currentQuestion.value.questionId);
+  const base = isObjectAnswer(record?.answer as StudentAnswerValue)
+    ? { ...(record?.answer as Record<string, any>) }
+    : {};
+  base[rowKey] = value;
+  updateAnswer(base);
+};
+
+const updateMatrixMultipleAnswer = (rowKey: string, value: string[]) => {
+  if (!currentQuestion.value) return;
+  const record = answers.value.get(currentQuestion.value.questionId);
+  const base = isObjectAnswer(record?.answer as StudentAnswerValue)
+    ? { ...(record?.answer as Record<string, any>) }
+    : {};
+  base[rowKey] = value;
+  updateAnswer(base);
+};
+
+const updateMatchingAnswer = (leftKey: string, value: string) => {
+  if (!currentQuestion.value) return;
+  const record = answers.value.get(currentQuestion.value.questionId);
+  const base = isObjectAnswer(record?.answer as StudentAnswerValue)
+    ? { ...(record?.answer as Record<string, any>) }
+    : {};
+  base[leftKey] = value;
+  updateAnswer(base);
+};
+
+const getCompositeSubQuestions = (question: any) =>
+  Array.isArray(question?.subQuestions) ? question.subQuestions : [];
+
+const updateCompositeSubAnswer = (
+  subId: number | string,
+  value: StudentAnswerValue
+) => {
+  if (!currentQuestion.value) return;
+  const record = answers.value.get(currentQuestion.value.questionId);
+  const base = isObjectAnswer(record?.answer as StudentAnswerValue)
+    ? { ...(record?.answer as Record<string, any>) }
+    : {};
+  base[String(subId)] = value;
+  updateAnswer(base);
+};
+
+const getCompositeSubAnswer = (subId: number | string): StudentAnswerValue => {
+  const answer = currentAnswerRecord.value?.answer;
+  if (!isObjectAnswer(answer as StudentAnswerValue)) return "";
+  return (answer as Record<string, any>)[String(subId)] ?? "";
 };
 
 // 加载考试数据
@@ -418,7 +527,12 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <div class="header-right">
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+        <el-button
+          type="primary"
+          class="submit-btn"
+          :loading="submitting"
+          @click="handleSubmit"
+        >
           <el-icon><Check /></el-icon>
           交卷
         </el-button>
@@ -498,8 +612,7 @@ onBeforeUnmount(() => {
             <!-- 单选题 -->
             <template
               v-if="
-                currentQuestion.questionType === 1 ||
-                currentQuestion.questionType === 3
+                [1, 3].includes(getQuestionTypeCode(currentQuestion))
               "
             >
               <el-radio-group
@@ -525,7 +638,7 @@ onBeforeUnmount(() => {
             </template>
 
             <!-- 多选题 -->
-            <template v-else-if="currentQuestion.questionType === 2">
+            <template v-else-if="getQuestionTypeCode(currentQuestion) === 2">
               <el-checkbox-group
                 :model-value="currentAnswerRecord?.answer as string[]"
                 class="options-group"
@@ -551,7 +664,7 @@ onBeforeUnmount(() => {
             </template>
 
             <!-- 填空题 -->
-            <template v-else-if="currentQuestion.questionType === 4">
+            <template v-else-if="getQuestionTypeCode(currentQuestion) === 4">
               <el-input
                 :model-value="currentAnswerRecord?.answer as string"
                 placeholder="请输入答案"
@@ -563,8 +676,7 @@ onBeforeUnmount(() => {
             <!-- 简答题/论述题 -->
             <template
               v-else-if="
-                currentQuestion.questionType === 5 ||
-                currentQuestion.questionType === 6
+                [5, 6].includes(getQuestionTypeCode(currentQuestion))
               "
             >
               <el-input
@@ -576,11 +688,259 @@ onBeforeUnmount(() => {
                 @update:model-value="updateAnswer"
               />
             </template>
+
+            <!-- 矩阵题 -->
+            <template
+              v-else-if="
+                [7, 8].includes(getQuestionTypeCode(currentQuestion))
+              "
+            >
+              <div class="matrix-wrapper">
+                <div class="matrix-header">
+                  <span class="matrix-cell matrix-first" />
+                  <span
+                    v-for="col in getMatrixCols(currentQuestion)"
+                    :key="col.key"
+                    class="matrix-cell"
+                  >
+                    {{ col.content }}
+                  </span>
+                </div>
+                <div
+                  v-for="row in getMatrixRows(currentQuestion)"
+                  :key="row.key"
+                  class="matrix-row"
+                >
+                  <span class="matrix-cell matrix-first">{{ row.content }}</span>
+
+                  <template v-if="getQuestionTypeCode(currentQuestion) === 7">
+                    <el-radio-group
+                      :model-value="
+                        (currentAnswerRecord?.answer as Record<string, string>)?.[
+                          row.key
+                        ]
+                      "
+                      class="matrix-radio-group"
+                      @update:model-value="val => updateMatrixSingleAnswer(row.key, val)"
+                    >
+                      <el-radio
+                        v-for="col in getMatrixCols(currentQuestion)"
+                        :key="`${row.key}-${col.key}`"
+                        :value="col.key"
+                        class="matrix-cell"
+                      />
+                    </el-radio-group>
+                  </template>
+
+                  <template v-else>
+                    <el-checkbox-group
+                      :model-value="
+                        ((currentAnswerRecord?.answer as Record<string, string[]>)?.[
+                          row.key
+                        ] || []) as string[]
+                      "
+                      class="matrix-checkbox-group"
+                      @update:model-value="val => updateMatrixMultipleAnswer(row.key, val as string[])"
+                    >
+                      <el-checkbox
+                        v-for="col in getMatrixCols(currentQuestion)"
+                        :key="`${row.key}-${col.key}`"
+                        :value="col.key"
+                        class="matrix-cell"
+                      />
+                    </el-checkbox-group>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- 连线题 -->
+            <template v-else-if="getQuestionTypeCode(currentQuestion) === 9">
+              <div class="matching-wrapper">
+                <div
+                  v-for="left in getMatchingLeftItems(currentQuestion)"
+                  :key="left.key"
+                  class="matching-row"
+                >
+                  <span class="matching-left">{{ left.content }}</span>
+                  <el-select
+                    :model-value="
+                      (currentAnswerRecord?.answer as Record<string, string>)?.[
+                        left.key
+                      ]
+                    "
+                    placeholder="请选择对应项"
+                    class="matching-select"
+                    @update:model-value="val => updateMatchingAnswer(left.key, val)"
+                  >
+                    <el-option
+                      v-for="right in getMatchingRightItems(currentQuestion)"
+                      :key="right.key"
+                      :label="right.content"
+                      :value="right.key"
+                    />
+                  </el-select>
+                </div>
+              </div>
+            </template>
+
+            <!-- 排序题 -->
+            <template v-else-if="getQuestionTypeCode(currentQuestion) === 10">
+              <div class="ordering-wrapper">
+                <div class="ordering-tip">请选择并按顺序点击选项以形成你的排序答案</div>
+                <el-select
+                  :model-value="(currentAnswerRecord?.answer as string[]) || []"
+                  multiple
+                  class="ordering-select"
+                  placeholder="按顺序选择"
+                  @update:model-value="updateAnswer"
+                >
+                  <el-option
+                    v-for="(item, idx) in getOrderingItems(currentQuestion)"
+                    :key="`${item}-${idx}`"
+                    :label="item"
+                    :value="item"
+                  />
+                </el-select>
+              </div>
+            </template>
+
+            <!-- 滑动评分 -->
+            <template v-else-if="getQuestionTypeCode(currentQuestion) === 11">
+              <div class="slider-wrapper">
+                <el-slider
+                  :model-value="(currentAnswerRecord?.answer as number | null) ?? 0"
+                  :min="currentQuestion.sliderMin ?? 0"
+                  :max="currentQuestion.sliderMax ?? 100"
+                  :step="currentQuestion.sliderStep ?? 1"
+                  show-input
+                  @update:model-value="updateAnswer"
+                />
+                <div class="slider-labels">
+                  <span>{{ currentQuestion.sliderLabels?.left || "最低" }}</span>
+                  <span>{{ currentQuestion.sliderLabels?.right || "最高" }}</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- NPS评分 -->
+            <template v-else-if="getQuestionTypeCode(currentQuestion) === 12">
+              <div class="nps-wrapper">
+                <el-radio-group
+                  :model-value="currentAnswerRecord?.answer as number"
+                  class="nps-group"
+                  @update:model-value="updateAnswer"
+                >
+                  <el-radio
+                    v-for="score in currentQuestion.npsMax ? currentQuestion.npsMax + 1 : 11"
+                    :key="`nps-${score - 1}`"
+                    :value="score - 1"
+                    class="nps-item"
+                  >
+                    {{ score - 1 }}
+                  </el-radio>
+                </el-radio-group>
+              </div>
+            </template>
+
+            <!-- 星级评分 -->
+            <template v-else-if="getQuestionTypeCode(currentQuestion) === 13">
+              <div class="star-wrapper">
+                <el-rate
+                  :model-value="(currentAnswerRecord?.answer as number | null) ?? 0"
+                  :max="currentQuestion.starCount || 5"
+                  show-score
+                  @update:model-value="updateAnswer"
+                />
+              </div>
+            </template>
+
+            <!-- 组合材料题 -->
+            <template v-else-if="getQuestionTypeCode(currentQuestion) === 14">
+              <div class="composite-wrapper">
+                <div v-if="currentQuestion.material" class="composite-material">
+                  <div class="material-title">材料</div>
+                  <RichContent :content="currentQuestion.material" />
+                </div>
+
+                <div
+                  v-for="(sub, subIndex) in getCompositeSubQuestions(currentQuestion)"
+                  :key="sub.subId || subIndex"
+                  class="composite-sub-question"
+                >
+                  <div class="sub-title">
+                    子题 {{ subIndex + 1 }}（{{ sub.points || 0 }}分）
+                  </div>
+                  <RichContent :content="sub.stem || ''" />
+
+                  <el-radio-group
+                    v-if="toQuestionTypeCode(sub.questionType) === 1"
+                    :model-value="getCompositeSubAnswer(sub.subId)"
+                    class="options-group"
+                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, val)"
+                  >
+                    <el-radio
+                      v-for="option in sub.options || []"
+                      :key="option.key"
+                      :value="option.key"
+                      class="option-item"
+                    >
+                      <span class="option-key">{{ option.key }}.</span>
+                      <span class="option-content">
+                        <RichContent :content="option.content" />
+                      </span>
+                    </el-radio>
+                  </el-radio-group>
+
+                  <el-checkbox-group
+                    v-else-if="toQuestionTypeCode(sub.questionType) === 2"
+                    :model-value="(getCompositeSubAnswer(sub.subId) as string[]) || []"
+                    class="options-group"
+                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, val as string[])"
+                  >
+                    <el-checkbox
+                      v-for="option in sub.options || []"
+                      :key="option.key"
+                      :value="option.key"
+                      class="option-item"
+                    >
+                      <span class="option-key">{{ option.key }}.</span>
+                      <span class="option-content">
+                        <RichContent :content="option.content" />
+                      </span>
+                    </el-checkbox>
+                  </el-checkbox-group>
+
+                  <el-input
+                    v-else-if="toQuestionTypeCode(sub.questionType) === 4"
+                    :model-value="getCompositeSubAnswer(sub.subId) as string"
+                    placeholder="请输入答案"
+                    class="fill-input"
+                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, val)"
+                  />
+
+                  <el-input
+                    v-else
+                    :model-value="getCompositeSubAnswer(sub.subId) as string"
+                    type="textarea"
+                    :rows="4"
+                    placeholder="请输入答案"
+                    class="essay-input"
+                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, val)"
+                  />
+                </div>
+              </div>
+            </template>
+
+            <template v-else>
+              <el-empty description="当前题型暂未适配" :image-size="100" />
+            </template>
           </div>
 
           <!-- 底部导航 -->
           <div class="question-footer">
             <el-button
+              class="nav-btn"
               :disabled="currentQuestionIndex === 0"
               @click="prevQuestion"
             >
@@ -589,6 +949,7 @@ onBeforeUnmount(() => {
             </el-button>
             <el-button
               v-if="currentQuestionIndex < allQuestions.length - 1"
+              class="nav-btn"
               type="primary"
               @click="nextQuestion"
             >
@@ -597,6 +958,7 @@ onBeforeUnmount(() => {
             </el-button>
             <el-button
               v-else
+              class="nav-btn"
               type="success"
               :loading="submitting"
               @click="handleSubmit"
@@ -675,8 +1037,10 @@ onBeforeUnmount(() => {
     .timer {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      padding: 8px 16px;
+      min-height: 42px;
+      padding: 0 16px;
       background: #f0f9ff;
       border-radius: 8px;
       font-size: 16px;
@@ -836,10 +1200,12 @@ onBeforeUnmount(() => {
     .question-timer {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
+      min-height: 34px;
       font-size: 14px;
       color: #6b7280;
-      padding: 6px 12px;
+      padding: 0 12px;
       background: #f5f7fa;
       border-radius: 6px;
     }
@@ -923,6 +1289,100 @@ onBeforeUnmount(() => {
     .essay-input {
       width: 100%;
     }
+
+    .matrix-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .matrix-header,
+      .matrix-row {
+        display: grid;
+        grid-template-columns: 180px repeat(auto-fit, minmax(80px, 1fr));
+        align-items: center;
+        gap: 8px;
+      }
+
+      .matrix-cell {
+        text-align: center;
+      }
+
+      .matrix-first {
+        text-align: left;
+        font-weight: 600;
+      }
+
+      .matrix-radio-group,
+      .matrix-checkbox-group {
+        display: contents;
+      }
+    }
+
+    .matching-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .matching-row {
+        display: grid;
+        grid-template-columns: 1fr 260px;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .matching-left {
+        padding: 10px 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+    }
+
+    .ordering-wrapper,
+    .slider-wrapper,
+    .nps-wrapper,
+    .star-wrapper,
+    .composite-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .ordering-tip {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .nps-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .nps-item {
+      margin-right: 0;
+    }
+
+    .composite-material,
+    .composite-sub-question {
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fcfcfd;
+    }
+
+    .material-title,
+    .sub-title {
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #374151;
+    }
   }
 
   .question-footer {
@@ -931,6 +1391,41 @@ onBeforeUnmount(() => {
     gap: 16px;
     padding-top: 20px;
     border-top: 1px solid #e5e7eb;
+
+    .nav-btn {
+      min-width: 96px;
+      height: 40px;
+      padding: 0 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      line-height: 1;
+      border-radius: 10px;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+  }
+}
+
+.header-right {
+  .submit-btn {
+    min-width: 84px;
+    height: 40px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    line-height: 1;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    background: #0f766e;
+
+    &:hover {
+      background: #0d9488;
+    }
   }
 }
 </style>

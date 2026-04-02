@@ -323,8 +323,8 @@
             <el-scrollbar ref="chatScrollRef">
               <div class="chat-container">
                 <div class="welcome-section">
-                  <div class="welcome-avatar">
-                    <img :src="aiPeopleAvatar" alt="" />
+                  <div class="welcome-avatar" :class="`state-${aiAvatarState}`">
+                    <img :src="aiPeopleAvatar" alt="" :style="welcomeAvatarStyle" />
                   </div>
                   <h3>Hi～我是您的 AI 助教</h3>
                   <p>课程学习中欢迎随时提问，我将全力为您答疑解惑！</p>
@@ -410,10 +410,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import CourseHeader from "./CourseHeader.vue";
 import VideoAnalysisPanel from "./VideoAnalysisPanel.vue";
-import aiPeopleAvatar from "@/assets/aipeople.jpg";
+import standbyAvatar from "/virtualpeopleanimation/standby.gif";
+import standupAvatar from "/virtualpeopleanimation/standup.gif";
+import answeringAvatar from "/virtualpeopleanimation/answering.gif";
 
 const props = defineProps<{
   visible: boolean;
@@ -447,6 +449,31 @@ const emit = defineEmits([
   "send-message",
   "node-click"
 ]);
+
+type AiAvatarState = "standby" | "standup" | "answering";
+
+const aiAvatarState = computed<AiAvatarState>(() => {
+  if (props.sendingMessage || props.isTyping) return "answering";
+  if (props.currentHour && props.currentHour.finished !== 1) return "standup";
+  return "standby";
+});
+
+const aiPeopleAvatar = computed(() => {
+  switch (aiAvatarState.value) {
+    case "answering":
+      return answeringAvatar;
+    case "standup":
+      return standupAvatar;
+    default:
+      return standbyAvatar;
+  }
+});
+
+const welcomeAvatarStyle = computed(() => {
+  return {
+    transform: `scale(1)`
+  };
+});
 
 const handleSeekVideo = (timeMs: number) => {
   const videoEl = videoPlayerRef.value as HTMLVideoElement | null;
@@ -1335,10 +1362,10 @@ $shadow-xl:
 .ai-dialog {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 560px;
-  height: 80vh;
-  max-height: 700px;
+  width: 90vw;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 900px;
   overflow: hidden;
   background: #fff;
   border-radius: $radius-xl;
@@ -1463,19 +1490,26 @@ $shadow-xl:
 }
 
 .welcome-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 32px 24px;
   text-align: center;
 
   .welcome-avatar {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto 16px;
+    width: 600px;
+    height: 337.5px;
+    margin: 0 auto 24px;
+    overflow: hidden;
 
     img {
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 20px;
+      transform-origin: center;
+      transition: transform 0.25s ease;
     }
   }
 

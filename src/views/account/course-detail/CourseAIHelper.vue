@@ -259,7 +259,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import SendIcon from "@/assets/course-icons/send-icon.svg?component";
 import AddNewTalkIcon from "@/assets/course-icons/add-new-talk-icon.svg?component";
 import NotSendBtnIcon from "@/assets/course-icons/not-send-btn.svg?component";
-import aiPeopleAvatar from "@/assets/aipeople.jpg";
+import aiPeopleAvatar from "/virtualpeopleanimation/virtual_people_pic.png";
 import {
   courseAIChatStream,
   getConversationHistory

@@ -1348,7 +1348,7 @@ $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
 
-$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$primary-gradient: linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%);
 $success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
@@ -1450,6 +1450,16 @@ $radius-lg: 16px;
     .header-actions {
       display: flex;
       gap: 12px;
+
+      :deep(.el-button--primary) {
+        color: #fff;
+        background: $primary-gradient;
+        border: none;
+
+        &:hover {
+          opacity: 0.92;
+        }
+      }
     }
   }
 
@@ -1673,8 +1683,8 @@ $radius-lg: 16px;
         transition: all 0.3s;
 
         &:hover {
-          border-color: #667eea;
-          background: rgba(102, 126, 234, 0.02);
+          border-color: #0f766e;
+          background: rgba(15, 118, 110, 0.04);
         }
       }
     }
@@ -1684,7 +1694,7 @@ $radius-lg: 16px;
 
       .upload-icon {
         font-size: 48px;
-        color: #667eea;
+        color: #0f766e;
         margin-bottom: 12px;
       }
 
@@ -1694,7 +1704,7 @@ $radius-lg: 16px;
         margin-bottom: 8px;
 
         em {
-          color: #667eea;
+          color: #0f766e;
           font-style: normal;
           cursor: pointer;
         }
@@ -1720,7 +1730,7 @@ $radius-lg: 16px;
   // 导出对话框样式
   .export-dialog-content {
     .export-count {
-      color: #667eea;
+      color: #0f766e;
       font-size: 12px;
     }
 

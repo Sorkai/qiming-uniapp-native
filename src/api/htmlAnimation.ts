@@ -57,7 +57,7 @@ export const generateHtmlAnimation = (data: {
 }) => {
   return http.request<ApiResponse<HtmlAnimationGenerateResult>>(
     "post",
-    "/edu/backend/v1/html-animation/generate",
+    "/edu/v1/html-animation/generate",
     { data }
   );
 };
@@ -69,7 +69,7 @@ export const getHtmlAnimationList = (params: {
 }) => {
   return http.request<ApiResponse<HtmlAnimationListResult>>(
     "get",
-    "/edu/backend/v1/html-animation/list",
+    "/edu/v1/html-animation/list",
     { params }
   );
 };
@@ -82,7 +82,7 @@ export const setHtmlAnimationDisplay = (data: {
 }) => {
   return http.request<ApiResponse>(
     "post",
-    "/edu/backend/v1/html-animation/display/set",
+    "/edu/v1/html-animation/display/set",
     { data }
   );
 };
@@ -91,7 +91,7 @@ export const setHtmlAnimationDisplay = (data: {
 export const forceSyncHtmlAnimation = () => {
   return http.request<ApiResponse<HtmlAnimationSyncResult>>(
     "post",
-    "/edu/backend/v1/html-animation/sync",
+    "/edu/v1/html-animation/sync",
     { data: {} }
   );
 };
@@ -103,7 +103,7 @@ export const getHtmlAnimationDisplay = (params: {
 }) => {
   return http.request<ApiResponse<HtmlAnimationDisplayResult>>(
     "get",
-    "/edu/frontend/v1/html-animation/display",
+    "/edu/v1/html-animation/display",
     { params }
   );
 };

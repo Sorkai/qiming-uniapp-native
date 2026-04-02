@@ -411,12 +411,12 @@ $dark-shadow-lg:
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
-$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$primary-gradient: linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%);
 $success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-$info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
-$pink-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-$cyan-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+$info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
+$pink-gradient: linear-gradient(135deg, #fb7185 0%, #f97316 100%);
+$cyan-gradient: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
 
 /* 统一圆角 */
 $radius-sm: 8px;
@@ -585,6 +585,16 @@ $radius-xl: 20px;
     display: flex;
     gap: 12px;
     align-items: center;
+
+    :deep(.el-button--primary) {
+      color: #fff;
+      background: $primary-gradient;
+      border: none;
+
+      &:hover {
+        opacity: 0.92;
+      }
+    }
   }
 }
 
@@ -738,7 +748,7 @@ $radius-xl: 20px;
         }
 
         &.good {
-          background: linear-gradient(90deg, #409eff, #79bbff);
+          background: linear-gradient(90deg, #14b8a6, #2dd4bf);
         }
 
         &.excellent {
@@ -746,7 +756,7 @@ $radius-xl: 20px;
         }
 
         &.perfect {
-          background: linear-gradient(90deg, #9c27b0, #ba68c8);
+          background: linear-gradient(90deg, #0f766e, #14b8a6);
         }
       }
     }
@@ -781,7 +791,7 @@ $radius-xl: 20px;
       .type-rate {
         font-size: 14px;
         font-weight: 600;
-        color: #667eea;
+        color: #0f766e;
       }
     }
 
@@ -872,7 +882,7 @@ $radius-xl: 20px;
       .student-score {
         font-size: 14px;
         font-weight: 600;
-        color: #667eea;
+        color: #0f766e;
       }
     }
   }

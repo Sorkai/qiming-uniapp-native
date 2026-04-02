@@ -5,7 +5,6 @@ import { useDark } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
 import {
   getStudentPaperList,
-  getPaperDetail,
   type StudentPaperItem
 } from "@/api/examPaper";
 import WaitingToCompleteIcon from "@/assets/papercentreicons/waitingtocomplete.svg?component";
@@ -107,7 +106,7 @@ const fetchPapers = async () => {
 
 // 开始考试
 const startExam = (paper: StudentPaperItem) => {
-  if (paper.status !== "available") {
+  if (paper.status !== "available" && paper.status !== "retake") {
     ElMessage.warning("该试卷当前不可答题");
     return;
   }
