@@ -280,7 +280,7 @@ onMounted(() => {
           <h3>学生列表</h3>
           <div class="filter-tags">
             <el-tag size="small" type="warning">待阅 {{ pendingCount }}</el-tag>
-            <el-tag size="small" type="success">已阅 {{ gradedCount }}</el-tag>
+            <el-tag size="small" type="primary">已阅 {{ gradedCount }}</el-tag>
           </div>
         </div>
         <div class="student-list">
@@ -401,7 +401,7 @@ onMounted(() => {
                 <span class="unit">/ {{ answer.maxScore }} 分</span>
                 <el-button
                   size="small"
-                  type="success"
+                  type="primary"
                   plain
                   @click="giveFullScore(index)"
                   >满分</el-button

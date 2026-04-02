@@ -471,7 +471,7 @@ onMounted(() => {
           </el-button>
           <el-button
             v-else-if="paper.status === 'completed'"
-            type="success"
+            type="primary"
             size="large"
             class="action-btn"
             @click="viewScore(paper)"

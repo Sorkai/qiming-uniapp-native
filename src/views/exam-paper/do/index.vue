@@ -959,7 +959,7 @@ onBeforeUnmount(() => {
             <el-button
               v-else
               class="nav-btn"
-              type="success"
+              type="primary"
               :loading="submitting"
               @click="handleSubmit"
             >

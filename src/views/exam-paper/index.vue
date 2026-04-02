@@ -60,7 +60,7 @@ const templates = ref([
     name: "快速测验模板",
     description: "仅包含客观题，适合课堂小测和随堂练习",
     icon: IconZap,
-    color: "linear-gradient(135deg, #2f855a 0%, #48bb78 100%)",
+    color: "linear-gradient(135deg, #4A7FC8 0%, #80C8FA 100%)",
     questionCount: 5,
     totalPoints: 25,
     useCount: 0
@@ -418,7 +418,7 @@ onMounted(() => {
               <el-progress
                 :percentage="learningStats.passRate"
                 :stroke-width="10"
-                status="success"
+                color="#739CF9"
               />
             </div>
             <div class="stat-item">

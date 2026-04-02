@@ -786,7 +786,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     margin-bottom: 16px;
 
     &.system {
-      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      background: linear-gradient(135deg, #EBF2FD 0%, #dbe5f7 100%);
     }
 
     &.private {

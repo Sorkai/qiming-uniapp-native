@@ -563,7 +563,7 @@ onMounted(() => {
                   编辑
                 </el-button>
                 <el-button
-                  type="success"
+                  type="primary"
                   link
                   size="small"
                   @click="publishPaper(row)"

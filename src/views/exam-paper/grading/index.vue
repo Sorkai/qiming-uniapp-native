@@ -370,7 +370,7 @@ onMounted(() => {
               <el-button
                 v-if="row.status !== 'completed'"
                 class="operation-btn"
-                type="success"
+                type="primary"
                 size="small"
                 @click="handleAutoGrade(row)"
               >
