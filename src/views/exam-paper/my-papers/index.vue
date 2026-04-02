@@ -81,13 +81,13 @@ const statCards = computed(() => [
     label: "试卷总数",
     value: statistics.value.total,
     icon: IconDocument,
-    color: "#0f766e"
+    color: "#4A7FC8"
   },
   {
     label: "已发布",
     value: statistics.value.published,
     icon: IconCheckCircle,
-    color: "#10b981"
+    color: "#739CF9"
   },
   {
     label: "草稿箱",
@@ -686,8 +686,8 @@ $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
 
-$primary-gradient: linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%);
-$success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+$primary-gradient: linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%);
+$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 $info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
@@ -750,7 +750,7 @@ $radius-lg: 16px;
 
         &.active {
           background: rgba(15, 118, 110, 0.28);
-          color: #5eead4;
+          color: #80C8FA;
         }
 
         .folder-name {
@@ -763,7 +763,7 @@ $radius-lg: 16px;
         }
 
         &.active .folder-count {
-          background: #14b8a6;
+          background: #80C8FA;
           color: #fff;
         }
       }
@@ -773,7 +773,7 @@ $radius-lg: 16px;
       .paper-title-cell {
         .paper-icon {
           background: rgba(20, 184, 166, 0.2);
-          color: #5eead4;
+          color: #80C8FA;
         }
 
         .paper-course {
@@ -982,7 +982,7 @@ $radius-lg: 16px;
 
       &.active {
         background: rgba(15, 118, 110, 0.14);
-        color: #0f766e;
+        color: #4A7FC8;
       }
 
       &.child {
@@ -1006,7 +1006,7 @@ $radius-lg: 16px;
       }
 
       &.active .folder-count {
-        background: #0f766e;
+        background: #4A7FC8;
         color: #fff;
       }
 
@@ -1067,8 +1067,8 @@ $radius-lg: 16px;
         justify-content: center;
         width: 44px;
         height: 44px;
-        color: #0f766e;
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #4A7FC8;
+        background: linear-gradient(135deg, #EBF2FD 0%, #EBF2FD 100%);
         border-radius: 8px;
 
         :deep(svg) {

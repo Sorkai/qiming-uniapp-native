@@ -647,7 +647,7 @@ const applyAllAIQuestions = () => {
     gap: 4px;
     font-size: 12px;
     color: #909399;
-    background: #f0f9eb;
+    background: #F5F9FF;
     padding: 4px 12px;
     border-radius: 12px;
   }
@@ -678,13 +678,13 @@ const applyAllAIQuestions = () => {
   transition: all 0.2s;
 
   &:hover {
-    border-color: #00bfa5;
-    background: rgba(0, 191, 165, 0.02);
+    border-color: #739CF9;
+    background: rgba(115, 156, 249, 0.02);
   }
 
   &.selected {
-    background: rgba(0, 191, 165, 0.05);
-    border-color: #00bfa5;
+    background: rgba(115, 156, 249, 0.05);
+    border-color: #739CF9;
   }
 
   .question-content {
@@ -798,7 +798,7 @@ const applyAllAIQuestions = () => {
 
       .question-number {
         font-weight: 600;
-        color: #00bfa5;
+        color: #739CF9;
         margin-right: 4px;
       }
     }

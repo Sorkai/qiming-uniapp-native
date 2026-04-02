@@ -43,8 +43,8 @@ defineOptions({
 // 自定义SVG图标组件
 const LogoIcon = {
   template: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#00bfa5"/>
-    <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#00bfa5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#739CF9"/>
+    <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#739CF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`
 };
 
@@ -295,22 +295,22 @@ const questionTypeGroups = [
   {
     groupLabel: "基础题型",
     types: [
-      { id: "radio", label: "单选题", icon: "RadioIcon", color: "#00bfa5" },
-      { id: "checkbox", label: "多选题", icon: "CheckboxIcon", color: "#00bfa5" },
-      { id: "judge", label: "判断题", icon: "JudgeIcon", color: "#00bfa5" },
-      { id: "input", label: "填空题", icon: "InputIcon", color: "#00bfa5" },
-      { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#00bfa5" }
+      { id: "radio", label: "单选题", icon: "RadioIcon", color: "#739CF9" },
+      { id: "checkbox", label: "多选题", icon: "CheckboxIcon", color: "#739CF9" },
+      { id: "judge", label: "判断题", icon: "JudgeIcon", color: "#739CF9" },
+      { id: "input", label: "填空题", icon: "InputIcon", color: "#739CF9" },
+      { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#739CF9" }
     ]
   },
   {
     groupLabel: "高级题型",
     types: [
-      { id: "textarea-essay", label: "论述题", icon: "EssayIcon", color: "#409eff" },
-      { id: "matrix-single", label: "矩阵单选", icon: "MatrixSingleIcon", color: "#409eff" },
-      { id: "matrix-multiple", label: "矩阵多选", icon: "MatrixMultipleIcon", color: "#409eff" },
-      { id: "matching", label: "连线题", icon: "MatchingIcon", color: "#409eff" },
-      { id: "ordering", label: "排序题", icon: "OrderingIcon", color: "#409eff" },
-      { id: "composite", label: "组合材料题", icon: "CompositeIcon", color: "#409eff" }
+      { id: "textarea-essay", label: "论述题", icon: "EssayIcon", color: "#a1b5f7" },
+      { id: "matrix-single", label: "矩阵单选", icon: "MatrixSingleIcon", color: "#a1b5f7" },
+      { id: "matrix-multiple", label: "矩阵多选", icon: "MatrixMultipleIcon", color: "#a1b5f7" },
+      { id: "matching", label: "连线题", icon: "MatchingIcon", color: "#a1b5f7" },
+      { id: "ordering", label: "排序题", icon: "OrderingIcon", color: "#a1b5f7" },
+      { id: "composite", label: "组合材料题", icon: "CompositeIcon", color: "#a1b5f7" }
     ]
   },
   {
@@ -1473,28 +1473,28 @@ const analyzeWithAI = async () => {
 
 // 获取难度颜色
 const getDifficultyColor = (score: number) => {
-  if (score <= 2) return "#67c23a";
+  if (score <= 2) return "#739CF9";
   if (score <= 3) return "#e6a23c";
   return "#f56c6c";
 };
 
 // 获取评分颜色
 const getScoreColor = (score: number) => {
-  if (score >= 80) return "#67c23a";
+  if (score >= 80) return "#739CF9";
   if (score >= 60) return "#e6a23c";
   return "#f56c6c";
 };
 
 // 饼状图颜色
 const pieColors = [
-  "#00bfa5",
-  "#409eff",
-  "#e6a23c",
-  "#f56c6c",
-  "#909399",
-  "#67c23a",
-  "#9c27b0",
-  "#ff9800"
+  "#739CF9",
+  "#a1b5f7",
+  "#f59e0b",
+  "#ef4444",
+  "#64748b",
+  "#80C8FA",
+  "#ec4899",
+  "#f97316"
 ];
 
 // 饼状图样式（使用 conic-gradient）
@@ -4338,7 +4338,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
       border-bottom-color: $dark-border;
 
       .logo-text {
-        background: linear-gradient(135deg, #00bfa5 0%, #00d4b8 100%);
+        background: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -4350,7 +4350,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         color: $dark-text-primary;
 
         &:hover {
-          border-color: #00bfa5;
+          border-color: #739CF9;
         }
       }
 
@@ -4380,7 +4380,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         border-color: $dark-border;
 
         &:hover {
-          border-color: #00bfa5;
+          border-color: #739CF9;
         }
 
         .type-label {
@@ -4388,7 +4388,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         }
 
         &:hover .type-label {
-          color: #00bfa5;
+          color: #739CF9;
         }
       }
     }
@@ -4416,7 +4416,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
       .outline-summary {
         color: $dark-text-secondary;
-        background: rgba(0, 191, 165, 0.15);
+        background: rgba(115, 156, 249, 0.15);
       }
 
       .outline-group {
@@ -4424,14 +4424,14 @@ $dark-border: rgba(255, 255, 255, 0.1);
         background: rgba(30, 41, 59, 0.6);
 
         &:hover {
-          border-color: #00bfa5;
+          border-color: #739CF9;
         }
 
         .outline-group-header {
           background: linear-gradient(
             135deg,
-            rgba(0, 191, 165, 0.15) 0%,
-            rgba(0, 191, 165, 0.08) 100%
+            rgba(115, 156, 249, 0.15) 0%,
+            rgba(115, 156, 249, 0.08) 100%
           );
           border-bottom-color: $dark-border;
 
@@ -4450,14 +4450,14 @@ $dark-border: rgba(255, 255, 255, 0.1);
           border-bottom-color: $dark-border;
 
           &:hover {
-            background: rgba(0, 191, 165, 0.15);
+            background: rgba(115, 156, 249, 0.15);
           }
 
           &.active {
             background: linear-gradient(
               135deg,
-              rgba(0, 191, 165, 0.25) 0%,
-              rgba(0, 191, 165, 0.15) 100%
+              rgba(115, 156, 249, 0.25) 0%,
+              rgba(115, 156, 249, 0.15) 100%
             );
           }
 
@@ -4482,16 +4482,16 @@ $dark-border: rgba(255, 255, 255, 0.1);
         .settings-toggle {
           background: linear-gradient(
             135deg,
-            rgba(0, 191, 165, 0.15) 0%,
-            rgba(0, 191, 165, 0.08) 100%
+            rgba(115, 156, 249, 0.15) 0%,
+            rgba(115, 156, 249, 0.08) 100%
           );
           color: $dark-text-primary;
 
           &:hover {
             background: linear-gradient(
               135deg,
-              rgba(0, 191, 165, 0.25) 0%,
-              rgba(0, 191, 165, 0.15) 100%
+              rgba(115, 156, 249, 0.25) 0%,
+              rgba(115, 156, 249, 0.15) 100%
             );
           }
         }
@@ -4530,14 +4530,14 @@ $dark-border: rgba(255, 255, 255, 0.1);
     .question-group-header {
       background: linear-gradient(
         135deg,
-        rgba(0, 191, 165, 0.15) 0%,
-        rgba(0, 191, 165, 0.08) 100%
+        rgba(115, 156, 249, 0.15) 0%,
+        rgba(115, 156, 249, 0.08) 100%
       );
-      border-color: rgba(0, 191, 165, 0.3);
+      border-color: rgba(115, 156, 249, 0.3);
 
       .group-title-input :deep(.el-input__wrapper) {
         background: rgba(30, 41, 59, 0.8);
-        border-color: rgba(0, 191, 165, 0.3);
+        border-color: rgba(115, 156, 249, 0.3);
         color: $dark-text-primary;
       }
 
@@ -4557,10 +4557,10 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
       &:hover,
       &.active {
-        border-color: #00bfa5;
+        border-color: #739CF9;
         background: linear-gradient(
           135deg,
-          rgba(0, 191, 165, 0.08) 0%,
+          rgba(115, 156, 249, 0.08) 0%,
           rgba(30, 41, 59, 0.95) 100%
         );
       }
@@ -4582,8 +4582,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
       }
 
       .blank-count-hint {
-        background: rgba(0, 191, 165, 0.15);
-        border-left-color: #00bfa5;
+        background: rgba(115, 156, 249, 0.15);
+        border-left-color: #739CF9;
       }
 
       .stem-preview-box {
@@ -4624,8 +4624,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
         .preview-group-title {
           background: linear-gradient(
             135deg,
-            rgba(0, 191, 165, 0.15) 0%,
-            rgba(0, 191, 165, 0.08) 100%
+            rgba(115, 156, 249, 0.15) 0%,
+            rgba(115, 156, 249, 0.08) 100%
           );
 
           .preview-group-name {
@@ -4679,13 +4679,13 @@ $dark-border: rgba(255, 255, 255, 0.1);
       width: 36px;
       height: 36px;
       margin-right: 12px;
-      filter: drop-shadow(0 2px 4px rgba(0, 191, 165, 0.2));
+      filter: drop-shadow(0 2px 4px rgba(115, 156, 249, 0.2));
     }
 
     .logo-text {
       font-size: 20px;
       font-weight: 700;
-      background: linear-gradient(135deg, #00bfa5 0%, #00a89f 100%);
+      background: linear-gradient(135deg, #739CF9 0%, #4A7FC8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -4706,13 +4706,13 @@ $dark-border: rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
 
       &:hover {
-        border-color: #00bfa5;
-        box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.1);
+        border-color: #739CF9;
+        box-shadow: 0 0 0 3px rgba(115, 156, 249, 0.1);
       }
 
       &:focus-within {
-        border-color: #00bfa5;
-        box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.15);
+        border-color: #739CF9;
+        box-shadow: 0 0 0 3px rgba(115, 156, 249, 0.15);
       }
     }
   }
@@ -4747,8 +4747,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
 
       &:hover {
-        background: rgba(0, 191, 165, 0.08);
-        color: #00bfa5;
+        background: #EBF2FD;
+        color: #4A7FC8;
       }
     }
   }
@@ -4756,7 +4756,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
 .question-toolbar {
   padding: 14px 24px;
-  background: linear-gradient(135deg, #fafafa 0%, #f5f7fa 100%);
+  background: #f8fafc;
 
   .toolbar-hint {
     font-size: 13px;
@@ -4819,8 +4819,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
       }
 
       &:hover {
-        border-color: #00bfa5;
-        box-shadow: 0 6px 18px rgba(0, 191, 165, 0.12);
+        border-color: var(--group-hover-color, #739CF9);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         transform: translateY(-2px);
 
         &::before {
@@ -4878,11 +4878,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
 }
 .editor-outline {
   width: 280px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.85) 100%
-  );
+  background: #ffffff;
   border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
@@ -4900,7 +4896,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     padding: 16px;
     border-bottom: 1px solid #f0f0f0;
     min-height: 50px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+    background: #f8fafc;
 
     .outline-title {
       font-size: 15px;
@@ -4929,10 +4925,10 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
     .outline-summary {
       font-size: 13px;
-      color: #606266;
+      color: #475569;
       margin-bottom: 12px;
       padding: 10px 12px;
-      background: rgba(0, 191, 165, 0.08);
+      background: #f1f5f9;
       border-radius: 6px;
       font-weight: 500;
     }
@@ -4947,8 +4943,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
         background: rgba(255, 255, 255, 0.6);
 
         &:hover {
-          border-color: #00bfa5;
-          box-shadow: 0 2px 8px rgba(0, 191, 165, 0.1);
+          border-color: #739CF9;
+          box-shadow: 0 2px 8px rgba(115, 156, 249, 0.1);
         }
 
         .outline-group-header {
@@ -4956,11 +4952,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
           align-items: center;
           gap: 8px;
           padding: 10px 12px;
-          background: linear-gradient(
-            135deg,
-            rgba(0, 191, 165, 0.08) 0%,
-            rgba(0, 191, 165, 0.04) 100%
-          );
+          background: #f8fafc;
           border-bottom: 1px solid #e4e7ed;
           cursor: grab;
           user-select: none;
@@ -4983,14 +4975,14 @@ $dark-border: rgba(255, 255, 255, 0.1);
             }
 
             &:hover {
-              color: #00bfa5;
+              color: #739CF9;
             }
           }
 
           .group-number {
             font-size: 14px;
             font-weight: 700;
-            color: #00bfa5;
+            color: #4A7FC8;
             min-width: 24px;
           }
 
@@ -5025,17 +5017,14 @@ $dark-border: rgba(255, 255, 255, 0.1);
             }
 
             &:hover {
-              background: rgba(0, 191, 165, 0.08);
+              background: #f1f5f9;
               transform: translateX(2px);
             }
 
             &.active {
-              background: linear-gradient(
-                135deg,
-                rgba(0, 191, 165, 0.15) 0%,
-                rgba(0, 191, 165, 0.08) 100%
-              );
-              color: #00bfa5;
+              background: #EBF2FD;
+              border-left: 3px solid #739CF9;
+              color: #4A7FC8;
             }
 
             .item-index {
@@ -5079,20 +5068,16 @@ $dark-border: rgba(255, 255, 255, 0.1);
       background: rgba(255, 255, 255, 0.5);
 
       &:hover {
-        background: rgba(0, 191, 165, 0.08);
-        border-color: rgba(0, 191, 165, 0.2);
+        background: #f1f5f9;
+        border-color: #e2e8f0;
         transform: translateX(2px);
       }
 
       &.active {
-        background: linear-gradient(
-          135deg,
-          rgba(0, 191, 165, 0.15) 0%,
-          rgba(0, 191, 165, 0.08) 100%
-        );
-        border-color: #00bfa5;
-        color: #00bfa5;
-        box-shadow: 0 2px 8px rgba(0, 191, 165, 0.1);
+        background: #EBF2FD;
+        border-color: #6365f1;
+        border-left: 3px solid #739CF9;
+        color: #4A7FC8;
       }
 
       .drag-handle {
@@ -5107,7 +5092,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         }
 
         &:hover {
-          color: #00bfa5;
+          color: #739CF9;
         }
       }
 
@@ -5138,8 +5123,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
     .ghost-item {
       opacity: 0.6;
-      background: rgba(0, 191, 165, 0.1);
-      border: 1px dashed #00bfa5;
+      background: #EBF2FD;
+      border: 1px dashed #739CF9;
     }
   }
 }
@@ -5155,7 +5140,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
   background-blend-mode: overlay;
   background-color: rgba(245, 247, 250, 0.92);
   &.drag-over {
-    background-color: rgba(0, 191, 165, 0.05);
+    background-color: rgba(115, 156, 249, 0.05);
   }
   &.is-dragging::after {
     content: "释放鼠标添加题目";
@@ -5164,7 +5149,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 20px 40px;
-    background: rgba(0, 191, 165, 0.9);
+    background: rgba(115, 156, 249, 0.9);
     color: #fff;
     font-size: 16px;
     border-radius: 8px;
@@ -5192,13 +5177,13 @@ $dark-border: rgba(255, 255, 255, 0.1);
       align-items: center;
       gap: 8px;
       padding: 12px 16px;
-      background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+      background: #f1f5f9;
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
       color: #303133;
       &:hover {
-        background: linear-gradient(135deg, #c8e6c9 0%, #bbdefb 100%);
+        background: #e2e8f0;
       }
       .toggle-arrow {
         transition: transform 0.3s;
@@ -5322,7 +5307,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
             color: #606266;
             line-height: 1.8;
             &::marker {
-              color: #00bfa5;
+              color: #739CF9;
             }
           }
         }
@@ -5365,7 +5350,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         .section-title {
           font-size: 14px;
           font-weight: 600;
-          color: #00bfa5;
+          color: #4A7FC8;
           margin: 0 0 12px;
           padding-bottom: 8px;
           border-bottom: 1px solid #e4e7ed;
@@ -5403,7 +5388,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
           background: #f5f7fa;
         }
         &.selected {
-          background: rgba(0, 191, 165, 0.08);
+          background: rgba(115, 156, 249, 0.08);
         }
         .student-name {
           font-size: 13px;
@@ -5427,13 +5412,10 @@ $dark-border: rgba(255, 255, 255, 0.1);
     justify-content: space-between;
     padding: 14px 20px;
     margin: 20px 0 16px 0;
-    background: linear-gradient(
-      135deg,
-      rgba(0, 191, 165, 0.08) 0%,
-      rgba(0, 191, 165, 0.04) 100%
-    );
+    background: #f8fafc;
     border-radius: 8px;
-    border: 1px solid rgba(0, 191, 165, 0.2);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #739CF9;
 
     .group-title-wrapper {
       display: flex;
@@ -5444,7 +5426,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
       .group-number {
         font-size: 18px;
         font-weight: 700;
-        color: #00bfa5;
+        color: #4A7FC8;
         min-width: 30px;
       }
 
@@ -5453,21 +5435,21 @@ $dark-border: rgba(255, 255, 255, 0.1);
         max-width: 400px;
 
         :deep(.el-input__wrapper) {
-          background: rgba(255, 255, 255, 0.8);
-          border: 1px solid rgba(0, 191, 165, 0.3);
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
           border-radius: 6px;
           font-size: 16px;
           font-weight: 600;
           color: #303133;
 
           &:hover {
-            border-color: #00bfa5;
+            border-color: #739CF9;
             background: rgba(255, 255, 255, 0.95);
           }
 
           &:focus-within {
-            border-color: #00bfa5;
-            box-shadow: 0 0 0 2px rgba(0, 191, 165, 0.1);
+            border-color: #739CF9;
+            box-shadow: 0 0 0 2px rgba(115, 156, 249, 0.1);
           }
         }
       }
@@ -5484,34 +5466,27 @@ $dark-border: rgba(255, 255, 255, 0.1);
   }
 
   .question-card {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.85) 100%
-    );
-    border: 2px solid #e4e7ed;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 18px;
     margin-bottom: 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
 
     &:hover {
-      border-color: #00bfa5;
-      box-shadow: 0 6px 18px rgba(0, 191, 165, 0.1);
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       transform: translateY(-1px);
     }
 
     &.active {
-      border-color: #00bfa5;
-      box-shadow: 0 8px 24px rgba(0, 191, 165, 0.15);
-      background: linear-gradient(
-        135deg,
-        rgba(0, 191, 165, 0.05) 0%,
-        rgba(255, 255, 255, 0.95) 100%
-      );
+      border-color: #739CF9;
+      border-left: 3px solid #739CF9;
+      box-shadow: 0 4px 16px rgba(115, 156, 249, 0.12);
+      background: #F5F9FF;
     }
     .question-header {
       display: flex;
@@ -5532,8 +5507,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
         .question-type-tag {
           font-size: 12px;
           padding: 2px 8px;
-          background: rgba(0, 191, 165, 0.1);
-          color: #00bfa5;
+          background: #EBF2FD;
+          color: #4A7FC8;
           border-radius: 4px;
         }
       }
@@ -5571,12 +5546,12 @@ $dark-border: rgba(255, 255, 255, 0.1);
         align-items: center;
         gap: 6px;
         font-size: 12px;
-        color: #00bfa5;
+        color: #4A7FC8;
         margin-top: 8px;
         padding: 6px 12px;
-        background: rgba(0, 191, 165, 0.08);
+        background: #EBF2FD;
         border-radius: 4px;
-        border-left: 3px solid #00bfa5;
+        border-left: 3px solid #739CF9;
       }
       .stem-preview-box {
         margin-top: 8px;
@@ -5828,8 +5803,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
                 color: #e6a23c;
               }
               &.promoter {
-                background: #e1f3d8;
-                color: #67c23a;
+                background: #EBF2FD;
+                color: #739CF9;
               }
             }
           }
@@ -5931,8 +5906,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
             .sub-item-type {
               font-size: 12px;
               padding: 1px 6px;
-              background: rgba(0, 191, 165, 0.1);
-              color: #00bfa5;
+              background: #EBF2FD;
+              color: #4A7FC8;
               border-radius: 3px;
             }
           }
@@ -6109,16 +6084,13 @@ $dark-border: rgba(255, 255, 255, 0.1);
         gap: 8px;
         margin: 24px 0 16px 0;
         padding: 12px 16px;
-        background: linear-gradient(
-          135deg,
-          rgba(0, 191, 165, 0.08) 0%,
-          rgba(0, 191, 165, 0.04) 100%
-        );
+        background: #f1f5f9;
         border-radius: 6px;
+        border-left: 4px solid #739CF9;
         .preview-group-number {
           font-size: 18px;
           font-weight: 700;
-          color: #00bfa5;
+          color: #4A7FC8;
         }
         .preview-group-name {
           font-size: 16px;
@@ -6180,7 +6152,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
 // 带答案预览对话框样式
 .preview-with-answer-dialog {
   .answer-badge {
-    background: #67c23a;
+    background: #739CF9;
     color: #fff;
     padding: 2px 8px;
     border-radius: 4px;
@@ -6188,13 +6160,13 @@ $dark-border: rgba(255, 255, 255, 0.1);
   }
   .preview-option {
     &.correct-option {
-      background: rgba(103, 194, 58, 0.1);
-      color: #67c23a;
+      background: rgba(115, 156, 249, 0.1);
+      color: #739CF9;
       font-weight: 500;
       border-radius: 4px;
       padding: 4px 8px 4px 20px;
       .correct-icon {
-        color: #67c23a;
+        color: #739CF9;
         margin-left: 8px;
       }
     }
@@ -6203,9 +6175,9 @@ $dark-border: rgba(255, 255, 255, 0.1);
     display: block;
     margin-bottom: 8px;
     .blank-answer {
-      color: #67c23a;
+      color: #739CF9;
       font-weight: 500;
-      background: rgba(103, 194, 58, 0.1);
+      background: rgba(115, 156, 249, 0.1);
       padding: 2px 8px;
       border-radius: 4px;
     }
@@ -6222,9 +6194,9 @@ $dark-border: rgba(255, 255, 255, 0.1);
     :deep(.blank-answer-inline) {
       display: inline-block;
       min-width: 60px;
-      color: #67c23a;
+      color: #739CF9;
       font-weight: 500;
-      background: rgba(103, 194, 58, 0.1);
+      background: rgba(115, 156, 249, 0.1);
       padding: 2px 8px;
       border-radius: 4px;
       margin: 0 4px;
@@ -6233,16 +6205,16 @@ $dark-border: rgba(255, 255, 255, 0.1);
   .preview-answer-section {
     margin-top: 12px;
     padding: 12px;
-    background: rgba(103, 194, 58, 0.08);
+    background: rgba(115, 156, 249, 0.08);
     border-radius: 6px;
-    border-left: 3px solid #67c23a;
+    border-left: 3px solid #739CF9;
     .answer-label {
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 13px;
       font-weight: 500;
-      color: #67c23a;
+      color: #739CF9;
       margin-bottom: 6px;
     }
     .answer-content {
@@ -6303,8 +6275,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
       margin-bottom: 8px;
       transition: all 0.2s;
       &:hover {
-        border-color: #00bfa5;
-        background: rgba(0, 191, 165, 0.05);
+        border-color: #739CF9;
+        background: #EBF2FD;
       }
     }
     .publish-student-toolbar {
@@ -6333,7 +6305,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         background: #f5f7fa;
       }
       &.selected {
-        background: rgba(0, 191, 165, 0.08);
+        background: #EBF2FD;
       }
       .student-name {
         font-size: 14px;

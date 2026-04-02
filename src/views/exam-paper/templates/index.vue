@@ -364,7 +364,7 @@ onMounted(() => {
             shadow="hover"
           >
             <div class="template-cover system">
-              <el-icon :size="48" color="#00bfa5"><Document /></el-icon>
+              <el-icon :size="48" color="#739CF9"><Document /></el-icon>
               <span class="system-badge">系统</span>
             </div>
             <div class="template-info">
@@ -598,8 +598,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
         &.system {
           background: linear-gradient(
             135deg,
-            rgba(0, 191, 165, 0.2) 0%,
-            rgba(0, 191, 165, 0.1) 100%
+            rgba(115, 156, 249, 0.2) 0%,
+            rgba(115, 156, 249, 0.1) 100%
           );
         }
         &.private {
@@ -804,7 +804,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     }
 
     .system-badge {
-      background: #00bfa5;
+      background: #739CF9;
       color: #fff;
     }
 

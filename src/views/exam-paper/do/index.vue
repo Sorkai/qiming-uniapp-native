@@ -1120,9 +1120,9 @@ onBeforeUnmount(() => {
     }
 
     &.answered {
-      background: #10b981;
+      background: #739CF9;
       color: #fff;
-      border-color: #10b981;
+      border-color: #739CF9;
     }
 
     &.answered.active {
@@ -1153,8 +1153,8 @@ onBeforeUnmount(() => {
         border: 1px solid #e5e7eb;
 
         &.answered {
-          background: #10b981;
-          border-color: #10b981;
+          background: #739CF9;
+          border-color: #739CF9;
         }
 
         &.active {
@@ -1421,10 +1421,10 @@ onBeforeUnmount(() => {
     border: none;
     border-radius: 10px;
     font-weight: 600;
-    background: #0f766e;
+    background: #4A7FC8;
 
     &:hover {
-      background: #0d9488;
+      background: #4A7FC8;
     }
   }
 }
