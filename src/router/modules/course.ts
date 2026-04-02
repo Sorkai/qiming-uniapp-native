@@ -67,7 +67,8 @@ export default [
     meta: {
       icon: "ri:community-line",
       title: "虚拟校园",
-      rank: 8
+      rank: 8,
+      roles: ["student"]
     }
   },
   {
