@@ -290,53 +290,41 @@ const previewWithAnswerDialogVisible = ref(false);
 const previewPaperSize = ref<"A4" | "A3">("A4");
 const previewScale = ref(100);
 
-// 题型定义
-const questionTypes = [
-  { id: "radio", label: "单选题", icon: "RadioIcon", color: "#00bfa5" },
-  { id: "checkbox", label: "多选题", icon: "CheckboxIcon", color: "#00bfa5" },
-  { id: "judge", label: "判断题", icon: "JudgeIcon", color: "#00bfa5" },
-  { id: "input", label: "填空题", icon: "InputIcon", color: "#00bfa5" },
-  { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#00bfa5" },
+// 题型分组定义
+const questionTypeGroups = [
   {
-    id: "textarea-essay",
-    label: "论述题",
-    icon: "EssayIcon",
-    color: "#00bfa5"
+    groupLabel: "基础题型",
+    types: [
+      { id: "radio", label: "单选题", icon: "RadioIcon", color: "#00bfa5" },
+      { id: "checkbox", label: "多选题", icon: "CheckboxIcon", color: "#00bfa5" },
+      { id: "judge", label: "判断题", icon: "JudgeIcon", color: "#00bfa5" },
+      { id: "input", label: "填空题", icon: "InputIcon", color: "#00bfa5" },
+      { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#00bfa5" }
+    ]
   },
   {
-    id: "matrix-single",
-    label: "矩阵单选",
-    icon: "MatrixSingleIcon",
-    color: "#00bfa5"
+    groupLabel: "高级题型",
+    types: [
+      { id: "textarea-essay", label: "论述题", icon: "EssayIcon", color: "#409eff" },
+      { id: "matrix-single", label: "矩阵单选", icon: "MatrixSingleIcon", color: "#409eff" },
+      { id: "matrix-multiple", label: "矩阵多选", icon: "MatrixMultipleIcon", color: "#409eff" },
+      { id: "matching", label: "连线题", icon: "MatchingIcon", color: "#409eff" },
+      { id: "ordering", label: "排序题", icon: "OrderingIcon", color: "#409eff" },
+      { id: "composite", label: "组合材料题", icon: "CompositeIcon", color: "#409eff" }
+    ]
   },
   {
-    id: "matrix-multiple",
-    label: "矩阵多选",
-    icon: "MatrixMultipleIcon",
-    color: "#00bfa5"
-  },
-  { id: "matching", label: "连线题", icon: "MatchingIcon", color: "#00bfa5" },
-  { id: "ordering", label: "排序题", icon: "OrderingIcon", color: "#00bfa5" },
-  { id: "slider", label: "滑动评分", icon: "SliderIcon", color: "#00bfa5" },
-  {
-    id: "nps-rating",
-    label: "NPS评分",
-    icon: "NpsRatingIcon",
-    color: "#00bfa5"
-  },
-  {
-    id: "star-rating",
-    label: "星级评分",
-    icon: "StarRatingIcon",
-    color: "#00bfa5"
-  },
-  {
-    id: "composite",
-    label: "组合材料题",
-    icon: "CompositeIcon",
-    color: "#00bfa5"
+    groupLabel: "数据收集",
+    types: [
+      { id: "slider", label: "滑动评分", icon: "SliderIcon", color: "#e6a23c" },
+      { id: "nps-rating", label: "NPS评分", icon: "NpsRatingIcon", color: "#e6a23c" },
+      { id: "star-rating", label: "星级评分", icon: "StarRatingIcon", color: "#e6a23c" }
+    ]
   }
 ];
+
+// 扁平题型列表（兼容原有逻辑）
+const questionTypes = questionTypeGroups.flatMap(g => g.types);
 
 // 监听数据变化
 watch(
@@ -2158,10 +2146,6 @@ onBeforeUnmount(() => {
             <el-icon><View /></el-icon>
             预览
           </el-button>
-          <el-button @click="previewPaperWithAnswer">
-            <el-icon><Document /></el-icon>
-            预览(带答案)
-          </el-button>
           <el-button @click="savePaper()">
             <el-icon><DocumentChecked /></el-icon>
             保存
@@ -2170,34 +2154,64 @@ onBeforeUnmount(() => {
             <el-icon><Promotion /></el-icon>
             发布
           </el-button>
-          <el-button @click="openSaveAsTemplateDialog">
-            <el-icon><FolderAdd /></el-icon>
-            存为模板
-          </el-button>
-          <el-button @click="archiveAllQuestionsToBank">
-            <el-icon><Collection /></el-icon>
-            归档到题库
-          </el-button>
+          <el-dropdown trigger="click">
+            <el-button>
+              更多操作
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="previewPaperWithAnswer">
+                  <el-icon><Document /></el-icon>
+                  预览(带答案)
+                </el-dropdown-item>
+                <el-dropdown-item @click="openSaveAsTemplateDialog">
+                  <el-icon><FolderAdd /></el-icon>
+                  存为模板
+                </el-dropdown-item>
+                <el-dropdown-item @click="archiveAllQuestionsToBank">
+                  <el-icon><Collection /></el-icon>
+                  归档到题库
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
 
       <!-- 工具栏 -->
       <div class="question-toolbar">
         <div class="toolbar-hint">拖拽或点击下方题型添加到试卷：</div>
-        <div class="toolbar-items">
+        <div class="toolbar-groups">
           <div
-            v-for="type in questionTypes"
-            :key="type.id"
-            class="type-item"
-            draggable="true"
-            @dragstart="onDragStart($event, type.id)"
-            @dragend="onDragEnd"
-            @click="addQuestionGroup(type.id)"
+            v-for="group in questionTypeGroups"
+            :key="group.groupLabel"
+            class="toolbar-group"
           >
-            <div class="type-icon-wrapper">
-              <component :is="iconComponents[type.icon]" class="type-icon" />
+            <div class="toolbar-group-label">{{ group.groupLabel }}</div>
+            <div class="toolbar-items">
+              <div
+                v-for="type in group.types"
+                :key="type.id"
+                class="type-item"
+                draggable="true"
+                @dragstart="onDragStart($event, type.id)"
+                @dragend="onDragEnd"
+                @click="addQuestionGroup(type.id)"
+              >
+                <div
+                  class="type-icon-wrapper"
+                  :style="{ background: `${type.color}18` }"
+                >
+                  <component
+                    :is="iconComponents[type.icon]"
+                    class="type-icon"
+                    :style="{ color: type.color }"
+                  />
+                </div>
+                <span class="type-label">{{ type.label }}</span>
+              </div>
             </div>
-            <span class="type-label">{{ type.label }}</span>
           </div>
         </div>
       </div>
@@ -4357,6 +4371,10 @@ $dark-border: rgba(255, 255, 255, 0.1);
         color: $dark-text-secondary;
       }
 
+      .toolbar-group-label {
+        color: $dark-text-secondary;
+      }
+
       .type-item {
         background: rgba(30, 41, 59, 0.8);
         border-color: $dark-border;
@@ -4737,26 +4755,44 @@ $dark-border: rgba(255, 255, 255, 0.1);
 }
 
 .question-toolbar {
-  padding: 16px 24px;
+  padding: 14px 24px;
   background: linear-gradient(135deg, #fafafa 0%, #f5f7fa 100%);
 
   .toolbar-hint {
     font-size: 13px;
     color: #909399;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     font-weight: 500;
+  }
+
+  .toolbar-groups {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+
+    .toolbar-group {
+      .toolbar-group-label {
+        font-size: 12px;
+        color: #909399;
+        font-weight: 600;
+        margin-bottom: 8px;
+        padding-left: 2px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+    }
   }
 
   .toolbar-items {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
 
     .type-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 14px 18px;
+      padding: 10px 14px;
       background: rgba(255, 255, 255, 0.8);
       border: 2px solid #e4e7ed;
       border-radius: 10px;
@@ -4764,6 +4800,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
+      min-width: 68px;
 
       &::before {
         content: "";
@@ -4783,7 +4820,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
       &:hover {
         border-color: #00bfa5;
-        box-shadow: 0 8px 24px rgba(0, 191, 165, 0.15);
+        box-shadow: 0 6px 18px rgba(0, 191, 165, 0.12);
         transform: translateY(-2px);
 
         &::before {
@@ -4797,34 +4834,23 @@ $dark-border: rgba(255, 255, 255, 0.1);
       }
 
       .type-icon-wrapper {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(
-          135deg,
-          rgba(0, 191, 165, 0.15) 0%,
-          rgba(0, 191, 165, 0.08) 100%
-        );
-        border-radius: 10px;
-        margin-bottom: 8px;
+        border-radius: 8px;
+        margin-bottom: 6px;
         transition: all 0.3s ease;
 
         .type-icon {
-          width: 22px;
-          height: 22px;
-          color: #00bfa5;
+          width: 20px;
+          height: 20px;
           transition: transform 0.3s ease;
         }
       }
 
       &:hover .type-icon-wrapper {
-        background: linear-gradient(
-          135deg,
-          rgba(0, 191, 165, 0.25) 0%,
-          rgba(0, 191, 165, 0.15) 100%
-        );
         transform: scale(1.1);
 
         .type-icon {
@@ -4833,14 +4859,14 @@ $dark-border: rgba(255, 255, 255, 0.1);
       }
 
       .type-label {
-        font-size: 13px;
+        font-size: 12px;
         color: #606266;
         font-weight: 500;
         transition: color 0.3s ease;
       }
 
       &:hover .type-label {
-        color: #00bfa5;
+        color: #303133;
       }
     }
   }
@@ -5127,7 +5153,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
   background-size: 800px;
   background-position: center;
   background-blend-mode: overlay;
-  background-color: rgba(245, 247, 250, 0.85);
+  background-color: rgba(245, 247, 250, 0.92);
   &.drag-over {
     background-color: rgba(0, 191, 165, 0.05);
   }
@@ -5146,7 +5172,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     z-index: 1000;
   }
   .paper-canvas {
-    max-width: 100%;
+    max-width: 960px;
     margin: 0 auto;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 8px;
@@ -5399,8 +5425,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
-    margin: 32px 0 24px 0;
+    padding: 14px 20px;
+    margin: 20px 0 16px 0;
     background: linear-gradient(
       135deg,
       rgba(0, 191, 165, 0.08) 0%,
@@ -5465,8 +5491,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
     );
     border: 2px solid #e4e7ed;
     border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 18px;
+    margin-bottom: 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     position: relative;
@@ -5474,8 +5500,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
     &:hover {
       border-color: #00bfa5;
-      box-shadow: 0 8px 24px rgba(0, 191, 165, 0.12);
-      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 191, 165, 0.1);
+      transform: translateY(-1px);
     }
 
     &.active {

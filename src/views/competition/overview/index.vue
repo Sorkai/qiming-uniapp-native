@@ -4,7 +4,7 @@
     <el-card class="box-card header-card">
       <div class="header-content">
         <div class="header-left">
-          <h2>🏆 赛事大屏概览</h2>
+          <h2>赛事大屏概览</h2>
           <p>实时查看各类竞赛活动的整体数据与统计信息</p>
         </div>
         <div class="header-stats">
