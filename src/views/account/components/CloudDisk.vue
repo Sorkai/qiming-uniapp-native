@@ -1,17 +1,12 @@
 <template>
   <div class="cloud-disk-container" :class="currentTheme">
     <div class="disk-header">
-      <h3>
-        <CloudIcon
-          style="
-            width: 24px;
-            height: 24px;
-            margin-right: 8px;
-            vertical-align: middle;
-          "
-        />
-        学习云盘
-      </h3>
+      <div class="disk-title">
+        <div class="title-icon">
+          <CloudIcon />
+        </div>
+        <span>学习云盘</span>
+      </div>
       <div class="actions">
         <el-input
           v-model="searchQuery"
@@ -20,57 +15,42 @@
           clearable
           class="search-input"
         />
-        <el-button type="primary" :icon="Upload" @click="handleUpload"
-          >上传文件</el-button
-        >
+        <button class="upload-btn" @click="handleUpload">
+          <el-icon><Upload /></el-icon>
+          <span>上传文件</span>
+        </button>
       </div>
     </div>
 
-    <el-table
-      v-loading="loading"
-      :data="filteredFiles"
-      style="width: 100%"
-      :row-style="{ cursor: 'pointer' }"
-      class="disk-table"
-    >
-      <el-table-column prop="name" label="文件名" min-width="250">
-        <template #default="{ row }">
-          <div class="file-name-cell">
-            <el-icon :size="20" class="file-icon">
-              <component :is="getFileIcon(row.type)" />
+    <div class="file-list-header">
+      <span class="col-name">文件名</span>
+      <span class="col-size">大小</span>
+      <span class="col-date">修改日期</span>
+      <span class="col-action">操作</span>
+    </div>
+    <div class="file-list-body">
+      <div
+        v-for="file in filteredFiles"
+        :key="file.id"
+        class="file-row"
+      >
+        <div class="col-name">
+          <div class="file-icon-wrap" :class="`icon-${file.type}`">
+            <el-icon :size="18">
+              <component :is="getFileIcon(file.type)" />
             </el-icon>
-            <span>{{ row.name }}</span>
           </div>
-        </template>
-      </el-table-column>
-      <el-table-column prop="size" label="大小" width="120" />
-      <el-table-column prop="date" label="修改日期" width="180" />
-      <el-table-column label="操作" width="200">
-        <template #default="{ row }">
-          <el-button
-            type="primary"
-            link
-            size="small"
-            @click.stop="handleDownload(row)"
-            >下载</el-button
-          >
-          <el-button
-            type="primary"
-            link
-            size="small"
-            @click.stop="handleShare(row)"
-            >分享</el-button
-          >
-          <el-button
-            type="danger"
-            link
-            size="small"
-            @click.stop="handleDelete(row)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
+          <span class="file-name-text">{{ file.name }}</span>
+        </div>
+        <span class="col-size">{{ file.size }}</span>
+        <span class="col-date">{{ file.date }}</span>
+        <div class="col-action">
+          <button class="action-link primary" @click.stop="handleDownload(file)">下载</button>
+          <button class="action-link primary" @click.stop="handleShare(file)">分享</button>
+          <button class="action-link danger" @click.stop="handleDelete(file)">删除</button>
+        </div>
+      </div>
+    </div>
 
     <div v-if="filteredFiles.length === 0 && !loading" class="empty-state">
       <el-empty description="没有找到文件或文件夹为空" />
@@ -314,44 +294,79 @@ const handleDelete = (file: CloudFile) => {
   width: calc(100% - 2px);
   min-width: 0;
   max-width: 100%;
-  padding: 16px;
+  padding: 24px;
   overflow: hidden;
-  background-color: #fff;
-  border: 1px solid var(--el-border-color-light);
+  background: linear-gradient(160deg, #fff, #f8faff);
+  border: 1px solid rgb(151 180 247 / 12%);
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgb(0 0 0 / 4%);
+  box-shadow: 0 4px 20px -4px rgb(151 180 247 / 15%);
 
   .dark & {
-    background-color: #1e293b;
-    border-color: #334155;
+    background: linear-gradient(160deg, #111b2d, #0f172a);
+    border-color: rgb(56 189 248 / 10%);
+    box-shadow: 0 4px 20px rgb(0 0 0 / 25%);
   }
 
   .disk-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
+    .disk-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1a2e;
 
       .dark & {
         color: #f1f5f9;
+      }
+
+      .title-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        color: #97b4f7;
+        background: linear-gradient(135deg, #eef2ff, #dce2f7);
+        border-radius: 8px;
+
+        .dark & {
+          color: #38bdf8;
+          background: rgb(56 189 248 / 10%);
+        }
+
+        svg {
+          width: 18px;
+          height: 18px;
+        }
       }
     }
 
     .actions {
       display: flex;
-      gap: 10px;
+      gap: 12px;
+      align-items: center;
     }
 
     .search-input {
-      width: 240px;
+      width: 200px;
 
       :deep(.el-input__wrapper) {
+        background: #f8faff;
+        border-radius: 10px;
+        box-shadow: 0 0 0 1px rgb(151 180 247 / 18%) inset;
+        transition: all 0.3s ease;
+
+        &:hover,
+        &.is-focus {
+          box-shadow: 0 0 0 1px rgb(151 180 247 / 40%) inset;
+        }
+
         .dark & {
           background-color: #1e293b;
           box-shadow: 0 0 0 1px #334155 inset;
@@ -359,6 +374,8 @@ const handleDelete = (file: CloudFile) => {
       }
 
       :deep(.el-input__inner) {
+        font-size: 13px;
+
         .dark & {
           color: #f1f5f9;
 
@@ -368,54 +385,281 @@ const handleDelete = (file: CloudFile) => {
         }
       }
     }
-  }
 
-  .disk-table {
-    width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    border-radius: 12px;
+    .upload-btn {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #97b4f7, #7c9cf5);
+      border: none;
+      border-radius: 10px;
+      box-shadow:
+        0 4px 14px rgb(151 180 247 / 40%),
+        inset 0 1px 0 rgb(255 255 255 / 20%);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    :deep(.el-table__inner-wrapper) {
-      overflow-x: auto;
-    }
+      &:hover {
+        box-shadow:
+          0 6px 20px rgb(151 180 247 / 50%),
+          inset 0 1px 0 rgb(255 255 255 / 25%);
+        transform: translateY(-2px);
+      }
 
-    :deep(.el-table__header-wrapper) {
-      th {
-        .dark & {
-          color: #94a3b8;
-          background-color: #0f172a;
-          border-bottom-color: #1e293b;
-        }
+      &:active {
+        transform: translateY(0);
+      }
+
+      .el-icon {
+        font-size: 15px;
       }
     }
-
-    :deep(.el-table__row) {
-      .dark & {
-        color: #f1f5f9;
-        background-color: #1e293b;
-
-        td {
-          border-bottom-color: #0f172a;
-        }
-
-        &:hover > td {
-          background-color: #334155;
-        }
-      }
-    }
   }
 
-  .file-name-cell {
+  .file-list-header {
     display: flex;
-    gap: 8px;
     align-items: center;
+    padding: 0 16px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgb(151 180 247 / 10%);
 
-    .file-icon {
-      color: #606266;
+    .dark & {
+      color: #64748b;
+      border-bottom-color: rgb(56 189 248 / 8%);
+    }
+
+    .col-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .col-size {
+      flex-shrink: 0;
+      width: 90px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .col-date {
+      flex-shrink: 0;
+      width: 150px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .col-action {
+      flex-shrink: 0;
+      width: 170px;
+      text-align: right;
+      white-space: nowrap;
+    }
+  }
+
+  .file-list-body {
+    max-height: 600px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgb(151 180 247 / 25%);
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  }
+
+  .file-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    margin-top: 4px;
+    border-radius: 10px;
+    transition: all 0.25s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #f0f4ff, #e8edff);
+      box-shadow: 0 2px 10px rgb(151 180 247 / 10%);
+
+      .dark & {
+        background: linear-gradient(135deg, #1e293b, #253348);
+        box-shadow: 0 2px 10px rgb(56 189 248 / 6%);
+      }
+
+      .col-action .action-link {
+        opacity: 1;
+      }
+    }
+
+    .col-name {
+      display: flex;
+      flex: 1;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+
+      .file-icon-wrap {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        transition: transform 0.2s ease;
+
+        &.icon-doc {
+          color: #6366f1;
+          background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+
+          .dark & {
+            color: #818cf8;
+            background: rgb(99 102 241 / 12%);
+          }
+        }
+
+        &.icon-audio {
+          color: #f59e0b;
+          background: linear-gradient(135deg, #fef3c7, #fde68a);
+
+          .dark & {
+            color: #fbbf24;
+            background: rgb(245 158 11 / 12%);
+          }
+        }
+
+        &.icon-image {
+          color: #10b981;
+          background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+
+          .dark & {
+            color: #34d399;
+            background: rgb(16 185 129 / 12%);
+          }
+        }
+
+        &.icon-video {
+          color: #ef4444;
+          background: linear-gradient(135deg, #fee2e2, #fecaca);
+
+          .dark & {
+            color: #f87171;
+            background: rgb(239 68 68 / 12%);
+          }
+        }
+
+        &.icon-folder {
+          color: #97b4f7;
+          background: linear-gradient(135deg, #eef2ff, #dce2f7);
+
+          .dark & {
+            color: #38bdf8;
+            background: rgb(56 189 248 / 12%);
+          }
+        }
+
+        &.icon-other {
+          color: #6b7280;
+          background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+
+          .dark & {
+            color: #94a3b8;
+            background: rgb(107 114 128 / 12%);
+          }
+        }
+      }
+
+      .file-name-text {
+        overflow: hidden;
+        font-size: 14px;
+        font-weight: 500;
+        color: #1e293b;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        .dark & {
+          color: #e2e8f0;
+        }
+      }
+    }
+
+    .col-size {
+      flex-shrink: 0;
+      width: 90px;
+      font-size: 13px;
+      color: #64748b;
+      text-align: right;
+      white-space: nowrap;
 
       .dark & {
         color: #94a3b8;
+      }
+    }
+
+    .col-date {
+      flex-shrink: 0;
+      width: 150px;
+      font-size: 13px;
+      color: #64748b;
+      text-align: right;
+      white-space: nowrap;
+
+      .dark & {
+        color: #94a3b8;
+      }
+    }
+
+    .col-action {
+      display: flex;
+      flex-shrink: 0;
+      gap: 6px;
+      justify-content: flex-end;
+      width: 170px;
+      white-space: nowrap;
+
+      .action-link {
+        padding: 4px 8px;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        background: none;
+        border: none;
+        border-radius: 6px;
+        opacity: 0.6;
+        transition: all 0.2s ease;
+
+        &.primary {
+          color: #7c9cf5;
+
+          &:hover {
+            color: #fff;
+            background: linear-gradient(135deg, #97b4f7, #7c9cf5);
+            box-shadow: 0 2px 8px rgb(151 180 247 / 35%);
+          }
+        }
+
+        &.danger {
+          color: #f87171;
+
+          &:hover {
+            color: #fff;
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            box-shadow: 0 2px 8px rgb(248 113 113 / 35%);
+          }
+        }
       }
     }
   }
