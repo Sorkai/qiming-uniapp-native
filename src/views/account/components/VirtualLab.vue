@@ -347,39 +347,49 @@ const handleDialogClose = () => {
     margin-bottom: 24px;
 
     :deep(.el-radio-group) {
+      display: flex;
+      gap: 10px;
+
       .el-radio-button {
         .el-radio-button__inner {
-          padding: 12px 24px;
+          padding: 10px 22px;
           font-size: 14px;
-          border-radius: 20px;
+          font-weight: 500;
+          color: #64748b;
+          background: linear-gradient(135deg, #f8faff, #f0f4ff);
+          border: 1px solid rgb(151 180 247 / 18%) !important;
+          border-radius: 20px !important;
+          box-shadow: none;
+          transition: all 0.3s ease;
 
           .dark & {
             color: #94a3b8;
-            background-color: #1e293b;
-            border-color: #334155;
+            background: #1e293b;
+            border-color: #334155 !important;
           }
-        }
 
-        &:first-child .el-radio-button__inner {
-          border-radius: 20px 0 0 20px;
-        }
+          &:hover {
+            color: #7c9cf5;
+            background: linear-gradient(135deg, #eef2ff, #dce2f7);
+            border-color: rgb(151 180 247 / 35%) !important;
 
-        &:last-child .el-radio-button__inner {
-          border-radius: 0 20px 20px 0;
-        }
-
-        /* 处理单个按钮的情况或强制全圆角 */
-        &.is-active .el-radio-button__inner {
-          border-radius: 20px;
+            .dark & {
+              color: #97b4f7;
+              background: rgb(56 189 248 / 8%);
+            }
+          }
         }
       }
 
       .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+        color: #fff !important;
+        background: linear-gradient(135deg, #97b4f7, #7c9cf5) !important;
+        border-color: transparent !important;
+        box-shadow: 0 4px 14px rgb(151 180 247 / 40%) !important;
+
         .dark & {
-          color: #fff;
-          background-color: #3b82f6;
-          border-color: #3b82f6;
-          box-shadow: -1px 0 0 0 #3b82f6;
+          background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+          box-shadow: 0 4px 14px rgb(59 130 246 / 35%) !important;
         }
       }
     }
