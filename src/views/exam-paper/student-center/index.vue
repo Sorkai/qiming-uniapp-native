@@ -220,12 +220,28 @@ onMounted(() => {
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-content">
-        <div class="header-icon">
-          <TestPaperCenterIcon class="custom-icon" />
+        <div class="header-left">
+          <div class="header-icon">
+            <TestPaperCenterIcon class="custom-icon" />
+          </div>
+          <div class="header-info">
+            <h1 class="page-title">试题试卷中心</h1>
+            <p class="page-desc">查看和完成老师发布的试卷</p>
+          </div>
         </div>
-        <div class="header-info">
-          <h1 class="page-title">试题试卷中心</h1>
-          <p class="page-desc">查看和完成老师发布的试卷</p>
+        <div class="header-stats">
+          <div class="stat-item">
+            <span class="stat-value">{{ statistics.available }}</span>
+            <span class="stat-label">待完成</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ statistics.completed }}</span>
+            <span class="stat-label">已完成</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ statistics.avgScore }}</span>
+            <span class="stat-label">平均分</span>
+          </div>
         </div>
       </div>
     </div>
@@ -535,7 +551,7 @@ $info-color: #6b7280;
 
 .student-exam-center {
   min-height: 100%;
-  padding: 24px;
+  padding: 0 24px 24px;
   background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
 
   &.is-dark {
@@ -559,6 +575,16 @@ $info-color: #6b7280;
 
         .custom-icon {
           color: #f1f5f9;
+        }
+      }
+
+      .header-stats .stat-item {
+        .stat-value {
+          color: #f1f5f9;
+        }
+
+        .stat-label {
+          color: #94a3b8;
         }
       }
     }
@@ -589,6 +615,12 @@ $info-color: #6b7280;
     box-shadow: 0 8px 32px rgb(151 180 247 / 25%);
 
     .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left {
       display: flex;
       align-items: center;
       gap: 16px;
@@ -624,6 +656,27 @@ $info-color: #6b7280;
       font-size: 14px;
       color: #2a3f5f;
       margin: 0;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 32px;
+
+      .stat-item {
+        text-align: center;
+
+        .stat-value {
+          display: block;
+          font-size: 28px;
+          font-weight: 700;
+          color: #1a2a4a;
+        }
+
+        .stat-label {
+          font-size: 12px;
+          color: #2a3f5f;
+        }
+      }
     }
   }
 
