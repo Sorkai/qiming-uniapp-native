@@ -291,9 +291,9 @@ const handleDialogClose = () => {
   .lab-header {
     padding: 24px;
     margin-bottom: 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #97b4f7 0%, #7c9cf5 60%, #a8c0ff 100%);
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgb(102 126 234 / 30%);
+    box-shadow: 0 8px 32px rgb(151 180 247 / 25%);
 
     .dark & {
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -310,14 +310,14 @@ const handleDialogClose = () => {
       h2 {
         margin: 0 0 8px;
         font-size: 24px;
-        font-weight: 600;
-        color: #fff;
+        font-weight: 700;
+        color: #1a2a4a;
       }
 
       p {
         margin: 0;
         font-size: 14px;
-        color: rgb(255 255 255 / 80%);
+        color: #2a3f5f;
       }
     }
 
@@ -332,12 +332,12 @@ const handleDialogClose = () => {
           display: block;
           font-size: 28px;
           font-weight: 700;
-          color: #fff;
+          color: #1a2a4a;
         }
 
         .stat-label {
           font-size: 12px;
-          color: rgb(255 255 255 / 70%);
+          color: #2a3f5f;
         }
       }
     }
