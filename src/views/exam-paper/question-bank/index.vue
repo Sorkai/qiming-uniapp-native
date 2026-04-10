@@ -1348,8 +1348,8 @@ $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
 
-$primary-gradient: linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%);
-$success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+$primary-gradient: linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%);
+$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 
@@ -1552,12 +1552,12 @@ $radius-lg: 16px;
       transition: all 0.2s;
 
       &:hover {
-        background: rgba(0, 191, 165, 0.05);
+        background: rgba(115, 156, 249, 0.05);
       }
 
       &.active {
-        background: rgba(0, 191, 165, 0.1);
-        color: #00bfa5;
+        background: rgba(115, 156, 249, 0.1);
+        color: #739CF9;
       }
 
       &.child {
@@ -1683,7 +1683,7 @@ $radius-lg: 16px;
         transition: all 0.3s;
 
         &:hover {
-          border-color: #0f766e;
+          border-color: #4A7FC8;
           background: rgba(15, 118, 110, 0.04);
         }
       }
@@ -1694,7 +1694,7 @@ $radius-lg: 16px;
 
       .upload-icon {
         font-size: 48px;
-        color: #0f766e;
+        color: #4A7FC8;
         margin-bottom: 12px;
       }
 
@@ -1704,7 +1704,7 @@ $radius-lg: 16px;
         margin-bottom: 8px;
 
         em {
-          color: #0f766e;
+          color: #4A7FC8;
           font-style: normal;
           cursor: pointer;
         }
@@ -1730,7 +1730,7 @@ $radius-lg: 16px;
   // 导出对话框样式
   .export-dialog-content {
     .export-count {
-      color: #0f766e;
+      color: #4A7FC8;
       font-size: 12px;
     }
 

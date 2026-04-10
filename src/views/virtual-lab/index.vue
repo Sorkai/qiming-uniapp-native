@@ -3,7 +3,7 @@
     <el-card class="box-card header-card">
       <div class="header-content">
         <div class="header-left">
-          <h2>🧪 虚拟实验室管理</h2>
+          <h2> 虚拟实验室管理</h2>
           <p>管理 HTML 动画与 AI 生成的互动实验内容</p>
         </div>
         <div class="header-stats">

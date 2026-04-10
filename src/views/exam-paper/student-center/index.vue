@@ -471,7 +471,7 @@ onMounted(() => {
           </el-button>
           <el-button
             v-else-if="paper.status === 'completed'"
-            type="success"
+            type="primary"
             size="large"
             class="action-btn"
             @click="viewScore(paper)"
@@ -527,8 +527,8 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-$primary-color: #00bfa5;
-$success-color: #10b981;
+$primary-color: #739CF9;
+$success-color: #739CF9;
 $warning-color: #f59e0b;
 $danger-color: #ef4444;
 $info-color: #6b7280;
@@ -581,7 +581,7 @@ $info-color: #6b7280;
       width: 56px;
       height: 56px;
       border-radius: 12px;
-      background: linear-gradient(135deg, $primary-color 0%, #00a89f 100%);
+      background: linear-gradient(135deg, $primary-color 0%, #4A7FC8 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -648,11 +648,11 @@ $info-color: #6b7280;
     }
 
     &.available .stat-icon {
-      background: linear-gradient(135deg, $success-color 0%, #34d399 100%);
+      background: linear-gradient(135deg, $success-color 0%, #80C8FA 100%);
     }
 
     &.completed .stat-icon {
-      background: linear-gradient(135deg, $primary-color 0%, #00a89f 100%);
+      background: linear-gradient(135deg, $primary-color 0%, #4A7FC8 100%);
     }
 
     &.expired .stat-icon {
@@ -773,7 +773,7 @@ $info-color: #6b7280;
           font-size: 12px;
           color: #6b7280;
           padding: 2px 8px;
-          background: rgba(0, 191, 165, 0.1);
+          background: rgba(115, 156, 249, 0.1);
           border-radius: 4px;
         }
       }

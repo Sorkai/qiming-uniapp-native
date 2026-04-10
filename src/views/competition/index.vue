@@ -3,7 +3,7 @@
     <el-card class="box-card header-card">
       <div class="header-content">
         <div class="header-left">
-          <h2>🏆 赛事管理</h2>
+          <h2> 赛事管理</h2>
           <p>管理在线编程竞赛、题库训练与作文批改等赛事活动</p>
         </div>
         <div class="header-stats">

@@ -274,7 +274,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-$primary-color: #00bfa5;
+$primary-color: #739CF9;
 
 .student-paper-detail {
   min-height: 100vh;

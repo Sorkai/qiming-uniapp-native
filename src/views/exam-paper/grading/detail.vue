@@ -280,7 +280,7 @@ onMounted(() => {
           <h3>学生列表</h3>
           <div class="filter-tags">
             <el-tag size="small" type="warning">待阅 {{ pendingCount }}</el-tag>
-            <el-tag size="small" type="success">已阅 {{ gradedCount }}</el-tag>
+            <el-tag size="small" type="primary">已阅 {{ gradedCount }}</el-tag>
           </div>
         </div>
         <div class="student-list">
@@ -401,7 +401,7 @@ onMounted(() => {
                 <span class="unit">/ {{ answer.maxScore }} 分</span>
                 <el-button
                   size="small"
-                  type="success"
+                  type="primary"
                   plain
                   @click="giveFullScore(index)"
                   >满分</el-button
@@ -489,7 +489,7 @@ $dark-text-primary: #f1f5f9;
 $dark-text-secondary: #94a3b8;
 $dark-border: rgba(255, 255, 255, 0.1);
 $primary-color: #667eea;
-$success-color: #10b981;
+$success-color: #739CF9;
 $warning-color: #f59e0b;
 $danger-color: #ef4444;
 $radius-sm: 8px;
@@ -780,7 +780,7 @@ $radius-lg: 16px;
     color: $light-text-primary;
   }
   .option-item.is-correct {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(115, 156, 249, 0.1);
     border-color: $success-color;
     color: $success-color;
   }

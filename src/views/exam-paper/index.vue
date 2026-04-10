@@ -49,7 +49,7 @@ const templates = ref([
     name: "标准考试模板",
     description: "单选10道·多选5道·填空5道·大题10道",
     icon: IconDocument,
-    color: "linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%)",
+    color: "linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%)",
     questionCount: 30,
     totalPoints: 100,
     useCount: 0
@@ -60,7 +60,7 @@ const templates = ref([
     name: "快速测验模板",
     description: "仅包含客观题，适合课堂小测和随堂练习",
     icon: IconZap,
-    color: "linear-gradient(135deg, #2f855a 0%, #48bb78 100%)",
+    color: "linear-gradient(135deg, #4A7FC8 0%, #80C8FA 100%)",
     questionCount: 5,
     totalPoints: 25,
     useCount: 0
@@ -418,7 +418,7 @@ onMounted(() => {
               <el-progress
                 :percentage="learningStats.passRate"
                 :stroke-width="10"
-                status="success"
+                color="#739CF9"
               />
             </div>
             <div class="stat-item">
@@ -426,7 +426,7 @@ onMounted(() => {
               <el-progress
                 :percentage="learningStats.excellentRate"
                 :stroke-width="10"
-                color="#0f766e"
+                color="#4A7FC8"
               />
             </div>
             <div class="stat-item">
@@ -537,8 +537,8 @@ $dark-shadow-lg:
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
-$primary-gradient: linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%);
-$success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+$primary-gradient: linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%);
+$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
 
@@ -621,8 +621,8 @@ $radius-xl: 20px;
       }
 
       .paper-icon {
-        background: rgba(20, 184, 166, 0.2);
-        color: #5eead4;
+        background: rgba(74, 127, 200, 0.2);
+        color: #80C8FA;
       }
 
       .paper-info {
@@ -650,7 +650,7 @@ $radius-xl: 20px;
       }
 
       .stat-value-large {
-        color: #5eead4;
+        color: #80C8FA;
 
         .stat-unit {
           color: $dark-text-muted;
@@ -682,7 +682,7 @@ $radius-xl: 20px;
   overflow: hidden;
   background: $primary-gradient;
   border-radius: $radius-xl;
-  box-shadow: 0 20px 40px rgba(15, 118, 110, 0.28);
+  box-shadow: 0 20px 40px rgba(74, 127, 200, 0.28);
 
   @media (width <= 768px) {
     flex-direction: column;
@@ -727,7 +727,7 @@ $radius-xl: 20px;
     padding: 0 32px;
     font-size: 16px;
     font-weight: 600;
-    color: #0f766e;
+    color: #4A7FC8;
     background: #fff;
     border: none;
     border-radius: 26px;
@@ -1004,8 +1004,8 @@ $radius-xl: 20px;
       justify-content: center;
       width: 56px;
       height: 56px;
-      color: #0f766e;
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      color: #4A7FC8;
+      background: linear-gradient(135deg, #EBF2FD 0%, #EBF2FD 100%);
       border-radius: $radius-md;
 
       svg {
@@ -1073,7 +1073,7 @@ $radius-xl: 20px;
       .stat-value-large {
         font-size: 36px;
         font-weight: 700;
-        color: #0f766e;
+        color: #4A7FC8;
 
         .stat-unit {
           margin-left: 4px;

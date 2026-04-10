@@ -74,7 +74,7 @@ const getTrendIcon = (trend: string) => {
 // 获取趋势颜色
 const getTrendColor = (trend: string) => {
   const colors: Record<string, string> = {
-    up: "#67c23a",
+    up: "#739CF9",
     down: "#f56c6c",
     same: "#909399"
   };
@@ -411,12 +411,12 @@ $dark-shadow-lg:
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
-$primary-gradient: linear-gradient(135deg, #0f766e 0%, #1f9d8f 100%);
-$success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+$primary-gradient: linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%);
+$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
 $pink-gradient: linear-gradient(135deg, #fb7185 0%, #f97316 100%);
-$cyan-gradient: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+$cyan-gradient: linear-gradient(135deg, #4A7FC8 0%, #80C8FA 100%);
 
 /* 统一圆角 */
 $radius-sm: 8px;
@@ -442,8 +442,8 @@ $radius-xl: 20px;
       }
 
       .header-icon {
-        background: rgba(16, 185, 129, 0.15);
-        color: #34d399;
+        background: rgba(115, 156, 249, 0.15);
+        color: #80C8FA;
       }
     }
 
@@ -748,15 +748,15 @@ $radius-xl: 20px;
         }
 
         &.good {
-          background: linear-gradient(90deg, #14b8a6, #2dd4bf);
+          background: linear-gradient(90deg, #80C8FA, #80C8FA);
         }
 
         &.excellent {
-          background: linear-gradient(90deg, #67c23a, #95d475);
+          background: linear-gradient(90deg, #739CF9, #a1b5f7);
         }
 
         &.perfect {
-          background: linear-gradient(90deg, #0f766e, #14b8a6);
+          background: linear-gradient(90deg, #4A7FC8, #80C8FA);
         }
       }
     }
@@ -791,7 +791,7 @@ $radius-xl: 20px;
       .type-rate {
         font-size: 14px;
         font-weight: 600;
-        color: #0f766e;
+        color: #4A7FC8;
       }
     }
 
@@ -882,7 +882,7 @@ $radius-xl: 20px;
       .student-score {
         font-size: 14px;
         font-weight: 600;
-        color: #0f766e;
+        color: #4A7FC8;
       }
     }
   }
