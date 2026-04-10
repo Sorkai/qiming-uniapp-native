@@ -85,13 +85,26 @@ const notificationList = ref([
 
   .notification-item {
     :deep(.el-timeline-item__timestamp) {
+      font-size: 13px;
+      font-weight: 500;
+      color: #7c9cf5;
+
       .dark & {
-        color: #64748b;
+        color: #97b4f7;
       }
+    }
+
+    :deep(.el-timeline-item__node) {
+      background-color: #97b4f7;
+    }
+
+    :deep(.el-timeline-item__tail) {
+      border-left-color: rgb(151 180 247 / 25%);
     }
 
     .content-card {
       cursor: pointer;
+      border-radius: 14px;
       transition: all 0.3s ease-in-out;
 
       .dark & {
