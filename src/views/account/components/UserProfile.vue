@@ -229,19 +229,25 @@
             <span>学习动态</span>
           </div>
         </div>
-        <div class="dynamics-timeline">
-          <el-timeline>
-            <el-timeline-item
-              v-for="activity in learningActivities"
-              :key="activity.id"
-              :timestamp="activity.timestamp"
-              :type="activity.type"
-              :icon="activity.icon"
-              size="large"
-            >
-              {{ activity.content }}
-            </el-timeline-item>
-          </el-timeline>
+        <div class="dynamics-list">
+          <div
+            v-for="activity in learningActivities"
+            :key="activity.id"
+            class="activity-item"
+          >
+            <div class="activity-dot" :class="`dot-${activity.type}`">
+              <component :is="activity.icon" class="activity-icon-svg" />
+            </div>
+            <div class="activity-body">
+              <div class="activity-content">{{ activity.content }}</div>
+              <div class="activity-time">{{ activity.timestamp }}</div>
+            </div>
+          </div>
+          <el-empty
+            v-if="learningActivities.length === 0"
+            description="暂无学习动态"
+            :image-size="60"
+          />
         </div>
       </div>
     </div>
@@ -1999,10 +2005,13 @@ onMounted(async () => {
     }
   }
 
-  .dynamics-timeline {
+  .dynamics-list {
+    display: flex;
     flex: 1;
+    flex-direction: column;
+    gap: 6px;
     min-height: 0;
-    padding-top: 10px;
+    padding-top: 4px;
     overflow-y: auto;
 
     &::-webkit-scrollbar {
@@ -2018,41 +2027,127 @@ onMounted(async () => {
       background: transparent;
     }
 
-    :deep(.el-timeline-item__icon) {
+    .activity-item {
       display: flex;
-      align-items: center;
-      justify-content: center;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, #f8faff, #f2f5ff);
+      border: 1px solid rgb(151 180 247 / 10%);
+      border-radius: 12px;
+      transition: all 0.25s ease;
 
-      svg {
-        width: 16px;
-        height: 16px;
+      .dark & {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border-color: rgb(56 189 248 / 8%);
+      }
 
-        path[stroke] {
-          stroke: currentColor;
-        }
+      &:hover {
+        background: linear-gradient(135deg, #eef2ff, #dce2f7);
+        border-color: rgb(151 180 247 / 20%);
+        box-shadow: 0 4px 14px rgb(151 180 247 / 14%);
 
-        path[fill]:not([fill="none"]):not([fill="white"]) {
-          fill: currentColor;
-        }
-
-        rect[stroke] {
-          stroke: currentColor;
-        }
-
-        g[clip-path] path[stroke] {
-          stroke: currentColor;
+        .dark & {
+          background: linear-gradient(135deg, #1e293b, #334155);
+          border-color: rgb(56 189 248 / 18%);
+          box-shadow: 0 4px 14px rgb(56 189 248 / 8%);
         }
       }
-    }
 
-    :deep(.el-timeline-item__content) {
-      font-size: 14.5px;
-      line-height: 1.6;
-      color: var(--el-text-color-regular);
-    }
+      .activity-dot {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
 
-    :deep(.el-timeline-item__timestamp) {
-      font-size: 13px;
+        .activity-icon-svg {
+          width: 17px;
+          height: 17px;
+        }
+
+        &.dot-success {
+          color: #10b981;
+          background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+
+          .dark & {
+            color: #34d399;
+            background: rgb(16 185 129 / 15%);
+          }
+        }
+
+        &.dot-primary {
+          color: #6366f1;
+          background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+
+          .dark & {
+            color: #818cf8;
+            background: rgb(99 102 241 / 15%);
+          }
+        }
+
+        &.dot-warning {
+          color: #f59e0b;
+          background: linear-gradient(135deg, #fef3c7, #fde68a);
+
+          .dark & {
+            color: #fbbf24;
+            background: rgb(245 158 11 / 15%);
+          }
+        }
+
+        &.dot-info {
+          color: #6b7280;
+          background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+
+          .dark & {
+            color: #94a3b8;
+            background: rgb(107 114 128 / 15%);
+          }
+        }
+
+        &.dot-danger {
+          color: #ef4444;
+          background: linear-gradient(135deg, #fee2e2, #fecaca);
+
+          .dark & {
+            color: #f87171;
+            background: rgb(239 68 68 / 15%);
+          }
+        }
+      }
+
+      .activity-body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+        padding-top: 2px;
+
+        .activity-content {
+          font-size: 14px;
+          font-weight: 500;
+          line-height: 1.5;
+          color: #1e293b;
+
+          .dark & {
+            color: #e2e8f0;
+          }
+        }
+
+        .activity-time {
+          font-size: 12px;
+          font-weight: 400;
+          color: #94a3b8;
+
+          .dark & {
+            color: #64748b;
+          }
+        }
+      }
     }
   }
 }
