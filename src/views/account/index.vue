@@ -1303,43 +1303,72 @@ onUnmounted(() => {
   .account-content {
     display: flex;
     gap: 24px;
-    min-height: calc(100vh - 90px);
-    padding: 88px 32px 32px;
+    height: calc(100vh - 64px);
+    padding: 88px 32px 0;
 
     .account-sidebar {
+      position: sticky;
+      top: 88px;
       flex-shrink: 0;
       width: 240px;
+      height: calc(100vh - 88px);
+      padding-bottom: 32px;
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        width: 0;
+      }
 
       .user-info-card {
         position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 30px 20px 24px;
+        padding: 32px 20px 26px;
         margin-bottom: 16px;
+        overflow: hidden;
         text-align: center;
-        background: linear-gradient(145deg, #fff, #f8faff);
-        border-radius: 16px;
-        box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+        background: linear-gradient(160deg, #fff, #f8faff);
+        border: 1px solid rgb(151 180 247 / 12%);
+        border-radius: 18px;
+        box-shadow:
+          0 4px 24px rgb(151 180 247 / 15%),
+          0 1px 4px rgb(0 0 0 / 4%);
         transition: all 0.3s ease;
 
+        &::before {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 60px;
+          content: "";
+          background: linear-gradient(135deg, #97b4f7, #dce2f7);
+          opacity: 0.15;
+        }
+
         &:hover {
-          box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
+          box-shadow:
+            0 8px 32px rgb(151 180 247 / 22%),
+            0 2px 8px rgb(0 0 0 / 6%);
           transform: translateY(-2px);
 
           .avatar-ring {
-            border-color: #dce2f7;
+            border-color: #97b4f7;
             transform: scale(1.05);
           }
         }
 
         .avatar-wrapper {
           position: relative;
-          margin-bottom: 8px;
+          z-index: 1;
+          margin-bottom: 10px;
 
           .el-avatar {
             border: 3px solid #fff;
-            box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+            box-shadow:
+              0 4px 16px rgb(151 180 247 / 30%),
+              0 0 0 3px rgb(151 180 247 / 15%);
             transition: transform 0.3s ease;
           }
 
@@ -1349,8 +1378,8 @@ onUnmounted(() => {
 
           .avatar-ring {
             position: absolute;
-            inset: -6px;
-            border: 2px dashed #97b4f7;
+            inset: -7px;
+            border: 2px dashed rgb(151 180 247 / 50%);
             border-radius: 50%;
             transition: all 0.4s ease;
             animation: rotate 12s linear infinite;
@@ -1358,10 +1387,12 @@ onUnmounted(() => {
         }
 
         h3 {
-          margin: 12px 0 4px;
+          position: relative;
+          z-index: 1;
+          margin: 12px 0 6px;
           font-size: 18px;
-          font-weight: 600;
-          color: #333;
+          font-weight: 700;
+          color: #1a1a2e;
 
           .dark & {
             color: #f1f5f9;
@@ -1369,22 +1400,34 @@ onUnmounted(() => {
         }
 
         .user-role {
-          padding: 4px 12px;
+          position: relative;
+          z-index: 1;
+          padding: 4px 14px;
           margin: 0;
           font-size: 12px;
-          color: #666;
-          background: linear-gradient(135deg, #e8edf8, #dce2f7);
-          border-radius: 12px;
+          font-weight: 600;
+          color: #fff;
+          letter-spacing: 0.5px;
+          background: linear-gradient(135deg, #97b4f7, #7c9cf5);
+          border-radius: 20px;
+          box-shadow: 0 2px 8px rgb(151 180 247 / 35%);
 
           .dark & {
             color: #38bdf8;
-            background: rgb(56 189 248 / 10%);
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            box-shadow: 0 2px 8px rgb(56 189 248 / 25%);
           }
         }
 
         .dark & {
-          background: linear-gradient(145deg, #111b2d, #1e293b);
+          background: linear-gradient(160deg, #111b2d, #0f172a);
+          border-color: rgb(56 189 248 / 10%);
           box-shadow: 0 4px 24px rgb(0 0 0 / 30%);
+
+          &::before {
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+            opacity: 0.08;
+          }
 
           .avatar-ring {
             border-color: #334155;
@@ -1393,23 +1436,26 @@ onUnmounted(() => {
       }
 
       .account-menu {
-        padding: 12px;
-        background: linear-gradient(145deg, #fff, #fafbff);
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+        padding: 14px;
+        background: linear-gradient(160deg, #fff, #f8faff);
+        border: 1px solid rgb(151 180 247 / 12%);
+        border-radius: 18px;
+        box-shadow:
+          0 4px 24px rgb(151 180 247 / 12%),
+          0 1px 4px rgb(0 0 0 / 4%);
 
         .dark & {
-          background: linear-gradient(145deg, #111b2d, #0f172a);
+          background: linear-gradient(160deg, #111b2d, #0f172a);
+          border-color: rgb(56 189 248 / 10%);
           box-shadow: 0 4px 24px rgb(0 0 0 / 30%);
         }
 
         :deep(.el-menu-item) {
           position: relative;
-          height: 48px;
-          margin-bottom: 6px;
+          height: 46px;
+          margin-bottom: 4px;
           overflow: hidden;
-          line-height: 48px;
+          line-height: 46px;
           color: #555;
           border-radius: 12px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1418,25 +1464,26 @@ onUnmounted(() => {
             position: absolute;
             top: 50%;
             left: 0;
-            width: 4px;
+            width: 3px;
             height: 0;
             content: "";
-            background: linear-gradient(180deg, #97b4f7, #dce2f7);
+            background: linear-gradient(180deg, #97b4f7, #7c9cf5);
             border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 8px rgb(151 180 247 / 40%);
             transform: translateY(-50%);
             transition: height 0.3s ease;
           }
 
           &:hover {
-            color: #333;
+            color: #1a1a2e;
             background: linear-gradient(
               90deg,
-              rgb(220 226 247 / 40%),
+              rgb(151 180 247 / 12%),
               transparent
             );
 
             &::before {
-              height: 60%;
+              height: 55%;
             }
 
             span {
@@ -1445,14 +1492,15 @@ onUnmounted(() => {
           }
 
           &.is-active {
-            font-weight: 600;
-            color: #333;
+            font-weight: 700;
+            color: #1a1a2e;
             background: linear-gradient(
               90deg,
-              rgb(220 226 247 / 60%),
-              rgb(220 226 247 / 20%)
+              rgb(151 180 247 / 18%),
+              rgb(220 226 247 / 10%)
             );
-            box-shadow: inset 0 0 0 1px rgb(200 212 240 / 50%);
+            border: 1px solid rgb(151 180 247 / 15%);
+            box-shadow: 0 2px 8px rgb(151 180 247 / 12%);
 
             .dark & {
               color: #f1f5f9;
@@ -1461,12 +1509,14 @@ onUnmounted(() => {
                 rgb(56 189 248 / 15%),
                 transparent
               );
-              box-shadow: inset 0 0 0 1px rgb(56 189 248 / 20%);
+              border-color: rgb(56 189 248 / 15%);
+              box-shadow: 0 2px 8px rgb(56 189 248 / 10%);
             }
 
             &::before {
-              height: 70%;
-              background: linear-gradient(180deg, #a8b8e8, #97b4f7);
+              height: 65%;
+              background: linear-gradient(180deg, #97b4f7, #7c9cf5);
+              box-shadow: 0 0 10px rgb(151 180 247 / 50%);
 
               .dark & {
                 background: linear-gradient(180deg, #38bdf8, #0ea5e9);
@@ -1474,7 +1524,7 @@ onUnmounted(() => {
             }
 
             .el-icon {
-              color: #5a6b8a;
+              color: #97b4f7;
 
               .dark & {
                 color: #38bdf8;
@@ -1501,13 +1551,14 @@ onUnmounted(() => {
 
           .el-icon {
             margin-right: 12px;
-            font-size: 24px;
-            color: #888;
+            font-size: 22px;
+            color: #8a9bbf;
             transition: all 0.3s ease;
           }
 
           span {
             font-size: 14px;
+            letter-spacing: 0.2px;
             transition: all 0.3s ease;
           }
         }
@@ -1516,10 +1567,25 @@ onUnmounted(() => {
 
     .account-main {
       flex: 1;
+      min-height: 0;
       padding: 0;
+      overflow-y: auto;
       background-color: transparent;
       border-radius: 12px;
       box-shadow: none;
+
+      &::-webkit-scrollbar {
+        width: 5px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgb(151 180 247 / 25%);
+        border-radius: 4px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
 
       .quick-access-section {
         display: grid;
@@ -1533,13 +1599,17 @@ onUnmounted(() => {
           align-items: center;
           padding: 20px;
           cursor: pointer;
-          background: #fff;
+          background: linear-gradient(160deg, #fff, #f8faff);
+          border: 1px solid rgb(151 180 247 / 10%);
           border-radius: 16px;
-          box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
-          transition: all 0.3s ease;
+          box-shadow:
+            0 4px 20px rgb(151 180 247 / 10%),
+            0 1px 3px rgb(0 0 0 / 4%);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
           .dark & {
-            background: #111b2d;
+            background: linear-gradient(160deg, #111b2d, #0f172a);
+            border-color: rgb(56 189 248 / 8%);
             box-shadow: 0 4px 20px rgb(0 0 0 / 20%);
 
             &.lab-access .access-icon {
@@ -1560,7 +1630,10 @@ onUnmounted(() => {
           }
 
           &:hover {
-            box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
+            border-color: rgb(151 180 247 / 25%);
+            box-shadow:
+              0 8px 32px rgb(151 180 247 / 18%),
+              0 2px 6px rgb(0 0 0 / 5%);
             transform: translateY(-4px);
 
             .access-arrow {
@@ -1574,10 +1647,11 @@ onUnmounted(() => {
             flex-shrink: 0;
             align-items: center;
             justify-content: center;
-            width: 56px;
-            height: 56px;
-            font-size: 28px;
+            width: 52px;
+            height: 52px;
+            font-size: 26px;
             border-radius: 14px;
+            box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
           }
 
           .access-info {
@@ -1587,8 +1661,8 @@ onUnmounted(() => {
             h4 {
               margin: 0 0 4px;
               font-size: 16px;
-              font-weight: 600;
-              color: #333;
+              font-weight: 700;
+              color: #1a1a2e;
 
               .dark & {
                 color: #f1f5f9;
@@ -1641,16 +1715,19 @@ onUnmounted(() => {
       }
 
       .card {
-        padding: 24px;
+        padding: 28px;
         margin-bottom: 24px;
-        background-color: #fff;
-        border: none;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+        background: linear-gradient(160deg, #fff, #f8faff);
+        border: 1px solid rgb(151 180 247 / 10%);
+        border-radius: 16px;
+        box-shadow:
+          0 4px 24px rgb(151 180 247 / 12%),
+          0 1px 4px rgb(0 0 0 / 4%);
 
         .dark & {
-          background-color: #111b2d;
-          box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
+          background: linear-gradient(160deg, #111b2d, #0f172a);
+          border-color: rgb(56 189 248 / 10%);
+          box-shadow: 0 4px 24px rgb(0 0 0 / 30%);
         }
 
         .reminder {
