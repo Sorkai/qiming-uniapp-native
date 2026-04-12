@@ -9,6 +9,7 @@ type Events = {
   tagViewsChange: string;
   changLayoutRoute: string;
   tagViewsShowModel: string;
+  accountMenuSelect: string;
   openEditProfile: void;
   openChangePassword: void;
   imageInfo: {

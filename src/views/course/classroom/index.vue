@@ -7,8 +7,11 @@ import {
   nextTick,
   watch
 } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useUserStoreHook } from "@/store/modules/user";
+import { emitter } from "@/utils/mitt";
+import { storageLocal } from "@pureadmin/utils";
 
 defineOptions({
   name: "Qiming2DCentre"
@@ -16,6 +19,7 @@ defineOptions({
 
 const campusBgUrl = `${import.meta.env.BASE_URL}campus-2d-bg.svg`;
 const userStore = useUserStoreHook();
+const router = useRouter();
 
 function formatCurrentTime24h(date = new Date()) {
   const hour = String(date.getHours()).padStart(2, "0");
@@ -312,6 +316,20 @@ watch(hoveredZone, (newId, oldId) => {
 });
 
 function onZoneClick(zone: HotZone) {
+  if (zone.id === "Cog") {
+    emitter.emit("openEditProfile");
+    return;
+  }
+
+  if (zone.id === "Bell") {
+    storageLocal().setItem("account_active_menu", "notification");
+    emitter.emit("accountMenuSelect", "notification");
+    if (!router.currentRoute.value.path.startsWith("/account")) {
+      void router.push("/account");
+    }
+    return;
+  }
+
   ElMessage.info(`即将进入「${zone.label}」，功能细化中…`);
 }
 </script>

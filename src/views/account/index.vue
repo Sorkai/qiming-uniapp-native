@@ -865,6 +865,11 @@ const handleUserInfoUpdate = (event: CustomEvent) => {
   userInfo.value = event.detail;
 };
 
+const handleExternalMenuSelect = (menu: string) => {
+  activeMenu.value = menu;
+  storageLocal().setItem("account_active_menu", menu);
+};
+
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener(
@@ -1054,6 +1059,7 @@ onMounted(async () => {
     "userInfoUpdated",
     handleUserInfoUpdate as EventListener
   );
+  emitter.on("accountMenuSelect", handleExternalMenuSelect);
 
   initActiveMenu();
 
@@ -1073,6 +1079,7 @@ onUnmounted(() => {
     "userInfoUpdated",
     handleUserInfoUpdate as EventListener
   );
+  emitter.off("accountMenuSelect", handleExternalMenuSelect);
   if (typingTimer) clearTimeout(typingTimer);
 });
 </script>
