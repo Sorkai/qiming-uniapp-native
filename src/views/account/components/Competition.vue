@@ -40,7 +40,9 @@
     <div class="modules-grid">
       <!-- 在线 OJ -->
       <div class="module-card oj-card" @click="goToModule('oj')">
-        <div class="card-icon">💻</div>
+        <div class="card-icon">
+          <img :src="onlineOjJudgementIcon" alt="在线 OJ 图标" />
+        </div>
         <div class="card-content">
           <h3>在线 OJ</h3>
           <p>算法编程在线评测，实时反馈结果</p>
@@ -60,7 +62,9 @@
 
       <!-- 在线题库训练 -->
       <div class="module-card training-card" @click="goToModule('training')">
-        <div class="card-icon">📚</div>
+        <div class="card-icon">
+          <img :src="trainSetsIcon" alt="题库训练集图标" />
+        </div>
         <div class="card-content">
           <h3>题库训练集</h3>
           <p>海量题目分类训练，巩固知识点</p>
@@ -80,7 +84,9 @@
 
       <!-- 作文批改 -->
       <div class="module-card essay-card" @click="goToModule('essay')">
-        <div class="card-icon">✍️</div>
+        <div class="card-icon">
+          <img :src="writingCorrectIcon" alt="作文批改检测图标" />
+        </div>
         <div class="card-content">
           <h3>作文批改检测</h3>
           <p>AI 智能批改中英文作文，提升写作能力</p>
@@ -95,7 +101,9 @@
 
       <!-- 国家安全知识竞赛 -->
       <div class="module-card security-card" @click="goToModule('security')">
-        <div class="card-icon">🛡️</div>
+        <div class="card-icon">
+          <img :src="encryptedKnowledgeIcon" alt="国家安全知识竞赛图标" />
+        </div>
         <div class="card-content">
           <h3>国家安全知识竞赛</h3>
           <p>学习国家安全知识，参与在线竞赛</p>
@@ -417,6 +425,10 @@ import { formatAvatar } from "@/utils/avatar";
 import { Clock, User, CircleCheck, Warning } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import CompetitionIcon from "@/new student interface icons/trophy-prize-medal-3-svgrepo-com.svg?component";
+import onlineOjJudgementIcon from "@/assets/comoprtitionarena/onlineojjudgement.svg?url";
+import trainSetsIcon from "@/assets/comoprtitionarena/trainsets.svg?url";
+import writingCorrectIcon from "@/assets/comoprtitionarena/writingcorrect.svg?url";
+import encryptedKnowledgeIcon from "@/assets/comoprtitionarena/encryptedknowledge.svg?url";
 
 defineProps<{
   currentTheme?: string;
@@ -783,6 +795,12 @@ const formatTime = (seconds: number) => {
       background: #f3f4f6;
       border-radius: 16px;
 
+      img {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+      }
+
       .dark & {
         background: #334155;
       }
@@ -833,34 +851,34 @@ const formatTime = (seconds: number) => {
     }
 
     &.oj-card .card-icon {
-      background: linear-gradient(135deg, #93c5fd, #60a5fa);
+      background: linear-gradient(135deg, #b6d5f6, #9dc5ef);
 
       .dark & {
-        background: linear-gradient(135deg, #1e40af, #1d4ed8);
+        background: linear-gradient(135deg, #2c467f, #2b4f9b);
       }
     }
 
     &.training-card .card-icon {
-      background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+      background: linear-gradient(135deg, #d3c9f7, #c2b6f1);
 
       .dark & {
-        background: linear-gradient(135deg, #5b21b6, #6d28d9);
+        background: linear-gradient(135deg, #53338d, #58409a);
       }
     }
 
     &.essay-card .card-icon {
-      background: linear-gradient(135deg, #fcd34d, #fbbf24);
+      background: linear-gradient(135deg, #f3db92, #edcd76);
 
       .dark & {
-        background: linear-gradient(135deg, #92400e, #b45309);
+        background: linear-gradient(135deg, #734526, #7f4b1e);
       }
     }
 
     &.security-card .card-icon {
-      background: linear-gradient(135deg, #6ee7b7, #34d399);
+      background: linear-gradient(135deg, #a9e2cc, #8dd9b8);
 
       .dark & {
-        background: linear-gradient(135deg, #065f46, #047857);
+        background: linear-gradient(135deg, #1f5848, #1d614f);
       }
     }
   }
