@@ -8,12 +8,43 @@ import {
   watch
 } from "vue";
 import { ElMessage } from "element-plus";
+import { useUserStoreHook } from "@/store/modules/user";
 
 defineOptions({
   name: "Qiming2DCentre"
 });
 
 const campusBgUrl = `${import.meta.env.BASE_URL}campus-2d-bg.svg`;
+const userStore = useUserStoreHook();
+
+function formatCurrentTime24h(date = new Date()) {
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  const second = String(date.getSeconds()).padStart(2, "0");
+  return `${hour}:${minute}:${second}`;
+}
+
+const nowTime = ref(formatCurrentTime24h());
+const currentUserName = computed(
+  () => userStore.nickname || userStore.username || "同学"
+);
+const welcomeLine1 = computed(
+  () => `欢迎来到启明智教 ${currentUserName.value}`
+);
+const welcomeLine2 = computed(() => `现在是 ${nowTime.value}`);
+let clockTimer: number | undefined;
+const welcomeAnchor = ref({
+  x: 43,
+  y: 86,
+  w: 668,
+  h: 86
+});
+const welcomeBannerStyle = computed(() => ({
+  left: `${welcomeAnchor.value.x}px`,
+  top: `${welcomeAnchor.value.y}px`,
+  width: `${welcomeAnchor.value.w}px`,
+  height: `${welcomeAnchor.value.h}px`
+}));
 
 /* ─── 容器与全屏 ─── */
 const rootRef = ref<HTMLDivElement>();
@@ -97,6 +128,29 @@ function injectSvgStyles() {
   svgDoc.querySelector("svg")?.appendChild(style);
 }
 
+function syncWelcomeAnchorFromSvg() {
+  const svgDoc = svgObjectRef.value?.contentDocument;
+  if (!svgDoc) return;
+  const target =
+    svgDoc.getElementById("Rectangle 13_3") ||
+    svgDoc.getElementById("leftuplabel");
+  if (!target) return;
+  if (!(target instanceof SVGGraphicsElement)) return;
+
+  const box = target.getBBox();
+  welcomeAnchor.value = {
+    x: box.x,
+    y: box.y,
+    w: box.width,
+    h: box.height
+  };
+}
+
+function onSvgLoad() {
+  injectSvgStyles();
+  syncWelcomeAnchorFromSvg();
+}
+
 /** 当 hoveredZone 变化时，操作 SVG 内部元素 */
 function applySvgHover(newId: string | null, oldId: string | null) {
   const svgDoc = svgObjectRef.value?.contentDocument;
@@ -130,11 +184,17 @@ onMounted(() => {
   const el = rootRef.value?.querySelector(".campus-container");
   if (el) ro.value.observe(el);
   document.addEventListener("fullscreenchange", onFsChange);
+  clockTimer = window.setInterval(() => {
+    nowTime.value = formatCurrentTime24h();
+  }, 1000);
 });
 
 onBeforeUnmount(() => {
   ro.value?.disconnect();
   document.removeEventListener("fullscreenchange", onFsChange);
+  if (clockTimer) {
+    window.clearInterval(clockTimer);
+  }
 });
 
 /* ─── 热区定义 — 坐标基于 SVG 原始 1920×1080 ─── */
@@ -296,7 +356,7 @@ function onZoneClick(zone: HotZone) {
           type="image/svg+xml"
           :width="svgNaturalW"
           :height="svgNaturalH"
-          @load="injectSvgStyles"
+          @load="onSvgLoad"
         >
           <img
             :src="campusBgUrl"
@@ -305,6 +365,11 @@ function onZoneClick(zone: HotZone) {
             alt="启明智教2D校园"
           />
         </object>
+
+        <div class="welcome-banner" :style="welcomeBannerStyle">
+          <div class="welcome-line welcome-line-1">{{ welcomeLine1 }}</div>
+          <div class="welcome-line welcome-line-2">{{ welcomeLine2 }}</div>
+        </div>
 
         <!-- 任务栏热区 -->
         <div
@@ -455,6 +520,41 @@ function onZoneClick(zone: HotZone) {
   display: block;
   pointer-events: none;
   user-select: none;
+}
+
+.welcome-banner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  padding: 8px 16px 8px 14px;
+  gap: 2px;
+  pointer-events: none;
+  color: #4f3d2d;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  z-index: 6;
+}
+
+.welcome-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.15;
+  letter-spacing: 0.5px;
+}
+
+.welcome-line-1 {
+  text-align: left;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.welcome-line-2 {
+  text-align: right;
+  font-size: 28px;
+  font-weight: 600;
+  padding-right: 8px;
 }
 
 /* ====== 热区通用 ====== */
