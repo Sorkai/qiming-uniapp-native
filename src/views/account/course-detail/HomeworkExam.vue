@@ -409,7 +409,6 @@ const viewExam = (exam: any) => {
 .exam-item:hover {
   border-color: #97b4f7;
   box-shadow: none;
-  transform: translateY(-8px) scale(1.02);
 }
 
 .homework-item.dark:hover,
@@ -448,7 +447,7 @@ const viewExam = (exam: any) => {
 
 .homework-item:hover .homework-icon,
 .exam-item:hover .exam-icon {
-  transform: scale(1.1) rotate(5deg);
+  transform: none;
 }
 
 .homework-item.dark .homework-icon,

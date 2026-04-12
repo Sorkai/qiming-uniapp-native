@@ -849,7 +849,7 @@ onUnmounted(() => {
   .grades-score {
     font-size: 48px;
     font-weight: 800;
-    color: #604ffd;
+    color: #5f5be3;
     text-align: center;
   }
 }
@@ -903,27 +903,27 @@ onUnmounted(() => {
 
     &.total {
       color: white;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #748ae1 0%, #8263ad 100%);
     }
 
     &.completed {
       color: white;
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      background: linear-gradient(135deg, #e497e5 0%, #e76e80 100%);
     }
 
     &.average {
       color: white;
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      background: linear-gradient(135deg, #63b2f4 0%, #4ccfe6 100%);
     }
 
     &.highest {
       color: white;
-      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      background: linear-gradient(135deg, #5de092 0%, #5edfc8 100%);
     }
 
     &.completion {
       color: white;
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      background: linear-gradient(135deg, #ee85a7 0%, #f3d45d 100%);
     }
   }
 
