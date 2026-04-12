@@ -674,9 +674,7 @@ onUnmounted(() => {
         >
           <template #header>
             <div class="card-header">
-              <span class="header-title">
-                <el-icon><Document /></el-icon> 成绩详情
-              </span>
+              <h3>成绩详情</h3>
             </div>
           </template>
 
@@ -1011,6 +1009,12 @@ onUnmounted(() => {
 .grades-list-card {
   border-radius: 12px;
 
+  :deep(.el-card__header) {
+    padding: 24px 24px 15px;
+    margin: 0;
+    border-bottom: 1px solid #f0f2f5;
+  }
+
   &.dark {
     background-color: #2a2a2a;
     border-color: #3e3e3e;
@@ -1019,7 +1023,7 @@ onUnmounted(() => {
       border-bottom-color: #3e3e3e;
     }
 
-    .card-header .header-title {
+    .card-header h3 {
       color: #e0e0e0;
     }
 
@@ -1032,10 +1036,15 @@ onUnmounted(() => {
 
   .card-header {
     display: flex;
-    gap: 8px;
     align-items: center;
-    font-size: 18px;
-    font-weight: 600;
+    justify-content: space-between;
+
+    h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: bold;
+      color: #1a1a1a;
+    }
   }
 
   :deep(.el-card__body) {
