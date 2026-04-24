@@ -3760,16 +3760,11 @@ const handleCommand = (command: string) => {
     line-height: 1.45;
   }
 
-  .home-container
-    .ai-power-section
-    .ai-power-container {
+  .home-container .ai-power-section .ai-power-container {
     display: block;
   }
 
-  .home-container
-    .ai-power-section
-    .ai-content-right
-    .section-header {
+  .home-container .ai-power-section .ai-content-right .section-header {
     text-align: left;
   }
 
@@ -3781,16 +3776,12 @@ const handleCommand = (command: string) => {
     margin-left: 0;
   }
 
-  .home-container
-    .ai-power-section
-    .ai-features-grid {
+  .home-container .ai-power-section .ai-features-grid {
     grid-template-columns: 1fr !important;
     gap: 14px;
   }
 
-  .home-container
-    .ai-power-section
-    .ai-feature-card {
+  .home-container .ai-power-section .ai-feature-card {
     display: grid;
     grid-template-columns: 40px 1fr;
     gap: 6px 12px;
@@ -3799,57 +3790,40 @@ const handleCommand = (command: string) => {
     text-align: left;
   }
 
-  .home-container
-    .ai-power-section
-    .ai-feature-card
-    .ai-icon {
+  .home-container .ai-power-section .ai-feature-card .ai-icon {
     grid-row: 1 / span 2;
     margin: 2px 0 0;
     font-size: 28px;
   }
 
-  .home-container
-    .ai-power-section
-    .ai-feature-card
-    h3 {
+  .home-container .ai-power-section .ai-feature-card h3 {
     margin: 0;
     font-size: 22px;
     line-height: 1.35;
   }
 
-  .home-container
-    .ai-power-section
-    .ai-feature-card
-    p {
+  .home-container .ai-power-section .ai-feature-card p {
     margin: 0;
     font-size: 15px;
     line-height: 1.7;
     color: rgb(255 255 255 / 72%);
   }
 
-  .home-container
-    .ai-power-section
-    .ai-decoration {
+  .home-container .ai-power-section .ai-decoration {
     display: none;
   }
 
-  .home-container
-    .platform-intro
-    .feature-list {
+  .home-container .platform-intro .feature-list {
     grid-template-columns: 1fr !important;
     gap: 14px;
   }
 
-  .home-container
-    .services-section
-    .services-grid {
+  .home-container .services-section .services-grid {
     grid-template-columns: 1fr !important;
     gap: 14px;
   }
 
-  .home-container
-    .services-section
-    .service-card {
+  .home-container .services-section .service-card {
     display: grid;
     grid-template-columns: 40px 1fr;
     gap: 6px 12px;
@@ -3858,74 +3832,50 @@ const handleCommand = (command: string) => {
     text-align: left;
   }
 
-  .home-container
-    .services-section
-    .service-card
-    .service-icon {
+  .home-container .services-section .service-card .service-icon {
     grid-row: 1 / span 2;
     margin: 2px 0 0;
     font-size: 28px;
   }
 
-  .home-container
-    .services-section
-    .service-card
-    .service-title {
+  .home-container .services-section .service-card .service-title {
     margin: 0;
     font-size: 22px;
     line-height: 1.35;
   }
 
-  .home-container
-    .services-section
-    .service-card
-    .service-desc {
+  .home-container .services-section .service-card .service-desc {
     margin: 0;
     font-size: 15px;
     line-height: 1.7;
     color: rgb(255 255 255 / 72%);
   }
 
-  .home-container
-    .services-section
-    .service-card
-    .service-features {
+  .home-container .services-section .service-card .service-features {
     grid-column: 1 / -1;
     margin-top: 8px;
   }
 
-  .home-container
-    .services-section
-    .service-card
-    .service-features
-    li {
+  .home-container .services-section .service-card .service-features li {
     font-size: 14px;
     line-height: 1.6;
   }
 
-  .home-container
-    .tech-section
-    .tech-grid {
+  .home-container .tech-section .tech-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 12px;
   }
 
-  .home-container
-    .testimonials-section
-    .testimonials-grid {
+  .home-container .testimonials-section .testimonials-grid {
     grid-template-columns: 1fr !important;
     gap: 14px;
   }
 
-  .home-container
-    .footer-section
-    .footer-container {
+  .home-container .footer-section .footer-container {
     padding: 0 16px;
   }
 
-  .home-container
-    .footer-section
-    .footer-grid {
+  .home-container .footer-section .footer-grid {
     grid-template-columns: 1fr;
     gap: 22px;
   }
