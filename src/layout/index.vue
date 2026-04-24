@@ -17,12 +17,7 @@ import {
   onBeforeMount,
   defineComponent
 } from "vue";
-import {
-  useDark,
-  useGlobal,
-  deviceDetection,
-  useResizeObserver
-} from "@pureadmin/utils";
+import { useDark, useGlobal, useResizeObserver } from "@pureadmin/utils";
 
 import LayTag from "./components/lay-tag/index.vue";
 import LayNavbar from "./components/lay-navbar/index.vue";
@@ -30,23 +25,24 @@ import LayContent from "./components/lay-content/index.vue";
 import LaySetting from "./components/lay-setting/index.vue";
 import NavVertical from "./components/lay-sidebar/NavVertical.vue";
 import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
+import NavMobile from "./components/NavMobile.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 
 const { t } = useI18n();
 const appWrapperRef = ref();
 const { isDark } = useDark();
 const { layout } = useLayout();
-const isMobile = deviceDetection();
+const appStore = useAppStoreHook();
 const pureSetting = useSettingStoreHook();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 const set: setType = reactive({
   sidebar: computed(() => {
-    return useAppStoreHook().sidebar;
+    return appStore.sidebar;
   }),
 
   device: computed(() => {
-    return useAppStoreHook().device;
+    return appStore.device;
   }),
 
   fixedHeader: computed(() => {
@@ -80,20 +76,34 @@ function setTheme(layoutModel: string) {
   };
 }
 
-function toggle(device: string, bool: boolean) {
-  useAppStoreHook().toggleDevice(device);
-  useAppStoreHook().toggleSideBar(bool, "resize");
+function toggle(device: "mobile" | "desktop", bool: boolean) {
+  appStore.toggleDevice(device);
+  appStore.toggleSideBar(bool, "resize");
 }
 
 // 判断是否可自动关闭菜单栏
 let isAutoCloseSidebar = true;
 
 useResizeObserver(appWrapperRef, entries => {
-  if (isMobile) return;
   const entry = entries[0];
-  const [{ inlineSize: width, blockSize: height }] = entry.borderBoxSize;
-  useAppStoreHook().setViewportSize({ width, height });
-  width <= 760 ? setTheme("vertical") : setTheme(useAppStoreHook().layout);
+  const borderBox = Array.isArray(entry.borderBoxSize)
+    ? entry.borderBoxSize[0]
+    : entry.borderBoxSize;
+  const width = borderBox?.inlineSize ?? entry.contentRect.width;
+  const height = borderBox?.blockSize ?? entry.contentRect.height;
+
+  appStore.setViewportSize({ width, height });
+  appStore.refreshUA(width);
+
+  const forceMobileLayout = appStore.getUA.isMobile || appStore.getUA.isTablet;
+  if (forceMobileLayout) {
+    setTheme("vertical");
+    toggle("mobile", false);
+    isAutoCloseSidebar = true;
+    return;
+  }
+
+  width <= 760 ? setTheme("vertical") : setTheme(appStore.layout);
   /** width app-wrapper类容器宽度
    * 0 < width <= 760 隐藏侧边栏
    * 760 < width <= 990 折叠侧边栏
@@ -117,7 +127,13 @@ useResizeObserver(appWrapperRef, entries => {
 });
 
 onMounted(() => {
-  if (isMobile) {
+  const width = document.documentElement.clientWidth;
+  const height = document.documentElement.clientHeight;
+  appStore.setViewportSize({ width, height });
+  appStore.refreshUA(width);
+
+  if (appStore.getDevice === "mobile") {
+    setTheme("vertical");
     toggle("mobile", false);
   }
 });
@@ -166,11 +182,12 @@ const LayHeader = defineComponent({
         layout.includes('vertical')
       "
       class="app-mask"
-      @click="useAppStoreHook().toggleSideBar()"
+      @click="appStore.toggleSideBar()"
     />
     <NavVertical
       v-show="
         !pureSetting.hiddenSideBar &&
+        set.device !== 'mobile' &&
         (layout.includes('vertical') ||
           layout.includes('mix') ||
           layout.includes('double'))
@@ -179,7 +196,8 @@ const LayHeader = defineComponent({
     <div
       :class="[
         'main-container',
-        pureSetting.hiddenSideBar ? 'main-hidden' : ''
+        pureSetting.hiddenSideBar ? 'main-hidden' : '',
+        set.device === 'mobile' ? 'mobile-main-container' : ''
       ]"
     >
       <div v-if="set.fixedHeader">
@@ -203,6 +221,8 @@ const LayHeader = defineComponent({
     </div>
     <!-- 系统设置 -->
     <LaySetting />
+    <!-- 移动端底部导航 -->
+    <NavMobile v-if="set.device === 'mobile'" />
   </div>
 </template>
 
@@ -211,6 +231,16 @@ const LayHeader = defineComponent({
   position: relative;
   width: 100%;
   height: 100%;
+
+  &.mobile {
+    .main-container {
+      margin-left: 0 !important;
+    }
+
+    .mobile-main-container {
+      padding-bottom: var(--pure-mobile-tab-height); // 预留底部导航高度
+    }
+  }
 
   &::after {
     clear: both;

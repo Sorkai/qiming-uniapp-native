@@ -6,6 +6,7 @@ import { getPlatformConfig } from "./config";
 import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
 import { createApp, type Directive } from "vue";
+import { useAppStoreHook } from "@/store/modules/app";
 import { useVxeTable } from "@/plugins/vxeTable";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { injectResponsiveStorage } from "@/utils/responsive";
@@ -56,6 +57,7 @@ app.use(VueTippy);
 
 getPlatformConfig(app).then(async config => {
   setupStore(app);
+  useAppStoreHook().refreshUA();
   app.use(router);
   await router.isReady();
   injectResponsiveStorage(app, config);

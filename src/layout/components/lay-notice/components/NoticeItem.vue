@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ListItem } from "../data";
-import { ref, PropType, nextTick } from "vue";
+import { ref, PropType, nextTick, computed } from "vue";
 import { formatAvatar } from "@/utils/avatar";
 import { useNav } from "@/layout/hooks/useNav";
-import { deviceDetection } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 
 defineProps({
   noticeItem: {
@@ -17,7 +17,8 @@ const titleTooltip = ref(false);
 const descriptionRef = ref(null);
 const descriptionTooltip = ref(false);
 const { tooltipEffect } = useNav();
-const isMobile = deviceDetection();
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 function hoverTitle() {
   nextTick(() => {

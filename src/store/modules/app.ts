@@ -1,12 +1,20 @@
 import { defineStore } from "pinia";
 import {
+  applyUAFlags,
+  getUA,
+  resolveLayoutDevice,
+  type LayoutDevice
+} from "@/utils/ua";
+import {
   type appType,
   store,
   getConfig,
   storageLocal,
-  deviceDetection,
   responsiveStorageNameSpace
 } from "../utils";
+
+const initialUA = getUA();
+applyUAFlags(initialUA);
 
 export const useAppStore = defineStore("pure-app", {
   state: (): appType => ({
@@ -23,7 +31,11 @@ export const useAppStore = defineStore("pure-app", {
       storageLocal().getItem<StorageConfigs>(
         `${responsiveStorageNameSpace()}layout`
       )?.layout ?? getConfig().Layout,
-    device: deviceDetection() ? "mobile" : "desktop",
+    device: resolveLayoutDevice(
+      initialUA,
+      document.documentElement.clientWidth || window.innerWidth
+    ),
+    ua: initialUA,
     isShowDouble: true,
     // 浏览器窗口的可视区域大小
     viewportSize: {
@@ -39,6 +51,9 @@ export const useAppStore = defineStore("pure-app", {
     },
     getDevice(state) {
       return state.device;
+    },
+    getUA(state) {
+      return state.ua;
     },
     getViewportWidth(state) {
       return state.viewportSize.width;
@@ -65,8 +80,20 @@ export const useAppStore = defineStore("pure-app", {
     async toggleSideBar(opened?: boolean, resize?: string) {
       await this.TOGGLE_SIDEBAR(opened, resize);
     },
-    toggleDevice(device: string) {
+    toggleDevice(device: LayoutDevice) {
       this.device = device;
+      // 切换设备时同时更新 UA 信息
+      this.ua = getUA();
+      applyUAFlags(this.ua);
+    },
+    refreshUA(viewportWidth?: number) {
+      const nextUA = getUA();
+      this.ua = nextUA;
+      this.device = resolveLayoutDevice(
+        nextUA,
+        viewportWidth ?? this.viewportSize.width
+      );
+      applyUAFlags(nextUA);
     },
     setLayout(layout) {
       this.layout = layout;

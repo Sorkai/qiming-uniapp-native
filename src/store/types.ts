@@ -1,4 +1,5 @@
 import type { RouteRecordName } from "vue-router";
+import type { LayoutDevice, UAInfo } from "@/utils/ua";
 
 export type cacheType = {
   mode: string;
@@ -18,7 +19,8 @@ export type appType = {
     isClickCollapse: boolean;
   };
   layout: string;
-  device: string;
+  device: LayoutDevice;
+  ua: UAInfo;
   isShowDouble: boolean;
   viewportSize: { width: number; height: number };
   sortSwap: boolean;

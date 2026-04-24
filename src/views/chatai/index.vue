@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { h } from "vue";
+import { h, computed } from "vue";
 import { ElEmpty } from "element-plus";
-import { deviceDetection } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 import {
   ChatGPT,
   Bard,
@@ -21,6 +21,9 @@ import {
 defineOptions({
   name: "ChatAi"
 });
+
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 const swiperExample: any[] = [
   { id: 0, label: "ChatGPT 风格", component: ChatGPT },
@@ -122,7 +125,7 @@ const swiperExample: any[] = [
       <el-card
         v-for="item in swiperExample"
         :key="item.id"
-        :class="['mt-4', !deviceDetection() && 'ml-16']"
+        :class="['mt-4', !isMobile && 'ml-16']"
       >
         <template #header>
           {{ item.label }}

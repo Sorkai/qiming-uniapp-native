@@ -94,24 +94,24 @@ watchEffect(() => {
   <div class="welcome-container p-4">
     <!-- Modern Welcome Header -->
     <div
-      class="welcome-header mb-6 px-6 py-5 rounded-[24px] relative overflow-hidden flex flex-col md:flex-row justify-between items-center text-slate-800 dark:text-white shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.01]"
+      class="welcome-header mb-6 px-4 py-5 md:px-6 md:py-5 rounded-[24px] relative overflow-hidden flex flex-col lg:flex-row justify-between items-center text-slate-800 dark:text-white shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.01]"
     >
-      <div class="z-10 text-center md:text-left group">
+      <div class="z-10 text-center lg:text-left group w-full lg:w-auto">
         <h1
-          class="text-4xl md:text-5xl font-extrabold mb-4 leading-tight transition-transform duration-300 group-hover:translate-x-2 min-h-[60px] flex items-center tracking-tight"
+          class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight transition-transform duration-300 group-hover:translate-x-2 min-h-[60px] flex items-center justify-center lg:justify-start tracking-tight"
         >
           {{ displayedText }}
           <span v-if="isTyping" class="cursor-blink ml-1">|</span>
           <span v-else class="wave ml-2">👋</span>
         </h1>
         <p
-          class="text-xl md:text-2xl font-medium leading-relaxed text-slate-600 dark:text-blue-50 opacity-90 max-w-2xl transition-all duration-300 group-hover:opacity-100 mb-8"
+          class="text-lg md:text-2xl font-medium leading-relaxed text-slate-600 dark:text-blue-50 opacity-90 max-w-2xl transition-all duration-300 group-hover:opacity-100 mb-8 mx-auto lg:mx-0"
         >
           欢迎回到智慧教学平台。您的 AI
           助手已经为您准备好了今天的课程方案和学生进度报告。
         </p>
         <div
-          class="mt-8 flex flex-wrap gap-4 justify-center md:justify-start items-center"
+          class="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start items-center"
         >
           <el-button
             :color="isDark ? '#a5b4fc' : '#ffffff'"
