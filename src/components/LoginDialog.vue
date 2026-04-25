@@ -1303,6 +1303,95 @@ watch(
 }
 
 /* 遮罩层 */
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .login-overlay {
+    align-items: center;
+    padding-top: 0;
+    padding: 16px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 320px;
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .card-title {
+    margin-bottom: 16px;
+    font-size: 20px;
+  }
+
+  .login-tabs {
+    margin-bottom: 16px;
+    border-radius: 10px;
+  }
+
+  .tab-btn {
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  .input-group {
+    margin-bottom: 12px;
+  }
+
+  .input-wrapper {
+    height: 44px;
+
+    input {
+      font-size: 14px;
+    }
+
+    .floating-label {
+      font-size: 13px;
+    }
+
+    .input-icon {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .submit-btn {
+    height: 44px;
+    margin-top: 4px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+
+  .third-party {
+    margin-top: 16px;
+
+    .divider {
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .social-btns {
+      gap: 12px;
+    }
+
+    .social-btn {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  .footer-link {
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .close-btn {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+  }
+}
 </style>
 
 <style lang="scss">

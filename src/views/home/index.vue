@@ -1572,8 +1572,38 @@ const handleCommand = (command: string) => {
     width: 100%;
     height: 100%;
     background-size: cover;
-    background-position: center;
+    background-position: center 30%;
     background-repeat: no-repeat;
+
+    /* 上方柔和模糊渐隐 */
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 18%;
+      z-index: 1;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+      -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+    }
+
+    /* 下方柔和模糊渐隐 */
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 22%;
+      z-index: 1;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      mask-image: linear-gradient(0deg, #000 0%, transparent 100%);
+      -webkit-mask-image: linear-gradient(0deg, #000 0%, transparent 100%);
+    }
   }
 
   .banner-signature {
@@ -3543,7 +3573,13 @@ const handleCommand = (command: string) => {
 
       .cta-buttons {
         flex-direction: column;
-        justify-content: center;
+        align-items: center;
+        width: 100%;
+
+        .el-button {
+          width: 100%;
+          max-width: 280px;
+        }
       }
 
       .cta-features {
@@ -3640,6 +3676,23 @@ const handleCommand = (command: string) => {
     display: none;
   }
 
+  .home-container .banner .banner-bg {
+    background-size: auto 55%;
+    background-position: center 8%;
+  }
+
+  .home-container .banner .banner-bg::before {
+    height: 6%;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .home-container .banner .banner-bg::after {
+    height: 8%;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
   .home-container .banner .banner-overlay {
     align-items: flex-end;
     background: linear-gradient(
@@ -3694,6 +3747,8 @@ const handleCommand = (command: string) => {
   .home-container .banner .banner-overlay .carousel-text .hero-buttons {
     gap: 10px;
     flex-direction: column;
+    align-items: stretch;
+    width: 100%;
   }
 
   .home-container
@@ -3706,6 +3761,7 @@ const handleCommand = (command: string) => {
     height: 48px;
     padding: 0 18px;
     font-size: 16px;
+    box-sizing: border-box;
   }
 
   .home-container
