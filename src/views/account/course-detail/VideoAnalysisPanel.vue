@@ -238,56 +238,80 @@
 
       <!-- 思维导图 -->
       <div v-if="activeTab === 'mindmap'" class="module-content">
-        <div v-if="moduleData?.mindMap?.url" class="mindmap-block">
+        <div
+          v-if="mindmapNodes.length"
+          class="mindmap-block"
+        >
           <div class="mindmap-toolbar">
-            <button
-              class="mindmap-action"
-              @click="mindmapZoomed = !mindmapZoomed"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                <line v-if="!mindmapZoomed" x1="11" y1="8" x2="11" y2="14" />
-                <line x1="8" y1="11" x2="14" y2="11" />
+            <button class="mindmap-action" @click="resetMindmapLayout">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
               </svg>
-              {{ mindmapZoomed ? "缩小" : "放大" }}
+              重置布局
             </button>
-            <a
-              class="mindmap-action"
-              :href="moduleData.mindMap.url"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-                />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              新窗口打开
-            </a>
           </div>
-          <div class="mindmap-container" :class="{ zoomed: mindmapZoomed }">
-            <img
-              :src="moduleData.mindMap.url"
-              alt="思维导图"
-              class="mindmap-img"
-            />
+          <div
+            ref="mindmapContainerRef"
+            class="mindmap-canvas"
+            @mousedown="onCanvasDragStart"
+            @mousemove="onCanvasDragMove"
+            @mouseup="onCanvasDragEnd"
+            @mouseleave="onCanvasDragEnd"
+            @wheel.prevent="onCanvasWheel"
+          >
+            <svg
+              class="mindmap-svg"
+              :style="{
+                transform: `translate(${canvasPan.x}px, ${canvasPan.y}px) scale(${canvasScale})`
+              }"
+            >
+              <!-- 连线 -->
+              <line
+                v-for="(edge, idx) in mindmapEdges"
+                :key="'e' + idx"
+                :x1="edge.x1"
+                :y1="edge.y1"
+                :x2="edge.x2"
+                :y2="edge.y2"
+                class="mindmap-edge"
+                :class="'edge-depth-' + edge.depth"
+              />
+              <!-- 节点 -->
+              <g
+                v-for="node in mindmapNodes"
+                :key="node.id"
+                :transform="`translate(${node.x}, ${node.y})`"
+                class="mindmap-node"
+                :class="[
+                  'node-depth-' + node.depth,
+                  { 'node-dragging': draggingNodeId === node.id }
+                ]"
+                @mousedown.stop="onNodeDragStart($event, node)"
+              >
+                <circle
+                  :r="node.depth === 0 ? 42 : node.depth === 1 ? 34 : 26"
+                  class="node-circle"
+                />
+                <text
+                  dy="0.35em"
+                  text-anchor="middle"
+                  class="node-label"
+                >
+                  <template v-if="node.label.length <= 5">
+                    {{ node.label }}
+                  </template>
+                  <template v-else>
+                    <tspan
+                      v-for="(line, li) in wrapText(node.label, node.depth === 0 ? 4 : node.depth === 1 ? 3 : 3)"
+                      :key="li"
+                      x="0"
+                      :dy="li === 0 ? `${-(wrapText(node.label, node.depth === 0 ? 4 : node.depth === 1 ? 3 : 3).length - 1) * 0.6}em` : '1.2em'"
+                    >{{ line }}</tspan>
+                  </template>
+                </text>
+              </g>
+            </svg>
           </div>
         </div>
         <div v-else class="module-empty">暂无思维导图</div>
@@ -324,7 +348,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, h } from "vue";
+import { ref, reactive, watch, computed, h, nextTick } from "vue";
 import {
   getVideoAnalyzeTask,
   getVideoAnalyzeModules,
@@ -347,6 +371,155 @@ const taskData = ref<VideoAnalyzeTask | null>(null);
 const moduleData = ref<VideoAnalyzeModuleResult | null>(null);
 const activeTab = ref("chapters");
 const mindmapZoomed = ref(false);
+
+// ---- 思维导图交互 ----
+interface MindmapNodeData {
+  id: string;
+  label: string;
+  children?: MindmapNodeData[];
+}
+interface MindmapNode {
+  id: string;
+  label: string;
+  depth: number;
+  x: number;
+  y: number;
+  parentId: string | null;
+}
+interface MindmapEdge {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  depth: number;
+}
+
+const mindmapContainerRef = ref<HTMLElement | null>(null);
+const mindmapNodes = ref<MindmapNode[]>([]);
+const draggingNodeId = ref<string | null>(null);
+const dragOffset = reactive({ x: 0, y: 0 });
+const canvasPan = reactive({ x: 0, y: 0 });
+const canvasScale = ref(1);
+const isPanningCanvas = ref(false);
+const panStart = reactive({ x: 0, y: 0 });
+
+const mindmapEdges = computed<MindmapEdge[]>(() => {
+  const nodeMap = new Map(mindmapNodes.value.map(n => [n.id, n]));
+  const edges: MindmapEdge[] = [];
+  for (const node of mindmapNodes.value) {
+    if (node.parentId) {
+      const parent = nodeMap.get(node.parentId);
+      if (parent) {
+        edges.push({
+          x1: parent.x,
+          y1: parent.y,
+          x2: node.x,
+          y2: node.y,
+          depth: node.depth
+        });
+      }
+    }
+  }
+  return edges;
+});
+
+const wrapText = (text: string, charsPerLine: number): string[] => {
+  const lines: string[] = [];
+  for (let i = 0; i < text.length; i += charsPerLine) {
+    lines.push(text.slice(i, i + charsPerLine));
+  }
+  return lines;
+};
+
+const flattenTree = (
+  tree: MindmapNodeData,
+  depth: number,
+  parentId: string | null,
+  cx: number,
+  cy: number,
+  angleStart: number,
+  angleEnd: number,
+  result: MindmapNode[]
+) => {
+  result.push({ id: tree.id, label: tree.label, depth, x: cx, y: cy, parentId });
+  const children = tree.children || [];
+  if (!children.length) return;
+  const radiusMap = [0, 180, 140, 110];
+  const radius = radiusMap[Math.min(depth + 1, 3)];
+  const spread = angleEnd - angleStart;
+  children.forEach((child, i) => {
+    const frac = children.length === 1 ? 0.5 : i / (children.length - 1);
+    const angle = angleStart + spread * frac;
+    const rad = (angle * Math.PI) / 180;
+    const childX = cx + radius * Math.cos(rad);
+    const childY = cy + radius * Math.sin(rad);
+    const childSpread = spread / children.length;
+    flattenTree(child, depth + 1, tree.id, childX, childY, angle - childSpread / 2, angle + childSpread / 2, result);
+  });
+};
+
+const buildMindmapFromData = () => {
+  const tree = moduleData.value?.mindMap?.tree as MindmapNodeData | undefined;
+  if (!tree) {
+    mindmapNodes.value = [];
+    return;
+  }
+  const nodes: MindmapNode[] = [];
+  flattenTree(tree, 0, null, 450, 300, 0, 360, nodes);
+  mindmapNodes.value = nodes;
+  canvasPan.x = 0;
+  canvasPan.y = 0;
+  canvasScale.value = 1;
+};
+
+const resetMindmapLayout = () => {
+  buildMindmapFromData();
+};
+
+// Node drag
+const onNodeDragStart = (e: MouseEvent, node: MindmapNode) => {
+  draggingNodeId.value = node.id;
+  const rect = mindmapContainerRef.value?.getBoundingClientRect();
+  if (!rect) return;
+  dragOffset.x = (e.clientX - rect.left - canvasPan.x) / canvasScale.value - node.x;
+  dragOffset.y = (e.clientY - rect.top - canvasPan.y) / canvasScale.value - node.y;
+  e.preventDefault();
+};
+
+// Canvas pan / node move
+const onCanvasDragStart = (e: MouseEvent) => {
+  if (draggingNodeId.value) return;
+  isPanningCanvas.value = true;
+  panStart.x = e.clientX - canvasPan.x;
+  panStart.y = e.clientY - canvasPan.y;
+};
+
+const onCanvasDragMove = (e: MouseEvent) => {
+  if (draggingNodeId.value) {
+    const rect = mindmapContainerRef.value?.getBoundingClientRect();
+    if (!rect) return;
+    const node = mindmapNodes.value.find(n => n.id === draggingNodeId.value);
+    if (node) {
+      node.x = (e.clientX - rect.left - canvasPan.x) / canvasScale.value - dragOffset.x;
+      node.y = (e.clientY - rect.top - canvasPan.y) / canvasScale.value - dragOffset.y;
+    }
+    return;
+  }
+  if (isPanningCanvas.value) {
+    canvasPan.x = e.clientX - panStart.x;
+    canvasPan.y = e.clientY - panStart.y;
+  }
+};
+
+const onCanvasDragEnd = () => {
+  draggingNodeId.value = null;
+  isPanningCanvas.value = false;
+};
+
+const onCanvasWheel = (e: WheelEvent) => {
+  const delta = e.deltaY > 0 ? -0.08 : 0.08;
+  canvasScale.value = Math.max(0.3, Math.min(2.5, canvasScale.value + delta));
+};
 
 const statusText = computed(() => {
   const s = taskData.value?.status;
@@ -683,6 +856,7 @@ const fetchAnalysis = async () => {
           moduleRes.data.mindMap = { url: raw.mindMapUrl };
         }
         moduleData.value = moduleRes.data;
+        nextTick(() => buildMindmapFromData());
       }
 
       // 如果模块化接口未返回思维导图，尝试从完整结果接口获取
@@ -1322,29 +1496,120 @@ $radius-lg: 16px;
     }
   }
 
-  .mindmap-container {
-    text-align: center;
-    overflow: auto;
-    max-height: 400px;
+  .mindmap-canvas {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    overflow: hidden;
     border: 1px solid $gray-200;
     border-radius: $radius-md;
-    background: $gray-50;
-    transition: max-height 0.3s ease;
+    background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #fff1f2 100%);
+    cursor: grab;
+    user-select: none;
 
-    &.zoomed {
-      max-height: none;
+    &:active {
+      cursor: grabbing;
     }
 
     .dark & {
       border-color: rgb(255 255 255 / 8%);
-      background: rgb(255 255 255 / 3%);
+      background: linear-gradient(135deg, rgb(30 30 60 / 80%) 0%, rgb(40 20 60 / 60%) 100%);
     }
   }
 
-  .mindmap-img {
-    max-width: 100%;
-    display: block;
-    margin: 0 auto;
+  .mindmap-svg {
+    width: 900px;
+    height: 600px;
+    transform-origin: 0 0;
+  }
+
+  .mindmap-edge {
+    stroke: $gray-300;
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: all 0.15s ease;
+
+    &.edge-depth-1 {
+      stroke: $primary;
+      stroke-width: 2.5;
+      opacity: 0.5;
+    }
+    &.edge-depth-2 {
+      stroke: $primary-light;
+      stroke-width: 2;
+      opacity: 0.4;
+    }
+    &.edge-depth-3 {
+      stroke: $gray-300;
+      stroke-width: 1.5;
+      opacity: 0.35;
+    }
+
+    .dark & {
+      stroke: rgb(255 255 255 / 15%);
+      &.edge-depth-1 { stroke: $primary-light; opacity: 0.4; }
+      &.edge-depth-2 { stroke: rgb(167 139 250 / 40%); }
+    }
+  }
+
+  .mindmap-node {
+    cursor: grab;
+    transition: transform 0.08s ease;
+
+    &.node-dragging {
+      cursor: grabbing;
+      .node-circle { filter: drop-shadow(0 6px 20px rgb(99 102 241 / 40%)); }
+    }
+
+    &.node-depth-0 .node-circle {
+      fill: $primary;
+      stroke: #fff;
+      stroke-width: 3;
+      filter: drop-shadow(0 4px 12px rgb(99 102 241 / 35%));
+    }
+    &.node-depth-0 .node-label {
+      fill: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    &.node-depth-1 .node-circle {
+      fill: #818cf8;
+      stroke: #fff;
+      stroke-width: 2;
+      filter: drop-shadow(0 3px 8px rgb(129 140 248 / 30%));
+    }
+    &.node-depth-1 .node-label {
+      fill: #fff;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    &.node-depth-2 .node-circle {
+      fill: #c4b5fd;
+      stroke: #fff;
+      stroke-width: 1.5;
+      filter: drop-shadow(0 2px 6px rgb(196 181 253 / 35%));
+    }
+    &.node-depth-2 .node-label {
+      fill: $gray-700;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    &:hover .node-circle {
+      filter: drop-shadow(0 4px 16px rgb(99 102 241 / 50%)) brightness(1.1);
+    }
+
+    .dark & {
+      &.node-depth-0 .node-circle { stroke: rgb(255 255 255 / 20%); }
+      &.node-depth-1 .node-circle { stroke: rgb(255 255 255 / 15%); }
+      &.node-depth-2 .node-circle {
+        fill: rgb(167 139 250 / 60%);
+        stroke: rgb(255 255 255 / 10%);
+      }
+      &.node-depth-2 .node-label { fill: rgb(255 255 255 / 80%); }
+    }
   }
 }
 
