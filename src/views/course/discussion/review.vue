@@ -140,6 +140,18 @@ const riskLevelText = (level: string): string => {
   return map[level] || level;
 };
 
+const isToday = (dateStr: string) => {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return false;
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+};
+
 // 加载数据- 使用 getAdminDiscussions 获取已发布的讨论列表，同时获取回复
 const fetchData = async () => {
   if (loading.value && discussions.value.length === 0) return; // 修改：如果是在刷新（已有数据），允许继续
@@ -161,7 +173,6 @@ const fetchData = async () => {
     }
 
     const allItems: ReviewQueueItem[] = [];
-    let totalCount = 0;
 
     // 确定要获取的课程列表
     const coursesToFetch = searchForm.courseId
@@ -189,7 +200,6 @@ const fetchData = async () => {
             courseName: course.courseName
           })) as ReviewQueueItem[];
           allItems.push(...postItems);
-          totalCount += postRes.data.pagination.total;
         }
 
         // 如果需要显示回复（type 为 all 或 reply）
@@ -225,7 +235,6 @@ const fetchData = async () => {
                   postId: Number(post.id)
                 })) as ReviewQueueItem[];
                 allItems.push(...replyItems);
-                totalCount += replyRes.data.total;
               }
             } catch (replyErr) {
               console.error(`获取帖子 ${post.id} 的回复失败:`, replyErr);
@@ -243,6 +252,21 @@ const fetchData = async () => {
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
+    // 统计卡片回填：当统计接口不可用或不准确时，保证和当前列表数据一致
+    const postCount = allItems.filter(item => item.itemType !== "reply").length;
+    const replyCount = allItems.filter(
+      item => item.itemType === "reply"
+    ).length;
+    const pendingCount = allItems.filter(
+      item => item.status === "pending"
+    ).length;
+    const todayCount = allItems.filter(item => isToday(item.createdAt)).length;
+
+    stats.value.totalPosts = postCount;
+    stats.value.totalReplies = replyCount;
+    stats.value.pendingReview = pendingCount;
+    stats.value.todayPosts = todayCount;
+
     // 分页处理
     const startIndex = (pagination.page - 1) * pagination.pageSize;
     const endIndex = startIndex + pagination.pageSize;
@@ -259,9 +283,20 @@ const fetchData = async () => {
 const fetchStats = async () => {
   try {
     const res = await getTeacherCourseStats();
-    if (res?.courses && res.courses.length > 0) {
-      stats.value = res;
-      return;
+    const statsData = (res as any)?.data || res;
+
+    if (statsData) {
+      stats.value.totalPosts = Number(statsData.totalPosts || 0);
+      stats.value.totalReplies = Number(statsData.totalReplies || 0);
+      stats.value.pendingReview = Number(statsData.pendingReview || 0);
+      stats.value.pendingReports = Number(statsData.pendingReports || 0);
+      stats.value.todayPosts = Number(statsData.todayPosts || 0);
+      stats.value.weekPosts = Number(statsData.weekPosts || 0);
+
+      if (Array.isArray(statsData.courses) && statsData.courses.length > 0) {
+        stats.value.courses = statsData.courses;
+        return;
+      }
     }
   } catch (error) {
     console.error("getTeacherCourseStats 失败，尝试备用方案", error);

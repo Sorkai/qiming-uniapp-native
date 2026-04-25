@@ -48,6 +48,11 @@ const overviewStats = reactive<LearningAnalyticsOverview>({
 
 // 成绩分布数据
 const scoreDistribution = ref<ScoreDistributionItem[]>([]);
+interface ScoreDistributionWithStudents extends ScoreDistributionItem {
+  students: string[];
+}
+const scoreDistributionWithStudents = ref<ScoreDistributionWithStudents[]>([]);
+const expandedRanges = ref<string[]>([]);
 
 // 知识点掌握情况
 const knowledgePoints = ref<KnowledgePointMastery[]>([]);
@@ -88,6 +93,46 @@ const getMasteryStatus = (mastery: number) => {
   return "exception";
 };
 
+const surnamePool =
+  "赵 钱 孙 李 周 吴 郑 王 冯 陈 褚 卫 蒋 沈 韩 杨 朱 秦 尤 许 何 吕 施 张 孔 曹 严 华 金 魏 陶 姜 戚 谢 邹 喻 柏 水 窦 章 云 苏 潘 葛 奚 范 彭 郎 鲁 韦 昌 马 苗 凤 花 方 俞 任 袁 柳 鲍 史 唐 费 廉 岑 薛 雷 贺 倪 汤 滕 殷 罗 毕 郝 邬 安 常 乐 于 时 傅 皮 卞 齐 康 伍 余 元 卜 顾 孟 平 黄 和 穆 萧 尹 姚 邵 湛 汪 祁 毛 禹 狄 米 贝 明 臧 计 伏 成 戴 谈 宋 茅 庞 熊 纪 舒 屈 项 祝 董 梁 杜 阮 蓝 闵 席 季 麻 强 贾 路 娄 危 江 童 颜 郭 梅 盛 林 刁 钟 徐 邱 骆 高 夏 蔡 田 樊 胡 凌 霍 虞 万 支 柯 管 卢 莫 房 裘 缪 干 解 应 宗 丁 宣 贲 邓 郁 单 杭 洪 包 诸 左 石 崔 吉 钮 龚 程 嵇 邢 裴 陆 荣 翁 荀 羊 惠 甄 麴 家 封 芮 羿 储 靳 汲 邴 糜 松 井 段 富 巫 乌 焦 巴 弓 牧 隗 山 谷 车 侯 宓 蓬 全 郗 班 仰 秋 仲 伊 宫 宁 仇 栾 暴 甘 钭 厉 戎 祖 武 符 刘 景 詹 束 龙 叶 幸 司 韶 郜 黎 蓟 薄 印 宿 白 怀 蒲 邰 从 鄂 索 咸 籍 赖 卓 蔺 屠 蒙 池 乔 阴 郁 胥 能 苍 双 闻 莘 党 翟 谭 贡 劳 逄 姬 申 扶 堵 冉 宰 郦 雍 却 璩 桑 桂 濮 牛 寿 通 边 扈 燕 冀 郏 浦 尚 农 温 别 庄 晏 柴 瞿 阎 充 慕 连 茹 习 宦 艾 鱼 容 向 古 易 慎 戈 廖 庾 终 暨 居 衡 步 都 耿 满 弘 匡 国 文 寇 广 禄 阙 东 欧 殳 沃 利 蔚 越 夔 隆 师 巩 聂 晁 勾 敖 融 冷 訾 辛 阚 那 简 饶 空 曾 毋 沙 乜 养 鞠 须 丰 巢 关 蒯 相 查 后 荆 红 游 竺 权 逯 盖 益 桓 公".split(
+    " "
+  );
+
+const shuffleSurnames = (list: string[]) => {
+  const shuffled = [...list];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+const buildScoreDistributionWithStudents = (
+  distribution: ScoreDistributionItem[]
+): ScoreDistributionWithStudents[] => {
+  return distribution.map(item => {
+    const shuffledSurnames = shuffleSurnames(surnamePool);
+    const students = Array.from({ length: item.count }, (_, index) => {
+      const surname = shuffledSurnames[index % shuffledSurnames.length];
+      return `${surname}同学`;
+    });
+    return {
+      ...item,
+      students
+    };
+  });
+};
+
+const toggleRangeExpand = (range: string) => {
+  if (expandedRanges.value.includes(range)) {
+    expandedRanges.value = expandedRanges.value.filter(item => item !== range);
+    return;
+  }
+  expandedRanges.value = [...expandedRanges.value, range];
+};
+
+const isRangeExpanded = (range: string) => expandedRanges.value.includes(range);
+
 // 加载课程列表
 const loadCourseList = async () => {
   try {
@@ -122,6 +167,13 @@ const loadAnalyticsData = async () => {
 
       // 更新成绩分布
       scoreDistribution.value = data.scoreDistribution || [];
+      scoreDistributionWithStudents.value = buildScoreDistributionWithStudents(
+        scoreDistribution.value
+      );
+      expandedRanges.value =
+        scoreDistributionWithStudents.value.length > 0
+          ? [scoreDistributionWithStudents.value[0].range]
+          : [];
 
       // 更新知识点掌握情况
       knowledgePoints.value = data.knowledgePoints || [];
@@ -254,25 +306,47 @@ onMounted(() => {
         </div>
         <div class="score-distribution">
           <div
-            v-for="item in scoreDistribution"
+            v-for="item in scoreDistributionWithStudents"
             :key="item.range"
-            class="distribution-item"
+            class="distribution-panel"
+            :class="{ expanded: isRangeExpanded(item.range) }"
           >
-            <div class="range-label">{{ item.range }}分</div>
-            <div class="bar-wrapper">
-              <div
-                class="bar"
-                :style="{ width: item.percentage + '%' }"
-                :class="{
-                  fail: item.range === '0-59',
-                  pass: item.range === '60-69',
-                  good: item.range === '70-79',
-                  excellent: item.range === '80-89',
-                  perfect: item.range === '90-100'
-                }"
-              />
+            <div
+              class="distribution-item"
+              @click="toggleRangeExpand(item.range)"
+            >
+              <div class="range-label">{{ item.range }}分</div>
+              <div class="bar-wrapper">
+                <div
+                  class="bar"
+                  :style="{ width: item.percentage + '%' }"
+                  :class="{
+                    fail: item.range === '0-59',
+                    pass: item.range === '60-69',
+                    good: item.range === '70-79',
+                    excellent: item.range === '80-89',
+                    perfect: item.range === '90-100'
+                  }"
+                />
+              </div>
+              <div class="distribution-meta">
+                <div class="count">
+                  {{ item.count }}人 ({{ item.percentage }}%)
+                </div>
+                <div class="expand-action">
+                  {{ isRangeExpanded(item.range) ? "收起名单" : "展开名单" }}
+                </div>
+              </div>
             </div>
-            <div class="count">{{ item.count }}人 ({{ item.percentage }}%)</div>
+            <div v-show="isRangeExpanded(item.range)" class="student-name-list">
+              <span
+                v-for="(name, idx) in item.students"
+                :key="`${item.range}-${name}-${idx}`"
+                class="student-chip"
+              >
+                {{ name }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -411,12 +485,12 @@ $dark-shadow-lg:
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
-$primary-gradient: linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%);
-$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
+$primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
+$success-gradient: linear-gradient(135deg, #739cf9 0%, #80c8fa 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
 $pink-gradient: linear-gradient(135deg, #fb7185 0%, #f97316 100%);
-$cyan-gradient: linear-gradient(135deg, #4A7FC8 0%, #80C8FA 100%);
+$cyan-gradient: linear-gradient(135deg, #4a7fc8 0%, #80c8fa 100%);
 
 /* 统一圆角 */
 $radius-sm: 8px;
@@ -443,7 +517,7 @@ $radius-xl: 20px;
 
       .header-icon {
         background: rgba(115, 156, 249, 0.15);
-        color: #80C8FA;
+        color: #80c8fa;
       }
     }
 
@@ -483,6 +557,29 @@ $radius-xl: 20px;
 
       .count {
         color: $dark-text-muted;
+      }
+
+      .distribution-panel {
+        background: rgba(115, 156, 249, 0.08);
+        border-color: rgba(255, 255, 255, 0.06);
+
+        &.expanded {
+          border-color: rgba(128, 200, 250, 0.4);
+        }
+      }
+
+      .student-name-list {
+        border-top-color: rgba(255, 255, 255, 0.14);
+      }
+
+      .student-chip {
+        color: $dark-text-primary;
+        background: rgba(115, 156, 249, 0.18);
+        border-color: rgba(128, 200, 250, 0.35);
+      }
+
+      .expand-action {
+        color: #80c8fa;
       }
 
       .bar-wrapper {
@@ -711,14 +808,28 @@ $radius-xl: 20px;
 }
 
 .score-distribution {
-  .distribution-item {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 16px;
+  .distribution-panel {
+    padding: 12px;
+    margin-bottom: 12px;
+    background: rgba(115, 156, 249, 0.05);
+    border: 1px solid rgba(115, 156, 249, 0.15);
+    border-radius: $radius-md;
+    transition: all 0.2s ease;
 
     &:last-child {
       margin-bottom: 0;
+    }
+
+    &.expanded {
+      border-color: #80c8fa;
+      box-shadow: 0 4px 12px rgb(74 127 200 / 12%);
+    }
+
+    .distribution-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      cursor: pointer;
     }
 
     .range-label {
@@ -748,24 +859,58 @@ $radius-xl: 20px;
         }
 
         &.good {
-          background: linear-gradient(90deg, #80C8FA, #80C8FA);
+          background: linear-gradient(90deg, #80c8fa, #80c8fa);
         }
 
         &.excellent {
-          background: linear-gradient(90deg, #739CF9, #a1b5f7);
+          background: linear-gradient(90deg, #739cf9, #a1b5f7);
         }
 
         &.perfect {
-          background: linear-gradient(90deg, #4A7FC8, #80C8FA);
+          background: linear-gradient(90deg, #4a7fc8, #80c8fa);
         }
       }
     }
 
+    .distribution-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 128px;
+      gap: 4px;
+    }
+
     .count {
-      width: 100px;
       font-size: 13px;
       color: $light-text-muted;
       text-align: right;
+    }
+
+    .expand-action {
+      font-size: 12px;
+      font-weight: 600;
+      color: #4a7fc8;
+    }
+
+    .student-name-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed $light-border;
+      max-height: 110px;
+      overflow-y: auto;
+    }
+
+    .student-chip {
+      padding: 4px 10px;
+      font-size: 12px;
+      color: #2f5f9b;
+      background: rgba(74, 127, 200, 0.12);
+      border: 1px solid rgba(74, 127, 200, 0.2);
+      border-radius: 999px;
+      white-space: nowrap;
     }
   }
 }
@@ -791,7 +936,7 @@ $radius-xl: 20px;
       .type-rate {
         font-size: 14px;
         font-weight: 600;
-        color: #4A7FC8;
+        color: #4a7fc8;
       }
     }
 
@@ -882,7 +1027,7 @@ $radius-xl: 20px;
       .student-score {
         font-size: 14px;
         font-weight: 600;
-        color: #4A7FC8;
+        color: #4a7fc8;
       }
     }
   }

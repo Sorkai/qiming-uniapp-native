@@ -4,7 +4,6 @@ import { useRoute, useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
 
-import IconUser from "@/assets/home-icons/user.svg?component";
 import IconDocument from "@/assets/home-icons/document.svg?component";
 
 defineOptions({
@@ -21,8 +20,8 @@ const submitting = ref(false);
 
 const paperInfo = ref({
   id: 1,
-  title: "2024年春季期中考试",
-  courseName: "高等数学",
+  title: "2024年春季概率论期末考试",
+  courseName: "概率论",
   totalScore: 100,
   studentCount: 45,
   gradedCount: 30
@@ -57,7 +56,7 @@ const studentAnswers = ref<StudentAnswer[]>([
   {
     id: 1,
     studentId: "2024001",
-    studentName: "张三",
+    studentName: "陈明轩",
     submitTime: "2024-04-15 10:30",
     status: "pending",
     totalScore: null,
@@ -97,7 +96,7 @@ const studentAnswers = ref<StudentAnswer[]>([
   {
     id: 2,
     studentId: "2024002",
-    studentName: "李四",
+    studentName: "林若彤",
     submitTime: "2024-04-15 10:45",
     status: "graded",
     totalScore: 85,
@@ -236,6 +235,22 @@ const isOptionSelected = (answer: Answer, option: string) => {
 const formatAnswer = (answer: string | string[]) =>
   Array.isArray(answer) ? answer.join(", ") : answer;
 
+const avatarGradients = [
+  "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+  "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+  "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+  "linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)"
+];
+
+const getAvatarText = (name: string) => name?.slice(-1) || "学";
+
+const getAvatarStyle = (studentId: string) => {
+  const gradientIndex = Number(studentId.slice(-1)) % avatarGradients.length;
+  return {
+    background: avatarGradients[gradientIndex]
+  };
+};
+
 onMounted(() => {
   loading.value = true;
   console.log("Loading paper:", paperId.value);
@@ -291,7 +306,12 @@ onMounted(() => {
             :class="{ active: index === currentStudentIndex }"
             @click="switchStudent(index)"
           >
-            <div class="student-avatar"><IconUser /></div>
+            <div
+              class="student-avatar"
+              :style="getAvatarStyle(student.studentId)"
+            >
+              {{ getAvatarText(student.studentName) }}
+            </div>
             <div class="student-info">
               <div class="student-name">{{ student.studentName }}</div>
               <div class="student-id">{{ student.studentId }}</div>
@@ -309,7 +329,12 @@ onMounted(() => {
       <div class="answer-panel">
         <div class="panel-header">
           <div class="student-header">
-            <div class="student-avatar large"><IconUser /></div>
+            <div
+              class="student-avatar large"
+              :style="getAvatarStyle(currentStudent?.studentId || '0')"
+            >
+              {{ getAvatarText(currentStudent?.studentName || "") }}
+            </div>
             <div class="student-detail">
               <h3>{{ currentStudent?.studentName }}</h3>
               <p>
@@ -489,7 +514,7 @@ $dark-text-primary: #f1f5f9;
 $dark-text-secondary: #94a3b8;
 $dark-border: rgba(255, 255, 255, 0.1);
 $primary-color: #667eea;
-$success-color: #739CF9;
+$success-color: #739cf9;
 $warning-color: #f59e0b;
 $danger-color: #ef4444;
 $radius-sm: 8px;
@@ -633,15 +658,14 @@ $radius-lg: 16px;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-  }
-  .student-avatar svg {
-    width: 20px;
-    height: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
   }
   .student-info {
     flex: 1;
@@ -688,15 +712,16 @@ $radius-lg: 16px;
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-  }
-  .student-avatar.large svg {
-    width: 24px;
-    height: 24px;
+    font-size: 16px;
+    font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.15);
+    line-height: 1;
+    flex-shrink: 0;
   }
   .student-detail h3 {
     margin: 0 0 4px;
