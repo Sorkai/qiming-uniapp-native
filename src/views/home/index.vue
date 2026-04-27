@@ -4141,6 +4141,10 @@ const handleCommand = (command: string) => {
     height: 220px;
   }
 
+  .home-container .transition-image-section .transition-visual {
+    display: none;
+  }
+
   .home-container .ai-power-section .ai-power-container {
     display: block;
   }
@@ -4350,6 +4354,13 @@ const handleCommand = (command: string) => {
   width: 100%;
   max-width: 320px;
   box-sizing: border-box;
+}
+
+:global(html.ua-mobile)
+  .home-container
+  .transition-image-section
+  .transition-visual {
+  display: none;
 }
 
 :global(html.ua-mobile)
