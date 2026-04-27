@@ -602,13 +602,18 @@ import IconEdit from "@/assets/home-icons/edit.svg?component";
 import IconTrending from "@/assets/home-icons/trending.svg?component";
 import IconZap from "@/assets/home-icons/zap.svg?component";
 import IconRocket from "@/assets/home-icons/rocket.svg?component";
-import IconShield from "@/assets/home-icons/shield.svg?component";
-import IconSmartphone from "@/assets/home-icons/smartphone.svg?component";
-import IconGlobe from "@/assets/home-icons/globe.svg?component";
 import IconLightbulb from "@/assets/home-icons/lightbulb.svg?component";
 import IconTrophy from "@/assets/home-icons/trophy.svg?component";
 import IconGraduation from "@/assets/home-icons/graduation.svg?component";
 import IconCrystal from "@/assets/home-icons/crystal.svg?component";
+import IconDeviceMultiple from "@/assets/newfirstpageicons/device-multiple-solid-svgrepo-com.svg?component";
+import IconFrame from "@/assets/newfirstpageicons/frame-svgrepo-com.svg?component";
+import IconKnowledgeGraph from "@/assets/newfirstpageicons/knowledge-graph-dashboard-svgrepo-com.svg?component";
+import IconMachineLearning from "@/assets/newfirstpageicons/machine-learning-03-svgrepo-com.svg?component";
+import IconMindSmartBulb from "@/assets/newfirstpageicons/mind-smart-light-bulb-svgrepo-com.svg?component";
+import IconPlanet from "@/assets/newfirstpageicons/planet-svgrepo-com.svg?component";
+import IconRocketInnovation from "@/assets/newfirstpageicons/rocket-innovation-space-svgrepo-com.svg?component";
+import IconShieldCheck from "@/assets/newfirstpageicons/shield-check-svgrepo-com.svg?component";
 
 type RgbTriple = [number, number, number];
 
@@ -1066,10 +1071,10 @@ const getCtaStarStyle = (index: number) => {
 };
 
 const statsData = ref([
-  { icon: IconStudent, number: "1,000+", label: "预计注册学员" },
-  { icon: IconTeacher, number: "50+", label: "预计优秀教师" },
-  { icon: IconBook, number: "100+", label: "预计上线精品课程" },
-  { icon: IconStar, number: "98%+", label: "预计学员满意度" }
+  { icon: IconStudent, number: "1,000+", label: "注册学员" },
+  { icon: IconTeacher, number: "50+", label: "优秀教师" },
+  { icon: IconBook, number: "100+", label: "上线精品课程" },
+  { icon: IconStar, number: "98%+", label: "学员满意度" }
 ]);
 
 const aiFeatures = ref([
@@ -1144,14 +1149,14 @@ const services = ref([
 ]);
 
 const techStack = ref([
-  { icon: IconBrain, name: "多模态 AI", version: "大语言模型" },
-  { icon: IconCrystal, name: "深度学习", version: "神经网络" },
-  { icon: IconChart, name: "知识图谱", version: "智能推荐" },
-  { icon: IconZap, name: "Vue 3", version: "前端框架" },
-  { icon: IconRocket, name: "云原生", version: "微服务架构" },
-  { icon: IconShield, name: "数据安全", version: "隐私保护" },
-  { icon: IconSmartphone, name: "多端适配", version: "全平台覆盖" },
-  { icon: IconGlobe, name: "边缘计算", version: "低延迟响应" }
+  { icon: IconMindSmartBulb, name: "多模态 AI", version: "大语言模型" },
+  { icon: IconMachineLearning, name: "深度学习", version: "神经网络" },
+  { icon: IconKnowledgeGraph, name: "知识图谱", version: "智能推荐" },
+  { icon: IconFrame, name: "Vue 3", version: "前端框架" },
+  { icon: IconRocketInnovation, name: "云原生", version: "微服务架构" },
+  { icon: IconShieldCheck, name: "数据安全", version: "隐私保护" },
+  { icon: IconDeviceMultiple, name: "多端适配", version: "全平台覆盖" },
+  { icon: IconPlanet, name: "边缘计算", version: "低延迟响应" }
 ]);
 
 const innovationHighlights = ref([
@@ -3023,9 +3028,15 @@ const handleCommand = (command: string) => {
     }
 
     .tech-icon {
-      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 12px;
       font-size: 36px;
       transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      line-height: 1;
     }
 
     &:hover .tech-icon {
@@ -3877,30 +3888,33 @@ const handleCommand = (command: string) => {
   }
 }
 
-/* 按钮波纹效果 */
-.hero-btn,
-.cta-section .el-button {
-  position: relative;
-  overflow: hidden;
+@media (hover: hover) and (pointer: fine) {
+  /* 按钮点击波纹：仅桌面端保留 */
+  .hero-btn,
+  .cta-section .el-button,
+  .cta-section-new .cta-buttons .el-button {
+    position: relative;
+    overflow: hidden;
 
-  &::after {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    content: "";
-    background: rgb(255 255 255 / 30%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition:
-      width 0.6s,
-      height 0.6s;
-  }
+    &::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      content: "";
+      background: rgb(255 255 255 / 30%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition:
+        width 0.6s,
+        height 0.6s;
+    }
 
-  &:active::after {
-    width: 300px;
-    height: 300px;
+    &:active::after {
+      width: 300px;
+      height: 300px;
+    }
   }
 }
 
@@ -4302,11 +4316,26 @@ const handleCommand = (command: string) => {
 }
 
 .service-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   color: #60a5fa;
+}
+
+.service-icon svg {
+  display: block;
 }
 
 .tech-icon {
   color: #60a5fa;
+}
+
+.tech-icon svg {
+  display: block;
+  width: 30px;
+  height: 30px;
+  overflow: visible;
 }
 
 .innovation-icon {
@@ -4666,17 +4695,23 @@ const handleCommand = (command: string) => {
 
   .home-container .services-section .service-card {
     display: grid;
-    grid-template-columns: 40px 1fr;
-    gap: 6px 12px;
-    align-items: start;
+    grid-template-columns: 52px 1fr;
+    gap: 8px 12px;
+    align-items: center;
     padding: 22px 16px;
     text-align: left;
   }
 
   .home-container .services-section .service-card .service-icon {
-    grid-row: 1 / span 2;
-    margin: 2px 0 0;
-    font-size: 28px;
+    grid-row: 1;
+    align-self: start;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    font-size: 24px;
+    background: rgb(96 165 250 / 12%);
+    border: 1px solid rgb(96 165 250 / 25%);
+    border-radius: 12px;
   }
 
   .home-container .services-section .service-card .service-title {
@@ -4686,7 +4721,8 @@ const handleCommand = (command: string) => {
   }
 
   .home-container .services-section .service-card .service-desc {
-    margin: 0;
+    grid-column: 1 / -1;
+    margin: 2px 0 0;
     font-size: 15px;
     line-height: 1.7;
     color: rgb(255 255 255 / 72%);
@@ -4900,6 +4936,71 @@ const handleCommand = (command: string) => {
     .transition-text
     .stat-item:last-child {
     grid-column: auto;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .home-container .scroll-animate,
+  .home-container .scroll-animate.animate-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .home-container .stat-card,
+  .home-container .ai-feature-card,
+  .home-container .feature-item,
+  .home-container .service-card,
+  .home-container .tech-card,
+  .home-container .innovation-card,
+  .home-container .capability-card,
+  .home-container .breakthrough-item,
+  .home-container .testimonial-card,
+  .home-container .hero-btn,
+  .home-container .cta-section .el-button,
+  .home-container .cta-section-new .cta-buttons .el-button,
+  .home-container .nav-link,
+  .home-container .social-link {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .home-container .stat-card::before,
+  .home-container .ai-feature-card::before,
+  .home-container .feature-item::before,
+  .home-container .service-card::before,
+  .home-container .tech-card::before,
+  .home-container .innovation-card::before,
+  .home-container .capability-card::before,
+  .home-container .breakthrough-item::before,
+  .home-container .testimonial-card::before,
+  .home-container .hero-btn::after,
+  .home-container .cta-section .el-button::after,
+  .home-container .cta-section-new .cta-buttons .el-button::after {
+    opacity: 0 !important;
+    display: none !important;
+  }
+
+  .home-container .stat-card:hover,
+  .home-container .ai-feature-card:hover,
+  .home-container .feature-item:hover,
+  .home-container .service-card:hover,
+  .home-container .tech-card:hover,
+  .home-container .innovation-card:hover,
+  .home-container .capability-card:hover,
+  .home-container .breakthrough-item:hover,
+  .home-container .testimonial-card:hover,
+  .home-container .hero-btn:hover,
+  .home-container .cta-section .el-button:hover,
+  .home-container .cta-section-new .cta-buttons .el-button:hover,
+  .home-container .social-link:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .home-container .nav-link:hover::after {
+    width: 0 !important;
   }
 }
 </style>
