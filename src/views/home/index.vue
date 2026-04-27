@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container">
+  <div class="home-container" :style="bannerThemeVars">
     <!-- 顶部导航 -->
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
@@ -517,12 +517,118 @@ import IconTrophy from "@/assets/home-icons/trophy.svg?component";
 import IconGraduation from "@/assets/home-icons/graduation.svg?component";
 import IconCrystal from "@/assets/home-icons/crystal.svg?component";
 
+type RgbTriple = [number, number, number];
+
 const router = useRouter();
 const isScrolled = ref(false);
 const starlightCanvas = ref<HTMLCanvasElement | null>(null);
 import { useUserStoreHook } from "@/store/modules/user";
 
 const userStore = useUserStoreHook();
+const defaultBannerEdgeColors = {
+  top: "rgb(5, 9, 16)",
+  bottom: "rgb(15, 23, 42)"
+};
+const bannerEdgeColors = ref({ ...defaultBannerEdgeColors });
+const bannerThemeVars = computed(() => ({
+  "--banner-top-color": bannerEdgeColors.value.top,
+  "--banner-bottom-color": bannerEdgeColors.value.bottom
+}));
+
+const rgbToCss = ([red, green, blue]: RgbTriple) =>
+  `rgb(${red}, ${green}, ${blue})`;
+
+const sampleBandColor = (
+  pixels: Uint8ClampedArray,
+  width: number,
+  xStart: number,
+  xEnd: number,
+  yStart: number,
+  yEnd: number
+): RgbTriple => {
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+  let count = 0;
+
+  for (let y = yStart; y < yEnd; y += 1) {
+    for (let x = xStart; x < xEnd; x += 1) {
+      const index = (y * width + x) * 4;
+      const alpha = pixels[index + 3];
+      if (alpha === 0) continue;
+      red += pixels[index];
+      green += pixels[index + 1];
+      blue += pixels[index + 2];
+      count += 1;
+    }
+  }
+
+  if (!count) {
+    return [15, 23, 42];
+  }
+
+  return [
+    Math.round(red / count),
+    Math.round(green / count),
+    Math.round(blue / count)
+  ];
+};
+
+const extractBannerEdgeColors = () => {
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.decoding = "async";
+
+  image.onload = () => {
+    const longestSide = Math.max(image.naturalWidth, image.naturalHeight);
+    const scale = longestSide > 320 ? 320 / longestSide : 1;
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      bannerEdgeColors.value = { ...defaultBannerEdgeColors };
+      return;
+    }
+
+    context.drawImage(image, 0, 0, width, height);
+
+    try {
+      const { data } = context.getImageData(0, 0, width, height);
+      const xStart = Math.floor(width * 0.16);
+      const xEnd = Math.max(xStart + 1, Math.ceil(width * 0.84));
+      const topBandHeight = Math.max(1, Math.round(height * 0.06));
+      const bottomBandHeight = Math.max(1, Math.round(height * 0.12));
+      const topColor = sampleBandColor(data, width, xStart, xEnd, 0, topBandHeight);
+      const bottomColor = sampleBandColor(
+        data,
+        width,
+        xStart,
+        xEnd,
+        Math.max(0, height - bottomBandHeight),
+        height
+      );
+
+      bannerEdgeColors.value = {
+        top: rgbToCss(topColor),
+        bottom: rgbToCss(bottomColor)
+      };
+    } catch (error) {
+      console.warn("[home banner] failed to sample edge colors", error);
+      bannerEdgeColors.value = { ...defaultBannerEdgeColors };
+    }
+  };
+
+  image.onerror = () => {
+    bannerEdgeColors.value = { ...defaultBannerEdgeColors };
+  };
+
+  image.src = bannerPhoto;
+};
+
 const userInfo = computed(() => {
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
   const avatar = userStore.avatar || info?.avatar;
@@ -810,6 +916,7 @@ const initStarlightAnimation = () => {
 };
 
 onMounted(() => {
+  extractBannerEdgeColors();
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("mousemove", handleMouseMove);
   setTimeout(initScrollAnimations, 100);
@@ -1563,7 +1670,12 @@ const handleCommand = (command: string) => {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: linear-gradient(180deg, #000 0%, #0f172a 15%, #1e293b 100%);
+  background: linear-gradient(
+    180deg,
+    var(--banner-top-color, #050910) 0%,
+    var(--banner-top-color, #050910) 18%,
+    var(--banner-bottom-color, #0f172a) 100%
+  );
 
   .banner-bg {
     position: absolute;
@@ -1831,6 +1943,12 @@ const handleCommand = (command: string) => {
 .wave-transition {
   z-index: 5;
   margin-top: -2px;
+  background: linear-gradient(
+    180deg,
+    var(--banner-bottom-color, #0f172a) 0%,
+    var(--banner-bottom-color, #0f172a) 58%,
+    #0f172a 100%
+  );
 
   svg {
     display: block;
