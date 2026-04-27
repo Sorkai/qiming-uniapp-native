@@ -297,6 +297,87 @@
       </div>
     </div>
 
+    <!-- 教育创新模块 -->
+    <div id="innovation" class="innovation-section">
+      <div class="section-container">
+        <div class="section-header light">
+          <span class="section-badge">INNOVATIONS</span>
+          <h2 class="section-title">教育 AI 创新引擎</h2>
+          <p class="section-desc">
+            从 Agentic AI
+            到数据闭环与多模态知识引擎，构建可持续进化的教育智能底座
+          </p>
+        </div>
+        <div class="innovation-grid">
+          <article
+            v-for="(item, index) in innovationHighlights"
+            :key="index"
+            class="innovation-card"
+          >
+            <div class="innovation-meta">
+              <span class="innovation-label">{{ item.label }}</span>
+              <div class="innovation-icon"><component :is="item.icon" /></div>
+            </div>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.description }}</p>
+            <ul class="innovation-points">
+              <li v-for="(point, pointIndex) in item.points" :key="pointIndex">
+                {{ point }}
+              </li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <!-- 核心能力模块 -->
+    <div class="capability-section">
+      <div class="section-container">
+        <div class="section-header light">
+          <span class="section-badge">FRAMEWORK</span>
+          <h2 class="section-title">核心能力框架</h2>
+          <p class="section-desc">
+            通过协议化扩展、混合检索与自适应诊断，实现 AI 教学能力的工程化落地
+          </p>
+        </div>
+        <div class="capability-grid">
+          <article
+            v-for="(item, index) in capabilityHighlights"
+            :key="index"
+            class="capability-card"
+          >
+            <div class="capability-tag">{{ item.tag }}</div>
+            <div class="capability-icon"><component :is="item.icon" /></div>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.description }}</p>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关键技术模块 -->
+    <div class="breakthrough-section">
+      <div class="section-container">
+        <div class="section-header light">
+          <span class="section-badge">RESEARCH</span>
+          <h2 class="section-title">关键技术成果</h2>
+          <p class="section-desc">
+            面向教育场景沉淀的七项核心技术，覆盖模型、检索、编排、评估与课件生成
+          </p>
+        </div>
+        <div class="breakthrough-panel">
+          <article
+            v-for="(item, index) in technicalBreakthroughs"
+            :key="index"
+            class="breakthrough-item"
+          >
+            <span class="breakthrough-index">{{ index + 1 }}</span>
+            <p>{{ item }}</p>
+          </article>
+        </div>
+      </div>
+    </div>
+
     <!-- 用户评价区域 -->
     <div class="testimonials-section">
       <div class="section-container">
@@ -614,7 +695,14 @@ const extractBannerEdgeColors = () => {
       const xEnd = Math.max(xStart + 1, Math.ceil(width * 0.84));
       const topBandHeight = Math.max(1, Math.round(height * 0.06));
       const bottomBandHeight = Math.max(1, Math.round(height * 0.12));
-      const topColor = sampleBandColor(data, width, xStart, xEnd, 0, topBandHeight);
+      const topColor = sampleBandColor(
+        data,
+        width,
+        xStart,
+        xEnd,
+        0,
+        topBandHeight
+      );
       const bottomColor = sampleBandColor(
         data,
         width,
@@ -726,7 +814,7 @@ const handleScroll = () => {
 
 const handleMouseMove = (e: MouseEvent) => {
   const elements = document.querySelectorAll(
-    ".stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .testimonial-card, .hero-btn, .cta-buttons .el-button"
+    ".stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .innovation-card, .capability-card, .breakthrough-item, .testimonial-card, .hero-btn, .cta-buttons .el-button"
   );
   elements.forEach((el: any) => {
     const rect = el.getBoundingClientRect();
@@ -751,7 +839,7 @@ const initScrollAnimations = () => {
 
   document
     .querySelectorAll(
-      ".stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .testimonial-card, .section-header"
+      ".stat-card, .ai-feature-card, .feature-item, .service-card, .tech-card, .innovation-card, .capability-card, .breakthrough-item, .testimonial-card, .section-header"
     )
     .forEach(el => {
       el.classList.add("scroll-animate");
@@ -1064,6 +1152,67 @@ const techStack = ref([
   { icon: IconShield, name: "数据安全", version: "隐私保护" },
   { icon: IconSmartphone, name: "多端适配", version: "全平台覆盖" },
   { icon: IconGlobe, name: "边缘计算", version: "低延迟响应" }
+]);
+
+const innovationHighlights = ref([
+  {
+    label: "创新一",
+    title: "从传统 RAG 到 Agentic AI",
+    description:
+      "启明智教引入 Agentic AI 架构，使 AI 具备自主规划、工具调用、多步推理和自我纠错能力。",
+    points: ["自主规划", "多工具调用", "多步推理与自纠错"],
+    icon: IconRobot
+  },
+  {
+    label: "创新二",
+    title: "全流程数据闭环",
+    description:
+      "系统打通备教学练评五大环节数据流，形成完整教学数据闭环，并持续沉淀领域知识和教学经验。",
+    points: ["五环节全链路贯通", "教学数据持续积累", "知识与经验双沉淀"],
+    icon: IconChart
+  },
+  {
+    label: "创新三",
+    title: "多模态资源引擎",
+    description:
+      "将长期积累的非结构化数据自动转化为可检索、可引用的结构化智能知识库。",
+    points: ["非结构化自动结构化", "高可检索可引用", "跨模态知识融合"],
+    icon: IconCrystal
+  }
+]);
+
+const capabilityHighlights = ref([
+  {
+    tag: "生态能力",
+    title: "支持 MCP 协议的私有 Skill 插件生态",
+    description:
+      "平台采用热插拔插件架构，可通过 MCP 标准化接口动态挂载外部工具，持续扩展教学能力边界。",
+    icon: IconRocket
+  },
+  {
+    tag: "检索能力",
+    title: "SAHR 混合检索框架",
+    description:
+      "重构文档检索切分逻辑，采用动态参数切分与稠密稀疏混合检索，显著提升召回质量与命中效率。",
+    icon: IconTarget
+  },
+  {
+    tag: "诊断能力",
+    title: "多维学情追踪与自适应引擎",
+    description:
+      "融合深度知识追踪模型与项目反应理论，实现学习过程的动态评估、个性化诊断与策略自适应。",
+    icon: IconTrending
+  }
+]);
+
+const technicalBreakthroughs = ref([
+  "面向教育垂直场景的大模型精调与对齐技术",
+  "SAHR 语义自适应切分与交叉映射重排序算法",
+  "基于 MCP 协议的微服务动态注册与双向通信架构",
+  "多模态智能体意图识别与任务自动化编排技术",
+  "基于思维链的错题语义偏离度计算与诊断算法",
+  "融合长短期记忆网络与三参数反应理论的动态学情评估算法",
+  "基于知识元拓扑的 HTML5 动态课件生成技术"
 ]);
 
 type TestimonialItem = {
@@ -1440,6 +1589,11 @@ const handleCommand = (command: string) => {
     grid-template-columns: repeat(4, 1fr);
   }
 
+  .innovation-section .innovation-grid,
+  .capability-section .capability-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .footer-section .footer-grid {
     grid-template-columns: 1fr 1fr;
     gap: 40px;
@@ -1531,6 +1685,9 @@ const handleCommand = (command: string) => {
   .platform-intro,
   .services-section,
   .tech-section,
+  .innovation-section,
+  .capability-section,
+  .breakthrough-section,
   .testimonials-section {
     padding: 80px 0;
   }
@@ -1553,6 +1710,12 @@ const handleCommand = (command: string) => {
 
   .tech-section .tech-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .innovation-section .innovation-grid,
+  .capability-section .capability-grid,
+  .breakthrough-section .breakthrough-panel {
+    grid-template-columns: 1fr;
   }
 
   .testimonials-section .testimonials-grid {
@@ -2883,6 +3046,226 @@ const handleCommand = (command: string) => {
   }
 }
 
+.innovation-section {
+  position: relative;
+  padding: 50px 0;
+  background: linear-gradient(180deg, #0f172a 0%, #18263d 100%);
+
+  .innovation-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    perspective: 1000px;
+  }
+
+  .innovation-card {
+    position: relative;
+    padding: 32px 26px;
+    overflow: hidden;
+    background: rgb(255 255 255 / 3%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+
+    &:hover {
+      border-color: rgb(96 165 250 / 55%);
+      box-shadow:
+        0 20px 40px rgb(96 165 250 / 18%),
+        0 8px 20px rgb(2 6 23 / 30%);
+      transform: translateY(-10px);
+    }
+
+    .innovation-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .innovation-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #bfdbfe;
+      letter-spacing: 0.04em;
+      background: rgb(96 165 250 / 14%);
+      border: 1px solid rgb(147 197 253 / 35%);
+      border-radius: 999px;
+    }
+
+    .innovation-icon {
+      font-size: 30px;
+      color: #60a5fa;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #fff;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.75;
+      color: rgb(255 255 255 / 72%);
+    }
+
+    .innovation-points {
+      display: grid;
+      gap: 8px;
+      padding: 0;
+      margin: 16px 0 0;
+      list-style: none;
+
+      li {
+        position: relative;
+        padding-left: 16px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: rgb(191 219 254 / 88%);
+
+        &::before {
+          position: absolute;
+          top: 8px;
+          left: 0;
+          width: 6px;
+          height: 6px;
+          content: "";
+          background: rgb(96 165 250 / 90%);
+          border-radius: 50%;
+        }
+      }
+    }
+  }
+}
+
+.capability-section {
+  position: relative;
+  padding: 50px 0;
+  background: linear-gradient(180deg, #18263d 0%, #1e293b 100%);
+
+  .capability-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    perspective: 1000px;
+  }
+
+  .capability-card {
+    position: relative;
+    padding: 30px 24px;
+    overflow: hidden;
+    background: rgb(255 255 255 / 3%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      border-color: rgb(96 165 250 / 50%);
+      box-shadow:
+        0 18px 34px rgb(96 165 250 / 15%),
+        0 8px 18px rgb(2 6 23 / 30%);
+      transform: translateY(-8px);
+    }
+
+    .capability-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 0 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgb(147 197 253 / 95%);
+      letter-spacing: 0.04em;
+      background: rgb(96 165 250 / 12%);
+      border: 1px solid rgb(96 165 250 / 35%);
+      border-radius: 999px;
+    }
+
+    .capability-icon {
+      margin-bottom: 14px;
+      font-size: 32px;
+      color: #60a5fa;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #fff;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.75;
+      color: rgb(255 255 255 / 70%);
+    }
+  }
+}
+
+.breakthrough-section {
+  position: relative;
+  padding: 50px 0;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+
+  .breakthrough-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .breakthrough-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 18px 20px;
+    background: rgb(255 255 255 / 3%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: rgb(96 165 250 / 45%);
+      background: rgb(96 165 250 / 8%);
+      transform: translateY(-4px);
+    }
+
+    .breakthrough-index {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      margin-top: 1px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      background: #60a5fa;
+      border-radius: 50%;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgb(255 255 255 / 78%);
+    }
+  }
+}
+
 .testimonials-section {
   padding: 50px 0;
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
@@ -2934,7 +3317,12 @@ const handleCommand = (command: string) => {
     .testimonial-backdrop {
       z-index: 1;
       background:
-        linear-gradient(180deg, rgb(15 23 42 / 18%) 0%, rgb(15 23 42 / 74%) 52%, rgb(2 6 23 / 94%) 100%),
+        linear-gradient(
+          180deg,
+          rgb(15 23 42 / 18%) 0%,
+          rgb(15 23 42 / 74%) 52%,
+          rgb(2 6 23 / 94%) 100%
+        ),
         linear-gradient(135deg, rgb(59 130 246 / 18%) 0%, transparent 58%);
     }
 
@@ -3390,6 +3778,58 @@ const handleCommand = (command: string) => {
   transition-delay: 0.56s;
 }
 
+.innovation-card.scroll-animate:nth-child(1) {
+  transition-delay: 0s;
+}
+
+.innovation-card.scroll-animate:nth-child(2) {
+  transition-delay: 0.15s;
+}
+
+.innovation-card.scroll-animate:nth-child(3) {
+  transition-delay: 0.3s;
+}
+
+.capability-card.scroll-animate:nth-child(1) {
+  transition-delay: 0s;
+}
+
+.capability-card.scroll-animate:nth-child(2) {
+  transition-delay: 0.15s;
+}
+
+.capability-card.scroll-animate:nth-child(3) {
+  transition-delay: 0.3s;
+}
+
+.breakthrough-item.scroll-animate:nth-child(1) {
+  transition-delay: 0s;
+}
+
+.breakthrough-item.scroll-animate:nth-child(2) {
+  transition-delay: 0.08s;
+}
+
+.breakthrough-item.scroll-animate:nth-child(3) {
+  transition-delay: 0.16s;
+}
+
+.breakthrough-item.scroll-animate:nth-child(4) {
+  transition-delay: 0.24s;
+}
+
+.breakthrough-item.scroll-animate:nth-child(5) {
+  transition-delay: 0.32s;
+}
+
+.breakthrough-item.scroll-animate:nth-child(6) {
+  transition-delay: 0.4s;
+}
+
+.breakthrough-item.scroll-animate:nth-child(7) {
+  transition-delay: 0.48s;
+}
+
 .testimonial-card.scroll-animate:nth-child(1) {
   transition-delay: 0s;
 }
@@ -3408,6 +3848,9 @@ const handleCommand = (command: string) => {
 .feature-item,
 .service-card,
 .tech-card,
+.innovation-card,
+.capability-card,
+.breakthrough-item,
 .testimonial-card {
   position: relative;
   overflow: hidden;
@@ -3838,6 +4281,8 @@ const handleCommand = (command: string) => {
 .ai-icon svg,
 .service-icon svg,
 .tech-icon svg,
+.innovation-icon svg,
+.capability-icon svg,
 .card-icon svg {
   width: 1em;
   height: 1em;
@@ -3861,6 +4306,14 @@ const handleCommand = (command: string) => {
 }
 
 .tech-icon {
+  color: #60a5fa;
+}
+
+.innovation-icon {
+  color: #60a5fa;
+}
+
+.capability-icon {
   color: #60a5fa;
 }
 
@@ -4028,6 +4481,9 @@ const handleCommand = (command: string) => {
   .home-container .platform-intro,
   .home-container .services-section,
   .home-container .tech-section,
+  .home-container .innovation-section,
+  .home-container .capability-section,
+  .home-container .breakthrough-section,
   .home-container .testimonials-section {
     padding: 56px 0;
   }
@@ -4251,6 +4707,42 @@ const handleCommand = (command: string) => {
     gap: 12px;
   }
 
+  .home-container .innovation-section .innovation-grid,
+  .home-container .capability-section .capability-grid,
+  .home-container .breakthrough-section .breakthrough-panel {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .home-container .innovation-section .innovation-card,
+  .home-container .capability-section .capability-card {
+    padding: 22px 16px;
+  }
+
+  .home-container .innovation-section .innovation-card h3,
+  .home-container .capability-section .capability-card h3 {
+    font-size: 20px;
+    line-height: 1.4;
+  }
+
+  .home-container .innovation-section .innovation-card p,
+  .home-container .capability-section .capability-card p,
+  .home-container .breakthrough-section .breakthrough-item p {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .home-container .breakthrough-section .breakthrough-item {
+    gap: 10px;
+    padding: 16px 14px;
+  }
+
+  .home-container .breakthrough-section .breakthrough-item .breakthrough-index {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
   .home-container .testimonials-section .testimonials-grid {
     grid-template-columns: 1fr !important;
     gap: 14px;
@@ -4312,7 +4804,12 @@ const handleCommand = (command: string) => {
 }
 
 /* UA 识别为移动端时，按钮自动换行并居中（避免仅改 UA 但视口仍偏大时错位） */
-:global(html.ua-mobile) .home-container .banner .banner-overlay .carousel-text .hero-buttons {
+:global(html.ua-mobile)
+  .home-container
+  .banner
+  .banner-overlay
+  .carousel-text
+  .hero-buttons {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
