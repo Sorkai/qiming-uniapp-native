@@ -310,14 +310,23 @@
             v-for="(item, index) in testimonials"
             :key="index"
             class="testimonial-card"
+            :style="{ '--testimonial-accent': item.accent }"
           >
-            <div class="quote-icon">"</div>
-            <p class="testimonial-content">{{ item.content }}</p>
-            <div class="testimonial-author">
-              <div class="author-avatar">{{ item.avatar }}</div>
-              <div class="author-info">
-                <div class="author-name">{{ item.name }}</div>
-                <div class="author-title">{{ item.title }}</div>
+            <div
+              class="testimonial-media"
+              :style="{ backgroundImage: `url(${item.background})` }"
+            />
+            <div class="testimonial-backdrop" />
+            <div class="testimonial-shell">
+              <div class="testimonial-tag">{{ item.tag }}</div>
+              <div class="quote-icon">"</div>
+              <p class="testimonial-content">{{ item.content }}</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">{{ item.avatar }}</div>
+                <div class="author-info">
+                  <div class="author-name">{{ item.name }}</div>
+                  <div class="author-title">{{ item.title }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -494,6 +503,9 @@ import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
 import artisticText from "@/assets/816438ed-a33a-4477-b57e-e273e15c03aa.png";
 import bannerPhoto from "@/assets/bannerphoto.png";
+import testimonialTeacherPhoto from "@/assets/mainfirstpagephotos/teacher.png";
+import testimonialStudentPhoto from "@/assets/mainfirstpagephotos/stus.png";
+import testimonialParentPhoto from "@/assets/mainfirstpagephotos/parents.png";
 import LoginDialog from "@/components/LoginDialog.vue";
 // 导入 SVG 图标组件
 import IconStudent from "@/assets/home-icons/student.svg?component";
@@ -1054,7 +1066,17 @@ const techStack = ref([
   { icon: IconGlobe, name: "边缘计算", version: "低延迟响应" }
 ]);
 
-const testimonials = ref([
+type TestimonialItem = {
+  content: string;
+  name: string;
+  title: string;
+  avatar: string;
+  tag?: string;
+  accent?: string;
+  background?: string;
+};
+
+const testimonials = ref<TestimonialItem[]>([
   {
     content:
       "启明智教帮助我找到了学习的薄弱点，针对性练习后成绩提升了很多，特别是错题分析功能太实用了！",
@@ -1077,6 +1099,29 @@ const testimonials = ref([
     avatar: "李"
   }
 ]);
+
+const testimonialEnhancements = [
+  {
+    tag: "学生反馈",
+    accent: "#38bdf8",
+    background: testimonialStudentPhoto
+  },
+  {
+    tag: "教师视角",
+    accent: "#a78bfa",
+    background: testimonialTeacherPhoto
+  },
+  {
+    tag: "家长评价",
+    accent: "#f59e0b",
+    background: testimonialParentPhoto
+  }
+];
+
+testimonials.value = testimonials.value.map((item, index) => ({
+  ...item,
+  ...testimonialEnhancements[index]
+}));
 
 const competitors = ref([
   {
@@ -2846,28 +2891,71 @@ const handleCommand = (command: string) => {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 30px;
+    align-items: stretch;
     perspective: 1000px;
   }
 
   .testimonial-card {
     position: relative;
-    padding: 40px;
+    display: flex;
+    min-height: 360px;
+    padding: 0;
     overflow: hidden;
     cursor: pointer;
-    background: rgb(255 255 255 / 3%);
-    border: 1px solid rgb(255 255 255 / 10%);
-    border-radius: 24px;
+    isolation: isolate;
+    background:
+      linear-gradient(180deg, rgb(15 23 42 / 12%) 0%, rgb(15 23 42 / 72%) 100%),
+      rgb(255 255 255 / 3%);
+    border: 1px solid rgb(255 255 255 / 8%);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgb(2 6 23 / 20%);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
 
-    &::before {
+    .testimonial-media,
+    .testimonial-backdrop,
+    .testimonial-shell {
       position: absolute;
       inset: 0;
+    }
+
+    .testimonial-media {
       z-index: 0;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+      filter: blur(2px) brightness(0.5) saturate(0.92);
+      transform: scale(1.12);
+      transition:
+        transform 0.6s ease,
+        filter 0.6s ease;
+    }
+
+    .testimonial-backdrop {
+      z-index: 1;
+      background:
+        linear-gradient(180deg, rgb(15 23 42 / 18%) 0%, rgb(15 23 42 / 74%) 52%, rgb(2 6 23 / 94%) 100%),
+        linear-gradient(135deg, rgb(59 130 246 / 18%) 0%, transparent 58%);
+    }
+
+    .testimonial-shell {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 28px;
+    }
+
+    &::after {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
       content: "";
       background: radial-gradient(
         600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        rgb(255 255 255 / 8%),
+        rgb(255 255 255 / 14%),
         transparent 40%
       );
       opacity: 0;
@@ -2875,52 +2963,70 @@ const handleCommand = (command: string) => {
     }
 
     &:hover {
-      background: linear-gradient(
-        145deg,
-        rgb(20 20 20 / 60%) 0%,
-        rgb(10 10 10 / 80%) 100%
-      );
-      border-color: rgb(96 165 250 / 40%);
-      box-shadow: 0 25px 50px rgb(96 165 250 / 15%);
-      transform: translateY(-10px) rotateX(3deg);
+      border-color: rgb(255 255 255 / 16%);
+      box-shadow: 0 28px 70px rgb(2 6 23 / 30%);
+      transform: translateY(-8px) rotateX(3deg);
 
-      &::before {
+      &::after {
         opacity: 1;
+      }
+
+      .testimonial-media {
+        filter: blur(3px) brightness(0.46) saturate(0.96);
+        transform: scale(1.16);
       }
     }
 
-    .quote-icon,
-    .testimonial-content,
-    .user-profile {
-      position: relative;
-      z-index: 1;
+    .testimonial-tag {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-height: 32px;
+      margin-bottom: auto;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.2;
+      color: #fff;
+      letter-spacing: 0.04em;
+      background: rgb(15 23 42 / 56%);
+      border: 1px solid rgb(255 255 255 / 16%);
+      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
     }
 
     .quote-icon {
       display: block;
-      margin-bottom: 20px;
-      font-size: 60px;
-      color: #60a5fa;
-      opacity: 0.5;
+      margin: 56px 0 14px;
+      font-size: 52px;
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 0.8;
+      color: var(--testimonial-accent);
+      opacity: 0.88;
       transition: all 0.4s;
     }
 
     &:hover .quote-icon {
-      color: #60a5fa;
       opacity: 1;
-      transform: scale(1.1);
+      transform: translateY(-2px) scale(1.04);
     }
 
     .testimonial-content {
-      margin-bottom: 30px;
+      margin-bottom: 26px;
       font-size: 16px;
-      color: rgb(255 255 255 / 80%);
+      line-height: 1.8;
+      color: rgb(255 255 255 / 92%);
+      text-shadow: 0 2px 16px rgb(2 6 23 / 35%);
     }
 
     .testimonial-author {
       display: flex;
       gap: 16px;
       align-items: center;
+      margin-top: auto;
+      padding-top: 18px;
+      border-top: 1px solid rgb(255 255 255 / 14%);
 
       .author-avatar {
         display: flex;
@@ -2930,8 +3036,9 @@ const handleCommand = (command: string) => {
         height: 50px;
         font-size: 20px;
         font-weight: 600;
-        color: #0a0a1a;
-        background: #60a5fa;
+        color: #fff;
+        background: var(--testimonial-accent);
+        box-shadow: inset 0 1px 0 rgb(255 255 255 / 14%);
         border-radius: 50%;
       }
 
@@ -2943,7 +3050,8 @@ const handleCommand = (command: string) => {
 
       .author-title {
         font-size: 13px;
-        color: rgb(255 255 255 / 50%);
+        line-height: 1.5;
+        color: rgb(255 255 255 / 72%);
       }
     }
   }
@@ -4058,6 +4166,51 @@ const handleCommand = (command: string) => {
   .home-container .testimonials-section .testimonials-grid {
     grid-template-columns: 1fr !important;
     gap: 14px;
+  }
+
+  .home-container .testimonials-section .testimonial-card {
+    min-height: 300px;
+    border-radius: 18px;
+  }
+
+  .home-container .testimonials-section .testimonial-card .testimonial-shell {
+    padding: 18px 18px 20px;
+  }
+
+  .home-container .testimonials-section .testimonial-card .testimonial-tag {
+    min-height: 28px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .home-container .testimonials-section .testimonial-card .quote-icon {
+    margin: 40px 0 10px;
+    font-size: 42px;
+  }
+
+  .home-container .testimonials-section .testimonial-card .testimonial-content {
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .home-container .testimonials-section .testimonial-card .testimonial-author {
+    gap: 12px;
+    padding-top: 14px;
+  }
+
+  .home-container .testimonials-section .testimonial-card .author-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 17px;
+  }
+
+  .home-container .testimonials-section .testimonial-card .author-name {
+    font-size: 15px;
+  }
+
+  .home-container .testimonials-section .testimonial-card .author-title {
+    font-size: 12px;
   }
 
   .home-container .footer-section .footer-container {
