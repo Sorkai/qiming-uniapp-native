@@ -4939,6 +4939,75 @@ const handleCommand = (command: string) => {
   }
 }
 
+@media screen and (width >= 1024px) {
+  .home-container .ai-power-section .section-header .section-title {
+    font-size: clamp(42px, 2.6vw, 52px);
+  }
+
+  .home-container .ai-power-section .section-header .section-desc {
+    max-width: 760px;
+    font-size: clamp(17px, 1.1vw, 20px);
+    line-height: 1.85;
+  }
+
+  .home-container .ai-power-section .ai-features-grid {
+    gap: 28px;
+  }
+
+  .home-container .ai-power-section .ai-feature-card {
+    padding: 48px 36px;
+    min-height: 210px;
+  }
+
+  .home-container .ai-power-section .ai-feature-card .ai-icon {
+    margin-bottom: 24px;
+    font-size: clamp(56px, 3vw, 68px);
+  }
+
+  .home-container .ai-power-section .ai-feature-card h3 {
+    margin-bottom: 16px;
+    font-size: clamp(24px, 1.55vw, 30px);
+    line-height: 1.35;
+  }
+
+  .home-container .ai-power-section .ai-feature-card p {
+    max-width: 34ch;
+    margin: 0 auto;
+    font-size: clamp(16px, 1vw, 18px);
+    line-height: 1.85;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-container .stat-card:hover,
+  .home-container .ai-feature-card:hover,
+  .home-container .feature-item:hover,
+  .home-container .service-card:hover,
+  .home-container .tech-card:hover,
+  .home-container .innovation-card:hover,
+  .home-container .capability-card:hover,
+  .home-container .breakthrough-item:hover,
+  .home-container .testimonial-card:hover {
+    transform: none !important;
+  }
+
+  .home-container .stat-card:hover .stat-icon,
+  .home-container .stat-card:hover .stat-number,
+  .home-container .ai-feature-card:hover .ai-icon,
+  .home-container .feature-item:hover .feature-image img,
+  .home-container .service-card:hover .service-icon,
+  .home-container .service-card:hover .service-features li,
+  .home-container .service-card:hover .service-features li .el-icon,
+  .home-container .tech-card:hover .tech-icon,
+  .home-container .testimonial-card:hover .quote-icon {
+    transform: none !important;
+  }
+
+  .home-container .testimonial-card:hover .testimonial-media {
+    transform: scale(1.12) !important;
+  }
+}
+
 @media (hover: none), (pointer: coarse) {
   .home-container .scroll-animate,
   .home-container .scroll-animate.animate-in {
