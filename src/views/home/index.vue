@@ -1710,6 +1710,11 @@ const handleCommand = (command: string) => {
         gap: 16px;
         pointer-events: auto;
 
+        /* 用 gap 控制间距，避免 Element Plus 默认 sibling margin 导致错位 */
+        .el-button + .el-button {
+          margin-left: 0 !important;
+        }
+
         .hero-btn {
           position: relative;
           z-index: 101;
@@ -3443,6 +3448,11 @@ const handleCommand = (command: string) => {
       gap: 16px;
       margin-bottom: 40px;
 
+      /* 用 gap 控制间距，避免 Element Plus 默认 sibling margin 导致错位 */
+      .el-button + .el-button {
+        margin-left: 0 !important;
+      }
+
       .el-button {
         height: 54px;
         padding: 0 36px;
@@ -3572,13 +3582,15 @@ const handleCommand = (command: string) => {
       }
 
       .cta-buttons {
-        flex-direction: column;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
         width: 100%;
 
         .el-button {
+          flex: 1 1 220px;
           width: 100%;
-          max-width: 280px;
+          max-width: 320px;
         }
       }
 
@@ -3746,8 +3758,9 @@ const handleCommand = (command: string) => {
 
   .home-container .banner .banner-overlay .carousel-text .hero-buttons {
     gap: 10px;
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
     width: 100%;
   }
 
@@ -3757,7 +3770,9 @@ const handleCommand = (command: string) => {
     .carousel-text
     .hero-buttons
     .hero-btn {
+    flex: 1 1 220px;
     width: 100%;
+    max-width: 320px;
     height: 48px;
     padding: 0 18px;
     font-size: 16px;
@@ -3935,6 +3950,69 @@ const handleCommand = (command: string) => {
     grid-template-columns: 1fr;
     gap: 22px;
   }
+}
+
+/* UA 识别为移动端时，按钮自动换行并居中（避免仅改 UA 但视口仍偏大时错位） */
+:global(html.ua-mobile) .home-container .banner .banner-overlay .carousel-text .hero-buttons {
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+:global(html.ua-mobile)
+  .home-container
+  .banner
+  .banner-overlay
+  .carousel-text
+  .hero-buttons
+  .hero-btn {
+  flex: 1 1 220px;
+  width: 100%;
+  max-width: 320px;
+  box-sizing: border-box;
+}
+
+:global(html.ua-mobile)
+  .home-container
+  .cta-section-new
+  .cta-content-left
+  .cta-buttons {
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+:global(html.ua-mobile)
+  .home-container
+  .cta-section-new
+  .cta-content-left
+  .cta-buttons
+  .el-button {
+  flex: 1 1 220px;
+  width: 100%;
+  max-width: 320px;
+  box-sizing: border-box;
+}
+
+:global(html.ua-mobile)
+  .home-container
+  .banner
+  .banner-overlay
+  .carousel-text
+  .hero-buttons
+  .el-button
+  + .el-button,
+:global(html.ua-mobile)
+  .home-container
+  .cta-section-new
+  .cta-content-left
+  .cta-buttons
+  .el-button
+  + .el-button {
+  margin-left: 0;
 }
 
 @media screen and (width <= 520px) {
