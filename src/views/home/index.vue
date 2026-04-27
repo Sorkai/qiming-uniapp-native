@@ -4023,6 +4023,7 @@ const handleCommand = (command: string) => {
   }
 
   .home-container .stats-section,
+  .home-container .transition-image-section,
   .home-container .ai-power-section,
   .home-container .platform-intro,
   .home-container .services-section,
@@ -4055,6 +4056,89 @@ const handleCommand = (command: string) => {
   .home-container .stats-section .stat-card .stat-label {
     font-size: 13px;
     line-height: 1.45;
+  }
+
+  .home-container .transition-image-section .transition-content {
+    gap: 28px;
+    padding: 0 16px;
+    text-align: left;
+  }
+
+  .home-container .transition-image-section .transition-text {
+    width: 100%;
+    max-width: none;
+  }
+
+  .home-container .transition-image-section .transition-text h2 {
+    margin-bottom: 16px;
+    font-size: 24px;
+    line-height: 1.35;
+  }
+
+  .home-container .transition-image-section .transition-text p {
+    margin-bottom: 24px;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  .home-container .transition-image-section .transition-text .transition-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .home-container .transition-image-section .transition-text .stat-item {
+    min-width: 0;
+    padding: 16px 14px;
+    text-align: left;
+    background: rgb(255 255 255 / 4%);
+    border: 1px solid rgb(255 255 255 / 8%);
+    border-radius: 14px;
+  }
+
+  .home-container
+    .transition-image-section
+    .transition-text
+    .stat-item:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .home-container
+    .transition-image-section
+    .transition-text
+    .stat-item
+    .stat-number {
+    margin-bottom: 6px;
+    font-size: 28px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .home-container
+    .transition-image-section
+    .transition-text
+    .stat-item
+    .stat-label {
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgb(255 255 255 / 72%);
+    word-break: keep-all;
+  }
+
+  .home-container .transition-image-section .transition-visual {
+    width: 100%;
+    min-height: 300px;
+  }
+
+  .home-container .transition-image-section .transition-visual .visual-grid {
+    max-width: 340px;
+    height: 280px;
+    margin: 0 auto;
+  }
+
+  .home-container .transition-image-section .transition-visual .visual-glow {
+    width: 220px;
+    height: 220px;
   }
 
   .home-container .ai-power-section .ai-power-container {
@@ -4289,6 +4373,25 @@ const handleCommand = (command: string) => {
 @media screen and (width <= 520px) {
   .home-container .stats-section .stats-container {
     grid-template-columns: 1fr !important;
+  }
+
+  .home-container .transition-image-section .transition-content {
+    gap: 24px;
+  }
+
+  .home-container .transition-image-section .transition-text h2 {
+    font-size: 22px;
+  }
+
+  .home-container .transition-image-section .transition-text .transition-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .home-container
+    .transition-image-section
+    .transition-text
+    .stat-item:last-child {
+    grid-column: auto;
   }
 }
 </style>
