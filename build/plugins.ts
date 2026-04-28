@@ -21,6 +21,7 @@ export function getPluginsList(
   VITE_MOCK_SCOPE = "all"
 ): PluginOption[] {
   const lifecycle = process.env.npm_lifecycle_event;
+  const isDevServer = lifecycle === "dev" || lifecycle === "serve";
   const mockInclude =
     VITE_MOCK_SCOPE === "exam-paper-only" ? "mock/exam-paper-only" : "mock";
   return [
@@ -42,17 +43,19 @@ export function getPluginsList(
      * Mac 默认组合键 Option + Shift
      * Windows 默认组合键 Alt + Shift
      */
-    codeInspectorPlugin({
-      bundler: "vite",
-      hideConsole: true
-    }),
+    isDevServer
+      ? codeInspectorPlugin({
+          bundler: "vite",
+          hideConsole: true
+        })
+      : null,
     viteBuildInfo(),
     /**
      * 开发环境下移除非必要的vue-router动态路由警告No match found for location with path
      * 非必要具体看 https://github.com/vuejs/router/issues/521 和 https://github.com/vuejs/router/issues/359
      * vite-plugin-router-warn只在开发环境下启用，只处理vue-router文件并且只在服务启动或重启时运行一次，性能消耗可忽略不计
      */
-    removeNoMatch(),
+    isDevServer ? removeNoMatch() : null,
     // mock支持
     vitePluginFakeServer({
       logger: true,

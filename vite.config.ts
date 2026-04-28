@@ -53,6 +53,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       // https://cn.vitejs.dev/guide/build.html#browser-compatibility
       target: "es2015",
       sourcemap: false,
+      reportCompressedSize: false,
       // 消除打包大小超过500kb警告
       chunkSizeWarningLimit: 4000,
       rollupOptions: {
@@ -77,6 +78,56 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         },
         // 静态资源分类打包
         output: {
+          manualChunks(id) {
+            if (!id.includes("node_modules")) return;
+
+            if (id.includes("pdfjs-dist") || id.includes("vue-pdf-embed")) {
+              return "pdf";
+            }
+            if (id.includes("xlsx")) {
+              return "xlsx";
+            }
+            if (id.includes("echarts")) {
+              return "echarts";
+            }
+            if (
+              id.includes("codemirror") ||
+              id.includes("vditor") ||
+              id.includes("markdown-it") ||
+              id.includes("highlight.js") ||
+              id.includes("katex")
+            ) {
+              return "editor";
+            }
+            if (id.includes("lottie-web")) {
+              return "lottie";
+            }
+            if (
+              id.includes("three") ||
+              id.includes("@pixiv/three-vrm") ||
+              id.includes("xgplayer") ||
+              id.includes("wavesurfer")
+            ) {
+              return "media";
+            }
+            if (
+              id.includes("element-plus") ||
+              id.includes("@element-plus/icons-vue")
+            ) {
+              return "element-plus";
+            }
+            if (
+              id.includes("/vue/") ||
+              id.includes("\\vue\\") ||
+              id.includes("vue-router") ||
+              id.includes("pinia") ||
+              id.includes("vue-i18n")
+            ) {
+              return "vue-vendor";
+            }
+
+            return "vendor";
+          },
           chunkFileNames: "static/js/[name]-[hash].js",
           entryFileNames: "static/js/[name]-[hash].js",
           assetFileNames: "static/[ext]/[name]-[hash].[ext]"

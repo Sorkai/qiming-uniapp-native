@@ -1,6 +1,8 @@
 import type { Plugin } from "vite";
 import gradient from "gradient-string";
-import { getPackageSize } from "./utils";
+import { getPackageSize, __APP_INFO__ } from "./utils";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import dayjs, { type Dayjs } from "dayjs";
 import duration from "dayjs/plugin/duration";
 import boxen, { type Options as BoxenOptions } from "boxen";
@@ -25,6 +27,35 @@ export function viteBuildInfo(): Plugin {
   let startTime: Dayjs;
   let endTime: Dayjs;
   let outDir: string;
+
+  const emitVersionFile = () => {
+    const distDir = join(process.cwd(), outDir);
+    const versionFile = join(distDir, "version.json");
+    const external = process.env.EXTERNAL?.trim() || "";
+    let normalizedExternal: string | Record<string, unknown> = external;
+
+    if (external) {
+      try {
+        normalizedExternal = JSON.parse(external);
+      } catch {
+        normalizedExternal = external;
+      }
+    }
+
+    mkdirSync(distDir, { recursive: true });
+    writeFileSync(
+      versionFile,
+      JSON.stringify(
+        {
+          version: process.env.VERSION || __APP_INFO__.pkg.version,
+          external: normalizedExternal
+        },
+        null,
+        2
+      )
+    );
+  };
+
   return {
     name: "vite:buildInfo",
     configResolved(resolvedConfig) {
@@ -35,6 +66,11 @@ export function viteBuildInfo(): Plugin {
       console.log(boxen(welcomeMessage, boxenOptions));
       if (config.command === "build") {
         startTime = dayjs(new Date());
+      }
+    },
+    writeBundle() {
+      if (config.command === "build") {
+        emitVersionFile();
       }
     },
     closeBundle() {
