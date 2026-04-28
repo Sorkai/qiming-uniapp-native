@@ -8,7 +8,6 @@ import type { FormInstance } from "element-plus";
 import { useVerifyCode } from "../utils/verifyCode";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
-import ReInvisibleInk from "@/components/ReInvisibleInk/index.vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
 import Eye from "~icons/ri/eye-line";
@@ -180,28 +179,23 @@ function onBack() {
           'is-focused': isPasswordFocused
         }"
       >
-        <ReInvisibleInk
-          :active="!passwordVisible && !!ruleForm.password"
-          class="w-full"
+        <el-input
+          v-model="ruleForm.password"
+          clearable
+          :type="passwordVisible ? 'text' : 'password'"
+          placeholder=""
+          :prefix-icon="useRenderIcon(Lock)"
+          @focus="isPasswordFocused = true"
+          @blur="isPasswordFocused = false"
         >
-          <el-input
-            v-model="ruleForm.password"
-            clearable
-            :type="passwordVisible ? 'text' : 'password'"
-            placeholder=""
-            :prefix-icon="useRenderIcon(Lock)"
-            @focus="isPasswordFocused = true"
-            @blur="isPasswordFocused = false"
-          >
-            <template #suffix>
-              <IconifyIconOffline
-                :icon="passwordVisible ? Eye : EyeOff"
-                class="cursor-pointer"
-                @click="passwordVisible = !passwordVisible"
-              />
-            </template>
-          </el-input>
-        </ReInvisibleInk>
+          <template #suffix>
+            <IconifyIconOffline
+              :icon="passwordVisible ? Eye : EyeOff"
+              class="cursor-pointer"
+              @click="passwordVisible = !passwordVisible"
+            />
+          </template>
+        </el-input>
         <label class="floating-label">{{ t("login.purePassword") }}</label>
       </el-form-item>
     </Motion>
@@ -216,28 +210,23 @@ function onBack() {
           'is-focused': isRepeatPasswordFocused
         }"
       >
-        <ReInvisibleInk
-          :active="!repeatPasswordVisible && !!ruleForm.repeatPassword"
-          class="w-full"
+        <el-input
+          v-model="ruleForm.repeatPassword"
+          clearable
+          :type="repeatPasswordVisible ? 'text' : 'password'"
+          placeholder=""
+          :prefix-icon="useRenderIcon(Lock)"
+          @focus="isRepeatPasswordFocused = true"
+          @blur="isRepeatPasswordFocused = false"
         >
-          <el-input
-            v-model="ruleForm.repeatPassword"
-            clearable
-            :type="repeatPasswordVisible ? 'text' : 'password'"
-            placeholder=""
-            :prefix-icon="useRenderIcon(Lock)"
-            @focus="isRepeatPasswordFocused = true"
-            @blur="isRepeatPasswordFocused = false"
-          >
-            <template #suffix>
-              <IconifyIconOffline
-                :icon="repeatPasswordVisible ? Eye : EyeOff"
-                class="cursor-pointer"
-                @click="repeatPasswordVisible = !repeatPasswordVisible"
-              />
-            </template>
-          </el-input>
-        </ReInvisibleInk>
+          <template #suffix>
+            <IconifyIconOffline
+              :icon="repeatPasswordVisible ? Eye : EyeOff"
+              class="cursor-pointer"
+              @click="repeatPasswordVisible = !repeatPasswordVisible"
+            />
+          </template>
+        </el-input>
         <label class="floating-label">{{ t("login.pureSure") }}</label>
       </el-form-item>
     </Motion>

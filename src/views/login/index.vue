@@ -18,7 +18,6 @@ import LoginUpdate from "./components/LoginUpdate.vue";
 import LoginQrCode from "./components/LoginQrCode.vue";
 import ParticlesBg from "./components/ParticlesBg.vue";
 import { useUserStoreHook } from "@/store/modules/user";
-import ReInvisibleInk from "@/components/ReInvisibleInk/index.vue";
 import { initRouter, getTopMenu } from "@/router/utils";
 import { bg, avatar, illustration } from "./utils/static";
 import { ReImageVerify } from "@/components/ReImageVerify";
@@ -469,28 +468,23 @@ watch(loginDay, value => {
                   'is-focused': isPasswordFocused
                 }"
               >
-                <ReInvisibleInk
-                  :active="!passwordVisible && !!ruleForm.password"
-                  class="flex-1"
+                <el-input
+                  v-model="ruleForm.password"
+                  clearable
+                  :type="passwordVisible ? 'text' : 'password'"
+                  placeholder=""
+                  :prefix-icon="useRenderIcon(Lock)"
+                  @focus="isPasswordFocused = true"
+                  @blur="isPasswordFocused = false"
                 >
-                  <el-input
-                    v-model="ruleForm.password"
-                    clearable
-                    :type="passwordVisible ? 'text' : 'password'"
-                    placeholder=""
-                    :prefix-icon="useRenderIcon(Lock)"
-                    @focus="isPasswordFocused = true"
-                    @blur="isPasswordFocused = false"
-                  >
-                    <template #suffix>
-                      <IconifyIconOffline
-                        :icon="passwordVisible ? Eye : EyeOff"
-                        class="cursor-pointer"
-                        @click="passwordVisible = !passwordVisible"
-                      />
-                    </template>
-                  </el-input>
-                </ReInvisibleInk>
+                  <template #suffix>
+                    <IconifyIconOffline
+                      :icon="passwordVisible ? Eye : EyeOff"
+                      class="cursor-pointer"
+                      @click="passwordVisible = !passwordVisible"
+                    />
+                  </template>
+                </el-input>
                 <label class="floating-label">{{
                   t("login.purePassword")
                 }}</label>

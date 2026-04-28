@@ -101,20 +101,15 @@
                       d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"
                     />
                   </svg>
-                  <ReInvisibleInk
-                    :active="!showLoginPassword && !!loginForm.password"
-                    class="flex-1"
-                  >
-                    <input
-                      ref="passwordInputRef"
-                      v-model="loginForm.password"
-                      :type="showLoginPassword ? 'text' : 'password'"
-                      placeholder=""
-                      @focus="isPasswordFocused = true"
-                      @blur="isPasswordFocused = false"
-                      @keyup.enter="handlePasswordLogin"
-                    />
-                  </ReInvisibleInk>
+                  <input
+                    ref="passwordInputRef"
+                    v-model="loginForm.password"
+                    :type="showLoginPassword ? 'text' : 'password'"
+                    placeholder=""
+                    @focus="isPasswordFocused = true"
+                    @blur="isPasswordFocused = false"
+                    @keyup.enter="handlePasswordLogin"
+                  />
                   <label class="floating-label">请输入密码</label>
                   <button
                     type="button"
@@ -383,18 +378,13 @@
                     d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"
                   />
                 </svg>
-                <ReInvisibleInk
-                  :active="!showRegisterPassword && !!registerForm.password"
-                  class="flex-1"
-                >
-                  <input
-                    v-model="registerForm.password"
-                    :type="showRegisterPassword ? 'text' : 'password'"
-                    placeholder=""
-                    @focus="registerPasswordFocused = true"
-                    @blur="registerPasswordFocused = false"
-                  />
-                </ReInvisibleInk>
+                <input
+                  v-model="registerForm.password"
+                  :type="showRegisterPassword ? 'text' : 'password'"
+                  placeholder=""
+                  @focus="registerPasswordFocused = true"
+                  @blur="registerPasswordFocused = false"
+                />
                 <label class="floating-label">请设置密码</label>
                 <button
                   type="button"
@@ -446,21 +436,14 @@
                     d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"
                   />
                 </svg>
-                <ReInvisibleInk
-                  :active="
-                    !showConfirmPassword && !!registerForm.confirmPassword
-                  "
-                  class="flex-1"
-                >
-                  <input
-                    v-model="registerForm.confirmPassword"
-                    :type="showConfirmPassword ? 'text' : 'password'"
-                    placeholder=""
-                    @focus="confirmPasswordFocused = true"
-                    @blur="confirmPasswordFocused = false"
-                    @keyup.enter="handleRegister"
-                  />
-                </ReInvisibleInk>
+                <input
+                  v-model="registerForm.confirmPassword"
+                  :type="showConfirmPassword ? 'text' : 'password'"
+                  placeholder=""
+                  @focus="confirmPasswordFocused = true"
+                  @blur="confirmPasswordFocused = false"
+                  @keyup.enter="handleRegister"
+                />
                 <label class="floating-label">请确认密码</label>
                 <button
                   type="button"
@@ -530,7 +513,6 @@ import { ref, reactive, watch } from "vue";
 import type { PropType } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserStoreHook } from "@/store/modules/user";
-import ReInvisibleInk from "@/components/ReInvisibleInk/index.vue";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { userRegister, userLogin, getUserDetail } from "@/api/user";
@@ -1083,6 +1065,7 @@ watch(
 
 .input-wrapper input {
   flex: 1;
+  min-width: 0;
   height: 100%;
   font-size: 15px;
   color: #1a1a2e;
@@ -1136,10 +1119,12 @@ watch(
 .sms-row {
   display: flex;
   gap: 10px;
+  width: 100%;
 }
 
 .sms-input {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .sms-btn {
