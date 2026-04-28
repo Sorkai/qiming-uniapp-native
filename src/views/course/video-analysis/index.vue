@@ -1,6 +1,9 @@
 <template>
   <div
-    class="video-analysis-container h-[calc(100vh-140px)] m-3 flex gap-3 overflow-hidden font-sans"
+    :class="[
+      'video-analysis-container h-[calc(100vh-140px)] m-3 flex gap-3 overflow-hidden font-sans',
+      { 'is-mobile-layout': isMobileLayout }
+    ]"
   >
     <!-- 左侧课程选择 -->
     <div
@@ -86,24 +89,58 @@
         <!-- 任务看板 -->
         <div class="mt-8">
           <div class="flex items-center justify-between mb-4">
-            <span class="text-base font-semibold text-[var(--el-text-color-primary)]">任务看板</span>
+            <span
+              class="text-base font-semibold text-[var(--el-text-color-primary)]"
+              >任务看板</span
+            >
             <el-icon
               class="text-[var(--el-text-color-placeholder)] transition-transform duration-300 hover:rotate-180 cursor-pointer"
               @click="loadTaskList"
-            ><DataAnalysis /></el-icon>
+              ><DataAnalysis
+            /></el-icon>
           </div>
           <div class="grid grid-cols-3 gap-3">
-            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-2xl font-black text-[var(--el-color-success)] leading-none mb-2">{{ stats.completed }}</div>
-              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">已完成</div>
+            <div
+              class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default"
+            >
+              <div
+                class="text-2xl font-black text-[var(--el-color-success)] leading-none mb-2"
+              >
+                {{ stats.completed }}
+              </div>
+              <div
+                class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider"
+              >
+                已完成
+              </div>
             </div>
-            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-2xl font-black text-[var(--el-color-warning)] leading-none mb-2">{{ stats.processing }}</div>
-              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">处理中</div>
+            <div
+              class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default"
+            >
+              <div
+                class="text-2xl font-black text-[var(--el-color-warning)] leading-none mb-2"
+              >
+                {{ stats.processing }}
+              </div>
+              <div
+                class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider"
+              >
+                处理中
+              </div>
             </div>
-            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-2xl font-black text-[var(--el-color-danger)] leading-none mb-2">{{ stats.failed }}</div>
-              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">失败</div>
+            <div
+              class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default"
+            >
+              <div
+                class="text-2xl font-black text-[var(--el-color-danger)] leading-none mb-2"
+              >
+                {{ stats.failed }}
+              </div>
+              <div
+                class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider"
+              >
+                失败
+              </div>
             </div>
           </div>
         </div>
@@ -128,7 +165,10 @@
               <el-icon class="mr-2 animate-spin"><Loading /></el-icon>
               自动刷新中...
             </span>
-            <span v-else class="text-[var(--el-text-color-secondary)] text-sm font-medium">
+            <span
+              v-else
+              class="text-[var(--el-text-color-secondary)] text-sm font-medium"
+            >
               共 {{ taskList.length }} 个任务
             </span>
           </div>
@@ -161,8 +201,12 @@
             v-if="!selectedCourseId"
             class="flex-1 flex flex-col items-center justify-center relative"
           >
-            <div class="absolute top-[15%] left-[20%] w-28 h-28 bg-purple-200/30 dark:bg-purple-800/20 rounded-full filter blur-2xl pointer-events-none" />
-            <div class="absolute bottom-[20%] right-[15%] w-36 h-36 bg-teal-200/30 dark:bg-teal-800/20 rounded-full filter blur-2xl pointer-events-none" />
+            <div
+              class="absolute top-[15%] left-[20%] w-28 h-28 bg-purple-200/30 dark:bg-purple-800/20 rounded-full filter blur-2xl pointer-events-none"
+            />
+            <div
+              class="absolute bottom-[20%] right-[15%] w-36 h-36 bg-teal-200/30 dark:bg-teal-800/20 rounded-full filter blur-2xl pointer-events-none"
+            />
             <div class="text-center relative z-10">
               <div class="lottie-glass mx-auto mb-8">
                 <lottie-animation
@@ -171,10 +215,14 @@
                   :height="200"
                 />
               </div>
-              <h3 class="text-2xl font-black text-[var(--el-text-color-primary)] mb-3">
+              <h3
+                class="text-2xl font-black text-[var(--el-text-color-primary)] mb-3"
+              >
                 选择课程开始分析
               </h3>
-              <p class="text-base text-[var(--el-text-color-secondary)] max-w-sm mx-auto leading-relaxed mb-8">
+              <p
+                class="text-base text-[var(--el-text-color-secondary)] max-w-sm mx-auto leading-relaxed mb-8"
+              >
                 从左侧选择目标课程，即可查看和管理视频分析任务
               </p>
             </div>
@@ -182,86 +230,101 @@
 
           <!-- 有课程时显示表格 -->
           <div v-else class="flex-1 overflow-auto custom-scrollbar">
-        <el-table
-          :data="taskList"
-          style="width: 100%"
-          height="100%"
-          class="task-table"
-          header-cell-class-name="!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-bold !text-base !py-4"
-        >
-          <el-table-column label="文件名" prop="fileName" min-width="200">
-            <template #default="{ row }">
-              <div class="flex items-center">
-                <el-icon class="mr-2 text-[var(--el-color-primary)]"
-                  ><VideoPlay
-                /></el-icon>
-                <span class="truncate">{{ row.fileName || "-" }}</span>
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column label="状态" prop="status" width="120" align="left">
-            <template #default="{ row }">
-              <el-tag
-                :type="statusTagType(row.status)"
-                effect="light"
-                round
-                size="default"
+            <el-table
+              :data="taskList"
+              style="width: 100%"
+              height="100%"
+              class="task-table"
+              header-cell-class-name="!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-bold !text-base !py-4"
+            >
+              <el-table-column label="文件名" prop="fileName" min-width="200">
+                <template #default="{ row }">
+                  <div class="flex items-center">
+                    <el-icon class="mr-2 text-[var(--el-color-primary)]"
+                      ><VideoPlay
+                    /></el-icon>
+                    <span class="truncate">{{ row.fileName || "-" }}</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column
+                label="状态"
+                prop="status"
+                width="120"
+                align="left"
               >
-                {{ statusLabel(row.status) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            label="进度"
-            prop="progress"
-            width="100"
-            align="center"
-          >
-            <template #default="{ row }">
-              <el-progress
-                v-if="['submitted', 'processing'].includes(row.status)"
-                :percentage="row.progress || 0"
-                :stroke-width="6"
-                :show-text="false"
+                <template #default="{ row }">
+                  <el-tag
+                    :type="statusTagType(row.status)"
+                    effect="light"
+                    round
+                    size="default"
+                  >
+                    {{ statusLabel(row.status) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column
+                label="进度"
+                prop="progress"
+                width="100"
+                align="center"
+              >
+                <template #default="{ row }">
+                  <el-progress
+                    v-if="['submitted', 'processing'].includes(row.status)"
+                    :percentage="row.progress || 0"
+                    :stroke-width="6"
+                    :show-text="false"
+                  />
+                  <span v-else>{{ row.progress ?? 0 }}%</span>
+                </template>
+              </el-table-column>
+              <el-table-column
+                label="提交时间"
+                prop="createdAt"
+                min-width="200"
               />
-              <span v-else>{{ row.progress ?? 0 }}%</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="提交时间" prop="createdAt" min-width="200" />
-          <el-table-column label="完成时间" prop="completedAt" min-width="200">
-            <template #default="{ row }">
-              {{ row.completedAt || "-" }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            label="操作"
-            width="160"
-            align="center"
-            fixed="right"
-          >
-            <template #default="{ row }">
-              <el-button
-                type="primary"
-                link
-                size="small"
-                @click="viewDetail(row)"
+              <el-table-column
+                label="完成时间"
+                prop="completedAt"
+                min-width="200"
               >
-                查看详情
-              </el-button>
-              <el-button
-                v-if="
-                  ['submitted', 'processing', 'pending'].includes(row.status)
-                "
-                type="primary"
-                link
-                size="small"
-                @click="refreshTask(row)"
+                <template #default="{ row }">
+                  {{ row.completedAt || "-" }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                label="操作"
+                width="160"
+                align="center"
+                fixed="right"
               >
-                刷新
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+                <template #default="{ row }">
+                  <el-button
+                    type="primary"
+                    link
+                    size="small"
+                    @click="viewDetail(row)"
+                  >
+                    查看详情
+                  </el-button>
+                  <el-button
+                    v-if="
+                      ['submitted', 'processing', 'pending'].includes(
+                        row.status
+                      )
+                    "
+                    type="primary"
+                    link
+                    size="small"
+                    @click="refreshTask(row)"
+                  >
+                    刷新
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
           </div>
         </div>
       </div>
@@ -480,10 +543,14 @@ import {
   type VideoAnalysisStatusResult
 } from "@/api/videoAnalysis";
 import { getCourseList, getCourseHoursList } from "@/api/course";
+import { useAppStoreHook } from "@/store/modules/app";
 import LottieAnimation from "@/components/LottieAnimation.vue";
 import EdenAnim from "@/assets/eden.json";
 
 defineOptions({ name: "VideoAnalysis" });
+
+const appStore = useAppStoreHook();
+const isMobileLayout = computed(() => appStore.getDevice === "mobile");
 
 // ========== 课程/章节选择 ==========
 const selectedCourseId = ref<number>();
@@ -943,7 +1010,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 
   // 将 Lottie 动画色相旋转到平台主色蓝
   :deep(div) {
@@ -978,7 +1047,11 @@ onUnmounted(() => {
     left: 10%;
     width: 80%;
     height: 60%;
-    background: radial-gradient(ellipse, rgb(255 255 255 / 30%) 0%, transparent 70%);
+    background: radial-gradient(
+      ellipse,
+      rgb(255 255 255 / 30%) 0%,
+      transparent 70%
+    );
     border-radius: 50%;
     pointer-events: none;
   }
@@ -1007,7 +1080,11 @@ onUnmounted(() => {
     }
 
     &::after {
-      background: radial-gradient(ellipse, rgb(255 255 255 / 8%) 0%, transparent 70%);
+      background: radial-gradient(
+        ellipse,
+        rgb(255 255 255 / 8%) 0%,
+        transparent 70%
+      );
     }
 
     &:hover {
@@ -1016,5 +1093,48 @@ onUnmounted(() => {
         inset 0 0 0 1px rgb(255 255 255 / 12%);
     }
   }
+}
+
+.video-analysis-container.is-mobile-layout {
+  height: auto !important;
+  min-height: calc(100vh - 140px);
+  margin: 0;
+  gap: 12px;
+  overflow: visible;
+  flex-direction: column;
+  padding: 12px;
+}
+
+.video-analysis-container.is-mobile-layout .sidebar-card,
+.video-analysis-container.is-mobile-layout > .flex-1 {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.video-analysis-container.is-mobile-layout .sidebar-card {
+  max-height: 48vh;
+}
+
+.video-analysis-container.is-mobile-layout .sidebar-card .header-section,
+.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 > div:first-child {
+  padding: 16px;
+}
+
+.video-analysis-container.is-mobile-layout .sidebar-card .header-subtitle {
+  margin-left: 0;
+}
+
+.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 > div:first-child {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 {
+  padding: 16px;
+}
+
+.video-analysis-container.is-mobile-layout :deep(.task-table) {
+  min-width: 720px;
 }
 </style>

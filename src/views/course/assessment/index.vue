@@ -1,6 +1,9 @@
 <template>
   <div
-    class="assessment-management flex h-[calc(100vh-120px)] overflow-hidden m-4 gap-4"
+    :class="[
+      'assessment-management flex h-[calc(100vh-120px)] overflow-hidden m-4 gap-4',
+      { 'is-mobile-layout': isMobileLayout }
+    ]"
   >
     <!-- 左侧课程选择侧边栏 -->
     <div
@@ -129,15 +132,18 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { getCourseList } from "@/api/course";
+import { useAppStoreHook } from "@/store/modules/app";
 import HomeworkManagement from "./components/HomeworkManagement.vue";
 import ExamManagement from "./components/ExamManagement.vue";
 import { Search } from "@element-plus/icons-vue";
 
 // 标签页控制
 const activeTab = ref("homework");
+const appStore = useAppStoreHook();
+const isMobileLayout = computed(() => appStore.getDevice === "mobile");
 
 // 课程选择相关
 const selectedCourseId = ref(null);
@@ -248,22 +254,28 @@ onMounted(() => {
   }
 }
 
-@media screen and (max-width: 768px) {
-  .assessment-management {
-    height: auto !important;
-    min-height: calc(100vh - 140px);
-    margin: 0;
-    gap: 12px;
-    overflow: visible;
-    flex-direction: column;
-    padding: 12px;
-  }
+@mixin assessment-mobile-layout {
+  height: auto !important;
+  min-height: calc(100vh - 140px);
+  margin: 0;
+  gap: 12px;
+  overflow: visible;
+  flex-direction: column;
+  padding: 12px;
+}
+
+@mixin assessment-mobile-panel-layout {
+  width: 100% !important;
+  min-width: 0;
+  border-radius: 20px;
+}
+
+.assessment-management.is-mobile-layout {
+  @include assessment-mobile-layout;
 
   .course-sidebar,
   .assessment-panel {
-    width: 100% !important;
-    min-width: 0;
-    border-radius: 20px;
+    @include assessment-mobile-panel-layout;
   }
 
   .course-sidebar {
@@ -272,6 +284,47 @@ onMounted(() => {
 
   .assessment-panel {
     min-height: calc(100vh - 280px);
+  }
+}
+
+.assessment-management.is-mobile-layout .course-item {
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.assessment-management.is-mobile-layout .assessment-tabs {
+  :deep(.el-tabs__header) {
+    overflow-x: auto;
+  }
+
+  :deep(.el-tabs__nav-wrap) {
+    padding-bottom: 6px;
+  }
+
+  :deep(.el-tabs__item) {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .assessment-management {
+    @include assessment-mobile-layout;
+
+    .course-sidebar,
+    .assessment-panel {
+      @include assessment-mobile-panel-layout;
+    }
+
+    .course-sidebar {
+      max-height: 48vh;
+    }
+
+    .assessment-panel {
+      min-height: calc(100vh - 280px);
+    }
   }
 
   .course-item {

@@ -107,7 +107,7 @@ const {
     <div
       :class="[
         'flex items-center h-full min-w-0',
-        device === 'mobile' ? 'flex-none shrink-0 px-3' : 'flex-1 px-8'
+        device === 'mobile' ? 'flex-none shrink-0 pl-0 pr-2' : 'flex-1 px-8'
       ]"
     >
       <LaySidebarTopCollapse

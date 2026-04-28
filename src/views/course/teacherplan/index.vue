@@ -1,6 +1,9 @@
 <template>
   <div
-    class="teacher-plan-container h-[calc(100vh-[var(--tags-view-height)]-10px)] m-4 flex gap-5 overflow-hidden"
+    :class="[
+      'teacher-plan-container h-[calc(100vh-[var(--tags-view-height)]-10px)] m-4 flex gap-5 overflow-hidden',
+      { 'is-mobile-layout': isMobileLayout }
+    ]"
   >
     <!-- 左侧课程选择侧边栏 -->
     <div
@@ -275,9 +278,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { getCourseList } from "@/api/course";
+import { useAppStoreHook } from "@/store/modules/app";
 import PlanGenerator from "./components/PlanGenerator.vue";
 import PlanList from "./components/PlanList.vue";
 import LottieAnimation from "@/components/LottieAnimation.vue";
@@ -298,6 +302,8 @@ defineOptions({
 
 // 标签页控制
 const activeTab = ref("generate");
+const appStore = useAppStoreHook();
+const isMobileLayout = computed(() => appStore.getDevice === "mobile");
 
 // 课程选择相关
 const selectedCourseId = ref(null);
@@ -519,22 +525,72 @@ onMounted(() => {
   }
 }
 
+@mixin teacher-plan-mobile-layout {
+  height: auto !important;
+  min-height: calc(100vh - 140px);
+  margin: 0;
+  gap: 12px;
+  overflow: visible;
+  flex-direction: column;
+  padding: 12px;
+}
+
+@mixin teacher-plan-mobile-panel-layout {
+  width: 100% !important;
+  min-width: 0;
+  border-radius: 24px;
+}
+
+.teacher-plan-container.is-mobile-layout {
+  @include teacher-plan-mobile-layout;
+
+  .course-sidebar,
+  .teacher-plan-panel {
+    @include teacher-plan-mobile-panel-layout;
+  }
+
+  .course-sidebar {
+    max-height: 48vh;
+  }
+
+  .teacher-plan-panel {
+    min-height: calc(100vh - 280px);
+  }
+}
+
+.teacher-plan-container.is-mobile-layout .course-item {
+  padding: 10px;
+  border-radius: 14px;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-tabs {
+  padding: 0 14px;
+
+  :deep(.el-tabs__header) {
+    padding-top: 0;
+    overflow-x: auto;
+  }
+
+  :deep(.el-tabs__nav-wrap) {
+    padding-bottom: 6px;
+  }
+
+  :deep(.el-tabs__item) {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .teacher-plan-container {
-    height: auto !important;
-    min-height: calc(100vh - 140px);
-    margin: 0;
-    gap: 12px;
-    overflow: visible;
-    flex-direction: column;
-    padding: 12px;
+    @include teacher-plan-mobile-layout;
   }
 
   .course-sidebar,
   .teacher-plan-panel {
-    width: 100% !important;
-    min-width: 0;
-    border-radius: 24px;
+    @include teacher-plan-mobile-panel-layout;
   }
 
   .course-sidebar {
