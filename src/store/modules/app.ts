@@ -26,7 +26,7 @@ export const useAppStore = defineStore("pure-app", {
       withoutAnimation: false,
       isClickCollapse: false
     },
-    // 这里的layout用于监听容器拖拉后恢复对应的导航模式
+    // 这里的 layout 用于监听容器拖拽后恢复对应的导航模式
     layout:
       storageLocal().getItem<StorageConfigs>(
         `${responsiveStorageNameSpace()}layout`
@@ -42,7 +42,7 @@ export const useAppStore = defineStore("pure-app", {
       width: document.documentElement.clientWidth,
       height: document.documentElement.clientHeight
     },
-    // 作用于 src/views/components/draggable/index.vue 页面，当离开页面并不会销毁 new Swap()，sortablejs 官网也没有提供任何销毁的 api
+    // 作用于 draggable 页面，离开页面后不销毁 sortable 实例
     sortSwap: false
   }),
   getters: {
@@ -63,26 +63,38 @@ export const useAppStore = defineStore("pure-app", {
     }
   },
   actions: {
-    TOGGLE_SIDEBAR(_opened?: boolean, _resize?: string) {
-      // 强制保持展开，不允许收起
-      this.sidebar.opened = true;
-      this.sidebar.withoutAnimation = false;
-      this.sidebar.isClickCollapse = false;
+    TOGGLE_SIDEBAR(opened?: boolean, resize?: string) {
+      // resize 时走显式开关，普通交互时执行切换
+      const layout =
+        storageLocal().getItem<StorageConfigs>(
+          `${responsiveStorageNameSpace()}layout`
+        ) ?? {};
 
-      const layout = storageLocal().getItem<StorageConfigs>(
-        `${responsiveStorageNameSpace()}layout`
-      );
-      if (layout) {
+      if (opened && resize) {
+        this.sidebar.withoutAnimation = true;
+        this.sidebar.opened = true;
+        this.sidebar.isClickCollapse = false;
         layout.sidebarStatus = true;
-        storageLocal().setItem(`${responsiveStorageNameSpace()}layout`, layout);
+      } else if (!opened && resize) {
+        this.sidebar.withoutAnimation = true;
+        this.sidebar.opened = false;
+        this.sidebar.isClickCollapse = false;
+        layout.sidebarStatus = false;
+      } else if (!opened && !resize) {
+        this.sidebar.withoutAnimation = false;
+        this.sidebar.opened = !this.sidebar.opened;
+        this.sidebar.isClickCollapse = !this.sidebar.opened;
+        layout.sidebarStatus = this.sidebar.opened;
       }
+
+      storageLocal().setItem(`${responsiveStorageNameSpace()}layout`, layout);
     },
     async toggleSideBar(opened?: boolean, resize?: string) {
       await this.TOGGLE_SIDEBAR(opened, resize);
     },
     toggleDevice(device: LayoutDevice) {
       this.device = device;
-      // 切换设备时同时更新 UA 信息
+      // 切换设备时同步更新 UA 信息
       this.ua = getUA();
       applyUAFlags(this.ua);
     },

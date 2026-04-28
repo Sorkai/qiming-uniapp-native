@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 import { getEfficientIndex } from "@/api/statistics";
 import {
   ElTooltip,
@@ -22,7 +23,9 @@ const selectedCourses = ref<number[]>([]);
 const showOptimizePanel = ref(false); // 默认折叠优化建议面板
 
 const currentPage = ref(1);
-const pageSize = ref(5);
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
+const pageSize = computed(() => (isMobile.value ? 1 : 5));
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
@@ -65,8 +68,21 @@ const pagedData = computed(() => {
 });
 
 // 监听分页和选中项变化重新渲染图表
-watch([currentPage, pageSize, selectedCourses], () => {
+watch([currentPage, selectedCourses, isMobile], () => {
   renderChart();
+});
+
+watch([totalFilteredData, isMobile], () => {
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalFilteredData.value.length / pageSize.value)
+  );
+  if (currentPage.value > totalPages) {
+    currentPage.value = totalPages;
+  }
+  if (currentPage.value < 1) {
+    currentPage.value = 1;
+  }
 });
 
 // 渲染图表
@@ -109,19 +125,27 @@ const renderChart = () => {
       }
     },
     legend: {
+      type: isMobile.value ? "scroll" : "plain",
       data: ["备课耗时", "备课修正耗时", "作业设计耗时", "作业设计修正耗时"],
-      bottom: 0,
-      itemGap: 20,
+      left: 0,
+      right: 0,
+      bottom: isMobile.value ? 10 : 0,
+      itemGap: isMobile.value ? 10 : 20,
+      itemWidth: isMobile.value ? 12 : 16,
+      itemHeight: isMobile.value ? 8 : 12,
       textStyle: {
         color: isDark.value ? "#fafafa" : "#334155",
-        fontSize: 12
+        fontSize: isMobile.value ? 11 : 12
+      },
+      pageTextStyle: {
+        color: isDark.value ? "#fafafa" : "#334155"
       }
     },
     grid: {
       top: 40,
       left: 20,
       right: 20,
-      bottom: 60,
+      bottom: isMobile.value ? 105 : 60,
       containLabel: true
     },
     xAxis: [
@@ -132,10 +156,10 @@ const renderChart = () => {
           alignWithLabel: true
         },
         axisLabel: {
-          fontSize: 12,
+          fontSize: isMobile.value ? 11 : 12,
           interval: 0,
           color: isDark.value ? "#fafafa" : "#64748b",
-          rotate: courseNames.length > 5 ? 30 : 0,
+          rotate: isMobile.value ? 0 : courseNames.length > 5 ? 30 : 0,
           // 自动换行：每行最多8个字
           formatter: (value: string) => {
             if (courseNames.length > 5) return value;
@@ -345,8 +369,10 @@ onMounted(() => {
                 v-model:current-page="currentPage"
                 :page-size="pageSize"
                 :total="totalFilteredData.length"
+                :pager-count="isMobile ? 5 : 7"
+                :size="isMobile ? 'small' : 'default'"
                 layout="prev, pager, next"
-                class="pure-pagination"
+                class="pure-pagination efficient-pagination"
               />
             </div>
           </div>
@@ -544,5 +570,32 @@ onMounted(() => {
 
 .chart-container {
   transition: all 0.3s ease;
+}
+
+:deep(.efficient-pagination) {
+  justify-content: center;
+}
+
+@media screen and (max-width: 768px) {
+  :deep(.efficient-pagination) {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  :deep(.efficient-pagination .btn-prev),
+  :deep(.efficient-pagination .btn-next),
+  :deep(.efficient-pagination .number),
+  :deep(.efficient-pagination .more) {
+    min-width: 24px;
+    height: 24px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 24px;
+  }
+
+  :deep(.efficient-pagination .btn-prev),
+  :deep(.efficient-pagination .btn-next) {
+    padding: 0 6px;
+  }
 }
 </style>

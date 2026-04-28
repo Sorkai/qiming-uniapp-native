@@ -4,11 +4,11 @@
     <div class="date-filter-row mb-4 flex items-center justify-between">
       <div class="filter-hint">
         <el-icon class="mr-1"><InfoFilled /></el-icon>
-        <span
+        <span class="filter-hint-text"
           >日期范围筛选「课程总数」「累计课时」和「完成率」，「在学人数」固定统计近7天</span
         >
       </div>
-      <div class="flex items-center gap-3">
+      <div class="filter-controls flex items-center gap-3">
         <el-date-picker
           v-model="dateRange"
           type="daterange"
@@ -253,17 +253,30 @@ const statsItems = computed(() => [
   background: var(--el-bg-color-overlay);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+  gap: 16px;
 
   .filter-hint {
     display: flex;
     align-items: center;
+    min-width: 0;
     font-size: 13px;
+    line-height: 1.7;
     color: var(--el-text-color-secondary);
 
     .el-icon {
+      flex-shrink: 0;
       color: var(--el-color-primary);
     }
   }
+}
+
+.filter-hint-text {
+  min-width: 0;
+  white-space: normal;
+}
+
+.filter-controls {
+  flex-shrink: 0;
 }
 
 .hint-icon {
@@ -272,5 +285,57 @@ const statsItems = computed(() => [
   vertical-align: middle;
   color: var(--el-text-color-placeholder);
   cursor: help;
+}
+
+@media screen and (max-width: 768px) {
+  .date-filter-row {
+    flex-direction: column;
+    align-items: stretch !important;
+    padding: 14px;
+  }
+
+  .filter-hint {
+    width: 100%;
+    font-size: 12px;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch !important;
+  }
+
+  :deep(.filter-controls .el-date-editor) {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  :deep(.filter-controls .el-button) {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .stats-card {
+    margin-bottom: 12px;
+
+    :deep(.el-card__body) {
+      padding: 16px;
+    }
+
+    .icon-wrapper {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+    }
+
+    .stats-label {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .stats-value {
+      font-size: 24px;
+    }
+  }
 }
 </style>

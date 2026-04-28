@@ -952,23 +952,25 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="course-statistics-panel w-full">
     <el-skeleton :loading="loading" animated :rows="1">
       <template #default>
         <div class="flex flex-col gap-6">
           <div
-            class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
+            class="analysis-toolbar flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
           >
             <div
-              class="flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 w-full"
+              class="analysis-toolbar-main flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 w-full"
             >
-              <div class="flex items-center gap-4 shrink-0">
+              <div
+                class="analysis-toolbar-brand flex items-center gap-4 shrink-0"
+              >
                 <div
                   class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
                 >
                   <ClipboardIcon class="w-6 h-6 [&_path]:!fill-white" />
                 </div>
-                <div class="flex flex-col">
+                <div class="analysis-brand-copy flex flex-col">
                   <span
                     class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
                     >分析课程数据</span
@@ -985,7 +987,7 @@ onMounted(async () => {
               />
 
               <div
-                class="flex items-center gap-3 flex-1 w-full max-lg:max-w-none max-w-lg"
+                class="analysis-toolbar-select flex items-center gap-3 flex-1 w-full max-lg:max-w-none max-w-lg"
               >
                 <el-select
                   v-model="selectedCourse"
@@ -1010,11 +1012,13 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="flex items-center gap-3 shrink-0 self-end md:self-auto">
+            <div
+              class="analysis-actions flex items-center gap-3 shrink-0 self-end md:self-auto"
+            >
               <el-button
                 color="#6366f1"
                 size="large"
-                class="!rounded-xl shadow-md shadow-blue-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all"
+                class="analysis-action-btn !rounded-xl shadow-md shadow-blue-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all"
                 @click="fetchAllData"
               >
                 <template #icon>
@@ -1025,7 +1029,7 @@ onMounted(async () => {
               <el-button
                 type="primary"
                 size="large"
-                class="!rounded-xl shadow-md shadow-blue-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all"
+                class="analysis-action-btn !rounded-xl shadow-md shadow-blue-200/50 dark:shadow-none hover:translate-y-[-2px] transition-all"
                 @click="handleExport"
               >
                 <template #icon>
@@ -1036,28 +1040,32 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+          <div
+            class="analysis-panel-grid grid grid-cols-1 md:grid-cols-2 gap-8 mt-4"
+          >
             <!-- 课程进度图表 -->
             <div
               v-loading="progressLoading"
-              class="relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-blue-500/10 shadow-sm transition-all hover:shadow-md"
+              class="analysis-panel relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-blue-500/10 shadow-sm transition-all hover:shadow-md"
             >
-              <div class="flex justify-between items-center mb-6 px-2">
-                <div class="flex items-center gap-3">
+              <div
+                class="analysis-panel-header flex justify-between items-center mb-6 px-2"
+              >
+                <div class="analysis-panel-title flex items-center gap-3">
                   <div
                     class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400"
                   >
                     <IconifyIconOnline icon="ep:user" />
                   </div>
                   <span
-                    class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center"
+                    class="analysis-section-title text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center"
                   >
                     学生个人进度报告
                   </span>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="analysis-panel-tools flex items-center gap-4">
                   <div
-                    class="flex items-center gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700"
+                    class="analysis-sort-box flex items-center gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700"
                   >
                     <span class="text-xs text-gray-500 font-medium">排序:</span>
                     <el-radio-group
@@ -1074,8 +1082,8 @@ onMounted(async () => {
               </div>
               <div
                 ref="progressChartRef"
-                class="chart-container"
-                style="width: 100%; height: 550px"
+                class="chart-container progress-chart"
+                style="width: 100%"
               />
               <!-- 学生进度分页器 -->
               <div
@@ -1095,28 +1103,30 @@ onMounted(async () => {
             <!-- 考试成绩图表 -->
             <div
               v-loading="examLoading"
-              class="relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-blue-500/10 shadow-sm transition-all hover:shadow-md"
+              class="analysis-panel relative bg-white dark:bg-[var(--el-bg-color-overlay)] p-6 rounded-3xl border border-gray-100 dark:border-blue-500/10 shadow-sm transition-all hover:shadow-md"
             >
-              <div class="flex justify-between items-center mb-6 px-2">
-                <div class="flex items-center gap-3">
+              <div
+                class="analysis-panel-header flex justify-between items-center mb-6 px-2"
+              >
+                <div class="analysis-panel-title flex items-center gap-3">
                   <div
                     class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400"
                   >
                     <IconifyIconOnline icon="ep:document-checked" />
                   </div>
                   <span
-                    class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center"
+                    class="analysis-section-title text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center"
                   >
                     成绩分布深度分析
                   </span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="analysis-panel-tools flex items-center gap-2">
                   <el-select
                     v-model="selectedExam"
                     placeholder="选择考试"
                     size="small"
                     style="width: 140px"
-                    class="custom-select"
+                    class="analysis-exam-select custom-select"
                     :disabled="examOptions.length === 0"
                   >
                     <el-option
@@ -1130,8 +1140,8 @@ onMounted(async () => {
               </div>
               <div
                 ref="examChartRef"
-                class="chart-container"
-                style="width: 100%; height: 550px"
+                class="chart-container exam-chart"
+                style="width: 100%"
               />
             </div>
           </div>
@@ -1170,7 +1180,104 @@ onMounted(async () => {
   transition: all 0.3s ease;
 }
 
+.progress-chart,
+.exam-chart {
+  height: 550px;
+}
+
 :deep(.el-select) {
   --el-select-input-focus-border-color: #2563eb;
+}
+
+@media screen and (max-width: 768px) {
+  .analysis-toolbar {
+    padding: 18px;
+    gap: 16px;
+  }
+
+  .analysis-toolbar-main,
+  .analysis-toolbar-brand,
+  .analysis-panel-header,
+  .analysis-panel-title,
+  .analysis-panel-tools,
+  .analysis-sort-box {
+    min-width: 0;
+  }
+
+  .analysis-toolbar-brand,
+  .analysis-brand-copy,
+  .analysis-toolbar-select,
+  .analysis-actions,
+  .analysis-panel-tools {
+    width: 100%;
+  }
+
+  .analysis-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-self: stretch;
+  }
+
+  :deep(.analysis-actions .el-button) {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .analysis-panel-grid {
+    gap: 16px;
+    margin-top: 0;
+  }
+
+  .analysis-panel {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .analysis-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 0;
+  }
+
+  .analysis-section-title {
+    min-width: 0;
+    font-size: 17px;
+    line-height: 1.45;
+    white-space: normal;
+  }
+
+  .analysis-sort-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .analysis-exam-select {
+    width: 100% !important;
+  }
+
+  .progress-chart,
+  .exam-chart {
+    height: 360px;
+  }
+
+  :deep(.custom-radio-group) {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  :deep(.custom-radio-group .el-radio-button__inner) {
+    padding: 8px 10px;
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  :deep(.pure-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 </style>

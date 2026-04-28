@@ -8,8 +8,14 @@
       class="mb-4 search-card"
       :style="{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }"
     >
-      <div class="flex justify-between items-center flex-wrap gap-4">
-        <el-form :inline="true" :model="searchForm" class="!mb-[-18px]">
+      <div
+        class="search-toolbar flex justify-between items-center flex-wrap gap-4"
+      >
+        <el-form
+          :inline="!isMobile"
+          :model="searchForm"
+          class="search-form !mb-[-18px]"
+        >
           <el-form-item label="课程名称">
             <el-input
               v-model="searchForm.courseName"
@@ -29,7 +35,12 @@
           </el-form-item>
         </el-form>
 
-        <el-button type="primary" :icon="Plus" @click="openCreateDialog">
+        <el-button
+          type="primary"
+          :icon="Plus"
+          class="create-course-btn"
+          @click="openCreateDialog"
+        >
           创建课程
         </el-button>
       </div>
@@ -64,8 +75,10 @@
             v-model:current-page="currentPage"
             v-model:page-size="pageSize"
             :page-sizes="[12, 24, 36, 48]"
-            layout="total, sizes, prev, pager, next, jumper"
+            :layout="paginationLayout"
+            :size="isMobile ? 'small' : 'default'"
             :total="total"
+            class="course-pagination"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
           />
@@ -695,6 +708,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, reactive, computed } from "vue";
+import { useAppStoreHook } from "@/store/modules/app";
 import { formatAvatar } from "@/utils/avatar";
 import { ElMessage, ElMessageBox, ElForm } from "element-plus";
 import {
@@ -717,6 +731,14 @@ import CourseForm from "./components/CourseForm.vue";
 import CourseCard from "./components/CourseCard.vue";
 import CourseStats from "./components/CourseStats.vue";
 import { Plus, Loading, Search } from "@element-plus/icons-vue";
+
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
+const paginationLayout = computed(() =>
+  isMobile.value
+    ? "sizes, prev, pager, next"
+    : "total, sizes, prev, pager, next, jumper"
+);
 
 // 统计数据
 const courseStats = reactive({
@@ -2025,5 +2047,101 @@ onMounted(async () => {
   height: 48px;
   padding: 0 16px;
   font-size: 15px;
+}
+
+@media screen and (max-width: 768px) {
+  .main {
+    padding: 12px;
+    margin: 0;
+  }
+
+  .search-toolbar {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .search-form {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .create-course-btn {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .pagination-container {
+    justify-content: center;
+  }
+
+  .course-header,
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .course-thumb {
+    margin-right: 0;
+    margin-bottom: 12px;
+  }
+
+  .meta-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .resource-preview {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .resource-info,
+  .resource-actions {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  :deep(.search-form .el-form-item) {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 12px;
+  }
+
+  :deep(.search-form .el-form-item__label) {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0 0 6px;
+    line-height: 1.4;
+  }
+
+  :deep(.search-form .el-form-item__content) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  :deep(.search-form .el-input) {
+    width: 100% !important;
+  }
+
+  :deep(.course-pagination) {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  :deep(.course-pagination .el-pagination__total),
+  :deep(.course-pagination .el-pagination__jump) {
+    display: none;
+  }
+
+  :deep(.el-dialog) {
+    width: calc(100vw - 24px) !important;
+    margin-top: 5vh !important;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 16px;
+  }
 }
 </style>

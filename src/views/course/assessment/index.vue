@@ -76,7 +76,7 @@
 
     <!-- 右侧内容管理区 -->
     <div
-      class="flex-1 bg-[var(--el-bg-color-overlay)] rounded-lg shadow-sm border border-[var(--el-border-color-light)] flex flex-col overflow-hidden"
+      class="assessment-panel flex-1 bg-[var(--el-bg-color-overlay)] rounded-lg shadow-sm border border-[var(--el-border-color-light)] flex flex-col overflow-hidden"
     >
       <template v-if="selectedCourseId">
         <div
@@ -245,6 +245,55 @@ onMounted(() => {
 
   &::-webkit-scrollbar-track {
     background: transparent;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .assessment-management {
+    height: auto !important;
+    min-height: calc(100vh - 140px);
+    margin: 0;
+    gap: 12px;
+    overflow: visible;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .course-sidebar,
+  .assessment-panel {
+    width: 100% !important;
+    min-width: 0;
+    border-radius: 20px;
+  }
+
+  .course-sidebar {
+    max-height: 48vh;
+  }
+
+  .assessment-panel {
+    min-height: calc(100vh - 280px);
+  }
+
+  .course-item {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .assessment-tabs {
+    :deep(.el-tabs__header) {
+      overflow-x: auto;
+    }
+
+    :deep(.el-tabs__nav-wrap) {
+      padding-bottom: 6px;
+    }
+
+    :deep(.el-tabs__item) {
+      height: 40px;
+      padding: 0 14px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
   }
 }
 </style>

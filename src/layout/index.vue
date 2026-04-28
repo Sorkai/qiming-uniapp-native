@@ -4,6 +4,7 @@ import "animate.css";
 import "@/components/ReIcon/src/offlineIcon";
 import { setType } from "./types";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import { useLayout } from "./hooks/useLayout";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useSettingStoreHook } from "@/store/modules/settings";
@@ -13,6 +14,7 @@ import {
   ref,
   reactive,
   computed,
+  watch,
   onMounted,
   onBeforeMount,
   defineComponent
@@ -29,6 +31,7 @@ import NavMobile from "./components/NavMobile.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 
 const { t } = useI18n();
+const route = useRoute();
 const appWrapperRef = ref();
 const { isDark } = useDark();
 const { layout } = useLayout();
@@ -138,6 +141,15 @@ onMounted(() => {
   }
 });
 
+watch(
+  () => route.fullPath,
+  () => {
+    if (set.device === "mobile" && set.sidebar.opened) {
+      appStore.toggleSideBar(false, "resize");
+    }
+  }
+);
+
 onBeforeMount(() => {
   useDataThemeChange().dataThemeChange($storage.layout?.overallStyle);
 });
@@ -165,7 +177,7 @@ const LayHeader = defineComponent({
           !pureSetting.hiddenSideBar && layout.value.includes("horizontal")
             ? h(NavHorizontal)
             : null,
-          h(LayTag)
+          set.device !== "mobile" ? h(LayTag) : null
         ]
       }
     );
@@ -182,12 +194,11 @@ const LayHeader = defineComponent({
         layout.includes('vertical')
       "
       class="app-mask"
-      @click="appStore.toggleSideBar()"
+      @click="appStore.toggleSideBar(false, 'resize')"
     />
     <NavVertical
       v-show="
         !pureSetting.hiddenSideBar &&
-        set.device !== 'mobile' &&
         (layout.includes('vertical') ||
           layout.includes('mix') ||
           layout.includes('double'))

@@ -13,8 +13,10 @@
           class="text-xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center tracking-tight"
           style="margin-bottom: 20px"
         >
-          <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-500 dark:text-blue-400 flex items-center justify-center mr-3">
-             <el-icon><Reading /></el-icon>
+          <div
+            class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-500 dark:text-blue-400 flex items-center justify-center mr-3"
+          >
+            <el-icon><Reading /></el-icon>
           </div>
           教学中心
         </h3>
@@ -26,7 +28,9 @@
           @input="handleCourseSearch"
         >
           <template #prefix>
-            <el-icon class="text-slate-400 dark:text-slate-500"><Search /></el-icon>
+            <el-icon class="text-slate-400 dark:text-slate-500"
+              ><Search
+            /></el-icon>
           </template>
         </el-input>
       </div>
@@ -91,7 +95,7 @@
 
     <!-- 右侧内容管理区 -->
     <div
-      class="flex-1 bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-sm border-2 border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden relative transition-colors duration-300"
+      class="teacher-plan-panel flex-1 bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-sm border-2 border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden relative transition-colors duration-300"
     >
       <template v-if="selectedCourseId">
         <!-- 顶部信息栏 -->
@@ -161,16 +165,27 @@
         class="flex-1 flex flex-col items-center justify-center relative bg-[#f8fafc] dark:bg-[#121212] transition-colors duration-300 overflow-hidden"
       >
         <!-- 装饰性背景元素：彩色圆形色块，增加活泼感 -->
-        <div class="absolute top-[10%] left-[15%] w-32 h-32 bg-blue-200/40 dark:bg-blue-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob"></div>
-        <div class="absolute top-[20%] right-[15%] w-40 h-40 bg-yellow-200/40 dark:bg-yellow-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob animation-delay-2000"></div>
-        <div class="absolute bottom-[10%] left-[40%] w-36 h-36 bg-emerald-200/40 dark:bg-emerald-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob animation-delay-4000"></div>
+        <div
+          class="absolute top-[10%] left-[15%] w-32 h-32 bg-blue-200/40 dark:bg-blue-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob"
+        />
+        <div
+          class="absolute top-[20%] right-[15%] w-40 h-40 bg-yellow-200/40 dark:bg-yellow-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob animation-delay-2000"
+        />
+        <div
+          class="absolute bottom-[10%] left-[40%] w-36 h-36 bg-emerald-200/40 dark:bg-emerald-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob animation-delay-4000"
+        />
 
-        <div class="max-w-3xl w-full px-8 text-center relative z-10 flex flex-col items-center">
-          
+        <div
+          class="max-w-3xl w-full px-8 text-center relative z-10 flex flex-col items-center"
+        >
           <!-- 插画区域：增加一个柔和的背景圈，让原有的 lottie 更具实体感 -->
           <div class="mb-10 relative">
-            <div class="absolute inset-0 bg-white/60 dark:bg-gray-800/40 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] scale-[1.3] z-0"></div>
-            <div class="relative z-10 transform transition-transform hover:scale-110 duration-300 drop-shadow-md">
+            <div
+              class="absolute inset-0 bg-white/60 dark:bg-gray-800/40 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] scale-[1.3] z-0"
+            />
+            <div
+              class="relative z-10 transform transition-transform hover:scale-110 duration-300 drop-shadow-md"
+            >
               <lottie-animation
                 :animation-data="EducationAnim"
                 :width="220"
@@ -179,55 +194,80 @@
             </div>
           </div>
 
-          <h2 class="text-[40px] font-black text-slate-800 dark:text-slate-100 mb-4 tracking-tight">
+          <h2
+            class="text-[40px] font-black text-slate-800 dark:text-slate-100 mb-4 tracking-tight"
+          >
             开启智能教案设计
           </h2>
 
-          <p class="text-lg text-slate-500 dark:text-slate-400 mb-12 max-w-xl mx-auto leading-relaxed font-medium">
+          <p
+            class="text-lg text-slate-500 dark:text-slate-400 mb-12 max-w-xl mx-auto leading-relaxed font-medium"
+          >
             选择左侧课程，AI 助手将帮你一键生成生动、规范的教学大纲与教案！
           </p>
 
           <!-- 功能卡片区：修改为拉直、变扁的长条形卡片 -->
           <div class="flex flex-col gap-5 w-full max-w-xl mx-auto px-4">
-            
             <!-- 卡片 1 (长条形) -->
-            <div class="group bg-white dark:bg-[#1d1d1d] rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_15px_45px_rgba(59,130,246,0.1)] hover:-translate-y-1 transition-all duration-300 cursor-default flex items-center">
-              <div class="flex-shrink-0 w-14 h-14 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-500 dark:text-blue-400 transform group-hover:scale-110 transition-transform">
+            <div
+              class="group bg-white dark:bg-[#1d1d1d] rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_15px_45px_rgba(59,130,246,0.1)] hover:-translate-y-1 transition-all duration-300 cursor-default flex items-center"
+            >
+              <div
+                class="flex-shrink-0 w-14 h-14 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-500 dark:text-blue-400 transform group-hover:scale-110 transition-transform"
+              >
                 <el-icon size="28"><Cpu /></el-icon>
               </div>
               <div class="ml-6 flex-1 text-left">
-                <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">
+                <h4
+                  class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1"
+                >
                   大模型智能解析
                 </h4>
-                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                <p
+                  class="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed"
+                >
                   自动识别重难点，精准抓取教学目标！
                 </p>
               </div>
-              <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
-                <el-icon class="text-blue-400" size="24"><ArrowRightBold /></el-icon>
+              <div
+                class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0"
+              >
+                <el-icon class="text-blue-400" size="24"
+                  ><ArrowRightBold
+                /></el-icon>
               </div>
             </div>
 
             <!-- 卡片 2 (长条形) -->
-            <div class="group bg-white dark:bg-[#1d1d1d] rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_15px_45_rgba(16,185,129,0.1)] hover:-translate-y-1 transition-all duration-300 cursor-default flex items-center">
-              <div class="flex-shrink-0 w-14 h-14 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-500 dark:text-emerald-400 transform group-hover:scale-110 transition-transform">
+            <div
+              class="group bg-white dark:bg-[#1d1d1d] rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_15px_45_rgba(16,185,129,0.1)] hover:-translate-y-1 transition-all duration-300 cursor-default flex items-center"
+            >
+              <div
+                class="flex-shrink-0 w-14 h-14 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-500 dark:text-emerald-400 transform group-hover:scale-110 transition-transform"
+              >
                 <el-icon size="28"><Document /></el-icon>
               </div>
               <div class="ml-6 flex-1 text-left">
-                <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">
+                <h4
+                  class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1"
+                >
                   一键输出文档
                 </h4>
-                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                <p
+                  class="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed"
+                >
                   自动排版 Markdown 与 PDF，直接打印！
                 </p>
               </div>
-              <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
-                <el-icon class="text-emerald-400" size="24"><ArrowRightBold /></el-icon>
+              <div
+                class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0"
+              >
+                <el-icon class="text-emerald-400" size="24"
+                  ><ArrowRightBold
+                /></el-icon>
               </div>
             </div>
-
           </div>
-
         </div>
       </div>
     </div>
@@ -476,6 +516,58 @@ onMounted(() => {
 
   &::-webkit-scrollbar-track {
     background: transparent;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .teacher-plan-container {
+    height: auto !important;
+    min-height: calc(100vh - 140px);
+    margin: 0;
+    gap: 12px;
+    overflow: visible;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .course-sidebar,
+  .teacher-plan-panel {
+    width: 100% !important;
+    min-width: 0;
+    border-radius: 24px;
+  }
+
+  .course-sidebar {
+    max-height: 48vh;
+  }
+
+  .teacher-plan-panel {
+    min-height: calc(100vh - 280px);
+  }
+
+  .course-item {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .teacher-plan-tabs {
+    padding: 0 14px;
+
+    :deep(.el-tabs__header) {
+      padding-top: 0;
+      overflow-x: auto;
+    }
+
+    :deep(.el-tabs__nav-wrap) {
+      padding-bottom: 6px;
+    }
+
+    :deep(.el-tabs__item) {
+      height: 40px;
+      padding: 0 14px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
   }
 }
 </style>

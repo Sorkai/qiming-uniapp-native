@@ -13,17 +13,38 @@ const route = useRoute();
 const router = useRouter();
 const userStore = useUserStoreHook();
 
-const isAdminOrTeacher = computed(() => {
-  return userStore.roles?.some(role => role === "admin" || role === "teacher");
-});
+const isAdminOrTeacher = computed(() =>
+  userStore.roles?.some(role => role === "admin" || role === "teacher")
+);
 
 const profilePath = computed(() =>
   isAdminOrTeacher.value ? "/account-settings" : "/account"
 );
 
-// 定义移动端底部导航项
-// 建议项：首页、课程、AI助手、个人中心
-const navItems = computed<MobileNavItem[]>(() => [
+const adminMobileNavItems: MobileNavItem[] = [
+  {
+    title: "首页",
+    icon: "ep:home-filled",
+    path: "/welcome"
+  },
+  {
+    title: "课程",
+    icon: "ep:reading",
+    path: "/course/list"
+  },
+  {
+    title: "教案",
+    icon: "ep:edit-pen",
+    path: "/course/teacherplan"
+  },
+  {
+    title: "考核",
+    icon: "ep:document-checked",
+    path: "/course/assessment"
+  }
+];
+
+const defaultMobileNavItems = computed<MobileNavItem[]>(() => [
   {
     title: "首页",
     icon: "ep:home-filled",
@@ -46,17 +67,18 @@ const navItems = computed<MobileNavItem[]>(() => [
   }
 ]);
 
-const visibleNavItems = computed(() => {
-  return navItems.value.filter(
-    item => router.resolve(item.path).matched.length > 0
-  );
-});
+const navItems = computed<MobileNavItem[]>(() =>
+  isAdminOrTeacher.value ? adminMobileNavItems : defaultMobileNavItems.value
+);
+
+const visibleNavItems = computed(() =>
+  navItems.value.filter(item => router.resolve(item.path).matched.length > 0)
+);
 
 const activePath = computed(() => route.path);
 
-const isActive = (path: string) => {
-  return activePath.value === path || activePath.value.startsWith(`${path}/`);
-};
+const isActive = (path: string) =>
+  activePath.value === path || activePath.value.startsWith(`${path}/`);
 
 const handleJump = (path: string) => {
   if (route.path === path) return;
@@ -89,14 +111,16 @@ const handleJump = (path: string) => {
   width: 100%;
   height: var(--pure-mobile-tab-height);
   padding-bottom: var(--pure-safe-area-bottom);
-  background: var(--el-bg-color-overlay);
-  box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.05);
-  border-top: 1px solid var(--el-border-color-lighter);
+  background: rgb(255 255 255 / 88%);
+  border-top: 1px solid rgb(226 232 240 / 90%);
+  box-shadow: 0 -8px 24px rgb(15 23 42 / 6%);
+  backdrop-filter: blur(18px);
 }
 
 .nav-mobile-item {
   display: flex;
   flex: 1;
+  min-width: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -105,12 +129,16 @@ const handleJump = (path: string) => {
 
   .nav-icon {
     font-size: 20px;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
   }
 
   .nav-title {
+    max-width: 100%;
+    overflow: hidden;
     font-size: 11px;
     font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &.active {
@@ -124,6 +152,24 @@ const handleJump = (path: string) => {
   &:active {
     opacity: 0.7;
     background: var(--el-fill-color-light);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .nav-mobile-container {
+    height: calc(var(--pure-mobile-tab-height) + 4px);
+  }
+
+  .nav-mobile-item {
+    .nav-icon {
+      font-size: 19px;
+    }
+
+    .nav-title {
+      font-size: 10px;
+      transform: scale(0.96);
+      transform-origin: center top;
+    }
   }
 }
 </style>

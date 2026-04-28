@@ -223,6 +223,8 @@ defineEmits([
 
 .course-meta {
   display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
   justify-content: space-between;
   margin-bottom: 16px;
   font-size: 13px;
@@ -232,6 +234,13 @@ defineEmits([
     display: flex;
     gap: 4px;
     align-items: center;
+    min-width: 0;
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 
@@ -241,6 +250,10 @@ defineEmits([
   .button-row {
     display: flex;
     gap: 8px;
+
+    :deep(.el-button + .el-button) {
+      margin-left: 0;
+    }
   }
 
   .action-btn {
@@ -256,6 +269,46 @@ defineEmits([
   .el-button {
     width: 40px;
     height: 40px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .course-thumb-container {
+    height: 160px;
+  }
+
+  .course-content {
+    padding: 14px;
+  }
+
+  .course-title {
+    display: -webkit-box;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .course-desc {
+    margin-bottom: 12px;
+  }
+
+  .course-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .course-footer {
+    .button-row {
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      min-width: calc(50% - 4px);
+      height: 34px;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
   }
 }
 </style>

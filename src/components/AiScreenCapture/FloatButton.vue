@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { getToken } from "@/utils/auth";
+import { useAppStoreHook } from "@/store/modules/app";
 import AiHubIcon from "@/assets/new-release/ai-hub-svgrepo-com.svg?component";
 
 defineOptions({
@@ -14,6 +15,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "click"): void;
 }>();
+
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 // 检查用户是否已登录
 const isLoggedIn = computed(() => {
@@ -39,6 +43,7 @@ const handleClick = () => {
 
 // 拖拽功能
 const handleMouseDown = (e: MouseEvent) => {
+  if (isMobile.value) return;
   isDragging.value = false;
   dragStart.value = {
     x: e.clientX,
@@ -90,10 +95,18 @@ const handleMouseDown = (e: MouseEvent) => {
 };
 
 // 按钮样式
-const buttonStyle = computed(() => ({
-  right: `${position.value.right}px`,
-  bottom: `${position.value.bottom}px`
-}));
+const buttonStyle = computed(() =>
+  isMobile.value
+    ? {
+        right: "16px",
+        bottom:
+          "calc(var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 20px)"
+      }
+    : {
+        right: `${position.value.right}px`,
+        bottom: `${position.value.bottom}px`
+      }
+);
 
 // 获取按钮中心位置（用于涟漪效果）
 const getButtonCenter = () => {
@@ -201,5 +214,17 @@ defineExpose({
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .ai-float-button {
+    width: 52px;
+    height: 52px;
+  }
+
+  .ai-float-button .ai-icon {
+    width: 24px;
+    height: 24px;
+  }
 }
 </style>

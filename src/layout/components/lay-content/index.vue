@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n";
 import LayFrame from "../lay-frame/index.vue";
 import LayFooter from "../lay-footer/index.vue";
 import { useTags } from "@/layout/hooks/useTag";
+import { useAppStoreHook } from "@/store/modules/app";
 import { useGlobal, isNumber } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 import { h, computed, Transition, defineComponent } from "vue";
@@ -12,6 +13,7 @@ const props = defineProps({
   fixedHeader: Boolean
 });
 
+const appStore = useAppStoreHook();
 const { t } = useI18n();
 const { showModel } = useTags();
 const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
@@ -38,9 +40,7 @@ const stretch = computed(() => {
   return $storage?.configure.stretch;
 });
 
-const layout = computed(() => {
-  return $storage?.layout.layout === "vertical";
-});
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 const getMainWidth = computed(() => {
   return isNumber(stretch.value)
@@ -51,26 +51,25 @@ const getMainWidth = computed(() => {
 });
 
 const getSectionStyle = computed(() => {
+  const headerOnlyHeight = isMobile.value ? 64 : 72;
+  const headerWithTagsHeight = isMobile.value
+    ? 64
+    : showModel.value == "chrome"
+      ? 116
+      : 112;
+
+  if (props.fixedHeader) {
+    return [
+      `padding-top: ${
+        hideTabs.value ? headerOnlyHeight : headerWithTagsHeight
+      }px;`
+    ];
+  }
+
   return [
-    hideTabs.value && layout ? "padding-top: 72px;" : "",
-    !hideTabs.value && layout
-      ? showModel.value == "chrome"
-        ? "padding-top: 116px;" // 略微增加以适配 Chrome 模式
-        : "padding-top: 112px;" // 胶囊模式
-      : "",
-    hideTabs.value && !layout.value ? "padding-top: 72px;" : "",
-    !hideTabs.value && !layout.value
-      ? showModel.value == "chrome"
-        ? "padding-top: 116px;"
-        : "padding-top: 112px;"
-      : "",
-    props.fixedHeader
-      ? ""
-      : `padding-top: 0;${
-          hideTabs.value
-            ? "min-height: calc(100vh - 72px);"
-            : "min-height: calc(100vh - 116px);"
-        }`
+    `padding-top: 0;min-height: calc(100vh - ${
+      hideTabs.value ? headerOnlyHeight : headerWithTagsHeight
+    }px);`
   ];
 });
 
@@ -120,6 +119,7 @@ const transitionMain = defineComponent({
               v-if="fixedHeader"
               :wrap-style="{
                 display: 'flex',
+                width: '100%',
                 'flex-wrap': 'wrap',
                 'max-width': getMainWidth,
                 margin: '0 auto',
@@ -191,7 +191,6 @@ const transitionMain = defineComponent({
       </template>
     </router-view>
 
-    <!-- 页脚 -->
     <LayFooter v-if="!hideFooter && !fixedHeader" />
   </section>
 </template>

@@ -104,7 +104,12 @@ const {
   <div
     class="navbar bg-white/10 dark:bg-white/[0.03] backdrop-blur-[20px] dark:backdrop-blur-[20px] border-b border-white/20 dark:border-white/10 transition-all duration-700"
   >
-    <div class="flex items-center h-full flex-1 min-w-0 px-8">
+    <div
+      :class="[
+        'flex items-center h-full min-w-0',
+        device === 'mobile' ? 'flex-none shrink-0 px-3' : 'flex-1 px-8'
+      ]"
+    >
       <LaySidebarTopCollapse
         v-if="device === 'mobile'"
         class="hamburger-container"
@@ -136,10 +141,17 @@ const {
 
     <div
       v-if="/vertical|double/.test(layout)"
-      class="vertical-header-right flex items-center justify-end px-4 h-full shrink-0"
+      :class="[
+        'vertical-header-right flex items-center justify-end h-full',
+        device === 'mobile' ? 'flex-1 min-w-0 px-3' : 'px-4 shrink-0'
+      ]"
     >
       <!-- 全屏 -->
-      <LaySidebarFullScreen id="full-screen" class="navbar-item" />
+      <LaySidebarFullScreen
+        v-if="device !== 'mobile'"
+        id="full-screen"
+        class="navbar-item"
+      />
       <!-- 整体风格 (含夜间模式) -->
       <LaySidebarOverallStyle id="header-overall" class="navbar-item" />
 
@@ -266,6 +278,32 @@ const {
     .navbar-item {
       color: #e5e7eb;
     }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .navbar {
+    height: 64px;
+
+    .navbar-item {
+      padding: 0 10px;
+    }
+  }
+
+  .vertical-header-right {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  :deep(.el-dropdown-link) {
+    padding: 6px 10px !important;
+  }
+
+  :deep(.el-dropdown-link p) {
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 </style>
