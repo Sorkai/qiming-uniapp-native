@@ -9,7 +9,7 @@ import {
   __APP_INFO__
 } from "./build/utils";
 
-export default ({ mode }: ConfigEnv): UserConfigExport => {
+export default ({ mode, command }: ConfigEnv): UserConfigExport => {
   const {
     VITE_CDN,
     VITE_PORT,
@@ -21,6 +21,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
   return {
     base: VITE_PUBLIC_PATH,
     root,
+    publicDir: command === "serve" ? "public" : false,
     resolve: {
       alias
     },

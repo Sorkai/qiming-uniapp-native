@@ -2,6 +2,7 @@ import { cdn } from "./cdn";
 import vue from "@vitejs/plugin-vue";
 import { pathResolve } from "./utils";
 import { viteBuildInfo } from "./info";
+import { copyPublicAssets } from "./publicAssets";
 import svgLoader from "vite-svg-loader";
 import Icons from "unplugin-icons/vite";
 import type { PluginOption } from "vite";
@@ -49,6 +50,7 @@ export function getPluginsList(
           hideConsole: true
         })
       : null,
+    copyPublicAssets(),
     viteBuildInfo(),
     /**
      * 开发环境下移除非必要的vue-router动态路由警告No match found for location with path
