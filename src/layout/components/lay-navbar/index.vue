@@ -117,6 +117,12 @@ const {
         @toggleClick="toggleSideBar"
       />
 
+      <span
+        v-if="device === 'mobile'"
+        class="text-base font-black italic tracking-tighter text-blue-600/80 uppercase ml-1"
+        >Intelledu</span
+      >
+
       <div v-if="device !== 'mobile'" class="flex items-center ml-4">
         <span
           class="text-xl font-black italic tracking-tighter text-blue-600/80 uppercase"
