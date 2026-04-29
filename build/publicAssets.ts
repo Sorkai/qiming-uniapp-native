@@ -7,7 +7,10 @@ const PUBLIC_ASSET_WHITELIST = [
   "logo.svg",
   "platform-config.json",
   "campus-2d-bg.svg",
-  "wasm"
+  "wasm",
+  "virtualpeopleanimation",
+  "homepage",
+  "publicbackgroundpreset"
 ];
 
 export function copyPublicAssets(): Plugin {

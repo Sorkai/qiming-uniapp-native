@@ -583,10 +583,6 @@ import card2 from "@/assets/home/card2.jpg";
 import card3 from "@/assets/home/card3.jpg";
 import logo from "@/assets/logo.png";
 import artisticText from "@/assets/816438ed-a33a-4477-b57e-e273e15c03aa.png";
-import bannerPhoto from "@/assets/bannerphoto.png";
-import testimonialTeacherPhoto from "@/assets/mainfirstpagephotos/teacher.png";
-import testimonialStudentPhoto from "@/assets/mainfirstpagephotos/stus.png";
-import testimonialParentPhoto from "@/assets/mainfirstpagephotos/parents.png";
 import LoginDialog from "@/components/LoginDialog.vue";
 // 导入 SVG 图标组件
 import IconStudent from "@/assets/home-icons/student.svg?component";
@@ -632,6 +628,11 @@ const bannerThemeVars = computed(() => ({
   "--banner-top-color": bannerEdgeColors.value.top,
   "--banner-bottom-color": bannerEdgeColors.value.bottom
 }));
+const homepageAssetBaseUrl = `${import.meta.env.BASE_URL}homepage`;
+const bannerPhoto = `${homepageAssetBaseUrl}/bannerphoto.png`;
+const testimonialTeacherPhoto = `${homepageAssetBaseUrl}/teacher.png`;
+const testimonialStudentPhoto = `${homepageAssetBaseUrl}/stus.png`;
+const testimonialParentPhoto = `${homepageAssetBaseUrl}/parents.png`;
 
 const rgbToCss = ([red, green, blue]: RgbTriple) =>
   `rgb(${red}, ${green}, ${blue})`;

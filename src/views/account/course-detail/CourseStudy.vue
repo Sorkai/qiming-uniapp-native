@@ -413,9 +413,6 @@
 import { computed, ref, watch, nextTick } from "vue";
 import CourseHeader from "./CourseHeader.vue";
 import VideoAnalysisPanel from "./VideoAnalysisPanel.vue";
-import standbyAvatar from "/virtualpeopleanimation/standby.gif";
-import standupAvatar from "/virtualpeopleanimation/standup.gif";
-import answeringAvatar from "/virtualpeopleanimation/answering.gif";
 
 const props = defineProps<{
   visible: boolean;
@@ -451,6 +448,11 @@ const emit = defineEmits([
 ]);
 
 type AiAvatarState = "standby" | "standup" | "answering";
+
+const virtualAvatarBaseUrl = `${import.meta.env.BASE_URL}virtualpeopleanimation`;
+const standbyAvatar = `${virtualAvatarBaseUrl}/standby.gif`;
+const standupAvatar = `${virtualAvatarBaseUrl}/standup.gif`;
+const answeringAvatar = `${virtualAvatarBaseUrl}/answering.gif`;
 
 const aiAvatarState = computed<AiAvatarState>(() => {
   if (props.sendingMessage || props.isTyping) return "answering";

@@ -517,11 +517,19 @@ const loading = ref(false);
 const userInfo = ref<DataInfo<number> | any>(storageLocal().getItem(userKey));
 
 // 动态加载预设背景图
-const presetImages = import.meta.glob<string>(
-  "@/assets/publicbackgroundpreset/*.{jpg,jpeg,png,heif,heic,HEIC,HEIF}",
-  { eager: true, query: "?url", import: "default" }
+const presetBannerNames = [
+  "9cc666916ece355333bbe45723e2921d.jpeg",
+  "FullSizeRender.jpeg",
+  "IMG_6914.jpeg",
+  "IMG_6994.jpeg",
+  "IMG_7006.jpeg",
+  "IMG_7069.jpeg",
+  "IMG_7462.jpeg",
+  "IMG_9180.jpeg"
+] as const;
+const presetBanners = presetBannerNames.map(
+  name => `${import.meta.env.BASE_URL}publicbackgroundpreset/${name}`
 );
-const presetBanners = Object.values(presetImages) as string[];
 
 // 弹窗与加载状态
 const presetDialogVisible = ref(false);
