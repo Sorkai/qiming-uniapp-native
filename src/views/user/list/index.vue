@@ -1,12 +1,12 @@
 <template>
-  <div class="main">
+  <div class="main user-list-page">
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
           <span>用户列表</span>
         </div>
       </template>
-      <el-form :inline="true" :model="searchForm" class="search-form">
+      <el-form :inline="!isMobile" :model="searchForm" class="search-form">
         <!-- <el-form-item label="手机号">
           <el-input
             v-model="searchForm.mobile"
@@ -19,7 +19,59 @@
           <!-- <el-button @click="resetSearch">重置</el-button> -->
         </el-form-item>
       </el-form>
-      <el-table v-loading="loading" :data="userList" stripe style="width: 100%">
+      <div v-if="isMobile" v-loading="loading" class="mobile-user-list">
+        <div
+          v-for="user in userList"
+          :key="user.id"
+          class="mobile-user-card"
+        >
+          <div class="mobile-user-card__header">
+            <div class="mobile-user-main">
+              <el-avatar :src="formatAvatar(user.avatar)" :size="44" />
+              <div class="mobile-user-summary">
+                <div class="mobile-user-name">
+                  {{ user.nickname || user.mobile || `#${user.id}` }}
+                </div>
+                <div class="mobile-user-meta">ID: {{ user.id }}</div>
+              </div>
+            </div>
+            <el-tag size="small">{{ getRoleTypeName(user.roleType) }}</el-tag>
+          </div>
+
+          <div class="mobile-user-card__body">
+            <div class="mobile-user-field">
+              <span class="label">Mobile</span>
+              <span>{{ user.mobile || "-" }}</span>
+            </div>
+            <div class="mobile-user-field">
+              <span class="label">Sex</span>
+              <span>{{
+                user.sex === 1 ? "男" : user.sex === 2 ? "女" : "未知"
+              }}</span>
+            </div>
+            <div class="mobile-user-field mobile-user-field--full">
+              <span class="label">Info</span>
+              <span>{{ user.info || "-" }}</span>
+            </div>
+          </div>
+
+          <div v-if="isAdminUser" class="mobile-user-card__actions">
+            <el-button type="primary" @click="handleEditRole(user)">
+              修改角色
+            </el-button>
+          </div>
+        </div>
+
+        <el-empty v-if="!loading && userList.length === 0" />
+      </div>
+
+      <el-table
+        v-else
+        v-loading="loading"
+        :data="userList"
+        stripe
+        style="width: 100%"
+      >
         <el-table-column prop="id" label="用户ID" width="100" sortable />
         <el-table-column prop="mobile" label="手机号" width="180" sortable />
         <el-table-column prop="nickname" label="昵称" width="180" sortable />
@@ -59,7 +111,8 @@
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :page-sizes="[10, 20, 30, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           :total="total"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
@@ -71,7 +124,7 @@
     <el-dialog
       v-model="roleDialogVisible"
       title="修改用户角色"
-      width="30%"
+      :width="getDialogWidth('30%')"
       :close-on-click-modal="false"
       align-center
     >
@@ -112,6 +165,7 @@ import { formatAvatar } from "@/utils/avatar";
 import { getUserList, updateUserRole } from "@/api/user";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { isAdmin } from "@/utils/auth";
+import { usePageResponsive } from "@/utils/pageResponsive";
 
 // 数据定义
 const userList = ref([]);
@@ -124,6 +178,7 @@ const searchForm = reactive({ mobile: "" });
 
 // 判断当前用户是否是管理员
 const isAdminUser = computed(() => isAdmin());
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
 
 // 修改角色对话框
 const roleDialogVisible = ref(false);
@@ -280,6 +335,89 @@ onMounted(() => {
   border-radius: 16px;
 }
 
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.search-form {
+  margin-bottom: 16px;
+}
+
+.mobile-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-user-card {
+  padding: 16px;
+  background: var(--el-fill-color-extra-light);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 14px;
+}
+
+.mobile-user-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mobile-user-main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.mobile-user-summary {
+  min-width: 0;
+}
+
+.mobile-user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  word-break: break-all;
+}
+
+.mobile-user-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.mobile-user-card__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.mobile-user-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.mobile-user-field--full {
+  grid-column: 1 / -1;
+}
+
+.mobile-user-field .label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.mobile-user-card__actions {
+  margin-top: 14px;
+}
+
 :deep(.el-card__header) {
   border-radius: 16px 16px 0 0;
 }
@@ -305,5 +443,29 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 15px;
+}
+
+@media (width <= 768px) {
+  .main.user-list-page {
+    margin: 0;
+  }
+
+  :deep(.search-form .el-form-item) {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 12px;
+  }
+
+  :deep(.search-form .el-form-item:last-child) {
+    margin-bottom: 0;
+  }
+
+  :deep(.search-form .el-button) {
+    width: 100%;
+  }
+
+  .pagination-container {
+    justify-content: center;
+  }
 }
 </style>

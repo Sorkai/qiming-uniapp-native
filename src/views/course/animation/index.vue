@@ -1,6 +1,9 @@
 <template>
   <div
-    class="ai-animation-container h-[calc(100vh-140px)] m-3 flex gap-3 overflow-hidden font-sans"
+    :class="[
+      'ai-animation-container m-3 flex gap-3 font-sans',
+      isMobile ? 'is-mobile-layout' : 'h-[calc(100vh-140px)] overflow-hidden'
+    ]"
   >
     <!-- 左侧课程选择 -->
     <div
@@ -119,9 +122,9 @@
       >
         <!-- 顶部操作栏（内嵌在卡片顶部） -->
         <div
-          class="px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-fill-color-light)]/30 flex-shrink-0"
+          class="content-toolbar px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-fill-color-light)]/30 flex-shrink-0"
         >
-          <div class="flex items-center space-x-4">
+          <div class="toolbar-status flex items-center space-x-4">
             <div
               v-if="displayVersionResolved"
               class="flex items-center gap-3 px-4 py-2 bg-[var(--el-color-success-light-9)] rounded-xl"
@@ -138,7 +141,7 @@
             </div>
           </div>
 
-          <div class="flex gap-2">
+          <div class="toolbar-actions flex gap-2">
             <el-button
               :disabled="!selectedChapterId"
               class="!rounded-xl !h-10 !px-4"
@@ -194,7 +197,7 @@
         </div>
         <div v-else class="flex-1 flex flex-col overflow-hidden">
           <div
-            class="flex justify-between items-center mb-5 pb-5 border-b border-[var(--el-border-color-lighter)]"
+            class="filter-toolbar flex justify-between items-center mb-5 pb-5 border-b border-[var(--el-border-color-lighter)]"
           >
             <el-radio-group
               v-model="statusFilter"
@@ -228,7 +231,7 @@
               placeholder="搜索文件名..."
               clearable
               size="large"
-              class="!w-80 !rounded-xl"
+              :class="['!rounded-xl filter-keyword', isMobile ? '!w-full' : '!w-80']"
               @input="applyFilter"
             >
               <template #prefix
@@ -239,7 +242,107 @@
           </div>
 
           <div class="flex-1 overflow-auto custom-scrollbar">
+            <div v-if="isMobile" class="mobile-animation-list">
+              <div
+                v-for="row in filteredTasks"
+                :key="row.taskId"
+                class="mobile-animation-card"
+              >
+                <div class="mobile-animation-card__header">
+                  <div class="mobile-animation-version">
+                    <el-icon
+                      v-if="isDisplayVersion(row)"
+                      class="text-[var(--el-color-success)] mr-1.5"
+                    >
+                      <StarFilled />
+                    </el-icon>
+                    <el-tag
+                      v-if="row.status === 'completed'"
+                      type="success"
+                      effect="plain"
+                    >
+                      v{{ row.version }}
+                    </el-tag>
+                    <span v-else class="text-[var(--el-text-color-placeholder)]">
+                      --
+                    </span>
+                  </div>
+
+                  <div
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold"
+                    :class="{
+                      'bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)]':
+                        row.status === 'completed',
+                      'bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning)]':
+                        row.status === 'processing',
+                      'bg-[var(--el-color-danger-light-9)] text-[var(--el-color-danger)]':
+                        row.status === 'failed',
+                      'bg-[var(--el-fill-color-light)] text-[var(--el-text-color-secondary)]':
+                        !['completed', 'processing', 'failed'].includes(row.status)
+                    }"
+                  >
+                    {{
+                      row.status === "completed"
+                        ? "瀹屾垚"
+                        : row.status === "processing"
+                          ? "澶勭悊涓?"
+                          : row.status === "failed"
+                            ? "澶辫触"
+                            : row.status
+                    }}
+                  </div>
+                </div>
+
+                <div class="mobile-animation-card__body">
+                  <div class="mobile-animation-field">
+                    <span class="label">File</span>
+                    <span>{{ row.fileName || "-" }}</span>
+                  </div>
+                  <div class="mobile-animation-grid">
+                    <div class="mobile-animation-field">
+                      <span class="label">Size</span>
+                      <span>{{ formatSize(row.fileSize) }}</span>
+                    </div>
+                    <div class="mobile-animation-field">
+                      <span class="label">Created</span>
+                      <span>{{ row.createdAt }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mobile-animation-card__actions">
+                  <el-button
+                    type="primary"
+                    plain
+                    :disabled="row.status !== 'completed'"
+                    @click="openPreview(row)"
+                  >
+                    棰勮
+                  </el-button>
+                  <el-button
+                    type="success"
+                    plain
+                    :disabled="row.status !== 'completed' || isDisplayVersion(row)"
+                    @click="setDisplay(row)"
+                  >
+                    灞曠ず
+                  </el-button>
+                  <el-button
+                    type="info"
+                    plain
+                    :disabled="row.status !== 'completed'"
+                    @click="copyUrl(row)"
+                  >
+                    URL
+                  </el-button>
+                </div>
+              </div>
+
+              <el-empty v-if="!listLoading && filteredTasks.length === 0" />
+            </div>
+
             <el-table
+              v-else
               v-loading="listLoading"
               :data="filteredTasks"
               class="animation-table"
@@ -415,7 +518,8 @@
     <el-dialog
       v-model="previewVisible"
       title="动画渲染预览"
-      width="85%"
+      :width="getDialogWidth('85%', '96%')"
+      :fullscreen="isMobile"
       top="4vh"
       class="!rounded-2xl overflow-hidden shadow-2xl"
     >
@@ -454,6 +558,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import { getCourseList, getCourseHoursList } from "@/api/course";
 import {
   generateHtmlAnimation,
@@ -493,6 +598,8 @@ import CinemaAnim from "@/assets/Cinema news animation.json";
 defineOptions({
   name: "CourseAnimation"
 });
+
+const { isMobile, getDialogWidth } = usePageResponsive();
 
 const selectedCourseId = ref<number | null>(null);
 const selectedChapterId = ref<number | null>(null);
@@ -1162,6 +1269,117 @@ onMounted(() => {
         0 12px 40px rgba(var(--el-color-primary-rgb), 0.22),
         inset 0 0 0 1px rgb(255 255 255 / 12%);
     }
+  }
+}
+
+.mobile-animation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-animation-card {
+  padding: 16px;
+  background: var(--el-fill-color-extra-light);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
+}
+
+.mobile-animation-card__header,
+.mobile-animation-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mobile-animation-card__header {
+  margin-bottom: 12px;
+}
+
+.mobile-animation-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-animation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.mobile-animation-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.mobile-animation-field .label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.mobile-animation-card__actions {
+  margin-top: 14px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+@media (width <= 768px) {
+  .ai-animation-container.is-mobile-layout {
+    height: auto;
+    min-height: calc(100vh - 96px);
+    margin: 8px;
+    overflow: visible;
+    flex-direction: column;
+  }
+
+  .ai-animation-container.is-mobile-layout .sidebar-card {
+    width: 100%;
+  }
+
+  .ai-animation-container.is-mobile-layout .header-subtitle {
+    margin-left: 0 !important;
+  }
+
+  .ai-animation-container.is-mobile-layout .content-toolbar,
+  .ai-animation-container.is-mobile-layout .filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .ai-animation-container.is-mobile-layout .toolbar-status,
+  .ai-animation-container.is-mobile-layout .toolbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ai-animation-container.is-mobile-layout .toolbar-actions :deep(.el-button) {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+
+  .ai-animation-container.is-mobile-layout .filter-keyword {
+    width: 100% !important;
+  }
+
+  .ai-animation-container.is-mobile-layout .animation-filter-group {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .mobile-animation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lottie-glass {
+    width: 180px;
+    height: 180px;
   }
 }
 </style>

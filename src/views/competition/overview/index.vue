@@ -26,7 +26,7 @@
 
     <!-- 四大模块统计卡片 -->
     <el-row :gutter="20" class="overview-cards">
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :lg="6">
         <el-card
           class="overview-card coding-card"
           shadow="always"
@@ -54,7 +54,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :lg="6">
         <el-card
           class="overview-card quiz-card"
           shadow="always"
@@ -82,7 +82,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :lg="6">
         <el-card
           class="overview-card essay-card"
           shadow="always"
@@ -110,7 +110,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :lg="6">
         <el-card
           class="overview-card event-card"
           shadow="always"
@@ -142,7 +142,7 @@
 
     <!-- 近期赛事 -->
     <el-row :gutter="20" class="bottom-row">
-      <el-col :span="16">
+      <el-col :xs="24" :lg="16">
         <el-card class="box-card events-card">
           <template #header>
             <div class="card-header">
@@ -156,7 +156,42 @@
               </el-button>
             </div>
           </template>
-          <el-table :data="recentEvents" stripe style="width: 100%">
+          <div v-if="isMobile" class="mobile-events-list">
+            <div
+              v-for="row in recentEvents"
+              :key="row.id || row.title"
+              class="mobile-event-card"
+            >
+              <div class="mobile-event-card__header">
+                <div class="event-title-cell">
+                  <span class="event-icon">{{ getTypeIcon(row.type) }}</span>
+                  <span>{{ row.title }}</span>
+                </div>
+                <el-tag :type="getStatusTagType(row.status)" size="small">
+                  {{ getStatusLabel(row.status) }}
+                </el-tag>
+              </div>
+
+              <div class="mobile-event-card__body">
+                <div class="mobile-event-field">
+                  <span class="label">Type</span>
+                  <span>{{ getTypeLabel(row.type) }}</span>
+                </div>
+                <div class="mobile-event-field">
+                  <span class="label">Start</span>
+                  <span>{{ row.startTime }}</span>
+                </div>
+                <div class="mobile-event-field">
+                  <span class="label">Participants</span>
+                  <span>{{ row.participants }}</span>
+                </div>
+              </div>
+            </div>
+
+            <el-empty v-if="recentEvents.length === 0" />
+          </div>
+
+          <el-table v-else :data="recentEvents" stripe style="width: 100%">
             <el-table-column prop="title" label="赛事名称" min-width="200">
               <template #default="{ row }">
                 <div class="event-title-cell">
@@ -204,7 +239,7 @@
           </el-table>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :xs="24" :lg="8">
         <el-card class="box-card rankings-card">
           <template #header>
             <div class="card-header">
@@ -238,9 +273,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { formatAvatar } from "@/utils/avatar";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   getEventStats,
   getOJStats,
@@ -255,6 +291,7 @@ defineOptions({
 });
 
 const router = useRouter();
+const { isMobile } = usePageResponsive();
 
 // 总体统计
 const stats = ref({
@@ -274,7 +311,7 @@ const recentEvents = ref<any[]>([]);
 
 // 排行榜
 const topRankings = ref<any[]>([]);
-const rankingsHeight = ref(280);
+const rankingsHeight = computed(() => (isMobile.value ? 240 : 280));
 
 const loadStats = async () => {
   try {
@@ -627,6 +664,45 @@ onMounted(() => {
   }
 }
 
+.mobile-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-event-card {
+  padding: 14px;
+  background: var(--el-fill-color-extra-light);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 14px;
+}
+
+.mobile-event-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.mobile-event-card__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.mobile-event-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mobile-event-field .label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
 .rankings-list {
   .ranking-item {
     display: flex;
@@ -693,5 +769,40 @@ onMounted(() => {
 
 :deep(.header-card .el-card__body) {
   padding: 24px;
+}
+
+@media (width <= 768px) {
+  .main {
+    padding: 8px;
+  }
+
+  .main .header-card .header-content,
+  .main .box-card .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .main .header-card .header-stats {
+    width: 100%;
+    gap: 16px;
+    justify-content: space-between;
+  }
+
+  .main .overview-cards {
+    margin-bottom: 12px;
+  }
+
+  .main .overview-cards .overview-card {
+    margin-bottom: 12px;
+  }
+
+  .mobile-event-card__body {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-row .rankings-card .rankings-list {
+    min-height: 220px;
+    max-height: none;
+  }
 }
 </style>

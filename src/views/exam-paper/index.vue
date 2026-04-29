@@ -1160,6 +1160,67 @@ $radius-xl: 20px;
   }
 }
 
+@media (width <= 768px) {
+  .exam-paper-index {
+    padding: 12px;
+  }
+
+  .welcome-section {
+    padding: 24px;
+
+    .welcome-title {
+      font-size: 26px;
+    }
+
+    .welcome-desc {
+      font-size: 14px;
+    }
+  }
+
+  .stats-section .stats-grid {
+    gap: 12px;
+  }
+
+  .stats-section .stat-card {
+    padding: 18px;
+  }
+
+  .section-card {
+    padding: 16px;
+
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+  }
+
+  .template-card,
+  .recent-papers .paper-item {
+    align-items: flex-start;
+  }
+
+  .template-card {
+    flex-direction: column;
+  }
+
+  .recent-papers .paper-item {
+    flex-direction: column;
+
+    .paper-info {
+      width: 100%;
+    }
+  }
+
+  .learning-stats-card .course-filter {
+    width: 100%;
+  }
+
+  .quick-links {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* SVG 图标样式 */
 :deep(svg) {
   fill: none;

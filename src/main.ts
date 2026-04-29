@@ -10,6 +10,7 @@ import { useAppStoreHook } from "@/store/modules/app";
 import { useVxeTable } from "@/plugins/vxeTable";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { injectResponsiveStorage } from "@/utils/responsive";
+import { registerPwa } from "@/utils/pwa";
 
 import Table from "@pureadmin/table";
 import PureDescriptions from "@pureadmin/descriptions";
@@ -58,6 +59,7 @@ app.use(VueTippy);
 getPlatformConfig(app).then(async config => {
   setupStore(app);
   useAppStoreHook().refreshUA();
+  registerPwa();
   app.use(router);
   await router.isReady();
   injectResponsiveStorage(app, config);

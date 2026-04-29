@@ -5,12 +5,26 @@ import type { Plugin } from "vite";
 const PUBLIC_ASSET_WHITELIST = [
   "favicon.ico",
   "logo.svg",
+  "manifest.webmanifest",
+  "sw.js",
   "platform-config.json",
   "campus-2d-bg.svg",
+  "icons",
   "wasm",
   "virtualpeopleanimation",
   "homepage",
   "publicbackgroundpreset"
+];
+
+const STATIC_ASSET_MAPPINGS = [
+  {
+    source: resolve("src/assets/course-detail-images"),
+    target: "static/images"
+  },
+  {
+    source: resolve("src/assets/img"),
+    target: "static/img"
+  }
 ];
 
 export function copyPublicAssets(): Plugin {
@@ -43,6 +57,14 @@ export function copyPublicAssets(): Plugin {
           mkdirSync(dirname(target), { recursive: true });
           cpSync(source, target, { force: true });
         }
+      }
+
+      for (const asset of STATIC_ASSET_MAPPINGS) {
+        if (!existsSync(asset.source)) continue;
+        cpSync(asset.source, join(distDir, asset.target), {
+          recursive: true,
+          force: true
+        });
       }
     }
   };

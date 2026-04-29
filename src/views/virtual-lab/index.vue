@@ -38,14 +38,14 @@
         </div>
       </template>
 
-      <el-form :inline="true" :model="searchForm" class="search-form">
+      <el-form :inline="!isMobile" :model="searchForm" class="search-form">
         <el-form-item label="选择课程">
           <el-select
             v-model="searchForm.courseId"
             placeholder="请选择课程"
             filterable
             clearable
-            style="width: 240px"
+            :style="{ width: isMobile ? '100%' : '240px' }"
             @change="handleCourseChange"
           >
             <el-option
@@ -63,7 +63,7 @@
             filterable
             clearable
             :disabled="!searchForm.courseId"
-            style="width: 240px"
+            :style="{ width: isMobile ? '100%' : '240px' }"
             @change="handleSearch"
           >
             <el-option
@@ -88,7 +88,7 @@
 
       <!-- 当前章节信息 -->
       <div v-if="currentAnimationData" class="chapter-info">
-        <el-descriptions :column="3" border>
+        <el-descriptions :column="isMobile ? 1 : 3" border>
           <el-descriptions-item label="当前展示版本">
             <el-tag
               v-if="currentAnimationData.displayVersionResolved"
@@ -133,6 +133,82 @@
       />
 
       <!-- 任务列表 -->
+      <div
+        v-else-if="isMobile"
+        v-loading="loading"
+        class="mobile-task-list"
+      >
+        <div v-for="row in taskList" :key="row.taskId" class="mobile-task-card">
+          <div class="mobile-task-card__header">
+            <div class="mobile-task-version">
+              <el-tag
+                v-if="row.version > 0"
+                :type="
+                  row.version.toString() ===
+                  currentAnimationData?.displayVersionResolved
+                    ? 'success'
+                    : 'info'
+                "
+              >
+                v{{ row.version }}
+              </el-tag>
+              <span v-else class="text-gray-400">-</span>
+            </div>
+            <el-tag :type="getStatusTagType(row.status)">
+              {{ getStatusLabel(row.status) }}
+            </el-tag>
+          </div>
+
+          <div class="mobile-task-card__body">
+            <div class="mobile-task-field">
+              <span class="label">Task ID</span>
+              <span class="task-id">{{ row.taskId }}</span>
+            </div>
+            <div class="mobile-task-field">
+              <span class="label">File</span>
+              <span>{{ row.fileName || "-" }}</span>
+            </div>
+            <div class="mobile-task-grid">
+              <div class="mobile-task-field">
+                <span class="label">Size</span>
+                <span>{{ row.fileSize > 0 ? formatFileSize(row.fileSize) : "-" }}</span>
+              </div>
+              <div class="mobile-task-field">
+                <span class="label">Created</span>
+                <span>{{ row.createdAt }}</span>
+              </div>
+              <div class="mobile-task-field mobile-task-field--full">
+                <span class="label">Completed</span>
+                <span>{{ row.completedAt || "-" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mobile-task-card__actions">
+            <el-button
+              v-if="row.status === 'completed' && row.fileUrl"
+              type="primary"
+              @click="handlePreview(row)"
+            >
+              预览
+            </el-button>
+            <el-button
+              v-if="row.status === 'completed' && row.version > 0"
+              type="success"
+              plain
+              @click="handleSetVersion(row.version.toString())"
+            >
+              设为展示
+            </el-button>
+            <el-tag v-if="row.status === 'failed'" type="danger" size="small">
+              {{ row.errorMessage || "生成失败" }}
+            </el-tag>
+          </div>
+        </div>
+
+        <el-empty v-if="!loading && taskList.length === 0" />
+      </div>
+
       <el-table
         v-else
         v-loading="loading"
@@ -248,7 +324,7 @@
     <el-dialog
       v-model="showSetVersionDialog"
       title="设置展示版本"
-      width="400px"
+      :width="getDialogWidth('400px')"
     >
       <el-form label-width="100px">
         <el-form-item label="版本选择">
@@ -287,7 +363,8 @@
     <el-dialog
       v-model="previewDialogVisible"
       :title="`HTML 动画预览 - v${currentPreviewTask?.version || ''}`"
-      width="90%"
+      :width="getDialogWidth('90%', '96%')"
+      :fullscreen="isMobile"
       class="lab-dialog"
     >
       <div class="lab-iframe-container">
@@ -308,6 +385,7 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { Refresh, VideoPlay, Setting } from "@element-plus/icons-vue";
 import { getCourseList, getCourseHoursList } from "@/api/course";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   getHtmlAnimationList,
   generateHtmlAnimation,
@@ -332,6 +410,7 @@ interface ChapterItem {
 }
 
 const loading = ref(false);
+const { isMobile, getDialogWidth } = usePageResponsive();
 const generateLoading = ref(false);
 const syncLoading = ref(false);
 const setVersionLoading = ref(false);
@@ -713,6 +792,7 @@ onMounted(() => {
     font-family: monospace;
     font-size: 12px;
     color: #606266;
+    word-break: break-all;
   }
 
   .text-gray-400 {
@@ -722,6 +802,66 @@ onMounted(() => {
   .mr-1 {
     margin-right: 4px;
   }
+}
+
+.mobile-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-task-card {
+  padding: 16px;
+  background: var(--el-fill-color-extra-light);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 14px;
+}
+
+.mobile-task-card__header,
+.mobile-task-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mobile-task-card__header {
+  margin-bottom: 12px;
+}
+
+.mobile-task-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-task-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.mobile-task-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.mobile-task-field--full {
+  grid-column: 1 / -1;
+}
+
+.mobile-task-field .label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.mobile-task-card__actions {
+  margin-top: 14px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
 .lab-iframe-container {
@@ -770,5 +910,42 @@ onMounted(() => {
 
 :deep(.el-descriptions) {
   --el-descriptions-item-bordered-label-background: #fafafa;
+}
+
+@media (width <= 768px) {
+  .main {
+    padding: 8px;
+  }
+
+  .main .header-card .header-content,
+  .main .box-card .card-header,
+  .main .chapter-info .action-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .main .header-card .header-stats {
+    gap: 18px;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  :deep(.search-form .el-form-item) {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 12px;
+  }
+
+  :deep(.search-form .el-button) {
+    width: 100%;
+  }
+
+  .main .chapter-info {
+    padding: 12px;
+  }
+
+  .mobile-task-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

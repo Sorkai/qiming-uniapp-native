@@ -1,5 +1,5 @@
 <template>
-  <div class="main">
+  <div class="main category-page">
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
@@ -10,7 +10,7 @@
         </div>
       </template>
 
-      <el-form :inline="true" :model="searchForm" class="search-form">
+      <el-form :inline="!isMobile" :model="searchForm" class="search-form">
         <el-form-item label="分类名称">
           <el-input
             v-model="searchForm.categoryName"
@@ -18,13 +18,38 @@
             clearable
           />
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="search-form__actions">
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="resetSearch">重置</el-button>
         </el-form-item>
       </el-form>
 
+      <div v-if="isMobile" v-loading="loading" class="mobile-category-list">
+        <div
+          v-for="row in tableData"
+          :key="row.categoryId"
+          class="mobile-category-card"
+        >
+          <div class="mobile-category-card__header">
+            <div class="mobile-category-name">{{ row.name }}</div>
+            <div class="mobile-category-meta">Category ID: {{ row.categoryId }}</div>
+          </div>
+
+          <div class="mobile-category-card__actions">
+            <el-button type="primary" @click="handleOpenDialog(row)">
+              编辑
+            </el-button>
+            <el-button type="danger" plain @click="handleDelete(row)">
+              删除
+            </el-button>
+          </div>
+        </div>
+
+        <el-empty v-if="!loading && tableData.length === 0" />
+      </div>
+
       <el-table
+        v-else
         v-loading="loading"
         :data="tableData"
         stripe
@@ -63,7 +88,8 @@
           v-model:current-page="queryParams.pageNum"
           v-model:page-size="queryParams.pageSize"
           :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           :total="total"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
@@ -75,7 +101,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="formData.categoryId ? '编辑分类' : '创建分类'"
-      width="500px"
+      :width="getDialogWidth('500px')"
       destroy-on-close
       align-center
     >
@@ -105,6 +131,7 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   getCategoryList,
   upsertCategory,
@@ -120,6 +147,7 @@ interface TableItem {
 const loading = ref(false);
 const tableData = ref<TableItem[]>([]);
 const total = ref(0);
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
 
 // 查询参数
 const queryParams = reactive({
@@ -280,6 +308,46 @@ onMounted(() => {
   }
 }
 
+.mobile-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-category-card {
+  padding: 16px;
+  background: var(--el-fill-color-extra-light);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 14px;
+}
+
+.mobile-category-card__header {
+  margin-bottom: 12px;
+}
+
+.mobile-category-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.mobile-category-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.mobile-category-card__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mobile-category-card__actions :deep(.el-button) {
+  width: 100%;
+  margin-left: 0;
+}
+
 :deep(.el-card__header) {
   border-radius: 16px 16px 0 0;
 }
@@ -306,5 +374,44 @@ onMounted(() => {
 
 :deep(.el-input__wrapper) {
   border-radius: 8px;
+}
+
+@media (width <= 768px) {
+  .main.category-page {
+    padding: 8px;
+  }
+
+  .main .box-card .card-header {
+    flex-wrap: wrap;
+  }
+
+  :deep(.search-form .el-form-item) {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 12px;
+  }
+
+  :deep(.search-form .el-input) {
+    width: 100%;
+  }
+
+  :deep(.search-form .el-button) {
+    width: 100%;
+  }
+
+  :deep(.search-form__actions .el-form-item__content) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+
+  :deep(.search-form__actions .el-button) {
+    margin-left: 0;
+  }
+
+  .main .pagination-container {
+    justify-content: center;
+  }
 }
 </style>

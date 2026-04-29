@@ -21,7 +21,7 @@
               v-model="searchForm.courseName"
               placeholder="请输入课程名称"
               clearable
-              class="!w-[280px]"
+              class="search-input"
               @keyup.enter="handleSearch"
             >
               <template #prefix>
@@ -29,7 +29,7 @@
               </template>
             </el-input>
           </el-form-item>
-          <el-form-item>
+          <el-form-item class="search-form__actions">
             <el-button type="primary" @click="handleSearch">搜索</el-button>
             <el-button @click="resetSearch">重置</el-button>
           </el-form-item>
@@ -1968,6 +1968,10 @@ onMounted(async () => {
   box-shadow: 0 4px 16px rgb(0 0 0 / 8%) !important;
 }
 
+.search-input {
+  width: min(100%, 280px);
+}
+
 :deep(.el-dialog) {
   overflow: hidden;
   border-radius: 20px;
@@ -2104,6 +2108,9 @@ onMounted(async () => {
   }
 
   :deep(.search-form .el-form-item) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     width: 100%;
     margin-right: 0;
     margin-bottom: 12px;
@@ -2123,6 +2130,17 @@ onMounted(async () => {
 
   :deep(.search-form .el-input) {
     width: 100% !important;
+  }
+
+  :deep(.search-form__actions .el-form-item__content) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+
+  :deep(.search-form__actions .el-button) {
+    margin-left: 0;
   }
 
   :deep(.course-pagination) {

@@ -7,7 +7,10 @@
           <p>共 {{ totalTodos }} 项，已完成 {{ completedTodos }} 项</p>
         </div>
         <div class="header-right flex items-center gap-4">
-          <el-radio-group v-model="filterStatus" size="default">
+          <el-radio-group
+            v-model="filterStatus"
+            :size="isMobile ? 'small' : 'default'"
+          >
             <el-radio-button value="all">全部</el-radio-button>
             <el-radio-button value="pending">待处理</el-radio-button>
             <el-radio-button value="completed">已完成</el-radio-button>
@@ -81,7 +84,7 @@
       <el-dialog
         v-model="dialogVisible"
         :title="isEditMode ? '编辑待办' : '添加待办'"
-        width="500px"
+        :width="getDialogWidth('500px')"
         @close="resetForm"
       >
         <el-form ref="formRef" :model="form" label-width="80px">
@@ -111,6 +114,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Plus,
   Edit,
@@ -136,6 +140,7 @@ const dialogVisible = ref(false);
 const isEditMode = ref(false);
 const formRef = ref(null);
 const filterStatus = ref("all"); // all, pending, completed
+const { isMobile, getDialogWidth } = usePageResponsive();
 
 const initialFormState = {
   id: 0,
@@ -366,5 +371,68 @@ const toggleStatus = (row: TodoItem) => {
 // Table transitions
 :deep(.el-table__row) {
   transition: all 0.3s ease;
+}
+
+@media (width <= 768px) {
+  .todo-page {
+    padding: 8px !important;
+  }
+
+  .card {
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+
+  .todo-container {
+    padding-top: 8px;
+
+    .todo-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+  }
+
+  .header-right {
+    flex-direction: column;
+    align-items: stretch !important;
+    width: 100%;
+  }
+
+  :deep(.header-right .el-radio-group) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  :deep(.header-right .el-radio-button__inner) {
+    width: 100%;
+  }
+
+  :deep(.header-right .el-button) {
+    width: 100%;
+  }
+
+  .todo-container .todo-row {
+    padding: 18px 16px;
+  }
+
+  .todo-row,
+  .todo-info,
+  .todo-actions,
+  .meta-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .todo-actions {
+    width: 100%;
+    gap: 8px !important;
+    margin-top: 12px;
+  }
+
+  :deep(.todo-actions .el-button) {
+    padding-left: 0;
+  }
 }
 </style>

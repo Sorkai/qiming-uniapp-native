@@ -58,6 +58,7 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
       // 消除打包大小超过500kb警告
       chunkSizeWarningLimit: 4000,
       rollupOptions: {
+        maxParallelFileOps: 5,
         input: {
           index: pathResolve("./index.html", import.meta.url)
         },
@@ -92,6 +93,46 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
               return "echarts";
             }
             if (
+              id.includes("@logicflow") ||
+              id.includes("@vue-flow") ||
+              id.includes("dagre")
+            ) {
+              return "flow";
+            }
+            if (
+              id.includes("@pureadmin/table") ||
+              id.includes("@pureadmin/descriptions") ||
+              id.includes("plus-pro-components") ||
+              id.includes("vxe-table")
+            ) {
+              return "table";
+            }
+            if (
+              id.includes("deep-chat") ||
+              id.includes("@docmee/sdk-ui") ||
+              id.includes("mqtt") ||
+              id.includes("cos-js-sdk-v5")
+            ) {
+              return "ai-tools";
+            }
+            if (
+              id.includes("cropperjs") ||
+              id.includes("html2canvas") ||
+              id.includes("sortablejs") ||
+              id.includes("vuedraggable") ||
+              id.includes("el-table-infinite-scroll") ||
+              id.includes("intro.js")
+            ) {
+              return "interaction";
+            }
+            if (
+              id.includes("@amap") ||
+              id.includes("china-area-data") ||
+              id.includes("pinyin-pro")
+            ) {
+              return "geo";
+            }
+            if (
               id.includes("codemirror") ||
               id.includes("vditor") ||
               id.includes("markdown-it") ||
@@ -107,7 +148,9 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
               id.includes("three") ||
               id.includes("@pixiv/three-vrm") ||
               id.includes("xgplayer") ||
-              id.includes("wavesurfer")
+              id.includes("wavesurfer") ||
+              id.includes("@splinetool/runtime") ||
+              id.includes("swiper")
             ) {
               return "media";
             }

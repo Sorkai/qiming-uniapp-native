@@ -6,6 +6,7 @@
 import { ref, reactive, onMounted, onActivated, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Search,
   Refresh,
@@ -13,6 +14,7 @@ import {
   Close,
   Delete,
   Edit,
+  Clock,
   Top,
   MoreFilled
 } from "@element-plus/icons-vue";
@@ -40,6 +42,8 @@ import { formatAvatar } from "@/utils/avatar";
 defineOptions({
   name: "TeacherDiscussionManage"
 });
+
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
 
 // 标签类型
 type TagType = "danger" | "warning" | "info" | "success" | "primary";
@@ -332,6 +336,18 @@ const handleSearch = () => {
 // 选择变化
 const handleSelectionChange = (rows: ReviewQueueItem[]) => {
   selectedIds.value = rows.map(r => r.id);
+};
+
+const isSelected = (id: string) => selectedIds.value.includes(id);
+
+const toggleMobileSelection = (id: string, checked: boolean) => {
+  if (checked) {
+    if (!selectedIds.value.includes(id)) {
+      selectedIds.value.push(id);
+    }
+    return;
+  }
+  selectedIds.value = selectedIds.value.filter(item => item !== id);
 };
 
 // 重置搜索
@@ -799,7 +815,7 @@ onActivated(() => {
 
     <!-- 搜索栏 -->
     <el-card shadow="never" class="mb-4">
-      <el-form :inline="true" :model="searchForm" class="search-form">
+      <el-form :inline="!isMobile" :model="searchForm" class="search-form">
         <el-form-item label="归属课程">
           <el-select
             v-model="searchForm.courseId"
@@ -907,7 +923,120 @@ onActivated(() => {
           >同步状态</el-button
         >
       </div>
+      <div v-if="isMobile" class="mobile-discussion-list">
+        <div
+          v-for="row in discussions"
+          :key="row.id"
+          class="mobile-discussion-card"
+        >
+          <div class="mobile-discussion-card__header">
+            <el-checkbox
+              :model-value="isSelected(row.id)"
+              @change="value => toggleMobileSelection(row.id, Boolean(value))"
+            />
+            <el-tag
+              :type="row.itemType === 'reply' ? 'info' : 'primary'"
+              effect="plain"
+              size="small"
+              round
+            >
+              {{ row.itemType === "reply" ? "回复" : "帖子" }}
+            </el-tag>
+            <el-tag :type="statusTagType(row.status)" effect="light" round>
+              {{ statusText(row.status) }}
+            </el-tag>
+          </div>
+
+          <div class="post-content">
+            <div class="post-header">
+              <el-tag
+                v-if="row.isPinned"
+                size="small"
+                type="warning"
+                effect="dark"
+                class="pin-tag"
+              >
+                精选置顶
+              </el-tag>
+              <span class="post-title">{{ row.title || "(无标题)" }}</span>
+            </div>
+            <div class="post-excerpt">
+              {{ row.content.substring(0, 120)
+              }}{{ row.content.length > 120 ? "..." : "" }}
+            </div>
+            <div class="post-meta">
+              <div class="meta-item">
+                <el-avatar :size="20" :src="formatAvatar(row.author?.avatar)" />
+                <span class="meta-author">{{ row.author?.name }}</span>
+              </div>
+              <div class="meta-item">
+                <span>{{ row.courseName || "未知课程" }}</span>
+              </div>
+              <div class="meta-item">
+                <el-icon :size="16"><Clock /></el-icon>
+                <span>{{ formatTime(row.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mobile-discussion-card__stats">
+            <div class="stat-item">
+              <el-icon :size="18"><HeartIcon /></el-icon>
+              <span>{{ row.likeCount }}</span>
+            </div>
+            <div class="stat-item">
+              <el-icon :size="18"><CommentIcon /></el-icon>
+              <span>{{ row.replyCount }}</span>
+            </div>
+            <el-tag
+              v-if="row.riskLevel"
+              :type="riskLevelType(row.riskLevel)"
+              effect="dark"
+              size="small"
+              round
+            >
+              {{ riskLevelText(row.riskLevel) }}
+            </el-tag>
+          </div>
+
+          <div class="mobile-discussion-card__actions">
+            <el-button plain @click="viewDetail(row)">详情</el-button>
+            <el-button
+              v-if="row.status === 'pending'"
+              type="success"
+              plain
+              @click="handleApprove(row)"
+            >
+              通过
+            </el-button>
+            <el-button
+              v-if="row.status === 'pending'"
+              type="warning"
+              plain
+              @click="handleReject(row)"
+            >
+              拒绝
+            </el-button>
+            <el-button
+              v-if="row.itemType === 'post'"
+              type="info"
+              plain
+              @click="row.isPinned ? handleUnpin(row) : handlePin(row)"
+            >
+              {{ row.isPinned ? "取消置顶" : "设为置顶" }}
+            </el-button>
+            <el-button plain @click="handleEdit(row)">编辑</el-button>
+            <el-button type="danger" plain @click="handleDelete(row)">
+              删除
+            </el-button>
+          </div>
+        </div>
+
+        <el-empty v-if="!loading && discussions.length === 0" />
+      </div>
+
       <el-table
+        v-else
         v-loading="loading"
         :data="discussions"
         row-class-name="discussion-table-row"
@@ -1094,7 +1223,8 @@ onActivated(() => {
           v-model:page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           @current-change="handlePageChange"
           @size-change="handleSizeChange"
         />
@@ -1105,7 +1235,7 @@ onActivated(() => {
     <el-dialog
       v-model="editDialogVisible"
       :title="editForm.type === 'post' ? '编辑帖子' : '编辑回复'"
-      width="600px"
+      :width="getDialogWidth('600px')"
       destroy-on-close
       class="custom-dialog"
     >
@@ -1136,7 +1266,7 @@ onActivated(() => {
     <el-dialog
       v-model="detailDialogVisible"
       title="内容审核"
-      width="520px"
+      :width="getDialogWidth('520px')"
       destroy-on-close
       class="simple-review-dialog"
     >
@@ -1443,6 +1573,37 @@ onActivated(() => {
   }
 }
 
+.mobile-discussion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-discussion-card {
+  padding: 14px;
+  background: var(--el-fill-color-extra-light);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 14px;
+}
+
+.mobile-discussion-card__header,
+.mobile-discussion-card__stats,
+.mobile-discussion-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobile-discussion-card__header,
+.mobile-discussion-card__stats {
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.mobile-discussion-card__actions {
+  flex-wrap: wrap;
+}
+
 /* 按钮样式修正 */
 .el-button {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1596,6 +1757,35 @@ onActivated(() => {
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@media (width <= 768px) {
+  .discussion-manage {
+    .search-form {
+      padding: 0;
+    }
+
+    :deep(.search-form .el-form-item) {
+      width: 100%;
+      margin-right: 0;
+      margin-bottom: 12px;
+    }
+
+    :deep(.search-form .el-select),
+    :deep(.search-form .el-input) {
+      width: 100% !important;
+    }
+
+    :deep(.search-form .el-button) {
+      width: 100%;
+    }
+
+    .post-content .post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+  }
 }
 </style>
 

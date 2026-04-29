@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, shallowRef, nextTick } from "vue";
+import { ref, onMounted, onBeforeUnmount, shallowRef, watch } from "vue";
 import { getPptToken } from "@/api/ppt";
 import { ElMessage } from "element-plus";
 import { DocmeeUI, CreatorType } from "@docmee/sdk-ui";
+import { usePageResponsive } from "@/utils/pageResponsive";
 
 const loading = ref(true);
 const iframeReady = ref(false); // 控制 iframe 显示，避免紫色闪烁
 const container = ref<HTMLDivElement>();
 const docmeeUI = shallowRef<any>(null);
+const { isMobile } = usePageResponsive();
+
+function destroyDocmee() {
+  docmeeUI.value?.destroy?.();
+  docmeeUI.value = null;
+  iframeReady.value = false;
+}
 
 async function initAiPPT() {
   try {
@@ -19,6 +27,7 @@ async function initAiPPT() {
     // 兼容多种状态码：0 或 200 都视为成功
     if (res && (res.code === 0 || res.code === 200) && res.data?.token) {
       console.log("Token 获取成功，正在初始化 DocmeeUI...");
+      destroyDocmee();
       docmeeUI.value = new DocmeeUI({
         container: "aippt-container", // 挂载 iframe 容器元素ID
         page: "creator", // 固定使用creator页面
@@ -29,8 +38,8 @@ async function initAiPPT() {
           creatorNow: true,
           type: CreatorType.AI_GEN
         },
-        isMobile: false, // 移动端模式
-        padding: "20px 20px 0px",
+        isMobile: isMobile.value, // 移动端模式
+        padding: isMobile.value ? "12px 12px 0px" : "20px 20px 0px",
         background: "linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)", // 与 welcome banner 一致的背景色
         mode: "light", // light 亮色模式, dark 暗色模式
         lang: "zh", // 国际化
@@ -286,6 +295,13 @@ onMounted(() => {
   // 加载SDK和初始化
   initAiPPT();
 });
+watch(isMobile, () => {
+  initAiPPT();
+});
+
+onBeforeUnmount(() => {
+  destroyDocmee();
+});
 </script>
 
 <template>
@@ -337,5 +353,16 @@ onMounted(() => {
 /* iframe 内部样式立即生效 */
 #aippt-container :deep(iframe) {
   opacity: inherit;
+}
+
+@media (width <= 768px) {
+  .aippt-page {
+    height: calc(100vh - 88px);
+    padding: 8px;
+  }
+
+  #aippt-container {
+    border-radius: 16px;
+  }
 }
 </style>
