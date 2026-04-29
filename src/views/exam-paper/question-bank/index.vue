@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useDark } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getQuestionBankList,
@@ -35,6 +36,8 @@ defineOptions({
 });
 
 const { isDark } = useDark();
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 // 搜索和筛选
 const searchQuery = ref("");
@@ -137,6 +140,37 @@ const exportDialogVisible = ref(false);
 const exportFormat = ref<"excel" | "word" | "json">("excel");
 const exportScope = ref<"all" | "selected" | "folder">("all");
 const exportLoading = ref(false);
+
+const paginationLayout = computed(() =>
+  isMobile.value
+    ? "prev, pager, next"
+    : "total, sizes, prev, pager, next, jumper"
+);
+
+const isQuestionSelected = (questionId: number) => {
+  return selectedQuestions.value.includes(questionId);
+};
+
+const toggleQuestionSelection = (questionId: number, checked: unknown) => {
+  const nextChecked = Boolean(checked);
+
+  if (nextChecked) {
+    if (!selectedQuestions.value.includes(questionId)) {
+      selectedQuestions.value = [...selectedQuestions.value, questionId];
+    }
+    return;
+  }
+
+  selectedQuestions.value = selectedQuestions.value.filter(
+    id => id !== questionId
+  );
+};
+
+const openSingleMoveDialog = (questionId: number) => {
+  selectedQuestions.value = [questionId];
+  targetFolderId.value = null;
+  moveDialogVisible.value = true;
+};
 
 // 加载题库列表
 const fetchQuestions = async () => {
@@ -774,14 +808,14 @@ onMounted(() => {
                 placeholder="搜索题目内容..."
                 prefix-icon="Search"
                 clearable
-                style="width: 250px"
+                :style="{ width: isMobile ? '100%' : '250px' }"
                 @change="handleSearch"
                 @clear="handleSearch"
               />
               <el-select
                 v-model="selectedType"
                 placeholder="题型"
-                style="width: 120px"
+                :style="{ width: isMobile ? '100%' : '120px' }"
                 @change="handleSearch"
               >
                 <el-option
@@ -794,7 +828,7 @@ onMounted(() => {
               <el-select
                 v-model="selectedDifficulty"
                 placeholder="难度"
-                style="width: 120px"
+                :style="{ width: isMobile ? '100%' : '120px' }"
                 @change="handleSearch"
               >
                 <el-option
@@ -807,7 +841,7 @@ onMounted(() => {
               <el-select
                 v-model="selectedKnowledgePoint"
                 placeholder="知识点"
-                style="width: 160px"
+                :style="{ width: isMobile ? '100%' : '160px' }"
                 clearable
                 filterable
                 @change="handleSearch"
@@ -829,7 +863,10 @@ onMounted(() => {
                 <el-icon class="mr-1"><Download /></el-icon>
                 导出
               </el-button>
-              <el-button @click="openMoveDialog">
+              <el-button
+                :disabled="selectedQuestions.length === 0"
+                @click="openMoveDialog"
+              >
                 <el-icon class="mr-1"><FolderOpened /></el-icon>
                 移动
               </el-button>
@@ -847,7 +884,109 @@ onMounted(() => {
 
         <!-- 题目列表 -->
         <div class="list-card">
+          <template v-if="isMobile">
+            <div v-loading="loading" class="question-mobile-list">
+              <div
+                v-for="row in questions"
+                :key="row.id"
+                class="question-mobile-card"
+              >
+                <div class="mobile-card-head">
+                  <div class="mobile-card-head-left">
+                    <el-checkbox
+                      :model-value="isQuestionSelected(row.id)"
+                      @change="
+                        (checked: unknown) =>
+                          toggleQuestionSelection(row.id, checked)
+                      "
+                    />
+                    <div class="mobile-tag-group">
+                      <el-tag
+                        :type="getTypeTagType(row.type)"
+                        size="small"
+                        effect="light"
+                      >
+                        {{ row.typeName }}
+                      </el-tag>
+                      <el-tag
+                        :type="getDifficultyType(row.difficulty)"
+                        size="small"
+                        effect="light"
+                      >
+                        {{ row.difficultyName }}
+                      </el-tag>
+                    </div>
+                  </div>
+                  <div class="mobile-stat-pills">
+                    <span class="points-badge">{{ row.points }}&#20998;</span>
+                    <span class="usage-badge">{{ row.useCount }}&#27425;</span>
+                  </div>
+                </div>
+
+                <div class="question-stem">{{ row.stem }}</div>
+
+                <div class="mobile-folder-line">
+                  <span class="meta-label"
+                    >&#25152;&#23646;&#20998;&#31867;</span
+                  >
+                  <span class="folder-badge">{{ row.folderName || "-" }}</span>
+                </div>
+
+                <div
+                  v-if="(row.knowledgePoints || []).length > 0"
+                  class="knowledge-tags"
+                >
+                  <el-tag
+                    v-for="kp in (row.knowledgePoints || []).slice(0, 3)"
+                    :key="kp"
+                    size="small"
+                    type="info"
+                    effect="plain"
+                    class="kp-tag"
+                  >
+                    {{ kp }}
+                  </el-tag>
+                  <span
+                    v-if="(row.knowledgePoints || []).length > 3"
+                    class="more-kp"
+                  >
+                    +{{ row.knowledgePoints.length - 3 }}
+                  </span>
+                </div>
+
+                <div class="mobile-action-grid">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click="openEditDialog(row)"
+                  >
+                    <el-icon class="mr-1"><Edit /></el-icon>
+                    &#32534;&#36753;
+                  </el-button>
+                  <el-button size="small" @click="openSingleMoveDialog(row.id)">
+                    <el-icon class="mr-1"><FolderOpened /></el-icon>
+                    &#31227;&#21160;
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    size="small"
+                    @click="handleDeleteQuestion(row)"
+                  >
+                    <el-icon class="mr-1"><Delete /></el-icon>
+                    &#21024;&#38500;
+                  </el-button>
+                </div>
+              </div>
+
+              <el-empty
+                v-if="!loading && questions.length === 0"
+                description="&#26242;&#26080;&#39064;&#30446;&#25968;&#25454;"
+                class="mobile-empty"
+              />
+            </div>
+          </template>
           <el-table
+            v-else
             v-loading="loading"
             :data="questions"
             style="width: 100%"
@@ -946,7 +1085,7 @@ onMounted(() => {
               v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50, 100]"
               :total="total"
-              layout="total, sizes, prev, pager, next, jumper"
+              :layout="paginationLayout"
               background
               @size-change="handlePageChange"
               @current-change="handlePageChange"
@@ -960,16 +1099,18 @@ onMounted(() => {
     <el-dialog
       v-model="editDialogVisible"
       :title="isNewQuestion ? '新建题目' : '编辑题目'"
-      width="800px"
+      :width="isMobile ? '100%' : '800px'"
+      :fullscreen="isMobile"
       destroy-on-close
     >
       <el-form
         v-if="editingQuestion"
         :model="editingQuestion"
-        label-width="100px"
+        :label-width="isMobile ? 'auto' : '100px'"
+        :label-position="isMobile ? 'top' : 'right'"
       >
-        <el-row :gutter="20">
-          <el-col :span="8">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 8">
             <el-form-item label="题型">
               <el-select v-model="editingQuestion.type" style="width: 100%">
                 <el-option
@@ -981,7 +1122,7 @@ onMounted(() => {
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :span="isMobile ? 24 : 8">
             <el-form-item label="难度">
               <el-select
                 v-model="editingQuestion.difficulty"
@@ -996,7 +1137,7 @@ onMounted(() => {
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :span="isMobile ? 24 : 8">
             <el-form-item label="分值">
               <el-input-number
                 v-model="editingQuestion.points"
@@ -1130,9 +1271,13 @@ onMounted(() => {
     <el-dialog
       v-model="folderDialogVisible"
       :title="isNewFolder ? '新建文件夹' : '编辑文件夹'"
-      width="400px"
+      :width="isMobile ? '92%' : '400px'"
     >
-      <el-form :model="editingFolder" label-width="80px">
+      <el-form
+        :model="editingFolder"
+        :label-width="isMobile ? 'auto' : '80px'"
+        :label-position="isMobile ? 'top' : 'right'"
+      >
         <el-form-item label="名称">
           <el-input
             v-model="editingFolder.name"
@@ -1150,7 +1295,7 @@ onMounted(() => {
     <el-dialog
       v-model="importDialogVisible"
       title="导入题目"
-      width="600px"
+      :width="isMobile ? '96%' : '600px'"
       destroy-on-close
     >
       <div class="import-dialog-content">
@@ -1180,7 +1325,10 @@ onMounted(() => {
 
         <!-- 导入设置 -->
         <div class="import-settings">
-          <el-form label-width="100px">
+          <el-form
+            :label-width="isMobile ? 'auto' : '100px'"
+            :label-position="isMobile ? 'top' : 'right'"
+          >
             <el-form-item label="目标文件夹">
               <el-select
                 v-model="importTargetFolderId"
@@ -1236,11 +1384,14 @@ onMounted(() => {
     <el-dialog
       v-model="exportDialogVisible"
       title="导出题目"
-      width="500px"
+      :width="isMobile ? '92%' : '500px'"
       destroy-on-close
     >
       <div class="export-dialog-content">
-        <el-form label-width="100px">
+        <el-form
+          :label-width="isMobile ? 'auto' : '100px'"
+          :label-position="isMobile ? 'top' : 'right'"
+        >
           <el-form-item label="导出范围">
             <el-radio-group v-model="exportScope">
               <el-radio value="all">全部题目</el-radio>
@@ -1304,8 +1455,15 @@ onMounted(() => {
     </el-dialog>
 
     <!-- 移动到文件夹对话框 -->
-    <el-dialog v-model="moveDialogVisible" title="移动到文件夹" width="400px">
-      <el-form label-width="80px">
+    <el-dialog
+      v-model="moveDialogVisible"
+      title="移动到文件夹"
+      :width="isMobile ? '92%' : '400px'"
+    >
+      <el-form
+        :label-width="isMobile ? 'auto' : '80px'"
+        :label-position="isMobile ? 'top' : 'right'"
+      >
         <el-form-item label="目标文件夹">
           <el-select
             v-model="targetFolderId"
@@ -1348,8 +1506,8 @@ $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
 
-$primary-gradient: linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%);
-$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
+$primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
+$success-gradient: linear-gradient(135deg, #739cf9 0%, #80c8fa 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 
@@ -1357,8 +1515,10 @@ $radius-md: 12px;
 $radius-lg: 16px;
 
 .question-bank {
+  box-sizing: border-box;
   min-height: 100%;
   padding: 24px;
+  overflow-x: hidden;
 
   &.is-dark {
     .page-header,
@@ -1368,6 +1528,7 @@ $radius-lg: 16px;
     .folder-sidebar {
       background: $dark-card-bg;
       border-color: $dark-border;
+      box-shadow: $dark-shadow;
     }
 
     .page-header {
@@ -1397,6 +1558,53 @@ $radius-lg: 16px;
         .folder-title {
           color: $dark-text-primary;
         }
+      }
+
+      .folder-item {
+        color: $dark-text-secondary;
+
+        &:hover {
+          background: rgba(74, 127, 200, 0.18);
+        }
+
+        &.active {
+          background: rgba(74, 127, 200, 0.28);
+          color: #80c8fa;
+        }
+
+        .folder-count {
+          color: $dark-text-secondary;
+        }
+      }
+    }
+
+    .list-card {
+      .question-mobile-card {
+        background: rgba(15, 23, 42, 0.68);
+        border-color: $dark-border;
+        box-shadow: $dark-shadow;
+      }
+
+      .meta-label,
+      .more-kp {
+        color: $dark-text-secondary;
+      }
+
+      .question-stem,
+      .points-badge,
+      .usage-badge,
+      .folder-badge {
+        color: $dark-text-primary;
+      }
+
+      .points-badge,
+      .usage-badge,
+      .folder-badge {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .pagination-wrapper {
+        border-top-color: $dark-border;
       }
     }
   }
@@ -1450,6 +1658,13 @@ $radius-lg: 16px;
     .header-actions {
       display: flex;
       gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+
+      :deep(.el-button + .el-button) {
+        margin-left: 0;
+      }
 
       :deep(.el-button--primary) {
         color: #fff;
@@ -1460,6 +1675,20 @@ $radius-lg: 16px;
           opacity: 0.92;
         }
       }
+    }
+
+    :deep(.el-button.create-btn) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      height: 48px;
+      padding: 0 24px !important;
+      border-radius: $radius-md;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1 !important;
+      white-space: nowrap;
     }
   }
 
@@ -1557,7 +1786,12 @@ $radius-lg: 16px;
 
       &.active {
         background: rgba(115, 156, 249, 0.1);
-        color: #739CF9;
+        color: #739cf9;
+
+        .folder-count {
+          color: #fff;
+          background: #739cf9;
+        }
       }
 
       &.child {
@@ -1572,6 +1806,9 @@ $radius-lg: 16px;
       .folder-count {
         font-size: 12px;
         color: $light-text-secondary;
+        padding: 2px 8px;
+        background: #f1f5f9;
+        border-radius: 10px;
       }
 
       .folder-actions {
@@ -1586,6 +1823,7 @@ $radius-lg: 16px;
 
   .content-area {
     flex: 1;
+    min-width: 0;
   }
 
   .toolbar-card {
@@ -1644,6 +1882,91 @@ $radius-lg: 16px;
       }
     }
 
+    .points-badge,
+    .usage-badge,
+    .folder-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: $light-text-secondary;
+      background: #f1f5f9;
+      border-radius: 999px;
+    }
+
+    .question-mobile-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .question-mobile-card {
+      padding: 16px;
+      border: 1px solid $light-border;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgb(255 255 255 / 96%), #fff);
+      box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+    }
+
+    .mobile-card-head {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .mobile-card-head-left {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .mobile-tag-group,
+    .mobile-stat-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .mobile-folder-line {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      margin-bottom: 14px;
+    }
+
+    .meta-label {
+      font-size: 12px;
+      color: $light-text-secondary;
+      white-space: nowrap;
+    }
+
+    .mobile-action-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+
+      .el-button {
+        flex: 1 1 calc(33.333% - 6px);
+        min-width: 0;
+        margin-left: 0;
+      }
+    }
+
+    .mobile-empty {
+      padding-top: 12px;
+    }
+
     .pagination-wrapper {
       padding: 16px 20px;
       display: flex;
@@ -1683,7 +2006,7 @@ $radius-lg: 16px;
         transition: all 0.3s;
 
         &:hover {
-          border-color: #4A7FC8;
+          border-color: #4a7fc8;
           background: rgba(15, 118, 110, 0.04);
         }
       }
@@ -1694,7 +2017,7 @@ $radius-lg: 16px;
 
       .upload-icon {
         font-size: 48px;
-        color: #4A7FC8;
+        color: #4a7fc8;
         margin-bottom: 12px;
       }
 
@@ -1704,7 +2027,7 @@ $radius-lg: 16px;
         margin-bottom: 8px;
 
         em {
-          color: #4A7FC8;
+          color: #4a7fc8;
           font-style: normal;
           cursor: pointer;
         }
@@ -1730,7 +2053,7 @@ $radius-lg: 16px;
   // 导出对话框样式
   .export-dialog-content {
     .export-count {
-      color: #4A7FC8;
+      color: #4a7fc8;
       font-size: 12px;
     }
 
@@ -1747,6 +2070,272 @@ $radius-lg: 16px;
     :deep(.el-form-item:last-child .el-radio-group) {
       flex-direction: row;
       gap: 0;
+    }
+  }
+
+  @media screen and (max-width: 1024px) {
+    .stats-section {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .question-main-content {
+      flex-direction: column;
+    }
+
+    .folder-sidebar {
+      width: 100%;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    padding: 12px calc(16px + env(safe-area-inset-right, 0px)) 20px 12px;
+
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 18px;
+      gap: 16px;
+
+      .header-content {
+        align-items: flex-start;
+      }
+
+      .header-icon {
+        width: 48px;
+        height: 48px;
+
+        :deep(svg) {
+          width: 24px;
+          height: 24px;
+        }
+      }
+
+      .page-title {
+        font-size: 20px;
+      }
+
+      .page-desc {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .header-actions {
+        justify-content: stretch;
+
+        .el-button,
+        .create-btn {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+
+      :deep(.el-button.create-btn) {
+        min-height: 42px;
+        height: 42px;
+        padding: 0 16px !important;
+        font-size: 14px;
+      }
+    }
+
+    .stats-section {
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      gap: 12px;
+      padding: 16px;
+
+      .stat-icon {
+        width: 42px;
+        height: 42px;
+
+        :deep(svg) {
+          width: 22px;
+          height: 22px;
+        }
+      }
+
+      .stat-value {
+        font-size: 22px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+      }
+    }
+
+    .question-main-content {
+      gap: 16px;
+    }
+
+    .folder-sidebar,
+    .toolbar-card {
+      padding: 16px;
+    }
+
+    .folder-sidebar {
+      .folder-header {
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+      }
+
+      .folder-tree {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-right: 12px;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+          display: none;
+        }
+      }
+
+      .folder-item {
+        flex: 0 0 auto;
+        min-width: 120px;
+      }
+    }
+
+    .toolbar-card {
+      margin-bottom: 16px;
+
+      .toolbar,
+      .toolbar-left,
+      .toolbar-right {
+        width: 100%;
+      }
+
+      .toolbar-left {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar-right {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+      }
+
+      .el-button {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      :deep(.el-input__wrapper),
+      :deep(.el-select__wrapper) {
+        min-height: 42px;
+        border-radius: 12px;
+      }
+    }
+
+    .list-card {
+      .question-stem {
+        -webkit-line-clamp: 3;
+      }
+
+      .pagination-wrapper {
+        padding: 16px;
+        justify-content: center;
+
+        :deep(.el-pagination) {
+          justify-content: center;
+          row-gap: 8px;
+        }
+      }
+    }
+  }
+
+  @media screen and (max-width: 520px) {
+    .stats-section {
+      grid-template-columns: 1fr;
+    }
+
+    .page-header {
+      .header-actions {
+        flex-direction: column;
+
+        .el-button,
+        .create-btn {
+          width: 100%;
+        }
+      }
+    }
+
+    .folder-sidebar {
+      .folder-tree {
+        flex-wrap: wrap;
+        gap: 8px;
+        overflow: visible;
+        padding-right: 0;
+        padding-bottom: 0;
+      }
+
+      .folder-item {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+        padding: 12px 10px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .folder-name {
+        min-width: 0;
+        white-space: normal;
+        line-height: 1.35;
+        word-break: break-word;
+      }
+
+      .folder-count {
+        margin-left: auto;
+      }
+
+      .folder-item .folder-actions {
+        display: none;
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 4px;
+      }
+
+      .folder-item.active .folder-actions {
+        display: flex;
+      }
+    }
+
+    .toolbar-card {
+      .toolbar-right {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .list-card {
+      .question-mobile-list {
+        padding: 12px;
+      }
+
+      .question-mobile-card {
+        padding: 14px;
+      }
+
+      .mobile-card-head,
+      .mobile-folder-line {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .mobile-stat-pills {
+        justify-content: flex-start;
+      }
+
+      .mobile-action-grid {
+        gap: 10px;
+
+        .el-button {
+          flex: 1 1 calc(50% - 4px);
+        }
+      }
     }
   }
 }

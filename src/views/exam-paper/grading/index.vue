@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 import { ElMessage } from "element-plus";
 import {
   getGradingStatistics,
@@ -22,6 +23,8 @@ defineOptions({
 
 const router = useRouter();
 const { isDark } = useDark();
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 // 搜索条件
 const searchForm = reactive({
@@ -64,6 +67,10 @@ const pagination = reactive({
 
 // 加载状态
 const loading = ref(false);
+
+const paginationLayout = computed(() =>
+  isMobile.value ? "prev, pager, next" : "total, prev, pager, next"
+);
 
 // 加载统计数据
 const loadStatistics = async () => {
@@ -234,13 +241,18 @@ onMounted(() => {
 
     <!-- 搜索区域 -->
     <div class="search-card">
-      <el-form :model="searchForm" inline>
+      <el-form
+        :model="searchForm"
+        :inline="!isMobile"
+        :label-position="isMobile ? 'top' : 'right'"
+        class="search-form"
+      >
         <el-form-item label="关键词">
           <el-input
             v-model="searchForm.keyword"
             placeholder="试卷名称"
             clearable
-            style="width: 200px"
+            :style="{ width: isMobile ? '100%' : '200px' }"
           />
         </el-form-item>
         <el-form-item label="状态">
@@ -248,7 +260,7 @@ onMounted(() => {
             v-model="searchForm.status"
             placeholder="全部状态"
             clearable
-            style="width: 140px"
+            :style="{ width: isMobile ? '100%' : '140px' }"
           >
             <el-option
               v-for="item in statusOptions"
@@ -263,7 +275,7 @@ onMounted(() => {
             v-model="searchForm.courseId"
             placeholder="全部课程"
             clearable
-            style="width: 160px"
+            :style="{ width: isMobile ? '100%' : '160px' }"
           >
             <el-option
               v-for="course in courseList"
@@ -273,17 +285,17 @@ onMounted(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="search-actions">
           <el-button
             type="primary"
             class="search-btn"
-            size="default"
+            size="large"
             @click="handleSearch"
           >
             <el-icon class="mr-1"><Search /></el-icon>
             <span>搜索</span>
           </el-button>
-          <el-button class="reset-btn" size="default" @click="handleReset">
+          <el-button class="reset-btn" size="large" @click="handleReset">
             <el-icon class="mr-1"><Refresh /></el-icon>
             <span>重置</span>
           </el-button>
@@ -293,7 +305,113 @@ onMounted(() => {
 
     <!-- 阅卷列表 -->
     <div class="list-card">
-      <el-table v-loading="loading" :data="gradingList" class="grading-table">
+      <template v-if="isMobile">
+        <div v-loading="loading" class="grading-mobile-list">
+          <div
+            v-for="row in gradingList"
+            :key="row.id"
+            class="grading-mobile-card"
+          >
+            <div class="mobile-card-head">
+              <div class="paper-info-cell">
+                <div class="paper-icon">
+                  <IconDocument />
+                </div>
+                <div class="paper-details">
+                  <span class="paper-title">{{ row.paperTitle }}</span>
+                  <span class="paper-course">{{ row.courseName }}</span>
+                </div>
+              </div>
+              <el-tag
+                :type="getStatusType(row.status)"
+                size="small"
+                effect="light"
+              >
+                {{ getStatusText(row.status) }}
+              </el-tag>
+            </div>
+
+            <div class="progress-panel">
+              <div class="progress-panel-head">
+                <span class="mobile-meta-label">阅卷进度</span>
+                <span class="progress-text">
+                  {{ row.gradedCount }}/{{ row.studentCount }}
+                </span>
+              </div>
+              <el-progress
+                :percentage="getProgress(row)"
+                :status="row.status === 'completed' ? 'success' : ''"
+                :stroke-width="10"
+              />
+            </div>
+
+            <div class="mobile-meta-grid">
+              <div class="mobile-meta-item">
+                <span class="mobile-meta-label">答卷数</span>
+                <span class="mobile-meta-value">{{ row.studentCount }}</span>
+              </div>
+              <div class="mobile-meta-item">
+                <span class="mobile-meta-label">完成度</span>
+                <span class="mobile-meta-value">{{ getProgress(row) }}%</span>
+              </div>
+              <div class="mobile-meta-item">
+                <span class="mobile-meta-label">截止时间</span>
+                <span class="mobile-meta-value">{{ row.deadline || "-" }}</span>
+              </div>
+              <div class="mobile-meta-item">
+                <span class="mobile-meta-label">发布时间</span>
+                <span class="mobile-meta-value">{{
+                  row.publishTime || "-"
+                }}</span>
+              </div>
+            </div>
+
+            <div class="mobile-action-grid">
+              <el-button
+                v-if="row.status !== 'completed'"
+                class="operation-btn"
+                type="primary"
+                size="small"
+                @click="handleGrade(row)"
+              >
+                <el-icon><Edit /></el-icon>
+                <span>阅卷</span>
+              </el-button>
+              <el-button
+                v-if="row.status !== 'completed'"
+                class="operation-btn"
+                type="primary"
+                size="small"
+                @click="handleAutoGrade(row)"
+              >
+                <el-icon><MagicStick /></el-icon>
+                <span>自动批改</span>
+              </el-button>
+              <el-button
+                class="operation-btn"
+                size="small"
+                @click="handleView(row)"
+              >
+                <el-icon><View /></el-icon>
+                <span>详情</span>
+              </el-button>
+            </div>
+          </div>
+
+          <el-empty
+            v-if="!loading && gradingList.length === 0"
+            description="暂无阅卷任务"
+            class="mobile-empty"
+          />
+        </div>
+      </template>
+
+      <el-table
+        v-else
+        v-loading="loading"
+        :data="gradingList"
+        class="grading-table"
+      >
         <el-table-column prop="paperTitle" label="试卷名称" min-width="200">
           <template #default="{ row }">
             <div class="paper-info-cell">
@@ -396,7 +514,7 @@ onMounted(() => {
           v-model:current-page="pagination.currentPage"
           :page-size="pagination.pageSize"
           :total="pagination.total"
-          layout="total, prev, pager, next"
+          :layout="paginationLayout"
           background
           @current-change="handlePageChange"
         />
@@ -449,6 +567,7 @@ $radius-xl: 20px;
 
 .grading-container {
   min-height: 100%;
+  overflow-x: hidden;
   transition: all 0.3s ease;
 
   &.is-dark {
@@ -500,6 +619,26 @@ $radius-xl: 20px;
       background: $dark-card-bg;
       border-color: $dark-border;
       box-shadow: $dark-shadow;
+
+      .grading-mobile-card {
+        background: rgba(15, 23, 42, 0.68);
+        border-color: $dark-border;
+        box-shadow: $dark-shadow;
+      }
+
+      .progress-panel {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: $dark-border;
+      }
+
+      .mobile-meta-label,
+      .progress-text {
+        color: $dark-text-secondary;
+      }
+
+      .mobile-meta-value {
+        color: $dark-text-primary;
+      }
 
       .grading-table {
         :deep(.el-table) {
@@ -697,27 +836,51 @@ $radius-xl: 20px;
     margin-bottom: 0;
   }
 
+  .search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    align-items: flex-end;
+
+    :deep(.el-form-item) {
+      margin-right: 0;
+    }
+  }
+
   /* 解决按钮文字未居中问题 */
-  .search-btn,
-  .reset-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    height: 32px;
-    padding: 0 16px;
+  :deep(.el-button.search-btn),
+  :deep(.el-button.reset-btn) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 16px !important;
     line-height: 1 !important;
+    white-space: nowrap;
+    border-radius: 12px;
 
-    :deep(span) {
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
+    > span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       line-height: 1 !important;
     }
+  }
 
-    :deep(.el-icon) {
-      margin-right: 4px !important;
-      line-height: 1 !important;
-    }
+  :deep(.el-button.search-btn.el-button--primary) {
+    color: #fff;
+    border: none;
+    background: $info-gradient;
+  }
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
+
+  :deep(.el-button .el-icon) {
+    margin-right: 4px !important;
+    line-height: 1 !important;
   }
 }
 
@@ -727,6 +890,72 @@ $radius-xl: 20px;
   border-radius: $radius-lg;
   box-shadow: $light-shadow;
   overflow: hidden;
+
+  .grading-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .grading-mobile-card {
+    padding: 16px;
+    border: 1px solid $light-border;
+    border-radius: $radius-lg;
+    background: linear-gradient(180deg, rgb(255 255 255 / 96%), #fff);
+    box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+  }
+
+  .mobile-card-head {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .progress-panel {
+    padding: 12px;
+    margin-bottom: 14px;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: $radius-md;
+  }
+
+  .progress-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .mobile-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .mobile-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .mobile-meta-label {
+    font-size: 12px;
+    color: $light-text-secondary;
+  }
+
+  .mobile-meta-value {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: $light-text-primary;
+    word-break: break-word;
+  }
 
   .grading-table {
     :deep(.el-table__header th) {
@@ -836,6 +1065,190 @@ $radius-xl: 20px;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+      }
+    }
+  }
+
+  .mobile-action-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    > * {
+      flex: 1 1 calc(33.333% - 6px);
+      min-width: 0;
+    }
+
+    .el-button {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+
+  .mobile-empty {
+    padding: 12px 0 0;
+  }
+}
+
+@media (width <= 768px) {
+  .page-header {
+    padding: 18px;
+    margin-bottom: 16px;
+
+    .header-content {
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    .header-info {
+      .page-title {
+        margin-bottom: 6px;
+        font-size: 20px;
+      }
+
+      .page-desc {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  .stats-section {
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .stat-card {
+      gap: 14px;
+      padding: 16px;
+
+      .stat-icon {
+        width: 44px;
+        height: 44px;
+
+        svg {
+          width: 22px;
+          height: 22px;
+        }
+      }
+
+      .stat-info {
+        .stat-value {
+          font-size: 24px;
+        }
+
+        .stat-label {
+          font-size: 12px;
+        }
+      }
+    }
+  }
+
+  .search-card {
+    padding: 16px;
+    margin-bottom: 16px;
+
+    .search-form {
+      display: block;
+
+      :deep(.el-form-item) {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 12px;
+      }
+
+      :deep(.el-form-item__label) {
+        width: auto !important;
+        height: auto;
+        padding: 0 0 6px;
+        line-height: 1.4;
+      }
+
+      :deep(.el-form-item__content) {
+        margin-left: 0 !important;
+        width: 100%;
+      }
+    }
+
+    .search-actions {
+      :deep(.el-form-item__content) {
+        display: flex;
+        gap: 10px;
+      }
+    }
+
+    :deep(.el-button.search-btn),
+    :deep(.el-button.reset-btn) {
+      flex: 1;
+      min-height: 40px;
+      height: 40px;
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      min-height: 42px;
+      border-radius: 12px;
+    }
+  }
+
+  .list-card {
+    .pagination-wrapper {
+      justify-content: center;
+      padding: 16px;
+
+      :deep(.el-pagination) {
+        justify-content: center;
+        row-gap: 8px;
+      }
+    }
+  }
+}
+
+@media (width <= 520px) {
+  .search-card {
+    .search-actions {
+      :deep(.el-form-item__content) {
+        flex-direction: column;
+      }
+    }
+
+    :deep(.el-button.search-btn),
+    :deep(.el-button.reset-btn) {
+      width: 100%;
+    }
+  }
+
+  .list-card {
+    .grading-mobile-list {
+      padding: 12px;
+    }
+
+    .grading-mobile-card {
+      padding: 14px;
+    }
+
+    .mobile-card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .mobile-meta-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .mobile-action-grid {
+      > * {
+        flex: 1 1 calc(50% - 4px);
       }
     }
   }

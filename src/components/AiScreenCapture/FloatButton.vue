@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { getToken } from "@/utils/auth";
 import { useAppStoreHook } from "@/store/modules/app";
 import AiHubIcon from "@/assets/new-release/ai-hub-svgrepo-com.svg?component";
@@ -18,106 +18,217 @@ const emit = defineEmits<{
 
 const appStore = useAppStoreHook();
 const isMobile = computed(() => appStore.getDevice === "mobile");
+const buttonRef = ref<HTMLElement | null>(null);
+const activePointerId = ref<number | null>(null);
+const isDragging = ref(false);
+const preventNextClick = ref(false);
+const dragStart = ref({ x: 0, y: 0 });
+const dragOrigin = ref({ left: 0, top: 0 });
+const position = ref({
+  left: 0,
+  top: 0
+});
 
-// 检查用户是否已登录
+const DESKTOP_BUTTON_SIZE = 56;
+const MOBILE_BUTTON_SIZE = 52;
+const POSITION_PADDING = 10;
+const DRAG_THRESHOLD = 6;
+
 const isLoggedIn = computed(() => {
   const token = getToken();
   return !!token?.accessToken;
 });
 
-// 按钮位置
-const position = ref({
-  right: 30,
-  bottom: 100
-});
+const getCssPixelValue = (name: string) => {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
-// 是否正在拖拽
-const isDragging = ref(false);
-const dragStart = ref({ x: 0, y: 0 });
+const getButtonSize = () => {
+  return (
+    buttonRef.value?.offsetWidth ||
+    (isMobile.value ? MOBILE_BUTTON_SIZE : DESKTOP_BUTTON_SIZE)
+  );
+};
 
-// 处理点击
+const clampPosition = (left: number, top: number) => {
+  const size = getButtonSize();
+  const maxLeft = Math.max(
+    POSITION_PADDING,
+    window.innerWidth - size - POSITION_PADDING
+  );
+  const maxTop = Math.max(
+    POSITION_PADDING,
+    window.innerHeight - size - POSITION_PADDING
+  );
+
+  return {
+    left: Math.min(Math.max(POSITION_PADDING, left), maxLeft),
+    top: Math.min(Math.max(POSITION_PADDING, top), maxTop)
+  };
+};
+
+const getDefaultPosition = () => {
+  const size = getButtonSize();
+  const rightOffset = isMobile.value ? 16 : 30;
+  const bottomOffset = isMobile.value
+    ? getCssPixelValue("--pure-mobile-tab-height") +
+      getCssPixelValue("--pure-safe-area-bottom") +
+      20
+    : 100;
+
+  return clampPosition(
+    window.innerWidth - size - rightOffset,
+    window.innerHeight - size - bottomOffset
+  );
+};
+
+const syncPosition = (reset = false) => {
+  if (
+    reset ||
+    (position.value.left === 0 && position.value.top === 0 && !isDragging.value)
+  ) {
+    position.value = getDefaultPosition();
+    return;
+  }
+
+  position.value = clampPosition(position.value.left, position.value.top);
+};
+
+const releasePointerCapture = (pointerId: number | null) => {
+  if (
+    buttonRef.value &&
+    pointerId !== null &&
+    buttonRef.value.hasPointerCapture(pointerId)
+  ) {
+    buttonRef.value.releasePointerCapture(pointerId);
+  }
+};
+
 const handleClick = () => {
   if (props.disabled || isDragging.value) return;
+
+  if (preventNextClick.value) {
+    preventNextClick.value = false;
+    return;
+  }
+
   emit("click");
 };
 
-// 拖拽功能
-const handleMouseDown = (e: MouseEvent) => {
-  if (isMobile.value) return;
+const handlePointerDown = (e: PointerEvent) => {
+  if (props.disabled || !e.isPrimary) return;
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+
+  activePointerId.value = e.pointerId;
   isDragging.value = false;
+  preventNextClick.value = false;
   dragStart.value = {
     x: e.clientX,
     y: e.clientY
   };
+  dragOrigin.value = { ...position.value };
 
-  const handleMouseMove = (moveEvent: MouseEvent) => {
-    const deltaX = moveEvent.clientX - dragStart.value.x;
-    const deltaY = moveEvent.clientY - dragStart.value.y;
-
-    // 如果移动距离超过5px，认为是拖拽
-    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-      isDragging.value = true;
-    }
-
-    if (isDragging.value) {
-      position.value.right -= deltaX;
-      position.value.bottom -= deltaY;
-
-      // 限制范围
-      position.value.right = Math.max(
-        10,
-        Math.min(window.innerWidth - 70, position.value.right)
-      );
-      position.value.bottom = Math.max(
-        10,
-        Math.min(window.innerHeight - 70, position.value.bottom)
-      );
-
-      dragStart.value = {
-        x: moveEvent.clientX,
-        y: moveEvent.clientY
-      };
-    }
-  };
-
-  const handleMouseUp = () => {
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-
-    // 延迟重置拖拽状态，防止触发点击
-    setTimeout(() => {
-      isDragging.value = false;
-    }, 100);
-  };
-
-  document.addEventListener("mousemove", handleMouseMove);
-  document.addEventListener("mouseup", handleMouseUp);
+  buttonRef.value?.setPointerCapture(e.pointerId);
+  e.preventDefault();
 };
 
-// 按钮样式
-const buttonStyle = computed(() =>
-  isMobile.value
-    ? {
-        right: "16px",
-        bottom:
-          "calc(var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 20px)"
-      }
-    : {
-        right: `${position.value.right}px`,
-        bottom: `${position.value.bottom}px`
-      }
-);
+const handlePointerMove = (e: PointerEvent) => {
+  if (activePointerId.value !== e.pointerId) return;
 
-// 获取按钮中心位置（用于涟漪效果）
+  const deltaX = e.clientX - dragStart.value.x;
+  const deltaY = e.clientY - dragStart.value.y;
+
+  if (
+    !isDragging.value &&
+    (Math.abs(deltaX) > DRAG_THRESHOLD || Math.abs(deltaY) > DRAG_THRESHOLD)
+  ) {
+    isDragging.value = true;
+  }
+
+  if (!isDragging.value) return;
+
+  position.value = clampPosition(
+    dragOrigin.value.left + deltaX,
+    dragOrigin.value.top + deltaY
+  );
+  e.preventDefault();
+};
+
+const finishDrag = (pointerId: number | null) => {
+  releasePointerCapture(pointerId);
+  activePointerId.value = null;
+
+  if (isDragging.value) {
+    preventNextClick.value = true;
+  }
+
+  window.setTimeout(() => {
+    isDragging.value = false;
+  }, 0);
+};
+
+const handlePointerUp = (e: PointerEvent) => {
+  if (activePointerId.value !== e.pointerId) return;
+  finishDrag(e.pointerId);
+};
+
+const handlePointerCancel = (e: PointerEvent) => {
+  if (activePointerId.value !== e.pointerId) return;
+  isDragging.value = false;
+  preventNextClick.value = false;
+  finishDrag(e.pointerId);
+};
+
+const handleResize = () => {
+  syncPosition();
+};
+
+const buttonStyle = computed(() => ({
+  left: `${position.value.left}px`,
+  top: `${position.value.top}px`
+}));
+
 const getButtonCenter = () => {
-  const x = window.innerWidth - position.value.right - 28; // 28 = 按钮宽度的一半
-  const y = window.innerHeight - position.value.bottom - 28;
-  return { x, y };
+  const size = getButtonSize();
+  return {
+    x: position.value.left + size / 2,
+    y: position.value.top + size / 2
+  };
 };
 
-// 暴露方法给父组件
+const getButtonCenterFromDom = () => {
+  const buttonEl = buttonRef.value;
+  if (buttonEl) {
+    const rect = buttonEl.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+  }
+
+  return getButtonCenter();
+};
+
+onMounted(() => {
+  syncPosition(true);
+  window.addEventListener("resize", handleResize, { passive: true });
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+  releasePointerCapture(activePointerId.value);
+});
+
+watch(isMobile, () => {
+  syncPosition(true);
+});
+
 defineExpose({
-  getButtonCenter,
+  getButtonCenter: getButtonCenterFromDom,
   position
 });
 </script>
@@ -126,10 +237,14 @@ defineExpose({
   <Transition name="fade">
     <div
       v-if="isLoggedIn"
+      ref="buttonRef"
       class="ai-float-button"
       :class="{ disabled: disabled, dragging: isDragging }"
       :style="buttonStyle"
-      @mousedown="handleMouseDown"
+      @pointerdown="handlePointerDown"
+      @pointermove="handlePointerMove"
+      @pointerup="handlePointerUp"
+      @pointercancel="handlePointerCancel"
       @click="handleClick"
     >
       <el-tooltip content="AI识屏助手" placement="left" :disabled="isDragging">
@@ -149,6 +264,7 @@ defineExpose({
   height: 56px;
   cursor: pointer;
   user-select: none;
+  touch-action: none;
   transition: transform 0.2s ease;
 
   &:hover:not(.disabled, .dragging) {

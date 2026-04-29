@@ -6,7 +6,13 @@ import { useTags } from "@/layout/hooks/useTag";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useGlobal, isNumber } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
-import { h, computed, Transition, defineComponent } from "vue";
+import {
+  h,
+  computed,
+  Transition,
+  defineComponent,
+  type CSSProperties
+} from "vue";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 
 const props = defineProps({
@@ -50,7 +56,33 @@ const getMainWidth = computed(() => {
       : "100%";
 });
 
-const getSectionStyle = computed(() => {
+const mobileFooterOffset = computed(() => {
+  return isMobile.value ? "calc(var(--pure-mobile-tab-height) + 16px)" : "0px";
+});
+
+const fixedScrollWrapStyle = computed<CSSProperties>(() => {
+  return {
+    display: "flex",
+    width: "100%",
+    flexWrap: "wrap",
+    maxWidth: getMainWidth.value,
+    margin: "0 auto",
+    transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)"
+  };
+});
+
+const fixedScrollViewStyle = computed<CSSProperties>(() => {
+  return {
+    display: "flex",
+    flex: "auto",
+    overflow: "hidden",
+    flexDirection: "column",
+    boxSizing: "border-box",
+    paddingBottom: mobileFooterOffset.value
+  };
+});
+
+const getSectionStyle = computed<CSSProperties>(() => {
   const headerOnlyHeight = isMobile.value ? 64 : 72;
   const headerWithTagsHeight = isMobile.value
     ? 64
@@ -59,18 +91,19 @@ const getSectionStyle = computed(() => {
       : 112;
 
   if (props.fixedHeader) {
-    return [
-      `padding-top: ${
-        hideTabs.value ? headerOnlyHeight : headerWithTagsHeight
-      }px;`
-    ];
+    return {
+      paddingTop: `${hideTabs.value ? headerOnlyHeight : headerWithTagsHeight}px`
+    };
   }
 
-  return [
-    `padding-top: 0;min-height: calc(100vh - ${
+  return {
+    paddingTop: "0",
+    minHeight: `calc(100vh - ${
       hideTabs.value ? headerOnlyHeight : headerWithTagsHeight
-    }px);`
-  ];
+    }px)`,
+    boxSizing: "border-box",
+    paddingBottom: mobileFooterOffset.value
+  };
 });
 
 const transitionMain = defineComponent({
@@ -117,20 +150,8 @@ const transitionMain = defineComponent({
           <template #default="{ Comp, fullPath, frameInfo }">
             <el-scrollbar
               v-if="fixedHeader"
-              :wrap-style="{
-                display: 'flex',
-                width: '100%',
-                'flex-wrap': 'wrap',
-                'max-width': getMainWidth,
-                margin: '0 auto',
-                transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)'
-              }"
-              :view-style="{
-                display: 'flex',
-                flex: 'auto',
-                overflow: 'hidden',
-                'flex-direction': 'column'
-              }"
+              :wrap-style="fixedScrollWrapStyle"
+              :view-style="fixedScrollViewStyle"
             >
               <el-backtop
                 :title="t('buttons.pureBackTop')"

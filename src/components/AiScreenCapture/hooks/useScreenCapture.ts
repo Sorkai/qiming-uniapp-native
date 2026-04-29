@@ -358,6 +358,7 @@ export function useScreenCapture() {
           ignoreElements: element => {
             return (
               element.classList.contains("capture-overlay") ||
+              element.classList.contains("capture-loading-overlay") ||
               element.classList.contains("ai-float-button")
             );
           }

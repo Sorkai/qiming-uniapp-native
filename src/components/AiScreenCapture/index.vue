@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { nextTick, ref, watch, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { useRoute } from "vue-router";
 import { storageLocal } from "@pureadmin/utils";
 import { userKey } from "@/utils/auth";
 import FloatButton from "./FloatButton.vue";
 import CaptureOverlay from "./CaptureOverlay.vue";
+import CaptureLoadingOverlay from "./CaptureLoadingOverlay.vue";
 import ChatDialog from "./ChatDialog.vue";
 import { useScreenCapture } from "./hooks/useScreenCapture";
 import { useAiChat } from "./hooks/useAiChat";
@@ -60,6 +61,48 @@ const {
 } = useAiChat({ courseId: courseIdRef });
 
 const chatDialogVisible = ref(false);
+const captureLoadingVisible = ref(false);
+const captureLoadingPreview = ref("");
+const captureLoadingStage = ref<"capturing" | "optimizing" | "starting">(
+  "capturing"
+);
+let captureLoadingStartedAt = 0;
+const CAPTURE_LOADING_MIN_DURATION = 480;
+
+const openCaptureLoading = (
+  preview: string,
+  stage: "capturing" | "optimizing" | "starting" = "capturing"
+) => {
+  captureLoadingPreview.value = preview;
+  captureLoadingStage.value = stage;
+  captureLoadingStartedAt = Date.now();
+  captureLoadingVisible.value = true;
+};
+
+const updateCaptureLoadingStage = (
+  stage: "capturing" | "optimizing" | "starting"
+) => {
+  if (!captureLoadingVisible.value) return;
+  captureLoadingStage.value = stage;
+};
+
+const resetCaptureLoading = () => {
+  captureLoadingVisible.value = false;
+  captureLoadingPreview.value = "";
+  captureLoadingStage.value = "capturing";
+};
+
+const closeCaptureLoading = async () => {
+  if (!captureLoadingVisible.value) return;
+
+  const remaining =
+    CAPTURE_LOADING_MIN_DURATION - (Date.now() - captureLoadingStartedAt);
+  if (remaining > 0) {
+    await new Promise(resolve => setTimeout(resolve, remaining));
+  }
+
+  resetCaptureLoading();
+};
 
 /** 当进入课程页面且处于聊天模式时，尝试加载已有会话历史 */
 watch(
@@ -110,18 +153,26 @@ const handleFloatButtonClick = () => {
 
 const handleCapture = async (area: CaptureArea) => {
   try {
+    openCaptureLoading("", "capturing");
     const base64 = await captureScreen(area);
+    captureLoadingPreview.value = base64;
+    updateCaptureLoadingStage("optimizing");
     const compressedImage = await compressImage(base64);
 
+    updateCaptureLoadingStage("starting");
     enterChatMode();
     chatDialogVisible.value = true;
 
     // 先发送带有截图的用户消息，然后静默等待 AI 分析，而不是让 analyzeScreenshot 自动添加消息
     // 或者我们直接调用 analyzeScreenshot，它内部会由 useAiChat 处理
-    await analyzeScreenshot(compressedImage).catch(err => {
+    const analyzeTask = analyzeScreenshot(compressedImage).catch(err => {
       console.error("AI分析启动失败:", err);
     });
+    await nextTick();
+    await closeCaptureLoading();
+    await analyzeTask;
   } catch (error) {
+    await closeCaptureLoading();
     console.error("截图失败:", error);
     // 只有在真正的截图插件或 canvas 转换失败时才报错
     ElMessage.error("截图失败，请重试");
@@ -160,6 +211,7 @@ const handleOpenChat = () => {
 
 const handleNewCapture = () => {
   chatDialogVisible.value = false;
+  resetCaptureLoading();
   resetChat();
   resetCapture();
   setTimeout(() => {
@@ -169,6 +221,7 @@ const handleNewCapture = () => {
 
 watch(chatDialogVisible, visible => {
   if (!visible) {
+    resetCaptureLoading();
     // 用户关闭窗口后不保留任何记录
     resetChat();
     resetCapture();
@@ -178,6 +231,7 @@ watch(chatDialogVisible, visible => {
 watch(shouldShowAssistant, visible => {
   if (!visible) {
     chatDialogVisible.value = false;
+    resetCaptureLoading();
     resetChat();
     resetCapture();
   }
@@ -197,6 +251,12 @@ watch(shouldShowAssistant, visible => {
       :origin="buttonCenter"
       @capture="handleCapture"
       @cancel="handleCancelCapture"
+    />
+
+    <CaptureLoadingOverlay
+      :visible="captureLoadingVisible"
+      :stage="captureLoadingStage"
+      :preview="captureLoadingPreview"
     />
 
     <ChatDialog

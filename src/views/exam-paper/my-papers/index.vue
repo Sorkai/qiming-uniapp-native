@@ -2,6 +2,7 @@
 import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Plus,
@@ -41,6 +42,8 @@ defineOptions({
 
 const router = useRouter();
 const { isDark } = useDark();
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 // 搜索表单
 const searchForm = reactive({
@@ -102,6 +105,22 @@ const statCards = computed(() => [
     color: "#475569"
   }
 ]);
+
+const paginationLayout = computed(() =>
+  isMobile.value ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+);
+
+const getPaperQuestionCount = (paper: any) => {
+  return paper.questionCount ?? paper.totalQuestions ?? 0;
+};
+
+const getPaperPublishCount = (paper: any) => {
+  return paper.publishCount ?? paper.publishTimes ?? 0;
+};
+
+const getPaperUpdateTime = (paper: any) => {
+  return paper.updateTime || paper.updatedAt || paper.createTime || "-";
+};
 
 // ==================== 文件夹相关状态 ====================
 const folderList = ref<PaperFolder[]>([]);
@@ -315,6 +334,28 @@ const publishPaper = (paper: any) => {
   router.push(`/exam-paper/publish/${paper.paperId}`);
 };
 
+const handleMobileAction = (command: string, paper: any) => {
+  switch (command) {
+    case "edit":
+      editPaper(paper);
+      break;
+    case "publish":
+      publishPaper(paper);
+      break;
+    case "move":
+      openMoveDialog([paper.paperId]);
+      break;
+    case "copy":
+      copyPaper(paper);
+      break;
+    case "delete":
+      deletePaper(paper);
+      break;
+    default:
+      break;
+  }
+};
+
 // 获取状态标签类型
 const getStatusType = (status: number) => {
   return status === 1 ? "success" : "info";
@@ -353,11 +394,11 @@ onMounted(() => {
         </div>
       </div>
       <div class="header-actions">
-        <el-button @click="openNewFolderDialog">
-          <el-icon class="mr-1"><FolderAdd /></el-icon>
-          新建文件夹
-        </el-button>
-        <el-button type="primary" class="create-btn" @click="createPaper">
+              <el-button @click="openNewFolderDialog">
+                <el-icon class="mr-1"><FolderAdd /></el-icon>
+                新建文件夹
+              </el-button>
+        <el-button type="primary" size="large" class="create-btn" @click="createPaper">
           <el-icon class="mr-2"><Plus /></el-icon>
           新建试卷
         </el-button>
@@ -385,7 +426,7 @@ onMounted(() => {
     </div>
 
     <!-- 主内容区域：左侧文件夹 + 右侧列表 -->
-    <div class="main-content">
+    <div class="papers-layout">
       <!-- 左侧文件夹侧边栏 -->
       <div class="folder-sidebar">
         <div class="folder-header">
@@ -436,8 +477,8 @@ onMounted(() => {
               <el-input
                 v-model="searchForm.keyword"
                 placeholder="搜索试卷标题..."
-                style="width: 240px"
-                prefix-icon="Search"
+                :style="{ width: isMobile ? '100%' : '240px' }"
+                :prefix-icon="Search"
                 clearable
                 @keyup.enter="handleSearch"
                 @clear="handleSearch"
@@ -445,7 +486,7 @@ onMounted(() => {
               <el-select
                 v-model="searchForm.status"
                 placeholder="试卷状态"
-                style="width: 120px"
+                :style="{ width: isMobile ? '100%' : '120px' }"
                 clearable
                 @change="handleSearch"
               >
@@ -455,7 +496,7 @@ onMounted(() => {
               <el-select
                 v-model="searchForm.courseId"
                 placeholder="所属课程"
-                style="width: 150px"
+                :style="{ width: isMobile ? '100%' : '150px' }"
                 clearable
                 @change="handleSearch"
               >
@@ -478,7 +519,92 @@ onMounted(() => {
 
         <!-- 试卷列表 -->
         <div class="list-card">
+          <template v-if="isMobile">
+            <div v-loading="loading" class="paper-mobile-list">
+              <div v-for="row in paperList" :key="row.paperId" class="paper-mobile-card">
+                <div class="mobile-card-head">
+                  <div class="paper-title-cell">
+                    <div class="paper-icon">
+                      <IconDocument />
+                    </div>
+                    <div class="paper-info">
+                      <el-link type="primary" @click="editPaper(row)">
+                        {{ row.title }}
+                      </el-link>
+                      <span class="paper-course">{{ row.courseName }}</span>
+                    </div>
+                  </div>
+                  <el-tag :type="getStatusType(row.status)" size="small" effect="light">
+                    {{ getStatusText(row.status) }}
+                  </el-tag>
+                </div>
+
+                <div class="mobile-meta-grid">
+                  <div class="mobile-meta-item">
+                    <span class="meta-label">题目数</span>
+                    <span class="count-badge">{{ getPaperQuestionCount(row) }}题</span>
+                  </div>
+                  <div class="mobile-meta-item">
+                    <span class="meta-label">总分</span>
+                    <span class="score-badge">{{ row.totalPoints }}分</span>
+                  </div>
+                  <div class="mobile-meta-item">
+                    <span class="meta-label">发布次数</span>
+                    <span class="usage-badge">{{ getPaperPublishCount(row) }}次</span>
+                  </div>
+                  <div class="mobile-meta-item">
+                    <span class="meta-label">更新时间</span>
+                    <span class="meta-value">{{ getPaperUpdateTime(row) }}</span>
+                  </div>
+                </div>
+
+                <div class="mobile-action-grid">
+                  <el-button size="small" type="primary" @click="editPaper(row)">
+                    <el-icon class="mr-1"><Edit /></el-icon>
+                    编辑
+                  </el-button>
+                  <el-button size="small" @click="publishPaper(row)">
+                    <el-icon class="mr-1"><Upload /></el-icon>
+                    发布
+                  </el-button>
+                  <el-dropdown
+                    trigger="click"
+                    @command="command => handleMobileAction(command as string, row)"
+                  >
+                    <el-button size="small">
+                      <el-icon class="mr-1"><MoreFilled /></el-icon>
+                      更多
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="move">
+                          <el-icon><FolderOpened /></el-icon>
+                          移动
+                        </el-dropdown-item>
+                        <el-dropdown-item command="copy">
+                          <el-icon><CopyDocument /></el-icon>
+                          复制
+                        </el-dropdown-item>
+                        <el-dropdown-item command="delete">
+                          <el-icon><Delete /></el-icon>
+                          删除
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </div>
+
+              <el-empty
+                v-if="!loading && paperList.length === 0"
+                description="暂无试卷数据"
+                class="mobile-empty"
+              />
+            </div>
+          </template>
+
           <el-table
+            v-else
             v-loading="loading"
             :data="paperList"
             class="paper-table"
@@ -506,7 +632,7 @@ onMounted(() => {
               align="center"
             >
               <template #default="{ row }">
-                <span class="count-badge">{{ row.questionCount }}题</span>
+                <span class="count-badge">{{ getPaperQuestionCount(row) }}题</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -542,7 +668,7 @@ onMounted(() => {
               align="center"
             >
               <template #default="{ row }">
-                <span class="usage-badge">{{ row.publishCount }}次</span>
+                <span class="usage-badge">{{ getPaperPublishCount(row) }}次</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -550,7 +676,11 @@ onMounted(() => {
               label="更新时间"
               width="160"
               align="center"
-            />
+            >
+              <template #default="{ row }">
+                {{ getPaperUpdateTime(row) }}
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="260" fixed="right">
               <template #default="{ row }">
                 <el-button
@@ -609,7 +739,7 @@ onMounted(() => {
               v-model:page-size="pagination.pageSize"
               :total="pagination.total"
               :page-sizes="[10, 20, 50, 100]"
-              layout="total, sizes, prev, pager, next, jumper"
+              :layout="paginationLayout"
               background
               @size-change="handlePageChange"
               @current-change="handlePageChange"
@@ -696,8 +826,10 @@ $radius-md: 12px;
 $radius-lg: 16px;
 
 .my-papers-page {
+  box-sizing: border-box;
   min-height: 100%;
   padding: 24px;
+  overflow-x: hidden;
 
   &.is-dark {
     .page-header,
@@ -770,6 +902,28 @@ $radius-lg: 16px;
     }
 
     .list-card {
+      .paper-mobile-card {
+        background: rgba(15, 23, 42, 0.68);
+        border-color: $dark-border;
+        box-shadow: $dark-shadow;
+      }
+
+      .meta-label {
+        color: $dark-text-secondary;
+      }
+
+      .meta-value {
+        color: $dark-text-primary;
+      }
+
+      .mobile-meta-item {
+        .count-badge,
+        .score-badge,
+        .usage-badge {
+          color: $dark-text-primary;
+        }
+      }
+
       .paper-title-cell {
         .paper-icon {
           background: rgba(74, 127, 200, 0.2);
@@ -867,12 +1021,33 @@ $radius-lg: 16px;
       margin: 0;
     }
 
-    .create-btn {
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+
+      :deep(.el-button + .el-button) {
+        margin-left: 0;
+      }
+    }
+
+    :deep(.el-button.create-btn) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
       height: 48px;
-      padding: 0 24px;
+      padding: 0 24px !important;
       border-radius: $radius-md;
       font-weight: 600;
       font-size: 16px;
+      line-height: 1 !important;
+      white-space: nowrap;
+    }
+
+    :deep(.el-button.create-btn.el-button--primary) {
       color: #fff;
       background: $primary-gradient;
       border: none;
@@ -939,7 +1114,7 @@ $radius-lg: 16px;
     }
   }
 
-  .main-content {
+  .papers-layout {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
@@ -1101,11 +1276,369 @@ $radius-lg: 16px;
       border-radius: 6px;
     }
 
+    .paper-mobile-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .paper-mobile-card {
+      padding: 16px;
+      border: 1px solid $light-border;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgb(255 255 255 / 96%), #fff);
+      box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+    }
+
+    .mobile-card-head {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .mobile-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .mobile-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+
+      .count-badge,
+      .score-badge,
+      .usage-badge,
+      .meta-value {
+        display: inline-flex;
+        align-items: center;
+        min-height: 20px;
+        padding: 0;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.5;
+        color: $light-text-primary;
+        background: transparent;
+        border-radius: 0;
+      }
+    }
+
+    .meta-label {
+      font-size: 12px;
+      color: $light-text-secondary;
+    }
+
+    .meta-value {
+      font-size: 13px;
+      line-height: 1.5;
+      color: $light-text-primary;
+      word-break: break-word;
+    }
+
+    .mobile-action-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      > * {
+        flex: 1 1 calc(33.333% - 6px);
+        min-width: 0;
+      }
+
+      .el-button {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      :deep(.el-dropdown) {
+        display: block;
+        width: 100%;
+      }
+    }
+
+    .mobile-empty {
+      padding: 12px 0 0;
+    }
+
     .pagination-wrapper {
       padding: 24px;
       display: flex;
       justify-content: flex-end;
       border-top: 1px solid $light-border;
+    }
+  }
+
+  @media screen and (max-width: 1024px) {
+    .stats-section {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .papers-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .folder-sidebar,
+    .content-area {
+      grid-column: auto;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    padding: 12px calc(16px + env(safe-area-inset-right, 0px)) 20px 12px;
+
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 18px;
+      gap: 16px;
+
+      .header-content {
+        align-items: flex-start;
+      }
+
+      .header-icon {
+        width: 48px;
+        height: 48px;
+
+        :deep(svg) {
+          width: 24px;
+          height: 24px;
+        }
+      }
+
+      .page-title {
+        font-size: 20px;
+      }
+
+      .page-desc {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .header-actions {
+        justify-content: stretch;
+
+        .el-button,
+        .create-btn {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+
+      :deep(.el-button.create-btn) {
+        min-height: 42px;
+        height: 42px;
+        padding: 0 16px !important;
+        font-size: 14px;
+      }
+    }
+
+    .stats-section {
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      gap: 12px;
+      padding: 16px;
+
+      .stat-icon {
+        width: 42px;
+        height: 42px;
+
+        :deep(svg) {
+          width: 22px;
+          height: 22px;
+        }
+      }
+
+      .stat-value {
+        font-size: 22px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+      }
+    }
+
+    .papers-layout {
+      gap: 16px;
+    }
+
+    .folder-sidebar,
+    .toolbar-card {
+      padding: 16px;
+    }
+
+    .folder-sidebar {
+      .folder-header {
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+      }
+
+      .folder-tree {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-right: 12px;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+          display: none;
+        }
+      }
+
+      .folder-item {
+        flex: 0 0 auto;
+        min-width: 120px;
+      }
+    }
+
+    .toolbar-card {
+      margin-bottom: 16px;
+
+      .toolbar,
+      .toolbar-left,
+      .toolbar-right {
+        width: 100%;
+      }
+
+      .toolbar-left {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar-right {
+        justify-content: stretch;
+
+        .el-button {
+          width: 100%;
+          margin-left: 0;
+        }
+      }
+
+      :deep(.el-input__wrapper),
+      :deep(.el-select__wrapper) {
+        min-height: 42px;
+        border-radius: 12px;
+      }
+    }
+
+    .list-card {
+      .paper-title-cell {
+        align-items: flex-start;
+
+        .paper-icon {
+          width: 40px;
+          height: 40px;
+        }
+
+        .paper-info {
+          min-width: 0;
+        }
+      }
+
+      .pagination-wrapper {
+        padding: 16px;
+        justify-content: center;
+
+        :deep(.el-pagination) {
+          justify-content: center;
+          row-gap: 8px;
+        }
+      }
+    }
+  }
+
+  @media screen and (max-width: 520px) {
+    .stats-section {
+      grid-template-columns: 1fr;
+    }
+
+    .page-header {
+      .header-actions {
+        flex-direction: column;
+
+        .el-button,
+        .create-btn {
+          width: 100%;
+        }
+      }
+    }
+
+    .folder-sidebar {
+      .folder-tree {
+        flex-wrap: wrap;
+        gap: 8px;
+        overflow: visible;
+        padding-right: 12px;
+        padding-bottom: 0;
+      }
+
+      .folder-item {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+        padding: 12px 10px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .folder-name {
+        min-width: 0;
+        white-space: normal;
+        line-height: 1.35;
+        word-break: break-word;
+      }
+
+      .folder-count {
+        margin-left: auto;
+      }
+
+      .folder-item .folder-actions {
+        display: none;
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 4px;
+      }
+
+      .folder-item.active .folder-actions {
+        display: flex;
+      }
+    }
+
+    .list-card {
+      .paper-mobile-list {
+        padding: 12px;
+      }
+
+      .paper-mobile-card {
+        padding: 14px;
+      }
+
+      .mobile-card-head {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .mobile-meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mobile-action-grid {
+        gap: 10px;
+
+        .el-button {
+          flex: 1 1 calc(50% - 4px);
+          min-width: 0;
+        }
+      }
     }
   }
 }

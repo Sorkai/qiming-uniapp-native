@@ -36,7 +36,7 @@ const props = defineProps<{
   loading?: boolean;
   suggestions?: string[];
   streaming?: boolean;
-  historyList?: any[]; // 新增：会话列表
+  historyList?: any[];
 }>();
 
 const emit = defineEmits<{
@@ -46,24 +46,21 @@ const emit = defineEmits<{
   (e: "newCapture"): void;
   (e: "stop"): void;
   (e: "openChat"): void;
-  (e: "loadHistory", id: string): void; // 新增：切换历史
-  (e: "reset"): void; // 新增：新建会话
-  (e: "uploadImage", file: File): void; // 新增：上传本地图片
+  (e: "loadHistory", id: string): void;
+  (e: "reset"): void;
+  (e: "uploadImage", file: File): void;
 }>();
 
-// 输入框内容
 const inputMessage = ref("");
 const messageListRef = ref<HTMLElement>();
 const inputRef = ref<any>();
 const fileInputRef = ref<HTMLInputElement>();
 
-// 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
   set: val => emit("update:visible", val)
 });
 
-// 监听弹窗显示，自动聚焦
 watch(
   () => props.visible,
   val => {
@@ -75,14 +72,12 @@ watch(
   }
 );
 
-// 判断是否正在流式输出（有内容但还在加载）
 const isStreaming = computed(() => {
   if (props.streaming) return true;
   const last = props.messages[props.messages.length - 1];
   return last?.role === "assistant" && last?.content && props.loading;
 });
 
-// 发送消息
 const handleSend = () => {
   const message = inputMessage.value.trim();
   if (!message || props.loading) return;
@@ -91,34 +86,28 @@ const handleSend = () => {
   inputMessage.value = "";
 };
 
-// 停止生成
 const handleStop = () => {
   emit("stop");
 };
 
-// 使用建议问题
 const useSuggestion = (suggestion: string) => {
   inputMessage.value = suggestion;
   handleSend();
 };
 
-// 触发文件选择
 const triggerFileUpload = () => {
   fileInputRef.value?.click();
 };
 
-// 处理文件选择
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
   if (file) {
     emit("uploadImage", file);
-    // 重置 input 值的以便下次选择相同文件也能触发 change
     target.value = "";
   }
 };
 
-// 滚动到底部
 const scrollToBottom = () => {
   nextTick(() => {
     if (messageListRef.value) {
@@ -127,7 +116,6 @@ const scrollToBottom = () => {
   });
 };
 
-// 监听消息变化，自动滚动（length 变化 + 流式内容追加均触发）
 watch(
   () => props.messages.length,
   () => {
@@ -145,13 +133,11 @@ watch(
   }
 );
 
-// 新建会话
 const handleNewChat = () => {
   emit("reset");
   inputMessage.value = "";
 };
 
-// 格式化时间
 const formatTime = (timestamp: number) => {
   if (!timestamp) return "";
   const date = new Date(timestamp);
@@ -161,14 +147,12 @@ const formatTime = (timestamp: number) => {
   });
 };
 
-// 格式化日期
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   return `${d.getMonth() + 1}/${d.getDate()}`;
 };
 
-// 关闭对话框
 const handleClose = () => {
   dialogVisible.value = false;
 };
@@ -227,7 +211,6 @@ const handleClose = () => {
     </template>
 
     <div class="chat-layout">
-      <!-- 左侧：历史记录 -->
       <div v-if="historyList?.length" class="chat-sidebar">
         <div class="sidebar-title">历史对话</div>
         <div class="history-list">
@@ -254,9 +237,7 @@ const handleClose = () => {
         </div>
       </div>
 
-      <!-- 右侧：主界面 -->
       <div class="chat-main">
-        <!-- 智能预览 -->
         <div v-if="screenshot" class="preview-banner">
           <div class="banner-inner">
             <div class="image-box">
@@ -273,7 +254,6 @@ const handleClose = () => {
           </div>
         </div>
 
-        <!-- 消息列表 -->
         <div ref="messageListRef" class="message-area">
           <div
             v-for="msg in messages"
@@ -347,7 +327,6 @@ const handleClose = () => {
           </div>
         </div>
 
-        <!-- 停止生成按钮 -->
         <div v-if="isStreaming" class="stop-bar">
           <button class="stop-btn" @click="handleStop">
             <svg viewBox="0 0 24 24" width="14" height="14">
@@ -364,7 +343,6 @@ const handleClose = () => {
           </button>
         </div>
 
-        <!-- 建议词 -->
         <div v-if="suggestions?.length && !isStreaming" class="suggestions-bar">
           <div
             v-for="(s, i) in suggestions"
@@ -381,7 +359,6 @@ const handleClose = () => {
     <template #footer>
       <div class="footer-input">
         <div class="input-container">
-          <!-- 隐藏的文件选择器 -->
           <input
             ref="fileInputRef"
             type="file"
@@ -447,12 +424,7 @@ const handleClose = () => {
   </el-dialog>
 </template>
 
-<!-- 非 scoped：dialog 使用 append-to-body 传送到 body，scoped 样式无法到达 -->
 <style lang="scss">
-/*
- * .ai-chat-dialog.modern-style 即 .el-dialog 元素本身（class 通过 v-bind="$attrs" 挂在 .el-dialog 上）
- * 所以定位/尺寸样式直接写在此选择器下，不再嵌套 .el-dialog
- */
 .el-dialog.ai-chat-dialog.modern-style {
   --ai-primary: var(--el-color-primary);
   --ai-primary-strong: var(--el-color-primary-dark-2);
@@ -460,23 +432,17 @@ const handleClose = () => {
   --ai-primary-soft: var(--el-color-primary-light-9);
   --ai-primary-soft-border: var(--el-color-primary-light-7);
 
-  /* 固定定位居中，覆盖 Element Plus 默认的 margin-top */
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
   margin: 0 !important;
-
-  /* flex 纵向布局，使 header/body/footer 各自占位 */
   display: flex;
   flex-direction: column;
-
-  /* 4:3 比例：宽 80vw，高 = 80vw × 3/4 = 60vw */
   width: min(80vw, 1000px);
   height: min(60vw, calc(100vh - 80px), 750px);
   min-width: 520px;
   min-height: 390px;
-
   padding: 0;
   overflow: hidden;
   background-color: var(--el-bg-color-page);
@@ -494,7 +460,7 @@ const handleClose = () => {
 
   .el-dialog__body {
     flex: 1;
-    min-height: 0; /* 关键：允许 flex 子元素收缩产生内部滚动 */
+    min-height: 0;
     padding: 0;
     overflow: hidden;
   }
@@ -505,6 +471,28 @@ const handleClose = () => {
     border-radius: 0 0 20px 20px;
     overflow: hidden;
     background: var(--el-bg-color);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .el-dialog.ai-chat-dialog.modern-style {
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    min-width: 0;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none !important;
+
+    .el-dialog__header,
+    .el-dialog__footer {
+      border-radius: 0;
+    }
   }
 }
 </style>
@@ -591,7 +579,7 @@ const handleClose = () => {
   display: flex;
   flex: 1;
   height: 100%;
-  min-height: 0; /* 允许 flex 容器收缩 */
+  min-height: 0;
   overflow: hidden;
 
   .chat-sidebar {
@@ -601,7 +589,7 @@ const handleClose = () => {
     height: 100%;
     background-color: var(--el-fill-color-light);
     border-right: 1px solid var(--ai-primary-soft-border);
-    overflow: hidden; // 确保内部滚动有效
+    overflow: hidden;
 
     .sidebar-title {
       flex-shrink: 0;
@@ -615,7 +603,7 @@ const handleClose = () => {
     .history-list {
       flex: 1;
       padding: 10px;
-      overflow-y: auto; // 列表滚动
+      overflow-y: auto;
 
       .history-item {
         display: flex;
@@ -633,6 +621,7 @@ const handleClose = () => {
 
         &.active {
           background-color: var(--ai-primary-soft);
+
           .item-title {
             color: var(--ai-primary);
           }
@@ -666,7 +655,7 @@ const handleClose = () => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0; /* 关键：允许内部 message-area 产生滚动 */
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -719,7 +708,7 @@ const handleClose = () => {
 
 .message-area {
   flex: 1;
-  min-height: 0; /* 关键：flex 子元素默认 min-height: auto 会阻止收缩 */
+  min-height: 0;
   padding: 20px;
   overflow-y: auto;
 
@@ -774,17 +763,17 @@ const handleClose = () => {
 
     .user-avatar,
     .ai-avatar {
-      display: flex !important; // 确保头像容器显示
+      display: flex !important;
       align-items: center;
       justify-content: center;
-      width: 40px; // 增大头像尺寸
+      width: 40px;
       height: 40px;
       border-radius: 12px;
 
       svg {
         width: 24px;
         height: 24px;
-        display: block; // 确保svg显示
+        display: block;
       }
     }
   }
@@ -838,6 +827,7 @@ const handleClose = () => {
 
       :deep(p) {
         margin: 0 0 10px;
+
         &:last-child {
           margin-bottom: 0;
         }
@@ -1014,6 +1004,7 @@ const handleClose = () => {
       flex-shrink: 0;
       margin-bottom: 2px;
       color: var(--el-text-color-regular);
+
       &:hover {
         color: var(--ai-primary);
         background-color: var(--ai-primary-soft);
@@ -1039,6 +1030,196 @@ const handleClose = () => {
       width: 32px;
       height: 32px;
     }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .dialog-header {
+    align-items: flex-start;
+    padding: 14px 16px;
+
+    .header-content {
+      min-width: 0;
+
+      .header-text {
+        min-width: 0;
+
+        .sub-title {
+          white-space: normal;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+
+  .chat-layout {
+    flex-direction: column;
+
+    .chat-sidebar {
+      width: 100%;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--ai-primary-soft-border);
+
+      .sidebar-title {
+        padding: 12px 16px 0;
+        border-bottom: none;
+      }
+
+      .history-list {
+        display: flex;
+        gap: 10px;
+        padding: 12px 16px 14px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+
+        .history-item {
+          flex: 0 0 180px;
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+
+  .preview-banner {
+    padding: 10px 16px;
+
+    .banner-inner {
+      align-items: flex-start;
+    }
+  }
+
+  .message-area {
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+
+    .message-row {
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .avatar-col {
+      .user-avatar,
+      .ai-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 11px;
+
+        svg {
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+
+    .content-col {
+      max-width: calc(100% - 46px);
+
+      .bubble {
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
+      .content-image {
+        :deep(.el-image) {
+          max-width: min(100%, 220px);
+        }
+      }
+
+      .markdown-body {
+        font-size: 13px;
+
+        :deep(pre) {
+          padding: 10px;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+
+  .stop-bar {
+    padding: 6px 16px;
+  }
+
+  .suggestions-bar {
+    flex-wrap: nowrap;
+    padding: 10px 16px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    .suggestion-chip {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+  }
+
+  .footer-input {
+    padding: 12px 12px calc(12px + var(--pure-safe-area-bottom));
+
+    .input-container {
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 14px;
+
+      .upload-btn {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 0;
+      }
+
+      :deep(.el-textarea__inner) {
+        min-height: 36px;
+        padding: 6px 8px;
+        font-size: 13px;
+      }
+    }
+
+    .send-action {
+      .el-button {
+        width: 36px;
+        height: 36px;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .dialog-header {
+    padding: 12px 14px;
+
+    .header-content {
+      .header-text {
+        .sub-title {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .chat-layout {
+    .chat-sidebar {
+      .history-list {
+        padding: 10px 12px 12px;
+
+        .history-item {
+          flex-basis: 160px;
+        }
+      }
+    }
+  }
+
+  .preview-banner,
+  .stop-bar,
+  .suggestions-bar,
+  .message-area {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .footer-input {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 </style>

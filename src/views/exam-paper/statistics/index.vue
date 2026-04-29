@@ -695,6 +695,64 @@ $radius-xl: 20px;
   }
 }
 
+@media (width <= 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 18px;
+    margin-bottom: 16px;
+
+    .header-content {
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    .header-info {
+      min-width: 0;
+
+      .page-title {
+        margin-bottom: 6px;
+        font-size: 20px;
+      }
+
+      .page-desc {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      width: 100%;
+
+      :deep(.el-date-editor),
+      :deep(.el-select),
+      :deep(.el-button) {
+        width: 100% !important;
+        margin-left: 0;
+      }
+
+      :deep(.el-button + .el-button) {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
 .stats-section {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

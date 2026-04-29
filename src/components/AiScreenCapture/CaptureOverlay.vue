@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import type { CaptureArea } from "./types";
 
 defineOptions({
@@ -15,19 +15,23 @@ const emit = defineEmits<{
   (e: "cancel"): void;
 }>();
 
-// 选区状态
+const overlayRef = ref<HTMLElement | null>(null);
 const isSelecting = ref(false);
 const startPoint = ref({ x: 0, y: 0 });
 const endPoint = ref({ x: 0, y: 0 });
-
-// 涟漪动画状态
+const activePointerId = ref<number | null>(null);
+const activePointerType = ref<string | null>(null);
 const rippleComplete = ref(false);
 
-// 计算涟漪原点位置
+const MIN_SELECTION_SIZE = 10;
+const prefersCoarsePointer =
+  typeof window !== "undefined" &&
+  "matchMedia" in window &&
+  window.matchMedia("(pointer: coarse)").matches;
+
 const originX = computed(() => props.origin?.x ?? window.innerWidth - 58);
 const originY = computed(() => props.origin?.y ?? window.innerHeight - 128);
 
-// 计算选区样式
 const selectionStyle = computed(() => {
   if (!isSelecting.value && startPoint.value.x === 0) {
     return { display: "none" };
@@ -46,45 +50,103 @@ const selectionStyle = computed(() => {
   };
 });
 
-// 计算选区尺寸文本
 const selectionSize = computed(() => {
   const width = Math.abs(endPoint.value.x - startPoint.value.x);
   const height = Math.abs(endPoint.value.y - startPoint.value.y);
   return `${Math.round(width)} × ${Math.round(height)}`;
 });
 
-// 开始选择
-const handleMouseDown = (e: MouseEvent) => {
-  // 忽略右键
-  if (e.button !== 0) return;
+const isTouchExperience = computed(() => {
+  return (
+    activePointerType.value === "touch" ||
+    activePointerType.value === "pen" ||
+    (activePointerType.value === null && prefersCoarsePointer)
+  );
+});
 
-  isSelecting.value = true;
-  startPoint.value = { x: e.clientX, y: e.clientY };
-  endPoint.value = { x: e.clientX, y: e.clientY };
+const tipText = computed(() => {
+  return isTouchExperience.value
+    ? "拖动手指框选区域，或轻点整屏截图"
+    : "拖动鼠标框选需要识别的区域";
+});
+
+const tipSubText = computed(() => {
+  return isTouchExperience.value ? "轻点可整屏截图，右上角可取消" : "按 ESC 取消";
+});
+
+const clampPoint = (x: number, y: number) => {
+  return {
+    x: Math.min(Math.max(0, x), window.innerWidth),
+    y: Math.min(Math.max(0, y), window.innerHeight)
+  };
 };
 
-// 选择中
-const handleMouseMove = (e: MouseEvent) => {
-  if (!isSelecting.value) return;
-  endPoint.value = { x: e.clientX, y: e.clientY };
+const resetSelection = () => {
+  startPoint.value = { x: 0, y: 0 };
+  endPoint.value = { x: 0, y: 0 };
 };
 
-// 结束选择
-const handleMouseUp = (e: MouseEvent) => {
-  if (!isSelecting.value) return;
+const releasePointerCapture = (pointerId: number | null) => {
+  if (
+    overlayRef.value &&
+    pointerId !== null &&
+    overlayRef.value.hasPointerCapture(pointerId)
+  ) {
+    overlayRef.value.releasePointerCapture(pointerId);
+  }
+};
 
+const clearPointerState = () => {
+  releasePointerCapture(activePointerId.value);
+  activePointerId.value = null;
+  activePointerType.value = null;
   isSelecting.value = false;
+};
+
+const captureViewport = () => {
+  emit("capture", {
+    x: 0,
+    y: 0,
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+};
+
+const beginSelection = (x: number, y: number) => {
+  const point = clampPoint(x, y);
+  isSelecting.value = true;
+  startPoint.value = point;
+  endPoint.value = point;
+};
+
+const updateSelection = (x: number, y: number) => {
+  if (!isSelecting.value) return;
+  endPoint.value = clampPoint(x, y);
+};
+
+const finishSelection = () => {
+  if (!isSelecting.value) return;
 
   const width = Math.abs(endPoint.value.x - startPoint.value.x);
   const height = Math.abs(endPoint.value.y - startPoint.value.y);
+  const shouldCaptureFullViewport =
+    (activePointerType.value === "touch" || activePointerType.value === "pen") &&
+    width < MIN_SELECTION_SIZE &&
+    height < MIN_SELECTION_SIZE;
 
-  // 如果选区太小，视为取消
-  if (width < 10 || height < 10) {
+  clearPointerState();
+
+  if (shouldCaptureFullViewport) {
+    resetSelection();
+    captureViewport();
+    return;
+  }
+
+  if (width < MIN_SELECTION_SIZE || height < MIN_SELECTION_SIZE) {
     resetSelection();
     return;
   }
 
-  // 计算选区
   const area: CaptureArea = {
     x: Math.min(startPoint.value.x, endPoint.value.x),
     y: Math.min(startPoint.value.y, endPoint.value.y),
@@ -95,19 +157,43 @@ const handleMouseUp = (e: MouseEvent) => {
   emit("capture", area);
 };
 
-// 重置选区
-const resetSelection = () => {
-  startPoint.value = { x: 0, y: 0 };
-  endPoint.value = { x: 0, y: 0 };
+const handlePointerDown = (e: PointerEvent) => {
+  if (!e.isPrimary) return;
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+
+  activePointerId.value = e.pointerId;
+  activePointerType.value = e.pointerType;
+  overlayRef.value?.setPointerCapture(e.pointerId);
+  beginSelection(e.clientX, e.clientY);
+  e.preventDefault();
 };
 
-// 取消截图
+const handlePointerMove = (e: PointerEvent) => {
+  if (!isSelecting.value || activePointerId.value !== e.pointerId) return;
+  updateSelection(e.clientX, e.clientY);
+  e.preventDefault();
+};
+
+const handlePointerUp = (e: PointerEvent) => {
+  if (!isSelecting.value || activePointerId.value !== e.pointerId) return;
+  updateSelection(e.clientX, e.clientY);
+  finishSelection();
+  e.preventDefault();
+};
+
+const handlePointerCancel = (e: PointerEvent) => {
+  if (activePointerId.value !== e.pointerId) return;
+  clearPointerState();
+  resetSelection();
+  e.preventDefault();
+};
+
 const handleCancel = () => {
+  clearPointerState();
   resetSelection();
   emit("cancel");
 };
 
-// ESC键取消
 const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === "Escape") {
     handleCancel();
@@ -116,26 +202,27 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 onMounted(() => {
   document.addEventListener("keydown", handleKeyDown);
-  // 涟漪动画完成后显示边框跑马灯（涟漪扩散到边缘需要约1.8秒）
-  setTimeout(() => {
+  window.setTimeout(() => {
     rippleComplete.value = true;
   }, 1800);
 });
 
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeyDown);
+  releasePointerCapture(activePointerId.value);
 });
 </script>
 
 <template>
   <Teleport to="body">
     <div
+      ref="overlayRef"
       class="capture-overlay"
-      @mousedown="handleMouseDown"
-      @mousemove="handleMouseMove"
-      @mouseup="handleMouseUp"
+      @pointerdown="handlePointerDown"
+      @pointermove="handlePointerMove"
+      @pointerup="handlePointerUp"
+      @pointercancel="handlePointerCancel"
     >
-      <!-- 从按钮扩散的涟漪效果 -->
       <div
         class="ripple-container"
         :style="{ '--origin-x': `${originX}px`, '--origin-y': `${originY}px` }"
@@ -144,48 +231,36 @@ onUnmounted(() => {
         <div class="ripple ripple-2" />
       </div>
 
-      <!-- 屏幕边缘流动边框 -->
       <div v-show="rippleComplete" class="screen-border">
         <div class="border-glow" />
       </div>
 
-      <!-- 提示文字 -->
       <div class="capture-tip">
         <div class="tip-icon">
           <svg viewBox="0 0 24 24" fill="none">
             <path
-              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+              d="M3 9a2 2 0 0 1 2-2h.93a2 2 0 0 0 1.664-.89l.812-1.22A2 2 0 0 1 10.07 4h3.86a2 2 0 0 1 1.664.89l.812 1.22A2 2 0 0 0 18.07 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"
               stroke="currentColor"
               stroke-width="1.5"
             />
-            <circle
-              cx="12"
-              cy="13"
-              r="3"
-              stroke="currentColor"
-              stroke-width="1.5"
-            />
+            <circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5" />
           </svg>
         </div>
-        <span class="tip-text">拖动鼠标框选需要识别的区域</span>
-        <span class="tip-sub">按 ESC 取消</span>
+        <span class="tip-text">{{ tipText }}</span>
+        <span class="tip-sub">{{ tipSubText }}</span>
       </div>
 
-      <!-- 选区 -->
       <div
         v-show="isSelecting || startPoint.x !== 0"
         class="selection-area"
         :style="selectionStyle"
       >
-        <!-- 尺寸提示 -->
         <div v-if="isSelecting" class="size-tip">
           {{ selectionSize }}
         </div>
 
-        <!-- 选区光晕边框 -->
         <div class="selection-glow" />
 
-        <!-- 白色粒子飞溅特效 -->
         <div class="particles-container">
           <div
             v-for="i in 20"
@@ -196,8 +271,13 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 取消按钮 -->
-      <button class="cancel-btn" @click.stop="handleCancel">
+      <button
+        class="cancel-btn"
+        type="button"
+        @pointerdown.stop
+        @pointerup.stop
+        @click.stop="handleCancel"
+      >
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
             d="M18 6L6 18M6 6l12 12"
@@ -237,13 +317,10 @@ onUnmounted(() => {
 
   100% {
     opacity: 0;
-
-    /* 扩散到足够大以覆盖整个屏幕 */
     transform: translate(-50%, -50%) scale(80);
   }
 }
 
-/* 定义屏幕边框角度变量 */
 @property --border-angle {
   syntax: "<angle>";
   initial-value: 0deg;
@@ -311,10 +388,10 @@ onUnmounted(() => {
   z-index: 9999;
   overflow: hidden;
   cursor: crosshair;
+  touch-action: none;
   background: transparent;
 }
 
-/* 涟漪容器 */
 .ripple-container {
   position: absolute;
   inset: 0;
@@ -322,15 +399,12 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-/* 从按钮扩散的涟漪 */
 .ripple {
   position: absolute;
   top: var(--origin-y);
   left: var(--origin-x);
   width: 60px;
   height: 60px;
-
-  /* 渐变边框效果 */
   background: conic-gradient(
     from 0deg,
     #00f2fe,
@@ -343,8 +417,6 @@ onUnmounted(() => {
   border-radius: 50%;
   opacity: 0;
   filter: blur(8px);
-
-  /* 只显示边框 */
   mask: radial-gradient(transparent 45%, #fff 50%, #fff 55%, transparent 60%);
   transform: translate(-50%, -50%) scale(0);
 }
@@ -354,12 +426,10 @@ onUnmounted(() => {
 }
 
 .ripple-2 {
-  /* 第二个涟漪边框变窄 */
   mask: radial-gradient(transparent 47%, #fff 49%, #fff 51%, transparent 53%);
   animation: ripple-expand 2s ease-out 0.4s forwards;
 }
 
-/* 屏幕边缘流动边框 */
 .screen-border {
   position: absolute;
   inset: 0;
@@ -367,14 +437,11 @@ onUnmounted(() => {
   animation: border-fade-in 0.5s ease-out forwards;
 }
 
-/* 流动光晕边框 */
 .border-glow {
   position: absolute;
   inset: 0;
   padding: 6px;
   pointer-events: none;
-
-  /* 流动渐变背景 */
   background: conic-gradient(
     from var(--border-angle),
     #00f2fe,
@@ -389,8 +456,6 @@ onUnmounted(() => {
   border-radius: 16px;
   opacity: 1;
   filter: blur(6px);
-
-  /* 使用 mask 只显示边框 */
   mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -407,6 +472,7 @@ onUnmounted(() => {
   flex-direction: row;
   gap: 8px;
   align-items: center;
+  max-width: calc(100vw - 32px);
   padding: 10px 20px;
   color: #fff;
   text-shadow: 0 1px 4px rgb(0 0 0 / 50%);
@@ -464,7 +530,6 @@ onUnmounted(() => {
     transform: translateX(-50%);
   }
 
-  /* 选区光晕边框 */
   .selection-glow {
     position: absolute;
     inset: -3px;
@@ -490,7 +555,6 @@ onUnmounted(() => {
     animation: selection-spin 2s linear infinite;
   }
 
-  /* 白色粒子容器 */
   .particles-container {
     position: absolute;
     inset: -20px;
@@ -498,7 +562,6 @@ onUnmounted(() => {
     pointer-events: none;
   }
 
-  /* 白色粒子 */
   .particle {
     position: absolute;
     width: 2px;
@@ -510,7 +573,6 @@ onUnmounted(() => {
     animation: particle-fly 2.5s ease-out infinite;
     animation-delay: calc(var(--i) * 0.12s);
 
-    /* 随机分布在边框周围 */
     &:nth-child(4n + 1) {
       top: 20px;
       left: calc(var(--i) * 5%);
@@ -532,7 +594,6 @@ onUnmounted(() => {
     }
   }
 
-  /* 选区内部边框 */
   &::before {
     position: absolute;
     inset: 0;
@@ -572,5 +633,39 @@ onUnmounted(() => {
   }
 }
 
-/* 定义自定义属性，允许动画过渡 */
+@media screen and (max-width: 768px) {
+  .capture-tip {
+    bottom: calc(var(--pure-mobile-tab-height) + 24px);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 16px;
+
+    .tip-sub {
+      padding-left: 0;
+      margin-left: 0;
+      border-left: none;
+    }
+  }
+
+  .selection-area {
+    .size-tip {
+      bottom: -32px;
+      padding: 5px 12px;
+      font-size: 12px;
+    }
+  }
+
+  .cancel-btn {
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    right: 16px;
+    width: 44px;
+    height: 44px;
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+}
 </style>
