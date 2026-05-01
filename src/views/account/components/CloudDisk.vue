@@ -1,11 +1,14 @@
 <template>
   <div class="cloud-disk-container" :class="currentTheme">
     <div class="disk-header">
-      <div class="disk-title">
-        <div class="title-icon">
-          <CloudIcon />
+      <div class="disk-heading">
+        <div class="disk-title">
+          <div class="title-icon">
+            <CloudIcon />
+          </div>
+          <span>学习云盘</span>
         </div>
-        <span>学习云盘</span>
+        <p class="disk-subtitle">整理课程资料、课件与个人学习文件</p>
       </div>
       <div class="actions">
         <el-input
@@ -22,35 +25,80 @@
       </div>
     </div>
 
-    <div class="file-list-header">
-      <span class="col-name">文件名</span>
-      <span class="col-size">大小</span>
-      <span class="col-date">修改日期</span>
-      <span class="col-action">操作</span>
-    </div>
-    <div class="file-list-body">
-      <div
-        v-for="file in filteredFiles"
-        :key="file.id"
-        class="file-row"
-      >
-        <div class="col-name">
-          <div class="file-icon-wrap" :class="`icon-${file.type}`">
-            <el-icon :size="18">
-              <component :is="getFileIcon(file.type)" />
-            </el-icon>
+    <template v-if="isMobile">
+      <div class="mobile-file-list">
+        <div
+          v-for="file in filteredFiles"
+          :key="file.id"
+          class="mobile-file-card"
+        >
+          <div class="mobile-file-main">
+            <div class="file-icon-wrap" :class="`icon-${file.type}`">
+              <el-icon :size="18">
+                <component :is="getFileIcon(file.type)" />
+              </el-icon>
+            </div>
+            <div class="mobile-file-body">
+              <div class="mobile-file-name">{{ file.name }}</div>
+              <div class="mobile-file-meta">
+                <span>{{ file.size }}</span>
+                <span>{{ file.date }}</span>
+              </div>
+            </div>
           </div>
-          <span class="file-name-text">{{ file.name }}</span>
-        </div>
-        <span class="col-size">{{ file.size }}</span>
-        <span class="col-date">{{ file.date }}</span>
-        <div class="col-action">
-          <button class="action-link primary" @click.stop="handleDownload(file)">下载</button>
-          <button class="action-link primary" @click.stop="handleShare(file)">分享</button>
-          <button class="action-link danger" @click.stop="handleDelete(file)">删除</button>
+          <div class="mobile-file-actions">
+            <button
+              class="action-link primary"
+              @click.stop="handleDownload(file)"
+            >
+              下载
+            </button>
+            <button class="action-link primary" @click.stop="handleShare(file)">
+              分享
+            </button>
+            <button class="action-link danger" @click.stop="handleDelete(file)">
+              删除
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
+    <template v-else>
+      <div class="file-list-header">
+        <span class="col-name">文件名</span>
+        <span class="col-size">大小</span>
+        <span class="col-date">修改日期</span>
+        <span class="col-action">操作</span>
+      </div>
+      <div class="file-list-body">
+        <div v-for="file in filteredFiles" :key="file.id" class="file-row">
+          <div class="col-name">
+            <div class="file-icon-wrap" :class="`icon-${file.type}`">
+              <el-icon :size="18">
+                <component :is="getFileIcon(file.type)" />
+              </el-icon>
+            </div>
+            <span class="file-name-text">{{ file.name }}</span>
+          </div>
+          <span class="col-size">{{ file.size }}</span>
+          <span class="col-date">{{ file.date }}</span>
+          <div class="col-action">
+            <button
+              class="action-link primary"
+              @click.stop="handleDownload(file)"
+            >
+              下载
+            </button>
+            <button class="action-link primary" @click.stop="handleShare(file)">
+              分享
+            </button>
+            <button class="action-link danger" @click.stop="handleDelete(file)">
+              删除
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
 
     <div v-if="filteredFiles.length === 0 && !loading" class="empty-state">
       <el-empty description="没有找到文件或文件夹为空" />
@@ -61,6 +109,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Upload,
   Search,
@@ -75,6 +124,8 @@ import CloudIcon from "@/new student interface icons/file-svgrepo-com.svg?compon
 defineProps<{
   currentTheme?: string;
 }>();
+
+const { isMobile } = usePageResponsive();
 
 // 文件类型定义
 type FileType = "folder" | "doc" | "image" | "video" | "audio" | "other";
@@ -311,38 +362,56 @@ const handleDelete = (file: CloudFile) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 18px;
     margin-bottom: 22px;
 
-    .disk-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 17px;
-      font-weight: 700;
-      color: #1a1a2e;
+    .disk-heading {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
 
-      .dark & {
-        color: #f1f5f9;
-      }
-
-      .title-icon {
+      .disk-title {
         display: flex;
         align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        color: #97b4f7;
-        background: linear-gradient(135deg, #eef2ff, #dce2f7);
-        border-radius: 8px;
+        gap: 10px;
+        font-size: 17px;
+        font-weight: 700;
+        color: #1a1a2e;
 
         .dark & {
-          color: #38bdf8;
-          background: rgb(56 189 248 / 10%);
+          color: #f1f5f9;
         }
 
-        svg {
-          width: 18px;
-          height: 18px;
+        .title-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          color: #97b4f7;
+          background: linear-gradient(135deg, #eef2ff, #dce2f7);
+          border-radius: 8px;
+
+          .dark & {
+            color: #38bdf8;
+            background: rgb(56 189 248 / 10%);
+          }
+
+          svg {
+            width: 18px;
+            height: 18px;
+          }
+        }
+      }
+
+      .disk-subtitle {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: #7a8bb8;
+
+        .dark & {
+          color: #94a3b8;
         }
       }
     }
@@ -664,8 +733,146 @@ const handleDelete = (file: CloudFile) => {
     }
   }
 
+  .mobile-file-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mobile-file-card {
+    padding: 16px;
+    background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+    border: 1px solid rgb(151 180 247 / 12%);
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgb(151 180 247 / 10%);
+
+    .dark & {
+      background: linear-gradient(180deg, #162033 0%, #101827 100%);
+      border-color: rgb(56 189 248 / 10%);
+      box-shadow: 0 6px 18px rgb(0 0 0 / 20%);
+    }
+  }
+
+  .mobile-file-main {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .mobile-file-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-file-name {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.6;
+    color: #1e293b;
+    word-break: break-word;
+
+    .dark & {
+      color: #e2e8f0;
+    }
+  }
+
+  .mobile-file-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #7a8bb8;
+
+    .dark & {
+      color: #94a3b8;
+    }
+  }
+
+  .mobile-file-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+
+    .action-link {
+      flex: 1 1 84px;
+      min-height: 38px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      border: none;
+      border-radius: 10px;
+      box-shadow: none;
+      opacity: 1;
+
+      &:hover,
+      &:focus,
+      &:focus-visible,
+      &:active {
+        box-shadow: none;
+      }
+
+      &.primary {
+        color: #6f8ff0;
+        background: rgb(151 180 247 / 10%);
+      }
+
+      &.danger {
+        color: #ef4444;
+        background: rgb(248 113 113 / 10%);
+      }
+    }
+  }
+
   .empty-state {
     margin-top: 40px;
+  }
+}
+
+@media (width <= 767px) {
+  .cloud-disk-container {
+    padding: 18px 16px;
+    border-radius: 20px;
+
+    .disk-header {
+      flex-direction: column;
+      align-items: stretch;
+      margin-bottom: 18px;
+
+      .disk-heading {
+        .disk-title {
+          font-size: 18px;
+        }
+      }
+
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input {
+        width: 100%;
+      }
+
+      .upload-btn {
+        justify-content: center;
+        min-height: 48px;
+        padding: 10px 18px;
+        font-size: 14px;
+      }
+    }
+
+    .file-list-body {
+      max-height: none;
+      overflow: visible;
+    }
+
+    .empty-state {
+      margin-top: 18px;
+    }
   }
 }
 </style>

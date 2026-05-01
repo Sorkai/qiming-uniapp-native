@@ -764,7 +764,9 @@ const fetchCourseScores = async () => {
   } catch (e) {}
 };
 
-const normalizePointList = (input: any): Array<{ title: string; content: string }> => {
+const normalizePointList = (
+  input: any
+): Array<{ title: string; content: string }> => {
   if (!Array.isArray(input)) return [];
   return input
     .map((item: any) => ({
@@ -785,7 +787,9 @@ const normalizeStudyEffectData = (raw: any, cid: number) => {
   const chapterList = chapters.map((chapter: any, index: number) => {
     return {
       chapterId: Number(chapter?.chapterId ?? chapter?.id ?? index + 1),
-      chapterName: String(chapter?.chapterName ?? chapter?.name ?? `第${index + 1}章`),
+      chapterName: String(
+        chapter?.chapterName ?? chapter?.name ?? `第${index + 1}章`
+      ),
       keyPointArray: normalizePointList(
         chapter?.keyPointArray ?? chapter?.keyPoints ?? chapter?.key_points
       ),
@@ -795,7 +799,9 @@ const normalizeStudyEffectData = (raw: any, cid: number) => {
           chapter?.difficult_points
       ),
       knowledgeArray: normalizePointList(
-        chapter?.knowledgeArray ?? chapter?.knowledgePoints ?? chapter?.knowledge_points
+        chapter?.knowledgeArray ??
+          chapter?.knowledgePoints ??
+          chapter?.knowledge_points
       ),
       ConceptArray: normalizePointList(
         chapter?.ConceptArray ?? chapter?.conceptArray ?? chapter?.concepts
@@ -808,7 +814,9 @@ const normalizeStudyEffectData = (raw: any, cid: number) => {
 
   return {
     courseId: Number(source.courseId ?? cid),
-    keyPointNum: Number(source.keyPointNum ?? sum(chapterList, "keyPointArray")),
+    keyPointNum: Number(
+      source.keyPointNum ?? sum(chapterList, "keyPointArray")
+    ),
     difficultPointNum: Number(
       source.difficultPointNum ?? sum(chapterList, "difficultPointArray")
     ),
@@ -1079,6 +1087,7 @@ onBeforeUnmount(() => {
   .layout-inner-content {
     position: relative;
     flex: 1;
+    min-width: 0;
     height: calc(100vh - 35px);
     margin: 20px 15px 15px 90px;
     overflow: hidden; /* 容器层级不滚动，由子页面内部滚动 */
@@ -1088,6 +1097,29 @@ onBeforeUnmount(() => {
 
     &.dark {
       background-color: #1a1a1a;
+    }
+  }
+
+  /* stylelint-disable-next-line order/order */
+  @media (width <= 767px) {
+    .layout-container {
+      display: block;
+      min-height: 100vh;
+    }
+
+    .layout-sidebar {
+      &.light,
+      &[class*="light"] {
+        max-height: none;
+      }
+    }
+
+    .layout-inner-content {
+      height: auto;
+      min-height: 100vh;
+      margin: 0;
+      overflow: visible;
+      border-radius: 0;
     }
   }
 }

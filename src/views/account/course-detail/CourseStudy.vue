@@ -324,7 +324,11 @@
               <div class="chat-container">
                 <div class="welcome-section">
                   <div class="welcome-avatar" :class="`state-${aiAvatarState}`">
-                    <img :src="aiPeopleAvatar" alt="" :style="welcomeAvatarStyle" />
+                    <img
+                      :src="aiPeopleAvatar"
+                      alt=""
+                      :style="welcomeAvatarStyle"
+                    />
                   </div>
                   <h3>Hi～我是您的 AI 助教</h3>
                   <p>课程学习中欢迎随时提问，我将全力为您答疑解惑！</p>
@@ -1073,10 +1077,10 @@ $shadow-xl:
 
 .chapter-catalog {
   display: flex;
-  flex-direction: column;
   flex: 1;
-  min-height: 0;
+  flex-direction: column;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   box-shadow:
     0 4px 20px -4px rgb(0 0 0 / 10%),
@@ -1138,8 +1142,7 @@ $shadow-xl:
 
       .el-scrollbar__wrap {
         height: 100%;
-        overflow-y: auto;
-        overflow-x: hidden;
+        overflow: hidden auto;
       }
 
       .el-scrollbar__view {
@@ -1740,6 +1743,311 @@ $shadow-xl:
   .ai-dialog {
     opacity: 0;
     transform: scale(0.9) translateY(20px);
+  }
+}
+
+/* stylelint-disable-next-line order/order */
+@media (width <= 1199px) {
+  .study-container {
+    padding: 80px 24px 24px;
+  }
+
+  .main-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .right-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+
+  .chapter-catalog {
+    min-height: 420px;
+  }
+}
+
+/* stylelint-disable-next-line order/order */
+@media (width <= 767px) {
+  .course-study-root {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .study-container {
+    height: auto;
+    min-height: 100vh;
+    padding: 164px 16px 20px;
+  }
+
+  .main-layout {
+    gap: 16px;
+  }
+
+  .left-main {
+    overflow: visible;
+  }
+
+  .video-section {
+    border-radius: 20px;
+
+    &::after {
+      right: 12px;
+      bottom: -12px;
+      left: 12px;
+    }
+  }
+
+  .video-info-bar {
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+
+    .video-meta {
+      gap: 10px;
+      align-items: flex-start;
+      width: 100%;
+
+      .lesson-badge {
+        padding: 5px 12px;
+        font-size: 12px;
+      }
+
+      .lesson-title {
+        font-size: 16px;
+        line-height: 1.3;
+      }
+    }
+
+    .video-actions {
+      gap: 6px;
+      align-self: flex-end;
+
+      .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 14px;
+      }
+    }
+  }
+
+  .glass-card {
+    border-radius: 20px;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+
+  .card-body {
+    :deep(.el-scrollbar) {
+      .el-scrollbar__wrap {
+        padding: 16px;
+      }
+    }
+  }
+
+  .ai-assistant-widget {
+    padding: 18px;
+    border-radius: 20px;
+
+    .ai-content {
+      gap: 12px;
+    }
+
+    .ai-avatar {
+      width: 48px;
+      height: 48px;
+    }
+
+    .ai-info {
+      min-width: 0;
+
+      .ai-title {
+        font-size: 15px;
+      }
+
+      .ai-status {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .chapter-catalog {
+    min-height: auto;
+
+    .catalog-header {
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .catalog-body {
+      padding: 12px;
+
+      :deep(.el-scrollbar) {
+        height: auto;
+
+        .el-scrollbar__wrap {
+          max-height: 420px;
+        }
+      }
+    }
+  }
+
+  .chapter-tree {
+    gap: 16px;
+  }
+
+  .chapter-node {
+    .chapter-title-row {
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .lessons-container {
+      padding-left: 0;
+    }
+  }
+
+  .lesson-node {
+    padding: 12px;
+  }
+
+  .ai-dialog-overlay {
+    align-items: flex-end;
+    padding: 0;
+    backdrop-filter: blur(2px);
+  }
+
+  .ai-dialog {
+    width: 100vw;
+    max-width: none;
+    height: min(92vh, 100%);
+    max-height: none;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .dialog-header {
+    padding: 16px;
+  }
+
+  .dialog-body {
+    .chat-container {
+      padding: 16px;
+    }
+  }
+
+  .welcome-section {
+    padding: 20px 8px 24px;
+
+    .welcome-avatar {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      margin-bottom: 18px;
+    }
+
+    p {
+      margin-bottom: 18px;
+    }
+
+    .quick-questions {
+      width: 100%;
+
+      .quick-btn {
+        width: 100%;
+        padding: 12px 14px;
+      }
+    }
+  }
+
+  .message-row {
+    .message-content {
+      max-width: 90%;
+      padding: 12px 14px;
+    }
+  }
+
+  .dialog-footer {
+    padding: 12px 16px 16px;
+
+    .input-wrapper {
+      gap: 10px;
+      padding: 10px 12px;
+    }
+  }
+}
+
+/* stylelint-disable-next-line order/order */
+@media (width <= 479px) {
+  .study-container {
+    padding: 156px 12px 16px;
+  }
+
+  .video-info-bar {
+    padding: 10px 12px;
+
+    .video-actions {
+      .action-btn {
+        width: 34px;
+        height: 34px;
+      }
+    }
+  }
+
+  .video-info-bar {
+    .video-meta {
+      .lesson-badge {
+        padding: 4px 10px;
+        font-size: 12px;
+      }
+
+      .lesson-title {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .card-header,
+  .chapter-catalog .catalog-header {
+    padding: 14px;
+  }
+
+  .card-body {
+    :deep(.el-scrollbar) {
+      .el-scrollbar__wrap {
+        padding: 14px;
+      }
+    }
+  }
+
+  .ai-assistant-widget {
+    padding: 16px;
+
+    .ai-arrow {
+      display: none;
+    }
+  }
+
+  .chapter-catalog {
+    .catalog-header {
+      .chapter-count {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .dialog-header {
+    .header-left {
+      gap: 10px;
+    }
   }
 }
 </style>

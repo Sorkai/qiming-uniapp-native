@@ -1574,6 +1574,7 @@ onUnmounted(() => {
 
     .account-main {
       flex: 1;
+      min-width: 0;
       min-height: 0;
       padding: 0;
       overflow-y: auto;
@@ -2164,10 +2165,10 @@ onUnmounted(() => {
                   padding: 6px 14px;
                   font-size: 12px;
                   font-weight: 600;
-                  backdrop-filter: blur(8px);
                   border: none;
                   border-radius: 8px;
                   box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+                  backdrop-filter: blur(8px);
                 }
               }
             }
@@ -2230,8 +2231,8 @@ onUnmounted(() => {
 
                 span {
                   display: flex;
-                  align-items: center;
                   gap: 4px;
+                  align-items: center;
 
                   .el-icon {
                     font-size: 14px;
@@ -2278,6 +2279,362 @@ onUnmounted(() => {
               background: linear-gradient(135deg, #1e293b, #0f172a);
               border: 1px solid rgb(56 189 248 / 20%);
             }
+          }
+        }
+      }
+    }
+  }
+
+  /* stylelint-disable-next-line order/order */
+  @media (width <= 1199px) {
+    .header {
+      .header-content {
+        padding: 0 24px;
+      }
+    }
+
+    .account-content {
+      gap: 20px;
+      padding: 84px 20px 0;
+
+      .account-sidebar {
+        width: 220px;
+      }
+
+      .account-main {
+        .quick-access-section {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .card {
+          .info-section {
+            flex-direction: column;
+
+            .course-info,
+            .ai-summary {
+              flex: 1 1 auto;
+            }
+
+            .ai-summary {
+              .summary-card {
+                position: static;
+                min-height: 240px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* stylelint-disable-next-line order/order */
+  @media (width <= 767px) {
+    .header {
+      height: 72px;
+
+      .header-content {
+        padding: 0 16px;
+
+        .logo {
+          height: 42px;
+          padding: 5px;
+          border-radius: 12px;
+        }
+
+        .header-right {
+          gap: 10px;
+
+          .theme-toggle-wrapper {
+            margin-right: 0;
+          }
+
+          .user-info {
+            max-width: calc(100vw - 150px);
+            padding: 0 4px;
+
+            .nickname {
+              @include text-ellipsis;
+
+              max-width: 72px;
+              margin: 0 6px;
+              font-size: 14px;
+            }
+
+            .el-icon--right {
+              font-size: 16px;
+            }
+          }
+        }
+      }
+    }
+
+    .account-content {
+      flex-direction: column;
+      gap: 18px;
+      height: auto;
+      min-height: calc(100vh - 72px);
+      padding: 84px 14px 0;
+
+      .account-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        padding-bottom: 0;
+        overflow: visible;
+
+        .user-info-card {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          align-items: center;
+          justify-content: center;
+          padding: 26px 18px 20px;
+          margin-bottom: 14px;
+          text-align: center;
+          border-radius: 22px;
+
+          &::before {
+            height: 72px;
+            background: linear-gradient(135deg, rgb(151 180 247 / 18%), transparent);
+          }
+
+          .avatar-wrapper {
+            margin-bottom: 0;
+          }
+
+          h3 {
+            margin: 4px 0 0;
+            font-size: 22px;
+          }
+
+          .user-role {
+            justify-self: center;
+            padding: 6px 20px;
+            font-size: 13px;
+          }
+        }
+
+        .account-menu {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          flex-wrap: nowrap;
+          gap: 10px;
+          padding: 14px;
+          overflow: auto hidden;
+          scroll-snap-type: x proximity;
+          scroll-padding-inline: 14px;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          white-space: nowrap;
+          border-radius: 22px;
+
+          &::-webkit-scrollbar {
+            display: none;
+          }
+
+          :deep(.el-menu-item) {
+            display: inline-flex;
+            flex: 0 0 auto;
+            flex-direction: row;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            min-width: max-content;
+            height: auto;
+            padding: 12px 18px;
+            margin-bottom: 0;
+            line-height: 1.1;
+            white-space: nowrap;
+            border: 1px solid rgb(151 180 247 / 8%);
+            border-radius: 18px;
+            scroll-snap-align: start;
+
+            &::before {
+              display: none;
+            }
+
+            .el-icon {
+              margin-right: 0;
+              font-size: 20px;
+            }
+
+            span {
+              display: block;
+              font-size: 13px;
+              line-height: 1.1;
+              white-space: nowrap;
+            }
+          }
+        }
+      }
+
+      .account-main {
+        overflow: visible;
+
+        .quick-access-section {
+          grid-template-columns: 1fr;
+          gap: 12px;
+          margin-bottom: 16px;
+
+          .quick-access-card {
+            padding: 16px;
+
+            .access-icon {
+              width: 46px;
+              height: 46px;
+            }
+
+            .access-info {
+              p {
+                white-space: normal;
+              }
+            }
+          }
+        }
+
+        .card {
+          padding: 18px 16px;
+          margin-bottom: 16px;
+          border-radius: 22px;
+
+          .reminder {
+            margin-bottom: 16px;
+
+            .reminder-content {
+              padding: 0 12px;
+              font-size: 13px;
+            }
+          }
+
+          .info-section {
+            gap: 16px;
+
+            .course-info {
+              h3 {
+                margin-bottom: 12px;
+                font-size: 17px;
+              }
+
+              .course-card {
+                min-height: auto;
+                padding: 12px;
+
+                .course-section {
+                  .mini-course-list {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                  }
+
+                  .mini-course-item {
+                    padding: 10px;
+                  }
+                }
+              }
+            }
+
+            .ai-summary {
+              h3 {
+                margin-bottom: 12px;
+                font-size: 17px;
+              }
+
+              .summary-card {
+                min-height: 220px;
+                padding: 14px;
+              }
+            }
+          }
+        }
+
+        .course-list {
+          .course-header {
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+            padding: 16px;
+            border-radius: 18px;
+
+            h3 {
+              font-size: 17px;
+            }
+
+            .course-filter {
+              :deep(.el-select) {
+                width: 100%;
+              }
+            }
+          }
+
+          .course-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+
+          .pagination {
+            gap: 10px;
+            justify-content: space-between;
+
+            .el-button {
+              flex: 1;
+            }
+
+            .page-info {
+              min-width: auto;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* stylelint-disable-next-line order/order */
+  @media (width <= 479px) {
+    .header {
+      .header-content {
+        .logo {
+          height: 38px;
+        }
+
+        .header-right {
+          gap: 8px;
+
+          .user-info {
+            max-width: calc(100vw - 136px);
+
+            .nickname {
+              max-width: 56px;
+            }
+          }
+        }
+      }
+    }
+
+    .account-content {
+      padding: 84px 10px 0;
+
+      .account-sidebar {
+        .user-info-card {
+          padding: 22px 14px 18px;
+        }
+
+        .account-menu {
+          padding: 12px;
+
+          :deep(.el-menu-item) {
+            padding: 11px 16px;
+          }
+        }
+      }
+
+      .account-main {
+        .card {
+          padding: 16px;
+        }
+
+        .course-list {
+          .pagination {
+            flex-wrap: wrap;
           }
         }
       }

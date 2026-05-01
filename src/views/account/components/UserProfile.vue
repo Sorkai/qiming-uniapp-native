@@ -1772,8 +1772,82 @@ onMounted(async () => {
 
 @media (width <= 768px) {
   .user-profile {
+    .profile-header {
+      gap: 14px;
+      align-items: stretch;
+      margin-bottom: 20px;
+
+      .action-buttons {
+        gap: 10px;
+
+        .btn-elevated {
+          min-height: 44px;
+          padding: 10px 16px;
+        }
+      }
+    }
+
     .profile-info {
       flex-direction: column;
+      gap: 16px;
+
+      .info-group {
+        padding: 20px 18px 18px;
+
+        .group-title {
+          margin-bottom: 18px;
+        }
+
+        .info-item {
+          flex-direction: column;
+          gap: 8px;
+          align-items: stretch;
+          padding: 14px 0;
+          margin-bottom: 0;
+          line-height: 1.7;
+          border-bottom: 1px solid rgb(151 180 247 / 10%);
+
+          &:last-child {
+            padding-bottom: 0;
+            border-bottom: none;
+          }
+
+          .label {
+            width: auto;
+            font-size: 13px;
+            line-height: 1.4;
+          }
+
+          .value {
+            align-items: flex-start;
+            line-height: 1.75;
+            word-break: break-word;
+          }
+
+          .email-value,
+          .time-value {
+            flex-wrap: wrap;
+          }
+
+          .progress-value {
+            width: 100%;
+            max-width: none;
+            margin-left: 0;
+          }
+
+          &.signature {
+            padding: 16px 14px;
+            margin-top: 6px;
+            background: linear-gradient(180deg, #f8fbff 0%, #f2f6ff 100%);
+            border: 1px solid rgb(151 180 247 / 14%);
+            border-radius: 14px;
+
+            .value {
+              display: block;
+            }
+          }
+        }
+      }
     }
   }
 }

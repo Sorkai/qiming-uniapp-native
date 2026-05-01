@@ -413,6 +413,80 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 .spotlight-button:hover::before {
   opacity: 1;
 }
+
+/* stylelint-disable-next-line order/order */
+@media (width <= 767px) {
+  .layout-header {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    height: 64px;
+    padding: 0 14px;
+    border-radius: 22px;
+  }
+
+  .header-content {
+    gap: 12px;
+  }
+
+  .header-left {
+    min-width: 0;
+  }
+
+  .back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+  }
+
+  .header-date {
+    margin-left: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 16px;
+  }
+
+  .theme-btn-premium {
+    margin-left: 12px;
+  }
+
+  .header-right {
+    flex: 0 0 auto;
+  }
+
+  .user-capsule {
+    max-width: 112px;
+    padding: 0 10px;
+  }
+
+  .user-name {
+    max-width: 52px;
+    margin-left: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+  }
+}
+
+/* stylelint-disable-next-line order/order */
+@media (width <= 479px) {
+  .layout-header {
+    padding: 0 12px;
+  }
+
+  .header-date {
+    font-size: 14px;
+  }
+
+  .user-capsule {
+    max-width: 84px;
+    padding: 0 8px;
+  }
+
+  .user-name {
+    max-width: 34px;
+  }
+}
 </style>
 
 <!-- 非scoped 样式，确保下拉菜单正确显示 -->

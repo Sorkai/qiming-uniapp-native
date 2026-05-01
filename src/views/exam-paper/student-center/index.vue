@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
+import { Search } from "@element-plus/icons-vue";
 import {
   getStudentPaperList,
   type StudentPaperItem
@@ -19,11 +21,13 @@ defineOptions({
 
 const router = useRouter();
 const { isDark } = useDark();
+const { isMobile, paginationLayout } = usePageResponsive();
 
 // 筛选条件
 const activeTab = ref<
   "available" | "submitted" | "graded" | "completed" | "expired" | "retake"
 >("available");
+type ExamTabKey = (typeof activeTab.value);
 const searchQuery = ref("");
 const selectedCourse = ref("");
 const selectedStatus = ref("");
@@ -55,6 +59,39 @@ const statistics = ref({
   retake: 0,
   avgScore: 0
 });
+
+const mobileTabOptions = computed(() => [
+  {
+    key: "available" as ExamTabKey,
+    label: "可答题",
+    count: statistics.value.available
+  },
+  {
+    key: "submitted" as ExamTabKey,
+    label: "待批改",
+    count: statistics.value.submitted
+  },
+  {
+    key: "graded" as ExamTabKey,
+    label: "待发布",
+    count: statistics.value.graded
+  },
+  {
+    key: "completed" as ExamTabKey,
+    label: "已完成",
+    count: statistics.value.completed
+  },
+  {
+    key: "retake" as ExamTabKey,
+    label: "补考中",
+    count: statistics.value.retake
+  },
+  {
+    key: "expired" as ExamTabKey,
+    label: "已过期",
+    count: statistics.value.expired
+  }
+]);
 
 // 直接使用后端返回的数据，不需要前端再次筛选
 const filteredPapers = computed(() => papers.value);
@@ -289,7 +326,25 @@ onMounted(() => {
     <!-- 筛选工具栏 -->
     <div class="filter-toolbar">
       <div class="toolbar-left">
-        <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+        <div v-if="isMobile" class="mobile-tab-strip">
+          <button
+            v-for="tab in mobileTabOptions"
+            :key="tab.key"
+            type="button"
+            class="mobile-tab-button"
+            :class="{ 'is-active': activeTab === tab.key }"
+            @click="
+              activeTab = tab.key;
+              handleTabChange();
+            "
+          >
+            <span class="mobile-tab-text">{{ tab.label }}</span>
+            <span v-if="tab.count > 0" class="mobile-tab-count">
+              {{ tab.count }}
+            </span>
+          </button>
+        </div>
+        <el-tabs v-else v-model="activeTab" @tab-change="handleTabChange">
           <el-tab-pane label="可答题" name="available">
             <template #label>
               <span class="tab-label">
@@ -364,7 +419,7 @@ onMounted(() => {
         <el-input
           v-model="searchQuery"
           placeholder="搜索试卷..."
-          prefix-icon="Search"
+          :prefix-icon="isMobile ? undefined : Search"
           clearable
           style="width: 240px"
           @change="handleSearch"
@@ -533,7 +588,8 @@ onMounted(() => {
         v-model:page-size="pageSize"
         :page-sizes="[12, 24, 36, 48]"
         :total="total"
-        layout="total, sizes, prev, pager, next, jumper"
+        :layout="paginationLayout"
+        :small="isMobile"
         background
         @size-change="handlePageChange"
         @current-change="handlePageChange"
@@ -618,12 +674,14 @@ $info-color: #6b7280;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 24px;
     }
 
     .header-left {
       display: flex;
       align-items: center;
       gap: 16px;
+      min-width: 0;
     }
 
     .header-icon {
@@ -650,16 +708,19 @@ $info-color: #6b7280;
       font-weight: 700;
       margin: 0 0 4px;
       color: #1a2a4a;
+      line-height: 1.2;
     }
 
     .page-desc {
       font-size: 14px;
       color: #2a3f5f;
       margin: 0;
+      line-height: 1.7;
     }
 
     .header-stats {
       display: flex;
+      flex-shrink: 0;
       gap: 32px;
 
       .stat-item {
@@ -700,6 +761,10 @@ $info-color: #6b7280;
     &:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 30px rgb(0 0 0 / 12%);
+    }
+
+    .stat-info {
+      min-width: 0;
     }
 
     .stat-icon {
@@ -756,13 +821,73 @@ $info-color: #6b7280;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 20px;
 
     .toolbar-left {
       flex: 1;
+      min-width: 0;
+
+      .mobile-tab-strip {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+
+        &::-webkit-scrollbar {
+          display: none;
+        }
+
+        .mobile-tab-button {
+          display: inline-flex;
+          flex: 0 0 auto;
+          gap: 8px;
+          align-items: center;
+          justify-content: center;
+          min-height: 42px;
+          padding: 0 16px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #475569;
+          white-space: nowrap;
+          cursor: pointer;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 999px;
+          box-shadow: none;
+          transition:
+            color 0.2s ease,
+            background-color 0.2s ease,
+            border-color 0.2s ease;
+
+          &.is-active {
+            color: #fff;
+            background: linear-gradient(135deg, #739cf9 0%, #5b87f5 100%);
+            border-color: transparent;
+          }
+
+          .mobile-tab-count {
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            font-size: 12px;
+            line-height: 20px;
+            color: inherit;
+            background: rgb(255 255 255 / 22%);
+            border-radius: 999px;
+          }
+        }
+      }
 
       :deep(.el-tabs) {
         .el-tabs__header {
           margin: 0;
+        }
+
+        .el-tabs__nav-wrap {
+          overflow: auto;
         }
 
         .el-tabs__nav-wrap::after {
@@ -783,7 +908,14 @@ $info-color: #6b7280;
 
     .toolbar-right {
       display: flex;
+      flex-shrink: 0;
+      flex-wrap: wrap;
       gap: 12px;
+
+      :deep(.el-input),
+      :deep(.el-select) {
+        min-width: 0;
+      }
     }
   }
 
@@ -832,14 +964,17 @@ $info-color: #6b7280;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
       padding: 16px 20px;
       background: linear-gradient(135deg, #f9fafb 0%, #f5f7fa 100%);
       border-bottom: 1px solid #e5e7eb;
 
       .header-left {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 8px;
+        min-width: 0;
 
         .course-tag {
           font-size: 12px;
@@ -852,6 +987,7 @@ $info-color: #6b7280;
 
       .remaining-time {
         display: flex;
+        flex-shrink: 0;
         align-items: center;
         gap: 4px;
         font-size: 13px;
@@ -870,6 +1006,7 @@ $info-color: #6b7280;
         color: #1f2937;
         cursor: pointer;
         transition: color 0.2s;
+        line-height: 1.45;
 
         &:hover {
           color: $primary-color;
@@ -889,6 +1026,7 @@ $info-color: #6b7280;
 
       .paper-meta {
         display: flex;
+        flex-wrap: wrap;
         gap: 16px;
         margin-bottom: 16px;
 
@@ -914,6 +1052,7 @@ $info-color: #6b7280;
         .time-item {
           display: flex;
           justify-content: space-between;
+          gap: 12px;
           font-size: 13px;
           margin-bottom: 4px;
 
@@ -928,6 +1067,7 @@ $info-color: #6b7280;
           .time-value {
             color: #1f2937;
             font-weight: 500;
+            text-align: right;
           }
         }
       }
@@ -964,11 +1104,17 @@ $info-color: #6b7280;
       background: #f9fafb;
       border-top: 1px solid #e5e7eb;
       display: flex;
+      align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
 
       .action-btn {
         flex: 1;
         font-weight: 500;
+      }
+
+      :deep(.el-button) {
+        box-shadow: none !important;
       }
     }
   }
@@ -982,6 +1128,274 @@ $info-color: #6b7280;
     display: flex;
     justify-content: center;
     padding: 20px 0;
+  }
+}
+
+@media (width <= 767px) {
+  .student-exam-center {
+    padding: 0 14px 20px;
+
+    .page-header {
+      padding: 20px 18px;
+      margin-bottom: 18px;
+      border-radius: 22px;
+
+      .header-content {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .header-left {
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .header-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+
+        .custom-icon {
+          width: 30px;
+          height: 30px;
+        }
+      }
+
+      .page-title {
+        font-size: 21px;
+      }
+
+      .page-desc {
+        font-size: 14px;
+      }
+
+      .header-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+
+        .stat-item {
+          padding: 12px 8px;
+          background: rgb(255 255 255 / 18%);
+          border-radius: 16px;
+
+          .stat-value {
+            font-size: 24px;
+            line-height: 1.1;
+          }
+
+          .stat-label {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            line-height: 1.4;
+          }
+        }
+      }
+    }
+
+    .stats-section {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat-card {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 20px;
+
+      &:hover {
+        transform: none;
+      }
+
+      .stat-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        line-height: 1.1;
+      }
+
+      .stat-label {
+        font-size: 13px;
+      }
+    }
+
+    .filter-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 18px 16px;
+      margin-bottom: 18px;
+      border-radius: 22px;
+
+      .toolbar-left {
+        .mobile-tab-strip {
+          margin-bottom: 2px;
+
+          .mobile-tab-button {
+            min-height: 40px;
+            padding: 0 15px;
+          }
+        }
+      }
+
+      .toolbar-right {
+        flex-direction: column;
+        gap: 10px;
+
+        :deep(.el-input),
+        :deep(.el-select) {
+          width: 100% !important;
+        }
+      }
+    }
+
+    .papers-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .paper-card {
+      border-radius: 22px;
+
+      &:hover {
+        transform: none;
+      }
+
+      .card-header {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 16px;
+
+        .remaining-time {
+          font-size: 12px;
+        }
+      }
+
+      .card-body {
+        padding: 18px 16px;
+
+        .paper-title {
+          font-size: 17px;
+        }
+
+        .paper-desc {
+          margin-bottom: 14px;
+          font-size: 14px;
+          line-height: 1.7;
+        }
+
+        .paper-meta {
+          gap: 10px 14px;
+          margin-bottom: 14px;
+
+          .meta-item {
+            font-size: 13px;
+          }
+        }
+
+        .paper-time {
+          padding: 12px 14px;
+          margin-bottom: 14px;
+
+          .time-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            margin-bottom: 10px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .time-value {
+              text-align: left;
+            }
+          }
+        }
+
+        .score-display {
+          gap: 10px;
+          padding: 14px;
+
+          .score-value {
+            font-size: 28px;
+          }
+        }
+      }
+
+      .card-footer {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px 16px 16px;
+
+        .action-btn {
+          width: 100%;
+          min-height: 44px;
+        }
+
+        :deep(.el-button--link) {
+          justify-content: center;
+          min-height: 22px;
+          padding: 0;
+        }
+      }
+    }
+
+    .empty-state {
+      padding: 28px 0;
+    }
+
+    .pagination-wrapper {
+      justify-content: stretch;
+      padding: 8px 0 0;
+
+      :deep(.el-pagination) {
+        justify-content: center;
+        flex-wrap: wrap;
+        row-gap: 10px;
+      }
+    }
+  }
+}
+
+@media (width <= 479px) {
+  .student-exam-center {
+    padding: 0 10px 18px;
+
+    .page-header {
+      padding: 18px 16px;
+
+      .header-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stats-section {
+      grid-template-columns: 1fr;
+    }
+
+    .filter-toolbar {
+      padding: 16px 14px;
+    }
+
+    .paper-card {
+      .card-body {
+        .paper-meta {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+      }
+    }
   }
 }
 </style>

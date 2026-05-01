@@ -11,7 +11,12 @@
           <el-radio-button value="pending">待处理</el-radio-button>
           <el-radio-button value="completed">已完成</el-radio-button>
         </el-radio-group>
-        <el-button type="primary" :icon="Plus" round @click="openAddDialog"
+        <el-button
+          type="primary"
+          :icon="Plus"
+          round
+          class="add-btn"
+          @click="openAddDialog"
           >添加待办</el-button
         >
       </div>
@@ -109,15 +114,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import {
-  Plus,
-  Edit,
-  Delete,
-  Check,
-  Refresh,
-  User,
-  Clock
-} from "@element-plus/icons-vue";
+import { Plus, User, Clock } from "@element-plus/icons-vue";
 
 defineProps<{
   currentTheme?: string;
@@ -324,9 +321,12 @@ const toggleStatus = (row: TodoItem) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
     margin-bottom: 15px;
 
     .header-left {
+      min-width: 0;
+
       h3 {
         margin: 0 0 8px;
         font-size: 26px;
@@ -338,6 +338,54 @@ const toggleStatus = (row: TodoItem) => {
         margin: 0;
         font-size: 15px;
         color: #909399;
+      }
+    }
+
+    .header-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    :deep(.el-radio-group) {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0;
+      overflow: hidden;
+      border-radius: 18px;
+      box-shadow: none;
+    }
+
+    :deep(.el-radio-button__inner) {
+      min-width: 88px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: none !important;
+    }
+
+    :deep(.el-radio-button:first-child .el-radio-button__inner) {
+      border-top-left-radius: 18px;
+      border-bottom-left-radius: 18px;
+    }
+
+    :deep(.el-radio-button:last-child .el-radio-button__inner) {
+      border-top-right-radius: 18px;
+      border-bottom-right-radius: 18px;
+    }
+
+    .add-btn {
+      min-height: 42px;
+      padding: 0 20px;
+      box-shadow: none !important;
+
+      &:hover,
+      &:focus,
+      &:focus-visible,
+      &:active {
+        box-shadow: none !important;
       }
     }
   }
@@ -387,14 +435,56 @@ const toggleStatus = (row: TodoItem) => {
       transform: translateY(-2px);
     }
 
+    .todo-info {
+      min-width: 0;
+    }
+
+    .status-icon {
+      flex-shrink: 0;
+    }
+
+    .text-content {
+      min-width: 0;
+    }
+
+    .title-row {
+      min-width: 0;
+    }
+
     .title {
       font-size: 18px;
       font-weight: 600;
       color: var(--el-text-color-primary);
+      word-break: break-word;
 
       &.is-completed {
         color: var(--el-text-color-placeholder);
         text-decoration: line-through;
+      }
+    }
+
+    .meta-row {
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .todo-actions {
+      flex-shrink: 0;
+      align-items: center;
+
+      :deep(.el-button) {
+        min-width: auto;
+        padding: 0;
+        box-shadow: none !important;
+
+        &:hover,
+        &:focus,
+        &:focus-visible,
+        &:active {
+          box-shadow: none !important;
+        }
       }
     }
   }
@@ -415,5 +505,122 @@ const toggleStatus = (row: TodoItem) => {
 // Table transitions
 :deep(.el-table__row) {
   transition: all 0.3s ease;
+}
+
+@media (width <= 767px) {
+  .todo-container {
+    .card {
+      padding: 22px 20px;
+      border-radius: 20px;
+    }
+
+    .todo-header {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 18px;
+
+      .header-left {
+        h3 {
+          font-size: 24px;
+          line-height: 1.2;
+        }
+
+        p {
+          font-size: 14px;
+          line-height: 1.7;
+        }
+      }
+
+      .header-right {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      :deep(.el-radio-group) {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+      }
+
+      :deep(.el-radio-button) {
+        width: 100%;
+      }
+
+      :deep(.el-radio-button__inner) {
+        width: 100%;
+        min-width: 0;
+        padding: 12px 10px;
+        font-size: 15px;
+        border-left: 1px solid var(--el-border-color) !important;
+        border-radius: 0 !important;
+      }
+
+      :deep(.el-radio-button:first-child .el-radio-button__inner) {
+        border-top-left-radius: 18px !important;
+        border-bottom-left-radius: 18px !important;
+        border-left: 1px solid var(--el-border-color) !important;
+      }
+
+      :deep(.el-radio-button:last-child .el-radio-button__inner) {
+        border-top-right-radius: 18px !important;
+        border-bottom-right-radius: 18px !important;
+      }
+
+      .add-btn {
+        justify-content: center;
+        width: 100%;
+        min-height: 48px;
+        font-size: 15px;
+      }
+    }
+
+    .todo-list {
+      margin-top: 18px;
+    }
+
+    .todo-row {
+      align-items: stretch;
+      padding: 20px;
+      margin-bottom: 14px;
+
+      &:hover {
+        transform: none;
+      }
+
+      .todo-info {
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .title-row {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .title {
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .meta-row {
+        gap: 8px 16px;
+        margin-top: 10px;
+        font-size: 14px;
+      }
+
+      .todo-actions {
+        justify-content: flex-end;
+        gap: 22px;
+        margin-top: 14px;
+        margin-left: 34px;
+
+        :deep(.el-button) {
+          min-height: 24px;
+          font-size: 15px;
+        }
+      }
+    }
+  }
 }
 </style>
