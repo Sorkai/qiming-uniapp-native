@@ -3,9 +3,10 @@
  * 教师端 - 内容审核队列
  * 教师可以审核所授课程中待审核的讨论内容
  */
-import { ref, reactive, onMounted, onActivated, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed, ref, reactive, onActivated, watch } from "vue";
+import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Search,
   Refresh,
@@ -16,11 +17,8 @@ import {
   Top
 } from "@element-plus/icons-vue";
 import {
-  getAdminDiscussions,
-  getAdminDiscussionDetail,
   reviewPost,
   reviewReply,
-  batchReview,
   pinPost,
   unpinPost,
   getTeacherCourseStats,
@@ -37,6 +35,8 @@ defineOptions({
   name: "TeacherReviewQueue"
 });
 
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
+
 // 标签类型
 type TagType = "danger" | "warning" | "info" | "success" | "primary";
 
@@ -46,6 +46,7 @@ const reviewItems = ref<ReviewQueueItem[]>([]);
 const selectedIds = ref<string[]>([]);
 const detailDialogVisible = ref(false);
 const currentDetail = ref<ReviewQueueItem | null>(null);
+const selectedCount = computed(() => selectedIds.value.length);
 
 // 统计数据
 const stats = ref({
@@ -80,6 +81,34 @@ const priorityOptions = [
   { label: "中优先级", value: "medium" },
   { label: "低优先级", value: "low" }
 ];
+const activeFilterCount = computed(() => {
+  let count = 0;
+
+  if (searchForm.courseId) count += 1;
+  if (searchForm.priority) count += 1;
+
+  return count;
+});
+const filterBadgeText = computed(() =>
+  activeFilterCount.value > 0
+    ? `已启用 ${activeFilterCount.value} 项筛选`
+    : "当前展示全部待审内容"
+);
+const queueSummaryText = computed(() => {
+  if (loading.value && pagination.total === 0) {
+    return "正在同步待审内容...";
+  }
+
+  if (pagination.total === 0) {
+    return "暂无待审核内容";
+  }
+
+  if (selectedCount.value > 0) {
+    return `共 ${pagination.total} 条待审内容，已选择 ${selectedCount.value} 条`;
+  }
+
+  return `共 ${pagination.total} 条待审内容，可继续筛选或批量处理`;
+});
 
 // 优先级标签样式
 const priorityTagType = (priority: string): TagType => {
@@ -235,6 +264,7 @@ const fetchCourses = async () => {
 // 搜索
 const handleSearch = () => {
   pagination.page = 1;
+  selectedIds.value = [];
   fetchData();
 };
 
@@ -248,18 +278,31 @@ const resetSearch = () => {
 // 分页变化
 const handlePageChange = (page: number) => {
   pagination.page = page;
+  selectedIds.value = [];
   fetchData();
 };
 
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size;
   pagination.page = 1;
+  selectedIds.value = [];
   fetchData();
 };
 
 // 选择变化
 const handleSelectionChange = (rows: ReviewQueueItem[]) => {
   selectedIds.value = rows.map(r => r.id);
+};
+const isSelected = (id: string) => selectedIds.value.includes(id);
+
+const toggleMobileSelection = (id: string, checked: boolean) => {
+  if (checked) {
+    if (!selectedIds.value.includes(id)) {
+      selectedIds.value.push(id);
+    }
+    return;
+  }
+  selectedIds.value = selectedIds.value.filter(item => item !== id);
 };
 
 // 查看详情
@@ -572,10 +615,10 @@ onActivated(() => {
 </script>
 
 <template>
-  <div class="review-queue">
+  <div class="review-queue" :class="{ 'review-queue--mobile': isMobile }">
     <!-- 统计卡片 -->
-    <el-row :gutter="20" class="mb-6">
-      <el-col :xs="8" :sm="8" :md="8">
+    <div class="review-stats-grid mb-6">
+      <div class="review-stats-grid__item">
         <el-card shadow="hover" class="stat-card pending">
           <div class="stat-content">
             <div class="stat-icon warning">
@@ -587,8 +630,8 @@ onActivated(() => {
             </div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="8" :sm="8" :md="8">
+      </div>
+      <div class="review-stats-grid__item">
         <el-card shadow="hover" class="stat-card high">
           <div class="stat-content">
             <div class="stat-icon danger">
@@ -600,8 +643,8 @@ onActivated(() => {
             </div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="8" :sm="8" :md="8">
+      </div>
+      <div class="review-stats-grid__item">
         <el-card shadow="hover" class="stat-card avg">
           <div class="stat-content">
             <div class="stat-icon info">
@@ -613,12 +656,30 @@ onActivated(() => {
             </div>
           </div>
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
 
     <!-- 搜索栏 -->
-    <el-card shadow="never" class="mb-4 search-card">
-      <el-form :inline="true" :model="searchForm" class="search-form">
+    <el-card shadow="never" class="mb-4 search-card review-panel">
+      <div class="review-panel__header">
+        <div class="review-panel__copy">
+          <span class="review-panel__eyebrow">筛选条件</span>
+          <h3>快速聚焦待审核内容</h3>
+          <p>按课程和优先级筛选审核队列，优先处理高风险内容。</p>
+        </div>
+        <div
+          class="review-panel__badge"
+          :class="{ 'is-active': activeFilterCount > 0 }"
+        >
+          {{ filterBadgeText }}
+        </div>
+      </div>
+      <el-form
+        :inline="!isMobile"
+        :label-position="isMobile ? 'top' : 'right'"
+        :model="searchForm"
+        class="search-form"
+      >
         <el-form-item label="所属课程">
           <el-select
             v-model="searchForm.courseId"
@@ -664,48 +725,182 @@ onActivated(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">
-            查询审核
-          </el-button>
-          <el-button :icon="Refresh" @click="resetSearch">重置条件</el-button>
+        <el-form-item class="search-form__action-item">
+          <div class="search-form__actions">
+            <el-button
+              type="primary"
+              :icon="Search"
+              class="search-form__primary"
+              @click="handleSearch"
+            >
+              查询审核
+            </el-button>
+            <el-button
+              :icon="Refresh"
+              class="search-form__secondary"
+              @click="resetSearch"
+            >
+              重置条件
+            </el-button>
+          </div>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 操作栏 -->
-    <el-card shadow="never" class="mb-4 action-bar">
-      <div class="flex justify-between items-center">
-        <div class="flex gap-4 items-center">
-          <el-button
-            type="success"
-            :icon="Check"
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchApprove"
-          >
-            批量通过
-          </el-button>
-          <el-button
-            type="danger"
-            :icon="Close"
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchReject"
-          >
-            批量拒绝
-          </el-button>
-          <div v-if="selectedIds.length > 0" class="batch-info animate-pulse">
-            <el-icon class="mr-1"><Warning /></el-icon>
-            已选中 {{ selectedIds.length }} 个待审项
-          </div>
+    <el-card shadow="never" class="mb-4 action-bar review-panel">
+      <div class="review-toolbar">
+        <div class="review-panel__copy">
+          <span class="review-panel__eyebrow">待审队列</span>
+          <h3>内容审核</h3>
+          <p>{{ queueSummaryText }}</p>
         </div>
-        <el-button :icon="Refresh" plain @click="initData">同步数据</el-button>
+        <div class="review-toolbar__actions">
+          <div class="batch-actions">
+            <el-button
+              type="success"
+              :icon="Check"
+              :disabled="selectedCount === 0"
+              @click="handleBatchApprove"
+            >
+              批量通过
+            </el-button>
+            <el-button
+              type="danger"
+              :icon="Close"
+              :disabled="selectedCount === 0"
+              @click="handleBatchReject"
+            >
+              批量拒绝
+            </el-button>
+          </div>
+          <div v-if="selectedCount > 0" class="batch-info">
+            <el-icon><Warning /></el-icon>
+            已选中 {{ selectedCount }} 个待审项
+          </div>
+          <el-button
+            :icon="Refresh"
+            :link="!isMobile"
+            :plain="isMobile"
+            class="sync-status-btn"
+            @click="initData"
+          >
+            同步数据
+          </el-button>
+        </div>
       </div>
     </el-card>
 
     <!-- 数据表格 -->
-    <el-card shadow="never" class="data-card">
+    <el-card v-loading="loading" shadow="never" class="data-card review-panel">
+      <div v-if="isMobile" class="mobile-review-list">
+        <div
+          v-for="row in reviewItems"
+          :key="row.id"
+          class="mobile-review-card"
+        >
+          <div class="mobile-review-card__header">
+            <div class="mobile-review-card__header-main">
+              <el-checkbox
+                :model-value="isSelected(row.id)"
+                @change="value => toggleMobileSelection(row.id, Boolean(value))"
+              />
+              <span class="mobile-review-card__header-note">
+                {{ isSelected(row.id) ? "已加入批量处理" : "加入批量处理" }}
+              </span>
+            </div>
+            <div class="mobile-review-card__header-tags">
+              <el-tag
+                :type="priorityTagType(row.priority)"
+                effect="light"
+                round
+                size="small"
+              >
+                {{ priorityText(row.priority) }}优先级
+              </el-tag>
+              <el-tag
+                :type="riskLevelType(row.riskLevel)"
+                effect="dark"
+                round
+                size="small"
+              >
+                {{ riskLevelText(row.riskLevel) }}
+              </el-tag>
+            </div>
+          </div>
+
+          <div class="discussion-item-classic">
+            <div v-if="row.title" class="item-title">
+              {{ row.title }}
+            </div>
+
+            <div class="item-excerpt">
+              {{ row.content }}
+            </div>
+
+            <div class="item-footer">
+              <div class="author-box">
+                <el-avatar
+                  :size="22"
+                  :src="formatAvatar(row.author?.avatar)"
+                  class="author-avatar"
+                />
+                <span class="author-name">{{ row.author?.name }}</span>
+              </div>
+              <span class="course-name">{{
+                row.courseName || "未知课程"
+              }}</span>
+              <span class="post-time">{{ formatTime(row.createdAt) }}</span>
+              <el-tag
+                v-if="row.itemType === 'reply'"
+                size="small"
+                class="type-tag"
+                effect="plain"
+              >
+                回复
+              </el-tag>
+            </div>
+          </div>
+
+          <div class="mobile-review-card__wait">
+            <span class="wait-label">已等待</span>
+            <span
+              class="wait-value"
+              :class="{
+                'is-urgent': getWaitTime(row.createdAt).includes('天')
+              }"
+            >
+              {{ getWaitTime(row.createdAt) }}
+            </span>
+          </div>
+
+          <div class="mobile-review-card__actions">
+            <el-button plain @click="viewDetail(row)">详情审核</el-button>
+            <el-button type="success" plain @click="handleApprove(row)">
+              直接通过
+            </el-button>
+            <el-button type="danger" plain @click="handleReject(row)">
+              违规拒绝
+            </el-button>
+            <el-button
+              v-if="row.itemType === 'post'"
+              type="warning"
+              plain
+              @click="row.isPinned ? handleUnpin(row) : handlePin(row)"
+            >
+              {{ row.isPinned ? "取消置顶" : "设为置顶" }}
+            </el-button>
+          </div>
+        </div>
+
+        <el-empty
+          v-if="!loading && reviewItems.length === 0"
+          description="暂无待审核内容"
+        />
+      </div>
+
       <el-table
-        v-loading="loading"
+        v-else
         :data="reviewItems"
         row-class-name="review-table-row"
         @selection-change="handleSelectionChange"
@@ -867,7 +1062,8 @@ onActivated(() => {
           v-model:page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           @current-change="handlePageChange"
           @size-change="handleSizeChange"
         />
@@ -878,7 +1074,7 @@ onActivated(() => {
     <el-dialog
       v-model="detailDialogVisible"
       title="内容审核"
-      width="520px"
+      :width="getDialogWidth('520px')"
       destroy-on-close
       class="simple-review-dialog"
     >
@@ -930,6 +1126,16 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .review-queue {
+  .review-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .review-stats-grid__item {
+    min-width: 0;
+  }
+
   :deep(.el-card) {
     border: none;
     border-radius: 12px;
@@ -939,6 +1145,100 @@ onActivated(() => {
 
     html.dark & {
       background-color: #1d1d1d;
+    }
+  }
+
+  .review-panel {
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 28px;
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+
+    :deep(.el-card__body) {
+      padding: 24px;
+    }
+  }
+
+  .review-panel__header,
+  .review-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .review-panel__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+
+      html.dark & {
+        color: #f8fafc;
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #64748b;
+
+      html.dark & {
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .review-panel__eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #6366f1;
+    text-transform: uppercase;
+  }
+
+  .review-panel__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    background: #eff6ff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d4ed8;
+    white-space: nowrap;
+
+    html.dark & {
+      border-color: #1d4ed8;
+      background: rgb(29 78 216 / 18%);
+      color: #bfdbfe;
+    }
+
+    &.is-active {
+      border-color: #c7d2fe;
+      background: #eef2ff;
+      color: #4f46e5;
+
+      html.dark & {
+        border-color: #4f46e5;
+        background: rgb(79 70 229 / 18%);
+        color: #c7d2fe;
+      }
     }
   }
 
@@ -958,7 +1258,14 @@ onActivated(() => {
 
   .stat-card {
     position: relative;
-    border: none;
+    border: 1px solid rgb(226 232 240 / 92%);
+    border-radius: 24px;
+    background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
 
     .stat-content {
       display: flex;
@@ -1014,15 +1321,104 @@ onActivated(() => {
 
   .search-form {
     padding: 0;
+
     :deep(.el-form-item) {
-      margin-bottom: 0;
+      margin-bottom: 16px;
       margin-right: 16px;
+    }
+
+    :deep(.el-form-item__label) {
+      font-weight: 700;
+      color: #334155;
+
+      html.dark & {
+        color: #cbd5e1;
+      }
     }
 
     :deep(.el-input__wrapper),
     :deep(.el-select__wrapper) {
-      border-radius: 6px;
+      min-height: 46px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgb(15 23 42 / 6%);
     }
+  }
+
+  .search-form__action-item {
+    margin-right: 0 !important;
+
+    :deep(.el-form-item__content) {
+      width: 100%;
+    }
+  }
+
+  .search-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .search-form__primary,
+  .search-form__secondary,
+  .sync-status-btn,
+  .batch-actions :deep(.el-button) {
+    min-height: 44px;
+    padding-inline: 18px;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
+  .search-form__actions :deep(.el-button) {
+    margin-left: 0;
+    display: flex;
+    width: 100%;
+  }
+
+  .search-form__primary {
+    box-shadow: 0 12px 24px rgb(59 130 246 / 18%);
+  }
+
+  .review-toolbar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .batch-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .batch-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 13px;
+    font-weight: 600;
+
+    html.dark & {
+      background: rgb(194 65 12 / 16%);
+      color: #fdba74;
+    }
+  }
+
+  .sync-status-btn {
+    margin-left: 0;
+  }
+
+  .batch-actions :deep(.el-button) {
+    margin-left: 0;
+    display: flex;
+    width: 100%;
   }
 
   .data-card {
@@ -1203,6 +1599,104 @@ onActivated(() => {
     }
   }
 
+  .mobile-review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .mobile-review-card {
+    padding: 18px;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 98%) 0%,
+      rgb(248 250 252 / 96%) 100%
+    );
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 22px;
+    box-shadow: 0 14px 32px rgb(15 23 42 / 8%);
+
+    html.dark & {
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+      border-color: #334155;
+      box-shadow: 0 14px 32px rgb(2 6 23 / 24%);
+    }
+  }
+
+  .mobile-review-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .mobile-review-card__header-main,
+  .mobile-review-card__header-tags {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .mobile-review-card__header-note {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+
+    html.dark & {
+      color: #94a3b8;
+    }
+  }
+
+  .mobile-review-card__wait {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    margin-top: 14px;
+    border-top: 1px solid rgb(226 232 240 / 88%);
+    border-bottom: 1px solid rgb(226 232 240 / 88%);
+
+    html.dark & {
+      border-color: #334155;
+    }
+  }
+
+  .wait-label {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+
+  .wait-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+
+    html.dark & {
+      color: #e2e8f0;
+    }
+
+    &.is-urgent {
+      color: #ef4444;
+    }
+  }
+
+  .mobile-review-card__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .mobile-review-card__actions :deep(.el-button) {
+    width: 100%;
+    min-height: 42px;
+    margin-left: 0;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
   .review-detail {
     .author-row {
       display: flex;
@@ -1271,6 +1765,160 @@ onActivated(() => {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+  }
+}
+
+@media (width <= 768px) {
+  .review-queue {
+    padding-bottom: calc(
+      var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
+    );
+
+    .review-stats-grid {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .review-panel {
+      :deep(.el-card__body) {
+        padding: 18px;
+      }
+    }
+
+    .review-panel__header,
+    .review-toolbar {
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    .review-panel__copy {
+      h3 {
+        font-size: 20px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+    }
+
+    .review-panel__badge {
+      width: 100%;
+      white-space: normal;
+    }
+
+    .stat-card {
+      .stat-content {
+        align-items: flex-start;
+        min-height: 110px;
+        padding: 4px 0;
+      }
+    }
+
+    .review-toolbar__actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .batch-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .batch-actions :deep(.el-button),
+    .sync-status-btn {
+      width: 100%;
+    }
+
+    .search-form {
+      :deep(.el-form-item) {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+
+      :deep(.el-form-item__label) {
+        padding: 0 0 8px;
+        line-height: 1.25;
+      }
+
+      :deep(.el-form-item__content) {
+        width: 100%;
+      }
+
+      :deep(.el-select) {
+        width: 100% !important;
+      }
+    }
+
+    .search-form__actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .discussion-item-classic {
+      gap: 8px;
+
+      .item-title {
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      .item-excerpt {
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .item-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 8px;
+        text-align: left;
+
+        .separator {
+          display: none;
+        }
+
+        .author-box {
+          justify-content: flex-start;
+          width: 100%;
+          margin-right: 0;
+        }
+
+        .course-name,
+        .post-time {
+          margin-right: 0;
+          width: 100%;
+          text-align: left;
+        }
+
+        .type-tag {
+          margin-left: 0;
+        }
+      }
+    }
+  }
+}
+
+@media (width <= 420px) {
+  .review-queue {
+    .batch-actions,
+    .search-form__actions,
+    .mobile-review-card__actions {
+      grid-template-columns: 1fr;
+    }
+
+    .mobile-review-card {
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .mobile-review-card__header-note {
+      font-size: 12px;
+    }
   }
 }
 

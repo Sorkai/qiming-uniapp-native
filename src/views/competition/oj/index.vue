@@ -1,5 +1,5 @@
 <template>
-  <div class="main">
+  <div class="main oj-manage" :class="{ 'oj-manage--mobile': isMobile }">
     <!-- 头部统计 -->
     <el-card class="box-card header-card">
       <div class="header-content">
@@ -30,17 +30,27 @@
 
     <!-- 标签页切换 -->
     <el-card class="box-card">
-      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <el-tabs
+        v-model="activeTab"
+        class="oj-tabs"
+        :stretch="isMobile"
+        @tab-change="handleTabChange"
+      >
         <el-tab-pane label="题目管理" name="problems">
           <!-- 题目搜索 -->
           <div class="toolbar">
-            <el-form :inline="true" :model="problemSearch" class="search-form">
+            <el-form
+              :inline="!isMobile"
+              :model="problemSearch"
+              :label-position="isMobile ? 'top' : 'right'"
+              class="search-form"
+            >
               <el-form-item label="题目名称">
                 <el-input
                   v-model="problemSearch.title"
                   placeholder="请输入题目名称"
                   clearable
-                  style="width: 200px"
+                  :style="{ width: isMobile ? '100%' : '200px' }"
                 />
               </el-form-item>
               <el-form-item label="难度">
@@ -48,7 +58,7 @@
                   v-model="problemSearch.difficulty"
                   placeholder="请选择"
                   clearable
-                  style="width: 120px"
+                  :style="{ width: isMobile ? '100%' : '120px' }"
                 >
                   <el-option label="简单" value="easy" />
                   <el-option label="中等" value="medium" />
@@ -60,7 +70,7 @@
                   v-model="problemSearch.tag"
                   placeholder="请选择"
                   clearable
-                  style="width: 150px"
+                  :style="{ width: isMobile ? '100%' : '150px' }"
                 >
                   <el-option
                     v-for="tag in tagOptions"
@@ -75,136 +85,240 @@
                 <el-button @click="resetProblemSearch">重置</el-button>
               </el-form-item>
             </el-form>
-            <el-button type="primary" @click="openProblemDialog()">
-              <el-icon><Plus /></el-icon>
-              添加题目
-            </el-button>
+            <div class="toolbar-actions">
+              <el-button
+                type="primary"
+                :class="{ 'toolbar-action-button': isMobile }"
+                @click="openProblemDialog()"
+              >
+                <el-icon><Plus /></el-icon>
+                添加题目
+              </el-button>
+            </div>
           </div>
 
           <!-- 题目列表 -->
-          <el-table
-            v-loading="problemLoading"
-            :data="problemList"
-            stripe
-            style="width: 100%"
-          >
-            <el-table-column
-              prop="problemId"
-              label="ID"
-              width="80"
-              align="center"
-            />
-            <el-table-column prop="title" label="题目名称" min-width="200">
-              <template #default="{ row }">
-                <el-link type="primary" @click="viewProblemDetail(row)">
-                  {{ row.title }}
-                </el-link>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="difficulty"
-              label="难度"
-              width="100"
-              align="center"
+          <template v-if="isMobile">
+            <div v-loading="problemLoading" class="mobile-problem-list">
+              <div
+                v-for="row in problemList"
+                :key="row.problemId"
+                class="mobile-problem-card"
+              >
+                <div class="mobile-card-head">
+                  <div class="mobile-card-head-main">
+                    <span class="mobile-card-id">#{{ row.problemId }}</span>
+                    <el-link
+                      type="primary"
+                      class="mobile-card-title"
+                      @click="viewProblemDetail(row)"
+                    >
+                      {{ row.title }}
+                    </el-link>
+                  </div>
+                  <el-tag
+                    :type="getProblemStatusType(row.status)"
+                    size="small"
+                    effect="light"
+                  >
+                    {{ getProblemStatusLabel(row.status) }}
+                  </el-tag>
+                </div>
+
+                <div class="mobile-card-tags">
+                  <el-tag
+                    :type="getDifficultyType(row.difficulty)"
+                    size="small"
+                    effect="light"
+                  >
+                    {{ getDifficultyLabel(row.difficulty) }}
+                  </el-tag>
+                  <span
+                    class="mobile-rate"
+                    :class="getAcceptRateClass(row.acceptRate)"
+                  >
+                    通过率 {{ row.acceptRate }}%
+                  </span>
+                </div>
+
+                <div v-if="row.tags?.length" class="mobile-tag-list">
+                  <el-tag
+                    v-for="tag in row.tags"
+                    :key="tag"
+                    size="small"
+                    class="tag-item"
+                    effect="plain"
+                  >
+                    {{ tag }}
+                  </el-tag>
+                </div>
+
+                <div class="mobile-metrics">
+                  <div class="metric-item">
+                    <span class="metric-label">提交数</span>
+                    <strong>{{ row.submitCount }}</strong>
+                  </div>
+                  <div class="metric-item">
+                    <span class="metric-label">通过数</span>
+                    <strong>{{ row.acceptCount }}</strong>
+                  </div>
+                </div>
+
+                <div class="mobile-card-actions">
+                  <el-button size="small" plain @click="openProblemDialog(row)">
+                    编辑
+                  </el-button>
+                  <el-button
+                    type="success"
+                    size="small"
+                    plain
+                    @click="viewSubmissions(row)"
+                  >
+                    提交记录
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    size="small"
+                    plain
+                    @click="deleteProblem(row)"
+                  >
+                    删除
+                  </el-button>
+                </div>
+              </div>
+
+              <el-empty
+                v-if="!problemLoading && problemList.length === 0"
+                description="暂无题目"
+              />
+            </div>
+          </template>
+          <div v-else class="table-shell">
+            <el-table
+              v-loading="problemLoading"
+              :data="problemList"
+              stripe
+              style="width: 100%"
             >
-              <template #default="{ row }">
-                <el-tag :type="getDifficultyType(row.difficulty)" size="small">
-                  {{ getDifficultyLabel(row.difficulty) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="tags" label="标签" width="200">
-              <template #default="{ row }">
-                <el-tag
-                  v-for="tag in row.tags"
-                  :key="tag"
-                  size="small"
-                  class="tag-item"
-                >
-                  {{ tag }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="submitCount"
-              label="提交数"
-              width="100"
-              align="center"
-            />
-            <el-table-column
-              prop="acceptCount"
-              label="通过数"
-              width="100"
-              align="center"
-            />
-            <el-table-column
-              prop="acceptRate"
-              label="通过率"
-              width="100"
-              align="center"
-            >
-              <template #default="{ row }">
-                <span :class="getAcceptRateClass(row.acceptRate)">
-                  {{ row.acceptRate }}%
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="status"
-              label="状态"
-              width="100"
-              align="center"
-            >
-              <template #default="{ row }">
-                <el-tag
-                  :type="row.status === 'published' ? 'success' : 'info'"
-                  size="small"
-                >
-                  {{ row.status === "published" ? "已发布" : "草稿" }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column
-              label="操作"
-              width="200"
-              align="center"
-              fixed="right"
-            >
-              <template #default="{ row }">
-                <el-button
-                  type="primary"
-                  size="small"
-                  link
-                  @click="openProblemDialog(row)"
-                >
-                  编辑
-                </el-button>
-                <el-button
-                  type="success"
-                  size="small"
-                  link
-                  @click="viewSubmissions(row)"
-                >
-                  提交记录
-                </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  link
-                  @click="deleteProblem(row)"
-                >
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+              <el-table-column
+                prop="problemId"
+                label="ID"
+                width="80"
+                align="center"
+              />
+              <el-table-column prop="title" label="题目名称" min-width="200">
+                <template #default="{ row }">
+                  <el-link type="primary" @click="viewProblemDetail(row)">
+                    {{ row.title }}
+                  </el-link>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="difficulty"
+                label="难度"
+                width="100"
+                align="center"
+              >
+                <template #default="{ row }">
+                  <el-tag
+                    :type="getDifficultyType(row.difficulty)"
+                    size="small"
+                  >
+                    {{ getDifficultyLabel(row.difficulty) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="tags" label="标签" width="200">
+                <template #default="{ row }">
+                  <el-tag
+                    v-for="tag in row.tags"
+                    :key="tag"
+                    size="small"
+                    class="tag-item"
+                  >
+                    {{ tag }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="submitCount"
+                label="提交数"
+                width="100"
+                align="center"
+              />
+              <el-table-column
+                prop="acceptCount"
+                label="通过数"
+                width="100"
+                align="center"
+              />
+              <el-table-column
+                prop="acceptRate"
+                label="通过率"
+                width="100"
+                align="center"
+              >
+                <template #default="{ row }">
+                  <span :class="getAcceptRateClass(row.acceptRate)">
+                    {{ row.acceptRate }}%
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="status"
+                label="状态"
+                width="100"
+                align="center"
+              >
+                <template #default="{ row }">
+                  <el-tag :type="getProblemStatusType(row.status)" size="small">
+                    {{ getProblemStatusLabel(row.status) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column
+                label="操作"
+                width="200"
+                align="center"
+                fixed="right"
+              >
+                <template #default="{ row }">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    link
+                    @click="openProblemDialog(row)"
+                  >
+                    编辑
+                  </el-button>
+                  <el-button
+                    type="success"
+                    size="small"
+                    link
+                    @click="viewSubmissions(row)"
+                  >
+                    提交记录
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    size="small"
+                    link
+                    @click="deleteProblem(row)"
+                  >
+                    删除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
 
           <div class="pagination-container">
             <el-pagination
               v-model:current-page="problemParams.pageNum"
               v-model:page-size="problemParams.pageSize"
               :page-sizes="[10, 20, 50]"
-              layout="total, sizes, prev, pager, next, jumper"
+              :layout="paginationLayout"
+              :size="isMobile ? 'small' : 'default'"
               :total="problemTotal"
               @size-change="loadProblems"
               @current-change="loadProblems"
@@ -216,8 +330,9 @@
           <!-- 提交记录搜索 -->
           <div class="toolbar">
             <el-form
-              :inline="true"
+              :inline="!isMobile"
               :model="submissionSearch"
+              :label-position="isMobile ? 'top' : 'right'"
               class="search-form"
             >
               <el-form-item label="题目ID">
@@ -225,7 +340,7 @@
                   v-model="submissionSearch.problemId"
                   placeholder="题目ID"
                   clearable
-                  style="width: 120px"
+                  :style="{ width: isMobile ? '100%' : '120px' }"
                 />
               </el-form-item>
               <el-form-item label="用户名">
@@ -233,7 +348,7 @@
                   v-model="submissionSearch.username"
                   placeholder="用户名"
                   clearable
-                  style="width: 150px"
+                  :style="{ width: isMobile ? '100%' : '150px' }"
                 />
               </el-form-item>
               <el-form-item label="判题结果">
@@ -241,7 +356,7 @@
                   v-model="submissionSearch.result"
                   placeholder="请选择"
                   clearable
-                  style="width: 150px"
+                  :style="{ width: isMobile ? '100%' : '150px' }"
                 >
                   <el-option label="Accepted" value="AC" />
                   <el-option label="Wrong Answer" value="WA" />
@@ -256,7 +371,7 @@
                   v-model="submissionSearch.language"
                   placeholder="请选择"
                   clearable
-                  style="width: 120px"
+                  :style="{ width: isMobile ? '100%' : '120px' }"
                 >
                   <el-option label="C++" value="cpp" />
                   <el-option label="Java" value="java" />
@@ -274,99 +389,150 @@
           </div>
 
           <!-- 提交记录列表 -->
-          <el-table
-            v-loading="submissionLoading"
-            :data="submissionList"
-            stripe
-            style="width: 100%"
-          >
-            <el-table-column
-              prop="submissionId"
-              label="提交ID"
-              width="100"
-              align="center"
-            />
-            <el-table-column
-              prop="problemId"
-              label="题目ID"
-              width="100"
-              align="center"
-            />
-            <el-table-column
-              prop="problemTitle"
-              label="题目名称"
-              min-width="180"
-            />
-            <el-table-column prop="username" label="用户" width="120" />
-            <el-table-column
-              prop="result"
-              label="结果"
-              width="150"
-              align="center"
+          <template v-if="isMobile">
+            <div v-loading="submissionLoading" class="mobile-submission-list">
+              <div
+                v-for="row in submissionList"
+                :key="row.submissionId"
+                class="mobile-submission-card"
+              >
+                <div class="mobile-card-head">
+                  <div class="mobile-card-head-main">
+                    <span class="mobile-card-id">#{{ row.submissionId }}</span>
+                    <div class="mobile-card-title">{{ row.problemTitle }}</div>
+                  </div>
+                  <el-tag
+                    :type="getResultType(row.result)"
+                    size="small"
+                    effect="light"
+                  >
+                    {{ row.result }}
+                  </el-tag>
+                </div>
+
+                <div class="mobile-submission-meta">
+                  <span>题目 ID：{{ row.problemId }}</span>
+                  <span>用户：{{ row.username }}</span>
+                  <span>语言：{{ getLanguageLabel(row.language) }}</span>
+                  <span>用时：{{ row.time }} ms</span>
+                  <span>内存：{{ row.memory }} KB</span>
+                  <span>提交时间：{{ row.submitTime }}</span>
+                </div>
+
+                <div class="mobile-card-actions">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    plain
+                    @click="viewCode(row)"
+                  >
+                    查看代码
+                  </el-button>
+                </div>
+              </div>
+
+              <el-empty
+                v-if="!submissionLoading && submissionList.length === 0"
+                description="暂无提交记录"
+              />
+            </div>
+          </template>
+          <div v-else class="table-shell">
+            <el-table
+              v-loading="submissionLoading"
+              :data="submissionList"
+              stripe
+              style="width: 100%"
             >
-              <template #default="{ row }">
-                <el-tag :type="getResultType(row.result)" size="small">
-                  {{ row.result }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="language"
-              label="语言"
-              width="100"
-              align="center"
-            >
-              <template #default="{ row }">
-                {{ getLanguageLabel(row.language) }}
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="time"
-              label="用时"
-              width="100"
-              align="center"
-            >
-              <template #default="{ row }"> {{ row.time }} ms </template>
-            </el-table-column>
-            <el-table-column
-              prop="memory"
-              label="内存"
-              width="100"
-              align="center"
-            >
-              <template #default="{ row }"> {{ row.memory }} KB </template>
-            </el-table-column>
-            <el-table-column
-              prop="submitTime"
-              label="提交时间"
-              width="180"
-              align="center"
-            />
-            <el-table-column
-              label="操作"
-              width="120"
-              align="center"
-              fixed="right"
-            >
-              <template #default="{ row }">
-                <el-button
-                  type="primary"
-                  size="small"
-                  link
-                  @click="viewCode(row)"
-                >
-                  查看代码
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+              <el-table-column
+                prop="submissionId"
+                label="提交ID"
+                width="100"
+                align="center"
+              />
+              <el-table-column
+                prop="problemId"
+                label="题目ID"
+                width="100"
+                align="center"
+              />
+              <el-table-column
+                prop="problemTitle"
+                label="题目名称"
+                min-width="180"
+              />
+              <el-table-column prop="username" label="用户" width="120" />
+              <el-table-column
+                prop="result"
+                label="结果"
+                width="150"
+                align="center"
+              >
+                <template #default="{ row }">
+                  <el-tag :type="getResultType(row.result)" size="small">
+                    {{ row.result }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="language"
+                label="语言"
+                width="100"
+                align="center"
+              >
+                <template #default="{ row }">
+                  {{ getLanguageLabel(row.language) }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="time"
+                label="用时"
+                width="100"
+                align="center"
+              >
+                <template #default="{ row }"> {{ row.time }} ms </template>
+              </el-table-column>
+              <el-table-column
+                prop="memory"
+                label="内存"
+                width="100"
+                align="center"
+              >
+                <template #default="{ row }"> {{ row.memory }} KB </template>
+              </el-table-column>
+              <el-table-column
+                prop="submitTime"
+                label="提交时间"
+                width="180"
+                align="center"
+              />
+              <el-table-column
+                label="操作"
+                width="120"
+                align="center"
+                fixed="right"
+              >
+                <template #default="{ row }">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    link
+                    @click="viewCode(row)"
+                  >
+                    查看代码
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
 
           <div class="pagination-container">
             <el-pagination
               v-model:current-page="submissionParams.pageNum"
               v-model:page-size="submissionParams.pageSize"
               :page-sizes="[20, 50, 100]"
-              layout="total, sizes, prev, pager, next, jumper"
+              :layout="paginationLayout"
+              :size="isMobile ? 'small' : 'default'"
               :total="submissionTotal"
               @size-change="loadSubmissions"
               @current-change="loadSubmissions"
@@ -380,17 +546,19 @@
     <el-dialog
       v-model="problemDialogVisible"
       :title="problemForm.problemId ? '编辑题目' : '添加题目'"
-      width="900px"
+      :width="getDialogWidth('900px', '96%')"
+      :fullscreen="isMobile"
       destroy-on-close
     >
       <el-form
         ref="problemFormRef"
         :model="problemForm"
         :rules="problemRules"
-        label-width="100px"
+        :label-width="isMobile ? undefined : '100px'"
+        :label-position="isMobile ? 'top' : 'right'"
       >
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="题目名称" prop="title">
               <el-input
                 v-model="problemForm.title"
@@ -398,7 +566,7 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="难度" prop="difficulty">
               <el-select
                 v-model="problemForm.difficulty"
@@ -411,25 +579,27 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="时间限制" prop="timeLimit">
               <el-input-number
                 v-model="problemForm.timeLimit"
                 :min="100"
                 :max="10000"
                 :step="100"
+                class="oj-number-input"
               />
               <span class="unit">ms</span>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="内存限制" prop="memoryLimit">
               <el-input-number
                 v-model="problemForm.memoryLimit"
                 :min="16"
                 :max="512"
                 :step="16"
+                class="oj-number-input"
               />
               <span class="unit">MB</span>
             </el-form-item>
@@ -460,8 +630,8 @@
             placeholder="请输入题目描述（支持Markdown）"
           />
         </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="输入格式" prop="inputFormat">
               <el-input
                 v-model="problemForm.inputFormat"
@@ -471,7 +641,7 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="输出格式" prop="outputFormat">
               <el-input
                 v-model="problemForm.outputFormat"
@@ -523,7 +693,8 @@
     <el-dialog
       v-model="problemDetailVisible"
       :title="currentProblem?.title"
-      width="800px"
+      :width="getDialogWidth('800px', '96%')"
+      :fullscreen="isMobile"
     >
       <div v-if="currentProblem" class="problem-detail">
         <div class="problem-meta">
@@ -558,14 +729,14 @@
         </div>
         <div class="section">
           <h4>示例</h4>
-          <el-row :gutter="20">
-            <el-col :span="12">
+          <el-row :gutter="isMobile ? 0 : 20">
+            <el-col :span="isMobile ? 24 : 12">
               <div class="sample-box">
                 <div class="sample-label">输入</div>
                 <pre>{{ currentProblem.sampleInput }}</pre>
               </div>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="isMobile ? 24 : 12">
               <div class="sample-box">
                 <div class="sample-label">输出</div>
                 <pre>{{ currentProblem.sampleOutput }}</pre>
@@ -581,9 +752,14 @@
     </el-dialog>
 
     <!-- 代码查看弹窗 -->
-    <el-dialog v-model="codeDialogVisible" title="提交代码" width="800px">
+    <el-dialog
+      v-model="codeDialogVisible"
+      title="提交代码"
+      :width="getDialogWidth('800px', '96%')"
+      :fullscreen="isMobile"
+    >
       <div v-if="currentSubmission" class="code-info">
-        <el-descriptions :column="4" border size="small">
+        <el-descriptions :column="isMobile ? 1 : 4" border size="small">
           <el-descriptions-item label="提交ID">{{
             currentSubmission.submissionId
           }}</el-descriptions-item>
@@ -614,6 +790,7 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   getOJStats,
   getProblemList,
@@ -626,6 +803,8 @@ import {
 defineOptions({
   name: "OJManage"
 });
+
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
 
 const activeTab = ref("problems");
 
@@ -880,6 +1059,12 @@ const getDifficultyLabel = (difficulty: string) => {
   return labels[difficulty] || difficulty;
 };
 
+const getProblemStatusType = (status: string) =>
+  status === "published" ? "success" : "info";
+
+const getProblemStatusLabel = (status: string) =>
+  status === "published" ? "已发布" : "草稿";
+
 const getAcceptRateClass = (rate: number) => {
   if (rate >= 60) return "rate-high";
   if (rate >= 30) return "rate-medium";
@@ -924,6 +1109,7 @@ onMounted(() => {
 <style lang="scss" scoped>
 .main {
   padding: 12px;
+  color: var(--el-text-color-primary);
 
   .header-card {
     margin-bottom: 16px;
@@ -936,6 +1122,7 @@ onMounted(() => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 24px;
       padding: 8px 0;
     }
 
@@ -955,11 +1142,17 @@ onMounted(() => {
     }
 
     .header-stats {
-      display: flex;
-      gap: 32px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(90px, 1fr));
+      gap: 16px;
 
       .stat-item {
         text-align: center;
+        padding: 14px 12px;
+        background: rgb(255 255 255 / 45%);
+        border: 1px solid rgb(255 255 255 / 30%);
+        border-radius: 14px;
+        backdrop-filter: blur(12px);
 
         .stat-value {
           display: block;
@@ -981,6 +1174,12 @@ onMounted(() => {
   .box-card {
     border-radius: 16px;
 
+    .oj-tabs {
+      :deep(.el-tabs__header) {
+        margin-bottom: 20px;
+      }
+    }
+
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -988,6 +1187,26 @@ onMounted(() => {
       align-items: flex-start;
       justify-content: space-between;
       margin-bottom: 16px;
+    }
+
+    .search-form {
+      flex: 1;
+      min-width: min(100%, 720px);
+    }
+  }
+
+  .toolbar-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .table-shell {
+    overflow-x: auto;
+
+    :deep(.el-table) {
+      min-width: 980px;
     }
   }
 
@@ -1017,9 +1236,194 @@ onMounted(() => {
     margin-top: 16px;
   }
 
+  .mobile-problem-list,
+  .mobile-submission-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mobile-problem-card,
+  .mobile-submission-card {
+    padding: 16px;
+    background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+  }
+
+  .mobile-card-head {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .mobile-card-head-main {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .mobile-card-id {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.08em;
+  }
+
+  .mobile-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .mobile-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .mobile-rate {
+    font-size: 13px;
+  }
+
+  .mobile-tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .mobile-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 14px;
+
+    strong {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+  }
+
+  .metric-label {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .mobile-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .mobile-submission-meta {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+  }
+
   .unit {
     margin-left: 8px;
     color: var(--el-text-color-secondary);
+  }
+
+  .oj-number-input {
+    width: 160px;
+  }
+}
+
+.oj-manage--mobile {
+  padding: 8px;
+
+  .header-card {
+    border-radius: 20px;
+
+    .header-content {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 18px;
+    }
+
+    .header-left {
+      h2 {
+        font-size: 22px;
+        line-height: 1.3;
+      }
+
+      p {
+        line-height: 1.6;
+      }
+    }
+
+    .header-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+
+      .stat-item {
+        text-align: left;
+      }
+    }
+  }
+
+  .box-card {
+    border-radius: 20px;
+
+    .toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-form {
+      min-width: 0;
+
+      :deep(.el-form-item) {
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+
+      :deep(.el-form-item__content) {
+        width: 100%;
+      }
+    }
+  }
+
+  .toolbar-actions {
+    width: 100%;
+  }
+
+  .toolbar-action-button {
+    width: 100%;
+  }
+
+  .pagination-container {
+    justify-content: center;
+    margin-top: 20px;
+
+    :deep(.el-pagination) {
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: 8px;
+    }
+  }
+
+  .oj-number-input {
+    width: 100%;
   }
 }
 
@@ -1027,6 +1431,7 @@ onMounted(() => {
 .problem-detail {
   .problem-meta {
     display: flex;
+    flex-wrap: wrap;
     gap: 16px;
     align-items: center;
 
@@ -1072,6 +1477,14 @@ onMounted(() => {
       font-family: Consolas, monospace;
       font-size: 14px;
       white-space: pre-wrap;
+    }
+  }
+}
+
+.oj-manage--mobile {
+  .problem-detail {
+    .section {
+      margin-bottom: 16px;
     }
   }
 }

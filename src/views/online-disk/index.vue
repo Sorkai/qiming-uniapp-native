@@ -2,7 +2,7 @@
   <div class="main">
     <el-card class="box-card">
       <template #header>
-        <div class="card-header">
+        <div class="card-header" :class="{ 'card-header--mobile': isMobile }">
           <span>在线云盘</span>
           <el-button type="primary" :icon="Upload" @click="handleUpload">
             上传文件
@@ -10,7 +10,12 @@
         </div>
       </template>
 
-      <el-form :inline="true" :model="listQuery" class="search-form">
+      <el-form
+        :inline="!isMobile"
+        :label-position="isMobile ? 'top' : 'right'"
+        :model="listQuery"
+        class="search-form"
+      >
         <el-form-item label="文件名">
           <el-input
             v-model="listQuery.name"
@@ -27,7 +32,50 @@
         </el-form-item>
       </el-form>
 
-      <el-table :data="filteredList" stripe style="width: 100%">
+      <div v-if="isMobile" v-loading="loading" class="mobile-file-list">
+        <div
+          v-for="row in filteredList"
+          :key="`${row.name}-${row.createTime}`"
+          class="mobile-file-card"
+        >
+          <div class="mobile-file-card__header">
+            <div class="file-name-cell">
+              <el-icon :size="20" class="file-icon">
+                <component :is="getFileIcon(row.name)" />
+              </el-icon>
+              <span class="mobile-file-card__name">{{ row.name }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-file-card__meta">
+            <div class="mobile-file-card__meta-item">
+              <span class="label">大小</span>
+              <span class="value">{{ row.size }}</span>
+            </div>
+            <div class="mobile-file-card__meta-item">
+              <span class="label">创建时间</span>
+              <span class="value">{{ row.createTime }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-file-card__actions">
+            <el-button plain @click="handleView(row)">查看</el-button>
+            <el-button type="primary" plain @click="handleDownload(row)">
+              下载
+            </el-button>
+            <el-button type="danger" plain @click="handleDelete(row)">
+              删除
+            </el-button>
+          </div>
+        </div>
+
+        <el-empty
+          v-if="!loading && filteredList.length === 0"
+          description="暂无文件"
+        />
+      </div>
+
+      <el-table v-else :data="filteredList" stripe style="width: 100%">
         <el-table-column
           label="文件名"
           prop="name"
@@ -52,6 +100,9 @@
         />
         <el-table-column label="操作" width="220" align="center">
           <template #default="{ row }">
+            <el-button type="info" size="small" @click="handleView(row)">
+              查看
+            </el-button>
             <el-button type="primary" size="small" @click="handleDownload(row)"
               >下载</el-button
             >
@@ -68,6 +119,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Upload,
   Search,
@@ -82,6 +134,8 @@ import { getFileList } from "@/api/user";
 defineOptions({
   name: "OnlineDisk"
 });
+
+const { isMobile } = usePageResponsive();
 
 // 默认数据，当API请求失败时使用
 const defaultFileList = [
@@ -216,9 +270,19 @@ const handleUpload = () => {
   ElMessage.info("请实名认证后上传文件");
 };
 
+const handleView = row => {
+  ElMessage.success(`正在打开: ${row.name}`);
+  window.open(row.url, "_blank", "noopener");
+};
+
 const handleDownload = row => {
   ElMessage.success(`开始下载: ${row.name}`);
-  window.open(row.url, "_blank");
+  const link = document.createElement("a");
+  link.href = row.url;
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.download = row.name;
+  link.click();
 };
 
 const handleDelete = row => {
@@ -258,6 +322,7 @@ const handleDelete = row => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
 
       span {
         font-size: 18px;
@@ -267,6 +332,14 @@ const handleDelete = row => {
 
     .search-form {
       margin-bottom: 20px;
+
+      :deep(.el-form-item) {
+        margin-right: 16px;
+      }
+
+      :deep(.el-form-item__label) {
+        font-weight: 600;
+      }
 
       :deep(.el-input__wrapper) {
         border-radius: 12px;
@@ -282,6 +355,72 @@ const handleDelete = row => {
 
   .file-icon {
     color: #409eff;
+  }
+
+  .mobile-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .mobile-file-card {
+    padding: 16px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  }
+
+  .mobile-file-card__name {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: #334155;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .mobile-file-card__meta {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+
+  .mobile-file-card__meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.04em;
+    }
+
+    .value {
+      font-size: 14px;
+      color: #334155;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+  }
+
+  .mobile-file-card__actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .mobile-file-card__actions :deep(.el-button) {
+    width: 100%;
+    min-height: 40px;
+    margin-left: 0;
+    font-weight: 600;
+    border-radius: 12px;
   }
 }
 
@@ -310,5 +449,50 @@ const handleDelete = row => {
 :deep(.el-button--small) {
   border-radius: 8px;
   padding: 5px 12px;
+}
+
+@media (width <= 768px) {
+  .main {
+    padding: 16px;
+
+    .box-card {
+      .card-header {
+        &.card-header--mobile {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+
+      .search-form {
+        :deep(.el-form-item) {
+          width: 100%;
+          margin-right: 0;
+          margin-bottom: 12px;
+        }
+
+        :deep(.el-form-item__label) {
+          padding: 0 0 8px;
+          line-height: 1.25;
+          text-align: left;
+        }
+
+        :deep(.el-form-item__content) {
+          width: 100%;
+        }
+
+        :deep(.el-button) {
+          margin-left: 0;
+        }
+      }
+    }
+  }
+}
+
+@media (width <= 420px) {
+  .main {
+    .mobile-file-card__actions {
+      grid-template-columns: 1fr;
+    }
+  }
 }
 </style>

@@ -1,18 +1,17 @@
 <script setup lang="ts">
 /**
  * 教师端 - 举报处理
- *教师可以处理所授课程中被举报的内容
+ * 教师可以处理所授课程中被举报的内容
  */
-import { ref, reactive, onMounted, onActivated, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed, reactive, ref, onActivated, watch } from "vue";
+import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Search,
   Refresh,
   Check,
   Close,
-  Delete,
-  Warning,
   MoreFilled
 } from "@element-plus/icons-vue";
 import {
@@ -27,49 +26,48 @@ defineOptions({
   name: "TeacherReportManage"
 });
 
-// 类型定义
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
+
 type TagType = "warning" | "success" | "info" | "primary" | "danger";
 
-// 状态
 const loading = ref(false);
 const reports = ref<ReportItem[]>([]);
 const detailDialogVisible = ref(false);
 const handleDialogVisible = ref(false);
 const currentReport = ref<ReportItem | null>(null);
 
-// 统计数据
 const stats = ref({
   pending: 0,
   resolvedToday: 0,
   totalReports: 0
 });
 
-// 搜索表单
 const searchForm = reactive({
   status: "pending" as ReportStatus | ""
 });
 
-// 处理表单
 const handleForm = reactive({
   action: "reject" as "accept" | "reject",
   note: ""
 });
 
-// 分页
 const pagination = reactive({
   page: 1,
   pageSize: 20,
   total: 0
 });
 
-// 状态选项
 const statusOptions = [
   { label: "待处理", value: "pending" },
   { label: "已报送", value: "accepted" },
   { label: "已驳回", value: "rejected" }
 ];
 
-// 举报原因选项 (根据需要保留或调整，后端返回的是 string)
+const actionOptions = [
+  { label: "驳回举报（内容无问题）", value: "reject" },
+  { label: "接受举报（内容受处理）", value: "accept" }
+];
+
 const getReasonText = (reason: string): string => {
   const map: Record<string, string> = {
     spam: "垃圾广告",
@@ -82,13 +80,6 @@ const getReasonText = (reason: string): string => {
   return map[reason] || reason || "未知原因";
 };
 
-// 处理方式选项
-const actionOptions = [
-  { label: "驳回举报（内容无问题）", value: "reject" },
-  { label: "接受举报（内容受处理）", value: "accept" }
-];
-
-// 状态标签样式
 const getStatusTagType = (status: ReportStatus): TagType => {
   const map: Record<string, TagType> = {
     pending: "warning",
@@ -107,24 +98,56 @@ const getStatusText = (status: ReportStatus): string => {
   return map[status] || status;
 };
 
-// 加载数据
+const getTargetTypeText = (targetType: ReportItem["targetType"]) =>
+  targetType === "post" ? "帖子" : "回复";
+
+const getContentPreview = (content: string, limit = 92) => {
+  if (!content) return "-";
+  return content.length > limit ? `${content.slice(0, limit)}...` : content;
+};
+
+const filterBadgeText = computed(() => {
+  if (!searchForm.status) {
+    return "当前展示全部举报";
+  }
+
+  return `当前筛选：${getStatusText(searchForm.status as ReportStatus)}`;
+});
+
+const listSummaryText = computed(() => {
+  if (loading.value && pagination.total === 0) {
+    return "正在同步举报记录...";
+  }
+
+  if (pagination.total === 0) {
+    return "暂无举报记录";
+  }
+
+  if (searchForm.status) {
+    return `共 ${pagination.total} 条${getStatusText(searchForm.status as ReportStatus)}举报`;
+  }
+
+  return `共 ${pagination.total} 条举报记录`;
+});
+
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: any = {
+    const params: Record<string, any> = {
       pageNum: pagination.page,
       pageSize: pagination.pageSize
     };
+
     if (searchForm.status) params.status = searchForm.status;
 
     const res = await getReportList(params);
     const responseData = (res as any).data || res;
     reports.value = responseData.list || [];
     pagination.total = responseData.total || 0;
-    // stats 暂时从列表计算或固定
+
     stats.value = {
       pending: (responseData.list || []).filter(
-        (r: any) => r.status === "pending"
+        (item: ReportItem) => item.status === "pending"
       ).length,
       resolvedToday: 0,
       totalReports: responseData.total || 0
@@ -136,19 +159,16 @@ const fetchData = async () => {
   }
 };
 
-// 搜索
 const handleSearch = () => {
   pagination.page = 1;
   fetchData();
 };
 
-// 重置
 const resetSearch = () => {
   searchForm.status = "pending";
   handleSearch();
 };
 
-// 分页变化
 const handlePageChange = (page: number) => {
   pagination.page = page;
   fetchData();
@@ -160,13 +180,11 @@ const handleSizeChange = (size: number) => {
   fetchData();
 };
 
-// 查看详情
 const viewDetail = (row: ReportItem) => {
   currentReport.value = row;
   detailDialogVisible.value = true;
 };
 
-// 打开处理弹窗
 const openHandleDialog = (row: ReportItem) => {
   currentReport.value = row;
   handleForm.action = "reject";
@@ -174,7 +192,6 @@ const openHandleDialog = (row: ReportItem) => {
   handleDialogVisible.value = true;
 };
 
-// 快速驳回
 const quickDismiss = async (row: ReportItem) => {
   try {
     await ElMessageBox.confirm("确定要驳回这条举报吗？", "提示", {
@@ -183,9 +200,8 @@ const quickDismiss = async (row: ReportItem) => {
       draggable: true
     });
     await handleReport(row.reportId, { action: "reject", note: "内容无问题" });
-
     ElMessage.success("已驳回");
-    fetchData();
+    await fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("操作失败");
@@ -193,7 +209,6 @@ const quickDismiss = async (row: ReportItem) => {
   }
 };
 
-// 快速接受
 const quickDelete = async (row: ReportItem) => {
   try {
     await ElMessageBox.confirm("确定要接受这条举报吗？", "警告", {
@@ -202,9 +217,8 @@ const quickDelete = async (row: ReportItem) => {
       draggable: true
     });
     await handleReport(row.reportId, { action: "accept", note: "内容违规" });
-
     ElMessage.success("已接受");
-    fetchData();
+    await fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("操作失败");
@@ -212,7 +226,6 @@ const quickDelete = async (row: ReportItem) => {
   }
 };
 
-// 提交处理
 const submitHandle = async () => {
   if (!currentReport.value) return;
 
@@ -224,25 +237,25 @@ const submitHandle = async () => {
 
     ElMessage.success("处理成功");
     handleDialogVisible.value = false;
-    fetchData();
+    await fetchData();
   } catch (error) {
     ElMessage.error("处理失败");
   }
 };
 
-// 格式化时间
 const formatTime = (dateStr: string) => {
   if (!dateStr) return "-";
   const date = new Date(dateStr);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes()
+  ).padStart(2, "0")}`;
 };
 
-// 数据是否已加载的标志
 const dataLoaded = ref(false);
 
-// 初始化加载数据
 const initData = async () => {
-  // 防止重复加载
   if (loading.value || dataLoaded.value) return;
 
   console.log("[reports.vue] initData 开始执行");
@@ -251,16 +264,18 @@ const initData = async () => {
   console.log("[reports.vue] initData 执行完成");
 };
 
+const refreshData = async () => {
+  dataLoaded.value = false;
+  await fetchData();
+  dataLoaded.value = true;
+};
+
 const route = useRoute();
 
-// 监听路由名称变化，当路由名称存在时加载数据
-// 根据 vue-pure-admin 的路由机制，route.name 存在表示动态路由已完全初始化
-// 这是解决页面刷新时数据不加载的关键
 watch(
   () => route.name,
   newName => {
     console.log("[reports.vue] 路由 name 变化:", newName);
-    // 当路由名称存在时加载数据
     if (newName && !dataLoaded.value) {
       console.log("[reports.vue] 开始加载数据");
       initData();
@@ -269,27 +284,25 @@ watch(
   { immediate: true }
 );
 
-// 当组件从 keep-alive 缓存中被激活时重新加载数据
 onActivated(() => {
   console.log("[reports.vue] onActivated 触发");
-  dataLoaded.value = false; // 重置标志以允许重新加载
+  dataLoaded.value = false;
   initData();
 });
 </script>
 
 <template>
-  <div class="report-manage p-4">
-    <!-- 统计卡片 -->
-    <el-row :gutter="16" class="mb-4">
-      <el-col :xs="8" :sm="8" :md="8">
+  <div class="report-manage p-4" :class="{ 'report-manage--mobile': isMobile }">
+    <div class="report-stats-grid mb-4">
+      <div class="report-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-warning">{{ stats.pending }}</div>
             <div class="stat-label">待处理</div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="8" :sm="8" :md="8">
+      </div>
+      <div class="report-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-success">
@@ -298,26 +311,44 @@ onActivated(() => {
             <div class="stat-label">今日已处理</div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="8" :sm="8" :md="8">
+      </div>
+      <div class="report-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-info">{{ stats.totalReports }}</div>
             <div class="stat-label">累计举报</div>
           </div>
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
 
-    <!-- 搜索栏 -->
-    <el-card shadow="never" class="mb-4">
-      <el-form :inline="true" :model="searchForm" class="search-form">
+    <el-card shadow="never" class="mb-4 report-panel">
+      <div class="report-panel__header">
+        <div class="report-panel__copy">
+          <span class="report-panel__eyebrow">筛选条件</span>
+          <h3>快速定位举报记录</h3>
+          <p>按处理状态筛选举报项，优先清理待处理内容。</p>
+        </div>
+        <div
+          class="report-panel__badge"
+          :class="{ 'is-active': Boolean(searchForm.status) }"
+        >
+          {{ filterBadgeText }}
+        </div>
+      </div>
+
+      <el-form
+        :inline="!isMobile"
+        :label-position="isMobile ? 'top' : 'right'"
+        :model="searchForm"
+        class="search-form"
+      >
         <el-form-item label="状态">
           <el-select
             v-model="searchForm.status"
             placeholder="全部状态"
             clearable
-            style="width: 120px"
+            :style="{ width: isMobile ? '100%' : '180px' }"
           >
             <el-option
               v-for="opt in statusOptions"
@@ -327,26 +358,111 @@ onActivated(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">
-            搜索
-          </el-button>
-          <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
+        <el-form-item class="search-form__action-item">
+          <div class="search-form__actions">
+            <el-button type="primary" :icon="Search" @click="handleSearch">
+              搜索
+            </el-button>
+            <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <!-- 数据表格 -->
-    <el-card shadow="never">
-      <el-table v-loading="loading" :data="reports" stripe>
+    <el-card shadow="never" class="report-panel data-card">
+      <div class="report-panel__header report-panel__header--compact">
+        <div class="report-panel__copy">
+          <span class="report-panel__eyebrow">举报队列</span>
+          <h3>举报处理</h3>
+          <p>{{ listSummaryText }}</p>
+        </div>
+        <el-button
+          :icon="Refresh"
+          :link="!isMobile"
+          :plain="isMobile"
+          class="sync-status-btn"
+          @click="refreshData"
+        >
+          同步数据
+        </el-button>
+      </div>
+
+      <div v-if="isMobile" v-loading="loading" class="mobile-report-list">
+        <div
+          v-for="row in reports"
+          :key="row.reportId"
+          class="mobile-report-card"
+        >
+          <div class="mobile-report-card__header">
+            <div class="mobile-report-card__header-tags">
+              <el-tag effect="plain" round size="small">
+                {{ getTargetTypeText(row.targetType) }}
+              </el-tag>
+              <el-tag type="danger" effect="plain" round size="small">
+                {{ getReasonText(row.reason) }}
+              </el-tag>
+            </div>
+            <el-tag
+              :type="getStatusTagType(row.status)"
+              effect="dark"
+              size="small"
+            >
+              {{ getStatusText(row.status) }}
+            </el-tag>
+          </div>
+
+          <div class="mobile-report-card__content">
+            {{ getContentPreview(row.targetContent) }}
+          </div>
+
+          <div class="mobile-report-card__meta">
+            <div class="mobile-report-card__meta-item">
+              <span class="label">举报人</span>
+              <span class="value">{{ row.reporterName || "-" }}</span>
+            </div>
+            <div class="mobile-report-card__meta-item">
+              <span class="label">举报时间</span>
+              <span class="value">{{ formatTime(row.createTime) }}</span>
+            </div>
+            <div
+              class="mobile-report-card__meta-item mobile-report-card__meta-item--full"
+            >
+              <span class="label">举报说明</span>
+              <span class="value">{{ row.description || "无补充说明" }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-report-card__actions">
+            <el-button plain @click="viewDetail(row)">查看详情</el-button>
+            <template v-if="row.status === 'pending'">
+              <el-button type="success" plain @click="quickDelete(row)">
+                接受举报
+              </el-button>
+              <el-button type="danger" plain @click="quickDismiss(row)">
+                驳回举报
+              </el-button>
+              <el-button type="warning" plain @click="openHandleDialog(row)">
+                更多处理
+              </el-button>
+            </template>
+          </div>
+        </div>
+
+        <el-empty
+          v-if="!loading && reports.length === 0"
+          description="暂无举报记录"
+        />
+      </div>
+
+      <el-table v-else v-loading="loading" :data="reports" stripe>
         <el-table-column label="被举报内容" min-width="300">
           <template #default="{ row }">
             <div class="report-content">
               <el-tag size="small" class="mb-1">
-                {{ row.targetType === "post" ? "帖子" : "回复" }}
+                {{ getTargetTypeText(row.targetType) }}
               </el-tag>
               <div class="content-text text-sm mt-1">
-                {{ row.targetContent?.substring(0, 100) }}...
+                {{ getContentPreview(row.targetContent, 100) }}
               </div>
             </div>
           </template>
@@ -373,8 +489,8 @@ onActivated(() => {
           </template>
         </el-table-column>
         <el-table-column label="举报时间" width="160" align="center">
-          <template #default="{ row }"
-            ><span class="text-sm text-gray-500">
+          <template #default="{ row }">
+            <span class="text-sm text-gray-500">
               {{ formatTime(row.createTime) }}
             </span>
           </template>
@@ -425,31 +541,30 @@ onActivated(() => {
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <div class="flex justify-end mt-4">
+      <div class="pagination-bar">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           @current-change="handlePageChange"
           @size-change="handleSizeChange"
         />
       </div>
     </el-card>
 
-    <!-- 详情弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
       title="举报详情"
-      width="600px"
+      :width="getDialogWidth('600px')"
       destroy-on-close
     >
       <div v-if="currentReport" class="report-detail">
-        <el-descriptions :column="2" border>
+        <el-descriptions :column="isMobile ? 1 : 2" border>
           <el-descriptions-item label="举报类型">
-            {{ currentReport.targetType === "post" ? "帖子" : "回复" }}
+            {{ getTargetTypeText(currentReport.targetType) }}
           </el-descriptions-item>
           <el-descriptions-item label="举报原因">
             <el-tag type="danger" size="small">
@@ -459,10 +574,10 @@ onActivated(() => {
           <el-descriptions-item label="举报人">
             {{ currentReport.reporterName }}
           </el-descriptions-item>
-          <el-descriptions-item label="举报时间" :span="2">
+          <el-descriptions-item label="举报时间" :span="isMobile ? 1 : 2">
             {{ formatTime(currentReport.createTime) }}
           </el-descriptions-item>
-          <el-descriptions-item label="举报说明" :span="2">
+          <el-descriptions-item label="举报说明" :span="isMobile ? 1 : 2">
             {{ currentReport.description || "无" }}
           </el-descriptions-item>
         </el-descriptions>
@@ -491,7 +606,10 @@ onActivated(() => {
       </div>
 
       <template #footer>
-        <div class="flex justify-between">
+        <div
+          class="dialog-footer"
+          :class="{ 'dialog-footer--mobile': isMobile }"
+        >
           <div v-if="currentReport?.status === 'pending'">
             <el-button
               type="success"
@@ -517,16 +635,22 @@ onActivated(() => {
       </template>
     </el-dialog>
 
-    <!-- 处理弹窗 -->
     <el-dialog
       v-model="handleDialogVisible"
       title="处理举报"
-      width="500px"
+      :width="getDialogWidth('500px')"
       destroy-on-close
     >
-      <el-form :model="handleForm" label-width="100px">
+      <el-form
+        :model="handleForm"
+        :label-position="isMobile ? 'top' : 'right'"
+        :label-width="isMobile ? undefined : '100px'"
+      >
         <el-form-item label="处理方式" required>
-          <el-radio-group v-model="handleForm.action">
+          <el-radio-group
+            v-model="handleForm.action"
+            class="handle-action-group"
+          >
             <el-radio
               v-for="opt in actionOptions"
               :key="opt.value"
@@ -556,17 +680,16 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .report-manage {
-  font-size: 16px; // 整体文字变大
+  font-size: 16px;
 
-  :deep(.el-table) {
-    font-size: 16px; // 进一步增大
-    .el-table__header {
-      font-size: 17px;
-      font-weight: bold;
-    }
-    .el-table__row {
-      height: 80px; // 增加行高，容纳大按钮
-    }
+  .report-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .report-stats-grid__item {
+    min-width: 0;
   }
 
   :deep(.el-card) {
@@ -595,13 +718,134 @@ onActivated(() => {
     }
   }
 
+  :deep(.el-table) {
+    font-size: 16px;
+
+    .el-table__header {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .el-table__row {
+      height: 80px;
+    }
+  }
+
+  .report-panel {
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 28px;
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+
+    :deep(.el-card__body) {
+      padding: 24px;
+    }
+  }
+
+  .report-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .report-panel__header--compact {
+    margin-bottom: 16px;
+  }
+
+  .report-panel__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+
+      html.dark & {
+        color: #f8fafc;
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #64748b;
+
+      html.dark & {
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .report-panel__eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #6366f1;
+    text-transform: uppercase;
+  }
+
+  .report-panel__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    background: #eff6ff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d4ed8;
+    white-space: nowrap;
+
+    html.dark & {
+      border-color: #1d4ed8;
+      background: rgb(29 78 216 / 18%);
+      color: #bfdbfe;
+    }
+
+    &.is-active {
+      border-color: #c7d2fe;
+      background: #eef2ff;
+      color: #4f46e5;
+
+      html.dark & {
+        border-color: #4f46e5;
+        background: rgb(79 70 229 / 18%);
+        color: #c7d2fe;
+      }
+    }
+  }
+
   .stat-card {
+    border: 1px solid rgb(226 232 240 / 92%);
+    border-radius: 24px;
+    background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+
     .stat-content {
-      padding: 12px 0;
-      text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      min-height: 132px;
+      padding: 12px 10px;
+      text-align: center;
 
       .stat-number {
         font-size: 32px;
@@ -612,9 +856,11 @@ onActivated(() => {
         &.text-warning {
           color: #f59e0b;
         }
+
         &.text-success {
           color: #10b981;
         }
+
         &.text-info {
           color: #3b82f6;
         }
@@ -624,6 +870,7 @@ onActivated(() => {
         font-size: 14px;
         font-weight: 500;
         color: #64748b;
+        white-space: nowrap;
 
         html.dark & {
           color: #94a3b8;
@@ -633,48 +880,172 @@ onActivated(() => {
   }
 
   .search-form {
-    padding: 4px 8px;
+    padding: 0;
+
     :deep(.el-form-item) {
-      margin-bottom: 0;
-      margin-right: 24px;
+      margin-right: 16px;
+      margin-bottom: 16px;
+    }
+
+    :deep(.el-form-item__label) {
+      font-weight: 700;
+      color: #334155;
+
+      html.dark & {
+        color: #cbd5e1;
+      }
     }
 
     :deep(.el-input__wrapper),
     :deep(.el-select__wrapper) {
-      border-radius: 8px;
-      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      min-height: 46px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgb(15 23 42 / 6%);
     }
   }
 
-  .report-content {
-    .report-main {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
+  .search-form__action-item {
+    margin-right: 0 !important;
 
-      .post-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: #1e293b;
+    :deep(.el-form-item__content) {
+      width: 100%;
+    }
+  }
 
-        html.dark & {
-          color: #f1f5f9;
-        }
-      }
+  .search-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .search-form__actions :deep(.el-button),
+  .sync-status-btn {
+    min-height: 44px;
+    margin-left: 0;
+    padding-inline: 18px;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
+  .pagination-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  .mobile-report-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .mobile-report-card {
+    padding: 18px;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 98%) 0%,
+      rgb(248 250 252 / 96%) 100%
+    );
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 22px;
+    box-shadow: 0 14px 32px rgb(15 23 42 / 8%);
+
+    html.dark & {
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+      border-color: #334155;
+      box-shadow: 0 14px 32px rgb(2 6 23 / 24%);
+    }
+  }
+
+  .mobile-report-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-report-card__header-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .mobile-report-card__content {
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #334155;
+
+    html.dark & {
+      color: #e2e8f0;
+    }
+  }
+
+  .mobile-report-card__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgb(226 232 240 / 88%);
+
+    html.dark & {
+      border-color: #334155;
+    }
+  }
+
+  .mobile-report-card__meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+
+    &--full {
+      grid-column: 1 / -1;
     }
 
-    .report-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .label {
       font-size: 12px;
+      font-weight: 700;
       color: #94a3b8;
+      letter-spacing: 0.04em;
+    }
 
-      .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
+    .value {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #334155;
+      word-break: break-word;
+
+      html.dark & {
+        color: #e2e8f0;
+      }
+    }
+  }
+
+  .mobile-report-card__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .mobile-report-card__actions :deep(.el-button) {
+    width: 100%;
+    min-height: 42px;
+    margin-left: 0;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
+  .report-content {
+    .content-text {
+      line-height: 1.7;
+      color: #334155;
+
+      html.dark & {
+        color: #e2e8f0;
       }
     }
   }
@@ -683,38 +1054,135 @@ onActivated(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px; // 间距变大
+    gap: 12px;
 
     :deep(.el-button) {
-      font-size: 20px; // 图标变大
+      font-size: 20px;
       padding: 8px;
     }
+  }
 
-    .btn-icon-wrapper {
-      padding: 8px;
-      border-radius: 10px;
-      transition: all 0.2s;
-      cursor: pointer;
-      color: #64748b;
+  .dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
 
-      &:hover {
-        background: rgba(0, 0, 0, 0.05);
-        transform: scale(1.1);
+  .handle-action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (width <= 768px) {
+  .report-manage {
+    padding-bottom: calc(
+      var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
+    );
+
+    .report-stats-grid {
+      gap: 12px;
+    }
+
+    .report-panel {
+      border-radius: 24px;
+
+      :deep(.el-card__body) {
+        padding: 18px;
+      }
+    }
+
+    .report-panel__header {
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    .report-panel__copy {
+      h3 {
+        font-size: 20px;
       }
 
-      &.handle:hover {
-        color: #10b981;
-        background: rgba(16, 185, 129, 0.1);
+      p {
+        font-size: 13px;
       }
-      &.view:hover {
-        color: #3b82f6;
-        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .report-panel__badge {
+      width: 100%;
+      white-space: normal;
+    }
+
+    .stat-card {
+      .stat-content {
+        min-height: 110px;
+        padding: 10px 8px;
       }
+    }
+
+    .search-form {
+      :deep(.el-form-item) {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+
+      :deep(.el-form-item__label) {
+        padding: 0 0 8px;
+        line-height: 1.25;
+      }
+
+      :deep(.el-form-item__content) {
+        width: 100%;
+      }
+
+      :deep(.el-select) {
+        width: 100% !important;
+      }
+    }
+
+    .search-form__actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pagination-bar {
+      justify-content: center;
+    }
+
+    .dialog-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .dialog-footer > div {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
   }
 }
 
-/* 按钮点击波纹效果增强 */
+@media (width <= 420px) {
+  .report-manage {
+    .report-stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .mobile-report-card {
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .mobile-report-card__meta,
+    .search-form__actions,
+    .mobile-report-card__actions {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
 .el-button {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 10px;

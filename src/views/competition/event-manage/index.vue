@@ -1,5 +1,5 @@
 <template>
-  <div class="main">
+  <div class="main event-manage" :class="{ 'event-manage--mobile': isMobile }">
     <el-card class="box-card header-card">
       <div class="header-content">
         <div class="header-left">
@@ -27,18 +27,28 @@
       <template #header>
         <div class="card-header">
           <span>赛事列表</span>
-          <el-button type="primary" @click="handleOpenDialog()">
+          <el-button
+            type="primary"
+            :class="{ 'header-action-button': isMobile }"
+            @click="handleOpenDialog()"
+          >
             创建赛事
           </el-button>
         </div>
       </template>
 
-      <el-form :inline="true" :model="searchForm" class="search-form">
+      <el-form
+        :inline="!isMobile"
+        :model="searchForm"
+        :label-position="isMobile ? 'top' : 'right'"
+        class="search-form"
+      >
         <el-form-item label="赛事名称">
           <el-input
             v-model="searchForm.title"
             placeholder="请输入赛事名称"
             clearable
+            :style="{ width: isMobile ? '100%' : '220px' }"
           />
         </el-form-item>
         <el-form-item label="类型">
@@ -46,6 +56,7 @@
             v-model="searchForm.type"
             placeholder="请选择类型"
             clearable
+            :style="{ width: isMobile ? '100%' : '160px' }"
           >
             <el-option label="编程竞赛" value="coding" />
             <el-option label="知识竞赛" value="quiz" />
@@ -58,6 +69,7 @@
             v-model="searchForm.status"
             placeholder="请选择状态"
             clearable
+            :style="{ width: isMobile ? '100%' : '160px' }"
           >
             <el-option label="即将开始" value="upcoming" />
             <el-option label="进行中" value="ongoing" />
@@ -70,86 +82,187 @@
         </el-form-item>
       </el-form>
 
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        stripe
-        style="width: 100%"
-      >
-        <el-table-column prop="eventId" label="ID" align="center" width="80" />
-        <el-table-column
-          prop="title"
-          label="赛事名称"
-          align="left"
-          min-width="200"
-        >
-          <template #default="{ row }">
-            <div class="event-title-cell">
-              <span class="event-icon">{{ getTypeIcon(row.type) }}</span>
-              <span>{{ row.title }}</span>
+      <template v-if="isMobile">
+        <div v-loading="loading" class="mobile-event-list">
+          <div
+            v-for="row in tableData"
+            :key="row.eventId"
+            class="mobile-event-card"
+          >
+            <div class="mobile-card-head">
+              <div class="mobile-card-head-main">
+                <span class="mobile-card-id">#{{ row.eventId }}</span>
+                <div class="mobile-event-title">
+                  <span class="event-icon">{{ getTypeIcon(row.type) }}</span>
+                  <span>{{ row.title }}</span>
+                </div>
+              </div>
+              <el-tag
+                :type="getStatusTagType(row.status)"
+                size="small"
+                effect="light"
+              >
+                {{ getStatusLabel(row.status) }}
+              </el-tag>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="type" label="类型" align="center" width="120">
-          <template #default="{ row }">
-            <el-tag :type="getTypeTagType(row.type)">
-              {{ getTypeLabel(row.type) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="startTime"
-          label="开始时间"
-          align="center"
-          width="160"
-        />
-        <el-table-column
-          prop="endTime"
-          label="结束时间"
-          align="center"
-          width="160"
-        />
-        <el-table-column
-          prop="participants"
-          label="参与人数"
-          align="center"
-          width="100"
-        />
-        <el-table-column prop="status" label="状态" align="center" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.status)">
-              {{ getStatusLabel(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" align="center" width="280">
-          <template #default="{ row }">
-            <el-button type="info" size="small" @click="viewParticipants(row)">
-              查看报名
-            </el-button>
-            <el-button type="primary" size="small" @click="viewRankings(row)">
-              排行榜
-            </el-button>
-            <el-button
-              type="warning"
-              size="small"
-              @click="handleOpenDialog(row)"
-            >
-              编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+
+            <div class="mobile-event-tags">
+              <el-tag
+                :type="getTypeTagType(row.type)"
+                size="small"
+                effect="light"
+              >
+                {{ getTypeLabel(row.type) }}
+              </el-tag>
+              <span class="mobile-participants"
+                >参与 {{ row.participants }} 人</span
+              >
+            </div>
+
+            <div class="mobile-event-meta">
+              <span>开始：{{ row.startTime }}</span>
+              <span>结束：{{ row.endTime }}</span>
+            </div>
+
+            <div class="mobile-card-actions">
+              <el-button
+                type="info"
+                size="small"
+                plain
+                @click="viewParticipants(row)"
+              >
+                查看报名
+              </el-button>
+              <el-button
+                type="primary"
+                size="small"
+                plain
+                @click="viewRankings(row)"
+              >
+                排行榜
+              </el-button>
+              <el-button
+                type="warning"
+                size="small"
+                plain
+                @click="handleOpenDialog(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                type="danger"
+                size="small"
+                plain
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
+          </div>
+
+          <el-empty
+            v-if="!loading && tableData.length === 0"
+            description="暂无赛事"
+          />
+        </div>
+      </template>
+      <div v-else class="table-shell">
+        <el-table
+          v-loading="loading"
+          :data="tableData"
+          stripe
+          style="width: 100%"
+        >
+          <el-table-column
+            prop="eventId"
+            label="ID"
+            align="center"
+            width="80"
+          />
+          <el-table-column
+            prop="title"
+            label="赛事名称"
+            align="left"
+            min-width="200"
+          >
+            <template #default="{ row }">
+              <div class="event-title-cell">
+                <span class="event-icon">{{ getTypeIcon(row.type) }}</span>
+                <span>{{ row.title }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="type" label="类型" align="center" width="120">
+            <template #default="{ row }">
+              <el-tag :type="getTypeTagType(row.type)">
+                {{ getTypeLabel(row.type) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="startTime"
+            label="开始时间"
+            align="center"
+            width="160"
+          />
+          <el-table-column
+            prop="endTime"
+            label="结束时间"
+            align="center"
+            width="160"
+          />
+          <el-table-column
+            prop="participants"
+            label="参与人数"
+            align="center"
+            width="100"
+          />
+          <el-table-column
+            prop="status"
+            label="状态"
+            align="center"
+            width="100"
+          >
+            <template #default="{ row }">
+              <el-tag :type="getStatusTagType(row.status)">
+                {{ getStatusLabel(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" align="center" width="280">
+            <template #default="{ row }">
+              <el-button
+                type="info"
+                size="small"
+                @click="viewParticipants(row)"
+              >
+                查看报名
+              </el-button>
+              <el-button type="primary" size="small" @click="viewRankings(row)">
+                排行榜
+              </el-button>
+              <el-button
+                type="warning"
+                size="small"
+                @click="handleOpenDialog(row)"
+              >
+                编辑
+              </el-button>
+              <el-button type="danger" size="small" @click="handleDelete(row)">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <div class="pagination-container">
         <el-pagination
           v-model:current-page="queryParams.pageNum"
           v-model:page-size="queryParams.pageSize"
           :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           :total="total"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
@@ -161,14 +274,16 @@
     <el-dialog
       v-model="dialogVisible"
       :title="formData.eventId ? '编辑赛事' : '创建赛事'"
-      width="650px"
+      :width="getDialogWidth('650px', '96%')"
+      :fullscreen="isMobile"
       destroy-on-close
     >
       <el-form
         ref="formRef"
         :model="formData"
         :rules="formRules"
-        label-width="100px"
+        :label-width="isMobile ? undefined : '100px'"
+        :label-position="isMobile ? 'top' : 'right'"
       >
         <el-form-item label="赛事名称" prop="title">
           <el-input v-model="formData.title" placeholder="请输入赛事名称" />
@@ -196,6 +311,7 @@
             placeholder="请选择开始时间"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
+            :style="{ width: isMobile ? '100%' : undefined }"
           />
         </el-form-item>
         <el-form-item label="结束时间" prop="endTime">
@@ -205,6 +321,7 @@
             placeholder="请选择结束时间"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
+            :style="{ width: isMobile ? '100%' : undefined }"
           />
         </el-form-item>
         <el-form-item label="题目数量" prop="questionCount">
@@ -246,26 +363,68 @@
     <el-dialog
       v-model="participantsDialogVisible"
       title="报名列表"
-      width="700px"
+      :width="getDialogWidth('700px', '96%')"
+      :fullscreen="isMobile"
     >
-      <el-table :data="participantsList" stripe style="width: 100%">
-        <el-table-column type="index" label="#" width="60" />
-        <el-table-column prop="username" label="用户名" />
-        <el-table-column prop="realName" label="姓名" />
-        <el-table-column prop="className" label="班级" />
-        <el-table-column prop="registerTime" label="报名时间" />
-        <el-table-column prop="status" label="状态">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'completed' ? 'success' : 'info'">
-              {{ row.status === "completed" ? "已完成" : "未参与" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
+      <template v-if="isMobile">
+        <div class="mobile-participant-list">
+          <div
+            v-for="(row, index) in participantsList"
+            :key="`${row.username}-${index}`"
+            class="mobile-participant-card"
+          >
+            <div class="mobile-card-head">
+              <div class="mobile-card-head-main">
+                <span class="mobile-card-id">#{{ index + 1 }}</span>
+                <div class="participant-name">
+                  {{ row.realName || row.username }}
+                </div>
+              </div>
+              <el-tag
+                :type="row.status === 'completed' ? 'success' : 'info'"
+                size="small"
+              >
+                {{ row.status === "completed" ? "已完成" : "未参与" }}
+              </el-tag>
+            </div>
+            <div class="mobile-event-meta">
+              <span>用户名：{{ row.username }}</span>
+              <span>班级：{{ row.className }}</span>
+              <span>报名时间：{{ row.registerTime }}</span>
+            </div>
+          </div>
+
+          <el-empty
+            v-if="participantsList.length === 0"
+            description="暂无报名信息"
+          />
+        </div>
+      </template>
+      <div v-else class="table-shell">
+        <el-table :data="participantsList" stripe style="width: 100%">
+          <el-table-column type="index" label="#" width="60" />
+          <el-table-column prop="username" label="用户名" />
+          <el-table-column prop="realName" label="姓名" />
+          <el-table-column prop="className" label="班级" />
+          <el-table-column prop="registerTime" label="报名时间" />
+          <el-table-column prop="status" label="状态">
+            <template #default="{ row }">
+              <el-tag :type="row.status === 'completed' ? 'success' : 'info'">
+                {{ row.status === "completed" ? "已完成" : "未参与" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-dialog>
 
     <!-- 排行榜弹窗 -->
-    <el-dialog v-model="rankingsDialogVisible" title="排行榜" width="700px">
+    <el-dialog
+      v-model="rankingsDialogVisible"
+      title="排行榜"
+      :width="getDialogWidth('700px', '96%')"
+      :fullscreen="isMobile"
+    >
       <div class="rankings-list">
         <div
           v-for="(user, index) in rankingsList"
@@ -296,6 +455,7 @@
 import { ref, reactive, onMounted } from "vue";
 import { formatAvatar } from "@/utils/avatar";
 import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   getEventList,
   upsertEvent,
@@ -308,6 +468,8 @@ import {
 defineOptions({
   name: "EventManage"
 });
+
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
 
 interface EventItem {
   eventId: number;
@@ -564,6 +726,7 @@ onMounted(() => {
 <style lang="scss" scoped>
 .main {
   padding: 12px;
+  color: var(--el-text-color-primary);
 
   .header-card {
     margin-bottom: 16px;
@@ -577,6 +740,7 @@ onMounted(() => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 24px;
       padding: 8px 0;
     }
 
@@ -596,11 +760,17 @@ onMounted(() => {
     }
 
     .header-stats {
-      display: flex;
-      gap: 32px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(90px, 1fr));
+      gap: 16px;
 
       .stat-item {
         text-align: center;
+        padding: 14px 12px;
+        background: rgb(255 255 255 / 35%);
+        border: 1px solid rgb(255 255 255 / 28%);
+        border-radius: 14px;
+        backdrop-filter: blur(10px);
 
         .stat-value {
           display: block;
@@ -630,10 +800,19 @@ onMounted(() => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
     }
 
     .search-form {
       margin-bottom: 16px;
+    }
+  }
+
+  .table-shell {
+    overflow-x: auto;
+
+    :deep(.el-table) {
+      min-width: 1120px;
     }
   }
 
@@ -651,6 +830,79 @@ onMounted(() => {
     display: flex;
     justify-content: flex-end;
     margin-top: 16px;
+  }
+
+  .mobile-event-list,
+  .mobile-participant-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mobile-event-card,
+  .mobile-participant-card {
+    padding: 16px;
+    background: linear-gradient(180deg, #fff 0%, #f4fffb 100%);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+  }
+
+  .mobile-card-head {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .mobile-card-head-main {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .mobile-card-id {
+    font-size: 12px;
+    font-weight: 700;
+    color: #047857;
+    letter-spacing: 0.08em;
+  }
+
+  .mobile-event-title,
+  .participant-name {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .mobile-event-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .mobile-participants {
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+  }
+
+  .mobile-event-meta {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+  }
+
+  .mobile-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .dialog-footer {
@@ -724,6 +976,98 @@ onMounted(() => {
     .time {
       font-size: 12px;
       color: var(--el-text-color-secondary);
+    }
+  }
+}
+
+.event-manage--mobile {
+  padding: 8px;
+
+  .header-card {
+    .header-content {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 18px;
+    }
+
+    .header-left {
+      h2 {
+        font-size: 22px;
+        line-height: 1.3;
+      }
+
+      p {
+        line-height: 1.6;
+      }
+    }
+
+    .header-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+
+      .stat-item {
+        text-align: left;
+      }
+    }
+  }
+
+  .box-card {
+    .card-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-form {
+      :deep(.el-form-item) {
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+
+      :deep(.el-form-item__content) {
+        width: 100%;
+      }
+    }
+  }
+
+  .header-action-button {
+    width: 100%;
+  }
+
+  .pagination-container {
+    justify-content: center;
+
+    :deep(.el-pagination) {
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: 8px;
+    }
+  }
+}
+
+.event-manage--mobile .rankings-list {
+  .ranking-item {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 8px 12px;
+    align-items: center;
+    padding: 14px;
+
+    .rank {
+      width: auto;
+    }
+
+    .user-info {
+      margin-left: 0;
+    }
+
+    .score {
+      margin-right: 0;
+      font-size: 16px;
+      grid-column: 2 / 4;
+    }
+
+    .time {
+      grid-column: 2 / 4;
     }
   }
 }

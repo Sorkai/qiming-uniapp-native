@@ -1,5 +1,8 @@
 <template>
-  <div class="main">
+  <div
+    class="main question-bank-page"
+    :class="{ 'question-bank-page--mobile': isMobile }"
+  >
     <!-- 头部统计 -->
     <el-card class="box-card header-card">
       <div class="header-content">
@@ -24,57 +27,97 @@
       </div>
     </el-card>
 
-    <el-row :gutter="16">
+    <el-row :gutter="16" class="content-row">
       <!-- 左侧分类树 -->
-      <el-col :span="5">
+      <el-col :xs="24" :sm="24" :md="6" :lg="5">
         <el-card class="box-card category-card">
           <template #header>
-            <div class="card-header">
-              <span>题目分类</span>
-              <el-button
-                type="primary"
-                size="small"
-                link
-                @click="openCategoryDialog()"
-              >
-                <el-icon><Plus /></el-icon>
-              </el-button>
+            <div class="card-header card-header--category">
+              <div class="card-header-title">
+                <span>题目分类</span>
+                <span v-if="selectedCategory" class="header-subtitle">
+                  当前：{{ selectedCategory.name }}
+                </span>
+              </div>
+              <div class="header-actions header-actions--compact">
+                <el-button
+                  v-if="selectedCategory"
+                  size="small"
+                  link
+                  @click="resetCategoryFilter"
+                >
+                  全部
+                </el-button>
+                <el-button
+                  v-if="isMobile"
+                  size="small"
+                  link
+                  @click="categoryPanelExpanded = !categoryPanelExpanded"
+                >
+                  {{ categoryPanelExpanded ? "收起" : "展开" }}
+                </el-button>
+                <el-button
+                  type="primary"
+                  size="small"
+                  link
+                  @click="openCategoryDialog()"
+                >
+                  <el-icon><Plus /></el-icon>
+                </el-button>
+              </div>
             </div>
           </template>
-          <el-tree
-            ref="categoryTreeRef"
-            :data="categoryTree"
-            :props="{ label: 'name', children: 'children' }"
-            node-key="categoryId"
-            highlight-current
-            default-expand-all
-            @node-click="handleCategoryClick"
-          >
-            <template #default="{ node, data }">
-              <span class="tree-node">
-                <span>{{ node.label }}</span>
-                <span class="count">({{ data.questionCount }})</span>
-              </span>
-            </template>
-          </el-tree>
+          <el-collapse-transition>
+            <div
+              v-show="!isMobile || categoryPanelExpanded"
+              class="category-tree-wrap"
+            >
+              <el-tree
+                ref="categoryTreeRef"
+                :data="categoryTree"
+                :props="{ label: 'name', children: 'children' }"
+                node-key="categoryId"
+                highlight-current
+                default-expand-all
+                @node-click="handleCategoryClick"
+              >
+                <template #default="{ node, data }">
+                  <span class="tree-node">
+                    <span>{{ node.label }}</span>
+                    <span class="count">({{ data.questionCount }})</span>
+                  </span>
+                </template>
+              </el-tree>
+            </div>
+          </el-collapse-transition>
         </el-card>
       </el-col>
 
       <!-- 右侧题目列表 -->
-      <el-col :span="19">
+      <el-col :xs="24" :sm="24" :md="18" :lg="19">
         <el-card class="box-card">
           <template #header>
             <div class="card-header">
-              <span
-                >题目列表
-                {{ selectedCategory ? `- ${selectedCategory.name}` : "" }}</span
-              >
+              <div class="card-header-title">
+                <span>题目列表</span>
+                <span v-if="selectedCategory" class="header-subtitle">
+                  当前分类：{{ selectedCategory.name }}
+                </span>
+              </div>
               <div class="header-actions">
-                <el-button type="success" @click="batchImport">
+                <el-button
+                  type="success"
+                  :size="isMobile ? 'small' : 'default'"
+                  @click="batchImport"
+                >
                   <el-icon><Upload /></el-icon>
                   批量导入
                 </el-button>
-                <el-button type="primary" @click="openQuestionDialog()">
+                <el-button
+                  type="primary"
+                  :size="isMobile ? 'small' : 'default'"
+                  @click="openQuestionDialog()"
+                >
                   <el-icon><Plus /></el-icon>
                   添加题目
                 </el-button>
@@ -84,13 +127,18 @@
 
           <!-- 搜索区域 -->
           <div class="toolbar">
-            <el-form :inline="true" :model="searchForm" class="search-form">
+            <el-form
+              :inline="!isMobile"
+              :model="searchForm"
+              :label-position="isMobile ? 'top' : 'right'"
+              class="search-form"
+            >
               <el-form-item label="题目内容">
                 <el-input
                   v-model="searchForm.content"
                   placeholder="搜索题目内容"
                   clearable
-                  style="width: 200px"
+                  :style="{ width: isMobile ? '100%' : '220px' }"
                 />
               </el-form-item>
               <el-form-item label="题型">
@@ -98,7 +146,7 @@
                   v-model="searchForm.type"
                   placeholder="请选择"
                   clearable
-                  style="width: 120px"
+                  :style="{ width: isMobile ? '100%' : '140px' }"
                 >
                   <el-option label="单选题" value="single" />
                   <el-option label="多选题" value="multiple" />
@@ -112,14 +160,14 @@
                   v-model="searchForm.difficulty"
                   placeholder="请选择"
                   clearable
-                  style="width: 100px"
+                  :style="{ width: isMobile ? '100%' : '120px' }"
                 >
                   <el-option label="简单" value="easy" />
                   <el-option label="中等" value="medium" />
                   <el-option label="困难" value="hard" />
                 </el-select>
               </el-form-item>
-              <el-form-item>
+              <el-form-item class="search-form__actions">
                 <el-button type="primary" @click="loadQuestionList"
                   >搜索</el-button
                 >
@@ -129,7 +177,93 @@
           </div>
 
           <!-- 题目列表 -->
+          <template v-if="isMobile">
+            <div v-loading="loading" class="question-mobile-list">
+              <div
+                v-for="row in questionList"
+                :key="row.questionId"
+                class="question-mobile-card"
+              >
+                <div class="mobile-card-head">
+                  <div class="mobile-card-head-left">
+                    <el-checkbox
+                      :model-value="isQuestionSelected(row.questionId)"
+                      @change="
+                        (checked: unknown) =>
+                          toggleQuestionSelection(row, checked)
+                      "
+                    />
+                    <div class="mobile-tag-group">
+                      <el-tag :type="getTypeTagType(row.type)" size="small">
+                        {{ getTypeLabel(row.type) }}
+                      </el-tag>
+                      <el-tag
+                        :type="getDifficultyType(row.difficulty)"
+                        size="small"
+                      >
+                        {{ getDifficultyLabel(row.difficulty) }}
+                      </el-tag>
+                    </div>
+                  </div>
+                  <span class="mobile-score">{{ row.score }} 分</span>
+                </div>
+
+                <div class="mobile-question-id">ID: {{ row.questionId }}</div>
+                <div class="mobile-question-content">
+                  {{ truncateText(row.content, 88) }}
+                </div>
+
+                <div class="mobile-meta-grid">
+                  <div class="mobile-meta-item">
+                    <span class="mobile-meta-label">使用次数</span>
+                    <span class="mobile-meta-value"
+                      >{{ row.usedCount }} 次</span
+                    >
+                  </div>
+                  <div class="mobile-meta-item">
+                    <span class="mobile-meta-label">创建时间</span>
+                    <span class="mobile-meta-value">
+                      {{ row.createTime || "-" }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="mobile-action-grid">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click="viewQuestion(row)"
+                  >
+                    查看
+                  </el-button>
+                  <el-button
+                    type="warning"
+                    size="small"
+                    plain
+                    @click="openQuestionDialog(row)"
+                  >
+                    编辑
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    size="small"
+                    plain
+                    @click="deleteQuestion(row)"
+                  >
+                    删除
+                  </el-button>
+                </div>
+              </div>
+
+              <el-empty
+                v-if="!loading && questionList.length === 0"
+                description="暂无题目数据"
+                class="mobile-empty"
+              />
+            </div>
+          </template>
           <el-table
+            v-else
             v-loading="loading"
             :data="questionList"
             stripe
@@ -246,7 +380,8 @@
               v-model:current-page="queryParams.pageNum"
               v-model:page-size="queryParams.pageSize"
               :page-sizes="[20, 50, 100]"
-              layout="total, sizes, prev, pager, next, jumper"
+              :layout="paginationLayout"
+              :size="isMobile ? 'small' : 'default'"
               :total="total"
               @size-change="loadQuestionList"
               @current-change="loadQuestionList"
@@ -260,17 +395,21 @@
     <el-dialog
       v-model="questionDialogVisible"
       :title="questionForm.questionId ? '编辑题目' : '添加题目'"
-      width="800px"
+      :width="getDialogWidth('800px', '96%')"
+      :fullscreen="isMobile"
       destroy-on-close
+      align-center
     >
       <el-form
         ref="questionFormRef"
         :model="questionForm"
         :rules="questionRules"
-        label-width="100px"
+        :label-width="isMobile ? undefined : '100px'"
+        :label-position="isMobile ? 'top' : 'right'"
+        class="question-dialog-form"
       >
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="所属分类" prop="categoryId">
               <el-tree-select
                 v-model="questionForm.categoryId"
@@ -286,7 +425,7 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="题型" prop="type">
               <el-select
                 v-model="questionForm.type"
@@ -387,8 +526,8 @@
           />
         </el-form-item>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="难度" prop="difficulty">
               <el-select
                 v-model="questionForm.difficulty"
@@ -400,7 +539,7 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="分值" prop="score">
               <el-input-number
                 v-model="questionForm.score"
@@ -427,7 +566,12 @@
     </el-dialog>
 
     <!-- 题目详情弹窗 -->
-    <el-dialog v-model="questionDetailVisible" title="题目详情" width="700px">
+    <el-dialog
+      v-model="questionDetailVisible"
+      title="题目详情"
+      :width="getDialogWidth('700px', '96%')"
+      align-center
+    >
       <div v-if="currentQuestion" class="question-detail">
         <div class="question-meta">
           <el-tag :type="getTypeTagType(currentQuestion.type)" size="small">
@@ -487,14 +631,16 @@
     <el-dialog
       v-model="categoryDialogVisible"
       :title="categoryForm.categoryId ? '编辑分类' : '添加分类'"
-      width="500px"
+      :width="getDialogWidth('500px', '92%')"
       destroy-on-close
+      align-center
     >
       <el-form
         ref="categoryFormRef"
         :model="categoryForm"
         :rules="categoryRules"
-        label-width="100px"
+        :label-width="isMobile ? undefined : '100px'"
+        :label-position="isMobile ? 'top' : 'right'"
       >
         <el-form-item label="分类名称" prop="name">
           <el-input v-model="categoryForm.name" placeholder="请输入分类名称" />
@@ -525,7 +671,12 @@
     </el-dialog>
 
     <!-- 批量导入弹窗 -->
-    <el-dialog v-model="importDialogVisible" title="批量导入题目" width="600px">
+    <el-dialog
+      v-model="importDialogVisible"
+      title="批量导入题目"
+      :width="getDialogWidth('600px', '96%')"
+      align-center
+    >
       <div class="import-content">
         <el-alert title="导入说明" type="info" :closable="false" class="mb-4">
           <template #default>
@@ -571,6 +722,7 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
 import { Plus, Delete, Upload, Check } from "@element-plus/icons-vue";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   getQuestionBankStats,
   getCategoryTree,
@@ -586,6 +738,8 @@ defineOptions({
   name: "QuestionBankManage"
 });
 
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
+
 // 统计数据
 const stats = ref({
   totalQuestions: 0,
@@ -597,6 +751,7 @@ const stats = ref({
 const categoryTreeRef = ref();
 const categoryTree = ref<any[]>([]);
 const selectedCategory = ref<any>(null);
+const categoryPanelExpanded = ref(false);
 
 // 题目列表
 const loading = ref(false);
@@ -669,7 +824,11 @@ const importFile = ref<File | null>(null);
 const loadStats = async () => {
   try {
     const { data } = await getQuestionBankStats();
-    stats.value = data;
+    stats.value = {
+      totalQuestions: data.totalQuestions ?? 0,
+      categories: data.totalCategories ?? 0,
+      usedCount: data.usageCount ?? 0
+    };
   } catch (error) {
     console.error("获取统计数据失败", error);
   }
@@ -688,16 +847,32 @@ const handleCategoryClick = (data: any) => {
   selectedCategory.value = data;
   queryParams.categoryId = data.categoryId;
   queryParams.pageNum = 1;
+  if (isMobile.value) {
+    categoryPanelExpanded.value = false;
+  }
+  loadQuestionList();
+};
+
+const resetCategoryFilter = () => {
+  selectedCategory.value = null;
+  queryParams.categoryId = undefined;
+  queryParams.pageNum = 1;
+  selectedQuestions.value = [];
+  categoryTreeRef.value?.setCurrentKey?.(null);
+  if (isMobile.value) {
+    categoryPanelExpanded.value = false;
+  }
   loadQuestionList();
 };
 
 const loadQuestionList = async () => {
   loading.value = true;
+  selectedQuestions.value = [];
   try {
     const params = { ...queryParams, ...searchForm };
     const { data } = await getQuestionList(params);
-    questionList.value = data.list;
-    total.value = data.total;
+    questionList.value = data.list || [];
+    total.value = data.total || 0;
   } catch (error) {
     ElMessage.error("获取题目列表失败");
   } finally {
@@ -715,6 +890,28 @@ const resetSearch = () => {
 
 const handleSelectionChange = (selection: any[]) => {
   selectedQuestions.value = selection;
+};
+
+const isQuestionSelected = (questionId: number) => {
+  return selectedQuestions.value.some(item => item.questionId === questionId);
+};
+
+const toggleQuestionSelection = (row: any, checked: unknown) => {
+  const shouldSelect =
+    typeof checked === "boolean"
+      ? checked
+      : !isQuestionSelected(row.questionId);
+
+  if (shouldSelect) {
+    if (!isQuestionSelected(row.questionId)) {
+      selectedQuestions.value = [...selectedQuestions.value, row];
+    }
+    return;
+  }
+
+  selectedQuestions.value = selectedQuestions.value.filter(
+    item => item.questionId !== row.questionId
+  );
 };
 
 const openQuestionDialog = (row?: any) => {
@@ -969,8 +1166,12 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.main {
+.main.question-bank-page {
   padding: 12px;
+
+  .content-row {
+    align-items: stretch;
+  }
 
   .header-card {
     margin-bottom: 16px;
@@ -980,12 +1181,16 @@ onMounted(() => {
 
     .header-content {
       display: flex;
+      gap: 24px;
       align-items: center;
       justify-content: space-between;
       padding: 8px 0;
     }
 
     .header-left {
+      flex: 1;
+      min-width: 0;
+
       h2 {
         margin: 0 0 8px;
         font-size: 24px;
@@ -1002,6 +1207,7 @@ onMounted(() => {
 
     .header-stats {
       display: flex;
+      flex-wrap: wrap;
       gap: 32px;
 
       .stat-item {
@@ -1049,12 +1255,51 @@ onMounted(() => {
 
   .card-header {
     display: flex;
-    align-items: center;
+    gap: 12px;
+    align-items: flex-start;
     justify-content: space-between;
+
+    .card-header-title {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      font-weight: 600;
+    }
+
+    .header-subtitle {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--el-text-color-secondary);
+    }
 
     .header-actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .header-actions--compact {
+      flex-shrink: 0;
+    }
+  }
+
+  .category-tree-wrap {
+    min-height: 120px;
+  }
+
+  .tree-node {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    min-width: 0;
+
+    > span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 
@@ -1062,18 +1307,146 @@ onMounted(() => {
     margin-bottom: 16px;
   }
 
+  .search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 12px;
+
+    :deep(.el-form-item) {
+      margin-bottom: 16px;
+    }
+
+    .search-form__actions {
+      :deep(.el-form-item__content) {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+    }
+  }
+
   .question-content {
     cursor: pointer;
+    line-height: 1.6;
+  }
+
+  .question-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .question-mobile-card {
+    padding: 16px;
+    background: linear-gradient(180deg, #fff, rgb(255 255 255 / 96%));
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+  }
+
+  .mobile-card-head {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .mobile-card-head-left {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .mobile-tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .mobile-score {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #059669;
+    white-space: nowrap;
+    background: rgb(16 185 129 / 10%);
+    border-radius: 999px;
+  }
+
+  .mobile-question-id {
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+
+  .mobile-question-content {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--el-text-color-primary);
+    word-break: break-word;
+  }
+
+  .mobile-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    margin-top: 14px;
+  }
+
+  .mobile-meta-item {
+    padding: 10px 12px;
+    background: var(--el-fill-color-light);
+    border-radius: 12px;
+  }
+
+  .mobile-meta-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+
+  .mobile-meta-value {
+    display: block;
+    font-size: 13px;
+    color: var(--el-text-color-primary);
+    word-break: break-word;
+  }
+
+  .mobile-action-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+
+    .el-button {
+      flex: 1 1 calc(33.333% - 6px);
+      min-width: 0;
+      margin-left: 0;
+    }
+  }
+
+  .mobile-empty {
+    padding-top: 12px;
   }
 
   .table-footer {
     display: flex;
+    gap: 12px;
     align-items: center;
+    flex-wrap: wrap;
     justify-content: space-between;
     margin-top: 16px;
 
     .batch-actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
     }
   }
@@ -1081,6 +1454,12 @@ onMounted(() => {
 
 // 选项编辑器
 .options-editor {
+  :deep(.el-select),
+  :deep(.el-tree-select),
+  :deep(.el-input-number) {
+    width: 100%;
+  }
+
   .option-item {
     display: flex;
     gap: 8px;
@@ -1179,6 +1558,136 @@ onMounted(() => {
 .import-content {
   .mb-4 {
     margin-bottom: 16px;
+  }
+}
+
+.question-dialog-form {
+  :deep(.el-select),
+  :deep(.el-tree-select),
+  :deep(.el-input-number) {
+    width: 100%;
+  }
+}
+
+.question-bank-page--mobile {
+  padding: 8px;
+
+  .header-card {
+    margin-bottom: 12px;
+  }
+
+  .header-card .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .header-card .header-left h2 {
+    font-size: 22px;
+  }
+
+  .header-card .header-stats {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .header-card .header-stats .stat-item {
+    flex: 1 1 calc(33.333% - 8px);
+    min-width: 88px;
+    padding: 12px;
+    background: rgb(255 255 255 / 12%);
+    border-radius: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+  }
+
+  .card-header .header-actions {
+    justify-content: flex-start;
+  }
+
+  .category-card {
+    margin-bottom: 12px;
+  }
+
+  .category-tree-wrap {
+    padding-top: 4px;
+  }
+
+  .category-card :deep(.el-tree-node__content) {
+    height: auto;
+    min-height: 36px;
+    padding: 6px 0;
+  }
+
+  .search-form {
+    display: block;
+  }
+
+  .search-form :deep(.el-form-item) {
+    margin-right: 0;
+  }
+
+  .search-form .search-form__actions :deep(.el-form-item__content) {
+    width: 100%;
+  }
+
+  .search-form .search-form__actions :deep(.el-button) {
+    flex: 1;
+    margin-left: 0;
+  }
+
+  .table-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .batch-actions {
+    width: 100%;
+  }
+
+  .batch-actions :deep(.el-button) {
+    flex: 1;
+    margin-left: 0;
+  }
+
+  .table-footer :deep(.el-pagination) {
+    justify-content: center;
+  }
+
+  .options-editor .option-item {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .options-editor .option-label {
+    width: auto;
+    min-width: 24px;
+    padding-top: 6px;
+  }
+
+  .options-editor :deep(.el-checkbox),
+  .options-editor :deep(.el-radio) {
+    margin-top: 6px;
+  }
+
+  .options-editor .el-input {
+    flex: 1 1 100%;
+  }
+
+  .question-detail .question-meta,
+  .question-detail .option-display {
+    flex-wrap: wrap;
+  }
+
+  .import-content :deep(.el-upload),
+  .import-content :deep(.el-upload-dragger) {
+    width: 100%;
+  }
+
+  .import-content :deep(.el-upload-dragger) {
+    padding: 24px 16px;
   }
 }
 </style>

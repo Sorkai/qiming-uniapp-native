@@ -236,6 +236,152 @@ async function initAiPPT() {
           [style*="--s: 249"] {
             --s: 210 100% 62% !important;
           }
+
+          /* ========== 移动端安全约束 ========== */
+          @media (max-width: 768px) {
+            #docmee_SdkContainer,
+            #docmee_SdkContainer * {
+              box-sizing: border-box !important;
+            }
+
+            #docmee_SdkContainer {
+              width: 100% !important;
+              max-width: 100% !important;
+              padding: 0 !important;
+              overflow-x: hidden !important;
+            }
+
+            /* 避免聊天区/卡片区在窄屏下被内容撑出横向滚动 */
+            .chat,
+            [class*="chat"],
+            .card,
+            [class*="card"],
+            .bg-base-100,
+            .bg-base-200,
+            .bg-base-300 {
+              max-width: 100% !important;
+              min-width: 0 !important;
+            }
+
+            /* 输入控件在 iOS 上保持可读字号，同时不强改内部布局 */
+            textarea,
+            .textarea,
+            .input,
+            input,
+            .select,
+            .hdd-select,
+            [class*="select"] {
+              width: 100% !important;
+              max-width: 100% !important;
+              min-width: 0 !important;
+              font-size: 16px !important;
+            }
+
+            /* 只做按钮尺寸兜底，不再强制主按钮铺满整行 */
+            button,
+            .btn,
+            [role="button"] {
+              max-width: 100% !important;
+              min-width: 0 !important;
+              min-height: 44px !important;
+            }
+
+            .btn {
+              white-space: normal !important;
+            }
+
+            /* 生成输入卡片：正文占主要区域，按钮固定在右下角 */
+            [class*="focus-within:border-primary-focus"],
+            [class*="border-primary/10"] {
+              position: relative !important;
+            }
+
+            [class*="focus-within:border-primary-focus"] > .flex,
+            [class*="border-primary/10"] > .flex {
+              display: block !important;
+            }
+
+            [class*="focus-within:border-primary-focus"] > .flex > :first-child,
+            [class*="border-primary/10"] > .flex > :first-child {
+              width: 100% !important;
+              min-width: 0 !important;
+              padding-right: 128px !important;
+            }
+
+            [class*="focus-within:border-primary-focus"] > .flex > :last-child,
+            [class*="border-primary/10"] > .flex > :last-child {
+              position: absolute !important;
+              right: 16px !important;
+              bottom: 16px !important;
+              display: flex !important;
+              flex-direction: row !important;
+              align-items: center !important;
+              gap: 10px !important;
+              width: 184px !important;
+              min-width: 184px !important;
+            }
+
+            [class*="focus-within:border-primary-focus"] textarea,
+            [class*="focus-within:border-primary-focus"] .textarea,
+            [class*="border-primary/10"] textarea,
+            [class*="border-primary/10"] .textarea {
+              min-height: 176px !important;
+              padding-right: 132px !important;
+              padding-bottom: 24px !important;
+              resize: none !important;
+            }
+
+            [class*="focus-within:border-primary-focus"] .btn.btn-primary,
+            [class*="border-primary/10"] .btn.btn-primary {
+              flex: 1 1 auto !important;
+              width: 118px !important;
+              min-width: 118px !important;
+              min-height: 56px !important;
+              justify-content: center !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+            }
+
+            [class*="focus-within:border-primary-focus"] .btn:not(.btn-primary),
+            [class*="border-primary/10"] .btn:not(.btn-primary) {
+              flex: 0 0 56px !important;
+              width: 56px !important;
+              min-width: 56px !important;
+              min-height: 56px !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+            }
+
+            /* 配置项区域改成真正的单列宽卡，避免半宽卡片留大片空白 */
+            [class*="grid-cols-2"] {
+              grid-template-columns: minmax(0, 1fr) !important;
+              gap: 12px !important;
+            }
+
+            [class*="grid-cols-2"] > * {
+              width: 100% !important;
+              min-width: 0 !important;
+            }
+
+            [class*="grid-cols-2"] .hdd-select,
+            [class*="grid-cols-2"] [class*="select"],
+            [class*="grid-cols-2"] [class*="switch"],
+            [class*="grid-cols-2"] .bg-base-200,
+            [class*="grid-cols-2"] .bg-base-100,
+            [class*="grid-cols-2"] button,
+            [class*="grid-cols-2"] [role="button"] {
+              display: flex !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              min-width: 0 !important;
+              min-height: 56px !important;
+              align-items: center !important;
+              justify-content: flex-start !important;
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+              text-align: left !important;
+            }
+          }
         `,
         onMessage: message => {
           console.log(message);

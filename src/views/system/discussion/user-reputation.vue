@@ -3,9 +3,10 @@
  * 管理员端 - 用户信誉管理
  * 管理用户的发言信誉分，可以查看、调整信誉分
  */
-import { ref, reactive, computed, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Refresh, Edit, Warning } from "@element-plus/icons-vue";
+import { computed, onMounted, reactive, ref } from "vue";
+import { ElMessage } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
+import { Search, Refresh, Edit } from "@element-plus/icons-vue";
 import {
   getUserReputationList,
   updateUserReputation,
@@ -17,14 +18,14 @@ defineOptions({
   name: "UserReputationManage"
 });
 
-// 状态
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
+
 const loading = ref(false);
 const users = ref<UserReputation[]>([]);
 const detailDialogVisible = ref(false);
 const adjustDialogVisible = ref(false);
 const currentUser = ref<UserReputation | null>(null);
 
-// 搜索表单
 const searchForm = reactive({
   keyword: "",
   level: "" as "" | "trusted" | "normal" | "restricted",
@@ -32,34 +33,29 @@ const searchForm = reactive({
   sortOrder: "desc" as "asc" | "desc"
 });
 
-// 调整表单
 const adjustForm = reactive({
   reputationScore: 0,
   reason: ""
 });
 
-// 分页
 const pagination = reactive({
   page: 1,
   pageSize: 20,
   total: 0
 });
 
-// 状态统计
 const stats = ref({
   trusted: 0,
   normal: 0,
   restricted: 0
 });
 
-// 等级选项
 const levelOptions = [
   { label: "信誉良好", value: "trusted" },
   { label: "信誉普通", value: "normal" },
   { label: "信誉受限", value: "restricted" }
 ];
 
-// 排序字段选项
 const sortByOptions = [
   { label: "信誉分", value: "score" },
   { label: "发帖数", value: "postCount" },
@@ -67,15 +63,42 @@ const sortByOptions = [
   { label: "被举报数", value: "reportCount" }
 ];
 
-// 信誉分颜色
+const activeFilterCount = computed(() => {
+  let count = 0;
+
+  if (searchForm.keyword.trim()) count += 1;
+  if (searchForm.level) count += 1;
+  if (searchForm.sortBy !== "score") count += 1;
+  if (searchForm.sortOrder !== "desc") count += 1;
+
+  return count;
+});
+
+const filterBadgeText = computed(() =>
+  activeFilterCount.value > 0
+    ? `已启用 ${activeFilterCount.value} 项筛选`
+    : "当前展示默认信誉排序"
+);
+
+const listSummaryText = computed(() => {
+  if (loading.value && pagination.total === 0) {
+    return "正在同步用户信誉数据...";
+  }
+
+  if (pagination.total === 0) {
+    return "暂无用户信誉记录";
+  }
+
+  return `共 ${pagination.total} 位用户，可查看详情或直接调整信誉分`;
+});
+
 const getScoreColor = (score: number) => {
-  if (score >= 80) return "#67c23a"; // 绿色
-  if (score >= 60) return "#409eff"; // 蓝色
-  if (score >= 40) return "#e6a23c"; // 橙色
-  return "#f56c6c"; // 红色
+  if (score >= 80) return "#67c23a";
+  if (score >= 60) return "#409eff";
+  if (score >= 40) return "#e6a23c";
+  return "#f56c6c";
 };
 
-// 等级标签样式
 const getLevelType = (level: string) => {
   const map: Record<string, string> = {
     trusted: "success",
@@ -94,23 +117,27 @@ const getLevelText = (level: string) => {
   return map[level] || level;
 };
 
-// 加载数据
+const getReportedText = (count: number) =>
+  count > 0 ? `${count} 次举报` : "暂无举报";
+
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: any = {
+    const params: Record<string, any> = {
       page: pagination.page,
       pageSize: pagination.pageSize,
       sortBy: searchForm.sortBy,
       sortOrder: searchForm.sortOrder
     };
+
     if (searchForm.keyword) params.keyword = searchForm.keyword;
     if (searchForm.level) params.level = searchForm.level;
 
     const res: any = await getUserReputationList(params);
-    const data = res.data;
+    const data = res.data || res;
     users.value = data.list || [];
     pagination.total = data.pagination?.total || 0;
+
     if (data.stats) {
       stats.value = data.stats;
     }
@@ -121,13 +148,11 @@ const fetchData = async () => {
   }
 };
 
-// 搜索
 const handleSearch = () => {
   pagination.page = 1;
   fetchData();
 };
 
-// 重置
 const resetSearch = () => {
   searchForm.keyword = "";
   searchForm.level = "";
@@ -136,7 +161,6 @@ const resetSearch = () => {
   handleSearch();
 };
 
-// 分页
 const handlePageChange = (page: number) => {
   pagination.page = page;
   fetchData();
@@ -148,13 +172,15 @@ const handleSizeChange = (size: number) => {
   fetchData();
 };
 
-// 查看详情
+const refreshData = async () => {
+  await fetchData();
+};
+
 const viewDetail = (row: UserReputation) => {
   currentUser.value = row;
   detailDialogVisible.value = true;
 };
 
-// 打开调整弹窗
 const openAdjustDialog = (row: UserReputation) => {
   currentUser.value = row;
   adjustForm.reputationScore = row.reputationScore;
@@ -162,7 +188,6 @@ const openAdjustDialog = (row: UserReputation) => {
   adjustDialogVisible.value = true;
 };
 
-// 提交调整
 const submitAdjust = async () => {
   if (!currentUser.value) return;
 
@@ -178,17 +203,20 @@ const submitAdjust = async () => {
     });
     ElMessage.success("操作成功");
     adjustDialogVisible.value = false;
-    fetchData();
+    await fetchData();
   } catch (error) {
     ElMessage.error("操作失败");
   }
 };
 
-// 格式化时间
 const formatTime = (dateStr: string) => {
   if (!dateStr) return "-";
   const date = new Date(dateStr);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes()
+  ).padStart(2, "0")}`;
 };
 
 onMounted(() => {
@@ -197,16 +225,37 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="user-reputation-page p-4">
-    <!-- 搜索栏 -->
-    <el-card shadow="never" class="mb-4">
-      <el-form :inline="true" :model="searchForm" class="search-form">
+  <div
+    class="user-reputation-page p-4"
+    :class="{ 'user-reputation-page--mobile': isMobile }"
+  >
+    <el-card shadow="never" class="mb-4 reputation-panel">
+      <div class="reputation-panel__header">
+        <div class="reputation-panel__copy">
+          <span class="reputation-panel__eyebrow">筛选条件</span>
+          <h3>快速定位用户信誉</h3>
+          <p>按昵称、信誉等级和排序方式筛选用户信誉列表。</p>
+        </div>
+        <div
+          class="reputation-panel__badge"
+          :class="{ 'is-active': activeFilterCount > 0 }"
+        >
+          {{ filterBadgeText }}
+        </div>
+      </div>
+
+      <el-form
+        :inline="!isMobile"
+        :label-position="isMobile ? 'top' : 'right'"
+        :model="searchForm"
+        class="search-form"
+      >
         <el-form-item label="搜索用户">
           <el-input
             v-model="searchForm.keyword"
             placeholder="搜索昵称"
             clearable
-            style="width: 220px"
+            :style="{ width: isMobile ? '100%' : '220px' }"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
@@ -215,7 +264,7 @@ onMounted(() => {
             v-model="searchForm.level"
             placeholder="全部等级"
             clearable
-            style="width: 140px"
+            :style="{ width: isMobile ? '100%' : '160px' }"
           >
             <el-option
               v-for="opt in levelOptions"
@@ -229,7 +278,7 @@ onMounted(() => {
           <el-select
             v-model="searchForm.sortBy"
             placeholder="排序字段"
-            style="width: 140px"
+            :style="{ width: isMobile ? '100%' : '160px' }"
           >
             <el-option
               v-for="opt in sortByOptions"
@@ -240,68 +289,139 @@ onMounted(() => {
           </el-select>
         </el-form-item>
         <el-form-item label="排序方向">
-          <el-select v-model="searchForm.sortOrder" style="width: 120px">
+          <el-select
+            v-model="searchForm.sortOrder"
+            :style="{ width: isMobile ? '100%' : '140px' }"
+          >
             <el-option label="降序" value="desc" />
             <el-option label="升序" value="asc" />
           </el-select>
         </el-form-item>
-        <el-form-item>
-          <el-button
-            type="primary"
-            :icon="Search"
-            style="padding: 12px 24px; font-size: 15px"
-            @click="handleSearch"
-          >
-            搜索
-          </el-button>
-          <el-button
-            :icon="Refresh"
-            style="padding: 12px 24px; font-size: 15px"
-            @click="resetSearch"
-          >
-            重置
-          </el-button>
+        <el-form-item class="search-form__action-item">
+          <div class="search-form__actions">
+            <el-button type="primary" :icon="Search" @click="handleSearch">
+              搜索
+            </el-button>
+            <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <!-- 统计信息 -->
-    <el-row :gutter="20" class="mb-4">
-      <el-col :span="8">
+    <div class="reputation-stats-grid mb-4">
+      <div class="reputation-stats-grid__item">
         <el-card shadow="hover" class="status-card">
-          <div class="flex items-center justify-between p-2">
-            <div class="text-gray-500">良好用户</div>
-            <div class="text-3xl font-bold text-success">
+          <div class="status-card__content">
+            <div class="status-card__label">良好用户</div>
+            <div class="status-card__value text-success">
               {{ stats.trusted }}
             </div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :span="8">
+      </div>
+      <div class="reputation-stats-grid__item">
         <el-card shadow="hover" class="status-card">
-          <div class="flex items-center justify-between p-2">
-            <div class="text-gray-500">普通用户</div>
-            <div class="text-3xl font-bold text-primary">
+          <div class="status-card__content">
+            <div class="status-card__label">普通用户</div>
+            <div class="status-card__value text-primary">
               {{ stats.normal }}
             </div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :span="8">
+      </div>
+      <div class="reputation-stats-grid__item">
         <el-card shadow="hover" class="status-card">
-          <div class="flex items-center justify-between p-2">
-            <div class="text-gray-500">受限用户</div>
-            <div class="text-3xl font-bold text-warning">
+          <div class="status-card__content">
+            <div class="status-card__label">受限用户</div>
+            <div class="status-card__value text-warning">
               {{ stats.restricted }}
             </div>
           </div>
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
 
-    <!-- 数据表格 -->
-    <el-card shadow="never">
+    <el-card shadow="never" class="reputation-panel data-card">
+      <div class="reputation-panel__header reputation-panel__header--compact">
+        <div class="reputation-panel__copy">
+          <span class="reputation-panel__eyebrow">信誉列表</span>
+          <h3>用户信誉管理</h3>
+          <p>{{ listSummaryText }}</p>
+        </div>
+        <el-button
+          :icon="Refresh"
+          :link="!isMobile"
+          :plain="isMobile"
+          class="sync-status-btn"
+          @click="refreshData"
+        >
+          同步数据
+        </el-button>
+      </div>
+
+      <div v-if="isMobile" v-loading="loading" class="mobile-user-list">
+        <div v-for="row in users" :key="row.userId" class="mobile-user-card">
+          <div class="mobile-user-card__header">
+            <div class="mobile-user-card__identity">
+              <el-avatar :size="48" :src="row.avatar" />
+              <div class="mobile-user-card__identity-copy">
+                <div class="mobile-user-card__name">{{ row.nickname }}</div>
+                <div class="mobile-user-card__id">ID: {{ row.userId }}</div>
+              </div>
+            </div>
+            <div
+              class="mobile-user-card__score"
+              :style="{ color: getScoreColor(row.reputationScore) }"
+            >
+              {{ row.reputationScore }}
+            </div>
+          </div>
+
+          <div class="mobile-user-card__meta">
+            <div class="mobile-user-card__meta-item">
+              <span class="label">信誉等级</span>
+              <el-tag :type="getLevelType(row.level)" size="small">
+                {{ getLevelText(row.level) }}
+              </el-tag>
+            </div>
+            <div class="mobile-user-card__meta-item">
+              <span class="label">被举报</span>
+              <span class="value">
+                {{ getReportedText(row.reportedCount) }}
+              </span>
+            </div>
+            <div class="mobile-user-card__meta-item">
+              <span class="label">发帖数</span>
+              <span class="value">{{ row.postCount }}</span>
+            </div>
+            <div class="mobile-user-card__meta-item">
+              <span class="label">回复数</span>
+              <span class="value">{{ row.replyCount }}</span>
+            </div>
+            <div
+              class="mobile-user-card__meta-item mobile-user-card__meta-item--full"
+            >
+              <span class="label">最后活跃</span>
+              <span class="value">{{ formatTime(row.lastActiveAt) }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-user-card__actions">
+            <el-button plain @click="viewDetail(row)">详情</el-button>
+            <el-button type="primary" plain @click="openAdjustDialog(row)">
+              调整
+            </el-button>
+          </div>
+        </div>
+
+        <el-empty
+          v-if="!loading && users.length === 0"
+          description="暂无用户信誉记录"
+        />
+      </div>
+
       <el-table
+        v-else
         v-loading="loading"
         :data="users"
         stripe
@@ -309,26 +429,19 @@ onMounted(() => {
       >
         <el-table-column label="用户" min-width="220">
           <template #default="{ row }">
-            <div class="flex items-center gap-4 h-[72px]">
+            <div class="table-user">
               <el-avatar :size="60" :src="row.avatar" />
               <div>
-                <div class="text-[18px] font-bold leading-tight">
-                  {{ row.nickname }}
-                </div>
-                <div class="text-[14px] text-gray-400">
-                  ID: {{ row.userId }}
-                </div>
+                <div class="table-user__name">{{ row.nickname }}</div>
+                <div class="table-user__id">ID: {{ row.userId }}</div>
               </div>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="信誉分" width="130" align="center">
           <template #default="{ row }">
-            <div class="flex justify-center items-center h-[72px]">
-              <div
-                class="relative flex items-center justify-center"
-                style="width: 64px; height: 64px"
-              >
+            <div class="table-score">
+              <div class="table-score__circle">
                 <el-progress
                   type="circle"
                   :percentage="row.reputationScore"
@@ -338,7 +451,7 @@ onMounted(() => {
                   :color="getScoreColor(row.reputationScore)"
                 />
                 <span
-                  class="absolute inset-0 flex items-center justify-center text-[20px] font-bold"
+                  class="table-score__value"
                   :style="{ color: getScoreColor(row.reputationScore) }"
                 >
                   {{ row.reputationScore }}
@@ -349,55 +462,43 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="等级" width="130" align="center">
           <template #default="{ row }">
-            <div class="flex justify-center items-center h-[72px]">
-              <el-tag
-                :type="getLevelType(row.level)"
-                size="large"
-                class="reputation-tag"
-              >
-                {{ getLevelText(row.level) }}
-              </el-tag>
-            </div>
+            <el-tag
+              :type="getLevelType(row.level)"
+              size="large"
+              class="reputation-tag"
+            >
+              {{ getLevelText(row.level) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="发帖数" width="110" align="center">
           <template #default="{ row }">
-            <div class="flex justify-center items-center h-[72px]">
-              <span class="text-[18px] font-medium">{{ row.postCount }}</span>
-            </div>
+            <span class="table-number">{{ row.postCount }}</span>
           </template>
         </el-table-column>
         <el-table-column label="回复数" width="110" align="center">
           <template #default="{ row }">
-            <div class="flex justify-center items-center h-[72px]">
-              <span class="text-[18px] font-medium">{{ row.replyCount }}</span>
-            </div>
+            <span class="table-number">{{ row.replyCount }}</span>
           </template>
         </el-table-column>
         <el-table-column label="被举报" width="120" align="center">
           <template #default="{ row }">
-            <div class="flex justify-center items-center h-[72px]">
-              <el-badge
-                :value="row.reportedCount"
-                :type="row.reportedCount > 0 ? 'warning' : 'info'"
-                :max="999"
-                class="large-badge"
-              />
-            </div>
+            <el-badge
+              :value="row.reportedCount"
+              :type="row.reportedCount > 0 ? 'warning' : 'info'"
+              :max="999"
+              class="large-badge"
+            />
           </template>
         </el-table-column>
         <el-table-column label="最后活跃" width="180" align="center">
           <template #default="{ row }">
-            <div class="flex justify-center items-center h-[72px]">
-              <span class="text-[16px] text-gray-500">
-                {{ formatTime(row.lastActiveAt) }}
-              </span>
-            </div>
+            <span class="table-time">{{ formatTime(row.lastActiveAt) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="{ row }">
-            <div class="flex justify-center items-center h-[72px] gap-4">
+            <div class="table-actions">
               <el-button
                 link
                 type="primary"
@@ -423,14 +524,14 @@ onMounted(() => {
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <div class="flex justify-end mt-6">
+      <div class="pagination-bar">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[20, 50, 100]"
-          layout="total, sizes, prev, pager, next"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           class="large-pagination"
           @current-change="handlePageChange"
           @size-change="handleSizeChange"
@@ -438,116 +539,120 @@ onMounted(() => {
       </div>
     </el-card>
 
-    <!-- 详情弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
       title="用户信誉详情"
-      width="600px"
+      :width="getDialogWidth('600px')"
       destroy-on-close
     >
       <div v-if="currentUser" class="user-detail">
-        <!-- 基本信息 -->
-        <div class="flex items-center gap-4 mb-6">
-          <el-avatar :size="64" :src="currentUser.avatar" />
-          <div>
-            <div class="text-lg font-medium">{{ currentUser.nickname }}</div>
-            <div class="text-sm text-gray-500">
-              用户 ID: {{ currentUser.userId }}
+        <div class="user-detail__hero">
+          <div class="user-detail__identity">
+            <el-avatar :size="64" :src="currentUser.avatar" />
+            <div>
+              <div class="user-detail__name">{{ currentUser.nickname }}</div>
+              <div class="user-detail__id">
+                用户 ID: {{ currentUser.userId }}
+              </div>
             </div>
           </div>
-          <div class="ml-auto text-center">
+          <div class="user-detail__score">
             <el-progress
               type="dashboard"
               :percentage="currentUser.reputationScore"
               :width="100"
               :color="getScoreColor(currentUser.reputationScore)"
             />
-            <div class="text-sm text-gray-500 mt-1">信誉分</div>
+            <div class="user-detail__score-label">信誉分</div>
           </div>
         </div>
 
-        <!-- 统计数据 -->
-        <el-row :gutter="16" class="mb-6">
-          <el-col :span="8">
-            <div class="stat-item">
-              <div class="stat-value">{{ currentUser.postCount }}</div>
-              <div class="stat-label">总发帖数</div>
+        <div class="user-detail__stats">
+          <div class="detail-stat-item">
+            <div class="detail-stat-item__value">
+              {{ currentUser.postCount }}
             </div>
-          </el-col>
-          <el-col :span="8">
-            <div class="stat-item">
-              <div class="stat-value">{{ currentUser.replyCount }}</div>
-              <div class="stat-label">总回复数</div>
+            <div class="detail-stat-item__label">总发帖数</div>
+          </div>
+          <div class="detail-stat-item">
+            <div class="detail-stat-item__value">
+              {{ currentUser.replyCount }}
             </div>
-          </el-col>
-          <el-col :span="8">
-            <div class="stat-item">
-              <div class="stat-value text-warning">
-                {{ currentUser.reportedCount }}
-              </div>
-              <div class="stat-label">被举报次数</div>
+            <div class="detail-stat-item__label">总回复数</div>
+          </div>
+          <div class="detail-stat-item">
+            <div class="detail-stat-item__value text-warning">
+              {{ currentUser.reportedCount }}
             </div>
-          </el-col>
-        </el-row>
+            <div class="detail-stat-item__label">被举报次数</div>
+          </div>
+        </div>
 
-        <!-- 更多信息 -->
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <div class="flex justify-between mb-2">
-            <span class="text-gray-500">信誉等级</span>
+        <div class="user-detail__info">
+          <div class="user-detail__info-row">
+            <span class="label">信誉等级</span>
             <el-tag :type="getLevelType(currentUser.level)" size="default">
               {{ getLevelText(currentUser.level) }}
             </el-tag>
           </div>
-          <div class="flex justify-between">
-            <span class="text-gray-500">最后活跃</span>
-            <span class="text-gray-700">{{
-              formatTime(currentUser.lastActiveAt)
-            }}</span>
+          <div class="user-detail__info-row">
+            <span class="label">最后活跃</span>
+            <span class="value">
+              {{ formatTime(currentUser.lastActiveAt) }}
+            </span>
           </div>
         </div>
       </div>
 
       <template #footer>
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-        <el-button
-          type="primary"
-          @click="
-            detailDialogVisible = false;
-            openAdjustDialog(currentUser!);
-          "
+        <div
+          class="dialog-footer"
+          :class="{ 'dialog-footer--mobile': isMobile }"
         >
-          调整信誉
-        </el-button>
+          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button
+            type="primary"
+            @click="
+              detailDialogVisible = false;
+              openAdjustDialog(currentUser!);
+            "
+          >
+            调整信誉
+          </el-button>
+        </div>
       </template>
     </el-dialog>
 
-    <!-- 调整弹窗 -->
     <el-dialog
       v-model="adjustDialogVisible"
       title="调整用户信誉"
-      width="500px"
+      :width="getDialogWidth('500px')"
       destroy-on-close
     >
       <div v-if="currentUser" class="adjust-form">
-        <div class="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded">
+        <div class="adjust-form__user">
           <el-avatar :size="40" :src="currentUser.avatar" />
           <div>
-            <div class="font-medium">{{ currentUser.nickname }}</div>
-            <div class="text-sm text-gray-500">
+            <div class="adjust-form__name">{{ currentUser.nickname }}</div>
+            <div class="adjust-form__score">
               当前信誉分：{{ currentUser.reputationScore }}
             </div>
           </div>
         </div>
 
-        <el-form :model="adjustForm" label-width="100px">
+        <el-form
+          :model="adjustForm"
+          :label-position="isMobile ? 'top' : 'right'"
+          :label-width="isMobile ? undefined : '100px'"
+        >
           <el-form-item label="信誉分" required>
             <el-input-number
               v-model="adjustForm.reputationScore"
               :min="0"
               :max="100"
-              style="width: 200px"
+              :style="{ width: isMobile ? '100%' : '200px' }"
             />
-            <div class="mt-1 text-xs text-gray-400">设置范围：0 - 100</div>
+            <div class="adjust-form__hint">设置范围：0 - 100</div>
           </el-form-item>
           <el-form-item label="原因" required>
             <el-input
@@ -561,8 +666,13 @@ onMounted(() => {
       </div>
 
       <template #footer>
-        <el-button @click="adjustDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitAdjust">确认</el-button>
+        <div
+          class="dialog-footer"
+          :class="{ 'dialog-footer--mobile': isMobile }"
+        >
+          <el-button @click="adjustDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitAdjust">确认</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -570,23 +680,344 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .user-reputation-page {
+  .reputation-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .reputation-stats-grid__item {
+    min-width: 0;
+  }
+
   :deep(.el-card) {
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%);
-    transition: all 0.3s;
+    border-radius: 16px;
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 
     html.dark & {
-      box-shadow: 0 4px 12px 0 rgb(0 0 0 / 20%);
+      background-color: #242424;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
     }
 
     &:hover {
-      box-shadow: 0 8px 24px 0 rgb(0 0 0 / 10%);
+      transform: translateY(-2px);
+      box-shadow:
+        0 10px 15px -3px rgb(0 0 0 / 0.1),
+        0 4px 6px -4px rgb(0 0 0 / 0.1);
 
       html.dark & {
-        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 40%);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
       }
     }
+  }
+
+  .reputation-panel {
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 28px;
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+
+    :deep(.el-card__body) {
+      padding: 24px;
+    }
+  }
+
+  .reputation-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .reputation-panel__header--compact {
+    margin-bottom: 16px;
+  }
+
+  .reputation-panel__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+
+      html.dark & {
+        color: #f8fafc;
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #64748b;
+
+      html.dark & {
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .reputation-panel__eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #6366f1;
+    text-transform: uppercase;
+  }
+
+  .reputation-panel__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    background: #eff6ff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d4ed8;
+    white-space: nowrap;
+
+    html.dark & {
+      border-color: #1d4ed8;
+      background: rgb(29 78 216 / 18%);
+      color: #bfdbfe;
+    }
+
+    &.is-active {
+      border-color: #c7d2fe;
+      background: #eef2ff;
+      color: #4f46e5;
+
+      html.dark & {
+        border-color: #4f46e5;
+        background: rgb(79 70 229 / 18%);
+        color: #c7d2fe;
+      }
+    }
+  }
+
+  .search-form {
+    padding: 0;
+
+    :deep(.el-form-item) {
+      margin-right: 16px;
+      margin-bottom: 16px;
+    }
+
+    :deep(.el-form-item__label) {
+      font-weight: 700;
+      color: #334155;
+
+      html.dark & {
+        color: #cbd5e1;
+      }
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      min-height: 46px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgb(15 23 42 / 6%);
+    }
+  }
+
+  .search-form__action-item {
+    margin-right: 0 !important;
+
+    :deep(.el-form-item__content) {
+      width: 100%;
+    }
+  }
+
+  .search-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .search-form__actions :deep(.el-button),
+  .sync-status-btn {
+    min-height: 44px;
+    margin-left: 0;
+    padding-inline: 18px;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
+  .status-card {
+    border: 1px solid rgb(226 232 240 / 92%);
+    border-radius: 24px;
+    background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+  }
+
+  .status-card__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 120px;
+    padding: 16px 18px;
+  }
+
+  .status-card__label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #64748b;
+
+    html.dark & {
+      color: #94a3b8;
+    }
+  }
+
+  .status-card__value {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .mobile-user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .mobile-user-card {
+    padding: 18px;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 98%) 0%,
+      rgb(248 250 252 / 96%) 100%
+    );
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 22px;
+    box-shadow: 0 14px 32px rgb(15 23 42 / 8%);
+
+    html.dark & {
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+      border-color: #334155;
+      box-shadow: 0 14px 32px rgb(2 6 23 / 24%);
+    }
+  }
+
+  .mobile-user-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-user-card__identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .mobile-user-card__identity-copy {
+    min-width: 0;
+  }
+
+  .mobile-user-card__name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    word-break: break-word;
+
+    html.dark & {
+      color: #f8fafc;
+    }
+  }
+
+  .mobile-user-card__id {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .mobile-user-card__score {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .mobile-user-card__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgb(226 232 240 / 88%);
+
+    html.dark & {
+      border-color: #334155;
+    }
+  }
+
+  .mobile-user-card__meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+
+    &--full {
+      grid-column: 1 / -1;
+    }
+
+    .label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.04em;
+    }
+
+    .value {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #334155;
+      word-break: break-word;
+
+      html.dark & {
+        color: #e2e8f0;
+      }
+    }
+  }
+
+  .mobile-user-card__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .mobile-user-card__actions :deep(.el-button) {
+    width: 100%;
+    min-height: 42px;
+    margin-left: 0;
+    font-weight: 600;
+    border-radius: 14px;
   }
 
   .reputation-table {
@@ -607,10 +1038,73 @@ onMounted(() => {
     }
   }
 
+  .table-user {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 72px;
+  }
+
+  .table-user__name {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .table-user__id {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #94a3b8;
+  }
+
+  .table-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 72px;
+  }
+
+  .table-score__circle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+  }
+
+  .table-score__value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
   .reputation-tag {
     font-size: 15px;
     padding: 12px 16px;
     height: auto;
+  }
+
+  .table-number {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .table-time {
+    font-size: 16px;
+    color: #64748b;
+  }
+
+  .table-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    min-height: 72px;
   }
 
   .large-badge {
@@ -641,50 +1135,253 @@ onMounted(() => {
     }
   }
 
-  .search-form {
-    :deep(.el-form-item) {
-      margin-bottom: 0;
-
-      .el-form-item__label {
-        font-size: 16px;
-      }
-
-      .el-input__wrapper,
-      .el-select__wrapper {
-        font-size: 16px;
-        height: 40px;
-      }
-    }
+  .pagination-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
   }
-}
 
-.status-card {
-  .text-gray-500 {
+  .user-detail__hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .user-detail__identity {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .user-detail__name {
     font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
   }
 
-  .text-2xl {
-    font-size: 36px;
+  .user-detail__id {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #94a3b8;
   }
-}
 
-.user-detail {
-  .stat-item {
+  .user-detail__score {
+    text-align: center;
+  }
+
+  .user-detail__score-label {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #94a3b8;
+  }
+
+  .user-detail__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .detail-stat-item {
     padding: 16px;
     text-align: center;
     background: #f5f7fa;
-    border-radius: 8px;
+    border-radius: 12px;
 
-    .stat-value {
-      font-size: 24px;
-      font-weight: 600;
-      color: #303133;
+    html.dark & {
+      background: rgb(148 163 184 / 12%);
+    }
+  }
+
+  .detail-stat-item__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #303133;
+  }
+
+  .detail-stat-item__label {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #909399;
+  }
+
+  .user-detail__info {
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+
+    html.dark & {
+      background: rgb(148 163 184 / 10%);
+    }
+  }
+
+  .user-detail__info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    &:not(:last-child) {
+      margin-bottom: 12px;
     }
 
-    .stat-label {
-      margin-top: 4px;
-      font-size: 14px;
-      color: #909399;
+    .label {
+      color: #64748b;
+    }
+
+    .value {
+      color: #334155;
+    }
+  }
+
+  .adjust-form__user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 12px;
+
+    html.dark & {
+      background: rgb(148 163 184 / 10%);
+    }
+  }
+
+  .adjust-form__name {
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .adjust-form__score {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .adjust-form__hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+}
+
+@media (width <= 768px) {
+  .user-reputation-page {
+    padding-bottom: calc(
+      var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
+    );
+
+    .reputation-panel {
+      border-radius: 24px;
+
+      :deep(.el-card__body) {
+        padding: 18px;
+      }
+    }
+
+    .reputation-panel__header {
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    .reputation-panel__copy {
+      h3 {
+        font-size: 20px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+    }
+
+    .reputation-panel__badge {
+      width: 100%;
+      white-space: normal;
+    }
+
+    .search-form {
+      :deep(.el-form-item) {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+
+      :deep(.el-form-item__label) {
+        padding: 0 0 8px;
+        line-height: 1.25;
+      }
+
+      :deep(.el-form-item__content) {
+        width: 100%;
+      }
+
+      :deep(.el-select) {
+        width: 100% !important;
+      }
+    }
+
+    .search-form__actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .status-card__content {
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+      min-height: 132px;
+      text-align: center;
+    }
+
+    .pagination-bar {
+      justify-content: center;
+    }
+
+    .user-detail__hero {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .user-detail__stats {
+      grid-template-columns: 1fr;
+    }
+
+    .dialog-footer {
+      flex-direction: column;
+    }
+
+    .dialog-footer--mobile :deep(.el-button) {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+}
+
+@media (width <= 420px) {
+  .user-reputation-page {
+    .reputation-stats-grid,
+    .mobile-user-card__meta,
+    .search-form__actions,
+    .mobile-user-card__actions {
+      grid-template-columns: 1fr;
+    }
+
+    .mobile-user-card {
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .mobile-user-card__header {
+      align-items: flex-start;
     }
   }
 }

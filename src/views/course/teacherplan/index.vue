@@ -163,113 +163,71 @@
       </template>
 
       <!-- 未选择状态 - 活泼教育风 -->
-      <div
-        v-else
-        class="flex-1 flex flex-col items-center justify-center relative bg-[#f8fafc] dark:bg-[#121212] transition-colors duration-300 overflow-hidden"
-      >
-        <!-- 装饰性背景元素：彩色圆形色块，增加活泼感 -->
+      <div v-else class="teacher-plan-empty-state">
         <div
-          class="absolute top-[10%] left-[15%] w-32 h-32 bg-blue-200/40 dark:bg-blue-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob"
+          class="teacher-plan-empty-state__blob teacher-plan-empty-state__blob--sky"
         />
         <div
-          class="absolute top-[20%] right-[15%] w-40 h-40 bg-yellow-200/40 dark:bg-yellow-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob animation-delay-2000"
+          class="teacher-plan-empty-state__blob teacher-plan-empty-state__blob--amber"
         />
         <div
-          class="absolute bottom-[10%] left-[40%] w-36 h-36 bg-emerald-200/40 dark:bg-emerald-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-2xl animate-blob animation-delay-4000"
+          class="teacher-plan-empty-state__blob teacher-plan-empty-state__blob--emerald"
         />
 
-        <div
-          class="max-w-3xl w-full px-8 text-center relative z-10 flex flex-col items-center"
-        >
-          <!-- 插画区域：增加一个柔和的背景圈，让原有的 lottie 更具实体感 -->
-          <div class="mb-10 relative">
-            <div
-              class="absolute inset-0 bg-white/60 dark:bg-gray-800/40 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] scale-[1.3] z-0"
-            />
-            <div
-              class="relative z-10 transform transition-transform hover:scale-110 duration-300 drop-shadow-md"
-            >
+        <div class="teacher-plan-empty-state__content">
+          <div class="teacher-plan-empty-state__eyebrow">
+            <span class="teacher-plan-empty-state__eyebrow-main">
+              AI 教案工作台
+            </span>
+            <span class="teacher-plan-empty-state__eyebrow-tag">
+              智能生成
+            </span>
+          </div>
+
+          <div class="teacher-plan-empty-state__illustration">
+            <div class="teacher-plan-empty-state__illustration-halo" />
+            <div class="teacher-plan-empty-state__illustration-shell">
               <lottie-animation
                 :animation-data="EducationAnim"
-                :width="220"
-                :height="220"
+                :width="emptyStateAnimationSize"
+                :height="emptyStateAnimationSize"
               />
             </div>
           </div>
 
-          <h2
-            class="text-[40px] font-black text-slate-800 dark:text-slate-100 mb-4 tracking-tight"
-          >
-            开启智能教案设计
-          </h2>
+          <h2 class="teacher-plan-empty-state__title">开启智能教案设计</h2>
 
-          <p
-            class="text-lg text-slate-500 dark:text-slate-400 mb-12 max-w-xl mx-auto leading-relaxed font-medium"
-          >
+          <p class="teacher-plan-empty-state__description">
             选择左侧课程，AI 助手将帮你一键生成生动、规范的教学大纲与教案！
           </p>
 
-          <!-- 功能卡片区：修改为拉直、变扁的长条形卡片 -->
-          <div class="flex flex-col gap-5 w-full max-w-xl mx-auto px-4">
-            <!-- 卡片 1 (长条形) -->
-            <div
-              class="group bg-white dark:bg-[#1d1d1d] rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_15px_45px_rgba(59,130,246,0.1)] hover:-translate-y-1 transition-all duration-300 cursor-default flex items-center"
+          <div class="teacher-plan-empty-state__features">
+            <article
+              v-for="item in emptyStateHighlights"
+              :key="item.title"
+              :class="[
+                'teacher-plan-empty-state__feature',
+                `teacher-plan-empty-state__feature--${item.tone}`
+              ]"
             >
-              <div
-                class="flex-shrink-0 w-14 h-14 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-500 dark:text-blue-400 transform group-hover:scale-110 transition-transform"
-              >
-                <el-icon size="28"><Cpu /></el-icon>
+              <div class="teacher-plan-empty-state__feature-icon">
+                <el-icon size="24">
+                  <component :is="item.icon" />
+                </el-icon>
               </div>
-              <div class="ml-6 flex-1 text-left">
-                <h4
-                  class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1"
-                >
-                  大模型智能解析
-                </h4>
-                <p
-                  class="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed"
-                >
-                  自动识别重难点，精准抓取教学目标！
-                </p>
-              </div>
-              <div
-                class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0"
-              >
-                <el-icon class="text-blue-400" size="24"
-                  ><ArrowRightBold
-                /></el-icon>
-              </div>
-            </div>
 
-            <!-- 卡片 2 (长条形) -->
-            <div
-              class="group bg-white dark:bg-[#1d1d1d] rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_15px_45_rgba(16,185,129,0.1)] hover:-translate-y-1 transition-all duration-300 cursor-default flex items-center"
-            >
-              <div
-                class="flex-shrink-0 w-14 h-14 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-500 dark:text-emerald-400 transform group-hover:scale-110 transition-transform"
+              <div class="teacher-plan-empty-state__feature-copy">
+                <h4>{{ item.title }}</h4>
+                <p>{{ item.description }}</p>
+              </div>
+
+              <el-icon
+                class="teacher-plan-empty-state__feature-arrow"
+                size="18"
               >
-                <el-icon size="28"><Document /></el-icon>
-              </div>
-              <div class="ml-6 flex-1 text-left">
-                <h4
-                  class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1"
-                >
-                  一键输出文档
-                </h4>
-                <p
-                  class="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed"
-                >
-                  自动排版 Markdown 与 PDF，直接打印！
-                </p>
-              </div>
-              <div
-                class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0"
-              >
-                <el-icon class="text-emerald-400" size="24"
-                  ><ArrowRightBold
-                /></el-icon>
-              </div>
-            </div>
+                <ArrowRightBold />
+              </el-icon>
+            </article>
           </div>
         </div>
       </div>
@@ -292,8 +250,7 @@ import {
   Collection,
   Cpu,
   Document,
-  MagicStick,
-  Pointer
+  ArrowRightBold
 } from "@element-plus/icons-vue";
 
 defineOptions({
@@ -304,6 +261,33 @@ defineOptions({
 const activeTab = ref("generate");
 const appStore = useAppStoreHook();
 const isMobileLayout = computed(() => appStore.getDevice === "mobile");
+const emptyStateAnimationSize = computed(() => {
+  const viewportWidth = appStore.getViewportWidth;
+
+  if (viewportWidth < 390) {
+    return 148;
+  }
+
+  if (viewportWidth < 768) {
+    return 176;
+  }
+
+  return 220;
+});
+const emptyStateHighlights = [
+  {
+    title: "大模型智能解析",
+    description: "自动识别重难点，精准抓取教学目标。",
+    icon: Cpu,
+    tone: "sky"
+  },
+  {
+    title: "一键输出文档",
+    description: "自动排版 Markdown 与 PDF，打印与分发都更顺手。",
+    icon: Document,
+    tone: "emerald"
+  }
+] as const;
 
 // 课程选择相关
 const selectedCourseId = ref(null);
@@ -525,6 +509,298 @@ onMounted(() => {
   }
 }
 
+.teacher-plan-empty-state {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(191, 219, 254, 0.55), transparent 42%),
+    linear-gradient(180deg, #f8fafc 0%, #eef5ff 100%);
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+
+  html.dark & {
+    background:
+      radial-gradient(circle at top, rgba(30, 64, 175, 0.3), transparent 40%),
+      linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  }
+}
+
+.teacher-plan-empty-state__blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(40px);
+  opacity: 0.9;
+  animation: teacher-plan-blob-float 10s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.teacher-plan-empty-state__blob--sky {
+  top: 12%;
+  left: 14%;
+  width: 150px;
+  height: 150px;
+  background: rgba(96, 165, 250, 0.24);
+}
+
+.teacher-plan-empty-state__blob--amber {
+  top: 20%;
+  right: 12%;
+  width: 180px;
+  height: 180px;
+  background: rgba(250, 204, 21, 0.2);
+  animation-delay: 1.8s;
+}
+
+.teacher-plan-empty-state__blob--emerald {
+  bottom: 12%;
+  left: 38%;
+  width: 168px;
+  height: 168px;
+  background: rgba(52, 211, 153, 0.2);
+  animation-delay: 3.6s;
+}
+
+.teacher-plan-empty-state__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 760px);
+  text-align: center;
+}
+
+.teacher-plan-empty-state__eyebrow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.teacher-plan-empty-state__eyebrow-main,
+.teacher-plan-empty-state__eyebrow-tag {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.teacher-plan-empty-state__eyebrow-main {
+  color: #1d4ed8;
+  background: rgba(219, 234, 254, 0.92);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.12);
+
+  html.dark & {
+    color: #bfdbfe;
+    background: rgba(30, 64, 175, 0.34);
+  }
+}
+
+.teacher-plan-empty-state__eyebrow-tag {
+  color: #475569;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+
+  html.dark & {
+    color: #cbd5e1;
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(71, 85, 105, 0.8);
+  }
+}
+
+.teacher-plan-empty-state__illustration {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.teacher-plan-empty-state__illustration-halo {
+  position: absolute;
+  width: clamp(190px, 30vw, 280px);
+  height: clamp(190px, 30vw, 280px);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, transparent 68%),
+    linear-gradient(135deg, rgba(96, 165, 250, 0.18), rgba(52, 211, 153, 0.1));
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+  transform: scale(1.12);
+
+  html.dark & {
+    background:
+      radial-gradient(circle, rgba(30, 41, 59, 0.9) 0%, transparent 68%),
+      linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(16, 185, 129, 0.12));
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.35);
+  }
+}
+
+.teacher-plan-empty-state__illustration-shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 999px;
+  transition: transform 0.3s ease;
+}
+
+.teacher-plan-empty-state__title {
+  max-width: 12ch;
+  margin: 0;
+  font-size: clamp(32px, 4.4vw, 44px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  color: #0f172a;
+
+  html.dark & {
+    color: #f8fafc;
+  }
+}
+
+.teacher-plan-empty-state__description {
+  max-width: 34rem;
+  margin: 16px 0 0;
+  font-size: clamp(15px, 2vw, 18px);
+  font-weight: 500;
+  line-height: 1.8;
+  color: #64748b;
+
+  html.dark & {
+    color: #94a3b8;
+  }
+}
+
+.teacher-plan-empty-state__features {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  margin-top: 32px;
+}
+
+.teacher-plan-empty-state__feature {
+  --feature-accent: #2563eb;
+  --feature-surface: rgba(255, 255, 255, 0.82);
+  --feature-border: rgba(226, 232, 240, 0.95);
+  --feature-border-hover: rgba(37, 99, 235, 0.24);
+  --feature-icon-bg: rgba(219, 234, 254, 0.92);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  min-height: 132px;
+  padding: 22px;
+  text-align: left;
+  border: 1px solid var(--feature-border);
+  border-radius: 24px;
+  background: var(--feature-surface);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(16px);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+
+  html.dark & {
+    --feature-surface: rgba(15, 23, 42, 0.72);
+    --feature-border: rgba(51, 65, 85, 0.92);
+    box-shadow: 0 18px 45px rgba(2, 6, 23, 0.3);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
+    border-color: var(--feature-border-hover);
+  }
+}
+
+.teacher-plan-empty-state__feature--sky {
+  --feature-accent: #2563eb;
+  --feature-icon-bg: rgba(219, 234, 254, 0.92);
+}
+
+.teacher-plan-empty-state__feature--emerald {
+  --feature-accent: #059669;
+  --feature-border-hover: rgba(5, 150, 105, 0.24);
+  --feature-icon-bg: rgba(209, 250, 229, 0.9);
+}
+
+.teacher-plan-empty-state__feature-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  color: var(--feature-accent);
+  background: var(--feature-icon-bg);
+  border-radius: 18px;
+
+  html.dark .teacher-plan-empty-state__feature--sky & {
+    background: rgba(30, 64, 175, 0.34);
+  }
+
+  html.dark .teacher-plan-empty-state__feature--emerald & {
+    background: rgba(6, 95, 70, 0.34);
+  }
+}
+
+.teacher-plan-empty-state__feature-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-plan-empty-state__feature-copy h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+
+  html.dark & {
+    color: #f8fafc;
+  }
+}
+
+.teacher-plan-empty-state__feature-copy p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.65;
+  color: #64748b;
+
+  html.dark & {
+    color: #94a3b8;
+  }
+}
+
+.teacher-plan-empty-state__feature-arrow {
+  flex-shrink: 0;
+  color: var(--feature-accent);
+  opacity: 0.76;
+}
+
+@keyframes teacher-plan-blob-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, -14px, 0) scale(1.06);
+  }
+}
+
 @mixin teacher-plan-mobile-layout {
   height: auto !important;
   min-height: calc(100vh - 140px);
@@ -583,6 +859,68 @@ onMounted(() => {
   }
 }
 
+.teacher-plan-container.is-mobile-layout .teacher-plan-empty-state {
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 24px 18px 28px;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-empty-state__content {
+  align-items: stretch;
+  width: 100%;
+  text-align: left;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-empty-state__eyebrow {
+  justify-content: flex-start;
+  margin-bottom: 14px;
+}
+
+.teacher-plan-container.is-mobile-layout
+  .teacher-plan-empty-state__illustration {
+  margin-bottom: 18px;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-empty-state__title {
+  max-width: none;
+  font-size: clamp(28px, 8.6vw, 34px);
+}
+
+.teacher-plan-container.is-mobile-layout
+  .teacher-plan-empty-state__description {
+  max-width: none;
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-empty-state__features {
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-empty-state__feature {
+  min-height: 0;
+  padding: 16px;
+  border-radius: 20px;
+  gap: 14px;
+}
+
+.teacher-plan-container.is-mobile-layout
+  .teacher-plan-empty-state__feature-copy
+  h4 {
+  font-size: 16px;
+}
+
+.teacher-plan-container.is-mobile-layout
+  .teacher-plan-empty-state__feature-copy
+  p {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 @media screen and (max-width: 768px) {
   .teacher-plan-container {
     @include teacher-plan-mobile-layout;
@@ -624,6 +962,82 @@ onMounted(() => {
       font-size: 13px;
       white-space: nowrap;
     }
+  }
+
+  .teacher-plan-empty-state {
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 24px 18px 28px;
+  }
+
+  .teacher-plan-empty-state__content {
+    align-items: stretch;
+    width: 100%;
+    text-align: left;
+  }
+
+  .teacher-plan-empty-state__eyebrow {
+    justify-content: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .teacher-plan-empty-state__illustration {
+    margin-bottom: 18px;
+  }
+
+  .teacher-plan-empty-state__title {
+    max-width: none;
+    font-size: clamp(28px, 8.6vw, 34px);
+  }
+
+  .teacher-plan-empty-state__description {
+    max-width: none;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .teacher-plan-empty-state__features {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .teacher-plan-empty-state__feature {
+    min-height: 0;
+    padding: 16px;
+    border-radius: 20px;
+    gap: 14px;
+  }
+
+  .teacher-plan-empty-state__feature-copy h4 {
+    font-size: 16px;
+  }
+
+  .teacher-plan-empty-state__feature-copy p {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .teacher-plan-empty-state__eyebrow {
+    gap: 8px;
+  }
+
+  .teacher-plan-empty-state__eyebrow-main,
+  .teacher-plan-empty-state__eyebrow-tag {
+    font-size: 12px;
+    padding: 7px 12px;
+  }
+
+  .teacher-plan-empty-state__feature {
+    align-items: flex-start;
+  }
+
+  .teacher-plan-empty-state__feature-arrow {
+    margin-top: 4px;
   }
 }
 </style>

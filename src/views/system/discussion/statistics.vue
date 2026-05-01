@@ -9,6 +9,7 @@
  */
 import { ref, reactive, onMounted, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Refresh,
   TrendCharts,
@@ -43,6 +44,7 @@ defineOptions({
   name: "DiscussionStatistics"
 });
 
+const { isMobile, paginationLayout } = usePageResponsive();
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
@@ -190,6 +192,12 @@ const pendingCards = computed(() => {
     return allStatCards.value.filter(c => c.category === "pending");
   return allStatCards.value.filter(c => c.category === "pending");
 });
+const pendingTotal = computed(
+  () =>
+    (stats.value?.pendingPosts || 0) +
+    (stats.value?.pendingReplies || 0) +
+    (stats.value?.pendingReports || 0)
+);
 
 // 用户与互动统计卡片
 const engagementCards = computed(() => {
@@ -198,6 +206,21 @@ const engagementCards = computed(() => {
     c => c.category === "engagement" || c.category === "user"
   );
 });
+const topCourses = computed(() => stats.value?.topCourses || []);
+
+const getOperatorRoleType = (role: string) => {
+  if (role === "admin") return "danger";
+  if (role === "teacher") return "warning";
+  return "info";
+};
+
+const getOperatorRoleText = (role: string) => {
+  if (role === "admin") return "管理员";
+  if (role === "teacher") return "教师";
+  return role || "未知";
+};
+
+const getTargetTypeText = (type: string) => (type === "post" ? "帖子" : "回复");
 
 // ==================== 图表逻辑 ====================
 
@@ -547,14 +570,13 @@ watch(theme, () => {
 
 <template>
   <div class="statistics-container p-4">
-    <!-- 操作栏 -->
-    <div class="flex justify-end items-center mb-6 gap-3">
+    <div class="statistics-toolbar mb-6">
       <el-select
         v-model="selectedCourse"
         placeholder="全部课程"
         clearable
         filterable
-        class="!w-[200px]"
+        class="statistics-toolbar__select"
         @change="handleCourseChange"
       >
         <el-option
@@ -568,6 +590,7 @@ watch(theme, () => {
         type="primary"
         :icon="Refresh"
         :loading="loading"
+        class="statistics-toolbar__button"
         @click="handleRefresh"
       >
         同步最新数据
@@ -576,48 +599,40 @@ watch(theme, () => {
 
     <!-- 核心数据总览 - 9个字段全部展示 -->
     <div class="mb-8">
-      <div class="flex items-center mb-4">
-        <div
-          class="w-1.5 h-5 bg-gradient-to-b from-blue-500 to-blue-400 mr-3 rounded-full"
-        />
+      <div class="section-heading mb-4">
+        <div class="section-heading__bar section-heading__bar--blue" />
         <span class="text-base font-bold">核心数据指标</span>
       </div>
 
-      <!-- 第一行: 内容统计 (3卡片) -->
-      <el-row :gutter="16" class="mb-4">
-        <el-col
-          v-for="item in allStatCards.filter(c => c.category === 'content')"
-          :key="item.label"
-          :xs="24"
-          :sm="12"
-          :md="8"
-        >
+      <div class="statistics-section-stack">
+        <div class="stats-grid stats-grid--content">
           <div
-            class="stat-card-modern p-5 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+            v-for="item in allStatCards.filter(c => c.category === 'content')"
+            :key="item.label"
+            class="stat-card-modern stat-card-modern--large"
             :style="{
               background: item.bg,
               border: `1px solid ${item.borderColor}`
             }"
           >
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
+            <div class="stat-card-modern__content">
+              <div class="stat-card-modern__copy">
+                <div class="stat-card-modern__label-row">
                   <el-tooltip :content="item.tip" placement="top">
-                    <span
-                      class="text-sm text-gray-500 dark:text-gray-400 font-medium"
-                      >{{ item.label }}</span
-                    >
+                    <span class="stat-card-modern__label">
+                      {{ item.label }}
+                    </span>
                   </el-tooltip>
                 </div>
                 <div
-                  class="text-3xl font-black tracking-tight"
+                  class="stat-card-modern__value stat-card-modern__value--large"
                   :style="{ color: item.color }"
                 >
                   {{ item.value?.toLocaleString() || 0 }}
                 </div>
               </div>
               <div
-                class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm"
+                class="stat-card-modern__icon stat-card-modern__icon--large"
                 :style="{ backgroundColor: `${item.color}15` }"
               >
                 <el-icon :size="28" :color="item.color">
@@ -626,41 +641,36 @@ watch(theme, () => {
               </div>
             </div>
           </div>
-        </el-col>
-      </el-row>
+        </div>
 
-      <!-- 第二行: 互动与用户 (2卡片) + 今日动态 (2卡片) -->
-      <el-row :gutter="16" class="mb-4">
-        <el-col
-          v-for="item in engagementCards"
-          :key="item.label"
-          :xs="12"
-          :sm="6"
-        >
+        <div class="stats-grid stats-grid--compact">
           <div
-            class="stat-card-modern p-4 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+            v-for="item in engagementCards"
+            :key="item.label"
+            class="stat-card-modern"
             :style="{
               background: item.bg,
               border: `1px solid ${item.borderColor}`
             }"
           >
-            <div class="flex items-center justify-between">
-              <div>
+            <div class="stat-card-modern__content">
+              <div class="stat-card-modern__copy">
                 <el-tooltip :content="item.tip" placement="top">
                   <span
-                    class="text-xs text-gray-500 dark:text-gray-400 font-medium"
-                    >{{ item.label }}</span
+                    class="stat-card-modern__label stat-card-modern__label--sm"
                   >
+                    {{ item.label }}
+                  </span>
                 </el-tooltip>
                 <div
-                  class="text-2xl font-bold mt-1"
+                  class="stat-card-modern__value stat-card-modern__value--sm"
                   :style="{ color: item.color }"
                 >
                   {{ item.value?.toLocaleString() || 0 }}
                 </div>
               </div>
               <div
-                class="w-11 h-11 rounded-xl flex items-center justify-center"
+                class="stat-card-modern__icon stat-card-modern__icon--sm"
                 :style="{ backgroundColor: `${item.color}15` }"
               >
                 <el-icon :size="22" :color="item.color">
@@ -669,47 +679,44 @@ watch(theme, () => {
               </div>
             </div>
           </div>
-        </el-col>
-        <el-col
-          v-for="item in allStatCards.filter(c => c.category === 'today')"
-          :key="item.label"
-          :xs="12"
-          :sm="6"
-        >
+
           <div
-            class="stat-card-modern p-4 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+            v-for="item in allStatCards.filter(c => c.category === 'today')"
+            :key="item.label"
+            class="stat-card-modern stat-card-modern--new"
             :style="{
               background: item.bg,
               border: `1px solid ${item.borderColor}`
             }"
           >
-            <div v-if="item.isNew" class="absolute top-2 right-2">
+            <div v-if="item.isNew" class="stat-card-modern__flag">
               <el-tag
                 size="small"
                 type="danger"
                 effect="dark"
                 round
-                class="scale-75 animate-pulse"
+                class="animate-pulse"
                 >NEW</el-tag
               >
             </div>
-            <div class="flex items-center justify-between">
-              <div>
+            <div class="stat-card-modern__content">
+              <div class="stat-card-modern__copy">
                 <el-tooltip :content="item.tip" placement="top">
                   <span
-                    class="text-xs text-gray-500 dark:text-gray-400 font-medium"
-                    >{{ item.label }}</span
+                    class="stat-card-modern__label stat-card-modern__label--sm"
                   >
+                    {{ item.label }}
+                  </span>
                 </el-tooltip>
                 <div
-                  class="text-2xl font-bold mt-1"
+                  class="stat-card-modern__value stat-card-modern__value--sm"
                   :style="{ color: item.color }"
                 >
                   {{ item.value?.toLocaleString() || 0 }}
                 </div>
               </div>
               <div
-                class="w-11 h-11 rounded-xl flex items-center justify-center"
+                class="stat-card-modern__icon stat-card-modern__icon--sm"
                 :style="{ backgroundColor: `${item.color}15` }"
               >
                 <el-icon :size="22" :color="item.color">
@@ -718,79 +725,69 @@ watch(theme, () => {
               </div>
             </div>
           </div>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
     </div>
 
     <!-- 待处理任务预警 -->
     <div class="mb-8">
-      <div class="flex items-center mb-4">
-        <div
-          class="w-1.5 h-5 bg-gradient-to-b from-orange-500 to-red-500 mr-3 rounded-full"
-        />
+      <div class="section-heading mb-4">
+        <div class="section-heading__bar section-heading__bar--warm" />
         <span class="text-base font-bold">待处理任务预警</span>
-        <el-badge
-          :value="
-            (stats?.pendingPosts || 0) +
-            (stats?.pendingReplies || 0) +
-            (stats?.pendingReports || 0)
-          "
-          :max="99"
-          class="ml-3"
-        />
+        <el-badge :value="pendingTotal" :max="99" class="ml-3" />
       </div>
-      <el-row :gutter="16">
-        <el-col v-for="item in pendingCards" :key="item.label" :xs="24" :sm="8">
+
+      <div class="pending-grid">
+        <div v-for="item in pendingCards" :key="item.label">
           <div
-            class="pending-card p-5 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+            class="pending-card"
             :style="{
               background: item.bg,
               border: `1px solid ${item.borderColor}`
             }"
           >
-            <!-- 背景装饰 -->
             <div
-              class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-10"
+              class="pending-card__ornament"
               :style="{ backgroundColor: item.color }"
             />
 
-            <div class="flex items-center justify-between relative z-10">
-              <div class="flex items-center">
+            <div class="pending-card__content">
+              <div class="pending-card__main">
                 <div
-                  class="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
+                  class="pending-card__icon"
                   :style="{ backgroundColor: `${item.color}20` }"
                 >
                   <el-icon :size="24" :color="item.color">
                     <component :is="item.icon" />
                   </el-icon>
                 </div>
-                <div>
+                <div class="pending-card__copy">
                   <div
-                    class="text-sm font-bold mb-0.5"
+                    class="pending-card__title"
                     :style="{ color: item.color }"
                   >
                     {{ item.label }}
                   </div>
-                  <div class="text-[11px] text-gray-500">{{ item.tip }}</div>
+                  <div class="pending-card__tip">{{ item.tip }}</div>
                 </div>
               </div>
-              <div class="flex flex-col items-end">
+              <div class="pending-card__count">
                 <span
-                  class="text-3xl font-black"
+                  class="pending-card__count-value"
                   :style="{ color: item.color }"
                 >
                   {{ item.value || 0 }}
                 </span>
-                <span class="text-[10px] text-gray-400">件待处理</span>
+                <span class="pending-card__count-label">件待处理</span>
               </div>
             </div>
           </div>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
     </div>
 
     <!-- 图表展示 -->
-    <el-row :gutter="16" class="mb-8">
+    <el-row :gutter="16" class="mb-8 charts-grid">
       <el-col :xs="24" :lg="14">
         <el-card
           shadow="never"
@@ -850,7 +847,7 @@ watch(theme, () => {
     </el-row>
 
     <!-- 平台角色活跃与课程排行 -->
-    <el-row :gutter="16" class="mb-8">
+    <el-row :gutter="16" class="mb-8 insights-grid">
       <el-col :xs="24" :lg="8">
         <el-card
           shadow="never"
@@ -895,11 +892,25 @@ watch(theme, () => {
               </el-button>
             </div>
           </template>
-          <el-table
-            :data="stats?.topCourses || []"
-            style="width: 100%"
-            height="250"
-          >
+          <div v-if="isMobile" class="top-course-list">
+            <div
+              v-for="(row, index) in topCourses"
+              :key="row.courseId"
+              class="top-course-card"
+            >
+              <div class="top-course-card__rank">
+                {{ index + 1 }}
+              </div>
+              <div class="top-course-card__content">
+                <div class="top-course-card__name">{{ row.courseName }}</div>
+                <div class="top-course-card__meta">
+                  <span>帖子 {{ row.postCount }}</span>
+                  <span>回复 {{ row.replyCount }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <el-table v-else :data="topCourses" style="width: 100%" height="250">
             <el-table-column
               type="index"
               label="排名"
@@ -952,7 +963,7 @@ watch(theme, () => {
             </el-table-column>
           </el-table>
           <div
-            v-if="!stats?.topCourses?.length"
+            v-if="!topCourses.length"
             class="flex flex-col items-center justify-center py-8 text-gray-400"
           >
             <el-empty :image-size="60" description="暂无热门课程数据" />
@@ -984,18 +995,19 @@ watch(theme, () => {
       </template>
 
       <!-- 搜索栏 -->
-      <div class="bg-gray-50 dark:bg-black/20 p-4 rounded-xl mb-6">
+      <div class="audit-search-panel">
         <el-form
-          :inline="true"
+          :inline="!isMobile"
+          :label-position="isMobile ? 'top' : 'right'"
           :model="queryForm"
-          class="flex flex-wrap gap-y-2"
+          class="search-form audit-search-form"
         >
           <el-form-item label="目标类型">
             <el-select
               v-model="queryForm.targetType"
               placeholder="全部类型"
               clearable
-              class="!w-[120px]"
+              :class="isMobile ? '' : '!w-[120px]'"
             >
               <el-option label="帖子" value="post" />
               <el-option label="回复" value="reply" />
@@ -1006,7 +1018,7 @@ watch(theme, () => {
               v-model="queryForm.action"
               placeholder="审批/删除等"
               clearable
-              class="!w-[140px]"
+              :class="isMobile ? '' : '!w-[140px]'"
             />
           </el-form-item>
           <el-form-item label="时间范围">
@@ -1017,20 +1029,97 @@ watch(theme, () => {
               start-placeholder="开始时间"
               end-placeholder="结束时间"
               value-format="YYYY-MM-DDTHH:mm:ss"
-              class="!w-[360px]"
+              :class="isMobile ? 'audit-search-form__range' : '!w-[360px]'"
             />
           </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :icon="Search" @click="handleSearch"
-              >搜索</el-button
-            >
-            <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+          <el-form-item class="search-form__action-item">
+            <div class="search-form__actions">
+              <el-button type="primary" :icon="Search" @click="handleSearch">
+                搜索
+              </el-button>
+              <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+            </div>
           </el-form-item>
         </el-form>
       </div>
 
-      <!-- 表格 -->
+      <div v-if="isMobile" v-loading="auditLoading" class="audit-log-list">
+        <div v-for="row in auditLogs" :key="row.id" class="audit-log-card">
+          <div class="audit-log-card__header">
+            <div class="audit-log-card__title">
+              <el-tag
+                :type="row.targetType === 'post' ? 'primary' : 'success'"
+                effect="light"
+                size="small"
+              >
+                {{ getTargetTypeText(row.targetType) }}
+              </el-tag>
+              <span class="audit-log-card__id">#{{ row.targetId }}</span>
+            </div>
+            <span class="audit-log-card__time">
+              {{ new Date(row.createTime).toLocaleString() }}
+            </span>
+          </div>
+
+          <div class="audit-log-card__operator">
+            <el-avatar
+              :size="32"
+              class="bg-gradient-to-br from-blue-400 to-purple-500"
+            >
+              {{ row.operatorName?.charAt(0) }}
+            </el-avatar>
+            <div class="audit-log-card__operator-copy">
+              <div class="audit-log-card__operator-name">
+                {{ row.operatorName }}
+              </div>
+              <div class="audit-log-card__operator-meta">
+                <span>ID: {{ row.operatorId }}</span>
+                <el-tag
+                  size="small"
+                  :type="getOperatorRoleType(row.operatorRole)"
+                  effect="plain"
+                  round
+                >
+                  {{ getOperatorRoleText(row.operatorRole) }}
+                </el-tag>
+              </div>
+            </div>
+          </div>
+
+          <div class="audit-log-card__body">
+            <div class="audit-log-card__row">
+              <span class="label">操作动作</span>
+              <span class="value text-blue-600 dark:text-blue-400">
+                {{ row.action }}
+              </span>
+            </div>
+            <div class="audit-log-card__row">
+              <span class="label">状态变化</span>
+              <div class="audit-log-card__status">
+                <span class="audit-log-card__status-from">
+                  {{ row.previousStatus || "无" }}
+                </span>
+                <el-icon class="text-gray-300"><TrendCharts /></el-icon>
+                <span class="audit-log-card__status-to">
+                  {{ row.newStatus || "无" }}
+                </span>
+              </div>
+            </div>
+            <div class="audit-log-card__row audit-log-card__row--full">
+              <span class="label">操作原因</span>
+              <span class="value">{{ row.reason || "-" }}</span>
+            </div>
+          </div>
+        </div>
+
+        <el-empty
+          v-if="!auditLoading && auditLogs.length === 0"
+          description="暂无审计日志"
+        />
+      </div>
+
       <el-table
+        v-else
         v-loading="auditLoading"
         :data="auditLogs"
         border
@@ -1073,23 +1162,11 @@ watch(theme, () => {
           <template #default="{ row }">
             <el-tag
               size="small"
-              :type="
-                row.operatorRole === 'admin'
-                  ? 'danger'
-                  : row.operatorRole === 'teacher'
-                    ? 'warning'
-                    : 'info'
-              "
+              :type="getOperatorRoleType(row.operatorRole)"
               effect="plain"
               round
             >
-              {{
-                row.operatorRole === "admin"
-                  ? "管理员"
-                  : row.operatorRole === "teacher"
-                    ? "教师"
-                    : row.operatorRole
-              }}
+              {{ getOperatorRoleText(row.operatorRole) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -1102,7 +1179,7 @@ watch(theme, () => {
                 size="small"
                 class="mr-2"
               >
-                {{ row.targetType === "post" ? "帖子" : "回复" }}
+                {{ getTargetTypeText(row.targetType) }}
               </el-tag>
               <span class="text-xs text-gray-400">#{{ row.targetId }}</span>
             </div>
@@ -1147,12 +1224,13 @@ watch(theme, () => {
       </el-table>
 
       <!-- 分页 -->
-      <div class="flex justify-end mt-6">
+      <div class="pagination-bar">
         <el-pagination
           v-model:current-page="queryForm.pageNum"
           v-model:page-size="queryForm.pageSize"
           :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           :total="total"
           background
           @size-change="handleSizeChange"
@@ -1169,12 +1247,411 @@ watch(theme, () => {
   margin: 0 auto;
 }
 
+.statistics-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.statistics-toolbar__select {
+  width: 200px;
+}
+
+.statistics-toolbar__button {
+  min-height: 42px;
+  padding-inline: 18px;
+  font-weight: 600;
+  border-radius: 14px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+}
+
+.section-heading__bar {
+  width: 6px;
+  height: 20px;
+  margin-right: 12px;
+  border-radius: 999px;
+}
+
+.section-heading__bar--blue {
+  background: linear-gradient(to bottom, #3b82f6, #60a5fa);
+}
+
+.section-heading__bar--warm {
+  background: linear-gradient(to bottom, #f97316, #ef4444);
+}
+
+.statistics-section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stats-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.stats-grid--content {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stats-grid--compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .stat-card-modern {
   backdrop-filter: blur(10px);
+  padding: 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card-modern--large {
+  padding: 20px;
+}
+
+.stat-card-modern__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.stat-card-modern__copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.stat-card-modern__label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stat-card-modern__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(107 114 128);
+}
+
+.stat-card-modern__label--sm {
+  font-size: 12px;
+}
+
+.stat-card-modern__value {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.stat-card-modern__value--large {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.stat-card-modern__value--sm {
+  margin-top: 6px;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.stat-card-modern__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgb(15 23 42 / 8%);
+}
+
+.stat-card-modern__icon--large {
+  width: 56px;
+  height: 56px;
+}
+
+.stat-card-modern__icon--sm {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+}
+
+.stat-card-modern__flag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 
 .pending-card {
   backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pending-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pending-card__ornament {
+  position: absolute;
+  right: -16px;
+  bottom: -16px;
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  opacity: 0.1;
+}
+
+.pending-card__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pending-card__main {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.pending-card__icon {
+  width: 48px;
+  height: 48px;
+  margin-right: 16px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pending-card__copy {
+  min-width: 0;
+}
+
+.pending-card__title {
+  margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pending-card__tip {
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgb(107 114 128);
+}
+
+.pending-card__count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.pending-card__count-value {
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pending-card__count-label {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgb(156 163 175);
+}
+
+.top-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.top-course-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgb(226 232 240 / 88%);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+}
+
+.top-course-card__rank {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+.top-course-card__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.top-course-card__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.top-course-card__meta {
+  display: flex;
+  gap: 14px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.audit-search-panel {
+  padding: 20px;
+  margin-bottom: 28px;
+  border-radius: 20px;
+  background: rgb(248 250 252);
+}
+
+.audit-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.audit-log-card {
+  padding: 16px;
+  border: 1px solid rgb(226 232 240 / 88%);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+}
+
+.audit-log-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.audit-log-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.audit-log-card__id {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.audit-log-card__time {
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: right;
+}
+
+.audit-search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+}
+
+.audit-log-card__operator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.audit-log-card__operator-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.audit-log-card__operator-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.audit-log-card__operator-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.audit-log-card__body {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(226 232 240 / 88%);
+}
+
+.audit-log-card__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.audit-log-card__row .label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+}
+
+.audit-log-card__row .value {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+  word-break: break-word;
+}
+
+.audit-log-card__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.audit-log-card__status-from,
+.audit-log-card__status-to {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.audit-log-card__status-from {
+  color: #6b7280;
+  background: rgb(243 244 246);
+}
+
+.audit-log-card__status-to {
+  color: #2563eb;
+  background: rgb(239 246 255);
 }
 
 :deep(.el-card__header) {
@@ -1196,6 +1673,155 @@ watch(theme, () => {
   :deep(.el-form-item) {
     margin-bottom: 0;
     margin-right: 20px;
+  }
+}
+
+.search-form__action-item {
+  :deep(.el-form-item__content) {
+    width: 100%;
+  }
+}
+
+.search-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.search-form__actions :deep(.el-button) {
+  margin-left: 0;
+}
+
+.pagination-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+@media (width <= 768px) {
+  .statistics-container {
+    padding-bottom: calc(
+      var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
+    );
+  }
+
+  .statistics-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .statistics-toolbar__select,
+  .statistics-toolbar__button {
+    width: 100%;
+  }
+
+  .charts-grid,
+  .insights-grid {
+    row-gap: 18px;
+  }
+
+  .stats-grid--content,
+  .pending-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-card-modern--large .stat-card-modern__value--large {
+    font-size: 34px;
+  }
+
+  .pending-card {
+    padding: 18px;
+  }
+
+  .pending-card__content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pending-card__count {
+    align-items: flex-start;
+  }
+
+  .audit-search-panel {
+    padding: 20px 16px;
+    margin-bottom: 24px;
+    border-radius: 22px;
+  }
+
+  .search-form {
+    :deep(.el-form-item) {
+      width: 100%;
+      margin-right: 0;
+      margin-bottom: 18px;
+    }
+
+    :deep(.el-form-item__label) {
+      padding: 0 0 10px;
+      line-height: 1.25;
+      font-weight: 700;
+      font-size: 15px;
+      text-align: left;
+      justify-content: flex-start;
+    }
+
+    :deep(.el-form-item__content) {
+      width: 100%;
+    }
+
+    :deep(.el-input),
+    :deep(.el-select),
+    :deep(.el-date-editor) {
+      width: 100% !important;
+    }
+  }
+
+  .audit-search-form__range {
+    :deep(.el-range-input) {
+      font-size: 14px;
+    }
+
+    :deep(.el-range-separator) {
+      padding: 0 8px;
+    }
+  }
+
+  .search-form__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 14px;
+  }
+
+  .search-form__actions :deep(.el-button) {
+    width: 100%;
+    min-height: 46px;
+    font-weight: 700;
+    border-radius: 16px;
+  }
+
+  .pagination-bar {
+    justify-content: center;
+  }
+
+  .audit-log-list {
+    gap: 18px;
+  }
+
+  .audit-log-card {
+    padding: 18px;
+    border-radius: 20px;
+  }
+}
+
+@media (width <= 420px) {
+  .stats-grid--compact,
+  .search-form__actions {
+    grid-template-columns: 1fr;
   }
 }
 

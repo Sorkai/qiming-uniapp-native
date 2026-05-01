@@ -3,8 +3,9 @@
  * 管理员端 - 敏感词管理
  * 管理敏感词库，包括添加、编辑、删除、导入导出
  */
-import { ref, reactive, onMounted } from "vue";
+import { computed, reactive, ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Plus,
   Search,
@@ -28,7 +29,8 @@ defineOptions({
   name: "SensitiveWordsManage"
 });
 
-// 状态
+const { isMobile, paginationLayout, getDialogWidth } = usePageResponsive();
+
 const loading = ref(false);
 const words = ref<SensitiveWord[]>([]);
 const selectedRows = ref<SensitiveWord[]>([]);
@@ -37,7 +39,6 @@ const importDialogVisible = ref(false);
 const isEdit = ref(false);
 const currentWord = ref<SensitiveWord | null>(null);
 
-// 统计
 const stats = ref({
   total: 0,
   high: 0,
@@ -45,7 +46,6 @@ const stats = ref({
   low: 0
 });
 
-// 搜索表单
 const searchForm = reactive({
   keyword: "",
   level: "" as SensitiveWordLevel | "",
@@ -53,7 +53,6 @@ const searchForm = reactive({
   isEnabled: undefined as boolean | undefined
 });
 
-// 表单数据
 const formData = reactive({
   word: "",
   level: 2 as SensitiveWordLevel,
@@ -62,28 +61,24 @@ const formData = reactive({
   isEnabled: true
 });
 
-// 导入数据
 const importData = reactive({
   content: "",
   level: 2 as SensitiveWordLevel,
   category: ""
 });
 
-// 分页
 const pagination = reactive({
   page: 1,
   pageSize: 50,
   total: 0
 });
 
-// 级别选项
 const levelOptions = [
   { label: "高风险", value: 3, type: "danger" },
   { label: "中风险", value: 2, type: "warning" },
   { label: "低风险", value: 1, type: "info" }
 ];
 
-// 分类选项
 const categoryOptions = [
   "政治敏感",
   "色情低俗",
@@ -94,7 +89,40 @@ const categoryOptions = [
   "其他"
 ];
 
-// 级别标签样式
+const selectedCount = computed(() => selectedRows.value.length);
+const activeFilterCount = computed(() => {
+  let count = 0;
+
+  if (searchForm.keyword.trim()) count += 1;
+  if (searchForm.level) count += 1;
+  if (searchForm.category) count += 1;
+  if (typeof searchForm.isEnabled === "boolean") count += 1;
+
+  return count;
+});
+
+const filterBadgeText = computed(() =>
+  activeFilterCount.value > 0
+    ? `已启用 ${activeFilterCount.value} 项筛选`
+    : "当前展示全部敏感词"
+);
+
+const listSummaryText = computed(() => {
+  if (loading.value && pagination.total === 0) {
+    return "正在同步敏感词库...";
+  }
+
+  if (pagination.total === 0) {
+    return "暂无敏感词记录";
+  }
+
+  if (selectedCount.value > 0) {
+    return `共 ${pagination.total} 个敏感词，已选择 ${selectedCount.value} 个`;
+  }
+
+  return `共 ${pagination.total} 个敏感词，可继续筛选或批量处理`;
+});
+
 const getLevelType = (level: SensitiveWordLevel) => {
   const map: Record<number, string> = {
     3: "danger",
@@ -110,22 +138,29 @@ const getLevelText = (level: SensitiveWordLevel) => {
     2: "中风险",
     1: "低风险"
   };
-  return map[level] || level;
+  return map[level] || String(level);
 };
 
-// 加载数据
+const getEnabledText = (isEnabled: boolean) =>
+  isEnabled ? "已启用" : "已禁用";
+
+const getContentPreview = (text: string, limit = 20) => {
+  if (!text) return "-";
+  return text.length > limit ? `${text.slice(0, limit)}...` : text;
+};
+
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: any = {
+    const params: Record<string, any> = {
       pageNum: pagination.page,
       pageSize: pagination.pageSize
     };
+
     if (searchForm.keyword) params.keyword = searchForm.keyword;
     if (searchForm.level) params.level = searchForm.level;
     if (searchForm.category) params.category = searchForm.category;
 
-    // isEnabled 映射: undefined -> -1 (全部), true -> 1 (启用), false -> 0 (禁用)
     if (searchForm.isEnabled === true) {
       params.isEnabled = 1;
     } else if (searchForm.isEnabled === false) {
@@ -134,14 +169,9 @@ const fetchData = async () => {
       params.isEnabled = -1;
     }
 
-    console.log("[SensitiveWords] Fetching with params:", params);
     const res = await getSensitiveWords(params);
-    console.log("[SensitiveWords] Raw response:", res);
-
-    // 兼容后端返回格式
     const resData = (res as any).data || res;
 
-    // 防御性处理：检查 data 字段结构
     if (resData && typeof resData === "object") {
       if (Array.isArray(resData.list)) {
         words.value = resData.list;
@@ -158,12 +188,11 @@ const fetchData = async () => {
       pagination.total = 0;
     }
 
-    // 统计功能根据当前数据计算
     stats.value = {
       total: pagination.total,
-      high: words.value.filter((w: any) => w.level === 3).length,
-      medium: words.value.filter((w: any) => w.level === 2).length,
-      low: words.value.filter((w: any) => w.level === 1).length
+      high: words.value.filter(item => item.level === 3).length,
+      medium: words.value.filter(item => item.level === 2).length,
+      low: words.value.filter(item => item.level === 1).length
     };
   } catch (error) {
     console.error("加载敏感词失败", error);
@@ -173,13 +202,11 @@ const fetchData = async () => {
   }
 };
 
-// 搜索
 const handleSearch = () => {
   pagination.page = 1;
   fetchData();
 };
 
-// 重置
 const resetSearch = () => {
   searchForm.keyword = "";
   searchForm.level = "";
@@ -188,7 +215,6 @@ const resetSearch = () => {
   handleSearch();
 };
 
-// 分页
 const handlePageChange = (page: number) => {
   pagination.page = page;
   fetchData();
@@ -200,24 +226,25 @@ const handleSizeChange = (size: number) => {
   fetchData();
 };
 
-// 选择变化
 const handleSelectionChange = (rows: SensitiveWord[]) => {
   selectedRows.value = rows;
 };
 
-// 打开添加弹窗
+const refreshData = async () => {
+  await fetchData();
+};
+
 const openAddDialog = () => {
   isEdit.value = false;
   currentWord.value = null;
   formData.word = "";
-  formData.level = 2; // 默认中风险
+  formData.level = 2;
   formData.category = "";
   formData.replacement = "***";
   formData.isEnabled = true;
   dialogVisible.value = true;
 };
 
-// 打开编辑弹窗
 const openEditDialog = (row: SensitiveWord) => {
   isEdit.value = true;
   currentWord.value = row;
@@ -229,7 +256,6 @@ const openEditDialog = (row: SensitiveWord) => {
   dialogVisible.value = true;
 };
 
-// 提交表单
 const submitForm = async () => {
   if (!formData.word.trim()) {
     ElMessage.warning("请输入敏感词");
@@ -238,9 +264,7 @@ const submitForm = async () => {
 
   try {
     const isEditMode = isEdit.value && currentWord.value;
-
-    // 根据文档，添加接口不包含 isEnabled，编辑接口包含
-    const payload: any = {
+    const payload: Record<string, any> = {
       word: formData.word,
       level: formData.level,
       category: formData.category || undefined,
@@ -251,18 +275,15 @@ const submitForm = async () => {
       payload.isEnabled = formData.isEnabled ? 1 : 0;
     }
 
-    console.log("[SensitiveWords] Submitting payload:", payload);
-
     if (isEditMode) {
       const res = await updateSensitiveWord(currentWord.value.id, payload);
-      // 兼容后端返回 {} 或 {"code": 0} 等情况，只要 http 状态码为 200 且 code 不为非零值即视为成功
       if (
         (res as any)?.code === 0 ||
         (res && typeof (res as any)?.code === "undefined")
       ) {
         ElMessage.success("更新成功");
         dialogVisible.value = false;
-        fetchData();
+        await fetchData();
       } else {
         ElMessage.error((res as any).msg || "更新失败");
       }
@@ -274,7 +295,7 @@ const submitForm = async () => {
       ) {
         ElMessage.success("添加成功");
         dialogVisible.value = false;
-        fetchData();
+        await fetchData();
       } else {
         ElMessage.error((res as any).msg || "添加失败");
       }
@@ -285,7 +306,6 @@ const submitForm = async () => {
   }
 };
 
-// 删除
 const handleDelete = async (row: SensitiveWord) => {
   try {
     await ElMessageBox.confirm(`确定要删除敏感词「${row.word}」吗？`, "提示", {
@@ -297,7 +317,7 @@ const handleDelete = async (row: SensitiveWord) => {
       (res && typeof (res as any)?.code === "undefined")
     ) {
       ElMessage.success("删除成功");
-      fetchData();
+      await fetchData();
     } else {
       ElMessage.error((res as any).msg || "删除失败");
     }
@@ -308,24 +328,25 @@ const handleDelete = async (row: SensitiveWord) => {
   }
 };
 
-// 批量删除
 const batchDelete = async () => {
   if (selectedRows.value.length === 0) {
     ElMessage.warning("请选择要删除的敏感词");
     return;
   }
+
   try {
     await ElMessageBox.confirm(
       `确定要删除选中的 ${selectedRows.value.length} 个敏感词吗？`,
       "提示",
       { type: "warning" }
     );
-    // 批量删除
+
     await Promise.all(
       selectedRows.value.map(row => deleteSensitiveWord(row.id))
     );
     ElMessage.success("批量删除成功");
-    fetchData();
+    selectedRows.value = [];
+    await fetchData();
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("批量删除失败");
@@ -333,12 +354,10 @@ const batchDelete = async () => {
   }
 };
 
-// 切换启用状态
 const toggleEnabled = async (row: SensitiveWord) => {
   const oldStatus = row.isEnabled;
   try {
     const newStatus = !row.isEnabled;
-    // 乐观更新 UI
     row.isEnabled = newStatus;
     const res = await updateSensitiveWord(row.id, {
       isEnabled: newStatus ? 1 : 0
@@ -353,13 +372,11 @@ const toggleEnabled = async (row: SensitiveWord) => {
       throw new Error((res as any).msg || "操作失败");
     }
   } catch (error: any) {
-    // 失败则回滚状态
     row.isEnabled = oldStatus;
     ElMessage.error(error.message || "操作失败");
   }
 };
 
-// 打开导入弹窗
 const openImportDialog = () => {
   importData.content = "";
   importData.level = 2;
@@ -367,7 +384,6 @@ const openImportDialog = () => {
   importDialogVisible.value = true;
 };
 
-// 导入
 const submitImport = async () => {
   if (!importData.content.trim()) {
     ElMessage.warning("请输入要导入的敏感词");
@@ -375,50 +391,50 @@ const submitImport = async () => {
   }
 
   try {
-    const wordsToImportArr = importData.content
+    const wordsToImport = importData.content
       .split("\n")
-      .map(w => w.trim())
-      .filter(w => w);
+      .map(word => word.trim())
+      .filter(Boolean);
 
-    if (wordsToImportArr.length === 0) {
+    if (wordsToImport.length === 0) {
       ElMessage.warning("没有有效的敏感词");
       return;
     }
 
     await importSensitiveWords({
-      words: wordsToImportArr.map(word => ({
+      words: wordsToImport.map(word => ({
         word,
         level: importData.level,
         category: importData.category || undefined
       }))
     });
 
-    ElMessage.success(`导入完成`);
+    ElMessage.success("导入完成");
     importDialogVisible.value = false;
-    fetchData();
+    await fetchData();
   } catch (error) {
     ElMessage.error("导入失败");
   }
 };
 
-// 导出
 const handleExport = () => {
-  const content = words.value.map(w => w.word).join("\n");
+  const content = words.value.map(item => item.word).join("\n");
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `敏感词_${new Date().toISOString().slice(0, 10)}.txt`;
-  a.click();
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `敏感词_${new Date().toISOString().slice(0, 10)}.txt`;
+  link.click();
   URL.revokeObjectURL(url);
   ElMessage.success("导出成功");
 };
 
-// 格式化时间
 const formatTime = (dateStr: string) => {
   if (!dateStr) return "-";
   const date = new Date(dateStr);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
 };
 
 onMounted(() => {
@@ -427,127 +443,226 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="sensitive-words-page p-4">
-    <!-- 统计卡片 -->
-    <el-row :gutter="16" class="mb-4">
-      <el-col :xs="6" :sm="6" :md="6">
+  <div
+    class="sensitive-words-page p-4"
+    :class="{ 'sensitive-words-page--mobile': isMobile }"
+  >
+    <div class="sensitive-stats-grid mb-4">
+      <div class="sensitive-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number">{{ stats.total }}</div>
             <div class="stat-label">总敏感词</div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="6" :sm="6" :md="6">
+      </div>
+      <div class="sensitive-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-danger">{{ stats.high }}</div>
             <div class="stat-label">高风险</div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="6" :sm="6" :md="6">
+      </div>
+      <div class="sensitive-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-warning">{{ stats.medium }}</div>
             <div class="stat-label">中风险</div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="6" :sm="6" :md="6">
+      </div>
+      <div class="sensitive-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-info">{{ stats.low }}</div>
             <div class="stat-label">低风险</div>
           </div>
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
 
-    <!-- 搜索栏和操作栏 -->
-    <el-card shadow="never" class="mb-4">
-      <div class="flex flex-wrap justify-between items-center gap-4">
-        <el-form :inline="true" :model="searchForm" class="search-form">
-          <el-form-item label="关键词">
-            <el-input
-              v-model="searchForm.keyword"
-              placeholder="搜索敏感词"
-              clearable
-              style="width: 150px"
-              @keyup.enter="handleSearch"
+    <el-card shadow="never" class="mb-4 sensitive-panel">
+      <div class="sensitive-panel__header">
+        <div class="sensitive-panel__copy">
+          <span class="sensitive-panel__eyebrow">筛选条件</span>
+          <h3>快速定位敏感词</h3>
+          <p>按关键词、风险级别、分类和状态筛选词库内容。</p>
+        </div>
+        <div
+          class="sensitive-panel__badge"
+          :class="{ 'is-active': activeFilterCount > 0 }"
+        >
+          {{ filterBadgeText }}
+        </div>
+      </div>
+
+      <el-form
+        :inline="!isMobile"
+        :label-position="isMobile ? 'top' : 'right'"
+        :model="searchForm"
+        class="search-form"
+      >
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="搜索敏感词"
+            clearable
+            :style="{ width: isMobile ? '100%' : '180px' }"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="级别">
+          <el-select
+            v-model="searchForm.level"
+            placeholder="全部级别"
+            clearable
+            :style="{ width: isMobile ? '100%' : '150px' }"
+          >
+            <el-option
+              v-for="opt in levelOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
             />
-          </el-form-item>
-          <el-form-item label="级别">
-            <el-select
-              v-model="searchForm.level"
-              placeholder="全部级别"
-              clearable
-              style="width: 120px"
-            >
-              <el-option
-                v-for="opt in levelOptions"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="分类">
-            <el-select
-              v-model="searchForm.category"
-              placeholder="全部分类"
-              clearable
-              style="width: 140px"
-            >
-              <el-option
-                v-for="cat in categoryOptions"
-                :key="cat"
-                :label="cat"
-                :value="cat"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select
-              v-model="searchForm.isEnabled"
-              placeholder="全部状态"
-              clearable
-              style="width: 100px"
-            >
-              <el-option label="已启用" :value="true" />
-              <el-option label="已禁用" :value="false" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-select
+            v-model="searchForm.category"
+            placeholder="全部分类"
+            clearable
+            :style="{ width: isMobile ? '100%' : '170px' }"
+          >
+            <el-option
+              v-for="cat in categoryOptions"
+              :key="cat"
+              :label="cat"
+              :value="cat"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="searchForm.isEnabled"
+            placeholder="全部状态"
+            clearable
+            :style="{ width: isMobile ? '100%' : '140px' }"
+          >
+            <el-option label="已启用" :value="true" />
+            <el-option label="已禁用" :value="false" />
+          </el-select>
+        </el-form-item>
+        <el-form-item class="search-form__action-item">
+          <div class="search-form__actions">
             <el-button type="primary" :icon="Search" @click="handleSearch">
               搜索
             </el-button>
             <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
-          </el-form-item>
-        </el-form>
-        <div class="action-btns">
-          <el-button type="primary" :icon="Plus" @click="openAddDialog">
-            添加敏感词
-          </el-button>
-          <el-button type="success" :icon="Upload" @click="openImportDialog">
-            批量导入
-          </el-button>
-          <el-button :icon="Download" @click="handleExport">导出</el-button>
-          <el-button
-            type="danger"
-            :icon="Delete"
-            :disabled="selectedRows.length === 0"
-            @click="batchDelete"
-          >
-            批量删除
-          </el-button>
-        </div>
+          </div>
+        </el-form-item>
+      </el-form>
+
+      <div class="toolbar-actions">
+        <el-button type="primary" :icon="Plus" @click="openAddDialog">
+          添加敏感词
+        </el-button>
+        <el-button type="success" :icon="Upload" @click="openImportDialog">
+          批量导入
+        </el-button>
+        <el-button :icon="Download" @click="handleExport">导出</el-button>
+        <el-button
+          type="danger"
+          :icon="Delete"
+          :disabled="selectedCount === 0"
+          @click="batchDelete"
+        >
+          批量删除
+        </el-button>
       </div>
     </el-card>
 
-    <!-- 数据表格 -->
-    <el-card shadow="never">
+    <el-card shadow="never" class="sensitive-panel data-card">
+      <div class="sensitive-panel__header sensitive-panel__header--compact">
+        <div class="sensitive-panel__copy">
+          <span class="sensitive-panel__eyebrow">词库列表</span>
+          <h3>敏感词管理</h3>
+          <p>{{ listSummaryText }}</p>
+        </div>
+        <el-button
+          :icon="Refresh"
+          :link="!isMobile"
+          :plain="isMobile"
+          class="sync-status-btn"
+          @click="refreshData"
+        >
+          同步数据
+        </el-button>
+      </div>
+
+      <div v-if="isMobile" v-loading="loading" class="mobile-word-list">
+        <div v-for="row in words" :key="row.id" class="mobile-word-card">
+          <div class="mobile-word-card__header">
+            <div class="mobile-word-card__title">
+              <span :class="{ 'is-disabled': !row.isEnabled }">
+                {{ getContentPreview(row.word, 28) }}
+              </span>
+            </div>
+            <el-tag :type="getLevelType(row.level)" effect="dark" size="small">
+              {{ getLevelText(row.level) }}
+            </el-tag>
+          </div>
+
+          <div class="mobile-word-card__meta">
+            <div class="mobile-word-card__meta-item">
+              <span class="label">分类</span>
+              <span class="value">{{ row.category || "-" }}</span>
+            </div>
+            <div class="mobile-word-card__meta-item">
+              <span class="label">状态</span>
+              <span class="value">{{ getEnabledText(row.isEnabled) }}</span>
+            </div>
+            <div class="mobile-word-card__meta-item">
+              <span class="label">替换文本</span>
+              <code class="value">{{ row.replacement || "***" }}</code>
+            </div>
+            <div class="mobile-word-card__meta-item">
+              <span class="label">命中次数</span>
+              <span class="value">{{ row.hitCount || 0 }}</span>
+            </div>
+            <div
+              class="mobile-word-card__meta-item mobile-word-card__meta-item--full"
+            >
+              <span class="label">创建时间</span>
+              <span class="value">{{ formatTime(row.createTime) }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-word-card__status">
+            <span class="mobile-word-card__status-label">启用状态</span>
+            <el-switch
+              :model-value="row.isEnabled"
+              size="small"
+              @click.stop="toggleEnabled(row)"
+            />
+          </div>
+
+          <div class="mobile-word-card__actions">
+            <el-button plain @click="openEditDialog(row)">编辑</el-button>
+            <el-button type="danger" plain @click="handleDelete(row)">
+              删除
+            </el-button>
+          </div>
+        </div>
+
+        <el-empty
+          v-if="!loading && words.length === 0"
+          description="暂无敏感词记录"
+        />
+      </div>
+
       <el-table
+        v-else
         v-loading="loading"
         :data="words"
         stripe
@@ -639,28 +754,31 @@ onMounted(() => {
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <div class="flex justify-end mt-4">
+      <div class="pagination-bar">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[50, 100, 200]"
-          layout="total, sizes, prev, pager, next"
+          :layout="paginationLayout"
+          :size="isMobile ? 'small' : 'default'"
           @current-change="handlePageChange"
           @size-change="handleSizeChange"
         />
       </div>
     </el-card>
 
-    <!-- 添加/编辑弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑敏感词' : '添加敏感词'"
-      width="500px"
+      :width="getDialogWidth('500px')"
       destroy-on-close
     >
-      <el-form :model="formData" label-width="100px">
+      <el-form
+        :model="formData"
+        :label-position="isMobile ? 'top' : 'right'"
+        :label-width="isMobile ? undefined : '100px'"
+      >
         <el-form-item label="敏感词" required>
           <el-input
             v-model="formData.word"
@@ -669,7 +787,7 @@ onMounted(() => {
           />
         </el-form-item>
         <el-form-item label="风险级别" required>
-          <el-radio-group v-model="formData.level">
+          <el-radio-group v-model="formData.level" class="level-group">
             <el-radio-button
               v-for="opt in levelOptions"
               :key="opt.value"
@@ -713,14 +831,17 @@ onMounted(() => {
       </template>
     </el-dialog>
 
-    <!-- 批量导入弹窗 -->
     <el-dialog
       v-model="importDialogVisible"
       title="批量导入敏感词"
-      width="600px"
+      :width="getDialogWidth('600px')"
       destroy-on-close
     >
-      <el-form :model="importData" label-width="100px">
+      <el-form
+        :model="importData"
+        :label-position="isMobile ? 'top' : 'right'"
+        :label-width="isMobile ? undefined : '100px'"
+      >
         <el-form-item label="敏感词列表" required>
           <el-input
             v-model="importData.content"
@@ -730,7 +851,7 @@ onMounted(() => {
           />
         </el-form-item>
         <el-form-item label="默认级别">
-          <el-radio-group v-model="importData.level">
+          <el-radio-group v-model="importData.level" class="level-group">
             <el-radio-button
               v-for="opt in levelOptions"
               :key="opt.value"
@@ -756,7 +877,7 @@ onMounted(() => {
           </el-select>
         </el-form-item>
       </el-form>
-      <div class="text-sm text-gray-500 mt-2">
+      <div class="import-tips">
         <p>提示：</p>
         <ul class="list-disc list-inside">
           <li>每行一个敏感词</li>
@@ -775,46 +896,479 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .sensitive-words-page {
+  .sensitive-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .sensitive-stats-grid__item {
+    min-width: 0;
+  }
+
   :deep(.el-card) {
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 5%);
-    transition: all 0.3s;
+    border-radius: 16px;
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 
     html.dark & {
-      box-shadow: 0 4px 12px 0 rgb(0 0 0 / 20%);
+      background-color: #242424;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
     }
 
     &:hover {
-      box-shadow: 0 8px 24px 0 rgb(0 0 0 / 10%);
+      transform: translateY(-2px);
+      box-shadow:
+        0 10px 15px -3px rgb(0 0 0 / 0.1),
+        0 4px 6px -4px rgb(0 0 0 / 0.1);
 
       html.dark & {
-        box-shadow: 0 8px 24px 0 rgb(0 0 0 / 40%);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+      }
+    }
+  }
+
+  :deep(.el-table) {
+    .el-table__row {
+      height: 72px;
+    }
+  }
+
+  .sensitive-panel {
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 28px;
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+
+    :deep(.el-card__body) {
+      padding: 24px;
+    }
+  }
+
+  .sensitive-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .sensitive-panel__header--compact {
+    margin-bottom: 16px;
+  }
+
+  .sensitive-panel__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+
+      html.dark & {
+        color: #f8fafc;
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #64748b;
+
+      html.dark & {
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .sensitive-panel__eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #6366f1;
+    text-transform: uppercase;
+  }
+
+  .sensitive-panel__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    background: #eff6ff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d4ed8;
+    white-space: nowrap;
+
+    html.dark & {
+      border-color: #1d4ed8;
+      background: rgb(29 78 216 / 18%);
+      color: #bfdbfe;
+    }
+
+    &.is-active {
+      border-color: #c7d2fe;
+      background: #eef2ff;
+      color: #4f46e5;
+
+      html.dark & {
+        border-color: #4f46e5;
+        background: rgb(79 70 229 / 18%);
+        color: #c7d2fe;
       }
     }
   }
 
   .stat-card {
+    border: 1px solid rgb(226 232 240 / 92%);
+    border-radius: 24px;
+    background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+
     .stat-content {
-      padding: 10px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 132px;
+      padding: 12px 10px;
       text-align: center;
 
       .stat-number {
-        font-size: 28px;
-        font-weight: 600;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1;
+
+        &.text-danger {
+          color: #ef4444;
+        }
+
+        &.text-warning {
+          color: #f59e0b;
+        }
+
+        &.text-info {
+          color: #3b82f6;
+        }
       }
 
       .stat-label {
-        margin-top: 8px;
+        margin-top: 10px;
         font-size: 14px;
-        color: #909399;
+        font-weight: 500;
+        color: #64748b;
+
+        html.dark & {
+          color: #94a3b8;
+        }
       }
     }
   }
 
   .search-form {
+    padding: 0;
+
     :deep(.el-form-item) {
-      margin-bottom: 0;
+      margin-right: 16px;
+      margin-bottom: 16px;
+    }
+
+    :deep(.el-form-item__label) {
+      font-weight: 700;
+      color: #334155;
+
+      html.dark & {
+        color: #cbd5e1;
+      }
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      min-height: 46px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgb(15 23 42 / 6%);
+    }
+  }
+
+  .search-form__action-item {
+    margin-right: 0 !important;
+
+    :deep(.el-form-item__content) {
+      width: 100%;
+    }
+  }
+
+  .search-form__actions,
+  .toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .toolbar-actions {
+    margin-top: 4px;
+  }
+
+  .search-form__actions :deep(.el-button),
+  .toolbar-actions :deep(.el-button),
+  .sync-status-btn {
+    min-height: 44px;
+    margin-left: 0;
+    padding-inline: 18px;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
+  .mobile-word-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .mobile-word-card {
+    padding: 18px;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 98%) 0%,
+      rgb(248 250 252 / 96%) 100%
+    );
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 22px;
+    box-shadow: 0 14px 32px rgb(15 23 42 / 8%);
+
+    html.dark & {
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+      border-color: #334155;
+      box-shadow: 0 14px 32px rgb(2 6 23 / 24%);
+    }
+  }
+
+  .mobile-word-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-word-card__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    word-break: break-word;
+
+    html.dark & {
+      color: #f8fafc;
+    }
+
+    .is-disabled {
+      color: #94a3b8;
+      text-decoration: line-through;
+    }
+  }
+
+  .mobile-word-card__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgb(226 232 240 / 88%);
+
+    html.dark & {
+      border-color: #334155;
+    }
+  }
+
+  .mobile-word-card__meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+
+    &--full {
+      grid-column: 1 / -1;
+    }
+
+    .label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.04em;
+    }
+
+    .value {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #334155;
+      word-break: break-word;
+
+      html.dark & {
+        color: #e2e8f0;
+      }
+    }
+  }
+
+  .mobile-word-card__status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding: 14px 0;
+    border-top: 1px solid rgb(226 232 240 / 88%);
+    border-bottom: 1px solid rgb(226 232 240 / 88%);
+
+    html.dark & {
+      border-color: #334155;
+    }
+  }
+
+  .mobile-word-card__status-label {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+
+  .mobile-word-card__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .mobile-word-card__actions :deep(.el-button) {
+    width: 100%;
+    min-height: 42px;
+    margin-left: 0;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
+  .pagination-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  .level-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .import-tips {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #64748b;
+
+    html.dark & {
+      color: #94a3b8;
+    }
+  }
+}
+
+@media (width <= 768px) {
+  .sensitive-words-page {
+    padding-bottom: calc(
+      var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
+    );
+
+    .sensitive-panel {
+      border-radius: 24px;
+
+      :deep(.el-card__body) {
+        padding: 18px;
+      }
+    }
+
+    .sensitive-panel__header {
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    .sensitive-panel__copy {
+      h3 {
+        font-size: 20px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+    }
+
+    .sensitive-panel__badge {
+      width: 100%;
+      white-space: normal;
+    }
+
+    .search-form {
+      :deep(.el-form-item) {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+
+      :deep(.el-form-item__label) {
+        padding: 0 0 8px;
+        line-height: 1.25;
+      }
+
+      :deep(.el-form-item__content) {
+        width: 100%;
+      }
+
+      :deep(.el-select) {
+        width: 100% !important;
+      }
+    }
+
+    .search-form__actions,
+    .toolbar-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .pagination-bar {
+      justify-content: center;
+    }
+  }
+}
+
+@media (width <= 420px) {
+  .sensitive-words-page {
+    .sensitive-stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mobile-word-card {
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .mobile-word-card__meta,
+    .search-form__actions,
+    .toolbar-actions,
+    .mobile-word-card__actions {
+      grid-template-columns: 1fr;
     }
   }
 }

@@ -3,7 +3,7 @@
  * 教师端- 课程讨论管理
  *教师可以管理所授课程的讨论内容，包括审核、置顶、删除等操作
  */
-import { ref, reactive, onMounted, onActivated, watch } from "vue";
+import { computed, ref, reactive, onMounted, onActivated, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
@@ -54,6 +54,7 @@ const discussions = ref<ReviewQueueItem[]>([]);
 const selectedIds = ref<string[]>([]);
 const detailDialogVisible = ref(false);
 const currentDetail = ref<ReviewQueueItem | null>(null);
+const selectedCount = computed(() => selectedIds.value.length);
 
 // 统计数据
 const stats = ref({
@@ -100,6 +101,36 @@ const typeOptions = [
   { label: "帖子", value: "post" },
   { label: "回复", value: "reply" }
 ];
+const activeFilterCount = computed(() => {
+  let count = 0;
+
+  if (searchForm.courseId) count += 1;
+  if (searchForm.type !== "all") count += 1;
+  if (searchForm.status) count += 1;
+  if (searchForm.keyword.trim()) count += 1;
+
+  return count;
+});
+const filterBadgeText = computed(() =>
+  activeFilterCount.value > 0
+    ? `已启用 ${activeFilterCount.value} 项筛选`
+    : "当前展示全部内容"
+);
+const listSummaryText = computed(() => {
+  if (loading.value && pagination.total === 0) {
+    return "正在同步讨论内容...";
+  }
+
+  if (pagination.total === 0) {
+    return "暂无匹配内容";
+  }
+
+  if (selectedCount.value > 0) {
+    return `共 ${pagination.total} 条内容，已选择 ${selectedCount.value} 条`;
+  }
+
+  return `共 ${pagination.total} 条内容，可继续筛选或批量处理`;
+});
 
 // 状态标签样式
 const statusTagType = (status: string): TagType => {
@@ -330,6 +361,7 @@ const fetchStats = async () => {
 //搜索
 const handleSearch = () => {
   pagination.page = 1;
+  selectedIds.value = [];
   fetchData();
 };
 
@@ -362,12 +394,14 @@ const resetSearch = () => {
 // 分页变化
 const handlePageChange = (page: number) => {
   pagination.page = page;
+  selectedIds.value = [];
   fetchData();
 };
 
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size;
   pagination.page = 1;
+  selectedIds.value = [];
   fetchData();
 };
 
@@ -774,26 +808,29 @@ onActivated(() => {
 </script>
 
 <template>
-  <div class="discussion-manage">
+  <div
+    class="discussion-manage"
+    :class="{ 'discussion-manage--mobile': isMobile }"
+  >
     <!-- 统计卡片 -->
-    <el-row :gutter="20" class="mb-6">
-      <el-col :xs="12" :sm="6" :md="6">
+    <div class="discussion-stats-grid mb-6">
+      <div class="discussion-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-primary">{{ stats.totalPosts }}</div>
             <div class="stat-label">库内讨论总量</div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="12" :sm="6" :md="6">
+      </div>
+      <div class="discussion-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-success">{{ stats.totalReplies }}</div>
             <div class="stat-label">学生互动回复</div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="12" :sm="6" :md="6">
+      </div>
+      <div class="discussion-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-warning">
@@ -802,20 +839,41 @@ onActivated(() => {
             <div class="stat-label">当前待处理审查</div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :xs="12" :sm="6" :md="6">
+      </div>
+      <div class="discussion-stats-grid__item">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-info">{{ stats.todayPosts }}</div>
             <div class="stat-label">今日活跃动态</div>
           </div>
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
 
     <!-- 搜索栏 -->
-    <el-card shadow="never" class="mb-4">
-      <el-form :inline="!isMobile" :model="searchForm" class="search-form">
+    <el-card
+      shadow="never"
+      class="discussion-panel discussion-filter-panel mb-4"
+    >
+      <div class="discussion-panel__header discussion-panel__header--filter">
+        <div class="discussion-panel__copy">
+          <span class="discussion-panel__eyebrow">筛选条件</span>
+          <h3>精准定位讨论内容</h3>
+          <p>按课程、类型、状态和关键词快速检索目标讨论。</p>
+        </div>
+        <div
+          class="discussion-panel__badge"
+          :class="{ 'is-active': activeFilterCount > 0 }"
+        >
+          {{ filterBadgeText }}
+        </div>
+      </div>
+      <el-form
+        :inline="!isMobile"
+        :label-position="isMobile ? 'top' : 'right'"
+        :model="searchForm"
+        class="search-form"
+      >
         <el-form-item label="归属课程">
           <el-select
             v-model="searchForm.courseId"
@@ -889,39 +947,59 @@ onActivated(() => {
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">
-            查询
-          </el-button>
-          <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
+        <el-form-item class="search-form__action-item">
+          <div class="search-form__actions">
+            <el-button
+              type="primary"
+              :icon="Search"
+              class="search-form__primary"
+              @click="handleSearch"
+            >
+              查询
+            </el-button>
+            <el-button
+              :icon="Refresh"
+              class="search-form__secondary"
+              @click="resetSearch"
+            >
+              重置
+            </el-button>
+          </div>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 数据表格 -->
-    <el-card shadow="never">
-      <div class="flex justify-between items-center mb-4">
-        <div class="batch-actions">
+    <el-card
+      v-loading="loading"
+      shadow="never"
+      class="discussion-panel discussion-list-panel"
+    >
+      <div class="discussion-list-toolbar">
+        <div class="discussion-panel__copy">
+          <span class="discussion-panel__eyebrow">内容队列</span>
+          <h3>讨论列表</h3>
+          <p>{{ listSummaryText }}</p>
+        </div>
+        <div class="discussion-list-toolbar__actions">
+          <div v-if="selectedCount > 0" class="batch-actions">
+            <el-button type="success" :icon="Check" @click="handleBatchApprove">
+              批量通过 ({{ selectedCount }})
+            </el-button>
+            <el-button type="danger" :icon="Close" @click="handleBatchReject">
+              批量拒绝
+            </el-button>
+          </div>
           <el-button
-            v-if="selectedIds.length > 0"
-            type="success"
-            :icon="Check"
-            @click="handleBatchApprove"
+            :icon="Refresh"
+            :link="!isMobile"
+            :plain="isMobile"
+            class="sync-status-btn"
+            @click="initData(true)"
           >
-            批量通过 ({{ selectedIds.length }})
-          </el-button>
-          <el-button
-            v-if="selectedIds.length > 0"
-            type="danger"
-            :icon="Close"
-            @click="handleBatchReject"
-          >
-            批量拒绝
+            同步状态
           </el-button>
         </div>
-        <el-button :icon="Refresh" link @click="initData(true)"
-          >同步状态</el-button
-        >
       </div>
       <div v-if="isMobile" class="mobile-discussion-list">
         <div
@@ -930,21 +1008,28 @@ onActivated(() => {
           class="mobile-discussion-card"
         >
           <div class="mobile-discussion-card__header">
-            <el-checkbox
-              :model-value="isSelected(row.id)"
-              @change="value => toggleMobileSelection(row.id, Boolean(value))"
-            />
-            <el-tag
-              :type="row.itemType === 'reply' ? 'info' : 'primary'"
-              effect="plain"
-              size="small"
-              round
-            >
-              {{ row.itemType === "reply" ? "回复" : "帖子" }}
-            </el-tag>
-            <el-tag :type="statusTagType(row.status)" effect="light" round>
-              {{ statusText(row.status) }}
-            </el-tag>
+            <div class="mobile-discussion-card__header-main">
+              <el-checkbox
+                :model-value="isSelected(row.id)"
+                @change="value => toggleMobileSelection(row.id, Boolean(value))"
+              />
+              <span class="mobile-discussion-card__header-note">
+                {{ isSelected(row.id) ? "已加入批量操作" : "加入批量操作" }}
+              </span>
+            </div>
+            <div class="mobile-discussion-card__header-tags">
+              <el-tag
+                :type="row.itemType === 'reply' ? 'info' : 'primary'"
+                effect="plain"
+                size="small"
+                round
+              >
+                {{ row.itemType === "reply" ? "回复" : "帖子" }}
+              </el-tag>
+              <el-tag :type="statusTagType(row.status)" effect="light" round>
+                {{ statusText(row.status) }}
+              </el-tag>
+            </div>
           </div>
 
           <div class="post-content">
@@ -1017,27 +1102,55 @@ onActivated(() => {
             >
               拒绝
             </el-button>
-            <el-button
-              v-if="row.itemType === 'post'"
-              type="info"
-              plain
-              @click="row.isPinned ? handleUnpin(row) : handlePin(row)"
+            <el-dropdown
+              trigger="click"
+              popper-class="modern-dropdown"
+              class="mobile-card-more"
             >
-              {{ row.isPinned ? "取消置顶" : "设为置顶" }}
-            </el-button>
-            <el-button plain @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" plain @click="handleDelete(row)">
-              删除
-            </el-button>
+              <el-button plain>
+                更多操作
+                <el-icon class="ml-1"><MoreFilled /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item :icon="Edit" @click="handleEdit(row)">
+                    编辑内容
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="row.itemType === 'post' && !row.isPinned"
+                    :icon="Top"
+                    @click="handlePin(row)"
+                  >
+                    设为置顶
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="row.itemType === 'post' && row.isPinned"
+                    :icon="Top"
+                    @click="handleUnpin(row)"
+                  >
+                    取消置顶
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    :icon="Delete"
+                    class="delete-item"
+                    @click="handleDelete(row)"
+                  >
+                    删除该条
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
 
-        <el-empty v-if="!loading && discussions.length === 0" />
+        <el-empty
+          v-if="!loading && discussions.length === 0"
+          description="暂无匹配内容"
+        />
       </div>
 
       <el-table
         v-else
-        v-loading="loading"
         :data="discussions"
         row-class-name="discussion-table-row"
         @selection-change="handleSelectionChange"
@@ -1318,6 +1431,16 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .discussion-manage {
+  .discussion-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .discussion-stats-grid__item {
+    min-width: 0;
+  }
+
   :deep(.el-card) {
     border: none;
     border-radius: 8px;
@@ -1345,12 +1468,28 @@ onActivated(() => {
   }
 
   .stat-card {
+    height: 100%;
+    border: 1px solid rgb(226 232 240 / 92%);
+    border-radius: 24px;
+    background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+
+    :deep(.el-card__body) {
+      height: 100%;
+      padding: 16px 18px;
+    }
+
     .stat-content {
-      padding: 12px 0;
+      min-height: 132px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
 
       .stat-number {
         font-size: 32px;
@@ -1384,18 +1523,181 @@ onActivated(() => {
     }
   }
 
+  .discussion-panel {
+    border: 1px solid rgb(226 232 240 / 88%);
+    border-radius: 28px;
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+
+    html.dark & {
+      border-color: #334155;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    }
+
+    :deep(.el-card__body) {
+      padding: 24px;
+    }
+  }
+
+  .discussion-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .discussion-panel__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+
+      html.dark & {
+        color: #f8fafc;
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #64748b;
+
+      html.dark & {
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .discussion-panel__eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #6366f1;
+    text-transform: uppercase;
+  }
+
+  .discussion-panel__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    background: #eff6ff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d4ed8;
+    white-space: nowrap;
+
+    html.dark & {
+      border-color: #1d4ed8;
+      background: rgb(29 78 216 / 18%);
+      color: #bfdbfe;
+    }
+
+    &.is-active {
+      border-color: #c7d2fe;
+      background: #eef2ff;
+      color: #4f46e5;
+
+      html.dark & {
+        border-color: #4f46e5;
+        background: rgb(79 70 229 / 18%);
+        color: #c7d2fe;
+      }
+    }
+  }
+
+  .discussion-list-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .discussion-list-toolbar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
   .search-form {
-    padding: 4px 8px;
+    padding: 0;
+
     :deep(.el-form-item) {
-      margin-bottom: 0;
-      margin-right: 24px;
+      margin-bottom: 16px;
+      margin-right: 16px;
+    }
+
+    :deep(.el-form-item__label) {
+      font-weight: 700;
+      color: #334155;
+
+      html.dark & {
+        color: #cbd5e1;
+      }
     }
 
     :deep(.el-input__wrapper),
     :deep(.el-select__wrapper) {
-      border-radius: 8px;
-      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      min-height: 46px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgb(15 23 42 / 6%);
     }
+  }
+
+  .search-form__action-item {
+    margin-right: 0 !important;
+
+    :deep(.el-form-item__content) {
+      width: 100%;
+    }
+  }
+
+  .search-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .search-form__primary,
+  .search-form__secondary,
+  .sync-status-btn,
+  .batch-actions :deep(.el-button) {
+    min-height: 44px;
+    padding-inline: 18px;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
+  .search-form__actions :deep(.el-button) {
+    margin-left: 0;
+  }
+
+  .search-form__primary {
+    box-shadow: 0 12px 24px rgb(59 130 246 / 18%);
+  }
+
+  .batch-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .sync-status-btn {
+    margin-left: 0;
   }
 
   .post-content {
@@ -1576,14 +1878,38 @@ onActivated(() => {
 .mobile-discussion-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .mobile-discussion-card {
-  padding: 14px;
-  background: var(--el-fill-color-extra-light);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 14px;
+  padding: 18px;
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 98%) 0%,
+    rgb(248 250 252 / 96%) 100%
+  );
+  border: 1px solid rgb(226 232 240 / 88%);
+  border-radius: 22px;
+  box-shadow: 0 14px 32px rgb(15 23 42 / 8%);
+}
+
+.mobile-discussion-card__header {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.mobile-discussion-card__header-main,
+.mobile-discussion-card__header-tags {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mobile-discussion-card__header-note {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .mobile-discussion-card__header,
@@ -1601,7 +1927,44 @@ onActivated(() => {
 }
 
 .mobile-discussion-card__actions {
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mobile-discussion-card__stats {
+  padding: 14px 0;
+  margin-bottom: 14px;
+  border-top: 1px solid rgb(226 232 240 / 88%);
+  border-bottom: 1px solid rgb(226 232 240 / 88%);
+}
+
+.mobile-discussion-card__stats .stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.mobile-discussion-card__actions :deep(.el-button) {
+  width: 100%;
+  min-height: 42px;
+  margin-left: 0;
+  font-weight: 600;
+  border-radius: 14px;
+}
+
+.mobile-card-more {
+  width: 100%;
+}
+
+.mobile-card-more :deep(.el-button) {
+  width: 100%;
 }
 
 /* 按钮样式修正 */
@@ -1761,6 +2124,79 @@ onActivated(() => {
 
 @media (width <= 768px) {
   .discussion-manage {
+    padding-bottom: calc(
+      var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
+    );
+
+    .discussion-stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .discussion-panel {
+      :deep(.el-card__body) {
+        padding: 18px;
+      }
+    }
+
+    .stat-card {
+      :deep(.el-card__body) {
+        padding: 14px;
+      }
+
+      .stat-content {
+        min-height: 124px;
+      }
+
+      .stat-number {
+        font-size: 30px;
+        margin-bottom: 14px;
+      }
+
+      .stat-label {
+        font-size: 13px;
+        line-height: 1.55;
+      }
+    }
+
+    .discussion-panel__header,
+    .discussion-list-toolbar {
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    .discussion-panel__copy {
+      h3 {
+        font-size: 20px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+    }
+
+    .discussion-panel__badge {
+      width: 100%;
+      white-space: normal;
+    }
+
+    .discussion-list-toolbar__actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .batch-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .batch-actions :deep(.el-button),
+    .sync-status-btn {
+      width: 100%;
+    }
+
     .search-form {
       padding: 0;
     }
@@ -1771,9 +2207,24 @@ onActivated(() => {
       margin-bottom: 12px;
     }
 
+    :deep(.search-form .el-form-item__label) {
+      padding: 0 0 8px;
+      line-height: 1.25;
+    }
+
+    :deep(.search-form .el-form-item__content) {
+      width: 100%;
+    }
+
     :deep(.search-form .el-select),
     :deep(.search-form .el-input) {
       width: 100% !important;
+    }
+
+    .search-form__actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
     }
 
     :deep(.search-form .el-button) {
@@ -1784,6 +2235,72 @@ onActivated(() => {
       flex-direction: column;
       align-items: flex-start;
       gap: 6px;
+    }
+
+    .post-content .post-header {
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .post-content .post-header .post-title {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .post-content .post-excerpt {
+      font-size: 13px;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+  }
+}
+
+@media (width <= 420px) {
+  .discussion-manage {
+    .discussion-stats-grid {
+      gap: 14px;
+    }
+
+    .search-form__actions,
+    .batch-actions,
+    .mobile-discussion-card__actions {
+      grid-template-columns: 1fr;
+    }
+
+    .mobile-discussion-card {
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .stat-card {
+      :deep(.el-card__body) {
+        padding: 12px;
+      }
+
+      .stat-content {
+        min-height: 112px;
+      }
+
+      .stat-number {
+        font-size: 28px;
+        margin-bottom: 12px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        line-height: 1.5;
+      }
+    }
+
+    .mobile-discussion-card__header-note {
+      font-size: 12px;
+    }
+
+    .mobile-discussion-card__stats {
+      gap: 8px;
     }
   }
 }
