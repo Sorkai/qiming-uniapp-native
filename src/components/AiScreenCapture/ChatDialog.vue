@@ -75,7 +75,7 @@ watch(
 const isStreaming = computed(() => {
   if (props.streaming) return true;
   const last = props.messages[props.messages.length - 1];
-  return last?.role === "assistant" && last?.content && props.loading;
+  return last?.role === "assistant" && !!last?.loading && props.loading;
 });
 
 const handleSend = () => {
@@ -294,15 +294,22 @@ const handleClose = () => {
               <div
                 class="bubble"
                 :class="{
+                  thinking:
+                    msg.role === 'assistant' && msg.loading && !msg.content,
                   streaming:
                     msg.role === 'assistant' && msg.content && msg.loading
                 }"
               >
                 <template v-if="msg.loading && !msg.content">
-                  <div class="typing">
-                    <span />
-                    <span />
-                    <span />
+                  <div class="thinking-state">
+                    <div class="thinking-text">
+                      {{ msg.placeholder || "正在思考中，请稍等..." }}
+                    </div>
+                    <div class="typing">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
                   </div>
                 </template>
                 <template v-else>
@@ -790,6 +797,16 @@ const handleClose = () => {
       word-break: break-word;
       box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
 
+      &.thinking {
+        min-width: 220px;
+        background:
+          linear-gradient(
+            135deg,
+            rgb(248 251 255 / 96%) 0%,
+            rgb(238 246 255 / 96%) 100%
+          );
+      }
+
       .bubble-text {
         white-space: pre-wrap;
       }
@@ -887,6 +904,7 @@ const handleClose = () => {
 .typing {
   display: flex;
   gap: 4px;
+  align-items: center;
   padding: 4px 0;
 
   span {
@@ -904,6 +922,17 @@ const handleClose = () => {
       animation-delay: -0.16s;
     }
   }
+}
+
+.thinking-state {
+  display: grid;
+  gap: 8px;
+}
+
+.thinking-text {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+  letter-spacing: 0.01em;
 }
 
 @keyframes bounce {

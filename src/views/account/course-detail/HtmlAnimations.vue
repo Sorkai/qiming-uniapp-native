@@ -593,4 +593,78 @@ const openHtmlAnimInNew = () => {
   color: #1d1d1f;
   opacity: 0.8;
 }
+
+@media (width <= 768px) {
+  .course-materials-wrapper {
+    min-height: 100vh;
+
+    .materials-container {
+      height: auto;
+      min-height: 100vh;
+      padding: var(--course-mobile-top-offset, 156px) 14px
+        calc(24px + env(safe-area-inset-bottom));
+      overflow: visible;
+    }
+  }
+
+  .materials-list.album-grid {
+    gap: 18px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .animation-card {
+    height: 220px;
+    border-radius: 20px;
+  }
+
+  .card-info-glass {
+    padding: 72px 20px 18px;
+    border-radius: 0 0 20px 20px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  .dialog-header-custom {
+    gap: 12px;
+    padding: 12px 14px;
+    margin: 14px 14px 12px;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+}
+
+@media (width <= 479px) {
+  .course-materials-wrapper {
+    .materials-container {
+      padding: var(--course-mobile-top-offset, 156px) 10px
+        calc(20px + env(safe-area-inset-bottom));
+    }
+  }
+
+  .materials-list.album-grid {
+    gap: 14px;
+  }
+
+  .animation-card {
+    height: 204px;
+    border-radius: 18px;
+  }
+
+  .card-info-glass {
+    padding: 64px 16px 16px;
+    border-radius: 0 0 18px 18px;
+  }
+
+  .card-title {
+    font-size: 15px;
+  }
+
+  .card-version {
+    font-size: 12px;
+  }
+}
 </style>

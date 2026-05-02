@@ -9,12 +9,50 @@ const loading = ref(true);
 const iframeReady = ref(false); // 控制 iframe 显示，避免紫色闪烁
 const container = ref<HTMLDivElement>();
 const docmeeUI = shallowRef<any>(null);
+const outlineReviewMode = ref(false);
+let outlineReviewTimer: ReturnType<typeof setTimeout> | null = null;
 const { isMobile } = usePageResponsive();
 
+function clearOutlineReviewTimer() {
+  if (outlineReviewTimer) {
+    clearTimeout(outlineReviewTimer);
+    outlineReviewTimer = null;
+  }
+}
+
+function applyOutlineReviewCss() {
+  if (!docmeeUI.value || !isMobile.value) return;
+
+  const extraBottom = outlineReviewMode.value ? "180px" : "0px";
+
+  docmeeUI.value.importCSS(`
+    :root, #docmee_SdkContainer {
+      --intelledu-outline-extra-bottom: ${extraBottom} !important;
+    }
+  `);
+}
+
+function enterOutlineReviewMode(delay = 1200) {
+  clearOutlineReviewTimer();
+  outlineReviewTimer = setTimeout(() => {
+    outlineReviewMode.value = true;
+    applyOutlineReviewCss();
+  }, delay);
+}
+
+function exitOutlineReviewMode() {
+  clearOutlineReviewTimer();
+  if (!outlineReviewMode.value) return;
+  outlineReviewMode.value = false;
+  applyOutlineReviewCss();
+}
+
 function destroyDocmee() {
+  clearOutlineReviewTimer();
   docmeeUI.value?.destroy?.();
   docmeeUI.value = null;
   iframeReady.value = false;
+  outlineReviewMode.value = false;
 }
 
 async function initAiPPT() {
@@ -39,8 +77,9 @@ async function initAiPPT() {
           type: CreatorType.AI_GEN
         },
         isMobile: isMobile.value, // 移动端模式
-        padding: isMobile.value ? "12px 12px 0px" : "20px 20px 0px",
+        padding: isMobile.value ? "8px 8px 24px" : "20px 20px 0px",
         background: "linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)", // 与 welcome banner 一致的背景色
+        themeColor: "#97b4f7", // 使用 SDK 官方主题色能力，避免回退到默认紫色
         mode: "light", // light 亮色模式, dark 暗色模式
         lang: "zh", // 国际化
         // 自定义 CSS 样式 - 使用平台统一蓝色 #97b4f7
@@ -263,123 +302,122 @@ async function initAiPPT() {
               min-width: 0 !important;
             }
 
-            /* 输入控件在 iOS 上保持可读字号，同时不强改内部布局 */
+            /* 仅保留可读字号，避免 iOS 聚焦自动放大 */
             textarea,
             .textarea,
             .input,
-            input,
-            .select,
-            .hdd-select,
-            [class*="select"] {
-              width: 100% !important;
-              max-width: 100% !important;
-              min-width: 0 !important;
+            input {
               font-size: 16px !important;
             }
 
-            /* 只做按钮尺寸兜底，不再强制主按钮铺满整行 */
-            button,
-            .btn,
-            [role="button"] {
-              max-width: 100% !important;
-              min-width: 0 !important;
-              min-height: 44px !important;
+            /* 为大纲页底部操作条、反馈卡片预留安全空间 */
+            .overflow-y-auto,
+            .overflow-auto,
+            [class*="overflow-y-auto"],
+            [class*="overflow-auto"] {
+              scroll-padding-bottom: calc(180px + var(--intelledu-outline-extra-bottom, 0px)) !important;
             }
 
-            .btn {
-              white-space: normal !important;
+            .bg-base-100.overflow-y-auto,
+            .bg-base-200.overflow-y-auto,
+            .bg-base-100.overflow-auto,
+            .bg-base-200.overflow-auto,
+            [class*="bg-base-100"][class*="overflow-y-auto"],
+            [class*="bg-base-200"][class*="overflow-y-auto"],
+            [class*="bg-base-100"][class*="overflow-auto"],
+            [class*="bg-base-200"][class*="overflow-auto"] {
+              padding-bottom: calc(120px + var(--intelledu-outline-extra-bottom, 0px)) !important;
             }
 
-            /* 生成输入卡片：正文占主要区域，按钮固定在右下角 */
-            [class*="focus-within:border-primary-focus"],
-            [class*="border-primary/10"] {
-              position: relative !important;
+            /* 大纲中轴线：精准命中真实节点，只在移动端缩短顶部和底部 */
+            .border-0.border-r.border-solid.border-base-300.h-full.w-1.absolute.top-0 {
+              top: 56px !important;
+              bottom: 132px !important;
+              height: auto !important;
             }
 
-            [class*="focus-within:border-primary-focus"] > .flex,
-            [class*="border-primary/10"] > .flex {
-              display: block !important;
-            }
-
-            [class*="focus-within:border-primary-focus"] > .flex > :first-child,
-            [class*="border-primary/10"] > .flex > :first-child {
-              width: 100% !important;
-              min-width: 0 !important;
-              padding-right: 128px !important;
-            }
-
-            [class*="focus-within:border-primary-focus"] > .flex > :last-child,
-            [class*="border-primary/10"] > .flex > :last-child {
-              position: absolute !important;
-              right: 16px !important;
-              bottom: 16px !important;
-              display: flex !important;
-              flex-direction: row !important;
+            /* 底部主操作按钮文字略收小，避免“挑选模版”显得发涨 */
+            .btn.btn-primary {
+              display: inline-flex !important;
               align-items: center !important;
-              gap: 10px !important;
-              width: 184px !important;
-              min-width: 184px !important;
-            }
-
-            [class*="focus-within:border-primary-focus"] textarea,
-            [class*="focus-within:border-primary-focus"] .textarea,
-            [class*="border-primary/10"] textarea,
-            [class*="border-primary/10"] .textarea {
-              min-height: 176px !important;
-              padding-right: 132px !important;
-              padding-bottom: 24px !important;
-              resize: none !important;
-            }
-
-            [class*="focus-within:border-primary-focus"] .btn.btn-primary,
-            [class*="border-primary/10"] .btn.btn-primary {
-              flex: 1 1 auto !important;
-              width: 118px !important;
-              min-width: 118px !important;
-              min-height: 56px !important;
               justify-content: center !important;
-              padding-left: 0 !important;
-              padding-right: 0 !important;
+              font-size: 15px !important;
+              min-height: 40px !important;
+              line-height: 1.2 !important;
+              white-space: nowrap !important;
+              overflow: visible !important;
             }
 
-            [class*="focus-within:border-primary-focus"] .btn:not(.btn-primary),
-            [class*="border-primary/10"] .btn:not(.btn-primary) {
-              flex: 0 0 56px !important;
-              width: 56px !important;
-              min-width: 56px !important;
-              min-height: 56px !important;
-              padding-left: 0 !important;
-              padding-right: 0 !important;
+            .btn.btn-primary span:last-child {
+              font-size: inherit !important;
+              line-height: inherit !important;
+              white-space: nowrap !important;
+              overflow: visible !important;
             }
 
-            /* 配置项区域改成真正的单列宽卡，避免半宽卡片留大片空白 */
-            [class*="grid-cols-2"] {
-              grid-template-columns: minmax(0, 1fr) !important;
-              gap: 12px !important;
-            }
-
-            [class*="grid-cols-2"] > * {
-              width: 100% !important;
-              min-width: 0 !important;
-            }
-
-            [class*="grid-cols-2"] .hdd-select,
-            [class*="grid-cols-2"] [class*="select"],
-            [class*="grid-cols-2"] [class*="switch"],
-            [class*="grid-cols-2"] .bg-base-200,
-            [class*="grid-cols-2"] .bg-base-100,
-            [class*="grid-cols-2"] button,
-            [class*="grid-cols-2"] [role="button"] {
+            /* 大纲底部操作区：移动端改成两行，避免“修改大纲”挤压“挑选模版” */
+            div:has(> .btn.btn-primary.btn-sm):has(> .btn.btn-sm:not(.btn-primary)) {
               display: flex !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              min-width: 0 !important;
-              min-height: 56px !important;
+              flex-wrap: wrap !important;
               align-items: center !important;
-              justify-content: flex-start !important;
-              padding-left: 20px !important;
-              padding-right: 20px !important;
-              text-align: left !important;
+              justify-content: flex-end !important;
+              gap: 8px !important;
+            }
+
+            div:has(> .btn.btn-primary.btn-sm):has(> .btn.btn-sm:not(.btn-primary)) > .btn.btn-primary.btn-sm {
+              order: 1 !important;
+              min-width: 132px !important;
+              margin-left: auto !important;
+            }
+
+            div:has(> .btn.btn-primary.btn-sm):has(> .btn.btn-sm:not(.btn-primary)) > .btn.btn-sm:not(.btn-primary) {
+              order: 2 !important;
+              margin-top: 4px !important;
+            }
+
+            /* 反馈卡片：精准命中真实节点，放宽宽度并整体上移 */
+            .mx-auto.w-1\\/2.bottom-\\[72px\\].rounded-2xl.gap-2.flex.flex-col.bg-white.p-4 {
+              box-sizing: border-box !important;
+              width: calc(100% - 24px) !important;
+              max-width: calc(100% - 24px) !important;
+              margin-left: auto !important;
+              margin-right: auto !important;
+              bottom: 116px !important;
+              left: 12px !important;
+              right: 12px !important;
+              transform: none !important;
+              z-index: 20 !important;
+            }
+
+            .mx-auto.w-1\\/2.bottom-\\[72px\\].rounded-2xl.gap-2.flex.flex-col.bg-white.p-4 > .flex.gap-2 {
+              display: grid !important;
+              grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+              gap: 8px !important;
+            }
+
+            .mx-auto.w-1\\/2.bottom-\\[72px\\].rounded-2xl.gap-2.flex.flex-col.bg-white.p-4 > .flex.gap-2 > button {
+              min-width: 0 !important;
+              padding-left: 4px !important;
+              padding-right: 4px !important;
+            }
+
+            .mx-auto.w-1\\/2.bottom-\\[72px\\].rounded-2xl.gap-2.flex.flex-col.bg-white.p-4 > .flex.gap-2 > button span:last-child {
+              white-space: normal !important;
+              line-height: 1.15 !important;
+              text-align: center !important;
+            }
+          }
+
+          @media (max-width: 400px) {
+            .btn.btn-primary {
+              font-size: 14px !important;
+              padding-left: 12px !important;
+              padding-right: 12px !important;
+            }
+
+            .btn.btn-primary svg {
+              transform: scale(0.92) !important;
+              transform-origin: center !important;
             }
           }
         `,
@@ -395,10 +433,12 @@ async function initAiPPT() {
             const { subtype, fields } = message.data;
             if (subtype === "outline") {
               // 生成大纲前触发
+              enterOutlineReviewMode();
               console.log("即将生成ppt大纲", fields);
               return true;
             } else if (subtype === "ppt") {
               // 生成PPT前触发
+              exitOutlineReviewMode();
               console.log("即将生成ppt", fields);
               docmeeUI.value.sendMessage({
                 type: "success",
@@ -406,8 +446,25 @@ async function initAiPPT() {
               });
               return true;
             }
+          } else if (message.type === "afterGenerate") {
+            const subtype = String(
+              message.data?.subtype || message.data?.type || ""
+            ).toLowerCase();
+            if (!subtype || subtype === "outline") {
+              enterOutlineReviewMode(0);
+            } else if (subtype === "ppt") {
+              exitOutlineReviewMode();
+            }
           } else if (message.type === "beforeCreateCustomTemplate") {
+            exitOutlineReviewMode();
             return true;
+          } else if (message.type === "pageChange") {
+            const page = String(
+              message.data?.page || message.data?.name || message.data || ""
+            ).toLowerCase();
+            if (page.includes("editor") || page.includes("template")) {
+              exitOutlineReviewMode();
+            }
           } else if (message.type === "beforeDownload") {
             // 自定义下载PPT的文件名称
             const { id, subject } = message.data;
@@ -425,6 +482,7 @@ async function initAiPPT() {
       // SDK 初始化后，延迟显示 iframe，让自定义 CSS 有时间生效
       setTimeout(() => {
         iframeReady.value = true;
+        applyOutlineReviewCss();
       }, 300); // 300ms 延迟，确保 CSS 注入生效
     } else {
       ElMessage.error("获取token失败");
@@ -465,19 +523,22 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: calc(100vh - 115px);
+  min-height: 0;
+  height: 100%;
   padding: 0;
   margin: 0;
   overflow: hidden;
 }
 
 .aippt-container-wrapper {
+  position: relative;
   flex: 1;
   width: 100%;
   height: 100%;
 }
 
 #aippt-container {
+  position: relative;
   width: 100%;
   height: 100%;
   padding: 0;
@@ -503,12 +564,11 @@ onBeforeUnmount(() => {
 
 @media (width <= 768px) {
   .aippt-page {
-    height: calc(100vh - 88px);
-    padding: 8px;
+    padding: 4px;
   }
 
   #aippt-container {
-    border-radius: 16px;
+    border-radius: 12px;
   }
 }
 </style>

@@ -40,8 +40,7 @@ const {
   cancelCapture,
   captureScreen,
   resetCapture,
-  enterChatMode,
-  compressImage
+  enterChatMode
 } = useScreenCapture();
 
 const {
@@ -67,7 +66,8 @@ const captureLoadingStage = ref<"capturing" | "optimizing" | "starting">(
   "capturing"
 );
 let captureLoadingStartedAt = 0;
-const CAPTURE_LOADING_MIN_DURATION = 480;
+const CAPTURE_LOADING_MIN_DURATION = 2200;
+const CAPTURE_STAGE_MIN_DURATION = 720;
 
 const openCaptureLoading = (
   preview: string,
@@ -102,6 +102,17 @@ const closeCaptureLoading = async () => {
   }
 
   resetCaptureLoading();
+};
+
+const sleep = (ms: number) =>
+  new Promise(resolve => setTimeout(resolve, ms));
+
+const advanceCaptureLoadingStage = async (
+  stage: "capturing" | "optimizing" | "starting",
+  minDuration = CAPTURE_STAGE_MIN_DURATION
+) => {
+  updateCaptureLoadingStage(stage);
+  await sleep(minDuration);
 };
 
 /** 当进入课程页面且处于聊天模式时，尝试加载已有会话历史 */
@@ -156,16 +167,14 @@ const handleCapture = async (area: CaptureArea) => {
     openCaptureLoading("", "capturing");
     const base64 = await captureScreen(area);
     captureLoadingPreview.value = base64;
-    updateCaptureLoadingStage("optimizing");
-    const compressedImage = await compressImage(base64);
-
-    updateCaptureLoadingStage("starting");
+    await advanceCaptureLoadingStage("optimizing");
+    await advanceCaptureLoadingStage("starting");
     enterChatMode();
     chatDialogVisible.value = true;
 
     // 先发送带有截图的用户消息，然后静默等待 AI 分析，而不是让 analyzeScreenshot 自动添加消息
     // 或者我们直接调用 analyzeScreenshot，它内部会由 useAiChat 处理
-    const analyzeTask = analyzeScreenshot(compressedImage).catch(err => {
+    const analyzeTask = analyzeScreenshot(base64).catch(err => {
       console.error("AI分析启动失败:", err);
     });
     await nextTick();

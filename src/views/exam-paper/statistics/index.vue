@@ -695,6 +695,39 @@ $radius-xl: 20px;
   }
 }
 
+@media (width <= 1200px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+
+    .header-content {
+      gap: 16px;
+    }
+
+    .header-info {
+      .page-title {
+        margin-bottom: 6px;
+        font-size: 22px;
+      }
+    }
+
+    .header-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(160px, 0.75fr) 160px;
+      gap: 12px;
+      width: 100%;
+
+      :deep(.el-date-editor),
+      :deep(.el-select),
+      :deep(.el-button) {
+        width: 100% !important;
+        margin-left: 0;
+      }
+    }
+  }
+}
+
 @media (width <= 768px) {
   .page-header {
     flex-direction: column;

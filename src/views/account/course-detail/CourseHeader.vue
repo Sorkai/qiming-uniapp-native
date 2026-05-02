@@ -471,11 +471,41 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 /* stylelint-disable-next-line order/order */
 @media (width <= 479px) {
   .layout-header {
+    height: 60px;
     padding: 0 12px;
   }
 
+  .header-content {
+    gap: 8px;
+  }
+
+  .header-left {
+    gap: 0;
+  }
+
+  .back-btn {
+    width: 34px;
+    height: 34px;
+  }
+
   .header-date {
+    margin-left: 10px;
     font-size: 14px;
+  }
+
+  .theme-btn-premium {
+    width: 48px;
+    height: 26px;
+    margin-left: 10px;
+
+    .switch-dot {
+      width: 18px;
+      height: 18px;
+    }
+
+    &.is-dark .switch-dot {
+      transform: translateX(22px);
+    }
   }
 
   .user-capsule {
@@ -485,6 +515,46 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
   .user-name {
     max-width: 34px;
+  }
+
+  .dropdown-arrow {
+    margin-left: 2px;
+  }
+}
+
+@media (width <= 379px) {
+  .layout-header {
+    right: 10px;
+    left: 10px;
+    padding: 0 10px;
+    border-radius: 20px;
+  }
+
+  .header-content {
+    gap: 6px;
+  }
+
+  .header-date {
+    margin-left: 8px;
+    font-size: 13px;
+  }
+
+  .theme-btn-premium {
+    margin-left: 8px;
+  }
+
+  .user-capsule {
+    max-width: 74px;
+    padding: 0 7px;
+  }
+
+  .user-avatar {
+    --el-avatar-size: 22px;
+  }
+
+  .user-name {
+    max-width: 28px;
+    font-size: 12px;
   }
 }
 </style>

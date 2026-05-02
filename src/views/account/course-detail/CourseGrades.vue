@@ -1160,14 +1160,161 @@ onUnmounted(() => {
 }
 
 @media (width <= 768px) {
+  .course-grades-wrapper {
+    min-height: 100vh;
+  }
+
+  .course-grades-container {
+    align-items: stretch;
+    height: auto;
+    min-height: 100vh;
+    padding: var(--course-mobile-top-offset, 156px) 14px
+      calc(24px + env(safe-area-inset-bottom));
+    overflow: visible;
+  }
+
+  .grades-cards,
   .statistics-cards {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .grades-card,
+  .grades-charts-section {
+    padding: 18px 16px;
+    border-radius: 18px;
+  }
+
+  .grades-card {
+    .grades-card-header {
+      margin-bottom: 16px;
+
+      h3 {
+        font-size: 16px;
+      }
+    }
+
+    .grades-score {
+      font-size: 40px;
+    }
+  }
+
+  .grades-charts-section {
+    margin-bottom: 20px;
+
+    .section-header h3 {
+      font-size: 18px;
+    }
+
+    .charts-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .chart-item-wrapper {
+      height: 320px;
+      padding: 12px;
+    }
   }
 
   .grade-item-header {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+  }
+
+  .grades-list {
+    .grade-item {
+      padding: 18px 16px;
+    }
+  }
+}
+
+@media (width <= 479px) {
+  .course-grades-container {
+    padding: var(--course-mobile-top-offset, 156px) 10px
+      calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .grades-cards,
+  .statistics-cards {
+    gap: 14px;
+  }
+
+  .grades-card,
+  .grades-charts-section {
+    padding: 16px 14px;
+    border-radius: 16px;
+  }
+
+  .grades-card {
+    .grades-card-header {
+      gap: 10px;
+
+      h3 {
+        font-size: 15px;
+      }
+    }
+
+    .grades-score {
+      font-size: 34px;
+    }
+  }
+
+  .statistics-cards {
+    .stat-card {
+      :deep(.el-card__body) {
+        padding: 16px 14px;
+      }
+    }
+
+    .stat-content {
+      gap: 12px;
+    }
+
+    .stat-icon {
+      width: 52px;
+      height: 52px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+    }
+  }
+
+  .grades-charts-section {
+    .section-header h3,
+    .card-header h3 {
+      font-size: 16px;
+    }
+
+    .chart-item-wrapper {
+      height: 280px;
+      padding: 10px;
+    }
+  }
+
+  .grades-list {
+    .grade-item {
+      padding: 16px 14px;
+
+      .item-title {
+        gap: 10px;
+      }
+
+      .score-display .score-number {
+        font-size: 28px;
+      }
+
+      .grade-item-body .item-meta {
+        gap: 8px;
+        flex-direction: column;
+      }
+    }
   }
 }
 </style>

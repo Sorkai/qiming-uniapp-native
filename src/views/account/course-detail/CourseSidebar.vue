@@ -3,9 +3,16 @@
   <div
     id="layout-sidebar"
     class="layout-sidebar"
-    :class="currentTheme"
+    :class="[
+      currentTheme,
+      { 'mobile-collapsed': mobileCollapsed && isMobileView }
+    ]"
   >
-    <div ref="sidebarRef" class="layout-sidebar-scroll">
+    <div
+      ref="sidebarRef"
+      class="layout-sidebar-scroll"
+      :class="{ collapsed: mobileCollapsed }"
+    >
       <template
         v-for="(item, index) in sidebarMenuItems"
         :key="item.key || index"
@@ -29,11 +36,45 @@
         </div>
       </template>
     </div>
+    <button
+      v-if="isMobileView"
+      type="button"
+      class="mobile-sidebar-toggle"
+      :class="{ visible: mobileCollapsed }"
+      :aria-expanded="String(!mobileCollapsed)"
+      :aria-label="mobileCollapsed ? '展开课程标签栏' : '课程标签栏已展开'"
+      @click.stop="handleMobileToggle"
+    >
+      <component
+        :is="activeMenuItem?.icon || CourseLearnIcon"
+        class="toggle-active-icon"
+      />
+      <svg
+        class="toggle-arrow"
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch
+} from "vue";
 import CourseLearnIcon from "@/assets/course-icons/course-learn-new.svg?component";
 import MasteryIcon from "@/assets/course-icons/mastery-new.svg?component";
 import CourseQaIcon from "@/assets/table-bar/chat-bubble-dots-svgrepo-com.svg?component";
@@ -49,15 +90,26 @@ const props = defineProps<{
 }>();
 
 const MOBILE_BREAKPOINT = 767;
+const MOBILE_COLLAPSE_DISTANCE = 120;
+const MOBILE_TOP_RESET = 8;
 const sidebarRef = ref<HTMLElement | null>(null);
 const itemRefs = new Map<string, HTMLElement>();
+const isMobileView = ref(false);
+const mobileCollapsed = ref(false);
+const mobileExpandAnchor = ref(0);
 
 // Emits
 defineEmits<{
   (e: "menu-click", menuName: string): void;
 }>();
 
-const isMobileViewport = () => window.innerWidth <= MOBILE_BREAKPOINT;
+const isMobileViewport = () => isMobileView.value;
+
+const getWindowScrollTop = () =>
+  window.scrollY ||
+  document.documentElement.scrollTop ||
+  document.body.scrollTop ||
+  0;
 
 const setItemRef = (key: string, el: HTMLDivElement | null) => {
   if (!key) return;
@@ -86,8 +138,52 @@ const ensureActiveItemVisible = () => {
   }
 };
 
-const handleViewportResize = () => {
+const updateViewportState = () => {
+  isMobileView.value = window.innerWidth <= MOBILE_BREAKPOINT;
+
+  if (!isMobileView.value) {
+    mobileCollapsed.value = false;
+    mobileExpandAnchor.value = 0;
+  }
+};
+
+const handleMobileScrollState = () => {
+  if (!isMobileViewport()) return;
+
+  const scrollTop = getWindowScrollTop();
+
+  if (scrollTop <= MOBILE_TOP_RESET) {
+    mobileCollapsed.value = false;
+    mobileExpandAnchor.value = 0;
+    return;
+  }
+
+  if (mobileCollapsed.value) return;
+
+  if (
+    Math.abs(scrollTop - mobileExpandAnchor.value) >= MOBILE_COLLAPSE_DISTANCE
+  ) {
+    mobileCollapsed.value = true;
+  }
+};
+
+const handleMobileToggle = () => {
+  if (!isMobileViewport()) return;
+
+  mobileCollapsed.value = false;
+  mobileExpandAnchor.value = getWindowScrollTop();
+
   nextTick(() => ensureActiveItemVisible());
+};
+
+const handleViewportResize = () => {
+  updateViewportState();
+  nextTick(() => ensureActiveItemVisible());
+  handleMobileScrollState();
+};
+
+const handleWindowScroll = () => {
+  handleMobileScrollState();
 };
 
 // 侧边栏菜单配置
@@ -102,22 +198,37 @@ const sidebarMenuItems = [
   { key: "grades", label: "成绩", icon: GradesIcon }
 ];
 
+const activeMenuItem = computed(
+  () =>
+    sidebarMenuItems.find(
+      item => "key" in item && item.key === props.activeMenu
+    ) as { key: string; label: string; icon: any } | undefined
+);
+
 watch(
   () => props.activeMenu,
   async () => {
     await nextTick();
     ensureActiveItemVisible();
+
+    if (isMobileViewport() && !mobileCollapsed.value) {
+      mobileExpandAnchor.value = getWindowScrollTop();
+    }
   },
   { immediate: true }
 );
 
 onMounted(() => {
+  updateViewportState();
   window.addEventListener("resize", handleViewportResize, { passive: true });
+  window.addEventListener("scroll", handleWindowScroll, { passive: true });
   nextTick(() => ensureActiveItemVisible());
+  handleMobileScrollState();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleViewportResize);
+  window.removeEventListener("scroll", handleWindowScroll);
 });
 </script>
 
@@ -346,25 +457,55 @@ onBeforeUnmount(() => {
   }
 }
 
+.mobile-sidebar-toggle {
+  display: none;
+}
+
 /* 侧边栏样式优化 - 独立显示，与左右保持距离 */
 
 /* stylelint-disable-next-line order/order */
 @media (width <= 767px) {
   .layout-sidebar {
+    --mobile-sidebar-easing: cubic-bezier(0.65, 0, 0.35, 1);
     top: 88px;
     right: 12px;
     left: 12px;
     z-index: 120;
     width: auto;
     min-width: 0;
+    height: 64px;
+    min-height: 64px;
     max-height: none;
     border-radius: 22px;
     overflow: hidden;
+    transition:
+      width 0.42s var(--mobile-sidebar-easing),
+      min-width 0.42s var(--mobile-sidebar-easing),
+      box-shadow 0.42s var(--mobile-sidebar-easing),
+      background 0.42s var(--mobile-sidebar-easing),
+      border-radius 0.42s var(--mobile-sidebar-easing);
 
     &::after {
       border-radius: 22px;
       opacity: 0.55;
       animation-duration: 5s;
+    }
+
+    &.mobile-collapsed {
+      right: auto;
+      width: 64px;
+      min-width: 64px;
+
+      .layout-sidebar-scroll {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(-16px);
+      }
+
+      .mobile-sidebar-toggle {
+        opacity: 1;
+        pointer-events: auto;
+      }
     }
   }
 
@@ -374,17 +515,77 @@ onBeforeUnmount(() => {
     gap: 10px;
     align-items: center;
     width: 100%;
+    height: 100%;
     max-height: none;
-    padding: 10px;
+    padding: 10px 12px;
     overflow: auto hidden;
     scroll-snap-type: x proximity;
-    scroll-padding-inline: 10px;
+    scroll-padding-inline: 12px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    transition:
+      opacity 0.34s var(--mobile-sidebar-easing),
+      transform 0.42s var(--mobile-sidebar-easing);
 
     &::-webkit-scrollbar {
       display: none;
     }
+  }
+
+  .mobile-sidebar-toggle {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    color: #5a6b8a;
+    cursor: pointer;
+    background: linear-gradient(
+      135deg,
+      rgb(255 255 255 / 92%),
+      rgb(245 247 250 / 96%)
+    );
+    border: none;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 0.32s var(--mobile-sidebar-easing),
+      color 0.32s var(--mobile-sidebar-easing),
+      background 0.32s var(--mobile-sidebar-easing),
+      transform 0.42s var(--mobile-sidebar-easing);
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .toggle-active-icon,
+    .toggle-arrow {
+      color: currentcolor;
+    }
+
+    .toggle-active-icon {
+      width: 20px;
+      height: 20px;
+
+      :deep(*) {
+        fill: currentcolor;
+        stroke: currentcolor;
+      }
+    }
+  }
+
+  .layout-sidebar.dark .mobile-sidebar-toggle {
+    color: #dbeafe;
+    background: linear-gradient(
+      135deg,
+      rgb(30 41 59 / 94%),
+      rgb(15 23 42 / 96%)
+    );
   }
 
   .layout-sidebar {
@@ -405,7 +606,8 @@ onBeforeUnmount(() => {
       align-items: center;
       justify-content: center;
       width: auto;
-      min-width: max-content;
+      min-width: fit-content;
+      max-width: calc(100vw - 72px);
       min-height: 0;
       padding: 12px 18px;
       background: transparent;
@@ -454,15 +656,23 @@ onBeforeUnmount(() => {
     top: 86px;
     right: 10px;
     left: 10px;
+    height: 60px;
+    min-height: 60px;
+
+    &.mobile-collapsed {
+      width: 60px;
+      min-width: 60px;
+    }
   }
 
   .layout-sidebar-scroll {
-    padding: 8px;
+    padding: 8px 10px;
   }
 
   .layout-sidebar {
     .hover-box {
-      padding: 11px 16px;
+      max-width: calc(100vw - 64px);
+      padding: 11px 15px;
     }
 
     .side-name {

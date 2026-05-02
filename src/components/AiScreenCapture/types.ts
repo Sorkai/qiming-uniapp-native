@@ -16,6 +16,7 @@ export interface ChatMessage {
   image?: string; // base64图片或附件URL
   timestamp: number;
   loading?: boolean;
+  placeholder?: string;
 }
 
 // AI分析请求（旧接口保留）
@@ -147,6 +148,52 @@ export interface UploadAttachmentParams {
   scene?: string;
   conversation_id?: string;
   course_id?: number;
+}
+
+// AI 聊天附件 STS 上传初始化请求参数
+export interface UploadAttachmentStsInitParams {
+  scene?: string;
+  conversation_id?: string;
+  course_id?: number;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+}
+
+// AI 聊天附件 STS 临时凭证
+export interface AttachmentStsCredentials {
+  tmp_secret_id?: string;
+  tmp_secret_key?: string;
+  security_token?: string;
+  session_token?: string;
+  tmpSecretId?: string;
+  tmpSecretKey?: string;
+  securityToken?: string;
+  sessionToken?: string;
+  start_time?: number;
+  expired_time?: number;
+  region?: string;
+  bucket?: string;
+  upload_host?: string;
+  upload_url?: string;
+}
+
+// AI 聊天附件 STS 上传初始化响应
+export interface UploadAttachmentStsInitResponse {
+  attachment_id: string;
+  upload_token: string;
+  object_key: string;
+  upload_url: string;
+  credentials?: AttachmentStsCredentials;
+  expired_time?: number;
+}
+
+// AI 聊天附件 STS 上传完成请求参数
+export interface UploadAttachmentStsCompleteParams {
+  upload_token: string;
+  width?: number;
+  height?: number;
+  sha256?: string;
 }
 
 // 多模态流式请求（新建会话）

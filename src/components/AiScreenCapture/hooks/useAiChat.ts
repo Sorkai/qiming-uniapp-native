@@ -1,15 +1,22 @@
 import { ref, type Ref } from "vue";
+import COS from "cos-js-sdk-v5";
 import { ElMessage } from "element-plus";
-import type { ChatMessage, SSEEventData, SimpleChatStreamData } from "../types";
+import type {
+  AttachmentInfo,
+  AttachmentStsCredentials,
+  ChatMessage,
+  SSEEventData,
+  SimpleChatStreamData,
+  UploadAttachmentStsInitResponse
+} from "../types";
 import {
-  createConversation,
   getConversationList, // 新增：导入获取会话列表的方法
   getConversationDetail,
   getMessageHistory,
-  uploadChatAttachment,
+  initChatAttachmentStsUpload,
+  completeChatAttachmentStsUpload,
   multimodalChatStream,
   continueConversationStream,
-  getConversationHistory,
   streamCourseChat,
   courseQA
 } from "@/api/frontend/aiConversation";
@@ -21,16 +28,46 @@ export interface CourseContext {
 }
 
 /**
- * 将 base64 数据转为 Blob，并处理为 WebP 格式且控制大小在 6MB 以内
+ * 将 data URL 转成 Blob，避免 FileReader 的重复往返。
  */
-function processImageToWebP(base64: string): Promise<Blob> {
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [header, base64Data] = dataUrl.split(",");
+  if (!header || !base64Data) {
+    throw new Error("无效的图片数据");
+  }
+
+  const mimeMatch = header.match(/data:(.*?);base64/);
+  const mimeType = mimeMatch?.[1] || "application/octet-stream";
+  const binary = atob(base64Data);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: mimeType });
+}
+
+/**
+ * 将图片处理为 WebP 格式且控制大小在 6MB 以内。
+ */
+function processImageToWebP(source: Blob | File | string): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.src = base64;
+    const sourceUrl =
+      typeof source === "string" ? source : URL.createObjectURL(source);
+    let objectUrlToRevoke: string | null =
+      typeof source === "string" ? null : sourceUrl;
+
+    img.src = sourceUrl;
     img.onload = () => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       if (!ctx) {
+        if (objectUrlToRevoke) {
+          URL.revokeObjectURL(objectUrlToRevoke);
+          objectUrlToRevoke = null;
+        }
         reject(new Error("无法创建 Canvas 上下文"));
         return;
       }
@@ -62,6 +99,10 @@ function processImageToWebP(base64: string): Promise<Blob> {
         canvas.toBlob(
           blob => {
             if (!blob) {
+              if (objectUrlToRevoke) {
+                URL.revokeObjectURL(objectUrlToRevoke);
+                objectUrlToRevoke = null;
+              }
               reject(new Error("Canvas 转 Blob 失败"));
               return;
             }
@@ -69,6 +110,10 @@ function processImageToWebP(base64: string): Promise<Blob> {
               quality -= 0.1;
               compress();
             } else {
+              if (objectUrlToRevoke) {
+                URL.revokeObjectURL(objectUrlToRevoke);
+                objectUrlToRevoke = null;
+              }
               resolve(blob);
             }
           },
@@ -79,7 +124,13 @@ function processImageToWebP(base64: string): Promise<Blob> {
 
       compress();
     };
-    img.onerror = () => reject(new Error("图片加载失败"));
+    img.onerror = () => {
+      if (objectUrlToRevoke) {
+        URL.revokeObjectURL(objectUrlToRevoke);
+        objectUrlToRevoke = null;
+      }
+      reject(new Error("图片加载失败"));
+    };
   });
 }
 
@@ -100,6 +151,174 @@ export function useAiChat(courseCtx?: CourseContext) {
 
   const generateId = () =>
     `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+
+  const pickField = (obj: any, keys: string[]) => {
+    if (!obj) return undefined;
+    for (const key of keys) {
+      if (obj[key] !== undefined && obj[key] !== null && obj[key] !== "") {
+        return obj[key];
+      }
+    }
+    return undefined;
+  };
+
+  const getImageSize = (blob: Blob): Promise<{ width: number; height: number }> =>
+    new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const size = {
+          width: img.naturalWidth || img.width || 0,
+          height: img.naturalHeight || img.height || 0
+        };
+        URL.revokeObjectURL(objectUrl);
+        resolve(size);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("读取图片尺寸失败"));
+      };
+      img.src = objectUrl;
+    });
+
+  const createCosClient = (
+    credentials: AttachmentStsCredentials,
+    uploadUrl?: string
+  ) => {
+    const tmpSecretId = pickField(credentials, [
+      "tmp_secret_id",
+      "tmpSecretId",
+      "TmpSecretId",
+      "secretId",
+      "SecretId"
+    ]);
+    const tmpSecretKey = pickField(credentials, [
+      "tmp_secret_key",
+      "tmpSecretKey",
+      "TmpSecretKey",
+      "secretKey",
+      "SecretKey"
+    ]);
+    const securityToken = pickField(credentials, [
+      "security_token",
+      "securityToken",
+      "SecurityToken",
+      "session_token",
+      "sessionToken",
+      "SessionToken",
+      "Token"
+    ]);
+    const bucket = pickField(credentials, ["bucket", "Bucket"]);
+    const region = pickField(credentials, ["region", "Region"]);
+
+    if (
+      !tmpSecretId ||
+      !tmpSecretKey ||
+      !securityToken ||
+      !bucket ||
+      !region
+    ) {
+      throw new Error("STS 初始化返回信息不完整");
+    }
+
+    let uploadDomain: string | undefined;
+    if (uploadUrl) {
+      try {
+        uploadDomain = new URL(uploadUrl).host;
+      } catch {
+        uploadDomain = undefined;
+      }
+    }
+
+    return {
+      cos: new COS({
+        SecretId: tmpSecretId,
+        SecretKey: tmpSecretKey,
+        SecurityToken: securityToken,
+        Protocol: "https:",
+        Domain: uploadDomain
+      }),
+      bucket,
+      region
+    };
+  };
+
+  const uploadBlobViaAiSts = async (
+    rawFile: Blob | File,
+    options: {
+      scene?: string;
+      conversation_id?: string;
+      course_id?: number;
+      file_name?: string;
+      content_type?: string;
+    }
+  ): Promise<AttachmentInfo> => {
+    const fileName =
+      options.file_name ||
+      (rawFile instanceof File && rawFile.name) ||
+      `upload-${Date.now()}.webp`;
+    const contentType =
+      options.content_type || rawFile.type || "application/octet-stream";
+
+    const initRes = await initChatAttachmentStsUpload({
+      scene: options.scene,
+      conversation_id: options.conversation_id,
+      course_id: options.course_id,
+      file_name: fileName,
+      content_type: contentType,
+      file_size: rawFile.size
+    });
+
+    const initData: UploadAttachmentStsInitResponse =
+      (initRes as any)?.data?.data || (initRes as any)?.data || initRes;
+
+    const uploadToken = pickField(initData, ["upload_token", "uploadToken"]);
+    const objectKey = pickField(initData, ["object_key", "objectKey", "key", "Key"]);
+    const uploadUrl = pickField(initData, ["upload_url", "uploadUrl", "uploadURL"]);
+    const credentials =
+      initData.credentials || ({} as AttachmentStsCredentials);
+
+    if (!uploadToken || !objectKey) {
+      throw new Error("STS 初始化返回信息不完整");
+    }
+
+    const { cos, bucket, region } = createCosClient(credentials, uploadUrl);
+
+    await new Promise((resolve, reject) => {
+      cos.putObject(
+        {
+          Bucket: bucket,
+          Region: region,
+          Key: objectKey,
+          Body: rawFile,
+          ContentType: contentType
+        },
+        (err, data) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(data);
+        }
+      );
+    });
+
+    const { width, height } = await getImageSize(rawFile);
+    const completeRes = await completeChatAttachmentStsUpload({
+      upload_token: uploadToken,
+      width,
+      height
+    });
+
+    const attachmentInfo: AttachmentInfo =
+      (completeRes as any)?.data?.data || (completeRes as any)?.data || completeRes;
+
+    if (!attachmentInfo?.attachment_id) {
+      throw new Error("附件上传失败");
+    }
+
+    return attachmentInfo;
+  };
 
   const fetchConversations = async (page = 1, pageSize = 20) => {
     try {
@@ -130,7 +349,8 @@ export function useAiChat(courseCtx?: CourseContext) {
       role: "assistant",
       content: "",
       timestamp: Date.now(),
-      loading: true
+      loading: true,
+      placeholder: "正在思考中，请稍等..."
     };
     messages.value.push(message);
     return message;
@@ -140,7 +360,7 @@ export function useAiChat(courseCtx?: CourseContext) {
     const msg = messages.value.find(m => m.id === id);
     if (msg) {
       msg.content += delta;
-      msg.loading = false;
+      msg.placeholder = "";
     }
   };
 
@@ -149,6 +369,7 @@ export function useAiChat(courseCtx?: CourseContext) {
     if (msg) {
       if (fullContent !== undefined) msg.content = fullContent;
       msg.loading = false;
+      msg.placeholder = "";
     }
   };
 
@@ -173,6 +394,7 @@ export function useAiChat(courseCtx?: CourseContext) {
     if (data.finished) {
       const msg = messages.value.find(m => m.id === loadingMsgId);
       if (msg) msg.loading = false;
+      if (msg) msg.placeholder = "";
       loading.value = false;
       resolve();
     }
@@ -233,18 +455,18 @@ export function useAiChat(courseCtx?: CourseContext) {
     const loadingMsg = addLoadingMessage();
 
     try {
-      // 1. 将 base64 截图处理为 WebP
-      const blob = await processImageToWebP(image);
-      const file = new File([blob], "screenshot.webp", { type: "image/webp" });
-      const uploadRes = await uploadChatAttachment(file, {
-        scene: "general"
+      // 1. 处理截图并通过 AI 专用 STS 直传
+      const sourceBlob = dataUrlToBlob(image);
+      const webpBlob = await processImageToWebP(sourceBlob);
+      const uploadRes = await uploadBlobViaAiSts(webpBlob, {
+        scene: "general",
+        course_id: isCourseMode() ? courseCtx!.courseId.value! : undefined,
+        file_name: "screenshot.webp",
+        content_type: "image/webp"
       });
 
-      const attachmentId =
-        (uploadRes as any)?.data?.attachment_id ??
-        (uploadRes as any)?.attachment_id;
-      const attachmentUrl =
-        (uploadRes as any)?.data?.url ?? (uploadRes as any)?.url;
+      const attachmentId = uploadRes.attachment_id;
+      const attachmentUrl = uploadRes.url;
 
       if (!attachmentId) {
         throw new Error("附件上传失败");
@@ -386,36 +608,24 @@ export function useAiChat(courseCtx?: CourseContext) {
     const loadingMsg = addLoadingMessage();
 
     try {
-      // 1. 处理图片为 WebP 并且控制大小
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = e => resolve(e.target?.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      const webpBlob = await processImageToWebP(base64);
-      const webpFile = new File([webpBlob], "upload.webp", {
-        type: "image/webp"
-      });
-
-      // 2. 上传附件
-      const uploadRes = await uploadChatAttachment(webpFile, {
+      // 1. 处理图片为 WebP 并通过 AI 专用 STS 直传
+      const webpBlob = await processImageToWebP(file);
+      const uploadRes = await uploadBlobViaAiSts(webpBlob, {
         scene: "general",
-        conversation_id: conversationId.value || undefined
+        conversation_id: conversationId.value || undefined,
+        course_id: isCourseMode() ? courseCtx!.courseId.value! : undefined,
+        file_name: "upload.webp",
+        content_type: "image/webp"
       });
 
-      const attachmentId =
-        (uploadRes as any)?.data?.attachment_id ??
-        (uploadRes as any)?.attachment_id;
-      const attachmentUrl =
-        (uploadRes as any)?.data?.url ?? (uploadRes as any)?.url;
+      const attachmentId = uploadRes.attachment_id;
+      const attachmentUrl = uploadRes.url;
 
       if (!attachmentId) throw new Error("附件上传失败");
 
       // 3. 添加用户消息（显示图片）
       const userMsg = "我上传了一张图片";
-      addUserMessage(userMsg, attachmentUrl || base64);
+      addUserMessage(userMsg, attachmentUrl);
 
       // 4. 发起对话
       if (!conversationId.value) {
@@ -520,6 +730,7 @@ export function useAiChat(courseCtx?: CourseContext) {
     const last = messages.value[messages.value.length - 1];
     if (last && last.role === "assistant" && last.loading) {
       last.loading = false;
+      last.placeholder = "";
       if (!last.content) last.content = "已停止生成";
     }
     loading.value = false;

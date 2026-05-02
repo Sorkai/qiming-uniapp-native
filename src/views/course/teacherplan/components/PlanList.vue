@@ -1,10 +1,16 @@
 <template>
-  <div v-loading="loading" class="list-container h-full flex flex-col">
+  <div
+    v-loading="loading"
+    :class="[
+      'list-container h-full flex flex-col',
+      { 'is-mobile-layout': isMobileLayout }
+    ]"
+  >
     <!-- 顶部统计与工具栏 -->
     <div
-      class="flex justify-between items-center mb-6 bg-[var(--el-fill-color-blank)] p-4 rounded-2xl border border-[var(--el-border-color-lighter)] shadow-sm"
+      class="plan-list-toolbar flex justify-between items-center mb-6 bg-[var(--el-fill-color-blank)] p-4 rounded-2xl border border-[var(--el-border-color-lighter)] shadow-sm"
     >
-      <div v-if="props.courseId" class="flex flex-col">
+      <div v-if="props.courseId" class="plan-list-toolbar__copy flex flex-col">
         <h3
           class="text-lg font-bold text-[var(--el-text-color-primary)] flex items-center mb-0.5"
         >
@@ -17,7 +23,7 @@
           当前显示所选课程关联的教案库
         </p>
       </div>
-      <div v-else class="flex flex-col">
+      <div v-else class="plan-list-toolbar__copy flex flex-col">
         <h3
           class="text-lg font-bold text-[var(--el-text-color-primary)] flex items-center mb-0.5"
         >
@@ -30,7 +36,7 @@
           查看并管理您的 AI 生成历史
         </p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="plan-list-toolbar__actions flex items-center gap-3">
         <el-button
           type="primary"
           :icon="Refresh"
@@ -47,12 +53,12 @@
     <div class="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
       <div
         v-if="planList.length > 0"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-6"
+        class="plan-card-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-6"
       >
         <div
           v-for="item in planList"
           :key="item.teacherPlanId"
-          class="group bg-[var(--el-bg-color-overlay)] border border-[var(--el-border-color-light)] rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:border-[var(--el-color-primary-light-5)] relative overflow-hidden flex flex-col h-full"
+          class="plan-card group bg-[var(--el-bg-color-overlay)] border border-[var(--el-border-color-light)] rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:border-[var(--el-color-primary-light-5)] relative overflow-hidden flex flex-col h-full"
         >
           <el-icon
             class="absolute -right-6 -bottom-6 text-8xl text-[var(--el-fill-color-light)] group-hover:text-[var(--el-color-primary-light-9)] transition-colors pointer-events-none opacity-50"
@@ -61,7 +67,9 @@
           </el-icon>
 
           <div class="relative z-10 flex flex-col h-full">
-            <div class="flex justify-between items-start mb-5">
+            <div
+              class="plan-card__header flex justify-between items-start mb-5"
+            >
               <span
                 class="px-2.5 py-1 bg-[var(--el-fill-color-light)] text-[var(--el-text-color-secondary)] text-[10px] font-bold rounded-md uppercase tracking-wider border border-[var(--el-border-color-lighter)]"
               >
@@ -111,13 +119,13 @@
             </div>
 
             <div
-              class="mt-auto pt-5 border-t border-[var(--el-border-color-lighter)] flex justify-between items-center"
+              class="plan-card__footer mt-auto pt-5 border-t border-[var(--el-border-color-lighter)] flex justify-between items-center"
             >
               <el-tag
                 size="small"
                 :type="item.status === 2 ? 'success' : 'warning'"
                 effect="dark"
-                class="!rounded-full !px-3 font-medium"
+                class="plan-card__status !rounded-full !px-3 font-medium"
               >
                 {{ item.status === 2 ? "生成完成" : "处理中" }}
               </el-tag>
@@ -125,7 +133,7 @@
               <el-button
                 type="primary"
                 size="small"
-                class="!rounded-lg !px-4 hover:shadow-sm"
+                class="plan-card__action !rounded-lg !px-4 hover:shadow-sm"
                 @click="checkProgress(item)"
               >
                 管理
@@ -171,7 +179,10 @@
     </div>
 
     <!-- 分页 -->
-    <div v-if="planList.length > 0" class="mt-8 flex justify-center">
+    <div
+      v-if="planList.length > 0"
+      class="plan-list-pagination mt-8 flex justify-center"
+    >
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -189,15 +200,18 @@
     <el-dialog
       v-model="progressDialogVisible"
       title="教案处理状态"
-      width="480px"
+      :width="isMobileLayout ? 'calc(100vw - 32px)' : '480px'"
       center
       align-center
-      class="rounded-dialog"
+      class="rounded-dialog plan-progress-dialog"
     >
-      <div v-loading="progressLoading" class="min-h-[280px] flex flex-col">
+      <div
+        v-loading="progressLoading"
+        class="plan-progress-content min-h-[280px] flex flex-col"
+      >
         <div v-if="currentProgress">
           <div
-            class="bg-[var(--el-fill-color-light)] rounded-2xl p-6 mb-8 border border-[var(--el-border-color-lighter)]"
+            class="plan-progress-summary bg-[var(--el-fill-color-light)] rounded-2xl p-6 mb-8 border border-[var(--el-border-color-lighter)]"
           >
             <div class="mb-4">
               <span
@@ -229,18 +243,21 @@
             </div>
           </div>
 
-          <div v-if="currentProgress.progress === 2" class="text-center pb-4">
+          <div
+            v-if="currentProgress.progress === 2"
+            class="plan-progress-state text-center pb-4"
+          >
             <div
-              class="w-16 h-16 bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)] rounded-full flex items-center justify-center mx-auto mb-4"
+              class="plan-progress-icon w-16 h-16 bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)] rounded-full flex items-center justify-center mx-auto mb-4"
             >
               <el-icon class="text-3xl"><CircleCheckFilled /></el-icon>
             </div>
-            <h4 class="text-lg font-bold mb-2">生成成功</h4>
-            <div class="flex gap-4 mt-8">
+            <h4 class="plan-progress-title text-lg font-bold mb-2">生成成功</h4>
+            <div class="plan-progress-actions flex gap-4 mt-8">
               <el-button
                 type="primary"
                 size="large"
-                class="flex-1 !rounded-xl !h-12 shadow-md"
+                class="plan-progress-button flex-1 !rounded-xl !h-12 shadow-md"
                 @click="downloadPlan(currentProgress.downloadUrl)"
               >
                 <el-icon class="mr-2"><Download /></el-icon>
@@ -248,7 +265,7 @@
               </el-button>
               <el-button
                 size="large"
-                class="!rounded-xl !h-12 !px-6"
+                class="plan-progress-button !rounded-xl !h-12 !px-6"
                 @click="progressDialogVisible = false"
               >
                 关闭
@@ -256,19 +273,21 @@
             </div>
           </div>
 
-          <div v-else class="text-center pb-4">
+          <div v-else class="plan-progress-state text-center pb-4">
             <div
-              class="w-16 h-16 bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"
+              class="plan-progress-icon w-16 h-16 bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"
             >
               <el-icon class="text-3xl"><Cpu /></el-icon>
             </div>
-            <h4 class="text-lg font-bold mb-2">AI 智能撰写中...</h4>
+            <h4 class="plan-progress-title text-lg font-bold mb-2">
+              AI 智能撰写中...
+            </h4>
             <el-progress
               :percentage="75"
               :stroke-width="15"
               striped
               striped-flow
-              class="mb-4 px-4 mt-8"
+              class="plan-progress-bar mb-4 px-4 mt-8"
               :color="'var(--el-color-primary)'"
             />
           </div>
@@ -279,9 +298,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { getTeacherPlanList, getTeacherPlanProgress } from "@/api/course";
+import { useAppStoreHook } from "@/store/modules/app";
 import {
   Refresh,
   Collection,
@@ -304,6 +324,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["switch-tab"]);
+const appStore = useAppStoreHook();
+const isMobileLayout = computed(() => appStore.getDevice === "mobile");
 
 const planList = ref([]);
 const total = ref(0);
@@ -438,6 +460,7 @@ onMounted(() => {
 :deep(.rounded-dialog) {
   overflow: hidden;
   border-radius: 20px;
+  align-self: center;
 
   .el-dialog__header {
     margin-right: 0;
@@ -464,5 +487,331 @@ onMounted(() => {
   overflow: hidden;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
+}
+
+.list-container.is-mobile-layout {
+  padding-bottom: 4px;
+}
+
+.list-container.is-mobile-layout .plan-list-toolbar {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 20px;
+}
+
+.list-container.is-mobile-layout .plan-list-toolbar__copy {
+  width: 100%;
+}
+
+.list-container.is-mobile-layout .plan-list-toolbar__copy h3 {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.list-container.is-mobile-layout .plan-list-toolbar__copy p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.list-container.is-mobile-layout .plan-list-toolbar__actions {
+  width: 100%;
+}
+
+.list-container.is-mobile-layout .plan-list-toolbar__actions :deep(.el-button) {
+  width: 100%;
+  height: 40px;
+  margin-left: 0;
+}
+
+.list-container.is-mobile-layout .plan-card-grid {
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.list-container.is-mobile-layout .plan-card {
+  padding: 16px;
+  border-radius: 20px;
+}
+
+.list-container.is-mobile-layout .plan-card__header {
+  margin-bottom: 14px;
+}
+
+.list-container.is-mobile-layout .plan-card h4 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.list-container.is-mobile-layout .plan-card .space-y-2 {
+  margin-bottom: 16px;
+}
+
+.list-container.is-mobile-layout .plan-card .space-y-2 p {
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.list-container.is-mobile-layout .plan-card__footer {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.list-container.is-mobile-layout .plan-card__status {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.list-container.is-mobile-layout .plan-card__action {
+  min-width: 88px;
+  height: 32px;
+  margin-left: auto;
+  padding-inline: 14px !important;
+}
+
+.list-container.is-mobile-layout .plan-list-pagination {
+  margin-top: 12px;
+  padding-bottom: 4px;
+}
+
+.list-container.is-mobile-layout .plan-list-pagination :deep(.el-pagination) {
+  justify-content: center;
+  row-gap: 8px;
+}
+
+.list-container.is-mobile-layout
+  .plan-list-pagination
+  :deep(.el-pagination__sizes) {
+  margin-right: 0;
+}
+
+.list-container.is-mobile-layout .plan-progress-summary {
+  padding: 14px;
+  margin-bottom: 16px;
+  border-radius: 16px;
+}
+
+.list-container.is-mobile-layout .plan-progress-content {
+  min-height: 180px;
+}
+
+.list-container.is-mobile-layout .plan-progress-icon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 12px;
+}
+
+.list-container.is-mobile-layout .plan-progress-title {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.list-container.is-mobile-layout .plan-progress-bar {
+  margin-top: 18px;
+  margin-bottom: 0;
+  padding-inline: 0 !important;
+}
+
+.list-container.is-mobile-layout .plan-progress-state h4 {
+  font-size: 16px;
+}
+
+.list-container.is-mobile-layout .plan-progress-actions {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list-container.is-mobile-layout .plan-progress-button {
+  width: 100%;
+  height: 44px !important;
+  margin-left: 0 !important;
+}
+
+.list-container.is-mobile-layout :deep(.rounded-dialog) {
+  width: calc(100vw - 32px);
+  max-width: 420px;
+  max-height: calc(100vh - 48px);
+  margin: 0 auto;
+  border-radius: 18px;
+  align-self: center;
+}
+
+.list-container.is-mobile-layout :deep(.rounded-dialog .el-dialog__header) {
+  padding: 18px 18px 10px;
+}
+
+.list-container.is-mobile-layout :deep(.rounded-dialog .el-dialog__body) {
+  max-height: calc(100vh - 160px);
+  padding: 12px 16px 18px;
+  overflow-y: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .list-container {
+    padding-bottom: 4px;
+  }
+
+  .plan-list-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .plan-list-toolbar__copy {
+    width: 100%;
+  }
+
+  .plan-list-toolbar__copy h3 {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .plan-list-toolbar__copy p {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .plan-list-toolbar__actions {
+    width: 100%;
+  }
+
+  .plan-list-toolbar__actions :deep(.el-button) {
+    width: 100%;
+    height: 40px;
+    margin-left: 0;
+  }
+
+  .plan-card-grid {
+    gap: 12px;
+    padding-bottom: 12px;
+  }
+
+  .plan-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .plan-card__header {
+    margin-bottom: 14px;
+  }
+
+  .plan-card h4 {
+    margin-bottom: 10px;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  .plan-card .space-y-2 {
+    margin-bottom: 16px;
+  }
+
+  .plan-card .space-y-2 p {
+    align-items: flex-start;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .plan-card__footer {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-top: 12px;
+  }
+
+  .plan-card__status {
+    flex-shrink: 0;
+    max-width: 100%;
+  }
+
+  .plan-card__action {
+    min-width: 88px;
+    height: 32px;
+    margin-left: auto;
+    padding-inline: 14px !important;
+  }
+
+  .plan-list-pagination {
+    margin-top: 12px;
+    padding-bottom: 4px;
+  }
+
+  .plan-list-pagination :deep(.el-pagination) {
+    justify-content: center;
+    row-gap: 8px;
+  }
+
+  .plan-list-pagination :deep(.el-pagination__sizes) {
+    margin-right: 0;
+  }
+
+  .plan-progress-summary {
+    padding: 14px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+  }
+
+  .plan-progress-content {
+    min-height: 180px;
+  }
+
+  .plan-progress-icon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 12px;
+  }
+
+  .plan-progress-title {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .plan-progress-bar {
+    margin-top: 18px;
+    margin-bottom: 0;
+    padding-inline: 0 !important;
+  }
+
+  .plan-progress-state h4 {
+    font-size: 16px;
+  }
+
+  .plan-progress-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .plan-progress-button {
+    width: 100%;
+    height: 44px !important;
+    margin-left: 0 !important;
+  }
+
+  :deep(.rounded-dialog) {
+    width: calc(100vw - 32px);
+    max-width: 420px;
+    max-height: calc(100vh - 48px);
+    margin: 0 auto;
+    border-radius: 18px;
+    align-self: center;
+  }
+
+  :deep(.rounded-dialog .el-dialog__header) {
+    padding: 18px 18px 10px;
+  }
+
+  :deep(.rounded-dialog .el-dialog__body) {
+    max-height: calc(100vh - 160px);
+    padding: 12px 16px 18px;
+    overflow-y: auto;
+  }
 }
 </style>

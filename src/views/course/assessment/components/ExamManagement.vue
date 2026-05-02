@@ -58,19 +58,43 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220" fixed="right" align="center">
+      <el-table-column
+        label="操作"
+        :width="isMobile ? 96 : 220"
+        fixed="right"
+        align="center"
+      >
         <template #default="scope">
-          <el-button link type="primary" @click="showQuestionDialog(scope.row)"
-            >试题管理</el-button
-          >
-          <el-divider direction="vertical" />
-          <el-button link type="primary" @click="showEditDialog(scope.row)"
-            >编辑</el-button
-          >
-          <el-divider direction="vertical" />
-          <el-button link type="danger" @click="confirmDelete(scope.row)"
-            >删除</el-button
-          >
+          <div v-if="isMobile" class="mobile-action-wrap">
+            <el-dropdown trigger="click" @command="command => handleExamAction(command, scope.row)">
+              <el-button text type="primary" class="more-action-btn">
+                更多
+                <el-icon class="ml-1"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="questions">试题管理</el-dropdown-item>
+                  <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>
+                    <span class="danger-action">删除</span>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+          <template v-else>
+            <el-button link type="primary" @click="showQuestionDialog(scope.row)"
+              >试题管理</el-button
+            >
+            <el-divider direction="vertical" />
+            <el-button link type="primary" @click="showEditDialog(scope.row)"
+              >编辑</el-button
+            >
+            <el-divider direction="vertical" />
+            <el-button link type="danger" @click="confirmDelete(scope.row)"
+              >删除</el-button
+            >
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -282,9 +306,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus } from "@element-plus/icons-vue";
+import { Plus, ArrowDown } from "@element-plus/icons-vue";
 import {
   getExamList,
   getExamQuestionList,
@@ -300,6 +324,11 @@ const props = defineProps({
     required: true
   }
 });
+
+const isMobile = ref(window.innerWidth < 768);
+const updateIsMobile = () => {
+  isMobile.value = window.innerWidth < 768;
+};
 
 // 考试列表相关
 const loading = ref(false);
@@ -387,6 +416,23 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   currentPage.value = val;
   fetchExamList();
+};
+
+const handleExamAction = (
+  command: "questions" | "edit" | "delete",
+  row
+) => {
+  if (command === "questions") {
+    showQuestionDialog(row);
+    return;
+  }
+  if (command === "edit") {
+    showEditDialog(row);
+    return;
+  }
+  if (command === "delete") {
+    confirmDelete(row);
+  }
 };
 
 // 显示创建对话框
@@ -638,9 +684,14 @@ const handleQuestionDialogClosed = () => {
 
 // 页面加载时获取数据
 onMounted(() => {
+  window.addEventListener("resize", updateIsMobile);
   if (props.courseId) {
     fetchExamList();
   }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateIsMobile);
 });
 </script>
 
@@ -657,6 +708,21 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.mobile-action-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.more-action-btn {
+  min-width: auto;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+
+.danger-action {
+  color: var(--el-color-danger);
 }
 
 .question-dialog-header {
@@ -686,6 +752,19 @@ onMounted(() => {
   .analysis-content {
     line-height: 1.5;
     white-space: pre-wrap;
+  }
+}
+
+@media (max-width: 767px) {
+  .exam-management {
+    :deep(.el-table .cell) {
+      word-break: break-word;
+    }
+  }
+
+  .pagination-container {
+    justify-content: center;
+    overflow-x: auto;
   }
 }
 </style>

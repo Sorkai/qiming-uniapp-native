@@ -103,29 +103,31 @@
       <template v-if="selectedCourseId">
         <!-- 顶部信息栏 -->
         <div
-          class="px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-bg-color-overlay)] z-10"
+          class="teacher-plan-course-header px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-bg-color-overlay)] z-10"
         >
-          <div class="flex items-center gap-4">
+          <div class="teacher-plan-course-summary flex items-center gap-4">
             <div
-              class="p-2 bg-[var(--el-color-primary-light-9)] rounded-lg text-[var(--el-color-primary)]"
+              class="teacher-plan-course-icon p-2 bg-[var(--el-color-primary-light-9)] rounded-lg text-[var(--el-color-primary)]"
             >
               <el-icon class="text-xl"><Collection /></el-icon>
             </div>
-            <div>
+            <div class="teacher-plan-course-copy">
               <h2
-                class="text-lg font-bold text-[var(--el-text-color-primary)] leading-none mb-1.5"
+                class="teacher-plan-course-title text-lg font-bold text-[var(--el-text-color-primary)] leading-none mb-1.5"
               >
                 {{ currentCourse?.title }}
               </h2>
-              <p class="text-[11px] text-[var(--el-text-color-secondary)]">
+              <p
+                class="teacher-plan-course-meta text-[11px] text-[var(--el-text-color-secondary)]"
+              >
                 授课教师: {{ currentCourse?.userName }} · 课程编号:
                 {{ currentCourse?.courseId }}
               </p>
             </div>
           </div>
-          <div class="flex items-center gap-4">
+          <div class="teacher-plan-course-actions flex items-center gap-4">
             <div
-              class="hidden md:flex items-center space-x-2 text-[var(--el-color-success)] text-xs bg-[var(--el-color-success-light-9)] px-4 py-2 rounded-full font-medium"
+              class="teacher-plan-status-pill hidden md:flex items-center space-x-2 text-[var(--el-color-success)] text-xs bg-[var(--el-color-success-light-9)] px-4 py-2 rounded-full font-medium"
             >
               <div
                 class="w-2 h-2 rounded-full bg-[var(--el-color-success)] animate-pulse"
@@ -859,6 +861,48 @@ onMounted(() => {
   }
 }
 
+.teacher-plan-container.is-mobile-layout .teacher-plan-course-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-course-summary {
+  width: 100%;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-course-icon {
+  padding: 10px;
+  border-radius: 16px;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-course-copy {
+  min-width: 0;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-course-title {
+  margin-bottom: 6px;
+  font-size: 18px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-course-meta {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-course-actions {
+  width: 100%;
+}
+
+.teacher-plan-container.is-mobile-layout .teacher-plan-panel {
+  min-height: calc(100vh - 240px);
+}
+
 .teacher-plan-container.is-mobile-layout .teacher-plan-empty-state {
   align-items: flex-start;
   justify-content: flex-start;
@@ -962,6 +1006,48 @@ onMounted(() => {
       font-size: 13px;
       white-space: nowrap;
     }
+  }
+
+  .teacher-plan-course-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .teacher-plan-course-summary {
+    width: 100%;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .teacher-plan-course-icon {
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  .teacher-plan-course-copy {
+    min-width: 0;
+  }
+
+  .teacher-plan-course-title {
+    margin-bottom: 6px;
+    font-size: 18px;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .teacher-plan-course-meta {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .teacher-plan-course-actions {
+    width: 100%;
+  }
+
+  .teacher-plan-panel {
+    min-height: calc(100vh - 240px);
   }
 
   .teacher-plan-empty-state {

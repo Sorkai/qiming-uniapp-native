@@ -7,6 +7,7 @@ export default {
   meta: {
     title: $t("menus.aiPPT"),
     rank: 12,
-    icon: "ri:presentation-fill"
+    icon: "ri:presentation-fill",
+    hideFooter: true
   }
 };

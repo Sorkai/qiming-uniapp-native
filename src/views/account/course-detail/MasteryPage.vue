@@ -376,7 +376,10 @@
                   </transition>
                 </div>
 
-                <div v-if="!chapterHasStudyContent(chapter)" class="chapter-empty">
+                <div
+                  v-if="!chapterHasStudyContent(chapter)"
+                  class="chapter-empty"
+                >
                   <el-empty description="本章暂无知识点数据" :image-size="64" />
                 </div>
               </div>
@@ -428,6 +431,12 @@ defineEmits<{
   (e: "go-to-account"): void;
   (e: "logout"): void;
 }>();
+
+const MOBILE_BREAKPOINT = 767;
+const SMALL_BREAKPOINT = 479;
+
+const isMobileViewport = () => window.innerWidth <= MOBILE_BREAKPOINT;
+const isSmallViewport = () => window.innerWidth <= SMALL_BREAKPOINT;
 
 // 引用状态
 const masterySummaryChartRef = ref<HTMLElement | null>(null);
@@ -570,6 +579,8 @@ const collapseAfterLeave = (el: Element) => {
 const updateMasteryPieChart = () => {
   if (!masteryPieChart) return;
   const isDark = props.currentTheme === "dark";
+  const isMobile = isMobileViewport();
+  const isSmall = isSmallViewport();
   const rawData = [
     { value: props.studyEffectData.knowledgePointNum || 0, name: "基础知识点" },
     { value: props.studyEffectData.keyPointNum || 0, name: "重点" },
@@ -593,43 +604,70 @@ const updateMasteryPieChart = () => {
       borderWidth: 1,
       textStyle: { color: isDark ? "#fff" : "#303133" }
     },
-    legend: {
-      orient: "vertical",
-      left: "0",
-      top: "center",
-      itemWidth: 14,
-      itemHeight: 14,
-      itemGap: 20,
-      formatter: (name: string) => {
-        const item = rawData.find(d => d.name === name);
-        return `{name|${name}}   {val|${item?.value || 0}}`;
-      },
-      textStyle: {
-        rich: {
-          name: {
-            fontSize: 14,
-            color: isDark ? "#b4b4c7" : "#606266",
-            width: 90
+    legend: isMobile
+      ? {
+          orient: "horizontal",
+          left: "center",
+          bottom: 0,
+          itemWidth: isSmall ? 10 : 12,
+          itemHeight: isSmall ? 10 : 12,
+          itemGap: isSmall ? 12 : 16,
+          formatter: (name: string) => {
+            const item = rawData.find(d => d.name === name);
+            return `{name|${name}} {val|${item?.value || 0}}`;
           },
-          val: {
-            fontSize: 15,
-            fontWeight: "bold",
-            color: isDark ? "#fff" : "#303133"
+          textStyle: {
+            rich: {
+              name: {
+                fontSize: isSmall ? 11 : 12,
+                color: isDark ? "#b4b4c7" : "#606266",
+                padding: [0, 4, 0, 0]
+              },
+              val: {
+                fontSize: isSmall ? 12 : 13,
+                fontWeight: "bold",
+                color: isDark ? "#fff" : "#303133"
+              }
+            }
           }
         }
-      }
-    },
+      : {
+          orient: "vertical",
+          left: "0",
+          top: "center",
+          itemWidth: 14,
+          itemHeight: 14,
+          itemGap: 20,
+          formatter: (name: string) => {
+            const item = rawData.find(d => d.name === name);
+            return `{name|${name}}   {val|${item?.value || 0}}`;
+          },
+          textStyle: {
+            rich: {
+              name: {
+                fontSize: 14,
+                color: isDark ? "#b4b4c7" : "#606266",
+                width: 90
+              },
+              val: {
+                fontSize: 15,
+                fontWeight: "bold",
+                color: isDark ? "#fff" : "#303133"
+              }
+            }
+          }
+        },
     series: [
       {
         name: "知识点分布",
         type: "pie",
-        radius: ["55%", "75%"],
-        center: ["65%", "50%"],
+        radius: isMobile ? ["46%", "68%"] : ["55%", "75%"],
+        center: isMobile ? ["50%", "42%"] : ["65%", "50%"],
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 8,
           borderColor: isDark ? "#1e1e26" : "#fff",
-          borderWidth: 3
+          borderWidth: isMobile ? 2 : 3
         },
         label: {
           show: true,
@@ -637,18 +675,25 @@ const updateMasteryPieChart = () => {
           formatter: `{total|${total}}\n{text|总计}`,
           rich: {
             total: {
-              fontSize: 36,
+              fontSize: isSmall ? 24 : isMobile ? 28 : 36,
               fontWeight: "bold",
               color: isDark ? "#fff" : "#303133",
               padding: [0, 0, 4, 0]
             },
-            text: { fontSize: 14, color: isDark ? "#888" : "#999" }
+            text: {
+              fontSize: isMobile ? 12 : 14,
+              color: isDark ? "#888" : "#999"
+            }
           }
         },
         emphasis: {
           scale: true,
           scaleSize: 10,
-          label: { show: true, fontSize: 40, fontWeight: "bold" }
+          label: {
+            show: true,
+            fontSize: isSmall ? 28 : isMobile ? 32 : 40,
+            fontWeight: "bold"
+          }
         },
         labelLine: { show: false },
         data: chartData.map((d, i) => ({
@@ -663,6 +708,8 @@ const updateMasteryPieChart = () => {
 const updateMasterySummaryChart = () => {
   if (!masterySummaryChart) return;
   const isDark = props.currentTheme === "dark";
+  const isMobile = isMobileViewport();
+  const isSmall = isSmallViewport();
   const textColor = isDark ? "#b4b4c7" : "#909399";
   const borderColor = isDark ? "rgba(255,255,255,0.05)" : "#f0f2f5";
   const dataValues = [
@@ -674,7 +721,14 @@ const updateMasterySummaryChart = () => {
   const maxVal = Math.max(...dataValues);
 
   masterySummaryChart.setOption({
-    grid: { left: "15%", right: "5%", top: "15%", bottom: "15%" },
+    grid: isMobile
+      ? {
+          left: isSmall ? "10%" : "11%",
+          right: "4%",
+          top: "12%",
+          bottom: isSmall ? "15%" : "14%"
+        }
+      : { left: "15%", right: "5%", top: "15%", bottom: "15%" },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "none" },
@@ -692,7 +746,11 @@ const updateMasterySummaryChart = () => {
       data: ["基础", "重点", "难点", "概念"],
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: textColor, fontSize: 12, margin: 15 }
+      axisLabel: {
+        color: textColor,
+        fontSize: isSmall ? 11 : 12,
+        margin: isMobile ? 12 : 15
+      }
     },
     yAxis: {
       type: "value",
@@ -702,7 +760,11 @@ const updateMasterySummaryChart = () => {
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: { lineStyle: { color: borderColor, type: "solid" } },
-      axisLabel: { show: true, color: textColor, fontSize: 11 }
+      axisLabel: {
+        show: true,
+        color: textColor,
+        fontSize: isSmall ? 10 : 11
+      }
     },
     series: [
       {
@@ -739,15 +801,15 @@ const updateMasterySummaryChart = () => {
             }
           };
         }),
-        barWidth: 28,
+        barWidth: isSmall ? 18 : isMobile ? 22 : 28,
         showBackground: false,
         label: {
           show: true,
           position: "top",
-          distance: 5,
+          distance: isMobile ? 2 : 5,
           color: isDark ? "#fff" : "#303133",
           fontWeight: "bold",
-          fontSize: 14
+          fontSize: isSmall ? 12 : 14
         }
       }
     ]
@@ -757,6 +819,10 @@ const updateMasterySummaryChart = () => {
 const handleResize = () => {
   masterySummaryChart?.resize();
   masteryPieChart?.resize();
+  if (props.visible) {
+    updateMasterySummaryChart();
+    updateMasteryPieChart();
+  }
 };
 
 watch(
@@ -1176,6 +1242,194 @@ onUnmounted(() => {
 
 .spotlight-button:hover::before {
   opacity: 1;
+}
+
+@media (width <= 1100px) {
+  .mastery-page-content {
+    .mastery-summary-left,
+    .mastery-summary-charts {
+      max-width: none;
+      flex-basis: 100%;
+    }
+  }
+}
+
+@media (width <= 767px) {
+  .mastery-page-content {
+    min-height: 100vh;
+    overflow: visible;
+
+    .left-scroll {
+      height: auto;
+      min-height: 100vh;
+      padding: var(--course-mobile-top-offset, 156px) 14px
+        calc(24px + env(safe-area-inset-bottom));
+      overflow: visible;
+    }
+
+    .mastery-summary-wrapper {
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .mastery-summary-left {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 22px;
+    }
+
+    .summary-card {
+      min-height: 132px;
+      padding: 18px 16px;
+      border-radius: 18px;
+    }
+
+    .summary-title {
+      margin-bottom: 8px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .summary-value {
+      font-size: 40px;
+    }
+
+    .mastery-summary-charts {
+      flex-direction: column;
+      gap: 18px;
+      padding: 18px 14px;
+      border-radius: 22px;
+    }
+
+    .chart-box {
+      min-width: 0;
+    }
+
+    .summary-chart-title {
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+
+    .summary-chart-bar,
+    .summary-chart-pie {
+      height: 280px;
+    }
+  }
+
+  .chapters-grid {
+    gap: 16px;
+  }
+
+  .chapter-section {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .chapter-section:hover,
+  .point-item:hover {
+    transform: none;
+  }
+
+  .chapter-section h2 {
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  .point-section {
+    padding-left: 0;
+    margin-bottom: 14px;
+  }
+
+  .point-section > .collapsible-header {
+    gap: 12px;
+    padding: 12px 14px;
+    margin: 0 0 10px;
+    border-radius: 14px;
+  }
+
+  .point-section > .collapsible-header > div {
+    flex: 1;
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .point-section > .collapsible-header > div > span:last-child,
+  .chapter-section h2 {
+    word-break: break-word;
+  }
+
+  .point-item {
+    padding: 14px;
+  }
+
+  .point-title {
+    font-size: 14px;
+  }
+
+  .point-content {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .count-badge {
+    margin-right: 0;
+  }
+
+  .empty-wrapper {
+    padding: 80px 0 40px;
+  }
+}
+
+@media (width <= 479px) {
+  .mastery-page-content {
+    .left-scroll {
+      padding: var(--course-mobile-top-offset, 156px) 10px
+        calc(20px + env(safe-area-inset-bottom));
+    }
+
+    .mastery-summary-left {
+      padding: 12px;
+    }
+
+    .summary-card {
+      min-height: 116px;
+      padding: 16px 14px;
+    }
+
+    .summary-title {
+      font-size: 13px;
+    }
+
+    .summary-value {
+      font-size: 34px;
+    }
+
+    .mastery-summary-charts {
+      padding: 16px 12px;
+    }
+
+    .summary-chart-bar,
+    .summary-chart-pie {
+      height: 240px;
+    }
+  }
+
+  .chapter-section {
+    padding: 16px 14px;
+  }
+
+  .chapter-section h2 {
+    font-size: 16px;
+  }
+
+  .count-badge {
+    padding: 2px 7px;
+    font-size: 11px;
+  }
 }
 
 .empty-wrapper {

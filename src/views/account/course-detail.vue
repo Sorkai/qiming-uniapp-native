@@ -1,5 +1,5 @@
 <template>
-  <div class="course-detail-root" :class="currentTheme">
+  <div ref="courseRootEl" class="course-detail-root" :class="currentTheme">
     <div class="layout-container" :class="currentTheme">
       <!-- 侧边栏菜单 -->
       <CourseSidebar
@@ -226,6 +226,10 @@ watch(activeMenu, newVal => {
       }
     });
   }
+
+  nextTick(() => {
+    scheduleMobileTopOffsetUpdate();
+  });
 });
 
 // 监听路由参数变化，处理课程切换
@@ -264,6 +268,10 @@ watch(
           fetchCourseStudyEffect();
         }
       }
+
+      nextTick(() => {
+        scheduleMobileTopOffsetUpdate();
+      });
     }
   }
 );
@@ -358,6 +366,53 @@ const htmlAnimationLoading = ref(false);
 // 成绩相关
 const courseScores = ref<any>(null);
 
+const MOBILE_BREAKPOINT = 767;
+const courseRootEl = ref<HTMLElement | null>(null);
+let mobileOffsetRafId: number | null = null;
+
+const updateMobileTopOffset = () => {
+  const root = courseRootEl.value;
+  if (!root) return;
+
+  if (window.innerWidth > MOBILE_BREAKPOINT) {
+    root.style.removeProperty("--course-mobile-top-offset");
+    return;
+  }
+
+  const headerEl = document.querySelector(
+    ".layout-header"
+  ) as HTMLElement | null;
+  const sidebarEl = document.querySelector(
+    "#layout-sidebar"
+  ) as HTMLElement | null;
+  const headerBottom = headerEl?.getBoundingClientRect().bottom ?? 0;
+  const sidebarBottom = sidebarEl?.getBoundingClientRect().bottom ?? 0;
+  const safeGap = 16;
+  const measuredOffset = Math.ceil(
+    Math.max(headerBottom, sidebarBottom) + safeGap
+  );
+
+  root.style.setProperty(
+    "--course-mobile-top-offset",
+    `${Math.max(measuredOffset, 156)}px`
+  );
+};
+
+const scheduleMobileTopOffsetUpdate = () => {
+  if (mobileOffsetRafId !== null) {
+    cancelAnimationFrame(mobileOffsetRafId);
+  }
+
+  mobileOffsetRafId = requestAnimationFrame(() => {
+    mobileOffsetRafId = null;
+    updateMobileTopOffset();
+  });
+};
+
+const handleViewportResize = () => {
+  scheduleMobileTopOffsetUpdate();
+};
+
 // ================= 方法 =================
 
 // 主题切换
@@ -439,6 +494,10 @@ watch(
       layout.darkMode = val === "dark";
       storageLocal().setItem("responsive-layout", layout);
     }
+
+    nextTick(() => {
+      scheduleMobileTopOffsetUpdate();
+    });
   },
   { immediate: true }
 );
@@ -970,7 +1029,11 @@ const initQAHistory = () => {
 
 onMounted(async () => {
   document.body.classList.add("course-page");
+  courseRootEl.value = document.querySelector(
+    ".course-detail-root"
+  ) as HTMLElement | null;
   baseCourseId.value = Number(route.params.id);
+  window.addEventListener("resize", handleViewportResize, { passive: true });
 
   // 获取用户ID（如果还没有）
   if (!userStore.userId) {
@@ -1027,6 +1090,10 @@ onMounted(async () => {
       Date.now().toString() + Math.random().toString(36).substring(2);
     localStorage.setItem(`chat_${courseId.value}`, conversationId.value);
   }
+
+  nextTick(() => {
+    scheduleMobileTopOffsetUpdate();
+  });
 });
 
 // 当组件从keep-alive缓存中被激活时重新加载当前菜单数据
@@ -1037,10 +1104,19 @@ onActivated(() => {
       courseQARef.value?.refreshData?.();
     });
   }
+
+  nextTick(() => {
+    scheduleMobileTopOffsetUpdate();
+  });
 });
 
 onBeforeUnmount(() => {
   document.body.classList.remove("course-page");
+  window.removeEventListener("resize", handleViewportResize);
+  if (mobileOffsetRafId !== null) {
+    cancelAnimationFrame(mobileOffsetRafId);
+    mobileOffsetRafId = null;
+  }
 });
 </script>
 
@@ -1053,6 +1129,8 @@ onBeforeUnmount(() => {
 @import url("@/../coursecss/css/chunk-b4b575b6.fcb08796.css");
 
 .course-detail-root {
+  --course-mobile-top-offset: 156px;
+  --course-mobile-fab-clearance: 92px;
   width: 100%;
   min-height: 100vh;
   background-color: #f5f7fa;

@@ -599,13 +599,28 @@ const viewExam = (exam: any) => {
 }
 
 @media (max-width: 768px) {
+  .homework-exam-wrapper {
+    min-height: 100vh;
+  }
+
+  .homework-container {
+    height: auto;
+    min-height: 100vh;
+    padding: var(--course-mobile-top-offset, 156px) 16px
+      calc(24px + env(safe-area-inset-bottom));
+    overflow: visible;
+  }
+
   .homework-list,
   .exam-list {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 479px) {
   .homework-container {
-    padding: 80px 16px 24px;
+    padding: var(--course-mobile-top-offset, 156px) 10px
+      calc(20px + env(safe-area-inset-bottom));
   }
 }
 </style>

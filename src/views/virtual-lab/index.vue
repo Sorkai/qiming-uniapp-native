@@ -1173,6 +1173,18 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.focus-actions :deep(.el-button),
+.task-card__actions :deep(.el-button),
+.lab-search-form__actions :deep(.el-button) {
+  margin-left: 0;
+}
+
+.focus-actions :deep(.el-button + .el-button),
+.task-card__actions :deep(.el-button + .el-button),
+.lab-search-form__actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
 :deep(.el-input__wrapper),
 :deep(.el-select__wrapper) {
   border-radius: 14px;
@@ -1304,6 +1316,7 @@ onMounted(() => {
     .focus-actions :deep(.el-button),
     .task-card__actions :deep(.el-button) {
       width: 100%;
+      justify-content: center;
     }
   }
 }

@@ -1490,33 +1490,470 @@ const filterByTag = (tagName: string) => {
     flex: 1;
     min-width: 200px;
   }
+
+  .board-toolbar,
+  .message-card,
+  .post-composer,
+  .stats-card,
+  .hot-tags-card,
+  .rules-card {
+    border-radius: 18px;
+  }
 }
 
 @media (width <= 768px) {
   .message-board-container {
-    padding: 80px 16px 16px;
+    height: auto;
+    min-height: 100vh;
+    padding: var(--course-mobile-top-offset, 156px) 14px
+      calc(24px + env(safe-area-inset-bottom));
+    overflow: visible;
+  }
+
+  .board-main-content {
+    gap: 20px;
+  }
+
+  .board-left-panel {
+    gap: 16px;
+  }
+
+  .board-toolbar {
+    padding: 16px 14px;
   }
 
   .filter-tabs {
     flex-wrap: nowrap;
+    gap: 10px;
     padding-bottom: 8px;
     overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .filter-tab {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 13px;
     white-space: nowrap;
+    scroll-snap-align: start;
   }
 
   .message-card {
-    padding: 16px;
+    padding: 18px 16px;
+  }
+
+  .message-card:hover,
+  .tag-item:hover,
+  .cloud-tag:hover,
+  .submit-reply-btn:not(:disabled):hover {
+    transform: none;
+  }
+
+  .message-header {
+    gap: 14px;
+    flex-direction: column;
+    margin-bottom: 14px;
+  }
+
+  .author-info {
+    align-items: flex-start;
+  }
+
+  .author-details,
+  .reply-content,
+  .composer-title {
+    min-width: 0;
+  }
+
+  .author-name {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .post-meta {
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+
+  .header-right-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .pinned-badge,
   .status-badge {
-    top: 8px;
-    right: 12px;
-    padding: 2px 8px;
+    padding: 4px 10px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+
+  .message-title {
+    margin-bottom: 10px;
+    font-size: 17px;
+  }
+
+  .message-content {
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .message-footer {
+    gap: 12px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .action-btn {
+    flex: 0 0 auto;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .action-btn .el-icon {
+    font-size: 16px;
+  }
+
+  .view-count {
+    font-size: 12px;
+  }
+
+  .replies-section {
+    padding-top: 14px;
+    margin-top: 14px;
+  }
+
+  .reply-item {
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 10px;
+  }
+
+  .reply-header {
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .reply-time {
+    width: 100%;
+    margin-left: 0;
+    font-size: 12px;
+  }
+
+  .reply-text {
+    font-size: 13px;
+  }
+
+  .reply-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .reply-action-btn {
+    gap: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .reply-action-btn .el-icon {
+    font-size: 15px;
+  }
+
+  .quick-reply-box {
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 12px;
+    margin: 14px 0 4px;
+    border-radius: 14px;
+  }
+
+  .reply-input-wrapper :deep(.el-textarea__inner) {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .reply-input-actions {
+    gap: 10px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reply-input-actions .hint {
+    font-size: 12px;
+  }
+
+  .submit-reply-btn {
+    width: 100%;
+  }
+
+  .board-right-panel {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .post-composer,
+  .stats-card,
+  .hot-tags-card,
+  .rules-card {
+    min-width: 0;
+  }
+
+  .post-composer {
+    padding: 18px 16px;
+    border-radius: 18px;
+  }
+
+  .composer-header {
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+  }
+
+  .composer-title h3 {
+    font-size: 16px;
+  }
+
+  .composer-title p {
+    font-size: 12px;
+  }
+
+  .composer-body {
+    gap: 14px;
+  }
+
+  .content-editor :deep(.el-textarea__inner) {
+    padding: 12px 14px 46px;
+    font-size: 13px;
+  }
+
+  .editor-toolbar {
+    left: 10px;
+  }
+
+  .toolbar-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+
+  .post-notice {
+    align-items: flex-start;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .submit-btn {
+    height: 44px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+
+  .stats-card,
+  .hot-tags-card,
+  .rules-card {
+    padding: 16px 14px;
+    border-radius: 18px;
+  }
+
+  .stats-grid {
+    gap: 10px;
+  }
+
+  .stat-item {
+    padding: 10px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .cloud-tag {
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .rules-list li {
+    line-height: 1.8;
+  }
+
+  .empty-state {
+    padding: 52px 20px;
+  }
+}
+
+@media (width <= 479px) {
+  .message-board-container {
+    padding: var(--course-mobile-top-offset, 156px) 10px
+      calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .board-main-content {
+    gap: 16px;
+  }
+
+  .board-toolbar {
+    padding: 14px 12px;
+    border-radius: 16px;
+  }
+
+  .search-box {
+    margin-bottom: 12px;
+  }
+
+  .search-box :deep(.el-input__wrapper),
+  .title-input :deep(.el-input__wrapper) {
+    padding: 7px 12px;
+  }
+
+  .filter-tabs {
+    gap: 8px;
+    padding-bottom: 6px;
+  }
+
+  .filter-tab {
+    gap: 6px;
+    height: 34px;
+    padding: 0 13px;
+    font-size: 12px;
+    border-radius: 9px;
+  }
+
+  .tab-icon {
+    font-size: 14px;
+  }
+
+  .tab-count {
+    padding: 1px 5px;
     font-size: 10px;
+  }
+
+  .message-card {
+    padding: 16px 14px;
+    border-radius: 16px;
+  }
+
+  .author-info {
+    gap: 10px;
+  }
+
+  .message-title {
+    font-size: 16px;
+  }
+
+  .message-tags {
+    gap: 6px;
+  }
+
+  .tag-item {
+    height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+    line-height: 24px;
+  }
+
+  .action-buttons {
+    gap: 8px;
+  }
+
+  .action-btn {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .reply-item {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .reply-item > :deep(.el-avatar) {
+    align-self: flex-start;
+  }
+
+  .reply-text {
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .reply-actions {
+    gap: 6px;
+  }
+
+  .reply-action-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .quick-reply-box {
+    flex-direction: column;
+    padding: 12px 10px;
+  }
+
+  .quick-reply-box > :deep(.el-avatar) {
+    align-self: flex-start;
+  }
+
+  .post-composer {
+    padding: 16px 14px;
+    border-radius: 16px;
+  }
+
+  .composer-header {
+    gap: 10px;
+  }
+
+  .composer-title h3 {
+    font-size: 15px;
+  }
+
+  .content-editor :deep(.el-textarea__inner) {
+    padding: 10px 12px 44px;
+  }
+
+  .toolbar-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .stats-card,
+  .hot-tags-card,
+  .rules-card {
+    padding: 14px 12px;
+    border-radius: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-item {
+    gap: 8px;
+  }
+
+  .stat-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .card-title {
+    margin-bottom: 14px;
+    font-size: 14px;
   }
 }
 
@@ -1525,7 +1962,9 @@ const filterByTag = (tagName: string) => {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 100%;
   height: 100%;
+  overflow-x: hidden;
   background-color: transparent;
   opacity: 0;
   animation: fadeIn 0.4s ease-out forwards;
@@ -1550,8 +1989,10 @@ const filterByTag = (tagName: string) => {
   flex: 1;
   flex-direction: column;
   width: 100%;
+  max-width: 100%;
   height: 100%;
   padding: 80px 32px 24px;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
@@ -1596,6 +2037,8 @@ const filterByTag = (tagName: string) => {
   flex: 1;
   gap: 32px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   margin: 0;
 }
 
@@ -1605,10 +2048,14 @@ const filterByTag = (tagName: string) => {
   flex: 1;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 /* 工具栏 */
 .board-toolbar {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   padding: 20px;
   background: #fff;
   border-radius: 16px;
@@ -1716,11 +2163,15 @@ const filterByTag = (tagName: string) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 /* 消息卡片 */
 .message-card {
   position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   padding: 24px;
   background: #fff;
   border: 1px solid transparent;
@@ -1811,6 +2262,7 @@ const filterByTag = (tagName: string) => {
   display: flex;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .author-avatar {
@@ -1913,6 +2365,7 @@ const filterByTag = (tagName: string) => {
   font-weight: 600;
   line-height: 1.4;
   color: #303133;
+  overflow-wrap: anywhere;
 }
 
 .dark .message-title {
@@ -1924,6 +2377,7 @@ const filterByTag = (tagName: string) => {
   line-height: 1.8;
   color: #606266;
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .dark .message-content {
@@ -1962,6 +2416,14 @@ const filterByTag = (tagName: string) => {
 .dark .message-content :deep(code) {
   color: #ff79c6;
   background: #333;
+}
+
+.message-content :deep(pre),
+.reply-text :deep(pre) {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .expand-btn {
@@ -2094,6 +2556,7 @@ const filterByTag = (tagName: string) => {
 
 .reply-content {
   flex: 1;
+  min-width: 0;
 }
 
 .reply-header {
@@ -2133,6 +2596,7 @@ const filterByTag = (tagName: string) => {
   font-size: 14px;
   line-height: 1.6;
   color: #606266;
+  overflow-wrap: anywhere;
 }
 
 .dark .reply-text {
@@ -2348,10 +2812,15 @@ const filterByTag = (tagName: string) => {
   flex-direction: column;
   gap: 20px;
   width: 380px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* 发帖卡片 */
 .post-composer {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   padding: 24px;
   background: #fff;
   border-radius: 20px;
@@ -2427,6 +2896,7 @@ const filterByTag = (tagName: string) => {
 
 .content-editor {
   position: relative;
+  min-width: 0;
 }
 
 .content-editor :deep(.el-textarea__inner) {
@@ -2542,6 +3012,9 @@ const filterByTag = (tagName: string) => {
 .stats-card,
 .hot-tags-card,
 .rules-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   padding: 20px;
   background: #fff;
   border-radius: 16px;

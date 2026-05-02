@@ -13,6 +13,7 @@ import {
   defineComponent,
   type CSSProperties
 } from "vue";
+import { useRoute } from "vue-router";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 
 const props = defineProps({
@@ -20,6 +21,7 @@ const props = defineProps({
 });
 
 const appStore = useAppStoreHook();
+const route = useRoute();
 const { t } = useI18n();
 const { showModel } = useTags();
 const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
@@ -39,7 +41,7 @@ const hideTabs = computed(() => {
 });
 
 const hideFooter = computed(() => {
-  return $storage?.configure.hideFooter;
+  return $storage?.configure.hideFooter || route.meta?.hideFooter === true;
 });
 
 const stretch = computed(() => {

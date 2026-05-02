@@ -207,6 +207,13 @@
                           )
                         "
                       >
+                        <div
+                          v-if="
+                            activeNode ===
+                            `${Number(cIndex) + 1}.${Number(hIndex) + 1}`
+                          "
+                          class="lesson-active-bg"
+                        />
                         <div class="lesson-left">
                           <div class="lesson-icon">
                             <svg
@@ -1228,13 +1235,17 @@ $shadow-xl:
 }
 
 .lesson-node {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
+  column-gap: 12px;
   padding: 12px 16px;
   cursor: pointer;
+  overflow: hidden;
   border: 1px solid transparent;
   border-radius: $radius-md;
+  isolation: isolate;
   transition: all 0.2s ease;
 
   &:hover {
@@ -1243,11 +1254,6 @@ $shadow-xl:
   }
 
   &.active {
-    background: linear-gradient(
-      135deg,
-      rgb(99 102 241 / 10%) 0%,
-      rgb(99 102 241 / 5%) 100%
-    );
     border-color: rgb(99 102 241 / 20%);
 
     .lesson-icon {
@@ -1258,6 +1264,12 @@ $shadow-xl:
     .lesson-num {
       color: $primary;
     }
+
+    .lesson-left,
+    .lesson-info,
+    .lesson-right {
+      background: transparent !important;
+    }
   }
 
   &.completed {
@@ -1267,12 +1279,27 @@ $shadow-xl:
     }
   }
 
+  .lesson-active-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgb(99 102 241 / 10%) 0%,
+      rgb(99 102 241 / 5%) 100%
+    );
+    border-radius: inherit;
+  }
+
   .lesson-left {
     display: flex;
-    flex: 1;
     gap: 12px;
     align-items: center;
     min-width: 0;
+    position: relative;
+    z-index: 1;
+    background: transparent;
   }
 
   .lesson-icon {
@@ -1298,6 +1325,7 @@ $shadow-xl:
     flex-direction: column;
     gap: 2px;
     min-width: 0;
+    background: transparent;
 
     .lesson-num {
       font-size: 11px;
@@ -1319,7 +1347,14 @@ $shadow-xl:
   }
 
   .lesson-right {
+    display: flex;
     flex-shrink: 0;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 20px;
+    position: relative;
+    z-index: 1;
+    background: transparent;
   }
 }
 
@@ -1779,7 +1814,8 @@ $shadow-xl:
   .study-container {
     height: auto;
     min-height: 100vh;
-    padding: 164px 16px 20px;
+    padding: var(--course-mobile-top-offset, 156px) 16px
+      calc(20px + var(--course-mobile-fab-clearance, 92px));
   }
 
   .main-layout {
@@ -1916,7 +1952,30 @@ $shadow-xl:
   }
 
   .lesson-node {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
     padding: 12px;
+
+    .lesson-left {
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .lesson-right {
+      display: flex;
+      justify-content: flex-end;
+      min-width: 24px;
+    }
+
+    .lesson-info {
+      flex: 1;
+      min-width: 0;
+
+      .lesson-name {
+        white-space: normal;
+        word-break: break-word;
+      }
+    }
   }
 
   .ai-dialog-overlay {
@@ -1988,7 +2047,8 @@ $shadow-xl:
 /* stylelint-disable-next-line order/order */
 @media (width <= 479px) {
   .study-container {
-    padding: 156px 12px 16px;
+    padding: var(--course-mobile-top-offset, 156px) 12px
+      calc(16px + var(--course-mobile-fab-clearance, 92px));
   }
 
   .video-info-bar {
@@ -2040,6 +2100,27 @@ $shadow-xl:
     .catalog-header {
       .chapter-count {
         font-size: 12px;
+      }
+    }
+  }
+
+  .lesson-node {
+    align-items: flex-start;
+
+    .lesson-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+    }
+
+    .lesson-right {
+      align-self: center;
+    }
+
+    .lesson-info {
+      .lesson-name {
+        font-size: 12px;
+        line-height: 1.45;
       }
     }
   }

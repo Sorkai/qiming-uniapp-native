@@ -122,7 +122,10 @@
       >
         <!-- 顶部操作栏（内嵌在卡片顶部） -->
         <div
-          class="content-toolbar px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-fill-color-light)]/30 flex-shrink-0"
+          :class="[
+            'content-toolbar px-6 py-4 border-b border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)]/30 flex-shrink-0',
+            isCompactLayout ? 'content-toolbar--compact' : 'flex justify-between items-center'
+          ]"
         >
           <div class="toolbar-status flex items-center space-x-4">
             <div
@@ -141,7 +144,7 @@
             </div>
           </div>
 
-          <div class="toolbar-actions flex gap-2">
+          <div :class="['toolbar-actions flex gap-2', { 'toolbar-actions--compact': isCompactLayout }]">
             <el-button
               :disabled="!selectedChapterId"
               class="!rounded-xl !h-10 !px-4"
@@ -197,12 +200,15 @@
         </div>
         <div v-else class="flex-1 flex flex-col overflow-hidden">
           <div
-            class="filter-toolbar flex justify-between items-center mb-5 pb-5 border-b border-[var(--el-border-color-lighter)]"
+            :class="[
+              'filter-toolbar mb-5 pb-5 border-b border-[var(--el-border-color-lighter)]',
+              isCompactLayout ? 'filter-toolbar--compact' : 'flex justify-between items-center'
+            ]"
           >
             <el-radio-group
               v-model="statusFilter"
               size="large"
-              class="animation-filter-group"
+              :class="['animation-filter-group', { 'animation-filter-group--compact': isCompactLayout }]"
               @change="applyFilter"
             >
               <el-radio-button value="all">
@@ -231,7 +237,10 @@
               placeholder="搜索文件名..."
               clearable
               size="large"
-              :class="['!rounded-xl filter-keyword', isMobile ? '!w-full' : '!w-80']"
+              :class="[
+                '!rounded-xl filter-keyword',
+                isMobile || isCompactLayout ? '!w-full' : '!w-80'
+              ]"
               @input="applyFilter"
             >
               <template #prefix
@@ -283,11 +292,11 @@
                   >
                     {{
                       row.status === "completed"
-                        ? "瀹屾垚"
+                        ? "完成"
                         : row.status === "processing"
-                          ? "澶勭悊涓?"
+                          ? "处理中"
                           : row.status === "failed"
-                            ? "澶辫触"
+                            ? "失败"
                             : row.status
                     }}
                   </div>
@@ -314,22 +323,25 @@
                   <el-button
                     type="primary"
                     plain
+                    class="mobile-animation-action-btn"
                     :disabled="row.status !== 'completed'"
                     @click="openPreview(row)"
                   >
-                    棰勮
+                    预览
                   </el-button>
                   <el-button
                     type="success"
                     plain
+                    class="mobile-animation-action-btn"
                     :disabled="row.status !== 'completed' || isDisplayVersion(row)"
                     @click="setDisplay(row)"
                   >
-                    灞曠ず
+                    展示
                   </el-button>
                   <el-button
                     type="info"
                     plain
+                    class="mobile-animation-action-btn"
                     :disabled="row.status !== 'completed'"
                     @click="copyUrl(row)"
                   >
@@ -600,6 +612,7 @@ defineOptions({
 });
 
 const { isMobile, getDialogWidth } = usePageResponsive();
+const isCompactLayout = ref(false);
 
 const selectedCourseId = ref<number | null>(null);
 const selectedChapterId = ref<number | null>(null);
@@ -621,6 +634,11 @@ const keyword = ref("");
 
 const previewVisible = ref(false);
 const previewUrl = ref("");
+
+const updateCompactLayout = () => {
+  if (typeof window === "undefined") return;
+  isCompactLayout.value = window.innerWidth <= 1120 && !isMobile.value;
+};
 
 // 统计
 const stats = computed(() => {
@@ -899,7 +917,13 @@ function rowClassName({ row }: { row: HtmlAnimationTask }) {
 }
 
 onMounted(() => {
+  updateCompactLayout();
+  window.addEventListener("resize", updateCompactLayout);
   preloadCourses();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateCompactLayout);
 });
 </script>
 
@@ -1077,6 +1101,42 @@ onMounted(() => {
     background: var(--el-color-primary) !important;
     border-color: var(--el-color-primary) !important;
     box-shadow: 0 2px 8px rgba(var(--el-color-primary-rgb), 0.3) !important;
+  }
+}
+
+.content-toolbar--compact,
+.filter-toolbar--compact {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.toolbar-actions--compact {
+  width: 100%;
+  justify-content: stretch;
+}
+
+.toolbar-actions--compact :deep(.el-button) {
+  flex: 1;
+  min-width: 0;
+}
+
+.animation-filter-group--compact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  width: 100%;
+
+  :deep(.el-radio-button) {
+    width: 100%;
+  }
+
+  :deep(.el-radio-button__inner) {
+    width: 100%;
+    margin-right: 0;
+    padding: 10px 14px;
+    text-align: center;
   }
 }
 
@@ -1324,8 +1384,27 @@ onMounted(() => {
 
 .mobile-animation-card__actions {
   margin-top: 14px;
-  justify-content: flex-start;
-  flex-wrap: wrap;
+  justify-content: stretch;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.mobile-animation-action-btn {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mobile-animation-action-btn :deep(span) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  line-height: 1;
 }
 
 @media (width <= 768px) {

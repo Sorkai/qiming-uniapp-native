@@ -235,7 +235,11 @@
               style="width: 100%"
               height="100%"
               class="task-table"
-              header-cell-class-name="!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-bold !text-base !py-4"
+              :header-cell-class-name="
+                isCompactLayout
+                  ? '!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-bold !text-sm !py-2.5'
+                  : '!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-bold !text-base !py-4'
+              "
             >
               <el-table-column label="文件名" prop="fileName" min-width="200">
                 <template #default="{ row }">
@@ -551,6 +555,12 @@ defineOptions({ name: "VideoAnalysis" });
 
 const appStore = useAppStoreHook();
 const isMobileLayout = computed(() => appStore.getDevice === "mobile");
+const isCompactLayout = ref(false);
+
+const updateCompactLayout = () => {
+  if (typeof window === "undefined") return;
+  isCompactLayout.value = window.innerWidth <= 1120 && !isMobileLayout.value;
+};
 
 // ========== 课程/章节选择 ==========
 const selectedCourseId = ref<number>();
@@ -895,10 +905,13 @@ const statusLabel = (status: string) => {
 
 // ========== 生命周期 ==========
 onMounted(() => {
+  updateCompactLayout();
+  window.addEventListener("resize", updateCompactLayout);
   searchCourses("");
 });
 
 onUnmounted(() => {
+  window.removeEventListener("resize", updateCompactLayout);
   stopPolling();
 });
 </script>

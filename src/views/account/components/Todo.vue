@@ -26,9 +26,9 @@
       <div
         v-for="todo in filteredTodos"
         :key="todo.id"
-        class="todo-row card mb-4 flex items-center justify-between"
+        class="todo-row card mb-4"
       >
-        <div class="todo-info flex items-center gap-6 flex-1">
+        <div class="todo-info">
           <div class="status-icon">
             <el-checkbox
               :model-value="todo.completed"
@@ -37,7 +37,7 @@
             />
           </div>
           <div class="text-content">
-            <div class="title-row flex items-center gap-3">
+            <div class="title-row">
               <span :class="['title', { 'is-completed': todo.completed }]">
                 {{ todo.title }}
               </span>
@@ -48,7 +48,7 @@
                 {{ todo.completed ? "已完成" : "待处理" }}
               </el-tag>
             </div>
-            <div class="meta-row mt-2 text-gray-500 text-base flex gap-6">
+            <div class="meta-row mt-2">
               <span
                 ><el-icon class="relative top-[2px]"><User /></el-icon>
                 {{ todo.publisher }}</span
@@ -60,17 +60,21 @@
             </div>
           </div>
         </div>
-        <div class="todo-actions flex gap-4">
-          <el-button
-            link
-            type="primary"
-            size="large"
+        <div class="todo-actions">
+          <button
+            type="button"
+            class="todo-action-btn todo-action-btn--edit"
             @click="openEditDialog(todo)"
-            >编辑</el-button
           >
-          <el-button link type="danger" size="large" @click="deleteTodo(todo)"
-            >删除</el-button
+            编辑
+          </button>
+          <button
+            type="button"
+            class="todo-action-btn todo-action-btn--delete"
+            @click="deleteTodo(todo)"
           >
+            删除
+          </button>
         </div>
       </div>
     </div>
@@ -424,6 +428,10 @@ const toggleStatus = (row: TodoItem) => {
   }
 
   .todo-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
     padding: 20px 30px;
     margin-bottom: 15px;
     background-color: var(--el-bg-color);
@@ -436,6 +444,10 @@ const toggleStatus = (row: TodoItem) => {
     }
 
     .todo-info {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      gap: 24px;
       min-width: 0;
     }
 
@@ -448,6 +460,9 @@ const toggleStatus = (row: TodoItem) => {
     }
 
     .title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       min-width: 0;
     }
 
@@ -464,27 +479,54 @@ const toggleStatus = (row: TodoItem) => {
     }
 
     .meta-row {
+      display: flex;
       flex-wrap: wrap;
+      gap: 0 24px;
       align-items: center;
       font-size: 15px;
+      color: var(--el-text-color-secondary);
       line-height: 1.7;
     }
 
     .todo-actions {
+      display: flex;
+      gap: 16px;
       flex-shrink: 0;
       align-items: center;
 
-      :deep(.el-button) {
+      .todo-action-btn {
         min-width: auto;
         padding: 0;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.4;
+        color: inherit;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        white-space: nowrap;
         box-shadow: none !important;
+        transition:
+          color 0.2s ease,
+          opacity 0.2s ease;
 
         &:hover,
         &:focus,
         &:focus-visible,
         &:active {
+          opacity: 0.85;
+          outline: none;
           box-shadow: none !important;
         }
+      }
+
+      .todo-action-btn--edit {
+        color: var(--el-color-primary);
+      }
+
+      .todo-action-btn--delete {
+        color: var(--el-color-danger);
       }
     }
   }
@@ -580,6 +622,8 @@ const toggleStatus = (row: TodoItem) => {
     }
 
     .todo-row {
+      flex-direction: column;
+      justify-content: flex-start;
       align-items: stretch;
       padding: 20px;
       margin-bottom: 14px;
@@ -589,8 +633,13 @@ const toggleStatus = (row: TodoItem) => {
       }
 
       .todo-info {
+        width: 100%;
         align-items: flex-start;
         gap: 14px;
+      }
+
+      .text-content {
+        width: 100%;
       }
 
       .title-row {
@@ -610,14 +659,42 @@ const toggleStatus = (row: TodoItem) => {
       }
 
       .todo-actions {
-        justify-content: flex-end;
-        gap: 22px;
-        margin-top: 14px;
-        margin-left: 34px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
+        margin-top: 16px;
+        margin-left: 0;
+        padding-top: 14px;
+        border-top: 1px solid var(--el-border-color-lighter);
 
-        :deep(.el-button) {
-          min-height: 24px;
-          font-size: 15px;
+        .todo-action-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          min-height: 40px;
+          margin: 0;
+          padding: 0 12px;
+          font-size: 14px;
+          font-weight: 600;
+          border: 1px solid transparent;
+          border-radius: 14px;
+          box-shadow: none !important;
+          white-space: nowrap;
+        }
+
+        .todo-action-btn--edit {
+          color: var(--el-color-primary);
+          background: var(--el-color-primary-light-9);
+          border-color: var(--el-color-primary-light-7);
+        }
+
+        .todo-action-btn--delete {
+          color: var(--el-color-danger);
+          background: var(--el-color-danger-light-9);
+          border-color: var(--el-color-danger-light-7);
         }
       }
     }

@@ -219,4 +219,83 @@ const viewMaterial = (material: any) => {
   padding: 10px 20px;
   font-size: 15px;
 }
+
+@media (width <= 768px) {
+  .course-materials-wrapper {
+    min-height: 100vh;
+  }
+
+  .materials-container {
+    height: auto;
+    min-height: 100vh;
+    padding: var(--course-mobile-top-offset, 156px) 14px
+      calc(24px + env(safe-area-inset-bottom));
+    overflow: visible;
+  }
+
+  .materials-list {
+    gap: 16px;
+  }
+
+  .material-item {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .material-icon img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .material-info .material-title {
+    font-size: 16px;
+    line-height: 1.5;
+    white-space: normal;
+  }
+
+  .material-info .material-type {
+    font-size: 13px;
+  }
+
+  .material-action .el-button {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (width <= 479px) {
+  .materials-container {
+    padding: var(--course-mobile-top-offset, 156px) 10px
+      calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .material-item {
+    flex-wrap: wrap;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .material-icon {
+    margin-right: 12px;
+  }
+
+  .material-info {
+    min-width: 0;
+    flex: 1 1 calc(100% - 54px);
+  }
+
+  .material-info .material-title {
+    font-size: 15px;
+  }
+
+  .material-action {
+    width: 100%;
+    margin-top: 8px;
+    margin-left: 0;
+  }
+
+  .material-action .el-button {
+    width: 100%;
+  }
+}
 </style>

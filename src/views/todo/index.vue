@@ -25,9 +25,9 @@
         <div
           v-for="todo in filteredTodos"
           :key="todo.id"
-          class="todo-row card mb-4 flex items-center justify-between"
+          class="todo-row card mb-4"
         >
-          <div class="todo-info flex items-center gap-4 flex-1">
+          <div class="todo-info">
             <div class="status-icon">
               <el-checkbox
                 :model-value="todo.completed"
@@ -36,7 +36,7 @@
               />
             </div>
             <div class="text-content">
-              <div class="title-row flex items-center gap-2">
+              <div class="title-row">
                 <span :class="['title', { 'is-completed': todo.completed }]">
                   {{ todo.title }}
                 </span>
@@ -47,7 +47,7 @@
                   {{ todo.completed ? "已完成" : "待处理" }}
                 </el-tag>
               </div>
-              <div class="meta-row mt-2 text-gray-500 text-base flex gap-6">
+              <div class="meta-row mt-2">
                 <span
                   ><el-icon class="relative top-[2px]"><User /></el-icon>
                   {{ todo.publisher }}</span
@@ -59,17 +59,21 @@
               </div>
             </div>
           </div>
-          <div class="todo-actions flex gap-4">
-            <el-button
-              link
-              type="primary"
-              size="large"
+          <div class="todo-actions">
+            <button
+              type="button"
+              class="todo-action-btn todo-action-btn--edit"
               @click="openEditDialog(todo)"
-              >编辑</el-button
             >
-            <el-button link type="danger" size="large" @click="deleteTodo(todo)"
-              >删除</el-button
+              编辑
+            </button>
+            <button
+              type="button"
+              class="todo-action-btn todo-action-btn--delete"
+              @click="deleteTodo(todo)"
             >
+              删除
+            </button>
           </div>
         </div>
       </div>
@@ -115,15 +119,7 @@
 import { ref, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
-import {
-  Plus,
-  Edit,
-  Delete,
-  Check,
-  Refresh,
-  User,
-  Clock
-} from "@element-plus/icons-vue";
+import { Plus, User, Clock } from "@element-plus/icons-vue";
 
 interface TodoItem {
   id: number;
@@ -325,6 +321,7 @@ const toggleStatus = (row: TodoItem) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
     margin-bottom: 10px;
 
     .header-left {
@@ -341,9 +338,52 @@ const toggleStatus = (row: TodoItem) => {
         color: var(--el-text-color-secondary);
       }
     }
+
+    .header-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    :deep(.el-radio-group) {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0;
+      overflow: hidden;
+      border-radius: 18px;
+      box-shadow: none;
+    }
+
+    :deep(.el-radio-button__inner) {
+      min-width: 88px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: none !important;
+    }
+
+    :deep(.el-radio-button:first-child .el-radio-button__inner) {
+      border-top-left-radius: 18px;
+      border-bottom-left-radius: 18px;
+    }
+
+    :deep(.el-radio-button:last-child .el-radio-button__inner) {
+      border-top-right-radius: 18px;
+      border-bottom-right-radius: 18px;
+    }
+
+    :deep(.el-button) {
+      box-shadow: none !important;
+    }
   }
 
   .todo-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
     padding: 20px 30px;
     margin-bottom: 15px;
     background-color: var(--el-bg-color);
@@ -355,14 +395,90 @@ const toggleStatus = (row: TodoItem) => {
       transform: translateY(-2px);
     }
 
+    .todo-info {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .status-icon {
+      flex-shrink: 0;
+    }
+
+    .text-content {
+      min-width: 0;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
     .title {
       font-size: 18px;
       font-weight: 600;
       color: var(--el-text-color-primary);
+      word-break: break-word;
 
       &.is-completed {
         color: var(--el-text-color-placeholder);
         text-decoration: line-through;
+      }
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 24px;
+      align-items: center;
+      font-size: 15px;
+      color: var(--el-text-color-secondary);
+      line-height: 1.7;
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 16px;
+      flex-shrink: 0;
+      align-items: center;
+
+      .todo-action-btn {
+        min-width: auto;
+        padding: 0;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.4;
+        color: inherit;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        white-space: nowrap;
+        box-shadow: none !important;
+        transition:
+          color 0.2s ease,
+          opacity 0.2s ease;
+
+        &:hover,
+        &:focus,
+        &:focus-visible,
+        &:active {
+          opacity: 0.85;
+          outline: none;
+          box-shadow: none !important;
+        }
+      }
+
+      .todo-action-btn--edit {
+        color: var(--el-color-primary);
+      }
+
+      .todo-action-btn--delete {
+        color: var(--el-color-danger);
       }
     }
   }
@@ -388,51 +504,124 @@ const toggleStatus = (row: TodoItem) => {
 
     .todo-header {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
       gap: 16px;
+    }
+
+    .header-right {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    :deep(.header-right .el-radio-group) {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    :deep(.header-right .el-radio-button) {
+      width: 100%;
+    }
+
+    :deep(.header-right .el-radio-button__inner) {
+      width: 100%;
+      min-width: 0;
+      padding: 12px 10px;
+      font-size: 15px;
+      border-left: 1px solid var(--el-border-color) !important;
+      border-radius: 0 !important;
+    }
+
+    :deep(.header-right .el-radio-button:first-child .el-radio-button__inner) {
+      border-top-left-radius: 18px !important;
+      border-bottom-left-radius: 18px !important;
+      border-left: 1px solid var(--el-border-color) !important;
+    }
+
+    :deep(.header-right .el-radio-button:last-child .el-radio-button__inner) {
+      border-top-right-radius: 18px !important;
+      border-bottom-right-radius: 18px !important;
+    }
+
+    :deep(.header-right .el-button) {
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+      font-size: 15px;
     }
   }
 
-  .header-right {
-    flex-direction: column;
-    align-items: stretch !important;
-    width: 100%;
-  }
-
-  :deep(.header-right .el-radio-group) {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
-  }
-
-  :deep(.header-right .el-radio-button__inner) {
-    width: 100%;
-  }
-
-  :deep(.header-right .el-button) {
-    width: 100%;
-  }
-
   .todo-container .todo-row {
-    padding: 18px 16px;
-  }
-
-  .todo-row,
-  .todo-info,
-  .todo-actions,
-  .meta-row {
     flex-direction: column;
-    align-items: flex-start !important;
-  }
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 18px 16px;
 
-  .todo-actions {
-    width: 100%;
-    gap: 8px !important;
-    margin-top: 12px;
-  }
+    .todo-info {
+      width: 100%;
+      align-items: flex-start;
+      gap: 14px;
+    }
 
-  :deep(.todo-actions .el-button) {
-    padding-left: 0;
+    .text-content {
+      width: 100%;
+    }
+
+    .title-row {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .title {
+      font-size: 17px;
+      line-height: 1.55;
+    }
+
+    .meta-row {
+      gap: 8px 16px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .todo-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      width: 100%;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--el-border-color-lighter);
+
+      .todo-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 40px;
+        margin: 0;
+        padding: 0 12px;
+        font-size: 14px;
+        font-weight: 600;
+        border: 1px solid transparent;
+        border-radius: 14px;
+        box-shadow: none !important;
+        white-space: nowrap;
+      }
+
+      .todo-action-btn--edit {
+        color: var(--el-color-primary);
+        background: var(--el-color-primary-light-9);
+        border-color: var(--el-color-primary-light-7);
+      }
+
+      .todo-action-btn--delete {
+        color: var(--el-color-danger);
+        background: var(--el-color-danger-light-9);
+        border-color: var(--el-color-danger-light-7);
+      }
+    }
   }
 }
 </style>

@@ -30,7 +30,7 @@ const position = ref({
 });
 
 const DESKTOP_BUTTON_SIZE = 56;
-const MOBILE_BUTTON_SIZE = 52;
+const MOBILE_BUTTON_SIZE = 48;
 const POSITION_PADDING = 10;
 const DRAG_THRESHOLD = 6;
 
@@ -73,11 +73,11 @@ const clampPosition = (left: number, top: number) => {
 
 const getDefaultPosition = () => {
   const size = getButtonSize();
-  const rightOffset = isMobile.value ? 16 : 30;
+  const rightOffset = isMobile.value ? 12 : 30;
   const bottomOffset = isMobile.value
     ? getCssPixelValue("--pure-mobile-tab-height") +
       getCssPixelValue("--pure-safe-area-bottom") +
-      20
+      12
     : 100;
 
   return clampPosition(
@@ -334,13 +334,13 @@ defineExpose({
 
 @media screen and (max-width: 768px) {
   .ai-float-button {
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
   }
 
   .ai-float-button .ai-icon {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
   }
 }
 </style>

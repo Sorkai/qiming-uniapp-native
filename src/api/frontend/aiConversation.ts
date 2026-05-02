@@ -17,7 +17,10 @@ import {
   CourseQARequest,
   CourseQAResponse,
   StreamCourseChatReq,
-  SimpleChatStreamData
+  SimpleChatStreamData,
+  UploadAttachmentStsInitParams,
+  UploadAttachmentStsInitResponse,
+  UploadAttachmentStsCompleteParams
 } from "@/components/AiScreenCapture/types";
 
 // ===== 通用响应类型 =====
@@ -137,6 +140,32 @@ export const uploadChatAttachment = (
       data: formData,
       headers: { "Content-Type": "multipart/form-data" }
     }
+  );
+};
+
+/** 初始化 AI 聊天附件 STS 上传
+ * POST /edu/frontend/v1/ai/chat/attachments/sts/init
+ */
+export const initChatAttachmentStsUpload = (
+  data: UploadAttachmentStsInitParams
+) => {
+  return http.request<ApiResponse<UploadAttachmentStsInitResponse>>(
+    "post",
+    "/edu/frontend/v1/ai/chat/attachments/sts/init",
+    { data }
+  );
+};
+
+/** 完成 AI 聊天附件 STS 上传
+ * POST /edu/frontend/v1/ai/chat/attachments/sts/complete
+ */
+export const completeChatAttachmentStsUpload = (
+  data: UploadAttachmentStsCompleteParams
+) => {
+  return http.request<ApiResponse<AttachmentInfo>>(
+    "post",
+    "/edu/frontend/v1/ai/chat/attachments/sts/complete",
+    { data }
   );
 };
 
