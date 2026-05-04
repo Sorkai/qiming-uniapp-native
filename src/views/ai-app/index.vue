@@ -11,6 +11,7 @@ import PathIcon from "@/assets/aiagentsvg/path-location-svgrepo-com.svg?componen
 import ProfileIcon from "@/assets/aiagentsvg/chart-user-square-svgrepo-com.svg?component";
 import AssessmentIcon from "@/assets/aiagentsvg/chart-line-svgrepo-com.svg?component";
 import AutomationIcon from "@/assets/aiagentsvg/script-coding-programming-svgrepo-com.svg?component";
+import AgentPdfWorkbench from "@/views/ai-app/AgentPdfWorkbench.vue";
 
 import * as echarts from "echarts";
 import katex from "katex";
@@ -25,18 +26,15 @@ import {
   MagicStick,
   Connection,
   Switch,
-  Promotion,
   Notebook,
   FolderOpened,
   PieChart,
   Collection,
   Cpu,
-  Operation,
   Paperclip,
   Check,
   Coordinate,
   Guide,
-  Brush,
   VideoPlay,
   Monitor
 } from "@element-plus/icons-vue";
@@ -143,7 +141,13 @@ const initCharts = () => {
     barChart = echarts.init(barChartRef.value);
     barChart.setOption({
       tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-      grid: { top: "10%", left: "3%", right: "4%", bottom: "3%", containLabel: true },
+      grid: {
+        top: "10%",
+        left: "3%",
+        right: "4%",
+        bottom: "3%",
+        containLabel: true
+      },
       xAxis: {
         type: "category",
         data: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -178,7 +182,12 @@ const initCharts = () => {
           type: "line",
           smooth: true,
           symbol: "none",
-          lineStyle: { width: 4, color: "var(--accent-secondary)", shadowBlur: 10, shadowColor: "rgba(0,0,0,0.1)" },
+          lineStyle: {
+            width: 4,
+            color: "var(--accent-secondary)",
+            shadowBlur: 10,
+            shadowColor: "rgba(0,0,0,0.1)"
+          },
           data: [100, 130, 120, 150, 140, 180, 170]
         }
       ]
@@ -188,7 +197,10 @@ const initCharts = () => {
 
 const renderMath = (tex: string) => {
   try {
-    return katex.renderToString(tex, { throwOnError: false, displayMode: false });
+    return katex.renderToString(tex, {
+      throwOnError: false,
+      displayMode: false
+    });
   } catch (e) {
     return tex;
   }
@@ -211,7 +223,10 @@ const isNewTab = computed(() => route.query.newTab === "true");
 onMounted(() => {
   // 如果不是新标签页打开，且是教师模式，则自动弹出新标签页并留在原地显示动画
   if (!isNewTab.value && mode.value === "教师模式") {
-    const url = window.location.href + (window.location.href.includes("?") ? "&" : "?") + "newTab=true";
+    const url =
+      window.location.href +
+      (window.location.href.includes("?") ? "&" : "?") +
+      "newTab=true";
     window.open(url, "_blank");
   }
 
@@ -282,6 +297,7 @@ const goBack = () => {
 const leftRailItems = [
   { key: "chat", label: "智能辅导", icon: ChatIcon },
   { key: "generation", label: "资源生成", icon: ResourceIcon },
+  { key: "agentpdf", label: "Agent PDF", icon: FolderOpened },
   { key: "path", label: "路径规划", icon: PathIcon },
   { key: "profile", label: "学习画像", icon: ProfileIcon },
   { key: "assessment", label: "学习评估", icon: AssessmentIcon },
@@ -289,11 +305,41 @@ const leftRailItems = [
 ];
 
 const agents = [
-  { id: "doc", name: "讲解专家", role: "讲解文档生成", icon: Notebook, status: "idle" },
-  { id: "map", name: "思维导图", role: "知识脉络构建", icon: Connection, status: "idle" },
-  { id: "exercise", name: "题库专家", role: "精准练习出题", icon: Collection, status: "idle" },
-  { id: "video", name: "视听专家", role: "教学视频制作", icon: VideoPlay, status: "idle" },
-  { id: "code", name: "实战教练", role: "代码案例演示", icon: Monitor, status: "idle" }
+  {
+    id: "doc",
+    name: "讲解专家",
+    role: "讲解文档生成",
+    icon: Notebook,
+    status: "idle"
+  },
+  {
+    id: "map",
+    name: "思维导图",
+    role: "知识脉络构建",
+    icon: Connection,
+    status: "idle"
+  },
+  {
+    id: "exercise",
+    name: "题库专家",
+    role: "精准练习出题",
+    icon: Collection,
+    status: "idle"
+  },
+  {
+    id: "video",
+    name: "视听专家",
+    role: "教学视频制作",
+    icon: VideoPlay,
+    status: "idle"
+  },
+  {
+    id: "code",
+    name: "实战教练",
+    role: "代码案例演示",
+    icon: Monitor,
+    status: "idle"
+  }
 ];
 
 const courses = [
@@ -301,19 +347,22 @@ const courses = [
     name: "数据结构与算法",
     tag: "计算机",
     progress: 72,
-    cover: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&auto=format&fit=crop&q=60"
+    cover:
+      "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&auto=format&fit=crop&q=60"
   },
   {
     name: "民法总论",
     tag: "法学",
     progress: 48,
-    cover: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=60"
+    cover:
+      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=60"
   },
   {
     name: "微观经济学",
     tag: "经济学",
     progress: 63,
-    cover: "https://images.unsplash.com/photo-1611974714658-75d325ad04da?w=400&auto=format&fit=crop&q=60"
+    cover:
+      "https://images.unsplash.com/photo-1611974714658-75d325ad04da?w=400&auto=format&fit=crop&q=60"
   }
 ];
 
@@ -330,6 +379,8 @@ const executionSteps = [
 ];
 
 const sourceItems = ["课程资料", "学习画像", "最近练习"];
+
+const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
 const accentMap: Record<string, ThemeAccent> = {
   light: {
@@ -441,13 +492,17 @@ const getStatusText = (status: string) => {
   if (status === "running") return "进行中";
   return "等待";
 };
+
+const currentExecutionSteps = computed(() => executionSteps);
+
+const currentSourceItems = computed(() => sourceItems);
 </script>
 
 <template>
   <div class="ai-app-page" :class="currentTheme" :style="themeVars">
     <div v-if="!isNewTab && mode === '教师模式'" class="placeholder-container">
       <div class="animation-box">
-        <div class="pulse-ring"></div>
+        <div class="pulse-ring" />
         <el-icon class="ai-icon"><Cpu /></el-icon>
       </div>
       <h2>AI 工作台已在新窗口打开</h2>
@@ -468,8 +523,8 @@ const getStatusText = (status: string) => {
 
           <div class="flex items-center ml-4">
             <span
-              class="text-xl font-black italic tracking-tighter text-blue-600/80 uppercase"
-              >Intelledu</span
+              class="logo-text text-xl font-black italic tracking-tighter uppercase"
+              >IntellEdu</span
             >
             <div class="h-4 w-[1px] bg-gray-300 mx-4" />
             <span
@@ -490,7 +545,7 @@ const getStatusText = (status: string) => {
         </div>
       </header>
 
-      <div class="app-body">
+      <div :class="['app-body', { 'is-agent-pdf': activeRail === 'agentpdf' }]">
         <div class="rail-area reveal" style="--delay: 0.08s">
           <aside class="nav-rail">
             <button
@@ -510,7 +565,11 @@ const getStatusText = (status: string) => {
           </aside>
         </div>
 
-        <aside class="course-column reveal" style="--delay: 0.12s">
+        <aside
+          v-if="activeRail !== 'agentpdf'"
+          class="course-column reveal"
+          style="--delay: 0.12s"
+        >
           <div class="column-header">
             <h3>选择课程</h3>
             <span class="count">{{ courses.length }}</span>
@@ -547,7 +606,10 @@ const getStatusText = (status: string) => {
 
         <main class="workspace">
           <!-- Chat / Tutoring -->
-          <section v-if="activeRail === 'chat'" class="content-view tutoring-view reveal">
+          <section
+            v-if="activeRail === 'chat'"
+            class="content-view tutoring-view reveal"
+          >
             <header class="view-header">
               <div class="view-title">
                 <el-icon><ChatDotRound /></el-icon>
@@ -555,7 +617,7 @@ const getStatusText = (status: string) => {
               </div>
               <div class="view-actions">
                 <span class="status-indicator">
-                  <span class="dot active"></span>
+                  <span class="dot active" />
                   AI 助教已就绪
                 </span>
               </div>
@@ -565,7 +627,11 @@ const getStatusText = (status: string) => {
               <div class="tutoring-main">
                 <div class="tutoring-copy">
                   <h1>我们今天构建什么课程能力？</h1>
-                  <p>基于当前课程《{{ activeCourseInfo.name }}》，您可以尝试以下指令：</p>
+                  <p>
+                    基于当前课程《{{
+                      activeCourseInfo.name
+                    }}》，您可以尝试以下指令：
+                  </p>
                 </div>
 
                 <div class="composer-container">
@@ -625,7 +691,10 @@ const getStatusText = (status: string) => {
           </section>
 
           <!-- Resource Generation -->
-          <section v-else-if="activeRail === 'generation'" class="content-view generation-view reveal">
+          <section
+            v-else-if="activeRail === 'generation'"
+            class="content-view generation-view reveal"
+          >
             <header class="view-header">
               <div class="view-title">
                 <el-icon><Cpu /></el-icon>
@@ -640,7 +709,11 @@ const getStatusText = (status: string) => {
             <div class="view-body">
               <div class="gen-intro">
                 <h3>协作智能体矩阵</h3>
-                <p>依据您的专业背景与课程《{{ activeCourseInfo.name }}》自动生成多模态资料</p>
+                <p>
+                  依据您的专业背景与课程《{{
+                    activeCourseInfo.name
+                  }}》自动生成多模态资料
+                </p>
               </div>
               <div class="agent-grid">
                 <div v-for="agent in agents" :key="agent.id" class="agent-card">
@@ -652,16 +725,43 @@ const getStatusText = (status: string) => {
                     <p>{{ agent.role }}</p>
                   </div>
                   <div class="agent-status">
-                    <span class="status-dot" :class="agent.status"></span>
-                    {{ agent.status === 'idle' ? '待命' : '生成中' }}
+                    <span class="status-dot" :class="agent.status" />
+                    {{ agent.status === "idle" ? "待命" : "生成中" }}
                   </div>
                 </div>
               </div>
             </div>
           </section>
 
+          <section
+            v-else-if="activeRail === 'agentpdf'"
+            class="content-view agentpdf-view reveal"
+          >
+            <header class="view-header">
+              <div class="view-title">
+                <el-icon><FolderOpened /></el-icon>
+                <h2>Agent PDF 工作台</h2>
+              </div>
+            </header>
+
+            <div class="view-body agentpdf-body">
+              <section class="agentpdf-workbench-panel">
+                <div class="card-title-row">
+                  <div>
+                    <h3>翻译工作台</h3>
+                    <p class="card-subtitle">上传 PDF 并开始翻译任务</p>
+                  </div>
+                </div>
+                <AgentPdfWorkbench :service-url="pdfServiceUrl" />
+              </section>
+            </div>
+          </section>
+
           <!-- Learning Path -->
-          <section v-else-if="activeRail === 'path'" class="content-view path-view reveal">
+          <section
+            v-else-if="activeRail === 'path'"
+            class="content-view path-view reveal"
+          >
             <header class="view-header">
               <div class="view-title">
                 <el-icon><Guide /></el-icon>
@@ -669,18 +769,45 @@ const getStatusText = (status: string) => {
               </div>
               <div class="path-meta">
                 <span class="meta-item">专业：计算机科学</span>
-                <span class="meta-item">进度：{{ activeCourseInfo.progress }}%</span>
+                <span class="meta-item"
+                  >进度：{{ activeCourseInfo.progress }}%</span
+                >
               </div>
             </header>
 
             <div class="view-body">
               <div class="path-steps">
-                <div v-for="(step, idx) in [
-                  { title: '知识点回顾', type: 'DOC', desc: '红黑树基础理论与特性', status: 'done' },
-                  { title: '逻辑梳理', type: 'MAP', desc: '构建动态平衡调整脉络图', status: 'active' },
-                  { title: '进阶实战', type: 'CODE', desc: '实现旋转与变色算法逻辑', status: 'pending' },
-                  { title: '能力评估', type: 'EXAM', desc: '完成 10 道针对性练习题', status: 'pending' }
-                ]" :key="idx" class="path-step-card" :class="step.status">
+                <div
+                  v-for="(step, idx) in [
+                    {
+                      title: '知识点回顾',
+                      type: 'DOC',
+                      desc: '红黑树基础理论与特性',
+                      status: 'done'
+                    },
+                    {
+                      title: '逻辑梳理',
+                      type: 'MAP',
+                      desc: '构建动态平衡调整脉络图',
+                      status: 'active'
+                    },
+                    {
+                      title: '进阶实战',
+                      type: 'CODE',
+                      desc: '实现旋转与变色算法逻辑',
+                      status: 'pending'
+                    },
+                    {
+                      title: '能力评估',
+                      type: 'EXAM',
+                      desc: '完成 10 道针对性练习题',
+                      status: 'pending'
+                    }
+                  ]"
+                  :key="idx"
+                  class="path-step-card"
+                  :class="step.status"
+                >
                   <div class="step-num">{{ idx + 1 }}</div>
                   <div class="step-main">
                     <div class="step-badge">{{ step.type }}</div>
@@ -689,7 +816,9 @@ const getStatusText = (status: string) => {
                   </div>
                   <button class="step-btn">
                     <template v-if="step.status === 'done'">重新复习</template>
-                    <template v-else-if="step.status === 'active'">继续学习</template>
+                    <template v-else-if="step.status === 'active'"
+                      >继续学习</template
+                    >
                     <template v-else>立即开始</template>
                   </button>
                 </div>
@@ -698,7 +827,10 @@ const getStatusText = (status: string) => {
           </section>
 
           <!-- Learning Profile -->
-          <section v-else-if="activeRail === 'profile'" class="content-view profile-view reveal">
+          <section
+            v-else-if="activeRail === 'profile'"
+            class="content-view profile-view reveal"
+          >
             <header class="view-header">
               <div class="view-title">
                 <el-icon><User /></el-icon>
@@ -710,10 +842,13 @@ const getStatusText = (status: string) => {
                 <div class="profile-card hero">
                   <div class="hero-header">
                     <div class="avatar-large">
-                      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+                      <img
+                        src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                        alt="avatar"
+                      />
                     </div>
                     <div class="hero-info">
-                      <h3>{{ userInfo?.username || '演示用户' }}</h3>
+                      <h3>{{ userInfo?.username || "演示用户" }}</h3>
                       <p>计算机科学与技术 · 大三</p>
                     </div>
                   </div>
@@ -734,12 +869,17 @@ const getStatusText = (status: string) => {
                 </div>
                 <div class="profile-card">
                   <h4>核心技能雷达</h4>
-                  <div ref="radarChartRef" class="chart-container"></div>
+                  <div ref="radarChartRef" class="chart-container" />
                 </div>
                 <div class="profile-card">
                   <h4>学习活跃度</h4>
                   <div class="activity-grid">
-                    <div v-for="n in 28" :key="n" class="activity-dot" :class="{ active: n % 3 === 0, strong: n % 7 === 0 }"></div>
+                    <div
+                      v-for="n in 28"
+                      :key="n"
+                      class="activity-dot"
+                      :class="{ active: n % 3 === 0, strong: n % 7 === 0 }"
+                    />
                   </div>
                 </div>
               </div>
@@ -747,7 +887,10 @@ const getStatusText = (status: string) => {
           </section>
 
           <!-- Learning Assessment -->
-          <section v-else-if="activeRail === 'assessment'" class="content-view assessment-view reveal">
+          <section
+            v-else-if="activeRail === 'assessment'"
+            class="content-view assessment-view reveal"
+          >
             <header class="view-header">
               <div class="view-title">
                 <el-icon><DataAnalysis /></el-icon>
@@ -763,20 +906,29 @@ const getStatusText = (status: string) => {
                   </div>
                   <div class="score-desc">
                     <h4>当前课程掌握度：良好</h4>
-                    <p v-html="renderMath('P(x) = \\sum_{i=0}^{n} a_i x^i')"></p>
-                    <p>您的算法逻辑理解较强，但在时空复杂度分析上仍有提升空间。</p>
+                    <p v-html="renderMath('P(x) = \\sum_{i=0}^{n} a_i x^i')" />
+                    <p>
+                      您的算法逻辑理解较强，但在时空复杂度分析上仍有提升空间。
+                    </p>
                   </div>
                 </div>
                 <div class="knowledge-mastery">
                   <h4>学习活跃度趋势</h4>
-                  <div ref="barChartRef" class="chart-container" style="height: 240px;"></div>
+                  <div
+                    ref="barChartRef"
+                    class="chart-container"
+                    style="height: 240px"
+                  />
                 </div>
               </div>
             </div>
           </section>
 
           <!-- Automation -->
-          <section v-else-if="activeRail === 'automation'" class="content-view automation-view reveal">
+          <section
+            v-else-if="activeRail === 'automation'"
+            class="content-view automation-view reveal"
+          >
             <header class="view-header">
               <div class="view-title">
                 <el-icon><Switch /></el-icon>
@@ -786,11 +938,27 @@ const getStatusText = (status: string) => {
             </header>
             <div class="view-body">
               <div class="auto-list">
-                <div v-for="task in [
-                  { name: '课后总结自动生成', desc: '每节直播课结束后，自动提取关键知识点并生成总结文档', status: true },
-                  { name: '个性化错题集推送', desc: '每周五晚上 8 点，根据本周评估结果整理薄弱项练习题', status: true },
-                  { name: '学习进度超前提醒', desc: '当课程学习进度超过 10% 的平均水平时，自动推送进阶实操案例', status: false }
-                ]" :key="task.name" class="auto-card">
+                <div
+                  v-for="task in [
+                    {
+                      name: '课后总结自动生成',
+                      desc: '每节直播课结束后，自动提取关键知识点并生成总结文档',
+                      status: true
+                    },
+                    {
+                      name: '个性化错题集推送',
+                      desc: '每周五晚上 8 点，根据本周评估结果整理薄弱项练习题',
+                      status: true
+                    },
+                    {
+                      name: '学习进度超前提醒',
+                      desc: '当课程学习进度超过 10% 的平均水平时，自动推送进阶实操案例',
+                      status: false
+                    }
+                  ]"
+                  :key="task.name"
+                  class="auto-card"
+                >
                   <div class="auto-info">
                     <h4>{{ task.name }}</h4>
                     <p>{{ task.desc }}</p>
@@ -805,7 +973,9 @@ const getStatusText = (status: string) => {
           <section v-else class="content-view empty-view reveal">
             <header class="view-header">
               <div class="view-title">
-                <h2>{{ leftRailItems.find(i => i.key === activeRail)?.label }}</h2>
+                <h2>
+                  {{ leftRailItems.find(i => i.key === activeRail)?.label }}
+                </h2>
               </div>
             </header>
             <div class="view-body centered">
@@ -818,7 +988,11 @@ const getStatusText = (status: string) => {
           </section>
         </main>
 
-        <aside class="context-panel panel reveal" style="--delay: 0.18s">
+        <aside
+          v-if="activeRail !== 'agentpdf'"
+          class="context-panel panel reveal"
+          style="--delay: 0.18s"
+        >
           <div class="context-tabs">
             <button
               v-for="tab in contextTabs"
@@ -837,7 +1011,7 @@ const getStatusText = (status: string) => {
             </div>
             <div class="trace-list">
               <div
-                v-for="step in executionSteps"
+                v-for="step in currentExecutionSteps"
                 :key="step.title"
                 class="trace-item"
               >
@@ -858,7 +1032,11 @@ const getStatusText = (status: string) => {
 
           <template v-else>
             <div class="source-list">
-              <div v-for="item in sourceItems" :key="item" class="source-item">
+              <div
+                v-for="item in currentSourceItems"
+                :key="item"
+                class="source-item"
+              >
                 {{ item }}
               </div>
             </div>
@@ -904,11 +1082,8 @@ const getStatusText = (status: string) => {
     background: var(--page-bg);
 
     .app-header {
-      margin-bottom: 0;
-      border-radius: 0;
-      border-left: none;
-      border-right: none;
-      border-top: none;
+      margin: 12px 14px 0 !important;
+      border-radius: 16px !important;
     }
 
     .app-body {
@@ -987,8 +1162,14 @@ const getStatusText = (status: string) => {
 }
 
 @keyframes pulse-bloom {
-  0% { transform: scale(0.6); opacity: 1; }
-  100% { transform: scale(1.4); opacity: 0; }
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
 }
 
 .page-shell {
@@ -1038,13 +1219,32 @@ textarea:focus-visible {
 }
 
 .app-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 86px;
-  padding: 16px 18px;
-  margin-bottom: 18px;
-  border-radius: var(--radius-page);
+  min-height: 64px;
+  padding: 12px 24px;
+  margin: 12px 14px 18px; // 左右留白
+  border-radius: 16px; // 圆角
+  background: rgba(255, 255, 255, 0.4) !important; 
+  backdrop-filter: blur(16px) saturate(160%) !important; 
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important; 
+  // 增加了一层柔和的阴影，有深度但不厚重
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important; 
+  z-index: 100;
+
+  .logo-text {
+    color: #3b82f6;
+    font-style: italic;
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+
+    &:hover {
+      text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+    }
+  }
 }
 
 .header-left {
@@ -1140,10 +1340,16 @@ textarea:focus-visible {
   --course-column: 280px;
   --right-column: 320px;
   display: grid;
-  grid-template-columns: var(--left-column) var(--course-column) minmax(0, 1fr) var(--right-column);
+  grid-template-columns:
+    var(--left-column) var(--course-column) minmax(0, 1fr)
+    var(--right-column);
   gap: 16px;
   align-items: center;
   min-height: calc(100vh - 124px);
+
+  &.is-agent-pdf {
+    grid-template-columns: var(--left-column) minmax(0, 1fr);
+  }
 }
 
 .rail-area {
@@ -1286,7 +1492,11 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 4px;
+  padding: 12px 16px; 
+  background: var(--panel-soft); // 浅色背景增强区域感
+  border-radius: 12px; // 引入 R 角
+  margin-bottom: 12px; 
+  border: 1px solid var(--border);
 
   h3 {
     margin: 0;
@@ -1519,7 +1729,6 @@ textarea:focus-visible {
   }
 }
 
-
 .course-drawer {
   position: absolute;
   top: 0;
@@ -1553,8 +1762,16 @@ textarea:focus-visible {
 }
 
 .ai-app-page.dark .app-header {
-  background: rgba(17, 24, 39, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(17, 24, 39, 0.4) !important;
+  backdrop-filter: blur(12px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(140%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3) !important;
+
+  .logo-text {
+    color: #60a5fa;
+    text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+  }
 }
 
 .header-left {
@@ -1642,14 +1859,14 @@ textarea:focus-visible {
   flex-direction: column;
   min-width: 0;
   padding: 0;
-  overflow: hidden;
-  height: calc(100vh - 124px);
+  overflow: visible;
+  min-height: calc(100vh - 124px);
 }
 
 .content-view {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
   background: var(--page-bg);
 }
 
@@ -1657,11 +1874,14 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
-  padding: 0 24px;
+  height: 56px; // 稍微收窄一点，更精致
+  padding: 0 20px;
   background: var(--panel-bg);
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px; // 引入 R 角设计
+  margin-bottom: 12px; // 增加与内容的空隙，使圆角闭合
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .view-title {
@@ -1738,13 +1958,89 @@ textarea:focus-visible {
 /* Generation Specific */
 .gen-intro {
   text-align: left;
-  h3 { margin: 0; font-size: 20px; font-weight: 800; }
-  p { margin: 4px 0 0; color: var(--text-subtle); font-size: 14px; }
+  h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+  }
+  p {
+    margin: 4px 0 0;
+    color: var(--text-subtle);
+    font-size: 14px;
+  }
 }
 
 .primary-gen-btn.mini {
   padding: 8px 16px;
   font-size: 13px;
+}
+
+.agentpdf-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tool-btn.compact {
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+.agentpdf-body {
+  gap: 18px;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.agentpdf-workbench-panel {
+  padding: 24px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-card {
+  padding: 22px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.workbench-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 100%;
+}
+
+.card-title-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+  }
+}
+
+.card-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-subtle);
 }
 
 /* Path Specific */
@@ -1762,14 +2058,16 @@ textarea:focus-visible {
 
   &.done {
     opacity: 0.8;
-    .step-num { background: #10b981; }
+    .step-num {
+      background: #10b981;
+    }
   }
   &.active {
     border-color: var(--accent-strong);
     box-shadow: 0 8px 24px var(--accent-softer);
     transform: translateX(4px);
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       left: 0;
       top: 24px;
@@ -1782,7 +2080,7 @@ textarea:focus-visible {
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   }
 }
 
@@ -1801,8 +2099,16 @@ textarea:focus-visible {
 
 .step-main {
   flex: 1;
-  h4 { margin: 0; font-size: 16px; font-weight: 800; }
-  p { margin: 6px 0 0; font-size: 14px; color: var(--text-muted); }
+  h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+  }
+  p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
 }
 
 .step-badge {
@@ -1844,7 +2150,10 @@ textarea:focus-visible {
     height: 8px;
     border-radius: 50%;
     background: #cbd5e1;
-    &.active { background: #10b981; box-shadow: 0 0 8px #10b981; }
+    &.active {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
   }
 }
 
@@ -1870,7 +2179,11 @@ textarea:focus-visible {
 
   &.hero {
     grid-column: 1 / -1;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--accent) 0%,
+      var(--accent-strong) 100%
+    );
     color: #fff;
     border: none;
   }
@@ -1889,12 +2202,24 @@ textarea:focus-visible {
   border-radius: 50%;
   border: 4px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
-  img { width: 100%; height: 100%; object-fit: cover; }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 .hero-info {
-  h3 { margin: 0; font-size: 24px; font-weight: 900; }
-  p { margin: 4px 0 0; opacity: 0.8; font-size: 14px; }
+  h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 900;
+  }
+  p {
+    margin: 4px 0 0;
+    opacity: 0.8;
+    font-size: 14px;
+  }
 }
 
 .hero-stats {
@@ -1910,8 +2235,15 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  .val { font-size: 24px; font-weight: 900; }
-  .lab { font-size: 12px; opacity: 0.8; font-weight: 700; }
+  .val {
+    font-size: 24px;
+    font-weight: 900;
+  }
+  .lab {
+    font-size: 12px;
+    opacity: 0.8;
+    font-weight: 700;
+  }
 }
 
 .chart-container {
@@ -1927,7 +2259,10 @@ textarea:focus-visible {
   justify-content: center;
   color: var(--text-subtle);
   gap: 12px;
-  .el-icon { font-size: 40px; opacity: 0.3; }
+  .el-icon {
+    font-size: 40px;
+    opacity: 0.3;
+  }
 }
 
 .activity-grid {
@@ -1940,8 +2275,14 @@ textarea:focus-visible {
   aspect-ratio: 1;
   background: var(--panel-muted);
   border-radius: 4px;
-  &.active { background: var(--accent); opacity: 0.5; }
-  &.strong { background: var(--accent-strong); opacity: 1; }
+  &.active {
+    background: var(--accent);
+    opacity: 0.5;
+  }
+  &.strong {
+    background: var(--accent-strong);
+    opacity: 1;
+  }
 }
 
 /* Assessment Styles */
@@ -1965,13 +2306,29 @@ textarea:focus-visible {
   display: flex;
   align-items: baseline;
   color: var(--accent-strong);
-  .score-val { font-size: 64px; font-weight: 900; line-height: 1; }
-  .score-unit { font-size: 18px; font-weight: 800; margin-left: 4px; }
+  .score-val {
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .score-unit {
+    font-size: 18px;
+    font-weight: 800;
+    margin-left: 4px;
+  }
 }
 
 .score-desc {
-  h4 { margin: 0 0 8px; font-size: 18px; font-weight: 800; }
-  p { margin: 0; color: var(--text-muted); line-height: 1.6; }
+  h4 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 800;
+  }
+  p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
 }
 
 .mastery-list {
@@ -2027,8 +2384,17 @@ textarea:focus-visible {
 }
 
 .auto-info {
-  h4 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
-  p { margin: 0; font-size: 14px; color: var(--text-muted); max-width: 500px; }
+  h4 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 800;
+  }
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 500px;
+  }
 }
 
 .start-panel {
@@ -2161,10 +2527,10 @@ textarea:focus-visible {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
-  padding: 4px;
-  margin-bottom: 16px;
+  padding: 6px; // 稍微增加内边距
+  margin-bottom: 20px;
   background: var(--panel-muted);
-  border-radius: 12px;
+  border-radius: 14px; // 保持较大的 R 角
 
   button {
     height: 38px;
@@ -2251,6 +2617,13 @@ textarea:focus-visible {
   background: var(--panel-soft);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
+}
+
+.source-list,
+.trace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 @keyframes reveal-up {
@@ -2368,8 +2741,10 @@ textarea:focus-visible {
     border-radius: 50%;
     background: #cbd5e1;
 
-    &.idle { background: #10b981; }
-    &.running { 
+    &.idle {
+      background: #10b981;
+    }
+    &.running {
       background: var(--accent);
       box-shadow: 0 0 8px var(--accent);
       animation: pulse-dot 2s infinite;
@@ -2378,9 +2753,15 @@ textarea:focus-visible {
 }
 
 @keyframes pulse-dot {
-  0% { opacity: 1; }
-  50% { opacity: 0.4; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .gen-action-bar {
@@ -2397,7 +2778,11 @@ textarea:focus-visible {
   font-size: 16px;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    var(--accent-strong) 100%
+  );
   border: none;
   border-radius: 99px;
   box-shadow: 0 10px 24px var(--accent-soft);
@@ -2518,24 +2903,62 @@ textarea:focus-visible {
     align-items: center;
     gap: 16px;
     color: var(--text-subtle);
-    .el-icon { font-size: 64px; opacity: 0.2; }
-    h3 { margin: 0; font-size: 20px; font-weight: 800; color: var(--text); }
-    p { margin: 0; font-size: 15px; }
+    .el-icon {
+      font-size: 64px;
+      opacity: 0.2;
+    }
+    h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    p {
+      margin: 0;
+      font-size: 15px;
+    }
   }
 }
 
 @media (width <= 1600px) {
   .app-body {
-    grid-template-columns: var(--left-column) var(--course-column) minmax(0, 1fr);
+    grid-template-columns: var(--left-column) var(--course-column) minmax(
+        0,
+        1fr
+      );
   }
-  .context-panel { display: none; }
+  .context-panel {
+    display: none;
+  }
 }
 
 @media (width <= 1200px) {
   .app-body {
     grid-template-columns: var(--left-column) minmax(0, 1fr);
   }
-  .course-column { display: none; }
+  .course-column {
+    display: none;
+  }
+}
+
+@media (width <= 960px) {
+  .view-header {
+    height: auto;
+    gap: 14px;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .agentpdf-header-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (width <= 768px) {
+  .panel-card {
+    padding: 18px;
+  }
 }
 
 @media (width <= 768px) {
