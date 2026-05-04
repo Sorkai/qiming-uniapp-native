@@ -70,6 +70,28 @@ export default [
     }
   },
   {
+    path: "/account/ai-app",
+    name: "AccountAiApp",
+    component: () => import("@/views/ai-app/index.vue"),
+    meta: {
+      title: "AI App",
+      showLink: false,
+      rank: 105.5
+    }
+  },
+  {
+    path: "/ai-app/workspace",
+    name: "AiAppWorkspace",
+    component: () => import("@/views/ai-app/index.vue"),
+    meta: {
+      title: "AI App",
+      showLink: false,
+      rank: 105.6,
+      roles: ["admin", "teacher", "student"],
+      activePath: "/ai-app/index"
+    }
+  },
+  {
     path: "/course/:id",
     name: "CourseDetail",
     component: () => import("@/views/account/course-detail.vue"),

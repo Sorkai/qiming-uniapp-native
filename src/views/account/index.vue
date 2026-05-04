@@ -138,6 +138,10 @@
             <el-icon><TodoIcon /></el-icon>
             <span>待办事项</span>
           </el-menu-item>
+          <el-menu-item index="ai-app">
+            <el-icon><Cpu /></el-icon>
+            <span>AI App</span>
+          </el-menu-item>
           <el-menu-item index="virtual-lab">
             <el-icon><LabIcon /></el-icon>
             <span>虚拟实验室</span>
@@ -851,6 +855,10 @@ const loadCoursePageData = async () => {
 
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
+  if (index === "ai-app") {
+    router.push("/account/ai-app?mode=student");
+    return;
+  }
   activeMenu.value = index;
   storageLocal().setItem("account_active_menu", index);
 };
