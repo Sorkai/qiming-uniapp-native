@@ -10,6 +10,12 @@ main:
           - /root/.local/share/pnpm/store:copy-on-write
       imports:
         - https://cnb.cool/sorkai/vue-pure-admin-max-secrets/-/blob/main/envs.yml
+      env:
+        VITE_PUBLIC_PATH: /
+        VITE_ROUTER_HISTORY: hash
+        VITE_CDN: "false"
+        VITE_COMPRESSION: none
+        VITE_PROXY_TARGET: https://aiedu-api.intelledu.cn
       stages:
         - name: Prepare pnpm
           script: |
@@ -57,6 +63,12 @@ dev:
           - /root/.local/share/pnpm/store:copy-on-write
       imports:
         - https://cnb.cool/sorkai/vue-pure-admin-max-secrets/-/blob/main/envs.yml
+      env:
+        VITE_PUBLIC_PATH: /
+        VITE_ROUTER_HISTORY: hash
+        VITE_CDN: "false"
+        VITE_COMPRESSION: none
+        VITE_PROXY_TARGET: https://aiedu-api.intelledu.cn
       stages:
         - name: Prepare pnpm
           script: |
