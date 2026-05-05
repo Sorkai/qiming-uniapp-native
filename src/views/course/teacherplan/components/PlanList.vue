@@ -123,11 +123,19 @@
             >
               <el-tag
                 size="small"
-                :type="item.status === 2 ? 'success' : 'warning'"
+                :type="
+                  item.status === 2 || item.status === 1 || item.status === 100
+                    ? 'success'
+                    : 'warning'
+                "
                 effect="dark"
                 class="plan-card__status !rounded-full !px-3 font-medium"
               >
-                {{ item.status === 2 ? "生成完成" : "处理中" }}
+                {{
+                  item.status === 2 || item.status === 1 || item.status === 100
+                    ? "生成完成"
+                    : "处理中"
+                }}
               </el-tag>
 
               <el-button
@@ -244,7 +252,9 @@
           </div>
 
           <div
-            v-if="currentProgress.progress === 2"
+            v-if="
+              currentProgress.progress === 2 || currentProgress.progress === 100
+            "
             class="plan-progress-state text-center pb-4"
           >
             <div
@@ -352,7 +362,24 @@ const fetchPlanList = async () => {
     const res = await getTeacherPlanList(params);
 
     if (res && res.code === 200 && res.data) {
-      planList.value = res.data.teacherPlanList || [];
+      const originalList = res.data.teacherPlanList || [];
+      // 并发请求每个教案的进度，因为列表接口没给状态
+      const listWithStatus = await Promise.all(
+        originalList.map(async item => {
+          try {
+            const progressRes = await getTeacherPlanProgress({
+              teacherPlanId: item.teacherPlanId
+            });
+            return {
+              ...item,
+              status: progressRes?.data?.progress ?? 0 // 将进度的 1 或 2 赋值给 status
+            };
+          } catch (e) {
+            return { ...item, status: 0 };
+          }
+        })
+      );
+      planList.value = listWithStatus;
       total.value = res.data.total || 0;
     } else {
       planList.value = [];
