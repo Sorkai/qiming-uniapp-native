@@ -296,29 +296,79 @@ const questionTypeGroups = [
     groupLabel: "基础题型",
     types: [
       { id: "radio", label: "单选题", icon: "RadioIcon", color: "#739CF9" },
-      { id: "checkbox", label: "多选题", icon: "CheckboxIcon", color: "#739CF9" },
+      {
+        id: "checkbox",
+        label: "多选题",
+        icon: "CheckboxIcon",
+        color: "#739CF9"
+      },
       { id: "judge", label: "判断题", icon: "JudgeIcon", color: "#739CF9" },
       { id: "input", label: "填空题", icon: "InputIcon", color: "#739CF9" },
-      { id: "textarea", label: "简答题", icon: "TextareaIcon", color: "#739CF9" }
+      {
+        id: "textarea",
+        label: "简答题",
+        icon: "TextareaIcon",
+        color: "#739CF9"
+      }
     ]
   },
   {
     groupLabel: "高级题型",
     types: [
-      { id: "textarea-essay", label: "论述题", icon: "EssayIcon", color: "#a1b5f7" },
-      { id: "matrix-single", label: "矩阵单选", icon: "MatrixSingleIcon", color: "#a1b5f7" },
-      { id: "matrix-multiple", label: "矩阵多选", icon: "MatrixMultipleIcon", color: "#a1b5f7" },
-      { id: "matching", label: "连线题", icon: "MatchingIcon", color: "#a1b5f7" },
-      { id: "ordering", label: "排序题", icon: "OrderingIcon", color: "#a1b5f7" },
-      { id: "composite", label: "组合材料题", icon: "CompositeIcon", color: "#a1b5f7" }
+      {
+        id: "textarea-essay",
+        label: "论述题",
+        icon: "EssayIcon",
+        color: "#a1b5f7"
+      },
+      {
+        id: "matrix-single",
+        label: "矩阵单选",
+        icon: "MatrixSingleIcon",
+        color: "#a1b5f7"
+      },
+      {
+        id: "matrix-multiple",
+        label: "矩阵多选",
+        icon: "MatrixMultipleIcon",
+        color: "#a1b5f7"
+      },
+      {
+        id: "matching",
+        label: "连线题",
+        icon: "MatchingIcon",
+        color: "#a1b5f7"
+      },
+      {
+        id: "ordering",
+        label: "排序题",
+        icon: "OrderingIcon",
+        color: "#a1b5f7"
+      },
+      {
+        id: "composite",
+        label: "组合材料题",
+        icon: "CompositeIcon",
+        color: "#a1b5f7"
+      }
     ]
   },
   {
     groupLabel: "数据收集",
     types: [
       { id: "slider", label: "滑动评分", icon: "SliderIcon", color: "#e6a23c" },
-      { id: "nps-rating", label: "NPS评分", icon: "NpsRatingIcon", color: "#e6a23c" },
-      { id: "star-rating", label: "星级评分", icon: "StarRatingIcon", color: "#e6a23c" }
+      {
+        id: "nps-rating",
+        label: "NPS评分",
+        icon: "NpsRatingIcon",
+        color: "#e6a23c"
+      },
+      {
+        id: "star-rating",
+        label: "星级评分",
+        icon: "StarRatingIcon",
+        color: "#e6a23c"
+      }
     ]
   }
 ];
@@ -3521,7 +3571,7 @@ onBeforeUnmount(() => {
                               </div>
                             </td>
                             <td
-                              v-for="(col, cIdx) in question.columns"
+                              v-for="col in question.columns"
                               :key="`${row.key}-${col.key}`"
                               class="matrix-cell"
                             >
@@ -3636,7 +3686,7 @@ onBeforeUnmount(() => {
                     <span>设置正确连线：左侧项 → 右侧项</span>
                   </div>
                   <div
-                    v-for="(item, idx) in question.leftItems"
+                    v-for="item in question.leftItems"
                     :key="`match-${item.key}`"
                     class="matching-pair"
                   >
@@ -3998,7 +4048,7 @@ onBeforeUnmount(() => {
                       <!-- 子题选项 -->
                       <div v-if="sub.options" class="sub-item-options">
                         <div
-                          v-for="(opt, oIdx) in sub.options"
+                          v-for="opt in sub.options"
                           :key="opt.key"
                           class="sub-option-item"
                         >
@@ -4338,7 +4388,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
       border-bottom-color: $dark-border;
 
       .logo-text {
-        background: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
+        background: linear-gradient(135deg, #739cf9 0%, #80c8fa 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -4350,7 +4400,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         color: $dark-text-primary;
 
         &:hover {
-          border-color: #739CF9;
+          border-color: #739cf9;
         }
       }
 
@@ -4380,7 +4430,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         border-color: $dark-border;
 
         &:hover {
-          border-color: #739CF9;
+          border-color: #739cf9;
         }
 
         .type-label {
@@ -4388,7 +4438,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         }
 
         &:hover .type-label {
-          color: #739CF9;
+          color: #739cf9;
         }
       }
     }
@@ -4424,7 +4474,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         background: rgba(30, 41, 59, 0.6);
 
         &:hover {
-          border-color: #739CF9;
+          border-color: #739cf9;
         }
 
         .outline-group-header {
@@ -4557,7 +4607,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
       &:hover,
       &.active {
-        border-color: #739CF9;
+        border-color: #739cf9;
         background: linear-gradient(
           135deg,
           rgba(115, 156, 249, 0.08) 0%,
@@ -4583,7 +4633,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
       .blank-count-hint {
         background: rgba(115, 156, 249, 0.15);
-        border-left-color: #739CF9;
+        border-left-color: #739cf9;
       }
 
       .stem-preview-box {
@@ -4685,7 +4735,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     .logo-text {
       font-size: 20px;
       font-weight: 700;
-      background: linear-gradient(135deg, #739CF9 0%, #4A7FC8 100%);
+      background: linear-gradient(135deg, #739cf9 0%, #4a7fc8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -4706,12 +4756,12 @@ $dark-border: rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
 
       &:hover {
-        border-color: #739CF9;
+        border-color: #739cf9;
         box-shadow: 0 0 0 3px rgba(115, 156, 249, 0.1);
       }
 
       &:focus-within {
-        border-color: #739CF9;
+        border-color: #739cf9;
         box-shadow: 0 0 0 3px rgba(115, 156, 249, 0.15);
       }
     }
@@ -4747,8 +4797,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
 
       &:hover {
-        background: #EBF2FD;
-        color: #4A7FC8;
+        background: #ebf2fd;
+        color: #4a7fc8;
       }
     }
   }
@@ -4819,7 +4869,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
       }
 
       &:hover {
-        border-color: var(--group-hover-color, #739CF9);
+        border-color: var(--group-hover-color, #739cf9);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         transform: translateY(-2px);
 
@@ -4943,7 +4993,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         background: rgba(255, 255, 255, 0.6);
 
         &:hover {
-          border-color: #739CF9;
+          border-color: #739cf9;
           box-shadow: 0 2px 8px rgba(115, 156, 249, 0.1);
         }
 
@@ -4975,14 +5025,14 @@ $dark-border: rgba(255, 255, 255, 0.1);
             }
 
             &:hover {
-              color: #739CF9;
+              color: #739cf9;
             }
           }
 
           .group-number {
             font-size: 14px;
             font-weight: 700;
-            color: #4A7FC8;
+            color: #4a7fc8;
             min-width: 24px;
           }
 
@@ -5022,9 +5072,9 @@ $dark-border: rgba(255, 255, 255, 0.1);
             }
 
             &.active {
-              background: #EBF2FD;
-              border-left: 3px solid #739CF9;
-              color: #4A7FC8;
+              background: #ebf2fd;
+              border-left: 3px solid #739cf9;
+              color: #4a7fc8;
             }
 
             .item-index {
@@ -5074,10 +5124,10 @@ $dark-border: rgba(255, 255, 255, 0.1);
       }
 
       &.active {
-        background: #EBF2FD;
+        background: #ebf2fd;
         border-color: #6365f1;
-        border-left: 3px solid #739CF9;
-        color: #4A7FC8;
+        border-left: 3px solid #739cf9;
+        color: #4a7fc8;
       }
 
       .drag-handle {
@@ -5092,7 +5142,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         }
 
         &:hover {
-          color: #739CF9;
+          color: #739cf9;
         }
       }
 
@@ -5123,8 +5173,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
 
     .ghost-item {
       opacity: 0.6;
-      background: #EBF2FD;
-      border: 1px dashed #739CF9;
+      background: #ebf2fd;
+      border: 1px dashed #739cf9;
     }
   }
 }
@@ -5307,7 +5357,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
             color: #606266;
             line-height: 1.8;
             &::marker {
-              color: #739CF9;
+              color: #739cf9;
             }
           }
         }
@@ -5350,7 +5400,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         .section-title {
           font-size: 14px;
           font-weight: 600;
-          color: #4A7FC8;
+          color: #4a7fc8;
           margin: 0 0 12px;
           padding-bottom: 8px;
           border-bottom: 1px solid #e4e7ed;
@@ -5415,7 +5465,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     background: #f8fafc;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
-    border-left: 4px solid #739CF9;
+    border-left: 4px solid #739cf9;
 
     .group-title-wrapper {
       display: flex;
@@ -5426,7 +5476,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
       .group-number {
         font-size: 18px;
         font-weight: 700;
-        color: #4A7FC8;
+        color: #4a7fc8;
         min-width: 30px;
       }
 
@@ -5443,12 +5493,12 @@ $dark-border: rgba(255, 255, 255, 0.1);
           color: #303133;
 
           &:hover {
-            border-color: #739CF9;
+            border-color: #739cf9;
             background: rgba(255, 255, 255, 0.95);
           }
 
           &:focus-within {
-            border-color: #739CF9;
+            border-color: #739cf9;
             box-shadow: 0 0 0 2px rgba(115, 156, 249, 0.1);
           }
         }
@@ -5483,10 +5533,10 @@ $dark-border: rgba(255, 255, 255, 0.1);
     }
 
     &.active {
-      border-color: #739CF9;
-      border-left: 3px solid #739CF9;
+      border-color: #739cf9;
+      border-left: 3px solid #739cf9;
       box-shadow: 0 4px 16px rgba(115, 156, 249, 0.12);
-      background: #F5F9FF;
+      background: #f5f9ff;
     }
     .question-header {
       display: flex;
@@ -5507,8 +5557,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
         .question-type-tag {
           font-size: 12px;
           padding: 2px 8px;
-          background: #EBF2FD;
-          color: #4A7FC8;
+          background: #ebf2fd;
+          color: #4a7fc8;
           border-radius: 4px;
         }
       }
@@ -5546,12 +5596,12 @@ $dark-border: rgba(255, 255, 255, 0.1);
         align-items: center;
         gap: 6px;
         font-size: 12px;
-        color: #4A7FC8;
+        color: #4a7fc8;
         margin-top: 8px;
         padding: 6px 12px;
-        background: #EBF2FD;
+        background: #ebf2fd;
         border-radius: 4px;
-        border-left: 3px solid #739CF9;
+        border-left: 3px solid #739cf9;
       }
       .stem-preview-box {
         margin-top: 8px;
@@ -5803,8 +5853,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
                 color: #e6a23c;
               }
               &.promoter {
-                background: #EBF2FD;
-                color: #739CF9;
+                background: #ebf2fd;
+                color: #739cf9;
               }
             }
           }
@@ -5906,8 +5956,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
             .sub-item-type {
               font-size: 12px;
               padding: 1px 6px;
-              background: #EBF2FD;
-              color: #4A7FC8;
+              background: #ebf2fd;
+              color: #4a7fc8;
               border-radius: 3px;
             }
           }
@@ -6086,11 +6136,11 @@ $dark-border: rgba(255, 255, 255, 0.1);
         padding: 12px 16px;
         background: #f1f5f9;
         border-radius: 6px;
-        border-left: 4px solid #739CF9;
+        border-left: 4px solid #739cf9;
         .preview-group-number {
           font-size: 18px;
           font-weight: 700;
-          color: #4A7FC8;
+          color: #4a7fc8;
         }
         .preview-group-name {
           font-size: 16px;
@@ -6152,7 +6202,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
 // 带答案预览对话框样式
 .preview-with-answer-dialog {
   .answer-badge {
-    background: #739CF9;
+    background: #739cf9;
     color: #fff;
     padding: 2px 8px;
     border-radius: 4px;
@@ -6161,12 +6211,12 @@ $dark-border: rgba(255, 255, 255, 0.1);
   .preview-option {
     &.correct-option {
       background: rgba(115, 156, 249, 0.1);
-      color: #739CF9;
+      color: #739cf9;
       font-weight: 500;
       border-radius: 4px;
       padding: 4px 8px 4px 20px;
       .correct-icon {
-        color: #739CF9;
+        color: #739cf9;
         margin-left: 8px;
       }
     }
@@ -6175,7 +6225,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     display: block;
     margin-bottom: 8px;
     .blank-answer {
-      color: #739CF9;
+      color: #739cf9;
       font-weight: 500;
       background: rgba(115, 156, 249, 0.1);
       padding: 2px 8px;
@@ -6194,7 +6244,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     :deep(.blank-answer-inline) {
       display: inline-block;
       min-width: 60px;
-      color: #739CF9;
+      color: #739cf9;
       font-weight: 500;
       background: rgba(115, 156, 249, 0.1);
       padding: 2px 8px;
@@ -6207,14 +6257,14 @@ $dark-border: rgba(255, 255, 255, 0.1);
     padding: 12px;
     background: rgba(115, 156, 249, 0.08);
     border-radius: 6px;
-    border-left: 3px solid #739CF9;
+    border-left: 3px solid #739cf9;
     .answer-label {
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 13px;
       font-weight: 500;
-      color: #739CF9;
+      color: #739cf9;
       margin-bottom: 6px;
     }
     .answer-content {
@@ -6275,8 +6325,8 @@ $dark-border: rgba(255, 255, 255, 0.1);
       margin-bottom: 8px;
       transition: all 0.2s;
       &:hover {
-        border-color: #739CF9;
-        background: #EBF2FD;
+        border-color: #739cf9;
+        background: #ebf2fd;
       }
     }
     .publish-student-toolbar {
@@ -6305,7 +6355,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
         background: #f5f7fa;
       }
       &.selected {
-        background: #EBF2FD;
+        background: #ebf2fd;
       }
       .student-name {
         font-size: 14px;

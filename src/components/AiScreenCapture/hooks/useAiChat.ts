@@ -144,7 +144,7 @@ export function useAiChat(courseCtx?: CourseContext) {
   const loading = ref(false);
   const suggestions = ref<string[]>([]);
   const conversationId = ref("");
-  const conversationList = ref<ChatMessage[]>([]); // 修改：为了语义化，我们这里维护一个会话列表
+  const _conversationList = ref<ChatMessage[]>([]); // 修改：为了语义化，我们这里维护一个会话列表
   const historyList = ref<any[]>([]); // 存储会话列表
   const currentImage = ref("");
   let cancelStream: (() => void) | null = null;
@@ -162,7 +162,9 @@ export function useAiChat(courseCtx?: CourseContext) {
     return undefined;
   };
 
-  const getImageSize = (blob: Blob): Promise<{ width: number; height: number }> =>
+  const getImageSize = (
+    blob: Blob
+  ): Promise<{ width: number; height: number }> =>
     new Promise((resolve, reject) => {
       const objectUrl = URL.createObjectURL(blob);
       const img = new Image();
@@ -211,13 +213,7 @@ export function useAiChat(courseCtx?: CourseContext) {
     const bucket = pickField(credentials, ["bucket", "Bucket"]);
     const region = pickField(credentials, ["region", "Region"]);
 
-    if (
-      !tmpSecretId ||
-      !tmpSecretKey ||
-      !securityToken ||
-      !bucket ||
-      !region
-    ) {
+    if (!tmpSecretId || !tmpSecretKey || !securityToken || !bucket || !region) {
       throw new Error("STS 初始化返回信息不完整");
     }
 
@@ -273,8 +269,17 @@ export function useAiChat(courseCtx?: CourseContext) {
       (initRes as any)?.data?.data || (initRes as any)?.data || initRes;
 
     const uploadToken = pickField(initData, ["upload_token", "uploadToken"]);
-    const objectKey = pickField(initData, ["object_key", "objectKey", "key", "Key"]);
-    const uploadUrl = pickField(initData, ["upload_url", "uploadUrl", "uploadURL"]);
+    const objectKey = pickField(initData, [
+      "object_key",
+      "objectKey",
+      "key",
+      "Key"
+    ]);
+    const uploadUrl = pickField(initData, [
+      "upload_url",
+      "uploadUrl",
+      "uploadURL"
+    ]);
     const credentials =
       initData.credentials || ({} as AttachmentStsCredentials);
 
@@ -311,7 +316,9 @@ export function useAiChat(courseCtx?: CourseContext) {
     });
 
     const attachmentInfo: AttachmentInfo =
-      (completeRes as any)?.data?.data || (completeRes as any)?.data || completeRes;
+      (completeRes as any)?.data?.data ||
+      (completeRes as any)?.data ||
+      completeRes;
 
     if (!attachmentInfo?.attachment_id) {
       throw new Error("附件上传失败");
@@ -526,7 +533,7 @@ export function useAiChat(courseCtx?: CourseContext) {
   /**
    * 通过「单课问答（非流式）」接口发送消息
    */
-  const sendCourseQa = async (message: string, loadingMsgId: string) => {
+  const _sendCourseQa = async (message: string, loadingMsgId: string) => {
     try {
       const res = await courseQA({
         courseId: courseCtx!.courseId.value!,

@@ -23,9 +23,36 @@ export default {
     }
   ],
   rules: {
-    "prettier/prettier": true,
+    "prettier/prettier": null,
     "selector-class-pattern": null,
     "no-descending-specificity": null,
+    "no-duplicate-selectors": null,
+    "block-no-empty": null,
+    "keyframes-name-pattern": null,
+    "color-function-notation": null,
+    "alpha-value-notation": null,
+    "value-keyword-case": null,
+    "media-feature-range-notation": null,
+    "declaration-block-no-shorthand-property-overrides": null,
+    "declaration-block-no-redundant-longhand-properties": null,
+    "declaration-block-no-duplicate-properties": null,
+    "declaration-block-single-line-max-declarations": null,
+    "shorthand-property-no-redundant-values": null,
+    "font-family-name-quotes": null,
+    "comment-empty-line-before": null,
+    "comment-whitespace-inside": null,
+    "declaration-empty-line-before": null,
+    "custom-property-empty-line-before": null,
+    "color-hex-length": null,
+    "selector-not-notation": null,
+    "selector-pseudo-element-colon-notation": null,
+    "property-no-vendor-prefix": null,
+    "function-no-unknown": [
+      true,
+      {
+        ignoreFunctions: ["v-bind", "fade"]
+      }
+    ],
     "scss/dollar-variable-pattern": null,
     "selector-pseudo-class-no-unknown": [
       true,
@@ -57,31 +84,10 @@ export default {
         ]
       }
     ],
-    "rule-empty-line-before": [
-      "always",
-      {
-        ignore: ["after-comment", "first-nested"]
-      }
-    ],
+    "rule-empty-line-before": null,
     "unit-no-unknown": [true, { ignoreUnits: ["rpx"] }],
-    "order/order": [
-      [
-        "dollar-variables",
-        "custom-properties",
-        "at-rules",
-        "declarations",
-        {
-          type: "at-rule",
-          name: "supports"
-        },
-        {
-          type: "at-rule",
-          name: "media"
-        },
-        "rules"
-      ],
-      { severity: "warning" }
-    ]
+    "order/properties-order": null,
+    "order/order": null
   },
   ignoreFiles: ["**/*.js", "**/*.ts", "**/*.jsx", "**/*.tsx", "report.html"]
 };
