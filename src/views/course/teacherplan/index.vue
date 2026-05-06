@@ -164,72 +164,41 @@
         </div>
       </template>
 
-      <!-- 未选择状态 - 活泼教育风 -->
-      <div v-else class="teacher-plan-empty-state">
-        <div
-          class="teacher-plan-empty-state__blob teacher-plan-empty-state__blob--sky"
+      <!-- 未选择状态 -->
+      <div v-else class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50/30 dark:bg-transparent">
+        <lottie-animation
+          :animation-data="EducationAnim"
+          :width="360"
+          :height="360"
+          class="mb-4"
         />
-        <div
-          class="teacher-plan-empty-state__blob teacher-plan-empty-state__blob--amber"
-        />
-        <div
-          class="teacher-plan-empty-state__blob teacher-plan-empty-state__blob--emerald"
-        />
+        <h2 class="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-4 tracking-tight">开启智能教案设计</h2>
+        <p class="text-base text-slate-500 dark:text-slate-400 mb-12 max-w-lg text-center leading-relaxed">
+          选择左侧课程，AI 助手将帮你一键生成生动、规范的教学大纲与教案
+        </p>
 
-        <div class="teacher-plan-empty-state__content">
-          <div class="teacher-plan-empty-state__eyebrow">
-            <span class="teacher-plan-empty-state__eyebrow-main">
-              AI 教案工作台
-            </span>
-            <span class="teacher-plan-empty-state__eyebrow-tag">
-              智能生成
-            </span>
-          </div>
-
-          <div class="teacher-plan-empty-state__illustration">
-            <div class="teacher-plan-empty-state__illustration-halo" />
-            <div class="teacher-plan-empty-state__illustration-shell">
-              <lottie-animation
-                :animation-data="EducationAnim"
-                :width="emptyStateAnimationSize"
-                :height="emptyStateAnimationSize"
-              />
-            </div>
-          </div>
-
-          <h2 class="teacher-plan-empty-state__title">开启智能教案设计</h2>
-
-          <p class="teacher-plan-empty-state__description">
-            选择左侧课程，AI 助手将帮你一键生成生动、规范的教学大纲与教案！
-          </p>
-
-          <div class="teacher-plan-empty-state__features">
-            <article
-              v-for="item in emptyStateHighlights"
-              :key="item.title"
-              :class="[
-                'teacher-plan-empty-state__feature',
-                `teacher-plan-empty-state__feature--${item.tone}`
-              ]"
+        <div class="flex flex-col sm:flex-row gap-8 max-w-3xl w-full justify-center">
+          <div
+            v-for="item in emptyStateHighlights"
+            :key="item.title"
+            class="flex-1 p-8 bg-white dark:bg-[#252525] rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-5 transition-all hover:shadow-md hover:-translate-y-1"
+          >
+            <div
+              class="p-3.5 rounded-xl flex-shrink-0"
+              :class="item.tone === 'sky' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500'"
             >
-              <div class="teacher-plan-empty-state__feature-icon">
-                <el-icon size="24">
-                  <component :is="item.icon" />
-                </el-icon>
-              </div>
-
-              <div class="teacher-plan-empty-state__feature-copy">
-                <h4>{{ item.title }}</h4>
-                <p>{{ item.description }}</p>
-              </div>
-
-              <el-icon
-                class="teacher-plan-empty-state__feature-arrow"
-                size="18"
-              >
-                <ArrowRightBold />
+              <el-icon size="28">
+                <component :is="item.icon" />
               </el-icon>
-            </article>
+            </div>
+            <div class="text-left mt-0.5">
+              <div class="font-bold text-lg text-slate-800 dark:text-slate-200 mb-2">
+                {{ item.title }}
+              </div>
+              <div class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                {{ item.description }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -542,266 +511,7 @@ onMounted(() => {
   pointer-events: none;
 }
 
-.teacher-plan-empty-state__blob--sky {
-  top: 12%;
-  left: 14%;
-  width: 150px;
-  height: 150px;
-  background: rgba(96, 165, 250, 0.24);
-}
 
-.teacher-plan-empty-state__blob--amber {
-  top: 20%;
-  right: 12%;
-  width: 180px;
-  height: 180px;
-  background: rgba(250, 204, 21, 0.2);
-  animation-delay: 1.8s;
-}
-
-.teacher-plan-empty-state__blob--emerald {
-  bottom: 12%;
-  left: 38%;
-  width: 168px;
-  height: 168px;
-  background: rgba(52, 211, 153, 0.2);
-  animation-delay: 3.6s;
-}
-
-.teacher-plan-empty-state__content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: min(100%, 760px);
-  text-align: center;
-}
-
-.teacher-plan-empty-state__eyebrow {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.teacher-plan-empty-state__eyebrow-main,
-.teacher-plan-empty-state__eyebrow-tag {
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.teacher-plan-empty-state__eyebrow-main {
-  color: #1d4ed8;
-  background: rgba(219, 234, 254, 0.92);
-  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.12);
-
-  html.dark & {
-    color: #bfdbfe;
-    background: rgba(30, 64, 175, 0.34);
-  }
-}
-
-.teacher-plan-empty-state__eyebrow-tag {
-  color: #475569;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-
-  html.dark & {
-    color: #cbd5e1;
-    background: rgba(15, 23, 42, 0.72);
-    border-color: rgba(71, 85, 105, 0.8);
-  }
-}
-
-.teacher-plan-empty-state__illustration {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  margin-bottom: 28px;
-}
-
-.teacher-plan-empty-state__illustration-halo {
-  position: absolute;
-  width: clamp(190px, 30vw, 280px);
-  height: clamp(190px, 30vw, 280px);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, transparent 68%),
-    linear-gradient(135deg, rgba(96, 165, 250, 0.18), rgba(52, 211, 153, 0.1));
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
-  transform: scale(1.12);
-
-  html.dark & {
-    background:
-      radial-gradient(circle, rgba(30, 41, 59, 0.9) 0%, transparent 68%),
-      linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(16, 185, 129, 0.12));
-    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.35);
-  }
-}
-
-.teacher-plan-empty-state__illustration-shell {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  border-radius: 999px;
-  transition: transform 0.3s ease;
-}
-
-.teacher-plan-empty-state__title {
-  max-width: 12ch;
-  margin: 0;
-  font-size: clamp(32px, 4.4vw, 44px);
-  font-weight: 900;
-  line-height: 1.08;
-  letter-spacing: -0.04em;
-  color: #0f172a;
-
-  html.dark & {
-    color: #f8fafc;
-  }
-}
-
-.teacher-plan-empty-state__description {
-  max-width: 34rem;
-  margin: 16px 0 0;
-  font-size: clamp(15px, 2vw, 18px);
-  font-weight: 500;
-  line-height: 1.8;
-  color: #64748b;
-
-  html.dark & {
-    color: #94a3b8;
-  }
-}
-
-.teacher-plan-empty-state__features {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  width: 100%;
-  margin-top: 32px;
-}
-
-.teacher-plan-empty-state__feature {
-  --feature-accent: #2563eb;
-  --feature-surface: rgba(255, 255, 255, 0.82);
-  --feature-border: rgba(226, 232, 240, 0.95);
-  --feature-border-hover: rgba(37, 99, 235, 0.24);
-  --feature-icon-bg: rgba(219, 234, 254, 0.92);
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  min-height: 132px;
-  padding: 22px;
-  text-align: left;
-  border: 1px solid var(--feature-border);
-  border-radius: 24px;
-  background: var(--feature-surface);
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(16px);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
-
-  html.dark & {
-    --feature-surface: rgba(15, 23, 42, 0.72);
-    --feature-border: rgba(51, 65, 85, 0.92);
-    box-shadow: 0 18px 45px rgba(2, 6, 23, 0.3);
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
-    border-color: var(--feature-border-hover);
-  }
-}
-
-.teacher-plan-empty-state__feature--sky {
-  --feature-accent: #2563eb;
-  --feature-icon-bg: rgba(219, 234, 254, 0.92);
-}
-
-.teacher-plan-empty-state__feature--emerald {
-  --feature-accent: #059669;
-  --feature-border-hover: rgba(5, 150, 105, 0.24);
-  --feature-icon-bg: rgba(209, 250, 229, 0.9);
-}
-
-.teacher-plan-empty-state__feature-icon {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  color: var(--feature-accent);
-  background: var(--feature-icon-bg);
-  border-radius: 18px;
-
-  html.dark .teacher-plan-empty-state__feature--sky & {
-    background: rgba(30, 64, 175, 0.34);
-  }
-
-  html.dark .teacher-plan-empty-state__feature--emerald & {
-    background: rgba(6, 95, 70, 0.34);
-  }
-}
-
-.teacher-plan-empty-state__feature-copy {
-  flex: 1;
-  min-width: 0;
-}
-
-.teacher-plan-empty-state__feature-copy h4 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  color: #0f172a;
-
-  html.dark & {
-    color: #f8fafc;
-  }
-}
-
-.teacher-plan-empty-state__feature-copy p {
-  margin: 8px 0 0;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.65;
-  color: #64748b;
-
-  html.dark & {
-    color: #94a3b8;
-  }
-}
-
-.teacher-plan-empty-state__feature-arrow {
-  flex-shrink: 0;
-  color: var(--feature-accent);
-  opacity: 0.76;
-}
-
-@keyframes teacher-plan-blob-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  50% {
-    transform: translate3d(0, -14px, 0) scale(1.06);
-  }
-}
 
 @mixin teacher-plan-mobile-layout {
   height: auto !important;

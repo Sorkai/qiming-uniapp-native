@@ -230,16 +230,9 @@ onMounted(() => {
     :class="{ 'user-reputation-page--mobile': isMobile }"
   >
     <el-card shadow="never" class="mb-4 reputation-panel">
-      <div class="reputation-panel__header">
-        <div class="reputation-panel__copy">
-          <span class="reputation-panel__eyebrow">筛选条件</span>
-          <h3>快速定位用户信誉</h3>
-          <p>按昵称、信誉等级和排序方式筛选用户信誉列表。</p>
-        </div>
-        <div
-          class="reputation-panel__badge"
-          :class="{ 'is-active': activeFilterCount > 0 }"
-        >
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">筛选条件</span>
+        <div class="text-sm text-gray-500">
           {{ filterBadgeText }}
         </div>
       </div>
@@ -248,7 +241,6 @@ onMounted(() => {
         :inline="!isMobile"
         :label-position="isMobile ? 'top' : 'right'"
         :model="searchForm"
-        class="search-form"
       >
         <el-form-item label="搜索用户">
           <el-input
@@ -297,13 +289,11 @@ onMounted(() => {
             <el-option label="升序" value="asc" />
           </el-select>
         </el-form-item>
-        <el-form-item class="search-form__action-item">
-          <div class="search-form__actions">
-            <el-button type="primary" :icon="Search" @click="handleSearch">
-              搜索
-            </el-button>
-            <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
-          </div>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -342,17 +332,14 @@ onMounted(() => {
     </div>
 
     <el-card shadow="never" class="reputation-panel data-card">
-      <div class="reputation-panel__header reputation-panel__header--compact">
-        <div class="reputation-panel__copy">
-          <span class="reputation-panel__eyebrow">信誉列表</span>
-          <h3>用户信誉管理</h3>
-          <p>{{ listSummaryText }}</p>
-        </div>
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">用户信誉管理</span>
+        <div class="text-sm text-gray-500">{{ listSummaryText }}</div>
+      </div>
+      <div class="flex justify-end mb-4">
         <el-button
           :icon="Refresh"
-          :link="!isMobile"
-          :plain="isMobile"
-          class="sync-status-btn"
+          text
           @click="refreshData"
         >
           同步数据

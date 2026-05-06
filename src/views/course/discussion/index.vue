@@ -661,16 +661,9 @@ onActivated(() => {
 
     <!-- 搜索栏 -->
     <el-card shadow="never" class="mb-4 search-card review-panel">
-      <div class="review-panel__header">
-        <div class="review-panel__copy">
-          <span class="review-panel__eyebrow">筛选条件</span>
-          <h3>快速聚焦待审核内容</h3>
-          <p>按课程和优先级筛选审核队列，优先处理高风险内容。</p>
-        </div>
-        <div
-          class="review-panel__badge"
-          :class="{ 'is-active': activeFilterCount > 0 }"
-        >
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">筛选条件</span>
+        <div class="text-sm text-gray-500">
           {{ filterBadgeText }}
         </div>
       </div>
@@ -678,7 +671,6 @@ onActivated(() => {
         :inline="!isMobile"
         :label-position="isMobile ? 'top' : 'right'"
         :model="searchForm"
-        class="search-form"
       >
         <el-form-item label="所属课程">
           <el-select
@@ -725,69 +717,58 @@ onActivated(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item class="search-form__action-item">
-          <div class="search-form__actions">
-            <el-button
-              type="primary"
-              :icon="Search"
-              class="search-form__primary"
-              @click="handleSearch"
-            >
-              查询审核
-            </el-button>
-            <el-button
-              :icon="Refresh"
-              class="search-form__secondary"
-              @click="resetSearch"
-            >
-              重置条件
-            </el-button>
-          </div>
+        <el-form-item>
+          <el-button
+            type="primary"
+            :icon="Search"
+            @click="handleSearch"
+          >
+            查询审核
+          </el-button>
+          <el-button
+            :icon="Refresh"
+            @click="resetSearch"
+          >
+            重置条件
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 操作栏 -->
     <el-card shadow="never" class="mb-4 action-bar review-panel">
-      <div class="review-toolbar">
-        <div class="review-panel__copy">
-          <span class="review-panel__eyebrow">待审队列</span>
-          <h3>内容审核</h3>
-          <p>{{ queueSummaryText }}</p>
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">内容审核列表</span>
+        <div class="text-sm text-gray-500">{{ queueSummaryText }}</div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <el-button
+          type="success"
+          :icon="Check"
+          :disabled="selectedCount === 0"
+          @click="handleBatchApprove"
+        >
+          批量通过
+        </el-button>
+        <el-button
+          type="danger"
+          :icon="Close"
+          :disabled="selectedCount === 0"
+          @click="handleBatchReject"
+        >
+          批量拒绝
+        </el-button>
+        <div v-if="selectedCount > 0" class="text-sm text-orange-500 ml-2 mr-2 flex items-center gap-1">
+          <el-icon><Warning /></el-icon>
+          已选中 {{ selectedCount }} 个待审项
         </div>
-        <div class="review-toolbar__actions">
-          <div class="batch-actions">
-            <el-button
-              type="success"
-              :icon="Check"
-              :disabled="selectedCount === 0"
-              @click="handleBatchApprove"
-            >
-              批量通过
-            </el-button>
-            <el-button
-              type="danger"
-              :icon="Close"
-              :disabled="selectedCount === 0"
-              @click="handleBatchReject"
-            >
-              批量拒绝
-            </el-button>
-          </div>
-          <div v-if="selectedCount > 0" class="batch-info">
-            <el-icon><Warning /></el-icon>
-            已选中 {{ selectedCount }} 个待审项
-          </div>
-          <el-button
-            :icon="Refresh"
-            :link="!isMobile"
-            :plain="isMobile"
-            class="sync-status-btn"
-            @click="initData"
-          >
-            同步数据
-          </el-button>
-        </div>
+        <el-button
+          :icon="Refresh"
+          text
+          @click="initData"
+        >
+          同步数据
+        </el-button>
       </div>
     </el-card>
 

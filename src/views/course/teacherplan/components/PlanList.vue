@@ -258,9 +258,13 @@
             class="plan-progress-state text-center pb-4"
           >
             <div
-              class="plan-progress-icon w-16 h-16 bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)] rounded-full flex items-center justify-center mx-auto mb-4"
+              class="plan-progress-icon w-20 h-20 mx-auto mb-2"
             >
-              <el-icon class="text-3xl"><CircleCheckFilled /></el-icon>
+              <lottie-animation
+                :animation-data="SuccessAnim"
+                :width="80"
+                :height="80"
+              />
             </div>
             <h4 class="plan-progress-title text-lg font-bold mb-2">生成成功</h4>
             <div class="plan-progress-actions flex gap-4 mt-8">
@@ -325,6 +329,8 @@ import {
   Box,
   Calendar
 } from "@element-plus/icons-vue";
+import LottieAnimation from "@/components/LottieAnimation.vue";
+import SuccessAnim from "@/lottie/Free Success Alert icon Animation.json";
 
 const props = defineProps({
   courseId: {

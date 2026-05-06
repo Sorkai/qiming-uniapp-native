@@ -855,16 +855,9 @@ onActivated(() => {
       shadow="never"
       class="discussion-panel discussion-filter-panel mb-4"
     >
-      <div class="discussion-panel__header discussion-panel__header--filter">
-        <div class="discussion-panel__copy">
-          <span class="discussion-panel__eyebrow">筛选条件</span>
-          <h3>精准定位讨论内容</h3>
-          <p>按课程、类型、状态和关键词快速检索目标讨论。</p>
-        </div>
-        <div
-          class="discussion-panel__badge"
-          :class="{ 'is-active': activeFilterCount > 0 }"
-        >
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">筛选条件</span>
+        <div class="text-sm text-gray-500">
           {{ filterBadgeText }}
         </div>
       </div>
@@ -872,7 +865,6 @@ onActivated(() => {
         :inline="!isMobile"
         :label-position="isMobile ? 'top' : 'right'"
         :model="searchForm"
-        class="search-form"
       >
         <el-form-item label="归属课程">
           <el-select
@@ -947,24 +939,20 @@ onActivated(() => {
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item class="search-form__action-item">
-          <div class="search-form__actions">
-            <el-button
-              type="primary"
-              :icon="Search"
-              class="search-form__primary"
-              @click="handleSearch"
-            >
-              查询
-            </el-button>
-            <el-button
-              :icon="Refresh"
-              class="search-form__secondary"
-              @click="resetSearch"
-            >
-              重置
-            </el-button>
-          </div>
+        <el-form-item>
+          <el-button
+            type="primary"
+            :icon="Search"
+            @click="handleSearch"
+          >
+            查询
+          </el-button>
+          <el-button
+            :icon="Refresh"
+            @click="resetSearch"
+          >
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -975,31 +963,26 @@ onActivated(() => {
       shadow="never"
       class="discussion-panel discussion-list-panel"
     >
-      <div class="discussion-list-toolbar">
-        <div class="discussion-panel__copy">
-          <span class="discussion-panel__eyebrow">内容队列</span>
-          <h3>讨论列表</h3>
-          <p>{{ listSummaryText }}</p>
-        </div>
-        <div class="discussion-list-toolbar__actions">
-          <div v-if="selectedCount > 0" class="batch-actions">
-            <el-button type="success" :icon="Check" @click="handleBatchApprove">
-              批量通过 ({{ selectedCount }})
-            </el-button>
-            <el-button type="danger" :icon="Close" @click="handleBatchReject">
-              批量拒绝
-            </el-button>
-          </div>
-          <el-button
-            :icon="Refresh"
-            :link="!isMobile"
-            :plain="isMobile"
-            class="sync-status-btn"
-            @click="initData(true)"
-          >
-            同步状态
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">讨论列表</span>
+        <div class="text-sm text-gray-500">{{ listSummaryText }}</div>
+      </div>
+      <div class="flex flex-wrap items-center justify-end gap-2 mb-4">
+        <div v-if="selectedCount > 0" class="flex gap-2">
+          <el-button type="success" :icon="Check" @click="handleBatchApprove">
+            批量通过 ({{ selectedCount }})
+          </el-button>
+          <el-button type="danger" :icon="Close" @click="handleBatchReject">
+            批量拒绝
           </el-button>
         </div>
+        <el-button
+          :icon="Refresh"
+          text
+          @click="initData(true)"
+        >
+            同步状态
+          </el-button>
       </div>
       <div v-if="isMobile" class="mobile-discussion-list">
         <div

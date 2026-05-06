@@ -32,6 +32,16 @@
           <el-form-item class="search-form__actions">
             <el-button type="primary" @click="handleSearch">搜索</el-button>
             <el-button @click="resetSearch">重置</el-button>
+            <el-button
+              type="success"
+              :disabled="selectedCourseIds.length !== 1"
+              @click="handleEditSelected"
+            >编辑课程</el-button>
+            <el-button
+              type="danger"
+              :disabled="selectedCourseIds.length === 0"
+              @click="handleBatchDelete"
+            >删除课程</el-button>
           </el-form-item>
         </el-form>
 
@@ -60,6 +70,8 @@
           >
             <CourseCard
               :course="course"
+              :is-selected="selectedCourseIds.includes(course.courseId)"
+              @toggle-select="toggleCourseSelection"
               @edit="editCourse"
               @delete="confirmDelete"
               @view-hours="viewHours"
@@ -722,6 +734,7 @@ import {
   getAllocationUserList,
   getStudyUserList,
   deleteCourse,
+  batchDeleteCourse,
   deleteChapter,
   deleteHour,
   createCourseChapter,
@@ -762,6 +775,18 @@ const loading = ref(false);
 const searchForm = ref({
   courseName: ""
 });
+
+// 选择的课程ID列表
+const selectedCourseIds = ref<number[]>([]);
+
+const toggleCourseSelection = (courseId: number) => {
+  const index = selectedCourseIds.value.indexOf(courseId);
+  if (index > -1) {
+    selectedCourseIds.value.splice(index, 1);
+  } else {
+    selectedCourseIds.value.push(courseId);
+  }
+};
 
 // 课时列表相关
 const hoursDialogVisible = ref(false);
@@ -967,6 +992,8 @@ const fetchCourseList = async () => {
       total.value = 0;
       ElMessage.warning("获取课程列表失败");
     }
+    // 列表刷新后，清空选中状态
+    selectedCourseIds.value = [];
   } catch (error) {
     console.error("获取课程列表失败:", error);
     ElMessage.error("获取课程列表失败");
@@ -1079,6 +1106,17 @@ const editCourse = course => {
   };
 
   courseFormDialogVisible.value = true;
+};
+
+// 编辑选中的课程
+const handleEditSelected = () => {
+  if (selectedCourseIds.value.length === 1) {
+    const courseId = selectedCourseIds.value[0];
+    const course = courseList.value.find(c => c.courseId === courseId);
+    if (course) {
+      editCourse(course);
+    }
+  }
 };
 
 // 查看课时列表
@@ -1375,6 +1413,56 @@ const handleDeleteCourse = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// 批量删除选中的课程
+const handleBatchDelete = () => {
+  if (selectedCourseIds.value.length === 0) return;
+  ElMessageBox.confirm(
+    `确定要删除选中的 ${selectedCourseIds.value.length} 门课程吗？会级联删除课程相关学习记录、作业考试、讨论、AI 资源等数据，此操作不可恢复！`,
+    "批量删除确认",
+    {
+      confirmButtonText: "确定删除",
+      cancelButtonText: "取消",
+      type: "warning"
+    }
+  ).then(async () => {
+    try {
+      loading.value = true;
+      const res = await batchDeleteCourse({
+        courseIds: selectedCourseIds.value
+      });
+      // 注意：此接口直接返回业务数据，没有包裹在 code/data 中
+      if (res && typeof res.total === 'number') {
+        if (res.failedCount > 0 && res.successCount === 0 && res.partialSuccessCount === 0) {
+          ElMessage.error(`删除失败：${res.items?.[0]?.message || '所有选中课程删除失败'}`);
+        } else if (res.partialSuccessCount > 0) {
+          ElMessage.warning(`部分课程已删除，但外部资源部分清理失败，可稍后重试。共选中 ${res.total} 门，成功 ${res.successCount} 门。`);
+          fetchCourseList();
+        } else {
+          ElMessage.success("批量删除成功");
+          fetchCourseList();
+        }
+      } else if ((res as any).code === 200) {
+        // 兼容处理：如果后端未来改为包裹格式
+        ElMessage.success("批量删除成功");
+        fetchCourseList();
+      } else {
+        ElMessage.error((res as any).msg || "批量删除失败");
+      }
+    } catch (error: any) {
+      console.error("批量删除出错:", error);
+      if (error.response && error.response.data) {
+        ElMessage.error(error.response.data.msg || "批量删除失败，请稍后重试");
+      } else {
+        ElMessage.error("批量删除失败，请稍后重试");
+      }
+    } finally {
+      loading.value = false;
+    }
+  }).catch(() => {
+    // 已取消删除
+  });
 };
 
 // 删除章节
