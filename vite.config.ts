@@ -58,7 +58,6 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
       // 消除打包大小超过500kb警告
       chunkSizeWarningLimit: 4000,
       rollupOptions: {
-        maxParallelFileOps: 5,
         input: {
           index: pathResolve("./index.html", import.meta.url)
         },
@@ -78,100 +77,7 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
           // 其他警告正常输出
           warn(warning);
         },
-        // 静态资源分类打包
         output: {
-          manualChunks(id) {
-            if (!id.includes("node_modules")) return;
-
-            if (id.includes("pdfjs-dist") || id.includes("vue-pdf-embed")) {
-              return "pdf";
-            }
-            if (id.includes("xlsx")) {
-              return "xlsx";
-            }
-            if (id.includes("echarts")) {
-              return "echarts";
-            }
-            if (
-              id.includes("@logicflow") ||
-              id.includes("@vue-flow") ||
-              id.includes("dagre")
-            ) {
-              return "flow";
-            }
-            if (
-              id.includes("@pureadmin/table") ||
-              id.includes("@pureadmin/descriptions") ||
-              id.includes("plus-pro-components") ||
-              id.includes("vxe-table")
-            ) {
-              return "table";
-            }
-            if (
-              id.includes("deep-chat") ||
-              id.includes("@docmee/sdk-ui") ||
-              id.includes("mqtt") ||
-              id.includes("cos-js-sdk-v5")
-            ) {
-              return "ai-tools";
-            }
-            if (
-              id.includes("cropperjs") ||
-              id.includes("html2canvas") ||
-              id.includes("sortablejs") ||
-              id.includes("vuedraggable") ||
-              id.includes("el-table-infinite-scroll") ||
-              id.includes("intro.js")
-            ) {
-              return "interaction";
-            }
-            if (
-              id.includes("@amap") ||
-              id.includes("china-area-data") ||
-              id.includes("pinyin-pro")
-            ) {
-              return "geo";
-            }
-            if (
-              id.includes("codemirror") ||
-              id.includes("vditor") ||
-              id.includes("markdown-it") ||
-              id.includes("highlight.js") ||
-              id.includes("katex")
-            ) {
-              return "editor";
-            }
-            if (id.includes("lottie-web")) {
-              return "lottie";
-            }
-            if (
-              id.includes("three") ||
-              id.includes("@pixiv/three-vrm") ||
-              id.includes("xgplayer") ||
-              id.includes("wavesurfer") ||
-              id.includes("@splinetool/runtime") ||
-              id.includes("swiper")
-            ) {
-              return "media";
-            }
-            if (
-              id.includes("element-plus") ||
-              id.includes("@element-plus/icons-vue")
-            ) {
-              return "element-plus";
-            }
-            if (
-              id.includes("/vue/") ||
-              id.includes("\\vue\\") ||
-              id.includes("vue-router") ||
-              id.includes("pinia") ||
-              id.includes("vue-i18n")
-            ) {
-              return "vue-vendor";
-            }
-
-            return "vendor";
-          },
           chunkFileNames: "static/js/[name]-[hash].js",
           entryFileNames: "static/js/[name]-[hash].js",
           assetFileNames: "static/[ext]/[name]-[hash].[ext]"

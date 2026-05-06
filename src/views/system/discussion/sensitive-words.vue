@@ -483,16 +483,9 @@ onMounted(() => {
     </div>
 
     <el-card shadow="never" class="mb-4 sensitive-panel">
-      <div class="sensitive-panel__header">
-        <div class="sensitive-panel__copy">
-          <span class="sensitive-panel__eyebrow">筛选条件</span>
-          <h3>快速定位敏感词</h3>
-          <p>按关键词、风险级别、分类和状态筛选词库内容。</p>
-        </div>
-        <div
-          class="sensitive-panel__badge"
-          :class="{ 'is-active': activeFilterCount > 0 }"
-        >
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">筛选条件</span>
+        <div class="text-sm text-gray-500">
           {{ filterBadgeText }}
         </div>
       </div>
@@ -501,7 +494,6 @@ onMounted(() => {
         :inline="!isMobile"
         :label-position="isMobile ? 'top' : 'right'"
         :model="searchForm"
-        class="search-form"
       >
         <el-form-item label="关键词">
           <el-input
@@ -553,13 +545,11 @@ onMounted(() => {
             <el-option label="已禁用" :value="false" />
           </el-select>
         </el-form-item>
-        <el-form-item class="search-form__action-item">
-          <div class="search-form__actions">
-            <el-button type="primary" :icon="Search" @click="handleSearch">
-              搜索
-            </el-button>
-            <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
-          </div>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
         </el-form-item>
       </el-form>
 
@@ -583,17 +573,14 @@ onMounted(() => {
     </el-card>
 
     <el-card shadow="never" class="sensitive-panel data-card">
-      <div class="sensitive-panel__header sensitive-panel__header--compact">
-        <div class="sensitive-panel__copy">
-          <span class="sensitive-panel__eyebrow">词库列表</span>
-          <h3>敏感词管理</h3>
-          <p>{{ listSummaryText }}</p>
-        </div>
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">敏感词管理</span>
+        <div class="text-sm text-gray-500">{{ listSummaryText }}</div>
+      </div>
+      <div class="flex justify-end mb-4">
         <el-button
           :icon="Refresh"
-          :link="!isMobile"
-          :plain="isMobile"
-          class="sync-status-btn"
+          text
           @click="refreshData"
         >
           同步数据

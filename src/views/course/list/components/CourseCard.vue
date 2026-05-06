@@ -21,6 +21,13 @@
           {{ course.isRequired === 1 ? "必修" : "选修" }}
         </el-tag>
       </div>
+      <div class="course-selection" @click.stop>
+        <el-checkbox
+          :model-value="isSelected"
+          @update:model-value="$emit('toggle-select', course.courseId)"
+          size="large"
+        />
+      </div>
       <div class="course-actions-overlay">
         <el-button
           type="primary"
@@ -104,6 +111,7 @@ import {
 
 defineProps<{
   course: any;
+  isSelected?: boolean;
 }>();
 
 defineEmits([
@@ -112,7 +120,8 @@ defineEmits([
   "view-hours",
   "view-attrs",
   "allocation",
-  "study-status"
+  "study-status",
+  "toggle-select"
 ]);
 </script>
 
@@ -177,6 +186,19 @@ defineEmits([
   top: 10px;
   left: 10px;
   z-index: 2;
+}
+
+.course-selection {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .course-actions-overlay {

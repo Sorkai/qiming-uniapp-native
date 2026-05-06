@@ -1,6 +1,6 @@
 import { http } from "@/utils/http";
 import { getToken, formatToken } from "@/utils/auth";
-import {
+import type {
   CreateConversationReq,
   CreateConversationResponse,
   ConversationDetailResponse,
@@ -304,7 +304,7 @@ export function streamCourseChat(
         try {
           const errorData = await response.json();
           errorMsg = errorData.error?.message || errorData.msg || errorMsg;
-        } catch (e) {
+        } catch {
           // 无法解析错误响应
         }
         console.error("单课AI互动流式请求错误:", errorMsg);
@@ -355,7 +355,7 @@ export function multimodalChatStream(
         try {
           const errorData = await response.json();
           errorMsg = errorData.error?.message || errorData.msg || errorMsg;
-        } catch (e) {
+        } catch {
           // 无法解析错误响应
         }
         throw new Error(errorMsg);
@@ -403,7 +403,7 @@ export function continueConversationStream(
         try {
           const errorData = await response.json();
           errorMsg = errorData.error?.message || errorData.msg || errorMsg;
-        } catch (e) {
+        } catch {
           // 无法解析错误响应
         }
         throw new Error(errorMsg);

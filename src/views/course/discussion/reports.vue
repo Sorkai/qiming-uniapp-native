@@ -323,16 +323,9 @@ onActivated(() => {
     </div>
 
     <el-card shadow="never" class="mb-4 report-panel">
-      <div class="report-panel__header">
-        <div class="report-panel__copy">
-          <span class="report-panel__eyebrow">筛选条件</span>
-          <h3>快速定位举报记录</h3>
-          <p>按处理状态筛选举报项，优先清理待处理内容。</p>
-        </div>
-        <div
-          class="report-panel__badge"
-          :class="{ 'is-active': Boolean(searchForm.status) }"
-        >
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">筛选条件</span>
+        <div class="text-sm text-gray-500">
           {{ filterBadgeText }}
         </div>
       </div>
@@ -341,7 +334,6 @@ onActivated(() => {
         :inline="!isMobile"
         :label-position="isMobile ? 'top' : 'right'"
         :model="searchForm"
-        class="search-form"
       >
         <el-form-item label="状态">
           <el-select
@@ -358,29 +350,24 @@ onActivated(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item class="search-form__action-item">
-          <div class="search-form__actions">
-            <el-button type="primary" :icon="Search" @click="handleSearch">
-              搜索
-            </el-button>
-            <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
-          </div>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card shadow="never" class="report-panel data-card">
-      <div class="report-panel__header report-panel__header--compact">
-        <div class="report-panel__copy">
-          <span class="report-panel__eyebrow">举报队列</span>
-          <h3>举报处理</h3>
-          <p>{{ listSummaryText }}</p>
-        </div>
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">举报处理</span>
+        <div class="text-sm text-gray-500">{{ listSummaryText }}</div>
+      </div>
+      <div class="flex justify-end mb-4">
         <el-button
           :icon="Refresh"
-          :link="!isMobile"
-          :plain="isMobile"
-          class="sync-status-btn"
+          text
           @click="refreshData"
         >
           同步数据

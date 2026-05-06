@@ -1,70 +1,16 @@
 <template>
   <div class="virtual-lab" :class="{ 'virtual-lab--mobile': isMobile }">
-    <el-card shadow="never" class="lab-panel hero-panel">
-      <div class="hero-panel__content">
-        <div class="hero-panel__copy">
-          <span class="hero-panel__eyebrow">虚拟实验室</span>
-          <h2>移动端统一管理实验动画</h2>
-          <p>
-            按课程与章节查看 HTML
-            动画生成任务，在手机和平板上也能顺手完成同步、生成和版本切换。
-          </p>
-          <div class="hero-panel__selection">
-            <span class="hero-chip">{{ selectionBadgeText }}</span>
-            <span v-if="hasSelection" class="hero-chip hero-chip--soft">
-              当前展示 {{ currentDisplayVersionText }}
-            </span>
-          </div>
-        </div>
-
-        <div class="hero-panel__stats">
-          <div class="hero-stat-card">
-            <span class="hero-stat-card__label">任务总数</span>
-            <strong class="hero-stat-card__value">{{
-              stats.totalTasks
-            }}</strong>
-            <span class="hero-stat-card__hint">当前章节累计生成任务</span>
-          </div>
-          <div class="hero-stat-card">
-            <span class="hero-stat-card__label">已完成</span>
-            <strong class="hero-stat-card__value">{{
-              stats.completedTasks
-            }}</strong>
-            <span class="hero-stat-card__hint">可预览或切换展示版本</span>
-          </div>
-          <div class="hero-stat-card">
-            <span class="hero-stat-card__label">进行中</span>
-            <strong class="hero-stat-card__value">{{
-              stats.processingTasks
-            }}</strong>
-            <span class="hero-stat-card__hint">等待中与生成中的任务</span>
-          </div>
-        </div>
-      </div>
-    </el-card>
-
-    <el-card shadow="never" class="lab-panel filter-panel">
-      <div class="panel-header">
-        <div class="panel-copy">
-          <span class="panel-eyebrow">筛选与同步</span>
-          <h3>先选课程，再定位到章节</h3>
-          <p>所有筛选和操作都按移动端触控布局排列，减少横向拥挤。</p>
-        </div>
-
-        <div class="panel-header__meta">
-          <span class="panel-badge" :class="{ 'is-active': hasSelection }">
-            {{ selectionHintText }}
-          </span>
-          <el-button
-            type="success"
-            class="panel-sync-button"
-            :loading="syncLoading"
-            @click="handleForceSync"
-          >
-            <el-icon class="mr-1"><Refresh /></el-icon>
-            强制同步
-          </el-button>
-        </div>
+    <el-card shadow="never" class="lab-panel filter-panel mb-4">
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">筛选与同步</span>
+        <el-button
+          type="success"
+          :loading="syncLoading"
+          @click="handleForceSync"
+        >
+          <el-icon class="mr-1"><Refresh /></el-icon>
+          强制同步
+        </el-button>
       </div>
 
       <el-form :model="searchForm" label-position="top" class="lab-search-form">
@@ -107,7 +53,7 @@
           </el-form-item>
         </div>
 
-        <div class="lab-search-form__actions">
+        <div class="mt-4 flex gap-2">
           <el-button
             type="primary"
             :disabled="!hasSelection"
@@ -121,18 +67,11 @@
     </el-card>
 
     <el-card v-if="hasSelection" shadow="never" class="lab-panel focus-panel">
-      <div class="panel-header">
-        <div class="panel-copy">
-          <span class="panel-eyebrow">当前章节</span>
-          <h3>{{ selectedChapterTitle || "已选择章节" }}</h3>
-          <p>{{ selectedCourseTitle || "已选择课程" }}</p>
-        </div>
-
-        <div class="focus-panel__version">
-          <span class="focus-panel__version-label">展示版本</span>
-          <strong class="focus-panel__version-value">
-            {{ currentDisplayVersionText }}
-          </strong>
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">当前章节：{{ selectedChapterTitle || "已选择章节" }} ({{ selectedCourseTitle || "已选择课程" }})</span>
+        <div class="text-sm">
+          <span>展示版本：</span>
+          <strong class="text-primary">{{ currentDisplayVersionText }}</strong>
         </div>
       </div>
 
@@ -187,12 +126,8 @@
       shadow="never"
       class="lab-panel task-panel"
     >
-      <div class="panel-header panel-header--task">
-        <div class="panel-copy">
-          <span class="panel-eyebrow">任务队列</span>
-          <h3>HTML 动画任务列表</h3>
-          <p>{{ taskSummaryText }}</p>
-        </div>
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-base">HTML 动画任务列表</span>
 
         <div v-if="hasSelection" class="task-panel__summary">
           <span class="summary-chip">已完成 {{ stats.completedTasks }}</span>

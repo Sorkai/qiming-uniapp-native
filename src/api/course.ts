@@ -246,6 +246,33 @@ export const deleteCourse = (data: { courseId: number }) => {
   });
 };
 
+export interface BatchDeleteResult {
+  total: number;
+  successCount: number;
+  partialSuccessCount: number;
+  failedCount: number;
+  notFoundCount: number;
+  items: Array<{
+    courseId: number;
+    status: string;
+    message: string;
+    deletedCounts: any;
+    storageDeletedCount: number;
+    storageFailedCount: number;
+    aiCleanupStatus: string;
+  }>;
+}
+
+/**
+ * 批量删除课程 (管理员)
+ * @param data 包含课程ID列表的数据对象
+ */
+export const batchDeleteCourse = (data: { courseIds: number[] }) => {
+  return http.request<BatchDeleteResult>("post", "/edu/backend/v1/admin/course/batch-delete", {
+    data
+  });
+};
+
 /**
  * 新增课程的章节及课时
  * @param data 包含课程ID和章节信息的数据对象

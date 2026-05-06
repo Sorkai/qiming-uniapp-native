@@ -1472,6 +1472,7 @@ onUnmounted(() => {
           overflow: hidden;
           line-height: 46px;
           color: #555;
+          background-color: transparent;
           border-radius: 12px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -2454,6 +2455,7 @@ onUnmounted(() => {
             margin-bottom: 0;
             line-height: 1.1;
             white-space: nowrap;
+            background-color: transparent;
             border: 1px solid rgb(151 180 247 / 8%);
             border-radius: 18px;
             scroll-snap-align: start;
