@@ -502,7 +502,13 @@ const handleNewChat = (payload: { course: string }) => {
                         : null
                     "
                   >
-                    <el-icon class="text-lg" :class="activeCourse && quickMessage.trim() ? '' : 'font-bold'"><Top /></el-icon>
+                    <el-icon
+                      class="text-lg"
+                      :class="
+                        activeCourse && quickMessage.trim() ? '' : 'font-bold'
+                      "
+                      ><Top
+                    /></el-icon>
                   </button>
                 </div>
               </div>
