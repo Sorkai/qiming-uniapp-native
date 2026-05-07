@@ -63,11 +63,10 @@
                 <el-button
                   type="primary"
                   size="small"
-                  circle
                   plain
                   :icon="Plus"
                   @click.stop="$emit('new-chat', { course })"
-                  class="opacity-0 group-hover/course:opacity-100 transition-opacity scale-75 hover:scale-90"
+                  class="!rounded-md opacity-0 group-hover/course:opacity-100 transition-all scale-75 hover:scale-90 hover:!shadow-[0_0_8px_rgba(94,127,248,0.4)]"
                 />
               </el-tooltip>
             </div>
@@ -254,4 +253,3 @@ defineEmits(["update:activeRail"]);
   background: #cbd5e1;
 }
 </style>
-

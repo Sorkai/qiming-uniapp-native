@@ -8,23 +8,18 @@
         <el-tag size="small" effect="plain" round class="animate-pulse">{{
           activeCourse
         }}</el-tag>
-        <span class="text-sm font-medium text-gray-600 uppercase tracking-wider"
-          >Session Console</span
-        >
       </div>
       <div class="flex items-center gap-3">
         <el-button-group>
           <el-button
             :icon="RefreshRight"
-            circle
             size="small"
-            class="hover:rotate-180 transition-transform duration-500"
+            class="!rounded-lg hover:rotate-180 transition-all duration-500 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.3)]"
           />
           <el-button
             :icon="More"
-            circle
             size="small"
-            class="hover:scale-110 transition-transform duration-300"
+            class="!rounded-lg hover:scale-110 transition-all duration-300 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.3)]"
           />
         </el-button-group>
       </div>
@@ -150,7 +145,7 @@
       </transition-group>
     </el-scrollbar>
 
-    <!-- 输入区：悬浮极简设计 -->
+    <!-- 输入区：悬浮极简设计，带常驻选择器 -->
     <div class="p-4 bg-transparent z-10 w-full">
       <div class="w-full relative group">
         <!-- 发光的呼吸框 -->
@@ -158,33 +153,169 @@
           class="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-[24px] blur opacity-0 group-focus-within:opacity-100 group-focus-within:animate-pulse transition duration-500"
         ></div>
         <div
-          class="relative bg-white border border-gray-200 rounded-[24px] p-2 flex items-end gap-2 shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300"
+          class="relative bg-white border border-gray-200 rounded-[24px] shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300 overflow-hidden"
         >
-          <el-button
-            :icon="Plus"
-            circle
-            class="mb-1 hover:rotate-90 hover:bg-gray-100 transition-all duration-300"
-          />
-          <el-input
-            v-model="input"
-            type="textarea"
-            :autosize="{ minRows: 1, maxRows: 5 }"
-            placeholder="与多智能体互动，描述你的学习需求..."
-            class="ai-input-base"
-            @keydown.enter.prevent="handleSend"
-          />
-          <el-button
-            type="primary"
-            :icon="Promotion"
-            circle
-            class="mb-1 transform transition-all duration-300 hover:scale-110 hover:shadow-md hover:shadow-primary/40 active:scale-95"
-            :class="
-              input
-                ? 'scale-100 opacity-100 translate-x-0'
-                : 'scale-0 opacity-0 translate-x-4'
-            "
-            @click="handleSend"
-          />
+          <!-- 输入框 -->
+          <div class="flex items-end gap-2 p-2">
+            <el-button
+              :icon="Plus"
+              class="!rounded-lg mb-1 hover:rotate-90 hover:bg-gray-100 transition-all duration-300 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.3)]"
+            />
+            <el-input
+              v-model="input"
+              type="textarea"
+              :autosize="{ minRows: 1, maxRows: 5 }"
+              placeholder="与多智能体互动，描述你的学习需求..."
+              class="ai-input-base"
+              @keydown.enter.prevent="handleSend"
+            />
+            <el-button
+              type="primary"
+              :icon="Promotion"
+              class="!rounded-lg mb-1 transform transition-all duration-300 hover:scale-110 hover:shadow-md hover:shadow-primary/40 active:scale-95 hover:!shadow-[0_0_12px_rgba(94,127,248,0.5)]"
+              :class="
+                input
+                  ? 'scale-100 opacity-100 translate-x-0'
+                  : 'scale-0 opacity-0 translate-x-4'
+              "
+              @click="handleSend"
+            />
+          </div>
+
+          <!-- 常驻工具栏：课程 / 模式 / 智能体 / 思考模式 / 模型 -->
+          <div
+            class="flex items-center justify-between px-3 py-2 bg-gray-50/60 border-t border-gray-100"
+          >
+            <div class="flex flex-wrap items-center gap-1">
+              <el-dropdown
+                v-if="courses && courses.length"
+                trigger="click"
+                @command="c => emit('switch-course', c)"
+              >
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium bg-primary/10 text-primary cursor-pointer hover:bg-primary/15 transition-colors"
+                >
+                  <el-icon class="mr-1 text-[13px]"><FolderOpened /></el-icon>
+                  {{ activeCourse }}
+                  <el-icon class="ml-1 text-[11px]"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      v-for="c in courses"
+                      :key="c"
+                      :command="c"
+                    >
+                      {{ c }}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+
+              <el-dropdown
+                trigger="click"
+                @command="m => emit('update:mode', m)"
+              >
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                >
+                  <el-icon class="mr-1 text-[13px]"><Monitor /></el-icon>
+                  {{ mode }}
+                  <el-icon class="ml-1 text-[11px]"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="学生模式"
+                      >学生模式</el-dropdown-item
+                    >
+                    <el-dropdown-item command="教师模式"
+                      >教师模式</el-dropdown-item
+                    >
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+
+              <el-dropdown
+                trigger="click"
+                @command="a => emit('update:selectedAgent', a)"
+              >
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                >
+                  <el-icon class="mr-1 text-[13px]"><Cpu /></el-icon>
+                  {{ selectedAgent }}
+                  <el-icon class="ml-1 text-[11px]"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="代码生成特工"
+                      >代码生成特工</el-dropdown-item
+                    >
+                    <el-dropdown-item command="多模态规划师"
+                      >多模态规划师</el-dropdown-item
+                    >
+                    <el-dropdown-item command="特征提取专家"
+                      >特征提取专家</el-dropdown-item
+                    >
+                    <el-dropdown-item command="排版与渲染器"
+                      >排版与渲染器</el-dropdown-item
+                    >
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+
+              <el-dropdown
+                trigger="click"
+                @command="t => emit('update:thinkingMode', t)"
+              >
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                >
+                  <el-icon class="mr-1 text-[13px]"><MagicStick /></el-icon>
+                  {{ thinkingMode }}
+                  <el-icon class="ml-1 text-[11px]"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="标准模式"
+                      >标准模式</el-dropdown-item
+                    >
+                    <el-dropdown-item command="深度思考"
+                      >深度思考</el-dropdown-item
+                    >
+                    <el-dropdown-item command="快速响应"
+                      >快速响应</el-dropdown-item
+                    >
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+
+            <el-dropdown
+              trigger="click"
+              @command="m => emit('update:selectedModel', m)"
+            >
+              <span
+                class="text-[11px] text-gray-400 font-medium tracking-wide flex items-center cursor-pointer hover:text-gray-600 transition-colors"
+              >
+                {{ selectedModel }}
+                <el-icon class="ml-1"><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="IntellEdu 4.0 超高"
+                    >IntellEdu 4.0 超高</el-dropdown-item
+                  >
+                  <el-dropdown-item command="IntellEdu 4.0 标准"
+                    >IntellEdu 4.0 标准</el-dropdown-item
+                  >
+                  <el-dropdown-item command="IntellEdu Lite"
+                    >IntellEdu Lite</el-dropdown-item
+                  >
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
       </div>
     </div>
@@ -202,15 +333,32 @@ import {
   Promotion,
   Plus,
   RefreshRight,
-  More
+  More,
+  FolderOpened,
+  Monitor,
+  ArrowDown,
+  MagicStick
 } from "@element-plus/icons-vue";
 
 const props = defineProps<{
   messages: any[];
   activeCourse: string;
+  courses?: string[];
+  mode?: string;
+  selectedAgent?: string;
+  selectedModel?: string;
+  thinkingMode?: string;
 }>();
 
-const emit = defineEmits(["send"]);
+const emit = defineEmits([
+  "send",
+  "switch-course",
+  "exit",
+  "update:mode",
+  "update:selectedAgent",
+  "update:selectedModel",
+  "update:thinkingMode"
+]);
 const input = ref("");
 
 const scrollbarRef = ref();

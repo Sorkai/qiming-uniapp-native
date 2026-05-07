@@ -47,6 +47,8 @@ const currentTheme = ref(
 // 会话数据集
 const activeRail = ref("chat");
 const activeCourse = ref(null);
+// 欢迎页待提交的课程草稿（仅在点击发送后才会提升为 activeCourse 并跳转）
+const draftCourse = ref<string | null>(null);
 
 // 学生拥有的课程（动态拉取）
 const myCourses = ref(["数据结构", "算法设计", "高等数学", "大学物理"]);
@@ -242,33 +244,75 @@ onMounted(() => {
 
 const quickMessage = ref("");
 const selectedMockAgent = ref("代码生成特工");
+const selectedModel = ref("IntellEdu 4.0 超高");
+const thinkingMode = ref("标准模式");
 
+// 侧边栏 + 按钮：仅预选课程到草稿，不直接进入对话
 const handleNewChat = (payload: { course: string }) => {
-  activeCourse.value = payload.course;
+  draftCourse.value = payload.course;
+  // 若用户已有问题草稿，则视为完整提交，正式进入对话
   if (quickMessage.value.trim()) {
-    handleSendMessage(quickMessage.value);
-    quickMessage.value = "";
+    submitDraft();
   }
+};
+
+// 真正提交：把草稿课程提升为 activeCourse 并发送首条消息
+const submitDraft = () => {
+  if (!draftCourse.value || !quickMessage.value.trim()) return;
+  activeCourse.value = draftCourse.value;
+  handleSendMessage(quickMessage.value);
+  quickMessage.value = "";
+};
+
+// 对话页内继续提问
+const handleChatSend = (text: string) => {
+  handleSendMessage(text);
+};
+
+// 退出当前会话回到欢迎页（保留草稿课程方便重新进入）
+const exitConversation = () => {
+  draftCourse.value = activeCourse.value;
+  activeCourse.value = null;
 };
 </script>
 
 <template>
   <div
-    class="ai-app-root h-screen w-full flex bg-[#f4f7fd] font-sans"
+    class="ai-app-root h-screen w-full flex font-sans relative overflow-hidden"
     :class="currentTheme"
   >
+    <!-- 全局背景：柔和的 mesh 渐变 -->
+    <div class="ai-app-bg pointer-events-none absolute inset-0 z-0" />
+
     <!-- 极简左侧边栏 (第一块) -->
     <aside
-      class="w-[260px] flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300"
+      class="w-[260px] flex-shrink-0 z-20 bg-white/70 backdrop-blur-xl border-r border-gray-100/80 flex flex-col transition-all duration-300 relative"
     >
       <!-- 品牌Logo区 -->
-      <div class="h-16 flex items-center border-b border-gray-100 px-6">
-        <img :src="getLogo()" alt="logo" class="h-8 w-8 object-contain mr-3" />
-        <span
-          class="text-xl font-black italic tracking-tighter uppercase"
-          style="color: var(--el-color-primary)"
-          >IntellEdu</span
+      <div class="h-16 flex items-center border-b border-gray-100/80 px-6">
+        <div
+          class="h-9 w-9 rounded-xl flex items-center justify-center mr-3 shadow-sm"
+          style="
+            background: linear-gradient(
+              135deg,
+              var(--el-color-primary-light-3) 0%,
+              var(--el-color-primary) 100%
+            );
+          "
         >
+          <img
+            :src="getLogo()"
+            alt="logo"
+            class="h-5 w-5 object-contain brightness-0 invert"
+          />
+        </div>
+        <div class="flex flex-col leading-tight">
+          <span
+            class="text-xl font-black italic tracking-tighter uppercase"
+            style="color: var(--el-color-primary)"
+            >IntellEdu</span
+          >
+        </div>
       </div>
       <div class="flex-1 overflow-hidden">
         <AiSidebar
@@ -287,39 +331,45 @@ const handleNewChat = (payload: { course: string }) => {
     </aside>
 
     <!-- 右边总体容器 (上边栏 + 主体) -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 relative z-10">
       <!-- 上边栏 (第二块) -->
       <header
-        class="h-16 flex-shrink-0 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-6 z-10"
+        class="h-16 flex-shrink-0 bg-white/60 backdrop-blur-xl border-b border-gray-100/80 flex items-center justify-between px-6 z-10"
       >
         <div class="flex items-center gap-3">
           <el-button
             :icon="ArrowLeftBold"
-            circle
             plain
-            class="shadow-sm hover:-translate-x-1 transition-transform"
+            class="!rounded-lg shadow-none hover:-translate-x-0.5 transition-all hover:!border-primary/50 hover:!shadow-[0_0_12px_rgba(94,127,248,0.3)]"
             @click="goBack"
           />
-          <div class="w-[1px] h-5 bg-gray-200 mx-2" />
-          <h2 class="text-[15px] font-black text-gray-800 tracking-tight">
+          <div class="w-[1px] h-5 bg-gray-200 mx-1" />
+          <h2 class="text-[15px] font-semibold text-gray-800 tracking-tight">
             AI 协作工坊
           </h2>
           <el-tag
             size="small"
             type="primary"
             effect="light"
-            class="ml-2 !rounded-full"
-            >基于大模型的系统</el-tag
+            class="ml-1 !rounded-full !border-0"
+            >多智能体</el-tag
           >
         </div>
-        <div class="flex items-center justify-end gap-4 flex-1">
-          <span class="text-sm font-bold text-gray-600 pr-2"
-            >当前模式: {{ mode }}</span
+        <div class="flex items-center justify-end gap-4">
+          <div
+            class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50/80 border border-gray-100"
           >
+            <span
+              class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"
+            />
+            <span class="text-[12px] font-medium text-gray-500">{{
+              mode
+            }}</span>
+          </div>
           <el-avatar
-            :size="30"
+            :size="32"
             src="https://avatars.githubusercontent.com/u/44761321?v=4"
-            class="shadow-sm border border-gray-100 hover:scale-110 transition-transform cursor-pointer"
+            class="shadow-sm border-2 border-white hover:scale-105 transition-transform cursor-pointer"
           />
         </div>
       </header>
@@ -333,22 +383,29 @@ const handleNewChat = (payload: { course: string }) => {
         >
           <!-- 对话流核心面板 -->
           <div
-            class="flex-1 h-full bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 overflow-hidden relative group"
+            class="flex-1 h-full bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(94,127,248,0.06)] border border-white/80 overflow-hidden relative"
           >
             <!-- 柔和的顶部遮罩渐变 -->
             <div
-              class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white to-transparent pointer-events-none z-10"
+              class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white/80 to-transparent pointer-events-none z-10"
             />
             <AiChatModule
+              v-model:mode="mode"
+              v-model:selectedAgent="selectedMockAgent"
+              v-model:selectedModel="selectedModel"
+              v-model:thinkingMode="thinkingMode"
               :messages="messages"
               :activeCourse="activeCourse"
-              @send="handleSendMessage"
+              :courses="myCourses"
+              @send="handleChatSend"
+              @switch-course="c => (activeCourse = c)"
+              @exit="exitConversation"
             />
           </div>
 
-          <!-- 右侧分析面板 (彻底移除响应式隐藏类，确保永远可见) -->
+          <!-- 右侧分析面板 -->
           <div
-            class="w-[340px] flex-shrink-0 h-full bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 overflow-hidden transform hover:-translate-y-0.5 transition-transform duration-500"
+            class="w-[340px] flex-shrink-0 h-full bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(94,127,248,0.06)] border border-white/80 overflow-hidden"
           >
             <AiInspector
               :profileDimensions="profileDimensions"
@@ -376,19 +433,43 @@ const handleNewChat = (payload: { course: string }) => {
           <div
             class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
           >
-            <div class="text-center space-y-4">
+            <div class="text-center space-y-3">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 backdrop-blur border border-gray-100 shadow-sm"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"
+                />
+                <span class="text-[12px] text-gray-500 font-medium"
+                  >IntellEdu 多智能体已就绪</span
+                >
+              </div>
               <h1
-                class="text-3xl sm:text-[38px] font-bold text-gray-800 tracking-tight"
+                class="text-3xl sm:text-[40px] font-semibold tracking-tight animate-gradient-text"
+                style="
+                  background: linear-gradient(
+                    135deg,
+                    #1e3a8a 0%,
+                    #0f172a 25%,
+                    var(--el-color-primary) 50%,
+                    #0f172a 75%,
+                    #1e3a8a 100%
+                  );
+                  background-size: 200% auto;
+                  -webkit-background-clip: text;
+                  background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                "
               >
                 今天想聊点什么？
               </h1>
-              <p class="text-[15px] text-gray-500 font-medium">
-                请先选择一门课程，然后随时向大模型提问
+              <p class="text-[14px] text-gray-500">
+                先选择一门课程，再向多智能体提出你的问题
               </p>
             </div>
 
             <div
-              class="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
+              class="bg-white/90 backdrop-blur-xl rounded-[24px] shadow-[0_12px_40px_rgba(94,127,248,0.08)] border border-white/80 focus-within:shadow-[0_16px_48px_rgba(94,127,248,0.14)] focus-within:border-primary/30 transition-all duration-500 overflow-hidden"
             >
               <el-input
                 v-model="quickMessage"
@@ -397,9 +478,7 @@ const handleNewChat = (payload: { course: string }) => {
                 placeholder="可向大模型询问任何事。输入 @ 提及课程或文件..."
                 class="quick-chat-input"
                 resize="none"
-                @keyup.enter.prevent="
-                  activeCourse ? handleNewChat({ course: activeCourse }) : null
-                "
+                @keyup.enter.prevent="submitDraft"
               />
 
               <div
@@ -408,12 +487,12 @@ const handleNewChat = (payload: { course: string }) => {
                 <div class="flex flex-wrap items-center gap-1.5">
                   <el-dropdown
                     trigger="click"
-                    @command="c => (activeCourse = c)"
+                    @command="c => (draftCourse = c)"
                   >
                     <span
                       class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors"
                       :class="
-                        activeCourse
+                        draftCourse
                           ? 'bg-primary/10 text-primary'
                           : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
                       "
@@ -421,7 +500,7 @@ const handleNewChat = (payload: { course: string }) => {
                       <el-icon class="mr-1.5 text-[14px]"
                         ><FolderOpened
                       /></el-icon>
-                      {{ activeCourse || "选择课程" }}
+                      {{ draftCourse || "选择课程" }}
                       <el-icon class="ml-1 text-[12px]"><ArrowDown /></el-icon>
                     </span>
                     <template #dropdown>
@@ -485,27 +564,23 @@ const handleNewChat = (payload: { course: string }) => {
                   <span
                     class="text-[12px] text-gray-400 font-medium tracking-wide flex items-center pr-2 cursor-pointer hover:text-gray-600 transition-colors"
                   >
-                    IntellEdu 4.0 超高
+                    {{ selectedModel }}
                     <el-icon class="ml-1"><ArrowDown /></el-icon>
                   </span>
                   <button
-                    class="w-9 h-9 flex items-center justify-center rounded-full transition-all transform border"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg transition-all transform border"
                     :class="
-                      activeCourse && quickMessage.trim()
-                        ? 'bg-black border-black text-white hover:bg-gray-800 hover:scale-105 shadow-md cursor-pointer'
+                      draftCourse && quickMessage.trim()
+                        ? 'bg-black border-black text-white hover:bg-gray-800 hover:scale-105 shadow-md cursor-pointer hover:shadow-[0_0_15px_rgba(94,127,248,0.5)]'
                         : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
                     "
-                    :disabled="!activeCourse || !quickMessage.trim()"
-                    @click="
-                      activeCourse
-                        ? handleNewChat({ course: activeCourse })
-                        : null
-                    "
+                    :disabled="!draftCourse || !quickMessage.trim()"
+                    @click="submitDraft"
                   >
                     <el-icon
                       class="text-lg"
                       :class="
-                        activeCourse && quickMessage.trim() ? '' : 'font-bold'
+                        draftCourse && quickMessage.trim() ? '' : 'font-bold'
                       "
                       ><Top
                     /></el-icon>
@@ -528,18 +603,20 @@ const handleNewChat = (payload: { course: string }) => {
         <!-- 【场景 C】 其他未开发项 -->
         <div v-else class="h-full w-full flex items-center justify-center p-4">
           <div
-            class="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] w-full max-w-2xl transform hover:scale-[1.01] transition-transform duration-500"
+            class="flex flex-col items-center justify-center p-12 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/80 shadow-[0_8px_32px_rgba(94,127,248,0.06)] w-full max-w-2xl"
           >
-            <el-icon :size="80" class="text-gray-200 mb-6 drop-shadow-sm"
-              ><Box
-            /></el-icon>
-            <h3 class="text-xl font-black text-gray-700 mb-2">
+            <div
+              class="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 bg-primary/5 border border-primary/10"
+            >
+              <el-icon :size="40" class="text-primary/60"><Box /></el-icon>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">
               正在积极建设中
             </h3>
-            <p class="text-sm text-gray-400">
-              目前「{{
+            <p class="text-sm text-gray-400 text-center max-w-md">
+              「{{
                 railItems.find(r => r.key === activeRail)?.label
-              }}」属于预期赛题规划内，即将与多智能体底座接通...
+              }}」即将与多智能体底座接通，敬请期待。
             </p>
           </div>
         </div>
@@ -551,6 +628,41 @@ const handleNewChat = (payload: { course: string }) => {
 <style scoped lang="scss">
 .ai-app-root {
   --el-color-primary: #5e7ff8; // 强制保持平台蓝
+  background: #f5f7fc;
+}
+
+// 柔和的全局 mesh 背景（同色系蓝）
+.ai-app-bg {
+  background-image:
+    radial-gradient(
+      circle at 12% 18%,
+      rgba(94, 127, 248, 0.18) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 88% 8%,
+      rgba(130, 158, 255, 0.16) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 70% 92%,
+      rgba(94, 127, 248, 0.12) 0%,
+      transparent 55%
+    ),
+    linear-gradient(180deg, #f5f7fc 0%, #eef2fb 100%);
+}
+
+@keyframes gradient-text {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-gradient-text {
+  animation: gradient-text 8s linear infinite;
 }
 
 .placeholder-container {
