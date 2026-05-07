@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { useRoute, useRouter } from "vue-router";
 
 defineOptions({
@@ -9,7 +9,7 @@ const route = useRoute();
 const router = useRouter();
 
 router.replace({
-  path: "/ai-app/workspace",
+  path: "/account/ai-app",
   query: {
     ...route.query,
     newTab: "true"
@@ -20,3 +20,4 @@ router.replace({
 <template>
   <div class="ai-app-entry-redirect" />
 </template>
+
