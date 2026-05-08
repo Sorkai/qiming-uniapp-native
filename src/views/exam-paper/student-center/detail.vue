@@ -42,7 +42,8 @@ const fetchPaperDetail = async () => {
   }
 };
 
-const getTypeCode = (type: QuestionTypeLike) => normalizeQuestionType(type) || 0;
+const getTypeCode = (type: QuestionTypeLike) =>
+  normalizeQuestionType(type) || 0;
 
 // 格式化时间
 const formatTime = (time: string): string => {
@@ -185,7 +186,10 @@ onMounted(() => {
                   </div>
 
                   <!-- 填空题提示 -->
-                  <div v-if="getTypeCode(group.questionType) === 4" class="question-hint">
+                  <div
+                    v-if="getTypeCode(group.questionType) === 4"
+                    class="question-hint"
+                  >
                     <el-icon><Edit /></el-icon>
                     填空题
                   </div>
@@ -274,7 +278,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-$primary-color: #739CF9;
+$primary-color: #739cf9;
 
 .student-paper-detail {
   min-height: 100vh;

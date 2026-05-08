@@ -107,7 +107,9 @@ const statCards = computed(() => [
 ]);
 
 const paginationLayout = computed(() =>
-  isMobile.value ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+  isMobile.value
+    ? "prev, pager, next"
+    : "total, sizes, prev, pager, next, jumper"
 );
 
 const getPaperQuestionCount = (paper: any) => {
@@ -394,11 +396,16 @@ onMounted(() => {
         </div>
       </div>
       <div class="header-actions">
-              <el-button @click="openNewFolderDialog">
-                <el-icon class="mr-1"><FolderAdd /></el-icon>
-                新建文件夹
-              </el-button>
-        <el-button type="primary" size="large" class="create-btn" @click="createPaper">
+        <el-button @click="openNewFolderDialog">
+          <el-icon class="mr-1"><FolderAdd /></el-icon>
+          新建文件夹
+        </el-button>
+        <el-button
+          type="primary"
+          size="large"
+          class="create-btn"
+          @click="createPaper"
+        >
           <el-icon class="mr-2"><Plus /></el-icon>
           新建试卷
         </el-button>
@@ -521,7 +528,11 @@ onMounted(() => {
         <div class="list-card">
           <template v-if="isMobile">
             <div v-loading="loading" class="paper-mobile-list">
-              <div v-for="row in paperList" :key="row.paperId" class="paper-mobile-card">
+              <div
+                v-for="row in paperList"
+                :key="row.paperId"
+                class="paper-mobile-card"
+              >
                 <div class="mobile-card-head">
                   <div class="paper-title-cell">
                     <div class="paper-icon">
@@ -534,7 +545,11 @@ onMounted(() => {
                       <span class="paper-course">{{ row.courseName }}</span>
                     </div>
                   </div>
-                  <el-tag :type="getStatusType(row.status)" size="small" effect="light">
+                  <el-tag
+                    :type="getStatusType(row.status)"
+                    size="small"
+                    effect="light"
+                  >
                     {{ getStatusText(row.status) }}
                   </el-tag>
                 </div>
@@ -542,7 +557,9 @@ onMounted(() => {
                 <div class="mobile-meta-grid">
                   <div class="mobile-meta-item">
                     <span class="meta-label">题目数</span>
-                    <span class="count-badge">{{ getPaperQuestionCount(row) }}题</span>
+                    <span class="count-badge"
+                      >{{ getPaperQuestionCount(row) }}题</span
+                    >
                   </div>
                   <div class="mobile-meta-item">
                     <span class="meta-label">总分</span>
@@ -550,16 +567,24 @@ onMounted(() => {
                   </div>
                   <div class="mobile-meta-item">
                     <span class="meta-label">发布次数</span>
-                    <span class="usage-badge">{{ getPaperPublishCount(row) }}次</span>
+                    <span class="usage-badge"
+                      >{{ getPaperPublishCount(row) }}次</span
+                    >
                   </div>
                   <div class="mobile-meta-item">
                     <span class="meta-label">更新时间</span>
-                    <span class="meta-value">{{ getPaperUpdateTime(row) }}</span>
+                    <span class="meta-value">{{
+                      getPaperUpdateTime(row)
+                    }}</span>
                   </div>
                 </div>
 
                 <div class="mobile-action-grid">
-                  <el-button size="small" type="primary" @click="editPaper(row)">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    @click="editPaper(row)"
+                  >
                     <el-icon class="mr-1"><Edit /></el-icon>
                     编辑
                   </el-button>
@@ -569,7 +594,9 @@ onMounted(() => {
                   </el-button>
                   <el-dropdown
                     trigger="click"
-                    @command="command => handleMobileAction(command as string, row)"
+                    @command="
+                      command => handleMobileAction(command as string, row)
+                    "
                   >
                     <el-button size="small">
                       <el-icon class="mr-1"><MoreFilled /></el-icon>
@@ -632,7 +659,9 @@ onMounted(() => {
               align="center"
             >
               <template #default="{ row }">
-                <span class="count-badge">{{ getPaperQuestionCount(row) }}题</span>
+                <span class="count-badge"
+                  >{{ getPaperQuestionCount(row) }}题</span
+                >
               </template>
             </el-table-column>
             <el-table-column
@@ -668,7 +697,9 @@ onMounted(() => {
               align="center"
             >
               <template #default="{ row }">
-                <span class="usage-badge">{{ getPaperPublishCount(row) }}次</span>
+                <span class="usage-badge"
+                  >{{ getPaperPublishCount(row) }}次</span
+                >
               </template>
             </el-table-column>
             <el-table-column
@@ -816,8 +847,8 @@ $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
 
-$primary-gradient: linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%);
-$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
+$primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
+$success-gradient: linear-gradient(135deg, #739cf9 0%, #80c8fa 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 $info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
@@ -882,7 +913,7 @@ $radius-lg: 16px;
 
         &.active {
           background: rgba(74, 127, 200, 0.28);
-          color: #80C8FA;
+          color: #80c8fa;
         }
 
         .folder-name {
@@ -895,7 +926,7 @@ $radius-lg: 16px;
         }
 
         &.active .folder-count {
-          background: #80C8FA;
+          background: #80c8fa;
           color: #fff;
         }
       }
@@ -927,7 +958,7 @@ $radius-lg: 16px;
       .paper-title-cell {
         .paper-icon {
           background: rgba(74, 127, 200, 0.2);
-          color: #80C8FA;
+          color: #80c8fa;
         }
 
         .paper-course {
@@ -1157,7 +1188,7 @@ $radius-lg: 16px;
 
       &.active {
         background: rgba(74, 127, 200, 0.14);
-        color: #4A7FC8;
+        color: #4a7fc8;
       }
 
       &.child {
@@ -1181,7 +1212,7 @@ $radius-lg: 16px;
       }
 
       &.active .folder-count {
-        background: #4A7FC8;
+        background: #4a7fc8;
         color: #fff;
       }
 
@@ -1242,8 +1273,8 @@ $radius-lg: 16px;
         justify-content: center;
         width: 44px;
         height: 44px;
-        color: #4A7FC8;
-        background: linear-gradient(135deg, #EBF2FD 0%, #EBF2FD 100%);
+        color: #4a7fc8;
+        background: linear-gradient(135deg, #ebf2fd 0%, #ebf2fd 100%);
         border-radius: 8px;
 
         :deep(svg) {

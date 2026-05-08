@@ -20,11 +20,7 @@
         </el-form-item>
       </el-form>
       <div v-if="isMobile" v-loading="loading" class="mobile-user-list">
-        <div
-          v-for="user in userList"
-          :key="user.id"
-          class="mobile-user-card"
-        >
+        <div v-for="user in userList" :key="user.id" class="mobile-user-card">
           <div class="mobile-user-card__header">
             <div class="mobile-user-main">
               <el-avatar :src="formatAvatar(user.avatar)" :size="44" />

@@ -537,8 +537,8 @@ $dark-shadow-lg:
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
-$primary-gradient: linear-gradient(135deg, #4A7FC8 0%, #739CF9 100%);
-$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
+$primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
+$success-gradient: linear-gradient(135deg, #739cf9 0%, #80c8fa 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $info-gradient: linear-gradient(135deg, #475569 0%, #64748b 100%);
 
@@ -622,7 +622,7 @@ $radius-xl: 20px;
 
       .paper-icon {
         background: rgba(74, 127, 200, 0.2);
-        color: #80C8FA;
+        color: #80c8fa;
       }
 
       .paper-info {
@@ -650,7 +650,7 @@ $radius-xl: 20px;
       }
 
       .stat-value-large {
-        color: #80C8FA;
+        color: #80c8fa;
 
         .stat-unit {
           color: $dark-text-muted;
@@ -727,7 +727,7 @@ $radius-xl: 20px;
     padding: 0 32px;
     font-size: 16px;
     font-weight: 600;
-    color: #4A7FC8;
+    color: #4a7fc8;
     background: #fff;
     border: none;
     border-radius: 26px;
@@ -1004,8 +1004,8 @@ $radius-xl: 20px;
       justify-content: center;
       width: 56px;
       height: 56px;
-      color: #4A7FC8;
-      background: linear-gradient(135deg, #EBF2FD 0%, #EBF2FD 100%);
+      color: #4a7fc8;
+      background: linear-gradient(135deg, #ebf2fd 0%, #ebf2fd 100%);
       border-radius: $radius-md;
 
       svg {
@@ -1073,7 +1073,7 @@ $radius-xl: 20px;
       .stat-value-large {
         font-size: 36px;
         font-weight: 700;
-        color: #4A7FC8;
+        color: #4a7fc8;
 
         .stat-unit {
           margin-left: 4px;

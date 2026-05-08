@@ -130,7 +130,6 @@
         />
       </div>
     </div>
-
   </div>
 </template>
 
@@ -298,7 +297,8 @@ const userRoleType = computed(() => {
 const isTeacher = computed(() => userRoleType.value === 2);
 const isAdmin = computed(() => userRoleType.value === 3);
 const showStudentScreenCapture = computed(
-  () => !isTeacher.value && !isAdmin.value && activeMenu.value !== "homework-exam"
+  () =>
+    !isTeacher.value && !isAdmin.value && activeMenu.value !== "homework-exam"
 );
 
 watch(

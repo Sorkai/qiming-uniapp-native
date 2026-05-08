@@ -5,10 +5,7 @@ import { useDark } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
 import { Search } from "@element-plus/icons-vue";
-import {
-  getStudentPaperList,
-  type StudentPaperItem
-} from "@/api/examPaper";
+import { getStudentPaperList, type StudentPaperItem } from "@/api/examPaper";
 import WaitingToCompleteIcon from "@/assets/papercentreicons/waitingtocomplete.svg?component";
 import AlreadyCompletedIcon from "@/assets/papercentreicons/alreadycompleted.svg?component";
 import AlreadyDeadlineIcon from "@/assets/papercentreicons/alreadydeadline.svg?component";
@@ -27,7 +24,7 @@ const { isMobile, paginationLayout } = usePageResponsive();
 const activeTab = ref<
   "available" | "submitted" | "graded" | "completed" | "expired" | "retake"
 >("available");
-type ExamTabKey = (typeof activeTab.value);
+type ExamTabKey = typeof activeTab.value;
 const searchQuery = ref("");
 const selectedCourse = ref("");
 const selectedStatus = ref("");
@@ -599,8 +596,8 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-$primary-color: #739CF9;
-$success-color: #739CF9;
+$primary-color: #739cf9;
+$success-color: #739cf9;
 $warning-color: #f59e0b;
 $danger-color: #ef4444;
 $info-color: #6b7280;
@@ -785,11 +782,11 @@ $info-color: #6b7280;
     }
 
     &.available .stat-icon {
-      background: linear-gradient(135deg, $success-color 0%, #80C8FA 100%);
+      background: linear-gradient(135deg, $success-color 0%, #80c8fa 100%);
     }
 
     &.completed .stat-icon {
-      background: linear-gradient(135deg, $primary-color 0%, #4A7FC8 100%);
+      background: linear-gradient(135deg, $primary-color 0%, #4a7fc8 100%);
     }
 
     &.expired .stat-icon {

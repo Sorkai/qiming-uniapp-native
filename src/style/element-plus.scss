@@ -55,7 +55,7 @@
 }
 
 /* 重置 el-button 中 icon 的 margin */
-.reset-margin [class*="el-icon"]+span {
+.reset-margin [class*="el-icon"] + span {
   margin-left: 2px;
 }
 
@@ -114,7 +114,6 @@
 }
 
 .el-icon {
-
   &.el-tour__close,
   &.el-dialog__close,
   &.el-drawer__close,
@@ -203,7 +202,6 @@
 
 /* 仿 el-scrollbar 滚动条样式，支持大多数浏览器，如Chrome、Edge、Firefox、Safari等。整体暗色风格在 src/style/dark.scss 文件进行了适配 */
 .pure-scrollbar {
-
   /* Firefox 及支持 scrollbar-color/scrollbar-width 的浏览器 */
   @supports (scrollbar-color: auto) {
     scrollbar-color: rgb(221 222 224) transparent;
@@ -241,7 +239,9 @@
   border-radius: 16px !important;
   padding-bottom: 20px !important;
   border: none !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
 
   .el-message-box__header {
     padding: 24px 24px 12px !important;
@@ -289,7 +289,7 @@
   padding: 0 8px;
   column-gap: 10px;
 
-  >.el-icon {
+  > .el-icon {
     margin: 0;
   }
 }

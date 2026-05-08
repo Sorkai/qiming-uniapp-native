@@ -112,8 +112,7 @@ const closeCaptureLoading = async () => {
   resetCaptureLoading();
 };
 
-const sleep = (ms: number) =>
-  new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const advanceCaptureLoadingStage = async (
   stage: "capturing" | "optimizing" | "starting",

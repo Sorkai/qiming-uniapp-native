@@ -68,7 +68,11 @@
 
     <el-card v-if="hasSelection" shadow="never" class="lab-panel focus-panel">
       <div class="flex justify-between items-center mb-4">
-        <span class="font-bold text-base">当前章节：{{ selectedChapterTitle || "已选择章节" }} ({{ selectedCourseTitle || "已选择课程" }})</span>
+        <span class="font-bold text-base"
+          >当前章节：{{ selectedChapterTitle || "已选择章节" }} ({{
+            selectedCourseTitle || "已选择课程"
+          }})</span
+        >
         <div class="text-sm">
           <span>展示版本：</span>
           <strong class="text-primary">{{ currentDisplayVersionText }}</strong>

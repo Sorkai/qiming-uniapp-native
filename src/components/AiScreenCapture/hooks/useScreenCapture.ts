@@ -102,8 +102,8 @@ export function useScreenCapture() {
 
       const ImageCaptureCtor = (window as any).ImageCapture as
         | (new (track: MediaStreamTrack) => {
-          grabFrame: () => Promise<ImageBitmap>;
-        })
+            grabFrame: () => Promise<ImageBitmap>;
+          })
         | undefined;
 
       if (ImageCaptureCtor) {

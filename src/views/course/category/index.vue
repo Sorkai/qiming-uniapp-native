@@ -32,7 +32,9 @@
         >
           <div class="mobile-category-card__header">
             <div class="mobile-category-name">{{ row.name }}</div>
-            <div class="mobile-category-meta">Category ID: {{ row.categoryId }}</div>
+            <div class="mobile-category-meta">
+              Category ID: {{ row.categoryId }}
+            </div>
           </div>
 
           <div class="mobile-category-card__actions">

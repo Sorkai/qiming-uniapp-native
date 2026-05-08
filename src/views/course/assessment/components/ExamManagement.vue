@@ -66,14 +66,19 @@
       >
         <template #default="scope">
           <div v-if="isMobile" class="mobile-action-wrap">
-            <el-dropdown trigger="click" @command="command => handleExamAction(command, scope.row)">
+            <el-dropdown
+              trigger="click"
+              @command="command => handleExamAction(command, scope.row)"
+            >
               <el-button text type="primary" class="more-action-btn">
                 更多
                 <el-icon class="ml-1"><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="questions">试题管理</el-dropdown-item>
+                  <el-dropdown-item command="questions"
+                    >试题管理</el-dropdown-item
+                  >
                   <el-dropdown-item command="edit">编辑</el-dropdown-item>
                   <el-dropdown-item command="delete" divided>
                     <span class="danger-action">删除</span>
@@ -83,7 +88,10 @@
             </el-dropdown>
           </div>
           <template v-else>
-            <el-button link type="primary" @click="showQuestionDialog(scope.row)"
+            <el-button
+              link
+              type="primary"
+              @click="showQuestionDialog(scope.row)"
               >试题管理</el-button
             >
             <el-divider direction="vertical" />
@@ -418,10 +426,7 @@ const handleCurrentChange = (val: number) => {
   fetchExamList();
 };
 
-const handleExamAction = (
-  command: "questions" | "edit" | "delete",
-  row
-) => {
+const handleExamAction = (command: "questions" | "edit" | "delete", row) => {
   if (command === "questions") {
     showQuestionDialog(row);
     return;

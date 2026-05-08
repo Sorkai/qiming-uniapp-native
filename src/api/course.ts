@@ -280,9 +280,13 @@ export interface BatchDeleteResult {
  * @param data 包含课程ID列表的数据对象
  */
 export const batchDeleteCourse = (data: { courseIds: number[] }) => {
-  return http.request<BatchDeleteResult>("post", "/edu/backend/v1/admin/course/batch-delete", {
-    data
-  });
+  return http.request<BatchDeleteResult>(
+    "post",
+    "/edu/backend/v1/admin/course/batch-delete",
+    {
+      data
+    }
+  );
 };
 
 /**

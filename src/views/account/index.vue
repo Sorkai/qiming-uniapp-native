@@ -2395,7 +2395,11 @@ onUnmounted(() => {
 
           &::before {
             height: 72px;
-            background: linear-gradient(135deg, rgb(151 180 247 / 18%), transparent);
+            background: linear-gradient(
+              135deg,
+              rgb(151 180 247 / 18%),
+              transparent
+            );
           }
 
           .avatar-wrapper {

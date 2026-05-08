@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { watch, nextTick, onMounted, onUnmounted, ref, type Component } from "vue";
+import {
+  watch,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  type Component
+} from "vue";
 import * as echarts from "echarts";
 import {
   Document,
@@ -53,12 +60,11 @@ const createEmptyStatistics = (): CourseGradesStatisticsResult => ({
   completionRate: 0
 });
 
-const createEmptyClassComparison =
-  (): CourseGradesClassComparisonResult => ({
-    categories: [],
-    personalScores: [],
-    classAverages: []
-  });
+const createEmptyClassComparison = (): CourseGradesClassComparisonResult => ({
+  categories: [],
+  personalScores: [],
+  classAverages: []
+});
 
 // 成绩列表数据（从API获取）
 const gradesList = ref<CourseGradeItem[]>([]);
@@ -77,7 +83,9 @@ const resetGradesState = () => {
   classComparisonData.value = createEmptyClassComparison();
 };
 
-const fetchGradesList = async (courseId: number): Promise<CourseGradeItem[]> => {
+const fetchGradesList = async (
+  courseId: number
+): Promise<CourseGradeItem[]> => {
   try {
     const res = await getCourseGradesList({ courseId });
     return res?.code === 200 && Array.isArray(res?.data?.list)
@@ -94,9 +102,7 @@ const fetchStatistics = async (
 ): Promise<CourseGradesStatisticsResult> => {
   try {
     const res = await getCourseGradesStatistics({ courseId });
-    return res?.code === 200 && res?.data
-      ? res.data
-      : createEmptyStatistics();
+    return res?.code === 200 && res?.data ? res.data : createEmptyStatistics();
   } catch (error) {
     console.error("获取成绩统计失败:", error);
     return createEmptyStatistics();
@@ -763,93 +769,96 @@ onUnmounted(() => {
           </template>
 
           <transition name="slow-collapse">
-            <div v-show="!gradesListCollapsed" class="grades-list-collapse-wrapper">
+            <div
+              v-show="!gradesListCollapsed"
+              class="grades-list-collapse-wrapper"
+            >
               <div v-if="gradesList.length === 0" class="empty-state">
                 <el-empty description="暂无成绩记录" />
               </div>
 
               <div v-else class="grades-list" :class="currentTheme">
-              <div
-                v-for="(item, index) in gradesList"
-                :key="index"
-                class="grade-item"
-                :style="{ '--row-delay': `${index * 0.04}s` }"
-              >
-              <div class="grade-item-header">
-                <div class="item-title">
-                  <el-icon class="item-icon" :size="20">
-                    <component :is="getAssignmentIcon(item.type)" />
-                  </el-icon>
-                  <span class="item-name">{{ item.name }}</span>
-                  <el-tag
-                    v-if="item.type"
-                    size="small"
-                    class="item-type-tag"
-                    effect="plain"
-                  >
-                    {{ item.type }}
-                  </el-tag>
-                </div>
-                <div class="item-score-section">
-                  <div v-if="item.score !== null" class="score-display">
-                    <div
-                      class="score-number"
-                      :style="{ color: getGradeLevel(item.score).color }"
-                    >
-                      {{ item.score }}
+                <div
+                  v-for="(item, index) in gradesList"
+                  :key="index"
+                  class="grade-item"
+                  :style="{ '--row-delay': `${index * 0.04}s` }"
+                >
+                  <div class="grade-item-header">
+                    <div class="item-title">
+                      <el-icon class="item-icon" :size="20">
+                        <component :is="getAssignmentIcon(item.type)" />
+                      </el-icon>
+                      <span class="item-name">{{ item.name }}</span>
+                      <el-tag
+                        v-if="item.type"
+                        size="small"
+                        class="item-type-tag"
+                        effect="plain"
+                      >
+                        {{ item.type }}
+                      </el-tag>
                     </div>
-                    <div class="score-total">/ 100</div>
-                    <el-tag
-                      :type="getGradeLevel(item.score).type"
-                      size="small"
-                      class="grade-tag"
-                      effect="dark"
-                    >
-                      {{ getGradeLevel(item.score).label }}
-                    </el-tag>
-                  </div>
-                  <el-tag v-else type="info" size="small">未评分</el-tag>
-                </div>
-              </div>
-
-              <div class="grade-item-body">
-                <div class="item-progress">
-                  <div class="score-bar-track">
-                    <div
-                      class="score-bar-fill"
-                      :class="getGradeLevel(item.score || 0).type"
-                      :style="{
-                        width: `${Math.max(0, Math.min(100, item.score || 0))}%`,
-                        background: getGradeLevel(item.score || 0).color
-                      }"
-                    >
-                      <span class="score-bar-shine" />
+                    <div class="item-score-section">
+                      <div v-if="item.score !== null" class="score-display">
+                        <div
+                          class="score-number"
+                          :style="{ color: getGradeLevel(item.score).color }"
+                        >
+                          {{ item.score }}
+                        </div>
+                        <div class="score-total">/ 100</div>
+                        <el-tag
+                          :type="getGradeLevel(item.score).type"
+                          size="small"
+                          class="grade-tag"
+                          effect="dark"
+                        >
+                          {{ getGradeLevel(item.score).label }}
+                        </el-tag>
+                      </div>
+                      <el-tag v-else type="info" size="small">未评分</el-tag>
                     </div>
                   </div>
-                </div>
-                <div class="item-meta">
-                  <div class="meta-item">
-                    <el-icon><Calendar /></el-icon>
-                    <span>提交时间: {{ item.submitTime || "未提交" }}</span>
-                  </div>
-                  <div v-if="item.gradedTime" class="meta-item">
-                    <el-icon><Clock /></el-icon>
-                    <span>评分时间: {{ item.gradedTime }}</span>
-                  </div>
-                </div>
-              </div>
 
-              <div v-if="item.comment" class="grade-item-footer">
-                <div class="teacher-comment">
-                  <div class="comment-label">教师评语:</div>
-                  <div class="comment-content">{{ item.comment }}</div>
+                  <div class="grade-item-body">
+                    <div class="item-progress">
+                      <div class="score-bar-track">
+                        <div
+                          class="score-bar-fill"
+                          :class="getGradeLevel(item.score || 0).type"
+                          :style="{
+                            width: `${Math.max(0, Math.min(100, item.score || 0))}%`,
+                            background: getGradeLevel(item.score || 0).color
+                          }"
+                        >
+                          <span class="score-bar-shine" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="item-meta">
+                      <div class="meta-item">
+                        <el-icon><Calendar /></el-icon>
+                        <span>提交时间: {{ item.submitTime || "未提交" }}</span>
+                      </div>
+                      <div v-if="item.gradedTime" class="meta-item">
+                        <el-icon><Clock /></el-icon>
+                        <span>评分时间: {{ item.gradedTime }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="item.comment" class="grade-item-footer">
+                    <div class="teacher-comment">
+                      <div class="comment-label">教师评语:</div>
+                      <div class="comment-content">{{ item.comment }}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </transition>
-    </el-card>
+          </transition>
+        </el-card>
       </div>
     </div>
   </div>

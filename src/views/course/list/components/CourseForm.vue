@@ -893,9 +893,16 @@ const uploadWithSts = async (
 
   const initData: any = initRes?.data || {};
   const uploadToken = pickField(initData, ["upload_token", "uploadToken"]);
-  const uploadUrl = pickField(initData, ["upload_url", "uploadUrl", "uploadURL"]);
+  const uploadUrl = pickField(initData, [
+    "upload_url",
+    "uploadUrl",
+    "uploadURL"
+  ]);
   const credentials =
-    initData.credentials || initData.credential || initData.tmpCredentials || {};
+    initData.credentials ||
+    initData.credential ||
+    initData.tmpCredentials ||
+    {};
   const tmpSecretId = pickField(credentials, [
     "tmp_secret_id",
     "tmpSecretId",
@@ -935,7 +942,12 @@ const uploadWithSts = async (
     }
   }
 
-  let objectKey = pickField(initData, ["object_key", "objectKey", "key", "Key"]);
+  let objectKey = pickField(initData, [
+    "object_key",
+    "objectKey",
+    "key",
+    "Key"
+  ]);
   if (!objectKey && uploadUrl) {
     try {
       const parsedUrl = new URL(uploadUrl);

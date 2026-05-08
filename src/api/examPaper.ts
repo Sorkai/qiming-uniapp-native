@@ -148,7 +148,13 @@ export interface Question {
   /** NPS评分范围 */
   npsMin?: number;
   npsMax?: number;
-  npsLabels?: { min?: string; max?: string; low?: string; mid?: string; high?: string };
+  npsLabels?: {
+    min?: string;
+    max?: string;
+    low?: string;
+    mid?: string;
+    high?: string;
+  };
   /** 星级评分 */
   starCount?: number;
   starLabels?: string[];
@@ -1503,12 +1509,12 @@ export interface StudentPaperItem {
    * retake - 补考中（允许补考且在补考时间内）
    */
   status:
-  | "available"
-  | "submitted"
-  | "graded"
-  | "completed"
-  | "expired"
-  | "retake";
+    | "available"
+    | "submitted"
+    | "graded"
+    | "completed"
+    | "expired"
+    | "retake";
   /** 提交ID（已提交时） */
   submissionId?: number;
   /** 得分（已完成且成绩发布后） */
@@ -1527,12 +1533,12 @@ export interface StudentPaperItem {
 export interface GetStudentPaperListParams extends PageParams {
   /** 状态筛选 */
   status?:
-  | "available"
-  | "submitted"
-  | "graded"
-  | "completed"
-  | "expired"
-  | "retake";
+    | "available"
+    | "submitted"
+    | "graded"
+    | "completed"
+    | "expired"
+    | "retake";
   /** 课程ID */
   courseId?: number;
   /** 关键词搜索 */
@@ -1755,9 +1761,13 @@ export const reportAntiCheatEvent = (data: {
   eventTime: number;
   detail?: string;
 }) => {
-  return http.request<ApiResponse>("post", "/edu/frontend/v1/exam/anti-cheat/event", {
-    data
-  });
+  return http.request<ApiResponse>(
+    "post",
+    "/edu/frontend/v1/exam/anti-cheat/event",
+    {
+      data
+    }
+  );
 };
 
 /**

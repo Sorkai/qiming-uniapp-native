@@ -762,7 +762,9 @@ const publishTopic = async () => {
           max: topicForm.maxWords
         },
         deadline: topicForm.deadline,
-        classIds: topicForm.targetClasses.map(item => Number(item)).filter(Boolean)
+        classIds: topicForm.targetClasses
+          .map(item => Number(item))
+          .filter(Boolean)
       });
       ElMessage.success("发布成功");
       topicDialogVisible.value = false;

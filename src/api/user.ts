@@ -262,9 +262,13 @@ export const uploadFile = (data: FormData) => {
 
 /** STS 初始化上传 */
 export const initStsUpload = (data: StsUploadInitRequest) => {
-  return http.request<StsUploadInitResult>("post", "/edu/v1/user/upload/sts/init", {
-    data
-  });
+  return http.request<StsUploadInitResult>(
+    "post",
+    "/edu/v1/user/upload/sts/init",
+    {
+      data
+    }
+  );
 };
 
 /** STS 完成上传 */

@@ -786,7 +786,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     margin-bottom: 16px;
 
     &.system {
-      background: linear-gradient(135deg, #EBF2FD 0%, #dbe5f7 100%);
+      background: linear-gradient(135deg, #ebf2fd 0%, #dbe5f7 100%);
     }
 
     &.private {
@@ -804,7 +804,7 @@ $dark-border: rgba(255, 255, 255, 0.1);
     }
 
     .system-badge {
-      background: #739CF9;
+      background: #739cf9;
       color: #fff;
     }
 

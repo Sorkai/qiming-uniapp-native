@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import {
-  ref,
-  reactive,
-  computed,
-  onMounted,
-  onBeforeUnmount
-} from "vue";
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useDark } from "@pureadmin/utils";
@@ -59,7 +53,9 @@ const toQuestionTypeCode = (type: unknown) =>
 const getQuestionTypeCode = (question: any) =>
   toQuestionTypeCode(question?.questionType);
 
-const isObjectAnswer = (value: StudentAnswerValue): value is Record<string, any> =>
+const isObjectAnswer = (
+  value: StudentAnswerValue
+): value is Record<string, any> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isAnsweredValue = (value: StudentAnswerValue) => {
@@ -393,8 +389,10 @@ const isQuestionAnswered = (questionId: number) => {
   return isAnsweredValue(record.answer);
 };
 
-const getMatrixRows = (question: any) => question?.matrixRows || question?.rows || [];
-const getMatrixCols = (question: any) => question?.matrixCols || question?.columns || [];
+const getMatrixRows = (question: any) =>
+  question?.matrixRows || question?.rows || [];
+const getMatrixCols = (question: any) =>
+  question?.matrixCols || question?.columns || [];
 
 const getMatchingLeftItems = (question: any) => {
   if (question?.leftItems?.length) return question.leftItems;
@@ -636,9 +634,7 @@ onBeforeUnmount(() => {
           <div class="question-options">
             <!-- 单选题 -->
             <template
-              v-if="
-                [1, 3].includes(getQuestionTypeCode(currentQuestion))
-              "
+              v-if="[1, 3].includes(getQuestionTypeCode(currentQuestion))"
             >
               <el-radio-group
                 :model-value="getScalarAnswer(currentAnswerRecord?.answer)"
@@ -700,9 +696,7 @@ onBeforeUnmount(() => {
 
             <!-- 简答题/论述题 -->
             <template
-              v-else-if="
-                [5, 6].includes(getQuestionTypeCode(currentQuestion))
-              "
+              v-else-if="[5, 6].includes(getQuestionTypeCode(currentQuestion))"
             >
               <el-input
                 :model-value="currentAnswerRecord?.answer as string"
@@ -716,9 +710,7 @@ onBeforeUnmount(() => {
 
             <!-- 矩阵题 -->
             <template
-              v-else-if="
-                [7, 8].includes(getQuestionTypeCode(currentQuestion))
-              "
+              v-else-if="[7, 8].includes(getQuestionTypeCode(currentQuestion))"
             >
               <div class="matrix-wrapper">
                 <div class="matrix-header">
@@ -736,13 +728,26 @@ onBeforeUnmount(() => {
                   :key="row.key"
                   class="matrix-row"
                 >
-                  <span class="matrix-cell matrix-first">{{ row.content }}</span>
+                  <span class="matrix-cell matrix-first">{{
+                    row.content
+                  }}</span>
 
                   <template v-if="getQuestionTypeCode(currentQuestion) === 7">
                     <el-radio-group
-                      :model-value="getScalarAnswer((currentAnswerRecord?.answer as Record<string, string>)?.[row.key])"
+                      :model-value="
+                        getScalarAnswer(
+                          (
+                            currentAnswerRecord?.answer as Record<
+                              string,
+                              string
+                            >
+                          )?.[row.key]
+                        )
+                      "
                       class="matrix-radio-group"
-                      @update:model-value="val => updateMatrixSingleAnswer(row.key, String(val))"
+                      @update:model-value="
+                        val => updateMatrixSingleAnswer(row.key, String(val))
+                      "
                     >
                       <el-radio
                         v-for="col in getMatrixCols(currentQuestion)"
@@ -756,12 +761,18 @@ onBeforeUnmount(() => {
                   <template v-else>
                     <el-checkbox-group
                       :model-value="
-                        ((currentAnswerRecord?.answer as Record<string, string[]>)?.[
-                          row.key
-                        ] || []) as string[]
+                        ((
+                          currentAnswerRecord?.answer as Record<
+                            string,
+                            string[]
+                          >
+                        )?.[row.key] || []) as string[]
                       "
                       class="matrix-checkbox-group"
-                      @update:model-value="val => updateMatrixMultipleAnswer(row.key, val as string[])"
+                      @update:model-value="
+                        val =>
+                          updateMatrixMultipleAnswer(row.key, val as string[])
+                      "
                     >
                       <el-checkbox
                         v-for="col in getMatrixCols(currentQuestion)"
@@ -785,10 +796,16 @@ onBeforeUnmount(() => {
                 >
                   <span class="matching-left">{{ left.content }}</span>
                   <el-select
-                    :model-value="(currentAnswerRecord?.answer as Record<string, string>)?.[left.key]"
+                    :model-value="
+                      (currentAnswerRecord?.answer as Record<string, string>)?.[
+                        left.key
+                      ]
+                    "
                     placeholder="请选择对应项"
                     class="matching-select"
-                    @update:model-value="val => updateMatchingAnswer(left.key, String(val))"
+                    @update:model-value="
+                      val => updateMatchingAnswer(left.key, String(val))
+                    "
                   >
                     <el-option
                       v-for="right in getMatchingRightItems(currentQuestion)"
@@ -804,7 +821,9 @@ onBeforeUnmount(() => {
             <!-- 排序题 -->
             <template v-else-if="getQuestionTypeCode(currentQuestion) === 10">
               <div class="ordering-wrapper">
-                <div class="ordering-tip">请选择并按顺序点击选项以形成你的排序答案</div>
+                <div class="ordering-tip">
+                  请选择并按顺序点击选项以形成你的排序答案
+                </div>
                 <el-select
                   :model-value="(currentAnswerRecord?.answer as string[]) || []"
                   multiple
@@ -826,7 +845,9 @@ onBeforeUnmount(() => {
             <template v-else-if="getQuestionTypeCode(currentQuestion) === 11">
               <div class="slider-wrapper">
                 <el-slider
-                  :model-value="(currentAnswerRecord?.answer as number | null) ?? 0"
+                  :model-value="
+                    (currentAnswerRecord?.answer as number | null) ?? 0
+                  "
                   :min="currentQuestion.sliderMin ?? 0"
                   :max="currentQuestion.sliderMax ?? 100"
                   :step="currentQuestion.sliderStep ?? 1"
@@ -834,8 +855,12 @@ onBeforeUnmount(() => {
                   @update:model-value="updateAnswer"
                 />
                 <div class="slider-labels">
-                  <span>{{ currentQuestion.sliderLabels?.left || "最低" }}</span>
-                  <span>{{ currentQuestion.sliderLabels?.right || "最高" }}</span>
+                  <span>{{
+                    currentQuestion.sliderLabels?.left || "最低"
+                  }}</span>
+                  <span>{{
+                    currentQuestion.sliderLabels?.right || "最高"
+                  }}</span>
                 </div>
               </div>
             </template>
@@ -849,7 +874,9 @@ onBeforeUnmount(() => {
                   @update:model-value="handleScalarAnswerUpdate"
                 >
                   <el-radio
-                    v-for="score in currentQuestion.npsMax ? currentQuestion.npsMax + 1 : 11"
+                    v-for="score in currentQuestion.npsMax
+                      ? currentQuestion.npsMax + 1
+                      : 11"
                     :key="`nps-${score - 1}`"
                     :value="score - 1"
                     class="nps-item"
@@ -864,7 +891,9 @@ onBeforeUnmount(() => {
             <template v-else-if="getQuestionTypeCode(currentQuestion) === 13">
               <div class="star-wrapper">
                 <el-rate
-                  :model-value="(currentAnswerRecord?.answer as number | null) ?? 0"
+                  :model-value="
+                    (currentAnswerRecord?.answer as number | null) ?? 0
+                  "
                   :max="currentQuestion.starCount || 5"
                   show-score
                   @update:model-value="updateAnswer"
@@ -881,7 +910,9 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div
-                  v-for="(sub, subIndex) in getCompositeSubQuestions(currentQuestion)"
+                  v-for="(sub, subIndex) in getCompositeSubQuestions(
+                    currentQuestion
+                  )"
                   :key="sub.subId || subIndex"
                   class="composite-sub-question"
                 >
@@ -892,9 +923,13 @@ onBeforeUnmount(() => {
 
                   <el-radio-group
                     v-if="toQuestionTypeCode(sub.questionType) === 1"
-                    :model-value="getScalarAnswer(getCompositeSubAnswer(sub.subId))"
+                    :model-value="
+                      getScalarAnswer(getCompositeSubAnswer(sub.subId))
+                    "
                     class="options-group"
-                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, String(val))"
+                    @update:model-value="
+                      val => updateCompositeSubAnswer(sub.subId, String(val))
+                    "
                   >
                     <el-radio
                       v-for="option in sub.options || []"
@@ -911,9 +946,14 @@ onBeforeUnmount(() => {
 
                   <el-checkbox-group
                     v-else-if="toQuestionTypeCode(sub.questionType) === 2"
-                    :model-value="(getCompositeSubAnswer(sub.subId) as string[]) || []"
+                    :model-value="
+                      (getCompositeSubAnswer(sub.subId) as string[]) || []
+                    "
                     class="options-group"
-                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, val as string[])"
+                    @update:model-value="
+                      val =>
+                        updateCompositeSubAnswer(sub.subId, val as string[])
+                    "
                   >
                     <el-checkbox
                       v-for="option in sub.options || []"
@@ -933,7 +973,9 @@ onBeforeUnmount(() => {
                     :model-value="getCompositeSubAnswer(sub.subId) as string"
                     placeholder="请输入答案"
                     class="fill-input"
-                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, val)"
+                    @update:model-value="
+                      val => updateCompositeSubAnswer(sub.subId, val)
+                    "
                   />
 
                   <el-input
@@ -943,7 +985,9 @@ onBeforeUnmount(() => {
                     :rows="4"
                     placeholder="请输入答案"
                     class="essay-input"
-                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, val)"
+                    @update:model-value="
+                      val => updateCompositeSubAnswer(sub.subId, val)
+                    "
                   />
                 </div>
               </div>
@@ -1137,9 +1181,9 @@ onBeforeUnmount(() => {
     }
 
     &.answered {
-      background: #739CF9;
+      background: #739cf9;
       color: #fff;
-      border-color: #739CF9;
+      border-color: #739cf9;
     }
 
     &.answered.active {
@@ -1170,8 +1214,8 @@ onBeforeUnmount(() => {
         border: 1px solid #e5e7eb;
 
         &.answered {
-          background: #739CF9;
-          border-color: #739CF9;
+          background: #739cf9;
+          border-color: #739cf9;
         }
 
         &.active {
@@ -1438,10 +1482,10 @@ onBeforeUnmount(() => {
     border: none;
     border-radius: 10px;
     font-weight: 600;
-    background: #4A7FC8;
+    background: #4a7fc8;
 
     &:hover {
-      background: #4A7FC8;
+      background: #4a7fc8;
     }
   }
 }

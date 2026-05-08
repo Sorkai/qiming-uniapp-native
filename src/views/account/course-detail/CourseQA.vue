@@ -969,10 +969,7 @@ const fetchDiscussions = async (append = false) => {
       keyword: searchKeyword.value || undefined
     };
 
-    if (
-      activeFilter.value !== "all" &&
-      activeFilter.value !== "mine"
-    ) {
+    if (activeFilter.value !== "all" && activeFilter.value !== "mine") {
       params.sort = activeFilter.value;
     }
 

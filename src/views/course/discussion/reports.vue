@@ -369,11 +369,7 @@ onActivated(() => {
         <div class="text-sm text-gray-500">{{ listSummaryText }}</div>
       </div>
       <div class="flex justify-end mb-4">
-        <el-button
-          :icon="Refresh"
-          text
-          @click="refreshData"
-        >
+        <el-button :icon="Refresh" text @click="refreshData">
           同步数据
         </el-button>
       </div>

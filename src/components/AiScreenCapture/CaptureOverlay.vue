@@ -71,7 +71,9 @@ const tipText = computed(() => {
 });
 
 const tipSubText = computed(() => {
-  return isTouchExperience.value ? "轻点可整屏截图，右上角可取消" : "按 ESC 取消";
+  return isTouchExperience.value
+    ? "轻点可整屏截图，右上角可取消"
+    : "按 ESC 取消";
 });
 
 const clampPoint = (x: number, y: number) => {
@@ -130,7 +132,8 @@ const finishSelection = () => {
   const width = Math.abs(endPoint.value.x - startPoint.value.x);
   const height = Math.abs(endPoint.value.y - startPoint.value.y);
   const shouldCaptureFullViewport =
-    (activePointerType.value === "touch" || activePointerType.value === "pen") &&
+    (activePointerType.value === "touch" ||
+      activePointerType.value === "pen") &&
     width < MIN_SELECTION_SIZE &&
     height < MIN_SELECTION_SIZE;
 
@@ -243,7 +246,13 @@ onUnmounted(() => {
               stroke="currentColor"
               stroke-width="1.5"
             />
-            <circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5" />
+            <circle
+              cx="12"
+              cy="13"
+              r="3"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
           </svg>
         </div>
         <span class="tip-text">{{ tipText }}</span>

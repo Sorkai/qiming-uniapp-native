@@ -799,12 +799,11 @@ const handleClose = () => {
 
       &.thinking {
         min-width: 220px;
-        background:
-          linear-gradient(
-            135deg,
-            rgb(248 251 255 / 96%) 0%,
-            rgb(238 246 255 / 96%) 100%
-          );
+        background: linear-gradient(
+          135deg,
+          rgb(248 251 255 / 96%) 0%,
+          rgb(238 246 255 / 96%) 100%
+        );
       }
 
       .bubble-text {

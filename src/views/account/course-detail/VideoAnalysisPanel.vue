@@ -238,13 +238,17 @@
 
       <!-- 思维导图 -->
       <div v-if="activeTab === 'mindmap'" class="module-content">
-        <div
-          v-if="mindmapNodes.length"
-          class="mindmap-block"
-        >
+        <div v-if="mindmapNodes.length" class="mindmap-block">
           <div class="mindmap-toolbar">
             <button class="mindmap-action" @click="resetMindmapLayout">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <polyline points="1 4 1 10 7 10" />
                 <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
               </svg>
@@ -293,21 +297,26 @@
                   :r="node.depth === 0 ? 42 : node.depth === 1 ? 34 : 26"
                   class="node-circle"
                 />
-                <text
-                  dy="0.35em"
-                  text-anchor="middle"
-                  class="node-label"
-                >
+                <text dy="0.35em" text-anchor="middle" class="node-label">
                   <template v-if="node.label.length <= 5">
                     {{ node.label }}
                   </template>
                   <template v-else>
                     <tspan
-                      v-for="(line, li) in wrapText(node.label, node.depth === 0 ? 4 : node.depth === 1 ? 3 : 3)"
+                      v-for="(line, li) in wrapText(
+                        node.label,
+                        node.depth === 0 ? 4 : node.depth === 1 ? 3 : 3
+                      )"
                       :key="li"
                       x="0"
-                      :dy="li === 0 ? `${-(wrapText(node.label, node.depth === 0 ? 4 : node.depth === 1 ? 3 : 3).length - 1) * 0.6}em` : '1.2em'"
-                    >{{ line }}</tspan>
+                      :dy="
+                        li === 0
+                          ? `${-(wrapText(node.label, node.depth === 0 ? 4 : node.depth === 1 ? 3 : 3).length - 1) * 0.6}em`
+                          : '1.2em'
+                      "
+                    >
+                      {{ line }}
+                    </tspan>
                   </template>
                 </text>
               </g>
@@ -441,7 +450,14 @@ const flattenTree = (
   angleEnd: number,
   result: MindmapNode[]
 ) => {
-  result.push({ id: tree.id, label: tree.label, depth, x: cx, y: cy, parentId });
+  result.push({
+    id: tree.id,
+    label: tree.label,
+    depth,
+    x: cx,
+    y: cy,
+    parentId
+  });
   const children = tree.children || [];
   if (!children.length) return;
   const radiusMap = [0, 180, 140, 110];
@@ -454,7 +470,16 @@ const flattenTree = (
     const childX = cx + radius * Math.cos(rad);
     const childY = cy + radius * Math.sin(rad);
     const childSpread = spread / children.length;
-    flattenTree(child, depth + 1, tree.id, childX, childY, angle - childSpread / 2, angle + childSpread / 2, result);
+    flattenTree(
+      child,
+      depth + 1,
+      tree.id,
+      childX,
+      childY,
+      angle - childSpread / 2,
+      angle + childSpread / 2,
+      result
+    );
   });
 };
 
@@ -481,8 +506,10 @@ const onNodeDragStart = (e: MouseEvent, node: MindmapNode) => {
   draggingNodeId.value = node.id;
   const rect = mindmapContainerRef.value?.getBoundingClientRect();
   if (!rect) return;
-  dragOffset.x = (e.clientX - rect.left - canvasPan.x) / canvasScale.value - node.x;
-  dragOffset.y = (e.clientY - rect.top - canvasPan.y) / canvasScale.value - node.y;
+  dragOffset.x =
+    (e.clientX - rect.left - canvasPan.x) / canvasScale.value - node.x;
+  dragOffset.y =
+    (e.clientY - rect.top - canvasPan.y) / canvasScale.value - node.y;
   e.preventDefault();
 };
 
@@ -500,8 +527,11 @@ const onCanvasDragMove = (e: MouseEvent) => {
     if (!rect) return;
     const node = mindmapNodes.value.find(n => n.id === draggingNodeId.value);
     if (node) {
-      node.x = (e.clientX - rect.left - canvasPan.x) / canvasScale.value - dragOffset.x;
-      node.y = (e.clientY - rect.top - canvasPan.y) / canvasScale.value - dragOffset.y;
+      node.x =
+        (e.clientX - rect.left - canvasPan.x) / canvasScale.value -
+        dragOffset.x;
+      node.y =
+        (e.clientY - rect.top - canvasPan.y) / canvasScale.value - dragOffset.y;
     }
     return;
   }
@@ -727,7 +757,9 @@ const extractLessonIndex = (value: string): string | null => {
   if (pair) return `${Number(pair[1])}.${Number(pair[2])}`;
 
   // 第1章第2节
-  const zh = raw.match(/第\s*(\d{1,2})\s*章[^\d]{0,6}第\s*(\d{1,2})\s*[节课讲]/);
+  const zh = raw.match(
+    /第\s*(\d{1,2})\s*章[^\d]{0,6}第\s*(\d{1,2})\s*[节课讲]/
+  );
   if (zh) return `${Number(zh[1])}.${Number(zh[2])}`;
 
   return null;
@@ -745,7 +777,11 @@ const isLikelySameLesson = (fileName: string, hourTitle: string) => {
   const fileNorm = normalizeLessonText(fileName);
   const hourNorm = normalizeLessonText(hourTitle);
   if (!fileNorm || !hourNorm) return true;
-  return fileNorm === hourNorm || fileNorm.includes(hourNorm) || hourNorm.includes(fileNorm);
+  return (
+    fileNorm === hourNorm ||
+    fileNorm.includes(hourNorm) ||
+    hourNorm.includes(fileNorm)
+  );
 };
 
 const requestSeq = ref(0);
@@ -1513,7 +1549,11 @@ $radius-lg: 16px;
 
     .dark & {
       border-color: rgb(255 255 255 / 8%);
-      background: linear-gradient(135deg, rgb(30 30 60 / 80%) 0%, rgb(40 20 60 / 60%) 100%);
+      background: linear-gradient(
+        135deg,
+        rgb(30 30 60 / 80%) 0%,
+        rgb(40 20 60 / 60%) 100%
+      );
     }
   }
 
@@ -1547,8 +1587,13 @@ $radius-lg: 16px;
 
     .dark & {
       stroke: rgb(255 255 255 / 15%);
-      &.edge-depth-1 { stroke: $primary-light; opacity: 0.4; }
-      &.edge-depth-2 { stroke: rgb(167 139 250 / 40%); }
+      &.edge-depth-1 {
+        stroke: $primary-light;
+        opacity: 0.4;
+      }
+      &.edge-depth-2 {
+        stroke: rgb(167 139 250 / 40%);
+      }
     }
   }
 
@@ -1558,7 +1603,9 @@ $radius-lg: 16px;
 
     &.node-dragging {
       cursor: grabbing;
-      .node-circle { filter: drop-shadow(0 6px 20px rgb(99 102 241 / 40%)); }
+      .node-circle {
+        filter: drop-shadow(0 6px 20px rgb(99 102 241 / 40%));
+      }
     }
 
     &.node-depth-0 .node-circle {
@@ -1602,13 +1649,19 @@ $radius-lg: 16px;
     }
 
     .dark & {
-      &.node-depth-0 .node-circle { stroke: rgb(255 255 255 / 20%); }
-      &.node-depth-1 .node-circle { stroke: rgb(255 255 255 / 15%); }
+      &.node-depth-0 .node-circle {
+        stroke: rgb(255 255 255 / 20%);
+      }
+      &.node-depth-1 .node-circle {
+        stroke: rgb(255 255 255 / 15%);
+      }
       &.node-depth-2 .node-circle {
         fill: rgb(167 139 250 / 60%);
         stroke: rgb(255 255 255 / 10%);
       }
-      &.node-depth-2 .node-label { fill: rgb(255 255 255 / 80%); }
+      &.node-depth-2 .node-label {
+        fill: rgb(255 255 255 / 80%);
+      }
     }
   }
 }

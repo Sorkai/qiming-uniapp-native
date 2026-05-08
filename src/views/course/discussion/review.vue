@@ -940,19 +940,10 @@ onActivated(() => {
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button
-            type="primary"
-            :icon="Search"
-            @click="handleSearch"
-          >
+          <el-button type="primary" :icon="Search" @click="handleSearch">
             查询
           </el-button>
-          <el-button
-            :icon="Refresh"
-            @click="resetSearch"
-          >
-            重置
-          </el-button>
+          <el-button :icon="Refresh" @click="resetSearch"> 重置 </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -976,13 +967,9 @@ onActivated(() => {
             批量拒绝
           </el-button>
         </div>
-        <el-button
-          :icon="Refresh"
-          text
-          @click="initData(true)"
-        >
-            同步状态
-          </el-button>
+        <el-button :icon="Refresh" text @click="initData(true)">
+          同步状态
+        </el-button>
       </div>
       <div v-if="isMobile" class="mobile-discussion-list">
         <div

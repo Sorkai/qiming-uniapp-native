@@ -4837,7 +4837,12 @@ const handleCommand = (command: string) => {
 
 /* UA 识别为移动端时，按钮自动换行并居中（避免仅改 UA 但视口仍偏大时错位） */
 :global(
-  html.ua-mobile .home-container .banner .banner-overlay .carousel-text .hero-buttons
+  html.ua-mobile
+    .home-container
+    .banner
+    .banner-overlay
+    .carousel-text
+    .hero-buttons
 ) {
   gap: 10px;
   flex-wrap: wrap;
@@ -4847,7 +4852,13 @@ const handleCommand = (command: string) => {
 }
 
 :global(
-  html.ua-mobile .home-container .banner .banner-overlay .carousel-text .hero-buttons .hero-btn
+  html.ua-mobile
+    .home-container
+    .banner
+    .banner-overlay
+    .carousel-text
+    .hero-buttons
+    .hero-btn
 ) {
   flex: 1 1 220px;
   width: 100%;
@@ -4865,7 +4876,12 @@ const handleCommand = (command: string) => {
 }
 
 :global(
-  html.ua-mobile .home-container .cta-section-new .cta-content-left .cta-buttons .el-button
+  html.ua-mobile
+    .home-container
+    .cta-section-new
+    .cta-content-left
+    .cta-buttons
+    .el-button
 ) {
   flex: 1 1 220px;
   width: 100%;
@@ -4880,11 +4896,22 @@ const handleCommand = (command: string) => {
 }
 
 :global(
-  html.ua-mobile .home-container .banner .banner-overlay .carousel-text .hero-buttons .el-button
+  html.ua-mobile
+    .home-container
+    .banner
+    .banner-overlay
+    .carousel-text
+    .hero-buttons
+    .el-button
     + .el-button
 ),
 :global(
-  html.ua-mobile .home-container .cta-section-new .cta-content-left .cta-buttons .el-button
+  html.ua-mobile
+    .home-container
+    .cta-section-new
+    .cta-content-left
+    .cta-buttons
+    .el-button
     + .el-button
 ) {
   margin-left: 0;
