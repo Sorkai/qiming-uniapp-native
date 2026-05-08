@@ -4,7 +4,7 @@
  * 管理敏感词库，包括添加、编辑、删除、导入导出
  */
 import { computed, reactive, ref, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox, type TagProps } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
 import {
   Plus,
@@ -77,7 +77,7 @@ const levelOptions = [
   { label: "高风险", value: 3, type: "danger" },
   { label: "中风险", value: 2, type: "warning" },
   { label: "低风险", value: 1, type: "info" }
-];
+] as const;
 
 const categoryOptions = [
   "政治敏感",
@@ -124,7 +124,7 @@ const listSummaryText = computed(() => {
 });
 
 const getLevelType = (level: SensitiveWordLevel) => {
-  const map: Record<number, string> = {
+  const map: Record<number, NonNullable<TagProps["type"]>> = {
     3: "danger",
     2: "warning",
     1: "info"
@@ -152,7 +152,14 @@ const getContentPreview = (text: string, limit = 20) => {
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: Record<string, any> = {
+    const params: {
+      pageNum: number;
+      pageSize: number;
+      keyword?: string;
+      level?: SensitiveWordLevel;
+      category?: string;
+      isEnabled?: number;
+    } = {
       pageNum: pagination.page,
       pageSize: pagination.pageSize
     };
@@ -264,7 +271,13 @@ const submitForm = async () => {
 
   try {
     const isEditMode = isEdit.value && currentWord.value;
-    const payload: Record<string, any> = {
+    const payload: {
+      word: string;
+      level: SensitiveWordLevel;
+      category?: string;
+      replacement?: string;
+      isEnabled?: number;
+    } = {
       word: formData.word,
       level: formData.level,
       category: formData.category || undefined,

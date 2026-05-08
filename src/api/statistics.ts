@@ -30,6 +30,15 @@ interface CourseUsersProgressResult {
       progress: number; // 进度 后端返回50代表完成50%
     }>;
   }>;
+  list?: Array<{
+    courseId: number;
+    courseName: string;
+    usersProgress: Array<{
+      userId: number;
+      userName: string;
+      progress: number;
+    }>;
+  }>;
 }
 
 interface CourseUsersExamInfoResult {
@@ -44,6 +53,34 @@ interface CourseUsersExamInfoResult {
       levelUserList: Array<{
         userId: number; // 用户id
         userName: string; // 用户名称
+      }>;
+    }>;
+  }>;
+  courseUsersExamInfo?: Array<{
+    courseId: number;
+    courseName: string;
+    examId: number;
+    examName: string;
+    examInfo: Array<{
+      level: number;
+      levelNum: number;
+      levelUserList: Array<{
+        userId: number;
+        userName: string;
+      }>;
+    }>;
+  }>;
+  list?: Array<{
+    courseId: number;
+    courseName: string;
+    examId: number;
+    examName: string;
+    examInfo: Array<{
+      level: number;
+      levelNum: number;
+      levelUserList: Array<{
+        userId: number;
+        userName: string;
       }>;
     }>;
   }>;
@@ -76,6 +113,7 @@ interface ApiResponse<T = any> {
   code: number;
   msg: string;
   data: T;
+  list?: any[];
 }
 
 /**

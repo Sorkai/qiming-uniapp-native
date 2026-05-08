@@ -71,6 +71,18 @@ export interface CourseListResult {
 }
 
 export interface CourseHoursListResult {
+  hoursList?: Array<{
+    chapterId: number;
+    name: string;
+    hourList: Array<{
+      resourceId: number;
+      duration: number;
+      title: string;
+      rType: string;
+      hourId: number;
+      fileUrl: string;
+    }>;
+  }>;
   courseChapters: Array<{
     chapterId: number;
     name: string;

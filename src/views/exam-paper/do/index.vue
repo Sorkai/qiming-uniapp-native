@@ -92,6 +92,31 @@ const getDefaultAnswerByType = (question: any): StudentAnswerValue => {
   return "";
 };
 
+const getScalarAnswer = (
+  value: StudentAnswerValue | undefined | null
+): string | number | boolean | undefined => {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+  return undefined;
+};
+
+const handleScalarAnswerUpdate = (value: string | number | boolean) => {
+  updateAnswer(value as StudentAnswerValue);
+};
+
+const handleStringAnswerUpdate = (value: string) => {
+  updateAnswer(value);
+};
+
+const handleNumberAnswerUpdate = (value: number) => {
+  updateAnswer(value);
+};
+
 // 考试计时器
 let examTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -616,9 +641,9 @@ onBeforeUnmount(() => {
               "
             >
               <el-radio-group
-                :model-value="currentAnswerRecord?.answer"
+                :model-value="getScalarAnswer(currentAnswerRecord?.answer)"
                 class="options-group"
-                @update:model-value="updateAnswer"
+                @update:model-value="handleScalarAnswerUpdate"
               >
                 <el-radio
                   v-for="option in currentQuestion.options"
@@ -715,13 +740,9 @@ onBeforeUnmount(() => {
 
                   <template v-if="getQuestionTypeCode(currentQuestion) === 7">
                     <el-radio-group
-                      :model-value="
-                        (currentAnswerRecord?.answer as Record<string, string>)?.[
-                          row.key
-                        ]
-                      "
+                      :model-value="getScalarAnswer((currentAnswerRecord?.answer as Record<string, string>)?.[row.key])"
                       class="matrix-radio-group"
-                      @update:model-value="val => updateMatrixSingleAnswer(row.key, val)"
+                      @update:model-value="val => updateMatrixSingleAnswer(row.key, String(val))"
                     >
                       <el-radio
                         v-for="col in getMatrixCols(currentQuestion)"
@@ -764,14 +785,10 @@ onBeforeUnmount(() => {
                 >
                   <span class="matching-left">{{ left.content }}</span>
                   <el-select
-                    :model-value="
-                      (currentAnswerRecord?.answer as Record<string, string>)?.[
-                        left.key
-                      ]
-                    "
+                    :model-value="(currentAnswerRecord?.answer as Record<string, string>)?.[left.key]"
                     placeholder="请选择对应项"
                     class="matching-select"
-                    @update:model-value="val => updateMatchingAnswer(left.key, val)"
+                    @update:model-value="val => updateMatchingAnswer(left.key, String(val))"
                   >
                     <el-option
                       v-for="right in getMatchingRightItems(currentQuestion)"
@@ -827,9 +844,9 @@ onBeforeUnmount(() => {
             <template v-else-if="getQuestionTypeCode(currentQuestion) === 12">
               <div class="nps-wrapper">
                 <el-radio-group
-                  :model-value="currentAnswerRecord?.answer as number"
+                  :model-value="getScalarAnswer(currentAnswerRecord?.answer)"
                   class="nps-group"
-                  @update:model-value="updateAnswer"
+                  @update:model-value="handleScalarAnswerUpdate"
                 >
                   <el-radio
                     v-for="score in currentQuestion.npsMax ? currentQuestion.npsMax + 1 : 11"
@@ -875,9 +892,9 @@ onBeforeUnmount(() => {
 
                   <el-radio-group
                     v-if="toQuestionTypeCode(sub.questionType) === 1"
-                    :model-value="getCompositeSubAnswer(sub.subId)"
+                    :model-value="getScalarAnswer(getCompositeSubAnswer(sub.subId))"
                     class="options-group"
-                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, val)"
+                    @update:model-value="val => updateCompositeSubAnswer(sub.subId, String(val))"
                   >
                     <el-radio
                       v-for="option in sub.options || []"

@@ -363,11 +363,13 @@
                 :key="key"
                 class="dimension-item"
               >
-                <span class="dim-label">{{ getDimensionLabel(key) }}</span>
+                <span class="dim-label">{{
+                  getDimensionLabel(String(key))
+                }}</span>
                 <el-progress
-                  :percentage="score"
+                  :percentage="Number(score)"
                   :stroke-width="8"
-                  :color="getProgressColor(score)"
+                  :color="getProgressColor(Number(score))"
                 />
               </div>
             </div>

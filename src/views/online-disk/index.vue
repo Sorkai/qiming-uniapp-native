@@ -227,7 +227,6 @@ const fetchFileList = async () => {
   loading.value = true;
   try {
     const res = await getFileList({ pageNum: 1, pageSize: 100 });
-    // 支持多种响应格式：{ fileList: [...] } 或 { data: { fileList: [...] } }
     const fileListData = res?.fileList || res?.data?.fileList;
     if (fileListData && fileListData.length > 0) {
       fileList.value = fileListData.map((file, index) => ({

@@ -133,7 +133,7 @@
           <el-input
             v-model="form.description"
             type="textarea"
-            rows="4"
+            :rows="4"
             placeholder="请输入考试描述"
           />
         </el-form-item>

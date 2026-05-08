@@ -151,7 +151,7 @@
           <el-input
             v-model="form.description"
             type="textarea"
-            rows="4"
+            :rows="4"
             placeholder="请输入作业描述"
           />
         </el-form-item>
