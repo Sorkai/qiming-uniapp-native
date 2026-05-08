@@ -257,9 +257,7 @@
             "
             class="plan-progress-state text-center pb-4"
           >
-            <div
-              class="plan-progress-icon w-20 h-20 mx-auto mb-2"
-            >
+            <div class="plan-progress-icon w-20 h-20 mx-auto mb-2">
               <lottie-animation
                 :animation-data="SuccessAnim"
                 :width="80"

@@ -149,6 +149,17 @@ export type FileListResult = {
     size: number;
     resourceType: string;
   }>;
+  data?: {
+    total?: number;
+    fileList?: Array<{
+      fileId: number;
+      fileUrl: string;
+      fileName: string;
+      extension: string;
+      size: number;
+      resourceType: string;
+    }>;
+  };
 };
 
 export type UserListResult = {
@@ -162,6 +173,18 @@ export type UserListResult = {
     info: string;
     roleType: number;
   }>;
+  data?: {
+    total?: number;
+    userList?: Array<{
+      id: number;
+      mobile: string;
+      nickname: string;
+      sex: number;
+      avatar: string;
+      info: string;
+      roleType: number;
+    }>;
+  };
 };
 
 type ResultTable = {
@@ -239,9 +262,13 @@ export const uploadFile = (data: FormData) => {
 
 /** STS 初始化上传 */
 export const initStsUpload = (data: StsUploadInitRequest) => {
-  return http.request<StsUploadInitResult>("post", "/edu/v1/user/upload/sts/init", {
-    data
-  });
+  return http.request<StsUploadInitResult>(
+    "post",
+    "/edu/v1/user/upload/sts/init",
+    {
+      data
+    }
+  );
 };
 
 /** STS 完成上传 */

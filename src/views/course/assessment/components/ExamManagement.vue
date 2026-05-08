@@ -66,14 +66,19 @@
       >
         <template #default="scope">
           <div v-if="isMobile" class="mobile-action-wrap">
-            <el-dropdown trigger="click" @command="command => handleExamAction(command, scope.row)">
+            <el-dropdown
+              trigger="click"
+              @command="command => handleExamAction(command, scope.row)"
+            >
               <el-button text type="primary" class="more-action-btn">
                 更多
                 <el-icon class="ml-1"><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="questions">试题管理</el-dropdown-item>
+                  <el-dropdown-item command="questions"
+                    >试题管理</el-dropdown-item
+                  >
                   <el-dropdown-item command="edit">编辑</el-dropdown-item>
                   <el-dropdown-item command="delete" divided>
                     <span class="danger-action">删除</span>
@@ -83,7 +88,10 @@
             </el-dropdown>
           </div>
           <template v-else>
-            <el-button link type="primary" @click="showQuestionDialog(scope.row)"
+            <el-button
+              link
+              type="primary"
+              @click="showQuestionDialog(scope.row)"
               >试题管理</el-button
             >
             <el-divider direction="vertical" />
@@ -133,7 +141,7 @@
           <el-input
             v-model="form.description"
             type="textarea"
-            rows="4"
+            :rows="4"
             placeholder="请输入考试描述"
           />
         </el-form-item>
@@ -344,7 +352,7 @@ const isEdit = ref(false);
 const formRef = ref(null);
 const form = ref({
   examId: 0,
-  courseId: props.courseId,
+  courseId: Number(props.courseId) || 0,
   title: "",
   description: "",
   timeLimit: 60,
@@ -418,10 +426,7 @@ const handleCurrentChange = (val: number) => {
   fetchExamList();
 };
 
-const handleExamAction = (
-  command: "questions" | "edit" | "delete",
-  row
-) => {
+const handleExamAction = (command: "questions" | "edit" | "delete", row) => {
   if (command === "questions") {
     showQuestionDialog(row);
     return;
@@ -440,7 +445,7 @@ const showCreateDialog = () => {
   isEdit.value = false;
   form.value = {
     examId: 0,
-    courseId: props.courseId,
+    courseId: Number(props.courseId) || 0,
     title: "",
     description: "",
     timeLimit: 60,
@@ -454,7 +459,7 @@ const showEditDialog = row => {
   isEdit.value = true;
   form.value = {
     examId: row.examId,
-    courseId: props.courseId,
+    courseId: Number(props.courseId) || 0,
     title: row.title,
     description: row.description,
     timeLimit: row.timeLimit,
@@ -484,7 +489,7 @@ const submitForm = async () => {
         } else {
           // 创建考试时不传递 examId，直接使用所需字段
           await createExam({
-            courseId: form.value.courseId,
+            courseId: Number(form.value.courseId),
             title: form.value.title,
             description: form.value.description,
             timeLimit: form.value.timeLimit,

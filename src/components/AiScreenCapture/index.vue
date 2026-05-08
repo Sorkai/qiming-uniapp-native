@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch, computed } from "vue";
+import { nextTick, ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useRoute } from "vue-router";
 import { storageLocal } from "@pureadmin/utils";
@@ -11,12 +11,20 @@ import ChatDialog from "./ChatDialog.vue";
 import { useScreenCapture } from "./hooks/useScreenCapture";
 import { useAiChat } from "./hooks/useAiChat";
 import type { CaptureArea } from "./types";
+import {
+  aiScreenCaptureVisibilityOverride,
+  claimAiScreenCaptureInstance,
+  createAiScreenCaptureInstanceId,
+  releaseAiScreenCaptureInstance
+} from "./visibility";
 
 defineOptions({
   name: "AiScreenCapture"
 });
 
 const route = useRoute();
+const instanceId = createAiScreenCaptureInstanceId();
+const isPrimaryInstance = ref(false);
 
 const floatButtonRef = ref<InstanceType<typeof FloatButton> | null>(null);
 const buttonCenter = ref({ x: 0, y: 0 });
@@ -104,8 +112,7 @@ const closeCaptureLoading = async () => {
   resetCaptureLoading();
 };
 
-const sleep = (ms: number) =>
-  new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const advanceCaptureLoadingStage = async (
   stage: "capturing" | "optimizing" | "starting",
@@ -149,9 +156,14 @@ const studentBlockedPathPrefixes = [
 ];
 
 const shouldShowAssistant = computed(() => {
-  if (!isStudent.value) return true;
-  return !studentBlockedPathPrefixes.some(prefix =>
-    route.path.startsWith(prefix)
+  const routeVisible =
+    !isStudent.value ||
+    !studentBlockedPathPrefixes.some(prefix => route.path.startsWith(prefix));
+  const overrideVisible = aiScreenCaptureVisibilityOverride.value;
+  return (
+    isPrimaryInstance.value &&
+    routeVisible &&
+    (overrideVisible === null ? true : overrideVisible)
   );
 });
 
@@ -244,6 +256,14 @@ watch(shouldShowAssistant, visible => {
     resetChat();
     resetCapture();
   }
+});
+
+onMounted(() => {
+  isPrimaryInstance.value = claimAiScreenCaptureInstance(instanceId);
+});
+
+onUnmounted(() => {
+  releaseAiScreenCaptureInstance(instanceId);
 });
 </script>
 

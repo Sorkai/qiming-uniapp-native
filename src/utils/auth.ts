@@ -132,9 +132,15 @@ export function setToken(data: DataInfo<Date>) {
 
 /** 删除`token`以及key值为`user-info`的localStorage信息 */
 export function removeToken() {
+  useUserStoreHook().CLEAR_USER_STATE();
   Cookies.remove(TokenKey, { path: "/" });
   Cookies.remove(multipleTabsKey, { path: "/" });
   storageLocal().removeItem(userKey);
+  storageLocal().removeItem("userId");
+  storageLocal().removeItem("userMobile");
+  storageLocal().removeItem("userSex");
+  storageLocal().removeItem("userInfo");
+  storageLocal().removeItem("userRoleType");
 
   // 清除持久化的 UI 状态
   storageLocal().removeItem("account_active_menu");

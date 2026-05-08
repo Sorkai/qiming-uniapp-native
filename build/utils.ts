@@ -58,7 +58,7 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
     VITE_HIDE_HOME: "false",
     VITE_ENABLE_TENANT: "true",
     VITE_COMPRESSION: "none",
-    VITE_PROXY_TARGET: "",
+    VITE_PROXY_TARGET: "https://aiedu-api.intelledu.cn",
     VITE_MOCK_SCOPE: "all"
   };
 

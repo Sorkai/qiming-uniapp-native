@@ -373,13 +373,8 @@ const initChat = () => {
 const loadChatHistory = async () => {
   try {
     const response = await getConversationHistory(conversationId.value);
-    if (
-      response &&
-      response.code === 200 &&
-      response.data &&
-      response.data.history
-    ) {
-      chatMessages.value = response.data.history;
+    if (response?.history) {
+      chatMessages.value = response.history;
     }
   } catch (error) {
     console.error("加载聊天历史失败:", error);

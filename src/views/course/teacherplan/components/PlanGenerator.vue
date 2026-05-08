@@ -303,7 +303,6 @@ const fetchChapters = async (courseId: number) => {
     });
 
     if (res && res.code === 200 && res.data) {
-      // API 可能返回 hoursList 或 courseChapters，这里根据实际情况处理
       chapterOptions.value =
         res.data.hoursList || res.data.courseChapters || [];
     } else {
@@ -349,7 +348,7 @@ const generatePlan = async () => {
       generateSuccess.value = true;
       ElMessage.success("已成功提交 AI 生成请求");
     } else {
-      ElMessage.error(res.message || "提交生成请求失败");
+      ElMessage.error(res.msg || "提交生成请求失败");
     }
   } catch (error) {
     console.error("生成教案失败:", error);

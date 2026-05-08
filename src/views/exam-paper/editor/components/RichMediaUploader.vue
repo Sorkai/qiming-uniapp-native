@@ -272,19 +272,19 @@ const toggleAudio = (url: string) => {
       border-bottom: 2px solid transparent;
 
       &:hover {
-        color: #739CF9;
+        color: #739cf9;
         background: rgba(115, 156, 249, 0.05);
       }
 
       &.active {
-        color: #739CF9;
-        border-bottom-color: #739CF9;
+        color: #739cf9;
+        border-bottom-color: #739cf9;
         background: rgba(115, 156, 249, 0.05);
       }
 
       .media-count {
         font-size: 11px;
-        background: #739CF9;
+        background: #739cf9;
         color: #fff;
         padding: 0 6px;
         border-radius: 10px;
@@ -357,7 +357,7 @@ const toggleAudio = (url: string) => {
         transition: all 0.2s;
 
         &:hover {
-          border-color: #739CF9;
+          border-color: #739cf9;
         }
       }
 
@@ -395,7 +395,7 @@ const toggleAudio = (url: string) => {
 
     .audio-icon {
       font-size: 24px;
-      color: #739CF9;
+      color: #739cf9;
       cursor: pointer;
 
       &:hover {

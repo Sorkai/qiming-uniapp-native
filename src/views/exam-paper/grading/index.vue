@@ -554,7 +554,7 @@ $dark-shadow-lg:
 
 /* 主色调 */
 $primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$success-gradient: linear-gradient(135deg, #739CF9 0%, #80C8FA 100%);
+$success-gradient: linear-gradient(135deg, #739cf9 0%, #80c8fa 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
 $danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
@@ -585,7 +585,7 @@ $radius-xl: 20px;
 
       .header-icon {
         background: rgba(102, 126, 234, 0.15);
-        color: #80C8FA;
+        color: #80c8fa;
       }
     }
 
@@ -672,7 +672,7 @@ $radius-xl: 20px;
       .paper-info-cell {
         .paper-icon {
           background: rgba(102, 126, 234, 0.15);
-          color: #80C8FA;
+          color: #80c8fa;
         }
 
         .paper-course {

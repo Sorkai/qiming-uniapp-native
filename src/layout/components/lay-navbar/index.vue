@@ -65,11 +65,9 @@ onMounted(() => {
   getUserDetail()
     .then(res => {
       console.log("[LayNavbar] 获取用户信息接口响应:", res);
-      // 兼容两种响应结构
-      const data = res.data || res;
-      if (data && data.userInfo) {
-        console.log("[LayNavbar] 获取到用户信息:", data.userInfo);
-        const userInfo = data.userInfo;
+      const userInfo = res?.data?.userInfo;
+      if (userInfo) {
+        console.log("[LayNavbar] 获取到用户信息:", userInfo);
         // 只要返回了信息就更新 store
         if (userInfo.avatar !== undefined) {
           console.log("[LayNavbar] 更新头像:", userInfo.avatar);

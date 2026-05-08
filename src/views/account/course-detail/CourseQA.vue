@@ -739,7 +739,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox, type TagProps } from "element-plus";
 import {
   Search,
   Clock,
@@ -805,6 +805,13 @@ interface Message extends DiscussionPost {
   replyPlaceholder: string;
 }
 
+type CourseQaFilter = "latest" | "hot" | "unanswered" | "all" | "mine";
+type HotTagItem = {
+  name: string;
+  count: number;
+  type?: TagProps["type"];
+};
+
 // Props
 const props = defineProps<{
   visible: boolean;
@@ -833,9 +840,7 @@ const emit = defineEmits<{
 
 // 响应式状态
 const searchKeyword = ref("");
-const activeFilter = ref<"latest" | "hot" | "unanswered" | "all" | "mine">(
-  "all"
-);
+const activeFilter = ref<CourseQaFilter>("all");
 const isLoading = ref(false);
 const isLoadingMore = ref(false);
 const hasMore = ref(true);
@@ -845,7 +850,9 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 
 // 筛选标签配置
-const filterTabs = computed(() => [
+const filterTabs = computed<
+  Array<{ label: string; value: CourseQaFilter; icon: any; count?: number }>
+>(() => [
   { label: "全部", value: "all", icon: Document },
   { label: "最新", value: "latest", icon: Clock },
   { label: "热门", value: "hot", icon: StarFilled },
@@ -854,7 +861,7 @@ const filterTabs = computed(() => [
 ]);
 
 // 热门标签
-const hotTags = ref<Array<{ name: string; count: number; type?: any }>>([]);
+const hotTags = ref<HotTagItem[]>([]);
 
 // 可用标签（用于发帖时选择）
 const availableTags = computed(() => hotTags.value.map(tag => tag.name));
@@ -962,7 +969,7 @@ const fetchDiscussions = async (append = false) => {
       keyword: searchKeyword.value || undefined
     };
 
-    if (activeFilter.value !== "all") {
+    if (activeFilter.value !== "all" && activeFilter.value !== "mine") {
       params.sort = activeFilter.value;
     }
 
@@ -1013,7 +1020,13 @@ const fetchStats = async () => {
 const fetchTags = async () => {
   try {
     const { data } = await getHotTags(normalizedCourseId.value);
-    const types = ["primary", "success", "warning", "info", "danger"];
+    const types: Array<NonNullable<TagProps["type"]>> = [
+      "primary",
+      "success",
+      "warning",
+      "info",
+      "danger"
+    ];
     hotTags.value = data.map((tag, index) => ({
       ...tag,
       type: types[index % types.length]

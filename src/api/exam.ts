@@ -4,6 +4,7 @@ export interface ExamListParams {
   pageNum: number;
   pageSize?: number;
   courseName?: string;
+  courseId?: number;
 }
 
 export interface ExamListResult {

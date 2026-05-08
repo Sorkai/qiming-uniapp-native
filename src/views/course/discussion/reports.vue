@@ -133,7 +133,11 @@ const listSummaryText = computed(() => {
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: Record<string, any> = {
+    const params: {
+      pageNum: number;
+      pageSize: number;
+      status?: ReportItem["status"];
+    } = {
       pageNum: pagination.page,
       pageSize: pagination.pageSize
     };
@@ -365,11 +369,7 @@ onActivated(() => {
         <div class="text-sm text-gray-500">{{ listSummaryText }}</div>
       </div>
       <div class="flex justify-end mb-4">
-        <el-button
-          :icon="Refresh"
-          text
-          @click="refreshData"
-        >
+        <el-button :icon="Refresh" text @click="refreshData">
           同步数据
         </el-button>
       </div>

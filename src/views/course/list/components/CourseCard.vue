@@ -24,8 +24,8 @@
       <div class="course-selection" @click.stop>
         <el-checkbox
           :model-value="isSelected"
-          @update:model-value="$emit('toggle-select', course.courseId)"
           size="large"
+          @update:model-value="$emit('toggle-select', course.courseId)"
         />
       </div>
       <div class="course-actions-overlay">

@@ -4,7 +4,7 @@
  * 管理用户的发言信誉分，可以查看、调整信誉分
  */
 import { computed, onMounted, reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, type TagProps } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
 import { Search, Refresh, Edit } from "@element-plus/icons-vue";
 import {
@@ -100,7 +100,7 @@ const getScoreColor = (score: number) => {
 };
 
 const getLevelType = (level: string) => {
-  const map: Record<string, string> = {
+  const map: Record<string, NonNullable<TagProps["type"]>> = {
     trusted: "success",
     normal: "primary",
     restricted: "warning"
@@ -337,11 +337,7 @@ onMounted(() => {
         <div class="text-sm text-gray-500">{{ listSummaryText }}</div>
       </div>
       <div class="flex justify-end mb-4">
-        <el-button
-          :icon="Refresh"
-          text
-          @click="refreshData"
-        >
+        <el-button :icon="Refresh" text @click="refreshData">
           同步数据
         </el-button>
       </div>

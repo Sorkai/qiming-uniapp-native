@@ -718,19 +718,10 @@ onActivated(() => {
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button
-            type="primary"
-            :icon="Search"
-            @click="handleSearch"
-          >
+          <el-button type="primary" :icon="Search" @click="handleSearch">
             查询审核
           </el-button>
-          <el-button
-            :icon="Refresh"
-            @click="resetSearch"
-          >
-            重置条件
-          </el-button>
+          <el-button :icon="Refresh" @click="resetSearch"> 重置条件 </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -758,17 +749,14 @@ onActivated(() => {
         >
           批量拒绝
         </el-button>
-        <div v-if="selectedCount > 0" class="text-sm text-orange-500 ml-2 mr-2 flex items-center gap-1">
+        <div
+          v-if="selectedCount > 0"
+          class="text-sm text-orange-500 ml-2 mr-2 flex items-center gap-1"
+        >
           <el-icon><Warning /></el-icon>
           已选中 {{ selectedCount }} 个待审项
         </div>
-        <el-button
-          :icon="Refresh"
-          text
-          @click="initData"
-        >
-          同步数据
-        </el-button>
+        <el-button :icon="Refresh" text @click="initData"> 同步数据 </el-button>
       </div>
     </el-card>
 

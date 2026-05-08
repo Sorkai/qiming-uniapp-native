@@ -41,7 +41,7 @@
       type="button"
       class="mobile-sidebar-toggle"
       :class="{ visible: mobileCollapsed }"
-      :aria-expanded="String(!mobileCollapsed)"
+      :aria-expanded="!mobileCollapsed"
       :aria-label="mobileCollapsed ? '展开课程标签栏' : '课程标签栏已展开'"
       @click.stop="handleMobileToggle"
     >

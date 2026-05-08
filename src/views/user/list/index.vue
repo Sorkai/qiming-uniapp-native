@@ -20,11 +20,7 @@
         </el-form-item>
       </el-form>
       <div v-if="isMobile" v-loading="loading" class="mobile-user-list">
-        <div
-          v-for="user in userList"
-          :key="user.id"
-          class="mobile-user-card"
-        >
+        <div v-for="user in userList" :key="user.id" class="mobile-user-card">
           <div class="mobile-user-card__header">
             <div class="mobile-user-main">
               <el-avatar :src="formatAvatar(user.avatar)" :size="44" />
@@ -302,10 +298,9 @@ const fetchUserList = async () => {
       mobile: searchForm.mobile // 将userName改为mobile，以匹配API定义
     });
 
-    // 正确处理嵌套在data中的userList和total
-    if (res && res.data) {
-      userList.value = res.data.userList || [];
-      total.value = res.data.total || 0;
+    if (res) {
+      userList.value = res.userList || res.data?.userList || [];
+      total.value = res.total || res.data?.total || 0;
     } else {
       userList.value = [];
       total.value = 0;

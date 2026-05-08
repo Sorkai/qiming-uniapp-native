@@ -151,7 +151,7 @@
           <el-input
             v-model="form.description"
             type="textarea"
-            rows="4"
+            :rows="4"
             placeholder="请输入作业描述"
           />
         </el-form-item>
@@ -351,7 +351,7 @@ const formRef = ref(null);
 // 当前正在编辑的作业ID
 const currentEditId = ref<number | null>(null);
 const form = ref({
-  courseId: props.courseId,
+  courseId: Number(props.courseId) || 0,
   chapterId: null as number | null,
   hourId: null as number | null,
   title: "",
@@ -454,7 +454,7 @@ const handleCurrentChange = (val: number) => {
 const showCreateDialog = () => {
   isEdit.value = false;
   form.value = {
-    courseId: props.courseId,
+    courseId: Number(props.courseId) || 0,
     chapterId: null as number | null,
     hourId: null as number | null,
     title: "",
@@ -470,7 +470,7 @@ const showEditDialog = row => {
   // 编辑时临时保存当前作业ID
   currentEditId.value = row.homeworkId;
   form.value = {
-    courseId: props.courseId,
+    courseId: Number(props.courseId) || 0,
     chapterId: row.chapterId,
     hourId: row.hourId,
     title: row.title,
@@ -490,7 +490,7 @@ const submitForm = async () => {
       try {
         if (isEdit.value) {
           await updateHomework({
-            homeworkId: form.value.homeworkId,
+            homeworkId: currentEditId.value!,
             title: form.value.title,
             description: form.value.description,
             dueDate: form.value.dueDate

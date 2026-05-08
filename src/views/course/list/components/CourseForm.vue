@@ -52,6 +52,48 @@
             >
           </div>
         </div>
+        <div
+          v-else-if="coverUploadState.isUploading"
+          class="uploading-overlay static"
+          style="width: 320px"
+        >
+          <div class="upload-progress-card">
+            <div class="upload-progress-header">
+              <el-icon class="is-loading"><Loading /></el-icon>
+              <span class="upload-progress-title">封面上传中...</span>
+              <span class="upload-progress-percent"
+                >{{ coverUploadState.uploadProgress || 0 }}%</span
+              >
+            </div>
+            <el-progress
+              :percentage="coverUploadState.uploadProgress || 0"
+              :stroke-width="8"
+              :show-text="false"
+              status="success"
+            />
+            <div class="upload-progress-meta">
+              <span>
+                已上传
+                <strong>{{
+                  formatBytes(coverUploadState.uploadLoaded || 0)
+                }}</strong>
+                / {{ formatBytes(coverUploadState.uploadTotal || 0) }}
+              </span>
+              <span>
+                速度
+                <strong
+                  >{{
+                    formatBytes(coverUploadState.uploadSpeed || 0)
+                  }}/s</strong
+                >
+              </span>
+              <span>
+                预计剩余
+                <strong>{{ formatEta(coverUploadState.uploadEta) }}</strong>
+              </span>
+            </div>
+          </div>
+        </div>
         <el-upload
           v-else
           class="upload-trigger"
@@ -260,9 +302,48 @@
                             v-if="hour.isUploading"
                             class="uploading-overlay"
                           >
-                            <div class="uploading-indicator">
-                              <el-icon class="is-loading"><Loading /></el-icon>
-                              <span>上传中...</span>
+                            <div class="upload-progress-card">
+                              <div class="upload-progress-header">
+                                <el-icon class="is-loading">
+                                  <Loading />
+                                </el-icon>
+                                <span class="upload-progress-title"
+                                  >上传中...</span
+                                >
+                                <span class="upload-progress-percent"
+                                  >{{ hour.uploadProgress || 0 }}%</span
+                                >
+                              </div>
+                              <el-progress
+                                :percentage="hour.uploadProgress || 0"
+                                :stroke-width="8"
+                                :show-text="false"
+                                status="success"
+                              />
+                              <div class="upload-progress-meta">
+                                <span>
+                                  已上传
+                                  <strong>{{
+                                    formatBytes(hour.uploadLoaded || 0)
+                                  }}</strong>
+                                  /
+                                  {{ formatBytes(hour.uploadTotal || 0) }}
+                                </span>
+                                <span>
+                                  速度
+                                  <strong
+                                    >{{
+                                      formatBytes(hour.uploadSpeed || 0)
+                                    }}/s</strong
+                                  >
+                                </span>
+                                <span>
+                                  预计剩余
+                                  <strong>{{
+                                    formatEta(hour.uploadEta)
+                                  }}</strong>
+                                </span>
+                              </div>
                             </div>
                           </div>
                           <el-upload
@@ -404,9 +485,41 @@
                       </div>
                     </div>
                     <div v-if="hour.isUploading" class="uploading-overlay">
-                      <div class="uploading-indicator">
-                        <el-icon class="is-loading"><Loading /></el-icon>
-                        <span>上传中...</span>
+                      <div class="upload-progress-card">
+                        <div class="upload-progress-header">
+                          <el-icon class="is-loading"><Loading /></el-icon>
+                          <span class="upload-progress-title">上传中...</span>
+                          <span class="upload-progress-percent"
+                            >{{ hour.uploadProgress || 0 }}%</span
+                          >
+                        </div>
+                        <el-progress
+                          :percentage="hour.uploadProgress || 0"
+                          :stroke-width="8"
+                          :show-text="false"
+                          status="success"
+                        />
+                        <div class="upload-progress-meta">
+                          <span>
+                            已上传
+                            <strong>{{
+                              formatBytes(hour.uploadLoaded || 0)
+                            }}</strong>
+                            / {{ formatBytes(hour.uploadTotal || 0) }}
+                          </span>
+                          <span>
+                            速度
+                            <strong
+                              >{{
+                                formatBytes(hour.uploadSpeed || 0)
+                              }}/s</strong
+                            >
+                          </span>
+                          <span>
+                            预计剩余
+                            <strong>{{ formatEta(hour.uploadEta) }}</strong>
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <el-upload
@@ -513,7 +626,7 @@
                   </div>
                 </div>
                 <el-upload
-                  v-else
+                  v-if="!attr.fileUrl && !attr.isUploading"
                   class="resource-upload"
                   action="#"
                   :auto-upload="false"
@@ -524,6 +637,42 @@
                     <el-icon><Plus /></el-icon>
                   </div>
                 </el-upload>
+                <div v-if="attr.isUploading" class="uploading-overlay static">
+                  <div class="upload-progress-card">
+                    <div class="upload-progress-header">
+                      <el-icon class="is-loading"><Loading /></el-icon>
+                      <span class="upload-progress-title">上传中...</span>
+                      <span class="upload-progress-percent"
+                        >{{ attr.uploadProgress || 0 }}%</span
+                      >
+                    </div>
+                    <el-progress
+                      :percentage="attr.uploadProgress || 0"
+                      :stroke-width="8"
+                      :show-text="false"
+                      status="success"
+                    />
+                    <div class="upload-progress-meta">
+                      <span>
+                        已上传
+                        <strong>{{
+                          formatBytes(attr.uploadLoaded || 0)
+                        }}</strong>
+                        / {{ formatBytes(attr.uploadTotal || 0) }}
+                      </span>
+                      <span>
+                        速度
+                        <strong
+                          >{{ formatBytes(attr.uploadSpeed || 0) }}/s</strong
+                        >
+                      </span>
+                      <span>
+                        预计剩余
+                        <strong>{{ formatEta(attr.uploadEta) }}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </el-form-item>
 
@@ -657,7 +806,73 @@ const getCurrentCourseId = () => {
   return Number.isFinite(courseId) && courseId > 0 ? courseId : undefined;
 };
 
-const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
+// 上传进度相关：格式化字节、剩余时间，以及创建带速度/ETA 的进度回调
+const formatBytes = (bytes: number) => {
+  if (!bytes || bytes <= 0) return "0 B";
+  const k = 1024;
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(k)),
+    units.length - 1
+  );
+  return `${(bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
+};
+
+const formatEta = (seconds: number) => {
+  if (!isFinite(seconds) || seconds < 0) return "--";
+  const total = Math.ceil(seconds);
+  if (total < 60) return `${total} 秒`;
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  if (m < 60) return `${m} 分 ${s} 秒`;
+  const h = Math.floor(m / 60);
+  return `${h} 小时 ${m % 60} 分`;
+};
+
+const createProgressTracker = (target: any) => {
+  target.uploadProgress = 0;
+  target.uploadLoaded = 0;
+  target.uploadTotal = 0;
+  target.uploadSpeed = 0;
+  target.uploadEta = Infinity;
+  const startTime = Date.now();
+  let lastTime = startTime;
+  let lastLoaded = 0;
+  return (loaded: number, total: number) => {
+    target.uploadLoaded = loaded;
+    target.uploadTotal = total;
+    target.uploadProgress = total > 0 ? Math.floor((loaded / total) * 100) : 0;
+    const now = Date.now();
+    const dt = (now - lastTime) / 1000;
+    if (dt >= 0.3 || loaded === total) {
+      const instantSpeed = dt > 0 ? (loaded - lastLoaded) / dt : 0;
+      const elapsed = (now - startTime) / 1000;
+      const avgSpeed = elapsed > 0 ? loaded / elapsed : 0;
+      // 平滑：取瞬时和平均的加权
+      target.uploadSpeed = instantSpeed * 0.6 + avgSpeed * 0.4;
+      target.uploadEta =
+        target.uploadSpeed > 0
+          ? (total - loaded) / target.uploadSpeed
+          : Infinity;
+      lastTime = now;
+      lastLoaded = loaded;
+    }
+  };
+};
+
+const resetProgressTracker = (target: any) => {
+  target.uploadProgress = 0;
+  target.uploadLoaded = 0;
+  target.uploadTotal = 0;
+  target.uploadSpeed = 0;
+  target.uploadEta = Infinity;
+};
+
+const uploadWithSts = async (
+  rawFile: File,
+  bizType = "resource_upload",
+  onProgress?: (loaded: number, total: number) => void
+) => {
   const pickField = (obj: any, keys: string[]) => {
     if (!obj) return undefined;
     for (const key of keys) {
@@ -676,11 +891,18 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
     course_id: getCurrentCourseId()
   });
 
-  const initData: any = initRes?.data?.data || initRes?.data || {};
+  const initData: any = initRes?.data || {};
   const uploadToken = pickField(initData, ["upload_token", "uploadToken"]);
-  const uploadUrl = pickField(initData, ["upload_url", "uploadUrl", "uploadURL"]);
+  const uploadUrl = pickField(initData, [
+    "upload_url",
+    "uploadUrl",
+    "uploadURL"
+  ]);
   const credentials =
-    initData.credentials || initData.credential || initData.tmpCredentials || {};
+    initData.credentials ||
+    initData.credential ||
+    initData.tmpCredentials ||
+    {};
   const tmpSecretId = pickField(credentials, [
     "tmp_secret_id",
     "tmpSecretId",
@@ -720,7 +942,12 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
     }
   }
 
-  let objectKey = pickField(initData, ["object_key", "objectKey", "key", "Key"]);
+  let objectKey = pickField(initData, [
+    "object_key",
+    "objectKey",
+    "key",
+    "Key"
+  ]);
   if (!objectKey && uploadUrl) {
     try {
       const parsedUrl = new URL(uploadUrl);
@@ -768,6 +995,13 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
     Domain: uploadDomain
   });
 
+  const totalBytes = rawFile.size;
+  let uploadedBytes = 0;
+  const reportProgress = (loaded: number) => {
+    if (onProgress) onProgress(Math.min(loaded, totalBytes), totalBytes);
+  };
+  reportProgress(0);
+
   const MULTIPART_THRESHOLD = 50 * 1024 * 1024;
   if (rawFile.size > MULTIPART_THRESHOLD) {
     const PART_SIZE = 5 * 1024 * 1024;
@@ -814,8 +1048,13 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
               UploadId: uploadId,
               PartNumber: partNumber,
               Body: chunk,
-              ContentLength: chunk.size
-            },
+              ContentLength: chunk.size,
+              onProgress: (progressData: any) => {
+                if (progressData) {
+                  reportProgress(uploadedBytes + (progressData.loaded || 0));
+                }
+              }
+            } as any,
             (err, data) => {
               if (err) {
                 reject(err);
@@ -830,6 +1069,9 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
         if (!etag) {
           throw new Error(`分片上传失败：缺少 ETag(part ${partNumber})`);
         }
+
+        uploadedBytes += chunk.size;
+        reportProgress(uploadedBytes);
 
         parts.push({
           PartNumber: partNumber,
@@ -889,8 +1131,13 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
           Region: region,
           Key: objectKey,
           Body: rawFile,
-          ContentType: rawFile.type || "application/octet-stream"
-        },
+          ContentType: rawFile.type || "application/octet-stream",
+          onProgress: (progressData: any) => {
+            if (progressData) {
+              reportProgress(progressData.loaded || 0);
+            }
+          }
+        } as any,
         (err, data) => {
           if (err) {
             reject(err);
@@ -902,8 +1149,9 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
     });
   }
 
+  reportProgress(totalBytes);
   const completeRes = await completeStsUpload({ upload_token: uploadToken });
-  const completeData: any = completeRes?.data?.data || completeRes?.data || {};
+  const completeData: any = completeRes?.data || {};
   const fileId = pickField(completeData, ["fileId", "file_id"]);
   const url = pickField(completeData, ["url", "Url"]);
   const completeCode = Number(completeRes?.code);
@@ -929,9 +1177,21 @@ const uploadWithSts = async (rawFile: File, bizType = "resource_upload") => {
 };
 
 // 处理封面上传
+const coverUploadState = reactive<any>({
+  isUploading: false,
+  uploadProgress: 0,
+  uploadLoaded: 0,
+  uploadTotal: 0,
+  uploadSpeed: 0,
+  uploadEta: Infinity
+});
+
 const handleCoverUpload = async file => {
   try {
-    const res = await uploadWithSts(file.raw);
+    coverUploadState.isUploading = true;
+    const tracker = createProgressTracker(coverUploadState);
+    const res = await uploadWithSts(file.raw, "resource_upload", tracker);
+    coverUploadState.isUploading = false;
     if (res && res.code === 200 && res.data && res.data.url) {
       // 更新表单数据，使用thumb_url字段
       formData.thumb_url = res.data.url;
@@ -942,6 +1202,7 @@ const handleCoverUpload = async file => {
       ElMessage.error("封面上传失败：无法获取文件URL");
     }
   } catch (error) {
+    coverUploadState.isUploading = false;
     console.error("封面上传失败:", error);
     ElMessage.error("封面上传失败");
   }
@@ -991,7 +1252,12 @@ const addHour = () => {
     resourceId: 0,
     fileUrl: "",
     isUploading: false, // 用于控制上传状态
-    originalFileName: "" // 保存原始文件名
+    originalFileName: "", // 保存原始文件名
+    uploadProgress: 0,
+    uploadLoaded: 0,
+    uploadTotal: 0,
+    uploadSpeed: 0,
+    uploadEta: Infinity
   });
 
   // 初始化独立课时的折叠状态数组
@@ -1015,7 +1281,12 @@ const addHourToChapter = chapterIndex => {
     resourceId: 0,
     fileUrl: "",
     isUploading: false, // 用于控制上传状态
-    originalFileName: "" // 保存原始文件名
+    originalFileName: "", // 保存原始文件名
+    uploadProgress: 0,
+    uploadLoaded: 0,
+    uploadTotal: 0,
+    uploadSpeed: 0,
+    uploadEta: Infinity
   });
 
   // 初始化当前章节的课时折叠状态数组
@@ -1052,7 +1323,10 @@ const handleResourceUpload = async (file, list, index) => {
       originalFileName.substring(0, originalFileName.lastIndexOf(".")) ||
       originalFileName;
 
-    const res = await uploadWithSts(file.raw);
+    // 创建进度跟踪器
+    const tracker = createProgressTracker(list[index]);
+
+    const res = await uploadWithSts(file.raw, "resource_upload", tracker);
     // 上传完成后结束上传状态
     list[index].isUploading = false;
 
@@ -1092,6 +1366,7 @@ const removeResource = (list, index) => {
   list[index].title = ""; // 清空标题
   list[index].duration = 0; // 重置时长
   list[index].originalFileName = ""; // 清空原始文件名
+  resetProgressTracker(list[index]);
 };
 
 // 附件相关方法
@@ -1101,7 +1376,13 @@ const addAttr = () => {
     rType: "document",
     resourceId: 0,
     fileUrl: "",
-    originalFileName: "" // 添加原始文件名字段
+    originalFileName: "", // 添加原始文件名字段
+    isUploading: false,
+    uploadProgress: 0,
+    uploadLoaded: 0,
+    uploadTotal: 0,
+    uploadSpeed: 0,
+    uploadEta: Infinity
   });
 };
 
@@ -1112,6 +1393,8 @@ const removeAttr = index => {
 // 处理附件上传
 const handleAttrUpload = async (file, index) => {
   try {
+    formData.attrList[index].isUploading = true;
+    const tracker = createProgressTracker(formData.attrList[index]);
     // 获取原始文件名
     const originalFileName = file.name;
     // 不含扩展名的文件名用于标题
@@ -1119,7 +1402,8 @@ const handleAttrUpload = async (file, index) => {
       originalFileName.substring(0, originalFileName.lastIndexOf(".")) ||
       originalFileName;
 
-    const res = await uploadWithSts(file.raw);
+    const res = await uploadWithSts(file.raw, "resource_upload", tracker);
+    formData.attrList[index].isUploading = false;
     if (
       res &&
       res.code === 200 &&
@@ -1137,6 +1421,7 @@ const handleAttrUpload = async (file, index) => {
       ElMessage.error("附件上传失败：无法获取文件信息");
     }
   } catch (error) {
+    formData.attrList[index].isUploading = false;
     console.error("附件上传失败:", error);
     ElMessage.error("附件上传失败");
   }
@@ -1430,6 +1715,68 @@ defineExpose({
     span {
       font-size: 14px;
       color: #97b4f7;
+    }
+  }
+}
+
+.uploading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px dashed #97b4f7;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgb(151 180 247 / 12%);
+
+  &.static {
+    width: 100%;
+  }
+}
+
+.upload-progress-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 10px;
+
+  .upload-progress-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .el-icon {
+      font-size: 18px;
+      color: #97b4f7;
+    }
+
+    .upload-progress-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #5b74ea;
+    }
+
+    .upload-progress-percent {
+      margin-left: auto;
+      font-size: 14px;
+      font-weight: 600;
+      color: #5b74ea;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .upload-progress-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+
+    strong {
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+      font-variant-numeric: tabular-nums;
     }
   }
 }

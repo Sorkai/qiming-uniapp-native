@@ -916,7 +916,6 @@ const handleCommand = (command: string) => {
       break;
     case "logout":
       removeToken();
-      storageLocal().removeItem(userKey);
       userInfo.value = null;
       ElMessage.success("退出登录成功");
       router.push("/home");
@@ -2404,7 +2403,11 @@ onUnmounted(() => {
 
           &::before {
             height: 72px;
-            background: linear-gradient(135deg, rgb(151 180 247 / 18%), transparent);
+            background: linear-gradient(
+              135deg,
+              rgb(151 180 247 / 18%),
+              transparent
+            );
           }
 
           .avatar-wrapper {

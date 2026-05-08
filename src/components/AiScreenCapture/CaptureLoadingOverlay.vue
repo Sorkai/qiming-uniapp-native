@@ -180,8 +180,18 @@ watch(
     syncThemeMode();
     lockVisualStage(props.stage);
     runTyping(TERMINAL_TITLE, typedTitle, 40, "title");
-    runTyping(stageDefinitions[props.stage].command, typedCommand, 18, "command");
-    runTyping(stageDefinitions[props.stage].headline, typedHeadline, 20, "headline");
+    runTyping(
+      stageDefinitions[props.stage].command,
+      typedCommand,
+      18,
+      "command"
+    );
+    runTyping(
+      stageDefinitions[props.stage].headline,
+      typedHeadline,
+      20,
+      "headline"
+    );
   },
   { immediate: true }
 );
@@ -386,7 +396,11 @@ onBeforeUnmount(() => {
   --shell-bg: rgb(247 249 252 / 96%);
   --shell-border: rgb(203 213 225 / 52%);
   --shell-shadow: 0 28px 72px rgb(15 23 42 / 12%);
-  --bar-bg: linear-gradient(180deg, rgb(243 246 251 / 96%), rgb(236 241 247 / 92%));
+  --bar-bg: linear-gradient(
+    180deg,
+    rgb(243 246 251 / 96%),
+    rgb(236 241 247 / 92%)
+  );
   --bar-border: rgb(191 219 254 / 52%);
   --path-color: rgb(71 85 105 / 78%);
   --console-primary: #0f172a;
@@ -517,12 +531,8 @@ onBeforeUnmount(() => {
 .preview-chip,
 .headline-panel {
   font-family:
-    "Consolas",
-    "JetBrains Mono",
-    "SFMono-Regular",
-    "Cascadia Code",
-    "Source Code Pro",
-    monospace;
+    "Consolas", "JetBrains Mono", "SFMono-Regular", "Cascadia Code",
+    "Source Code Pro", monospace;
 }
 
 .terminal-path {
@@ -583,7 +593,9 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: filter 0.3s ease, opacity 0.3s ease;
+  transition:
+    filter 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .capture-loading-overlay.is-dark .blueprint-template {
@@ -721,7 +733,11 @@ onBeforeUnmount(() => {
 .stage-glow {
   inset: auto 16px 16px;
   height: 64px;
-  background: radial-gradient(circle at center, var(--stage-glow), transparent 72%);
+  background: radial-gradient(
+    circle at center,
+    var(--stage-glow),
+    transparent 72%
+  );
   filter: blur(18px);
   pointer-events: none;
 }

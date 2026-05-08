@@ -255,7 +255,6 @@ const fetchAllData = async () => {
         examData = examRes.value.data.courseUsersExamInfoList;
         console.log("使用路径: data.courseUsersExamInfoList");
       } else if (examRes.value?.data?.courseUsersExamInfo) {
-        // 兼容后端返回字段名不带 List 后缀的情况
         examData = examRes.value.data.courseUsersExamInfo;
         console.log("使用路径: data.courseUsersExamInfo");
       } else if (examRes.value?.data?.list) {

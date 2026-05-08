@@ -1,4 +1,8 @@
-import type { MockMethod } from "vite-plugin-mock";
+type MockMethod = {
+  url: string;
+  method?: string;
+  response: ((options?: any) => any) | any;
+};
 
 // 试卷状态枚举
 const PaperStatus = {
@@ -881,32 +885,32 @@ export default [
         msg: "success",
         data: submission
           ? {
-            ...submission,
-            answers: [
-              { questionId: 101, answer: "B", score: 4, isCorrect: true },
-              { questionId: 102, answer: "C", score: 4, isCorrect: true },
-              {
-                questionId: 201,
-                answer: ["A", "B", "D"],
-                score: 5,
-                isCorrect: true
-              },
-              { questionId: 301, answer: "A", score: 3, isCorrect: true },
-              { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
-              {
-                questionId: 501,
-                answer: "解题过程...",
-                score: 8,
-                comment: "正确"
-              },
-              {
-                questionId: 601,
-                answer: "拉格朗日...",
-                score: 12,
-                comment: "完整"
-              }
-            ]
-          }
+              ...submission,
+              answers: [
+                { questionId: 101, answer: "B", score: 4, isCorrect: true },
+                { questionId: 102, answer: "C", score: 4, isCorrect: true },
+                {
+                  questionId: 201,
+                  answer: ["A", "B", "D"],
+                  score: 5,
+                  isCorrect: true
+                },
+                { questionId: 301, answer: "A", score: 3, isCorrect: true },
+                { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
+                {
+                  questionId: 501,
+                  answer: "解题过程...",
+                  score: 8,
+                  comment: "正确"
+                },
+                {
+                  questionId: 601,
+                  answer: "拉格朗日...",
+                  score: 12,
+                  comment: "完整"
+                }
+              ]
+            }
           : null
       };
     }
@@ -956,8 +960,8 @@ export default [
       const keyword = (query?.keyword || "").toString().trim();
       const list = keyword
         ? mockCourses
-          .filter(item => item.name.includes(keyword))
-          .map(item => ({ id: item.id, name: item.name }))
+            .filter(item => item.name.includes(keyword))
+            .map(item => ({ id: item.id, name: item.name }))
         : mockCourses.map(item => ({ id: item.id, name: item.name }));
       return {
         code: 0,
@@ -1179,7 +1183,7 @@ export default [
           studentPapers
             .filter(p => p.score !== null)
             .reduce((sum, p) => sum + (p.score || 0), 0) /
-          studentPapers.filter(p => p.score !== null).length
+            studentPapers.filter(p => p.score !== null).length
         )
       };
 
@@ -1368,32 +1372,32 @@ export default [
         msg: "success",
         data: submission
           ? {
-            ...submission,
-            answers: [
-              { questionId: 101, answer: "B", score: 4, isCorrect: true },
-              { questionId: 102, answer: "C", score: 4, isCorrect: true },
-              {
-                questionId: 201,
-                answer: ["A", "B", "D"],
-                score: 5,
-                isCorrect: true
-              },
-              { questionId: 301, answer: "A", score: 3, isCorrect: true },
-              { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
-              {
-                questionId: 501,
-                answer: "解题过程...",
-                score: 8,
-                comment: "正确"
-              },
-              {
-                questionId: 601,
-                answer: "拉格朗日...",
-                score: 12,
-                comment: "完整"
-              }
-            ]
-          }
+              ...submission,
+              answers: [
+                { questionId: 101, answer: "B", score: 4, isCorrect: true },
+                { questionId: 102, answer: "C", score: 4, isCorrect: true },
+                {
+                  questionId: 201,
+                  answer: ["A", "B", "D"],
+                  score: 5,
+                  isCorrect: true
+                },
+                { questionId: 301, answer: "A", score: 3, isCorrect: true },
+                { questionId: 401, answer: "x³/3", score: 4, isCorrect: true },
+                {
+                  questionId: 501,
+                  answer: "解题过程...",
+                  score: 8,
+                  comment: "正确"
+                },
+                {
+                  questionId: 601,
+                  answer: "拉格朗日...",
+                  score: 12,
+                  comment: "完整"
+                }
+              ]
+            }
           : null
       };
     }

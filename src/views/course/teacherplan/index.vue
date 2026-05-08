@@ -165,19 +165,30 @@
       </template>
 
       <!-- 未选择状态 -->
-      <div v-else class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50/30 dark:bg-transparent">
+      <div
+        v-else
+        class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50/30 dark:bg-transparent"
+      >
         <lottie-animation
           :animation-data="EducationAnim"
           :width="360"
           :height="360"
           class="mb-4"
         />
-        <h2 class="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-4 tracking-tight">开启智能教案设计</h2>
-        <p class="text-base text-slate-500 dark:text-slate-400 mb-12 max-w-lg text-center leading-relaxed">
+        <h2
+          class="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-4 tracking-tight"
+        >
+          开启智能教案设计
+        </h2>
+        <p
+          class="text-base text-slate-500 dark:text-slate-400 mb-12 max-w-lg text-center leading-relaxed"
+        >
           选择左侧课程，AI 助手将帮你一键生成生动、规范的教学大纲与教案
         </p>
 
-        <div class="flex flex-col sm:flex-row gap-8 max-w-3xl w-full justify-center">
+        <div
+          class="flex flex-col sm:flex-row gap-8 max-w-3xl w-full justify-center"
+        >
           <div
             v-for="item in emptyStateHighlights"
             :key="item.title"
@@ -185,17 +196,25 @@
           >
             <div
               class="p-3.5 rounded-xl flex-shrink-0"
-              :class="item.tone === 'sky' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500'"
+              :class="
+                item.tone === 'sky'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500'
+                  : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500'
+              "
             >
               <el-icon size="28">
                 <component :is="item.icon" />
               </el-icon>
             </div>
             <div class="text-left mt-0.5">
-              <div class="font-bold text-lg text-slate-800 dark:text-slate-200 mb-2">
+              <div
+                class="font-bold text-lg text-slate-800 dark:text-slate-200 mb-2"
+              >
                 {{ item.title }}
               </div>
-              <div class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+              <div
+                class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed"
+              >
                 {{ item.description }}
               </div>
             </div>
@@ -510,8 +529,6 @@ onMounted(() => {
   animation: teacher-plan-blob-float 10s ease-in-out infinite;
   pointer-events: none;
 }
-
-
 
 @mixin teacher-plan-mobile-layout {
   height: auto !important;

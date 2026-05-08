@@ -93,21 +93,57 @@
         <!-- 任务统计看板 -->
         <div class="mt-8">
           <div class="flex items-center justify-between mb-4">
-            <span class="text-base font-semibold text-[var(--el-text-color-primary)]">任务看板</span>
-            <el-icon class="text-[var(--el-text-color-placeholder)] transition-transform duration-300 hover:rotate-180 cursor-pointer"><DataAnalysis /></el-icon>
+            <span
+              class="text-base font-semibold text-[var(--el-text-color-primary)]"
+              >任务看板</span
+            >
+            <el-icon
+              class="text-[var(--el-text-color-placeholder)] transition-transform duration-300 hover:rotate-180 cursor-pointer"
+              ><DataAnalysis
+            /></el-icon>
           </div>
           <div class="grid grid-cols-3 gap-3">
-            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-2xl font-black text-[var(--el-color-success)] leading-none mb-2">{{ stats.completed }}</div>
-              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">已完成</div>
+            <div
+              class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default"
+            >
+              <div
+                class="text-2xl font-black text-[var(--el-color-success)] leading-none mb-2"
+              >
+                {{ stats.completed }}
+              </div>
+              <div
+                class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider"
+              >
+                已完成
+              </div>
             </div>
-            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-2xl font-black text-[var(--el-color-warning)] leading-none mb-2">{{ stats.processing }}</div>
-              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">处理中</div>
+            <div
+              class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default"
+            >
+              <div
+                class="text-2xl font-black text-[var(--el-color-warning)] leading-none mb-2"
+              >
+                {{ stats.processing }}
+              </div>
+              <div
+                class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider"
+              >
+                处理中
+              </div>
             </div>
-            <div class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-              <div class="text-2xl font-black text-[var(--el-color-danger)] leading-none mb-2">{{ stats.failed }}</div>
-              <div class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider">失败</div>
+            <div
+              class="stat-card bg-[var(--el-color-primary-light-9)] rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default"
+            >
+              <div
+                class="text-2xl font-black text-[var(--el-color-danger)] leading-none mb-2"
+              >
+                {{ stats.failed }}
+              </div>
+              <div
+                class="text-xs font-medium text-[var(--el-text-color-secondary)] tracking-wider"
+              >
+                失败
+              </div>
             </div>
           </div>
         </div>
@@ -124,7 +160,9 @@
         <div
           :class="[
             'content-toolbar px-6 py-4 border-b border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)]/30 flex-shrink-0',
-            isCompactLayout ? 'content-toolbar--compact' : 'flex justify-between items-center'
+            isCompactLayout
+              ? 'content-toolbar--compact'
+              : 'flex justify-between items-center'
           ]"
         >
           <div class="toolbar-status flex items-center space-x-4">
@@ -132,8 +170,12 @@
               v-if="displayVersionResolved"
               class="flex items-center gap-3 px-4 py-2 bg-[var(--el-color-success-light-9)] rounded-xl"
             >
-              <div class="w-2 h-2 bg-[var(--el-color-success)] rounded-full animate-pulse" />
-              <span class="text-sm text-[var(--el-color-success)] font-bold">Active v{{ displayVersionResolved }}</span>
+              <div
+                class="w-2 h-2 bg-[var(--el-color-success)] rounded-full animate-pulse"
+              />
+              <span class="text-sm text-[var(--el-color-success)] font-bold"
+                >Active v{{ displayVersionResolved }}</span
+              >
             </div>
             <div
               v-if="polling"
@@ -144,7 +186,12 @@
             </div>
           </div>
 
-          <div :class="['toolbar-actions flex gap-2', { 'toolbar-actions--compact': isCompactLayout }]">
+          <div
+            :class="[
+              'toolbar-actions flex gap-2',
+              { 'toolbar-actions--compact': isCompactLayout }
+            ]"
+          >
             <el-button
               :disabled="!selectedChapterId"
               class="!rounded-xl !h-10 !px-4"
@@ -175,353 +222,376 @@
 
         <!-- 内容体 -->
         <div class="flex-1 p-6 overflow-hidden flex flex-col">
-        <div
-          v-if="!selectedChapterId"
-          class="flex-1 flex flex-col items-center justify-center relative"
-        >
-          <!-- 装饰性背景光斑 -->
-          <div class="absolute top-[15%] left-[20%] w-28 h-28 bg-blue-200/30 dark:bg-blue-800/20 rounded-full filter blur-2xl pointer-events-none" />
-          <div class="absolute bottom-[20%] right-[15%] w-36 h-36 bg-amber-200/30 dark:bg-amber-800/20 rounded-full filter blur-2xl pointer-events-none" />
-          <div class="text-center relative z-10">
-            <div class="lottie-glass mx-auto mb-8">
-              <lottie-animation
-                :animation-data="CinemaAnim"
-                :width="200"
-                :height="200"
-              />
-            </div>
-            <h3 class="text-2xl font-black text-[var(--el-text-color-primary)] mb-3">
-              选择课程与章节
-            </h3>
-            <p class="text-base text-[var(--el-text-color-secondary)] max-w-sm mx-auto leading-relaxed mb-8">
-              从左侧选择目标课程和章节，即可查看和管理 AI 动画生成任务
-            </p>
-          </div>
-        </div>
-        <div v-else class="flex-1 flex flex-col overflow-hidden">
           <div
-            :class="[
-              'filter-toolbar mb-5 pb-5 border-b border-[var(--el-border-color-lighter)]',
-              isCompactLayout ? 'filter-toolbar--compact' : 'flex justify-between items-center'
-            ]"
+            v-if="!selectedChapterId"
+            class="flex-1 flex flex-col items-center justify-center relative"
           >
-            <el-radio-group
-              v-model="statusFilter"
-              size="large"
-              :class="['animation-filter-group', { 'animation-filter-group--compact': isCompactLayout }]"
-              @change="applyFilter"
-            >
-              <el-radio-button value="all">
-                <span class="flex items-center gap-2 text-sm px-1">
-                  全部
-                </span>
-              </el-radio-button>
-              <el-radio-button value="completed">
-                <span class="flex items-center gap-2 text-sm px-1">
-                  成功
-                </span>
-              </el-radio-button>
-              <el-radio-button value="processing">
-                <span class="flex items-center gap-2 text-sm px-1">
-                  进行中
-                </span>
-              </el-radio-button>
-              <el-radio-button value="failed">
-                <span class="flex items-center gap-2 text-sm px-1">
-                  失败
-                </span>
-              </el-radio-button>
-            </el-radio-group>
-            <el-input
-              v-model="keyword"
-              placeholder="搜索文件名..."
-              clearable
-              size="large"
-              :class="[
-                '!rounded-xl filter-keyword',
-                isMobile || isCompactLayout ? '!w-full' : '!w-80'
-              ]"
-              @input="applyFilter"
-            >
-              <template #prefix
-                ><el-icon class="text-[var(--el-text-color-placeholder)]"
-                  ><Search /></el-icon
-              ></template>
-            </el-input>
-          </div>
-
-          <div class="flex-1 overflow-auto custom-scrollbar">
-            <div v-if="isMobile" class="mobile-animation-list">
-              <div
-                v-for="row in filteredTasks"
-                :key="row.taskId"
-                class="mobile-animation-card"
-              >
-                <div class="mobile-animation-card__header">
-                  <div class="mobile-animation-version">
-                    <el-icon
-                      v-if="isDisplayVersion(row)"
-                      class="text-[var(--el-color-success)] mr-1.5"
-                    >
-                      <StarFilled />
-                    </el-icon>
-                    <el-tag
-                      v-if="row.status === 'completed'"
-                      type="success"
-                      effect="plain"
-                    >
-                      v{{ row.version }}
-                    </el-tag>
-                    <span v-else class="text-[var(--el-text-color-placeholder)]">
-                      --
-                    </span>
-                  </div>
-
-                  <div
-                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold"
-                    :class="{
-                      'bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)]':
-                        row.status === 'completed',
-                      'bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning)]':
-                        row.status === 'processing',
-                      'bg-[var(--el-color-danger-light-9)] text-[var(--el-color-danger)]':
-                        row.status === 'failed',
-                      'bg-[var(--el-fill-color-light)] text-[var(--el-text-color-secondary)]':
-                        !['completed', 'processing', 'failed'].includes(row.status)
-                    }"
-                  >
-                    {{
-                      row.status === "completed"
-                        ? "完成"
-                        : row.status === "processing"
-                          ? "处理中"
-                          : row.status === "failed"
-                            ? "失败"
-                            : row.status
-                    }}
-                  </div>
-                </div>
-
-                <div class="mobile-animation-card__body">
-                  <div class="mobile-animation-field">
-                    <span class="label">File</span>
-                    <span>{{ row.fileName || "-" }}</span>
-                  </div>
-                  <div class="mobile-animation-grid">
-                    <div class="mobile-animation-field">
-                      <span class="label">Size</span>
-                      <span>{{ formatSize(row.fileSize) }}</span>
-                    </div>
-                    <div class="mobile-animation-field">
-                      <span class="label">Created</span>
-                      <span>{{ row.createdAt }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mobile-animation-card__actions">
-                  <el-button
-                    type="primary"
-                    plain
-                    class="mobile-animation-action-btn"
-                    :disabled="row.status !== 'completed'"
-                    @click="openPreview(row)"
-                  >
-                    预览
-                  </el-button>
-                  <el-button
-                    type="success"
-                    plain
-                    class="mobile-animation-action-btn"
-                    :disabled="row.status !== 'completed' || isDisplayVersion(row)"
-                    @click="setDisplay(row)"
-                  >
-                    展示
-                  </el-button>
-                  <el-button
-                    type="info"
-                    plain
-                    class="mobile-animation-action-btn"
-                    :disabled="row.status !== 'completed'"
-                    @click="copyUrl(row)"
-                  >
-                    URL
-                  </el-button>
-                </div>
+            <!-- 装饰性背景光斑 -->
+            <div
+              class="absolute top-[15%] left-[20%] w-28 h-28 bg-blue-200/30 dark:bg-blue-800/20 rounded-full filter blur-2xl pointer-events-none"
+            />
+            <div
+              class="absolute bottom-[20%] right-[15%] w-36 h-36 bg-amber-200/30 dark:bg-amber-800/20 rounded-full filter blur-2xl pointer-events-none"
+            />
+            <div class="text-center relative z-10">
+              <div class="lottie-glass mx-auto mb-8">
+                <lottie-animation
+                  :animation-data="CinemaAnim"
+                  :width="200"
+                  :height="200"
+                />
               </div>
-
-              <el-empty v-if="!listLoading && filteredTasks.length === 0" />
+              <h3
+                class="text-2xl font-black text-[var(--el-text-color-primary)] mb-3"
+              >
+                选择课程与章节
+              </h3>
+              <p
+                class="text-base text-[var(--el-text-color-secondary)] max-w-sm mx-auto leading-relaxed mb-8"
+              >
+                从左侧选择目标课程和章节，即可查看和管理 AI 动画生成任务
+              </p>
+            </div>
+          </div>
+          <div v-else class="flex-1 flex flex-col overflow-hidden">
+            <div
+              :class="[
+                'filter-toolbar mb-5 pb-5 border-b border-[var(--el-border-color-lighter)]',
+                isCompactLayout
+                  ? 'filter-toolbar--compact'
+                  : 'flex justify-between items-center'
+              ]"
+            >
+              <el-radio-group
+                v-model="statusFilter"
+                size="large"
+                :class="[
+                  'animation-filter-group',
+                  { 'animation-filter-group--compact': isCompactLayout }
+                ]"
+                @change="applyFilter"
+              >
+                <el-radio-button value="all">
+                  <span class="flex items-center gap-2 text-sm px-1">
+                    全部
+                  </span>
+                </el-radio-button>
+                <el-radio-button value="completed">
+                  <span class="flex items-center gap-2 text-sm px-1">
+                    成功
+                  </span>
+                </el-radio-button>
+                <el-radio-button value="processing">
+                  <span class="flex items-center gap-2 text-sm px-1">
+                    进行中
+                  </span>
+                </el-radio-button>
+                <el-radio-button value="failed">
+                  <span class="flex items-center gap-2 text-sm px-1">
+                    失败
+                  </span>
+                </el-radio-button>
+              </el-radio-group>
+              <el-input
+                v-model="keyword"
+                placeholder="搜索文件名..."
+                clearable
+                size="large"
+                :class="[
+                  '!rounded-xl filter-keyword',
+                  isMobile || isCompactLayout ? '!w-full' : '!w-80'
+                ]"
+                @input="applyFilter"
+              >
+                <template #prefix
+                  ><el-icon class="text-[var(--el-text-color-placeholder)]"
+                    ><Search /></el-icon
+                ></template>
+              </el-input>
             </div>
 
-            <el-table
-              v-else
-              v-loading="listLoading"
-              :data="filteredTasks"
-              class="animation-table"
-              :row-class-name="rowClassName"
-              header-cell-class-name="!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-bold !text-base !py-4"
-            >
-              <el-table-column
-                prop="version"
-                label="版本"
-                width="120"
-                align="center"
-              >
-                <template #default="{ row }">
-                  <div class="flex items-center justify-center text-base">
-                    <el-icon
-                      v-if="isDisplayVersion(row)"
-                      class="text-[var(--el-color-success)] mr-1.5"
-                      ><StarFilled
-                    /></el-icon>
-                    <el-tag
-                      v-if="row.status === 'completed'"
-                      type="success"
-                      size="large"
-                      effect="plain"
-                      class="!bg-[var(--el-color-success-light-9)] !font-bold !rounded-lg !text-base"
-                      >v{{ row.version }}</el-tag
-                    >
-                    <span v-else class="text-[var(--el-text-color-placeholder)]"
-                      >--</span
-                    >
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="status"
-                label="状态"
-                width="140"
-                align="center"
-              >
-                <template #default="{ row }">
-                  <div
-                    class="inline-flex items-center px-4 py-2 rounded-lg text-base font-bold"
-                    :class="{
-                      'bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)]':
-                        row.status === 'completed',
-                      'bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning)]':
-                        row.status === 'processing',
-                      'bg-[var(--el-color-danger-light-9)] text-[var(--el-color-danger)]':
-                        row.status === 'failed',
-                      'bg-[var(--el-fill-color-light)] text-[var(--el-text-color-secondary)]':
-                        !['completed', 'processing', 'failed'].includes(
-                          row.status
-                        )
-                    }"
-                  >
-                    <span
-                      class="w-2 h-2 rounded-full mr-2"
+            <div class="flex-1 overflow-auto custom-scrollbar">
+              <div v-if="isMobile" class="mobile-animation-list">
+                <div
+                  v-for="row in filteredTasks"
+                  :key="row.taskId"
+                  class="mobile-animation-card"
+                >
+                  <div class="mobile-animation-card__header">
+                    <div class="mobile-animation-version">
+                      <el-icon
+                        v-if="isDisplayVersion(row)"
+                        class="text-[var(--el-color-success)] mr-1.5"
+                      >
+                        <StarFilled />
+                      </el-icon>
+                      <el-tag
+                        v-if="row.status === 'completed'"
+                        type="success"
+                        effect="plain"
+                      >
+                        v{{ row.version }}
+                      </el-tag>
+                      <span
+                        v-else
+                        class="text-[var(--el-text-color-placeholder)]"
+                      >
+                        --
+                      </span>
+                    </div>
+
+                    <div
+                      class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold"
                       :class="{
-                        'bg-[var(--el-color-success)]':
+                        'bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)]':
                           row.status === 'completed',
-                        'bg-[var(--el-color-warning)] animate-pulse':
+                        'bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning)]':
                           row.status === 'processing',
-                        'bg-[var(--el-color-danger)]': row.status === 'failed',
-                        'bg-[var(--el-text-color-placeholder)]': ![
-                          'completed',
-                          'processing',
-                          'failed'
-                        ].includes(row.status)
+                        'bg-[var(--el-color-danger-light-9)] text-[var(--el-color-danger)]':
+                          row.status === 'failed',
+                        'bg-[var(--el-fill-color-light)] text-[var(--el-text-color-secondary)]':
+                          !['completed', 'processing', 'failed'].includes(
+                            row.status
+                          )
                       }"
-                    />
-                    {{
-                      row.status === "completed"
-                        ? "完成"
-                        : row.status === "processing"
-                          ? "处理中"
-                          : row.status === "failed"
-                            ? "失败"
-                            : row.status
-                    }}
+                    >
+                      {{
+                        row.status === "completed"
+                          ? "完成"
+                          : row.status === "processing"
+                            ? "处理中"
+                            : row.status === "failed"
+                              ? "失败"
+                              : row.status
+                      }}
+                    </div>
                   </div>
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="fileName"
-                label="文件名"
-                min-width="200"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  <span
-                    class="text-[var(--el-text-color-primary)] font-medium text-base"
-                    >{{ row.fileName }}</span
-                  >
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="fileSize"
-                label="大小"
-                width="120"
-                align="center"
-              >
-                <template #default="{ row }">
-                  <span
-                    class="text-[var(--el-text-color-secondary)] text-base font-mono"
-                    >{{ formatSize(row.fileSize) }}</span
-                  >
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="createdAt"
-                label="创建时间"
-                width="180"
-                align="center"
-              >
-                <template #default="{ row }">
-                  <span
-                    class="text-[var(--el-text-color-secondary)] text-base"
-                    >{{ row.createdAt }}</span
-                  >
-                </template>
-              </el-table-column>
-              <el-table-column
-                label="操作"
-                width="320"
-                fixed="right"
-                align="center"
-              >
-                <template #default="{ row }">
-                  <div class="flex gap-2 justify-center">
+
+                  <div class="mobile-animation-card__body">
+                    <div class="mobile-animation-field">
+                      <span class="label">File</span>
+                      <span>{{ row.fileName || "-" }}</span>
+                    </div>
+                    <div class="mobile-animation-grid">
+                      <div class="mobile-animation-field">
+                        <span class="label">Size</span>
+                        <span>{{ formatSize(row.fileSize) }}</span>
+                      </div>
+                      <div class="mobile-animation-field">
+                        <span class="label">Created</span>
+                        <span>{{ row.createdAt }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mobile-animation-card__actions">
                     <el-button
-                      size="large"
                       type="primary"
                       plain
-                      class="!rounded-lg !text-sm"
+                      class="mobile-animation-action-btn"
                       :disabled="row.status !== 'completed'"
                       @click="openPreview(row)"
                     >
-                      <el-icon class="mr-1"><View /></el-icon>预览
+                      预览
                     </el-button>
                     <el-button
-                      size="large"
                       type="success"
                       plain
-                      class="!rounded-lg !text-sm"
+                      class="mobile-animation-action-btn"
                       :disabled="
                         row.status !== 'completed' || isDisplayVersion(row)
                       "
                       @click="setDisplay(row)"
                     >
-                      <el-icon class="mr-1"><StarFilled /></el-icon>展示
+                      展示
                     </el-button>
                     <el-button
-                      size="large"
                       type="info"
                       plain
-                      class="!rounded-lg !text-sm"
+                      class="mobile-animation-action-btn"
                       :disabled="row.status !== 'completed'"
                       @click="copyUrl(row)"
                     >
-                      <el-icon class="mr-1"><DocumentCopy /></el-icon>URL
+                      URL
                     </el-button>
                   </div>
-                </template>
-              </el-table-column>
-            </el-table>
+                </div>
+
+                <el-empty v-if="!listLoading && filteredTasks.length === 0" />
+              </div>
+
+              <el-table
+                v-else
+                v-loading="listLoading"
+                :data="filteredTasks"
+                class="animation-table"
+                :row-class-name="rowClassName"
+                header-cell-class-name="!bg-[var(--el-fill-color-light)] !text-[var(--el-text-color-primary)] !font-bold !text-base !py-4"
+              >
+                <el-table-column
+                  prop="version"
+                  label="版本"
+                  width="120"
+                  align="center"
+                >
+                  <template #default="{ row }">
+                    <div class="flex items-center justify-center text-base">
+                      <el-icon
+                        v-if="isDisplayVersion(row)"
+                        class="text-[var(--el-color-success)] mr-1.5"
+                        ><StarFilled
+                      /></el-icon>
+                      <el-tag
+                        v-if="row.status === 'completed'"
+                        type="success"
+                        size="large"
+                        effect="plain"
+                        class="!bg-[var(--el-color-success-light-9)] !font-bold !rounded-lg !text-base"
+                        >v{{ row.version }}</el-tag
+                      >
+                      <span
+                        v-else
+                        class="text-[var(--el-text-color-placeholder)]"
+                        >--</span
+                      >
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  prop="status"
+                  label="状态"
+                  width="140"
+                  align="center"
+                >
+                  <template #default="{ row }">
+                    <div
+                      class="inline-flex items-center px-4 py-2 rounded-lg text-base font-bold"
+                      :class="{
+                        'bg-[var(--el-color-success-light-9)] text-[var(--el-color-success)]':
+                          row.status === 'completed',
+                        'bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning)]':
+                          row.status === 'processing',
+                        'bg-[var(--el-color-danger-light-9)] text-[var(--el-color-danger)]':
+                          row.status === 'failed',
+                        'bg-[var(--el-fill-color-light)] text-[var(--el-text-color-secondary)]':
+                          !['completed', 'processing', 'failed'].includes(
+                            row.status
+                          )
+                      }"
+                    >
+                      <span
+                        class="w-2 h-2 rounded-full mr-2"
+                        :class="{
+                          'bg-[var(--el-color-success)]':
+                            row.status === 'completed',
+                          'bg-[var(--el-color-warning)] animate-pulse':
+                            row.status === 'processing',
+                          'bg-[var(--el-color-danger)]':
+                            row.status === 'failed',
+                          'bg-[var(--el-text-color-placeholder)]': ![
+                            'completed',
+                            'processing',
+                            'failed'
+                          ].includes(row.status)
+                        }"
+                      />
+                      {{
+                        row.status === "completed"
+                          ? "完成"
+                          : row.status === "processing"
+                            ? "处理中"
+                            : row.status === "failed"
+                              ? "失败"
+                              : row.status
+                      }}
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  prop="fileName"
+                  label="文件名"
+                  min-width="200"
+                  show-overflow-tooltip
+                >
+                  <template #default="{ row }">
+                    <span
+                      class="text-[var(--el-text-color-primary)] font-medium text-base"
+                      >{{ row.fileName }}</span
+                    >
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  prop="fileSize"
+                  label="大小"
+                  width="120"
+                  align="center"
+                >
+                  <template #default="{ row }">
+                    <span
+                      class="text-[var(--el-text-color-secondary)] text-base font-mono"
+                      >{{ formatSize(row.fileSize) }}</span
+                    >
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  prop="createdAt"
+                  label="创建时间"
+                  width="180"
+                  align="center"
+                >
+                  <template #default="{ row }">
+                    <span
+                      class="text-[var(--el-text-color-secondary)] text-base"
+                      >{{ row.createdAt }}</span
+                    >
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  label="操作"
+                  width="320"
+                  fixed="right"
+                  align="center"
+                >
+                  <template #default="{ row }">
+                    <div class="flex gap-2 justify-center">
+                      <el-button
+                        size="large"
+                        type="primary"
+                        plain
+                        class="!rounded-lg !text-sm"
+                        :disabled="row.status !== 'completed'"
+                        @click="openPreview(row)"
+                      >
+                        <el-icon class="mr-1"><View /></el-icon>预览
+                      </el-button>
+                      <el-button
+                        size="large"
+                        type="success"
+                        plain
+                        class="!rounded-lg !text-sm"
+                        :disabled="
+                          row.status !== 'completed' || isDisplayVersion(row)
+                        "
+                        @click="setDisplay(row)"
+                      >
+                        <el-icon class="mr-1"><StarFilled /></el-icon>展示
+                      </el-button>
+                      <el-button
+                        size="large"
+                        type="info"
+                        plain
+                        class="!rounded-lg !text-sm"
+                        :disabled="row.status !== 'completed'"
+                        @click="copyUrl(row)"
+                      >
+                        <el-icon class="mr-1"><DocumentCopy /></el-icon>URL
+                      </el-button>
+                    </div>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </div>
@@ -1031,11 +1101,11 @@ onBeforeUnmount(() => {
 }
 
 :deep(
-    .animation-table
-      .el-table__body
-      tr:not(.row-display):not(.row-failed):hover
-      > td
-  ) {
+  .animation-table
+    .el-table__body
+    tr:not(.row-display):not(.row-failed):hover
+    > td
+) {
   background: var(--el-fill-color-lighter) !important;
 }
 
@@ -1255,7 +1325,9 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 
   // 将 Lottie 动画色相旋转到平台主色蓝
   :deep(div) {
@@ -1292,7 +1364,11 @@ onBeforeUnmount(() => {
     left: 10%;
     width: 80%;
     height: 60%;
-    background: radial-gradient(ellipse, rgb(255 255 255 / 30%) 0%, transparent 70%);
+    background: radial-gradient(
+      ellipse,
+      rgb(255 255 255 / 30%) 0%,
+      transparent 70%
+    );
     border-radius: 50%;
     pointer-events: none;
   }
@@ -1321,7 +1397,11 @@ onBeforeUnmount(() => {
     }
 
     &::after {
-      background: radial-gradient(ellipse, rgb(255 255 255 / 8%) 0%, transparent 70%);
+      background: radial-gradient(
+        ellipse,
+        rgb(255 255 255 / 8%) 0%,
+        transparent 70%
+      );
     }
 
     &:hover {

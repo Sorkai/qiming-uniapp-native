@@ -24,13 +24,17 @@ const answeredCount = computed(() => {
   if (!result.value?.answers?.length) return 0;
   return result.value.answers.filter(item => {
     if (Array.isArray(item.answer)) return item.answer.length > 0;
-    return item.answer !== "" && item.answer !== null && item.answer !== undefined;
+    return (
+      item.answer !== "" && item.answer !== null && item.answer !== undefined
+    );
   }).length;
 });
 
 const objectiveAccuracy = computed(() => {
   if (!result.value?.answers?.length) return "-";
-  const objective = result.value.answers.filter(item => item.isCorrect !== undefined);
+  const objective = result.value.answers.filter(
+    item => item.isCorrect !== undefined
+  );
   if (!objective.length) return "-";
   const correctCount = objective.filter(item => item.isCorrect).length;
   return `${Math.round((correctCount / objective.length) * 100)}%`;
@@ -123,11 +127,15 @@ onMounted(() => {
             </div>
             <div class="item">
               <span class="item-label">提交时间</span>
-              <span class="item-value">{{ formatDateTime(result.submitTime) }}</span>
+              <span class="item-value">{{
+                formatDateTime(result.submitTime)
+              }}</span>
             </div>
             <div class="item">
               <span class="item-label">考试用时</span>
-              <span class="item-value">{{ formatDuration(result.duration) }}</span>
+              <span class="item-value">{{
+                formatDuration(result.duration)
+              }}</span>
             </div>
           </div>
         </div>
@@ -169,7 +177,12 @@ onMounted(() => {
                 <span v-else>-</span>
               </template>
             </el-table-column>
-            <el-table-column prop="comment" label="评语" min-width="220" show-overflow-tooltip />
+            <el-table-column
+              prop="comment"
+              label="评语"
+              min-width="220"
+              show-overflow-tooltip
+            />
           </el-table>
         </div>
       </template>

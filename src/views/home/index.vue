@@ -1354,11 +1354,6 @@ const handleCommand = (command: string) => {
       break;
     case "logout":
       removeToken();
-      storageLocal().removeItem(userKey);
-      // 重置 userStore 状态，确保 UI 正确显示未登录状态
-      userStore.SET_AVATAR("");
-      userStore.SET_USERNAME("");
-      userStore.SET_NICKNAME("");
       ElMessage.success("退出登录成功");
       break;
   }
@@ -4841,12 +4836,14 @@ const handleCommand = (command: string) => {
 }
 
 /* UA 识别为移动端时，按钮自动换行并居中（避免仅改 UA 但视口仍偏大时错位） */
-:global(html.ua-mobile)
-  .home-container
-  .banner
-  .banner-overlay
-  .carousel-text
-  .hero-buttons {
+:global(
+  html.ua-mobile
+    .home-container
+    .banner
+    .banner-overlay
+    .carousel-text
+    .hero-buttons
+) {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
@@ -4854,64 +4851,69 @@ const handleCommand = (command: string) => {
   width: 100%;
 }
 
-:global(html.ua-mobile)
-  .home-container
-  .banner
-  .banner-overlay
-  .carousel-text
-  .hero-buttons
-  .hero-btn {
+:global(
+  html.ua-mobile
+    .home-container
+    .banner
+    .banner-overlay
+    .carousel-text
+    .hero-buttons
+    .hero-btn
+) {
   flex: 1 1 220px;
   width: 100%;
   max-width: 320px;
   box-sizing: border-box;
 }
 
-:global(html.ua-mobile)
-  .home-container
-  .cta-section-new
-  .cta-content-left
-  .cta-buttons {
+:global(
+  html.ua-mobile .home-container .cta-section-new .cta-content-left .cta-buttons
+) {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   width: 100%;
 }
 
-:global(html.ua-mobile)
-  .home-container
-  .cta-section-new
-  .cta-content-left
-  .cta-buttons
-  .el-button {
+:global(
+  html.ua-mobile
+    .home-container
+    .cta-section-new
+    .cta-content-left
+    .cta-buttons
+    .el-button
+) {
   flex: 1 1 220px;
   width: 100%;
   max-width: 320px;
   box-sizing: border-box;
 }
 
-:global(html.ua-mobile)
-  .home-container
-  .transition-image-section
-  .transition-visual {
+:global(
+  html.ua-mobile .home-container .transition-image-section .transition-visual
+) {
   display: none;
 }
 
-:global(html.ua-mobile)
-  .home-container
-  .banner
-  .banner-overlay
-  .carousel-text
-  .hero-buttons
-  .el-button
-  + .el-button,
-:global(html.ua-mobile)
-  .home-container
-  .cta-section-new
-  .cta-content-left
-  .cta-buttons
-  .el-button
-  + .el-button {
+:global(
+  html.ua-mobile
+    .home-container
+    .banner
+    .banner-overlay
+    .carousel-text
+    .hero-buttons
+    .el-button
+    + .el-button
+),
+:global(
+  html.ua-mobile
+    .home-container
+    .cta-section-new
+    .cta-content-left
+    .cta-buttons
+    .el-button
+    + .el-button
+) {
   margin-left: 0;
 }
 

@@ -36,12 +36,14 @@
               type="success"
               :disabled="selectedCourseIds.length !== 1"
               @click="handleEditSelected"
-            >编辑课程</el-button>
+              >编辑课程</el-button
+            >
             <el-button
               type="danger"
               :disabled="selectedCourseIds.length === 0"
               @click="handleBatchDelete"
-            >删除课程</el-button>
+              >删除课程</el-button
+            >
           </el-form-item>
         </el-form>
 
@@ -1426,43 +1428,55 @@ const handleBatchDelete = () => {
       cancelButtonText: "取消",
       type: "warning"
     }
-  ).then(async () => {
-    try {
-      loading.value = true;
-      const res = await batchDeleteCourse({
-        courseIds: selectedCourseIds.value
-      });
-      // 注意：此接口直接返回业务数据，没有包裹在 code/data 中
-      if (res && typeof res.total === 'number') {
-        if (res.failedCount > 0 && res.successCount === 0 && res.partialSuccessCount === 0) {
-          ElMessage.error(`删除失败：${res.items?.[0]?.message || '所有选中课程删除失败'}`);
-        } else if (res.partialSuccessCount > 0) {
-          ElMessage.warning(`部分课程已删除，但外部资源部分清理失败，可稍后重试。共选中 ${res.total} 门，成功 ${res.successCount} 门。`);
-          fetchCourseList();
-        } else {
+  )
+    .then(async () => {
+      try {
+        loading.value = true;
+        const res = await batchDeleteCourse({
+          courseIds: selectedCourseIds.value
+        });
+        // 注意：此接口直接返回业务数据，没有包裹在 code/data 中
+        if (res && typeof res.total === "number") {
+          if (
+            res.failedCount > 0 &&
+            res.successCount === 0 &&
+            res.partialSuccessCount === 0
+          ) {
+            ElMessage.error(
+              `删除失败：${res.items?.[0]?.message || "所有选中课程删除失败"}`
+            );
+          } else if (res.partialSuccessCount > 0) {
+            ElMessage.warning(
+              `部分课程已删除，但外部资源部分清理失败，可稍后重试。共选中 ${res.total} 门，成功 ${res.successCount} 门。`
+            );
+            fetchCourseList();
+          } else {
+            ElMessage.success("批量删除成功");
+            fetchCourseList();
+          }
+        } else if ((res as any).code === 200) {
+          // 兼容处理：如果后端未来改为包裹格式
           ElMessage.success("批量删除成功");
           fetchCourseList();
+        } else {
+          ElMessage.error((res as any).msg || "批量删除失败");
         }
-      } else if ((res as any).code === 200) {
-        // 兼容处理：如果后端未来改为包裹格式
-        ElMessage.success("批量删除成功");
-        fetchCourseList();
-      } else {
-        ElMessage.error((res as any).msg || "批量删除失败");
+      } catch (error: any) {
+        console.error("批量删除出错:", error);
+        if (error.response && error.response.data) {
+          ElMessage.error(
+            error.response.data.msg || "批量删除失败，请稍后重试"
+          );
+        } else {
+          ElMessage.error("批量删除失败，请稍后重试");
+        }
+      } finally {
+        loading.value = false;
       }
-    } catch (error: any) {
-      console.error("批量删除出错:", error);
-      if (error.response && error.response.data) {
-        ElMessage.error(error.response.data.msg || "批量删除失败，请稍后重试");
-      } else {
-        ElMessage.error("批量删除失败，请稍后重试");
-      }
-    } finally {
-      loading.value = false;
-    }
-  }).catch(() => {
-    // 已取消删除
-  });
+    })
+    .catch(() => {
+      // 已取消删除
+    });
 };
 
 // 删除章节
