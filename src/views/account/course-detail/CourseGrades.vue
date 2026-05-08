@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, nextTick, onMounted, onUnmounted, ref } from "vue";
+import { watch, nextTick, onMounted, onUnmounted, ref, type Component } from "vue";
 import * as echarts from "echarts";
 import {
   Document,
@@ -8,10 +8,16 @@ import {
   Calendar,
   Clock,
   Edit,
-  Coffee
+  Coffee,
+  ArrowUp,
+  ArrowDown
 } from "@element-plus/icons-vue";
 import CourseHeader from "./CourseHeader.vue";
 import {
+  type CourseGradeItem,
+  type CourseGradesClassComparisonResult,
+  type CourseGradesStatisticsResult,
+  type CourseScoreResult,
   getCourseGradesList,
   getCourseGradesStatistics,
   getCourseGradesClassComparison
@@ -25,7 +31,7 @@ defineOptions({
 const props = defineProps<{
   visible: boolean;
   currentTheme: string;
-  courseScores: any | null;
+  courseScores: CourseScoreResult | null;
   userAvatar: string;
   userNickname: string;
   courseId: number;
@@ -39,20 +45,7 @@ defineEmits<{
   (e: "logout"): void;
 }>();
 
-// 成绩列表数据（从API获取）
-const gradesList = ref<
-  Array<{
-    name: string;
-    type: string;
-    score: number;
-    submitTime: string;
-    gradedTime: string;
-    comment: string;
-  }>
->([]);
-
-// 统计数据（从API获取）
-const statistics = ref({
+const createEmptyStatistics = (): CourseGradesStatisticsResult => ({
   totalAssignments: 0,
   completedAssignments: 0,
   averageScore: 0,
@@ -60,66 +53,104 @@ const statistics = ref({
   completionRate: 0
 });
 
+const createEmptyClassComparison =
+  (): CourseGradesClassComparisonResult => ({
+    categories: [],
+    personalScores: [],
+    classAverages: []
+  });
+
+// 成绩列表数据（从API获取）
+const gradesList = ref<CourseGradeItem[]>([]);
+
+// 统计数据（从API获取）
+const statistics = ref<CourseGradesStatisticsResult>(createEmptyStatistics());
+
 // 班级对比数据（从API获取）
-const classComparisonData = ref({
-  categories: [] as string[],
-  personalScores: [] as number[],
-  classAverages: [] as number[]
-});
+const classComparisonData = ref<CourseGradesClassComparisonResult>(
+  createEmptyClassComparison()
+);
+
+const resetGradesState = () => {
+  gradesList.value = [];
+  statistics.value = createEmptyStatistics();
+  classComparisonData.value = createEmptyClassComparison();
+};
+
+const fetchGradesList = async (courseId: number): Promise<CourseGradeItem[]> => {
+  try {
+    const res = await getCourseGradesList({ courseId });
+    return res?.code === 200 && Array.isArray(res?.data?.list)
+      ? res.data.list
+      : [];
+  } catch (error) {
+    console.error("获取成绩列表失败:", error);
+    return [];
+  }
+};
+
+const fetchStatistics = async (
+  courseId: number
+): Promise<CourseGradesStatisticsResult> => {
+  try {
+    const res = await getCourseGradesStatistics({ courseId });
+    return res?.code === 200 && res?.data
+      ? res.data
+      : createEmptyStatistics();
+  } catch (error) {
+    console.error("获取成绩统计失败:", error);
+    return createEmptyStatistics();
+  }
+};
+
+const fetchClassComparison = async (
+  courseId: number
+): Promise<CourseGradesClassComparisonResult> => {
+  try {
+    const res = await getCourseGradesClassComparison({ courseId });
+    return res?.code === 200 && res?.data
+      ? res.data
+      : createEmptyClassComparison();
+  } catch (error) {
+    console.error("获取班级对比数据失败:", error);
+    return createEmptyClassComparison();
+  }
+};
+
+let latestLoadRequestId = 0;
 
 // 加载状态
 const loading = ref(false);
 
-// 获取成绩详情列表
-const fetchGradesList = async () => {
-  if (!props.courseId) return;
-  try {
-    const res = await getCourseGradesList({ courseId: props.courseId });
-    if (res?.code === 200 && res?.data?.list) {
-      gradesList.value = res.data.list;
-    }
-  } catch (error) {
-    console.error("获取成绩列表失败:", error);
-  }
-};
-
-// 获取成绩统计数据
-const fetchStatistics = async () => {
-  if (!props.courseId) return;
-  try {
-    const res = await getCourseGradesStatistics({ courseId: props.courseId });
-    if (res?.code === 200 && res?.data) {
-      statistics.value = res.data;
-    }
-  } catch (error) {
-    console.error("获取成绩统计失败:", error);
-  }
-};
-
-// 获取班级对比数据
-const fetchClassComparison = async () => {
-  if (!props.courseId) return;
-  try {
-    const res = await getCourseGradesClassComparison({
-      courseId: props.courseId
-    });
-    if (res?.code === 200 && res?.data) {
-      classComparisonData.value = res.data;
-    }
-  } catch (error) {
-    console.error("获取班级对比数据失败:", error);
-  }
-};
-
 // 加载所有数据
 const loadAllData = async () => {
+  if (!props.courseId) {
+    resetGradesState();
+    return;
+  }
+
+  const requestId = ++latestLoadRequestId;
   loading.value = true;
-  await Promise.all([
-    fetchGradesList(),
-    fetchStatistics(),
-    fetchClassComparison()
-  ]);
-  loading.value = false;
+  try {
+    const [list, stats, comparison] = await Promise.all([
+      fetchGradesList(props.courseId),
+      fetchStatistics(props.courseId),
+      fetchClassComparison(props.courseId)
+    ]);
+
+    if (requestId !== latestLoadRequestId) return;
+
+    gradesList.value = list;
+    statistics.value = stats;
+    classComparisonData.value = comparison;
+
+    await nextTick();
+    initAllCharts();
+  } finally {
+    if (requestId === latestLoadRequestId) {
+      loading.value = false;
+    }
+  }
 };
 
 // 获取成绩等级
@@ -137,7 +168,7 @@ const getGradeLevel = (score: number) => {
 
 // 获取作业类型图标
 const getAssignmentIcon = (type: string) => {
-  const icons = {
+  const icons: Record<string, Component> = {
     作业: Document,
     考试: Trophy,
     实验: TrendCharts
@@ -147,10 +178,20 @@ const getAssignmentIcon = (type: string) => {
 
 // 滚动到成绩列表
 const gradesListCardRef = ref<any>(null);
+const gradesListCollapsed = ref(false);
 const scrollToGradesList = () => {
-  if (gradesListCardRef.value?.$el) {
-    gradesListCardRef.value.$el.scrollIntoView({ behavior: "smooth" });
+  if (gradesListCollapsed.value) {
+    gradesListCollapsed.value = false;
   }
+  nextTick(() => {
+    if (gradesListCardRef.value?.$el) {
+      gradesListCardRef.value.$el.scrollIntoView({ behavior: "smooth" });
+    }
+  });
+};
+
+const toggleGradesListCollapsed = () => {
+  gradesListCollapsed.value = !gradesListCollapsed.value;
 };
 
 const gradesChartRef = ref<HTMLElement | null>(null);
@@ -165,7 +206,11 @@ let masteryChartInstance: echarts.ECharts | null = null;
 
 // 初始化成绩占比图表 (Pie)
 const initGradesChart = () => {
-  if (!gradesChartRef.value || !props.courseScores) return;
+  if (!gradesChartRef.value || !props.courseScores) {
+    gradeChartInstance?.dispose();
+    gradeChartInstance = null;
+    return;
+  }
   if (gradeChartInstance) gradeChartInstance.dispose();
   gradeChartInstance = echarts.init(
     gradesChartRef.value,
@@ -227,7 +272,11 @@ const initGradesChart = () => {
 
 // 初始化成绩趋势图表 (Line)
 const initTrendChart = () => {
-  if (!trendChartRef.value) return;
+  if (!trendChartRef.value) {
+    trendChartInstance?.dispose();
+    trendChartInstance = null;
+    return;
+  }
   if (trendChartInstance) trendChartInstance.dispose();
   trendChartInstance = echarts.init(
     trendChartRef.value,
@@ -305,7 +354,11 @@ const initTrendChart = () => {
 
 // 初始化班级对比图表 (Bar)
 const initClassChart = () => {
-  if (!classChartRef.value) return;
+  if (!classChartRef.value) {
+    classChartInstance?.dispose();
+    classChartInstance = null;
+    return;
+  }
   if (classChartInstance) classChartInstance.dispose();
   classChartInstance = echarts.init(
     classChartRef.value,
@@ -387,7 +440,11 @@ const initClassChart = () => {
 
 // 初始化个人雷达图 (Radar)
 const initMasteryChart = () => {
-  if (!masteryChartRef.value) return;
+  if (!masteryChartRef.value || !props.courseScores) {
+    masteryChartInstance?.dispose();
+    masteryChartInstance = null;
+    return;
+  }
   if (masteryChartInstance) masteryChartInstance.dispose();
   masteryChartInstance = echarts.init(
     masteryChartRef.value,
@@ -466,18 +523,21 @@ const initAllCharts = () => {
   initMasteryChart();
 };
 
-// 监听分数变化或可见性变化
+const refreshCharts = async () => {
+  if (!props.visible) return;
+  await nextTick();
+  initAllCharts();
+};
+
+// 进入成绩页时加载数据
 watch(
-  () => [props.visible, props.courseScores, props.currentTheme],
-  async () => {
-    if (props.visible) {
+  () => props.visible,
+  async visible => {
+    if (visible) {
       await loadAllData();
-      nextTick(() => {
-        initAllCharts();
-      });
     }
   },
-  { deep: true }
+  { immediate: true }
 );
 
 // 监听 courseId 变化
@@ -486,11 +546,19 @@ watch(
   async newId => {
     if (newId && props.visible) {
       await loadAllData();
-      nextTick(() => {
-        initAllCharts();
-      });
+    } else if (!newId) {
+      resetGradesState();
     }
   }
+);
+
+// 课程分数和主题变化时只刷新图表，不重复请求接口
+watch(
+  () => [props.currentTheme, props.courseScores],
+  () => {
+    refreshCharts();
+  },
+  { deep: true }
 );
 
 const handleResize = () => {
@@ -502,10 +570,6 @@ const handleResize = () => {
 
 onMounted(async () => {
   window.addEventListener("resize", handleResize);
-  if (props.visible) {
-    await loadAllData();
-    initAllCharts();
-  }
 });
 
 onUnmounted(() => {
@@ -534,7 +598,7 @@ onUnmounted(() => {
     <div class="course-grades-container" :class="currentTheme">
       <div class="grades-content">
         <!-- 核心成绩指标卡片 -->
-        <div class="grades-cards">
+        <div class="grades-cards reveal-up" style="--reveal-delay: 0.05s">
           <div class="grades-card" :class="currentTheme">
             <div class="grades-card-header">
               <el-icon><Edit /></el-icon>
@@ -576,7 +640,11 @@ onUnmounted(() => {
         </div>
 
         <!-- 统计分析卡片区域 -->
-        <div class="statistics-cards" :class="currentTheme">
+        <div
+          class="statistics-cards reveal-up"
+          :class="currentTheme"
+          style="--reveal-delay: 0.15s"
+        >
           <el-card class="stat-card" shadow="hover" :class="currentTheme">
             <div class="stat-content">
               <div class="stat-icon total">
@@ -642,7 +710,11 @@ onUnmounted(() => {
         </div>
 
         <!-- 成绩多维分析图表区域 -->
-        <div class="grades-charts-section" :class="currentTheme">
+        <div
+          class="grades-charts-section reveal-up"
+          :class="currentTheme"
+          style="--reveal-delay: 0.25s"
+        >
           <div class="section-header">
             <h3>成绩多维分析</h3>
             <el-button type="primary" link @click="scrollToGradesList">
@@ -668,26 +740,41 @@ onUnmounted(() => {
         <!-- 成绩列表详情 -->
         <el-card
           ref="gradesListCardRef"
-          class="grades-list-card"
+          class="grades-list-card reveal-up"
+          :class="[currentTheme, { 'is-collapsed': gradesListCollapsed }]"
           shadow="never"
-          :class="currentTheme"
+          style="--reveal-delay: 0.35s"
         >
           <template #header>
             <div class="card-header">
               <h3>成绩详情</h3>
+              <el-button
+                class="collapse-btn"
+                type="primary"
+                link
+                @click="toggleGradesListCollapsed"
+              >
+                {{ gradesListCollapsed ? "展开" : "收起" }}
+                <el-icon class="el-icon--right">
+                  <component :is="gradesListCollapsed ? ArrowDown : ArrowUp" />
+                </el-icon>
+              </el-button>
             </div>
           </template>
 
-          <div v-if="gradesList.length === 0" class="empty-state">
-            <el-empty description="暂无成绩记录" />
-          </div>
+          <transition name="slow-collapse">
+            <div v-show="!gradesListCollapsed" class="grades-list-collapse-wrapper">
+              <div v-if="gradesList.length === 0" class="empty-state">
+                <el-empty description="暂无成绩记录" />
+              </div>
 
-          <div v-else class="grades-list" :class="currentTheme">
-            <div
-              v-for="(item, index) in gradesList"
-              :key="index"
-              class="grade-item"
-            >
+              <div v-else class="grades-list" :class="currentTheme">
+              <div
+                v-for="(item, index) in gradesList"
+                :key="index"
+                class="grade-item"
+                :style="{ '--row-delay': `${index * 0.04}s` }"
+              >
               <div class="grade-item-header">
                 <div class="item-title">
                   <el-icon class="item-icon" :size="20">
@@ -727,12 +814,18 @@ onUnmounted(() => {
 
               <div class="grade-item-body">
                 <div class="item-progress">
-                  <el-progress
-                    :percentage="item.score || 0"
-                    :color="getGradeLevel(item.score || 0).color"
-                    :show-text="false"
-                    :stroke-width="8"
-                  />
+                  <div class="score-bar-track">
+                    <div
+                      class="score-bar-fill"
+                      :class="getGradeLevel(item.score || 0).type"
+                      :style="{
+                        width: `${Math.max(0, Math.min(100, item.score || 0))}%`,
+                        background: getGradeLevel(item.score || 0).color
+                      }"
+                    >
+                      <span class="score-bar-shine" />
+                    </div>
+                  </div>
                 </div>
                 <div class="item-meta">
                   <div class="meta-item">
@@ -754,7 +847,9 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
-        </el-card>
+        </div>
+      </transition>
+    </el-card>
       </div>
     </div>
   </div>
@@ -1007,12 +1102,48 @@ onUnmounted(() => {
 }
 
 .grades-list-card {
-  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eef1f6;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgb(64 87 158 / 6%);
 
   :deep(.el-card__header) {
-    padding: 24px 24px 15px;
+    padding: 20px 24px;
     margin: 0;
     border-bottom: 1px solid #f0f2f5;
+  }
+
+  .collapse-btn {
+    font-weight: 600;
+    transition: all 0.25s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+
+    .el-icon--right {
+      transition: transform 0.3s ease;
+    }
+  }
+
+  .grades-list-collapse-wrapper {
+    overflow: hidden;
+    width: 100%;
+  }
+
+  // 自定义缓慢推开动画
+  .slow-collapse-enter-active,
+  .slow-collapse-leave-active {
+    transition:
+      max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.5s ease;
+    max-height: 2000px; // 足够大的高度以容纳列表
+  }
+
+  .slow-collapse-enter-from,
+  .slow-collapse-leave-to {
+    max-height: 0;
+    opacity: 0;
   }
 
   &.dark {
@@ -1078,16 +1209,25 @@ onUnmounted(() => {
   }
 
   .grade-item {
-    padding: 24px;
-    border-bottom: 1px solid #ebeef5;
-    transition: all 0.3s ease;
+    position: relative;
+    padding: 22px 24px;
+    border-bottom: 1px solid #eef1f6;
+    transition:
+      background 0.25s ease,
+      box-shadow 0.25s ease,
+      transform 0.25s ease;
+    opacity: 0;
+    animation: gradeRowIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--row-delay, 0s);
 
     &:last-child {
       border-bottom: none;
     }
 
     &:hover {
-      background: #f5f7fa;
+      background: linear-gradient(90deg, #f7faff 0%, #fdfdff 100%);
+      box-shadow: 0 6px 18px rgb(64 87 158 / 6%);
+      transform: translateY(-1px);
     }
 
     .grade-item-header {
@@ -1121,7 +1261,47 @@ onUnmounted(() => {
 
     .grade-item-body {
       .item-progress {
-        margin-bottom: 12px;
+        margin-bottom: 14px;
+      }
+
+      .score-bar-track {
+        position: relative;
+        width: 100%;
+        height: 10px;
+        overflow: hidden;
+        background: linear-gradient(
+          90deg,
+          rgba(148, 163, 184, 0.14),
+          rgba(148, 163, 184, 0.08)
+        );
+        border-radius: 999px;
+      }
+
+      .score-bar-fill {
+        position: relative;
+        height: 100%;
+        border-radius: 999px;
+        background: #97b4f7;
+        box-shadow: 0 2px 6px rgb(64 158 255 / 28%);
+        animation: scoreBarGrow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+        transform-origin: left center;
+      }
+
+      .score-bar-shine {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 28px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.55) 50%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        border-radius: 999px;
+        opacity: 0.6;
+        animation: scoreBarShine 2.4s ease-in-out infinite;
       }
 
       .item-meta {
@@ -1315,6 +1495,54 @@ onUnmounted(() => {
         flex-direction: column;
       }
     }
+  }
+}
+
+.reveal-up {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: revealUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--reveal-delay, 0s);
+}
+
+@keyframes revealUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradeRowIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scoreBarGrow {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes scoreBarShine {
+  0% {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(8px);
+    opacity: 0;
   }
 }
 </style>

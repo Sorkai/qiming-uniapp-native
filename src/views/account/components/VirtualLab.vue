@@ -117,6 +117,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import type { TagProps } from "element-plus";
 import { Star, Clock, ArrowRight } from "@element-plus/icons-vue";
 import LabIcon from "@/new student interface icons/lab-medical-test-svgrepo-com.svg?component";
 
@@ -263,7 +264,7 @@ const getCategoryTagType = (category: string) => {
     game: "success",
     simulation: "info"
   };
-  return types[category] || "default";
+  return (types[category] || "info") as TagProps["type"];
 };
 
 const getDifficultyLabel = (difficulty: string) => {

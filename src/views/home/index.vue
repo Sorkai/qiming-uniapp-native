@@ -1354,11 +1354,6 @@ const handleCommand = (command: string) => {
       break;
     case "logout":
       removeToken();
-      storageLocal().removeItem(userKey);
-      // 重置 userStore 状态，确保 UI 正确显示未登录状态
-      userStore.SET_AVATAR("");
-      userStore.SET_USERNAME("");
-      userStore.SET_NICKNAME("");
       ElMessage.success("退出登录成功");
       break;
   }

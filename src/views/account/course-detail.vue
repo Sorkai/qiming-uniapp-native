@@ -131,7 +131,6 @@
       </div>
     </div>
 
-    <AiScreenCapture v-if="showStudentScreenCapture" />
   </div>
 </template>
 
@@ -151,12 +150,13 @@ import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
 import { userKey } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
-import AiScreenCapture from "@/components/AiScreenCapture/index.vue";
+import { setAiScreenCaptureVisibilityOverride } from "@/components/AiScreenCapture/visibility";
 
 // 导入 API
 import {
   getCourseDetail,
   reportCourseLesson,
+  type CourseScoreResult,
   getCourseScore,
   getCourseStudyEffect
 } from "@/api/frontend/course";
@@ -239,6 +239,7 @@ watch(
     if (newId) {
       const id = Number(newId);
       baseCourseId.value = id;
+      courseScores.value = null;
 
       // 恢复新课程的菜单状态
       const savedMenu = storageLocal().getItem(
@@ -296,12 +297,17 @@ const userRoleType = computed(() => {
 });
 const isTeacher = computed(() => userRoleType.value === 2);
 const isAdmin = computed(() => userRoleType.value === 3);
-const showStudentScreenCapture = computed(() => {
-  // 学生端仅在作业考试菜单屏蔽，其他菜单都允许使用识屏助手。
-  return (
-    !isTeacher.value && !isAdmin.value && activeMenu.value !== "homework-exam"
-  );
-});
+const showStudentScreenCapture = computed(
+  () => !isTeacher.value && !isAdmin.value && activeMenu.value !== "homework-exam"
+);
+
+watch(
+  showStudentScreenCapture,
+  visible => {
+    setAiScreenCaptureVisibilityOverride(visible);
+  },
+  { immediate: true }
+);
 
 // 课程学习相关
 const courseStudyRef = ref(null);
@@ -364,7 +370,7 @@ const htmlAnimationList = ref<any[]>([]);
 const htmlAnimationLoading = ref(false);
 
 // 成绩相关
-const courseScores = ref<any>(null);
+const courseScores = ref<CourseScoreResult | null>(null);
 
 const MOBILE_BREAKPOINT = 767;
 const courseRootEl = ref<HTMLElement | null>(null);
@@ -537,7 +543,8 @@ const handleLogout = () => {
   ElMessageBox.confirm("确定要退出登录吗？", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
-    type: "warning"
+    type: "warning",
+    customClass: "custom-message-box"
   })
     .then(() => {
       useUserStoreHook().logOut();
@@ -816,11 +823,17 @@ const fetchHtmlAnimations = async () => {
 };
 
 const fetchCourseScores = async () => {
-  if (!courseId.value) return;
+  if (!courseId.value) {
+    courseScores.value = null;
+    return;
+  }
   try {
     const response = await getCourseScore({ courseId: courseId.value });
     if (response?.code === 200) courseScores.value = response.data;
-  } catch (e) {}
+    else courseScores.value = null;
+  } catch (e) {
+    courseScores.value = null;
+  }
 };
 
 const normalizePointList = (
@@ -1042,7 +1055,10 @@ onMounted(async () => {
       if (code === 200 && data?.userInfo?.id) {
         userStore.SET_USERID(data.userInfo.id);
         // 同时更新 localStorage
-        const userInfo = storageLocal().getItem(userKey) || {};
+        const userInfo = (storageLocal().getItem(userKey) || {}) as Record<
+          string,
+          any
+        >;
         storageLocal().setItem(userKey, {
           ...userInfo,
           userId: data.userInfo.id
@@ -1083,7 +1099,7 @@ onMounted(async () => {
     conversationId.value = storedId;
     try {
       const res = await getConversationHistory(storedId);
-      if (res?.code === 200) chatMessages.value = res.data.history || [];
+      if (res?.history) chatMessages.value = res.history || [];
     } catch (e) {}
   } else {
     conversationId.value =
@@ -1111,6 +1127,7 @@ onActivated(() => {
 });
 
 onBeforeUnmount(() => {
+  setAiScreenCaptureVisibilityOverride(null);
   document.body.classList.remove("course-page");
   window.removeEventListener("resize", handleViewportResize);
   if (mobileOffsetRafId !== null) {

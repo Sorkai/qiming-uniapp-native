@@ -344,7 +344,7 @@ const isEdit = ref(false);
 const formRef = ref(null);
 const form = ref({
   examId: 0,
-  courseId: props.courseId,
+  courseId: Number(props.courseId) || 0,
   title: "",
   description: "",
   timeLimit: 60,
@@ -440,7 +440,7 @@ const showCreateDialog = () => {
   isEdit.value = false;
   form.value = {
     examId: 0,
-    courseId: props.courseId,
+    courseId: Number(props.courseId) || 0,
     title: "",
     description: "",
     timeLimit: 60,
@@ -454,7 +454,7 @@ const showEditDialog = row => {
   isEdit.value = true;
   form.value = {
     examId: row.examId,
-    courseId: props.courseId,
+    courseId: Number(props.courseId) || 0,
     title: row.title,
     description: row.description,
     timeLimit: row.timeLimit,
@@ -484,7 +484,7 @@ const submitForm = async () => {
         } else {
           // 创建考试时不传递 examId，直接使用所需字段
           await createExam({
-            courseId: form.value.courseId,
+            courseId: Number(form.value.courseId),
             title: form.value.title,
             description: form.value.description,
             timeLimit: form.value.timeLimit,

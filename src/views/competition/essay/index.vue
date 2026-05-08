@@ -652,7 +652,12 @@ const topicRules = {
 const loadStats = async () => {
   try {
     const { data } = await getEssayStats();
-    stats.value = data;
+    stats.value = {
+      totalEssays: data.totalEssays,
+      pendingReview: data.pendingReview,
+      avgScore: data.avgScore,
+      todaySubmit: data.todaySubmissions
+    };
   } catch (error) {
     console.error("获取统计数据失败", error);
   }
@@ -708,9 +713,7 @@ const openReviewDialog = async (row: any) => {
 const requestAIReview = async () => {
   aiReviewLoading.value = true;
   try {
-    const { data } = await requestAIReviewApi({ essayId: reviewForm.essayId });
-    reviewEssay.value.aiScore = data.score;
-    reviewEssay.value.aiReview = data.review;
+    await requestAIReviewApi({ essayId: reviewForm.essayId });
     ElMessage.success("AI批改完成");
   } catch (error) {
     ElMessage.error("AI批改失败");
@@ -749,7 +752,16 @@ const publishTopic = async () => {
   topicFormRef.value?.validate(async valid => {
     if (!valid) return;
     try {
-      await publishEssayTopic(topicForm);
+      await publishEssayTopic({
+        title: topicForm.title,
+        requirement: topicForm.requirement,
+        wordLimit: {
+          min: topicForm.minWords,
+          max: topicForm.maxWords
+        },
+        deadline: topicForm.deadline,
+        classIds: topicForm.targetClasses.map(item => Number(item)).filter(Boolean)
+      });
       ElMessage.success("发布成功");
       topicDialogVisible.value = false;
     } catch (error) {

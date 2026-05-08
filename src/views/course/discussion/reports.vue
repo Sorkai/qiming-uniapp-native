@@ -133,7 +133,11 @@ const listSummaryText = computed(() => {
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: Record<string, any> = {
+    const params: {
+      pageNum: number;
+      pageSize: number;
+      status?: ReportItem["status"];
+    } = {
       pageNum: pagination.page,
       pageSize: pagination.pageSize
     };

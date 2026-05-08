@@ -938,7 +938,14 @@ const resetProblemSearch = () => {
 const loadSubmissions = async () => {
   submissionLoading.value = true;
   try {
-    const params = { ...submissionParams, ...submissionSearch };
+    const params = {
+      ...submissionParams,
+      language: submissionSearch.language || undefined,
+      status: submissionSearch.result || undefined,
+      problemId: submissionSearch.problemId
+        ? Number(submissionSearch.problemId)
+        : undefined
+    };
     const { data } = await getSubmissionList(params);
     submissionList.value = data.list;
     submissionTotal.value = data.total;
@@ -984,7 +991,31 @@ const saveProblem = async () => {
   problemFormRef.value?.validate(async valid => {
     if (!valid) return;
     try {
-      await upsertProblem(problemForm);
+      await upsertProblem({
+        problemId: problemForm.problemId || undefined,
+        title: problemForm.title,
+        difficulty: problemForm.difficulty,
+        tags: problemForm.tags,
+        content: problemForm.description,
+        inputFormat: problemForm.inputFormat,
+        outputFormat: problemForm.outputFormat,
+        examples: [
+          {
+            input: problemForm.sampleInput,
+            output: problemForm.sampleOutput
+          }
+        ],
+        timeLimit: problemForm.timeLimit,
+        memoryLimit: problemForm.memoryLimit,
+        hint: problemForm.hint,
+        testCases: [
+          {
+            input: problemForm.sampleInput,
+            output: problemForm.sampleOutput
+          }
+        ],
+        status: problemForm.status
+      });
       ElMessage.success(problemForm.problemId ? "编辑成功" : "添加成功");
       problemDialogVisible.value = false;
       loadProblems();

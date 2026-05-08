@@ -79,7 +79,6 @@ async function initAiPPT() {
         isMobile: isMobile.value, // 移动端模式
         padding: isMobile.value ? "8px 8px 24px" : "20px 20px 0px",
         background: "linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)", // 与 welcome banner 一致的背景色
-        themeColor: "#97b4f7", // 使用 SDK 官方主题色能力，避免回退到默认紫色
         mode: "light", // light 亮色模式, dark 暗色模式
         lang: "zh", // 国际化
         // 自定义 CSS 样式 - 使用平台统一蓝色 #97b4f7

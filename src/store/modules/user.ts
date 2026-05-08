@@ -81,6 +81,15 @@ export const useUserStore = defineStore("pure-user", {
     SET_LOGINDAY(value: number) {
       this.loginDay = Number(value);
     },
+    /** 清空当前登录用户相关状态 */
+    CLEAR_USER_STATE() {
+      this.avatar = "";
+      this.username = "";
+      this.nickname = "";
+      this.roles = [];
+      this.permissions = [];
+      this.userId = null;
+    },
     /** 登入 */
     async loginByUsername(data) {
       return new Promise<UserResult>((resolve, reject) => {
@@ -96,9 +105,7 @@ export const useUserStore = defineStore("pure-user", {
     },
     /** 前端登出（不调用接口） */
     logOut() {
-      this.username = "";
-      this.roles = [];
-      this.permissions = [];
+      this.CLEAR_USER_STATE();
       removeToken();
       useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
       resetRouter();

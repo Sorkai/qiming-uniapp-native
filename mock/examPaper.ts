@@ -1,4 +1,8 @@
-import type { MockMethod } from "vite-plugin-mock";
+type MockMethod = {
+  url: string;
+  method?: string;
+  response: ((options?: any) => any) | any;
+};
 
 // 试卷状态枚举
 const PaperStatus = {
