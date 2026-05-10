@@ -64,6 +64,22 @@ export interface CommonResponse<T = any> {
   data: T;
 }
 
+type MaybeWrappedResponse<T> = CommonResponse<T> | T;
+
+function unwrapResponseData<T>(response: MaybeWrappedResponse<T>): T {
+  if (
+    response &&
+    typeof response === "object" &&
+    "code" in response &&
+    "msg" in response &&
+    "data" in response
+  ) {
+    return (response as CommonResponse<T>).data;
+  }
+
+  return response as T;
+}
+
 /** 后端返回的帖子列表项 */
 interface BackendPostListItem {
   postId: number;
@@ -665,13 +681,18 @@ export function getAuditLogs(params?: {
   endTime?: string;
   pageNum: number;
   pageSize?: number;
-}) {
-  return http.request<
-    CommonResponse<{
-      total: number;
-      list: AuditLog[];
-    }>
-  >("get", "/edu/backend/v1/discussions/audit-logs", { params });
+}): Promise<{
+  total: number;
+  list: AuditLog[];
+}> {
+  return http
+    .request<
+      MaybeWrappedResponse<{
+        total: number;
+        list: AuditLog[];
+      }>
+    >("get", "/edu/backend/v1/discussions/audit-logs", { params })
+    .then(unwrapResponseData);
 }
 
 /**
@@ -682,12 +703,14 @@ export function getGlobalStatistics(params?: {
   courseId?: number;
   startDate?: string;
   endDate?: string;
-}) {
-  return http.request<CommonResponse<GlobalStatistics>>(
-    "get",
-    "/edu/backend/v1/discussions/statistics",
-    { params }
-  );
+}): Promise<GlobalStatistics> {
+  return http
+    .request<MaybeWrappedResponse<GlobalStatistics>>(
+      "get",
+      "/edu/backend/v1/discussions/statistics",
+      { params }
+    )
+    .then(unwrapResponseData);
 }
 
 /**

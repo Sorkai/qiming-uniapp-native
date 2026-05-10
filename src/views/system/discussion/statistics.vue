@@ -514,9 +514,9 @@ const fetchAuditLogs = async () => {
       params.startTime = timeRange.value[0];
       params.endTime = timeRange.value[1];
     }
-    const { data } = await getAuditLogs(params);
-    auditLogs.value = data?.list || [];
-    total.value = data?.total || 0;
+    const result = await getAuditLogs(params);
+    auditLogs.value = result?.list || [];
+    total.value = result?.total || 0;
   } catch (error) {
     console.error("加载审计日志失败", error);
   } finally {
@@ -562,8 +562,8 @@ const fetchData = async () => {
       selectedCourse.value != null
         ? { courseId: selectedCourse.value }
         : undefined;
-    const { data } = await getGlobalStatistics(params);
-    stats.value = normalizeStatistics(data);
+    const result = await getGlobalStatistics(params);
+    stats.value = normalizeStatistics(result);
     await initCharts();
   } catch (error) {
     console.error("加载统计数据失败", error);
@@ -1055,7 +1055,7 @@ watch(theme, () => {
               range-separator="至"
               start-placeholder="开始时间"
               end-placeholder="结束时间"
-              value-format="YYYY-MM-DDTHH:mm:ss"
+              value-format="YYYY-MM-DD HH:mm:ss"
               :class="isMobile ? 'audit-search-form__range' : '!w-[360px]'"
             />
           </el-form-item>
