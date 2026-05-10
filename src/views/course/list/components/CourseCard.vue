@@ -38,6 +38,7 @@
           <el-icon :size="18"><Edit /></el-icon>
         </el-button>
         <el-button
+          v-if="canDelete"
           type="danger"
           size="default"
           circle
@@ -109,10 +110,17 @@ import {
   Collection
 } from "@element-plus/icons-vue";
 
-defineProps<{
-  course: any;
-  isSelected?: boolean;
-}>();
+withDefaults(
+  defineProps<{
+    course: any;
+    isSelected?: boolean;
+    canDelete?: boolean;
+  }>(),
+  {
+    isSelected: false,
+    canDelete: false
+  }
+);
 
 defineEmits([
   "edit",
