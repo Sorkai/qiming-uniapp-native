@@ -27,7 +27,6 @@ import {
   PieChart,
   Histogram,
   Flag,
-  Check,
   Clock
 } from "@element-plus/icons-vue";
 import {
@@ -48,18 +47,78 @@ const { isMobile, paginationLayout } = usePageResponsive();
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
+type CourseOption = {
+  courseId: number;
+  title: string;
+};
+
+const createEmptyStatistics = (): GlobalStatistics => ({
+  totalPosts: 0,
+  totalReplies: 0,
+  totalLikes: 0,
+  pendingPosts: 0,
+  pendingReplies: 0,
+  pendingReports: 0,
+  activeUsers: 0,
+  todayPosts: 0,
+  todayReplies: 0,
+  trends: {
+    posts: [],
+    replies: []
+  },
+  topCourses: []
+});
+
+const normalizeTrendItems = (
+  items?: Array<{ date?: string; count?: number | string }>
+) =>
+  Array.isArray(items)
+    ? items
+        .map(item => ({
+          date: item?.date || "",
+          count: Number(item?.count || 0)
+        }))
+        .filter(item => item.date)
+    : [];
+
+const normalizeStatistics = (
+  data?: Partial<GlobalStatistics> | null
+): GlobalStatistics => ({
+  totalPosts: Number(data?.totalPosts || 0),
+  totalReplies: Number(data?.totalReplies || 0),
+  totalLikes: Number(data?.totalLikes || 0),
+  pendingPosts: Number(data?.pendingPosts || 0),
+  pendingReplies: Number(data?.pendingReplies || 0),
+  pendingReports: Number(data?.pendingReports || 0),
+  activeUsers: Number(data?.activeUsers || 0),
+  todayPosts: Number(data?.todayPosts || 0),
+  todayReplies: Number(data?.todayReplies || 0),
+  trends: {
+    posts: normalizeTrendItems(data?.trends?.posts),
+    replies: normalizeTrendItems(data?.trends?.replies)
+  },
+  topCourses: Array.isArray(data?.topCourses)
+    ? data.topCourses.map(item => ({
+        courseId: Number(item?.courseId || 0),
+        courseName: item?.courseName || "",
+        postCount: Number(item?.postCount || 0),
+        replyCount: Number(item?.replyCount || 0)
+      }))
+    : []
+});
+
 // ==================== 状态统计 ====================
 
 const loading = ref(false);
 const stats = ref<GlobalStatistics | null>(null);
-const selectedCourse = ref("");
-const courses = ref([]);
+const selectedCourse = ref<number | null | undefined>(null);
+const courses = ref<CourseOption[]>([]);
 
 // 获取课程列表用于过滤
 const fetchCourses = async () => {
   try {
     const { data } = await getCourseList({ pageNum: 1, pageSize: 100 });
-    courses.value = data.courseList || [];
+    courses.value = data?.courseList || [];
   } catch (error) {
     console.error("加载课程列表失败", error);
   }
@@ -167,25 +226,6 @@ const allStatCards = computed(() => {
   ];
 });
 
-// 分组统计卡片
-const statCards = computed(() => {
-  if (!stats.value) return [];
-  return [
-    {
-      label: "内容统计",
-      icon: Document,
-      color: "#409eff",
-      children: allStatCards.value.filter(c => c.category === "content")
-    },
-    {
-      label: "今日动态",
-      icon: Clock,
-      color: "#06b6d4",
-      children: allStatCards.value.filter(c => c.category === "today")
-    }
-  ];
-});
-
 // 待处理指标卡片
 const pendingCards = computed(() => {
   if (!stats.value)
@@ -207,6 +247,11 @@ const engagementCards = computed(() => {
   );
 });
 const topCourses = computed(() => stats.value?.topCourses || []);
+const trendDates = computed(() => {
+  const postDates = stats.value?.trends?.posts.map(item => item.date) || [];
+  if (postDates.length > 0) return postDates;
+  return stats.value?.trends?.replies.map(item => item.date) || [];
+});
 
 const getOperatorRoleType = (role: string) => {
   if (role === "admin") return "danger";
@@ -236,14 +281,9 @@ const { setOptions: setSummaryOptions } = useECharts(summaryChartRef, {
 });
 
 const initCharts = async () => {
-  // 趋势图 (Line Chart) - 使用 mock 或 backend 数据
-  const dates = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const postData = stats.value?.trends?.posts.map(i => i.count) || [
-    120, 132, 101, 134, 90, 230, 210
-  ];
-  const replyData = stats.value?.trends?.replies.map(i => i.count) || [
-    220, 182, 191, 234, 290, 330, 310
-  ];
+  const currentStats = stats.value || createEmptyStatistics();
+  const postData = currentStats.trends?.posts.map(item => item.count) || [];
+  const replyData = currentStats.trends?.replies.map(item => item.count) || [];
 
   setTrendOptions({
     tooltip: { trigger: "axis" },
@@ -252,7 +292,7 @@ const initCharts = async () => {
     xAxis: {
       type: "category",
       boundaryGap: false,
-      data: stats.value?.trends?.posts.map(i => i.date) || dates
+      data: trendDates.value
     },
     yAxis: { type: "value" },
     series: [
@@ -297,17 +337,17 @@ const initCharts = async () => {
         labelLine: { show: false },
         data: [
           {
-            value: stats.value?.totalPosts || 0,
+            value: currentStats.totalPosts,
             name: "帖子",
             itemStyle: { color: "#409eff" }
           },
           {
-            value: stats.value?.totalReplies || 0,
+            value: currentStats.totalReplies,
             name: "回复",
             itemStyle: { color: "#67c23a" }
           },
           {
-            value: stats.value?.totalLikes || 0,
+            value: currentStats.totalLikes,
             name: "点赞",
             itemStyle: { color: "#f59e0b" }
           }
@@ -332,15 +372,15 @@ const initCharts = async () => {
         barWidth: "50%",
         data: [
           {
-            value: stats.value?.pendingPosts || 0,
+            value: currentStats.pendingPosts,
             itemStyle: { color: "#f97316" }
           },
           {
-            value: stats.value?.pendingReplies || 0,
+            value: currentStats.pendingReplies,
             itemStyle: { color: "#eab308" }
           },
           {
-            value: stats.value?.pendingReports || 0,
+            value: currentStats.pendingReports,
             itemStyle: { color: "#ef4444" }
           }
         ],
@@ -460,12 +500,6 @@ const queryForm = reactive({
 
 const timeRange = ref([]);
 
-// 导出字段映射（体现字段实现）
-const targetTypeMap = {
-  post: { text: "帖子", type: "primary" },
-  reply: { text: "回复", type: "success" }
-};
-
 const fetchAuditLogs = async () => {
   auditLoading.value = true;
   try {
@@ -480,13 +514,9 @@ const fetchAuditLogs = async () => {
       params.startTime = timeRange.value[0];
       params.endTime = timeRange.value[1];
     }
-    const response = await getAuditLogs(params);
-    console.log("[AuditLogs] API响应:", response);
-    // 兼容不同的响应格式
-    const responseData = (response as any)?.data || response;
-    auditLogs.value = responseData?.list || [];
-    total.value = responseData?.total || 0;
-    console.log("[AuditLogs] 审计日志:", auditLogs.value, "总数:", total.value);
+    const { data } = await getAuditLogs(params);
+    auditLogs.value = data?.list || [];
+    total.value = data?.total || 0;
   } catch (error) {
     console.error("加载审计日志失败", error);
   } finally {
@@ -525,24 +555,21 @@ const handleCurrentChange = (val: number) => {
 
 // ==================== 数据加载 ====================
 
-const lastUpdateTime = ref(new Date().toLocaleString());
-
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params: any = {};
-    if (selectedCourse.value) params.courseId = selectedCourse.value;
-    const response = await getGlobalStatistics(params);
-    console.log("[Statistics] API响应:", response);
-    // 兼容不同的响应格式
-    const responseData = (response as any)?.data || response;
-    stats.value = responseData;
-    console.log("[Statistics] 统计数据:", stats.value);
-    lastUpdateTime.value = new Date().toLocaleString();
-    initCharts();
+    const params =
+      selectedCourse.value != null
+        ? { courseId: selectedCourse.value }
+        : undefined;
+    const { data } = await getGlobalStatistics(params);
+    stats.value = normalizeStatistics(data);
+    await initCharts();
   } catch (error) {
     console.error("加载统计数据失败", error);
     ElMessage.error("加载统计数据失败");
+    stats.value = createEmptyStatistics();
+    await initCharts();
   } finally {
     loading.value = false;
   }
@@ -583,7 +610,7 @@ watch(theme, () => {
           v-for="item in courses"
           :key="item.courseId"
           :label="item.title"
-          :value="item.courseId.toString()"
+          :value="item.courseId"
         />
       </el-select>
       <el-button
