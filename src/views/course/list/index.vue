@@ -39,6 +39,7 @@
               >编辑课程</el-button
             >
             <el-button
+              v-if="isAdminUser"
               type="danger"
               :disabled="selectedCourseIds.length === 0"
               @click="handleBatchDelete"
@@ -73,6 +74,7 @@
             <CourseCard
               :course="course"
               :is-selected="selectedCourseIds.includes(course.courseId)"
+              :can-delete="canDeleteCourse(course)"
               @toggle-select="toggleCourseSelection"
               @edit="editCourse"
               @delete="confirmDelete"
@@ -723,7 +725,9 @@
 <script lang="ts" setup>
 import { ref, onMounted, reactive, computed } from "vue";
 import { useAppStoreHook } from "@/store/modules/app";
+import { useUserStoreHook } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
+import { isAdmin } from "@/utils/auth";
 import { ElMessage, ElMessageBox, ElForm } from "element-plus";
 import {
   getCourseList,
@@ -754,6 +758,14 @@ const paginationLayout = computed(() =>
     ? "sizes, prev, pager, next"
     : "total, sizes, prev, pager, next, jumper"
 );
+const userStore = useUserStoreHook();
+const isAdminUser = computed(() => isAdmin());
+const currentUserId = computed(() => userStore.userId);
+const currentUserNames = computed(() =>
+  [userStore.nickname, userStore.username]
+    .map(name => name?.trim())
+    .filter(Boolean)
+);
 
 // 统计数据
 const courseStats = reactive({
@@ -780,6 +792,24 @@ const searchForm = ref({
 
 // 选择的课程ID列表
 const selectedCourseIds = ref<number[]>([]);
+
+const canDeleteCourse = (course: any) => {
+  if (!course) return false;
+  if (isAdminUser.value) return true;
+
+  const courseCreatorId = Number(course.userId);
+  if (
+    Number.isFinite(courseCreatorId) &&
+    courseCreatorId > 0 &&
+    currentUserId.value
+  ) {
+    return courseCreatorId === currentUserId.value;
+  }
+
+  const courseCreatorName = course.userName?.trim();
+  if (!courseCreatorName) return false;
+  return currentUserNames.value.includes(courseCreatorName);
+};
 
 const toggleCourseSelection = (courseId: number) => {
   const index = selectedCourseIds.value.indexOf(courseId);
@@ -1384,12 +1414,21 @@ const deleteConfirmVisible = ref(false);
 
 // 打开删除确认对话框
 const confirmDelete = (row: any) => {
+  if (!canDeleteCourse(row)) {
+    ElMessage.warning("只能删除自己创建的课程");
+    return;
+  }
   currentCourse.value = row;
   deleteConfirmVisible.value = true;
 };
 
 // 处理删除课程
 const handleDeleteCourse = async () => {
+  if (!canDeleteCourse(currentCourse.value)) {
+    ElMessage.warning("只能删除自己创建的课程");
+    deleteConfirmVisible.value = false;
+    return;
+  }
   try {
     loading.value = true;
     const response = await deleteCourse({
@@ -1419,6 +1458,10 @@ const handleDeleteCourse = async () => {
 
 // 批量删除选中的课程
 const handleBatchDelete = () => {
+  if (!isAdminUser.value) {
+    ElMessage.warning("只有管理员可以删除课程");
+    return;
+  }
   if (selectedCourseIds.value.length === 0) return;
   ElMessageBox.confirm(
     `确定要删除选中的 ${selectedCourseIds.value.length} 门课程吗？会级联删除课程相关学习记录、作业考试、讨论、AI 资源等数据，此操作不可恢复！`,
