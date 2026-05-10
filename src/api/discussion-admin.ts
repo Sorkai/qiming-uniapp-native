@@ -226,14 +226,12 @@ export interface GlobalStatistics {
   activeUsers: number;
   todayPosts: number;
   todayReplies: number;
-  // 保持趋势数据，用于图表展示
   trends?: {
     posts: Array<{ date: string; count: number }>;
     replies: Array<{ date: string; count: number }>;
-    activeUsers: Array<{ date: string; count: number }>;
   };
   topCourses?: Array<{
-    courseId: string;
+    courseId: number;
     courseName: string;
     postCount: number;
     replyCount: number;
@@ -680,7 +678,11 @@ export function getAuditLogs(params?: {
  * 获取全局统计
  * @param params 查询参数
  */
-export function getGlobalStatistics(params?: { courseId?: string }) {
+export function getGlobalStatistics(params?: {
+  courseId?: number;
+  startDate?: string;
+  endDate?: string;
+}) {
   return http.request<CommonResponse<GlobalStatistics>>(
     "get",
     "/edu/backend/v1/discussions/statistics",
