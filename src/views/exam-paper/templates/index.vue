@@ -342,12 +342,19 @@ onMounted(() => {
 <template>
   <div class="templates-page" :class="{ 'is-dark': isDark }">
     <div class="page-header">
-      <div class="header-left">
-        <h2>试卷模板</h2>
-        <p>选择一个模板快速开始创建试卷，或创建自己的私有模板</p>
+      <div class="header-content">
+        <div class="header-icon">
+          <el-icon><Document /></el-icon>
+        </div>
+        <div class="header-info">
+          <h1 class="page-title">试卷模板</h1>
+          <p class="page-desc">
+            选择一个模板快速开始创建试卷，或创建自己的私有模板
+          </p>
+        </div>
       </div>
-      <div class="header-right">
-        <el-button type="primary" @click="openCreateDialog">
+      <div class="header-actions">
+        <el-button type="primary" class="create-btn" @click="openCreateDialog">
           <el-icon><Plus /></el-icon>
           新建模板
         </el-button>
@@ -573,19 +580,34 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-$light-text-primary: #303133;
-$light-text-secondary: #606266;
-$dark-text-primary: #f1f5f9;
-$dark-text-secondary: #94a3b8;
-$dark-border: rgba(255, 255, 255, 0.1);
+$light-text-primary: var(--el-text-color-primary);
+$light-text-secondary: var(--el-text-color-regular);
+$light-card-bg: var(--el-bg-color);
+$light-border: var(--el-border-color-lighter);
+$light-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+$dark-text-primary: var(--el-text-color-primary);
+$dark-text-secondary: var(--el-text-color-regular);
+$dark-card-bg: var(--el-bg-color);
+$dark-border: var(--el-border-color-lighter);
+$radius-md: 12px;
+$radius-lg: 16px;
+$primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
 
 .templates-page {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 24px;
+  overflow-x: hidden;
+
   &.is-dark {
     .page-header {
-      h2 {
+      background: $dark-card-bg;
+      border-color: $dark-border;
+
+      .page-title {
         color: $dark-text-primary;
       }
-      p {
+      .page-desc {
         color: $dark-text-secondary;
       }
     }
@@ -664,20 +686,112 @@ $dark-border: rgba(255, 255, 255, 0.1);
 }
 
 .page-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  gap: 16px;
+  min-height: 104px;
+  padding: 24px;
   margin-bottom: 24px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #c7d9fb 0%, #fcd9b6 100%);
+  border: 1px solid $light-border;
+  border-radius: $radius-lg;
+  box-shadow: $light-shadow;
 
-  .header-left {
-    h2 {
-      margin: 0 0 8px;
-      font-size: 24px;
+  .header-bg-pattern {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header-content,
+  .header-actions {
+    position: relative;
+    z-index: 1;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: $radius-md;
+    background: $primary-gradient;
+    box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
+    color: #fff;
+
+    :deep(.el-icon) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      font-size: 28px;
+      line-height: 1;
+      color: #fff;
     }
+  }
 
-    p {
-      margin: 0;
-      color: #909399;
+  .page-title {
+    margin: 0 0 4px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .page-desc {
+    margin: 0;
+    font-size: 14px;
+    color: #4b5563;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  :deep(.el-button.action-btn) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    height: 48px;
+    padding: 0 24px !important;
+    border-radius: $radius-md;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1 !important;
+
+    .el-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-right: 6px;
+    }
+  }
+
+  :deep(.el-button.create-btn.el-button--primary) {
+    color: #fff;
+    background: $primary-gradient;
+    border: none;
+
+    &:hover {
+      opacity: 0.92;
     }
   }
 }
