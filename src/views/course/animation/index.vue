@@ -648,6 +648,7 @@ import {
   setHtmlAnimationDisplay,
   forceSyncHtmlAnimation,
   getHtmlAnimationDisplay,
+  normalizeHtmlAnimationTask,
   type HtmlAnimationTask
 } from "@/api/htmlAnimation";
 import {
@@ -705,6 +706,11 @@ const keyword = ref("");
 const previewVisible = ref(false);
 const previewUrl = ref("");
 
+const isTaskProcessing = (task: HtmlAnimationTask) =>
+  ["pending", "submitted", "processing"].includes(task.status);
+const isTaskCompleted = (task: HtmlAnimationTask) => task.status === "completed";
+const isTaskFailed = (task: HtmlAnimationTask) => task.status === "failed";
+
 const updateCompactLayout = () => {
   if (typeof window === "undefined") return;
   isCompactLayout.value = window.innerWidth <= 1120 && !isMobile.value;
@@ -713,24 +719,22 @@ const updateCompactLayout = () => {
 // 统计
 const stats = computed(() => {
   return {
-    completed: tasks.value.filter(t => t.status === "completed").length,
-    processing: tasks.value.filter(t => t.status === "processing").length,
-    failed: tasks.value.filter(t => t.status === "failed").length
+    completed: tasks.value.filter(isTaskCompleted).length,
+    processing: tasks.value.filter(isTaskProcessing).length,
+    failed: tasks.value.filter(isTaskFailed).length
   };
 });
 
 const latestCompletedVersion = computed(() => {
   const versions = tasks.value
-    .filter(t => t.status === "completed")
+    .filter(isTaskCompleted)
     .map(t => t.version)
     .filter(v => v > 0);
   return versions.length ? Math.max(...versions) : null;
 });
 
 const latestSuccessTime = computed(() => {
-  const completed = tasks.value.filter(
-    t => t.status === "completed" && t.completedAt
-  );
+  const completed = tasks.value.filter(t => isTaskCompleted(t) && t.completedAt);
   if (!completed.length) return "";
   // 最新完成时间
   return completed.sort((a, b) =>
@@ -742,13 +746,17 @@ const canGenerate = computed(
   () =>
     !!selectedCourseId.value &&
     !!selectedChapterId.value &&
-    !tasks.value.some(t => t.status === "processing")
+    !tasks.value.some(isTaskProcessing)
 );
 
 const filteredTasks = computed(() => {
   let arr = tasks.value.slice().sort((a, b) => b.version - a.version);
   if (statusFilter.value !== "all")
-    arr = arr.filter(t => t.status === statusFilter.value);
+    arr = arr.filter(t =>
+      statusFilter.value === "processing"
+        ? isTaskProcessing(t)
+        : t.status === statusFilter.value
+    );
   if (keyword.value)
     arr = arr.filter(t =>
       t.fileName?.toLowerCase().includes(keyword.value.toLowerCase())
@@ -830,13 +838,13 @@ async function refreshList() {
       courseId: selectedCourseId.value,
       chapterId: selectedChapterId.value
     });
-    tasks.value = data.tasks || [];
+    tasks.value = (data.tasks || []).map(normalizeHtmlAnimationTask);
     displayVersionRaw.value = data.displayVersionRaw;
     displayVersionResolved.value = data.displayVersionResolved;
     // 若存在 processing 且未轮询启动 -> 启动
-    if (tasks.value.some(t => t.status === "processing") && !polling.value) {
+    if (tasks.value.some(isTaskProcessing) && !polling.value) {
       startPolling();
-    } else if (!tasks.value.some(t => t.status === "processing")) {
+    } else if (!tasks.value.some(isTaskProcessing)) {
       stopPolling();
     }
   } catch (e) {
@@ -894,7 +902,7 @@ async function setDisplayLatest() {
 }
 
 async function setDisplay(row: HtmlAnimationTask) {
-  if (row.status !== "completed") return;
+  if (!isTaskCompleted(row)) return;
   try {
     await setHtmlAnimationDisplay({
       courseId: selectedCourseId.value!,
@@ -924,14 +932,14 @@ async function onForceSync() {
 }
 
 function isDisplayVersion(row: HtmlAnimationTask) {
-  if (row.status !== "completed" || !row.version) return false;
+  if (!isTaskCompleted(row) || !row.version) return false;
   if (displayVersionRaw.value === "latest")
     return String(row.version) === displayVersionResolved.value;
   return String(row.version) === displayVersionRaw.value;
 }
 
 function openPreview(row: HtmlAnimationTask) {
-  if (row.status !== "completed") return;
+  if (!isTaskCompleted(row)) return;
   previewUrl.value = buildFileUrl(row);
   previewVisible.value = true;
 }
@@ -982,7 +990,7 @@ function truncate(str: string, len: number) {
 
 function rowClassName({ row }: { row: HtmlAnimationTask }) {
   if (isDisplayVersion(row)) return "row-display";
-  if (row.status === "failed") return "row-failed";
+  if (isTaskFailed(row)) return "row-failed";
   return "";
 }
 
@@ -994,6 +1002,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateCompactLayout);
+  stopPolling();
 });
 </script>
 
