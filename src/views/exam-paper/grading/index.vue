@@ -15,7 +15,6 @@ import IconEdit from "@/assets/home-icons/edit.svg?component";
 import IconClock from "@/assets/home-icons/clock.svg?component";
 import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
 import IconDocument from "@/assets/home-icons/document.svg?component";
-import IconClipboard from "@/assets/home-icons/clipboard.svg?component";
 
 defineOptions({
   name: "ExamPaperGrading"
@@ -190,7 +189,7 @@ onMounted(() => {
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
-          <IconClipboard />
+          <IconifyIconOnline icon="ri:clipboard-line" />
         </div>
         <div class="header-info">
           <h1 class="page-title">阅卷管理</h1>
@@ -729,10 +728,9 @@ $radius-xl: 20px;
     flex-shrink: 0;
     box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
 
-    svg {
-      width: 28px !important;
-      height: 28px !important;
-      display: block;
+    :deep(svg) {
+      width: 28px;
+      height: 28px;
     }
   }
 

@@ -3,6 +3,8 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage, ElMessageBox } from "element-plus";
+import IconDocument from "@/assets/home-icons/document.svg?component";
+import IconFolder from "@/assets/home-icons/folder.svg?component";
 import {
   getMyTemplates,
   createTemplate,
@@ -344,7 +346,7 @@ onMounted(() => {
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
-          <el-icon><Document /></el-icon>
+          <IconifyIconOnline icon="ri:file-list-3-line" />
         </div>
         <div class="header-info">
           <h1 class="page-title">试卷模板</h1>
@@ -371,7 +373,7 @@ onMounted(() => {
             shadow="hover"
           >
             <div class="template-cover system">
-              <el-icon :size="48" color="#739CF9"><Document /></el-icon>
+              <IconDocument style="width: 48px; height: 48px; color: #739cf9" />
               <span class="system-badge">系统</span>
             </div>
             <div class="template-info">
@@ -429,7 +431,7 @@ onMounted(() => {
             shadow="hover"
           >
             <div class="template-cover private">
-              <el-icon :size="48" color="#409eff"><Folder /></el-icon>
+              <IconFolder style="width: 48px; height: 48px; color: #409eff" />
               <span class="private-badge">私有</span>
             </div>
             <div class="template-info">
@@ -733,14 +735,9 @@ $primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
     box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
     color: #fff;
 
-    :deep(.el-icon) {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    :deep(svg) {
       width: 28px;
       height: 28px;
-      font-size: 28px;
-      line-height: 1;
       color: #fff;
     }
   }

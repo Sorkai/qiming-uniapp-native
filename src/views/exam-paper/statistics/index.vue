@@ -18,7 +18,6 @@ import IconDocument from "@/assets/home-icons/document.svg?component";
 import IconUsers from "@/assets/home-icons/users.svg?component";
 import IconChart from "@/assets/home-icons/chart.svg?component";
 import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
-import IconTrending from "@/assets/home-icons/trending.svg?component";
 
 defineOptions({
   name: "ExamPaperStatistics"
@@ -219,7 +218,7 @@ onMounted(() => {
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
-          <IconTrending />
+          <IconifyIconOnline icon="ri:line-chart-line" />
         </div>
         <div class="header-info">
           <h1 class="page-title">学情分析</h1>
@@ -664,10 +663,9 @@ $radius-xl: 20px;
     flex-shrink: 0;
     box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
 
-    svg {
-      width: 28px !important;
-      height: 28px !important;
-      display: block;
+    :deep(svg) {
+      width: 28px;
+      height: 28px;
     }
   }
 

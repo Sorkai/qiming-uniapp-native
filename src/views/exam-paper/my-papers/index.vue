@@ -31,7 +31,6 @@ import {
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
-import IconFolder from "@/assets/home-icons/folder.svg?component";
 import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
 import IconEdit from "@/assets/home-icons/edit.svg?component";
 import IconClock from "@/assets/home-icons/clock.svg?component";
@@ -386,7 +385,7 @@ onMounted(() => {
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
-          <IconFolder />
+          <IconifyIconOnline icon="ri:folder-2-line" />
         </div>
         <div class="header-info">
           <h1 class="page-title">我的试卷</h1>
@@ -1036,11 +1035,10 @@ $radius-lg: 16px;
       flex-shrink: 0;
       box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
 
-      :deep(> svg) {
+      :deep(svg) {
         width: 28px;
         height: 28px;
         color: #fff;
-        display: block;
       }
     }
 

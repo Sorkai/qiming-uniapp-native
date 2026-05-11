@@ -27,7 +27,6 @@ import {
 import IconDocument from "@/assets/home-icons/document.svg?component";
 import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
 import IconEdit from "@/assets/home-icons/edit.svg?component";
-import IconGrid from "@/assets/home-icons/grid.svg?component";
 import LatexEditor from "../editor/components/LatexEditor.vue";
 import RichMediaUploader from "../editor/components/RichMediaUploader.vue";
 
@@ -691,7 +690,7 @@ onMounted(() => {
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
-          <IconGrid />
+          <IconifyIconOnline icon="ri:apps-2-line" />
         </div>
         <div class="header-info">
           <h1 class="page-title">题库管理</h1>
@@ -1639,11 +1638,10 @@ $radius-lg: 16px;
       flex-shrink: 0;
       box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
 
-      :deep(> svg) {
+      :deep(svg) {
         width: 28px;
         height: 28px;
         color: #fff;
-        display: block;
       }
     }
 
