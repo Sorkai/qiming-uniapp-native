@@ -27,7 +27,6 @@ import {
 import IconDocument from "@/assets/home-icons/document.svg?component";
 import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
 import IconEdit from "@/assets/home-icons/edit.svg?component";
-import IconGrid from "@/assets/home-icons/grid.svg?component";
 import LatexEditor from "../editor/components/LatexEditor.vue";
 import RichMediaUploader from "../editor/components/RichMediaUploader.vue";
 
@@ -691,7 +690,7 @@ onMounted(() => {
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
-          <IconGrid />
+          <IconifyIconOnline icon="ri:apps-2-line" />
         </div>
         <div class="header-info">
           <h1 class="page-title">题库管理</h1>
@@ -701,14 +700,14 @@ onMounted(() => {
         </div>
       </div>
       <div class="header-actions">
-        <el-button @click="openNewFolderDialog">
+        <el-button size="large" class="action-btn" @click="openNewFolderDialog">
           <el-icon class="mr-1"><FolderAdd /></el-icon>
           新建文件夹
         </el-button>
         <el-button
           type="primary"
           size="large"
-          class="create-btn"
+          class="action-btn create-btn"
           @click="openNewQuestionDialog"
         >
           <el-icon class="mr-2"><Plus /></el-icon>
@@ -1488,20 +1487,20 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-$light-bg: #f5f7fa;
-$light-card-bg: #fff;
-$light-text-primary: #1f2937;
-$light-text-secondary: #6b7280;
-$light-border: #e5e7eb;
+$light-bg: var(--el-bg-color-page);
+$light-card-bg: var(--el-bg-color);
+$light-text-primary: var(--el-text-color-primary);
+$light-text-secondary: var(--el-text-color-regular);
+$light-border: var(--el-border-color-lighter);
 $light-shadow:
   0 4px 6px -1px rgb(0 0 0 / 10%),
   0 2px 4px -2px rgb(0 0 0 / 10%);
 
-$dark-bg: #0f172a;
-$dark-card-bg: rgba(30, 41, 59, 0.8);
-$dark-text-primary: #f1f5f9;
-$dark-text-secondary: #94a3b8;
-$dark-border: rgba(255, 255, 255, 0.1);
+$dark-bg: var(--el-bg-color-page);
+$dark-card-bg: var(--el-bg-color);
+$dark-text-primary: var(--el-text-color-primary);
+$dark-text-secondary: var(--el-text-color-regular);
+$dark-border: var(--el-border-color-lighter);
 $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
@@ -1613,6 +1612,8 @@ $radius-lg: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
+    min-height: 104px;
     padding: 24px;
     background: $light-card-bg;
     border-radius: $radius-lg;
@@ -1634,6 +1635,8 @@ $radius-lg: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
 
       :deep(svg) {
         width: 28px;
@@ -1677,7 +1680,7 @@ $radius-lg: 16px;
       }
     }
 
-    :deep(.el-button.create-btn) {
+    :deep(.el-button.action-btn) {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1685,10 +1688,17 @@ $radius-lg: 16px;
       height: 48px;
       padding: 0 24px !important;
       border-radius: $radius-md;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       line-height: 1 !important;
       white-space: nowrap;
+
+      .el-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
     }
   }
 
@@ -1702,21 +1712,28 @@ $radius-lg: 16px;
   .stat-card {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 20px;
+    gap: 20px;
+    padding: 24px;
     background: $light-card-bg;
     border-radius: $radius-lg;
     box-shadow: $light-shadow;
     border: 1px solid $light-border;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+    }
 
     .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: $radius-md;
-      background: $primary-gradient;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: $radius-md;
+      background: $primary-gradient;
+      color: #fff;
+      flex-shrink: 0;
 
       &.radio {
         background: $success-gradient;
@@ -1728,10 +1745,11 @@ $radius-lg: 16px;
         background: $danger-gradient;
       }
 
-      :deep(svg) {
-        width: 24px;
-        height: 24px;
+      :deep(> svg) {
+        width: 26px;
+        height: 26px;
         color: #fff;
+        display: block;
       }
     }
 

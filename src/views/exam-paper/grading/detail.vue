@@ -501,18 +501,18 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-$light-bg: #f5f7fa;
-$light-card-bg: #fff;
-$light-text-primary: #1f2937;
-$light-text-secondary: #6b7280;
-$light-text-muted: #9ca3af;
-$light-border: #e5e7eb;
+$light-bg: var(--el-bg-color-page);
+$light-card-bg: var(--el-bg-color);
+$light-text-primary: var(--el-text-color-primary);
+$light-text-secondary: var(--el-text-color-regular);
+$light-text-muted: var(--el-text-color-secondary);
+$light-border: var(--el-border-color-lighter);
 $light-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%);
-$dark-bg: #0f172a;
-$dark-card-bg: rgba(30, 41, 59, 0.8);
-$dark-text-primary: #f1f5f9;
-$dark-text-secondary: #94a3b8;
-$dark-border: rgba(255, 255, 255, 0.1);
+$dark-bg: var(--el-bg-color-page);
+$dark-card-bg: var(--el-bg-color);
+$dark-text-primary: var(--el-text-color-primary);
+$dark-text-secondary: var(--el-text-color-regular);
+$dark-border: var(--el-border-color-lighter);
 $primary-color: #667eea;
 $success-color: #739cf9;
 $warning-color: #f59e0b;
@@ -960,7 +960,9 @@ $radius-lg: 16px;
   }
 }
 
-:deep(svg) {
+/* SVG 图标样式 —— 仅作用于本页显式标记为线性图标的元素，避免误伤 el-empty / el-icon / echarts */
+:deep(.title-icon),
+:deep(.title-icon svg) {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;

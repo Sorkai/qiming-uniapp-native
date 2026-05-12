@@ -4358,29 +4358,35 @@ onBeforeUnmount(() => {
 </template>
 
 <style lang="scss" scoped>
-$light-bg: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
-$light-card-bg: rgba(255, 255, 255, 0.95);
-$light-text-primary: #303133;
-$light-text-secondary: #606266;
-$light-border: #e4e7ed;
+/* 与教师管理端整体设计对齐：尽量使用 Element Plus CSS 变量；统一卡片圆角 16px 与阴影 */
+$light-bg: var(--el-bg-color-page);
+$light-card-bg: var(--el-bg-color);
+$light-text-primary: var(--el-text-color-primary);
+$light-text-secondary: var(--el-text-color-regular);
+$light-border: var(--el-border-color-lighter);
 
-$dark-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-$dark-card-bg: rgba(30, 41, 59, 0.8);
-$dark-text-primary: #f1f5f9;
-$dark-text-secondary: #94a3b8;
-$dark-border: rgba(255, 255, 255, 0.1);
+$dark-bg: var(--el-bg-color-page);
+$dark-card-bg: var(--el-bg-color);
+$dark-text-primary: var(--el-text-color-primary);
+$dark-text-secondary: var(--el-text-color-regular);
+$dark-border: var(--el-border-color-lighter);
+
+/* 管理端统一卡片阴影 */
+$admin-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+$admin-shadow-lg: 0 8px 20px rgb(0 0 0 / 12%);
+$admin-radius: 16px;
 
 .exam-paper-editor {
-  min-height: 100vh;
-  background: $light-bg;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+  background: $light-bg;
 
   &.is-dark {
     background: $dark-bg;
 
     .editor-fixed-top {
-      background: rgba(30, 41, 59, 0.95);
+      background: var(--el-bg-color);
       border-color: $dark-border;
     }
 
@@ -4699,21 +4705,20 @@ $dark-border: rgba(255, 255, 255, 0.1);
   position: sticky;
   top: 12px;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  margin: 12px 24px 24px;
-  border-radius: 16px;
   overflow: hidden;
+  margin: 12px 16px 16px;
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
 }
 
 .editor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 
   .header-left .logo {
     display: flex;
@@ -4927,13 +4932,13 @@ $dark-border: rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
 .editor-outline {
-  width: 280px;
-  background: #ffffff;
-  border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
+  width: 280px;
+  background-color: var(--el-bg-color);
+  border-right: 1px solid var(--el-border-color-lighter);
+  box-shadow: 2px 0 8px rgb(0 0 0 / 4%);
   transition: all 0.3s ease;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
 
   &.collapsed {
     width: 60px;
@@ -4943,15 +4948,15 @@ $dark-border: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid #f0f0f0;
     min-height: 50px;
-    background: #f8fafc;
+    padding: 16px;
+    background-color: var(--el-fill-color-light);
+    border-bottom: 1px solid var(--el-border-color-lighter);
 
     .outline-title {
       font-size: 15px;
       font-weight: 600;
-      color: #303133;
+      color: var(--el-text-color-primary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

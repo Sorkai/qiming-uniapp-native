@@ -328,6 +328,7 @@ import {
   generateHtmlAnimation,
   setHtmlAnimationDisplay,
   forceSyncHtmlAnimation,
+  normalizeHtmlAnimationTask,
   type HtmlAnimationTask,
   type HtmlAnimationListResult
 } from "@/api/htmlAnimation";
@@ -356,14 +357,16 @@ const courseList = ref<CourseItem[]>([]);
 const chapterList = ref<ChapterItem[]>([]);
 const currentAnimationData = ref<HtmlAnimationListResult | null>(null);
 const taskList = ref<HtmlAnimationTask[]>([]);
+const isTaskProcessing = (task: HtmlAnimationTask) =>
+  ["pending", "submitted", "processing"].includes(task.status);
+const isTaskCompleted = (task: HtmlAnimationTask) => task.status === "completed";
+const isTaskFailed = (task: HtmlAnimationTask) => task.status === "failed";
 
 const stats = computed(() => {
   const total = taskList.value.length;
-  const completed = taskList.value.filter(t => t.status === "completed").length;
-  const processing = taskList.value.filter(
-    t => t.status === "pending" || t.status === "processing"
-  ).length;
-  const failed = taskList.value.filter(t => t.status === "failed").length;
+  const completed = taskList.value.filter(isTaskCompleted).length;
+  const processing = taskList.value.filter(isTaskProcessing).length;
+  const failed = taskList.value.filter(isTaskFailed).length;
 
   return {
     totalTasks: total,
@@ -374,7 +377,7 @@ const stats = computed(() => {
 });
 
 const completedTasks = computed(() =>
-  taskList.value.filter(t => t.status === "completed" && t.version > 0)
+  taskList.value.filter(t => isTaskCompleted(t) && t.version > 0)
 );
 
 const searchForm = reactive({
@@ -544,7 +547,7 @@ const handleSearch = async () => {
       chapterId: searchForm.chapterId
     });
     currentAnimationData.value = res.data;
-    taskList.value = res.data.tasks || [];
+    taskList.value = (res.data.tasks || []).map(normalizeHtmlAnimationTask);
   } catch (error) {
     console.error("获取动画任务列表失败", error);
     ElMessage.error(getRequestErrorMessage(error, "获取动画任务列表失败"));
