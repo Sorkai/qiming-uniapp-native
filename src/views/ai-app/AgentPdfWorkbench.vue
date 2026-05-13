@@ -559,6 +559,21 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 4px; // 为滚动条预留一点空间
+
+  /* 自定义滚动条样式 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .panel-card {

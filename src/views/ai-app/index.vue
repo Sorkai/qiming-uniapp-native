@@ -26,12 +26,26 @@ import AiSidebar from "./components/AiSidebar.vue";
 import AiChatModule from "./components/AiChatModule.vue";
 import AiInspector from "./components/AiInspector.vue";
 import AgentPdfWorkbench from "./AgentPdfWorkbench.vue";
+import LottieAnimation from "@/components/LottieAnimation.vue";
 
 import AiResourceGeneration from "./components/AiResourceGeneration.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
+
+// 引入 Lottie 动画资源
+import creditCardAnimation from "@/assets/aiapplottie/credit-card-animation.json";
+import emptyStateDevSettingsAnimation from "@/assets/aiapplottie/empty-state-dev-settings-animation.json";
+import emptyStateDevelopmentAnimation from "@/assets/aiapplottie/empty-state-development-animation.json";
+import emptyStateLockedContentAnimation from "@/assets/aiapplottie/empty-state-locked-content-animation.json";
+import emptyStateMediaAnimation from "@/assets/aiapplottie/empty-state-media-animation.json";
+import emptyStateResponsiveAnimation from "@/assets/aiapplottie/empty-state-responsive-animation.json";
+import emptyStateSignatureAnimation from "@/assets/aiapplottie/empty-state-signature-animation.json";
+import emptyStateUploadMediaAnimation from "@/assets/aiapplottie/empty-state-upload-media-animation.json";
+import lockedFilesAnimation from "@/assets/aiapplottie/locked-files-animation.json";
+import onlineChartAnimation from "@/assets/aiapplottie/online-chart-animation.json";
+import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
 
 import { useUserStore } from "@/store/modules/user";
 import { useNav } from "@/layout/hooks/useNav";
@@ -553,6 +567,15 @@ const handleNewChat = (payload: { course: string }) => {
           <div
             class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
           >
+            <!-- 待机状态 Lottie 动画 -->
+            <div class="flex justify-center mb-[-20px]">
+              <LottieAnimation
+                :animationData="saasAnimation"
+                :width="280"
+                :height="280"
+              />
+            </div>
+
             <div class="text-center space-y-4">
               <h1
                 class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
@@ -697,7 +720,7 @@ const handleNewChat = (payload: { course: string }) => {
         </div>
 
         <!-- 【场景 B】 Agent PDF 工作台 -->
-        <div v-else-if="activeRail === `agentpdf`" class="h-full w-full p-4">
+        <div v-else-if="activeRail === `agentpdf`" class="h-full w-full p-4 overflow-hidden">
           <div
             class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
           >
