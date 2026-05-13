@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storageLocal } from "@pureadmin/utils";
 import {
@@ -45,7 +45,13 @@ const currentTheme = ref(
 );
 
 // 会话数据集
-const activeRail = ref("chat");
+const activeRail = ref(route.path.split("/").pop() || "chat");
+watch(
+  () => route.path,
+  newPath => {
+    activeRail.value = newPath.split("/").pop() || "chat";
+  }
+);
 const activeCourse = ref(null);
 
 // 学生拥有的课程（动态拉取）
@@ -255,26 +261,17 @@ const handleNewChat = (payload: { course: string }) => {
 
 <template>
   <div
-    class="ai-app-root h-screen w-full flex bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans"
+    class="ai-app-root h-[calc(100vh-120px)] w-full flex bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans rounded-xl overflow-hidden"
     :class="currentTheme"
   >
     <!-- 极简左侧边栏 (第一块) -->
     <aside
+      v-if="['chat', 'agentpdf'].includes(activeRail)"
       class="w-[260px] flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300"
     >
-      <!-- 品牌Logo区 -->
-      <div class="h-16 flex items-center border-b border-gray-100 px-6">
-        <img :src="getLogo()" alt="logo" class="h-8 w-8 object-contain mr-3" />
-        <span
-          class="text-xl font-black italic tracking-tighter uppercase"
-          style="color: var(--el-color-primary)"
-          >IntellEdu</span
-        >
-      </div>
       <div class="flex-1 overflow-hidden">
         <AiSidebar
           v-model:activeRail="activeRail"
-          :railItems="railItems"
           :conversations="conversations"
           :courses="myCourses"
           @new-chat="handleNewChat"
@@ -383,7 +380,10 @@ const handleNewChat = (payload: { course: string }) => {
               >
                 今天想聊点什么？
               </h1>
-              <p class="text-[15px] font-medium tracking-wide" style="color: rgba(140,80,159,0.7)">
+              <p
+                class="text-[15px] font-medium tracking-wide"
+                style="color: rgba(140, 80, 159, 0.7)"
+              >
                 请先选择一门课程，然后随时向大模型提问
               </p>
             </div>

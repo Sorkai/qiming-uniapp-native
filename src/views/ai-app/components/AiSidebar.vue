@@ -2,42 +2,6 @@
   <div
     class="ai-sidebar h-full flex flex-col p-4 bg-gray-50/50 border-r border-gray-100 italic-safe"
   >
-    <!-- Navigation: Simplified Icons -->
-    <div class="space-y-1 mb-6">
-      <div
-        v-for="item in railItems"
-        :key="item.key"
-        :class="[
-          'flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-all duration-300 group',
-          activeRail === item.key
-            ? 'bg-white shadow-sm text-primary transform scale-[1.02]'
-            : 'text-gray-500 hover:bg-white/60 hover:text-gray-800 hover:translate-x-1'
-        ]"
-        @click="$emit('update:activeRail', item.key)"
-      >
-        <div class="flex items-center gap-3">
-          <el-icon
-            :size="18"
-            class="transition-transform duration-300"
-            :class="
-              activeRail === item.key
-                ? 'text-primary scale-110'
-                : 'group-hover:text-primary group-hover:scale-110 group-hover:rotate-6'
-            "
-            ><component :is="item.icon"
-          /></el-icon>
-          <span class="text-sm font-medium transition-colors">{{
-            item.label
-          }}</span>
-        </div>
-        <!-- 侧边导航指示条(可选) -->
-        <div
-          v-if="activeRail === item.key"
-          class="w-1 h-4 bg-primary rounded-full animate-fade-in-right"
-        ></div>
-      </div>
-    </div>
-
     <!-- Sessions: Grouped by Course -->
     <div class="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-6">
       <!-- 1. 智能辅导 (按课程展开) -->
@@ -64,8 +28,8 @@
                   type="primary"
                   plain
                   :icon="Plus"
-                  @click.stop="$emit('new-chat', { course })"
                   class="!rounded-md opacity-0 group-hover/course:opacity-100 transition-all scale-75 hover:scale-90 hover:!shadow-[0_0_8px_rgba(94,127,248,0.4)]"
+                  @click.stop="$emit('new-chat', { course })"
                 />
               </el-tooltip>
             </div>
@@ -85,7 +49,7 @@
                   >
                     <div
                       class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    ></div>
+                    />
 
                     <span
                       class="text-[15px] text-gray-600 truncate group-hover:text-primary group-hover:font-medium transition-all duration-300 relative z-10"
@@ -110,7 +74,7 @@
         </div>
         <div class="space-y-1">
           <div
-            v-for="(conv, index) in recentHistory"
+            v-for="conv in recentHistory"
             :key="'recent-' + conv.id"
             class="px-3 py-2.5 rounded-xl hover:bg-white cursor-pointer group transition-all duration-300 border border-transparent hover:border-gray-100"
           >
@@ -139,7 +103,7 @@
       <!-- 渐变悬浮背景 -->
       <div
         class="absolute inset-0 bg-gradient-to-r from-white to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-      ></div>
+      />
       <el-avatar
         :size="32"
         src="https://avatars.githubusercontent.com/u/44761321?v=4"

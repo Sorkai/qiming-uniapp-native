@@ -20,4 +20,3 @@ router.replace({
 <template>
   <div class="ai-app-entry-redirect" />
 </template>
-

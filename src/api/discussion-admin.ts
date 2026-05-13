@@ -705,11 +705,9 @@ export function getGlobalStatistics(params?: {
   endDate?: string;
 }): Promise<GlobalStatistics> {
   return http
-    .request<MaybeWrappedResponse<GlobalStatistics>>(
-      "get",
-      "/edu/backend/v1/discussions/statistics",
-      { params }
-    )
+    .request<
+      MaybeWrappedResponse<GlobalStatistics>
+    >("get", "/edu/backend/v1/discussions/statistics", { params })
     .then(unwrapResponseData);
 }
 

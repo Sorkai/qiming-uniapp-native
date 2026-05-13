@@ -410,9 +410,7 @@ onMounted(() => {
               <el-select
                 v-if="field.kind === 'dropdown'"
                 :model-value="field.value"
-                @update:model-value="
-                  value => patchFieldValue(field.key, value)
-                "
+                @update:model-value="value => patchFieldValue(field.key, value)"
               >
                 <el-option
                   v-for="option in field.choices"
@@ -426,9 +424,7 @@ onMounted(() => {
                 v-else-if="field.kind === 'radio'"
                 :model-value="field.value"
                 class="radio-group"
-                @update:model-value="
-                  value => patchFieldValue(field.key, value)
-                "
+                @update:model-value="value => patchFieldValue(field.key, value)"
               >
                 <el-radio-button
                   v-for="option in field.choices"
@@ -442,9 +438,7 @@ onMounted(() => {
               <el-switch
                 v-else-if="field.kind === 'checkbox'"
                 :model-value="field.value"
-                @update:model-value="
-                  value => patchFieldValue(field.key, value)
-                "
+                @update:model-value="value => patchFieldValue(field.key, value)"
               />
 
               <el-input-number
@@ -462,37 +456,35 @@ onMounted(() => {
                 :min="field.minimum ?? 0"
                 :max="field.maximum ?? 100"
                 :step="field.step ?? 1"
-                @update:model-value="
-                  value => patchFieldValue(field.key, value)
-                "
+                @update:model-value="value => patchFieldValue(field.key, value)"
               />
 
               <el-input
                 v-else
                 :model-value="field.value"
                 :placeholder="field.placeholder || ''"
-                @update:model-value="
-                  value => patchFieldValue(field.key, value)
-                "
+                @update:model-value="value => patchFieldValue(field.key, value)"
               />
             </label>
           </template>
         </div>
 
-      <div class="submit-row">
-        <button
-          class="submit-btn"
-          :disabled="!canSubmit"
-          @click="submitTranslation"
-        >
-          <el-icon v-if="submitting || uploading"><Loading /></el-icon>
-          <el-icon v-else><Position /></el-icon>
-          <span>{{ submitting || uploading ? "处理中..." : "开始翻译" }}</span>
-        </button>
-      </div>
+        <div class="submit-row">
+          <button
+            class="submit-btn"
+            :disabled="!canSubmit"
+            @click="submitTranslation"
+          >
+            <el-icon v-if="submitting || uploading"><Loading /></el-icon>
+            <el-icon v-else><Position /></el-icon>
+            <span>{{
+              submitting || uploading ? "处理中..." : "开始翻译"
+            }}</span>
+          </button>
+        </div>
       </div>
     </section>
- 
+
     <section class="result-grid">
       <article class="panel-card preview-card">
         <div class="section-head">

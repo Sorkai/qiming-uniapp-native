@@ -18,17 +18,17 @@
             <div
               ref="radarChartRef"
               class="w-full h-full transform transition-transform duration-700 group-hover:scale-105"
-            ></div>
+            />
             <div
               class="absolute top-2 right-2 flex items-center gap-1 transition-opacity duration-300"
             >
               <span class="relative flex h-2 w-2">
                 <span
                   class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"
-                ></span>
+                />
                 <span
                   class="relative inline-flex rounded-full h-2 w-2 bg-success"
-                ></span>
+                />
               </span>
               <span
                 class="text-xs text-gray-400 font-bold group-hover:text-success transition-colors"
@@ -38,7 +38,7 @@
             <!-- 指示光效 -->
             <div
               class="absolute -inset-1 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-700 pointer-events-none"
-            ></div>
+            />
           </div>
 
           <!-- Agent 状态列表: 动画组 -->
@@ -71,11 +71,11 @@
                 <div
                   v-if="agent.status === 'running'"
                   class="absolute top-0 left-0 w-1 h-full bg-primary animate-pulse"
-                ></div>
+                />
                 <div
                   v-else
                   class="absolute top-0 left-0 w-1 h-full bg-success transition-all duration-500 transform origin-left"
-                ></div>
+                />
 
                 <div
                   class="flex items-center justify-between mb-1 relative z-10"
@@ -139,7 +139,7 @@
               <!-- 悬浮光效背景 -->
               <div
                 class="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-br from-white/0 via-primary/5 to-white/0 opacity-0 group-hover/res:opacity-100 group-hover/res:animate-spin-slow pointer-events-none transition-opacity duration-500"
-              ></div>
+              />
 
               <div class="flex items-start justify-between mb-2 relative z-10">
                 <el-tag

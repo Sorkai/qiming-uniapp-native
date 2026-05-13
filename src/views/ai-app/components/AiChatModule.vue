@@ -74,7 +74,7 @@
               <div
                 v-if="msg.type === 'system'"
                 class="absolute top-0 left-[-100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/50 to-transparent group-hover:left-[200%] transition-all duration-1000 ease-in-out opacity-0 group-hover:opacity-100"
-              ></div>
+              />
 
               <div
                 class="text-base leading-relaxed whitespace-pre-wrap relative z-10"
@@ -101,7 +101,7 @@
                   >
                     <div
                       class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300"
-                    ></div>
+                    />
                     <el-icon
                       class="text-white text-3xl opacity-80 group-hover:scale-125 group-hover:text-primary transition-all duration-300 z-10"
                       ><VideoPlay
@@ -149,7 +149,7 @@
         <!-- 发光的呼吸框 -->
         <div
           class="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-[24px] blur opacity-0 group-focus-within:opacity-100 group-focus-within:animate-pulse transition duration-500"
-        ></div>
+        />
         <div
           class="relative bg-white border border-gray-200 rounded-[24px] shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300 overflow-hidden"
         >
