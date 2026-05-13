@@ -567,15 +567,6 @@ const handleNewChat = (payload: { course: string }) => {
           <div
             class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
           >
-            <!-- 待机状态 Lottie 动画 -->
-            <div class="flex justify-center mb-[-20px]">
-              <LottieAnimation
-                :animationData="saasAnimation"
-                :width="280"
-                :height="280"
-              />
-            </div>
-
             <div class="text-center space-y-4">
               <h1
                 class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
@@ -738,6 +729,21 @@ const handleNewChat = (payload: { course: string }) => {
 
         <div v-else-if="activeRail === `path`" class="h-full w-full p-4">
           <div
+            v-if="isTeacher && !selectedStudentId"
+            class="h-full w-full flex items-center justify-center"
+          >
+            <div class="flex flex-col items-center justify-center bg-transparent lottie-empty-state">
+              <LottieAnimation
+                :animationData="onlineChartAnimation"
+                :width="360"
+                :height="360"
+              />
+              <h3 class="mt-4 text-lg font-black text-gray-600">尚未选择学生</h3>
+              <p class="mt-2 text-sm text-gray-400">请在顶部选择需要分析的学生以查看个性化路径规划</p>
+            </div>
+          </div>
+          <div
+            v-else
             class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
           >
             <AiLearningPath :student-id="selectedStudentId" />
@@ -746,6 +752,21 @@ const handleNewChat = (payload: { course: string }) => {
 
         <div v-else-if="activeRail === `profile`" class="h-full w-full p-4">
           <div
+            v-if="isTeacher && !selectedStudentId"
+            class="h-full w-full flex items-center justify-center"
+          >
+            <div class="flex flex-col items-center justify-center bg-transparent lottie-empty-state">
+              <LottieAnimation
+                :animationData="emptyStateDevelopmentAnimation"
+                :width="360"
+                :height="360"
+              />
+              <h3 class="mt-4 text-lg font-black text-gray-600">尚未选择学生</h3>
+              <p class="mt-2 text-sm text-gray-400">请在顶部选择学生以查看学习画像与多智能体分析</p>
+            </div>
+          </div>
+          <div
+            v-else
             class="h-full flex gap-4 overflow-hidden"
           >
             <!-- 左：完整学习画像 -->
@@ -769,6 +790,21 @@ const handleNewChat = (payload: { course: string }) => {
 
         <div v-else-if="activeRail === `assessment`" class="h-full w-full p-4">
           <div
+            v-if="isTeacher && !selectedStudentId"
+            class="h-full w-full flex items-center justify-center"
+          >
+            <div class="flex flex-col items-center justify-center bg-transparent lottie-empty-state">
+              <LottieAnimation
+                :animationData="saasAnimation"
+                :width="360"
+                :height="360"
+              />
+              <h3 class="mt-4 text-lg font-black text-gray-600">尚未选择学生</h3>
+              <p class="mt-2 text-sm text-gray-400">请在顶部选择学生以查看学习评估报告</p>
+            </div>
+          </div>
+          <div
+            v-else
             class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
           >
             <AiAssessment :student-id="selectedStudentId" />
@@ -813,6 +849,14 @@ const handleNewChat = (payload: { course: string }) => {
   :deep(iframe),
   :deep(svg image) {
     filter: saturate(1.82); // 1 / 0.55 ≈ 1.82，抵消父级降饱和
+  }
+}
+
+/* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */
+.lottie-empty-state {
+  :deep(svg) {
+    mix-blend-mode: multiply;
+    background: transparent !important;
   }
 }
 
