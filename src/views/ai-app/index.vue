@@ -241,6 +241,7 @@ onMounted(() => {
 });
 
 const quickMessage = ref("");
+const quickCourse = ref("");
 const selectedMockAgent = ref("代码生成特工");
 
 const handleNewChat = (payload: { course: string }) => {
@@ -254,7 +255,7 @@ const handleNewChat = (payload: { course: string }) => {
 
 <template>
   <div
-    class="ai-app-root h-screen w-full flex bg-[#f4f7fd] font-sans"
+    class="ai-app-root h-screen w-full flex bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans"
     :class="currentTheme"
   >
     <!-- 极简左侧边栏 (第一块) -->
@@ -378,11 +379,11 @@ const handleNewChat = (payload: { course: string }) => {
           >
             <div class="text-center space-y-4">
               <h1
-                class="text-3xl sm:text-[38px] font-bold text-gray-800 tracking-tight"
+                class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
               >
                 今天想聊点什么？
               </h1>
-              <p class="text-[15px] text-gray-500 font-medium">
+              <p class="text-[15px] font-medium tracking-wide" style="color: rgba(140,80,159,0.7)">
                 请先选择一门课程，然后随时向大模型提问
               </p>
             </div>
@@ -398,7 +399,7 @@ const handleNewChat = (payload: { course: string }) => {
                 class="quick-chat-input"
                 resize="none"
                 @keyup.enter.prevent="
-                  activeCourse ? handleNewChat({ course: activeCourse }) : null
+                  quickCourse ? handleNewChat({ course: quickCourse }) : null
                 "
               />
 
@@ -408,12 +409,12 @@ const handleNewChat = (payload: { course: string }) => {
                 <div class="flex flex-wrap items-center gap-1.5">
                   <el-dropdown
                     trigger="click"
-                    @command="c => (activeCourse = c)"
+                    @command="c => (quickCourse = c)"
                   >
                     <span
                       class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors"
                       :class="
-                        activeCourse
+                        quickCourse
                           ? 'bg-primary/10 text-primary'
                           : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
                       "
@@ -421,7 +422,7 @@ const handleNewChat = (payload: { course: string }) => {
                       <el-icon class="mr-1.5 text-[14px]"
                         ><FolderOpened
                       /></el-icon>
-                      {{ activeCourse || "选择课程" }}
+                      {{ quickCourse || "选择课程" }}
                       <el-icon class="ml-1 text-[12px]"><ArrowDown /></el-icon>
                     </span>
                     <template #dropdown>
@@ -491,21 +492,21 @@ const handleNewChat = (payload: { course: string }) => {
                   <button
                     class="w-9 h-9 flex items-center justify-center rounded-full transition-all transform border"
                     :class="
-                      activeCourse && quickMessage.trim()
+                      quickCourse && quickMessage.trim()
                         ? 'bg-black border-black text-white hover:bg-gray-800 hover:scale-105 shadow-md cursor-pointer'
                         : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
                     "
-                    :disabled="!activeCourse || !quickMessage.trim()"
+                    :disabled="!quickCourse || !quickMessage.trim()"
                     @click="
-                      activeCourse
-                        ? handleNewChat({ course: activeCourse })
+                      quickCourse
+                        ? handleNewChat({ course: quickCourse })
                         : null
                     "
                   >
                     <el-icon
                       class="text-lg"
                       :class="
-                        activeCourse && quickMessage.trim() ? '' : 'font-bold'
+                        quickCourse && quickMessage.trim() ? '' : 'font-bold'
                       "
                       ><Top
                     /></el-icon>
@@ -551,6 +552,32 @@ const handleNewChat = (payload: { course: string }) => {
 <style scoped lang="scss">
 .ai-app-root {
   --el-color-primary: #5e7ff8; // 强制保持平台蓝
+}
+
+.gradient-text-animate {
+  background: linear-gradient(
+    -45deg,
+    rgb(140, 80, 159),
+    rgb(190, 120, 200),
+    rgb(140, 80, 159)
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: gradientShift 6s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .placeholder-container {

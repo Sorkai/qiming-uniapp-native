@@ -31,7 +31,7 @@
                 ></span>
               </span>
               <span
-                class="text-[9px] text-gray-400 font-bold group-hover:text-success transition-colors"
+                class="text-xs text-gray-400 font-bold group-hover:text-success transition-colors"
                 >实时同步 中</span
               >
             </div>
@@ -44,7 +44,7 @@
           <!-- Agent 状态列表: 动画组 -->
           <div class="space-y-3 mt-4">
             <div
-              class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex justify-between group cursor-pointer"
+              class="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 flex justify-between group cursor-pointer"
             >
               <span
                 class="group-hover:text-primary transition-colors duration-300"
@@ -81,7 +81,7 @@
                   class="flex items-center justify-between mb-1 relative z-10"
                 >
                   <span
-                    class="text-xs font-bold text-gray-800 group-hover/agent:text-primary transition-colors"
+                    class="text-sm font-bold text-gray-800 group-hover/agent:text-primary transition-colors"
                     >{{ agent.name }}</span
                   >
 
@@ -110,7 +110,7 @@
                     </el-tag>
                   </transition>
                 </div>
-                <span class="text-[11px] text-gray-400 relative z-10">{{
+                <span class="text-[13px] text-gray-400 relative z-10">{{
                   agent.desc
                 }}</span>
               </div>
@@ -162,13 +162,13 @@
                 />
               </div>
               <h4
-                class="text-sm font-bold text-gray-700 mb-1 group-hover/res:text-primary transition-colors relative z-10"
+                class="text-base font-bold text-gray-700 mb-1 group-hover/res:text-primary transition-colors relative z-10"
               >
                 {{ res.title }}
               </h4>
               <p
                 v-if="res.desc"
-                class="text-[11px] text-gray-400 leading-snug relative z-10"
+                class="text-xs text-gray-400 leading-snug relative z-10"
               >
                 {{ res.desc }}
               </p>

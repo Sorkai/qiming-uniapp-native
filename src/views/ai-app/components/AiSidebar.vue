@@ -45,7 +45,7 @@
         <div v-for="course in courses" :key="course" class="mb-4">
           <!-- 课程分类标题栏 + 新建按钮 -->
           <div
-            class="text-[12px] font-bold text-gray-700 tracking-widest mb-2 px-3 flex items-center justify-between group/course cursor-pointer"
+            class="text-sm font-bold text-gray-700 tracking-widest mb-2 px-3 flex items-center justify-between group/course cursor-pointer"
             @click="toggleCourse(course)"
           >
             <div class="flex items-center gap-2">
@@ -62,7 +62,6 @@
               <el-tooltip content="新建该课程的辅导会话" placement="right">
                 <el-button
                   type="primary"
-                  size="small"
                   plain
                   :icon="Plus"
                   @click.stop="$emit('new-chat', { course })"
@@ -89,7 +88,7 @@
                     ></div>
 
                     <span
-                      class="text-sm text-gray-600 truncate group-hover:text-primary group-hover:font-medium transition-all duration-300 relative z-10"
+                      class="text-[15px] text-gray-600 truncate group-hover:text-primary group-hover:font-medium transition-all duration-300 relative z-10"
                     >
                       {{ conv.title }}
                     </span>
@@ -104,7 +103,7 @@
       <!-- 2. 最近聊天记录 (全局历史) -->
       <div class="mt-8">
         <div
-          class="text-[12px] font-bold text-gray-400 tracking-widest mb-3 px-3 flex items-center gap-2"
+          class="text-sm font-bold text-gray-400 tracking-widest mb-3 px-3 flex items-center gap-2"
         >
           <el-icon><Timer /></el-icon>
           <span>历史记录</span>
@@ -117,13 +116,13 @@
           >
             <div class="flex items-center justify-between gap-2">
               <span
-                class="text-[13px] text-gray-500 truncate group-hover:text-gray-700"
+                class="text-sm text-gray-500 truncate group-hover:text-gray-700"
               >
                 {{ conv.title }}
               </span>
               <span
                 v-if="conv.course"
-                class="text-[10px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded italic"
+                class="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded italic"
               >
                 {{ conv.course }}
               </span>
@@ -148,12 +147,12 @@
       />
       <div class="flex-1 min-w-0 relative z-10">
         <p
-          class="text-xs font-bold text-gray-700 truncate group-hover:text-primary transition-colors"
+          class="text-sm font-bold text-gray-700 truncate group-hover:text-primary transition-colors"
         >
           系统设置
         </p>
         <p
-          class="text-[10px] text-gray-400 truncate group-hover:text-gray-500 transition-colors"
+          class="text-xs text-gray-400 truncate group-hover:text-gray-500 transition-colors"
         >
           当前版本
         </p>
