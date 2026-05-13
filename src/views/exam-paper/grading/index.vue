@@ -525,12 +525,12 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 /* 浅色模式变量 */
-$light-bg: #f5f7fa;
-$light-card-bg: #fff;
-$light-text-primary: #1f2937;
-$light-text-secondary: #6b7280;
-$light-text-muted: #9ca3af;
-$light-border: #e5e7eb;
+$light-bg: var(--el-bg-color-page);
+$light-card-bg: var(--el-bg-color);
+$light-text-primary: var(--el-text-color-primary);
+$light-text-secondary: var(--el-text-color-regular);
+$light-text-muted: var(--el-text-color-secondary);
+$light-border: var(--el-border-color-lighter);
 $light-shadow:
   0 4px 6px -1px rgb(0 0 0 / 10%),
   0 2px 4px -2px rgb(0 0 0 / 10%);
@@ -539,12 +539,12 @@ $light-shadow-lg:
   0 4px 6px -4px rgb(0 0 0 / 10%);
 
 /* 深色模式变量 */
-$dark-bg: #0f172a;
-$dark-card-bg: rgba(30, 41, 59, 0.8);
-$dark-text-primary: #f1f5f9;
-$dark-text-secondary: #94a3b8;
-$dark-text-muted: #64748b;
-$dark-border: rgba(255, 255, 255, 0.1);
+$dark-bg: var(--el-bg-color-page);
+$dark-card-bg: var(--el-bg-color);
+$dark-text-primary: var(--el-text-color-primary);
+$dark-text-secondary: var(--el-text-color-regular);
+$dark-text-muted: var(--el-text-color-secondary);
+$dark-border: var(--el-border-color-lighter);
 $dark-shadow:
   0 4px 6px -1px rgb(0 0 0 / 30%),
   0 2px 4px -2px rgb(0 0 0 / 30%);
@@ -553,7 +553,7 @@ $dark-shadow-lg:
   0 4px 6px -4px rgb(0 0 0 / 40%);
 
 /* 主色调 */
-$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
 $success-gradient: linear-gradient(135deg, #739cf9 0%, #80c8fa 100%);
 $warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 $info-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
@@ -566,7 +566,9 @@ $radius-lg: 16px;
 $radius-xl: 20px;
 
 .grading-container {
+  box-sizing: border-box;
   min-height: 100%;
+  padding: 24px;
   overflow-x: hidden;
   transition: all 0.3s ease;
 
@@ -700,6 +702,8 @@ $radius-xl: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  min-height: 104px;
   padding: 24px;
   margin-bottom: 24px;
   background: $light-card-bg;
@@ -710,28 +714,31 @@ $radius-xl: 20px;
   .header-content {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
   }
 
   .header-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     color: #fff;
-    background: $warning-gradient;
+    background: $primary-gradient;
     border-radius: $radius-md;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
 
     svg {
-      width: 32px;
-      height: 32px;
+      width: 28px !important;
+      height: 28px !important;
+      display: block;
     }
   }
 
   .header-info {
     .page-title {
-      margin: 0 0 8px;
+      margin: 0 0 4px;
       font-size: 24px;
       font-weight: 700;
       color: $light-text-primary;
@@ -784,6 +791,7 @@ $radius-xl: 20px;
       height: 56px;
       color: #fff;
       border-radius: $radius-md;
+      flex-shrink: 0;
 
       &.pending {
         background: $danger-gradient;
@@ -802,8 +810,9 @@ $radius-xl: 20px;
       }
 
       svg {
-        width: 26px;
-        height: 26px;
+        width: 26px !important;
+        height: 26px !important;
+        display: block;
       }
     }
 
@@ -1254,8 +1263,10 @@ $radius-xl: 20px;
   }
 }
 
-/* SVG 图标样式 */
-:deep(svg) {
+/* SVG 图标样式 —— 仅作用于本页的线性图标容器，避免影响 el-empty / el-icon / echarts 等填充型 SVG */
+:deep(.header-icon svg),
+:deep(.stat-icon svg),
+:deep(.paper-icon svg) {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
