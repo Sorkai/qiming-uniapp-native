@@ -52,6 +52,7 @@ const currentTheme = ref(
   (storageLocal().getItem("course_theme") as string) ||
     (layoutStorage?.darkMode ? "dark" : "light")
 );
+const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
 // 会话数据集
 const activeRail = ref(route.path.split("/").pop() || "chat");
@@ -276,12 +277,12 @@ const handleNewChat = (payload: { course: string }) => {
 
 <template>
   <div
-    class="ai-app-root h-[calc(100vh-140px)] flex bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans rounded-xl overflow-hidden shadow-sm"
+    class="ai-app-root h-[calc(100vh-80px)] flex bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans rounded-xl overflow-hidden shadow-sm"
     :class="currentTheme"
   >
     <!-- 极简左侧边栏 (第一块) -->
     <aside
-      v-if="['chat', 'agentpdf'].includes(activeRail)"
+      v-if="activeRail === 'chat'"
       class="flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
       :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
     >
@@ -326,33 +327,8 @@ const handleNewChat = (payload: { course: string }) => {
       </button>
     </aside>
 
-    <!-- 右边总体容器 (上边栏 + 主体) -->
+    <!-- 右边总体容器 (主体) -->
     <div class="flex-1 flex flex-col min-w-0">
-      <!-- 上边栏 (第二块) -->
-      <header
-        class="h-16 flex-shrink-0 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-6 z-10"
-      >
-        <div class="flex items-center gap-3">
-          <el-button
-            :icon="ArrowLeftBold"
-            plain
-            class="!rounded-lg shadow-sm hover:-translate-x-1 transition-transform"
-            @click="goBack"
-          />
-          <div class="w-[1px] h-5 bg-gray-200 mx-2" />
-          <h2 class="text-[15px] font-black text-gray-800 tracking-tight">
-            AI 协作工坊
-          </h2>
-          <el-tag
-            size="small"
-            type="primary"
-            effect="light"
-            class="ml-2 !rounded-full"
-            >基于大模型的系统</el-tag
-          >
-        </div>
-      </header>
-
       <!-- 主体内容 (第三块) -->
       <main class="flex-1 overflow-hidden relative">
         <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
@@ -576,7 +552,7 @@ const handleNewChat = (payload: { course: string }) => {
           <div
             class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
           >
-            <AgentPdfWorkbench />
+            <AgentPdfWorkbench :service-url="pdfServiceUrl" />
           </div>
         </div>
 

@@ -5,32 +5,70 @@ import {
   Aim,
   Check,
   VideoPlay,
-  Edit
+  Edit,
+  Cpu,
+  Reading
 } from "@element-plus/icons-vue";
+
+// 课程上下文：嵌入式 Linux 开发实践教程（Qt GUI 与 TensorFlow Lite 集成）
+const courseMeta = ref({
+  name: "嵌入式 Linux 开发实践教程",
+  subtitle: "Qt GUI 与 TensorFlow Lite 集成",
+  totalPhase: 4,
+  currentPhase: 2,
+  estimatedHours: 36
+});
 
 const roadmapData = ref([
   {
-    title: "第一阶段：基础概念强化",
+    title: "第一阶段：嵌入式 Qt 框架与环境搭建",
     status: "completed",
+    summary: "理解 Qt 模块体系，完成交叉编译工具链与 Qt Creator 远程部署",
     nodes: [
-      { name: "二叉树的定义与性质", type: "video", done: true },
-      { name: "完全二叉树满二叉树", type: "quiz", done: true }
+      { name: "Qt Widgets / QML 与模块体系", type: "video", done: true },
+      { name: "交叉编译工具链与 sysroot 配置", type: "doc", done: true },
+      { name: "Qt Creator 远程部署小测", type: "quiz", done: true }
     ]
   },
   {
-    title: "第二阶段：核心算法突破 (当前)",
+    title: "第二阶段：Qt GUI 编程核心 (当前)",
     status: "active",
+    summary: "信号与槽机制、布局管理器与 Qt Designer 综合实战",
     nodes: [
-      { name: "红黑树的左旋与右旋", type: "video", done: false, current: true },
-      { name: "红黑树插入修复逻辑", type: "code", done: false }
+      {
+        name: "信号与槽机制 (Lambda 与 Connect)",
+        type: "video",
+        done: true
+      },
+      {
+        name: "QHBoxLayout / QGridLayout 响应式布局",
+        type: "video",
+        done: false,
+        current: true
+      },
+      { name: "Qt Designer 拖拽 + uic 生成代码", type: "code", done: false },
+      { name: "QThread 与 QtConcurrent 多线程", type: "quiz", done: false }
     ]
   },
   {
-    title: "第三阶段：应用与拓展",
+    title: "第三阶段：TensorFlow Lite 推理引擎部署",
     status: "pending",
+    summary: "TFLite 模型转换、量化与 C++ Interpreter 接入",
     nodes: [
-      { name: "B树与B+树对比", type: "doc", done: false },
-      { name: "数据库索引实战", type: "code", done: false }
+      { name: "TFLite 模型转换 (SavedModel → .tflite)", type: "video", done: false },
+      { name: "训练后量化 / 量化感知训练 (QAT)", type: "doc", done: false },
+      { name: "C++ Interpreter 加载与推理", type: "code", done: false },
+      { name: "GPU / NNAPI / XNNPACK Delegate", type: "doc", done: false }
+    ]
+  },
+  {
+    title: "第四阶段：Qt + TFLite 综合智能终端实践",
+    status: "pending",
+    summary: "V4L2 摄像头采集 → TFLite 实时推理 → Qt UI 反馈闭环",
+    nodes: [
+      { name: "V4L2 摄像头数据流接入", type: "code", done: false },
+      { name: "推理结果叠加 (QPainter 绘框)", type: "code", done: false },
+      { name: "目标板 FPS / 内存性能调优", type: "quiz", done: false }
     ]
   }
 ]);
@@ -45,6 +83,39 @@ const roadmapData = ref([
       <p class="text-sm text-gray-500 mt-1">
         基于学习画像为你动态规划的最优学习路线
       </p>
+
+      <!-- 课程信息卡 -->
+      <div
+        class="mt-4 max-w-3xl bg-gradient-to-r from-primary/5 via-purple-50 to-transparent border border-primary/10 rounded-2xl p-5 flex items-center gap-4"
+      >
+        <div
+          class="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary"
+        >
+          <el-icon :size="28"><Cpu /></el-icon>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-bold text-gray-800">{{ courseMeta.name }}</span>
+            <el-tag size="small" type="info" round class="!border-none">{{
+              courseMeta.subtitle
+            }}</el-tag>
+          </div>
+          <div class="mt-2 text-xs text-gray-500 flex items-center gap-3">
+            <span
+              >当前进度：第
+              <span class="text-primary font-bold">{{
+                courseMeta.currentPhase
+              }}</span>
+              / {{ courseMeta.totalPhase }} 阶段</span
+            >
+            <span class="text-gray-300">|</span>
+            <span>预计 {{ courseMeta.estimatedHours }} 学时</span>
+          </div>
+        </div>
+        <el-button type="primary" round size="small">
+          <el-icon class="mr-1"><Reading /></el-icon>继续学习
+        </el-button>
+      </div>
     </div>
 
     <div class="max-w-3xl mx-auto w-full relative">
@@ -93,6 +164,15 @@ const roadmapData = ref([
         >
           {{ phase.title }}
         </h3>
+        <p
+          v-if="phase.summary"
+          class="-mt-3 mb-4 text-xs"
+          :class="
+            phase.status === 'pending' ? 'text-gray-300' : 'text-gray-500'
+          "
+        >
+          {{ phase.summary }}
+        </p>
 
         <div class="grid gap-3">
           <div
@@ -144,6 +224,22 @@ const roadmapData = ref([
               class="!border-none bg-gray-50"
             >
               <el-icon class="mr-1"><Edit /></el-icon> 练习
+            </el-tag>
+            <el-tag
+              v-else-if="node.type === 'code'"
+              size="small"
+              type="warning"
+              class="!border-none"
+            >
+              <el-icon class="mr-1"><Edit /></el-icon> 代码实操
+            </el-tag>
+            <el-tag
+              v-else-if="node.type === 'doc'"
+              size="small"
+              type="success"
+              class="!border-none"
+            >
+              <el-icon class="mr-1"><Reading /></el-icon> 文档
             </el-tag>
           </div>
         </div>

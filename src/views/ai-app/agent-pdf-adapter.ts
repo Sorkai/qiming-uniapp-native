@@ -251,6 +251,14 @@ function buildFieldKey(label: string, componentId: number) {
   return normalized || `component_${componentId}`;
 }
 
+function ensureAgentPdfServiceUrl(serviceUrl?: string | null) {
+  const normalized = String(serviceUrl || "").trim();
+  if (!normalized) {
+    throw new Error("Agent PDF 服务地址未配置");
+  }
+  return normalized.replace(/\/$/, "");
+}
+
 function toField(component: GradioComponent): AgentPdfDynamicField | null {
   const props = component.props || {};
   const label = String(props.label || component.type || component.id);
@@ -339,7 +347,8 @@ export async function fetchAgentPdfConfig(
   serviceUrl: string,
   axiosConfig?: AxiosRequestConfig
 ) {
-  const url = `${serviceUrl.replace(/\/$/, "")}/config`;
+  const baseUrl = ensureAgentPdfServiceUrl(serviceUrl);
+  const url = `${baseUrl}/config`;
   const { data } = await axios.get<GradioConfig>(url, {
     withCredentials: true,
     ...axiosConfig
@@ -359,7 +368,11 @@ export function extractAgentPdfPresetConfig(
     component =>
       component.type === "file" &&
       Array.isArray(component.props?.file_types) &&
-      component.props.file_types.some((item: string) => item.includes(".pdf"))
+      component.props.file_types.some((item: unknown) =>
+        String(item || "")
+          .toLowerCase()
+          .includes(".pdf")
+      )
   );
   const linkInputComponent = findComponentByLabel(
     config,
@@ -471,11 +484,12 @@ export async function uploadAgentPdfFiles(
   files: File[],
   axiosConfig?: AxiosRequestConfig
 ) {
+  const baseUrl = ensureAgentPdfServiceUrl(serviceUrl);
   const formData = new FormData();
   files.forEach(file => formData.append("files", file));
 
   const { data } = await axios.post<string[]>(
-    `${serviceUrl.replace(/\/$/, "")}/upload`,
+    `${baseUrl}/upload`,
     formData,
     {
       withCredentials: true,
@@ -525,8 +539,9 @@ export async function callAgentPdfEvent(
   sessionHash?: string,
   axiosConfig?: AxiosRequestConfig
 ) {
+  const baseUrl = ensureAgentPdfServiceUrl(serviceUrl);
   const { data: response } = await axios.post<{ event_id: string }>(
-    `${serviceUrl.replace(/\/$/, "")}/call/${apiName}`,
+    `${baseUrl}/call/${apiName}`,
     {
       data,
       session_hash: sessionHash || null
@@ -545,8 +560,9 @@ export async function* streamAgentPdfEvent(
   apiName: string,
   eventId: string
 ): AsyncGenerator<GradioCallEvent> {
+  const baseUrl = ensureAgentPdfServiceUrl(serviceUrl);
   const response = await fetch(
-    `${serviceUrl.replace(/\/$/, "")}/call/${apiName}/${eventId}`,
+    `${baseUrl}/call/${apiName}/${eventId}`,
     {
       credentials: "include"
     }
@@ -594,10 +610,11 @@ export function resolveAgentPdfFileUrl(
   serviceUrl: string,
   filePathOrUrl?: string | null
 ) {
+  const baseUrl = ensureAgentPdfServiceUrl(serviceUrl);
   if (!filePathOrUrl) return "";
   if (/^https?:\/\//i.test(filePathOrUrl)) return filePathOrUrl;
   if (filePathOrUrl.startsWith("/")) {
-    return `${serviceUrl.replace(/\/$/, "")}${filePathOrUrl}`;
+    return `${baseUrl}${filePathOrUrl}`;
   }
-  return `${serviceUrl.replace(/\/$/, "")}/file=${filePathOrUrl}`;
+  return `${baseUrl}/file=${filePathOrUrl}`;
 }

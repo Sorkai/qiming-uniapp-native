@@ -456,7 +456,13 @@ onMounted(() => {
                 :min="field.minimum ?? 0"
                 :max="field.maximum ?? 100"
                 :step="field.step ?? 1"
-                @update:model-value="value => patchFieldValue(field.key, value)"
+                @update:model-value="
+                  value =>
+                    patchFieldValue(
+                      field.key,
+                      Array.isArray(value) ? (value[0] ?? null) : value
+                    )
+                "
               />
 
               <el-input
