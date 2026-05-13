@@ -104,10 +104,11 @@
       <div
         class="absolute inset-0 bg-gradient-to-r from-white to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
       />
-      <el-avatar
-        :size="32"
-        src="https://avatars.githubusercontent.com/u/44761321?v=4"
-        class="group-hover:scale-110 transition-transform duration-300 shadow-sm border border-white"
+      <img
+        :src="avatarSrc"
+        alt="user avatar"
+        class="w-8 h-8 rounded-full object-cover group-hover:scale-110 transition-transform duration-300 shadow-sm border border-white"
+        @error="handleAvatarError"
       />
       <div class="flex-1 min-w-0 relative z-10">
         <p
@@ -137,10 +138,13 @@ import {
   Timer,
   ArrowDown
 } from "@element-plus/icons-vue";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import DefaultAvatar from "@/assets/user.jpg";
+import { getUserDetail } from "@/api/user";
+import { useUserStoreHook } from "@/store/modules/user";
+import { formatAvatar } from "@/utils/avatar";
 
 const props = defineProps<{
-  railItems: any[];
   activeRail: string;
   conversations: any[];
   courses: string[];
@@ -159,6 +163,20 @@ const recentHistory = computed(() => {
 });
 
 const collapsedCourses = ref<string[]>([]);
+const userStore = useUserStoreHook();
+const avatarSrc = ref(formatAvatar(userStore.avatar));
+
+watch(
+  () => userStore.avatar,
+  avatar => {
+    avatarSrc.value = formatAvatar(avatar);
+  },
+  { immediate: true }
+);
+
+const handleAvatarError = () => {
+  avatarSrc.value = DefaultAvatar;
+};
 
 const toggleCourse = (course: string) => {
   const index = collapsedCourses.value.indexOf(course);
@@ -169,7 +187,25 @@ const toggleCourse = (course: string) => {
   }
 };
 
-defineEmits(["update:activeRail"]);
+onMounted(() => {
+  getUserDetail()
+    .then(res => {
+      const userInfo = res?.data?.userInfo;
+      if (!userInfo) return;
+
+      if (userInfo.avatar !== undefined) {
+        userStore.SET_AVATAR(userInfo.avatar || "");
+      }
+      if (userInfo.nickname) {
+        userStore.SET_NICKNAME(userInfo.nickname);
+      }
+    })
+    .catch(error => {
+      console.error("[AiSidebar] 获取用户信息失败:", error);
+    });
+});
+
+defineEmits(["update:activeRail", "new-chat", "select-chat"]);
 </script>
 
 <style scoped>

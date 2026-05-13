@@ -21,3 +21,12 @@ tests/**/coverage/
 *.sln
 tsconfig.tsbuildinfo
 .planning/*
+
+# Qiming virtual-people 项目内重型 FBX 资源 / 模型 / node_modules 走软链接，不入仓
+qiming-virtual-people/1
+qiming-virtual-people/2
+qiming-virtual-people/3
+qiming-virtual-people/4
+qiming-virtual-people/node_modules
+qiming-virtual-people/QmingVirtualPeopleTestVersion1.0.vrm
+qiming-virtual-people/outputs

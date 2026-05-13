@@ -1,0 +1,523 @@
+{
+  "vrm": "./QmingVirtualPeopleTestVersion1.0.vrm",
+  "backgrounds": [
+    {
+      "name": "教室场景 1",
+      "fileName": "1.glb",
+      "path": "./background/1.glb"
+    },
+    {
+      "name": "教室场景 2",
+      "fileName": "2.glb",
+      "path": "./background/2.glb"
+    }
+  ],
+  "motions": [
+    {
+      "group": "1",
+      "fileName": "standing_idle.fbx",
+      "name": "老师标准站立待机",
+      "type": "基础待机",
+      "detail": "数字人默认待机动作，适合作为课程页面和 3D 教室中老师的基础循环状态。",
+      "usage": "课程首页待机、讲解间隙、AI 回复前的静止呼吸动作",
+      "priority": "高",
+      "code": "A01",
+      "path": "./1/standing_idle.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_idle_02_looking.fbx",
+      "name": "老师观察式待机",
+      "type": "基础待机",
+      "detail": "带有轻微观察和视线移动，更像老师在看学生或看屏幕。",
+      "usage": "等待学生提问、播放视频时陪伴、查看课堂反馈",
+      "priority": "高",
+      "code": "A02",
+      "path": "./1/standing_idle_02_looking.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_idle_03_examine.fbx",
+      "name": "思考/查看资料待机",
+      "type": "基础待机",
+      "detail": "带轻度审视感，适合表现老师在看课件或整理思路。",
+      "usage": "AI 助教组织答案、查看知识点、等待下一条指令",
+      "priority": "中",
+      "code": "A03",
+      "path": "./1/standing_idle_03_examine.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_greeting.fbx",
+      "name": "开场问候",
+      "type": "开场互动",
+      "detail": "进入课堂时的欢迎动作，适合作为数字人第一印象。",
+      "usage": "课程开场欢迎、首次进入课程、直播课开场",
+      "priority": "高",
+      "code": "I01",
+      "path": "./1/standing_greeting.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_clap_1.fbx",
+      "name": "鼓励式鼓掌",
+      "type": "反馈鼓励",
+      "detail": "适合作为正向反馈，不夸张。",
+      "usage": "学生答对问题、完成章节、考试通过提示",
+      "priority": "中",
+      "code": "D02",
+      "path": "./1/standing_clap_1.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_fist_pump.fbx",
+      "name": "轻量庆祝/鼓励",
+      "type": "反馈鼓励",
+      "detail": "表达鼓励和成就感，比鼓掌更短更直接。",
+      "usage": "完成作业、闯关成功、学习里程碑达成",
+      "priority": "中",
+      "code": "D03",
+      "path": "./1/standing_fist_pump.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_thumbs_up.fbx",
+      "name": "认可点赞",
+      "type": "反馈鼓励",
+      "detail": "明确表达认可，适合短反馈。",
+      "usage": "AI 助教确认回答正确、操作成功提示、作业提交成功",
+      "priority": "高",
+      "code": "D01",
+      "path": "./1/standing_thumbs_up.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "writing.fbx",
+      "name": "书写/板书动作",
+      "type": "讲解操作",
+      "detail": "适合作为老师在黑板、一体机或虚拟白板前书写的表现。",
+      "usage": "讲解重点、推导公式、板书知识结构、生成课堂笔记时",
+      "priority": "高",
+      "code": "C01",
+      "path": "./1/writing.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_using_touchscreen_tablet.fbx",
+      "name": "操作教学平板/一体机",
+      "type": "讲解操作",
+      "detail": "非常贴合你项目中的智能教学一体机场景。",
+      "usage": "切换课件、点开视频、展示资料、操作课堂面板",
+      "priority": "高",
+      "code": "C02",
+      "path": "./1/standing_using_touchscreen_tablet.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_turn_90_left.fbx",
+      "name": "左转看黑板/大屏",
+      "type": "镜头转场",
+      "detail": "适合老师在学生和黑板之间切换朝向。",
+      "usage": "转向黑板讲解、切换到课件区、配合镜头调度",
+      "priority": "高",
+      "code": "G01",
+      "path": "./1/standing_turn_90_left.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_turn_90_right.fbx",
+      "name": "右转看学生/镜头",
+      "type": "镜头转场",
+      "detail": "配合互动或答疑时回到正面。",
+      "usage": "从课件回到学生视角、恢复正面讲解",
+      "priority": "高",
+      "code": "G02",
+      "path": "./1/standing_turn_90_right.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_walk_forward.fbx",
+      "name": "向前走近镜头/讲台",
+      "type": "镜头转场",
+      "detail": "适合数字人从教室后方或讲台边移动到主讲位。",
+      "usage": "课堂入场、切换讲解区、沉浸式演示过场",
+      "priority": "中",
+      "code": "G03",
+      "path": "./1/standing_walk_forward.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "standing_walk_back.fbx",
+      "name": "后退回讲台/屏幕旁",
+      "type": "镜头转场",
+      "detail": "与前进动作配套，适合回位。",
+      "usage": "讲解结束回到讲台、给屏幕留出展示区域",
+      "priority": "中",
+      "code": "G04",
+      "path": "./1/standing_walk_back.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "stand_to_sit.fbx",
+      "name": "从站立到坐下",
+      "type": "状态切换",
+      "detail": "适合老师或学生在桌前切换状态。",
+      "usage": "答疑结束坐下、学生进入听课状态、办公室咨询场景",
+      "priority": "中",
+      "code": "G06",
+      "path": "./1/stand_to_sit.fbx"
+    },
+    {
+      "group": "1",
+      "fileName": "stand_up.fbx",
+      "name": "起立动作",
+      "type": "状态切换",
+      "detail": "与坐姿动作配套。",
+      "usage": "老师起身讲解、学生回答问题前起立、场景切换",
+      "priority": "中",
+      "code": "G07",
+      "path": "./1/stand_up.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "pointing_forward.fbx",
+      "name": "正向指示",
+      "type": "讲解指示",
+      "detail": "是教学数字人最关键的解释类动作之一。",
+      "usage": "指出知识点、引导点击按钮、强调视频区域或目录节点",
+      "priority": "高",
+      "code": "B01",
+      "path": "./2/pointing_forward.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "pointing_gesture.fbx",
+      "name": "指点讲解",
+      "type": "讲解指示",
+      "detail": "相比纯 pointing 更像讲解中的手势。",
+      "usage": "讲解章节结构、说明步骤、引导学习路径",
+      "priority": "高",
+      "code": "B02",
+      "path": "./2/pointing_gesture.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "pointing.fbx",
+      "name": "泛用指向动作",
+      "type": "讲解指示",
+      "detail": "适合作为通用指示动作池补充。",
+      "usage": "指向课件、成绩卡片、资料区、答疑入口",
+      "priority": "中",
+      "code": "B03",
+      "path": "./2/pointing.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "quick_formal_bow.fbx",
+      "name": "正式致意",
+      "type": "礼仪互动",
+      "detail": "适合正式课堂礼仪或结束致谢。",
+      "usage": "课程结束、结课致辞、颁奖或考试结束提示",
+      "priority": "中",
+      "code": "I02",
+      "path": "./2/quick_formal_bow.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "quick_informal_bow.fbx",
+      "name": "轻量致意",
+      "type": "礼仪互动",
+      "detail": "比正式鞠躬更自然。",
+      "usage": "问候、感谢提问、互动结束",
+      "priority": "中",
+      "code": "I03",
+      "path": "./2/quick_informal_bow.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "reaching_out.fbx",
+      "name": "伸手引导",
+      "type": "讲解指示",
+      "detail": "有“请看这里/请继续”的感觉。",
+      "usage": "引导进入下一章节、邀请提问、提醒点击学习资料",
+      "priority": "高",
+      "code": "B04",
+      "path": "./2/reaching_out.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "plotting.fbx",
+      "name": "规划/描绘动作",
+      "type": "讲解操作",
+      "detail": "适合表现老师在讲逻辑图、路线图、知识网络。",
+      "usage": "思维导图讲解、学习路径规划、知识结构展示",
+      "priority": "高",
+      "code": "C03",
+      "path": "./2/plotting.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "sitting_and_pointing.fbx",
+      "name": "坐姿讲解指示",
+      "type": "答疑陪伴",
+      "detail": "非常适合在线答疑、陪伴学习、桌面辅导场景。",
+      "usage": "学生中心 AI 助教、桌面答疑、小窗陪伴讲解",
+      "priority": "高",
+      "code": "F01",
+      "path": "./2/sitting_and_pointing.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "sitting_idle.fbx",
+      "name": "坐姿待机",
+      "type": "答疑陪伴",
+      "detail": "适合作为坐姿数字人的基础循环。",
+      "usage": "AI 助教悬浮窗、陪伴学习、答疑窗口待机",
+      "priority": "高",
+      "code": "F02",
+      "path": "./2/sitting_idle.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "seated_idle.fbx",
+      "name": "稳定坐姿待机",
+      "type": "答疑陪伴",
+      "detail": "是另一种更平稳的坐姿备选。",
+      "usage": "长时陪伴、课程资料阅读、静默守候",
+      "priority": "中",
+      "code": "F03",
+      "path": "./2/seated_idle.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "sitting_clap.fbx",
+      "name": "坐姿鼓掌反馈",
+      "type": "反馈鼓励",
+      "detail": "更适合学生席位或答疑面板角色。",
+      "usage": "学生端数字人反馈、鼓励互动、课后评价反馈",
+      "priority": "中",
+      "code": "D04",
+      "path": "./2/sitting_clap.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "sitting_fist_pump.fbx",
+      "name": "坐姿鼓励反馈",
+      "type": "反馈鼓励",
+      "detail": "陪伴型数字人很适合。",
+      "usage": "闯关成功、做题正确、连续学习打卡成功",
+      "priority": "中",
+      "code": "D05",
+      "path": "./2/sitting_fist_pump.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "sitting_thumbs_up.fbx",
+      "name": "坐姿点赞",
+      "type": "反馈鼓励",
+      "detail": "简洁明了的正反馈。",
+      "usage": "回答正确、资料已提交、视频已看完",
+      "priority": "高",
+      "code": "D06",
+      "path": "./2/sitting_thumbs_up.fbx"
+    },
+    {
+      "group": "2",
+      "fileName": "standard_walk.fbx",
+      "name": "标准行走",
+      "type": "镜头转场",
+      "detail": "过场自然，不戏剧化。",
+      "usage": "数字人入场、镜头切换、场景漫游讲解",
+      "priority": "中",
+      "code": "G05",
+      "path": "./2/standard_walk.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "Female_Standing_Pose_1.fbx",
+      "name": "女性教师静态展示姿",
+      "type": "封面展示",
+      "detail": "适合做封面、候场或轻动效起始姿态。",
+      "usage": "课程封面、角色立绘过渡、首屏展示",
+      "priority": "中",
+      "code": "A06",
+      "path": "./3/Female_Standing_Pose_1.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "focus.fbx",
+      "name": "专注状态",
+      "type": "答疑陪伴",
+      "detail": "适合表现认真思考、认真倾听。",
+      "usage": "学生提问时聆听、AI 生成答案中、查看学习数据",
+      "priority": "高",
+      "code": "F04",
+      "path": "./3/focus.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "hands_forward_gesture.fbx",
+      "name": "双手前置讲解",
+      "type": "讲解指示",
+      "detail": "具有解释和展开说明的感觉。",
+      "usage": "知识点展开说明、总结归纳、课程提要介绍",
+      "priority": "高",
+      "code": "B05",
+      "path": "./3/hands_forward_gesture.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "happy_hand_gesture.fbx",
+      "name": "积极表达手势",
+      "type": "反馈鼓励",
+      "detail": "适合轻松、鼓励型课堂气氛。",
+      "usage": "夸奖学生、宣布完成、提示继续学习",
+      "priority": "中",
+      "code": "D07",
+      "path": "./3/happy_hand_gesture.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "head_gesture.fbx",
+      "name": "头部确认动作",
+      "type": "答疑陪伴",
+      "detail": "适合小幅确认，不打断流程。",
+      "usage": "AI 应答确认、识别到学生操作、轻度反馈",
+      "priority": "高",
+      "code": "F05",
+      "path": "./3/head_gesture.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "looking.fbx",
+      "name": "观察前方",
+      "type": "基础待机",
+      "detail": "适合作为轻运动待机。",
+      "usage": "等待学生输入、观看视频进度、监听语音输入",
+      "priority": "中",
+      "code": "A04",
+      "path": "./3/looking.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "looking_around.fbx",
+      "name": "环顾课堂",
+      "type": "基础待机",
+      "detail": "能增强 3D 教室里数字人的活感。",
+      "usage": "课堂巡场、等待学生进入、空闲时增加生命感",
+      "priority": "中",
+      "code": "A05",
+      "path": "./3/looking_around.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "looking_down.fbx",
+      "name": "低头查看内容",
+      "type": "讲解操作",
+      "detail": "适合看书、看作业、看平板。",
+      "usage": "查看作业、看成绩单、阅读资料",
+      "priority": "高",
+      "code": "C04",
+      "path": "./3/looking_down.fbx"
+    },
+    {
+      "group": "3",
+      "fileName": "looking_through_files_low.fbx",
+      "name": "翻看资料/文件",
+      "type": "讲解操作",
+      "detail": "非常贴合资料区与课程文档场景。",
+      "usage": "课程资料阅读、作业批注前、试卷解析时",
+      "priority": "高",
+      "code": "C05",
+      "path": "./3/looking_through_files_low.fbx"
+    },
+    {
+      "group": "4",
+      "fileName": "acknowledging.fbx",
+      "name": "收到并确认",
+      "type": "答疑陪伴",
+      "detail": "像老师听到学生发言后的确认动作。",
+      "usage": "接收提问、识别语音后确认、开始回答前",
+      "priority": "高",
+      "code": "F06",
+      "path": "./4/acknowledging.fbx"
+    },
+    {
+      "group": "4",
+      "fileName": "agreeing.fbx",
+      "name": "点头认同",
+      "type": "答疑陪伴",
+      "detail": "适合作为对学生发言的温和反馈。",
+      "usage": "学生答题正确、认可思路、继续追问前的过渡",
+      "priority": "高",
+      "code": "F07",
+      "path": "./4/agreeing.fbx"
+    },
+    {
+      "group": "4",
+      "fileName": "asking_question.fbx",
+      "name": "老师提问动作",
+      "type": "课堂互动",
+      "detail": "非常适合主动式课堂互动。",
+      "usage": "课堂提问、引导思考、发起互动问答",
+      "priority": "高",
+      "code": "E01",
+      "path": "./4/asking_question.fbx"
+    },
+    {
+      "group": "4",
+      "fileName": "beckoning.fbx",
+      "name": "招手示意/邀请",
+      "type": "课堂互动",
+      "detail": "很适合邀请学生继续操作或进入下一步。",
+      "usage": "邀请回答、提示进入下一节、召唤注意力",
+      "priority": "中",
+      "code": "E02",
+      "path": "./4/beckoning.fbx"
+    },
+    {
+      "group": "4",
+      "fileName": "arm_gesture.fbx",
+      "name": "手臂展开讲解",
+      "type": "讲解指示",
+      "detail": "适合作为总述、总结、引导。",
+      "usage": "讲课程目标、总结章节、展示知识全貌",
+      "priority": "高",
+      "code": "B06",
+      "path": "./4/arm_gesture.fbx"
+    },
+    {
+      "group": "4",
+      "fileName": "annoyed_head_shake.fbx",
+      "name": "轻微否定/纠错",
+      "type": "纠错反馈",
+      "detail": "用于答错了但温和纠正的反馈。",
+      "usage": "纠错提示、提醒重试、学习路径偏离时",
+      "priority": "中",
+      "code": "H01",
+      "path": "./4/annoyed_head_shake.fbx"
+    },
+    {
+      "group": "4",
+      "fileName": "clapping.fbx",
+      "name": "通用鼓掌",
+      "type": "反馈鼓励",
+      "detail": "适合更热情一点的庆祝反馈。",
+      "usage": "课程结业、活动奖励、积分达成",
+      "priority": "中",
+      "code": "D08",
+      "path": "./4/clapping.fbx"
+    },
+    {
+      "group": "4",
+      "fileName": "disappointed.fbx",
+      "name": "轻度遗憾反馈",
+      "type": "纠错反馈",
+      "detail": "可用于失败但不严厉的提示。",
+      "usage": "答题错误、任务未完成、学习中断提醒",
+      "priority": "低",
+      "code": "H02",
+      "path": "./4/disappointed.fbx"
+    }
+  ]
+}

@@ -15,7 +15,10 @@ import {
   Box,
   Monitor,
   ArrowDown,
-  Top
+  Top,
+  Expand,
+  Fold,
+  Avatar
 } from "@element-plus/icons-vue";
 
 // 引入三个拆分后的组件
@@ -28,6 +31,7 @@ import AiResourceGeneration from "./components/AiResourceGeneration.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
+import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 
 import { useNav } from "@/layout/hooks/useNav";
 
@@ -58,6 +62,12 @@ watch(
   }
 );
 const activeCourse = ref(null);
+
+// 侧边栏 / 数字人面板 收起状态
+const sidebarCollapsed = ref(false);
+const humanCollapsed = ref(false);
+const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
+const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 
 // 学生拥有的课程（动态拉取）
 const myCourses = ref(["数据结构", "算法设计", "高等数学", "大学物理"]);
@@ -272,9 +282,10 @@ const handleNewChat = (payload: { course: string }) => {
     <!-- 极简左侧边栏 (第一块) -->
     <aside
       v-if="['chat', 'agentpdf'].includes(activeRail)"
-      class="w-[260px] flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300"
+      class="flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
+      :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
     >
-      <div class="flex-1 overflow-hidden">
+      <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
         <AiSidebar
           v-model:activeRail="activeRail"
           :conversations="conversations"
@@ -287,6 +298,32 @@ const handleNewChat = (payload: { course: string }) => {
           "
         />
       </div>
+
+      <!-- 收起态：竖向标识 -->
+      <div
+        v-show="sidebarCollapsed"
+        class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer"
+        @click="toggleSidebar"
+      >
+        <el-icon :size="14" class="rotate-90 mb-2"><FolderOpened /></el-icon>
+        <span
+          class="text-[11px] tracking-widest"
+          style="writing-mode: vertical-rl"
+          >课程 · 历史</span
+        >
+      </div>
+
+      <!-- 收起 / 展开 把手 -->
+      <button
+        class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+        :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
+        @click="toggleSidebar"
+      >
+        <el-icon :size="12">
+          <Expand v-if="sidebarCollapsed" />
+          <Fold v-else />
+        </el-icon>
+      </button>
     </aside>
 
     <!-- 右边总体容器 (上边栏 + 主体) -->
@@ -298,9 +335,8 @@ const handleNewChat = (payload: { course: string }) => {
         <div class="flex items-center gap-3">
           <el-button
             :icon="ArrowLeftBold"
-            circle
             plain
-            class="shadow-sm hover:-translate-x-1 transition-transform"
+            class="!rounded-lg shadow-sm hover:-translate-x-1 transition-transform"
             @click="goBack"
           />
           <div class="w-[1px] h-5 bg-gray-200 mx-2" />
@@ -314,16 +350,6 @@ const handleNewChat = (payload: { course: string }) => {
             class="ml-2 !rounded-full"
             >基于大模型的系统</el-tag
           >
-        </div>
-        <div class="flex items-center justify-end gap-4 flex-1">
-          <span class="text-sm font-bold text-gray-600 pr-2"
-            >当前模式: {{ mode }}</span
-          >
-          <el-avatar
-            :size="30"
-            src="https://avatars.githubusercontent.com/u/44761321?v=4"
-            class="shadow-sm border border-gray-100 hover:scale-110 transition-transform cursor-pointer"
-          />
         </div>
       </header>
 
@@ -349,15 +375,38 @@ const handleNewChat = (payload: { course: string }) => {
             />
           </div>
 
-          <!-- 右侧分析面板 (彻底移除响应式隐藏类，确保永远可见) -->
+          <!-- 数字人面板：可收起，替代原右侧学习画像/拓展资源选项卡 -->
           <div
-            class="w-[340px] flex-shrink-0 h-full bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 overflow-hidden transform hover:-translate-y-0.5 transition-transform duration-500"
+            class="flex-shrink-0 h-full bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 overflow-hidden transition-all duration-300 relative"
+            :class="humanCollapsed ? 'w-[44px]' : 'w-[420px]'"
           >
-            <AiInspector
-              :profileDimensions="profileDimensions"
-              :agentItems="agentItems"
-              :resources="generatedResources"
-            />
+            <VirtualHumanPanel v-show="!humanCollapsed" />
+
+            <!-- 收起态 -->
+            <div
+              v-show="humanCollapsed"
+              class="h-full flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer gap-3"
+              @click="toggleHuman"
+            >
+              <el-icon :size="18" class="text-primary"><Avatar /></el-icon>
+              <span
+                class="text-[11px] tracking-widest text-gray-500"
+                style="writing-mode: vertical-rl"
+                >数字人助教</span
+              >
+            </div>
+
+            <!-- 收起 / 展开 把手 -->
+            <button
+              class="absolute top-3 -left-3 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+              :title="humanCollapsed ? '展开数字人' : '收起数字人'"
+              @click="toggleHuman"
+            >
+              <el-icon :size="12">
+                <Fold v-if="humanCollapsed" />
+                <Expand v-else />
+              </el-icon>
+            </button>
           </div>
         </div>
 
@@ -495,10 +544,10 @@ const handleNewChat = (payload: { course: string }) => {
                     <el-icon class="ml-1"><ArrowDown /></el-icon>
                   </span>
                   <button
-                    class="w-9 h-9 flex items-center justify-center rounded-full transition-all transform border"
+                    class="w-10 h-10 flex items-center justify-center rounded-xl transition-all transform border"
                     :class="
                       quickCourse && quickMessage.trim()
-                        ? 'bg-black border-black text-white hover:bg-gray-800 hover:scale-105 shadow-md cursor-pointer'
+                        ? 'bg-[#c199f9] border-[#c199f9] text-white hover:bg-[#b085f7] hover:scale-105 shadow-lg shadow-purple-100 cursor-pointer'
                         : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
                     "
                     :disabled="!quickCourse || !quickMessage.trim()"
@@ -549,9 +598,24 @@ const handleNewChat = (payload: { course: string }) => {
 
         <div v-else-if="activeRail === `profile`" class="h-full w-full p-4">
           <div
-            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+            class="h-full flex gap-4 overflow-hidden"
           >
-            <AiLearningProfile />
+            <!-- 左：完整学习画像 -->
+            <div
+              class="flex-1 h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <AiLearningProfile />
+            </div>
+            <!-- 右：原 chat 右侧的画像 / 智能体 / 拓展资源 选项卡 -->
+            <div
+              class="w-[360px] flex-shrink-0 h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <AiInspector
+                :profileDimensions="profileDimensions"
+                :agentItems="agentItems"
+                :resources="generatedResources"
+              />
+            </div>
           </div>
         </div>
 
