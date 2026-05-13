@@ -1,132 +1,67 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed } from "vue";
 import {
   DataAnalysis,
   Reading,
   CircleCheck,
   InfoFilled,
   Cpu,
-  Promotion
+  Promotion,
+  TrendCharts
 } from "@element-plus/icons-vue";
+import { getStudentDataset } from "./studentDatasets";
 
-// 课程上下文：嵌入式 Linux 开发实践教程
-const courseInfo = ref({
-  name: "嵌入式 Linux 开发实践教程",
-  subtitle: "Qt GUI 与 TensorFlow Lite 集成",
-  totalChapters: 12,
-  finishedChapters: 7
-});
+const props = defineProps<{ studentId?: string }>();
 
-const stats = ref([
-  { label: "综合评估等级", value: "B+", sub: "前 32%" },
-  { label: "预估结业分", value: "84", sub: "稳中有升" },
-  { label: "章节里程碑", value: "7/12", sub: "进度 58%" },
-  { label: "实操通过率", value: "76%", sub: "略高于均值" }
-]);
-
-const strengths = ref([
-  { title: "Qt 信号与槽机制", desc: "测验正确率 96%，理解透彻" },
-  { title: "交叉编译工具链配置", desc: "完成 sysroot 实操任务 3/3" },
-  { title: "Qt 布局管理器", desc: "响应式 UI 题目无错误" }
-]);
-
-const weakPoints = ref([
-  {
-    level: "high",
-    title: "TFLite Delegate 硬件加速选择",
-    desc: "GPU / NNAPI / XNNPACK 适用场景判断错误率 45%，建议刷《Delegate 决策树》专项。"
-  },
-  {
-    level: "high",
-    title: "TFLite Interpreter C++ API 调用顺序",
-    desc: "AllocateTensors / Invoke / typed_output_tensor 步骤记忆混淆。"
-  },
-  {
-    level: "mid",
-    title: "训练后量化 vs 量化感知训练 (QAT)",
-    desc: "概念辨析题答题时间超出平均 40%，建议复看 2.1 节。"
-  },
-  {
-    level: "mid",
-    title: "V4L2 摄像头采集与 QImage 转换",
-    desc: "上手实验通过，但帧率优化未达标 (实测 12 FPS / 目标 25 FPS)。"
-  }
-]);
-
-const timeline = ref([
-  {
-    time: "今天 11:20",
-    content: "完成《Qt 布局管理器》章节测验：满分通过",
-    type: "success"
-  },
-  {
-    time: "昨天 16:40",
-    content: "提交《TFLite 模型转换》代码作业，量化后体积下降 73%",
-    type: "primary"
-  },
-  {
-    time: "昨天 09:15",
-    content: "Delegate 选择题失分较多，AI 已生成专项练习推送",
-    type: "warning"
-  },
-  {
-    time: "本周一",
-    content: "完成第一阶段（Qt 框架与环境）综合测评，等级 A",
-    type: "success"
-  }
-]);
-
-const suggestions = ref([
-  "重新观看 2.2 节《TFLite Interpreter C++ API》并完成沙盒实操。",
-  "在路径规划中接入「Delegate 决策树」专项训练 (20min)。",
-  "进入虚拟实验室，尝试将 V4L2 采集帧率优化到 25 FPS 以上。"
-]);
+const dataset = computed(() => getStudentDataset(props.studentId));
+const courseInfo = computed(() => dataset.value.assessment.courseInfo);
+const stats = computed(() => dataset.value.assessment.stats);
+const strengths = computed(() => dataset.value.assessment.strengths);
+const weakPoints = computed(() => dataset.value.assessment.weakPoints);
+const timeline = computed(() => dataset.value.assessment.timeline);
+const suggestions = computed(() => dataset.value.assessment.suggestions);
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-6 bg-gray-50/30 overflow-y-auto">
+  <div class="h-full flex flex-col p-6 bg-transparent overflow-y-auto">
     <div class="mb-8 flex justify-between items-end gap-4 flex-wrap">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4">
         <div
-          class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"
+          class="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
         >
-          <el-icon :size="24"><Cpu /></el-icon>
+          <el-icon :size="28"><DataAnalysis /></el-icon>
         </div>
         <div>
-          <h2 class="text-xl font-bold text-gray-800">阶段学习评估</h2>
-          <p class="text-sm text-gray-500 mt-1">
+          <h2 class="text-xl font-bold text-text_color_primary">阶段学习评估</h2>
+          <p class="text-sm text-text_color_regular mt-1">
             课程：{{ courseInfo.name }} ·
-            <span class="text-gray-400">{{ courseInfo.subtitle }}</span>
+            <span class="opacity-60">{{ courseInfo.subtitle }}</span>
           </p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <el-tag round type="info" class="!border-none bg-gray-100"
-          >章节 {{ courseInfo.finishedChapters }}/{{
-            courseInfo.totalChapters
-          }}</el-tag
-        >
-        <el-button plain round>导出为 PDF</el-button>
+      <div class="flex items-center gap-3">
+        <el-tag effect="plain" round size="large" class="!bg-bg_color">
+          章节 {{ courseInfo.finishedChapters }} / {{ courseInfo.totalChapters }}
+        </el-tag>
+        <el-button type="primary" plain round icon="Download">导出报告</el-button>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <!-- 核心统计 - 适配平台看板风格 -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div
         v-for="(s, i) in stats"
         :key="i"
-        class="bg-white p-6 rounded-2xl border border-gray-100 flex flex-col justify-center items-center relative overflow-hidden group"
+        class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-all group"
       >
-        <div
-          class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-        />
-        <div class="text-gray-500 text-sm mb-2 relative z-10">
+        <div class="text-text_color_regular text-xs uppercase tracking-widest mb-3">
           {{ s.label }}
         </div>
-        <div class="text-4xl font-black text-gray-800 mb-1 relative z-10">
+        <div class="text-4xl font-black text-text_color_primary mb-2 group-hover:scale-110 transition-transform">
           {{ s.value }}
         </div>
         <div
-          class="text-xs text-primary bg-primary/10 px-2 py-1 rounded-full relative z-10"
+          class="text-[10px] font-bold px-3 py-1 rounded-full bg-primary/5 text-primary border border-primary/10"
         >
           {{ s.sub }}
         </div>
@@ -134,66 +69,56 @@ const suggestions = ref([
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- 弱点警示 -->
-      <div class="bg-white p-6 rounded-2xl border border-red-100">
-        <h4 class="font-bold text-red-600 flex items-center gap-2 mb-4">
-          <el-icon><InfoFilled /></el-icon>
+      <!-- 弱点警示 - 针对性UI重构 -->
+      <div class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm border-l-4 border-l-red-500">
+        <h4 class="font-bold text-red-600 flex items-center gap-2 mb-6 uppercase tracking-wider text-sm">
+          <el-icon :size="18"><InfoFilled /></el-icon>
           薄弱知识点警示
         </h4>
-        <div class="space-y-3">
+        <div class="space-y-4">
           <div
             v-for="(w, i) in weakPoints"
             :key="i"
-            class="flex flex-col p-3 rounded-lg border"
-            :class="
-              w.level === 'high'
-                ? 'bg-red-50/50 border-red-50'
-                : 'bg-orange-50/50 border-orange-50'
-            "
+            class="group p-4 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:border-red-200 transition-colors"
           >
-            <span
-              class="text-sm font-bold"
-              :class="w.level === 'high' ? 'text-red-700' : 'text-orange-700'"
-              >{{ w.title }}</span
-            >
-            <span
-              class="text-xs mt-1"
-              :class="w.level === 'high' ? 'text-red-500' : 'text-orange-500'"
-              >{{ w.desc }}</span
-            >
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-bold text-text_color_primary">{{ w.title }}</span>
+              <el-tag :type="w.level === 'high' ? 'danger' : 'warning'" size="small" effect="dark" round>
+                {{ w.level === 'high' ? '高危' : '中危' }}
+              </el-tag>
+            </div>
+            <p class="text-xs text-text_color_regular leading-relaxed opacity-80">{{ w.desc }}</p>
           </div>
         </div>
       </div>
 
       <!-- 优势能力 -->
-      <div class="bg-white p-6 rounded-2xl border border-green-100">
-        <h4 class="font-bold text-green-600 flex items-center gap-2 mb-4">
-          <el-icon><CircleCheck /></el-icon>
+      <div class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm border-l-4 border-l-green-500">
+        <h4 class="font-bold text-green-600 flex items-center gap-2 mb-6 uppercase tracking-wider text-sm">
+          <el-icon :size="18"><CircleCheck /></el-icon>
           稳定优势能力
         </h4>
-        <div class="space-y-3">
+        <div class="space-y-4">
           <div
             v-for="(item, i) in strengths"
             :key="i"
-            class="flex flex-col p-3 bg-green-50/50 rounded-lg border border-green-50"
+            class="p-4 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:border-green-200 transition-colors"
           >
-            <span class="text-sm font-bold text-green-700">{{
-              item.title
-            }}</span>
-            <span class="text-xs text-green-500 mt-1">{{ item.desc }}</span>
+            <span class="text-sm font-bold text-text_color_primary block mb-2">{{ item.title }}</span>
+            <span class="text-xs text-text_color_regular leading-relaxed opacity-80">{{ item.desc }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6 pb-6">
       <!-- 动态流水 -->
-      <div class="bg-white p-6 rounded-2xl border border-gray-100">
-        <h4 class="font-bold text-gray-700 flex items-center gap-2 mb-6">
-          <el-icon class="text-primary"><DataAnalysis /></el-icon>
+      <div class="lg:col-span-2 bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-8 text-sm uppercase">
+          <el-icon class="text-primary"><TrendCharts /></el-icon>
           最近评估动态
         </h4>
-        <el-timeline>
+        <el-timeline class="pl-2">
           <el-timeline-item
             v-for="(activity, index) in timeline"
             :key="index"
@@ -201,39 +126,45 @@ const suggestions = ref([
             :timestamp="activity.time"
             hollow
           >
-            {{ activity.content }}
+            <span class="text-[13px] text-text_color_regular">{{ activity.content }}</span>
           </el-timeline-item>
         </el-timeline>
       </div>
 
-      <!-- AI 建议 -->
+      <!-- AI 建议 - 卡片视觉重构 -->
       <div
-        class="bg-gradient-to-br from-primary/5 via-purple-50 to-transparent p-6 rounded-2xl border border-primary/10"
+        class="lg:col-span-3 bg-gradient-to-br from-primary/5 via-bg_color to-primary/5 p-8 rounded-xl border border-primary/20 shadow-lg relative overflow-hidden group"
       >
-        <h4 class="font-bold text-primary flex items-center gap-2 mb-4">
-          <el-icon><Promotion /></el-icon>
-          AI 提升建议
+        <!-- 背景装饰 -->
+        <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-50"></div>
+        
+        <h4 class="font-bold text-primary flex items-center gap-2 mb-8 text-sm uppercase relative z-10">
+          <el-icon :size="20" class="animate-bounce"><Promotion /></el-icon>
+          AI 提升建议报告
         </h4>
-        <ul class="space-y-3">
-          <li
+        
+        <div class="space-y-4 relative z-10">
+          <div
             v-for="(tip, i) in suggestions"
             :key="i"
-            class="flex items-start gap-3 p-3 bg-white/70 rounded-xl border border-white"
+            class="flex items-start gap-4 p-4 bg-bg_color border border-gray-100 dark:border-gray-800 group-hover:border-primary/30 transition-all rounded-xl hover:translate-x-2"
           >
-            <span
-              class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center flex-shrink-0 font-bold"
-              >{{ i + 1 }}</span
+            <div
+              class="w-6 h-6 rounded-full bg-primary text-white text-[10px] flex items-center justify-center flex-shrink-0 font-bold shadow-sm"
             >
-            <span class="text-sm text-gray-700 leading-relaxed">{{
+              0{{ i + 1 }}
+            </div>
+            <span class="text-[13px] text-text_color_primary font-medium leading-relaxed">{{
               tip
             }}</span>
-          </li>
-        </ul>
-        <div class="mt-5 flex items-center gap-2">
-          <el-button type="primary" round size="small"
-            ><el-icon class="mr-1"><Reading /></el-icon>一键加入学习路径</el-button
-          >
-          <el-button plain round size="small">下次再说</el-button>
+          </div>
+        </div>
+        
+        <div class="mt-8 flex items-center gap-3 relative z-10">
+          <el-button type="primary" size="large" class="shadow-lg shadow-primary/20">
+            <el-icon class="mr-2"><Reading /></el-icon>更新学习路径
+          </el-button>
+          <el-button size="large" plain round>暂不处理</el-button>
         </div>
       </div>
     </div>

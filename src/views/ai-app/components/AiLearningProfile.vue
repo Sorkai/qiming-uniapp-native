@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed } from "vue";
 import {
   User,
   Medal,
@@ -8,101 +8,79 @@ import {
   Trophy,
   Cpu,
   Reading,
-  VideoPlay
+  VideoPlay,
+  Avatar
 } from "@element-plus/icons-vue";
+import { getStudentDataset } from "./studentDatasets";
 
-// 课程上下文：嵌入式 Linux 开发实践教程
-const learner = ref({
-  name: "嵌入式 Linux 学员",
-  role: "Qt + TFLite 进阶选手",
-  course: "嵌入式 Linux 开发实践教程",
-  enrollDays: 18,
-  studyMinutes: 1240
-});
+const props = defineProps<{ studentId?: string }>();
 
-const dimensions = ref([
-  { label: "Qt GUI 编程熟练度", value: 82, color: "#10b981", icon: Medal },
-  { label: "C++ / 交叉编译基础", value: 88, color: "#3b82f6", icon: TrendCharts },
-  { label: "TFLite 推理与量化理解", value: 64, color: "#f59e0b", icon: Trophy },
-  { label: "硬件加速 (Delegate) 实战", value: 55, color: "#ef4444", icon: Star },
-  { label: "工程化与调试能力", value: 76, color: "#8b5cf6", icon: Star }
-]);
+const dataset = computed(() => getStudentDataset(props.studentId));
+const learner = computed(() => dataset.value.profile.learner);
 
-// 知识图谱掌握度（章节级）
-const knowledgeMap = ref([
-  { label: "Qt 模块体系", mastery: 95 },
-  { label: "信号与槽 / 布局管理", mastery: 86 },
-  { label: "Qt Designer & uic", mastery: 70 },
-  { label: "QThread / QtConcurrent", mastery: 58 },
-  { label: "交叉编译与 sysroot", mastery: 90 },
-  { label: "TFLite Converter (量化)", mastery: 62 },
-  { label: "TFLite Interpreter C++ API", mastery: 48 },
-  { label: "GPU / NNAPI Delegate", mastery: 35 },
-  { label: "V4L2 摄像头采集", mastery: 40 },
-  { label: "QPainter 推理结果叠加", mastery: 30 }
-]);
-
-const RecentTags = [
-  "Qt 信号槽达人",
-  "交叉编译稳健",
-  "TFLite 量化新手",
-  "偏好 3D 推演视频",
-  "夜间高产学员"
-];
+// 为不同维度分配图标（按顺序）
+const ICONS = [Medal, TrendCharts, Trophy, Star, Star];
+const dimensions = computed(() =>
+  dataset.value.profile.dimensions.map((d, i) => ({
+    ...d,
+    icon: ICONS[i % ICONS.length]
+  }))
+);
+const knowledgeMap = computed(() => dataset.value.profile.knowledgeMap);
+const RecentTags = computed(() => dataset.value.profile.tags);
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-6 bg-gray-50/30 overflow-y-auto">
+  <div class="h-full flex flex-col p-6 bg-transparent overflow-y-auto">
     <div class="mb-8">
-      <h2 class="text-xl font-bold text-gray-800">全息学习画像</h2>
-      <p class="text-sm text-gray-500 mt-1">
+      <div class="flex items-center gap-2 mb-1">
+        <el-icon class="text-primary"><User /></el-icon>
+        <h2 class="text-xl font-bold text-text_color_primary">全息学习画像</h2>
+      </div>
+      <p class="text-sm text-text_color_regular mt-1">
         AI 实时抓取并总结你的学习特征 · 课程：{{ learner.course }}
       </p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Left Profile Card -->
+      <!-- Left Profile Card - 适配平台卡片风格 -->
       <div
-        class="col-span-1 bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col items-center"
+        class="col-span-1 bg-bg_color rounded-xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center hover:shadow-md transition-all"
       >
         <div
-          class="relative w-24 h-24 rounded-full bg-gradient-to-r from-primary to-purple-500 p-1 mb-4"
+          class="relative w-28 h-28 rounded-full bg-gradient-to-tr from-primary to-purple-400 p-1 mb-6"
         >
           <div
-            class="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden"
+            class="w-full h-full rounded-full bg-bg_color flex items-center justify-center overflow-hidden"
           >
-            <el-icon :size="40" class="text-primary"><Cpu /></el-icon>
+            <el-icon :size="48" class="text-primary"><Avatar /></el-icon>
           </div>
           <div
-            class="absolute bottom-0 right-0 bg-green-500 w-5 h-5 rounded-full border-2 border-white"
+            class="absolute bottom-1 right-1 bg-green-500 w-6 h-6 rounded-full border-4 border-bg_color shadow-sm"
           />
         </div>
-        <h3 class="text-lg font-bold text-gray-800">{{ learner.name }}</h3>
-        <p class="text-sm text-gray-400 mt-1">{{ learner.role }}</p>
+        <h3 class="text-xl font-bold text-text_color_primary">{{ learner.name }}</h3>
+        <p class="text-sm text-text_color_regular mt-1 mb-6">{{ learner.role }}</p>
 
-        <!-- 简要数据 -->
-        <div class="mt-4 w-full grid grid-cols-2 gap-2 text-center">
-          <div class="bg-gray-50 rounded-xl py-2">
-            <div class="text-lg font-bold text-primary">
-              {{ learner.enrollDays }}
-            </div>
-            <div class="text-[11px] text-gray-400">学习天数</div>
+        <!-- 简要数据 - 改为更通透的设计 -->
+        <div class="w-full grid grid-cols-2 gap-4 text-center">
+          <div class="flex flex-col">
+            <span class="text-2xl font-black text-primary">{{ learner.enrollDays }}</span>
+            <span class="text-[11px] text-text_color_regular uppercase tracking-wider">学习天数</span>
           </div>
-          <div class="bg-gray-50 rounded-xl py-2">
-            <div class="text-lg font-bold text-primary">
-              {{ learner.studyMinutes }}
-            </div>
-            <div class="text-[11px] text-gray-400">累计分钟</div>
+          <div class="flex flex-col">
+            <span class="text-2xl font-black text-primary">{{ learner.studyMinutes }}</span>
+            <span class="text-[11px] text-text_color_regular uppercase tracking-wider">累计分钟</span>
           </div>
         </div>
 
-        <div class="mt-6 flex flex-wrap justify-center gap-2">
+        <div class="mt-8 flex flex-wrap justify-center gap-2">
           <el-tag
             v-for="(tag, i) in RecentTags"
             :key="i"
             effect="plain"
             round
-            class="!border-primary/20 !text-primary bg-primary/5"
+            size="small"
           >
             {{ tag }}
           </el-tag>
@@ -111,34 +89,37 @@ const RecentTags = [
 
       <!-- Right Skills Details -->
       <div
-        class="col-span-1 md:col-span-2 bg-white rounded-3xl p-6 border border-gray-100 shadow-sm"
+        class="col-span-1 md:col-span-2 bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all"
       >
-        <h4 class="font-bold text-gray-700 mb-6 flex items-center gap-2">
+        <h4 class="font-bold text-text_color_primary mb-8 flex items-center gap-2">
           <el-icon class="text-primary"><TrendCharts /></el-icon>
           能力维度分析
         </h4>
 
-        <div class="space-y-6">
-          <div v-for="dim in dimensions" :key="dim.label">
-            <div class="flex justify-between items-center mb-2">
+        <div class="space-y-8">
+          <div v-for="dim in dimensions" :key="dim.label" class="group">
+            <div class="flex justify-between items-center mb-3">
               <span
-                class="text-sm font-medium text-gray-600 flex items-center gap-2"
+                class="text-sm font-medium text-text_color_regular flex items-center gap-3"
               >
-                <el-icon :style="{ color: dim.color }"
-                  ><component :is="dim.icon"
-                /></el-icon>
+                <div class="w-8 h-8 rounded-lg flex-c bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:text-primary transition-colors">
+                  <el-icon :style="{ color: dim.color }">
+                    <component :is="dim.icon" />
+                  </el-icon>
+                </div>
                 {{ dim.label }}
               </span>
               <span class="text-sm font-bold" :style="{ color: dim.color }">{{
                 dim.value
-              }}</span>
+              }}%</span>
             </div>
             <el-progress
               :percentage="dim.value"
               :color="dim.color"
-              :stroke-width="10"
+              :stroke-width="8"
               :show-text="false"
               stroke-linecap="round"
+              class="w-full"
             />
           </div>
         </div>
@@ -147,29 +128,29 @@ const RecentTags = [
 
     <!-- 知识图谱掌握度 -->
     <div
-      class="mt-6 bg-white rounded-3xl p-6 border border-gray-100 shadow-sm"
+      class="mt-6 bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all"
     >
-      <div class="flex items-center justify-between mb-6">
-        <h4 class="font-bold text-gray-700 flex items-center gap-2">
+      <div class="flex items-center justify-between mb-8">
+        <h4 class="font-bold text-text_color_primary flex items-center gap-2">
           <el-icon class="text-primary"><Reading /></el-icon>
           知识图谱掌握度
         </h4>
-        <span class="text-xs text-gray-400">基于课程章节 + 测验数据生成</span>
+        <span class="text-xs text-text_color_regular opacity-60 italic">基于各章节测验及实践数据动态推演</span>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-x-12 gap-y-6">
         <div
           v-for="node in knowledgeMap"
           :key="node.label"
-          class="flex items-center gap-3"
+          class="flex items-center gap-4 group"
         >
-          <span class="w-44 flex-shrink-0 text-sm text-gray-600 truncate">{{
+          <span class="w-48 flex-shrink-0 text-sm text-text_color_regular truncate group-hover:text-primary transition-colors">{{
             node.label
           }}</span>
           <el-progress
             class="flex-1"
             :percentage="node.mastery"
-            :stroke-width="8"
+            :stroke-width="10"
             :color="
               node.mastery >= 80
                 ? '#10b981'
@@ -181,16 +162,19 @@ const RecentTags = [
             "
             stroke-linecap="round"
           />
+          <span class="text-xs font-mono text-text_color_regular w-8 text-right">{{ node.mastery }}</span>
         </div>
       </div>
 
-      <div class="mt-6 flex items-center gap-2 text-xs text-gray-400">
-        <el-icon><VideoPlay /></el-icon>
-        <span
-          >建议下一步：补强 <span class="text-primary font-bold"
+      <div class="mt-8 p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-center gap-3 text-xs text-text_color_regular">
+        <el-icon color="var(--el-color-primary)" :size="20"><VideoPlay /></el-icon>
+        <div class="flex-1">
+           <span class="font-bold text-text_color_primary">提优建议：</span>
+            本周建议补强 <span class="text-primary underline font-bold underline-offset-4 pointer-events-auto cursor-pointer"
             >GPU / NNAPI Delegate</span
-          > 与 <span class="text-primary font-bold">V4L2 摄像头采集</span> 两个低分项。</span
-        >
+          > 与 <span class="text-primary underline font-bold underline-offset-4 pointer-events-auto cursor-pointer">V4L2 摄像头采集</span>。
+        </div>
+        <el-button type="primary" size="small" link class="!p-0 ml-auto">查看路径</el-button>
       </div>
     </div>
   </div>

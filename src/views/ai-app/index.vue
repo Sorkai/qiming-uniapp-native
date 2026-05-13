@@ -33,6 +33,7 @@ import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 
+import { useUserStore } from "@/store/modules/user";
 import { useNav } from "@/layout/hooks/useNav";
 
 defineOptions({ name: "AiAppWorkbench" });
@@ -40,9 +41,21 @@ defineOptions({ name: "AiAppWorkbench" });
 const route = useRoute();
 const router = useRouter();
 const { getLogo } = useNav();
+const userStore = useUserStore();
+
+// 权限判断
+const isAdmin = ref(userStore.roles.includes("admin"));
+const isTeacher = ref(userStore.roles.includes("teacher") || isAdmin.value);
 
 // === 模拟/基础状态数据 ===
 const mode = ref("学生模式");
+// 如果是老师或管理员，默认进入管理视角
+onMounted(() => {
+  if (isTeacher.value) {
+    mode.value = "教师模式";
+  }
+});
+
 const isNewTab = ref(false);
 
 const layoutStorage = storageLocal().getItem("responsive-layout") as
@@ -72,6 +85,89 @@ const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 
 // 学生拥有的课程（动态拉取）
 const myCourses = ref(["数据结构", "算法设计", "高等数学", "大学物理"]);
+
+// 教师关联的学生列表
+const myStudents = ref([
+  { 
+    id: "s1", 
+    name: "吴同学", 
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Wu",
+    profileDimensions: [
+      { label: "知识基础", value: 72 },
+      { label: "认知风格", value: 88 },
+      { label: "易错点偏好", value: 45 },
+      { label: "学习进度", value: 62 },
+      { label: "探索欲", value: 92 },
+      { label: "抗挫折能力", value: 78 }
+    ]
+  },
+  { 
+    id: "s2", 
+    name: "张同学", 
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhang",
+    profileDimensions: [
+      { label: "知识基础", value: 45 },
+      { label: "认知风格", value: 60 },
+      { label: "易错点偏好", value: 85 },
+      { label: "学习进度", value: 30 },
+      { label: "探索欲", value: 55 },
+      { label: "抗挫折能力", value: 40 }
+    ]
+  },
+  { 
+    id: "s3", 
+    name: "赵同学", 
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhao",
+    profileDimensions: [
+      { label: "知识基础", value: 98 },
+      { label: "认知风格", value: 95 },
+      { label: "易错点偏好", value: 15 },
+      { label: "学习进度", value: 99 },
+      { label: "探索欲", value: 96 },
+      { label: "抗挫折能力", value: 97 }
+    ]
+  },
+  { 
+    id: "s4", 
+    name: "钱同学", 
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Qian",
+    profileDimensions: [
+      { label: "知识基础", value: 65 },
+      { label: "认知风格", value: 72 },
+      { label: "易错点偏好", value: 58 },
+      { label: "学习进度", value: 84 },
+      { label: "探索欲", value: 70 },
+      { label: "抗挫折能力", value: 82 }
+    ]
+  },
+  { 
+    id: "s5", 
+    name: "孙同学", 
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sun",
+    profileDimensions: [
+      { label: "知识基础", value: 52 },
+      { label: "认知风格", value: 68 },
+      { label: "易错点偏好", value: 82 },
+      { label: "学习进度", value: 48 },
+      { label: "探索欲", value: 65 },
+      { label: "抗挫折能力", value: 50 }
+    ]
+  },
+  { 
+    id: "s6", 
+    name: "周同学", 
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhou",
+    profileDimensions: [
+      { label: "知识基础", value: 88 },
+      { label: "认知风格", value: 82 },
+      { label: "易错点偏好", value: 35 },
+      { label: "学习进度", value: 81 },
+      { label: "探索欲", value: 89 },
+      { label: "抗挫折能力", value: 91 }
+    ]
+  }
+]);
+const selectedStudentId = ref("");
 
 // 【请求还原】：保留原版所有的侧边功能项
 const railItems = ref([
@@ -277,113 +373,166 @@ const handleNewChat = (payload: { course: string }) => {
 
 <template>
   <div
-    class="ai-app-root h-[calc(100vh-80px)] flex bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans rounded-xl overflow-hidden shadow-sm"
+    class="ai-app-root h-[calc(100vh-80px)] flex flex-col bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans rounded-xl overflow-hidden shadow-sm"
     :class="currentTheme"
   >
-    <!-- 极简左侧边栏 (第一块) -->
-    <aside
-      v-if="activeRail === 'chat'"
-      class="flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
-      :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
+    <!-- 顶部状态栏：仅对 管理员/教师 可见 -->
+    <header 
+      v-if="isTeacher" 
+      class="h-14 bg-white/80 backdrop-blur border-b border-gray-100 flex items-center justify-between px-6 z-30"
     >
-      <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
-        <AiSidebar
-          v-model:activeRail="activeRail"
-          :conversations="conversations"
-          :courses="myCourses"
-          @new-chat="handleNewChat"
-          @select-chat="
-            conv => {
-              activeCourse = conv.course;
-            }
-          "
-        />
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+            <el-icon><Monitor /></el-icon>
+          </div>
+          <span class="font-bold text-gray-700">管理看板</span>
+        </div>
+        <el-divider direction="vertical" />
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-bold text-primary px-3 py-1 bg-primary/10 rounded-full">
+            {{ isAdmin ? '管理员控制台' : '教师端管理视角' }}
+          </span>
+        </div>
       </div>
 
-      <!-- 收起态：竖向标识 -->
-      <div
-        v-show="sidebarCollapsed"
-        class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer"
-        @click="toggleSidebar"
-      >
-        <el-icon :size="14" class="rotate-90 mb-2"><FolderOpened /></el-icon>
-        <span
-          class="text-[11px] tracking-widest"
-          style="writing-mode: vertical-rl"
-          >课程 · 历史</span
+      <div class="flex items-center gap-4">
+        <span class="text-xs text-gray-500 font-medium">当前分析学生:</span>
+        <el-select 
+          v-model="selectedStudentId" 
+          placeholder="请选择学生" 
+          size="default" 
+          style="width: 200px"
+          class="student-select"
         >
+          <template #prefix>
+            <el-icon><User /></el-icon>
+          </template>
+          <el-option
+            v-for="item in myStudents"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          >
+            <div class="flex items-center gap-3">
+              <el-avatar :size="20" :src="item.avatar" />
+              <span>{{ item.name }}</span>
+            </div>
+          </el-option>
+        </el-select>
+        <el-tooltip content="刷新数据" placement="bottom">
+          <el-button circle icon="Refresh" size="small" border-none bg-transparent />
+        </el-tooltip>
       </div>
+    </header>
 
-      <!-- 收起 / 展开 把手 -->
-      <button
-        class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-        :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
-        @click="toggleSidebar"
+    <div class="flex-1 flex overflow-hidden">
+      <!-- 极简左侧边栏 (第一块) -->
+      <aside
+        v-if="activeRail === 'chat'"
+        class="flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
+        :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
       >
-        <el-icon :size="12">
-          <Expand v-if="sidebarCollapsed" />
-          <Fold v-else />
-        </el-icon>
-      </button>
-    </aside>
+        <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
+          <AiSidebar
+            v-model:activeRail="activeRail"
+            :conversations="conversations"
+            :courses="myCourses"
+            @new-chat="handleNewChat"
+            @select-chat="
+              conv => {
+                activeCourse = conv.course;
+              }
+            "
+          />
+        </div>
+
+        <!-- 收起态：竖向标识 -->
+        <div
+          v-show="sidebarCollapsed"
+          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer"
+          @click="toggleSidebar"
+        >
+          <el-icon :size="14" class="rotate-90 mb-2"><FolderOpened /></el-icon>
+          <span
+            class="text-[11px] tracking-widest"
+            style="writing-mode: vertical-rl"
+            >课程 · 历史</span
+          >
+        </div>
+
+        <!-- 收起 / 展开 把手 -->
+        <button
+          class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+          :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
+          @click="toggleSidebar"
+        >
+          <el-icon :size="12">
+            <Expand v-if="sidebarCollapsed" />
+            <Fold v-else />
+          </el-icon>
+        </button>
+      </aside>
 
     <!-- 右边总体容器 (主体) -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- 主体内容 (第三块) -->
       <main class="flex-1 overflow-hidden relative">
         <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
-        <div
-          v-if="activeRail === `chat` && activeCourse"
-          class="h-full w-full flex stretch p-4 gap-4 overflow-hidden"
-        >
+        <div v-if="activeRail === `chat` && activeCourse" class="h-full w-full flex stretch p-4 gap-4 overflow-hidden">
           <!-- 对话流核心面板 -->
-          <div
-            class="flex-1 h-full bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 overflow-hidden relative group"
-          >
-            <!-- 柔和的顶部遮罩渐变 -->
+          <transition appear name="panel-slide">
             <div
-              class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white to-transparent pointer-events-none z-10"
-            />
-            <AiChatModule
-              :messages="messages"
-              :activeCourse="activeCourse"
-              @send="handleSendMessage"
-            />
-          </div>
-
-          <!-- 数字人面板：可收起，替代原右侧学习画像/拓展资源选项卡 -->
-          <div
-            class="flex-shrink-0 h-full bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 overflow-hidden transition-all duration-300 relative"
-            :class="humanCollapsed ? 'w-[44px]' : 'w-[420px]'"
-          >
-            <VirtualHumanPanel v-show="!humanCollapsed" />
-
-            <!-- 收起态 -->
-            <div
-              v-show="humanCollapsed"
-              class="h-full flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer gap-3"
-              @click="toggleHuman"
+              class="flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
             >
-              <el-icon :size="18" class="text-primary"><Avatar /></el-icon>
-              <span
-                class="text-[11px] tracking-widest text-gray-500"
-                style="writing-mode: vertical-rl"
-                >数字人助教</span
-              >
+              <!-- 柔和的顶部遮罩渐变 -->
+              <div
+                class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white/80 to-transparent pointer-events-none z-10"
+              />
+              <AiChatModule
+                :messages="messages"
+                :activeCourse="activeCourse"
+                @send="handleSendMessage"
+              />
             </div>
+          </transition>
 
-            <!-- 收起 / 展开 把手 -->
-            <button
-              class="absolute top-3 -left-3 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-              :title="humanCollapsed ? '展开数字人' : '收起数字人'"
-              @click="toggleHuman"
+          <!-- 数字人面板 -->
+          <transition appear name="panel-reveal">
+            <div
+              class="flex-shrink-0 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
+              :class="humanCollapsed ? 'w-[64px]' : 'w-[420px]'"
             >
-              <el-icon :size="12">
-                <Fold v-if="humanCollapsed" />
-                <Expand v-else />
-              </el-icon>
-            </button>
-          </div>
+              <VirtualHumanPanel v-show="!humanCollapsed" />
+              <!-- 收起态 -->
+              <div
+                v-show="humanCollapsed"
+                class="h-full flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer gap-6 group/btn"
+                @click="toggleHuman"
+              >
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:scale-125 transition-transform duration-500">
+                  <el-icon :size="20"><Avatar /></el-icon>
+                </div>
+                <span
+                  class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover/btn:text-primary transition-colors"
+                  style="writing-mode: vertical-rl"
+                  >Digital Assistant</span
+                >
+              </div>
+
+              <!-- 收起 / 展开 把手 -->
+              <button
+                class="absolute top-3 -left-3 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+                :title="humanCollapsed ? '展开数字人' : '收起数字人'"
+                @click="toggleHuman"
+              >
+                <el-icon :size="12">
+                  <Fold v-if="humanCollapsed" />
+                  <Expand v-else />
+                </el-icon>
+              </button>
+            </div>
+          </transition>
         </div>
 
         <!-- 【场景 A2】 智能辅导欢迎中心 (未选课) -->
@@ -568,7 +717,7 @@ const handleNewChat = (payload: { course: string }) => {
           <div
             class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
           >
-            <AiLearningPath />
+            <AiLearningPath :student-id="selectedStudentId" />
           </div>
         </div>
 
@@ -580,14 +729,14 @@ const handleNewChat = (payload: { course: string }) => {
             <div
               class="flex-1 h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
             >
-              <AiLearningProfile />
+              <AiLearningProfile :student-id="selectedStudentId" />
             </div>
             <!-- 右：原 chat 右侧的画像 / 智能体 / 拓展资源 选项卡 -->
             <div
               class="w-[360px] flex-shrink-0 h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
             >
               <AiInspector
-                :profileDimensions="profileDimensions"
+                :profileDimensions="selectedStudentId ? (myStudents.find(s => s.id === selectedStudentId)?.profileDimensions || profileDimensions) : profileDimensions"
                 :agentItems="agentItems"
                 :resources="generatedResources"
               />
@@ -599,7 +748,7 @@ const handleNewChat = (payload: { course: string }) => {
           <div
             class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
           >
-            <AiAssessment />
+            <AiAssessment :student-id="selectedStudentId" />
           </div>
         </div>
 
@@ -623,12 +772,62 @@ const handleNewChat = (payload: { course: string }) => {
         </div>
       </main>
     </div>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .ai-app-root {
   --el-color-primary: #5e7ff8; // 强制保持平台蓝
+
+  // 整体降低色彩饱和度，营造更柔和的视觉氛围
+  filter: saturate(0.55);
+
+  // 媒体内容（数字人、图片、视频等）保持原色
+  :deep(img),
+  :deep(video),
+  :deep(canvas),
+  :deep(iframe),
+  :deep(svg image) {
+    filter: saturate(1.82); // 1 / 0.55 ≈ 1.82，抵消父级降饱和
+  }
+}
+
+/* 全局交互 UI 增强 */
+:deep(.el-radio-button__inner) {
+  border-radius: 12px !important;
+  margin: 0 4px;
+  border: 1px solid transparent !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    background: rgba(94, 127, 248, 0.05);
+  }
+}
+
+:deep(.student-select .el-input__wrapper) {
+  border-radius: 12px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.3s ease;
+  &:hover {
+    box-shadow: 0 4px 16px rgba(94, 127, 248, 0.1) !important;
+  }
+}
+
+/* 面板转场动画 */
+.panel-slide-enter-active {
+  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.panel-slide-enter-from {
+  opacity: 0;
+  transform: translateX(-30px) scale(0.98);
+}
+
+.panel-reveal-enter-active {
+  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.panel-reveal-enter-from {
+  opacity: 0;
+  transform: translateX(50px) rotate(1deg);
 }
 
 .gradient-text-animate {
