@@ -24,6 +24,11 @@ import AiChatModule from "./components/AiChatModule.vue";
 import AiInspector from "./components/AiInspector.vue";
 import AgentPdfWorkbench from "./AgentPdfWorkbench.vue";
 
+import AiResourceGeneration from "./components/AiResourceGeneration.vue";
+import AiLearningPath from "./components/AiLearningPath.vue";
+import AiLearningProfile from "./components/AiLearningProfile.vue";
+import AiAssessment from "./components/AiAssessment.vue";
+
 import { useNav } from "@/layout/hooks/useNav";
 
 defineOptions({ name: "AiAppWorkbench" });
@@ -526,7 +531,39 @@ const handleNewChat = (payload: { course: string }) => {
           </div>
         </div>
 
-        <!-- 【场景 C】 其他未开发项 -->
+        <div v-else-if="activeRail === `generation`" class="h-full w-full p-4">
+          <div
+            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+          >
+            <AiResourceGeneration />
+          </div>
+        </div>
+
+        <div v-else-if="activeRail === `path`" class="h-full w-full p-4">
+          <div
+            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+          >
+            <AiLearningPath />
+          </div>
+        </div>
+
+        <div v-else-if="activeRail === `profile`" class="h-full w-full p-4">
+          <div
+            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+          >
+            <AiLearningProfile />
+          </div>
+        </div>
+
+        <div v-else-if="activeRail === `assessment`" class="h-full w-full p-4">
+          <div
+            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+          >
+            <AiAssessment />
+          </div>
+        </div>
+
+        <!-- 【场景 C】 其他未开发项 (自动化等) -->
         <div v-else class="h-full w-full flex items-center justify-center p-4">
           <div
             class="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] w-full max-w-2xl transform hover:scale-[1.01] transition-transform duration-500"
