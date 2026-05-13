@@ -261,7 +261,7 @@ const handleNewChat = (payload: { course: string }) => {
 
 <template>
   <div
-    class="ai-app-root h-[calc(100vh-120px)] w-full flex bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans rounded-xl overflow-hidden"
+    class="ai-app-root h-[calc(100vh-140px)] flex bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans rounded-xl overflow-hidden shadow-sm"
     :class="currentTheme"
   >
     <!-- 极简左侧边栏 (第一块) -->
