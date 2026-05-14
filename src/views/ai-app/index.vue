@@ -531,6 +531,38 @@ const handleNewChat = (payload: { course: string }) => {
 
       <!-- 右边总体容器 (主体) -->
       <div class="flex-1 flex flex-col min-w-0">
+        <!-- 教师专属：顶部学生选择器工具栏 -->
+        <div
+          v-if="
+            isTeacher && ['path', 'profile', 'assessment'].includes(activeRail)
+          "
+          class="flex-none flex items-center justify-end gap-3 bg-white px-6 py-3 border-b border-gray-100 z-10 relative shadow-sm"
+        >
+          <span class="text-xs text-gray-500 font-medium">分析对象:</span>
+          <el-select
+            v-model="selectedStudentId"
+            placeholder="请选择学生"
+            size="small"
+            style="width: 160px"
+            class="student-select"
+          >
+            <template #prefix>
+              <el-icon><User /></el-icon>
+            </template>
+            <el-option
+              v-for="item in myStudents"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            >
+              <div class="flex items-center gap-2">
+                <el-avatar :size="18" :src="item.avatar" />
+                <span class="text-sm">{{ item.name }}</span>
+              </div>
+            </el-option>
+          </el-select>
+        </div>
+
         <!-- 主体内容 (第三块) -->
         <main class="flex-1 overflow-hidden relative">
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
