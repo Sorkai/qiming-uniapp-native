@@ -656,39 +656,77 @@ const handleNewChat = (payload: { course: string }) => {
             <!-- 数字人面板 -->
             <transition appear name="panel-reveal">
               <div
-                class="flex-shrink-0 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
-                :class="humanCollapsed ? 'w-[64px]' : 'w-[420px]'"
+                class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
+                :class="humanCollapsed ? 'w-16' : 'w-[420px]'"
               >
-                <VirtualHumanPanel ref="virtualHumanRef" v-show="!humanCollapsed" />
-                <!-- 收起态 -->
+                <!-- 原有的数字人容器 (现在嵌套在 flex 容器中) -->
                 <div
-                  v-show="humanCollapsed"
-                  class="h-full flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer gap-6 group/btn"
-                  @click="toggleHuman"
+                  class="flex-1 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative"
                 >
+                  <VirtualHumanPanel
+                    ref="virtualHumanRef"
+                    v-show="!humanCollapsed"
+                  />
+                  <!-- 收起态 (数字人这一窄条的内容) -->
                   <div
-                    class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:scale-125 transition-transform duration-500"
+                    v-show="humanCollapsed"
+                    class="h-full flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer gap-6 group/btn"
+                    @click="toggleHuman"
                   >
-                    <el-icon :size="20"><Avatar /></el-icon>
+                    <div
+                      class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:scale-125 transition-transform duration-500"
+                    >
+                      <el-icon :size="20"><Avatar /></el-icon>
+                    </div>
+                    <span
+                      class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover/btn:text-primary transition-colors"
+                      style="writing-mode: vertical-rl"
+                      >专属助教</span
+                    >
                   </div>
-                  <span
-                    class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover/btn:text-primary transition-colors"
-                    style="writing-mode: vertical-rl"
-                    >专属助教</span
+
+                  <!-- 收起 / 展开 把手 -->
+                  <button
+                    class="absolute top-3 -left-3 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+                    :title="humanCollapsed ? '展开数字人' : '收起数字人'"
+                    @click="toggleHuman"
                   >
+                    <el-icon :size="12">
+                      <Fold v-if="humanCollapsed" />
+                      <Expand v-else />
+                    </el-icon>
+                  </button>
                 </div>
 
-                <!-- 收起 / 展开 把手 -->
-                <button
-                  class="absolute top-3 -left-3 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-                  :title="humanCollapsed ? '展开数字人' : '收起数字人'"
-                  @click="toggleHuman"
-                >
-                  <el-icon :size="12">
-                    <Fold v-if="humanCollapsed" />
-                    <Expand v-else />
-                  </el-icon>
-                </button>
+                <!-- 重点：在数字人这一条的最下面新开一个独立小块，放快捷消息互动 -->
+                <transition name="el-zoom-in-bottom">
+                  <div
+                    v-show="humanCollapsed"
+                    class="flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-sm flex flex-col gap-2 overflow-hidden"
+                  >
+                    <div
+                      class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter text-center border-b border-gray-100 pb-1 mb-1"
+                    >
+                      快速互动
+                    </div>
+                    <div class="flex flex-col gap-1.5 align-center">
+                      <el-button
+                        v-for="msg in [
+                          { t: '老师好', i: '' },
+                          { t: '听不太懂', i: '' },
+                          { t: '很有深度', i: '' },
+                          { t: '写完了', i: '' }
+                        ]"
+                        :key="msg.t"
+                        size="small"
+                        class="!px-2 !py-1 !m-0 !text-[11px] !rounded-lg !border-none !bg-blue-50 hover:!bg-blue-100 !text-blue-600 transition-all"
+                        @click="virtualHumanRef?.speak?.(msg.t)"
+                      >
+                        {{ msg.t }}
+                      </el-button>
+                    </div>
+                  </div>
+                </transition>
               </div>
             </transition>
           </div>

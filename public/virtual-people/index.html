@@ -601,8 +601,8 @@
       <div id="speechMeta" class="speech-meta"></div>
     </div>
 
-    <!-- 独立的快捷消息层：浮动在数字人画面正下方 -->
-    <div class="interaction-overlay">
+    <!-- 独立的快捷消息层：由于现在 Vue 端已经有了独立的底部块，这里仅保留作为内部备用，或者您可以根据需要移除 -->
+    <div class="interaction-overlay" style="display: none !important;">
       <button type="button" onclick="speakText('老师好！')">👋 打个招呼</button>
       <button type="button" onclick="speakText('这节课讲什么？')">📚 询问进度</button>
       <button type="button" onclick="speakText('请解释一下。')">💡 请求解释</button>
@@ -966,14 +966,15 @@
     worldRoot.add(teacherRig);
 
     const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 100);
-    camera.position.set(0.0, 1.45, 2.75);
+    // 默认视角：往前推，离老师更近 (Z轴从 2.75 移至 1.35)
+    camera.position.set(0.0, 1.45, 1.35);
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     const controls = new OrbitControls(camera, canvas);
-    controls.target.set(0, 1.15, 0);
+    controls.target.set(0, 1.35, 0); // 焦点稍微上移一点到老师头部
     controls.enableDamping = true;
     controls.minDistance = 0.6;
     controls.maxDistance = 40;
