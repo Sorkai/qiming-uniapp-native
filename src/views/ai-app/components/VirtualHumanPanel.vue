@@ -14,14 +14,31 @@ const loading = ref(true);
 const errored = ref(false);
 const reloadKey = ref(0);
 let probeTimer: ReturnType<typeof setTimeout> | null = null;
+let iframeReady = false;
+const pendingSpeakQueue: string[] = [];
+
+function flushPendingSpeak() {
+  const iframe = iframeRef.value;
+  if (!iframe || !iframe.contentWindow) return;
+  while (pendingSpeakQueue.length) {
+    const text = pendingSpeakQueue.shift()!;
+    try {
+      iframe.contentWindow.postMessage({ type: "speak", text }, "*");
+    } catch (err) {
+      console.warn("[VirtualHumanPanel] flush speak failed", err);
+    }
+  }
+}
 
 function handleLoad() {
   loading.value = false;
   errored.value = false;
+  iframeReady = true;
   if (probeTimer) {
     clearTimeout(probeTimer);
     probeTimer = null;
   }
+  flushPendingSpeak();
 }
 
 function handleError() {
@@ -32,6 +49,7 @@ function handleError() {
 function refresh() {
   loading.value = true;
   errored.value = false;
+  iframeReady = false;
   reloadKey.value++;
   schedulePing();
 }
@@ -58,6 +76,23 @@ onMounted(() => {
 onUnmounted(() => {
   if (probeTimer) clearTimeout(probeTimer);
 });
+
+// 对外暴露：让父组件可以触发数字人朗读 (自动带口型)
+// 如果 iframe 尚未加载完成，先把文本排队，加载完后再统一发送
+function speak(text: string) {
+  const iframe = iframeRef.value;
+  if (!iframe || !iframe.contentWindow || !iframeReady) {
+    pendingSpeakQueue.push(text);
+    return;
+  }
+  try {
+    iframe.contentWindow.postMessage({ type: "speak", text }, "*");
+  } catch (err) {
+    console.warn("[VirtualHumanPanel] speak() postMessage failed", err);
+  }
+}
+
+defineExpose({ speak });
 </script>
 
 <template>

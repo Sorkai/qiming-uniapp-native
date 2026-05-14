@@ -56,12 +56,132 @@
       overflow: hidden;
     }
 
+    .mini-btn {
+      padding: 6px 4px !important;
+      font-size: 11px !important;
+      border-radius: 6px !important;
+      background: #f3f4f6 !important;
+      border: 1px solid #e5e7eb !important;
+      color: #4b5563 !important;
+      font-weight: 600 !important;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mini-btn:hover {
+      background: #e5e7eb !important;
+      color: #111827 !important;
+    }
+
     .sidebar {
       flex: 1;
       /* 面板在下方，占剩余空间 */
       display: flex;
       flex-direction: column;
       min-height: 0;
+      position: relative;
+      transition: max-height 0.3s ease, flex 0.3s ease;
+    }
+
+    /* 收起态：显示小占位框和快速互动按钮 */
+    body.sidebar-collapsed .sidebar {
+      flex: 0 0 auto;
+      max-height: 120px;
+      overflow: hidden;
+    }
+
+    /* 展开态时强制显示侧边栏滚动区域 */
+    .sidebar-scroll {
+      display: block !important;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding-bottom: 12px;
+    }
+
+    /* 收起态时隐藏其他元素 */
+    body.sidebar-collapsed .sidebar-scroll,
+    body.sidebar-collapsed .search-wrap,
+    body.sidebar-collapsed .status {
+      display: none !important;
+    }
+
+    body.sidebar-collapsed .sidebar-head {
+      padding: 10px 14px;
+      border-bottom: none;
+    }
+
+    body.sidebar-collapsed .sidebar-head>div:first-child {
+      display: none !important;
+      /* 隐藏"数字人设置"标题 */
+    }
+
+    /* 快捷消息栏容器 */
+    .quick-actions-bar {
+      display: none;
+      /* 默认隐藏 */
+      gap: 8px;
+      margin-right: 32px;
+      /* 避开收起按钮 */
+      flex-wrap: wrap; /* 允许换行 */
+    }
+
+    .quick-actions-bar::-webkit-scrollbar {
+      display: none;
+      /* Chrome/Safari */
+    }
+
+    body.sidebar-collapsed .quick-actions-bar {
+      display: flex;
+      /* 仅在收起时显示 */
+    }
+
+    .quick-actions-bar button {
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 8px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    }
+
+    .quick-actions-bar button:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+    }
+
+    .quick-actions-bar button:active {
+      transform: translateY(0);
+    }
+
+    .sidebar-toggle {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--border, #e5e7eb);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      color: #6b7280;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle:hover {
+      color: #111827;
+      background: #ffffff;
     }
 
     .sidebar-scroll {
@@ -475,10 +595,20 @@
   </main>
 
   <aside class="panel sidebar">
+    <button id="sidebarToggleBtn" class="sidebar-toggle" type="button" title="展开/收起控制面板" aria-label="展开/收起控制面板">
+      <span id="sidebarToggleIcon">▾</span>
+    </button>
     <div class="sidebar-head">
+      <div style="font-weight: 800; font-size: 16px; color: #374151; margin-bottom: 4px;">数字人设置</div>
+      <div class="quick-actions-bar">
+        <button type="button" onclick="speakText('老师好！')">打个招呼</button>
+        <button type="button" onclick="speakText('这节课讲什么？')">询问进度</button>
+        <button type="button" onclick="speakText('请解释一下。')">请求解释</button>
+        <button type="button" onclick="speakText('听不懂。')">反馈</button>
+      </div>
       <div class="search-wrap">
         <div class="search-autocomplete">
-          <input id="searchInput" type="search" autocomplete="off" placeholder="搜索动作名，比如 walk / idle / point" />
+          <input id="searchInput" type="search" autocomplete="off" placeholder="搜索动作名..." />
           <div id="searchSuggest" class="search-suggest hidden"></div>
         </div>
         <div class="controls">
@@ -486,54 +616,63 @@
             <option value="all">全部分组</option>
           </select>
           <select id="speedSelect">
-            <option value="0.5">0.5x 速度</option>
-            <option value="0.75">0.75x 速度</option>
-            <option value="1" selected>1.0x 速度</option>
-            <option value="1.25">1.25x 速度</option>
-            <option value="1.5">1.5x 速度</option>
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1.0x</option>
+            <option value="1.5">1.5x</option>
           </select>
         </div>
-        <div class="toolbar">
-          <button id="prevBtn" class="secondary" type="button">上一条</button>
-          <button id="nextBtn" class="secondary" type="button">下一条</button>
-          <button id="playPauseBtn" class="accent" type="button">暂停</button>
-          <button id="loopBtn" type="button">循环开</button>
-        </div>
       </div>
-
       <div class="status">
         <span id="statusDot" class="dot"></span>
-        <span id="statusText">准备中</span>
+        <span id="statusText">系统就绪</span>
       </div>
     </div>
 
     <div class="sidebar-scroll">
-      <div class="helper-card">
-        <div class="helper-grid test-form">
-          <div>
-            <div class="helper-label">朗读文本</div>
-            <textarea id="speechInput" placeholder="输入一段文字让数字人朗读...">同学们好，今天我们开始上课。</textarea>
+      <!-- 快捷消息互动区 -->
+      <div class="helper-card" style="margin-top: 0; border-top: none; border-radius: 0 0 12px 12px;">
+        <div style="padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+          <div
+            style="font-size: 12px; font-weight: bold; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">
+            快捷互动</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button class="secondary mini-btn" type="button" onclick="speakText('老师好！')">打个招呼</button>
+            <button class="secondary mini-btn" type="button" onclick="speakText('这节课讲什么？')">询问进度</button>
+            <button class="secondary mini-btn" type="button" onclick="speakText('没听懂，再讲讲。')">请求重讲</button>
+            <button class="secondary mini-btn" type="button" onclick="speakText('太棒了！')">给予鼓励</button>
           </div>
-
-          <div class="test-toolbar">
-            <button id="speakBtn" class="accent" type="button">发送并说话</button>
-            <button id="stopSpeakBtn" class="danger" type="button">停止说话</button>
+          <div style="margin-top: 4px;">
+            <textarea id="speechInput"
+              style="width: 100%; height: 60px; font-size: 13px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb; resize: none;"
+              placeholder="输入文字互动..."></textarea>
+            <div style="margin-top: 8px; display: flex; gap: 6px;">
+              <button id="speakBtn" class="accent" style="flex: 1; padding: 8px; font-size: 13px;"
+                type="button">点击并说话</button>
+              <button id="stopSpeakBtn" class="danger" style="padding: 8px; font-size: 13px;" type="button">停止</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 表情/动作下拉等保留作为 JS 引用桩，但不在 UI 显示 -->
+      <!-- 动作列表 -->
+      <div id="motionList" class="motion-list"></div>
+
+      <!-- 隐藏逻辑桩 -->
       <div hidden aria-hidden="true">
+        <button id="prevBtn"></button>
+        <button id="nextBtn"></button>
+        <button id="playPauseBtn"></button>
+        <button id="loopBtn"></button>
         <select id="actionSelect">
-          <option value="">跟随左侧当前动作</option>
+          <option value=""></option>
         </select>
         <select id="moodSelect">
           <option value="neutral">neutral</option>
-          <option value="happy">happy</option>
-          <option value="relaxed">relaxed</option>
-          <option value="sad">sad</option>
-          <option value="angry">angry</option>
-          <option value="surprised">surprised</option>
+        </select>
+        <option value="relaxed">relaxed</option>
+        <option value="sad">sad</option>
+        <option value="angry">angry</option>
+        <option value="surprised">surprised</option>
         </select>
         <button id="applyMoodBtn" type="button">只应用表情</button>
         <button id="resetFaceBtn" type="button">重置表情口型</button>
@@ -729,6 +868,61 @@
     const teacherToTargetBtn = document.getElementById('teacherToTargetBtn');
     const teacherFaceCameraBtn = document.getElementById('teacherFaceCameraBtn');
     const copySceneStateBtn = document.getElementById('copySceneStateBtn');
+
+    // === 侧边栏收起 / 展开 (默认收起，但保留快捷按钮) ===
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+    function setSidebarCollapsed(collapsed) {
+      if (collapsed) {
+        document.body.classList.add('sidebar-collapsed');
+        if (sidebarToggleIcon) sidebarToggleIcon.textContent = '▴';
+      } else {
+        document.body.classList.remove('sidebar-collapsed');
+        if (sidebarToggleIcon) sidebarToggleIcon.textContent = '▾';
+      }
+    }
+    // 默认收起
+    setSidebarCollapsed(true);
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.addEventListener('click', () => {
+        setSidebarCollapsed(!document.body.classList.contains('sidebar-collapsed'));
+      });
+    }
+
+    // === 接收来自父页面 (Vue 应用) 的指令 ===
+    // 如果 VRM 模型还未加载完成，先把朗读请求排队，等模型加载完再统一播放
+    const __pendingSpeakQueue = [];
+    function __trySpeak(text) {
+      try {
+        if (typeof speakText === 'function' && window.__virtualPeopleState && window.__virtualPeopleState.vrm) {
+          speakText(text);
+          return true;
+        }
+      } catch (err) {
+        console.warn('[virtual-people] speak failed', err);
+      }
+      return false;
+    }
+    function __flushPendingSpeak() {
+      while (__pendingSpeakQueue.length) {
+        const next = __pendingSpeakQueue.shift();
+        if (!__trySpeak(next)) {
+          __pendingSpeakQueue.unshift(next);
+          return;
+        }
+      }
+    }
+    window.addEventListener('message', (event) => {
+      const data = event && event.data;
+      if (!data || typeof data !== 'object') return;
+      if (data.type === 'speak' && typeof data.text === 'string') {
+        if (!__trySpeak(data.text)) {
+          __pendingSpeakQueue.push(data.text);
+        }
+      } else if (data.type === 'toggleSidebar') {
+        setSidebarCollapsed(!document.body.classList.contains('sidebar-collapsed'));
+      }
+    });
     const teacherPosX = document.getElementById('teacherPosX');
     const teacherPosY = document.getElementById('teacherPosY');
     const teacherPosZ = document.getElementById('teacherPosZ');
@@ -1951,7 +2145,7 @@
       state.speakingMotionTime = 0;
 
       speechText.textContent = trimmed;
-      speechMeta.textContent = `纯前端口型测试 · 共 ${plan.length} 个字/停顿单元`;
+      speechMeta.textContent = `智能互动 · 共 ${plan.length} 个字/停顿单元`;
       speechPanel.classList.remove('hidden');
       speakWithBrowserVoice(trimmed);
 
@@ -1961,7 +2155,7 @@
         const currentLabel = item.mouths.length
           ? `第 ${i + 1} 步：${item.char}${item.pinyin ? `(${item.pinyin})` : ''} -> ${item.label}`
           : `第 ${i + 1} 步：${item.char} -> 停顿`;
-        speechMeta.textContent = `纯前端口型测试 · ${currentLabel}`;
+        speechMeta.textContent = `智能互动 · ${currentLabel}`;
 
         if (item.mouths.length) {
           const segmentDuration = Math.max(50, Math.floor(item.duration / item.mouths.length));
@@ -1997,7 +2191,7 @@
 
       await animateMouthTo(null, releaseDuration, token);
       state.isSpeaking = false;
-      speechMeta.textContent = '纯前端口型测试 · 已完成';
+      speechMeta.textContent = '智能互动 · 已完成';
     }
 
     function updateSpeechMotion(delta) {
@@ -2470,6 +2664,11 @@
       const loadedAvatar = await loadVRM(state.vrmUrl);
       state.vrm = loadedAvatar.vrm;
       state.avatarRoot = loadedAvatar.avatarRoot;
+      // 暴露 state 给外部并冲刷在模型加载前排队的朗读请求
+      window.__virtualPeopleState = state;
+      if (typeof __flushPendingSpeak === 'function') {
+        try { __flushPendingSpeak(); } catch (e) { console.warn('[virtual-people] flush pending speak failed', e); }
+      }
       applyTeacherPose(state.avatarRoot);
 
       const maps = buildExpressionMaps(state.vrm);

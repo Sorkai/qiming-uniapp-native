@@ -94,6 +94,7 @@
                   :key="res.title"
                   :style="{ transitionDelay: `${index * 100}ms` }"
                   class="flex flex-col gap-2 p-3 rounded-xl bg-gray-50/80 border border-gray-100 hover:border-primary/50 hover:bg-primary/5 cursor-pointer shadow-sm hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 group"
+                  @click="emit('preview', res)"
                 >
                   <div
                     v-if="res.type === 'video'"
@@ -110,6 +111,43 @@
                       class="absolute bottom-1 right-1 text-xs bg-black/60 text-white px-1.5 rounded z-10 font-mono"
                     >
                       03:45
+                    </div>
+                  </div>
+
+                  <!-- 动画预览：栈操作可视化缩略图 -->
+                  <div
+                    v-else-if="res.type === 'animation'"
+                    class="h-24 w-full rounded-lg relative overflow-hidden flex items-end justify-center gap-1 px-3 py-2 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 group-hover:shadow-inner"
+                  >
+                    <div
+                      class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300"
+                    />
+                    <div class="flex flex-col-reverse gap-1 z-10">
+                      <div
+                        class="w-12 h-4 rounded bg-white/90 text-[10px] font-bold text-indigo-600 flex items-center justify-center shadow"
+                      >
+                        A
+                      </div>
+                      <div
+                        class="w-12 h-4 rounded bg-white/80 text-[10px] font-bold text-purple-600 flex items-center justify-center shadow"
+                      >
+                        B
+                      </div>
+                      <div
+                        class="w-12 h-4 rounded bg-white/70 text-[10px] font-bold text-pink-600 flex items-center justify-center shadow animate-bounce"
+                      >
+                        C
+                      </div>
+                    </div>
+                    <div
+                      class="absolute top-1 left-2 text-[10px] font-bold text-white/90 z-10"
+                    >
+                      Stack · LIFO
+                    </div>
+                    <div
+                      class="absolute bottom-1 right-1 text-[10px] bg-black/40 text-white px-1.5 rounded z-10"
+                    >
+                      点击预览
                     </div>
                   </div>
 
@@ -352,6 +390,7 @@ const emit = defineEmits([
   "send",
   "switch-course",
   "exit",
+  "preview",
   "update:mode",
   "update:selectedAgent",
   "update:selectedModel",

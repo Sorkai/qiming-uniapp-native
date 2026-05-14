@@ -58,6 +58,10 @@ import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
 
 import { useUserStore } from "@/store/modules/user";
 import { useNav } from "@/layout/hooks/useNav";
+import { formatAvatar } from "@/utils/avatar";
+import CourseHeader from "@/views/account/course-detail/CourseHeader.vue";
+import AiAppSidebar from "./components/AiAppSidebar.vue";
+import { userKey, type DataInfo } from "@/utils/auth";
 
 defineOptions({ name: "AiAppWorkbench" });
 
@@ -90,6 +94,30 @@ const currentTheme = ref(
 );
 const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
+// 当前用户信息（用于头部展示）
+const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
+
+// 主题切换
+const toggleTheme = () => {
+  currentTheme.value = currentTheme.value === "dark" ? "light" : "dark";
+  storageLocal().setItem("course_theme", currentTheme.value);
+};
+
+// 进入个人中心
+const goToAccount = () => {
+  router.push("/account");
+};
+
+// 退出登录
+const handleLogout = () => {
+  userStore.logOut();
+};
+
+// 侧边栏菜单点击
+const handleSidebarMenuClick = (key: string) => {
+  activeRail.value = key;
+};
+
 // 会话数据集
 const activeRail = ref("chat");
 const activeCourse = ref<string | null>(null);
@@ -100,8 +128,11 @@ const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 
+// 数字人面板引用（用于触发朗读 + 自动口型）
+const virtualHumanRef = ref<{ speak?: (text: string) => void } | null>(null);
+
 // 学生拥有的课程（动态拉取）
-const myCourses = ref(["数据结构", "算法设计", "高等数学", "大学物理"]);
+const myCourses = ref(["Linux 系统实训", "算法设计", "高等数学", "大学物理"]);
 
 // 教师关联的学生列表
 const myStudents = ref([
@@ -202,16 +233,16 @@ const railItems = ref([
 const conversations = ref([
   {
     id: 1,
-    title: "关于图的遍历算法探讨",
+    title: "关于进程调度算法探讨",
     time: "上午 10:23",
-    course: "数据结构",
+    course: "Linux 系统实训",
     status: "分析中"
   },
   {
     id: 2,
-    title: "红黑树左旋右旋原理解析",
+    title: "Vim编辑器操作原理解析",
     time: "昨天 14:15",
-    course: "数据结构",
+    course: "Linux 系统实训",
     status: "已解答"
   },
   {
@@ -339,19 +370,19 @@ const agentItems = ref([
 
 const generatedResources = ref([
   {
-    title: "红黑树左旋右旋 3D动画",
+    title: "Linux 系统 3D 动画演示",
     kind: "视频讲解",
     desc: "自动生成的动画讲解逻辑",
     eta: "马上可用"
   },
   {
-    title: "数据结构期中错题重组",
+    title: "Linux 系统实训期中错题重组",
     kind: "互动题库",
     desc: "基于你历史易错点生成",
     eta: "马上可用"
   },
   {
-    title: "二叉树实战代码沙盒",
+    title: "Shell 脚本实战代码沙盒",
     kind: "代码实操",
     desc: "带有智能断点的运行环境",
     eta: "马上可用"
@@ -364,30 +395,30 @@ const messages = ref([
     role: "系统提示",
     type: "system",
     content:
-      "同学你好，你的「数据结构」智能辅导平台已就绪。专属助教已经分析了你上次的『二叉树』测验，发现存在易混淆点。今天我们需要针对性突破吗？"
+      "同学你好，你的「Linux 系统实训」智能辅导平台已就绪。专属助教已经分析了你上次的『进程管理』测验，发现存在易混淆点。今天我们需要针对性突破吗？"
   },
   {
     id: 2,
     role: "学生",
     type: "user",
-    content: "是的，红黑树的左旋和右旋我总是搞混，手写代码也容易记错指针变换。"
+    content: "是的，关于 grep 和 sed 的组合使用我还是不太熟练，经常写错正则表达式。"
   },
   {
     id: 3,
     role: "智能助教",
     type: "system",
     content:
-      "很典型的痛点！我正在调度排版校对助手和出题助手为你构建一套专属的复习资源，先看看这份概念视频，再到沙盒里试着做做题：",
+      "正则确实是 Linux 操作中的一大难点！我正在调度资料总结助手和练习题助手为你构建专属实训资源，先看下这两个工具的管道流演示，再通过交互式沙盒练习一下：",
     resources: [
       {
-        title: "红黑树左旋右旋 3D动画",
+        title: "grep/sed 管道流交互动画",
         type: "video",
-        desc: "直观展示节点指针的转移过程"
+        desc: "可视化展示文本处理的层级过滤"
       },
       {
-        title: "易错点专项练习",
+        title: "正则表达式实战练习",
         type: "code",
-        desc: "动手补充左旋函数 core 部分"
+        desc: "动手匹配特定格式的用户日志"
       }
     ]
   }
@@ -401,6 +432,11 @@ const handleSendMessage = (text: string) => {
     type: "user",
     content: text
   });
+
+  // 演示用：用户提问后立即让数字人开口朗读固定的「演示回复」(自动驱动口型)
+  const demoReply =
+    "助手们已为您深度解析，并生成了额外的拓展阅读，请在右侧查收最新的学习资料。";
+  virtualHumanRef.value?.speak?.(demoReply);
 
   setTimeout(() => {
     profileDimensions.value[4].value = Math.min(
@@ -461,15 +497,43 @@ const selectedMockAgent = ref("练习题助手");
 const handleNewChat = (payload: { course: string }) => {
   activeCourse.value = payload.course;
   if (quickMessage.value.trim()) {
-    handleSendMessage(quickMessage.value);
-    quickMessage.value = "";
+    // 切换到聊天栏目，确保 VirtualHumanPanel 渲染（v-show 下 ref 才能绑定到实例）
+    activeRail.value = "chat";
+    // 微延时等待 DOM 切换完成
+    setTimeout(() => {
+      handleSendMessage(quickMessage.value);
+      quickMessage.value = "";
+    }, 100);
   }
 };
 </script>
 
 <template>
+  <div class="course-detail-root ai-app-page-root" :class="currentTheme">
+    <div class="layout-container" :class="currentTheme">
+      <!-- 学习助手左侧二级菜单（统一课程界面风格） -->
+      <AiAppSidebar
+        :current-theme="currentTheme"
+        :active-menu="activeRail"
+        @menu-click="handleSidebarMenuClick"
+      />
+
+      <!-- 主体内容容器 -->
+      <div class="layout-inner-content" :class="currentTheme">
+        <!-- 顶部统一 Header -->
+        <CourseHeader
+          :current-theme="currentTheme"
+          title="学习助手"
+          :user-avatar="formatAvatar(userInfo?.avatar)"
+          :user-nickname="userInfo?.nickname || userInfo?.username || ''"
+          @go-back="goBack"
+          @toggle-theme="toggleTheme"
+          @go-to-account="goToAccount"
+          @logout="handleLogout"
+        />
+
   <div
-    class="ai-app-root h-[calc(100vh-80px)] flex flex-col font-sans rounded-xl overflow-hidden shadow-sm bg-white"
+    class="ai-app-root ai-app-inner flex flex-col font-sans rounded-xl overflow-hidden shadow-sm bg-white"
     :class="[
       activeRail === 'chat'
         ? 'bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)]'
@@ -478,29 +542,6 @@ const handleNewChat = (payload: { course: string }) => {
     ]"
   >
     <div class="flex-1 flex overflow-hidden">
-      <!-- 学生专属图标功能边栏 -->
-      <div
-        v-if="!isTeacher"
-        class="flex-shrink-0 w-16 bg-white border-r border-gray-100 flex flex-col items-center py-6 gap-6 z-30 shadow-sm"
-      >
-        <template v-for="item in railItems" :key="item.key">
-          <div
-            v-if="item.key !== 'generation'"
-            class="w-11 h-11 rounded-2xl flex items-center justify-center cursor-pointer transition-all duration-300"
-            :class="
-              activeRail === item.key
-                ? 'bg-primary/10 text-primary shadow-inner scale-110'
-                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
-            "
-            :title="item.label"
-            @click="activeRail = item.key"
-          >
-            <!-- 动态引入图标组件 -->
-            <el-icon :size="22"><component :is="item.icon" /></el-icon>
-          </div>
-        </template>
-      </div>
-
       <!-- 极简左侧边栏 (第一块) -->
       <aside
         v-if="activeRail === 'chat'"
@@ -550,10 +591,12 @@ const handleNewChat = (payload: { course: string }) => {
 
       <!-- 右边总体容器 (主体) -->
       <div class="flex-1 flex flex-col min-w-0">
-        <!-- 教师专属：顶部学生选择器工具栏 -->
+        <!-- 教师专属：顶部学生选择器工具栏 (仅对教师/管理员显示) -->
         <div
           v-if="
-            isTeacher && ['path', 'profile', 'assessment'].includes(activeRail)
+            isTeacher &&
+            ['path', 'profile', 'assessment'].includes(activeRail) &&
+            userStore.roles.includes('teacher')
           "
           class="flex-none flex items-center justify-end gap-3 bg-white px-6 py-3 border-b border-gray-100 z-10 relative shadow-sm"
         >
@@ -612,7 +655,7 @@ const handleNewChat = (payload: { course: string }) => {
                 class="flex-shrink-0 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
                 :class="humanCollapsed ? 'w-[64px]' : 'w-[420px]'"
               >
-                <VirtualHumanPanel v-show="!humanCollapsed" />
+                <VirtualHumanPanel ref="virtualHumanRef" v-show="!humanCollapsed" />
                 <!-- 收起态 -->
                 <div
                   v-show="humanCollapsed"
@@ -867,7 +910,9 @@ const handleNewChat = (payload: { course: string }) => {
               </div>
             </div>
             <div v-else class="h-full bg-white overflow-hidden">
-              <AiLearningPath :student-id="selectedStudentId" />
+              <AiLearningPath
+                :student-id="isTeacher ? selectedStudentId : ''"
+              />
             </div>
           </div>
 
@@ -900,7 +945,9 @@ const handleNewChat = (payload: { course: string }) => {
               <div
                 class="flex-1 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
-                <AiLearningProfile :student-id="selectedStudentId" />
+                <AiLearningProfile
+                  :student-id="isTeacher ? selectedStudentId : ''"
+                />
               </div>
               <!-- 右：原 chat 右侧的画像 / 智能体 / 拓展资源 选项卡 -->
               <div
@@ -908,7 +955,7 @@ const handleNewChat = (payload: { course: string }) => {
               >
                 <AiInspector
                   :profileDimensions="
-                    selectedStudentId
+                    isTeacher && selectedStudentId
                       ? myStudents.find(s => s.id === selectedStudentId)
                           ?.profileDimensions || profileDimensions
                       : profileDimensions
@@ -942,7 +989,7 @@ const handleNewChat = (payload: { course: string }) => {
               </div>
             </div>
             <div v-else class="h-full bg-white overflow-hidden">
-              <AiAssessment :student-id="selectedStudentId" />
+              <AiAssessment :student-id="isTeacher ? selectedStudentId : ''" />
             </div>
           </div>
 
@@ -1184,9 +1231,48 @@ const handleNewChat = (payload: { course: string }) => {
       </div>
     </div>
   </div>
+      </div>
+      <!-- /.layout-inner-content -->
+    </div>
+    <!-- /.layout-container -->
+  </div>
+  <!-- /.course-detail-root -->
 </template>
 
 <style scoped lang="scss">
+/* === 学习助手页面外壳：复用课程详情页统一的布局风格 === */
+.ai-app-page-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #f5f7fa;
+  transition: background 0.3s ease;
+
+  &.dark {
+    background: #1a1a1a;
+  }
+
+  .layout-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .layout-inner-content {
+    position: relative;
+    margin-left: 90px;
+    height: 100%;
+    padding: 90px 20px 20px;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  // 让内部 ai-app-root 自适应剩余区域，为底部署名留出更多位置
+  .ai-app-inner {
+    height: calc(100vh - 150px);
+  }
+}
+
 .ai-app-root {
   --el-color-primary: #5e7ff8; // 强制保持平台蓝
 

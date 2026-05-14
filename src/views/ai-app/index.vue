@@ -106,6 +106,9 @@ const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 
+// 数字人面板引用（用于触发朗读 + 自动口型）
+const virtualHumanRef = ref<{ speak?: (text: string) => void } | null>(null);
+
 // 学生拥有的课程（动态拉取）
 const myCourses = ref(["数据结构", "算法设计", "高等数学", "大学物理"]);
 
@@ -406,6 +409,11 @@ const handleSendMessage = (text: string) => {
     content: text
   });
 
+  // 演示用：用户提问后立即让数字人开口朗读固定的「演示回复」(自动驱动口型)
+  const demoReply =
+    "栈是一种先进后出(LIFO)的线性结构，只能在栈顶进行插入和删除。核心操作包括 push 压栈、pop 出栈、peek 查看栈顶，常用于函数调用、表达式求值与括号匹配。右侧已为你生成可交互的栈操作动画，点击即可预览。";
+  virtualHumanRef.value?.speak?.(demoReply);
+
   setTimeout(() => {
     profileDimensions.value[4].value = Math.min(
       100,
@@ -424,13 +432,17 @@ const handleSendMessage = (text: string) => {
         id: Date.now(),
         role: "智能助教",
         type: "system",
-        content:
-          "助手们已为您深度解析，并生成了额外的拓展阅读，请在右侧查收最新的学习资料。",
+        content: demoReply,
         resources: [
           {
-            title: "图神经网络的拓展前沿 (PDF)",
+            title: "栈操作交互动画 (push / pop / peek)",
+            type: "animation",
+            desc: "点击查看 LIFO 压栈与出栈过程"
+          },
+          {
+            title: "栈的典型应用场景梳理 (PDF)",
             type: "doc",
-            desc: "为你翻译提取的学术脉络"
+            desc: "函数调用 / 括号匹配 / 表达式求值"
           }
         ]
       });
@@ -441,6 +453,54 @@ const handleSendMessage = (text: string) => {
     }, 1500);
   }, 500);
 };
+
+// === 栈操作预览弹窗 ===
+const stackPreviewVisible = ref(false);
+const stackItems = ref<{ key: number; value: string }[]>([
+  { key: 1, value: "A" },
+  { key: 2, value: "B" },
+  { key: 3, value: "C" }
+]);
+let stackKeySeed = 100;
+const stackLog = ref<string[]>([
+  "初始状态：栈顶 -> C, B, A (最后压入 C)"
+]);
+function stackPush() {
+  const candidate = ["D", "E", "F", "G", "H", "X", "Y", "Z"];
+  const v = candidate[Math.floor(Math.random() * candidate.length)];
+  stackItems.value.push({ key: ++stackKeySeed, value: v });
+  stackLog.value.unshift(`push(${v})  → 栈顶现为 ${v}`);
+}
+function stackPop() {
+  if (!stackItems.value.length) {
+    stackLog.value.unshift("pop() 失败：栈为空");
+    return;
+  }
+  const top = stackItems.value[stackItems.value.length - 1];
+  stackItems.value.pop();
+  stackLog.value.unshift(
+    `pop()    → 弹出 ${top.value}，现栈顶 ${stackItems.value[stackItems.value.length - 1]?.value || "空"}`
+  );
+}
+function stackPeek() {
+  const top = stackItems.value[stackItems.value.length - 1];
+  stackLog.value.unshift(
+    top ? `peek()   → 栈顶是 ${top.value}` : "peek() 失败：栈为空"
+  );
+}
+function stackReset() {
+  stackItems.value = [
+    { key: ++stackKeySeed, value: "A" },
+    { key: ++stackKeySeed, value: "B" },
+    { key: ++stackKeySeed, value: "C" }
+  ];
+  stackLog.value = ["重置：栈顶 -> C, B, A"];
+}
+function handlePreview(res: any) {
+  if (res?.type === "animation") {
+    stackPreviewVisible.value = true;
+  }
+}
 
 const goBack = () => {
   if (window.history.state && window.history.length > 1) {
@@ -465,15 +525,20 @@ const selectedMockAgent = ref("练习题助手");
 const handleNewChat = (payload: { course: string }) => {
   activeCourse.value = payload.course;
   if (quickMessage.value.trim()) {
-    handleSendMessage(quickMessage.value);
-    quickMessage.value = "";
+    // 切换到聊天栏目，确保 VirtualHumanPanel 渲染 (v-show 会让 ref 可用)
+    activeRail.value = "chat";
+    // 微延时等待 DOM 切换完成，确保 ref 绑定到实例上
+    setTimeout(() => {
+      handleSendMessage(quickMessage.value);
+      quickMessage.value = "";
+    }, 100);
   }
 };
 </script>
 
 <template>
   <div
-    class="ai-app-root h-[calc(100vh-80px)] flex flex-col font-sans rounded-xl overflow-hidden shadow-sm bg-white"
+    class="ai-app-root h-[calc(100vh-140px)] flex flex-col font-sans rounded-xl overflow-hidden shadow-sm bg-white"
     :class="[
       activeRail === 'chat'
         ? 'bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)]'
@@ -583,6 +648,7 @@ const handleNewChat = (payload: { course: string }) => {
                   :messages="messages"
                   :activeCourse="activeCourse"
                   @send="handleSendMessage"
+                  @preview="handlePreview"
                 />
               </div>
             </transition>
@@ -593,7 +659,7 @@ const handleNewChat = (payload: { course: string }) => {
                 class="flex-shrink-0 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
                 :class="humanCollapsed ? 'w-[64px]' : 'w-[420px]'"
               >
-                <VirtualHumanPanel v-show="!humanCollapsed" />
+                <VirtualHumanPanel ref="virtualHumanRef" v-show="!humanCollapsed" />
                 <!-- 收起态 -->
                 <div
                   v-show="humanCollapsed"
@@ -1150,8 +1216,89 @@ const handleNewChat = (payload: { course: string }) => {
         </main>
       </div>
     </div>
+
+    <!-- 栈操作可视化预览弹窗 -->
+    <el-dialog
+      v-model="stackPreviewVisible"
+      title="栈 (Stack) 操作可视化"
+      width="640px"
+      align-center
+      destroy-on-close
+    >
+      <div class="flex gap-6">
+        <!-- 栈可视化区 -->
+        <div
+          class="relative w-44 h-72 mx-auto bg-gradient-to-b from-indigo-50 to-purple-50 rounded-2xl border-2 border-dashed border-indigo-300 flex flex-col-reverse items-center p-3 gap-2 overflow-hidden"
+        >
+          <div
+            class="absolute top-2 left-3 text-[11px] font-bold text-indigo-500"
+          >
+            栈顶 (top) ↑
+          </div>
+          <div
+            class="absolute bottom-2 right-3 text-[11px] font-bold text-purple-500"
+          >
+            栈底 (bottom)
+          </div>
+          <transition-group name="stack-anim" tag="div" class="flex flex-col-reverse gap-2 w-full items-center">
+            <div
+              v-for="item in stackItems"
+              :key="item.key"
+              class="w-28 h-9 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center shadow-lg"
+            >
+              {{ item.value }}
+            </div>
+          </transition-group>
+          <div
+            v-if="!stackItems.length"
+            class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm"
+          >
+            栈为空
+          </div>
+        </div>
+
+        <!-- 操作 + 日志 -->
+        <div class="flex-1 flex flex-col gap-3">
+          <div class="flex flex-wrap gap-2">
+            <el-button type="primary" @click="stackPush">push 压栈</el-button>
+            <el-button type="danger" @click="stackPop">pop 出栈</el-button>
+            <el-button type="warning" @click="stackPeek">peek 栈顶</el-button>
+            <el-button @click="stackReset">重置</el-button>
+          </div>
+          <div class="text-xs text-gray-500">
+            栈大小：<b class="text-indigo-600">{{ stackItems.length }}</b>
+            ｜ 栈顶元素：<b class="text-pink-600">{{
+              stackItems[stackItems.length - 1]?.value || "—"
+            }}</b>
+          </div>
+          <div
+            class="flex-1 min-h-[180px] max-h-[220px] overflow-auto rounded-lg bg-gray-900 text-emerald-300 font-mono text-[12px] p-3 leading-relaxed"
+          >
+            <div v-for="(line, i) in stackLog" :key="i">› {{ line }}</div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="stackPreviewVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.stack-anim-enter-active,
+.stack-anim-leave-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.stack-anim-enter-from {
+  opacity: 0;
+  transform: translateY(-30px) scale(0.7);
+}
+.stack-anim-leave-to {
+  opacity: 0;
+  transform: translateY(-40px) scale(0.7);
+}
+</style>
 
 <style scoped lang="scss">
 .ai-app-root {
