@@ -219,7 +219,7 @@ const myStudents = ref([
     ]
   }
 ]);
-const selectedStudentId = ref("");
+const selectedStudentId = ref("s1");
 
 import { Check } from "@element-plus/icons-vue";
 
@@ -654,7 +654,7 @@ onUnmounted(() => {
           v-if="
             isTeacher &&
             ['path', 'profile', 'assessment'].includes(activeRail) &&
-            userStore.roles.includes('teacher')
+            mode === '教师模式'
           "
           class="flex-none flex items-center justify-end gap-3 bg-white px-6 py-3 border-b border-gray-100 z-10 relative shadow-sm"
         >
@@ -985,7 +985,10 @@ onUnmounted(() => {
 
           <div v-else-if="activeRail === `path`" class="h-full w-full">
             <div
-              v-if="isTeacher && !selectedStudentId"
+              v-if="
+                (isTeacher && mode === '教师模式' && !selectedStudentId) ||
+                (mode === '学生模式' && !selectedStudentId)
+              "
               class="h-full w-full flex items-center justify-center bg-white"
             >
               <div
@@ -1016,7 +1019,10 @@ onUnmounted(() => {
             class="h-full w-full p-4 bg-white"
           >
             <div
-              v-if="isTeacher && !selectedStudentId"
+              v-if="
+                (isTeacher && mode === '教师模式' && !selectedStudentId) ||
+                (mode === '学生模式' && !selectedStudentId)
+              "
               class="h-full w-full flex items-center justify-center"
             >
               <div
@@ -1064,7 +1070,10 @@ onUnmounted(() => {
 
           <div v-else-if="activeRail === `assessment`" class="h-full w-full">
             <div
-              v-if="isTeacher && !selectedStudentId"
+              v-if="
+                (isTeacher && mode === '教师模式' && !selectedStudentId) ||
+                (mode === '学生模式' && !selectedStudentId)
+              "
               class="h-full w-full flex items-center justify-center bg-white"
             >
               <div
