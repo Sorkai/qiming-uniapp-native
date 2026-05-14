@@ -21,7 +21,19 @@
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </div>
-        <span class="header-date">{{ currentDate }}</span>
+        <div
+          v-if="showClockMeta"
+          class="header-date-group header-date-group--rich"
+        >
+          <span class="header-date">{{ currentDate }}</span>
+          <div class="header-clock-row">
+            <span class="header-time">{{ currentTime }}</span>
+            <span class="header-period">{{ dayPhase }}</span>
+          </div>
+        </div>
+        <span v-else class="header-date header-date--single">{{
+          currentDate
+        }}</span>
         <div
           class="theme-btn-premium"
           :class="{ 'is-dark': currentTheme === 'dark' }"
@@ -110,20 +122,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { IconifyIconOffline } from "@/components/ReIcon";
 import ArrowDown from "~icons/ep/arrow-down";
 import Setting from "~icons/ri/user-settings-line";
 import LogoutIcon from "~icons/ri/logout-circle-r-line";
 
-defineProps<{
-  currentTheme: string;
-  title?: string;
-  userAvatar: string;
-  userNickname: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    currentTheme: string;
+    title?: string;
+    userAvatar: string;
+    userNickname: string;
+    showClockMeta?: boolean;
+  }>(),
+  {
+    showClockMeta: false
+  }
+);
 
 const visible = ref(false);
+const now = ref(new Date());
+let clockTimer: ReturnType<typeof setInterval> | null = null;
 
 defineEmits<{
   (e: "go-back"): void;
@@ -133,11 +153,44 @@ defineEmits<{
 }>();
 
 const currentDate = computed(() => {
-  const date = new Date();
+  const date = now.value;
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}年${month}月${day}日`;
+});
+
+const currentTime = computed(() => {
+  const date = now.value;
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  const second = String(date.getSeconds()).padStart(2, "0");
+  return `${hour}:${minute}:${second}`;
+});
+
+const dayPhase = computed(() => {
+  const hour = now.value.getHours();
+  if (hour < 5) return "凌晨";
+  if (hour < 8) return "清晨";
+  if (hour < 11) return "上午";
+  if (hour < 13) return "中午";
+  if (hour < 18) return "下午";
+  if (hour < 20) return "傍晚";
+  return "晚上";
+});
+
+onMounted(() => {
+  if (!props.showClockMeta) return;
+  clockTimer = setInterval(() => {
+    now.value = new Date();
+  }, 1000);
+});
+
+onUnmounted(() => {
+  if (clockTimer) {
+    clearInterval(clockTimer);
+    clockTimer = null;
+  }
 });
 
 const handleButtonMouseMove = (e: MouseEvent) => {
@@ -210,16 +263,79 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   transform: scale(1.05);
 }
 
-.header-date {
+.header-date-group {
+  display: flex;
+  flex-direction: column;
   margin-left: 20px;
+  line-height: 1;
+}
+
+.header-date {
+  font-family:
+    "SF Pro Display",
+    "PingFang SC",
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
   font-size: 20px;
   font-weight: 700;
+  letter-spacing: 0.01em;
   color: #97b4f7;
+  white-space: nowrap;
+}
+
+.header-date--single {
+  margin-left: 20px;
+}
+
+.header-date-group--rich .header-date {
+  margin-left: 0;
+}
+
+.header-clock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.header-time {
+  font-family:
+    "SF Mono",
+    "SFMono-Regular",
+    "JetBrains Mono",
+    "Menlo",
+    monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgb(151 180 247 / 92%);
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.header-period {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6f94eb;
+  background: rgb(151 180 247 / 12%);
+  border: 1px solid rgb(151 180 247 / 16%);
+  border-radius: 999px;
   white-space: nowrap;
 }
 
 .layout-header.dark .header-date {
   color: #4facfe;
+}
+
+.layout-header.dark .header-time {
+  color: rgb(79 172 254 / 92%);
+}
+
+.layout-header.dark .header-period {
+  color: #8ac8ff;
+  background: rgb(79 172 254 / 12%);
+  border-color: rgb(79 172 254 / 18%);
 }
 
 .layout-header.dark .back-btn {
@@ -440,10 +556,28 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   }
 
   .header-date {
-    margin-left: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 16px;
+  }
+
+  .header-date--single,
+  .header-date-group {
+    margin-left: 12px;
+  }
+
+  .header-clock-row {
+    gap: 8px;
+    margin-top: 5px;
+  }
+
+  .header-time {
+    font-size: 11px;
+  }
+
+  .header-period {
+    padding: 3px 7px;
+    font-size: 10px;
   }
 
   .theme-btn-premium {
@@ -489,8 +623,27 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   }
 
   .header-date {
-    margin-left: 10px;
     font-size: 14px;
+  }
+
+  .header-date--single,
+  .header-date-group {
+    margin-left: 10px;
+  }
+
+  .header-clock-row {
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .header-time {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .header-period {
+    padding: 2px 6px;
+    font-size: 9px;
   }
 
   .theme-btn-premium {
@@ -535,8 +688,20 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   }
 
   .header-date {
-    margin-left: 8px;
     font-size: 13px;
+  }
+
+  .header-date--single,
+  .header-date-group {
+    margin-left: 8px;
+  }
+
+  .header-time {
+    font-size: 9px;
+  }
+
+  .header-period {
+    display: none;
   }
 
   .theme-btn-premium {

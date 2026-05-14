@@ -549,6 +549,7 @@ const handleNewChat = (payload: { course: string }) => {
           title="学习助手"
           :user-avatar="formatAvatar(userInfo?.avatar)"
           :user-nickname="userInfo?.nickname || userInfo?.username || ''"
+          :show-clock-meta="true"
           @go-back="goBack"
           @toggle-theme="toggleTheme"
           @go-to-account="goToAccount"
