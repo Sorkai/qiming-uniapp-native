@@ -94,6 +94,7 @@
                   :key="res.title"
                   :style="{ transitionDelay: `${index * 100}ms` }"
                   class="flex flex-col gap-2 p-3 rounded-xl bg-gray-50/80 border border-gray-100 hover:border-primary/50 hover:bg-primary/5 cursor-pointer shadow-sm hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 group"
+                  @click="emit('preview', res)"
                 >
                   <div
                     v-if="res.type === 'video'"
@@ -352,6 +353,7 @@ const emit = defineEmits([
   "send",
   "switch-course",
   "exit",
+  "preview",
   "update:mode",
   "update:selectedAgent",
   "update:selectedModel",

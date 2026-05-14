@@ -493,6 +493,29 @@ onMounted(() => {
 const quickMessage = ref("");
 const quickCourse = ref("");
 const selectedMockAgent = ref("练习题助手");
+const quickInteractionMessages = [
+  "老师好",
+  "这一段没听懂",
+  "请再讲一遍",
+  "我做完了"
+];
+const grepSedDemoUrl = `${import.meta.env.BASE_URL}interactive/grep-sed-pipeline.html`;
+const graphNeuralPdfUrl = "https://arxiv.org/pdf/1812.08434.pdf";
+
+const handleQuickInteraction = (text: string) => {
+  virtualHumanRef.value?.speak?.(text);
+};
+
+const handleResourcePreview = (res: { title?: string; type?: string }) => {
+  const title = res?.title || "";
+  if (title.includes("grep/sed")) {
+    window.open(grepSedDemoUrl, "_blank", "noopener");
+    return;
+  }
+  if (title.includes("图神经网络")) {
+    window.open(graphNeuralPdfUrl, "_blank", "noopener,noreferrer");
+  }
+};
 
 const handleNewChat = (payload: { course: string }) => {
   activeCourse.value = payload.course;
@@ -645,6 +668,7 @@ const handleNewChat = (payload: { course: string }) => {
                   :messages="messages"
                   :activeCourse="activeCourse"
                   @send="handleSendMessage"
+                  @preview="handleResourcePreview"
                 />
               </div>
             </transition>
@@ -655,6 +679,18 @@ const handleNewChat = (payload: { course: string }) => {
                 class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
                 :class="humanCollapsed ? 'w-16' : 'w-[420px]'"
               >
+                <!-- 收起 / 展开 把手：挂在外层，避免被圆角容器裁切 -->
+                <button
+                  class="absolute top-4 left-0 -translate-x-1/2 w-7 h-7 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-[140]"
+                  :title="humanCollapsed ? '展开数字人' : '收起数字人'"
+                  @click="toggleHuman"
+                >
+                  <el-icon :size="12">
+                    <Fold v-if="humanCollapsed" />
+                    <Expand v-else />
+                  </el-icon>
+                </button>
+
                 <!-- 数字人容器 -->
                 <div
                   class="flex-1 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative"
@@ -680,45 +716,31 @@ const handleNewChat = (payload: { course: string }) => {
                       >专属助教</span
                     >
                   </div>
-
-                  <!-- 收起 / 展开 把手 -->
-                  <button
-                    class="absolute top-3 -left-3 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-                    :title="humanCollapsed ? '展开数字人' : '收起数字人'"
-                    @click="toggleHuman"
-                  >
-                    <el-icon :size="12">
-                      <Fold v-if="humanCollapsed" />
-                      <Expand v-else />
-                    </el-icon>
-                  </button>
                 </div>
 
-                <!-- 独立快捷块：在数字人这一窄条的正下方单独开一块 -->
+                <!-- 独立快捷块：仅在展开态显示在数字人底部 -->
                 <transition name="el-zoom-in-bottom">
                   <div
-                    v-show="humanCollapsed"
-                    class="flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-sm flex flex-col gap-2 overflow-hidden"
+                    v-show="!humanCollapsed"
+                    class="flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
+                    style="min-height: 180px"
                   >
                     <div
-                      class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter text-center border-b border-gray-100 pb-1 mb-1"
+                      class="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center border-b border-gray-100 pb-1.5 mb-1"
                     >
                       快速互动
                     </div>
-                    <div class="flex flex-col gap-1.5 align-center">
+                    <div class="flex flex-col gap-2">
                       <el-button
-                        v-for="msg in [
-                          { t: '老师好', i: '' },
-                          { t: '有点难', i: '' },
-                          { t: '悟了', i: '' },
-                          { t: '完成任务', i: '' }
-                        ]"
-                        :key="msg.t"
-                        size="small"
-                        class="!px-2 !py-1 !m-0 !text-[11px] !rounded-lg !border-none !bg-blue-50 hover:!bg-blue-100 !text-blue-600 transition-all"
-                        @click="virtualHumanRef?.speak?.(msg.t)"
+                        v-for="msg in quickInteractionMessages"
+                        :key="msg"
+                        type="primary"
+                        plain
+                        size="default"
+                        class="!w-full !m-0 !text-[12px] !rounded-xl !border-blue-100 !bg-blue-50/50 hover:!bg-blue-500 hover:!text-white transition-all duration-300"
+                        @click="handleQuickInteraction(msg)"
                       >
-                        {{ msg.t }}
+                        {{ msg }}
                       </el-button>
                     </div>
                   </div>
