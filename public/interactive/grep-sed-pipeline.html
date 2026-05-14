@@ -1,532 +1,536 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>grep/sed 管道流交互动画</title>
-    <style>
-      :root {
-        --bg: #07111f;
-        --panel: rgba(11, 24, 44, 0.88);
-        --panel-soft: rgba(18, 37, 67, 0.72);
-        --line: rgba(148, 163, 184, 0.2);
-        --text: #e5eefc;
-        --muted: #8ea3c7;
-        --cyan: #22d3ee;
-        --blue: #60a5fa;
-        --green: #34d399;
-        --amber: #fbbf24;
-        --rose: #fb7185;
-      }
 
-      * {
-        box-sizing: border-box;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grep/sed 管道流交互动画</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(11, 24, 44, 0.88);
+      --panel-soft: rgba(18, 37, 67, 0.72);
+      --line: rgba(148, 163, 184, 0.2);
+      --text: #e5eefc;
+      --muted: #8ea3c7;
+      --cyan: #22d3ee;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+    }
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family:
-          "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(circle at top left, rgba(34, 211, 238, 0.18), transparent 30%),
-          radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 28%),
-          linear-gradient(160deg, #040916 0%, #07111f 42%, #0a1730 100%);
-      }
+    * {
+      box-sizing: border-box;
+    }
 
-      .page {
-        width: min(1180px, calc(100% - 32px));
-        margin: 24px auto;
-        display: grid;
-        gap: 20px;
-      }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family:
+        "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 28%),
+        linear-gradient(160deg, #040916 0%, #07111f 42%, #0a1730 100%);
+    }
 
-      .hero,
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 28px;
-        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
-      }
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 24px auto;
+      display: grid;
+      gap: 20px;
+    }
 
-      .hero {
-        padding: 28px;
-      }
+    .hero,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+    }
 
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(96, 165, 250, 0.12);
-        color: var(--blue);
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-      }
+    .hero {
+      padding: 28px;
+    }
 
-      h1 {
-        margin: 16px 0 10px;
-        font-size: clamp(28px, 5vw, 46px);
-        line-height: 1.05;
-      }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(96, 165, 250, 0.12);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
 
-      .hero p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 15px;
-        line-height: 1.8;
-        max-width: 760px;
-      }
+    h1 {
+      margin: 16px 0 10px;
+      font-size: clamp(28px, 5vw, 46px);
+      line-height: 1.05;
+    }
 
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.8;
+      max-width: 760px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .panel-title h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      box-shadow: 0 12px 28px rgba(34, 211, 238, 0.22);
+    }
+
+    .secondary {
+      background: rgba(96, 165, 250, 0.12);
+      border: 1px solid rgba(96, 165, 250, 0.18);
+    }
+
+    .ghost {
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 16px;
+    }
+
+    .stage {
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      overflow: hidden;
+    }
+
+    .stage-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stage-head strong {
+      font-size: 15px;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.gray {
+      background: rgba(148, 163, 184, 0.12);
+      color: #cbd5e1;
+    }
+
+    .badge.green {
+      background: rgba(52, 211, 153, 0.14);
+      color: var(--green);
+    }
+
+    .badge.amber {
+      background: rgba(251, 191, 36, 0.14);
+      color: var(--amber);
+    }
+
+    .terminal {
+      margin: 0;
+      padding: 16px;
+      min-height: 188px;
+      font-family:
+        "JetBrains Mono", "SFMono-Regular", "Menlo", monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    .line {
+      display: block;
+      padding: 0 8px;
+      margin: 2px 0;
+      border-radius: 10px;
+      opacity: 0.45;
+      transform: translateX(0);
+      transition:
+        opacity 0.25s ease,
+        background 0.25s ease,
+        transform 0.25s ease,
+        color 0.25s ease;
+    }
+
+    .line.active {
+      opacity: 1;
+      background: rgba(96, 165, 250, 0.14);
+      transform: translateX(4px);
+    }
+
+    .line.pass {
+      opacity: 1;
+      color: #ebf8ff;
+    }
+
+    .line.filtered {
+      opacity: 0.3;
+      text-decoration: line-through;
+    }
+
+    .line.output {
+      opacity: 1;
+      background: rgba(52, 211, 153, 0.12);
+      color: #d1fae5;
+    }
+
+    .cmd-card {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(8, 18, 34, 0.9), rgba(8, 18, 34, 0.7));
+      padding: 18px;
+    }
+
+    .cmd {
+      font-family:
+        "JetBrains Mono", "SFMono-Regular", "Menlo", monospace;
+      font-size: 14px;
+      color: #dbeafe;
+      line-height: 1.8;
+      margin: 0;
+      white-space: pre-wrap;
+    }
+
+    .cmd .token {
+      color: var(--cyan);
+    }
+
+    .cmd .arg {
+      color: var(--amber);
+    }
+
+    .explain {
+      display: grid;
+      gap: 12px;
+    }
+
+    .explain-item {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+    }
+
+    .explain-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .explain-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .status-bar {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(251, 113, 133, 0.08);
+      border: 1px solid rgba(251, 113, 133, 0.14);
+      color: #fecdd3;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 980px) {
       .main-grid {
-        display: grid;
-        grid-template-columns: 1.15fr 0.85fr;
-        gap: 20px;
+        grid-template-columns: 1fr;
       }
+    }
+  </style>
+</head>
 
-      .panel {
-        padding: 22px;
-      }
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">Linux Mock · 交互演示</div>
+      <h1>grep / sed 管道流交互动画</h1>
+      <p>
+        本页面演示了 Linux 环境下 grep 与 sed 工具结合使用的典型场景。
+        点击下方按钮可以逐步演示一段日志如何先被 <code>grep</code> 过滤，再被
+        <code>sed</code> 格式化，最后输出成更易读的结果。
+      </p>
+    </section>
 
-      .panel-title {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 18px;
-      }
+    <section class="main-grid">
+      <div class="panel">
+        <div class="panel-title">
+          <div>
+            <h2>可视化流水线</h2>
+            <div class="sub">输入日志 → grep 过滤 ERROR → sed 替换级别前缀</div>
+          </div>
+          <span class="badge gray" id="stepBadge">等待开始</span>
+        </div>
 
-      .panel-title h2 {
-        margin: 0;
-        font-size: 18px;
-      }
+        <div class="toolbar">
+          <button class="primary" id="playBtn">播放动画</button>
+          <button class="secondary" id="nextBtn">下一步</button>
+          <button class="ghost" id="resetBtn">重置</button>
+        </div>
 
-      .sub {
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 18px;
-      }
-
-      button {
-        border: none;
-        border-radius: 14px;
-        padding: 10px 14px;
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--text);
-        cursor: pointer;
-        transition:
-          transform 0.18s ease,
-          box-shadow 0.18s ease,
-          background 0.18s ease;
-      }
-
-      button:hover {
-        transform: translateY(-1px);
-      }
-
-      .primary {
-        background: linear-gradient(135deg, var(--cyan), var(--blue));
-        box-shadow: 0 12px 28px rgba(34, 211, 238, 0.22);
-      }
-
-      .secondary {
-        background: rgba(96, 165, 250, 0.12);
-        border: 1px solid rgba(96, 165, 250, 0.18);
-      }
-
-      .ghost {
-        background: rgba(148, 163, 184, 0.08);
-        border: 1px solid rgba(148, 163, 184, 0.12);
-      }
-
-      .pipeline {
-        display: grid;
-        gap: 16px;
-      }
-
-      .stage {
-        border-radius: 20px;
-        border: 1px solid var(--line);
-        background: var(--panel-soft);
-        overflow: hidden;
-      }
-
-      .stage-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .stage-head strong {
-        font-size: 15px;
-      }
-
-      .badge {
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-      }
-
-      .badge.gray {
-        background: rgba(148, 163, 184, 0.12);
-        color: #cbd5e1;
-      }
-
-      .badge.green {
-        background: rgba(52, 211, 153, 0.14);
-        color: var(--green);
-      }
-
-      .badge.amber {
-        background: rgba(251, 191, 36, 0.14);
-        color: var(--amber);
-      }
-
-      .terminal {
-        margin: 0;
-        padding: 16px;
-        min-height: 188px;
-        font-family:
-          "JetBrains Mono", "SFMono-Regular", "Menlo", monospace;
-        font-size: 13px;
-        line-height: 1.8;
-        white-space: pre-wrap;
-      }
-
-      .line {
-        display: block;
-        padding: 0 8px;
-        margin: 2px 0;
-        border-radius: 10px;
-        opacity: 0.45;
-        transform: translateX(0);
-        transition:
-          opacity 0.25s ease,
-          background 0.25s ease,
-          transform 0.25s ease,
-          color 0.25s ease;
-      }
-
-      .line.active {
-        opacity: 1;
-        background: rgba(96, 165, 250, 0.14);
-        transform: translateX(4px);
-      }
-
-      .line.pass {
-        opacity: 1;
-        color: #ebf8ff;
-      }
-
-      .line.filtered {
-        opacity: 0.3;
-        text-decoration: line-through;
-      }
-
-      .line.output {
-        opacity: 1;
-        background: rgba(52, 211, 153, 0.12);
-        color: #d1fae5;
-      }
-
-      .cmd-card {
-        border-radius: 22px;
-        border: 1px solid var(--line);
-        background: linear-gradient(180deg, rgba(8, 18, 34, 0.9), rgba(8, 18, 34, 0.7));
-        padding: 18px;
-      }
-
-      .cmd {
-        font-family:
-          "JetBrains Mono", "SFMono-Regular", "Menlo", monospace;
-        font-size: 14px;
-        color: #dbeafe;
-        line-height: 1.8;
-        margin: 0;
-        white-space: pre-wrap;
-      }
-
-      .cmd .token {
-        color: var(--cyan);
-      }
-
-      .cmd .arg {
-        color: var(--amber);
-      }
-
-      .explain {
-        display: grid;
-        gap: 12px;
-      }
-
-      .explain-item {
-        padding: 14px 16px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid var(--line);
-      }
-
-      .explain-item strong {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 14px;
-      }
-
-      .explain-item p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 13px;
-        line-height: 1.7;
-      }
-
-      .status-bar {
-        margin-top: 16px;
-        padding: 14px 16px;
-        border-radius: 18px;
-        background: rgba(251, 113, 133, 0.08);
-        border: 1px solid rgba(251, 113, 133, 0.14);
-        color: #fecdd3;
-        font-size: 13px;
-        line-height: 1.7;
-      }
-
-      @media (max-width: 980px) {
-        .main-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="page">
-      <section class="hero">
-        <div class="eyebrow">Linux Mock · 交互演示</div>
-        <h1>grep / sed 管道流交互动画</h1>
-        <p>
-          本页面演示了 Linux 环境下 grep 与 sed 工具结合使用的典型场景。
-          点击下方按钮可以逐步演示一段日志如何先被 <code>grep</code> 过滤，再被
-          <code>sed</code> 格式化，最后输出成更易读的结果。
-        </p>
-      </section>
-
-      <section class="main-grid">
-        <div class="panel">
-          <div class="panel-title">
-            <div>
-              <h2>可视化流水线</h2>
-              <div class="sub">输入日志 → grep 过滤 ERROR → sed 替换级别前缀</div>
+        <div class="pipeline">
+          <div class="stage">
+            <div class="stage-head">
+              <strong>输入流：application.log</strong>
+              <span class="badge gray">原始日志</span>
             </div>
-            <span class="badge gray" id="stepBadge">等待开始</span>
+            <pre class="terminal" id="sourceStage"></pre>
           </div>
 
-          <div class="toolbar">
-            <button class="primary" id="playBtn">播放动画</button>
-            <button class="secondary" id="nextBtn">下一步</button>
-            <button class="ghost" id="resetBtn">重置</button>
+          <div class="stage">
+            <div class="stage-head">
+              <strong>grep "ERROR"</strong>
+              <span class="badge amber" id="grepBadge">等待过滤</span>
+            </div>
+            <pre class="terminal" id="grepStage"></pre>
           </div>
 
-          <div class="pipeline">
-            <div class="stage">
-              <div class="stage-head">
-                <strong>输入流：application.log</strong>
-                <span class="badge gray">原始日志</span>
-              </div>
-              <pre class="terminal" id="sourceStage"></pre>
+          <div class="stage">
+            <div class="stage-head">
+              <strong>sed 's/ERROR/[ALERT]/g'</strong>
+              <span class="badge green" id="sedBadge">等待格式化</span>
             </div>
+            <pre class="terminal" id="outputStage"></pre>
+          </div>
+        </div>
+      </div>
 
-            <div class="stage">
-              <div class="stage-head">
-                <strong>grep "ERROR"</strong>
-                <span class="badge amber" id="grepBadge">等待过滤</span>
-              </div>
-              <pre class="terminal" id="grepStage"></pre>
-            </div>
-
-            <div class="stage">
-              <div class="stage-head">
-                <strong>sed 's/ERROR/[ALERT]/g'</strong>
-                <span class="badge green" id="sedBadge">等待格式化</span>
-              </div>
-              <pre class="terminal" id="outputStage"></pre>
-            </div>
+      <div class="panel">
+        <div class="panel-title">
+          <div>
+            <h2>命令说明</h2>
+            <div class="sub">下面展示了该演示所执行的底层 Linux 命令</div>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-title">
-            <div>
-              <h2>命令说明</h2>
-              <div class="sub">下面展示了该演示所执行的底层 Linux 命令</div>
-            </div>
-          </div>
+        <div class="cmd-card">
+          <pre
+            class="cmd"><span class="token">cat</span> application.log | <span class="token">grep</span> <span class="arg">"ERROR"</span> | <span class="token">sed</span> <span class="arg">'s/ERROR/[ALERT]/g'</span></pre>
+        </div>
 
-          <div class="cmd-card">
-            <pre class="cmd"><span class="token">cat</span> application.log | <span class="token">grep</span> <span class="arg">"ERROR"</span> | <span class="token">sed</span> <span class="arg">'s/ERROR/[ALERT]/g'</span></pre>
+        <div class="explain" style="margin-top: 18px">
+          <div class="explain-item">
+            <strong>第 1 步：grep 过滤</strong>
+            <p>只保留包含 <code>ERROR</code> 的行，方便快速聚焦真正需要排查的问题。</p>
           </div>
-
-          <div class="explain" style="margin-top: 18px">
-            <div class="explain-item">
-              <strong>第 1 步：grep 过滤</strong>
-              <p>只保留包含 <code>ERROR</code> 的行，方便快速聚焦真正需要排查的问题。</p>
-            </div>
-            <div class="explain-item">
-              <strong>第 2 步：sed 改写</strong>
-              <p>把日志级别标签统一替换成更醒目的 <code>[ALERT]</code>，便于展示或上报。</p>
-            </div>
-            <div class="explain-item">
-              <strong>适合放在课程页里做什么</strong>
-              <p>适合给学生讲“管道”“文本过滤”“批量替换”的组合思维，而不只是记命令。</p>
-            </div>
+          <div class="explain-item">
+            <strong>第 2 步：sed 改写</strong>
+            <p>把日志级别标签统一替换成更醒目的 <code>[ALERT]</code>，便于展示或上报。</p>
           </div>
-
-          <div class="status-bar" id="statusText">
-            当前状态：尚未播放。点击“播放动画”后会自动高亮每一行在管道中的流转过程。
+          <div class="explain-item">
+            <strong>适合放在课程页里做什么</strong>
+            <p>适合给学生讲“管道”“文本过滤”“批量替换”的组合思维，而不只是记命令。</p>
           </div>
         </div>
-      </section>
-    </div>
 
-    <script>
-      const sourceLines = [
-        "2026-05-14 09:00:12 INFO user.login ok",
-        "2026-05-14 09:01:05 ERROR grep pattern missing",
-        "2026-05-14 09:01:42 WARN sed delimiter unusual",
-        "2026-05-14 09:02:17 ERROR pipe broken in shell demo",
-        "2026-05-14 09:03:02 INFO practice finished"
-      ];
+        <div class="status-bar" id="statusText">
+          当前状态：尚未播放。点击“播放动画”后会自动高亮每一行在管道中的流转过程。
+        </div>
+      </div>
+    </section>
+  </div>
 
-      const steps = [
-        { type: "idle", label: "等待开始" },
-        { type: "scan", label: "扫描输入流" },
-        { type: "grep", label: "grep 过滤 ERROR" },
-        { type: "sed", label: "sed 格式化输出" }
-      ];
+  <script>
+    const sourceLines = [
+      "2026-05-14 09:00:12 INFO user.login ok",
+      "2026-05-14 09:01:05 ERROR grep pattern missing",
+      "2026-05-14 09:01:42 WARN sed delimiter unusual",
+      "2026-05-14 09:02:17 ERROR pipe broken in shell demo",
+      "2026-05-14 09:03:02 INFO practice finished"
+    ];
 
-      const sourceStage = document.getElementById("sourceStage");
-      const grepStage = document.getElementById("grepStage");
-      const outputStage = document.getElementById("outputStage");
-      const stepBadge = document.getElementById("stepBadge");
-      const grepBadge = document.getElementById("grepBadge");
-      const sedBadge = document.getElementById("sedBadge");
-      const statusText = document.getElementById("statusText");
+    const steps = [
+      { type: "idle", label: "等待开始" },
+      { type: "scan", label: "扫描输入流" },
+      { type: "grep", label: "grep 过滤 ERROR" },
+      { type: "sed", label: "sed 格式化输出" }
+    ];
 
-      let currentStep = 0;
-      let playTimer = null;
+    const sourceStage = document.getElementById("sourceStage");
+    const grepStage = document.getElementById("grepStage");
+    const outputStage = document.getElementById("outputStage");
+    const stepBadge = document.getElementById("stepBadge");
+    const grepBadge = document.getElementById("grepBadge");
+    const sedBadge = document.getElementById("sedBadge");
+    const statusText = document.getElementById("statusText");
 
-      function renderLines(container, lines, mode) {
-        container.innerHTML = "";
-        lines.forEach((line, index) => {
-          const row = document.createElement("span");
-          row.className = "line";
-          row.textContent = line;
+    let currentStep = 0;
+    let playTimer = null;
 
-          if (mode === "scan" && index <= 4) row.classList.add("active");
-          if (mode === "grep") {
-            row.classList.add(line.includes("ERROR") ? "pass" : "filtered");
-          }
-          if (mode === "output") row.classList.add("output");
+    function renderLines(container, lines, mode) {
+      container.innerHTML = "";
+      lines.forEach((line, index) => {
+        const row = document.createElement("span");
+        row.className = "line";
+        row.textContent = line;
 
-          container.appendChild(row);
-        });
+        if (mode === "scan" && index <= 4) row.classList.add("active");
+        if (mode === "grep") {
+          row.classList.add(line.includes("ERROR") ? "pass" : "filtered");
+        }
+        if (mode === "output") row.classList.add("output");
+
+        container.appendChild(row);
+      });
+    }
+
+    function applyStep(stepIndex) {
+      currentStep = stepIndex;
+      const step = steps[stepIndex];
+      stepBadge.textContent = step.label;
+
+      if (step.type === "idle") {
+        renderLines(sourceStage, sourceLines);
+        grepStage.textContent = "等待 grep 过滤...";
+        outputStage.textContent = "等待 sed 输出...";
+        grepBadge.textContent = "等待过滤";
+        sedBadge.textContent = "等待格式化";
+        statusText.textContent =
+          "当前状态：尚未播放。点击“播放动画”后会自动高亮每一行在管道中的流转过程。";
+        return;
       }
 
-      function applyStep(stepIndex) {
-        currentStep = stepIndex;
-        const step = steps[stepIndex];
-        stepBadge.textContent = step.label;
+      if (step.type === "scan") {
+        renderLines(sourceStage, sourceLines, "scan");
+        grepStage.textContent = "grep 正在逐行匹配 ERROR ...";
+        outputStage.textContent = "sed 等待上游结果...";
+        grepBadge.textContent = "扫描中";
+        sedBadge.textContent = "等待输入";
+        statusText.textContent =
+          "当前状态：输入流已载入，grep 正在扫描每一行日志。";
+        return;
+      }
 
-        if (step.type === "idle") {
-          renderLines(sourceStage, sourceLines);
-          grepStage.textContent = "等待 grep 过滤...";
-          outputStage.textContent = "等待 sed 输出...";
-          grepBadge.textContent = "等待过滤";
-          sedBadge.textContent = "等待格式化";
-          statusText.textContent =
-            "当前状态：尚未播放。点击“播放动画”后会自动高亮每一行在管道中的流转过程。";
-          return;
-        }
+      const grepLines = sourceLines.filter(line => line.includes("ERROR"));
 
-        if (step.type === "scan") {
-          renderLines(sourceStage, sourceLines, "scan");
-          grepStage.textContent = "grep 正在逐行匹配 ERROR ...";
-          outputStage.textContent = "sed 等待上游结果...";
-          grepBadge.textContent = "扫描中";
-          sedBadge.textContent = "等待输入";
-          statusText.textContent =
-            "当前状态：输入流已载入，grep 正在扫描每一行日志。";
-          return;
-        }
-
-        const grepLines = sourceLines.filter(line => line.includes("ERROR"));
-
-        if (step.type === "grep") {
-          renderLines(sourceStage, sourceLines);
-          renderLines(grepStage, grepLines, "grep");
-          outputStage.textContent = "sed 尚未开始替换...";
-          grepBadge.textContent = "已筛出 2 条";
-          sedBadge.textContent = "等待格式化";
-          statusText.textContent =
-            "当前状态：grep 只保留 ERROR 行，其他行已被过滤掉。";
-          return;
-        }
-
-        const sedLines = grepLines.map(line => line.replaceAll("ERROR", "[ALERT]"));
+      if (step.type === "grep") {
         renderLines(sourceStage, sourceLines);
         renderLines(grepStage, grepLines, "grep");
-        renderLines(outputStage, sedLines, "output");
-        grepBadge.textContent = "过滤完成";
-        sedBadge.textContent = "替换完成";
+        outputStage.textContent = "sed 尚未开始替换...";
+        grepBadge.textContent = "已筛出 2 条";
+        sedBadge.textContent = "等待格式化";
         statusText.textContent =
-          "当前状态：sed 已把 ERROR 替换为 [ALERT]，输出流已生成。";
+          "当前状态：grep 只保留 ERROR 行，其他行已被过滤掉。";
+        return;
       }
 
-      function nextStep() {
-        const next = currentStep >= steps.length - 1 ? 0 : currentStep + 1;
-        applyStep(next);
-      }
+      const sedLines = grepLines.map(line => line.replaceAll("ERROR", "[ALERT]"));
+      renderLines(sourceStage, sourceLines);
+      renderLines(grepStage, grepLines, "grep");
+      renderLines(outputStage, sedLines, "output");
+      grepBadge.textContent = "过滤完成";
+      sedBadge.textContent = "替换完成";
+      statusText.textContent =
+        "当前状态：sed 已把 ERROR 替换为 [ALERT]，输出流已生成。";
+    }
 
-      function play() {
-        if (playTimer) {
-          clearInterval(playTimer);
-        }
-        applyStep(1);
-        let step = 1;
-        playTimer = setInterval(() => {
-          step += 1;
-          if (step > 3) {
-            clearInterval(playTimer);
-            playTimer = null;
-            return;
-          }
-          applyStep(step);
-        }, 1100);
-      }
+    function nextStep() {
+      const next = currentStep >= steps.length - 1 ? 0 : currentStep + 1;
+      applyStep(next);
+    }
 
-      document.getElementById("playBtn").addEventListener("click", play);
-      document.getElementById("nextBtn").addEventListener("click", nextStep);
-      document.getElementById("resetBtn").addEventListener("click", () => {
-        if (playTimer) {
+    function play() {
+      if (playTimer) {
+        clearInterval(playTimer);
+      }
+      applyStep(1);
+      let step = 1;
+      playTimer = setInterval(() => {
+        step += 1;
+        if (step > 3) {
           clearInterval(playTimer);
           playTimer = null;
+          return;
         }
-        applyStep(0);
-      });
+        applyStep(step);
+      }, 1100);
+    }
 
+    document.getElementById("playBtn").addEventListener("click", play);
+    document.getElementById("nextBtn").addEventListener("click", nextStep);
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+      }
       applyStep(0);
-    </script>
-  </body>
+    });
+
+    applyStep(0);
+  </script>
+</body>
+
 </html>
