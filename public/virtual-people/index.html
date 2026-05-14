@@ -83,10 +83,10 @@
       transition: max-height 0.3s ease, flex 0.3s ease;
     }
 
-    /* 收起态：显示小占位框和快速互动按钮 */
+    /* 收起态：恢复小占位框 */
     body.sidebar-collapsed .sidebar {
-      flex: 0 0 auto;
-      max-height: 120px;
+      flex: 0 0 52px;
+      max-height: 52px;
       overflow: hidden;
     }
 
@@ -116,48 +116,55 @@
       /* 隐藏"数字人设置"标题 */
     }
 
-    /* 快捷消息栏容器 */
-    .quick-actions-bar {
-      display: none;
-      /* 默认隐藏 */
-      gap: 8px;
-      margin-right: 32px;
-      /* 避开收起按钮 */
-      flex-wrap: wrap;
-      /* 允许换行 */
-    }
 
-    .quick-actions-bar::-webkit-scrollbar {
-      display: none;
-      /* Chrome/Safari */
-    }
-
-    body.sidebar-collapsed .quick-actions-bar {
+    /* 独立快捷消息互动区域 (位于数字人画面下方，背景半透明) */
+    .interaction-overlay {
+      position: absolute;
+      bottom: 24px;
+      left: 20px;
+      right: 20px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      z-index: 50;
       display: flex;
-      /* 仅在收起时显示 */
+      flex-wrap: wrap;
+      gap: 8px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    .quick-actions-bar button {
-      padding: 6px 12px;
+    .interaction-overlay button {
+      padding: 8px 16px;
       font-size: 13px;
-      border-radius: 8px;
-      background: #3b82f6;
-      color: white;
-      border: none;
+      font-weight: 500;
+      border-radius: 14px;
+      background: #ffffff;
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.1);
       cursor: pointer;
       flex-shrink: 0;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+      transition: all 0.2s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
     }
 
-    .quick-actions-bar button:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+    .interaction-overlay button:hover {
+      background: #3b82f6;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 15px rgba(59, 130, 246, 0.2);
     }
 
-    .quick-actions-bar button:active {
-      transform: translateY(0);
+    .interaction-overlay button:active {
+      transform: scale(0.95);
+    }
+
+    /* 当控制面板展开时，隐藏独立层，避免视觉冲突 */
+    body:not(.sidebar-collapsed) .interaction-overlay {
+      display: none !important;
     }
 
     .sidebar-toggle {
@@ -593,6 +600,16 @@
       <div id="speechText" class="speech-line"></div>
       <div id="speechMeta" class="speech-meta"></div>
     </div>
+
+    <!-- 独立的快捷消息层：浮动在数字人画面正下方 -->
+    <div class="interaction-overlay">
+      <button type="button" onclick="speakText('老师好！')">👋 打个招呼</button>
+      <button type="button" onclick="speakText('这节课讲什么？')">📚 询问进度</button>
+      <button type="button" onclick="speakText('请解释一下。')">💡 请求解释</button>
+      <button type="button" onclick="speakText('不太明白。')">❓ 反馈疑惑</button>
+      <button type="button" onclick="speakText('讲得真好！')">👏 点赞</button>
+      <button type="button" onclick="speakText('写完了。')">✅ 写完</button>
+    </div>
   </main>
 
   <aside class="panel sidebar">
@@ -601,15 +618,6 @@
     </button>
     <div class="sidebar-head">
       <div style="font-weight: 800; font-size: 16px; color: #374151; margin-bottom: 4px;">数字人设置</div>
-      <div class="quick-actions-bar">
-        <button type="button" onclick="speakText('老师好！')">👋 打个招呼</button>
-        <button type="button" onclick="speakText('这节课讲什么？')">📚 询问进度</button>
-        <button type="button" onclick="speakText('请解释一下这个知识点。')">💡 请求解释</button>
-        <button type="button" onclick="speakText('我不太明白。')">❓ 反馈疑惑</button>
-        <button type="button" onclick="speakText('老师刚才讲得真好！')">👏 点赞老师</button>
-        <button type="button" onclick="speakText('我写完了！')">✅ 完成作业</button>
-        <button type="button" onclick="speakText('什么时候下课呀？')">⏰ 询问下课</button>
-      </div>
       <div class="search-wrap">
         <div class="search-autocomplete">
           <input id="searchInput" type="search" autocomplete="off" placeholder="搜索动作名..." />
