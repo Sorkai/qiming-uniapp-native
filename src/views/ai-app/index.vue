@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storageLocal } from "@pureadmin/utils";
 import {
@@ -107,7 +107,11 @@ const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 
 // 数字人面板引用（用于触发朗读 + 自动口型）
-const virtualHumanRef = ref<{ speak?: (text: string) => void } | null>(null);
+const virtualHumanRef = ref<{
+  speak?: (text: string) => void;
+  pauseRender?: () => void;
+  resumeRender?: () => void;
+} | null>(null);
 
 // 学生拥有的课程（动态拉取）
 const myCourses = ref(["数据结构", "算法设计", "高等数学", "大学物理"]);
@@ -544,6 +548,36 @@ const handleNewChat = (payload: { course: string }) => {
     }, 100);
   }
 };
+
+const syncHumanRenderState = () => {
+  if (!virtualHumanRef.value) return;
+  const shouldPause =
+    document.hidden || activeRail.value !== "chat" || humanCollapsed.value;
+  if (shouldPause) {
+    virtualHumanRef.value.pauseRender?.();
+  } else {
+    virtualHumanRef.value.resumeRender?.();
+  }
+};
+
+watch([humanCollapsed, activeRail], () => {
+  syncHumanRenderState();
+});
+
+const handleVisibilityChange = () => {
+  syncHumanRenderState();
+};
+
+onMounted(() => {
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  setTimeout(() => {
+    syncHumanRenderState();
+  }, 0);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
+});
 </script>
 
 <template>
@@ -1349,18 +1383,6 @@ const handleNewChat = (payload: { course: string }) => {
 <style scoped lang="scss">
 .ai-app-root {
   --el-color-primary: #5e7ff8; // 强制保持平台蓝
-
-  // 整体降低色彩饱和度，营造更柔和的视觉氛围
-  filter: saturate(0.55);
-
-  // 媒体内容（数字人、图片、视频等）保持原色
-  :deep(img),
-  :deep(video),
-  :deep(canvas),
-  :deep(iframe),
-  :deep(svg image) {
-    filter: saturate(1.82); // 1 / 0.55 ≈ 1.82，抵消父级降饱和
-  }
 }
 
 /* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */

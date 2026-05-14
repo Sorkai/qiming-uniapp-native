@@ -30,6 +30,16 @@ function flushPendingSpeak() {
   }
 }
 
+function postControlMessage(payload: Record<string, unknown>) {
+  const iframe = iframeRef.value;
+  if (!iframe || !iframe.contentWindow) return;
+  try {
+    iframe.contentWindow.postMessage(payload, "*");
+  } catch (err) {
+    console.warn("[VirtualHumanPanel] control postMessage failed", err);
+  }
+}
+
 function handleLoad() {
   loading.value = false;
   errored.value = false;
@@ -39,6 +49,7 @@ function handleLoad() {
     probeTimer = null;
   }
   flushPendingSpeak();
+  postControlMessage({ type: "resumeRender" });
 }
 
 function handleError() {
@@ -92,7 +103,15 @@ function speak(text: string) {
   }
 }
 
-defineExpose({ speak });
+function pauseRender() {
+  postControlMessage({ type: "pauseRender" });
+}
+
+function resumeRender() {
+  postControlMessage({ type: "resumeRender" });
+}
+
+defineExpose({ speak, pauseRender, resumeRender });
 </script>
 
 <template>

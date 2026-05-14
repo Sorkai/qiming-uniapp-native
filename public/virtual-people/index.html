@@ -933,6 +933,10 @@
         }
       } else if (data.type === 'toggleSidebar') {
         setSidebarCollapsed(!document.body.classList.contains('sidebar-collapsed'));
+      } else if (data.type === 'pauseRender') {
+        state.renderPaused = true;
+      } else if (data.type === 'resumeRender') {
+        state.renderPaused = false;
       }
     });
     const teacherPosX = document.getElementById('teacherPosX');
@@ -969,9 +973,9 @@
     // 默认视角：往前推，离老师更近 (Z轴从 2.75 移至 1.35)
     camera.position.set(0.0, 1.45, 1.35);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'low-power' });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.top !== window.self ? 1.25 : 1.5));
 
     const controls = new OrbitControls(camera, canvas);
     controls.target.set(0, 1.35, 0); // 焦点稍微上移一点到老师头部
@@ -1096,6 +1100,7 @@
       debugPanelTimer: 0,
       searchSuggestions: [],
       searchSuggestionIndex: -1,
+      renderPaused: false,
     };
 
     const MAX_SEARCH_SUGGESTIONS = 8;
@@ -2913,6 +2918,9 @@
       if (state.debugPanelTimer >= 0.12) {
         state.debugPanelTimer = 0;
         updateDebugReadouts();
+      }
+      if (state.renderPaused) {
+        return;
       }
       renderer.render(scene, camera);
     });
