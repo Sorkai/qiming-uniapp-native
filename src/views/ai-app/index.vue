@@ -18,7 +18,16 @@ import {
   Top,
   Expand,
   Fold,
-  Avatar
+  Avatar,
+  Clock,
+  DataBoard,
+  Calendar,
+  Bell,
+  ChatLineRound,
+  Close,
+  CircleCheckFilled,
+  WarningFilled,
+  ArrowRight
 } from "@element-plus/icons-vue";
 
 // 引入三个拆分后的组件
@@ -102,9 +111,9 @@ const myCourses = ref(["数据结构", "算法设计", "高等数学", "大学�
 
 // 教师关联的学生列表
 const myStudents = ref([
-  { 
-    id: "s1", 
-    name: "吴同学", 
+  {
+    id: "s1",
+    name: "吴同学",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Wu",
     profileDimensions: [
       { label: "知识基础", value: 72 },
@@ -115,9 +124,9 @@ const myStudents = ref([
       { label: "抗挫折能力", value: 78 }
     ]
   },
-  { 
-    id: "s2", 
-    name: "张同学", 
+  {
+    id: "s2",
+    name: "张同学",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhang",
     profileDimensions: [
       { label: "知识基础", value: 45 },
@@ -128,9 +137,9 @@ const myStudents = ref([
       { label: "抗挫折能力", value: 40 }
     ]
   },
-  { 
-    id: "s3", 
-    name: "赵同学", 
+  {
+    id: "s3",
+    name: "赵同学",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhao",
     profileDimensions: [
       { label: "知识基础", value: 98 },
@@ -141,9 +150,9 @@ const myStudents = ref([
       { label: "抗挫折能力", value: 97 }
     ]
   },
-  { 
-    id: "s4", 
-    name: "钱同学", 
+  {
+    id: "s4",
+    name: "钱同学",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Qian",
     profileDimensions: [
       { label: "知识基础", value: 65 },
@@ -154,9 +163,9 @@ const myStudents = ref([
       { label: "抗挫折能力", value: 82 }
     ]
   },
-  { 
-    id: "s5", 
-    name: "孙同学", 
+  {
+    id: "s5",
+    name: "孙同学",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sun",
     profileDimensions: [
       { label: "知识基础", value: 52 },
@@ -167,9 +176,9 @@ const myStudents = ref([
       { label: "抗挫折能力", value: 50 }
     ]
   },
-  { 
-    id: "s6", 
-    name: "周同学", 
+  {
+    id: "s6",
+    name: "周同学",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhou",
     profileDimensions: [
       { label: "知识基础", value: 88 },
@@ -185,13 +194,13 @@ const selectedStudentId = ref("");
 
 // 【请求还原】：保留原版所有的侧边功能项
 const railItems = ref([
-  { key: "chat", label: "智能辅导", icon: "ChatDotRound" },
-  { key: "generation", label: "资源生成", icon: "FolderOpened" },
-  { key: "agentpdf", label: "Agent PDF", icon: "Document" },
-  { key: "path", label: "路径规划", icon: "Guide" },
-  { key: "profile", label: "学习画像", icon: "User" },
-  { key: "assessment", label: "学习评估", icon: "DataAnalysis" },
-  { key: "automation", label: "自动化", icon: "MagicStick" }
+  { key: "chat", label: "互动答疑", icon: "ChatDotRound" },
+  { key: "generation", label: "教学资源", icon: "FolderOpened" },
+  { key: "agentpdf", label: "资料研读", icon: "Document" },
+  { key: "path", label: "学习计划", icon: "Guide" },
+  { key: "profile", label: "学情分析", icon: "User" },
+  { key: "assessment", label: "测验评估", icon: "DataAnalysis" },
+  { key: "automation", label: "常规任务", icon: "Check" }
 ]);
 
 const conversations = ref([
@@ -218,6 +227,83 @@ const conversations = ref([
   }
 ]);
 
+const selectedTaskId = ref("");
+
+const mockTaskHistory = ref([
+  {
+    date: "2026-05-13",
+    time: "18:00",
+    status: "success",
+    log: "任务执行成功，耗时 1.2s，产出物已归档并发送通知。"
+  },
+  {
+    date: "2026-05-06",
+    time: "18:00",
+    status: "success",
+    log: "任务执行成功，耗时 1.5s，产出物已归档。"
+  },
+  {
+    date: "2026-04-29",
+    time: "18:00",
+    status: "warning",
+    log: "任务执行完成，部分来源数据缺失，已使用默认值填充计算。"
+  },
+  {
+    date: "2026-04-22",
+    time: "18:00",
+    status: "success",
+    log: "任务执行成功，耗时 1.1s，产出物已归档。"
+  }
+]);
+
+const routineTasks = ref([
+  {
+    id: "r1",
+    title: "学情周报生成",
+    desc: "每周五 18:00 自动汇总本周学习数据并生成专属报告",
+    role: "student",
+    status: "active",
+    lastRun: "上周五 18:00",
+    icon: "Calendar"
+  },
+  {
+    id: "r2",
+    title: "遗忘曲线复习推送",
+    desc: "每日 20:00 基于艾宾浩斯曲线生成错题回顾任务",
+    role: "student",
+    status: "active",
+    lastRun: "昨天 20:00",
+    icon: "Bell"
+  },
+  {
+    id: "r3",
+    title: "课前预习资料速递",
+    desc: "根据明日课表提前生成包含重难点的预习大纲",
+    role: "student",
+    status: "paused",
+    lastRun: "-",
+    icon: "Document"
+  },
+  {
+    id: "r4",
+    title: "班级共性错题汇总",
+    desc: "每日 22:00 分析班级作业数据并生成共性盲点看板",
+    role: "teacher",
+    status: "active",
+    lastRun: "昨天 22:00",
+    icon: "DataBoard"
+  },
+  {
+    id: "r5",
+    title: "答疑区高频问题聚合",
+    desc: "每周日 12:00 自动整理答疑区相似提问并生成FAQ",
+    role: "teacher",
+    status: "active",
+    lastRun: "上周日 12:00",
+    icon: "ChatLineRound"
+  }
+]);
+
 // === 智能画像、智能体与资源数据 ===
 const profileDimensions = ref([
   { label: "知识基础", value: 85 },
@@ -231,26 +317,26 @@ const profileDimensions = ref([
 const agentItems = ref([
   {
     id: "a1",
-    name: "特征提取专家",
-    desc: "监听聊天更新学习画像",
+    name: "学情诊断专家",
+    desc: "分析答疑记录更新画像",
     status: "running"
   },
   {
     id: "a2",
-    name: "多模态规划师",
-    desc: "构建视频与图文骨架",
+    name: "课程研发助手",
+    desc: "梳理知识点与内容大纲",
     status: "running"
   },
   {
     id: "a3",
-    name: "代码生成特工",
-    desc: "生成带反思断点的算法题",
+    name: "练习题出题人",
+    desc: "根据重难点生成练习题",
     status: "running"
   },
   {
     id: "a4",
-    name: "排版与渲染器",
-    desc: "整合内容导出专属讲义",
+    name: "讲义排版校对",
+    desc: "为您整合导出专属辅导",
     status: "done"
   }
 ]);
@@ -282,7 +368,7 @@ const messages = ref([
     role: "系统提示",
     type: "system",
     content:
-      "同学你好，你的「数据结构」智能辅导平台已就绪。多智能体已经分析了你上次的『二叉树』测验，发现存在易混淆点。今天我们需要针对性突破吗？"
+      "同学你好，你的「数据结构」智能辅导平台已就绪。专属助教已经分析了你上次的『二叉树』测验，发现存在易混淆点。今天我们需要针对性突破吗？"
   },
   {
     id: 2,
@@ -292,10 +378,10 @@ const messages = ref([
   },
   {
     id: 3,
-    role: "主控智能体",
+    role: "智能助教",
     type: "system",
     content:
-      "很典型的痛点！我正在调用【排版渲染器】和【代码生成特工】为你构建一套专属的复习组件，先看看这份推演视频，再到沙盒里试着填空：",
+      "很典型的痛点！我正在调度排版校对助手和出题助手为你构建一套专属的复习资源，先看看这份概念视频，再到沙盒里试着做做题：",
     resources: [
       {
         title: "红黑树左旋右旋 3D动画",
@@ -303,7 +389,7 @@ const messages = ref([
         desc: "直观展示节点指针的转移过程"
       },
       {
-        title: "易错点专项沙盒 (带断点)",
+        title: "易错点专项练习",
         type: "code",
         desc: "动手补充左旋函数 core 部分"
       }
@@ -336,10 +422,10 @@ const handleSendMessage = (text: string) => {
       agentItems.value[1].status = "done";
       messages.value.push({
         id: Date.now(),
-        role: "主控智能体",
+        role: "智能助教",
         type: "system",
         content:
-          "多智能体已深度解析，为你生成额外的知识图谱与拓展阅读，请右侧查收最新的学习资产。",
+          "助手们已为您深度解析，并生成了额外的拓展阅读，请在右侧查收最新的学习资料。",
         resources: [
           {
             title: "图神经网络的拓展前沿 (PDF)",
@@ -368,13 +454,13 @@ onMounted(() => {
   if (route.query.mode) mode.value = route.query.mode as string;
   if (route.query.newTab === "true") {
     isNewTab.value = true;
-    document.title = `AI 智能体 (${mode.value})`;
+    document.title = `学习助手 (${mode.value})`;
   }
 });
 
 const quickMessage = ref("");
 const quickCourse = ref("");
-const selectedMockAgent = ref("代码生成特工");
+const selectedMockAgent = ref("练习题助手");
 
 const handleNewChat = (payload: { course: string }) => {
   activeCourse.value = payload.course;
@@ -387,59 +473,14 @@ const handleNewChat = (payload: { course: string }) => {
 
 <template>
   <div
-    class="ai-app-root h-[calc(100vh-80px)] flex flex-col bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)] font-sans rounded-xl overflow-hidden shadow-sm"
-    :class="currentTheme"
+    class="ai-app-root h-[calc(100vh-80px)] flex flex-col font-sans rounded-xl overflow-hidden shadow-sm bg-white"
+    :class="[
+      activeRail === 'chat'
+        ? 'bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)]'
+        : '',
+      currentTheme
+    ]"
   >
-    <!-- 顶部状态栏：仅对 管理员/教师 可见 -->
-    <header 
-      v-if="isTeacher" 
-      class="h-14 bg-white/80 backdrop-blur border-b border-gray-100 flex items-center justify-between px-6 z-30"
-    >
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-            <el-icon><Monitor /></el-icon>
-          </div>
-          <span class="font-bold text-gray-700">管理看板</span>
-        </div>
-        <el-divider direction="vertical" />
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-bold text-primary px-3 py-1 bg-primary/10 rounded-full">
-            {{ isAdmin ? '管理员控制台' : '教师端管理视角' }}
-          </span>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-4">
-        <span class="text-xs text-gray-500 font-medium">当前分析学生:</span>
-        <el-select 
-          v-model="selectedStudentId" 
-          placeholder="请选择学生" 
-          size="default" 
-          style="width: 200px"
-          class="student-select"
-        >
-          <template #prefix>
-            <el-icon><User /></el-icon>
-          </template>
-          <el-option
-            v-for="item in myStudents"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
-          >
-            <div class="flex items-center gap-3">
-              <el-avatar :size="20" :src="item.avatar" />
-              <span>{{ item.name }}</span>
-            </div>
-          </el-option>
-        </el-select>
-        <el-tooltip content="刷新数据" placement="bottom">
-          <el-button circle icon="Refresh" size="small" border-none bg-transparent />
-        </el-tooltip>
-      </div>
-    </header>
-
     <div class="flex-1 flex overflow-hidden">
       <!-- 极简左侧边栏 (第一块) -->
       <aside
@@ -488,349 +529,594 @@ const handleNewChat = (payload: { course: string }) => {
         </button>
       </aside>
 
-    <!-- 右边总体容器 (主体) -->
-    <div class="flex-1 flex flex-col min-w-0">
-      <!-- 主体内容 (第三块) -->
-      <main class="flex-1 overflow-hidden relative">
-        <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
-        <div v-if="activeRail === `chat` && activeCourse" class="h-full w-full flex stretch p-4 gap-4 overflow-hidden">
-          <!-- 对话流核心面板 -->
-          <transition appear name="panel-slide">
-            <div
-              class="flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
-            >
-              <!-- 柔和的顶部遮罩渐变 -->
+      <!-- 右边总体容器 (主体) -->
+      <div class="flex-1 flex flex-col min-w-0">
+        <!-- 主体内容 (第三块) -->
+        <main class="flex-1 overflow-hidden relative">
+          <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
+          <div
+            v-if="activeRail === `chat` && activeCourse"
+            class="h-full w-full flex stretch p-4 gap-4 overflow-hidden"
+          >
+            <!-- 对话流核心面板 -->
+            <transition appear name="panel-slide">
               <div
-                class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white/80 to-transparent pointer-events-none z-10"
+                class="flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
+              >
+                <!-- 柔和的顶部遮罩渐变 -->
+                <div
+                  class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white/80 to-transparent pointer-events-none z-10"
+                />
+                <AiChatModule
+                  :messages="messages"
+                  :activeCourse="activeCourse"
+                  @send="handleSendMessage"
+                />
+              </div>
+            </transition>
+
+            <!-- 数字人面板 -->
+            <transition appear name="panel-reveal">
+              <div
+                class="flex-shrink-0 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
+                :class="humanCollapsed ? 'w-[64px]' : 'w-[420px]'"
+              >
+                <VirtualHumanPanel v-show="!humanCollapsed" />
+                <!-- 收起态 -->
+                <div
+                  v-show="humanCollapsed"
+                  class="h-full flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer gap-6 group/btn"
+                  @click="toggleHuman"
+                >
+                  <div
+                    class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:scale-125 transition-transform duration-500"
+                  >
+                    <el-icon :size="20"><Avatar /></el-icon>
+                  </div>
+                  <span
+                    class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover/btn:text-primary transition-colors"
+                    style="writing-mode: vertical-rl"
+                    >专属助教</span
+                  >
+                </div>
+
+                <!-- 收起 / 展开 把手 -->
+                <button
+                  class="absolute top-3 -left-3 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+                  :title="humanCollapsed ? '展开数字人' : '收起数字人'"
+                  @click="toggleHuman"
+                >
+                  <el-icon :size="12">
+                    <Fold v-if="humanCollapsed" />
+                    <Expand v-else />
+                  </el-icon>
+                </button>
+              </div>
+            </transition>
+          </div>
+
+          <!-- 【场景 A2】 智能辅导欢迎中心 (未选课) -->
+          <div
+            v-else-if="activeRail === `chat` && !activeCourse"
+            class="h-full w-full p-4 flex items-center justify-center relative"
+          >
+            <!-- 背景装饰 -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+              <div
+                class="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60"
               />
-              <AiChatModule
-                :messages="messages"
-                :activeCourse="activeCourse"
-                @send="handleSendMessage"
+              <div
+                class="absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60"
               />
             </div>
-          </transition>
 
-          <!-- 数字人面板 -->
-          <transition appear name="panel-reveal">
             <div
-              class="flex-shrink-0 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
-              :class="humanCollapsed ? 'w-[64px]' : 'w-[420px]'"
+              class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
             >
-              <VirtualHumanPanel v-show="!humanCollapsed" />
-              <!-- 收起态 -->
-              <div
-                v-show="humanCollapsed"
-                class="h-full flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer gap-6 group/btn"
-                @click="toggleHuman"
-              >
-                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:scale-125 transition-transform duration-500">
-                  <el-icon :size="20"><Avatar /></el-icon>
-                </div>
-                <span
-                  class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover/btn:text-primary transition-colors"
-                  style="writing-mode: vertical-rl"
-                  >Digital Assistant</span
+              <div class="text-center space-y-4">
+                <h1
+                  class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
                 >
+                  今天想聊点什么？
+                </h1>
+                <p
+                  class="text-[15px] font-medium tracking-wide"
+                  style="color: rgba(140, 80, 159, 0.7)"
+                >
+                  请先选择一门课程，然后随时寻求学习辅导
+                </p>
               </div>
 
-              <!-- 收起 / 展开 把手 -->
-              <button
-                class="absolute top-3 -left-3 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-                :title="humanCollapsed ? '展开数字人' : '收起数字人'"
-                @click="toggleHuman"
+              <div
+                class="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
               >
-                <el-icon :size="12">
-                  <Fold v-if="humanCollapsed" />
-                  <Expand v-else />
-                </el-icon>
-              </button>
-            </div>
-          </transition>
-        </div>
+                <el-input
+                  v-model="quickMessage"
+                  type="textarea"
+                  :autosize="{ minRows: 2, maxRows: 8 }"
+                  placeholder="可以输入想要了解的知识点。输入 @ 提及课程或文件..."
+                  class="quick-chat-input"
+                  resize="none"
+                  @keyup.enter.prevent="
+                    quickCourse ? handleNewChat({ course: quickCourse }) : null
+                  "
+                />
 
-        <!-- 【场景 A2】 智能辅导欢迎中心 (未选课) -->
-        <div
-          v-else-if="activeRail === `chat` && !activeCourse"
-          class="h-full w-full p-4 flex items-center justify-center relative"
-        >
-          <!-- 背景装饰 -->
-          <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div
+                  class="flex items-center justify-between px-4 py-3 bg-gray-50/50 border-t border-gray-50"
+                >
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <el-dropdown
+                      trigger="click"
+                      @command="c => (quickCourse = c)"
+                    >
+                      <span
+                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors"
+                        :class="
+                          quickCourse
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
+                        "
+                      >
+                        <el-icon class="mr-1.5 text-[14px]"
+                          ><FolderOpened
+                        /></el-icon>
+                        {{ quickCourse || "选择课程" }}
+                        <el-icon class="ml-1 text-[12px]"
+                          ><ArrowDown
+                        /></el-icon>
+                      </span>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item
+                            v-for="c in myCourses"
+                            :key="c"
+                            :command="c"
+                          >
+                            {{ c }}
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+
+                    <el-dropdown trigger="click" @command="m => (mode = m)">
+                      <span
+                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                      >
+                        <el-icon class="mr-1.5 text-[14px]"
+                          ><Monitor
+                        /></el-icon>
+                        {{ mode }}
+                        <el-icon class="ml-1 text-[12px]"
+                          ><ArrowDown
+                        /></el-icon>
+                      </span>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="学生模式"
+                            >学生模式</el-dropdown-item
+                          >
+                          <el-dropdown-item command="教师模式"
+                            >教师模式</el-dropdown-item
+                          >
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+
+                    <el-dropdown
+                      trigger="click"
+                      @command="a => (selectedMockAgent = a)"
+                    >
+                      <span
+                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                      >
+                        <el-icon class="mr-1.5 text-[14px]"><Cpu /></el-icon>
+                        {{ selectedMockAgent }}
+                        <el-icon class="ml-1 text-[12px]"
+                          ><ArrowDown
+                        /></el-icon>
+                      </span>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="练习题助手"
+                            >练习题助手</el-dropdown-item
+                          >
+                          <el-dropdown-item command="辅导助教"
+                            >辅导助教</el-dropdown-item
+                          >
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
+
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="text-[12px] text-gray-400 font-medium tracking-wide flex items-center pr-2 cursor-pointer hover:text-gray-600 transition-colors"
+                    >
+                      IntellEdu 4.0 超高
+                      <el-icon class="ml-1"><ArrowDown /></el-icon>
+                    </span>
+                    <button
+                      class="w-10 h-10 flex items-center justify-center rounded-xl transition-all transform border"
+                      :class="
+                        quickCourse && quickMessage.trim()
+                          ? 'bg-[#c199f9] border-[#c199f9] text-white hover:bg-[#b085f7] hover:scale-105 shadow-lg shadow-purple-100 cursor-pointer'
+                          : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
+                      "
+                      :disabled="!quickCourse || !quickMessage.trim()"
+                      @click="
+                        quickCourse
+                          ? handleNewChat({ course: quickCourse })
+                          : null
+                      "
+                    >
+                      <el-icon
+                        class="text-lg"
+                        :class="
+                          quickCourse && quickMessage.trim() ? '' : 'font-bold'
+                        "
+                        ><Top
+                      /></el-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 【场景 B】 Agent PDF 工作台 -->
+          <div
+            v-else-if="activeRail === `agentpdf`"
+            class="h-full w-full overflow-hidden"
+          >
+            <div class="h-full bg-white overflow-hidden">
+              <AgentPdfWorkbench :service-url="pdfServiceUrl" />
+            </div>
+          </div>
+
+          <div v-else-if="activeRail === `generation`" class="h-full w-full">
+            <div class="h-full bg-white overflow-hidden">
+              <AiResourceGeneration />
+            </div>
+          </div>
+
+          <div v-else-if="activeRail === `path`" class="h-full w-full">
             <div
-              class="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60"
-            />
-            <div
-              class="absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60"
-            />
+              v-if="isTeacher && !selectedStudentId"
+              class="h-full w-full flex items-center justify-center bg-white"
+            >
+              <div
+                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
+              >
+                <LottieAnimation
+                  :animationData="onlineChartAnimation"
+                  :width="360"
+                  :height="360"
+                />
+                <h3 class="mt-4 text-lg font-black text-gray-600">
+                  尚未选择学生
+                </h3>
+                <p class="mt-2 text-sm text-gray-400">
+                  请在顶部选择需要分析的学生以查看个性化路径规划
+                </p>
+              </div>
+            </div>
+            <div v-else class="h-full bg-white overflow-hidden">
+              <AiLearningPath :student-id="selectedStudentId" />
+            </div>
           </div>
 
           <div
-            class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
+            v-else-if="activeRail === `profile`"
+            class="h-full w-full p-4 bg-white"
           >
-            <div class="text-center space-y-4">
-              <h1
-                class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
+            <div
+              v-if="isTeacher && !selectedStudentId"
+              class="h-full w-full flex items-center justify-center"
+            >
+              <div
+                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
               >
-                今天想聊点什么？
-              </h1>
-              <p
-                class="text-[15px] font-medium tracking-wide"
-                style="color: rgba(140, 80, 159, 0.7)"
+                <LottieAnimation
+                  :animationData="emptyStateDevelopmentAnimation"
+                  :width="360"
+                  :height="360"
+                />
+                <h3 class="mt-4 text-lg font-black text-gray-600">
+                  尚未选择学生
+                </h3>
+                <p class="mt-2 text-sm text-gray-400">
+                  请在顶部选择学生以查看学习画像与学情分析
+                </p>
+              </div>
+            </div>
+            <div v-else class="h-full flex gap-4 overflow-hidden">
+              <!-- 左：完整学习画像 -->
+              <div
+                class="flex-1 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
-                请先选择一门课程，然后随时向大模型提问
+                <AiLearningProfile :student-id="selectedStudentId" />
+              </div>
+              <!-- 右：原 chat 右侧的画像 / 智能体 / 拓展资源 选项卡 -->
+              <div
+                class="w-[360px] flex-shrink-0 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+              >
+                <AiInspector
+                  :profileDimensions="
+                    selectedStudentId
+                      ? myStudents.find(s => s.id === selectedStudentId)
+                          ?.profileDimensions || profileDimensions
+                      : profileDimensions
+                  "
+                  :agentItems="agentItems"
+                  :resources="generatedResources"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="activeRail === `assessment`" class="h-full w-full">
+            <div
+              v-if="isTeacher && !selectedStudentId"
+              class="h-full w-full flex items-center justify-center bg-white"
+            >
+              <div
+                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
+              >
+                <LottieAnimation
+                  :animationData="saasAnimation"
+                  :width="360"
+                  :height="360"
+                />
+                <h3 class="mt-4 text-lg font-black text-gray-600">
+                  尚未选择学生
+                </h3>
+                <p class="mt-2 text-sm text-gray-400">
+                  请在顶部选择学生以查看学习评估报告
+                </p>
+              </div>
+            </div>
+            <div v-else class="h-full bg-white overflow-hidden">
+              <AiAssessment :student-id="selectedStudentId" />
+            </div>
+          </div>
+
+          <!-- 【场景 C】 常规任务 (原自动化) -->
+          <div
+            v-else-if="activeRail === `automation`"
+            class="h-full w-full overflow-hidden flex justify-center bg-white"
+          >
+            <div
+              class="flex w-full h-full gap-4 transition-all duration-500 ease-in-out p-6"
+              :class="selectedTaskId ? 'max-w-full' : 'max-w-5xl'"
+            >
+              <!-- 左侧：任务列表 -->
+              <div
+                class="h-full bg-white p-2 overflow-y-auto transition-all duration-500"
+                :class="selectedTaskId ? 'w-[45%]' : 'w-full'"
+              >
+                <div class="mb-8">
+                  <h2 class="text-2xl font-bold text-gray-800">常规任务计划</h2>
+                  <p class="text-sm text-gray-500 mt-2">
+                    助手会在后台为您自动执行这些周期性或触发式任务，提升教与学的效率。
+                  </p>
+                </div>
+
+                <div class="space-y-4">
+                  <div
+                    v-for="task in routineTasks.filter(t =>
+                      mode === '学生模式'
+                        ? t.role === 'student'
+                        : t.role === 'teacher'
+                    )"
+                    :key="task.id"
+                    class="flex items-start justify-between p-5 rounded-2xl border transition-all group cursor-pointer"
+                    :class="
+                      selectedTaskId === task.id
+                        ? 'border-primary/40 bg-primary/5 shadow-md shadow-primary/10'
+                        : 'border-gray-100 hover:border-primary/20 hover:shadow-md bg-gray-50/50'
+                    "
+                    @click="selectedTaskId = task.id"
+                  >
+                    <div class="flex items-start gap-4">
+                      <div
+                        class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center transition-transform"
+                        :class="
+                          selectedTaskId === task.id
+                            ? 'text-primary scale-110'
+                            : 'text-primary group-hover:scale-110'
+                        "
+                      >
+                        <component :is="task.icon" class="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4
+                          class="text-base font-semibold text-gray-800 flex items-center gap-2"
+                        >
+                          {{ task.title }}
+                          <span
+                            class="px-2 py-0.5 text-[10px] rounded-full"
+                            :class="
+                              task.status === 'active'
+                                ? 'bg-green-100 text-green-600'
+                                : 'bg-gray-200 text-gray-500'
+                            "
+                          >
+                            {{ task.status === "active" ? "运行中" : "已暂停" }}
+                          </span>
+                        </h4>
+                        <p class="text-sm text-gray-500 mt-1 line-clamp-2">
+                          {{ task.desc }}
+                        </p>
+                        <p
+                          class="text-xs text-gray-400 mt-2 flex items-center gap-1"
+                        >
+                          <el-icon><Clock /></el-icon> 上次执行：{{
+                            task.lastRun
+                          }}
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      class="flex flex-col items-end justify-between h-full pl-2"
+                    >
+                      <el-switch
+                        v-model="task.status"
+                        active-value="active"
+                        inactive-value="paused"
+                        style="--el-switch-on-color: var(--el-color-primary)"
+                        @click.stop
+                      />
+                      <el-button
+                        type="primary"
+                        link
+                        class="mt-4 transition-opacity"
+                        :class="
+                          selectedTaskId === task.id
+                            ? 'opacity-100 font-bold'
+                            : 'opacity-0 group-hover:opacity-100'
+                        "
+                      >
+                        记录 <el-icon class="ml-1"><ArrowRight /></el-icon>
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="
+                      routineTasks.filter(t =>
+                        mode === '学生模式'
+                          ? t.role === 'student'
+                          : t.role === 'teacher'
+                      ).length === 0
+                    "
+                    class="text-center py-12 text-gray-400"
+                  >
+                    <el-empty
+                      description="暂无计划中的常规任务"
+                      :image-size="120"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 右侧：历史记录面板 -->
+              <div
+                v-if="selectedTaskId"
+                class="flex-1 h-full bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-fade-in"
+              >
+                <!-- 头部 -->
+                <div
+                  class="flex items-center justify-between p-6 border-b border-gray-50"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center"
+                    >
+                      <el-icon :size="20"><Document /></el-icon>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-gray-800">
+                        {{
+                          routineTasks.find(t => t.id === selectedTaskId)?.title
+                        }}
+                      </h3>
+                      <p class="text-[13px] text-gray-400 mt-0.5">
+                        任务执行历史记录
+                      </p>
+                    </div>
+                  </div>
+                  <el-button
+                    circle
+                    plain
+                    size="small"
+                    @click="selectedTaskId = ''"
+                  >
+                    <el-icon><Close /></el-icon>
+                  </el-button>
+                </div>
+
+                <!-- 时间轴区域 -->
+                <div class="flex-1 overflow-y-auto p-8 relative bg-gray-50/30">
+                  <el-timeline class="task-timeline">
+                    <el-timeline-item
+                      v-for="(item, index) in mockTaskHistory"
+                      :key="index"
+                      :type="item.status === 'success' ? 'success' : 'warning'"
+                      :icon="
+                        item.status === 'success'
+                          ? 'CircleCheckFilled'
+                          : 'WarningFilled'
+                      "
+                      :color="item.status === 'success' ? '#67C23A' : '#E6A23C'"
+                      size="large"
+                    >
+                      <div
+                        class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <div class="flex items-center justify-between mb-2">
+                          <span class="text-sm font-bold text-gray-700">{{
+                            item.date
+                          }}</span>
+                          <span class="text-xs font-medium text-gray-400">{{
+                            item.time
+                          }}</span>
+                        </div>
+                        <p class="text-[13px] text-gray-600 leading-relaxed">
+                          {{ item.log }}
+                        </p>
+
+                        <div
+                          v-if="item.status === 'success' && index === 0"
+                          class="mt-3 py-2 px-3 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100"
+                        >
+                          <span
+                            class="text-xs text-gray-500 font-medium flex items-center gap-1.5"
+                          >
+                            <el-icon class="text-primary"
+                              ><FolderOpened
+                            /></el-icon>
+                            产出报告.pdf
+                          </span>
+                          <el-button
+                            type="primary"
+                            link
+                            size="small"
+                            class="text-xs"
+                            >查看</el-button
+                          >
+                        </div>
+                      </div>
+                    </el-timeline-item>
+                  </el-timeline>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 【场景 D】 其他未开发项 -->
+          <div
+            v-else
+            class="h-full w-full flex items-center justify-center p-4"
+          >
+            <div
+              class="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] w-full max-w-2xl transform hover:scale-[1.01] transition-transform duration-500"
+            >
+              <el-icon :size="80" class="text-gray-200 mb-6 drop-shadow-sm"
+                ><Box
+              /></el-icon>
+              <h3 class="text-xl font-black text-gray-700 mb-2">
+                正在积极建设中
+              </h3>
+              <p class="text-sm text-gray-400">
+                目前「{{
+                  railItems.find(r => r.key === activeRail)?.label
+                }}」属于预期规划内，即将上线，敬请期待...
               </p>
             </div>
-
-            <div
-              class="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
-            >
-              <el-input
-                v-model="quickMessage"
-                type="textarea"
-                :autosize="{ minRows: 2, maxRows: 8 }"
-                placeholder="可向大模型询问任何事。输入 @ 提及课程或文件..."
-                class="quick-chat-input"
-                resize="none"
-                @keyup.enter.prevent="
-                  quickCourse ? handleNewChat({ course: quickCourse }) : null
-                "
-              />
-
-              <div
-                class="flex items-center justify-between px-4 py-3 bg-gray-50/50 border-t border-gray-50"
-              >
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <el-dropdown
-                    trigger="click"
-                    @command="c => (quickCourse = c)"
-                  >
-                    <span
-                      class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors"
-                      :class="
-                        quickCourse
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
-                      "
-                    >
-                      <el-icon class="mr-1.5 text-[14px]"
-                        ><FolderOpened
-                      /></el-icon>
-                      {{ quickCourse || "选择课程" }}
-                      <el-icon class="ml-1 text-[12px]"><ArrowDown /></el-icon>
-                    </span>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item
-                          v-for="c in myCourses"
-                          :key="c"
-                          :command="c"
-                        >
-                          {{ c }}
-                        </el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-
-                  <el-dropdown trigger="click" @command="m => (mode = m)">
-                    <span
-                      class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
-                    >
-                      <el-icon class="mr-1.5 text-[14px]"><Monitor /></el-icon>
-                      {{ mode }}
-                      <el-icon class="ml-1 text-[12px]"><ArrowDown /></el-icon>
-                    </span>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item command="学生模式"
-                          >学生模式</el-dropdown-item
-                        >
-                        <el-dropdown-item command="教师模式"
-                          >教师模式</el-dropdown-item
-                        >
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-
-                  <el-dropdown
-                    trigger="click"
-                    @command="a => (selectedMockAgent = a)"
-                  >
-                    <span
-                      class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
-                    >
-                      <el-icon class="mr-1.5 text-[14px]"><Cpu /></el-icon>
-                      {{ selectedMockAgent }}
-                      <el-icon class="ml-1 text-[12px]"><ArrowDown /></el-icon>
-                    </span>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item command="代码生成特工"
-                          >代码生成特工</el-dropdown-item
-                        >
-                        <el-dropdown-item command="多模态规划师"
-                          >多模态规划师</el-dropdown-item
-                        >
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-
-                <div class="flex items-center gap-3">
-                  <span
-                    class="text-[12px] text-gray-400 font-medium tracking-wide flex items-center pr-2 cursor-pointer hover:text-gray-600 transition-colors"
-                  >
-                    IntellEdu 4.0 超高
-                    <el-icon class="ml-1"><ArrowDown /></el-icon>
-                  </span>
-                  <button
-                    class="w-10 h-10 flex items-center justify-center rounded-xl transition-all transform border"
-                    :class="
-                      quickCourse && quickMessage.trim()
-                        ? 'bg-[#c199f9] border-[#c199f9] text-white hover:bg-[#b085f7] hover:scale-105 shadow-lg shadow-purple-100 cursor-pointer'
-                        : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
-                    "
-                    :disabled="!quickCourse || !quickMessage.trim()"
-                    @click="
-                      quickCourse
-                        ? handleNewChat({ course: quickCourse })
-                        : null
-                    "
-                  >
-                    <el-icon
-                      class="text-lg"
-                      :class="
-                        quickCourse && quickMessage.trim() ? '' : 'font-bold'
-                      "
-                      ><Top
-                    /></el-icon>
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
-        </div>
-
-        <!-- 【场景 B】 Agent PDF 工作台 -->
-        <div v-else-if="activeRail === `agentpdf`" class="h-full w-full p-4 overflow-hidden">
-          <div
-            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-          >
-            <AgentPdfWorkbench :service-url="pdfServiceUrl" />
-          </div>
-        </div>
-
-        <div v-else-if="activeRail === `generation`" class="h-full w-full p-4">
-          <div
-            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-          >
-            <AiResourceGeneration />
-          </div>
-        </div>
-
-        <div v-else-if="activeRail === `path`" class="h-full w-full p-4">
-          <div
-            v-if="isTeacher && !selectedStudentId"
-            class="h-full w-full flex items-center justify-center"
-          >
-            <div class="flex flex-col items-center justify-center bg-transparent lottie-empty-state">
-              <LottieAnimation
-                :animationData="onlineChartAnimation"
-                :width="360"
-                :height="360"
-              />
-              <h3 class="mt-4 text-lg font-black text-gray-600">尚未选择学生</h3>
-              <p class="mt-2 text-sm text-gray-400">请在顶部选择需要分析的学生以查看个性化路径规划</p>
-            </div>
-          </div>
-          <div
-            v-else
-            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-          >
-            <AiLearningPath :student-id="selectedStudentId" />
-          </div>
-        </div>
-
-        <div v-else-if="activeRail === `profile`" class="h-full w-full p-4">
-          <div
-            v-if="isTeacher && !selectedStudentId"
-            class="h-full w-full flex items-center justify-center"
-          >
-            <div class="flex flex-col items-center justify-center bg-transparent lottie-empty-state">
-              <LottieAnimation
-                :animationData="emptyStateDevelopmentAnimation"
-                :width="360"
-                :height="360"
-              />
-              <h3 class="mt-4 text-lg font-black text-gray-600">尚未选择学生</h3>
-              <p class="mt-2 text-sm text-gray-400">请在顶部选择学生以查看学习画像与多智能体分析</p>
-            </div>
-          </div>
-          <div
-            v-else
-            class="h-full flex gap-4 overflow-hidden"
-          >
-            <!-- 左：完整学习画像 -->
-            <div
-              class="flex-1 h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-            >
-              <AiLearningProfile :student-id="selectedStudentId" />
-            </div>
-            <!-- 右：原 chat 右侧的画像 / 智能体 / 拓展资源 选项卡 -->
-            <div
-              class="w-[360px] flex-shrink-0 h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-            >
-              <AiInspector
-                :profileDimensions="selectedStudentId ? (myStudents.find(s => s.id === selectedStudentId)?.profileDimensions || profileDimensions) : profileDimensions"
-                :agentItems="agentItems"
-                :resources="generatedResources"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div v-else-if="activeRail === `assessment`" class="h-full w-full p-4">
-          <div
-            v-if="isTeacher && !selectedStudentId"
-            class="h-full w-full flex items-center justify-center"
-          >
-            <div class="flex flex-col items-center justify-center bg-transparent lottie-empty-state">
-              <LottieAnimation
-                :animationData="saasAnimation"
-                :width="360"
-                :height="360"
-              />
-              <h3 class="mt-4 text-lg font-black text-gray-600">尚未选择学生</h3>
-              <p class="mt-2 text-sm text-gray-400">请在顶部选择学生以查看学习评估报告</p>
-            </div>
-          </div>
-          <div
-            v-else
-            class="h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-          >
-            <AiAssessment :student-id="selectedStudentId" />
-          </div>
-        </div>
-
-        <!-- 【场景 C】 其他未开发项 (自动化等) -->
-        <div v-else class="h-full w-full flex items-center justify-center p-4">
-          <div
-            class="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] w-full max-w-2xl transform hover:scale-[1.01] transition-transform duration-500"
-          >
-            <el-icon :size="80" class="text-gray-200 mb-6 drop-shadow-sm"
-              ><Box
-            /></el-icon>
-            <h3 class="text-xl font-black text-gray-700 mb-2">
-              正在积极建设中
-            </h3>
-            <p class="text-sm text-gray-400">
-              目前「{{
-                railItems.find(r => r.key === activeRail)?.label
-              }}」属于预期赛题规划内，即将与多智能体底座接通...
-            </p>
-          </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
     </div>
   </div>
 </template>

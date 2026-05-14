@@ -68,9 +68,7 @@ onUnmounted(() => {
     >
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        <span class="text-[13px] font-semibold text-gray-700"
-          >启明数字人</span
-        >
+        <span class="text-[13px] font-semibold text-gray-700">启明数字人</span>
         <span class="text-[11px] text-gray-400">VRM · FBX 实时驱动</span>
       </div>
       <div class="flex items-center gap-1.5">
@@ -124,9 +122,7 @@ onUnmounted(() => {
         class="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
       >
         <el-icon :size="36" class="text-amber-500 mb-3"><Warning /></el-icon>
-        <h4 class="text-sm font-bold text-gray-700 mb-1">
-          数字人资源加载失败
-        </h4>
+        <h4 class="text-sm font-bold text-gray-700 mb-1">数字人资源加载失败</h4>
         <p class="text-xs text-gray-500 leading-relaxed max-w-[260px]">
           请检查
           <code
@@ -152,6 +148,7 @@ onUnmounted(() => {
 .animate-spin {
   animation: vh-spin 1s linear infinite;
 }
+
 @keyframes vh-spin {
   to {
     transform: rotate(360deg);

@@ -26,7 +26,9 @@ const roadmapData = computed(() => dataset.value.path.roadmap);
     <div class="mb-8">
       <div class="flex items-center gap-2 mb-1">
         <el-icon class="text-primary"><Guide /></el-icon>
-        <h2 class="text-xl font-bold text-text_color_primary">个性化路径规划</h2>
+        <h2 class="text-xl font-bold text-text_color_primary">
+          个性化路径规划
+        </h2>
       </div>
       <p class="text-sm text-text_color_regular mt-1">
         基于AI学情画像动态生成的专属进阶路线
@@ -43,24 +45,29 @@ const roadmapData = computed(() => dataset.value.path.roadmap);
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-bold text-text_color_primary lg:text-lg">{{ courseMeta.name }}</span>
+            <span class="font-bold text-text_color_primary lg:text-lg">{{
+              courseMeta.name
+            }}</span>
             <el-tag size="small" effect="plain" round>{{
               courseMeta.subtitle
             }}</el-tag>
           </div>
-          <div class="mt-2 text-xs text-text_color_regular flex items-center gap-3">
+          <div
+            class="mt-2 text-xs text-text_color_regular flex items-center gap-3"
+          >
             <span
               >当前阶段：<span class="text-primary font-bold">{{
                 courseMeta.currentPhase
               }}</span>
               / {{ courseMeta.totalPhase }}</span
             >
-            <span class="w-[1px] h-3 bg-gray-200 dark:bg-gray-700"></span>
+            <span class="w-[1px] h-3 bg-gray-200 dark:bg-gray-700" />
             <span>预计 {{ courseMeta.estimatedHours }} 学时</span>
           </div>
         </div>
         <el-button type="primary" round>
-          <el-icon class="mr-1"><Reading /></el-icon>{{ studentId ? '继续分析' : '继续学习' }}
+          <el-icon class="mr-1"><Reading /></el-icon
+          >{{ studentId ? "继续分析" : "继续学习" }}
         </el-button>
       </div>
     </div>
@@ -92,24 +99,33 @@ const roadmapData = computed(() => dataset.value.path.roadmap);
             'border-gray-300 dark:border-gray-700': phase.status === 'pending'
           }"
         >
-          <el-icon v-if="phase.status === 'completed'" :size="12"><Check /></el-icon>
-        <div
-          v-else-if="phase.status === 'active'"
-          class="w-2.5 h-2.5 bg-primary rounded-full animate-ping"
-        />
-        <div v-else class="w-2 h-2 bg-gray-300 dark:bg-gray-700 rounded-full" />
-      </div>
+          <el-icon v-if="phase.status === 'completed'" :size="12"
+            ><Check
+          /></el-icon>
+          <div
+            v-else-if="phase.status === 'active'"
+            class="w-2.5 h-2.5 bg-primary rounded-full animate-ping"
+          />
+          <div
+            v-else
+            class="w-2 h-2 bg-gray-300 dark:bg-gray-700 rounded-full"
+          />
+        </div>
 
-      <div class="flex items-center justify-between mb-4 hover:translate-x-2 transition-transform duration-500 cursor-default">
-        <div>
-          <h3
-            class="text-lg font-black tracking-tight"
-            :class="
-              phase.status === 'pending' ? 'text-text_color_regular opacity-40' : 'text-text_color_primary'
-            "
-          >
-            {{ phase.title }}
-          </h3>
+        <div
+          class="flex items-center justify-between mb-4 hover:translate-x-2 transition-transform duration-500 cursor-default"
+        >
+          <div>
+            <h3
+              class="text-lg font-black tracking-tight"
+              :class="
+                phase.status === 'pending'
+                  ? 'text-text_color_regular opacity-40'
+                  : 'text-text_color_primary'
+              "
+            >
+              {{ phase.title }}
+            </h3>
             <p
               v-if="phase.summary"
               class="mt-1 text-xs text-text_color_regular"
@@ -118,7 +134,9 @@ const roadmapData = computed(() => dataset.value.path.roadmap);
               {{ phase.summary }}
             </p>
           </div>
-          <el-tag v-if="phase.status === 'active'" size="small" effect="dark">进行中</el-tag>
+          <el-tag v-if="phase.status === 'active'" size="small" effect="dark"
+            >进行中</el-tag
+          >
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -127,7 +145,8 @@ const roadmapData = computed(() => dataset.value.path.roadmap);
             :key="nIndex"
             class="flex items-center p-4 rounded-xl border transition-all duration-300 group"
             :class="{
-              'bg-primary/5 border-primary/20 text-primary shadow-sm': node.current,
+              'bg-primary/5 border-primary/20 text-primary shadow-sm':
+                node.current,
               'bg-bg_color border-gray-100 dark:border-gray-800 opacity-60':
                 !node.done && !node.current,
               'bg-bg_color border-gray-100 dark:border-gray-800 hover:border-primary/50 hover:shadow-md cursor-pointer':
@@ -147,24 +166,49 @@ const roadmapData = computed(() => dataset.value.path.roadmap);
               <el-icon :size="16">
                 <Check v-if="node.done" />
                 <Location v-else-if="node.current" />
-                <component :is="node.type === 'video' ? 'VideoPlay' : (node.type === 'code' ? 'Cpu' : 'Reading')" v-else />
+                <component
+                  :is="
+                    node.type === 'video'
+                      ? 'VideoPlay'
+                      : node.type === 'code'
+                        ? 'Cpu'
+                        : 'Reading'
+                  "
+                  v-else
+                />
               </el-icon>
             </div>
 
             <div
               class="flex-1 font-medium text-sm truncate"
-              :class="!node.done && !node.current ? 'text-text_color_regular' : ''"
+              :class="
+                !node.done && !node.current ? 'text-text_color_regular' : ''
+              "
             >
               {{ node.name }}
             </div>
 
             <el-tag
               size="small"
-              :type="node.type === 'video' ? 'info' : (node.type === 'code' ? 'warning' : 'success')"
+              :type="
+                node.type === 'video'
+                  ? 'info'
+                  : node.type === 'code'
+                    ? 'warning'
+                    : 'success'
+              "
               effect="plain"
               class="ml-2 !border-none"
             >
-              {{ node.type === 'video' ? '视频' : (node.type === 'code' ? '实验' : (node.type === 'quiz' ? '练习' : '文档')) }}
+              {{
+                node.type === "video"
+                  ? "视频"
+                  : node.type === "code"
+                    ? "实验"
+                    : node.type === "quiz"
+                      ? "练习"
+                      : "文档"
+              }}
             </el-tag>
           </div>
         </div>

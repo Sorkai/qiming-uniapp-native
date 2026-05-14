@@ -488,17 +488,13 @@ export async function uploadAgentPdfFiles(
   const formData = new FormData();
   files.forEach(file => formData.append("files", file));
 
-  const { data } = await axios.post<string[]>(
-    `${baseUrl}/upload`,
-    formData,
-    {
-      withCredentials: true,
-      headers: {
-        "Content-Type": "multipart/form-data"
-      },
-      ...axiosConfig
-    }
-  );
+  const { data } = await axios.post<string[]>(`${baseUrl}/upload`, formData, {
+    withCredentials: true,
+    headers: {
+      "Content-Type": "multipart/form-data"
+    },
+    ...axiosConfig
+  });
 
   return data;
 }
@@ -561,12 +557,9 @@ export async function* streamAgentPdfEvent(
   eventId: string
 ): AsyncGenerator<GradioCallEvent> {
   const baseUrl = ensureAgentPdfServiceUrl(serviceUrl);
-  const response = await fetch(
-    `${baseUrl}/call/${apiName}/${eventId}`,
-    {
-      credentials: "include"
-    }
-  );
+  const response = await fetch(`${baseUrl}/call/${apiName}/${eventId}`, {
+    credentials: "include"
+  });
 
   if (!response.ok || !response.body) {
     throw new Error(`Failed to connect event stream: ${response.status}`);

@@ -131,7 +131,7 @@
                         {{ res.title }}
                       </p>
                       <p class="text-xs text-gray-400 truncate">
-                        {{ res.desc || "AI 协同智能体生成" }}
+                        {{ res.desc || "AI 助教生成" }}
                       </p>
                     </div>
                   </div>
@@ -163,7 +163,7 @@
               v-model="input"
               type="textarea"
               :autosize="{ minRows: 1, maxRows: 5 }"
-              placeholder="与多智能体互动，描述你的学习需求..."
+              placeholder="随时提问，描述你的学习需求..."
               class="ai-input-base"
               @keydown.enter.prevent="handleSend"
             />

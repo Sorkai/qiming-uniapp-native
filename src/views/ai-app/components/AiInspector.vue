@@ -48,7 +48,7 @@
             >
               <span
                 class="group-hover:text-primary transition-colors duration-300"
-                >多智能体协作流
+                >专属助手调度流
               </span>
               <el-icon
                 class="opacity-0 group-hover:opacity-100 group-hover:rotate-180 transition-all duration-500"

@@ -32,7 +32,9 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
           <el-icon :size="28"><DataAnalysis /></el-icon>
         </div>
         <div>
-          <h2 class="text-xl font-bold text-text_color_primary">阶段学习评估</h2>
+          <h2 class="text-xl font-bold text-text_color_primary">
+            阶段学习评估
+          </h2>
           <p class="text-sm text-text_color_regular mt-1">
             课程：{{ courseInfo.name }} ·
             <span class="opacity-60">{{ courseInfo.subtitle }}</span>
@@ -41,9 +43,12 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
       </div>
       <div class="flex items-center gap-3">
         <el-tag effect="plain" round size="large" class="!bg-bg_color">
-          章节 {{ courseInfo.finishedChapters }} / {{ courseInfo.totalChapters }}
+          章节 {{ courseInfo.finishedChapters }} /
+          {{ courseInfo.totalChapters }}
         </el-tag>
-        <el-button type="primary" plain round icon="Download">导出报告</el-button>
+        <el-button type="primary" plain round icon="Download"
+          >导出报告</el-button
+        >
       </div>
     </div>
 
@@ -54,10 +59,14 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
         :key="i"
         class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-all group"
       >
-        <div class="text-text_color_regular text-xs uppercase tracking-widest mb-3">
+        <div
+          class="text-text_color_regular text-xs uppercase tracking-widest mb-3"
+        >
           {{ s.label }}
         </div>
-        <div class="text-4xl font-black text-text_color_primary mb-2 group-hover:scale-110 transition-transform">
+        <div
+          class="text-4xl font-black text-text_color_primary mb-2 group-hover:scale-110 transition-transform"
+        >
           {{ s.value }}
         </div>
         <div
@@ -70,8 +79,12 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- 弱点警示 - 针对性UI重构 -->
-      <div class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm border-l-4 border-l-red-500">
-        <h4 class="font-bold text-red-600 flex items-center gap-2 mb-6 uppercase tracking-wider text-sm">
+      <div
+        class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm border-l-4 border-l-red-500"
+      >
+        <h4
+          class="font-bold text-red-600 flex items-center gap-2 mb-6 uppercase tracking-wider text-sm"
+        >
           <el-icon :size="18"><InfoFilled /></el-icon>
           薄弱知识点警示
         </h4>
@@ -82,19 +95,34 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
             class="group p-4 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:border-red-200 transition-colors"
           >
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-bold text-text_color_primary">{{ w.title }}</span>
-              <el-tag :type="w.level === 'high' ? 'danger' : 'warning'" size="small" effect="dark" round>
-                {{ w.level === 'high' ? '高危' : '中危' }}
+              <span class="text-sm font-bold text-text_color_primary">{{
+                w.title
+              }}</span>
+              <el-tag
+                :type="w.level === 'high' ? 'danger' : 'warning'"
+                size="small"
+                effect="dark"
+                round
+              >
+                {{ w.level === "high" ? "高危" : "中危" }}
               </el-tag>
             </div>
-            <p class="text-xs text-text_color_regular leading-relaxed opacity-80">{{ w.desc }}</p>
+            <p
+              class="text-xs text-text_color_regular leading-relaxed opacity-80"
+            >
+              {{ w.desc }}
+            </p>
           </div>
         </div>
       </div>
 
       <!-- 优势能力 -->
-      <div class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm border-l-4 border-l-green-500">
-        <h4 class="font-bold text-green-600 flex items-center gap-2 mb-6 uppercase tracking-wider text-sm">
+      <div
+        class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm border-l-4 border-l-green-500"
+      >
+        <h4
+          class="font-bold text-green-600 flex items-center gap-2 mb-6 uppercase tracking-wider text-sm"
+        >
           <el-icon :size="18"><CircleCheck /></el-icon>
           稳定优势能力
         </h4>
@@ -104,8 +132,14 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
             :key="i"
             class="p-4 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:border-green-200 transition-colors"
           >
-            <span class="text-sm font-bold text-text_color_primary block mb-2">{{ item.title }}</span>
-            <span class="text-xs text-text_color_regular leading-relaxed opacity-80">{{ item.desc }}</span>
+            <span
+              class="text-sm font-bold text-text_color_primary block mb-2"
+              >{{ item.title }}</span
+            >
+            <span
+              class="text-xs text-text_color_regular leading-relaxed opacity-80"
+              >{{ item.desc }}</span
+            >
           </div>
         </div>
       </div>
@@ -113,8 +147,12 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6 pb-6">
       <!-- 动态流水 -->
-      <div class="lg:col-span-2 bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
-        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-8 text-sm uppercase">
+      <div
+        class="lg:col-span-2 bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+      >
+        <h4
+          class="font-bold text-text_color_primary flex items-center gap-2 mb-8 text-sm uppercase"
+        >
           <el-icon class="text-primary"><TrendCharts /></el-icon>
           最近评估动态
         </h4>
@@ -126,7 +164,9 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
             :timestamp="activity.time"
             hollow
           >
-            <span class="text-[13px] text-text_color_regular">{{ activity.content }}</span>
+            <span class="text-[13px] text-text_color_regular">{{
+              activity.content
+            }}</span>
           </el-timeline-item>
         </el-timeline>
       </div>
@@ -136,13 +176,17 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
         class="lg:col-span-3 bg-gradient-to-br from-primary/5 via-bg_color to-primary/5 p-8 rounded-xl border border-primary/20 shadow-lg relative overflow-hidden group"
       >
         <!-- 背景装饰 -->
-        <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-50"></div>
-        
-        <h4 class="font-bold text-primary flex items-center gap-2 mb-8 text-sm uppercase relative z-10">
+        <div
+          class="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-50"
+        />
+
+        <h4
+          class="font-bold text-primary flex items-center gap-2 mb-8 text-sm uppercase relative z-10"
+        >
           <el-icon :size="20" class="animate-bounce"><Promotion /></el-icon>
           AI 提升建议报告
         </h4>
-        
+
         <div class="space-y-4 relative z-10">
           <div
             v-for="(tip, i) in suggestions"
@@ -154,14 +198,19 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
             >
               0{{ i + 1 }}
             </div>
-            <span class="text-[13px] text-text_color_primary font-medium leading-relaxed">{{
-              tip
-            }}</span>
+            <span
+              class="text-[13px] text-text_color_primary font-medium leading-relaxed"
+              >{{ tip }}</span
+            >
           </div>
         </div>
-        
+
         <div class="mt-8 flex items-center gap-3 relative z-10">
-          <el-button type="primary" size="large" class="shadow-lg shadow-primary/20">
+          <el-button
+            type="primary"
+            size="large"
+            class="shadow-lg shadow-primary/20"
+          >
             <el-icon class="mr-2"><Reading /></el-icon>更新学习路径
           </el-button>
           <el-button size="large" plain round>暂不处理</el-button>
