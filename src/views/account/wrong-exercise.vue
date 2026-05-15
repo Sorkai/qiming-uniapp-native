@@ -18,176 +18,171 @@
       <el-card>
         <template #header>
           <div class="card-header">
-            <h3 class="header-title">
-              历史错题
-              <span class="count-badge">{{ total }}</span>
-            </h3>
-          </div>
-
-          <!-- 筛选区域 -->
-          <div
-            class="filters-section"
-            :class="{ dark: currentTheme === 'dark' }"
-          >
-            <!-- 第一行：基础筛选 -->
-            <div class="filter-row primary-filters">
-              <div class="filter-group">
-                <label class="filter-label">来源</label>
-                <el-select
-                  v-model="filterSource"
-                  placeholder=" 全部来源 "
-                  clearable
-                  size="default"
-                  class="filter-select"
-                  popper-class="custom-select-popper"
-                  @change="refreshList"
-                >
-                  <el-option label="作业" :value="1" />
-                  <el-option label="考试" :value="2" />
-                  <el-option label="自测题" :value="3" />
-                </el-select>
-              </div>
-
-              <div class="filter-group">
-                <label class="filter-label">题型</label>
-                <el-select
-                  v-model="filterType"
-                  placeholder=" 全部题型 "
-                  clearable
-                  size="default"
-                  class="filter-select"
-                  popper-class="custom-select-popper"
-                >
-                  <el-option
-                    v-for="(txt, val) in questionTypeMap"
-                    :key="val"
-                    :label="txt"
-                    :value="Number(val)"
-                  />
-                </el-select>
-              </div>
-
-              <div class="filter-group date-group">
-                <label class="filter-label">日期范围</label>
-                <el-date-picker
-                  v-model="filterDateRange"
-                  type="daterange"
-                  unlink-panels
-                  range-separator="至"
-                  start-placeholder="开始日期"
-                  end-placeholder="结束日期"
-                  size="default"
-                  value-format="YYYY-MM-DD"
-                  class="filter-date"
-                  popper-class="custom-select-popper"
-                />
-              </div>
-
-              <div class="filter-actions">
-                <el-button
-                  type="primary"
-                  size="default"
-                  class="action-btn primary-btn"
-                  @click="refreshList"
-                >
-                  <el-icon><Search /></el-icon>
-                  筛选
-                </el-button>
-                <el-button
-                  size="default"
-                  class="action-btn"
-                  @click="resetFilters"
-                >
-                  <el-icon><RefreshLeft /></el-icon>
-                  重置
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 第二行：批量操作 -->
-            <div class="filter-row batch-operations">
-              <div class="batch-left">
-                <el-button
-                  size="default"
-                  :type="selectionMode ? 'warning' : 'primary'"
-                  :disabled="batchAnalyzing"
-                  class="action-btn"
-                  @click="toggleSelectionMode"
-                >
-                  <el-icon><Grid /></el-icon>
-                  {{ selectionMode ? "退出多选" : "多选模式" }}
-                </el-button>
-
-                <template v-if="selectionMode">
-                  <el-button
+            <!-- 筛选区域 -->
+            <div
+              class="filters-section"
+              :class="{ dark: currentTheme === 'dark' }"
+            >
+              <!-- 第一行：基础筛选 -->
+              <div class="filter-row primary-filters">
+                <div class="filter-group">
+                  <label class="filter-label">来源</label>
+                  <el-select
+                    v-model="filterSource"
+                    placeholder=" 全部来源 "
+                    clearable
                     size="default"
-                    :disabled="batchAnalyzing || !filteredRecords.length"
-                    class="action-btn"
-                    @click="selectAllVisible"
+                    class="filter-select"
+                    popper-class="custom-select-popper"
+                    @change="refreshList"
                   >
-                    <el-icon><Select /></el-icon>
-                    全选
-                  </el-button>
-                  <el-button
-                    size="default"
-                    :disabled="batchAnalyzing || !filteredRecords.length"
-                    class="action-btn"
-                    @click="invertSelectionVisible"
-                  >
-                    <el-icon><Sort /></el-icon>
-                    反选
-                  </el-button>
-                </template>
-              </div>
+                    <el-option label="作业" :value="1" />
+                    <el-option label="考试" :value="2" />
+                    <el-option label="自测题" :value="3" />
+                  </el-select>
+                </div>
 
-              <div class="batch-right">
-                <div v-if="!batchAnalyzing" class="concurrency-control">
-                  <label class="filter-label">并发数</label>
-                  <el-input-number
-                    v-model="concurrency"
-                    :min="1"
-                    :max="10"
+                <div class="filter-group">
+                  <label class="filter-label">题型</label>
+                  <el-select
+                    v-model="filterType"
+                    placeholder=" 全部题型 "
+                    clearable
                     size="default"
-                    :disabled="batchAnalyzing"
-                    class="concurrency-input"
+                    class="filter-select"
+                    popper-class="custom-select-popper"
+                  >
+                    <el-option
+                      v-for="(txt, val) in questionTypeMap"
+                      :key="val"
+                      :label="txt"
+                      :value="Number(val)"
+                    />
+                  </el-select>
+                </div>
+
+                <div class="filter-group date-group">
+                  <label class="filter-label">日期范围</label>
+                  <el-date-picker
+                    v-model="filterDateRange"
+                    type="daterange"
+                    unlink-panels
+                    range-separator="至"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                    size="default"
+                    value-format="YYYY-MM-DD"
+                    class="filter-date"
+                    popper-class="custom-select-popper"
                   />
                 </div>
 
-                <el-button
-                  v-if="selectionMode"
-                  size="default"
-                  type="success"
-                  :disabled="batchAnalyzing || selectedUnAnalyzedCount === 0"
-                  :loading="batchAnalyzing"
-                  class="action-btn analyze-btn"
-                  @click="batchAnalyzeSelected"
-                >
-                  <el-icon v-if="!batchAnalyzing"><MagicStick /></el-icon>
-                  分析所选 ({{ selectedUnAnalyzedCount }})
-                </el-button>
-                <el-button
-                  v-else
-                  size="default"
-                  type="success"
-                  :disabled="batchAnalyzing || unAnalyzedCount === 0"
-                  :loading="batchAnalyzing"
-                  class="action-btn analyze-btn"
-                  @click="() => batchAnalyze()"
-                >
-                  <el-icon v-if="!batchAnalyzing"><MagicStick /></el-icon>
-                  批量分析 ({{ unAnalyzedCount }})
-                </el-button>
+                <div class="filter-actions">
+                  <el-button
+                    type="primary"
+                    size="default"
+                    class="action-btn primary-btn"
+                    @click="refreshList"
+                  >
+                    <el-icon><Search /></el-icon>
+                    筛选
+                  </el-button>
+                  <el-button
+                    size="default"
+                    class="action-btn"
+                    @click="resetFilters"
+                  >
+                    <el-icon><RefreshLeft /></el-icon>
+                    重置
+                  </el-button>
+                </div>
+              </div>
 
-                <el-button
-                  v-if="batchAnalyzing"
-                  size="default"
-                  type="danger"
-                  class="action-btn"
-                  @click="cancelBatch"
-                >
-                  <el-icon><Close /></el-icon>
-                  取消
-                </el-button>
+              <!-- 第二行：批量操作 -->
+              <div class="filter-row batch-operations">
+                <div class="batch-left">
+                  <el-button
+                    size="default"
+                    :type="selectionMode ? 'warning' : 'primary'"
+                    :disabled="batchAnalyzing"
+                    class="action-btn"
+                    @click="toggleSelectionMode"
+                  >
+                    <el-icon><Grid /></el-icon>
+                    {{ selectionMode ? "退出多选" : "多选模式" }}
+                  </el-button>
+
+                  <template v-if="selectionMode">
+                    <el-button
+                      size="default"
+                      :disabled="batchAnalyzing || !filteredRecords.length"
+                      class="action-btn"
+                      @click="selectAllVisible"
+                    >
+                      <el-icon><Select /></el-icon>
+                      全选
+                    </el-button>
+                    <el-button
+                      size="default"
+                      :disabled="batchAnalyzing || !filteredRecords.length"
+                      class="action-btn"
+                      @click="invertSelectionVisible"
+                    >
+                      <el-icon><Sort /></el-icon>
+                      反选
+                    </el-button>
+                  </template>
+                </div>
+
+                <div class="batch-right">
+                  <div v-if="!batchAnalyzing" class="concurrency-control">
+                    <label class="filter-label">并发数</label>
+                    <el-input-number
+                      v-model="concurrency"
+                      :min="1"
+                      :max="10"
+                      size="default"
+                      :disabled="batchAnalyzing"
+                      class="concurrency-input"
+                    />
+                  </div>
+
+                  <el-button
+                    v-if="selectionMode"
+                    size="default"
+                    type="success"
+                    :disabled="batchAnalyzing || selectedUnAnalyzedCount === 0"
+                    :loading="batchAnalyzing"
+                    class="action-btn analyze-btn"
+                    @click="batchAnalyzeSelected"
+                  >
+                    <el-icon v-if="!batchAnalyzing"><MagicStick /></el-icon>
+                    分析所选 ({{ selectedUnAnalyzedCount }})
+                  </el-button>
+                  <el-button
+                    v-else
+                    size="default"
+                    type="success"
+                    :disabled="batchAnalyzing || unAnalyzedCount === 0"
+                    :loading="batchAnalyzing"
+                    class="action-btn analyze-btn"
+                    @click="() => batchAnalyze()"
+                  >
+                    <el-icon v-if="!batchAnalyzing"><MagicStick /></el-icon>
+                    批量分析 ({{ unAnalyzedCount }})
+                  </el-button>
+
+                  <el-button
+                    v-if="batchAnalyzing"
+                    size="default"
+                    type="danger"
+                    class="action-btn"
+                    @click="cancelBatch"
+                  >
+                    <el-icon><Close /></el-icon>
+                    取消
+                  </el-button>
+                </div>
               </div>
             </div>
           </div>
@@ -198,39 +193,62 @@
         <div v-else>
           <el-empty v-if="!records.length" description="暂无错题记录" />
 
-          <div v-else class="wrong-list">
-            <div
-              v-for="item in filteredRecords"
-              :key="item.id"
-              class="wrong-item"
-              :class="{ dark: currentTheme === 'dark' }"
-            >
-              <div v-if="selectionMode" class="select-box">
-                <el-checkbox
-                  v-model="selectionMap[item.id]"
-                  @change="onSelectChange(item)"
-                />
-              </div>
-              <div class="w-title" v-html="item.stem" />
-              <div class="w-meta">
-                <span class="tag">来源：{{ sourceText(item.sourceType) }}</span>
-                <span class="tag">错误次数：{{ item.wrongNum }}</span>
-                <span
-                  v-if="isAnalyzed(item)"
-                  class="tag analyzed"
-                  :class="{
-                    'new-analyzed': newlyAnalyzedKeys.has(
-                      String(item.questionId || item.id)
-                    )
-                  }"
-                  >已分析</span
-                >
-                <span class="time">{{ item.lastWrongTime }}</span>
-              </div>
-              <div class="actions">
-                <el-button type="primary" text @click="openDetail(item)"
-                  >查看</el-button
-                >
+          <template v-else>
+            <div class="list-stats">
+              <span class="stats-label">共</span>
+              <span class="stats-count">{{ total }}</span>
+              <span class="stats-label">道错题</span>
+            </div>
+            <div class="wrong-list">
+              <div
+                v-for="item in filteredRecords"
+                :key="item.id"
+                class="wrong-item"
+                :class="{ dark: currentTheme === 'dark' }"
+                @click="!selectionMode && openDetail(item)"
+              >
+                <div v-if="selectionMode" class="select-box" @click.stop>
+                  <el-checkbox
+                    v-model="selectionMap[item.id]"
+                    @change="onSelectChange(item)"
+                  />
+                </div>
+                <div class="wrong-icon" aria-hidden="true">
+                  <span class="wrong-icon-text">错</span>
+                </div>
+                <div class="wrong-main">
+                  <div class="w-title" v-html="item.stem" />
+                  <div class="w-meta">
+                    <span class="meta-tag source-tag">
+                      {{ sourceText(item.sourceType) }}
+                    </span>
+                    <span class="meta-tag count-tag">
+                      错 {{ item.wrongNum }} 次
+                    </span>
+                    <span
+                      v-if="isAnalyzed(item)"
+                      class="meta-tag analyzed-tag"
+                      :class="{
+                        'new-analyzed': newlyAnalyzedKeys.has(
+                          String(item.questionId || item.id)
+                        )
+                      }"
+                    >
+                      已分析
+                    </span>
+                  </div>
+                </div>
+                <div class="wrong-footer">
+                  <span class="time">{{ item.lastWrongTime }}</span>
+                  <el-button
+                    size="small"
+                    type="primary"
+                    class="view-btn"
+                    @click.stop="openDetail(item)"
+                  >
+                    查看详情
+                  </el-button>
+                </div>
               </div>
             </div>
 
@@ -244,7 +262,7 @@
                 @current-change="handlePageChange"
               />
             </div>
-          </div>
+          </template>
         </div>
       </el-card>
     </div>
@@ -642,10 +660,11 @@ onMounted(async () => {
   }
 }
 
+/* ============== 容器 ============== */
 .practice-container {
   min-height: 100vh;
   padding: 70px 0 30px;
-  background-color: #f5f7fa;
+  background-color: transparent;
 }
 
 .practice-container.dark {
@@ -654,23 +673,26 @@ onMounted(async () => {
 
 .practice-container[data-embedded="true"] {
   min-height: auto;
-  padding: 20px 0 0;
+  padding: 8px 0 0;
   background-color: transparent;
 }
 
+/* ============== 头部（独立访问时） ============== */
 .header {
   position: fixed;
   top: 0;
   right: 0;
   left: 0;
   height: 60px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  background: linear-gradient(135deg, #fff, #f8faff);
+  border-bottom: 1px solid rgb(220 226 247 / 60%);
+  box-shadow: 0 2px 12px rgb(151 180 247 / 12%);
 }
 
 .header.dark {
-  background: #1d1d1d;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+  background: linear-gradient(135deg, #111b2d, #0f172a);
+  border-bottom-color: #1e293b;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 30%);
 }
 
 .header .header-content {
@@ -683,52 +705,92 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
+.header .back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5a6b8a;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.header .back-btn:hover {
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #dce2f7, #97b4f7);
+}
+
+.header.dark .back-btn {
+  color: #94a3b8;
+}
+
+.header.dark .back-btn:hover {
+  color: #f1f5f9;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+}
+
 .header .title {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 0.3px;
 }
 
 .header.dark .title {
-  color: #e0e0e0;
+  color: #f1f5f9;
 }
 
 .header .placeholder {
   min-width: 60px;
 }
 
+/* ============== 主内容 ============== */
 .main-content {
   max-width: 1200px;
   padding: 0 32px;
   margin: 0 auto;
 }
 
+.main-content :deep(.el-card) {
+  background: linear-gradient(145deg, #fff, #f8faff);
+  border: 1px solid rgb(220 226 247 / 60%);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgb(151 180 247 / 10%);
+}
+
 .main-content.dark :deep(.el-card) {
-  color: #e0e0e0;
-  background-color: #2a2a2a;
-  border-color: #3e3e3e;
+  color: #e2e8f0;
+  background: linear-gradient(145deg, #111b2d, #0f172a);
+  border-color: #1e293b;
+  box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
 }
 
 .main-content.dark :deep(.el-card__header) {
-  color: #e0e0e0;
-  border-bottom-color: #3e3e3e;
+  color: #e2e8f0;
+  border-bottom-color: #1e293b;
 }
 
 .main-content.dark :deep(.el-empty__description p) {
-  color: #aaa;
+  color: #94a3b8;
 }
 
-.main-content.dark :deep(.el-empty__image img) {
+.main-content.dark :deep(.el-empty__image img),
+.main-content.dark :deep(.el-empty__image svg) {
   opacity: 0.8;
   filter: brightness(0.7);
 }
 
+/* 嵌入模式：融入父容器 */
 .practice-container[data-embedded="true"] .main-content {
   width: 100%;
   max-width: 100%;
   padding: 0;
 }
 
-.practice-container[data-embedded="true"] .el-card {
+.practice-container[data-embedded="true"] :deep(.el-card) {
   width: 100%;
   background: transparent;
   border: none;
@@ -736,91 +798,129 @@ onMounted(async () => {
 }
 
 .practice-container[data-embedded="true"] :deep(.el-card__header) {
-  padding-right: 0;
-  padding-left: 0;
+  padding: 0 0 16px;
+  border-bottom: none;
 }
 
 .practice-container[data-embedded="true"] :deep(.el-card__body) {
-  padding-right: 0;
-  padding-left: 0;
+  padding: 0;
 }
 
+/* ============== 卡片头部 ============== */
 .card-header {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
-/* 标题样式 */
 .header-title {
   display: flex;
   align-items: center;
   gap: 12px;
   margin: 0 0 20px;
-  font-size: 24px;
+  padding: 4px 2px;
+  font-size: 22px;
   font-weight: 700;
+  line-height: 1.4;
   color: #1a1a1a;
+  letter-spacing: 0.3px;
 }
 
-.title-icon {
-  font-size: 28px;
+.main-content.dark .header-title {
+  color: #f1f5f9;
 }
 
 .count-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 28px;
-  padding: 0 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgb(102 126 234 / 30%);
+  min-width: 36px;
+  height: 26px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #dce2f7, #97b4f7);
+  border-radius: 13px;
+  box-shadow: 0 2px 8px rgb(151 180 247 / 30%);
 }
 
-/* 筛选区域 */
+.main-content.dark .count-badge {
+  color: #f1f5f9;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  box-shadow: 0 2px 8px rgb(56 189 248 / 30%);
+}
+
+/* 列表统计条 */
+.list-stats {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 20px 0 12px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #5a6b8a;
+  background: linear-gradient(135deg, rgb(220 226 247 / 35%), transparent);
+  border-left: 3px solid #97b4f7;
+  border-radius: 6px;
+}
+
+.main-content.dark .list-stats {
+  color: #94a3b8;
+  background: linear-gradient(135deg, rgb(56 189 248 / 8%), transparent);
+  border-left-color: #38bdf8;
+}
+
+.list-stats .stats-label {
+  font-weight: 500;
+}
+
+.list-stats .stats-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: #5a6cd1;
+}
+
+.main-content.dark .list-stats .stats-count {
+  color: #38bdf8;
+}
+
+/* ============== 筛选区 ============== */
 .filters-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 20px;
-  background: linear-gradient(135deg, #f8f9ff, #fff);
-  border: 1px solid #e8eaf6;
+  background: linear-gradient(135deg, rgb(220 226 247 / 25%), transparent);
+  border: 1px solid rgb(220 226 247 / 60%);
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgb(0 0 0 / 4%);
 }
 
 .filters-section.dark {
-  background: linear-gradient(135deg, #1a1f2e, #252b3b);
-  border-color: #2d3548;
-  box-shadow: 0 2px 12px rgb(0 0 0 / 20%);
+  background: linear-gradient(135deg, rgb(56 189 248 / 6%), transparent);
+  border-color: #1e293b;
 }
 
-/* 筛选行 */
 .filter-row {
   display: flex;
-  align-items: center;
-  gap: 16px;
   flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
 }
 
 .primary-filters {
   padding-bottom: 16px;
-  border-bottom: 1px solid #e8eaf6;
+  border-bottom: 1px solid rgb(220 226 247 / 60%);
 }
 
 .filters-section.dark .primary-filters {
-  border-bottom-color: #2d3548;
+  border-bottom-color: rgb(56 189 248 / 12%);
 }
 
 .batch-operations {
   justify-content: space-between;
 }
 
-/* 筛选组 */
 .filter-group {
   display: flex;
   flex-direction: column;
@@ -847,16 +947,14 @@ onMounted(async () => {
   width: 140px;
 }
 
-/* 下拉框圆角设计 */
-.filter-select :deep(.el-input__wrapper) {
+.filter-select :deep(.el-input__wrapper),
+.filter-select :deep(.el-input__inner),
+.filter-date :deep(.el-input__wrapper),
+.filter-date :deep(.el-input__inner),
+.filter-date :deep(.el-range-input) {
   border-radius: 12px !important;
 }
 
-.filter-select :deep(.el-input__inner) {
-  border-radius: 12px !important;
-}
-
-/* 下拉菜单面板圆角设计 */
 :deep(.el-select-dropdown) {
   border-radius: 12px !important;
 }
@@ -865,29 +963,11 @@ onMounted(async () => {
   width: 100%;
 }
 
-/* 日期选择器圆角设计 */
-.filter-date :deep(.el-input__wrapper) {
-  border-radius: 12px !important;
-}
-
-.filter-date :deep(.el-input__inner) {
-  border-radius: 12px !important;
-}
-
-.filter-date :deep(.el-range-input) {
-  border-radius: 12px !important;
-}
-
-/* 并发数输入框圆角设计 */
-.concurrency-input :deep(.el-input__wrapper) {
-  border-radius: 10px !important;
-}
-
+.concurrency-input :deep(.el-input__wrapper),
 .concurrency-input :deep(.el-input__inner) {
   border-radius: 10px !important;
 }
 
-/* 筛选操作按钮 */
 .filter-actions {
   display: flex;
   gap: 12px;
@@ -901,53 +981,387 @@ onMounted(async () => {
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #dce2f7, #97b4f7);
   border: none;
+  box-shadow: 0 4px 12px rgb(151 180 247 / 30%);
 }
 
 .primary-btn:hover {
-  background: linear-gradient(135deg, #5568d3, #6a3f8f);
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #c9d2f3, #7f9ff5);
+  box-shadow: 0 6px 16px rgb(151 180 247 / 40%);
+}
+
+.filters-section.dark .primary-btn {
+  color: #f1f5f9;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  box-shadow: 0 4px 12px rgb(56 189 248 / 30%);
+}
+
+.filters-section.dark .primary-btn:hover {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
 }
 
 .analyze-btn {
-  background: linear-gradient(135deg, #11998e, #38ef7d);
+  color: #fff;
+  background: linear-gradient(135deg, #5eead4, #14b8a6);
   border: none;
+  box-shadow: 0 4px 12px rgb(20 184 166 / 30%);
 }
 
 .analyze-btn:hover {
-  background: linear-gradient(135deg, #0e8577, #2dd46a);
+  background: linear-gradient(135deg, #2dd4bf, #0d9488);
+  box-shadow: 0 6px 16px rgb(20 184 166 / 40%);
 }
 
-/* 批量操作区域 */
+.filters-section.dark .analyze-btn {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+}
+
 .batch-left,
 .batch-right {
   display: flex;
-  align-items: center;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
 }
 
 .concurrency-control {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
 }
 
 .concurrency-input {
   width: 120px;
 }
 
-/* 响应式设计 */
+/* ============== 错题列表（与课程详情卡片风格一致） ============== */
+.wrong-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wrong-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  cursor: pointer;
+  background: linear-gradient(145deg, #fff, #f8faff);
+  border: 1px solid rgb(220 226 247 / 60%);
+  border-radius: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wrong-item:hover {
+  border-color: #97b4f7;
+  box-shadow: 0 8px 24px rgb(151 180 247 / 18%);
+  transform: translateY(-2px);
+}
+
+.wrong-item.dark {
+  background: linear-gradient(145deg, #111b2d, #0f172a);
+  border-color: #1e293b;
+}
+
+.wrong-item.dark:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 8px 24px rgb(56 189 248 / 18%);
+}
+
+/* 多选 */
+.select-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 图标徽章 */
+.wrong-icon {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #fef3f2 0%, #fee4e2 100%);
+  border: 1px solid rgb(252 165 165 / 50%);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 80%),
+    0 2px 6px rgb(239 68 68 / 12%);
+  transition: all 0.3s ease;
+}
+
+.wrong-icon::after {
+  position: absolute;
+  top: -40%;
+  left: -40%;
+  width: 80%;
+  height: 80%;
+  pointer-events: none;
+  content: "";
+  background: radial-gradient(
+    circle,
+    rgb(255 255 255 / 60%) 0%,
+    rgb(255 255 255 / 0%) 70%
+  );
+}
+
+.wrong-item:hover .wrong-icon {
+  transform: scale(1.05);
+}
+
+.wrong-icon-text {
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #dc2626;
+  letter-spacing: 0;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 60%);
+}
+
+.wrong-item.dark .wrong-icon {
+  background: linear-gradient(135deg, #3b1818 0%, #4a1d1d 100%);
+  border-color: rgb(239 68 68 / 40%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 10%),
+    0 2px 6px rgb(0 0 0 / 30%);
+}
+
+.wrong-item.dark .wrong-icon-text {
+  color: #fca5a5;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 40%);
+}
+
+/* 主内容 */
+.wrong-main {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.w-title {
+  display: -webkit-box;
+  margin-bottom: 10px;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #1a1a1a;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.wrong-item.dark .w-title {
+  color: #f1f5f9;
+}
+
+.w-title :deep(p) {
+  margin: 0;
+}
+
+.w-title :deep(img) {
+  max-height: 24px;
+  vertical-align: middle;
+}
+
+.w-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.source-tag {
+  color: #5a6b8a;
+  background: rgb(220 226 247 / 60%);
+}
+
+.wrong-item.dark .source-tag {
+  color: #94a3b8;
+  background: rgb(56 189 248 / 12%);
+}
+
+.count-tag {
+  color: #c2410c;
+  background: rgb(254 215 170 / 70%);
+}
+
+.wrong-item.dark .count-tag {
+  color: #fdba74;
+  background: rgb(234 88 12 / 18%);
+}
+
+.analyzed-tag {
+  color: #0d9488;
+  background: rgb(94 234 212 / 50%);
+}
+
+.wrong-item.dark .analyzed-tag {
+  color: #5eead4;
+  background: rgb(20 184 166 / 18%);
+}
+
+/* 右侧底部 */
+.wrong-footer {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.wrong-footer .time {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.wrong-item.dark .wrong-footer .time {
+  color: #64748b;
+}
+
+.view-btn {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #dce2f7, #97b4f7);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgb(151 180 247 / 25%);
+  transition: all 0.3s ease;
+}
+
+.view-btn:hover {
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #c9d2f3, #7f9ff5);
+  box-shadow: 0 4px 12px rgb(151 180 247 / 35%);
+  transform: translateY(-1px);
+}
+
+.wrong-item.dark .view-btn {
+  color: #f1f5f9;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  box-shadow: 0 2px 8px rgb(56 189 248 / 25%);
+}
+
+.wrong-item.dark .view-btn:hover {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+}
+
+/* 分页 */
+.pager {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+:deep(.el-pagination.is-background .el-pager li) {
+  border-radius: 8px;
+}
+
+:deep(.el-pagination.is-background .el-pager li.is-active) {
+  background: linear-gradient(135deg, #dce2f7, #97b4f7) !important;
+  color: #1a1a1a !important;
+}
+
+.main-content.dark :deep(.el-pagination.is-background .el-pager li.is-active) {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9) !important;
+  color: #f1f5f9 !important;
+}
+
+/* ============== 批量分析遮罩 ============== */
+.batch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(15 23 42 / 55%);
+  backdrop-filter: blur(4px);
+}
+
+.overlay-content {
+  padding: 32px 40px;
+  text-align: center;
+  background: linear-gradient(145deg, #fff, #f8faff);
+  border: 1px solid rgb(220 226 247 / 60%);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 25%);
+}
+
+.overlay-content.dark {
+  color: #f1f5f9;
+  background: linear-gradient(145deg, #111b2d, #0f172a);
+  border-color: #1e293b;
+}
+
+.overlay-content h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.overlay-content .stats {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #5a6b8a;
+}
+
+.overlay-content.dark .stats {
+  color: #94a3b8;
+}
+
+/* 动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.analyzed-tag.new-analyzed {
+  position: relative;
+  animation: pop-in 1.1s ease;
+}
+
+/* ============== 响应式 ============== */
 @media (max-width: 1024px) {
   .filter-row {
     flex-direction: column;
@@ -987,142 +1401,34 @@ onMounted(async () => {
   }
 
   .header-title {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .action-btn {
     padding: 8px 16px;
     font-size: 13px;
   }
-}
 
-.wrong-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+  .wrong-item {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
 
-.wrong-item {
-  padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
-}
+  .wrong-icon {
+    width: 44px;
+    height: 44px;
+  }
 
-.wrong-item.dark {
-  background: #333;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
-}
+  .wrong-icon-text {
+    font-size: 18px;
+  }
 
-.w-title {
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.wrong-item.dark .w-title {
-  color: #e0e0e0;
-}
-
-.w-meta {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  font-size: 13px;
-  color: #666;
-}
-
-.wrong-item.dark .w-meta {
-  color: #aaa;
-}
-
-.w-meta .tag {
-  padding: 2px 6px;
-  background: #f5f7ff;
-  border-radius: 4px;
-}
-
-.wrong-item.dark .w-meta .tag {
-  color: #ccc;
-  background: #444;
-}
-
-.w-meta .right {
-  color: #2f9e44;
-  background: #f0fff4;
-}
-
-.w-meta .time {
-  margin-left: auto;
-  color: #999;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.pager {
-  display: flex;
-  justify-content: center;
-  margin-top: 10px;
-}
-
-/* Overlay */
-.batch-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(0 0 0 / 45%);
-}
-
-.overlay-content {
-  padding: 30px 40px;
-  text-align: center;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 15%);
-}
-
-.overlay-content.dark {
-  color: #e0e0e0;
-  background: #2a2a2a;
-}
-
-.overlay-content h3 {
-  margin: 0 0 10px;
-}
-
-.overlay-content .stats {
-  display: flex;
-  gap: 14px;
-  justify-content: center;
-  margin: 0 0 16px;
-  font-size: 13px;
-  color: #555;
-}
-
-.overlay-content.dark .stats {
-  color: #aaa;
-}
-
-/* Fade + new analyzed animation */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.analyzed.new-analyzed {
-  position: relative;
-  animation: pop-in 1.1s ease;
+  .wrong-footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 </style>
 
