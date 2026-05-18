@@ -1638,10 +1638,11 @@ $radius-lg: 16px;
       flex-shrink: 0;
       box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
 
-      :deep(svg) {
+      :deep(> svg) {
         width: 28px;
         height: 28px;
         color: #fff;
+        display: block;
       }
     }
 

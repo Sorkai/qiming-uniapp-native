@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'assessment-management flex h-[calc(100vh-120px)] overflow-hidden m-4 gap-4',
+      'assessment-management flex h-[calc(100vh-160px)] overflow-hidden m-4 gap-4',
       { 'is-mobile-layout': isMobileLayout }
     ]"
   >

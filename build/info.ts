@@ -13,7 +13,7 @@ const welcomeMessage = gradient(["cyan", "magenta"]).multiline(
 
 Intelledu.com 
 
-Copyright (c) 2024 Est. 吉林省云创迅捷软件开发有限公司 All Rights Reserved. `
+Copyright (c) 2026 Est. 吉林省云创迅捷软件开发有限公司 All Rights Reserved. `
 );
 
 const boxenOptions: BoxenOptions = {

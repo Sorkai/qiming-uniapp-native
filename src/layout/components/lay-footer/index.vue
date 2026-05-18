@@ -16,7 +16,7 @@ const TITLE = getConfig("Title");
         <span class="domain">Intelledu.com</span>
       </div>
       <div class="line2">
-        Copyright (c) 2024 Est. 吉林省云创迅捷软件开发有限公司 All Rights
+        Copyright (c) 2026 Est. 吉林省云创迅捷软件开发有限公司 All Rights
         Reserved
       </div>
     </div>

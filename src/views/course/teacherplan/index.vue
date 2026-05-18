@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'teacher-plan-container h-[calc(100vh-var(--tags-view-height)-10px)] m-4 flex gap-5 overflow-hidden',
+      'teacher-plan-container h-[calc(100vh-var(--tags-view-height)-80px)] m-4 flex gap-5 overflow-hidden',
       { 'is-mobile-layout': isMobileLayout }
     ]"
   >

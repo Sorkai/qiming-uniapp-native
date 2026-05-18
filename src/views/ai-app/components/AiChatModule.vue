@@ -13,12 +13,10 @@
         <el-button-group>
           <el-button
             :icon="RefreshRight"
-            size="small"
             class="!rounded-lg hover:rotate-180 transition-all duration-500 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.3)]"
           />
           <el-button
             :icon="More"
-            size="small"
             class="!rounded-lg hover:scale-110 transition-all duration-300 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.3)]"
           />
         </el-button-group>
@@ -53,12 +51,12 @@
               :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
             >
               <el-avatar
-                :size="24"
+                :size="28"
                 :icon="msg.type === 'user' ? User : Cpu"
                 class="shadow-sm hover:scale-110 transition-transform duration-300"
               />
               <span
-                class="text-[10px] text-gray-400 font-bold uppercase tracking-widest"
+                class="text-xs text-gray-400 font-bold uppercase tracking-widest"
                 >{{ msg.role }}</span
               >
             </div>
@@ -76,10 +74,10 @@
               <div
                 v-if="msg.type === 'system'"
                 class="absolute top-0 left-[-100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/50 to-transparent group-hover:left-[200%] transition-all duration-1000 ease-in-out opacity-0 group-hover:opacity-100"
-              ></div>
+              />
 
               <div
-                class="text-[14px] leading-relaxed whitespace-pre-wrap relative z-10"
+                class="text-base leading-relaxed whitespace-pre-wrap relative z-10"
               >
                 {{ msg.content }}
               </div>
@@ -96,6 +94,7 @@
                   :key="res.title"
                   :style="{ transitionDelay: `${index * 100}ms` }"
                   class="flex flex-col gap-2 p-3 rounded-xl bg-gray-50/80 border border-gray-100 hover:border-primary/50 hover:bg-primary/5 cursor-pointer shadow-sm hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 group"
+                  @click="emit('preview', res)"
                 >
                   <div
                     v-if="res.type === 'video'"
@@ -103,15 +102,52 @@
                   >
                     <div
                       class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300"
-                    ></div>
+                    />
                     <el-icon
                       class="text-white text-3xl opacity-80 group-hover:scale-125 group-hover:text-primary transition-all duration-300 z-10"
                       ><VideoPlay
                     /></el-icon>
                     <div
-                      class="absolute bottom-1 right-1 text-[9px] bg-black/60 text-white px-1.5 rounded z-10 font-mono"
+                      class="absolute bottom-1 right-1 text-xs bg-black/60 text-white px-1.5 rounded z-10 font-mono"
                     >
                       03:45
+                    </div>
+                  </div>
+
+                  <!-- 动画预览：栈操作可视化缩略图 -->
+                  <div
+                    v-else-if="res.type === 'animation'"
+                    class="h-24 w-full rounded-lg relative overflow-hidden flex items-end justify-center gap-1 px-3 py-2 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 group-hover:shadow-inner"
+                  >
+                    <div
+                      class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300"
+                    />
+                    <div class="flex flex-col-reverse gap-1 z-10">
+                      <div
+                        class="w-12 h-4 rounded bg-white/90 text-[10px] font-bold text-indigo-600 flex items-center justify-center shadow"
+                      >
+                        A
+                      </div>
+                      <div
+                        class="w-12 h-4 rounded bg-white/80 text-[10px] font-bold text-purple-600 flex items-center justify-center shadow"
+                      >
+                        B
+                      </div>
+                      <div
+                        class="w-12 h-4 rounded bg-white/70 text-[10px] font-bold text-pink-600 flex items-center justify-center shadow animate-bounce"
+                      >
+                        C
+                      </div>
+                    </div>
+                    <div
+                      class="absolute top-1 left-2 text-[10px] font-bold text-white/90 z-10"
+                    >
+                      Stack · LIFO
+                    </div>
+                    <div
+                      class="absolute bottom-1 right-1 text-[10px] bg-black/40 text-white px-1.5 rounded z-10"
+                    >
+                      点击预览
                     </div>
                   </div>
 
@@ -128,12 +164,12 @@
                     </el-icon>
                     <div class="flex-1 min-w-0">
                       <p
-                        class="text-[13px] font-bold text-gray-800 truncate group-hover:text-primary transition-colors"
+                        class="text-sm font-bold text-gray-800 truncate group-hover:text-primary transition-colors"
                       >
                         {{ res.title }}
                       </p>
-                      <p class="text-[10px] text-gray-400 truncate">
-                        {{ res.desc || "AI 协同智能体生成" }}
+                      <p class="text-xs text-gray-400 truncate">
+                        {{ res.desc || "AI 助教生成" }}
                       </p>
                     </div>
                   </div>
@@ -151,7 +187,7 @@
         <!-- 发光的呼吸框 -->
         <div
           class="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-[24px] blur opacity-0 group-focus-within:opacity-100 group-focus-within:animate-pulse transition duration-500"
-        ></div>
+        />
         <div
           class="relative bg-white border border-gray-200 rounded-[24px] shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300 overflow-hidden"
         >
@@ -165,7 +201,7 @@
               v-model="input"
               type="textarea"
               :autosize="{ minRows: 1, maxRows: 5 }"
-              placeholder="与多智能体互动，描述你的学习需求..."
+              placeholder="随时提问，描述你的学习需求..."
               class="ai-input-base"
               @keydown.enter.prevent="handleSend"
             />
@@ -193,11 +229,11 @@
                 @command="c => emit('switch-course', c)"
               >
                 <span
-                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium bg-primary/10 text-primary cursor-pointer hover:bg-primary/15 transition-colors"
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium bg-primary/10 text-primary cursor-pointer hover:bg-primary/15 transition-colors"
                 >
                   <el-icon class="mr-1 text-[13px]"><FolderOpened /></el-icon>
                   {{ activeCourse }}
-                  <el-icon class="ml-1 text-[11px]"><ArrowDown /></el-icon>
+                  <el-icon class="ml-1 text-xs"><ArrowDown /></el-icon>
                 </span>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -217,11 +253,11 @@
                 @command="m => emit('update:mode', m)"
               >
                 <span
-                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
                 >
                   <el-icon class="mr-1 text-[13px]"><Monitor /></el-icon>
                   {{ mode }}
-                  <el-icon class="ml-1 text-[11px]"><ArrowDown /></el-icon>
+                  <el-icon class="ml-1 text-xs"><ArrowDown /></el-icon>
                 </span>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -240,11 +276,11 @@
                 @command="a => emit('update:selectedAgent', a)"
               >
                 <span
-                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
                 >
                   <el-icon class="mr-1 text-[13px]"><Cpu /></el-icon>
                   {{ selectedAgent }}
-                  <el-icon class="ml-1 text-[11px]"><ArrowDown /></el-icon>
+                  <el-icon class="ml-1 text-xs"><ArrowDown /></el-icon>
                 </span>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -269,11 +305,11 @@
                 @command="t => emit('update:thinkingMode', t)"
               >
                 <span
-                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
                 >
                   <el-icon class="mr-1 text-[13px]"><MagicStick /></el-icon>
                   {{ thinkingMode }}
-                  <el-icon class="ml-1 text-[11px]"><ArrowDown /></el-icon>
+                  <el-icon class="ml-1 text-xs"><ArrowDown /></el-icon>
                 </span>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -354,6 +390,7 @@ const emit = defineEmits([
   "send",
   "switch-course",
   "exit",
+  "preview",
   "update:mode",
   "update:selectedAgent",
   "update:selectedModel",

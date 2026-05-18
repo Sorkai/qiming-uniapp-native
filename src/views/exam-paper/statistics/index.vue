@@ -663,9 +663,10 @@ $radius-xl: 20px;
     flex-shrink: 0;
     box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
 
-    :deep(svg) {
-      width: 28px;
-      height: 28px;
+    svg {
+      width: 28px !important;
+      height: 28px !important;
+      display: block;
     }
   }
 

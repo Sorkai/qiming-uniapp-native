@@ -346,7 +346,7 @@ onMounted(() => {
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
-          <IconifyIconOnline icon="ri:file-list-3-line" />
+          <el-icon><Document /></el-icon>
         </div>
         <div class="header-info">
           <h1 class="page-title">试卷模板</h1>
@@ -735,9 +735,14 @@ $primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
     box-shadow: 0 6px 16px rgb(74 127 200 / 30%);
     color: #fff;
 
-    :deep(svg) {
+    :deep(.el-icon) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       width: 28px;
       height: 28px;
+      font-size: 28px;
+      line-height: 1;
       color: #fff;
     }
   }

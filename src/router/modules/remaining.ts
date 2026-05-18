@@ -72,7 +72,7 @@ export default [
   {
     path: "/account/ai-app",
     name: "AccountAiApp",
-    component: () => import("@/views/ai-app/index.vue"),
+    component: () => import("@/views/account/ai-app/index.vue"),
     meta: {
       title: "AI App",
       showLink: false,
