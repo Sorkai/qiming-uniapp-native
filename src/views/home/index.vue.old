@@ -1,0 +1,2159 @@
+<template>
+  <div class="home-container">
+    <header class="header" :class="{ 'header-scrolled': isScrolled }">
+      <div class="header-content">
+        <button class="brand" type="button" @click="router.push('/home')">
+          <img :src="logo" alt="启明智教" />
+          <span>启明智教</span>
+        </button>
+
+        <nav class="nav-links" aria-label="首页导航">
+          <a href="#showcase">智能工作台</a>
+          <a href="#features">平台特色</a>
+          <a href="#services">核心服务</a>
+          <a href="#tech">技术实力</a>
+        </nav>
+
+        <div class="header-right">
+          <template v-if="userInfo">
+            <el-dropdown trigger="hover" @command="handleCommand">
+              <div class="user-info">
+                <el-avatar :size="32" :src="formatAvatar(userInfo.avatar)" />
+                <span class="nickname">{{
+                  userInfo.nickname || userInfo.username
+                }}</span>
+                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="hasAdminAccess" command="space">
+                    <el-icon><User /></el-icon>
+                    进入空间
+                  </el-dropdown-item>
+                  <el-dropdown-item command="account">
+                    <el-icon><Setting /></el-icon>
+                    账号管理
+                  </el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>
+                    <el-icon><SwitchButton /></el-icon>
+                    退出登录
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+          <el-button
+            v-else
+            type="primary"
+            class="login-btn"
+            @click="handleEntry"
+          >
+            登录
+          </el-button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-section">
+        <div class="hero-path path-one" />
+        <div class="hero-path path-two" />
+        <div class="floating-badge badge-course">
+          <IconBook />
+        </div>
+        <div class="floating-badge badge-ai">
+          <IconRobot />
+        </div>
+        <div class="floating-badge badge-chart">
+          <IconChart />
+        </div>
+
+        <div class="hero-copy">
+          <span class="eyebrow">AI EDUCATION WORKSPACE</span>
+          <h1>让教学、学习和反馈在一个智能空间里流动。</h1>
+          <p>
+            启明智教把课程、试卷、作业、错题诊断、AI 助教和动态课件连接起来，
+            帮教师减少重复劳动，也让学生知道下一步该学什么。
+          </p>
+          <div class="hero-actions">
+            <el-button
+              type="primary"
+              size="large"
+              class="hero-btn primary"
+              @click="handleEntry"
+            >
+              立即体验
+            </el-button>
+            <el-button
+              size="large"
+              class="hero-btn secondary"
+              @click="scrollToSection('showcase')"
+            >
+              查看能力
+            </el-button>
+          </div>
+          <div class="hero-metrics" aria-label="平台指标">
+            <div v-for="item in heroMetrics" :key="item.label">
+              <strong>{{ item.value }}</strong>
+              <span>{{ item.label }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="showcase" class="hero-product" aria-label="智能工作台预览">
+          <div class="browser-shell">
+            <div class="browser-chrome">
+              <span />
+              <span />
+              <span />
+              <div class="address">qiming.edu / workspace</div>
+            </div>
+
+            <div class="workspace-panel">
+              <aside class="workspace-sidebar">
+                <div class="sidebar-title">Qiming HQ</div>
+                <button
+                  v-for="(slide, index) in showcaseSlides"
+                  :key="slide.key"
+                  type="button"
+                  class="side-item"
+                  :class="{ active: activeShowcaseIndex === index }"
+                  @click="setShowcase(index)"
+                >
+                  <component :is="slide.icon" />
+                  <span>{{ slide.shortTitle }}</span>
+                </button>
+              </aside>
+
+              <section class="workspace-main">
+                <Transition name="showcase" mode="out-in">
+                  <article
+                    :key="activeShowcase.key"
+                    class="showcase-card"
+                    :class="`theme-${activeShowcase.key}`"
+                  >
+                    <div class="showcase-head">
+                      <div>
+                        <span class="showcase-label">{{
+                          activeShowcase.label
+                        }}</span>
+                        <h2>{{ activeShowcase.title }}</h2>
+                      </div>
+                      <div class="status-pill">
+                        <span class="pulse" />
+                        实时运行
+                      </div>
+                    </div>
+
+                    <div class="showcase-body">
+                      <div class="task-column">
+                        <div
+                          v-for="task in activeShowcase.tasks"
+                          :key="task"
+                          class="task-card"
+                        >
+                          {{ task }}
+                        </div>
+                      </div>
+
+                      <div class="insight-panel">
+                        <div class="insight-score">
+                          <span>{{ activeShowcase.score }}</span>
+                          <small>{{ activeShowcase.scoreLabel }}</small>
+                        </div>
+                        <div class="insight-bars">
+                          <i
+                            v-for="bar in activeShowcase.bars"
+                            :key="bar"
+                            :style="{ height: `${bar}%` }"
+                          />
+                        </div>
+                        <p>{{ activeShowcase.summary }}</p>
+                      </div>
+                    </div>
+
+                    <div class="agent-strip">
+                      <span
+                        v-for="agent in activeShowcase.agents"
+                        :key="agent"
+                      >
+                        {{ agent }}
+                      </span>
+                    </div>
+                  </article>
+                </Transition>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="proof-strip">
+          <span>课程学习</span>
+          <span>AI 助教</span>
+          <span>错题诊断</span>
+          <span>试卷中心</span>
+          <span>AI 动画课件</span>
+          <span>虚拟校园</span>
+        </div>
+      </section>
+
+      <section class="stats-section">
+        <article v-for="stat in statsData" :key="stat.label" class="stat-card">
+          <div class="stat-icon"><component :is="stat.icon" /></div>
+          <strong>{{ stat.number }}</strong>
+          <span>{{ stat.label }}</span>
+        </article>
+      </section>
+
+      <section id="features" class="section feature-section">
+        <div class="section-heading">
+          <span>FEATURES</span>
+          <h2>像 Notion 一样轻，但面向教育场景更具体。</h2>
+          <p>
+            首页不再只讲愿景，而是直接把平台里真正能用的模块做成产品化展示。
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <article
+            v-for="feature in features"
+            :key="feature.title"
+            class="feature-card"
+          >
+            <img :src="feature.image" :alt="feature.title" />
+            <div>
+              <component :is="feature.icon" />
+              <h3>{{ feature.title }}</h3>
+              <p>{{ feature.description }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="services" class="section services-section">
+        <div class="section-heading compact">
+          <span>SERVICES</span>
+          <h2>核心服务围绕一条教育闭环展开。</h2>
+        </div>
+        <div class="services-grid">
+          <article
+            v-for="service in services"
+            :key="service.title"
+            class="service-card"
+          >
+            <div class="service-icon"><component :is="service.icon" /></div>
+            <h3>{{ service.title }}</h3>
+            <p>{{ service.description }}</p>
+            <ul>
+              <li v-for="item in service.features" :key="item">
+                <el-icon><Check /></el-icon>
+                {{ item }}
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section workflow-section">
+        <div class="section-heading compact">
+          <span>WORKFLOW</span>
+          <h2>从备课到评测，AI 把散落的环节接起来。</h2>
+        </div>
+        <div class="workflow-board">
+          <article
+            v-for="(item, index) in workflowItems"
+            :key="item.title"
+            class="workflow-card"
+          >
+            <span>{{ String(index + 1).padStart(2, "0") }}</span>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.description }}</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="tech" class="section tech-section">
+        <div class="section-heading">
+          <span>TECH STACK</span>
+          <h2>技术能力不是摆设，而是落到教学产品里。</h2>
+          <p>
+            Agentic AI、MCP 插件生态、混合检索、知识追踪和多模态课件生成，
+            都对应具体的教学场景。
+          </p>
+        </div>
+        <div class="tech-grid">
+          <article v-for="tech in techStack" :key="tech.name" class="tech-card">
+            <component :is="tech.icon" />
+            <strong>{{ tech.name }}</strong>
+            <span>{{ tech.version }}</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="section innovation-section">
+        <div class="innovation-grid">
+          <article
+            v-for="item in innovationHighlights"
+            :key="item.title"
+            class="innovation-card"
+          >
+            <span>{{ item.label }}</span>
+            <component :is="item.icon" />
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.description }}</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section testimonials-section">
+        <div class="section-heading compact">
+          <span>VOICE</span>
+          <h2>给不同角色都留出清晰入口。</h2>
+        </div>
+        <div class="testimonials-grid">
+          <article
+            v-for="item in testimonials"
+            :key="item.name"
+            class="testimonial-card"
+            :style="{ '--accent': item.accent }"
+          >
+            <img :src="item.background" :alt="item.name" />
+            <div class="testimonial-content">
+              <span>{{ item.tag }}</span>
+              <p>{{ item.content }}</p>
+              <strong>{{ item.name }}</strong>
+              <small>{{ item.title }}</small>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="cta-section">
+        <div class="cta-card">
+          <span>READY</span>
+          <h2>把智能教育工作台打开看看。</h2>
+          <p>用真实课程、试卷、错题和 AI 助教能力，呈现一个可落地的平台。</p>
+          <div class="cta-actions">
+            <el-button type="primary" size="large" @click="handleEntry">
+              立即试用
+            </el-button>
+            <el-button size="large" plain @click="scrollToSection('showcase')">
+              回到展示
+            </el-button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <LoginDialog
+      v-model:visible="showLoginDialog"
+      @login-success="handleLoginSuccess"
+    />
+
+    <footer class="footer-section">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <img :src="logo" alt="启明智教" />
+          <div>
+            <strong>启明智教 Intelledu.com</strong>
+            <p>
+              长春工业大学计算机科学与工程学院 ·
+              吉林省云创迅捷软件开发有限公司
+            </p>
+          </div>
+        </div>
+        <p>
+          吉ICP备2025035820号-1 · 吉公网安备22017302000511号 · Copyright
+          (c) 2024 Est. All Rights Reserved
+        </p>
+      </div>
+    </footer>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, markRaw, onMounted, onUnmounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import {
+  ArrowDown,
+  Check,
+  Setting,
+  SwitchButton,
+  User
+} from "@element-plus/icons-vue";
+import { storageLocal } from "@pureadmin/utils";
+import { ElMessage } from "element-plus";
+import { useUserStoreHook } from "@/store/modules/user";
+import { initRouter } from "@/router/utils";
+import { formatAvatar } from "@/utils/avatar";
+import { getToken, removeToken, userKey } from "@/utils/auth";
+import type { DataInfo } from "@/utils/auth";
+import LoginDialog from "@/components/LoginDialog.vue";
+
+import logo from "@/assets/logo.png";
+import card1 from "@/assets/home/card1.jpg";
+import card2 from "@/assets/home/card2.jpg";
+import card3 from "@/assets/home/card3.jpg";
+
+import IconBook from "@/assets/home-icons/book.svg?component";
+import IconBrain from "@/assets/home-icons/brain.svg?component";
+import IconChart from "@/assets/home-icons/chart.svg?component";
+import IconCrystal from "@/assets/home-icons/crystal.svg?component";
+import IconEdit from "@/assets/home-icons/edit.svg?component";
+import IconGraduation from "@/assets/home-icons/graduation.svg?component";
+import IconMessage from "@/assets/home-icons/message.svg?component";
+import IconRobot from "@/assets/home-icons/robot.svg?component";
+import IconRocket from "@/assets/home-icons/rocket.svg?component";
+import IconShieldCheck from "@/assets/newfirstpageicons/shield-check-svgrepo-com.svg?component";
+import IconStudent from "@/assets/home-icons/student.svg?component";
+import IconTarget from "@/assets/home-icons/target.svg?component";
+import IconTeacher from "@/assets/home-icons/teacher.svg?component";
+import IconTrending from "@/assets/home-icons/trending.svg?component";
+import IconTrophy from "@/assets/home-icons/trophy.svg?component";
+import IconZap from "@/assets/home-icons/zap.svg?component";
+import IconDeviceMultiple from "@/assets/newfirstpageicons/device-multiple-solid-svgrepo-com.svg?component";
+import IconFrame from "@/assets/newfirstpageicons/frame-svgrepo-com.svg?component";
+import IconKnowledgeGraph from "@/assets/newfirstpageicons/knowledge-graph-dashboard-svgrepo-com.svg?component";
+import IconMachineLearning from "@/assets/newfirstpageicons/machine-learning-03-svgrepo-com.svg?component";
+import IconMindSmartBulb from "@/assets/newfirstpageicons/mind-smart-light-bulb-svgrepo-com.svg?component";
+import IconPlanet from "@/assets/newfirstpageicons/planet-svgrepo-com.svg?component";
+
+const router = useRouter();
+const userStore = useUserStoreHook();
+const isScrolled = ref(false);
+const showLoginDialog = ref(false);
+const activeShowcaseIndex = ref(0);
+let showcaseTimer: number | undefined;
+const rawIcon = (icon: any) => markRaw(icon);
+
+const homepageAssetBaseUrl = `${import.meta.env.BASE_URL}homepage`;
+const testimonialTeacherPhoto = `${homepageAssetBaseUrl}/teacher.png`;
+const testimonialStudentPhoto = `${homepageAssetBaseUrl}/stus.png`;
+const testimonialParentPhoto = `${homepageAssetBaseUrl}/parents.png`;
+
+const userInfo = computed(() => {
+  const info = storageLocal().getItem<DataInfo<number>>(userKey);
+  const avatar = userStore.avatar || info?.avatar;
+  const nickname = userStore.nickname || info?.nickname;
+  const username = userStore.username || info?.username;
+
+  if (!avatar && !nickname && !username) {
+    return null;
+  }
+
+  return {
+    avatar,
+    nickname,
+    username,
+    roleType: info?.roleType
+  };
+});
+
+const hasAdminAccess = computed(() => {
+  if (!userInfo.value) return false;
+  return userInfo.value.roleType === 2 || userInfo.value.roleType === 3;
+});
+
+const heroMetrics = [
+  { value: "7+", label: "教育智能模块" },
+  { value: "24h", label: "AI 助教响应" },
+  { value: "1站式", label: "备教学练评闭环" }
+];
+
+const showcaseSlides = [
+  {
+    key: "course",
+    shortTitle: "课程学习",
+    label: "Course Workspace",
+    title: "把课程资源、章节进度和学习计划放在同一个界面。",
+    summary: "AI 正在根据章节完成度，为学生生成下一组学习任务。",
+    score: "86%",
+    scoreLabel: "平均进度",
+    bars: [36, 64, 48, 78, 56, 88],
+    tasks: [
+      "嵌入式 Linux 开发实践教程",
+      "第 3 章：进程与线程实验",
+      "课件资源已同步到云盘",
+      "AI 生成章节导学笔记"
+    ],
+    agents: ["课程助手", "资源整理", "进度追踪"],
+    icon: rawIcon(IconBook)
+  },
+  {
+    key: "wrong",
+    shortTitle: "错题诊断",
+    label: "Wrong Exercise Agent",
+    title: "错题不只记录答案，而是追踪错误原因和知识点偏差。",
+    summary: "系统识别到概念理解偏差，已生成 3 道同类强化练习。",
+    score: "3题",
+    scoreLabel: "新训练",
+    bars: [70, 42, 86, 54, 76, 60],
+    tasks: [
+      "计算题：运算优先级错误",
+      "关联知识点：表达式求值",
+      "生成同类题与解析",
+      "推送给学生个人中心"
+    ],
+    agents: ["错因分析", "题目生成", "学习建议"],
+    icon: rawIcon(IconTarget)
+  },
+  {
+    key: "exam",
+    shortTitle: "试卷中心",
+    label: "Exam Paper Center",
+    title: "教师组卷、学生答题、阅卷和学情分析串成闭环。",
+    summary: "本周考试完成率提升，阅卷队列还有 12 份待处理。",
+    score: "92",
+    scoreLabel: "平均分",
+    bars: [40, 58, 72, 90, 68, 84],
+    tasks: [
+      "算法期中测验已发布",
+      "12 份主观题待阅卷",
+      "题型难度分布正常",
+      "学情分析报告已生成"
+    ],
+    agents: ["智能组卷", "阅卷管理", "学情报告"],
+    icon: rawIcon(IconEdit)
+  },
+  {
+    key: "animation",
+    shortTitle: "AI 课件",
+    label: "HTML Animation Engine",
+    title: "把抽象知识点转换成可播放、可交互的动态课件。",
+    summary: "课程章节已匹配展示版本，学生端可直接播放动画资源。",
+    score: "HTML5",
+    scoreLabel: "动态课件",
+    bars: [54, 76, 46, 92, 62, 80],
+    tasks: [
+      "章节动画展示版本已生成",
+      "知识点结构映射完成",
+      "多模态资源接入课程",
+      "虚拟校园场景可联动"
+    ],
+    agents: ["动画生成", "资源解析", "场景联动"],
+    icon: rawIcon(IconZap)
+  }
+];
+
+const activeShowcase = computed(() => showcaseSlides[activeShowcaseIndex.value]);
+
+const statsData = [
+  { icon: rawIcon(IconStudent), number: "1,000+", label: "注册学员" },
+  { icon: rawIcon(IconTeacher), number: "50+", label: "优秀教师" },
+  { icon: rawIcon(IconBook), number: "100+", label: "上线精品课程" },
+  { icon: rawIcon(IconTrophy), number: "98%+", label: "学员满意度" }
+];
+
+const features = [
+  {
+    icon: rawIcon(IconBrain),
+    title: "智能题库",
+    description: "AI 自动组卷、难度评估和题型分布分析，让练习更贴合目标。",
+    image: card1
+  },
+  {
+    icon: rawIcon(IconMessage),
+    title: "互动课堂",
+    description: "课程学习、答疑讨论、资源云盘和学习轨迹集中到同一空间。",
+    image: card2
+  },
+  {
+    icon: rawIcon(IconChart),
+    title: "学情报告",
+    description: "从课程进度、考试成绩到错题原因，形成持续更新的数据画像。",
+    image: card3
+  }
+];
+
+const services = [
+  {
+    icon: rawIcon(IconBook),
+    title: "精品课程",
+    description: "课程、章节、附件、课时和学习记录统一管理。",
+    features: ["课程分配", "章节资源", "进度追踪", "云盘同步"]
+  },
+  {
+    icon: rawIcon(IconRobot),
+    title: "AI 辅导",
+    description: "围绕课程内容提供问答、错题分析和个性化建议。",
+    features: ["即时答疑", "错因分析", "知识讲解", "学习规划"]
+  },
+  {
+    icon: rawIcon(IconEdit),
+    title: "智能作业",
+    description: "作业、考试、试卷模板和阅卷流程一体化。",
+    features: ["智能组卷", "自动批改", "阅卷详情", "成绩发布"]
+  },
+  {
+    icon: rawIcon(IconGraduation),
+    title: "成长档案",
+    description: "面向学生保留学习路径、成绩趋势和能力图谱。",
+    features: ["学习记录", "能力图谱", "成长报告", "错题回顾"]
+  }
+];
+
+const workflowItems = [
+  {
+    title: "备课",
+    description: "教师从课程章节发起教案、资源、动画课件和题库配置。"
+  },
+  {
+    title: "学习",
+    description: "学生在课程空间里看资源、做练习、提问并获得 AI 提示。"
+  },
+  {
+    title: "评测",
+    description: "试卷中心管理考试、答题、阅卷和成绩发布状态。"
+  },
+  {
+    title: "诊断",
+    description: "错题分析和学情报告持续定位薄弱点，生成下一步计划。"
+  }
+];
+
+const techStack = [
+  { icon: rawIcon(IconMindSmartBulb), name: "多模态 AI", version: "内容理解" },
+  { icon: rawIcon(IconMachineLearning), name: "深度学习", version: "学情建模" },
+  { icon: rawIcon(IconKnowledgeGraph), name: "知识图谱", version: "路径推荐" },
+  { icon: rawIcon(IconFrame), name: "Vue 3", version: "前端框架" },
+  { icon: rawIcon(IconRocket), name: "MCP 生态", version: "工具扩展" },
+  { icon: rawIcon(IconShieldCheck), name: "数据安全", version: "隐私保护" },
+  { icon: rawIcon(IconDeviceMultiple), name: "多端适配", version: "全平台覆盖" },
+  { icon: rawIcon(IconPlanet), name: "边缘计算", version: "低延迟响应" }
+];
+
+const innovationHighlights = [
+  {
+    label: "Agentic AI",
+    title: "从问答到自主任务编排",
+    description:
+      "AI 不只回答问题，还能围绕课程、试卷、错题和资源自动拆解任务。",
+    icon: rawIcon(IconRobot)
+  },
+  {
+    label: "Data Loop",
+    title: "备教学练评全流程数据闭环",
+    description:
+      "课程进度、作业考试、讨论与错题诊断共同沉淀为可分析的学习画像。",
+    icon: rawIcon(IconChart)
+  },
+  {
+    label: "Multimodal",
+    title: "多模态资源与动态课件引擎",
+    description:
+      "把文档、视频、HTML 动画和虚拟校园资源转为更容易理解的教学体验。",
+    icon: rawIcon(IconCrystal)
+  }
+];
+
+const testimonials = [
+  {
+    tag: "学生反馈",
+    content:
+      "错题分析能直接告诉我哪里理解偏了，还会给同类练习，比只看答案有用得多。",
+    name: "小明同学",
+    title: "课程学习者",
+    accent: "#38bdf8",
+    background: testimonialStudentPhoto
+  },
+  {
+    tag: "教师视角",
+    content:
+      "试卷、作业和学情报告集中在一个工作台，备课和课后跟进都更省心。",
+    name: "张老师",
+    title: "课程教师",
+    accent: "#8b5cf6",
+    background: testimonialTeacherPhoto
+  },
+  {
+    tag: "家长评价",
+    content:
+      "孩子的学习进度、成绩趋势和薄弱点都能看清楚，学习计划也更有方向。",
+    name: "李女士",
+    title: "学生家长",
+    accent: "#f59e0b",
+    background: testimonialParentPhoto
+  }
+];
+
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 30;
+};
+
+const setShowcase = (index: number) => {
+  activeShowcaseIndex.value = index;
+};
+
+const startShowcaseTimer = () => {
+  showcaseTimer = window.setInterval(() => {
+    activeShowcaseIndex.value =
+      (activeShowcaseIndex.value + 1) % showcaseSlides.length;
+  }, 4200);
+};
+
+const scrollToSection = (id: string) => {
+  const element = document.getElementById(id);
+  element?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+const handleEntry = () => {
+  const token = getToken();
+  const info = storageLocal().getItem<DataInfo<number>>(userKey);
+  const isLogged = !!(token?.accessToken || token?.refreshToken || info);
+
+  if (isLogged) {
+    const roleType =
+      info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
+
+    if (roleType === 2 || roleType === 3) {
+      router.push("/welcome/index");
+    } else {
+      router.push("/account");
+    }
+  } else {
+    showLoginDialog.value = true;
+  }
+};
+
+const handleLoginSuccess = async () => {
+  await initRouter();
+  const info = storageLocal().getItem<DataInfo<number>>(userKey);
+  const token = getToken();
+  const roleType =
+    info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
+
+  if (Number(roleType) === 2 || Number(roleType) === 3) {
+    router.push("/welcome/index");
+  } else {
+    router.push("/account");
+  }
+};
+
+const handleCommand = (command: string) => {
+  switch (command) {
+    case "space":
+      if (hasAdminAccess.value) {
+        router.push("/welcome/index");
+      } else {
+        ElMessage.warning("您没有权限进入后台管理空间");
+      }
+      break;
+    case "account":
+      router.push("/account");
+      break;
+    case "logout":
+      removeToken();
+      ElMessage.success("退出登录成功");
+      break;
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("scroll", handleScroll);
+  startShowcaseTimer();
+});
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+  if (showcaseTimer) {
+    window.clearInterval(showcaseTimer);
+  }
+});
+</script>
+
+<style lang="scss" scoped>
+@keyframes badge-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-4deg);
+  }
+
+  50% {
+    transform: translate3d(0, -16px, 0) rotate(6deg);
+  }
+}
+
+@keyframes path-drift {
+  0% {
+    transform: translateX(-8%);
+  }
+
+  100% {
+    transform: translateX(8%);
+  }
+}
+
+.home-container {
+  min-height: 100vh;
+  color: #111827;
+  background:
+    linear-gradient(180deg, #f8f6ef 0%, #fffaf0 18%, #101723 18%),
+    #101723;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 40;
+  height: 72px;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    backdrop-filter 0.25s ease;
+
+  &.header-scrolled {
+    background: rgb(248 246 239 / 86%);
+    box-shadow: 0 12px 36px rgb(31 41 55 / 10%);
+    backdrop-filter: blur(18px);
+  }
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1200px;
+  padding: 0 24px;
+  margin: 0 auto;
+}
+
+.brand {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+
+  img {
+    width: 40px;
+    height: 40px;
+    padding: 5px;
+    background: #fff;
+    border: 1px solid rgb(17 24 39 / 8%);
+    border-radius: 10px;
+    box-shadow: 0 8px 22px rgb(17 24 39 / 8%);
+  }
+}
+
+.nav-links {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+
+  a {
+    position: relative;
+    font-size: 14px;
+    font-weight: 650;
+    color: rgb(17 24 39 / 70%);
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &::after {
+      position: absolute;
+      right: 0;
+      bottom: -8px;
+      left: 0;
+      height: 2px;
+      content: "";
+      background: #2f6df6;
+      border-radius: 999px;
+      opacity: 0;
+      transform: scaleX(0.4);
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    &:hover {
+      color: #111827;
+
+      &::after {
+        opacity: 1;
+        transform: scaleX(1);
+      }
+    }
+  }
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.login-btn.el-button {
+  height: 42px;
+  padding: 0 24px;
+  font-weight: 750;
+  color: #fff;
+  background: #2f6df6;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgb(47 109 246 / 22%);
+}
+
+.user-info {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  cursor: pointer;
+  background: rgb(255 255 255 / 72%);
+  border: 1px solid rgb(17 24 39 / 8%);
+  border-radius: 999px;
+
+  .nickname {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+  }
+}
+
+.hero-section {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(500px, 1fr);
+  gap: 40px;
+  align-items: center;
+  min-height: 100vh;
+  padding: 110px max(24px, calc((100vw - 1200px) / 2)) 74px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 14% 18%, rgb(93 135 255 / 20%), transparent 32%),
+    radial-gradient(circle at 82% 18%, rgb(255 143 85 / 18%), transparent 30%),
+    linear-gradient(180deg, #f7f3ea 0%, #fffaf0 66%, #101723 66%);
+}
+
+.hero-path {
+  position: absolute;
+  right: -10vw;
+  left: -10vw;
+  height: 150px;
+  pointer-events: none;
+  border: 8px solid rgb(43 75 221 / 72%);
+  border-right: 0;
+  border-left: 0;
+  border-radius: 50%;
+  opacity: 0.34;
+  filter: drop-shadow(0 0 14px rgb(43 75 221 / 18%));
+  animation: path-drift 8s ease-in-out infinite alternate;
+}
+
+.path-one {
+  top: 130px;
+  transform: rotate(-6deg);
+}
+
+.path-two {
+  top: 430px;
+  transform: rotate(4deg);
+  animation-delay: -2s;
+}
+
+.floating-badge {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  color: #101723;
+  background: #fff;
+  border: 1px solid rgb(17 24 39 / 10%);
+  border-radius: 18px;
+  box-shadow: 0 18px 42px rgb(31 41 55 / 16%);
+  animation: badge-float 4.8s ease-in-out infinite;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.badge-course {
+  top: 168px;
+  right: 39%;
+  background: #ffda66;
+}
+
+.badge-ai {
+  top: 240px;
+  right: 9%;
+  background: #ff8b6f;
+  animation-delay: -1.4s;
+}
+
+.badge-chart {
+  right: 31%;
+  bottom: 132px;
+  background: #7dd3fc;
+  animation-delay: -2.8s;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 4;
+  max-width: 560px;
+  padding-bottom: 56px;
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 13px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #2749b9;
+    letter-spacing: 0.08em;
+    background: rgb(47 109 246 / 10%);
+    border: 1px solid rgb(47 109 246 / 18%);
+    border-radius: 999px;
+  }
+
+  h1 {
+    max-width: 560px;
+    margin: 0;
+    font-size: clamp(42px, 5.2vw, 64px);
+    font-weight: 900;
+    line-height: 1.03;
+    color: #141414;
+    letter-spacing: 0;
+  }
+
+  p {
+    max-width: 520px;
+    margin: 22px 0 0;
+    font-size: 18px;
+    line-height: 1.85;
+    color: rgb(17 24 39 / 68%);
+  }
+}
+
+.hero-actions,
+.cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 32px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.hero-btn,
+.cta-actions .el-button {
+  min-width: 136px;
+  height: 50px;
+  padding: 0 26px;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 999px;
+
+  &.primary,
+  &.el-button--primary {
+    color: #fff;
+    background: #2f6df6;
+    border: 0;
+    box-shadow: 0 18px 36px rgb(47 109 246 / 26%);
+  }
+
+  &.secondary,
+  &.is-plain {
+    color: #111827;
+    background: rgb(255 255 255 / 72%);
+    border: 1px solid rgb(17 24 39 / 12%);
+  }
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 34px;
+
+  div {
+    min-width: 0;
+    padding: 14px;
+    background: rgb(255 255 255 / 62%);
+    border: 1px solid rgb(17 24 39 / 8%);
+    border-radius: 16px;
+    box-shadow: 0 14px 30px rgb(17 24 39 / 6%);
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    margin-bottom: 4px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #141414;
+  }
+
+  span {
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgb(17 24 39 / 60%);
+  }
+}
+
+.hero-product {
+  position: relative;
+  z-index: 5;
+  min-width: 0;
+  align-self: center;
+}
+
+.browser-shell {
+  overflow: hidden;
+  background: rgb(255 255 255 / 92%);
+  border: 1px solid rgb(17 24 39 / 12%);
+  border-radius: 8px;
+  box-shadow:
+    0 38px 100px rgb(17 24 39 / 24%),
+    0 0 0 10px rgb(47 109 246 / 8%);
+}
+
+.browser-chrome {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  height: 38px;
+  padding: 0 14px;
+  background: #f6f4ed;
+  border-bottom: 1px solid rgb(17 24 39 / 8%);
+
+  span {
+    width: 10px;
+    height: 10px;
+    background: #d7d2c5;
+    border-radius: 50%;
+  }
+
+  .address {
+    flex: 1;
+    min-width: 0;
+    margin-left: 12px;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgb(17 24 39 / 48%);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.workspace-panel {
+  display: grid;
+  grid-template-columns: 166px minmax(0, 1fr);
+  min-height: 500px;
+  background:
+    linear-gradient(90deg, #f8f6ef 0, #f8f6ef 166px, transparent 166px),
+    #fbfaf6;
+}
+
+.workspace-sidebar {
+  padding: 20px 12px;
+  border-right: 1px solid rgb(17 24 39 / 8%);
+
+  .sidebar-title {
+    padding: 0 10px 14px;
+    font-size: 13px;
+    font-weight: 900;
+    color: #111827;
+  }
+}
+
+.side-item {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  margin-bottom: 5px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  color: rgb(17 24 39 / 58%);
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+
+  svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  &.active {
+    color: #111827;
+    background: #fff;
+    box-shadow: 0 8px 20px rgb(17 24 39 / 7%);
+  }
+}
+
+.workspace-main {
+  min-width: 0;
+  padding: 24px;
+}
+
+.showcase-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 448px;
+  padding: 24px;
+  overflow: hidden;
+  color: #111827;
+  background:
+    radial-gradient(circle at 88% 12%, rgb(47 109 246 / 16%), transparent 28%),
+    #fff;
+  border: 1px solid rgb(17 24 39 / 8%);
+  border-radius: 8px;
+  box-shadow: 0 18px 46px rgb(17 24 39 / 8%);
+
+  &.theme-wrong {
+    background:
+      radial-gradient(circle at 88% 14%, rgb(255 139 111 / 22%), transparent 28%),
+      #fff;
+  }
+
+  &.theme-exam {
+    background:
+      radial-gradient(circle at 88% 14%, rgb(125 211 252 / 24%), transparent 28%),
+      #fff;
+  }
+
+  &.theme-animation {
+    background:
+      radial-gradient(circle at 88% 14%, rgb(255 218 102 / 26%), transparent 28%),
+      #fff;
+  }
+}
+
+.showcase-head {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  h2 {
+    max-width: 500px;
+    margin: 8px 0 0;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.18;
+    letter-spacing: 0;
+  }
+}
+
+.showcase-label {
+  display: inline-flex;
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #2f6df6;
+  background: rgb(47 109 246 / 9%);
+  border-radius: 999px;
+  align-items: center;
+}
+
+.status-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 8px;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgb(17 24 39 / 68%);
+  background: #f8f6ef;
+  border: 1px solid rgb(17 24 39 / 8%);
+  border-radius: 999px;
+
+  .pulse {
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 5px rgb(34 197 94 / 12%);
+  }
+}
+
+.showcase-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(210px, 0.9fr);
+  gap: 18px;
+  flex: 1;
+}
+
+.task-column {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.task-card {
+  min-height: 54px;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 760;
+  line-height: 1.45;
+  color: rgb(17 24 39 / 74%);
+  background: #fbfaf6;
+  border: 1px solid rgb(17 24 39 / 7%);
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgb(17 24 39 / 4%);
+}
+
+.insight-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+  background: #101723;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+
+  p {
+    margin: 16px 0 0;
+    font-size: 13px;
+    line-height: 1.75;
+    color: rgb(255 255 255 / 74%);
+  }
+}
+
+.insight-score {
+  span,
+  small {
+    display: block;
+  }
+
+  span {
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+  }
+
+  small {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgb(255 255 255 / 56%);
+  }
+}
+
+.insight-bars {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  height: 120px;
+  padding-top: 22px;
+
+  i {
+    flex: 1;
+    min-width: 12px;
+    background: linear-gradient(180deg, #7dd3fc 0%, #2f6df6 100%);
+    border-radius: 999px 999px 4px 4px;
+    box-shadow: 0 8px 22px rgb(47 109 246 / 28%);
+  }
+}
+
+.agent-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 18px;
+  margin-top: 20px;
+  border-top: 1px solid rgb(17 24 39 / 8%);
+
+  span {
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgb(17 24 39 / 60%);
+    background: #f8f6ef;
+    border: 1px solid rgb(17 24 39 / 8%);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.showcase-enter-active,
+.showcase-leave-active {
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+.showcase-enter-from {
+  opacity: 0;
+  transform: translateY(12px) scale(0.985);
+}
+
+.showcase-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.985);
+}
+
+.proof-strip {
+  position: absolute;
+  right: max(24px, calc((100vw - 1200px) / 2));
+  bottom: 20px;
+  left: max(24px, calc((100vw - 1200px) / 2));
+  z-index: 6;
+  display: flex;
+  gap: clamp(18px, 4vw, 52px);
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  overflow: hidden;
+  color: rgb(255 255 255 / 76%);
+  background: rgb(16 23 35 / 88%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 999px;
+  box-shadow: 0 20px 50px rgb(2 6 23 / 28%);
+
+  span {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 850;
+    letter-spacing: 0.02em;
+  }
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding: 54px max(24px, calc((100vw - 1200px) / 2));
+  background: #101723;
+}
+
+.stat-card {
+  min-width: 0;
+  padding: 26px 22px;
+  color: #fff;
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 8px;
+
+  .stat-icon {
+    margin-bottom: 14px;
+    color: #7dd3fc;
+  }
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    font-size: 30px;
+    font-weight: 900;
+  }
+
+  span {
+    margin-top: 6px;
+    font-size: 13px;
+    color: rgb(255 255 255 / 60%);
+  }
+}
+
+.section {
+  padding: 72px max(24px, calc((100vw - 1200px) / 2));
+  background: #101723;
+}
+
+.section-heading {
+  max-width: 720px;
+  margin-bottom: 34px;
+
+  &.compact {
+    max-width: 660px;
+  }
+
+  span {
+    display: inline-flex;
+    min-height: 28px;
+    padding: 0 10px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #7dd3fc;
+    letter-spacing: 0.08em;
+    background: rgb(125 211 252 / 10%);
+    border: 1px solid rgb(125 211 252 / 16%);
+    border-radius: 999px;
+    align-items: center;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: clamp(30px, 4vw, 48px);
+    font-weight: 900;
+    line-height: 1.12;
+    color: #fff;
+    letter-spacing: 0;
+  }
+
+  p {
+    margin: 16px 0 0;
+    font-size: 16px;
+    line-height: 1.8;
+    color: rgb(255 255 255 / 62%);
+  }
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.feature-card {
+  position: relative;
+  min-height: 420px;
+  overflow: hidden;
+  background: #172032;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 18%);
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.48;
+    filter: saturate(0.9);
+    transform: scale(1.03);
+  }
+
+  div {
+    position: absolute;
+    inset: auto 0 0;
+    padding: 28px;
+    background: linear-gradient(180deg, transparent 0%, rgb(16 23 35 / 94%) 34%);
+  }
+
+  svg {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 16px;
+    color: #7dd3fc;
+  }
+
+  h3 {
+    margin: 0 0 10px;
+    font-size: 24px;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+    color: rgb(255 255 255 / 70%);
+  }
+}
+
+.services-grid,
+.tech-grid,
+.innovation-grid,
+.testimonials-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.services-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.service-card,
+.tech-card,
+.innovation-card,
+.workflow-card {
+  min-width: 0;
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+}
+
+.service-card {
+  padding: 26px 22px;
+
+  .service-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 18px;
+    color: #101723;
+    background: #7dd3fc;
+    border-radius: 8px;
+  }
+
+  h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  p {
+    min-height: 72px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgb(255 255 255 / 62%);
+  }
+
+  ul {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    margin: 18px 0 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    color: rgb(255 255 255 / 72%);
+
+    .el-icon {
+      color: #7dd3fc;
+    }
+  }
+}
+
+.workflow-section {
+  background: linear-gradient(180deg, #101723 0%, #151f30 100%);
+}
+
+.workflow-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.workflow-card {
+  padding: 24px;
+
+  span {
+    display: block;
+    margin-bottom: 34px;
+    font-size: 13px;
+    font-weight: 900;
+    color: #7dd3fc;
+  }
+
+  h3 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+    color: rgb(255 255 255 / 62%);
+  }
+}
+
+.tech-grid {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.tech-card {
+  padding: 22px 12px;
+  text-align: center;
+
+  svg {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 12px;
+    color: #7dd3fc;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    font-size: 14px;
+    color: #fff;
+  }
+
+  span {
+    margin-top: 5px;
+    font-size: 12px;
+    color: rgb(255 255 255 / 50%);
+  }
+}
+
+.innovation-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.innovation-card {
+  padding: 28px;
+
+  > span {
+    display: inline-flex;
+    min-height: 28px;
+    padding: 0 10px;
+    margin-bottom: 18px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #7dd3fc;
+    background: rgb(125 211 252 / 10%);
+    border-radius: 999px;
+    align-items: center;
+  }
+
+  svg {
+    display: block;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 16px;
+    color: #7dd3fc;
+  }
+
+  h3 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+    color: rgb(255 255 255 / 64%);
+  }
+}
+
+.testimonials-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.testimonial-card {
+  position: relative;
+  min-height: 360px;
+  overflow: hidden;
+  background: #172032;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 8px;
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.42;
+    filter: brightness(0.7) saturate(0.92);
+  }
+}
+
+.testimonial-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 28px;
+  background:
+    linear-gradient(180deg, rgb(16 23 35 / 10%) 0%, rgb(16 23 35 / 90%) 72%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 28%, transparent), transparent 46%);
+
+  span {
+    width: fit-content;
+    padding: 7px 10px;
+    margin-bottom: auto;
+    font-size: 12px;
+    font-weight: 900;
+    color: #fff;
+    background: rgb(255 255 255 / 12%);
+    border: 1px solid rgb(255 255 255 / 16%);
+    border-radius: 999px;
+  }
+
+  p {
+    margin: 0 0 20px;
+    font-size: 16px;
+    line-height: 1.8;
+    color: rgb(255 255 255 / 88%);
+  }
+
+  strong,
+  small {
+    display: block;
+  }
+
+  strong {
+    font-size: 16px;
+    color: #fff;
+  }
+
+  small {
+    margin-top: 4px;
+    font-size: 13px;
+    color: rgb(255 255 255 / 62%);
+  }
+}
+
+.cta-section {
+  padding: 72px max(24px, calc((100vw - 1200px) / 2));
+  background: #101723;
+}
+
+.cta-card {
+  padding: 44px;
+  background:
+    radial-gradient(circle at 82% 20%, rgb(47 109 246 / 24%), transparent 32%),
+    #f8f6ef;
+  border-radius: 8px;
+
+  span {
+    display: inline-flex;
+    min-height: 28px;
+    padding: 0 10px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #2749b9;
+    background: rgb(47 109 246 / 10%);
+    border-radius: 999px;
+    align-items: center;
+  }
+
+  h2 {
+    max-width: 680px;
+    margin: 0;
+    font-size: clamp(32px, 4vw, 54px);
+    font-weight: 900;
+    line-height: 1.08;
+    color: #141414;
+  }
+
+  p {
+    max-width: 620px;
+    margin: 16px 0 0;
+    font-size: 16px;
+    line-height: 1.75;
+    color: rgb(17 24 39 / 64%);
+  }
+}
+
+.footer-section {
+  padding: 34px max(24px, calc((100vw - 1200px) / 2));
+  color: rgb(255 255 255 / 58%);
+  background: #0b111c;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+}
+
+.footer-container {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+
+  > p {
+    max-width: 520px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.7;
+    text-align: right;
+  }
+}
+
+.footer-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  img {
+    width: 42px;
+    height: 42px;
+    padding: 5px;
+    background: #fff;
+    border-radius: 10px;
+  }
+
+  strong {
+    display: block;
+    font-size: 15px;
+    color: #fff;
+  }
+
+  p {
+    margin: 5px 0 0;
+    font-size: 12px;
+  }
+}
+
+svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media screen and (width <= 1080px) {
+  .hero-section {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: 112px;
+    background:
+      radial-gradient(circle at 20% 10%, rgb(93 135 255 / 18%), transparent 32%),
+      #f7f3ea;
+  }
+
+  .hero-copy {
+    max-width: 760px;
+    padding-bottom: 0;
+  }
+
+  .hero-product {
+    margin-bottom: 84px;
+  }
+
+  .proof-strip {
+    bottom: 22px;
+  }
+
+  .stats-section,
+  .services-grid,
+  .workflow-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .feature-grid,
+  .innovation-grid,
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tech-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media screen and (width <= 760px) {
+  .header {
+    height: 64px;
+  }
+
+  .header-content {
+    padding: 0 16px;
+  }
+
+  .brand span,
+  .nav-links {
+    display: none;
+  }
+
+  .hero-section {
+    gap: 18px;
+    padding: 90px 16px 26px;
+  }
+
+  .hero-path,
+  .floating-badge {
+    display: none;
+  }
+
+  .hero-copy {
+    h1 {
+      font-size: clamp(34px, 10.2vw, 42px);
+    }
+
+    p {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+  }
+
+  .hero-copy .eyebrow {
+    min-height: 28px;
+    margin-bottom: 14px;
+    font-size: 11px;
+  }
+
+  .hero-actions {
+    margin-top: 24px;
+  }
+
+  .hero-actions,
+  .cta-actions {
+    .el-button {
+      flex: 1 1 160px;
+      min-width: 0;
+    }
+  }
+
+  .hero-metrics {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 24px;
+
+    div {
+      padding: 13px 14px;
+    }
+  }
+
+  .browser-shell {
+    border-radius: 8px;
+    box-shadow: 0 24px 60px rgb(17 24 39 / 20%);
+  }
+
+  .workspace-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-sidebar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding: 12px;
+    border-right: 0;
+    border-bottom: 1px solid rgb(17 24 39 / 8%);
+
+    .sidebar-title {
+      grid-column: 1 / -1;
+      padding: 0 0 4px;
+    }
+  }
+
+  .side-item {
+    justify-content: center;
+    margin: 0;
+
+    span {
+      display: none;
+    }
+  }
+
+  .workspace-main {
+    padding: 12px;
+  }
+
+  .showcase-card {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .showcase-head,
+  .showcase-body {
+    grid-template-columns: 1fr;
+  }
+
+  .showcase-head {
+    display: block;
+
+    h2 {
+      font-size: 20px;
+    }
+
+    .status-pill {
+      margin-top: 14px;
+    }
+  }
+
+  .insight-panel {
+    min-height: 190px;
+  }
+
+  .proof-strip {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+    min-height: 0;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 8px;
+  }
+
+  .stats-section,
+  .services-grid,
+  .workflow-board,
+  .tech-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-section,
+  .section,
+  .cta-section,
+  .footer-section {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .feature-card,
+  .testimonial-card {
+    min-height: 320px;
+  }
+
+  .service-card p {
+    min-height: 0;
+  }
+
+  .cta-card {
+    padding: 28px 20px;
+  }
+
+  .footer-container {
+    display: block;
+
+    > p {
+      margin-top: 18px;
+      text-align: left;
+    }
+  }
+}
+</style>
