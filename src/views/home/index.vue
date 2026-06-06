@@ -3,7 +3,11 @@
     <!-- ============== NAV ============== -->
     <header class="nx-nav" :class="{ 'is-scrolled': isScrolled }">
       <div class="nx-nav__inner">
-        <button class="nx-nav__brand" type="button" @click="router.push('/home')">
+        <button
+          class="nx-nav__brand"
+          type="button"
+          @click="router.push('/home')"
+        >
           <img :src="logo" alt="启明智教" />
           <span>启明智教</span>
         </button>
@@ -40,7 +44,11 @@
           <button v-else class="nx-link" type="button" @click="handleEntry">
             登录
           </button>
-          <button class="nx-btn nx-btn--primary" type="button" @click="handleEntry">
+          <button
+            class="nx-btn nx-btn--primary"
+            type="button"
+            @click="handleEntry"
+          >
             免费使用
           </button>
         </div>
@@ -50,47 +58,136 @@
     <main>
       <!-- ============== HERO ============== -->
       <section class="nx-hero">
-        <!-- Notion-style line doodles peeking from edges -->
-        <svg class="nx-doodle nx-doodle--left" viewBox="0 0 600 600" fill="none" aria-hidden="true">
-          <path d="M-20 380 C 80 320, 150 360, 210 300 S 340 220, 420 260" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          <path d="M40 460 C 120 420, 200 440, 260 400" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        <svg
+          class="nx-doodle nx-doodle--left"
+          viewBox="0 0 600 600"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M-20 380 C 80 320, 150 360, 210 300 S 340 220, 420 260"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
+          <path
+            d="M40 460 C 120 420, 200 440, 260 400"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
           <circle cx="120" cy="180" r="3" fill="currentColor" />
           <circle cx="180" cy="240" r="2" fill="currentColor" />
           <circle cx="60" cy="260" r="2.5" fill="currentColor" />
-          <!-- open book -->
           <g transform="translate(60 60)">
-            <path d="M0 40 L 50 30 L 100 40 L 100 90 L 50 80 L 0 90 Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+            <path
+              d="M0 40 L 50 30 L 100 40 L 100 90 L 50 80 L 0 90 Z"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linejoin="round"
+            />
             <path d="M50 30 L 50 80" stroke="currentColor" stroke-width="1.2" />
-            <path d="M12 48 L 40 44 M12 60 L 40 56 M60 44 L 88 48 M60 56 L 88 60" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.6" />
+            <path
+              d="M12 48 L 40 44 M12 60 L 40 56 M60 44 L 88 48 M60 56 L 88 60"
+              stroke="currentColor"
+              stroke-width="1"
+              stroke-linecap="round"
+              opacity="0.6"
+            />
           </g>
-          <!-- sparkle -->
           <g transform="translate(300 80)">
-            <path d="M20 0 L 24 16 L 40 20 L 24 24 L 20 40 L 16 24 L 0 20 L 16 16 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none" />
+            <path
+              d="M20 0 L 24 16 L 40 20 L 24 24 L 20 40 L 16 24 L 0 20 L 16 16 Z"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linejoin="round"
+              fill="none"
+            />
           </g>
-          <!-- squiggle -->
-          <path d="M250 520 q 12 -18 24 0 t 24 0 t 24 0 t 24 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none" />
+          <path
+            d="M250 520 q 12 -18 24 0 t 24 0 t 24 0 t 24 0"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            fill="none"
+          />
         </svg>
 
-        <svg class="nx-doodle nx-doodle--right" viewBox="0 0 600 600" fill="none" aria-hidden="true">
-          <path d="M620 320 C 520 260, 440 320, 380 260 S 240 200, 160 240" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          <path d="M560 420 C 480 380, 400 420, 320 380" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        <svg
+          class="nx-doodle nx-doodle--right"
+          viewBox="0 0 600 600"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M620 320 C 520 260, 440 320, 380 260 S 240 200, 160 240"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
+          <path
+            d="M560 420 C 480 380, 400 420, 320 380"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
           <circle cx="460" cy="160" r="3" fill="currentColor" />
           <circle cx="520" cy="220" r="2" fill="currentColor" />
           <circle cx="560" cy="180" r="2.5" fill="currentColor" />
-          <!-- mini character with hard hat -->
           <g transform="translate(440 60)">
-            <circle cx="40" cy="40" r="18" stroke="currentColor" stroke-width="1.4" fill="none" />
-            <path d="M22 36 q 18 -22 36 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" />
-            <path d="M16 36 L 64 36" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            <circle
+              cx="40"
+              cy="40"
+              r="18"
+              stroke="currentColor"
+              stroke-width="1.4"
+              fill="none"
+            />
+            <path
+              d="M22 36 q 18 -22 36 0"
+              stroke="currentColor"
+              stroke-width="1.4"
+              fill="none"
+              stroke-linecap="round"
+            />
+            <path
+              d="M16 36 L 64 36"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linecap="round"
+            />
             <circle cx="34" cy="42" r="1.6" fill="currentColor" />
             <circle cx="46" cy="42" r="1.6" fill="currentColor" />
-            <path d="M34 52 q 6 6 12 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" />
-            <path d="M40 58 L 40 90 M 28 70 L 52 70" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            <path
+              d="M34 52 q 6 6 12 0"
+              stroke="currentColor"
+              stroke-width="1.4"
+              fill="none"
+              stroke-linecap="round"
+            />
+            <path
+              d="M40 58 L 40 90 M 28 70 L 52 70"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linecap="round"
+            />
           </g>
-          <!-- arrow -->
           <g transform="translate(380 460)">
-            <path d="M0 30 C 30 0, 70 0, 100 20" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" />
-            <path d="M92 10 L 100 20 L 90 28" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M0 30 C 30 0, 70 0, 100 20"
+              stroke="currentColor"
+              stroke-width="1.4"
+              fill="none"
+              stroke-linecap="round"
+            />
+            <path
+              d="M92 10 L 100 20 L 90 28"
+              stroke="currentColor"
+              stroke-width="1.4"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </g>
         </svg>
 
@@ -101,26 +198,27 @@
             Notion 的页面块一样自然连接。
           </p>
           <div class="nx-hero__cta">
-            <button class="nx-btn nx-btn--primary nx-btn--lg" @click="handleEntry">
+            <button
+              class="nx-btn nx-btn--primary nx-btn--lg"
+              @click="handleEntry"
+            >
               免费使用
             </button>
-            <button class="nx-btn nx-btn--ghost nx-btn--lg" @click="scrollToSection('agents')">
+            <button
+              class="nx-btn nx-btn--ghost nx-btn--lg"
+              @click="scrollToSection('agents')"
+            >
               查看演示
             </button>
           </div>
 
-          <!-- Capability pills: every major platform highlight -->
-          <ul class="nx-pills" aria-label="平台能力">
-            <li v-for="p in capabilityPills" :key="p">{{ p }}</li>
-          </ul>
         </div>
 
-        <!-- Product preview composition: central window + satellite cards -->
+        <!-- Product preview composition -->
         <div class="nx-hero__product">
-          <!-- satellite: 数字人讲师 -->
           <aside class="nx-sat nx-sat--tl" aria-label="数字人讲师">
             <header>
-              <span class="nx-sat__dot" style="background:#7B61FF" />
+              <span class="nx-sat__dot" style="background: #7b61ff" />
               <span>数字人讲师</span>
             </header>
             <div class="nx-sat__media">
@@ -141,30 +239,33 @@
                   <span>实时口型同步</span>
                 </div>
                 <div class="nx-sat__wave nx-sat__wave--chip">
-                  <span v-for="i in 10" :key="i" :style="{ animationDelay: i * 80 + 'ms' }" />
+                  <span
+                    v-for="i in 10"
+                    :key="i"
+                    :style="{ animationDelay: i * 80 + 'ms' }"
+                  />
                 </div>
               </aside>
             </div>
-            <p>VRM 形象 + AI 语音，可以直接在课程里代老师讲课。</p>
           </aside>
 
-          <!-- satellite: AI 助教对话 -->
           <aside class="nx-sat nx-sat--tr" aria-label="AI 助教">
             <header>
-              <span class="nx-sat__dot" style="background:#26ce83" />
+              <span class="nx-sat__dot" style="background: #26ce83" />
               <span>AI 助教 · 课程问答</span>
             </header>
-            <div class="nx-bubble nx-bubble--in">第 3 章二叉树为什么不能用 BFS 直接判平衡？</div>
+            <div class="nx-bubble nx-bubble--in">
+              第 3 章二叉树为什么不能用 BFS 直接判平衡？
+            </div>
             <div class="nx-bubble nx-bubble--out">
-              因为 BFS 不能在回溯时同步获取左右子树高度，建议用后序 DFS……
+              建议用后序 DFS，同步返回左右子树高度。
               <span class="nx-typing"><i /><i /><i /></span>
             </div>
           </aside>
 
-          <!-- satellite: AI PPT 缩略图 -->
           <aside class="nx-sat nx-sat--bl" aria-label="AI PPT">
             <header>
-              <span class="nx-sat__dot" style="background:#FFB547" />
+              <span class="nx-sat__dot" style="background: #ffb547" />
               <span>AI 一键生成 PPT</span>
             </header>
             <div class="nx-slides">
@@ -183,13 +284,14 @@
             </div>
           </aside>
 
-          <!-- satellite: OJ 判题 -->
           <aside class="nx-sat nx-sat--br" aria-label="OJ 在线判题">
             <header>
-              <span class="nx-sat__dot" style="background:#4A90E2" />
+              <span class="nx-sat__dot" style="background: #4a90e2" />
               <span>OJ · 在线判题</span>
             </header>
-            <pre class="nx-code"><span class="k">def</span> <span class="f">solve</span>(n):
+            <pre
+              class="nx-code"
+            ><span class="k">def</span> <span class="f">solve</span>(n):
   <span class="k">return</span> n * (n + 1) // 2</pre>
             <ul class="nx-cases">
               <li><i class="nx-ok" />Case 1 · 2 ms</li>
@@ -199,9 +301,7 @@
           </aside>
 
           <div class="nx-window">
-            <div class="nx-window__bar">
-              <span /><span /><span />
-            </div>
+            <div class="nx-window__bar"><span /><span /><span /></div>
             <div class="nx-window__body">
               <aside class="nx-side">
                 <div class="nx-side__head">
@@ -265,6 +365,26 @@
         </div>
       </section>
 
+      <!-- ============== CORE TECH ============= -->
+      <section class="nx-section nx-section--gray">
+        <header class="nx-shead nx-shead--center">
+          <p class="nx-eyebrow">研发成果 · core technologies</p>
+          <h2 class="nx-stitle">潜心打磨的底层能力。</h2>
+          <p class="nx-ssub">
+            面向教育场景沉淀的七项核心技术，覆盖模型、检索、编排、评估与课件生成。
+          </p>
+        </header>
+        <div class="nx-tech-grid">
+          <article v-for="(tech, i) in coreTechs" :key="i" class="nx-tech-card">
+            <div class="nx-tech-card__num">
+              {{ String(i + 1).padStart(2, "0") }}
+            </div>
+            <h3 class="nx-tech-card__title">{{ tech.title }}</h3>
+            <p class="nx-tech-card__desc">{{ tech.desc }}</p>
+          </article>
+        </div>
+      </section>
+
       <!-- ============== BENTO: FEATURES ============== -->
       <section id="features" class="nx-section nx-section--features">
         <header class="nx-shead">
@@ -273,26 +393,31 @@
         </header>
 
         <!-- big bento card -->
-        <article class="nx-bento nx-bento--wide" :style="{ '--bento-color': '#FFB547' }">
+        <article
+          class="nx-bento nx-bento--wide"
+          :style="getBentoStyle('course')"
+        >
           <div class="nx-bento__head">
             <div>
               <p class="nx-bento__eyebrow">课程工作台</p>
-              <h3 class="nx-bento__title">把课程、章节与学习计划，放在同一处。</h3>
+              <h3 class="nx-bento__title">
+                把课程、章节与学习计划，放在同一处。
+              </h3>
             </div>
             <button class="nx-arrow" type="button" @click="handleEntry">
               <span aria-hidden="true">→</span>
             </button>
           </div>
           <div class="nx-bento__media">
-            <div class="nx-bento__inset nx-bento__inset--carousel">
-              <MiniBrowser :slides="bentoCourseSlides" />
+            <div class="nx-bento__inset nx-bento__inset--scripted">
+              <ScriptedMiniDemo :scene="scriptedScenes.course" />
             </div>
           </div>
         </article>
 
         <!-- 2-up bento -->
         <div class="nx-bento__grid">
-          <article class="nx-bento" :style="{ '--bento-color': '#E85847' }">
+          <article class="nx-bento" :style="getBentoStyle('wrong')">
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">错题诊断</p>
@@ -303,13 +428,13 @@
               </button>
             </div>
             <div class="nx-bento__media">
-              <div class="nx-bento__inset nx-bento__inset--carousel">
-                <MiniBrowser :slides="bentoWrongSlides" :interval="5200" />
+              <div class="nx-bento__inset nx-bento__inset--scripted">
+                <ScriptedMiniDemo compact :scene="scriptedScenes.wrong" />
               </div>
             </div>
           </article>
 
-          <article class="nx-bento" :style="{ '--bento-color': '#4A90E2' }">
+          <article class="nx-bento" :style="getBentoStyle('exam')">
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">智能组卷</p>
@@ -320,8 +445,8 @@
               </button>
             </div>
             <div class="nx-bento__media">
-              <div class="nx-bento__inset nx-bento__inset--carousel">
-                <MiniBrowser :slides="bentoExamSlides" :interval="5800" />
+              <div class="nx-bento__inset nx-bento__inset--scripted">
+                <ScriptedMiniDemo compact :scene="scriptedScenes.exam" />
               </div>
             </div>
           </article>
@@ -329,24 +454,26 @@
 
         <!-- 3-up rich bento cards (with carousels & live-demo) -->
         <div class="nx-bento__grid nx-bento__grid--3">
-          <article class="nx-bento" :style="{ '--bento-color': '#10B981' }">
+          <article class="nx-bento" :style="getBentoStyle('portrait')">
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">学情画像</p>
-                <h3 class="nx-bento__title">能力雷达 · 教师 / 学生同步可见。</h3>
+                <h3 class="nx-bento__title">
+                  能力雷达 · 教师 / 学生同步可见。
+                </h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
               </button>
             </div>
             <div class="nx-bento__media">
-              <div class="nx-bento__inset nx-bento__inset--carousel">
-                <MiniBrowser :slides="bentoPortraitSlides" :interval="5000" />
+              <div class="nx-bento__inset nx-bento__inset--scripted">
+                <ScriptedMiniDemo compact :scene="scriptedScenes.portrait" />
               </div>
             </div>
           </article>
 
-          <article class="nx-bento" :style="{ '--bento-color': '#7B61FF' }">
+          <article class="nx-bento" :style="getBentoStyle('path')">
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">学习路径</p>
@@ -357,13 +484,13 @@
               </button>
             </div>
             <div class="nx-bento__media">
-              <div class="nx-bento__inset nx-bento__inset--carousel">
-                <MiniBrowser :slides="bentoPathSlides" :interval="5400" />
+              <div class="nx-bento__inset nx-bento__inset--scripted">
+                <ScriptedMiniDemo compact :scene="scriptedScenes.path" />
               </div>
             </div>
           </article>
 
-          <article class="nx-bento" :style="{ '--bento-color': '#F59E0B' }">
+          <article class="nx-bento" :style="getBentoStyle('animation')">
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">虚拟实验 · AI 课件</p>
@@ -374,27 +501,32 @@
               </button>
             </div>
             <div class="nx-bento__media">
-              <div class="nx-bento__inset nx-bento__inset--carousel">
-                <MiniBrowser :slides="bentoLabSlides" :interval="5800" />
+              <div class="nx-bento__inset nx-bento__inset--scripted">
+                <ScriptedMiniDemo compact :scene="scriptedScenes.animation" />
               </div>
             </div>
           </article>
         </div>
 
         <!-- competition wide bento -->
-        <article class="nx-bento nx-bento--wide" :style="{ '--bento-color': '#FF6B6B' }">
+        <article
+          class="nx-bento nx-bento--wide"
+          :style="getBentoStyle('competition')"
+        >
           <div class="nx-bento__head">
             <div>
               <p class="nx-bento__eyebrow">综合赛事</p>
-              <h3 class="nx-bento__title">OJ 判题 · 作文比赛 · 赛事管理一站式。</h3>
+              <h3 class="nx-bento__title">
+                OJ 判题 · 作文比赛 · 赛事管理一站式。
+              </h3>
             </div>
             <button class="nx-arrow" type="button" @click="handleEntry">
               <span aria-hidden="true">→</span>
             </button>
           </div>
           <div class="nx-bento__media">
-            <div class="nx-bento__inset nx-bento__inset--carousel">
-              <MiniBrowser :slides="bentoCompetitionSlides" :interval="5400" />
+            <div class="nx-bento__inset nx-bento__inset--scripted">
+              <ScriptedMiniDemo :scene="scriptedScenes.competition" />
             </div>
           </div>
         </article>
@@ -411,7 +543,11 @@
                 <p class="nx-bento__eyebrow">{{ b.eyebrow }}</p>
                 <h3 class="nx-bento__title">{{ b.title }}</h3>
               </div>
-              <button class="nx-arrow nx-arrow--sm" type="button" @click="handleEntry">
+              <button
+                class="nx-arrow nx-arrow--sm"
+                type="button"
+                @click="handleEntry"
+              >
                 <span aria-hidden="true">→</span>
               </button>
             </div>
@@ -457,10 +593,10 @@
               </div>
               <div class="nx-tabpanel__media">
                 <div
-                  class="nx-bento__inset nx-bento__inset--lg nx-bento__inset--carousel"
+                  class="nx-bento__inset nx-bento__inset--lg nx-bento__inset--scripted"
                   :style="{ '--bento-color': activeShowcase.color }"
                 >
-                  <MiniBrowser :slides="activeShowcase.screens" :interval="5000" />
+                  <ScriptedMiniDemo :scene="activeScriptedScene" />
                 </div>
               </div>
             </div>
@@ -477,7 +613,9 @@
 
         <ol class="nx-steps">
           <li v-for="(item, idx) in workflowItems" :key="item.title">
-            <span class="nx-steps__num">{{ String(idx + 1).padStart(2, "0") }}</span>
+            <span class="nx-steps__num">{{
+              String(idx + 1).padStart(2, "0")
+            }}</span>
             <h4>{{ item.title }}</h4>
             <p>{{ item.description }}</p>
           </li>
@@ -523,10 +661,16 @@
           <h2>把智能教育工作台打开看看。</h2>
           <p>用真实课程、试卷、错题和 AI 助教，呈现一个可以落地的平台。</p>
           <div class="nx-cta__btns">
-            <button class="nx-btn nx-btn--primary nx-btn--lg" @click="handleEntry">
+            <button
+              class="nx-btn nx-btn--primary nx-btn--lg"
+              @click="handleEntry"
+            >
               免费使用
             </button>
-            <button class="nx-btn nx-btn--ghost nx-btn--lg" @click="scrollToSection('agents')">
+            <button
+              class="nx-btn nx-btn--ghost nx-btn--lg"
+              @click="scrollToSection('agents')"
+            >
               回看演示
             </button>
           </div>
@@ -545,7 +689,9 @@
           <img :src="logo" alt="启明智教" />
           <div>
             <strong>启明智教 · Intelledu.com</strong>
-            <p>长春工业大学计算机科学与工程学院 · 吉林省云创迅捷软件开发有限公司</p>
+            <p>
+              长春工业大学计算机科学与工程学院 · 吉林省云创迅捷软件开发有限公司
+            </p>
           </div>
         </div>
         <p class="nx-foot__legal">
@@ -575,22 +721,10 @@ gsap.registerPlugin(ScrollTrigger);
 
 import logo from "@/assets/logo.png";
 import avatarVideo from "@/assets/生成数字人待机视频.mp4";
-import MiniBrowser from "./MiniBrowser.vue";
 import ScriptedDemo from "./ScriptedDemo.vue";
+import ScriptedMiniDemo from "./ScriptedMiniDemo.vue";
 
-import shotStudentDashboard from "@/assets/home/screens/student-dashboard.jpg";
-import shotStudentCourses from "@/assets/home/screens/student-courses.jpg";
-import shotStudentExam from "@/assets/home/screens/student-exam.jpg";
-import shotStudentDisk from "@/assets/home/screens/student-disk.jpg";
-import shotStudentVlab from "@/assets/home/screens/student-virtual-lab.jpg";
-import shotStudentAiapp from "@/assets/home/screens/student-aiapp.jpg";
-import shotStudentCompetition from "@/assets/home/screens/student-competition.jpg";
-import shotTeacherCategory from "@/assets/home/screens/teacher-course-category.jpg";
-import shotTeacherTemplates from "@/assets/home/screens/teacher-templates.jpg";
-
-// 新一批：真实页面截图（1600×1000）
 import shotStudentWelcome from "@/assets/home/screens/student-welcome.jpg";
-import shotStudentAccount from "@/assets/home/screens/student-account.jpg";
 import shotStudentWrongBook from "@/assets/home/screens/student-wrong-book.jpg";
 import shotStudentAiappGen from "@/assets/home/screens/student-aiapp.jpg";
 import shotStudentAiappChat from "@/assets/home/screens/student-aiapp-chat.jpg";
@@ -601,9 +735,7 @@ import shotStudentVirtualLab from "@/assets/home/screens/student-virtual-lab.jpg
 import shotStudentExamCenter from "@/assets/home/screens/student-exam.jpg";
 import shotStudentOj from "@/assets/home/screens/student-competition-oj.jpg";
 import shotStudentEssay from "@/assets/home/screens/student-competition-essay.jpg";
-import shotStudentCloudDisk from "@/assets/home/screens/student-disk.jpg";
 
-import shotTeacherWelcome from "@/assets/home/screens/teacher-welcome.jpg";
 import shotTeacherCourseList from "@/assets/home/screens/teacher-course-list.jpg";
 import shotTeacherCourseCategory from "@/assets/home/screens/teacher-course-category.jpg";
 import shotTeacherTeacherplan from "@/assets/home/screens/teacher-teacherplan.jpg";
@@ -616,7 +748,6 @@ import shotTeacherResearchPath from "@/assets/home/screens/teacher-research-path
 import shotTeacherQuestionBank from "@/assets/home/screens/teacher-question-bank.jpg";
 import shotTeacherVideoAnalysis from "@/assets/home/screens/teacher-video-analysis.jpg";
 import shotTeacherEventManage from "@/assets/home/screens/teacher-event-manage.jpg";
-import shotTeacherDiscussionReview from "@/assets/home/screens/teacher-discussion-review.jpg";
 
 import IconBook from "@/assets/home-icons/book.svg?component";
 import IconEdit from "@/assets/home-icons/edit.svg?component";
@@ -679,6 +810,37 @@ const capabilityPills = [
   "综合赛事管理"
 ];
 
+const coreTechs = [
+  {
+    title: "垂直场景大模型精调与对齐",
+    desc: "基于百万级高质量教育语料，在指令遵循与教育心理学框架下进行强化学习对齐，减少生成幻觉。"
+  },
+  {
+    title: "SAHR 语义自适应与交叉重排算法",
+    desc: "针对长文本（特别是教案、教材）切分导致上下文丢失的问题，引入自适应重构与双路向量检索机制。"
+  },
+  {
+    title: "基于 MCP 协议的双向通信架构",
+    desc: "动态注册模型上下文服务，打破模型与后端系统的数据孤岛，实现即时、双向的指令与数据流动。"
+  },
+  {
+    title: "多模态意图识别与任务自动化编排",
+    desc: "让系统具备“听懂、看懂”的能力，通过意图槽位解析自动编排复杂教学工作流，化繁为简。"
+  },
+  {
+    title: "思维链错题语义偏离度诊断",
+    desc: "不仅仅是对与错，而是通过思维链推演学生解题逻辑，计算认知偏差量，精准锚定知识盲点。"
+  },
+  {
+    title: "长短期记忆与三参数动态学情评估",
+    desc: "融合学生历史行为（LTSM）与题目难度特征（Item Response Theory），立体刻画学习者能力。"
+  },
+  {
+    title: "知识元拓扑驱动的 H5 动态课件",
+    desc: "解析知识点间的依赖图谱，自动化生成结构严谨、支持富交互及虚拟仿真的 HTML5 课件。"
+  }
+];
+
 const showcaseSlides = [
   {
     key: "course",
@@ -693,36 +855,13 @@ const showcaseSlides = [
       { k: "章节", v: "12" }
     ],
     tasks: [
-      "第 3 章：进程与线程实验",
-      "课件资源同步到云盘",
-      "AI 生成章节导学笔记",
-      "下一步：完成本章随堂练习"
+      "第 3 章：进程与线程实验自动关联虚拟实验室",
+      "课件资源秒级同步到云端教学资源库",
+      "AI 自动提取章节核心考点并生成导学笔记",
+      "精准识别学生预习盲点，动态调整下节课件内容"
     ],
-    agents: ["资源整理", "进度追踪", "AI 导学"],
-    icon: rawIcon(IconBook),
-    screens: [
-      {
-        src: shotTeacherCourseList,
-        url: "intelledu.com/course/list",
-        title: "教师·课程列表 · 进度同步",
-        iframeRoute: "/course/list",
-        role: "teacher" as const
-      },
-      {
-        src: shotStudentWelcome,
-        url: "intelledu.com/welcome · 学生",
-        title: "学生·智慧教学平台首页",
-        iframeRoute: "/welcome/index",
-        role: "student" as const
-      },
-      {
-        src: shotTeacherCourseCategory,
-        url: "intelledu.com/course/category",
-        title: "教师·课程分类与运营看板",
-        iframeRoute: "/course/category",
-        role: "teacher" as const
-      }
-    ]
+    agents: ["教学资源整理", "学生进度追踪", "AI 知识点导学", "个性化预习推荐"],
+    icon: rawIcon(IconBook)
   },
   {
     key: "wrong",
@@ -737,44 +876,25 @@ const showcaseSlides = [
       { k: "薄弱点", v: "表达式求值" }
     ],
     tasks: [
-      "运算优先级错误已归因",
-      "关联知识点：表达式求值",
-      "已生成同类题与解析",
-      "推送至学生个人中心"
+      "运算优先级概念偏差已自动归因为知识点漏读",
+      "关联前序知识点：C 语言表达式求值递归深度",
+      "已自动生成同类针对性强化练习与多维解析视频",
+      "通过 AI 助教实时推送至学生错题中心，并标记重要性"
     ],
-    agents: ["错因分析", "题目生成", "学习建议"],
-    icon: rawIcon(IconTarget),
-    screens: [
-      {
-        src: shotStudentWrongBook,
-        url: "intelledu.com/account/wrong-exercise",
-        title: "AI 错题本 · 错因聚类",
-        iframeRoute: "/account/wrong-exercise",
-        role: "student" as const
-      },
-      {
-        src: shotStudentAiappGen,
-        url: "intelledu.com/ai-app/generation",
-        title: "举一反三 · AI 资源生成",
-        iframeRoute: "/ai-app/generation",
-        role: "student" as const
-      },
-      {
-        src: shotStudentAiappChat,
-        url: "intelledu.com/ai-app/chat",
-        title: "AI 助教 · 课程问答",
-        iframeRoute: "/ai-app/chat",
-        role: "student" as const
-      }
-    ]
+    agents: [
+      "多维错因分析",
+      "同类题目动态生成",
+      "个性化精准学习建议",
+      "错题轨迹云记录"
+    ],
+    icon: rawIcon(IconTarget)
   },
   {
     key: "exam",
     shortTitle: "试卷",
     title: "试卷中心，把组卷、答题、阅卷串成一条线。",
     docTitle: "算法期中测验",
-    summary:
-      "教师组卷、学生答题、阅卷与学情报告在同一空间完成。",
+    summary: "教师组卷、学生答题、阅卷与学情报告在同一空间完成。",
     color: "#4A90E2",
     props: [
       { k: "平均分", v: "92" },
@@ -787,37 +907,7 @@ const showcaseSlides = [
       "学情分析报告已生成"
     ],
     agents: ["智能组卷", "阅卷管理", "学情报告"],
-    icon: rawIcon(IconEdit),
-    screens: [
-      {
-        src: shotTeacherTpls,
-        url: "intelledu.com/exam-paper/templates",
-        title: "教师·试卷模板",
-        iframeRoute: "/exam-paper/templates",
-        role: "teacher" as const
-      },
-      {
-        src: shotTeacherGrading,
-        url: "intelledu.com/exam-paper/grading",
-        title: "AI 阅卷管理",
-        iframeRoute: "/exam-paper/grading",
-        role: "teacher" as const
-      },
-      {
-        src: shotTeacherStatistics,
-        url: "intelledu.com/exam-paper/statistics",
-        title: "多维成绩分析",
-        iframeRoute: "/exam-paper/statistics",
-        role: "teacher" as const
-      },
-      {
-        src: shotStudentExamCenter,
-        url: "intelledu.com/student-exam-center",
-        title: "学生·考试中心",
-        iframeRoute: "/student-exam-center/list",
-        role: "student" as const
-      }
-    ]
+    icon: rawIcon(IconEdit)
   },
   {
     key: "animation",
@@ -838,37 +928,7 @@ const showcaseSlides = [
       "虚拟校园场景可联动"
     ],
     agents: ["动画生成", "资源解析", "场景联动"],
-    icon: rawIcon(IconZap),
-    screens: [
-      {
-        src: shotStudentVirtualLab,
-        url: "intelledu.com/virtual-lab",
-        title: "虚拟实验室 · 动画 + 交互",
-        iframeRoute: "/virtual-lab",
-        role: "student" as const
-      },
-      {
-        src: shotTeacherAippt,
-        url: "intelledu.com/aippt",
-        title: "AI PPT 生成",
-        iframeRoute: "/aippt",
-        role: "teacher" as const
-      },
-      {
-        src: shotTeacherVideoAnalysis,
-        url: "intelledu.com/course/video-analysis",
-        title: "视频分析 · 教学视频结构化",
-        iframeRoute: "/course/video-analysis",
-        role: "teacher" as const
-      },
-      {
-        src: shotStudentAiappPdf,
-        url: "intelledu.com/ai-app/agentpdf",
-        title: "AI 资料研读 · 文档智能体",
-        iframeRoute: "/ai-app/agentpdf",
-        role: "student" as const
-      }
-    ]
+    icon: rawIcon(IconZap)
   },
   {
     key: "portrait",
@@ -889,85 +949,244 @@ const showcaseSlides = [
       "教研路径联动"
     ],
     agents: ["画像分析", "知识图谱", "教研路径"],
-    icon: rawIcon(IconTarget),
-    screens: [
-      {
-        src: shotTeacherPortrait,
-        url: "intelledu.com/ai-app/profile · 教师",
-        title: "教师·全息学情画像",
-        iframeRoute: "/ai-app/profile",
-        role: "teacher" as const
-      },
-      {
-        src: shotTeacherResearchPath,
-        url: "intelledu.com/ai-app/path · 教研",
-        title: "教师·教研路径分析",
-        iframeRoute: "/ai-app/path",
-        role: "teacher" as const
-      },
-      {
-        src: shotStudentAiappProfile,
-        url: "intelledu.com/ai-app/profile · 学生",
-        title: "学生·学习画像",
-        iframeRoute: "/ai-app/profile",
-        role: "student" as const
-      },
-      {
-        src: shotStudentAiappPath,
-        url: "intelledu.com/ai-app/path · 学习",
-        title: "学生·个性化学习路径",
-        iframeRoute: "/ai-app/path",
-        role: "student" as const
-      }
-    ]
+    icon: rawIcon(IconTarget)
   },
   {
     key: "competition",
     shortTitle: "赛事",
     title: "综合赛事，把竞赛与日常教学打通。",
     docTitle: "校内编程赛",
-    summary:
-      "OJ 判题、作文比赛、综合赛事在同一空间发布、报名、评审。",
+    summary: "OJ 判题、作文比赛、综合赛事在同一空间发布、报名、评审。",
     color: "#F59E0B",
     props: [
       { k: "已上线", v: "12 项" },
       { k: "参与人数", v: "1,280" }
     ],
-    tasks: [
-      "OJ 题目自动评测",
-      "AI 作文打分",
-      "赛事流程闭环",
-      "教学与竞赛贯通"
-    ],
+    tasks: ["OJ 题目自动评测", "AI 作文打分", "赛事流程闭环", "教学与竞赛贯通"],
     agents: ["OJ 判题", "作文 AI", "赛事管理"],
-    icon: rawIcon(IconEdit),
-    screens: [
-      {
-        src: shotStudentOj,
-        url: "intelledu.com/competition/oj",
-        title: "学生·OJ 判题",
-        iframeRoute: "/competition/oj",
-        role: "student" as const
-      },
-      {
-        src: shotStudentEssay,
-        url: "intelledu.com/competition/essay",
-        title: "学生·作文比赛",
-        iframeRoute: "/competition/essay",
-        role: "student" as const
-      },
-      {
-        src: shotTeacherEventManage,
-        url: "intelledu.com/competition/event-manage",
-        title: "教师·综合赛事管理",
-        iframeRoute: "/competition/event-manage",
-        role: "teacher" as const
-      }
-    ]
+    icon: rawIcon(IconEdit)
   }
 ];
 
-const activeShowcase = computed(() => showcaseSlides[activeShowcaseIndex.value]);
+const activeShowcase = computed(
+  () => showcaseSlides[activeShowcaseIndex.value]
+);
+
+const scriptedDemoCopy = {
+  title: "智能工作流控制台",
+  subtitle: ""
+};
+
+const awspStack = [
+  { key: "A", label: "Agent", desc: "教学智能体" },
+  { key: "W", label: "Workflow", desc: "任务编排" },
+  { key: "S", label: "State", desc: "学情状态" },
+  { key: "P", label: "Pipeline", desc: "评价流水线" }
+];
+
+const scriptedScenes = {
+  course: {
+    ...scriptedDemoCopy,
+    module: "课程工作台",
+    title: "课程工作台 · AI 备课流水线",
+    command: "开启 AI 备课流水线",
+    path: "intelledu.com/workflow/course",
+    accent: "#FFB547",
+    steps: [
+      { label: "课程目标", detail: "读取章节与课标" },
+      { label: "学情匹配", detail: "识别预习盲点" },
+      { label: "课堂节奏", detail: "生成 45 分钟计划" },
+      { label: "课后追踪", detail: "推送巩固任务" }
+    ],
+    metrics: [
+      { label: "章节同步", value: "12", trend: "+4" },
+      { label: "资源匹配", value: "96%", trend: "+18%" },
+      { label: "备课耗时", value: "8s", trend: "-43%" }
+    ],
+    stack: awspStack,
+    console: [
+      "course.chapter.scan -> 12 nodes",
+      "student.profile.merge -> 45 learners",
+      "lesson.timeline.render -> 7 segments",
+      "homework.loop.dispatch -> success"
+    ]
+  },
+  wrong: {
+    ...scriptedDemoCopy,
+    module: "错题诊断",
+    title: "错题诊断 · 错因追踪",
+    command: "追踪错因并生成同类练习",
+    path: "intelledu.com/workflow/wrong-exercise",
+    accent: "#E85847",
+    steps: [
+      { label: "答案采集", detail: "同步错题轨迹" },
+      { label: "错因推演", detail: "定位概念偏差" },
+      { label: "题目生成", detail: "举一反三强化" },
+      { label: "个性推送", detail: "回流学生中心" }
+    ],
+    metrics: [
+      { label: "错因聚类", value: "9", trend: "+3" },
+      { label: "命中薄弱点", value: "94%", trend: "+16%" },
+      { label: "新练习", value: "24", trend: "+8" }
+    ],
+    stack: awspStack,
+    console: [
+      "wrong.answer.trace -> collected",
+      "reasoning.chain.compare -> bias 0.82",
+      "similar.question.generate -> 24 items",
+      "student.center.push -> completed"
+    ]
+  },
+  exam: {
+    ...scriptedDemoCopy,
+    module: "智能组卷",
+    title: "智能组卷 · 自动阅卷",
+    command: "从命题到阅卷自动排线",
+    path: "intelledu.com/workflow/exam-paper",
+    accent: "#4A90E2",
+    steps: [
+      { label: "蓝图约束", detail: "题型难度配平" },
+      { label: "智能抽题", detail: "知识点覆盖校验" },
+      { label: "自动阅卷", detail: "主客观混合批改" },
+      { label: "成绩报告", detail: "生成班级画像" }
+    ],
+    metrics: [
+      { label: "覆盖知识点", value: "32", trend: "+6" },
+      { label: "待阅卷", value: "0", trend: "-12" },
+      { label: "报告生成", value: "5s", trend: "-51%" }
+    ],
+    stack: awspStack,
+    console: [
+      "exam.blueprint.validate -> balanced",
+      "question.bank.match -> 32 concepts",
+      "grading.agent.batch -> completed",
+      "score.report.publish -> ready"
+    ]
+  },
+  portrait: {
+    ...scriptedDemoCopy,
+    module: "学情画像",
+    title: "学情画像 · 能力雷达",
+    command: "汇聚学习行为并刷新能力雷达",
+    path: "intelledu.com/workflow/profile",
+    accent: "#10B981",
+    steps: [
+      { label: "行为沉淀", detail: "课程/考试/错题入库" },
+      { label: "能力估计", detail: "IRT + 长短期记忆" },
+      { label: "雷达刷新", detail: "教师学生同步可见" },
+      { label: "路径推荐", detail: "下一步学习建议" }
+    ],
+    metrics: [
+      { label: "画像维度", value: "8", trend: "+2" },
+      { label: "低掌握预警", value: "6", trend: "-3" },
+      { label: "更新频率", value: "实时", trend: "live" }
+    ],
+    stack: awspStack,
+    console: [
+      "learning.event.stream -> online",
+      "ability.model.update -> 8 dimensions",
+      "radar.snapshot.sync -> teacher/student",
+      "recommendation.path.emit -> ready"
+    ]
+  },
+  path: {
+    ...scriptedDemoCopy,
+    module: "学习路径",
+    title: "学习路径 · 个性推荐",
+    command: "自动生成教研与个性化学习路径",
+    path: "intelledu.com/workflow/path",
+    accent: "#7B61FF",
+    steps: [
+      { label: "知识图谱", detail: "解析前后置关系" },
+      { label: "目标拆解", detail: "映射课程能力点" },
+      { label: "路径编排", detail: "动态生成路线" },
+      { label: "持续校准", detail: "根据反馈重排" }
+    ],
+    metrics: [
+      { label: "路径节点", value: "18", trend: "+5" },
+      { label: "推荐置信", value: "91%", trend: "+13%" },
+      { label: "重排次数", value: "4", trend: "auto" }
+    ],
+    stack: awspStack,
+    console: [
+      "knowledge.graph.resolve -> 18 nodes",
+      "objective.split -> 6 milestones",
+      "path.rank.personalize -> 91 score",
+      "feedback.reorder -> applied"
+    ]
+  },
+  animation: {
+    ...scriptedDemoCopy,
+    module: "虚拟实验 · AI 课件",
+    title: "虚拟实验 · 动态课件",
+    command: "把抽象知识点编排成动态课件",
+    path: "intelledu.com/workflow/virtual-lab",
+    accent: "#F59E0B",
+    steps: [
+      { label: "素材解析", detail: "PPT/视频/教材入流" },
+      { label: "知识建模", detail: "抽取依赖拓扑" },
+      { label: "动画生成", detail: "H5 课件可交互" },
+      { label: "实验联动", detail: "虚拟仿真同步" }
+    ],
+    metrics: [
+      { label: "生成片段", value: "21", trend: "+7" },
+      { label: "交互节点", value: "14", trend: "+5" },
+      { label: "渲染帧率", value: "60", trend: "fps" }
+    ],
+    stack: awspStack,
+    console: [
+      "media.parser.ingest -> ppt/video/pdf",
+      "concept.topology.build -> complete",
+      "h5.animation.compose -> 21 scenes",
+      "virtual.lab.bind -> interactive"
+    ]
+  },
+  competition: {
+    ...scriptedDemoCopy,
+    module: "综合赛事",
+    title: "综合赛事 · 自动评测",
+    command: "串联 OJ 判题、作文评审与赛事管理",
+    path: "intelledu.com/workflow/competition",
+    accent: "#FF6B6B",
+    steps: [
+      { label: "赛事发布", detail: "规则报名一键生成" },
+      { label: "在线评测", detail: "OJ/作文自动评分" },
+      { label: "排行复核", detail: "异常提交识别" },
+      { label: "沉淀档案", detail: "回写成长记录" }
+    ],
+    metrics: [
+      { label: "赛事在线", value: "12", trend: "+2" },
+      { label: "提交评测", value: "1.2k", trend: "+31%" },
+      { label: "处理延迟", value: "2s", trend: "-28%" }
+    ],
+    stack: awspStack,
+    console: [
+      "competition.event.publish -> live",
+      "oj.judge.queue -> 1208 submissions",
+      "essay.ai.review -> rubric aligned",
+      "portfolio.archive.write -> success"
+    ]
+  }
+};
+
+const activeScriptedScene = computed(() => {
+  const key = activeShowcase.value.key as keyof typeof scriptedScenes;
+  return scriptedScenes[key] ?? scriptedScenes.course;
+});
+
+const bentoSurfaces = {
+  course: "rgb(255 181 71 / 22%)",
+  wrong: "rgb(232 88 71 / 15%)",
+  exam: "rgb(74 144 226 / 16%)",
+  portrait: "rgb(16 185 129 / 15%)",
+  path: "rgb(123 97 255 / 15%)",
+  animation: "rgb(245 158 11 / 17%)",
+  competition: "rgb(255 107 107 / 16%)"
+};
+
+const getBentoStyle = (key: keyof typeof bentoSurfaces) => ({
+  "--bento-color": bentoSurfaces[key]
+});
 
 const bentoCourseSlides = [
   {
@@ -1157,10 +1376,22 @@ const tripleBento = [
 ];
 
 const workflowItems = [
-  { title: "备课", description: "从课程章节发起教案、资源、动画课件和题库配置。" },
-  { title: "学习", description: "学生在课程空间里看资源、做练习、提问并获得 AI 提示。" },
-  { title: "评测", description: "试卷中心管理考试、答题、阅卷和成绩发布状态。" },
-  { title: "诊断", description: "错题分析与学情报告持续定位薄弱点，生成下一步计划。" }
+  {
+    title: "备课",
+    description: "从课程章节发起教案、资源、动画课件和题库配置。"
+  },
+  {
+    title: "学习",
+    description: "学生在课程空间里看资源、做练习、提问并获得 AI 提示。"
+  },
+  {
+    title: "评测",
+    description: "试卷中心管理考试、答题、阅卷和成绩发布状态。"
+  },
+  {
+    title: "诊断",
+    description: "错题分析与学情报告持续定位薄弱点，生成下一步计划。"
+  }
 ];
 
 const statsData = [
@@ -1180,15 +1411,13 @@ const testimonials = [
   },
   {
     tag: "教师",
-    content:
-      "试卷、作业和学情报告集中在一个工作台，备课和课后跟进都更省心。",
+    content: "试卷、作业和学情报告集中在一个工作台，备课和课后跟进都更省心。",
     name: "张老师",
     title: "课程教师"
   },
   {
     tag: "家长",
-    content:
-      "孩子的学习进度、成绩趋势和薄弱点都能看清楚，学习计划也更有方向。",
+    content: "孩子的学习进度、成绩趋势和薄弱点都能看清楚，学习计划也更有方向。",
     name: "李女士",
     title: "学生家长"
   }
@@ -1208,7 +1437,9 @@ const startShowcaseTimer = () => {
   }, 6000);
 };
 const scrollToSection = (id: string) => {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document
+    .getElementById(id)
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 const handleEntry = () => {
   const token = getToken();
@@ -1262,7 +1493,7 @@ onMounted(() => {
     ease: "power3.out",
     scrollTrigger: {
       trigger: "#features",
-      start: "top 80%",
+      start: "top 80%"
     }
   });
 
@@ -1286,7 +1517,7 @@ onMounted(() => {
     ease: "back.out(1.7)",
     scrollTrigger: {
       trigger: ".nx-steps",
-      start: "top 85%",
+      start: "top 85%"
     }
   });
 });
@@ -1317,8 +1548,8 @@ onUnmounted(() => {
   --nx-container-wide: 1480px;
   --nx-font:
     "Inter", "NotionInter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Helvetica,
-    Arial, sans-serif;
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial,
+    sans-serif;
 
   min-height: 100vh;
   font-family: var(--nx-font);
@@ -1347,7 +1578,10 @@ onUnmounted(() => {
   height: 60px;
   color: rgb(246 245 244);
   background: transparent;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
   border-bottom: 1px solid transparent;
 
   &.is-scrolled {
@@ -1386,7 +1620,9 @@ onUnmounted(() => {
     height: 38px;
     border-radius: 8px;
     object-fit: contain;
-    transition: background 0.2s, box-shadow 0.2s;
+    transition:
+      background 0.2s,
+      box-shadow 0.2s;
   }
 }
 
@@ -1410,7 +1646,9 @@ onUnmounted(() => {
     opacity: 0.78;
     transition: opacity 0.15s;
 
-    &:hover { opacity: 1; }
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 
@@ -1433,15 +1671,21 @@ onUnmounted(() => {
   background: transparent;
   border: 1px solid rgb(255 255 255 / 20%);
   border-radius: 999px;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 
-  &:hover { background: rgb(255 255 255 / 10%); }
+  &:hover {
+    background: rgb(255 255 255 / 10%);
+  }
 }
 
 .nx-nav.is-scrolled .nx-nav__user {
   border-color: var(--nx-border);
 
-  &:hover { background: var(--nx-bg-gray); }
+  &:hover {
+    background: var(--nx-bg-gray);
+  }
 }
 
 /* =========================================================
@@ -1462,13 +1706,18 @@ onUnmounted(() => {
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--nx-radius-sm);
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 
   &--primary {
     color: #fff;
     background: var(--nx-blue);
 
-    &:hover { background: var(--nx-blue-hover); }
+    &:hover {
+      background: var(--nx-blue-hover);
+    }
   }
 
   &--ghost {
@@ -1477,7 +1726,10 @@ onUnmounted(() => {
     border-color: currentcolor;
     opacity: 0.85;
 
-    &:hover { opacity: 1; background: rgb(255 255 255 / 8%); }
+    &:hover {
+      opacity: 1;
+      background: rgb(255 255 255 / 8%);
+    }
   }
 
   /* on light bg ghost looks correct via opacity + outline */
@@ -1488,7 +1740,9 @@ onUnmounted(() => {
     border-color: var(--nx-border-strong);
     opacity: 1;
 
-    &:hover { background: var(--nx-bg-gray); }
+    &:hover {
+      background: var(--nx-bg-gray);
+    }
   }
 
   &--lg {
@@ -1511,10 +1765,14 @@ onUnmounted(() => {
   border-radius: var(--nx-radius-xs);
   transition: background 0.15s;
 
-  &:hover { background: rgb(255 255 255 / 10%); }
+  &:hover {
+    background: rgb(255 255 255 / 10%);
+  }
 }
 
-.nx-nav.is-scrolled .nx-link:hover { background: var(--nx-bg-gray); }
+.nx-nav.is-scrolled .nx-link:hover {
+  background: var(--nx-bg-gray);
+}
 
 /* round black arrow button — Notion's signature card CTA */
 .nx-arrow {
@@ -1531,7 +1789,9 @@ onUnmounted(() => {
   background: var(--nx-text);
   border: 0;
   border-radius: 50%;
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
 
   &:hover {
     background: #000;
@@ -1570,8 +1830,12 @@ onUnmounted(() => {
   color: var(--hero-doodle);
   pointer-events: none;
 
-  &--left { left: -120px; }
-  &--right { right: -120px; }
+  &--left {
+    left: -120px;
+  }
+  &--right {
+    right: -120px;
+  }
 }
 
 .nx-hero__inner {
@@ -1626,7 +1890,10 @@ onUnmounted(() => {
     background: rgb(255 255 255 / 6%);
     border: 1px solid rgb(255 255 255 / 12%);
     border-radius: 999px;
-    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    transition:
+      color 0.15s,
+      background 0.15s,
+      border-color 0.15s;
 
     &:hover {
       color: var(--hero-fg);
@@ -1677,10 +1944,28 @@ onUnmounted(() => {
     color: var(--nx-text);
   }
 
-  &--tl { top: -28px; left: -16px; width: 320px; transform: rotate(-2deg); }
-  &--tr { top: -28px; right: -16px; transform: rotate(2deg); }
-  &--bl { bottom: -32px; left: 12px; transform: rotate(-1.5deg); }
-  &--br { bottom: -32px; right: 12px; width: 260px; transform: rotate(1.5deg); }
+  &--tl {
+    top: -28px;
+    left: -16px;
+    width: 320px;
+    transform: rotate(-2deg);
+  }
+  &--tr {
+    top: -28px;
+    right: -16px;
+    transform: rotate(2deg);
+  }
+  &--bl {
+    bottom: -32px;
+    left: 12px;
+    transform: rotate(-1.5deg);
+  }
+  &--br {
+    bottom: -32px;
+    right: 12px;
+    width: 260px;
+    transform: rotate(1.5deg);
+  }
 }
 
 .nx-sat__dot {
@@ -1711,7 +1996,11 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 6px;
   padding: 10px;
-  background: linear-gradient(160deg, rgb(123 97 255 / 12%), rgb(74 144 226 / 10%));
+  background: linear-gradient(
+    160deg,
+    rgb(123 97 255 / 12%),
+    rgb(74 144 226 / 10%)
+  );
   border: 1px solid rgb(123 97 255 / 25%);
   border-radius: 12px;
 
@@ -1750,8 +2039,12 @@ onUnmounted(() => {
 }
 
 @keyframes nx-pulse-sm {
-  0% { box-shadow: 0 0 0 0 rgb(38 206 131 / 60%); }
-  100% { box-shadow: 0 0 0 8px rgb(38 206 131 / 0%); }
+  0% {
+    box-shadow: 0 0 0 0 rgb(38 206 131 / 60%);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgb(38 206 131 / 0%);
+  }
 }
 
 .nx-sat__wave--chip {
@@ -1760,7 +2053,7 @@ onUnmounted(() => {
 
   span {
     width: 2px;
-    background: linear-gradient(180deg, #7B61FF, #4A90E2);
+    background: linear-gradient(180deg, #7b61ff, #4a90e2);
   }
 }
 
@@ -1773,7 +2066,7 @@ onUnmounted(() => {
   font-size: 16px;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #7B61FF, #4A90E2);
+  background: linear-gradient(135deg, #7b61ff, #4a90e2);
   border-radius: 50%;
 
   .nx-pulse {
@@ -1786,8 +2079,14 @@ onUnmounted(() => {
 }
 
 @keyframes nx-pulse {
-  0% { transform: scale(0.9); opacity: 1; }
-  100% { transform: scale(1.35); opacity: 0; }
+  0% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
 }
 
 .nx-sat__wave {
@@ -1800,15 +2099,20 @@ onUnmounted(() => {
   span {
     width: 3px;
     height: 30%;
-    background: linear-gradient(180deg, #7B61FF, #4A90E2);
+    background: linear-gradient(180deg, #7b61ff, #4a90e2);
     border-radius: 2px;
     animation: nx-wave 1.2s ease-in-out infinite;
   }
 }
 
 @keyframes nx-wave {
-  0%, 100% { height: 30%; }
-  50% { height: 100%; }
+  0%,
+  100% {
+    height: 30%;
+  }
+  50% {
+    height: 100%;
+  }
 }
 
 /* AI chat bubbles */
@@ -1848,13 +2152,25 @@ onUnmounted(() => {
     animation: nx-typing 1.2s ease-in-out infinite;
   }
 
-  i:nth-child(2) { animation-delay: 0.15s; }
-  i:nth-child(3) { animation-delay: 0.3s; }
+  i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
 }
 
 @keyframes nx-typing {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-  40% { transform: translateY(-3px); opacity: 1; }
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
 }
 
 /* AI PPT slides */
@@ -1885,8 +2201,12 @@ onUnmounted(() => {
     background: rgb(0 0 0 / 12%);
     border-radius: 2px;
 
-    &.w70 { width: 70%; }
-    &.w50 { width: 50%; }
+    &.w70 {
+      width: 70%;
+    }
+    &.w50 {
+      width: 50%;
+    }
   }
 
   &--alt {
@@ -1908,8 +2228,14 @@ onUnmounted(() => {
   background: rgb(74 144 226 / 8%);
   border-radius: 6px;
 
-  .k { color: #c41a16; font-weight: 600; }
-  .f { color: #0e8a16; font-weight: 600; }
+  .k {
+    color: #c41a16;
+    font-weight: 600;
+  }
+  .f {
+    color: #0e8a16;
+    font-weight: 600;
+  }
 }
 
 .nx-cases {
@@ -2027,7 +2353,9 @@ onUnmounted(() => {
   border: 0;
   border-radius: 4px;
   opacity: 0.78;
-  transition: background 0.15s, opacity 0.15s;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
 
   svg {
     width: 16px;
@@ -2123,7 +2451,9 @@ onUnmounted(() => {
     border-radius: 4px;
     transition: background 0.15s;
 
-    &:hover { background: rgb(0 0 0 / 3%); }
+    &:hover {
+      background: rgb(0 0 0 / 3%);
+    }
   }
 }
 
@@ -2149,11 +2479,19 @@ onUnmounted(() => {
 
 .nx-fade-enter-active,
 .nx-fade-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
-.nx-fade-enter-from { opacity: 0; transform: translateY(6px); }
-.nx-fade-leave-to { opacity: 0; transform: translateY(-4px); }
+.nx-fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.nx-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
 
 /* =========================================================
    LOGO STRIP
@@ -2190,13 +2528,65 @@ onUnmounted(() => {
 }
 
 /* =========================================================
+   CORE TECH GRID
+   ========================================================= */
+.nx-tech-grid {
+  max-width: var(--nx-container);
+  margin: 48px auto 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.nx-tech-card {
+  padding: 32px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid var(--nx-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.nx-tech-card__num {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--nx-brand);
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.nx-tech-card__title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--nx-text);
+}
+
+.nx-tech-card__desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--nx-text-muted);
+}
+
+/* =========================================================
    SECTION shared
    ========================================================= */
 .nx-section {
   padding: 96px 32px;
   background: var(--nx-bg);
 
-  &--gray { background: var(--nx-bg-gray); }
+  &--gray {
+    background: var(--nx-bg-gray);
+  }
 }
 
 .nx-section--features {
@@ -2210,7 +2600,8 @@ onUnmounted(() => {
   &--center {
     text-align: center;
   }
-}.nx-eyebrow {
+}
+.nx-eyebrow {
   margin: 0;
   font-size: 14px;
   font-weight: 500;
@@ -2227,7 +2618,10 @@ onUnmounted(() => {
   color: var(--nx-text);
 }
 
-.nx-shead--center .nx-stitle { margin-left: auto; margin-right: auto; }
+.nx-shead--center .nx-stitle {
+  margin-left: auto;
+  margin-right: auto;
+}
 
 .nx-ssub {
   max-width: 560px;
@@ -2277,7 +2671,9 @@ onUnmounted(() => {
   &--sm {
     padding: 28px;
 
-    .nx-bento__head { padding: 0; }
+    .nx-bento__head {
+      padding: 0;
+    }
   }
 }
 
@@ -2305,7 +2701,9 @@ onUnmounted(() => {
   color: var(--nx-text);
 }
 
-.nx-bento--wide .nx-bento__title { font-size: 28px; }
+.nx-bento--wide .nx-bento__title {
+  font-size: 28px;
+}
 
 .nx-bento__copy {
   margin: 14px 0 0;
@@ -2361,6 +2759,33 @@ onUnmounted(() => {
   }
 }
 
+.nx-bento__inset--scripted {
+  display: flex;
+  min-height: 420px;
+  padding: 0;
+  background: #07111f;
+  border-radius: 8px 0 0;
+  box-shadow: 0 -2px 14px rgb(0 0 0 / 16%);
+
+  :deep(.smd) {
+    min-height: inherit;
+    border: 0;
+    border-radius: inherit;
+    box-shadow: none;
+  }
+}
+
+.nx-bento:not(.nx-bento--wide) .nx-bento__inset--scripted {
+  min-height: 360px;
+}
+
+.nx-bento__inset--lg.nx-bento__inset--scripted {
+  min-height: 520px;
+  padding: 0;
+  background: #07111f;
+  border-radius: var(--nx-radius);
+}
+
 .nx-bento__inset--lg .nx-mockdoc {
   flex: 1;
   padding: 24px 28px;
@@ -2399,7 +2824,9 @@ onUnmounted(() => {
   max-width: var(--nx-container);
   margin: 0 auto 20px;
 
-  .nx-bento { margin: 0; }
+  .nx-bento {
+    margin: 0;
+  }
 
   &--3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2438,9 +2865,15 @@ onUnmounted(() => {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 999px;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 
-  &:hover { color: var(--nx-text); background: #fff; }
+  &:hover {
+    color: var(--nx-text);
+    background: #fff;
+  }
 
   &.is-active {
     color: var(--nx-text);
@@ -2495,7 +2928,11 @@ onUnmounted(() => {
 }
 
 .nx-tabpanel__media .nx-bento__inset--lg {
-  min-height: 320px;
+  min-height: 520px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 32px 80px rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
 }
 
 /* =========================================================
@@ -2690,7 +3127,10 @@ onUnmounted(() => {
   gap: 12px;
   align-items: center;
 
-  img { width: 32px; height: 32px; }
+  img {
+    width: 32px;
+    height: 32px;
+  }
 
   strong {
     display: block;
@@ -2716,12 +3156,16 @@ onUnmounted(() => {
    RESPONSIVE
    ========================================================= */
 @media (width <= 1024px) {
-  .nx-sat { display: none; }
+  .nx-sat {
+    display: none;
+  }
 
   .nx-bento--wide {
     flex-direction: column;
 
-    > .nx-bento__head { flex: none; }
+    > .nx-bento__head {
+      flex: none;
+    }
   }
 
   .nx-bento__grid,
@@ -2734,20 +3178,39 @@ onUnmounted(() => {
     gap: 28px;
   }
 
-  .nx-steps { grid-template-columns: repeat(2, 1fr); row-gap: 28px; }
-  .nx-steps li:nth-child(3)::before { display: none; }
+  .nx-steps {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 28px;
+  }
+  .nx-steps li:nth-child(3)::before {
+    display: none;
+  }
 
-  .nx-quotes { grid-template-columns: 1fr; }
+  .nx-quotes {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (width <= 680px) {
-  .nx-nav__inner { padding: 0 16px; }
-  .nx-nav__links { display: none; }
+  .nx-nav__inner {
+    padding: 0 16px;
+  }
+  .nx-nav__links {
+    display: none;
+  }
 
-  .nx-hero { padding: 100px 16px 56px; }
-  .nx-hero__product { padding: 0 16px; margin-top: 36px; }
+  .nx-hero {
+    padding: 100px 16px 56px;
+  }
+  .nx-hero__product {
+    padding: 0 16px;
+    margin-top: 36px;
+  }
 
-  .nx-window__body { grid-template-columns: 1fr; min-height: 0; }
+  .nx-window__body {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
 
   .nx-side {
     display: grid;
@@ -2758,7 +3221,10 @@ onUnmounted(() => {
     border-bottom: 1px solid var(--nx-border);
   }
 
-  .nx-side__head, .nx-side__group { display: none; }
+  .nx-side__head,
+  .nx-side__group {
+    display: none;
+  }
 
   .nx-side__item {
     flex-direction: column;
@@ -2768,23 +3234,53 @@ onUnmounted(() => {
     text-align: center;
   }
 
-  .nx-doc { padding: 24px 20px; }
-  .nx-doc__title { font-size: 24px; }
+  .nx-doc {
+    padding: 24px 20px;
+  }
+  .nx-doc__title {
+    font-size: 24px;
+  }
 
-  .nx-strip__items { gap: 24px; }
+  .nx-strip__items {
+    gap: 24px;
+  }
 
-  .nx-section { padding: 64px 16px; }
-  .nx-cta { padding: 72px 16px 88px; }
+  .nx-section {
+    padding: 64px 16px;
+  }
+  .nx-cta {
+    padding: 72px 16px 88px;
+  }
 
-  .nx-bento__head { padding: 22px 22px 18px; }
-  .nx-bento__title { font-size: 19px; }
+  .nx-bento__head {
+    padding: 22px 22px 18px;
+  }
+  .nx-bento__title {
+    font-size: 19px;
+  }
 
-  .nx-steps { grid-template-columns: 1fr; }
-  .nx-steps li + li::before { display: none; }
-  .nx-steps li { padding: 0; }
-  .nx-steps li + li { padding-top: 22px; margin-top: 22px; border-top: 1px solid var(--nx-border); }
+  .nx-steps {
+    grid-template-columns: 1fr;
+  }
+  .nx-steps li + li::before {
+    display: none;
+  }
+  .nx-steps li {
+    padding: 0;
+  }
+  .nx-steps li + li {
+    padding-top: 22px;
+    margin-top: 22px;
+    border-top: 1px solid var(--nx-border);
+  }
 
-  .nx-foot__inner { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .nx-foot__legal { text-align: left; }
+  .nx-foot__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .nx-foot__legal {
+    text-align: left;
+  }
 }
 </style>

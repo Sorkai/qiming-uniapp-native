@@ -4,6 +4,8 @@
  * 课程上下文：嵌入式 Linux 开发实践教程 (Qt GUI + TFLite)
  */
 
+type TimelineItemType = "success" | "primary" | "warning" | "danger" | "info";
+
 export interface StudentDataset {
   id: string;
   name: string;
@@ -52,7 +54,7 @@ export interface StudentDataset {
     stats: Array<{ label: string; value: string; sub: string }>;
     strengths: Array<{ title: string; desc: string }>;
     weakPoints: Array<{ level: "high" | "mid"; title: string; desc: string }>;
-    timeline: Array<{ time: string; content: string; type: string }>;
+    timeline: Array<{ time: string; content: string; type: TimelineItemType }>;
     suggestions: string[];
   };
 }
