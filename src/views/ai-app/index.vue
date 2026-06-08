@@ -1,11 +1,10 @@
 ﻿<script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storageLocal } from "@pureadmin/utils";
+import { ElMessage } from "element-plus";
 import {
-  ArrowLeftBold,
   Cpu,
-  ChatDotRound,
   FolderOpened,
   Document,
   Guide,
@@ -25,8 +24,6 @@ import {
   Bell,
   ChatLineRound,
   Close,
-  CircleCheckFilled,
-  WarningFilled,
   ArrowRight
 } from "@element-plus/icons-vue";
 
@@ -43,41 +40,81 @@ import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 
-// 引入 Lottie 动画资源
-import creditCardAnimation from "@/assets/aiapplottie/credit-card-animation.json";
-import emptyStateDevSettingsAnimation from "@/assets/aiapplottie/empty-state-dev-settings-animation.json";
 import emptyStateDevelopmentAnimation from "@/assets/aiapplottie/empty-state-development-animation.json";
-import emptyStateLockedContentAnimation from "@/assets/aiapplottie/empty-state-locked-content-animation.json";
-import emptyStateMediaAnimation from "@/assets/aiapplottie/empty-state-media-animation.json";
-import emptyStateResponsiveAnimation from "@/assets/aiapplottie/empty-state-responsive-animation.json";
-import emptyStateSignatureAnimation from "@/assets/aiapplottie/empty-state-signature-animation.json";
-import emptyStateUploadMediaAnimation from "@/assets/aiapplottie/empty-state-upload-media-animation.json";
-import lockedFilesAnimation from "@/assets/aiapplottie/locked-files-animation.json";
 import onlineChartAnimation from "@/assets/aiapplottie/online-chart-animation.json";
 import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
 
 import { useUserStore } from "@/store/modules/user";
-import { useNav } from "@/layout/hooks/useNav";
+import {
+  getAssistantBootstrap,
+  getAssistantConversationGroups,
+  getAssistantConversationMessages,
+  streamAssistantChat,
+  type AssistantBootstrapCourse,
+  type AssistantBootstrapResp,
+  type AssistantBootstrapStudent,
+  type AssistantChatResource,
+  type AssistantChatStreamEvent,
+  type AssistantChatTraceStep,
+  type AssistantConversationItem,
+  type AssistantOption,
+  type AssistantSkill
+} from "@/api/frontend/assistant";
 
 defineOptions({ name: "AiAppWorkbench" });
 
 const route = useRoute();
 const router = useRouter();
-const { getLogo } = useNav();
 const userStore = useUserStore();
 
 // 权限判断
-const isAdmin = ref(userStore.roles.includes("admin"));
-const isTeacher = ref(userStore.roles.includes("teacher") || isAdmin.value);
+const isAdmin = computed(() => userStore.roles.includes("admin"));
+const isTeacher = computed(
+  () => userStore.roles.includes("teacher") || isAdmin.value
+);
 
-// === 模拟/基础状态数据 ===
+type CourseView = AssistantBootstrapCourse & {
+  id: number;
+  name: string;
+};
+
+type StudentView = AssistantBootstrapStudent & {
+  id: number;
+  name: string;
+  avatar: string;
+};
+
+type ConversationView = AssistantConversationItem & {
+  id: string;
+  title: string;
+  time?: string;
+  course: string;
+  courseId?: number;
+  status?: string;
+};
+
+type ChatMessageView = {
+  id: string | number;
+  role: string;
+  type: "system" | "user";
+  content: string;
+  resources?: AssistantChatResource[];
+  streaming?: boolean;
+  error?: boolean;
+};
+
+const assistantBootstrap = ref<AssistantBootstrapResp | null>(null);
+const isBootstrapping = ref(false);
+const isChatStreaming = ref(false);
+const featureFlags = computed(
+  () => assistantBootstrap.value?.feature_flags || {}
+);
+
 const mode = ref("学生模式");
-// 如果是老师或管理员，默认进入管理视角
-onMounted(() => {
-  if (isTeacher.value) {
-    mode.value = "教师模式";
-  }
-});
+const selectedAgentKey = ref("");
+const selectedModelKey = ref("");
+const thinkingModeKey = ref("");
+const selectedSkillKeys = ref<string[]>([]);
 
 const isNewTab = ref(false);
 
@@ -90,15 +127,29 @@ const currentTheme = ref(
 );
 const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
+const resolveRailFromPath = (path: string) => {
+  const key = path.split("/").filter(Boolean).pop() || "chat";
+  const knownRails = [
+    "chat",
+    "generation",
+    "agentpdf",
+    "path",
+    "profile",
+    "assessment",
+    "automation"
+  ];
+  return knownRails.includes(key) ? key : "chat";
+};
+
 // 会话数据集
-const activeRail = ref(route.path.split("/").pop() || "chat");
+const activeRail = ref(resolveRailFromPath(route.path));
 watch(
   () => route.path,
   newPath => {
-    activeRail.value = newPath.split("/").pop() || "chat";
+    activeRail.value = resolveRailFromPath(newPath);
   }
 );
-const activeCourse = ref(null);
+const activeCourse = ref<CourseView | null>(null);
 
 // 侧边栏 / 数字人面板 收起状态
 const sidebarCollapsed = ref(false);
@@ -113,91 +164,21 @@ const virtualHumanRef = ref<{
   resumeRender?: () => void;
 } | null>(null);
 
-// 学生拥有的课程（动态拉取）
-const myCourses = ref(["数据结构", "算法设计", "高等数学", "大学物理"]);
+const myCourses = ref<CourseView[]>([]);
+const myStudents = ref<StudentView[]>([]);
+const selectedStudentId = ref<number | undefined>();
+const conversations = ref<ConversationView[]>([]);
+const activeConversationId = ref("");
 
-// 教师关联的学生列表
-const myStudents = ref([
-  {
-    id: "s1",
-    name: "吴同学",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Wu",
-    profileDimensions: [
-      { label: "知识基础", value: 72 },
-      { label: "认知风格", value: 88 },
-      { label: "易错点偏好", value: 45 },
-      { label: "学习进度", value: 62 },
-      { label: "探索欲", value: 92 },
-      { label: "抗挫折能力", value: 78 }
-    ]
-  },
-  {
-    id: "s2",
-    name: "张同学",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhang",
-    profileDimensions: [
-      { label: "知识基础", value: 45 },
-      { label: "认知风格", value: 60 },
-      { label: "易错点偏好", value: 85 },
-      { label: "学习进度", value: 30 },
-      { label: "探索欲", value: 55 },
-      { label: "抗挫折能力", value: 40 }
-    ]
-  },
-  {
-    id: "s3",
-    name: "赵同学",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhao",
-    profileDimensions: [
-      { label: "知识基础", value: 98 },
-      { label: "认知风格", value: 95 },
-      { label: "易错点偏好", value: 15 },
-      { label: "学习进度", value: 99 },
-      { label: "探索欲", value: 96 },
-      { label: "抗挫折能力", value: 97 }
-    ]
-  },
-  {
-    id: "s4",
-    name: "钱同学",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Qian",
-    profileDimensions: [
-      { label: "知识基础", value: 65 },
-      { label: "认知风格", value: 72 },
-      { label: "易错点偏好", value: 58 },
-      { label: "学习进度", value: 84 },
-      { label: "探索欲", value: 70 },
-      { label: "抗挫折能力", value: 82 }
-    ]
-  },
-  {
-    id: "s5",
-    name: "孙同学",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sun",
-    profileDimensions: [
-      { label: "知识基础", value: 52 },
-      { label: "认知风格", value: 68 },
-      { label: "易错点偏好", value: 82 },
-      { label: "学习进度", value: 48 },
-      { label: "探索欲", value: 65 },
-      { label: "抗挫折能力", value: 50 }
-    ]
-  },
-  {
-    id: "s6",
-    name: "周同学",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zhou",
-    profileDimensions: [
-      { label: "知识基础", value: 88 },
-      { label: "认知风格", value: 82 },
-      { label: "易错点偏好", value: 35 },
-      { label: "学习进度", value: 81 },
-      { label: "探索欲", value: 89 },
-      { label: "抗挫折能力", value: 91 }
-    ]
-  }
-]);
-const selectedStudentId = ref("s1");
+const selectedCourseId = computed(
+  () => activeCourse.value?.id || assistantBootstrap.value?.selected_course_id
+);
+const selectedCourseName = computed(
+  () => activeCourse.value?.name || assistantBootstrap.value?.courses?.[0]?.course_name || ""
+);
+const selectedTargetStudentId = computed(() =>
+  mode.value === "教师模式" ? selectedStudentId.value : undefined
+);
 
 // 【请求还原】：保留原版所有的侧边功能项
 const railItems = ref([
@@ -210,58 +191,7 @@ const railItems = ref([
   { key: "automation", label: "常规任务", icon: "Check" }
 ]);
 
-const conversations = ref([
-  {
-    id: 1,
-    title: "关于图的遍历算法探讨",
-    time: "上午 10:23",
-    course: "数据结构",
-    status: "分析中"
-  },
-  {
-    id: 2,
-    title: "红黑树左旋右旋原理解析",
-    time: "昨天 14:15",
-    course: "数据结构",
-    status: "已解答"
-  },
-  {
-    id: 3,
-    title: "动态规划: 斐波那契数列变形",
-    time: "昨天 09:30",
-    course: "算法设计",
-    status: "已解答"
-  }
-]);
-
 const selectedTaskId = ref("");
-
-const mockTaskHistory = ref([
-  {
-    date: "2026-05-13",
-    time: "18:00",
-    status: "success",
-    log: "任务执行成功，耗时 1.2s，产出物已归档并发送通知。"
-  },
-  {
-    date: "2026-05-06",
-    time: "18:00",
-    status: "success",
-    log: "任务执行成功，耗时 1.5s，产出物已归档。"
-  },
-  {
-    date: "2026-04-29",
-    time: "18:00",
-    status: "warning",
-    log: "任务执行完成，部分来源数据缺失，已使用默认值填充计算。"
-  },
-  {
-    date: "2026-04-22",
-    time: "18:00",
-    status: "success",
-    log: "任务执行成功，耗时 1.1s，产出物已归档。"
-  }
-]);
 
 const routineTasks = ref([
   {
@@ -321,141 +251,165 @@ const profileDimensions = ref([
   { label: "抗挫折能力", value: 88 }
 ]);
 
-const agentItems = ref([
-  {
-    id: "a1",
-    name: "学情诊断专家",
-    desc: "分析答疑记录更新画像",
-    status: "running"
-  },
-  {
-    id: "a2",
-    name: "课程研发助手",
-    desc: "梳理知识点与内容大纲",
-    status: "running"
-  },
-  {
-    id: "a3",
-    name: "练习题出题人",
-    desc: "根据重难点生成练习题",
-    status: "running"
-  },
-  {
-    id: "a4",
-    name: "讲义排版校对",
-    desc: "为您整合导出专属辅导",
+const agentTrace = ref<AssistantChatTraceStep[]>([]);
+const generatedResources = ref<AssistantChatResource[]>([]);
+const streamCancel = ref<null | (() => void)>(null);
+const messages = ref<ChatMessageView[]>([]);
+
+const agentItems = computed(() => {
+  if (agentTrace.value.length) {
+    return agentTrace.value.map((step, index) => ({
+      id: `${step.agent}-${step.stage}-${index}`,
+      name: step.agent || step.stage || "学习助手",
+      desc: step.summary || step.stage || "处理中",
+      status:
+        step.status === "done" || step.status === "completed"
+          ? "done"
+          : "running"
+    }));
+  }
+
+  return (assistantBootstrap.value?.agents || []).map(agent => ({
+    id: agent.key,
+    name: agent.label,
+    desc: agent.description || "学习助手 Agent",
     status: "done"
-  }
-]);
+  }));
+});
 
-const generatedResources = ref([
-  {
-    title: "红黑树左旋右旋 3D动画",
-    kind: "视频讲解",
-    desc: "自动生成的动画讲解逻辑",
-    eta: "马上可用"
-  },
-  {
-    title: "数据结构期中错题重组",
-    kind: "互动题库",
-    desc: "基于你历史易错点生成",
-    eta: "马上可用"
-  },
-  {
-    title: "二叉树实战代码沙盒",
-    kind: "代码实操",
-    desc: "带有智能断点的运行环境",
-    eta: "马上可用"
-  }
-]);
+const inspectorResources = computed(() =>
+  generatedResources.value.map(resource => ({
+    title: resource.title,
+    kind: resource.type || "学习资源",
+    desc: resource.desc || "学习助手推荐资源",
+    eta: resource.preview_url ? "可预览" : "已生成",
+    preview_url: resource.preview_url
+  }))
+);
 
-const messages = ref([
-  {
-    id: 1,
-    role: "系统提示",
-    type: "system",
-    content:
-      "同学你好，你的「数据结构」智能辅导平台已就绪。专属助教已经分析了你上次的『二叉树』测验，发现存在易混淆点。今天我们需要针对性突破吗？"
-  },
-  {
-    id: 2,
-    role: "学生",
-    type: "user",
-    content: "是的，红黑树的左旋和右旋我总是搞混，手写代码也容易记错指针变换。"
-  },
-  {
-    id: 3,
-    role: "智能助教",
-    type: "system",
-    content:
-      "很典型的痛点！我正在调度排版校对助手和出题助手为你构建一套专属的复习资源，先看看这份概念视频，再到沙盒里试着做做题：",
-    resources: [
-      {
-        title: "红黑树左旋右旋 3D动画",
-        type: "video",
-        desc: "直观展示节点指针的转移过程"
-      },
-      {
-        title: "易错点专项练习",
-        type: "code",
-        desc: "动手补充左旋函数 core 部分"
-      }
-    ]
-  }
-]);
+const resetChatGreeting = () => {
+  const courseName = selectedCourseName.value || "当前课程";
+  messages.value = [
+    {
+      id: "assistant-greeting",
+      role: "智能助教",
+      type: "system",
+      content:
+        assistantBootstrap.value?.message ||
+        `你好，${courseName} 的学习助手已就绪。你可以直接提出学习问题，我会结合课程、画像和学习路径给出建议。`
+    }
+  ];
+};
 
-// 模拟交互
+const updateAssistantMessage = (
+  id: string | number,
+  patch: Partial<ChatMessageView>
+) => {
+  const target = messages.value.find(item => item.id === id);
+  if (target) Object.assign(target, patch);
+};
+
+const handleAssistantStreamEvent = (
+  event: AssistantChatStreamEvent,
+  assistantMessageId: string | number
+) => {
+  if (event.conversation_id) {
+    activeConversationId.value = event.conversation_id;
+  }
+
+  if (event.event === "conversation.created") {
+    void loadConversationGroups();
+    return;
+  }
+
+  if (event.event === "assistant.delta") {
+    const target = messages.value.find(item => item.id === assistantMessageId);
+    if (target) target.content += event.delta || "";
+    return;
+  }
+
+  if (event.event === "assistant.completed") {
+    const content = event.content_text || "";
+    updateAssistantMessage(assistantMessageId, {
+      content:
+        content ||
+        messages.value.find(item => item.id === assistantMessageId)?.content ||
+        "学习助手已完成回复。",
+      resources: event.resources || [],
+      streaming: false
+    });
+    agentTrace.value = event.trace || [];
+    generatedResources.value = event.resources || [];
+    virtualHumanRef.value?.speak?.(
+      event.digital_human?.speech_text || content || event.digital_human?.highlight_text || ""
+    );
+    isChatStreaming.value = false;
+    void loadConversationGroups();
+    return;
+  }
+
+  if (event.event === "error") {
+    updateAssistantMessage(assistantMessageId, {
+      content: event.error_message || "学习助手响应失败，请稍后重试。",
+      streaming: false,
+      error: true
+    });
+    isChatStreaming.value = false;
+    ElMessage.error(event.error_message || "学习助手响应失败");
+  }
+};
+
 const handleSendMessage = (text: string) => {
+  const trimmed = text.trim();
+  if (!trimmed || isChatStreaming.value) return;
+  if (featureFlags.value.chat_stream === false) {
+    ElMessage.warning("当前学习助手对话能力暂不可用");
+    return;
+  }
+  if (!selectedCourseId.value) {
+    ElMessage.warning("请先选择课程");
+    return;
+  }
+  if (mode.value === "教师模式" && !selectedTargetStudentId.value) {
+    ElMessage.warning("教师模式下请先选择学生");
+    return;
+  }
+
   messages.value.push({
-    id: Date.now(),
-    role: "学生",
+    id: `user-${Date.now()}`,
+    role: mode.value === "教师模式" ? "教师" : "学生",
     type: "user",
-    content: text
+    content: trimmed
   });
 
-  // 演示用：用户提问后立即让数字人开口朗读固定的「演示回复」(自动驱动口型)
-  const demoReply =
-    "栈是一种先进后出(LIFO)的线性结构，只能在栈顶进行插入和删除。核心操作包括 push 压栈、pop 出栈、peek 查看栈顶，常用于函数调用、表达式求值与括号匹配。右侧已为你生成可交互的栈操作动画，点击即可预览。";
-  virtualHumanRef.value?.speak?.(demoReply);
+  const assistantMessageId = `assistant-${Date.now()}`;
+  messages.value.push({
+    id: assistantMessageId,
+    role: "智能助教",
+    type: "system",
+    content: "",
+    streaming: true
+  });
 
-  setTimeout(() => {
-    profileDimensions.value[4].value = Math.min(
-      100,
-      profileDimensions.value[4].value + 5
-    );
-    profileDimensions.value[2].value = Math.max(
-      0,
-      profileDimensions.value[2].value - 5
-    );
-    agentItems.value.forEach(a => (a.status = "running"));
-
-    setTimeout(() => {
-      agentItems.value[0].status = "done";
-      agentItems.value[1].status = "done";
-      messages.value.push({
-        id: Date.now(),
-        role: "智能助教",
-        type: "system",
-        content: demoReply,
-        resources: [
-          {
-            title: "栈操作交互动画 (push / pop / peek)",
-            type: "animation",
-            desc: "点击查看 LIFO 压栈与出栈过程"
-          },
-          {
-            title: "栈的典型应用场景梳理 (PDF)",
-            type: "doc",
-            desc: "函数调用 / 括号匹配 / 表达式求值"
-          }
-        ]
-      });
-      setTimeout(() => {
-        agentItems.value[2].status = "done";
-        agentItems.value[3].status = "done";
-      }, 1000);
-    }, 1500);
-  }, 500);
+  isChatStreaming.value = true;
+  agentTrace.value = [];
+  streamCancel.value?.();
+  streamCancel.value = streamAssistantChat(
+    {
+      conversation_id: activeConversationId.value || undefined,
+      course_id: selectedCourseId.value,
+      target_student_id: selectedTargetStudentId.value,
+      mode: assistantBootstrap.value?.mode || (mode.value === "教师模式" ? "teacher" : "student"),
+      selected_agent: selectedAgentKey.value || undefined,
+      skill_keys: selectedSkillKeys.value,
+      selected_model: selectedModelKey.value || undefined,
+      thinking_mode: thinkingModeKey.value || undefined,
+      message: trimmed,
+      attachment_ids: [],
+      metadata: { ui_entry: "ai_app_workbench" }
+    },
+    event => handleAssistantStreamEvent(event, assistantMessageId)
+  );
 };
 
 // === 栈操作预览弹窗 ===
@@ -503,8 +457,164 @@ function stackReset() {
 function handlePreview(res: any) {
   if (res?.type === "animation") {
     stackPreviewVisible.value = true;
+    return;
+  }
+  if (res?.preview_url) {
+    window.open(res.preview_url, "_blank");
   }
 }
+
+const formatConversationTime = (value?: string) => {
+  if (!value) return "";
+  return value.slice(5, 16);
+};
+
+const courseNameById = (courseId?: number) =>
+  myCourses.value.find(course => course.id === courseId)?.name ||
+  selectedCourseName.value ||
+  "未命名课程";
+
+const normalizeConversation = (
+  item: AssistantConversationItem,
+  fallbackCourseName?: string
+): ConversationView => ({
+  ...item,
+  id: item.conversation_id,
+  title: item.title || "未命名会话",
+  time: formatConversationTime(item.last_message_at),
+  course: fallbackCourseName || courseNameById(item.course_id),
+  courseId: item.course_id,
+  status: item.message_count > 0 ? "已同步" : "新会话"
+});
+
+const optionLabel = (options: AssistantOption[], key: string) =>
+  options.find(item => item.key === key)?.label || key;
+
+const selectedAgentLabel = computed(() =>
+  optionLabel(assistantBootstrap.value?.agents || [], selectedAgentKey.value)
+);
+const selectedModelLabel = computed(() =>
+  optionLabel(assistantBootstrap.value?.models || [], selectedModelKey.value)
+);
+const thinkingModeLabel = computed(() =>
+  optionLabel(
+    assistantBootstrap.value?.thinking_modes || [],
+    thinkingModeKey.value
+  )
+);
+
+const applyBootstrap = (data: AssistantBootstrapResp) => {
+  assistantBootstrap.value = data;
+  myCourses.value = (data.courses || []).map(course => ({
+    ...course,
+    id: course.course_id,
+    name: course.course_name
+  }));
+  myStudents.value = (data.students || []).map(student => ({
+    ...student,
+    id: student.student_id,
+    name: student.student_name,
+    avatar:
+      student.avatar ||
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.student_id}`
+  }));
+
+  mode.value =
+    data.mode === "teacher" || data.role === "teacher" || isTeacher.value
+      ? "教师模式"
+      : "学生模式";
+  selectedStudentId.value = data.selected_student_id || myStudents.value[0]?.id;
+  activeCourse.value =
+    myCourses.value.find(course => course.id === data.selected_course_id) ||
+    myCourses.value[0] ||
+    null;
+  selectedAgentKey.value = data.agents?.[0]?.key || "";
+  selectedModelKey.value = data.models?.[0]?.key || "";
+  thinkingModeKey.value = data.thinking_modes?.[0]?.key || "";
+  selectedSkillKeys.value = (data.skills || [])
+    .filter((skill: AssistantSkill) => skill.default_on)
+    .map(skill => skill.key);
+
+  if (data.conversation_summary?.conversation_id) {
+    activeConversationId.value = data.conversation_summary.conversation_id;
+  }
+  resetChatGreeting();
+};
+
+const loadAssistantBootstrap = async () => {
+  isBootstrapping.value = true;
+  try {
+    const { data } = await getAssistantBootstrap({
+      course_id: selectedCourseId.value,
+      target_student_id: selectedTargetStudentId.value
+    });
+    applyBootstrap(data);
+    await loadConversationGroups();
+  } catch (error: any) {
+    console.error("[AiApp] 学习助手启动上下文加载失败:", error);
+    ElMessage.error(error?.message || "学习助手启动上下文加载失败");
+  } finally {
+    isBootstrapping.value = false;
+  }
+};
+
+const loadConversationGroups = async () => {
+  try {
+    const { data } = await getAssistantConversationGroups({
+      target_student_id: selectedTargetStudentId.value
+    });
+    conversations.value = (data.list || []).flatMap(group =>
+      (group.conversations || []).map(item =>
+        normalizeConversation(item, group.course_name)
+      )
+    );
+  } catch (error) {
+    console.error("[AiApp] 学习助手会话加载失败:", error);
+  }
+};
+
+const loadConversationMessages = async (conversation: ConversationView) => {
+  if (!conversation.conversation_id) return;
+  try {
+    const { data } = await getAssistantConversationMessages(
+      conversation.conversation_id
+    );
+    activeConversationId.value = conversation.conversation_id;
+    const course =
+      myCourses.value.find(item => item.id === conversation.course_id) ||
+      myCourses.value.find(item => item.name === conversation.course);
+    if (course) activeCourse.value = course;
+    messages.value = (data.list || []).map(item => ({
+      id: item.message_id,
+      role:
+        item.role === "user"
+          ? mode.value === "教师模式"
+            ? "教师"
+            : "学生"
+          : "智能助教",
+      type: item.role === "user" ? "user" : "system",
+      content: item.content_text || ""
+    }));
+    if (!messages.value.length) resetChatGreeting();
+  } catch (error: any) {
+    console.error("[AiApp] 学习助手会话消息加载失败:", error);
+    ElMessage.error(error?.message || "会话消息加载失败");
+  }
+};
+
+const handleSwitchCourse = (courseName: string) => {
+  const target = myCourses.value.find(course => course.name === courseName);
+  if (!target) return;
+  activeCourse.value = target;
+  activeConversationId.value = "";
+  resetChatGreeting();
+};
+
+const handleProfileLoaded = (payload: { dimensions?: any[] }) => {
+  if (payload.dimensions?.length) {
+    profileDimensions.value = payload.dimensions;
+  }
+};
 
 const goBack = () => {
   if (window.history.state && window.history.length > 1) {
@@ -520,11 +630,11 @@ onMounted(() => {
     isNewTab.value = true;
     document.title = `学习助手 (${mode.value})`;
   }
+  void loadAssistantBootstrap();
 });
 
 const quickMessage = ref("");
 const quickCourse = ref("");
-const selectedMockAgent = ref("练习题助手");
 const quickInteractionMessages = [
   "老师好",
   "这一段没听懂",
@@ -537,7 +647,10 @@ const handleQuickInteraction = (text: string) => {
 };
 
 const handleNewChat = (payload: { course: string }) => {
-  activeCourse.value = payload.course;
+  const course = myCourses.value.find(item => item.name === payload.course);
+  if (course) activeCourse.value = course;
+  activeConversationId.value = "";
+  resetChatGreeting();
   if (quickMessage.value.trim()) {
     // 切换到聊天栏目，确保 VirtualHumanPanel 渲染 (v-show 会让 ref 可用)
     activeRail.value = "chat";
@@ -564,6 +677,18 @@ watch([humanCollapsed, activeRail], () => {
   syncHumanRenderState();
 });
 
+watch(selectedStudentId, () => {
+  if (
+    isBootstrapping.value ||
+    !assistantBootstrap.value ||
+    mode.value !== "教师模式"
+  )
+    return;
+  activeConversationId.value = "";
+  resetChatGreeting();
+  void loadAssistantBootstrap();
+});
+
 const handleVisibilityChange = () => {
   syncHumanRenderState();
 };
@@ -576,6 +701,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  streamCancel.value?.();
   document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
@@ -601,13 +727,9 @@ onUnmounted(() => {
           <AiSidebar
             v-model:activeRail="activeRail"
             :conversations="conversations"
-            :courses="myCourses"
+            :courses="myCourses.map(course => course.name)"
             @new-chat="handleNewChat"
-            @select-chat="
-              conv => {
-                activeCourse = conv.course;
-              }
-            "
+            @select-chat="loadConversationMessages"
           />
         </div>
 
@@ -692,9 +814,23 @@ onUnmounted(() => {
                 />
                 <AiChatModule
                   :messages="messages"
-                  :activeCourse="activeCourse"
+                  :activeCourse="activeCourse.name"
+                  :courses="myCourses.map(course => course.name)"
+                  :mode="mode"
+                  :agents="assistantBootstrap?.agents || []"
+                  :models="assistantBootstrap?.models || []"
+                  :thinkingModes="assistantBootstrap?.thinking_modes || []"
+                  :selectedAgent="selectedAgentLabel"
+                  :selectedModel="selectedModelLabel"
+                  :thinkingMode="thinkingModeLabel"
+                  :loading="isChatStreaming"
                   @send="handleSendMessage"
                   @preview="handlePreview"
+                  @switch-course="handleSwitchCourse"
+                  @update:mode="mode = $event"
+                  @update:selectedAgent="selectedAgentKey = $event"
+                  @update:selectedModel="selectedModelKey = $event"
+                  @update:thinkingMode="thinkingModeKey = $event"
                 />
               </div>
             </transition>
@@ -850,10 +986,10 @@ onUnmounted(() => {
                         <el-dropdown-menu>
                           <el-dropdown-item
                             v-for="c in myCourses"
-                            :key="c"
-                            :command="c"
+                            :key="c.id"
+                            :command="c.name"
                           >
-                            {{ c }}
+                            {{ c.name }}
                           </el-dropdown-item>
                         </el-dropdown-menu>
                       </template>
@@ -885,25 +1021,26 @@ onUnmounted(() => {
 
                     <el-dropdown
                       trigger="click"
-                      @command="a => (selectedMockAgent = a)"
+                      @command="a => (selectedAgentKey = a)"
                     >
                       <span
                         class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
                       >
                         <el-icon class="mr-1.5 text-[14px]"><Cpu /></el-icon>
-                        {{ selectedMockAgent }}
+                        {{ selectedAgentLabel || "选择助手" }}
                         <el-icon class="ml-1 text-[12px]"
                           ><ArrowDown
                         /></el-icon>
                       </span>
                       <template #dropdown>
                         <el-dropdown-menu>
-                          <el-dropdown-item command="练习题助手"
-                            >练习题助手</el-dropdown-item
+                          <el-dropdown-item
+                            v-for="agent in assistantBootstrap?.agents || []"
+                            :key="agent.key"
+                            :command="agent.key"
                           >
-                          <el-dropdown-item command="辅导助教"
-                            >辅导助教</el-dropdown-item
-                          >
+                            {{ agent.label }}
+                          </el-dropdown-item>
                         </el-dropdown-menu>
                       </template>
                     </el-dropdown>
@@ -913,7 +1050,7 @@ onUnmounted(() => {
                     <span
                       class="text-[12px] text-gray-400 font-medium tracking-wide flex items-center pr-2 cursor-pointer hover:text-gray-600 transition-colors"
                     >
-                      IntellEdu 4.0 超高
+                      {{ selectedModelLabel || "选择模型" }}
                       <el-icon class="ml-1"><ArrowDown /></el-icon>
                     </span>
                     <button
@@ -956,15 +1093,17 @@ onUnmounted(() => {
 
           <div v-else-if="activeRail === `generation`" class="h-full w-full">
             <div class="h-full bg-white overflow-hidden">
-              <AiResourceGeneration />
+              <AiResourceGeneration
+                :course-id="selectedCourseId"
+                :target-student-id="selectedTargetStudentId"
+              />
             </div>
           </div>
 
           <div v-else-if="activeRail === `path`" class="h-full w-full">
             <div
               v-if="
-                (isTeacher && mode === '教师模式' && !selectedStudentId) ||
-                (mode === '学生模式' && !selectedStudentId)
+                isTeacher && mode === '教师模式' && !selectedStudentId
               "
               class="h-full w-full flex items-center justify-center bg-white"
             >
@@ -985,7 +1124,10 @@ onUnmounted(() => {
               </div>
             </div>
             <div v-else class="h-full bg-white overflow-hidden">
-              <AiLearningPath :student-id="selectedStudentId" />
+              <AiLearningPath
+                :course-id="selectedCourseId"
+                :target-student-id="selectedTargetStudentId"
+              />
             </div>
           </div>
 
@@ -995,8 +1137,7 @@ onUnmounted(() => {
           >
             <div
               v-if="
-                (isTeacher && mode === '教师模式' && !selectedStudentId) ||
-                (mode === '学生模式' && !selectedStudentId)
+                isTeacher && mode === '教师模式' && !selectedStudentId
               "
               class="h-full w-full flex items-center justify-center"
             >
@@ -1021,7 +1162,11 @@ onUnmounted(() => {
               <div
                 class="flex-1 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
-                <AiLearningProfile :student-id="selectedStudentId" />
+                <AiLearningProfile
+                  :course-id="selectedCourseId"
+                  :target-student-id="selectedTargetStudentId"
+                  @profile-loaded="handleProfileLoaded"
+                />
               </div>
               <!-- 右：原 chat 右侧的画像 / 智能体 / 拓展资源 选项卡 -->
               <div
@@ -1029,13 +1174,10 @@ onUnmounted(() => {
               >
                 <AiInspector
                   :profileDimensions="
-                    selectedStudentId
-                      ? myStudents.find(s => s.id === selectedStudentId)
-                          ?.profileDimensions || profileDimensions
-                      : profileDimensions
+                    profileDimensions
                   "
                   :agentItems="agentItems"
-                  :resources="generatedResources"
+                  :resources="inspectorResources"
                 />
               </div>
             </div>
@@ -1044,8 +1186,7 @@ onUnmounted(() => {
           <div v-else-if="activeRail === `assessment`" class="h-full w-full">
             <div
               v-if="
-                (isTeacher && mode === '教师模式' && !selectedStudentId) ||
-                (mode === '学生模式' && !selectedStudentId)
+                isTeacher && mode === '教师模式' && !selectedStudentId
               "
               class="h-full w-full flex items-center justify-center bg-white"
             >
@@ -1066,7 +1207,10 @@ onUnmounted(() => {
               </div>
             </div>
             <div v-else class="h-full bg-white overflow-hidden">
-              <AiAssessment :student-id="selectedStudentId" />
+              <AiAssessment
+                :course-id="selectedCourseId"
+                :target-student-id="selectedTargetStudentId"
+              />
             </div>
           </div>
 
@@ -1227,57 +1371,10 @@ onUnmounted(() => {
 
                 <!-- 时间轴区域 -->
                 <div class="flex-1 overflow-y-auto p-8 relative bg-gray-50/30">
-                  <el-timeline class="task-timeline">
-                    <el-timeline-item
-                      v-for="(item, index) in mockTaskHistory"
-                      :key="index"
-                      :type="item.status === 'success' ? 'success' : 'warning'"
-                      :icon="
-                        item.status === 'success'
-                          ? 'CircleCheckFilled'
-                          : 'WarningFilled'
-                      "
-                      :color="item.status === 'success' ? '#67C23A' : '#E6A23C'"
-                      size="large"
-                    >
-                      <div
-                        class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <div class="flex items-center justify-between mb-2">
-                          <span class="text-sm font-bold text-gray-700">{{
-                            item.date
-                          }}</span>
-                          <span class="text-xs font-medium text-gray-400">{{
-                            item.time
-                          }}</span>
-                        </div>
-                        <p class="text-[13px] text-gray-600 leading-relaxed">
-                          {{ item.log }}
-                        </p>
-
-                        <div
-                          v-if="item.status === 'success' && index === 0"
-                          class="mt-3 py-2 px-3 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100"
-                        >
-                          <span
-                            class="text-xs text-gray-500 font-medium flex items-center gap-1.5"
-                          >
-                            <el-icon class="text-primary"
-                              ><FolderOpened
-                            /></el-icon>
-                            产出报告.pdf
-                          </span>
-                          <el-button
-                            type="primary"
-                            link
-                            size="small"
-                            class="text-xs"
-                            >查看</el-button
-                          >
-                        </div>
-                      </div>
-                    </el-timeline-item>
-                  </el-timeline>
+                  <el-empty
+                    description="暂无真实执行记录"
+                    :image-size="120"
+                  />
                 </div>
               </div>
             </div>

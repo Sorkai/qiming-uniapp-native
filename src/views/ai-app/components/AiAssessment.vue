@@ -1,29 +1,74 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { ElMessage } from "element-plus";
 import {
   DataAnalysis,
   Reading,
   CircleCheck,
   InfoFilled,
-  Cpu,
   Promotion,
   TrendCharts
 } from "@element-plus/icons-vue";
-import { getStudentDataset } from "./studentDatasets";
+import {
+  getAssistantAssessmentCurrent,
+  type AssistantAssessmentCurrentResp
+} from "@/api/frontend/assistant";
 
-const props = defineProps<{ studentId?: string }>();
+const props = defineProps<{
+  courseId?: number;
+  targetStudentId?: number;
+}>();
 
-const dataset = computed(() => getStudentDataset(props.studentId));
-const courseInfo = computed(() => dataset.value.assessment.courseInfo);
-const stats = computed(() => dataset.value.assessment.stats);
-const strengths = computed(() => dataset.value.assessment.strengths);
-const weakPoints = computed(() => dataset.value.assessment.weakPoints);
-const timeline = computed(() => dataset.value.assessment.timeline);
-const suggestions = computed(() => dataset.value.assessment.suggestions);
+const loading = ref(false);
+const assessment = ref<AssistantAssessmentCurrentResp | null>(null);
+
+const courseInfo = computed(
+  () =>
+    assessment.value?.course_info || {
+      name: "当前课程",
+      subtitle: "",
+      total_chapters: 0,
+      finished_chapters: 0
+    }
+);
+const stats = computed(() => assessment.value?.stats || []);
+const strengths = computed(() => assessment.value?.strengths || []);
+const weakPoints = computed(() => assessment.value?.weak_points || []);
+const timeline = computed(() => assessment.value?.timeline || []);
+const suggestions = computed(() => assessment.value?.suggestions || []);
+
+const timelineType = (type: string) => {
+  if (["primary", "success", "warning", "danger", "info"].includes(type)) {
+    return type as "primary" | "success" | "warning" | "danger" | "info";
+  }
+  return "primary";
+};
+
+const loadAssessment = async () => {
+  loading.value = true;
+  try {
+    const { data } = await getAssistantAssessmentCurrent({
+      course_id: props.courseId,
+      target_student_id: props.targetStudentId
+    });
+    assessment.value = data;
+  } catch (error: any) {
+    console.error("[AiAssessment] 学习评估加载失败:", error);
+    ElMessage.error(error?.message || "学习评估加载失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(loadAssessment);
+watch(() => [props.courseId, props.targetStudentId], loadAssessment);
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-6 bg-transparent overflow-y-auto">
+  <div
+    v-loading="loading"
+    class="h-full flex flex-col p-6 bg-transparent overflow-y-auto"
+  >
     <div class="mb-8 flex justify-between items-end gap-4 flex-wrap">
       <div class="flex items-center gap-4">
         <div
@@ -43,20 +88,19 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
       </div>
       <div class="flex items-center gap-3">
         <el-tag effect="plain" round size="large" class="!bg-bg_color">
-          章节 {{ courseInfo.finishedChapters }} /
-          {{ courseInfo.totalChapters }}
+          章节 {{ courseInfo.finished_chapters }} /
+          {{ courseInfo.total_chapters }}
         </el-tag>
-        <el-button type="primary" plain round icon="Download"
-          >导出报告</el-button
-        >
+        <el-tag v-if="assessment?.message" type="info" effect="plain" round>
+          {{ assessment.message }}
+        </el-tag>
       </div>
     </div>
 
-    <!-- 核心统计 - 适配平台看板风格 -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div v-if="stats.length" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div
-        v-for="(s, i) in stats"
-        :key="i"
+        v-for="s in stats"
+        :key="s.label"
         class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-all group"
       >
         <div
@@ -70,6 +114,7 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
           {{ s.value }}
         </div>
         <div
+          v-if="s.sub"
           class="text-[10px] font-bold px-3 py-1 rounded-full bg-primary/5 text-primary border border-primary/10"
         >
           {{ s.sub }}
@@ -78,7 +123,6 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- 弱点警示 - 针对性UI重构 -->
       <div
         class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm border-l-4 border-l-red-500"
       >
@@ -88,10 +132,10 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
           <el-icon :size="18"><InfoFilled /></el-icon>
           薄弱知识点警示
         </h4>
-        <div class="space-y-4">
+        <div v-if="weakPoints.length" class="space-y-4">
           <div
-            v-for="(w, i) in weakPoints"
-            :key="i"
+            v-for="w in weakPoints"
+            :key="w.title"
             class="group p-4 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:border-red-200 transition-colors"
           >
             <div class="flex items-center justify-between mb-2">
@@ -114,9 +158,9 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
             </p>
           </div>
         </div>
+        <el-empty v-else description="暂无薄弱点数据" :image-size="90" />
       </div>
 
-      <!-- 优势能力 -->
       <div
         class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm border-l-4 border-l-green-500"
       >
@@ -126,10 +170,10 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
           <el-icon :size="18"><CircleCheck /></el-icon>
           稳定优势能力
         </h4>
-        <div class="space-y-4">
+        <div v-if="strengths.length" class="space-y-4">
           <div
-            v-for="(item, i) in strengths"
-            :key="i"
+            v-for="item in strengths"
+            :key="item.title"
             class="p-4 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:border-green-200 transition-colors"
           >
             <span
@@ -142,11 +186,11 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
             >
           </div>
         </div>
+        <el-empty v-else description="暂无优势能力数据" :image-size="90" />
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6 pb-6">
-      <!-- 动态流水 -->
       <div
         class="lg:col-span-2 bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
       >
@@ -156,11 +200,11 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
           <el-icon class="text-primary"><TrendCharts /></el-icon>
           最近评估动态
         </h4>
-        <el-timeline class="pl-2">
+        <el-timeline v-if="timeline.length" class="pl-2">
           <el-timeline-item
-            v-for="(activity, index) in timeline"
-            :key="index"
-            :type="activity.type"
+            v-for="activity in timeline"
+            :key="`${activity.time}-${activity.content}`"
+            :type="timelineType(activity.type)"
             :timestamp="activity.time"
             hollow
           >
@@ -169,28 +213,23 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
             }}</span>
           </el-timeline-item>
         </el-timeline>
+        <el-empty v-else description="暂无评估动态" :image-size="90" />
       </div>
 
-      <!-- AI 建议 - 卡片视觉重构 -->
       <div
         class="lg:col-span-3 bg-gradient-to-br from-primary/5 via-bg_color to-primary/5 p-8 rounded-xl border border-primary/20 shadow-lg relative overflow-hidden group"
       >
-        <!-- 背景装饰 -->
-        <div
-          class="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-50"
-        />
-
         <h4
           class="font-bold text-primary flex items-center gap-2 mb-8 text-sm uppercase relative z-10"
         >
-          <el-icon :size="20" class="animate-bounce"><Promotion /></el-icon>
+          <el-icon :size="20"><Promotion /></el-icon>
           AI 提升建议报告
         </h4>
 
-        <div class="space-y-4 relative z-10">
+        <div v-if="suggestions.length" class="space-y-4 relative z-10">
           <div
             v-for="(tip, i) in suggestions"
-            :key="i"
+            :key="tip"
             class="flex items-start gap-4 p-4 bg-bg_color border border-gray-100 dark:border-gray-800 group-hover:border-primary/30 transition-all rounded-xl hover:translate-x-2"
           >
             <div
@@ -204,16 +243,12 @@ const suggestions = computed(() => dataset.value.assessment.suggestions);
             >
           </div>
         </div>
+        <el-empty v-else description="暂无提升建议" :image-size="100" />
 
         <div class="mt-8 flex items-center gap-3 relative z-10">
-          <el-button
-            type="primary"
-            size="large"
-            class="shadow-lg shadow-primary/20"
-          >
-            <el-icon class="mr-2"><Reading /></el-icon>更新学习路径
+          <el-button type="primary" size="large" class="shadow-lg shadow-primary/20">
+            <el-icon class="mr-2"><Reading /></el-icon>查看学习路径
           </el-button>
-          <el-button size="large" plain round>暂不处理</el-button>
         </div>
       </div>
     </div>

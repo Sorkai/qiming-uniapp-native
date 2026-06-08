@@ -1,49 +1,127 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { ElMessage } from "element-plus";
 import {
   User,
   Medal,
   TrendCharts,
   Star,
   Trophy,
-  Cpu,
   Reading,
   VideoPlay,
-  Avatar
+  Avatar,
+  Refresh
 } from "@element-plus/icons-vue";
-import { getStudentDataset } from "./studentDatasets";
+import {
+  getAssistantProfileCurrent,
+  refreshAssistantProfile,
+  type AssistantProfileCurrentResp
+} from "@/api/frontend/assistant";
 
-const props = defineProps<{ studentId?: string }>();
+const props = defineProps<{
+  courseId?: number;
+  targetStudentId?: number;
+}>();
 
-const dataset = computed(() => getStudentDataset(props.studentId));
-const learner = computed(() => dataset.value.profile.learner);
+const emit = defineEmits<{
+  (event: "profile-loaded", payload: AssistantProfileCurrentResp): void;
+}>();
 
-// 为不同维度分配图标（按顺序）
-const ICONS = [Medal, TrendCharts, Trophy, Star, Star];
+const loading = ref(false);
+const refreshing = ref(false);
+const profile = ref<AssistantProfileCurrentResp | null>(null);
+
+const learner = computed(
+  () =>
+    profile.value?.learner || {
+      name: "学习者",
+      role: "student",
+      course: "当前课程",
+      enroll_days: 0,
+      study_minutes: 0
+    }
+);
+
+const icons = [Medal, TrendCharts, Trophy, Star, Star];
 const dimensions = computed(() =>
-  dataset.value.profile.dimensions.map((d, i) => ({
-    ...d,
-    icon: ICONS[i % ICONS.length]
+  (profile.value?.dimensions || []).map((dimension, index) => ({
+    ...dimension,
+    color: dimension.color || ["#5e7ff8", "#10b981", "#f59e0b", "#8b5cf6"][index % 4],
+    icon: icons[index % icons.length]
   }))
 );
-const knowledgeMap = computed(() => dataset.value.profile.knowledgeMap);
-const RecentTags = computed(() => dataset.value.profile.tags);
+const knowledgeMap = computed(() => profile.value?.knowledge_map || []);
+const tags = computed(() => profile.value?.tags || []);
+
+const loadProfile = async () => {
+  loading.value = true;
+  try {
+    const { data } = await getAssistantProfileCurrent({
+      course_id: props.courseId,
+      target_student_id: props.targetStudentId
+    });
+    profile.value = data;
+    emit("profile-loaded", data);
+  } catch (error: any) {
+    console.error("[AiLearningProfile] 学习画像加载失败:", error);
+    ElMessage.error(error?.message || "学习画像加载失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleRefresh = async () => {
+  refreshing.value = true;
+  try {
+    const { data } = await refreshAssistantProfile({
+      course_id: props.courseId,
+      target_student_id: props.targetStudentId,
+      trigger: "manual_refresh"
+    });
+    ElMessage.success(data.message || "学习画像刷新完成");
+    await loadProfile();
+  } catch (error: any) {
+    console.error("[AiLearningProfile] 学习画像刷新失败:", error);
+    ElMessage.error(error?.message || "学习画像刷新失败");
+  } finally {
+    refreshing.value = false;
+  }
+};
+
+onMounted(loadProfile);
+watch(() => [props.courseId, props.targetStudentId], loadProfile);
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-6 bg-transparent overflow-y-auto">
-    <div class="mb-8">
-      <div class="flex items-center gap-2 mb-1">
-        <el-icon class="text-primary"><User /></el-icon>
-        <h2 class="text-xl font-bold text-text_color_primary">全息学习画像</h2>
+  <div
+    v-loading="loading"
+    class="h-full flex flex-col p-6 bg-transparent overflow-y-auto"
+  >
+    <div class="mb-8 flex items-start justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <el-icon class="text-primary"><User /></el-icon>
+          <h2 class="text-xl font-bold text-text_color_primary">
+            全息学习画像
+          </h2>
+        </div>
+        <p class="text-sm text-text_color_regular mt-1">
+          AI 实时抓取并总结学习特征 · 课程：{{ learner.course || "当前课程" }}
+        </p>
       </div>
-      <p class="text-sm text-text_color_regular mt-1">
-        AI 实时抓取并总结你的学习特征 · 课程：{{ learner.course }}
-      </p>
+      <el-button
+        type="primary"
+        plain
+        round
+        :loading="refreshing"
+        @click="handleRefresh"
+      >
+        <el-icon class="mr-1"><Refresh /></el-icon>
+        刷新画像
+      </el-button>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Left Profile Card - 适配平台卡片风格 -->
       <div
         class="col-span-1 bg-bg_color rounded-xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center hover:shadow-md transition-all"
       >
@@ -66,11 +144,10 @@ const RecentTags = computed(() => dataset.value.profile.tags);
           {{ learner.role }}
         </p>
 
-        <!-- 简要数据 - 改为更通透的设计 -->
         <div class="w-full grid grid-cols-2 gap-4 text-center">
           <div class="flex flex-col">
             <span class="text-2xl font-black text-primary">{{
-              learner.enrollDays
+              learner.enroll_days
             }}</span>
             <span
               class="text-[11px] text-text_color_regular uppercase tracking-wider"
@@ -79,7 +156,7 @@ const RecentTags = computed(() => dataset.value.profile.tags);
           </div>
           <div class="flex flex-col">
             <span class="text-2xl font-black text-primary">{{
-              learner.studyMinutes
+              learner.study_minutes
             }}</span>
             <span
               class="text-[11px] text-text_color_regular uppercase tracking-wider"
@@ -89,19 +166,12 @@ const RecentTags = computed(() => dataset.value.profile.tags);
         </div>
 
         <div class="mt-8 flex flex-wrap justify-center gap-2">
-          <el-tag
-            v-for="(tag, i) in RecentTags"
-            :key="i"
-            effect="plain"
-            round
-            size="small"
-          >
+          <el-tag v-for="tag in tags" :key="tag" effect="plain" round size="small">
             {{ tag }}
           </el-tag>
         </div>
       </div>
 
-      <!-- Right Skills Details -->
       <div
         class="col-span-1 md:col-span-2 bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all"
       >
@@ -112,7 +182,7 @@ const RecentTags = computed(() => dataset.value.profile.tags);
           能力维度分析
         </h4>
 
-        <div class="space-y-8">
+        <div v-if="dimensions.length" class="space-y-8">
           <div v-for="dim in dimensions" :key="dim.label" class="group">
             <div class="flex justify-between items-center mb-3">
               <span
@@ -139,12 +209,26 @@ const RecentTags = computed(() => dataset.value.profile.tags);
               stroke-linecap="round"
               class="w-full"
             />
+            <div
+              v-if="dim.evidence?.length"
+              class="mt-3 flex flex-wrap gap-2"
+            >
+              <el-tag
+                v-for="evidence in dim.evidence"
+                :key="evidence"
+                size="small"
+                effect="plain"
+                class="!rounded-md"
+              >
+                {{ evidence }}
+              </el-tag>
+            </div>
           </div>
         </div>
+        <el-empty v-else description="暂无学习画像维度" :image-size="100" />
       </div>
     </div>
 
-    <!-- 知识图谱掌握度 -->
     <div
       class="mt-6 bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all"
     >
@@ -154,11 +238,12 @@ const RecentTags = computed(() => dataset.value.profile.tags);
           知识图谱掌握度
         </h4>
         <span class="text-xs text-text_color_regular opacity-60 italic"
-          >基于各章节测验及实践数据动态推演</span
+          >基于课程学习数据动态推演</span
         >
       </div>
 
       <div
+        v-if="knowledgeMap.length"
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-x-12 gap-y-6"
       >
         <div
@@ -191,29 +276,19 @@ const RecentTags = computed(() => dataset.value.profile.tags);
           >
         </div>
       </div>
+      <el-empty v-else description="暂无知识图谱数据" :image-size="100" />
 
       <div
+        v-if="profile?.message"
         class="mt-8 p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-center gap-3 text-xs text-text_color_regular"
       >
         <el-icon color="var(--el-color-primary)" :size="20"
           ><VideoPlay
         /></el-icon>
         <div class="flex-1">
-          <span class="font-bold text-text_color_primary">提优建议：</span>
-          本周建议补强
-          <span
-            class="text-primary underline font-bold underline-offset-4 pointer-events-auto cursor-pointer"
-            >GPU / NNAPI Delegate</span
-          >
-          与
-          <span
-            class="text-primary underline font-bold underline-offset-4 pointer-events-auto cursor-pointer"
-            >V4L2 摄像头采集</span
-          >。
+          <span class="font-bold text-text_color_primary">画像状态：</span>
+          {{ profile.message }}
         </div>
-        <el-button type="primary" size="small" link class="!p-0 ml-auto"
-          >查看路径</el-button
-        >
       </div>
     </div>
   </div>

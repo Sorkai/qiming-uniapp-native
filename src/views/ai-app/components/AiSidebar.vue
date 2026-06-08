@@ -43,6 +43,7 @@
                   :key="conv.id"
                   :style="{ transitionDelay: `${index * 50}ms` }"
                   class="px-3 py-3 rounded-xl hover:bg-white cursor-pointer group transition-all duration-300 hover:shadow-sm hover:scale-[1.01] hover:border-gray-200 border border-transparent"
+                  @click="emit('select-chat', conv)"
                 >
                   <div
                     class="flex items-center justify-between gap-2 relative overflow-hidden"
@@ -77,6 +78,7 @@
             v-for="conv in recentHistory"
             :key="'recent-' + conv.id"
             class="px-3 py-2.5 rounded-xl hover:bg-white cursor-pointer group transition-all duration-300 border border-transparent hover:border-gray-100"
+            @click="emit('select-chat', conv)"
           >
             <div class="flex items-center justify-between gap-2">
               <span
@@ -159,7 +161,7 @@ const groupedConversations = computed(() => {
 });
 
 const recentHistory = computed(() => {
-  return props.conversations.filter(c => !c.course).slice(0, 5);
+  return props.conversations.slice(0, 5);
 });
 
 const collapsedCourses = ref<string[]>([]);
@@ -205,7 +207,7 @@ onMounted(() => {
     });
 });
 
-defineEmits(["update:activeRail", "new-chat", "select-chat"]);
+const emit = defineEmits(["update:activeRail", "new-chat", "select-chat"]);
 </script>
 
 <style scoped>

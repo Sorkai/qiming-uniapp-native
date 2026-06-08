@@ -114,6 +114,43 @@
                     </div>
                   </div>
 
+                  <!-- 动画预览：栈操作可视化缩略图 -->
+                  <div
+                    v-else-if="res.type === 'animation'"
+                    class="h-24 w-full rounded-lg relative overflow-hidden flex items-end justify-center gap-1 px-3 py-2 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 group-hover:shadow-inner"
+                  >
+                    <div
+                      class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300"
+                    />
+                    <div class="flex flex-col-reverse gap-1 z-10">
+                      <div
+                        class="w-12 h-4 rounded bg-white/90 text-[10px] font-bold text-indigo-600 flex items-center justify-center shadow"
+                      >
+                        A
+                      </div>
+                      <div
+                        class="w-12 h-4 rounded bg-white/80 text-[10px] font-bold text-purple-600 flex items-center justify-center shadow"
+                      >
+                        B
+                      </div>
+                      <div
+                        class="w-12 h-4 rounded bg-white/70 text-[10px] font-bold text-pink-600 flex items-center justify-center shadow animate-bounce"
+                      >
+                        C
+                      </div>
+                    </div>
+                    <div
+                      class="absolute top-1 left-2 text-[10px] font-bold text-white/90 z-10"
+                    >
+                      Stack · LIFO
+                    </div>
+                    <div
+                      class="absolute bottom-1 right-1 text-[10px] bg-black/40 text-white px-1.5 rounded z-10"
+                    >
+                      点击预览
+                    </div>
+                  </div>
+
                   <div class="flex items-start gap-2">
                     <el-icon
                       :class="[
@@ -171,6 +208,8 @@
             <el-button
               type="primary"
               :icon="Promotion"
+              :loading="loading"
+              :disabled="loading || !input.trim()"
               class="!rounded-lg mb-1 transform transition-all duration-300 hover:scale-110 hover:shadow-md hover:shadow-primary/40 active:scale-95 hover:!shadow-[0_0_12px_rgba(94,127,248,0.5)]"
               :class="
                 input
@@ -247,18 +286,13 @@
                 </span>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="代码生成特工"
-                      >代码生成特工</el-dropdown-item
+                    <el-dropdown-item
+                      v-for="agent in agents || []"
+                      :key="agent.key"
+                      :command="agent.key"
                     >
-                    <el-dropdown-item command="多模态规划师"
-                      >多模态规划师</el-dropdown-item
-                    >
-                    <el-dropdown-item command="特征提取专家"
-                      >特征提取专家</el-dropdown-item
-                    >
-                    <el-dropdown-item command="排版与渲染器"
-                      >排版与渲染器</el-dropdown-item
-                    >
+                      {{ agent.label }}
+                    </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -276,15 +310,13 @@
                 </span>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="标准模式"
-                      >标准模式</el-dropdown-item
+                    <el-dropdown-item
+                      v-for="thinking in thinkingModes || []"
+                      :key="thinking.key"
+                      :command="thinking.key"
                     >
-                    <el-dropdown-item command="深度思考"
-                      >深度思考</el-dropdown-item
-                    >
-                    <el-dropdown-item command="快速响应"
-                      >快速响应</el-dropdown-item
-                    >
+                      {{ thinking.label }}
+                    </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -302,15 +334,13 @@
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="IntellEdu 4.0 超高"
-                    >IntellEdu 4.0 超高</el-dropdown-item
+                  <el-dropdown-item
+                    v-for="model in models || []"
+                    :key="model.key"
+                    :command="model.key"
                   >
-                  <el-dropdown-item command="IntellEdu 4.0 标准"
-                    >IntellEdu 4.0 标准</el-dropdown-item
-                  >
-                  <el-dropdown-item command="IntellEdu Lite"
-                    >IntellEdu Lite</el-dropdown-item
-                  >
+                    {{ model.label }}
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -344,9 +374,13 @@ const props = defineProps<{
   activeCourse: string;
   courses?: string[];
   mode?: string;
+  agents?: { key: string; label: string; description?: string }[];
+  models?: { key: string; label: string; description?: string }[];
+  thinkingModes?: { key: string; label: string; description?: string }[];
   selectedAgent?: string;
   selectedModel?: string;
   thinkingMode?: string;
+  loading?: boolean;
 }>();
 
 const emit = defineEmits([
@@ -364,7 +398,7 @@ const input = ref("");
 const scrollbarRef = ref();
 
 const handleSend = () => {
-  if (!input.value.trim()) return;
+  if (!input.value.trim() || props.loading) return;
   emit("send", input.value);
   input.value = "";
 
