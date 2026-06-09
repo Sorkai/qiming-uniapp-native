@@ -118,11 +118,13 @@ if ($config) {
 }
 
 if ($manifest) {
-  $appid = [string]$manifest.appid
+  $appidConfig = Get-ConfigValue ([string]$manifest.appid) "QIMING_DCLOUD_APPID"
+  $appid = [string]$appidConfig.Value
   if ((Test-MissingValue $appid) -or $appid -eq "__UNI__QIMING" -or $appid -notmatch "^__UNI__") {
     Add-Result "DCloud AppID" "WARN" "replace manifest appid with a registered DCloud __UNI__ appid"
   } else {
-    Add-Result "DCloud AppID" "OK" $appid
+    $appidSource = if ($appidConfig.Source -eq "env") { "configured via env" } else { $appid }
+    Add-Result "DCloud AppID" "OK" $appidSource
   }
 }
 

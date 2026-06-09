@@ -132,9 +132,11 @@ Cloud packaging config:
   `QIMING_IOS_CERT_PASSWORD` in the current PowerShell session. `pack-native`
   writes those values only to an ignored temporary config and deletes it after
   the HBuilderX call.
-- Replace `native-app/src/manifest.json` `appid` with the registered DCloud
-  AppID before cloud packaging. The current `__UNI__QIMING` value is only a
-  local placeholder.
+- Instead of committing a real DCloud AppID, set `QIMING_DCLOUD_APPID` in the
+  current PowerShell session. `pack-native` temporarily injects it into
+  `native-app/src/manifest.json` for the HBuilderX call, then restores the
+  public placeholder bytes. The current committed `__UNI__QIMING` value is only
+  a local placeholder.
 - `pack-config.local.json`, keystores, `.p12`, and `.mobileprovision` files are
   ignored by Git.
 - Without `pack-config.local.json`, `scripts/pack-native.ps1` exits early with a
@@ -356,3 +358,11 @@ The uni-app shell receives messages through the `web-view` `message` event.
 - `pnpm --dir native-app type-check` and `pnpm --dir native-app build:app`
   passed after adding the device/run scripts, and browser inspection reconfirmed
   the full platform `/home` preview iframe.
+- `QIMING_DCLOUD_APPID` support was added for pack config validation and
+  HBuilderX packaging. Android-only validation with temporary AppID and signing
+  password environment variables reports `9 OK`, `0 WARN`, `0 FAIL`.
+- `scripts/pack-native.ps1 -Platform android -SkipPrepare -DryRun` was tested
+  with temporary AppID/signing environment variables. It generated the effective
+  config, temporarily injected the AppID into `native-app/src/manifest.json`,
+  restored the manifest byte-for-byte, and removed
+  `pack-config.effective.tmp.json`.

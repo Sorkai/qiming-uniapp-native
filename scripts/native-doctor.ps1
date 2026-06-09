@@ -70,7 +70,10 @@ Add-Check "Android device" ($(if ($deviceCount -gt 0) { "OK" } else { "WARN" }))
 Add-Check "Android keystore" ($(if (Test-Path -LiteralPath $androidKeystore) { "OK" } else { "WARN" })) $androidKeystore
 if (Test-Path -LiteralPath $sourceManifest) {
   $manifestAppid = Try-Run { (Get-Content -LiteralPath $sourceManifest -Raw -Encoding UTF8 | ConvertFrom-Json).appid }
-  Add-Check "DCloud AppID" ($(if ($manifestAppid -and $manifestAppid -ne "__UNI__QIMING" -and $manifestAppid -match "^__UNI__") { "OK" } else { "WARN" })) ($(if ($manifestAppid) { $manifestAppid } else { "missing manifest appid" }))
+  $envAppid = [Environment]::GetEnvironmentVariable("QIMING_DCLOUD_APPID")
+  $effectiveAppid = if ($envAppid) { $envAppid } else { $manifestAppid }
+  $appidDetail = if ($envAppid) { "configured via env" } elseif ($manifestAppid) { $manifestAppid } else { "missing manifest appid" }
+  Add-Check "DCloud AppID" ($(if ($effectiveAppid -and $effectiveAppid -ne "__UNI__QIMING" -and $effectiveAppid -match "^__UNI__") { "OK" } else { "WARN" })) $appidDetail
 } else {
   Add-Check "DCloud AppID" "WARN" "missing native-app/src/manifest.json"
 }
