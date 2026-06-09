@@ -3,13 +3,13 @@
     class="ai-sidebar h-full flex flex-col p-4 bg-gray-50/50 border-r border-gray-100 italic-safe"
   >
     <!-- Sessions: Grouped by Course -->
-    <div class="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-6">
+    <div class="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar space-y-6">
       <!-- 1. 智能辅导 (按课程展开) -->
       <div v-show="activeRail === 'chat'">
         <div v-for="course in courses" :key="course" class="mb-4">
           <!-- 课程分类标题栏 + 新建按钮 -->
           <div
-            class="text-sm font-bold text-gray-700 tracking-widest mb-2 px-3 flex items-center justify-between group/course cursor-pointer"
+            class="text-sm font-semibold text-gray-700 tracking-normal mb-2 px-3 flex items-center justify-between group/course cursor-pointer"
             @click="toggleCourse(course)"
           >
             <div class="flex items-center gap-2">
@@ -68,7 +68,7 @@
       <!-- 2. 最近聊天记录 (全局历史) -->
       <div class="mt-8">
         <div
-          class="text-sm font-bold text-gray-400 tracking-widest mb-3 px-3 flex items-center gap-2"
+          class="text-sm font-medium text-gray-400 tracking-normal mb-3 px-3 flex items-center gap-2"
         >
           <el-icon><Timer /></el-icon>
           <span>历史记录</span>
@@ -98,6 +98,8 @@
       </div>
     </div>
 
+    <div class="ai-sidebar__digital-human-reserve" aria-hidden="true" />
+
     <!-- User Profile Area -->
     <div
       class="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3 relative overflow-hidden group cursor-pointer rounded-xl p-2 hover:bg-white hover:shadow-sm transition-all duration-300"
@@ -114,7 +116,7 @@
       />
       <div class="flex-1 min-w-0 relative z-10">
         <p
-          class="text-sm font-bold text-gray-700 truncate group-hover:text-primary transition-colors"
+          class="text-sm font-semibold text-gray-700 truncate group-hover:text-primary transition-colors"
         >
           系统设置
         </p>
@@ -215,6 +217,15 @@ const emit = defineEmits(["update:activeRail", "new-chat", "select-chat"]);
   font-style: normal;
 }
 
+.ai-sidebar {
+  position: relative;
+}
+
+.ai-sidebar__digital-human-reserve {
+  flex: 0 0 132px;
+  margin: 0 0 10px;
+}
+
 /* 列表进入过渡 */
 .list-enter-active,
 .list-leave-active {
@@ -243,14 +254,16 @@ const emit = defineEmits(["update:activeRail", "new-chat", "select-chat"]);
 
 /* 滚动条美化 */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: transparent;
-  border-radius: 4px;
-  transition: background 0.3s;
 }
-.custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+
+.custom-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 </style>

@@ -6,7 +6,7 @@ import { Refresh, FullScreen, Warning, Loading } from "@element-plus/icons-vue";
 const humanUrl = computed(() => {
   // 获取当前基础路径，动态兼容部署环境
   const base = window.location.origin;
-  return `${base}/virtual-people/index.html`;
+  return `${base}/virtual-people/index.html?embed=ai-app`;
 });
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
@@ -115,7 +115,7 @@ defineExpose({ speak, pauseRender, resumeRender });
 </script>
 
 <template>
-  <div class="h-full w-full flex flex-col bg-white">
+  <div class="virtual-human-panel h-full w-full flex flex-col bg-white">
     <!-- 顶部条 -->
     <div
       class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-white/80 backdrop-blur rounded-t-3xl"
@@ -148,7 +148,9 @@ defineExpose({ speak, pauseRender, resumeRender });
     </div>
 
     <!-- 主区 -->
-    <div class="flex-1 relative bg-gradient-to-br from-slate-50 to-white">
+    <div
+      class="virtual-human-panel__viewer flex-1 relative bg-gradient-to-br from-slate-50 to-white"
+    >
       <!-- iframe -->
       <iframe
         v-show="!errored"
@@ -199,6 +201,15 @@ defineExpose({ speak, pauseRender, resumeRender });
 </template>
 
 <style scoped>
+.virtual-human-panel {
+  min-height: 0;
+}
+
+.virtual-human-panel__viewer {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .animate-spin {
   animation: vh-spin 1s linear infinite;
 }

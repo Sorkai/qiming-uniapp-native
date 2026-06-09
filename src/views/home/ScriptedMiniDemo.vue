@@ -3,7 +3,7 @@
     class="smd"
     :class="{ 'smd--compact': compact }"
     :style="styleVars"
-    :aria-label="`${demo.module} Scripted Demo`"
+    :aria-label="`${demo.module}演示`"
   >
     <div class="smd__chrome">
       <div class="smd__lights"><span /><span /><span /></div>
@@ -26,7 +26,7 @@
       <aside class="smd__side">
         <div class="smd__brand">
           <strong>Q</strong>
-          <span>Qiming HQ</span>
+          <span>启明智教</span>
         </div>
         <p>工作区</p>
         <button
@@ -43,16 +43,16 @@
       <main class="smd__main">
         <div class="smd__top">
           <div class="smd__crumbs">
-            <span>Qiming HQ</span>
+            <span>启明智教</span>
             <span>/</span>
             <strong>{{ demo.module }}</strong>
           </div>
-          <span class="smd__mesh"><i />Service Mesh: Connected</span>
+          <span class="smd__mesh"><i />教学服务已连接</span>
         </div>
 
         <section class="smd__head">
           <div>
-            <p>智能工作流 · Scripted Demo</p>
+            <p>智能工作流演示</p>
             <h4>{{ demo.title || demo.module }}</h4>
           </div>
           <div class="smd__metrics">
@@ -230,16 +230,16 @@ const fallbackScene: ScriptedMiniScene = {
     { label: "命中率", value: "96%", trend: "+11%" }
   ],
   stack: [
-    { key: "A", label: "Agent", desc: "教学智能体" },
-    { key: "W", label: "Workflow", desc: "任务编排" },
-    { key: "S", label: "State", desc: "学情状态" },
-    { key: "P", label: "Pipeline", desc: "评价流水线" }
+    { key: "智", label: "教学智能体", desc: "理解任务意图" },
+    { key: "编", label: "任务编排", desc: "串联教学流程" },
+    { key: "学", label: "学情状态", desc: "沉淀学生表现" },
+    { key: "评", label: "评价闭环", desc: "反馈下一步行动" }
   ],
   console: [
-    "course.chapter.scan -> ready",
-    "student.profile.merge -> 45 learners",
-    "lesson.timeline.render -> 7 segments",
-    "assessment.loop.dispatch -> success"
+    "章节扫描完成",
+    "学情合并完成：45 名学生",
+    "课堂节奏生成：7 个环节",
+    "评价任务已下发"
   ]
 };
 

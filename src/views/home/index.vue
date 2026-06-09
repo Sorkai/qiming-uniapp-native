@@ -49,7 +49,7 @@
             type="button"
             @click="handleEntry"
           >
-            免费使用
+            进入平台
           </button>
         </div>
       </div>
@@ -192,23 +192,23 @@
         </svg>
 
         <div class="nx-hero__inner">
-          <h1 class="nx-hero__title">把教学、学习与反馈，放进一个空间。</h1>
+          <h1 class="nx-hero__title">面向真实教学过程的智能教育平台。</h1>
           <p class="nx-hero__sub">
-            启明智教让课程、试卷、作业、错题诊断和 AI 助教在同一处工作 —— 像
-            Notion 的页面块一样自然连接。
+            启明智教围绕备课、授课、练习、测评与学情诊断，把教师工作台、学生学习端和
+            AI 助教接到同一条教学闭环里。
           </p>
           <div class="nx-hero__cta">
             <button
               class="nx-btn nx-btn--primary nx-btn--lg"
               @click="handleEntry"
             >
-              免费使用
+              进入平台
             </button>
             <button
               class="nx-btn nx-btn--ghost nx-btn--lg"
               @click="scrollToSection('agents')"
             >
-              查看演示
+              查看工作台演示
             </button>
           </div>
 
@@ -287,16 +287,16 @@
           <aside class="nx-sat nx-sat--br" aria-label="OJ 在线判题">
             <header>
               <span class="nx-sat__dot" style="background: #4a90e2" />
-              <span>OJ · 在线判题</span>
+              <span>OJ 在线判题</span>
             </header>
             <pre
               class="nx-code"
             ><span class="k">def</span> <span class="f">solve</span>(n):
   <span class="k">return</span> n * (n + 1) // 2</pre>
             <ul class="nx-cases">
-              <li><i class="nx-ok" />Case 1 · 2 ms</li>
-              <li><i class="nx-ok" />Case 2 · 3 ms</li>
-              <li><i class="nx-ok" />Case 3 · 2 ms</li>
+              <li><i class="nx-ok" />样例一 · 2 ms</li>
+              <li><i class="nx-ok" />样例二 · 3 ms</li>
+              <li><i class="nx-ok" />样例三 · 2 ms</li>
             </ul>
           </aside>
 
@@ -306,7 +306,7 @@
               <aside class="nx-side">
                 <div class="nx-side__head">
                   <img :src="logo" alt="" />
-                  <span>Qiming HQ</span>
+                  <span>启明智教</span>
                 </div>
                 <div class="nx-side__group">工作区</div>
                 <button
@@ -326,7 +326,7 @@
                 <Transition name="nx-fade" mode="out-in">
                   <article :key="activeShowcase.key" class="nx-doc__inner">
                     <div class="nx-doc__crumbs">
-                      <span>Qiming HQ</span>
+                      <span>启明智教</span>
                       <span>/</span>
                       <span>{{ activeShowcase.shortTitle }}</span>
                     </div>
@@ -368,10 +368,10 @@
       <!-- ============== CORE TECH ============= -->
       <section class="nx-section nx-section--gray">
         <header class="nx-shead nx-shead--center">
-          <p class="nx-eyebrow">研发成果 · core technologies</p>
-          <h2 class="nx-stitle">潜心打磨的底层能力。</h2>
+          <p class="nx-eyebrow">研发成果</p>
+          <h2 class="nx-stitle">支撑教学闭环的核心能力。</h2>
           <p class="nx-ssub">
-            面向教育场景沉淀的七项核心技术，覆盖模型、检索、编排、评估与课件生成。
+            面向教育场景沉淀模型、检索、编排、评估与课件生成能力，让平台不是演示概念，而是能进入日常教学。
           </p>
         </header>
         <div class="nx-tech-grid">
@@ -388,8 +388,8 @@
       <!-- ============== BENTO: FEATURES ============== -->
       <section id="features" class="nx-section nx-section--features">
         <header class="nx-shead">
-          <p class="nx-eyebrow">能力 · Features</p>
-          <h2 class="nx-stitle">教学场景，每个都有专属的工作面。</h2>
+          <p class="nx-eyebrow">平台能力</p>
+          <h2 class="nx-stitle">把高频教学任务做成清晰的工作面。</h2>
         </header>
 
         <!-- big bento card -->
@@ -459,7 +459,7 @@
               <div>
                 <p class="nx-bento__eyebrow">学情画像</p>
                 <h3 class="nx-bento__title">
-                  能力雷达 · 教师 / 学生同步可见。
+                  能力雷达，教师与学生同步可见。
                 </h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
@@ -477,7 +477,7 @@
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">学习路径</p>
-                <h3 class="nx-bento__title">教研路径 · 个性化推荐。</h3>
+                <h3 class="nx-bento__title">按学情生成下一步学习建议。</h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -493,8 +493,8 @@
           <article class="nx-bento" :style="getBentoStyle('animation')">
             <div class="nx-bento__head">
               <div>
-                <p class="nx-bento__eyebrow">虚拟实验 · AI 课件</p>
-                <h3 class="nx-bento__title">动画、PPT、视频分析。</h3>
+                <p class="nx-bento__eyebrow">虚拟实验与 AI 课件</p>
+                <h3 class="nx-bento__title">把复杂知识做成可看的过程。</h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -517,7 +517,7 @@
             <div>
               <p class="nx-bento__eyebrow">综合赛事</p>
               <h3 class="nx-bento__title">
-                OJ 判题 · 作文比赛 · 赛事管理一站式。
+                OJ 判题、作文比赛与赛事管理一站式完成。
               </h3>
             </div>
             <button class="nx-arrow" type="button" @click="handleEntry">
@@ -559,10 +559,10 @@
       <!-- ============== AGENTS SHOWCASE ============== -->
       <section id="agents" class="nx-section nx-section--gray">
         <header class="nx-shead nx-shead--center">
-          <p class="nx-eyebrow">智能工作台 · Workspace</p>
-          <h2 class="nx-stitle">一个空间，承载所有教学活动。</h2>
+          <p class="nx-eyebrow">智能工作台</p>
+          <h2 class="nx-stitle">教师和学生看到的是同一条教学进程。</h2>
           <p class="nx-ssub">
-            点击左侧切换不同模块，看看教师与学生在启明智教中的真实工作面。
+            点击左侧切换模块，查看课程、错题、试卷、课件、学情和赛事如何在同一套数据下协同。
           </p>
         </header>
 
@@ -607,8 +607,8 @@
       <!-- ============== WORKFLOW ============== -->
       <section id="workflow" class="nx-section">
         <header class="nx-shead">
-          <p class="nx-eyebrow">工作流 · Workflow</p>
-          <h2 class="nx-stitle">从备课到诊断，一条线走完。</h2>
+          <p class="nx-eyebrow">教学流程</p>
+          <h2 class="nx-stitle">从备课到诊断，过程清楚，结果可追踪。</h2>
         </header>
 
         <ol class="nx-steps">
@@ -625,8 +625,8 @@
       <!-- ============== TESTIMONIALS ============== -->
       <section id="voice" class="nx-section nx-section--gray">
         <header class="nx-shead">
-          <p class="nx-eyebrow">用户声音 · Voices</p>
-          <h2 class="nx-stitle">每个角色，都有清晰的入口。</h2>
+          <p class="nx-eyebrow">使用反馈</p>
+          <h2 class="nx-stitle">每个角色都能找到自己的下一步。</h2>
         </header>
 
         <div class="nx-quotes">
@@ -658,20 +658,20 @@
       <!-- ============== CTA ============== -->
       <section class="nx-cta">
         <div class="nx-cta__inner">
-          <h2>把智能教育工作台打开看看。</h2>
-          <p>用真实课程、试卷、错题和 AI 助教，呈现一个可以落地的平台。</p>
+          <h2>进入启明智教，看看完整教学闭环。</h2>
+          <p>用真实课程、试卷、错题和 AI 助教，呈现一套可以落地使用的平台。</p>
           <div class="nx-cta__btns">
             <button
               class="nx-btn nx-btn--primary nx-btn--lg"
               @click="handleEntry"
             >
-              免费使用
+              进入平台
             </button>
             <button
               class="nx-btn nx-btn--ghost nx-btn--lg"
               @click="scrollToSection('agents')"
             >
-              回看演示
+              查看工作台演示
             </button>
           </div>
         </div>
@@ -688,7 +688,7 @@
         <div class="nx-foot__brand">
           <img :src="logo" alt="启明智教" />
           <div>
-            <strong>启明智教 · Intelledu.com</strong>
+            <strong>启明智教</strong>
             <p>
               长春工业大学计算机科学与工程学院 · 吉林省云创迅捷软件开发有限公司
             </p>
@@ -978,10 +978,10 @@ const scriptedDemoCopy = {
 };
 
 const awspStack = [
-  { key: "A", label: "Agent", desc: "教学智能体" },
-  { key: "W", label: "Workflow", desc: "任务编排" },
-  { key: "S", label: "State", desc: "学情状态" },
-  { key: "P", label: "Pipeline", desc: "评价流水线" }
+  { key: "智", label: "教学智能体", desc: "理解任务意图" },
+  { key: "编", label: "任务编排", desc: "串联教学流程" },
+  { key: "学", label: "学情状态", desc: "沉淀学生表现" },
+  { key: "评", label: "评价闭环", desc: "反馈下一步行动" }
 ];
 
 const scriptedScenes = {
@@ -1005,10 +1005,10 @@ const scriptedScenes = {
     ],
     stack: awspStack,
     console: [
-      "course.chapter.scan -> 12 nodes",
-      "student.profile.merge -> 45 learners",
-      "lesson.timeline.render -> 7 segments",
-      "homework.loop.dispatch -> success"
+      "章节扫描完成：12 个知识点",
+      "学情合并完成：45 名学生",
+      "课堂节奏生成：7 个环节",
+      "课后任务已下发"
     ]
   },
   wrong: {
@@ -1031,10 +1031,10 @@ const scriptedScenes = {
     ],
     stack: awspStack,
     console: [
-      "wrong.answer.trace -> collected",
-      "reasoning.chain.compare -> bias 0.82",
-      "similar.question.generate -> 24 items",
-      "student.center.push -> completed"
+      "错题轨迹已采集",
+      "推理链偏差识别：0.82",
+      "同类练习生成：24 题",
+      "学生中心已收到推送"
     ]
   },
   exam: {
@@ -1057,10 +1057,10 @@ const scriptedScenes = {
     ],
     stack: awspStack,
     console: [
-      "exam.blueprint.validate -> balanced",
-      "question.bank.match -> 32 concepts",
-      "grading.agent.batch -> completed",
-      "score.report.publish -> ready"
+      "试卷蓝图校验通过",
+      "题库匹配完成：32 个知识点",
+      "批量阅卷已完成",
+      "成绩报告可发布"
     ]
   },
   portrait: {
@@ -1079,14 +1079,14 @@ const scriptedScenes = {
     metrics: [
       { label: "画像维度", value: "8", trend: "+2" },
       { label: "低掌握预警", value: "6", trend: "-3" },
-      { label: "更新频率", value: "实时", trend: "live" }
+      { label: "更新频率", value: "实时", trend: "同步" }
     ],
     stack: awspStack,
     console: [
-      "learning.event.stream -> online",
-      "ability.model.update -> 8 dimensions",
-      "radar.snapshot.sync -> teacher/student",
-      "recommendation.path.emit -> ready"
+      "学习行为持续入流",
+      "能力模型更新：8 个维度",
+      "雷达快照已同步",
+      "学习建议已生成"
     ]
   },
   path: {
@@ -1105,14 +1105,14 @@ const scriptedScenes = {
     metrics: [
       { label: "路径节点", value: "18", trend: "+5" },
       { label: "推荐置信", value: "91%", trend: "+13%" },
-      { label: "重排次数", value: "4", trend: "auto" }
+      { label: "重排次数", value: "4", trend: "自动" }
     ],
     stack: awspStack,
     console: [
-      "knowledge.graph.resolve -> 18 nodes",
-      "objective.split -> 6 milestones",
-      "path.rank.personalize -> 91 score",
-      "feedback.reorder -> applied"
+      "知识图谱解析：18 个节点",
+      "学习目标拆解：6 个阶段",
+      "个性排序得分：91",
+      "反馈重排已生效"
     ]
   },
   animation: {
@@ -1131,14 +1131,14 @@ const scriptedScenes = {
     metrics: [
       { label: "生成片段", value: "21", trend: "+7" },
       { label: "交互节点", value: "14", trend: "+5" },
-      { label: "渲染帧率", value: "60", trend: "fps" }
+      { label: "渲染帧率", value: "60", trend: "帧" }
     ],
     stack: awspStack,
     console: [
-      "media.parser.ingest -> ppt/video/pdf",
-      "concept.topology.build -> complete",
-      "h5.animation.compose -> 21 scenes",
-      "virtual.lab.bind -> interactive"
+      "素材解析完成：PPT/视频/PDF",
+      "知识拓扑已建立",
+      "H5 动画生成：21 个场景",
+      "虚拟实验已可交互"
     ]
   },
   competition: {
@@ -1161,10 +1161,10 @@ const scriptedScenes = {
     ],
     stack: awspStack,
     console: [
-      "competition.event.publish -> live",
-      "oj.judge.queue -> 1208 submissions",
-      "essay.ai.review -> rubric aligned",
-      "portfolio.archive.write -> success"
+      "赛事已发布",
+      "OJ 评测队列：1208 次提交",
+      "作文评分标准已对齐",
+      "成长档案已写入"
     ]
   }
 };
@@ -1529,7 +1529,7 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 /* =========================================================
-   Notion-faithful tokens (measured 2026-06)
+   启明智教首页视觉变量
    ========================================================= */
 .nx {
   --nx-text: rgb(0 0 0 / 95%);
@@ -1774,7 +1774,7 @@ onUnmounted(() => {
   background: var(--nx-bg-gray);
 }
 
-/* round black arrow button — Notion's signature card CTA */
+/* round black arrow button for card CTA */
 .nx-arrow {
   display: inline-grid;
   flex-shrink: 0;
@@ -1806,7 +1806,7 @@ onUnmounted(() => {
 }
 
 /* =========================================================
-   HERO  (dark navy, Notion-style)
+   HERO  (dark navy product style)
    ========================================================= */
 .nx-hero {
   --hero-bg: rgb(2 9 58);

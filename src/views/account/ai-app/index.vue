@@ -39,12 +39,15 @@ import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
+import FloatingDigitalHuman2D from "./components/FloatingDigitalHuman2D.vue";
 
 import emptyStateDevelopmentAnimation from "@/assets/aiapplottie/empty-state-development-animation.json";
 import onlineChartAnimation from "@/assets/aiapplottie/online-chart-animation.json";
 import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
 
 import { useUserStore } from "@/store/modules/user";
+import { formatAvatar } from "@/utils/avatar";
+import { type DataInfo, userKey } from "@/utils/auth";
 import {
   getAssistantBootstrap,
   getAssistantConversationGroups,
@@ -66,12 +69,6 @@ defineOptions({ name: "AiAppWorkbench" });
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-
-// 权限判断
-const isAdmin = computed(() => userStore.roles.includes("admin"));
-const isTeacher = computed(
-  () => userStore.roles.includes("teacher") || isAdmin.value
-);
 
 type CourseView = AssistantBootstrapCourse & {
   id: number;
@@ -98,6 +95,7 @@ type ChatMessageView = {
   role: string;
   type: "system" | "user";
   content: string;
+  avatar?: string;
   resources?: AssistantChatResource[];
   streaming?: boolean;
   error?: boolean;
@@ -110,11 +108,69 @@ const featureFlags = computed(
   () => assistantBootstrap.value?.feature_flags || {}
 );
 
-const mode = ref("学生模式");
 const selectedAgentKey = ref("");
 const selectedModelKey = ref("");
 const thinkingModeKey = ref("");
 const selectedSkillKeys = ref<string[]>([]);
+
+const loginRoleType = computed(() => {
+  const userInfoRoleType =
+    storageLocal().getItem<DataInfo<number>>(userKey)?.roleType;
+  const localRoleType = window.localStorage.getItem("userRoleType");
+  return Number(userInfoRoleType || localRoleType) || 0;
+});
+const bootstrapRole = computed(() =>
+  String(assistantBootstrap.value?.role || "").toLowerCase()
+);
+const normalizedRoles = computed(() =>
+  (userStore.roles || []).map(role => String(role).toLowerCase())
+);
+
+const roleMode = computed<{
+  mode: "管理员模式" | "教师模式" | "学生模式";
+  apiMode: "admin" | "teacher" | "student";
+  userLabel: "管理员" | "教师" | "学生";
+}>(() => {
+  if (loginRoleType.value === 1) {
+    return { mode: "学生模式", apiMode: "student", userLabel: "学生" };
+  }
+  if (loginRoleType.value === 2) {
+    return { mode: "教师模式", apiMode: "teacher", userLabel: "教师" };
+  }
+  if (loginRoleType.value === 3) {
+    return { mode: "管理员模式", apiMode: "admin", userLabel: "管理员" };
+  }
+
+  if (bootstrapRole.value === "student") {
+    return { mode: "学生模式", apiMode: "student", userLabel: "学生" };
+  }
+  if (bootstrapRole.value === "teacher") {
+    return { mode: "教师模式", apiMode: "teacher", userLabel: "教师" };
+  }
+  if (bootstrapRole.value === "admin") {
+    return { mode: "管理员模式", apiMode: "admin", userLabel: "管理员" };
+  }
+
+  if (
+    normalizedRoles.value.includes("student") ||
+    normalizedRoles.value.includes("common")
+  ) {
+    return { mode: "学生模式", apiMode: "student", userLabel: "学生" };
+  }
+  if (normalizedRoles.value.includes("teacher")) {
+    return { mode: "教师模式", apiMode: "teacher", userLabel: "教师" };
+  }
+  if (normalizedRoles.value.includes("admin")) {
+    return { mode: "管理员模式", apiMode: "admin", userLabel: "管理员" };
+  }
+
+  return { mode: "学生模式", apiMode: "student", userLabel: "学生" };
+});
+const mode = computed(() => roleMode.value.mode);
+const apiMode = computed(() => roleMode.value.apiMode);
+const currentUserRoleLabel = computed(() => roleMode.value.userLabel);
+const isStaffMode = computed(() => apiMode.value !== "student");
+const currentUserAvatar = computed(() => formatAvatar(userStore.avatar));
 
 const isNewTab = ref(false);
 
@@ -151,18 +207,103 @@ watch(
 );
 const activeCourse = ref<CourseView | null>(null);
 
-// 侧边栏 / 数字人面板 收起状态
+// 侧边栏收起状态
 const sidebarCollapsed = ref(false);
 const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 
-// 数字人面板引用（用于触发朗读 + 自动口型）
+type DigitalHumanState = "standby" | "listening" | "thinking" | "saying";
+
+const digitalHumanStreamState = ref<DigitalHumanState | null>(null);
+const digitalHumanState = computed<DigitalHumanState>(() => {
+  if (digitalHumanStreamState.value) return digitalHumanStreamState.value;
+  if (activeRail.value === "chat" && activeCourse.value) return "listening";
+  return "standby";
+});
+
+const normalizeDigitalHumanState = (
+  value?: string | null
+): DigitalHumanState | null => {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s-]+/g, "");
+
+  if (!normalized) return null;
+
+  const stateMap: Record<string, DigitalHumanState> = {
+    idle: "standby",
+    standby: "standby",
+    waiting: "standby",
+    wait: "standby",
+    ready: "standby",
+    待机: "standby",
+    listening: "listening",
+    listen: "listening",
+    hearing: "listening",
+    倾听: "listening",
+    聆听: "listening",
+    thinking: "thinking",
+    think: "thinking",
+    reasoning: "thinking",
+    processing: "thinking",
+    loading: "thinking",
+    思考: "thinking",
+    推理: "thinking",
+    saying: "saying",
+    speaking: "saying",
+    speak: "saying",
+    talking: "saying",
+    answer: "saying",
+    answering: "saying",
+    explaining: "saying",
+    讲解: "saying",
+    说话: "saying",
+    回答: "saying"
+  };
+
+  return stateMap[normalized] || null;
+};
+
+const applyDigitalHumanDirective = (event: AssistantChatStreamEvent) => {
+  const directive = event.digital_human;
+  const backendState = normalizeDigitalHumanState(
+    directive?.state ||
+      directive?.status ||
+      directive?.phase ||
+      directive?.action ||
+      directive?.mode ||
+      directive?.gesture ||
+      directive?.emotion
+  );
+
+  if (backendState) {
+    digitalHumanStreamState.value = backendState;
+    return true;
+  }
+
+  return false;
+};
+
+// 数字人引用：右侧 VRM 面板负责原有展示，小圆圈负责轻量状态检查。
 const virtualHumanRef = ref<{
   speak?: (text: string) => void;
   pauseRender?: () => void;
   resumeRender?: () => void;
 } | null>(null);
+const floatingHumanRef = ref<{
+  speak?: (text: string) => void;
+  pauseRender?: () => void;
+  resumeRender?: () => void;
+} | null>(null);
+
+const speakDigitalHumans = (text: string) => {
+  const speakText = text || "";
+  if (!speakText) return;
+  virtualHumanRef.value?.speak?.(speakText);
+  floatingHumanRef.value?.speak?.(speakText);
+};
 
 const myCourses = ref<CourseView[]>([]);
 const myStudents = ref<StudentView[]>([]);
@@ -170,14 +311,27 @@ const selectedStudentId = ref<number | undefined>();
 const conversations = ref<ConversationView[]>([]);
 const activeConversationId = ref("");
 
-const selectedCourseId = computed(
-  () => activeCourse.value?.id || assistantBootstrap.value?.selected_course_id
+const routeCourseId = computed(() => {
+  const raw = route.query.courseId || route.query.course_id;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const courseId = Number(value);
+  return Number.isFinite(courseId) && courseId > 0 ? courseId : undefined;
+});
+const fallbackCourse = computed(
+  () =>
+    myCourses.value.find(
+      course => course.id === assistantBootstrap.value?.selected_course_id
+    ) ||
+    myCourses.value[0] ||
+    null
 );
-const selectedCourseName = computed(
-  () => activeCourse.value?.name || assistantBootstrap.value?.courses?.[0]?.course_name || ""
+const effectiveCourse = computed(
+  () => activeCourse.value || fallbackCourse.value
 );
+const selectedCourseId = computed(() => effectiveCourse.value?.id);
+const selectedCourseName = computed(() => effectiveCourse.value?.name || "");
 const selectedTargetStudentId = computed(() =>
-  mode.value === "教师模式" ? selectedStudentId.value : undefined
+  isStaffMode.value ? selectedStudentId.value : undefined
 );
 
 // 【请求还原】：保留原版所有的侧边功能项
@@ -240,6 +394,12 @@ const routineTasks = ref([
     icon: "ChatLineRound"
   }
 ]);
+const routineTaskRole = computed(() =>
+  apiMode.value === "student" ? "student" : "teacher"
+);
+const visibleRoutineTasks = computed(() =>
+  routineTasks.value.filter(task => task.role === routineTaskRole.value)
+);
 
 // === 智能画像、智能体与资源数据 ===
 const profileDimensions = ref([
@@ -313,16 +473,20 @@ const handleAssistantStreamEvent = (
   event: AssistantChatStreamEvent,
   assistantMessageId: string | number
 ) => {
+  const hasBackendHumanState = applyDigitalHumanDirective(event);
+
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
   }
 
   if (event.event === "conversation.created") {
+    if (!hasBackendHumanState) digitalHumanStreamState.value = "thinking";
     void loadConversationGroups();
     return;
   }
 
   if (event.event === "assistant.delta") {
+    if (!hasBackendHumanState) digitalHumanStreamState.value = "thinking";
     const target = messages.value.find(item => item.id === assistantMessageId);
     if (target) target.content += event.delta || "";
     return;
@@ -340,10 +504,19 @@ const handleAssistantStreamEvent = (
     });
     agentTrace.value = event.trace || [];
     generatedResources.value = event.resources || [];
-    virtualHumanRef.value?.speak?.(
-      event.digital_human?.speech_text || content || event.digital_human?.highlight_text || ""
+    if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
+    speakDigitalHumans(
+      event.digital_human?.speech_text ||
+        content ||
+        event.digital_human?.highlight_text ||
+        ""
     );
     isChatStreaming.value = false;
+    window.setTimeout(() => {
+      if (!isChatStreaming.value && digitalHumanStreamState.value === "saying") {
+        digitalHumanStreamState.value = null;
+      }
+    }, 2400);
     void loadConversationGroups();
     return;
   }
@@ -355,6 +528,7 @@ const handleAssistantStreamEvent = (
       error: true
     });
     isChatStreaming.value = false;
+    digitalHumanStreamState.value = null;
     ElMessage.error(event.error_message || "学习助手响应失败");
   }
 };
@@ -370,16 +544,17 @@ const handleSendMessage = (text: string) => {
     ElMessage.warning("请先选择课程");
     return;
   }
-  if (mode.value === "教师模式" && !selectedTargetStudentId.value) {
-    ElMessage.warning("教师模式下请先选择学生");
+  if (isStaffMode.value && !selectedTargetStudentId.value) {
+    ElMessage.warning("教师/管理员模式下请先选择学生");
     return;
   }
 
   messages.value.push({
     id: `user-${Date.now()}`,
-    role: mode.value === "教师模式" ? "教师" : "学生",
+    role: currentUserRoleLabel.value,
     type: "user",
-    content: trimmed
+    content: trimmed,
+    avatar: currentUserAvatar.value
   });
 
   const assistantMessageId = `assistant-${Date.now()}`;
@@ -392,6 +567,7 @@ const handleSendMessage = (text: string) => {
   });
 
   isChatStreaming.value = true;
+  digitalHumanStreamState.value = "thinking";
   agentTrace.value = [];
   streamCancel.value?.();
   streamCancel.value = streamAssistantChat(
@@ -399,7 +575,7 @@ const handleSendMessage = (text: string) => {
       conversation_id: activeConversationId.value || undefined,
       course_id: selectedCourseId.value,
       target_student_id: selectedTargetStudentId.value,
-      mode: assistantBootstrap.value?.mode || (mode.value === "教师模式" ? "teacher" : "student"),
+      mode: apiMode.value,
       selected_agent: selectedAgentKey.value || undefined,
       skill_keys: selectedSkillKeys.value,
       selected_model: selectedModelKey.value || undefined,
@@ -420,9 +596,7 @@ const stackItems = ref<{ key: number; value: string }[]>([
   { key: 3, value: "C" }
 ]);
 let stackKeySeed = 100;
-const stackLog = ref<string[]>([
-  "初始状态：栈顶 -> C, B, A (最后压入 C)"
-]);
+const stackLog = ref<string[]>(["初始状态：栈顶 -> C, B, A (最后压入 C)"]);
 function stackPush() {
   const candidate = ["D", "E", "F", "G", "H", "X", "Y", "Z"];
   const v = candidate[Math.floor(Math.random() * candidate.length)];
@@ -519,15 +693,15 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
       `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.student_id}`
   }));
 
-  mode.value =
-    data.mode === "teacher" || data.role === "teacher" || isTeacher.value
-      ? "教师模式"
-      : "学生模式";
   selectedStudentId.value = data.selected_student_id || myStudents.value[0]?.id;
-  activeCourse.value =
-    myCourses.value.find(course => course.id === data.selected_course_id) ||
-    myCourses.value[0] ||
-    null;
+  const previousCourseId = activeCourse.value?.id;
+  const routeSelectedCourse = routeCourseId.value
+    ? myCourses.value.find(course => course.id === routeCourseId.value)
+    : null;
+  const preservedCourse = previousCourseId
+    ? myCourses.value.find(course => course.id === previousCourseId)
+    : null;
+  activeCourse.value = routeSelectedCourse || preservedCourse || null;
   selectedAgentKey.value = data.agents?.[0]?.key || "";
   selectedModelKey.value = data.models?.[0]?.key || "";
   thinkingModeKey.value = data.thinking_modes?.[0]?.key || "";
@@ -535,10 +709,12 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
     .filter((skill: AssistantSkill) => skill.default_on)
     .map(skill => skill.key);
 
-  if (data.conversation_summary?.conversation_id) {
-    activeConversationId.value = data.conversation_summary.conversation_id;
+  if (activeCourse.value) {
+    resetChatGreeting();
+  } else {
+    activeConversationId.value = "";
+    messages.value = [];
   }
-  resetChatGreeting();
 };
 
 const loadAssistantBootstrap = async () => {
@@ -586,14 +762,10 @@ const loadConversationMessages = async (conversation: ConversationView) => {
     if (course) activeCourse.value = course;
     messages.value = (data.list || []).map(item => ({
       id: item.message_id,
-      role:
-        item.role === "user"
-          ? mode.value === "教师模式"
-            ? "教师"
-            : "学生"
-          : "智能助教",
+      role: item.role === "user" ? currentUserRoleLabel.value : "智能助教",
       type: item.role === "user" ? "user" : "system",
-      content: item.content_text || ""
+      content: item.content_text || "",
+      avatar: item.role === "user" ? currentUserAvatar.value : undefined
     }));
     if (!messages.value.length) resetChatGreeting();
   } catch (error: any) {
@@ -625,7 +797,6 @@ const goBack = () => {
 };
 
 onMounted(() => {
-  if (route.query.mode) mode.value = route.query.mode as string;
   if (route.query.newTab === "true") {
     isNewTab.value = true;
     document.title = `学习助手 (${mode.value})`;
@@ -643,7 +814,7 @@ const quickInteractionMessages = [
 ];
 
 const handleQuickInteraction = (text: string) => {
-  virtualHumanRef.value?.speak?.(text);
+  speakDigitalHumans(text);
 };
 
 const handleNewChat = (payload: { course: string }) => {
@@ -652,9 +823,9 @@ const handleNewChat = (payload: { course: string }) => {
   activeConversationId.value = "";
   resetChatGreeting();
   if (quickMessage.value.trim()) {
-    // 切换到聊天栏目，确保 VirtualHumanPanel 渲染 (v-show 会让 ref 可用)
+    // 切换到聊天栏目，确保数字人状态与课程上下文同步。
     activeRail.value = "chat";
-    // 微延时等待 DOM 切换完成，确保 ref 绑定到实例上
+    // 微延时等待课程上下文切换完成。
     setTimeout(() => {
       handleSendMessage(quickMessage.value);
       quickMessage.value = "";
@@ -673,16 +844,12 @@ const syncHumanRenderState = () => {
   }
 };
 
-watch([humanCollapsed, activeRail], () => {
+watch([activeRail, humanCollapsed], () => {
   syncHumanRenderState();
 });
 
 watch(selectedStudentId, () => {
-  if (
-    isBootstrapping.value ||
-    !assistantBootstrap.value ||
-    mode.value !== "教师模式"
-  )
+  if (isBootstrapping.value || !assistantBootstrap.value || !isStaffMode.value)
     return;
   activeConversationId.value = "";
   resetChatGreeting();
@@ -708,7 +875,7 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="ai-app-root h-[calc(100vh-140px)] flex flex-col font-sans rounded-xl overflow-hidden shadow-sm bg-white"
+    class="ai-app-root h-[100dvh] w-full flex flex-col overflow-hidden bg-white"
     :class="[
       activeRail === 'chat'
         ? 'bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)]'
@@ -716,11 +883,11 @@ onUnmounted(() => {
       currentTheme
     ]"
   >
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 min-h-0 flex overflow-hidden">
       <!-- 极简左侧边栏 (第一块) -->
       <aside
         v-if="activeRail === 'chat'"
-        class="flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
+        class="ai-app-left-rail flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
         :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
@@ -765,9 +932,8 @@ onUnmounted(() => {
         <!-- 教师专属：顶部学生选择器工具栏 -->
         <div
           v-if="
-            isTeacher &&
-            ['path', 'profile', 'assessment'].includes(activeRail) &&
-            mode === '教师模式'
+            isStaffMode &&
+            ['path', 'profile', 'assessment'].includes(activeRail)
           "
           class="flex-none flex items-center justify-end gap-3 bg-white px-6 py-3 border-b border-gray-100 z-10 relative shadow-sm"
         >
@@ -801,7 +967,7 @@ onUnmounted(() => {
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
           <div
             v-if="activeRail === `chat` && activeCourse"
-            class="h-full w-full flex stretch p-4 gap-4 overflow-hidden"
+            class="h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
           >
             <!-- 对话流核心面板 -->
             <transition appear name="panel-slide">
@@ -817,6 +983,7 @@ onUnmounted(() => {
                   :activeCourse="activeCourse.name"
                   :courses="myCourses.map(course => course.name)"
                   :mode="mode"
+                  :user-avatar="currentUserAvatar"
                   :agents="assistantBootstrap?.agents || []"
                   :models="assistantBootstrap?.models || []"
                   :thinkingModes="assistantBootstrap?.thinking_modes || []"
@@ -827,7 +994,6 @@ onUnmounted(() => {
                   @send="handleSendMessage"
                   @preview="handlePreview"
                   @switch-course="handleSwitchCourse"
-                  @update:mode="mode = $event"
                   @update:selectedAgent="selectedAgentKey = $event"
                   @update:selectedModel="selectedModelKey = $event"
                   @update:thinkingMode="thinkingModeKey = $event"
@@ -835,13 +1001,13 @@ onUnmounted(() => {
               </div>
             </transition>
 
-            <!-- 数字人面板 -->
+            <!-- 数字人面板：保留原右侧 VRM 数字人模块 -->
             <transition appear name="panel-reveal">
               <div
                 class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
                 :class="humanCollapsed ? 'w-16' : 'w-[420px]'"
               >
-                <!-- 收起 / 展开 把手：挂在外层，避免被圆角容器裁切 -->
+                <!-- 收起 / 展开把手：挂在外层，避免被圆角容器裁切 -->
                 <button
                   class="absolute top-4 left-0 -translate-x-1/2 w-7 h-7 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-[140]"
                   :title="humanCollapsed ? '展开数字人' : '收起数字人'"
@@ -853,7 +1019,6 @@ onUnmounted(() => {
                   </el-icon>
                 </button>
 
-                <!-- 原有的数字人容器 (现在嵌套在 flex 容器中) -->
                 <div
                   class="flex-1 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative"
                 >
@@ -861,7 +1026,7 @@ onUnmounted(() => {
                     ref="virtualHumanRef"
                     v-show="!humanCollapsed"
                   />
-                  <!-- 收起态 (数字人这一窄条的内容) -->
+
                   <div
                     v-show="humanCollapsed"
                     class="h-full flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer gap-6 group/btn"
@@ -875,12 +1040,12 @@ onUnmounted(() => {
                     <span
                       class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover/btn:text-primary transition-colors"
                       style="writing-mode: vertical-rl"
-                      >专属助教</span
                     >
+                      专属助教
+                    </span>
                   </div>
                 </div>
 
-                <!-- 快速互动：仅在展开态显示在数字人底部 -->
                 <transition name="el-zoom-in-bottom">
                   <div
                     v-show="!humanCollapsed"
@@ -933,7 +1098,7 @@ onUnmounted(() => {
                 <h1
                   class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
                 >
-                  今天想聊点什么？
+                  今天想学习什么？
                 </h1>
                 <p
                   class="text-[15px] font-medium tracking-wide"
@@ -995,29 +1160,12 @@ onUnmounted(() => {
                       </template>
                     </el-dropdown>
 
-                    <el-dropdown trigger="click" @command="m => (mode = m)">
-                      <span
-                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
-                      >
-                        <el-icon class="mr-1.5 text-[14px]"
-                          ><Monitor
-                        /></el-icon>
-                        {{ mode }}
-                        <el-icon class="ml-1 text-[12px]"
-                          ><ArrowDown
-                        /></el-icon>
-                      </span>
-                      <template #dropdown>
-                        <el-dropdown-menu>
-                          <el-dropdown-item command="学生模式"
-                            >学生模式</el-dropdown-item
-                          >
-                          <el-dropdown-item command="教师模式"
-                            >教师模式</el-dropdown-item
-                          >
-                        </el-dropdown-menu>
-                      </template>
-                    </el-dropdown>
+                    <span
+                      class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 bg-gray-100"
+                    >
+                      <el-icon class="mr-1.5 text-[14px]"><Monitor /></el-icon>
+                      {{ mode }}
+                    </span>
 
                     <el-dropdown
                       trigger="click"
@@ -1102,9 +1250,7 @@ onUnmounted(() => {
 
           <div v-else-if="activeRail === `path`" class="h-full w-full">
             <div
-              v-if="
-                isTeacher && mode === '教师模式' && !selectedStudentId
-              "
+              v-if="isStaffMode && !selectedStudentId"
               class="h-full w-full flex items-center justify-center bg-white"
             >
               <div
@@ -1136,9 +1282,7 @@ onUnmounted(() => {
             class="h-full w-full p-4 bg-white"
           >
             <div
-              v-if="
-                isTeacher && mode === '教师模式' && !selectedStudentId
-              "
+              v-if="isStaffMode && !selectedStudentId"
               class="h-full w-full flex items-center justify-center"
             >
               <div
@@ -1173,9 +1317,7 @@ onUnmounted(() => {
                 class="w-[360px] flex-shrink-0 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <AiInspector
-                  :profileDimensions="
-                    profileDimensions
-                  "
+                  :profileDimensions="profileDimensions"
                   :agentItems="agentItems"
                   :resources="inspectorResources"
                 />
@@ -1185,9 +1327,7 @@ onUnmounted(() => {
 
           <div v-else-if="activeRail === `assessment`" class="h-full w-full">
             <div
-              v-if="
-                isTeacher && mode === '教师模式' && !selectedStudentId
-              "
+              v-if="isStaffMode && !selectedStudentId"
               class="h-full w-full flex items-center justify-center bg-white"
             >
               <div
@@ -1237,11 +1377,7 @@ onUnmounted(() => {
 
                 <div class="space-y-4">
                   <div
-                    v-for="task in routineTasks.filter(t =>
-                      mode === '学生模式'
-                        ? t.role === 'student'
-                        : t.role === 'teacher'
-                    )"
+                    v-for="task in visibleRoutineTasks"
                     :key="task.id"
                     class="flex items-start justify-between p-5 rounded-2xl border transition-all group cursor-pointer"
                     :class="
@@ -1316,13 +1452,7 @@ onUnmounted(() => {
                   </div>
 
                   <div
-                    v-if="
-                      routineTasks.filter(t =>
-                        mode === '学生模式'
-                          ? t.role === 'student'
-                          : t.role === 'teacher'
-                      ).length === 0
-                    "
+                    v-if="visibleRoutineTasks.length === 0"
                     class="text-center py-12 text-gray-400"
                   >
                     <el-empty
@@ -1371,10 +1501,7 @@ onUnmounted(() => {
 
                 <!-- 时间轴区域 -->
                 <div class="flex-1 overflow-y-auto p-8 relative bg-gray-50/30">
-                  <el-empty
-                    description="暂无真实执行记录"
-                    :image-size="120"
-                  />
+                  <el-empty description="暂无真实执行记录" :image-size="120" />
                 </div>
               </div>
             </div>
@@ -1405,6 +1532,18 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <FloatingDigitalHuman2D
+      ref="floatingHumanRef"
+      :role-label="currentUserRoleLabel"
+      :course-name="selectedCourseName"
+      :state="digitalHumanState"
+      anchor="appLeftBottom"
+      anchor-selector=".ai-app-root"
+      :left-zone-width="sidebarCollapsed ? 34 : 260"
+      :bottom-offset="104"
+      storage-key="ai-app-floating-digital-human-2d-left-bottom"
+    />
+
     <!-- 栈操作可视化预览弹窗 -->
     <el-dialog
       v-model="stackPreviewVisible"
@@ -1428,7 +1567,11 @@ onUnmounted(() => {
           >
             栈底 (bottom)
           </div>
-          <transition-group name="stack-anim" tag="div" class="flex flex-col-reverse gap-2 w-full items-center">
+          <transition-group
+            name="stack-anim"
+            tag="div"
+            class="flex flex-col-reverse gap-2 w-full items-center"
+          >
             <div
               v-for="item in stackItems"
               :key="item.key"
@@ -1454,8 +1597,8 @@ onUnmounted(() => {
             <el-button @click="stackReset">重置</el-button>
           </div>
           <div class="text-xs text-gray-500">
-            栈大小：<b class="text-indigo-600">{{ stackItems.length }}</b>
-            ｜ 栈顶元素：<b class="text-pink-600">{{
+            栈大小：<b class="text-indigo-600">{{ stackItems.length }}</b> ｜
+            栈顶元素：<b class="text-pink-600">{{
               stackItems[stackItems.length - 1]?.value || "—"
             }}</b>
           </div>
@@ -1491,6 +1634,27 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .ai-app-root {
   --el-color-primary: #5e7ff8; // 强制保持平台蓝
+  --ai-app-font:
+    "Inter", "NotionInter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial,
+    sans-serif;
+
+  font-family: var(--ai-app-font);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.ai-app-root :deep(*) {
+  font-family: var(--ai-app-font);
+}
+
+.ai-app-root :deep(.iconfont),
+.ai-app-root :deep([class^="el-icon-"]),
+.ai-app-root :deep([class*=" el-icon-"]),
+.ai-app-root :deep(.iconify) {
+  font-family:
+    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline" !important;
 }
 
 /* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */

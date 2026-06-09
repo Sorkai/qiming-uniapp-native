@@ -96,6 +96,11 @@ export interface AssistantChatResource {
 }
 
 export interface AssistantDigitalHumanDirective {
+  state?: string;
+  status?: string;
+  phase?: string;
+  action?: string;
+  mode?: string;
   emotion?: string;
   gesture?: string;
   speech_text?: string;

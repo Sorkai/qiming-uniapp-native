@@ -559,6 +559,35 @@
       display: none !important;
     }
 
+    body.embedded-ai-app {
+      display: block;
+      padding: 0;
+      gap: 0;
+      background: transparent;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    body.embedded-ai-app .viewer {
+      width: 100vw;
+      height: 100vh !important;
+      min-height: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    body.embedded-ai-app .sidebar,
+    body.embedded-ai-app .interaction-overlay {
+      display: none !important;
+    }
+
+    body.embedded-ai-app .speech-panel {
+      display: none !important;
+    }
+
     @media (max-width: 1080px) {
       body {
         grid-template-columns: 1fr;
@@ -588,6 +617,11 @@
 </head>
 
 <body>
+  <script>
+    if (new URLSearchParams(window.location.search).get('embed') === 'ai-app') {
+      document.body.classList.add('embedded-ai-app');
+    }
+  </script>
   <main class="panel viewer" style="height: 62vh; flex-shrink: 0;">
     <canvas id="canvas"></canvas>
 
@@ -875,6 +909,7 @@
     const speechPanel = document.getElementById('speechPanel');
     const speechText = document.getElementById('speechText');
     const speechMeta = document.getElementById('speechMeta');
+    const isEmbeddedAiApp = document.body.classList.contains('embedded-ai-app');
     const backgroundSelect = document.getElementById('backgroundSelect');
     const resetCameraBtn = document.getElementById('resetCameraBtn');
     const teacherToTargetBtn = document.getElementById('teacherToTargetBtn');
@@ -2162,9 +2197,11 @@
       state.isSpeaking = true;
       state.speakingMotionTime = 0;
 
-      speechText.textContent = trimmed;
-      speechMeta.textContent = `智能互动 · 共 ${plan.length} 个字/停顿单元`;
-      speechPanel.classList.remove('hidden');
+      if (!isEmbeddedAiApp) {
+        speechText.textContent = trimmed;
+        speechMeta.textContent = `智能互动 · 共 ${plan.length} 个字/停顿单元`;
+        speechPanel.classList.remove('hidden');
+      }
       speakWithBrowserVoice(trimmed);
 
       for (let i = 0; i < plan.length; i += 1) {
@@ -2173,7 +2210,9 @@
         const currentLabel = item.mouths.length
           ? `第 ${i + 1} 步：${item.char}${item.pinyin ? `(${item.pinyin})` : ''} -> ${item.label}`
           : `第 ${i + 1} 步：${item.char} -> 停顿`;
-        speechMeta.textContent = `智能互动 · ${currentLabel}`;
+        if (!isEmbeddedAiApp) {
+          speechMeta.textContent = `智能互动 · ${currentLabel}`;
+        }
 
         if (item.mouths.length) {
           const segmentDuration = Math.max(50, Math.floor(item.duration / item.mouths.length));
@@ -2702,9 +2741,11 @@
       currentTitle.textContent = 'VRM 已加载';
       currentMeta.textContent = `动作总数 ${state.motionList.length}${state.currentBackgroundName ? ` · 背景 ${state.currentBackgroundName}` : ''}，可以直接测试动作、表情和前端口型。`;
       setStatus('ok', `VRM 已加载，共 ${state.motionList.length} 个动作`);
-      speechText.textContent = '';
-      speechMeta.textContent = `已识别口型通道：${getAvailableMouthSummary()}${state.selectedVoiceName ? ` · 语音：${state.selectedVoiceName}` : ' · 语音：浏览器未就绪或不可用'}`;
-      speechPanel.classList.remove('hidden');
+      if (!isEmbeddedAiApp) {
+        speechText.textContent = '';
+        speechMeta.textContent = `已识别口型通道：${getAvailableMouthSummary()}${state.selectedVoiceName ? ` · 语音：${state.selectedVoiceName}` : ' · 语音：浏览器未就绪或不可用'}`;
+        speechPanel.classList.remove('hidden');
+      }
       syncTeacherStateFromScene();
       syncTeacherEditorFromState();
       updateDebugReadouts();

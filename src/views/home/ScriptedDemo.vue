@@ -1,7 +1,7 @@
 <template>
   <section class="sd" aria-label="启明智教 · 智能工作流演示">
     <header class="sd__head">
-      <p class="sd__eyebrow">智能工作流 · Scripted Demo</p>
+      <p class="sd__eyebrow">智能工作流演示</p>
     </header>
 
     <div ref="rootEl" class="sd__stage" :class="{ 'is-paused': paused }">
@@ -18,7 +18,7 @@
               stroke-linejoin="round"
             />
           </svg>
-          <span>intelledu.com / workspace</span>
+          <span>intelledu.com / 智能工作台</span>
         </div>
         <div class="sd__chip">
           <i class="sd__chipDot" />
@@ -30,8 +30,8 @@
         <!-- 侧边栏 -->
         <aside class="sd__side">
           <div class="sd__sideHead">
-            <span class="sd__brandSquare">Q</span>
-            <span>Qiming HQ</span>
+            <span class="sd__brandSquare">启</span>
+            <span>启明智教</span>
           </div>
           <p class="sd__sideGroup">工作区</p>
           <button
@@ -52,13 +52,13 @@
         <!-- 中间内容区 -->
         <main class="sd__main">
           <div class="sd__crumbs">
-            <span>Qiming HQ</span>
+            <span>启明智教</span>
             <span>/</span>
             <span ref="crumbActiveEl">{{ activeLabel }}</span>
             <div class="sd__tbActions">
               <span class="sd__tbBadge">
                 <i class="sd__tbDot"></i>
-                Service Mesh: Connected
+                教学服务已连接
               </span>
               <button class="sd__tbBtn">导出报告</button>
             </div>
@@ -148,7 +148,7 @@
           >
             <div class="sd__sceneHead">
               <div class="sd__sceneHeadMain">
-                <h3 class="sd__sceneTitle">学情看板 · 多维评估模型 (IRT)</h3>
+                <h3 class="sd__sceneTitle">学情看板 · 多维能力评估</h3>
                 <p class="sd__sceneLede">
                   融合学生历史行为（LTSM）与题目难度特征，立体刻画学习者能力。
                 </p>
