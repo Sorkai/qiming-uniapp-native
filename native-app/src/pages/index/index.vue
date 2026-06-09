@@ -1,5 +1,5 @@
 <template>
-  <view class="native-shell">
+  <view class="native-shell" :class="{ 'is-preview-phone': isPhonePreview }">
     <view v-if="!loaded || loadError" class="shell-state">
       <view class="brand-mark">
         <text class="brand-mark__text">启</text>
@@ -12,24 +12,33 @@
     </view>
 
     <!-- #ifdef H5 -->
-    <iframe
-      v-if="isH5DevPreview"
-      id="qiming-preview-frame"
-      class="qiming-preview-frame"
-      :src="webviewSrc"
-      title="启明智教客户端预览"
-      @load="handleLoad"
-    />
-    <view v-if="isH5DevPreview" class="preview-switcher">
-      <button
-        v-for="role in previewRoles"
-        :key="role"
-        class="preview-switcher__button"
-        :class="{ 'is-active': previewRole === role }"
-        @click="switchPreviewRole(role)"
-      >
-        {{ previewRoleLabels[role] }}
-      </button>
+    <view v-if="isH5DevPreview" class="preview-stage">
+      <view class="preview-device">
+        <view class="preview-device__speaker" />
+        <iframe
+          id="qiming-preview-frame"
+          class="qiming-preview-frame"
+          :src="webviewSrc"
+          title="启明智教客户端预览"
+          @load="handleLoad"
+        />
+      </view>
+      <view class="preview-toolbar">
+        <view class="preview-switcher">
+          <button
+            v-for="role in previewRoles"
+            :key="role"
+            class="preview-switcher__button"
+            :class="{ 'is-active': previewRole === role }"
+            @click="switchPreviewRole(role)"
+          >
+            {{ previewRoleLabels[role] }}
+          </button>
+        </view>
+        <button class="preview-mode-button" @click="togglePreviewMode">
+          {{ isPhonePreview ? "全屏" : "手机" }}
+        </button>
+      </view>
     </view>
     <!-- #endif -->
 
@@ -65,6 +74,7 @@ const loaded = ref(false);
 const loadError = ref(false);
 const webviewVersion = ref(0);
 const lastMessage = ref<WebMessage | null>(null);
+const previewMode = ref<"phone" | "full">("phone");
 
 let isH5DevPreview = false;
 // #ifdef H5
@@ -96,12 +106,18 @@ const webviewSrc = computed(() => {
   const separator = entryPath.value.includes("?") ? "&" : "?";
   return `${entryPath.value}${separator}v=${webviewVersion.value}`;
 });
+const isPhonePreview = computed(
+  () => isH5DevPreview && previewMode.value === "phone"
+);
 function switchPreviewRole(role: PreviewRole) {
   if (!isH5DevPreview || typeof window === "undefined") return;
   const url = new URL(window.location.href);
   url.searchParams.set("demoRole", role);
   window.history.replaceState(null, "", url);
   webviewVersion.value += 1;
+}
+function togglePreviewMode() {
+  previewMode.value = previewMode.value === "phone" ? "full" : "phone";
 }
 const webviewStyles = {
   progress: {
@@ -195,11 +211,68 @@ onBackPress(() => {
   border: 0;
 }
 
-.preview-switcher {
+.preview-stage {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(47, 125, 255, 0.1), transparent 34%),
+    #eef2f8;
+}
+
+.preview-device {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+
+.native-shell.is-preview-phone .preview-stage {
+  align-items: center;
+  padding: 28rpx;
+}
+
+.native-shell.is-preview-phone .preview-device {
+  width: min(393px, calc(100vw - 32px));
+  height: min(852px, calc(100dvh - 32px));
+  border: 1rpx solid rgba(122, 137, 166, 0.26);
+  border-radius: 42rpx;
+  box-shadow:
+    0 32rpx 96rpx rgba(47, 67, 103, 0.22),
+    0 0 0 10rpx rgba(255, 255, 255, 0.54);
+}
+
+.preview-device__speaker {
+  display: none;
+}
+
+.native-shell.is-preview-phone .preview-device__speaker {
+  position: absolute;
+  top: 14rpx;
+  left: 50%;
+  z-index: 3;
+  display: block;
+  width: 96rpx;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: rgba(31, 41, 55, 0.18);
+  transform: translateX(-50%);
+}
+
+.preview-toolbar {
   position: absolute;
   right: 20rpx;
   bottom: calc(24rpx + env(safe-area-inset-bottom, 0px));
   z-index: 10;
+  display: flex;
+  gap: 10rpx;
+  align-items: center;
+}
+
+.preview-switcher {
   display: flex;
   gap: 8rpx;
   padding: 8rpx;
@@ -228,6 +301,23 @@ onBackPress(() => {
 .preview-switcher__button.is-active {
   color: #fff;
   background: #2f7dff;
+}
+
+.preview-mode-button {
+  height: 64rpx;
+  min-width: 88rpx;
+  padding: 0 22rpx;
+  border: 1rpx solid rgba(204, 213, 230, 0.88);
+  border-radius: 999rpx;
+  color: #344054;
+  font-size: 22rpx;
+  line-height: 64rpx;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12rpx 36rpx rgba(47, 84, 158, 0.14);
+}
+
+.preview-mode-button::after {
+  border: 0;
 }
 
 .shell-state {

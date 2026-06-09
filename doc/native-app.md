@@ -118,6 +118,11 @@ The H5 preview shell also renders a small bottom-right role switcher for
 student/teacher/admin review. This switcher is wrapped in H5-only conditional
 compilation and is not included in the APP-PLUS build.
 
+By default, the preview shell renders the app inside a 393 x 852 phone canvas so
+mobile layout issues are visible while developing. The bottom-right "full
+screen" toggle switches back to full browser width when wider layout inspection
+is needed.
+
 ## Android Packaging Checklist
 
 1. Install HBuilderX and sign in to a DCloud account.
@@ -217,3 +222,10 @@ The uni-app shell receives messages through the `web-view` `message` event.
 - The live native H5 preview now includes a bottom-right student/teacher/admin
   switcher for visual review while developing. `pnpm --dir native-app
   type-check` and `pnpm --dir native-app build:app` passed after this change.
+- The live preview shell now defaults to a 393 x 852 phone canvas with a
+  full-screen toggle. Browser inspection confirmed the iframe and device frame
+  are `393x852` at `http://localhost:8861/?demoRole=teacher`.
+- `pnpm --dir native-app type-check` passed after the phone-canvas preview
+  change.
+- `pnpm --dir native-app build:app` passed after the phone-canvas preview
+  change.
