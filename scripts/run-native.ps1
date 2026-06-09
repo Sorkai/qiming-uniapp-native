@@ -35,6 +35,76 @@ function Get-AndroidDeviceLines {
     })
 }
 
+function Get-PhysicalAndroidDeviceLines {
+  return @(Get-AndroidDeviceLines | Where-Object {
+      $_ -notmatch "^emulator-"
+    })
+}
+
+function Get-WindowsAndroidUsbIssues {
+  if ($env:OS -ne "Windows_NT") {
+    return @()
+  }
+
+  $androidVendorIds = @(
+    "USB\VID_12D1",
+    "USB\VID_18D1",
+    "USB\VID_2717",
+    "USB\VID_2A70",
+    "USB\VID_22D9",
+    "USB\VID_04E8",
+    "USB\VID_0BB4",
+    "USB\VID_2A45"
+  )
+  $keywordPattern = "Android|HUAWEI|HONOR|Harmony|Phone|MTP|ADB|HDB"
+
+  try {
+    $issues = @()
+    $devices = @(Get-CimInstance Win32_PnPEntity -ErrorAction SilentlyContinue)
+
+    foreach ($device in $devices) {
+      $deviceId = ([string]$device.PNPDeviceID).ToUpperInvariant()
+      if ([string]::IsNullOrWhiteSpace($deviceId)) {
+        continue
+      }
+
+      $vendorMatch = $false
+      foreach ($vendorId in $androidVendorIds) {
+        if ($deviceId.StartsWith($vendorId)) {
+          $vendorMatch = $true
+          break
+        }
+      }
+
+      $keywordMatch = (
+        ($device.Name -match $keywordPattern) -or
+        ($device.Description -match $keywordPattern)
+      )
+      $problemCode = 0
+      [void][int]::TryParse([string]$device.ConfigManagerErrorCode, [ref]$problemCode)
+      $status = [string]$device.Status
+      $hasProblem = (($status -and $status -ne "OK") -or $problemCode -ne 0)
+
+      if (($vendorMatch -or $keywordMatch) -and $hasProblem) {
+        $name = [string]$device.Name
+        if ($deviceId.StartsWith("USB\VID_12D1")) {
+          $name = "Huawei/Honor Android USB ($name)"
+        }
+        $issues += [pscustomobject]@{
+          Name = $name
+          InstanceId = $device.PNPDeviceID
+          Status = $status
+          Problem = $problemCode
+        }
+      }
+    }
+
+    return $issues
+  } catch {
+    return @()
+  }
+}
+
 function Assert-AndroidDevice([string]$RequestedDeviceId) {
   $deviceLines = Get-AndroidDeviceLines
   if ($deviceLines.Count -eq 0) {
@@ -196,8 +266,21 @@ if ($Platform -eq "ios" -and $env:OS -eq "Windows_NT") {
 if ($Platform -eq "android") {
   & $devicesScript -Platform android
   $androidDeviceCount = Assert-AndroidDevice $DeviceId
-  Write-Host "Android device preflight: $androidDeviceCount device(s) available."
+  $physicalAndroidCount = (Get-PhysicalAndroidDeviceLines).Count
+  $usbIssues = @(Get-WindowsAndroidUsbIssues)
+  Write-Host "Android device preflight: $androidDeviceCount ADB device(s), $physicalAndroidCount physical device(s)."
+  if (-not $DeviceId -and $physicalAndroidCount -eq 0) {
+    Write-Warning "No physical Android device is visible to ADB; the launch will use an emulator unless you pass -DeviceId after fixing USB debugging/driver access."
+  }
+  foreach ($issue in $usbIssues) {
+    Write-Warning "Windows sees an Android-like USB device that is not usable by ADB: $($issue.Name) [$($issue.InstanceId)] status=$($issue.Status) problem=$($issue.Problem)."
+  }
   $resolvedAndroidDeviceId = Get-AndroidDeviceId $DeviceId
+  if ($resolvedAndroidDeviceId -match "^emulator-") {
+    Write-Host "Resolved Android target: $resolvedAndroidDeviceId (emulator)"
+  } else {
+    Write-Host "Resolved Android target: $resolvedAndroidDeviceId (physical)"
+  }
 }
 
 if (-not $SkipPrepare) {

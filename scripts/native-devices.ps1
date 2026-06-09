@@ -46,6 +46,82 @@ function Count-AndroidDevices([string]$AdbOutput) {
     }).Count
 }
 
+function Get-AndroidDeviceLines([string]$AdbOutput) {
+  return @(($AdbOutput -split "`n") | Where-Object {
+      $_ -match "\bdevice\b" -and $_ -notmatch "List of devices"
+    })
+}
+
+function Get-PhysicalAndroidDeviceLines([string]$AdbOutput) {
+  return @(Get-AndroidDeviceLines $AdbOutput | Where-Object {
+      $_ -notmatch "^emulator-"
+    })
+}
+
+function Get-WindowsAndroidUsbIssues {
+  if ($env:OS -ne "Windows_NT") {
+    return @()
+  }
+
+  $androidVendorIds = @(
+    "USB\VID_12D1",
+    "USB\VID_18D1",
+    "USB\VID_2717",
+    "USB\VID_2A70",
+    "USB\VID_22D9",
+    "USB\VID_04E8",
+    "USB\VID_0BB4",
+    "USB\VID_2A45"
+  )
+  $keywordPattern = "Android|HUAWEI|HONOR|Harmony|Phone|MTP|ADB|HDB"
+
+  try {
+    $issues = @()
+    $devices = @(Get-CimInstance Win32_PnPEntity -ErrorAction SilentlyContinue)
+
+    foreach ($device in $devices) {
+      $deviceId = ([string]$device.PNPDeviceID).ToUpperInvariant()
+      if ([string]::IsNullOrWhiteSpace($deviceId)) {
+        continue
+      }
+
+      $vendorMatch = $false
+      foreach ($vendorId in $androidVendorIds) {
+        if ($deviceId.StartsWith($vendorId)) {
+          $vendorMatch = $true
+          break
+        }
+      }
+
+      $keywordMatch = (
+        ($device.Name -match $keywordPattern) -or
+        ($device.Description -match $keywordPattern)
+      )
+      $problemCode = 0
+      [void][int]::TryParse([string]$device.ConfigManagerErrorCode, [ref]$problemCode)
+      $status = [string]$device.Status
+      $hasProblem = (($status -and $status -ne "OK") -or $problemCode -ne 0)
+
+      if (($vendorMatch -or $keywordMatch) -and $hasProblem) {
+        $name = [string]$device.Name
+        if ($deviceId.StartsWith("USB\VID_12D1")) {
+          $name = "Huawei/Honor Android USB ($name)"
+        }
+        $issues += [pscustomobject]@{
+          Name = $name
+          InstanceId = $device.PNPDeviceID
+          Status = $status
+          Problem = $problemCode
+        }
+      }
+    }
+
+    return $issues
+  } catch {
+    return @()
+  }
+}
+
 function Count-HBuilderDevices([string]$Output) {
   if ([string]::IsNullOrWhiteSpace($Output)) {
     return 0
@@ -65,10 +141,22 @@ if (-not (Test-Path -LiteralPath $hbuilderCli)) {
 if ($Platform -eq "all" -or $Platform -eq "android") {
   if (Test-Path -LiteralPath $adb) {
     $adbResult = Invoke-WithTimeout { & "G:\qiming-uniapp-native-tools\android-sdk\platform-tools\adb.exe" devices -l } $TimeoutSeconds
-    $androidCount = Count-AndroidDevices $adbResult.Output
-    Add-DeviceResult "ADB android devices" ($(if ($androidCount -gt 0) { "OK" } else { "WARN" })) ($(if ($androidCount -gt 0) { "$androidCount device(s)" } else { "no Android device attached" }))
+    $androidLines = Get-AndroidDeviceLines $adbResult.Output
+    $androidCount = $androidLines.Count
+    $physicalAndroidCount = (Get-PhysicalAndroidDeviceLines $adbResult.Output).Count
+    $adbDetail = if ($androidCount -gt 0) { ($androidLines -join "; ") } else { "no Android device attached" }
+    Add-DeviceResult "ADB android devices" ($(if ($androidCount -gt 0) { "OK" } else { "WARN" })) $adbDetail
+    Add-DeviceResult "ADB physical devices" ($(if ($physicalAndroidCount -gt 0) { "OK" } else { "WARN" })) ($(if ($physicalAndroidCount -gt 0) { "$physicalAndroidCount physical device(s)" } else { "only emulator/no physical Android device visible to ADB" }))
   } else {
     Add-DeviceResult "ADB" "WARN" "missing: $adb"
+  }
+
+  $usbIssues = @(Get-WindowsAndroidUsbIssues)
+  if ($usbIssues.Count -gt 0) {
+    $usbDetails = ($usbIssues | ForEach-Object {
+        "$($_.Name) [$($_.InstanceId)] status=$($_.Status) problem=$($_.Problem)"
+      }) -join "; "
+    Add-DeviceResult "Windows Android USB" "WARN" $usbDetails
   }
 
   if (Test-Path -LiteralPath $hbuilderCli) {

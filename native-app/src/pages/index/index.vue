@@ -86,7 +86,7 @@ const loaded = ref(false);
 const loadError = ref(false);
 const webviewVersion = ref(0);
 const lastMessage = ref<WebMessage | null>(null);
-const previewMode = ref<"phone" | "full">("full");
+const previewMode = ref<"phone" | "full">("phone");
 const appEntryRoute = ref(defaultEntryRoute);
 
 let isH5DevPreview = false;
@@ -309,10 +309,14 @@ onBackPress(() => {
 
 .preview-stage {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   justify-content: center;
+  gap: 14rpx;
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
+  padding: 18rpx;
   background:
     radial-gradient(circle at 50% 0%, rgba(47, 125, 255, 0.1), transparent 34%),
     #eef2f8;
@@ -320,7 +324,9 @@ onBackPress(() => {
 
 .preview-device {
   position: relative;
+  flex: 1 1 auto;
   width: 100%;
+  min-height: 0;
   height: 100%;
   overflow: hidden;
   background: #fff;
@@ -328,12 +334,13 @@ onBackPress(() => {
 
 .native-shell.is-preview-phone .preview-stage {
   align-items: center;
-  padding: 28rpx;
+  padding: 24rpx 24rpx calc(18rpx + env(safe-area-inset-bottom, 0px));
 }
 
 .native-shell.is-preview-phone .preview-device {
+  flex: 0 1 auto;
   width: min(393px, calc(100vw - 32px));
-  height: min(852px, calc(100dvh - 32px));
+  height: min(852px, calc(100dvh - 178rpx));
   border: 1rpx solid rgba(122, 137, 166, 0.26);
   border-radius: 42rpx;
   box-shadow:
@@ -359,15 +366,14 @@ onBackPress(() => {
 }
 
 .preview-toolbar {
-  position: absolute;
-  right: 20rpx;
-  bottom: calc(24rpx + env(safe-area-inset-bottom, 0px));
-  left: 20rpx;
+  position: relative;
   z-index: 10;
   display: flex;
+  flex: 0 0 auto;
   gap: 10rpx;
   align-items: center;
   justify-content: flex-end;
+  width: min(100%, 1320rpx);
   pointer-events: none;
 }
 
@@ -498,9 +504,6 @@ onBackPress(() => {
 
 @media (max-width: 760px) {
   .preview-toolbar {
-    right: 14rpx;
-    bottom: calc(18rpx + env(safe-area-inset-bottom, 0px));
-    left: 14rpx;
     flex-wrap: wrap;
   }
 
