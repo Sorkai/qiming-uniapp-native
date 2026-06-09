@@ -15,6 +15,10 @@ npm-debug.log*
 .pnpm-debug.log
 .dev-server*.log
 .native-dev*.log
+.native-*.png
+native-*.png
+native-*.xml
+native-app/.hbuilderx/
 pack-config.json
 pack-config.local.json
 !pack-config.example.json

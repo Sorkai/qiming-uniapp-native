@@ -3155,7 +3155,7 @@ onUnmounted(() => {
 /* =========================================================
    RESPONSIVE
    ========================================================= */
-@media (width <= 1024px) {
+@media (max-width: 1024px) {
   .nx-sat {
     display: none;
   }
@@ -3191,20 +3191,157 @@ onUnmounted(() => {
   }
 }
 
-@media (width <= 680px) {
-  .nx-nav__inner {
-    padding: 0 16px;
+@media (max-width: 680px) {
+  .nx {
+    min-height: 100%;
   }
+
+  .nx-nav {
+    height: calc(64px + var(--qiming-native-status-top, 0px));
+    padding-top: var(--qiming-native-status-top, 0px);
+    color: rgb(246 245 244);
+    background: rgb(2 9 58 / 78%);
+    border-bottom-color: rgb(255 255 255 / 8%);
+    backdrop-filter: saturate(170%) blur(14px);
+  }
+
+  .nx-nav.is-scrolled {
+    color: var(--nx-text);
+    background: rgb(255 255 255 / 94%);
+  }
+
+  .nx-nav__inner {
+    gap: 10px;
+    padding: 0 14px;
+  }
+
+  .nx-nav__brand {
+    min-width: 0;
+    gap: 8px;
+    font-size: 15px;
+  }
+
+  .nx-nav__brand img {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .nx-nav__brand span,
+  .nx-nav__user span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nx-nav__brand span {
+    max-width: 88px;
+  }
+
+  .nx-nav:not(.is-scrolled) .nx-nav__brand img {
+    box-shadow:
+      0 0 0 2px #fff,
+      0 4px 12px rgb(0 0 0 / 22%);
+  }
+
   .nx-nav__links {
     display: none;
   }
 
-  .nx-hero {
-    padding: 100px 16px 56px;
+  .nx-nav__right {
+    flex-shrink: 0;
+    gap: 6px;
+    margin-left: auto;
   }
+
+  .nx-nav__user {
+    max-width: 118px;
+    height: 34px;
+    padding: 4px 8px 4px 4px;
+  }
+
+  .nx-nav__user span {
+    max-width: 68px;
+  }
+
+  .nx-link {
+    display: none;
+  }
+
+  .nx-nav__right .nx-btn {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .nx-hero {
+    padding: calc(88px + var(--qiming-native-status-top, 0px)) 18px 46px;
+  }
+
+  .nx-doodle {
+    top: 72px;
+    width: 360px;
+    height: 360px;
+    opacity: 0.55;
+  }
+
+  .nx-doodle--left {
+    left: -240px;
+  }
+
+  .nx-doodle--right {
+    right: -250px;
+  }
+
+  .nx-hero__inner {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .nx-hero__title {
+    font-size: clamp(32px, 11vw, 42px);
+    line-height: 1.08;
+    letter-spacing: 0;
+  }
+
+  .nx-hero__sub {
+    max-width: none;
+    margin: 16px 0 0;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .nx-hero__cta {
+    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 22px;
+  }
+
+  .nx-hero__cta .nx-btn {
+    flex: 1 1 144px;
+    height: 42px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+
+  .nx-pills {
+    display: none;
+  }
+
   .nx-hero__product {
-    padding: 0 16px;
-    margin-top: 36px;
+    padding: 0;
+    margin-top: 28px;
+  }
+
+  .nx-window {
+    max-height: 430px;
+    border-radius: 12px;
+  }
+
+  .nx-window__bar {
+    height: 28px;
+    padding: 0 10px;
   }
 
   .nx-window__body {
@@ -3235,10 +3372,44 @@ onUnmounted(() => {
   }
 
   .nx-doc {
-    padding: 24px 20px;
+    max-height: 340px;
+    padding: 20px 16px;
   }
+
+  .nx-doc__crumbs {
+    font-size: 11px;
+  }
+
   .nx-doc__title {
-    font-size: 24px;
+    margin: 10px 0 10px;
+    font-size: 21px;
+    letter-spacing: 0;
+  }
+
+  .nx-doc__lede {
+    display: -webkit-box;
+    margin-bottom: 14px;
+    overflow: hidden;
+    font-size: 12.5px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .nx-doc__props {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 0;
+    margin-bottom: 12px;
+  }
+
+  .nx-doc__props > div {
+    flex: 1 1 86px;
+  }
+
+  .nx-doc__list li {
+    align-items: flex-start;
+    padding: 5px 0;
+    font-size: 12.5px;
   }
 
   .nx-strip__items {
@@ -3246,17 +3417,110 @@ onUnmounted(() => {
   }
 
   .nx-section {
-    padding: 64px 16px;
+    padding: 56px 18px;
   }
+
+  .nx-section--features {
+    padding-inline: 18px;
+  }
+
+  .nx-shead {
+    margin-bottom: 24px;
+  }
+
+  .nx-shead--center {
+    text-align: left;
+  }
+
+  .nx-shead--center .nx-stitle,
+  .nx-shead--center .nx-ssub {
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .nx-stitle {
+    font-size: 26px;
+    letter-spacing: 0;
+  }
+
+  .nx-ssub {
+    font-size: 14px;
+  }
+
+  .nx-strip {
+    padding: 36px 18px 42px;
+  }
+
   .nx-cta {
     padding: 72px 16px 88px;
   }
 
-  .nx-bento__head {
-    padding: 22px 22px 18px;
+  .nx-bento {
+    margin-bottom: 14px;
+    border-radius: 12px;
   }
+
+  .nx-bento--wide {
+    min-height: 0;
+  }
+
+  .nx-bento--wide > .nx-bento__head {
+    padding: 22px 20px 18px;
+  }
+
+  .nx-bento__head {
+    gap: 14px;
+    padding: 22px 20px 18px;
+  }
+
   .nx-bento__title {
     font-size: 19px;
+    letter-spacing: 0;
+  }
+
+  .nx-bento--wide .nx-bento__title {
+    font-size: 22px;
+  }
+
+  .nx-bento--wide .nx-bento__media {
+    padding: 0 20px 20px;
+  }
+
+  .nx-bento:not(.nx-bento--wide) .nx-bento__media {
+    padding: 16px 0 0 16px;
+    margin: 0 20px 20px;
+  }
+
+  .nx-bento__inset--scripted,
+  .nx-bento:not(.nx-bento--wide) .nx-bento__inset--scripted {
+    min-height: 260px;
+    border-radius: 10px;
+  }
+
+  .nx-bento__inset--lg.nx-bento__inset--scripted,
+  .nx-tabpanel__media .nx-bento__inset--lg {
+    min-height: 300px;
+    border-radius: 12px;
+  }
+
+  .nx-tabbar {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+  }
+
+  .nx-tabbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nx-tabbar__btn {
+    flex: 0 0 auto;
+  }
+
+  .nx-arrow {
+    width: 34px;
+    height: 34px;
   }
 
   .nx-steps {
@@ -3281,6 +3545,32 @@ onUnmounted(() => {
   }
   .nx-foot__legal {
     text-align: left;
+  }
+}
+
+@media (max-width: 420px) {
+  .nx-nav__brand span {
+    max-width: 74px;
+  }
+
+  .nx-nav__right .nx-btn {
+    padding: 0 12px;
+  }
+
+  .nx-hero__title {
+    font-size: 34px;
+  }
+
+  .nx-hero__cta .nx-btn {
+    flex-basis: 100%;
+  }
+
+  .nx-doc__props {
+    display: none;
+  }
+
+  .nx-bento__title {
+    font-size: 18px;
   }
 }
 </style>

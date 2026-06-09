@@ -2,7 +2,7 @@ param(
   [ValidateSet("android", "ios")]
   [string]$Platform = "android",
   [string]$DeviceId = "",
-  [string]$EntryPath = "/home",
+  [string]$EntryPath = "/welcome/index",
   [switch]$SkipPrepare,
   [switch]$NativeLog
 )
