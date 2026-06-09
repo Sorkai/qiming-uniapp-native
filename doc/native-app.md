@@ -84,10 +84,15 @@ Convenience commands:
 ```powershell
 pnpm native:build:android
 pnpm native:build:ios
+pnpm native:pack:android
+pnpm native:pack:ios
+pnpm native:pack:all
 ```
 
 The Android/iOS convenience commands currently generate uni-app App resources.
-Final APK/IPA packaging still requires HBuilderX packaging credentials.
+The `native:pack:*` commands call HBuilderX cloud packaging through
+`scripts/pack-native.ps1`. Final APK/IPA packaging still requires HBuilderX
+DCloud login and local certificate configuration.
 
 Cloud packaging config:
 
@@ -96,6 +101,8 @@ Cloud packaging config:
 - Fill Android keystore passwords and iOS certificate paths locally.
 - `pack-config.local.json`, keystores, `.p12`, and `.mobileprovision` files are
   ignored by Git.
+- Without `pack-config.local.json`, `scripts/pack-native.ps1` exits early with a
+  clear setup error instead of attempting packaging.
 
 Live browser prototype while developing:
 
@@ -229,3 +236,6 @@ The uni-app shell receives messages through the `web-view` `message` event.
   change.
 - `pnpm --dir native-app build:app` passed after the phone-canvas preview
   change.
+- `scripts/pack-native.ps1 -Platform android -SkipPrepare` was tested without a
+  local config and correctly stopped at the missing `pack-config.local.json`
+  setup requirement.
