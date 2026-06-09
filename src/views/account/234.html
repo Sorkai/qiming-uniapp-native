@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>课程系统图标展示 - 深色/浅色模式</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        /* 浅色模式变量 */
+        --primary: #4361ee;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --warning: #f72585;
+        --text: #212529;
+        --text-secondary: #495057;
+        --bg: #f8f9fa;
+        --card-bg: #fff;
+        --card-shadow: rgb(0 0 0 / 8%);
+        --card-hover-shadow: rgb(67 97 238 / 15%);
+        --icon-bg: rgb(67 97 238 / 10%);
+        --border: rgb(0 0 0 / 10%);
+        --category-border: rgb(67 97 238 / 20%);
+        --notes-bg: #fff;
+        --toggle-bg: #e9ecef;
+        --toggle-icon: #6c757d;
+      }
+
+      .dark-mode {
+        /* 深色模式变量 */
+        --primary: #5e72e4;
+        --secondary: #4a56d6;
+        --text: #e9ecef;
+        --text-secondary: #adb5bd;
+        --bg: #121212;
+        --card-bg: #1e1e1e;
+        --card-shadow: rgb(0 0 0 / 30%);
+        --card-hover-shadow: rgb(92 114 228 / 25%);
+        --icon-bg: rgb(92 114 228 / 15%);
+        --border: rgb(255 255 255 / 10%);
+        --category-border: rgb(92 114 228 / 30%);
+        --notes-bg: #1a1a1a;
+        --toggle-bg: #2d2d2d;
+        --toggle-icon: #adb5bd;
+      }
+
+      * {
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+        transition:
+          background-color 0.3s,
+          color 0.3s,
+          border-color 0.3s;
+      }
+
+      body {
+        min-height: 100vh;
+        padding: 2rem;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        line-height: 1.6;
+        color: var(--text);
+        background: var(--bg);
+      }
+
+      .container {
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        position: relative;
+        padding: 2rem 2rem 3rem;
+        margin-bottom: 3rem;
+        text-align: center;
+      }
+
+      h1 {
+        margin-bottom: 1rem;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .subtitle {
+        max-width: 700px;
+        margin: 0 auto;
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+      }
+
+      .theme-toggle {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        cursor: pointer;
+        background: var(--toggle-bg);
+        border: none;
+        border-radius: 50%;
+        box-shadow: 0 4px 10px rgb(0 0 0 / 10%);
+      }
+
+      .theme-toggle i {
+        font-size: 1.5rem;
+        color: var(--toggle-icon);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+      }
+
+      .icon-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        padding: 2rem;
+        text-align: center;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px var(--card-shadow);
+        transition: all 0.3s ease;
+      }
+
+      .icon-card:hover {
+        box-shadow: 0 15px 40px var(--card-hover-shadow);
+        transform: translateY(-10px);
+      }
+
+      .icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        margin-bottom: 1.5rem;
+        background: var(--icon-bg);
+        border-radius: 50%;
+      }
+
+      .icon-card svg {
+        width: 40px;
+        height: 40px;
+        color: var(--primary);
+      }
+
+      .icon-title {
+        margin-bottom: 0.8rem;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .icon-desc {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: var(--text-secondary);
+      }
+
+      .category {
+        padding-bottom: 0.5rem;
+        margin: 3rem 0 1.5rem;
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: var(--primary);
+        border-bottom: 2px solid var(--category-border);
+      }
+
+      .notes {
+        padding: 2rem;
+        margin-top: 3rem;
+        background: var(--notes-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px var(--card-shadow);
+      }
+
+      .notes h2 {
+        margin-bottom: 1.5rem;
+        color: var(--primary);
+      }
+
+      .notes ul {
+        padding-left: 1.5rem;
+      }
+
+      .notes li {
+        margin-bottom: 0.8rem;
+        line-height: 1.6;
+        color: var(--text);
+      }
+
+      .mode-indicator {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        display: none;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        color: white;
+        background: var(--primary);
+        border-radius: 30px;
+        opacity: 0.9;
+      }
+
+      @media (width <= 768px) {
+        .grid {
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+
+        h1 {
+          font-size: 2.2rem;
+        }
+
+        header {
+          padding: 1rem 1rem 2rem;
+        }
+
+        .theme-toggle {
+          top: 1rem;
+          right: 1rem;
+          width: 40px;
+          height: 40px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>课程系统功能图标集</h1>
+        <p class="subtitle">
+          以下图标代表了在线教育平台的核心功能模块，支持深色/浅色模式切换
+        </p>
+        <button
+          class="theme-toggle"
+          id="themeToggle"
+          type="button"
+          title="Toggle dark/light mode"
+        >
+          <i class="fas fa-moon"></i>
+        </button>
+      </header>
+
+      <div class="category">核心学习功能</div>
+      <div class="grid">
+        <!-- 课程学习 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">课程学习</h3>
+          <p class="icon-desc">访问课程内容、视频讲座和学习材料</p>
+        </div>
+
+        <!-- 知识点 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
+              <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">知识点</h3>
+          <p class="icon-desc">跟踪您的学习进度和理解程度</p>
+        </div>
+
+        <!-- 课程问答 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10 1.5 0 2.921-.33 4.21-.92l3.715 1.483a1 1 0 001.317-1.024l-.473-4.593A9.96 9.96 0 0022 12c0-5.523-4.477-10-10-10zm0 18a8 8 0 110-16 8 8 0 010 16z"
+              ></path>
+              <circle cx="8" cy="10" r="1.5"></circle>
+              <circle cx="12" cy="10" r="1.5"></circle>
+              <circle cx="16" cy="10" r="1.5"></circle>
+            </svg>
+          </div>
+          <h3 class="icon-title">课程问答</h3>
+          <p class="icon-desc">向教师和同学提问并获得解答</p>
+        </div>
+
+        <!-- 作业考试 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <rect
+                x="4"
+                y="5"
+                width="16"
+                height="14"
+                rx="1"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+              <path d="M4 8H20" stroke="currentColor" stroke-width="1.5" />
+              <path d="M7 11H17" stroke="currentColor" stroke-width="1.5" />
+              <path d="M7 14H14" stroke="currentColor" stroke-width="1.5" />
+              <path
+                d="M16 4L14 2L12 4"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+              <path
+                d="M15 18L18 15"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+              <path
+                d="M18 15L15 12"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <h3 class="icon-title">作业考试</h3>
+          <p class="icon-desc">完成作业和参加课程考试</p>
+        </div>
+      </div>
+
+      <div class="category">学习资源</div>
+      <div class="grid">
+        <!-- 课程资料 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"
+              ></path>
+              <path
+                d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">课程资料</h3>
+          <p class="icon-desc">下载课件、阅读材料和补充资源</p>
+        </div>
+
+        <!-- 成绩 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V5z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">成绩</h3>
+          <p class="icon-desc">查看作业和考试的评分结果</p>
+        </div>
+
+        <!-- AI文档问答 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              data-slot="icon"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path d="M6.5 9a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0Z"></path>
+              <path
+                clip-rule="evenodd"
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM9 5a4 4 0 1 0 2.248 7.309l1.472 1.471a.75.75 0 1 0 1.06-1.06l-1.471-1.472A4 4 0 0 0 9 5Z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">AI文档问答</h3>
+          <p class="icon-desc">使用AI智能搜索课程文档内容</p>
+        </div>
+
+        <!-- 学前必读 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                clip-rule="evenodd"
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">学前必读</h3>
+          <p class="icon-desc">课程开始前需要了解的重要信息</p>
+        </div>
+      </div>
+
+      <div class="category">课程管理</div>
+      <div class="grid">
+        <!-- 课程提醒 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              data-slot="icon"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                clip-rule="evenodd"
+                fill-rule="evenodd"
+                d="M10 2a6 6 0 0 0-6 6c0 1.887-.454 3.665-1.257 5.234a.75.75 0 0 0 .515 1.076 32.91 32.91 0 0 0 3.256.508 3.5 3.5 0 0 0 6.972 0 32.903 32.903 0 0 0 3.256-.508.75.75 0 0 0 .515-1.076A11.448 11.448 0 0 1 16 8a6 6 0 0 0-6-6ZM8.05 14.943a33.54 33.54 0 0 0 3.9 0 2 2 0 0 1-3.9 0Z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">课程提醒</h3>
+          <p class="icon-desc">获取重要截止日期和课程通知</p>
+        </div>
+
+        <!-- 班级信息 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">班级信息</h3>
+          <p class="icon-desc">查看班级成员和教师联系方式</p>
+        </div>
+
+        <!-- 消息中心 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"
+              ></path>
+              <path
+                d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">消息中心</h3>
+          <p class="icon-desc">查看系统通知和课程消息</p>
+        </div>
+
+        <!-- 退课 -->
+        <div class="icon-card">
+          <div class="icon-wrapper">
+            <svg
+              data-slot="icon"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                clip-rule="evenodd"
+                fill-rule="evenodd"
+                d="M17 4.25A2.25 2.25 0 0 0 14.75 2h-5.5A2.25 2.25 0 0 0 7 4.25v2a.75.75 0 0 0 1.5 0v-2a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v11.5a.75.75 0 0 1-.75.75h-5.5a.75.75 0 0 1-.75-.75v-2a.75.75 0 0 0-1.5 0v2A2.25 2.25 0 0 0 9.25 18h5.5A2.25 2.25 0 0 0 17 15.75V4.25Z"
+              ></path>
+              <path
+                clip-rule="evenodd"
+                fill-rule="evenodd"
+                d="M14 10a.75.75 0 0 0-.75-.75H3.704l1.048-.943a.75.75 0 1 0-1.004-1.114l-2.5 2.25a.75.75 0 0 0 0 1.114l2.5 2.25a.75.75 0 1 0 1.004-1.114l-1.048-.943h9.546A.75.75 0 0 0 14 10Z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="icon-title">退课</h3>
+          <p class="icon-desc">退出当前课程的管理功能</p>
+        </div>
+      </div>
+
+      <div class="notes">
+        <h2>图标设计说明</h2>
+        <ul>
+          <li>
+            <strong>统一风格</strong
+            >：所有图标采用线性设计风格，保持一致的线条粗细(1.5px)和圆角处理
+          </li>
+          <li>
+            <strong>色彩系统</strong
+            >：使用蓝色(#4361ee)作为主色调，代表教育专业性和可靠性
+          </li>
+          <li>
+            <strong>视觉层次</strong
+            >：通过卡片悬浮效果和阴影增强交互体验，图标背景使用浅蓝色突出显示
+          </li>
+          <li>
+            <strong>响应式设计</strong
+            >：网格布局自适应不同屏幕尺寸，在移动设备上自动调整为单列显示
+          </li>
+          <li>
+            <strong>语义表达</strong
+            >：每个图标通过隐喻设计传达其功能（如书籍代表课程、钟表代表提醒等）
+          </li>
+          <li>
+            <strong>深色模式</strong
+            >：精心调整的色彩方案减少眼睛疲劳，提升夜间使用体验
+          </li>
+        </ul>
+      </div>
+
+      <div class="mode-indicator" id="modeIndicator">深色模式已启用</div>
+    </div>
+
+    <script>
+      // 主题切换功能
+      const themeToggle = document.getElementById("themeToggle");
+      const modeIndicator = document.getElementById("modeIndicator");
+      const body = document.body;
+
+      // 检查本地存储或系统偏好
+      const prefersDarkScheme = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      );
+      const savedTheme = localStorage.getItem("theme");
+
+      // 初始化主题
+      if (savedTheme === "dark" || (!savedTheme && prefersDarkScheme.matches)) {
+        body.classList.add("dark-mode");
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+      } else {
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+      }
+
+      // 切换主题
+      themeToggle.addEventListener("click", () => {
+        body.classList.toggle("dark-mode");
+
+        // 更新图标
+        if (body.classList.contains("dark-mode")) {
+          themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+          localStorage.setItem("theme", "dark");
+          showModeIndicator("深色模式已启用");
+        } else {
+          themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+          localStorage.setItem("theme", "light");
+          showModeIndicator("浅色模式已启用");
+        }
+      });
+
+      // 显示模式切换提示
+      function showModeIndicator(text) {
+        modeIndicator.textContent = text;
+        modeIndicator.style.display = "block";
+        setTimeout(() => {
+          modeIndicator.style.display = "none";
+        }, 2000);
+      }
+
+      // 监听系统主题变化
+      prefersDarkScheme.addEventListener("change", e => {
+        if (!localStorage.getItem("theme")) {
+          if (e.matches) {
+            body.classList.add("dark-mode");
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+          } else {
+            body.classList.remove("dark-mode");
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,346 @@
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { getToken } from "@/utils/auth";
+import { useAppStoreHook } from "@/store/modules/app";
+import AiHubIcon from "@/assets/new-release/ai-hub-svgrepo-com.svg?component";
+
+defineOptions({
+  name: "AiFloatButton"
+});
+
+const props = defineProps<{
+  disabled?: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: "click"): void;
+}>();
+
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
+const buttonRef = ref<HTMLElement | null>(null);
+const activePointerId = ref<number | null>(null);
+const isDragging = ref(false);
+const preventNextClick = ref(false);
+const dragStart = ref({ x: 0, y: 0 });
+const dragOrigin = ref({ left: 0, top: 0 });
+const position = ref({
+  left: 0,
+  top: 0
+});
+
+const DESKTOP_BUTTON_SIZE = 56;
+const MOBILE_BUTTON_SIZE = 48;
+const POSITION_PADDING = 10;
+const DRAG_THRESHOLD = 6;
+
+const isLoggedIn = computed(() => {
+  const token = getToken();
+  return !!token?.accessToken;
+});
+
+const getCssPixelValue = (name: string) => {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const getButtonSize = () => {
+  return (
+    buttonRef.value?.offsetWidth ||
+    (isMobile.value ? MOBILE_BUTTON_SIZE : DESKTOP_BUTTON_SIZE)
+  );
+};
+
+const clampPosition = (left: number, top: number) => {
+  const size = getButtonSize();
+  const maxLeft = Math.max(
+    POSITION_PADDING,
+    window.innerWidth - size - POSITION_PADDING
+  );
+  const maxTop = Math.max(
+    POSITION_PADDING,
+    window.innerHeight - size - POSITION_PADDING
+  );
+
+  return {
+    left: Math.min(Math.max(POSITION_PADDING, left), maxLeft),
+    top: Math.min(Math.max(POSITION_PADDING, top), maxTop)
+  };
+};
+
+const getDefaultPosition = () => {
+  const size = getButtonSize();
+  const rightOffset = isMobile.value ? 12 : 30;
+  const bottomOffset = isMobile.value
+    ? getCssPixelValue("--pure-mobile-tab-height") +
+      getCssPixelValue("--pure-safe-area-bottom") +
+      12
+    : 100;
+
+  return clampPosition(
+    window.innerWidth - size - rightOffset,
+    window.innerHeight - size - bottomOffset
+  );
+};
+
+const syncPosition = (reset = false) => {
+  if (
+    reset ||
+    (position.value.left === 0 && position.value.top === 0 && !isDragging.value)
+  ) {
+    position.value = getDefaultPosition();
+    return;
+  }
+
+  position.value = clampPosition(position.value.left, position.value.top);
+};
+
+const releasePointerCapture = (pointerId: number | null) => {
+  if (
+    buttonRef.value &&
+    pointerId !== null &&
+    buttonRef.value.hasPointerCapture(pointerId)
+  ) {
+    buttonRef.value.releasePointerCapture(pointerId);
+  }
+};
+
+const handleClick = () => {
+  if (props.disabled || isDragging.value) return;
+
+  if (preventNextClick.value) {
+    preventNextClick.value = false;
+    return;
+  }
+
+  emit("click");
+};
+
+const handlePointerDown = (e: PointerEvent) => {
+  if (props.disabled || !e.isPrimary) return;
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+
+  activePointerId.value = e.pointerId;
+  isDragging.value = false;
+  preventNextClick.value = false;
+  dragStart.value = {
+    x: e.clientX,
+    y: e.clientY
+  };
+  dragOrigin.value = { ...position.value };
+
+  buttonRef.value?.setPointerCapture(e.pointerId);
+  e.preventDefault();
+};
+
+const handlePointerMove = (e: PointerEvent) => {
+  if (activePointerId.value !== e.pointerId) return;
+
+  const deltaX = e.clientX - dragStart.value.x;
+  const deltaY = e.clientY - dragStart.value.y;
+
+  if (
+    !isDragging.value &&
+    (Math.abs(deltaX) > DRAG_THRESHOLD || Math.abs(deltaY) > DRAG_THRESHOLD)
+  ) {
+    isDragging.value = true;
+  }
+
+  if (!isDragging.value) return;
+
+  position.value = clampPosition(
+    dragOrigin.value.left + deltaX,
+    dragOrigin.value.top + deltaY
+  );
+  e.preventDefault();
+};
+
+const finishDrag = (pointerId: number | null) => {
+  releasePointerCapture(pointerId);
+  activePointerId.value = null;
+
+  if (isDragging.value) {
+    preventNextClick.value = true;
+  }
+
+  window.setTimeout(() => {
+    isDragging.value = false;
+  }, 0);
+};
+
+const handlePointerUp = (e: PointerEvent) => {
+  if (activePointerId.value !== e.pointerId) return;
+  finishDrag(e.pointerId);
+};
+
+const handlePointerCancel = (e: PointerEvent) => {
+  if (activePointerId.value !== e.pointerId) return;
+  isDragging.value = false;
+  preventNextClick.value = false;
+  finishDrag(e.pointerId);
+};
+
+const handleResize = () => {
+  syncPosition();
+};
+
+const buttonStyle = computed(() => ({
+  left: `${position.value.left}px`,
+  top: `${position.value.top}px`
+}));
+
+const getButtonCenter = () => {
+  const size = getButtonSize();
+  return {
+    x: position.value.left + size / 2,
+    y: position.value.top + size / 2
+  };
+};
+
+const getButtonCenterFromDom = () => {
+  const buttonEl = buttonRef.value;
+  if (buttonEl) {
+    const rect = buttonEl.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+  }
+
+  return getButtonCenter();
+};
+
+onMounted(() => {
+  syncPosition(true);
+  window.addEventListener("resize", handleResize, { passive: true });
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+  releasePointerCapture(activePointerId.value);
+});
+
+watch(isMobile, () => {
+  syncPosition(true);
+});
+
+defineExpose({
+  getButtonCenter: getButtonCenterFromDom,
+  position
+});
+</script>
+
+<template>
+  <Transition name="fade">
+    <div
+      v-if="isLoggedIn"
+      ref="buttonRef"
+      class="ai-float-button"
+      :class="{ disabled: disabled, dragging: isDragging }"
+      :style="buttonStyle"
+      @pointerdown="handlePointerDown"
+      @pointermove="handlePointerMove"
+      @pointerup="handlePointerUp"
+      @pointercancel="handlePointerCancel"
+      @click="handleClick"
+    >
+      <el-tooltip content="AI识屏助手" placement="left" :disabled="isDragging">
+        <div class="button-inner">
+          <AiHubIcon class="ai-icon" />
+        </div>
+      </el-tooltip>
+    </div>
+  </Transition>
+</template>
+
+<style lang="scss" scoped>
+.ai-float-button {
+  position: fixed;
+  z-index: 2000;
+  width: 56px;
+  height: 56px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.2s ease;
+
+  &:hover:not(.disabled, .dragging) {
+    transform: scale(1.1);
+  }
+
+  &:active:not(.disabled) {
+    transform: scale(0.95);
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &.dragging {
+    cursor: grabbing;
+  }
+
+  .button-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgb(148 163 184 / 30%);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 6px 20px rgb(148 163 184 / 50%);
+    }
+
+    html.dark & {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgb(255 255 255 / 10%);
+      box-shadow: 0 4px 15px rgb(0 0 0 / 30%);
+
+      &:hover {
+        box-shadow: 0 6px 20px rgb(0 0 0 / 50%);
+      }
+    }
+  }
+
+  .ai-icon {
+    width: 28px;
+    height: 28px;
+    color: #64748b;
+
+    html.dark & {
+      color: #e2e8f0;
+    }
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .ai-float-button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .ai-float-button .ai-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+</style>

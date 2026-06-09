@@ -1,0 +1,252 @@
+<script setup lang="ts">
+import { storeToRefs } from "pinia";
+import { emitter } from "@/utils/mitt";
+import { useNav } from "@/layout/hooks/useNav";
+import LaySearch from "../lay-search/index.vue";
+import LayNotice from "../lay-notice/index.vue";
+import { responsiveStorageNameSpace } from "@/config";
+import { ref, watch, nextTick, computed, onMounted } from "vue";
+import { storageLocal, isAllEmpty } from "@pureadmin/utils";
+import { useTranslationLang } from "../../hooks/useTranslationLang";
+import { usePermissionStoreHook } from "@/store/modules/permission";
+import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
+import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
+import LaySidebarOverallStyle from "../lay-sidebar/components/SidebarOverallStyle.vue";
+
+import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
+import AccountSettingsIcon from "~icons/ri/user-settings-line";
+import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
+import Setting from "~icons/ri/settings-3-line";
+import Check from "~icons/ep/check";
+import DefaultAvatar from "@/assets/user.jpg";
+
+const menuRef = ref();
+const showLogo = ref(
+  storageLocal().getItem<StorageConfigs>(
+    `${responsiveStorageNameSpace()}configure`
+  )?.showLogo ?? true
+);
+
+// 使用 storeToRefs 正确获取响应式的 wholeMenus
+const { wholeMenus } = storeToRefs(usePermissionStoreHook());
+
+const {
+  t,
+  route,
+  locale,
+  translationCh,
+  translationTw,
+  translationEn,
+  translationJa,
+  translationKo
+} = useTranslationLang(menuRef);
+const {
+  title,
+  logout,
+  onPanel,
+  getLogo,
+  username,
+  userAvatar,
+  backTopMenu,
+  avatarsStyle,
+  toAccountSettings,
+  getDropdownItemStyle,
+  getDropdownItemClass
+} = useNav();
+
+// 头像加载失败时使用默认头像
+const avatarSrc = ref(userAvatar.value);
+watch(
+  () => userAvatar.value,
+  val => {
+    avatarSrc.value = val;
+  }
+);
+const handleAvatarError = () => {
+  avatarSrc.value = DefaultAvatar;
+};
+
+const defaultActive = computed(() =>
+  !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
+);
+
+nextTick(() => {
+  menuRef.value?.handleResize();
+});
+
+onMounted(() => {
+  emitter.on("logoChange", key => {
+    showLogo.value = key;
+  });
+});
+</script>
+
+<template>
+  <div v-loading="wholeMenus.length === 0" class="horizontal-header">
+    <div v-if="showLogo" class="horizontal-header-left" @click="backTopMenu">
+      <img :src="getLogo()" alt="logo" class="app-logo-img" />
+      <span>{{ title }}</span>
+    </div>
+    <el-menu
+      ref="menuRef"
+      mode="horizontal"
+      popper-class="pure-scrollbar"
+      class="horizontal-header-menu"
+      :default-active="defaultActive"
+    >
+      <LaySidebarItem
+        v-for="route in wholeMenus"
+        :key="route.path"
+        :item="route"
+        :base-path="route.path"
+      />
+    </el-menu>
+    <div class="horizontal-header-right">
+      <!-- 菜单搜索 -->
+      <LaySearch id="header-search" />
+      <!-- 国际化 -->
+      <el-dropdown id="header-translation" trigger="click">
+        <GlobalizationIcon
+          class="navbar-bg-hover w-[40px] h-[64px] p-[18px] cursor-pointer outline-hidden"
+        />
+        <template #dropdown>
+          <el-dropdown-menu class="translation">
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'zh')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'zh')]"
+              @click="translationCh"
+            >
+              <IconifyIconOffline
+                v-show="locale === 'zh'"
+                class="check-btn"
+                :icon="Check"
+              />
+              简体中文
+            </el-dropdown-item>
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'tw')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'tw')]"
+              @click="translationTw"
+            >
+              <IconifyIconOffline
+                v-show="locale === 'tw'"
+                class="check-btn"
+                :icon="Check"
+              />
+              繁體中文
+            </el-dropdown-item>
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'en')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'en')]"
+              @click="translationEn"
+            >
+              <span v-show="locale === 'en'" class="check-btn">
+                <IconifyIconOffline :icon="Check" />
+              </span>
+              English
+            </el-dropdown-item>
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'ja')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ja')]"
+              @click="translationJa"
+            >
+              <span v-show="locale === 'ja'" class="check-btn">
+                <IconifyIconOffline :icon="Check" />
+              </span>
+              日本語
+            </el-dropdown-item>
+            <el-dropdown-item
+              :style="getDropdownItemStyle(locale, 'ko')"
+              :class="['dark:text-white', getDropdownItemClass(locale, 'ko')]"
+              @click="translationKo"
+            >
+              <span v-show="locale === 'ko'" class="check-btn">
+                <IconifyIconOffline :icon="Check" />
+              </span>
+              한국어
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <!-- 全屏 -->
+      <LaySidebarFullScreen id="full-screen" />
+      <!-- 整体风格 -->
+      <LaySidebarOverallStyle id="header-overall" />
+      <!-- 消息通知 -->
+      <LayNotice id="header-notice" />
+      <!-- 退出登录 -->
+      <el-dropdown trigger="click">
+        <span
+          class="el-dropdown-link group select-none bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white transition-all duration-200 px-3 py-1.5 rounded-full flex items-center justify-center cursor-pointer border border-gray-100 dark:border-white/10"
+        >
+          <img
+            :src="avatarSrc"
+            :style="avatarsStyle"
+            class="ring-2 ring-white dark:ring-gray-800"
+            @error="handleAvatarError"
+          />
+          <p
+            v-if="username"
+            class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-900"
+          >
+            {{ username }}
+          </p>
+        </span>
+        <template #dropdown>
+          <el-dropdown-item @click="toAccountSettings">
+            <IconifyIconOffline
+              :icon="AccountSettingsIcon"
+              style="margin: 5px"
+            />
+            {{ t("buttons.pureAccountSettings") }}
+          </el-dropdown-item>
+          <el-dropdown-menu class="logout">
+            <el-dropdown-item @click="logout">
+              <IconifyIconOffline
+                :icon="LogoutCircleRLine"
+                style="margin: 5px"
+              />
+              {{ t("buttons.pureLoginOut") }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <span
+        class="set-icon navbar-bg-hover"
+        :title="t('buttons.pureOpenSystemSet')"
+        @click="onPanel"
+      >
+        <IconifyIconOffline :icon="Setting" />
+      </span>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+:deep(.el-loading-mask) {
+  opacity: 0.45;
+}
+
+/* 使用全局 .app-logo-img 提供圆角 */
+
+.translation {
+  ::v-deep(.el-dropdown-menu__item) {
+    padding: 5px 40px;
+  }
+
+  .check-btn {
+    position: absolute;
+    left: 20px;
+  }
+}
+
+.logout {
+  width: 120px;
+
+  ::v-deep(.el-dropdown-menu__item) {
+    display: inline-flex;
+    flex-wrap: wrap;
+    min-width: 100%;
+  }
+}
+</style>

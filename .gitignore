@@ -1,0 +1,34 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+native-app/src/hybrid/html
+native-app/dist
+*.local
+.eslintcache
+report.html
+vite.config.*.timestamp*
+
+yarn.lock
+npm-debug.log*
+.pnpm-error.log*
+.pnpm-debug.log
+tests/**/coverage/
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+tsconfig.tsbuildinfo
+.planning/*
+
+# Qiming virtual-people 项目内重型 FBX 资源 / 模型 / node_modules 走软链接，不入仓
+qiming-virtual-people/1
+qiming-virtual-people/2
+qiming-virtual-people/3
+qiming-virtual-people/4
+qiming-virtual-people/node_modules
+qiming-virtual-people/QmingVirtualPeopleTestVersion1.0.vrm
+qiming-virtual-people/outputs

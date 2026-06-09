@@ -1,0 +1,119 @@
+@use "theme";
+@use "transition";
+@use "element-plus";
+@use "sidebar";
+@use "dark";
+
+/* 全局统一 logo 圆角样式 */
+.app-logo-img {
+  display: inline-block;
+  height: auto;
+  max-height: 100%;
+  border-radius: 12px;
+}
+
+/* 自定义全局 CssVar */
+:root {
+  /* 左侧菜单展开、收起动画时长 */
+  --pure-transition-duration: 0.3s;
+
+  /* 常用border-color 需要时可取用 */
+  --pure-border-color: rgb(5 5 5 / 6%);
+
+  /* switch关闭状态下的color 需要时可取用 */
+  --pure-switch-off-color: #a6a6a6;
+
+  /* 主内容区默认边距 */
+  --pure-main-content-margin: 24px 24px 0;
+
+  /** 主题色 */
+  --pure-theme-sub-menu-active-text: initial;
+  --pure-theme-menu-bg: none;
+  --pure-theme-menu-hover: none;
+  --pure-theme-sub-menu-bg: transparent;
+  --pure-theme-menu-text: initial;
+  --pure-theme-sidebar-logo: none;
+  --pure-theme-menu-title-hover: initial;
+  --pure-theme-menu-active-before: transparent;
+  --pure-theme-menu-border-color: transparent;
+
+  /* 移动端底部安全区域与导航高度 */
+  --pure-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --pure-mobile-tab-height: calc(56px + var(--pure-safe-area-bottom));
+}
+
+html.ua-mobile {
+  --pure-main-content-margin: 12px 12px 0;
+}
+
+html.ua-mobile body {
+  overscroll-behavior-y: contain;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 灰色模式 */
+.html-grey {
+  filter: grayscale(100%);
+}
+
+/* 色弱模式 */
+.html-weakness {
+  filter: invert(80%);
+}
+
+/* 日期选择器弹窗在对话框内的样式 */
+.date-picker-popper {
+  position: absolute;
+  z-index: 9999;
+
+  &.el-popper {
+    position: absolute;
+    inset: auto;
+    margin-top: 0;
+  }
+}
+
+/* 主内容区 */
+.main-content {
+  margin: var(--pure-main-content-margin);
+}
+
+/* 导航路径（面包屑）深色模式终极修复补丁 - 强制覆盖所有可能的颜色冲突 */
+html.dark {
+  .el-breadcrumb {
+    &__inner,
+    &__inner a,
+    &__inner.is-link,
+    &__inner a:hover {
+      color: #d4d4d8 !important;
+      -webkit-text-fill-color: #d4d4d8 !important;
+
+      /* 针对某些可能使用了 text-fill-color 的情况 */
+    }
+
+    &__item:last-child &__inner,
+    &__item:last-child &__inner a,
+    &__item:last-child &__inner:hover {
+      font-weight: 600 !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+    }
+
+    &__separator {
+      color: #888 !important;
+      -webkit-text-fill-color: #888 !important;
+    }
+  }
+
+  /* 针对顶部导航栏中 breadcrumb-container 的特殊覆盖 */
+  .breadcrumb-container {
+    .el-breadcrumb__inner,
+    .el-breadcrumb__inner a {
+      color: #d4d4d8 !important;
+    }
+
+    .el-breadcrumb__item:last-child .el-breadcrumb__inner {
+      color: #fff !important;
+    }
+  }
+}

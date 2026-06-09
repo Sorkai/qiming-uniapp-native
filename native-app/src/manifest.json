@@ -1,0 +1,80 @@
+{
+  "name": "启明智教",
+  "appid": "__UNI__QIMING",
+  "description": "启明智教 Android/iOS native shell for the existing H5 learning platform.",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "app-plus": {
+    "usingComponents": true,
+    "nvueStyleCompiler": "uni-app",
+    "compilerVersion": 3,
+    "splashscreen": {
+      "alwaysShowBeforeRender": true,
+      "waiting": true,
+      "autoclose": true,
+      "delay": 0
+    },
+    "statusbar": {
+      "immersed": true,
+      "style": "dark"
+    },
+    "modules": {
+      "Barcode": {},
+      "Camera": {},
+      "File": {},
+      "Share": {}
+    },
+    "distribute": {
+      "android": {
+        "packagename": "cn.intelledu.qiming",
+        "minSdkVersion": 23,
+        "targetSdkVersion": 35,
+        "permissions": [
+          "<uses-permission android:name=\"android.permission.INTERNET\"/>",
+          "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
+          "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\"/>",
+          "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+          "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+          "<uses-permission android:name=\"android.permission.READ_MEDIA_IMAGES\"/>",
+          "<uses-permission android:name=\"android.permission.READ_MEDIA_VIDEO\"/>",
+          "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\" android:maxSdkVersion=\"32\"/>",
+          "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" android:maxSdkVersion=\"28\"/>",
+          "<uses-feature android:name=\"android.hardware.camera\" android:required=\"false\"/>",
+          "<uses-feature android:name=\"android.hardware.camera.autofocus\" android:required=\"false\"/>"
+        ]
+      },
+      "ios": {
+        "bundleIdentifier": "cn.intelledu.qiming",
+        "privacyDescription": {
+          "NSCameraUsageDescription": "用于扫码、拍照上传学习资料和课堂资源。",
+          "NSPhotoLibraryUsageDescription": "用于选择并上传学习图片、视频和资料。",
+          "NSPhotoLibraryAddUsageDescription": "用于保存学习资料、截图和导出的文件。",
+          "NSMicrophoneUsageDescription": "用于语音提问、课堂互动和 AI 学习助手语音输入。"
+        }
+      },
+      "sdkConfigs": {}
+    }
+  },
+  "quickapp": {},
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false
+    },
+    "usingComponents": true
+  },
+  "mp-alipay": {
+    "usingComponents": true
+  },
+  "mp-baidu": {
+    "usingComponents": true
+  },
+  "mp-toutiao": {
+    "usingComponents": true
+  },
+  "uniStatistics": {
+    "enable": false
+  },
+  "vueVersion": "3"
+}

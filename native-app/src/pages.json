@@ -1,0 +1,26 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationStyle": "custom",
+        "disableScroll": true,
+        "app-plus": {
+          "bounce": "none",
+          "titleNView": false
+        }
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "启明智教",
+    "navigationBarBackgroundColor": "#F7F8FC",
+    "backgroundColor": "#F7F8FC",
+    "app-plus": {
+      "background": "#F7F8FC",
+      "softinputMode": "adjustResize",
+      "scrollIndicator": "none"
+    }
+  }
+}
