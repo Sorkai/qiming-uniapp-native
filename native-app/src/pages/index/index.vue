@@ -1,6 +1,6 @@
 <template>
   <view class="native-shell" :class="{ 'is-preview-phone': isPhonePreview }">
-    <view v-if="!loaded || loadError" class="shell-state">
+    <view v-if="showShellState" class="shell-state">
       <view class="brand-mark">
         <text class="brand-mark__text">启</text>
       </view>
@@ -147,9 +147,21 @@ const previewEntryRoute = computed(() => {
 
 const activePreviewEntry = computed(() => previewEntryRoute.value);
 
+const h5PreviewOrigin = computed(() => {
+  if (!isH5DevPreview || typeof window === "undefined") {
+    return "http://localhost:8851";
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const host = window.location.hostname || "localhost";
+  const port = params.get("h5Port") || "8851";
+  const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+  return `${protocol}//${host}:${port}`;
+});
+
 const h5DevEntryPath = computed(() =>
   appendQuery(
-    `http://localhost:8851/#${previewEntryRoute.value}`,
+    `${h5PreviewOrigin.value}/#${previewEntryRoute.value}`,
     "demoRole",
     previewRole.value
   )
@@ -166,6 +178,10 @@ const webviewSrc = computed(() => {
 
 const isPhonePreview = computed(
   () => isH5DevPreview && previewMode.value === "phone"
+);
+
+const showShellState = computed(
+  () => !isH5DevPreview && (!loaded.value || loadError.value)
 );
 
 const webviewStyles = {

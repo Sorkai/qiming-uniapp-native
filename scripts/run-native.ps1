@@ -6,7 +6,8 @@ param(
   [switch]$SkipPrepare,
   [switch]$NativeLog,
   [switch]$SkipGrantPermissions,
-  [switch]$KeepRuntimeData
+  [switch]$KeepRuntimeData,
+  [int]$LaunchTimeoutSeconds = 180
 )
 
 $ErrorActionPreference = "Stop"
@@ -111,6 +112,79 @@ function Reset-HBuilderRuntime([string]$ResolvedDeviceId) {
   & $adb -s $ResolvedDeviceId shell pm clear $packageName 2>$null
 }
 
+function Stop-NativeAppCompilerJobs {
+  $escapedNativeProject = [Regex]::Escape($nativeProject)
+  $jobs = Get-CimInstance Win32_Process | Where-Object {
+    $_.CommandLine -match $escapedNativeProject -and
+    $_.CommandLine -match "vite-plugin-uni\\bin\\uni\.js" -and
+    $_.CommandLine -match "\s-p\s+app\b"
+  }
+  foreach ($job in $jobs) {
+    Stop-Process -Id $job.ProcessId -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Wait-AndroidLaunchReady([string]$ResolvedDeviceId, [string]$ExpectedEntryPath, [int]$TimeoutSeconds) {
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+  $expectedRoute = "#$ExpectedEntryPath"
+  $mismatchPattern = "compiled using HBuilderX 5\.01|mobile SDK version is 5\.07|Mismatching versions"
+
+  while ((Get-Date) -lt $deadline) {
+    $processId = (& $adb -s $ResolvedDeviceId shell pidof io.dcloud.HBuilder 2>$null | Out-String).Trim()
+    $recentLogs = & $adb -s $ResolvedDeviceId logcat -d -t 500 2>$null | Out-String
+
+    if ($recentLogs -match $mismatchPattern) {
+      throw "Android runtime reported an HBuilderX version mismatch. Reinstall the 15.07 base APK and clear runtime data."
+    }
+
+    if (
+      $processId -and
+      $recentLogs -match "hybrid/html/index\.html" -and
+      $recentLogs -match [Regex]::Escape($expectedRoute)
+    ) {
+      return $true
+    }
+
+    Start-Sleep -Seconds 2
+  }
+
+  return $false
+}
+
+function Invoke-AndroidHBuilderLaunch([string[]]$LaunchArgs, [string]$ResolvedDeviceId, [string]$ExpectedEntryPath) {
+  & $adb -s $ResolvedDeviceId logcat -c 2>$null
+
+  $process = Start-Process `
+    -FilePath $hbuilderCli `
+    -ArgumentList $LaunchArgs `
+    -WindowStyle Hidden `
+    -PassThru
+
+  Write-Host "HBuilderX launch pid: $($process.Id)"
+  $ready = Wait-AndroidLaunchReady $ResolvedDeviceId $ExpectedEntryPath $LaunchTimeoutSeconds
+
+  if ($ready) {
+    Write-Host "Android launch verified: hybrid/html/index.html#$ExpectedEntryPath"
+    if (-not $process.HasExited) {
+      Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+    }
+    Stop-NativeAppCompilerJobs
+    return
+  }
+
+  if (-not $process.HasExited) {
+    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+    Stop-NativeAppCompilerJobs
+    throw "Timed out after $LaunchTimeoutSeconds seconds waiting for Android runtime to load hybrid/html/index.html#$ExpectedEntryPath."
+  }
+
+  if ($process.ExitCode -ne 0) {
+    throw "HBuilderX CLI launch failed with exit code $($process.ExitCode)."
+  }
+
+  throw "HBuilderX CLI exited before Android runtime loaded hybrid/html/index.html#$ExpectedEntryPath."
+}
+
 Require-File $hbuilderCli "HBuilderX CLI not found: $hbuilderCli"
 Require-File $nativeProject "native app project not found: $nativeProject"
 Require-File $devicesScript "Native devices script not found: $devicesScript"
@@ -164,7 +238,7 @@ if ($Platform -eq "android") {
   if ($NativeLog) {
     $launchArgs += @("--native-log", "true")
   }
-  & $hbuilderCli @launchArgs
+  Invoke-AndroidHBuilderLaunch $launchArgs $resolvedAndroidDeviceId $EntryPath
 } else {
   & $devicesScript -Platform ios-iPhone
   $launchArgs = @(
