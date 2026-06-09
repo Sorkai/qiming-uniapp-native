@@ -87,12 +87,19 @@ pnpm native:build:ios
 pnpm native:pack:android
 pnpm native:pack:ios
 pnpm native:pack:all
+pnpm native:doctor
 ```
 
 The Android/iOS convenience commands currently generate uni-app App resources.
 The `native:pack:*` commands call HBuilderX cloud packaging through
 `scripts/pack-native.ps1`. Final APK/IPA packaging still requires HBuilderX
 DCloud login and local certificate configuration.
+
+Run `pnpm native:doctor` before packaging. It checks the public repo state, the
+local `origin/agent` source commit, preview ports, HBuilderX CLI, Java, ADB,
+Android keystore, local pack config, iOS certificate files, and generated App
+resources. Missing optional packaging inputs are reported as `WARN`; missing
+required local tools are reported as `FAIL`.
 
 Cloud packaging config:
 
@@ -251,3 +258,15 @@ The uni-app shell receives messages through the `web-view` `message` event.
 - `pnpm exec vue-tsc --noEmit --skipLibCheck`, `pnpm --dir native-app
   type-check`, and `pnpm --dir native-app build:app` passed after adding the
   preview launcher.
+- `pnpm native:doctor` was added and tested. The first run during this
+  documentation update reported `10 OK`, `5 WARN`, `0 FAIL`: HBuilderX/Java/
+  Keytool/ADB, preview ports, Android keystore, source `origin/agent`, and App
+  resources are ready. The dirty working tree WARN is temporary during edits;
+  the real packaging WARNs are DCloud login verification, no Android device
+  attached, missing `pack-config.local.json`, and missing iOS
+  `.p12`/`.mobileprovision`.
+- `pnpm --dir native-app type-check` and `pnpm --dir native-app build:app`
+  passed after adding the native doctor diagnostics.
+- Browser inspection confirmed `http://localhost:8861/?demoRole=teacher`
+  renders the phone preview shell, with a `395x854` device frame and a `393x852`
+  iframe loading `http://localhost:8851/#/account/ai-app?demoRole=teacher`.
