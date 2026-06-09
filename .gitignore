@@ -13,6 +13,8 @@ yarn.lock
 npm-debug.log*
 .pnpm-error.log*
 .pnpm-debug.log
+.dev-server*.log
+.native-dev*.log
 tests/**/coverage/
 
 # Editor directories and files

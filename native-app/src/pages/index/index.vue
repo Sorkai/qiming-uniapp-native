@@ -11,6 +11,18 @@
       </button>
     </view>
 
+    <!-- #ifdef H5 -->
+    <iframe
+      v-if="isH5DevPreview"
+      id="qiming-preview-frame"
+      class="qiming-preview-frame"
+      :src="webviewSrc"
+      title="启明智教客户端预览"
+      @load="handleLoad"
+    />
+    <!-- #endif -->
+
+    <!-- #ifdef APP-PLUS -->
     <web-view
       id="qiming-webview"
       class="qiming-webview"
@@ -21,6 +33,7 @@
       @error="handleError"
       @message="handleMessage"
     />
+    <!-- #endif -->
   </view>
 </template>
 
@@ -42,8 +55,27 @@ const loadError = ref(false);
 const webviewVersion = ref(0);
 const lastMessage = ref<WebMessage | null>(null);
 
-const entryPath = "/hybrid/html/index.html#/account/ai-app";
-const webviewSrc = computed(() => `${entryPath}?v=${webviewVersion.value}`);
+let isH5DevPreview = false;
+// #ifdef H5
+isH5DevPreview = import.meta.env.DEV;
+// #endif
+const appEntryPath = "/hybrid/html/index.html#/account/ai-app";
+const previewRoles = ["student", "teacher", "admin"];
+const previewRole = computed(() => {
+  if (!isH5DevPreview || typeof window === "undefined") return "teacher";
+  const role = new URLSearchParams(window.location.search).get("demoRole");
+  return role && previewRoles.includes(role) ? role : "teacher";
+});
+const h5DevEntryPath = computed(
+  () => `http://localhost:8851/#/account/ai-app?demoRole=${previewRole.value}`
+);
+const entryPath = computed(() =>
+  isH5DevPreview ? h5DevEntryPath.value : appEntryPath
+);
+const webviewSrc = computed(() => {
+  const separator = entryPath.value.includes("?") ? "&" : "?";
+  return `${entryPath.value}${separator}v=${webviewVersion.value}`;
+});
 const webviewStyles = {
   progress: {
     color: "#2F7DFF"
@@ -122,15 +154,18 @@ onBackPress(() => {
 .native-shell {
   position: relative;
   width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   overflow: hidden;
   background: #f7f8fc;
 }
 
-.qiming-webview {
+.qiming-webview,
+.qiming-preview-frame {
+  display: block;
   width: 100%;
   height: 100%;
+  border: 0;
 }
 
 .shell-state {
@@ -142,7 +177,9 @@ onBackPress(() => {
   align-items: center;
   justify-content: center;
   padding: 48rpx;
-  background: #f7f8fc;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(94, 127, 248, 0.1), transparent 42%),
+    #f7f8fc;
 }
 
 .brand-mark {

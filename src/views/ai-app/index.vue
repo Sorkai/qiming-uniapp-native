@@ -204,6 +204,7 @@ watch(
 const activeCourse = ref<CourseView | null>(null);
 
 // 侧边栏 / 数字人面板 收起状态
+const isMobileViewport = ref(false);
 const sidebarCollapsed = ref(false);
 const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
@@ -827,7 +828,10 @@ const handleNewChat = (payload: { course: string }) => {
 const syncHumanRenderState = () => {
   if (!virtualHumanRef.value) return;
   const shouldPause =
-    document.hidden || activeRail.value !== "chat" || humanCollapsed.value;
+    document.hidden ||
+    activeRail.value !== "chat" ||
+    humanCollapsed.value ||
+    isMobileViewport.value;
   if (shouldPause) {
     virtualHumanRef.value.pauseRender?.();
   } else {
@@ -838,6 +842,15 @@ const syncHumanRenderState = () => {
 watch([humanCollapsed, activeRail], () => {
   syncHumanRenderState();
 });
+
+const updateMobileViewportState = () => {
+  isMobileViewport.value = window.innerWidth <= 768;
+  if (isMobileViewport.value) {
+    sidebarCollapsed.value = true;
+    humanCollapsed.value = true;
+  }
+  syncHumanRenderState();
+};
 
 watch(selectedStudentId, () => {
   if (isBootstrapping.value || !assistantBootstrap.value || !isStaffMode.value)
@@ -852,6 +865,10 @@ const handleVisibilityChange = () => {
 };
 
 onMounted(() => {
+  updateMobileViewportState();
+  window.addEventListener("resize", updateMobileViewportState, {
+    passive: true
+  });
   document.addEventListener("visibilitychange", handleVisibilityChange);
   setTimeout(() => {
     syncHumanRenderState();
@@ -860,6 +877,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   streamCancel.value?.();
+  window.removeEventListener("resize", updateMobileViewportState);
   document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
@@ -879,7 +897,7 @@ onUnmounted(() => {
       <aside
         v-if="activeRail === 'chat'"
         class="ai-app-left-rail flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
-        :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
+        :class="sidebarCollapsed ? 'is-collapsed w-[34px]' : 'w-[260px]'"
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <AiSidebar
@@ -994,7 +1012,7 @@ onUnmounted(() => {
             <!-- 数字人面板 -->
             <transition appear name="panel-reveal">
               <div
-                class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-300 relative"
+                class="ai-app-human-panel flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-300 relative"
                 :style="humanPanelStyle"
               >
                 <!-- 收起 / 展开 把手：挂在外层，避免被圆角容器裁切 -->
@@ -1531,7 +1549,7 @@ onUnmounted(() => {
       anchor="appLeftBottom"
       anchor-selector=".ai-app-root"
       :left-zone-width="sidebarCollapsed ? 34 : 260"
-      :bottom-offset="82"
+      :bottom-offset="isMobileViewport ? 92 : 82"
       storage-key="ai-app-workspace-floating-digital-human-2d-left-bottom-v2"
     />
 
@@ -1792,6 +1810,67 @@ onUnmounted(() => {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(94, 127, 248, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-app-root {
+    height: 100dvh;
+    min-width: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .ai-app-root > .flex-1 {
+    min-width: 0;
+  }
+
+  .ai-app-left-rail {
+    position: absolute;
+    top: 12px;
+    bottom: calc(92px + var(--pure-safe-area-bottom, 0px));
+    left: 10px;
+    z-index: 80;
+    width: min(292px, calc(100vw - 20px)) !important;
+    max-width: calc(100vw - 20px);
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    border-radius: 22px;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+  }
+
+  .ai-app-left-rail.is-collapsed {
+    width: 42px !important;
+    max-width: 42px;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(94, 127, 248, 0.16);
+  }
+
+  .ai-app-left-rail.is-collapsed :deep(.ai-sidebar) {
+    padding: 0;
+  }
+
+  .ai-app-human-panel {
+    display: none !important;
+  }
+
+  main > div[class*="p-4"] {
+    padding: 10px 10px calc(78px + var(--pure-safe-area-bottom, 0px)) 54px;
+    gap: 10px;
+  }
+
+  main > div[class*="p-4"] > .flex-1 {
+    min-width: 0;
+    border-radius: 24px !important;
+  }
+
+  .gradient-text-animate {
+    font-size: clamp(26px, 8vw, 34px) !important;
+    line-height: 1.15;
+  }
+
+  :deep(.el-dialog) {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
   }
 }
 </style>

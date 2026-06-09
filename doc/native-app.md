@@ -22,6 +22,11 @@ Reasons:
 - `web-view` supports local HTML on App, which lets Android/iOS packages run the
   existing product while we gradually add native bridges.
 
+The source baseline is the original `origin/agent` branch of
+`Sorkai/vue-pure-admin-max`. The original desktop workspace is not modified;
+this public repository is a clean G drive snapshot with native packaging layers
+added on top.
+
 Official reference points:
 
 - `web-view` supports local sources on App and can receive `uni.postMessage`
@@ -81,6 +86,23 @@ pnpm native:build:ios
 
 The Android/iOS convenience commands currently generate uni-app App resources.
 Final APK/IPA packaging still requires HBuilderX packaging credentials.
+
+Live browser prototype while developing:
+
+```powershell
+pnpm dev -- --host 0.0.0.0 --port 8849
+pnpm --dir native-app dev:h5 -- --host 0.0.0.0 --port 8861
+```
+
+Current preview URLs:
+
+- Teacher: `http://localhost:8861/?demoRole=teacher`
+- Student: `http://localhost:8861/?demoRole=student`
+- Admin: `http://localhost:8861/?demoRole=admin`
+
+The `demoRole` switch is development-only. It exists so the native shell can be
+reviewed live in a browser while code changes hot-reload. Android/iOS packaged
+apps still use the normal login flow.
 
 ## Android Packaging Checklist
 
@@ -159,3 +181,12 @@ The uni-app shell receives messages through the `web-view` `message` event.
 - ADB 37.0.0 was installed from Android platform-tools; no device was attached.
 - Public GitHub repo push succeeded on `main`.
 - `.github/workflows/sync-to-cnb.yml` was removed and pushed.
+- The native H5 preview shell is running on `http://localhost:8861/` and embeds
+  the copied H5 dev server on `http://localhost:8851/`.
+- `pnpm exec vue-tsc --noEmit --skipLibCheck` passed after adding the
+  development-only `demoRole` preview bootstrap.
+- `pnpm --dir native-app type-check` passed after simplifying the native shell.
+- `pnpm native:prepare` passed again and regenerated the local App H5 payload.
+- `pnpm --dir native-app build:app` passed again and generated App resources.
+- Build warnings remain for legacy unresolved image/font references and large
+  chunks in the original web app; they do not block App resource generation.

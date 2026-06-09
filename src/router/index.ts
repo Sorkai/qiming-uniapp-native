@@ -114,6 +114,13 @@ export function resetRouter() {
 const whiteList = ["/login", "/home"];
 
 const { VITE_HIDE_HOME } = import.meta.env;
+const demoRoles = ["student", "teacher", "admin"] as const;
+const demoRoleTypes = {
+  student: 1,
+  teacher: 2,
+  admin: 3
+};
+let demoSessionBootstrapping = false;
 
 router.beforeEach((to: ToRouteType, _from, next) => {
   console.log(`[Router Guard] ${to.path} <- ${_from.path}`);
@@ -125,6 +132,29 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     }
   }
   const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
+  const demoRole = String(to.query?.demoRole || "");
+  if (
+    import.meta.env.DEV &&
+    demoRoles.includes(demoRole as (typeof demoRoles)[number]) &&
+    userInfo?.roleType !== demoRoleTypes[demoRole] &&
+    !demoSessionBootstrapping
+  ) {
+    demoSessionBootstrapping = true;
+    import("@/views/home/demoSession")
+      .then(({ ensureDemoSession }) =>
+        ensureDemoSession(demoRole as (typeof demoRoles)[number])
+      )
+      .then(() => {
+        demoSessionBootstrapping = false;
+        next({ ...to, replace: true });
+      })
+      .catch(error => {
+        demoSessionBootstrapping = false;
+        console.error("[Router Guard] Demo session bootstrap failed", error);
+        next({ path: "/home" });
+      });
+    return;
+  }
   console.log(
     "[Router Guard] 用户信息:",
     userInfo ? "已登录" : "未登录",

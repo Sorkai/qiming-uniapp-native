@@ -48,6 +48,11 @@ const bridgeScript = `
       timestamp: Date.now()
     }, extra || {}));
   }
+  document.documentElement.classList.add('qiming-native-webview');
+  document.documentElement.setAttribute('data-qiming-native', 'true');
+  document.documentElement.style.setProperty('--qiming-native-safe-bottom', 'env(safe-area-inset-bottom, 0px)');
+  document.documentElement.style.setProperty('--qiming-native-safe-top', 'env(safe-area-inset-top, 0px)');
+  document.documentElement.style.setProperty('--qiming-native-bottom-clearance', 'calc(88px + env(safe-area-inset-bottom, 0px))');
   var script = document.createElement('script');
   script.src = bridgeUrl;
   script.onload = function () {

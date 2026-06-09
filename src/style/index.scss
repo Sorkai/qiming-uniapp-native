@@ -51,6 +51,34 @@ html.ua-mobile body {
   -webkit-tap-highlight-color: transparent;
 }
 
+html.qiming-native-webview {
+  --pure-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --pure-safe-area-top: env(safe-area-inset-top, 0px);
+  --pure-mobile-tab-height: calc(58px + var(--pure-safe-area-bottom));
+  --pure-main-content-margin: 10px 10px 0;
+}
+
+html.qiming-native-webview,
+html.qiming-native-webview body,
+html.qiming-native-webview #app {
+  width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background: #f7f8fc;
+  overscroll-behavior: contain;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.qiming-native-webview .main-content {
+  margin: var(--pure-main-content-margin);
+}
+
+html.qiming-native-webview .nav-mobile-container {
+  height: calc(58px + var(--pure-safe-area-bottom));
+  padding-bottom: var(--pure-safe-area-bottom);
+}
+
 /* 灰色模式 */
 .html-grey {
   filter: grayscale(100%);
