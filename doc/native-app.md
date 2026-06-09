@@ -89,6 +89,9 @@ pnpm native:pack:ios
 pnpm native:pack:all
 pnpm native:pack:init
 pnpm native:pack:check
+pnpm native:devices
+pnpm native:run:android
+pnpm native:run:ios
 pnpm native:doctor
 ```
 
@@ -108,6 +111,16 @@ Run `pnpm native:pack:init` once to create the ignored local
 `pnpm native:pack:check` before `native:pack:*`; it strictly validates the
 registered DCloud AppID, Android package/certificate fields, iOS bundle/profile/
 p12 fields, and manifest/config package consistency.
+
+Run `pnpm native:devices` before real-device verification. It checks ADB and
+HBuilderX Android devices and reports iOS device/simulator availability without
+hanging on Windows. `pnpm native:run:android` runs the native shell to a
+connected Android device or emulator and defaults to the full platform entry
+`/home`; it performs device preflight before `native:prepare` and stops early
+with a clear message when no Android device is attached.
+`pnpm native:run:ios` documents the same flow for iOS, but this Windows host
+stops early because iOS device/simulator launch requires macOS or HBuilderX iOS
+tooling.
 
 Cloud packaging config:
 
@@ -172,7 +185,10 @@ is needed.
 4. Open `native-app` in HBuilderX.
 5. Run发行 -> 原生App-云打包.
 6. Use package name `cn.intelledu.qiming`.
-7. Verify on a physical Android device:
+7. Verify with CLI:
+   - `pnpm native:devices`
+   - `pnpm native:run:android`
+8. Verify on a physical Android device or emulator:
    - login
    - AI streaming
    - student/teacher/admin AI app pages
@@ -189,7 +205,10 @@ is needed.
 5. Configure iOS privacy strings in `native-app/src/manifest.json`.
 6. Use HBuilderX cloud packaging to create IPA.
 7. Upload through Transporter/App Store Connect/TestFlight.
-8. Verify on a real iPhone and iPad:
+8. Verify with CLI on a macOS-capable host:
+   - `pnpm native:devices`
+   - `pnpm native:run:ios`
+9. Verify on a real iPhone and iPad:
    - safe area
    - keyboard input and streaming chat
    - media permissions
@@ -325,3 +344,15 @@ The uni-app shell receives messages through the `web-view` `message` event.
   `http://localhost:8851/#/home?demoRole=teacher&v=0`, while the optional
   `entry=%2Faccount%2Fai-app` override still routes to the AI App page for
   focused debugging.
+- `pnpm native:devices` was added and tested. Current result is `1 OK`,
+  `3 WARN`, `0 FAIL`: HBuilderX CLI is present, Android has no attached
+  device, HBuilderX returns no Android device, and iOS device/simulator launch
+  is not available on this Windows host.
+- `pnpm native:run:android` and `scripts/run-native.ps1 -Platform android
+  -SkipPrepare` were tested without an Android device and now stop during
+  device preflight, before `native:prepare` and before HBuilderX launch, with a
+  clear "No Android device attached" message. `scripts/run-native.ps1 -Platform
+  ios -SkipPrepare` stops early on Windows with an iOS host/tooling message.
+- `pnpm --dir native-app type-check` and `pnpm --dir native-app build:app`
+  passed after adding the device/run scripts, and browser inspection reconfirmed
+  the full platform `/home` preview iframe.
