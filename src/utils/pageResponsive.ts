@@ -4,7 +4,9 @@ import { useAppStoreHook } from "@/store/modules/app";
 export function usePageResponsive() {
   const appStore = useAppStoreHook();
 
-  const isMobile = computed(() => appStore.getDevice === "mobile");
+  const isMobile = computed(
+    () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
+  );
   const paginationLayout = computed(() =>
     isMobile.value
       ? "sizes, prev, pager, next"

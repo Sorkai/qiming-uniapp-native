@@ -208,7 +208,7 @@
       v-model="ojDialogVisible"
       title="在线 OJ"
       width="90%"
-      class="oj-dialog"
+      class="competition-dialog oj-dialog"
     >
       <div class="oj-content">
         <!-- 题目分类筛选 -->
@@ -267,7 +267,12 @@
     </el-dialog>
 
     <!-- 题库训练模态框 -->
-    <el-dialog v-model="trainingDialogVisible" title="题库训练集" width="80%">
+    <el-dialog
+      v-model="trainingDialogVisible"
+      title="题库训练集"
+      width="80%"
+      class="competition-dialog training-dialog"
+    >
       <div class="training-content">
         <div class="training-categories">
           <div
@@ -292,7 +297,12 @@
     </el-dialog>
 
     <!-- 作文批改模态框 -->
-    <el-dialog v-model="essayDialogVisible" title="作文批改检测" width="80%">
+    <el-dialog
+      v-model="essayDialogVisible"
+      title="作文批改检测"
+      width="80%"
+      class="competition-dialog essay-dialog"
+    >
       <div class="essay-content">
         <div class="essay-type-selector">
           <el-radio-group v-model="essayType" size="large">
@@ -355,6 +365,7 @@
       v-model="securityDialogVisible"
       title="国家安全知识竞赛"
       width="70%"
+      class="competition-dialog security-dialog"
     >
       <div class="security-content">
         <div v-if="!securityQuizStarted" class="security-intro">
@@ -1465,7 +1476,7 @@ const formatTime = (seconds: number) => {
   }
 }
 
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .competition {
     .competition-banner {
       padding: 22px 20px;
@@ -1829,12 +1840,114 @@ const formatTime = (seconds: number) => {
   }
 
   :deep(.el-dialog) {
+    display: flex;
+    flex-direction: column;
     width: calc(100vw - 24px) !important;
-    margin-top: 6vh !important;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    margin: 12px auto !important;
   }
 
   :deep(.el-dialog__body) {
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 16px !important;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+</style>
+
+<style lang="scss">
+@media (max-width: 768px) {
+  .competition-dialog {
+    width: calc(100vw - 24px) !important;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    margin: 12px auto !important;
+    overflow: hidden;
+    border-radius: 20px;
+
+    .el-dialog__header {
+      padding: 16px 18px 10px;
+    }
+
+    .el-dialog__body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      padding: 16px !important;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  .oj-dialog {
+    .oj-filters {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+
+      .el-select,
+      .el-input {
+        width: 100% !important;
+      }
+    }
+
+    .el-table {
+      min-width: 620px;
+    }
+  }
+
+  .training-dialog {
+    .training-categories {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .essay-dialog {
+    .essay-type-selector .el-radio-group {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .essay-type-selector .el-radio-button__inner {
+      width: 100%;
+    }
+
+    .essay-actions .el-button {
+      width: 100%;
+      min-height: 44px;
+    }
+
+    .essay-result {
+      padding: 16px;
+    }
+  }
+
+  .security-dialog {
+    .security-intro {
+      padding: 20px 0;
+    }
+
+    .intro-icon {
+      font-size: 48px;
+    }
+
+    .intro-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .security-intro .el-button,
+    .quiz-actions .el-button {
+      width: 100%;
+      min-height: 44px;
+    }
   }
 }
 </style>

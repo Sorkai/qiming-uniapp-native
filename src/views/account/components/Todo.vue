@@ -90,6 +90,7 @@
       v-model="dialogVisible"
       :title="isEditMode ? '编辑待办' : '添加待办'"
       width="500px"
+      class="student-todo-dialog"
       @close="resetForm"
     >
       <el-form ref="formRef" :model="form" label-width="80px">
@@ -549,7 +550,7 @@ const toggleStatus = (row: TodoItem) => {
   transition: all 0.3s ease;
 }
 
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .todo-container {
     .card {
       padding: 22px 20px;
@@ -697,6 +698,106 @@ const toggleStatus = (row: TodoItem) => {
           border-color: var(--el-color-danger-light-7);
         }
       }
+    }
+
+    :deep(.el-dialog) {
+      display: flex;
+      flex-direction: column;
+      width: min(500px, calc(100vw - 24px)) !important;
+      max-height: calc(100vh - 24px);
+      max-height: calc(100dvh - 24px);
+      margin: 12px auto !important;
+      border-radius: 20px;
+    }
+
+    :deep(.el-dialog__body) {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 16px 18px 8px !important;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    :deep(.el-form-item) {
+      display: block;
+      margin-bottom: 18px;
+    }
+
+    :deep(.el-form-item__label) {
+      justify-content: flex-start;
+      width: auto !important;
+      height: auto;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    :deep(.el-dialog__footer) {
+      flex: 0 0 auto;
+      padding: 12px 18px 18px;
+    }
+
+    :deep(.el-dialog__footer .el-button) {
+      min-height: 42px;
+      padding: 0 18px;
+    }
+  }
+}
+</style>
+
+<style lang="scss">
+@media (max-width: 768px) {
+  .student-todo-dialog {
+    width: min(500px, calc(100vw - 24px)) !important;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    margin: 12px auto !important;
+    overflow: hidden;
+    border-radius: 20px;
+
+    .el-dialog__header {
+      padding: 18px 18px 8px;
+    }
+
+    .el-dialog__body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      padding: 16px 18px 8px !important;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .el-form-item {
+      display: block;
+      margin-bottom: 18px;
+    }
+
+    .el-form-item__label {
+      justify-content: flex-start;
+      width: auto !important;
+      height: auto;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .el-form-item__content {
+      width: 100%;
+      margin-left: 0 !important;
+    }
+
+    .el-dialog__footer {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding: 12px 18px 18px;
+    }
+
+    .el-dialog__footer .el-button {
+      min-height: 42px;
+      padding: 0 18px;
     }
   }
 }

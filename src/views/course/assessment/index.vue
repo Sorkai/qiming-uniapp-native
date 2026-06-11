@@ -120,11 +120,15 @@
 
       <div
         v-else
-        class="flex-1 flex flex-col items-center justify-center bg-[var(--el-fill-color-light)]"
+        class="assessment-empty-state flex-1 flex flex-col items-center justify-center bg-[var(--el-fill-color-light)]"
       >
         <el-empty
-          description="请从左侧选择一个课程开始管理"
-          :image-size="120"
+          :description="
+            isMobileLayout
+              ? '请选择一门课程开始管理'
+              : '请从左侧选择一个课程开始管理'
+          "
+          :image-size="isMobileLayout ? 76 : 120"
         />
       </div>
     </div>
@@ -143,7 +147,9 @@ import { Search } from "@element-plus/icons-vue";
 // 标签页控制
 const activeTab = ref("homework");
 const appStore = useAppStoreHook();
-const isMobileLayout = computed(() => appStore.getDevice === "mobile");
+const isMobileLayout = computed(
+  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
+);
 
 // 课程选择相关
 const selectedCourseId = ref(null);
@@ -256,18 +262,18 @@ onMounted(() => {
 
 @mixin assessment-mobile-layout {
   height: auto !important;
-  min-height: calc(100vh - 140px);
+  min-height: auto;
   margin: 0;
-  gap: 12px;
+  gap: 8px;
   overflow: visible;
   flex-direction: column;
-  padding: 12px;
+  padding: 6px 6px calc(var(--pure-mobile-tab-height, 58px) + 38px);
 }
 
 @mixin assessment-mobile-panel-layout {
   width: 100% !important;
   min-width: 0;
-  border-radius: 20px;
+  border-radius: 16px;
 }
 
 .assessment-management.is-mobile-layout {
@@ -279,16 +285,16 @@ onMounted(() => {
   }
 
   .course-sidebar {
-    max-height: 48vh;
+    max-height: 264px;
   }
 
   .assessment-panel {
-    min-height: calc(100vh - 280px);
+    min-height: 0;
   }
 }
 
 .assessment-management.is-mobile-layout .course-item {
-  padding: 10px;
+  padding: 8px 10px;
   border-radius: 12px;
 }
 
@@ -302,8 +308,8 @@ onMounted(() => {
   }
 
   :deep(.el-tabs__item) {
-    height: 40px;
-    padding: 0 14px;
+    height: 36px;
+    padding: 0 12px;
     font-size: 13px;
     white-space: nowrap;
   }
@@ -319,16 +325,16 @@ onMounted(() => {
     }
 
     .course-sidebar {
-      max-height: 48vh;
+      max-height: 264px;
     }
 
     .assessment-panel {
-      min-height: calc(100vh - 280px);
+      min-height: 0;
     }
   }
 
   .course-item {
-    padding: 10px;
+    padding: 8px 10px;
     border-radius: 12px;
   }
 
@@ -342,11 +348,29 @@ onMounted(() => {
     }
 
     :deep(.el-tabs__item) {
-      height: 40px;
-      padding: 0 14px;
+      height: 36px;
+      padding: 0 12px;
       font-size: 13px;
       white-space: nowrap;
     }
   }
+}
+
+.assessment-management.is-mobile-layout .assessment-empty-state {
+  justify-content: flex-start;
+  min-height: 118px;
+  padding: 14px 12px;
+}
+
+.assessment-management.is-mobile-layout .assessment-empty-state :deep(.el-empty) {
+  padding: 0;
+}
+
+.assessment-management.is-mobile-layout
+  .assessment-empty-state
+  :deep(.el-empty__description) {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.45;
 }
 </style>

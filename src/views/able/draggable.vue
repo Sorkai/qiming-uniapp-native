@@ -183,7 +183,7 @@ onMounted(() => {
   cursor: move;
   border: 1px solid #e5e4e9;
 
-  @media screen and (width <= 750px) {
+  @media screen and (max-width: 750px) {
     line-height: 90px;
   }
 }

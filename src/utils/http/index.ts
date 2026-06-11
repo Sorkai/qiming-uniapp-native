@@ -31,6 +31,19 @@ const defaultConfig: AxiosRequestConfig = {
   }
 };
 
+const isNativeDemoPreview = () => {
+  if (!import.meta.env.DEV || typeof window === "undefined") return false;
+
+  const queryText = `${window.location.search}&${window.location.hash}`;
+  const hasNativeFlag =
+    queryText.includes("qimingNative=1") ||
+    localStorage.getItem("qimingNativeWebView") === "1" ||
+    sessionStorage.getItem("qimingNativeWebView") === "1" ||
+    document.documentElement.classList.contains("qiming-native-webview");
+
+  return hasNativeFlag && !!localStorage.getItem("qiming-demo-role");
+};
+
 class PureHttp {
   constructor() {
     this.httpInterceptorsRequest();
@@ -76,6 +89,12 @@ class PureHttp {
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
         const whiteList = ["/refresh-token", "/login"];
+        const headers = config.headers as Record<string, any> | undefined;
+        const hasExplicitAuthorization =
+          !!headers?.Authorization || !!headers?.authorization;
+        if (hasExplicitAuthorization) {
+          return config;
+        }
         return whiteList.some(url => config.url.endsWith(url))
           ? config
           : new Promise(resolve => {
@@ -152,7 +171,7 @@ class PureHttp {
       },
       (error: PureHttpError) => {
         const $error = error;
-        if ($error.response?.status === 401) {
+        if ($error.response?.status === 401 && !isNativeDemoPreview()) {
           useUserStoreHook().logOut();
         }
         $error.isCancelRequest = Axios.isCancel($error);

@@ -2112,47 +2112,61 @@ $radius-lg: 16px;
     .page-header {
       flex-direction: column;
       align-items: stretch;
-      padding: 18px;
-      gap: 16px;
+      padding: 14px;
+      gap: 12px;
 
       .header-content {
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        align-items: center;
+        gap: 12px;
       }
 
       .header-icon {
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
 
         :deep(svg) {
-          width: 24px;
-          height: 24px;
+          width: 22px;
+          height: 22px;
         }
+      }
+
+      .header-info {
+        min-width: 0;
       }
 
       .page-title {
         font-size: 20px;
+        line-height: 1.25;
       }
 
       .page-desc {
         font-size: 13px;
-        line-height: 1.6;
+        line-height: 1.45;
       }
 
       .header-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
         justify-content: stretch;
 
         .el-button,
         .create-btn {
-          flex: 1;
+          width: 100%;
           min-width: 0;
+          margin-left: 0;
         }
       }
 
+      :deep(.el-button.action-btn),
       :deep(.el-button.create-btn) {
-        min-height: 42px;
-        height: 42px;
-        padding: 0 16px !important;
-        font-size: 14px;
+        min-height: 38px;
+        height: 38px;
+        padding: 0 10px !important;
+        font-size: 13px;
       }
     }
 
@@ -2269,12 +2283,12 @@ $radius-lg: 16px;
 
   @media screen and (max-width: 520px) {
     .stats-section {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .page-header {
       .header-actions {
-        flex-direction: column;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
 
         .el-button,
         .create-btn {
@@ -2354,6 +2368,18 @@ $radius-lg: 16px;
         .el-button {
           flex: 1 1 calc(50% - 4px);
         }
+      }
+    }
+  }
+
+  @media screen and (max-width: 360px) {
+    .stats-section {
+      grid-template-columns: 1fr;
+    }
+
+    .page-header {
+      .header-actions {
+        grid-template-columns: 1fr;
       }
     }
   }

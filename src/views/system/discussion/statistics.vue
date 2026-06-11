@@ -265,7 +265,12 @@ const getOperatorRoleText = (role: string) => {
   return role || "未知";
 };
 
-const getTargetTypeText = (type: string) => (type === "post" ? "帖子" : "回复");
+const getTargetTypeText = (type: string) => {
+  if (type === "post") return "帖子";
+  if (type === "reply") return "回复";
+  if (type === "report") return "举报";
+  return type || "未知";
+};
 
 // ==================== 图表逻辑 ====================
 
@@ -1038,6 +1043,7 @@ watch(theme, () => {
             >
               <el-option label="帖子" value="post" />
               <el-option label="回复" value="reply" />
+              <el-option label="举报" value="report" />
             </el-select>
           </el-form-item>
           <el-form-item label="操作动作">
@@ -1725,7 +1731,7 @@ watch(theme, () => {
   margin-top: 24px;
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .statistics-container {
     padding-bottom: calc(
       var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
@@ -1845,7 +1851,7 @@ watch(theme, () => {
   }
 }
 
-@media (width <= 420px) {
+@media (max-width: 420px) {
   .stats-grid--compact,
   .search-form__actions {
     grid-template-columns: 1fr;

@@ -8,6 +8,8 @@ import { useGlobal, isNumber } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 import {
   h,
+  watch,
+  nextTick,
   computed,
   Transition,
   defineComponent,
@@ -62,6 +64,53 @@ const mobileFooterOffset = computed(() => {
   return isMobile.value ? "calc(var(--pure-mobile-tab-height) + 16px)" : "0px";
 });
 
+function getNativeSafeAreaTop() {
+  if (typeof window === "undefined") return 0;
+  if (!document.documentElement.classList.contains("qiming-native-webview")) {
+    return 0;
+  }
+  const rawValue = getComputedStyle(document.documentElement)
+    .getPropertyValue("--pure-safe-area-top")
+    .trim();
+  const safeTop = Number.parseFloat(rawValue);
+  return Number.isFinite(safeTop) ? safeTop : 0;
+}
+
+function resetMobileScrollPosition() {
+  if (typeof window === "undefined" || !isMobile.value) return;
+
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.scrollTo({ left: 0, top: 0 });
+
+  [
+    ".main-container > .el-scrollbar .el-scrollbar__wrap",
+    ".main-container .app-main .el-scrollbar__wrap",
+    ".main-container",
+    ".app-main",
+    ".app-main-nofixed-header"
+  ].forEach(selector => {
+    document.querySelectorAll<HTMLElement>(selector).forEach(el => {
+      el.scrollTop = 0;
+      el.scrollLeft = 0;
+    });
+  });
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (!isMobile.value) return;
+
+    nextTick(() => {
+      resetMobileScrollPosition();
+      requestAnimationFrame(resetMobileScrollPosition);
+      window.setTimeout(resetMobileScrollPosition, 160);
+    });
+  },
+  { immediate: true }
+);
+
 const fixedScrollWrapStyle = computed<CSSProperties>(() => {
   return {
     display: "flex",
@@ -85,9 +134,10 @@ const fixedScrollViewStyle = computed<CSSProperties>(() => {
 });
 
 const getSectionStyle = computed<CSSProperties>(() => {
-  const headerOnlyHeight = isMobile.value ? 64 : 72;
+  const nativeSafeAreaTop = isMobile.value ? getNativeSafeAreaTop() : 0;
+  const headerOnlyHeight = isMobile.value ? 64 + nativeSafeAreaTop : 72;
   const headerWithTagsHeight = isMobile.value
-    ? 64
+    ? 64 + nativeSafeAreaTop
     : showModel.value == "chrome"
       ? 116
       : 112;
@@ -116,6 +166,10 @@ const transitionMain = defineComponent({
     }
   },
   render() {
+    const disableNativeMobileTransition =
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("qiming-native-webview") &&
+      document.documentElement.classList.contains("ua-mobile");
     const transitionName =
       transitions.value(this.route)?.name || "fade-transform";
     const enterTransition = transitions.value(this.route)?.enterTransition;
@@ -123,15 +177,19 @@ const transitionMain = defineComponent({
     return h(
       Transition,
       {
-        name: enterTransition ? "pure-classes-transition" : transitionName,
-        enterActiveClass: enterTransition
+        name: disableNativeMobileTransition
+          ? undefined
+          : enterTransition
+            ? "pure-classes-transition"
+            : transitionName,
+        enterActiveClass: !disableNativeMobileTransition && enterTransition
           ? `animate__animated ${enterTransition}`
           : undefined,
-        leaveActiveClass: leaveTransition
+        leaveActiveClass: !disableNativeMobileTransition && leaveTransition
           ? `animate__animated ${leaveTransition}`
           : undefined,
         mode: "out-in",
-        appear: true
+        appear: !disableNativeMobileTransition
       },
       {
         default: () => [this.$slots.default()]

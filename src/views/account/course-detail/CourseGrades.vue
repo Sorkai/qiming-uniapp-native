@@ -1086,7 +1086,7 @@ onUnmounted(() => {
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 20px;
 
-    @media (width <= 992px) {
+    @media (max-width: 992px) {
       grid-template-columns: 1fr;
     }
   }
@@ -1348,7 +1348,7 @@ onUnmounted(() => {
   }
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .course-grades-wrapper {
     min-height: 100vh;
   }
@@ -1419,7 +1419,7 @@ onUnmounted(() => {
   }
 }
 
-@media (width <= 479px) {
+@media (max-width: 479px) {
   .course-grades-container {
     padding: var(--course-mobile-top-offset, 156px) 10px
       calc(20px + env(safe-area-inset-bottom));

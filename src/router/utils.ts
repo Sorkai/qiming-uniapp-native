@@ -29,6 +29,11 @@ const modulesRoutes = import.meta.glob("/src/views/**/*.{vue,tsx}");
 // 动态路由
 import { getAsyncRoutes } from "@/api/routes";
 
+function normalizeAsyncRouteData(res: any) {
+  const data = res?.data;
+  return Array.isArray(data) ? data : [];
+}
+
 function handRank(routeInfo: any) {
   const { name, path, parentId, meta } = routeInfo;
   return isAllEmpty(parentId)
@@ -281,7 +286,7 @@ function initRouter() {
         getAsyncRoutes()
           .then(res => {
             console.log("[Router] 获取动态路由响应:", res);
-            const data = res?.data ?? [];
+            const data = normalizeAsyncRouteData(res);
             handleAsyncRoutes(cloneDeep(data));
             storageLocal().setItem(key, data);
             resolve(router);
@@ -299,7 +304,7 @@ function initRouter() {
       getAsyncRoutes()
         .then(res => {
           console.log("[Router] 获取动态路由响应:", res);
-          const data = res?.data ?? [];
+          const data = normalizeAsyncRouteData(res);
           handleAsyncRoutes(cloneDeep(data));
           resolve(router);
         })

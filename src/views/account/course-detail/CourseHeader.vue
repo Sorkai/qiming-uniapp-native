@@ -531,7 +531,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .layout-header {
     top: 12px;
     right: 12px;
@@ -603,7 +603,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (width <= 479px) {
+@media (max-width: 479px) {
   .layout-header {
     height: 60px;
     padding: 0 12px;
@@ -675,7 +675,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   }
 }
 
-@media (width <= 379px) {
+@media (max-width: 379px) {
   .layout-header {
     right: 10px;
     left: 10px;

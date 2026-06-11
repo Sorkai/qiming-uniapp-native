@@ -147,6 +147,7 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
+import { getSavedCourseTheme, setSavedCourseTheme } from "@/utils/courseTheme";
 import { userKey } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 import { setAiScreenCaptureVisibilityOverride } from "@/components/AiScreenCapture/visibility";
@@ -193,9 +194,7 @@ const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
-const currentTheme = ref(
-  (storageLocal().getItem("course_theme") as string) || "light"
-);
+const currentTheme = ref(getSavedCourseTheme("light"));
 const activeMenu = ref(
   (storageLocal().getItem(
     `course_detail_active_menu_${route.params.id}`
@@ -487,7 +486,7 @@ const resolveVideoPlayerEl = () => {
 watch(
   currentTheme,
   val => {
-    storageLocal().setItem("course_theme", val);
+    setSavedCourseTheme(val);
     const other = val === "light" ? "dark" : "light";
     document.documentElement.classList.remove(other);
     document.documentElement.classList.add(val);
@@ -495,12 +494,6 @@ watch(
     document.body.classList.add(val);
 
     // 同步到管理后台主题设置
-    const layout = storageLocal().getItem("responsive-layout") as any;
-    if (layout) {
-      layout.darkMode = val === "dark";
-      storageLocal().setItem("responsive-layout", layout);
-    }
-
     nextTick(() => {
       scheduleMobileTopOffsetUpdate();
     });
@@ -787,20 +780,57 @@ const fetchHtmlAnimations = async () => {
     const results = await Promise.all(
       chapters.map(async (ch: any) => {
         try {
-          const { data } = await getHtmlAnimationDisplay({
+          const response: any = await getHtmlAnimationDisplay({
             courseId: courseDetail.value.courseId,
             chapterId: ch.chapterId
           });
+          const data = response?.data || response;
           if (data?.url) {
             return {
               chapterId: ch.chapterId,
               chapterName: ch.name,
               version: data.version,
               url: data.url,
-              previewUrl: data.previewUrl
+              coverUrl: data.coverUrl || data.previewUrl,
+              previewUrl: data.previewUrl || data.coverUrl,
+              previewVideoUrl: data.previewVideoUrl,
+              available: data.available !== false,
+              message: data.message,
+              status: "ready"
+            };
+          }
+          if (data?.available === false) {
+            return {
+              chapterId: ch.chapterId,
+              chapterName: ch.name,
+              version: "",
+              url: "",
+              available: false,
+              message: data.message || "暂无可用HTML动画版本",
+              status: "unavailable"
             };
           }
         } catch (e) {
+          const status = e?.response?.status;
+          const message =
+            e?.response?.data?.message ||
+            e?.response?.data?.msg ||
+            e?.message ||
+            "";
+          if (status === 404) {
+            return {
+              chapterId: ch.chapterId,
+              chapterName: ch.name,
+              version: "",
+              url: "",
+              available: false,
+              message: message || "暂无可展示动画",
+              status:
+                message.includes("对象不存在") || message.includes("版本对象")
+                  ? "missing"
+                  : "unavailable"
+            };
+          }
           return null;
         }
         return null;
@@ -1196,7 +1226,7 @@ onBeforeUnmount(() => {
   }
 
   /* stylelint-disable-next-line order/order */
-  @media (width <= 767px) {
+  @media (max-width: 767px) {
     .layout-container {
       display: block;
       min-height: 100vh;

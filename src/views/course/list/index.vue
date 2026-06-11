@@ -752,7 +752,9 @@ import CourseStats from "./components/CourseStats.vue";
 import { Plus, Loading, Search } from "@element-plus/icons-vue";
 
 const appStore = useAppStoreHook();
-const isMobile = computed(() => appStore.getDevice === "mobile");
+const isMobile = computed(
+  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
+);
 const paginationLayout = computed(() =>
   isMobile.value
     ? "sizes, prev, pager, next"
@@ -2200,23 +2202,35 @@ onMounted(async () => {
 
 @media screen and (max-width: 768px) {
   .main {
-    padding: 12px;
+    padding: 6px 6px calc(var(--pure-mobile-tab-height, 58px) + 38px);
     margin: 0;
+  }
+
+  .search-card {
+    margin-bottom: 7px !important;
+    border-radius: 13px;
+  }
+
+  :deep(.search-card .el-card__body) {
+    padding: 8px !important;
   }
 
   .search-toolbar {
     flex-direction: column;
     align-items: stretch !important;
+    gap: 6px !important;
   }
 
   .search-form {
     width: 100%;
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
   }
 
   .create-course-btn {
     width: 100%;
     margin-left: 0;
+    min-height: 30px;
+    font-size: 12px;
   }
 
   .pagination-container {
@@ -2254,18 +2268,20 @@ onMounted(async () => {
 
   :deep(.search-form .el-form-item) {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
     width: 100%;
     margin-right: 0;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
   }
 
   :deep(.search-form .el-form-item__label) {
-    width: 100%;
+    flex: 0 0 64px;
+    width: 64px;
     justify-content: flex-start;
-    padding: 0 0 6px;
-    line-height: 1.4;
+    padding: 0 8px 0 0;
+    font-size: 12px;
+    line-height: 30px;
   }
 
   :deep(.search-form .el-form-item__content) {
@@ -2280,12 +2296,23 @@ onMounted(async () => {
   :deep(.search-form__actions .el-form-item__content) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 6px;
     width: 100%;
   }
 
   :deep(.search-form__actions .el-button) {
     margin-left: 0;
+    min-height: 28px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  :deep(.search-form__actions.el-form-item) {
+    margin-bottom: 6px;
+  }
+
+  :deep(.el-row .el-col.mb-5) {
+    margin-bottom: 8px !important;
   }
 
   :deep(.course-pagination) {
@@ -2306,5 +2333,30 @@ onMounted(async () => {
   :deep(.el-dialog__body) {
     padding: 16px;
   }
+}
+
+</style>
+
+<style lang="scss">
+html.qiming-native-webview.ua-mobile .main {
+  padding-top: 2px;
+}
+
+html.qiming-native-webview.ua-mobile .main > .mb-6 {
+  margin-bottom: 7px !important;
+}
+
+html.qiming-native-webview.ua-mobile .search-card {
+  box-shadow: 0 8px 18px rgb(28 39 68 / 5%) !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  .search-form__actions
+  .el-form-item__content {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+html.qiming-native-webview.ua-mobile .create-course-btn {
+  min-height: 30px;
 }
 </style>

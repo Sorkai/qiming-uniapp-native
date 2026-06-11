@@ -434,7 +434,7 @@ onBeforeUnmount(() => {
   display: none;
 }
 
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .layout-sidebar {
     --mobile-sidebar-easing: cubic-bezier(0.65, 0, 0.35, 1);
     top: 88px;

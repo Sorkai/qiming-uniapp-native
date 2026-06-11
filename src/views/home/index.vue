@@ -1437,9 +1437,18 @@ const startShowcaseTimer = () => {
   }, 6000);
 };
 const scrollToSection = (id: string) => {
-  document
-    .getElementById(id)
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const target = document.getElementById(id);
+  if (!target) return;
+
+  const navHeight =
+    document.querySelector(".nx-nav")?.getBoundingClientRect().height ?? 0;
+  const targetTop =
+    target.getBoundingClientRect().top + window.scrollY - navHeight - 8;
+
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: "smooth"
+  });
 };
 const handleEntry = () => {
   const token = getToken();
@@ -1573,8 +1582,13 @@ onUnmounted(() => {
    ========================================================= */
 .nx-nav {
   position: fixed;
-  inset: 0 0 auto;
+  top: 0;
+  right: 0;
+  left: 0;
   z-index: 40;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
   height: 60px;
   color: rgb(246 245 244);
   background: transparent;
@@ -3196,6 +3210,10 @@ onUnmounted(() => {
     min-height: 100%;
   }
 
+  .nx-section {
+    scroll-margin-top: calc(76px + var(--qiming-native-status-top, 0px));
+  }
+
   .nx-nav {
     height: calc(64px + var(--qiming-native-status-top, 0px));
     padding-top: var(--qiming-native-status-top, 0px);
@@ -3211,19 +3229,22 @@ onUnmounted(() => {
   }
 
   .nx-nav__inner {
-    gap: 10px;
-    padding: 0 14px;
+    gap: 12px;
+    padding: 0 18px;
   }
 
   .nx-nav__brand {
+    flex: 1 1 auto;
     min-width: 0;
-    gap: 8px;
+    max-width: 168px;
+    gap: 14px;
     font-size: 15px;
   }
 
   .nx-nav__brand img {
     width: 34px;
     height: 34px;
+    margin-right: 10px;
     border-radius: 8px;
   }
 
@@ -3235,7 +3256,7 @@ onUnmounted(() => {
   }
 
   .nx-nav__brand span {
-    max-width: 88px;
+    max-width: 96px;
   }
 
   .nx-nav:not(.is-scrolled) .nx-nav__brand img {
@@ -3250,18 +3271,31 @@ onUnmounted(() => {
 
   .nx-nav__right {
     flex-shrink: 0;
-    gap: 6px;
+    gap: 10px;
     margin-left: auto;
   }
 
   .nx-nav__user {
-    max-width: 118px;
+    width: 34px;
     height: 34px;
-    padding: 4px 8px 4px 4px;
+    padding: 4px;
+    overflow: hidden;
   }
 
-  .nx-nav__user span {
-    max-width: 68px;
+  .nx-nav__user > span:not(.el-avatar),
+  .nx-nav__user .el-icon--right {
+    display: none;
+  }
+
+  .nx-nav__user :deep(.el-avatar) {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+
+  .nx-nav__user :deep(.el-avatar),
+  .nx-nav__user :deep(.el-avatar img) {
+    width: 26px !important;
+    height: 26px !important;
   }
 
   .nx-link {
@@ -3269,9 +3303,9 @@ onUnmounted(() => {
   }
 
   .nx-nav__right .nx-btn {
-    height: 36px;
-    padding: 0 14px;
-    font-size: 14px;
+    height: 34px;
+    padding: 0 12px;
+    font-size: 13px;
     border-radius: 8px;
   }
 
@@ -3313,16 +3347,19 @@ onUnmounted(() => {
   }
 
   .nx-hero__cta {
-    justify-content: flex-start;
-    gap: 8px;
+    display: block;
     margin-top: 22px;
   }
 
   .nx-hero__cta .nx-btn {
-    flex: 1 1 144px;
+    width: 100%;
     height: 42px;
     padding: 0 14px;
     font-size: 14px;
+  }
+
+  .nx-hero__cta .nx-btn + .nx-btn {
+    margin-top: 10px;
   }
 
   .nx-pills {
@@ -3417,15 +3454,15 @@ onUnmounted(() => {
   }
 
   .nx-section {
-    padding: 56px 18px;
+    padding: 32px 16px;
   }
 
   .nx-section--features {
-    padding-inline: 18px;
+    padding-inline: 16px;
   }
 
   .nx-shead {
-    margin-bottom: 24px;
+    margin-bottom: 10px;
   }
 
   .nx-shead--center {
@@ -3439,7 +3476,8 @@ onUnmounted(() => {
   }
 
   .nx-stitle {
-    font-size: 26px;
+    font-size: 22px;
+    line-height: 1.18;
     letter-spacing: 0;
   }
 
@@ -3465,42 +3503,80 @@ onUnmounted(() => {
   }
 
   .nx-bento--wide > .nx-bento__head {
-    padding: 22px 20px 18px;
+    padding: 14px 16px 10px;
   }
 
   .nx-bento__head {
-    gap: 14px;
-    padding: 22px 20px 18px;
+    gap: 12px;
+    padding: 14px 16px 10px;
+  }
+
+  .nx-bento__eyebrow {
+    margin-bottom: 5px;
+    font-size: 13px;
   }
 
   .nx-bento__title {
-    font-size: 19px;
+    font-size: 17px;
+    line-height: 1.22;
     letter-spacing: 0;
   }
 
   .nx-bento--wide .nx-bento__title {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .nx-bento--wide .nx-bento__media {
-    padding: 0 20px 20px;
+    padding: 0 12px 12px;
   }
 
   .nx-bento:not(.nx-bento--wide) .nx-bento__media {
-    padding: 16px 0 0 16px;
-    margin: 0 20px 20px;
+    padding: 0;
+    margin: 0 12px 12px;
   }
 
-  .nx-bento__inset--scripted,
-  .nx-bento:not(.nx-bento--wide) .nx-bento__inset--scripted {
-    min-height: 260px;
+  .nx-section--features .nx-bento__inset--scripted,
+  .nx-section--features
+    .nx-bento:not(.nx-bento--wide)
+    .nx-bento__inset--scripted {
+    height: auto;
+    min-height: 0;
     border-radius: 10px;
+  }
+
+  .nx-section--features
+    .nx-bento:not(.nx-bento--wide)
+    .nx-bento__inset--scripted {
+    height: auto;
   }
 
   .nx-bento__inset--lg.nx-bento__inset--scripted,
   .nx-tabpanel__media .nx-bento__inset--lg {
-    min-height: 300px;
+    height: 330px;
+    min-height: 0;
     border-radius: 12px;
+  }
+
+  .nx-tabpanel__inner {
+    gap: 18px;
+  }
+
+  .nx-tabpanel__copy {
+    h3 {
+      margin-bottom: 8px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    > p {
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    ul {
+      grid-template-columns: 1fr;
+      gap: 7px;
+    }
   }
 
   .nx-tabbar {
@@ -3519,8 +3595,9 @@ onUnmounted(() => {
   }
 
   .nx-arrow {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
   }
 
   .nx-steps {
@@ -3550,7 +3627,7 @@ onUnmounted(() => {
 
 @media (max-width: 420px) {
   .nx-nav__brand span {
-    max-width: 74px;
+    max-width: 92px;
   }
 
   .nx-nav__right .nx-btn {

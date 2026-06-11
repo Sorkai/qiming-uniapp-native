@@ -455,7 +455,7 @@ const handleDelete = (file: CloudFile) => {
       }
     }
 
-    .upload-btn {
+  .upload-btn {
       display: inline-flex;
       gap: 6px;
       align-items: center;
@@ -486,6 +486,77 @@ const handleDelete = (file: CloudFile) => {
 
       .el-icon {
         font-size: 15px;
+      }
+    }
+  }
+
+  .file-icon-wrap {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    transition: transform 0.2s ease;
+
+    &.icon-doc {
+      color: #6366f1;
+      background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+
+      .dark & {
+        color: #818cf8;
+        background: rgb(99 102 241 / 12%);
+      }
+    }
+
+    &.icon-audio {
+      color: #f59e0b;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+
+      .dark & {
+        color: #fbbf24;
+        background: rgb(245 158 11 / 12%);
+      }
+    }
+
+    &.icon-image {
+      color: #10b981;
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+
+      .dark & {
+        color: #34d399;
+        background: rgb(16 185 129 / 12%);
+      }
+    }
+
+    &.icon-video {
+      color: #ef4444;
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+
+      .dark & {
+        color: #f87171;
+        background: rgb(239 68 68 / 12%);
+      }
+    }
+
+    &.icon-folder {
+      color: #97b4f7;
+      background: linear-gradient(135deg, #eef2ff, #dce2f7);
+
+      .dark & {
+        color: #38bdf8;
+        background: rgb(56 189 248 / 12%);
+      }
+    }
+
+    &.icon-other {
+      color: #6b7280;
+      background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+
+      .dark & {
+        color: #94a3b8;
+        background: rgb(107 114 128 / 12%);
       }
     }
   }
@@ -739,7 +810,7 @@ const handleDelete = (file: CloudFile) => {
   }
 
   .mobile-file-card {
-    padding: 16px;
+    padding: 15px;
     background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
     border: 1px solid rgb(151 180 247 / 12%);
     border-radius: 18px;
@@ -753,9 +824,16 @@ const handleDelete = (file: CloudFile) => {
   }
 
   .mobile-file-main {
-    display: flex;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 14px;
     align-items: flex-start;
+  }
+
+  .mobile-file-main > .file-icon-wrap {
+    width: 42px;
+    height: 42px;
+    margin-top: 2px;
   }
 
   .mobile-file-body {
@@ -764,11 +842,15 @@ const handleDelete = (file: CloudFile) => {
   }
 
   .mobile-file-name {
+    display: -webkit-box;
+    overflow: hidden;
     font-size: 14px;
     font-weight: 600;
-    line-height: 1.6;
+    line-height: 1.45;
     color: #1e293b;
     word-break: break-word;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 
     .dark & {
       color: #e2e8f0;
@@ -781,7 +863,25 @@ const handleDelete = (file: CloudFile) => {
     gap: 8px 12px;
     margin-top: 8px;
     font-size: 12px;
+    line-height: 1.2;
     color: #7a8bb8;
+
+    span + span {
+      position: relative;
+      padding-left: 12px;
+
+      &::before {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 4px;
+        height: 4px;
+        content: "";
+        background: rgb(151 180 247 / 60%);
+        border-radius: 999px;
+        transform: translateY(-50%);
+      }
+    }
 
     .dark & {
       color: #94a3b8;
@@ -832,7 +932,7 @@ const handleDelete = (file: CloudFile) => {
   }
 }
 
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .cloud-disk-container {
     padding: 18px 16px;
     border-radius: 20px;

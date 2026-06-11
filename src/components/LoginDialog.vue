@@ -518,6 +518,16 @@ import { useI18n } from "vue-i18n";
 import { userRegister, userLogin, getUserDetail } from "@/api/user";
 import { setToken, getToken } from "@/utils/auth";
 
+const ROLE_BY_TYPE: Record<number, string[]> = {
+  1: ["student"],
+  2: ["teacher"],
+  3: ["admin"]
+};
+
+function rolesFromRoleType(roleType?: number) {
+  return ROLE_BY_TYPE[Number(roleType)] || ["common"];
+}
+
 const props = defineProps({
   visible: {
     type: Boolean as PropType<boolean>,
@@ -667,6 +677,7 @@ const fetchUserDetail = async () => {
       const userStore = useUserStoreHook();
       userStore.SET_NICKNAME(userInfo.nickname || "");
       userStore.SET_AVATAR(userInfo.avatar || "");
+      userStore.SET_ROLES(rolesFromRoleType(userInfo.roleType));
 
       setToken({
         accessToken: getToken()?.accessToken || "",
@@ -677,7 +688,7 @@ const fetchUserDetail = async () => {
         username: userInfo.mobile,
         nickname: userInfo.nickname,
         avatar: userInfo.avatar,
-        roles: ["admin"],
+        roles: rolesFromRoleType(userInfo.roleType),
         permissions: ["*:*:*"],
         roleType: userInfo.roleType
       });
@@ -726,7 +737,7 @@ const handlePasswordLogin = async () => {
         refreshToken: res.data.accessToken,
         username: loginForm.username,
         nickname: loginForm.username,
-        roles: ["admin"],
+        roles: ["common"],
         permissions: ["*:*:*"]
       });
 
@@ -1293,6 +1304,7 @@ watch(
 @media screen and (max-width: 768px) {
   .login-overlay {
     align-items: center;
+    justify-content: center;
     padding-top: 0;
     padding: 16px;
   }
@@ -1377,6 +1389,7 @@ watch(
     height: 28px;
   }
 }
+
 </style>
 
 <style lang="scss">
@@ -1405,5 +1418,86 @@ watch(
 
 .login-card.shake {
   animation: shake 0.5s ease-in-out;
+}
+
+html.qiming-native-webview .login-overlay {
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100vw !important;
+  height: var(--qiming-native-vh, 100dvh) !important;
+  padding:
+    calc(var(--qiming-native-status-top, 0px) + 14px) 16px
+    calc(env(safe-area-inset-bottom, 0px) + 16px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  transform: none !important;
+}
+
+html.qiming-native-webview .login-card {
+  width: min(100%, 360px);
+  max-width: calc(100vw - 32px);
+  max-height: calc(
+    var(--qiming-native-vh, 100dvh) - var(--qiming-native-status-top, 0px) - env(safe-area-inset-bottom, 0px) - 34px
+  );
+  padding: 24px 20px;
+  overflow-y: auto;
+  border-radius: 18px;
+  transform: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html.qiming-native-webview .third-party {
+  margin-top: 18px;
+}
+
+html.qiming-native-webview .footer-link {
+  margin-top: 16px;
+}
+
+html.qiming-native-webview.dark .login-overlay {
+  background: rgb(0 0 0 / 62%);
+}
+
+html.qiming-native-webview.dark .login-card {
+  color: var(--qiming-native-text-primary, #f8fafc);
+  background: var(--qiming-native-surface-bg, #111827);
+  border: 1px solid var(--qiming-native-border-color, rgb(148 163 184 / 20%));
+}
+
+html.qiming-native-webview.dark .card-title,
+html.qiming-native-webview.dark .tab-btn.active {
+  color: var(--qiming-native-text-primary, #f8fafc);
+}
+
+html.qiming-native-webview.dark .login-tabs,
+html.qiming-native-webview.dark .input-wrapper,
+html.qiming-native-webview.dark .sms-btn,
+html.qiming-native-webview.dark .social-btn,
+html.qiming-native-webview.dark .close-btn {
+  color: var(--qiming-native-text-regular, #d4d4d8);
+  background: var(--qiming-native-surface-soft-bg, #0b1220);
+  border-color: var(--qiming-native-border-color, rgb(148 163 184 / 20%));
+}
+
+html.qiming-native-webview.dark .input-wrapper input {
+  color: var(--qiming-native-text-primary, #f8fafc);
+}
+
+html.qiming-native-webview.dark .input-wrapper.focus,
+html.qiming-native-webview.dark .tab-btn.active {
+  background: rgb(15 23 42 / 96%);
+}
+
+html.qiming-native-webview.dark .input-wrapper.focus .floating-label,
+html.qiming-native-webview.dark .input-wrapper.has-value .floating-label {
+  background: var(--qiming-native-surface-bg, #111827);
 }
 </style>

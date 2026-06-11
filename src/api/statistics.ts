@@ -116,13 +116,55 @@ interface ApiResponse<T = any> {
   list?: any[];
 }
 
+const apiUrl = (path: string) => {
+  const base = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+};
+
+async function requestWithNativeFetchFallback<T>(
+  path: string,
+  request: () => Promise<ApiResponse<T>>
+) {
+  try {
+    return await request();
+  } catch (error) {
+    const tokenInfo = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("user-info") || "{}");
+      } catch {
+        return {};
+      }
+    })();
+    const token = tokenInfo.accessToken || tokenInfo.refreshToken;
+    const isNativePreview =
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("qiming-native-webview");
+
+    if (!isNativePreview || !token) throw error;
+
+    const response = await fetch(apiUrl(path), {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) throw error;
+    return (await response.json()) as ApiResponse<T>;
+  }
+}
+
 /**
  * 获取最近7天老师使用情况【管理端统计】
  */
 export const getTeacherUsage = () => {
-  return http.request<ApiResponse<TeacherUsageResult>>(
-    "get",
-    "/edu/backend/v1/statistics/teacher/usage"
+  return requestWithNativeFetchFallback(
+    "/edu/backend/v1/statistics/teacher/usage",
+    () =>
+      http.request<ApiResponse<TeacherUsageResult>>(
+        "get",
+        "/edu/backend/v1/statistics/teacher/usage"
+      )
   );
 };
 
@@ -130,9 +172,13 @@ export const getTeacherUsage = () => {
  * 获取最近7天学生使用情况【管理端统计】
  */
 export const getStudentUsage = () => {
-  return http.request<ApiResponse<StudentUsageResult>>(
-    "get",
-    "/edu/backend/v1/statistics/student/usage"
+  return requestWithNativeFetchFallback(
+    "/edu/backend/v1/statistics/student/usage",
+    () =>
+      http.request<ApiResponse<StudentUsageResult>>(
+        "get",
+        "/edu/backend/v1/statistics/student/usage"
+      )
   );
 };
 
@@ -140,9 +186,13 @@ export const getStudentUsage = () => {
  * 获取一周内学生、老师的总使用情况【管理端统计】
  */
 export const getWeekUsage = () => {
-  return http.request<ApiResponse<WeekUsageResult>>(
-    "get",
-    "/edu/backend/v1/statistics/week/usage"
+  return requestWithNativeFetchFallback(
+    "/edu/backend/v1/statistics/week/usage",
+    () =>
+      http.request<ApiResponse<WeekUsageResult>>(
+        "get",
+        "/edu/backend/v1/statistics/week/usage"
+      )
   );
 };
 

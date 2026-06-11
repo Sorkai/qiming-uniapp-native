@@ -1,9 +1,15 @@
 node_modules
 .DS_Store
+.env
+.env.*
+!.env.example
+!.env.*.example
 dist
 dist-ssr
 native-app/src/hybrid/html
 native-app/dist
+.screenshots/
+artifacts/
 *.local
 .eslintcache
 report.html

@@ -440,15 +440,38 @@ onMounted(() => {
   margin-top: 15px;
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .main.user-list-page {
     margin: 0;
+    padding: 6px 6px calc(var(--pure-mobile-tab-height, 58px) + 38px);
+  }
+
+  .box-card {
+    border-radius: 14px;
+  }
+
+  :deep(.box-card > .el-card__header) {
+    padding: 9px 12px;
+  }
+
+  .card-header {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  :deep(.box-card > .el-card__body) {
+    padding: 8px 10px;
+  }
+
+  .search-form {
+    margin-bottom: 8px;
   }
 
   :deep(.search-form .el-form-item) {
     width: 100%;
     margin-right: 0;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   :deep(.search-form .el-form-item:last-child) {
@@ -457,10 +480,112 @@ onMounted(() => {
 
   :deep(.search-form .el-button) {
     width: 100%;
+    min-height: 32px;
+    font-size: 13px;
+  }
+
+  .mobile-user-list {
+    gap: 8px;
+    padding-bottom: 16px;
+    min-height: 180px;
+  }
+
+  .mobile-user-list :deep(.el-empty) {
+    width: 100%;
+    padding: 28px 0;
+  }
+
+  .mobile-user-card {
+    padding: 9px 10px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgb(28 39 68 / 6%);
+  }
+
+  :global(html.dark) .mobile-user-card {
+    color: var(--qiming-native-text-regular, #d4d4d8);
+    background: var(--qiming-native-surface-bg, #111827);
+    border: 1px solid var(--qiming-native-border-color, rgb(148 163 184 / 20%));
+    box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
+  }
+
+  .mobile-user-card__header {
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .mobile-user-main {
+    flex: 1;
+    gap: 9px;
+  }
+
+  .mobile-user-main :deep(.el-avatar) {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .mobile-user-name {
+    font-size: 13.5px;
+    line-height: 1.3;
+  }
+
+  .mobile-user-meta {
+    margin-top: 2px;
+  }
+
+  .mobile-user-card__body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 12px;
+    padding-top: 7px;
+    border-top: 1px solid rgb(226 232 240 / 72%);
+  }
+
+  :global(html.dark) .mobile-user-card__body {
+    border-top-color: var(--qiming-native-border-color, rgb(148 163 184 / 20%));
+  }
+
+  .mobile-user-field {
+    flex-direction: row;
+    gap: 6px;
+    align-items: baseline;
+    justify-content: flex-start;
+    font-size: 12px;
+    line-height: 1.28;
+  }
+
+  .mobile-user-field .label {
+    flex: 0 0 44px;
+    font-size: 11px;
+  }
+
+  .mobile-user-field span:last-child {
+    min-width: 0;
+    flex: 1 1 auto;
+    width: auto;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-user-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .mobile-user-card__actions {
+    margin-top: 7px;
+  }
+
+  .mobile-user-card__actions :deep(.el-button) {
+    min-height: 30px;
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
   .pagination-container {
     justify-content: center;
+    padding-bottom: 14px;
   }
 }
 </style>

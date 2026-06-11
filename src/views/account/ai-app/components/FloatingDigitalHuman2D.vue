@@ -47,8 +47,8 @@ const stateLabels: Record<DigitalHumanState, string> = {
   saying: "讲解"
 };
 
-const bubbleSize = 88;
 const windowPadding = 18;
+const bubbleSize = ref(88);
 const storageKey = computed(
   () =>
     props.storageKey ||
@@ -84,15 +84,39 @@ const ariaLabel = computed(
     }`
 );
 const bubbleStyle = computed(() => ({
-  width: `${bubbleSize}px`,
-  height: `${bubbleSize}px`,
+  width: `${bubbleSize.value}px`,
+  height: `${bubbleSize.value}px`,
   transform: `translate3d(${position.value.x}px, ${position.value.y}px, 0)`,
   opacity: isReady.value ? 1 : 0
 }));
 
+const getNativeSafeTop = () => {
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue("--pure-safe-area-top")
+    .trim();
+  const value = Number.parseFloat(raw);
+  return Number.isFinite(value) ? value : 0;
+};
+
+const getResponsiveBubbleSize = () => {
+  if (typeof window === "undefined") return 88;
+  return window.innerWidth <= 768 ? 56 : 88;
+};
+
+const syncBubbleSize = () => {
+  bubbleSize.value = getResponsiveBubbleSize();
+};
+
 const clampPosition = (nextX: number, nextY: number) => {
-  const maxX = Math.max(windowPadding, window.innerWidth - bubbleSize - windowPadding);
-  const maxY = Math.max(windowPadding, window.innerHeight - bubbleSize - windowPadding);
+  const size = bubbleSize.value;
+  const maxX = Math.max(
+    windowPadding,
+    window.innerWidth - size - windowPadding
+  );
+  const maxY = Math.max(
+    windowPadding,
+    window.innerHeight - size - windowPadding
+  );
   return {
     x: Math.min(Math.max(windowPadding, nextX), maxX),
     y: Math.min(Math.max(windowPadding, nextY), maxY)
@@ -117,22 +141,30 @@ const getAnchorRect = () => {
 };
 
 const getDefaultPosition = () => {
+  const size = bubbleSize.value;
+  if (window.innerWidth <= 768) {
+    return clampPosition(
+      window.innerWidth - size - 16,
+      getNativeSafeTop() + 92
+    );
+  }
+
   if (props.anchor === "appLeftBottom") {
     const rect = getAnchorRect();
     const zoneWidth = Math.min(props.leftZoneWidth, rect.width);
     const leftOffset = Math.max(
       windowPadding,
-      Math.round((zoneWidth - bubbleSize) / 2)
+      Math.round((zoneWidth - size) / 2)
     );
 
     return clampPosition(
       rect.left + leftOffset,
-      rect.bottom - bubbleSize - props.bottomOffset
+      rect.bottom - size - props.bottomOffset
     );
   }
 
   return clampPosition(
-    window.innerWidth - bubbleSize - 30,
+    window.innerWidth - size - 30,
     window.innerWidth >= 768 ? 78 : 68
   );
 };
@@ -226,6 +258,7 @@ const handlePointerUp = (event: PointerEvent) => {
 };
 
 const handleResize = () => {
+  syncBubbleSize();
   position.value = hasUserPosition.value
     ? clampPosition(position.value.x, position.value.y)
     : getDefaultPosition();
@@ -272,6 +305,7 @@ watch(
 );
 
 onMounted(() => {
+  syncBubbleSize();
   restorePosition();
   isReady.value = true;
   preloadStateVideos();
@@ -409,6 +443,22 @@ defineExpose({ speak, pauseRender, resumeRender });
 @media (max-width: 768px) {
   .floating-human-2d {
     transform-origin: top left;
+    z-index: 760;
+  }
+
+  .floating-human-2d::before {
+    inset: -4px;
+  }
+
+  .floating-human-2d video {
+    border-width: 3px;
+  }
+
+  .floating-human-2d__dot {
+    right: 4px;
+    bottom: 8px;
+    width: 11px;
+    height: 11px;
   }
 }
 </style>

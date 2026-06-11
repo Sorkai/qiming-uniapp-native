@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 import { getTeacherUsage, getStudentUsage } from "@/api/statistics";
 
 defineOptions({
@@ -13,6 +14,11 @@ const studentData = ref<{ date: string; usageNum: number }[]>([]);
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
+const appStore = useAppStoreHook();
+const isMobile = computed(
+  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
+);
+const chartHeight = computed(() => (isMobile.value ? "250px" : "350px"));
 
 const chartRef = ref();
 const { setOptions } = useECharts(chartRef, {
@@ -50,6 +56,11 @@ const renderChart = () => {
   const dates = teacherData.value.map(item => item.date);
   const teacherUsage = teacherData.value.map(item => item.usageNum);
   const studentUsage = studentData.value.map(item => item.usageNum);
+  const formatMobileDate = (value: string) => {
+    if (!isMobile.value || !value) return value;
+    const parts = value.split("-");
+    return parts.length >= 3 ? `${parts[1]}-${parts[2]}` : value;
+  };
 
   setOptions({
     tooltip: {
@@ -75,16 +86,18 @@ const renderChart = () => {
       data: ["教研活动", "学生学习"],
       bottom: 0,
       icon: "circle",
-      itemGap: 24,
+      itemGap: isMobile.value ? 12 : 24,
       textStyle: {
-        color: isDark.value ? "#fafafa" : "#4b5563"
+        color: isDark.value ? "#fafafa" : "#4b5563",
+        fontSize: isMobile.value ? 11 : 12
       }
     },
     grid: {
-      top: 30,
-      left: 40,
-      right: 20,
-      bottom: 50
+      top: isMobile.value ? 18 : 30,
+      left: isMobile.value ? 22 : 40,
+      right: isMobile.value ? 24 : 20,
+      bottom: isMobile.value ? 44 : 50,
+      containLabel: true
     },
     xAxis: [
       {
@@ -98,7 +111,10 @@ const renderChart = () => {
         },
         axisLabel: {
           color: isDark.value ? "#cbd5e1" : "#94a3b8",
-          fontSize: 11
+          fontSize: isMobile.value ? 10 : 11,
+          hideOverlap: true,
+          margin: isMobile.value ? 10 : 8,
+          formatter: formatMobileDate
         },
         axisTick: {
           show: false
@@ -116,7 +132,7 @@ const renderChart = () => {
         },
         axisLabel: {
           color: isDark.value ? "#cbd5e1" : "#94a3b8",
-          fontSize: 11
+          fontSize: isMobile.value ? 10 : 11
         }
       }
     ],
@@ -174,7 +190,7 @@ const renderChart = () => {
 };
 
 watch(
-  () => [teacherData.value, studentData.value],
+  () => [teacherData.value, studentData.value, isMobile.value],
   () => {
     renderChart();
   },
@@ -203,7 +219,7 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div ref="chartRef" style="width: 100%; height: 350px" />
+        <div ref="chartRef" :style="{ width: '100%', height: chartHeight }" />
       </template>
     </el-skeleton>
   </div>

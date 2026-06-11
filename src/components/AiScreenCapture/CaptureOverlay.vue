@@ -29,6 +29,10 @@ const prefersCoarsePointer =
   "matchMedia" in window &&
   window.matchMedia("(pointer: coarse)").matches;
 
+const isNativeTouchRuntime = () =>
+  typeof document !== "undefined" &&
+  document.documentElement.classList.contains("qiming-native-webview");
+
 const originX = computed(() => props.origin?.x ?? window.innerWidth - 58);
 const originY = computed(() => props.origin?.y ?? window.innerHeight - 128);
 
@@ -60,7 +64,8 @@ const isTouchExperience = computed(() => {
   return (
     activePointerType.value === "touch" ||
     activePointerType.value === "pen" ||
-    (activePointerType.value === null && prefersCoarsePointer)
+    (activePointerType.value === null &&
+      (prefersCoarsePointer || isNativeTouchRuntime()))
   );
 });
 
@@ -94,7 +99,19 @@ const releasePointerCapture = (pointerId: number | null) => {
     pointerId !== null &&
     overlayRef.value.hasPointerCapture(pointerId)
   ) {
-    overlayRef.value.releasePointerCapture(pointerId);
+    try {
+      overlayRef.value.releasePointerCapture(pointerId);
+    } catch {
+      // Android WebView can report pointer-capture support but still reject it.
+    }
+  }
+};
+
+const setPointerCaptureSafely = (pointerId: number) => {
+  try {
+    overlayRef.value?.setPointerCapture(pointerId);
+  } catch {
+    // The overlay covers the viewport, so selection still works without capture.
   }
 };
 
@@ -131,11 +148,12 @@ const finishSelection = () => {
 
   const width = Math.abs(endPoint.value.x - startPoint.value.x);
   const height = Math.abs(endPoint.value.y - startPoint.value.y);
+  const isTapGesture = width < MIN_SELECTION_SIZE && height < MIN_SELECTION_SIZE;
   const shouldCaptureFullViewport =
+    isTapGesture &&
     (activePointerType.value === "touch" ||
-      activePointerType.value === "pen") &&
-    width < MIN_SELECTION_SIZE &&
-    height < MIN_SELECTION_SIZE;
+      activePointerType.value === "pen" ||
+      isNativeTouchRuntime());
 
   clearPointerState();
 
@@ -166,7 +184,7 @@ const handlePointerDown = (e: PointerEvent) => {
 
   activePointerId.value = e.pointerId;
   activePointerType.value = e.pointerType;
-  overlayRef.value?.setPointerCapture(e.pointerId);
+  setPointerCaptureSafely(e.pointerId);
   beginSelection(e.clientX, e.clientY);
   e.preventDefault();
 };
@@ -393,8 +411,14 @@ onUnmounted(() => {
 
 .capture-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 9999;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   cursor: crosshair;
   touch-action: none;
@@ -403,7 +427,12 @@ onUnmounted(() => {
 
 .ripple-container {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   pointer-events: none;
 }
@@ -441,14 +470,20 @@ onUnmounted(() => {
 
 .screen-border {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   pointer-events: none;
   animation: border-fade-in 0.5s ease-out forwards;
 }
 
 .border-glow {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   padding: 6px;
   pointer-events: none;
   background: conic-gradient(
@@ -541,7 +576,10 @@ onUnmounted(() => {
 
   .selection-glow {
     position: absolute;
-    inset: -3px;
+    top: -3px;
+    right: -3px;
+    bottom: -3px;
+    left: -3px;
     padding: 3px;
     pointer-events: none;
     background: conic-gradient(
@@ -566,7 +604,10 @@ onUnmounted(() => {
 
   .particles-container {
     position: absolute;
-    inset: -20px;
+    top: -20px;
+    right: -20px;
+    bottom: -20px;
+    left: -20px;
     overflow: visible;
     pointer-events: none;
   }
@@ -605,7 +646,10 @@ onUnmounted(() => {
 
   &::before {
     position: absolute;
-    inset: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     pointer-events: none;
     content: "";
     border: 2px solid rgb(255 255 255 / 50%);

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 import { getWeekUsage } from "@/api/statistics";
 
 defineOptions({
@@ -15,6 +16,11 @@ const weekData = ref({
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
+const appStore = useAppStoreHook();
+const isMobile = computed(
+  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
+);
+const chartHeight = computed(() => (isMobile.value ? "250px" : "350px"));
 
 const chartRef = ref();
 const { setOptions } = useECharts(chartRef, {
@@ -122,7 +128,7 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div ref="chartRef" style="width: 100%; height: 350px" />
+        <div ref="chartRef" :style="{ width: '100%', height: chartHeight }" />
       </template>
     </el-skeleton>
   </div>

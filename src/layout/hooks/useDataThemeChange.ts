@@ -48,24 +48,31 @@ export function useDataThemeChange() {
     theme = getConfig().Theme ?? "light",
     isClick = true
   ) {
-    layoutTheme.value.theme = theme;
-    document.documentElement.setAttribute("data-theme", theme);
+    const fallbackTheme = getConfig().Theme ?? "light";
+    const matchedTheme =
+      theme === "default" || theme === "light"
+        ? theme
+        : themeColors.value.some(v => v.themeColor === theme)
+          ? theme
+          : fallbackTheme;
+    layoutTheme.value.theme = matchedTheme;
+    document.documentElement.setAttribute("data-theme", matchedTheme);
     // 如果非isClick，保留之前的themeColor
-    const storageThemeColor = $storage.layout.themeColor;
+    const storageThemeColor = $storage.layout?.themeColor ?? fallbackTheme;
     $storage.layout = {
       layout: layout.value,
-      theme,
+      theme: matchedTheme,
       darkMode: dataTheme.value,
-      sidebarStatus: $storage.layout?.sidebarStatus,
-      epThemeColor: $storage.layout?.epThemeColor,
-      themeColor: isClick ? theme : storageThemeColor,
+      sidebarStatus: $storage.layout?.sidebarStatus ?? true,
+      epThemeColor: $storage.layout?.epThemeColor ?? getConfig().EpThemeColor,
+      themeColor: isClick ? matchedTheme : storageThemeColor,
       overallStyle: overallStyle.value
     };
 
-    if (theme === "default" || theme === "light") {
+    if (matchedTheme === "default" || matchedTheme === "light") {
       setEpThemeColor(getConfig().EpThemeColor);
     } else {
-      const colors = themeColors.value.find(v => v.themeColor === theme);
+      const colors = themeColors.value.find(v => v.themeColor === matchedTheme);
       setEpThemeColor(colors.color);
     }
   }
@@ -92,16 +99,17 @@ export function useDataThemeChange() {
   /** 浅色、深色整体风格切换 */
   function dataThemeChange(overall?: string) {
     overallStyle.value = overall;
-    if (useEpThemeStoreHook().epTheme === "light" && dataTheme.value) {
+    const epTheme = useEpThemeStoreHook().epTheme || $storage.layout?.theme;
+    if (epTheme === "light" && dataTheme.value) {
       setLayoutThemeColor("default", false);
     } else {
-      setLayoutThemeColor(useEpThemeStoreHook().epTheme, false);
+      setLayoutThemeColor(epTheme || getConfig().Theme || "light", false);
     }
 
     if (dataTheme.value) {
       document.documentElement.classList.add("dark");
     } else {
-      if ($storage.layout.themeColor === "light") {
+      if ($storage.layout?.themeColor === "light") {
         setLayoutThemeColor("light", false);
       }
       document.documentElement.classList.remove("dark");

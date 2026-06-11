@@ -21,13 +21,13 @@ import {
   reviewReply,
   pinPost,
   unpinPost,
-  getTeacherCourseStats,
   getPendingList,
+  getPendingStatistics,
   getUserAvatars,
+  mapPendingItemToReviewQueueItem,
   type ReviewQueueItem,
   type PendingItem
 } from "@/api/discussion-admin";
-import { getCourseList } from "@/api/course";
 import { formatAvatar } from "@/utils/avatar";
 import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
 
@@ -56,8 +56,9 @@ const stats = ref({
   courses: [] as Array<{
     courseId: string;
     courseName: string;
-    postCount: number;
-    pendingCount: number;
+    pendingPosts: number;
+    pendingReplies: number;
+    pendingTotal: number;
   }>
 });
 
@@ -168,9 +169,8 @@ const fetchData = async () => {
     });
 
     // 兼容后端返回格式
-    const responseData = (res as any)?.data || res;
-    const list = responseData?.list || [];
-    const total = responseData?.total || 0;
+    const list = res?.list || [];
+    const total = res?.total || 0;
 
     // 提取所有用户 ID，获取用户头像
     const userIds = list.map((item: PendingItem) => item.authorId);
@@ -178,46 +178,15 @@ const fetchData = async () => {
     if (userIds.length > 0) {
       try {
         avatarMap = await getUserAvatars(userIds);
-        console.log("[fetchData] 获取用户头像成功:", avatarMap);
       } catch (avatarError) {
         console.error("[fetchData] 获取用户头像失败:", avatarError);
       }
     }
 
     // 转换 PendingItem 为 ReviewQueueItem 格式
-    reviewItems.value = list.map((item: PendingItem) => ({
-      id: String(item.id),
-      title: item.postTitle || (item.type === "reply" ? "[回复]" : ""),
-      content: item.content,
-      contentHtml: item.content,
-      author: {
-        id: String(item.authorId),
-        name: item.authorName,
-        // 优先使用从用户列表获取的头像，其次使用后端返回的头像
-        avatar: avatarMap.get(item.authorId) || item.authorAvatar || "",
-        isTeacher: false,
-        isAdmin: false
-      },
-      tags: [],
-      status: "pending" as const,
-      isPinned:
-        (item as any).isPinned === true ||
-        (item as any).isPinned === 1 ||
-        String((item as any).isPinned) === "true" ||
-        String((item as any).isPinned) === "1",
-      likeCount: 0,
-      replyCount: 0,
-      viewCount: 0,
-      isLiked: false,
-      createdAt: item.createTime,
-      courseName: item.courseName,
-      riskLevel: "low" as const,
-      matchedWords: [],
-      priority: "medium" as const,
-      // 额外字段用于区分类型
-      itemType: item.type,
-      postId: item.postId
-    })) as ReviewQueueItem[];
+    reviewItems.value = list.map((item: PendingItem) =>
+      mapPendingItemToReviewQueueItem(item, avatarMap.get(item.authorId))
+    );
 
     pagination.total = total;
     stats.value.pending = total;
@@ -231,33 +200,19 @@ const fetchData = async () => {
 // 加载课程列表
 const fetchCourses = async () => {
   try {
-    const res = await getTeacherCourseStats();
-    if (res?.courses && res.courses.length > 0) {
-      stats.value.courses = res.courses;
-      return;
-    }
+    const data = await getPendingStatistics();
+    stats.value.pending = Number(data.pendingTotal || 0);
+    stats.value.courses = Array.isArray(data.courses)
+      ? data.courses.map(course => ({
+          courseId: String(course.courseId),
+          courseName: course.courseName,
+          pendingPosts: Number(course.pendingPosts || 0),
+          pendingReplies: Number(course.pendingReplies || 0),
+          pendingTotal: Number(course.pendingTotal || 0)
+        }))
+      : [];
   } catch (error) {
-    console.error("getTeacherCourseStats 失败，尝试备用方案", error);
-  }
-
-  // 备用方案：使用 getCourseList 获取课程列表
-  try {
-    console.log("使用 getCourseList 作为备用方案获取课程列表");
-    const courseRes = await getCourseList({ pageNum: 1, pageSize: 100 });
-    const courseData = (courseRes as any)?.data || courseRes;
-    if (courseData?.courseList && courseData.courseList.length > 0) {
-      stats.value.courses = courseData.courseList.map((course: any) => ({
-        courseId: String(course.courseId),
-        courseName: course.title,
-        postCount: 0,
-        pendingCount: 0
-      }));
-      console.log("备用方案获取课程列表成功:", stats.value.courses);
-    } else {
-      console.warn("备用方案也没有获取到课程列表");
-    }
-  } catch (backupError) {
-    console.error("备用方案获取课程列表也失败", backupError);
+    console.error("加载待审核统计失败", error);
   }
 };
 
@@ -577,15 +532,13 @@ const handleDetailReject = () => {
 const dataLoaded = ref(false);
 
 // 初始化加载数据
-const initData = async () => {
+const initData = async (force = false) => {
   // 防止重复加载
-  if (loading.value || dataLoaded.value) return;
+  if (loading.value || (dataLoaded.value && !force)) return;
 
-  console.log("[index.vue] initData 开始执行");
   await fetchCourses();
   await fetchData();
   dataLoaded.value = true;
-  console.log("[index.vue] initData 执行完成");
 };
 
 const route = useRoute();
@@ -596,10 +549,8 @@ const route = useRoute();
 watch(
   () => route.name,
   newName => {
-    console.log("[index.vue] 路由 name 变化:", newName);
     // 当路由名称存在时加载数据
     if (newName && !dataLoaded.value) {
-      console.log("[index.vue] 开始加载数据");
       initData();
     }
   },
@@ -608,7 +559,6 @@ watch(
 
 // 当组件从 keep-alive 缓存中被激活时重新加载数据
 onActivated(() => {
-  console.log("[index.vue] onActivated 触发");
   dataLoaded.value = false; // 重置标志以允许重新加载
   initData();
 });
@@ -689,13 +639,13 @@ onActivated(() => {
               <div class="flex justify-between items-center">
                 <span>{{ course.courseName }}</span>
                 <el-tag
-                  v-if="course.pendingCount > 0"
+                  v-if="course.pendingTotal > 0"
                   size="small"
                   type="warning"
                   effect="plain"
                   round
                 >
-                  {{ course.pendingCount }}
+                  {{ course.pendingTotal }}
                 </el-tag>
               </div>
             </el-option>
@@ -756,7 +706,9 @@ onActivated(() => {
           <el-icon><Warning /></el-icon>
           已选中 {{ selectedCount }} 个待审项
         </div>
-        <el-button :icon="Refresh" text @click="initData"> 同步数据 </el-button>
+        <el-button :icon="Refresh" text @click="initData(true)">
+          同步数据
+        </el-button>
       </div>
     </el-card>
 
@@ -1737,16 +1689,16 @@ onActivated(() => {
   }
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .review-queue {
     padding-bottom: calc(
       var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
     );
 
     .review-stats-grid {
-      grid-template-columns: 1fr;
-      gap: 14px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
     }
 
     .review-panel {
@@ -1777,10 +1729,59 @@ onActivated(() => {
     }
 
     .stat-card {
+      border-radius: 18px;
+
+      :deep(.el-card__body) {
+        padding: 10px 8px;
+      }
+
       .stat-content {
-        align-items: flex-start;
-        min-height: 110px;
-        padding: 4px 0;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        min-height: 76px;
+        padding: 0;
+        text-align: center;
+
+        .stat-icon {
+          width: 30px;
+          height: 30px;
+          border-radius: 10px;
+
+          :deep(svg) {
+            width: 16px;
+            height: 16px;
+          }
+        }
+
+        .stat-info {
+          min-width: 0;
+
+          .stat-number {
+            font-size: 18px;
+            line-height: 1.1;
+          }
+
+          .stat-label {
+            margin-top: 2px;
+            font-size: 11px;
+            line-height: 1.2;
+          }
+        }
+      }
+    }
+
+    @media (max-width: 360px) {
+      .review-stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-card .stat-content {
+        flex-direction: row;
+        justify-content: flex-start;
+        min-height: 58px;
+        text-align: left;
       }
     }
 
@@ -1872,7 +1873,7 @@ onActivated(() => {
   }
 }
 
-@media (width <= 420px) {
+@media (max-width: 420px) {
   .review-queue {
     .batch-actions,
     .search-form__actions,

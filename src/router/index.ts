@@ -86,14 +86,16 @@ export const router: Router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     return new Promise(resolve => {
       if (savedPosition) {
-        return savedPosition;
-      } else {
-        if (from.meta.saveSrollTop) {
-          const top: number =
-            document.documentElement.scrollTop || document.body.scrollTop;
-          resolve({ left: 0, top });
-        }
+        resolve(savedPosition);
+        return;
       }
+      if (from.meta.saveSrollTop) {
+        const top: number =
+          document.documentElement.scrollTop || document.body.scrollTop;
+        resolve({ left: 0, top });
+        return;
+      }
+      resolve({ left: 0, top: 0 });
     });
   }
 });
@@ -115,12 +117,13 @@ const whiteList = ["/login", "/home"];
 
 const { VITE_HIDE_HOME } = import.meta.env;
 const demoRoles = ["student", "teacher", "admin"] as const;
+type DemoRole = (typeof demoRoles)[number];
 const demoRoleTypes = {
   student: 1,
   teacher: 2,
   admin: 3
 };
-let demoSessionBootstrapping = false;
+const nativeDemoSessionReady = new Set<DemoRole>();
 
 router.beforeEach((to: ToRouteType, _from, next) => {
   console.log(`[Router Guard] ${to.path} <- ${_from.path}`);
@@ -133,23 +136,40 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   }
   const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
   const demoRole = String(to.query?.demoRole || "");
+  const normalizedDemoRole = demoRoles.includes(demoRole as DemoRole)
+    ? (demoRole as DemoRole)
+    : null;
+  const isNativeDemoRoute = String(to.query?.qimingNative || "") === "1";
+  const userRoles = userInfo?.roles ?? [];
+  const hasRequiredDemoIdentity =
+    normalizedDemoRole !== "student" || !!userInfo?.avatar;
+  const demoSessionMatchesRole =
+    !!normalizedDemoRole &&
+    userInfo?.roleType === demoRoleTypes[normalizedDemoRole] &&
+    Array.isArray(userRoles) &&
+    userRoles.includes(normalizedDemoRole) &&
+    hasRequiredDemoIdentity &&
+    localStorage.getItem("qiming-demo-role") === normalizedDemoRole &&
+    !!Cookies.get(multipleTabsKey);
+
+  if (isNativeDemoRoute && normalizedDemoRole && demoSessionMatchesRole) {
+    nativeDemoSessionReady.add(normalizedDemoRole);
+  }
+
   if (
     import.meta.env.DEV &&
-    demoRoles.includes(demoRole as (typeof demoRoles)[number]) &&
-    userInfo?.roleType !== demoRoleTypes[demoRole] &&
-    !demoSessionBootstrapping
+    normalizedDemoRole &&
+    !demoSessionMatchesRole
   ) {
-    demoSessionBootstrapping = true;
     import("@/views/home/demoSession")
       .then(({ ensureDemoSession }) =>
-        ensureDemoSession(demoRole as (typeof demoRoles)[number])
+        ensureDemoSession(normalizedDemoRole)
       )
       .then(() => {
-        demoSessionBootstrapping = false;
+        nativeDemoSessionReady.add(normalizedDemoRole);
         next({ ...to, replace: true });
       })
       .catch(error => {
-        demoSessionBootstrapping = false;
         console.error("[Router Guard] Demo session bootstrap failed", error);
         next({ path: "/home" });
       });

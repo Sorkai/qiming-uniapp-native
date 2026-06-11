@@ -54,6 +54,11 @@ const welcomeBannerStyle = computed(() => ({
 const rootRef = ref<HTMLDivElement>();
 const svgObjectRef = ref<HTMLObjectElement>();
 const isFullscreen = ref(false);
+const mobileQuery =
+  typeof window === "undefined"
+    ? null
+    : window.matchMedia("(max-width: 767px)");
+const isMobileView = ref(mobileQuery?.matches ?? false);
 
 function toggleFullscreen() {
   if (!rootRef.value) return;
@@ -68,6 +73,11 @@ function onFsChange() {
   isFullscreen.value = !!document.fullscreenElement;
 }
 
+function onMobileQueryChange(event: MediaQueryListEvent) {
+  isMobileView.value = event.matches;
+  nextTick(measureContainer);
+}
+
 /* ─── 自适应居中（不可缩放、不可拖拽） ─── */
 const svgNaturalW = 1920;
 const svgNaturalH = 1080;
@@ -76,7 +86,14 @@ const containerW = ref(800);
 const containerH = ref(600);
 
 /** 宽度撑满，上下居中 */
-const fitScale = computed(() => containerW.value / svgNaturalW);
+const fitScale = computed(() => {
+  if (!isMobileView.value) return containerW.value / svgNaturalW;
+
+  return Math.max(
+    containerW.value / svgNaturalW,
+    containerH.value / svgNaturalH
+  );
+});
 
 const offsetX = computed(() => 0);
 const offsetY = computed(
@@ -188,6 +205,7 @@ onMounted(() => {
   const el = rootRef.value?.querySelector(".campus-container");
   if (el) ro.value.observe(el);
   document.addEventListener("fullscreenchange", onFsChange);
+  mobileQuery?.addEventListener("change", onMobileQueryChange);
   clockTimer = window.setInterval(() => {
     nowTime.value = formatCurrentTime24h();
   }, 1000);
@@ -196,6 +214,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   ro.value?.disconnect();
   document.removeEventListener("fullscreenchange", onFsChange);
+  mobileQuery?.removeEventListener("change", onMobileQueryChange);
   if (clockTimer) {
     window.clearInterval(clockTimer);
   }
@@ -368,6 +387,7 @@ function onZoneClick(zone: HotZone) {
       >
         <!-- SVG 底图 — 用 object 标签可靠渲染 -->
         <object
+          v-show="!isMobileView"
           ref="svgObjectRef"
           class="campus-bg"
           :data="campusBgUrl"
@@ -383,6 +403,14 @@ function onZoneClick(zone: HotZone) {
             alt="启明智教2D校园"
           />
         </object>
+        <img
+          v-show="isMobileView"
+          class="campus-bg"
+          :src="campusBgUrl"
+          :width="svgNaturalW"
+          :height="svgNaturalH"
+          alt="鍚槑鏅烘暀2D鏍″洯"
+        />
 
         <div class="welcome-banner" :style="welcomeBannerStyle">
           <div class="welcome-line welcome-line-1">{{ welcomeLine1 }}</div>
@@ -627,5 +655,41 @@ function onZoneClick(zone: HotZone) {
 .missions-zone.hovered {
   background: rgba(255, 255, 255, 0.08);
   z-index: 10;
+}
+
+@media (max-width: 767px) {
+  .campus-root {
+    height: min(58dvh, 420px);
+    min-height: 300px;
+    border-radius: 18px;
+  }
+
+  .campus-toolbar {
+    height: 42px;
+    padding: 0 12px;
+  }
+
+  .toolbar-title {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .toolbar-actions {
+    flex: 0 0 auto;
+  }
+
+  .tb-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .hot-zone .zone-tip {
+    display: none;
+  }
 }
 </style>

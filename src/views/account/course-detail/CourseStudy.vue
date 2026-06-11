@@ -1782,7 +1782,7 @@ $shadow-xl:
 }
 
 /* stylelint-disable-next-line order/order */
-@media (width <= 1199px) {
+@media (max-width: 1199px) {
   .study-container {
     padding: 80px 24px 24px;
   }
@@ -1804,7 +1804,7 @@ $shadow-xl:
 }
 
 /* stylelint-disable-next-line order/order */
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .course-study-root {
     height: auto;
     min-height: 100vh;
@@ -2045,7 +2045,7 @@ $shadow-xl:
 }
 
 /* stylelint-disable-next-line order/order */
-@media (width <= 479px) {
+@media (max-width: 479px) {
   .study-container {
     padding: var(--course-mobile-top-offset, 156px) 12px
       calc(16px + var(--course-mobile-fab-clearance, 92px));

@@ -912,7 +912,7 @@ onUnmounted(() => {
   }
 }
 
-@media (width <= 1280px) {
+@media (max-width: 1280px) {
   .chapters-grid {
     grid-template-columns: 1fr;
   }
@@ -1244,7 +1244,7 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-@media (width <= 1100px) {
+@media (max-width: 1100px) {
   .mastery-page-content {
     .mastery-summary-left,
     .mastery-summary-charts {
@@ -1254,7 +1254,7 @@ onUnmounted(() => {
   }
 }
 
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .mastery-page-content {
     min-height: 100vh;
     overflow: visible;
@@ -1384,7 +1384,7 @@ onUnmounted(() => {
   }
 }
 
-@media (width <= 479px) {
+@media (max-width: 479px) {
   .mastery-page-content {
     .left-scroll {
       padding: var(--course-mobile-top-offset, 156px) 10px

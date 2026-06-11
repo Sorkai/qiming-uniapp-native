@@ -25,7 +25,7 @@
       </div>
     </div>
     <!-- 统计卡片 -->
-    <el-row :gutter="20">
+    <el-row class="stats-grid" :gutter="20">
       <el-col
         v-for="(item, index) in statsItems"
         :key="index"
@@ -288,54 +288,148 @@ const statsItems = computed(() => [
 }
 
 @media screen and (max-width: 768px) {
+  .mb-6 {
+    margin-bottom: 8px !important;
+  }
+
   .date-filter-row {
-    flex-direction: column;
-    align-items: stretch !important;
-    padding: 14px;
+    align-items: center !important;
+    gap: 8px;
+    padding: 7px 8px;
+    margin-bottom: 6px !important;
+    border-radius: 12px;
   }
 
   .filter-hint {
-    width: 100%;
-    font-size: 12px;
+    flex: 1 1 36%;
+    width: auto;
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .filter-hint-text {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
 
   .filter-controls {
-    flex-direction: column;
-    width: 100%;
+    flex-direction: row;
+    flex: 1 1 64%;
+    width: auto;
+    min-width: 0;
     align-items: stretch !important;
+    gap: 6px !important;
   }
 
   :deep(.filter-controls .el-date-editor) {
-    width: 100%;
+    flex: 1 1 auto;
+    width: auto;
     margin-right: 0;
   }
 
   :deep(.filter-controls .el-button) {
-    width: 100%;
+    flex: 0 0 76px;
+    width: 76px;
     margin-left: 0;
   }
 
+  :deep(.filter-controls .el-input__wrapper),
+  :deep(.filter-controls .el-button) {
+    min-height: 30px;
+  }
+
+  :deep(.filter-controls .el-range-input) {
+    font-size: 11px;
+  }
+
+  :deep(.filter-controls .el-range-separator) {
+    min-width: 18px;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  .stats-grid {
+    --el-row-gutter: 8px !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  :deep(.stats-grid .el-col) {
+    display: block;
+    max-width: 100%;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+    margin-bottom: 0;
+    flex: none;
+  }
+
   .stats-card {
-    margin-bottom: 12px;
+    height: 58px;
+    margin-bottom: 0;
+    border-radius: 12px;
 
     :deep(.el-card__body) {
-      padding: 16px;
+      height: 100%;
+      padding: 7px 8px;
+      box-sizing: border-box;
+    }
+
+    :deep(.el-card__body > .flex) {
+      height: 100%;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 3px;
+      flex-direction: column;
+    }
+
+    .stats-content {
+      margin-left: 0 !important;
     }
 
     .icon-wrapper {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
+      width: 20px;
+      height: 20px;
+      border-radius: 7px;
+
+      :deep(.el-icon) {
+        font-size: 15px !important;
+      }
     }
 
     .stats-label {
-      font-size: 13px;
-      line-height: 1.5;
+      max-width: 100%;
+      margin-bottom: 1px;
+      overflow: hidden;
+      font-size: 10.5px;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: keep-all;
     }
 
     .stats-value {
-      font-size: 24px;
+      font-size: 17px;
+      line-height: 1.1;
     }
   }
+}
+
+@media screen and (max-width: 360px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+</style>
+
+<style lang="scss">
+html.qiming-native-webview.ua-mobile .date-filter-row {
+  box-shadow: 0 8px 18px rgb(28 39 68 / 5%);
 }
 </style>

@@ -3,6 +3,8 @@ param(
   [string]$Platform = "android",
   [string]$DeviceId = "",
   [string]$EntryPath = "/home",
+  [string]$DevServer = "",
+  [string]$DemoRole = "",
   [switch]$SkipPrepare,
   [switch]$NativeLog,
   [switch]$SkipGrantPermissions,
@@ -224,9 +226,9 @@ function Stop-NativeAppCompilerJobs {
   }
 }
 
-function Wait-AndroidLaunchReady([string]$ResolvedDeviceId, [string]$ExpectedEntryPath, [int]$TimeoutSeconds) {
+function Wait-AndroidLaunchReady([string]$ResolvedDeviceId, [string]$ExpectedEntryPath, [string]$ExpectedUrlPattern, [int]$TimeoutSeconds) {
   $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-  $expectedRoute = "#$ExpectedEntryPath"
+  $expectedRoute = if ($ExpectedEntryPath) { "#$ExpectedEntryPath" } else { "" }
   $mismatchPattern = "compiled using HBuilderX 5\.01|mobile SDK version is 5\.07|Mismatching versions"
 
   while ((Get-Date) -lt $deadline) {
@@ -239,9 +241,13 @@ function Wait-AndroidLaunchReady([string]$ResolvedDeviceId, [string]$ExpectedEnt
 
     if (
       $processId -and
-      $recentLogs -match "hybrid/html/index\.html" -and
-      $recentLogs -match [Regex]::Escape($expectedRoute)
+      $recentLogs -match $ExpectedUrlPattern -and
+      (-not $expectedRoute -or $recentLogs -match [Regex]::Escape($expectedRoute))
     ) {
+      return $true
+    }
+
+    if ($processId -and (Test-AndroidWebViewUrl $ResolvedDeviceId $ExpectedUrlPattern $expectedRoute)) {
       return $true
     }
 
@@ -251,7 +257,225 @@ function Wait-AndroidLaunchReady([string]$ResolvedDeviceId, [string]$ExpectedEnt
   return $false
 }
 
-function Invoke-AndroidHBuilderLaunch([string[]]$LaunchArgs, [string]$ResolvedDeviceId, [string]$ExpectedEntryPath) {
+function Test-AndroidWebViewUrl([string]$ResolvedDeviceId, [string]$ExpectedUrlPattern, [string]$ExpectedRoute) {
+  try {
+    $localPort = Get-AndroidWebViewDevToolsPort $ResolvedDeviceId
+    $targetsJson = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$localPort/json" -TimeoutSec 2
+    $targets = $targetsJson.Content | ConvertFrom-Json
+    foreach ($target in @($targets)) {
+      $url = [string]$target.url
+      if (
+        $url -and
+        $url -match $ExpectedUrlPattern -and
+        (-not $ExpectedRoute -or $url -match [Regex]::Escape($ExpectedRoute))
+      ) {
+        return $true
+      }
+    }
+  } catch {
+    return $false
+  }
+  return $false
+}
+
+function Get-AndroidWebViewDevToolsPort([string]$ResolvedDeviceId) {
+  $processId = (& $adb -s $ResolvedDeviceId shell pidof io.dcloud.HBuilder 2>$null | Out-String).Trim()
+  if (-not $processId) {
+    throw "HBuilder runtime is not running on Android device."
+  }
+
+  $localPort = 9224
+  & $adb -s $ResolvedDeviceId forward --remove "tcp:$localPort" 2>$null
+  & $adb -s $ResolvedDeviceId forward "tcp:$localPort" "localabstract:webview_devtools_remote_$processId" | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    throw "Failed to forward Android WebView DevTools port for process $processId."
+  }
+  return $localPort
+}
+
+function Invoke-AndroidWebViewNavigation([string]$ResolvedDeviceId, [string]$TargetUrl) {
+  $localPort = Get-AndroidWebViewDevToolsPort $ResolvedDeviceId
+  $targetUrlJson = $TargetUrl | ConvertTo-Json -Compress
+  $script = @"
+const WebSocket = require("ws");
+const http = require("http");
+let targetUrl = $targetUrlJson;
+
+function requestJson(url) {
+  return new Promise((resolve, reject) => {
+    const request = http.get(url, response => {
+      let body = "";
+      response.setEncoding("utf8");
+      response.on("data", chunk => {
+        body += chunk;
+      });
+      response.on("end", () => {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          reject(new Error("HTTP " + response.statusCode + " for " + url));
+          return;
+        }
+        try {
+          resolve(JSON.parse(body));
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+    request.on("error", reject);
+    request.setTimeout(5000, () => {
+      request.destroy(new Error("Timeout requesting " + url));
+    });
+  });
+}
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function requestJsonWithRetry(url, attempts = 20) {
+  let lastError;
+  for (let index = 0; index < attempts; index += 1) {
+    try {
+      return await requestJson(url);
+    } catch (error) {
+      lastError = error;
+      await sleep(500);
+    }
+  }
+  throw lastError;
+}
+
+async function openWebSocketWithRetry(url, attempts = 10) {
+  let lastError;
+  for (let index = 0; index < attempts; index += 1) {
+    try {
+      const ws = new WebSocket(url);
+      await new Promise((resolve, reject) => {
+        ws.once("open", resolve);
+        ws.once("error", reject);
+      });
+      return ws;
+    } catch (error) {
+      lastError = error;
+      await sleep(500);
+    }
+  }
+  throw lastError;
+}
+
+async function main() {
+  let page = null;
+  for (let index = 0; index < 20; index += 1) {
+    const pages = await requestJsonWithRetry("http://127.0.0.1:$localPort/json", 4);
+    page =
+      pages.find(item => item.url && item.url.includes("/hybrid/html/index.html")) ||
+      pages.find(item => item.type === "page" && item.url && item.url !== "about:blank");
+    if (page && page.webSocketDebuggerUrl) {
+      break;
+    }
+    await sleep(500);
+  }
+  if (!page) throw new Error("No debuggable WebView page found.");
+
+  const ws = await openWebSocketWithRetry(page.webSocketDebuggerUrl);
+  let id = 0;
+  const pending = new Map();
+  ws.on("message", data => {
+    const message = JSON.parse(data.toString());
+    if (message.id && pending.has(message.id)) {
+      const { resolve, reject } = pending.get(message.id);
+      pending.delete(message.id);
+      if (message.error) reject(new Error(JSON.stringify(message.error)));
+      else resolve(message.result);
+    }
+  });
+  function send(method, params = {}) {
+    const messageId = ++id;
+    ws.send(JSON.stringify({ id: messageId, method, params }));
+    return new Promise((resolve, reject) =>
+      pending.set(messageId, { resolve, reject })
+    );
+  }
+
+  await send("Page.enable");
+  await send("Runtime.enable");
+  const statusResult = await send("Runtime.evaluate", {
+    expression: "(() => { try { return Number(typeof plus !== 'undefined' && plus.navigator && plus.navigator.getStatusbarHeight && plus.navigator.getStatusbarHeight()) || 0; } catch (_) { return 0; } })()",
+    returnByValue: true
+  });
+  const statusTop = Number(statusResult.result && statusResult.result.value) || 0;
+  const appendQuery = (url, key, value) =>
+    url + (url.includes("?") ? "&" : "?") + key + "=" + encodeURIComponent(value);
+  targetUrl = appendQuery(targetUrl, "qimingNative", "1");
+  if (statusTop > 0) {
+    targetUrl = appendQuery(targetUrl, "nativeStatusTop", String(statusTop));
+  }
+  const targetHash = targetUrl.includes("#")
+    ? targetUrl.slice(targetUrl.indexOf("#")).split("?")[0]
+    : "";
+  await send("Page.navigate", { url: targetUrl });
+  let href = "";
+  for (let index = 0; index < 30; index += 1) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = await send("Runtime.evaluate", {
+      expression: "(() => { const text = document.body ? document.body.innerText.replace(/\\s+/g, ' ').trim() : ''; return { href: location.href, readyState: document.readyState, textLength: text.length, title: document.title }; })()",
+      returnByValue: true
+    });
+    const state = result.result && result.result.value || {};
+    href = state.href || "";
+    if (
+      href.includes(targetUrl.split("#")[0]) &&
+      (!targetHash || href.includes(targetHash)) &&
+      state.readyState !== "loading" &&
+      Number(state.textLength || 0) > 0
+    ) {
+      break;
+    }
+  }
+  console.log(href || "");
+  ws.close();
+}
+
+main().catch(error => {
+  console.error(error && (error.stack || error.message) || error);
+  process.exit(1);
+});
+"@
+
+  $actualUrl = ""
+  $lastNodeOutput = ""
+  $navigationSucceeded = $false
+  for ($attempt = 1; $attempt -le 4; $attempt++) {
+    if ($attempt -gt 1) {
+      Start-Sleep -Seconds (2 * $attempt)
+      [void](Get-AndroidWebViewDevToolsPort $ResolvedDeviceId)
+    }
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+      $nodeOutput = $script | node - 2>&1
+      $exitCode = $LASTEXITCODE
+    } finally {
+      $ErrorActionPreference = $previousErrorActionPreference
+    }
+    $lastNodeOutput = (($nodeOutput | Out-String).Trim())
+    if ($exitCode -eq 0) {
+      $actualUrl = (($nodeOutput | Where-Object { $_ } | Select-Object -Last 1) | Out-String).Trim()
+      $navigationSucceeded = $true
+      break
+    }
+    Write-Warning "Android WebView navigation attempt $attempt failed: $lastNodeOutput"
+  }
+
+  if (-not $navigationSucceeded) {
+    throw "Failed to navigate Android WebView to dev server after retries: $TargetUrl. Last error: $lastNodeOutput"
+  }
+  if ($actualUrl -notmatch [Regex]::Escape($TargetUrl.Split("#")[0])) {
+    throw "Android WebView navigation did not reach dev server. Expected '$TargetUrl', got '$actualUrl'."
+  }
+  Write-Host "Android WebView navigated: $actualUrl"
+}
+
+function Invoke-AndroidHBuilderLaunch([string[]]$LaunchArgs, [string]$ResolvedDeviceId, [string]$ExpectedEntryPath, [string]$ExpectedUrlPattern, [string]$ExpectedUrlLabel) {
   & $adb -s $ResolvedDeviceId logcat -c 2>$null
 
   $process = Start-Process `
@@ -261,10 +485,11 @@ function Invoke-AndroidHBuilderLaunch([string[]]$LaunchArgs, [string]$ResolvedDe
     -PassThru
 
   Write-Host "HBuilderX launch pid: $($process.Id)"
-  $ready = Wait-AndroidLaunchReady $ResolvedDeviceId $ExpectedEntryPath $LaunchTimeoutSeconds
+  $ready = Wait-AndroidLaunchReady $ResolvedDeviceId $ExpectedEntryPath $ExpectedUrlPattern $LaunchTimeoutSeconds
 
   if ($ready) {
-    Write-Host "Android launch verified: hybrid/html/index.html#$ExpectedEntryPath"
+    $routeLabel = if ($ExpectedEntryPath) { "#$ExpectedEntryPath" } else { "" }
+    Write-Host "Android launch verified: $ExpectedUrlLabel$routeLabel"
     if (-not $process.HasExited) {
       Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
     }
@@ -275,14 +500,16 @@ function Invoke-AndroidHBuilderLaunch([string[]]$LaunchArgs, [string]$ResolvedDe
   if (-not $process.HasExited) {
     Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
     Stop-NativeAppCompilerJobs
-    throw "Timed out after $LaunchTimeoutSeconds seconds waiting for Android runtime to load hybrid/html/index.html#$ExpectedEntryPath."
+    $routeLabel = if ($ExpectedEntryPath) { "#$ExpectedEntryPath" } else { "" }
+    throw "Timed out after $LaunchTimeoutSeconds seconds waiting for Android runtime to load $ExpectedUrlLabel$routeLabel."
   }
 
   if ($process.ExitCode -ne 0) {
     throw "HBuilderX CLI launch failed with exit code $($process.ExitCode)."
   }
 
-  throw "HBuilderX CLI exited before Android runtime loaded hybrid/html/index.html#$ExpectedEntryPath."
+  $routeLabel = if ($ExpectedEntryPath) { "#$ExpectedEntryPath" } else { "" }
+  throw "HBuilderX CLI exited before Android runtime loaded $ExpectedUrlLabel$routeLabel."
 }
 
 Require-File $hbuilderCli "HBuilderX CLI not found: $hbuilderCli"
@@ -322,6 +549,26 @@ if (-not $SkipPrepare) {
   }
 }
 
+$pageQueryParts = @("entry=$([Uri]::EscapeDataString($EntryPath))")
+$expectedUrlPattern = "hybrid/html/index\.html"
+$expectedUrlLabel = "hybrid/html/index.html"
+$devServerTargetUrl = ""
+if ($DevServer) {
+  $pageQueryParts += "devServer=$([Uri]::EscapeDataString($DevServer))"
+  $expectedUrlPattern = [Regex]::Escape($DevServer)
+  $expectedUrlLabel = $DevServer
+  $normalizedDevServer = $DevServer.TrimEnd("/")
+  $devServerTargetUrl = "$normalizedDevServer/#$EntryPath"
+}
+if ($DemoRole) {
+  $pageQueryParts += "demoRole=$([Uri]::EscapeDataString($DemoRole))"
+  if ($devServerTargetUrl) {
+    $separator = if ($devServerTargetUrl.Contains("?")) { "&" } else { "?" }
+    $devServerTargetUrl = "${devServerTargetUrl}${separator}demoRole=$([Uri]::EscapeDataString($DemoRole))"
+  }
+}
+$pageQuery = $pageQueryParts -join "&"
+
 if ($Platform -eq "android") {
   if (-not $SkipGrantPermissions) {
     Ensure-HBuilderBase $resolvedAndroidDeviceId $KeepBaseApk.IsPresent
@@ -345,7 +592,7 @@ if ($Platform -eq "android") {
     "--pagePath",
     "pages/index/index",
     "--pageQuery",
-    "entry=$([Uri]::EscapeDataString($EntryPath))"
+    $pageQuery
   )
   if ($DeviceId) {
     $launchArgs += @("--deviceId", $DeviceId)
@@ -353,7 +600,12 @@ if ($Platform -eq "android") {
   if ($NativeLog) {
     $launchArgs += @("--native-log", "true")
   }
-  Invoke-AndroidHBuilderLaunch $launchArgs $resolvedAndroidDeviceId $EntryPath
+  if ($DevServer) {
+    Invoke-AndroidHBuilderLaunch $launchArgs $resolvedAndroidDeviceId "" "hybrid/html/index\.html" "hybrid/html/index.html"
+    Invoke-AndroidWebViewNavigation $resolvedAndroidDeviceId $devServerTargetUrl
+  } else {
+    Invoke-AndroidHBuilderLaunch $launchArgs $resolvedAndroidDeviceId $EntryPath $expectedUrlPattern $expectedUrlLabel
+  }
 } else {
   & $devicesScript -Platform ios-iPhone
   $launchArgs = @(
@@ -368,7 +620,7 @@ if ($Platform -eq "android") {
     "--pagePath",
     "pages/index/index",
     "--pageQuery",
-    "entry=$([Uri]::EscapeDataString($EntryPath))"
+    $pageQuery
   )
   if ($DeviceId) {
     $launchArgs += @("--deviceId", $DeviceId)

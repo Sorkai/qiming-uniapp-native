@@ -53,7 +53,7 @@
           </el-form-item>
         </div>
 
-        <div class="mt-4 flex gap-2">
+        <div class="lab-search-form__actions">
           <el-button
             type="primary"
             :disabled="!hasSelection"
@@ -188,6 +188,15 @@
           </div>
 
           <div class="task-card__body">
+            <div class="task-cover">
+              <img
+                v-if="row.coverUrl"
+                :src="row.coverUrl"
+                alt="HTML 动画快照封面"
+              />
+              <div v-else class="task-cover__empty">暂无快照封面</div>
+            </div>
+
             <div class="task-field task-field--full">
               <span class="task-field__label">任务 ID</span>
               <span class="task-id">{{ row.taskId }}</span>
@@ -196,6 +205,11 @@
             <div class="task-field task-field--full">
               <span class="task-field__label">文件名</span>
               <span class="task-field__value">{{ row.fileName || "-" }}</span>
+            </div>
+
+            <div v-if="row.coverObject" class="task-field task-field--full">
+              <span class="task-field__label">封面对象</span>
+              <span class="task-field__value">{{ row.coverObject }}</span>
             </div>
 
             <div class="task-meta-grid">
@@ -1047,6 +1061,46 @@ onMounted(() => {
     gap: 14px;
   }
 
+  .task-cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg, rgb(151 180 247 / 16%), transparent 42%),
+      #f8fafc;
+    border: 1px solid rgb(226 232 240 / 86%);
+    border-radius: 16px;
+
+    html.dark & {
+      background:
+        linear-gradient(135deg, rgb(96 165 250 / 18%), transparent 42%),
+        #0f172a;
+      border-color: rgb(71 85 105 / 52%);
+    }
+  }
+
+  .task-cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .task-cover__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+
+    html.dark & {
+      color: #cbd5e1;
+    }
+  }
+
   .task-field {
     min-width: 0;
     word-break: break-word;
@@ -1151,7 +1205,7 @@ onMounted(() => {
   width: 100%;
 }
 
-@media (width >= 768px) {
+@media (min-width: 768px) {
   .virtual-lab {
     padding: 16px;
 
@@ -1199,7 +1253,7 @@ onMounted(() => {
   }
 }
 
-@media (width >= 1100px) {
+@media (min-width: 1100px) {
   .virtual-lab {
     .hero-panel__content {
       flex-direction: row;
@@ -1230,10 +1284,32 @@ onMounted(() => {
   }
 }
 
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .virtual-lab {
-    padding: 10px 10px
+    padding: 8px 8px
       calc(var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 24px);
+
+    .lab-panel {
+      margin-bottom: 12px;
+      border-radius: 18px;
+    }
+
+    :deep(.el-card__body) {
+      padding: 14px;
+    }
+
+    .filter-panel > :deep(.el-card__body) > .flex:first-child,
+    .task-panel > :deep(.el-card__body) > .flex:first-child {
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px !important;
+    }
+
+    .filter-panel > :deep(.el-card__body) > .flex:first-child span,
+    .task-panel > :deep(.el-card__body) > .flex:first-child span.font-bold {
+      font-size: 15px;
+      line-height: 1.35;
+    }
 
     .hero-panel__copy h2 {
       font-size: 28px;
@@ -1246,6 +1322,52 @@ onMounted(() => {
     .panel-sync-button,
     .panel-badge {
       width: 100%;
+    }
+
+    .lab-search-form {
+      margin-top: 4px;
+    }
+
+    .lab-search-form__grid {
+      gap: 10px;
+    }
+
+    .lab-search-form__actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    :deep(.el-button) {
+      min-height: 36px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      min-height: 36px;
+      border-radius: 12px;
+    }
+
+    :deep(.el-form-item__label) {
+      margin-bottom: 4px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    :deep(.el-empty) {
+      padding: 18px 0 10px;
+    }
+
+    :deep(.el-empty__image) {
+      width: 96px;
+      height: 96px;
+    }
+
+    :deep(.el-empty__description) {
+      margin-top: 8px;
+      font-size: 13px;
     }
 
     .focus-actions,
@@ -1263,7 +1385,7 @@ onMounted(() => {
   }
 }
 
-@media (width <= 420px) {
+@media (max-width: 420px) {
   .virtual-lab {
     .hero-panel__copy h2 {
       font-size: 24px;
@@ -1273,7 +1395,6 @@ onMounted(() => {
       font-size: 30px;
     }
 
-    .lab-search-form__actions,
     .task-card__actions {
       grid-template-columns: 1fr;
     }

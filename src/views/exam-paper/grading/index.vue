@@ -757,11 +757,11 @@ $radius-xl: 20px;
   gap: 20px;
   margin-bottom: 24px;
 
-  @media (width <= 1200px) {
+  @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (width <= 768px) {
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 
@@ -1098,72 +1098,100 @@ $radius-xl: 20px;
   }
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
+  .grading-container {
+    padding: 10px 8px calc(var(--pure-mobile-tab-height, 58px) + 24px);
+  }
+
   .page-header {
-    padding: 18px;
-    margin-bottom: 16px;
+    min-height: 0;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 18px;
 
     .header-content {
-      gap: 14px;
-      align-items: flex-start;
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
     }
 
     .header-icon {
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
 
       svg {
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
       }
     }
 
     .header-info {
+      min-width: 0;
+
       .page-title {
-        margin-bottom: 6px;
-        font-size: 20px;
+        margin-bottom: 4px;
+        font-size: 21px;
+        line-height: 1.2;
       }
 
       .page-desc {
         font-size: 13px;
-        line-height: 1.6;
+        line-height: 1.45;
       }
     }
   }
 
   .stats-section {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 16px;
 
     .stat-card {
-      gap: 14px;
-      padding: 16px;
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      min-height: 78px;
+      padding: 12px;
+      border-radius: 18px;
 
       .stat-icon {
-        width: 44px;
-        height: 44px;
+        grid-column: 1;
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
 
         svg {
-          width: 22px;
-          height: 22px;
+          width: 20px;
+          height: 20px;
         }
       }
 
       .stat-info {
+        grid-column: 2;
+        min-width: 0;
+
         .stat-value {
-          font-size: 24px;
+          margin-bottom: 4px;
+          font-size: 22px;
+          line-height: 1.05;
         }
 
         .stat-label {
           font-size: 12px;
+          line-height: 1.35;
+          white-space: normal;
         }
       }
     }
   }
 
   .search-card {
-    padding: 16px;
-    margin-bottom: 16px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 18px;
 
     .search-form {
       display: block;
@@ -1172,7 +1200,7 @@ $radius-xl: 20px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
       }
 
       :deep(.el-form-item__label) {
@@ -1198,13 +1226,14 @@ $radius-xl: 20px;
     :deep(.el-button.search-btn),
     :deep(.el-button.reset-btn) {
       flex: 1;
-      min-height: 40px;
-      height: 40px;
+      min-height: 36px;
+      height: 36px;
+      font-size: 13px;
     }
 
     :deep(.el-input__wrapper),
     :deep(.el-select__wrapper) {
-      min-height: 42px;
+      min-height: 36px;
       border-radius: 12px;
     }
   }
@@ -1222,7 +1251,13 @@ $radius-xl: 20px;
   }
 }
 
-@media (width <= 520px) {
+@media (max-width: 360px) {
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
   .search-card {
     .search-actions {
       :deep(.el-form-item__content) {

@@ -15,6 +15,7 @@ import {
   getMessageHistory,
   initChatAttachmentStsUpload,
   completeChatAttachmentStsUpload,
+  uploadChatAttachment,
   multimodalChatStream,
   continueConversationStream,
   streamCourseChat,
@@ -147,7 +148,12 @@ export function useAiChat(courseCtx?: CourseContext) {
   const _conversationList = ref<ChatMessage[]>([]); // 修改：为了语义化，我们这里维护一个会话列表
   const historyList = ref<any[]>([]); // 存储会话列表
   const currentImage = ref("");
+  const localPreviewUrls = new Set<string>();
   let cancelStream: (() => void) | null = null;
+
+  const isNativeWebView = () =>
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("qiming-native-webview");
 
   const generateId = () =>
     `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
@@ -327,6 +333,49 @@ export function useAiChat(courseCtx?: CourseContext) {
     return attachmentInfo;
   };
 
+  const uploadBlobForAiChat = async (
+    rawFile: Blob | File,
+    options: {
+      scene?: string;
+      conversation_id?: string;
+      course_id?: number;
+      file_name?: string;
+      content_type?: string;
+    }
+  ): Promise<AttachmentInfo> => {
+    if (!isNativeWebView()) {
+      return uploadBlobViaAiSts(rawFile, options);
+    }
+
+    const sourceFile =
+      rawFile instanceof File
+        ? rawFile
+        : new File([rawFile], options.file_name || `upload-${Date.now()}.webp`, {
+            type: options.content_type || rawFile.type || "image/webp"
+          });
+
+    try {
+      const response = await uploadChatAttachment(sourceFile, {
+        scene: options.scene,
+        conversation_id: options.conversation_id,
+        course_id: options.course_id
+      });
+      const attachmentInfo: AttachmentInfo =
+        (response as any)?.data?.data ||
+        (response as any)?.data ||
+        (response as any);
+
+      if (!attachmentInfo?.attachment_id) {
+        throw new Error("附件上传失败");
+      }
+
+      return attachmentInfo;
+    } catch (error) {
+      console.warn("AI 识屏后端上传失败，回退 STS 直传", error);
+      return uploadBlobViaAiSts(rawFile, options);
+    }
+  };
+
   const fetchConversations = async (page = 1, pageSize = 20) => {
     try {
       const res = await getConversationList({ page, page_size: pageSize });
@@ -361,6 +410,23 @@ export function useAiChat(courseCtx?: CourseContext) {
     };
     messages.value.push(message);
     return message;
+  };
+
+  const createLocalPreviewUrl = (file: File) => {
+    const url = URL.createObjectURL(file);
+    localPreviewUrls.add(url);
+    return url;
+  };
+
+  const releaseLocalPreview = (url?: string) => {
+    if (!url || !localPreviewUrls.has(url)) return;
+    URL.revokeObjectURL(url);
+    localPreviewUrls.delete(url);
+  };
+
+  const releaseAllLocalPreviews = () => {
+    localPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    localPreviewUrls.clear();
   };
 
   const updateAssistantDelta = (id: string, delta: string) => {
@@ -465,7 +531,7 @@ export function useAiChat(courseCtx?: CourseContext) {
       // 1. 处理截图并通过 AI 专用 STS 直传
       const sourceBlob = dataUrlToBlob(image);
       const webpBlob = await processImageToWebP(sourceBlob);
-      const uploadRes = await uploadBlobViaAiSts(webpBlob, {
+      const uploadRes = await uploadBlobForAiChat(webpBlob, {
         scene: "general",
         course_id: isCourseMode() ? courseCtx!.courseId.value! : undefined,
         file_name: "screenshot.webp",
@@ -612,12 +678,15 @@ export function useAiChat(courseCtx?: CourseContext) {
    */
   const uploadAndContinue = async (file: File) => {
     loading.value = true;
+    const previewUrl = createLocalPreviewUrl(file);
+    const userMsg = "我上传了一张图片";
+    const userMessage = addUserMessage(userMsg, previewUrl);
     const loadingMsg = addLoadingMessage();
 
     try {
       // 1. 处理图片为 WebP 并通过 AI 专用 STS 直传
       const webpBlob = await processImageToWebP(file);
-      const uploadRes = await uploadBlobViaAiSts(webpBlob, {
+      const uploadRes = await uploadBlobForAiChat(webpBlob, {
         scene: "general",
         conversation_id: conversationId.value || undefined,
         course_id: isCourseMode() ? courseCtx!.courseId.value! : undefined,
@@ -630,9 +699,10 @@ export function useAiChat(courseCtx?: CourseContext) {
 
       if (!attachmentId) throw new Error("附件上传失败");
 
-      // 3. 添加用户消息（显示图片）
-      const userMsg = "我上传了一张图片";
-      addUserMessage(userMsg, attachmentUrl);
+      if (attachmentUrl) {
+        userMessage.image = attachmentUrl;
+        releaseLocalPreview(previewUrl);
+      }
 
       // 4. 发起对话
       if (!conversationId.value) {
@@ -720,6 +790,7 @@ export function useAiChat(courseCtx?: CourseContext) {
       cancelStream();
       cancelStream = null;
     }
+    releaseAllLocalPreviews();
     currentImage.value = "";
     conversationId.value = "";
     messages.value = [];

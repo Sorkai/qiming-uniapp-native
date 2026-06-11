@@ -702,7 +702,7 @@ $radius-xl: 20px;
   }
 }
 
-@media (width <= 1200px) {
+@media (max-width: 1200px) {
   .page-header {
     flex-direction: column;
     align-items: stretch;
@@ -735,26 +735,35 @@ $radius-xl: 20px;
   }
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
+  .statistics-container {
+    padding: 10px 8px 92px;
+  }
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 16px;
-    padding: 18px;
-    margin-bottom: 16px;
+    min-height: 0;
+    gap: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 18px;
 
     .header-content {
-      align-items: flex-start;
-      gap: 14px;
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
     }
 
     .header-icon {
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
 
       svg {
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
       }
     }
 
@@ -762,28 +771,46 @@ $radius-xl: 20px;
       min-width: 0;
 
       .page-title {
-        margin-bottom: 6px;
-        font-size: 20px;
+        margin-bottom: 4px;
+        font-size: 21px;
+        line-height: 1.2;
       }
 
       .page-desc {
         font-size: 13px;
-        line-height: 1.6;
+        line-height: 1.45;
       }
     }
 
     .header-actions {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: stretch;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
 
       :deep(.el-date-editor),
       :deep(.el-select),
       :deep(.el-button) {
         width: 100% !important;
+        min-width: 0;
+        height: 36px;
         margin-left: 0;
+      }
+
+      :deep(.el-date-editor) {
+        grid-column: 1 / -1;
+      }
+
+      :deep(.el-input__wrapper),
+      :deep(.el-select__wrapper) {
+        min-height: 36px;
+        font-size: 13px;
+      }
+
+      :deep(.el-button) {
+        padding: 0 10px;
+        font-size: 13px;
       }
 
       :deep(.el-button + .el-button) {
@@ -799,11 +826,11 @@ $radius-xl: 20px;
   gap: 20px;
   margin-bottom: 24px;
 
-  @media (width <= 1200px) {
+  @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (width <= 768px) {
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 
@@ -879,7 +906,109 @@ $radius-xl: 20px;
   gap: 24px;
   margin-bottom: 24px;
 
-  @media (width <= 1200px) {
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-section {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .stat-card {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      min-height: 78px;
+      padding: 12px;
+      border-radius: 18px;
+
+      .stat-icon {
+        grid-column: 1;
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+
+        svg {
+          width: 20px;
+          height: 20px;
+        }
+      }
+
+      .stat-info {
+        grid-column: 2;
+        min-width: 0;
+
+        .stat-value {
+          margin-bottom: 4px;
+          font-size: 22px;
+          line-height: 1.05;
+        }
+
+        .stat-label {
+          font-size: 12px;
+          line-height: 1.35;
+          white-space: normal;
+        }
+      }
+    }
+  }
+
+  .charts-row,
+  .detail-row {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .chart-card,
+  .detail-card {
+    padding: 14px;
+    border-radius: 18px;
+
+    .card-header {
+      margin-bottom: 12px;
+
+      .card-title {
+        font-size: 15px;
+        line-height: 1.35;
+      }
+    }
+  }
+
+  .score-distribution {
+    .distribution-panel {
+      padding: 10px;
+
+      .distribution-item {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        gap: 8px;
+      }
+
+      .range-label {
+        width: auto;
+        font-size: 12px;
+      }
+
+      .distribution-meta {
+        grid-column: 1 / -1;
+        align-items: flex-start;
+        min-width: 0;
+      }
+
+      .count,
+      .expand-action {
+        text-align: left;
+      }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .stats-section {
     grid-template-columns: 1fr;
   }
 }
@@ -1052,7 +1181,7 @@ $radius-xl: 20px;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 
-  @media (width <= 1200px) {
+  @media (max-width: 1200px) {
     grid-template-columns: 1fr;
   }
 }

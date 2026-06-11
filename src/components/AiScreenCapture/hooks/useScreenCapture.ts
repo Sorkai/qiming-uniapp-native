@@ -11,6 +11,94 @@ export function useScreenCapture() {
   const BLACK_RATIO_THRESHOLD = 0.92;
   const MEDIA_SELECTOR = "video, iframe, canvas";
 
+  const isNativeWebView = () =>
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("qiming-native-webview");
+
+  const withTimeout = <T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    message: string
+  ): Promise<T> => {
+    let timer: number | null = null;
+    return new Promise<T>((resolve, reject) => {
+      timer = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+      promise
+        .then(resolve)
+        .catch(reject)
+        .finally(() => {
+          if (timer !== null) window.clearTimeout(timer);
+        });
+    });
+  };
+
+  const captureByNativeWebview = async (area: CaptureArea): Promise<string> => {
+    const plusApi = (window as any).plus;
+    const currentWebview = plusApi?.webview?.currentWebview?.();
+    const BitmapCtor = plusApi?.nativeObj?.Bitmap;
+
+    if (!currentWebview?.draw || !BitmapCtor) {
+      throw new Error("当前 App WebView 不支持原生截图");
+    }
+
+    const bitmap = new BitmapCtor(`qiming-ai-screen-${Date.now()}`);
+    const clip = {
+      top: `${Math.max(0, Math.round(area.y))}px`,
+      left: `${Math.max(0, Math.round(area.x))}px`,
+      width: `${Math.max(1, Math.round(area.width))}px`,
+      height: `${Math.max(1, Math.round(area.height))}px`
+    };
+
+    try {
+      return await withTimeout(
+        new Promise<string>((resolve, reject) => {
+          currentWebview.draw(
+            bitmap,
+            () => {
+              const base64 = bitmap.toBase64Data?.();
+              if (base64) {
+                const base64Text = String(base64);
+                const payload = base64Text.split(",", 2)[1] || "";
+                const inferredMime = payload.startsWith("/9j/")
+                  ? "image/jpeg"
+                  : "image/png";
+                resolve(
+                  base64Text.replace(
+                    /^data:image\/null;base64,/i,
+                    `data:${inferredMime};base64,`
+                  )
+                );
+              } else {
+                reject(new Error("原生截图为空"));
+              }
+            },
+            (error: unknown) => {
+              reject(
+                error instanceof Error
+                  ? error
+                  : new Error(`原生截图失败: ${JSON.stringify(error)}`)
+              );
+            },
+            {
+              check: false,
+              checkKeyboard: false,
+              clip
+            }
+          );
+        }),
+        6000,
+        "原生截图超时"
+      );
+    } finally {
+      try {
+        bitmap.recycle?.();
+      } catch {}
+      try {
+        bitmap.clear?.();
+      } catch {}
+    }
+  };
+
   /**
    * 粗略判断截图是否几乎全黑，用于识别视频黑帧场景。
    */
@@ -300,8 +388,22 @@ export function useScreenCapture() {
 
       // 等待DOM更新
       await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+      );
 
-      if (areaContainsMedia(area)) {
+      if (isNativeWebView()) {
+        try {
+          const base64 = await captureByNativeWebview(area);
+          screenshot.value = base64;
+          status.value = "preview";
+          return base64;
+        } catch (nativeError) {
+          console.warn("原生 WebView 截图失败，回退 DOM 截图", nativeError);
+        }
+      }
+
+      if (!isNativeWebView() && areaContainsMedia(area)) {
         const base64 = await captureByDisplayMedia(area);
         screenshot.value = base64;
         status.value = "preview";
@@ -332,13 +434,21 @@ export function useScreenCapture() {
       let canvas: HTMLCanvasElement;
       try {
         // 优先走常规渲染，性能更好
-        canvas = await renderCanvas(false);
+        canvas = await withTimeout(
+          renderCanvas(false),
+          10000,
+          "DOM 截图生成超时"
+        );
       } catch (firstErr) {
         if (!isUnsupportedColorFunctionError(firstErr)) {
           throw firstErr;
         }
         // 命中颜色函数兼容问题时，降级到 foreignObjectRendering 再试一次
-        canvas = await renderCanvas(true);
+        canvas = await withTimeout(
+          renderCanvas(true),
+          10000,
+          "DOM 兼容截图生成超时"
+        );
       }
 
       // 裁剪指定区域
@@ -366,7 +476,7 @@ export function useScreenCapture() {
       let base64 = croppedCanvas.toDataURL("image/png");
 
       // html2canvas 在某些复杂场景仍可能返回黑帧，这里保留最后一道兜底。
-      if (isMostlyBlackImage(croppedCanvas)) {
+      if (!isNativeWebView() && isMostlyBlackImage(croppedCanvas)) {
         try {
           base64 = await captureByDisplayMedia(area);
         } catch (fallbackErr) {

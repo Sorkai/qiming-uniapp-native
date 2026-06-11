@@ -7,15 +7,17 @@ type MobileNavItem = {
   title: string;
   icon: string;
   path: string;
+  menu?: string;
+  mode?: string;
 };
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStoreHook();
 
-const isAdminOrTeacher = computed(() =>
-  userStore.roles?.some(role => role === "admin" || role === "teacher")
-);
+const isAdmin = computed(() => userStore.roles?.includes("admin"));
+const isTeacher = computed(() => userStore.roles?.includes("teacher"));
+const isAdminOrTeacher = computed(() => isAdmin.value || isTeacher.value);
 
 const profilePath = computed(() =>
   isAdminOrTeacher.value ? "/account-settings" : "/account"
@@ -44,31 +46,69 @@ const adminMobileNavItems: MobileNavItem[] = [
   }
 ];
 
-const defaultMobileNavItems = computed<MobileNavItem[]>(() => [
+const teacherMobileNavItems = adminMobileNavItems;
+
+const managerMobileNavItems: MobileNavItem[] = [
   {
-    title: "首页",
+    title: "\u9996\u9875",
     icon: "ep:home-filled",
     path: "/welcome"
   },
   {
-    title: "课程",
+    title: "\u7528\u6237",
+    icon: "ep:user-filled",
+    path: "/user/list"
+  },
+  {
+    title: "\u8bfe\u7a0b",
     icon: "ep:reading",
     path: "/course/list"
   },
   {
-    title: "AI助手",
+    title: "AI App",
     icon: "ep:chat-dot-round",
-    path: "/chatai/index"
+    path: "/account/ai-app"
+  },
+  {
+    title: "\u8003\u6838",
+    icon: "ep:document-checked",
+    path: "/course/assessment"
+  }
+];
+
+const defaultMobileNavItems = computed<MobileNavItem[]>(() => [
+  {
+    title: "首页",
+    icon: "ep:home-filled",
+    path: "/account",
+    menu: "home"
+  },
+  {
+    title: "课程",
+    icon: "ep:reading",
+    path: "/account",
+    menu: "course"
+  },
+  {
+    title: "AI App",
+    icon: "ep:chat-dot-round",
+    path: "/account/ai-app",
+    mode: "student"
   },
   {
     title: "我的",
     icon: "ep:user",
-    path: profilePath.value
+    path: profilePath.value,
+    menu: "profile"
   }
 ]);
 
 const navItems = computed<MobileNavItem[]>(() =>
-  isAdminOrTeacher.value ? adminMobileNavItems : defaultMobileNavItems.value
+  isAdmin.value
+    ? managerMobileNavItems
+    : isTeacher.value
+      ? teacherMobileNavItems
+      : defaultMobileNavItems.value
 );
 
 const visibleNavItems = computed(() =>
@@ -77,12 +117,51 @@ const visibleNavItems = computed(() =>
 
 const activePath = computed(() => route.path);
 
-const isActive = (path: string) =>
-  activePath.value === path || activePath.value.startsWith(`${path}/`);
+const getQueryValue = (value: unknown) => (Array.isArray(value) ? value[0] : value);
 
-const handleJump = (path: string) => {
-  if (route.path === path) return;
-  router.push(path);
+const isActive = (item: MobileNavItem) => {
+  if (item.menu) {
+    const menu = getQueryValue(route.query.menu);
+    return (
+      activePath.value === item.path &&
+      (menu === item.menu || (!menu && item.menu === "home"))
+    );
+  }
+  if (item.mode) {
+    return activePath.value === item.path && getQueryValue(route.query.mode) === item.mode;
+  }
+  return (
+    activePath.value === item.path || activePath.value.startsWith(`${item.path}/`)
+  );
+};
+
+const buildJumpQuery = (item: MobileNavItem) => {
+  const query: Record<string, any> = { ...route.query };
+  if (item.menu) {
+    query.menu = item.menu;
+  } else {
+    delete query.menu;
+  }
+
+  if (item.mode) {
+    query.mode = item.mode;
+  } else {
+    delete query.mode;
+  }
+  return query;
+};
+
+const handleJump = (item: MobileNavItem) => {
+  const query = buildJumpQuery(item);
+  const samePath = route.path === item.path;
+  const sameMenu = getQueryValue(route.query.menu) === item.menu;
+  const sameMode = getQueryValue(route.query.mode) === item.mode;
+  if (samePath && sameMenu && sameMode) return;
+
+  router.push({
+    path: item.path,
+    query
+  });
 };
 </script>
 
@@ -90,10 +169,10 @@ const handleJump = (path: string) => {
   <div class="nav-mobile-container">
     <div
       v-for="item in visibleNavItems"
-      :key="item.path"
+      :key="`${item.path}:${item.menu || item.mode || item.title}`"
       class="nav-mobile-item"
-      :class="{ active: isActive(item.path) }"
-      @click="handleJump(item.path)"
+      :class="{ active: isActive(item) }"
+      @click="handleJump(item)"
     >
       <IconifyIconOnline :icon="item.icon" class="nav-icon" />
       <span class="nav-title">{{ item.title }}</span>
@@ -111,9 +190,9 @@ const handleJump = (path: string) => {
   width: 100%;
   height: var(--pure-mobile-tab-height);
   padding-bottom: var(--pure-safe-area-bottom);
-  background: rgb(255 255 255 / 88%);
-  border-top: 1px solid rgb(226 232 240 / 90%);
-  box-shadow: 0 -8px 24px rgb(15 23 42 / 6%);
+  background: var(--qiming-native-dock-bg, rgb(255 255 255 / 96%));
+  border-top: 1px solid var(--qiming-native-dock-border, rgb(226 232 240 / 90%));
+  box-shadow: var(--qiming-native-dock-shadow, 0 -8px 24px rgb(15 23 42 / 6%));
   backdrop-filter: blur(18px);
 }
 
@@ -170,6 +249,28 @@ const handleJump = (path: string) => {
       transform: scale(0.96);
       transform-origin: center top;
     }
+  }
+}
+
+</style>
+
+<style lang="scss">
+html.qiming-native-webview.ua-mobile .nav-mobile-container {
+  background: var(--qiming-native-dock-bg);
+  border-top-color: var(--qiming-native-dock-border);
+  box-shadow: var(--qiming-native-dock-shadow);
+  backdrop-filter: none;
+}
+
+html.qiming-native-webview.ua-mobile.dark .nav-mobile-item {
+  color: var(--qiming-native-text-secondary);
+
+  &.active {
+    color: var(--el-color-primary);
+  }
+
+  &:active {
+    background: rgb(148 163 184 / 10%);
   }
 }
 </style>

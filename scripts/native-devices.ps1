@@ -24,7 +24,7 @@ function Invoke-WithTimeout([scriptblock]$Block, [int]$Timeout) {
   try {
     $completed = Wait-Job -Job $job -Timeout $Timeout
     if (-not $completed) {
-      Stop-Job -Job $job -Force
+      Stop-Job -Job $job
       return [pscustomobject]@{
         ExitCode = 124
         Output = "timed out after $Timeout seconds"

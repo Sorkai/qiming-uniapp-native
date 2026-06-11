@@ -706,7 +706,7 @@ watch(loginDay, value => {
 }
 
 // 响应式设计
-@media screen and (width <= 1200px) {
+@media screen and (max-width: 1200px) {
   .main-content {
     grid-template-columns: 1fr;
     gap: 40px;
@@ -743,7 +743,7 @@ watch(loginDay, value => {
   }
 }
 
-@media screen and (width <= 768px) {
+@media screen and (max-width: 768px) {
   .top-toolbar {
     padding: 16px 20px;
   }

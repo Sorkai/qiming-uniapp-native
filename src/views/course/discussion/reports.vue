@@ -16,6 +16,7 @@ import {
 } from "@element-plus/icons-vue";
 import {
   getReportList,
+  getReportStatistics,
   handleReport,
   type ReportItem,
   type ReportStatus
@@ -145,21 +146,27 @@ const fetchData = async () => {
     if (searchForm.status) params.status = searchForm.status;
 
     const res = await getReportList(params);
-    const responseData = (res as any).data || res;
-    reports.value = responseData.list || [];
-    pagination.total = responseData.total || 0;
-
-    stats.value = {
-      pending: (responseData.list || []).filter(
-        (item: ReportItem) => item.status === "pending"
-      ).length,
-      resolvedToday: 0,
-      totalReports: responseData.total || 0
-    };
+    reports.value = res.list || [];
+    pagination.total = res.total || 0;
   } catch (error) {
     console.error("加载举报列表失败", error);
+    reports.value = [];
+    pagination.total = 0;
   } finally {
     loading.value = false;
+  }
+};
+
+const fetchStats = async () => {
+  try {
+    const data = await getReportStatistics();
+    stats.value = {
+      pending: Number(data.pendingReports || 0),
+      resolvedToday: Number(data.resolvedToday || 0),
+      totalReports: Number(data.totalReports || 0)
+    };
+  } catch (error) {
+    console.error("加载举报统计失败", error);
   }
 };
 
@@ -205,7 +212,7 @@ const quickDismiss = async (row: ReportItem) => {
     });
     await handleReport(row.reportId, { action: "reject", note: "内容无问题" });
     ElMessage.success("已驳回");
-    await fetchData();
+    await Promise.all([fetchStats(), fetchData()]);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("操作失败");
@@ -222,7 +229,7 @@ const quickDelete = async (row: ReportItem) => {
     });
     await handleReport(row.reportId, { action: "accept", note: "内容违规" });
     ElMessage.success("已接受");
-    await fetchData();
+    await Promise.all([fetchStats(), fetchData()]);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("操作失败");
@@ -241,7 +248,7 @@ const submitHandle = async () => {
 
     ElMessage.success("处理成功");
     handleDialogVisible.value = false;
-    await fetchData();
+    await Promise.all([fetchStats(), fetchData()]);
   } catch (error) {
     ElMessage.error("处理失败");
   }
@@ -262,15 +269,13 @@ const dataLoaded = ref(false);
 const initData = async () => {
   if (loading.value || dataLoaded.value) return;
 
-  console.log("[reports.vue] initData 开始执行");
-  await fetchData();
+  await Promise.all([fetchStats(), fetchData()]);
   dataLoaded.value = true;
-  console.log("[reports.vue] initData 执行完成");
 };
 
 const refreshData = async () => {
   dataLoaded.value = false;
-  await fetchData();
+  await Promise.all([fetchStats(), fetchData()]);
   dataLoaded.value = true;
 };
 
@@ -279,9 +284,7 @@ const route = useRoute();
 watch(
   () => route.name,
   newName => {
-    console.log("[reports.vue] 路由 name 变化:", newName);
     if (newName && !dataLoaded.value) {
-      console.log("[reports.vue] 开始加载数据");
       initData();
     }
   },
@@ -289,7 +292,6 @@ watch(
 );
 
 onActivated(() => {
-  console.log("[reports.vue] onActivated 触发");
   dataLoaded.value = false;
   initData();
 });
@@ -1063,14 +1065,15 @@ onActivated(() => {
   }
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .report-manage {
     padding-bottom: calc(
       var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
     );
 
     .report-stats-grid {
-      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .report-panel {
@@ -1102,9 +1105,48 @@ onActivated(() => {
     }
 
     .stat-card {
-      .stat-content {
-        min-height: 110px;
+      border-radius: 18px;
+
+      :deep(.el-card__body) {
         padding: 10px 8px;
+      }
+
+      .stat-content {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        min-height: 76px;
+        padding: 0;
+        text-align: center;
+
+        .stat-number {
+          min-width: 0;
+          margin-bottom: 0;
+          font-size: 18px;
+          line-height: 1;
+        }
+
+        .stat-label {
+          min-width: 0;
+          font-size: 11px;
+          line-height: 1.2;
+          white-space: normal;
+        }
+      }
+    }
+
+    @media (max-width: 360px) {
+      .report-stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-card .stat-content {
+        flex-direction: row;
+        justify-content: flex-start;
+        min-height: 58px;
+        text-align: left;
       }
     }
 
@@ -1151,7 +1193,7 @@ onActivated(() => {
   }
 }
 
-@media (width <= 420px) {
+@media (max-width: 360px) {
   .report-manage {
     .report-stats-grid {
       grid-template-columns: 1fr;

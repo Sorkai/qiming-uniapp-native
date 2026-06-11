@@ -49,6 +49,10 @@ import { useUserStore } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
 import { type DataInfo, userKey } from "@/utils/auth";
 import {
+  getResponsiveLayoutTheme,
+  getSavedCourseTheme
+} from "@/utils/courseTheme";
+import {
   getAssistantBootstrap,
   getAssistantConversationGroups,
   getAssistantConversationMessages,
@@ -174,13 +178,7 @@ const currentUserAvatar = computed(() => formatAvatar(userStore.avatar));
 
 const isNewTab = ref(false);
 
-const layoutStorage = storageLocal().getItem("responsive-layout") as
-  | { darkMode?: boolean }
-  | undefined;
-const currentTheme = ref(
-  (storageLocal().getItem("course_theme") as string) ||
-    (layoutStorage?.darkMode ? "dark" : "light")
-);
+const currentTheme = ref(getSavedCourseTheme(getResponsiveLayoutTheme()));
 const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
 const resolveRailFromPath = (path: string) => {
@@ -209,10 +207,21 @@ const activeCourse = ref<CourseView | null>(null);
 
 // 侧边栏收起状态
 const isMobileViewport = ref(false);
-const sidebarCollapsed = ref(false);
+const sidebarCollapsed = ref(
+  typeof window !== "undefined" &&
+    (window.innerWidth <= 768 ||
+      document.documentElement.classList.contains("qiming-native-webview") ||
+      new URLSearchParams(window.location.search).get("qimingNative") === "1" ||
+      new URLSearchParams(window.location.hash.split("?")[1] || "").get(
+        "qimingNative"
+      ) === "1")
+);
 const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
+const shouldShowFloatingHuman = computed(
+  () => !isMobileViewport.value || Boolean(activeCourse.value)
+);
 
 type DigitalHumanState = "standby" | "listening" | "thinking" | "saying";
 
@@ -837,10 +846,7 @@ const handleNewChat = (payload: { course: string }) => {
 const syncHumanRenderState = () => {
   if (!virtualHumanRef.value) return;
   const shouldPause =
-    document.hidden ||
-    activeRail.value !== "chat" ||
-    humanCollapsed.value ||
-    isMobileViewport.value;
+    document.hidden || activeRail.value !== "chat" || humanCollapsed.value;
   if (shouldPause) {
     virtualHumanRef.value.pauseRender?.();
   } else {
@@ -856,7 +862,7 @@ const updateMobileViewportState = () => {
   isMobileViewport.value = window.innerWidth <= 768;
   if (isMobileViewport.value) {
     sidebarCollapsed.value = true;
-    humanCollapsed.value = true;
+    humanCollapsed.value = false;
   }
   syncHumanRenderState();
 };
@@ -918,10 +924,10 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- 收起态：竖向标识 -->
+        <!-- 收起态：桌面保留竖向标识，移动端仅保留独立按钮 -->
         <div
-          v-show="sidebarCollapsed"
-          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer"
+          v-show="sidebarCollapsed && !isMobileViewport"
+          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer collapsed-rail-label"
           @click="toggleSidebar"
         >
           <el-icon :size="14" class="rotate-90 mb-2"><FolderOpened /></el-icon>
@@ -935,6 +941,7 @@ onUnmounted(() => {
         <!-- 收起 / 展开 把手 -->
         <button
           class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+          :class="{ 'is-mobile-collapsed-trigger': sidebarCollapsed && isMobileViewport }"
           :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           @click="toggleSidebar"
         >
@@ -985,12 +992,12 @@ onUnmounted(() => {
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
           <div
             v-if="activeRail === `chat` && activeCourse"
-            class="h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
+            class="ai-chat-scene h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
           >
             <!-- 对话流核心面板 -->
             <transition appear name="panel-slide">
               <div
-                class="flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
+                class="ai-chat-card flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
               >
                 <!-- 柔和的顶部遮罩渐变 -->
                 <div
@@ -1067,7 +1074,7 @@ onUnmounted(() => {
                 <transition name="el-zoom-in-bottom">
                   <div
                     v-show="!humanCollapsed"
-                    class="flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
+                    class="ai-human-actions flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
                     style="min-height: 180px"
                   >
                     <div
@@ -1097,7 +1104,7 @@ onUnmounted(() => {
           <!-- 【场景 A2】 智能辅导欢迎中心 (未选课) -->
           <div
             v-else-if="activeRail === `chat` && !activeCourse"
-            class="h-full w-full p-4 flex items-center justify-center relative"
+            class="ai-chat-welcome h-full w-full p-4 flex items-center justify-center relative"
           >
             <!-- 背景装饰 -->
             <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -1110,8 +1117,22 @@ onUnmounted(() => {
             </div>
 
             <div
-              class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
+              class="ai-chat-welcome-card w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
             >
+              <div class="ai-chat-welcome-human">
+                <VirtualHumanPanel ref="virtualHumanRef" />
+                <div class="ai-chat-welcome-actions">
+                  <button
+                    v-for="msg in quickInteractionMessages"
+                    :key="`welcome-${msg}`"
+                    type="button"
+                    @click="handleQuickInteraction(msg)"
+                  >
+                    {{ msg }}
+                  </button>
+                </div>
+              </div>
+
               <div class="text-center space-y-4">
                 <h1
                   class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
@@ -1127,7 +1148,7 @@ onUnmounted(() => {
               </div>
 
               <div
-                class="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
+                class="quick-chat-box bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
               >
                 <el-input
                   v-model="quickMessage"
@@ -1551,6 +1572,7 @@ onUnmounted(() => {
     </div>
 
     <FloatingDigitalHuman2D
+      v-if="shouldShowFloatingHuman"
       ref="floatingHumanRef"
       :role-label="currentUserRoleLabel"
       :course-name="selectedCourseName"
@@ -1558,8 +1580,12 @@ onUnmounted(() => {
       anchor="appLeftBottom"
       anchor-selector=".ai-app-root"
       :left-zone-width="sidebarCollapsed ? 34 : 260"
-      :bottom-offset="isMobileViewport ? 92 : 104"
-      storage-key="ai-app-floating-digital-human-2d-left-bottom"
+      :bottom-offset="isMobileViewport ? 24 : 104"
+      :storage-key="
+        isMobileViewport
+          ? 'ai-app-floating-digital-human-2d-mobile-status'
+          : 'ai-app-floating-digital-human-2d-left-bottom'
+      "
     />
 
     <!-- 栈操作可视化预览弹窗 -->
@@ -1661,6 +1687,11 @@ onUnmounted(() => {
   font-synthesis-weight: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  :global(html.dark) & {
+    color: var(--qiming-native-text-primary, #f8fafc);
+    background: var(--qiming-native-page-bg, #020409) !important;
+  }
 }
 
 .ai-app-root :deep(*) {
@@ -1824,6 +1855,9 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .ai-app-root {
+    width: 100%;
+    height: var(--qiming-native-vh, 100dvh);
+    min-height: var(--qiming-native-vh, 100dvh);
     min-width: 0;
     overflow: hidden;
   }
@@ -1832,37 +1866,147 @@ onUnmounted(() => {
     min-width: 0;
   }
 
+  .ai-app-root > .flex-1 > .flex-1 {
+    width: 100%;
+  }
+
   .ai-app-left-rail {
-    position: absolute;
-    top: 12px;
-    bottom: calc(92px + var(--pure-safe-area-bottom, 0px));
-    left: 10px;
-    z-index: 80;
-    width: min(292px, calc(100vw - 20px)) !important;
-    max-width: calc(100vw - 20px);
+    position: fixed !important;
+    top: calc(24px + var(--pure-safe-area-top, 0px));
+    bottom: calc(82px + var(--pure-safe-area-bottom, 0px));
+    left: 18px;
+    z-index: 120 !important;
+    width: min(292px, calc(100vw - 36px)) !important;
+    max-width: calc(100vw - 36px);
     border: 1px solid rgba(226, 232, 240, 0.92);
     border-radius: 22px;
     box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
   }
 
   .ai-app-left-rail.is-collapsed {
-    width: 42px !important;
-    max-width: 42px;
-    border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(94, 127, 248, 0.16);
+    top: calc(24px + var(--pure-safe-area-top, 0px));
+    bottom: auto;
+    width: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    height: 46px;
+    min-height: 46px !important;
+    overflow: visible;
+    background: transparent !important;
+    border: 0;
+    border-radius: 16px;
+    box-shadow: none;
+    pointer-events: none;
   }
 
   .ai-app-left-rail.is-collapsed :deep(.ai-sidebar) {
     padding: 0;
   }
 
-  .ai-app-human-panel {
+  .ai-app-left-rail.is-collapsed > div:first-child,
+  .ai-app-left-rail.is-collapsed > div:nth-child(2),
+  .ai-app-left-rail.is-collapsed .collapsed-rail-label {
     display: none !important;
   }
 
+  .ai-app-left-rail.is-collapsed > button {
+    position: absolute !important;
+    top: 0 !important;
+    right: auto !important;
+    left: 0 !important;
+    width: 46px !important;
+    height: 46px !important;
+    transform: none !important;
+    border-radius: 14px !important;
+    border-color: rgba(226, 232, 240, 0.82) !important;
+    box-shadow: 0 12px 28px rgba(94, 127, 248, 0.18) !important;
+    pointer-events: auto;
+  }
+
+  .ai-app-left-rail:not(.is-collapsed) > button {
+    top: 14px !important;
+    right: 14px !important;
+    width: 34px !important;
+    height: 34px !important;
+    color: #6b7a96 !important;
+    background: rgba(255, 255, 255, 0.86) !important;
+    border-color: rgba(203, 213, 225, 0.78) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 20px rgba(35, 50, 82, 0.08) !important;
+    transform: none !important;
+  }
+
+  .ai-app-left-rail.is-collapsed > button.is-mobile-collapsed-trigger {
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(16px);
+  }
+
+  .ai-chat-scene,
+  .ai-chat-welcome,
   main > div[class*="p-4"] {
-    padding: 10px 10px calc(78px + var(--pure-safe-area-bottom, 0px)) 54px;
-    gap: 10px;
+    padding:
+      calc(54px + var(--pure-safe-area-top, 0px)) 12px
+      calc(74px + var(--pure-safe-area-bottom, 0px)) !important;
+    gap: 10px !important;
+  }
+
+  .ai-chat-scene {
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ai-chat-card {
+    flex: 0 0 auto;
+    height: clamp(340px, 50vh, 420px) !important;
+    min-height: 340px;
+    border-radius: 24px !important;
+  }
+
+  .ai-app-human-panel {
+    flex: 0 0 auto;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0;
+    gap: 6px;
+  }
+
+  .ai-app-human-panel > button {
+    display: none !important;
+  }
+
+  .ai-app-human-panel > div:first-of-type {
+    height: clamp(188px, 28vh, 246px);
+    min-height: 188px;
+    border-radius: 24px !important;
+  }
+
+  .ai-human-actions {
+    padding: 8px !important;
+    min-height: 0 !important;
+    border-radius: 20px !important;
+  }
+
+  .ai-human-actions[style] {
+    min-height: 112px !important;
+    max-height: 126px !important;
+  }
+
+  .ai-human-actions > div:last-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .ai-human-actions > div:first-child {
+    padding-bottom: 5px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .ai-human-actions :deep(.el-button) {
+    min-height: 30px !important;
+    padding: 6px 8px !important;
+    font-size: 11px !important;
   }
 
   main > div[class*="p-4"] > .flex-1 {
@@ -1871,8 +2015,169 @@ onUnmounted(() => {
   }
 
   .gradient-text-animate {
-    font-size: clamp(26px, 8vw, 34px) !important;
-    line-height: 1.15;
+    font-size: 24px !important;
+    line-height: 1.14;
+    letter-spacing: 0;
+  }
+
+  .ai-chat-welcome {
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    padding-bottom: calc(24px + var(--pure-safe-area-bottom, 0px)) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ai-chat-welcome-card {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    gap: 12px !important;
+    max-width: none !important;
+    min-height: 100%;
+    width: 100%;
+    padding: 0 0 10px;
+    transform: none !important;
+  }
+
+  .ai-chat-welcome-card > .text-center {
+    order: 1;
+    padding: 0 4px;
+    text-align: left;
+    margin: 0 !important;
+    gap: 6px;
+  }
+
+  .ai-chat-welcome-card > .text-center p {
+    max-width: 340px;
+    font-size: 13px !important;
+    line-height: 1.4;
+  }
+
+  .quick-chat-box {
+    order: 2;
+    display: flex !important;
+    flex-direction: column;
+    border-radius: 20px !important;
+    box-shadow: 0 12px 34px rgba(94, 127, 248, 0.1) !important;
+  }
+
+  .quick-chat-box :deep(.el-textarea__inner) {
+    height: 78px !important;
+    min-height: 78px !important;
+    padding: 14px 14px !important;
+    font-size: 14px !important;
+    line-height: 1.42;
+  }
+
+  .quick-chat-box > div:last-child {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+    padding: 9px !important;
+  }
+
+  .quick-chat-box > div:last-child > div:first-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .quick-chat-box > div:last-child > div:last-child {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .quick-chat-box > div:last-child span {
+    justify-content: center;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    min-height: 32px;
+    padding-right: 8px !important;
+    padding-left: 8px !important;
+    font-size: 12px !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quick-chat-box > div:last-child button {
+    position: relative;
+    z-index: 2;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    touch-action: manipulation;
+  }
+
+  .quick-chat-box > div:last-child > div:last-child > span {
+    justify-content: flex-start;
+    max-width: calc(100% - 46px);
+  }
+
+  .ai-chat-welcome-human {
+    order: 3;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    margin-top: 8px;
+    min-height: 292px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 24px;
+    box-shadow: 0 16px 42px rgba(94, 127, 248, 0.12);
+  }
+
+  :global(html.dark) .ai-chat-welcome-human {
+    background: rgb(15 23 42 / 82%);
+    border-color: rgb(148 163 184 / 22%);
+    box-shadow: 0 18px 44px rgb(0 0 0 / 30%);
+  }
+
+  .ai-chat-welcome-human :deep(.virtual-human-panel) {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 224px;
+    background: transparent;
+  }
+
+  .ai-chat-welcome-actions {
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.82);
+    border-top: 1px solid rgba(226, 232, 240, 0.7);
+  }
+
+  :global(html.dark) .ai-chat-welcome-actions {
+    background: rgb(2 6 23 / 74%);
+    border-top-color: rgb(148 163 184 / 20%);
+  }
+
+  .ai-chat-welcome-actions button {
+    min-width: 0;
+    min-height: 32px;
+    padding: 0 8px;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 600;
+    color: #5e7ff8;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: rgba(239, 246, 255, 0.8);
+    border: 1px solid rgba(191, 219, 254, 0.8);
+    border-radius: 12px;
+  }
+
+  :global(html.dark) .ai-chat-welcome-actions button {
+    color: #c7d2fe;
+    background: rgb(30 41 59 / 80%);
+    border-color: rgb(129 140 248 / 24%);
   }
 
   :deep(.el-dialog) {

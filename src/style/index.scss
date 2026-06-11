@@ -40,6 +40,20 @@
   /* 移动端底部安全区域与导航高度 */
   --pure-safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --pure-mobile-tab-height: calc(56px + var(--pure-safe-area-bottom));
+  --qiming-native-page-bg: #f7f8fc;
+  --qiming-native-surface-bg: #fff;
+  --qiming-native-surface-soft-bg: #f8fafc;
+  --qiming-native-text-primary: #172033;
+  --qiming-native-text-regular: #475569;
+  --qiming-native-text-secondary: #64748b;
+  --qiming-native-border-color: rgb(226 232 240 / 88%);
+  --qiming-native-navbar-bg: rgb(248 250 255 / 92%);
+  --qiming-native-navbar-text: #1f3f7b;
+  --qiming-native-control-bg: rgb(255 255 255 / 92%);
+  --qiming-native-control-border: rgb(210 220 238 / 92%);
+  --qiming-native-dock-bg: rgb(255 255 255 / 96%);
+  --qiming-native-dock-border: rgb(226 232 240 / 90%);
+  --qiming-native-dock-shadow: 0 -10px 26px rgb(15 23 42 / 8%);
 }
 
 html.ua-mobile {
@@ -54,7 +68,12 @@ html.ua-mobile body {
 html.qiming-native-webview {
   --pure-safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --pure-safe-area-top: env(safe-area-inset-top, 0px);
+  --qiming-native-vh: 100dvh;
+  --qiming-native-vw: 100vw;
   --pure-mobile-tab-height: calc(58px + var(--pure-safe-area-bottom));
+  --pure-mobile-content-bottom-gap: calc(
+    var(--pure-mobile-tab-height) + 96px
+  );
   --pure-main-content-margin: 10px 10px 0;
 }
 
@@ -63,11 +82,378 @@ html.qiming-native-webview body,
 html.qiming-native-webview #app {
   width: 100%;
   min-width: 0;
+  height: var(--qiming-native-vh, 100dvh);
+  min-height: 100vh;
   min-height: 100dvh;
-  overflow-x: hidden;
-  background: #f7f8fc;
+  min-height: var(--qiming-native-vh, 100dvh);
+  color: var(--qiming-native-text-primary);
+  background: var(--qiming-native-page-bg);
   overscroll-behavior: contain;
   -webkit-tap-highlight-color: transparent;
+}
+
+html.qiming-native-webview.dark {
+  --qiming-native-page-bg: #020409;
+  --qiming-native-surface-bg: #111827;
+  --qiming-native-surface-soft-bg: #0b1220;
+  --qiming-native-text-primary: #f8fafc;
+  --qiming-native-text-regular: #d4d4d8;
+  --qiming-native-text-secondary: #94a3b8;
+  --qiming-native-border-color: rgb(148 163 184 / 20%);
+  --qiming-native-navbar-bg: rgb(7 12 24 / 92%);
+  --qiming-native-navbar-text: #eaf2ff;
+  --qiming-native-control-bg: rgb(15 23 42 / 86%);
+  --qiming-native-control-border: rgb(148 163 184 / 22%);
+  --qiming-native-dock-bg: rgb(7 12 24 / 94%);
+  --qiming-native-dock-border: rgb(148 163 184 / 20%);
+  --qiming-native-dock-shadow: 0 -12px 30px rgb(0 0 0 / 36%);
+}
+
+html.qiming-native-webview.dark body,
+html.qiming-native-webview.dark #app,
+html.qiming-native-webview.dark .app-wrapper,
+html.qiming-native-webview.dark .main-container,
+html.qiming-native-webview.dark .app-main,
+html.qiming-native-webview.dark .app-main-nofixed-header,
+html.qiming-native-webview.dark .main-content,
+html.qiming-native-webview.dark .el-scrollbar__wrap {
+  color: var(--qiming-native-text-primary);
+  background: var(--qiming-native-page-bg);
+}
+
+html.qiming-native-webview.dark .main-content [class*="bg-white"],
+html.qiming-native-webview.dark .el-card,
+html.qiming-native-webview.dark .el-dialog,
+html.qiming-native-webview.dark .el-drawer,
+html.qiming-native-webview.dark .el-popover,
+html.qiming-native-webview.dark .el-table,
+html.qiming-native-webview.dark .el-table__inner-wrapper,
+html.qiming-native-webview.dark .el-table tr,
+html.qiming-native-webview.dark .el-table th.el-table__cell,
+html.qiming-native-webview.dark .el-table td.el-table__cell,
+html.qiming-native-webview.dark .pure-table,
+html.qiming-native-webview.dark .vxe-table {
+  color: var(--qiming-native-text-regular);
+  background-color: var(--qiming-native-surface-bg) !important;
+  border-color: var(--qiming-native-border-color) !important;
+}
+
+html.qiming-native-webview.dark .main-content [class*="border-gray-"],
+html.qiming-native-webview.dark .main-content [class*="border-slate-"],
+html.qiming-native-webview.dark .main-content [class*="border-white"] {
+  border-color: var(--qiming-native-border-color) !important;
+}
+
+html.qiming-native-webview.dark .el-input__wrapper,
+html.qiming-native-webview.dark .el-textarea__inner,
+html.qiming-native-webview.dark .el-select__wrapper,
+html.qiming-native-webview.dark .el-date-editor,
+html.qiming-native-webview.dark .el-button:not(.el-button--primary):not(.is-link):not(.is-text),
+html.qiming-native-webview.dark .analysis-sort-box {
+  color: var(--qiming-native-text-regular);
+  background: var(--qiming-native-surface-soft-bg) !important;
+  border-color: var(--qiming-native-border-color) !important;
+  box-shadow: 0 0 0 1px var(--qiming-native-border-color) inset !important;
+}
+
+html.qiming-native-webview.dark .analysis-sort-box .el-radio-button__inner {
+  color: var(--qiming-native-text-regular) !important;
+  background: rgb(15 23 42 / 88%) !important;
+  border-color: rgb(148 163 184 / 30%) !important;
+}
+
+html.qiming-native-webview.dark .analysis-sort-box .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  color: #f8fafc !important;
+  background: #7fa2f7 !important;
+  border-color: #7fa2f7 !important;
+  box-shadow: -1px 0 0 0 #7fa2f7 !important;
+}
+
+html.qiming-native-webview.dark .el-input__inner,
+html.qiming-native-webview.dark .el-textarea__inner,
+html.qiming-native-webview.dark .el-select__placeholder,
+html.qiming-native-webview.dark .el-table,
+html.qiming-native-webview.dark .el-form-item__label,
+html.qiming-native-webview.dark .el-descriptions__label,
+html.qiming-native-webview.dark .el-descriptions__content {
+  color: var(--qiming-native-text-regular);
+}
+
+html.qiming-native-webview.dark .el-input__inner::placeholder,
+html.qiming-native-webview.dark .el-textarea__inner::placeholder {
+  color: var(--qiming-native-text-secondary);
+}
+
+html.qiming-native-webview.dark .welcome-header,
+html.qiming-native-webview.dark .chart-card,
+html.qiming-native-webview.dark .mobile-user-card,
+html.qiming-native-webview.dark .ai-app-root,
+html.qiming-native-webview.dark .ai-app-left-rail,
+html.qiming-native-webview.dark .ai-chat-card,
+html.qiming-native-webview.dark .quick-chat-box,
+html.qiming-native-webview.dark .ai-chat-welcome-human,
+html.qiming-native-webview.dark .virtual-human-panel,
+html.qiming-native-webview.dark .ai-human-actions {
+  color: var(--qiming-native-text-primary) !important;
+  background: var(--qiming-native-surface-bg) !important;
+  background-color: var(--qiming-native-surface-bg) !important;
+  border-color: var(--qiming-native-border-color) !important;
+}
+
+html.qiming-native-webview.dark .welcome-header h1,
+html.qiming-native-webview.dark .welcome-header p,
+html.qiming-native-webview.dark .chart-card .el-card__header .text-lg,
+html.qiming-native-webview.dark .main-content h1,
+html.qiming-native-webview.dark .main-content h2,
+html.qiming-native-webview.dark .main-content h3,
+html.qiming-native-webview.dark .main-content h4,
+html.qiming-native-webview.dark .main-content h5,
+html.qiming-native-webview.dark .main-content h6,
+html.qiming-native-webview.dark .main-content [class*="title"],
+html.qiming-native-webview.dark .main-content [class*="Title"],
+html.qiming-native-webview.dark .main-content [class*="heading"],
+html.qiming-native-webview.dark .main-content [class*="Heading"],
+html.qiming-native-webview.dark .main-content .el-card__header,
+html.qiming-native-webview.dark .main-content .el-descriptions__title,
+html.qiming-native-webview.dark .main-content .el-statistic__content,
+html.qiming-native-webview.dark .analysis-section-title,
+html.qiming-native-webview.dark .analysis-panel-title,
+html.qiming-native-webview.dark .efficient-filter-title,
+html.qiming-native-webview.dark .page-title,
+html.qiming-native-webview.dark .card-title,
+html.qiming-native-webview.dark .section-title,
+html.qiming-native-webview.dark .mobile-user-card,
+html.qiming-native-webview.dark .mobile-user-card .mobile-user-name,
+html.qiming-native-webview.dark .ai-app-root h1,
+html.qiming-native-webview.dark .ai-app-root h2,
+html.qiming-native-webview.dark .ai-app-root h3,
+html.qiming-native-webview.dark .ai-app-root .font-bold {
+  color: var(--qiming-native-text-primary) !important;
+  -webkit-text-fill-color: var(--qiming-native-text-primary) !important;
+}
+
+html.qiming-native-webview.dark .welcome-header p,
+html.qiming-native-webview.dark .mobile-user-card .mobile-user-meta,
+html.qiming-native-webview.dark .mobile-user-card .label,
+html.qiming-native-webview.dark .ai-app-root .text-gray-400,
+html.qiming-native-webview.dark .ai-app-root .text-gray-500,
+html.qiming-native-webview.dark .ai-app-root .text-slate-500,
+html.qiming-native-webview.dark .ai-app-root .text-slate-600 {
+  color: var(--qiming-native-text-secondary) !important;
+  -webkit-text-fill-color: var(--qiming-native-text-secondary) !important;
+}
+
+html.qiming-native-webview.dark .main-content .text-slate-800,
+html.qiming-native-webview.dark .main-content .text-slate-900,
+html.qiming-native-webview.dark .main-content .text-gray-700,
+html.qiming-native-webview.dark .main-content .text-gray-800,
+html.qiming-native-webview.dark .main-content .text-gray-900,
+html.qiming-native-webview.dark .main-content .text-zinc-700,
+html.qiming-native-webview.dark .main-content .text-zinc-800,
+html.qiming-native-webview.dark .main-content .text-zinc-900,
+html.qiming-native-webview.dark .main-content .text-neutral-700,
+html.qiming-native-webview.dark .main-content .text-neutral-800,
+html.qiming-native-webview.dark .main-content .text-neutral-900,
+html.qiming-native-webview.dark .main-content [class*="text-slate-7"],
+html.qiming-native-webview.dark .main-content [class*="text-slate-8"],
+html.qiming-native-webview.dark .main-content [class*="text-slate-9"],
+html.qiming-native-webview.dark .main-content [class*="text-gray-7"],
+html.qiming-native-webview.dark .main-content [class*="text-gray-8"],
+html.qiming-native-webview.dark .main-content [class*="text-gray-9"],
+html.qiming-native-webview.dark .main-content [class*="text-zinc-8"],
+html.qiming-native-webview.dark .main-content [class*="text-zinc-9"],
+html.qiming-native-webview.dark .main-content [class*="text-neutral-8"],
+html.qiming-native-webview.dark .main-content [class*="text-neutral-9"] {
+  color: var(--qiming-native-text-primary) !important;
+  -webkit-text-fill-color: var(--qiming-native-text-primary) !important;
+}
+
+html.qiming-native-webview.dark .chart-card .el-card__header,
+html.qiming-native-webview.dark .mobile-user-card__body,
+html.qiming-native-webview.dark .ai-chat-welcome-actions,
+html.qiming-native-webview.dark .virtual-human-panel > div:first-child {
+  border-color: var(--qiming-native-border-color) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-welcome,
+html.qiming-native-webview.dark .ai-chat-scene {
+  background:
+    radial-gradient(circle at 18% 0%, rgb(94 127 248 / 16%), transparent 38%),
+    var(--qiming-native-page-bg) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-welcome-actions {
+  background: rgb(2 6 23 / 74%) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-welcome-actions button {
+  color: #c7d2fe !important;
+  background: rgb(30 41 59 / 82%) !important;
+  border-color: rgb(129 140 248 / 26%) !important;
+}
+
+html.qiming-native-webview.dark .quick-chat-box {
+  color: var(--qiming-native-text-primary) !important;
+  background: rgb(15 23 42 / 94%) !important;
+  border-color: rgb(148 163 184 / 24%) !important;
+  box-shadow:
+    0 18px 38px rgb(0 0 0 / 34%),
+    0 0 0 1px rgb(148 163 184 / 10%) inset !important;
+}
+
+html.qiming-native-webview.dark .quick-chat-box > div:last-child {
+  color: var(--qiming-native-text-regular) !important;
+  background: rgb(15 23 42 / 88%) !important;
+  border-color: rgb(148 163 184 / 20%) !important;
+}
+
+html.qiming-native-webview.dark .quick-chat-box .el-textarea__inner {
+  color: var(--qiming-native-text-primary) !important;
+  -webkit-text-fill-color: var(--qiming-native-text-primary) !important;
+  caret-color: #93c5fd;
+  background: transparent !important;
+}
+
+html.qiming-native-webview.dark .quick-chat-box .el-textarea__inner::placeholder {
+  color: var(--qiming-native-text-secondary) !important;
+  -webkit-text-fill-color: var(--qiming-native-text-secondary) !important;
+}
+
+html.qiming-native-webview.dark .quick-chat-box > div:last-child span,
+html.qiming-native-webview.dark .quick-chat-box > div:last-child .el-icon {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+}
+
+html.qiming-native-webview.dark .quick-chat-box > div:last-child > div:first-child > .el-dropdown:first-child span {
+  color: #bfdbfe !important;
+  -webkit-text-fill-color: #bfdbfe !important;
+  background: rgb(59 130 246 / 16%) !important;
+  border-color: rgb(96 165 250 / 24%) !important;
+}
+
+html.qiming-native-webview.dark .quick-chat-box > div:last-child > div:first-child > span,
+html.qiming-native-webview.dark .quick-chat-box > div:last-child > div:first-child > .el-dropdown:not(:first-child) span,
+html.qiming-native-webview.dark .quick-chat-box > div:last-child > div:last-child > span {
+  color: #dbeafe !important;
+  -webkit-text-fill-color: #dbeafe !important;
+  background: rgb(30 41 59 / 78%) !important;
+  border: 1px solid rgb(148 163 184 / 16%) !important;
+}
+
+html.qiming-native-webview.ua-mobile.dark .quick-chat-box > div:last-child > div:last-child > span {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px !important;
+  border-radius: 14px !important;
+  outline: none !important;
+}
+
+html.qiming-native-webview.dark .quick-chat-box > div:last-child button:disabled {
+  color: rgb(148 163 184 / 62%) !important;
+  background: rgb(30 41 59 / 72%) !important;
+  border-color: rgb(148 163 184 / 16%) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__composer-card {
+  color: var(--qiming-native-text-primary) !important;
+  background: rgb(15 23 42 / 94%) !important;
+  border-color: rgb(148 163 184 / 24%) !important;
+  box-shadow:
+    0 18px 38px rgb(0 0 0 / 34%),
+    0 0 0 1px rgb(148 163 184 / 10%) inset !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__input-row,
+html.qiming-native-webview.dark .ai-chat-module__toolbar {
+  color: var(--qiming-native-text-regular) !important;
+  background: rgb(15 23 42 / 88%) !important;
+  border-color: rgb(148 163 184 / 20%) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__toolbar {
+  box-shadow: 0 -1px 0 rgb(148 163 184 / 14%) inset !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__composer .el-textarea__inner {
+  color: var(--qiming-native-text-primary) !important;
+  -webkit-text-fill-color: var(--qiming-native-text-primary) !important;
+  caret-color: #93c5fd;
+  background: transparent !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__composer .el-textarea__inner::placeholder {
+  color: var(--qiming-native-text-secondary) !important;
+  -webkit-text-fill-color: var(--qiming-native-text-secondary) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__toolbar span,
+html.qiming-native-webview.dark .ai-chat-module__toolbar .el-icon {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__toolbar-main > .el-dropdown:first-child span {
+  color: #bfdbfe !important;
+  -webkit-text-fill-color: #bfdbfe !important;
+  background: rgb(59 130 246 / 16%) !important;
+  border-color: rgb(96 165 250 / 24%) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__toolbar-main > .el-dropdown:not(:first-child) span,
+html.qiming-native-webview.dark .ai-chat-module__toolbar-main > span,
+html.qiming-native-webview.dark .ai-chat-module__toolbar > .el-dropdown span {
+  color: #dbeafe !important;
+  -webkit-text-fill-color: #dbeafe !important;
+  background: rgb(30 41 59 / 78%) !important;
+  border: 1px solid rgb(148 163 184 / 16%) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__composer .el-button:not(.el-button--primary) {
+  color: #cbd5e1 !important;
+  background: rgb(30 41 59 / 82%) !important;
+  border-color: rgb(148 163 184 / 20%) !important;
+}
+
+html.qiming-native-webview.dark .ai-chat-module__composer .el-button.is-disabled,
+html.qiming-native-webview.dark .ai-chat-module__composer .el-button.is-disabled:hover {
+  color: rgb(148 163 184 / 72%) !important;
+  background: rgb(30 41 59 / 68%) !important;
+  border-color: rgb(148 163 184 / 14%) !important;
+  opacity: 1 !important;
+}
+
+html.qiming-native-webview.dark .virtual-human-panel > div:first-child {
+  color: var(--qiming-native-text-primary) !important;
+  background: rgb(15 23 42 / 94%) !important;
+  border-color: rgb(148 163 184 / 20%) !important;
+}
+
+html.qiming-native-webview.dark .virtual-human-panel > div:first-child span:nth-child(2) {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+html.qiming-native-webview.dark .virtual-human-panel > div:first-child span:nth-child(3) {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+}
+
+html.qiming-native-webview.dark .virtual-human-panel > div:first-child .el-button {
+  color: #cbd5e1 !important;
+}
+
+html.qiming-native-webview {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+html.qiming-native-webview body,
+html.qiming-native-webview #app {
+  overflow: hidden;
 }
 
 html.qiming-native-webview .main-content {
@@ -77,6 +463,187 @@ html.qiming-native-webview .main-content {
 html.qiming-native-webview .nav-mobile-container {
   height: calc(58px + var(--pure-safe-area-bottom));
   padding-bottom: var(--pure-safe-area-bottom);
+}
+
+html.qiming-native-webview.ua-mobile .main-container > .el-scrollbar > .el-scrollbar__wrap,
+html.qiming-native-webview.ua-mobile .app-main > .el-scrollbar > .el-scrollbar__wrap {
+  padding-bottom: var(--pure-mobile-content-bottom-gap);
+  scroll-padding-top: calc(86px + var(--pure-safe-area-top, 0px));
+  box-sizing: border-box;
+}
+
+html.qiming-native-webview.ua-mobile,
+html.qiming-native-webview.ua-mobile body {
+  overflow-x: hidden;
+}
+
+html.qiming-native-webview.ua-mobile .app-wrapper,
+html.qiming-native-webview.ua-mobile .main-container,
+html.qiming-native-webview.ua-mobile .app-main,
+html.qiming-native-webview.ua-mobile .app-main-nofixed-header {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+html.qiming-native-webview.ua-mobile .main-content {
+  max-width: calc(100vw - 20px);
+  box-sizing: border-box;
+  padding-bottom: calc(var(--pure-mobile-tab-height) + 42px);
+  padding-top: 8px;
+  text-rendering: geometricprecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html.qiming-native-webview.ua-mobile .fixed-header,
+html.qiming-native-webview.ua-mobile .navbar {
+  opacity: 1 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html.qiming-native-webview.ua-mobile.dark .fixed-header,
+html.qiming-native-webview.ua-mobile.dark .navbar {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html.qiming-native-webview.ua-mobile [id],
+html.qiming-native-webview.ua-mobile .chart-card,
+html.qiming-native-webview.ua-mobile .analysis-panel {
+  scroll-margin-top: calc(86px + var(--pure-safe-area-top, 0px));
+}
+
+html.qiming-native-webview.ua-mobile .main-content > :first-child {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+html.qiming-native-webview.ua-mobile .el-table,
+html.qiming-native-webview.ua-mobile .el-table__inner-wrapper,
+html.qiming-native-webview.ua-mobile .el-card,
+html.qiming-native-webview.ua-mobile .pure-table,
+html.qiming-native-webview.ua-mobile .vxe-table {
+  max-width: 100%;
+}
+
+html.qiming-native-webview.ua-mobile .el-table__body-wrapper,
+html.qiming-native-webview.ua-mobile .el-scrollbar__wrap {
+  -webkit-overflow-scrolling: touch;
+}
+
+html.qiming-native-webview.ua-mobile,
+html.qiming-native-webview.ua-mobile body,
+html.qiming-native-webview.ua-mobile #app,
+html.qiming-native-webview.ua-mobile .main-container,
+html.qiming-native-webview.ua-mobile .app-main,
+html.qiming-native-webview.ua-mobile .app-main-nofixed-header,
+html.qiming-native-webview.ua-mobile .el-scrollbar__wrap {
+  scrollbar-width: none;
+}
+
+html.qiming-native-webview.ua-mobile .main-container::-webkit-scrollbar,
+html.qiming-native-webview.ua-mobile .app-main::-webkit-scrollbar,
+html.qiming-native-webview.ua-mobile .app-main-nofixed-header::-webkit-scrollbar,
+html.qiming-native-webview.ua-mobile .el-scrollbar__wrap::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+html.qiming-native-webview.ua-mobile .el-scrollbar__bar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+html.qiming-native-webview.ua-mobile .bg-clip-text.text-transparent,
+html.qiming-native-webview.ua-mobile .text-glow {
+  color: #2563eb !important;
+  text-shadow: none !important;
+  background: none !important;
+  -webkit-text-fill-color: #2563eb !important;
+}
+
+html.qiming-native-webview.ua-mobile .gradient-text-animate {
+  color: #b56ac7 !important;
+  text-shadow: none !important;
+  background: none !important;
+  -webkit-text-fill-color: #b56ac7 !important;
+}
+
+html.qiming-native-webview.ua-mobile .page-title,
+html.qiming-native-webview.ua-mobile .card-title,
+html.qiming-native-webview.ua-mobile .welcome-title,
+html.qiming-native-webview.ua-mobile .paper-title,
+html.qiming-native-webview.ua-mobile .section-title,
+html.qiming-native-webview.ua-mobile .efficient-filter-title,
+html.qiming-native-webview.ua-mobile .analysis-panel-title,
+html.qiming-native-webview.ua-mobile .analysis-section-title {
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  will-change: auto !important;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-stroke: 0 transparent;
+}
+
+html.qiming-native-webview.ua-mobile .el-card {
+  border-radius: 16px;
+}
+
+html.qiming-native-webview.ua-mobile .layout-footer {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  html.qiming-native-webview,
+  html.qiming-native-webview body {
+    overflow-x: hidden;
+  }
+
+  html.qiming-native-webview .app-wrapper,
+  html.qiming-native-webview .main-container,
+  html.qiming-native-webview .app-main,
+  html.qiming-native-webview .app-main-nofixed-header {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  html.qiming-native-webview .main-content {
+    max-width: calc(100vw - 20px);
+    box-sizing: border-box;
+  }
+
+  html.qiming-native-webview .main-content > :first-child {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  html.qiming-native-webview .el-table,
+  html.qiming-native-webview .el-table__inner-wrapper,
+  html.qiming-native-webview .el-card,
+  html.qiming-native-webview .pure-table,
+  html.qiming-native-webview .vxe-table {
+    max-width: 100%;
+  }
+
+  html.qiming-native-webview .el-table__body-wrapper,
+  html.qiming-native-webview .el-scrollbar__wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html.qiming-native-webview .el-card {
+    border-radius: 16px;
+  }
 }
 
 /* 灰色模式 */

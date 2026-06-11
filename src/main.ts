@@ -1,3 +1,4 @@
+import "./polyfills/nativeCompat";
 import App from "./App.vue";
 import router from "./router";
 import { setupStore } from "@/store";
@@ -25,6 +26,254 @@ import "./style/tailwind.css";
 // 导入字体图标
 import "./assets/iconfont/iconfont.js";
 import "./assets/iconfont/iconfont.css";
+
+function readNativeQueryParams() {
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?") + 1)
+    : "";
+  const hashParams = new URLSearchParams(hashQuery);
+  const queryNative =
+    searchParams.get("qimingNative") === "1" ||
+    hashParams.get("qimingNative") === "1";
+  const storedNative =
+    sessionStorage.getItem("qimingNativeWebView") === "1" ||
+    localStorage.getItem("qimingNativeWebView") === "1";
+  const nativeStatusTop =
+    hashParams.get("nativeStatusTop") ||
+    searchParams.get("nativeStatusTop") ||
+    sessionStorage.getItem("qimingNativeStatusTop") ||
+    localStorage.getItem("qimingNativeStatusTop") ||
+    "";
+
+  if (queryNative) {
+    sessionStorage.setItem("qimingNativeWebView", "1");
+    localStorage.setItem("qimingNativeWebView", "1");
+  }
+  if (nativeStatusTop) {
+    sessionStorage.setItem("qimingNativeStatusTop", nativeStatusTop);
+    localStorage.setItem("qimingNativeStatusTop", nativeStatusTop);
+  }
+
+  return {
+    isNative: queryNative || storedNative,
+    nativeStatusTop
+  };
+}
+
+function applyNativeWebViewRuntime() {
+  if (typeof window === "undefined") return;
+  const { isNative, nativeStatusTop } = readNativeQueryParams();
+  if (!isNative) return;
+
+  const root = document.documentElement;
+  root.classList.add("qiming-native-webview");
+  root.dataset.qimingNative = "true";
+
+  const setViewportVars = () => {
+    const viewportHeight =
+      window.visualViewport?.height ||
+      window.innerHeight ||
+      root.clientHeight ||
+      0;
+    const viewportWidth =
+      window.visualViewport?.width || window.innerWidth || root.clientWidth || 0;
+
+    if (viewportHeight > 0) {
+      root.style.setProperty("--qiming-native-vh", `${viewportHeight}px`);
+    }
+    if (viewportWidth > 0) {
+      root.style.setProperty("--qiming-native-vw", `${viewportWidth}px`);
+    }
+  };
+
+  setViewportVars();
+  window.addEventListener("resize", setViewportVars, { passive: true });
+  window.visualViewport?.addEventListener("resize", setViewportVars, {
+    passive: true
+  });
+
+  const statusTop = Number(nativeStatusTop);
+  if (Number.isFinite(statusTop) && statusTop > 0) {
+    const statusTopPx = `${statusTop}px`;
+    root.style.setProperty("--pure-safe-area-top", statusTopPx);
+    root.style.setProperty("--qiming-native-safe-top", statusTopPx);
+    root.style.setProperty("--qiming-native-status-top", statusTopPx);
+  }
+
+  const syncStatusBar = () => {
+    try {
+      const plusApi = (globalThis as any).plus;
+      const isDark =
+        root.classList.contains("dark") ||
+        document.body?.classList.contains("dark");
+      plusApi?.navigator?.setStatusBarStyle?.(isDark ? "light" : "dark");
+      plusApi?.navigator?.setStatusBarBackground?.("rgba(0,0,0,0)");
+    } catch {
+      // The H5 preview and some WebView runtimes do not expose plus.navigator.
+    }
+  };
+
+  syncStatusBar();
+  document.addEventListener("plusready", syncStatusBar, { once: true });
+  new MutationObserver(syncStatusBar).observe(root, {
+    attributes: true,
+    attributeFilter: ["class"]
+  });
+
+  const notifyNativeShell = (type: "bridge-ready" | "loaded") => {
+    const payload = {
+      source: "qiming-h5",
+      type,
+      href: window.location.href,
+      title: document.title,
+      online: navigator.onLine,
+      timestamp: Date.now()
+    };
+    try {
+      (window as any).uni?.postMessage?.({ data: payload });
+    } catch {
+      // uni.webView bridge is not injected in the desktop H5 preview.
+    }
+    try {
+      window.parent?.postMessage(payload, "*");
+    } catch {
+      // Cross-origin parent access can be unavailable in some WebViews.
+    }
+  };
+
+  const getSingleQueryValue = (value: unknown) =>
+    Array.isArray(value) ? value[0] : value;
+
+  const buildNativeBackQuery = (
+    extra: Record<string, string | number> = {},
+    omitKeys: string[] = []
+  ) => {
+    const currentQuery = router.currentRoute.value.query;
+    const query: Record<string, string | number> = {};
+    Object.entries(currentQuery).forEach(([key, value]) => {
+      const singleValue = getSingleQueryValue(value);
+      if (
+        singleValue !== undefined &&
+        singleValue !== null &&
+        typeof singleValue !== "object"
+      ) {
+        query[key] = String(singleValue);
+      }
+    });
+    omitKeys.forEach(key => {
+      delete query[key];
+    });
+    return {
+      ...query,
+      qimingNative: "1",
+      ...extra
+    };
+  };
+
+  const stringifyNativeBackQuery = (query: Record<string, string | number>) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.set(key, String(value));
+      }
+    });
+    return params.toString();
+  };
+
+  const navigateNativeBack = (
+    path: string,
+    query: Record<string, string | number>
+  ) => {
+    const queryString = stringifyNativeBackQuery(query);
+    const targetHash = `#${path}${queryString ? `?${queryString}` : ""}`;
+    const ensureHashNavigation = () => {
+      if (window.location.hash === targetHash) return;
+      window.location.hash = targetHash;
+    };
+    router
+      .replace({ path, query })
+      .catch(() => {})
+      .finally(() => {
+        window.setTimeout(ensureHashNavigation, 80);
+        window.setTimeout(ensureHashNavigation, 360);
+      });
+  };
+
+  const normalizeNativeRoleRoute = () => {
+    const currentRoute = router.currentRoute.value;
+    const role = String(
+      getSingleQueryValue(currentRoute.query.demoRole) ||
+        localStorage.getItem("qiming-demo-role") ||
+        ""
+    );
+    const isStudentRole = !role || role === "student";
+    if (isStudentRole && currentRoute.path === "/home") {
+      navigateNativeBack(
+        "/account",
+        buildNativeBackQuery({ menu: "home" }, ["mode"])
+      );
+    }
+  };
+
+  router.afterEach(() => {
+    window.setTimeout(normalizeNativeRoleRoute, 40);
+  });
+  window.setTimeout(normalizeNativeRoleRoute, 300);
+
+  (window as any).__qimingNativeBack = () => {
+    const currentRoute = router.currentRoute.value;
+    const currentPath = currentRoute.path;
+    const currentMenu = String(getSingleQueryValue(currentRoute.query.menu) || "");
+    const role = String(
+      getSingleQueryValue(currentRoute.query.demoRole) ||
+        localStorage.getItem("qiming-demo-role") ||
+        ""
+    );
+
+    if (currentPath === "/account") {
+      if (currentMenu && currentMenu !== "home") {
+        navigateNativeBack(
+          "/account",
+          buildNativeBackQuery({ menu: "home" }, ["mode"])
+        );
+        return "handled";
+      }
+      return "root";
+    }
+
+    if (currentPath === "/account/ai-app" || currentPath.startsWith("/course/")) {
+      navigateNativeBack(
+        "/account",
+        buildNativeBackQuery({ menu: "home" }, ["mode"])
+      );
+      return "handled";
+    }
+
+    if (currentPath !== "/home") {
+      const rootPath =
+        role === "teacher" || role === "admin" ? "/welcome/index" : "/account";
+      const rootQuery =
+        rootPath === "/account"
+          ? buildNativeBackQuery({ menu: "home" }, ["mode"])
+          : buildNativeBackQuery({}, ["menu", "mode"]);
+      navigateNativeBack(rootPath, rootQuery);
+      return "handled";
+    }
+
+    return "root";
+  };
+
+  document.addEventListener("UniAppJSBridgeReady", () => {
+    notifyNativeShell("bridge-ready");
+  });
+  window.addEventListener("load", () => {
+    notifyNativeShell("loaded");
+  });
+  setTimeout(() => notifyNativeShell("loaded"), 1200);
+}
+
+applyNativeWebViewRuntime();
 
 const app = createApp(App);
 

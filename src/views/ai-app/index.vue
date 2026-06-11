@@ -48,9 +48,14 @@ import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
 import { useUserStore } from "@/store/modules/user";
 import { type DataInfo, userKey } from "@/utils/auth";
 import {
+  getResponsiveLayoutTheme,
+  getSavedCourseTheme
+} from "@/utils/courseTheme";
+import {
+  createAssistantConversation,
   getAssistantBootstrap,
+  getAssistantConversation,
   getAssistantConversationGroups,
-  getAssistantConversationMessages,
   streamAssistantChat,
   type AssistantBootstrapCourse,
   type AssistantBootstrapResp,
@@ -95,6 +100,8 @@ type ChatMessageView = {
   type: "system" | "user";
   content: string;
   resources?: AssistantChatResource[];
+  metadata?: Record<string, any>;
+  profileEvent?: Record<string, any>;
   streaming?: boolean;
   error?: boolean;
 };
@@ -170,13 +177,7 @@ const isStaffMode = computed(() => apiMode.value !== "student");
 
 const isNewTab = ref(false);
 
-const layoutStorage = storageLocal().getItem("responsive-layout") as
-  | { darkMode?: boolean }
-  | undefined;
-const currentTheme = ref(
-  (storageLocal().getItem("course_theme") as string) ||
-    (layoutStorage?.darkMode ? "dark" : "light")
-);
+const currentTheme = ref(getSavedCourseTheme(getResponsiveLayoutTheme()));
 const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
 const resolveRailFromPath = (path: string) => {
@@ -209,6 +210,9 @@ const sidebarCollapsed = ref(false);
 const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
+const shouldShowFloatingHuman = computed(
+  () => !isMobileViewport.value || Boolean(activeCourse.value)
+);
 const humanPanelStyle = computed(() => ({
   width: humanCollapsed.value
     ? "64px"
@@ -474,9 +478,18 @@ const handleAssistantStreamEvent = (
   assistantMessageId: string | number
 ) => {
   const hasBackendHumanState = applyDigitalHumanDirective(event);
+  const directiveText =
+    event.digital_human?.speech_text || event.digital_human?.highlight_text || "";
 
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
+  }
+
+  if (event.event === "digital_human.directive") {
+    if (event.digital_human?.speak && directiveText) {
+      speakDigitalHumans(directiveText);
+    }
+    return;
   }
 
   if (event.event === "conversation.created") {
@@ -500,16 +513,17 @@ const handleAssistantStreamEvent = (
         messages.value.find(item => item.id === assistantMessageId)?.content ||
         "学习助手已完成回复。",
       resources: event.resources || [],
+      profileEvent: event.profile_event,
       streaming: false
     });
     agentTrace.value = event.trace || [];
     generatedResources.value = event.resources || [];
+    if (event.profile_event) {
+      ElMessage.success("学习画像已同步更新");
+    }
     if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
     speakDigitalHumans(
-      event.digital_human?.speech_text ||
-        content ||
-        event.digital_human?.highlight_text ||
-        ""
+      directiveText || content || ""
     );
     isChatStreaming.value = false;
     window.setTimeout(() => {
@@ -745,19 +759,24 @@ const loadConversationGroups = async () => {
 const loadConversationMessages = async (conversation: ConversationView) => {
   if (!conversation.conversation_id) return;
   try {
-    const { data } = await getAssistantConversationMessages(
+    const { data } = await getAssistantConversation(
       conversation.conversation_id
     );
     activeConversationId.value = conversation.conversation_id;
+    const detailConversation = data.conversation || conversation;
+    if (detailConversation.metadata) conversation.metadata = detailConversation.metadata;
     const course =
-      myCourses.value.find(item => item.id === conversation.course_id) ||
+      myCourses.value.find(
+        item => item.id === (detailConversation.course_id || conversation.course_id)
+      ) ||
       myCourses.value.find(item => item.name === conversation.course);
     if (course) activeCourse.value = course;
-    messages.value = (data.list || []).map(item => ({
+    messages.value = (data.messages || data.list || []).map(item => ({
       id: item.message_id,
       role: item.role === "user" ? currentUserRoleLabel.value : "智能助教",
       type: item.role === "user" ? "user" : "system",
-      content: item.content_text || ""
+      content: item.content_text || "",
+      metadata: item.metadata
     }));
     if (!messages.value.length) resetChatGreeting();
   } catch (error: any) {
@@ -809,17 +828,55 @@ const handleQuickInteraction = (text: string) => {
   speakDigitalHumans(text);
 };
 
-const handleNewChat = (payload: { course: string }) => {
+const handleNewChat = async (payload: { course: string }) => {
   const course = myCourses.value.find(item => item.name === payload.course);
   if (course) activeCourse.value = course;
-  activeConversationId.value = "";
   resetChatGreeting();
-  if (quickMessage.value.trim()) {
+  try {
+    const { data } = await createAssistantConversation({
+      course_id: course?.id || selectedCourseId.value,
+      target_student_id: selectedTargetStudentId.value,
+      title: payload.course ? `${payload.course} 学习辅导` : "学习辅导",
+      metadata: {
+        ui_entry: "ai_app_sidebar",
+        selected_agent: selectedAgentKey.value,
+        selected_model: selectedModelKey.value,
+        thinking_mode: thinkingModeKey.value,
+        skill_keys: selectedSkillKeys.value
+      }
+    });
+    const conversationId =
+      data.conversation?.conversation_id || data.conversation_id;
+    if (!conversationId) {
+      throw new Error("后端未返回会话 ID");
+    }
+    const conversation: AssistantConversationItem = data.conversation || {
+      conversation_id: conversationId,
+      title: data.title || (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
+      message_count: 0,
+      course_id: course?.id || selectedCourseId.value,
+      target_student_id: selectedTargetStudentId.value
+    };
+    activeConversationId.value = conversation.conversation_id;
+    conversations.value = [
+      normalizeConversation(conversation, course?.name),
+      ...conversations.value.filter(
+        item => item.conversation_id !== conversation.conversation_id
+      )
+    ];
+  } catch (error: any) {
+    console.error("[AiApp] 创建学习助手会话失败:", error);
+    ElMessage.error(error?.message || "创建会话失败");
+    return;
+  }
+
+  const pendingMessage = quickMessage.value.trim();
+  if (pendingMessage) {
     // 切换到聊天栏目，确保数字人状态与课程上下文同步。
     activeRail.value = "chat";
     // 微延时等待课程上下文切换完成。
     setTimeout(() => {
-      handleSendMessage(quickMessage.value);
+      handleSendMessage(pendingMessage);
       quickMessage.value = "";
     }, 100);
   }
@@ -828,10 +885,7 @@ const handleNewChat = (payload: { course: string }) => {
 const syncHumanRenderState = () => {
   if (!virtualHumanRef.value) return;
   const shouldPause =
-    document.hidden ||
-    activeRail.value !== "chat" ||
-    humanCollapsed.value ||
-    isMobileViewport.value;
+    document.hidden || activeRail.value !== "chat" || humanCollapsed.value;
   if (shouldPause) {
     virtualHumanRef.value.pauseRender?.();
   } else {
@@ -843,15 +897,6 @@ watch([humanCollapsed, activeRail], () => {
   syncHumanRenderState();
 });
 
-const updateMobileViewportState = () => {
-  isMobileViewport.value = window.innerWidth <= 768;
-  if (isMobileViewport.value) {
-    sidebarCollapsed.value = true;
-    humanCollapsed.value = true;
-  }
-  syncHumanRenderState();
-};
-
 watch(selectedStudentId, () => {
   if (isBootstrapping.value || !assistantBootstrap.value || !isStaffMode.value)
     return;
@@ -861,6 +906,17 @@ watch(selectedStudentId, () => {
 });
 
 const handleVisibilityChange = () => {
+  syncHumanRenderState();
+};
+
+const updateMobileViewportState = () => {
+  isMobileViewport.value =
+    window.innerWidth <= 768 ||
+    document.documentElement.classList.contains("qiming-native-webview");
+  if (isMobileViewport.value) {
+    sidebarCollapsed.value = true;
+    humanCollapsed.value = false;
+  }
   syncHumanRenderState();
 };
 
@@ -909,10 +965,10 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- 收起态：竖向标识 -->
+        <!-- 收起态：桌面保留竖向标识，移动端仅保留独立按钮 -->
         <div
-          v-show="sidebarCollapsed"
-          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer"
+          v-show="sidebarCollapsed && !isMobileViewport"
+          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer collapsed-rail-label"
           @click="toggleSidebar"
         >
           <el-icon :size="14" class="rotate-90 mb-2"><FolderOpened /></el-icon>
@@ -926,6 +982,7 @@ onUnmounted(() => {
         <!-- 收起 / 展开 把手 -->
         <button
           class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+          :class="{ 'is-mobile-collapsed-trigger': sidebarCollapsed && isMobileViewport }"
           :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           @click="toggleSidebar"
         >
@@ -1012,7 +1069,7 @@ onUnmounted(() => {
             <!-- 数字人面板 -->
             <transition appear name="panel-reveal">
               <div
-                class="ai-app-human-panel flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-300 relative"
+                class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-300 relative"
                 :style="humanPanelStyle"
               >
                 <!-- 收起 / 展开 把手：挂在外层，避免被圆角容器裁切 -->
@@ -1542,6 +1599,7 @@ onUnmounted(() => {
     </div>
 
     <FloatingDigitalHuman2D
+      v-if="shouldShowFloatingHuman"
       ref="floatingHumanRef"
       :role-label="currentUserRoleLabel"
       :course-name="selectedCourseName"
@@ -1549,8 +1607,12 @@ onUnmounted(() => {
       anchor="appLeftBottom"
       anchor-selector=".ai-app-root"
       :left-zone-width="sidebarCollapsed ? 34 : 260"
-      :bottom-offset="isMobileViewport ? 92 : 82"
-      storage-key="ai-app-workspace-floating-digital-human-2d-left-bottom-v2"
+      :bottom-offset="isMobileViewport ? 24 : 82"
+      :storage-key="
+        isMobileViewport
+          ? 'ai-app-workspace-floating-digital-human-2d-mobile-status'
+          : 'ai-app-workspace-floating-digital-human-2d-left-bottom-v2'
+      "
     />
 
     <!-- 栈操作可视化预览弹窗 -->
@@ -1810,67 +1872,6 @@ onUnmounted(() => {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(94, 127, 248, 0);
-  }
-}
-
-@media (max-width: 768px) {
-  .ai-app-root {
-    height: 100dvh;
-    min-width: 0;
-    border-radius: 0;
-    overflow: hidden;
-  }
-
-  .ai-app-root > .flex-1 {
-    min-width: 0;
-  }
-
-  .ai-app-left-rail {
-    position: absolute;
-    top: 12px;
-    bottom: calc(92px + var(--pure-safe-area-bottom, 0px));
-    left: 10px;
-    z-index: 80;
-    width: min(292px, calc(100vw - 20px)) !important;
-    max-width: calc(100vw - 20px);
-    border: 1px solid rgba(226, 232, 240, 0.92);
-    border-radius: 22px;
-    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
-  }
-
-  .ai-app-left-rail.is-collapsed {
-    width: 42px !important;
-    max-width: 42px;
-    border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(94, 127, 248, 0.16);
-  }
-
-  .ai-app-left-rail.is-collapsed :deep(.ai-sidebar) {
-    padding: 0;
-  }
-
-  .ai-app-human-panel {
-    display: none !important;
-  }
-
-  main > div[class*="p-4"] {
-    padding: 10px 10px calc(78px + var(--pure-safe-area-bottom, 0px)) 54px;
-    gap: 10px;
-  }
-
-  main > div[class*="p-4"] > .flex-1 {
-    min-width: 0;
-    border-radius: 24px !important;
-  }
-
-  .gradient-text-animate {
-    font-size: clamp(26px, 8vw, 34px) !important;
-    line-height: 1.15;
-  }
-
-  :deep(.el-dialog) {
-    width: calc(100vw - 24px) !important;
-    max-width: calc(100vw - 24px) !important;
   }
 }
 </style>

@@ -754,18 +754,50 @@
     </div>
   </aside>
 
-  <script type="importmap">
+  <script>
+    window.__qimingVirtualPeopleErrors = [];
+    window.addEventListener('error', function (event) {
+      window.__qimingVirtualPeopleErrors.push({
+        type: 'error',
+        message: event.message || '',
+        source: event.filename || '',
+        line: event.lineno || 0,
+        column: event.colno || 0
+      });
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      var reason = event.reason || {};
+      window.__qimingVirtualPeopleErrors.push({
+        type: 'unhandledrejection',
+        message: reason.message || String(reason),
+        stack: reason.stack || ''
+      });
+    });
+    window.esmsInitOptions = {
+      shimMode: true,
+      nativePassthrough: false,
+      onerror: function (error) {
+        window.__qimingVirtualPeopleErrors.push({
+          type: 'es-module-shims',
+          message: error && error.message ? error.message : String(error),
+          stack: error && error.stack ? error.stack : ''
+        });
+      }
+    };
+  </script>
+  <script src="./es-module-shims.js"></script>
+  <script type="importmap-shim">
       {
         "imports": {
-          "three": "/node_modules/three/build/three.module.js",
-          "three/addons/": "/node_modules/three/examples/jsm/",
-          "@pixiv/three-vrm": "/node_modules/@pixiv/three-vrm/lib/three-vrm.module.js",
+          "three": "/virtual-people/vendor/three/build/three.module.js",
+          "three/addons/": "/virtual-people/vendor/three/examples/jsm/",
+          "@pixiv/three-vrm": "/virtual-people/vendor/pixiv/three-vrm/lib/three-vrm.module.js",
           "pinyin-pro": "/node_modules/pinyin-pro/dist/index.mjs"
         }
       }
     </script>
 
-  <script type="module">
+  <script type="module-shim">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -880,8 +912,11 @@
       surprised: { nodAmp: 0.02, swayAmp: 0.014, blinkChance: 0.0025 },
     };
 
-    const clock = new THREE.Timer();
-    clock.connect(document);
+    const clock =
+      typeof THREE.Timer === 'function' ? new THREE.Timer() : new THREE.Clock();
+    if (typeof clock.connect === 'function') {
+      clock.connect(document);
+    }
     const canvas = document.getElementById('canvas');
     const searchInput = document.getElementById('searchInput');
     const searchAutocomplete = searchInput.parentElement;
@@ -1008,9 +1043,64 @@
     // 默认视角：往前推，离老师更近 (Z轴从 2.75 移至 1.35)
     camera.position.set(0.0, 1.45, 1.35);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'low-power' });
+    const rendererContextAttributes = {
+      alpha: false,
+      antialias: true,
+      powerPreference: 'low-power',
+      failIfMajorPerformanceCaveat: false,
+    };
+
+    function createPreferredRenderer(targetCanvas) {
+      const attempts = [];
+      const contextTypes = ['webgl2', 'webgl', 'experimental-webgl'];
+
+      for (const contextType of contextTypes) {
+        try {
+          const context = targetCanvas.getContext(contextType, rendererContextAttributes);
+          if (!context) {
+            attempts.push(`${contextType}: unavailable`);
+            continue;
+          }
+
+          return {
+            context,
+            contextType,
+            renderer: new THREE.WebGLRenderer({
+              canvas: targetCanvas,
+              context,
+              alpha: rendererContextAttributes.alpha,
+              antialias: rendererContextAttributes.antialias,
+              powerPreference: rendererContextAttributes.powerPreference,
+            }),
+          };
+        } catch (error) {
+          attempts.push(`${contextType}: ${error?.message || String(error)}`);
+        }
+      }
+
+      throw new Error(`WebGL 初始化失败：${attempts.join('; ')}`);
+    }
+
+    const rendererBootstrap = createPreferredRenderer(canvas);
+    const renderer = rendererBootstrap.renderer;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.top !== window.self ? 1.25 : 1.5));
+    const gl = rendererBootstrap.context || renderer.getContext();
+    const glExtensions = new Set(gl.getSupportedExtensions?.() || []);
+    const renderCompat = {
+      contextType: rendererBootstrap.contextType,
+      isWebGL1: !renderer.capabilities.isWebGL2,
+      hasStandardDerivatives:
+        renderer.capabilities.isWebGL2 ||
+        glExtensions.has('OES_standard_derivatives') ||
+        glExtensions.has('GL_OES_standard_derivatives'),
+    };
+    window.__qimingVirtualPeopleRenderCompat = {
+      ...renderCompat,
+      isWebGL2: renderer.capabilities.isWebGL2,
+      renderer: gl.getParameter?.(gl.RENDERER) || '',
+      vendor: gl.getParameter?.(gl.VENDOR) || '',
+    };
 
     const controls = new OrbitControls(camera, canvas);
     controls.target.set(0, 1.35, 0); // 焦点稍微上移一点到老师头部
@@ -1058,7 +1148,7 @@
 
 
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/node_modules/three/examples/jsm/libs/draco/gltf/');
+    dracoLoader.setDecoderPath('/virtual-people/vendor/three/examples/jsm/libs/draco/gltf/');
 
     const sceneGltfLoader = new GLTFLoader();
     sceneGltfLoader.setDRACOLoader(dracoLoader);
@@ -1136,6 +1226,22 @@
       searchSuggestions: [],
       searchSuggestionIndex: -1,
       renderPaused: false,
+    };
+
+    window.__virtualPeopleInternals = {
+      THREE,
+      state,
+      scene,
+      camera,
+      controls,
+      renderer,
+      worldRoot,
+      backgroundStage,
+      backgroundNormalizeRoot,
+      teacherRig,
+      floor,
+      ring,
+      grid,
     };
 
     const MAX_SEARCH_SUGGESTIONS = 8;
@@ -1229,8 +1335,11 @@
 
     function resizeRenderer() {
       const rect = canvas.parentElement.getBoundingClientRect();
-      const width = Math.max(320, Math.floor(rect.width));
-      const height = Math.max(420, Math.floor(rect.height));
+      const isEmbeddedView = document.body.classList.contains('embedded-ai-app') || window.top !== window.self;
+      const minWidth = isEmbeddedView ? 1 : 320;
+      const minHeight = isEmbeddedView ? 1 : 420;
+      const width = Math.max(minWidth, Math.floor(rect.width || window.innerWidth || minWidth));
+      const height = Math.max(minHeight, Math.floor(rect.height || window.innerHeight || minHeight));
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -1371,6 +1480,78 @@
       });
     }
 
+    function getMaterialBaseColor(material, fallback = '#ffffff') {
+      if (material?.color?.isColor) return material.color.clone();
+      if (material?.uniforms?.litFactor?.value?.isColor) {
+        return material.uniforms.litFactor.value.clone();
+      }
+      if (material?.uniforms?.diffuse?.value?.isColor) {
+        return material.uniforms.diffuse.value.clone();
+      }
+      return new THREE.Color(fallback);
+    }
+
+    function buildWebGL1CompatibleMaterial(material, options = {}) {
+      const baseColor = getMaterialBaseColor(material, options.fallbackColor);
+      const texture =
+        material?.map ||
+        material?.uniforms?.map?.value ||
+        material?.emissiveMap ||
+        material?.uniforms?.emissiveMap?.value ||
+        null;
+
+      if (texture) {
+        texture.needsUpdate = true;
+      }
+
+      const opacity = Number.isFinite(material?.opacity)
+        ? material.opacity
+        : Number.isFinite(material?.uniforms?.opacity?.value)
+          ? material.uniforms.opacity.value
+          : 1;
+      const transparent = Boolean(material?.transparent || opacity < 1);
+      const alphaTest = Number.isFinite(material?.alphaTest)
+        ? material.alphaTest
+        : Number.isFinite(material?.uniforms?.alphaTest?.value)
+          ? material.uniforms.alphaTest.value
+          : 0;
+      const compatible = new THREE.MeshBasicMaterial({
+        name: `${material?.name || options.name || 'material'} WebGL1`,
+        map: texture,
+        color: texture ? 0xffffff : baseColor,
+        transparent,
+        opacity,
+        alphaTest,
+        side: material?.side ?? THREE.DoubleSide,
+        depthWrite: transparent ? false : (material?.depthWrite ?? true),
+        depthTest: material?.depthTest ?? true,
+        fog: false,
+      });
+      compatible.toneMapped = false;
+      return compatible;
+    }
+
+    function simplifyMaterialForLegacyWebView(material, options = {}) {
+      if (!renderCompat.isWebGL1 && renderCompat.hasStandardDerivatives) return material;
+      if (!material) return material;
+
+      const needsShaderFallback =
+        material.isShaderMaterial ||
+        material.isMeshStandardMaterial ||
+        material.isMeshPhysicalMaterial ||
+        material.normalMap ||
+        material.bumpMap;
+
+      if (!needsShaderFallback) {
+        material.normalMap = null;
+        material.bumpMap = null;
+        material.needsUpdate = true;
+        return material;
+      }
+
+      return buildWebGL1CompatibleMaterial(material, options);
+    }
+
     function tuneBackgroundRendering(root) {
       if (!root) return;
 
@@ -1379,7 +1560,15 @@
 
         if (!node.material) return;
 
-        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        const originalMaterials = Array.isArray(node.material) ? node.material : [node.material];
+        const materials = originalMaterials.map((material) =>
+          simplifyMaterialForLegacyWebView(material, {
+            fallbackColor: '#dce6e2',
+            name: node.name,
+          })
+        );
+        node.material = Array.isArray(node.material) ? materials : materials[0];
+
         for (const material of materials) {
           if (!material) continue;
 
@@ -1408,7 +1597,15 @@
 
         node.frustumCulled = false;
 
-        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        const originalMaterials = Array.isArray(node.material) ? node.material : [node.material];
+        const materials = originalMaterials.map((material) =>
+          simplifyMaterialForLegacyWebView(material, {
+            fallbackColor: '#f5d8c8',
+            name: node.name,
+          })
+        );
+        node.material = Array.isArray(node.material) ? materials : materials[0];
+
         for (const material of materials) {
           if (!material) continue;
 
@@ -1463,9 +1660,9 @@
     }
 
     function updateReferenceHelpers() {
-      floor.visible = !state.backgroundSceneRoot;
-      grid.visible = true;
-      ring.visible = true;
+      floor.visible = !isEmbeddedAiApp && !state.backgroundSceneRoot;
+      grid.visible = !isEmbeddedAiApp;
+      ring.visible = !isEmbeddedAiApp;
     }
 
     function updateDebugReadouts() {
@@ -2948,7 +3145,9 @@
     window.addEventListener('resize', resizeRenderer);
 
     renderer.setAnimationLoop(() => {
-      clock.update();
+      if (typeof clock.update === 'function') {
+        clock.update();
+      }
       const delta = clock.getDelta();
       controls.update();
       updateCameraRoaming(delta);

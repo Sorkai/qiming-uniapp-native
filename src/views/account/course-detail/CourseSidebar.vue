@@ -464,7 +464,7 @@ onBeforeUnmount(() => {
 /* 侧边栏样式优化 - 独立显示，与左右保持距离 */
 
 /* stylelint-disable-next-line order/order */
-@media (width <= 767px) {
+@media (max-width: 767px) {
   .layout-sidebar {
     --mobile-sidebar-easing: cubic-bezier(0.65, 0, 0.35, 1);
     top: 88px;
@@ -651,7 +651,7 @@ onBeforeUnmount(() => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (width <= 479px) {
+@media (max-width: 479px) {
   .layout-sidebar {
     top: 86px;
     right: 10px;

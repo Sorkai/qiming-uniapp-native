@@ -201,6 +201,74 @@ type ResultTable = {
   };
 };
 
+const apiUrl = (path: string) => {
+  const base = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+};
+
+const isNativeWebViewPreview = () => {
+  return (
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("qiming-native-webview")
+  );
+};
+
+const getNativeAccessToken = () => {
+  try {
+    const userInfo = JSON.parse(localStorage.getItem("user-info") || "{}");
+    return userInfo?.accessToken || userInfo?.refreshToken || "";
+  } catch {
+    return "";
+  }
+};
+
+async function requestUserDetailWithNativeFallback(
+  request: () => Promise<UserCenterDetailResult>
+) {
+  try {
+    return await request();
+  } catch (error) {
+    if (!isNativeWebViewPreview()) throw error;
+
+    const token = getNativeAccessToken();
+    if (!token) throw error;
+
+    const url = apiUrl("/edu/v1/user/detail");
+    let lastFetchError: unknown = error;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: "{}"
+        });
+
+        if (response.ok) {
+          return (await response.json()) as UserCenterDetailResult;
+        }
+        lastFetchError = new Error(
+          `Native user detail failed: ${response.status}`
+        );
+      } catch (fetchError) {
+        lastFetchError = fetchError;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 260 * (attempt + 1)));
+    }
+
+    console.warn("[NativeFetchFallback] user detail request failed", {
+      url,
+      error: lastFetchError
+    });
+    throw error;
+  }
+}
+
 /** 登录 */
 export const getLogin = (data?: object) => {
   return http.request<UserResult>("post", "/login", { data });
@@ -239,10 +307,8 @@ export const userLogin = (data: { mobile: string; password: string }) => {
 
 /** 获取用户信息 */
 export const getUserDetail = () => {
-  return http.request<UserCenterDetailResult>(
-    "post",
-    "/edu/v1/user/detail",
-    {}
+  return requestUserDetailWithNativeFallback(() =>
+    http.request<UserCenterDetailResult>("post", "/edu/v1/user/detail", {})
   );
 };
 

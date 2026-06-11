@@ -88,6 +88,10 @@ const webviewVersion = ref(0);
 const lastMessage = ref<WebMessage | null>(null);
 const previewMode = ref<"phone" | "full">("phone");
 const appEntryRoute = ref(defaultEntryRoute);
+const appDevServer = ref("");
+const appDemoRole = ref("");
+const appNativeStatusTop = ref(0);
+let loadFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
 let isH5DevPreview = false;
 // #ifdef H5
@@ -133,6 +137,34 @@ function appendQuery(url: string, key: string, value: string) {
   return `${url}${separator}${key}=${encodeURIComponent(value)}`;
 }
 
+function appendNativeQuery(url: string) {
+  let output = appendQuery(url, "qimingNative", "1");
+  if (appNativeStatusTop.value > 0) {
+    output = appendQuery(
+      output,
+      "nativeStatusTop",
+      String(appNativeStatusTop.value)
+    );
+  }
+  return output;
+}
+
+function normalizeDevServer(url: string | null | undefined) {
+  const value = url?.trim();
+  if (!value) return "";
+  try {
+    const parsed = new URL(value);
+    if (!["http:", "https:"].includes(parsed.protocol)) return "";
+    return parsed.origin;
+  } catch {
+    return "";
+  }
+}
+
+function normalizeDemoRole(role: string | null | undefined) {
+  return isPreviewRole(role || "") ? role || "" : "";
+}
+
 const previewRole = computed(() => {
   if (!isH5DevPreview || typeof window === "undefined") return "teacher";
   const role = new URLSearchParams(window.location.search).get("demoRole");
@@ -160,15 +192,24 @@ const h5PreviewOrigin = computed(() => {
 });
 
 const h5DevEntryPath = computed(() =>
-  appendQuery(
-    `${h5PreviewOrigin.value}/#${previewEntryRoute.value}`,
-    "demoRole",
-    previewRole.value
+  appendNativeQuery(
+    appendQuery(
+      `${h5PreviewOrigin.value}/#${previewEntryRoute.value}`,
+      "demoRole",
+      previewRole.value
+    )
   )
 );
 
 const webviewSrc = computed(() => {
   if (!isH5DevPreview) {
+    if (appDevServer.value) {
+      const base = `${appDevServer.value}/#${appEntryRoute.value}`;
+      const withRole = appDemoRole.value
+        ? appendQuery(base, "demoRole", appDemoRole.value)
+        : base;
+      return appendQuery(appendNativeQuery(withRole), "v", String(webviewVersion.value));
+    }
     return `${localAppEntryBase}?v=${webviewVersion.value}#${appEntryRoute.value}`;
   }
 
@@ -208,11 +249,13 @@ function extractMessages(event: any): WebMessage[] {
 function handleLoad() {
   loaded.value = true;
   loadError.value = false;
+  clearLoadFallbackTimer();
 }
 
 function handleError(event: any) {
   loaded.value = false;
   loadError.value = true;
+  clearLoadFallbackTimer();
   console.error("[QimingNative] web-view load failed", event);
 }
 
@@ -224,6 +267,7 @@ function handleMessage(event: any) {
     if (message.type === "loaded" || message.type === "bridge-ready") {
       loaded.value = true;
       loadError.value = false;
+      clearLoadFallbackTimer();
     }
   }
 }
@@ -232,6 +276,129 @@ function reloadWebview() {
   loaded.value = false;
   loadError.value = false;
   webviewVersion.value += 1;
+  scheduleLoadFallback();
+}
+
+function getRoleRootRoute() {
+  if (appDemoRole.value === "student") return "/account";
+  if (appDemoRole.value === "teacher" || appDemoRole.value === "admin") {
+    return "/welcome/index";
+  }
+  return normalizeEntryRoute(appEntryRoute.value || defaultEntryRoute);
+}
+
+function buildRoleRootHash() {
+  const rootRoute = getRoleRootRoute();
+  let hash = `#${rootRoute}`;
+  if (appDemoRole.value) {
+    hash = appendQuery(hash, "demoRole", appDemoRole.value);
+  }
+  hash = appendQuery(hash, "qimingNative", "1");
+  if (appNativeStatusTop.value > 0) {
+    hash = appendQuery(hash, "nativeStatusTop", String(appNativeStatusTop.value));
+  }
+  if (rootRoute === "/account") {
+    hash = appendQuery(hash, "menu", "home");
+  }
+  return hash;
+}
+
+function resetToRoleRoot() {
+  appEntryRoute.value = getRoleRootRoute();
+  reloadWebview();
+}
+
+function dispatchBackToInnerWebview() {
+  // #ifdef APP-PLUS
+  try {
+    const plusApi = (globalThis as any).plus;
+    const currentWebview = plusApi?.webview?.currentWebview?.();
+    const webviews = (plusApi?.webview?.all?.() || []) as Array<{
+      id?: string;
+      getURL?: () => string;
+      evalJS?: (code: string) => void;
+    }>;
+    const candidates = webviews.filter(webview => {
+      if (!webview || webview === currentWebview) return false;
+      const url = webview.getURL?.() || "";
+      return (
+        (appDevServer.value && url.includes(appDevServer.value)) ||
+        url.includes("hybrid/html/index.html") ||
+        url.includes("#/")
+      );
+    });
+    const target = candidates[candidates.length - 1];
+    if (!target?.evalJS) return false;
+    const fallbackHash = JSON.stringify(buildRoleRootHash());
+    target.evalJS(`
+      (function () {
+        var fallbackHash = ${fallbackHash};
+        var fallbackBase = fallbackHash.split("?")[0];
+        function isAtFallbackRoot() {
+          var hash = String(window.location && window.location.hash || "");
+          if (fallbackBase === "#/account") {
+            return hash.indexOf("#/account") === 0 && hash.indexOf("menu=home") !== -1;
+          }
+          return hash.indexOf(fallbackBase) === 0;
+        }
+        function forceFallbackRoot() {
+          if (!isAtFallbackRoot()) {
+            window.location.hash = fallbackHash;
+          }
+        }
+        try {
+          if (window.__qimingNativeBack) {
+            window.__qimingNativeBack();
+          } else if (window.history && window.history.length > 1) {
+            window.history.back();
+          }
+        } catch (error) {
+          forceFallbackRoot();
+        }
+        window.setTimeout(forceFallbackRoot, 220);
+        window.setTimeout(forceFallbackRoot, 640);
+      })();
+    `);
+    return true;
+  } catch (error) {
+    console.warn("[QimingNative] native back dispatch failed", error);
+    return false;
+  }
+  // #endif
+  return false;
+}
+
+function clearLoadFallbackTimer() {
+  if (loadFallbackTimer) {
+    clearTimeout(loadFallbackTimer);
+    loadFallbackTimer = null;
+  }
+}
+
+function scheduleLoadFallback() {
+  clearLoadFallbackTimer();
+  if (!appDevServer.value) return;
+  loadFallbackTimer = setTimeout(() => {
+    // HBuilderX devServer 调试时，外层 uni-app 不一定收到内嵌 web-view 的
+    // load/message 事件；只要没有 error，就撤掉 loading 层，避免白屏遮住 H5。
+    if (!loadError.value) loaded.value = true;
+  }, 6000);
+}
+
+function detectNativeStatusTop() {
+  // #ifdef APP-PLUS
+  try {
+    const plusApi = (globalThis as any).plus;
+    const statusTop = Number(
+      plusApi?.navigator?.getStatusbarHeight?.() || 0
+    );
+    if (Number.isFinite(statusTop) && statusTop > 0) {
+      appNativeStatusTop.value = statusTop;
+    }
+  } catch (error) {
+    console.warn("[QimingNative] statusbar height unavailable", error);
+  }
+  // #endif
 }
 
 function switchPreviewRole(role: PreviewRole) {
@@ -255,30 +422,28 @@ function togglePreviewMode() {
 }
 
 onLoad(options => {
-  appEntryRoute.value = normalizeEntryRoute(
-    (options as { entry?: string })?.entry
-  );
+  detectNativeStatusTop();
+  const pageOptions = options as {
+    entry?: string;
+    devServer?: string;
+    demoRole?: string;
+  };
+  appEntryRoute.value = normalizeEntryRoute(pageOptions?.entry);
+  appDevServer.value = normalizeDevServer(pageOptions?.devServer);
+  appDemoRole.value = normalizeDemoRole(pageOptions?.demoRole);
+  scheduleLoadFallback();
   uni.setNavigationBarTitle({ title: "启明智教" });
 });
 
 onShow(() => {
+  detectNativeStatusTop();
   uni.setKeepScreenOn({ keepScreenOn: true });
 });
 
 onBackPress(() => {
-  uni.showModal({
-    title: "退出应用",
-    content: "确定要退出启明智教吗？",
-    confirmText: "退出",
-    cancelText: "继续学习",
-    success(result) {
-      if (result.confirm) {
-        // #ifdef APP-PLUS
-        plus.runtime.quit();
-        // #endif
-      }
-    }
-  });
+  if (!dispatchBackToInnerWebview()) {
+    resetToRoleRoot();
+  }
   return true;
 });
 </script>

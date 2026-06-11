@@ -135,6 +135,73 @@ export interface ApiResponse<T = any> {
   data: T;
 }
 
+const apiUrl = (path: string, params?: Record<string, unknown>) => {
+  const base = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+  const query = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    query.append(key, String(value));
+  });
+
+  const queryString = query.toString();
+  return `${base}${path.startsWith("/") ? path : `/${path}`}${
+    queryString ? `?${queryString}` : ""
+  }`;
+};
+
+async function requestWithNativeFetchFallback<T>(
+  path: string,
+  params: Record<string, unknown> | undefined,
+  request: () => Promise<ApiResponse<T>>
+) {
+  try {
+    return await request();
+  } catch (error) {
+    const isNativePreview =
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("qiming-native-webview");
+    if (!isNativePreview) throw error;
+
+    const tokenInfo = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("user-info") || "{}");
+      } catch {
+        return {};
+      }
+    })();
+    const token = tokenInfo.accessToken || tokenInfo.refreshToken;
+    if (!token) throw error;
+
+    const url = apiUrl(path, params);
+    let lastFetchError: unknown = error;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) return (await response.json()) as ApiResponse<T>;
+        lastFetchError = new Error(`Native fetch failed: ${response.status}`);
+      } catch (fetchError) {
+        lastFetchError = fetchError;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 260 * (attempt + 1)));
+    }
+
+    console.warn("[NativeFetchFallback] course request failed", {
+      url,
+      error: lastFetchError
+    });
+    throw error;
+  }
+}
+
 /**
  * 创建课程
  */
@@ -161,10 +228,15 @@ export const getCourseList = (params: {
   pageSize?: number;
   courseName?: string;
 }) => {
-  return http.request<ApiResponse<CourseListResult>>(
-    "get",
+  return requestWithNativeFetchFallback<CourseListResult>(
     "/edu/backend/v1/course/list",
-    { params }
+    params,
+    () =>
+      http.request<ApiResponse<CourseListResult>>(
+        "get",
+        "/edu/backend/v1/course/list",
+        { params }
+      )
   );
 };
 
@@ -172,10 +244,15 @@ export const getCourseList = (params: {
  * 获取课时列表
  */
 export const getCourseHoursList = (params: { courseId: number }) => {
-  return http.request<ApiResponse<CourseHoursListResult>>(
-    "get",
+  return requestWithNativeFetchFallback<CourseHoursListResult>(
     "/edu/backend/v1/course/hours/list",
-    { params }
+    params,
+    () =>
+      http.request<ApiResponse<CourseHoursListResult>>(
+        "get",
+        "/edu/backend/v1/course/hours/list",
+        { params }
+      )
   );
 };
 
@@ -183,10 +260,15 @@ export const getCourseHoursList = (params: { courseId: number }) => {
  * 获取课程附件列表
  */
 export const getCourseAttrList = (params: { courseId: number }) => {
-  return http.request<ApiResponse<CourseAttrListResult>>(
-    "get",
+  return requestWithNativeFetchFallback<CourseAttrListResult>(
     "/edu/backend/v1/course/attr/list",
-    { params }
+    params,
+    () =>
+      http.request<ApiResponse<CourseAttrListResult>>(
+        "get",
+        "/edu/backend/v1/course/attr/list",
+        { params }
+      )
   );
 };
 
@@ -194,9 +276,14 @@ export const getCourseAttrList = (params: { courseId: number }) => {
  * 获取课程详情
  */
 export const getCourseDetail = (params: { courseId: number }) => {
-  return http.request<ApiResponse>("get", "/edu/backend/v1/course/detail", {
-    params
-  });
+  return requestWithNativeFetchFallback(
+    "/edu/backend/v1/course/detail",
+    params,
+    () =>
+      http.request<ApiResponse>("get", "/edu/backend/v1/course/detail", {
+        params
+      })
+  );
 };
 
 /**
@@ -224,10 +311,15 @@ export const getAllocationUserList = (params: {
   pageNum: number;
   pageSize?: number;
 }) => {
-  return http.request<ApiResponse<AllocationUserResult>>(
-    "get",
+  return requestWithNativeFetchFallback<AllocationUserResult>(
     "/edu/backend/v1/course/allocation/user/list",
-    { params }
+    params,
+    () =>
+      http.request<ApiResponse<AllocationUserResult>>(
+        "get",
+        "/edu/backend/v1/course/allocation/user/list",
+        { params }
+      )
   );
 };
 
@@ -241,10 +333,15 @@ export const getStudyUserList = (params: {
   pageNum: number;
   pageSize?: number;
 }) => {
-  return http.request<ApiResponse<StudyUserResult>>(
-    "get",
+  return requestWithNativeFetchFallback<StudyUserResult>(
     "/edu/backend/v1/course/study/user/list",
-    { params }
+    params,
+    () =>
+      http.request<ApiResponse<StudyUserResult>>(
+        "get",
+        "/edu/backend/v1/course/study/user/list",
+        { params }
+      )
   );
 };
 
@@ -387,10 +484,15 @@ export const getCourseStats = (params?: {
   startDate?: string; // 开始日期 yyyy-MM-dd
   endDate?: string; // 结束日期 yyyy-MM-dd
 }) => {
-  return http.request<ApiResponse<CourseStatsResult>>(
-    "get",
+  return requestWithNativeFetchFallback<CourseStatsResult>(
     "/edu/backend/v1/course/stats/overview",
-    { params }
+    params,
+    () =>
+      http.request<ApiResponse<CourseStatsResult>>(
+        "get",
+        "/edu/backend/v1/course/stats/overview",
+        { params }
+      )
   );
 };
 
@@ -402,18 +504,29 @@ export const getTeacherPlanList = (params: {
   pageNum: number;
   pageSize?: number;
 }) => {
-  return http.request<
-    ApiResponse<{
-      total: number;
-      teacherPlanList: Array<{
-        teacherPlanId: number;
-        courseId: number;
-        chapterId: number;
-        courseName: string;
-        chapterName: string;
-      }>;
-    }>
-  >("get", "/edu/backend/v1/course/teacher/plan/list", { params });
+  return requestWithNativeFetchFallback<{
+    total: number;
+    teacherPlanList: Array<{
+      teacherPlanId: number;
+      courseId: number;
+      chapterId: number;
+      courseName: string;
+      chapterName: string;
+    }>;
+  }>("/edu/backend/v1/course/teacher/plan/list", params, () =>
+    http.request<
+      ApiResponse<{
+        total: number;
+        teacherPlanList: Array<{
+          teacherPlanId: number;
+          courseId: number;
+          chapterId: number;
+          courseName: string;
+          chapterName: string;
+        }>;
+      }>
+    >("get", "/edu/backend/v1/course/teacher/plan/list", { params })
+  );
 };
 
 /**
@@ -421,10 +534,15 @@ export const getTeacherPlanList = (params: {
  * @param params 包含教案ID的参数对象
  */
 export const getTeacherPlanProgress = (params: { teacherPlanId: number }) => {
-  return http.request<
-    ApiResponse<{
-      progress: number;
-      downloadUrl?: string;
-    }>
-  >("get", "/edu/backend/v1/course/teacher/plan/progress", { params });
+  return requestWithNativeFetchFallback<{
+    progress: number;
+    downloadUrl?: string;
+  }>("/edu/backend/v1/course/teacher/plan/progress", params, () =>
+    http.request<
+      ApiResponse<{
+        progress: number;
+        downloadUrl?: string;
+      }>
+    >("get", "/edu/backend/v1/course/teacher/plan/progress", { params })
+  );
 };

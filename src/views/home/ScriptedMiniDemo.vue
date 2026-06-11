@@ -6,20 +6,14 @@
     :aria-label="`${demo.module}演示`"
   >
     <div class="smd__chrome">
-      <div class="smd__lights"><span /><span /><span /></div>
-      <div class="smd__url">
-        <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true">
-          <path
-            d="M12 1 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linejoin="round"
-          />
-        </svg>
-        <span>{{ demo.path }}</span>
+      <div class="smd__appbar">
+        <span class="smd__appmark" aria-hidden="true" />
+        <div>
+          <strong>{{ demo.module }}</strong>
+          <span>智能工作流</span>
+        </div>
       </div>
-      <span class="smd__live"><i />实时演示</span>
+      <span class="smd__live"><i />实时协同</span>
     </div>
 
     <div class="smd__workspace">
@@ -35,7 +29,7 @@
           type="button"
           :class="{ 'is-active': i === 0 }"
         >
-          <i>{{ item.slice(0, 1) }}</i>
+          <i aria-hidden="true" />
           <span>{{ item }}</span>
         </button>
       </aside>
@@ -315,37 +309,58 @@ const radarPoints = computed(() => {
 
 .smd__chrome {
   display: flex;
-  flex: 0 0 auto;
-  gap: 12px;
   align-items: center;
+  justify-content: space-between;
   height: 38px;
   padding: 0 14px;
   background: linear-gradient(90deg, #fafafa, #f4f6f9);
   border-bottom: 1px solid var(--smd-border);
 }
 
-.smd__lights {
+.smd__appbar {
   display: flex;
-  flex: 0 0 auto;
-  gap: 6px;
+  align-items: center;
+  min-width: 0;
+
+  > div {
+    min-width: 0;
+  }
+
+  strong,
+  span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    font-size: 12px;
+    font-weight: 800;
+    color: rgb(17 24 39);
+  }
 
   span {
-    width: 11px;
-    height: 11px;
-    border-radius: 50%;
-
-    &:nth-child(1) {
-      background: #ff5f57;
-    }
-
-    &:nth-child(2) {
-      background: #febc2e;
-    }
-
-    &:nth-child(3) {
-      background: #28c840;
-    }
+    font-size: 10px;
+    color: var(--smd-muted);
   }
+}
+
+.smd__appmark {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  margin-right: 9px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 64% 34%, rgb(255 255 255 / 62%) 0 3px, transparent 4px),
+    linear-gradient(135deg, var(--smd-accent), color-mix(in srgb, var(--smd-accent) 58%, #10b981));
+  border-radius: 9px;
+  box-shadow:
+    0 8px 18px -13px var(--smd-accent),
+    inset 0 0 0 1px rgb(255 255 255 / 28%);
 }
 
 .smd__url {
@@ -446,17 +461,25 @@ const radarPoints = computed(() => {
     }
 
     i {
-      display: inline-grid;
+      position: relative;
+      display: inline-block;
       flex: 0 0 auto;
       width: 18px;
       height: 18px;
-      place-items: center;
-      font-style: normal;
-      font-size: 10px;
-      color: color-mix(in srgb, var(--smd-accent) 76%, #111827);
-      background: color-mix(in srgb, var(--smd-accent) 12%, transparent);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 64% 34%, rgb(255 255 255 / 60%) 0 2px, transparent 3px),
+        color-mix(in srgb, var(--smd-accent) 18%, transparent);
       border: 1px solid color-mix(in srgb, var(--smd-accent) 24%, transparent);
       border-radius: 5px;
+
+      &::after {
+        position: absolute;
+        inset: 5px;
+        content: "";
+        background: color-mix(in srgb, var(--smd-accent) 72%, #111827);
+        border-radius: 999px;
+      }
     }
   }
 }
@@ -969,63 +992,128 @@ const radarPoints = computed(() => {
   }
 }
 
-@media (width <= 680px) {
+@media (max-width: 680px) {
   .smd {
-    min-height: 360px;
+    min-height: 0;
+  }
+
+  .smd__chrome {
+    height: 34px;
+    padding: 0 10px;
+    background: rgb(255 255 255 / 88%);
+  }
+
+  .smd__appmark {
+    display: none;
   }
 
   .smd__workspace {
-    grid-template-columns: 52px minmax(0, 1fr);
+    display: block;
   }
 
   .smd__side {
-    padding: 12px 8px;
-
-    p,
-    .smd__brand span,
-    button span {
-      display: none;
-    }
-
-    button {
-      justify-content: center;
-      padding: 0;
-    }
+    display: none;
   }
 
   .smd__main {
-    gap: 9px;
-    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 12px 10px;
   }
 
-  .smd__mesh,
-  .smd__live {
+  .smd__mesh {
     display: none;
+  }
+
+  .smd__live {
+    height: 22px;
+    padding: 0 8px;
+    font-size: 10px;
   }
 
   .smd__head {
     display: block;
 
     h4 {
-      font-size: 18px;
+      font-size: 15px;
+      line-height: 1.18;
     }
   }
 
+  .smd__crumbs {
+    font-size: 10px;
+  }
+
+  .smd__head p {
+    margin-bottom: 3px;
+    font-size: 10px;
+  }
+
   .smd__metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     min-width: 0;
-    margin-top: 10px;
+    margin-top: 5px;
+
+    article {
+      padding: 5px 5px;
+    }
+
+    span,
+    em {
+      font-size: 8px;
+      line-height: 1.15;
+    }
+
+    strong {
+      margin: 2px 0 1px;
+      font-size: 12px;
+    }
   }
 
   .smd__viz {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .smd__radar {
     display: none;
   }
 
+  .smd__pipeline {
+    min-height: 116px;
+    padding: 8px 8px 6px;
+  }
+
+  .smd__flow {
+    height: 64px;
+  }
+
   .smd__nodes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding-top: 30px;
+  }
+
+  .smd__nodes article {
+    min-width: 0;
+    padding: 5px 3px 3px;
+  }
+
+  .smd__nodes article span {
+    width: 24px;
+    height: 20px;
+    margin: 0 auto 4px;
+    font-size: 9px;
+  }
+
+  .smd__nodes article strong {
+    font-size: 9px;
+    line-height: 1.15;
+  }
+
+  .smd__nodes article small {
+    display: none;
+  }
+
+  .smd__stack,
+  .smd__console {
+    display: none;
   }
 }
 

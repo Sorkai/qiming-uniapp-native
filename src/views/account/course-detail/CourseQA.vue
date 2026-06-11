@@ -1476,13 +1476,13 @@ const filterByTag = (tagName: string) => {
 
 <style scoped>
 /* 响应式 */
-@media (width <= 1200px) {
+@media (max-width: 1200px) {
   .board-right-panel {
     width: 300px;
   }
 }
 
-@media (width <= 992px) {
+@media (max-width: 992px) {
   .board-main-content {
     flex-direction: column-reverse;
   }
@@ -1514,7 +1514,7 @@ const filterByTag = (tagName: string) => {
   }
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .message-board-container {
     height: auto;
     min-height: 100vh;
@@ -1810,7 +1810,7 @@ const filterByTag = (tagName: string) => {
   }
 }
 
-@media (width <= 479px) {
+@media (max-width: 479px) {
   .message-board-container {
     padding: var(--course-mobile-top-offset, 156px) 10px
       calc(20px + env(safe-area-inset-bottom));

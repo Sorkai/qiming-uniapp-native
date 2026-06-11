@@ -1110,41 +1110,192 @@ onUnmounted(() => {
 
 .video-analysis-container.is-mobile-layout {
   height: auto !important;
-  min-height: calc(100vh - 140px);
+  min-height: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   margin: 0;
-  gap: 12px;
+  gap: 10px;
   overflow: visible;
   flex-direction: column;
-  padding: 12px;
+  padding: 8px 8px calc(var(--pure-mobile-tab-height, 58px) + 24px);
 }
 
 .video-analysis-container.is-mobile-layout .sidebar-card,
 .video-analysis-container.is-mobile-layout > .flex-1 {
   width: 100% !important;
+  max-width: 100%;
   min-width: 0;
+  flex: 0 0 auto;
 }
 
 .video-analysis-container.is-mobile-layout .sidebar-card {
-  max-height: 48vh;
+  max-height: none;
+  overflow: visible;
+}
+
+.video-analysis-container.is-mobile-layout .sidebar-card > .p-6 {
+  padding: 10px 12px 12px !important;
+  overflow: visible !important;
+}
+
+.video-analysis-container.is-mobile-layout .icon-box {
+  width: 36px !important;
+  height: 36px !important;
+  margin-right: 9px !important;
+  border-radius: 11px !important;
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary),
+    var(--el-color-primary-dark-2)
+  ) !important;
+  box-shadow: 0 10px 24px rgba(64, 111, 255, 0.24);
+}
+
+.video-analysis-container.is-mobile-layout .icon-box :deep(.el-icon) {
+  font-size: 21px !important;
+  color: #fff !important;
 }
 
 .video-analysis-container.is-mobile-layout .sidebar-card .header-section,
 .video-analysis-container.is-mobile-layout .flex-1 > .flex-1 > div:first-child {
-  padding: 16px;
+  padding: 10px 12px;
+}
+
+.video-analysis-container.is-mobile-layout .sidebar-card .header-section h3 {
+  font-size: 17px !important;
+  line-height: 1.25;
 }
 
 .video-analysis-container.is-mobile-layout .sidebar-card .header-subtitle {
+  margin-top: 4px !important;
   margin-left: 0;
+  font-size: 12px !important;
+  line-height: 1.35;
 }
 
 .video-analysis-container.is-mobile-layout .flex-1 > .flex-1 > div:first-child {
   flex-direction: column;
   align-items: stretch;
-  gap: 12px;
+  gap: 8px;
 }
 
 .video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 {
-  padding: 16px;
+  padding: 10px 12px;
+  overflow: visible;
+}
+
+.video-analysis-container.is-mobile-layout > .flex-1 > .flex-1 {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.video-analysis-container.is-mobile-layout > .flex-1 > .flex-1 > .flex-1 {
+  flex: 0 0 auto;
+}
+
+.video-analysis-container.is-mobile-layout
+  .flex-1
+  > .flex-1
+  .p-6
+  > .flex-1 {
+  min-height: 0;
+  padding: 10px 0 14px;
+  justify-content: flex-start;
+}
+
+.video-analysis-container.is-mobile-layout
+  .flex-1
+  > .flex-1
+  .p-6
+  > .flex-1
+  .text-center {
+  width: 100%;
+}
+
+.video-analysis-container.is-mobile-layout
+  .flex-1
+  > .flex-1
+  .p-6
+  > .flex-1
+  .absolute {
+  display: none;
+}
+
+.video-analysis-container.is-mobile-layout
+  .flex-1
+  > .flex-1
+  .p-6
+  > .flex-1
+  h3 {
+  margin-bottom: 6px !important;
+  font-size: 17px !important;
+  line-height: 1.35;
+}
+
+.video-analysis-container.is-mobile-layout
+  .flex-1
+  > .flex-1
+  .p-6
+  > .flex-1
+  p {
+  max-width: 100%;
+  margin-bottom: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.5;
+}
+
+.video-analysis-container.is-mobile-layout .custom-scrollbar {
+  scrollbar-width: none;
+}
+
+.video-analysis-container.is-mobile-layout .custom-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.video-analysis-container.is-mobile-layout :deep(.el-select .el-input__wrapper),
+.video-analysis-container.is-mobile-layout :deep(.el-input .el-input__wrapper) {
+  min-height: 34px;
+}
+
+.video-analysis-container.is-mobile-layout :deep(.el-input__inner) {
+  font-size: 13px;
+}
+
+.video-analysis-container.is-mobile-layout label {
+  margin-bottom: 4px;
+  font-size: 13px !important;
+  line-height: 1.3;
+}
+
+.video-analysis-container.is-mobile-layout .stat-card {
+  min-height: 58px;
+  padding: 8px !important;
+  border-radius: 13px !important;
+}
+
+.video-analysis-container.is-mobile-layout .stat-card > div:first-child {
+  margin-bottom: 4px !important;
+  font-size: 20px !important;
+}
+
+.video-analysis-container.is-mobile-layout .stat-card > div:last-child {
+  font-size: 11px !important;
+}
+
+.video-analysis-container.is-mobile-layout :deep(.el-button) {
+  min-height: 36px;
+  font-size: 13px;
+}
+
+.video-analysis-container.is-mobile-layout .lottie-glass {
+  width: 86px;
+  height: 86px;
+  margin-bottom: 10px !important;
+  border-radius: 20px;
 }
 
 .video-analysis-container.is-mobile-layout :deep(.task-table) {

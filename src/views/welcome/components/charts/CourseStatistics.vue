@@ -12,6 +12,7 @@ import { getCourseList } from "@/api/course";
 import { getHomeworkList } from "@/api/homework";
 import { getExamList } from "@/api/exam";
 import { isAdmin } from "@/utils/auth";
+import { useAppStoreHook } from "@/store/modules/app";
 import {
   ElPagination,
   ElSelect,
@@ -44,7 +45,11 @@ const selectedExam = ref<number>();
 // 进度排序与分页
 const progressSortOrder = ref<"none" | "asc" | "desc">("none");
 const progressPage = ref(1);
-const progressPageSize = ref(10);
+const appStore = useAppStoreHook();
+const isMobile = computed(
+  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
+);
+const progressPageSize = computed(() => (isMobile.value ? 5 : 10));
 
 // 缓存所有课程的数据
 const allProgressData = ref<any[]>([]);
@@ -560,18 +565,19 @@ const updateProgressChart = users => {
       }
     },
     grid: {
-      left: 20,
-      right: 60, // 增加右侧间距以显示百分比文字
-      top: 20,
-      bottom: 20,
+      left: isMobile.value ? 8 : 20,
+      right: isMobile.value ? 36 : 60, // 增加右侧间距以显示百分比文字
+      top: isMobile.value ? 8 : 20,
+      bottom: isMobile.value ? 8 : 20,
       containLabel: true
     },
     xAxis: {
       type: "value",
-      name: "完成进度(%)",
+      name: isMobile.value ? "" : "完成进度(%)",
       max: 100,
       axisLabel: {
         formatter: "{value}%",
+        fontSize: isMobile.value ? 10 : 12,
         color: isDark.value ? "#cbd5e1" : "#64748b"
       },
       splitLine: {
@@ -585,7 +591,9 @@ const updateProgressChart = users => {
       type: "category",
       data: userNames,
       axisLabel: {
-        fontSize: 12,
+        fontSize: isMobile.value ? 10 : 12,
+        width: isMobile.value ? 70 : 120,
+        overflow: "truncate",
         color: isDark.value ? "#fafafa" : "#475569"
       },
       axisLine: {
@@ -599,12 +607,13 @@ const updateProgressChart = users => {
         name: "完成进度",
         type: "bar",
         data: progressData,
-        barMaxWidth: 24,
+        barMaxWidth: isMobile.value ? 18 : 24,
         label: {
           show: true,
           position: "right",
           formatter: "{c}%",
           color: isDark.value ? "#ffffff" : "#4b5563",
+          fontSize: isMobile.value ? 11 : 12,
           fontWeight: "bold"
         },
         itemStyle: {
@@ -702,9 +711,9 @@ const renderExamChart = courseData => {
       title: {
         text: courseData.examName,
         left: "center",
-        top: 10,
+        top: isMobile.value ? 4 : 10,
         textStyle: {
-          fontSize: 16,
+          fontSize: isMobile.value ? 13 : 16,
           fontWeight: "bold",
           color: isDark.value ? "#ffffff" : "#1e293b"
         }
@@ -715,19 +724,19 @@ const renderExamChart = courseData => {
       },
       legend: {
         bottom: "5%",
-        itemGap: 20,
+        itemGap: isMobile.value ? 10 : 20,
         data: levels,
         textStyle: {
           color: isDark.value ? "#fafafa" : "#334155",
-          fontSize: 13
+          fontSize: isMobile.value ? 11 : 13
         }
       },
       series: [
         {
           name: "成绩分布",
           type: "pie",
-          radius: ["40%", "65%"],
-          center: ["50%", "50%"],
+          radius: isMobile.value ? ["34%", "58%"] : ["40%", "65%"],
+          center: isMobile.value ? ["50%", "48%"] : ["50%", "50%"],
           avoidLabelOverlap: true,
           itemStyle: {
             borderRadius: 12,
@@ -749,14 +758,14 @@ const renderExamChart = courseData => {
             }
           },
           label: {
-            show: true,
+            show: !isMobile.value,
             formatter: "{b}: {c}人",
             color: isDark.value ? "#ffffff" : "#334155",
             fontSize: 12,
             fontWeight: 500
           },
           labelLine: {
-            show: true,
+            show: !isMobile.value,
             lineStyle: {
               color: isDark.value ? "#cbd5e1" : "#cbd5e1"
             }
@@ -803,9 +812,9 @@ const renderExamChart = courseData => {
           text: courseData.examName,
           subtext: "基本信息统计",
           left: "center",
-          top: 10,
+          top: isMobile.value ? 4 : 10,
           textStyle: {
-            fontSize: 16,
+            fontSize: isMobile.value ? 13 : 16,
             fontWeight: "bold",
             color: isDark.value ? "#ffffff" : "#1e293b"
           },
@@ -821,10 +830,10 @@ const renderExamChart = courseData => {
           }
         },
         grid: {
-          left: 20,
-          right: 40,
-          top: 80,
-          bottom: 40,
+          left: isMobile.value ? 8 : 20,
+          right: isMobile.value ? 20 : 40,
+          top: isMobile.value ? 58 : 80,
+          bottom: isMobile.value ? 24 : 40,
           containLabel: true
         },
         xAxis: {
@@ -832,7 +841,7 @@ const renderExamChart = courseData => {
           data: chartData.map(item => item.name),
           axisLabel: {
             color: isDark.value ? "#cbd5e1" : "#64748b",
-            fontSize: 13
+            fontSize: isMobile.value ? 10 : 13
           },
           axisLine: {
             lineStyle: {
@@ -857,13 +866,13 @@ const renderExamChart = courseData => {
             name: "数值",
             type: "bar",
             data: chartData,
-            barMaxWidth: 60,
+            barMaxWidth: isMobile.value ? 42 : 60,
             label: {
               show: true,
               position: "top",
               color: isDark.value ? "#ffffff" : "#4b5563",
               fontWeight: "bold",
-              fontSize: 14
+              fontSize: isMobile.value ? 11 : 14
             },
             itemStyle: {
               borderRadius: [6, 6, 0, 0]
@@ -1190,8 +1199,10 @@ onMounted(async () => {
 
 @media screen and (max-width: 768px) {
   .analysis-toolbar {
-    padding: 18px;
-    gap: 16px;
+    padding: 14px;
+    gap: 12px;
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgb(37 99 235 / 8%);
   }
 
   .analysis-toolbar-main,
@@ -1209,27 +1220,33 @@ onMounted(async () => {
   .analysis-actions,
   .analysis-panel-tools {
     width: 100%;
+    justify-content: center;
   }
 
   .analysis-actions {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-self: stretch;
+    gap: 8px;
   }
 
   :deep(.analysis-actions .el-button) {
     width: 100%;
+    min-width: 0;
+    height: 36px;
+    padding: 0 8px;
     margin-left: 0;
+    font-size: 12px;
   }
 
   .analysis-panel-grid {
-    gap: 16px;
+    gap: 12px;
     margin-top: 0;
   }
 
   .analysis-panel {
-    padding: 18px;
-    border-radius: 24px;
+    padding: 14px;
+    border-radius: 18px;
   }
 
   .analysis-panel-header {
@@ -1241,16 +1258,22 @@ onMounted(async () => {
 
   .analysis-section-title {
     min-width: 0;
-    font-size: 17px;
-    line-height: 1.45;
+    font-size: 15px;
+    line-height: 1.35;
     white-space: normal;
   }
 
   .analysis-sort-box {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px;
+    align-items: center;
+    align-self: center;
+    justify-content: center;
+    gap: 6px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 10px 12px;
+    margin: 0 auto;
+    text-align: center;
   }
 
   .analysis-exam-select {
@@ -1259,18 +1282,19 @@ onMounted(async () => {
 
   .progress-chart,
   .exam-chart {
-    height: 360px;
+    height: 300px;
   }
 
   :deep(.custom-radio-group) {
     display: flex;
     flex-wrap: wrap;
-    width: 100%;
+    justify-content: center;
+    width: auto;
   }
 
   :deep(.custom-radio-group .el-radio-button__inner) {
-    padding: 8px 10px;
-    font-size: 12px;
+    padding: 7px 8px;
+    font-size: 11px;
     white-space: normal;
   }
 
@@ -1278,5 +1302,40 @@ onMounted(async () => {
     flex-wrap: wrap;
     justify-content: center;
   }
+}
+
+</style>
+
+<style>
+html.qiming-native-webview.ua-mobile.dark .analysis-panel {
+  background: #111827 !important;
+  border-color: rgb(148 163 184 / 20%) !important;
+}
+
+html.qiming-native-webview.ua-mobile.dark .analysis-section-title,
+html.qiming-native-webview.ua-mobile.dark .analysis-panel-title,
+html.qiming-native-webview.ua-mobile.dark .analysis-panel-header {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  text-shadow: none !important;
+}
+
+html.qiming-native-webview.ua-mobile.dark .analysis-panel-title span,
+html.qiming-native-webview.ua-mobile.dark .analysis-panel h1,
+html.qiming-native-webview.ua-mobile.dark .analysis-panel h2,
+html.qiming-native-webview.ua-mobile.dark .analysis-panel h3 {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+html.qiming-native-webview.ua-mobile.dark .analysis-sort-box {
+  color: #e5e7eb !important;
+  background: rgb(15 23 42 / 92%) !important;
+  border-color: rgb(148 163 184 / 26%) !important;
+}
+
+html.qiming-native-webview.ua-mobile.dark .analysis-sort-box span {
+  color: #d4d4d8 !important;
+  -webkit-text-fill-color: #d4d4d8 !important;
 }
 </style>
