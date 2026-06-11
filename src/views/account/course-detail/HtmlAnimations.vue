@@ -30,7 +30,10 @@
           :key="item.chapterId"
           v-motion
           class="animation-card"
-          :class="{ dark: currentTheme === 'dark' }"
+          :class="{
+            dark: currentTheme === 'dark',
+            'is-unavailable': !item.url
+          }"
           :initial="{ opacity: 0, y: 20, scale: 0.95 }"
           :visible-once="{
             opacity: 1,
@@ -70,10 +73,10 @@
                 <el-icon size="42">
                   <component :is="VideoPlay" />
                 </el-icon>
-                <span>封面生成中</span>
+                <span>{{ item.url ? "默认封面" : statusText(item) }}</span>
               </div>
             </template>
-            <div class="play-overlay">
+            <div v-if="item.url" class="play-overlay">
               <el-icon size="48">
                 <component :is="VideoPlay" />
               </el-icon>
@@ -82,7 +85,9 @@
           <!-- 毛玻璃内容层：带平滑渐变 mask -->
           <div class="card-info-glass">
             <div class="card-title">{{ item.chapterName }}</div>
-            <div class="card-version">Version {{ item.version }}</div>
+            <div class="card-version">
+              {{ item.version ? `Version ${item.version}` : statusText(item) }}
+            </div>
           </div>
         </div>
       </div>
@@ -165,6 +170,7 @@ const props = defineProps<{
     previewVideoUrl?: string;
     available?: boolean;
     message?: string;
+    status?: string;
   }>;
   userAvatar: string;
   userNickname: string;
@@ -187,6 +193,13 @@ const iframeLoading = ref(true);
 const resolveCoverUrl = (item: { coverUrl?: string; previewUrl?: string }) =>
   item.coverUrl || item.previewUrl || "";
 
+const statusText = (item: { status?: string; message?: string; url?: string }) => {
+  if (item.url) return "可播放";
+  if (item.status === "missing") return "文件缺失";
+  if (item.status === "processing") return "生成中";
+  return item.message || "暂无动画";
+};
+
 // 监听弹窗打开，重置加载状态
 watch(htmlAnimPreviewVisible, val => {
   if (val) iframeLoading.value = true;
@@ -206,6 +219,7 @@ const captureAndUpload = () => {
 
 // 打开 HTML 动画预览
 const openHtmlAnimation = (item: { url: string }) => {
+  if (!item.url) return;
   htmlAnimPreviewUrl.value = item.url;
   htmlAnimPreviewVisible.value = true;
 };
@@ -284,8 +298,23 @@ const openHtmlAnimInNew = () => {
   transform: translateY(-10px);
 }
 
+.animation-card.is-unavailable {
+  cursor: default;
+}
+
+.animation-card.is-unavailable:hover {
+  border-color: rgb(255 255 255 / 50%);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 8%);
+  transform: none;
+}
+
 .animation-card.dark {
   background-color: rgb(40 40 40 / 80%);
+  border-color: rgb(255 255 255 / 10%);
+  box-shadow: 0 10px 25px rgb(0 0 0 / 30%);
+}
+
+.animation-card.dark.is-unavailable:hover {
   border-color: rgb(255 255 255 / 10%);
   box-shadow: 0 10px 25px rgb(0 0 0 / 30%);
 }
@@ -307,6 +336,12 @@ const openHtmlAnimInNew = () => {
 .animation-card:hover .card-preview img,
 .animation-card:hover .hover-video {
   transform: scale(1.1);
+}
+
+.animation-card.is-unavailable:hover .card-preview img,
+.animation-card.is-unavailable:hover .hover-video,
+.animation-card.is-unavailable:hover .cover-placeholder {
+  transform: none;
 }
 
 .cover-placeholder {

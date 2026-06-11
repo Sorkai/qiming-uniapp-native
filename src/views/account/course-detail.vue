@@ -787,10 +787,11 @@ const fetchHtmlAnimations = async () => {
     const results = await Promise.all(
       chapters.map(async (ch: any) => {
         try {
-          const { data } = await getHtmlAnimationDisplay({
+          const response: any = await getHtmlAnimationDisplay({
             courseId: courseDetail.value.courseId,
             chapterId: ch.chapterId
           });
+          const data = response?.data || response;
           if (data?.url) {
             return {
               chapterId: ch.chapterId,
@@ -801,13 +802,42 @@ const fetchHtmlAnimations = async () => {
               previewUrl: data.previewUrl || data.coverUrl,
               previewVideoUrl: data.previewVideoUrl,
               available: data.available !== false,
-              message: data.message
+              message: data.message,
+              status: "ready"
             };
           }
           if (data?.available === false) {
-            return null;
+            return {
+              chapterId: ch.chapterId,
+              chapterName: ch.name,
+              version: "",
+              url: "",
+              available: false,
+              message: data.message || "暂无可用HTML动画版本",
+              status: "unavailable"
+            };
           }
         } catch (e) {
+          const status = e?.response?.status;
+          const message =
+            e?.response?.data?.message ||
+            e?.response?.data?.msg ||
+            e?.message ||
+            "";
+          if (status === 404) {
+            return {
+              chapterId: ch.chapterId,
+              chapterName: ch.name,
+              version: "",
+              url: "",
+              available: false,
+              message: message || "暂无可展示动画",
+              status:
+                message.includes("对象不存在") || message.includes("版本对象")
+                  ? "missing"
+                  : "unavailable"
+            };
+          }
           return null;
         }
         return null;
