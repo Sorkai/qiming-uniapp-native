@@ -4,6 +4,7 @@
       <div
         v-if="visible"
         class="login-overlay"
+        :style="nativeOverlayVars"
         @click.self="emit('update:visible', false)"
       >
         <div class="login-card" :class="{ shake: isShaking }">
@@ -509,8 +510,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch
+} from "vue";
 import type { PropType } from "vue";
+import type { StyleValue } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
@@ -541,6 +551,49 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const nativeViewportTop = ref(0);
+const nativeViewportHeight = ref(0);
+
+const isQimingNativeWebView = () =>
+  typeof document !== "undefined" &&
+  document.documentElement.classList.contains("qiming-native-webview");
+
+const syncNativeOverlayBounds = () => {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  nativeViewportTop.value =
+    window.scrollY ||
+    document.documentElement.scrollTop ||
+    document.body?.scrollTop ||
+    0;
+  nativeViewportHeight.value =
+    window.innerHeight || document.documentElement.clientHeight || 0;
+};
+
+const nativeOverlayVars = computed<StyleValue | undefined>(() => {
+  if (!props.visible || !isQimingNativeWebView()) return undefined;
+  const height =
+    nativeViewportHeight.value ||
+    (typeof window !== "undefined" ? window.innerHeight : 0);
+
+  return {
+    "--qiming-login-overlay-top": `${nativeViewportTop.value}px`,
+    "--qiming-login-overlay-height": `${height}px`,
+    position: "absolute",
+    inset: "auto",
+    top: `${nativeViewportTop.value}px`,
+    right: "auto",
+    bottom: "auto",
+    left: "0",
+    zIndex: "10050",
+    width: "100vw",
+    height: `${height}px`,
+    minHeight: `${height}px`,
+    maxHeight: `${height}px`,
+    transform: "none"
+  };
+});
 
 // 登录类型
 const loginType = ref<"password" | "sms">("password");
@@ -891,11 +944,28 @@ const resetForm = () => {
 watch(
   () => props.visible,
   val => {
-    if (!val) {
-      setTimeout(resetForm, 300);
+    if (val) {
+      syncNativeOverlayBounds();
+      void nextTick(syncNativeOverlayBounds);
+      return;
     }
+
+    setTimeout(resetForm, 300);
   }
 );
+
+onMounted(() => {
+  syncNativeOverlayBounds();
+  window.addEventListener("resize", syncNativeOverlayBounds);
+  window.addEventListener("orientationchange", syncNativeOverlayBounds);
+  window.addEventListener("scroll", syncNativeOverlayBounds, true);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", syncNativeOverlayBounds);
+  window.removeEventListener("orientationchange", syncNativeOverlayBounds);
+  window.removeEventListener("scroll", syncNativeOverlayBounds, true);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -1421,15 +1491,29 @@ watch(
 }
 
 html.qiming-native-webview .login-overlay {
-  top: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+  position: absolute !important;
+  inset: auto !important;
+  top: var(--qiming-login-overlay-top, 0px) !important;
+  right: auto !important;
+  bottom: auto !important;
   left: 0 !important;
+  z-index: 10050 !important;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   width: 100vw !important;
-  height: var(--qiming-native-vh, 100dvh) !important;
+  height: var(
+    --qiming-login-overlay-height,
+    var(--qiming-native-vh, 100dvh)
+  ) !important;
+  min-height: var(
+    --qiming-login-overlay-height,
+    var(--qiming-native-vh, 100dvh)
+  ) !important;
+  max-height: var(
+    --qiming-login-overlay-height,
+    var(--qiming-native-vh, 100dvh)
+  ) !important;
   padding:
     calc(var(--qiming-native-status-top, 0px) + 14px) 16px
     calc(env(safe-area-inset-bottom, 0px) + 16px);
