@@ -9,16 +9,20 @@ import {
   MagicStick,
   Refresh,
   Download,
-  View
+  View,
+  CircleCheck,
+  ChatDotRound
 } from "@element-plus/icons-vue";
 import {
   createAssistantResourceTask,
   listAssistantResourceTaskLogs,
   listAssistantResourceTasks,
   listAssistantResources,
+  reportAssistantResourceUsage,
   type AssistantResourceSummary,
   type AssistantResourceTaskItem,
-  type AssistantResourceTaskLogItem
+  type AssistantResourceTaskLogItem,
+  type AssistantResourceUsageEventType
 } from "@/api/frontend/assistant";
 
 const props = defineProps<{
@@ -34,6 +38,13 @@ const tasks = ref<AssistantResourceTaskItem[]>([]);
 const resources = ref<AssistantResourceSummary[]>([]);
 const selectedTaskId = ref("");
 const taskLogs = ref<AssistantResourceTaskLogItem[]>([]);
+const detailVisible = ref(false);
+const selectedResource = ref<AssistantResourceSummary | null>(null);
+const resourceOpenedAt = ref(0);
+const resourceFeedbackScore = ref(5);
+const resourceFeedbackText = ref("");
+const feedbackSubmitting = ref(false);
+const completeSubmitting = ref(false);
 
 const filteredResources = computed(() => {
   const keyword = searchQuery.value.trim().toLowerCase();
@@ -63,6 +74,33 @@ const tagType = (status: string) => {
   if (status === "completed" || status === "ready") return "success";
   if (status === "failed") return "danger";
   return "warning";
+};
+
+const qualityLabel = (score?: number) => {
+  if (score === undefined || score === null) return "";
+  const normalized = score <= 1 ? score * 100 : score;
+  return `${Math.round(normalized)}%`;
+};
+
+const hasInlinePreview = (resource?: AssistantResourceSummary | null) =>
+  !!resource?.content_body && !resource.preview_url;
+
+const reportResourceUsage = async (
+  resource: AssistantResourceSummary,
+  eventType: AssistantResourceUsageEventType,
+  extra: Record<string, any> = {}
+) => {
+  try {
+    await reportAssistantResourceUsage({
+      resource_id: resource.resource_id,
+      course_id: props.courseId,
+      target_student_id: props.targetStudentId,
+      event_type: eventType,
+      ...extra
+    });
+  } catch (error) {
+    console.warn("[AiResourceGeneration] 资源使用事件上报失败:", error);
+  }
 };
 
 const loadResources = async () => {
@@ -126,12 +164,72 @@ const handleCreateTask = async () => {
   }
 };
 
-const openUrl = (url?: string) => {
+const openResourceDetail = (resource: AssistantResourceSummary) => {
+  selectedResource.value = resource;
+  detailVisible.value = true;
+  resourceOpenedAt.value = Date.now();
+  resourceFeedbackScore.value = 5;
+  resourceFeedbackText.value = "";
+  void reportResourceUsage(resource, "open", {
+    metadata: {
+      content_format: resource.content_format || "",
+      html_animation_status: resource.html_animation_status || ""
+    }
+  });
+};
+
+const handleResourceDialogClosed = () => {
+  const resource = selectedResource.value;
+  if (resource && resourceOpenedAt.value) {
+    void reportResourceUsage(resource, "heartbeat", {
+      dwell_ms: Math.max(Date.now() - resourceOpenedAt.value, 0),
+      progress_percent: 100
+    });
+  }
+  selectedResource.value = null;
+  resourceOpenedAt.value = 0;
+};
+
+const openUrl = (url?: string, resource?: AssistantResourceSummary) => {
   if (!url) {
     ElMessage.warning("当前资源暂无可访问链接");
     return;
   }
+  if (resource) {
+    void reportResourceUsage(resource, "view", {
+      metadata: { target: url }
+    });
+  }
   window.open(url, "_blank");
+};
+
+const handleCompleteResource = async () => {
+  if (!selectedResource.value) return;
+  completeSubmitting.value = true;
+  try {
+    await reportResourceUsage(selectedResource.value, "complete", {
+      completed: true,
+      progress_percent: 100
+    });
+    ElMessage.success("已记录资源完成状态");
+  } finally {
+    completeSubmitting.value = false;
+  }
+};
+
+const handleSubmitFeedback = async () => {
+  if (!selectedResource.value) return;
+  feedbackSubmitting.value = true;
+  try {
+    await reportResourceUsage(selectedResource.value, "feedback", {
+      feedback_score: resourceFeedbackScore.value,
+      feedback_text: resourceFeedbackText.value.trim()
+    });
+    ElMessage.success("资源反馈已提交");
+    resourceFeedbackText.value = "";
+  } finally {
+    feedbackSubmitting.value = false;
+  }
 };
 
 onMounted(loadResources);
@@ -287,6 +385,49 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
             <p v-if="res.recommendation" class="text-xs text-primary mb-4 line-clamp-2">
               {{ res.recommendation }}
             </p>
+            <div class="mb-4 flex flex-wrap gap-1.5">
+              <el-tag
+                v-if="res.content_format"
+                size="small"
+                effect="plain"
+                class="!rounded-md"
+              >
+                {{ res.content_format }}
+              </el-tag>
+              <el-tag
+                v-if="res.quality_score !== undefined"
+                size="small"
+                type="success"
+                effect="plain"
+                class="!rounded-md"
+              >
+                质量 {{ qualityLabel(res.quality_score) }}
+              </el-tag>
+              <el-tag
+                v-if="res.safety_status"
+                size="small"
+                :type="res.safety_status === 'safe' ? 'success' : 'warning'"
+                effect="plain"
+                class="!rounded-md"
+              >
+                {{ res.safety_status }}
+              </el-tag>
+              <el-tag
+                v-if="res.html_animation_status"
+                size="small"
+                :type="tagType(res.html_animation_status)"
+                effect="plain"
+                class="!rounded-md"
+              >
+                动画 {{ res.html_animation_status }}
+              </el-tag>
+            </div>
+            <p
+              v-if="res.html_animation_status && res.html_animation_status !== 'ready'"
+              class="text-xs text-amber-600 mb-4 line-clamp-2"
+            >
+              {{ res.html_animation_message || res.html_animation_error || "动画任务处理中" }}
+            </p>
             <div
               class="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-50"
             >
@@ -297,15 +438,15 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
                   text
                   type="primary"
                   :icon="View"
-                  @click="openUrl(res.preview_url)"
+                  @click="openResourceDetail(res)"
                 >
-                  预览
+                  查看
                 </el-button>
                 <el-button
                   size="small"
                   text
                   :icon="Download"
-                  @click="openUrl(res.download_url)"
+                  @click="openUrl(res.download_url, res)"
                 >
                   下载
                 </el-button>
@@ -316,5 +457,166 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
         <el-empty v-else description="暂无学习资源" />
       </div>
     </div>
+
+    <el-dialog
+      v-model="detailVisible"
+      width="760px"
+      destroy-on-close
+      class="assistant-resource-dialog"
+      @closed="handleResourceDialogClosed"
+    >
+      <template #header>
+        <div class="pr-8">
+          <div class="text-base font-bold text-gray-800">
+            {{ selectedResource?.title || "资源详情" }}
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            <el-tag size="small" effect="plain">
+              {{ selectedResource?.resource_type || "resource" }}
+            </el-tag>
+            <el-tag
+              v-if="selectedResource?.content_format"
+              size="small"
+              effect="plain"
+            >
+              {{ selectedResource.content_format }}
+            </el-tag>
+            <el-tag
+              v-if="selectedResource?.quality_score !== undefined"
+              size="small"
+              type="success"
+              effect="plain"
+            >
+              质量 {{ qualityLabel(selectedResource.quality_score) }}
+            </el-tag>
+            <el-tag
+              v-if="selectedResource?.safety_status"
+              size="small"
+              :type="selectedResource.safety_status === 'safe' ? 'success' : 'warning'"
+              effect="plain"
+            >
+              {{ selectedResource.safety_status }}
+            </el-tag>
+          </div>
+        </div>
+      </template>
+
+      <div v-if="selectedResource" class="space-y-5">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          {{ selectedResource.summary || selectedResource.recommendation || "暂无摘要" }}
+        </p>
+
+        <div
+          v-if="selectedResource.html_animation_task_id"
+          class="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+        >
+          <div class="font-bold">
+            动画任务：{{ selectedResource.html_animation_status || "pending" }}
+          </div>
+          <div class="mt-1 text-xs leading-relaxed">
+            {{
+              selectedResource.html_animation_message ||
+              selectedResource.html_animation_error ||
+              "可通过任务 ID 进入动画状态轮询流程"
+            }}
+          </div>
+          <div class="mt-2 font-mono text-xs text-amber-600">
+            {{ selectedResource.html_animation_task_id }}
+          </div>
+        </div>
+
+        <div
+          v-if="hasInlinePreview(selectedResource)"
+          class="rounded-xl border border-gray-100 bg-gray-50 p-4"
+        >
+          <div class="mb-3 text-xs font-bold text-gray-500 uppercase">
+            内联预览
+          </div>
+          <pre
+            class="max-h-80 overflow-auto whitespace-pre-wrap break-words text-sm leading-7 text-gray-700"
+            >{{ selectedResource.content_body }}</pre
+          >
+        </div>
+
+        <div v-if="selectedResource.object_key" class="text-xs text-gray-500">
+          对象存储 Key：{{ selectedResource.object_key }}
+        </div>
+
+        <div v-if="selectedResource.citations?.length" class="space-y-2">
+          <div class="text-xs font-bold text-gray-500 uppercase">引用来源</div>
+          <div
+            v-for="(citation, index) in selectedResource.citations"
+            :key="`${citation.title || citation.url || index}`"
+            class="rounded-lg border border-gray-100 px-3 py-2 text-xs text-gray-600"
+          >
+            <div class="font-medium text-gray-700">
+              {{ citation.title || citation.source || `引用 ${index + 1}` }}
+            </div>
+            <div v-if="citation.snippet" class="mt-1 leading-relaxed">
+              {{ citation.snippet }}
+            </div>
+            <a
+              v-if="citation.url"
+              :href="citation.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="mt-1 inline-block text-primary"
+            >
+              {{ citation.url }}
+            </a>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-100 p-4">
+          <div class="flex items-center gap-2 text-sm font-bold text-gray-700">
+            <el-icon><ChatDotRound /></el-icon>
+            资源反馈
+          </div>
+          <div class="mt-3 flex items-center gap-3">
+            <el-rate v-model="resourceFeedbackScore" :max="5" />
+            <span class="text-xs text-gray-400">{{ resourceFeedbackScore }} / 5</span>
+          </div>
+          <el-input
+            v-model="resourceFeedbackText"
+            class="mt-3"
+            type="textarea"
+            :rows="3"
+            maxlength="300"
+            show-word-limit
+            placeholder="这份资源对你是否有帮助？"
+          />
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex items-center justify-between gap-3">
+          <el-button
+            :icon="CircleCheck"
+            :loading="completeSubmitting"
+            @click="handleCompleteResource"
+          >
+            标记完成
+          </el-button>
+          <div class="flex items-center gap-2">
+            <el-button
+              v-if="selectedResource?.preview_url"
+              type="primary"
+              plain
+              :icon="View"
+              @click="openUrl(selectedResource.preview_url, selectedResource)"
+            >
+              打开预览
+            </el-button>
+            <el-button
+              type="primary"
+              :loading="feedbackSubmitting"
+              @click="handleSubmitFeedback"
+            >
+              提交反馈
+            </el-button>
+          </div>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>

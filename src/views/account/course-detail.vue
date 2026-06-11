@@ -797,8 +797,15 @@ const fetchHtmlAnimations = async () => {
               chapterName: ch.name,
               version: data.version,
               url: data.url,
-              previewUrl: data.previewUrl
+              coverUrl: data.coverUrl || data.previewUrl,
+              previewUrl: data.previewUrl || data.coverUrl,
+              previewVideoUrl: data.previewVideoUrl,
+              available: data.available !== false,
+              message: data.message
             };
+          }
+          if (data?.available === false) {
+            return null;
           }
         } catch (e) {
           return null;

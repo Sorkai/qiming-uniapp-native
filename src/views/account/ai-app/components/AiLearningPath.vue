@@ -31,6 +31,7 @@ const path = ref<AssistantPathRoadmap | null>(null);
 
 const courseMeta = computed(() => path.value?.course_meta);
 const roadmapData = computed(() => path.value?.roadmap || []);
+const hasPath = computed(() => !!path.value && roadmapData.value.length > 0);
 
 const loadPath = async () => {
   loading.value = true;
@@ -39,7 +40,7 @@ const loadPath = async () => {
       course_id: props.courseId,
       target_student_id: props.targetStudentId
     });
-    path.value = data.path;
+    path.value = data.path || null;
     status.value = data.status;
     statusMessage.value = data.message || "";
   } catch (error: any) {
@@ -133,7 +134,13 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
           </p>
         </div>
         <div class="flex gap-2">
-          <el-button plain round :loading="actionLoading" @click="handleReplan">
+          <el-button
+            plain
+            round
+            :loading="actionLoading"
+            :disabled="!hasPath"
+            @click="handleReplan"
+          >
             <el-icon class="mr-1"><RefreshRight /></el-icon>
             重规划
           </el-button>
@@ -181,7 +188,7 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
       </div>
     </div>
 
-    <div v-if="roadmapData.length" class="max-w-4xl w-full relative">
+    <div v-if="hasPath" class="max-w-4xl w-full relative">
       <div
         v-for="(phase, index) in roadmapData"
         :key="phase.title"
@@ -304,6 +311,23 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
         </div>
       </div>
     </div>
-    <el-empty v-else description="暂无学习路径" :image-size="140" />
+    <div
+      v-else
+      class="max-w-3xl w-full rounded-2xl border border-dashed border-primary/20 bg-primary/5 p-8 text-center"
+    >
+      <el-empty
+        :description="statusMessage || '当前课程还没有真实学习路径'"
+        :image-size="140"
+      />
+      <el-button
+        type="primary"
+        round
+        :loading="actionLoading"
+        @click="handleGenerate"
+      >
+        <el-icon class="mr-1"><MagicStick /></el-icon>
+        生成路径
+      </el-button>
+    </div>
   </div>
 </template>

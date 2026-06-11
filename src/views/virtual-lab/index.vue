@@ -188,6 +188,15 @@
           </div>
 
           <div class="task-card__body">
+            <div class="task-cover">
+              <img
+                v-if="row.coverUrl"
+                :src="row.coverUrl"
+                alt="HTML 动画快照封面"
+              />
+              <div v-else class="task-cover__empty">暂无快照封面</div>
+            </div>
+
             <div class="task-field task-field--full">
               <span class="task-field__label">任务 ID</span>
               <span class="task-id">{{ row.taskId }}</span>
@@ -196,6 +205,11 @@
             <div class="task-field task-field--full">
               <span class="task-field__label">文件名</span>
               <span class="task-field__value">{{ row.fileName || "-" }}</span>
+            </div>
+
+            <div v-if="row.coverObject" class="task-field task-field--full">
+              <span class="task-field__label">封面对象</span>
+              <span class="task-field__value">{{ row.coverObject }}</span>
             </div>
 
             <div class="task-meta-grid">
@@ -1045,6 +1059,46 @@ onMounted(() => {
 
   .task-card__body {
     gap: 14px;
+  }
+
+  .task-cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg, rgb(151 180 247 / 16%), transparent 42%),
+      #f8fafc;
+    border: 1px solid rgb(226 232 240 / 86%);
+    border-radius: 16px;
+
+    html.dark & {
+      background:
+        linear-gradient(135deg, rgb(96 165 250 / 18%), transparent 42%),
+        #0f172a;
+      border-color: rgb(71 85 105 / 52%);
+    }
+  }
+
+  .task-cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .task-cover__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+
+    html.dark & {
+      color: #cbd5e1;
+    }
   }
 
   .task-field {

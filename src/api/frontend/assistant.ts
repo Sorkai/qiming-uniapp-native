@@ -106,6 +106,12 @@ export interface AssistantDigitalHumanDirective {
   speech_text?: string;
   highlight_text?: string;
   focus_resource_id?: string;
+  speak?: boolean;
+  expression_intensity?: number;
+  gesture_duration_ms?: number;
+  posture?: string;
+  speech_rate?: number;
+  priority?: number;
 }
 
 export interface AssistantChatStreamEvent {
@@ -126,6 +132,7 @@ export interface AssistantChatStreamEvent {
   resources?: AssistantChatResource[];
   trace?: AssistantChatTraceStep[];
   digital_human?: AssistantDigitalHumanDirective;
+  profile_event?: Record<string, any>;
 }
 
 export interface AssistantConversationItem {
@@ -136,6 +143,7 @@ export interface AssistantConversationItem {
   message_count: number;
   course_id?: number;
   target_student_id?: number;
+  metadata?: Record<string, any>;
 }
 
 export interface AssistantConversationGroup {
@@ -157,11 +165,40 @@ export interface AssistantConversationMessagesResp {
   list: AssistantConversationMessageItem[];
 }
 
+export interface AssistantCoursesResp {
+  status: string;
+  message?: string;
+  selected_course_id?: number;
+  selected_student_id?: number;
+  latest_conversation_id?: string;
+  latest_conversation?: AssistantConversationItem;
+  courses: AssistantBootstrapCourse[];
+}
+
+export interface AssistantCreateConversationResp {
+  created?: boolean;
+  status: string;
+  message?: string;
+  conversation?: AssistantConversationItem;
+  conversation_id?: string;
+  title?: string;
+}
+
+export interface AssistantConversationDetailResp {
+  status: string;
+  message?: string;
+  conversation?: AssistantConversationItem;
+  total?: number;
+  messages?: AssistantConversationMessageItem[];
+  list?: AssistantConversationMessageItem[];
+}
+
 export interface AssistantConversationMessageItem {
   message_id: string;
   role: string;
   content_text?: string;
   created_at: string;
+  metadata?: Record<string, any>;
 }
 
 export interface AssistantProfileCurrentResp {
@@ -225,6 +262,24 @@ export interface AssistantResourceSummary {
   preview_url?: string;
   download_url?: string;
   recommendation?: string;
+  object_key?: string;
+  content_format?: string;
+  content_body?: string;
+  html_animation_task_id?: string;
+  html_animation_status?: string;
+  html_animation_message?: string;
+  html_animation_error?: string;
+  quality_score?: number;
+  safety_status?: string;
+  citations?: AssistantResourceCitation[];
+}
+
+export interface AssistantResourceCitation {
+  title?: string;
+  url?: string;
+  source?: string;
+  snippet?: string;
+  [key: string]: any;
 }
 
 export interface AssistantCreateResourceTaskResp {
@@ -254,6 +309,33 @@ export interface AssistantListResourceTaskLogsResp {
   list: AssistantResourceTaskLogItem[];
 }
 
+export type AssistantResourceUsageEventType =
+  | "open"
+  | "view"
+  | "heartbeat"
+  | "complete"
+  | "feedback";
+
+export interface AssistantResourceUsageMetrics {
+  open_count?: number;
+  view_count?: number;
+  heartbeat_count?: number;
+  complete_count?: number;
+  feedback_count?: number;
+  total_dwell_ms?: number;
+  max_progress_percent?: number;
+  completed?: boolean;
+  average_feedback_score?: number;
+  [key: string]: any;
+}
+
+export interface AssistantReportResourceUsageResp {
+  accepted: boolean;
+  status: string;
+  message?: string;
+  metrics?: AssistantResourceUsageMetrics;
+}
+
 export interface AssistantPathRoadmap {
   course_meta: {
     name: string;
@@ -281,7 +363,7 @@ export interface AssistantPathRoadmap {
 export interface AssistantGetCurrentPathResp {
   status: string;
   message?: string;
-  path: AssistantPathRoadmap;
+  path?: AssistantPathRoadmap | null;
 }
 
 export interface AssistantGeneratePathResp {
@@ -327,6 +409,51 @@ export interface AssistantAssessmentCurrentResp {
     type: string;
   }[];
   suggestions: string[];
+  resource_usage?: AssistantAssessmentResourceUsage;
+  feedback_summary?: AssistantAssessmentFeedbackSummary;
+}
+
+export interface AssistantAssessmentResourceUsage {
+  usage_count?: number;
+  open_count?: number;
+  view_count?: number;
+  heartbeat_count?: number;
+  complete_count?: number;
+  feedback_count?: number;
+  total_dwell_ms?: number;
+  dwell_ms?: number;
+  dwell_seconds?: number;
+  completion_rate?: number;
+  average_progress_percent?: number;
+  resource_feedback_count?: number;
+  average_resource_score?: number;
+  average_feedback_score?: number;
+  [key: string]: any;
+}
+
+export interface AssistantAssessmentFeedbackSummary {
+  feedback_count?: number;
+  count?: number;
+  average_score?: number;
+  avg_score?: number;
+  latest_feedback_at?: string;
+  latest_at?: string;
+  latest_feedback?: string;
+  latest_content?: string;
+  [key: string]: any;
+}
+
+export interface AssistantAssessmentRefreshResp {
+  accepted: boolean;
+  status: string;
+  message?: string;
+}
+
+export interface AssistantAssessmentFeedbackResp {
+  accepted: boolean;
+  status: string;
+  message?: string;
+  feedback_summary?: AssistantAssessmentFeedbackSummary;
 }
 
 function buildAuthHeaders(): Record<string, string> {
@@ -412,6 +539,15 @@ export const getAssistantBootstrap = (params?: {
     { params }
   );
 
+export const getAssistantCourses = (params?: {
+  target_student_id?: number;
+}) =>
+  http.request<ApiResponse<AssistantCoursesResp>>(
+    "get",
+    "/edu/frontend/v1/assistant/courses",
+    { params }
+  );
+
 export const getAssistantConversationGroups = (params?: {
   target_student_id?: number;
 }) =>
@@ -433,6 +569,24 @@ export const getAssistantConversationsByCourse = (params: {
       list: AssistantConversationItem[];
     }>
   >("get", "/edu/frontend/v1/assistant/conversations/by-course", { params });
+
+export const createAssistantConversation = (data: {
+  course_id?: number;
+  target_student_id?: number;
+  title?: string;
+  metadata?: Record<string, any>;
+}) =>
+  http.request<ApiResponse<AssistantCreateConversationResp>>(
+    "post",
+    "/edu/frontend/v1/assistant/conversations",
+    { data }
+  );
+
+export const getAssistantConversation = (conversationId: string) =>
+  http.request<ApiResponse<AssistantConversationDetailResp>>(
+    "get",
+    `/edu/frontend/v1/assistant/conversations/${encodeURIComponent(conversationId)}`
+  );
 
 export const getAssistantConversationMessages = (conversationId: string) =>
   http.request<ApiResponse<AssistantConversationMessagesResp>>(
@@ -547,6 +701,24 @@ export const getAssistantResource = (resourceId: string) =>
     `/edu/frontend/v1/assistant/resources/${encodeURIComponent(resourceId)}`
   );
 
+export const reportAssistantResourceUsage = (data: {
+  resource_id: string;
+  course_id?: number;
+  target_student_id?: number;
+  event_type: AssistantResourceUsageEventType;
+  dwell_ms?: number;
+  progress_percent?: number;
+  completed?: boolean;
+  feedback_score?: number;
+  feedback_text?: string;
+  metadata?: Record<string, any>;
+}) =>
+  http.request<ApiResponse<AssistantReportResourceUsageResp>>(
+    "post",
+    "/edu/frontend/v1/assistant/resources/usage/events",
+    { data }
+  );
+
 export const getAssistantCurrentPath = (params?: {
   course_id?: number;
   target_student_id?: number;
@@ -601,4 +773,28 @@ export const getAssistantAssessmentCurrent = (params?: {
     "get",
     "/edu/frontend/v1/assistant/assessment/current",
     { params }
+  );
+
+export const refreshAssistantAssessment = (data: {
+  course_id?: number;
+  target_student_id?: number;
+  trigger?: string;
+}) =>
+  http.request<ApiResponse<AssistantAssessmentRefreshResp>>(
+    "post",
+    "/edu/frontend/v1/assistant/assessment/refresh",
+    { data }
+  );
+
+export const submitAssistantAssessmentFeedback = (data: {
+  course_id?: number;
+  target_student_id?: number;
+  score?: number;
+  feedback_text?: string;
+  metadata?: Record<string, any>;
+}) =>
+  http.request<ApiResponse<AssistantAssessmentFeedbackResp>>(
+    "post",
+    "/edu/frontend/v1/assistant/assessment/feedback",
+    { data }
   );

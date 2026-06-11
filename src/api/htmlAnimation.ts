@@ -7,6 +7,9 @@ export interface HtmlAnimationTask {
   fileName: string;
   objectName: string;
   fileUrl?: string;
+  coverName?: string;
+  coverObject?: string;
+  coverUrl?: string;
   fileSize: number;
   errorMessage: string;
   createdAt: string;
@@ -38,8 +41,11 @@ export interface HtmlAnimationSyncResult {
 export interface HtmlAnimationDisplayResult {
   courseId: number;
   chapterId: number;
+  available?: boolean;
+  message?: string;
   version: string;
   url: string;
+  coverUrl?: string;
   previewUrl?: string;
   previewVideoUrl?: string;
 }

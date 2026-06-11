@@ -62,9 +62,16 @@
             </template>
             <template v-else>
               <img
-                :src="item.previewUrl || getPlaceholder(item.chapterId)"
+                v-if="resolveCoverUrl(item)"
+                :src="resolveCoverUrl(item)"
                 alt="预览图"
               />
+              <div v-else class="cover-placeholder">
+                <el-icon size="42">
+                  <component :is="VideoPlay" />
+                </el-icon>
+                <span>封面生成中</span>
+              </div>
             </template>
             <div class="play-overlay">
               <el-icon size="48">
@@ -143,20 +150,6 @@ import ExternalLink from "~icons/ep/link";
 import Loading from "~icons/ep/loading";
 import Camera from "~icons/ep/camera";
 
-// 动画卡片占位图（根据 chapterId 循环使用）
-const placeholders = [
-  "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&q=80",
-  "https://images.unsplash.com/photo-1558655146-d09347e92766?w=500&q=80",
-  "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&q=80",
-  "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&q=80",
-  "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=500&q=80",
-  "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=500&q=80"
-];
-
-const getPlaceholder = (id: number) => {
-  return placeholders[id % placeholders.length];
-};
-
 // Props
 const props = defineProps<{
   visible: boolean;
@@ -167,8 +160,11 @@ const props = defineProps<{
     chapterName: string;
     version: string;
     url: string;
+    coverUrl?: string;
     previewUrl?: string;
     previewVideoUrl?: string;
+    available?: boolean;
+    message?: string;
   }>;
   userAvatar: string;
   userNickname: string;
@@ -187,6 +183,9 @@ const hoveredChapterId = ref<number | null>(null);
 const htmlAnimPreviewVisible = ref(false);
 const htmlAnimPreviewUrl = ref("");
 const iframeLoading = ref(true);
+
+const resolveCoverUrl = (item: { coverUrl?: string; previewUrl?: string }) =>
+  item.coverUrl || item.previewUrl || "";
 
 // 监听弹窗打开，重置加载状态
 watch(htmlAnimPreviewVisible, val => {
@@ -308,6 +307,40 @@ const openHtmlAnimInNew = () => {
 .animation-card:hover .card-preview img,
 .animation-card:hover .hover-video {
   transform: scale(1.1);
+}
+
+.cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #64748b;
+  background:
+    linear-gradient(135deg, rgb(151 180 247 / 18%), transparent 42%),
+    linear-gradient(315deg, rgb(0 184 212 / 16%), transparent 45%),
+    #f8fafc;
+  transition: transform 0.8s ease;
+}
+
+.cover-placeholder span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.animation-card:hover .cover-placeholder {
+  transform: scale(1.06);
+}
+
+.dark .cover-placeholder {
+  color: #cbd5e1;
+  background:
+    linear-gradient(135deg, rgb(151 180 247 / 20%), transparent 42%),
+    linear-gradient(315deg, rgb(0 184 212 / 14%), transparent 45%),
+    #0f172a;
 }
 
 .play-overlay {
