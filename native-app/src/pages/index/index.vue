@@ -29,8 +29,10 @@
             v-for="entry in previewEntries"
             :key="entry.path"
             class="preview-entrybar__button"
-            :class="{ 'is-active': activePreviewEntry === entry.path }"
-            @click="switchPreviewEntry(entry.path)"
+            :class="{
+              'is-active': activePreviewEntry === resolvePreviewEntryPath(entry)
+            }"
+            @click="switchPreviewEntry(resolvePreviewEntryPath(entry))"
           >
             {{ entry.label }}
           </button>
@@ -101,19 +103,39 @@ isH5DevPreview = import.meta.env.DEV;
 const localAppEntryBase = "./hybrid/html/index.html";
 const previewRoles = ["student", "teacher", "admin"] as const;
 type PreviewRole = (typeof previewRoles)[number];
+type PreviewEntry = {
+  label: string;
+  path: string;
+  studentPath?: string;
+  teacherPath?: string;
+  adminPath?: string;
+};
 const previewRoleLabels = {
   student: "学生",
   teacher: "教师",
   admin: "管理"
 };
-const previewEntries = [
-  { label: "工作台", path: "/welcome/index" },
-  { label: "AI App", path: "/account/ai-app" },
-  { label: "课程", path: "/account" },
-  { label: "试卷", path: "/exam-paper/index" },
+const previewEntries: readonly PreviewEntry[] = [
+  { label: "工作台", path: "/welcome/index", studentPath: "/account?menu=home" },
+  {
+    label: "AI App",
+    path: "/account/ai-app",
+    studentPath: "/account/ai-app?mode=student"
+  },
+  { label: "课程", path: "/course/list", studentPath: "/account?menu=course" },
+  {
+    label: "试卷",
+    path: "/course/assessment",
+    studentPath: "/account?menu=exam-center"
+  },
   { label: "学生考试", path: "/student-exam-center/list" },
-  { label: "用户", path: "/user/list" }
-] as const;
+  {
+    label: "用户",
+    path: "/user/list",
+    studentPath: "/account?menu=profile",
+    teacherPath: "/account-settings"
+  }
+];
 
 function isPreviewRole(role: string | null): role is PreviewRole {
   return !!role && (previewRoles as readonly string[]).includes(role);
@@ -131,6 +153,19 @@ function normalizeEntryRoute(route: string | null | undefined) {
   if (value.startsWith("//") || value.includes("://")) return defaultEntryRoute;
   return value;
 }
+
+const h5PreviewRole = ref<PreviewRole>("teacher");
+const h5PreviewEntryRoute = ref(defaultEntryRoute);
+
+function syncH5PreviewStateFromLocation() {
+  if (!isH5DevPreview || typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  const role = params.get("demoRole");
+  h5PreviewRole.value = isPreviewRole(role) ? role : "teacher";
+  h5PreviewEntryRoute.value = normalizeEntryRoute(params.get("entry"));
+}
+
+syncH5PreviewStateFromLocation();
 
 function appendQuery(url: string, key: string, value: string) {
   const separator = url.includes("?") ? "&" : "?";
@@ -167,17 +202,28 @@ function normalizeDemoRole(role: string | null | undefined) {
 
 const previewRole = computed(() => {
   if (!isH5DevPreview || typeof window === "undefined") return "teacher";
-  const role = new URLSearchParams(window.location.search).get("demoRole");
-  return isPreviewRole(role) ? role : "teacher";
+  return h5PreviewRole.value;
 });
 
 const previewEntryRoute = computed(() => {
   if (!isH5DevPreview || typeof window === "undefined") return defaultEntryRoute;
-  const entry = new URLSearchParams(window.location.search).get("entry");
-  return normalizeEntryRoute(entry);
+  return h5PreviewEntryRoute.value;
 });
 
 const activePreviewEntry = computed(() => previewEntryRoute.value);
+
+function resolvePreviewEntryPath(entry: PreviewEntry): string {
+  if (previewRole.value === "student" && entry.studentPath) {
+    return entry.studentPath;
+  }
+  if (previewRole.value === "teacher" && entry.teacherPath) {
+    return entry.teacherPath;
+  }
+  if (previewRole.value === "admin" && entry.adminPath) {
+    return entry.adminPath;
+  }
+  return entry.path;
+}
 
 const h5PreviewOrigin = computed(() => {
   if (!isH5DevPreview || typeof window === "undefined") {
@@ -406,14 +452,17 @@ function switchPreviewRole(role: PreviewRole) {
   const url = new URL(window.location.href);
   url.searchParams.set("demoRole", role);
   window.history.replaceState(null, "", url);
+  h5PreviewRole.value = role;
   reloadWebview();
 }
 
 function switchPreviewEntry(entryPath: string) {
   if (!isH5DevPreview || typeof window === "undefined") return;
+  const normalizedEntry = normalizeEntryRoute(entryPath);
   const url = new URL(window.location.href);
-  url.searchParams.set("entry", normalizeEntryRoute(entryPath));
+  url.searchParams.set("entry", normalizedEntry);
   window.history.replaceState(null, "", url);
+  h5PreviewEntryRoute.value = normalizedEntry;
   reloadWebview();
 }
 
