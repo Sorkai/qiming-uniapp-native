@@ -4,6 +4,7 @@ env:
 
 permissions:
   contents: write
+
 on:
   push:
     branches:
@@ -14,23 +15,23 @@ jobs:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           registry-url: https://registry.npmjs.com/
 
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v6
         name: Install pnpm
         id: pnpm-install
         with:
           version: 9
           run_install: false
 
-      - name: Deploy 🔧
+      - name: Build static site
         run: |
           pnpm install --no-frozen-lockfile
           sed -i "s#VITE_PUBLIC_PATH = /#VITE_PUBLIC_PATH = /vue-pure-admin/#g" $(pwd)/.env.production
@@ -38,7 +39,7 @@ jobs:
           cd dist
           touch README.md .nojekyll
 
-      - name: Deploy 🚀
+      - name: Deploy GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
