@@ -1,77 +1,61 @@
-# vue-pure-admin-max
+# Hi👋 hello the next generation juiced native Android app in the edu area presented by ycxj Jilin
+# ccut 108 全新 启明智教 (Qimingedu) - Android 客户端
 
-当前仓库用于维护 AI 教育平台前端，并在现有稳定版本基础上继续演进 Agent 智能体能力。
+#Checkout from the pics first Stu Teacher and Admin
+<img width="400" height="833" alt="image" src="https://github.com/user-attachments/assets/1e7b4d23-2014-42de-b5da-1b194b4cf4c8" />
+<img width="397" height="829" alt="image" src="https://github.com/user-attachments/assets/c85d7aab-e49d-494c-8164-2b88d071fe74" />
+<img width="392" height="804" alt="image" src="https://github.com/user-attachments/assets/9878a4fd-1d0d-42e0-8f81-4e1c7493d36c" />
+<img width="394" height="828" alt="image" src="https://github.com/user-attachments/assets/4b27c936-a290-4e26-8a25-cee2c16d861a" />
+<img width="396" height="830" alt="image" src="https://github.com/user-attachments/assets/18137d8e-bd39-42d1-8d21-2b532c8584f5" />
+<img width="403" height="830" alt="image" src="https://github.com/user-attachments/assets/64c7b42d-6a13-4d25-a23a-0aa05e30a8dd" />
+<img width="398" height="831" alt="image" src="https://github.com/user-attachments/assets/29ed07d3-17c8-4046-8834-6d84c6dee125" />
+<img width="395" height="836" alt="image" src="https://github.com/user-attachments/assets/9fd5810d-91e4-4360-9986-f2a13cbf91c0" />
 
-## 当前基线
 
-- 当前稳定基线标签：`v3.2.0-base`
-- 该标签对应提交：`f25459b`
-- 这个基线代表当前不含后续 Agent 改造的稳定版本
+## 项目简介
 
-## 分支设计
+**启明智教** 是一款由 AI 驱动的智能化教育与课堂监控平台 Android 客户端。本项目致力于通过先进的人工智能技术优化教学流程，为师生提供高效、个性化的教育互动体验。客户端采用 UniApp 框架开发，深度优化 Android 原生渲染体验，保障复杂的交互与数据流依然丝滑流畅。
 
-### `main`
+依托平台强大的微服务后端架构（基于 Go-Zero 与 Python FastAPI），客户端无缝接入了核心的 **EduClaw 智能体**。同时，结合底层的高效 **SAHR (Semantic Adaptive Hybrid Retrieval) 语义自适应混合检索框架**（精确调优的融合权重：稀疏检索 0.7，稠密检索 0.3），客户端能够在海量教学知识库中实现极高精度的检索、问答与辅助决策。
 
-`main` 是当前上线版本分支。
+##  核心功能
 
-- 用途：生产环境稳定版本
-- 内容：不带后续 Agent 架构改造的正式上线版本
-- 目标：保持可交付、可对接、可回滚
+* **伴学答疑 (EduClaw 智能体):** 深度集成定制化智能体，提供全天候的自适应教学引导与精准解答。
+* **高精度知识检索引擎:** 借助 SAHR 混合检索算法，打破传统检索的语义壁垒，极速定位教学资源与文献。
+* **课堂状态监控与分析:** 接入 AI 视觉与多维数据分析，实时反馈课堂教学状态，助力教育数字化转型（核心算法及应用已布局多项软著与专利）。
+* **原生级流畅体验:** 充分利用 App-Plus 扩展能力，调用 Android 底层 API，实现高效的设备硬件交互与网络并发处理。
 
-### `agent`
+## 其他功能
+* **其余教育平台所拥有的基础功能之上  我们融合全新的完整数据链路** 
+* **教师端管理员端更高效的AI融合备课组件** 
+* **教师端管理员端更精准的提效建议与工作效率分析**
+* **教师端管理员端更个性化的个人画像分析**
+* **学生端AI导学组卷** 
+* **学生端AI当节课程知识问答**
+* **学生端AI思维导图** 
+* **融合了多模态资源的AI助手回答与生成**
+* **响应迅速的截图提问功能** 
+* **启明智教精调的垂直领域大模型**
+* **----还有更多----**
 
-`agent` 是在当前上线版本基础上引入 Agent 智能体能力的长期演进分支。
+##  技术栈与依赖
 
-- 用途：Agent 版本主线
-- 内容：接入类似 ChatGPT 的全平台智能体能力，以及相关 UI、会话、工具调用和后续架构升级
-- 目标：逐步演进为未来新的上线版本
+* **前端框架:** UniApp (Vue 3 语法 / 组合式 API)
+* **构建与编译:** Vite / HBuilderX
+* **网络通信:** 封装 `uni.request`，支持 RESTful API 与长链接 WebSocket 交互
+* **核心关联后端:** * 业务逻辑层：Go-Zero
+    * 模型服务层：Python FastAPI
+* **前端技术**： Element Plus, Tailwind CSS, Sass,Three.js, ECharts , LogicFlow/Vue-Flow , WangEditor/Vditor等等
 
-后续规划：
+##  快速开始
 
-- 当前上线版本先以 `main` 为准
-- 后续等 Agent 版本稳定后，正式上线版本会逐步切换到 `agent`
+### 1. 环境准备
+* 安装 [Node.js](https://nodejs.org/) (推荐 v16.x 或以上版本)
+* 安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 开发者工具
+* 准备 Android Studio 模拟器或真实的 Android 物理测试设备（需开启“开发者模式”及“USB 调试”）
 
-### `dev`
+### 2. 克隆项目代码
 
-`dev` 是测试版本分支。
-
-- 用途：集成测试、联调测试、功能验收前的版本验证
-- 内容：准备进入上线流程的改动
-- 目标：作为上线前的测试主线
-
-### `derive`
-
-`derive` 是给 `dev` 和 `main` 修 bug 用的实验分支。
-
-- 用途：先验证 bug fix、风险修复和小范围调整
-- 内容：针对 `dev` 或 `main` 的修复性改动
-- 目标：降低直接改 `dev` / `main` 的风险
-
-## 推荐协作方式
-
-1. 新功能测试和集成先进入 `dev`
-2. 针对 `dev` 或 `main` 的 bug 修复，先在 `derive` 验证
-3. 当前生产上线仍以 `main` 为准
-4. Agent 相关能力持续在 `agent` 演进
-5. 当 `agent` 成熟后，再把正式上线版本逐步切换到 `agent`
-
-## 修复流转规则
-
-如果后续发现当前原版本接口、页面或公共逻辑需要修复，建议按下面流程处理：
-
-1. 先在 `derive` 完成修复和验证
-2. 再同步到 `dev` 做联调和测试
-3. 确认稳定后，把这次修复合并到 `main`
-4. 如果 `agent` 也需要这次公共修复，再把 `main` 的修复同步到 `agent`
-
-注意：
-
-- `main` 的修改不会自动同步到 `agent`
-- `agent` 和 `main` 是同源分支，不是自动联动分支
-- 公共修复通常应该先进 `main`，再同步到 `agent`
-- `agent` 专属功能不要回流到 `main`
-
-## 文档入口
-
-- 接口文档入口见 [doc/README.md](./doc/README.md)
-- 综合文档说明见 [doc/README-all.md](./doc/README-all.md)
+```bash
+git clone git@github.com:Farrran69311/qiming-uniapp-native.git
+cd qiming-uniapp-native
