@@ -526,7 +526,9 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { userRegister, userLogin, getUserDetail } from "@/api/user";
-import { setToken, getToken } from "@/utils/auth";
+import { storageLocal } from "@pureadmin/utils";
+import { setToken, getToken, userKey } from "@/utils/auth";
+import type { DataInfo } from "@/utils/auth";
 
 const ROLE_BY_TYPE: Record<number, string[]> = {
   1: ["student"],
@@ -765,6 +767,29 @@ const fetchUserDetail = async () => {
   }
 };
 
+const getCurrentRoleType = () => {
+  const token = getToken();
+  const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
+  const roleType = Number(
+    userInfo?.roleType ??
+      (token as any)?.roleType ??
+      localStorage.getItem("userRoleType")
+  );
+  return Number.isFinite(roleType) ? roleType : 0;
+};
+
+const ensureUserRoleReady = async () => {
+  const detail = await fetchUserDetail();
+  const roleType = Number(
+    detail?.data?.userInfo?.roleType ?? getCurrentRoleType()
+  );
+  if ([1, 2, 3].includes(roleType)) return true;
+
+  console.warn("[LoginDialog] missing roleType after login", { detail });
+  message("未获取到账号角色，请重新登录", { type: "error" });
+  return false;
+};
+
 // 密码登录
 const handlePasswordLogin = async () => {
   clearErrors();
@@ -800,7 +825,11 @@ const handlePasswordLogin = async () => {
         permissions: ["*:*:*"]
       });
 
-      await fetchUserDetail();
+      const roleReady = await ensureUserRoleReady();
+      if (!roleReady) {
+        triggerShake();
+        return;
+      }
       message(t("login.pureLoginSuccess"), { type: "success" });
 
       setTimeout(() => {
@@ -913,7 +942,11 @@ const handleRegister = async () => {
         permissions: ["*:*:*"]
       });
 
-      await fetchUserDetail();
+      const roleReady = await ensureUserRoleReady();
+      if (!roleReady) {
+        triggerShake();
+        return;
+      }
       ElMessage.success("注册成功，已自动登录");
 
       setTimeout(() => {
