@@ -5,7 +5,8 @@ param(
   [switch]$SkipAppBuild,
   [switch]$Install,
   [string]$DeviceId = "",
-  [switch]$ForceReinstall
+  [switch]$ForceReinstall,
+  [switch]$KeepRuntimeData
 )
 
 $ErrorActionPreference = "Stop"
@@ -425,6 +426,35 @@ try {
           continue
         }
 
+        if ($name -eq "AndroidManifest.xml") {
+          $sourceManifestPath = Join-Path $stagingNative "AndroidManifest.source.xml"
+          $patchedManifestPath = Join-Path $stagingNative "AndroidManifest.patched.xml"
+          $inputStream = $entry.Open()
+          try {
+            $fileStream = [System.IO.File]::Open(
+              $sourceManifestPath,
+              [System.IO.FileMode]::Create,
+              [System.IO.FileAccess]::Write
+            )
+            try {
+              $inputStream.CopyTo($fileStream)
+            } finally {
+              $fileStream.Dispose()
+            }
+          } finally {
+            $inputStream.Dispose()
+          }
+
+          node (Join-Path $repoRoot "scripts\strip-android-permissions.mjs") `
+            $sourceManifestPath `
+            $patchedManifestPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "AndroidManifest permission stripping failed with exit code $LASTEXITCODE"
+          }
+          Add-FileToZip $destZip $patchedManifestPath $name
+          continue
+        }
+
         if ($launcherIconFiles.ContainsKey($name)) {
           Add-FileToZip $destZip $launcherIconFiles[$name] $name
           continue
@@ -588,6 +618,16 @@ if ($Install) {
       Write-Host $installText
       throw "ADB install failed with exit code $LASTEXITCODE"
     }
+  }
+  if (-not $KeepRuntimeData) {
+    & $adb -s $targetDevice shell am force-stop io.dcloud.HBuilder | Out-Null
+    $clearOutput = & $adb -s $targetDevice shell pm clear io.dcloud.HBuilder 2>&1
+    $clearText = ($clearOutput | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0 -or $clearText -notmatch "Success") {
+      Write-Host $clearText
+      throw "ADB pm clear failed; stale HBuilder app resources may remain on device."
+    }
+    Write-Host "Cleared HBuilder runtime data so this install loads bundled version $VersionCode resources."
   }
 }
 

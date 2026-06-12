@@ -1274,24 +1274,33 @@
       const controls = new OrbitControls(camera, canvas);
       controls.target.set(0, 1.35, 0); // 焦点稍微上移一点到老师头部
       controls.enableDamping = true;
-      controls.dampingFactor = isEmbeddedAiApp ? 0.12 : 0.1;
-      controls.rotateSpeed = isEmbeddedAiApp ? 0.42 : 0.55;
-      controls.zoomSpeed = isEmbeddedAiApp ? 0.62 : 0.78;
-      controls.panSpeed = isEmbeddedAiApp ? 0.36 : 0.52;
-      controls.keyPanSpeed = isEmbeddedAiApp ? 3.2 : 4.5;
+      controls.dampingFactor = isEmbeddedAiApp ? 0.16 : 0.12;
+      controls.rotateSpeed = isEmbeddedAiApp ? 0.28 : 0.44;
+      controls.zoomSpeed = isEmbeddedAiApp ? 0.5 : 0.68;
+      controls.panSpeed = isEmbeddedAiApp ? 0.24 : 0.42;
+      controls.keyPanSpeed = isEmbeddedAiApp ? 2.2 : 3.6;
       controls.minDistance = 0.6;
-      controls.maxDistance = 40;
+      controls.maxDistance = isEmbeddedAiApp ? 8 : 18;
       controls.maxPolarAngle = Math.PI * 0.495;
 
-      const CONTROL_REFERENCE_DISTANCE = 2.75;
+      const CONTROL_REFERENCE_DISTANCE = Math.max(0.001, controls.getDistance ? controls.getDistance() : camera.position.distanceTo(controls.target));
       const CONTROL_BASE_ROTATE_SPEED = controls.rotateSpeed;
       const CONTROL_BASE_PAN_SPEED = controls.panSpeed;
+      const CONTROL_MIN_DISTANCE_FACTOR = isEmbeddedAiApp ? 0.18 : 0.24;
+      const CONTROL_MAX_DISTANCE_FACTOR = 1;
 
       function updateControlFeelByDistance() {
         const distance = Math.max(0.001, controls.getDistance ? controls.getDistance() : camera.position.distanceTo(controls.target));
-        const distanceFactor = Math.max(0.24, Math.min(0.9, Math.sqrt(CONTROL_REFERENCE_DISTANCE / distance)));
-        controls.rotateSpeed = CONTROL_BASE_ROTATE_SPEED * distanceFactor;
-        controls.panSpeed = CONTROL_BASE_PAN_SPEED * distanceFactor;
+        const rotateDistanceFactor = Math.max(
+          CONTROL_MIN_DISTANCE_FACTOR,
+          Math.min(CONTROL_MAX_DISTANCE_FACTOR, Math.pow(CONTROL_REFERENCE_DISTANCE / distance, 0.8))
+        );
+        const panDistanceFactor = Math.max(
+          CONTROL_MIN_DISTANCE_FACTOR,
+          Math.min(CONTROL_MAX_DISTANCE_FACTOR, Math.pow(CONTROL_REFERENCE_DISTANCE / distance, 0.9))
+        );
+        controls.rotateSpeed = CONTROL_BASE_ROTATE_SPEED * rotateDistanceFactor;
+        controls.panSpeed = CONTROL_BASE_PAN_SPEED * panDistanceFactor;
       }
 
       updateControlFeelByDistance();
