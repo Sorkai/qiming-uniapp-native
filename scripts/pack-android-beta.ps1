@@ -108,7 +108,9 @@ if (Test-Path -LiteralPath $stagingWww) {
 }
 New-Item -ItemType Directory -Path $stagingWww -Force | Out-Null
 
-Copy-Item -LiteralPath (Join-Path $appBuildDir "hybrid") -Destination (Join-Path $stagingWww "hybrid") -Recurse -Force
+foreach ($item in Get-ChildItem -LiteralPath $appBuildDir -Force) {
+  Copy-Item -LiteralPath $item.FullName -Destination $stagingWww -Recurse -Force
+}
 
 $logo = Join-Path $h5BuildDir "logo.svg"
 if (Test-Path -LiteralPath $logo) {
@@ -140,18 +142,20 @@ $runtimeManifest = [ordered]@{
   }
   orientation = @("portrait-primary", "portrait-secondary")
   permissions = [ordered]@{
+    Barcode = @{}
     Camera = @{}
     File = @{}
-    Share = @{}
-    Webview = @{}
-    Runtime = @{}
+    Gallery = @{}
     NativeUI = @{}
     Navigator = @{}
-    XMLHttpRequest = @{}
-    Gallery = @{}
+    Runtime = @{}
+    Share = @{}
+    UniNView = @{
+      description = "UniNView native render"
+    }
     Uploader = @{}
-    Barcode = @{}
-    UniNView = @{}
+    Webview = @{}
+    XMLHttpRequest = @{}
   }
   plus = [ordered]@{
     splashscreen = [ordered]@{

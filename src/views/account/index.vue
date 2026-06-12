@@ -2808,8 +2808,8 @@ onUnmounted(() => {
     overflow-x: hidden;
 
     .header {
-      height: calc(64px + var(--pure-safe-area-top, 0px));
-      padding-top: var(--pure-safe-area-top, 0px);
+      height: calc(64px + var(--pure-safe-area-top, 0));
+      padding-top: var(--pure-safe-area-top, 0);
       box-sizing: border-box;
 
       .header-content {
@@ -2879,8 +2879,7 @@ onUnmounted(() => {
     .account-content {
       gap: 14px;
       min-height: 100dvh;
-      padding:
-        calc(76px + var(--pure-safe-area-top, 0px)) 12px
+      padding: calc(76px + var(--pure-safe-area-top, 0)) 12px
         calc(var(--pure-mobile-tab-height, 58px) + 22px);
       box-sizing: border-box;
 
@@ -2928,6 +2927,8 @@ onUnmounted(() => {
         .account-menu {
           position: relative;
           gap: 8px;
+          width: 100%;
+          max-width: 100%;
           padding: 8px 10px;
           overflow-x: auto;
           overflow-y: hidden;
@@ -2958,9 +2959,9 @@ onUnmounted(() => {
           :deep(.el-menu-item) {
             flex: 0 0 auto;
             width: auto;
-            min-width: 96px;
+            min-width: 88px;
             height: 40px;
-            padding: 0 12px;
+            padding: 0 10px;
             border-radius: 16px;
             scroll-snap-align: start;
 
@@ -2971,6 +2972,7 @@ onUnmounted(() => {
 
             span {
               min-width: 0;
+              max-width: 56px;
               overflow: hidden;
               font-size: 12px;
               line-height: 1;
