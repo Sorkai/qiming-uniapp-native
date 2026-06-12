@@ -159,6 +159,9 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   const userRoles = userInfo?.roles ?? [];
   const hasRequiredDemoIdentity =
     normalizedDemoRole !== "student" || !!userInfo?.avatar;
+  const hasDemoSessionMarker =
+    !!Cookies.get(multipleTabsKey) ||
+    (isNativeDemoRoute && hasNativeStoredSession(userInfo));
   const demoSessionMatchesRole =
     !!normalizedDemoRole &&
     userInfo?.roleType === demoRoleTypes[normalizedDemoRole] &&
@@ -166,7 +169,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     userRoles.includes(normalizedDemoRole) &&
     hasRequiredDemoIdentity &&
     localStorage.getItem("qiming-demo-role") === normalizedDemoRole &&
-    !!Cookies.get(multipleTabsKey);
+    hasDemoSessionMarker;
 
   if (isNativeDemoRoute && normalizedDemoRole && demoSessionMatchesRole) {
     nativeDemoSessionReady.add(normalizedDemoRole);
