@@ -66,8 +66,7 @@ function cachedSessionMatches(role: Role) {
     Number(cached?.roleType) === ROLE_META[role].roleType &&
     Array.isArray(cached?.roles) &&
     cached.roles.includes(role) &&
-    Boolean(cached?.accessToken || cached?.refreshToken) &&
-    Boolean(cached?.avatar)
+    Boolean(cached?.accessToken || cached?.refreshToken)
   );
 }
 

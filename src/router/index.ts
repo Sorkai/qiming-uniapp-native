@@ -172,7 +172,11 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     nativeDemoSessionReady.add(normalizedDemoRole);
   }
 
-  if (import.meta.env.DEV && normalizedDemoRole && !demoSessionMatchesRole) {
+  if (
+    (import.meta.env.DEV || isNativeDemoRoute) &&
+    normalizedDemoRole &&
+    !demoSessionMatchesRole
+  ) {
     import("@/views/home/demoSession")
       .then(({ ensureDemoSession }) => ensureDemoSession(normalizedDemoRole))
       .then(() => {
