@@ -117,7 +117,8 @@ const visibleNavItems = computed(() =>
 
 const activePath = computed(() => route.path);
 
-const getQueryValue = (value: unknown) => (Array.isArray(value) ? value[0] : value);
+const getQueryValue = (value: unknown) =>
+  Array.isArray(value) ? value[0] : value;
 
 const isActive = (item: MobileNavItem) => {
   if (item.menu) {
@@ -128,10 +129,14 @@ const isActive = (item: MobileNavItem) => {
     );
   }
   if (item.mode) {
-    return activePath.value === item.path && getQueryValue(route.query.mode) === item.mode;
+    return (
+      activePath.value === item.path &&
+      getQueryValue(route.query.mode) === item.mode
+    );
   }
   return (
-    activePath.value === item.path || activePath.value.startsWith(`${item.path}/`)
+    activePath.value === item.path ||
+    activePath.value.startsWith(`${item.path}/`)
   );
 };
 
@@ -251,7 +256,6 @@ const handleJump = (item: MobileNavItem) => {
     }
   }
 }
-
 </style>
 
 <style lang="scss">

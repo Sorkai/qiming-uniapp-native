@@ -43,7 +43,10 @@ function withCardStyle(items: Omit<StatItem, "color" | "bgColor">[]) {
 }
 
 function sumUsage(list?: Array<{ usageNum?: number }>) {
-  return (list || []).reduce((total, item) => total + Number(item.usageNum || 0), 0);
+  return (list || []).reduce(
+    (total, item) => total + Number(item.usageNum || 0),
+    0
+  );
 }
 
 function usageTrend(list?: Array<{ usageNum?: number }>) {
@@ -110,7 +113,10 @@ onMounted(async () => {
       return;
     }
   } catch (error) {
-    console.info("Platform overview endpoint unavailable, using usage fallback.", error);
+    console.info(
+      "Platform overview endpoint unavailable, using usage fallback.",
+      error
+    );
   }
 
   try {
@@ -225,7 +231,6 @@ onMounted(async () => {
     transparent 100%
   );
 }
-
 </style>
 
 <style>
@@ -273,10 +278,7 @@ html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card p {
   letter-spacing: 0 !important;
 }
 
-html.qiming-native-webview.ua-mobile
-  .stats-overview-grid
-  .stat-card
-  .text-3xl {
+html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card .text-3xl {
   font-size: 22px !important;
   line-height: 1.05 !important;
 }
@@ -285,17 +287,12 @@ html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card .mb-6 {
   margin-bottom: 12px !important;
 }
 
-html.qiming-native-webview.ua-mobile.dark
-  .stats-overview-grid
-  .stat-card {
+html.qiming-native-webview.ua-mobile.dark .stats-overview-grid .stat-card {
   background: var(--qiming-native-surface-bg) !important;
   border-color: var(--qiming-native-border-color) !important;
 }
 
-html.qiming-native-webview.ua-mobile.dark
-  .stats-overview-grid
-  .stat-card
-  p {
+html.qiming-native-webview.ua-mobile.dark .stats-overview-grid .stat-card p {
   color: rgb(203 213 225 / 92%) !important;
 }
 

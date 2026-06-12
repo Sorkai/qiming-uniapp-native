@@ -68,7 +68,6 @@ const fetchData = async () => {
       // 默认选中所有课程
       selectedCourses.value = efficientData.value.map((_, index) => index);
     }
-
   } catch (error) {
     console.error("获取教学效率指数数据失败:", error);
   } finally {
@@ -404,7 +403,9 @@ onMounted(() => {
             v-if="optimizeSuggestions.length"
             class="optimize-suggestions mt-4"
           >
-            <div class="efficient-suggestion-head flex items-center justify-between mb-6">
+            <div
+              class="efficient-suggestion-head flex items-center justify-between mb-6"
+            >
               <h3
                 class="flex items-center text-lg font-bold text-gray-800 dark:text-gray-200"
               >

@@ -539,9 +539,7 @@ export const getAssistantBootstrap = (params?: {
     { params }
   );
 
-export const getAssistantCourses = (params?: {
-  target_student_id?: number;
-}) =>
+export const getAssistantCourses = (params?: { target_student_id?: number }) =>
   http.request<ApiResponse<AssistantCoursesResp>>(
     "get",
     "/edu/frontend/v1/assistant/courses",
@@ -696,7 +694,13 @@ export const listAssistantResources = (params?: {
   );
 
 export const getAssistantResource = (resourceId: string) =>
-  http.request<ApiResponse<{ status: string; message?: string; resource: AssistantResourceSummary }>>(
+  http.request<
+    ApiResponse<{
+      status: string;
+      message?: string;
+      resource: AssistantResourceSummary;
+    }>
+  >(
     "get",
     `/edu/frontend/v1/assistant/resources/${encodeURIComponent(resourceId)}`
   );

@@ -61,7 +61,9 @@ const filteredResources = computed(() => {
 });
 
 const resourceTypeOptions = computed(() =>
-  Array.from(new Set(resources.value.map(item => item.resource_type))).filter(Boolean)
+  Array.from(new Set(resources.value.map(item => item.resource_type))).filter(
+    Boolean
+  )
 );
 
 const resourceIcon = (type: string) => {
@@ -274,7 +276,12 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
         class="max-w-md"
         :prefix-icon="Search"
       />
-      <el-select v-model="resourceType" placeholder="资源类型" class="w-40" clearable>
+      <el-select
+        v-model="resourceType"
+        placeholder="资源类型"
+        class="w-40"
+        clearable
+      >
         <el-option label="全部" value="" />
         <el-option
           v-for="type in resourceTypeOptions"
@@ -286,7 +293,9 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
     </div>
 
     <div class="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
-      <div class="bg-white border border-gray-100 rounded-xl overflow-hidden flex flex-col">
+      <div
+        class="bg-white border border-gray-100 rounded-xl overflow-hidden flex flex-col"
+      >
         <div class="px-5 py-4 border-b border-gray-100 font-bold text-gray-700">
           任务中心
         </div>
@@ -347,7 +356,11 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
               <span class="text-xs text-gray-600">{{ log.message }}</span>
             </el-timeline-item>
           </el-timeline>
-          <el-empty v-if="!taskLogs.length" description="暂无任务日志" :image-size="80" />
+          <el-empty
+            v-if="!taskLogs.length"
+            description="暂无任务日志"
+            :image-size="80"
+          />
         </div>
       </div>
 
@@ -363,7 +376,9 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
           >
             <div class="flex items-start justify-between mb-4">
               <div class="p-3 rounded-xl text-primary bg-primary/10">
-                <el-icon :size="24"><component :is="resourceIcon(res.resource_type)" /></el-icon>
+                <el-icon :size="24"
+                  ><component :is="resourceIcon(res.resource_type)"
+                /></el-icon>
               </div>
               <el-tag
                 size="small"
@@ -382,7 +397,10 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
             <p class="text-sm text-gray-500 mb-3 line-clamp-2">
               {{ res.summary || "暂无摘要" }}
             </p>
-            <p v-if="res.recommendation" class="text-xs text-primary mb-4 line-clamp-2">
+            <p
+              v-if="res.recommendation"
+              class="text-xs text-primary mb-4 line-clamp-2"
+            >
               {{ res.recommendation }}
             </p>
             <div class="mb-4 flex flex-wrap gap-1.5">
@@ -423,10 +441,17 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
               </el-tag>
             </div>
             <p
-              v-if="res.html_animation_status && res.html_animation_status !== 'ready'"
+              v-if="
+                res.html_animation_status &&
+                res.html_animation_status !== 'ready'
+              "
               class="text-xs text-amber-600 mb-4 line-clamp-2"
             >
-              {{ res.html_animation_message || res.html_animation_error || "动画任务处理中" }}
+              {{
+                res.html_animation_message ||
+                res.html_animation_error ||
+                "动画任务处理中"
+              }}
             </p>
             <div
               class="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-50"
@@ -492,7 +517,11 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
             <el-tag
               v-if="selectedResource?.safety_status"
               size="small"
-              :type="selectedResource.safety_status === 'safe' ? 'success' : 'warning'"
+              :type="
+                selectedResource.safety_status === 'safe'
+                  ? 'success'
+                  : 'warning'
+              "
               effect="plain"
             >
               {{ selectedResource.safety_status }}
@@ -503,7 +532,11 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
 
       <div v-if="selectedResource" class="space-y-5">
         <p class="text-sm text-gray-600 leading-relaxed">
-          {{ selectedResource.summary || selectedResource.recommendation || "暂无摘要" }}
+          {{
+            selectedResource.summary ||
+            selectedResource.recommendation ||
+            "暂无摘要"
+          }}
         </p>
 
         <div
@@ -574,7 +607,9 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
           </div>
           <div class="mt-3 flex items-center gap-3">
             <el-rate v-model="resourceFeedbackScore" :max="5" />
-            <span class="text-xs text-gray-400">{{ resourceFeedbackScore }} / 5</span>
+            <span class="text-xs text-gray-400"
+              >{{ resourceFeedbackScore }} / 5</span
+            >
           </div>
           <el-input
             v-model="resourceFeedbackText"

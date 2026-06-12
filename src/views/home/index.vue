@@ -211,7 +211,6 @@
               查看工作台演示
             </button>
           </div>
-
         </div>
 
         <!-- Product preview composition -->
@@ -458,9 +457,7 @@
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">学情画像</p>
-                <h3 class="nx-bento__title">
-                  能力雷达，教师与学生同步可见。
-                </h3>
+                <h3 class="nx-bento__title">能力雷达，教师与学生同步可见。</h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -3216,7 +3213,7 @@ onUnmounted(() => {
 
   .nx-nav {
     height: calc(64px + var(--qiming-native-status-top, 0px));
-    padding-top: var(--qiming-native-status-top, 0px);
+    padding-top: var(--qiming-native-status-top, 0);
     color: rgb(246 245 244);
     background: rgb(2 9 58 / 78%);
     border-bottom-color: rgb(255 255 255 / 8%);

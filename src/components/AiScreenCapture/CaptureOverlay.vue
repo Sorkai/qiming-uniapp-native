@@ -148,7 +148,8 @@ const finishSelection = () => {
 
   const width = Math.abs(endPoint.value.x - startPoint.value.x);
   const height = Math.abs(endPoint.value.y - startPoint.value.y);
-  const isTapGesture = width < MIN_SELECTION_SIZE && height < MIN_SELECTION_SIZE;
+  const isTapGesture =
+    width < MIN_SELECTION_SIZE && height < MIN_SELECTION_SIZE;
   const shouldCaptureFullViewport =
     isTapGesture &&
     (activePointerType.value === "touch" ||

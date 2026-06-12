@@ -355,8 +355,16 @@ const radarPoints = computed(() => {
   margin-right: 9px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 64% 34%, rgb(255 255 255 / 62%) 0 3px, transparent 4px),
-    linear-gradient(135deg, var(--smd-accent), color-mix(in srgb, var(--smd-accent) 58%, #10b981));
+    radial-gradient(
+      circle at 64% 34%,
+      rgb(255 255 255 / 62%) 0 3px,
+      transparent 4px
+    ),
+    linear-gradient(
+      135deg,
+      var(--smd-accent),
+      color-mix(in srgb, var(--smd-accent) 58%, #10b981)
+    );
   border-radius: 9px;
   box-shadow:
     0 8px 18px -13px var(--smd-accent),
@@ -468,7 +476,11 @@ const radarPoints = computed(() => {
       height: 18px;
       overflow: hidden;
       background:
-        radial-gradient(circle at 64% 34%, rgb(255 255 255 / 60%) 0 2px, transparent 3px),
+        radial-gradient(
+          circle at 64% 34%,
+          rgb(255 255 255 / 60%) 0 2px,
+          transparent 3px
+        ),
         color-mix(in srgb, var(--smd-accent) 18%, transparent);
       border: 1px solid color-mix(in srgb, var(--smd-accent) 24%, transparent);
       border-radius: 5px;

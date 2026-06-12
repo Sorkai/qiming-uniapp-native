@@ -50,9 +50,7 @@ const stateLabels: Record<DigitalHumanState, string> = {
 const windowPadding = 18;
 const bubbleSize = ref(88);
 const storageKey = computed(
-  () =>
-    props.storageKey ||
-    `ai-app-floating-digital-human-2d-${props.anchor}`
+  () => props.storageKey || `ai-app-floating-digital-human-2d-${props.anchor}`
 );
 
 const videoRef = ref<HTMLVideoElement | null>(null);
@@ -359,7 +357,11 @@ defineExpose({ speak, pauseRender, resumeRender });
   overflow: visible;
   cursor: grab;
   background:
-    radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.95), transparent 45%),
+    radial-gradient(
+      circle at 50% 24%,
+      rgba(255, 255, 255, 0.95),
+      transparent 45%
+    ),
     linear-gradient(145deg, #f6f9ff, #fff4fb);
   border: 1px solid rgba(191, 203, 230, 0.9);
   border-radius: 999px;

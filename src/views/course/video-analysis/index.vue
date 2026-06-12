@@ -1195,11 +1195,7 @@ onUnmounted(() => {
   flex: 0 0 auto;
 }
 
-.video-analysis-container.is-mobile-layout
-  .flex-1
-  > .flex-1
-  .p-6
-  > .flex-1 {
+.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 {
   min-height: 0;
   padding: 10px 0 14px;
   justify-content: flex-start;
@@ -1223,23 +1219,13 @@ onUnmounted(() => {
   display: none;
 }
 
-.video-analysis-container.is-mobile-layout
-  .flex-1
-  > .flex-1
-  .p-6
-  > .flex-1
-  h3 {
+.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 h3 {
   margin-bottom: 6px !important;
   font-size: 17px !important;
   line-height: 1.35;
 }
 
-.video-analysis-container.is-mobile-layout
-  .flex-1
-  > .flex-1
-  .p-6
-  > .flex-1
-  p {
+.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 p {
   max-width: 100%;
   margin-bottom: 0 !important;
   font-size: 13px !important;
@@ -1250,7 +1236,8 @@ onUnmounted(() => {
   scrollbar-width: none;
 }
 
-.video-analysis-container.is-mobile-layout .custom-scrollbar::-webkit-scrollbar {
+.video-analysis-container.is-mobile-layout
+  .custom-scrollbar::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;

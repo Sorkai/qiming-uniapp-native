@@ -362,7 +362,9 @@ onMounted(() => {
   padding: 14px 12px;
 }
 
-.assessment-management.is-mobile-layout .assessment-empty-state :deep(.el-empty) {
+.assessment-management.is-mobile-layout
+  .assessment-empty-state
+  :deep(.el-empty) {
   padding: 0;
 }
 

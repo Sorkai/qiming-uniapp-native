@@ -354,7 +354,6 @@ defineEmits([
     }
   }
 }
-
 </style>
 
 <style lang="scss">

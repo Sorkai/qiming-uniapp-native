@@ -144,7 +144,12 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
             <el-icon class="mr-1"><RefreshRight /></el-icon>
             重规划
           </el-button>
-          <el-button type="primary" round :loading="actionLoading" @click="handleGenerate">
+          <el-button
+            type="primary"
+            round
+            :loading="actionLoading"
+            @click="handleGenerate"
+          >
             <el-icon class="mr-1"><MagicStick /></el-icon>
             生成路径
           </el-button>
@@ -284,12 +289,21 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
 
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="font-medium text-sm truncate">{{ node.name }}</span>
-                <el-tag size="small" effect="plain" class="ml-auto !border-none">
+                <span class="font-medium text-sm truncate">{{
+                  node.name
+                }}</span>
+                <el-tag
+                  size="small"
+                  effect="plain"
+                  class="ml-auto !border-none"
+                >
                   {{ node.type }}
                 </el-tag>
               </div>
-              <p v-if="node.reason" class="mt-2 text-xs text-text_color_regular">
+              <p
+                v-if="node.reason"
+                class="mt-2 text-xs text-text_color_regular"
+              >
                 {{ node.reason }}
               </p>
               <p v-if="node.resource_id" class="mt-1 text-[11px] text-primary">

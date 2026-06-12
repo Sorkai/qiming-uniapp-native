@@ -46,7 +46,9 @@ const icons = [Medal, TrendCharts, Trophy, Star, Star];
 const dimensions = computed(() =>
   (profile.value?.dimensions || []).map((dimension, index) => ({
     ...dimension,
-    color: dimension.color || ["#5e7ff8", "#10b981", "#f59e0b", "#8b5cf6"][index % 4],
+    color:
+      dimension.color ||
+      ["#5e7ff8", "#10b981", "#f59e0b", "#8b5cf6"][index % 4],
     icon: icons[index % icons.length]
   }))
 );
@@ -166,7 +168,13 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
         </div>
 
         <div class="mt-8 flex flex-wrap justify-center gap-2">
-          <el-tag v-for="tag in tags" :key="tag" effect="plain" round size="small">
+          <el-tag
+            v-for="tag in tags"
+            :key="tag"
+            effect="plain"
+            round
+            size="small"
+          >
             {{ tag }}
           </el-tag>
         </div>
@@ -209,10 +217,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
               stroke-linecap="round"
               class="w-full"
             />
-            <div
-              v-if="dim.evidence?.length"
-              class="mt-3 flex flex-wrap gap-2"
-            >
+            <div v-if="dim.evidence?.length" class="mt-3 flex flex-wrap gap-2">
               <el-tag
                 v-for="evidence in dim.evidence"
                 :key="evidence"

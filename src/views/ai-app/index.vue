@@ -479,7 +479,9 @@ const handleAssistantStreamEvent = (
 ) => {
   const hasBackendHumanState = applyDigitalHumanDirective(event);
   const directiveText =
-    event.digital_human?.speech_text || event.digital_human?.highlight_text || "";
+    event.digital_human?.speech_text ||
+    event.digital_human?.highlight_text ||
+    "";
 
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
@@ -522,12 +524,13 @@ const handleAssistantStreamEvent = (
       ElMessage.success("学习画像已同步更新");
     }
     if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
-    speakDigitalHumans(
-      directiveText || content || ""
-    );
+    speakDigitalHumans(directiveText || content || "");
     isChatStreaming.value = false;
     window.setTimeout(() => {
-      if (!isChatStreaming.value && digitalHumanStreamState.value === "saying") {
+      if (
+        !isChatStreaming.value &&
+        digitalHumanStreamState.value === "saying"
+      ) {
         digitalHumanStreamState.value = null;
       }
     }, 2400);
@@ -764,12 +767,13 @@ const loadConversationMessages = async (conversation: ConversationView) => {
     );
     activeConversationId.value = conversation.conversation_id;
     const detailConversation = data.conversation || conversation;
-    if (detailConversation.metadata) conversation.metadata = detailConversation.metadata;
+    if (detailConversation.metadata)
+      conversation.metadata = detailConversation.metadata;
     const course =
       myCourses.value.find(
-        item => item.id === (detailConversation.course_id || conversation.course_id)
-      ) ||
-      myCourses.value.find(item => item.name === conversation.course);
+        item =>
+          item.id === (detailConversation.course_id || conversation.course_id)
+      ) || myCourses.value.find(item => item.name === conversation.course);
     if (course) activeCourse.value = course;
     messages.value = (data.messages || data.list || []).map(item => ({
       id: item.message_id,
@@ -852,7 +856,9 @@ const handleNewChat = async (payload: { course: string }) => {
     }
     const conversation: AssistantConversationItem = data.conversation || {
       conversation_id: conversationId,
-      title: data.title || (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
+      title:
+        data.title ||
+        (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
       message_count: 0,
       course_id: course?.id || selectedCourseId.value,
       target_student_id: selectedTargetStudentId.value
@@ -982,7 +988,9 @@ onUnmounted(() => {
         <!-- 收起 / 展开 把手 -->
         <button
           class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-          :class="{ 'is-mobile-collapsed-trigger': sidebarCollapsed && isMobileViewport }"
+          :class="{
+            'is-mobile-collapsed-trigger': sidebarCollapsed && isMobileViewport
+          }"
           :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           @click="toggleSidebar"
         >
@@ -1725,7 +1733,8 @@ onUnmounted(() => {
 .ai-app-root :deep([class*=" el-icon-"]),
 .ai-app-root :deep(.iconify) {
   font-family:
-    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline", sans-serif !important;
+    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline",
+    sans-serif !important;
 }
 
 /* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */

@@ -503,7 +503,8 @@ onUnmounted(() => {
 
     html.dark & {
       background: var(--qiming-native-surface-bg, var(--el-bg-color-overlay));
-      border: 1px solid var(--qiming-native-border-color, rgb(148 163 184 / 20%));
+      border: 1px solid
+        var(--qiming-native-border-color, rgb(148 163 184 / 20%));
       box-shadow: 0 12px 28px rgb(0 0 0 / 24%);
     }
 
@@ -515,7 +516,10 @@ onUnmounted(() => {
       padding: 15px 14px 10px;
 
       html.dark & {
-        border-bottom-color: var(--qiming-native-border-color, rgb(148 163 184 / 20%));
+        border-bottom-color: var(
+          --qiming-native-border-color,
+          rgb(148 163 184 / 20%)
+        );
       }
 
       .text-lg {
@@ -534,7 +538,10 @@ onUnmounted(() => {
 
         html.dark & {
           color: var(--qiming-native-text-primary, #f8fafc) !important;
-          -webkit-text-fill-color: var(--qiming-native-text-primary, #f8fafc) !important;
+          -webkit-text-fill-color: var(
+            --qiming-native-text-primary,
+            #f8fafc
+          ) !important;
         }
       }
     }
@@ -568,5 +575,4 @@ onUnmounted(() => {
     padding-left: 0 !important;
   }
 }
-
 </style>

@@ -350,9 +350,13 @@ export function useAiChat(courseCtx?: CourseContext) {
     const sourceFile =
       rawFile instanceof File
         ? rawFile
-        : new File([rawFile], options.file_name || `upload-${Date.now()}.webp`, {
-            type: options.content_type || rawFile.type || "image/webp"
-          });
+        : new File(
+            [rawFile],
+            options.file_name || `upload-${Date.now()}.webp`,
+            {
+              type: options.content_type || rawFile.type || "image/webp"
+            }
+          );
 
     try {
       const response = await uploadChatAttachment(sourceFile, {

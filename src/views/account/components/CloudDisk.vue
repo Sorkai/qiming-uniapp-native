@@ -455,7 +455,7 @@ const handleDelete = (file: CloudFile) => {
       }
     }
 
-  .upload-btn {
+    .upload-btn {
       display: inline-flex;
       gap: 6px;
       align-items: center;

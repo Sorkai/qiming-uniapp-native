@@ -708,7 +708,8 @@ const previewUrl = ref("");
 
 const isTaskProcessing = (task: HtmlAnimationTask) =>
   ["pending", "submitted", "processing"].includes(task.status);
-const isTaskCompleted = (task: HtmlAnimationTask) => task.status === "completed";
+const isTaskCompleted = (task: HtmlAnimationTask) =>
+  task.status === "completed";
 const isTaskFailed = (task: HtmlAnimationTask) => task.status === "failed";
 
 const updateCompactLayout = () => {
@@ -734,7 +735,9 @@ const latestCompletedVersion = computed(() => {
 });
 
 const latestSuccessTime = computed(() => {
-  const completed = tasks.value.filter(t => isTaskCompleted(t) && t.completedAt);
+  const completed = tasks.value.filter(
+    t => isTaskCompleted(t) && t.completedAt
+  );
   if (!completed.length) return "";
   // 最新完成时间
   return completed.sort((a, b) =>
@@ -1574,11 +1577,7 @@ onBeforeUnmount(() => {
     overflow: visible;
   }
 
-  .ai-animation-container.is-mobile-layout
-    .flex-1
-    > .flex-1
-    .p-6
-    > .flex-1 {
+  .ai-animation-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 {
     min-height: 0;
     padding: 10px 0 14px;
     justify-content: flex-start;
@@ -1602,23 +1601,13 @@ onBeforeUnmount(() => {
     display: none;
   }
 
-  .ai-animation-container.is-mobile-layout
-    .flex-1
-    > .flex-1
-    .p-6
-    > .flex-1
-    h3 {
+  .ai-animation-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 h3 {
     margin-bottom: 6px !important;
     font-size: 17px !important;
     line-height: 1.35;
   }
 
-  .ai-animation-container.is-mobile-layout
-    .flex-1
-    > .flex-1
-    .p-6
-    > .flex-1
-    p {
+  .ai-animation-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 p {
     max-width: 100%;
     margin-bottom: 0 !important;
     font-size: 13px !important;
@@ -1699,8 +1688,10 @@ onBeforeUnmount(() => {
     scrollbar-width: none;
   }
 
-  .ai-animation-container.is-mobile-layout .animation-filter-group::-webkit-scrollbar,
-  .ai-animation-container.is-mobile-layout .custom-scrollbar::-webkit-scrollbar {
+  .ai-animation-container.is-mobile-layout
+    .animation-filter-group::-webkit-scrollbar,
+  .ai-animation-container.is-mobile-layout
+    .custom-scrollbar::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;

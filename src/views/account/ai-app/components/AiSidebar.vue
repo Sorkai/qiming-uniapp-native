@@ -10,7 +10,11 @@
 
     <div class="ai-sidebar__scroll custom-scrollbar">
       <div v-show="activeRail === 'chat'">
-        <section v-for="course in courses" :key="course" class="ai-course-group">
+        <section
+          v-for="course in courses"
+          :key="course"
+          class="ai-course-group"
+        >
           <div
             class="ai-course-header"
             role="button"
@@ -75,7 +79,9 @@
 
       <section class="ai-history-section">
         <div class="ai-section-label">
-          <span class="ai-section-icon"><el-icon><Timer /></el-icon></span>
+          <span class="ai-section-icon"
+            ><el-icon><Timer /></el-icon
+          ></span>
           <span>最近会话</span>
         </div>
         <div class="ai-history-list">
@@ -579,8 +585,7 @@ const emit = defineEmits(["update:activeRail", "new-chat", "select-chat"]);
 :global(.ai-app-root.dark) .ai-sidebar {
   color: #e5eefc;
   background:
-    linear-gradient(180deg, rgb(15 23 42 / 96%), rgb(10 16 29 / 98%)),
-    #0f172a;
+    linear-gradient(180deg, rgb(15 23 42 / 96%), rgb(10 16 29 / 98%)), #0f172a;
   border-right-color: rgb(148 163 184 / 16%);
 }
 

@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, watch, onMounted, onBeforeUnmount } from "vue";
+import {
+  ref,
+  computed,
+  nextTick,
+  watch,
+  onMounted,
+  onBeforeUnmount
+} from "vue";
 import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
 import { ElMessage } from "element-plus";
@@ -155,12 +162,9 @@ const resolveNativeGalleryFile = (filePath: string): Promise<File> => {
     plusApi?.io?.resolveLocalFileSystemURL?.(
       filePath,
       entry => {
-        entry.file?.(
-          file => {
-            resolve(file as File);
-          },
-          reject
-        );
+        entry.file?.(file => {
+          resolve(file as File);
+        }, reject);
       },
       reject
     );
@@ -696,20 +700,23 @@ const handleClose = () => {
     }
 
     .el-dialog__header {
-      border-bottom: 1px solid var(--qiming-native-border-color, rgb(151 180 247 / 20%));
+      border-bottom: 1px solid
+        var(--qiming-native-border-color, rgb(151 180 247 / 20%));
     }
 
     .el-dialog__footer {
       background: var(--qiming-native-page-bg, rgb(246 249 255 / 96%));
-      border-top: 1px solid var(--qiming-native-border-color, rgb(151 180 247 / 18%));
+      border-top: 1px solid
+        var(--qiming-native-border-color, rgb(151 180 247 / 18%));
     }
   }
 
   .el-dialog.ai-chat-dialog.modern-style .dialog-header {
     box-sizing: border-box;
     min-height: calc(54px + var(--pure-safe-area-top, 0px));
-    padding:
-      calc(8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    padding: calc(
+        8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
       12px 8px;
     background: var(--qiming-native-navbar-bg, rgb(255 255 255 / 96%));
     border-bottom: 0;
@@ -770,7 +777,8 @@ const handleClose = () => {
   .el-dialog.ai-chat-dialog.modern-style .chat-sidebar {
     max-height: 78px;
     background: var(--qiming-native-page-bg, rgb(248 251 255 / 94%));
-    border-bottom: 1px solid var(--qiming-native-border-color, rgb(151 180 247 / 20%));
+    border-bottom: 1px solid
+      var(--qiming-native-border-color, rgb(151 180 247 / 20%));
   }
 
   .el-dialog.ai-chat-dialog.modern-style .chat-sidebar .sidebar-title {
@@ -789,7 +797,9 @@ const handleClose = () => {
     scrollbar-width: none;
   }
 
-  .el-dialog.ai-chat-dialog.modern-style .chat-sidebar .history-list::-webkit-scrollbar {
+  .el-dialog.ai-chat-dialog.modern-style
+    .chat-sidebar
+    .history-list::-webkit-scrollbar {
     display: none;
   }
 
@@ -832,7 +842,9 @@ const handleClose = () => {
     background: rgb(7 17 31 / 96%);
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .dialog-header .main-title {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .dialog-header
+    .main-title {
     color: #f8fafc !important;
   }
 
@@ -850,25 +862,37 @@ const handleClose = () => {
     border-bottom-color: rgb(148 163 184 / 18%);
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .chat-sidebar .sidebar-title {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .chat-sidebar
+    .sidebar-title {
     color: #94a3b8;
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .chat-sidebar .history-item {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .chat-sidebar
+    .history-item {
     background: rgb(30 41 59 / 82%);
     border-color: rgb(148 163 184 / 18%);
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .chat-sidebar .item-title {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .chat-sidebar
+    .item-title {
     color: #e5e7eb;
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .chat-sidebar .item-date,
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .chat-sidebar .item-icon {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .chat-sidebar
+    .item-date,
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .chat-sidebar
+    .item-icon {
     color: #94a3b8;
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .preview-banner .banner-inner {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .preview-banner
+    .banner-inner {
     background: rgb(15 23 42 / 86%);
     border-color: rgb(148 163 184 / 18%);
   }
@@ -878,14 +902,18 @@ const handleClose = () => {
     color: #dbeafe;
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .message-row.assistant .bubble {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .message-row.assistant
+    .bubble {
     color: #e5e7eb;
     background: rgb(15 23 42 / 92%);
     border-color: rgb(148 163 184 / 18%);
     box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .message-row.assistant .bubble.thinking {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .message-row.assistant
+    .bubble.thinking {
     background: rgb(30 41 59 / 88%);
   }
 
@@ -904,14 +932,20 @@ const handleClose = () => {
   }
 
   .el-dialog.ai-chat-dialog.modern-style.is-native-dark .stop-bar {
-    background: linear-gradient(180deg, rgb(7 17 31 / 0%) 0%, rgb(7 17 31 / 88%) 100%);
+    background: linear-gradient(
+      180deg,
+      rgb(7 17 31 / 0%) 0%,
+      rgb(7 17 31 / 88%) 100%
+    );
   }
 
   .el-dialog.ai-chat-dialog.modern-style.is-native-dark .footer-input {
     background: rgb(7 17 31 / 96%);
   }
 
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .footer-input .input-container {
+  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
+    .footer-input
+    .input-container {
     background: rgb(2 6 23 / 86%);
     border-color: rgb(148 163 184 / 22%);
     box-shadow: 0 10px 28px rgb(0 0 0 / 24%);
@@ -1583,8 +1617,9 @@ const handleClose = () => {
   .dialog-header {
     min-height: calc(54px + var(--pure-safe-area-top, 0px));
     align-items: flex-end;
-    padding:
-      calc(8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    padding: calc(
+        8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
       12px 8px;
     background: rgb(255 255 255 / 96%);
     border-bottom: 0;
@@ -1863,8 +1898,7 @@ const handleClose = () => {
   }
 
   .footer-input {
-    padding:
-      8px 10px
+    padding: 8px 10px
       calc(8px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
     background: rgb(248 251 255 / 96%);
 
@@ -1903,8 +1937,9 @@ const handleClose = () => {
 
 @media screen and (max-width: 480px) {
   .dialog-header {
-    padding:
-      calc(8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    padding: calc(
+        8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
       10px 8px;
 
     .header-content {

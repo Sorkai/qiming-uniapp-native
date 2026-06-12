@@ -136,11 +136,10 @@ const getMobileBottomOffset = () => {
 
 const clampPosition = (left: number, top: number) => {
   const size = getButtonSize();
-  const edgePadding = isMobile.value ? MOBILE_POSITION_PADDING : POSITION_PADDING;
-  const maxLeft = Math.max(
-    edgePadding,
-    window.innerWidth - size - edgePadding
-  );
+  const edgePadding = isMobile.value
+    ? MOBILE_POSITION_PADDING
+    : POSITION_PADDING;
+  const maxLeft = Math.max(edgePadding, window.innerWidth - size - edgePadding);
   const maxTop = Math.max(
     edgePadding,
     window.innerHeight - size - getMobileBottomOffset()
@@ -292,7 +291,8 @@ const handlePointerCancel = (e: PointerEvent) => {
   finishDrag(e.pointerId);
 };
 
-const shouldIgnoreTouchFallback = () => Date.now() - lastPointerEventAt.value < 600;
+const shouldIgnoreTouchFallback = () =>
+  Date.now() - lastPointerEventAt.value < 600;
 
 const handleTouchStart = (e: TouchEvent) => {
   if (props.disabled || shouldIgnoreTouchFallback()) return;

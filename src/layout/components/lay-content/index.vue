@@ -182,12 +182,14 @@ const transitionMain = defineComponent({
           : enterTransition
             ? "pure-classes-transition"
             : transitionName,
-        enterActiveClass: !disableNativeMobileTransition && enterTransition
-          ? `animate__animated ${enterTransition}`
-          : undefined,
-        leaveActiveClass: !disableNativeMobileTransition && leaveTransition
-          ? `animate__animated ${leaveTransition}`
-          : undefined,
+        enterActiveClass:
+          !disableNativeMobileTransition && enterTransition
+            ? `animate__animated ${enterTransition}`
+            : undefined,
+        leaveActiveClass:
+          !disableNativeMobileTransition && leaveTransition
+            ? `animate__animated ${leaveTransition}`
+            : undefined,
         mode: "out-in",
         appear: !disableNativeMobileTransition
       },

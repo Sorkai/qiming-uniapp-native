@@ -654,12 +654,17 @@ onMounted(() => {
   line-height: 1.6;
 }
 
-.teacher-plan-container.is-mobile-layout .teacher-plan-empty-mobile > div:last-child {
+.teacher-plan-container.is-mobile-layout
+  .teacher-plan-empty-mobile
+  > div:last-child {
   gap: 12px;
   max-width: 100%;
 }
 
-.teacher-plan-container.is-mobile-layout .teacher-plan-empty-mobile > div:last-child > div {
+.teacher-plan-container.is-mobile-layout
+  .teacher-plan-empty-mobile
+  > div:last-child
+  > div {
   padding: 14px;
   border-radius: 18px;
   gap: 12px;
@@ -742,7 +747,7 @@ onMounted(() => {
   }
 
   .teacher-plan-panel {
-      min-height: 0;
+    min-height: 0;
   }
 
   .course-item {

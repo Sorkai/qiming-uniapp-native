@@ -224,7 +224,9 @@
           <div
             class="ai-chat-module__toolbar flex items-center justify-between px-3 py-2 bg-gray-50/60 border-t border-gray-100"
           >
-            <div class="ai-chat-module__toolbar-main flex flex-wrap items-center gap-1">
+            <div
+              class="ai-chat-module__toolbar-main flex flex-wrap items-center gap-1"
+            >
               <el-dropdown
                 v-if="courses && courses.length"
                 trigger="click"

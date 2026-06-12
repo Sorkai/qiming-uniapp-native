@@ -45,7 +45,9 @@ const weakPoints = computed(() => assessment.value?.weak_points || []);
 const timeline = computed(() => assessment.value?.timeline || []);
 const suggestions = computed(() => assessment.value?.suggestions || []);
 const resourceUsage = computed(() => assessment.value?.resource_usage || {});
-const feedbackSummary = computed(() => assessment.value?.feedback_summary || {});
+const feedbackSummary = computed(
+  () => assessment.value?.feedback_summary || {}
+);
 const formatDuration = (value?: number) => {
   const ms =
     value ||
@@ -308,7 +310,11 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
               }}
             </div>
             <div class="mt-1 text-xs text-text_color_regular">
-              {{ resourceUsage.resource_feedback_count || resourceUsage.feedback_count || 0 }}
+              {{
+                resourceUsage.resource_feedback_count ||
+                resourceUsage.feedback_count ||
+                0
+              }}
               条反馈
             </div>
           </div>
@@ -334,12 +340,18 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
           <div class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3">
             <div class="text-xs text-text_color_regular">平均评分</div>
             <div class="mt-2 text-xl font-black text-text_color_primary">
-              {{ scoreLabel(feedbackSummary.average_score || feedbackSummary.avg_score) }}
+              {{
+                scoreLabel(
+                  feedbackSummary.average_score || feedbackSummary.avg_score
+                )
+              }}
             </div>
           </div>
           <div class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3">
             <div class="text-xs text-text_color_regular">最近反馈</div>
-            <div class="mt-2 text-xs font-medium text-text_color_primary line-clamp-2">
+            <div
+              class="mt-2 text-xs font-medium text-text_color_primary line-clamp-2"
+            >
               {{
                 feedbackSummary.latest_feedback_at ||
                 feedbackSummary.latest_at ||
@@ -349,14 +361,20 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
           </div>
         </div>
         <p
-          v-if="feedbackSummary.latest_feedback || feedbackSummary.latest_content"
+          v-if="
+            feedbackSummary.latest_feedback || feedbackSummary.latest_content
+          "
           class="mb-4 rounded-lg bg-primary/5 px-3 py-2 text-xs text-text_color_regular leading-relaxed"
         >
-          {{ feedbackSummary.latest_feedback || feedbackSummary.latest_content }}
+          {{
+            feedbackSummary.latest_feedback || feedbackSummary.latest_content
+          }}
         </p>
         <div class="flex items-center gap-3">
           <el-rate v-model="feedbackScore" />
-          <span class="text-xs text-text_color_regular">{{ feedbackScore }} / 5</span>
+          <span class="text-xs text-text_color_regular"
+            >{{ feedbackScore }} / 5</span
+          >
         </div>
         <el-input
           v-model="feedbackText"
@@ -435,7 +453,11 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
         <el-empty v-else description="暂无提升建议" :image-size="100" />
 
         <div class="mt-8 flex items-center gap-3 relative z-10">
-          <el-button type="primary" size="large" class="shadow-lg shadow-primary/20">
+          <el-button
+            type="primary"
+            size="large"
+            class="shadow-lg shadow-primary/20"
+          >
             <el-icon class="mr-2"><Reading /></el-icon>查看学习路径
           </el-button>
         </div>

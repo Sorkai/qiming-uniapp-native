@@ -453,9 +453,13 @@ export function reviewPost(
     action: data.action,
     reviewNote: data.note || data.reason
   };
-  return http.request<object>("post", `/edu/backend/v1/discussions/${postId}/review`, {
-    data: requestData
-  });
+  return http.request<object>(
+    "post",
+    `/edu/backend/v1/discussions/${postId}/review`,
+    {
+      data: requestData
+    }
+  );
 }
 
 /**
@@ -483,7 +487,10 @@ export function reviewReply(
  * @param postId 帖子ID
  */
 export function pinPost(postId: string | number) {
-  return http.request<object>("post", `/edu/backend/v1/discussions/${postId}/pin`);
+  return http.request<object>(
+    "post",
+    `/edu/backend/v1/discussions/${postId}/pin`
+  );
 }
 
 /**
@@ -491,9 +498,13 @@ export function pinPost(postId: string | number) {
  * @param postId 帖子ID
  */
 export function unpinPost(postId: string | number) {
-  return http.request<object>("delete", `/edu/backend/v1/discussions/${postId}/pin`, {
-    params: { _t: Date.now() }
-  });
+  return http.request<object>(
+    "delete",
+    `/edu/backend/v1/discussions/${postId}/pin`,
+    {
+      params: { _t: Date.now() }
+    }
+  );
 }
 
 /**
@@ -502,9 +513,13 @@ export function unpinPost(postId: string | number) {
  * @param reason 删除原因
  */
 export function forceDeletePost(postId: string | number, reason?: string) {
-  return http.request<object>("delete", `/edu/backend/v1/discussions/${postId}/force`, {
-    data: { reason }
-  });
+  return http.request<object>(
+    "delete",
+    `/edu/backend/v1/discussions/${postId}/force`,
+    {
+      data: { reason }
+    }
+  );
 }
 
 /**
@@ -558,11 +573,9 @@ export function getReportList(params: {
   pageSize?: number;
 }): Promise<ReportListResponse> {
   return http
-    .request<MaybeWrappedResponse<ReportListResponse>>(
-      "get",
-      "/edu/backend/v1/discussions/reports",
-      { params }
-    )
+    .request<
+      MaybeWrappedResponse<ReportListResponse>
+    >("get", "/edu/backend/v1/discussions/reports", { params })
     .then(unwrapResponseData);
 }
 
@@ -572,10 +585,9 @@ export function getReportList(params: {
  */
 export function getReportStatistics(): Promise<ReportStatistics> {
   return http
-    .request<MaybeWrappedResponse<ReportStatistics>>(
-      "get",
-      "/edu/backend/v1/discussions/reports/statistics"
-    )
+    .request<
+      MaybeWrappedResponse<ReportStatistics>
+    >("get", "/edu/backend/v1/discussions/reports/statistics")
     .then(unwrapResponseData);
 }
 
@@ -783,11 +795,9 @@ export async function getPendingList(params?: {
   pageSize?: number;
 }): Promise<PendingListResponse> {
   return http
-    .request<MaybeWrappedResponse<PendingListResponse>>(
-      "get",
-      "/edu/backend/v1/discussions/pending",
-      { params }
-    )
+    .request<
+      MaybeWrappedResponse<PendingListResponse>
+    >("get", "/edu/backend/v1/discussions/pending", { params })
     .then(unwrapResponseData);
 }
 
@@ -799,11 +809,9 @@ export function getPendingStatistics(params?: {
   courseId?: string | number;
 }): Promise<PendingStatistics> {
   return http
-    .request<MaybeWrappedResponse<PendingStatistics>>(
-      "get",
-      "/edu/backend/v1/discussions/pending/statistics",
-      { params }
-    )
+    .request<
+      MaybeWrappedResponse<PendingStatistics>
+    >("get", "/edu/backend/v1/discussions/pending/statistics", { params })
     .then(unwrapResponseData);
 }
 
