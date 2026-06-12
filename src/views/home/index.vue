@@ -784,6 +784,33 @@ const buildNativeRouteQuery = () => {
   return query;
 };
 
+const buildNativeRuntimeQuery = () => {
+  const query: LocationQueryRaw = {};
+  const nativeQuery = buildNativeRouteQuery();
+  if (String(nativeQuery.qimingNative || "") === "1") {
+    query.qimingNative = "1";
+  } else if (
+    typeof window !== "undefined" &&
+    localStorage.getItem("qimingNativeWebView") === "1"
+  ) {
+    query.qimingNative = "1";
+  }
+
+  const nativeStatusTop =
+    nativeQuery.nativeStatusTop ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("qimingNativeStatusTop") || ""
+      : "");
+  if (nativeStatusTop) query.nativeStatusTop = String(nativeStatusTop);
+  return query;
+};
+
+const clearNativeDemoRoleState = () => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("qiming-demo-role");
+  sessionStorage.removeItem("qiming-demo-role");
+};
+
 const isNativeHomeEntry = (query: LocationQueryRaw) => {
   if (String(query.qimingNative || "") === "1") return true;
   if (typeof window === "undefined") return false;
@@ -1525,14 +1552,24 @@ const handleEntry = () => {
   }
 };
 const handleLoginSuccess = async () => {
+  clearNativeDemoRoleState();
   await initRouter();
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
   const token = getToken();
   const roleType =
     info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
-  if (Number(roleType) === 2 || Number(roleType) === 3)
-    router.push("/welcome/index");
-  else router.push("/account");
+  const nativeQuery = buildNativeRuntimeQuery();
+  if (Number(roleType) === 2 || Number(roleType) === 3) {
+    router.replace({
+      path: "/welcome/index",
+      query: nativeQuery
+    });
+  } else {
+    router.replace({
+      path: "/account",
+      query: { ...nativeQuery, menu: "home" }
+    });
+  }
 };
 const handleCommand = (command: string) => {
   switch (command) {

@@ -8,10 +8,12 @@ import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
 import { createApp, type Directive } from "vue";
 import { useAppStoreHook } from "@/store/modules/app";
+import { storageLocal } from "@pureadmin/utils";
 import { useVxeTable } from "@/plugins/vxeTable";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { injectResponsiveStorage } from "@/utils/responsive";
 import { registerPwa } from "@/utils/pwa";
+import { userKey, type DataInfo } from "@/utils/auth";
 
 import Table from "@pureadmin/table";
 import PureDescriptions from "@pureadmin/descriptions";
@@ -73,11 +75,7 @@ function normalizeNativeInitialHash() {
   );
   if (params.get("qimingNative") !== "1" || path !== "/home") return;
 
-  const role =
-    params.get("demoRole") ||
-    localStorage.getItem("qiming-demo-role") ||
-    sessionStorage.getItem("qiming-demo-role") ||
-    "";
+  const role = params.get("demoRole") || "";
   if (!["student", "teacher", "admin"].includes(role)) return;
 
   params.delete("menu");
@@ -176,6 +174,41 @@ function applyNativeWebViewRuntime() {
   const getSingleQueryValue = (value: unknown) =>
     Array.isArray(value) ? value[0] : value;
 
+  const getNativeUserRole = () => {
+    const storedUserInfo = storageLocal().getItem<DataInfo<number>>(userKey);
+    if (storedUserInfo?.roleType === 3) return "admin";
+    if (storedUserInfo?.roleType === 2) return "teacher";
+    if (storedUserInfo?.roleType === 1) return "student";
+    const storedRoles = Array.isArray(storedUserInfo?.roles)
+      ? storedUserInfo.roles
+      : [];
+    if (storedRoles.includes("admin")) return "admin";
+    if (storedRoles.includes("teacher")) return "teacher";
+    if (storedRoles.includes("student")) return "student";
+
+    const parseStoredValue = (rawValue: string | null) => {
+      if (!rawValue) return null;
+      try {
+        const parsed = JSON.parse(rawValue);
+        return parsed?.value ?? parsed?.data ?? parsed;
+      } catch {
+        return null;
+      }
+    };
+    const userInfo =
+      parseStoredValue(localStorage.getItem("user-info")) ||
+      parseStoredValue(localStorage.getItem("authorized-token"));
+    const roleType = Number(userInfo?.roleType);
+    if (roleType === 3) return "admin";
+    if (roleType === 2) return "teacher";
+    if (roleType === 1) return "student";
+    const roles = Array.isArray(userInfo?.roles) ? userInfo.roles : [];
+    if (roles.includes("admin")) return "admin";
+    if (roles.includes("teacher")) return "teacher";
+    if (roles.includes("student")) return "student";
+    return "";
+  };
+
   const buildNativeBackQuery = (
     extra: Record<string, string | number> = {},
     omitKeys: string[] = []
@@ -233,11 +266,7 @@ function applyNativeWebViewRuntime() {
 
   const normalizeNativeRoleRoute = () => {
     const currentRoute = router.currentRoute.value;
-    const role = String(
-      getSingleQueryValue(currentRoute.query.demoRole) ||
-        localStorage.getItem("qiming-demo-role") ||
-        ""
-    );
+    const role = String(getSingleQueryValue(currentRoute.query.demoRole) || "");
     const isStudentRole = role === "student";
     if (isStudentRole && currentRoute.path === "/home") {
       navigateNativeBack(
@@ -282,7 +311,7 @@ function applyNativeWebViewRuntime() {
     );
     const role = String(
       getSingleQueryValue(currentRoute.query.demoRole) ||
-        localStorage.getItem("qiming-demo-role") ||
+        getNativeUserRole() ||
         ""
     );
 
