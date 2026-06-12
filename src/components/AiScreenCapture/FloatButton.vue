@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { getToken } from "@/utils/auth";
 import { useAppStoreHook } from "@/store/modules/app";
 import AiHubIcon from "@/assets/new-release/ai-hub-svgrepo-com.svg?component";
 
@@ -40,11 +39,6 @@ const NATIVE_MOBILE_BUTTON_SIZE = 38;
 const POSITION_PADDING = 10;
 const MOBILE_POSITION_PADDING = 14;
 const DRAG_THRESHOLD = 6;
-
-const isLoggedIn = computed(() => {
-  const token = getToken();
-  return !!token?.accessToken;
-});
 
 const isNativeAiAppMobile = () => {
   if (typeof document === "undefined") return false;
@@ -377,32 +371,29 @@ defineExpose({
 </script>
 
 <template>
-  <Transition name="fade">
-    <div
-      v-if="isLoggedIn"
-      ref="buttonRef"
-      class="ai-float-button"
-      :class="{
-        disabled: disabled,
-        dragging: isDragging,
-        'is-native-mobile': isNativeMobile()
-      }"
-      :style="buttonStyle"
-      @pointerdown="handlePointerDown"
-      @pointermove="handlePointerMove"
-      @pointerup="handlePointerUp"
-      @pointercancel="handlePointerCancel"
-      @touchstart="handleTouchStart"
-      @touchend="handleTouchEnd"
-      @click="handleClick"
-    >
-      <el-tooltip content="AI识屏助手" placement="left" :disabled="isDragging">
-        <div class="button-inner">
-          <AiHubIcon class="ai-icon" />
-        </div>
-      </el-tooltip>
-    </div>
-  </Transition>
+  <div
+    ref="buttonRef"
+    class="ai-float-button"
+    :class="{
+      disabled: disabled,
+      dragging: isDragging,
+      'is-native-mobile': isNativeMobile()
+    }"
+    :style="buttonStyle"
+    @pointerdown="handlePointerDown"
+    @pointermove="handlePointerMove"
+    @pointerup="handlePointerUp"
+    @pointercancel="handlePointerCancel"
+    @touchstart="handleTouchStart"
+    @touchend="handleTouchEnd"
+    @click="handleClick"
+  >
+    <el-tooltip content="AI识屏助手" placement="left" :disabled="isDragging">
+      <div class="button-inner">
+        <AiHubIcon class="ai-icon" />
+      </div>
+    </el-tooltip>
+  </div>
 </template>
 
 <style lang="scss" scoped>

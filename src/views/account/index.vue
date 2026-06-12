@@ -1282,12 +1282,13 @@ onUnmounted(() => {
       .header-right {
         display: flex;
         align-items: center;
+        gap: 16px;
 
         .theme-toggle-wrapper {
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-right: 20px;
+          margin-right: 0;
         }
 
         .theme-btn-premium {
@@ -2758,7 +2759,7 @@ onUnmounted(() => {
         }
 
         .header-right {
-          gap: 8px;
+          gap: 10px;
 
           .user-info {
             max-width: calc(100vw - 136px);
@@ -2830,12 +2831,17 @@ onUnmounted(() => {
 
         .header-right {
           flex: 1 1 auto;
-          gap: 8px;
+          gap: 12px;
           justify-content: flex-end;
           min-width: 0;
 
+          :deep(.el-dropdown) {
+            margin-left: 12px;
+          }
+
           .theme-toggle-wrapper {
             flex: 0 0 auto;
+            min-width: 50px;
           }
 
           .theme-btn-premium {
@@ -2926,7 +2932,7 @@ onUnmounted(() => {
 
         .account-menu {
           position: relative;
-          gap: 8px;
+          gap: 10px;
           width: 100%;
           max-width: 100%;
           padding: 8px 10px;
@@ -2957,16 +2963,21 @@ onUnmounted(() => {
           }
 
           :deep(.el-menu-item) {
+            display: inline-flex;
             flex: 0 0 auto;
+            gap: 7px;
+            align-items: center;
+            justify-content: center;
             width: auto;
-            min-width: 88px;
+            min-width: 94px;
             height: 40px;
-            padding: 0 10px;
+            padding: 0 12px;
             border-radius: 16px;
             scroll-snap-align: start;
 
             .el-icon {
               flex: 0 0 auto;
+              margin-right: 7px !important;
               font-size: 18px;
             }
 
