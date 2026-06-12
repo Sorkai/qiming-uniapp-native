@@ -175,6 +175,26 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     nativeDemoSessionReady.add(normalizedDemoRole);
   }
 
+  if (isNativeDemoRoute && normalizedDemoRole && to.path === "/home") {
+    const query = { ...to.query };
+    delete query.menu;
+    delete query.mode;
+    if (normalizedDemoRole === "student") {
+      next({
+        path: "/account",
+        query: { ...query, menu: "home" },
+        replace: true
+      });
+      return;
+    }
+    next({
+      path: "/welcome/index",
+      query,
+      replace: true
+    });
+    return;
+  }
+
   if (
     (import.meta.env.DEV || isNativeDemoRoute) &&
     normalizedDemoRole &&

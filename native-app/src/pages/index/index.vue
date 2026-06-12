@@ -116,11 +116,17 @@ const previewRoleLabels = {
   admin: "管理"
 };
 const previewEntries: readonly PreviewEntry[] = [
-  { label: "工作台", path: "/welcome/index", studentPath: "/account?menu=home" },
+  {
+    label: "工作台",
+    path: "/welcome/index",
+    studentPath: "/account?menu=home"
+  },
   {
     label: "AI App",
-    path: "/account/ai-app",
-    studentPath: "/account/ai-app?mode=student"
+    path: "/ai-app/workspace",
+    studentPath: "/account/ai-app?mode=student",
+    teacherPath: "/ai-app/workspace",
+    adminPath: "/ai-app/workspace"
   },
   { label: "课程", path: "/course/list", studentPath: "/account?menu=course" },
   {
@@ -154,6 +160,30 @@ function normalizeEntryRoute(route: string | null | undefined) {
   return value;
 }
 
+function resolveEntryForRole(
+  route: string | null | undefined,
+  role: PreviewRole | ""
+) {
+  const normalized = normalizeEntryRoute(route);
+  const normalizedPath = normalized.split("?")[0];
+  if (role === "student" && normalizedPath === "/home") {
+    return "/account?menu=home";
+  }
+  if (role === "teacher" || role === "admin") {
+    if (
+      normalizedPath === "/home" ||
+      normalized === "/account?menu=home" ||
+      normalized === "/account"
+    ) {
+      return "/welcome/index";
+    }
+    if (normalizedPath === "/account/ai-app") {
+      return "/ai-app/workspace";
+    }
+  }
+  return normalized;
+}
+
 const h5PreviewRole = ref<PreviewRole>("teacher");
 const h5PreviewEntryRoute = ref(defaultEntryRoute);
 
@@ -162,7 +192,10 @@ function syncH5PreviewStateFromLocation() {
   const params = new URLSearchParams(window.location.search);
   const role = params.get("demoRole");
   h5PreviewRole.value = isPreviewRole(role) ? role : "teacher";
-  h5PreviewEntryRoute.value = normalizeEntryRoute(params.get("entry"));
+  h5PreviewEntryRoute.value = resolveEntryForRole(
+    params.get("entry"),
+    h5PreviewRole.value
+  );
 }
 
 syncH5PreviewStateFromLocation();
@@ -206,7 +239,8 @@ const previewRole = computed(() => {
 });
 
 const previewEntryRoute = computed(() => {
-  if (!isH5DevPreview || typeof window === "undefined") return defaultEntryRoute;
+  if (!isH5DevPreview || typeof window === "undefined")
+    return defaultEntryRoute;
   return h5PreviewEntryRoute.value;
 });
 
@@ -254,7 +288,11 @@ const webviewSrc = computed(() => {
       const withRole = appDemoRole.value
         ? appendQuery(base, "demoRole", appDemoRole.value)
         : base;
-      return appendQuery(appendNativeQuery(withRole), "v", String(webviewVersion.value));
+      return appendQuery(
+        appendNativeQuery(withRole),
+        "v",
+        String(webviewVersion.value)
+      );
     }
     return `${localAppEntryBase}?v=${webviewVersion.value}#${appEntryRoute.value}`;
   }
@@ -341,7 +379,11 @@ function buildRoleRootHash() {
   }
   hash = appendQuery(hash, "qimingNative", "1");
   if (appNativeStatusTop.value > 0) {
-    hash = appendQuery(hash, "nativeStatusTop", String(appNativeStatusTop.value));
+    hash = appendQuery(
+      hash,
+      "nativeStatusTop",
+      String(appNativeStatusTop.value)
+    );
   }
   if (rootRoute === "/account") {
     hash = appendQuery(hash, "menu", "home");
@@ -435,9 +477,7 @@ function detectNativeStatusTop() {
   // #ifdef APP-PLUS
   try {
     const plusApi = (globalThis as any).plus;
-    const statusTop = Number(
-      plusApi?.navigator?.getStatusbarHeight?.() || 0
-    );
+    const statusTop = Number(plusApi?.navigator?.getStatusbarHeight?.() || 0);
     if (Number.isFinite(statusTop) && statusTop > 0) {
       appNativeStatusTop.value = statusTop;
     }
@@ -449,10 +489,13 @@ function detectNativeStatusTop() {
 
 function switchPreviewRole(role: PreviewRole) {
   if (!isH5DevPreview || typeof window === "undefined") return;
+  const entryRoute = resolveEntryForRole(h5PreviewEntryRoute.value, role);
   const url = new URL(window.location.href);
   url.searchParams.set("demoRole", role);
+  url.searchParams.set("entry", entryRoute);
   window.history.replaceState(null, "", url);
   h5PreviewRole.value = role;
+  h5PreviewEntryRoute.value = entryRoute;
   reloadWebview();
 }
 
@@ -477,9 +520,12 @@ onLoad(options => {
     devServer?: string;
     demoRole?: string;
   };
-  appEntryRoute.value = normalizeEntryRoute(pageOptions?.entry);
-  appDevServer.value = normalizeDevServer(pageOptions?.devServer);
   appDemoRole.value = normalizeDemoRole(pageOptions?.demoRole);
+  appEntryRoute.value = resolveEntryForRole(
+    pageOptions?.entry,
+    appDemoRole.value
+  );
+  appDevServer.value = normalizeDevServer(pageOptions?.devServer);
   scheduleLoadFallback();
   uni.setNavigationBarTitle({ title: "启明智教" });
 });
@@ -665,7 +711,11 @@ onBackPress(() => {
   justify-content: center;
   padding: 48rpx;
   background:
-    radial-gradient(circle at 50% 20%, rgba(94, 127, 248, 0.1), transparent 42%),
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(94, 127, 248, 0.1),
+      transparent 42%
+    ),
     #f7f8fc;
 }
 

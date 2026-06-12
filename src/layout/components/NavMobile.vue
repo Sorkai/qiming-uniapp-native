@@ -27,7 +27,7 @@ const adminMobileNavItems: MobileNavItem[] = [
   {
     title: "首页",
     icon: "ep:home-filled",
-    path: "/welcome"
+    path: "/welcome/index"
   },
   {
     title: "课程",
@@ -52,7 +52,7 @@ const managerMobileNavItems: MobileNavItem[] = [
   {
     title: "\u9996\u9875",
     icon: "ep:home-filled",
-    path: "/welcome"
+    path: "/welcome/index"
   },
   {
     title: "\u7528\u6237",
@@ -67,7 +67,7 @@ const managerMobileNavItems: MobileNavItem[] = [
   {
     title: "AI App",
     icon: "ep:chat-dot-round",
-    path: "/account/ai-app"
+    path: "/ai-app/workspace"
   },
   {
     title: "\u8003\u6838",
@@ -212,8 +212,11 @@ const handleJump = (item: MobileNavItem) => {
   transition: all 0.3s;
 
   .nav-icon {
+    display: block;
+    flex: 0 0 auto;
     font-size: 20px;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
+    line-height: 1;
   }
 
   .nav-title {
@@ -221,6 +224,7 @@ const handleJump = (item: MobileNavItem) => {
     overflow: hidden;
     font-size: 11px;
     font-weight: 500;
+    line-height: 1.1;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -257,7 +261,6 @@ const handleJump = (item: MobileNavItem) => {
   }
 }
 </style>
-
 <style lang="scss">
 html.qiming-native-webview.ua-mobile .nav-mobile-container {
   background: var(--qiming-native-dock-bg);

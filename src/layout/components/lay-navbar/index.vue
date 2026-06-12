@@ -382,13 +382,13 @@ const {
     flex: 0 0 26px;
     width: 26px;
     height: 26px;
+    margin-right: 8px;
     object-fit: contain;
     border-radius: 9px;
   }
 
   .vertical-header-right {
     flex: 0 0 auto !important;
-    gap: 4px;
     padding: 0 10px 0 0;
     overflow: visible;
   }
@@ -397,6 +397,7 @@ const {
     flex: 0 0 46px;
     width: 46px;
     height: 40px;
+    margin-right: 6px;
     padding: 0;
     overflow: visible;
   }
@@ -415,6 +416,7 @@ const {
 
   :deep(.el-dropdown-link p) {
     max-width: 52px;
+    margin-left: 7px;
     overflow: hidden;
     font-size: 12.5px;
     text-overflow: ellipsis;

@@ -700,8 +700,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, onMounted, onUnmounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import {
+  computed,
+  markRaw,
+  onBeforeMount,
+  onMounted,
+  onUnmounted,
+  ref
+} from "vue";
+import { useRoute, useRouter, type LocationQueryRaw } from "vue-router";
 import { Setting, SwitchButton, User } from "@element-plus/icons-vue";
 import { storageLocal } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
@@ -752,12 +759,69 @@ import IconTarget from "@/assets/home-icons/target.svg?component";
 import IconZap from "@/assets/home-icons/zap.svg?component";
 
 const router = useRouter();
+const route = useRoute();
 const userStore = useUserStoreHook();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const activeShowcaseIndex = ref(0);
 let showcaseTimer: number | undefined;
 const rawIcon = (icon: any) => markRaw(icon);
+
+const nativeDemoRoles = ["student", "teacher", "admin"] as const;
+type NativeDemoRole = (typeof nativeDemoRoles)[number];
+
+const getNativeHashQuery = () => {
+  if (typeof window === "undefined") return new URLSearchParams();
+  const hashQuery = window.location.hash.split("?")[1] || "";
+  return new URLSearchParams(hashQuery || window.location.search.slice(1));
+};
+
+const buildNativeRouteQuery = () => {
+  const query: LocationQueryRaw = { ...route.query };
+  getNativeHashQuery().forEach((value, key) => {
+    if (query[key] == null) query[key] = value;
+  });
+  return query;
+};
+
+const isNativeHomeEntry = (query: LocationQueryRaw) => {
+  if (String(query.qimingNative || "") === "1") return true;
+  if (typeof window === "undefined") return false;
+  return (
+    window.location.hash.includes("qimingNative=1") ||
+    localStorage.getItem("qimingNativeWebView") === "1" ||
+    document.documentElement.classList.contains("qiming-native-webview")
+  );
+};
+
+const redirectNativeDemoHomeEntry = () => {
+  if (route.path !== "/home") return false;
+  const query = buildNativeRouteQuery();
+  const demoRole = String(query.demoRole || "");
+  if (
+    !isNativeHomeEntry(query) ||
+    !nativeDemoRoles.includes(demoRole as NativeDemoRole)
+  ) {
+    return false;
+  }
+
+  delete query.menu;
+  delete query.mode;
+
+  if (demoRole === "student") {
+    router.replace({
+      path: "/account",
+      query: { ...query, menu: "home" }
+    });
+    return true;
+  }
+
+  router.replace({
+    path: "/welcome/index",
+    query
+  });
+  return true;
+};
 
 const userInfo = computed(() => {
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
@@ -1486,7 +1550,13 @@ const handleCommand = (command: string) => {
   }
 };
 
+onBeforeMount(() => {
+  redirectNativeDemoHomeEntry();
+});
+
 onMounted(() => {
+  if (redirectNativeDemoHomeEntry()) return;
+
   window.addEventListener("scroll", handleScroll);
   startShowcaseTimer();
 

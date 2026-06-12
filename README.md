@@ -1,7 +1,21 @@
-# Hi👋 hello the next generation juiced native Android app in the edu area presented by ycxj Jilin
-## ccut 108 全新 启明智教 (Qimingedu) - Android 客户端
+﻿# Hi馃憢 hello the next generation juiced native Android app in the edu area presented by ycxj Jilin
+## ccut 108 鍏ㄦ柊 鍚槑鏅烘暀 (Qimingedu) - Android 瀹㈡埛绔?
 
 ### Checkout from the pics first Stu Teacher and Admin
+## License / Usage Restriction
+
+This repository is public for collaboration, review, and build verification only.
+All product names, source code, UI designs, teaching materials, digital-human
+assets, build scripts, certificates, and related resources remain proprietary to
+the project owner unless a separate written license is granted.
+
+Without prior written permission from the project owner, no individual or
+organization may copy, reuse, redistribute, sublicense, commercialize, publish a
+derivative product from, or deploy this project or any substantial part of it.
+
+The public visibility of this repository does not grant an open-source license.
+
+褰撳墠浠撳簱鐢ㄤ簬缁存姢 AI 鏁欒偛骞冲彴鍓嶇锛屽苟鍦ㄧ幇鏈夌ǔ瀹氱増鏈熀纭€涓婄户缁紨杩?Agent 鏅鸿兘浣撹兘鍔涖€?
 
 <p align="center">
 <img width="400" height="833" alt="image" src="https://github.com/user-attachments/assets/1e7b4d23-2014-42de-b5da-1b194b4cf4c8" />
@@ -20,49 +34,49 @@
 <img width="401" height="834" alt="image" src="https://github.com/user-attachments/assets/1d3918cc-837d-49ca-a812-5b2a32762ed6" />
   </p>
 
-## 项目简介
+## 椤圭洰绠€浠?
 
-**启明智教** 是一款由 AI 驱动的智能化教育与课堂监控平台 Android 客户端。本项目致力于通过先进的人工智能技术优化教学流程，为师生提供高效、个性化的教育互动体验。客户端采用 UniApp 框架开发，深度优化 Android 原生渲染体验，保障复杂的交互与数据流依然丝滑流畅。
+**鍚槑鏅烘暀** 鏄竴娆剧敱 AI 椹卞姩鐨勬櫤鑳藉寲鏁欒偛涓庤鍫傜洃鎺у钩鍙?Android 瀹㈡埛绔€傛湰椤圭洰鑷村姏浜庨€氳繃鍏堣繘鐨勪汉宸ユ櫤鑳芥妧鏈紭鍖栨暀瀛︽祦绋嬶紝涓哄笀鐢熸彁渚涢珮鏁堛€佷釜鎬у寲鐨勬暀鑲蹭簰鍔ㄤ綋楠屻€傚鎴风閲囩敤 UniApp 妗嗘灦寮€鍙戯紝娣卞害浼樺寲 Android 鍘熺敓娓叉煋浣撻獙锛屼繚闅滃鏉傜殑浜や簰涓庢暟鎹祦渚濈劧涓濇粦娴佺晠銆?
 
-依托平台强大的微服务后端架构（基于 Go-Zero 与 Python FastAPI），客户端无缝接入了核心的 **EduClaw 智能体**。同时，结合底层的高效 **SAHR (Semantic Adaptive Hybrid Retrieval) 语义自适应混合检索框架**（精确调优的融合权重：稀疏检索 0.7，稠密检索 0.3），客户端能够在海量教学知识库中实现极高精度的检索、问答与辅助决策。
+渚濇墭骞冲彴寮哄ぇ鐨勫井鏈嶅姟鍚庣鏋舵瀯锛堝熀浜?Go-Zero 涓?Python FastAPI锛夛紝瀹㈡埛绔棤缂濇帴鍏ヤ簡鏍稿績鐨?**EduClaw 鏅鸿兘浣?*銆傚悓鏃讹紝缁撳悎搴曞眰鐨勯珮鏁?**SAHR (Semantic Adaptive Hybrid Retrieval) 璇箟鑷€傚簲娣峰悎妫€绱㈡鏋?*锛堢簿纭皟浼樼殑铻嶅悎鏉冮噸锛氱█鐤忔绱?0.7锛岀瀵嗘绱?0.3锛夛紝瀹㈡埛绔兘澶熷湪娴烽噺鏁欏鐭ヨ瘑搴撲腑瀹炵幇鏋侀珮绮惧害鐨勬绱€侀棶绛斾笌杈呭姪鍐崇瓥銆?
 
-##  核心功能
+##  鏍稿績鍔熻兘
 
-* **伴学答疑 (EduClaw 智能体):** 深度集成定制化智能体，提供全天候的自适应教学引导与精准解答。
-* **高精度知识检索引擎:** 借助 SAHR 混合检索算法，打破传统检索的语义壁垒，极速定位教学资源与文献。
-* **课堂状态监控与分析:** 接入 AI 视觉与多维数据分析，实时反馈课堂教学状态，助力教育数字化转型（核心算法及应用已布局多项软著与专利）。
-* **原生级流畅体验:** 充分利用 App-Plus 扩展能力，调用 Android 底层 API，实现高效的设备硬件交互与网络并发处理。
+* **浼村绛旂枒 (EduClaw 鏅鸿兘浣?:** 娣卞害闆嗘垚瀹氬埗鍖栨櫤鑳戒綋锛屾彁渚涘叏澶╁€欑殑鑷€傚簲鏁欏寮曞涓庣簿鍑嗚В绛斻€?
+* **楂樼簿搴︾煡璇嗘绱㈠紩鎿?** 鍊熷姪 SAHR 娣峰悎妫€绱㈢畻娉曪紝鎵撶牬浼犵粺妫€绱㈢殑璇箟澹佸瀿锛屾瀬閫熷畾浣嶆暀瀛﹁祫婧愪笌鏂囩尞銆?
+* **璇惧爞鐘舵€佺洃鎺т笌鍒嗘瀽:** 鎺ュ叆 AI 瑙嗚涓庡缁存暟鎹垎鏋愶紝瀹炴椂鍙嶉璇惧爞鏁欏鐘舵€侊紝鍔╁姏鏁欒偛鏁板瓧鍖栬浆鍨嬶紙鏍稿績绠楁硶鍙婂簲鐢ㄥ凡甯冨眬澶氶」杞憲涓庝笓鍒╋級銆?
+* **鍘熺敓绾ф祦鐣呬綋楠?** 鍏呭垎鍒╃敤 App-Plus 鎵╁睍鑳藉姏锛岃皟鐢?Android 搴曞眰 API锛屽疄鐜伴珮鏁堢殑璁惧纭欢浜や簰涓庣綉缁滃苟鍙戝鐞嗐€?
 
-## 其他功能
-* **其余教育平台所拥有的基础功能之上  我们融合全新的完整数据链路** 
-* **教师端管理员端更高效的AI融合备课组件** 
-* **教师端管理员端更精准的提效建议与工作效率分析**
-* **教师端管理员端更个性化的个人画像分析**
-* **学生端AI导学组卷** 
-* **学生端AI当节课程知识问答**
-* **学生端AI思维导图** 
-* **融合了多模态资源的AI助手回答与生成**
-* **响应迅速的截图提问功能** 
-* **启明智教精调的垂直领域大模型**
-* **----还有更多----**
+## 鍏朵粬鍔熻兘
+* **鍏朵綑鏁欒偛骞冲彴鎵€鎷ユ湁鐨勫熀纭€鍔熻兘涔嬩笂  鎴戜滑铻嶅悎鍏ㄦ柊鐨勫畬鏁存暟鎹摼璺?* 
+* **鏁欏笀绔鐞嗗憳绔洿楂樻晥鐨凙I铻嶅悎澶囪缁勪欢** 
+* **鏁欏笀绔鐞嗗憳绔洿绮惧噯鐨勬彁鏁堝缓璁笌宸ヤ綔鏁堢巼鍒嗘瀽**
+* **鏁欏笀绔鐞嗗憳绔洿涓€у寲鐨勪釜浜虹敾鍍忓垎鏋?*
+* **瀛︾敓绔疉I瀵煎缁勫嵎** 
+* **瀛︾敓绔疉I褰撹妭璇剧▼鐭ヨ瘑闂瓟**
+* **瀛︾敓绔疉I鎬濈淮瀵煎浘** 
+* **铻嶅悎浜嗗妯℃€佽祫婧愮殑AI鍔╂墜鍥炵瓟涓庣敓鎴?*
+* **鍝嶅簲杩呴€熺殑鎴浘鎻愰棶鍔熻兘** 
+* **鍚槑鏅烘暀绮捐皟鐨勫瀭鐩撮鍩熷ぇ妯″瀷**
+* **----杩樻湁鏇村----**
 
-##  技术栈与依赖
+##  鎶€鏈爤涓庝緷璧?
 
-* **前端框架:** UniApp (Vue 3 语法 / 组合式 API)
-* **构建与编译:** Vite / HBuilderX
-* **网络通信:** 封装 `uni.request`，支持 RESTful API 与长链接 WebSocket 交互
-* **核心关联后端:** * 业务逻辑层：Go-Zero
-    * 模型服务层：Python FastAPI
-* **前端技术**： Element Plus, Tailwind CSS, Sass,Three.js, ECharts , LogicFlow/Vue-Flow , WangEditor/Vditor等等
+* **鍓嶇妗嗘灦:** UniApp (Vue 3 璇硶 / 缁勫悎寮?API)
+* **鏋勫缓涓庣紪璇?** Vite / HBuilderX
+* **缃戠粶閫氫俊:** 灏佽 `uni.request`锛屾敮鎸?RESTful API 涓庨暱閾炬帴 WebSocket 浜や簰
+* **鏍稿績鍏宠仈鍚庣:** * 涓氬姟閫昏緫灞傦細Go-Zero
+    * 妯″瀷鏈嶅姟灞傦細Python FastAPI
+* **鍓嶇鎶€鏈?*锛?Element Plus, Tailwind CSS, Sass,Three.js, ECharts , LogicFlow/Vue-Flow , WangEditor/Vditor绛夌瓑
 
-##  快速开始
+##  蹇€熷紑濮?
 
-### 1. 环境准备
-* 安装 [Node.js](https://nodejs.org/) (推荐 v16.x 或以上版本)
-* 安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 开发者工具
-* 准备 Android Studio 模拟器或真实的 Android 物理测试设备（需开启“开发者模式”及“USB 调试”）
+### 1. 鐜鍑嗗
+* 瀹夎 [Node.js](https://nodejs.org/) (鎺ㄨ崘 v16.x 鎴栦互涓婄増鏈?
+* 瀹夎 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 寮€鍙戣€呭伐鍏?
+* 鍑嗗 Android Studio 妯℃嫙鍣ㄦ垨鐪熷疄鐨?Android 鐗╃悊娴嬭瘯璁惧锛堥渶寮€鍚€滃紑鍙戣€呮ā寮忊€濆強鈥淯SB 璋冭瘯鈥濓級
 
-### 2. 克隆项目代码
+### 2. 鍏嬮殕椤圭洰浠ｇ爜
 
 ```bash
 git clone git@github.com:Farrran69311/qiming-uniapp-native.git

@@ -61,8 +61,36 @@ function readNativeQueryParams() {
   };
 }
 
+function normalizeNativeInitialHash() {
+  if (typeof window === "undefined") return;
+  const hash = window.location.hash || "";
+  const queryStart = hash.indexOf("?");
+  const path =
+    (queryStart >= 0 ? hash.slice(1, queryStart) : hash.slice(1)) || "/";
+  const hashQuery = queryStart >= 0 ? hash.slice(queryStart + 1) : "";
+  const params = new URLSearchParams(
+    hashQuery || window.location.search.slice(1)
+  );
+  if (params.get("qimingNative") !== "1" || path !== "/home") return;
+
+  const role =
+    params.get("demoRole") ||
+    localStorage.getItem("qiming-demo-role") ||
+    sessionStorage.getItem("qiming-demo-role") ||
+    "";
+  if (!["student", "teacher", "admin"].includes(role)) return;
+
+  params.delete("menu");
+  params.delete("mode");
+  const targetPath = role === "student" ? "/account" : "/welcome/index";
+  if (role === "student") params.set("menu", "home");
+  const targetQuery = params.toString();
+  window.location.hash = `#${targetPath}${targetQuery ? `?${targetQuery}` : ""}`;
+}
+
 function applyNativeWebViewRuntime() {
   if (typeof window === "undefined") return;
+  normalizeNativeInitialHash();
   const { isNative, nativeStatusTop } = readNativeQueryParams();
   if (!isNative) return;
 
@@ -215,6 +243,16 @@ function applyNativeWebViewRuntime() {
       navigateNativeBack(
         "/account",
         buildNativeBackQuery({ menu: "home" }, ["mode"])
+      );
+      return;
+    }
+    if (
+      (role === "teacher" || role === "admin") &&
+      currentRoute.path === "/home"
+    ) {
+      navigateNativeBack(
+        "/welcome/index",
+        buildNativeBackQuery({}, ["menu", "mode"])
       );
     }
   };

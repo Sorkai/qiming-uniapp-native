@@ -2824,6 +2824,7 @@ onUnmounted(() => {
           justify-content: center;
           width: 40px;
           height: 40px;
+          margin-right: 12px;
           padding: 4px;
           overflow: hidden;
           border-radius: 12px;
@@ -2831,9 +2832,13 @@ onUnmounted(() => {
 
         .header-right {
           flex: 1 1 auto;
-          gap: 12px;
+          gap: 0;
           justify-content: flex-end;
           min-width: 0;
+
+          > * + * {
+            margin-left: 12px;
+          }
 
           :deep(.el-dropdown) {
             margin-left: 12px;
@@ -2891,48 +2896,48 @@ onUnmounted(() => {
 
       .account-sidebar {
         .user-info-card {
-          min-height: clamp(118px, 28vw, 132px);
-          padding: 16px 14px 12px;
-          margin-bottom: 10px;
+          min-height: 184px;
+          padding: 24px 16px 16px;
+          margin-bottom: 14px;
           border-radius: 18px;
 
           &::before {
-            height: 60px;
+            height: 68px;
           }
 
           .avatar-wrapper {
-            margin-bottom: 2px;
+            margin-bottom: 6px;
 
             :deep(.el-avatar) {
-              width: clamp(52px, 13vw, 60px) !important;
-              height: clamp(52px, 13vw, 60px) !important;
+              width: 64px !important;
+              height: 64px !important;
             }
 
             .avatar-ring {
-              inset: -5px;
+              inset: -6px;
             }
           }
 
           h3 {
             max-width: 100%;
-            margin: 3px 0 0;
+            margin: 12px 0 6px;
             overflow: hidden;
-            font-size: 18px;
+            font-size: 20px;
             line-height: 1.15;
             text-overflow: ellipsis;
             white-space: nowrap;
           }
 
           .user-role {
-            padding: 4px 16px;
-            font-size: 11.5px;
+            padding: 5px 18px;
+            font-size: 12.5px;
             line-height: 1;
           }
         }
 
         .account-menu {
           position: relative;
-          gap: 10px;
+          gap: 0;
           width: 100%;
           max-width: 100%;
           padding: 8px 10px;
@@ -2965,7 +2970,7 @@ onUnmounted(() => {
           :deep(.el-menu-item) {
             display: inline-flex;
             flex: 0 0 auto;
-            gap: 7px;
+            gap: 0;
             align-items: center;
             justify-content: center;
             width: auto;
@@ -2974,6 +2979,10 @@ onUnmounted(() => {
             padding: 0 12px;
             border-radius: 16px;
             scroll-snap-align: start;
+
+            & + .el-menu-item {
+              margin-left: 10px;
+            }
 
             .el-icon {
               flex: 0 0 auto;
@@ -3002,13 +3011,18 @@ onUnmounted(() => {
           margin-bottom: 16px;
 
           .quick-access-card {
+            display: flex;
+            gap: 0;
+            align-items: center;
             min-height: 74px;
             padding: 13px 14px;
             border-radius: 18px;
 
             .access-icon {
+              flex: 0 0 44px;
               width: 44px;
               height: 44px;
+              margin-right: 12px;
               border-radius: 13px;
 
               svg {
@@ -3018,6 +3032,9 @@ onUnmounted(() => {
             }
 
             .access-info {
+              flex: 1 1 auto;
+              min-width: 0;
+
               h4 {
                 margin-bottom: 4px;
                 font-size: 16px;
