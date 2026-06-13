@@ -1,5 +1,5 @@
 <template>
-  <div class="nx">
+  <div class="nx" :class="{ 'is-dragging-scroll': isHomeDragging }">
     <!-- ============== NAV ============== -->
     <header class="nx-nav" :class="{ 'is-scrolled': isScrolled }">
       <div class="nx-nav__inner">
@@ -211,7 +211,6 @@
               查看工作台演示
             </button>
           </div>
-
         </div>
 
         <!-- Product preview composition -->
@@ -458,9 +457,7 @@
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">学情画像</p>
-                <h3 class="nx-bento__title">
-                  能力雷达，教师与学生同步可见。
-                </h3>
+                <h3 class="nx-bento__title">能力雷达，教师与学生同步可见。</h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -759,8 +756,18 @@ const userStore = useUserStoreHook();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const activeShowcaseIndex = ref(0);
+const isHomeDragging = ref(false);
 let showcaseTimer: number | undefined;
 const rawIcon = (icon: any) => markRaw(icon);
+const homeDragState = {
+  active: false,
+  moved: false,
+  suppressClick: false,
+  startX: 0,
+  startY: 0,
+  lastX: 0,
+  lastY: 0
+};
 
 const userInfo = computed(() => {
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
@@ -1441,6 +1448,93 @@ const scrollToSection = (id: string) => {
     .getElementById(id)
     ?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
+const isInteractiveDragTarget = (target: EventTarget | null) => {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      [
+        "a",
+        "button",
+        "input",
+        "textarea",
+        "select",
+        "label",
+        "[role='button']",
+        "[contenteditable='true']",
+        ".el-overlay",
+        ".el-dialog",
+        ".el-popper",
+        ".el-dropdown-menu",
+        ".nx-side__item",
+        ".nx-tabbar__btn"
+      ].join(",")
+    )
+  );
+};
+const cleanupHomeDragListeners = () => {
+  window.removeEventListener("pointermove", handleHomePointerMove, true);
+  window.removeEventListener("pointerup", handleHomePointerUp, true);
+  window.removeEventListener("pointercancel", handleHomePointerUp, true);
+};
+const handleHomePointerDown = (event: PointerEvent) => {
+  if (event.pointerType !== "mouse" || event.button !== 0) return;
+  if (isInteractiveDragTarget(event.target)) return;
+
+  homeDragState.active = true;
+  homeDragState.moved = false;
+  homeDragState.startX = event.clientX;
+  homeDragState.startY = event.clientY;
+  homeDragState.lastX = event.clientX;
+  homeDragState.lastY = event.clientY;
+  cleanupHomeDragListeners();
+  window.addEventListener("pointermove", handleHomePointerMove, {
+    capture: true,
+    passive: false
+  });
+  window.addEventListener("pointerup", handleHomePointerUp, true);
+  window.addEventListener("pointercancel", handleHomePointerUp, true);
+};
+const handleHomePointerMove = (event: PointerEvent) => {
+  if (!homeDragState.active) return;
+
+  const totalX = event.clientX - homeDragState.startX;
+  const totalY = event.clientY - homeDragState.startY;
+  if (!homeDragState.moved && Math.hypot(totalX, totalY) > 5) {
+    homeDragState.moved = true;
+    isHomeDragging.value = true;
+  }
+
+  if (!homeDragState.moved) return;
+  event.preventDefault();
+
+  const deltaX = event.clientX - homeDragState.lastX;
+  const deltaY = event.clientY - homeDragState.lastY;
+  window.scrollBy({
+    left: -deltaX,
+    top: -deltaY,
+    behavior: "auto"
+  });
+  homeDragState.lastX = event.clientX;
+  homeDragState.lastY = event.clientY;
+};
+const handleHomePointerUp = () => {
+  if (homeDragState.active && homeDragState.moved) {
+    homeDragState.suppressClick = true;
+    window.setTimeout(() => {
+      homeDragState.suppressClick = false;
+    }, 0);
+  }
+  homeDragState.active = false;
+  homeDragState.moved = false;
+  isHomeDragging.value = false;
+  cleanupHomeDragListeners();
+};
+const handleHomeDragClickCapture = (event: MouseEvent) => {
+  if (!homeDragState.suppressClick) return;
+  event.preventDefault();
+  event.stopPropagation();
+  homeDragState.suppressClick = false;
+};
 const handleEntry = () => {
   const token = getToken();
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
@@ -1482,6 +1576,8 @@ const handleCommand = (command: string) => {
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
+  document.addEventListener("pointerdown", handleHomePointerDown, true);
+  document.addEventListener("click", handleHomeDragClickCapture, true);
   startShowcaseTimer();
 
   // GSAP: Bento Cards Reveal
@@ -1523,6 +1619,9 @@ onMounted(() => {
 });
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
+  document.removeEventListener("pointerdown", handleHomePointerDown, true);
+  document.removeEventListener("click", handleHomeDragClickCapture, true);
+  cleanupHomeDragListeners();
   if (showcaseTimer) window.clearInterval(showcaseTimer);
 });
 </script>
@@ -1558,6 +1657,12 @@ onUnmounted(() => {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+}
+
+.nx.is-dragging-scroll,
+.nx.is-dragging-scroll * {
+  cursor: grabbing !important;
+  user-select: none !important;
 }
 
 .nx :deep(svg) {
