@@ -108,6 +108,7 @@ pnpm native:pack:check
 pnpm native:devices
 pnpm native:run:android
 pnpm native:run:ios
+pnpm native:smoke
 pnpm native:doctor
 ```
 
@@ -137,6 +138,24 @@ Windows PowerShell automation when running on Windows; on macOS it reports a
 manual HBuilderX fallback until Android automation is ported. `pnpm
 native:run:ios` stops with a clear Xcode/HBuilderX preflight message if the host
 cannot launch an iOS simulator or device.
+
+Run `pnpm native:smoke` for repeatable mobile WebView route validation while
+full iOS simulator/device validation is unavailable. The script drives the
+system Chromium browser through the Chrome DevTools Protocol, uses an
+isolated temporary browser profile that is removed after the run, starts the H5
+dev server if port `8851` is not listening, and checks key student/teacher/admin
+native routes at an iPhone-sized viewport. It fails if a route stays on the
+loading state, renders almost no content, misses the mobile layout or bottom
+navigation, overflows horizontally, or emits a new console/page error. Results
+are written to ignored `native-smoke-report.json`.
+
+Useful variants:
+
+```powershell
+pnpm native:smoke -- --roles teacher
+pnpm native:smoke -- --roles student,teacher,admin --no-start
+pnpm native:smoke -- --chrome "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+```
 
 Cloud packaging config:
 
