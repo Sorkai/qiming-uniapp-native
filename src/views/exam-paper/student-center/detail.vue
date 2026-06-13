@@ -11,6 +11,8 @@ import {
   type StudentPaperDetail,
   type QuestionTypeLike
 } from "@/api/examPaper";
+import { logNativeFallback, isNativeWebViewRuntime } from "@/utils/nativeRuntime";
+import { nativeDemoStudentPaper } from "@/views/exam-paper/nativeDemoPaper";
 
 defineOptions({
   name: "StudentPaperDetail"
@@ -24,6 +26,10 @@ const paperId = computed(() => Number(route.params.id));
 const loading = ref(false);
 const paper = ref<StudentPaperDetail | null>(null);
 
+const applyNativeDemoPaper = () => {
+  paper.value = JSON.parse(JSON.stringify(nativeDemoStudentPaper));
+};
+
 // 获取试卷详情
 const fetchPaperDetail = async () => {
   loading.value = true;
@@ -31,12 +37,20 @@ const fetchPaperDetail = async () => {
     const res = await getStudentPaperDetail(paperId.value);
     if (res.code === 0 || res.code === 200) {
       paper.value = res.data;
+    } else if (isNativeWebViewRuntime()) {
+      logNativeFallback("获取试卷详情失败，已使用原生演示试卷", res?.msg);
+      applyNativeDemoPaper();
     } else {
       ElMessage.error(res.msg || "获取试卷详情失败");
     }
   } catch (error) {
-    console.error("获取试卷详情失败:", error);
-    ElMessage.error("获取试卷详情失败");
+    if (isNativeWebViewRuntime()) {
+      logNativeFallback("获取试卷详情失败，已使用原生演示试卷", error);
+      applyNativeDemoPaper();
+    } else {
+      console.error("获取试卷详情失败:", error);
+      ElMessage.error("获取试卷详情失败");
+    }
   } finally {
     loading.value = false;
   }

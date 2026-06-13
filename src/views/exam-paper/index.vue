@@ -9,6 +9,7 @@ import {
   getLearningAnalytics,
   getSystemTemplateStats
 } from "@/api/examPaper";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -125,7 +126,7 @@ const loadLearningStats = async (courseId?: number) => {
       };
     }
   } catch (e) {
-    console.error("获取学情概览失败", e);
+    logNativeFallback("获取学情概览失败", e);
   }
 };
 
@@ -187,7 +188,7 @@ const loadStatistics = async () => {
       statistics.value = res.data;
     }
   } catch (e) {
-    console.error("获取总览统计失败", e);
+    logNativeFallback("获取总览统计失败", e);
   }
 };
 
@@ -199,7 +200,7 @@ const loadRecentPapers = async () => {
       recentPapers.value = res.data;
     }
   } catch (e) {
-    console.error("获取最近试卷失败", e);
+    logNativeFallback("获取最近试卷失败", e);
   }
 };
 
@@ -218,7 +219,7 @@ const loadTemplateStats = async () => {
       });
     }
   } catch (e) {
-    console.error("获取模板统计失败", e);
+    logNativeFallback("获取模板统计失败", e);
   }
 };
 

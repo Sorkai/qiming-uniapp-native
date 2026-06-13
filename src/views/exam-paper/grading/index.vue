@@ -9,6 +9,7 @@ import {
   getGradingPaperList,
   autoGradeObjective
 } from "@/api/examPaper";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 // 导入 SVG 图标组件
 import IconEdit from "@/assets/home-icons/edit.svg?component";
@@ -79,7 +80,7 @@ const loadStatistics = async () => {
       statistics.value = res.data;
     }
   } catch (e) {
-    console.error("获取阅卷统计失败", e);
+    logNativeFallback("获取阅卷统计失败", e);
   }
 };
 
@@ -99,7 +100,7 @@ const handleSearch = async () => {
       pagination.total = res.data.total || 0;
     }
   } catch (e) {
-    console.error("获取阅卷列表失败", e);
+    logNativeFallback("获取阅卷列表失败", e);
   } finally {
     loading.value = false;
   }

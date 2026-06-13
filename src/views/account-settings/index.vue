@@ -10,6 +10,7 @@ import { useGlobal, deviceDetection } from "@pureadmin/utils";
 import AccountManagement from "./components/AccountManagement.vue";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import LaySidebarTopCollapse from "@/layout/components/lay-sidebar/components/SidebarTopCollapse.vue";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 import leftLine from "~icons/ri/arrow-left-s-line";
 import ProfileIcon from "~icons/ri/user-3-line";
@@ -61,9 +62,13 @@ const panes = [
 ];
 const witchPane = ref("profile");
 
-getMine().then(res => {
-  userInfo.value = res.data;
-});
+getMine()
+  .then(res => {
+    userInfo.value = res.data;
+  })
+  .catch(error => {
+    logNativeFallback("获取账号设置用户信息失败", error);
+  });
 </script>
 
 <template>

@@ -11,6 +11,7 @@ import {
   deleteTemplate,
   getSystemTemplateStats
 } from "@/api/examPaper";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 defineOptions({
   name: "ExamPaperTemplates"
@@ -95,7 +96,7 @@ const loadTemplateStats = async () => {
       });
     }
   } catch (error) {
-    console.error("加载模板统计失败:", error);
+    logNativeFallback("加载模板统计失败:", error);
   }
 };
 
@@ -107,7 +108,7 @@ const loadMyTemplates = async () => {
       myTemplates.value = result.data;
     }
   } catch (error) {
-    console.error("加载我的模板失败:", error);
+    logNativeFallback("加载我的模板失败:", error);
   }
 };
 

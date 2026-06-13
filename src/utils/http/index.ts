@@ -13,20 +13,10 @@ import { stringify } from "qs";
 import NProgress from "../progress";
 import { getToken, formatToken } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
+import { isNativeWebViewRuntime } from "@/utils/nativeRuntime";
 
 export const nativeApiBaseURL = "https://aiedu-api.intelledu.cn";
-
-export function isNativeWebViewRuntime() {
-  if (typeof window === "undefined") return false;
-
-  const queryText = `${window.location.search}&${window.location.hash}`;
-  return (
-    queryText.includes("qimingNative=1") ||
-    localStorage.getItem("qimingNativeWebView") === "1" ||
-    sessionStorage.getItem("qimingNativeWebView") === "1" ||
-    document.documentElement.classList.contains("qiming-native-webview")
-  );
-}
+export { isNativeWebViewRuntime };
 
 export function resolveApiBaseURL(
   baseURL = import.meta.env.VITE_API_URL || "/api"

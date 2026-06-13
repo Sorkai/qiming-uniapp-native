@@ -12,6 +12,8 @@ import {
   type StudentAnswerValue
 } from "@/api/examPaper";
 import RichContent from "@/views/exam-paper/editor/components/RichContent.vue";
+import { logNativeFallback, isNativeWebViewRuntime } from "@/utils/nativeRuntime";
+import { createNativeDemoExamSession } from "@/views/exam-paper/nativeDemoPaper";
 
 defineOptions({
   name: "ExamPaperDo"
@@ -207,7 +209,7 @@ const leaveQuestion = async (questionId: number) => {
         leaveTime: leaveTime
       });
     } catch (error) {
-      console.error("保存答题时长失败:", error);
+      logNativeFallback("保存答题时长失败", error);
     }
     record.enterTime = 0;
   }
@@ -269,7 +271,7 @@ const autoSaveAnswer = async (
       answer
     });
   } catch (error) {
-    console.error("自动保存失败:", error);
+    logNativeFallback("自动保存失败", error);
   }
 };
 
@@ -499,14 +501,40 @@ const loadExamData = async () => {
       // 启动计时器
       startExamTimer();
       startQuestionTimer();
+    } else if (isNativeWebViewRuntime()) {
+      const demoSession = createNativeDemoExamSession();
+      logNativeFallback("加载考试失败，已使用原生演示试卷", res?.msg);
+      examData.submissionId = demoSession.submissionId;
+      examData.paper = demoSession.paper;
+      examData.remainingTime = demoSession.remainingTime;
+      initAnswerRecords();
+      if (allQuestions.value.length > 0) {
+        enterQuestion(allQuestions.value[0].questionId);
+      }
+      startExamTimer();
+      startQuestionTimer();
     } else {
       ElMessage.error(res.msg || "加载考试失败");
       router.back();
     }
   } catch (error) {
-    console.error("加载考试失败:", error);
-    ElMessage.error("加载考试失败");
-    router.back();
+    if (isNativeWebViewRuntime()) {
+      const demoSession = createNativeDemoExamSession();
+      logNativeFallback("加载考试失败，已使用原生演示试卷", error);
+      examData.submissionId = demoSession.submissionId;
+      examData.paper = demoSession.paper;
+      examData.remainingTime = demoSession.remainingTime;
+      initAnswerRecords();
+      if (allQuestions.value.length > 0) {
+        enterQuestion(allQuestions.value[0].questionId);
+      }
+      startExamTimer();
+      startQuestionTimer();
+    } else {
+      console.error("加载考试失败:", error);
+      ElMessage.error("加载考试失败");
+      router.back();
+    }
   } finally {
     loading.value = false;
   }

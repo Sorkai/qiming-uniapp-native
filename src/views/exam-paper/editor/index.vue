@@ -35,6 +35,8 @@ import {
   type ClassInfo,
   type PublishTargetStudent
 } from "@/api/examPaper";
+import { logNativeFallback, isNativeWebViewRuntime } from "@/utils/nativeRuntime";
+import { nativeDemoStudentPaper } from "@/views/exam-paper/nativeDemoPaper";
 
 defineOptions({
   name: "ExamPaperEditor"
@@ -263,6 +265,20 @@ const paper = reactive({
     useHighestScore: false
   }
 });
+
+const applyNativeDemoPaperDetail = () => {
+  paper.title = nativeDemoStudentPaper.title;
+  paper.description = nativeDemoStudentPaper.description || "";
+  paper.courseId = nativeDemoStudentPaper.courseId;
+  paper.timeLimit = nativeDemoStudentPaper.timeLimit;
+  paper.startTime = nativeDemoStudentPaper.startTime || "";
+  paper.endTime = nativeDemoStudentPaper.endTime || "";
+  paper.questionGroups = JSON.parse(
+    JSON.stringify(nativeDemoStudentPaper.questionGroups || [])
+  );
+  updateTotals();
+  hasUnsavedChanges.value = false;
+};
 
 // 设置面板是否展开
 const settingsPanelVisible = ref(false);
@@ -2109,7 +2125,16 @@ const fetchCourseList = async () => {
       courseOptions.value = res.data;
     }
   } catch (e) {
-    console.error("加载课程列表失败", e);
+    if (isNativeWebViewRuntime()) {
+      logNativeFallback("加载课程列表失败，已使用原生演示课程", e);
+      courseOptions.value = [
+        { id: 1, name: "高等数学" },
+        { id: 2, name: "大学英语" },
+        { id: 3, name: "计算机基础" }
+      ];
+    } else {
+      console.error("加载课程列表失败", e);
+    }
   }
 };
 
@@ -2128,10 +2153,18 @@ const loadPaperDetail = async () => {
       paper.questionGroups = data.questionGroups || [];
       updateTotals();
       hasUnsavedChanges.value = false;
+    } else if (isNativeWebViewRuntime()) {
+      logNativeFallback("加载试卷失败，已使用原生演示试卷", res?.msg);
+      applyNativeDemoPaperDetail();
     }
   } catch (error) {
-    console.error("加载试卷失败:", error);
-    ElMessage.error("加载试卷失败");
+    if (isNativeWebViewRuntime()) {
+      logNativeFallback("加载试卷失败，已使用原生演示试卷", error);
+      applyNativeDemoPaperDetail();
+    } else {
+      console.error("加载试卷失败:", error);
+      ElMessage.error("加载试卷失败");
+    }
   }
 };
 
@@ -6380,6 +6413,154 @@ $admin-radius: 16px;
         border-radius: 4px;
       }
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .exam-paper-editor {
+    min-width: 0;
+    padding-bottom: var(--pure-mobile-content-bottom-gap, 140px);
+  }
+
+  .editor-fixed-top {
+    top: calc(var(--pure-safe-area-top, 0px) + 8px);
+    margin: 8px 12px 12px;
+    border-radius: 12px;
+  }
+
+  .editor-header {
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+    flex-wrap: wrap;
+
+    .header-left {
+      flex: 1 1 100%;
+      min-width: 0;
+
+      .logo {
+        width: 100%;
+      }
+
+      .logo-icon {
+        width: 30px;
+        height: 30px;
+        margin-right: 8px;
+      }
+
+      .logo-text {
+        display: block;
+        min-width: 0;
+        font-size: 18px;
+        line-height: 1.25;
+        white-space: normal;
+        word-break: keep-all;
+      }
+    }
+
+    .header-center {
+      order: 3;
+      flex: 1 1 100%;
+      max-width: none;
+      margin: 0;
+    }
+
+    .header-right {
+      order: 2;
+      flex: 1 1 100%;
+      min-width: 0;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      .auto-save-status {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 12px;
+        white-space: normal;
+      }
+
+      :deep(.el-button) {
+        height: 36px;
+        min-width: 72px;
+        padding: 0 10px;
+        margin-left: 0;
+        font-size: 13px;
+      }
+    }
+  }
+
+  .question-toolbar {
+    padding: 12px;
+
+    .toolbar-hint {
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .toolbar-groups {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+
+      .toolbar-group-label {
+        letter-spacing: 0;
+      }
+    }
+
+    .toolbar-items {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+
+      .type-item {
+        min-width: 0;
+        min-height: 86px;
+        padding: 8px 6px;
+
+        .type-icon-wrapper {
+          width: 32px;
+          height: 32px;
+          margin-bottom: 6px;
+        }
+
+        .type-label {
+          max-width: 100%;
+          font-size: 12px;
+          line-height: 1.25;
+          text-align: center;
+          white-space: normal;
+          word-break: keep-all;
+        }
+      }
+    }
+  }
+
+  .editor-main {
+    min-height: 0;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .editor-outline {
+    width: auto;
+    max-height: 220px;
+    flex-shrink: 0;
+    margin: 0 12px 12px;
+    overflow: hidden;
+    border-right: 0;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 12px;
+
+    &.collapsed {
+      width: auto;
+      max-height: 54px;
+    }
+  }
+
+  .editor-content {
+    overflow: visible;
+    padding: 12px;
+    background-size: 520px;
   }
 }
 </style>

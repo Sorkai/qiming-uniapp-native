@@ -40,15 +40,6 @@ const POSITION_PADDING = 10;
 const MOBILE_POSITION_PADDING = 14;
 const DRAG_THRESHOLD = 6;
 
-const isNativeAiAppMobile = () => {
-  if (typeof document === "undefined") return false;
-  return (
-    isMobile.value &&
-    document.documentElement.classList.contains("qiming-native-webview") &&
-    window.location.hash.includes("/account/ai-app")
-  );
-};
-
 const getCssPixelValue = (name: string) => {
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(name)
@@ -108,9 +99,6 @@ const hasVisibleBottomDock = () => {
 
 const getMobileBottomOffset = () => {
   if (!isMobile.value) return POSITION_PADDING;
-  if (isNativeAiAppMobile()) {
-    return getCssPixelValue("--pure-safe-area-bottom") + 22;
-  }
   const safeBottom = getCssPixelValue("--pure-safe-area-bottom");
   if (isNativeMobile()) {
     const tabHeight =

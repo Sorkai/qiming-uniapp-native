@@ -12,6 +12,7 @@ import {
   type ExamTrendItem,
   type StudentRankingItem
 } from "@/api/examPaper";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -140,7 +141,7 @@ const loadCourseList = async () => {
       courseList.value = res.data;
     }
   } catch (error) {
-    console.error("加载课程列表失败:", error);
+    logNativeFallback("加载课程列表失败:", error);
   }
 };
 
@@ -189,7 +190,7 @@ const loadAnalyticsData = async () => {
       ElMessage.error("加载学情分析数据失败");
     }
   } catch (error) {
-    console.error("加载学情分析数据失败:", error);
+    logNativeFallback("加载学情分析数据失败:", error);
     ElMessage.error("加载学情分析数据失败");
   } finally {
     loading.value = false;

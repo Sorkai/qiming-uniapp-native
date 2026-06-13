@@ -119,6 +119,65 @@ const createEmptyStatistics = (): StudentPaperStatistics => ({
   avgScore: 0
 });
 
+const isNativeDemoPreview = () => {
+  if (typeof window === "undefined") return false;
+  const queryText = `${window.location.search}&${window.location.hash}`;
+  return (
+    queryText.includes("qimingNative=1") ||
+    localStorage.getItem("qimingNativeWebView") === "1" ||
+    sessionStorage.getItem("qimingNativeWebView") === "1" ||
+    document.documentElement.classList.contains("qiming-native-webview")
+  );
+};
+
+const nativeDemoPapers: StudentPaperItem[] = [
+  {
+    id: 1,
+    title: "2024年春季期中考试",
+    description: "覆盖函数、导数与综合应用题，建议完成后查看错题解析。",
+    courseId: 1,
+    courseName: "高等数学",
+    timeLimit: 105,
+    totalPoints: 100,
+    totalQuestions: 7,
+    startTime: "2024-04-15 09:00:00",
+    endTime: "2099-04-15 11:00:00",
+    status: "available",
+    submissionId: null,
+    score: null
+  },
+  {
+    id: 2,
+    title: "英语阅读理解专项测评",
+    description: "训练长篇阅读、词汇辨析和主旨概括能力。",
+    courseId: 2,
+    courseName: "大学英语",
+    timeLimit: 60,
+    totalPoints: 100,
+    totalQuestions: 18,
+    startTime: "2024-04-08 14:00:00",
+    endTime: "2024-04-08 15:00:00",
+    status: "completed",
+    submissionId: 1,
+    score: 85
+  },
+  {
+    id: 3,
+    title: "计算机基础实验小测",
+    description: "实验课后巩固，等待教师发布批改结果。",
+    courseId: 3,
+    courseName: "计算机基础",
+    timeLimit: 45,
+    totalPoints: 60,
+    totalQuestions: 12,
+    startTime: "2024-04-10 10:00:00",
+    endTime: "2024-04-10 10:45:00",
+    status: "submitted",
+    submissionId: 3,
+    score: null
+  }
+];
+
 const isSuccessResponse = (res: { code?: unknown; success?: unknown }) =>
   res?.code === 0 ||
   res?.code === 200 ||
@@ -251,6 +310,28 @@ const applyPaperPayload = (
   statistics.value = normalizeStatistics(data?.statistics, allPapers);
 };
 
+const applyNativeDemoPapers = () => {
+  const keyword = searchQuery.value.trim();
+  const courseId =
+    selectedCourse.value && selectedCourse.value !== "0"
+      ? Number(selectedCourse.value)
+      : 0;
+  const visiblePapers = nativeDemoPapers.filter(item => {
+    const matchesTab = item.status === activeTab.value;
+    const matchesCourse = !courseId || item.courseId === courseId;
+    const matchesKeyword =
+      !keyword ||
+      item.title.includes(keyword) ||
+      item.courseName.includes(keyword) ||
+      item.description?.includes(keyword);
+    return matchesTab && matchesCourse && matchesKeyword;
+  });
+
+  papers.value = visiblePapers;
+  total.value = visiblePapers.length;
+  statistics.value = normalizeStatistics(undefined, nativeDemoPapers);
+};
+
 const buildLegacyExamParams = () => {
   const params: any = {
     pageNum: currentPage.value,
@@ -303,14 +384,26 @@ const fetchPapers = async () => {
       return;
     } else if (await fetchPapersFromLegacyApi()) {
       return;
+    } else if (isNativeDemoPreview()) {
+      console.warn("[StudentExamCenter] using native demo paper fallback", {
+        message: res.msg,
+        params
+      });
+      applyNativeDemoPapers();
+      return;
     } else {
       ElMessage.error(res.msg || "获取试卷列表失败");
     }
   } catch (error) {
-    console.error("获取试卷列表失败:", error);
     if (await fetchPapersFromLegacyApi()) {
       return;
     }
+    if (isNativeDemoPreview()) {
+      console.warn("[StudentExamCenter] using native demo paper fallback", error);
+      applyNativeDemoPapers();
+      return;
+    }
+    console.error("获取试卷列表失败:", error);
     ElMessage.error("获取试卷列表失败");
   } finally {
     loading.value = false;

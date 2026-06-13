@@ -7,6 +7,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import ReCropperPreview from "@/components/ReCropperPreview";
 import { createFormData, deviceDetection } from "@pureadmin/utils";
 import uploadLine from "~icons/ri/upload-line";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 defineOptions({
   name: "Profile"
@@ -98,9 +99,13 @@ const onSubmit = async (formEl: FormInstance) => {
   });
 };
 
-getMine().then(res => {
-  Object.assign(userInfos, res.data);
-});
+getMine()
+  .then(res => {
+    Object.assign(userInfos, res.data);
+  })
+  .catch(error => {
+    logNativeFallback("获取个人信息失败", error);
+  });
 </script>
 
 <template>

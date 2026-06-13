@@ -4,6 +4,7 @@ import { getMineLogs } from "@/api/user";
 import { reactive, ref, onMounted } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import type { PaginationProps } from "@pureadmin/table";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 defineOptions({
   name: "SecurityLog"
@@ -55,11 +56,15 @@ const columns: TableColumnList = [
 
 async function onSearch() {
   loading.value = true;
-  const { data } = await getMineLogs();
-  dataList.value = data.list;
-  pagination.total = data.total;
-  pagination.pageSize = data.pageSize;
-  pagination.currentPage = data.currentPage;
+  try {
+    const { data } = await getMineLogs();
+    dataList.value = data.list;
+    pagination.total = data.total;
+    pagination.pageSize = data.pageSize;
+    pagination.currentPage = data.currentPage;
+  } catch (error) {
+    logNativeFallback("获取安全日志失败", error);
+  }
 
   setTimeout(() => {
     loading.value = false;

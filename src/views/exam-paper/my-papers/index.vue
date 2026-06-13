@@ -28,6 +28,7 @@ import {
   type PaperStatus,
   type PaperFolder
 } from "@/api/examPaper";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -163,7 +164,7 @@ const loadStatistics = async () => {
       statistics.value = res.data;
     }
   } catch (e) {
-    console.error("获取统计数据失败", e);
+    logNativeFallback("获取统计数据失败", e);
   }
 };
 
@@ -186,7 +187,7 @@ const loadData = async () => {
       pagination.total = res.data.total || 0;
     }
   } catch (e) {
-    console.error("获取试卷列表失败", e);
+    logNativeFallback("获取试卷列表失败", e);
   } finally {
     loading.value = false;
   }
@@ -200,7 +201,7 @@ const fetchFolders = async () => {
       folderList.value = res.data;
     }
   } catch (e) {
-    console.error("获取文件夹列表失败", e);
+    logNativeFallback("获取文件夹列表失败", e);
   }
 };
 

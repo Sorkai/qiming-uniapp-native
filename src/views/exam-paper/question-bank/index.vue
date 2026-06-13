@@ -22,6 +22,7 @@ import {
   type QuestionFolder,
   type KnowledgePoint
 } from "@/api/examPaper";
+import { logNativeFallback } from "@/utils/nativeRuntime";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -188,6 +189,8 @@ const fetchQuestions = async () => {
       questions.value = res.data.list;
       total.value = res.data.total;
     }
+  } catch (e) {
+    logNativeFallback("加载题目列表失败", e);
   } finally {
     loading.value = false;
   }
@@ -201,7 +204,7 @@ const fetchStatistics = async () => {
       statistics.value = res.data;
     }
   } catch (e) {
-    console.error("加载统计数据失败", e);
+    logNativeFallback("加载统计数据失败", e);
   }
 };
 
@@ -213,7 +216,7 @@ const fetchFolders = async () => {
       folderList.value = res.data;
     }
   } catch (e) {
-    console.error("加载文件夹失败", e);
+    logNativeFallback("加载文件夹失败", e);
   }
 };
 
@@ -225,7 +228,7 @@ const fetchKnowledgePoints = async () => {
       knowledgePointList.value = res.data;
     }
   } catch (e) {
-    console.error("加载知识点失败", e);
+    logNativeFallback("加载知识点失败", e);
   }
 };
 
