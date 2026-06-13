@@ -222,9 +222,9 @@
 
           <!-- 常驻工具栏：课程 / 模式 / 智能体 / 思考模式 / 模型 -->
           <div
-            class="flex items-center justify-between px-3 py-2 bg-gray-50/60 border-t border-gray-100"
+            class="ai-chat-module-toolrow flex items-center justify-between px-3 py-2 bg-gray-50/60 border-t border-gray-100"
           >
-            <div class="flex flex-wrap items-center gap-1">
+            <div class="ai-chat-module-tools flex flex-wrap items-center gap-1">
               <el-dropdown
                 v-if="courses && courses.length"
                 trigger="click"
@@ -307,11 +307,12 @@
             </div>
 
             <el-dropdown
+              class="ai-chat-module-model-select"
               trigger="click"
               @command="m => emit('update:selectedModel', m)"
             >
               <span
-                class="text-[11px] text-gray-400 font-medium tracking-wide flex items-center cursor-pointer hover:text-gray-600 transition-colors"
+                class="ai-chat-module-model-trigger text-[11px] text-gray-400 font-medium tracking-wide flex items-center cursor-pointer hover:text-gray-600 transition-colors"
               >
                 {{ selectedModel }}
                 <el-icon class="ml-1"><ArrowDown /></el-icon>
@@ -630,18 +631,18 @@ watch(
 }
 </style>
 
-<style scoped lang="scss">
-:global(.ai-app-root.is-native-mobile-workspace) {
+<style lang="scss">
+.ai-app-root.is-native-mobile-workspace {
   .ai-chat-module-topbar {
     min-height: 64px;
-    padding-left: 70px;
+    padding-left: 16px;
     gap: 10px;
   }
 
   .ai-chat-module-course {
     min-width: 0;
 
-    :deep(.el-tag) {
+    .el-tag {
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -652,10 +653,47 @@ watch(
   .ai-chat-module-actions {
     flex-shrink: 0;
   }
+
+  .ai-chat-module-toolrow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .ai-chat-module-tools {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    > * {
+      max-width: 100%;
+    }
+
+    .el-dropdown {
+      min-width: 0;
+    }
+
+    span {
+      max-width: 100%;
+    }
+  }
+
+  .ai-chat-module-model-select {
+    flex: 0 0 auto;
+    max-width: 100%;
+    padding-top: 0;
+  }
+
+  .ai-chat-module-model-trigger {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 @media (max-width: 768px) {
-  :global(.ai-app-root.is-native-mobile-workspace) {
+  .ai-app-root.is-native-mobile-workspace {
     .ai-chat-module-topbar {
       padding-top: 12px;
       padding-right: 12px;

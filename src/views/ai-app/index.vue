@@ -963,7 +963,13 @@ onUnmounted(() => {
       <aside
         v-if="activeRail === 'chat'"
         class="ai-app-left-rail flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
-        :class="sidebarCollapsed ? 'is-collapsed w-[34px]' : 'w-[260px]'"
+        :class="
+          sidebarCollapsed
+            ? isMobileViewport
+              ? 'is-collapsed is-mobile-collapsed w-0'
+              : 'is-collapsed w-[34px]'
+            : 'w-[260px]'
+        "
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <AiSidebar
@@ -1786,6 +1792,30 @@ onUnmounted(() => {
 
   .ai-app-root.is-native-mobile-workspace .ai-app-left-rail.is-collapsed {
     bottom: auto;
+  }
+
+  .ai-app-root.is-native-mobile-workspace
+    .ai-app-left-rail.is-mobile-collapsed {
+    flex-basis: 0;
+    min-width: 0;
+    overflow: visible;
+    pointer-events: none;
+    background: transparent;
+    border-right: 0;
+  }
+
+  .ai-app-root.is-native-mobile-workspace
+    .ai-app-left-rail.is-mobile-collapsed
+    .is-mobile-collapsed-trigger {
+    position: fixed !important;
+    top: calc(var(--qiming-native-safe-top, 0px) + 18px) !important;
+    left: 18px !important;
+    right: auto !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 12px !important;
+    pointer-events: auto;
+    transform: none !important;
   }
 
   .ai-app-root.is-native-mobile-workspace :deep(.floating-human-2d) {
