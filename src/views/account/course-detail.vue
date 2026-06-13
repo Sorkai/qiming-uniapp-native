@@ -653,14 +653,16 @@ const videoEnded = async () => {
 const handleNodeClick = (nodeId: string, hour: any) => {
   activeNode.value = nodeId;
   storageLocal().setItem(`course_detail_active_node_${courseId.value}`, nodeId);
-  if (hour?.fileUrl) {
-    currentHour.value = hour;
+  if (hour) {
     const oldUrl = currentVideoUrl.value;
-    currentVideoUrl.value = hour.fileUrl;
-    if (oldUrl !== hour.fileUrl) autoPlayOnLoad.value = true;
+    const nextUrl = hour.fileUrl || "";
+    currentHour.value = hour;
+    currentVideoUrl.value = nextUrl;
+    autoPlayOnLoad.value =
+      activeMenu.value === "course-learn" && !!nextUrl && oldUrl !== nextUrl;
 
     const videoPlayerEl = resolveVideoPlayerEl();
-    if (videoPlayerEl && oldUrl === hour.fileUrl) {
+    if (videoPlayerEl && nextUrl && oldUrl === nextUrl) {
       videoPlayerEl.currentTime = 0;
       if (typeof videoPlayerEl.play === "function") {
         videoPlayerEl.play();
