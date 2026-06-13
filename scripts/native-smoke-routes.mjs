@@ -18,8 +18,65 @@ const routeSuites = {
   teacher: [
     { label: "教师工作台", path: "/welcome/index", expect: ["教师"] },
     { label: "教师课程", path: "/course/list", expect: ["课程"] },
+    {
+      label: "课程分类",
+      path: "/course/category",
+      expect: ["课程分类"],
+      selectors: [".mobile-category-list"]
+    },
     { label: "教案管理", path: "/course/teacherplan", expect: ["教案"] },
     { label: "作业与考试", path: "/course/assessment", expect: ["作业"] },
+    {
+      label: "AI 动画",
+      path: "/course/animation",
+      expect: ["智能动画中心"],
+      selectors: [".ai-animation-container.is-mobile-layout"]
+    },
+    {
+      label: "视频分析",
+      path: "/course/video-analysis",
+      expect: ["视频分析中心"],
+      selectors: [".video-analysis-container.is-mobile-layout"]
+    },
+    {
+      label: "讨论列表",
+      path: "/course/discussion/review",
+      expect: ["讨论列表"],
+      selectors: [".discussion-manage--mobile", ".mobile-discussion-list"]
+    },
+    {
+      label: "试卷总览",
+      path: "/exam-paper/index",
+      expect: ["试卷", "阅卷管理"]
+    },
+    {
+      label: "我的试卷",
+      path: "/exam-paper/my-papers",
+      expect: ["我的试卷"],
+      selectors: [".paper-mobile-list"]
+    },
+    {
+      label: "试卷模板",
+      path: "/exam-paper/templates",
+      expect: ["试卷模板"]
+    },
+    {
+      label: "阅卷管理",
+      path: "/exam-paper/grading",
+      expect: ["阅卷管理"],
+      selectors: [".grading-mobile-list"]
+    },
+    {
+      label: "学情分析",
+      path: "/exam-paper/statistics",
+      expect: ["学情分析"]
+    },
+    {
+      label: "题库管理",
+      path: "/exam-paper/question-bank",
+      expect: ["题库管理"],
+      selectors: [".question-mobile-list"]
+    },
     {
       label: "教师 AI App",
       path: "/ai-app/workspace",
@@ -47,10 +104,52 @@ const routeSuites = {
       layout: "account"
     },
     {
+      label: "学生虚拟校园",
+      path: "/account?menu=classroom",
+      expect: ["2D 校园导览"],
+      layout: "account"
+    },
+    {
       label: "学生 AI App",
       path: "/account/ai-app?mode=student",
       expect: ["AI"],
       layout: "account-ai"
+    },
+    {
+      label: "学生云盘",
+      path: "/account?menu=cloud-disk",
+      expect: ["学习云盘"],
+      layout: "account"
+    },
+    {
+      label: "学生通知",
+      path: "/account?menu=notification",
+      expect: ["系统通知"],
+      layout: "account"
+    },
+    {
+      label: "学生待办",
+      path: "/account?menu=todo",
+      expect: ["待办事项"],
+      layout: "account"
+    },
+    {
+      label: "学生虚拟实验室",
+      path: "/account?menu=virtual-lab",
+      expect: ["虚拟实验室"],
+      layout: "account"
+    },
+    {
+      label: "学生赛事场",
+      path: "/account?menu=competition",
+      expect: ["赛事场"],
+      layout: "account"
+    },
+    {
+      label: "学生试卷中心",
+      path: "/account?menu=exam-center",
+      expect: ["试题试卷中心"],
+      layout: "account"
     },
     {
       label: "学生我的",
@@ -63,6 +162,29 @@ const routeSuites = {
     { label: "管理工作台", path: "/welcome/index", expect: ["管理员"] },
     { label: "用户管理", path: "/user/list", expect: ["用户"] },
     { label: "管理课程", path: "/course/list", expect: ["课程"] },
+    {
+      label: "管理课程分类",
+      path: "/course/category",
+      expect: ["课程分类"],
+      selectors: [".mobile-category-list"]
+    },
+    {
+      label: "管理讨论",
+      path: "/course/discussion/review",
+      expect: ["讨论列表"],
+      selectors: [".discussion-manage--mobile", ".mobile-discussion-list"]
+    },
+    {
+      label: "管理试卷总览",
+      path: "/exam-paper/index",
+      expect: ["试卷", "阅卷管理"]
+    },
+    {
+      label: "管理题库",
+      path: "/exam-paper/question-bank",
+      expect: ["题库管理"],
+      selectors: [".question-mobile-list"]
+    },
     {
       label: "管理 AI App",
       path: "/ai-app/workspace",
@@ -382,6 +504,7 @@ function isIgnorableSmokeError(message) {
 async function validateRoute(port, sessionId, route, baseUrl, timeoutMs) {
   const eventStart = cdp.events.length;
   const url = buildRouteUrl(baseUrl, route, `smoke-${Date.now()}`);
+  const expectedSelectors = JSON.stringify(route.selectors || []);
   console.log(`Checking [${route.role}] ${route.label}: ${route.path}`);
   await cdp(port, "Page.navigate", { url }, sessionId);
   await waitForLoad(sessionId, eventStart, 1500);
@@ -408,6 +531,7 @@ async function validateRoute(port, sessionId, route, baseUrl, timeoutMs) {
         href: location.href,
         title: document.title,
         bodyTextLength: bodyText.length,
+        bodyText,
         bodyTextSample: bodyText.slice(0, 500),
         appHtmlLength: app?.innerHTML.length || 0,
         appRect: appRect ? {
@@ -418,6 +542,10 @@ async function validateRoute(port, sessionId, route, baseUrl, timeoutMs) {
         hasAccountNativeMobile: account?.classList.contains("is-native-mobile") || false,
         hasAiNativeMobile: aiRoot?.classList.contains("is-native-mobile-workspace") || false,
         hasMobileNav: Boolean(mobileNav),
+        selectors: Object.fromEntries(
+          ${expectedSelectors}
+            .map(selector => [selector, Boolean(document.querySelector(selector))])
+        ),
         mobileNavRect: navRect ? {
           y: Math.round(navRect.y),
           width: Math.round(navRect.width),
@@ -455,8 +583,13 @@ async function validateRoute(port, sessionId, route, baseUrl, timeoutMs) {
   if (state.appHtmlLength < 1000) failures.push("app content is too small");
   if (state.bodyTextLength < 20) failures.push("visible text is too short");
   for (const expected of route.expect || []) {
-    if (!state.bodyTextSample.includes(expected) && !state.title.includes(expected)) {
+    if (!state.bodyText.includes(expected) && !state.title.includes(expected)) {
       failures.push(`expected text missing: ${expected}`);
+    }
+  }
+  for (const selector of route.selectors || []) {
+    if (!state.selectors?.[selector]) {
+      failures.push(`expected selector missing: ${selector}`);
     }
   }
   if (errors.length > 0) failures.push(`${errors.length} console/page error(s)`);

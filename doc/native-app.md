@@ -144,10 +144,13 @@ full iOS simulator/device validation is unavailable. The script drives the
 system Chromium browser through the Chrome DevTools Protocol, uses an
 isolated temporary browser profile that is removed after the run, starts the H5
 dev server if port `8851` is not listening, and checks key student/teacher/admin
-native routes at an iPhone-sized viewport. It fails if a route stays on the
-loading state, renders almost no content, misses the mobile layout or bottom
-navigation, overflows horizontally, or emits a new console/page error. Results
-are written to ignored `native-smoke-report.json`.
+native routes at an iPhone-sized viewport. The default suite currently covers
+36 routes: student account tabs, teacher course/discussion/exam-paper pages,
+and admin course/discussion/exam-paper pages. It fails if a route stays on the
+loading state, renders almost no content, misses the expected mobile layout,
+bottom navigation, or page-specific mobile list selector, overflows
+horizontally, or emits a new console/page error. Results are written to ignored
+`native-smoke-report.json`.
 
 Useful variants:
 

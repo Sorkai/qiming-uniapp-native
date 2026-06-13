@@ -23,7 +23,7 @@ npm-debug.log*
 .dev-server*.log
 .native-dev*.log
 .native-smoke/
-native-smoke-report.json
+native-smoke*-report.json
 .native-*.png
 native-*.png
 native-*.xml
