@@ -218,12 +218,15 @@ const shouldShowFloatingHuman = computed(
 const humanPanelStyle = computed(() => ({
   width: humanCollapsed.value
     ? "64px"
-    : isStaffMode.value
+    : isMobileViewport.value
+      ? "100%"
+      : isStaffMode.value
       ? "clamp(360px, 26vw, 460px)"
       : "clamp(320px, 23vw, 420px)"
 }));
 const humanStageClass = computed(() => {
   if (humanCollapsed.value) return "flex-1";
+  if (isMobileViewport.value) return "flex-none h-[188px]";
   return isStaffMode.value
     ? "flex-none min-h-[390px] max-h-[560px] h-[64vh]"
     : "flex-none min-h-[360px] max-h-[520px] h-[60vh]";
@@ -1823,6 +1826,51 @@ onUnmounted(() => {
       var(--pure-mobile-tab-height, 56px) + 16px +
         var(--pure-safe-area-bottom, 0px)
     ) !important;
+  }
+
+  .ai-app-root.is-native-mobile-workspace .ai-chat-scene {
+    flex-direction: column;
+    gap: 10px !important;
+    padding: calc(var(--qiming-native-safe-top, 0px) + 54px) 12px
+      calc(
+        var(--pure-mobile-tab-height, 56px) +
+          var(--pure-safe-area-bottom, 0px) + 14px
+      ) !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ai-app-root.is-native-mobile-workspace .ai-chat-card {
+    flex: 0 0 auto;
+    height: clamp(360px, 54vh, 430px) !important;
+    min-height: 360px;
+    border-radius: 24px !important;
+  }
+
+  .ai-app-root.is-native-mobile-workspace .ai-chat-card > div:first-child {
+    height: 64px;
+  }
+
+  .ai-app-root.is-native-mobile-workspace .ai-app-human-panel {
+    flex: 0 0 auto;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0;
+    gap: 6px;
+  }
+
+  .ai-app-root.is-native-mobile-workspace .ai-app-human-panel > button {
+    display: none !important;
+  }
+
+  .ai-app-root.is-native-mobile-workspace .ai-app-human-panel > div:first-of-type {
+    height: clamp(172px, 24vh, 210px);
+    min-height: 172px;
+    border-radius: 24px !important;
+  }
+
+  .ai-app-root.is-native-mobile-workspace .ai-human-actions {
+    display: none !important;
   }
 }
 

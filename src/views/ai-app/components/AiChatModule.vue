@@ -24,7 +24,10 @@
     </div>
 
     <!-- 消息流：移除背景修饰文字，保持纯净 -->
-    <el-scrollbar ref="scrollbarRef" class="flex-1 px-4 py-6 scroll-smooth">
+    <el-scrollbar
+      ref="scrollbarRef"
+      class="ai-chat-module-scroll flex-1 px-4 py-6 scroll-smooth"
+    >
       <transition-group
         appear
         name="chat-list"
@@ -182,17 +185,17 @@
     </el-scrollbar>
 
     <!-- 输入区：悬浮极简设计，带常驻选择器 -->
-    <div class="p-4 bg-transparent z-10 w-full">
-      <div class="w-full relative group">
+    <div class="ai-chat-module-composer p-4 bg-transparent z-10 w-full">
+      <div class="ai-chat-module-composer-shell w-full relative group">
         <!-- 发光的呼吸框 -->
         <div
           class="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-[24px] blur opacity-0 group-focus-within:opacity-100 group-focus-within:animate-pulse transition duration-500"
         />
         <div
-          class="relative bg-white border border-gray-200 rounded-[24px] shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300 overflow-hidden"
+          class="ai-chat-module-composer-card relative bg-white border border-gray-200 rounded-[24px] shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300 overflow-hidden"
         >
           <!-- 输入框 -->
-          <div class="flex items-end gap-2 p-2">
+          <div class="ai-chat-module-input-row flex items-end gap-2 p-2">
             <el-button
               :icon="Plus"
               class="!rounded-lg mb-1 hover:rotate-90 hover:bg-gray-100 transition-all duration-300 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.3)]"
@@ -405,6 +408,14 @@ const visibleMessages = computed(() =>
 
 const formatMessageContent = (content: unknown) => String(content || "").trim();
 
+const syncScrollPosition = () => {
+  if (!scrollbarRef.value) return;
+  const shouldScrollToBottom =
+    visibleMessages.value.length > 1 ||
+    visibleMessages.value.some(msg => msg.type === "user");
+  scrollbarRef.value.setScrollTop(shouldScrollToBottom ? 9999 : 0);
+};
+
 const handleEnter = (event: KeyboardEvent) => {
   if (event.isComposing || event.shiftKey) return;
   event.preventDefault();
@@ -418,12 +429,7 @@ const handleSend = () => {
   input.value = "";
 
   nextTick(() => {
-    if (scrollbarRef.value) {
-      // 添加滚动动画延迟，让消息先渲染完
-      setTimeout(() => {
-        scrollbarRef.value.setScrollTop(9999);
-      }, 100);
-    }
+    setTimeout(syncScrollPosition, 100);
   });
 };
 
@@ -431,11 +437,7 @@ watch(
   () => props.messages,
   () => {
     nextTick(() => {
-      if (scrollbarRef.value) {
-        setTimeout(() => {
-          scrollbarRef.value.setScrollTop(9999);
-        }, 100);
-      }
+      setTimeout(syncScrollPosition, 100);
     });
   },
   { deep: true }
@@ -633,10 +635,77 @@ watch(
 
 <style lang="scss">
 .ai-app-root.is-native-mobile-workspace {
+  .ai-chat-module {
+    min-height: 0;
+  }
+
   .ai-chat-module-topbar {
     min-height: 64px;
     padding-left: 16px;
     gap: 10px;
+  }
+
+  .ai-chat-module-scroll {
+    flex: 1 1 auto;
+    min-height: 118px;
+    padding: 12px 14px 8px !important;
+  }
+
+  .chat-message-row {
+    gap: 8px;
+  }
+
+  .message-avatar {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .message-stack,
+  .message-stack.is-user {
+    max-width: calc(100% - 42px);
+  }
+
+  .message-bubble {
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .message-bubble-system {
+    border-radius: 16px 18px 18px 8px;
+  }
+
+  .ai-chat-module-composer {
+    flex: 0 0 auto;
+    padding: 8px 10px 10px !important;
+  }
+
+  .ai-chat-module-composer-shell {
+    border-radius: 20px;
+  }
+
+  .ai-chat-module-composer-card {
+    border-radius: 20px !important;
+  }
+
+  .ai-chat-module-input-row {
+    align-items: flex-end;
+    gap: 6px;
+    padding: 7px !important;
+  }
+
+  .ai-chat-module-composer .el-button {
+    width: 30px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0;
+  }
+
+  .ai-chat-module-composer .ai-input-base .el-textarea__inner {
+    min-height: 32px !important;
+    padding: 5px 8px;
+    font-size: 14px;
+    line-height: 1.45;
   }
 
   .ai-chat-module-course {
@@ -655,15 +724,20 @@ watch(
   }
 
   .ai-chat-module-toolrow {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
     align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
+    gap: 5px;
     min-width: 0;
+    padding: 6px 8px !important;
   }
 
   .ai-chat-module-tools {
-    flex: 1 1 auto;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
     min-width: 0;
+    width: 100%;
 
     > * {
       max-width: 100%;
@@ -674,7 +748,15 @@ watch(
     }
 
     span {
+      justify-content: center;
       max-width: 100%;
+      min-height: 26px;
+      min-width: 0;
+      padding: 4px 7px !important;
+      overflow: hidden;
+      font-size: 10.5px !important;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 
@@ -682,10 +764,13 @@ watch(
     flex: 0 0 auto;
     max-width: 100%;
     padding-top: 0;
+    width: 100%;
   }
 
   .ai-chat-module-model-trigger {
+    justify-content: center;
     max-width: 100%;
+    min-height: 22px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
