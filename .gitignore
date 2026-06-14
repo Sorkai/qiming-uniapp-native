@@ -10,6 +10,7 @@ dist-ssr
 native-app/src/hybrid/html
 native-app/dist
 ios-native/build/
+ios-native/build-device/
 .screenshots/
 artifacts/
 *.local
