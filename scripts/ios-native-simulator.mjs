@@ -19,10 +19,12 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const iosRoot = join(repoRoot, "ios-native");
 const buildRoot = join(iosRoot, "build");
 const appName = "QimingIntellEdu";
-const bundleId = "cn.intelledu.qiming.native";
+const bundleId = "cn.intelledu.qiming";
 const appPath = join(buildRoot, `${appName}.app`);
 const resourceSource = join(repoRoot, "native-app", "src", "hybrid", "html");
 const resourceTarget = join(appPath, "AppResources");
+const iconSource = join(repoRoot, "native-app", "src", "static", "logo.png");
+const appIconRoot = join(iosRoot, "Resources", "AppIcon");
 const defaultDeviceName = "iPhone 16 Pro";
 const defaultSmokeRoles = "student,teacher,admin";
 
@@ -147,6 +149,11 @@ async function main() {
     collectDiagnostics(resolveDeviceId(), output, Date.now() - getNumber("last", 180) * 1000);
     return;
   }
+  if (command === "package") {
+    buildApp();
+    packageSimulatorApp();
+    return;
+  }
   if (command === "smoke") {
     buildApp();
     const deviceId = resolveDeviceId();
@@ -164,8 +171,9 @@ async function main() {
       ? resolveOutputPath(String(flags.output))
       : join(repoRoot, "artifacts", "ios-simulator", `${getDemoRole()}-${slugRoute(getEntry())}-native.png`);
     wait(getNumber("wait", 12) * 1000);
-    screenshot(deviceId, output);
     collectDiagnostics(deviceId, output, launchStartedAt);
+    screenshot(deviceId, output);
+    collectDiagnostics(deviceId, output, launchStartedAt, { includeCrashReports: false, skipWebView: true });
     console.log(`iOS native screenshot: ${output}`);
     return;
   }
@@ -179,6 +187,7 @@ function buildApp() {
   mkdirSync(appPath, { recursive: true });
   cpSync(resourceSource, resourceTarget, { recursive: true });
   copyFileSync(join(iosRoot, "Resources", "Info.plist"), join(appPath, "Info.plist"));
+  copyAppIcons(appPath);
   writeFileSync(join(appPath, "PkgInfo"), "APPL????");
 
   const sdkPath = capture("xcrun", ["--sdk", "iphonesimulator", "--show-sdk-path"]);
@@ -201,6 +210,7 @@ function buildApp() {
     join(appPath, appName),
     ...sourceFiles
   ]);
+  removeAppleDoubleFiles(appPath);
   run("codesign", [
     "--force",
     "--sign",
@@ -212,6 +222,111 @@ function buildApp() {
   console.log(`Built iOS native app: ${appPath}`);
 }
 
+function copyAppIcons(targetAppPath) {
+  ensureFile(iconSource, `App icon source is missing: ${iconSource}`);
+  mkdirSync(appIconRoot, { recursive: true });
+  const icons = [
+    ["AppIcon20x20@2x.png", 40],
+    ["AppIcon20x20@3x.png", 60],
+    ["AppIcon29x29@2x.png", 58],
+    ["AppIcon29x29@3x.png", 87],
+    ["AppIcon40x40@2x.png", 80],
+    ["AppIcon40x40@3x.png", 120],
+    ["AppIcon60x60@2x.png", 120],
+    ["AppIcon60x60@3x.png", 180],
+    ["AppIcon76x76@1x.png", 76],
+    ["AppIcon76x76@2x.png", 152],
+    ["AppIcon83.5x83.5@2x.png", 167],
+    ["AppIcon1024x1024.png", 1024]
+  ];
+  for (const [name, size] of icons) {
+    const output = join(appIconRoot, name);
+    run("sips", ["-z", String(size), String(size), iconSource, "--out", output]);
+  }
+  normalizeAppIcons();
+  for (const [name] of icons) {
+    copyFileSync(join(appIconRoot, name), join(targetAppPath, name));
+  }
+}
+
+function normalizeAppIcons() {
+  const python = `
+from pathlib import Path
+from PIL import Image
+
+root = Path(${JSON.stringify(appIconRoot)})
+for path in root.glob("AppIcon*.png"):
+    image = Image.open(path)
+    if image.mode == "RGB" and "transparency" not in image.info:
+        continue
+    rgba = image.convert("RGBA")
+    background = Image.new("RGB", rgba.size, (255, 255, 255))
+    background.paste(rgba, mask=rgba.getchannel("A"))
+    background.save(path)
+`;
+  const result = spawnSync("python3", ["-c", python], {
+    cwd: repoRoot,
+    encoding: "utf8"
+  });
+  if (result.status !== 0) {
+    const details = (result.stderr || result.stdout || "python3 icon normalization failed").trim();
+    console.warn(`Could not normalize iOS app icon alpha channel: ${details}`);
+  }
+}
+
+function packageSimulatorApp() {
+  const outputDir = resolveOutputPath(getString("output-dir", "artifacts/ios-release"));
+  mkdirSync(outputDir, { recursive: true });
+  const version = readPlistValue(join(appPath, "Info.plist"), "CFBundleShortVersionString") || "1.0.0";
+  const build = readPlistValue(join(appPath, "Info.plist"), "CFBundleVersion") || "100";
+  const packageBase = `QimingIntellEdu-iOS-simulator-v${version}-${build}-${shortSha()}`;
+  const zipPath = join(outputDir, `${packageBase}.zip`);
+  const manifestPath = join(outputDir, `${packageBase}.release-notes.md`);
+  rmSync(zipPath, { force: true });
+  removeAppleDoubleFiles(appPath);
+  run("ditto", ["--norsrc", "-c", "-k", "--keepParent", appPath, zipPath], {
+    env: { COPYFILE_DISABLE: "1" }
+  });
+  const signing = captureSigningStatus();
+  writeFileSync(
+    manifestPath,
+    [
+      `# ${packageBase}`,
+      "",
+      "- Package type: iOS Simulator `.app` zip",
+      `- Bundle id: \`${bundleId}\``,
+      `- Version: \`${version} (${build})\``,
+      `- Commit: \`${shortSha()}\``,
+      "- Icon source: `native-app/src/static/logo.png`",
+      "- Signing status: simulator ad-hoc signed only",
+      `- Local artifact: \`${zipPath}\``,
+      "",
+      "## Real Device Signing",
+      "",
+      signing.validIdentities > 0
+        ? `This machine has ${signing.validIdentities} code-signing identity/identities, but this lightweight shell does not archive an iPhoneOS IPA yet.`
+        : "This machine has no valid iOS code-signing identity, so a real-device `.ipa` cannot be produced here yet.",
+      "",
+      "To produce a real-device build, install an Apple Development or Distribution certificate and a provisioning profile for `cn.intelledu.qiming`, then extend the iOS packaging command to target `iphoneos` and sign with that identity.",
+      ""
+    ].join("\n")
+  );
+  console.log(`iOS simulator release package: ${zipPath}`);
+  console.log(`Release notes: ${manifestPath}`);
+}
+
+function removeAppleDoubleFiles(rootPath) {
+  if (!existsSync(rootPath)) return;
+  for (const item of readdirSync(rootPath, { withFileTypes: true })) {
+    const itemPath = join(rootPath, item.name);
+    if (item.name.startsWith("._")) {
+      rmSync(itemPath, { recursive: true, force: true });
+      continue;
+    }
+    if (item.isDirectory()) removeAppleDoubleFiles(itemPath);
+  }
+}
+
 function installApp(deviceId) {
   run("xcrun", ["simctl", "uninstall", deviceId, bundleId], { allowFailure: true });
   run("xcrun", ["simctl", "install", deviceId, appPath]);
@@ -220,17 +335,17 @@ function installApp(deviceId) {
 
 function launchApp(deviceId, entry, role) {
   run("xcrun", ["simctl", "terminate", deviceId, bundleId], { allowFailure: true });
-    run("xcrun", [
-      "simctl",
-      "launch",
-      deviceId,
-      bundleId,
-      "--entry",
-      entry,
-      "--demoRole",
-      role,
-      ...testScriptLaunchArgs()
-    ]);
+  run("xcrun", [
+    "simctl",
+    "launch",
+    deviceId,
+    bundleId,
+    "--entry",
+    entry,
+    "--demoRole",
+    role,
+    ...testScriptLaunchArgs()
+  ]);
   console.log(`Launched ${bundleId}: role=${role} entry=${entry}`);
 }
 
@@ -278,16 +393,18 @@ function runSmoke(deviceId) {
   }
 }
 
-function collectDiagnostics(deviceId, screenshotPath, startedAtMs) {
+function collectDiagnostics(deviceId, screenshotPath, startedAtMs, options = {}) {
   const basePath = screenshotPath.replace(/\.[^.]+$/, "");
   const outputDir = dirname(screenshotPath);
   mkdirSync(outputDir, { recursive: true });
 
   const webviewPath = `${basePath}.webview.jsonl`;
   const simlogPath = `${basePath}.simlog.txt`;
-  copyWebViewDiagnostics(deviceId, webviewPath);
+  if (!options.skipWebView) copyWebViewDiagnostics(deviceId, webviewPath);
   writeSimulatorLog(deviceId, simlogPath, startedAtMs);
-  copyCrashReports(join(outputDir, "crashes"), startedAtMs);
+  if (options.includeCrashReports !== false) {
+    copyCrashReports(join(outputDir, "crashes"), startedAtMs);
+  }
   return { webviewPath, simlogPath };
 }
 
@@ -317,6 +434,7 @@ function writeSimulatorLog(deviceId, outputPath, startedAtMs) {
   const predicate = [
     'eventMessage CONTAINS[c] "[QimingNative]"',
     'eventMessage CONTAINS[c] "[QimingNativeScheme]"',
+    'subsystem == "cn.intelledu.qiming"',
     'subsystem == "cn.intelledu.qiming.native"'
   ].join(" OR ");
   const result = spawnSync(
@@ -364,6 +482,35 @@ function copyCrashReports(outputDir, startedAtMs) {
     console.log(`Crash reports: ${copied.join(", ")}`);
   } else {
     writeFileSync(join(outputDir, "NO_RECENT_QIMING_CRASHES.txt"), "No recent QimingIntellEdu crash reports were found for this run.\n");
+  }
+}
+
+function captureSigningStatus() {
+  const result = spawnSync("security", ["find-identity", "-v", "-p", "codesigning"], {
+    cwd: repoRoot,
+    encoding: "utf8"
+  });
+  const output = `${result.stdout || ""}\n${result.stderr || ""}`;
+  const match = output.match(/(\d+) valid identities found/);
+  return {
+    validIdentities: match ? Number(match[1]) : 0,
+    output
+  };
+}
+
+function readPlistValue(plistPath, key) {
+  const result = spawnSync("/usr/libexec/PlistBuddy", ["-c", `Print ${key}`, plistPath], {
+    cwd: repoRoot,
+    encoding: "utf8"
+  });
+  return result.status === 0 ? result.stdout.trim() : "";
+}
+
+function shortSha() {
+  try {
+    return capture("git", ["rev-parse", "--short", "HEAD"]);
+  } catch {
+    return "unknown";
   }
 }
 
@@ -566,7 +713,11 @@ function captureFile(path) {
 }
 
 function run(commandName, commandArgs, options = {}) {
-  const result = spawnSync(commandName, commandArgs, { cwd: repoRoot, stdio: "inherit" });
+  const result = spawnSync(commandName, commandArgs, {
+    cwd: repoRoot,
+    stdio: "inherit",
+    env: options.env ? { ...process.env, ...options.env } : process.env
+  });
   if (result.status !== 0 && !options.allowFailure) {
     throw new Error(`${commandName} ${commandArgs.join(" ")} failed with exit code ${result.status}`);
   }

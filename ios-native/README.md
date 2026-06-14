@@ -36,3 +36,14 @@ Screenshots:
 ```bash
 pnpm native:ios:screenshot -- --device-id <SIMULATOR_UDID> --output artifacts/ios-simulator/teacher.png
 ```
+
+Simulator release package:
+
+```bash
+pnpm native:prepare
+pnpm native:ios:package -- --output-dir artifacts/ios-release
+```
+
+The simulator package is an ad-hoc signed `.app` zip for Simulator installs.
+Real-device `.ipa` packaging still requires a valid Apple Development or
+Distribution certificate and a provisioning profile for `cn.intelledu.qiming`.

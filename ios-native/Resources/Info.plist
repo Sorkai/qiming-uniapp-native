@@ -9,7 +9,21 @@
   <key>CFBundleExecutable</key>
   <string>QimingIntellEdu</string>
   <key>CFBundleIdentifier</key>
-  <string>cn.intelledu.qiming.native</string>
+  <string>cn.intelledu.qiming</string>
+  <key>CFBundleIcons</key>
+  <dict>
+    <key>CFBundlePrimaryIcon</key>
+    <dict>
+      <key>CFBundleIconFiles</key>
+      <array>
+        <string>AppIcon60x60</string>
+        <string>AppIcon76x76</string>
+        <string>AppIcon83.5x83.5</string>
+      </array>
+      <key>UIPrerenderedIcon</key>
+      <false/>
+    </dict>
+  </dict>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
@@ -65,8 +79,8 @@
   <true/>
   <key>UIStatusBarHidden</key>
   <false/>
-	<key>UIStatusBarStyle</key>
-	<string>UIStatusBarStyleDarkContent</string>
+  <key>UIStatusBarStyle</key>
+  <string>UIStatusBarStyleDarkContent</string>
   <key>UISupportedInterfaceOrientations</key>
   <array>
     <string>UIInterfaceOrientationPortrait</string>

@@ -23,6 +23,7 @@
     "native:run:ios": "node scripts/ios-native-simulator.mjs run",
     "native:ios:build": "node scripts/ios-native-simulator.mjs build",
     "native:ios:install": "node scripts/ios-native-simulator.mjs install",
+    "native:ios:package": "node scripts/ios-native-simulator.mjs package",
     "native:ios:screenshot": "node scripts/ios-native-simulator.mjs screenshot",
     "native:ios:smoke": "node scripts/ios-native-simulator.mjs smoke",
     "native:run:ios:hbuilder": "node scripts/native-tooling.mjs run --platform ios",
