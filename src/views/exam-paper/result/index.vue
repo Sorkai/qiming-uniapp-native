@@ -470,6 +470,25 @@ onMounted(() => {
       calc(var(--pure-mobile-content-bottom-gap, 120px) + 16px);
   }
 
+  :global(html.qiming-native-webview.ua-mobile body) {
+    background: linear-gradient(120deg, #f4f7fb 0%, #eaf1ff 100%);
+  }
+
+  :global(html.qiming-native-webview.ua-mobile.dark body) {
+    background: linear-gradient(120deg, #0f172a 0%, #111827 100%);
+  }
+
+  :global(html.qiming-native-webview.ua-mobile) .exam-result-page {
+    position: fixed;
+    inset: var(--pure-safe-area-top, 0px) 0 0;
+    height: auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-top: 18px;
+    padding-top: 18px;
+  }
+
   .header-row {
     align-items: flex-start;
     gap: 14px;
