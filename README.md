@@ -1,4 +1,4 @@
-# Hi👋 hello the next generation juiced up native Android/iOS app in the edu area presented by ycxj Jilin
+# Hi👋 hello the next generation juiced up native Android / iOS app in the edu area presented by ycxj Jilin
 
 ## ccut 108 全新 启明智教 (Qimingedu) - Android / iOS 原生客户端
 
@@ -17,10 +17,10 @@ from, deploy, re-sign, or store-distribute this project or any substantial part 
 
 The public visibility of this repository does not grant an open-source license.
 
-Android signing certificates, generated beta APKs, and installation packages are provided
-only for authorized testing. They must not be reused, re-signed, redistributed, or deployed
-to any store, device fleet, school, organization, or commercial environment without the
-project owner's prior written consent.
+Android/iOS signing certificates, generated beta APKs, simulator packages, IPA packages,
+and installation packages are provided only for authorized testing. They must not be
+reused, re-signed, redistributed, or deployed to any store, device fleet, school,
+organization, or commercial environment without the project owner's prior written consent.
 
 本仓库公开仅用于协作、评审与构建验证。项目名称、源代码、UI 设计、教学资料、数字人资产、
 构建脚本、签名证书、安装包及相关资源，除非另行取得项目所有者书面授权，否则均保留全部权利。
@@ -58,7 +58,7 @@ project owner's prior written consent.
 - **伴学答疑 (EduClaw 智能体):** 深度集成定制化智能体，提供全天候的自适应教学引导与精准解答。
 - **高精度知识检索引擎:** 借助 SAHR 混合检索算法，打破传统检索的语义壁垒，极速定位教学资源与文献。
 - **课堂状态监控与分析:** 接入 AI 视觉与多维数据分析，实时反馈课堂教学状态，助力教育数字化转型（核心算法及应用已布局多项软著与专利）。
-- **原生级流畅体验:** 充分利用 App-Plus 扩展能力，调用 Android 底层 API，实现高效的设备硬件交互与网络并发处理。
+- **原生级流畅体验:** 充分利用 App-Plus、UIKit/WKWebView 与平台隔离样式，分别适配 Android 与 iOS 的设备交互、网络并发、状态栏安全区和离线包加载。
 
 ## 其他功能
 
@@ -86,6 +86,8 @@ project owner's prior written consent.
   Android 打包配置、Android 设备调试和 Android 专属原生能力。
 - **iOS 原生线:** `ios-native/` 承载 Xcode/UIKit/WKWebView iOS Simulator
   验证壳；iOS 打包与 HBuilderX iOS 能力在 `native-app/` 的 iOS 配置中衔接。
+  若当前分支尚未包含 `ios-native/`，请切到或合并 iOS 工具分支
+  `codex/ios-native-tooling`。
 - **端专属边界:** 平台问题优先落在对应原生线、平台 class、平台脚本或平台
   测试中。Android 专属改动不应要求 iOS 迁就，iOS 专属改动也不应隐式改变
   Android 行为。
@@ -101,7 +103,7 @@ project owner's prior written consent.
 ## 技术栈与依赖
 
 - **前端框架:** UniApp (Vue 3 语法 / 组合式 API)
-- **构建与编译:** Vite / HBuilderX
+- **构建与编译:** Vite / HBuilderX / Xcode command line tools
 - **网络通信:** 封装 `uni.request`，支持 RESTful API 与长链接 WebSocket 交互
 - **核心关联后端:** 业务逻辑层 Go-Zero；模型服务层 Python FastAPI
 - **前端技术:** Element Plus, Tailwind CSS, Sass, Three.js, ECharts, LogicFlow/Vue-Flow, WangEditor/Vditor 等
@@ -113,6 +115,7 @@ project owner's prior written consent.
 - 安装 [Node.js](https://nodejs.org/)（推荐使用仓库 `.nvmrc` 中的版本）
 - 安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 开发者工具
 - 准备 Android Studio 模拟器或真实 Android 物理测试设备（需开启“开发者模式”和“USB 调试”）
+- iOS 开发需在 macOS 上安装 Xcode；Simulator 包可使用 Xcode 命令行工具验证，真机/TestFlight 还需要 Apple Distribution 证书和 `cn.intelledu.qiming` provisioning profile
 
 ### 2. 克隆项目代码
 
@@ -120,3 +123,50 @@ project owner's prior written consent.
 git clone git@github.com:Farrran69311/qiming-uniapp-native.git
 cd qiming-uniapp-native
 ```
+
+### 3. 安装依赖与同步离线包
+
+```bash
+pnpm install
+pnpm native:prepare
+```
+
+### 4. Android 调试与打包
+
+```bash
+pnpm native:devices
+pnpm native:run:android
+pnpm native:build:android
+```
+
+Android 容器、HBuilderX/App-Plus 配置和 Android 专属原生能力集中在 `native-app/`。
+
+### 5. iOS Simulator 调试、验收与发版包
+
+```bash
+pnpm native:run:ios -- --device-id <SIMULATOR_UDID> --demo-role teacher --entry /welcome/index
+pnpm native:ios:smoke -- --device-id <SIMULATOR_UDID> --roles student,teacher,admin
+pnpm native:ios:package -- --output-dir artifacts/ios-release
+```
+
+iOS Simulator 原生壳集中在 `ios-native/`，用于在 Apple Silicon iOS Simulator 上加载同一套 UniApp/H5 离线业务包并验证学生端、教师端、管理端页面。Simulator zip 只能安装到 iOS Simulator，不能上传 TestFlight。
+
+### 6. iOS 真机 / TestFlight 打包
+
+```bash
+pnpm native:ios:ipa profiles
+pnpm native:ios:ipa -- --output-dir artifacts/ios-release
+```
+
+真机 IPA 需要本机 Keychain 中存在 Apple Distribution 签名身份，并安装匹配 `cn.intelledu.qiming` 的 App Store 或 Ad Hoc provisioning profile。也可以显式指定 profile：
+
+```bash
+pnpm native:ios:ipa -- --profile /path/to/AppStore_cn.intelledu.qiming.mobileprovision --output-dir artifacts/ios-release
+```
+
+## 当前 iOS 验收状态
+
+- iOS Simulator 版已完成学生端、教师端、管理端三端 smoke 验收：`36 OK / 0 FAIL`。
+- 最新已验证 Simulator 包 tag: `v1.0.1-ios-simulator.101+tooling.1`。
+- 最新已验证 Simulator 包: `QimingIntellEdu-iOS-simulator-v1.0.1-101-56444d6.zip`。
+- 真机/TestFlight 仍依赖 Apple Distribution 证书与 `cn.intelledu.qiming` provisioning profile。
