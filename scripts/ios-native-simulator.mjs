@@ -107,7 +107,7 @@ const routeSuites = {
       label: "学生考试详情",
       entry: "/account/exam-detail?examId=1&courseId=1",
       demoRole: "student",
-      expect: ["嵌入式 Linux 阶段测验", "开始考试"],
+      expect: ["嵌入式 Linux 阶段测验", "提交考试"],
       testScriptFile: "scripts/ios-test-scripts/student-exam-detail-basic.js"
     },
     {
