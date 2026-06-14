@@ -86,6 +86,12 @@ function normalizeNativeInitialHash() {
   window.location.hash = `#${targetPath}${targetQuery ? `?${targetQuery}` : ""}`;
 }
 
+function normalizeNativeStatusbarTop(value: string) {
+  const statusTop = Number(value);
+  if (!Number.isFinite(statusTop) || statusTop <= 0) return 0;
+  return Math.min(Math.max(statusTop, 22), 28);
+}
+
 function applyNativeWebViewRuntime() {
   if (typeof window === "undefined") return;
   normalizeNativeInitialHash();
@@ -211,12 +217,13 @@ function applyNativeWebViewRuntime() {
     true
   );
 
-  const statusTop = Number(nativeStatusTop);
-  if (Number.isFinite(statusTop) && statusTop > 0) {
+  const statusTop = normalizeNativeStatusbarTop(nativeStatusTop);
+  if (statusTop > 0) {
     const statusTopPx = `${statusTop}px`;
     root.style.setProperty("--pure-safe-area-top", statusTopPx);
     root.style.setProperty("--qiming-native-safe-top", statusTopPx);
     root.style.setProperty("--qiming-native-status-top", statusTopPx);
+    root.style.setProperty("--qiming-native-statusbar-offset", statusTopPx);
   }
 
   const syncStatusBar = () => {

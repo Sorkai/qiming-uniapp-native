@@ -67,12 +67,23 @@ html.ua-mobile body {
 
 html.qiming-native-webview {
   --pure-safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --pure-safe-area-top: env(safe-area-inset-top, 0px);
+  --qiming-native-env-safe-top: env(safe-area-inset-top, 0px);
+  --pure-safe-area-top: var(--qiming-native-env-safe-top);
+  --qiming-native-statusbar-offset: var(--pure-safe-area-top, 0px);
   --qiming-native-vh: 100dvh;
   --qiming-native-vw: 100vw;
   --pure-mobile-tab-height: calc(58px + var(--pure-safe-area-bottom));
   --pure-mobile-content-bottom-gap: calc(var(--pure-mobile-tab-height) + 96px);
   --pure-main-content-margin: 10px 10px 0;
+}
+
+html.qiming-native-webview.ua-mobile {
+  --qiming-native-statusbar-offset: clamp(
+    22px,
+    var(--qiming-native-env-safe-top, 0px),
+    28px
+  );
+  --pure-safe-area-top: var(--qiming-native-statusbar-offset);
 }
 
 html.qiming-native-webview,
@@ -536,7 +547,7 @@ html.qiming-native-webview.ua-mobile
   > .el-scrollbar
   > .el-scrollbar__wrap {
   padding-bottom: var(--pure-mobile-content-bottom-gap);
-  scroll-padding-top: calc(86px + var(--pure-safe-area-top, 0));
+  scroll-padding-top: calc(86px + var(--qiming-native-statusbar-offset, 0px));
   box-sizing: border-box;
   scrollbar-width: none;
 }
@@ -588,7 +599,7 @@ html.qiming-native-webview.ua-mobile.dark .navbar {
 html.qiming-native-webview.ua-mobile [id],
 html.qiming-native-webview.ua-mobile .chart-card,
 html.qiming-native-webview.ua-mobile .analysis-panel {
-  scroll-margin-top: calc(86px + var(--pure-safe-area-top, 0));
+  scroll-margin-top: calc(86px + var(--qiming-native-statusbar-offset, 0px));
 }
 
 html.qiming-native-webview.ua-mobile .main-content > :first-child {
@@ -636,18 +647,10 @@ html.qiming-native-webview.ua-mobile .el-table__fixed-right::before {
   box-shadow: none !important;
 }
 
-html.qiming-native-webview.ua-mobile
-  .el-table
-  .el-table-fixed-column--left,
-html.qiming-native-webview.ua-mobile
-  .el-table
-  .el-table-fixed-column--right,
-html.qiming-native-webview.ua-mobile
-  .el-table
-  .el-table__cell.is-left,
-html.qiming-native-webview.ua-mobile
-  .el-table
-  .el-table__cell.is-right {
+html.qiming-native-webview.ua-mobile .el-table .el-table-fixed-column--left,
+html.qiming-native-webview.ua-mobile .el-table .el-table-fixed-column--right,
+html.qiming-native-webview.ua-mobile .el-table .el-table__cell.is-left,
+html.qiming-native-webview.ua-mobile .el-table .el-table__cell.is-right {
   position: static !important;
   left: auto !important;
   right: auto !important;

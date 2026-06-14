@@ -69,11 +69,18 @@ function getNativeSafeAreaTop() {
   if (!document.documentElement.classList.contains("qiming-native-webview")) {
     return 0;
   }
-  const rawValue = getComputedStyle(document.documentElement)
-    .getPropertyValue("--pure-safe-area-top")
-    .trim();
-  const safeTop = Number.parseFloat(rawValue);
-  return Number.isFinite(safeTop) ? safeTop : 0;
+  const rootStyle = getComputedStyle(document.documentElement);
+  const rawValues = [
+    rootStyle.getPropertyValue("--qiming-native-statusbar-offset").trim(),
+    rootStyle.getPropertyValue("--pure-safe-area-top").trim()
+  ];
+  for (const rawValue of rawValues) {
+    const safeTop = Number.parseFloat(rawValue);
+    if (Number.isFinite(safeTop) && safeTop > 0) {
+      return Math.min(Math.max(safeTop, 22), 28);
+    }
+  }
+  return document.documentElement.classList.contains("ua-mobile") ? 24 : 0;
 }
 
 function resetMobileScrollPosition() {

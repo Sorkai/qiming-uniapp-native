@@ -293,8 +293,14 @@ const {
 @media screen and (max-width: 768px) {
   .navbar {
     align-items: flex-end;
-    height: calc(56px + var(--pure-safe-area-top, 0));
-    padding-top: var(--pure-safe-area-top, 0);
+    height: calc(
+      56px +
+        var(--qiming-native-statusbar-offset, var(--pure-safe-area-top, 0px))
+    );
+    padding-top: var(
+      --qiming-native-statusbar-offset,
+      var(--pure-safe-area-top, 0px)
+    );
     background: transparent !important;
     border-bottom: 0 !important;
     backdrop-filter: none !important;

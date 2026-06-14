@@ -294,7 +294,12 @@ const webviewSrc = computed(() => {
         String(webviewVersion.value)
       );
     }
-    return `${localAppEntryBase}?v=${webviewVersion.value}#${appEntryRoute.value}`;
+    let localHash = `#${appEntryRoute.value}`;
+    if (appDemoRole.value) {
+      localHash = appendQuery(localHash, "demoRole", appDemoRole.value);
+    }
+    localHash = appendNativeQuery(localHash);
+    return `${localAppEntryBase}?v=${webviewVersion.value}${localHash}`;
   }
 
   const separator = h5DevEntryPath.value.includes("?") ? "&" : "?";
