@@ -47,6 +47,16 @@ const selectedIds = ref<string[]>([]);
 const detailDialogVisible = ref(false);
 const currentDetail = ref<ReviewQueueItem | null>(null);
 const selectedCount = computed(() => selectedIds.value.length);
+const filteredReviewItems = computed(() => {
+  if (!searchForm.priority) return reviewItems.value;
+
+  return reviewItems.value.filter(
+    item => item.priority === searchForm.priority
+  );
+});
+const displayedTotal = computed(() =>
+  searchForm.priority ? filteredReviewItems.value.length : pagination.total
+);
 
 // 统计数据
 const stats = ref({
@@ -100,15 +110,15 @@ const queueSummaryText = computed(() => {
     return "正在同步待审内容...";
   }
 
-  if (pagination.total === 0) {
+  if (displayedTotal.value === 0) {
     return "暂无待审核内容";
   }
 
   if (selectedCount.value > 0) {
-    return `共 ${pagination.total} 条待审内容，已选择 ${selectedCount.value} 条`;
+    return `共 ${displayedTotal.value} 条待审内容，已选择 ${selectedCount.value} 条`;
   }
 
-  return `共 ${pagination.total} 条待审内容，可继续筛选或批量处理`;
+  return `共 ${displayedTotal.value} 条待审内容，可继续筛选或批量处理`;
 });
 
 // 优先级标签样式
@@ -163,6 +173,7 @@ const fetchData = async () => {
     // 使用待审核列表接口获取待审核内容
     const res = await getPendingList({
       courseId: searchForm.courseId || undefined,
+      priority: searchForm.priority || undefined,
       type: "all", // 获取所有类型（帖子和回复）
       pageNum: pagination.page,
       pageSize: pagination.pageSize
@@ -190,6 +201,12 @@ const fetchData = async () => {
 
     pagination.total = total;
     stats.value.pending = total;
+    stats.value.highPriority = reviewItems.value.filter(
+      item =>
+        item.priority === "high" ||
+        item.riskLevel === "high" ||
+        item.riskLevel === "critical"
+    ).length;
   } catch (error) {
     console.error("加载审核队列失败", error);
   } finally {
@@ -716,7 +733,7 @@ onActivated(() => {
     <el-card v-loading="loading" shadow="never" class="data-card review-panel">
       <div v-if="isMobile" class="mobile-review-list">
         <div
-          v-for="row in reviewItems"
+          v-for="row in filteredReviewItems"
           :key="row.id"
           class="mobile-review-card"
         >
@@ -818,11 +835,15 @@ onActivated(() => {
           v-if="!loading && reviewItems.length === 0"
           description="暂无待审核内容"
         />
+        <el-empty
+          v-else-if="!loading && filteredReviewItems.length === 0"
+          description="暂无对应优先级内容"
+        />
       </div>
 
       <el-table
         v-else
-        :data="reviewItems"
+        :data="filteredReviewItems"
         row-class-name="review-table-row"
         @selection-change="handleSelectionChange"
       >
@@ -981,7 +1002,7 @@ onActivated(() => {
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
-          :total="pagination.total"
+          :total="displayedTotal"
           :page-sizes="[10, 20, 50]"
           :layout="paginationLayout"
           :size="isMobile ? 'small' : 'default'"

@@ -180,6 +180,9 @@ export interface PendingItem {
   authorName: string;
   authorAvatar?: string; // 用户头像
   createTime: string;
+  riskLevel?: "low" | "medium" | "high" | "critical" | string;
+  matchedWords?: string[] | string;
+  priority?: "high" | "medium" | "low" | string | number;
 }
 
 /** 待审核列表响应 */
@@ -209,6 +212,31 @@ export function mapPendingItemToReviewQueueItem(
   item: PendingItem,
   avatar?: string
 ): ReviewQueueItem {
+  const rawRiskLevel = String(item.riskLevel || "").toLowerCase();
+  const riskLevel = (
+    ["low", "medium", "high", "critical"].includes(rawRiskLevel)
+      ? rawRiskLevel
+      : "low"
+  ) as ReviewQueueItem["riskLevel"];
+  const rawPriority = String(item.priority || "").toLowerCase();
+  const priorityMap: Record<string, ReviewQueueItem["priority"]> = {
+    high: "high",
+    "3": "high",
+    medium: "medium",
+    normal: "medium",
+    "2": "medium",
+    low: "low",
+    "1": "low"
+  };
+  const matchedWords = Array.isArray(item.matchedWords)
+    ? item.matchedWords.map(String)
+    : typeof item.matchedWords === "string" && item.matchedWords.trim()
+      ? item.matchedWords
+          .split(/[,，\s]+/)
+          .map(word => word.trim())
+          .filter(Boolean)
+      : [];
+
   return {
     id: String(item.id),
     title: item.postTitle || (item.type === "reply" ? "[回复]" : ""),
@@ -234,9 +262,9 @@ export function mapPendingItemToReviewQueueItem(
     isLiked: false,
     createdAt: item.createTime,
     courseName: item.courseName,
-    riskLevel: "low",
-    matchedWords: [],
-    priority: "medium",
+    riskLevel,
+    matchedWords,
+    priority: priorityMap[rawPriority] || "medium",
     itemType: item.type,
     postId: item.postId
   };
@@ -790,6 +818,7 @@ export function getGlobalStatistics(params?: {
  */
 export async function getPendingList(params?: {
   courseId?: string;
+  priority?: "high" | "medium" | "low";
   type?: "all" | "post" | "reply";
   pageNum: number;
   pageSize?: number;
