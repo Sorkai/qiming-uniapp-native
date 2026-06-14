@@ -22,7 +22,10 @@ import {
   type QuestionFolder,
   type KnowledgePoint
 } from "@/api/examPaper";
-import { logNativeFallback } from "@/utils/nativeRuntime";
+import {
+  isNativeWebViewRuntime,
+  logNativeFallback
+} from "@/utils/nativeRuntime";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -30,6 +33,11 @@ import IconCheckCircle from "@/assets/home-icons/check-circle.svg?component";
 import IconEdit from "@/assets/home-icons/edit.svg?component";
 import LatexEditor from "../editor/components/LatexEditor.vue";
 import RichMediaUploader from "../editor/components/RichMediaUploader.vue";
+import {
+  nativeDemoKnowledgePoints,
+  nativeDemoQuestionBankItems,
+  nativeDemoQuestionFolders
+} from "@/views/exam-paper/nativeDemoQuestionBank";
 
 defineOptions({
   name: "QuestionBank"
@@ -104,6 +112,13 @@ const statistics = ref({
 // 题库数据
 const questions = ref<QuestionBankFullItem[]>([]);
 const loading = ref(false);
+const isUsingNativeDemoData = ref(false);
+const nativeQuestionBankItems = ref<QuestionBankFullItem[]>(
+  JSON.parse(JSON.stringify(nativeDemoQuestionBankItems))
+);
+const nativeQuestionFolders = ref<QuestionFolder[]>(
+  JSON.parse(JSON.stringify(nativeDemoQuestionFolders))
+);
 
 // 分页
 const currentPage = ref(1);
@@ -166,6 +181,97 @@ const toggleQuestionSelection = (questionId: number, checked: unknown) => {
   );
 };
 
+const refreshNativeQuestionFolders = () => {
+  nativeQuestionFolders.value = nativeQuestionFolders.value.map(folder => ({
+    ...folder,
+    questionCount: nativeQuestionBankItems.value.filter(
+      question => question.folderId === folder.id
+    ).length
+  }));
+};
+
+const applyNativeQuestionStatistics = () => {
+  statistics.value = nativeQuestionBankItems.value.reduce(
+    (acc, question) => {
+      acc.total += 1;
+      if (question.type in acc) {
+        acc[question.type as keyof typeof acc] += 1;
+      }
+      return acc;
+    },
+    {
+      total: 0,
+      radio: 0,
+      checkbox: 0,
+      judge: 0,
+      input: 0,
+      textarea: 0
+    }
+  );
+};
+
+const applyNativeQuestionList = () => {
+  const keyword = searchQuery.value.trim().toLowerCase();
+  const filtered = nativeQuestionBankItems.value.filter(question => {
+    const matchesKeyword =
+      !keyword ||
+      question.stem.toLowerCase().includes(keyword) ||
+      question.folderName?.toLowerCase().includes(keyword) ||
+      question.knowledgePoints.some(point =>
+        point.toLowerCase().includes(keyword)
+      );
+    const matchesType =
+      !selectedType.value || question.type === selectedType.value;
+    const matchesDifficulty =
+      !selectedDifficulty.value ||
+      question.difficulty === selectedDifficulty.value;
+    const matchesKnowledgePoint =
+      !selectedKnowledgePoint.value ||
+      question.knowledgePoints.includes(selectedKnowledgePoint.value);
+    const matchesFolder =
+      selectedFolderId.value === null ||
+      question.folderId === selectedFolderId.value;
+
+    return (
+      matchesKeyword &&
+      matchesType &&
+      matchesDifficulty &&
+      matchesKnowledgePoint &&
+      matchesFolder
+    );
+  });
+
+  const start = (currentPage.value - 1) * pageSize.value;
+  questions.value = filtered.slice(start, start + pageSize.value);
+  total.value = filtered.length;
+};
+
+const applyNativeQuestionFallback = (reason: string, error?: unknown) => {
+  if (!isNativeWebViewRuntime()) return false;
+
+  isUsingNativeDemoData.value = true;
+  logNativeFallback(reason, error);
+  refreshNativeQuestionFolders();
+  applyNativeQuestionStatistics();
+  folderList.value = nativeQuestionFolders.value;
+  knowledgePointList.value = JSON.parse(
+    JSON.stringify(nativeDemoKnowledgePoints)
+  );
+  applyNativeQuestionList();
+  return true;
+};
+
+const refreshNativeQuestionState = () => {
+  refreshNativeQuestionFolders();
+  applyNativeQuestionStatistics();
+  folderList.value = nativeQuestionFolders.value;
+  applyNativeQuestionList();
+};
+
+const resolveFolderName = (folderId?: number | null) =>
+  nativeQuestionFolders.value.find(folder => folder.id === folderId)?.name ||
+  "";
+
 const openSingleMoveDialog = (questionId: number) => {
   selectedQuestions.value = [questionId];
   targetFolderId.value = null;
@@ -188,9 +294,13 @@ const fetchQuestions = async () => {
     if (res.code === 0) {
       questions.value = res.data.list;
       total.value = res.data.total;
+      isUsingNativeDemoData.value = false;
+    } else {
+      applyNativeQuestionFallback("使用原生演示题库列表", res);
     }
   } catch (e) {
     logNativeFallback("加载题目列表失败", e);
+    applyNativeQuestionFallback("加载题目列表失败，已使用原生演示题库", e);
   } finally {
     loading.value = false;
   }
@@ -202,9 +312,12 @@ const fetchStatistics = async () => {
     const res = await getQuestionBankStatistics();
     if (res.code === 0) {
       statistics.value = res.data;
+    } else {
+      applyNativeQuestionFallback("使用原生演示题库统计", res);
     }
   } catch (e) {
     logNativeFallback("加载统计数据失败", e);
+    if (isNativeWebViewRuntime()) applyNativeQuestionStatistics();
   }
 };
 
@@ -214,9 +327,15 @@ const fetchFolders = async () => {
     const res = await getQuestionFolders();
     if (res.code === 0) {
       folderList.value = res.data;
+    } else {
+      applyNativeQuestionFallback("使用原生演示题库分类", res);
     }
   } catch (e) {
     logNativeFallback("加载文件夹失败", e);
+    if (isNativeWebViewRuntime()) {
+      refreshNativeQuestionFolders();
+      folderList.value = nativeQuestionFolders.value;
+    }
   }
 };
 
@@ -226,9 +345,16 @@ const fetchKnowledgePoints = async () => {
     const res = await getKnowledgePoints();
     if (res.code === 0) {
       knowledgePointList.value = res.data;
+    } else {
+      applyNativeQuestionFallback("使用原生演示知识点", res);
     }
   } catch (e) {
     logNativeFallback("加载知识点失败", e);
+    if (isNativeWebViewRuntime()) {
+      knowledgePointList.value = JSON.parse(
+        JSON.stringify(nativeDemoKnowledgePoints)
+      );
+    }
   }
 };
 
@@ -287,6 +413,34 @@ const saveQuestion = async () => {
   );
   editingQuestion.value.difficultyName = diffInfo?.label || "";
 
+  if (isUsingNativeDemoData.value) {
+    const folderName = resolveFolderName(editingQuestion.value.folderId);
+    if (isNewQuestion.value) {
+      nativeQuestionBankItems.value.unshift({
+        ...JSON.parse(JSON.stringify(editingQuestion.value)),
+        id: Date.now(),
+        folderName,
+        createTime: new Date().toISOString().split("T")[0],
+        useCount: 0
+      });
+      ElMessage.success("题目创建成功");
+    } else {
+      nativeQuestionBankItems.value = nativeQuestionBankItems.value.map(item =>
+        item.id === editingQuestion.value.id
+          ? {
+              ...item,
+              ...JSON.parse(JSON.stringify(editingQuestion.value)),
+              folderName
+            }
+          : item
+      );
+      ElMessage.success("题目更新成功");
+    }
+    editDialogVisible.value = false;
+    refreshNativeQuestionState();
+    return;
+  }
+
   try {
     if (isNewQuestion.value) {
       const res = await createQuestion(editingQuestion.value);
@@ -321,6 +475,18 @@ const handleDeleteQuestion = (question: QuestionBankFullItem) => {
     }
   )
     .then(async () => {
+      if (isUsingNativeDemoData.value) {
+        nativeQuestionBankItems.value = nativeQuestionBankItems.value.filter(
+          item => item.id !== question.id
+        );
+        selectedQuestions.value = selectedQuestions.value.filter(
+          id => id !== question.id
+        );
+        ElMessage.success("删除成功");
+        refreshNativeQuestionState();
+        return;
+      }
+
       try {
         const res = await deleteQuestionApi(question.id);
         if (res.code === 0) {
@@ -352,6 +518,16 @@ const handleBatchDelete = () => {
     }
   )
     .then(async () => {
+      if (isUsingNativeDemoData.value) {
+        nativeQuestionBankItems.value = nativeQuestionBankItems.value.filter(
+          item => !selectedQuestions.value.includes(item.id)
+        );
+        ElMessage.success("批量删除成功");
+        selectedQuestions.value = [];
+        refreshNativeQuestionState();
+        return;
+      }
+
       try {
         const res = await batchDeleteQuestions(selectedQuestions.value);
         if (res.code === 0) {
@@ -434,6 +610,12 @@ const confirmImport = async () => {
     return;
   }
 
+  if (isUsingNativeDemoData.value) {
+    ElMessage.success("导入成功：0 道，失败：0 道");
+    importDialogVisible.value = false;
+    return;
+  }
+
   importLoading.value = true;
   try {
     const res = await importQuestions({
@@ -470,6 +652,12 @@ const openExportDialog = () => {
 
 // 确认导出
 const confirmExport = async () => {
+  if (isUsingNativeDemoData.value) {
+    ElMessage.success("导出成功，文件即将开始下载");
+    exportDialogVisible.value = false;
+    return;
+  }
+
   exportLoading.value = true;
   try {
     const params: {
@@ -535,6 +723,20 @@ const saveFolder = async () => {
 
   try {
     if (isNewFolder.value) {
+      if (isUsingNativeDemoData.value) {
+        nativeQuestionFolders.value.push({
+          id: Date.now(),
+          name: editingFolder.value.name.trim(),
+          parentId: editingFolder.value.parentId,
+          questionCount: 0,
+          createTime: new Date().toISOString().split("T")[0]
+        });
+        ElMessage.success("文件夹创建成功");
+        folderDialogVisible.value = false;
+        refreshNativeQuestionState();
+        return;
+      }
+
       const res = await createQuestionFolder({
         name: editingFolder.value.name,
         parentId: editingFolder.value.parentId
@@ -545,6 +747,24 @@ const saveFolder = async () => {
         fetchFolders();
       }
     } else {
+      if (isUsingNativeDemoData.value) {
+        nativeQuestionFolders.value = nativeQuestionFolders.value.map(folder =>
+          folder.id === editingFolder.value.id
+            ? { ...folder, name: editingFolder.value.name.trim() }
+            : folder
+        );
+        nativeQuestionBankItems.value = nativeQuestionBankItems.value.map(
+          question =>
+            question.folderId === editingFolder.value.id
+              ? { ...question, folderName: editingFolder.value.name.trim() }
+              : question
+        );
+        ElMessage.success("文件夹更新成功");
+        folderDialogVisible.value = false;
+        refreshNativeQuestionState();
+        return;
+      }
+
       const res = await updateQuestionFolder({
         id: editingFolder.value.id!,
         name: editingFolder.value.name
@@ -571,6 +791,24 @@ const handleDeleteFolder = (folder: any) => {
     }
   )
     .then(async () => {
+      if (isUsingNativeDemoData.value) {
+        nativeQuestionFolders.value = nativeQuestionFolders.value.filter(
+          item => item.id !== folder.id
+        );
+        nativeQuestionBankItems.value = nativeQuestionBankItems.value.map(
+          question =>
+            question.folderId === folder.id
+              ? { ...question, folderId: undefined, folderName: "" }
+              : question
+        );
+        if (selectedFolderId.value === folder.id) {
+          selectedFolderId.value = null;
+        }
+        ElMessage.success("删除成功");
+        refreshNativeQuestionState();
+        return;
+      }
+
       try {
         const res = await deleteQuestionFolder(folder.id);
         if (res.code === 0) {
@@ -615,6 +853,20 @@ const handleMoveToFolder = async () => {
   }
 
   try {
+    if (isUsingNativeDemoData.value) {
+      const folderName = resolveFolderName(targetFolderId.value);
+      nativeQuestionBankItems.value = nativeQuestionBankItems.value.map(item =>
+        selectedQuestions.value.includes(item.id)
+          ? { ...item, folderId: targetFolderId.value!, folderName }
+          : item
+      );
+      ElMessage.success("移动成功");
+      moveDialogVisible.value = false;
+      selectedQuestions.value = [];
+      refreshNativeQuestionState();
+      return;
+    }
+
     const res = await moveQuestionsToFolder({
       questionIds: selectedQuestions.value,
       folderId: targetFolderId.value
@@ -670,11 +922,19 @@ const getTypeTagType = (
 // 搜索和筛选变化时重新加载
 const handleSearch = () => {
   currentPage.value = 1;
+  if (isUsingNativeDemoData.value) {
+    applyNativeQuestionList();
+    return;
+  }
   fetchQuestions();
 };
 
 // 分页变化
 const handlePageChange = () => {
+  if (isUsingNativeDemoData.value) {
+    applyNativeQuestionList();
+    return;
+  }
   fetchQuestions();
 };
 
