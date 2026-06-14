@@ -9,7 +9,16 @@ import {
   getLearningAnalytics,
   getSystemTemplateStats
 } from "@/api/examPaper";
-import { logNativeFallback } from "@/utils/nativeRuntime";
+import {
+  isNativeWebViewRuntime,
+  logNativeFallback
+} from "@/utils/nativeRuntime";
+import {
+  createNativeDemoLearningAnalytics,
+  nativeDemoOverviewStatistics,
+  nativeDemoRecentPapers,
+  nativeDemoSystemTemplateStats
+} from "@/views/exam-paper/nativeDemoOverview";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -108,25 +117,49 @@ const courseOptions = [
   { value: "prob", label: "概率论" }
 ];
 
+const applyLearningPayload = (data: any) => {
+  if (!data?.overview) return;
+
+  const o = data.overview;
+  learningStats.value = {
+    passRate: o.passRate,
+    excellentRate: Math.round(
+      data.scoreDistribution?.find(d => d.range === "90-100")?.percentage || 0
+    ),
+    averageScore: o.avgScore,
+    participantCount: o.totalStudents
+  };
+};
+
+const applyNativeDemoTemplateStats = () => {
+  nativeDemoSystemTemplateStats.forEach(stat => {
+    const t = templates.value.find(
+      item => item.templateKey === stat.templateKey
+    );
+    if (t) {
+      t.questionCount = stat.questionCount;
+      t.totalPoints = stat.totalPoints;
+      t.useCount = stat.useCount;
+    }
+  });
+};
+
 // 加载学情概览数据
 const loadLearningStats = async (courseId?: number) => {
   try {
     const params = courseId ? { courseId } : undefined;
     const res = await getLearningAnalytics(params);
     if (res.code === 0 && res.data?.overview) {
-      const o = res.data.overview;
-      learningStats.value = {
-        passRate: o.passRate,
-        excellentRate: Math.round(
-          res.data.scoreDistribution?.find(d => d.range === "90-100")
-            ?.percentage || 0
-        ),
-        averageScore: o.avgScore,
-        participantCount: o.totalStudents
-      };
+      applyLearningPayload(res.data);
+    } else if (isNativeWebViewRuntime()) {
+      logNativeFallback("使用原生演示学情概览", res);
+      applyLearningPayload(createNativeDemoLearningAnalytics(courseId));
     }
   } catch (e) {
     logNativeFallback("获取学情概览失败", e);
+    if (isNativeWebViewRuntime()) {
+      applyLearningPayload(createNativeDemoLearningAnalytics(courseId));
+    }
   }
 };
 
@@ -186,9 +219,15 @@ const loadStatistics = async () => {
     const res = await getOverviewStatistics();
     if (res.code === 0 && res.data) {
       statistics.value = res.data;
+    } else if (isNativeWebViewRuntime()) {
+      logNativeFallback("使用原生演示总览统计", res);
+      statistics.value = { ...nativeDemoOverviewStatistics };
     }
   } catch (e) {
     logNativeFallback("获取总览统计失败", e);
+    if (isNativeWebViewRuntime()) {
+      statistics.value = { ...nativeDemoOverviewStatistics };
+    }
   }
 };
 
@@ -198,9 +237,15 @@ const loadRecentPapers = async () => {
     const res = await getRecentPapers(5);
     if (res.code === 0 && res.data) {
       recentPapers.value = res.data;
+    } else if (isNativeWebViewRuntime()) {
+      logNativeFallback("使用原生演示最近试卷", res);
+      recentPapers.value = JSON.parse(JSON.stringify(nativeDemoRecentPapers));
     }
   } catch (e) {
     logNativeFallback("获取最近试卷失败", e);
+    if (isNativeWebViewRuntime()) {
+      recentPapers.value = JSON.parse(JSON.stringify(nativeDemoRecentPapers));
+    }
   }
 };
 
@@ -217,9 +262,13 @@ const loadTemplateStats = async () => {
           t.useCount = stat.useCount;
         }
       });
+    } else if (isNativeWebViewRuntime()) {
+      logNativeFallback("使用原生演示模板统计", res);
+      applyNativeDemoTemplateStats();
     }
   } catch (e) {
     logNativeFallback("获取模板统计失败", e);
+    if (isNativeWebViewRuntime()) applyNativeDemoTemplateStats();
   }
 };
 
