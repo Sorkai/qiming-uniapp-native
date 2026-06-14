@@ -29,6 +29,13 @@ final class QimingWebViewController: UIViewController, WKNavigationDelegate, WKS
         configuration.userContentController.add(self, name: "qimingNative")
         configuration.userContentController.addUserScript(
             WKUserScript(
+                source: Self.nativeEnvironmentBootstrapScript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: true
+            )
+        )
+        configuration.userContentController.addUserScript(
+            WKUserScript(
                 source: Self.diagnosticsScript,
                 injectionTime: .atDocumentStart,
                 forMainFrameOnly: false
@@ -169,6 +176,8 @@ final class QimingWebViewController: UIViewController, WKNavigationDelegate, WKS
         (function () {
           document.documentElement.classList.add('qiming-native-webview', 'qiming-native-ios');
           document.documentElement.setAttribute('data-qiming-native', 'true');
+          document.documentElement.style.setProperty('--qiming-native-ios-safe-top-fallback', '\(fallbackSafeAreaInsets().top)px');
+          document.documentElement.style.setProperty('--qiming-native-ios-safe-bottom-fallback', '\(fallbackSafeAreaInsets().bottom)px');
           document.documentElement.style.setProperty('--qiming-native-safe-top', '\(top)px');
           document.documentElement.style.setProperty('--qiming-native-status-top', '\(top)px');
           document.documentElement.style.setProperty('--qiming-native-safe-bottom', '\(bottom)px');
@@ -185,9 +194,23 @@ final class QimingWebViewController: UIViewController, WKNavigationDelegate, WKS
     private func nativeSafeAreaInsets() -> (top: Int, bottom: Int) {
         let windowInsets = view.window?.safeAreaInsets ?? .zero
         let statusBarHeight = view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
-        let top = max(view.safeAreaInsets.top, windowInsets.top, statusBarHeight)
-        let bottom = max(view.safeAreaInsets.bottom, windowInsets.bottom)
+        let fallback = fallbackSafeAreaInsets()
+        let top = max(view.safeAreaInsets.top, windowInsets.top, statusBarHeight, CGFloat(fallback.top))
+        let bottom = max(view.safeAreaInsets.bottom, windowInsets.bottom, CGFloat(fallback.bottom))
         return (Int(top.rounded(.up)), Int(bottom.rounded(.up)))
+    }
+
+    private func fallbackSafeAreaInsets() -> (top: Int, bottom: Int) {
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            return (24, 0)
+        }
+
+        let screenBounds = UIScreen.main.bounds
+        let longEdge = max(screenBounds.width, screenBounds.height)
+        if longEdge >= 812 {
+            return (59, 34)
+        }
+        return (20, 0)
     }
 
     private func scheduleWebProbes(generation: Int) {
@@ -416,6 +439,33 @@ final class QimingWebViewController: UIViewController, WKNavigationDelegate, WKS
 }
 
 private extension QimingWebViewController {
+    static let nativeEnvironmentBootstrapScript = """
+    (function () {
+      if (window.__qimingNativeEnvironmentBootstrapped) return;
+      window.__qimingNativeEnvironmentBootstrapped = true;
+      var ua = navigator.userAgent || '';
+      var isIos = /\\b(iPhone|iPad|iPod)\\b/i.test(ua) || /QimingNative\\s+iOS/i.test(ua);
+      var longEdge = Math.max(screen.width || 0, screen.height || 0);
+      var safeTop = /iPad/i.test(ua) ? 24 : (longEdge >= 812 ? 59 : 20);
+      var safeBottom = /iPad/i.test(ua) ? 0 : (longEdge >= 812 ? 34 : 0);
+      document.documentElement.classList.add('qiming-native-webview');
+      document.documentElement.setAttribute('data-qiming-native', 'true');
+      if (isIos) {
+        document.documentElement.classList.add('qiming-native-ios');
+        document.documentElement.style.setProperty('--qiming-native-ios-safe-top-fallback', safeTop + 'px');
+        document.documentElement.style.setProperty('--qiming-native-ios-safe-bottom-fallback', safeBottom + 'px');
+        document.documentElement.style.setProperty('--qiming-native-safe-top', safeTop + 'px');
+        document.documentElement.style.setProperty('--qiming-native-status-top', safeTop + 'px');
+        document.documentElement.style.setProperty('--qiming-native-safe-bottom', safeBottom + 'px');
+        document.documentElement.style.setProperty('--pure-safe-area-top', safeTop + 'px');
+        document.documentElement.style.setProperty('--pure-safe-area-bottom', safeBottom + 'px');
+        document.documentElement.style.setProperty('--pure-mobile-tab-height', 'calc(62px + ' + safeBottom + 'px)');
+        document.documentElement.style.setProperty('--pure-mobile-content-bottom-gap', 'calc(62px + ' + safeBottom + 'px + 72px)');
+        document.documentElement.style.setProperty('--qiming-native-bottom-clearance', 'calc(96px + ' + safeBottom + 'px)');
+      }
+    })();
+    """
+
     static let diagnosticsScript = """
     (function () {
       if (window.__qimingNativeDiagnostics) return;

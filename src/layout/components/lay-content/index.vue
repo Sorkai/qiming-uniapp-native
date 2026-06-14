@@ -43,7 +43,10 @@ const hideTabs = computed(() => {
 });
 
 const hideFooter = computed(() => {
-  return ($storage?.configure?.hideFooter ?? false) || route.meta?.hideFooter === true;
+  return (
+    ($storage?.configure?.hideFooter ?? false) ||
+    route.meta?.hideFooter === true
+  );
 });
 
 const stretch = computed(() => {
@@ -64,16 +67,41 @@ const mobileFooterOffset = computed(() => {
   return isMobile.value ? "calc(var(--pure-mobile-tab-height) + 16px)" : "0px";
 });
 
+function readCssPixelVar(name: string) {
+  if (typeof window === "undefined") return 0;
+  const rawValue = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  const parsed = Number.parseFloat(rawValue);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function getNativeSafeAreaTop() {
   if (typeof window === "undefined") return 0;
   if (!document.documentElement.classList.contains("qiming-native-webview")) {
     return 0;
   }
-  const rawValue = getComputedStyle(document.documentElement)
-    .getPropertyValue("--pure-safe-area-top")
-    .trim();
-  const safeTop = Number.parseFloat(rawValue);
-  return Number.isFinite(safeTop) ? safeTop : 0;
+  const safeAreaTop = readCssPixelVar("--pure-safe-area-top");
+  if (!document.documentElement.classList.contains("qiming-native-ios")) {
+    return safeAreaTop;
+  }
+
+  return Math.max(
+    safeAreaTop,
+    readCssPixelVar("--qiming-native-ios-safe-top-fallback")
+  );
+}
+
+function getNativeMobileHeaderBaseHeight() {
+  if (typeof window === "undefined" || !isMobile.value) return 64;
+  if (
+    !document.documentElement.classList.contains("qiming-native-webview") ||
+    !document.documentElement.classList.contains("qiming-native-ios")
+  ) {
+    return 64;
+  }
+
+  return readCssPixelVar("--qiming-native-mobile-header-base-height") || 78;
 }
 
 function resetMobileScrollPosition() {
@@ -135,9 +163,12 @@ const fixedScrollViewStyle = computed<CSSProperties>(() => {
 
 const getSectionStyle = computed<CSSProperties>(() => {
   const nativeSafeAreaTop = isMobile.value ? getNativeSafeAreaTop() : 0;
-  const headerOnlyHeight = isMobile.value ? 64 + nativeSafeAreaTop : 72;
+  const mobileHeaderBaseHeight = getNativeMobileHeaderBaseHeight();
+  const headerOnlyHeight = isMobile.value
+    ? mobileHeaderBaseHeight + nativeSafeAreaTop
+    : 72;
   const headerWithTagsHeight = isMobile.value
-    ? 64 + nativeSafeAreaTop
+    ? mobileHeaderBaseHeight + nativeSafeAreaTop
     : showModel.value == "chrome"
       ? 116
       : 112;

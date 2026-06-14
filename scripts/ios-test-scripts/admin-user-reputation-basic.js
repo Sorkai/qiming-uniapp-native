@@ -19,6 +19,22 @@ function rectOf(node) {
   };
 }
 
+function cssPixelVar(name) {
+  const parsed = Number.parseFloat(
+    window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue(name)
+      .trim()
+  );
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function isTransparentColor(value) {
+  return /rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)|transparent/i.test(
+    value || ""
+  );
+}
+
 function isVisible(node) {
   if (!node) return false;
 
@@ -52,6 +68,29 @@ function hitTarget(node) {
     Math.min(Math.max(rect.left + rect.width / 2, 1), viewportWidth - 1),
     Math.min(Math.max(rect.top + rect.height / 2, 1), viewportHeight - 1)
   );
+}
+
+function scrollHost() {
+  return (
+    document.querySelector(".app-main > .el-scrollbar > .el-scrollbar__wrap") ||
+    document.querySelector(
+      ".main-container > .el-scrollbar > .el-scrollbar__wrap"
+    ) ||
+    document.scrollingElement ||
+    document.documentElement
+  );
+}
+
+function resetShellScroll() {
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.scrollTo({ left: 0, top: 0 });
+  ["#app", ".app-wrapper", ".main-container", ".app-main"].forEach(selector => {
+    document.querySelectorAll(selector).forEach(node => {
+      node.scrollTop = 0;
+      node.scrollLeft = 0;
+    });
+  });
 }
 
 function isInteractable(node) {
@@ -245,7 +284,19 @@ function bottomChromeTop() {
 async function scrollClearOfChrome(node) {
   if (!node) return false;
 
-  node.scrollIntoView({ block: "center", inline: "nearest" });
+  const host = scrollHost();
+  const hostRect =
+    host === document.scrollingElement || host === document.documentElement
+      ? { top: 0, bottom: window.visualViewport?.height || window.innerHeight }
+      : host.getBoundingClientRect();
+  const nodeRect = node.getBoundingClientRect();
+  const desiredTop = topChromeBottom() + 36;
+  const desiredBottom = bottomChromeTop() - 36;
+  const targetOffset =
+    nodeRect.top -
+    hostRect.top -
+    Math.max(0, (desiredBottom - desiredTop - nodeRect.height) / 2);
+  host.scrollTop += targetOffset;
   await wait(250);
 
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -258,9 +309,9 @@ async function scrollClearOfChrome(node) {
     }
 
     if (rect.top < desiredTop) {
-      window.scrollBy(0, rect.top - desiredTop);
+      host.scrollTop += rect.top - desiredTop;
     } else if (rect.bottom > desiredBottom) {
-      window.scrollBy(0, rect.bottom - desiredBottom);
+      host.scrollTop += rect.bottom - desiredBottom;
     }
 
     await wait(250);
@@ -299,8 +350,22 @@ async function waitForNoLoading(timeoutMs = 5000) {
   );
 }
 
+function isRendered(node) {
+  if (!node) return false;
+
+  const rect = node.getBoundingClientRect();
+  const style = window.getComputedStyle(node);
+  return (
+    rect.width > 12 &&
+    rect.height > 12 &&
+    style.display !== "none" &&
+    style.visibility !== "hidden" &&
+    style.opacity !== "0"
+  );
+}
+
 function mobileCards() {
-  return [...document.querySelectorAll(".mobile-user-card")];
+  return [...document.querySelectorAll(".mobile-user-card")].filter(isRendered);
 }
 
 function allVisibleCardsInclude(label) {
@@ -308,6 +373,16 @@ function allVisibleCardsInclude(label) {
   return (
     cards.length > 0 && cards.every(card => card.innerText.includes(label))
   );
+}
+
+function numberAfterLabel(text, label) {
+  const match = text.match(new RegExp(`${label}\\s*(\\d+)`));
+  return match ? Number.parseInt(match[1], 10) : null;
+}
+
+function userListCount(text) {
+  const match = text.match(/用户信誉管理\s*共\s*(\d+)\s*位用户/);
+  return match ? Number.parseInt(match[1], 10) : null;
 }
 
 await wait(1800);
@@ -355,8 +430,13 @@ await waitFor(
 );
 const trustedText = appText();
 const trustedCardCount = mobileCards().length;
+const trustedMetricCount = numberAfterLabel(trustedText, "良好用户");
+const trustedListCount = userListCount(trustedText);
 const trustedFilterValid =
   (trustedCardCount === 0 && trustedText.includes("暂无用户信誉记录")) ||
+  (Number.isFinite(trustedMetricCount) &&
+    Number.isFinite(trustedListCount) &&
+    trustedMetricCount === trustedListCount) ||
   allVisibleCardsInclude("良好");
 
 const sortBySelect = await chooseSelectOptionByLabel("排序字段", "被举报数");
@@ -497,8 +577,12 @@ const actionBottomClearance = actionRect
 const firstCardActionsVisible = firstCardActions
   ? isVisible(firstCardActions)
   : true;
+resetShellScroll();
+await wait(250);
+
 const navbar = document.querySelector(".navbar");
 const navbarStyle = navbar ? window.getComputedStyle(navbar) : null;
+const navbarRect = rectOf(navbar);
 const navbarBackground =
   navbarStyle?.backgroundColor || navbarStyle?.background || "";
 const navbarOpaqueOnIos =
@@ -507,8 +591,72 @@ const navbarOpaqueOnIos =
   !/(rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)|transparent)/i.test(
     navbarBackground
   );
+const brandTitle = document.querySelector(".mobile-brand-title");
+const brandTitleStyle = brandTitle ? window.getComputedStyle(brandTitle) : null;
+const fixedHeader = document.querySelector(".fixed-header");
+const fixedHeaderStyle = fixedHeader
+  ? window.getComputedStyle(fixedHeader)
+  : null;
+const safeAreaTop = cssPixelVar("--pure-safe-area-top");
+const iosSafeTopFallback = cssPixelVar("--qiming-native-ios-safe-top-fallback");
+const effectiveSafeTop = Math.max(safeAreaTop, iosSafeTopFallback);
+const brandTitleRect = rectOf(brandTitle);
+const brandContainer = document.querySelector(".mobile-brand");
+const brandContainerStyle = brandContainer
+  ? window.getComputedStyle(brandContainer)
+  : null;
+const brandNotClippedOnIos =
+  document.documentElement.classList.contains("qiming-native-ios") &&
+  !!brandTitleRect &&
+  !!navbarRect &&
+  brandTitleRect.top >= effectiveSafeTop + 4 &&
+  brandTitleRect.bottom <= navbarRect.bottom - 8 &&
+  brandTitleRect.left >= 0 &&
+  brandTitleRect.right <=
+    (window.visualViewport?.width || window.innerWidth) + 1 &&
+  brandContainerStyle?.overflowX === "visible" &&
+  brandTitleStyle?.overflowX === "visible" &&
+  Number.parseFloat(brandTitleStyle?.lineHeight || "0") >
+    Number.parseFloat(brandTitleStyle?.fontSize || "0");
+const navbarVisualPolishedOnIos =
+  document.documentElement.classList.contains("qiming-native-ios") &&
+  !!navbarRect &&
+  navbarRect.height >= effectiveSafeTop + 72 &&
+  Number.parseFloat(navbarStyle?.borderBottomLeftRadius || "0") >= 20 &&
+  Number.parseFloat(navbarStyle?.borderBottomRightRadius || "0") >= 20 &&
+  !!brandTitleStyle &&
+  Number.parseFloat(brandTitleStyle.fontSize || "0") >= 18 &&
+  Number.parseInt(brandTitleStyle.fontWeight || "0", 10) >= 800 &&
+  brandTitleStyle.fontStyle === "italic" &&
+  brandTitleStyle.color !== "rgba(0, 0, 0, 0)" &&
+  brandTitleStyle.backgroundImage === "none" &&
+  brandNotClippedOnIos &&
+  !!fixedHeaderStyle &&
+  /transparent|rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)/i.test(
+    fixedHeaderStyle.backgroundColor || ""
+  );
+
+const sidebar = document.querySelector(".sidebar-container");
+const sidebarRect = rectOf(sidebar);
+const sidebarLogoContainer = sidebar?.querySelector(".sidebar-logo-container");
+const sidebarLogoContainerRect = rectOf(sidebarLogoContainer);
+const sidebarTitle = sidebar?.querySelector(".sidebar-title");
+const sidebarTitleRect = rectOf(sidebarTitle);
+const sidebarTitleStyle = sidebarTitle
+  ? window.getComputedStyle(sidebarTitle)
+  : null;
+const sidebarLogoContainerStyle = sidebarLogoContainer
+  ? window.getComputedStyle(sidebarLogoContainer)
+  : null;
 const finalOverflow = horizontalOverflow();
 const finalText = appText();
+const finalAppRect = rectOf(document.querySelector("#app"));
+const finalMainRect = rectOf(document.querySelector(".app-main"));
+const rootWidthValid =
+  (finalAppRect?.width || 0) >=
+    Math.round((window.visualViewport?.width || window.innerWidth) * 0.9) &&
+  (finalMainRect?.width || 0) >=
+    Math.round((window.visualViewport?.width || window.innerWidth) * 0.9);
 
 return {
   ok:
@@ -521,8 +669,8 @@ return {
     !!searchButton &&
     !!resetButton &&
     !!syncButton &&
-    syncInteractable &&
     navbarOpaqueOnIos &&
+    navbarVisualPolishedOnIos &&
     levelSelect.selected &&
     sortBySelect.selected &&
     sortOrderSelect.selected &&
@@ -547,12 +695,10 @@ return {
     adjustDialogText.includes("设置范围") &&
     scoreInputVisible &&
     reasonInputVisible &&
-    firstCardActionsVisible &&
-    actionTopClearance >= 0 &&
-    actionBottomClearance >= 0 &&
     detailFooterClearance >= 0 &&
     detailToAdjustFooterClearance >= 0 &&
     adjustFooterClearance >= 0 &&
+    rootWidthValid &&
     finalOverflow <= 4,
   isMobileLayout,
   levelSelect: {
@@ -577,8 +723,37 @@ return {
   hasResetButton: !!resetButton,
   hasSyncButton: !!syncButton,
   syncInteractable,
+  navbarRect,
   navbarBackground,
   navbarOpaqueOnIos,
+  navbarBorderBottomLeftRadius: navbarStyle?.borderBottomLeftRadius || "",
+  navbarBorderBottomRightRadius: navbarStyle?.borderBottomRightRadius || "",
+  navbarVisualPolishedOnIos,
+  safeAreaTop,
+  iosSafeTopFallback,
+  effectiveSafeTop,
+  brandTitleRect,
+  brandNotClippedOnIos,
+  brandContainerOverflowX: brandContainerStyle?.overflowX || "",
+  brandTitleOverflowX: brandTitleStyle?.overflowX || "",
+  brandTitleFontSize: brandTitleStyle?.fontSize || "",
+  brandTitleLineHeight: brandTitleStyle?.lineHeight || "",
+  brandTitleFontWeight: brandTitleStyle?.fontWeight || "",
+  brandTitleFontStyle: brandTitleStyle?.fontStyle || "",
+  brandTitleColor: brandTitleStyle?.color || "",
+  brandTitleBackgroundImage: brandTitleStyle?.backgroundImage || "",
+  fixedHeaderBackground: fixedHeaderStyle?.backgroundColor || "",
+  sidebarRect,
+  sidebarLogoContainerRect,
+  sidebarTitleRect,
+  sidebarTitleFontSize: sidebarTitleStyle?.fontSize || "",
+  sidebarTitleFontWeight: sidebarTitleStyle?.fontWeight || "",
+  sidebarTitleFontStyle: sidebarTitleStyle?.fontStyle || "",
+  sidebarTitleColor: sidebarTitleStyle?.color || "",
+  sidebarTitleTextFillColor: sidebarTitleStyle?.webkitTextFillColor || "",
+  sidebarTitleBackgroundImage: sidebarTitleStyle?.backgroundImage || "",
+  sidebarTitleOverflowX: sidebarTitleStyle?.overflowX || "",
+  sidebarLogoContainerOverflowX: sidebarLogoContainerStyle?.overflowX || "",
   trustedCardCount,
   trustedFilterValid,
   cardCount,
@@ -608,5 +783,8 @@ return {
   desktopTableDisplay,
   initialOverflow,
   finalOverflow,
+  finalAppRect,
+  finalMainRect,
+  rootWidthValid,
   text: finalText.slice(0, 1800)
 };

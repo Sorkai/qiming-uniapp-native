@@ -123,7 +123,7 @@ const {
           alt="logo"
           class="app-logo-img mobile-brand-logo"
         />
-        <span>{{ title }}</span>
+        <span class="mobile-brand-title">{{ title }}</span>
       </span>
 
       <div v-if="device !== 'mobile'" class="flex items-center ml-4">
@@ -363,7 +363,7 @@ const {
     line-height: 1;
     white-space: nowrap;
 
-    span {
+    .mobile-brand-title {
       overflow: hidden;
       text-overflow: ellipsis;
     }
