@@ -176,9 +176,11 @@ async function main() {
     return;
   }
   if (command === "run") {
-    buildApp();
     const deviceId = resolveDeviceId();
-    installApp(deviceId);
+    if (!hasFlag("skip-build")) {
+      buildApp();
+      installApp(deviceId);
+    }
     const launchStartedAt = Date.now();
     launchApp(deviceId, getEntry(), getDemoRole());
     const output = flags.output
@@ -668,6 +670,10 @@ function getEntry() {
 function getDemoRole() {
   const role = getString("demo-role", getString("demoRole", "teacher"));
   return ["student", "teacher", "admin"].includes(role) ? role : "teacher";
+}
+
+function hasFlag(name) {
+  return Boolean(flags[name] || flags[name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())]);
 }
 
 function testScriptLaunchArgs(item = {}) {
