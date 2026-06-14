@@ -291,6 +291,10 @@ onMounted(() => {
   .assessment-panel {
     min-height: 0;
   }
+
+  .assessment-panel > .flex-1 {
+    padding: 14px !important;
+  }
 }
 
 .assessment-management.is-mobile-layout .course-item {
@@ -330,6 +334,10 @@ onMounted(() => {
 
     .assessment-panel {
       min-height: 0;
+    }
+
+    .assessment-panel > .flex-1 {
+      padding: 14px !important;
     }
   }
 
