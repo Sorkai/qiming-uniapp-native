@@ -1113,7 +1113,7 @@ export async function getAdminDiscussionDetail(
 
     return { data: detail };
   } catch (error) {
-    console.error("获取管理端讨论详情失败:", error);
+    console.warn("获取管理端讨论详情失败，已使用列表数据兜底:", error);
     return null;
   }
 }

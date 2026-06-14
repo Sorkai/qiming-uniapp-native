@@ -293,7 +293,7 @@ const viewDetail = async (row: ReviewQueueItem) => {
     }
     detailDialogVisible.value = true;
   } catch (error) {
-    console.error("获取讨论详情失败:", error);
+    console.warn("获取讨论详情失败，已使用列表数据兜底:", error);
     // 出错时使用列表中的数据
     currentDetail.value = row;
     detailDialogVisible.value = true;
