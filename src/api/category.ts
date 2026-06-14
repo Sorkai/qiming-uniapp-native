@@ -7,6 +7,7 @@ import { http } from "@/utils/http";
 export const getCategoryList = (params: {
   pageNum: number;
   pageSize?: number;
+  categoryName?: string;
 }) => {
   return http.request<{
     code: number;

@@ -179,9 +179,17 @@ const resetSearch = () => {
 const loadTableData = async () => {
   loading.value = true;
   try {
-    const { data } = await getCategoryList(queryParams);
-    tableData.value = data.categoryList;
-    total.value = data.total;
+    const categoryName = searchForm.categoryName.trim();
+    const { data } = await getCategoryList({
+      ...queryParams,
+      categoryName: categoryName || undefined
+    });
+    const categoryList = data.categoryList || [];
+    const filteredList = categoryName
+      ? categoryList.filter(item => item.name?.includes(categoryName))
+      : categoryList;
+    tableData.value = filteredList;
+    total.value = categoryName ? filteredList.length : data.total;
   } catch (error) {
     console.error("获取分类列表失败", error);
     ElMessage.error("获取分类列表失败");
