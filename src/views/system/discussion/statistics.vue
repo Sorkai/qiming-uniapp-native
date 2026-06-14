@@ -1839,6 +1839,9 @@ watch(theme, () => {
 
   .pagination-bar {
     justify-content: center;
+    margin-bottom: calc(
+      var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 64px
+    );
   }
 
   .audit-log-list {
