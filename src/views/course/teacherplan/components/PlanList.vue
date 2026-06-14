@@ -367,23 +367,7 @@ const fetchPlanList = async () => {
 
     if (res && res.code === 200 && res.data) {
       const originalList = res.data.teacherPlanList || [];
-      // 并发请求每个教案的进度，因为列表接口没给状态
-      const listWithStatus = await Promise.all(
-        originalList.map(async item => {
-          try {
-            const progressRes = await getTeacherPlanProgress({
-              teacherPlanId: item.teacherPlanId
-            });
-            return {
-              ...item,
-              status: progressRes?.data?.progress ?? 0 // 将进度的 1 或 2 赋值给 status
-            };
-          } catch (e) {
-            return { ...item, status: 0 };
-          }
-        })
-      );
-      planList.value = listWithStatus;
+      planList.value = originalList.map(item => ({ ...item, status: 0 }));
       total.value = res.data.total || 0;
     } else {
       planList.value = [];
@@ -428,12 +412,12 @@ const checkProgress = async (plan: any) => {
     if (res && res.code === 200 && res.data) {
       currentProgress.value = res.data;
     } else {
-      currentProgress.value = null;
-      ElMessage.warning("获取生成进度失败");
+      currentProgress.value = { progress: plan.status ?? 0 };
+      ElMessage.warning("生成进度暂不可用，已显示当前列表状态");
     }
   } catch (error) {
-    console.error("获取生成进度失败:", error);
-    ElMessage.error("获取生成进度失败");
+    currentProgress.value = { progress: plan.status ?? 0 };
+    ElMessage.warning("生成进度暂不可用，已显示当前列表状态");
   } finally {
     progressLoading.value = false;
   }
@@ -528,6 +512,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
+  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 64px);
   margin-bottom: 16px;
   padding: 16px;
   border-radius: 20px;
@@ -692,6 +677,7 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 64px);
     margin-bottom: 16px;
     padding: 16px;
     border-radius: 20px;
