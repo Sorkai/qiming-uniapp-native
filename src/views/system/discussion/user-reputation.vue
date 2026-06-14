@@ -526,6 +526,7 @@ onMounted(() => {
       v-model="detailDialogVisible"
       title="用户信誉详情"
       :width="getDialogWidth('600px')"
+      class="reputation-mobile-dialog"
       destroy-on-close
     >
       <div v-if="currentUser" class="user-detail">
@@ -610,6 +611,7 @@ onMounted(() => {
       v-model="adjustDialogVisible"
       title="调整用户信誉"
       :width="getDialogWidth('500px')"
+      class="reputation-mobile-dialog"
       destroy-on-close
     >
       <div v-if="currentUser" class="adjust-form">
@@ -1346,6 +1348,42 @@ onMounted(() => {
       width: 100%;
       margin-left: 0;
     }
+  }
+
+  :global(
+    html.qiming-native-webview.qiming-native-ios.ua-mobile
+      .reputation-mobile-dialog
+  ) {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(
+      100dvh - var(--pure-mobile-tab-height) - var(--pure-safe-area-bottom) -
+        44px
+    );
+    margin-top: calc(var(--pure-safe-area-top) + 18px) !important;
+    margin-bottom: calc(
+      var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 18px
+    );
+  }
+
+  :global(
+    html.qiming-native-webview.qiming-native-ios.ua-mobile
+      .reputation-mobile-dialog
+      .el-dialog__body
+  ) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :global(
+    html.qiming-native-webview.qiming-native-ios.ua-mobile
+      .reputation-mobile-dialog
+      .el-dialog__footer
+  ) {
+    flex: 0 0 auto;
+    padding-bottom: max(16px, var(--pure-safe-area-bottom));
   }
 }
 
