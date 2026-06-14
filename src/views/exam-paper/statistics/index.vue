@@ -5,6 +5,7 @@ import { ElMessage } from "element-plus";
 import {
   getLearningAnalytics,
   getCourseList,
+  type LearningAnalyticsData,
   type LearningAnalyticsOverview,
   type ScoreDistributionItem,
   type KnowledgePointMastery,
@@ -12,7 +13,11 @@ import {
   type ExamTrendItem,
   type StudentRankingItem
 } from "@/api/examPaper";
-import { logNativeFallback } from "@/utils/nativeRuntime";
+import {
+  isNativeWebViewRuntime,
+  logNativeFallback
+} from "@/utils/nativeRuntime";
+import { createNativeDemoLearningAnalytics } from "@/views/exam-paper/nativeDemoOverview";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -37,6 +42,12 @@ const selectedCourse = ref<number | null>(null);
 
 // 课程列表
 const courseList = ref<Array<{ id: number; name: string }>>([]);
+const nativeDemoCourseList = [
+  { id: 1, name: "高等数学" },
+  { id: 2, name: "嵌入式 Linux" },
+  { id: 3, name: "计算机基础" },
+  { id: 4, name: "线性代数" }
+];
 
 // 总体统计数据
 const overviewStats = reactive<LearningAnalyticsOverview>({
@@ -133,15 +144,47 @@ const toggleRangeExpand = (range: string) => {
 
 const isRangeExpanded = (range: string) => expandedRanges.value.includes(range);
 
+const applyAnalyticsPayload = (data: LearningAnalyticsData) => {
+  Object.assign(overviewStats, data.overview);
+  scoreDistribution.value = data.scoreDistribution || [];
+  scoreDistributionWithStudents.value = buildScoreDistributionWithStudents(
+    scoreDistribution.value
+  );
+  expandedRanges.value =
+    scoreDistributionWithStudents.value.length > 0
+      ? [scoreDistributionWithStudents.value[0].range]
+      : [];
+  knowledgePoints.value = data.knowledgePoints || [];
+  questionTypeStats.value = data.questionTypeStats || [];
+  examTrends.value = data.examTrends || [];
+  studentRanking.value = data.studentRanking || [];
+};
+
+const applyNativeAnalyticsFallback = (reason: string, error?: unknown) => {
+  if (!isNativeWebViewRuntime()) return false;
+
+  logNativeFallback(reason, error);
+  applyAnalyticsPayload(
+    createNativeDemoLearningAnalytics(selectedCourse.value || undefined)
+  );
+  return true;
+};
+
 // 加载课程列表
 const loadCourseList = async () => {
   try {
     const res = await getCourseList();
     if (res.code === 0 && res.data) {
       courseList.value = res.data;
+    } else if (isNativeWebViewRuntime()) {
+      logNativeFallback("使用原生演示课程列表", res);
+      courseList.value = nativeDemoCourseList;
     }
   } catch (error) {
     logNativeFallback("加载课程列表失败:", error);
+    if (isNativeWebViewRuntime()) {
+      courseList.value = nativeDemoCourseList;
+    }
   }
 };
 
@@ -160,38 +203,14 @@ const loadAnalyticsData = async () => {
 
     const res = await getLearningAnalytics(params);
     if (res.code === 0 && res.data) {
-      const data = res.data;
-
-      // 更新总览数据
-      Object.assign(overviewStats, data.overview);
-
-      // 更新成绩分布
-      scoreDistribution.value = data.scoreDistribution || [];
-      scoreDistributionWithStudents.value = buildScoreDistributionWithStudents(
-        scoreDistribution.value
-      );
-      expandedRanges.value =
-        scoreDistributionWithStudents.value.length > 0
-          ? [scoreDistributionWithStudents.value[0].range]
-          : [];
-
-      // 更新知识点掌握情况
-      knowledgePoints.value = data.knowledgePoints || [];
-
-      // 更新题型正确率
-      questionTypeStats.value = data.questionTypeStats || [];
-
-      // 更新考试趋势
-      examTrends.value = data.examTrends || [];
-
-      // 更新学生排名
-      studentRanking.value = data.studentRanking || [];
-    } else {
+      applyAnalyticsPayload(res.data);
+    } else if (!applyNativeAnalyticsFallback("使用原生演示学情分析数据", res)) {
       ElMessage.error("加载学情分析数据失败");
     }
   } catch (error) {
-    logNativeFallback("加载学情分析数据失败:", error);
-    ElMessage.error("加载学情分析数据失败");
+    if (!applyNativeAnalyticsFallback("加载学情分析数据失败:", error)) {
+      ElMessage.error("加载学情分析数据失败");
+    }
   } finally {
     loading.value = false;
   }
