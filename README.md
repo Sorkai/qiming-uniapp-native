@@ -1,6 +1,6 @@
-# Hi👋 hello the next generation juiced up native Android app in the edu area presented by ycxj Jilin
+# Hi👋 hello the next generation juiced up native Android/iOS app in the edu area presented by ycxj Jilin
 
-## ccut 108 全新 启明智教 (Qimingedu) - Android 客户端
+## ccut 108 全新 启明智教 (Qimingedu) - Android / iOS 原生客户端
 
 ### Checkout from the pics first Stu Teacher and Admin
 
@@ -49,46 +49,70 @@ project owner's prior written consent.
 
 ## 项目简介
 
-**启明智教** 是一款由 AI 驱动的智能化教育与课堂监控平台 Android 客户端。本项目致力于通过先进的人工智能技术优化教学流程，为师生提供高效、个性化的教育互动体验。客户端采用 UniApp 框架开发，深度优化 Android 原生渲染体验，保障复杂的交互与数据流依然丝滑流畅。
+**启明智教** 是一款由 AI 驱动的智能化教育与课堂监控平台 Android / iOS 原生客户端。本项目致力于通过先进的人工智能技术优化教学流程，为师生提供高效、个性化的教育互动体验。客户端采用 UniApp 框架与双原生容器线并行开发，分别优化 Android 与 iOS 的原生渲染、打包和真机验证体验，保障复杂的交互与数据流依然丝滑流畅。
 
 依托平台强大的微服务后端架构（基于 Go-Zero 与 Python FastAPI），客户端无缝接入了核心的 **EduClaw 智能体**。同时，结合底层的高效 **SAHR (Semantic Adaptive Hybrid Retrieval) 语义自适应混合检索框架**（精确调优的融合权重：稀疏检索 0.7，稠密检索 0.3），客户端能够在海量教学知识库中实现极高精度的检索、问答与辅助决策。
 
 ## 核心功能
 
-* **伴学答疑 (EduClaw 智能体):** 深度集成定制化智能体，提供全天候的自适应教学引导与精准解答。
-* **高精度知识检索引擎:** 借助 SAHR 混合检索算法，打破传统检索的语义壁垒，极速定位教学资源与文献。
-* **课堂状态监控与分析:** 接入 AI 视觉与多维数据分析，实时反馈课堂教学状态，助力教育数字化转型（核心算法及应用已布局多项软著与专利）。
-* **原生级流畅体验:** 充分利用 App-Plus 扩展能力，调用 Android 底层 API，实现高效的设备硬件交互与网络并发处理。
+- **伴学答疑 (EduClaw 智能体):** 深度集成定制化智能体，提供全天候的自适应教学引导与精准解答。
+- **高精度知识检索引擎:** 借助 SAHR 混合检索算法，打破传统检索的语义壁垒，极速定位教学资源与文献。
+- **课堂状态监控与分析:** 接入 AI 视觉与多维数据分析，实时反馈课堂教学状态，助力教育数字化转型（核心算法及应用已布局多项软著与专利）。
+- **原生级流畅体验:** 充分利用 App-Plus 扩展能力，调用 Android 底层 API，实现高效的设备硬件交互与网络并发处理。
 
 ## 其他功能
 
-* **其余教育平台所拥有的基础功能之上，我们融合全新的完整数据链路**
-* **教师端、管理员端更高效的 AI 融合备课组件**
-* **教师端、管理员端更精准的提效建议与工作效率分析**
-* **教师端、管理员端更个性化的个人画像分析**
-* **学生端 AI 导学组卷**
-* **学生端 AI 当节课程知识问答**
-* **学生端 AI 思维导图**
-* **融合了多模态资源的 AI 助手回答与生成**
-* **响应迅速的截图提问功能**
-* **启明智教精调的垂直领域大模型**
-* **----还有更多----**
+- **其余教育平台所拥有的基础功能之上，我们融合全新的完整数据链路**
+- **教师端、管理员端更高效的 AI 融合备课组件**
+- **教师端、管理员端更精准的提效建议与工作效率分析**
+- **教师端、管理员端更个性化的个人画像分析**
+- **学生端 AI 导学组卷**
+- **学生端 AI 当节课程知识问答**
+- **学生端 AI 思维导图**
+- **融合了多模态资源的 AI 助手回答与生成**
+- **响应迅速的截图提问功能**
+- **启明智教精调的垂直领域大模型**
+- **----还有更多----**
+
+## Android / iOS 双线工程设计
+
+本仓库不是 Android 工程旁边临时补一个 iOS 工程，而是一个共享业务层、
+双原生容器线并行维护的移动端仓库。Android 与 iOS 可以在同一仓库内各自
+演进、各自验证、各自打包，同时复用同一套业务页面、接口和设计语言。
+
+- **共享业务层:** 仓库根目录的 Vue/Vite/UniApp 业务源码、公共组件、接口、
+  主题和路由是三端角色（学生端、教师端、管理端）共同依赖的产品层。
+- **Android 原生线:** `native-app/` 承载 HBuilderX/App-Plus Android 容器、
+  Android 打包配置、Android 设备调试和 Android 专属原生能力。
+- **iOS 原生线:** `ios-native/` 承载 Xcode/UIKit/WKWebView iOS Simulator
+  验证壳；iOS 打包与 HBuilderX iOS 能力在 `native-app/` 的 iOS 配置中衔接。
+- **端专属边界:** 平台问题优先落在对应原生线、平台 class、平台脚本或平台
+  测试中。Android 专属改动不应要求 iOS 迁就，iOS 专属改动也不应隐式改变
+  Android 行为。
+- **共享层变更规则:** 只有确实属于共同产品体验、共同业务逻辑或共同设计系统
+  的改动才进入共享层；进入共享层的改动需要同时考虑 Android 与 iOS 验收。
+- **CSS/运行时隔离:** 平台差异使用明确选择器或运行时标记隔离，例如
+  `html.qiming-native-webview.qiming-native-ios` 与
+  `html.qiming-native-webview.qiming-native-android`，避免用宽泛的移动端选择器
+  解决单平台问题。
+- **验证节奏:** 每个小问题单独提交；端专属改动至少跑对应端模拟器/真机或自动化
+  截图脚本，共享层改动需要补充双端风险说明和必要的双端验证。
 
 ## 技术栈与依赖
 
-* **前端框架:** UniApp (Vue 3 语法 / 组合式 API)
-* **构建与编译:** Vite / HBuilderX
-* **网络通信:** 封装 `uni.request`，支持 RESTful API 与长链接 WebSocket 交互
-* **核心关联后端:** 业务逻辑层 Go-Zero；模型服务层 Python FastAPI
-* **前端技术:** Element Plus, Tailwind CSS, Sass, Three.js, ECharts, LogicFlow/Vue-Flow, WangEditor/Vditor 等
+- **前端框架:** UniApp (Vue 3 语法 / 组合式 API)
+- **构建与编译:** Vite / HBuilderX
+- **网络通信:** 封装 `uni.request`，支持 RESTful API 与长链接 WebSocket 交互
+- **核心关联后端:** 业务逻辑层 Go-Zero；模型服务层 Python FastAPI
+- **前端技术:** Element Plus, Tailwind CSS, Sass, Three.js, ECharts, LogicFlow/Vue-Flow, WangEditor/Vditor 等
 
 ## 快速开始
 
 ### 1. 环境准备
 
-* 安装 [Node.js](https://nodejs.org/)（推荐使用仓库 `.nvmrc` 中的版本）
-* 安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 开发者工具
-* 准备 Android Studio 模拟器或真实 Android 物理测试设备（需开启“开发者模式”和“USB 调试”）
+- 安装 [Node.js](https://nodejs.org/)（推荐使用仓库 `.nvmrc` 中的版本）
+- 安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 开发者工具
+- 准备 Android Studio 模拟器或真实 Android 物理测试设备（需开启“开发者模式”和“USB 调试”）
 
 ### 2. 克隆项目代码
 
