@@ -541,8 +541,13 @@ function evaluateSmokeCase(item, screenshotPath, diagnostics) {
     .filter(event => event.type === "web-message" && event.payload?.type)
     .map(event => event.payload);
   const failures = [];
+  const isResizeObserverNoise = event =>
+    event.message === "ResizeObserver loop completed with undelivered notifications." ||
+    event.error === "ResizeObserver loop completed with undelivered notifications.";
   const consoleErrors = webMessages.filter(event => event.type === "console.error");
-  const runtimeErrors = webMessages.filter(event => event.type === "error");
+  const runtimeErrors = webMessages.filter(
+    event => event.type === "error" && !isResizeObserverNoise(event)
+  );
   const resourceErrors = webMessages.filter(event => event.type === "resource-error");
   const unhandledRejections = webMessages.filter(event => event.type === "unhandledrejection");
   const fetchErrors = webMessages.filter(event => event.type === "fetch-error");

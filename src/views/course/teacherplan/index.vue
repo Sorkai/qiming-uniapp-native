@@ -538,6 +538,7 @@ onMounted(() => {
   overflow: visible;
   flex-direction: column;
   padding: 12px;
+  scroll-padding-top: calc(var(--pure-safe-area-top, 0px) + 84px);
 }
 
 @mixin teacher-plan-mobile-panel-layout {
@@ -628,6 +629,21 @@ onMounted(() => {
 
 .teacher-plan-container.is-mobile-layout .teacher-plan-panel {
   min-height: 0;
+}
+
+:global(html.qiming-native-webview.ua-mobile)
+  .teacher-plan-container.is-mobile-layout {
+  padding-top: 24px;
+  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 84px);
+}
+
+:global(html.qiming-native-webview.ua-mobile)
+  .teacher-plan-container.is-mobile-layout
+  .teacher-plan-panel,
+:global(html.qiming-native-webview.ua-mobile)
+  .teacher-plan-container.is-mobile-layout
+  .course-sidebar {
+  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 84px);
 }
 
 .teacher-plan-container.is-mobile-layout .teacher-plan-empty-mobile {

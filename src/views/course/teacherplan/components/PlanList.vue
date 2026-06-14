@@ -512,10 +512,16 @@ onMounted(() => {
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 64px);
+  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 128px);
   margin-bottom: 16px;
   padding: 16px;
   border-radius: 20px;
+}
+
+:global(html.qiming-native-webview.ua-mobile)
+  .list-container.is-mobile-layout
+  .plan-list-toolbar {
+  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 152px);
 }
 
 .list-container.is-mobile-layout .plan-list-toolbar__copy {
