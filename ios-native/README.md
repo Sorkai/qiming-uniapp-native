@@ -55,7 +55,15 @@ pnpm native:ios:ipa -- --profile /path/to/AppStore_cn.intelledu.qiming.mobilepro
 
 The device package requires an Apple Distribution signing identity in Keychain
 and an App Store or Ad Hoc provisioning profile for `cn.intelledu.qiming`.
-The command validates the profile bundle id before building and stops early
-when the signing identity or profile is missing. For local device experiments
-only, pass `--allow-development-profile` with an Apple Development identity and
-a development profile.
+When `--profile` is omitted, the command looks for a single matching
+distribution profile in `~/Library/MobileDevice/Provisioning Profiles`.
+You can inspect installed matching profiles with:
+
+```bash
+pnpm native:ios:ipa profiles
+```
+
+The command validates the profile bundle id before building and stops early when
+the signing identity or profile is missing. For local device experiments only,
+pass `--allow-development-profile` with an Apple Development identity and a
+development profile.

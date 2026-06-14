@@ -24,9 +24,12 @@ const appPath = join(buildRoot, `${appName}.app`);
 const resourceSource = join(repoRoot, "native-app", "src", "hybrid", "html");
 const resourceTarget = join(appPath, "AppResources");
 const appIconRoot = join(iosRoot, "Resources", "AppIcon");
+const defaultProfilesDir = join(process.env.HOME || "", "Library", "MobileDevice", "Provisioning Profiles");
+const plistBuddyPath = process.env.PLISTBUDDY || "/usr/libexec/PlistBuddy";
 
 const args = process.argv.slice(2);
 const command = args[0] && !args[0].startsWith("-") ? args.shift() : "package";
+const positional = args.filter(value => value !== "--" && !value.startsWith("-"));
 const flags = parseFlags(args);
 
 Promise.resolve().then(main).catch(error => {
@@ -37,6 +40,11 @@ Promise.resolve().then(main).catch(error => {
 function main() {
   if (command === "help" || hasFlag("help")) {
     printHelp();
+    return;
+  }
+
+  if (command === "profiles" || positional.includes("profiles") || hasFlag("list-profiles")) {
+    listMatchingProfiles();
     return;
   }
 
@@ -195,7 +203,7 @@ function readProvisioningProfile(profilePath) {
   }
   writeFileSync(profilePlist, decoded.stdout);
 
-  const entitlements = capture("/usr/libexec/PlistBuddy", ["-x", "-c", "Print :Entitlements", profilePlist]);
+  const entitlements = capture(plistBuddyPath, ["-x", "-c", "Print :Entitlements", profilePlist]);
   return {
     path: profilePath,
     plistPath: profilePlist,
@@ -228,12 +236,66 @@ function validateProvisioningProfile(profile, profilePath) {
 
 function resolveProfilePath() {
   const value = getString("profile", process.env.IOS_PROVISIONING_PROFILE || "");
-  if (!value) {
+  if (value) return resolve(repoRoot, value);
+
+  const matches = findDefaultProvisioningProfiles();
+  if (matches.length === 1) {
+    console.log(`Using provisioning profile: ${matches[0].path}`);
+    return matches[0].path;
+  }
+  if (matches.length > 1) {
     throw new Error(
-      "Missing provisioning profile. Pass --profile /path/to/profile.mobileprovision or set IOS_PROVISIONING_PROFILE."
+      [
+        `Multiple provisioning profiles match ${bundleId}. Pass --profile with the intended file:`,
+        ...matches.map(profile => `- ${profile.path} (${profile.name || "unnamed"}, expires ${profile.expirationDate || "unknown"})`)
+      ].join("\n")
     );
   }
-  return resolve(repoRoot, value);
+
+  throw new Error(
+    `Missing provisioning profile. Pass --profile /path/to/profile.mobileprovision, set IOS_PROVISIONING_PROFILE, or install a matching profile in ${defaultProfilesDir}.`
+  );
+}
+
+function listMatchingProfiles() {
+  const profiles = findDefaultProvisioningProfiles({ includeDevelopment: true, includeWildcard: true });
+  if (!profiles.length) {
+    console.log(`No provisioning profiles for ${bundleId} were found in ${defaultProfilesDir}.`);
+    return;
+  }
+  for (const profile of profiles) {
+    console.log(
+      [
+        profile.path,
+        `  name: ${profile.name || "(unnamed)"}`,
+        `  uuid: ${profile.uuid || "(unknown)"}`,
+        `  app id: ${profile.applicationIdentifier || "(unknown)"}`,
+        `  team: ${profile.teamId || "(unknown)"}`,
+        `  expires: ${profile.expirationDate || "(unknown)"}`,
+        `  development: ${profile.getTaskAllow === "true" ? "yes" : "no"}`
+      ].join("\n")
+    );
+  }
+}
+
+function findDefaultProvisioningProfiles(options = {}) {
+  if (!defaultProfilesDir || !existsSync(defaultProfilesDir)) return [];
+  const profiles = [];
+  for (const name of readdirSync(defaultProfilesDir)) {
+    if (!/\.(mobileprovision|provisionprofile)$/.test(name)) continue;
+    const path = join(defaultProfilesDir, name);
+    try {
+      const profile = readProvisioningProfile(path);
+      const appId = profile.applicationIdentifier || "";
+      const suffix = appId.includes(".") ? appId.slice(appId.indexOf(".") + 1) : "";
+      const matchesBundle = suffix === bundleId || (options.includeWildcard && suffix === "*");
+      const developmentAllowed = options.includeDevelopment || profile.getTaskAllow !== "true";
+      if (matchesBundle && developmentAllowed) profiles.push(profile);
+    } catch {
+      // Ignore profiles that cannot be decoded; explicit --profile still reports the decode error.
+    }
+  }
+  return profiles.sort((left, right) => String(right.expirationDate).localeCompare(String(left.expirationDate)));
 }
 
 function resolveSigningIdentity() {
@@ -261,7 +323,7 @@ function resolveSigningIdentity() {
 }
 
 function readPlistValue(plistPath, key) {
-  const result = spawnSync("/usr/libexec/PlistBuddy", ["-c", `Print :${key}`, plistPath], {
+  const result = spawnSync(plistBuddyPath, ["-c", `Print :${key}`, plistPath], {
     cwd: repoRoot,
     encoding: "utf8"
   });
@@ -269,7 +331,7 @@ function readPlistValue(plistPath, key) {
 }
 
 function plistKeyExists(plistPath, key) {
-  const result = spawnSync("/usr/libexec/PlistBuddy", ["-c", `Print :${key}`, plistPath], {
+  const result = spawnSync(plistBuddyPath, ["-c", `Print :${key}`, plistPath], {
     cwd: repoRoot,
     encoding: "utf8",
     stdio: "ignore"
@@ -355,7 +417,8 @@ function run(commandName, commandArgs, options = {}) {
 function printHelp() {
   console.log(`
 Usage:
-  pnpm native:ios:ipa -- --profile /path/to/profile.mobileprovision [--identity "Apple Distribution: ..."]
+  pnpm native:ios:ipa -- [--profile /path/to/profile.mobileprovision] [--identity "Apple Distribution: ..."]
+  pnpm native:ios:ipa profiles
 
 Options:
   --profile <path>                 Provisioning profile for ${bundleId}
@@ -363,6 +426,7 @@ Options:
   --output-dir <path>              Output directory. Defaults to artifacts/ios-release.
   --target <triple>                Swift target. Defaults to arm64-apple-ios17.0.
   --allow-development-profile      Allow a development profile for local device experiments.
+  --list-profiles                  List installed profiles matching ${bundleId}.
 
 Environment:
   IOS_PROVISIONING_PROFILE         Fallback provisioning profile path.
