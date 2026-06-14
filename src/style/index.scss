@@ -82,8 +82,13 @@ html.qiming-native-webview {
 html.qiming-native-webview,
 html.qiming-native-webview body,
 html.qiming-native-webview #app {
+  display: block !important;
+  align-items: initial !important;
+  justify-content: initial !important;
   width: 100%;
-  min-width: 0;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   height: var(--qiming-native-vh, 100dvh);
   min-height: 100vh;
   min-height: 100dvh;
@@ -949,6 +954,301 @@ html.qiming-native-webview.ua-mobile .el-card {
 
 html.qiming-native-webview.ua-mobile .layout-footer {
   display: none !important;
+}
+
+html.qiming-native-webview.ua-mobile body.exam-page,
+html.qiming-native-webview.ua-mobile body.homework-page {
+  width: 100vw !important;
+  min-width: 100vw !important;
+  max-width: 100vw !important;
+  height: var(--qiming-native-vh, 100dvh) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.qiming-native-webview.ua-mobile body.exam-page #app,
+html.qiming-native-webview.ua-mobile body.homework-page #app {
+  width: 100vw !important;
+  min-width: 100vw !important;
+  max-width: 100vw !important;
+  height: var(--qiming-native-vh, 100dvh) !important;
+  margin: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.qiming-native-webview.ua-mobile body.exam-page .exam-detail-container,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+html.qiming-native-webview.ua-mobile body.exam-page .exam-detail-container {
+  padding: calc(var(--pure-safe-area-top, 0px) + 76px) 12px
+    calc(var(--pure-safe-area-bottom, 0px) + 92px) !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container {
+  padding: calc(var(--pure-safe-area-top, 0px) + 76px) 12px
+    calc(var(--pure-safe-area-bottom, 0px) + 28px) !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .header,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .header {
+  border-radius: 0 0 18px 18px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .header-content,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .header-content {
+  padding: 0 16px !important;
+  grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr) !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .header-content
+  .title,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .header-content
+  .title {
+  font-size: 17px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .header-content
+  .timer {
+  min-width: 86px !important;
+  font-size: 14px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .main-content,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .main-content {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .el-card,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .el-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: 18px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .el-card__body,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .el-card__body {
+  padding: 16px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .card-header
+  h3,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .card-header
+  h3 {
+  font-size: 18px !important;
+  line-height: 1.35 !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .meta-info,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .meta-info {
+  justify-content: flex-start !important;
+  gap: 8px 12px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .meta-info {
+  margin-bottom: 12px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .description,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .description {
+  padding: 14px !important;
+  border-radius: 12px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .question-item,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .question-item {
+  padding: 16px !important;
+  margin-bottom: 16px !important;
+  border-radius: 14px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .question-title,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .question-title {
+  align-items: flex-start !important;
+  line-height: 1.45 !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .question-type,
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .question-score,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .question-type,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .question-score {
+  margin-left: 0 !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .el-radio-group,
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .el-checkbox-group,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .el-radio-group,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .el-checkbox-group {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .el-radio,
+html.qiming-native-webview.ua-mobile
+  body.exam-page
+  .exam-detail-container
+  .el-checkbox,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .el-radio,
+html.qiming-native-webview.ua-mobile
+  body.homework-page
+  .homework-detail-container
+  .el-checkbox {
+  height: auto !important;
+  margin-right: 0 !important;
+  white-space: normal !important;
+}
+
+html.qiming-native-webview.ua-mobile body.exam-page .footer-actions {
+  border-radius: 18px 18px 0 0 !important;
+}
+
+html.qiming-native-webview.ua-mobile body.exam-page .el-dialog,
+html.qiming-native-webview.ua-mobile body.homework-page .el-dialog {
+  width: min(360px, calc(100vw - 32px)) !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  .teacher-plan-container.is-mobile-layout {
+  padding-top: 24px !important;
+  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 84px) !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  .teacher-plan-container.is-mobile-layout
+  .teacher-plan-panel,
+html.qiming-native-webview.ua-mobile
+  .teacher-plan-container.is-mobile-layout
+  .course-sidebar {
+  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 84px) !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  .list-container.is-mobile-layout
+  .plan-list-toolbar {
+  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 152px) !important;
 }
 
 html.qiming-native-webview .account-container,

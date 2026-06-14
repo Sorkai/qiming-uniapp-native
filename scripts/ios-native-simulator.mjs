@@ -97,6 +97,20 @@ const routeSuites = {
       expect: ["考试结果", "答题明细"]
     },
     {
+      label: "学生作业详情",
+      entry: "/account/homework-detail?homeworkId=1&courseId=1",
+      demoRole: "student",
+      expect: ["嵌入式 Linux 开发环境作业", "提交作业"],
+      testScriptFile: "scripts/ios-test-scripts/student-homework-detail-basic.js"
+    },
+    {
+      label: "学生考试详情",
+      entry: "/account/exam-detail?examId=1&courseId=1",
+      demoRole: "student",
+      expect: ["嵌入式 Linux 阶段测验", "开始考试"],
+      testScriptFile: "scripts/ios-test-scripts/student-exam-detail-basic.js"
+    },
+    {
       label: "教师阅卷详情",
       entry: "/exam-paper/grading/1",
       demoRole: "teacher",
@@ -334,7 +348,7 @@ function installApp(deviceId) {
   console.log(`Installed ${bundleId} on ${deviceId}`);
 }
 
-function launchApp(deviceId, entry, role) {
+function launchApp(deviceId, entry, role, item = {}) {
   run("xcrun", ["simctl", "terminate", deviceId, bundleId], { allowFailure: true });
   run("xcrun", [
     "simctl",
@@ -345,7 +359,7 @@ function launchApp(deviceId, entry, role) {
     entry,
     "--demoRole",
     role,
-    ...testScriptLaunchArgs()
+    ...testScriptLaunchArgs(item)
   ]);
   console.log(`Launched ${bundleId}: role=${role} entry=${entry}`);
 }
@@ -365,7 +379,7 @@ function runSmoke(deviceId) {
   const results = [];
   for (const [index, item] of cases.entries()) {
     const launchStartedAt = Date.now();
-    launchApp(deviceId, item.entry, item.role);
+    launchApp(deviceId, item.entry, item.role, item);
     wait(waitSeconds * 1000);
     const outputPath = join(
       outputDir,
@@ -656,17 +670,19 @@ function getDemoRole() {
   return ["student", "teacher", "admin"].includes(role) ? role : "teacher";
 }
 
-function testScriptLaunchArgs() {
-  const script = resolveTestScript();
+function testScriptLaunchArgs(item = {}) {
+  const script = resolveTestScript(item);
   return script ? ["--test-script", script] : [];
 }
 
-function resolveTestScript() {
+function resolveTestScript(item = {}) {
   const inline = getString("test-script", "");
   if (inline) return inline;
   const file = getString("test-script-file", "");
-  if (!file) return "";
-  return captureFile(resolve(repoRoot, file));
+  const routeFile = item.testScriptFile || "";
+  const resolvedFile = file || routeFile;
+  if (!resolvedFile) return "";
+  return captureFile(resolve(repoRoot, resolvedFile));
 }
 
 function resolveOutputPath(value) {

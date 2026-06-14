@@ -226,6 +226,20 @@ const routeSuites = {
       layout: "standalone"
     },
     {
+      label: "学生作业详情",
+      path: "/account/homework-detail?homeworkId=1&courseId=1",
+      demoRole: "student",
+      expect: ["嵌入式 Linux 开发环境作业", "提交作业"],
+      layout: "standalone"
+    },
+    {
+      label: "学生考试详情",
+      path: "/account/exam-detail?examId=1&courseId=1",
+      demoRole: "student",
+      expect: ["嵌入式 Linux 阶段测验", "开始考试"],
+      layout: "standalone"
+    },
+    {
       label: "教师阅卷详情",
       path: "/exam-paper/grading/1",
       demoRole: "teacher",

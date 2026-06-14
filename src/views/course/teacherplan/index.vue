@@ -631,21 +631,6 @@ onMounted(() => {
   min-height: 0;
 }
 
-:global(html.qiming-native-webview.ua-mobile)
-  .teacher-plan-container.is-mobile-layout {
-  padding-top: 24px;
-  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 84px);
-}
-
-:global(html.qiming-native-webview.ua-mobile)
-  .teacher-plan-container.is-mobile-layout
-  .teacher-plan-panel,
-:global(html.qiming-native-webview.ua-mobile)
-  .teacher-plan-container.is-mobile-layout
-  .course-sidebar {
-  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 84px);
-}
-
 .teacher-plan-container.is-mobile-layout .teacher-plan-empty-mobile {
   justify-content: flex-start;
   min-height: 0;

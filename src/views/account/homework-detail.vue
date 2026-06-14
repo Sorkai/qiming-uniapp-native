@@ -375,6 +375,8 @@ onBeforeUnmount(() => {
 .homework-detail-container {
   min-height: 100vh;
   padding: 70px 0 30px;
+  padding-top: calc(var(--pure-safe-area-top, 0px) + 70px);
+  padding-bottom: calc(var(--pure-safe-area-bottom, 0px) + 30px);
   background-color: #f5f7fa;
   transition: background-color 0.3s;
 
@@ -389,7 +391,8 @@ onBeforeUnmount(() => {
     right: 0;
     left: 0;
     z-index: 1000;
-    height: 60px;
+    height: calc(var(--pure-safe-area-top, 0px) + 60px);
+    padding-top: var(--pure-safe-area-top, 0px);
     background-color: #fff;
     box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: background-color 0.3s;
@@ -402,7 +405,8 @@ onBeforeUnmount(() => {
     .header-content {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: minmax(72px, 1fr) auto minmax(72px, 1fr);
       max-width: 1200px;
       height: 100%;
       padding: 0 32px;
@@ -411,6 +415,7 @@ onBeforeUnmount(() => {
       .back-btn {
         display: flex;
         align-items: center;
+        justify-self: start;
         min-width: 60px;
         font-size: 14px;
         cursor: pointer;
@@ -421,13 +426,14 @@ onBeforeUnmount(() => {
       }
 
       .title {
-        flex: 1;
+        justify-self: center;
         font-size: 18px;
         font-weight: bold;
         text-align: center;
       }
 
       .placeholder {
+        justify-self: end;
         min-width: 60px;
       }
     }
@@ -513,6 +519,8 @@ onBeforeUnmount(() => {
             .question-title {
               display: flex;
               align-items: center;
+              flex-wrap: wrap;
+              gap: 8px;
               font-size: 16px;
               font-weight: bold;
 
@@ -589,4 +597,5 @@ onBeforeUnmount(() => {
     text-align: center;
   }
 }
+
 </style>
