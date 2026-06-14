@@ -184,8 +184,8 @@ final class QimingWebViewController: UIViewController, WKNavigationDelegate, WKS
           document.documentElement.style.setProperty('--pure-safe-area-top', '\(top)px');
           document.documentElement.style.setProperty('--pure-safe-area-bottom', '\(bottom)px');
           document.documentElement.style.setProperty('--pure-mobile-tab-height', 'calc(62px + \(bottom)px)');
-          document.documentElement.style.setProperty('--pure-mobile-content-bottom-gap', 'calc(62px + \(bottom)px + 72px)');
-          document.documentElement.style.setProperty('--qiming-native-bottom-clearance', 'calc(96px + \(bottom)px)');
+          document.documentElement.style.setProperty('--pure-mobile-content-bottom-gap', 'calc(62px + \(bottom)px + 18px)');
+          document.documentElement.style.setProperty('--qiming-native-bottom-clearance', 'calc(80px + \(bottom)px)');
         })();
         """
         webView.evaluateJavaScript(script, completionHandler: nil)
@@ -460,8 +460,8 @@ private extension QimingWebViewController {
         document.documentElement.style.setProperty('--pure-safe-area-top', safeTop + 'px');
         document.documentElement.style.setProperty('--pure-safe-area-bottom', safeBottom + 'px');
         document.documentElement.style.setProperty('--pure-mobile-tab-height', 'calc(62px + ' + safeBottom + 'px)');
-        document.documentElement.style.setProperty('--pure-mobile-content-bottom-gap', 'calc(62px + ' + safeBottom + 'px + 72px)');
-        document.documentElement.style.setProperty('--qiming-native-bottom-clearance', 'calc(96px + ' + safeBottom + 'px)');
+        document.documentElement.style.setProperty('--pure-mobile-content-bottom-gap', 'calc(62px + ' + safeBottom + 'px + 18px)');
+        document.documentElement.style.setProperty('--qiming-native-bottom-clearance', 'calc(80px + ' + safeBottom + 'px)');
       }
     })();
     """

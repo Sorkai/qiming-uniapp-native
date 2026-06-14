@@ -374,6 +374,7 @@ const courseScores = ref<CourseScoreResult | null>(null);
 const MOBILE_BREAKPOINT = 767;
 const courseRootEl = ref<HTMLElement | null>(null);
 let mobileOffsetRafId: number | null = null;
+let nativeScrollResetTimerIds: number[] = [];
 
 const isNativeCourseWebView = () =>
   typeof document !== "undefined" &&
@@ -404,7 +405,7 @@ const updateMobileTopOffset = () => {
 
   root.style.setProperty(
     "--course-mobile-top-offset",
-    `${Math.max(measuredOffset, isNative ? 224 : 176)}px`
+    `${Math.max(measuredOffset, isNative ? 150 : 176)}px`
   );
 };
 
@@ -416,6 +417,37 @@ const scheduleMobileTopOffsetUpdate = () => {
   mobileOffsetRafId = requestAnimationFrame(() => {
     mobileOffsetRafId = null;
     updateMobileTopOffset();
+  });
+};
+
+const resetNativeCourseScrollPosition = () => {
+  if (!isNativeCourseWebView()) return;
+
+  nativeScrollResetTimerIds.forEach(timerId => window.clearTimeout(timerId));
+  nativeScrollResetTimerIds = [];
+
+  const reset = () => {
+    window.scrollTo({ left: 0, top: 0 });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    [
+      document.getElementById("app"),
+      courseRootEl.value,
+      document.querySelector(".layout-container"),
+      document.querySelector(".layout-inner-content"),
+      document.querySelector(".course-study-root")
+    ].forEach(node => {
+      if (!(node instanceof HTMLElement)) return;
+      node.scrollTop = 0;
+      node.scrollLeft = 0;
+    });
+  };
+
+  reset();
+  requestAnimationFrame(reset);
+  [80, 240, 600, 1200].forEach(delay => {
+    nativeScrollResetTimerIds.push(window.setTimeout(reset, delay));
   });
 };
 
@@ -1166,6 +1198,7 @@ onMounted(async () => {
 
   nextTick(() => {
     scheduleMobileTopOffsetUpdate();
+    resetNativeCourseScrollPosition();
   });
 });
 
@@ -1180,6 +1213,7 @@ onActivated(() => {
 
   nextTick(() => {
     scheduleMobileTopOffsetUpdate();
+    resetNativeCourseScrollPosition();
   });
 });
 
@@ -1192,6 +1226,8 @@ onBeforeUnmount(() => {
     cancelAnimationFrame(mobileOffsetRafId);
     mobileOffsetRafId = null;
   }
+  nativeScrollResetTimerIds.forEach(timerId => window.clearTimeout(timerId));
+  nativeScrollResetTimerIds = [];
 });
 </script>
 
@@ -1275,6 +1311,22 @@ onBeforeUnmount(() => {
       border-radius: 0;
     }
   }
+}
+
+html.qiming-native-webview.ua-mobile body.course-page {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
+html.qiming-native-webview.ua-mobile body.course-page #app {
+  height: var(--qiming-native-vh, 100dvh) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overflow-anchor: none;
+  overscroll-behavior-y: contain;
+  scroll-behavior: auto !important;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 清空对话 确认框美化 */
@@ -1986,6 +2038,34 @@ html.dark {
     .el-progress-bar__outer {
       background: #444;
     }
+  }
+}
+
+html.qiming-native-webview.ua-mobile .course-detail-root {
+  .layout-inner-content,
+  :deep(.layout-sidebar),
+  :deep(.video-section),
+  :deep(.glass-card),
+  :deep(.out-ai-pro-talk-box),
+  :deep(.ai-assistant-widget) {
+    box-shadow: 0 3px 12px rgb(29 60 120 / 6%) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  :deep(.video-section::after),
+  :deep(.glow-border::before) {
+    opacity: 0 !important;
+  }
+
+  :deep(.study-container),
+  :deep(.mastery-container),
+  :deep(.materials-container),
+  :deep(.homework-exam-container),
+  :deep(.animations-container),
+  :deep(.grades-container),
+  :deep(.qa-container) {
+    padding-bottom: calc(18px + var(--pure-safe-area-bottom, 0px)) !important;
   }
 }
 

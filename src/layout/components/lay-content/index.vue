@@ -54,6 +54,10 @@ const stretch = computed(() => {
 });
 
 const isMobile = computed(() => appStore.getDevice === "mobile");
+const isNativeMobile = computed(() => {
+  if (typeof document === "undefined" || !isMobile.value) return false;
+  return document.documentElement.classList.contains("qiming-native-webview");
+});
 
 const getMainWidth = computed(() => {
   return isNumber(stretch.value)
@@ -64,6 +68,7 @@ const getMainWidth = computed(() => {
 });
 
 const mobileFooterOffset = computed(() => {
+  if (isNativeMobile.value) return "0px";
   return isMobile.value ? "calc(var(--pure-mobile-tab-height) + 16px)" : "0px";
 });
 

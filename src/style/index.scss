@@ -72,7 +72,7 @@ html.qiming-native-webview {
   --qiming-native-vh: 100dvh;
   --qiming-native-vw: 100vw;
   --pure-mobile-tab-height: calc(62px + var(--pure-safe-area-bottom));
-  --pure-mobile-content-bottom-gap: calc(var(--pure-mobile-tab-height) + 72px);
+  --pure-mobile-content-bottom-gap: calc(var(--pure-mobile-tab-height) + 18px);
   --pure-main-content-margin: 10px 10px 0;
   --qiming-native-dock-bg: #fff;
   --qiming-native-dock-border: rgb(226 232 240 / 96%);
@@ -590,7 +590,7 @@ html.qiming-native-webview.ua-mobile
 html.qiming-native-webview.ua-mobile .main-content {
   max-width: calc(100vw - 20px);
   box-sizing: border-box;
-  padding-bottom: var(--pure-mobile-content-bottom-gap);
+  padding-bottom: 0;
   padding-top: 8px;
   text-rendering: geometricprecision;
   -webkit-font-smoothing: antialiased;
@@ -628,10 +628,10 @@ html.qiming-native-webview.qiming-native-ios.ua-mobile .navbar {
   border-bottom: 1px solid var(--qiming-native-dock-border) !important;
   border-radius: 0 0 24px 24px;
   box-shadow:
-    0 14px 30px rgb(29 60 120 / 13%),
-    inset 0 -1px 0 rgb(255 255 255 / 68%) !important;
-  backdrop-filter: blur(24px) saturate(1.16) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.16) !important;
+    0 8px 18px rgb(29 60 120 / 8%),
+    inset 0 -1px 0 rgb(255 255 255 / 70%) !important;
+  backdrop-filter: blur(14px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
 }
 
 html.qiming-native-webview.qiming-native-ios.ua-mobile .navbar > div {

@@ -1,11 +1,19 @@
 <script setup lang="ts">
+import type { Component } from "vue";
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStoreHook } from "@/store/modules/user";
+import DocumentChecked from "~icons/ep/document-checked";
+import HomeFilled from "~icons/ep/home-filled";
+import Reading from "~icons/ep/reading";
+import User from "~icons/ep/user";
+import UserFilled from "~icons/ep/user-filled";
+import EditPen from "~icons/ep/edit-pen";
+import MagicLine from "~icons/ri/magic-line";
 
 type MobileNavItem = {
   title: string;
-  icon: string;
+  icon: Component;
   path: string;
   menu?: string;
   mode?: string;
@@ -26,22 +34,22 @@ const profilePath = computed(() =>
 const adminMobileNavItems: MobileNavItem[] = [
   {
     title: "首页",
-    icon: "ep:home-filled",
+    icon: HomeFilled,
     path: "/welcome/index"
   },
   {
     title: "课程",
-    icon: "ep:reading",
+    icon: Reading,
     path: "/course/list"
   },
   {
     title: "教案",
-    icon: "ep:edit-pen",
+    icon: EditPen,
     path: "/course/teacherplan"
   },
   {
     title: "考核",
-    icon: "ep:document-checked",
+    icon: DocumentChecked,
     path: "/course/assessment"
   }
 ];
@@ -51,27 +59,27 @@ const teacherMobileNavItems = adminMobileNavItems;
 const managerMobileNavItems: MobileNavItem[] = [
   {
     title: "\u9996\u9875",
-    icon: "ep:home-filled",
+    icon: HomeFilled,
     path: "/welcome/index"
   },
   {
     title: "\u7528\u6237",
-    icon: "ep:user-filled",
+    icon: UserFilled,
     path: "/user/list"
   },
   {
     title: "\u8bfe\u7a0b",
-    icon: "ep:reading",
+    icon: Reading,
     path: "/course/list"
   },
   {
     title: "AI App",
-    icon: "ep:chat-dot-round",
+    icon: MagicLine,
     path: "/ai-app/workspace"
   },
   {
     title: "\u8003\u6838",
-    icon: "ep:document-checked",
+    icon: DocumentChecked,
     path: "/course/assessment"
   }
 ];
@@ -79,25 +87,25 @@ const managerMobileNavItems: MobileNavItem[] = [
 const defaultMobileNavItems = computed<MobileNavItem[]>(() => [
   {
     title: "首页",
-    icon: "ep:home-filled",
+    icon: HomeFilled,
     path: "/account",
     menu: "home"
   },
   {
     title: "课程",
-    icon: "ep:reading",
+    icon: Reading,
     path: "/account",
     menu: "course"
   },
   {
     title: "AI App",
-    icon: "ep:chat-dot-round",
+    icon: MagicLine,
     path: "/account/ai-app",
     mode: "student"
   },
   {
     title: "我的",
-    icon: "ep:user",
+    icon: User,
     path: profilePath.value,
     menu: "profile"
   }
@@ -179,7 +187,7 @@ const handleJump = (item: MobileNavItem) => {
       :class="{ active: isActive(item) }"
       @click="handleJump(item)"
     >
-      <IconifyIconOnline :icon="item.icon" class="nav-icon" />
+      <component :is="item.icon" class="nav-icon" />
       <span class="nav-title">{{ item.title }}</span>
     </div>
   </div>

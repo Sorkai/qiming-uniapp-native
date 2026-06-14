@@ -718,6 +718,128 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 <!-- 非scoped 样式，确保下拉菜单正确显示 -->
 <style lang="scss">
+html.qiming-native-webview.ua-mobile {
+  width: 100% !important;
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html.qiming-native-webview.ua-mobile body.course-page,
+html.qiming-native-webview.ua-mobile body.course-page #app,
+html.qiming-native-webview.ua-mobile body.course-page .course-detail-root,
+html.qiming-native-webview.ua-mobile body.course-page .layout-container,
+html.qiming-native-webview.ua-mobile body.course-page .layout-inner-content,
+html.qiming-native-webview.ua-mobile body.course-page .course-study-root {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  transform: none !important;
+}
+
+html.qiming-native-webview.ua-mobile body.course-page .layout-header {
+  top: calc(8px + var(--pure-safe-area-top, 0px)) !important;
+  right: 12px !important;
+  left: 12px !important;
+  z-index: 140 !important;
+  height: 56px !important;
+  padding: 0 12px !important;
+  background: #f8faff !important;
+  border-color: rgb(210 220 238 / 72%) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 2px 8px rgb(29 60 120 / 5%),
+    inset 0 1px 0 rgb(255 255 255 / 72%) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html.qiming-native-webview.ua-mobile body.course-page .layout-header.dark {
+  background: #1e293b !important;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 18%) !important;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .header-content {
+  gap: 8px;
+}
+
+html.qiming-native-webview.ua-mobile body.course-page .layout-header .back-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .header-date {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .header-date--single,
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .header-date-group {
+  margin-left: 10px;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .theme-btn-premium {
+  width: 46px;
+  height: 26px;
+  margin-left: 10px;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .theme-btn-premium
+  .switch-dot {
+  width: 18px;
+  height: 18px;
+}
+
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .theme-btn-premium.is-dark
+  .switch-dot {
+  transform: translateX(20px);
+}
+
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .user-capsule {
+  max-width: 82px;
+  height: 34px;
+  padding: 0 8px;
+  background: rgb(226 232 240 / 72%);
+}
+
+html.qiming-native-webview.ua-mobile
+  body.course-page
+  .layout-header
+  .user-name {
+  max-width: 34px;
+  font-size: 12px;
+}
+
 .course-user-dropdown {
   z-index: 9999 !important;
   padding: 0 !important;
