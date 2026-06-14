@@ -244,6 +244,7 @@ function copyAppIcons(targetAppPath) {
     run("sips", ["-z", String(size), String(size), iconSource, "--out", output]);
   }
   normalizeAppIcons();
+  removeAppleDoubleFiles(appIconRoot);
   for (const [name] of icons) {
     copyFileSync(join(appIconRoot, name), join(targetAppPath, name));
   }
