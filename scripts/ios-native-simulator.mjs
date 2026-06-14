@@ -547,10 +547,16 @@ function evaluateSmokeCase(item, screenshotPath, diagnostics) {
   const unhandledRejections = webMessages.filter(event => event.type === "unhandledrejection");
   const fetchErrors = webMessages.filter(event => event.type === "fetch-error");
   const probeErrors = events.filter(event => event.type === "web-probe-error");
-  const testScriptErrors = events.filter(event => event.type === "test-script-error");
-  const testScriptFailures = events.filter(event => {
-    if (event.type !== "test-script") return false;
-    const result = event.payload?.result ?? event.payload;
+  const testScriptErrors = [
+    ...events.filter(event => event.type === "test-script-error"),
+    ...webMessages.filter(event => event.type === "test-script-error")
+  ];
+  const testScriptResults = [
+    ...events.filter(event => event.type === "test-script").map(event => event.payload),
+    ...webMessages.filter(event => event.type === "test-script")
+  ];
+  const testScriptFailures = testScriptResults.filter(event => {
+    const result = event?.result ?? event;
     return result && typeof result === "object" && result.ok === false;
   });
 
