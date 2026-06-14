@@ -2075,7 +2075,10 @@ $shadow-xl:
   }
 
   .chapter-catalog {
-    min-height: auto;
+    flex: 0 0 auto;
+    height: clamp(260px, 36vh, 340px);
+    min-height: 260px;
+    max-height: 340px;
 
     .catalog-header {
       flex-wrap: wrap;
@@ -2084,13 +2087,17 @@ $shadow-xl:
     }
 
     .catalog-body {
+      min-height: 0;
       padding: 12px;
 
       :deep(.el-scrollbar) {
-        height: auto;
+        height: 100%;
 
         .el-scrollbar__wrap {
-          max-height: 420px;
+          height: 100%;
+          max-height: none;
+          overflow: hidden auto;
+          -webkit-overflow-scrolling: touch;
         }
       }
     }

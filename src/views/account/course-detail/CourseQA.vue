@@ -3740,4 +3740,27 @@ const filterByTag = (tagName: string) => {
   border-color: #3d3d3f !important;
   color: #e0e0e0 !important;
 }
+
+@media (max-width: 768px) {
+  .message-board-wrapper {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .message-board-container {
+    height: auto !important;
+    min-height: 100vh;
+    padding: var(--course-mobile-top-offset, 176px) 14px
+      calc(24px + env(safe-area-inset-bottom)) !important;
+    overflow: visible !important;
+  }
+}
+
+@media (max-width: 479px) {
+  .message-board-container {
+    padding: var(--course-mobile-top-offset, 176px) 10px
+      calc(20px + env(safe-area-inset-bottom)) !important;
+  }
+}
 </style>

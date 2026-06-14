@@ -97,6 +97,7 @@ const itemRefs = new Map<string, HTMLElement>();
 const isMobileView = ref(false);
 const mobileCollapsed = ref(false);
 const mobileExpandAnchor = ref(0);
+let activeScrollTarget: Window | HTMLElement | null = null;
 
 // Emits
 defineEmits<{
@@ -105,11 +106,40 @@ defineEmits<{
 
 const isMobileViewport = () => isMobileView.value;
 
-const getWindowScrollTop = () =>
-  window.scrollY ||
-  document.documentElement.scrollTop ||
-  document.body.scrollTop ||
-  0;
+const resolveScrollTarget = (): Window | HTMLElement => {
+  if (document.documentElement.classList.contains("qiming-native-webview")) {
+    const appRoot = document.getElementById("app");
+    if (appRoot) return appRoot;
+  }
+
+  return window;
+};
+
+const getCurrentScrollTop = () => {
+  const target = activeScrollTarget || resolveScrollTarget();
+
+  if (target instanceof HTMLElement) {
+    return target.scrollTop || 0;
+  }
+
+  return (
+    window.scrollY ||
+    document.documentElement.scrollTop ||
+    document.body.scrollTop ||
+    0
+  );
+};
+
+const bindScrollTarget = () => {
+  const nextTarget = resolveScrollTarget();
+  if (nextTarget === activeScrollTarget) return;
+
+  activeScrollTarget?.removeEventListener("scroll", handleWindowScroll);
+  activeScrollTarget = nextTarget;
+  activeScrollTarget.addEventListener("scroll", handleWindowScroll, {
+    passive: true
+  });
+};
 
 const setItemRef = (key: string, el: HTMLDivElement | null) => {
   if (!key) return;
@@ -126,16 +156,14 @@ const ensureActiveItemVisible = () => {
 
   const containerRect = container.getBoundingClientRect();
   const activeRect = activeItem.getBoundingClientRect();
-  const overflowLeft = activeRect.left < containerRect.left;
-  const overflowRight = activeRect.right > containerRect.right;
+  const targetLeft =
+    activeItem.offsetLeft -
+    (container.clientWidth - activeItem.offsetWidth) / 2;
 
-  if (overflowLeft || overflowRight) {
-    activeItem.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-      block: "nearest"
-    });
-  }
+  container.scrollTo({
+    left: Math.max(0, targetLeft),
+    behavior: "smooth"
+  });
 };
 
 const updateViewportState = () => {
@@ -150,7 +178,7 @@ const updateViewportState = () => {
 const handleMobileScrollState = () => {
   if (!isMobileViewport()) return;
 
-  const scrollTop = getWindowScrollTop();
+  const scrollTop = getCurrentScrollTop();
 
   if (scrollTop <= MOBILE_TOP_RESET) {
     mobileCollapsed.value = false;
@@ -171,13 +199,14 @@ const handleMobileToggle = () => {
   if (!isMobileViewport()) return;
 
   mobileCollapsed.value = false;
-  mobileExpandAnchor.value = getWindowScrollTop();
+  mobileExpandAnchor.value = getCurrentScrollTop();
 
   nextTick(() => ensureActiveItemVisible());
 };
 
 const handleViewportResize = () => {
   updateViewportState();
+  bindScrollTarget();
   nextTick(() => ensureActiveItemVisible());
   handleMobileScrollState();
 };
@@ -212,7 +241,7 @@ watch(
     ensureActiveItemVisible();
 
     if (isMobileViewport() && !mobileCollapsed.value) {
-      mobileExpandAnchor.value = getWindowScrollTop();
+      mobileExpandAnchor.value = getCurrentScrollTop();
     }
   },
   { immediate: true }
@@ -220,15 +249,19 @@ watch(
 
 onMounted(() => {
   updateViewportState();
+  bindScrollTarget();
   window.addEventListener("resize", handleViewportResize, { passive: true });
-  window.addEventListener("scroll", handleWindowScroll, { passive: true });
-  nextTick(() => ensureActiveItemVisible());
+  nextTick(() => {
+    bindScrollTarget();
+    ensureActiveItemVisible();
+  });
   handleMobileScrollState();
 });
 
 onBeforeUnmount(() => {
+  activeScrollTarget?.removeEventListener("scroll", handleWindowScroll);
+  activeScrollTarget = null;
   window.removeEventListener("resize", handleViewportResize);
-  window.removeEventListener("scroll", handleWindowScroll);
 });
 </script>
 
@@ -667,6 +700,7 @@ onBeforeUnmount(() => {
 
   .layout-sidebar-scroll {
     padding: 8px 10px;
+    scroll-padding-inline: 10px;
   }
 
   .layout-sidebar {
