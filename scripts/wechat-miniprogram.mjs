@@ -841,7 +841,7 @@ async function fetchJson(url, init) {
   return response.json();
 }
 
-async function waitForBrowser(port, timeoutMs = 10000) {
+async function waitForBrowser(port, timeoutMs = 20000) {
   const startedAt = Date.now();
   let lastError;
   while (Date.now() - startedAt < timeoutMs) {
@@ -943,6 +943,7 @@ async function runH5Smoke(options) {
   mkdirSync(outDir, { recursive: true });
 
   const browserArgs = [
+    "--remote-debugging-address=127.0.0.1",
     `--remote-debugging-port=${debugPort}`,
     `--user-data-dir=${profileDir}`,
     "--no-first-run",

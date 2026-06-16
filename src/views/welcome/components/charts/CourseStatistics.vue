@@ -57,6 +57,8 @@ const allExamData = ref<any[]>([]);
 
 const progressChartRef = ref();
 const examChartRef = ref();
+const isProgressChartEmpty = ref(false);
+const isExamChartEmpty = ref(false);
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
@@ -554,6 +556,7 @@ watch([pagedUsers, progressSortOrder], () => {
 
 // 渲染学生进度图表（改名为 updateProgressChart，接收已处理的数据）
 const updateProgressChart = users => {
+  isProgressChartEmpty.value = false;
   const userNames = users.map(user => user.userName);
   const progressData = users.map(user => user.progress);
 
@@ -652,6 +655,7 @@ const renderProgressChart = courseData => {
 
 // 渲染空的进度图表
 const renderEmptyProgressChart = (message = "暂无课程进度数据") => {
+  isProgressChartEmpty.value = true;
   setProgressOptions({
     title: {
       text: message,
@@ -694,6 +698,7 @@ const renderExamChart = courseData => {
 
   // 如果有成绩分布数据，显示饼图
   if (courseData.examInfo && courseData.examInfo.length > 0) {
+    isExamChartEmpty.value = false;
     // 转换等级为文字说明
     const levelTexts = {
       1: "差",
@@ -807,6 +812,7 @@ const renderExamChart = courseData => {
     }
 
     if (chartData.length > 0) {
+      isExamChartEmpty.value = false;
       setExamOptions({
         title: {
           text: courseData.examName,
@@ -890,6 +896,7 @@ const renderExamChart = courseData => {
 
 // 渲染空的考试图表
 const renderEmptyExamChart = (message = "暂无考试成绩数据") => {
+  isExamChartEmpty.value = true;
   setExamOptions({
     title: {
       text: message,
@@ -1091,6 +1098,7 @@ onMounted(async () => {
               <div
                 ref="progressChartRef"
                 class="chart-container progress-chart"
+                :class="{ 'is-empty-chart': isProgressChartEmpty }"
                 style="width: 100%"
               />
               <!-- 学生进度分页器 -->
@@ -1149,6 +1157,7 @@ onMounted(async () => {
               <div
                 ref="examChartRef"
                 class="chart-container exam-chart"
+                :class="{ 'is-empty-chart': isExamChartEmpty }"
                 style="width: 100%"
               />
             </div>

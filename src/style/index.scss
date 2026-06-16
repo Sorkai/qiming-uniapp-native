@@ -796,6 +796,39 @@ html.qiming-mini-program-webview.ua-mobile
   padding-bottom: 0 !important;
 }
 
+html.qiming-mini-program-webview.ua-mobile .analysis-panel {
+  padding: 14px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .analysis-panel-header {
+  gap: 10px !important;
+  margin-bottom: 12px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .analysis-panel .progress-chart,
+html.qiming-mini-program-webview.ua-mobile .analysis-panel .exam-chart {
+  height: clamp(160px, 22dvh, 188px) !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .analysis-panel
+  .chart-container.is-empty-chart {
+  height: clamp(96px, 14dvh, 128px) !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .analysis-section
+  .card-body
+  .el-scrollbar__wrap {
+  padding-block: 12px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .analysis-section
+  .panel-empty {
+  height: 144px !important;
+}
+
 html.qiming-native-webview.ua-mobile.dark .fixed-header,
 html.qiming-native-webview.ua-mobile.dark .navbar {
   background: transparent !important;
