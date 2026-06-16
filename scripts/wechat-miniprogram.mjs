@@ -79,6 +79,8 @@ function parseArgs(argv) {
       process.env.QIMING_MINIPROGRAM_WEBVIEW_ORIGIN ||
       process.env.WECHAT_MINIPROGRAM_DEV_SERVER ||
       "",
+    role: process.env.QIMING_MINIPROGRAM_ROLE || "",
+    entry: process.env.QIMING_MINIPROGRAM_ENTRY || "",
     pureSimulator: false,
     version: process.env.WECHAT_MINIPROGRAM_VERSION || "",
     desc: process.env.WECHAT_MINIPROGRAM_DESC || ""
@@ -98,6 +100,12 @@ function parseArgs(argv) {
     } else if (arg === "--dev-server" && next) {
       options.devServer = next;
       i += 1;
+    } else if (arg === "--role" && next) {
+      options.role = next;
+      i += 1;
+    } else if (arg === "--entry" && next) {
+      options.entry = next;
+      i += 1;
     } else if (arg === "--pure-simulator") {
       options.pureSimulator = true;
     } else if (arg === "--version" && next) {
@@ -114,6 +122,8 @@ function parseArgs(argv) {
   }
 
   options.devServer = normalizeOrigin(options.devServer);
+  options.role = normalizeRole(options.role);
+  options.entry = normalizeEntry(options.entry);
   return { command, options };
 }
 
@@ -127,6 +137,29 @@ function normalizeOrigin(input) {
   return parsed.origin;
 }
 
+function normalizeRole(input) {
+  const value = String(input || "").trim();
+  if (!value) return "";
+  if (["student", "teacher", "admin"].includes(value)) return value;
+  throw new Error(`Unsupported mini program role: ${value}`);
+}
+
+function normalizeEntry(input) {
+  let value = String(input || "").trim();
+  if (!value) return "";
+  try {
+    value = decodeURIComponent(value);
+  } catch {
+    value = "/welcome/index";
+  }
+  value = value.replace(/^#/, "");
+  if (!value.startsWith("/")) value = `/${value}`;
+  if (value.startsWith("//") || value.includes("://")) {
+    throw new Error(`Unsupported mini program entry: ${input}`);
+  }
+  return value;
+}
+
 function readJson(file) {
   return JSON.parse(readFileSync(file, "utf8"));
 }
@@ -135,11 +168,11 @@ function writeJson(file, value) {
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-function run(command, args, cwd = root) {
+function run(command, args, cwd = root, env = {}) {
   const result = spawnSync(command, args, {
     cwd,
     stdio: "inherit",
-    env: process.env
+    env: { ...process.env, ...env }
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
@@ -171,6 +204,19 @@ function buildQuery(route, role, devServer) {
   return params.toString();
 }
 
+function readLaunchOptions(config) {
+  const condition = config.condition?.miniprogram;
+  const currentIndex = Number.isInteger(condition?.current) ? condition.current : 0;
+  const current = condition?.list?.[currentIndex] || condition?.list?.[0];
+  if (!current?.query) return {};
+  const params = new URLSearchParams(current.query);
+  return {
+    entry: params.get("entry") || "",
+    role: params.get("demoRole") || "",
+    devServer: params.get("devServer") || ""
+  };
+}
+
 function patchProjectConfig(options) {
   if (!existsSync(projectConfigPath)) {
     throw new Error(
@@ -178,18 +224,31 @@ function patchProjectConfig(options) {
     );
   }
   const config = readJson(projectConfigPath);
+  const existing = readLaunchOptions(config);
+  const launch = {
+    entry: normalizeEntry(options.entry || existing.entry || "/welcome/index"),
+    role: normalizeRole(options.role || existing.role || "teacher"),
+    devServer: normalizeOrigin(options.devServer || existing.devServer || "")
+  };
   config.appid = options.appid || "";
   config.projectname = config.projectname || "IntellEdu";
   config.condition = config.condition || {};
   config.condition.miniprogram = {
     current: 0,
-    list: routeMatrix.map((route, index) => ({
-      id: index,
-      name: route.name,
-      pathName: "pages/index/index",
-      query: buildQuery(route.entry, route.role, options.devServer),
-      scene: null
-    }))
+    list: [
+      {
+        name: "current",
+        pathName: "pages/index/index",
+        query: buildQuery(launch.entry, launch.role, launch.devServer)
+      },
+      ...routeMatrix.map((route, index) => ({
+        id: index,
+        name: route.name,
+        pathName: "pages/index/index",
+        query: buildQuery(route.entry, route.role, launch.devServer),
+        scene: null
+      }))
+    ]
   };
   writeJson(projectConfigPath, config);
   return config;
@@ -213,7 +272,11 @@ function ensureBuildInstalled() {
 
 function runBuild(options) {
   ensureBuildInstalled();
-  run(pnpmCommand(), ["--dir", "native-app", "build:mp-weixin"]);
+  run(pnpmCommand(), ["--dir", "native-app", "build:mp-weixin"], root, {
+    VITE_QIMING_MINIPROGRAM_WEBVIEW_ORIGIN: options.devServer,
+    VITE_QIMING_MINIPROGRAM_ROLE: options.role,
+    VITE_QIMING_MINIPROGRAM_ENTRY: options.entry
+  });
   patchProjectConfig(options);
 }
 
@@ -251,13 +314,15 @@ function collectChecks(options) {
     );
   }
 
+  let launchOptions = {};
   if (existsSync(projectConfigPath)) {
     const config = patchProjectConfig(options);
+    launchOptions = readLaunchOptions(config);
     const list = config.condition?.miniprogram?.list || [];
     add(
-      list.length >= routeMatrix.length ? "OK" : "FAIL",
+      list.length >= routeMatrix.length + 1 ? "OK" : "FAIL",
       "route matrix",
-      `${list.length}/${routeMatrix.length} launch conditions`
+      `${list.length}/${routeMatrix.length + 1} launch conditions`
     );
     add(
       hasRealAppId(config.appid) ? "OK" : "WARN",
@@ -297,9 +362,9 @@ function collectChecks(options) {
     cliPath || "not installed or WECHAT_DEVTOOLS_CLI not set"
   );
   add(
-    options.devServer ? "OK" : "WARN",
+    launchOptions.devServer ? "OK" : "WARN",
     "web-view dev server",
-    options.devServer || "not set; fallback status page will render"
+    launchOptions.devServer || "not set; fallback status page will render"
   );
   return checks;
 }
@@ -445,6 +510,8 @@ Options:
   --appid <wxappid>       Override WECHAT_MINIPROGRAM_APPID.
   --cli <path>            Override WECHAT_DEVTOOLS_CLI.
   --dev-server <origin>   H5 origin for web-view debugging, e.g. http://localhost:8851.
+  --role <role>           Launch role: student, teacher, or admin.
+  --entry <path>          Launch H5 route, e.g. /welcome/index.
   --pure-simulator        Use DevTools pure simulator mode for open.
   --version <semver>      Upload version.
   --desc <text>           Upload description.

@@ -108,17 +108,6 @@ type WebMessage = {
 };
 
 const defaultEntryRoute = "/home";
-const loaded = ref(false);
-const loadError = ref(false);
-const webviewVersion = ref(0);
-const lastMessage = ref<WebMessage | null>(null);
-const previewMode = ref<"phone" | "full">("phone");
-const appEntryRoute = ref(defaultEntryRoute);
-const appDevServer = ref("");
-const appDemoRole = ref("");
-const appNativeStatusTop = ref(0);
-let loadFallbackTimer: ReturnType<typeof setTimeout> | null = null;
-
 let isH5DevPreview = false;
 // #ifdef H5
 isH5DevPreview = import.meta.env.DEV;
@@ -261,9 +250,33 @@ function normalizeDevServer(url: string | null | undefined) {
   }
 }
 
-function normalizeDemoRole(role: string | null | undefined) {
-  return isPreviewRole(role || "") ? role || "" : "";
+function normalizeDemoRole(role: string | null | undefined): PreviewRole | "" {
+  const value = role || "";
+  return isPreviewRole(value) ? value : "";
 }
+
+const loaded = ref(false);
+const loadError = ref(false);
+const webviewVersion = ref(0);
+const lastMessage = ref<WebMessage | null>(null);
+const previewMode = ref<"phone" | "full">("phone");
+const defaultMiniProgramDevServer = normalizeDevServer(
+  import.meta.env.VITE_QIMING_MINIPROGRAM_WEBVIEW_ORIGIN
+);
+const defaultMiniProgramRole = normalizeDemoRole(
+  import.meta.env.VITE_QIMING_MINIPROGRAM_ROLE
+);
+const defaultMiniProgramEntry = resolveEntryForRole(
+  import.meta.env.VITE_QIMING_MINIPROGRAM_ENTRY,
+  defaultMiniProgramRole
+);
+const appEntryRoute = ref(
+  isMiniProgramRuntime ? defaultMiniProgramEntry : defaultEntryRoute
+);
+const appDevServer = ref(isMiniProgramRuntime ? defaultMiniProgramDevServer : "");
+const appDemoRole = ref(isMiniProgramRuntime ? defaultMiniProgramRole : "");
+const appNativeStatusTop = ref(0);
+let loadFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
 const previewRole = computed(() => {
   if (!isH5DevPreview || typeof window === "undefined") return "teacher";
@@ -580,12 +593,17 @@ onLoad(options => {
     devServer?: string;
     demoRole?: string;
   };
-  appDemoRole.value = normalizeDemoRole(pageOptions?.demoRole);
-  appEntryRoute.value = resolveEntryForRole(
-    pageOptions?.entry,
-    appDemoRole.value
-  );
-  appDevServer.value = normalizeDevServer(pageOptions?.devServer);
+  const demoRole =
+    pageOptions?.demoRole !== undefined
+      ? normalizeDemoRole(pageOptions.demoRole)
+      : appDemoRole.value;
+  appDemoRole.value = demoRole;
+  if (pageOptions?.entry !== undefined) {
+    appEntryRoute.value = resolveEntryForRole(pageOptions.entry, demoRole);
+  }
+  if (pageOptions?.devServer !== undefined) {
+    appDevServer.value = normalizeDevServer(pageOptions.devServer);
+  }
   scheduleLoadFallback();
   uni.setNavigationBarTitle({ title: "IntellEdu" });
 });

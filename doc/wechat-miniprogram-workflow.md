@@ -47,9 +47,12 @@ export WECHAT_DEVTOOLS_CLI="/path/to/WeChat DevTools.app/Contents/MacOS/cli"
 打开模拟器：
 
 ```bash
-pnpm mini:open
-pnpm mini:open -- --pure-simulator
+pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role teacher --entry /welcome/index
 ```
+
+`--role` 支持 `student`、`teacher`、`admin`；`--entry` 对应 H5 内部路由。
+裸跑 `mini:open` 时，脚本会保留上一次生成配置里的 `devServer`、角色和入口，避免模拟器
+突然回到没有 web-view 的兜底状态页。
 
 开启微信开发者工具自动化、生成预览二维码、上传体验版都需要真实微信小程序 AppID：
 
@@ -91,11 +94,18 @@ pnpm mini:build
 
 ```bash
 export QIMING_MINIPROGRAM_WEBVIEW_ORIGIN="http://localhost:8851"
-pnpm mini:build
-pnpm mini:open
+pnpm mini:build -- --role teacher --entry /welcome/index
+pnpm mini:open -- --pure-simulator
 ```
 
 `mini:build` 会把 `devServer` 写入启动条件，便于在微信开发者工具里逐个切换路径。
+也可以不用环境变量，直接传：
+
+```bash
+pnpm mini:build -- --dev-server http://localhost:8851 --role student --entry /account?menu=course
+pnpm mini:open -- --pure-simulator
+```
+
 `mini:preview`、`mini:auto`、`mini:upload` 会拒绝空 AppID，防止误把游客态当成可发布版本。
 
 ## 路径矩阵

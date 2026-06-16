@@ -174,14 +174,15 @@ pnpm native:ios:ipa -- --profile /path/to/AppStore_cn.intelledu.qiming.mobilepro
 pnpm mini:doctor
 pnpm mini:build
 pnpm mini:smoke
-pnpm mini:open
+pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role teacher --entry /welcome/index
 ```
 
 微信端从 `main` 单独拉分支推进，继续复用 `native-app/` 的 uni-app 工程。
 `mini:build` 会生成 `native-app/dist/build/mp-weixin` 并写入三端启动路径矩阵；
-`mini:open` 通过微信开发者工具 CLI 打开模拟器。没有真实 AppID 时会使用空 AppID
-导入模拟器，避免触发 `tourist appid` 切换错误；自动化、真机预览和上传需要配置
-`WECHAT_MINIPROGRAM_APPID`，并在微信管理后台配置业务域名。完整流程见
+`mini:open` 通过微信开发者工具 CLI 打开模拟器。调试 web-view 时传入
+`--dev-server`、`--role` 和 `--entry`；未传时脚本会沿用上一次生成配置里的启动条件。
+没有真实 AppID 时会使用空 AppID 导入模拟器，避免触发 `tourist appid` 切换错误；
+自动化、真机预览和上传需要配置 `WECHAT_MINIPROGRAM_APPID`，并在微信管理后台配置业务域名。完整流程见
 `doc/wechat-miniprogram-workflow.md`。
 
 ## 当前 iOS 验收状态
