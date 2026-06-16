@@ -86,6 +86,12 @@ html.qiming-native-webview.ua-mobile {
   --pure-safe-area-top: var(--qiming-native-statusbar-offset);
 }
 
+html.qiming-mini-program-webview.ua-mobile {
+  --qiming-native-statusbar-offset: 0px;
+  --pure-safe-area-top: 0px;
+  --pure-main-content-margin: 8px 10px 0;
+}
+
 html.qiming-native-webview,
 html.qiming-native-webview body,
 html.qiming-native-webview #app {
@@ -804,6 +810,12 @@ html.qiming-native-webview.ua-mobile .account-container .account-content {
   padding: calc(76px + var(--pure-safe-area-top, 0)) 12px
     calc(var(--pure-mobile-tab-height, 58px) + 22px) !important;
   box-sizing: border-box !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .account-container
+  .account-content {
+  padding-top: 14px !important;
 }
 
 html.qiming-native-webview .account-container .account-sidebar,

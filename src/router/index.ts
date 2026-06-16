@@ -232,7 +232,12 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   }
 
   const externalLink = isUrl(to?.name as string);
-  if (!externalLink) {
+  const isMiniProgramWebView =
+    document.documentElement.classList.contains("qiming-mini-program-webview") ||
+    String(to.query?.qimingMiniProgram || "") === "1" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1";
+  if (!externalLink && !isMiniProgramWebView) {
     to.matched.some(item => {
       if (!item.meta.title) return "";
       const Title = getConfig().Title;

@@ -38,9 +38,15 @@ function readNativeQueryParams() {
   const queryNative =
     searchParams.get("qimingNative") === "1" ||
     hashParams.get("qimingNative") === "1";
+  const queryMiniProgram =
+    searchParams.get("qimingMiniProgram") === "1" ||
+    hashParams.get("qimingMiniProgram") === "1";
   const storedNative =
     sessionStorage.getItem("qimingNativeWebView") === "1" ||
     localStorage.getItem("qimingNativeWebView") === "1";
+  const storedMiniProgram =
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1";
   const nativeStatusTop =
     hashParams.get("nativeStatusTop") ||
     searchParams.get("nativeStatusTop") ||
@@ -48,9 +54,13 @@ function readNativeQueryParams() {
     localStorage.getItem("qimingNativeStatusTop") ||
     "";
 
-  if (queryNative) {
+  if (queryNative || queryMiniProgram) {
     sessionStorage.setItem("qimingNativeWebView", "1");
     localStorage.setItem("qimingNativeWebView", "1");
+  }
+  if (queryMiniProgram) {
+    sessionStorage.setItem("qimingMiniProgramWebView", "1");
+    localStorage.setItem("qimingMiniProgramWebView", "1");
   }
   if (nativeStatusTop) {
     sessionStorage.setItem("qimingNativeStatusTop", nativeStatusTop);
@@ -58,7 +68,8 @@ function readNativeQueryParams() {
   }
 
   return {
-    isNative: queryNative || storedNative,
+    isNative: queryNative || queryMiniProgram || storedNative,
+    isMiniProgram: queryMiniProgram || storedMiniProgram,
     nativeStatusTop
   };
 }
@@ -95,13 +106,17 @@ function normalizeNativeStatusbarTop(value: string) {
 function applyNativeWebViewRuntime() {
   if (typeof window === "undefined") return;
   normalizeNativeInitialHash();
-  const { isNative, nativeStatusTop } = readNativeQueryParams();
+  const { isNative, isMiniProgram, nativeStatusTop } = readNativeQueryParams();
   if (!isNative) return;
 
   document.title = "IntellEdu";
   const root = document.documentElement;
   root.classList.add("qiming-native-webview");
   root.dataset.qimingNative = "true";
+  if (isMiniProgram) {
+    root.classList.add("qiming-mini-program-webview");
+    root.dataset.qimingMiniProgram = "true";
+  }
   let maxObservedViewportHeight = 0;
   let focusedNativeInput = false;
 
@@ -270,6 +285,36 @@ function applyNativeWebViewRuntime() {
   const getSingleQueryValue = (value: unknown) =>
     Array.isArray(value) ? value[0] : value;
 
+  const syncMiniProgramDocumentTitle = () => {
+    if (!isMiniProgram) return;
+    const currentRoute = router.currentRoute.value;
+    const role = String(
+      getSingleQueryValue(currentRoute.query.demoRole) || ""
+    );
+    let nextTitle = "IntellEdu";
+    if (currentRoute.path === "/welcome/index") {
+      nextTitle =
+        role === "admin"
+          ? "管理工作台"
+          : role === "teacher"
+            ? "教师工作台"
+            : "IntellEdu";
+    } else if (currentRoute.path === "/account") {
+      nextTitle = "学生主页";
+    } else if (currentRoute.path.startsWith("/course/")) {
+      nextTitle = "课程学习";
+    } else if (currentRoute.path === "/course/list") {
+      nextTitle = "课程";
+    } else if (currentRoute.path === "/course/assessment") {
+      nextTitle = "作业考试";
+    } else if (currentRoute.path === "/ai-app/workspace") {
+      nextTitle = "AI App";
+    } else if (currentRoute.meta?.title) {
+      nextTitle = String(currentRoute.meta.title);
+    }
+    document.title = nextTitle;
+  };
+
   const getNativeUserRole = () => {
     const storedUserInfo = storageLocal().getItem<DataInfo<number>>(userKey);
     if (storedUserInfo?.roleType === 3) return "admin";
@@ -400,8 +445,10 @@ function applyNativeWebViewRuntime() {
       // Best-effort route restore cache for Android task switching.
     }
     window.setTimeout(normalizeNativeRoleRoute, 40);
+    window.setTimeout(syncMiniProgramDocumentTitle, 60);
   });
   window.setTimeout(normalizeNativeRoleRoute, 300);
+  window.setTimeout(syncMiniProgramDocumentTitle, 320);
 
   const dispatchNativeBackEvent = () => {
     const event = new CustomEvent("qiming:native-back", {

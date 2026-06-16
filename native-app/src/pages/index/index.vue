@@ -611,7 +611,9 @@ onLoad(options => {
     appDevServer.value = normalizeDevServer(pageOptions.devServer);
   }
   scheduleLoadFallback();
-  uni.setNavigationBarTitle({ title: "IntellEdu" });
+  if (!isMiniProgramRuntime) {
+    uni.setNavigationBarTitle({ title: "IntellEdu" });
+  }
 });
 
 onShow(() => {
