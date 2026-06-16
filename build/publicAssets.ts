@@ -8,6 +8,7 @@ const PUBLIC_ASSET_WHITELIST = [
   "manifest.webmanifest",
   "sw.js",
   "platform-config.json",
+  "hyWOiOCR1C.txt",
   "campus-2d-bg.svg",
   "icons",
   "wasm",
