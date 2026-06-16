@@ -1248,7 +1248,7 @@ html.qiming-native-webview.ua-mobile .ai-app-left-rail {
 
 html.qiming-native-webview .ai-app-left-rail.is-collapsed,
 html.qiming-native-webview.ua-mobile .ai-app-left-rail.is-collapsed {
-  top: calc(70px + var(--pure-safe-area-top, 0)) !important;
+  top: calc(28px + var(--pure-safe-area-top, 0)) !important;
   bottom: auto !important;
   width: 44px !important;
   min-width: 44px !important;
@@ -1300,12 +1300,15 @@ html.qiming-native-webview .ai-app-left-rail:not(.is-collapsed) > button {
 }
 
 html.qiming-native-webview .ai-chat-scene,
+html.qiming-native-webview.ua-mobile .ai-chat-scene {
+  padding: calc(56px + var(--pure-safe-area-top, 0)) 12px
+    calc(74px + var(--pure-safe-area-bottom, 0)) !important;
+  gap: 10px !important;
+}
+
 html.qiming-native-webview .ai-chat-welcome,
-html.qiming-native-webview main > div[class*="p-4"],
-html.qiming-native-webview.ua-mobile .ai-chat-scene,
-html.qiming-native-webview.ua-mobile .ai-chat-welcome,
-html.qiming-native-webview.ua-mobile main > div[class*="p-4"] {
-  padding: calc(72px + var(--pure-safe-area-top, 0)) 12px
+html.qiming-native-webview.ua-mobile .ai-chat-welcome {
+  padding: calc(84px + var(--pure-safe-area-top, 0)) 12px
     calc(74px + var(--pure-safe-area-bottom, 0)) !important;
   gap: 10px !important;
 }
@@ -1328,8 +1331,8 @@ html.qiming-native-webview.ua-mobile .ai-chat-scene {
 html.qiming-native-webview .ai-chat-card,
 html.qiming-native-webview.ua-mobile .ai-chat-card {
   flex: 0 0 auto !important;
-  height: clamp(236px, 38vh, 330px) !important;
-  min-height: 236px !important;
+  height: clamp(360px, 48vh, 400px) !important;
+  min-height: 360px !important;
   border-radius: 22px !important;
 }
 
@@ -1344,8 +1347,8 @@ html.qiming-native-webview.ua-mobile .ai-app-human-panel {
 
 html.qiming-native-webview .ai-app-human-panel > div:first-of-type,
 html.qiming-native-webview.ua-mobile .ai-app-human-panel > div:first-of-type {
-  height: clamp(286px, 42vh, 390px) !important;
-  min-height: 286px !important;
+  height: clamp(230px, 34vh, 320px) !important;
+  min-height: 230px !important;
   border-radius: 24px !important;
 }
 

@@ -1212,6 +1212,9 @@ async function runH5Smoke(options) {
         info = await inspectPage();
       }
       await waitForImages();
+      // CSS panel transitions can finish after the route text is already present.
+      // Capture settled UI states so screenshots are useful for visual review.
+      await wait(900);
       info = await inspectPage();
       info.matchedExpectedText = route.expectText
         ? String(info.textSample || "").includes(route.expectText)
