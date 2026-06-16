@@ -17,11 +17,29 @@ pnpm --dir native-app install --frozen-lockfile
 pnpm mini:doctor
 pnpm mini:build
 pnpm mini:smoke
+pnpm mini:h5-smoke -- --dev-server http://localhost:8851
 ```
 
 `mini:build` 会执行 `native-app` 的 `uni build -p mp-weixin`，并给
 `native-app/dist/build/mp-weixin/project.config.json` 写入学生端、教师端、管理端
 的启动路径矩阵。
+
+`mini:h5-smoke` 用本机 Chrome/Edge 通过 DevTools Protocol 跑 390x844 手机视口，
+为路径矩阵生成截图和 `summary.json`：
+
+```bash
+pnpm mini:h5-smoke -- --dev-server http://localhost:8851
+```
+
+可选参数：
+
+- `--browser /path/to/Chrome`：指定 Chromium 浏览器。
+- `--out-dir artifacts/wechat-miniprogram/my-run`：指定截图输出目录。
+- `--wait-ms 5000`：延长每条路径等待时间。
+- `--headed`：打开可见浏览器窗口，方便人工旁看。
+
+该命令验证的是微信 `<web-view>` 里承载的 H5 页面移动形态；真实小程序模拟器/真机预览仍需
+真实 AppID 与业务域名配置。
 
 ## 微信开发者工具
 
@@ -88,7 +106,9 @@ pnpm mini:build
 
 1. 编译期与 DevTools 阶段：用 `devServer` 打开现有 H5 业务页，逐个走学生端、教师端、
    管理端路径矩阵。
-2. 真机/发布阶段：确认真实 AppID 与业务域名后，再生成预览二维码和上传体验版。
+2. H5 自动化阶段：用 `pnpm mini:h5-smoke -- --dev-server http://localhost:8851`
+   生成 390x844 手机视口截图和加载摘要。
+3. 真机/发布阶段：确认真实 AppID 与业务域名后，再生成预览二维码和上传体验版。
 
 配置 H5 调试域名：
 

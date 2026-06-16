@@ -25,6 +25,7 @@
     "mini:doctor": "node scripts/wechat-miniprogram.mjs doctor",
     "mini:build": "node scripts/wechat-miniprogram.mjs build",
     "mini:smoke": "node scripts/wechat-miniprogram.mjs smoke",
+    "mini:h5-smoke": "node scripts/wechat-miniprogram.mjs h5-smoke",
     "mini:open": "node scripts/wechat-miniprogram.mjs open",
     "mini:preview": "node scripts/wechat-miniprogram.mjs preview",
     "mini:auto": "node scripts/wechat-miniprogram.mjs auto",

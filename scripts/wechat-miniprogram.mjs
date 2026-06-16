@@ -1,7 +1,16 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,47 +31,56 @@ const routeMatrix = [
   {
     name: "student-home",
     role: "student",
-    entry: "/account?menu=home"
+    entry: "/account?menu=home",
+    expectText: "吴同学"
   },
   {
     name: "student-courses",
     role: "student",
-    entry: "/account?menu=course"
+    entry: "/account?menu=course",
+    expectText: "我的课程"
   },
   {
     name: "student-exams",
     role: "student",
-    entry: "/account?menu=exam-center"
+    entry: "/account?menu=exam-center",
+    expectText: "试题试卷中心"
   },
   {
     name: "student-ai-app",
     role: "student",
-    entry: "/account/ai-app?mode=student"
+    entry: "/account/ai-app?mode=student",
+    expectText: "学生模式"
   },
   {
     name: "teacher-dashboard",
     role: "teacher",
-    entry: "/welcome/index"
+    entry: "/welcome/index",
+    expectText: "教师"
   },
   {
     name: "teacher-courses",
     role: "teacher",
-    entry: "/course/list"
+    entry: "/course/list",
+    expectText: "课程名称"
   },
   {
     name: "teacher-ai-app",
     role: "teacher",
-    entry: "/ai-app/workspace"
+    entry: "/ai-app/workspace",
+    expectText: "教师模式"
   },
   {
     name: "admin-dashboard",
     role: "admin",
-    entry: "/welcome/index"
+    entry: "/welcome/index",
+    expectText: "管理员"
   },
   {
     name: "admin-users",
     role: "admin",
-    entry: "/user/list"
+    entry: "/user/list",
+    expectText: "用户列表"
   }
 ];
 
@@ -83,7 +101,11 @@ function parseArgs(argv) {
     entry: process.env.QIMING_MINIPROGRAM_ENTRY || "",
     pureSimulator: false,
     version: process.env.WECHAT_MINIPROGRAM_VERSION || "",
-    desc: process.env.WECHAT_MINIPROGRAM_DESC || ""
+    desc: process.env.WECHAT_MINIPROGRAM_DESC || "",
+    browser: process.env.QIMING_MINIPROGRAM_BROWSER || "",
+    outDir: "",
+    waitMs: Number(process.env.QIMING_MINIPROGRAM_H5_WAIT_MS || 8000),
+    headed: false
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -114,6 +136,17 @@ function parseArgs(argv) {
     } else if (arg === "--desc" && next) {
       options.desc = next;
       i += 1;
+    } else if (arg === "--browser" && next) {
+      options.browser = next;
+      i += 1;
+    } else if (arg === "--out-dir" && next) {
+      options.outDir = next;
+      i += 1;
+    } else if (arg === "--wait-ms" && next) {
+      options.waitMs = Number(next);
+      i += 1;
+    } else if (arg === "--headed") {
+      options.headed = true;
     } else if (arg === "-h" || arg === "--help") {
       options.help = true;
     } else {
@@ -124,6 +157,9 @@ function parseArgs(argv) {
   options.devServer = normalizeOrigin(options.devServer);
   options.role = normalizeRole(options.role);
   options.entry = normalizeEntry(options.entry);
+  if (!Number.isFinite(options.waitMs) || options.waitMs < 0) {
+    throw new Error(`Unsupported wait time: ${options.waitMs}`);
+  }
   return { command, options };
 }
 
@@ -192,6 +228,16 @@ function resolveCliPath(explicitPath = "") {
     "/Applications/WeChat DevTools.app/Contents/MacOS/cli",
     "/Applications/WeChatDeveloperTool.app/Contents/MacOS/cli",
     "/Applications/微信开发者工具.app/Contents/MacOS/cli"
+  ].filter(Boolean);
+  return candidates.find(candidate => existsSync(candidate)) || "";
+}
+
+function resolveBrowserPath(explicitPath = "") {
+  const candidates = [
+    explicitPath,
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium"
   ].filter(Boolean);
   return candidates.find(candidate => existsSync(candidate)) || "";
 }
@@ -381,6 +427,288 @@ function printChecks(checks) {
   if (failCount > 0) process.exitCode = 1;
 }
 
+function wait(ms) {
+  return new Promise(resolveWait => setTimeout(resolveWait, ms));
+}
+
+function hasValidRouteContent(info, route) {
+  const textLength = Number(info?.textLength);
+  if (!Number.isFinite(textLength) || textLength === 0 || info?.blank) {
+    return false;
+  }
+  return route.expectText
+    ? String(info?.textSample || "").includes(route.expectText)
+    : true;
+}
+
+function getFreePort() {
+  return new Promise((resolvePort, rejectPort) => {
+    const server = createServer();
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      server.close(() => {
+        if (address && typeof address === "object") {
+          resolvePort(address.port);
+        } else {
+          rejectPort(new Error("Unable to allocate a local browser debug port."));
+        }
+      });
+    });
+    server.on("error", rejectPort);
+  });
+}
+
+async function fetchJson(url, init) {
+  const response = await fetch(url, init);
+  if (!response.ok) {
+    throw new Error(`${url} failed with HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+async function waitForBrowser(port, timeoutMs = 10000) {
+  const startedAt = Date.now();
+  let lastError;
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      return await fetchJson(`http://127.0.0.1:${port}/json/version`);
+    } catch (error) {
+      lastError = error;
+      await wait(200);
+    }
+  }
+  throw new Error(
+    `Browser did not expose DevTools port ${port}: ${
+      lastError instanceof Error ? lastError.message : lastError
+    }`
+  );
+}
+
+class CdpClient {
+  constructor(wsUrl) {
+    this.wsUrl = wsUrl;
+    this.nextId = 1;
+    this.pending = new Map();
+  }
+
+  async connect() {
+    this.socket = new WebSocket(this.wsUrl);
+    await new Promise((resolveConnect, rejectConnect) => {
+      this.socket.addEventListener("open", resolveConnect, { once: true });
+      this.socket.addEventListener(
+        "error",
+        () => rejectConnect(new Error(`Unable to connect CDP: ${this.wsUrl}`)),
+        { once: true }
+      );
+    });
+    this.socket.addEventListener("message", event => {
+      const message = JSON.parse(event.data);
+      if (!message.id) return;
+      const pending = this.pending.get(message.id);
+      if (!pending) return;
+      this.pending.delete(message.id);
+      if (message.error) {
+        pending.reject(new Error(message.error.message || "CDP command failed."));
+      } else {
+        pending.resolve(message.result);
+      }
+    });
+  }
+
+  send(method, params = {}) {
+    const id = this.nextId;
+    this.nextId += 1;
+    const payload = JSON.stringify({ id, method, params });
+    return new Promise((resolveCommand, rejectCommand) => {
+      this.pending.set(id, { resolve: resolveCommand, reject: rejectCommand });
+      this.socket.send(payload);
+    });
+  }
+
+  close() {
+    this.socket?.close();
+  }
+}
+
+function h5RouteUrl(devServer, route, smokeId = "") {
+  const params = new URLSearchParams({
+    demoRole: route.role,
+    qimingNative: "1",
+    qimingMiniProgram: "1"
+  });
+  if (smokeId) params.set("_qimingSmoke", smokeId);
+  return `${devServer}/#${route.entry}${
+    route.entry.includes("?") ? "&" : "?"
+  }${params.toString()}`;
+}
+
+async function runH5Smoke(options) {
+  const devServer = normalizeOrigin(options.devServer);
+  if (!devServer) {
+    throw new Error(
+      "mini:h5-smoke requires --dev-server or QIMING_MINIPROGRAM_WEBVIEW_ORIGIN."
+    );
+  }
+
+  const browserPath = resolveBrowserPath(options.browser);
+  if (!browserPath) {
+    throw new Error(
+      "Chrome/Edge not found. Pass --browser /path/to/Chrome or install a Chromium browser."
+    );
+  }
+
+  const debugPort = await getFreePort();
+  const profileDir = mkdtempSync(join(tmpdir(), "qiming-mini-h5-smoke-"));
+  const outDir =
+    options.outDir ||
+    join(
+      artifactsDir,
+      `h5-route-smoke-${new Date().toISOString().replace(/[:.]/g, "-")}`
+    );
+  mkdirSync(outDir, { recursive: true });
+
+  const browserArgs = [
+    `--remote-debugging-port=${debugPort}`,
+    `--user-data-dir=${profileDir}`,
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-background-networking",
+    "--disable-renderer-backgrounding",
+    "--window-size=390,844"
+  ];
+  if (!options.headed) browserArgs.push("--headless=new");
+
+  const browserProcess = spawn(browserPath, browserArgs, {
+    stdio: ["ignore", "ignore", "pipe"]
+  });
+  let browserError = "";
+  browserProcess.stderr.on("data", chunk => {
+    browserError += chunk.toString();
+  });
+
+  let client;
+  try {
+    await waitForBrowser(debugPort);
+    const tab = await fetchJson(`http://127.0.0.1:${debugPort}/json/new`, {
+      method: "PUT"
+    });
+    client = new CdpClient(tab.webSocketDebuggerUrl);
+    await client.connect();
+    await client.send("Page.enable");
+    await client.send("Runtime.enable");
+    await client.send("Emulation.setDeviceMetricsOverride", {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 3,
+      mobile: true
+    });
+
+    const inspectPageExpression = `(() => {
+      const text = (document.body?.innerText || "").replace(/\\s+/g, " ").trim();
+      const app = document.querySelector("#app");
+      const vw = document.documentElement.clientWidth;
+      const maxScrollWidth = Math.max(
+        document.body.scrollWidth,
+        document.documentElement.scrollWidth
+      );
+      return {
+        href: location.href,
+        title: document.title,
+        textLength: text.length,
+        textSample: text.slice(0, 420),
+        appChildren: app?.children?.length || 0,
+        overflowX: Math.max(0, Math.round(maxScrollWidth - vw)),
+        scrollHeight: Math.round(Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight
+        )),
+        blank: Boolean(app) && !text,
+        loadingDots: document.querySelectorAll(
+          ".pure-loading, .loading, [class*=loading], [class*=Loading]"
+        ).length
+      };
+    })()`;
+    const inspectPage = async () => {
+      const evaluation = await client.send("Runtime.evaluate", {
+        returnByValue: true,
+        awaitPromise: true,
+        expression: inspectPageExpression
+      });
+      return evaluation.result?.value || {};
+    };
+
+    const results = [];
+    for (const route of routeMatrix) {
+      const url = h5RouteUrl(devServer, route, `${Date.now()}-${route.name}`);
+      await client.send("Page.navigate", { url: "about:blank" });
+      await wait(150);
+      await client.send("Page.navigate", { url });
+      const startedAt = Date.now();
+      let info = await inspectPage();
+      while (
+        Date.now() - startedAt < options.waitMs &&
+        !hasValidRouteContent(info, route)
+      ) {
+        await wait(300);
+        info = await inspectPage();
+      }
+      info.matchedExpectedText = route.expectText
+        ? String(info.textSample || "").includes(route.expectText)
+        : true;
+      const screenshot = await client.send("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true
+      });
+      const screenshotPath = join(outDir, `${route.name}.png`);
+      writeFileSync(screenshotPath, Buffer.from(screenshot.data, "base64"));
+      results.push({ ...route, url, screenshotPath, info });
+      const failed = !hasValidRouteContent(info, route);
+      const status = failed ? "FAIL" : "OK";
+      console.log(
+        `[${status}] ${route.name.padEnd(18, " ")} text=${String(
+          info.textLength ?? 0
+        ).padStart(4, " ")} overflowX=${info.overflowX ?? "?"} expect=${
+          route.expectText || "-"
+        } ${screenshotPath}`
+      );
+    }
+
+    const summary = {
+      generatedAt: new Date().toISOString(),
+      devServer,
+      viewport: { width: 390, height: 844, deviceScaleFactor: 3, mobile: true },
+      browserPath,
+      results
+    };
+    writeJson(join(outDir, "summary.json"), summary);
+    const failed = results.filter(
+      result => !hasValidRouteContent(result.info, result)
+    );
+    console.log(`Summary written: ${join(outDir, "summary.json")}`);
+    console.log(
+      `H5 route smoke: ${results.length - failed.length} OK, ${failed.length} FAIL`
+    );
+    if (failed.length > 0) process.exitCode = 1;
+  } finally {
+    client?.close();
+    browserProcess.kill();
+    await wait(300);
+    try {
+      rmSync(profileDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 150 });
+    } catch (error) {
+      console.warn(
+        `[WARN] temporary browser profile cleanup skipped: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+    }
+  }
+
+  if (browserError && process.env.QIMING_MINIPROGRAM_DEBUG_BROWSER === "1") {
+    console.error(browserError.trim());
+  }
+}
+
 function runDoctor(options) {
   const checks = [];
   const add = (status, name, detail = "") => checks.push({ status, name, detail });
@@ -501,6 +829,7 @@ Commands:
   doctor   Check local mini program tooling.
   build    Build native-app as mp-weixin and patch launch conditions.
   smoke    Verify generated mp-weixin files and route conditions.
+  h5-smoke Capture mobile screenshots for the H5 route matrix.
   open     Open the generated project in WeChat DevTools.
   preview  Generate a WeChat preview QR code through DevTools CLI.
   auto     Enable WeChat DevTools automation; requires a real AppID.
@@ -513,6 +842,10 @@ Options:
   --role <role>           Launch role: student, teacher, or admin.
   --entry <path>          Launch H5 route, e.g. /welcome/index.
   --pure-simulator        Use DevTools pure simulator mode for open.
+  --browser <path>        Chromium browser path for h5-smoke.
+  --out-dir <path>        Screenshot output directory for h5-smoke.
+  --wait-ms <ms>          Per-route wait time for h5-smoke.
+  --headed                Run h5-smoke with a visible browser window.
   --version <semver>      Upload version.
   --desc <text>           Upload description.
 `);
@@ -529,6 +862,8 @@ try {
     printChecks(collectChecks(options));
   } else if (command === "smoke") {
     printChecks(collectChecks(options));
+  } else if (command === "h5-smoke") {
+    await runH5Smoke(options);
   } else if (command === "open") {
     runOpen(options);
   } else if (command === "preview") {

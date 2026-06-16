@@ -174,6 +174,7 @@ pnpm native:ios:ipa -- --profile /path/to/AppStore_cn.intelledu.qiming.mobilepro
 pnpm mini:doctor
 pnpm mini:build
 pnpm mini:smoke
+pnpm mini:h5-smoke -- --dev-server http://localhost:8851
 pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role teacher --entry /welcome/index
 ```
 
@@ -181,6 +182,9 @@ pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role tea
 `mini:build` 会生成 `native-app/dist/build/mp-weixin` 并写入三端启动路径矩阵；
 `mini:open` 通过微信开发者工具 CLI 打开模拟器。调试 web-view 时传入
 `--dev-server`、`--role` 和 `--entry`；未传时脚本会沿用上一次生成配置里的启动条件。
+`mini:h5-smoke` 会用本机 Chrome/Edge 以 390x844 手机视口为学生端、教师端、管理端路径矩阵
+生成截图和 `summary.json` 到 `artifacts/wechat-miniprogram/`，用于微信 web-view 正式 AppID
+可用前的自动化界面加载验收。
 没有真实 AppID 时会使用空 AppID 导入模拟器，避免触发 `tourist appid` 切换错误；
 自动化、真机预览和上传需要配置 `WECHAT_MINIPROGRAM_APPID`，并在微信管理后台配置业务域名。完整流程见
 `doc/wechat-miniprogram-workflow.md`。
