@@ -51,6 +51,13 @@ pnpm mini:open
 pnpm mini:open -- --pure-simulator
 ```
 
+开启微信开发者工具自动化、生成预览二维码、上传体验版都需要真实微信小程序 AppID：
+
+```bash
+export WECHAT_MINIPROGRAM_APPID="wx..."
+pnpm mini:auto
+```
+
 生成预览二维码：
 
 ```bash
@@ -65,7 +72,8 @@ pnpm mini:upload -- --version 0.1.0 --desc "IntellEdu WeChat mini program smoke 
 
 ## AppID 与业务域名
 
-本地没有真实微信小程序 AppID 时，构建产物会保留 `touristappid`。拿到真实 AppID 后：
+本地没有真实微信小程序 AppID 时，构建产物会保留空 AppID，方便导入微信开发者工具模拟器，
+并避免登录后触发 `tourist appid` 的 AppID 切换错误。拿到真实 AppID 后：
 
 ```bash
 export WECHAT_MINIPROGRAM_APPID="wx..."
@@ -88,6 +96,7 @@ pnpm mini:open
 ```
 
 `mini:build` 会把 `devServer` 写入启动条件，便于在微信开发者工具里逐个切换路径。
+`mini:preview`、`mini:auto`、`mini:upload` 会拒绝空 AppID，防止误把游客态当成可发布版本。
 
 ## 路径矩阵
 

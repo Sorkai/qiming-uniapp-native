@@ -10,6 +10,8 @@ const buildDir = join(nativeProject, "dist", "build", "mp-weixin");
 const projectConfigPath = join(buildDir, "project.config.json");
 const artifactsDir = join(root, "artifacts", "wechat-miniprogram");
 
+const realAppIdPattern = /^wx[a-zA-Z0-9]{16}$/;
+
 const roleLabels = {
   student: "student",
   teacher: "teacher",
@@ -176,7 +178,7 @@ function patchProjectConfig(options) {
     );
   }
   const config = readJson(projectConfigPath);
-  config.appid = options.appid || config.appid || "touristappid";
+  config.appid = options.appid || "";
   config.projectname = config.projectname || "IntellEdu";
   config.condition = config.condition || {};
   config.condition.miniprogram = {
@@ -191,6 +193,17 @@ function patchProjectConfig(options) {
   };
   writeJson(projectConfigPath, config);
   return config;
+}
+
+function hasRealAppId(appid) {
+  return realAppIdPattern.test(String(appid || ""));
+}
+
+function assertRealAppId(options, command) {
+  if (hasRealAppId(options.appid)) return;
+  throw new Error(
+    `${command} requires a real WeChat Mini Program AppID. Set WECHAT_MINIPROGRAM_APPID=wx... or pass --appid wx....`
+  );
 }
 
 function ensureBuildInstalled() {
@@ -247,9 +260,9 @@ function collectChecks(options) {
       `${list.length}/${routeMatrix.length} launch conditions`
     );
     add(
-      config.appid && config.appid !== "touristappid" ? "OK" : "WARN",
+      hasRealAppId(config.appid) ? "OK" : "WARN",
       "WeChat AppID",
-      config.appid || "missing; set WECHAT_MINIPROGRAM_APPID"
+      config.appid || "empty for simulator import; set WECHAT_MINIPROGRAM_APPID for preview/upload/auto"
     );
   }
 
@@ -353,6 +366,7 @@ function runOpen(options) {
 }
 
 function runPreview(options) {
+  assertRealAppId(options, "mini:preview");
   if (!existsSync(buildDir)) runBuild(options);
   patchProjectConfig(options);
   const cliPath = resolveCliPath(options.cli);
@@ -375,7 +389,21 @@ function runPreview(options) {
   ]);
 }
 
+function runAuto(options) {
+  assertRealAppId(options, "mini:auto");
+  if (!existsSync(buildDir)) runBuild(options);
+  patchProjectConfig(options);
+  const cliPath = resolveCliPath(options.cli);
+  if (!cliPath) {
+    throw new Error(
+      "WeChat DevTools CLI not found. Install WeChat DevTools or set WECHAT_DEVTOOLS_CLI."
+    );
+  }
+  run(cliPath, ["auto", "--project", buildDir, "--trust-project"]);
+}
+
 function runUpload(options) {
+  assertRealAppId(options, "mini:upload");
   if (!options.version) {
     throw new Error("Missing --version or WECHAT_MINIPROGRAM_VERSION.");
   }
@@ -410,6 +438,7 @@ Commands:
   smoke    Verify generated mp-weixin files and route conditions.
   open     Open the generated project in WeChat DevTools.
   preview  Generate a WeChat preview QR code through DevTools CLI.
+  auto     Enable WeChat DevTools automation; requires a real AppID.
   upload   Upload through DevTools CLI; requires --version.
 
 Options:
@@ -437,6 +466,8 @@ try {
     runOpen(options);
   } else if (command === "preview") {
     runPreview(options);
+  } else if (command === "auto") {
+    runAuto(options);
   } else if (command === "upload") {
     runUpload(options);
   } else {

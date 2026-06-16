@@ -27,6 +27,7 @@
     "mini:smoke": "node scripts/wechat-miniprogram.mjs smoke",
     "mini:open": "node scripts/wechat-miniprogram.mjs open",
     "mini:preview": "node scripts/wechat-miniprogram.mjs preview",
+    "mini:auto": "node scripts/wechat-miniprogram.mjs auto",
     "mini:upload": "node scripts/wechat-miniprogram.mjs upload",
     "build:staging": "rimraf dist && vite build --mode staging",
     "report": "rimraf dist && vite build",
