@@ -686,6 +686,26 @@ function hasValidRouteContent(info, route) {
     : true;
 }
 
+function getH5RouteSmokeFailures(info, route) {
+  const failures = [];
+  const textLength = Number(info?.textLength);
+  if (!Number.isFinite(textLength) || textLength === 0) {
+    failures.push("empty-text");
+  }
+  if (info?.blank) failures.push("blank");
+  const overflowX = Number(info?.overflowX);
+  if (Number.isFinite(overflowX) && overflowX > 0) {
+    failures.push(`overflow-x:${overflowX}`);
+  }
+  if (
+    route.expectText &&
+    !String(info?.textSample || "").includes(route.expectText)
+  ) {
+    failures.push(`missing-text:${route.expectText}`);
+  }
+  return failures;
+}
+
 function inspectPng(file) {
   const png = PNG.sync.read(readFileSync(file));
   const pixels = png.width * png.height;
@@ -956,9 +976,10 @@ async function runH5Smoke(options) {
       });
       const screenshotPath = join(outDir, `${route.name}.png`);
       writeFileSync(screenshotPath, Buffer.from(screenshot.data, "base64"));
-      results.push({ ...route, url, screenshotPath, info });
-      const failed = !hasValidRouteContent(info, route);
-      const status = failed ? "FAIL" : "OK";
+      const failReasons = getH5RouteSmokeFailures(info, route);
+      const ok = failReasons.length === 0;
+      results.push({ ...route, url, screenshotPath, info, ok, failReasons });
+      const status = ok ? "OK" : "FAIL";
       console.log(
         `[${status}] ${route.name.padEnd(18, " ")} text=${String(
           info.textLength ?? 0
@@ -973,12 +994,15 @@ async function runH5Smoke(options) {
       devServer,
       viewport: { width: 390, height: 844, deviceScaleFactor: 3, mobile: true },
       browserPath,
+      totals: {
+        routes: results.length,
+        ok: results.filter(result => result.ok).length,
+        fail: results.filter(result => !result.ok).length
+      },
       results
     };
     writeJson(join(outDir, "summary.json"), summary);
-    const failed = results.filter(
-      result => !hasValidRouteContent(result.info, result)
-    );
+    const failed = results.filter(result => !result.ok);
     console.log(`Summary written: ${join(outDir, "summary.json")}`);
     console.log(
       `H5 route smoke: ${results.length - failed.length} OK, ${failed.length} FAIL`
