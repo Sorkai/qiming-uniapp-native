@@ -34,6 +34,10 @@ pnpm mini:smoke
 - `/Applications/WeChatWebDevTools.app/Contents/MacOS/cli`
 - `/Applications/微信开发者工具.app/Contents/MacOS/cli`
 
+本机已验证路径：
+
+- `/Applications/wechatwebdevtools.app/Contents/MacOS/cli`
+
 若安装在其它位置：
 
 ```bash
