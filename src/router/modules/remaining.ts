@@ -109,7 +109,8 @@ export default [
     meta: {
       title: "作业详情",
       showLink: false,
-      rank: 107
+      rank: 107,
+      roles: ["admin", "teacher", "student"]
     }
   },
   {
@@ -119,7 +120,8 @@ export default [
     meta: {
       title: "考试详情",
       showLink: false,
-      rank: 108
+      rank: 108,
+      roles: ["admin", "teacher", "student"]
     }
   },
   // 学生答卷页面（全屏，无布局）
@@ -130,7 +132,8 @@ export default [
     meta: {
       title: "参加考试",
       showLink: false,
-      rank: 109
+      rank: 109,
+      roles: ["student"]
     }
   },
   {
@@ -140,7 +143,8 @@ export default [
     meta: {
       title: "考试结果",
       showLink: false,
-      rank: 110
+      rank: 110,
+      roles: ["student"]
     }
   }
   // 嵌入到课程详情中的随练页面已不再需要独立路由

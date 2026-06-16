@@ -189,16 +189,43 @@ import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 const router = useRouter();
 const route = useRoute();
 
+const courseDetailMenuKeys = [
+  "course-learn",
+  "mastery",
+  "course-qa",
+  "homework-exam",
+  "course-materials",
+  "html-animations",
+  "grades"
+] as const;
+
+type CourseDetailMenuKey = (typeof courseDetailMenuKeys)[number];
+
+const normalizeCourseDetailMenu = (
+  value: unknown
+): CourseDetailMenuKey | "" => {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return typeof raw === "string" &&
+    (courseDetailMenuKeys as readonly string[]).includes(raw)
+    ? (raw as CourseDetailMenuKey)
+    : "";
+};
+
+const getSavedActiveMenu = (id: string | string[]) =>
+  normalizeCourseDetailMenu(
+    storageLocal().getItem(`course_detail_active_menu_${id}`)
+  );
+
 // 基础状态
 const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
 const currentTheme = ref(getSavedCourseTheme("light"));
-const activeMenu = ref(
-  (storageLocal().getItem(
-    `course_detail_active_menu_${route.params.id}`
-  ) as string) || "course-learn"
+const activeMenu = ref<CourseDetailMenuKey>(
+  normalizeCourseDetailMenu(route.query.section) ||
+    getSavedActiveMenu(route.params.id) ||
+    "course-learn"
 );
 
 // 监听菜单变化并持久化
@@ -240,10 +267,10 @@ watch(
       courseScores.value = null;
 
       // 恢复新课程的菜单状态
-      const savedMenu = storageLocal().getItem(
-        `course_detail_active_menu_${id}`
-      ) as string;
-      activeMenu.value = savedMenu || "course-learn";
+      activeMenu.value =
+        normalizeCourseDetailMenu(route.query.section) ||
+        getSavedActiveMenu(String(id)) ||
+        "course-learn";
 
       // 恢复新课程的课时状态
       const savedNode = storageLocal().getItem(
@@ -271,6 +298,16 @@ watch(
       nextTick(() => {
         scheduleMobileTopOffsetUpdate();
       });
+    }
+  }
+);
+
+watch(
+  () => route.query.section,
+  section => {
+    const nextMenu = normalizeCourseDetailMenu(section);
+    if (nextMenu && nextMenu !== activeMenu.value) {
+      activeMenu.value = nextMenu;
     }
   }
 );
@@ -558,7 +595,7 @@ watch(
 );
 
 // 菜单切换
-const handleMenuClick = (menuName: string) => {
+const handleMenuClick = (menuName: CourseDetailMenuKey) => {
   activeMenu.value = menuName;
 
   // 如果视频正在播放且切换到了非课程学习菜单，则暂停视频

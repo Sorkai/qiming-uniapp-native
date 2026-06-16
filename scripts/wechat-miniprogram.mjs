@@ -41,10 +41,46 @@ const routeMatrix = [
     expectText: "我的课程"
   },
   {
+    name: "student-course-study",
+    role: "student",
+    entry: "/course/1?section=course-learn",
+    expectText: "章节目录"
+  },
+  {
+    name: "student-course-mastery",
+    role: "student",
+    entry: "/course/1?section=mastery",
+    expectText: "知识点"
+  },
+  {
+    name: "student-course-qa",
+    role: "student",
+    entry: "/course/1?section=course-qa",
+    expectText: "课程问答"
+  },
+  {
+    name: "student-course-work",
+    role: "student",
+    entry: "/course/1?section=homework-exam",
+    expectText: "作业考试"
+  },
+  {
     name: "student-exams",
     role: "student",
     entry: "/account?menu=exam-center",
     expectText: "试题试卷中心"
+  },
+  {
+    name: "student-exam-do",
+    role: "student",
+    entry: "/student-exam-center/do/1",
+    expectText: "考试"
+  },
+  {
+    name: "student-exam-result",
+    role: "student",
+    entry: "/exam-paper/result/1",
+    expectText: "考试结果"
   },
   {
     name: "student-ai-app",
@@ -65,6 +101,24 @@ const routeMatrix = [
     expectText: "课程名称"
   },
   {
+    name: "teacher-course-category",
+    role: "teacher",
+    entry: "/course/category",
+    expectText: "课程分类"
+  },
+  {
+    name: "teacher-course-assessment",
+    role: "teacher",
+    entry: "/course/assessment",
+    expectText: "课程中心"
+  },
+  {
+    name: "teacher-discussion-review",
+    role: "teacher",
+    entry: "/course/discussion/review",
+    expectText: "筛选条件"
+  },
+  {
     name: "teacher-ai-app",
     role: "teacher",
     entry: "/ai-app/workspace",
@@ -81,6 +135,18 @@ const routeMatrix = [
     role: "admin",
     entry: "/user/list",
     expectText: "用户列表"
+  },
+  {
+    name: "admin-course-category",
+    role: "admin",
+    entry: "/course/category",
+    expectText: "课程分类"
+  },
+  {
+    name: "admin-discussion-review",
+    role: "admin",
+    entry: "/course/discussion/review",
+    expectText: "筛选条件"
   }
 ];
 
@@ -564,6 +630,10 @@ function wait(ms) {
 function hasValidRouteContent(info, route) {
   const textLength = Number(info?.textLength);
   if (!Number.isFinite(textLength) || textLength === 0 || info?.blank) {
+    return false;
+  }
+  const overflowX = Number(info?.overflowX);
+  if (Number.isFinite(overflowX) && overflowX > 0) {
     return false;
   }
   return route.expectText
