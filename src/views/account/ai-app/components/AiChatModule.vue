@@ -640,12 +640,12 @@ watch(
 
   .ai-chat-module__header {
     min-height: 40px;
-    padding: 7px 10px !important;
+    padding: 7px 10px 7px 78px !important;
     border-radius: 20px 20px 0 0;
   }
 
   .ai-chat-module__header :deep(.el-tag) {
-    max-width: calc(100vw - 118px);
+    max-width: calc(100vw - 190px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

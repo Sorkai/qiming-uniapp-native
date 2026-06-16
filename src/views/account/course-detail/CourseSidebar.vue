@@ -770,12 +770,12 @@ onBeforeUnmount(() => {
   .layout-sidebar-scroll {
     display: flex;
     flex-direction: row;
-    gap: 10px;
+    gap: 6px;
     align-items: center;
     width: 100%;
     height: 100%;
     max-height: none;
-    padding: 10px 12px;
+    padding: 10px 10px;
     overflow: auto hidden;
     scroll-snap-type: x proximity;
     scroll-padding-inline: 12px;
@@ -848,7 +848,7 @@ onBeforeUnmount(() => {
 
   .layout-sidebar {
     .item {
-      flex: 0 0 auto;
+      flex: 0 0 calc((100% - 12px) / 3);
       width: auto;
       padding: 0;
       scroll-snap-align: start;
@@ -860,14 +860,14 @@ onBeforeUnmount(() => {
 
     .hover-box {
       flex-direction: row;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
       justify-content: center;
-      width: auto;
-      min-width: fit-content;
-      max-width: calc(100vw - 72px);
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
       min-height: 0;
-      padding: 12px 18px;
+      padding: 12px 8px;
       background: transparent;
       border-radius: 18px;
       box-shadow: none;
@@ -899,6 +899,8 @@ onBeforeUnmount(() => {
       margin-top: 0;
       font-size: 13px;
       line-height: 1.1;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
@@ -924,13 +926,12 @@ onBeforeUnmount(() => {
   }
 
   .layout-sidebar-scroll {
-    padding: 8px 10px;
+    padding: 8px;
   }
 
   .layout-sidebar {
     .hover-box {
-      max-width: calc(100vw - 64px);
-      padding: 11px 15px;
+      padding: 11px 6px;
     }
 
     .side-name {

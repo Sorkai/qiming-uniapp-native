@@ -682,6 +682,10 @@ function hasValidRouteContent(info, route) {
   if (!Number.isFinite(textLength) || textLength === 0 || info?.blank) {
     return false;
   }
+  const activeLoadingMasks = Number(info?.activeLoadingMasks || 0);
+  if (Number.isFinite(activeLoadingMasks) && activeLoadingMasks > 0) {
+    return false;
+  }
   const overflowX = Number(info?.overflowX);
   if (Number.isFinite(overflowX) && overflowX > 0) {
     return false;
@@ -698,6 +702,10 @@ function getH5RouteSmokeFailures(info, route) {
     failures.push("empty-text");
   }
   if (info?.blank) failures.push("blank");
+  const activeLoadingMasks = Number(info?.activeLoadingMasks || 0);
+  if (Number.isFinite(activeLoadingMasks) && activeLoadingMasks > 0) {
+    failures.push(`active-loading:${activeLoadingMasks}`);
+  }
   const overflowX = Number(info?.overflowX);
   if (Number.isFinite(overflowX) && overflowX > 0) {
     failures.push(`overflow-x:${overflowX}`);
@@ -988,6 +996,39 @@ async function runH5Smoke(options) {
             Number(style.opacity || 1) > 0.01
         };
       };
+      const getMainScrollElement = () => {
+        const selectors = [
+          ".main-container > .el-scrollbar > .el-scrollbar__wrap",
+          ".main-container > .el-scrollbar .el-scrollbar__wrap",
+          ".main-container .app-main > .el-scrollbar > .el-scrollbar__wrap",
+          ".main-container .app-main .el-scrollbar__wrap",
+          ".mobile-main-container",
+          ".app-main",
+          ".app-main-nofixed-header",
+          document.scrollingElement ? "__document__" : ""
+        ];
+        for (const selector of selectors) {
+          const el =
+            selector === "__document__"
+              ? document.scrollingElement
+              : selector
+                ? document.querySelector(selector)
+                : null;
+          if (!el) continue;
+          const rect = el.getBoundingClientRect();
+          const scrollable = el.scrollHeight > el.clientHeight + 8;
+          const visible = rect.width > 1 && rect.height > 1;
+          const inMainArea =
+            selector === "__document__" ||
+            selector.includes("main-container") ||
+            selector.includes("mobile-main-container") ||
+            selector.includes("app-main");
+          if (scrollable && visible && inMainArea) {
+            return { el, selector };
+          }
+        }
+        return { el: document.scrollingElement || document.documentElement, selector: "__document__" };
+      };
       const text = (document.body?.innerText || "").replace(/\\s+/g, " ").trim();
       const app = document.querySelector("#app");
       const topbar = document.querySelector(".navbar");
@@ -1045,6 +1086,11 @@ async function runH5Smoke(options) {
         : 0;
       const mainRect = mainContent?.getBoundingClientRect();
       const appMainRect = appMain?.getBoundingClientRect();
+      const mainScroll = getMainScrollElement();
+      const mainScrollRect = mainScroll.el?.getBoundingClientRect();
+      const activeLoadingMasks = Array.from(
+        document.querySelectorAll(".el-loading-mask, .pure-loading, .loading, [class*=loading], [class*=Loading]")
+      ).filter(el => isVisibleElement(el)).length;
       return {
         href: location.href,
         title: document.title,
@@ -1057,6 +1103,7 @@ async function runH5Smoke(options) {
         loadingDots: document.querySelectorAll(
           ".pure-loading, .loading, [class*=loading], [class*=Loading]"
         ).length,
+        activeLoadingMasks,
         layout: {
           topbar: {
             exists: Boolean(topbar),
@@ -1082,9 +1129,25 @@ async function runH5Smoke(options) {
             navMobile: rectInfo(navMobile)
           },
           bottom: {
-            scrollable: scrollHeight > vh + 8,
+            scrollable:
+              scrollHeight > vh + 8 ||
+              mainScroll.el.scrollHeight > mainScroll.el.clientHeight + 8,
             viewportHeight: vh,
             scrollHeight,
+            mainScroll: {
+              selector: mainScroll.selector,
+              scrollTop: Math.round(mainScroll.el.scrollTop || 0),
+              scrollHeight: Math.round(mainScroll.el.scrollHeight || 0),
+              clientHeight: Math.round(mainScroll.el.clientHeight || 0),
+              rect: mainScrollRect
+                ? {
+                    x: Math.round(mainScrollRect.x),
+                    y: Math.round(mainScrollRect.y),
+                    width: Math.round(mainScrollRect.width),
+                    height: Math.round(mainScrollRect.height)
+                  }
+                : null
+            },
             contentBottom: mainRect ? Math.round(mainRect.bottom) : null,
             measuredSelector: bottomTarget?.selector || "",
             measuredBottom: bottomTarget
@@ -1159,11 +1222,41 @@ async function runH5Smoke(options) {
       });
       const screenshotPath = join(outDir, `${route.name}.png`);
       writeFileSync(screenshotPath, Buffer.from(screenshot.data, "base64"));
-      await client.send("Runtime.evaluate", {
-        awaitPromise: true,
-        expression: `window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));`
-      });
-      await wait(160);
+      for (let scrollAttempt = 0; scrollAttempt < 8; scrollAttempt += 1) {
+        await client.send("Runtime.evaluate", {
+          awaitPromise: true,
+          expression: `(() => {
+            const selectors = [
+              ".main-container > .el-scrollbar > .el-scrollbar__wrap",
+              ".main-container > .el-scrollbar .el-scrollbar__wrap",
+              ".main-container .app-main > .el-scrollbar > .el-scrollbar__wrap",
+              ".main-container .app-main .el-scrollbar__wrap",
+              ".mobile-main-container",
+              ".app-main",
+              ".app-main-nofixed-header"
+            ];
+            let target = null;
+            for (const selector of selectors) {
+              const el = document.querySelector(selector);
+              if (el && el.scrollHeight > el.clientHeight + 8) {
+                const rect = el.getBoundingClientRect();
+                if (rect.width > 1 && rect.height > 1) {
+                  target = el;
+                  break;
+                }
+              }
+            }
+            target ||= document.scrollingElement || document.documentElement;
+            const top = Math.max(0, target.scrollHeight - target.clientHeight);
+            target.scrollTo?.({ top, left: 0, behavior: "instant" });
+            target.scrollTop = top;
+            target.scrollLeft = 0;
+            target.dispatchEvent(new Event("scroll", { bubbles: true }));
+            window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));
+          })()`
+        });
+        await wait(160);
+      }
       const bottomInfo = await inspectPage();
       info.layout = {
         ...(info.layout || {}),
