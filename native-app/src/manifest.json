@@ -1,7 +1,7 @@
 {
   "name": "IntellEdu",
   "appid": "__UNI__QIMING",
-  "description": "IntellEdu Android/iOS native shell for the existing H5 learning platform.",
+  "description": "IntellEdu Android/iOS native shell and WeChat Mini Program bridge for the existing H5 learning platform.",
   "versionName": "1.0.0",
   "versionCode": "100",
   "transformPx": false,

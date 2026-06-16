@@ -88,9 +88,12 @@ organization, or commercial environment without the project owner's prior writte
   验证壳；iOS 打包与 HBuilderX iOS 能力在 `native-app/` 的 iOS 配置中衔接。
   若当前分支尚未包含 `ios-native/`，请切到或合并 iOS 工具分支
   `codex/ios-native-tooling`。
+- **微信小程序线:** `native-app/` 继续作为 uni-app 小程序源码入口，通过
+  `build:mp-weixin` 生成 `dist/build/mp-weixin`，微信开发者工具负责模拟器、
+  预览、上传和自动化验证。详见 `doc/wechat-miniprogram-workflow.md`。
 - **端专属边界:** 平台问题优先落在对应原生线、平台 class、平台脚本或平台
   测试中。Android 专属改动不应要求 iOS 迁就，iOS 专属改动也不应隐式改变
-  Android 行为。
+  Android 行为，微信小程序专属改动也不应隐式改变 Android/iOS 行为。
 - **共享层变更规则:** 只有确实属于共同产品体验、共同业务逻辑或共同设计系统
   的改动才进入共享层；进入共享层的改动需要同时考虑 Android 与 iOS 验收。
 - **CSS/运行时隔离:** 平台差异使用明确选择器或运行时标记隔离，例如
@@ -114,6 +117,7 @@ organization, or commercial environment without the project owner's prior writte
 
 - 安装 [Node.js](https://nodejs.org/)（推荐使用仓库 `.nvmrc` 中的版本）
 - 安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 开发者工具
+- 微信小程序开发需安装微信开发者工具，并在“设置 -> 安全设置”中开启服务端口
 - 准备 Android Studio 模拟器或真实 Android 物理测试设备（需开启“开发者模式”和“USB 调试”）
 - iOS 开发需在 macOS 上安装 Xcode；Simulator 包可使用 Xcode 命令行工具验证，真机/TestFlight 还需要 Apple Distribution 证书和 `cn.intelledu.qiming` provisioning profile
 
@@ -163,6 +167,21 @@ pnpm native:ios:ipa -- --output-dir artifacts/ios-release
 ```bash
 pnpm native:ios:ipa -- --profile /path/to/AppStore_cn.intelledu.qiming.mobileprovision --output-dir artifacts/ios-release
 ```
+
+### 7. 微信小程序构建与 DevTools
+
+```bash
+pnpm mini:doctor
+pnpm mini:build
+pnpm mini:smoke
+pnpm mini:open
+```
+
+微信端从 `main` 单独拉分支推进，继续复用 `native-app/` 的 uni-app 工程。
+`mini:build` 会生成 `native-app/dist/build/mp-weixin` 并写入三端启动路径矩阵；
+`mini:open` 通过微信开发者工具 CLI 打开模拟器。没有真实 AppID 时会使用
+`touristappid`；真机预览和上传需要配置 `WECHAT_MINIPROGRAM_APPID`，并在微信管理后台
+配置业务域名。完整流程见 `doc/wechat-miniprogram-workflow.md`。
 
 ## 当前 iOS 验收状态
 

@@ -55,6 +55,30 @@
     </view>
     <!-- #endif -->
 
+    <!-- #ifdef MP-WEIXIN -->
+    <web-view
+      v-if="miniProgramWebviewSrc"
+      id="qiming-wechat-webview"
+      class="qiming-webview"
+      :src="miniProgramWebviewSrc"
+      @load="handleLoad"
+      @error="handleError"
+      @message="handleMessage"
+    />
+    <view v-else class="wechat-shell">
+      <view class="brand-mark">
+        <text class="brand-mark__text">启</text>
+      </view>
+      <text class="wechat-kicker">微信小程序</text>
+      <text class="shell-title">IntellEdu</text>
+      <text class="shell-subtitle">小程序构建已就绪</text>
+      <view class="wechat-status">
+        <text class="wechat-status__label">入口</text>
+        <text class="wechat-status__value">{{ miniProgramEntryLabel }}</text>
+      </view>
+    </view>
+    <!-- #endif -->
+
     <!-- #ifdef APP-PLUS -->
     <web-view
       id="qiming-webview"
@@ -98,6 +122,10 @@ let loadFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 let isH5DevPreview = false;
 // #ifdef H5
 isH5DevPreview = import.meta.env.DEV;
+// #endif
+let isMiniProgramRuntime = false;
+// #ifdef MP-WEIXIN
+isMiniProgramRuntime = true;
 // #endif
 
 const localAppEntryBase = "./hybrid/html/index.html";
@@ -217,6 +245,10 @@ function appendNativeQuery(url: string) {
   return output;
 }
 
+function appendMiniProgramQuery(url: string) {
+  return appendQuery(appendNativeQuery(url), "qimingMiniProgram", "1");
+}
+
 function normalizeDevServer(url: string | null | undefined) {
   const value = url?.trim();
   if (!value) return "";
@@ -306,12 +338,35 @@ const webviewSrc = computed(() => {
   return `${h5DevEntryPath.value}${separator}v=${webviewVersion.value}`;
 });
 
+const miniProgramWebviewSrc = computed(() => {
+  if (!isMiniProgramRuntime || !appDevServer.value) return "";
+  const base = `${appDevServer.value}/#${appEntryRoute.value}`;
+  const withRole = appDemoRole.value
+    ? appendQuery(base, "demoRole", appDemoRole.value)
+    : base;
+  return appendQuery(
+    appendMiniProgramQuery(withRole),
+    "v",
+    String(webviewVersion.value)
+  );
+});
+
+const miniProgramEntryLabel = computed(() => {
+  const roleLabel = appDemoRole.value
+    ? previewRoleLabels[appDemoRole.value as PreviewRole]
+    : "默认";
+  return `${roleLabel} / ${appEntryRoute.value || defaultEntryRoute}`;
+});
+
 const isPhonePreview = computed(
   () => isH5DevPreview && previewMode.value === "phone"
 );
 
 const showShellState = computed(
-  () => !isH5DevPreview && (!loaded.value || loadError.value)
+  () =>
+    !isH5DevPreview &&
+    !isMiniProgramRuntime &&
+    (!loaded.value || loadError.value)
 );
 
 const webviewStyles = {
@@ -756,6 +811,54 @@ onBackPress(() => {
   font-size: 28rpx;
   line-height: 1.5;
   text-align: center;
+}
+
+.wechat-shell {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: calc(64rpx + env(safe-area-inset-top, 0px)) 48rpx
+    calc(64rpx + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fc 100%);
+}
+
+.wechat-kicker {
+  margin-bottom: 10rpx;
+  color: #2f7dff;
+  font-size: 24rpx;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.wechat-status {
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+  max-width: 620rpx;
+  margin-top: 28rpx;
+  padding: 18rpx 24rpx;
+  border: 1rpx solid rgba(203, 213, 225, 0.82);
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 16rpx 44rpx rgba(47, 67, 103, 0.1);
+}
+
+.wechat-status__label {
+  flex: 0 0 auto;
+  color: #7a869a;
+  font-size: 24rpx;
+}
+
+.wechat-status__value {
+  min-width: 0;
+  color: #172033;
+  font-size: 24rpx;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .retry-button {
