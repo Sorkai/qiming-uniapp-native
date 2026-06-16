@@ -755,13 +755,35 @@ html.qiming-mini-program-webview.ua-mobile .app-main {
   min-height: 100dvh;
 }
 
+html.qiming-mini-program-webview.ua-mobile
+  .main-container
+  > .el-scrollbar,
+html.qiming-mini-program-webview.ua-mobile
+  .main-container
+  > .el-scrollbar
+  > .el-scrollbar__wrap {
+  height: calc(100dvh - var(--pure-mobile-tab-height)) !important;
+  max-height: calc(100dvh - var(--pure-mobile-tab-height)) !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .app-main-nofixed-header {
+  padding-bottom: 0 !important;
+}
+
 html.qiming-mini-program-webview.ua-mobile .main-content {
   padding-top: 0;
-  padding-bottom: calc(var(--pure-mobile-tab-height) + 16px);
+  padding-bottom: 0;
   margin-top: 0;
 }
 
 html.qiming-mini-program-webview.ua-mobile .mobile-main-container,
+html.qiming-mini-program-webview.ua-mobile
+  .main-container
+  > .el-scrollbar
+  > .el-scrollbar__wrap {
+  padding-bottom: 0 !important;
+}
+
 html.qiming-mini-program-webview.ua-mobile
   .app-main
   > .el-scrollbar
