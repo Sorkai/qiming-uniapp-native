@@ -55,10 +55,11 @@ const { title, getLogo } = useNav();
       white-space: nowrap;
       background: linear-gradient(
         135deg,
-        var(--el-color-primary) 0%,
-        color-mix(in srgb, var(--el-color-primary), #4facfe 100%) 100%
+        var(--el-color-primary, #97b4f7) 0%,
+        #4facfe 100%
       );
       background-clip: text;
+      -webkit-background-clip: text;
       transform: skewX(-8deg);
       transition: all 0.3s;
       -webkit-text-fill-color: transparent;

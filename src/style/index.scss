@@ -91,6 +91,12 @@ html.qiming-mini-program-webview.ua-mobile {
   --pure-safe-area-top: 0px;
   --pure-main-content-margin: 8px 10px 0;
   --qiming-native-navbar-bg: transparent;
+  --qiming-mini-topbar-height: 132px;
+  --qiming-mini-left-toolbar-top: 56px;
+  --qiming-mini-toolbar-top: 88px;
+  --pure-mobile-content-bottom-gap: calc(
+    var(--pure-mobile-tab-height) + 18px
+  );
 }
 
 html.qiming-native-webview,
@@ -601,25 +607,28 @@ html.qiming-mini-program-webview.ua-mobile .fixed-header {
   width: 100% !important;
   height: auto !important;
   min-height: 0 !important;
-  pointer-events: none;
 }
 
 html.qiming-mini-program-webview.ua-mobile .navbar {
-  height: 0 !important;
+  position: relative !important;
+  display: block !important;
+  height: var(--qiming-mini-topbar-height) !important;
   min-height: 0 !important;
   padding: 0 !important;
   overflow: visible !important;
-  pointer-events: none;
+  background: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
 }
 
 html.qiming-mini-program-webview.ua-mobile .navbar > div:first-child {
   position: absolute;
-  top: 18px;
+  top: var(--qiming-mini-left-toolbar-top);
   left: 10px;
   z-index: 2;
   height: 46px !important;
   min-height: 46px !important;
-  max-width: min(180px, calc(100vw - 220px));
+  max-width: min(208px, calc(100vw - 174px));
   padding: 0 !important;
   transform: none !important;
   pointer-events: auto;
@@ -631,13 +640,65 @@ html.qiming-mini-program-webview.ua-mobile .hamburger-container {
   margin: 0 !important;
 }
 
-html.qiming-mini-program-webview.ua-mobile .navbar .mobile-brand,
+html.qiming-mini-program-webview.ua-mobile .navbar .mobile-brand {
+  display: inline-flex !important;
+  max-width: calc(100vw - 246px);
+  overflow: hidden;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .navbar
+  .mobile-brand
+  .mobile-brand-logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .navbar
+  .mobile-brand
+  .mobile-brand-wordmark {
+  max-width: 88px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 html.qiming-mini-program-webview.ua-mobile .navbar .vertical-header-right {
-  display: none !important;
+  display: flex !important;
+  flex: 0 0 auto !important;
+  position: absolute !important;
+  top: var(--qiming-mini-toolbar-top);
+  right: 0;
+  max-width: 152px;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding-right: 8px !important;
+  transform: none !important;
+  pointer-events: auto;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .navbar
+  .vertical-header-right
+  .el-dropdown-link {
+  display: flex !important;
+  max-width: 82px;
+  padding-inline: 7px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .navbar
+  .vertical-header-right
+  .el-dropdown-link
+  p {
+  max-width: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 html.qiming-mini-program-webview.ua-mobile .navbar > div:not(:first-child) {
-  display: none !important;
+  pointer-events: auto;
 }
 
 html.qiming-mini-program-webview.ua-mobile .app-main {
@@ -647,7 +708,21 @@ html.qiming-mini-program-webview.ua-mobile .app-main {
 
 html.qiming-mini-program-webview.ua-mobile .main-content {
   padding-top: 0;
+  padding-bottom: calc(var(--pure-mobile-tab-height) + 16px);
   margin-top: 0;
+}
+
+html.qiming-mini-program-webview.ua-mobile .mobile-main-container,
+html.qiming-mini-program-webview.ua-mobile
+  .app-main
+  > .el-scrollbar
+  > .el-scrollbar__wrap,
+html.qiming-mini-program-webview.ua-mobile
+  .app-main
+  > .el-scrollbar
+  > .el-scrollbar__wrap
+  > .el-scrollbar__view {
+  padding-bottom: 0 !important;
 }
 
 html.qiming-native-webview.ua-mobile.dark .fixed-header,

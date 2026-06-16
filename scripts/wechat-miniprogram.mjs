@@ -703,6 +703,43 @@ function getH5RouteSmokeFailures(info, route) {
   ) {
     failures.push(`missing-text:${route.expectText}`);
   }
+  const topbar = info?.layout?.topbar;
+  if (topbar?.exists) {
+    if (!topbar.hamburgerVisible) failures.push("topbar-missing-menu-button");
+    if (!topbar.themeToggleVisible) failures.push("topbar-missing-theme-button");
+    if (!topbar.userChipVisible) failures.push("topbar-missing-user-button");
+    const reservedBottom = Number(topbar.miniCapsuleReservedBottom);
+    const reservedLeft = Number(topbar.miniCapsuleReservedLeft);
+    for (const [name, rect] of [
+      ["menu", topbar.hamburger],
+      ["theme", topbar.themeToggle],
+      ["user", topbar.userChip]
+    ]) {
+      if (
+        Number.isFinite(reservedBottom) &&
+        Number.isFinite(reservedLeft) &&
+        rect?.visible &&
+        Number(rect.y) < reservedBottom &&
+        Number(rect.x) + Number(rect.width) > reservedLeft
+      ) {
+        failures.push(`topbar-${name}-overlaps-mini-capsule-zone`);
+      }
+    }
+  }
+  const bottom = info?.layout?.bottom;
+  const bottomContentGap = Number(bottom?.contentGap);
+  if (
+    bottom?.scrollable &&
+    Number.isFinite(bottomContentGap) &&
+    bottomContentGap > 180
+  ) {
+    failures.push(`bottom-empty-gap:${bottomContentGap}px`);
+  }
+  if (route.name === "teacher-dashboard" && info?.sidebarCheck) {
+    if (!info.sidebarCheck.wordmarkVisible) {
+      failures.push("sidebar-missing-intelledu-wordmark");
+    }
+  }
   return failures;
 }
 
@@ -919,13 +956,79 @@ async function runH5Smoke(options) {
     });
 
     const inspectPageExpression = `(() => {
+      const rectInfo = el => {
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        return {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+          visible:
+            rect.width > 1 &&
+            rect.height > 1 &&
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            Number(style.opacity || 1) > 0.01
+        };
+      };
       const text = (document.body?.innerText || "").replace(/\\s+/g, " ").trim();
       const app = document.querySelector("#app");
+      const topbar = document.querySelector(".navbar");
+      const hamburger = document.querySelector(".hamburger-container");
+      const themeToggle = document.querySelector("#header-overall, .theme-toggle-container");
+      const userChip = document.querySelector(".vertical-header-right .el-dropdown-link");
+      const navMobile = document.querySelector(".nav-mobile-container");
+      const mainContent = document.querySelector(".main-content");
+      const appMain = document.querySelector(".app-main");
+      const bottomSelectors = [
+        ".main-content",
+        ".account-container",
+        ".course-detail-page",
+        ".course-detail-container",
+        ".course-study-page",
+        ".course-layout",
+        ".exam-page",
+        ".ai-app-root",
+        ".el-main",
+        "#app > *"
+      ];
       const vw = document.documentElement.clientWidth;
+      const vh = document.documentElement.clientHeight;
       const maxScrollWidth = Math.max(
         document.body.scrollWidth,
         document.documentElement.scrollWidth
       );
+      const scrollHeight = Math.round(Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight
+      ));
+      const visibleContentRects = [];
+      for (const selector of bottomSelectors) {
+        document.querySelectorAll(selector).forEach(el => {
+          const rect = el.getBoundingClientRect();
+          const style = getComputedStyle(el);
+          if (
+            rect.width > 1 &&
+            rect.height > 1 &&
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            Number(style.opacity || 1) > 0.01
+          ) {
+            visibleContentRects.push({ selector, rect });
+          }
+        });
+      }
+      const bottomTarget = visibleContentRects.reduce(
+        (best, item) => (!best || item.rect.bottom > best.rect.bottom ? item : best),
+        null
+      );
+      const bottomGap = bottomTarget
+        ? Math.max(0, Math.round(vh - bottomTarget.rect.bottom))
+        : 0;
+      const mainRect = mainContent?.getBoundingClientRect();
+      const appMainRect = appMain?.getBoundingClientRect();
       return {
         href: location.href,
         title: document.title,
@@ -933,14 +1036,42 @@ async function runH5Smoke(options) {
         textSample: text.slice(0, 420),
         appChildren: app?.children?.length || 0,
         overflowX: Math.max(0, Math.round(maxScrollWidth - vw)),
-        scrollHeight: Math.round(Math.max(
-          document.body.scrollHeight,
-          document.documentElement.scrollHeight
-        )),
+        scrollHeight,
         blank: Boolean(app) && !text,
         loadingDots: document.querySelectorAll(
           ".pure-loading, .loading, [class*=loading], [class*=Loading]"
-        ).length
+        ).length,
+        layout: {
+          topbar: {
+            exists: Boolean(topbar),
+            miniCapsuleReservedBottom: 88,
+            miniCapsuleReservedLeft: Math.max(0, vw - 174),
+            rect: rectInfo(topbar),
+            hamburger: rectInfo(hamburger),
+            hamburgerVisible: Boolean(rectInfo(hamburger)?.visible),
+            themeToggle: rectInfo(themeToggle),
+            themeToggleVisible: Boolean(rectInfo(themeToggle)?.visible),
+            userChip: rectInfo(userChip),
+            userChipVisible: Boolean(rectInfo(userChip)?.visible)
+          },
+          content: {
+            mainContent: rectInfo(mainContent),
+            appMain: rectInfo(appMain),
+            navMobile: rectInfo(navMobile)
+          },
+          bottom: {
+            scrollable: scrollHeight > vh + 8,
+            viewportHeight: vh,
+            scrollHeight,
+            contentBottom: mainRect ? Math.round(mainRect.bottom) : null,
+            measuredSelector: bottomTarget?.selector || "",
+            measuredBottom: bottomTarget
+              ? Math.round(bottomTarget.rect.bottom)
+              : null,
+            appMainBottom: appMainRect ? Math.round(appMainRect.bottom) : null,
+            contentGap: bottomGap
+          }
+        }
       };
     })()`;
     const inspectPage = async () => {
@@ -976,16 +1107,105 @@ async function runH5Smoke(options) {
       });
       const screenshotPath = join(outDir, `${route.name}.png`);
       writeFileSync(screenshotPath, Buffer.from(screenshot.data, "base64"));
+      await client.send("Runtime.evaluate", {
+        awaitPromise: true,
+        expression: `window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));`
+      });
+      await wait(160);
+      const bottomInfo = await inspectPage();
+      info.layout = {
+        ...(info.layout || {}),
+        bottom: bottomInfo.layout?.bottom || info.layout?.bottom
+      };
+      const bottomScreenshot = await client.send("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true
+      });
+      const bottomScreenshotPath = join(outDir, `${route.name}-bottom.png`);
+      writeFileSync(
+        bottomScreenshotPath,
+        Buffer.from(bottomScreenshot.data, "base64")
+      );
+      let sidebarScreenshotPath = "";
+      if (route.name === "teacher-dashboard") {
+        await client.send("Runtime.evaluate", {
+          awaitPromise: true,
+          expression: `(() => {
+            window.scrollTo(0, 0);
+            const button = document.querySelector(".hamburger-container");
+            button?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+          })()`
+        });
+        await wait(420);
+        const sidebarCheck = await client.send("Runtime.evaluate", {
+          returnByValue: true,
+          awaitPromise: true,
+          expression: `(() => {
+            const logo = document.querySelector(".sidebar-logo-container");
+            const wordmark = document.querySelector(".sidebar-logo-container .sidebar-title");
+            const logoRect = logo?.getBoundingClientRect();
+            const wordmarkRect = wordmark?.getBoundingClientRect();
+            const style = wordmark ? getComputedStyle(wordmark) : null;
+            return {
+              text: wordmark?.textContent?.trim() || "",
+              logoVisible: Boolean(logoRect && logoRect.width > 1 && logoRect.height > 1),
+              wordmarkVisible: Boolean(
+                wordmarkRect &&
+                  wordmarkRect.width > 20 &&
+                  wordmarkRect.height > 12 &&
+                  style?.display !== "none" &&
+                  style?.visibility !== "hidden" &&
+                  Number(style?.opacity || 1) > 0.01
+              ),
+              logoRect: logoRect
+                ? {
+                    x: Math.round(logoRect.x),
+                    y: Math.round(logoRect.y),
+                    width: Math.round(logoRect.width),
+                    height: Math.round(logoRect.height)
+                  }
+                : null,
+              wordmarkRect: wordmarkRect
+                ? {
+                    x: Math.round(wordmarkRect.x),
+                    y: Math.round(wordmarkRect.y),
+                    width: Math.round(wordmarkRect.width),
+                    height: Math.round(wordmarkRect.height)
+                  }
+                : null
+            };
+          })()`
+        });
+        info.sidebarCheck = sidebarCheck.result?.value || {};
+        const sidebarScreenshot = await client.send("Page.captureScreenshot", {
+          format: "png",
+          fromSurface: true
+        });
+        sidebarScreenshotPath = join(outDir, `${route.name}-sidebar.png`);
+        writeFileSync(
+          sidebarScreenshotPath,
+          Buffer.from(sidebarScreenshot.data, "base64")
+        );
+      }
       const failReasons = getH5RouteSmokeFailures(info, route);
       const ok = failReasons.length === 0;
-      results.push({ ...route, url, screenshotPath, info, ok, failReasons });
+      results.push({
+        ...route,
+        url,
+        screenshotPath,
+        bottomScreenshotPath,
+        sidebarScreenshotPath,
+        info,
+        ok,
+        failReasons
+      });
       const status = ok ? "OK" : "FAIL";
       console.log(
         `[${status}] ${route.name.padEnd(18, " ")} text=${String(
           info.textLength ?? 0
-        ).padStart(4, " ")} overflowX=${info.overflowX ?? "?"} expect=${
-          route.expectText || "-"
-        } ${screenshotPath}`
+        ).padStart(4, " ")} overflowX=${info.overflowX ?? "?"} bottomGap=${
+          info.layout?.bottom?.contentGap ?? "?"
+        } expect=${route.expectText || "-"} ${screenshotPath}`
       );
     }
 
