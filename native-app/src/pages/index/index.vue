@@ -260,12 +260,12 @@ const loadError = ref(false);
 const webviewVersion = ref(0);
 const lastMessage = ref<WebMessage | null>(null);
 const previewMode = ref<"phone" | "full">("phone");
-const defaultMiniProgramDevServer = normalizeDevServer(
-  import.meta.env.VITE_QIMING_MINIPROGRAM_WEBVIEW_ORIGIN
-);
-const defaultMiniProgramRole = normalizeDemoRole(
-  import.meta.env.VITE_QIMING_MINIPROGRAM_ROLE
-);
+const defaultMiniProgramDevServer =
+  normalizeDevServer(import.meta.env.VITE_QIMING_MINIPROGRAM_WEBVIEW_ORIGIN) ||
+  (isMiniProgramRuntime ? "http://localhost:8851" : "");
+const defaultMiniProgramRole: PreviewRole | "" =
+  normalizeDemoRole(import.meta.env.VITE_QIMING_MINIPROGRAM_ROLE) ||
+  (isMiniProgramRuntime ? "teacher" : "");
 const defaultMiniProgramEntry = resolveEntryForRole(
   import.meta.env.VITE_QIMING_MINIPROGRAM_ENTRY,
   defaultMiniProgramRole
@@ -274,7 +274,9 @@ const appEntryRoute = ref(
   isMiniProgramRuntime ? defaultMiniProgramEntry : defaultEntryRoute
 );
 const appDevServer = ref(isMiniProgramRuntime ? defaultMiniProgramDevServer : "");
-const appDemoRole = ref(isMiniProgramRuntime ? defaultMiniProgramRole : "");
+const appDemoRole = ref<PreviewRole | "">(
+  isMiniProgramRuntime ? defaultMiniProgramRole : ""
+);
 const appNativeStatusTop = ref(0);
 let loadFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
