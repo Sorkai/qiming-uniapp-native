@@ -223,6 +223,7 @@ const LayHeader = defineComponent({
       </div>
       <el-scrollbar v-else>
         <el-backtop
+          v-if="set.device !== 'mobile'"
           :title="t('buttons.pureBackTop')"
           :right="10"
           :bottom="10"
