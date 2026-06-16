@@ -188,6 +188,9 @@ pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role tea
 没有真实 AppID 时会使用空 AppID 导入模拟器，避免触发 `tourist appid` 切换错误；
 自动化、真机预览和上传需要配置 `WECHAT_MINIPROGRAM_APPID`，并在微信管理后台配置业务域名。完整流程见
 `doc/wechat-miniprogram-workflow.md`。
+注意：扫码预览/上传面向手机环境，`--dev-server` 必须是手机可访问且已配置为微信 `web-view`
+业务域名的 HTTPS 前端 H5 地址；`http://localhost:8851` 只适合微信开发者工具模拟器和本机截图验证。
+`https://aiedu-api.intelledu.cn` 是后端 API 地址，不能作为 `web-view` 页面入口。
 
 ## 当前 iOS 验收状态
 

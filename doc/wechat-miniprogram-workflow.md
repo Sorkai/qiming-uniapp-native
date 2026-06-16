@@ -82,13 +82,13 @@ pnpm mini:auto
 生成预览二维码：
 
 ```bash
-pnpm mini:preview
+pnpm mini:preview -- --dev-server https://your-h5-domain.example --role teacher --entry /welcome/index
 ```
 
 上传版本：
 
 ```bash
-pnpm mini:upload -- --version 0.1.0 --desc "IntellEdu WeChat mini program smoke build"
+pnpm mini:upload -- --dev-server https://your-h5-domain.example --version 0.1.0 --desc "IntellEdu WeChat mini program smoke build"
 ```
 
 ## AppID 与业务域名
@@ -102,7 +102,9 @@ pnpm mini:build
 ```
 
 小程序 `<web-view>` 承载网页时，真机环境要求网页域名已经在小程序管理后台配置为
-业务域名；个人类型小程序也不支持 `web-view`。因此本仓库当前微信线采用两段验证：
+业务域名；个人类型小程序也不支持 `web-view`。`devServer` 指向的是前端 H5 页面地址，
+不是后端 API 地址：`https://aiedu-api.intelledu.cn` 只能用于业务请求，不能作为
+`web-view` 页面入口。因此本仓库当前微信线采用两段验证：
 
 1. 编译期与 DevTools 阶段：用 `devServer` 打开现有 H5 业务页，逐个走学生端、教师端、
    管理端路径矩阵。
@@ -125,6 +127,11 @@ pnpm mini:open -- --pure-simulator
 pnpm mini:build -- --dev-server http://localhost:8851 --role student --entry /account?menu=course
 pnpm mini:open -- --pure-simulator
 ```
+
+`mini:preview` 和 `mini:upload` 会重新构建当前启动入口，并要求 `--dev-server` 是手机可访问的
+HTTPS H5 地址；如果传入 `http://localhost:8851`，脚本会拒绝生成二维码，避免手机扫码后只看到
+小程序兜底页。确实只想做 DevTools 侧调试时，可以加 `--allow-localhost-preview`，但该二维码不适合
+真机扫码验收。
 
 `mini:preview`、`mini:auto`、`mini:upload` 会拒绝空 AppID，防止误把游客态当成可发布版本。
 

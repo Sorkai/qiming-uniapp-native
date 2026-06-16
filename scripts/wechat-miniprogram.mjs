@@ -105,7 +105,8 @@ function parseArgs(argv) {
     browser: process.env.QIMING_MINIPROGRAM_BROWSER || "",
     outDir: "",
     waitMs: Number(process.env.QIMING_MINIPROGRAM_H5_WAIT_MS || 8000),
-    headed: false
+    headed: false,
+    allowLocalhostPreview: false
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -147,6 +148,8 @@ function parseArgs(argv) {
       i += 1;
     } else if (arg === "--headed") {
       options.headed = true;
+    } else if (arg === "--allow-localhost-preview") {
+      options.allowLocalhostPreview = true;
     } else if (arg === "-h" || arg === "--help") {
       options.help = true;
     } else {
@@ -263,6 +266,60 @@ function readLaunchOptions(config) {
   };
 }
 
+function readExistingLaunchOptions() {
+  if (!existsSync(projectConfigPath)) return {};
+  try {
+    return readLaunchOptions(readJson(projectConfigPath));
+  } catch {
+    return {};
+  }
+}
+
+function resolveLaunchOptions(options) {
+  const existing = readExistingLaunchOptions();
+  return {
+    entry: normalizeEntry(options.entry || existing.entry || "/welcome/index"),
+    role: normalizeRole(options.role || existing.role || "teacher"),
+    devServer: normalizeOrigin(options.devServer || existing.devServer || "")
+  };
+}
+
+function hasLaunchOverrides(options) {
+  return Boolean(options.devServer || options.role || options.entry);
+}
+
+function isLocalhostOrigin(origin) {
+  if (!origin) return false;
+  const { hostname } = new URL(origin);
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname.endsWith(".localhost")
+  );
+}
+
+function assertPhonePreviewTarget(launch, options, command) {
+  if (!launch.devServer) {
+    throw new Error(
+      `${command} needs --dev-server https://your-h5-domain. Without a web-view H5 origin, the QR code opens the fallback shell page.`
+    );
+  }
+
+  const parsed = new URL(launch.devServer);
+  if (parsed.protocol !== "https:" || isLocalhostOrigin(launch.devServer)) {
+    if (options.allowLocalhostPreview) {
+      console.warn(
+        `[WARN] ${command} is using ${launch.devServer}. A phone QR preview usually cannot open localhost/http web-view pages; use this only for DevTools-side debugging.`
+      );
+      return;
+    }
+    throw new Error(
+      `${command} needs a phone-accessible HTTPS H5 origin, but got ${launch.devServer}. Use mini:open for local DevTools simulator checks, or pass --dev-server https://your-h5-domain after adding it as a WeChat web-view business domain.`
+    );
+  }
+}
+
 function patchProjectConfig(options) {
   if (!existsSync(projectConfigPath)) {
     throw new Error(
@@ -270,12 +327,7 @@ function patchProjectConfig(options) {
     );
   }
   const config = readJson(projectConfigPath);
-  const existing = readLaunchOptions(config);
-  const launch = {
-    entry: normalizeEntry(options.entry || existing.entry || "/welcome/index"),
-    role: normalizeRole(options.role || existing.role || "teacher"),
-    devServer: normalizeOrigin(options.devServer || existing.devServer || "")
-  };
+  const launch = resolveLaunchOptions(options);
   config.appid = options.appid || "";
   config.projectname = config.projectname || "IntellEdu";
   config.condition = config.condition || {};
@@ -317,13 +369,15 @@ function ensureBuildInstalled() {
 }
 
 function runBuild(options) {
+  const launch = resolveLaunchOptions(options);
+  const buildOptions = { ...options, ...launch };
   ensureBuildInstalled();
   run(pnpmCommand(), ["--dir", "native-app", "build:mp-weixin"], root, {
-    VITE_QIMING_MINIPROGRAM_WEBVIEW_ORIGIN: options.devServer,
-    VITE_QIMING_MINIPROGRAM_ROLE: options.role,
-    VITE_QIMING_MINIPROGRAM_ENTRY: options.entry
+    VITE_QIMING_MINIPROGRAM_WEBVIEW_ORIGIN: buildOptions.devServer,
+    VITE_QIMING_MINIPROGRAM_ROLE: buildOptions.role,
+    VITE_QIMING_MINIPROGRAM_ENTRY: buildOptions.entry
   });
-  patchProjectConfig(options);
+  patchProjectConfig(buildOptions);
 }
 
 function collectChecks(options) {
@@ -745,8 +799,11 @@ function runDoctor(options) {
 }
 
 function runOpen(options) {
-  if (!existsSync(buildDir)) runBuild(options);
-  patchProjectConfig(options);
+  if (!existsSync(buildDir) || hasLaunchOverrides(options)) {
+    runBuild(options);
+  } else {
+    patchProjectConfig(options);
+  }
   const cliPath = resolveCliPath(options.cli);
   if (!cliPath) {
     throw new Error(
@@ -760,8 +817,9 @@ function runOpen(options) {
 
 function runPreview(options) {
   assertRealAppId(options, "mini:preview");
-  if (!existsSync(buildDir)) runBuild(options);
-  patchProjectConfig(options);
+  const launch = resolveLaunchOptions(options);
+  assertPhonePreviewTarget(launch, options, "mini:preview");
+  runBuild({ ...options, ...launch });
   const cliPath = resolveCliPath(options.cli);
   if (!cliPath) {
     throw new Error(
@@ -784,8 +842,11 @@ function runPreview(options) {
 
 function runAuto(options) {
   assertRealAppId(options, "mini:auto");
-  if (!existsSync(buildDir)) runBuild(options);
-  patchProjectConfig(options);
+  if (!existsSync(buildDir) || hasLaunchOverrides(options)) {
+    runBuild(options);
+  } else {
+    patchProjectConfig(options);
+  }
   const cliPath = resolveCliPath(options.cli);
   if (!cliPath) {
     throw new Error(
@@ -800,8 +861,9 @@ function runUpload(options) {
   if (!options.version) {
     throw new Error("Missing --version or WECHAT_MINIPROGRAM_VERSION.");
   }
-  if (!existsSync(buildDir)) runBuild(options);
-  patchProjectConfig(options);
+  const launch = resolveLaunchOptions(options);
+  assertPhonePreviewTarget(launch, options, "mini:upload");
+  runBuild({ ...options, ...launch });
   const cliPath = resolveCliPath(options.cli);
   if (!cliPath) {
     throw new Error(
@@ -846,6 +908,8 @@ Options:
   --out-dir <path>        Screenshot output directory for h5-smoke.
   --wait-ms <ms>          Per-route wait time for h5-smoke.
   --headed                Run h5-smoke with a visible browser window.
+  --allow-localhost-preview
+                          Allow localhost/http preview QR generation for DevTools-only debugging.
   --version <semver>      Upload version.
   --desc <text>           Upload description.
 `);

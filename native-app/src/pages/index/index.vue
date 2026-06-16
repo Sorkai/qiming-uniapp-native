@@ -71,7 +71,7 @@
       </view>
       <text class="wechat-kicker">微信小程序</text>
       <text class="shell-title">IntellEdu</text>
-      <text class="shell-subtitle">小程序构建已就绪</text>
+      <text class="shell-subtitle">{{ miniProgramFallbackText }}</text>
       <view class="wechat-status">
         <text class="wechat-status__label">入口</text>
         <text class="wechat-status__value">{{ miniProgramEntryLabel }}</text>
@@ -370,6 +370,10 @@ const miniProgramEntryLabel = computed(() => {
     : "默认";
   return `${roleLabel} / ${appEntryRoute.value || defaultEntryRoute}`;
 });
+
+const miniProgramFallbackText = computed(() =>
+  appDevServer.value ? "正在打开 H5 业务页" : "未配置 H5 页面地址"
+);
 
 const isPhonePreview = computed(
   () => isH5DevPreview && previewMode.value === "phone"
