@@ -175,6 +175,7 @@ pnpm mini:doctor
 pnpm mini:build
 pnpm mini:smoke
 pnpm mini:h5-smoke -- --dev-server http://localhost:8851
+pnpm mini:preflight -- --dev-server https://your-h5-domain.example --role teacher --entry /welcome/index
 pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role teacher --entry /welcome/index
 ```
 
@@ -185,6 +186,8 @@ pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role tea
 `mini:h5-smoke` 会用本机 Chrome/Edge 以 390x844 手机视口为学生端、教师端、管理端路径矩阵
 生成截图和 `summary.json` 到 `artifacts/wechat-miniprogram/`，用于微信 web-view 正式 AppID
 可用前的自动化界面加载验收。
+`mini:preflight` 用于生成真机二维码前的发布检查，会验证真实 AppID、微信开发者工具 CLI、
+HTTPS H5 地址可访问性、小程序构建产物和三端启动矩阵。
 没有真实 AppID 时会使用空 AppID 导入模拟器，避免触发 `tourist appid` 切换错误；
 自动化、真机预览和上传需要配置 `WECHAT_MINIPROGRAM_APPID`，并在微信管理后台配置业务域名。完整流程见
 `doc/wechat-miniprogram-workflow.md`。

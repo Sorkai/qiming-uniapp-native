@@ -320,6 +320,78 @@ function assertPhonePreviewTarget(launch, options, command) {
   }
 }
 
+function collectPhoneTargetChecks(options, launch, command = "mini:preflight") {
+  const checks = [];
+  const add = (status, name, detail = "") => checks.push({ status, name, detail });
+  const appid = options.appid || "";
+  const cliPath = resolveCliPath(options.cli);
+  add(
+    hasRealAppId(appid) ? "OK" : "FAIL",
+    "WeChat AppID",
+    appid || "set WECHAT_MINIPROGRAM_APPID=wx... or pass --appid wx..."
+  );
+  add(
+    cliPath ? "OK" : "FAIL",
+    "WeChat DevTools CLI",
+    cliPath || "install WeChat DevTools or set WECHAT_DEVTOOLS_CLI"
+  );
+
+  if (!launch.devServer) {
+    add(
+      "FAIL",
+      "web-view H5 origin",
+      `${command} needs --dev-server https://your-h5-domain`
+    );
+    return checks;
+  }
+
+  const parsed = new URL(launch.devServer);
+  add(
+    parsed.protocol === "https:" ? "OK" : "FAIL",
+    "HTTPS H5 origin",
+    launch.devServer
+  );
+  add(
+    !isLocalhostOrigin(launch.devServer) ? "OK" : "FAIL",
+    "phone reachable origin",
+    isLocalhostOrigin(launch.devServer)
+      ? "localhost is only usable from this Mac, not from phone QR preview"
+      : launch.devServer
+  );
+  return checks;
+}
+
+async function collectH5OriginChecks(origin) {
+  const checks = [];
+  const add = (status, name, detail = "") => checks.push({ status, name, detail });
+  if (!origin) return checks;
+  try {
+    const response = await fetch(origin, {
+      method: "GET",
+      redirect: "follow",
+      signal: AbortSignal.timeout(10000)
+    });
+    add(
+      response.ok ? "OK" : "FAIL",
+      "H5 origin HTTP",
+      `${response.status} ${response.statusText} ${response.url}`
+    );
+    const contentType = response.headers.get("content-type") || "";
+    add(
+      contentType.includes("text/html") ? "OK" : "WARN",
+      "H5 origin content-type",
+      contentType || "empty"
+    );
+  } catch (error) {
+    add(
+      "FAIL",
+      "H5 origin HTTP",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+  return checks;
+}
+
 function patchProjectConfig(options) {
   if (!existsSync(projectConfigPath)) {
     throw new Error(
@@ -328,7 +400,11 @@ function patchProjectConfig(options) {
   }
   const config = readJson(projectConfigPath);
   const launch = resolveLaunchOptions(options);
-  config.appid = options.appid || "";
+  config.appid = hasRealAppId(options.appid)
+    ? options.appid
+    : hasRealAppId(config.appid)
+      ? config.appid
+      : "";
   config.projectname = config.projectname || "IntellEdu";
   config.condition = config.condition || {};
   config.condition.miniprogram = {
@@ -798,6 +874,18 @@ function runDoctor(options) {
   printChecks(checks);
 }
 
+async function runPreflight(options) {
+  assertRealAppId(options, "mini:preflight");
+  const launch = resolveLaunchOptions(options);
+  runBuild({ ...options, ...launch });
+  const checks = [
+    ...collectPhoneTargetChecks(options, launch, "mini:preflight"),
+    ...collectChecks({ ...options, ...launch }),
+    ...(await collectH5OriginChecks(launch.devServer))
+  ];
+  printChecks(checks);
+}
+
 function runOpen(options) {
   if (!existsSync(buildDir) || hasLaunchOverrides(options)) {
     runBuild(options);
@@ -892,6 +980,8 @@ Commands:
   build    Build native-app as mp-weixin and patch launch conditions.
   smoke    Verify generated mp-weixin files and route conditions.
   h5-smoke Capture mobile screenshots for the H5 route matrix.
+  preflight
+           Build and verify AppID, HTTPS H5 origin, DevTools CLI, and route matrix before preview/upload.
   open     Open the generated project in WeChat DevTools.
   preview  Generate a WeChat preview QR code through DevTools CLI.
   auto     Enable WeChat DevTools automation; requires a real AppID.
@@ -928,6 +1018,8 @@ try {
     printChecks(collectChecks(options));
   } else if (command === "h5-smoke") {
     await runH5Smoke(options);
+  } else if (command === "preflight") {
+    await runPreflight(options);
   } else if (command === "open") {
     runOpen(options);
   } else if (command === "preview") {

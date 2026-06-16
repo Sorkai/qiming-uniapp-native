@@ -18,6 +18,7 @@ pnpm mini:doctor
 pnpm mini:build
 pnpm mini:smoke
 pnpm mini:h5-smoke -- --dev-server http://localhost:8851
+pnpm mini:preflight -- --dev-server https://your-h5-domain.example --role teacher --entry /welcome/index
 ```
 
 `mini:build` 会执行 `native-app` 的 `uni build -p mp-weixin`，并给
@@ -40,6 +41,20 @@ pnpm mini:h5-smoke -- --dev-server http://localhost:8851
 
 该命令验证的是微信 `<web-view>` 里承载的 H5 页面移动形态；真实小程序模拟器/真机预览仍需
 真实 AppID 与业务域名配置。
+
+## H5 配置来源
+
+桌面副本 `/Users/fengrran/Desktop/vue-pure-admin-max/.env.production` 里可复用的公开构建参数是：
+
+- `VITE_API_URL = https://aiedu-api.intelledu.cn`
+- `VITE_ROUTER_HISTORY = "hash"`
+- `VITE_PUBLIC_PATH = /`
+- `VITE_CDN = false`
+- `VITE_COMPRESSION = "none"`
+
+该文件还包含 Docmee API Key，不能原样搬进 Git。本仓库提供了安全模板
+`.env.wechat-h5.example`，只保留微信 web-view H5 部署需要的公开配置；真正部署时本机复制为
+`.env.wechat-h5` 并按目标环境填入私密参数。
 
 ## 微信开发者工具
 
@@ -82,6 +97,7 @@ pnpm mini:auto
 生成预览二维码：
 
 ```bash
+pnpm mini:preflight -- --dev-server https://your-h5-domain.example --role teacher --entry /welcome/index
 pnpm mini:preview -- --dev-server https://your-h5-domain.example --role teacher --entry /welcome/index
 ```
 
