@@ -12,8 +12,11 @@ import { dirname, join, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+import { PNG } from "pngjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const require = createRequire(import.meta.url);
 const nativeProject = join(root, "native-app");
 const buildDir = join(nativeProject, "dist", "build", "mp-weixin");
 const projectConfigPath = join(buildDir, "project.config.json");
@@ -171,6 +174,9 @@ function parseArgs(argv) {
     browser: process.env.QIMING_MINIPROGRAM_BROWSER || "",
     outDir: "",
     waitMs: Number(process.env.QIMING_MINIPROGRAM_H5_WAIT_MS || 8000),
+    devtoolsWaitMs: Number(
+      process.env.QIMING_MINIPROGRAM_DEVTOOLS_WAIT_MS || 16000
+    ),
     headed: false,
     allowLocalhostPreview: false
   };
@@ -212,6 +218,9 @@ function parseArgs(argv) {
     } else if (arg === "--wait-ms" && next) {
       options.waitMs = Number(next);
       i += 1;
+    } else if (arg === "--devtools-wait-ms" && next) {
+      options.devtoolsWaitMs = Number(next);
+      i += 1;
     } else if (arg === "--headed") {
       options.headed = true;
     } else if (arg === "--allow-localhost-preview") {
@@ -228,6 +237,9 @@ function parseArgs(argv) {
   options.entry = normalizeEntry(options.entry);
   if (!Number.isFinite(options.waitMs) || options.waitMs < 0) {
     throw new Error(`Unsupported wait time: ${options.waitMs}`);
+  }
+  if (!Number.isFinite(options.devtoolsWaitMs) || options.devtoolsWaitMs < 0) {
+    throw new Error(`Unsupported DevTools wait time: ${options.devtoolsWaitMs}`);
   }
   return { command, options };
 }
@@ -285,6 +297,23 @@ function run(command, args, cwd = root, env = {}) {
   }
 }
 
+function runCapture(command, args, cwd = root, env = {}) {
+  const result = spawnSync(command, args, {
+    cwd,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    env: { ...process.env, ...env }
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    const output = [result.stdout, result.stderr].filter(Boolean).join("\n");
+    throw new Error(
+      `${command} ${args.join(" ")} failed with ${result.status}\n${output}`
+    );
+  }
+  return `${result.stdout || ""}${result.stderr || ""}`;
+}
+
 function pnpmCommand() {
   return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 }
@@ -309,6 +338,15 @@ function resolveBrowserPath(explicitPath = "") {
     "/Applications/Chromium.app/Contents/MacOS/Chromium"
   ].filter(Boolean);
   return candidates.find(candidate => existsSync(candidate)) || "";
+}
+
+function hasPackage(packageName) {
+  try {
+    require.resolve(packageName);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function buildQuery(route, role, devServer) {
@@ -608,6 +646,13 @@ function collectChecks(options) {
     "web-view dev server",
     launchOptions.devServer || "not set; fallback status page will render"
   );
+  add(
+    hasPackage("miniprogram-automator") ? "OK" : "WARN",
+    "DevTools automator SDK",
+    hasPackage("miniprogram-automator")
+      ? "miniprogram-automator"
+      : "missing; run pnpm install"
+  );
   return checks;
 }
 
@@ -639,6 +684,56 @@ function hasValidRouteContent(info, route) {
   return route.expectText
     ? String(info?.textSample || "").includes(route.expectText)
     : true;
+}
+
+function inspectPng(file) {
+  const png = PNG.sync.read(readFileSync(file));
+  const pixels = png.width * png.height;
+  const sampleStep = Math.max(4, Math.floor(pixels / 12000)) * 4;
+  let dark = 0;
+  let colored = 0;
+  let nonWhite = 0;
+  let sampled = 0;
+  for (let i = 0; i < png.data.length; i += sampleStep) {
+    const r = png.data[i];
+    const g = png.data[i + 1];
+    const b = png.data[i + 2];
+    const a = png.data[i + 3];
+    if (a < 16) continue;
+    sampled += 1;
+    if (r < 245 || g < 245 || b < 245) nonWhite += 1;
+    if (r < 210 || g < 210 || b < 210) dark += 1;
+    if (Math.max(r, g, b) - Math.min(r, g, b) > 18) colored += 1;
+  }
+  return {
+    width: png.width,
+    height: png.height,
+    sampled,
+    nonWhiteRatio: sampled ? nonWhite / sampled : 0,
+    darkRatio: sampled ? dark / sampled : 0,
+    coloredRatio: sampled ? colored / sampled : 0
+  };
+}
+
+function hasValidDevToolsScreenshot(metrics) {
+  return (
+    metrics.width >= 300 &&
+    metrics.height >= 600 &&
+    metrics.nonWhiteRatio > 0.015 &&
+    (metrics.darkRatio > 0.003 || metrics.coloredRatio > 0.003)
+  );
+}
+
+function findValueContaining(value, needle) {
+  if (typeof value === "string") {
+    return value.includes(needle) ? value : "";
+  }
+  if (!value || typeof value !== "object") return "";
+  for (const item of Array.isArray(value) ? value : Object.values(value)) {
+    const found = findValueContaining(item, needle);
+    if (found) return found;
+  }
+  return "";
 }
 
 function getFreePort() {
@@ -909,6 +1004,100 @@ async function runH5Smoke(options) {
   }
 }
 
+async function runDevToolsSmoke(options) {
+  assertRealAppId(options, "mini:devtools-smoke");
+  const launch = resolveLaunchOptions(options);
+  runBuild({ ...options, ...launch });
+  const checks = collectChecks({ ...options, ...launch });
+  const failedChecks = checks.filter(check => check.status === "FAIL");
+  if (failedChecks.length > 0) {
+    printChecks(checks);
+    process.exitCode = 1;
+    return;
+  }
+
+  const cliPath = resolveCliPath(options.cli);
+  if (!cliPath) {
+    throw new Error(
+      "WeChat DevTools CLI not found. Install WeChat DevTools or set WECHAT_DEVTOOLS_CLI."
+    );
+  }
+  const automator = require("miniprogram-automator");
+  const outDir =
+    options.outDir ||
+    join(
+      artifactsDir,
+      `devtools-smoke-${new Date().toISOString().replace(/[:.]/g, "-")}`
+    );
+  mkdirSync(outDir, { recursive: true });
+  const screenshotPath = join(outDir, "current.png");
+  const summaryPath = join(outDir, "summary.json");
+
+  let miniProgram;
+  try {
+    miniProgram = await automator.launch({
+      cliPath,
+      projectPath: buildDir,
+      timeout: Math.max(30000, options.devtoolsWaitMs + 30000),
+      trustProject: true
+    });
+
+    const query = buildQuery(launch.entry, launch.role, launch.devServer);
+    const page = await miniProgram.reLaunch(
+      `/pages/index/index?${query}&_qimingDevtoolsSmoke=${Date.now()}`
+    );
+    await page.waitFor(options.devtoolsWaitMs);
+    const currentPage = await miniProgram.currentPage();
+    const systemInfo = await miniProgram.systemInfo();
+    const pageData = currentPage ? await currentPage.data() : {};
+    await miniProgram.screenshot({ path: screenshotPath });
+    const screenshot = inspectPng(screenshotPath);
+    const webviewSrc = findValueContaining(pageData, "qimingMiniProgram=1");
+    const result = {
+      generatedAt: new Date().toISOString(),
+      entry: launch.entry,
+      role: launch.role,
+      devServer: launch.devServer,
+      webviewSrc,
+      page: currentPage
+        ? { path: currentPage.path, query: currentPage.query }
+        : null,
+      systemInfo: {
+        brand: systemInfo.brand,
+        model: systemInfo.model,
+        platform: systemInfo.platform,
+        screenWidth: systemInfo.screenWidth,
+        screenHeight: systemInfo.screenHeight,
+        windowWidth: systemInfo.windowWidth,
+        windowHeight: systemInfo.windowHeight,
+        SDKVersion: systemInfo.SDKVersion
+      },
+      screenshotPath,
+      screenshot
+    };
+    writeJson(summaryPath, result);
+    const pageOk = currentPage?.path === "pages/index/index";
+    const webviewOk =
+      webviewSrc.includes(launch.devServer) &&
+      webviewSrc.includes("qimingMiniProgram=1") &&
+      webviewSrc.includes(`#${launch.entry}`);
+    const screenshotOk = hasValidDevToolsScreenshot(screenshot);
+    console.log(
+      `[${pageOk ? "OK" : "FAIL"}] DevTools page ${currentPage?.path || "-"}`
+    );
+    console.log(
+      `[${webviewOk ? "OK" : "FAIL"}] DevTools web-view ${webviewSrc || "-"}`
+    );
+    console.log(
+      `[${screenshotOk ? "OK" : "WARN"}] DevTools screenshot ${screenshotPath} nonWhite=${screenshot.nonWhiteRatio.toFixed(4)} dark=${screenshot.darkRatio.toFixed(4)} colored=${screenshot.coloredRatio.toFixed(4)}`
+    );
+    console.log(`Summary written: ${summaryPath}`);
+    if (!pageOk || !webviewOk) process.exitCode = 1;
+  } finally {
+    miniProgram?.disconnect?.();
+  }
+}
+
 function runDoctor(options) {
   const checks = [];
   const add = (status, name, detail = "") => checks.push({ status, name, detail });
@@ -1011,7 +1200,13 @@ function runAuto(options) {
       "WeChat DevTools CLI not found. Install WeChat DevTools or set WECHAT_DEVTOOLS_CLI."
     );
   }
-  run(cliPath, ["auto", "--project", buildDir, "--trust-project"]);
+  const output = runCapture(cliPath, [
+    "auto",
+    "--project",
+    buildDir,
+    "--trust-project"
+  ]);
+  console.log(output.trim());
 }
 
 function runUpload(options) {
@@ -1050,6 +1245,8 @@ Commands:
   build    Build native-app as mp-weixin and patch launch conditions.
   smoke    Verify generated mp-weixin files and route conditions.
   h5-smoke Capture mobile screenshots for the H5 route matrix.
+  devtools-smoke
+           Launch WeChat DevTools automation and capture the generated mini program shell.
   preflight
            Build and verify AppID, HTTPS H5 origin, DevTools CLI, and route matrix before preview/upload.
   open     Open the generated project in WeChat DevTools.
@@ -1067,6 +1264,7 @@ Options:
   --browser <path>        Chromium browser path for h5-smoke.
   --out-dir <path>        Screenshot output directory for h5-smoke.
   --wait-ms <ms>          Per-route wait time for h5-smoke.
+  --devtools-wait-ms <ms> Wait time before DevTools screenshot capture.
   --headed                Run h5-smoke with a visible browser window.
   --allow-localhost-preview
                           Allow localhost/http preview QR generation for DevTools-only debugging.
@@ -1088,6 +1286,8 @@ try {
     printChecks(collectChecks(options));
   } else if (command === "h5-smoke") {
     await runH5Smoke(options);
+  } else if (command === "devtools-smoke") {
+    await runDevToolsSmoke(options);
   } else if (command === "preflight") {
     await runPreflight(options);
   } else if (command === "open") {

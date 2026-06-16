@@ -142,23 +142,38 @@ const fixedScrollViewStyle = computed<CSSProperties>(() => {
 
 const getSectionStyle = computed<CSSProperties>(() => {
   const nativeSafeAreaTop = isMobile.value ? getNativeSafeAreaTop() : 0;
+  const isMiniProgramWebView =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("qiming-mini-program-webview");
   const headerOnlyHeight = isMobile.value ? 64 + nativeSafeAreaTop : 72;
   const headerWithTagsHeight = isMobile.value
-    ? 64 + nativeSafeAreaTop
+    ? isMiniProgramWebView
+      ? 0
+      : 64 + nativeSafeAreaTop
     : showModel.value == "chrome"
       ? 116
       : 112;
 
   if (props.fixedHeader) {
     return {
-      paddingTop: `${hideTabs.value ? headerOnlyHeight : headerWithTagsHeight}px`
+      paddingTop: `${
+        isMiniProgramWebView
+          ? headerWithTagsHeight
+          : hideTabs.value
+            ? headerOnlyHeight
+            : headerWithTagsHeight
+      }px`
     };
   }
 
   return {
     paddingTop: "0",
     minHeight: `calc(100vh - ${
-      hideTabs.value ? headerOnlyHeight : headerWithTagsHeight
+      isMiniProgramWebView
+        ? headerWithTagsHeight
+        : hideTabs.value
+          ? headerOnlyHeight
+          : headerWithTagsHeight
     }px)`,
     boxSizing: "border-box",
     paddingBottom: mobileFooterOffset.value

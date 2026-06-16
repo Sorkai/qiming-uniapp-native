@@ -90,6 +90,7 @@ html.qiming-mini-program-webview.ua-mobile {
   --qiming-native-statusbar-offset: 0px;
   --pure-safe-area-top: 0px;
   --pure-main-content-margin: 8px 10px 0;
+  --qiming-native-navbar-bg: transparent;
 }
 
 html.qiming-native-webview,
@@ -593,6 +594,62 @@ html.qiming-native-webview.ua-mobile .navbar {
   -webkit-backdrop-filter: none !important;
 }
 
+html.qiming-mini-program-webview.ua-mobile .fixed-header {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  pointer-events: none;
+}
+
+html.qiming-mini-program-webview.ua-mobile .navbar {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  pointer-events: none;
+}
+
+html.qiming-mini-program-webview.ua-mobile .navbar > div:first-child {
+  position: absolute;
+  top: 18px;
+  left: 10px;
+  z-index: 2;
+  height: 46px !important;
+  min-height: 46px !important;
+  max-width: min(180px, calc(100vw - 220px));
+  padding: 0 !important;
+  transform: none !important;
+  pointer-events: auto;
+}
+
+html.qiming-mini-program-webview.ua-mobile .hamburger-container {
+  width: 46px;
+  height: 46px;
+  margin: 0 !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .navbar .mobile-brand,
+html.qiming-mini-program-webview.ua-mobile .navbar .vertical-header-right {
+  display: none !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .navbar > div:not(:first-child) {
+  display: none !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .app-main {
+  height: auto;
+  min-height: 100dvh;
+}
+
+html.qiming-mini-program-webview.ua-mobile .main-content {
+  padding-top: 0;
+  margin-top: 0;
+}
+
 html.qiming-native-webview.ua-mobile.dark .fixed-header,
 html.qiming-native-webview.ua-mobile.dark .navbar {
   background: transparent !important;
@@ -815,7 +872,7 @@ html.qiming-native-webview.ua-mobile .account-container .account-content {
 html.qiming-mini-program-webview.ua-mobile
   .account-container
   .account-content {
-  padding-top: 14px !important;
+  padding-top: 8px !important;
 }
 
 html.qiming-native-webview .account-container .account-sidebar,

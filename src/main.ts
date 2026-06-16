@@ -103,6 +103,49 @@ function normalizeNativeStatusbarTop(value: string) {
   return Math.min(Math.max(statusTop, 22), 28);
 }
 
+function readCurrentHashRouteInfo() {
+  const hash = window.location.hash || "";
+  const queryStart = hash.indexOf("?");
+  const path =
+    (queryStart >= 0 ? hash.slice(1, queryStart) : hash.slice(1)) || "/";
+  const hashQuery = queryStart >= 0 ? hash.slice(queryStart + 1) : "";
+  const params = new URLSearchParams(
+    hashQuery || window.location.search.slice(1)
+  );
+  return {
+    path,
+    role: params.get("demoRole") || ""
+  };
+}
+
+function resolveMiniProgramDocumentTitle(
+  path: string,
+  role: string,
+  routeTitle?: unknown
+) {
+  if (path === "/welcome/index") {
+    if (role === "admin") return "管理工作台";
+    if (role === "teacher") return "教师工作台";
+    return "IntellEdu";
+  }
+  if (path === "/account") return "学生主页";
+  if (path === "/course/list") return "课程";
+  if (path === "/course/category") return "课程分类";
+  if (path === "/course/assessment") return "作业考试";
+  if (path.startsWith("/course/discussion")) return "讨论管理";
+  if (path.startsWith("/course/")) return "课程学习";
+  if (path === "/user/list") return "用户管理";
+  if (path === "/ai-app/workspace" || path === "/account/ai-app") {
+    return "AI App";
+  }
+  if (path.startsWith("/student-exam-center/do")) return "参加考试";
+  if (path.startsWith("/exam-paper/result")) return "考试结果";
+  if (typeof routeTitle === "string" && routeTitle.trim()) {
+    return routeTitle.trim();
+  }
+  return "IntellEdu";
+}
+
 function applyNativeWebViewRuntime() {
   if (typeof window === "undefined") return;
   normalizeNativeInitialHash();
@@ -116,6 +159,11 @@ function applyNativeWebViewRuntime() {
   if (isMiniProgram) {
     root.classList.add("qiming-mini-program-webview");
     root.dataset.qimingMiniProgram = "true";
+    const initialRoute = readCurrentHashRouteInfo();
+    document.title = resolveMiniProgramDocumentTitle(
+      initialRoute.path,
+      initialRoute.role
+    );
   }
   let maxObservedViewportHeight = 0;
   let focusedNativeInput = false;
@@ -291,28 +339,11 @@ function applyNativeWebViewRuntime() {
     const role = String(
       getSingleQueryValue(currentRoute.query.demoRole) || ""
     );
-    let nextTitle = "IntellEdu";
-    if (currentRoute.path === "/welcome/index") {
-      nextTitle =
-        role === "admin"
-          ? "管理工作台"
-          : role === "teacher"
-            ? "教师工作台"
-            : "IntellEdu";
-    } else if (currentRoute.path === "/account") {
-      nextTitle = "学生主页";
-    } else if (currentRoute.path.startsWith("/course/")) {
-      nextTitle = "课程学习";
-    } else if (currentRoute.path === "/course/list") {
-      nextTitle = "课程";
-    } else if (currentRoute.path === "/course/assessment") {
-      nextTitle = "作业考试";
-    } else if (currentRoute.path === "/ai-app/workspace") {
-      nextTitle = "AI App";
-    } else if (currentRoute.meta?.title) {
-      nextTitle = String(currentRoute.meta.title);
-    }
-    document.title = nextTitle;
+    document.title = resolveMiniProgramDocumentTitle(
+      currentRoute.path,
+      role,
+      currentRoute.meta?.title
+    );
   };
 
   const getNativeUserRole = () => {

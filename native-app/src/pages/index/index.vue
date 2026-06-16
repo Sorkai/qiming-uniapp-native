@@ -239,15 +239,16 @@ function appendMiniProgramQuery(url: string) {
 }
 
 function normalizeDevServer(url: string | null | undefined) {
-  const value = url?.trim();
+  let value = String(url || "").trim();
   if (!value) return "";
   try {
-    const parsed = new URL(value);
-    if (!["http:", "https:"].includes(parsed.protocol)) return "";
-    return parsed.origin;
+    value = decodeURIComponent(value);
   } catch {
     return "";
   }
+  const match = value.match(/^(https?):\/\/([^/?#]+)/i);
+  if (!match?.[1] || !match?.[2]) return "";
+  return `${match[1].toLowerCase()}://${match[2]}`;
 }
 
 function normalizeDemoRole(role: string | null | undefined): PreviewRole | "" {
