@@ -85,7 +85,9 @@ function parseArgs(argv) {
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
     const next = args[i + 1];
-    if (arg === "--appid" && next) {
+    if (arg === "--") {
+      continue;
+    } else if (arg === "--appid" && next) {
       options.appid = next;
       i += 1;
     } else if (arg === "--cli" && next) {
