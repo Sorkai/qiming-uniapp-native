@@ -173,6 +173,7 @@ function parseArgs(argv) {
     desc: process.env.WECHAT_MINIPROGRAM_DESC || "",
     browser: process.env.QIMING_MINIPROGRAM_BROWSER || "",
     outDir: "",
+    route: process.env.QIMING_MINIPROGRAM_SMOKE_ROUTE || "",
     waitMs: Number(process.env.QIMING_MINIPROGRAM_H5_WAIT_MS || 8000),
     devtoolsWaitMs: Number(
       process.env.QIMING_MINIPROGRAM_DEVTOOLS_WAIT_MS || 16000
@@ -215,6 +216,9 @@ function parseArgs(argv) {
     } else if (arg === "--out-dir" && next) {
       options.outDir = next;
       i += 1;
+    } else if ((arg === "--route" || arg === "--only") && next) {
+      options.route = next;
+      i += 1;
     } else if (arg === "--wait-ms" && next) {
       options.waitMs = Number(next);
       i += 1;
@@ -241,6 +245,7 @@ function parseArgs(argv) {
   if (!Number.isFinite(options.devtoolsWaitMs) || options.devtoolsWaitMs < 0) {
     throw new Error(`Unsupported DevTools wait time: ${options.devtoolsWaitMs}`);
   }
+  options.route = String(options.route || "").trim();
   return { command, options };
 }
 
@@ -708,21 +713,25 @@ function getH5RouteSmokeFailures(info, route) {
     if (!topbar.hamburgerVisible) failures.push("topbar-missing-menu-button");
     if (!topbar.themeToggleVisible) failures.push("topbar-missing-theme-button");
     if (!topbar.userChipVisible) failures.push("topbar-missing-user-button");
-    const reservedBottom = Number(topbar.miniCapsuleReservedBottom);
-    const reservedLeft = Number(topbar.miniCapsuleReservedLeft);
-    for (const [name, rect] of [
-      ["menu", topbar.hamburger],
-      ["theme", topbar.themeToggle],
-      ["user", topbar.userChip]
-    ]) {
-      if (
-        Number.isFinite(reservedBottom) &&
-        Number.isFinite(reservedLeft) &&
-        rect?.visible &&
-        Number(rect.y) < reservedBottom &&
-        Number(rect.x) + Number(rect.width) > reservedLeft
-      ) {
-        failures.push(`topbar-${name}-overlaps-mini-capsule-zone`);
+    if (topbar.brandText && topbar.brandText !== "IntellEdu") {
+      failures.push(`topbar-brand-text:${topbar.brandText}`);
+    }
+    if (topbar.brandText === "IntellEdu" && !topbar.brandComplete) {
+      failures.push("topbar-brand-truncated");
+    }
+    const toolbarRects = [
+      topbar.hamburger,
+      topbar.brand,
+      topbar.themeToggle,
+      topbar.userChip
+    ].filter(rect => rect?.visible);
+    if (toolbarRects.length >= 3) {
+      const topY = Math.min(...toolbarRects.map(rect => Number(rect.y)));
+      const bottomY = Math.max(
+        ...toolbarRects.map(rect => Number(rect.y) + Number(rect.height))
+      );
+      if (bottomY - topY > 58) {
+        failures.push(`topbar-controls-not-single-row:${Math.round(bottomY - topY)}px`);
       }
     }
   }
@@ -738,6 +747,12 @@ function getH5RouteSmokeFailures(info, route) {
   if (route.name === "teacher-dashboard" && info?.sidebarCheck) {
     if (!info.sidebarCheck.wordmarkVisible) {
       failures.push("sidebar-missing-intelledu-wordmark");
+    }
+    if (info.sidebarCheck.text !== "IntellEdu") {
+      failures.push(`sidebar-brand-text:${info.sidebarCheck.text || "empty"}`);
+    }
+    if (info.sidebarCheck.text === "IntellEdu" && !info.sidebarCheck.wordmarkComplete) {
+      failures.push("sidebar-brand-truncated");
     }
   }
   return failures;
@@ -977,6 +992,7 @@ async function runH5Smoke(options) {
       const app = document.querySelector("#app");
       const topbar = document.querySelector(".navbar");
       const hamburger = document.querySelector(".hamburger-container");
+      const brand = document.querySelector(".mobile-brand-wordmark");
       const themeToggle = document.querySelector("#header-overall, .theme-toggle-container");
       const userChip = document.querySelector(".vertical-header-right .el-dropdown-link");
       const navMobile = document.querySelector(".nav-mobile-container");
@@ -1044,9 +1060,15 @@ async function runH5Smoke(options) {
         layout: {
           topbar: {
             exists: Boolean(topbar),
-            miniCapsuleReservedBottom: 88,
-            miniCapsuleReservedLeft: Math.max(0, vw - 174),
             rect: rectInfo(topbar),
+            brand: rectInfo(brand),
+            brandText: brand?.textContent?.trim() || "",
+            brandComplete: Boolean(
+              brand &&
+                brand.textContent?.trim() === "IntellEdu" &&
+                brand.getBoundingClientRect().width >= 70 &&
+                getComputedStyle(brand).textOverflow !== "ellipsis"
+            ),
             hamburger: rectInfo(hamburger),
             hamburgerVisible: Boolean(rectInfo(hamburger)?.visible),
             themeToggle: rectInfo(themeToggle),
@@ -1082,9 +1104,37 @@ async function runH5Smoke(options) {
       });
       return evaluation.result?.value || {};
     };
+    const waitForImages = async () => {
+      await client.send("Runtime.evaluate", {
+        awaitPromise: true,
+        expression: `Promise.all(Array.from(document.images).map(img => {
+          if (img.complete && img.naturalWidth > 0) return true;
+          if (typeof img.decode === "function") {
+            return img.decode().then(() => true).catch(() => false);
+          }
+          return new Promise(resolve => {
+            img.addEventListener("load", () => resolve(true), { once: true });
+            img.addEventListener("error", () => resolve(false), { once: true });
+            setTimeout(() => resolve(false), 1200);
+          });
+        }))`
+      });
+      await wait(180);
+    };
+
+    const selectedRoutes = options.route
+      ? routeMatrix.filter(route => route.name === options.route)
+      : routeMatrix;
+    if (options.route && selectedRoutes.length === 0) {
+      throw new Error(
+        `Unknown H5 smoke route: ${options.route}. Known routes: ${routeMatrix
+          .map(route => route.name)
+          .join(", ")}`
+      );
+    }
 
     const results = [];
-    for (const route of routeMatrix) {
+    for (const route of selectedRoutes) {
       const url = h5RouteUrl(devServer, route, `${Date.now()}-${route.name}`);
       await client.send("Page.navigate", { url: "about:blank" });
       await wait(150);
@@ -1098,6 +1148,8 @@ async function runH5Smoke(options) {
         await wait(300);
         info = await inspectPage();
       }
+      await waitForImages();
+      info = await inspectPage();
       info.matchedExpectedText = route.expectText
         ? String(info.textSample || "").includes(route.expectText)
         : true;
@@ -1146,8 +1198,9 @@ async function runH5Smoke(options) {
             const logoRect = logo?.getBoundingClientRect();
             const wordmarkRect = wordmark?.getBoundingClientRect();
             const style = wordmark ? getComputedStyle(wordmark) : null;
+            const text = wordmark?.textContent?.trim() || "";
             return {
-              text: wordmark?.textContent?.trim() || "",
+              text,
               logoVisible: Boolean(logoRect && logoRect.width > 1 && logoRect.height > 1),
               wordmarkVisible: Boolean(
                 wordmarkRect &&
@@ -1156,6 +1209,12 @@ async function runH5Smoke(options) {
                   style?.display !== "none" &&
                   style?.visibility !== "hidden" &&
                   Number(style?.opacity || 1) > 0.01
+              ),
+              wordmarkComplete: Boolean(
+                text === "IntellEdu" &&
+                  wordmarkRect &&
+                  wordmarkRect.width >= 96 &&
+                  style?.textOverflow !== "ellipsis"
               ),
               logoRect: logoRect
                 ? {

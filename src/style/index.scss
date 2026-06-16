@@ -91,9 +91,8 @@ html.qiming-mini-program-webview.ua-mobile {
   --pure-safe-area-top: 0px;
   --pure-main-content-margin: 8px 10px 0;
   --qiming-native-navbar-bg: transparent;
-  --qiming-mini-topbar-height: 132px;
-  --qiming-mini-left-toolbar-top: 56px;
-  --qiming-mini-toolbar-top: 88px;
+  --qiming-mini-topbar-height: 80px;
+  --qiming-mini-toolbar-top: 18px;
   --pure-mobile-content-bottom-gap: calc(
     var(--pure-mobile-tab-height) + 18px
   );
@@ -623,12 +622,12 @@ html.qiming-mini-program-webview.ua-mobile .navbar {
 
 html.qiming-mini-program-webview.ua-mobile .navbar > div:first-child {
   position: absolute;
-  top: var(--qiming-mini-left-toolbar-top);
+  top: var(--qiming-mini-toolbar-top);
   left: 10px;
   z-index: 2;
   height: 46px !important;
   min-height: 46px !important;
-  max-width: min(208px, calc(100vw - 174px));
+  max-width: min(190px, calc(100vw - 184px));
   padding: 0 !important;
   transform: none !important;
   pointer-events: auto;
@@ -642,35 +641,35 @@ html.qiming-mini-program-webview.ua-mobile .hamburger-container {
 
 html.qiming-mini-program-webview.ua-mobile .navbar .mobile-brand {
   display: inline-flex !important;
-  max-width: calc(100vw - 246px);
-  overflow: hidden;
+  flex: 0 0 auto;
+  max-width: 120px;
+  overflow: visible;
 }
 
 html.qiming-mini-program-webview.ua-mobile
   .navbar
   .mobile-brand
   .mobile-brand-logo {
-  width: 24px;
-  height: 24px;
-  margin-right: 6px;
+  display: none !important;
 }
 
 html.qiming-mini-program-webview.ua-mobile
   .navbar
   .mobile-brand
   .mobile-brand-wordmark {
-  max-width: 88px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: none;
+  overflow: visible;
+  font-size: 20px;
+  text-overflow: clip;
 }
 
 html.qiming-mini-program-webview.ua-mobile .navbar .vertical-header-right {
   display: flex !important;
   flex: 0 0 auto !important;
   position: absolute !important;
-  top: var(--qiming-mini-toolbar-top);
+  top: calc(var(--qiming-mini-toolbar-top) + 3px);
   right: 0;
-  max-width: 152px;
+  max-width: 158px;
   height: 40px !important;
   min-height: 40px !important;
   padding-right: 8px !important;
@@ -683,7 +682,7 @@ html.qiming-mini-program-webview.ua-mobile
   .vertical-header-right
   .el-dropdown-link {
   display: flex !important;
-  max-width: 82px;
+  max-width: 88px;
   padding-inline: 7px !important;
 }
 
@@ -692,13 +691,63 @@ html.qiming-mini-program-webview.ua-mobile
   .vertical-header-right
   .el-dropdown-link
   p {
-  max-width: 32px;
+  max-width: 38px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 html.qiming-mini-program-webview.ua-mobile .navbar > div:not(:first-child) {
   pointer-events: auto;
+}
+
+html.qiming-mini-program-webview.ua-mobile .sidebar-logo-container {
+  height: 80px !important;
+  min-height: 80px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .sidebar-logo-container
+  .sidebar-logo-link {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  padding: 0 14px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .sidebar-logo-container
+  .app-logo-img {
+  flex: 0 0 auto !important;
+  width: 40px !important;
+  height: 40px !important;
+  object-fit: contain !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .sidebar-logo-container
+  .sidebar-title {
+  display: inline-block !important;
+  flex: 0 1 auto !important;
+  min-width: 108px !important;
+  max-width: 148px !important;
+  overflow: visible !important;
+  font-family:
+    "Arial Black", "Arial Narrow", "Inter Tight", "Inter", "Microsoft YaHei",
+    sans-serif !important;
+  font-size: 24px !important;
+  font-style: italic !important;
+  font-weight: 900 !important;
+  line-height: 40px !important;
+  color: #174580 !important;
+  letter-spacing: -0.06em !important;
+  background: linear-gradient(135deg, #174580 0%, #2f6fd6 100%) !important;
+  background-clip: text !important;
+  transform: skewX(-8deg) !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 html.qiming-mini-program-webview.ua-mobile .app-main {

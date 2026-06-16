@@ -123,7 +123,7 @@ const {
           alt="logo"
           class="app-logo-img mobile-brand-logo"
         />
-        <span class="mobile-brand-wordmark">{{ title }}</span>
+        <span class="mobile-brand-wordmark">IntellEdu</span>
       </span>
 
       <div v-if="device !== 'mobile'" class="flex items-center ml-4">
