@@ -195,7 +195,7 @@ HTTPS H5 地址可访问性、小程序构建产物和三端启动矩阵。
 注意：扫码预览/上传面向手机环境，`--dev-server` 必须是手机可访问且已配置为微信 `web-view`
 业务域名的 HTTPS 前端 H5 地址；`http://localhost:8851` 只适合微信开发者工具模拟器和本机截图验证。
 当前小程序专用 H5 域名为 `https://aiedu-mp.intelledu.cn`，EdgeOne Pages 构建命令应使用
-`pnpm install --no-frozen-lockfile && pnpm build:wechat-h5`，输出目录为 `dist`。
+安装命令 `pnpm edgeone:install`、构建命令 `pnpm build:wechat-h5`，输出目录为 `dist`。
 `https://aiedu-api.intelledu.cn` 是后端 API 地址，不能作为 `web-view` 页面入口。
 
 ## 当前 iOS 验收状态

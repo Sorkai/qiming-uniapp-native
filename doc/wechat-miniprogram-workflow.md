@@ -191,8 +191,8 @@ pnpm mini:preflight -- --dev-server https://aiedu-mp.intelledu.cn --role teacher
 pnpm mini:preview -- --dev-server https://aiedu-mp.intelledu.cn --role teacher --entry /welcome/index
 ```
 
-EdgeOne Pages 的小程序 H5 项目应绑定到 `codex/wechat-miniprogram` 分支，构建命令使用
-`pnpm install --no-frozen-lockfile && pnpm build:wechat-h5`，输出目录使用 `dist`。发布前需要确认
+EdgeOne Pages 的小程序 H5 项目应绑定到 `wechat-miniprogram` 分支，安装命令使用
+`pnpm edgeone:install`，构建命令使用 `pnpm build:wechat-h5`，输出目录使用 `dist`。发布前需要确认
 `https://aiedu-mp.intelledu.cn/` 返回完整 H5 内容，并包含 `/static/js/` 入口脚本，而不是 0 字节空页。
 `public/hyWOiOCR1C.txt` 是微信业务域名校验文件，会随 `build:wechat-h5` 一起进入 `dist/` 根目录。
 
