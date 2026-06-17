@@ -491,6 +491,18 @@ async function collectH5OriginChecks(origin) {
       "H5 origin content-type",
       contentType || "empty"
     );
+    const html = await response.text();
+    const bodySize = new TextEncoder().encode(html).length;
+    add(
+      bodySize > 1024 ? "OK" : "FAIL",
+      "H5 origin body",
+      `${bodySize} bytes`
+    );
+    add(
+      /<script\b[^>]+src=["'][^"']*\/static\/js\//.test(html) ? "OK" : "FAIL",
+      "H5 origin assets",
+      "expected Vite entry script under /static/js/"
+    );
   } catch (error) {
     add(
       "FAIL",
