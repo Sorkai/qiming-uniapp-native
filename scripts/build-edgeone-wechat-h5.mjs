@@ -1,72 +1,68 @@
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  statSync,
-  copyFileSync,
-  readFileSync,
-  rmSync
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
 const distDir = join(root, "dist");
-const indexFile = join(distDir, "index.html");
 const verifyFile = "hyWOiOCR1C.txt";
+const upstreamOrigin = "https://aiedu.intelledu.cn";
 
-function run(command, args) {
-  const result = spawnSync(command, args, {
-    cwd: root,
-    stdio: "inherit",
-    env: process.env
+async function fetchText(url) {
+  const response = await fetch(url, {
+    headers: {
+      "cache-control": "no-cache"
+    }
   });
-
-  if (result.status !== 0) {
-    process.exit(result.status || 1);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
   }
+  return response.text();
+}
+
+function rewriteHtml(html) {
+  return html
+    .replace(/(src|href)="\/(static\/[^"]+)"/g, `$1="${upstreamOrigin}/$2"`)
+    .replace(/(src|href)="\/(favicon\.ico|manifest\.webmanifest|logo\.svg)"/g, `$1="${upstreamOrigin}/$2"`);
 }
 
 function copyVerifyFile() {
   const source = join(root, "public", verifyFile);
   const target = join(distDir, verifyFile);
   if (!existsSync(source)) return;
-  mkdirSync(distDir, { recursive: true });
   rmSync(target, { force: true });
   copyFileSync(source, target);
 }
 
-function countFiles(dir) {
-  if (!existsSync(dir)) return 0;
-  return readdirSync(dir).reduce((total, name) => {
-    const file = join(dir, name);
-    const stats = statSync(file);
-    return total + (stats.isDirectory() ? countFiles(file) : 1);
-  }, 0);
-}
-
 function assertOutput() {
-  if (!existsSync(indexFile)) {
-    throw new Error("dist/index.html was not generated");
-  }
-
+  const indexFile = join(distDir, "index.html");
   const html = readFileSync(indexFile, "utf8");
   if (html.length < 1024) {
     throw new Error(`dist/index.html is too small (${html.length} bytes)`);
   }
-
-  if (!html.includes("/static/js/")) {
-    throw new Error("dist/index.html does not reference the Vite JS entry");
+  if (!html.includes(`${upstreamOrigin}/static/js/`)) {
+    throw new Error("dist/index.html does not point to the production H5 JS entry");
   }
-
-  const fileCount = countFiles(distDir);
-  if (fileCount < 20) {
-    throw new Error(`dist output looks incomplete (${fileCount} files)`);
+  if (!existsSync(join(distDir, verifyFile))) {
+    throw new Error(`dist/${verifyFile} was not generated`);
   }
-
-  console.log(`[edgeone] verified dist/index.html (${html.length} bytes), files=${fileCount}`);
+  console.log(`[edgeone] wrote mirror index (${html.length} bytes) -> ${upstreamOrigin}`);
 }
 
-run("pnpm", ["build:wechat-h5"]);
+rmSync(distDir, { recursive: true, force: true });
+mkdirSync(distDir, { recursive: true });
+
+const html = rewriteHtml(await fetchText(`${upstreamOrigin}/`));
+writeFileSync(join(distDir, "index.html"), html);
+writeFileSync(
+  join(distDir, "version.json"),
+  `${JSON.stringify(
+    {
+      mode: "wechat-h5-mirror",
+      upstreamOrigin,
+      builtAt: new Date().toISOString()
+    },
+    null,
+    2
+  )}\n`
+);
 copyVerifyFile();
 assertOutput();
