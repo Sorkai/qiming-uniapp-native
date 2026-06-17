@@ -8,6 +8,7 @@
     "serve": "pnpm dev",
     "build": "rimraf dist && NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "build:wechat-h5": "rimraf dist && NODE_OPTIONS=--max-old-space-size=8192 vite build --mode wechat-h5",
+    "edgeone:build": "node scripts/build-edgeone-wechat-h5.mjs",
     "edgeone:install": "pnpm install --no-frozen-lockfile --ignore-scripts && pnpm rebuild @parcel/watcher @tailwindcss/oxide esbuild vue-demi",
     "build:app-h5": "rimraf dist && NODE_OPTIONS=--max-old-space-size=8192 vite build --mode app",
     "sync:app-h5": "node scripts/sync-app-h5.mjs",

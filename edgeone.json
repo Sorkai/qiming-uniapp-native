@@ -1,6 +1,6 @@
 {
   "installCommand": "pnpm edgeone:install",
-  "buildCommand": "pnpm build:wechat-h5",
+  "buildCommand": "pnpm edgeone:build",
   "outputDirectory": "dist",
   "nodeVersion": "22.11.0"
 }
