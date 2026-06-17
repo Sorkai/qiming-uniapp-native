@@ -3,12 +3,7 @@ import { ref, onMounted } from "vue";
 import { type IconifyIcon } from "@iconify/vue";
 import { useDark } from "../utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
-import {
-  getPlatformStats,
-  getStudentUsage,
-  getTeacherUsage,
-  getWeekUsage
-} from "@/api/statistics";
+import { getPlatformStats } from "@/api/statistics";
 
 const { isDark } = useDark();
 const loading = ref(true);
@@ -34,96 +29,18 @@ const darkBgColors = [
 
 const stats = ref<StatItem[]>([]);
 
-function withCardStyle(items: Omit<StatItem, "color" | "bgColor">[]) {
-  return items.map((item, index) => ({
-    ...item,
-    color: colors[index % colors.length],
-    bgColor: bgColors[index % bgColors.length]
-  }));
-}
-
-function sumUsage(list?: Array<{ usageNum?: number }>) {
-  return (list || []).reduce(
-    (total, item) => total + Number(item.usageNum || 0),
-    0
-  );
-}
-
-function usageTrend(list?: Array<{ usageNum?: number }>) {
-  const data = list || [];
-  if (data.length < 2) return 0;
-  const current = Number(data[0]?.usageNum || 0);
-  const previous = Number(data[1]?.usageNum || 0);
-  if (previous <= 0) return current > 0 ? 100 : 0;
-  return Math.round(((current - previous) / previous) * 100);
-}
-
-async function loadUsageFallbackStats() {
-  const [teacherRes, studentRes, weekRes] = await Promise.all([
-    getTeacherUsage().catch(() => null),
-    getStudentUsage().catch(() => null),
-    getWeekUsage().catch(() => null)
-  ]);
-
-  const teacherList = teacherRes?.data?.usageInfoList || [];
-  const studentList = studentRes?.data?.usageInfoList || [];
-  const teacherTotal =
-    Number(weekRes?.data?.teacherTotalNum ?? sumUsage(teacherList)) || 0;
-  const studentTotal =
-    Number(weekRes?.data?.studentTotalNum ?? sumUsage(studentList)) || 0;
-  const totalUsage = teacherTotal + studentTotal;
-
-  return withCardStyle([
-    {
-      title: "本周总互动",
-      value: totalUsage,
-      unit: "次",
-      trend: usageTrend([...teacherList, ...studentList]),
-      icon: "ep:data-analysis"
-    },
-    {
-      title: "教师教研活跃",
-      value: teacherTotal,
-      unit: "次",
-      trend: usageTrend(teacherList),
-      icon: "ep:reading"
-    },
-    {
-      title: "学生学习活跃",
-      value: studentTotal,
-      unit: "次",
-      trend: usageTrend(studentList),
-      icon: "ep:user-filled"
-    },
-    {
-      title: "日均教学互动",
-      value: Math.round((totalUsage / 7) * 10) / 10,
-      unit: "次",
-      trend: 0,
-      icon: "ep:trend-charts"
-    }
-  ]);
-}
-
 onMounted(async () => {
   try {
     const { data } = await getPlatformStats();
     if (data && data.stats) {
-      stats.value = withCardStyle(data.stats);
-      return;
+      stats.value = data.stats.map((item, index) => ({
+        ...item,
+        color: colors[index % colors.length],
+        bgColor: bgColors[index % bgColors.length]
+      }));
     }
   } catch (error) {
-    console.info(
-      "Platform overview endpoint unavailable, using usage fallback.",
-      error
-    );
-  }
-
-  try {
-    stats.value = await loadUsageFallbackStats();
-  } catch (error) {
-    console.warn("Failed to load platform usage fallback stats:", error);
-    stats.value = [];
+    console.error("Failed to fetch platform stats:", error);
   } finally {
     loading.value = false;
   }
@@ -131,7 +48,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <el-row v-loading="loading" :gutter="20" class="stats-overview-grid">
+  <el-row v-loading="loading" :gutter="20">
     <el-col
       v-for="(item, index) in stats"
       :key="index"
@@ -230,87 +147,5 @@ onMounted(async () => {
     rgb(255 255 255 / 10%) 0%,
     transparent 100%
   );
-}
-</style>
-
-<style>
-html.qiming-native-webview.ua-mobile .stats-overview-grid {
-  --el-row-gutter: 10px;
-}
-
-html.qiming-native-webview.ua-mobile .stats-overview-grid > .el-col {
-  flex: 0 0 50%;
-  max-width: 50%;
-  padding-right: 5px !important;
-  padding-left: 5px !important;
-}
-
-html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card {
-  min-height: 112px;
-  padding: 14px !important;
-  margin-bottom: 10px !important;
-  border-radius: 18px !important;
-  transform: none !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  .stats-overview-grid
-  .stat-card
-  .icon-wrapper {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 12px !important;
-  font-size: 18px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  .stats-overview-grid
-  .stat-card
-  .trend-tag {
-  padding: 3px 7px !important;
-  font-size: 10px !important;
-}
-
-html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card p {
-  margin-bottom: 5px !important;
-  font-size: 11px !important;
-  line-height: 1.25 !important;
-  letter-spacing: 0 !important;
-}
-
-html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card .text-3xl {
-  font-size: 22px !important;
-  line-height: 1.05 !important;
-}
-
-html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card .mb-6 {
-  margin-bottom: 12px !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark .stats-overview-grid .stat-card {
-  background: var(--qiming-native-surface-bg) !important;
-  border-color: var(--qiming-native-border-color) !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark .stats-overview-grid .stat-card p {
-  color: rgb(203 213 225 / 92%) !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark
-  .stats-overview-grid
-  .stat-card
-  .text-3xl,
-html.qiming-native-webview.ua-mobile.dark
-  .stats-overview-grid
-  .stat-card
-  .text-gray-400 {
-  color: rgb(248 250 252 / 96%) !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark
-  .stats-overview-grid
-  .stat-card
-  .absolute.-right-4 {
-  opacity: 0.08 !important;
 }
 </style>

@@ -1,6 +1,4 @@
 import { http } from "@/utils/http";
-import { storageLocal } from "@pureadmin/utils";
-import { getToken, userKey, type DataInfo } from "@/utils/auth";
 
 export type UserResult = {
   success: boolean;
@@ -203,96 +201,6 @@ type ResultTable = {
   };
 };
 
-const apiUrl = (path: string) => {
-  const base = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
-};
-
-const isNativeWebViewPreview = () => {
-  return (
-    typeof document !== "undefined" &&
-    document.documentElement.classList.contains("qiming-native-webview")
-  );
-};
-
-const getNativeAccessToken = () => {
-  try {
-    const token = getToken();
-    const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
-    return (
-      token?.accessToken ||
-      token?.refreshToken ||
-      userInfo?.accessToken ||
-      userInfo?.refreshToken ||
-      ""
-    );
-  } catch {
-    return "";
-  }
-};
-
-async function requestUserDetailWithNativeFallback(
-  request: () => Promise<UserCenterDetailResult>
-) {
-  if (isNativeWebViewPreview()) {
-    const token = getNativeAccessToken();
-    if (token) {
-      try {
-        return await fetchNativeUserDetail(token);
-      } catch (fetchError) {
-        console.warn("[NativeFetchFallback] user detail request failed", {
-          error: fetchError
-        });
-      }
-    }
-  }
-
-  try {
-    return await request();
-  } catch (error) {
-    if (!isNativeWebViewPreview()) throw error;
-
-    const token = getNativeAccessToken();
-    if (!token) throw error;
-
-    let lastFetchError: unknown = error;
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        return await fetchNativeUserDetail(token);
-      } catch (fetchError) {
-        lastFetchError = fetchError;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 260 * (attempt + 1)));
-    }
-
-    console.warn("[NativeFetchFallback] user detail request failed", {
-      error: lastFetchError
-    });
-    throw error;
-  }
-}
-
-async function fetchNativeUserDetail(token: string) {
-  const url = apiUrl("/edu/v1/user/detail");
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: "{}"
-  });
-
-  if (!response.ok) {
-    throw new Error(`Native user detail failed: ${response.status}`);
-  }
-
-  return (await response.json()) as UserCenterDetailResult;
-}
-
 /** 登录 */
 export const getLogin = (data?: object) => {
   return http.request<UserResult>("post", "/login", { data });
@@ -331,8 +239,10 @@ export const userLogin = (data: { mobile: string; password: string }) => {
 
 /** 获取用户信息 */
 export const getUserDetail = () => {
-  return requestUserDetailWithNativeFallback(() =>
-    http.request<UserCenterDetailResult>("post", "/edu/v1/user/detail", {})
+  return http.request<UserCenterDetailResult>(
+    "post",
+    "/edu/v1/user/detail",
+    {}
   );
 };
 

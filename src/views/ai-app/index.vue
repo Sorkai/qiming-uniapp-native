@@ -38,9 +38,9 @@ import AiResourceGeneration from "./components/AiResourceGeneration.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
+import AiGovernanceDashboard from "@/views/account/ai-app/components/AiGovernanceDashboard.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 import FloatingDigitalHuman2D from "@/views/account/ai-app/components/FloatingDigitalHuman2D.vue";
-import NavMobile from "@/layout/components/NavMobile.vue";
 
 import emptyStateDevelopmentAnimation from "@/assets/aiapplottie/empty-state-development-animation.json";
 import onlineChartAnimation from "@/assets/aiapplottie/online-chart-animation.json";
@@ -48,10 +48,6 @@ import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
 
 import { useUserStore } from "@/store/modules/user";
 import { type DataInfo, userKey } from "@/utils/auth";
-import {
-  getResponsiveLayoutTheme,
-  getSavedCourseTheme
-} from "@/utils/courseTheme";
 import {
   createAssistantConversation,
   getAssistantBootstrap,
@@ -101,6 +97,13 @@ type ChatMessageView = {
   type: "system" | "user";
   content: string;
   resources?: AssistantChatResource[];
+  sourceRefs?: AssistantChatStreamEvent["source_refs"];
+  videoSegments?: AssistantChatStreamEvent["video_segments"];
+  followups?: AssistantChatStreamEvent["followups"];
+  resourceTask?: AssistantChatStreamEvent["resource_task"];
+  safetyStatus?: string;
+  safetySummary?: string;
+  safetyFlags?: string[];
   metadata?: Record<string, any>;
   profileEvent?: Record<string, any>;
   streaming?: boolean;
@@ -178,7 +181,13 @@ const isStaffMode = computed(() => apiMode.value !== "student");
 
 const isNewTab = ref(false);
 
-const currentTheme = ref(getSavedCourseTheme(getResponsiveLayoutTheme()));
+const layoutStorage = storageLocal().getItem("responsive-layout") as
+  | { darkMode?: boolean }
+  | undefined;
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) ||
+    (layoutStorage?.darkMode ? "dark" : "light")
+);
 const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
 const resolveRailFromPath = (path: string) => {
@@ -190,6 +199,7 @@ const resolveRailFromPath = (path: string) => {
     "path",
     "profile",
     "assessment",
+    "governance",
     "automation"
   ];
   return knownRails.includes(key) ? key : "chat";
@@ -206,15 +216,10 @@ watch(
 const activeCourse = ref<CourseView | null>(null);
 
 // 侧边栏 / 数字人面板 收起状态
-const isMobileViewport = ref(false);
 const sidebarCollapsed = ref(false);
 const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
-const shouldShowNativeMobileNav = computed(() => isMobileViewport.value);
-const shouldShowFloatingHuman = computed(
-  () => !shouldShowNativeMobileNav.value
-);
 const humanPanelStyle = computed(() => ({
   width: humanCollapsed.value
     ? "64px"
@@ -348,6 +353,7 @@ const railItems = ref([
   { key: "path", label: "学习计划", icon: "Guide" },
   { key: "profile", label: "学情分析", icon: "User" },
   { key: "assessment", label: "测验评估", icon: "DataAnalysis" },
+  { key: "governance", label: "治理看板", icon: "DataBoard" },
   { key: "automation", label: "常规任务", icon: "Check" }
 ]);
 
@@ -427,7 +433,10 @@ const agentItems = computed(() => {
     return agentTrace.value.map((step, index) => ({
       id: `${step.agent}-${step.stage}-${index}`,
       name: step.agent || step.stage || "学习助手",
-      desc: step.summary || step.stage || "处理中",
+      desc:
+        step.status === "degraded" || step.status === "blocked"
+          ? step.degraded_reason || step.summary || step.stage || "降级处理中"
+          : step.summary || step.stage || "处理中",
       status:
         step.status === "done" || step.status === "completed"
           ? "done"
@@ -481,9 +490,7 @@ const handleAssistantStreamEvent = (
 ) => {
   const hasBackendHumanState = applyDigitalHumanDirective(event);
   const directiveText =
-    event.digital_human?.speech_text ||
-    event.digital_human?.highlight_text ||
-    "";
+    event.digital_human?.speech_text || event.digital_human?.highlight_text || "";
 
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
@@ -517,23 +524,44 @@ const handleAssistantStreamEvent = (
         messages.value.find(item => item.id === assistantMessageId)?.content ||
         "学习助手已完成回复。",
       resources: event.resources || [],
+      sourceRefs: event.source_refs || [],
+      videoSegments: event.video_segments || [],
+      followups: event.followups || [],
+      resourceTask: event.resource_task,
+      safetyStatus: event.safety_status,
+      safetySummary: event.safety_summary,
+      safetyFlags: event.safety_flags || event.sensitive_word_hits || [],
       profileEvent: event.profile_event,
       streaming: false
     });
     agentTrace.value = event.trace || [];
     generatedResources.value = event.resources || [];
+    if (event.conversation_title) {
+      const active = conversations.value.find(
+        item => item.conversation_id === event.conversation_id
+      );
+      if (active) active.title = event.conversation_title;
+    }
     if (event.profile_event) {
-      ElMessage.success("学习画像已同步更新");
+      if (event.profile_event.decision === "skip") {
+        ElMessage.info(event.profile_event.skip_reason || "本轮画像无需更新");
+      } else {
+        ElMessage.success("学习画像已同步更新");
+      }
+    }
+    const degradedTrace = (event.trace || []).find(step =>
+      ["degraded", "blocked"].includes(step.status)
+    );
+    if (degradedTrace?.degraded_reason) {
+      ElMessage.warning(degradedTrace.degraded_reason);
     }
     if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
-    speakDigitalHumans(directiveText || content || "");
-    speakDigitalHumans(directiveText || content || "");
+    speakDigitalHumans(
+      directiveText || content || ""
+    );
     isChatStreaming.value = false;
     window.setTimeout(() => {
-      if (
-        !isChatStreaming.value &&
-        digitalHumanStreamState.value === "saying"
-      ) {
+      if (!isChatStreaming.value && digitalHumanStreamState.value === "saying") {
         digitalHumanStreamState.value = null;
       }
     }, 2400);
@@ -601,6 +629,10 @@ const handleSendMessage = (text: string) => {
       thinking_mode: thinkingModeKey.value || undefined,
       message: trimmed,
       attachment_ids: [],
+      enable_realtime_resource: selectedSkillKeys.value.includes("resource_hint"),
+      preferred_explanation_mode: selectedSkillKeys.value.includes("visual")
+        ? "visual"
+        : undefined,
       metadata: { ui_entry: "ai_app_workbench" }
     },
     event => handleAssistantStreamEvent(event, assistantMessageId)
@@ -770,13 +802,12 @@ const loadConversationMessages = async (conversation: ConversationView) => {
     );
     activeConversationId.value = conversation.conversation_id;
     const detailConversation = data.conversation || conversation;
-    if (detailConversation.metadata)
-      conversation.metadata = detailConversation.metadata;
+    if (detailConversation.metadata) conversation.metadata = detailConversation.metadata;
     const course =
       myCourses.value.find(
-        item =>
-          item.id === (detailConversation.course_id || conversation.course_id)
-      ) || myCourses.value.find(item => item.name === conversation.course);
+        item => item.id === (detailConversation.course_id || conversation.course_id)
+      ) ||
+      myCourses.value.find(item => item.name === conversation.course);
     if (course) activeCourse.value = course;
     messages.value = (data.messages || data.list || []).map(item => ({
       id: item.message_id,
@@ -803,6 +834,24 @@ const handleSwitchCourse = (courseName: string) => {
 const handleProfileLoaded = (payload: { dimensions?: any[] }) => {
   if (payload.dimensions?.length) {
     profileDimensions.value = payload.dimensions;
+  }
+};
+
+const handleGovernanceSelectStudent = (payload: {
+  studentId: number;
+  rail: "profile" | "path" | "assessment";
+}) => {
+  selectedStudentId.value = payload.studentId;
+  activeRail.value = payload.rail;
+  if (route.path.startsWith("/ai-app/")) {
+    void router.push(`/ai-app/${payload.rail}`);
+  }
+};
+
+const handleGovernanceNavigate = (rail: "generation") => {
+  activeRail.value = rail;
+  if (route.path.startsWith("/ai-app/")) {
+    void router.push(`/ai-app/${rail}`);
   }
 };
 
@@ -849,7 +898,7 @@ const handleNewChat = async (payload: { course: string }) => {
         selected_agent: selectedAgentKey.value,
         selected_model: selectedModelKey.value,
         thinking_mode: thinkingModeKey.value,
-        skill_keys: selectedSkillKeys.value
+        skill_keys: selectedSkillKeys.value.join(",")
       }
     });
     const conversationId =
@@ -859,9 +908,7 @@ const handleNewChat = async (payload: { course: string }) => {
     }
     const conversation: AssistantConversationItem = data.conversation || {
       conversation_id: conversationId,
-      title:
-        data.title ||
-        (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
+      title: data.title || (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
       message_count: 0,
       course_id: course?.id || selectedCourseId.value,
       target_student_id: selectedTargetStudentId.value
@@ -918,22 +965,7 @@ const handleVisibilityChange = () => {
   syncHumanRenderState();
 };
 
-const updateMobileViewportState = () => {
-  isMobileViewport.value =
-    window.innerWidth <= 768 ||
-    document.documentElement.classList.contains("qiming-native-webview");
-  if (isMobileViewport.value) {
-    sidebarCollapsed.value = true;
-    humanCollapsed.value = false;
-  }
-  syncHumanRenderState();
-};
-
 onMounted(() => {
-  updateMobileViewportState();
-  window.addEventListener("resize", updateMobileViewportState, {
-    passive: true
-  });
   document.addEventListener("visibilitychange", handleVisibilityChange);
   setTimeout(() => {
     syncHumanRenderState();
@@ -942,7 +974,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   streamCancel.value?.();
-  window.removeEventListener("resize", updateMobileViewportState);
   document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
@@ -954,8 +985,7 @@ onUnmounted(() => {
       activeRail === 'chat'
         ? 'bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)]'
         : '',
-      currentTheme,
-      { 'is-native-mobile-workspace': shouldShowNativeMobileNav }
+      currentTheme
     ]"
   >
     <div class="flex-1 flex overflow-hidden">
@@ -963,7 +993,7 @@ onUnmounted(() => {
       <aside
         v-if="activeRail === 'chat'"
         class="ai-app-left-rail flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
-        :class="sidebarCollapsed ? 'is-collapsed w-[34px]' : 'w-[260px]'"
+        :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <AiSidebar
@@ -975,10 +1005,10 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- 收起态：桌面保留竖向标识，移动端仅保留独立按钮 -->
+        <!-- 收起态：竖向标识 -->
         <div
-          v-show="sidebarCollapsed && !isMobileViewport"
-          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer collapsed-rail-label"
+          v-show="sidebarCollapsed"
+          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer"
           @click="toggleSidebar"
         >
           <el-icon :size="14" class="rotate-90 mb-2"><FolderOpened /></el-icon>
@@ -992,9 +1022,6 @@ onUnmounted(() => {
         <!-- 收起 / 展开 把手 -->
         <button
           class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-          :class="{
-            'is-mobile-collapsed-trigger': sidebarCollapsed && isMobileViewport
-          }"
           :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           @click="toggleSidebar"
         >
@@ -1045,12 +1072,12 @@ onUnmounted(() => {
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
           <div
             v-if="activeRail === `chat` && activeCourse"
-            class="ai-chat-scene h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
+            class="h-full w-full flex stretch p-4 gap-4 overflow-hidden"
           >
             <!-- 对话流核心面板 -->
             <transition appear name="panel-slide">
               <div
-                class="ai-chat-card flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
+                class="flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
               >
                 <!-- 柔和的顶部遮罩渐变 -->
                 <div
@@ -1081,7 +1108,7 @@ onUnmounted(() => {
             <!-- 数字人面板 -->
             <transition appear name="panel-reveal">
               <div
-                class="ai-app-human-panel flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-300 relative"
+                class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-300 relative"
                 :style="humanPanelStyle"
               >
                 <!-- 收起 / 展开 把手：挂在外层，避免被圆角容器裁切 -->
@@ -1128,7 +1155,7 @@ onUnmounted(() => {
                 <transition name="el-zoom-in-bottom">
                   <div
                     v-show="!humanCollapsed"
-                    class="ai-human-actions flex-1 min-h-[168px] bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
+                    class="flex-1 min-h-[168px] bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
                   >
                     <div
                       class="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center border-b border-gray-100 pb-1.5 mb-1"
@@ -1157,7 +1184,7 @@ onUnmounted(() => {
           <!-- 【场景 A2】 智能辅导欢迎中心 (未选课) -->
           <div
             v-else-if="activeRail === `chat` && !activeCourse"
-            class="ai-chat-welcome h-full w-full p-4 flex items-center justify-center relative"
+            class="h-full w-full p-4 flex items-center justify-center relative"
           >
             <!-- 背景装饰 -->
             <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -1170,22 +1197,8 @@ onUnmounted(() => {
             </div>
 
             <div
-              class="ai-chat-welcome-card w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
+              class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
             >
-              <div class="ai-chat-welcome-human">
-                <VirtualHumanPanel ref="virtualHumanRef" />
-                <div class="ai-chat-welcome-actions">
-                  <button
-                    v-for="msg in quickInteractionMessages"
-                    :key="`welcome-${msg}`"
-                    type="button"
-                    @click="handleQuickInteraction(msg)"
-                  >
-                    {{ msg }}
-                  </button>
-                </div>
-              </div>
-
               <div class="text-center space-y-4">
                 <h1
                   class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
@@ -1201,7 +1214,7 @@ onUnmounted(() => {
               </div>
 
               <div
-                class="quick-chat-box bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
+                class="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
               >
                 <el-input
                   v-model="quickMessage"
@@ -1446,6 +1459,17 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <div v-else-if="activeRail === `governance`" class="h-full w-full">
+            <div class="h-full bg-white overflow-hidden">
+              <AiGovernanceDashboard
+                :course-id="selectedCourseId"
+                :is-staff-mode="isStaffMode"
+                @select-student="handleGovernanceSelectStudent"
+                @navigate="handleGovernanceNavigate"
+              />
+            </div>
+          </div>
+
           <!-- 【场景 C】 常规任务 (原自动化) -->
           <div
             v-else-if="activeRail === `automation`"
@@ -1625,7 +1649,6 @@ onUnmounted(() => {
     </div>
 
     <FloatingDigitalHuman2D
-      v-if="shouldShowFloatingHuman"
       ref="floatingHumanRef"
       :role-label="currentUserRoleLabel"
       :course-name="selectedCourseName"
@@ -1633,15 +1656,9 @@ onUnmounted(() => {
       anchor="appLeftBottom"
       anchor-selector=".ai-app-root"
       :left-zone-width="sidebarCollapsed ? 34 : 260"
-      :bottom-offset="isMobileViewport ? 24 : 82"
-      :storage-key="
-        isMobileViewport
-          ? 'ai-app-workspace-floating-digital-human-2d-mobile-status'
-          : 'ai-app-workspace-floating-digital-human-2d-left-bottom-v2'
-      "
+      :bottom-offset="82"
+      storage-key="ai-app-workspace-floating-digital-human-2d-left-bottom-v2"
     />
-
-    <NavMobile v-if="shouldShowNativeMobileNav" />
 
     <!-- 栈操作可视化预览弹窗 -->
     <el-dialog
@@ -1753,47 +1770,7 @@ onUnmounted(() => {
 .ai-app-root :deep([class*=" el-icon-"]),
 .ai-app-root :deep(.iconify) {
   font-family:
-    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline",
-    sans-serif !important;
-}
-
-.ai-app-root.is-native-mobile-workspace {
-  width: 100%;
-  height: var(--qiming-native-vh, 100dvh) !important;
-  min-height: var(--qiming-native-vh, 100dvh);
-  padding-bottom: calc(
-    var(--pure-mobile-tab-height, 56px) + var(--pure-safe-area-bottom, 0px)
-  );
-  border-radius: 0;
-}
-
-.ai-app-root.is-native-mobile-workspace > .flex-1 {
-  min-height: 0;
-}
-
-@media (max-width: 768px) {
-  .ai-app-root.is-native-mobile-workspace {
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .ai-app-root.is-native-mobile-workspace .ai-app-left-rail {
-    bottom: calc(
-      var(--pure-mobile-tab-height, 56px) + 18px +
-        var(--pure-safe-area-bottom, 0px)
-    );
-  }
-
-  .ai-app-root.is-native-mobile-workspace .ai-app-left-rail.is-collapsed {
-    bottom: auto;
-  }
-
-  .ai-app-root.is-native-mobile-workspace :deep(.floating-human-2d) {
-    bottom: calc(
-      var(--pure-mobile-tab-height, 56px) + 16px +
-        var(--pure-safe-area-bottom, 0px)
-    ) !important;
-  }
+    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline" !important;
 }
 
 /* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */
@@ -1912,14 +1889,6 @@ onUnmounted(() => {
   }
   &::after {
     content: "IntellEdu";
-    display: inline-block;
-    font-family:
-      "Arial Black", "Arial Narrow", "Inter Tight", "Inter", "Microsoft YaHei",
-      sans-serif;
-    font-style: italic;
-    font-weight: 900;
-    letter-spacing: -0.06em;
-    transform: skewX(-8deg);
   }
 }
 
@@ -1937,12 +1906,6 @@ onUnmounted(() => {
       color: #9ca3af;
     }
   }
-}
-
-:global(html.qiming-native-keyboard-open .ai-app-left-rail.is-collapsed) {
-  opacity: 0 !important;
-  transform: translate3d(-18px, -10px, 0) scale(0.84) !important;
-  pointer-events: none !important;
 }
 
 @keyframes simple-pulse {

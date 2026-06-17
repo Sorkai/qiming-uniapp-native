@@ -33,8 +33,6 @@ const {
   username,
   userAvatar,
   avatarsStyle,
-  title,
-  getLogo,
   toggleSideBar,
   toAccountSettings,
   getDropdownItemStyle,
@@ -117,19 +115,16 @@ const {
         @toggleClick="toggleSideBar"
       />
 
-      <span v-if="device === 'mobile'" class="mobile-brand">
-        <img
-          :src="getLogo()"
-          alt="logo"
-          class="app-logo-img mobile-brand-logo"
-        />
-        <span class="mobile-brand-wordmark">IntellEdu</span>
-      </span>
+      <span
+        v-if="device === 'mobile'"
+        class="text-base font-black italic tracking-tighter text-blue-600/80 uppercase ml-1"
+        >Intelledu</span
+      >
 
       <div v-if="device !== 'mobile'" class="flex items-center ml-4">
         <span
           class="text-xl font-black italic tracking-tighter text-blue-600/80 uppercase"
-          >IntellEdu</span
+          >Intelledu</span
         >
         <div class="h-4 w-[1px] bg-gray-300 mx-4" />
         <span
@@ -292,157 +287,27 @@ const {
 
 @media screen and (max-width: 768px) {
   .navbar {
-    align-items: flex-end;
-    height: calc(
-      56px +
-        var(--qiming-native-statusbar-offset, var(--pure-safe-area-top, 0px))
-    );
-    padding-top: var(
-      --qiming-native-statusbar-offset,
-      var(--pure-safe-area-top, 0px)
-    );
-    background: transparent !important;
-    border-bottom: 0 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
+    height: 64px;
 
     .navbar-item {
-      width: 32px;
-      padding: 0;
+      padding: 0 10px;
     }
-  }
-
-  .navbar > div {
-    height: 58px;
-    min-height: 58px;
-    transform: translateY(8px);
-  }
-
-  .navbar > div:first-child {
-    flex: 1 1 auto !important;
-    width: auto;
-    min-width: 0;
-    padding-right: 8px !important;
-  }
-
-  .hamburger-container {
-    position: relative;
-    flex: 0 0 48px;
-    width: 48px;
-    height: 46px;
-    box-sizing: border-box;
-    padding: 0 !important;
-    margin: 0 9px 0 14px !important;
-    border-radius: 15px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    transform: none;
-
-    &::before {
-      position: absolute;
-      inset: 4px 5px;
-      content: "";
-      background: var(--qiming-native-control-bg, rgb(255 255 255 / 92%));
-      border: 1px solid
-        var(--qiming-native-control-border, rgb(210 220 238 / 92%));
-      border-radius: 14px;
-      box-shadow:
-        0 8px 18px rgb(15 23 42 / 9%),
-        inset 0 1px 0 rgb(255 255 255 / 70%);
-    }
-  }
-
-  .mobile-brand {
-    display: inline-flex;
-    flex: 1 1 auto;
-    align-items: center;
-    min-width: 0;
-    gap: 8px;
-    color: var(--qiming-native-navbar-text, #1f3f7b);
-    font-size: 15px;
-    font-weight: 800;
-    line-height: 1;
-    white-space: nowrap;
-
-    span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
-
-  :deep(.hamburger-container .iconify-icon-offline),
-  :deep(.hamburger-container svg) {
-    position: relative;
-    z-index: 1;
-    width: 19px;
-    height: 19px;
-    font-size: 19px;
-  }
-
-  .mobile-brand-logo {
-    flex: 0 0 26px;
-    width: 26px;
-    height: 26px;
-    margin-right: 8px;
-    object-fit: contain;
-    border-radius: 9px;
   }
 
   .vertical-header-right {
-    flex: 0 0 auto !important;
-    padding: 0 10px 0 0;
-    overflow: visible;
-  }
-
-  #header-overall.navbar-item {
-    flex: 0 0 46px;
-    width: 46px;
-    height: 40px;
-    margin-right: 6px;
-    padding: 0;
-    overflow: visible;
-  }
-
-  :deep(.vertical-header-right .el-dropdown),
-  :deep(.vertical-header-right .ml-2) {
-    margin-left: 4px !important;
+    gap: 8px;
+    padding: 0 12px;
   }
 
   :deep(.el-dropdown-link) {
-    min-width: 0;
-    height: 32px;
-    padding: 4px 8px !important;
-    border-radius: 17px !important;
+    padding: 6px 10px !important;
   }
 
   :deep(.el-dropdown-link p) {
-    max-width: 52px;
-    margin-left: 7px;
+    max-width: 72px;
     overflow: hidden;
-    font-size: 12.5px;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .mobile-brand-wordmark {
-    display: inline-block;
-    font-family:
-      "Arial Black", "Arial Narrow", "Inter Tight", "Inter", "Microsoft YaHei",
-      sans-serif;
-    font-style: italic;
-    font-weight: 900;
-    letter-spacing: -0.06em;
-    transform: skewX(-8deg);
-  }
-
-  :deep(.el-avatar) {
-    width: 24px !important;
-    height: 24px !important;
   }
 }
 </style>
@@ -537,16 +402,5 @@ html.dark .logout-menu {
       background-color: rgb(248 113 113 / 15%) !important;
     }
   }
-}
-
-html.qiming-native-webview.ua-mobile.dark .navbar {
-  background: transparent !important;
-  border-bottom-color: transparent !important;
-  box-shadow: none !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark .el-dropdown-link {
-  background: rgb(248 250 252 / 96%) !important;
-  border-color: rgb(255 255 255 / 76%) !important;
 }
 </style>

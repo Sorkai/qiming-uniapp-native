@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="nx"
-    :class="{ 'is-dragging-scroll': isHomeDragging }"
-  >
+  <div class="nx" :class="{ 'is-dragging-scroll': isHomeDragging }">
     <!-- ============== NAV ============== -->
     <header class="nx-nav" :class="{ 'is-scrolled': isScrolled }">
       <div class="nx-nav__inner">
@@ -703,15 +700,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  markRaw,
-  onBeforeMount,
-  onMounted,
-  onUnmounted,
-  ref
-} from "vue";
-import { useRoute, useRouter, type LocationQueryRaw } from "vue-router";
+import { computed, markRaw, onMounted, onUnmounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import { Setting, SwitchButton, User } from "@element-plus/icons-vue";
 import { storageLocal } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
@@ -762,7 +752,6 @@ import IconTarget from "@/assets/home-icons/target.svg?component";
 import IconZap from "@/assets/home-icons/zap.svg?component";
 
 const router = useRouter();
-const route = useRoute();
 const userStore = useUserStoreHook();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
@@ -770,114 +759,14 @@ const activeShowcaseIndex = ref(0);
 const isHomeDragging = ref(false);
 let showcaseTimer: number | undefined;
 const rawIcon = (icon: any) => markRaw(icon);
-type HomeDragScrollTarget = HTMLElement | Window;
-const homeDragState: {
-  active: boolean;
-  moved: boolean;
-  suppressClick: boolean;
-  startX: number;
-  startY: number;
-  lastX: number;
-  lastY: number;
-  scrollTarget: HomeDragScrollTarget | null;
-} = {
+const homeDragState = {
   active: false,
   moved: false,
   suppressClick: false,
   startX: 0,
   startY: 0,
   lastX: 0,
-  lastY: 0,
-  scrollTarget: null
-};
-
-const nativeDemoRoles = ["student", "teacher", "admin"] as const;
-type NativeDemoRole = (typeof nativeDemoRoles)[number];
-
-const getNativeHashQuery = () => {
-  if (typeof window === "undefined") return new URLSearchParams();
-  const hashQuery = window.location.hash.split("?")[1] || "";
-  return new URLSearchParams(hashQuery || window.location.search.slice(1));
-};
-
-const buildNativeRouteQuery = () => {
-  const query: LocationQueryRaw = { ...route.query };
-  getNativeHashQuery().forEach((value, key) => {
-    if (query[key] == null) query[key] = value;
-  });
-  return query;
-};
-
-const buildNativeRuntimeQuery = () => {
-  const query: LocationQueryRaw = {};
-  const nativeQuery = buildNativeRouteQuery();
-  if (String(nativeQuery.qimingNative || "") === "1") {
-    query.qimingNative = "1";
-  } else if (
-    typeof window !== "undefined" &&
-    localStorage.getItem("qimingNativeWebView") === "1"
-  ) {
-    query.qimingNative = "1";
-  }
-
-  const nativeStatusTop =
-    nativeQuery.nativeStatusTop ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("qimingNativeStatusTop") || ""
-      : "");
-  if (nativeStatusTop) query.nativeStatusTop = String(nativeStatusTop);
-  return query;
-};
-
-const clearNativeDemoRoleState = () => {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem("qiming-demo-role");
-  sessionStorage.removeItem("qiming-demo-role");
-};
-
-const isNativeHomeEntry = (query: LocationQueryRaw) => {
-  if (String(query.qimingNative || "") === "1") return true;
-  if (typeof window === "undefined") return false;
-  return (
-    window.location.hash.includes("qimingNative=1") ||
-    localStorage.getItem("qimingNativeWebView") === "1" ||
-    document.documentElement.classList.contains("qiming-native-webview")
-  );
-};
-
-const redirectNativeDemoHomeEntry = () => {
-  if (route.path !== "/home") return false;
-  const query = buildNativeRouteQuery();
-  const demoRole = String(query.demoRole || "");
-  if (
-    !isNativeHomeEntry(query) ||
-    !nativeDemoRoles.includes(demoRole as NativeDemoRole)
-  ) {
-    return false;
-  }
-
-  delete query.menu;
-  delete query.mode;
-
-  if (demoRole === "student") {
-    router.replace({
-      path: "/account",
-      query: { ...query, menu: "home" }
-    });
-    return true;
-  }
-
-  router.replace({
-    path: "/welcome/index",
-    query
-  });
-  return true;
-};
-
-const shouldUseHomeRevealMotion = () => {
-  if (typeof window === "undefined") return false;
-  const isSmallViewport = window.matchMedia("(max-width: 680px)").matches;
-  return !isSmallViewport && !isNativeHomeEntry(buildNativeRouteQuery());
+  lastY: 0
 };
 
 const userInfo = computed(() => {
@@ -1542,13 +1431,8 @@ const testimonials = [
 ];
 
 /* ---------- Handlers ---------- */
-const getHomeAppScrollRoot = () =>
-  typeof document === "undefined"
-    ? null
-    : (document.getElementById("app") as HTMLElement | null);
 const handleScroll = () => {
-  isScrolled.value =
-    window.scrollY > 20 || (getHomeAppScrollRoot()?.scrollTop ?? 0) > 20;
+  isScrolled.value = window.scrollY > 20;
 };
 const setShowcase = (index: number) => {
   activeShowcaseIndex.value = index;
@@ -1560,18 +1444,9 @@ const startShowcaseTimer = () => {
   }, 6000);
 };
 const scrollToSection = (id: string) => {
-  const target = document.getElementById(id);
-  if (!target) return;
-
-  const navHeight =
-    document.querySelector(".nx-nav")?.getBoundingClientRect().height ?? 0;
-  const targetTop =
-    target.getBoundingClientRect().top + window.scrollY - navHeight - 8;
-
-  window.scrollTo({
-    top: Math.max(0, targetTop),
-    behavior: "smooth"
-  });
+  document
+    .getElementById(id)
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 const isInteractiveDragTarget = (target: EventTarget | null) => {
   if (!(target instanceof Element)) return false;
@@ -1596,51 +1471,6 @@ const isInteractiveDragTarget = (target: EventTarget | null) => {
     )
   );
 };
-const canElementDragScroll = (element: HTMLElement, axis: "x" | "y") => {
-  const style = window.getComputedStyle(element);
-  const overflow = axis === "x" ? style.overflowX : style.overflowY;
-  const hasRoom =
-    axis === "x"
-      ? element.scrollWidth > element.clientWidth + 1
-      : element.scrollHeight > element.clientHeight + 1;
-  return hasRoom && /(auto|scroll|overlay)/.test(overflow);
-};
-const resolveHomeDragScrollTarget = (
-  target: EventTarget | null
-): HomeDragScrollTarget => {
-  let element = target instanceof Element ? target : null;
-  while (element && element !== document.body) {
-    if (
-      element instanceof HTMLElement &&
-      (canElementDragScroll(element, "x") || canElementDragScroll(element, "y"))
-    ) {
-      return element;
-    }
-    element = element.parentElement;
-  }
-
-  const appRoot = getHomeAppScrollRoot();
-  if (
-    appRoot &&
-    (canElementDragScroll(appRoot, "x") || canElementDragScroll(appRoot, "y"))
-  ) {
-    return appRoot;
-  }
-
-  return window;
-};
-const scrollHomeDragTarget = (
-  target: HomeDragScrollTarget | null,
-  left: number,
-  top: number
-) => {
-  if (target instanceof HTMLElement) {
-    target.scrollLeft += left;
-    target.scrollTop += top;
-  } else {
-    window.scrollBy({ left, top, behavior: "auto" });
-  }
-};
 const cleanupHomeDragListeners = () => {
   window.removeEventListener("pointermove", handleHomePointerMove, true);
   window.removeEventListener("pointerup", handleHomePointerUp, true);
@@ -1656,7 +1486,6 @@ const handleHomePointerDown = (event: PointerEvent) => {
   homeDragState.startY = event.clientY;
   homeDragState.lastX = event.clientX;
   homeDragState.lastY = event.clientY;
-  homeDragState.scrollTarget = resolveHomeDragScrollTarget(event.target);
   cleanupHomeDragListeners();
   window.addEventListener("pointermove", handleHomePointerMove, {
     capture: true,
@@ -1680,7 +1509,11 @@ const handleHomePointerMove = (event: PointerEvent) => {
 
   const deltaX = event.clientX - homeDragState.lastX;
   const deltaY = event.clientY - homeDragState.lastY;
-  scrollHomeDragTarget(homeDragState.scrollTarget, -deltaX, -deltaY);
+  window.scrollBy({
+    left: -deltaX,
+    top: -deltaY,
+    behavior: "auto"
+  });
   homeDragState.lastX = event.clientX;
   homeDragState.lastY = event.clientY;
 };
@@ -1693,7 +1526,6 @@ const handleHomePointerUp = () => {
   }
   homeDragState.active = false;
   homeDragState.moved = false;
-  homeDragState.scrollTarget = null;
   isHomeDragging.value = false;
   cleanupHomeDragListeners();
 };
@@ -1710,41 +1542,21 @@ const handleEntry = () => {
   if (isLogged) {
     const roleType =
       info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
-    const nativeQuery = buildNativeRuntimeQuery();
-    if (roleType === 2 || roleType === 3) {
-      router.push({
-        path: "/welcome/index",
-        query: nativeQuery
-      });
-    } else {
-      router.push({
-        path: "/account",
-        query: { ...nativeQuery, menu: "home" }
-      });
-    }
+    if (roleType === 2 || roleType === 3) router.push("/welcome/index");
+    else router.push("/account");
   } else {
     showLoginDialog.value = true;
   }
 };
 const handleLoginSuccess = async () => {
-  clearNativeDemoRoleState();
   await initRouter();
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
   const token = getToken();
   const roleType =
     info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
-  const nativeQuery = buildNativeRuntimeQuery();
-  if (Number(roleType) === 2 || Number(roleType) === 3) {
-    router.replace({
-      path: "/welcome/index",
-      query: nativeQuery
-    });
-  } else {
-    router.replace({
-      path: "/account",
-      query: { ...nativeQuery, menu: "home" }
-    });
-  }
+  if (Number(roleType) === 2 || Number(roleType) === 3)
+    router.push("/welcome/index");
+  else router.push("/account");
 };
 const handleCommand = (command: string) => {
   switch (command) {
@@ -1762,63 +1574,48 @@ const handleCommand = (command: string) => {
   }
 };
 
-onBeforeMount(() => {
-  redirectNativeDemoHomeEntry();
-});
-
 onMounted(() => {
-  if (redirectNativeDemoHomeEntry()) return;
-
   window.addEventListener("scroll", handleScroll);
   document.addEventListener("pointerdown", handleHomePointerDown, true);
   document.addEventListener("click", handleHomeDragClickCapture, true);
   startShowcaseTimer();
 
-  if (shouldUseHomeRevealMotion()) {
-    // GSAP: Bento Cards Reveal
-    gsap.from(".nx-bento", {
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.2,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: "#features",
-        start: "top 80%"
-      }
-    });
+  // GSAP: Bento Cards Reveal
+  gsap.from(".nx-bento", {
+    y: 40,
+    opacity: 0,
+    duration: 0.8,
+    stagger: 0.2,
+    ease: "power3.out",
+    scrollTrigger: {
+      trigger: "#features",
+      start: "top 80%"
+    }
+  });
 
-    // GSAP: Hero satellites floating
-    gsap.to(".nx-sat", {
-      y: "random(-10, 10)",
-      x: "random(-5, 5)",
-      rotation: "random(-2, 2)",
-      duration: "random(2, 4)",
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut"
-    });
+  // GSAP: Hero satellites floating
+  gsap.to(".nx-sat", {
+    y: "random(-10, 10)",
+    x: "random(-5, 5)",
+    rotation: "random(-2, 2)",
+    duration: "random(2, 4)",
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut"
+  });
 
-    // GSAP: Workflow Steps Sequential Reveal
-    gsap.from(".nx-steps li", {
-      x: -30,
-      opacity: 0,
-      duration: 0.6,
-      stagger: 0.15,
-      ease: "back.out(1.7)",
-      scrollTrigger: {
-        trigger: ".nx-steps",
-        start: "top 85%"
-      }
-    });
-  } else {
-    gsap.set([".nx-bento", ".nx-steps li"], {
-      clearProps: "all",
-      opacity: 1,
-      x: 0,
-      y: 0
-    });
-  }
+  // GSAP: Workflow Steps Sequential Reveal
+  gsap.from(".nx-steps li", {
+    x: -30,
+    opacity: 0,
+    duration: 0.6,
+    stagger: 0.15,
+    ease: "back.out(1.7)",
+    scrollTrigger: {
+      trigger: ".nx-steps",
+      start: "top 85%"
+    }
+  });
 });
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
@@ -1881,13 +1678,8 @@ onUnmounted(() => {
    ========================================================= */
 .nx-nav {
   position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
+  inset: 0 0 auto;
   z-index: 40;
-  width: 100%;
-  max-width: 100vw;
-  box-sizing: border-box;
   height: 60px;
   color: rgb(246 245 244);
   background: transparent;
@@ -3468,7 +3260,7 @@ onUnmounted(() => {
 /* =========================================================
    RESPONSIVE
    ========================================================= */
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
   .nx-sat {
     display: none;
   }
@@ -3504,181 +3296,20 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 680px) {
-  .nx {
-    min-height: 100%;
-  }
-
-  .nx-section {
-    scroll-margin-top: calc(76px + var(--qiming-native-status-top, 0px));
-  }
-
-  .nx-nav {
-    height: calc(64px + var(--qiming-native-status-top, 0px));
-    padding-top: var(--qiming-native-status-top, 0);
-    color: rgb(246 245 244);
-    background: rgb(2 9 58 / 78%);
-    border-bottom-color: rgb(255 255 255 / 8%);
-    backdrop-filter: saturate(170%) blur(14px);
-  }
-
-  .nx-nav.is-scrolled {
-    color: var(--nx-text);
-    background: rgb(255 255 255 / 94%);
-  }
-
+@media (width <= 680px) {
   .nx-nav__inner {
-    gap: 12px;
-    padding: 0 18px;
+    padding: 0 16px;
   }
-
-  .nx-nav__brand {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 168px;
-    gap: 14px;
-    font-size: 15px;
-  }
-
-  .nx-nav__brand img {
-    width: 34px;
-    height: 34px;
-    margin-right: 10px;
-    border-radius: 8px;
-  }
-
-  .nx-nav__brand span,
-  .nx-nav__user span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .nx-nav__brand span {
-    max-width: 96px;
-  }
-
-  .nx-nav:not(.is-scrolled) .nx-nav__brand img {
-    box-shadow:
-      0 0 0 2px #fff,
-      0 4px 12px rgb(0 0 0 / 22%);
-  }
-
   .nx-nav__links {
     display: none;
   }
 
-  .nx-nav__right {
-    flex-shrink: 0;
-    gap: 10px;
-    margin-left: auto;
-  }
-
-  .nx-nav__user {
-    width: 34px;
-    height: 34px;
-    padding: 4px;
-    overflow: hidden;
-  }
-
-  .nx-nav__user > span:not(.el-avatar),
-  .nx-nav__user .el-icon--right {
-    display: none;
-  }
-
-  .nx-nav__user :deep(.el-avatar) {
-    display: inline-flex;
-    flex: 0 0 auto;
-  }
-
-  .nx-nav__user :deep(.el-avatar),
-  .nx-nav__user :deep(.el-avatar img) {
-    width: 26px !important;
-    height: 26px !important;
-  }
-
-  .nx-link {
-    display: none;
-  }
-
-  .nx-nav__right .nx-btn {
-    height: 34px;
-    padding: 0 12px;
-    font-size: 13px;
-    border-radius: 8px;
-  }
-
   .nx-hero {
-    padding: calc(88px + var(--qiming-native-status-top, 0px)) 18px 46px;
+    padding: 100px 16px 56px;
   }
-
-  .nx-doodle {
-    top: 72px;
-    width: 360px;
-    height: 360px;
-    opacity: 0.55;
-  }
-
-  .nx-doodle--left {
-    left: -240px;
-  }
-
-  .nx-doodle--right {
-    right: -250px;
-  }
-
-  .nx-hero__inner {
-    max-width: 100%;
-    padding: 0 6px;
-    text-align: center;
-  }
-
-  .nx-hero__title {
-    font-size: clamp(32px, 11vw, 42px);
-    line-height: 1.08;
-    letter-spacing: 0;
-  }
-
-  .nx-hero__sub {
-    max-width: 34em;
-    margin: 16px auto 0;
-    font-size: 15px;
-    line-height: 1.55;
-  }
-
-  .nx-hero__cta {
-    display: block;
-    margin-top: 22px;
-  }
-
-  .nx-hero__cta .nx-btn {
-    width: 100%;
-    height: 42px;
-    padding: 0 14px;
-    font-size: 14px;
-  }
-
-  .nx-hero__cta .nx-btn + .nx-btn {
-    margin-top: 10px;
-  }
-
-  .nx-pills {
-    display: none;
-  }
-
   .nx-hero__product {
-    padding: 0;
-    margin-top: 28px;
-  }
-
-  .nx-window {
-    max-height: 430px;
-    border-radius: 12px;
-  }
-
-  .nx-window__bar {
-    height: 28px;
-    padding: 0 10px;
+    padding: 0 16px;
+    margin-top: 36px;
   }
 
   .nx-window__body {
@@ -3709,44 +3340,10 @@ onUnmounted(() => {
   }
 
   .nx-doc {
-    max-height: 340px;
-    padding: 20px 16px;
+    padding: 24px 20px;
   }
-
-  .nx-doc__crumbs {
-    font-size: 11px;
-  }
-
   .nx-doc__title {
-    margin: 10px 0 10px;
-    font-size: 21px;
-    letter-spacing: 0;
-  }
-
-  .nx-doc__lede {
-    display: -webkit-box;
-    margin-bottom: 14px;
-    overflow: hidden;
-    font-size: 12.5px;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-  }
-
-  .nx-doc__props {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px 0;
-    margin-bottom: 12px;
-  }
-
-  .nx-doc__props > div {
-    flex: 1 1 86px;
-  }
-
-  .nx-doc__list li {
-    align-items: flex-start;
-    padding: 5px 0;
-    font-size: 12.5px;
+    font-size: 24px;
   }
 
   .nx-strip__items {
@@ -3754,154 +3351,21 @@ onUnmounted(() => {
   }
 
   .nx-section {
-    padding: 32px 16px;
+    padding: 64px 16px;
   }
-
-  .nx-section--features {
-    padding-inline: 16px;
-  }
-
-  .nx-shead {
-    margin-bottom: 10px;
-  }
-
-  .nx-shead--center {
-    text-align: left;
-  }
-
-  .nx-shead--center .nx-stitle,
-  .nx-shead--center .nx-ssub {
-    margin-right: 0;
-    margin-left: 0;
-  }
-
-  .nx-stitle {
-    font-size: 22px;
-    line-height: 1.18;
-    letter-spacing: 0;
-  }
-
-  .nx-ssub {
-    font-size: 14px;
-  }
-
-  .nx-strip {
-    padding: 36px 18px 42px;
-  }
-
   .nx-cta {
     padding: 72px 16px 88px;
   }
 
-  .nx-bento {
-    margin-bottom: 14px;
-    border-radius: 12px;
-  }
-
-  .nx-bento--wide {
-    min-height: 0;
-  }
-
-  .nx-bento--wide > .nx-bento__head {
-    padding: 14px 16px 10px;
-  }
-
   .nx-bento__head {
-    gap: 12px;
-    padding: 14px 16px 10px;
+    padding: 22px 22px 18px;
   }
-
-  .nx-bento__eyebrow {
-    margin-bottom: 5px;
-    font-size: 13px;
-  }
-
   .nx-bento__title {
-    font-size: 17px;
-    line-height: 1.22;
-    letter-spacing: 0;
-  }
-
-  .nx-bento--wide .nx-bento__title {
-    font-size: 18px;
-  }
-
-  .nx-bento--wide .nx-bento__media {
-    padding: 0 12px 12px;
-  }
-
-  .nx-bento:not(.nx-bento--wide) .nx-bento__media {
-    padding: 0;
-    margin: 0 12px 12px;
-  }
-
-  .nx-section--features .nx-bento__inset--scripted,
-  .nx-section--features
-    .nx-bento:not(.nx-bento--wide)
-    .nx-bento__inset--scripted {
-    min-height: 268px;
-    border-radius: 10px;
-  }
-
-  .nx-section--features
-    .nx-bento:not(.nx-bento--wide)
-    .nx-bento__inset--scripted {
-    min-height: 248px;
-  }
-
-  .nx-bento__inset--lg.nx-bento__inset--scripted,
-  .nx-tabpanel__media .nx-bento__inset--lg {
-    height: 330px;
-    min-height: 0;
-    border-radius: 12px;
-  }
-
-  .nx-tabpanel__inner {
-    gap: 18px;
-  }
-
-  .nx-tabpanel__copy {
-    h3 {
-      margin-bottom: 8px;
-      font-size: 20px;
-      letter-spacing: 0;
-    }
-
-    > p {
-      margin-bottom: 12px;
-      font-size: 14px;
-    }
-
-    ul {
-      grid-template-columns: 1fr;
-      gap: 7px;
-    }
-  }
-
-  .nx-tabbar {
-    justify-content: flex-start;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 2px;
-  }
-
-  .nx-tabbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .nx-tabbar__btn {
-    flex: 0 0 auto;
-  }
-
-  .nx-arrow {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    font-size: 19px;
   }
 
   .nx-steps {
     grid-template-columns: 1fr;
-    gap: 0;
   }
   .nx-steps li + li::before {
     display: none;
@@ -3923,37 +3387,5 @@ onUnmounted(() => {
   .nx-foot__legal {
     text-align: left;
   }
-}
-
-@media (max-width: 420px) {
-  .nx-nav__brand span {
-    max-width: 92px;
-  }
-
-  .nx-nav__right .nx-btn {
-    padding: 0 12px;
-  }
-
-  .nx-hero__title {
-    font-size: 34px;
-  }
-
-  .nx-hero__cta .nx-btn {
-    flex-basis: 100%;
-  }
-
-  .nx-doc__props {
-    display: none;
-  }
-
-  .nx-bento__title {
-    font-size: 18px;
-  }
-}
-
-:global(html.qiming-native-webview) .nx-section--features .nx-bento,
-:global(html.qiming-native-webview) .nx-steps li {
-  opacity: 1 !important;
-  transform: none !important;
 }
 </style>

@@ -167,13 +167,13 @@
       <!-- 未选择状态 -->
       <div
         v-else
-        class="teacher-plan-empty-mobile flex-1 flex flex-col items-center justify-center p-8 bg-slate-50/30 dark:bg-transparent"
+        class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50/30 dark:bg-transparent"
       >
         <lottie-animation
           :animation-data="EducationAnim"
-          :width="emptyStateAnimationSize"
-          :height="emptyStateAnimationSize"
-          class="teacher-plan-empty-mobile__animation mb-4"
+          :width="360"
+          :height="360"
+          class="mb-4"
         />
         <h2
           class="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-4 tracking-tight"
@@ -255,11 +255,11 @@ const emptyStateAnimationSize = computed(() => {
   const viewportWidth = appStore.getViewportWidth;
 
   if (viewportWidth < 390) {
-    return 76;
+    return 148;
   }
 
   if (viewportWidth < 768) {
-    return 92;
+    return 176;
   }
 
   return 220;
@@ -559,7 +559,7 @@ onMounted(() => {
   }
 
   .teacher-plan-panel {
-    min-height: 0;
+    min-height: calc(100vh - 280px);
   }
 }
 
@@ -627,47 +627,7 @@ onMounted(() => {
 }
 
 .teacher-plan-container.is-mobile-layout .teacher-plan-panel {
-  min-height: 0;
-}
-
-.teacher-plan-container.is-mobile-layout .teacher-plan-empty-mobile {
-  justify-content: flex-start;
-  min-height: 0;
-  padding: 10px 18px 22px;
-}
-
-.teacher-plan-container.is-mobile-layout .teacher-plan-empty-mobile__animation {
-  margin-bottom: 4px;
-}
-
-.teacher-plan-container.is-mobile-layout .teacher-plan-empty-mobile h2 {
-  margin-bottom: 6px;
-  font-size: 20px;
-  line-height: 1.25;
-  text-align: center;
-}
-
-.teacher-plan-container.is-mobile-layout .teacher-plan-empty-mobile p {
-  max-width: 310px;
-  margin-bottom: 18px;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.teacher-plan-container.is-mobile-layout
-  .teacher-plan-empty-mobile
-  > div:last-child {
-  gap: 12px;
-  max-width: 100%;
-}
-
-.teacher-plan-container.is-mobile-layout
-  .teacher-plan-empty-mobile
-  > div:last-child
-  > div {
-  padding: 14px;
-  border-radius: 18px;
-  gap: 12px;
+  min-height: calc(100vh - 240px);
 }
 
 .teacher-plan-container.is-mobile-layout .teacher-plan-empty-state {
@@ -747,7 +707,7 @@ onMounted(() => {
   }
 
   .teacher-plan-panel {
-    min-height: 0;
+    min-height: calc(100vh - 280px);
   }
 
   .course-item {
@@ -814,31 +774,7 @@ onMounted(() => {
   }
 
   .teacher-plan-panel {
-    min-height: 0;
-  }
-
-  .teacher-plan-empty-mobile {
-    justify-content: flex-start;
-    min-height: 0;
-    padding: 10px 18px 22px;
-  }
-
-  .teacher-plan-empty-mobile__animation {
-    margin-bottom: 4px;
-  }
-
-  .teacher-plan-empty-mobile h2 {
-    margin-bottom: 6px;
-    font-size: 20px;
-    line-height: 1.25;
-    text-align: center;
-  }
-
-  .teacher-plan-empty-mobile p {
-    max-width: 310px;
-    margin-bottom: 18px;
-    font-size: 13px;
-    line-height: 1.6;
+    min-height: calc(100vh - 240px);
   }
 
   .teacher-plan-empty-state {

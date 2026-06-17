@@ -472,8 +472,7 @@ const clearChat = () => {
   ElMessageBox.confirm("确定要清空所有聊天记录吗？", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
-    type: "warning",
-    customClass: "clear-chat-confirm-dialog"
+    type: "warning"
   })
     .then(() => {
       chatMessages.value = [];

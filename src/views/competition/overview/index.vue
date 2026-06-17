@@ -771,7 +771,7 @@ onMounted(() => {
   padding: 24px;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .main {
     padding: 8px;
   }

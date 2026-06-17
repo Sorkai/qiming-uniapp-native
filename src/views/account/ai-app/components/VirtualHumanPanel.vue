@@ -2,14 +2,11 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { Refresh, FullScreen, Warning, Loading } from "@element-plus/icons-vue";
 
+// 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
 const humanUrl = computed(() => {
-  const suffix = "virtual-people/index.html?embed=ai-app";
-  if (window.location.protocol === "file:") {
-    return `./${suffix}`;
-  }
-
-  const base = `${window.location.origin}${import.meta.env.BASE_URL || "/"}`;
-  return new URL(suffix, base).toString();
+  // 获取当前基础路径，动态兼容部署环境
+  const base = window.location.origin;
+  return `${base}/virtual-people/index.html?embed=ai-app`;
 });
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
@@ -220,48 +217,6 @@ defineExpose({ speak, pauseRender, resumeRender });
 @keyframes vh-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 768px) {
-  .virtual-human-panel :deep(.el-button) {
-    width: 30px;
-    height: 30px;
-    min-height: 30px;
-  }
-
-  .virtual-human-panel > div:first-child {
-    min-height: 42px;
-    padding: 8px 10px;
-    border-radius: 20px 20px 0 0;
-  }
-
-  .virtual-human-panel > div:first-child > div:first-child {
-    min-width: 0;
-    gap: 6px;
-  }
-
-  .virtual-human-panel > div:first-child span:nth-child(2) {
-    flex: 0 0 auto;
-    font-size: 13px;
-  }
-
-  .virtual-human-panel > div:first-child span:nth-child(3) {
-    min-width: 0;
-    overflow: hidden;
-    font-size: 10px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .virtual-human-panel__viewer {
-    border-radius: 0 0 20px 20px;
-  }
-
-  .virtual-human-panel__viewer iframe {
-    width: 100%;
-    height: 100%;
-    transform: translateZ(0);
   }
 }
 </style>

@@ -4,7 +4,6 @@
       <div
         v-if="visible"
         class="login-overlay"
-        :style="nativeOverlayVars"
         @click.self="emit('update:visible', false)"
       >
         <div class="login-card" :class="{ shake: isShaking }">
@@ -510,35 +509,14 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  reactive,
-  ref,
-  watch
-} from "vue";
+import { ref, reactive, watch } from "vue";
 import type { PropType } from "vue";
-import type { StyleValue } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { userRegister, userLogin, getUserDetail } from "@/api/user";
-import { storageLocal } from "@pureadmin/utils";
-import { setToken, getToken, userKey } from "@/utils/auth";
-import type { DataInfo } from "@/utils/auth";
-
-const ROLE_BY_TYPE: Record<number, string[]> = {
-  1: ["student"],
-  2: ["teacher"],
-  3: ["admin"]
-};
-
-function rolesFromRoleType(roleType?: number) {
-  return ROLE_BY_TYPE[Number(roleType)] || ["common"];
-}
+import { setToken, getToken } from "@/utils/auth";
 
 const props = defineProps({
   visible: {
@@ -553,55 +531,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-
-const nativeViewportTop = ref(0);
-const nativeViewportHeight = ref(0);
-
-const isQimingNativeWebView = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
-
-const syncNativeOverlayBounds = () => {
-  if (typeof window === "undefined" || typeof document === "undefined") return;
-
-  nativeViewportTop.value =
-    window.scrollY ||
-    document.documentElement.scrollTop ||
-    document.body?.scrollTop ||
-    0;
-  nativeViewportHeight.value =
-    window.innerHeight || document.documentElement.clientHeight || 0;
-};
-
-const nativeOverlayVars = computed<StyleValue | undefined>(() => {
-  if (!props.visible || !isQimingNativeWebView()) return undefined;
-  const height =
-    nativeViewportHeight.value ||
-    (typeof window !== "undefined" ? window.innerHeight : 0);
-
-  return {
-    "--qiming-login-overlay-top": `${nativeViewportTop.value}px`,
-    "--qiming-login-overlay-height": `${height}px`,
-    position: "absolute",
-    inset: "auto",
-    top: `${nativeViewportTop.value}px`,
-    right: "auto",
-    bottom: "auto",
-    left: "0",
-    zIndex: "10050",
-    width: "100vw",
-    height: `${height}px`,
-    minHeight: `${height}px`,
-    maxHeight: `${height}px`,
-    transform: "none"
-  };
-});
-
-const handleNativeBack = (event: Event) => {
-  if (!props.visible) return;
-  event.preventDefault();
-  emit("update:visible", false);
-};
 
 // 登录类型
 const loginType = ref<"password" | "sms">("password");
@@ -738,7 +667,6 @@ const fetchUserDetail = async () => {
       const userStore = useUserStoreHook();
       userStore.SET_NICKNAME(userInfo.nickname || "");
       userStore.SET_AVATAR(userInfo.avatar || "");
-      userStore.SET_ROLES(rolesFromRoleType(userInfo.roleType));
 
       setToken({
         accessToken: getToken()?.accessToken || "",
@@ -749,7 +677,7 @@ const fetchUserDetail = async () => {
         username: userInfo.mobile,
         nickname: userInfo.nickname,
         avatar: userInfo.avatar,
-        roles: rolesFromRoleType(userInfo.roleType),
+        roles: ["admin"],
         permissions: ["*:*:*"],
         roleType: userInfo.roleType
       });
@@ -765,29 +693,6 @@ const fetchUserDetail = async () => {
     console.error("获取用户详细信息出错:", error);
     return null;
   }
-};
-
-const getCurrentRoleType = () => {
-  const token = getToken();
-  const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
-  const roleType = Number(
-    userInfo?.roleType ??
-      (token as any)?.roleType ??
-      localStorage.getItem("userRoleType")
-  );
-  return Number.isFinite(roleType) ? roleType : 0;
-};
-
-const ensureUserRoleReady = async () => {
-  const detail = await fetchUserDetail();
-  const roleType = Number(
-    detail?.data?.userInfo?.roleType ?? getCurrentRoleType()
-  );
-  if ([1, 2, 3].includes(roleType)) return true;
-
-  console.warn("[LoginDialog] missing roleType after login", { detail });
-  message("未获取到账号角色，请重新登录", { type: "error" });
-  return false;
 };
 
 // 密码登录
@@ -821,15 +726,11 @@ const handlePasswordLogin = async () => {
         refreshToken: res.data.accessToken,
         username: loginForm.username,
         nickname: loginForm.username,
-        roles: ["common"],
+        roles: ["admin"],
         permissions: ["*:*:*"]
       });
 
-      const roleReady = await ensureUserRoleReady();
-      if (!roleReady) {
-        triggerShake();
-        return;
-      }
+      await fetchUserDetail();
       message(t("login.pureLoginSuccess"), { type: "success" });
 
       setTimeout(() => {
@@ -942,11 +843,7 @@ const handleRegister = async () => {
         permissions: ["*:*:*"]
       });
 
-      const roleReady = await ensureUserRoleReady();
-      if (!roleReady) {
-        triggerShake();
-        return;
-      }
+      await fetchUserDetail();
       ElMessage.success("注册成功，已自动登录");
 
       setTimeout(() => {
@@ -983,30 +880,11 @@ const resetForm = () => {
 watch(
   () => props.visible,
   val => {
-    if (val) {
-      syncNativeOverlayBounds();
-      void nextTick(syncNativeOverlayBounds);
-      return;
+    if (!val) {
+      setTimeout(resetForm, 300);
     }
-
-    setTimeout(resetForm, 300);
   }
 );
-
-onMounted(() => {
-  syncNativeOverlayBounds();
-  window.addEventListener("resize", syncNativeOverlayBounds);
-  window.addEventListener("orientationchange", syncNativeOverlayBounds);
-  window.addEventListener("scroll", syncNativeOverlayBounds, true);
-  window.addEventListener("qiming:native-back", handleNativeBack);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", syncNativeOverlayBounds);
-  window.removeEventListener("orientationchange", syncNativeOverlayBounds);
-  window.removeEventListener("scroll", syncNativeOverlayBounds, true);
-  window.removeEventListener("qiming:native-back", handleNativeBack);
-});
 </script>
 
 <style lang="scss" scoped>
@@ -1415,7 +1293,6 @@ onUnmounted(() => {
 @media screen and (max-width: 768px) {
   .login-overlay {
     align-items: center;
-    justify-content: center;
     padding-top: 0;
     padding: 16px;
   }
@@ -1528,103 +1405,5 @@ onUnmounted(() => {
 
 .login-card.shake {
   animation: shake 0.5s ease-in-out;
-}
-
-html.qiming-native-webview .login-overlay {
-  position: absolute !important;
-  inset: auto !important;
-  top: var(--qiming-login-overlay-top, 0) !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: 0 !important;
-  z-index: 10050 !important;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 100vw !important;
-  height: var(
-    --qiming-login-overlay-height,
-    var(--qiming-native-vh, 100dvh)
-  ) !important;
-  min-height: var(
-    --qiming-login-overlay-height,
-    var(--qiming-native-vh, 100dvh)
-  ) !important;
-  max-height: var(
-    --qiming-login-overlay-height,
-    var(--qiming-native-vh, 100dvh)
-  ) !important;
-  padding: calc(var(--qiming-native-status-top, 0px) + 14px) 16px
-    calc(env(safe-area-inset-bottom, 0px) + 16px);
-  overflow: auto;
-  overscroll-behavior: contain;
-  transform: none !important;
-}
-
-html.qiming-native-webview .login-card {
-  width: min(100%, 360px);
-  max-width: calc(100vw - 32px);
-  max-height: calc(
-    var(--qiming-native-vh, 100dvh) - var(
-        --qiming-native-status-top,
-        0px
-      ) - env(safe-area-inset-bottom, 0px) -
-      34px
-  );
-  padding: 24px 20px;
-  overflow-y: auto;
-  border-radius: 18px;
-  transform: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-html.qiming-native-webview .third-party {
-  margin-top: 18px;
-}
-
-html.qiming-native-webview .footer-link {
-  margin-top: 16px;
-}
-
-html.qiming-native-webview.dark .login-overlay {
-  background: rgb(0 0 0 / 62%);
-}
-
-html.qiming-native-webview.dark .login-card {
-  color: var(--qiming-native-text-primary, #f8fafc);
-  background: var(--qiming-native-surface-bg, #111827);
-  border: 1px solid var(--qiming-native-border-color, rgb(148 163 184 / 20%));
-}
-
-html.qiming-native-webview.dark .card-title,
-html.qiming-native-webview.dark .tab-btn.active {
-  color: var(--qiming-native-text-primary, #f8fafc);
-}
-
-html.qiming-native-webview.dark .login-tabs,
-html.qiming-native-webview.dark .input-wrapper,
-html.qiming-native-webview.dark .sms-btn,
-html.qiming-native-webview.dark .social-btn,
-html.qiming-native-webview.dark .close-btn {
-  color: var(--qiming-native-text-regular, #d4d4d8);
-  background: var(--qiming-native-surface-soft-bg, #0b1220);
-  border-color: var(--qiming-native-border-color, rgb(148 163 184 / 20%));
-}
-
-html.qiming-native-webview.dark .input-wrapper input {
-  color: var(--qiming-native-text-primary, #f8fafc);
-}
-
-html.qiming-native-webview.dark .input-wrapper.focus,
-html.qiming-native-webview.dark .tab-btn.active {
-  background: rgb(15 23 42 / 96%);
-}
-
-html.qiming-native-webview.dark .input-wrapper.focus .floating-label,
-html.qiming-native-webview.dark .input-wrapper.has-value .floating-label {
-  background: var(--qiming-native-surface-bg, #111827);
 }
 </style>

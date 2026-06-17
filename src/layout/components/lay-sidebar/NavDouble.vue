@@ -201,16 +201,10 @@ onBeforeUnmount(() => {
   .sidebar-title {
     overflow: hidden;
     text-overflow: ellipsis;
-    font-family:
-      "Arial Black", "Arial Narrow", "Inter Tight", "Inter", "Microsoft YaHei",
-      sans-serif;
     font-size: 18px;
-    font-style: italic;
-    font-weight: 900;
+    font-weight: 600;
     color: var(--pure-theme-sub-menu-active-text);
-    letter-spacing: -0.06em;
     white-space: nowrap;
-    transform: skewX(-8deg);
   }
 }
 </style>

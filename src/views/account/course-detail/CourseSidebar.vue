@@ -90,152 +90,26 @@ const props = defineProps<{
 }>();
 
 const MOBILE_BREAKPOINT = 767;
-const MOBILE_COLLAPSE_DISTANCE = 72;
-const MOBILE_TOUCH_DISTANCE = 18;
-const MOBILE_WHEEL_DISTANCE = 6;
+const MOBILE_COLLAPSE_DISTANCE = 120;
 const MOBILE_TOP_RESET = 8;
 const sidebarRef = ref<HTMLElement | null>(null);
 const itemRefs = new Map<string, HTMLElement>();
 const isMobileView = ref(false);
 const mobileCollapsed = ref(false);
 const mobileExpandAnchor = ref(0);
-let scrollStateRafId: number | null = null;
-let scrollElementsObserver: MutationObserver | null = null;
-let boundScrollableElements: HTMLElement[] = [];
-let touchStartY = 0;
-let touchLastY = 0;
-let touchTracking = false;
-let gestureLockedCollapsed = false;
 
 // Emits
 defineEmits<{
   (e: "menu-click", menuName: string): void;
 }>();
 
-const isNativeCourseWebView = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
+const isMobileViewport = () => isMobileView.value;
 
-const isMobileViewport = () => isMobileView.value || isNativeCourseWebView();
-
-const getCourseScrollRoot = () =>
-  (document.querySelector(".course-detail-root") as HTMLElement | null) ||
-  document.documentElement;
-
-const COURSE_SCROLL_SELECTORS = [
-  ".app-main",
-  ".app-main-nofixed-header",
-  ".main-container",
-  ".el-scrollbar__wrap",
-  ".layout-inner-content",
-  ".study-container",
-  ".message-board-wrapper",
-  ".message-board-container",
-  ".mastery-page-content",
-  ".homework-container",
-  ".materials-container",
-  ".course-grades-container",
-  ".animations-container",
-  ".left-scroll",
-  ".board-left-panel",
-  ".messages-list"
-];
-
-const isScrollableElement = (el: HTMLElement) => {
-  if (el.closest("#layout-sidebar")) return false;
-  return el.scrollHeight - el.clientHeight > 4 || el.scrollTop > 0;
-};
-
-const getScrollableCourseElements = () => {
-  const root = getCourseScrollRoot();
-  const elements = new Set<HTMLElement>();
-
-  document
-    .querySelectorAll<HTMLElement>(COURSE_SCROLL_SELECTORS.join(","))
-    .forEach(el => elements.add(el));
-
-  root?.querySelectorAll<HTMLElement>("*").forEach(el => {
-    if (isScrollableElement(el)) elements.add(el);
-  });
-
-  return Array.from(elements).filter(isScrollableElement);
-};
-
-const getWindowScrollTop = () => {
-  const scrollCandidates = [
-    window.scrollY,
-    document.documentElement.scrollTop,
-    document.body.scrollTop,
-    ...getScrollableCourseElements().map(el => el.scrollTop)
-  ];
-
-  return Math.max(0, ...scrollCandidates.filter(Number.isFinite));
-};
-
-const isCourseAtTop = () => getWindowScrollTop() <= MOBILE_TOP_RESET;
-
-const isCourseGestureTarget = (target: EventTarget | null) => {
-  const root = getCourseScrollRoot();
-  if (!(target instanceof Node) || !root.contains(target)) return false;
-
-  if (
-    target instanceof Element &&
-    target.closest("#layout-sidebar, .mobile-sidebar-toggle")
-  ) {
-    return false;
-  }
-
-  return true;
-};
-
-const collapseFromGesture = () => {
-  if (!isMobileViewport()) return;
-
-  gestureLockedCollapsed = true;
-  mobileExpandAnchor.value = getWindowScrollTop();
-  mobileCollapsed.value = true;
-  scheduleMobileScrollState();
-};
-
-const expandAtTop = () => {
-  gestureLockedCollapsed = false;
-  mobileCollapsed.value = false;
-  mobileExpandAnchor.value = 0;
-};
-
-const scheduleMobileScrollState = () => {
-  if (scrollStateRafId !== null) return;
-
-  scrollStateRafId = requestAnimationFrame(() => {
-    scrollStateRafId = null;
-    handleMobileScrollState();
-  });
-};
-
-const unbindScrollableElements = () => {
-  boundScrollableElements.forEach(el => {
-    el.removeEventListener("scroll", scheduleMobileScrollState);
-  });
-  boundScrollableElements = [];
-};
-
-const bindScrollableElements = () => {
-  unbindScrollableElements();
-  boundScrollableElements = getScrollableCourseElements();
-  boundScrollableElements.forEach(el => {
-    el.addEventListener("scroll", scheduleMobileScrollState, {
-      passive: true
-    });
-  });
-};
-
-const notifyCollapseChange = () => {
-  window.dispatchEvent(
-    new CustomEvent("qiming:course-sidebar-collapse-change", {
-      detail: { collapsed: mobileCollapsed.value }
-    })
-  );
-};
+const getWindowScrollTop = () =>
+  window.scrollY ||
+  document.documentElement.scrollTop ||
+  document.body.scrollTop ||
+  0;
 
 const setItemRef = (key: string, el: HTMLDivElement | null) => {
   if (!key) return;
@@ -265,11 +139,9 @@ const ensureActiveItemVisible = () => {
 };
 
 const updateViewportState = () => {
-  isMobileView.value =
-    window.innerWidth <= MOBILE_BREAKPOINT || isNativeCourseWebView();
+  isMobileView.value = window.innerWidth <= MOBILE_BREAKPOINT;
 
   if (!isMobileView.value) {
-    gestureLockedCollapsed = false;
     mobileCollapsed.value = false;
     mobileExpandAnchor.value = 0;
   }
@@ -281,13 +153,10 @@ const handleMobileScrollState = () => {
   const scrollTop = getWindowScrollTop();
 
   if (scrollTop <= MOBILE_TOP_RESET) {
-    if (!gestureLockedCollapsed) {
-      expandAtTop();
-    }
+    mobileCollapsed.value = false;
+    mobileExpandAnchor.value = 0;
     return;
   }
-
-  gestureLockedCollapsed = false;
 
   if (mobileCollapsed.value) return;
 
@@ -301,7 +170,6 @@ const handleMobileScrollState = () => {
 const handleMobileToggle = () => {
   if (!isMobileViewport()) return;
 
-  gestureLockedCollapsed = false;
   mobileCollapsed.value = false;
   mobileExpandAnchor.value = getWindowScrollTop();
 
@@ -315,72 +183,7 @@ const handleViewportResize = () => {
 };
 
 const handleWindowScroll = () => {
-  scheduleMobileScrollState();
-};
-
-const handleTouchStart = (event: TouchEvent) => {
-  if (!isMobileViewport() || !isCourseGestureTarget(event.target)) {
-    touchTracking = false;
-    return;
-  }
-
-  const touch = event.touches[0];
-  if (!touch) return;
-
-  touchStartY = touch.clientY;
-  touchLastY = touch.clientY;
-  touchTracking = true;
-};
-
-const handleTouchMove = (event: TouchEvent) => {
-  if (!isMobileViewport() || !touchTracking) return;
-
-  const touch = event.touches[0];
-  if (!touch) return;
-
-  const deltaFromStart = touchStartY - touch.clientY;
-  const deltaFromLast = touchLastY - touch.clientY;
-  touchLastY = touch.clientY;
-
-  if (
-    deltaFromStart >= MOBILE_TOUCH_DISTANCE ||
-    deltaFromLast >= MOBILE_TOUCH_DISTANCE
-  ) {
-    collapseFromGesture();
-    return;
-  }
-
-  if (
-    (deltaFromStart <= -MOBILE_TOUCH_DISTANCE ||
-      deltaFromLast <= -MOBILE_TOUCH_DISTANCE) &&
-    isCourseAtTop()
-  ) {
-    expandAtTop();
-  }
-
-  scheduleMobileScrollState();
-};
-
-const handleTouchEnd = () => {
-  touchTracking = false;
-  touchStartY = 0;
-  touchLastY = 0;
-  scheduleMobileScrollState();
-};
-
-const handleWheelGesture = (event: WheelEvent) => {
-  if (!isMobileViewport() || !isCourseGestureTarget(event.target)) return;
-
-  if (event.deltaY >= MOBILE_WHEEL_DISTANCE) {
-    collapseFromGesture();
-    return;
-  }
-
-  if (event.deltaY <= -MOBILE_WHEEL_DISTANCE && isCourseAtTop()) {
-    expandAtTop();
-  }
-
-  scheduleMobileScrollState();
+  handleMobileScrollState();
 };
 
 // 侧边栏菜单配置
@@ -406,87 +209,26 @@ watch(
   () => props.activeMenu,
   async () => {
     await nextTick();
-    bindScrollableElements();
     ensureActiveItemVisible();
 
-    if (isMobileViewport()) {
-      expandAtTop();
-      notifyCollapseChange();
-      scheduleMobileScrollState();
+    if (isMobileViewport() && !mobileCollapsed.value) {
+      mobileExpandAnchor.value = getWindowScrollTop();
     }
   },
   { immediate: true }
-);
-
-watch(
-  mobileCollapsed,
-  () => {
-    notifyCollapseChange();
-  },
-  { flush: "post" }
 );
 
 onMounted(() => {
   updateViewportState();
   window.addEventListener("resize", handleViewportResize, { passive: true });
   window.addEventListener("scroll", handleWindowScroll, { passive: true });
-  document.addEventListener("scroll", handleWindowScroll, {
-    capture: true,
-    passive: true
-  });
-  document.addEventListener("touchstart", handleTouchStart, {
-    capture: true,
-    passive: true
-  });
-  document.addEventListener("touchmove", handleTouchMove, {
-    capture: true,
-    passive: true
-  });
-  document.addEventListener("touchend", handleTouchEnd, {
-    capture: true,
-    passive: true
-  });
-  document.addEventListener("touchcancel", handleTouchEnd, {
-    capture: true,
-    passive: true
-  });
-  document.addEventListener("wheel", handleWheelGesture, {
-    capture: true,
-    passive: true
-  });
-  scrollElementsObserver = new MutationObserver(() => {
-    nextTick(() => {
-      bindScrollableElements();
-      scheduleMobileScrollState();
-    });
-  });
-  scrollElementsObserver.observe(getCourseScrollRoot(), {
-    childList: true,
-    subtree: true
-  });
-  nextTick(() => {
-    bindScrollableElements();
-    ensureActiveItemVisible();
-  });
+  nextTick(() => ensureActiveItemVisible());
   handleMobileScrollState();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleViewportResize);
   window.removeEventListener("scroll", handleWindowScroll);
-  document.removeEventListener("scroll", handleWindowScroll, true);
-  document.removeEventListener("touchstart", handleTouchStart, true);
-  document.removeEventListener("touchmove", handleTouchMove, true);
-  document.removeEventListener("touchend", handleTouchEnd, true);
-  document.removeEventListener("touchcancel", handleTouchEnd, true);
-  document.removeEventListener("wheel", handleWheelGesture, true);
-  scrollElementsObserver?.disconnect();
-  scrollElementsObserver = null;
-  unbindScrollableElements();
-  if (scrollStateRafId !== null) {
-    cancelAnimationFrame(scrollStateRafId);
-    scrollStateRafId = null;
-  }
 });
 </script>
 
@@ -722,10 +464,10 @@ onBeforeUnmount(() => {
 /* 侧边栏样式优化 - 独立显示，与左右保持距离 */
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .layout-sidebar {
     --mobile-sidebar-easing: cubic-bezier(0.65, 0, 0.35, 1);
-    top: calc(84px + var(--pure-safe-area-top, 0px));
+    top: 88px;
     right: 12px;
     left: 12px;
     z-index: 120;
@@ -770,12 +512,12 @@ onBeforeUnmount(() => {
   .layout-sidebar-scroll {
     display: flex;
     flex-direction: row;
-    gap: 6px;
+    gap: 10px;
     align-items: center;
     width: 100%;
     height: 100%;
     max-height: none;
-    padding: 10px 10px;
+    padding: 10px 12px;
     overflow: auto hidden;
     scroll-snap-type: x proximity;
     scroll-padding-inline: 12px;
@@ -848,7 +590,7 @@ onBeforeUnmount(() => {
 
   .layout-sidebar {
     .item {
-      flex: 0 0 calc((100% - 12px) / 3);
+      flex: 0 0 auto;
       width: auto;
       padding: 0;
       scroll-snap-align: start;
@@ -860,14 +602,14 @@ onBeforeUnmount(() => {
 
     .hover-box {
       flex-direction: row;
-      gap: 6px;
+      gap: 8px;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
+      width: auto;
+      min-width: fit-content;
+      max-width: calc(100vw - 72px);
       min-height: 0;
-      padding: 12px 8px;
+      padding: 12px 18px;
       background: transparent;
       border-radius: 18px;
       box-shadow: none;
@@ -899,8 +641,6 @@ onBeforeUnmount(() => {
       margin-top: 0;
       font-size: 13px;
       line-height: 1.1;
-      overflow: hidden;
-      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
@@ -911,9 +651,9 @@ onBeforeUnmount(() => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .layout-sidebar {
-    top: calc(82px + var(--pure-safe-area-top, 0px));
+    top: 86px;
     right: 10px;
     left: 10px;
     height: 60px;
@@ -926,12 +666,13 @@ onBeforeUnmount(() => {
   }
 
   .layout-sidebar-scroll {
-    padding: 8px;
+    padding: 8px 10px;
   }
 
   .layout-sidebar {
     .hover-box {
-      padding: 11px 6px;
+      max-width: calc(100vw - 64px);
+      padding: 11px 15px;
     }
 
     .side-name {

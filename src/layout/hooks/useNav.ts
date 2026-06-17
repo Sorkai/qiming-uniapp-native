@@ -84,7 +84,7 @@ export function useNav() {
   });
 
   const title = computed(() => {
-    return $config.Title || getConfig().Title || "IntellEdu";
+    return $config.Title;
   });
 
   /** 动态title */

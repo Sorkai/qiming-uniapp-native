@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storageLocal } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
@@ -38,6 +38,7 @@ import AiResourceGeneration from "./components/AiResourceGeneration.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
+import AiGovernanceDashboard from "./components/AiGovernanceDashboard.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 import FloatingDigitalHuman2D from "./components/FloatingDigitalHuman2D.vue";
 
@@ -48,10 +49,6 @@ import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
 import { useUserStore } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
 import { type DataInfo, userKey } from "@/utils/auth";
-import {
-  getResponsiveLayoutTheme,
-  getSavedCourseTheme
-} from "@/utils/courseTheme";
 import {
   createAssistantConversation,
   getAssistantBootstrap,
@@ -102,6 +99,13 @@ type ChatMessageView = {
   content: string;
   avatar?: string;
   resources?: AssistantChatResource[];
+  sourceRefs?: AssistantChatStreamEvent["source_refs"];
+  videoSegments?: AssistantChatStreamEvent["video_segments"];
+  followups?: AssistantChatStreamEvent["followups"];
+  resourceTask?: AssistantChatStreamEvent["resource_task"];
+  safetyStatus?: string;
+  safetySummary?: string;
+  safetyFlags?: string[];
   metadata?: Record<string, any>;
   profileEvent?: Record<string, any>;
   streaming?: boolean;
@@ -181,7 +185,13 @@ const currentUserAvatar = computed(() => formatAvatar(userStore.avatar));
 
 const isNewTab = ref(false);
 
-const currentTheme = ref(getSavedCourseTheme(getResponsiveLayoutTheme()));
+const layoutStorage = storageLocal().getItem("responsive-layout") as
+  | { darkMode?: boolean }
+  | undefined;
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) ||
+    (layoutStorage?.darkMode ? "dark" : "light")
+);
 const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
 const resolveRailFromPath = (path: string) => {
@@ -193,6 +203,7 @@ const resolveRailFromPath = (path: string) => {
     "path",
     "profile",
     "assessment",
+    "governance",
     "automation"
   ];
   return knownRails.includes(key) ? key : "chat";
@@ -209,20 +220,10 @@ watch(
 const activeCourse = ref<CourseView | null>(null);
 
 // 侧边栏收起状态
-const isMobileViewport = ref(false);
-const sidebarCollapsed = ref(
-  typeof window !== "undefined" &&
-    (window.innerWidth <= 768 ||
-      document.documentElement.classList.contains("qiming-native-webview") ||
-      new URLSearchParams(window.location.search).get("qimingNative") === "1" ||
-      new URLSearchParams(window.location.hash.split("?")[1] || "").get(
-        "qimingNative"
-      ) === "1")
-);
+const sidebarCollapsed = ref(false);
 const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
-const shouldShowFloatingHuman = computed(() => !isMobileViewport.value);
 
 type DigitalHumanState = "standby" | "listening" | "thinking" | "saying";
 
@@ -353,6 +354,7 @@ const railItems = ref([
   { key: "path", label: "学习计划", icon: "Guide" },
   { key: "profile", label: "学情分析", icon: "User" },
   { key: "assessment", label: "测验评估", icon: "DataAnalysis" },
+  { key: "governance", label: "治理看板", icon: "DataBoard" },
   { key: "automation", label: "常规任务", icon: "Check" }
 ]);
 
@@ -432,7 +434,10 @@ const agentItems = computed(() => {
     return agentTrace.value.map((step, index) => ({
       id: `${step.agent}-${step.stage}-${index}`,
       name: step.agent || step.stage || "学习助手",
-      desc: step.summary || step.stage || "处理中",
+      desc:
+        step.status === "degraded" || step.status === "blocked"
+          ? step.degraded_reason || step.summary || step.stage || "降级处理中"
+          : step.summary || step.stage || "处理中",
       status:
         step.status === "done" || step.status === "completed"
           ? "done"
@@ -486,9 +491,7 @@ const handleAssistantStreamEvent = (
 ) => {
   const hasBackendHumanState = applyDigitalHumanDirective(event);
   const directiveText =
-    event.digital_human?.speech_text ||
-    event.digital_human?.highlight_text ||
-    "";
+    event.digital_human?.speech_text || event.digital_human?.highlight_text || "";
 
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
@@ -522,22 +525,42 @@ const handleAssistantStreamEvent = (
         messages.value.find(item => item.id === assistantMessageId)?.content ||
         "学习助手已完成回复。",
       resources: event.resources || [],
+      sourceRefs: event.source_refs || [],
+      videoSegments: event.video_segments || [],
+      followups: event.followups || [],
+      resourceTask: event.resource_task,
+      safetyStatus: event.safety_status,
+      safetySummary: event.safety_summary,
+      safetyFlags: event.safety_flags || event.sensitive_word_hits || [],
       profileEvent: event.profile_event,
       streaming: false
     });
     agentTrace.value = event.trace || [];
     generatedResources.value = event.resources || [];
+    if (event.conversation_title) {
+      const active = conversations.value.find(
+        item => item.conversation_id === event.conversation_id
+      );
+      if (active) active.title = event.conversation_title;
+    }
     if (event.profile_event) {
-      ElMessage.success("学习画像已同步更新");
+      if (event.profile_event.decision === "skip") {
+        ElMessage.info(event.profile_event.skip_reason || "本轮画像无需更新");
+      } else {
+        ElMessage.success("学习画像已同步更新");
+      }
+    }
+    const degradedTrace = (event.trace || []).find(step =>
+      ["degraded", "blocked"].includes(step.status)
+    );
+    if (degradedTrace?.degraded_reason) {
+      ElMessage.warning(degradedTrace.degraded_reason);
     }
     if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
     speakDigitalHumans(directiveText || content || "");
     isChatStreaming.value = false;
     window.setTimeout(() => {
-      if (
-        !isChatStreaming.value &&
-        digitalHumanStreamState.value === "saying"
-      ) {
+      if (!isChatStreaming.value && digitalHumanStreamState.value === "saying") {
         digitalHumanStreamState.value = null;
       }
     }, 2400);
@@ -606,20 +629,14 @@ const handleSendMessage = (text: string) => {
       thinking_mode: thinkingModeKey.value || undefined,
       message: trimmed,
       attachment_ids: [],
+      enable_realtime_resource: selectedSkillKeys.value.includes("resource_hint"),
+      preferred_explanation_mode: selectedSkillKeys.value.includes("visual")
+        ? "visual"
+        : undefined,
       metadata: { ui_entry: "ai_app_workbench" }
     },
     event => handleAssistantStreamEvent(event, assistantMessageId)
   );
-};
-
-const sendQuickMessageWithResolvedContext = (text: string, course?: CourseView | null) => {
-  const trimmed = text.trim();
-  if (!trimmed) return;
-  if (course) activeCourse.value = course;
-  activeRail.value = "chat";
-  nextTick(() => {
-    handleSendMessage(trimmed);
-  });
 };
 
 // === 栈操作预览弹窗 ===
@@ -791,13 +808,12 @@ const loadConversationMessages = async (conversation: ConversationView) => {
     );
     activeConversationId.value = conversation.conversation_id;
     const detailConversation = data.conversation || conversation;
-    if (detailConversation.metadata)
-      conversation.metadata = detailConversation.metadata;
+    if (detailConversation.metadata) conversation.metadata = detailConversation.metadata;
     const course =
       myCourses.value.find(
-        item =>
-          item.id === (detailConversation.course_id || conversation.course_id)
-      ) || myCourses.value.find(item => item.name === conversation.course);
+        item => item.id === (detailConversation.course_id || conversation.course_id)
+      ) ||
+      myCourses.value.find(item => item.name === conversation.course);
     if (course) activeCourse.value = course;
     messages.value = (data.messages || data.list || []).map(item => ({
       id: item.message_id,
@@ -825,6 +841,24 @@ const handleSwitchCourse = (courseName: string) => {
 const handleProfileLoaded = (payload: { dimensions?: any[] }) => {
   if (payload.dimensions?.length) {
     profileDimensions.value = payload.dimensions;
+  }
+};
+
+const handleGovernanceSelectStudent = (payload: {
+  studentId: number;
+  rail: "profile" | "path" | "assessment";
+}) => {
+  selectedStudentId.value = payload.studentId;
+  activeRail.value = payload.rail;
+  if (route.path.startsWith("/ai-app/")) {
+    void router.push(`/ai-app/${payload.rail}`);
+  }
+};
+
+const handleGovernanceNavigate = (rail: "generation") => {
+  activeRail.value = rail;
+  if (route.path.startsWith("/ai-app/")) {
+    void router.push(`/ai-app/${rail}`);
   }
 };
 
@@ -857,24 +891,6 @@ const handleQuickInteraction = (text: string) => {
   speakDigitalHumans(text);
 };
 
-const resolveQuickCourseName = () =>
-  quickCourse.value ||
-  selectedCourseName.value ||
-  myCourses.value[0]?.name ||
-  "";
-
-const submitQuickMessage = () => {
-  const pendingMessage = quickMessage.value.trim();
-  const courseName = resolveQuickCourseName();
-  if (!pendingMessage) return;
-  if (!courseName) {
-    ElMessage.warning("请先选择课程");
-    return;
-  }
-  quickCourse.value = courseName;
-  handleNewChat({ course: courseName });
-};
-
 const handleNewChat = async (payload: { course: string }) => {
   const course = myCourses.value.find(item => item.name === payload.course);
   if (course) activeCourse.value = course;
@@ -889,7 +905,7 @@ const handleNewChat = async (payload: { course: string }) => {
         selected_agent: selectedAgentKey.value,
         selected_model: selectedModelKey.value,
         thinking_mode: thinkingModeKey.value,
-        skill_keys: selectedSkillKeys.value
+        skill_keys: selectedSkillKeys.value.join(",")
       }
     });
     const conversationId =
@@ -899,9 +915,7 @@ const handleNewChat = async (payload: { course: string }) => {
     }
     const conversation: AssistantConversationItem = data.conversation || {
       conversation_id: conversationId,
-      title:
-        data.title ||
-        (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
+      title: data.title || (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
       message_count: 0,
       course_id: course?.id || selectedCourseId.value,
       target_student_id: selectedTargetStudentId.value
@@ -921,8 +935,13 @@ const handleNewChat = async (payload: { course: string }) => {
 
   const pendingMessage = quickMessage.value.trim();
   if (pendingMessage) {
-    quickMessage.value = "";
-    sendQuickMessageWithResolvedContext(pendingMessage, course || activeCourse.value);
+    // 切换到聊天栏目，确保数字人状态与课程上下文同步。
+    activeRail.value = "chat";
+    // 微延时等待课程上下文切换完成。
+    setTimeout(() => {
+      handleSendMessage(pendingMessage);
+      quickMessage.value = "";
+    }, 100);
   }
 };
 
@@ -941,17 +960,6 @@ watch([activeRail, humanCollapsed], () => {
   syncHumanRenderState();
 });
 
-const updateMobileViewportState = () => {
-  isMobileViewport.value =
-    window.innerWidth <= 768 ||
-    document.documentElement.classList.contains("qiming-native-webview");
-  if (isMobileViewport.value) {
-    sidebarCollapsed.value = true;
-    humanCollapsed.value = false;
-  }
-  syncHumanRenderState();
-};
-
 watch(selectedStudentId, () => {
   if (isBootstrapping.value || !assistantBootstrap.value || !isStaffMode.value)
     return;
@@ -965,10 +973,6 @@ const handleVisibilityChange = () => {
 };
 
 onMounted(() => {
-  updateMobileViewportState();
-  window.addEventListener("resize", updateMobileViewportState, {
-    passive: true
-  });
   document.addEventListener("visibilitychange", handleVisibilityChange);
   setTimeout(() => {
     syncHumanRenderState();
@@ -977,7 +981,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   streamCancel.value?.();
-  window.removeEventListener("resize", updateMobileViewportState);
   document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
@@ -997,7 +1000,7 @@ onUnmounted(() => {
       <aside
         v-if="activeRail === 'chat'"
         class="ai-app-left-rail flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
-        :class="sidebarCollapsed ? 'is-collapsed w-[34px]' : 'w-[260px]'"
+        :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <AiSidebar
@@ -1009,10 +1012,10 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- 收起态：桌面保留竖向标识，移动端仅保留独立按钮 -->
+        <!-- 收起态：竖向标识 -->
         <div
-          v-show="sidebarCollapsed && !isMobileViewport"
-          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer collapsed-rail-label"
+          v-show="sidebarCollapsed"
+          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer"
           @click="toggleSidebar"
         >
           <el-icon :size="14" class="rotate-90 mb-2"><FolderOpened /></el-icon>
@@ -1026,9 +1029,6 @@ onUnmounted(() => {
         <!-- 收起 / 展开 把手 -->
         <button
           class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-          :class="{
-            'is-mobile-collapsed-trigger': sidebarCollapsed && isMobileViewport
-          }"
           :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           @click="toggleSidebar"
         >
@@ -1079,12 +1079,12 @@ onUnmounted(() => {
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
           <div
             v-if="activeRail === `chat` && activeCourse"
-            class="ai-chat-scene h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
+            class="h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
           >
             <!-- 对话流核心面板 -->
             <transition appear name="panel-slide">
               <div
-                class="ai-chat-card flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
+                class="flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
               >
                 <!-- 柔和的顶部遮罩渐变 -->
                 <div
@@ -1116,7 +1116,7 @@ onUnmounted(() => {
             <!-- 数字人面板：保留原右侧 VRM 数字人模块 -->
             <transition appear name="panel-reveal">
               <div
-                class="ai-app-human-panel flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
+                class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
                 :class="humanCollapsed ? 'w-16' : 'w-[420px]'"
               >
                 <!-- 收起 / 展开把手：挂在外层，避免被圆角容器裁切 -->
@@ -1135,8 +1135,8 @@ onUnmounted(() => {
                   class="flex-1 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative"
                 >
                   <VirtualHumanPanel
-                    v-show="!humanCollapsed"
                     ref="virtualHumanRef"
+                    v-show="!humanCollapsed"
                   />
 
                   <div
@@ -1161,7 +1161,7 @@ onUnmounted(() => {
                 <transition name="el-zoom-in-bottom">
                   <div
                     v-show="!humanCollapsed"
-                    class="ai-human-actions flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
+                    class="flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
                     style="min-height: 180px"
                   >
                     <div
@@ -1191,7 +1191,7 @@ onUnmounted(() => {
           <!-- 【场景 A2】 智能辅导欢迎中心 (未选课) -->
           <div
             v-else-if="activeRail === `chat` && !activeCourse"
-            class="ai-chat-welcome h-full w-full p-4 flex items-center justify-center relative"
+            class="h-full w-full p-4 flex items-center justify-center relative"
           >
             <!-- 背景装饰 -->
             <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -1204,22 +1204,8 @@ onUnmounted(() => {
             </div>
 
             <div
-              class="ai-chat-welcome-card w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
+              class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
             >
-              <div class="ai-chat-welcome-human">
-                <VirtualHumanPanel ref="virtualHumanRef" />
-                <div class="ai-chat-welcome-actions">
-                  <button
-                    v-for="msg in quickInteractionMessages"
-                    :key="`welcome-${msg}`"
-                    type="button"
-                    @click="handleQuickInteraction(msg)"
-                  >
-                    {{ msg }}
-                  </button>
-                </div>
-              </div>
-
               <div class="text-center space-y-4">
                 <h1
                   class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
@@ -1235,7 +1221,7 @@ onUnmounted(() => {
               </div>
 
               <div
-                class="quick-chat-box bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
+                class="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
               >
                 <el-input
                   v-model="quickMessage"
@@ -1244,7 +1230,9 @@ onUnmounted(() => {
                   placeholder="可以输入想要了解的知识点。输入 @ 提及课程或文件..."
                   class="quick-chat-input"
                   resize="none"
-                  @keyup.enter.prevent="submitQuickMessage"
+                  @keyup.enter.prevent="
+                    quickCourse ? handleNewChat({ course: quickCourse }) : null
+                  "
                 />
 
                 <div
@@ -1266,7 +1254,7 @@ onUnmounted(() => {
                         <el-icon class="mr-1.5 text-[14px]"
                           ><FolderOpened
                         /></el-icon>
-                        {{ quickCourse || selectedCourseName || "选择课程" }}
+                        {{ quickCourse || "选择课程" }}
                         <el-icon class="ml-1 text-[12px]"
                           ><ArrowDown
                         /></el-icon>
@@ -1326,23 +1314,26 @@ onUnmounted(() => {
                       <el-icon class="ml-1"><ArrowDown /></el-icon>
                     </span>
                     <button
-                      class="quick-chat-send-btn h-10 flex items-center justify-center rounded-xl transition-all transform border"
+                      class="w-10 h-10 flex items-center justify-center rounded-xl transition-all transform border"
                       :class="
-                        resolveQuickCourseName() && quickMessage.trim()
+                        quickCourse && quickMessage.trim()
                           ? 'bg-[#c199f9] border-[#c199f9] text-white hover:bg-[#b085f7] hover:scale-105 shadow-lg shadow-purple-100 cursor-pointer'
                           : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
                       "
-                      :disabled="!resolveQuickCourseName() || !quickMessage.trim()"
-                      @click="submitQuickMessage"
+                      :disabled="!quickCourse || !quickMessage.trim()"
+                      @click="
+                        quickCourse
+                          ? handleNewChat({ course: quickCourse })
+                          : null
+                      "
                     >
                       <el-icon
-                        class="text-[16px]"
+                        class="text-lg"
                         :class="
-                          resolveQuickCourseName() && quickMessage.trim() ? '' : 'font-bold'
+                          quickCourse && quickMessage.trim() ? '' : 'font-bold'
                         "
                         ><Top
                       /></el-icon>
-                      <span>发送</span>
                     </button>
                   </div>
                 </div>
@@ -1471,6 +1462,17 @@ onUnmounted(() => {
               <AiAssessment
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
+              />
+            </div>
+          </div>
+
+          <div v-else-if="activeRail === `governance`" class="h-full w-full">
+            <div class="h-full bg-white overflow-hidden">
+              <AiGovernanceDashboard
+                :course-id="selectedCourseId"
+                :is-staff-mode="isStaffMode"
+                @select-student="handleGovernanceSelectStudent"
+                @navigate="handleGovernanceNavigate"
               />
             </div>
           </div>
@@ -1654,7 +1656,6 @@ onUnmounted(() => {
     </div>
 
     <FloatingDigitalHuman2D
-      v-if="shouldShowFloatingHuman"
       ref="floatingHumanRef"
       :role-label="currentUserRoleLabel"
       :course-name="selectedCourseName"
@@ -1662,12 +1663,8 @@ onUnmounted(() => {
       anchor="appLeftBottom"
       anchor-selector=".ai-app-root"
       :left-zone-width="sidebarCollapsed ? 34 : 260"
-      :bottom-offset="isMobileViewport ? 24 : 104"
-      :storage-key="
-        isMobileViewport
-          ? 'ai-app-floating-digital-human-2d-mobile-status'
-          : 'ai-app-floating-digital-human-2d-left-bottom'
-      "
+      :bottom-offset="104"
+      storage-key="ai-app-floating-digital-human-2d-left-bottom"
     />
 
     <!-- 栈操作可视化预览弹窗 -->
@@ -1769,11 +1766,6 @@ onUnmounted(() => {
   font-synthesis-weight: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-
-  :global(html.dark) & {
-    color: var(--qiming-native-text-primary, #f8fafc);
-    background: var(--qiming-native-page-bg, #020409) !important;
-  }
 }
 
 .ai-app-root :deep(*) {
@@ -1785,8 +1777,7 @@ onUnmounted(() => {
 .ai-app-root :deep([class*=" el-icon-"]),
 .ai-app-root :deep(.iconify) {
   font-family:
-    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline",
-    sans-serif !important;
+    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline" !important;
 }
 
 /* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */
@@ -1905,14 +1896,6 @@ onUnmounted(() => {
   }
   &::after {
     content: "IntellEdu";
-    display: inline-block;
-    font-family:
-      "Arial Black", "Arial Narrow", "Inter Tight", "Inter", "Microsoft YaHei",
-      sans-serif;
-    font-style: italic;
-    font-weight: 900;
-    letter-spacing: -0.06em;
-    transform: skewX(-8deg);
   }
 }
 
@@ -1923,7 +1906,7 @@ onUnmounted(() => {
   .el-textarea__inner {
     border: none !important;
     box-shadow: none !important;
-    padding: 16px 16px;
+    padding: 16px 20px;
     background-color: transparent !important;
     color: #374151;
     &::placeholder {
@@ -1942,377 +1925,5 @@ onUnmounted(() => {
   100% {
     box-shadow: 0 0 0 0 rgba(94, 127, 248, 0);
   }
-}
-
-@media (max-width: 768px) {
-  .ai-app-root {
-    width: 100%;
-    height: var(--qiming-native-vh, 100dvh);
-    min-height: var(--qiming-native-vh, 100dvh);
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  .ai-app-root > .flex-1 {
-    min-width: 0;
-  }
-
-  .ai-app-root > .flex-1 > .flex-1 {
-    width: 100%;
-  }
-
-  .ai-app-left-rail {
-    position: fixed !important;
-    top: calc(24px + var(--pure-safe-area-top, 0));
-    bottom: calc(82px + var(--pure-safe-area-bottom, 0));
-    left: 18px;
-    z-index: 120 !important;
-    width: min(292px, calc(100vw - 36px)) !important;
-    max-width: calc(100vw - 36px);
-    border: 1px solid rgba(226, 232, 240, 0.92);
-    border-radius: 22px;
-    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
-  }
-
-  .ai-app-left-rail.is-collapsed {
-    top: calc(24px + var(--pure-safe-area-top, 0));
-    bottom: auto;
-    width: 46px !important;
-    min-width: 46px !important;
-    max-width: 46px !important;
-    height: 46px;
-    min-height: 46px !important;
-    overflow: visible;
-    background: transparent !important;
-    border: 0;
-    border-radius: 16px;
-    box-shadow: none;
-    pointer-events: none;
-  }
-
-  .ai-app-left-rail.is-collapsed :deep(.ai-sidebar) {
-    padding: 0;
-  }
-
-  .ai-app-left-rail.is-collapsed > div:first-child,
-  .ai-app-left-rail.is-collapsed > div:nth-child(2),
-  .ai-app-left-rail.is-collapsed .collapsed-rail-label {
-    display: none !important;
-  }
-
-  .ai-app-left-rail.is-collapsed > button {
-    position: absolute !important;
-    top: 0 !important;
-    right: auto !important;
-    left: 0 !important;
-    width: 46px !important;
-    height: 46px !important;
-    transform: none !important;
-    border-radius: 14px !important;
-    border-color: rgba(226, 232, 240, 0.82) !important;
-    box-shadow: 0 12px 28px rgba(94, 127, 248, 0.18) !important;
-    pointer-events: auto;
-  }
-
-  .ai-app-left-rail:not(.is-collapsed) > button {
-    top: 14px !important;
-    right: 14px !important;
-    width: 34px !important;
-    height: 34px !important;
-    color: #6b7a96 !important;
-    background: rgba(255, 255, 255, 0.86) !important;
-    border-color: rgba(203, 213, 225, 0.78) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 8px 20px rgba(35, 50, 82, 0.08) !important;
-    transform: none !important;
-  }
-
-  .ai-app-left-rail.is-collapsed > button.is-mobile-collapsed-trigger {
-    background: rgba(255, 255, 255, 0.92) !important;
-    backdrop-filter: blur(16px);
-  }
-
-  .ai-chat-scene,
-  .ai-chat-welcome,
-  main > div[class*="p-4"] {
-    padding: calc(54px + var(--pure-safe-area-top, 0)) 12px
-      calc(74px + var(--pure-safe-area-bottom, 0)) !important;
-    gap: 10px !important;
-  }
-
-  .ai-chat-scene {
-    flex-direction: column;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .ai-chat-card {
-    flex: 0 0 auto;
-    height: clamp(340px, 50vh, 420px) !important;
-    min-height: 340px;
-    border-radius: 24px !important;
-  }
-
-  .ai-app-human-panel {
-    flex: 0 0 auto;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 0;
-    gap: 6px;
-  }
-
-  .ai-app-human-panel > button {
-    display: none !important;
-  }
-
-  .ai-app-human-panel > div:first-of-type {
-    height: clamp(188px, 28vh, 246px);
-    min-height: 188px;
-    border-radius: 24px !important;
-  }
-
-  .ai-human-actions {
-    padding: 8px !important;
-    min-height: 0 !important;
-    border-radius: 20px !important;
-  }
-
-  .ai-human-actions[style] {
-    min-height: 112px !important;
-    max-height: 126px !important;
-  }
-
-  .ai-human-actions > div:last-child {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-  }
-
-  .ai-human-actions > div:first-child {
-    padding-bottom: 5px !important;
-    margin-bottom: 2px !important;
-  }
-
-  .ai-human-actions :deep(.el-button) {
-    min-height: 30px !important;
-    padding: 6px 8px !important;
-    font-size: 11px !important;
-  }
-
-  main > div[class*="p-4"] > .flex-1 {
-    min-width: 0;
-    border-radius: 24px !important;
-  }
-
-  .gradient-text-animate {
-    font-size: 24px !important;
-    line-height: 1.14;
-    letter-spacing: 0;
-  }
-
-  .ai-chat-welcome {
-    align-items: stretch !important;
-    justify-content: flex-start !important;
-    padding-bottom: calc(24px + var(--pure-safe-area-bottom, 0)) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .ai-chat-welcome-card {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    gap: 12px !important;
-    max-width: none !important;
-    min-height: 100%;
-    width: 100%;
-    padding: 0 0 10px;
-    transform: none !important;
-  }
-
-  .ai-chat-welcome-card > .text-center {
-    order: 1;
-    padding: 0 4px;
-    text-align: left;
-    margin: 0 !important;
-    gap: 6px;
-  }
-
-  .ai-chat-welcome-card > .text-center p {
-    max-width: 340px;
-    font-size: 13px !important;
-    line-height: 1.4;
-  }
-
-  .quick-chat-box {
-    order: 2;
-    display: flex !important;
-    flex-direction: column;
-    border-radius: 20px !important;
-    box-shadow: 0 12px 34px rgba(94, 127, 248, 0.1) !important;
-  }
-
-  .quick-chat-box :deep(.el-textarea__inner) {
-    height: 78px !important;
-    min-height: 78px !important;
-    padding: 14px 12px !important;
-    font-size: 14px !important;
-    line-height: 1.42;
-  }
-
-  .quick-chat-box > div:last-child {
-    display: flex !important;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 7px;
-    padding: 9px !important;
-  }
-
-  .quick-chat-box > div:last-child > div:first-child {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-  }
-
-  .quick-chat-box > div:last-child > div:last-child {
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .quick-chat-box > div:last-child span {
-    justify-content: center;
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    min-height: 32px;
-    padding-right: 8px !important;
-    padding-left: 8px !important;
-    font-size: 12px !important;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .quick-chat-box > div:last-child button {
-    position: relative;
-    z-index: 2;
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
-    touch-action: manipulation;
-  }
-
-  .quick-chat-box > div:last-child button.quick-chat-send-btn {
-    width: auto !important;
-    min-width: 74px !important;
-    padding: 0 12px !important;
-    gap: 4px;
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  .quick-chat-box > div:last-child > div:last-child > span {
-    justify-content: flex-start;
-    max-width: calc(100% - 46px);
-  }
-
-  .ai-chat-welcome-human {
-    order: 3;
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    margin-top: 8px;
-    min-height: 292px;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.76);
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    border-radius: 24px;
-    box-shadow: 0 16px 42px rgba(94, 127, 248, 0.12);
-  }
-
-  .ai-app-root.dark .ai-chat-welcome-human {
-    background: rgb(15 23 42 / 82%);
-    border-color: rgb(148 163 184 / 22%);
-    box-shadow: 0 18px 44px rgb(0 0 0 / 30%);
-  }
-
-  .ai-chat-welcome-human :deep(.virtual-human-panel) {
-    flex: 1 1 auto;
-    height: auto;
-    min-height: 224px;
-    background: transparent;
-  }
-
-  .ai-chat-welcome-actions {
-    display: grid;
-    flex: 0 0 auto;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.82);
-    border-top: 1px solid rgba(226, 232, 240, 0.7);
-  }
-
-  .ai-app-root.dark .ai-chat-welcome-actions {
-    background: rgb(2 6 23 / 74%);
-    border-top-color: rgb(148 163 184 / 20%);
-  }
-
-  .ai-chat-welcome-actions button {
-    min-width: 0;
-    min-height: 32px;
-    padding: 0 8px;
-    overflow: hidden;
-    font-size: 11px;
-    font-weight: 600;
-    color: #5e7ff8;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    background: rgba(239, 246, 255, 0.8);
-    border: 1px solid rgba(191, 219, 254, 0.8);
-    border-radius: 12px;
-  }
-
-  .ai-app-root.dark .ai-chat-welcome-actions button {
-    color: #c7d2fe;
-    background: rgb(30 41 59 / 80%);
-    border-color: rgb(129 140 248 / 24%);
-  }
-
-  :deep(.el-dialog) {
-    width: calc(100vw - 24px) !important;
-    max-width: calc(100vw - 24px) !important;
-  }
-}
-
-:global(html.qiming-native-keyboard-open .ai-chat-welcome) {
-  height: var(--qiming-native-vh, 100dvh) !important;
-  min-height: var(--qiming-native-vh, 100dvh) !important;
-  padding-top: calc(40px + var(--pure-safe-area-top, 0)) !important;
-}
-
-:global(html.qiming-native-keyboard-open .quick-chat-box) {
-  flex: 0 0 auto !important;
-}
-
-:global(html.qiming-native-keyboard-open .ai-app-left-rail.is-collapsed) {
-  opacity: 0 !important;
-  transform: translate3d(-18px, -10px, 0) scale(0.84) !important;
-  pointer-events: none !important;
-}
-
-:global(html.qiming-native-keyboard-open .quick-chat-box .el-textarea__inner) {
-  height: 128px !important;
-  min-height: 128px !important;
-  padding: 12px 12px 12px 10px !important;
-  font-size: 16px !important;
-}
-
-:global(html.qiming-native-keyboard-open .ai-chat-welcome-human) {
-  display: none !important;
-}
-
-:global(html.qiming-native-keyboard-open .ai-chat-welcome-human .virtual-human-panel) {
-  display: none !important;
 }
 </style>

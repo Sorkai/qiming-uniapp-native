@@ -1086,7 +1086,7 @@ onUnmounted(() => {
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 20px;
 
-    @media (max-width: 992px) {
+    @media (width <= 992px) {
       grid-template-columns: 1fr;
     }
   }
@@ -1348,7 +1348,7 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .course-grades-wrapper {
     min-height: 100vh;
   }
@@ -1357,7 +1357,7 @@ onUnmounted(() => {
     align-items: stretch;
     height: auto;
     min-height: 100vh;
-    padding: var(--course-mobile-top-offset, 176px) 14px
+    padding: var(--course-mobile-top-offset, 156px) 14px
       calc(24px + env(safe-area-inset-bottom));
     overflow: visible;
   }
@@ -1419,9 +1419,9 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .course-grades-container {
-    padding: var(--course-mobile-top-offset, 176px) 10px
+    padding: var(--course-mobile-top-offset, 156px) 10px
       calc(20px + env(safe-area-inset-bottom));
   }
 

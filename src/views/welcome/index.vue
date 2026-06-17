@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect, onUnmounted } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import ReCol from "@/components/ReCol";
 import LottieAnimation from "@/components/LottieAnimation.vue";
@@ -36,38 +36,7 @@ const handleViewReport = () => {
 
 const { isDark } = useDark();
 const userStore = useUserStoreHook();
-
-const getNativeDemoRoleName = () => {
-  if (typeof window === "undefined") return "";
-  const query = new URLSearchParams(window.location.search);
-  const hashQueryText = window.location.hash.includes("?")
-    ? window.location.hash.split("?")[1]
-    : "";
-  const hashQuery = new URLSearchParams(hashQueryText);
-  const role = hashQuery.get("demoRole") || query.get("demoRole");
-  if (role === "student") return "吴同学";
-  if (role === "admin") return "管理员";
-  if (role === "teacher") return "教师";
-  return "";
-};
-
-const getStoredDisplayName = () => {
-  if (typeof window === "undefined") return "";
-  try {
-    const userInfo = JSON.parse(localStorage.getItem("user-info") || "{}");
-    return String(userInfo?.nickname || userInfo?.username || "").trim();
-  } catch {
-    return "";
-  }
-};
-
-const nickname = computed(
-  () =>
-    String(userStore.nickname || userStore.username || "").trim() ||
-    getStoredDisplayName() ||
-    getNativeDemoRoleName() ||
-    "老师"
-);
+const nickname = ref(userStore.nickname || userStore.username);
 
 // 随机选择一个动画
 const selectedAnimation = ref(
@@ -94,49 +63,30 @@ const isAdminUser = ref(isAdmin());
 // 打字机效果
 const displayedText = ref("");
 const isTyping = ref(true);
-let typewriterTimer: ReturnType<typeof setInterval> | undefined;
-
-const isNativeMobileWebView = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview") &&
-  document.documentElement.classList.contains("ua-mobile");
 
 const startTypewriter = () => {
   const fullText = `${greeting.value}, ${nickname.value}!`;
-  if (typewriterTimer) {
-    clearInterval(typewriterTimer);
-  }
   displayedText.value = "";
   isTyping.value = true;
-
-  if (isNativeMobileWebView()) {
-    displayedText.value = fullText;
-    isTyping.value = false;
-    return;
-  }
-
   let i = 0;
 
-  typewriterTimer = setInterval(() => {
+  const timer = setInterval(() => {
     if (i < fullText.length) {
       displayedText.value += fullText.charAt(i);
       i++;
     } else {
-      if (typewriterTimer) clearInterval(typewriterTimer);
+      clearInterval(timer);
       isTyping.value = false;
     }
   }, 100);
 };
 
 // 监听问候语变化重新触发打字机
+import { watchEffect } from "vue";
 watchEffect(() => {
   if (greeting.value && nickname.value) {
     startTypewriter();
   }
-});
-
-onUnmounted(() => {
-  if (typewriterTimer) clearInterval(typewriterTimer);
 });
 </script>
 
@@ -446,133 +396,6 @@ onUnmounted(() => {
 
   html.dark & {
     color: rgb(255 255 255 / 80%);
-  }
-}
-
-@media (max-width: 768px) {
-  .welcome-container {
-    min-height: auto;
-    padding: 0 !important;
-  }
-
-  .welcome-header {
-    width: 100%;
-    min-height: 0;
-    padding: 22px 18px !important;
-    margin-bottom: 14px !important;
-    border-radius: 18px !important;
-    box-shadow: 0 10px 22px rgb(15 23 42 / 5%);
-
-    h1 {
-      min-height: 0 !important;
-      margin-bottom: 10px !important;
-      font-size: 24px !important;
-      line-height: 1.15 !important;
-      letter-spacing: 0 !important;
-      transform: none !important;
-    }
-
-    p {
-      max-width: 100%;
-      margin-bottom: 14px !important;
-      font-size: 14px !important;
-      line-height: 1.55 !important;
-    }
-
-    .mt-8 {
-      display: grid !important;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px !important;
-      width: min(320px, 100%);
-      margin: 0 auto !important;
-    }
-
-    :deep(.el-button) {
-      width: 100%;
-      height: 38px;
-      padding: 0 12px !important;
-      margin: 0 !important;
-      font-size: 13px !important;
-    }
-  }
-
-  .chart-card {
-    border-radius: 18px;
-    margin-bottom: 14px;
-    overflow: visible;
-
-    html.dark & {
-      background: var(--qiming-native-surface-bg, var(--el-bg-color-overlay));
-      border: 1px solid
-        var(--qiming-native-border-color, rgb(148 163 184 / 20%));
-      box-shadow: 0 12px 28px rgb(0 0 0 / 24%);
-    }
-
-    &:hover {
-      transform: none;
-    }
-
-    :deep(.el-card__header) {
-      padding: 15px 14px 10px;
-
-      html.dark & {
-        border-bottom-color: var(
-          --qiming-native-border-color,
-          rgb(148 163 184 / 20%)
-        );
-      }
-
-      .text-lg {
-        display: inline-flex;
-        align-items: center;
-        min-width: 0;
-        color: #374151 !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        line-height: 1.25 !important;
-        text-shadow: none !important;
-        letter-spacing: 0 !important;
-        transform: translateZ(0);
-        -webkit-font-smoothing: antialiased;
-        -webkit-text-fill-color: #374151 !important;
-
-        html.dark & {
-          color: var(--qiming-native-text-primary, #f8fafc) !important;
-          -webkit-text-fill-color: var(
-            --qiming-native-text-primary,
-            #f8fafc
-          ) !important;
-        }
-      }
-    }
-
-    :deep(.el-card__body) {
-      padding: 0 12px 14px;
-    }
-
-    :deep(.min-h-\[600px\]),
-    :deep(.h-\[450px\]) {
-      min-height: 0 !important;
-      height: auto !important;
-      max-height: none;
-      overflow: visible;
-    }
-
-    :deep(.el-scrollbar__wrap),
-    :deep(.el-scrollbar__view) {
-      max-height: none !important;
-      overflow: visible !important;
-    }
-  }
-
-  :deep(.el-row) {
-    margin-right: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  :deep(.el-col) {
-    padding-right: 0 !important;
-    padding-left: 0 !important;
   }
 }
 </style>

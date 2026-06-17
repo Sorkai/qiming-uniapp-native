@@ -2,7 +2,6 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
-import { ArrowRight, Plus } from "@element-plus/icons-vue";
 import {
   getOverviewStatistics,
   getRecentPapers,
@@ -1078,118 +1077,19 @@ onMounted(() => {
 /* 响应式 */
 @media (max-width: 768px) {
   .exam-paper-index {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-    box-sizing: border-box;
-    padding: 10px 8px calc(var(--pure-mobile-tab-height, 58px) + 24px);
+    padding: 10px;
   }
 
   .welcome-section {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    border-radius: 18px;
-
-    .welcome-content {
-      flex: 0 0 auto;
-      width: 100%;
-      min-width: 0;
-    }
-
-    .welcome-badge {
-      margin-bottom: 8px;
-      font-size: 12px;
-    }
+    padding: 18px 18px;
 
     .welcome-title {
-      margin-bottom: 6px;
-      font-size: 22px;
-      line-height: 1.2;
-    }
-
-    .welcome-desc {
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .quick-actions {
-      width: 100%;
-
-      .create-btn {
-        width: 100%;
-        height: 38px;
-        font-size: 13px;
-      }
+      font-size: 20px;
     }
   }
 
-  .stats-section {
-    margin-bottom: 12px;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .stat-card {
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 10px;
-    align-items: center;
-    min-height: 78px;
-    padding: 12px;
-    border-radius: 18px;
-
-    .stat-icon {
-      grid-column: 1;
-      width: 40px;
-      height: 40px;
-      border-radius: 14px;
-
-      svg {
-        width: 20px;
-        height: 20px;
-      }
-    }
-
-    .stat-info {
-      grid-column: 2;
-      min-width: 0;
-
-      .stat-value {
-        margin-bottom: 4px;
-        font-size: 22px;
-        line-height: 1.05;
-      }
-
-      .stat-label {
-        margin-top: 0;
-        font-size: 12px;
-        line-height: 1.35;
-        white-space: normal;
-      }
-    }
-  }
-
-  .content-section,
-  .overview-main-content,
-  .side-content {
-    gap: 12px;
-  }
-
-  .section-card {
-    padding: 14px;
-    border-radius: 18px;
-  }
-}
-
-@media (max-width: 360px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .stat-card .stat-info .stat-value {
+    font-size: 22px;
   }
 }
 </style>

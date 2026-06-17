@@ -8,8 +8,6 @@ import { useGlobal, isNumber } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 import {
   h,
-  watch,
-  nextTick,
   computed,
   Transition,
   defineComponent,
@@ -64,60 +62,6 @@ const mobileFooterOffset = computed(() => {
   return isMobile.value ? "calc(var(--pure-mobile-tab-height) + 16px)" : "0px";
 });
 
-function getNativeSafeAreaTop() {
-  if (typeof window === "undefined") return 0;
-  if (!document.documentElement.classList.contains("qiming-native-webview")) {
-    return 0;
-  }
-  const rootStyle = getComputedStyle(document.documentElement);
-  const rawValues = [
-    rootStyle.getPropertyValue("--qiming-native-statusbar-offset").trim(),
-    rootStyle.getPropertyValue("--pure-safe-area-top").trim()
-  ];
-  for (const rawValue of rawValues) {
-    const safeTop = Number.parseFloat(rawValue);
-    if (Number.isFinite(safeTop) && safeTop > 0) {
-      return Math.min(Math.max(safeTop, 22), 28);
-    }
-  }
-  return document.documentElement.classList.contains("ua-mobile") ? 24 : 0;
-}
-
-function resetMobileScrollPosition() {
-  if (typeof window === "undefined" || !isMobile.value) return;
-
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-  window.scrollTo({ left: 0, top: 0 });
-
-  [
-    ".main-container > .el-scrollbar .el-scrollbar__wrap",
-    ".main-container .app-main .el-scrollbar__wrap",
-    ".main-container",
-    ".app-main",
-    ".app-main-nofixed-header"
-  ].forEach(selector => {
-    document.querySelectorAll<HTMLElement>(selector).forEach(el => {
-      el.scrollTop = 0;
-      el.scrollLeft = 0;
-    });
-  });
-}
-
-watch(
-  () => route.fullPath,
-  () => {
-    if (!isMobile.value) return;
-
-    nextTick(() => {
-      resetMobileScrollPosition();
-      requestAnimationFrame(resetMobileScrollPosition);
-      window.setTimeout(resetMobileScrollPosition, 160);
-    });
-  },
-  { immediate: true }
-);
-
 const fixedScrollWrapStyle = computed<CSSProperties>(() => {
   return {
     display: "flex",
@@ -141,39 +85,23 @@ const fixedScrollViewStyle = computed<CSSProperties>(() => {
 });
 
 const getSectionStyle = computed<CSSProperties>(() => {
-  const nativeSafeAreaTop = isMobile.value ? getNativeSafeAreaTop() : 0;
-  const isMiniProgramWebView =
-    typeof document !== "undefined" &&
-    document.documentElement.classList.contains("qiming-mini-program-webview");
-  const headerOnlyHeight = isMobile.value ? 64 + nativeSafeAreaTop : 72;
+  const headerOnlyHeight = isMobile.value ? 64 : 72;
   const headerWithTagsHeight = isMobile.value
-    ? isMiniProgramWebView
-      ? 0
-      : 64 + nativeSafeAreaTop
+    ? 64
     : showModel.value == "chrome"
       ? 116
       : 112;
 
   if (props.fixedHeader) {
     return {
-      paddingTop: `${
-        isMiniProgramWebView
-          ? headerWithTagsHeight
-          : hideTabs.value
-            ? headerOnlyHeight
-            : headerWithTagsHeight
-      }px`
+      paddingTop: `${hideTabs.value ? headerOnlyHeight : headerWithTagsHeight}px`
     };
   }
 
   return {
     paddingTop: "0",
     minHeight: `calc(100vh - ${
-      isMiniProgramWebView
-        ? headerWithTagsHeight
-        : hideTabs.value
-          ? headerOnlyHeight
-          : headerWithTagsHeight
+      hideTabs.value ? headerOnlyHeight : headerWithTagsHeight
     }px)`,
     boxSizing: "border-box",
     paddingBottom: mobileFooterOffset.value
@@ -188,10 +116,6 @@ const transitionMain = defineComponent({
     }
   },
   render() {
-    const disableNativeMobileTransition =
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("qiming-native-webview") &&
-      document.documentElement.classList.contains("ua-mobile");
     const transitionName =
       transitions.value(this.route)?.name || "fade-transform";
     const enterTransition = transitions.value(this.route)?.enterTransition;
@@ -199,21 +123,15 @@ const transitionMain = defineComponent({
     return h(
       Transition,
       {
-        name: disableNativeMobileTransition
-          ? undefined
-          : enterTransition
-            ? "pure-classes-transition"
-            : transitionName,
-        enterActiveClass:
-          !disableNativeMobileTransition && enterTransition
-            ? `animate__animated ${enterTransition}`
-            : undefined,
-        leaveActiveClass:
-          !disableNativeMobileTransition && leaveTransition
-            ? `animate__animated ${leaveTransition}`
-            : undefined,
+        name: enterTransition ? "pure-classes-transition" : transitionName,
+        enterActiveClass: enterTransition
+          ? `animate__animated ${enterTransition}`
+          : undefined,
+        leaveActiveClass: leaveTransition
+          ? `animate__animated ${leaveTransition}`
+          : undefined,
         mode: "out-in",
-        appear: !disableNativeMobileTransition
+        appear: true
       },
       {
         default: () => [this.$slots.default()]
@@ -238,7 +156,6 @@ const transitionMain = defineComponent({
               :view-style="fixedScrollViewStyle"
             >
               <el-backtop
-                v-if="!isMobile"
                 :title="t('buttons.pureBackTop')"
                 :right="10"
                 :bottom="10"

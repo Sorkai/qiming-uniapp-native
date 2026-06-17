@@ -43,15 +43,20 @@ export function useTags() {
   // 当前右键选中的路由信息
   const currentSelect = ref({});
   const isScrolling = ref(false);
-  const configureKey = `${responsiveStorageNameSpace()}configure`;
-  const configure = computed<Partial<StorageConfigs>>(() => {
-    return storageLocal().getItem<StorageConfigs>(configureKey) ?? {};
-  });
 
   /** 显示模式，默认灵动模式 */
-  const showModel = ref(configure.value.showModel || "smart");
+  const showModel = ref(
+    storageLocal().getItem<StorageConfigs>(
+      `${responsiveStorageNameSpace()}configure`
+    )?.showModel || "smart"
+  );
   /** 是否隐藏标签页，默认显示 */
-  const showTags = ref(configure.value.hideTabs ?? false);
+  const showTags =
+    ref(
+      storageLocal().getItem<StorageConfigs>(
+        `${responsiveStorageNameSpace()}configure`
+      ).hideTabs
+    ) ?? ref("false");
   const multiTags: any = computed(() => {
     return useMultiTagsStoreHook().multiTags;
   });
@@ -198,10 +203,14 @@ export function useTags() {
 
   onMounted(() => {
     if (!showModel.value) {
-      storageLocal().setItem(configureKey, {
-        ...configure.value,
-        showModel: "card"
-      });
+      const configure = storageLocal().getItem<StorageConfigs>(
+        `${responsiveStorageNameSpace()}configure`
+      );
+      configure.showModel = "card";
+      storageLocal().setItem(
+        `${responsiveStorageNameSpace()}configure`,
+        configure
+      );
     }
   });
 

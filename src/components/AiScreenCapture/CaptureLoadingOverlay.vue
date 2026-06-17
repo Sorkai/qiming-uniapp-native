@@ -429,38 +429,16 @@ onBeforeUnmount(() => {
   --stage-glow: rgb(96 165 250 / 0.2);
 
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100vw;
-  min-width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
-  min-height: 100dvh;
   padding: 24px;
   background:
     radial-gradient(circle at top, var(--overlay-accent), transparent 34%),
     var(--overlay-tint);
   backdrop-filter: blur(8px) saturate(1.06);
-}
-
-:global(html.qiming-native-webview .capture-loading-overlay) {
-  top: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  min-width: 100vw !important;
-  height: var(--qiming-native-vh, 100vh) !important;
-  min-height: var(--qiming-native-vh, 100vh) !important;
-  padding: 14px !important;
-  transform: translateZ(0);
 }
 
 .capture-loading-overlay.is-dark {

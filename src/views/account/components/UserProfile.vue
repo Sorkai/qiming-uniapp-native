@@ -183,8 +183,7 @@
             class="course-mini-card"
             @click="
               router.push({
-                path: `/course/${course.courseId}`,
-                query: route.query
+                path: `/course/${course.courseId}`
               })
             "
           >
@@ -258,7 +257,6 @@
       v-model="dialogVisible"
       title="修改个人资料"
       width="500px"
-      class="student-profile-dialog student-profile-edit-dialog"
       destroy-on-close
       :close-on-click-modal="false"
     >
@@ -358,7 +356,6 @@
       v-model="presetDialogVisible"
       title="选择预设背景图"
       width="600px"
-      class="student-profile-dialog student-profile-preset-dialog"
       append-to-body
     >
       <div class="preset-banners-grid">
@@ -382,7 +379,6 @@
       v-model="cropperDialogVisible"
       :title="currentCroppingType === 'avatar' ? '裁剪头像' : '裁剪横幅图'"
       width="800px"
-      class="student-profile-dialog student-profile-cropper-dialog"
       append-to-body
       destroy-on-close
     >
@@ -416,7 +412,6 @@
       v-model="passwordDialogVisible"
       title="修改密码"
       width="500px"
-      class="student-profile-dialog student-profile-password-dialog"
       destroy-on-close
       :close-on-click-modal="false"
     >
@@ -467,7 +462,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import {
   Edit,
   Plus,
@@ -516,7 +511,6 @@ const props = defineProps<{
 const emit = defineEmits(["to-course"]);
 
 const router = useRouter();
-const route = useRoute();
 const defaultAvatar = "/src/assets/user.jpg";
 const dialogVisible = ref(false);
 const loading = ref(false);
@@ -1188,7 +1182,7 @@ const formattedLastLoginTime = computed(() =>
     : "-"
 );
 
-const defaultBanner = "/src/assets/bannerphoto.png";
+const defaultBanner = "/src/assets/course/cover-default.jpg";
 const bannerStyle = computed(() => {
   const url = userInfo.value?.bannerUrl || extraInfo.bannerUrl || defaultBanner;
   return { backgroundImage: `url(${url})` };
@@ -1358,7 +1352,7 @@ onMounted(async () => {
     display: flex;
     gap: 28px;
 
-    @media (max-width: 768px) {
+    @media (width <= 768px) {
       flex-direction: column;
       gap: 20px;
     }
@@ -1776,36 +1770,19 @@ onMounted(async () => {
   border-radius: 8px;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .user-profile {
-    .profile-banner {
-      height: clamp(132px, 36vw, 168px);
-      margin-bottom: 22px;
-      border-radius: 18px;
-      background-position: center center;
-
-      .banner-overlay {
-        padding: 20px 24px;
-      }
-    }
-
     .profile-header {
       gap: 14px;
       align-items: stretch;
-      flex-direction: column;
       margin-bottom: 20px;
 
       .action-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
         gap: 10px;
-        width: 100%;
 
         .btn-elevated {
-          width: 100%;
           min-height: 44px;
           padding: 10px 16px;
-          justify-content: center;
         }
       }
     }
@@ -1871,63 +1848,6 @@ onMounted(async () => {
           }
         }
       }
-    }
-
-    :deep(.el-dialog) {
-      display: flex;
-      flex-direction: column;
-      width: min(560px, calc(100vw - 24px)) !important;
-      max-height: calc(100vh - 24px);
-      max-height: calc(100dvh - 24px);
-      margin: 12px auto !important;
-      border-radius: 20px;
-    }
-
-    :deep(.el-dialog__body) {
-      flex: 1 1 auto;
-      min-height: 0;
-      max-height: none;
-      padding: 16px 18px 8px !important;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    :deep(.el-form-item) {
-      display: block;
-      margin-bottom: 18px;
-    }
-
-    :deep(.el-form-item__label) {
-      justify-content: flex-start;
-      width: auto !important;
-      height: auto;
-      margin-bottom: 8px;
-      line-height: 1.3;
-    }
-
-    :deep(.el-dialog__footer) {
-      flex: 0 0 auto;
-      padding: 12px 18px 18px;
-    }
-
-    :deep(.el-dialog__footer .dialog-footer),
-    :deep(.el-dialog__footer) {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    :deep(.el-dialog__footer .el-button) {
-      min-height: 42px;
-      padding: 0 18px;
-    }
-
-    .preset-banners-grid {
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    }
-
-    .cropper-container {
-      padding: 12px;
     }
   }
 }
@@ -2319,176 +2239,9 @@ onMounted(async () => {
   box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
 }
 
-@media (max-width: 1200px) {
+@media (width <= 1200px) {
   .profile-extra-sections {
     flex-direction: column;
-  }
-}
-</style>
-
-<style lang="scss">
-@media (max-width: 768px) {
-  .student-profile-dialog {
-    width: min(560px, calc(100vw - 24px)) !important;
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 24px);
-    max-height: calc(100dvh - 24px);
-    margin: 12px auto !important;
-    overflow: hidden;
-    border-radius: 20px;
-
-    .el-dialog__header {
-      padding: 18px 18px 8px;
-    }
-
-    .el-dialog__body {
-      flex: 1 1 auto;
-      min-height: 0;
-      max-height: none;
-      padding: 16px 18px 8px !important;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .el-form-item {
-      display: block;
-      margin-bottom: 18px;
-    }
-
-    .el-form-item__label {
-      justify-content: flex-start;
-      width: auto !important;
-      height: auto;
-      margin-bottom: 8px;
-      line-height: 1.3;
-    }
-
-    .el-form-item__content {
-      width: 100%;
-      margin-left: 0 !important;
-    }
-
-    .el-dialog__footer {
-      flex: 0 0 auto;
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      padding: 12px 18px 18px;
-    }
-
-    .el-dialog__footer .el-button {
-      min-height: 42px;
-      padding: 0 18px;
-    }
-  }
-
-  .student-profile-preset-dialog {
-    .preset-banners-grid {
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      padding: 4px;
-    }
-  }
-
-  .student-profile-cropper-dialog {
-    width: calc(100vw - 20px) !important;
-
-    .cropper-container {
-      padding: 12px;
-    }
-  }
-}
-
-html.qiming-native-webview.ua-mobile {
-  .student-profile-dialog {
-    width: calc(100vw - 24px) !important;
-    max-width: 560px !important;
-    max-height: calc(100vh - 24px);
-    max-height: calc(100dvh - 24px);
-    margin: 12px auto !important;
-    overflow: hidden;
-    border-radius: 20px;
-
-    .el-dialog__header {
-      padding: 18px 18px 8px;
-    }
-
-    .el-dialog__body {
-      max-width: 100%;
-      padding: 16px 18px 8px !important;
-      overflow-x: hidden;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .el-form {
-      width: 100%;
-      max-width: 100%;
-    }
-
-    .el-form-item {
-      display: block;
-      margin-bottom: 18px;
-    }
-
-    .el-form-item__label {
-      justify-content: flex-start;
-      width: auto !important;
-      max-width: 100%;
-      height: auto;
-      margin-bottom: 8px;
-      line-height: 1.35;
-    }
-
-    .el-form-item__content {
-      width: 100%;
-      max-width: 100%;
-      margin-left: 0 !important;
-    }
-
-    .el-input,
-    .el-textarea,
-    .el-select,
-    .el-radio-group {
-      width: 100%;
-      max-width: 100%;
-    }
-
-    .el-radio-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 12px;
-    }
-
-    .el-dialog__footer {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      padding: 12px 18px 18px;
-    }
-
-    .el-dialog__footer .el-button {
-      min-height: 42px;
-      padding: 0 18px;
-    }
-  }
-
-  .student-profile-cropper-dialog {
-    width: calc(100vw - 20px) !important;
-    max-width: calc(100vw - 20px) !important;
-
-    .cropper-container {
-      max-width: 100%;
-      padding: 12px;
-      overflow: hidden;
-    }
-  }
-
-  .student-profile-preset-dialog {
-    .preset-banners-grid {
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      padding: 4px;
-    }
   }
 }
 </style>

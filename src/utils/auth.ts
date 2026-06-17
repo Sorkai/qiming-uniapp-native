@@ -85,7 +85,6 @@ export function setToken(data: DataInfo<Date>) {
     useUserStoreHook().SET_ROLES(roles);
     useUserStoreHook().SET_PERMS(permissions);
     storageLocal().setItem(userKey, {
-      accessToken,
       refreshToken,
       expires,
       avatar: avatar || "",

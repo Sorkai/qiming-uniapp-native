@@ -5,15 +5,8 @@
     </header>
 
     <div ref="rootEl" class="sd__stage" :class="{ 'is-paused': paused }">
-      <!-- 舞台：桌面端保留演示外框，移动端会收敛成 App 任务面板 -->
+      <!-- 舞台：浏览器外框 -->
       <div class="sd__chrome">
-        <div class="sd__mobileTitle">
-          <span class="sd__mobileMark" aria-hidden="true" />
-          <div>
-            <strong>智能工作流</strong>
-            <span>{{ activeLabel }}同步演示</span>
-          </div>
-        </div>
         <div class="sd__lights"><span /><span /><span /></div>
         <div class="sd__url">
           <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true">
@@ -37,7 +30,7 @@
         <!-- 侧边栏 -->
         <aside class="sd__side">
           <div class="sd__sideHead">
-            <span class="sd__brandSquare" aria-hidden="true" />
+            <span class="sd__brandSquare">启</span>
             <span>启明智教</span>
           </div>
           <p class="sd__sideGroup">工作区</p>
@@ -64,7 +57,7 @@
             <span ref="crumbActiveEl">{{ activeLabel }}</span>
             <div class="sd__tbActions">
               <span class="sd__tbBadge">
-                <i class="sd__tbDot" />
+                <i class="sd__tbDot"></i>
                 教学服务已连接
               </span>
               <button class="sd__tbBtn">导出报告</button>
@@ -84,9 +77,9 @@
                 </p>
                 <div class="sd__sceneMeta">
                   <span>授课对象：信工 22 级 3 班 (45人)</span>
-                  <span class="divider" />
+                  <span class="divider"></span>
                   <span>预计总时长：45 分钟</span>
-                  <span class="divider" />
+                  <span class="divider"></span>
                   <span>关联知识图谱节点：22 个</span>
                 </div>
               </div>
@@ -94,7 +87,7 @@
 
             <div ref="cardsEl" class="sd__cards">
               <!-- Timeline line running behind cards -->
-              <div class="sd__timelineTrack" />
+              <div class="sd__timelineTrack"></div>
               <article
                 v-for="(c, i) in prepCards"
                 :key="c.title"
@@ -102,7 +95,10 @@
                 class="sd__card sd__card--node"
                 :data-i="i"
               >
-                <div class="sd__timelineDot" :style="{ background: c.tagFg }" />
+                <div
+                  class="sd__timelineDot"
+                  :style="{ background: c.tagFg }"
+                ></div>
                 <div class="sd__cardTop">
                   <span
                     class="sd__cardTag"
@@ -270,7 +266,7 @@
                 <p class="sd__sceneLede">知识点、反馈、资源与评价同步点亮。</p>
               </div>
               <div class="sd__liveOverlay">
-                <div class="sd__livePulse" />
+                <div class="sd__livePulse"></div>
                 <div class="sd__liveStats">
                   <div v-for="m in classMetrics" :key="m.label" class="stat">
                     <span class="val">{{ m.value }}</span
@@ -430,8 +426,8 @@
                 <div
                   v-for="q in examQuestions"
                   :key="q.id"
-                  ref="examQRefs"
                   class="sd__examQ"
+                  ref="examQRefs"
                   :data-id="q.id"
                 >
                   <span
@@ -458,10 +454,10 @@
                     <span>预计耗时 40'</span>
                   </div>
                 </div>
-                <div ref="paperBodyEl" class="sd__paperBody">
+                <div class="sd__paperBody" ref="paperBodyEl">
                   <div
-                    v-if="!paperQuestions.length"
                     class="sd__paperPlaceholder"
+                    v-if="!paperQuestions.length"
                   >
                     等待算法汇聚组卷策略...
                   </div>
@@ -494,7 +490,7 @@
             </div>
             <div class="sd__vlab">
               <div class="sd__vlabSys">
-                <div ref="vlabKernel" class="sd__linuxKernel">
+                <div class="sd__linuxKernel" ref="vlabKernel">
                   <div class="sd__osLabel">
                     Linux-LTS v6.1 · Pedagogical Trace
                   </div>
@@ -502,8 +498,8 @@
                     <div
                       v-for="i in 3"
                       :key="i"
-                      ref="vlabProcs"
                       class="sd__procItem"
+                      ref="vlabProcs"
                     >
                       <span class="sd__procId">0{{ i }}</span>
                       Proc_{{ i === 1 ? "INIT" : i === 2 ? "KWORKER" : "VLAB" }}
@@ -513,12 +509,12 @@
                     <span v-for="i in 5" :key="i" />
                   </div>
                 </div>
-                <div ref="vlabHardware" class="sd__hardware">
+                <div class="sd__hardware" ref="vlabHardware">
                   <div
                     v-for="i in 4"
                     :key="i"
-                    ref="vlabCpus"
                     class="sd__cpuCore"
+                    ref="vlabCpus"
                   >
                     <span class="sd__cpuLabel">Core {{ i }}</span>
                     <div class="sd__cpuLoad"><i /></div>
@@ -530,49 +526,13 @@
                   <span class="sd__consoleDot" />
                   Kernel Pedagogical Console
                 </div>
-                <div ref="vlabConsoleEl" class="sd__consoleLines">
+                <div class="sd__consoleLines" ref="vlabConsoleEl">
                   <p v-for="(line, i) in consoleLines" :key="i">{{ line }}</p>
                 </div>
               </div>
             </div>
           </div>
         </main>
-
-        <section class="sd__mobilePanel" aria-label="智能工作流移动端预览">
-          <div class="sd__mobileStatus">
-            <span>{{ mobileScene.eyebrow }}</span>
-            <strong>{{ mobileScene.title }}</strong>
-            <p>{{ mobileScene.desc }}</p>
-          </div>
-
-          <div class="sd__mobileMetrics">
-            <article v-for="metric in mobileScene.metrics" :key="metric.label">
-              <span>{{ metric.label }}</span>
-              <strong>{{ metric.value }}</strong>
-            </article>
-          </div>
-
-          <div class="sd__mobileFlow">
-            <div class="sd__mobileLine" aria-hidden="true">
-              <i />
-            </div>
-            <article
-              v-for="(step, index) in mobileScene.steps"
-              :key="step"
-              :class="{ 'is-active': index === mobileScene.activeStep }"
-            >
-              <span>{{ String(index + 1).padStart(2, "0") }}</span>
-              <strong>{{ step }}</strong>
-            </article>
-          </div>
-
-          <div class="sd__mobileAction">
-            <span>教学服务已连接</span>
-            <button type="button" @click="manualActivate(nextMobileKey)">
-              下一步
-            </button>
-          </div>
-        </section>
 
         <!-- 右侧浮动卡 -->
         <Transition name="sd-pop">
@@ -865,85 +825,6 @@ const activeNav = ref<NavKey>("prep");
 const activeLabel = computed(
   () => navItems.find(n => n.key === activeNav.value)?.label ?? ""
 );
-
-const mobileScenes: Record<
-  NavKey,
-  {
-    eyebrow: string;
-    title: string;
-    desc: string;
-    activeStep: number;
-    metrics: Array<{ label: string; value: string }>;
-    steps: string[];
-  }
-> = {
-  prep: {
-    eyebrow: "AI 备课同步",
-    title: "嵌入式 Linux 教学方案生成中",
-    desc: "章节目标、资源与课堂节奏正在被串成一条可执行任务流。",
-    activeStep: 1,
-    metrics: [
-      { label: "章节", value: "12" },
-      { label: "资源", value: "96%" },
-      { label: "耗时", value: "8s" }
-    ],
-    steps: ["课程目标", "学情匹配", "课堂节奏", "课后追踪"]
-  },
-  insight: {
-    eyebrow: "学情分析",
-    title: "多维能力评估已更新",
-    desc: "历史行为与题目表现合并计算，刷新班级能力画像。",
-    activeStep: 2,
-    metrics: [
-      { label: "均值", value: "85.4" },
-      { label: "预警", value: "6人" },
-      { label: "掌握", value: "75%" }
-    ],
-    steps: ["行为入库", "能力估计", "风险识别", "报告生成"]
-  },
-  class: {
-    eyebrow: "课堂互动",
-    title: "知识拓扑正在同步点亮",
-    desc: "知识点、反馈、资源与评价状态在教师端实时对齐。",
-    activeStep: 2,
-    metrics: [
-      { label: "连通", value: "94%" },
-      { label: "响应", value: "37/45" },
-      { label: "延迟", value: "1.2s" }
-    ],
-    steps: ["意图识别", "拓扑更新", "学生响应", "反馈沉淀"]
-  },
-  exam: {
-    eyebrow: "智能组卷",
-    title: "错因诊断与组卷策略完成",
-    desc: "错因挖掘、试题调权和 A 套试卷流转已收敛。",
-    activeStep: 3,
-    metrics: [
-      { label: "信度", value: "0.88" },
-      { label: "题量", value: "3题" },
-      { label: "耗时", value: "40'" }
-    ],
-    steps: ["错因挖掘", "题目匹配", "难度调权", "试卷生成"]
-  },
-  vlab: {
-    eyebrow: "虚拟实验",
-    title: "内核轨迹正在映射教学事件",
-    desc: "CPU 调度与系统调用流动被转换为可观察实验过程。",
-    activeStep: 1,
-    metrics: [
-      { label: "进程", value: "3" },
-      { label: "核心", value: "4" },
-      { label: "状态", value: "同步" }
-    ],
-    steps: ["轨迹采样", "负载映射", "事件解释", "实验回放"]
-  }
-};
-
-const mobileScene = computed(() => mobileScenes[activeNav.value]);
-const nextMobileKey = computed(() => {
-  const index = navItems.findIndex(item => item.key === activeNav.value);
-  return navItems[(index + 1) % navItems.length].key;
-});
 const typedTitle = ref("");
 const showCaret = ref(false);
 const showInsight = ref(false);
@@ -1457,10 +1338,6 @@ $faint: #91908d;
     border-bottom: 1px solid $border;
   }
 
-  &__mobileTitle {
-    display: none;
-  }
-
   &__lights {
     display: flex;
     gap: 6px;
@@ -1549,31 +1426,15 @@ $faint: #91908d;
   }
 
   &__brandSquare {
-    position: relative;
-    display: inline-block;
-    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
     width: 22px;
     height: 22px;
-    overflow: hidden;
-    background:
-      radial-gradient(
-        circle at 64% 34%,
-        rgb(255 255 255 / 58%) 0 3px,
-        transparent 4px
-      ),
-      linear-gradient(135deg, #111, #444);
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #111, #444);
     border-radius: 5px;
-
-    &::after {
-      position: absolute;
-      right: 5px;
-      bottom: 5px;
-      width: 5px;
-      height: 5px;
-      content: "";
-      background: #10b981;
-      border-radius: 999px;
-    }
   }
 
   &__sideGroup {
@@ -1632,10 +1493,6 @@ $faint: #91908d;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-  }
-
-  &__mobilePanel {
-    display: none;
   }
 
   &__crumbs {
@@ -2200,11 +2057,7 @@ $faint: #91908d;
     position: relative;
     overflow: hidden;
     background:
-      radial-gradient(
-        circle at 2px 2px,
-        rgba(0, 0, 0, 0.055) 1px,
-        transparent 0
-      ),
+      radial-gradient(circle at 2px 2px, rgba(0, 0, 0, 0.055) 1px, transparent 0),
       #fff;
     background-size: 22px 22px;
   }
@@ -2931,466 +2784,76 @@ $faint: #91908d;
   }
 }
 
-@keyframes sd-mobile-flow {
-  0%,
-  100% {
-    transform: translateX(-24%);
-  }
-
-  50% {
-    transform: translateX(54%);
-  }
-}
-
 @media (max-width: 900px) {
   .sd {
-    padding: 28px 16px 36px;
+    padding: 72px 18px;
   }
-
-  .sd__head {
-    display: none;
-  }
-
   .sd__stage {
     aspect-ratio: auto;
-    min-height: 0;
-    overflow: hidden;
-    border-radius: 18px;
-    box-shadow:
-      0 1px 2px rgb(0 0 0 / 4%),
-      0 18px 42px rgb(15 23 42 / 8%);
+    min-height: 820px;
   }
-
-  .sd__chrome {
-    height: 54px;
-    padding: 0 14px;
-    background: linear-gradient(
-      135deg,
-      rgb(239 246 255 / 96%),
-      rgb(255 255 255 / 96%)
-    );
-    border-bottom-color: rgb(226 232 240);
-  }
-
-  .sd__mobileTitle {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    min-width: 0;
-  }
-
-  .sd__mobileTitle > div {
-    min-width: 0;
-  }
-
-  .sd__mobileTitle > div strong,
-  .sd__mobileTitle > div span {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .sd__mobileTitle strong {
-    font-size: 14px;
-    font-weight: 850;
-    color: $text;
-  }
-
-  .sd__mobileTitle span {
-    margin-top: 2px;
-    font-size: 11px;
-    color: $muted;
-  }
-
-  .sd__mobileMark {
-    position: relative;
-    display: inline-block;
-    flex: 0 0 auto;
-    width: 30px;
-    height: 30px;
-    overflow: hidden;
-    background:
-      radial-gradient(
-        circle at 66% 34%,
-        rgb(255 255 255 / 62%) 0 4px,
-        transparent 5px
-      ),
-      linear-gradient(135deg, #4a90e2, #7b61ff);
-    border-radius: 10px;
-    box-shadow: 0 10px 24px rgb(74 144 226 / 18%);
-  }
-
-  .sd__lights,
-  .sd__url {
-    display: none;
-  }
-
-  .sd__chip {
-    margin-left: auto;
-    padding: 5px 9px;
-    font-size: 11px;
-  }
-
   .sd__body {
-    height: auto;
     grid-template-columns: 1fr;
   }
-
   .sd__side {
     display: none;
   }
-
   .sd__main {
-    display: none;
+    padding: 18px;
   }
-
-  .sd__mobilePanel {
-    display: grid;
-    gap: 14px;
-    padding: 16px;
-    background:
-      radial-gradient(circle at 12% 0%, rgb(74 144 226 / 8%), transparent 32%),
-      #fff;
-  }
-
-  .sd__mobileStatus {
-    padding: 15px;
-    background: rgb(248 250 252 / 84%);
-    border: 1px solid rgb(226 232 240);
-    border-radius: 16px;
-  }
-
-  .sd__mobileStatus span {
-    display: inline-flex;
-    margin-bottom: 9px;
-    padding: 5px 9px;
-    font-size: 11px;
-    font-weight: 800;
-    color: #047857;
-    background: rgb(16 185 129 / 10%);
-    border: 1px solid rgb(16 185 129 / 22%);
-    border-radius: 999px;
-  }
-
-  .sd__mobileStatus strong {
-    display: block;
-    font-size: 21px;
-    line-height: 1.2;
-    color: $text;
-    letter-spacing: 0;
-  }
-
-  .sd__mobileStatus p {
-    margin: 8px 0 0;
-    font-size: 12.5px;
-    line-height: 1.5;
-    color: $muted;
-  }
-
-  .sd__mobileMetrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .sd__mobileMetrics article {
-    min-width: 0;
-    padding: 10px 9px;
-    background: #fff;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 14px;
-    box-shadow: 0 10px 24px rgb(15 23 42 / 4%);
-  }
-
-  .sd__mobileMetrics span,
-  .sd__mobileMetrics strong {
-    display: block;
-  }
-
-  .sd__mobileMetrics span {
-    font-size: 10.5px;
-    color: $faint;
-  }
-
-  .sd__mobileMetrics strong {
-    margin-top: 4px;
-    font-size: 17px;
-    line-height: 1;
-    color: $text;
-  }
-
-  .sd__mobileFlow {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-    padding: 18px 8px 8px;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 16px;
-  }
-
-  .sd__mobileLine {
-    position: absolute;
-    top: 42px;
-    left: 18px;
-    right: 18px;
-    height: 3px;
-    overflow: hidden;
-    background: rgb(226 232 240);
-    border-radius: 999px;
-  }
-
-  .sd__mobileLine i {
-    display: block;
-    width: 70%;
-    height: 100%;
-    background: linear-gradient(90deg, #ffb547, #10b981, #4a90e2);
-    border-radius: inherit;
-    animation: sd-mobile-flow 2.8s ease-in-out infinite;
-  }
-
-  .sd__mobileFlow article {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    justify-items: center;
-    gap: 7px;
-    min-width: 0;
-    text-align: center;
-  }
-
-  .sd__mobileFlow article span {
-    display: grid;
-    width: 30px;
-    height: 30px;
-    place-items: center;
-    font-size: 11px;
-    font-weight: 900;
-    color: #fff;
-    background: #cbd5e1;
-    border: 3px solid #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 16px rgb(15 23 42 / 10%);
-  }
-
-  .sd__mobileFlow article.is-active span {
-    background: linear-gradient(135deg, #4a90e2, #10b981);
-  }
-
-  .sd__mobileFlow article strong {
-    font-size: 10.5px;
-    line-height: 1.2;
-    color: $text;
-  }
-
-  .sd__mobileAction {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 12px;
-    background: rgb(239 246 255 / 72%);
-    border: 1px solid rgb(191 219 254);
-    border-radius: 14px;
-  }
-
-  .sd__mobileAction span {
-    min-width: 0;
-    font-size: 12px;
-    font-weight: 750;
-    color: #2563eb;
-  }
-
-  .sd__mobileAction button {
-    flex: 0 0 auto;
-    height: 32px;
-    padding: 0 14px;
-    font-size: 12px;
-    font-weight: 850;
-    color: #fff;
-    background: #0b7fe8;
-    border: 0;
-    border-radius: 999px;
-  }
-
   .sd__crumbs {
-    gap: 8px;
-    margin-bottom: 14px;
-    font-size: 11px;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+    font-size: 12px;
   }
-
-  .sd__crumbs > span:not(:last-of-type) {
-    display: none;
-  }
-
-  .sd__crumbs > span:last-of-type {
-    padding: 5px 9px;
-    color: #047857;
-    background: rgb(16 185 129 / 10%);
-    border: 1px solid rgb(16 185 129 / 22%);
-    border-radius: 999px;
-  }
-
   .sd__tbActions {
-    width: auto;
+    width: 100%;
     margin-left: 0;
-    margin-inline-start: auto;
-    justify-content: flex-end;
+    gap: 8px;
+    justify-content: space-between;
   }
-
   .sd__tbBadge {
-    display: none;
+    min-width: 0;
+    font-size: 9px;
   }
-
   .sd__tbBtn {
     flex: 0 0 auto;
-    padding: 6px 11px;
-    font-size: 11px;
+    padding: 4px 10px;
     white-space: nowrap;
-    border-radius: 999px;
   }
-
-  .sd__scene {
-    min-height: 0;
-  }
-
   .sd__sceneTitle {
     min-height: auto;
-    margin-bottom: 6px;
-    font-size: 20px;
-    line-height: 1.18;
-    letter-spacing: 0;
+    font-size: 22px;
+    line-height: 1.2;
   }
-
   .sd__sceneLede {
     font-size: 12.5px;
-    line-height: 1.55;
   }
-
-  .sd__sceneMeta {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    margin-top: 10px;
-  }
-
-  .sd__sceneMeta span:not(.divider) {
-    padding: 7px;
-    font-size: 10px;
-    line-height: 1.35;
-    background: rgb(248 250 252);
-    border: 1px solid rgb(226 232 240);
-    border-radius: 10px;
-  }
-
-  .sd__sceneMeta .divider {
-    display: none;
-  }
-
   .sd__cards {
     grid-template-columns: 1fr;
-    gap: 10px;
-    margin-top: 12px;
   }
-
-  .sd__timelineTrack,
-  .sd__timelineDot {
-    display: none;
-  }
-
-  .sd__card {
-    padding: 12px;
-    border-radius: 14px;
-  }
-
-  .sd__cards .sd__card:nth-of-type(n + 3) {
-    display: none;
-  }
-
-  .sd__card h4 {
-    font-size: 14px;
-  }
-
-  .sd__card p {
-    margin-bottom: 8px;
-    font-size: 12px;
-  }
-
-  .sd__cardFoot {
-    padding-top: 10px;
-  }
-
-  .sd__kpiGrid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
-    gap: 8px;
-    padding: 0;
-    background: transparent;
-    border: 0;
-  }
-
-  .sd__kpi {
-    gap: 3px;
-    min-width: 0;
-    padding: 8px 7px;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 12px;
-    background: rgb(248 250 252);
-  }
-
-  .sd__kpiLabel {
-    font-size: 10px;
-  }
-
-  .sd__kpiVal {
-    font-size: 16px;
-  }
-
   .sd__chartRow {
     grid-template-columns: 1fr;
-    height: auto;
-    min-height: 150px;
-    gap: 12px;
-    padding: 14px 10px 12px;
-    background-size: 18px 18px;
+    gap: 16px;
   }
-
-  .sd__bars {
-    gap: 10px;
-    min-height: 132px;
-    padding-bottom: 22px;
-  }
-
-  .sd__barVal {
-    font-size: 12px;
-  }
-
-  .sd__barLabel {
-    font-size: 11px;
-  }
-
   .sd__radar {
     display: none;
   }
-
   .sd__insight {
-    display: none;
+    right: 12px;
+    top: 60px;
+    width: 180px;
   }
-
   .sd__sceneHead {
     gap: 12px;
     flex-direction: column;
-    margin-bottom: 14px;
+    margin-bottom: 20px;
   }
-
   .sd__liveOverlay {
     width: 100%;
     justify-content: space-between;
-    padding: 7px 9px;
+    padding: 8px 10px;
   }
   .sd__liveStats {
     width: 100%;
@@ -3402,185 +2865,27 @@ $faint: #91908d;
   .sd__liveStats .lbl {
     font-size: 9px;
   }
-
   .sd__class {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    gap: 12px;
+    grid-template-rows: auto 280px auto;
     height: auto;
     min-height: 0;
-    padding: 0;
-    overflow: visible;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
   }
-
   .sd__teacherPanel {
-    display: flex;
+    display: grid;
     grid-template-columns: 1fr;
-    padding: 14px;
-    border-radius: 16px;
   }
-
-  .sd__teacherTop {
-    justify-content: center;
-    gap: 14px;
-  }
-
-  .sd__avatar--teacher {
-    width: 52px;
-    height: 52px;
-  }
-
-  .sd__topology {
-    min-height: 210px;
-    border-radius: 16px;
-  }
-
-  .sd__topologyCanvas {
-    inset: 40px 8px 12px;
-  }
-
-  .sd__topologyNode {
-    width: 96px;
-    padding: 7px;
-  }
-
-  .sd__topologyNode span {
-    width: 24px;
-    height: 24px;
-  }
-
-  .sd__topologyNode strong {
-    font-size: 10.5px;
-  }
-
-  .sd__topologyNode small {
-    display: none;
-  }
-
   .sd__featureGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
   }
-
   .sd__responseDock {
-    display: none;
+    grid-template-columns: 1fr;
   }
-
   .sd__student {
     min-height: 56px;
   }
-
   .sd__featureTile {
-    min-height: 56px;
-    padding: 9px;
-  }
-
-  .sd__exam {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    height: auto;
-  }
-
-  .sd__examBank {
-    max-height: none;
-    padding: 10px;
-    overflow: hidden;
-    border-style: solid;
-    border-radius: 16px;
-  }
-
-  .sd__examQ {
-    align-items: flex-start;
-    padding: 10px;
-    margin-bottom: 7px;
-  }
-
-  .sd__examQ:nth-of-type(n + 4) {
-    display: none;
-  }
-
-  .sd__examPaper {
-    border-radius: 16px;
-  }
-
-  .sd__examQText strong {
-    font-size: 12px;
-  }
-
-  .sd__paperBar {
-    display: block;
-    padding: 12px 14px;
-    font-size: 12px;
-  }
-
-  .sd__paperStats {
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 6px;
-    font-size: 10px;
-  }
-
-  .sd__paperBody {
-    padding: 10px 12px;
-  }
-
-  .sd__paperItem {
-    font-size: 12.5px;
-    line-height: 1.5;
-  }
-
-  .sd__vlab {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    height: auto;
-  }
-
-  .sd__linuxKernel {
-    min-height: 172px;
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .sd__osLabel {
-    font-size: 10px;
-    line-height: 1.4;
-  }
-
-  .sd__osProc {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
-  }
-
-  .sd__procItem {
-    min-width: 0;
-    padding: 7px 8px;
-    overflow: hidden;
-    font-size: 10px;
-    text-overflow: ellipsis;
-  }
-
-  .sd__hardware {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: 10px;
-  }
-
-  .sd__vlabConsole {
-    max-height: 180px;
-  }
-
-  .sd__consoleLines {
-    max-height: 138px;
-    overflow: hidden;
-    font-size: 10px;
-  }
-
-  .sd__cursor {
-    display: none;
+    min-height: 64px;
   }
 }
 

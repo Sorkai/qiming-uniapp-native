@@ -561,7 +561,7 @@ onBeforeUnmount(() => {
   opacity: inherit;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .aippt-page {
     padding: 4px;
   }

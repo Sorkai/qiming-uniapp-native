@@ -147,7 +147,6 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
-import { getSavedCourseTheme, setSavedCourseTheme } from "@/utils/courseTheme";
 import { userKey } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 import { setAiScreenCaptureVisibilityOverride } from "@/components/AiScreenCapture/visibility";
@@ -189,43 +188,18 @@ import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 const router = useRouter();
 const route = useRoute();
 
-const courseDetailMenuKeys = [
-  "course-learn",
-  "mastery",
-  "course-qa",
-  "homework-exam",
-  "course-materials",
-  "html-animations",
-  "grades"
-] as const;
-
-type CourseDetailMenuKey = (typeof courseDetailMenuKeys)[number];
-
-const normalizeCourseDetailMenu = (
-  value: unknown
-): CourseDetailMenuKey | "" => {
-  const raw = Array.isArray(value) ? value[0] : value;
-  return typeof raw === "string" &&
-    (courseDetailMenuKeys as readonly string[]).includes(raw)
-    ? (raw as CourseDetailMenuKey)
-    : "";
-};
-
-const getSavedActiveMenu = (id: string | string[]) =>
-  normalizeCourseDetailMenu(
-    storageLocal().getItem(`course_detail_active_menu_${id}`)
-  );
-
 // 基础状态
 const baseCourseId = ref<number | null>(null);
 const courseId = computed(() => baseCourseId.value);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
-const currentTheme = ref(getSavedCourseTheme("light"));
-const activeMenu = ref<CourseDetailMenuKey>(
-  normalizeCourseDetailMenu(route.query.section) ||
-    getSavedActiveMenu(route.params.id) ||
-    "course-learn"
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) || "light"
+);
+const activeMenu = ref(
+  (storageLocal().getItem(
+    `course_detail_active_menu_${route.params.id}`
+  ) as string) || "course-learn"
 );
 
 // 监听菜单变化并持久化
@@ -267,10 +241,10 @@ watch(
       courseScores.value = null;
 
       // 恢复新课程的菜单状态
-      activeMenu.value =
-        normalizeCourseDetailMenu(route.query.section) ||
-        getSavedActiveMenu(String(id)) ||
-        "course-learn";
+      const savedMenu = storageLocal().getItem(
+        `course_detail_active_menu_${id}`
+      ) as string;
+      activeMenu.value = savedMenu || "course-learn";
 
       // 恢复新课程的课时状态
       const savedNode = storageLocal().getItem(
@@ -298,16 +272,6 @@ watch(
       nextTick(() => {
         scheduleMobileTopOffsetUpdate();
       });
-    }
-  }
-);
-
-watch(
-  () => route.query.section,
-  section => {
-    const nextMenu = normalizeCourseDetailMenu(section);
-    if (nextMenu && nextMenu !== activeMenu.value) {
-      activeMenu.value = nextMenu;
     }
   }
 );
@@ -412,20 +376,11 @@ const MOBILE_BREAKPOINT = 767;
 const courseRootEl = ref<HTMLElement | null>(null);
 let mobileOffsetRafId: number | null = null;
 
-const isNativeCourseWebView = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
-
-const isCourseMobileViewport = () =>
-  typeof window !== "undefined" &&
-  (window.innerWidth <= MOBILE_BREAKPOINT || isNativeCourseWebView());
-
 const updateMobileTopOffset = () => {
   const root = courseRootEl.value;
   if (!root) return;
 
-  const isNative = isNativeCourseWebView();
-  if (!isNative && window.innerWidth > MOBILE_BREAKPOINT) {
+  if (window.innerWidth > MOBILE_BREAKPOINT) {
     root.style.removeProperty("--course-mobile-top-offset");
     return;
   }
@@ -438,27 +393,14 @@ const updateMobileTopOffset = () => {
   ) as HTMLElement | null;
   const headerBottom = headerEl?.getBoundingClientRect().bottom ?? 0;
   const sidebarBottom = sidebarEl?.getBoundingClientRect().bottom ?? 0;
-  const sidebarCollapsed =
-    sidebarEl?.classList.contains("mobile-collapsed") ?? false;
-  const safeGap = isNative ? 14 : 12;
+  const safeGap = 16;
   const measuredOffset = Math.ceil(
-    Math.max(headerBottom, sidebarCollapsed ? 0 : sidebarBottom) + safeGap
+    Math.max(headerBottom, sidebarBottom) + safeGap
   );
-  const fallbackOffset = sidebarCollapsed
-    ? isNative
-      ? 106
-      : 92
-    : isNative
-      ? 174
-      : 158;
 
   root.style.setProperty(
     "--course-mobile-top-offset",
-    `${Math.max(measuredOffset, fallbackOffset)}px`
-  );
-  root.style.setProperty(
-    "--course-mobile-fab-clearance",
-    isNative ? "64px" : "72px"
+    `${Math.max(measuredOffset, 156)}px`
   );
 };
 
@@ -474,40 +416,6 @@ const scheduleMobileTopOffsetUpdate = () => {
 };
 
 const handleViewportResize = () => {
-  scheduleMobileTopOffsetUpdate();
-};
-
-const COURSE_SCROLL_CONTAINERS = [
-  ".app-main",
-  ".app-main-nofixed-header",
-  ".layout-inner-content",
-  ".study-container",
-  ".message-board-container",
-  ".mastery-page-content",
-  ".homework-container",
-  ".materials-container",
-  ".course-grades-container",
-  ".animations-container",
-  ".left-scroll",
-  ".el-scrollbar__wrap"
-];
-
-const resetCourseScrollPosition = () => {
-  if (!isCourseMobileViewport()) return;
-
-  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-
-  COURSE_SCROLL_CONTAINERS.forEach(selector => {
-    document.querySelectorAll<HTMLElement>(selector).forEach(el => {
-      el.scrollTop = 0;
-      el.scrollLeft = 0;
-    });
-  });
-};
-
-const handleCourseSidebarCollapseChange = () => {
   scheduleMobileTopOffsetUpdate();
 };
 
@@ -579,7 +487,7 @@ const resolveVideoPlayerEl = () => {
 watch(
   currentTheme,
   val => {
-    setSavedCourseTheme(val);
+    storageLocal().setItem("course_theme", val);
     const other = val === "light" ? "dark" : "light";
     document.documentElement.classList.remove(other);
     document.documentElement.classList.add(val);
@@ -587,6 +495,12 @@ watch(
     document.body.classList.add(val);
 
     // 同步到管理后台主题设置
+    const layout = storageLocal().getItem("responsive-layout") as any;
+    if (layout) {
+      layout.darkMode = val === "dark";
+      storageLocal().setItem("responsive-layout", layout);
+    }
+
     nextTick(() => {
       scheduleMobileTopOffsetUpdate();
     });
@@ -595,7 +509,7 @@ watch(
 );
 
 // 菜单切换
-const handleMenuClick = (menuName: CourseDetailMenuKey) => {
+const handleMenuClick = (menuName: string) => {
   activeMenu.value = menuName;
 
   // 如果视频正在播放且切换到了非课程学习菜单，则暂停视频
@@ -605,11 +519,6 @@ const handleMenuClick = (menuName: CourseDetailMenuKey) => {
       videoPlayerEl.pause();
     }
   }
-
-  requestAnimationFrame(() => {
-    resetCourseScrollPosition();
-    scheduleMobileTopOffsetUpdate();
-  });
 
   // 数据加载统一由 watch(activeMenu) 处理，避免重复请求
 };
@@ -621,25 +530,6 @@ const goBack = () => {
   } else {
     router.push("/account");
   }
-};
-
-const goBackToCourseList = () => {
-  router.push({
-    path: "/account",
-    query: {
-      ...route.query,
-      menu: "course",
-      qimingNative: "1"
-    }
-  });
-};
-
-const handleNativeBack = (event: Event) => {
-  if (!document.documentElement.classList.contains("qiming-native-webview")) {
-    return;
-  }
-  event.preventDefault();
-  goBackToCourseList();
 };
 
 // 跳转账号管理
@@ -1194,11 +1084,6 @@ onMounted(async () => {
   ) as HTMLElement | null;
   baseCourseId.value = Number(route.params.id);
   window.addEventListener("resize", handleViewportResize, { passive: true });
-  window.addEventListener(
-    "qiming:course-sidebar-collapse-change",
-    handleCourseSidebarCollapseChange
-  );
-  window.addEventListener("qiming:native-back", handleNativeBack);
 
   // 获取用户ID（如果还没有）
   if (!userStore.userId) {
@@ -1282,11 +1167,6 @@ onBeforeUnmount(() => {
   setAiScreenCaptureVisibilityOverride(null);
   document.body.classList.remove("course-page");
   window.removeEventListener("resize", handleViewportResize);
-  window.removeEventListener(
-    "qiming:course-sidebar-collapse-change",
-    handleCourseSidebarCollapseChange
-  );
-  window.removeEventListener("qiming:native-back", handleNativeBack);
   if (mobileOffsetRafId !== null) {
     cancelAnimationFrame(mobileOffsetRafId);
     mobileOffsetRafId = null;
@@ -1303,7 +1183,7 @@ onBeforeUnmount(() => {
 @import url("@/../coursecss/css/chunk-b4b575b6.fcb08796.css");
 
 .course-detail-root {
-  --course-mobile-top-offset: 176px;
+  --course-mobile-top-offset: 156px;
   --course-mobile-fab-clearance: 92px;
   width: 100%;
   min-height: 100vh;
@@ -1353,7 +1233,7 @@ onBeforeUnmount(() => {
   }
 
   /* stylelint-disable-next-line order/order */
-  @media (max-width: 767px) {
+  @media (width <= 767px) {
     .layout-container {
       display: block;
       min-height: 100vh;

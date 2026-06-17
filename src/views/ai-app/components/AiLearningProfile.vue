@@ -10,12 +10,21 @@ import {
   Reading,
   VideoPlay,
   Avatar,
-  Refresh
+  Refresh,
+  EditPen,
+  Clock
 } from "@element-plus/icons-vue";
 import {
+  createAssistantProfileCorrection,
   getAssistantProfileCurrent,
+  listAssistantProfileCorrections,
+  listAssistantProfileEvents,
+  listAssistantProfileHistory,
   refreshAssistantProfile,
-  type AssistantProfileCurrentResp
+  type AssistantProfileCorrectionItem,
+  type AssistantProfileCurrentResp,
+  type AssistantProfileEvent,
+  type AssistantProfileHistoryItem
 } from "@/api/frontend/assistant";
 
 const props = defineProps<{
@@ -29,7 +38,14 @@ const emit = defineEmits<{
 
 const loading = ref(false);
 const refreshing = ref(false);
+const correctionSubmitting = ref(false);
 const profile = ref<AssistantProfileCurrentResp | null>(null);
+const profileHistory = ref<AssistantProfileHistoryItem[]>([]);
+const profileEvents = ref<AssistantProfileEvent[]>([]);
+const profileCorrections = ref<AssistantProfileCorrectionItem[]>([]);
+const correctionDimension = ref("");
+const correctionValue = ref(80);
+const correctionReason = ref("");
 
 const learner = computed(
   () =>
@@ -46,24 +62,57 @@ const icons = [Medal, TrendCharts, Trophy, Star, Star];
 const dimensions = computed(() =>
   (profile.value?.dimensions || []).map((dimension, index) => ({
     ...dimension,
-    color:
-      dimension.color ||
-      ["#5e7ff8", "#10b981", "#f59e0b", "#8b5cf6"][index % 4],
+    color: dimension.color || ["#5e7ff8", "#10b981", "#f59e0b", "#8b5cf6"][index % 4],
     icon: icons[index % icons.length]
   }))
 );
 const knowledgeMap = computed(() => profile.value?.knowledge_map || []);
 const tags = computed(() => profile.value?.tags || []);
+const profileMeta = computed<Partial<AssistantProfileCurrentResp>>(
+  () => profile.value || {}
+);
+const canCreateCorrection = computed(() => !!props.targetStudentId);
+const currentDimension = computed(() =>
+  dimensions.value.find(item => (item.key || item.label) === correctionDimension.value)
+);
+
+const percentLabel = (value?: number) => {
+  if (value === undefined || value === null) return "暂无";
+  const normalized = value <= 1 ? value * 100 : value;
+  return `${Math.round(normalized)}%`;
+};
+
+const decisionType = (decision?: string) => {
+  if (decision === "write_delta") return "success";
+  if (decision === "skip") return "info";
+  if (decision === "merge_without_event") return "warning";
+  return "info";
+};
 
 const loadProfile = async () => {
   loading.value = true;
   try {
-    const { data } = await getAssistantProfileCurrent({
+    const params = {
       course_id: props.courseId,
       target_student_id: props.targetStudentId
-    });
-    profile.value = data;
-    emit("profile-loaded", data);
+    };
+    const [currentResp, historyResp, eventsResp, correctionsResp] =
+      await Promise.all([
+        getAssistantProfileCurrent(params),
+        listAssistantProfileHistory({ ...params, limit: 6 }),
+        listAssistantProfileEvents({ ...params, limit: 8 }),
+        listAssistantProfileCorrections({ ...params, limit: 6 })
+      ]);
+    profile.value = currentResp.data;
+    profileHistory.value = historyResp.data.items || [];
+    profileEvents.value = eventsResp.data.items || [];
+    profileCorrections.value = correctionsResp.data.items || [];
+    if (!correctionDimension.value && currentResp.data.dimensions?.length) {
+      const first = currentResp.data.dimensions[0];
+      correctionDimension.value = first.key || first.label;
+      correctionValue.value = first.value || Math.round(first.score || 80);
+    }
+    emit("profile-loaded", currentResp.data);
   } catch (error: any) {
     console.error("[AiLearningProfile] 学习画像加载失败:", error);
     ElMessage.error(error?.message || "学习画像加载失败");
@@ -80,13 +129,56 @@ const handleRefresh = async () => {
       target_student_id: props.targetStudentId,
       trigger: "manual_refresh"
     });
-    ElMessage.success(data.message || "学习画像刷新完成");
+    if (data.decision === "skip") {
+      ElMessage.info(data.skip_reason || data.message || "本次画像无需更新");
+    } else {
+      ElMessage.success(data.message || "学习画像刷新完成");
+    }
     await loadProfile();
   } catch (error: any) {
     console.error("[AiLearningProfile] 学习画像刷新失败:", error);
     ElMessage.error(error?.message || "学习画像刷新失败");
   } finally {
     refreshing.value = false;
+  }
+};
+
+const handleSubmitCorrection = async () => {
+  if (!props.targetStudentId) {
+    ElMessage.warning("请选择需要纠偏的学生");
+    return;
+  }
+  if (!correctionDimension.value) {
+    ElMessage.warning("请选择画像维度");
+    return;
+  }
+  correctionSubmitting.value = true;
+  try {
+    const dimension = currentDimension.value;
+    const afterJson = JSON.stringify({
+      key: dimension?.key || correctionDimension.value,
+      label: dimension?.label || correctionDimension.value,
+      value: correctionValue.value,
+      score: correctionValue.value,
+      level: dimension?.level,
+      evidence: ["教师纠偏"],
+      updated_at: new Date().toISOString()
+    });
+    const { data } = await createAssistantProfileCorrection({
+      course_id: props.courseId,
+      target_student_id: props.targetStudentId,
+      dimension_key: correctionDimension.value,
+      after_json: afterJson,
+      reason: correctionReason.value.trim() || "教师人工纠偏"
+    });
+    ElMessage.success(data.message || "画像纠偏已提交");
+    correctionReason.value = "";
+    await loadProfile();
+  } catch (error: any) {
+    console.error("[AiLearningProfile] 学习画像纠偏失败:", error);
+    ElMessage.error(error?.message || "学习画像纠偏失败");
+  } finally {
+    correctionSubmitting.value = false;
   }
 };
 
@@ -168,15 +260,50 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
         </div>
 
         <div class="mt-8 flex flex-wrap justify-center gap-2">
-          <el-tag
-            v-for="tag in tags"
-            :key="tag"
-            effect="plain"
-            round
-            size="small"
-          >
+          <el-tag v-for="tag in tags" :key="tag" effect="plain" round size="small">
             {{ tag }}
           </el-tag>
+        </div>
+
+        <div class="mt-6 w-full space-y-2 text-xs text-text_color_regular">
+          <div class="flex items-center justify-between">
+            <span>画像版本</span>
+            <b class="text-text_color_primary">
+              v{{ profileMeta.profile_version || 0 }}
+            </b>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>置信度</span>
+            <b class="text-text_color_primary">
+              {{ percentLabel(profileMeta.confidence) }}
+            </b>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>更新决策</span>
+            <el-tag
+              size="small"
+              effect="plain"
+              :type="decisionType(profileMeta.last_update_decision)"
+            >
+              {{ profileMeta.last_update_decision || "暂无" }}
+            </el-tag>
+          </div>
+        </div>
+
+        <div v-if="profileMeta.risk_flags?.length" class="mt-5 w-full">
+          <div class="mb-2 text-xs font-bold text-text_color_regular">风险标记</div>
+          <div class="flex flex-wrap gap-2">
+            <el-tag
+              v-for="flag in profileMeta.risk_flags"
+              :key="flag"
+              type="warning"
+              effect="plain"
+              size="small"
+              class="!rounded-md"
+            >
+              {{ flag }}
+            </el-tag>
+          </div>
         </div>
       </div>
 
@@ -217,7 +344,10 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
               stroke-linecap="round"
               class="w-full"
             />
-            <div v-if="dim.evidence?.length" class="mt-3 flex flex-wrap gap-2">
+            <div
+              v-if="dim.evidence?.length"
+              class="mt-3 flex flex-wrap gap-2"
+            >
               <el-tag
                 v-for="evidence in dim.evidence"
                 :key="evidence"
@@ -228,9 +358,185 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
                 {{ evidence }}
               </el-tag>
             </div>
+            <div
+              v-if="dim.description || dim.trend || dim.updated_at"
+              class="mt-2 text-xs text-text_color_regular leading-relaxed"
+            >
+              <span v-if="dim.description">{{ dim.description }}</span>
+              <span v-if="dim.trend" class="ml-2 text-primary">
+                趋势：{{ dim.trend }}
+              </span>
+              <span v-if="dim.updated_at" class="ml-2 opacity-60">
+                {{ dim.updated_at }}
+              </span>
+            </div>
           </div>
         </div>
         <el-empty v-else description="暂无学习画像维度" :image-size="100" />
+      </div>
+    </div>
+
+    <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div
+        class="bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm"
+      >
+        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-5">
+          <el-icon class="text-primary"><Clock /></el-icon>
+          画像历史
+        </h4>
+        <el-timeline v-if="profileHistory.length">
+          <el-timeline-item
+            v-for="item in profileHistory"
+            :key="item.profile_id"
+            :timestamp="item.updated_at"
+            hollow
+          >
+            <div class="text-sm font-bold text-text_color_primary">
+              v{{ item.profile_version }}
+              <span class="ml-2 text-xs font-normal text-text_color_regular">
+                {{ percentLabel(item.confidence) }}
+              </span>
+            </div>
+            <p class="mt-1 text-xs text-text_color_regular leading-relaxed">
+              {{ item.summary || item.updated_reason || "画像快照已更新" }}
+            </p>
+            <div v-if="item.risk_flags?.length" class="mt-2 flex flex-wrap gap-1">
+              <el-tag
+                v-for="flag in item.risk_flags"
+                :key="flag"
+                size="small"
+                effect="plain"
+                class="!rounded-md"
+              >
+                {{ flag }}
+              </el-tag>
+            </div>
+          </el-timeline-item>
+        </el-timeline>
+        <el-empty v-else description="暂无历史版本" :image-size="90" />
+      </div>
+
+      <div
+        class="bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm"
+      >
+        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-5">
+          <el-icon class="text-primary"><TrendCharts /></el-icon>
+          更新事件
+        </h4>
+        <div v-if="profileEvents.length" class="space-y-3">
+          <div
+            v-for="event in profileEvents"
+            :key="`${event.event_source}-${event.trigger_id || event.summary}`"
+            class="rounded-lg border border-gray-100 dark:border-gray-800 p-3"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-sm font-bold text-text_color_primary">
+                {{ event.event_source }}
+              </span>
+              <el-tag
+                size="small"
+                effect="plain"
+                :type="decisionType(event.decision)"
+              >
+                {{ event.decision || "unknown" }}
+              </el-tag>
+            </div>
+            <p class="mt-2 text-xs text-text_color_regular leading-relaxed">
+              {{ event.summary || event.skip_reason || "画像事件已记录" }}
+            </p>
+            <div v-if="event.changed_dimensions?.length" class="mt-2 flex flex-wrap gap-1">
+              <el-tag
+                v-for="dimension in event.changed_dimensions"
+                :key="dimension"
+                size="small"
+                type="success"
+                effect="plain"
+                class="!rounded-md"
+              >
+                {{ dimension }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无画像事件" :image-size="90" />
+      </div>
+
+      <div
+        class="bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm"
+      >
+        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-5">
+          <el-icon class="text-primary"><EditPen /></el-icon>
+          教师纠偏
+        </h4>
+        <div v-if="canCreateCorrection" class="space-y-3">
+          <el-select
+            v-model="correctionDimension"
+            class="w-full"
+            placeholder="选择画像维度"
+          >
+            <el-option
+              v-for="dim in dimensions"
+              :key="dim.key || dim.label"
+              :label="dim.label"
+              :value="dim.key || dim.label"
+            />
+          </el-select>
+          <div>
+            <div class="mb-2 text-xs text-text_color_regular">
+              调整分值：{{ correctionValue }}
+            </div>
+            <el-slider v-model="correctionValue" :min="0" :max="100" />
+          </div>
+          <el-input
+            v-model="correctionReason"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="填写纠偏原因"
+          />
+          <el-button
+            type="primary"
+            class="w-full"
+            :loading="correctionSubmitting"
+            @click="handleSubmitCorrection"
+          >
+            提交纠偏
+          </el-button>
+        </div>
+        <el-alert
+          v-else
+          type="info"
+          show-icon
+          :closable="false"
+          title="学生本人可查看纠偏记录；教师/管理员选择学生后可提交纠偏。"
+        />
+
+        <div class="mt-5 space-y-2">
+          <div
+            v-for="item in profileCorrections"
+            :key="item.correction_id"
+            class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 px-3 py-2 text-xs"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-text_color_primary">
+                {{ item.dimension_key }}
+              </span>
+              <el-tag size="small" effect="plain">{{ item.status }}</el-tag>
+            </div>
+            <p class="mt-1 text-text_color_regular line-clamp-2">
+              {{ item.reason || "暂无原因" }}
+            </p>
+            <div class="mt-1 text-text_color_regular opacity-60">
+              {{ item.operator_role }} · {{ item.created_at }}
+            </div>
+          </div>
+          <el-empty
+            v-if="!profileCorrections.length"
+            description="暂无纠偏记录"
+            :image-size="80"
+          />
+        </div>
       </div>
     </div>
 

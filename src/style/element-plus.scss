@@ -170,13 +170,13 @@
 
 /* 自定义菜单搜索样式 */
 .pure-search-dialog {
-  @media screen and (min-width: 761px) and (max-width: 940px) {
+  @media screen and (width > 760px) and (width <=940px) {
     .el-input__inner {
       font-size: 12px;
     }
   }
 
-  @media screen and (max-width: 470px) {
+  @media screen and (width <=470px) {
     .el-input__inner {
       font-size: 12px;
     }

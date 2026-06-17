@@ -291,58 +291,14 @@ const handleUpload = () => {
   ElMessage.info("管理员已停用上传");
 };
 
-const openNativeExternalUrl = (url?: string) => {
-  if (!url || url === "#") return false;
-  const plusApi = (window as any).plus;
-  const isNativeWebView = document.documentElement.classList.contains(
-    "qiming-native-webview"
-  );
-  if (!isNativeWebView || !plusApi?.runtime?.openURL) return false;
-  try {
-    plusApi.runtime.openURL(url);
-    return true;
-  } catch (error) {
-    console.warn("Native openURL failed:", error);
-    return false;
-  }
-};
-
-const isNativeWebView = () =>
-  document.documentElement.classList.contains("qiming-native-webview");
-
-const copyDownloadUrl = (url: string) => {
-  const writePromise = navigator.clipboard?.writeText?.(url);
-  if (!writePromise) {
-    ElMessage.info("当前 App 暂不支持直接下载，请稍后在浏览器打开");
-    return;
-  }
-
-  writePromise
-    .then(() => {
-      ElMessage.success("下载链接已复制，请在浏览器中打开");
-    })
-    .catch(() => {
-      ElMessage.info("当前 App 暂不支持直接下载，请稍后在浏览器打开");
-    });
-};
-
 // 模拟下载
 const handleDownload = (file: CloudFile) => {
   if (file.type === "folder") {
     ElMessage.warning("文件夹不能直接下载");
     return;
   }
-  if (!file.url || file.url === "#") {
-    ElMessage.warning("该文件没有可用的下载链接");
-    return;
-  }
   ElMessage.success(`开始下载文件: ${file.name}`);
-  if (openNativeExternalUrl(file.url)) return;
-  if (isNativeWebView()) {
-    copyDownloadUrl(file.url);
-    return;
-  }
-  window.open(file.url, "_blank", "noopener,noreferrer");
+  window.open(file.url, "_blank");
 };
 
 // 文件分享
@@ -530,77 +486,6 @@ const handleDelete = (file: CloudFile) => {
 
       .el-icon {
         font-size: 15px;
-      }
-    }
-  }
-
-  .file-icon-wrap {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 9px;
-    transition: transform 0.2s ease;
-
-    &.icon-doc {
-      color: #6366f1;
-      background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-
-      .dark & {
-        color: #818cf8;
-        background: rgb(99 102 241 / 12%);
-      }
-    }
-
-    &.icon-audio {
-      color: #f59e0b;
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-
-      .dark & {
-        color: #fbbf24;
-        background: rgb(245 158 11 / 12%);
-      }
-    }
-
-    &.icon-image {
-      color: #10b981;
-      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-
-      .dark & {
-        color: #34d399;
-        background: rgb(16 185 129 / 12%);
-      }
-    }
-
-    &.icon-video {
-      color: #ef4444;
-      background: linear-gradient(135deg, #fee2e2, #fecaca);
-
-      .dark & {
-        color: #f87171;
-        background: rgb(239 68 68 / 12%);
-      }
-    }
-
-    &.icon-folder {
-      color: #97b4f7;
-      background: linear-gradient(135deg, #eef2ff, #dce2f7);
-
-      .dark & {
-        color: #38bdf8;
-        background: rgb(56 189 248 / 12%);
-      }
-    }
-
-    &.icon-other {
-      color: #6b7280;
-      background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-
-      .dark & {
-        color: #94a3b8;
-        background: rgb(107 114 128 / 12%);
       }
     }
   }
@@ -854,7 +739,7 @@ const handleDelete = (file: CloudFile) => {
   }
 
   .mobile-file-card {
-    padding: 15px;
+    padding: 16px;
     background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
     border: 1px solid rgb(151 180 247 / 12%);
     border-radius: 18px;
@@ -868,16 +753,9 @@ const handleDelete = (file: CloudFile) => {
   }
 
   .mobile-file-main {
-    display: grid;
-    grid-template-columns: 42px minmax(0, 1fr);
-    gap: 14px;
+    display: flex;
+    gap: 12px;
     align-items: flex-start;
-  }
-
-  .mobile-file-main > .file-icon-wrap {
-    width: 42px;
-    height: 42px;
-    margin-top: 2px;
   }
 
   .mobile-file-body {
@@ -886,15 +764,11 @@ const handleDelete = (file: CloudFile) => {
   }
 
   .mobile-file-name {
-    display: -webkit-box;
-    overflow: hidden;
     font-size: 14px;
     font-weight: 600;
-    line-height: 1.45;
+    line-height: 1.6;
     color: #1e293b;
     word-break: break-word;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
 
     .dark & {
       color: #e2e8f0;
@@ -907,25 +781,7 @@ const handleDelete = (file: CloudFile) => {
     gap: 8px 12px;
     margin-top: 8px;
     font-size: 12px;
-    line-height: 1.2;
     color: #7a8bb8;
-
-    span + span {
-      position: relative;
-      padding-left: 12px;
-
-      &::before {
-        position: absolute;
-        top: 50%;
-        left: 0;
-        width: 4px;
-        height: 4px;
-        content: "";
-        background: rgb(151 180 247 / 60%);
-        border-radius: 999px;
-        transform: translateY(-50%);
-      }
-    }
 
     .dark & {
       color: #94a3b8;
@@ -976,7 +832,7 @@ const handleDelete = (file: CloudFile) => {
   }
 }
 
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .cloud-disk-container {
     padding: 18px 16px;
     border-radius: 20px;

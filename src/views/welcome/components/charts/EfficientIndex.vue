@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch, nextTick } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { useAppStoreHook } from "@/store/modules/app";
 import { getEfficientIndex } from "@/api/statistics";
@@ -24,31 +24,16 @@ const showOptimizePanel = ref(false); // 默认折叠优化建议面板
 
 const currentPage = ref(1);
 const appStore = useAppStoreHook();
-const isMobile = computed(
-  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
-);
+const isMobile = computed(() => appStore.getDevice === "mobile");
 const pageSize = computed(() => (isMobile.value ? 1 : 5));
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
 const chartRef = ref();
-const { setOptions, resize } = useECharts(chartRef, {
+const { setOptions } = useECharts(chartRef, {
   theme
 });
-
-let chartFrame = 0;
-
-const scheduleRenderChart = async () => {
-  await nextTick();
-  if (chartFrame) cancelAnimationFrame(chartFrame);
-  chartFrame = requestAnimationFrame(() => {
-    chartFrame = requestAnimationFrame(() => {
-      renderChart();
-      resize();
-    });
-  });
-};
 
 // 获取教学效率指数数据
 const fetchData = async () => {
@@ -57,22 +42,16 @@ const fetchData = async () => {
     const response = await getEfficientIndex();
 
     if (response?.data?.efficientIndexList) {
-      efficientData.value = response.data.efficientIndexList.map(
-        (item, index) => ({
-          ...item,
-          courseName:
-            String(item?.courseName ?? "").trim() ||
-            `\u672A\u547D\u540D\u8BFE\u7A0B ${index + 1}`
-        })
-      );
+      efficientData.value = response.data.efficientIndexList;
       // 默认选中所有课程
       selectedCourses.value = efficientData.value.map((_, index) => index);
     }
+
+    renderChart();
   } catch (error) {
     console.error("获取教学效率指数数据失败:", error);
   } finally {
     loading.value = false;
-    scheduleRenderChart();
   }
 };
 
@@ -90,7 +69,7 @@ const pagedData = computed(() => {
 
 // 监听分页和选中项变化重新渲染图表
 watch([currentPage, selectedCourses, isMobile], () => {
-  scheduleRenderChart();
+  renderChart();
 });
 
 watch([totalFilteredData, isMobile], () => {
@@ -298,7 +277,7 @@ showOptimizePanel.value = true;
 watch(
   () => selectedCourses.value,
   () => {
-    scheduleRenderChart();
+    renderChart();
   },
   { deep: true }
 );
@@ -308,7 +287,7 @@ watch(
   () => isDark.value,
   () => {
     if (!loading.value && pagedData.value.length > 0) {
-      scheduleRenderChart();
+      renderChart();
     }
   }
 );
@@ -322,21 +301,21 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div class="efficient-layout flex flex-col gap-6">
+        <div class="flex flex-col gap-6">
           <!-- 筛选控制区域 -->
           <div
             v-if="efficientData.length"
-            class="efficient-filter flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
+            class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
           >
             <div class="flex items-center gap-4 shrink-0">
               <div
-                class="efficient-filter-icon w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
+                class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
               >
                 <ChartIcon class="w-7 h-7 [&_path]:!fill-white" />
               </div>
               <div class="flex flex-col">
                 <span
-                  class="efficient-filter-title text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
+                  class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
                   >筛选分析课程</span
                 >
                 <span
@@ -353,7 +332,7 @@ onMounted(() => {
             <div class="flex-1 w-full overflow-hidden">
               <el-checkbox-group
                 v-model="selectedCourses"
-                class="efficient-course-checks flex flex-wrap gap-x-10 gap-y-4"
+                class="flex flex-wrap gap-x-10 gap-y-4"
                 @change="handleCoursesChange"
               >
                 <el-checkbox
@@ -373,12 +352,12 @@ onMounted(() => {
 
           <!-- 图表主体 -->
           <div
-            class="efficient-chart-panel relative bg-white/50 dark:bg-[var(--el-bg-color-overlay)] p-8 rounded-3xl border border-blue-100/50 dark:border-blue-500/10 shadow-sm"
+            class="relative bg-white/50 dark:bg-[var(--el-bg-color-overlay)] p-8 rounded-3xl border border-blue-100/50 dark:border-blue-500/10 shadow-sm"
           >
             <div
               ref="chartRef"
               class="chart-container"
-              :style="{ width: '100%', height: isMobile ? '360px' : '600px' }"
+              style="width: 100%; height: 600px"
             />
 
             <!-- 分页部件 -->
@@ -403,9 +382,7 @@ onMounted(() => {
             v-if="optimizeSuggestions.length"
             class="optimize-suggestions mt-4"
           >
-            <div
-              class="efficient-suggestion-head flex items-center justify-between mb-6"
-            >
+            <div class="flex items-center justify-between mb-6">
               <h3
                 class="flex items-center text-lg font-bold text-gray-800 dark:text-gray-200"
               >
@@ -437,7 +414,7 @@ onMounted(() => {
                     class="mb-6"
                   >
                     <div
-                      class="efficient-suggestion-card suggestion-card-new p-5 h-full flex flex-col justify-between bg-white dark:bg-[var(--el-bg-color-overlay)] border border-slate-100 dark:border-gray-800"
+                      class="suggestion-card-new p-5 h-full flex flex-col justify-between bg-white dark:bg-[var(--el-bg-color-overlay)] border border-slate-100 dark:border-gray-800"
                     >
                       <div>
                         <div class="flex items-center gap-2 mb-4">
@@ -600,101 +577,6 @@ onMounted(() => {
 }
 
 @media screen and (max-width: 768px) {
-  .efficient-layout {
-    gap: 12px;
-  }
-
-  .efficient-filter {
-    gap: 10px;
-    padding: 12px !important;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgb(37 99 235 / 8%);
-  }
-
-  .efficient-filter-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 12px;
-
-    :deep(svg) {
-      width: 18px;
-      height: 18px;
-    }
-  }
-
-  .efficient-filter-title {
-    font-size: 16px !important;
-    line-height: 1.25 !important;
-  }
-
-  .efficient-course-checks {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px !important;
-    width: 100%;
-  }
-
-  :deep(.efficient-course-checks .el-checkbox) {
-    width: 100%;
-    height: auto;
-    min-height: 30px;
-    margin: 0;
-  }
-
-  :deep(.efficient-course-checks .el-checkbox__label) {
-    min-width: 0;
-    overflow: hidden;
-    font-size: 13px;
-    line-height: 1.35;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .efficient-chart-panel {
-    padding: 14px !important;
-    border-radius: 20px;
-  }
-
-  .chart-container {
-    height: 360px !important;
-  }
-
-  .optimize-suggestions {
-    margin-top: 0;
-  }
-
-  .efficient-suggestion-head {
-    gap: 10px;
-    align-items: flex-start;
-    margin-bottom: 12px;
-
-    h3 {
-      min-width: 0;
-      font-size: 16px;
-      line-height: 1.35;
-    }
-
-    :deep(.el-button) {
-      flex: 0 0 auto;
-    }
-  }
-
-  :deep(.suggestion-row) {
-    margin-right: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  :deep(.suggestion-row .el-col) {
-    padding-right: 0 !important;
-    padding-left: 0 !important;
-    margin-bottom: 12px !important;
-  }
-
-  .efficient-suggestion-card {
-    padding: 14px !important;
-    border-radius: 16px;
-  }
-
   :deep(.efficient-pagination) {
     flex-wrap: wrap;
     gap: 4px;

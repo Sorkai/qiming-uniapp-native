@@ -193,11 +193,7 @@ const iframeLoading = ref(true);
 const resolveCoverUrl = (item: { coverUrl?: string; previewUrl?: string }) =>
   item.coverUrl || item.previewUrl || "";
 
-const statusText = (item: {
-  status?: string;
-  message?: string;
-  url?: string;
-}) => {
+const statusText = (item: { status?: string; message?: string; url?: string }) => {
   if (item.url) return "可播放";
   if (item.status === "missing") return "文件缺失";
   if (item.status === "processing") return "生成中";
@@ -359,7 +355,8 @@ const openHtmlAnimInNew = () => {
   color: #64748b;
   background:
     linear-gradient(135deg, rgb(151 180 247 / 18%), transparent 42%),
-    linear-gradient(315deg, rgb(0 184 212 / 16%), transparent 45%), #f8fafc;
+    linear-gradient(315deg, rgb(0 184 212 / 16%), transparent 45%),
+    #f8fafc;
   transition: transform 0.8s ease;
 }
 
@@ -377,7 +374,8 @@ const openHtmlAnimInNew = () => {
   color: #cbd5e1;
   background:
     linear-gradient(135deg, rgb(151 180 247 / 20%), transparent 42%),
-    linear-gradient(315deg, rgb(0 184 212 / 14%), transparent 45%), #0f172a;
+    linear-gradient(315deg, rgb(0 184 212 / 14%), transparent 45%),
+    #0f172a;
 }
 
 .play-overlay {
@@ -664,14 +662,14 @@ const openHtmlAnimInNew = () => {
   opacity: 0.8;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .course-materials-wrapper {
     min-height: 100vh;
 
     .materials-container {
       height: auto;
       min-height: 100vh;
-      padding: var(--course-mobile-top-offset, 176px) 14px
+      padding: var(--course-mobile-top-offset, 156px) 14px
         calc(24px + env(safe-area-inset-bottom));
       overflow: visible;
     }
@@ -707,10 +705,10 @@ const openHtmlAnimInNew = () => {
   }
 }
 
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .course-materials-wrapper {
     .materials-container {
-      padding: var(--course-mobile-top-offset, 176px) 10px
+      padding: var(--course-mobile-top-offset, 156px) 10px
         calc(20px + env(safe-area-inset-bottom));
     }
   }

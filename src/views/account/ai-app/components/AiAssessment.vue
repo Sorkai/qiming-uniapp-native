@@ -9,13 +9,22 @@ import {
   Promotion,
   TrendCharts,
   Refresh,
-  ChatDotRound
+  ChatDotRound,
+  Operation,
+  Clock
 } from "@element-plus/icons-vue";
 import {
+  applyAssistantAssessmentAction,
   getAssistantAssessmentCurrent,
+  listAssistantAssessmentActions,
+  listAssistantAssessmentHistory,
+  listAssistantAssessmentJobs,
   refreshAssistantAssessment,
   submitAssistantAssessmentFeedback,
-  type AssistantAssessmentCurrentResp
+  type AssistantAssessmentActionItem,
+  type AssistantAssessmentCurrentResp,
+  type AssistantAssessmentHistoryItem,
+  type AssistantAssessmentJobItem
 } from "@/api/frontend/assistant";
 
 const props = defineProps<{
@@ -26,7 +35,11 @@ const props = defineProps<{
 const loading = ref(false);
 const refreshLoading = ref(false);
 const feedbackSubmitting = ref(false);
+const actionSubmitting = ref("");
 const assessment = ref<AssistantAssessmentCurrentResp | null>(null);
+const assessmentActions = ref<AssistantAssessmentActionItem[]>([]);
+const assessmentHistory = ref<AssistantAssessmentHistoryItem[]>([]);
+const assessmentJobs = ref<AssistantAssessmentJobItem[]>([]);
 const feedbackScore = ref(5);
 const feedbackText = ref("");
 
@@ -45,10 +58,29 @@ const weakPoints = computed(() => assessment.value?.weak_points || []);
 const timeline = computed(() => assessment.value?.timeline || []);
 const suggestions = computed(() => assessment.value?.suggestions || []);
 const resourceUsage = computed(() => assessment.value?.resource_usage || {});
-const feedbackSummary = computed(
-  () => assessment.value?.feedback_summary || {}
+const feedbackSummary = computed(() => assessment.value?.feedback_summary || {});
+const evidence = computed(() => assessment.value?.evidence || []);
+const recommendedActions = computed(
+  () => assessmentActions.value.length
+    ? assessmentActions.value
+    : (assessment.value?.recommended_actions || []).map((item, index) => ({
+        action_id: `current_${index}`,
+        assessment_id: "",
+        action: item.action,
+        reason: item.reason,
+        priority: item.priority,
+        target_type: item.target_type,
+        target_id: item.target_id,
+        status: "pending",
+        auto_triggered: item.auto_triggered
+      }))
 );
 const formatDuration = (value?: number) => {
+  if (resourceUsage.value.dwell_seconds && !value) {
+    const minutes = Math.max(1, Math.round(resourceUsage.value.dwell_seconds / 60));
+    if (minutes < 60) return `${minutes} 分钟`;
+    return `${Math.floor(minutes / 60)} 小时 ${minutes % 60} 分钟`;
+  }
   const ms =
     value ||
     resourceUsage.value.total_dwell_ms ||
@@ -78,11 +110,20 @@ const timelineType = (type: string) => {
 const loadAssessment = async () => {
   loading.value = true;
   try {
-    const { data } = await getAssistantAssessmentCurrent({
+    const params = {
       course_id: props.courseId,
       target_student_id: props.targetStudentId
-    });
-    assessment.value = data;
+    };
+    const [currentResp, actionsResp, historyResp, jobsResp] = await Promise.all([
+      getAssistantAssessmentCurrent(params),
+      listAssistantAssessmentActions(params),
+      listAssistantAssessmentHistory(params),
+      listAssistantAssessmentJobs(params)
+    ]);
+    assessment.value = currentResp.data;
+    assessmentActions.value = actionsResp.data.list || [];
+    assessmentHistory.value = historyResp.data.list || [];
+    assessmentJobs.value = jobsResp.data.list || [];
   } catch (error: any) {
     console.error("[AiAssessment] 学习评估加载失败:", error);
     ElMessage.error(error?.message || "学习评估加载失败");
@@ -97,9 +138,14 @@ const handleRefreshAssessment = async () => {
     const { data } = await refreshAssistantAssessment({
       course_id: props.courseId,
       target_student_id: props.targetStudentId,
-      trigger: "frontend_manual_refresh"
+      reason: "frontend_manual_refresh",
+      mode: "sync"
     });
-    ElMessage.success(data.message || "评估刷新已提交");
+    if (data.job_id) {
+      ElMessage.success(data.message || `评估刷新已提交：${data.job_id}`);
+    } else {
+      ElMessage.success(data.message || "评估刷新已提交");
+    }
     await loadAssessment();
   } catch (error: any) {
     console.error("[AiAssessment] 学习评估刷新失败:", error);
@@ -115,11 +161,12 @@ const handleSubmitFeedback = async () => {
     const { data } = await submitAssistantAssessmentFeedback({
       course_id: props.courseId,
       target_student_id: props.targetStudentId,
-      score: feedbackScore.value,
-      feedback_text: feedbackText.value.trim(),
+      target_type: "assessment",
+      rating: feedbackScore.value,
+      content: feedbackText.value.trim(),
       metadata: { ui_entry: "ai_assessment_panel" }
     });
-    ElMessage.success(data.message || "评估反馈已提交");
+    ElMessage.success(data.message || "评估反馈已提交，已入队刷新评估");
     feedbackText.value = "";
     await loadAssessment();
   } catch (error: any) {
@@ -127,6 +174,37 @@ const handleSubmitFeedback = async () => {
     ElMessage.error(error?.message || "评估反馈提交失败");
   } finally {
     feedbackSubmitting.value = false;
+  }
+};
+
+const actionType = (priority?: string) => {
+  if (priority === "high") return "danger";
+  if (priority === "medium") return "warning";
+  return "info";
+};
+
+const jobType = (status?: string) => {
+  if (status === "completed") return "success";
+  if (status === "failed") return "danger";
+  if (status === "running" || status === "processing") return "warning";
+  return "info";
+};
+
+const handleApplyAction = async (action: AssistantAssessmentActionItem) => {
+  if (action.action_id.startsWith("current_")) {
+    ElMessage.info("该动作来自当前快照，请刷新动作列表后再应用");
+    return;
+  }
+  actionSubmitting.value = action.action_id;
+  try {
+    const { data } = await applyAssistantAssessmentAction(action.action_id);
+    ElMessage.success(data.message || "评估动作已应用");
+    await loadAssessment();
+  } catch (error: any) {
+    console.error("[AiAssessment] 应用评估动作失败:", error);
+    ElMessage.error(error?.message || "应用评估动作失败");
+  } finally {
+    actionSubmitting.value = "";
   }
 };
 
@@ -164,6 +242,22 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
         <el-tag v-if="assessment?.message" type="info" effect="plain" round>
           {{ assessment.message }}
         </el-tag>
+        <el-tag
+          v-if="assessment?.confidence"
+          type="success"
+          effect="plain"
+          round
+        >
+          置信度 {{ percentLabel(assessment.confidence) }}
+        </el-tag>
+        <el-tag
+          v-if="assessment?.need_replan"
+          type="warning"
+          effect="plain"
+          round
+        >
+          建议重规划
+        </el-tag>
         <el-button
           type="primary"
           plain
@@ -174,6 +268,90 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
         >
           刷新评估
         </el-button>
+      </div>
+    </div>
+
+    <div
+      v-if="evidence.length || recommendedActions.length"
+      class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"
+    >
+      <div
+        class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+      >
+        <h4
+          class="font-bold text-text_color_primary flex items-center gap-2 mb-5 text-sm uppercase"
+        >
+          <el-icon class="text-primary"><Operation /></el-icon>
+          评估证据链
+        </h4>
+        <div v-if="evidence.length" class="space-y-3">
+          <div
+            v-for="item in evidence"
+            :key="`${item.source}-${item.summary}`"
+            class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3 text-xs"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-text_color_primary">{{ item.source }}</span>
+              <el-tag v-if="item.confidence" size="small" effect="plain">
+                {{ percentLabel(item.confidence) }}
+              </el-tag>
+            </div>
+            <p class="mt-2 text-text_color_regular leading-relaxed">
+              {{ item.summary }}
+            </p>
+          </div>
+        </div>
+        <el-empty v-else description="暂无评估证据" :image-size="90" />
+      </div>
+
+      <div
+        class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+      >
+        <h4
+          class="font-bold text-text_color_primary flex items-center gap-2 mb-5 text-sm uppercase"
+        >
+          <el-icon class="text-primary"><Promotion /></el-icon>
+          待处理优化动作
+        </h4>
+        <div v-if="recommendedActions.length" class="space-y-3">
+          <div
+            v-for="action in recommendedActions"
+            :key="action.action_id"
+            class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3 text-xs"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-text_color_primary">
+                  {{ action.action }}
+                </span>
+                <el-tag
+                  size="small"
+                  effect="plain"
+                  :type="actionType(action.priority)"
+                >
+                  {{ action.priority || "normal" }}
+                </el-tag>
+              </div>
+              <el-tag size="small" effect="plain">{{ action.status }}</el-tag>
+            </div>
+            <p class="mt-2 text-text_color_regular leading-relaxed">
+              {{ action.reason }}
+            </p>
+            <div class="mt-3 text-right">
+              <el-button
+                size="small"
+                type="primary"
+                plain
+                :loading="actionSubmitting === action.action_id"
+                :disabled="action.action_id.startsWith('current_')"
+                @click="handleApplyAction(action)"
+              >
+                应用动作
+              </el-button>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无待处理动作" :image-size="90" />
       </div>
     </div>
 
@@ -305,16 +483,13 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
               {{
                 scoreLabel(
                   resourceUsage.average_resource_score ||
-                    resourceUsage.average_feedback_score
+                    resourceUsage.average_feedback_score ||
+                    resourceUsage.average_feedback
                 )
               }}
             </div>
             <div class="mt-1 text-xs text-text_color_regular">
-              {{
-                resourceUsage.resource_feedback_count ||
-                resourceUsage.feedback_count ||
-                0
-              }}
+              {{ resourceUsage.resource_feedback_count || resourceUsage.feedback_count || 0 }}
               条反馈
             </div>
           </div>
@@ -340,20 +515,15 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
           <div class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3">
             <div class="text-xs text-text_color_regular">平均评分</div>
             <div class="mt-2 text-xl font-black text-text_color_primary">
-              {{
-                scoreLabel(
-                  feedbackSummary.average_score || feedbackSummary.avg_score
-                )
-              }}
+              {{ scoreLabel(feedbackSummary.average_score || feedbackSummary.avg_score) }}
             </div>
           </div>
           <div class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3">
             <div class="text-xs text-text_color_regular">最近反馈</div>
-            <div
-              class="mt-2 text-xs font-medium text-text_color_primary line-clamp-2"
-            >
+            <div class="mt-2 text-xs font-medium text-text_color_primary line-clamp-2">
               {{
                 feedbackSummary.latest_feedback_at ||
+                feedbackSummary.last_feedback_at ||
                 feedbackSummary.latest_at ||
                 "暂无"
               }}
@@ -362,19 +532,21 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
         </div>
         <p
           v-if="
-            feedbackSummary.latest_feedback || feedbackSummary.latest_content
+            feedbackSummary.latest_feedback ||
+            feedbackSummary.latest_content ||
+            feedbackSummary.latest_comment
           "
           class="mb-4 rounded-lg bg-primary/5 px-3 py-2 text-xs text-text_color_regular leading-relaxed"
         >
           {{
-            feedbackSummary.latest_feedback || feedbackSummary.latest_content
+            feedbackSummary.latest_feedback ||
+            feedbackSummary.latest_content ||
+            feedbackSummary.latest_comment
           }}
         </p>
         <div class="flex items-center gap-3">
           <el-rate v-model="feedbackScore" />
-          <span class="text-xs text-text_color_regular"
-            >{{ feedbackScore }} / 5</span
-          >
+          <span class="text-xs text-text_color_regular">{{ feedbackScore }} / 5</span>
         </div>
         <el-input
           v-model="feedbackText"
@@ -394,6 +566,78 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
             提交评估反馈
           </el-button>
         </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div
+        class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+      >
+        <h4
+          class="font-bold text-text_color_primary flex items-center gap-2 mb-5 text-sm uppercase"
+        >
+          <el-icon class="text-primary"><Clock /></el-icon>
+          评估历史
+        </h4>
+        <el-timeline v-if="assessmentHistory.length">
+          <el-timeline-item
+            v-for="item in assessmentHistory"
+            :key="item.assessment_id"
+            :timestamp="item.updated_at || item.created_at"
+            hollow
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-text_color_primary">
+                v{{ item.assessment_version }} · {{ item.overall_level }}
+              </span>
+              <el-tag v-if="item.need_replan" size="small" type="warning" effect="plain">
+                需重规划
+              </el-tag>
+              <el-tag v-if="item.auto_action_status" size="small" effect="plain">
+                {{ item.auto_action_status }}
+              </el-tag>
+            </div>
+            <p class="mt-1 text-xs text-text_color_regular leading-relaxed">
+              {{ item.summary || `预测分 ${item.predicted_score}` }}
+            </p>
+          </el-timeline-item>
+        </el-timeline>
+        <el-empty v-else description="暂无评估历史" :image-size="90" />
+      </div>
+
+      <div
+        class="bg-bg_color p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+      >
+        <h4
+          class="font-bold text-text_color_primary flex items-center gap-2 mb-5 text-sm uppercase"
+        >
+          <el-icon class="text-primary"><Refresh /></el-icon>
+          评估队列任务
+        </h4>
+        <div v-if="assessmentJobs.length" class="space-y-3">
+          <div
+            v-for="job in assessmentJobs"
+            :key="job.job_id"
+            class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3 text-xs"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-text_color_primary">
+                {{ job.job_type }} · {{ job.trigger_source || "manual" }}
+              </span>
+              <el-tag size="small" :type="jobType(job.status)" effect="plain">
+                {{ job.status }}
+              </el-tag>
+            </div>
+            <div class="mt-2 text-text_color_regular">
+              尝试 {{ job.attempt_count }}/{{ job.max_attempts }}
+              <span v-if="job.assessment_id"> · {{ job.assessment_id }}</span>
+            </div>
+            <p v-if="job.error_message" class="mt-1 text-red-500">
+              {{ job.error_message }}
+            </p>
+          </div>
+        </div>
+        <el-empty v-else description="暂无评估队列任务" :image-size="90" />
       </div>
     </div>
 
@@ -453,11 +697,7 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
         <el-empty v-else description="暂无提升建议" :image-size="100" />
 
         <div class="mt-8 flex items-center gap-3 relative z-10">
-          <el-button
-            type="primary"
-            size="large"
-            class="shadow-lg shadow-primary/20"
-          >
+          <el-button type="primary" size="large" class="shadow-lg shadow-primary/20">
             <el-icon class="mr-2"><Reading /></el-icon>查看学习路径
           </el-button>
         </div>

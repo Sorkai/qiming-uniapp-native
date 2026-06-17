@@ -791,7 +791,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 1400px) {
+@media (width <= 1400px) {
   .result-grid,
   .triple-grid,
   .dynamic-grid {
@@ -799,7 +799,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 960px) {
+@media (width <= 960px) {
   .submit-row {
     justify-content: stretch;
   }

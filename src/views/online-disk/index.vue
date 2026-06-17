@@ -477,7 +477,7 @@ const handleDelete = row => {
   padding: 5px 12px;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .main {
     padding: 16px;
 
@@ -514,7 +514,7 @@ const handleDelete = row => {
   }
 }
 
-@media (max-width: 420px) {
+@media (width <= 420px) {
   .main {
     .mobile-file-card__actions {
       grid-template-columns: 1fr;

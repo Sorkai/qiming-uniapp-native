@@ -1,132 +1,77 @@
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync
-} from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
 const distDir = join(root, "dist");
 const verifyFile = "hyWOiOCR1C.txt";
-const upstreamOrigin = "https://aiedu.intelledu.cn";
 
-async function fetchBuffer(pathname) {
-  const url = `${upstreamOrigin}/${pathname.replace(/^\/+/, "")}`;
-  const response = await fetch(url, {
-    headers: {
-      "cache-control": "no-cache"
-    }
+function run(command, args, env = {}) {
+  const result = spawnSync(command, args, {
+    cwd: root,
+    env: {
+      ...process.env,
+      ...env,
+      NODE_OPTIONS: process.env.NODE_OPTIONS || "--max-old-space-size=8192"
+    },
+    stdio: "inherit"
   });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+
+  if (result.status !== 0) {
+    throw new Error(`${command} ${args.join(" ")} failed with ${result.status}`);
   }
-  return Buffer.from(await response.arrayBuffer());
 }
 
-async function fetchText(pathname) {
-  return (await fetchBuffer(pathname)).toString("utf8");
-}
-
-function collectHtmlAssets(html) {
-  const assets = new Set();
-  const pattern = /(?:src|href)="\/(static\/[^"]+)"/g;
-  for (const match of html.matchAll(pattern)) {
-    assets.add(match[1]);
+function assertFile(pathname, message = `${pathname} was not generated`) {
+  if (!existsSync(join(distDir, pathname))) {
+    throw new Error(message);
   }
-  return assets;
 }
 
-function collectChunkAssets(js) {
-  const assets = new Set();
-  const pattern = /["'](static\/(?:js|css)\/[^"']+\.(?:js|css))["']/g;
-  for (const match of js.matchAll(pattern)) {
-    assets.add(match[1]);
-  }
-  return assets;
-}
-
-function writeAsset(pathname, content) {
-  const target = join(distDir, pathname);
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, content);
-}
-
-async function mirrorAssets(initialAssets) {
-  const pending = [...initialAssets];
-  const mirrored = new Set();
-
-  while (pending.length > 0) {
-    const asset = pending.shift();
-    if (!asset || mirrored.has(asset)) continue;
-    mirrored.add(asset);
-
-    const content = await fetchBuffer(asset);
-    writeAsset(asset, content);
-
-    if (asset.endsWith(".js")) {
-      const nestedAssets = collectChunkAssets(content.toString("utf8"));
-      for (const nested of nestedAssets) {
-        if (!mirrored.has(nested)) pending.push(nested);
-      }
-    }
-  }
-
-  return mirrored;
-}
-
-function copyVerifyFile() {
-  const source = join(root, "public", verifyFile);
-  const target = join(distDir, verifyFile);
-  if (!existsSync(source)) return;
-  rmSync(target, { force: true });
-  copyFileSync(source, target);
-}
-
-function assertOutput(assetCount) {
+function assertOutput() {
   const indexFile = join(distDir, "index.html");
   const html = readFileSync(indexFile, "utf8");
+
   if (html.length < 1024) {
     throw new Error(`dist/index.html is too small (${html.length} bytes)`);
   }
-  if (html.includes(`${upstreamOrigin}/static/`)) {
-    throw new Error("dist/index.html still points to cross-origin static assets");
-  }
-  if (!html.includes("/static/js/")) {
+  if (!html.includes('/static/js/')) {
     throw new Error("dist/index.html does not reference a local JS entry");
   }
-  if (assetCount < 2) {
-    throw new Error(`mirrored asset count looks too small (${assetCount})`);
+  if (html.includes("https://aiedu.intelledu.cn/static/")) {
+    throw new Error("dist/index.html still points to the old production static origin");
   }
-  if (!existsSync(join(distDir, verifyFile))) {
-    throw new Error(`dist/${verifyFile} was not generated`);
+
+  const staticEntries = [...html.matchAll(/\/(static\/(?:js|css)\/[^\"']+)/g)].map(
+    match => match[1]
+  );
+  for (const entry of staticEntries) {
+    assertFile(entry, `HTML references missing asset: ${entry}`);
   }
+
+  assertFile(verifyFile, `dist/${verifyFile} was not generated`);
+  assertFile("logo.svg");
+  assertFile("manifest.webmanifest");
+  assertFile("icons/app-192.png");
+  assertFile("icons/app-512.png");
+  assertFile("platform-config.json");
 }
 
 rmSync(distDir, { recursive: true, force: true });
-mkdirSync(distDir, { recursive: true });
+run("pnpm", ["exec", "vite", "build", "--mode", "wechat-h5"]);
+assertOutput();
 
-const html = await fetchText("/");
-const initialAssets = collectHtmlAssets(html);
-const mirrored = await mirrorAssets(initialAssets);
-
-writeFileSync(join(distDir, "index.html"), html);
 writeFileSync(
   join(distDir, "version.json"),
   `${JSON.stringify(
     {
-      mode: "wechat-h5-static-mirror",
-      upstreamOrigin,
-      mirroredAssets: mirrored.size,
+      mode: "wechat-h5-source-build",
+      source: "qiming-uniapp-native/wechat-miniprogram",
       builtAt: new Date().toISOString()
     },
     null,
     2
   )}\n`
 );
-copyVerifyFile();
-assertOutput(mirrored.size);
 
-console.log(`[edgeone] mirrored ${mirrored.size} static assets from ${upstreamOrigin}`);
+console.log("[edgeone] built WeChat H5 from current source branch");

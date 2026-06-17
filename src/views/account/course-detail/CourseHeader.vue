@@ -272,7 +272,11 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 .header-date {
   font-family:
-    "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    "SF Pro Display",
+    "PingFang SC",
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -297,7 +301,11 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 .header-time {
   font-family:
-    "SF Mono", "SFMono-Regular", "JetBrains Mono", "Menlo", monospace;
+    "SF Mono",
+    "SFMono-Regular",
+    "JetBrains Mono",
+    "Menlo",
+    monospace;
   font-size: 12px;
   font-weight: 700;
   color: rgb(151 180 247 / 92%);
@@ -523,9 +531,9 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .layout-header {
-    top: calc(12px + var(--pure-safe-area-top, 0px));
+    top: 12px;
     right: 12px;
     left: 12px;
     height: 64px;
@@ -595,7 +603,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .layout-header {
     height: 60px;
     padding: 0 12px;
@@ -667,7 +675,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   }
 }
 
-@media (max-width: 379px) {
+@media (width <= 379px) {
   .layout-header {
     right: 10px;
     left: 10px;

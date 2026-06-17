@@ -5,12 +5,7 @@ import { useDark } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
 import { Search } from "@element-plus/icons-vue";
-import {
-  getStudentExamList,
-  getStudentPaperList,
-  type StudentPaperItem,
-  type StudentPaperStatistics
-} from "@/api/examPaper";
+import { getStudentPaperList, type StudentPaperItem } from "@/api/examPaper";
 import WaitingToCompleteIcon from "@/assets/papercentreicons/waitingtocomplete.svg?component";
 import AlreadyCompletedIcon from "@/assets/papercentreicons/alreadycompleted.svg?component";
 import AlreadyDeadlineIcon from "@/assets/papercentreicons/alreadydeadline.svg?component";
@@ -98,184 +93,6 @@ const mobileTabOptions = computed(() => [
 // 直接使用后端返回的数据，不需要前端再次筛选
 const filteredPapers = computed(() => papers.value);
 
-type StudentPaperStatus = StudentPaperItem["status"];
-
-const paperStatuses: StudentPaperStatus[] = [
-  "available",
-  "submitted",
-  "graded",
-  "completed",
-  "expired",
-  "retake"
-];
-
-const createEmptyStatistics = (): StudentPaperStatistics => ({
-  available: 0,
-  submitted: 0,
-  graded: 0,
-  completed: 0,
-  expired: 0,
-  retake: 0,
-  avgScore: 0
-});
-
-const isSuccessResponse = (res: { code?: unknown; success?: unknown }) =>
-  res?.code === 0 ||
-  res?.code === 200 ||
-  res?.code === "0" ||
-  res?.code === "200" ||
-  res?.success === true;
-
-const toFiniteNumber = (value: unknown, fallback = 0) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const readPageList = (data: any) => {
-  const list =
-    data?.list ?? data?.records ?? data?.rows ?? data?.data?.list ?? [];
-  return Array.isArray(list) ? list : [];
-};
-
-const readPageTotal = (data: any, fallback: number) =>
-  toFiniteNumber(
-    data?.total ?? data?.totalCount ?? data?.count ?? data?.pagination?.total,
-    fallback
-  );
-
-const resolvePaperStatus = (item: any): StudentPaperStatus => {
-  const status = item?.status;
-  if (
-    typeof status === "string" &&
-    paperStatuses.includes(status as StudentPaperStatus)
-  ) {
-    return status as StudentPaperStatus;
-  }
-
-  const score = item?.score ?? item?.finalScore ?? item?.studentScore;
-  if (item?.allowRetake || toFiniteNumber(item?.remainingRetakeCount) > 0) {
-    return "retake";
-  }
-  if (item?.submitted === true) {
-    return score === null || score === undefined ? "submitted" : "completed";
-  }
-
-  const numericStatus = Number(status);
-  if (numericStatus === 0 || numericStatus === 1) return "available";
-  if (numericStatus === 2) return "expired";
-  return "available";
-};
-
-const normalizeStudentPaper = (item: any): StudentPaperItem => {
-  const score = item?.score ?? item?.finalScore ?? item?.studentScore;
-  const submissionId = item?.submissionId ?? item?.submitId;
-
-  return {
-    id: toFiniteNumber(item?.id ?? item?.paperId ?? item?.examId),
-    title: String(item?.title ?? item?.paperTitle ?? item?.examName ?? ""),
-    description: item?.description ?? item?.paperDescription ?? item?.remark,
-    courseId: toFiniteNumber(item?.courseId),
-    courseName: String(item?.courseName ?? item?.course?.name ?? ""),
-    timeLimit: toFiniteNumber(
-      item?.timeLimit ?? item?.duration ?? item?.limitMinutes
-    ),
-    totalPoints: toFiniteNumber(
-      item?.totalPoints ?? item?.totalScore ?? item?.scoreTotal
-    ),
-    totalQuestions: toFiniteNumber(
-      item?.totalQuestions ?? item?.questionCount ?? item?.questionNum
-    ),
-    startTime: String(
-      item?.startTime ?? item?.availableFrom ?? item?.beginTime ?? ""
-    ),
-    endTime: String(item?.endTime ?? item?.availableTo ?? item?.deadline ?? ""),
-    status: resolvePaperStatus(item),
-    submissionId:
-      submissionId === null || submissionId === undefined
-        ? null
-        : toFiniteNumber(submissionId),
-    score:
-      score === null || score === undefined ? null : toFiniteNumber(score),
-    allowRetake: Boolean(item?.allowRetake),
-    remainingRetakeCount: toFiniteNumber(item?.remainingRetakeCount),
-    retakeStartTime: item?.retakeStartTime,
-    retakeEndTime: item?.retakeEndTime
-  };
-};
-
-const normalizeStatistics = (
-  value: Partial<StudentPaperStatistics> | undefined,
-  allPapers: StudentPaperItem[]
-): StudentPaperStatistics => {
-  const computedStatistics = createEmptyStatistics();
-  allPapers.forEach(item => {
-    computedStatistics[item.status] += 1;
-  });
-
-  const scoredPapers = allPapers.filter(item => typeof item.score === "number");
-  computedStatistics.avgScore = scoredPapers.length
-    ? Math.round(
-        scoredPapers.reduce((sum, item) => sum + Number(item.score), 0) /
-          scoredPapers.length
-      )
-    : 0;
-
-  if (!value) return computedStatistics;
-
-  return {
-    available: toFiniteNumber(value.available, computedStatistics.available),
-    submitted: toFiniteNumber(value.submitted, computedStatistics.submitted),
-    graded: toFiniteNumber(value.graded, computedStatistics.graded),
-    completed: toFiniteNumber(value.completed, computedStatistics.completed),
-    expired: toFiniteNumber(value.expired, computedStatistics.expired),
-    retake: toFiniteNumber(value.retake, computedStatistics.retake),
-    avgScore: toFiniteNumber(value.avgScore, computedStatistics.avgScore)
-  };
-};
-
-const applyPaperPayload = (
-  data: any,
-  options: { clientFilterByTab?: boolean } = {}
-) => {
-  const allPapers = readPageList(data)
-    .map(normalizeStudentPaper)
-    .filter(item => item.id > 0);
-  const visiblePapers = options.clientFilterByTab
-    ? allPapers.filter(item => item.status === activeTab.value)
-    : allPapers;
-
-  papers.value = visiblePapers;
-  total.value = options.clientFilterByTab
-    ? visiblePapers.length
-    : readPageTotal(data, visiblePapers.length);
-  statistics.value = normalizeStatistics(data?.statistics, allPapers);
-};
-
-const buildLegacyExamParams = () => {
-  const params: any = {
-    pageNum: currentPage.value,
-    pageSize: pageSize.value
-  };
-
-  if (selectedCourse.value && selectedCourse.value !== "0") {
-    params.courseId = Number(selectedCourse.value);
-  }
-
-  return params;
-};
-
-const fetchPapersFromLegacyApi = async () => {
-  try {
-    const legacyRes = await getStudentExamList(buildLegacyExamParams());
-    if (!isSuccessResponse(legacyRes)) return false;
-    applyPaperPayload(legacyRes.data, { clientFilterByTab: true });
-    return true;
-  } catch (legacyError) {
-    console.warn("Student legacy exam list API failed:", legacyError);
-    return false;
-  }
-};
-
 // 获取试卷列表
 const fetchPapers = async () => {
   loading.value = true;
@@ -298,19 +115,23 @@ const fetchPapers = async () => {
     const res = await getStudentPaperList(params);
     console.log("获取试卷列表响应:", res);
 
-    if (isSuccessResponse(res)) {
-      applyPaperPayload(res.data);
-      return;
-    } else if (await fetchPapersFromLegacyApi()) {
-      return;
+    if (res.code === 0) {
+      papers.value = res.data.list || [];
+      total.value = res.data.total || 0;
+      statistics.value = res.data.statistics || {
+        available: 0,
+        submitted: 0,
+        graded: 0,
+        completed: 0,
+        expired: 0,
+        retake: 0,
+        avgScore: 0
+      };
     } else {
       ElMessage.error(res.msg || "获取试卷列表失败");
     }
   } catch (error) {
     console.error("获取试卷列表失败:", error);
-    if (await fetchPapersFromLegacyApi()) {
-      return;
-    }
     ElMessage.error("获取试卷列表失败");
   } finally {
     loading.value = false;
@@ -1307,7 +1128,7 @@ $info-color: #6b7280;
   }
 }
 
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .student-exam-center {
     padding: 0 14px 20px;
 
@@ -1348,7 +1169,7 @@ $info-color: #6b7280;
 
       .header-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 10px;
 
         .stat-item {
@@ -1372,7 +1193,7 @@ $info-color: #6b7280;
     }
 
     .stats-section {
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
       margin-bottom: 18px;
     }
@@ -1543,12 +1364,20 @@ $info-color: #6b7280;
   }
 }
 
-@media (max-width: 360px) {
+@media (width <= 479px) {
   .student-exam-center {
     padding: 0 10px 18px;
 
     .page-header {
       padding: 18px 16px;
+
+      .header-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stats-section {
+      grid-template-columns: 1fr;
     }
 
     .filter-toolbar {

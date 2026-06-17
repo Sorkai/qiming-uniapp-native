@@ -1476,13 +1476,13 @@ const filterByTag = (tagName: string) => {
 
 <style scoped>
 /* 响应式 */
-@media (max-width: 1200px) {
+@media (width <= 1200px) {
   .board-right-panel {
     width: 300px;
   }
 }
 
-@media (max-width: 992px) {
+@media (width <= 992px) {
   .board-main-content {
     flex-direction: column-reverse;
   }
@@ -1514,11 +1514,11 @@ const filterByTag = (tagName: string) => {
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .message-board-container {
     height: auto;
     min-height: 100vh;
-    padding: var(--course-mobile-top-offset, 176px) 14px
+    padding: var(--course-mobile-top-offset, 156px) 14px
       calc(24px + env(safe-area-inset-bottom));
     overflow: visible;
   }
@@ -1810,9 +1810,9 @@ const filterByTag = (tagName: string) => {
   }
 }
 
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .message-board-container {
-    padding: var(--course-mobile-top-offset, 176px) 10px
+    padding: var(--course-mobile-top-offset, 156px) 10px
       calc(20px + env(safe-area-inset-bottom));
   }
 
@@ -2007,28 +2007,6 @@ const filterByTag = (tagName: string) => {
   padding: 80px 32px 24px;
   overflow-x: hidden;
   overflow-y: auto;
-}
-
-@media (max-width: 768px) {
-  .message-board-wrapper {
-    min-height: 100vh;
-    overflow: visible;
-  }
-
-  .message-board-container {
-    height: auto;
-    min-height: 100vh;
-    padding: var(--course-mobile-top-offset, 176px) 14px
-      calc(24px + env(safe-area-inset-bottom));
-    overflow: visible;
-  }
-}
-
-@media (max-width: 479px) {
-  .message-board-container {
-    padding: var(--course-mobile-top-offset, 176px) 10px
-      calc(20px + env(safe-area-inset-bottom));
-  }
 }
 
 .message-board-container :deep(.el-input__wrapper.is-focus),

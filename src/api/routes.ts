@@ -6,19 +6,13 @@ type Result = {
 };
 
 export const getAsyncRoutes = () => {
-  if (import.meta.env.VITE_MOCK_SCOPE !== "all") {
-    return Promise.resolve({
-      success: true,
-      data: []
-    } satisfies Result);
-  }
-
+  // 不走代理，保持原来的路径，确保mock数据可用
   return http.request<Result>(
     "get",
     "/get-async-routes",
     {},
     {
-      baseURL: ""
+      baseURL: "" // 使用空baseURL，不会添加/api前缀
     }
   );
 };

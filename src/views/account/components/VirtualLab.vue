@@ -99,7 +99,7 @@
       v-model="labDialogVisible"
       :title="currentLab?.title"
       width="90%"
-      class="student-lab-dialog lab-dialog"
+      class="lab-dialog"
       :before-close="handleDialogClose"
     >
       <div class="lab-iframe-container">
@@ -310,13 +310,9 @@ const handleDialogClose = () => {
     .header-left {
       h2 {
         margin: 0 0 8px;
-        overflow: visible;
         font-size: 24px;
         font-weight: 700;
-        line-height: 1.25;
         color: #1a2a4a;
-        white-space: normal;
-        word-break: keep-all;
       }
 
       p {
@@ -540,177 +536,6 @@ const handleDialogClose = () => {
     .lab-iframe {
       width: 100%;
       height: 100%;
-    }
-  }
-}
-
-@media (max-width: 767px) {
-  .virtual-lab {
-    .lab-header {
-      padding: 18px;
-      margin-bottom: 18px;
-      border-radius: 20px;
-
-      .header-content {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
-
-      .header-left {
-        h2 {
-          margin-bottom: 8px;
-          font-size: clamp(20px, 5.6vw, 24px);
-          line-height: 1.28;
-        }
-
-        p {
-          font-size: 13px;
-          line-height: 1.55;
-        }
-      }
-
-      .header-stats {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-
-        .stat-item {
-          min-width: 0;
-          padding: 10px 6px;
-          background: rgb(255 255 255 / 32%);
-          border: 1px solid rgb(255 255 255 / 28%);
-          border-radius: 14px;
-
-          .stat-value {
-            font-size: 22px;
-            line-height: 1.1;
-          }
-
-          .stat-label {
-            display: block;
-            margin-top: 4px;
-            font-size: 11px;
-            line-height: 1.2;
-          }
-        }
-      }
-    }
-
-    .category-tabs {
-      margin-bottom: 18px;
-      overflow: hidden;
-
-      :deep(.el-radio-group) {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding-bottom: 2px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-
-        &::-webkit-scrollbar {
-          display: none;
-        }
-
-        .el-radio-button {
-          flex: 0 0 auto;
-
-          .el-radio-button__inner {
-            padding: 9px 18px;
-            font-size: 13px;
-            border-radius: 18px !important;
-          }
-        }
-      }
-    }
-
-    .lab-grid {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-
-    .lab-card {
-      border-radius: 18px;
-
-      &:hover {
-        transform: none;
-      }
-
-      .card-preview {
-        height: 118px;
-
-        .preview-icon {
-          font-size: 38px;
-        }
-      }
-
-      .card-content {
-        padding: 14px;
-
-        p {
-          height: auto;
-          min-height: 0;
-        }
-      }
-
-      .card-actions {
-        padding: 0 14px 14px;
-      }
-    }
-  }
-
-  .lab-dialog {
-    :deep(.el-dialog) {
-      display: flex;
-      flex-direction: column;
-      width: calc(100vw - 24px) !important;
-      max-height: calc(100vh - 24px);
-      max-height: calc(100dvh - 24px);
-      margin: 12px auto !important;
-      border-radius: 20px;
-    }
-
-    :deep(.el-dialog__body) {
-      flex: 1 1 auto;
-      min-height: 0;
-      padding: 0 !important;
-    }
-
-    .lab-iframe-container {
-      height: min(calc(100vh - 132px), 560px);
-      height: min(calc(100dvh - 132px), 560px);
-    }
-  }
-}
-</style>
-
-<style lang="scss">
-@media (max-width: 768px) {
-  .student-lab-dialog {
-    width: calc(100vw - 24px) !important;
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 24px);
-    max-height: calc(100dvh - 24px);
-    margin: 12px auto !important;
-    overflow: hidden;
-    border-radius: 20px;
-
-    .el-dialog__header {
-      padding: 16px 18px 12px;
-    }
-
-    .el-dialog__body {
-      flex: 1 1 auto;
-      min-height: 0;
-      padding: 0 !important;
-    }
-
-    .lab-iframe-container {
-      height: min(calc(100vh - 132px), 560px);
-      height: min(calc(100dvh - 132px), 560px);
     }
   }
 }

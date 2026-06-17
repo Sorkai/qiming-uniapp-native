@@ -108,73 +108,6 @@ export interface CourseGradesClassComparisonResult {
   classAverages: number[];
 }
 
-const apiUrl = (path: string, params?: Record<string, unknown>) => {
-  const base = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
-  const query = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === "") return;
-    query.append(key, String(value));
-  });
-
-  const queryString = query.toString();
-  return `${base}${path.startsWith("/") ? path : `/${path}`}${
-    queryString ? `?${queryString}` : ""
-  }`;
-};
-
-async function requestWithNativeFetchFallback<T>(
-  path: string,
-  params: Record<string, unknown> | undefined,
-  request: () => Promise<ApiResponse<T>>
-) {
-  try {
-    return await request();
-  } catch (error) {
-    const isNativePreview =
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("qiming-native-webview");
-    if (!isNativePreview) throw error;
-
-    const tokenInfo = (() => {
-      try {
-        return JSON.parse(localStorage.getItem("user-info") || "{}");
-      } catch {
-        return {};
-      }
-    })();
-    const token = tokenInfo.accessToken || tokenInfo.refreshToken;
-    if (!token) throw error;
-
-    const url = apiUrl(path, params);
-    let lastFetchError: unknown = error;
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        const response = await fetch(url, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) return (await response.json()) as ApiResponse<T>;
-        lastFetchError = new Error(`Native fetch failed: ${response.status}`);
-      } catch (fetchError) {
-        lastFetchError = fetchError;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 260 * (attempt + 1)));
-    }
-
-    console.warn("[NativeFetchFallback] course request failed", {
-      url,
-      error: lastFetchError
-    });
-    throw error;
-  }
-}
-
 /**
  * 获取课程列表
  */
@@ -183,15 +116,10 @@ export const getCourseList = (params: {
   pageSize?: number;
   queryType?: number;
 }) => {
-  return requestWithNativeFetchFallback<CourseListResult>(
+  return http.request<ApiResponse<CourseListResult>>(
+    "get",
     "/edu/frontend/v1/course/list",
-    params,
-    () =>
-      http.request<ApiResponse<CourseListResult>>(
-        "get",
-        "/edu/frontend/v1/course/list",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -199,15 +127,10 @@ export const getCourseList = (params: {
  * 获取课程详情
  */
 export const getCourseDetail = (params: { courseId: number }) => {
-  return requestWithNativeFetchFallback<CourseDetailResult>(
+  return http.request<ApiResponse<CourseDetailResult>>(
+    "get",
     "/edu/frontend/v1/course/detail",
-    params,
-    () =>
-      http.request<ApiResponse<CourseDetailResult>>(
-        "get",
-        "/edu/frontend/v1/course/detail",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -229,15 +152,10 @@ export const reportCourseLesson = (data: {
  * 获取课程学习效果
  */
 export const getCourseStudyEffect = (params: { courseId: number }) => {
-  return requestWithNativeFetchFallback<CourseStudyEffectResult>(
+  return http.request<ApiResponse<CourseStudyEffectResult>>(
+    "get",
     "/edu/frontend/v1/course/study/effect",
-    params,
-    () =>
-      http.request<ApiResponse<CourseStudyEffectResult>>(
-        "get",
-        "/edu/frontend/v1/course/study/effect",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -245,15 +163,10 @@ export const getCourseStudyEffect = (params: { courseId: number }) => {
  * 获取课程成绩
  */
 export const getCourseScore = (params: { courseId: number }) => {
-  return requestWithNativeFetchFallback<CourseScoreResult>(
+  return http.request<ApiResponse<CourseScoreResult>>(
+    "get",
     "/edu/frontend/v1/course/score",
-    params,
-    () =>
-      http.request<ApiResponse<CourseScoreResult>>(
-        "get",
-        "/edu/frontend/v1/course/score",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -265,15 +178,10 @@ export const getFrontendCourseList = (params: {
   pageSize?: number;
   status?: string;
 }) => {
-  return requestWithNativeFetchFallback<CourseListResult>(
+  return http.request<ApiResponse<CourseListResult>>(
+    "get",
     "/edu/frontend/v1/course/list",
-    params,
-    () =>
-      http.request<ApiResponse<CourseListResult>>(
-        "get",
-        "/edu/frontend/v1/course/list",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -282,15 +190,10 @@ export const getFrontendCourseList = (params: {
  *包含每个作业/考试的得分、提交时间、评语等
  */
 export const getCourseGradesList = (params: { courseId: number }) => {
-  return requestWithNativeFetchFallback<CourseGradesListResult>(
+  return http.request<ApiResponse<CourseGradesListResult>>(
+    "get",
     "/edu/frontend/v1/course/grades/list",
-    params,
-    () =>
-      http.request<ApiResponse<CourseGradesListResult>>(
-        "get",
-        "/edu/frontend/v1/course/grades/list",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -299,15 +202,10 @@ export const getCourseGradesList = (params: { courseId: number }) => {
  * 包含总作业数、完成数、平均分、最高分等指标
  */
 export const getCourseGradesStatistics = (params: { courseId: number }) => {
-  return requestWithNativeFetchFallback<CourseGradesStatisticsResult>(
+  return http.request<ApiResponse<CourseGradesStatisticsResult>>(
+    "get",
     "/edu/frontend/v1/course/grades/statistics",
-    params,
-    () =>
-      http.request<ApiResponse<CourseGradesStatisticsResult>>(
-        "get",
-        "/edu/frontend/v1/course/grades/statistics",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -318,14 +216,9 @@ export const getCourseGradesStatistics = (params: { courseId: number }) => {
 export const getCourseGradesClassComparison = (params: {
   courseId: number;
 }) => {
-  return requestWithNativeFetchFallback<CourseGradesClassComparisonResult>(
+  return http.request<ApiResponse<CourseGradesClassComparisonResult>>(
+    "get",
     "/edu/frontend/v1/course/grades/class-comparison",
-    params,
-    () =>
-      http.request<ApiResponse<CourseGradesClassComparisonResult>>(
-        "get",
-        "/edu/frontend/v1/course/grades/class-comparison",
-        { params }
-      )
+    { params }
   );
 };

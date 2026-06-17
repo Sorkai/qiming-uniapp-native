@@ -728,7 +728,7 @@ import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
 import { isAdmin } from "@/utils/auth";
-import { ElMessage, ElMessageBox, ElForm } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getCourseList,
   getCourseHoursList,
@@ -746,15 +746,14 @@ import {
   createCourseChapter,
   getCourseStats
 } from "@/api/course";
+import type { CourseCreateParams, CourseUpdateParams } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
 import CourseCard from "./components/CourseCard.vue";
 import CourseStats from "./components/CourseStats.vue";
 import { Plus, Loading, Search } from "@element-plus/icons-vue";
 
 const appStore = useAppStoreHook();
-const isMobile = computed(
-  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
-);
+const isMobile = computed(() => appStore.getDevice === "mobile");
 const paginationLayout = computed(() =>
   isMobile.value
     ? "sizes, prev, pager, next"
@@ -780,7 +779,10 @@ const courseStats = reactive({
 // 统计筛选日期
 const statsDateFilter = ref<{ startDate?: string; endDate?: string }>({});
 
-const courseFormRef = ref<InstanceType<typeof ElForm>>();
+const courseFormRef = ref<{
+  validate: () => Promise<boolean>;
+  scrollToFirstError?: () => void;
+}>();
 
 // 数据定义
 const courseList = ref([]);
@@ -870,31 +872,6 @@ const courseForm = ref({
   attrList: []
 });
 
-// 表单验证规则
-const courseFormRules = {
-  title: [{ required: true, message: "请输入课程标题", trigger: "blur" }],
-  shortDesc: [{ required: true, message: "请输入课程简介", trigger: "blur" }],
-  thumb: [
-    {
-      required: true,
-      type: "number",
-      min: 1,
-      message: "请上传课程封面",
-      trigger: "change"
-    }
-  ],
-  categoryIds: [
-    {
-      required: true,
-      type: "array",
-      min: 1,
-      message: "请选择课程分类",
-      trigger: "change"
-    }
-  ],
-  endingTime: [{ required: true, message: "请选择结束时间", trigger: "change" }]
-};
-
 // 格式化时长显示
 const formatDuration = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -902,79 +879,131 @@ const formatDuration = (seconds: number) => {
   return `${minutes}分${remainingSeconds}秒`;
 };
 
-// 处理封面图片选择
-const handleThumbChange = file => {
-  // 通常这里应该上传文件到服务器，这里仅做演示，使用本地URL预览
-  courseForm.value.thumb_url = URL.createObjectURL(file.raw); // 使用thumb_url字段与API参数一致
-  // 假设上传成功后服务器返回资源ID
-  courseForm.value.thumb = 1001; // 实际项目中应该使用服务器返回的资源ID
+const toPositiveNumber = (value: unknown) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : 0;
+};
+
+const cleanHourPayload = (hour: any) => {
+  const payload: CourseCreateParams["hourList"][number] = {
+    resourceId: toPositiveNumber(hour?.resourceId),
+    duration: Number(hour?.duration || 0)
+  };
+
+  if (hour?.title) payload.title = String(hour.title).trim();
+  if (hour?.rType) payload.rType = hour.rType;
+  if (toPositiveNumber(hour?.hourId))
+    payload.hourId = toPositiveNumber(hour.hourId);
+  if (hour?.fileUrl) payload.fileUrl = hour.fileUrl;
+
+  return payload;
+};
+
+const cleanAttrPayload = (attr: any) => {
+  const payload: CourseCreateParams["attrList"][number] = {
+    resourceId: toPositiveNumber(attr?.resourceId)
+  };
+
+  if (attr?.title) payload.title = String(attr.title).trim();
+  if (attr?.rType) payload.rType = attr.rType;
+  if (toPositiveNumber(attr?.attrId))
+    payload.attrId = toPositiveNumber(attr.attrId);
+  if (attr?.fileUrl) payload.fileUrl = attr.fileUrl;
+
+  return payload;
+};
+
+const buildCreateCoursePayload = (): CourseCreateParams => {
+  const formData = courseForm.value;
+  const basePayload = {
+    title: formData.title.trim(),
+    thumb_url: formData.thumb_url,
+    shortDesc: formData.shortDesc.trim(),
+    isRequired: Number(formData.isRequired),
+    categoryIds: [...formData.categoryIds].map(Number),
+    isChapter: Number(formData.isChapter),
+    endingTime: formData.endingTime,
+    attrList: (formData.attrList || [])
+      .map(cleanAttrPayload)
+      .filter(attr => attr.resourceId > 0)
+  };
+
+  if (Number(formData.isChapter) === 1) {
+    return {
+      ...basePayload,
+      chapterList: (formData.chapterList || []).map(chapter => ({
+        ...(toPositiveNumber(chapter?.chapterId)
+          ? { chapterId: toPositiveNumber(chapter.chapterId) }
+          : {}),
+        name: String(chapter?.name || "").trim(),
+        hourList: (chapter?.hourList || []).map(cleanHourPayload)
+      }))
+    };
+  }
+
+  return {
+    ...basePayload,
+    hourList: (formData.hourList || []).map(cleanHourPayload)
+  };
+};
+
+const buildUpdateCoursePayload = (): CourseUpdateParams => {
+  const formData = courseForm.value;
+  return {
+    courseId: Number(formData.courseId),
+    title: formData.title.trim(),
+    thumbUrl: formData.thumb_url,
+    shortDesc: formData.shortDesc.trim(),
+    isRequired: Number(formData.isRequired),
+    categoryIds: [...formData.categoryIds].map(Number),
+    endingTime: formData.endingTime
+  };
 };
 
 // 提交课程表单
 const submitCourseForm = async () => {
   if (!courseFormRef.value) return;
 
+  let valid = false;
   try {
-    // 使用表单组件的验证方法
-    const valid = await courseFormRef.value.validate();
+    valid = await courseFormRef.value.validate();
+  } catch (error) {
+    console.warn("课程表单校验未通过:", error);
+    courseFormRef.value.scrollToFirstError?.();
+    ElMessage.warning("请先完善课程必填信息");
+    return;
+  }
 
-    if (valid) {
-      courseFormLoading.value = true;
+  if (!valid) {
+    courseFormRef.value.scrollToFirstError?.();
+    ElMessage.warning("请先完善课程必填信息");
+    return;
+  }
 
-      // 准备提交数据
-      const formData = { ...courseForm.value };
-      let submitData;
+  try {
+    courseFormLoading.value = true;
 
-      if (isEdit.value) {
-        // 编辑模式，移除不需要的字段
-        const {
-          thumb_url,
-          hourList,
-          chapterList,
-          attrList,
-          isChapter,
-          thumb,
-          ...updateData
-        } = formData;
-        submitData = {
-          ...updateData,
-          thumbUrl: thumb_url, // 字段名转换
-          categoryIds: [...formData.categoryIds] // 确保是普通数组而非 Proxy
-        };
+    if (isEdit.value) {
+      const res = await updateCourse(buildUpdateCoursePayload());
 
-        // 调用更新接口
-        const res = await updateCourse(submitData);
-
-        if (res && res.code === 200) {
-          ElMessage.success("课程更新成功");
-          courseFormDialogVisible.value = false;
-          fetchCourseList(); // 刷新列表
-        } else {
-          ElMessage.error("课程更新失败");
-        }
+      if (res && res.code === 200) {
+        ElMessage.success("课程更新成功");
+        courseFormDialogVisible.value = false;
+        fetchCourseList(); // 刷新列表
       } else {
-        // 创建模式
-        if (formData.isChapter === 1) {
-          // 有章节模式，移除顶层hourList
-          const { hourList, ...chapterData } = formData;
-          submitData = chapterData;
-        } else {
-          // 无章节模式，保留顶层hourList，移除chapterList
-          const { chapterList, ...hourData } = formData;
-          submitData = hourData;
-        }
-
-        // 调用创建接口
-        const res = await createCourse(submitData);
-
-        if (res && res.code === 200) {
-          ElMessage.success("课程创建成功");
-          courseFormDialogVisible.value = false;
-          fetchCourseList(); // 刷新列表
-        } else {
-          ElMessage.error("课程创建失败");
-        }
+        ElMessage.error(res?.msg || "课程更新失败");
       }
+      return;
+    }
+
+    const res = await createCourse(buildCreateCoursePayload());
+
+    if (res && res.code === 200) {
+      ElMessage.success("课程创建成功");
+      courseFormDialogVisible.value = false;
+      fetchCourseList(); // 刷新列表
+    } else {
+      ElMessage.error(res?.msg || "课程创建失败");
     }
   } catch (error) {
     console.error(isEdit.value ? "更新课程失败:" : "创建课程失败:", error);
@@ -2202,35 +2231,23 @@ onMounted(async () => {
 
 @media screen and (max-width: 768px) {
   .main {
-    padding: 6px 6px calc(var(--pure-mobile-tab-height, 58px) + 38px);
+    padding: 12px;
     margin: 0;
-  }
-
-  .search-card {
-    margin-bottom: 7px !important;
-    border-radius: 13px;
-  }
-
-  :deep(.search-card .el-card__body) {
-    padding: 8px !important;
   }
 
   .search-toolbar {
     flex-direction: column;
     align-items: stretch !important;
-    gap: 6px !important;
   }
 
   .search-form {
     width: 100%;
-    margin-bottom: 0 !important;
+    margin-bottom: 0;
   }
 
   .create-course-btn {
     width: 100%;
     margin-left: 0;
-    min-height: 30px;
-    font-size: 12px;
   }
 
   .pagination-container {
@@ -2268,20 +2285,18 @@ onMounted(async () => {
 
   :deep(.search-form .el-form-item) {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: stretch;
     width: 100%;
     margin-right: 0;
-    margin-bottom: 6px;
+    margin-bottom: 12px;
   }
 
   :deep(.search-form .el-form-item__label) {
-    flex: 0 0 64px;
-    width: 64px;
+    width: 100%;
     justify-content: flex-start;
-    padding: 0 8px 0 0;
-    font-size: 12px;
-    line-height: 30px;
+    padding: 0 0 6px;
+    line-height: 1.4;
   }
 
   :deep(.search-form .el-form-item__content) {
@@ -2296,23 +2311,12 @@ onMounted(async () => {
   :deep(.search-form__actions .el-form-item__content) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    gap: 10px;
     width: 100%;
   }
 
   :deep(.search-form__actions .el-button) {
     margin-left: 0;
-    min-height: 28px;
-    padding: 6px 8px;
-    font-size: 12px;
-  }
-
-  :deep(.search-form__actions.el-form-item) {
-    margin-bottom: 6px;
-  }
-
-  :deep(.el-row .el-col.mb-5) {
-    margin-bottom: 8px !important;
   }
 
   :deep(.course-pagination) {
@@ -2333,29 +2337,5 @@ onMounted(async () => {
   :deep(.el-dialog__body) {
     padding: 16px;
   }
-}
-</style>
-
-<style lang="scss">
-html.qiming-native-webview.ua-mobile .main {
-  padding-top: 2px;
-}
-
-html.qiming-native-webview.ua-mobile .main > .mb-6 {
-  margin-bottom: 7px !important;
-}
-
-html.qiming-native-webview.ua-mobile .search-card {
-  box-shadow: 0 8px 18px rgb(28 39 68 / 5%) !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  .search-form__actions
-  .el-form-item__content {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-html.qiming-native-webview.ua-mobile .create-course-btn {
-  min-height: 30px;
 }
 </style>

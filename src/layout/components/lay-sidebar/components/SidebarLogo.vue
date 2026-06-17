@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { useNav } from "@/layout/hooks/useNav";
 
-const { getLogo } = useNav();
-const brandTitle = "IntellEdu";
+const { title, getLogo } = useNav();
 </script>
 
 <template>
   <div class="sidebar-logo-container">
-    <router-link key="expand" :title="brandTitle" class="sidebar-logo-link" to="/">
+    <router-link key="expand" :title="title" class="sidebar-logo-link" to="/">
       <img :src="getLogo()" alt="logo" class="app-logo-img" />
-      <span class="sidebar-title">{{ brandTitle }}</span>
+      <span class="sidebar-title">{{ title }}</span>
     </router-link>
   </div>
 </template>
@@ -56,7 +55,6 @@ const brandTitle = "IntellEdu";
         color-mix(in srgb, var(--el-color-primary), #4facfe 100%) 100%
       );
       background-clip: text;
-      -webkit-background-clip: text;
       transition: all 0.3s;
       -webkit-text-fill-color: transparent;
     }

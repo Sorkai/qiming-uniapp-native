@@ -242,51 +242,6 @@ const onToggle = async (event: MouseEvent) => {
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
-
-@media screen and (max-width: 768px) {
-  .theme-toggle-container {
-    width: 48px;
-    min-width: 48px;
-    height: 40px;
-    padding: 0;
-  }
-
-  .theme-btn-premium {
-    width: 42px;
-    height: 26px;
-    padding: 4px;
-
-    &:hover {
-      transform: none;
-    }
-
-    &.is-dark {
-      background-color: rgb(30 41 59 / 94%);
-      box-shadow:
-        inset 0 1px 3px rgb(0 0 0 / 35%),
-        0 4px 12px rgb(0 0 0 / 22%);
-
-      .switch-dot {
-        transform: translateX(16px);
-      }
-    }
-
-    .icon {
-      width: 18px;
-      height: 18px;
-
-      svg {
-        width: 14px;
-        height: 14px;
-      }
-    }
-
-    .switch-dot {
-      width: 18px;
-      height: 18px;
-    }
-  }
-}
 </style>
 
 <style lang="scss">

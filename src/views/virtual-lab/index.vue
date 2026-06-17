@@ -53,7 +53,7 @@
           </el-form-item>
         </div>
 
-        <div class="lab-search-form__actions">
+        <div class="mt-4 flex gap-2">
           <el-button
             type="primary"
             :disabled="!hasSelection"
@@ -373,8 +373,7 @@ const currentAnimationData = ref<HtmlAnimationListResult | null>(null);
 const taskList = ref<HtmlAnimationTask[]>([]);
 const isTaskProcessing = (task: HtmlAnimationTask) =>
   ["pending", "submitted", "processing"].includes(task.status);
-const isTaskCompleted = (task: HtmlAnimationTask) =>
-  task.status === "completed";
+const isTaskCompleted = (task: HtmlAnimationTask) => task.status === "completed";
 const isTaskFailed = (task: HtmlAnimationTask) => task.status === "failed";
 
 const stats = computed(() => {
@@ -1067,13 +1066,15 @@ onMounted(() => {
     aspect-ratio: 16 / 9;
     overflow: hidden;
     background:
-      linear-gradient(135deg, rgb(151 180 247 / 16%), transparent 42%), #f8fafc;
+      linear-gradient(135deg, rgb(151 180 247 / 16%), transparent 42%),
+      #f8fafc;
     border: 1px solid rgb(226 232 240 / 86%);
     border-radius: 16px;
 
     html.dark & {
       background:
-        linear-gradient(135deg, rgb(96 165 250 / 18%), transparent 42%), #0f172a;
+        linear-gradient(135deg, rgb(96 165 250 / 18%), transparent 42%),
+        #0f172a;
       border-color: rgb(71 85 105 / 52%);
     }
   }
@@ -1204,7 +1205,7 @@ onMounted(() => {
   width: 100%;
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .virtual-lab {
     padding: 16px;
 
@@ -1252,7 +1253,7 @@ onMounted(() => {
   }
 }
 
-@media (min-width: 1100px) {
+@media (width >= 1100px) {
   .virtual-lab {
     .hero-panel__content {
       flex-direction: row;
@@ -1283,32 +1284,10 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .virtual-lab {
-    padding: 8px 8px
+    padding: 10px 10px
       calc(var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 24px);
-
-    .lab-panel {
-      margin-bottom: 12px;
-      border-radius: 18px;
-    }
-
-    :deep(.el-card__body) {
-      padding: 14px;
-    }
-
-    .filter-panel > :deep(.el-card__body) > .flex:first-child,
-    .task-panel > :deep(.el-card__body) > .flex:first-child {
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px !important;
-    }
-
-    .filter-panel > :deep(.el-card__body) > .flex:first-child span,
-    .task-panel > :deep(.el-card__body) > .flex:first-child span.font-bold {
-      font-size: 15px;
-      line-height: 1.35;
-    }
 
     .hero-panel__copy h2 {
       font-size: 28px;
@@ -1321,52 +1300,6 @@ onMounted(() => {
     .panel-sync-button,
     .panel-badge {
       width: 100%;
-    }
-
-    .lab-search-form {
-      margin-top: 4px;
-    }
-
-    .lab-search-form__grid {
-      gap: 10px;
-    }
-
-    .lab-search-form__actions {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 2px;
-    }
-
-    :deep(.el-button) {
-      min-height: 36px;
-      border-radius: 12px;
-      font-size: 13px;
-    }
-
-    :deep(.el-input__wrapper),
-    :deep(.el-select__wrapper) {
-      min-height: 36px;
-      border-radius: 12px;
-    }
-
-    :deep(.el-form-item__label) {
-      margin-bottom: 4px;
-      font-size: 13px;
-      line-height: 1.35;
-    }
-
-    :deep(.el-empty) {
-      padding: 18px 0 10px;
-    }
-
-    :deep(.el-empty__image) {
-      width: 96px;
-      height: 96px;
-    }
-
-    :deep(.el-empty__description) {
-      margin-top: 8px;
-      font-size: 13px;
     }
 
     .focus-actions,
@@ -1384,7 +1317,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 420px) {
+@media (width <= 420px) {
   .virtual-lab {
     .hero-panel__copy h2 {
       font-size: 24px;
@@ -1394,6 +1327,7 @@ onMounted(() => {
       font-size: 30px;
     }
 
+    .lab-search-form__actions,
     .task-card__actions {
       grid-template-columns: 1fr;
     }

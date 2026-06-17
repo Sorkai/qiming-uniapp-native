@@ -3,10 +3,6 @@ export function registerPwa() {
     return;
   }
 
-  if (window.location.protocol === "file:") {
-    return;
-  }
-
   const base = import.meta.env.BASE_URL || "/";
   const serviceWorkerUrl = `${base.replace(/\/?$/, "/")}sw.js`;
 

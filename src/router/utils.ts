@@ -29,11 +29,6 @@ const modulesRoutes = import.meta.glob("/src/views/**/*.{vue,tsx}");
 // 动态路由
 import { getAsyncRoutes } from "@/api/routes";
 
-function normalizeAsyncRouteData(res: any) {
-  const data = res?.data;
-  return Array.isArray(data) ? data : [];
-}
-
 function handRank(routeInfo: any) {
   const { name, path, parentId, meta } = routeInfo;
   return isAllEmpty(parentId)
@@ -286,7 +281,7 @@ function initRouter() {
         getAsyncRoutes()
           .then(res => {
             console.log("[Router] 获取动态路由响应:", res);
-            const data = normalizeAsyncRouteData(res);
+            const data = res?.data ?? [];
             handleAsyncRoutes(cloneDeep(data));
             storageLocal().setItem(key, data);
             resolve(router);
@@ -304,7 +299,7 @@ function initRouter() {
       getAsyncRoutes()
         .then(res => {
           console.log("[Router] 获取动态路由响应:", res);
-          const data = normalizeAsyncRouteData(res);
+          const data = res?.data ?? [];
           handleAsyncRoutes(cloneDeep(data));
           resolve(router);
         })
@@ -427,9 +422,9 @@ function addAsyncRoutes(arrRoutes: Array<RouteRecordRaw>) {
 }
 
 /** 获取路由历史模式 https://next.router.vuejs.org/zh/guide/essentials/history-mode.html */
-function getHistoryMode(routerHistory = "hash"): RouterHistory {
+function getHistoryMode(routerHistory): RouterHistory {
   // len为1 代表只有历史模式 为2 代表历史模式中存在base参数 https://next.router.vuejs.org/zh/api/#%E5%8F%82%E6%95%B0-1
-  const historyMode = String(routerHistory || "hash").split(",");
+  const historyMode = routerHistory.split(",");
   const leftMode = historyMode[0];
   const rightMode = historyMode[1];
   // no param
@@ -447,7 +442,6 @@ function getHistoryMode(routerHistory = "hash"): RouterHistory {
       return createWebHistory(rightMode);
     }
   }
-  return createWebHashHistory("");
 }
 
 /** 获取当前页面按钮级别的权限 */

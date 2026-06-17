@@ -3,7 +3,7 @@ import { nextTick, ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useRoute } from "vue-router";
 import { storageLocal } from "@pureadmin/utils";
-import { getToken, userKey } from "@/utils/auth";
+import { userKey } from "@/utils/auth";
 import FloatButton from "./FloatButton.vue";
 import CaptureOverlay from "./CaptureOverlay.vue";
 import CaptureLoadingOverlay from "./CaptureLoadingOverlay.vue";
@@ -25,7 +25,6 @@ defineOptions({
 const route = useRoute();
 const instanceId = createAiScreenCaptureInstanceId();
 const isPrimaryInstance = ref(false);
-const assistantSessionVersion = ref(0);
 
 const floatButtonRef = ref<InstanceType<typeof FloatButton> | null>(null);
 const buttonCenter = ref({ x: 0, y: 0 });
@@ -123,14 +122,6 @@ const advanceCaptureLoadingStage = async (
   await sleep(minDuration);
 };
 
-const isNativeWebViewRuntime = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
-
-const refreshAssistantSession = () => {
-  assistantSessionVersion.value += 1;
-};
-
 /** 当进入课程页面且处于聊天模式时，尝试加载已有会话历史 */
 watch(
   [courseIdRef, chatDialogVisible],
@@ -157,29 +148,6 @@ const userRoleType = computed(() => {
 
 const isStudent = computed(() => userRoleType.value === 1);
 
-const hasAssistantSession = computed(() => {
-  assistantSessionVersion.value;
-
-  const token = getToken();
-  if (token?.accessToken) return true;
-
-  if (typeof window === "undefined" || !isNativeWebViewRuntime()) return false;
-
-  try {
-    const rawUserInfo = window.localStorage.getItem(userKey);
-    const userInfo = rawUserInfo ? JSON.parse(rawUserInfo) : null;
-    if (userInfo?.accessToken) return true;
-  } catch {
-    // Some native debug sessions keep legacy login markers instead.
-  }
-
-  return !!(
-    window.localStorage.getItem("userId") ||
-    window.localStorage.getItem("userMobile") ||
-    window.localStorage.getItem("userRoleType")
-  );
-});
-
 const studentBlockedPathPrefixes = [
   "/student-exam-center",
   "/account/homework-detail",
@@ -194,7 +162,6 @@ const shouldShowAssistant = computed(() => {
   const overrideVisible = aiScreenCaptureVisibilityOverride.value;
   return (
     isPrimaryInstance.value &&
-    hasAssistantSession.value &&
     routeVisible &&
     (overrideVisible === null ? true : overrideVisible)
   );
@@ -209,18 +176,9 @@ const handleFloatButtonClick = () => {
 
 const handleCapture = async (area: CaptureArea) => {
   try {
-    const delayLoadingUntilCaptured = isNativeWebViewRuntime();
-    if (!delayLoadingUntilCaptured) {
-      openCaptureLoading("", "capturing");
-    }
-
+    openCaptureLoading("", "capturing");
     const base64 = await captureScreen(area);
-    if (delayLoadingUntilCaptured) {
-      openCaptureLoading(base64, "optimizing");
-    } else {
-      captureLoadingPreview.value = base64;
-    }
-
+    captureLoadingPreview.value = base64;
     await advanceCaptureLoadingStage("optimizing");
     await advanceCaptureLoadingStage("starting");
     enterChatMode();
@@ -263,13 +221,6 @@ const handleUploadImage = async (file: File) => {
   }
 };
 
-const handleUploadImages = async (payload: File | File[]) => {
-  const files = Array.isArray(payload) ? payload : [payload];
-  for (const file of files) {
-    await handleUploadImage(file);
-  }
-};
-
 const handleStopGenerate = () => {
   stopGenerate();
 };
@@ -307,43 +258,18 @@ watch(shouldShowAssistant, visible => {
   }
 });
 
-watch(
-  () => route.fullPath,
-  () => {
-    refreshAssistantSession();
-    chatDialogVisible.value = false;
-    resetCaptureLoading();
-    resetChat();
-    resetCapture();
-  }
-);
-
 onMounted(() => {
   isPrimaryInstance.value = claimAiScreenCaptureInstance(instanceId);
-  refreshAssistantSession();
-  window.addEventListener("storage", refreshAssistantSession);
-  window.addEventListener("focus", refreshAssistantSession);
-  window.addEventListener("userInfoUpdated", refreshAssistantSession);
 });
 
 onUnmounted(() => {
-  window.removeEventListener("storage", refreshAssistantSession);
-  window.removeEventListener("focus", refreshAssistantSession);
-  window.removeEventListener("userInfoUpdated", refreshAssistantSession);
   releaseAiScreenCaptureInstance(instanceId);
 });
 </script>
 
 <template>
-  <div
-    v-if="shouldShowAssistant"
-    class="ai-screen-capture"
-    :class="{
-      'is-busy': chatDialogVisible || captureLoadingVisible || status !== 'idle'
-    }"
-  >
+  <div v-if="shouldShowAssistant" class="ai-screen-capture">
     <FloatButton
-      v-if="!chatDialogVisible && !captureLoadingVisible && status === 'idle'"
       ref="floatButtonRef"
       :disabled="status !== 'idle' || isProcessing"
       @click="handleFloatButtonClick"
@@ -375,15 +301,7 @@ onUnmounted(() => {
       @open-chat="handleOpenChat"
       @load-history="loadHistory"
       @reset="resetChat"
-      @upload-image="handleUploadImages"
+      @upload-image="handleUploadImage"
     />
   </div>
 </template>
-
-<style lang="scss" scoped>
-.ai-screen-capture.is-busy {
-  :deep(.ai-float-button) {
-    display: none !important;
-  }
-}
-</style>
