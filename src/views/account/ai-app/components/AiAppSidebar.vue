@@ -80,6 +80,7 @@ import {
   Guide,
   User,
   DataAnalysis,
+  DataBoard,
   Check
 } from "@element-plus/icons-vue";
 
@@ -183,6 +184,7 @@ const sidebarMenuItems = [
   { key: "path", label: "学习计划", icon: Guide },
   { key: "profile", label: "学情分析", icon: User },
   { key: "assessment", label: "测验评估", icon: DataAnalysis },
+  { key: "governance", label: "治理看板", icon: DataBoard },
   { type: "divider" },
   { key: "automation", label: "常规任务", icon: Check }
 ];

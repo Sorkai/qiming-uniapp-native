@@ -8,13 +8,23 @@ import {
   Reading,
   Guide,
   RefreshRight,
-  MagicStick
+  MagicStick,
+  Bell,
+  Clock
 } from "@element-plus/icons-vue";
 import {
+  applyAssistantPathAction,
   completeAssistantPathNode,
+  completeAssistantPathPushTask,
   generateAssistantPath,
   getAssistantCurrentPath,
+  listAssistantPathActions,
+  listAssistantPathHistory,
+  listAssistantPathPushTasks,
   replanAssistantPath,
+  type AssistantPathActionItem,
+  type AssistantPathHistoryItem,
+  type AssistantPathPushTaskItem,
   type AssistantPathRoadmap
 } from "@/api/frontend/assistant";
 
@@ -28,21 +38,36 @@ const actionLoading = ref(false);
 const status = ref("");
 const statusMessage = ref("");
 const path = ref<AssistantPathRoadmap | null>(null);
+const pathActions = ref<AssistantPathActionItem[]>([]);
+const pathHistory = ref<AssistantPathHistoryItem[]>([]);
+const pushTasks = ref<AssistantPathPushTaskItem[]>([]);
 
 const courseMeta = computed(() => path.value?.course_meta);
 const roadmapData = computed(() => path.value?.roadmap || []);
 const hasPath = computed(() => !!path.value && roadmapData.value.length > 0);
+const pendingActions = computed(() =>
+  pathActions.value.filter(item => item.status !== "applied")
+);
 
 const loadPath = async () => {
   loading.value = true;
   try {
-    const { data } = await getAssistantCurrentPath({
+    const params = {
       course_id: props.courseId,
       target_student_id: props.targetStudentId
-    });
-    path.value = data.path || null;
-    status.value = data.status;
-    statusMessage.value = data.message || "";
+    };
+    const [currentResp, actionsResp, historyResp, pushResp] = await Promise.all([
+      getAssistantCurrentPath(params),
+      listAssistantPathActions(params),
+      listAssistantPathHistory(params),
+      listAssistantPathPushTasks(params)
+    ]);
+    path.value = currentResp.data.path || null;
+    status.value = currentResp.data.status;
+    statusMessage.value = currentResp.data.message || "";
+    pathActions.value = actionsResp.data.list || [];
+    pathHistory.value = historyResp.data.list || [];
+    pushTasks.value = pushResp.data.list || [];
   } catch (error: any) {
     console.error("[AiLearningPath] 学习路径加载失败:", error);
     ElMessage.error(error?.message || "学习路径加载失败");
@@ -78,16 +103,45 @@ const handleReplan = async () => {
     const { data } = await replanAssistantPath({
       course_id: props.courseId,
       target_student_id: props.targetStudentId,
-      reason: "frontend_manual_replan"
+      reason: "frontend_manual_replan",
+      apply_immediately: false
     });
-    if (data.path) path.value = data.path;
     status.value = data.status;
     statusMessage.value = data.message || "";
-    ElMessage.success(data.message || "已提交重规划");
+    ElMessage.success(data.message || "已生成重规划预览，确认后可应用");
     await loadPath();
   } catch (error: any) {
     console.error("[AiLearningPath] 学习路径重规划失败:", error);
     ElMessage.error(error?.message || "学习路径重规划失败");
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
+const handleApplyAction = async (actionId: string) => {
+  actionLoading.value = true;
+  try {
+    const { data } = await applyAssistantPathAction(actionId);
+    if (data.path) path.value = data.path;
+    ElMessage.success(data.message || "重规划预览已应用");
+    await loadPath();
+  } catch (error: any) {
+    console.error("[AiLearningPath] 应用路径动作失败:", error);
+    ElMessage.error(error?.message || "应用路径动作失败");
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
+const handleCompletePushTask = async (pushId: string) => {
+  actionLoading.value = true;
+  try {
+    const { data } = await completeAssistantPathPushTask(pushId);
+    ElMessage.success(data.message || "推送任务已完成");
+    await loadPath();
+  } catch (error: any) {
+    console.error("[AiLearningPath] 完成推送任务失败:", error);
+    ElMessage.error(error?.message || "完成推送任务失败");
   } finally {
     actionLoading.value = false;
   }
@@ -168,6 +222,18 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
             <el-tag size="small" effect="plain" round>{{
               courseMeta.subtitle || status
             }}</el-tag>
+            <el-tag v-if="path?.schema_version" size="small" effect="plain" round>
+              {{ path.schema_version }}
+            </el-tag>
+            <el-tag
+              v-if="path?.apply_status"
+              size="small"
+              type="success"
+              effect="plain"
+              round
+            >
+              {{ path.apply_status }}
+            </el-tag>
           </div>
           <div
             class="mt-2 text-xs text-text_color_regular flex items-center gap-3"
@@ -180,11 +246,58 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
             >
             <span class="w-[1px] h-3 bg-gray-200 dark:bg-gray-700" />
             <span>预计 {{ courseMeta.estimated_hours }} 学时</span>
+            <span
+              v-if="path?.path_version"
+              class="w-[1px] h-3 bg-gray-200 dark:bg-gray-700"
+            />
+            <span v-if="path?.path_version">路径版本 v{{ path.path_version }}</span>
           </div>
         </div>
         <el-tag v-if="statusMessage" type="info" effect="plain" round>
           {{ statusMessage }}
         </el-tag>
+      </div>
+
+      <div
+        v-if="pendingActions.length"
+        class="mt-4 max-w-4xl rounded-xl border border-amber-100 bg-amber-50 p-4"
+      >
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div class="text-sm font-bold text-amber-700">待应用重规划预览</div>
+            <p class="mt-1 text-xs text-amber-700/80">
+              后端已生成 preview/pending_apply，不会替换当前路径，确认后才应用。
+            </p>
+          </div>
+          <el-button
+            v-for="action in pendingActions"
+            :key="action.action_id"
+            type="warning"
+            plain
+            :loading="actionLoading"
+            @click="handleApplyAction(action.action_id)"
+          >
+            应用 {{ action.action_type || "预览" }}
+          </el-button>
+        </div>
+        <div
+          v-for="action in pendingActions"
+          :key="`${action.action_id}-summary`"
+          class="mt-3 rounded-lg bg-white/70 px-3 py-2 text-xs text-amber-700"
+        >
+          {{ action.reason || action.path?.summary || "重规划预览待确认" }}
+        </div>
+      </div>
+
+      <div
+        v-if="path?.natural_plan"
+        class="mt-4 max-w-4xl rounded-xl border border-primary/10 bg-primary/5 p-4"
+      >
+        <div class="mb-2 text-xs font-bold text-primary">自然语言规划</div>
+        <pre
+          class="whitespace-pre-wrap break-words text-xs leading-6 text-text_color_regular"
+          >{{ path.natural_plan }}</pre
+        >
       </div>
     </div>
 
@@ -295,6 +408,51 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
               <p v-if="node.resource_id" class="mt-1 text-[11px] text-primary">
                 资源：{{ node.resource_id }}
               </p>
+              <div class="mt-2 flex flex-wrap gap-1">
+                <el-tag
+                  v-if="node.knowledge_point_id"
+                  size="small"
+                  effect="plain"
+                  class="!rounded-md"
+                >
+                  {{ node.knowledge_point_id }}
+                </el-tag>
+                <el-tag
+                  v-if="node.estimated_minutes"
+                  size="small"
+                  effect="plain"
+                  class="!rounded-md"
+                >
+                  {{ node.estimated_minutes }} 分钟
+                </el-tag>
+                <el-tag
+                  v-if="node.status"
+                  size="small"
+                  effect="plain"
+                  class="!rounded-md"
+                >
+                  {{ node.status }}
+                </el-tag>
+                <el-tag
+                  v-if="node.video_segment_refs?.length"
+                  size="small"
+                  type="info"
+                  effect="plain"
+                  class="!rounded-md"
+                >
+                  视频 {{ node.video_segment_refs.length }}
+                </el-tag>
+              </div>
+              <p
+                v-if="node.status_reason || node.completion_rule?.type || node.due_at"
+                class="mt-2 text-[11px] text-text_color_regular leading-relaxed"
+              >
+                {{
+                  node.status_reason ||
+                  node.completion_rule?.type ||
+                  (node.due_at ? `截止：${node.due_at}` : "")
+                }}
+              </p>
               <el-button
                 v-if="!node.done"
                 size="small"
@@ -328,6 +486,78 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
         <el-icon class="mr-1"><MagicStick /></el-icon>
         生成路径
       </el-button>
+    </div>
+
+    <div
+      class="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-6 max-w-4xl w-full pb-6"
+    >
+      <div
+        class="rounded-xl border border-gray-100 dark:border-gray-800 p-5 bg-bg_color"
+      >
+        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-4">
+          <el-icon class="text-primary"><Bell /></el-icon>
+          路径推送任务
+        </h4>
+        <div v-if="pushTasks.length" class="space-y-3">
+          <div
+            v-for="task in pushTasks"
+            :key="task.push_id"
+            class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3 text-xs"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-text_color_primary">{{ task.title }}</span>
+              <el-tag size="small" effect="plain">{{ task.status }}</el-tag>
+            </div>
+            <p v-if="task.summary || task.reason" class="mt-2 text-text_color_regular">
+              {{ task.summary || task.reason }}
+            </p>
+            <div class="mt-2 flex items-center justify-between gap-2">
+              <span class="text-text_color_regular opacity-60">
+                {{ task.scheduled_at || task.created_at || "" }}
+              </span>
+              <el-button
+                v-if="task.status !== 'completed'"
+                link
+                type="primary"
+                :loading="actionLoading"
+                @click="handleCompletePushTask(task.push_id)"
+              >
+                标记完成
+              </el-button>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无推送任务" :image-size="90" />
+      </div>
+
+      <div
+        class="rounded-xl border border-gray-100 dark:border-gray-800 p-5 bg-bg_color"
+      >
+        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-4">
+          <el-icon class="text-primary"><Clock /></el-icon>
+          路径版本历史
+        </h4>
+        <el-timeline v-if="pathHistory.length">
+          <el-timeline-item
+            v-for="item in pathHistory"
+            :key="item.path_id"
+            :timestamp="item.updated_at || item.created_at"
+            hollow
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-text_color_primary">
+                v{{ item.path_version }}
+              </span>
+              <el-tag size="small" effect="plain">{{ item.status }}</el-tag>
+              <el-tag size="small" effect="plain">{{ item.apply_status }}</el-tag>
+            </div>
+            <p class="mt-1 text-xs text-text_color_regular leading-relaxed">
+              {{ item.summary || item.goal || "路径版本已记录" }}
+            </p>
+          </el-timeline-item>
+        </el-timeline>
+        <el-empty v-else description="暂无路径历史" :image-size="90" />
+      </div>
     </div>
   </div>
 </template>

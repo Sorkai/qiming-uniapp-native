@@ -11,18 +11,29 @@ import {
   Download,
   View,
   CircleCheck,
-  ChatDotRound
+  ChatDotRound,
+  EditPen,
+  Delete,
+  Stamp
 } from "@element-plus/icons-vue";
 import {
   createAssistantResourceTask,
+  deleteAssistantResource,
+  getAssistantTaskTrace,
   listAssistantResourceTaskLogs,
   listAssistantResourceTasks,
+  listAssistantResourceVersions,
   listAssistantResources,
+  publishAssistantResource,
   reportAssistantResourceUsage,
+  reviewAssistantResource,
+  updateAssistantResource,
   type AssistantResourceSummary,
   type AssistantResourceTaskItem,
   type AssistantResourceTaskLogItem,
-  type AssistantResourceUsageEventType
+  type AssistantResourceUsageEventType,
+  type AssistantResourceVersionItem,
+  type AssistantChatTraceStep
 } from "@/api/frontend/assistant";
 
 const props = defineProps<{
@@ -38,13 +49,27 @@ const tasks = ref<AssistantResourceTaskItem[]>([]);
 const resources = ref<AssistantResourceSummary[]>([]);
 const selectedTaskId = ref("");
 const taskLogs = ref<AssistantResourceTaskLogItem[]>([]);
+const taskTrace = ref<AssistantChatTraceStep[]>([]);
 const detailVisible = ref(false);
 const selectedResource = ref<AssistantResourceSummary | null>(null);
+const resourceVersions = ref<AssistantResourceVersionItem[]>([]);
 const resourceOpenedAt = ref(0);
 const resourceFeedbackScore = ref(5);
 const resourceFeedbackText = ref("");
 const feedbackSubmitting = ref(false);
 const completeSubmitting = ref(false);
+const governanceSubmitting = ref(false);
+const editMode = ref(false);
+const editForm = ref({
+  title: "",
+  summary: "",
+  description: "",
+  content_format: "markdown",
+  content_body: "",
+  knowledge_point_id: "",
+  knowledge_relevance: 0,
+  edit_reason: ""
+});
 
 const filteredResources = computed(() => {
   const keyword = searchQuery.value.trim().toLowerCase();
@@ -71,8 +96,12 @@ const resourceIcon = (type: string) => {
 };
 
 const tagType = (status: string) => {
-  if (status === "completed" || status === "ready") return "success";
-  if (status === "failed") return "danger";
+  if (["completed", "ready", "published", "approved", "safe"].includes(status))
+    return "success";
+  if (["failed", "blocked", "rejected", "deleted"].includes(status))
+    return "danger";
+  if (["degraded", "processing", "pending", "changes_requested"].includes(status))
+    return "warning";
   return "warning";
 };
 
@@ -84,6 +113,33 @@ const qualityLabel = (score?: number) => {
 
 const hasInlinePreview = (resource?: AssistantResourceSummary | null) =>
   !!resource?.content_body && !resource.preview_url;
+
+const incompleteStates = computed(() => {
+  const resource = selectedResource.value;
+  if (!resource) return [];
+  return [
+    resource.pptx_status
+      ? { label: "PPTX", value: resource.pptx_status }
+      : null,
+    resource.question_bank_status
+      ? { label: "题库", value: resource.question_bank_status }
+      : null,
+    resource.runtime_status
+      ? { label: "代码运行", value: resource.runtime_status }
+      : null,
+    resource.storage_status
+      ? { label: "对象存储", value: resource.storage_status }
+      : null,
+    resource.html_animation_status
+      ? { label: "HTML 动画", value: resource.html_animation_status }
+      : null
+  ].filter(Boolean) as { label: string; value: string }[];
+});
+
+const showAsIncomplete = (value?: string) =>
+  ["not_configured", "exportable_only", "degraded", "processing", "missing"].includes(
+    String(value || "")
+  );
 
 const reportResourceUsage = async (
   resource: AssistantResourceSummary,
@@ -129,8 +185,12 @@ const loadResources = async () => {
 const loadTaskLogs = async (taskId: string) => {
   selectedTaskId.value = taskId;
   try {
-    const { data } = await listAssistantResourceTaskLogs(taskId);
-    taskLogs.value = data.list || [];
+    const [logsResp, traceResp] = await Promise.all([
+      listAssistantResourceTaskLogs(taskId),
+      getAssistantTaskTrace(taskId).catch(() => null)
+    ]);
+    taskLogs.value = logsResp.data.list || [];
+    taskTrace.value = traceResp?.data.trace || [];
   } catch (error: any) {
     console.error("[AiResourceGeneration] 任务日志加载失败:", error);
     ElMessage.error(error?.message || "任务日志加载失败");
@@ -146,6 +206,7 @@ const handleCreateTask = async () => {
       resource_types: [
         "explanation_doc",
         "mind_map",
+        "courseware_ppt",
         "exercise_set",
         "extended_reading",
         "html_animation",
@@ -166,6 +227,18 @@ const handleCreateTask = async () => {
 
 const openResourceDetail = (resource: AssistantResourceSummary) => {
   selectedResource.value = resource;
+  editForm.value = {
+    title: resource.title || "",
+    summary: resource.summary || "",
+    description: resource.description || "",
+    content_format: resource.content_format || "markdown",
+    content_body: resource.content_body || "",
+    knowledge_point_id: resource.knowledge_point_id || "",
+    knowledge_relevance: resource.knowledge_relevance || 0,
+    edit_reason: ""
+  };
+  editMode.value = false;
+  resourceVersions.value = [];
   detailVisible.value = true;
   resourceOpenedAt.value = Date.now();
   resourceFeedbackScore.value = 5;
@@ -176,6 +249,7 @@ const openResourceDetail = (resource: AssistantResourceSummary) => {
       html_animation_status: resource.html_animation_status || ""
     }
   });
+  void loadResourceVersions(resource.resource_id);
 };
 
 const handleResourceDialogClosed = () => {
@@ -201,6 +275,15 @@ const openUrl = (url?: string, resource?: AssistantResourceSummary) => {
     });
   }
   window.open(url, "_blank");
+};
+
+const loadResourceVersions = async (resourceId: string) => {
+  try {
+    const { data } = await listAssistantResourceVersions(resourceId);
+    resourceVersions.value = data.list || [];
+  } catch (error) {
+    console.warn("[AiResourceGeneration] 资源版本加载失败:", error);
+  }
 };
 
 const handleCompleteResource = async () => {
@@ -229,6 +312,90 @@ const handleSubmitFeedback = async () => {
     resourceFeedbackText.value = "";
   } finally {
     feedbackSubmitting.value = false;
+  }
+};
+
+const syncSelectedResource = (resource?: AssistantResourceSummary) => {
+  if (!resource) return;
+  selectedResource.value = resource;
+  const index = resources.value.findIndex(item => item.resource_id === resource.resource_id);
+  if (index >= 0) resources.value[index] = resource;
+};
+
+const handleSaveResource = async () => {
+  if (!selectedResource.value) return;
+  governanceSubmitting.value = true;
+  try {
+    const { data } = await updateAssistantResource(selectedResource.value.resource_id, {
+      ...editForm.value,
+      knowledge_relevance: Number(editForm.value.knowledge_relevance || 0)
+    });
+    syncSelectedResource(data.resource);
+    editMode.value = false;
+    ElMessage.success(data.message || "资源已保存为草稿，等待审核");
+    await loadResourceVersions(selectedResource.value.resource_id);
+  } catch (error: any) {
+    console.error("[AiResourceGeneration] 资源保存失败:", error);
+    ElMessage.error(error?.message || "资源保存失败");
+  } finally {
+    governanceSubmitting.value = false;
+  }
+};
+
+const handleReviewResource = async (reviewStatus: string) => {
+  if (!selectedResource.value) return;
+  governanceSubmitting.value = true;
+  try {
+    const { data } = await reviewAssistantResource(selectedResource.value.resource_id, {
+      review_status: reviewStatus,
+      review_comment:
+        reviewStatus === "approved" ? "内容准确，可以发布" : "请根据教师意见调整"
+    });
+    syncSelectedResource(data.resource);
+    ElMessage.success(data.message || "资源审核状态已更新");
+    await loadResources();
+  } catch (error: any) {
+    console.error("[AiResourceGeneration] 资源审核失败:", error);
+    ElMessage.error(error?.message || "资源审核失败");
+  } finally {
+    governanceSubmitting.value = false;
+  }
+};
+
+const handlePublishResource = async () => {
+  if (!selectedResource.value) return;
+  governanceSubmitting.value = true;
+  try {
+    const { data } = await publishAssistantResource(selectedResource.value.resource_id);
+    syncSelectedResource(data.resource);
+    const status = data.resource?.status || data.status;
+    if (status === "degraded" || data.resource?.storage_status === "degraded") {
+      ElMessage.warning(data.message || "资源已发布但存在降级状态");
+    } else {
+      ElMessage.success(data.message || "资源已发布");
+    }
+    await loadResources();
+  } catch (error: any) {
+    console.error("[AiResourceGeneration] 资源发布失败:", error);
+    ElMessage.error(error?.message || "资源发布失败");
+  } finally {
+    governanceSubmitting.value = false;
+  }
+};
+
+const handleDeleteResource = async () => {
+  if (!selectedResource.value) return;
+  governanceSubmitting.value = true;
+  try {
+    const { data } = await deleteAssistantResource(selectedResource.value.resource_id);
+    ElMessage.success(data.message || "资源已删除");
+    detailVisible.value = false;
+    await loadResources();
+  } catch (error: any) {
+    console.error("[AiResourceGeneration] 资源删除失败:", error);
+    ElMessage.error(error?.message || "资源删除失败");
+  } finally {
+    governanceSubmitting.value = false;
   }
 };
 
@@ -347,6 +514,28 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
               <span class="text-xs text-gray-600">{{ log.message }}</span>
             </el-timeline-item>
           </el-timeline>
+          <div v-if="taskTrace.length" class="mt-4 border-t border-gray-100 pt-3">
+            <div class="mb-2 text-xs font-bold text-gray-500">Agent Trace</div>
+            <div class="space-y-2">
+              <div
+                v-for="(step, index) in taskTrace"
+                :key="`${step.agent_key || step.agent}-${step.stage}-${index}`"
+                class="rounded-lg bg-white border border-gray-100 px-3 py-2 text-xs"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-bold text-gray-700">
+                    {{ step.agent_label || step.agent || step.agent_key }}
+                  </span>
+                  <el-tag size="small" :type="tagType(step.status)" effect="plain">
+                    {{ step.status }}
+                  </el-tag>
+                </div>
+                <p class="mt-1 text-gray-500 leading-relaxed">
+                  {{ step.degraded_reason || step.summary || step.stage }}
+                </p>
+              </div>
+            </div>
+          </div>
           <el-empty v-if="!taskLogs.length" description="暂无任务日志" :image-size="80" />
         </div>
       </div>
@@ -413,6 +602,23 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
                 {{ res.safety_status }}
               </el-tag>
               <el-tag
+                v-if="res.review_status"
+                size="small"
+                :type="tagType(res.review_status)"
+                effect="plain"
+                class="!rounded-md"
+              >
+                审核 {{ res.review_status }}
+              </el-tag>
+              <el-tag
+                v-if="res.version_no"
+                size="small"
+                effect="plain"
+                class="!rounded-md"
+              >
+                v{{ res.version_no }}
+              </el-tag>
+              <el-tag
                 v-if="res.html_animation_status"
                 size="small"
                 :type="tagType(res.html_animation_status)"
@@ -423,10 +629,18 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
               </el-tag>
             </div>
             <p
-              v-if="res.html_animation_status && res.html_animation_status !== 'ready'"
+              v-if="
+                (res.html_animation_status && res.html_animation_status !== 'ready') ||
+                showAsIncomplete(res.storage_status)
+              "
               class="text-xs text-amber-600 mb-4 line-clamp-2"
             >
-              {{ res.html_animation_message || res.html_animation_error || "动画任务处理中" }}
+              {{
+                res.html_animation_message ||
+                res.html_animation_error ||
+                res.storage_error ||
+                "资源存在处理中或降级状态"
+              }}
             </p>
             <div
               class="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-50"
@@ -497,14 +711,122 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
             >
               {{ selectedResource.safety_status }}
             </el-tag>
+            <el-tag
+              v-if="selectedResource?.review_status"
+              size="small"
+              :type="tagType(selectedResource.review_status)"
+              effect="plain"
+            >
+              审核 {{ selectedResource.review_status }}
+            </el-tag>
+            <el-tag v-if="selectedResource?.version_no" size="small" effect="plain">
+              v{{ selectedResource.version_no }}
+            </el-tag>
           </div>
         </div>
       </template>
 
       <div v-if="selectedResource" class="space-y-5">
+        <div
+          v-if="incompleteStates.length"
+          class="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+        >
+          <div class="font-bold">能力边界与降级状态</div>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <el-tag
+              v-for="item in incompleteStates"
+              :key="`${item.label}-${item.value}`"
+              size="small"
+              :type="showAsIncomplete(item.value) ? 'warning' : 'success'"
+              effect="plain"
+              class="!rounded-md"
+            >
+              {{ item.label }}：{{ item.value }}
+            </el-tag>
+          </div>
+        </div>
+
         <p class="text-sm text-gray-600 leading-relaxed">
-          {{ selectedResource.summary || selectedResource.recommendation || "暂无摘要" }}
+          {{
+            selectedResource.description ||
+            selectedResource.summary ||
+            selectedResource.recommendation ||
+            "暂无摘要"
+          }}
         </p>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div class="rounded-lg bg-gray-50 p-3">
+            <div class="text-gray-400">知识点</div>
+            <div class="mt-1 font-bold text-gray-700 truncate">
+              {{ selectedResource.knowledge_point_id || "未关联" }}
+            </div>
+          </div>
+          <div class="rounded-lg bg-gray-50 p-3">
+            <div class="text-gray-400">关联度</div>
+            <div class="mt-1 font-bold text-gray-700">
+              {{ qualityLabel(selectedResource.knowledge_relevance) || "暂无" }}
+            </div>
+          </div>
+          <div class="rounded-lg bg-gray-50 p-3">
+            <div class="text-gray-400">更新时间</div>
+            <div class="mt-1 font-bold text-gray-700 truncate">
+              {{ selectedResource.updated_at || "暂无" }}
+            </div>
+          </div>
+          <div class="rounded-lg bg-gray-50 p-3">
+            <div class="text-gray-400">对象存储</div>
+            <div class="mt-1 font-bold text-gray-700 truncate">
+              {{ selectedResource.storage_status || "默认" }}
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="editMode"
+          class="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3"
+        >
+          <div class="text-sm font-bold text-gray-700">编辑资源草稿</div>
+          <el-input v-model="editForm.title" placeholder="资源标题" />
+          <el-input v-model="editForm.summary" placeholder="资源摘要" />
+          <el-input
+            v-model="editForm.description"
+            type="textarea"
+            :rows="2"
+            placeholder="资源说明"
+          />
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <el-input v-model="editForm.content_format" placeholder="正文格式" />
+            <el-input v-model="editForm.knowledge_point_id" placeholder="知识点 ID" />
+            <el-input-number
+              v-model="editForm.knowledge_relevance"
+              :min="0"
+              :max="1"
+              :step="0.05"
+              class="!w-full"
+            />
+          </div>
+          <el-input
+            v-model="editForm.content_body"
+            type="textarea"
+            :rows="8"
+            placeholder="资源正文"
+          />
+          <el-input
+            v-model="editForm.edit_reason"
+            placeholder="编辑原因"
+          />
+          <div class="flex justify-end gap-2">
+            <el-button @click="editMode = false">取消</el-button>
+            <el-button
+              type="primary"
+              :loading="governanceSubmitting"
+              @click="handleSaveResource"
+            >
+              保存草稿
+            </el-button>
+          </div>
+        </div>
 
         <div
           v-if="selectedResource.html_animation_task_id"
@@ -542,6 +864,27 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
           对象存储 Key：{{ selectedResource.object_key }}
         </div>
 
+        <div v-if="selectedResource.safety_summary || selectedResource.safety_flags?.length">
+          <div class="text-xs font-bold text-gray-500 uppercase">安全与引用状态</div>
+          <div class="mt-2 rounded-lg border border-gray-100 px-3 py-2 text-xs text-gray-600">
+            <p v-if="selectedResource.safety_summary" class="leading-relaxed">
+              {{ selectedResource.safety_summary }}
+            </p>
+            <div v-if="selectedResource.safety_flags?.length" class="mt-2 flex flex-wrap gap-1">
+              <el-tag
+                v-for="flag in selectedResource.safety_flags"
+                :key="flag"
+                size="small"
+                type="warning"
+                effect="plain"
+                class="!rounded-md"
+              >
+                {{ flag }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+
         <div v-if="selectedResource.citations?.length" class="space-y-2">
           <div class="text-xs font-bold text-gray-500 uppercase">引用来源</div>
           <div
@@ -567,6 +910,35 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
           </div>
         </div>
 
+        <div v-if="resourceVersions.length" class="space-y-2">
+          <div class="text-xs font-bold text-gray-500 uppercase">资源版本</div>
+          <div
+            v-for="version in resourceVersions"
+            :key="version.version_id"
+            class="rounded-lg border border-gray-100 px-3 py-2 text-xs text-gray-600"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-gray-700">
+                v{{ version.version_no }} · {{ version.title }}
+              </span>
+              <el-tag
+                v-if="version.safety_status"
+                size="small"
+                :type="version.safety_status === 'safe' ? 'success' : 'warning'"
+                effect="plain"
+              >
+                {{ version.safety_status }}
+              </el-tag>
+            </div>
+            <p v-if="version.edit_reason" class="mt-1">
+              {{ version.edit_reason }}
+            </p>
+            <div class="mt-1 text-gray-400">
+              {{ version.created_at || "" }}
+            </div>
+          </div>
+        </div>
+
         <div class="rounded-xl border border-gray-100 p-4">
           <div class="flex items-center gap-2 text-sm font-bold text-gray-700">
             <el-icon><ChatDotRound /></el-icon>
@@ -589,14 +961,36 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-between gap-3">
-          <el-button
-            :icon="CircleCheck"
-            :loading="completeSubmitting"
-            @click="handleCompleteResource"
-          >
-            标记完成
-          </el-button>
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <el-button
+              :icon="CircleCheck"
+              :loading="completeSubmitting"
+              @click="handleCompleteResource"
+            >
+              标记完成
+            </el-button>
+            <el-button :icon="EditPen" plain @click="editMode = !editMode">
+              编辑
+            </el-button>
+            <el-button
+              :icon="Stamp"
+              plain
+              :loading="governanceSubmitting"
+              @click="handleReviewResource('approved')"
+            >
+              审核通过
+            </el-button>
+            <el-button
+              type="danger"
+              plain
+              :icon="Delete"
+              :loading="governanceSubmitting"
+              @click="handleDeleteResource"
+            >
+              删除
+            </el-button>
+          </div>
           <div class="flex items-center gap-2">
             <el-button
               v-if="selectedResource?.preview_url"
@@ -606,6 +1000,14 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
               @click="openUrl(selectedResource.preview_url, selectedResource)"
             >
               打开预览
+            </el-button>
+            <el-button
+              plain
+              type="primary"
+              :loading="governanceSubmitting"
+              @click="handlePublishResource"
+            >
+              发布
             </el-button>
             <el-button
               type="primary"

@@ -38,6 +38,7 @@ import AiResourceGeneration from "./components/AiResourceGeneration.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
+import AiGovernanceDashboard from "./components/AiGovernanceDashboard.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 import FloatingDigitalHuman2D from "./components/FloatingDigitalHuman2D.vue";
 
@@ -98,6 +99,13 @@ type ChatMessageView = {
   content: string;
   avatar?: string;
   resources?: AssistantChatResource[];
+  sourceRefs?: AssistantChatStreamEvent["source_refs"];
+  videoSegments?: AssistantChatStreamEvent["video_segments"];
+  followups?: AssistantChatStreamEvent["followups"];
+  resourceTask?: AssistantChatStreamEvent["resource_task"];
+  safetyStatus?: string;
+  safetySummary?: string;
+  safetyFlags?: string[];
   metadata?: Record<string, any>;
   profileEvent?: Record<string, any>;
   streaming?: boolean;
@@ -195,6 +203,7 @@ const resolveRailFromPath = (path: string) => {
     "path",
     "profile",
     "assessment",
+    "governance",
     "automation"
   ];
   return knownRails.includes(key) ? key : "chat";
@@ -345,6 +354,7 @@ const railItems = ref([
   { key: "path", label: "学习计划", icon: "Guide" },
   { key: "profile", label: "学情分析", icon: "User" },
   { key: "assessment", label: "测验评估", icon: "DataAnalysis" },
+  { key: "governance", label: "治理看板", icon: "DataBoard" },
   { key: "automation", label: "常规任务", icon: "Check" }
 ]);
 
@@ -424,7 +434,10 @@ const agentItems = computed(() => {
     return agentTrace.value.map((step, index) => ({
       id: `${step.agent}-${step.stage}-${index}`,
       name: step.agent || step.stage || "学习助手",
-      desc: step.summary || step.stage || "处理中",
+      desc:
+        step.status === "degraded" || step.status === "blocked"
+          ? step.degraded_reason || step.summary || step.stage || "降级处理中"
+          : step.summary || step.stage || "处理中",
       status:
         step.status === "done" || step.status === "completed"
           ? "done"
@@ -512,13 +525,36 @@ const handleAssistantStreamEvent = (
         messages.value.find(item => item.id === assistantMessageId)?.content ||
         "学习助手已完成回复。",
       resources: event.resources || [],
+      sourceRefs: event.source_refs || [],
+      videoSegments: event.video_segments || [],
+      followups: event.followups || [],
+      resourceTask: event.resource_task,
+      safetyStatus: event.safety_status,
+      safetySummary: event.safety_summary,
+      safetyFlags: event.safety_flags || event.sensitive_word_hits || [],
       profileEvent: event.profile_event,
       streaming: false
     });
     agentTrace.value = event.trace || [];
     generatedResources.value = event.resources || [];
+    if (event.conversation_title) {
+      const active = conversations.value.find(
+        item => item.conversation_id === event.conversation_id
+      );
+      if (active) active.title = event.conversation_title;
+    }
     if (event.profile_event) {
-      ElMessage.success("学习画像已同步更新");
+      if (event.profile_event.decision === "skip") {
+        ElMessage.info(event.profile_event.skip_reason || "本轮画像无需更新");
+      } else {
+        ElMessage.success("学习画像已同步更新");
+      }
+    }
+    const degradedTrace = (event.trace || []).find(step =>
+      ["degraded", "blocked"].includes(step.status)
+    );
+    if (degradedTrace?.degraded_reason) {
+      ElMessage.warning(degradedTrace.degraded_reason);
     }
     if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
     speakDigitalHumans(directiveText || content || "");
@@ -593,6 +629,10 @@ const handleSendMessage = (text: string) => {
       thinking_mode: thinkingModeKey.value || undefined,
       message: trimmed,
       attachment_ids: [],
+      enable_realtime_resource: selectedSkillKeys.value.includes("resource_hint"),
+      preferred_explanation_mode: selectedSkillKeys.value.includes("visual")
+        ? "visual"
+        : undefined,
       metadata: { ui_entry: "ai_app_workbench" }
     },
     event => handleAssistantStreamEvent(event, assistantMessageId)
@@ -804,6 +844,24 @@ const handleProfileLoaded = (payload: { dimensions?: any[] }) => {
   }
 };
 
+const handleGovernanceSelectStudent = (payload: {
+  studentId: number;
+  rail: "profile" | "path" | "assessment";
+}) => {
+  selectedStudentId.value = payload.studentId;
+  activeRail.value = payload.rail;
+  if (route.path.startsWith("/ai-app/")) {
+    void router.push(`/ai-app/${payload.rail}`);
+  }
+};
+
+const handleGovernanceNavigate = (rail: "generation") => {
+  activeRail.value = rail;
+  if (route.path.startsWith("/ai-app/")) {
+    void router.push(`/ai-app/${rail}`);
+  }
+};
+
 const goBack = () => {
   if (window.history.state && window.history.length > 1) {
     router.back();
@@ -847,7 +905,7 @@ const handleNewChat = async (payload: { course: string }) => {
         selected_agent: selectedAgentKey.value,
         selected_model: selectedModelKey.value,
         thinking_mode: thinkingModeKey.value,
-        skill_keys: selectedSkillKeys.value
+        skill_keys: selectedSkillKeys.value.join(",")
       }
     });
     const conversationId =
@@ -1404,6 +1462,17 @@ onUnmounted(() => {
               <AiAssessment
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
+              />
+            </div>
+          </div>
+
+          <div v-else-if="activeRail === `governance`" class="h-full w-full">
+            <div class="h-full bg-white overflow-hidden">
+              <AiGovernanceDashboard
+                :course-id="selectedCourseId"
+                :is-staff-mode="isStaffMode"
+                @select-student="handleGovernanceSelectStudent"
+                @navigate="handleGovernanceNavigate"
               />
             </div>
           </div>

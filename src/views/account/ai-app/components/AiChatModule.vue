@@ -168,6 +168,116 @@
                   </div>
                 </div>
               </transition-group>
+
+              <div
+                v-if="msg.safetyStatus || msg.safetySummary || msg.safetyFlags?.length"
+                class="mt-3 rounded-xl border px-3 py-2 text-xs"
+                :class="
+                  msg.safetyStatus === 'blocked'
+                    ? 'border-red-200 bg-red-50 text-red-700'
+                    : msg.safetyStatus === 'degraded' || msg.safetyStatus === 'warning'
+                      ? 'border-amber-200 bg-amber-50 text-amber-700'
+                      : 'border-emerald-100 bg-emerald-50 text-emerald-700'
+                "
+              >
+                <div class="font-bold">
+                  安全状态：{{ msg.safetyStatus || "已检查" }}
+                </div>
+                <div v-if="msg.safetySummary" class="mt-1 leading-relaxed">
+                  {{ msg.safetySummary }}
+                </div>
+                <div v-if="msg.safetyFlags?.length" class="mt-2 flex flex-wrap gap-1">
+                  <el-tag
+                    v-for="flag in msg.safetyFlags"
+                    :key="flag"
+                    size="small"
+                    effect="plain"
+                    class="!rounded-md"
+                  >
+                    {{ flag }}
+                  </el-tag>
+                </div>
+              </div>
+
+              <div
+                v-if="msg.sourceRefs?.length"
+                class="mt-3 rounded-xl bg-gray-50/80 border border-gray-100 p-3"
+              >
+                <div class="mb-2 text-[11px] font-bold text-gray-500">
+                  回答依据
+                </div>
+                <div class="space-y-2">
+                  <div
+                    v-for="source in msg.sourceRefs"
+                    :key="`${source.source_type}-${source.ref_id || source.title}`"
+                    class="text-xs text-gray-600"
+                  >
+                    <div class="flex items-center gap-2">
+                      <el-tag size="small" effect="plain" class="!rounded-md">
+                        {{ source.source_type }}
+                      </el-tag>
+                      <span class="font-bold text-gray-700">{{ source.title }}</span>
+                      <span v-if="source.confidence" class="text-gray-400">
+                        {{ Math.round(source.confidence * 100) }}%
+                      </span>
+                    </div>
+                    <p v-if="source.summary" class="mt-1 leading-relaxed">
+                      {{ source.summary }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="msg.videoSegments?.length"
+                class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2"
+              >
+                <div
+                  v-for="segment in msg.videoSegments"
+                  :key="segment.segment_id"
+                  class="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-700"
+                >
+                  <div class="flex items-center gap-2 font-bold">
+                    <el-icon><VideoPlay /></el-icon>
+                    {{ segment.title }}
+                  </div>
+                  <p v-if="segment.summary" class="mt-1 leading-relaxed">
+                    {{ segment.summary }}
+                  </p>
+                  <div class="mt-2 text-blue-500">
+                    {{ formatMs(segment.start_ms) }} - {{ formatMs(segment.end_ms) }}
+                    <span v-if="segment.source_status">
+                      · {{ segment.source_status }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="msg.resourceTask"
+                class="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary"
+              >
+                <div class="font-bold">
+                  实时资源任务：{{ msg.resourceTask.status }}
+                </div>
+                <div class="mt-1">
+                  {{ msg.resourceTask.summary || msg.resourceTask.stage || msg.resourceTask.task_id }}
+                </div>
+              </div>
+
+              <div v-if="msg.followups?.length" class="mt-3 flex flex-wrap gap-2">
+                <el-button
+                  v-for="followup in msg.followups"
+                  :key="followup.text"
+                  size="small"
+                  round
+                  plain
+                  type="primary"
+                  @click="emit('send', followup.text)"
+                >
+                  {{ followup.text }}
+                </el-button>
+              </div>
             </div>
           </div>
           <el-avatar
@@ -405,6 +515,13 @@ const visibleMessages = computed(() =>
 );
 
 const formatMessageContent = (content: unknown) => String(content || "").trim();
+
+const formatMs = (value?: number) => {
+  const totalSeconds = Math.max(0, Math.floor(Number(value || 0) / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = `${totalSeconds % 60}`.padStart(2, "0");
+  return `${minutes}:${seconds}`;
+};
 
 const handleEnter = (event: KeyboardEvent) => {
   if (event.isComposing || event.shiftKey) return;
