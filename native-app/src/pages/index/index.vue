@@ -107,7 +107,8 @@ type WebMessage = {
   timestamp?: number;
 };
 
-const defaultEntryRoute = "/home";
+const defaultEntryRoute = "/login";
+const defaultMiniProgramOrigin = "https://aiedu-mp.intelledu.cn";
 let isH5DevPreview = false;
 // #ifdef H5
 isH5DevPreview = import.meta.env.DEV;
@@ -263,10 +264,10 @@ const lastMessage = ref<WebMessage | null>(null);
 const previewMode = ref<"phone" | "full">("phone");
 const defaultMiniProgramDevServer =
   normalizeDevServer(import.meta.env.VITE_QIMING_MINIPROGRAM_WEBVIEW_ORIGIN) ||
-  (isMiniProgramRuntime ? "http://localhost:8851" : "");
+  (isMiniProgramRuntime ? defaultMiniProgramOrigin : "");
 const defaultMiniProgramRole: PreviewRole | "" =
   normalizeDemoRole(import.meta.env.VITE_QIMING_MINIPROGRAM_ROLE) ||
-  (isMiniProgramRuntime ? "teacher" : "");
+  (isMiniProgramRuntime ? "" : "");
 const defaultMiniProgramEntry = resolveEntryForRole(
   import.meta.env.VITE_QIMING_MINIPROGRAM_ENTRY,
   defaultMiniProgramRole
@@ -623,6 +624,9 @@ onShow(() => {
 });
 
 onBackPress(() => {
+  if (isMiniProgramRuntime) {
+    return false;
+  }
   if (!dispatchBackToInnerWebview()) {
     resetToRoleRoot();
   }

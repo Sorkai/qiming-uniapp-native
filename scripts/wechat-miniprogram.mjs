@@ -21,6 +21,9 @@ const nativeProject = join(root, "native-app");
 const buildDir = join(nativeProject, "dist", "build", "mp-weixin");
 const projectConfigPath = join(buildDir, "project.config.json");
 const artifactsDir = join(root, "artifacts", "wechat-miniprogram");
+const defaultWebviewOrigin = "https://aiedu-mp.intelledu.cn";
+const defaultLaunchEntry = "/login";
+const defaultLaunchRole = "";
 
 const realAppIdPattern = /^wx[a-zA-Z0-9]{16}$/;
 
@@ -357,7 +360,7 @@ function hasPackage(packageName) {
 function buildQuery(route, role, devServer) {
   const params = new URLSearchParams();
   params.set("entry", route);
-  params.set("demoRole", role);
+  if (role) params.set("demoRole", role);
   if (devServer) params.set("devServer", devServer);
   return params.toString();
 }
@@ -385,11 +388,10 @@ function readExistingLaunchOptions() {
 }
 
 function resolveLaunchOptions(options) {
-  const existing = readExistingLaunchOptions();
   return {
-    entry: normalizeEntry(options.entry || existing.entry || "/welcome/index"),
-    role: normalizeRole(options.role || existing.role || "teacher"),
-    devServer: normalizeOrigin(options.devServer || existing.devServer || "")
+    entry: normalizeEntry(options.entry || defaultLaunchEntry),
+    role: normalizeRole(options.role || defaultLaunchRole),
+    devServer: normalizeOrigin(options.devServer || defaultWebviewOrigin)
   };
 }
 
