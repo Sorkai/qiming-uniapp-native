@@ -8,6 +8,7 @@ const verifyFile = "hyWOiOCR1C.txt";
 const sourceName = "Sorkai/qiming-uniapp-native/wechat-miniprogram";
 
 const wechatH5Env = {
+  QIMING_EDGEONE_WECHAT_H5: "1",
   VITE_PUBLIC_PATH: "/",
   VITE_API_URL: "https://aiedu-api.intelledu.cn",
   VITE_ROUTER_HISTORY: "hash",

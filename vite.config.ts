@@ -18,6 +18,7 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     VITE_PROXY_TARGET,
     VITE_MOCK_SCOPE
   } = wrapperEnv(loadEnv(mode, root));
+  const isEdgeOneWechatH5 = process.env.QIMING_EDGEONE_WECHAT_H5 === "1";
   return {
     base: VITE_PUBLIC_PATH,
     root,
@@ -61,7 +62,9 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     },
     build: {
       // https://cn.vitejs.dev/guide/build.html#browser-compatibility
-      target: "es2015",
+      target: isEdgeOneWechatH5 ? "es2020" : "es2015",
+      minify: isEdgeOneWechatH5 ? false : "esbuild",
+      cssMinify: isEdgeOneWechatH5 ? false : "esbuild",
       sourcemap: false,
       reportCompressedSize: false,
       // 消除打包大小超过500kb警告
