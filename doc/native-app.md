@@ -246,8 +246,8 @@ The uni-app shell receives messages through the `web-view` `message` event.
 - HBuilderX CLI publish/cloud packaging currently reports "this feature needs
   login". A DCloud account login is required before APK/IPA cloud packaging can
   run.
-- GitHub Actions no longer contains the CNB sync workflow; only the existing
-  lint/pages workflows remain.
+- GitHub 到 CNB 的自动同步工作流已恢复，但真实自动发布仍依赖 GitHub `CNB_TOKEN`
+  和 CNB 侧 `EDGEONE_API_TOKEN` / `EDGEONE_PAGES_NAME` 配置齐全。
 - iOS IPA packaging cannot be fully finished without Apple certificates.
 
 ## Verification Log

@@ -105,7 +105,7 @@ function assertOutput() {
 }
 
 rmSync(distDir, { recursive: true, force: true });
-run("pnpm", ["exec", "vite", "build", "--mode", "wechat-h5"]);
+run("pnpm", ["--ignore-workspace", "exec", "vite", "build", "--mode", "wechat-h5"]);
 assertOutput();
 
 writeFileSync(

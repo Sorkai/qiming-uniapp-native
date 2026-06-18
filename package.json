@@ -9,7 +9,7 @@
     "build": "rimraf dist && NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "build:wechat-h5": "rimraf dist && NODE_OPTIONS=--max-old-space-size=8192 vite build --mode wechat-h5",
     "edgeone:build": "node scripts/build-edgeone-wechat-h5.mjs",
-    "edgeone:install": "pnpm install --no-frozen-lockfile --ignore-scripts && pnpm rebuild @parcel/watcher @tailwindcss/oxide esbuild vue-demi",
+    "edgeone:install": "pnpm --ignore-workspace install --no-frozen-lockfile --ignore-scripts && pnpm --ignore-workspace rebuild @parcel/watcher @tailwindcss/oxide esbuild vue-demi",
     "build:app-h5": "rimraf dist && NODE_OPTIONS=--max-old-space-size=8192 vite build --mode app",
     "sync:app-h5": "node scripts/sync-app-h5.mjs",
     "native:prepare": "pnpm build:app-h5 && pnpm sync:app-h5",
@@ -46,7 +46,7 @@
     "lint:prettier": "prettier --write  \"src/**/*.{js,ts,json,tsx,css,scss,vue,html,md}\"",
     "lint:stylelint": "stylelint --cache --fix \"**/*.{html,vue,css,scss}\" --cache-location node_modules/.cache/stylelint/",
     "lint": "pnpm lint:eslint && pnpm lint:prettier && pnpm lint:stylelint",
-    "prepare": "husky || true; pnpm rebuild @parcel/watcher @tailwindcss/oxide esbuild vue-demi || true",
+    "prepare": "husky || true; pnpm --ignore-workspace rebuild @parcel/watcher @tailwindcss/oxide esbuild vue-demi || true",
     "preinstall": "npx only-allow pnpm"
   },
   "keywords": [

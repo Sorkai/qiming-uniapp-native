@@ -192,9 +192,10 @@ pnpm mini:preview -- --dev-server https://aiedu-mp.intelledu.cn --role teacher -
 ```
 
 EdgeOne Pages 的小程序 H5 项目应绑定到 `wechat-miniprogram` 分支，安装命令使用
-`pnpm edgeone:install`，构建命令使用 `pnpm build:wechat-h5`，输出目录使用 `dist`。发布前需要确认
+`pnpm --ignore-workspace edgeone:install`，构建命令使用 `pnpm --ignore-workspace edgeone:build`，输出目录使用 `dist`。当前正式自动化链路为
+GitHub Actions 同步 `wechat-miniprogram` 到 CNB，再由 CNB 执行 `.cnb.yml` 调用 EdgeOne CLI 发布。发布前需要确认
 `https://aiedu-mp.intelledu.cn/` 返回完整 H5 内容，并包含 `/static/js/` 入口脚本，而不是 0 字节空页。
-`public/hyWOiOCR1C.txt` 是微信业务域名校验文件，会随 `build:wechat-h5` 一起进入 `dist/` 根目录。
+`public/hyWOiOCR1C.txt` 是微信业务域名校验文件，会随 `edgeone:build` 一起进入 `dist/` 根目录。
 
 后续页面适配遵守既有研发准则：先看现有 Android/iOS 已验证体验和 web 端响应式设计；
 只有小程序环境出现布局或能力矛盾时，才做小范围端专属适配。

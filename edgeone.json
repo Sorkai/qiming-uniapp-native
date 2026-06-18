@@ -1,6 +1,6 @@
 {
-  "installCommand": "pnpm edgeone:install",
-  "buildCommand": "pnpm edgeone:build",
+  "installCommand": "pnpm --ignore-workspace edgeone:install",
+  "buildCommand": "pnpm --ignore-workspace edgeone:build",
   "outputDirectory": "dist",
   "nodeVersion": "22.11.0"
 }
