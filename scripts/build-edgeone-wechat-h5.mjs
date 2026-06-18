@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 const root = process.cwd();
 const distDir = join(root, "dist");
 const verifyFile = "hyWOiOCR1C.txt";
-const sourceName = "Sorkai/qiming-uniapp-native/wechat-miniprogramm";
+const sourceName = "Sorkai/qiming-uniapp-native/wechat-miniprogram";
 
 const wechatH5Env = {
   VITE_PUBLIC_PATH: "/",
