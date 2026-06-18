@@ -14,8 +14,8 @@
 
 ## 触发策略
 
-- GitHub `push` 到 `main` 或 `wechat-miniprogram` 时，自动同步同名分支到 CNB。
-- GitHub `workflow_dispatch` 可手动重放 `main` 或 `wechat-miniprogram`。
+- GitHub `push` 到 `wechat-miniprogram` 时，自动同步同名分支到 CNB。
+- GitHub `workflow_dispatch` 可手动重放 `wechat-miniprogram`。
 - CNB 只在 `wechat-miniprogram` 分支收到更新时执行部署流水线。
 
 ## GitHub 侧配置

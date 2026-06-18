@@ -5,7 +5,6 @@ env:
 on:
   push:
     branches:
-      - main
       - wechat-miniprogram
   workflow_dispatch:
     inputs:
@@ -16,7 +15,6 @@ on:
         type: choice
         options:
           - wechat-miniprogram
-          - main
 
 permissions:
   contents: read
