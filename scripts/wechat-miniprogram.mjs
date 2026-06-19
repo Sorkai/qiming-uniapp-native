@@ -181,6 +181,7 @@ function parseArgs(argv) {
     devtoolsWaitMs: Number(
       process.env.QIMING_MINIPROGRAM_DEVTOOLS_WAIT_MS || 16000
     ),
+    devtoolsPort: Number(process.env.WECHAT_DEVTOOLS_PORT || 0),
     headed: false,
     allowLocalhostPreview: false
   };
@@ -228,6 +229,9 @@ function parseArgs(argv) {
     } else if (arg === "--devtools-wait-ms" && next) {
       options.devtoolsWaitMs = Number(next);
       i += 1;
+    } else if (arg === "--devtools-port" && next) {
+      options.devtoolsPort = Number(next);
+      i += 1;
     } else if (arg === "--headed") {
       options.headed = true;
     } else if (arg === "--allow-localhost-preview") {
@@ -247,6 +251,9 @@ function parseArgs(argv) {
   }
   if (!Number.isFinite(options.devtoolsWaitMs) || options.devtoolsWaitMs < 0) {
     throw new Error(`Unsupported DevTools wait time: ${options.devtoolsWaitMs}`);
+  }
+  if (!Number.isFinite(options.devtoolsPort) || options.devtoolsPort < 0) {
+    throw new Error(`Unsupported DevTools port: ${options.devtoolsPort}`);
   }
   options.route = String(options.route || "").trim();
   return { command, options };
@@ -346,6 +353,13 @@ function resolveBrowserPath(explicitPath = "") {
     "/Applications/Chromium.app/Contents/MacOS/Chromium"
   ].filter(Boolean);
   return candidates.find(candidate => existsSync(candidate)) || "";
+}
+
+function withDevToolsPort(args, options) {
+  if (options.devtoolsPort > 0) {
+    args.push("--port", String(options.devtoolsPort));
+  }
+  return args;
 }
 
 function hasPackage(packageName) {
@@ -1571,7 +1585,7 @@ function runOpen(options) {
       "WeChat DevTools CLI not found. Install WeChat DevTools or set WECHAT_DEVTOOLS_CLI."
     );
   }
-  const args = ["open", "--project", buildDir];
+  const args = withDevToolsPort(["open", "--project", buildDir], options);
   if (options.pureSimulator) args.push("--pure-simulator");
   run(cliPath, args);
 }
@@ -1588,7 +1602,7 @@ function runPreview(options) {
     );
   }
   mkdirSync(artifactsDir, { recursive: true });
-  run(cliPath, [
+  run(cliPath, withDevToolsPort([
     "preview",
     "--project",
     buildDir,
@@ -1598,7 +1612,7 @@ function runPreview(options) {
     join(artifactsDir, "preview.png"),
     "--info-output",
     join(artifactsDir, "preview-info.json")
-  ]);
+  ], options));
 }
 
 function runAuto(options) {
@@ -1614,12 +1628,12 @@ function runAuto(options) {
       "WeChat DevTools CLI not found. Install WeChat DevTools or set WECHAT_DEVTOOLS_CLI."
     );
   }
-  const output = runCapture(cliPath, [
+  const output = runCapture(cliPath, withDevToolsPort([
     "auto",
     "--project",
     buildDir,
     "--trust-project"
-  ]);
+  ], options));
   console.log(output.trim());
 }
 
@@ -1638,7 +1652,7 @@ function runUpload(options) {
     );
   }
   mkdirSync(artifactsDir, { recursive: true });
-  run(cliPath, [
+  run(cliPath, withDevToolsPort([
     "upload",
     "--project",
     buildDir,
@@ -1648,7 +1662,7 @@ function runUpload(options) {
     options.desc || `IntellEdu mini program ${options.version}`,
     "--info-output",
     join(artifactsDir, "upload-info.json")
-  ]);
+  ], options));
 }
 
 function printHelp() {
@@ -1679,6 +1693,7 @@ Options:
   --out-dir <path>        Screenshot output directory for h5-smoke.
   --wait-ms <ms>          Per-route wait time for h5-smoke.
   --devtools-wait-ms <ms> Wait time before DevTools screenshot capture.
+  --devtools-port <port>  WeChat DevTools local HTTP server port.
   --headed                Run h5-smoke with a visible browser window.
   --allow-localhost-preview
                           Allow localhost/http preview QR generation for DevTools-only debugging.
