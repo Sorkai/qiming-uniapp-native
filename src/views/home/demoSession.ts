@@ -4,6 +4,8 @@ import { http } from "@/utils/http";
 
 type Role = "student" | "teacher" | "admin";
 
+const FALLBACK_AVATAR = "/logo.svg";
+
 const ACCOUNTS: Record<Role, string> = {
   student: "13111111112",
   teacher: "13111111113",
@@ -53,13 +55,14 @@ async function doLogin(role: Role) {
   });
   document.cookie = `authorized-token=${encodeURIComponent(cookieVal)}; path=/; expires=${new Date(expMs).toUTCString()}`;
   document.cookie = `multiple-tabs=true; path=/; max-age=${7 * 86400}`;
+  localStorage.setItem("qiming-demo-role", role);
 
   localStorage.setItem(
     "user-info",
     JSON.stringify({
       refreshToken: tk,
       expires: expMs,
-      avatar: u.avatar || "",
+      avatar: u.avatar || FALLBACK_AVATAR,
       username: u.mobile,
       nickname: u.nickname,
       roles: [role, "admin", "teacher", "student"],
