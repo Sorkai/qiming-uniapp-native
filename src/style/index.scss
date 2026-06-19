@@ -98,6 +98,16 @@ html.qiming-mini-program-webview.ua-mobile {
   );
 }
 
+html.qiming-mini-program-webview input,
+html.qiming-mini-program-webview textarea,
+html.qiming-mini-program-webview select {
+  font-size: 16px !important;
+}
+
+html.qiming-mini-program-webview img {
+  font-size: 0;
+}
+
 html.qiming-native-webview,
 html.qiming-native-webview body,
 html.qiming-native-webview #app {

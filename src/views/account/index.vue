@@ -631,6 +631,44 @@ const router = useRouter();
 const route = useRoute();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
+const isMiniProgramDemoRoute = computed(
+  () => route.query.qimingMiniProgram === "1" || route.query.qimingNative === "1"
+);
+
+const demoCourses = [
+  {
+    courseId: 1,
+    courseName: "嵌入式 Linux 开发实践教程",
+    thumbUrl: "",
+    isRequired: 1,
+    totalHours: 24,
+    finishedHours: 8
+  },
+  {
+    courseId: 2,
+    courseName: "数据结构动画课件",
+    thumbUrl: "",
+    isRequired: 1,
+    totalHours: 18,
+    finishedHours: 12
+  },
+  {
+    courseId: 3,
+    courseName: "AI 助教学习诊断",
+    thumbUrl: "",
+    isRequired: 0,
+    totalHours: 12,
+    finishedHours: 4
+  },
+  {
+    courseId: 4,
+    courseName: "计算机组成原理测评",
+    thumbUrl: "",
+    isRequired: 1,
+    totalHours: 20,
+    finishedHours: 15
+  }
+];
 
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
 
@@ -768,16 +806,18 @@ const fetchCourseList = async () => {
     const { code, data, msg } = await getFrontendCourseList({
       pageNum: 1,
       pageSize: 100 // 获取足够多的课程数据
-    });
+    }, { timeout: isMiniProgramDemoRoute.value ? 8000 : 0 });
 
     if (code === 200 && data) {
       return data.list || [];
     } else {
+      if (isMiniProgramDemoRoute.value) return demoCourses;
       ElMessage.error(msg || "获取课程列表失败");
       return [];
     }
   } catch (error) {
     console.error("获取课程列表出错:", error);
+    if (isMiniProgramDemoRoute.value) return demoCourses;
     ElMessage.error("获取课程数据失败，请稍后重试");
     return [];
   } finally {
@@ -833,18 +873,28 @@ const loadCoursePageData = async () => {
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       status: courseFilter.value === "all" ? undefined : courseFilter.value
-    });
+    }, { timeout: isMiniProgramDemoRoute.value ? 8000 : 0 });
 
     if (code === 200 && data) {
       coursesData.value.list = data.list || [];
       total.value = data.total || 0;
     } else {
+      if (isMiniProgramDemoRoute.value) {
+        coursesData.value.list = demoCourses;
+        total.value = demoCourses.length;
+        return;
+      }
       ElMessage.error(msg || "获取课程列表失败");
       coursesData.value.list = [];
       total.value = 0;
     }
   } catch (error) {
     console.error("获取课程列表出错:", error);
+    if (isMiniProgramDemoRoute.value) {
+      coursesData.value.list = demoCourses;
+      total.value = demoCourses.length;
+      return;
+    }
     ElMessage.error("获取课程数据失败，请稍后重试");
     coursesData.value.list = [];
     total.value = 0;

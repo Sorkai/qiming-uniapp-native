@@ -177,11 +177,16 @@ export const getFrontendCourseList = (params: {
   pageNum: number;
   pageSize?: number;
   status?: string;
-}) => {
+}, options: { timeout?: number } = {}) => {
+  const config = {
+    params,
+    ...(options.timeout !== undefined ? { timeout: options.timeout } : {})
+  };
+
   return http.request<ApiResponse<CourseListResult>>(
     "get",
     "/edu/frontend/v1/course/list",
-    { params }
+    config
   );
 };
 

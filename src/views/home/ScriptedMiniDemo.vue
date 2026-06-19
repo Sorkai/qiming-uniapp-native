@@ -560,9 +560,9 @@ const radarPoints = computed(() => {
   article {
     min-width: 0;
     padding: 10px 12px;
-    opacity: 0;
-    transform: translateY(8px);
-    animation: smd-rise 0.45s ease-out forwards;
+    opacity: 1;
+    transform: none;
+    animation: smd-rise 0.45s ease-out both;
 
     + article {
       border-left: 1px solid var(--smd-border);
@@ -648,6 +648,7 @@ const radarPoints = computed(() => {
     );
     border-radius: 6px 6px 0 0;
     box-shadow: 0 14px 30px -18px var(--bar-c);
+    transform: scaleY(1);
     animation: smd-grow 0.7s ease-out both;
     transform-origin: bottom;
   }
@@ -681,8 +682,8 @@ const radarPoints = computed(() => {
     0 5px 10px color-mix(in srgb, var(--smd-accent) 24%, transparent)
   );
   stroke-dasharray: 210;
-  stroke-dashoffset: 210;
-  animation: smd-draw 1.2s ease-out forwards;
+  stroke-dashoffset: 0;
+  animation: smd-draw 1.2s ease-out both;
 }
 
 .smd__pipeline {
@@ -742,9 +743,9 @@ const radarPoints = computed(() => {
   background: #fff;
   border: 1px solid color-mix(in srgb, var(--smd-accent) 24%, var(--smd-border));
   border-radius: 10px;
-  opacity: 0;
-  transform: translateY(10px);
-  animation: smd-rise 0.5s ease-out forwards;
+  opacity: 1;
+  transform: none;
+  animation: smd-rise 0.5s ease-out both;
 
   span {
     display: inline-grid;
@@ -833,9 +834,9 @@ const radarPoints = computed(() => {
     gap: 8px;
     align-items: center;
     min-width: 0;
-    opacity: 0;
-    transform: translateX(-8px);
-    animation: smd-log 0.45s ease-out forwards;
+    opacity: 1;
+    transform: none;
+    animation: smd-log 0.45s ease-out both;
   }
 
   span {
@@ -1048,6 +1049,11 @@ const radarPoints = computed(() => {
 }
 
 @keyframes smd-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1057,6 +1063,10 @@ const radarPoints = computed(() => {
 @keyframes smd-grow {
   from {
     transform: scaleY(0.18);
+  }
+
+  to {
+    transform: scaleY(1);
   }
 }
 
@@ -1069,6 +1079,10 @@ const radarPoints = computed(() => {
 }
 
 @keyframes smd-draw {
+  from {
+    stroke-dashoffset: 210;
+  }
+
   to {
     stroke-dashoffset: 0;
   }
@@ -1081,6 +1095,11 @@ const radarPoints = computed(() => {
 }
 
 @keyframes smd-log {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
   to {
     opacity: 1;
     transform: translateX(0);

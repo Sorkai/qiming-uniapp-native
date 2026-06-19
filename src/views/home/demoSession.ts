@@ -5,6 +5,11 @@ import { http } from "@/utils/http";
 type Role = "student" | "teacher" | "admin";
 
 const FALLBACK_AVATAR = "/logo.svg";
+const ROLE_TYPES: Record<Role, number> = {
+  student: 1,
+  teacher: 2,
+  admin: 3
+};
 
 const ACCOUNTS: Record<Role, string> = {
   student: "13111111112",
@@ -33,9 +38,63 @@ interface DetailResp {
   };
 }
 
+function writeDemoSession(
+  role: Role,
+  data: {
+    token: string;
+    expires: number;
+    mobile: string;
+    nickname: string;
+    avatar?: string;
+    roleType: number;
+    userId: number;
+  }
+) {
+  const cookieVal = JSON.stringify({
+    accessToken: data.token,
+    expires: data.expires,
+    refreshToken: data.token
+  });
+  document.cookie = `authorized-token=${encodeURIComponent(cookieVal)}; path=/; expires=${new Date(data.expires).toUTCString()}`;
+  document.cookie = `multiple-tabs=true; path=/; max-age=${7 * 86400}`;
+  localStorage.setItem("qiming-demo-role", role);
+
+  localStorage.setItem(
+    "user-info",
+    JSON.stringify({
+      accessToken: data.token,
+      refreshToken: data.token,
+      expires: data.expires,
+      avatar: data.avatar || FALLBACK_AVATAR,
+      username: data.mobile,
+      nickname: data.nickname,
+      roles: [role, "admin", "teacher", "student"],
+      permissions: ["*:*:*"],
+      roleType: data.roleType,
+      userId: data.userId
+    })
+  );
+  currentRole = role;
+}
+
+function writeFallbackDemoSession(role: Role) {
+  const expires = Date.now() + 7 * 86400 * 1000;
+  writeDemoSession(role, {
+    token: `demo-${role}-${Date.now()}`,
+    expires,
+    mobile: ACCOUNTS[role],
+    nickname:
+      role === "student" ? "吴同学" : role === "teacher" ? "教师" : "管理员",
+    avatar: FALLBACK_AVATAR,
+    roleType: ROLE_TYPES[role],
+    userId: role === "student" ? 1001 : role === "teacher" ? 2001 : 3001
+  });
+}
+
 async function doLogin(role: Role) {
   const loginRes = await http.request<LoginResp>("post", "/edu/v1/user/login", {
-    data: { mobile: ACCOUNTS[role], password: PASSWORD }
+    data: { mobile: ACCOUNTS[role], password: PASSWORD },
+    timeout: 8000
   });
   const tk = loginRes.data.accessToken;
   const expMs = loginRes.data.accessExpire * 1000;
@@ -43,42 +102,32 @@ async function doLogin(role: Role) {
   const detailRes = await http.request<DetailResp>(
     "post",
     "/edu/v1/user/detail",
-    { data: {} },
+    { data: {}, timeout: 8000 },
     { headers: { Authorization: `Bearer ${tk}` } }
   );
   const u = detailRes.data.userInfo;
 
-  const cookieVal = JSON.stringify({
-    accessToken: tk,
+  writeDemoSession(role, {
+    token: tk,
     expires: expMs,
-    refreshToken: tk
+    mobile: u.mobile,
+    nickname: u.nickname,
+    avatar: u.avatar,
+    roleType: u.roleType,
+    userId: u.id
   });
-  document.cookie = `authorized-token=${encodeURIComponent(cookieVal)}; path=/; expires=${new Date(expMs).toUTCString()}`;
-  document.cookie = `multiple-tabs=true; path=/; max-age=${7 * 86400}`;
-  localStorage.setItem("qiming-demo-role", role);
-
-  localStorage.setItem(
-    "user-info",
-    JSON.stringify({
-      refreshToken: tk,
-      expires: expMs,
-      avatar: u.avatar || FALLBACK_AVATAR,
-      username: u.mobile,
-      nickname: u.nickname,
-      roles: [role, "admin", "teacher", "student"],
-      permissions: ["*:*:*"],
-      roleType: u.roleType,
-      userId: u.id
-    })
-  );
-  currentRole = role;
 }
 
 export async function ensureDemoSession(role: Role = "teacher") {
   if (currentRole === role) return;
   if (inflight) await inflight;
   if (currentRole === role) return;
-  inflight = doLogin(role).finally(() => (inflight = null));
+  inflight = doLogin(role)
+    .catch(error => {
+      console.warn("[DemoSession] Falling back to local demo session", error);
+      writeFallbackDemoSession(role);
+    })
+    .finally(() => (inflight = null));
   await inflight;
 }
 

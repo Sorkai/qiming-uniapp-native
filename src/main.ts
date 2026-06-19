@@ -123,6 +123,16 @@ function resolveMiniProgramDocumentTitle(
   role: string,
   routeTitle?: unknown
 ) {
+  const titleFallbacks: Record<string, string> = {
+    "menus.pureHome": "启明智教",
+    "menus.pureLogin": "登录",
+    "menus.pureEmpty": "启明智教",
+    "menus.aiPPT": "AI 课件",
+    "menus.virtualLab": "虚拟实验室",
+    "menus.competition": "综合赛事",
+    "menus.todo": "待办"
+  };
+
   if (path === "/welcome/index") {
     if (role === "admin") return "管理工作台";
     if (role === "teacher") return "教师工作台";
@@ -141,7 +151,10 @@ function resolveMiniProgramDocumentTitle(
   if (path.startsWith("/student-exam-center/do")) return "参加考试";
   if (path.startsWith("/exam-paper/result")) return "考试结果";
   if (typeof routeTitle === "string" && routeTitle.trim()) {
-    return routeTitle.trim();
+    const normalizedTitle = routeTitle.trim();
+    if (titleFallbacks[normalizedTitle]) return titleFallbacks[normalizedTitle];
+    if (normalizedTitle.startsWith("menus.")) return "启明智教";
+    return normalizedTitle;
   }
   return "启明智教";
 }

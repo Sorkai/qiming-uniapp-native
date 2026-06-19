@@ -64,6 +64,8 @@
                   ref="phoneInputRef"
                   v-model="loginForm.username"
                   type="text"
+                  inputmode="text"
+                  autocomplete="username"
                   placeholder=""
                   maxlength="30"
                   @focus="isPhoneFocused = true"
@@ -105,6 +107,7 @@
                     ref="passwordInputRef"
                     v-model="loginForm.password"
                     :type="showLoginPassword ? 'text' : 'password'"
+                    autocomplete="current-password"
                     placeholder=""
                     @focus="isPasswordFocused = true"
                     @blur="isPasswordFocused = false"
@@ -167,6 +170,8 @@
                     <input
                       v-model="loginForm.smsCode"
                       type="text"
+                      inputmode="numeric"
+                      autocomplete="one-time-code"
                       placeholder=""
                       maxlength="6"
                       @focus="isCodeFocused = true"
@@ -296,6 +301,8 @@
                 <input
                   v-model="registerForm.phone"
                   type="text"
+                  inputmode="tel"
+                  autocomplete="tel"
                   placeholder=""
                   maxlength="11"
                   @focus="registerPhoneFocused = true"
@@ -333,6 +340,8 @@
                   <input
                     v-model="registerForm.code"
                     type="text"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
                     placeholder=""
                     maxlength="6"
                     @focus="registerCodeFocused = true"
@@ -381,6 +390,7 @@
                 <input
                   v-model="registerForm.password"
                   :type="showRegisterPassword ? 'text' : 'password'"
+                  autocomplete="new-password"
                   placeholder=""
                   @focus="registerPasswordFocused = true"
                   @blur="registerPasswordFocused = false"
@@ -439,6 +449,7 @@
                 <input
                   v-model="registerForm.confirmPassword"
                   :type="showConfirmPassword ? 'text' : 'password'"
+                  autocomplete="new-password"
                   placeholder=""
                   @focus="confirmPasswordFocused = true"
                   @blur="confirmPasswordFocused = false"

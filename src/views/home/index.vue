@@ -752,7 +752,7 @@ import IconZap from "@/assets/home-icons/zap.svg?component";
 
 const router = useRouter();
 const userStore = useUserStoreHook();
-const logo = "/logo.svg?v=qiming-smart-edu";
+const logo = "/icons/app-192.png?v=qiming-smart-edu";
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const activeShowcaseIndex = ref(0);
@@ -3425,17 +3425,22 @@ onUnmounted(() => {
 }
 
 :global(html.qiming-mini-program-webview .nx-nav) {
+  min-height: 64px !important;
   color: var(--nx-text) !important;
-  background: rgb(255 255 255 / 94%) !important;
-  border-bottom-color: var(--nx-border) !important;
-  box-shadow: 0 1px 0 rgb(15 23 42 / 6%) !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 98%), rgb(248 250 255 / 94%)),
+    #fff !important;
+  border-bottom: 1px solid rgb(226 232 240 / 88%) !important;
+  box-shadow:
+    0 1px 0 rgb(15 23 42 / 6%),
+    0 12px 28px rgb(15 23 42 / 6%) !important;
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
 }
 
 :global(html.qiming-mini-program-webview .nx-nav__brand img) {
   background: #fff;
-  box-shadow: none !important;
+  box-shadow: 0 0 0 4px #fff !important;
 }
 
 :global(html.qiming-mini-program-webview .nx-bento),
@@ -3450,6 +3455,55 @@ onUnmounted(() => {
       .nx-bento:not(.nx-bento--wide)
       .nx-bento__inset--scripted
   ) {
+  display: block !important;
   min-height: clamp(320px, 54vh, 420px);
+  overflow: hidden !important;
+  background: #fff !important;
+}
+
+:global(html.qiming-mini-program-webview .nx-bento__media) {
+  min-height: 320px;
+  background: color-mix(in srgb, var(--bento-color, #4a90e2) 10%, #fff) !important;
+}
+
+:global(html.qiming-mini-program-webview .nx-bento:not(.nx-bento--wide) .nx-bento__media) {
+  min-height: 340px;
+}
+
+:global(html.qiming-mini-program-webview .nx-steps) {
+  min-height: 180px;
+}
+
+:global(html.qiming-mini-program-webview .nx-steps li) {
+  visibility: visible !important;
+}
+
+:global(html.qiming-mini-program-webview .smd),
+:global(html.qiming-mini-program-webview .smd__workspace),
+:global(html.qiming-mini-program-webview .smd__main),
+:global(html.qiming-mini-program-webview .smd__viz),
+:global(html.qiming-mini-program-webview .smd__pipeline),
+:global(html.qiming-mini-program-webview .smd__stack),
+:global(html.qiming-mini-program-webview .smd__console) {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+:global(html.qiming-mini-program-webview .smd__metrics article),
+:global(html.qiming-mini-program-webview .smd__nodes article),
+:global(html.qiming-mini-program-webview .smd__console div),
+:global(html.qiming-mini-program-webview .smd__radarFill) {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+:global(html.qiming-mini-program-webview .smd__bars article i) {
+  transform: scaleY(1) !important;
+}
+
+:global(html.qiming-mini-program-webview .smd__radarLine) {
+  stroke-dashoffset: 0 !important;
 }
 </style>
