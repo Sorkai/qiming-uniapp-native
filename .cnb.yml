@@ -17,8 +17,8 @@ wechat-miniprogram:
             corepack enable
             corepack prepare pnpm@9 --activate
             node -v
-            pnpm -v
-            pnpm --ignore-workspace config set store-dir /root/.local/share/pnpm/store
+            (cd ~ && pnpm -v)
+            pnpm --global config set store-dir /root/.local/share/pnpm/store
 
         - name: Install dependencies
           script: |
