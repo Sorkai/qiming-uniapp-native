@@ -1067,7 +1067,7 @@ watch(
   flex: 1;
   min-width: 0;
   height: 100%;
-  font-size: 15px;
+  font-size: 16px;
   color: #1a1a2e;
   outline: none;
   background: transparent;
@@ -1327,7 +1327,7 @@ watch(
     height: 44px;
 
     input {
-      font-size: 14px;
+      font-size: 16px;
     }
 
     .floating-label {

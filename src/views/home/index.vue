@@ -716,7 +716,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-import logo from "@/assets/logo.png";
 import avatarVideo from "@/assets/生成数字人待机视频.mp4";
 import ScriptedDemo from "./ScriptedDemo.vue";
 import ScriptedMiniDemo from "./ScriptedMiniDemo.vue";
@@ -753,6 +752,7 @@ import IconZap from "@/assets/home-icons/zap.svg?component";
 
 const router = useRouter();
 const userStore = useUserStoreHook();
+const logo = "/logo.svg?v=qiming-smart-edu";
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const activeShowcaseIndex = ref(0);
@@ -767,6 +767,37 @@ const homeDragState = {
   startY: 0,
   lastX: 0,
   lastY: 0
+};
+
+const isMiniProgramWebView = () => {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return false;
+  }
+
+  const root = document.documentElement;
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?") + 1)
+    : "";
+  const hashParams = new URLSearchParams(hashQuery);
+
+  try {
+    return (
+      root.classList.contains("qiming-mini-program-webview") ||
+      root.dataset.qimingMiniProgram === "true" ||
+      searchParams.get("qimingMiniProgram") === "1" ||
+      hashParams.get("qimingMiniProgram") === "1" ||
+      localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+      sessionStorage.getItem("qimingMiniProgramWebView") === "1"
+    );
+  } catch {
+    return (
+      root.classList.contains("qiming-mini-program-webview") ||
+      root.dataset.qimingMiniProgram === "true" ||
+      searchParams.get("qimingMiniProgram") === "1" ||
+      hashParams.get("qimingMiniProgram") === "1"
+    );
+  }
 };
 
 const userInfo = computed(() => {
@@ -1580,7 +1611,13 @@ onMounted(() => {
   document.addEventListener("click", handleHomeDragClickCapture, true);
   startShowcaseTimer();
 
-  // GSAP: Bento Cards Reveal
+  if (isMiniProgramWebView()) {
+    gsap.set(".nx-bento, .nx-steps li", { opacity: 1, x: 0, y: 0 });
+    gsap.set(".nx-sat", { x: 0, y: 0, rotation: 0 });
+    ScrollTrigger.refresh();
+    return;
+  }
+
   gsap.from(".nx-bento", {
     y: 40,
     opacity: 0,
@@ -1593,7 +1630,6 @@ onMounted(() => {
     }
   });
 
-  // GSAP: Hero satellites floating
   gsap.to(".nx-sat", {
     y: "random(-10, 10)",
     x: "random(-5, 5)",
@@ -1604,7 +1640,6 @@ onMounted(() => {
     ease: "sine.inOut"
   });
 
-  // GSAP: Workflow Steps Sequential Reveal
   gsap.from(".nx-steps li", {
     x: -30,
     opacity: 0,
@@ -3387,5 +3422,34 @@ onUnmounted(() => {
   .nx-foot__legal {
     text-align: left;
   }
+}
+
+:global(html.qiming-mini-program-webview .nx-nav) {
+  color: var(--nx-text) !important;
+  background: rgb(255 255 255 / 94%) !important;
+  border-bottom-color: var(--nx-border) !important;
+  box-shadow: 0 1px 0 rgb(15 23 42 / 6%) !important;
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+}
+
+:global(html.qiming-mini-program-webview .nx-nav__brand img) {
+  background: #fff;
+  box-shadow: none !important;
+}
+
+:global(html.qiming-mini-program-webview .nx-bento),
+:global(html.qiming-mini-program-webview .nx-steps li) {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+:global(html.qiming-mini-program-webview .nx-bento__inset--scripted),
+:global(
+    html.qiming-mini-program-webview
+      .nx-bento:not(.nx-bento--wide)
+      .nx-bento__inset--scripted
+  ) {
+  min-height: clamp(320px, 54vh, 420px);
 }
 </style>

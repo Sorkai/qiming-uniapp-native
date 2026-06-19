@@ -7,7 +7,7 @@ export default [
     name: "Home",
     component: () => import("@/views/home/index.vue"),
     meta: {
-      title: $t("menus.pureHome"),
+      title: "启明智教",
       showLink: false,
       rank: 100
     }

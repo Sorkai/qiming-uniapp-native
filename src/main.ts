@@ -126,7 +126,7 @@ function resolveMiniProgramDocumentTitle(
   if (path === "/welcome/index") {
     if (role === "admin") return "管理工作台";
     if (role === "teacher") return "教师工作台";
-    return "IntellEdu";
+    return "启明智教";
   }
   if (path === "/account") return "学生主页";
   if (path === "/course/list") return "课程";
@@ -143,7 +143,7 @@ function resolveMiniProgramDocumentTitle(
   if (typeof routeTitle === "string" && routeTitle.trim()) {
     return routeTitle.trim();
   }
-  return "IntellEdu";
+  return "启明智教";
 }
 
 function applyNativeWebViewRuntime() {
@@ -152,7 +152,7 @@ function applyNativeWebViewRuntime() {
   const { isNative, isMiniProgram, nativeStatusTop } = readNativeQueryParams();
   if (!isNative) return;
 
-  document.title = "IntellEdu";
+  document.title = "启明智教";
   const root = document.documentElement;
   root.classList.add("qiming-native-webview");
   root.dataset.qimingNative = "true";
