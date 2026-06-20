@@ -1,6 +1,6 @@
-# Hi👋 hello the next generation juiced up native Android / iOS app in the edu area presented by ycxj Jilin
+# Hi👋 hello the next generation juiced up Android / iOS / WeChat mini program in the edu area presented by ycxj Jilin
 
-## ccut 108 全新 启明智教 (Qimingedu) - Android / iOS 原生客户端
+## ccut 108 全新 启明智教 (Qimingedu) - Android / iOS 原生客户端与微信小程序
 
 ### Checkout from the pics first Stu Teacher and Admin
 
@@ -49,7 +49,7 @@ organization, or commercial environment without the project owner's prior writte
 
 ## 项目简介
 
-**启明智教** 是一款由 AI 驱动的智能化教育与课堂监控平台 Android / iOS 原生客户端。本项目致力于通过先进的人工智能技术优化教学流程，为师生提供高效、个性化的教育互动体验。客户端采用 UniApp 框架与双原生容器线并行开发，分别优化 Android 与 iOS 的原生渲染、打包和真机验证体验，保障复杂的交互与数据流依然丝滑流畅。
+**启明智教** 是一款由 AI 驱动的智能化教育与课堂监控平台，已覆盖 Android 原生客户端、iOS 原生客户端与微信小程序端。本项目致力于通过先进的人工智能技术优化教学流程，为师生提供高效、个性化的教育互动体验。客户端采用 UniApp 框架与多端容器线并行开发，分别优化 Android、iOS 与微信 `web-view` 小程序的渲染、打包和真机验证体验，保障复杂的交互与数据流依然丝滑流畅。
 
 依托平台强大的微服务后端架构（基于 Go-Zero 与 Python FastAPI），客户端无缝接入了核心的 **EduClaw 智能体**。同时，结合底层的高效 **SAHR (Semantic Adaptive Hybrid Retrieval) 语义自适应混合检索框架**（精确调优的融合权重：稀疏检索 0.7，稠密检索 0.3），客户端能够在海量教学知识库中实现极高精度的检索、问答与辅助决策。
 
@@ -74,11 +74,11 @@ organization, or commercial environment without the project owner's prior writte
 - **启明智教精调的垂直领域大模型**
 - **----还有更多----**
 
-## Android / iOS 双线工程设计
+## Android / iOS / 微信小程序多端工程设计
 
-本仓库不是 Android 工程旁边临时补一个 iOS 工程，而是一个共享业务层、
-双原生容器线并行维护的移动端仓库。Android 与 iOS 可以在同一仓库内各自
-演进、各自验证、各自打包，同时复用同一套业务页面、接口和设计语言。
+本仓库不是 Android 工程旁边临时补一个 iOS 工程，也不是另起炉灶做小程序，
+而是一个共享业务层、多端容器线并行维护的移动端仓库。Android、iOS 与微信小程序
+可以在同一仓库内各自演进、各自验证、各自打包，同时复用同一套业务页面、接口和设计语言。
 
 - **共享业务层:** 仓库根目录的 Vue/Vite/UniApp 业务源码、公共组件、接口、
   主题和路由是三端角色（学生端、教师端、管理端）共同依赖的产品层。
@@ -90,7 +90,8 @@ organization, or commercial environment without the project owner's prior writte
   `codex/ios-native-tooling`。
 - **微信小程序线:** `native-app/` 继续作为 uni-app 小程序源码入口，通过
   `build:mp-weixin` 生成 `dist/build/mp-weixin`，微信开发者工具负责模拟器、
-  预览、上传和自动化验证。详见 `doc/wechat-miniprogram-workflow.md`。
+  预览、上传和自动化验证；小程序 H5 业务域名为 `https://aiedu-mp.intelledu.cn`。
+  详见 `doc/wechat-miniprogram-workflow.md`。
 - **端专属边界:** 平台问题优先落在对应原生线、平台 class、平台脚本或平台
   测试中。Android 专属改动不应要求 iOS 迁就，iOS 专属改动也不应隐式改变
   Android 行为，微信小程序专属改动也不应隐式改变 Android/iOS 行为。
@@ -178,6 +179,7 @@ pnpm mini:h5-smoke -- --dev-server http://localhost:8851
 pnpm build:wechat-h5
 pnpm mini:preflight -- --dev-server https://aiedu-mp.intelledu.cn --role teacher --entry /welcome/index
 pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role teacher --entry /welcome/index
+WECHAT_MINIPROGRAM_APPID=wx5a9db47d4dcce103 pnpm mini:upload -- --dev-server https://aiedu-mp.intelledu.cn --entry /home --version <version> --desc "<release note>"
 ```
 
 微信端从 `main` 单独拉分支推进，继续复用 `native-app/` 的 uni-app 工程。
@@ -199,6 +201,9 @@ HTTPS H5 地址可访问性、小程序构建产物和三端启动矩阵。
 当前自动化发布链路为 GitHub Actions 同步 `wechat-miniprogram` 到 CNB，再由 CNB 执行 `.cnb.yml`
 完成构建并通过 EdgeOne CLI 发布；详情见 `doc/CI-CD-CNB.md`。
 `https://aiedu-api.intelledu.cn` 是后端 API 地址，不能作为 `web-view` 页面入口。
+首页页脚备案链接需保持可点击：ICP备案跳转 `https://beian.miit.gov.cn/`，
+公网安备跳转 `https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511`，
+对应备案图标位于 `public/icons/beian-icp.webp` 与 `public/icons/beian-mps.webp`。
 
 ## 当前 iOS 验收状态
 

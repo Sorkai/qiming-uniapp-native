@@ -691,9 +691,27 @@
             </p>
           </div>
         </div>
-        <p class="nx-foot__legal">
-          吉ICP备2025035820号-1 · 吉公网安备22017302000511号 · ©2024 Est.
-        </p>
+        <div class="nx-foot__legal" aria-label="网站备案信息">
+          <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img :src="icpBeianIcon" alt="" aria-hidden="true" />
+            <span>吉ICP备2025035820号-1</span>
+          </a>
+          <span class="nx-foot__dot" aria-hidden="true">·</span>
+          <a
+            href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img :src="mpsBeianIcon" alt="" aria-hidden="true" />
+            <span>吉公网安备22017302000511号</span>
+          </a>
+          <span class="nx-foot__dot" aria-hidden="true">·</span>
+          <span>©2024 Est.</span>
+        </div>
       </div>
     </footer>
   </div>
@@ -753,6 +771,8 @@ import IconZap from "@/assets/home-icons/zap.svg?component";
 const router = useRouter();
 const userStore = useUserStoreHook();
 const logo = "/icons/app-192.png?v=qiming-smart-edu";
+const icpBeianIcon = "/icons/beian-icp.webp";
+const mpsBeianIcon = "/icons/beian-mps.webp";
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const activeShowcaseIndex = ref(0);
@@ -3286,10 +3306,39 @@ onUnmounted(() => {
 }
 
 .nx-foot__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
   margin: 0;
   font-size: 12px;
   color: var(--nx-text-muted);
   text-align: right;
+
+  a {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s;
+
+    &:hover {
+      color: var(--nx-text);
+    }
+  }
+
+  img {
+    display: block;
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+  }
+}
+
+.nx-foot__dot {
+  color: rgb(0 0 0 / 24%);
 }
 
 /* =========================================================
@@ -3420,6 +3469,7 @@ onUnmounted(() => {
     gap: 16px;
   }
   .nx-foot__legal {
+    justify-content: flex-start;
     text-align: left;
   }
 }
