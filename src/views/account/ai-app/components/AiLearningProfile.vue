@@ -15,6 +15,7 @@ import {
   Clock
 } from "@element-plus/icons-vue";
 import {
+  assistantApiErrorMessage,
   createAssistantProfileCorrection,
   getAssistantProfileCurrent,
   listAssistantProfileCorrections,
@@ -30,6 +31,7 @@ import {
 const props = defineProps<{
   courseId?: number;
   targetStudentId?: number;
+  requiresTargetStudent?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -75,6 +77,20 @@ const canCreateCorrection = computed(() => !!props.targetStudentId);
 const currentDimension = computed(() =>
   dimensions.value.find(item => (item.key || item.label) === correctionDimension.value)
 );
+const contextWarning = computed(() => {
+  if (!props.courseId) return "请先选择课程";
+  if (props.requiresTargetStudent && !props.targetStudentId) {
+    return "请先选择学生";
+  }
+  return "";
+});
+const hasRequiredContext = computed(() => !contextWarning.value);
+
+const ensureCourseContext = () => {
+  if (hasRequiredContext.value) return true;
+  ElMessage.warning(contextWarning.value || "请先选择课程");
+  return false;
+};
 
 const percentLabel = (value?: number) => {
   if (value === undefined || value === null) return "暂无";
@@ -90,38 +106,58 @@ const decisionType = (decision?: string) => {
 };
 
 const loadProfile = async () => {
+  if (!hasRequiredContext.value) {
+    profile.value = null;
+    profileHistory.value = [];
+    profileEvents.value = [];
+    profileCorrections.value = [];
+    return;
+  }
   loading.value = true;
   try {
     const params = {
       course_id: props.courseId,
       target_student_id: props.targetStudentId
     };
-    const [currentResp, historyResp, eventsResp, correctionsResp] =
-      await Promise.all([
+    const [currentResult, historyResult, eventsResult, correctionsResult] =
+      await Promise.allSettled([
         getAssistantProfileCurrent(params),
         listAssistantProfileHistory({ ...params, limit: 6 }),
         listAssistantProfileEvents({ ...params, limit: 8 }),
         listAssistantProfileCorrections({ ...params, limit: 6 })
       ]);
-    profile.value = currentResp.data;
-    profileHistory.value = historyResp.data.items || [];
-    profileEvents.value = eventsResp.data.items || [];
-    profileCorrections.value = correctionsResp.data.items || [];
-    if (!correctionDimension.value && currentResp.data.dimensions?.length) {
-      const first = currentResp.data.dimensions[0];
+    if (currentResult.status === "fulfilled") {
+      profile.value = currentResult.value?.data || null;
+    } else {
+      profile.value = null;
+      console.warn("[AiLearningProfile] 当前画像接口加载失败:", currentResult.reason);
+    }
+    profileHistory.value =
+      historyResult.status === "fulfilled"
+        ? historyResult.value?.data?.items || []
+        : [];
+    profileEvents.value =
+      eventsResult.status === "fulfilled" ? eventsResult.value?.data?.items || [] : [];
+    profileCorrections.value =
+      correctionsResult.status === "fulfilled"
+        ? correctionsResult.value?.data?.items || []
+        : [];
+    if (!correctionDimension.value && profile.value?.dimensions?.length) {
+      const first = profile.value.dimensions[0];
       correctionDimension.value = first.key || first.label;
       correctionValue.value = first.value || Math.round(first.score || 80);
     }
-    emit("profile-loaded", currentResp.data);
+    if (profile.value) emit("profile-loaded", profile.value);
   } catch (error: any) {
     console.error("[AiLearningProfile] 学习画像加载失败:", error);
-    ElMessage.error(error?.message || "学习画像加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习画像加载失败"));
   } finally {
     loading.value = false;
   }
 };
 
 const handleRefresh = async () => {
+  if (!ensureCourseContext()) return;
   refreshing.value = true;
   try {
     const { data } = await refreshAssistantProfile({
@@ -137,13 +173,14 @@ const handleRefresh = async () => {
     await loadProfile();
   } catch (error: any) {
     console.error("[AiLearningProfile] 学习画像刷新失败:", error);
-    ElMessage.error(error?.message || "学习画像刷新失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习画像刷新失败"));
   } finally {
     refreshing.value = false;
   }
 };
 
 const handleSubmitCorrection = async () => {
+  if (!ensureCourseContext()) return;
   if (!props.targetStudentId) {
     ElMessage.warning("请选择需要纠偏的学生");
     return;
@@ -176,7 +213,7 @@ const handleSubmitCorrection = async () => {
     await loadProfile();
   } catch (error: any) {
     console.error("[AiLearningProfile] 学习画像纠偏失败:", error);
-    ElMessage.error(error?.message || "学习画像纠偏失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习画像纠偏失败"));
   } finally {
     correctionSubmitting.value = false;
   }

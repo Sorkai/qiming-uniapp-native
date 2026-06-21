@@ -50,6 +50,7 @@ import { useUserStore } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
 import { type DataInfo, userKey } from "@/utils/auth";
 import {
+  assistantApiErrorMessage,
   createAssistantConversation,
   getAssistantBootstrap,
   getAssistantConversation,
@@ -322,6 +323,7 @@ const myStudents = ref<StudentView[]>([]);
 const selectedStudentId = ref<number | undefined>();
 const conversations = ref<ConversationView[]>([]);
 const activeConversationId = ref("");
+const manuallySelectedCourseId = ref<number | undefined>();
 
 const routeCourseId = computed(() => {
   const raw = route.query.courseId || route.query.course_id;
@@ -345,6 +347,50 @@ const selectedCourseName = computed(() => effectiveCourse.value?.name || "");
 const selectedTargetStudentId = computed(() =>
   isStaffMode.value ? selectedStudentId.value : undefined
 );
+const courseScopedRails = [
+  "generation",
+  "path",
+  "profile",
+  "assessment",
+  "governance"
+];
+const studentScopedRails = ["generation", "path", "profile", "assessment"];
+const isCourseSwitching = ref(false);
+const selectedCoursePickerId = computed({
+  get: () => selectedCourseId.value,
+  set: courseId => {
+    void handleCourseContextChange(Number(courseId));
+  }
+});
+
+async function handleCourseContextChange(courseId?: number) {
+  const normalizedCourseId = Number(courseId);
+  if (!Number.isFinite(normalizedCourseId) || normalizedCourseId <= 0) return;
+  const targetCourse = myCourses.value.find(
+    course => course.id === normalizedCourseId
+  );
+  if (!targetCourse) return;
+  if (targetCourse.id === selectedCourseId.value) {
+    activeCourse.value = targetCourse;
+    manuallySelectedCourseId.value = targetCourse.id;
+    return;
+  }
+
+  isCourseSwitching.value = true;
+  manuallySelectedCourseId.value = targetCourse.id;
+  activeCourse.value = targetCourse;
+  activeConversationId.value = "";
+  if (isStaffMode.value) {
+    selectedStudentId.value = undefined;
+    myStudents.value = [];
+  }
+  resetChatGreeting();
+  try {
+    await loadAssistantBootstrap();
+  } finally {
+    isCourseSwitching.value = false;
+  }
+}
 
 // 【请求还原】：保留原版所有的侧边功能项
 const railItems = ref([
@@ -746,13 +792,17 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
 
   selectedStudentId.value = data.selected_student_id || myStudents.value[0]?.id;
   const previousCourseId = activeCourse.value?.id;
+  const manuallySelectedCourse = manuallySelectedCourseId.value
+    ? myCourses.value.find(course => course.id === manuallySelectedCourseId.value)
+    : null;
   const routeSelectedCourse = routeCourseId.value
     ? myCourses.value.find(course => course.id === routeCourseId.value)
     : null;
   const preservedCourse = previousCourseId
     ? myCourses.value.find(course => course.id === previousCourseId)
     : null;
-  activeCourse.value = routeSelectedCourse || preservedCourse || null;
+  activeCourse.value =
+    manuallySelectedCourse || routeSelectedCourse || preservedCourse || null;
   selectedAgentKey.value = data.agents?.[0]?.key || "";
   selectedModelKey.value = data.models?.[0]?.key || "";
   thinkingModeKey.value = data.thinking_modes?.[0]?.key || "";
@@ -779,7 +829,7 @@ const loadAssistantBootstrap = async () => {
     await loadConversationGroups();
   } catch (error: any) {
     console.error("[AiApp] 学习助手启动上下文加载失败:", error);
-    ElMessage.error(error?.message || "学习助手启动上下文加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习助手启动上下文加载失败"));
   } finally {
     isBootstrapping.value = false;
   }
@@ -826,13 +876,17 @@ const loadConversationMessages = async (conversation: ConversationView) => {
     if (!messages.value.length) resetChatGreeting();
   } catch (error: any) {
     console.error("[AiApp] 学习助手会话消息加载失败:", error);
-    ElMessage.error(error?.message || "会话消息加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "会话消息加载失败"));
   }
 };
 
 const handleSwitchCourse = (courseName: string) => {
   const target = myCourses.value.find(course => course.name === courseName);
   if (!target) return;
+  if (target.id !== selectedCourseId.value) {
+    void handleCourseContextChange(target.id);
+    return;
+  }
   activeCourse.value = target;
   activeConversationId.value = "";
   resetChatGreeting();
@@ -893,13 +947,27 @@ const handleQuickInteraction = (text: string) => {
 
 const handleNewChat = async (payload: { course: string }) => {
   const course = myCourses.value.find(item => item.name === payload.course);
-  if (course) activeCourse.value = course;
+  if (course && course.id !== selectedCourseId.value) {
+    await handleCourseContextChange(course.id);
+  } else if (course) {
+    activeCourse.value = course;
+  }
+  const courseId = course?.id || selectedCourseId.value;
+  const courseName = course?.name || payload.course;
+  if (!courseId) {
+    ElMessage.warning("请先选择课程");
+    return;
+  }
+  if (isStaffMode.value && !selectedTargetStudentId.value) {
+    ElMessage.warning("请先选择学生");
+    return;
+  }
   resetChatGreeting();
   try {
     const { data } = await createAssistantConversation({
-      course_id: course?.id || selectedCourseId.value,
+      course_id: courseId,
       target_student_id: selectedTargetStudentId.value,
-      title: payload.course ? `${payload.course} 学习辅导` : "学习辅导",
+      title: courseName ? `${courseName} 学习辅导` : "学习辅导",
       metadata: {
         ui_entry: "ai_app_sidebar",
         selected_agent: selectedAgentKey.value,
@@ -915,9 +983,9 @@ const handleNewChat = async (payload: { course: string }) => {
     }
     const conversation: AssistantConversationItem = data.conversation || {
       conversation_id: conversationId,
-      title: data.title || (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
+      title: data.title || (courseName ? `${courseName} 学习辅导` : "学习辅导"),
       message_count: 0,
-      course_id: course?.id || selectedCourseId.value,
+      course_id: courseId,
       target_student_id: selectedTargetStudentId.value
     };
     activeConversationId.value = conversation.conversation_id;
@@ -929,7 +997,7 @@ const handleNewChat = async (payload: { course: string }) => {
     ];
   } catch (error: any) {
     console.error("[AiApp] 创建学习助手会话失败:", error);
-    ElMessage.error(error?.message || "创建会话失败");
+    ElMessage.error(assistantApiErrorMessage(error, "创建会话失败"));
     return;
   }
 
@@ -961,7 +1029,12 @@ watch([activeRail, humanCollapsed], () => {
 });
 
 watch(selectedStudentId, () => {
-  if (isBootstrapping.value || !assistantBootstrap.value || !isStaffMode.value)
+  if (
+    isCourseSwitching.value ||
+    isBootstrapping.value ||
+    !assistantBootstrap.value ||
+    !isStaffMode.value
+  )
     return;
   activeConversationId.value = "";
   resetChatGreeting();
@@ -1041,37 +1114,66 @@ onUnmounted(() => {
 
       <!-- 右边总体容器 (主体) -->
       <div class="flex-1 flex flex-col min-w-0">
-        <!-- 教师专属：顶部学生选择器工具栏 -->
+        <!-- 课程 / 学生上下文工具栏 -->
         <div
-          v-if="
-            isStaffMode &&
-            ['path', 'profile', 'assessment'].includes(activeRail)
-          "
+          v-if="courseScopedRails.includes(activeRail)"
           class="flex-none flex items-center justify-end gap-3 bg-white px-6 py-3 border-b border-gray-100 z-10 relative shadow-sm"
         >
-          <span class="text-xs text-gray-500 font-medium">分析对象:</span>
+          <span class="text-xs text-gray-500 font-medium">课程:</span>
           <el-select
-            v-model="selectedStudentId"
-            placeholder="请选择学生"
+            v-model="selectedCoursePickerId"
+            placeholder="请选择课程"
             size="small"
-            style="width: 160px"
-            class="student-select"
+            style="width: 220px"
+            class="course-select"
+            :disabled="isBootstrapping || !myCourses.length"
           >
             <template #prefix>
-              <el-icon><User /></el-icon>
+              <el-icon><FolderOpened /></el-icon>
             </template>
             <el-option
-              v-for="item in myStudents"
+              v-for="item in myCourses"
               :key="item.id"
               :label="item.name"
               :value="item.id"
             >
-              <div class="flex items-center gap-2">
-                <el-avatar :size="18" :src="item.avatar" />
-                <span class="text-sm">{{ item.name }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm truncate">{{ item.name }}</span>
+                <span
+                  v-if="item.subtitle"
+                  class="text-xs text-gray-400 truncate max-w-[110px]"
+                >
+                  {{ item.subtitle }}
+                </span>
               </div>
             </el-option>
           </el-select>
+          <template v-if="isStaffMode && studentScopedRails.includes(activeRail)">
+            <span class="text-xs text-gray-500 font-medium">分析对象:</span>
+            <el-select
+              v-model="selectedStudentId"
+              placeholder="请选择学生"
+              size="small"
+              style="width: 160px"
+              class="student-select"
+              :disabled="isBootstrapping || isCourseSwitching"
+            >
+              <template #prefix>
+                <el-icon><User /></el-icon>
+              </template>
+              <el-option
+                v-for="item in myStudents"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              >
+                <div class="flex items-center gap-2">
+                  <el-avatar :size="18" :src="item.avatar" />
+                  <span class="text-sm">{{ item.name }}</span>
+                </div>
+              </el-option>
+            </el-select>
+          </template>
         </div>
 
         <!-- 主体内容 (第三块) -->
@@ -1352,10 +1454,31 @@ onUnmounted(() => {
           </div>
 
           <div v-else-if="activeRail === `generation`" class="h-full w-full">
-            <div class="h-full bg-white overflow-hidden">
+            <div
+              v-if="isStaffMode && !selectedStudentId"
+              class="h-full w-full flex items-center justify-center bg-white"
+            >
+              <div
+                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
+              >
+                <LottieAnimation
+                  :animationData="emptyStateDevelopmentAnimation"
+                  :width="360"
+                  :height="360"
+                />
+                <h3 class="mt-4 text-lg font-black text-gray-600">
+                  尚未选择学生
+                </h3>
+                <p class="mt-2 text-sm text-gray-400">
+                  请在顶部选择学生以查看或生成个性化教学资源
+                </p>
+              </div>
+            </div>
+            <div v-else class="h-full bg-white overflow-hidden">
               <AiResourceGeneration
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
+                :requires-target-student="isStaffMode"
               />
             </div>
           </div>
@@ -1385,6 +1508,7 @@ onUnmounted(() => {
               <AiLearningPath
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
+                :requires-target-student="isStaffMode"
               />
             </div>
           </div>
@@ -1421,6 +1545,7 @@ onUnmounted(() => {
                 <AiLearningProfile
                   :course-id="selectedCourseId"
                   :target-student-id="selectedTargetStudentId"
+                  :requires-target-student="isStaffMode"
                   @profile-loaded="handleProfileLoaded"
                 />
               </div>
@@ -1462,6 +1587,7 @@ onUnmounted(() => {
               <AiAssessment
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
+                :requires-target-student="isStaffMode"
               />
             </div>
           </div>
@@ -1470,6 +1596,7 @@ onUnmounted(() => {
             <div class="h-full bg-white overflow-hidden">
               <AiGovernanceDashboard
                 :course-id="selectedCourseId"
+                :course-name="selectedCourseName"
                 :is-staff-mode="isStaffMode"
                 @select-student="handleGovernanceSelectStudent"
                 @navigate="handleGovernanceNavigate"

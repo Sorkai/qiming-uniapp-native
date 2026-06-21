@@ -7,6 +7,62 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+const genericAxiosErrorPattern = /^Request failed with status code \d+$/;
+
+const extractEmbeddedAssistantError = (text: string): string | undefined => {
+  const match = text.match(/returned status \d+:\s*(.+)$/);
+  if (!match?.[1]) return undefined;
+  try {
+    return normalizeAssistantErrorText(JSON.parse(match[1]));
+  } catch {
+    return undefined;
+  }
+};
+
+const normalizeAssistantErrorText = (value: unknown): string | undefined => {
+  if (Array.isArray(value)) {
+    const text = value
+      .map(item => normalizeAssistantErrorText(item))
+      .filter(Boolean)
+      .join("; ");
+    return text || undefined;
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const loc = Array.isArray(record.loc) ? record.loc.join(".") : "";
+    const message = normalizeAssistantErrorText(
+      record.msg ?? record.message ?? record.error ?? record.detail
+    );
+    const text = [loc, message].filter(Boolean).join(": ");
+    return text || undefined;
+  }
+  if (typeof value !== "string") return undefined;
+  const text = value.trim();
+  if (!text || genericAxiosErrorPattern.test(text)) return undefined;
+  return extractEmbeddedAssistantError(text) || text;
+};
+
+export const assistantApiErrorMessage = (error: unknown, fallback: string) => {
+  const axiosError = error as any;
+  const data = axiosError?.response?.data;
+  const candidates = [
+    data?.msg,
+    data?.message,
+    data?.error,
+    data?.detail,
+    data?.data?.msg,
+    data?.data?.message,
+    data?.data?.error,
+    data?.data?.detail,
+    typeof data === "string" ? data : undefined,
+    axiosError?.message
+  ];
+  return (
+    candidates.map(item => normalizeAssistantErrorText(item)).find(Boolean) ||
+    fallback
+  );
+};
+
 export interface AssistantBootstrapCourse {
   course_id: number;
   course_name: string;

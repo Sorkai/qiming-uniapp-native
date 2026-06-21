@@ -17,6 +17,7 @@ import {
   Stamp
 } from "@element-plus/icons-vue";
 import {
+  assistantApiErrorMessage,
   createAssistantResourceTask,
   deleteAssistantResource,
   getAssistantTaskTrace,
@@ -39,7 +40,17 @@ import {
 const props = defineProps<{
   courseId?: number;
   targetStudentId?: number;
+  requiresTargetStudent?: boolean;
 }>();
+
+const contextWarning = computed(() => {
+  if (!props.courseId) return "请先选择课程";
+  if (props.requiresTargetStudent && !props.targetStudentId) {
+    return "请先选择学生";
+  }
+  return "";
+});
+const hasRequiredContext = computed(() => !contextWarning.value);
 
 const loading = ref(false);
 const creating = ref(false);
@@ -70,6 +81,22 @@ const editForm = ref({
   knowledge_relevance: 0,
   edit_reason: ""
 });
+
+const ensureCourseContext = () => {
+  if (hasRequiredContext.value) return true;
+  ElMessage.warning(contextWarning.value || "请先选择课程");
+  return false;
+};
+
+const resetResourceSelection = () => {
+  selectedTaskId.value = "";
+  taskLogs.value = [];
+  taskTrace.value = [];
+  detailVisible.value = false;
+  selectedResource.value = null;
+  resourceVersions.value = [];
+  editMode.value = false;
+};
 
 const filteredResources = computed(() => {
   const keyword = searchQuery.value.trim().toLowerCase();
@@ -160,9 +187,15 @@ const reportResourceUsage = async (
 };
 
 const loadResources = async () => {
+  if (!hasRequiredContext.value) {
+    tasks.value = [];
+    resources.value = [];
+    resetResourceSelection();
+    return;
+  }
   loading.value = true;
   try {
-    const [taskResp, resourceResp] = await Promise.all([
+    const [taskResult, resourceResult] = await Promise.allSettled([
       listAssistantResourceTasks({
         course_id: props.courseId,
         target_student_id: props.targetStudentId
@@ -172,11 +205,23 @@ const loadResources = async () => {
         target_student_id: props.targetStudentId
       })
     ]);
-    tasks.value = taskResp.data.list || [];
-    resources.value = resourceResp.data.list || [];
+    tasks.value =
+      taskResult.status === "fulfilled" ? taskResult.value?.data?.list || [] : [];
+    resources.value =
+      resourceResult.status === "fulfilled"
+        ? resourceResult.value?.data?.list || []
+        : [];
+    if (taskResult.status === "rejected" || resourceResult.status === "rejected") {
+      console.warn("[AiResourceGeneration] 部分学习资源接口加载失败", {
+        taskError:
+          taskResult.status === "rejected" ? taskResult.reason : undefined,
+        resourceError:
+          resourceResult.status === "rejected" ? resourceResult.reason : undefined
+      });
+    }
   } catch (error: any) {
     console.error("[AiResourceGeneration] 学习资源加载失败:", error);
-    ElMessage.error(error?.message || "学习资源加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习资源加载失败"));
   } finally {
     loading.value = false;
   }
@@ -185,19 +230,22 @@ const loadResources = async () => {
 const loadTaskLogs = async (taskId: string) => {
   selectedTaskId.value = taskId;
   try {
-    const [logsResp, traceResp] = await Promise.all([
+    const [logsResult, traceResult] = await Promise.allSettled([
       listAssistantResourceTaskLogs(taskId),
-      getAssistantTaskTrace(taskId).catch(() => null)
+      getAssistantTaskTrace(taskId)
     ]);
-    taskLogs.value = logsResp.data.list || [];
-    taskTrace.value = traceResp?.data.trace || [];
+    taskLogs.value =
+      logsResult.status === "fulfilled" ? logsResult.value?.data?.list || [] : [];
+    taskTrace.value =
+      traceResult.status === "fulfilled" ? traceResult.value?.data?.trace || [] : [];
   } catch (error: any) {
     console.error("[AiResourceGeneration] 任务日志加载失败:", error);
-    ElMessage.error(error?.message || "任务日志加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "任务日志加载失败"));
   }
 };
 
 const handleCreateTask = async () => {
+  if (!ensureCourseContext()) return;
   creating.value = true;
   try {
     const { data } = await createAssistantResourceTask({
@@ -219,7 +267,7 @@ const handleCreateTask = async () => {
     if (data.task?.task_id) await loadTaskLogs(data.task.task_id);
   } catch (error: any) {
     console.error("[AiResourceGeneration] 创建资源任务失败:", error);
-    ElMessage.error(error?.message || "创建资源任务失败");
+    ElMessage.error(assistantApiErrorMessage(error, "创建资源任务失败"));
   } finally {
     creating.value = false;
   }
@@ -288,6 +336,7 @@ const loadResourceVersions = async (resourceId: string) => {
 
 const handleCompleteResource = async () => {
   if (!selectedResource.value) return;
+  if (!ensureCourseContext()) return;
   completeSubmitting.value = true;
   try {
     await reportResourceUsage(selectedResource.value, "complete", {
@@ -302,6 +351,7 @@ const handleCompleteResource = async () => {
 
 const handleSubmitFeedback = async () => {
   if (!selectedResource.value) return;
+  if (!ensureCourseContext()) return;
   feedbackSubmitting.value = true;
   try {
     await reportResourceUsage(selectedResource.value, "feedback", {
@@ -324,6 +374,7 @@ const syncSelectedResource = (resource?: AssistantResourceSummary) => {
 
 const handleSaveResource = async () => {
   if (!selectedResource.value) return;
+  if (!ensureCourseContext()) return;
   governanceSubmitting.value = true;
   try {
     const { data } = await updateAssistantResource(selectedResource.value.resource_id, {
@@ -336,7 +387,7 @@ const handleSaveResource = async () => {
     await loadResourceVersions(selectedResource.value.resource_id);
   } catch (error: any) {
     console.error("[AiResourceGeneration] 资源保存失败:", error);
-    ElMessage.error(error?.message || "资源保存失败");
+    ElMessage.error(assistantApiErrorMessage(error, "资源保存失败"));
   } finally {
     governanceSubmitting.value = false;
   }
@@ -344,6 +395,7 @@ const handleSaveResource = async () => {
 
 const handleReviewResource = async (reviewStatus: string) => {
   if (!selectedResource.value) return;
+  if (!ensureCourseContext()) return;
   governanceSubmitting.value = true;
   try {
     const { data } = await reviewAssistantResource(selectedResource.value.resource_id, {
@@ -356,7 +408,7 @@ const handleReviewResource = async (reviewStatus: string) => {
     await loadResources();
   } catch (error: any) {
     console.error("[AiResourceGeneration] 资源审核失败:", error);
-    ElMessage.error(error?.message || "资源审核失败");
+    ElMessage.error(assistantApiErrorMessage(error, "资源审核失败"));
   } finally {
     governanceSubmitting.value = false;
   }
@@ -364,6 +416,7 @@ const handleReviewResource = async (reviewStatus: string) => {
 
 const handlePublishResource = async () => {
   if (!selectedResource.value) return;
+  if (!ensureCourseContext()) return;
   governanceSubmitting.value = true;
   try {
     const { data } = await publishAssistantResource(selectedResource.value.resource_id);
@@ -377,7 +430,7 @@ const handlePublishResource = async () => {
     await loadResources();
   } catch (error: any) {
     console.error("[AiResourceGeneration] 资源发布失败:", error);
-    ElMessage.error(error?.message || "资源发布失败");
+    ElMessage.error(assistantApiErrorMessage(error, "资源发布失败"));
   } finally {
     governanceSubmitting.value = false;
   }
@@ -385,6 +438,7 @@ const handlePublishResource = async () => {
 
 const handleDeleteResource = async () => {
   if (!selectedResource.value) return;
+  if (!ensureCourseContext()) return;
   governanceSubmitting.value = true;
   try {
     const { data } = await deleteAssistantResource(selectedResource.value.resource_id);
@@ -393,14 +447,17 @@ const handleDeleteResource = async () => {
     await loadResources();
   } catch (error: any) {
     console.error("[AiResourceGeneration] 资源删除失败:", error);
-    ElMessage.error(error?.message || "资源删除失败");
+    ElMessage.error(assistantApiErrorMessage(error, "资源删除失败"));
   } finally {
     governanceSubmitting.value = false;
   }
 };
 
 onMounted(loadResources);
-watch(() => [props.courseId, props.targetStudentId], loadResources);
+watch(() => [props.courseId, props.targetStudentId], () => {
+  resetResourceSelection();
+  void loadResources();
+});
 </script>
 
 <template>
@@ -424,6 +481,7 @@ watch(() => [props.courseId, props.targetStudentId], loadResources);
           size="large"
           round
           :loading="creating"
+          :disabled="!hasRequiredContext"
           @click="handleCreateTask"
         >
           <template #icon>

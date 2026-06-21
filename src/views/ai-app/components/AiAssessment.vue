@@ -14,6 +14,7 @@ import {
   Clock
 } from "@element-plus/icons-vue";
 import {
+  assistantApiErrorMessage,
   applyAssistantAssessmentAction,
   getAssistantAssessmentCurrent,
   listAssistantAssessmentActions,
@@ -30,6 +31,7 @@ import {
 const props = defineProps<{
   courseId?: number;
   targetStudentId?: number;
+  requiresTargetStudent?: boolean;
 }>();
 
 const loading = ref(false);
@@ -99,6 +101,20 @@ const scoreLabel = (value?: number) => {
   if (value === undefined || value === null) return "暂无";
   return `${Number(value).toFixed(1)} / 5`;
 };
+const contextWarning = computed(() => {
+  if (!props.courseId) return "请先选择课程";
+  if (props.requiresTargetStudent && !props.targetStudentId) {
+    return "请先选择学生";
+  }
+  return "";
+});
+const hasRequiredContext = computed(() => !contextWarning.value);
+
+const ensureCourseContext = () => {
+  if (hasRequiredContext.value) return true;
+  ElMessage.warning(contextWarning.value || "请先选择课程");
+  return false;
+};
 
 const timelineType = (type: string) => {
   if (["primary", "success", "warning", "danger", "info"].includes(type)) {
@@ -108,31 +124,60 @@ const timelineType = (type: string) => {
 };
 
 const loadAssessment = async () => {
+  if (!hasRequiredContext.value) {
+    assessment.value = null;
+    assessmentActions.value = [];
+    assessmentHistory.value = [];
+    assessmentJobs.value = [];
+    return;
+  }
   loading.value = true;
   try {
     const params = {
       course_id: props.courseId,
       target_student_id: props.targetStudentId
     };
-    const [currentResp, actionsResp, historyResp, jobsResp] = await Promise.all([
+    const [currentResult, actionsResult, historyResult, jobsResult] =
+      await Promise.allSettled([
       getAssistantAssessmentCurrent(params),
       listAssistantAssessmentActions(params),
       listAssistantAssessmentHistory(params),
       listAssistantAssessmentJobs(params)
     ]);
-    assessment.value = currentResp.data;
-    assessmentActions.value = actionsResp.data.list || [];
-    assessmentHistory.value = historyResp.data.list || [];
-    assessmentJobs.value = jobsResp.data.list || [];
+    assessment.value =
+      currentResult.status === "fulfilled" ? currentResult.value?.data || null : null;
+    assessmentActions.value =
+      actionsResult.status === "fulfilled" ? actionsResult.value?.data?.list || [] : [];
+    assessmentHistory.value =
+      historyResult.status === "fulfilled" ? historyResult.value?.data?.list || [] : [];
+    assessmentJobs.value =
+      jobsResult.status === "fulfilled" ? jobsResult.value?.data?.list || [] : [];
+    if (
+      currentResult.status === "rejected" ||
+      actionsResult.status === "rejected" ||
+      historyResult.status === "rejected" ||
+      jobsResult.status === "rejected"
+    ) {
+      console.warn("[AiAssessment] 部分学习评估接口加载失败", {
+        currentError:
+          currentResult.status === "rejected" ? currentResult.reason : undefined,
+        actionsError:
+          actionsResult.status === "rejected" ? actionsResult.reason : undefined,
+        historyError:
+          historyResult.status === "rejected" ? historyResult.reason : undefined,
+        jobsError: jobsResult.status === "rejected" ? jobsResult.reason : undefined
+      });
+    }
   } catch (error: any) {
     console.error("[AiAssessment] 学习评估加载失败:", error);
-    ElMessage.error(error?.message || "学习评估加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习评估加载失败"));
   } finally {
     loading.value = false;
   }
 };
 
 const handleRefreshAssessment = async () => {
+  if (!ensureCourseContext()) return;
   refreshLoading.value = true;
   try {
     const { data } = await refreshAssistantAssessment({
@@ -149,13 +194,18 @@ const handleRefreshAssessment = async () => {
     await loadAssessment();
   } catch (error: any) {
     console.error("[AiAssessment] 学习评估刷新失败:", error);
-    ElMessage.error(error?.message || "学习评估刷新失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习评估刷新失败"));
   } finally {
     refreshLoading.value = false;
   }
 };
 
 const handleSubmitFeedback = async () => {
+  if (!ensureCourseContext()) return;
+  if (!feedbackText.value.trim() && !feedbackScore.value) {
+    ElMessage.warning("请先填写评分或反馈内容");
+    return;
+  }
   feedbackSubmitting.value = true;
   try {
     const { data } = await submitAssistantAssessmentFeedback({
@@ -171,7 +221,7 @@ const handleSubmitFeedback = async () => {
     await loadAssessment();
   } catch (error: any) {
     console.error("[AiAssessment] 评估反馈提交失败:", error);
-    ElMessage.error(error?.message || "评估反馈提交失败");
+    ElMessage.error(assistantApiErrorMessage(error, "评估反馈提交失败"));
   } finally {
     feedbackSubmitting.value = false;
   }
@@ -191,6 +241,7 @@ const jobType = (status?: string) => {
 };
 
 const handleApplyAction = async (action: AssistantAssessmentActionItem) => {
+  if (!ensureCourseContext()) return;
   if (action.action_id.startsWith("current_")) {
     ElMessage.info("该动作来自当前快照，请刷新动作列表后再应用");
     return;
@@ -202,7 +253,7 @@ const handleApplyAction = async (action: AssistantAssessmentActionItem) => {
     await loadAssessment();
   } catch (error: any) {
     console.error("[AiAssessment] 应用评估动作失败:", error);
-    ElMessage.error(error?.message || "应用评估动作失败");
+    ElMessage.error(assistantApiErrorMessage(error, "应用评估动作失败"));
   } finally {
     actionSubmitting.value = "";
   }

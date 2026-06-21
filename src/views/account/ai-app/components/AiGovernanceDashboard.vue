@@ -14,6 +14,7 @@ import {
   Warning
 } from "@element-plus/icons-vue";
 import {
+  assistantApiErrorMessage,
   getAssistantConversationTrace,
   getAssistantDashboardPaths,
   getAssistantDashboardResources,
@@ -32,6 +33,7 @@ import {
 
 const props = defineProps<{
   courseId?: number;
+  courseName?: string;
   isStaffMode?: boolean;
 }>();
 
@@ -64,7 +66,7 @@ const selectedConversationTrace = ref<AssistantConversationTraceResp | null>(
 
 const isStaff = computed(() => props.isStaffMode !== false);
 const courseLabel = computed(() =>
-  props.courseId ? `课程 ${props.courseId}` : "默认课程"
+  props.courseName || (props.courseId ? `课程 ${props.courseId}` : "默认课程")
 );
 
 const studentSummary = computed(() => studentsDashboard.value?.summary);
@@ -171,6 +173,13 @@ function taskTypesText(row: AssistantResourceTaskItem) {
 
 async function loadDashboard() {
   if (!isStaff.value) return;
+  if (!props.courseId) {
+    studentsDashboard.value = null;
+    resourcesDashboard.value = null;
+    risksDashboard.value = null;
+    pathsDashboard.value = null;
+    return;
+  }
   loading.value = true;
   try {
     const commonParams = { course_id: props.courseId };
@@ -195,7 +204,7 @@ async function loadDashboard() {
     pathsDashboard.value = pathsResp.data;
   } catch (error: any) {
     console.error("[AiGovernanceDashboard] 加载治理看板失败:", error);
-    ElMessage.error(error?.message || "治理看板加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "治理看板加载失败"));
   } finally {
     loading.value = false;
   }
@@ -224,7 +233,7 @@ async function loadTaskTrace(taskId: string) {
     selectedTaskTrace.value = data;
   } catch (error: any) {
     console.error("[AiGovernanceDashboard] 加载任务 Trace 失败:", error);
-    ElMessage.error(error?.message || "任务 Trace 加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "任务 Trace 加载失败"));
   } finally {
     taskTraceLoading.value = false;
   }
@@ -243,7 +252,7 @@ async function loadConversationTrace() {
     selectedConversationTrace.value = data;
   } catch (error: any) {
     console.error("[AiGovernanceDashboard] 加载会话 Trace 失败:", error);
-    ElMessage.error(error?.message || "会话 Trace 加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "会话 Trace 加载失败"));
   } finally {
     conversationTraceLoading.value = false;
   }

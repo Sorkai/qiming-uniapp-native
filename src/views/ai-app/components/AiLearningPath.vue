@@ -13,6 +13,7 @@ import {
   Clock
 } from "@element-plus/icons-vue";
 import {
+  assistantApiErrorMessage,
   applyAssistantPathAction,
   completeAssistantPathNode,
   completeAssistantPathPushTask,
@@ -31,6 +32,7 @@ import {
 const props = defineProps<{
   courseId?: number;
   targetStudentId?: number;
+  requiresTargetStudent?: boolean;
 }>();
 
 const loading = ref(false);
@@ -48,35 +50,81 @@ const hasPath = computed(() => !!path.value && roadmapData.value.length > 0);
 const pendingActions = computed(() =>
   pathActions.value.filter(item => item.status !== "applied")
 );
+const contextWarning = computed(() => {
+  if (!props.courseId) return "请先选择课程";
+  if (props.requiresTargetStudent && !props.targetStudentId) {
+    return "请先选择学生";
+  }
+  return "";
+});
+const hasRequiredContext = computed(() => !contextWarning.value);
+
+const ensureCourseContext = () => {
+  if (hasRequiredContext.value) return true;
+  ElMessage.warning(contextWarning.value || "请先选择课程");
+  return false;
+};
 
 const loadPath = async () => {
+  if (!hasRequiredContext.value) {
+    path.value = null;
+    pathActions.value = [];
+    pathHistory.value = [];
+    pushTasks.value = [];
+    status.value = "";
+    statusMessage.value = contextWarning.value || "请先选择课程";
+    return;
+  }
   loading.value = true;
   try {
     const params = {
       course_id: props.courseId,
       target_student_id: props.targetStudentId
     };
-    const [currentResp, actionsResp, historyResp, pushResp] = await Promise.all([
+    const [currentResult, actionsResult, historyResult, pushResult] =
+      await Promise.allSettled([
       getAssistantCurrentPath(params),
       listAssistantPathActions(params),
       listAssistantPathHistory(params),
       listAssistantPathPushTasks(params)
     ]);
-    path.value = currentResp.data.path || null;
-    status.value = currentResp.data.status;
-    statusMessage.value = currentResp.data.message || "";
-    pathActions.value = actionsResp.data.list || [];
-    pathHistory.value = historyResp.data.list || [];
-    pushTasks.value = pushResp.data.list || [];
+    const currentData =
+      currentResult.status === "fulfilled" ? currentResult.value?.data : undefined;
+    path.value = currentData?.path || null;
+    status.value = currentData?.status || "";
+    statusMessage.value = currentData?.message || "";
+    pathActions.value =
+      actionsResult.status === "fulfilled" ? actionsResult.value?.data?.list || [] : [];
+    pathHistory.value =
+      historyResult.status === "fulfilled" ? historyResult.value?.data?.list || [] : [];
+    pushTasks.value =
+      pushResult.status === "fulfilled" ? pushResult.value?.data?.list || [] : [];
+    if (
+      currentResult.status === "rejected" ||
+      actionsResult.status === "rejected" ||
+      historyResult.status === "rejected" ||
+      pushResult.status === "rejected"
+    ) {
+      console.warn("[AiLearningPath] 部分学习路径接口加载失败", {
+        currentError:
+          currentResult.status === "rejected" ? currentResult.reason : undefined,
+        actionsError:
+          actionsResult.status === "rejected" ? actionsResult.reason : undefined,
+        historyError:
+          historyResult.status === "rejected" ? historyResult.reason : undefined,
+        pushError: pushResult.status === "rejected" ? pushResult.reason : undefined
+      });
+    }
   } catch (error: any) {
     console.error("[AiLearningPath] 学习路径加载失败:", error);
-    ElMessage.error(error?.message || "学习路径加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习路径加载失败"));
   } finally {
     loading.value = false;
   }
 };
 
 const handleGenerate = async () => {
+  if (!ensureCourseContext()) return;
   actionLoading.value = true;
   try {
     const { data } = await generateAssistantPath({
@@ -91,13 +139,14 @@ const handleGenerate = async () => {
     await loadPath();
   } catch (error: any) {
     console.error("[AiLearningPath] 学习路径生成失败:", error);
-    ElMessage.error(error?.message || "学习路径生成失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习路径生成失败"));
   } finally {
     actionLoading.value = false;
   }
 };
 
 const handleReplan = async () => {
+  if (!ensureCourseContext()) return;
   actionLoading.value = true;
   try {
     const { data } = await replanAssistantPath({
@@ -112,13 +161,14 @@ const handleReplan = async () => {
     await loadPath();
   } catch (error: any) {
     console.error("[AiLearningPath] 学习路径重规划失败:", error);
-    ElMessage.error(error?.message || "学习路径重规划失败");
+    ElMessage.error(assistantApiErrorMessage(error, "学习路径重规划失败"));
   } finally {
     actionLoading.value = false;
   }
 };
 
 const handleApplyAction = async (actionId: string) => {
+  if (!ensureCourseContext()) return;
   actionLoading.value = true;
   try {
     const { data } = await applyAssistantPathAction(actionId);
@@ -127,13 +177,14 @@ const handleApplyAction = async (actionId: string) => {
     await loadPath();
   } catch (error: any) {
     console.error("[AiLearningPath] 应用路径动作失败:", error);
-    ElMessage.error(error?.message || "应用路径动作失败");
+    ElMessage.error(assistantApiErrorMessage(error, "应用路径动作失败"));
   } finally {
     actionLoading.value = false;
   }
 };
 
 const handleCompletePushTask = async (pushId: string) => {
+  if (!ensureCourseContext()) return;
   actionLoading.value = true;
   try {
     const { data } = await completeAssistantPathPushTask(pushId);
@@ -141,13 +192,14 @@ const handleCompletePushTask = async (pushId: string) => {
     await loadPath();
   } catch (error: any) {
     console.error("[AiLearningPath] 完成推送任务失败:", error);
-    ElMessage.error(error?.message || "完成推送任务失败");
+    ElMessage.error(assistantApiErrorMessage(error, "完成推送任务失败"));
   } finally {
     actionLoading.value = false;
   }
 };
 
 const handleComplete = async (nodeId: string) => {
+  if (!ensureCourseContext()) return;
   actionLoading.value = true;
   try {
     const { data } = await completeAssistantPathNode(nodeId, {
@@ -159,7 +211,7 @@ const handleComplete = async (nodeId: string) => {
     await loadPath();
   } catch (error: any) {
     console.error("[AiLearningPath] 完成路径节点失败:", error);
-    ElMessage.error(error?.message || "完成路径节点失败");
+    ElMessage.error(assistantApiErrorMessage(error, "完成路径节点失败"));
   } finally {
     actionLoading.value = false;
   }
