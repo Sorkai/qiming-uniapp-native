@@ -239,6 +239,14 @@ function appendMiniProgramQuery(url: string) {
   return appendQuery(appendNativeQuery(url), "qimingMiniProgram", "1");
 }
 
+function appendOriginQueryBeforeHash(url: string, key: string, value: string) {
+  const hashIndex = url.indexOf("#");
+  if (hashIndex < 0) return appendQuery(url, key, value);
+  const originPart = url.slice(0, hashIndex);
+  const hashPart = url.slice(hashIndex);
+  return `${appendQuery(originPart, key, value)}${hashPart}`;
+}
+
 function normalizeDevServer(url: string | null | undefined) {
   let value = String(url || "").trim();
   if (!value) return "";
@@ -361,7 +369,7 @@ const miniProgramWebviewSrc = computed(() => {
   const withRole = appDemoRole.value
     ? appendQuery(base, "demoRole", appDemoRole.value)
     : base;
-  return appendQuery(
+  return appendOriginQueryBeforeHash(
     appendMiniProgramQuery(withRole),
     "v",
     String(webviewVersion.value)

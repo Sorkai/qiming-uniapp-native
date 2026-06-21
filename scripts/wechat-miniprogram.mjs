@@ -556,7 +556,7 @@ function patchProjectConfig(options) {
         id: index,
         name: route.name,
         pathName: "pages/index/index",
-        query: buildQuery(route.entry, route.role, launch.devServer),
+        query: buildQuery(route.entry, "", launch.devServer),
         scene: null
       }))
     ]
