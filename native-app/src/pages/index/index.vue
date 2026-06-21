@@ -107,7 +107,7 @@ type WebMessage = {
   timestamp?: number;
 };
 
-const defaultEntryRoute = "/home";
+const defaultEntryRoute = "/login";
 const defaultMiniProgramOrigin = "https://aiedu-mp.intelledu.cn";
 let isH5DevPreview = false;
 // #ifdef H5

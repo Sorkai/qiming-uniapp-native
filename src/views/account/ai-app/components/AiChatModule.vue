@@ -2,7 +2,7 @@
   <div class="ai-chat-module h-full flex flex-col bg-transparent">
     <!-- 顶部精简导航 -->
     <div
-      class="flex items-center justify-between p-4 bg-white/50 backdrop-blur-md rounded-t-2xl border-b border-gray-100 z-10"
+      class="ai-chat-module__topbar flex items-center justify-between p-4 bg-white/50 backdrop-blur-md rounded-t-2xl border-b border-gray-100 z-10"
     >
       <div class="flex items-center gap-2">
         <el-tag size="small" effect="plain" round class="animate-pulse">{{
@@ -24,7 +24,10 @@
     </div>
 
     <!-- 消息流：移除背景修饰文字，保持纯净 -->
-    <el-scrollbar ref="scrollbarRef" class="flex-1 px-4 py-6 scroll-smooth">
+    <el-scrollbar
+      ref="scrollbarRef"
+      class="ai-chat-module__messages flex-1 px-4 py-6 scroll-smooth"
+    >
       <transition-group
         appear
         name="chat-list"
@@ -292,17 +295,17 @@
     </el-scrollbar>
 
     <!-- 输入区：悬浮极简设计，带常驻选择器 -->
-    <div class="p-4 bg-transparent z-10 w-full">
+    <div class="ai-chat-module__composer p-4 bg-transparent z-10 w-full">
       <div class="w-full relative group">
         <!-- 发光的呼吸框 -->
         <div
           class="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-[24px] blur opacity-0 group-focus-within:opacity-100 group-focus-within:animate-pulse transition duration-500"
         />
         <div
-          class="relative bg-white border border-gray-200 rounded-[24px] shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300 overflow-hidden"
+          class="ai-chat-module__composer-card relative bg-white border border-gray-200 rounded-[24px] shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300 overflow-hidden"
         >
           <!-- 输入框 -->
-          <div class="flex items-end gap-2 p-2">
+          <div class="ai-chat-module__input-row flex items-end gap-2 p-2">
             <el-button
               :icon="Plus"
               class="!rounded-lg mb-1 hover:rotate-90 hover:bg-gray-100 transition-all duration-300 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.3)]"
@@ -332,9 +335,9 @@
 
           <!-- 常驻工具栏：课程 / 模式 / 智能体 / 思考模式 / 模型 -->
           <div
-            class="flex items-center justify-between px-3 py-2 bg-gray-50/60 border-t border-gray-100"
+            class="ai-chat-module__toolbar flex items-center justify-between px-3 py-2 bg-gray-50/60 border-t border-gray-100"
           >
-            <div class="flex flex-wrap items-center gap-1">
+            <div class="ai-chat-module__toolbar-main flex flex-wrap items-center gap-1">
               <el-dropdown
                 v-if="courses && courses.length"
                 trigger="click"

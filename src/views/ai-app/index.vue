@@ -244,7 +244,7 @@ const shouldUseCompactAiSidebar = () =>
   isCompactViewport() || isMiniProgramWebView();
 
 const sidebarCollapsed = ref(shouldUseCompactAiSidebar());
-const humanCollapsed = ref(false);
+const humanCollapsed = ref(shouldUseCompactAiSidebar());
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 const humanPanelStyle = computed(() => ({
@@ -995,6 +995,7 @@ const handleVisibilityChange = () => {
 const handleViewportResize = () => {
   if (shouldUseCompactAiSidebar()) {
     sidebarCollapsed.value = true;
+    humanCollapsed.value = true;
   }
 };
 
@@ -1108,12 +1109,12 @@ onUnmounted(() => {
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
           <div
             v-if="activeRail === `chat` && activeCourse"
-            class="h-full w-full flex stretch p-4 gap-4 overflow-hidden"
+            class="ai-chat-scene h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
           >
             <!-- 对话流核心面板 -->
             <transition appear name="panel-slide">
               <div
-                class="flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
+                class="ai-chat-card flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
               >
                 <!-- 柔和的顶部遮罩渐变 -->
                 <div
@@ -1144,7 +1145,8 @@ onUnmounted(() => {
             <!-- 数字人面板 -->
             <transition appear name="panel-reveal">
               <div
-                class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-300 relative"
+                class="ai-app-human-panel flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-300 relative"
+                :class="{ 'is-collapsed': humanCollapsed }"
                 :style="humanPanelStyle"
               >
                 <!-- 收起 / 展开 把手：挂在外层，避免被圆角容器裁切 -->
@@ -1191,7 +1193,7 @@ onUnmounted(() => {
                 <transition name="el-zoom-in-bottom">
                   <div
                     v-show="!humanCollapsed"
-                    class="flex-1 min-h-[168px] bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
+                    class="ai-human-actions flex-1 min-h-[168px] bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
                   >
                     <div
                       class="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center border-b border-gray-100 pb-1.5 mb-1"

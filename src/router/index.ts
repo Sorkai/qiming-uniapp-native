@@ -156,6 +156,12 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     ? (demoRole as DemoRole)
     : null;
   const isNativeDemoRoute = String(to.query?.qimingNative || "") === "1";
+  const externalLink = isUrl(to?.name as string);
+  const isMiniProgramWebView =
+    document.documentElement.classList.contains("qiming-mini-program-webview") ||
+    String(to.query?.qimingMiniProgram || "") === "1" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1";
   const storedDemoRole = localStorage.getItem("qiming-demo-role");
   const isExplicitDemoSession =
     !!normalizedDemoRole && storedDemoRole === normalizedDemoRole;
@@ -217,7 +223,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       })
       .catch(error => {
         console.error("[Router Guard] Demo session bootstrap failed", error);
-        next({ path: "/home" });
+        next({ path: isMiniProgramWebView ? "/login" : "/home" });
       });
     return;
   }
@@ -240,12 +246,6 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     console.log("[Router Guard] 检测到登录状态不一致，已自动恢复 cookie");
   }
 
-  const externalLink = isUrl(to?.name as string);
-  const isMiniProgramWebView =
-    document.documentElement.classList.contains("qiming-mini-program-webview") ||
-    String(to.query?.qimingMiniProgram || "") === "1" ||
-    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
-    sessionStorage.getItem("qimingMiniProgramWebView") === "1";
   if (!externalLink && !isMiniProgramWebView) {
     to.matched.some(item => {
       if (!item.meta.title) return "";
@@ -371,7 +371,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
           "[Router Guard] 拒绝访问非白名单页面，清除 token 并回退到首页"
         );
         removeToken();
-        next({ path: "/home" });
+        next({ path: isMiniProgramWebView ? "/login" : "/home" });
       }
     } else {
       next();

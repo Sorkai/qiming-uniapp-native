@@ -248,7 +248,7 @@ const shouldUseCompactAiSidebar = () =>
   isCompactViewport() || isMiniProgramWebView();
 
 const sidebarCollapsed = ref(shouldUseCompactAiSidebar());
-const humanCollapsed = ref(false);
+const humanCollapsed = ref(shouldUseCompactAiSidebar());
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 
@@ -1002,6 +1002,7 @@ const handleVisibilityChange = () => {
 const handleViewportResize = () => {
   if (shouldUseCompactAiSidebar()) {
     sidebarCollapsed.value = true;
+    humanCollapsed.value = true;
   }
 };
 
@@ -1154,8 +1155,8 @@ onUnmounted(() => {
             <!-- 数字人面板：保留原右侧 VRM 数字人模块 -->
             <transition appear name="panel-reveal">
               <div
-                class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
-                :class="humanCollapsed ? 'w-16' : 'w-[420px]'"
+                class="ai-app-human-panel flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
+                :class="humanCollapsed ? 'w-16 is-collapsed' : 'w-[420px]'"
               >
                 <!-- 收起 / 展开把手：挂在外层，避免被圆角容器裁切 -->
                 <button
@@ -1199,7 +1200,7 @@ onUnmounted(() => {
                 <transition name="el-zoom-in-bottom">
                   <div
                     v-show="!humanCollapsed"
-                    class="flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
+                    class="ai-human-actions flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
                     style="min-height: 180px"
                   >
                     <div
