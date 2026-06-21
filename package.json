@@ -29,6 +29,7 @@
     "mini:build": "node scripts/wechat-miniprogram.mjs build",
     "mini:smoke": "node scripts/wechat-miniprogram.mjs smoke",
     "mini:h5-smoke": "node scripts/wechat-miniprogram.mjs h5-smoke",
+    "mini:real-audit": "node scripts/wechat-real-session-audit.mjs",
     "mini:devtools-smoke": "node scripts/wechat-miniprogram.mjs devtools-smoke",
     "mini:preflight": "node scripts/wechat-miniprogram.mjs preflight",
     "mini:open": "node scripts/wechat-miniprogram.mjs open",

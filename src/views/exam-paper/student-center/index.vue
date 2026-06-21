@@ -4,7 +4,21 @@ import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
-import { Search } from "@element-plus/icons-vue";
+import {
+  Check,
+  CircleCheck,
+  Clock,
+  Document,
+  DocumentChecked,
+  Edit,
+  Loading,
+  Lock,
+  RefreshRight,
+  Search,
+  Star,
+  Timer,
+  View
+} from "@element-plus/icons-vue";
 import { getStudentPaperList, type StudentPaperItem } from "@/api/examPaper";
 import WaitingToCompleteIcon from "@/assets/papercentreicons/waitingtocomplete.svg?component";
 import AlreadyCompletedIcon from "@/assets/papercentreicons/alreadycompleted.svg?component";
@@ -19,6 +33,24 @@ defineOptions({
 const router = useRouter();
 const { isDark } = useDark();
 const { isMobile, paginationLayout } = usePageResponsive();
+
+const isMiniProgramWebView = () => {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return false;
+  }
+  const root = document.documentElement;
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?") + 1)
+    : "";
+  const hashParams = new URLSearchParams(hashQuery);
+  return (
+    root.classList.contains("qiming-mini-program-webview") ||
+    root.dataset.qimingMiniProgram === "true" ||
+    hashParams.get("qimingMiniProgram") === "1" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1"
+  );
+};
 
 // 筛选条件
 const activeTab = ref<
@@ -128,11 +160,17 @@ const fetchPapers = async () => {
         avgScore: 0
       };
     } else {
-      ElMessage.error(res.msg || "获取试卷列表失败");
+      if (!isMiniProgramWebView()) {
+        ElMessage.error(res.msg || "获取试卷列表失败");
+      }
     }
   } catch (error) {
-    console.error("获取试卷列表失败:", error);
-    ElMessage.error("获取试卷列表失败");
+    papers.value = [];
+    total.value = 0;
+    if (!isMiniProgramWebView()) {
+      console.error("获取试卷列表失败:", error);
+      ElMessage.error("获取试卷列表失败");
+    }
   } finally {
     loading.value = false;
   }

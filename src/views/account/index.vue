@@ -635,6 +635,27 @@ const isMiniProgramDemoRoute = computed(
   () => route.query.qimingMiniProgram === "1" || route.query.qimingNative === "1"
 );
 
+const menuKeys = [
+  "home",
+  "course",
+  "classroom",
+  "profile",
+  "cloud-disk",
+  "notification",
+  "todo",
+  "ai-app",
+  "virtual-lab",
+  "competition",
+  "exam-center"
+];
+
+const readRouteMenu = () => {
+  const menu = Array.isArray(route.query.menu)
+    ? route.query.menu[0]
+    : route.query.menu;
+  return typeof menu === "string" && menuKeys.includes(menu) ? menu : "";
+};
+
 const demoCourses = [
   {
     courseId: 1,
@@ -757,6 +778,13 @@ const activeMenu = ref<string>("home");
 
 // 初始化菜单状态
 const initActiveMenu = () => {
+  const routeMenu = readRouteMenu();
+  if (routeMenu) {
+    activeMenu.value = routeMenu;
+    storageLocal().setItem("account_active_menu", routeMenu);
+    return;
+  }
+
   const savedMenu = storageLocal().getItem("account_active_menu");
   if (typeof savedMenu === "string" && savedMenu) {
     activeMenu.value = savedMenu;
@@ -1108,6 +1136,21 @@ watch(activeMenu, async newVal => {
     await loadCoursePageData();
   }
 });
+
+watch(
+  () => route.query.menu,
+  async () => {
+    const routeMenu = readRouteMenu();
+    if (!routeMenu || routeMenu === activeMenu.value) return;
+    activeMenu.value = routeMenu;
+    if (routeMenu === "home") {
+      await loadHomeData();
+      startTyping();
+    } else if (routeMenu === "course") {
+      await loadCoursePageData();
+    }
+  }
+);
 
 // 初次挂载如果就在首页也启动
 onMounted(async () => {

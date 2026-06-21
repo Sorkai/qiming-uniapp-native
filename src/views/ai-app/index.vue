@@ -216,7 +216,34 @@ watch(
 const activeCourse = ref<CourseView | null>(null);
 
 // 侧边栏 / 数字人面板 收起状态
-const sidebarCollapsed = ref(false);
+const readUrlFlag = (key: string) => {
+  if (typeof window === "undefined") return false;
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?") + 1)
+    : "";
+  const hashParams = new URLSearchParams(hashQuery);
+  return searchParams.get(key) === "1" || hashParams.get(key) === "1";
+};
+const isMiniProgramWebView = () =>
+  typeof document !== "undefined" &&
+  (document.documentElement.classList.contains("qiming-mini-program-webview") ||
+    document.documentElement.dataset.qimingMiniProgram === "true" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    readUrlFlag("qimingMiniProgram") ||
+    readUrlFlag("qimingNative"));
+const isCompactViewport = () =>
+  typeof window !== "undefined" &&
+  Math.min(
+    window.innerWidth || Number.POSITIVE_INFINITY,
+    document.documentElement.clientWidth || Number.POSITIVE_INFINITY,
+    window.visualViewport?.width || Number.POSITIVE_INFINITY
+  ) <= 767;
+const shouldUseCompactAiSidebar = () =>
+  isCompactViewport() || isMiniProgramWebView();
+
+const sidebarCollapsed = ref(shouldUseCompactAiSidebar());
 const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
@@ -965,8 +992,16 @@ const handleVisibilityChange = () => {
   syncHumanRenderState();
 };
 
+const handleViewportResize = () => {
+  if (shouldUseCompactAiSidebar()) {
+    sidebarCollapsed.value = true;
+  }
+};
+
 onMounted(() => {
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("resize", handleViewportResize, { passive: true });
+  handleViewportResize();
   setTimeout(() => {
     syncHumanRenderState();
   }, 0);
@@ -975,6 +1010,7 @@ onMounted(() => {
 onUnmounted(() => {
   streamCancel.value?.();
   document.removeEventListener("visibilitychange", handleVisibilityChange);
+  window.removeEventListener("resize", handleViewportResize);
 });
 </script>
 
@@ -993,7 +1029,7 @@ onUnmounted(() => {
       <aside
         v-if="activeRail === 'chat'"
         class="ai-app-left-rail flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
-        :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
+        :class="sidebarCollapsed ? 'w-[34px] is-collapsed' : 'w-[260px]'"
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <AiSidebar

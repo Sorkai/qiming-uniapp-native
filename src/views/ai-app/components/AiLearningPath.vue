@@ -23,7 +23,11 @@ import {
   listAssistantPathPushTasks,
   replanAssistantPath,
   type AssistantPathActionItem,
+  type AssistantGetCurrentPathResp,
   type AssistantPathHistoryItem,
+  type AssistantListPathActionsResp,
+  type AssistantListPathHistoryResp,
+  type AssistantListPathPushTasksResp,
   type AssistantPathPushTaskItem,
   type AssistantPathRoadmap
 } from "@/api/frontend/assistant";
@@ -41,6 +45,16 @@ const path = ref<AssistantPathRoadmap | null>(null);
 const pathActions = ref<AssistantPathActionItem[]>([]);
 const pathHistory = ref<AssistantPathHistoryItem[]>([]);
 const pushTasks = ref<AssistantPathPushTaskItem[]>([]);
+
+const unwrapData = <T,>(response: { data?: T } | T | undefined | null) => {
+  if (response && typeof response === "object" && "data" in response) {
+    return (response as { data?: T }).data;
+  }
+  return response as T | undefined | null;
+};
+
+const toArray = <T,>(value: T[] | undefined | null) =>
+  Array.isArray(value) ? value : [];
 
 const courseMeta = computed(() => path.value?.course_meta);
 const roadmapData = computed(() => path.value?.roadmap || []);
@@ -62,12 +76,20 @@ const loadPath = async () => {
       listAssistantPathHistory(params),
       listAssistantPathPushTasks(params)
     ]);
-    path.value = currentResp.data.path || null;
-    status.value = currentResp.data.status;
-    statusMessage.value = currentResp.data.message || "";
-    pathActions.value = actionsResp.data.list || [];
-    pathHistory.value = historyResp.data.list || [];
-    pushTasks.value = pushResp.data.list || [];
+    const currentData: Partial<AssistantGetCurrentPathResp> =
+      unwrapData<AssistantGetCurrentPathResp>(currentResp) || {};
+    const actionsData: Partial<AssistantListPathActionsResp> =
+      unwrapData<AssistantListPathActionsResp>(actionsResp) || {};
+    const historyData: Partial<AssistantListPathHistoryResp> =
+      unwrapData<AssistantListPathHistoryResp>(historyResp) || {};
+    const pushData: Partial<AssistantListPathPushTasksResp> =
+      unwrapData<AssistantListPathPushTasksResp>(pushResp) || {};
+    path.value = currentData.path || null;
+    status.value = currentData.status || "";
+    statusMessage.value = currentData.message || "";
+    pathActions.value = toArray(actionsData.list);
+    pathHistory.value = toArray(historyData.list);
+    pushTasks.value = toArray(pushData.list);
   } catch (error: any) {
     console.error("[AiLearningPath] 学习路径加载失败:", error);
     ElMessage.error(error?.message || "学习路径加载失败");

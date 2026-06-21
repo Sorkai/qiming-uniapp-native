@@ -43,6 +43,36 @@ const assessmentJobs = ref<AssistantAssessmentJobItem[]>([]);
 const feedbackScore = ref(5);
 const feedbackText = ref("");
 
+const emptyAssessment: AssistantAssessmentCurrentResp = {
+  status: "empty",
+  message: "暂无学习评估数据",
+  course_info: {
+    name: "当前课程",
+    subtitle: "",
+    total_chapters: 0,
+    finished_chapters: 0
+  },
+  stats: [],
+  strengths: [],
+  weak_points: [],
+  timeline: [],
+  suggestions: [],
+  resource_usage: {},
+  feedback_summary: {},
+  evidence: [],
+  recommended_actions: []
+};
+
+const unwrapData = <T,>(response: { data?: T } | T | undefined | null) => {
+  if (response && typeof response === "object" && "data" in response) {
+    return (response as { data?: T }).data;
+  }
+  return response as T | undefined | null;
+};
+
+const toArray = <T,>(value: T[] | undefined | null) =>
+  Array.isArray(value) ? value : [];
+
 const courseInfo = computed(
   () =>
     assessment.value?.course_info || {
@@ -120,13 +150,33 @@ const loadAssessment = async () => {
       listAssistantAssessmentHistory(params),
       listAssistantAssessmentJobs(params)
     ]);
-    assessment.value = currentResp.data;
-    assessmentActions.value = actionsResp.data.list || [];
-    assessmentHistory.value = historyResp.data.list || [];
-    assessmentJobs.value = jobsResp.data.list || [];
+    const currentData =
+      unwrapData<AssistantAssessmentCurrentResp>(currentResp) || emptyAssessment;
+    assessment.value = {
+      ...emptyAssessment,
+      ...currentData,
+      course_info: currentData.course_info || emptyAssessment.course_info,
+      stats: toArray(currentData.stats),
+      strengths: toArray(currentData.strengths),
+      weak_points: toArray(currentData.weak_points),
+      timeline: toArray(currentData.timeline),
+      suggestions: toArray(currentData.suggestions),
+      resource_usage: currentData.resource_usage || {},
+      feedback_summary: currentData.feedback_summary || {},
+      evidence: toArray(currentData.evidence),
+      recommended_actions: toArray(currentData.recommended_actions)
+    };
+    assessmentActions.value = toArray(unwrapData(actionsResp)?.list);
+    assessmentHistory.value = toArray(unwrapData(historyResp)?.list);
+    assessmentJobs.value = toArray(unwrapData(jobsResp)?.list);
   } catch (error: any) {
-    console.error("[AiAssessment] 学习评估加载失败:", error);
-    ElMessage.error(error?.message || "学习评估加载失败");
+    assessment.value = emptyAssessment;
+    assessmentActions.value = [];
+    assessmentHistory.value = [];
+    assessmentJobs.value = [];
+    if (import.meta.env.DEV) {
+      console.warn("[AiAssessment] 学习评估加载失败:", error);
+    }
   } finally {
     loading.value = false;
   }

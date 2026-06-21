@@ -17,8 +17,8 @@
           :current-theme="currentTheme"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
-          :course-name="courseDetail?.courseName"
-          :course-id="courseId"
+          :course-name="courseDetail?.courseName || ''"
+          :course-id="resolvedCourseId"
           :chapter-id="currentChapterId"
           :current-hour="currentHour"
           :current-video-url="currentVideoUrl"
@@ -27,7 +27,7 @@
           :chat-messages="chatMessages"
           :is-typing="isTyping"
           :sending-message="sendingMessage"
-          :chapter-list="courseDetail?.courseChapterList"
+          :chapter-list="courseDetail?.courseChapterList || []"
           :active-node="activeNode"
           @go-back="goBack"
           @toggle-theme="e => toggleTheme(e)"
@@ -60,7 +60,7 @@
           ref="courseQARef"
           :visible="activeMenu === 'course-qa'"
           :current-theme="currentTheme"
-          :course-id="courseId"
+          :course-id="resolvedCourseId"
           :user-id="userIdStr"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
@@ -77,7 +77,7 @@
           v-if="courseId"
           :visible="activeMenu === 'homework-exam'"
           :current-theme="currentTheme"
-          :course-id="courseId"
+          :course-id="resolvedCourseId"
           :homework-list="homeworkList"
           :exam-list="examList"
           :user-avatar="userAvatar"
@@ -122,7 +122,7 @@
           :course-scores="courseScores"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
-          :course-id="courseId"
+          :course-id="resolvedCourseId"
           @go-back="goBack"
           @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
@@ -187,19 +187,52 @@ import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 
 const router = useRouter();
 const route = useRoute();
+const courseMenuKeys = [
+  "course-learn",
+  "mastery",
+  "course-qa",
+  "homework-exam",
+  "course-materials",
+  "html-animations",
+  "grades"
+];
+
+const readRouteSection = () => {
+  const value = Array.isArray(route.query.section)
+    ? route.query.section[0]
+    : route.query.section;
+  return typeof value === "string" && courseMenuKeys.includes(value)
+    ? value
+    : "";
+};
+
+const buildFallbackCourseDetail = (cid: number) => ({
+  courseId: cid,
+  courseName: "课程学习",
+  thumbUrl: "",
+  isRequired: 1,
+  totalHours: 0,
+  finishedHours: 0,
+  courseDesc: "当前课程详情暂未返回完整数据，请稍后刷新。",
+  courseChapterList: [],
+  courseAttrList: []
+});
 
 // 基础状态
-const baseCourseId = ref<number | null>(null);
+const baseCourseId = ref<number | null>(Number(route.params.id) || null);
 const courseId = computed(() => baseCourseId.value);
+const resolvedCourseId = computed(() => courseId.value || 0);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
 const currentTheme = ref(
   (storageLocal().getItem("course_theme") as string) || "light"
 );
 const activeMenu = ref(
-  (storageLocal().getItem(
-    `course_detail_active_menu_${route.params.id}`
-  ) as string) || "course-learn"
+  readRouteSection() ||
+    (storageLocal().getItem(
+      `course_detail_active_menu_${route.params.id}`
+    ) as string) ||
+    "course-learn"
 );
 
 // 监听菜单变化并持久化
@@ -240,11 +273,11 @@ watch(
       baseCourseId.value = id;
       courseScores.value = null;
 
-      // 恢复新课程的菜单状态
+      // URL 直达的 section 优先级最高，其次才恢复新课程的菜单状态
       const savedMenu = storageLocal().getItem(
         `course_detail_active_menu_${id}`
       ) as string;
-      activeMenu.value = savedMenu || "course-learn";
+      activeMenu.value = readRouteSection() || savedMenu || "course-learn";
 
       // 恢复新课程的课时状态
       const savedNode = storageLocal().getItem(
@@ -272,6 +305,16 @@ watch(
       nextTick(() => {
         scheduleMobileTopOffsetUpdate();
       });
+    }
+  }
+);
+
+watch(
+  () => route.query.section,
+  section => {
+    const routeSection = readRouteSection();
+    if (routeSection && routeSection !== activeMenu.value) {
+      activeMenu.value = routeSection;
     }
   }
 );
@@ -483,6 +526,16 @@ const resolveVideoPlayerEl = () => {
   return (player as any).value ?? player;
 };
 
+const safelyPlayVideo = (videoPlayerEl: any) => {
+  if (!videoPlayerEl || typeof videoPlayerEl.play !== "function") return;
+  const playResult = videoPlayerEl.play();
+  if (playResult && typeof playResult.catch === "function") {
+    playResult.catch(() => {
+      autoPlayOnLoad.value = false;
+    });
+  }
+};
+
 // 监听主题变化
 watch(
   currentTheme,
@@ -597,10 +650,16 @@ const fetchCourseDetail = async () => {
         }
       }
     } else {
+      courseDetail.value = buildFallbackCourseDetail(courseId.value);
+      currentHour.value = null;
+      currentVideoUrl.value = "";
       ElMessage.error(msg || "获取课程详情失败");
     }
   } catch (error) {
     console.error("获取课程详情出错:", error);
+    courseDetail.value = buildFallbackCourseDetail(courseId.value);
+    currentHour.value = null;
+    currentVideoUrl.value = "";
   } finally {
     loading.value = false;
   }
@@ -610,9 +669,7 @@ const fetchCourseDetail = async () => {
 const videoLoaded = () => {
   const videoPlayerEl = resolveVideoPlayerEl();
   if (autoPlayOnLoad.value && videoPlayerEl) {
-    if (typeof videoPlayerEl.play === "function") {
-      videoPlayerEl.play();
-    }
+    safelyPlayVideo(videoPlayerEl);
     autoPlayOnLoad.value = false;
   }
 };
@@ -645,9 +702,7 @@ const handleNodeClick = (nodeId: string, hour: any) => {
     const videoPlayerEl = resolveVideoPlayerEl();
     if (videoPlayerEl && oldUrl === hour.fileUrl) {
       videoPlayerEl.currentTime = 0;
-      if (typeof videoPlayerEl.play === "function") {
-        videoPlayerEl.play();
-      }
+      safelyPlayVideo(videoPlayerEl);
     }
   }
 };

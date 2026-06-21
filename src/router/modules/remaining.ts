@@ -98,7 +98,8 @@ export default [
     meta: {
       title: "课程学习",
       showLink: false,
-      rank: 106
+      rank: 106,
+      roles: ["student"]
     }
   },
   {

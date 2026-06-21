@@ -47,6 +47,32 @@ const correctionDimension = ref("");
 const correctionValue = ref(80);
 const correctionReason = ref("");
 
+const emptyProfile: AssistantProfileCurrentResp = {
+  status: "empty",
+  message: "暂无学习画像数据",
+  learner: {
+    user_id: 0,
+    name: "学习者",
+    role: "student",
+    course: "当前课程",
+    enroll_days: 0,
+    study_minutes: 0
+  },
+  dimensions: [],
+  knowledge_map: [],
+  tags: []
+};
+
+const unwrapData = <T,>(response: { data?: T } | T | undefined | null) => {
+  if (response && typeof response === "object" && "data" in response) {
+    return (response as { data?: T }).data;
+  }
+  return response as T | undefined | null;
+};
+
+const toArray = <T,>(value: T[] | undefined | null) =>
+  Array.isArray(value) ? value : [];
+
 const learner = computed(
   () =>
     profile.value?.learner || {
@@ -103,16 +129,25 @@ const loadProfile = async () => {
         listAssistantProfileEvents({ ...params, limit: 8 }),
         listAssistantProfileCorrections({ ...params, limit: 6 })
       ]);
-    profile.value = currentResp.data;
-    profileHistory.value = historyResp.data.items || [];
-    profileEvents.value = eventsResp.data.items || [];
-    profileCorrections.value = correctionsResp.data.items || [];
-    if (!correctionDimension.value && currentResp.data.dimensions?.length) {
-      const first = currentResp.data.dimensions[0];
+    const currentData = unwrapData(currentResp) || emptyProfile;
+    const normalizedProfile: AssistantProfileCurrentResp = {
+      ...emptyProfile,
+      ...currentData,
+      learner: currentData.learner || emptyProfile.learner,
+      dimensions: toArray(currentData.dimensions),
+      knowledge_map: toArray(currentData.knowledge_map),
+      tags: toArray(currentData.tags)
+    };
+    profile.value = normalizedProfile;
+    profileHistory.value = toArray(unwrapData(historyResp)?.items);
+    profileEvents.value = toArray(unwrapData(eventsResp)?.items);
+    profileCorrections.value = toArray(unwrapData(correctionsResp)?.items);
+    if (!correctionDimension.value && normalizedProfile.dimensions?.length) {
+      const first = normalizedProfile.dimensions[0];
       correctionDimension.value = first.key || first.label;
       correctionValue.value = first.value || Math.round(first.score || 80);
     }
-    emit("profile-loaded", currentResp.data);
+    emit("profile-loaded", normalizedProfile);
   } catch (error: any) {
     console.error("[AiLearningProfile] 学习画像加载失败:", error);
     ElMessage.error(error?.message || "学习画像加载失败");

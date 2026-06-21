@@ -653,6 +653,16 @@ const learningActivities = ref([
 ]);
 
 const fetchActivities = async () => {
+  if (
+    document.documentElement.classList.contains(
+      "qiming-mini-program-webview"
+    ) ||
+    document.documentElement.dataset.qimingMiniProgram === "true" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1"
+  ) {
+    return;
+  }
   try {
     const res = await getUserActivities().catch(() => null);
     if (res?.code === 200 && res.data?.list) {

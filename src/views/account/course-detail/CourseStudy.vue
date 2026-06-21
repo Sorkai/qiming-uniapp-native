@@ -492,7 +492,7 @@ const handleSeekVideo = (timeMs: number) => {
   const videoEl = videoPlayerRef.value as HTMLVideoElement | null;
   if (videoEl) {
     videoEl.currentTime = timeMs / 1000;
-    videoEl.play();
+    videoEl.play()?.catch(() => {});
   }
 };
 

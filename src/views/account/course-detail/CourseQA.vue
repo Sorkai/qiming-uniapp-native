@@ -910,30 +910,6 @@ const editingReply = ref({
 // 消息列表
 const messages = ref<Message[]>([]);
 
-// 统一监听 visible 和 courseId，只要两者都准备好且 visible 为 true 就加载
-watch(
-  [() => props.visible, () => normalizedCourseId.value],
-  ([newVisible, newCourseId]) => {
-    console.log("[CourseQA] Status check:", { newVisible, newCourseId });
-    if (newVisible && newCourseId) {
-      refreshData();
-    }
-  },
-  { immediate: true }
-);
-
-// 监听 tab 切换
-watch(activeFilter, () => {
-  if (normalizedCourseId.value && props.visible) {
-    refreshData();
-  }
-});
-
-// 监听搜索
-watch(searchKeyword, () => {
-  // 可以在这里做防抖搜索
-});
-
 const refreshData = async () => {
   currentPage.value = 1;
   messages.value = [];
@@ -1033,6 +1009,30 @@ const fetchTags = async () => {
     }));
   } catch (error) {}
 };
+
+// 统一监听 visible 和 courseId，只要两者都准备好且 visible 为 true 就加载
+watch(
+  [() => props.visible, () => normalizedCourseId.value],
+  ([newVisible, newCourseId]) => {
+    console.log("[CourseQA] Status check:", { newVisible, newCourseId });
+    if (newVisible && newCourseId) {
+      refreshData();
+    }
+  },
+  { immediate: true }
+);
+
+// 监听 tab 切换
+watch(activeFilter, () => {
+  if (normalizedCourseId.value && props.visible) {
+    refreshData();
+  }
+});
+
+// 监听搜索
+watch(searchKeyword, () => {
+  // 可以在这里做防抖搜索
+});
 
 // 计算属性
 const isTeacherOrAdmin = computed(() => props.isTeacher || props.isAdmin);
