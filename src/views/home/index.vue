@@ -857,10 +857,15 @@ const buildEntryQuery = (roleType?: number | null) => {
 };
 
 const pushEntryRoute = (path: string, roleType?: number | null) => {
-  router.push({
+  const routeLocation = {
     path,
     query: buildEntryQuery(roleType)
-  });
+  };
+  if (isMiniProgramWebView()) {
+    router.replace(routeLocation);
+    return;
+  }
+  router.push(routeLocation);
 };
 
 /* ---------- Data ---------- */

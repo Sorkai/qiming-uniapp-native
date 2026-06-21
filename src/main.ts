@@ -94,7 +94,9 @@ function normalizeNativeInitialHash() {
   const targetPath = role === "student" ? "/account" : "/welcome/index";
   if (role === "student") params.set("menu", "home");
   const targetQuery = params.toString();
-  window.location.hash = `#${targetPath}${targetQuery ? `?${targetQuery}` : ""}`;
+  const targetHash = `#${targetPath}${targetQuery ? `?${targetQuery}` : ""}`;
+  const targetUrl = `${window.location.pathname}${window.location.search}${targetHash}`;
+  window.history.replaceState(window.history.state, "", targetUrl);
 }
 
 function normalizeNativeStatusbarTop(value: string) {
@@ -438,7 +440,8 @@ function applyNativeWebViewRuntime() {
     const targetHash = `#${path}${queryString ? `?${queryString}` : ""}`;
     const ensureHashNavigation = () => {
       if (window.location.hash === targetHash) return;
-      window.location.hash = targetHash;
+      const targetUrl = `${window.location.pathname}${window.location.search}${targetHash}`;
+      window.history.replaceState(window.history.state, "", targetUrl);
     };
     router
       .replace({ path, query })
