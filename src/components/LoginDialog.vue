@@ -614,6 +614,13 @@ const errors = reactive({
   confirmPassword: ""
 });
 
+const rolesByRoleType = (roleType?: number | null) => {
+  if (roleType === 3) return ["admin"];
+  if (roleType === 2) return ["teacher"];
+  if (roleType === 1) return ["student"];
+  return ["common"];
+};
+
 // 清除错误
 const clearErrors = () => {
   Object.keys(errors).forEach(key => {
@@ -688,9 +695,10 @@ const fetchUserDetail = async () => {
         username: userInfo.mobile,
         nickname: userInfo.nickname,
         avatar: userInfo.avatar,
-        roles: ["admin"],
+        roles: rolesByRoleType(userInfo.roleType),
         permissions: ["*:*:*"],
-        roleType: userInfo.roleType
+        roleType: userInfo.roleType,
+        userId: userInfo.id
       });
 
       localStorage.setItem("userId", userInfo.id.toString());
@@ -737,7 +745,7 @@ const handlePasswordLogin = async () => {
         refreshToken: res.data.accessToken,
         username: loginForm.username,
         nickname: loginForm.username,
-        roles: ["admin"],
+        roles: ["common"],
         permissions: ["*:*:*"]
       });
 
@@ -850,7 +858,7 @@ const handleRegister = async () => {
         refreshToken: res.data.accessToken,
         username: registerForm.phone,
         nickname: registerForm.phone,
-        roles: ["admin"],
+        roles: ["common"],
         permissions: ["*:*:*"]
       });
 

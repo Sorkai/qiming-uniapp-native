@@ -156,6 +156,7 @@ const transitionMain = defineComponent({
               :view-style="fixedScrollViewStyle"
             >
               <el-backtop
+                v-if="!isMobile"
                 :title="t('buttons.pureBackTop')"
                 :right="10"
                 :bottom="10"

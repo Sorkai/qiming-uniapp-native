@@ -156,6 +156,9 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     ? (demoRole as DemoRole)
     : null;
   const isNativeDemoRoute = String(to.query?.qimingNative || "") === "1";
+  const storedDemoRole = localStorage.getItem("qiming-demo-role");
+  const isExplicitDemoSession =
+    !!normalizedDemoRole && storedDemoRole === normalizedDemoRole;
   const userRoles = userInfo?.roles ?? [];
   const hasRequiredDemoIdentity =
     normalizedDemoRole !== "student" || !!userInfo?.avatar;
@@ -168,14 +171,19 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     Array.isArray(userRoles) &&
     userRoles.includes(normalizedDemoRole) &&
     hasRequiredDemoIdentity &&
-    localStorage.getItem("qiming-demo-role") === normalizedDemoRole &&
+    isExplicitDemoSession &&
     hasDemoSessionMarker;
 
   if (isNativeDemoRoute && normalizedDemoRole && demoSessionMatchesRole) {
     nativeDemoSessionReady.add(normalizedDemoRole);
   }
 
-  if (isNativeDemoRoute && normalizedDemoRole && to.path === "/home") {
+  if (
+    isNativeDemoRoute &&
+    normalizedDemoRole &&
+    isExplicitDemoSession &&
+    to.path === "/home"
+  ) {
     const query = { ...to.query };
     delete query.menu;
     delete query.mode;
@@ -198,6 +206,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   if (
     (import.meta.env.DEV || isNativeDemoRoute) &&
     normalizedDemoRole &&
+    isExplicitDemoSession &&
     !demoSessionMatchesRole
   ) {
     import("@/views/home/demoSession")

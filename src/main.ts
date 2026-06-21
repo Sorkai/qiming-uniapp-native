@@ -412,7 +412,7 @@ function applyNativeWebViewRuntime() {
         query[key] = String(singleValue);
       }
     });
-    omitKeys.forEach(key => {
+    [...omitKeys, "demoRole"].forEach(key => {
       delete query[key];
     });
     return {
@@ -516,9 +516,7 @@ function applyNativeWebViewRuntime() {
       getSingleQueryValue(currentRoute.query.menu) || ""
     );
     const role = String(
-      getSingleQueryValue(currentRoute.query.demoRole) ||
-        getNativeUserRole() ||
-        ""
+      getNativeUserRole() || getSingleQueryValue(currentRoute.query.demoRole) || ""
     );
 
     const canUseBrowserHistory =

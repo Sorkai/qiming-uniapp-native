@@ -53,7 +53,7 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
   const ret: ViteEnv = {
     VITE_PORT: 8848,
     VITE_PUBLIC_PATH: "",
-    VITE_ROUTER_HISTORY: "",
+    VITE_ROUTER_HISTORY: "hash",
     VITE_CDN: false,
     VITE_HIDE_HOME: "false",
     VITE_ENABLE_TENANT: "true",

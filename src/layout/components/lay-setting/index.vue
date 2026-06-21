@@ -30,6 +30,19 @@ const { t } = useI18n();
 const { device } = useNav();
 const { isDark } = useDark();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
+const configure = computed(
+  () =>
+    $storage.configure ?? {
+      grey: false,
+      weak: false,
+      hideTabs: false,
+      hideFooter: true,
+      showLogo: true,
+      showModel: "smart",
+      multiTagsCache: false,
+      stretch: false
+    }
+);
 
 const mixRef = ref();
 const verticalRef = ref();
@@ -55,19 +68,19 @@ if (unref(layoutTheme)) {
 }
 
 /** 默认灵动模式 */
-const markValue = ref($storage.configure?.showModel ?? "smart");
+const markValue = ref(configure.value.showModel ?? "smart");
 
-const logoVal = ref($storage.configure?.showLogo ?? true);
+const logoVal = ref(configure.value.showLogo ?? true);
 
 const settings = reactive({
-  greyVal: $storage.configure.grey,
-  weakVal: $storage.configure.weak,
-  tabsVal: $storage.configure.hideTabs,
-  showLogo: $storage.configure.showLogo,
-  showModel: $storage.configure.showModel,
-  hideFooter: $storage.configure.hideFooter,
-  multiTagsCache: $storage.configure.multiTagsCache,
-  stretch: $storage.configure.stretch
+  greyVal: configure.value.grey,
+  weakVal: configure.value.weak,
+  tabsVal: configure.value.hideTabs,
+  showLogo: configure.value.showLogo,
+  showModel: configure.value.showModel,
+  hideFooter: configure.value.hideFooter,
+  multiTagsCache: configure.value.multiTagsCache,
+  stretch: configure.value.stretch
 });
 
 const getThemeColorStyle = computed(() => {
@@ -84,7 +97,7 @@ const showThemeColors = computed(() => {
 });
 
 function storageConfigureChange<T>(key: string, val: T): void {
-  const storageConfigure = $storage.configure;
+  const storageConfigure = $storage.configure ?? configure.value;
   storageConfigure[key] = val;
   $storage.configure = storageConfigure;
 }

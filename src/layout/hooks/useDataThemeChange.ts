@@ -11,6 +11,7 @@ import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { darken, lighten, useGlobal, storageLocal } from "@pureadmin/utils";
 
 export function useDataThemeChange() {
+  const defaultEpThemeColor = getConfig().EpThemeColor || "#97b4f7";
   const { layoutTheme, layout } = useLayout();
   const themeColors = ref<Array<themeColorsType>>([
     /* 亮白色 */
@@ -63,10 +64,10 @@ export function useDataThemeChange() {
     };
 
     if (theme === "default" || theme === "light") {
-      setEpThemeColor(getConfig().EpThemeColor);
+      setEpThemeColor(defaultEpThemeColor);
     } else {
       const colors = themeColors.value.find(v => v.themeColor === theme);
-      setEpThemeColor(colors.color);
+      setEpThemeColor(colors?.color || defaultEpThemeColor);
     }
   }
 
@@ -79,13 +80,14 @@ export function useDataThemeChange() {
 
   /** 设置 `element-plus` 主题色 */
   const setEpThemeColor = (color: string) => {
-    useEpThemeStoreHook().setEpThemeColor(color);
-    document.documentElement.style.setProperty("--el-color-primary", color);
+    const safeColor = color || defaultEpThemeColor;
+    useEpThemeStoreHook().setEpThemeColor(safeColor);
+    document.documentElement.style.setProperty("--el-color-primary", safeColor);
     for (let i = 1; i <= 2; i++) {
-      setPropertyPrimary("dark", i, color);
+      setPropertyPrimary("dark", i, safeColor);
     }
     for (let i = 1; i <= 9; i++) {
-      setPropertyPrimary("light", i, color);
+      setPropertyPrimary("light", i, safeColor);
     }
   };
 

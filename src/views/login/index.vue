@@ -147,7 +147,7 @@ const fetchUserDetail = async () => {
       } else if (userInfo.roleType === 2) {
         roles = ["teacher"];
       } else {
-        roles = ["common"];
+        roles = ["student"];
       }
 
       setToken({
@@ -161,7 +161,8 @@ const fetchUserDetail = async () => {
         avatar: userInfo.avatar || "",
         roles: roles,
         permissions: ["*:*:*"],
-        roleType: userInfo.roleType
+        roleType: userInfo.roleType,
+        userId: userInfo.id
       });
 
       localStorage.setItem("userId", userInfo.id.toString());

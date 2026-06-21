@@ -29,6 +29,13 @@ import CloseLeftTags from "~icons/ri/text-direction-r";
 import RefreshRight from "~icons/ep/refresh-right";
 import Close from "~icons/ep/close";
 
+const configureKey = `${responsiveStorageNameSpace()}configure`;
+const getConfigure = () =>
+  storageLocal().getItem<StorageConfigs>(configureKey) ?? {
+    hideTabs: false,
+    showModel: "smart"
+  };
+
 export function useTags() {
   const route = useRoute();
   const router = useRouter();
@@ -46,17 +53,10 @@ export function useTags() {
 
   /** 显示模式，默认灵动模式 */
   const showModel = ref(
-    storageLocal().getItem<StorageConfigs>(
-      `${responsiveStorageNameSpace()}configure`
-    )?.showModel || "smart"
+    getConfigure()?.showModel || "smart"
   );
   /** 是否隐藏标签页，默认显示 */
-  const showTags =
-    ref(
-      storageLocal().getItem<StorageConfigs>(
-        `${responsiveStorageNameSpace()}configure`
-      ).hideTabs
-    ) ?? ref("false");
+  const showTags = ref(getConfigure()?.hideTabs ?? false);
   const multiTags: any = computed(() => {
     return useMultiTagsStoreHook().multiTags;
   });
@@ -203,14 +203,9 @@ export function useTags() {
 
   onMounted(() => {
     if (!showModel.value) {
-      const configure = storageLocal().getItem<StorageConfigs>(
-        `${responsiveStorageNameSpace()}configure`
-      );
+      const configure = getConfigure();
       configure.showModel = "card";
-      storageLocal().setItem(
-        `${responsiveStorageNameSpace()}configure`,
-        configure
-      );
+      storageLocal().setItem(configureKey, configure);
     }
   });
 
