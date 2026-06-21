@@ -839,6 +839,30 @@ const hasAdminAccess = computed(() => {
   return userInfo.value.roleType === 2 || userInfo.value.roleType === 3;
 });
 
+const getMiniProgramRole = (roleType?: number | null) => {
+  if (roleType === 3) return "admin";
+  if (roleType === 2) return "teacher";
+  if (roleType === 1) return "student";
+  return "";
+};
+
+const buildEntryQuery = (roleType?: number | null) => {
+  if (!isMiniProgramWebView()) return {};
+  const role = getMiniProgramRole(roleType);
+  return {
+    qimingMiniProgram: "1",
+    qimingNative: "1",
+    ...(role ? { demoRole: role } : {})
+  };
+};
+
+const pushEntryRoute = (path: string, roleType?: number | null) => {
+  router.push({
+    path,
+    query: buildEntryQuery(roleType)
+  });
+};
+
 /* ---------- Data ---------- */
 const logoStrip = [
   "学生",
@@ -1593,8 +1617,9 @@ const handleEntry = () => {
   if (isLogged) {
     const roleType =
       info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
-    if (roleType === 2 || roleType === 3) router.push("/welcome/index");
-    else router.push("/account");
+    if (roleType === 2 || roleType === 3)
+      pushEntryRoute("/welcome/index", roleType);
+    else pushEntryRoute("/account", roleType);
   } else {
     showLoginDialog.value = true;
   }
@@ -1606,17 +1631,18 @@ const handleLoginSuccess = async () => {
   const roleType =
     info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
   if (Number(roleType) === 2 || Number(roleType) === 3)
-    router.push("/welcome/index");
-  else router.push("/account");
+    pushEntryRoute("/welcome/index", Number(roleType));
+  else pushEntryRoute("/account", Number(roleType));
 };
 const handleCommand = (command: string) => {
   switch (command) {
     case "space":
-      if (hasAdminAccess.value) router.push("/welcome/index");
+      if (hasAdminAccess.value)
+        pushEntryRoute("/welcome/index", userInfo.value?.roleType);
       else ElMessage.warning("您没有权限进入后台管理空间");
       break;
     case "account":
-      router.push("/account");
+      pushEntryRoute("/account", userInfo.value?.roleType);
       break;
     case "logout":
       removeToken();

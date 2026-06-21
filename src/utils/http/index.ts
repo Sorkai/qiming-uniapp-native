@@ -14,6 +14,37 @@ import NProgress from "../progress";
 import { getToken, formatToken } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 
+function isMiniProgramWebViewRuntime() {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return false;
+  }
+
+  const root = document.documentElement;
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?") + 1)
+    : "";
+  const hashParams = new URLSearchParams(hashQuery);
+
+  try {
+    return (
+      root.classList.contains("qiming-mini-program-webview") ||
+      root.dataset.qimingMiniProgram === "true" ||
+      searchParams.get("qimingMiniProgram") === "1" ||
+      hashParams.get("qimingMiniProgram") === "1" ||
+      localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+      sessionStorage.getItem("qimingMiniProgramWebView") === "1"
+    );
+  } catch {
+    return (
+      root.classList.contains("qiming-mini-program-webview") ||
+      root.dataset.qimingMiniProgram === "true" ||
+      searchParams.get("qimingMiniProgram") === "1" ||
+      hashParams.get("qimingMiniProgram") === "1"
+    );
+  }
+}
+
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间，上传大文件时设置为0表示不超时
@@ -153,7 +184,18 @@ class PureHttp {
       (error: PureHttpError) => {
         const $error = error;
         if ($error.response?.status === 401) {
-          useUserStoreHook().logOut();
+          if (isMiniProgramWebViewRuntime()) {
+            window.dispatchEvent(
+              new CustomEvent("qiming:http-unauthorized", {
+                detail: {
+                  url: $error.config?.url,
+                  method: $error.config?.method
+                }
+              })
+            );
+          } else {
+            useUserStoreHook().logOut();
+          }
         }
         $error.isCancelRequest = Axios.isCancel($error);
         // 关闭进度条动画
