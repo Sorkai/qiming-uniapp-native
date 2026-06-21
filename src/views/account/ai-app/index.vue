@@ -1259,7 +1259,7 @@ onUnmounted(() => {
               </div>
 
               <div
-                class="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
+                class="ai-quick-chat-card bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
               >
                 <el-input
                   v-model="quickMessage"
@@ -1274,9 +1274,9 @@ onUnmounted(() => {
                 />
 
                 <div
-                  class="flex items-center justify-between px-4 py-3 bg-gray-50/50 border-t border-gray-50"
+                  class="ai-quick-toolbar flex items-center justify-between px-4 py-3 bg-gray-50/50 border-t border-gray-50"
                 >
-                  <div class="flex flex-wrap items-center gap-1.5">
+                  <div class="ai-quick-controls flex flex-wrap items-center gap-1.5">
                     <el-dropdown
                       trigger="click"
                       @command="c => (quickCourse = c)"
@@ -1344,9 +1344,9 @@ onUnmounted(() => {
                     </el-dropdown>
                   </div>
 
-                  <div class="flex items-center gap-3">
+                  <div class="ai-quick-submit flex items-center gap-3">
                     <span
-                      class="text-[12px] text-gray-400 font-medium tracking-wide flex items-center pr-2 cursor-pointer hover:text-gray-600 transition-colors"
+                      class="ai-quick-model text-[12px] text-gray-400 font-medium tracking-wide flex items-center pr-2 cursor-pointer hover:text-gray-600 transition-colors"
                     >
                       {{ selectedModelLabel || "选择模型" }}
                       <el-icon class="ml-1"><ArrowDown /></el-icon>
@@ -1950,6 +1950,57 @@ onUnmounted(() => {
     &::placeholder {
       color: #9ca3af;
     }
+  }
+}
+
+@media (width <= 767px) {
+  .ai-quick-chat-card {
+    border-radius: 20px;
+  }
+
+  .ai-quick-toolbar {
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px !important;
+    flex-direction: column;
+  }
+
+  .ai-quick-controls,
+  .ai-quick-submit {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ai-quick-controls {
+    gap: 6px !important;
+
+    :deep(.el-dropdown),
+    > span {
+      max-width: 100%;
+    }
+
+    :deep(.el-dropdown > span),
+    > span {
+      max-width: 100%;
+      min-width: 0;
+    }
+  }
+
+  .ai-quick-submit {
+    justify-content: space-between;
+  }
+
+  .ai-quick-model {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: calc(100% - 52px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ai-quick-submit button {
+    flex: 0 0 40px;
   }
 }
 
