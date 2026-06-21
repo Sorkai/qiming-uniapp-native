@@ -220,14 +220,30 @@ watch(
 const activeCourse = ref<CourseView | null>(null);
 
 // 侧边栏收起状态
+const readUrlFlag = (key: string) => {
+  if (typeof window === "undefined") return false;
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?") + 1)
+    : "";
+  const hashParams = new URLSearchParams(hashQuery);
+  return searchParams.get(key) === "1" || hashParams.get(key) === "1";
+};
 const isMiniProgramWebView = () =>
   typeof document !== "undefined" &&
   (document.documentElement.classList.contains("qiming-mini-program-webview") ||
     document.documentElement.dataset.qimingMiniProgram === "true" ||
     localStorage.getItem("qimingMiniProgramWebView") === "1" ||
-    sessionStorage.getItem("qimingMiniProgramWebView") === "1");
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    readUrlFlag("qimingMiniProgram") ||
+    readUrlFlag("qimingNative"));
 const isCompactViewport = () =>
-  typeof window !== "undefined" && window.innerWidth <= 767;
+  typeof window !== "undefined" &&
+  Math.min(
+    window.innerWidth || Number.POSITIVE_INFINITY,
+    document.documentElement.clientWidth || Number.POSITIVE_INFINITY,
+    window.visualViewport?.width || Number.POSITIVE_INFINITY
+  ) <= 767;
 const shouldUseCompactAiSidebar = () =>
   isCompactViewport() || isMiniProgramWebView();
 
