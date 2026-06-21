@@ -11,6 +11,7 @@ import {
   type UserResult,
   type RefreshTokenResult,
   getLogin,
+  userLogin,
   refreshTokenApi
 } from "@/api/user";
 import { useMultiTagsStoreHook } from "./multiTags";
@@ -93,10 +94,52 @@ export const useUserStore = defineStore("pure-user", {
     /** 登入 */
     async loginByUsername(data) {
       return new Promise<UserResult>((resolve, reject) => {
+        const username = String(data?.username ?? "").trim();
+        const password = String(data?.password ?? "");
+        const useUserCenter = /^1\d{10}$/.test(username);
+
+        const normalizeLoginToken = (loginData: any) => {
+          const expiresValue = Number(loginData?.accessExpire);
+          const expiresTime =
+            expiresValue > 100000000000
+              ? expiresValue
+              : expiresValue * 1000;
+          return {
+            accessToken: loginData?.accessToken,
+            refreshToken: loginData?.refreshToken || loginData?.accessToken,
+            expires: new Date(expiresTime),
+            username,
+            nickname: username,
+            avatar: "",
+            roles: [],
+            permissions: ["*:*:*"]
+          };
+        };
+
+        if (useUserCenter) {
+          userLogin({ mobile: username, password })
+            .then(res => {
+              if (res?.code === 200 && res?.data?.accessToken) {
+                const tokenData = normalizeLoginToken(res.data);
+                setToken(tokenData);
+                resolve({
+                  success: true,
+                  data: tokenData
+                } as UserResult);
+                return;
+              }
+              reject(new Error(res?.msg || "登录失败"));
+            })
+            .catch(error => {
+              reject(error);
+            });
+          return;
+        }
+
         getLogin(data)
-          .then(data => {
-            if (data?.success) setToken(data.data);
-            resolve(data);
+          .then(res => {
+            if (res?.success) setToken(res.data);
+            resolve(res);
           })
           .catch(error => {
             reject(error);
