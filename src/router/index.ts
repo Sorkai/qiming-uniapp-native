@@ -223,7 +223,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       })
       .catch(error => {
         console.error("[Router Guard] Demo session bootstrap failed", error);
-        next({ path: isMiniProgramWebView ? "/login" : "/home" });
+        next({ path: "/home" });
       });
     return;
   }
@@ -371,7 +371,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
           "[Router Guard] 拒绝访问非白名单页面，清除 token 并回退到首页"
         );
         removeToken();
-        next({ path: isMiniProgramWebView ? "/login" : "/home" });
+        next({ path: "/home" });
       }
     } else {
       next();

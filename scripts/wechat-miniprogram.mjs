@@ -22,7 +22,7 @@ const buildDir = join(nativeProject, "dist", "build", "mp-weixin");
 const projectConfigPath = join(buildDir, "project.config.json");
 const artifactsDir = join(root, "artifacts", "wechat-miniprogram");
 const defaultWebviewOrigin = "https://aiedu-mp.intelledu.cn";
-const defaultLaunchEntry = "/login";
+const defaultLaunchEntry = "/home";
 const defaultLaunchRole = "";
 
 const realAppIdPattern = /^wx[a-zA-Z0-9]{16}$/;

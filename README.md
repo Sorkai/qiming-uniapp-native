@@ -179,14 +179,14 @@ pnpm mini:h5-smoke -- --dev-server http://localhost:8851
 pnpm build:wechat-h5
 pnpm mini:preflight -- --dev-server https://aiedu-mp.intelledu.cn --role teacher --entry /welcome/index
 pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role teacher --entry /welcome/index
-WECHAT_MINIPROGRAM_APPID=wx5a9db47d4dcce103 pnpm mini:upload -- --dev-server https://aiedu-mp.intelledu.cn --entry /login --version <version> --desc "<release note>"
+WECHAT_MINIPROGRAM_APPID=wx5a9db47d4dcce103 pnpm mini:upload -- --dev-server https://aiedu-mp.intelledu.cn --entry /home --version <version> --desc "<release note>"
 ```
 
 微信端从 `main` 单独拉分支推进，继续复用 `native-app/` 的 uni-app 工程。
 `mini:build` 会生成 `native-app/dist/build/mp-weixin` 并写入三端启动路径矩阵；
 `mini:open` 通过微信开发者工具 CLI 打开模拟器。调试 web-view 时传入
 `--dev-server`、`--role` 和 `--entry`；未传时脚本会沿用上一次生成配置里的启动条件。
-正式体验版默认入口使用 `/login`，避免微信小程序从营销首页 `/home` 启动后和业务系统返回栈混在一起。
+正式体验版默认入口使用 `/home`，进入启明智教首页后通过业务登录弹窗进入三端系统，避免落到 vue-pure-admin 模板登录页。
 `mini:h5-smoke` 会用本机 Chrome/Edge 以 390x844 手机视口为学生端、教师端、管理端路径矩阵
 生成截图和 `summary.json` 到 `artifacts/wechat-miniprogram/`，用于微信 web-view 正式 AppID
 可用前的自动化界面加载验收。
