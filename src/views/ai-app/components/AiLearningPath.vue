@@ -1,17 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import {
-  Location,
-  Check,
-  Cpu,
-  Reading,
-  Guide,
-  RefreshRight,
-  MagicStick,
-  Bell,
-  Clock
-} from "@element-plus/icons-vue";
+import { Check, RefreshRight, MagicStick } from "@element-plus/icons-vue";
 import {
   assistantApiErrorMessage,
   applyAssistantPathAction,
@@ -50,6 +40,39 @@ const hasPath = computed(() => !!path.value && roadmapData.value.length > 0);
 const pendingActions = computed(() =>
   pathActions.value.filter(item => item.status !== "applied")
 );
+const totalNodes = computed(() =>
+  roadmapData.value.reduce((total, phase) => total + phase.nodes.length, 0)
+);
+const completedNodes = computed(() =>
+  roadmapData.value.reduce(
+    (total, phase) => total + phase.nodes.filter(node => node.done).length,
+    0
+  )
+);
+const completionPercent = computed(() =>
+  totalNodes.value
+    ? Math.round((completedNodes.value / totalNodes.value) * 100)
+    : 0
+);
+const activePhase = computed(
+  () =>
+    roadmapData.value.find(phase => phase.status === "active") ||
+    roadmapData.value[0]
+);
+const estimatedMinutes = computed(() =>
+  roadmapData.value.reduce(
+    (total, phase) =>
+      total +
+      phase.nodes.reduce(
+        (phaseTotal, node) => phaseTotal + Number(node.estimated_minutes || 0),
+        0
+      ),
+    0
+  )
+);
+const pathSummary = computed(
+  () => path.value?.summary || path.value?.goal || ""
+);
 const contextWarning = computed(() => {
   if (!props.courseId) return "请先选择课程";
   if (props.requiresTargetStudent && !props.targetStudentId) {
@@ -58,6 +81,95 @@ const contextWarning = computed(() => {
   return "";
 });
 const hasRequiredContext = computed(() => !contextWarning.value);
+
+const statusTextMap: Record<string, string> = {
+  completed: "已完成",
+  done: "已完成",
+  active: "进行中",
+  pending: "待开始",
+  applied: "已应用",
+  pending_apply: "待应用",
+  preview: "预览",
+  draft: "草稿",
+  generated: "已生成",
+  failed: "失败",
+  blocked: "已阻断"
+};
+
+const nodeTypeTextMap: Record<string, string> = {
+  explanation: "讲解",
+  exercise: "练习",
+  reading: "阅读",
+  review: "复习",
+  quiz: "测验",
+  resource: "资源",
+  video: "视频",
+  practice: "实践",
+  project: "项目"
+};
+
+const ruleTypeTextMap: Record<string, string> = {
+  resource_complete: "完成资源",
+  quiz_score: "测验达标",
+  evidence_required: "提交证明",
+  manual: "手动确认"
+};
+
+const textOf = (
+  map: Record<string, string>,
+  value?: string,
+  fallback = "暂无"
+) => {
+  const key = String(value || "").trim();
+  if (!key) return fallback;
+  return map[key] || key;
+};
+
+const statusText = (value?: string) => textOf(statusTextMap, value);
+const nodeTypeText = (value?: string) => textOf(nodeTypeTextMap, value);
+const ruleTypeText = (value?: string) => textOf(ruleTypeTextMap, value);
+
+const tagType = (value?: string) => {
+  const normalized = String(value || "").toLowerCase();
+  if (
+    ["completed", "done", "applied", "active", "generated"].includes(normalized)
+  )
+    return "success";
+  if (["pending", "pending_apply", "preview", "draft"].includes(normalized))
+    return "warning";
+  if (["failed", "blocked"].includes(normalized)) return "danger";
+  return "info";
+};
+
+const formatMinutes = (minutes?: number) => {
+  const value = Number(minutes || 0);
+  if (!value) return "";
+  if (value < 60) return `${value} 分钟`;
+  const hours = Math.floor(value / 60);
+  const rest = value % 60;
+  return rest ? `${hours} 小时 ${rest} 分钟` : `${hours} 小时`;
+};
+
+const nodeMeta = (
+  node: AssistantPathRoadmap["roadmap"][number]["nodes"][number]
+) =>
+  [
+    node.knowledge_point_id,
+    formatMinutes(node.estimated_minutes),
+    node.status ? statusText(node.status) : "",
+    node.video_segment_refs?.length
+      ? `视频 ${node.video_segment_refs.length}`
+      : ""
+  ].filter(Boolean);
+
+const nodeNote = (
+  node: AssistantPathRoadmap["roadmap"][number]["nodes"][number]
+) =>
+  node.status_reason ||
+  (node.completion_rule?.type
+    ? `完成规则：${ruleTypeText(node.completion_rule.type)}`
+    : "") ||
+  (node.due_at ? `截止：${node.due_at}` : "");
 
 const ensureCourseContext = () => {
   if (hasRequiredContext.value) return true;
@@ -83,22 +195,30 @@ const loadPath = async () => {
     };
     const [currentResult, actionsResult, historyResult, pushResult] =
       await Promise.allSettled([
-      getAssistantCurrentPath(params),
-      listAssistantPathActions(params),
-      listAssistantPathHistory(params),
-      listAssistantPathPushTasks(params)
-    ]);
+        getAssistantCurrentPath(params),
+        listAssistantPathActions(params),
+        listAssistantPathHistory(params),
+        listAssistantPathPushTasks(params)
+      ]);
     const currentData =
-      currentResult.status === "fulfilled" ? currentResult.value?.data : undefined;
+      currentResult.status === "fulfilled"
+        ? currentResult.value?.data
+        : undefined;
     path.value = currentData?.path || null;
     status.value = currentData?.status || "";
     statusMessage.value = currentData?.message || "";
     pathActions.value =
-      actionsResult.status === "fulfilled" ? actionsResult.value?.data?.list || [] : [];
+      actionsResult.status === "fulfilled"
+        ? actionsResult.value?.data?.list || []
+        : [];
     pathHistory.value =
-      historyResult.status === "fulfilled" ? historyResult.value?.data?.list || [] : [];
+      historyResult.status === "fulfilled"
+        ? historyResult.value?.data?.list || []
+        : [];
     pushTasks.value =
-      pushResult.status === "fulfilled" ? pushResult.value?.data?.list || [] : [];
+      pushResult.status === "fulfilled"
+        ? pushResult.value?.data?.list || []
+        : [];
     if (
       currentResult.status === "rejected" ||
       actionsResult.status === "rejected" ||
@@ -107,12 +227,19 @@ const loadPath = async () => {
     ) {
       console.warn("[AiLearningPath] 部分学习路径接口加载失败", {
         currentError:
-          currentResult.status === "rejected" ? currentResult.reason : undefined,
+          currentResult.status === "rejected"
+            ? currentResult.reason
+            : undefined,
         actionsError:
-          actionsResult.status === "rejected" ? actionsResult.reason : undefined,
+          actionsResult.status === "rejected"
+            ? actionsResult.reason
+            : undefined,
         historyError:
-          historyResult.status === "rejected" ? historyResult.reason : undefined,
-        pushError: pushResult.status === "rejected" ? pushResult.reason : undefined
+          historyResult.status === "rejected"
+            ? historyResult.reason
+            : undefined,
+        pushError:
+          pushResult.status === "rejected" ? pushResult.reason : undefined
       });
     }
   } catch (error: any) {
@@ -224,351 +351,227 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
 <template>
   <div
     v-loading="loading"
-    class="h-full flex flex-col p-6 bg-transparent overflow-y-auto custom-scrollbar"
+    class="learning-path-page h-full flex flex-col bg-transparent overflow-y-auto custom-scrollbar"
   >
-    <div class="mb-8">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-2 mb-1">
-            <el-icon class="text-primary"><Guide /></el-icon>
-            <h2 class="text-xl font-bold text-text_color_primary">
-              个性化路径规划
-            </h2>
-          </div>
-          <p class="text-sm text-text_color_regular mt-1">
-            基于 AI 学情画像动态生成的专属进阶路线
-          </p>
-        </div>
-        <div class="flex gap-2">
-          <el-button
-            plain
-            round
-            :loading="actionLoading"
-            :disabled="!hasPath"
-            @click="handleReplan"
-          >
-            <el-icon class="mr-1"><RefreshRight /></el-icon>
-            重规划
-          </el-button>
-          <el-button type="primary" round :loading="actionLoading" @click="handleGenerate">
-            <el-icon class="mr-1"><MagicStick /></el-icon>
-            生成路径
-          </el-button>
-        </div>
+    <div class="path-toolbar">
+      <div class="path-toolbar__title">
+        <div class="eyebrow">学习计划</div>
+        <h2>个性化路径规划</h2>
       </div>
-
-      <div
-        v-if="courseMeta"
-        class="mt-4 max-w-4xl bg-bg_color border border-gray-200 dark:border-gray-800 rounded-xl p-5 flex items-center gap-4 transition-all hover:shadow-md"
-      >
-        <div
-          class="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+      <div class="path-toolbar__actions">
+        <el-button
+          plain
+          :loading="actionLoading"
+          :disabled="!hasPath"
+          @click="handleReplan"
         >
-          <el-icon :size="28"><Cpu /></el-icon>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-bold text-text_color_primary lg:text-lg">{{
-              courseMeta.name
-            }}</span>
-            <el-tag size="small" effect="plain" round>{{
-              courseMeta.subtitle || status
-            }}</el-tag>
-            <el-tag v-if="path?.schema_version" size="small" effect="plain" round>
-              {{ path.schema_version }}
-            </el-tag>
-            <el-tag
-              v-if="path?.apply_status"
-              size="small"
-              type="success"
-              effect="plain"
-              round
-            >
-              {{ path.apply_status }}
-            </el-tag>
-          </div>
-          <div
-            class="mt-2 text-xs text-text_color_regular flex items-center gap-3"
+          <template #icon>
+            <el-icon><RefreshRight /></el-icon>
+          </template>
+          重规划
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="actionLoading"
+          @click="handleGenerate"
+        >
+          <template #icon>
+            <el-icon><MagicStick /></el-icon>
+          </template>
+          生成路径
+        </el-button>
+      </div>
+    </div>
+
+    <section v-if="courseMeta" class="path-summary-panel">
+      <div class="course-block">
+        <div class="course-title-row">
+          <h3>{{ courseMeta.name }}</h3>
+          <el-tag
+            v-if="courseMeta.subtitle || status"
+            size="small"
+            effect="plain"
           >
-            <span
-              >当前阶段：<span class="text-primary font-bold">{{
-                courseMeta.current_phase
-              }}</span>
-              / {{ courseMeta.total_phase }}</span
-            >
-            <span class="w-[1px] h-3 bg-gray-200 dark:bg-gray-700" />
-            <span>预计 {{ courseMeta.estimated_hours }} 学时</span>
-            <span
-              v-if="path?.path_version"
-              class="w-[1px] h-3 bg-gray-200 dark:bg-gray-700"
-            />
-            <span v-if="path?.path_version">路径版本 v{{ path.path_version }}</span>
-          </div>
+            {{ courseMeta.subtitle || statusText(status) }}
+          </el-tag>
+          <el-tag
+            v-if="path?.apply_status"
+            size="small"
+            :type="tagType(path.apply_status)"
+            effect="plain"
+          >
+            {{ statusText(path.apply_status) }}
+          </el-tag>
         </div>
-        <el-tag v-if="statusMessage" type="info" effect="plain" round>
-          {{ statusMessage }}
-        </el-tag>
+        <p v-if="pathSummary" class="course-summary">{{ pathSummary }}</p>
       </div>
 
-      <div
-        v-if="pendingActions.length"
-        class="mt-4 max-w-4xl rounded-xl border border-amber-100 bg-amber-50 p-4"
-      >
-        <div class="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <div class="text-sm font-bold text-amber-700">待应用重规划预览</div>
-            <p class="mt-1 text-xs text-amber-700/80">
-              后端已生成 preview/pending_apply，不会替换当前路径，确认后才应用。
-            </p>
-          </div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span>当前阶段</span>
+          <b>{{ activePhase?.title || courseMeta.current_phase }}</b>
+        </div>
+        <div class="summary-item">
+          <span>完成进度</span>
+          <b>{{ completedNodes }} / {{ totalNodes }}</b>
+        </div>
+        <div class="summary-item">
+          <span>预计投入</span>
+          <b>{{
+            formatMinutes(estimatedMinutes) ||
+            courseMeta.estimated_hours + " 学时"
+          }}</b>
+        </div>
+        <div class="summary-item">
+          <span>路径版本</span>
+          <b>{{ path?.path_version ? `v${path.path_version}` : "暂无" }}</b>
+        </div>
+      </div>
+
+      <el-progress
+        class="path-progress"
+        :percentage="completionPercent"
+        :stroke-width="12"
+        striped
+        striped-flow
+        :duration="14"
+      />
+    </section>
+
+    <section v-if="pendingActions.length" class="path-notice-panel">
+      <div class="notice-head">
+        <span>待应用重规划</span>
+        <div class="notice-actions">
           <el-button
             v-for="action in pendingActions"
             :key="action.action_id"
             type="warning"
             plain
+            size="small"
             :loading="actionLoading"
             @click="handleApplyAction(action.action_id)"
           >
-            应用 {{ action.action_type || "预览" }}
+            应用{{
+              action.action_type ? ` ${statusText(action.action_type)}` : ""
+            }}
           </el-button>
         </div>
-        <div
+      </div>
+      <div class="notice-list">
+        <p
           v-for="action in pendingActions"
           :key="`${action.action_id}-summary`"
-          class="mt-3 rounded-lg bg-white/70 px-3 py-2 text-xs text-amber-700"
         >
           {{ action.reason || action.path?.summary || "重规划预览待确认" }}
-        </div>
+        </p>
       </div>
+    </section>
 
-      <div
-        v-if="path?.natural_plan"
-        class="mt-4 max-w-4xl rounded-xl border border-primary/10 bg-primary/5 p-4"
-      >
-        <div class="mb-2 text-xs font-bold text-primary">自然语言规划</div>
-        <pre
-          class="whitespace-pre-wrap break-words text-xs leading-6 text-text_color_regular"
-          >{{ path.natural_plan }}</pre
-        >
-      </div>
-    </div>
+    <section v-if="path?.natural_plan" class="natural-plan-panel">
+      <div class="panel-heading">规划说明</div>
+      <pre>{{ path.natural_plan }}</pre>
+    </section>
 
-    <div v-if="hasPath" class="max-w-4xl w-full relative">
-      <div
+    <section v-if="hasPath" class="roadmap-board">
+      <article
         v-for="(phase, index) in roadmapData"
         :key="phase.title"
-        class="relative pl-10 mb-12"
+        class="phase-panel"
+        :class="`is-${phase.status || 'pending'}`"
       >
-        <div
-          v-if="index !== roadmapData.length - 1"
-          class="absolute left-[11px] top-8 bottom-[-48px] w-0.5"
-          :class="
-            phase.status === 'completed'
-              ? 'bg-primary'
-              : 'bg-gray-200 dark:bg-gray-800 border-dashed border-l'
-          "
-        />
-
-        <div
-          class="absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center border-2 bg-bg_color z-10"
-          :class="{
-            'border-primary text-primary': phase.status === 'completed',
-            'border-blue-500 shadow-[0_0_12px_rgba(var(--el-color-primary-rgb),0.3)]':
-              phase.status === 'active',
-            'border-gray-300 dark:border-gray-700': phase.status === 'pending'
-          }"
-        >
-          <el-icon v-if="phase.status === 'completed'" :size="12"
-            ><Check
-          /></el-icon>
-          <div
-            v-else-if="phase.status === 'active'"
-            class="w-2.5 h-2.5 bg-primary rounded-full animate-ping"
-          />
-          <div
-            v-else
-            class="w-2 h-2 bg-gray-300 dark:bg-gray-700 rounded-full"
-          />
-        </div>
-
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3
-              class="text-lg font-black tracking-tight"
-              :class="
-                phase.status === 'pending'
-                  ? 'text-text_color_regular opacity-40'
-                  : 'text-text_color_primary'
-              "
-            >
-              {{ phase.title }}
-            </h3>
-            <p
-              v-if="phase.summary"
-              class="mt-1 text-xs text-text_color_regular"
-              :class="phase.status === 'pending' ? 'opacity-50' : ''"
-            >
-              {{ phase.summary }}
-            </p>
+        <div class="phase-head">
+          <div class="phase-index">
+            {{ String(index + 1).padStart(2, "0") }}
           </div>
-          <el-tag v-if="phase.status === 'active'" size="small" effect="dark"
-            >进行中</el-tag
-          >
+          <div class="phase-title">
+            <div class="phase-title-row">
+              <h3>{{ phase.title }}</h3>
+              <el-tag size="small" :type="tagType(phase.status)" effect="plain">
+                {{ statusText(phase.status) }}
+              </el-tag>
+            </div>
+            <p v-if="phase.summary">{{ phase.summary }}</p>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div
+        <div class="node-grid">
+          <article
             v-for="node in phase.nodes"
             :key="node.node_id"
-            class="flex items-start p-4 rounded-xl border transition-all duration-300 group"
-            :class="{
-              'bg-primary/5 border-primary/20 text-primary shadow-sm':
-                node.current,
-              'bg-bg_color border-gray-100 dark:border-gray-800 opacity-70':
-                !node.done && !node.current,
-              'bg-bg_color border-gray-100 dark:border-gray-800 hover:border-primary/50 hover:shadow-md':
-                node.done || (!node.done && !node.current)
-            }"
+            class="node-card"
+            :class="{ 'is-current': node.current, 'is-done': node.done }"
           >
-            <div
-              class="w-8 h-8 rounded-lg flex-c mr-3 transition-colors flex-shrink-0"
-              :class="
-                node.done
-                  ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
-                  : node.current
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-400 dark:bg-gray-800'
-              "
-            >
-              <el-icon :size="16">
-                <Check v-if="node.done" />
-                <Location v-else-if="node.current" />
-                <Reading v-else />
-              </el-icon>
+            <div class="node-card__head">
+              <div class="node-status">
+                <el-icon v-if="node.done"><Check /></el-icon>
+                <span v-else>{{ node.current ? "进行" : "待办" }}</span>
+              </div>
+              <el-tag size="small" effect="plain">
+                {{ nodeTypeText(node.type) }}
+              </el-tag>
             </div>
-
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="font-medium text-sm truncate">{{ node.name }}</span>
-                <el-tag size="small" effect="plain" class="ml-auto !border-none">
-                  {{ node.type }}
-                </el-tag>
-              </div>
-              <p v-if="node.reason" class="mt-2 text-xs text-text_color_regular">
-                {{ node.reason }}
-              </p>
-              <p v-if="node.resource_id" class="mt-1 text-[11px] text-primary">
-                资源：{{ node.resource_id }}
-              </p>
-              <div class="mt-2 flex flex-wrap gap-1">
-                <el-tag
-                  v-if="node.knowledge_point_id"
-                  size="small"
-                  effect="plain"
-                  class="!rounded-md"
-                >
-                  {{ node.knowledge_point_id }}
-                </el-tag>
-                <el-tag
-                  v-if="node.estimated_minutes"
-                  size="small"
-                  effect="plain"
-                  class="!rounded-md"
-                >
-                  {{ node.estimated_minutes }} 分钟
-                </el-tag>
-                <el-tag
-                  v-if="node.status"
-                  size="small"
-                  effect="plain"
-                  class="!rounded-md"
-                >
-                  {{ node.status }}
-                </el-tag>
-                <el-tag
-                  v-if="node.video_segment_refs?.length"
-                  size="small"
-                  type="info"
-                  effect="plain"
-                  class="!rounded-md"
-                >
-                  视频 {{ node.video_segment_refs.length }}
-                </el-tag>
-              </div>
-              <p
-                v-if="node.status_reason || node.completion_rule?.type || node.due_at"
-                class="mt-2 text-[11px] text-text_color_regular leading-relaxed"
-              >
-                {{
-                  node.status_reason ||
-                  node.completion_rule?.type ||
-                  (node.due_at ? `截止：${node.due_at}` : "")
-                }}
-              </p>
+            <h4>{{ node.name }}</h4>
+            <p v-if="node.reason" class="node-reason">{{ node.reason }}</p>
+            <div v-if="nodeMeta(node).length" class="node-meta">
+              <span v-for="meta in nodeMeta(node)" :key="meta">{{ meta }}</span>
+            </div>
+            <p v-if="node.resource_id" class="node-resource">
+              资源：{{ node.resource_id }}
+            </p>
+            <p v-if="nodeNote(node)" class="node-note">{{ nodeNote(node) }}</p>
+            <div class="node-actions">
               <el-button
                 v-if="!node.done"
                 size="small"
-                link
+                plain
                 type="primary"
-                class="!p-0 mt-2"
                 :loading="actionLoading"
                 @click="handleComplete(node.node_id)"
               >
                 标记完成
               </el-button>
             </div>
-          </div>
+          </article>
         </div>
-      </div>
-    </div>
-    <div
-      v-else
-      class="max-w-3xl w-full rounded-2xl border border-dashed border-primary/20 bg-primary/5 p-8 text-center"
-    >
+      </article>
+    </section>
+
+    <section v-else class="path-empty-panel">
       <el-empty
-        :description="statusMessage || '当前课程还没有真实学习路径'"
-        :image-size="140"
+        :description="statusMessage || '当前课程还没有学习路径'"
+        :image-size="110"
       />
       <el-button
         type="primary"
-        round
         :loading="actionLoading"
         @click="handleGenerate"
       >
-        <el-icon class="mr-1"><MagicStick /></el-icon>
+        <template #icon>
+          <el-icon><MagicStick /></el-icon>
+        </template>
         生成路径
       </el-button>
-    </div>
+    </section>
 
-    <div
-      class="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-6 max-w-4xl w-full pb-6"
-    >
-      <div
-        class="rounded-xl border border-gray-100 dark:border-gray-800 p-5 bg-bg_color"
-      >
-        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-4">
-          <el-icon class="text-primary"><Bell /></el-icon>
-          路径推送任务
-        </h4>
-        <div v-if="pushTasks.length" class="space-y-3">
-          <div
-            v-for="task in pushTasks"
-            :key="task.push_id"
-            class="rounded-lg bg-gray-50/70 dark:bg-gray-800/30 p-3 text-xs"
-          >
-            <div class="flex items-center justify-between gap-2">
-              <span class="font-bold text-text_color_primary">{{ task.title }}</span>
-              <el-tag size="small" effect="plain">{{ task.status }}</el-tag>
+    <section class="path-secondary-grid">
+      <article class="secondary-panel">
+        <div class="panel-heading">路径推送任务</div>
+        <div v-if="pushTasks.length" class="task-list">
+          <div v-for="task in pushTasks" :key="task.push_id" class="task-row">
+            <div>
+              <div class="task-title">{{ task.title }}</div>
+              <p v-if="task.summary || task.reason">
+                {{ task.summary || task.reason }}
+              </p>
+              <span>{{ task.scheduled_at || task.created_at || "" }}</span>
             </div>
-            <p v-if="task.summary || task.reason" class="mt-2 text-text_color_regular">
-              {{ task.summary || task.reason }}
-            </p>
-            <div class="mt-2 flex items-center justify-between gap-2">
-              <span class="text-text_color_regular opacity-60">
-                {{ task.scheduled_at || task.created_at || "" }}
-              </span>
+            <div class="task-row__side">
+              <el-tag size="small" :type="tagType(task.status)" effect="plain">
+                {{ statusText(task.status) }}
+              </el-tag>
               <el-button
                 v-if="task.status !== 'completed'"
+                size="small"
                 link
                 type="primary"
                 :loading="actionLoading"
@@ -579,37 +582,436 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
             </div>
           </div>
         </div>
-        <el-empty v-else description="暂无推送任务" :image-size="90" />
-      </div>
+        <el-empty v-else description="暂无推送任务" :image-size="80" />
+      </article>
 
-      <div
-        class="rounded-xl border border-gray-100 dark:border-gray-800 p-5 bg-bg_color"
-      >
-        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-4">
-          <el-icon class="text-primary"><Clock /></el-icon>
-          路径版本历史
-        </h4>
-        <el-timeline v-if="pathHistory.length">
+      <article class="secondary-panel">
+        <div class="panel-heading">路径版本历史</div>
+        <el-timeline v-if="pathHistory.length" class="history-timeline">
           <el-timeline-item
             v-for="item in pathHistory"
             :key="item.path_id"
             :timestamp="item.updated_at || item.created_at"
             hollow
           >
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-text_color_primary">
-                v{{ item.path_version }}
-              </span>
-              <el-tag size="small" effect="plain">{{ item.status }}</el-tag>
-              <el-tag size="small" effect="plain">{{ item.apply_status }}</el-tag>
+            <div class="history-title">
+              <span>v{{ item.path_version }}</span>
+              <el-tag size="small" :type="tagType(item.status)" effect="plain">
+                {{ statusText(item.status) }}
+              </el-tag>
+              <el-tag
+                size="small"
+                :type="tagType(item.apply_status)"
+                effect="plain"
+              >
+                {{ statusText(item.apply_status) }}
+              </el-tag>
             </div>
-            <p class="mt-1 text-xs text-text_color_regular leading-relaxed">
-              {{ item.summary || item.goal || "路径版本已记录" }}
-            </p>
+            <p>{{ item.summary || item.goal || "路径版本已记录" }}</p>
           </el-timeline-item>
         </el-timeline>
-        <el-empty v-else description="暂无路径历史" :image-size="90" />
-      </div>
-    </div>
+        <el-empty v-else description="暂无路径历史" :image-size="80" />
+      </article>
+    </section>
   </div>
 </template>
+
+<style scoped lang="scss">
+.learning-path-page {
+  gap: 16px;
+  padding: 0;
+  color: #303847;
+}
+
+.path-toolbar,
+.path-summary-panel,
+.path-notice-panel,
+.natural-plan-panel,
+.phase-panel,
+.path-empty-panel,
+.secondary-panel {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(224, 233, 247, 0.88);
+  border-radius: 18px;
+  box-shadow:
+    0 12px 30px rgba(38, 54, 78, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+}
+
+.path-toolbar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  padding: 12px 16px;
+}
+
+.path-toolbar__title h2 {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #273142;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6d7a8d;
+}
+
+.path-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.path-toolbar :deep(.el-button) {
+  border-radius: 10px;
+}
+
+.path-summary-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.4fr) minmax(420px, 2fr);
+  gap: 18px;
+  padding: 18px;
+}
+
+.course-title-row,
+.phase-title-row,
+.notice-head,
+.history-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.course-title-row h3,
+.phase-title-row h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #273142;
+}
+
+.course-summary,
+.phase-title p,
+.node-reason,
+.node-note,
+.task-row p,
+.history-timeline p,
+.notice-list p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #637083;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.summary-item {
+  min-width: 0;
+  padding: 12px;
+  background: rgba(247, 250, 253, 0.9);
+  border: 1px solid rgba(229, 236, 247, 0.86);
+  border-radius: 14px;
+}
+
+.summary-item span {
+  display: block;
+  font-size: 12px;
+  color: #8490a2;
+}
+
+.summary-item b {
+  display: block;
+  margin-top: 6px;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  color: #303847;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.path-progress {
+  grid-column: 1 / -1;
+}
+
+.path-progress :deep(.el-progress-bar__outer) {
+  background: #edf2f8;
+}
+
+.path-notice-panel,
+.natural-plan-panel,
+.path-empty-panel,
+.secondary-panel {
+  padding: 16px;
+}
+
+.notice-head {
+  justify-content: space-between;
+  font-weight: 700;
+  color: #875b1a;
+}
+
+.notice-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.notice-list p {
+  padding: 10px 12px;
+  background: rgba(255, 250, 238, 0.88);
+  border: 1px solid #f3dfb7;
+  border-radius: 12px;
+  color: #8a6427;
+}
+
+.panel-heading {
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #303847;
+}
+
+.natural-plan-panel pre {
+  margin: 0;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.85;
+  color: #586579;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.roadmap-board {
+  display: grid;
+  gap: 14px;
+}
+
+.phase-panel {
+  padding: 18px;
+}
+
+.phase-head {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.phase-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5f8fe8;
+  background: #eef5ff;
+  border: 1px solid #dbe8ff;
+  border-radius: 10px;
+}
+
+.node-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.node-card {
+  display: flex;
+  min-height: 190px;
+  padding: 14px;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(225, 233, 245, 0.9);
+  border-radius: 14px;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.node-card:hover,
+.node-card.is-current {
+  background: #fff;
+  border-color: #9cbcf3;
+  box-shadow: 0 10px 24px rgba(72, 110, 166, 0.08);
+}
+
+.node-card.is-done {
+  border-color: rgba(116, 190, 136, 0.45);
+}
+
+.node-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.node-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5f8fe8;
+  background: #eef5ff;
+  border-radius: 8px;
+}
+
+.node-card.is-done .node-status {
+  color: #3f9b67;
+  background: #edf8f2;
+}
+
+.node-card h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #273142;
+}
+
+.node-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.node-meta span {
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #637083;
+  background: #f5f8fc;
+  border-radius: 8px;
+}
+
+.node-resource {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #5f8fe8;
+  word-break: break-word;
+}
+
+.node-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.node-actions :deep(.el-button) {
+  border-radius: 9px;
+}
+
+.path-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding-bottom: 16px;
+}
+
+.task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.task-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(247, 250, 253, 0.9);
+  border: 1px solid rgba(229, 236, 247, 0.86);
+  border-radius: 12px;
+}
+
+.task-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #303847;
+}
+
+.task-row span {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #8a95a6;
+}
+
+.task-row__side {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-title span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #303847;
+}
+
+.history-timeline {
+  padding-top: 4px;
+}
+
+@media (max-width: 1180px) {
+  .path-summary-panel,
+  .path-secondary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .learning-path-page {
+    padding: 0;
+  }
+
+  .path-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .summary-grid,
+  .node-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-row {
+    grid-template-columns: 1fr;
+  }
+
+  .task-row__side {
+    align-items: flex-start;
+  }
+}
+</style>

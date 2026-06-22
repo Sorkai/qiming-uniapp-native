@@ -537,7 +537,9 @@ const handleAssistantStreamEvent = (
 ) => {
   const hasBackendHumanState = applyDigitalHumanDirective(event);
   const directiveText =
-    event.digital_human?.speech_text || event.digital_human?.highlight_text || "";
+    event.digital_human?.speech_text ||
+    event.digital_human?.highlight_text ||
+    "";
 
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
@@ -606,7 +608,10 @@ const handleAssistantStreamEvent = (
     speakDigitalHumans(directiveText || content || "");
     isChatStreaming.value = false;
     window.setTimeout(() => {
-      if (!isChatStreaming.value && digitalHumanStreamState.value === "saying") {
+      if (
+        !isChatStreaming.value &&
+        digitalHumanStreamState.value === "saying"
+      ) {
         digitalHumanStreamState.value = null;
       }
     }, 2400);
@@ -675,7 +680,8 @@ const handleSendMessage = (text: string) => {
       thinking_mode: thinkingModeKey.value || undefined,
       message: trimmed,
       attachment_ids: [],
-      enable_realtime_resource: selectedSkillKeys.value.includes("resource_hint"),
+      enable_realtime_resource:
+        selectedSkillKeys.value.includes("resource_hint"),
       preferred_explanation_mode: selectedSkillKeys.value.includes("visual")
         ? "visual"
         : undefined,
@@ -793,7 +799,9 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
   selectedStudentId.value = data.selected_student_id || myStudents.value[0]?.id;
   const previousCourseId = activeCourse.value?.id;
   const manuallySelectedCourse = manuallySelectedCourseId.value
-    ? myCourses.value.find(course => course.id === manuallySelectedCourseId.value)
+    ? myCourses.value.find(
+        course => course.id === manuallySelectedCourseId.value
+      )
     : null;
   const routeSelectedCourse = routeCourseId.value
     ? myCourses.value.find(course => course.id === routeCourseId.value)
@@ -829,7 +837,9 @@ const loadAssistantBootstrap = async () => {
     await loadConversationGroups();
   } catch (error: any) {
     console.error("[AiApp] 学习助手启动上下文加载失败:", error);
-    ElMessage.error(assistantApiErrorMessage(error, "学习助手启动上下文加载失败"));
+    ElMessage.error(
+      assistantApiErrorMessage(error, "学习助手启动上下文加载失败")
+    );
   } finally {
     isBootstrapping.value = false;
   }
@@ -858,12 +868,13 @@ const loadConversationMessages = async (conversation: ConversationView) => {
     );
     activeConversationId.value = conversation.conversation_id;
     const detailConversation = data.conversation || conversation;
-    if (detailConversation.metadata) conversation.metadata = detailConversation.metadata;
+    if (detailConversation.metadata)
+      conversation.metadata = detailConversation.metadata;
     const course =
       myCourses.value.find(
-        item => item.id === (detailConversation.course_id || conversation.course_id)
-      ) ||
-      myCourses.value.find(item => item.name === conversation.course);
+        item =>
+          item.id === (detailConversation.course_id || conversation.course_id)
+      ) || myCourses.value.find(item => item.name === conversation.course);
     if (course) activeCourse.value = course;
     messages.value = (data.messages || data.list || []).map(item => ({
       id: item.message_id,
@@ -1060,11 +1071,11 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="ai-app-root h-[100dvh] w-full flex flex-col overflow-hidden bg-white"
+    class="ai-app-root h-[100dvh] w-full flex flex-col overflow-hidden"
     :class="[
       activeRail === 'chat'
         ? 'bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)]'
-        : '',
+        : 'bg-transparent',
       currentTheme
     ]"
   >
@@ -1117,7 +1128,7 @@ onUnmounted(() => {
         <!-- 课程 / 学生上下文工具栏 -->
         <div
           v-if="courseScopedRails.includes(activeRail)"
-          class="flex-none flex items-center justify-end gap-3 bg-white px-6 py-3 border-b border-gray-100 z-10 relative shadow-sm"
+          class="flex-none flex items-center justify-end gap-3 bg-white mb-5 px-6 py-3 border border-gray-100 rounded-[18px] z-10 relative overflow-hidden"
         >
           <span class="text-xs text-gray-500 font-medium">课程:</span>
           <el-select
@@ -1148,7 +1159,9 @@ onUnmounted(() => {
               </div>
             </el-option>
           </el-select>
-          <template v-if="isStaffMode && studentScopedRails.includes(activeRail)">
+          <template
+            v-if="isStaffMode && studentScopedRails.includes(activeRail)"
+          >
             <span class="text-xs text-gray-500 font-medium">分析对象:</span>
             <el-select
               v-model="selectedStudentId"
@@ -1419,7 +1432,7 @@ onUnmounted(() => {
                       class="w-10 h-10 flex items-center justify-center rounded-xl transition-all transform border"
                       :class="
                         quickCourse && quickMessage.trim()
-                          ? 'bg-[#c199f9] border-[#c199f9] text-white hover:bg-[#b085f7] hover:scale-105 shadow-lg shadow-purple-100 cursor-pointer'
+                          ? 'bg-primary border-primary text-white hover:bg-primary/90 cursor-pointer'
                           : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
                       "
                       :disabled="!quickCourse || !quickMessage.trim()"
@@ -1456,7 +1469,7 @@ onUnmounted(() => {
           <div v-else-if="activeRail === `generation`" class="h-full w-full">
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center bg-white"
+              class="h-full w-full flex items-center justify-center bg-transparent"
             >
               <div
                 class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
@@ -1469,12 +1482,9 @@ onUnmounted(() => {
                 <h3 class="mt-4 text-lg font-black text-gray-600">
                   尚未选择学生
                 </h3>
-                <p class="mt-2 text-sm text-gray-400">
-                  请在顶部选择学生以查看或生成个性化教学资源
-                </p>
               </div>
             </div>
-            <div v-else class="h-full bg-white overflow-hidden">
+            <div v-else class="h-full bg-transparent overflow-hidden">
               <AiResourceGeneration
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -1486,7 +1496,7 @@ onUnmounted(() => {
           <div v-else-if="activeRail === `path`" class="h-full w-full">
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center bg-white"
+              class="h-full w-full flex items-center justify-center bg-transparent"
             >
               <div
                 class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
@@ -1499,12 +1509,9 @@ onUnmounted(() => {
                 <h3 class="mt-4 text-lg font-black text-gray-600">
                   尚未选择学生
                 </h3>
-                <p class="mt-2 text-sm text-gray-400">
-                  请在顶部选择需要分析的学生以查看个性化路径规划
-                </p>
               </div>
             </div>
-            <div v-else class="h-full bg-white overflow-hidden">
+            <div v-else class="h-full bg-transparent overflow-hidden">
               <AiLearningPath
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -1515,32 +1522,17 @@ onUnmounted(() => {
 
           <div
             v-else-if="activeRail === `profile`"
-            class="h-full w-full p-4 bg-white"
+            class="h-full w-full bg-transparent"
           >
             <div
               v-if="isStaffMode && !selectedStudentId"
               class="h-full w-full flex items-center justify-center"
             >
-              <div
-                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
-              >
-                <LottieAnimation
-                  :animationData="emptyStateDevelopmentAnimation"
-                  :width="360"
-                  :height="360"
-                />
-                <h3 class="mt-4 text-lg font-black text-gray-600">
-                  尚未选择学生
-                </h3>
-                <p class="mt-2 text-sm text-gray-400">
-                  请在顶部选择学生以查看学习画像与学情分析
-                </p>
-              </div>
+              <el-empty description="尚未选择学生" :image-size="120" />
             </div>
-            <div v-else class="h-full flex gap-4 overflow-hidden">
-              <!-- 左：完整学习画像 -->
+            <div v-else class="h-full min-h-0 flex gap-4 overflow-hidden">
               <div
-                class="flex-1 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                class="flex-1 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <AiLearningProfile
                   :course-id="selectedCourseId"
@@ -1549,9 +1541,8 @@ onUnmounted(() => {
                   @profile-loaded="handleProfileLoaded"
                 />
               </div>
-              <!-- 右：原 chat 右侧的画像 / 智能体 / 拓展资源 选项卡 -->
               <div
-                class="w-[360px] flex-shrink-0 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                class="w-[440px] flex-shrink-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <AiInspector
                   :profileDimensions="profileDimensions"
@@ -1565,7 +1556,7 @@ onUnmounted(() => {
           <div v-else-if="activeRail === `assessment`" class="h-full w-full">
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center bg-white"
+              class="h-full w-full flex items-center justify-center bg-transparent"
             >
               <div
                 class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
@@ -1578,12 +1569,9 @@ onUnmounted(() => {
                 <h3 class="mt-4 text-lg font-black text-gray-600">
                   尚未选择学生
                 </h3>
-                <p class="mt-2 text-sm text-gray-400">
-                  请在顶部选择学生以查看学习评估报告
-                </p>
               </div>
             </div>
-            <div v-else class="h-full bg-white overflow-hidden">
+            <div v-else class="h-full bg-transparent overflow-hidden">
               <AiAssessment
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -1805,15 +1793,15 @@ onUnmounted(() => {
       <div class="flex gap-6">
         <!-- 栈可视化区 -->
         <div
-          class="relative w-44 h-72 mx-auto bg-gradient-to-b from-indigo-50 to-purple-50 rounded-2xl border-2 border-dashed border-indigo-300 flex flex-col-reverse items-center p-3 gap-2 overflow-hidden"
+          class="relative w-44 h-72 mx-auto bg-gray-50 rounded-2xl border border-dashed border-blue-200 flex flex-col-reverse items-center p-3 gap-2 overflow-hidden"
         >
           <div
-            class="absolute top-2 left-3 text-[11px] font-bold text-indigo-500"
+            class="absolute top-2 left-3 text-[11px] font-bold text-blue-500"
           >
             栈顶 (top) ↑
           </div>
           <div
-            class="absolute bottom-2 right-3 text-[11px] font-bold text-purple-500"
+            class="absolute bottom-2 right-3 text-[11px] font-bold text-gray-500"
           >
             栈底 (bottom)
           </div>
@@ -1825,7 +1813,7 @@ onUnmounted(() => {
             <div
               v-for="item in stackItems"
               :key="item.key"
-              class="w-28 h-9 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center shadow-lg"
+              class="w-28 h-9 rounded-lg bg-blue-500 text-white font-bold flex items-center justify-center shadow-sm"
             >
               {{ item.value }}
             </div>
@@ -1847,8 +1835,8 @@ onUnmounted(() => {
             <el-button @click="stackReset">重置</el-button>
           </div>
           <div class="text-xs text-gray-500">
-            栈大小：<b class="text-indigo-600">{{ stackItems.length }}</b> ｜
-            栈顶元素：<b class="text-pink-600">{{
+            栈大小：<b class="text-blue-600">{{ stackItems.length }}</b> ｜
+            栈顶元素：<b class="text-blue-600">{{
               stackItems[stackItems.length - 1]?.value || "—"
             }}</b>
           </div>

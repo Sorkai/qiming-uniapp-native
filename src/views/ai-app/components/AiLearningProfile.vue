@@ -3,10 +3,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
 import {
   User,
-  Medal,
   TrendCharts,
-  Star,
-  Trophy,
   Reading,
   VideoPlay,
   Avatar,
@@ -48,6 +45,8 @@ const profileCorrections = ref<AssistantProfileCorrectionItem[]>([]);
 const correctionDimension = ref("");
 const correctionValue = ref(80);
 const correctionReason = ref("");
+const selectedDimension = ref<any | null>(null);
+const dimensionDetailVisible = ref(false);
 
 const learner = computed(
   () =>
@@ -60,14 +59,29 @@ const learner = computed(
     }
 );
 
-const icons = [Medal, TrendCharts, Trophy, Star, Star];
+const dimensionPalette = [
+  "#5f8fe8",
+  "#45b59f",
+  "#d6a23f",
+  "#7f95bf",
+  "#e27b73",
+  "#b89155"
+];
+
+const toPercentValue = (value?: number) => {
+  if (value === undefined || value === null) return 0;
+  const normalized = value <= 1 ? value * 100 : value;
+  return Math.min(100, Math.max(0, Math.round(normalized)));
+};
+
 const dimensions = computed(() =>
   (profile.value?.dimensions || []).map((dimension, index) => ({
     ...dimension,
-    color: dimension.color || ["#5e7ff8", "#10b981", "#f59e0b", "#8b5cf6"][index % 4],
-    icon: icons[index % icons.length]
+    value: toPercentValue(dimension.value ?? dimension.score),
+    color: dimensionPalette[index % dimensionPalette.length]
   }))
 );
+const previewDimensions = computed(() => dimensions.value.slice(0, 6));
 const knowledgeMap = computed(() => profile.value?.knowledge_map || []);
 const tags = computed(() => profile.value?.tags || []);
 const profileMeta = computed<Partial<AssistantProfileCurrentResp>>(
@@ -75,7 +89,9 @@ const profileMeta = computed<Partial<AssistantProfileCurrentResp>>(
 );
 const canCreateCorrection = computed(() => !!props.targetStudentId);
 const currentDimension = computed(() =>
-  dimensions.value.find(item => (item.key || item.label) === correctionDimension.value)
+  dimensions.value.find(
+    item => (item.key || item.label) === correctionDimension.value
+  )
 );
 const contextWarning = computed(() => {
   if (!props.courseId) return "请先选择课程";
@@ -105,6 +121,14 @@ const decisionType = (decision?: string) => {
   return "info";
 };
 
+const dimensionEvidence = (dimension: any) =>
+  Array.isArray(dimension?.evidence) ? dimension.evidence : [];
+
+const openDimensionDetail = (dimension: any) => {
+  selectedDimension.value = dimension;
+  dimensionDetailVisible.value = true;
+};
+
 const loadProfile = async () => {
   if (!hasRequiredContext.value) {
     profile.value = null;
@@ -130,14 +154,19 @@ const loadProfile = async () => {
       profile.value = currentResult.value?.data || null;
     } else {
       profile.value = null;
-      console.warn("[AiLearningProfile] 当前画像接口加载失败:", currentResult.reason);
+      console.warn(
+        "[AiLearningProfile] 当前画像接口加载失败:",
+        currentResult.reason
+      );
     }
     profileHistory.value =
       historyResult.status === "fulfilled"
         ? historyResult.value?.data?.items || []
         : [];
     profileEvents.value =
-      eventsResult.status === "fulfilled" ? eventsResult.value?.data?.items || [] : [];
+      eventsResult.status === "fulfilled"
+        ? eventsResult.value?.data?.items || []
+        : [];
     profileCorrections.value =
       correctionsResult.status === "fulfilled"
         ? correctionsResult.value?.data?.items || []
@@ -226,19 +255,14 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
 <template>
   <div
     v-loading="loading"
-    class="h-full flex flex-col p-6 bg-transparent overflow-y-auto"
+    class="profile-page h-full flex flex-col p-6 bg-transparent overflow-y-auto"
   >
-    <div class="mb-8 flex items-start justify-between gap-4">
+    <div class="mb-5 flex items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
           <el-icon class="text-primary"><User /></el-icon>
-          <h2 class="text-xl font-bold text-text_color_primary">
-            全息学习画像
-          </h2>
+          <h2 class="text-xl font-bold text-text_color_primary">学情分析</h2>
         </div>
-        <p class="text-sm text-text_color_regular mt-1">
-          AI 实时抓取并总结学习特征 · 课程：{{ learner.course || "当前课程" }}
-        </p>
       </div>
       <el-button
         type="primary"
@@ -252,12 +276,12 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
       </el-button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-5">
       <div
-        class="col-span-1 bg-bg_color rounded-xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center hover:shadow-md transition-all"
+        class="profile-summary bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 flex flex-col items-center"
       >
         <div
-          class="relative w-28 h-28 rounded-full bg-gradient-to-tr from-primary to-purple-400 p-1 mb-6"
+          class="relative w-24 h-24 rounded-full border border-gray-200 bg-gray-50 p-1 mb-5"
         >
           <div
             class="w-full h-full rounded-full bg-bg_color flex items-center justify-center overflow-hidden"
@@ -265,39 +289,47 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
             <el-icon :size="48" class="text-primary"><Avatar /></el-icon>
           </div>
           <div
-            class="absolute bottom-1 right-1 bg-green-500 w-6 h-6 rounded-full border-4 border-bg_color shadow-sm"
+            class="absolute bottom-1 right-1 bg-emerald-500 w-4 h-4 rounded-full border-2 border-bg_color"
           />
         </div>
-        <h3 class="text-xl font-bold text-text_color_primary">
+        <h3 class="text-lg font-semibold text-text_color_primary">
           {{ learner.name }}
         </h3>
-        <p class="text-sm text-text_color_regular mt-1 mb-6">
+        <p class="text-sm text-text_color_regular mt-1 mb-5">
           {{ learner.role }}
         </p>
 
-        <div class="w-full grid grid-cols-2 gap-4 text-center">
-          <div class="flex flex-col">
-            <span class="text-2xl font-black text-primary">{{
-              learner.enroll_days
-            }}</span>
+        <div class="w-full grid grid-cols-2 gap-3 text-center">
+          <div class="rounded-lg bg-gray-50 px-3 py-3">
             <span
-              class="text-[11px] text-text_color_regular uppercase tracking-wider"
+              class="block text-2xl font-semibold text-text_color_primary"
+              >{{ learner.enroll_days }}</span
+            >
+            <span class="block mt-1 text-xs text-text_color_regular"
               >学习天数</span
             >
           </div>
-          <div class="flex flex-col">
-            <span class="text-2xl font-black text-primary">{{
-              learner.study_minutes
-            }}</span>
+          <div class="rounded-lg bg-gray-50 px-3 py-3">
             <span
-              class="text-[11px] text-text_color_regular uppercase tracking-wider"
+              class="block text-2xl font-semibold text-text_color_primary"
+              >{{ learner.study_minutes }}</span
+            >
+            <span class="block mt-1 text-xs text-text_color_regular"
               >累计分钟</span
             >
           </div>
         </div>
 
-        <div class="mt-8 flex flex-wrap justify-center gap-2">
-          <el-tag v-for="tag in tags" :key="tag" effect="plain" round size="small">
+        <div
+          v-if="tags.length"
+          class="mt-5 flex flex-wrap justify-center gap-2"
+        >
+          <el-tag
+            v-for="tag in tags.slice(0, 4)"
+            :key="tag"
+            effect="plain"
+            size="small"
+          >
             {{ tag }}
           </el-tag>
         </div>
@@ -328,7 +360,9 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
         </div>
 
         <div v-if="profileMeta.risk_flags?.length" class="mt-5 w-full">
-          <div class="mb-2 text-xs font-bold text-text_color_regular">风险标记</div>
+          <div class="mb-2 text-xs font-bold text-text_color_regular">
+            风险标记
+          </div>
           <div class="flex flex-wrap gap-2">
             <el-tag
               v-for="flag in profileMeta.risk_flags"
@@ -345,48 +379,67 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
       </div>
 
       <div
-        class="col-span-1 md:col-span-2 bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all"
+        class="dimension-preview bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800"
       >
-        <h4
-          class="font-bold text-text_color_primary mb-8 flex items-center gap-2"
-        >
-          <el-icon class="text-primary"><TrendCharts /></el-icon>
-          能力维度分析
-        </h4>
+        <div class="mb-5 flex items-center justify-between">
+          <h4
+            class="font-semibold text-text_color_primary flex items-center gap-2"
+          >
+            <el-icon class="text-primary"><TrendCharts /></el-icon>
+            能力维度
+          </h4>
+          <span class="text-xs text-text_color_regular">
+            {{ previewDimensions.length }} 项
+          </span>
+        </div>
 
-        <div v-if="dimensions.length" class="space-y-8">
-          <div v-for="dim in dimensions" :key="dim.label" class="group">
-            <div class="flex justify-between items-center mb-3">
-              <span
-                class="text-sm font-medium text-text_color_regular flex items-center gap-3"
-              >
+        <div
+          v-if="previewDimensions.length"
+          class="grid grid-cols-1 2xl:grid-cols-2 gap-4"
+        >
+          <button
+            v-for="dim in previewDimensions"
+            :key="dim.key || dim.label"
+            type="button"
+            class="dimension-card"
+            @click="openDimensionDetail(dim)"
+            @keydown.enter.prevent="openDimensionDetail(dim)"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0 text-left">
                 <div
-                  class="w-8 h-8 rounded-lg flex-c bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:text-primary transition-colors"
+                  class="text-base font-semibold text-text_color_primary truncate"
                 >
-                  <el-icon :style="{ color: dim.color }">
-                    <component :is="dim.icon" />
-                  </el-icon>
+                  {{ dim.label }}
                 </div>
-                {{ dim.label }}
+                <div
+                  v-if="dim.level || dim.trend"
+                  class="mt-1 text-sm text-text_color_regular truncate"
+                >
+                  {{ dim.level || dim.trend }}
+                </div>
+              </div>
+              <span class="dimension-value" :style="{ color: dim.color }">
+                {{ dim.value }}%
               </span>
-              <span class="text-sm font-bold" :style="{ color: dim.color }"
-                >{{ dim.value }}%</span
-              >
             </div>
             <el-progress
+              class="dimension-progress mt-4"
               :percentage="dim.value"
               :color="dim.color"
-              :stroke-width="8"
+              :stroke-width="14"
               :show-text="false"
               stroke-linecap="round"
-              class="w-full"
+              striped
+              striped-flow
+              :duration="14"
             />
             <div
-              v-if="dim.evidence?.length"
+              v-if="dimensionEvidence(dim).length"
               class="mt-3 flex flex-wrap gap-2"
             >
               <el-tag
-                v-for="evidence in dim.evidence"
+                v-for="evidence in dimensionEvidence(dim).slice(0, 2)"
                 :key="evidence"
                 size="small"
                 effect="plain"
@@ -396,18 +449,12 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
               </el-tag>
             </div>
             <div
-              v-if="dim.description || dim.trend || dim.updated_at"
-              class="mt-2 text-xs text-text_color_regular leading-relaxed"
+              class="mt-4 flex items-center justify-between text-xs text-text_color_regular"
             >
-              <span v-if="dim.description">{{ dim.description }}</span>
-              <span v-if="dim.trend" class="ml-2 text-primary">
-                趋势：{{ dim.trend }}
-              </span>
-              <span v-if="dim.updated_at" class="ml-2 opacity-60">
-                {{ dim.updated_at }}
-              </span>
+              <span>{{ dim.updated_at || "暂无更新时间" }}</span>
+              <span class="text-primary">查看</span>
             </div>
-          </div>
+          </button>
         </div>
         <el-empty v-else description="暂无学习画像维度" :image-size="100" />
       </div>
@@ -417,7 +464,9 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
       <div
         class="bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm"
       >
-        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-5">
+        <h4
+          class="font-bold text-text_color_primary flex items-center gap-2 mb-5"
+        >
           <el-icon class="text-primary"><Clock /></el-icon>
           画像历史
         </h4>
@@ -437,7 +486,10 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
             <p class="mt-1 text-xs text-text_color_regular leading-relaxed">
               {{ item.summary || item.updated_reason || "画像快照已更新" }}
             </p>
-            <div v-if="item.risk_flags?.length" class="mt-2 flex flex-wrap gap-1">
+            <div
+              v-if="item.risk_flags?.length"
+              class="mt-2 flex flex-wrap gap-1"
+            >
               <el-tag
                 v-for="flag in item.risk_flags"
                 :key="flag"
@@ -456,7 +508,9 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
       <div
         class="bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm"
       >
-        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-5">
+        <h4
+          class="font-bold text-text_color_primary flex items-center gap-2 mb-5"
+        >
           <el-icon class="text-primary"><TrendCharts /></el-icon>
           更新事件
         </h4>
@@ -481,7 +535,10 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
             <p class="mt-2 text-xs text-text_color_regular leading-relaxed">
               {{ event.summary || event.skip_reason || "画像事件已记录" }}
             </p>
-            <div v-if="event.changed_dimensions?.length" class="mt-2 flex flex-wrap gap-1">
+            <div
+              v-if="event.changed_dimensions?.length"
+              class="mt-2 flex flex-wrap gap-1"
+            >
               <el-tag
                 v-for="dimension in event.changed_dimensions"
                 :key="dimension"
@@ -501,7 +558,9 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
       <div
         class="bg-bg_color rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm"
       >
-        <h4 class="font-bold text-text_color_primary flex items-center gap-2 mb-5">
+        <h4
+          class="font-bold text-text_color_primary flex items-center gap-2 mb-5"
+        >
           <el-icon class="text-primary"><EditPen /></el-icon>
           教师纠偏
         </h4>
@@ -585,9 +644,9 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
           <el-icon class="text-primary"><Reading /></el-icon>
           知识图谱掌握度
         </h4>
-        <span class="text-xs text-text_color_regular opacity-60 italic"
-          >基于课程学习数据动态推演</span
-        >
+        <span class="text-xs text-text_color_regular opacity-60 italic">{{
+          learner.course || "当前课程"
+        }}</span>
       </div>
 
       <div
@@ -639,5 +698,133 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
         </div>
       </div>
     </div>
+
+    <el-dialog
+      v-model="dimensionDetailVisible"
+      width="560px"
+      class="profile-dimension-dialog"
+      destroy-on-close
+    >
+      <template #header>
+        <div v-if="selectedDimension" class="pr-8">
+          <div class="text-base font-semibold text-text_color_primary">
+            {{ selectedDimension.label }}
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <el-tag effect="plain">{{ selectedDimension.value }}%</el-tag>
+            <el-tag v-if="selectedDimension.level" effect="plain">
+              {{ selectedDimension.level }}
+            </el-tag>
+            <el-tag v-if="selectedDimension.trend" effect="plain">
+              {{ selectedDimension.trend }}
+            </el-tag>
+          </div>
+        </div>
+      </template>
+
+      <div v-if="selectedDimension" class="space-y-5">
+        <el-progress
+          class="dimension-progress"
+          :percentage="selectedDimension.value"
+          :color="selectedDimension.color"
+          :stroke-width="16"
+          :show-text="false"
+          stroke-linecap="round"
+          striped
+          striped-flow
+          :duration="14"
+        />
+        <div
+          v-if="selectedDimension.description"
+          class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-sm leading-7 text-text_color_regular"
+        >
+          {{ selectedDimension.description }}
+        </div>
+        <div v-if="dimensionEvidence(selectedDimension).length">
+          <div class="mb-2 text-sm font-medium text-text_color_primary">
+            依据
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <el-tag
+              v-for="evidence in dimensionEvidence(selectedDimension)"
+              :key="evidence"
+              effect="plain"
+            >
+              {{ evidence }}
+            </el-tag>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="rounded-lg bg-gray-50 px-4 py-3">
+            <div class="text-text_color_regular">维度键</div>
+            <div class="mt-1 font-medium text-text_color_primary break-all">
+              {{ selectedDimension.key || selectedDimension.label }}
+            </div>
+          </div>
+          <div class="rounded-lg bg-gray-50 px-4 py-3">
+            <div class="text-text_color_regular">更新时间</div>
+            <div class="mt-1 font-medium text-text_color_primary">
+              {{ selectedDimension.updated_at || "暂无" }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
+
+<style scoped lang="scss">
+.profile-page {
+  --profile-border: #edf0f5;
+}
+
+.profile-summary,
+.dimension-preview {
+  box-shadow: none;
+}
+
+.dimension-card {
+  width: 100%;
+  min-height: 150px;
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--el-bg-color);
+  border: 1px solid var(--profile-border);
+  border-radius: 12px;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #fafbfc;
+    border-color: #cfd7e3;
+  }
+}
+
+.dimension-value {
+  flex: 0 0 auto;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dimension-progress {
+  :deep(.el-progress-bar__outer) {
+    background-color: #eef1f5;
+  }
+
+  :deep(.el-progress-bar__inner) {
+    transition: width 0.55s ease;
+  }
+}
+
+.profile-dimension-dialog {
+  :deep(.el-dialog__body) {
+    padding-top: 8px;
+  }
+}
+</style>
