@@ -126,6 +126,7 @@ const props = defineProps<{
 const activeTab = ref("profile");
 const radarChartRef = ref<HTMLElement>();
 let radarInstance: echarts.ECharts | null = null;
+let themeObserver: MutationObserver | null = null;
 const handleResize = () => radarInstance?.resize();
 
 const renderRadar = () => {
@@ -145,23 +146,36 @@ const renderRadar = () => {
     max: 100
   }));
   const values = props.profileDimensions.map(d => d.score || d.value || 0);
+  const isDark = document.documentElement.classList.contains("dark");
+  const radarLabelColor = isDark ? "#cbd6e8" : "#697386";
+  const radarLineColor = isDark
+    ? "rgba(148, 163, 184, 0.28)"
+    : "rgba(209, 213, 219, 0.65)";
+  const radarAreaColor = isDark
+    ? ["rgba(142, 175, 255, 0.08)", "rgba(15, 23, 42, 0.28)"]
+    : ["#fafafa", "#f5f7fa"];
 
   const option = {
-    tooltip: { trigger: "item" },
+    tooltip: {
+      trigger: "item",
+      backgroundColor: isDark ? "#121b2a" : "#fff",
+      borderColor: isDark ? "rgba(148, 163, 184, 0.26)" : "#e5e7eb",
+      textStyle: { color: isDark ? "#eef4ff" : "#303847" }
+    },
     radar: {
       indicator,
       radius: "48%",
       center: ["50%", "52%"],
       splitNumber: 4,
       axisName: {
-        color: "#697386",
+        color: radarLabelColor,
         fontSize: 11,
         lineHeight: 15,
         formatter: formatRadarLabel
       },
-      splitLine: { lineStyle: { color: "rgba(209, 213, 219, 0.65)" } },
-      splitArea: { show: true, areaStyle: { color: ["#fafafa", "#f5f7fa"] } },
-      axisLine: { lineStyle: { color: "rgba(209, 213, 219, 0.65)" } }
+      splitLine: { lineStyle: { color: radarLineColor } },
+      splitArea: { show: true, areaStyle: { color: radarAreaColor } },
+      axisLine: { lineStyle: { color: radarLineColor } }
     },
     series: [
       {
@@ -172,8 +186,8 @@ const renderRadar = () => {
             value: values,
             name: "画像",
             areaStyle: { color: "rgba(95, 143, 232, 0.16)" },
-            lineStyle: { width: 2, color: "#5f8fe8" },
-            itemStyle: { color: "#5f8fe8" },
+            lineStyle: { width: 2, color: isDark ? "#8eafff" : "#5f8fe8" },
+            itemStyle: { color: isDark ? "#8eafff" : "#5f8fe8" },
             animationDurationUpdate: 500,
             animationEasingUpdate: "cubicOut"
           }
@@ -186,11 +200,17 @@ const renderRadar = () => {
 
 onMounted(() => {
   renderRadar();
+  themeObserver = new MutationObserver(renderRadar);
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"]
+  });
   window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
   radarInstance?.dispose();
+  themeObserver?.disconnect();
   window.removeEventListener("resize", handleResize);
 });
 
