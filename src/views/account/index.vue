@@ -126,6 +126,14 @@
             <el-icon><StudentIcon /></el-icon>
             <span>个人资料</span>
           </el-menu-item>
+          <el-menu-item index="learning-profile">
+            <el-icon><TrendCharts /></el-icon>
+            <span>学生画像</span>
+          </el-menu-item>
+          <el-menu-item index="learning-path">
+            <el-icon><Guide /></el-icon>
+            <span>学习路径规划</span>
+          </el-menu-item>
           <el-menu-item index="cloud-disk">
             <el-icon><CloudIcon /></el-icon>
             <span>学习云盘</span>
@@ -162,6 +170,12 @@
             :current-theme="currentTheme"
             @to-course="activeMenu = 'course'"
           />
+        </div>
+        <div v-else-if="activeMenu === 'learning-profile'">
+          <student-learning-profile :current-theme="currentTheme" />
+        </div>
+        <div v-else-if="activeMenu === 'learning-path'">
+          <student-learning-path-planner :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'cloud-disk'">
           <cloud-disk :current-theme="currentTheme" />
@@ -593,7 +607,9 @@ import {
   Cpu,
   Trophy,
   Sunny,
-  Moon
+  Moon,
+  TrendCharts,
+  Guide
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
@@ -609,6 +625,8 @@ import {
   Competition
 } from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
+import StudentLearningProfile from "./components/StudentLearningProfile.vue";
+import StudentLearningPathPlanner from "./components/StudentLearningPathPlanner.vue";
 import Classroom3D from "@/views/course/classroom/index.vue";
 import StudentExamCenter from "@/views/exam-paper/student-center/index.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
