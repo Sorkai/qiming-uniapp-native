@@ -698,7 +698,7 @@
             rel="noopener noreferrer"
           >
             <img :src="icpBeianIcon" alt="" aria-hidden="true" />
-            <span>吉ICP备2025035820号-1</span>
+            <span>吉ICP备2025035820号-2X</span>
           </a>
           <span class="nx-foot__dot" aria-hidden="true">·</span>
           <a

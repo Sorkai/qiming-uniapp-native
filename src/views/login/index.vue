@@ -654,7 +654,7 @@ watch(loginDay, value => {
           href="https://beian.miit.gov.cn/"
           target="_blank"
           style="color: inherit; text-decoration: none"
-          >吉ICP备2025035820号-1</a
+          >吉ICP备2025035820号-2X</a
         >
         <a
           href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511"
