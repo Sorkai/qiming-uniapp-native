@@ -1117,13 +1117,31 @@ onUnmounted(() => {
 }
 
 .account-container {
+  height: 100vh;
   min-height: 100vh;
+  overflow: hidden;
   background-color: #f7f8fc;
   transition: background-color 0.3s ease;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   &.dark {
     color: #f1f5f9;
     background-color: #0b1120;
+  }
+
+  :deep(.layout-footer) {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    padding: 8px 0 6px;
+    pointer-events: none;
+    background: transparent;
   }
 
   .header {
@@ -1333,17 +1351,20 @@ onUnmounted(() => {
   }
 
   .account-content {
-    display: flex;
-    gap: 24px;
-    height: calc(100vh - 64px);
-    padding: 88px 32px 0;
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    height: 100vh;
+    min-height: 0;
+    padding: 88px 32px 28px;
 
     .account-sidebar {
-      position: sticky;
+      position: fixed;
       top: 88px;
-      flex-shrink: 0;
+      bottom: 28px;
+      left: 32px;
       width: 240px;
-      height: calc(100vh - 88px);
+      height: auto;
       padding-bottom: 32px;
       overflow-y: auto;
 
@@ -1599,26 +1620,20 @@ onUnmounted(() => {
     }
 
     .account-main {
-      flex: 1;
+      height: 100%;
+      margin-left: 264px;
       min-width: 0;
       min-height: 0;
-      padding: 0;
+      padding: 0 0 56px;
       overflow-y: auto;
       background-color: transparent;
       border-radius: 12px;
       box-shadow: none;
+      scrollbar-width: none;
 
       &::-webkit-scrollbar {
-        width: 5px;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background: rgb(151 180 247 / 25%);
-        border-radius: 4px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: transparent;
+        display: none;
+        width: 0;
       }
 
       .quick-access-section {
@@ -2321,13 +2336,19 @@ onUnmounted(() => {
 
     .account-content {
       gap: 20px;
-      padding: 84px 20px 0;
+      padding: 84px 20px 24px;
 
       .account-sidebar {
+        top: 84px;
+        bottom: 24px;
+        left: 20px;
         width: 220px;
       }
 
       .account-main {
+        padding-bottom: 56px;
+        margin-left: 240px;
+
         .quick-access-section {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -2403,6 +2424,7 @@ onUnmounted(() => {
 
       .account-sidebar {
         position: static;
+        inset: auto;
         width: 100%;
         height: auto;
         padding-bottom: 0;
@@ -2501,6 +2523,9 @@ onUnmounted(() => {
       }
 
       .account-main {
+        height: auto;
+        margin-left: 0;
+        padding-bottom: 56px;
         overflow: visible;
 
         .quick-access-section {

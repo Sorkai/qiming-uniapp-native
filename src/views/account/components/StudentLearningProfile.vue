@@ -509,7 +509,7 @@ onMounted(async () => {
   );
   border: 1px solid rgb(151 180 247 / 16%);
   border-radius: 18px;
-  box-shadow: 0 14px 36px rgb(80 118 190 / 10%);
+  box-shadow: none;
 
   .dark &,
   .student-assistant-page.dark & {
@@ -519,7 +519,7 @@ onMounted(async () => {
       rgb(15 23 42 / 92%)
     );
     border-color: rgb(96 165 250 / 16%);
-    box-shadow: 0 18px 42px rgb(0 0 0 / 24%);
+    box-shadow: none;
   }
 }
 
