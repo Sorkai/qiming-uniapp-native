@@ -691,6 +691,25 @@ const handleSendMessage = (text: string) => {
   );
 };
 
+const handleRegenerateMessage = (assistantMessageId: string | number) => {
+  const assistantIndex = messages.value.findIndex(
+    item => item.id === assistantMessageId
+  );
+  const searchEnd =
+    assistantIndex >= 0 ? assistantIndex : messages.value.length - 1;
+  const lastUserMessage = messages.value
+    .slice(0, searchEnd + 1)
+    .reverse()
+    .find(item => item.type === "user" && item.content.trim());
+
+  if (!lastUserMessage) {
+    ElMessage.warning("没有找到可重新生成的问题");
+    return;
+  }
+
+  handleSendMessage(lastUserMessage.content);
+};
+
 // === 栈操作预览弹窗 ===
 const stackPreviewVisible = ref(false);
 const stackItems = ref<{ key: number; value: string }[]>([
@@ -1220,6 +1239,7 @@ onUnmounted(() => {
                   :loading="isChatStreaming"
                   @send="handleSendMessage"
                   @preview="handlePreview"
+                  @regenerate="handleRegenerateMessage"
                   @switch-course="handleSwitchCourse"
                   @update:selectedAgent="selectedAgentKey = $event"
                   @update:selectedModel="selectedModelKey = $event"
@@ -1250,8 +1270,8 @@ onUnmounted(() => {
                   class="flex-1 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative"
                 >
                   <VirtualHumanPanel
-                    ref="virtualHumanRef"
                     v-show="!humanCollapsed"
+                    ref="virtualHumanRef"
                   />
 
                   <div

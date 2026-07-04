@@ -1,21 +1,61 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { Refresh, FullScreen, Warning, Loading } from "@element-plus/icons-vue";
+import {
+  Refresh,
+  FullScreen,
+  Warning,
+  Loading,
+  VideoPlay,
+  Download
+} from "@element-plus/icons-vue";
+
+type TtsEngine = "browser" | "auto" | "local";
+
+const TTS_ENGINE_STORAGE_KEY = "qiming.virtualPeople.tts.engine";
+const ttsEngineOptions: Array<{ label: string; value: TtsEngine }> = [
+  { label: "浏览器音色", value: "browser" },
+  { label: "优先本地女声", value: "auto" },
+  { label: "仅本地女声", value: "local" }
+];
 
 // 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
-const humanUrl = computed(() => {
+const humanBaseUrl = computed(() => {
   // 获取当前基础路径，动态兼容部署环境
   const base = window.location.origin;
-  return `${base}/virtual-people/index.html?embed=ai-app`;
+  return `${base}/virtual-people/index.html`;
 });
+const humanUrl = computed(() => `${humanBaseUrl.value}?embed=ai-app`);
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
 const loading = ref(true);
 const errored = ref(false);
 const reloadKey = ref(0);
+const ttsEngine = ref<TtsEngine>(readStoredTtsEngine());
 let probeTimer: ReturnType<typeof setTimeout> | null = null;
 let iframeReady = false;
 const pendingSpeakQueue: string[] = [];
+
+function normalizeTtsEngine(value: unknown): TtsEngine {
+  return value === "auto" || value === "local" || value === "browser"
+    ? value
+    : "browser";
+}
+
+function readStoredTtsEngine(): TtsEngine {
+  try {
+    return normalizeTtsEngine(window.localStorage.getItem(TTS_ENGINE_STORAGE_KEY));
+  } catch (_err) {
+    return "browser";
+  }
+}
+
+function writeStoredTtsEngine(value: TtsEngine) {
+  try {
+    window.localStorage.setItem(TTS_ENGINE_STORAGE_KEY, value);
+  } catch (_err) {
+    // localStorage can be unavailable in restricted browser contexts.
+  }
+}
 
 function flushPendingSpeak() {
   const iframe = iframeRef.value;
@@ -48,8 +88,9 @@ function handleLoad() {
     clearTimeout(probeTimer);
     probeTimer = null;
   }
-  flushPendingSpeak();
   postControlMessage({ type: "resumeRender" });
+  syncTtsEngine();
+  flushPendingSpeak();
 }
 
 function handleError() {
@@ -66,7 +107,34 @@ function refresh() {
 }
 
 function openFull() {
-  window.open(humanUrl.value, "_blank", "noopener");
+  window.open(humanBaseUrl.value, "_blank", "noopener");
+}
+
+function syncTtsEngine() {
+  postControlMessage({ type: "setTtsEngine", engine: ttsEngine.value });
+}
+
+function setTtsEngine(value: TtsEngine) {
+  ttsEngine.value = value;
+  writeStoredTtsEngine(value);
+  syncTtsEngine();
+}
+
+function handleTtsEngineChange(event: Event) {
+  const value = (event.target as HTMLSelectElement | null)?.value;
+  setTtsEngine(normalizeTtsEngine(value));
+}
+
+function previewVoice() {
+  postControlMessage({
+    type: "previewTts",
+    text: "你好，我是启明数字人。现在使用中文女声为你朗读。"
+  });
+}
+
+function loadLocalVoice() {
+  setTtsEngine("local");
+  postControlMessage({ type: "reloadLocalTts" });
 }
 
 function schedulePing() {
@@ -123,7 +191,6 @@ defineExpose({ speak, pauseRender, resumeRender });
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         <span class="text-[13px] font-semibold text-gray-700">启明数字人</span>
-        <span class="text-[11px] text-gray-400">VRM · FBX 实时驱动</span>
       </div>
       <div class="flex items-center gap-1.5">
         <el-tooltip content="刷新" placement="top">
@@ -145,6 +212,43 @@ defineExpose({ speak, pauseRender, resumeRender });
           />
         </el-tooltip>
       </div>
+    </div>
+
+    <div class="virtual-human-panel__voicebar" aria-label="朗读音色">
+      <label class="virtual-human-panel__voice-label">
+        <span>朗读音色</span>
+        <select
+          :value="ttsEngine"
+          class="virtual-human-panel__voice-select"
+          @change="handleTtsEngineChange"
+        >
+          <option
+            v-for="option in ttsEngineOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+      <el-button
+        :icon="VideoPlay"
+        class="virtual-human-panel__voice-btn"
+        size="small"
+        text
+        @click="previewVoice"
+      >
+        试听
+      </el-button>
+      <el-button
+        :icon="Download"
+        class="virtual-human-panel__voice-btn"
+        size="small"
+        text
+        @click="loadLocalVoice"
+      >
+        加载本地
+      </el-button>
     </div>
 
     <!-- 主区 -->
@@ -208,6 +312,55 @@ defineExpose({ speak, pauseRender, resumeRender });
 .virtual-human-panel__viewer {
   min-height: 0;
   overflow: hidden;
+}
+
+.virtual-human-panel__voicebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #eef3fb;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.virtual-human-panel__voice-label {
+  display: flex;
+  flex: 1 1 190px;
+  align-items: center;
+  min-width: 190px;
+  gap: 8px;
+}
+
+.virtual-human-panel__voice-label span {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.virtual-human-panel__voice-select {
+  flex: 1;
+  min-width: 126px;
+  max-width: 190px;
+  height: 28px;
+  padding: 0 24px 0 9px;
+  font-size: 12px;
+  color: #334155;
+  outline: none;
+  background: #f8fbff;
+  border: 1px solid #dbe6f5;
+  border-radius: 8px;
+}
+
+.virtual-human-panel__voice-select:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+.virtual-human-panel__voice-btn {
+  height: 28px;
+  padding: 0 8px;
 }
 
 .animate-spin {

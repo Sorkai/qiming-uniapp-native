@@ -3,7 +3,9 @@
     class="ai-sidebar h-full flex flex-col p-4 bg-gray-50/50 border-r border-gray-100 italic-safe"
   >
     <!-- Sessions: Grouped by Course -->
-    <div class="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar space-y-6">
+    <div
+      class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 custom-scrollbar space-y-6"
+    >
       <!-- 1. 智能辅导 (按课程展开) -->
       <div v-show="activeRail === 'chat'">
         <div v-for="course in courses" :key="course" class="mb-4">
@@ -25,10 +27,9 @@
             <div class="flex items-center gap-1">
               <el-tooltip content="新建该课程的辅导会话" placement="right">
                 <el-button
-                  type="primary"
-                  plain
+                  text
                   :icon="Plus"
-                  class="!rounded-md opacity-0 group-hover/course:opacity-100 transition-all scale-75 hover:scale-90 hover:!shadow-[0_0_8px_rgba(94,127,248,0.4)]"
+                  class="ai-sidebar__course-add opacity-0 group-hover/course:opacity-100 transition-opacity duration-150"
                   @click.stop="$emit('new-chat', { course })"
                 />
               </el-tooltip>
@@ -42,7 +43,7 @@
                   v-for="(conv, index) in groupedConversations[course] || []"
                   :key="conv.id"
                   :style="{ transitionDelay: `${index * 50}ms` }"
-                  class="px-3 py-3 rounded-xl hover:bg-white cursor-pointer group transition-all duration-300 hover:shadow-sm hover:scale-[1.01] hover:border-gray-200 border border-transparent"
+                  class="relative w-full box-border overflow-hidden px-3 py-3 rounded-xl hover:bg-white cursor-pointer group transition-all duration-200 hover:shadow-sm hover:border-gray-200 border border-transparent"
                   @click="emit('select-chat', conv)"
                 >
                   <div
@@ -77,7 +78,7 @@
           <div
             v-for="conv in recentHistory"
             :key="'recent-' + conv.id"
-            class="px-3 py-2.5 rounded-xl hover:bg-white cursor-pointer group transition-all duration-300 border border-transparent hover:border-gray-100"
+            class="relative w-full box-border overflow-hidden px-3 py-2.5 rounded-xl hover:bg-white cursor-pointer group transition-all duration-200 border border-transparent hover:border-gray-100"
             @click="emit('select-chat', conv)"
           >
             <div class="flex items-center justify-between gap-2">
@@ -224,6 +225,24 @@ const emit = defineEmits(["update:activeRail", "new-chat", "select-chat"]);
 .ai-sidebar__digital-human-reserve {
   flex: 0 0 132px;
   margin: 0 0 10px;
+}
+
+.ai-sidebar__course-add {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #64748b;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.ai-sidebar__course-add:hover,
+.ai-sidebar__course-add:focus {
+  color: #3f6ef2;
+  background: #f1f5f9;
+  border: 0;
+  box-shadow: none;
 }
 
 /* 列表进入过渡 */
