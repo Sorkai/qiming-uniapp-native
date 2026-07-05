@@ -1,18 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import {
-  ChatLineRound,
-  DataAnalysis,
-  DataBoard,
-  FolderOpened,
-  Guide,
-  Refresh,
-  Search,
-  User,
-  View,
-  Warning
-} from "@element-plus/icons-vue";
+import { ChatLineRound, Refresh, Search, View } from "@element-plus/icons-vue";
 import {
   assistantApiErrorMessage,
   getAssistantConversationTrace,
@@ -65,21 +54,119 @@ const selectedConversationTrace = ref<AssistantConversationTraceResp | null>(
 );
 
 const isStaff = computed(() => props.isStaffMode !== false);
-const courseLabel = computed(() =>
-  props.courseName || (props.courseId ? `课程 ${props.courseId}` : "默认课程")
+const courseLabel = computed(
+  () =>
+    props.courseName || (props.courseId ? `课程 ${props.courseId}` : "默认课程")
 );
 
-const studentSummary = computed(() => studentsDashboard.value?.summary);
-const resourceSummary = computed(() => resourcesDashboard.value?.summary);
-const riskSummary = computed(() => risksDashboard.value?.summary);
-const pathSummary = computed(() => pathsDashboard.value?.summary);
-
 const studentList = computed(() => studentsDashboard.value?.list || []);
-const recentTasks = computed(() => resourcesDashboard.value?.recent_tasks || []);
+const recentTasks = computed(
+  () => resourcesDashboard.value?.recent_tasks || []
+);
 const attentionStudents = computed(
   () => risksDashboard.value?.attention_students || []
 );
 const pathList = computed(() => pathsDashboard.value?.list || []);
+
+const studentSummary = computed(() => {
+  const summary = studentsDashboard.value?.summary;
+  const list = studentList.value;
+  const total = Math.max(
+    numberOrZero(summary?.total_students),
+    numberOrZero(studentsDashboard.value?.total),
+    list.length
+  );
+  return {
+    total_students: total,
+    profile_ready_count: Math.max(
+      numberOrZero(summary?.profile_ready_count),
+      list.filter(item => isReadyStatus(item.profile_status)).length
+    ),
+    high_risk_count: Math.max(
+      numberOrZero(summary?.high_risk_count),
+      list.filter(item => item.risk_flags?.includes("high")).length
+    ),
+    need_replan_count: Math.max(
+      numberOrZero(summary?.need_replan_count),
+      list.filter(item => item.need_replan).length
+    ),
+    average_progress:
+      summary?.average_progress ??
+      (list.length
+        ? list.reduce((total, item) => total + numberOrZero(item.progress), 0) /
+          list.length
+        : 0)
+  };
+});
+const resourceSummary = computed(() => {
+  const summary = resourcesDashboard.value?.summary;
+  const tasks = recentTasks.value;
+  return {
+    total_resources: Math.max(
+      numberOrZero(summary?.total_resources),
+      tasks.length
+    ),
+    pending_review_count: Math.max(
+      numberOrZero(summary?.pending_review_count),
+      tasks.filter(item =>
+        isPendingStatus((item as any).review_status || item.status)
+      ).length
+    ),
+    blocked_count: Math.max(
+      numberOrZero(summary?.blocked_count),
+      tasks.filter(item => isBlockedStatus(item.status)).length
+    ),
+    degraded_count: Math.max(
+      numberOrZero(summary?.degraded_count),
+      tasks.filter(item => isDegradedStatus(item.status)).length
+    ),
+    average_quality: summary?.average_quality ?? 0
+  };
+});
+const riskSummary = computed(() => {
+  const summary = risksDashboard.value?.summary;
+  const list = attentionStudents.value;
+  return {
+    high_risk_students: Math.max(
+      numberOrZero(summary?.high_risk_students),
+      list.filter(item => item.risk_flags?.includes("high")).length
+    ),
+    low_completion_students: Math.max(
+      numberOrZero(summary?.low_completion_students),
+      list.filter(item => progressValue(item.progress) < 60).length
+    ),
+    need_replan_students: Math.max(
+      numberOrZero(summary?.need_replan_students),
+      list.filter(item => item.need_replan).length
+    ),
+    negative_feedback_students: numberOrZero(
+      summary?.negative_feedback_students
+    )
+  };
+});
+const pathSummary = computed(() => {
+  const summary = pathsDashboard.value?.summary;
+  const list = pathList.value;
+  return {
+    active_path_students: Math.max(
+      numberOrZero(summary?.active_path_students),
+      list.length
+    ),
+    average_completion_rate:
+      summary?.average_completion_rate ??
+      (list.length
+        ? list.reduce(
+            (total, item) => total + numberOrZero(item.completion_rate),
+            0
+          ) / list.length
+        : 0),
+    overdue_node_count: Math.max(
+      numberOrZero(summary?.overdue_node_count),
+      list.reduce((total, item) => total + numberOrZero(item.overdue_nodes), 0)
+    ),
+    need_replan_count: numberOrZero(summary?.need_replan_count)
+  };
+});
 
 const dashboardStats = computed(() => [
   {
@@ -87,7 +174,7 @@ const dashboardStats = computed(() => [
     label: "画像就绪",
     value: studentSummary.value?.profile_ready_count ?? 0,
     sub: `${studentSummary.value?.total_students ?? 0} 名学生`,
-    icon: User,
+    mark: "画像",
     tone: "blue"
   },
   {
@@ -95,15 +182,15 @@ const dashboardStats = computed(() => [
     label: "待审核资源",
     value: resourceSummary.value?.pending_review_count ?? 0,
     sub: `${resourceSummary.value?.degraded_count ?? 0} 个降级`,
-    icon: FolderOpened,
-    tone: "violet"
+    mark: "资源",
+    tone: "blue"
   },
   {
     key: "risk",
     label: "高风险学生",
     value: riskSummary.value?.high_risk_students ?? 0,
     sub: `${riskSummary.value?.need_replan_students ?? 0} 人需重规划`,
-    icon: Warning,
+    mark: "风险",
     tone: "orange"
   },
   {
@@ -111,10 +198,192 @@ const dashboardStats = computed(() => [
     label: "路径完成率",
     value: percentText(pathSummary.value?.average_completion_rate),
     sub: `${pathSummary.value?.overdue_node_count ?? 0} 个逾期节点`,
-    icon: Guide,
+    mark: "路径",
     tone: "green"
   }
 ]);
+
+const asRecord = (value: unknown): Record<string, any> =>
+  value && typeof value === "object" ? (value as Record<string, any>) : {};
+
+const payloadRecord = (value: unknown) => {
+  const record = asRecord(value);
+  const nested = asRecord(record.data);
+  return Object.keys(nested).length &&
+    !("summary" in record) &&
+    !("list" in record)
+    ? nested
+    : record;
+};
+
+const pickArray = <T,>(record: Record<string, any>, keys: string[]): T[] => {
+  for (const key of keys) {
+    if (Array.isArray(record[key])) return record[key] as T[];
+  }
+  return [];
+};
+
+const numberOrZero = (value: unknown) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
+const isReadyStatus = (status?: string) =>
+  ["ready", "completed", "published", "active", "ok", "success"].includes(
+    String(status || "").toLowerCase()
+  );
+
+const isPendingStatus = (status?: string) =>
+  ["pending", "reviewing", "waiting", "draft"].includes(
+    String(status || "").toLowerCase()
+  );
+
+const isBlockedStatus = (status?: string) =>
+  ["blocked", "rejected", "failed"].includes(
+    String(status || "").toLowerCase()
+  );
+
+const isDegradedStatus = (status?: string) =>
+  String(status || "")
+    .toLowerCase()
+    .includes("degraded");
+
+const normalizeStudentsDashboard = (
+  raw: unknown
+): AssistantDashboardStudentsResp => {
+  const record = payloadRecord(raw);
+  const summary = asRecord(record.summary);
+  const list = pickArray<AssistantDashboardStudentItem>(record, [
+    "list",
+    "students",
+    "items",
+    "records",
+    "results"
+  ]);
+  return {
+    status: String(record.status || "ok"),
+    message: record.message,
+    course_id: Number(record.course_id || props.courseId || 0),
+    total: numberOrZero(record.total ?? summary.total_students ?? list.length),
+    summary: {
+      total_students: numberOrZero(
+        summary.total_students ??
+          record.total_students ??
+          record.total ??
+          list.length
+      ),
+      profile_ready_count: numberOrZero(
+        summary.profile_ready_count ?? record.profile_ready_count
+      ),
+      high_risk_count: numberOrZero(
+        summary.high_risk_count ?? record.high_risk_count
+      ),
+      need_replan_count: numberOrZero(
+        summary.need_replan_count ?? record.need_replan_count
+      ),
+      average_progress: numberOrZero(
+        summary.average_progress ?? record.average_progress
+      )
+    },
+    list
+  };
+};
+
+const normalizeResourcesDashboard = (
+  raw: unknown
+): AssistantDashboardResourcesResp => {
+  const record = payloadRecord(raw);
+  const summary = asRecord(record.summary);
+  return {
+    status: String(record.status || "ok"),
+    message: record.message,
+    course_id: Number(record.course_id || props.courseId || 0),
+    summary: {
+      total_resources: numberOrZero(
+        summary.total_resources ?? record.total_resources
+      ),
+      pending_review_count: numberOrZero(
+        summary.pending_review_count ?? record.pending_review_count
+      ),
+      blocked_count: numberOrZero(
+        summary.blocked_count ?? record.blocked_count
+      ),
+      degraded_count: numberOrZero(
+        summary.degraded_count ?? record.degraded_count
+      ),
+      average_quality: numberOrZero(
+        summary.average_quality ?? record.average_quality
+      )
+    },
+    type_distribution: pickArray(record, ["type_distribution", "types"]),
+    status_distribution: pickArray(record, ["status_distribution", "statuses"]),
+    review_distribution: pickArray(record, ["review_distribution", "reviews"]),
+    recent_tasks: pickArray<AssistantResourceTaskItem>(record, [
+      "recent_tasks",
+      "tasks",
+      "list",
+      "items",
+      "records"
+    ])
+  };
+};
+
+const normalizeRisksDashboard = (raw: unknown): AssistantDashboardRisksResp => {
+  const record = payloadRecord(raw);
+  const summary = asRecord(record.summary);
+  return {
+    status: String(record.status || "ok"),
+    message: record.message,
+    course_id: Number(record.course_id || props.courseId || 0),
+    summary: {
+      high_risk_students: numberOrZero(
+        summary.high_risk_students ?? record.high_risk_students
+      ),
+      low_completion_students: numberOrZero(
+        summary.low_completion_students ?? record.low_completion_students
+      ),
+      need_replan_students: numberOrZero(
+        summary.need_replan_students ?? record.need_replan_students
+      ),
+      negative_feedback_students: numberOrZero(
+        summary.negative_feedback_students ?? record.negative_feedback_students
+      )
+    },
+    risk_flags: pickArray(record, ["risk_flags", "flags", "distribution"]),
+    attention_students: pickArray<AssistantDashboardStudentItem>(record, [
+      "attention_students",
+      "students",
+      "list",
+      "items",
+      "records"
+    ])
+  };
+};
+
+const normalizePathsDashboard = (raw: unknown): AssistantDashboardPathsResp => {
+  const record = payloadRecord(raw);
+  const summary = asRecord(record.summary);
+  return {
+    status: String(record.status || "ok"),
+    message: record.message,
+    course_id: Number(record.course_id || props.courseId || 0),
+    summary: {
+      active_path_students: numberOrZero(
+        summary.active_path_students ?? record.active_path_students
+      ),
+      average_completion_rate: numberOrZero(
+        summary.average_completion_rate ?? record.average_completion_rate
+      ),
+      overdue_node_count: numberOrZero(
+        summary.overdue_node_count ?? record.overdue_node_count
+      ),
+      need_replan_count: numberOrZero(
+        summary.need_replan_count ?? record.need_replan_count
+      )
+    },
+    list: pickArray(record, ["list", "paths", "items", "records", "results"])
+  };
+};
 
 const statusTagType = (status?: string) => {
   const value = String(status || "").toLowerCase();
@@ -198,10 +467,20 @@ async function loadDashboard() {
         getAssistantDashboardPaths(commonParams)
       ]);
 
-    studentsDashboard.value = studentsResp.data;
-    resourcesDashboard.value = resourcesResp.data;
-    risksDashboard.value = risksResp.data;
-    pathsDashboard.value = pathsResp.data;
+    if (import.meta.env.DEV) {
+      console.debug("[AiGovernanceDashboard] dashboard response", {
+        course_id: props.courseId,
+        students: studentsResp.data,
+        resources: resourcesResp.data,
+        risks: risksResp.data,
+        paths: pathsResp.data
+      });
+    }
+
+    studentsDashboard.value = normalizeStudentsDashboard(studentsResp.data);
+    resourcesDashboard.value = normalizeResourcesDashboard(resourcesResp.data);
+    risksDashboard.value = normalizeRisksDashboard(risksResp.data);
+    pathsDashboard.value = normalizePathsDashboard(pathsResp.data);
   } catch (error: any) {
     console.error("[AiGovernanceDashboard] 加载治理看板失败:", error);
     ElMessage.error(assistantApiErrorMessage(error, "治理看板加载失败"));
@@ -270,24 +549,17 @@ watch(
 <template>
   <div
     v-loading="loading"
-    class="h-full bg-white overflow-y-auto custom-scrollbar"
+    class="governance-dashboard-frame h-full overflow-y-auto custom-scrollbar"
   >
     <div class="a3-governance-page p-6">
       <div class="flex items-start justify-between gap-4 mb-5">
         <div class="min-w-0">
           <div class="flex items-center gap-3 mb-2">
-            <span
-              class="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center"
-            >
-              <el-icon :size="22"><DataBoard /></el-icon>
-            </span>
+            <span class="governance-brand-mark">治</span>
             <div class="min-w-0">
               <h2 class="text-2xl font-bold text-gray-800 leading-tight">
-                A3 治理看板
+                治理看板
               </h2>
-              <p class="text-sm text-gray-500 mt-1">
-                班级画像、资源审核、路径风险和执行 Trace 的统一入口
-              </p>
             </div>
             <el-tag type="info" effect="plain" round>{{ courseLabel }}</el-tag>
           </div>
@@ -321,9 +593,9 @@ watch(
                 <p class="mt-1 text-xs text-gray-400">{{ item.sub }}</p>
               </div>
               <span
-                class="w-10 h-10 rounded-xl flex items-center justify-center stat-icon"
+                class="min-w-10 h-10 px-3 rounded-xl flex items-center justify-center stat-icon"
               >
-                <el-icon :size="20"><component :is="item.icon" /></el-icon>
+                {{ item.mark }}
               </span>
             </div>
           </section>
@@ -364,7 +636,11 @@ watch(
           </div>
           <div class="flex items-center gap-2">
             <el-button @click="resetFilters">重置</el-button>
-            <el-button type="primary" :icon="Search" @click="loadDashboard">
+            <el-button
+              class="governance-query-button"
+              :icon="Search"
+              @click="loadDashboard"
+            >
               查询
             </el-button>
           </div>
@@ -475,13 +751,19 @@ watch(
           </el-tab-pane>
 
           <el-tab-pane label="资源治理" name="resources">
-            <div class="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-4">
+            <div
+              class="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-4"
+            >
               <section class="rounded-2xl border border-gray-100 bg-white p-4">
                 <div class="flex items-center justify-between gap-3 mb-4">
                   <h3 class="text-base font-semibold text-gray-800">
                     资源治理概览
                   </h3>
-                  <el-button type="primary" link @click="emit('navigate', 'generation')">
+                  <el-button
+                    type="primary"
+                    link
+                    @click="emit('navigate', 'generation')"
+                  >
                     进入资源治理
                   </el-button>
                 </div>
@@ -492,7 +774,9 @@ watch(
                   </div>
                   <div class="governance-row">
                     <span>待审核</span>
-                    <strong>{{ resourceSummary?.pending_review_count ?? 0 }}</strong>
+                    <strong>{{
+                      resourceSummary?.pending_review_count ?? 0
+                    }}</strong>
                   </div>
                   <div class="governance-row">
                     <span>被阻断</span>
@@ -507,12 +791,11 @@ watch(
                 </div>
 
                 <div class="mt-5">
-                  <p class="text-sm font-medium text-gray-700 mb-2">
-                    审核分布
-                  </p>
+                  <p class="text-sm font-medium text-gray-700 mb-2">审核分布</p>
                   <div class="flex flex-wrap gap-2">
                     <el-tag
-                      v-for="item in resourcesDashboard?.review_distribution || []"
+                      v-for="item in resourcesDashboard?.review_distribution ||
+                      []"
                       :key="item.key"
                       effect="plain"
                       :type="statusTagType(item.key)"
@@ -596,7 +879,9 @@ watch(
           </el-tab-pane>
 
           <el-tab-pane label="风险中心" name="risks">
-            <div class="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-4">
+            <div
+              class="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-4"
+            >
               <section class="rounded-2xl border border-gray-100 bg-white p-4">
                 <h3 class="text-base font-semibold text-gray-800 mb-4">
                   风险摘要
@@ -614,7 +899,9 @@ watch(
                   </div>
                   <div class="governance-row">
                     <span>需要重规划</span>
-                    <strong>{{ riskSummary?.need_replan_students ?? 0 }}</strong>
+                    <strong>{{
+                      riskSummary?.need_replan_students ?? 0
+                    }}</strong>
                   </div>
                   <div class="governance-row">
                     <span>负反馈</span>
@@ -800,19 +1087,18 @@ watch(
           </el-tab-pane>
 
           <el-tab-pane label="Trace" name="trace">
-            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px] gap-4">
+            <div
+              class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px] gap-4"
+            >
               <section
                 v-loading="taskTraceLoading"
-                class="rounded-2xl border border-gray-100 bg-white p-4 min-h-[430px]"
+                class="trace-panel rounded-2xl border border-gray-100 bg-white p-4 min-h-[430px]"
               >
                 <div class="flex items-center justify-between gap-4 mb-4">
                   <div>
                     <h3 class="text-base font-semibold text-gray-800">
                       资源任务 Trace
                     </h3>
-                    <p class="text-xs text-gray-400 mt-1">
-                      从资源治理表点击 Trace 后查看完整执行链路
-                    </p>
                   </div>
                   <el-tag
                     v-if="selectedTaskTrace?.task?.status"
@@ -837,7 +1123,9 @@ watch(
                     <el-timeline-item
                       v-for="(step, index) in selectedTaskTrace.trace"
                       :key="`${step.stage}-${index}`"
-                      :timestamp="formatDate(step.finished_at || step.started_at)"
+                      :timestamp="
+                        formatDate(step.finished_at || step.started_at)
+                      "
                       :type="statusTagType(step.status)"
                     >
                       <div class="space-y-1">
@@ -909,14 +1197,11 @@ watch(
 
               <section
                 v-loading="conversationTraceLoading"
-                class="rounded-2xl border border-gray-100 bg-white p-4 min-h-[430px]"
+                class="trace-panel rounded-2xl border border-gray-100 bg-white p-4 min-h-[430px]"
               >
-                <h3 class="text-base font-semibold text-gray-800 mb-2">
+                <h3 class="text-base font-semibold text-gray-800 mb-4">
                   会话 Trace 查询
                 </h3>
-                <p class="text-xs text-gray-400 mb-4">
-                  输入 conversation_id 后查看安全状态、来源引用和资源链接
-                </p>
 
                 <div class="flex gap-2 mb-4">
                   <el-input
@@ -929,7 +1214,10 @@ watch(
                       <el-icon><ChatLineRound /></el-icon>
                     </template>
                   </el-input>
-                  <el-button type="primary" @click="loadConversationTrace">
+                  <el-button
+                    class="governance-query-button"
+                    @click="loadConversationTrace"
+                  >
                     查询
                   </el-button>
                 </div>
@@ -949,7 +1237,9 @@ watch(
                       <span>安全状态</span>
                       <el-tag
                         :type="
-                          statusTagType(selectedConversationTrace.safety?.status)
+                          statusTagType(
+                            selectedConversationTrace.safety?.status
+                          )
                         "
                         effect="plain"
                       >
@@ -979,7 +1269,9 @@ watch(
                     <el-timeline-item
                       v-for="(step, index) in selectedConversationTrace.trace"
                       :key="`${step.stage}-${index}`"
-                      :timestamp="formatDate(step.finished_at || step.started_at)"
+                      :timestamp="
+                        formatDate(step.finished_at || step.started_at)
+                      "
                       :type="statusTagType(step.status)"
                     >
                       <p class="text-sm font-medium text-gray-800">
@@ -1009,39 +1301,102 @@ watch(
 </template>
 
 <style scoped>
+.governance-dashboard-frame {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 16px 38px rgb(15 23 42 / 5%);
+}
+
 .a3-governance-page {
   min-width: 0;
 }
 
+.governance-brand-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: #1f6feb;
+  font-size: 17px;
+  font-weight: 800;
+  background: linear-gradient(180deg, #eef7ff 0%, #e4f1ff 100%);
+  border: 1px solid rgb(111 168 255 / 34%);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 85%);
+}
+
 .a3-stat-panel {
+  background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%);
+  border-color: rgb(218 229 244);
   transition:
     border-color 0.2s ease,
+    box-shadow 0.2s ease,
     transform 0.2s ease;
 }
 
 .a3-stat-panel:hover {
-  border-color: rgb(64 158 255 / 28%);
+  border-color: rgb(111 168 255 / 42%);
+  box-shadow: 0 14px 28px rgb(43 91 155 / 8%);
   transform: translateY(-1px);
 }
 
 .stat-icon {
-  color: var(--el-color-primary);
-  background: rgb(64 158 255 / 10%);
+  color: #2f6fcb;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgb(111 168 255 / 13%);
+  border: 1px solid rgb(111 168 255 / 18%);
 }
 
 .tone-violet .stat-icon {
-  color: #7c3aed;
-  background: rgb(124 58 237 / 10%);
+  color: #2f6fcb;
+  background: rgb(111 168 255 / 13%);
 }
 
 .tone-orange .stat-icon {
-  color: #d97706;
-  background: rgb(217 119 6 / 12%);
+  color: #b45309;
+  background: rgb(245 158 11 / 12%);
+  border-color: rgb(245 158 11 / 18%);
 }
 
 .tone-green .stat-icon {
   color: #059669;
   background: rgb(5 150 105 / 10%);
+  border-color: rgb(5 150 105 / 16%);
+}
+
+.governance-query-button {
+  color: #fff;
+  background: #6fa8ff;
+  border-color: #6fa8ff;
+  box-shadow: 0 8px 18px rgb(111 168 255 / 22%);
+}
+
+.governance-query-button:hover,
+.governance-query-button:focus {
+  color: #fff;
+  background: #5b95f2;
+  border-color: #5b95f2;
+}
+
+.governance-query-button:active {
+  color: #fff;
+  background: #4c82d8;
+  border-color: #4c82d8;
+}
+
+.trace-panel {
+  line-height: 1.65;
+}
+
+.trace-panel h3 {
+  line-height: 1.35;
+}
+
+.trace-panel :deep(.el-input__wrapper) {
+  min-height: 44px;
 }
 
 .governance-search {

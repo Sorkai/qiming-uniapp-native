@@ -799,6 +799,7 @@ html.dark {
   .ai-app-root .secondary-panel,
   .ai-app-root .profile-summary,
   .ai-app-root .dimension-preview,
+  .ai-app-root .governance-dashboard-frame,
   .ai-app-root .a3-governance-page,
   .ai-app-root .panel-card,
   .ai-app-root .ai-sidebar,
@@ -1006,6 +1007,12 @@ html.dark {
   .ai-app-root .virtual-human-panel code {
     color: #fda4af !important;
     background-color: rgb(15 23 42 / 88%) !important;
+  }
+
+  .ai-app-root .governance-brand-mark {
+    color: var(--ai-app-blue) !important;
+    background: rgb(94 127 248 / 16%) !important;
+    border-color: rgb(142 175 255 / 26%) !important;
   }
 
   .ai-app-root .a3-governance-page .a3-stat-panel,

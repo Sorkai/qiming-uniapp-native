@@ -849,6 +849,7 @@ watch(
       width="820px"
       destroy-on-close
       class="assistant-resource-dialog"
+      modal-class="assistant-resource-dialog-mask"
       @closed="handleResourceDialogClosed"
     >
       <template #header>
@@ -1523,14 +1524,15 @@ watch(
   border-radius: var(--resource-radius);
 }
 
-.assistant-resource-dialog {
-  :deep(.el-dialog) {
-    border-radius: 12px;
-  }
+:global(.assistant-resource-dialog.el-dialog),
+:global(.assistant-resource-dialog-mask .el-dialog) {
+  overflow: hidden !important;
+  border-radius: 18px !important;
+}
 
-  :deep(.el-dialog__body) {
-    padding-top: 8px;
-  }
+:global(.assistant-resource-dialog .el-dialog__body),
+:global(.assistant-resource-dialog-mask .el-dialog__body) {
+  padding-top: 8px;
 }
 
 @media (max-width: 960px) {

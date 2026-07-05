@@ -24,11 +24,25 @@ import {
   type AssistantProfileEvent,
   type AssistantProfileHistoryItem
 } from "@/api/frontend/assistant";
+import linuxCourseCover from "@/assets/course/嵌入式Linux开发实践教程.webp";
+import dataStructureCourseCover from "@/assets/course/数据结构与算法.png";
+import mathCourseCover from "@/assets/course/高等数学.png";
+import networkCourseCover from "@/assets/course/计算机网络.webp";
+
+type EnrolledCourse = {
+  id?: number;
+  course_id?: number;
+  name?: string;
+  course_name?: string;
+  subtitle?: string;
+  thumb_url?: string;
+};
 
 const props = defineProps<{
   courseId?: number;
   targetStudentId?: number;
   requiresTargetStudent?: boolean;
+  enrolledCourses?: EnrolledCourse[];
 }>();
 
 const emit = defineEmits<{
@@ -59,6 +73,52 @@ const learner = computed(
     }
 );
 
+const roleLabelMap: Record<string, string> = {
+  student: "学生",
+  teacher: "教师",
+  admin: "管理员"
+};
+
+const statusLabelMap: Record<string, string> = {
+  at_risk: "需关注",
+  developing: "发展中",
+  stable: "稳定",
+  excellent: "优秀",
+  write_delta: "已写入更新",
+  skip: "本次跳过",
+  merge_without_event: "合并更新",
+  risk_high: "高风险",
+  risk_state: "风险状态",
+  profile_agent_degraded_rules: "画像规则降级",
+  "wrong-question-repair-needed": "错题修复待处理"
+};
+
+const learnerRoleLabel = computed(() => {
+  const role = String(learner.value.role || "student").toLowerCase();
+  return roleLabelMap[role] || learner.value.role || "学生";
+});
+
+const localizeStatusText = (value?: string) => {
+  if (!value) return "暂无";
+  const normalized = value.replace(/-/g, "_");
+  return statusLabelMap[value] || statusLabelMap[normalized] || value;
+};
+
+const localizeTag = (tag: string) => {
+  if (tag.startsWith("course:")) return `课程：${tag.slice(7)}`;
+  if (tag === "mode:student") return "学生模式";
+  if (tag === "mode:teacher") return "教师模式";
+  return localizeStatusText(tag);
+};
+
+const courseCoverByName = (name: string) => {
+  if (/linux|嵌入式/i.test(name)) return linuxCourseCover;
+  if (/数据结构|算法/.test(name)) return dataStructureCourseCover;
+  if (/高等数学|数学/.test(name)) return mathCourseCover;
+  if (/计算机网络|网络/.test(name)) return networkCourseCover;
+  return linuxCourseCover;
+};
+
 const dimensionPalette = [
   "#5f8fe8",
   "#45b59f",
@@ -84,9 +144,49 @@ const dimensions = computed(() =>
 const previewDimensions = computed(() => dimensions.value.slice(0, 6));
 const knowledgeMap = computed(() => profile.value?.knowledge_map || []);
 const tags = computed(() => profile.value?.tags || []);
+const displayTags = computed(() =>
+  tags.value.map(tag => ({ raw: tag, label: localizeTag(tag) }))
+);
 const profileMeta = computed<Partial<AssistantProfileCurrentResp>>(
   () => profile.value || {}
 );
+const joinedCourses = computed(() => {
+  const fallbackCourse = learner.value.course
+    ? [
+        {
+          id: props.courseId,
+          name: learner.value.course,
+          subtitle: "当前分析课程"
+        }
+      ]
+    : [];
+  const source = props.enrolledCourses?.length
+    ? props.enrolledCourses
+    : fallbackCourse;
+  const seen = new Set<string>();
+  return source
+    .map(course => {
+      const id = course.id ?? course.course_id;
+      const name = course.name || course.course_name || "未命名课程";
+      const key = `${id || ""}-${name}`;
+      return {
+        id,
+        key,
+        name,
+        subtitle:
+          course.subtitle ||
+          (id === props.courseId ? "当前分析课程" : "已加入学习"),
+        cover: course.thumb_url || courseCoverByName(name),
+        active: id === props.courseId || name === learner.value.course
+      };
+    })
+    .filter(course => {
+      if (seen.has(course.key)) return false;
+      seen.add(course.key);
+      return true;
+    })
+    .slice(0, 3);
+});
 const canCreateCorrection = computed(() => !!props.targetStudentId);
 const currentDimension = computed(() =>
   dimensions.value.find(
@@ -288,15 +388,12 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
           >
             <el-icon :size="48" class="text-primary"><Avatar /></el-icon>
           </div>
-          <div
-            class="absolute bottom-1 right-1 bg-emerald-500 w-4 h-4 rounded-full border-2 border-bg_color"
-          />
         </div>
         <h3 class="text-lg font-semibold text-text_color_primary">
           {{ learner.name }}
         </h3>
         <p class="text-sm text-text_color_regular mt-1 mb-5">
-          {{ learner.role }}
+          {{ learnerRoleLabel }}
         </p>
 
         <div class="w-full grid grid-cols-2 gap-3 text-center">
@@ -320,17 +417,46 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
           </div>
         </div>
 
+        <div v-if="joinedCourses.length" class="joined-courses">
+          <div class="joined-courses__head">
+            <span>已加入课程</span>
+            <b>{{ joinedCourses.length }} 门</b>
+          </div>
+          <div class="joined-courses__list">
+            <article
+              v-for="course in joinedCourses"
+              :key="course.key"
+              class="joined-course"
+              :class="{ 'is-active': course.active }"
+            >
+              <img :src="course.cover" :alt="`${course.name}课程封面`" />
+              <div class="min-w-0 flex-1">
+                <h4>{{ course.name }}</h4>
+                <p>{{ course.subtitle }}</p>
+              </div>
+              <el-tag
+                v-if="course.active"
+                size="small"
+                effect="plain"
+                class="!rounded-md"
+              >
+                当前
+              </el-tag>
+            </article>
+          </div>
+        </div>
+
         <div
-          v-if="tags.length"
+          v-if="displayTags.length"
           class="mt-5 flex flex-wrap justify-center gap-2"
         >
           <el-tag
-            v-for="tag in tags.slice(0, 4)"
-            :key="tag"
+            v-for="tag in displayTags.slice(0, 4)"
+            :key="tag.raw"
             effect="plain"
             size="small"
           >
-            {{ tag }}
+            {{ tag.label }}
           </el-tag>
         </div>
 
@@ -354,7 +480,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
               effect="plain"
               :type="decisionType(profileMeta.last_update_decision)"
             >
-              {{ profileMeta.last_update_decision || "暂无" }}
+              {{ localizeStatusText(profileMeta.last_update_decision) }}
             </el-tag>
           </div>
         </div>
@@ -372,7 +498,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
               size="small"
               class="!rounded-md"
             >
-              {{ flag }}
+              {{ localizeStatusText(flag) }}
             </el-tag>
           </div>
         </div>
@@ -416,7 +542,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
                   v-if="dim.level || dim.trend"
                   class="mt-1 text-sm text-text_color_regular truncate"
                 >
-                  {{ dim.level || dim.trend }}
+                  {{ localizeStatusText(dim.level || dim.trend) }}
                 </div>
               </div>
               <span class="dimension-value" :style="{ color: dim.color }">
@@ -445,7 +571,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
                 effect="plain"
                 class="!rounded-md"
               >
-                {{ evidence }}
+                {{ localizeTag(evidence) }}
               </el-tag>
             </div>
             <div
@@ -497,7 +623,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
                 effect="plain"
                 class="!rounded-md"
               >
-                {{ flag }}
+                {{ localizeStatusText(flag) }}
               </el-tag>
             </div>
           </el-timeline-item>
@@ -529,7 +655,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
                 effect="plain"
                 :type="decisionType(event.decision)"
               >
-                {{ event.decision || "unknown" }}
+                {{ localizeStatusText(event.decision || "unknown") }}
               </el-tag>
             </div>
             <p class="mt-2 text-xs text-text_color_regular leading-relaxed">
@@ -547,7 +673,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
                 effect="plain"
                 class="!rounded-md"
               >
-                {{ dimension }}
+                {{ localizeStatusText(dimension) }}
               </el-tag>
             </div>
           </div>
@@ -713,10 +839,10 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
           <div class="mt-2 flex items-center gap-2">
             <el-tag effect="plain">{{ selectedDimension.value }}%</el-tag>
             <el-tag v-if="selectedDimension.level" effect="plain">
-              {{ selectedDimension.level }}
+              {{ localizeStatusText(selectedDimension.level) }}
             </el-tag>
             <el-tag v-if="selectedDimension.trend" effect="plain">
-              {{ selectedDimension.trend }}
+              {{ localizeStatusText(selectedDimension.trend) }}
             </el-tag>
           </div>
         </div>
@@ -750,7 +876,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
               :key="evidence"
               effect="plain"
             >
-              {{ evidence }}
+              {{ localizeTag(evidence) }}
             </el-tag>
           </div>
         </div>
@@ -781,6 +907,82 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
 .profile-summary,
 .dimension-preview {
   box-shadow: none;
+}
+
+.joined-courses {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.joined-courses__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+
+  span {
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+  }
+
+  b {
+    font-weight: 700;
+    color: var(--el-color-primary);
+  }
+}
+
+.joined-courses__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.joined-course {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--profile-border);
+  border-radius: 12px;
+  background: #fbfcff;
+  text-align: left;
+
+  &.is-active {
+    border-color: rgb(95 143 232 / 38%);
+    background: rgb(95 143 232 / 7%);
+  }
+
+  img {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+
+  h4 {
+    margin: 0;
+    overflow: hidden;
+    color: var(--el-text-color-primary);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  p {
+    margin: 4px 0 0;
+    overflow: hidden;
+    color: var(--el-text-color-regular);
+    font-size: 12px;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .dimension-card {

@@ -14,7 +14,7 @@ import {
   Box,
   Monitor,
   ArrowDown,
-  Top,
+  Microphone,
   Expand,
   Fold,
   Avatar,
@@ -971,6 +971,19 @@ onMounted(() => {
 
 const quickMessage = ref("");
 const quickCourse = ref("");
+const quickVoiceListening = ref(false);
+const quickUploadInputRef = ref<HTMLInputElement | null>(null);
+let quickSpeechRecognition: any = null;
+type QuickAttachmentPreview = {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+  extension: string;
+  previewUrl?: string;
+};
+const quickAttachments = ref<QuickAttachmentPreview[]>([]);
 const quickInteractionMessages = [
   "老师好",
   "这一段没听懂",
@@ -980,6 +993,156 @@ const quickInteractionMessages = [
 
 const handleQuickInteraction = (text: string) => {
   speakDigitalHumans(text);
+};
+
+const handleQuickUploadClick = () => {
+  quickUploadInputRef.value?.click();
+};
+
+const getQuickFileExtension = (file: File) => {
+  const nameExtension = file.name.split(".").pop()?.trim();
+  const typeExtension = file.type.split("/").pop()?.trim();
+  return (nameExtension || typeExtension || "file").slice(0, 8).toUpperCase();
+};
+
+const formatQuickFileSize = (size: number) => {
+  if (size < 1024) return `${size} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = size / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+  return `${value >= 10 ? value.toFixed(1) : value.toFixed(2)} ${
+    units[unitIndex]
+  }`;
+};
+
+const getQuickAttachmentKind = (attachment: QuickAttachmentPreview) => {
+  const type = attachment.type.toLowerCase();
+  const extension = attachment.extension.toUpperCase();
+  if (type.startsWith("image/")) return "图片";
+  if (type.includes("pdf") || extension === "PDF") return "PDF";
+  if (type.includes("word") || ["DOC", "DOCX"].includes(extension)) {
+    return "Word";
+  }
+  if (
+    type.includes("spreadsheet") ||
+    ["XLS", "XLSX", "CSV"].includes(extension)
+  ) {
+    return "表格";
+  }
+  if (type.includes("presentation") || ["PPT", "PPTX"].includes(extension)) {
+    return "PPT";
+  }
+  return extension || "文件";
+};
+
+const revokeQuickAttachmentUrl = (attachment: QuickAttachmentPreview) => {
+  if (attachment.previewUrl) {
+    URL.revokeObjectURL(attachment.previewUrl);
+  }
+};
+
+const clearQuickAttachments = () => {
+  quickAttachments.value.forEach(revokeQuickAttachmentUrl);
+  quickAttachments.value = [];
+};
+
+const removeQuickAttachment = (id: string) => {
+  const attachment = quickAttachments.value.find(item => item.id === id);
+  if (attachment) revokeQuickAttachmentUrl(attachment);
+  quickAttachments.value = quickAttachments.value.filter(
+    item => item.id !== id
+  );
+};
+
+const handleQuickAttachmentChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  const createdAt = Date.now();
+  const nextAttachments = files.map((file, index) => ({
+    id: `${file.name}-${file.size}-${file.lastModified}-${createdAt}-${index}`,
+    file,
+    name: file.name,
+    size: file.size,
+    type: file.type || "",
+    extension: getQuickFileExtension(file),
+    previewUrl: file.type.startsWith("image/")
+      ? URL.createObjectURL(file)
+      : undefined
+  }));
+  quickAttachments.value = [...quickAttachments.value, ...nextAttachments];
+  ElMessage.success(
+    files.length > 1
+      ? `已选择 ${files.length} 个文件`
+      : `已选择 ${files[0].name}`
+  );
+  input.value = "";
+};
+
+const handleQuickVoiceInput = () => {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    ElMessage.warning("当前浏览器暂不支持系统语音输入");
+    return;
+  }
+
+  if (quickVoiceListening.value && quickSpeechRecognition) {
+    quickSpeechRecognition.stop?.();
+    return;
+  }
+
+  const initialText = quickMessage.value.trim();
+  const recognition = new SpeechRecognition();
+  quickSpeechRecognition = recognition;
+  recognition.lang = "zh-CN";
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  let committedSpeechText = "";
+
+  recognition.onresult = (event: any) => {
+    let interimText = "";
+    for (let index = event.resultIndex; index < event.results.length; index++) {
+      const transcript = event.results[index][0]?.transcript || "";
+      if (event.results[index].isFinal) {
+        committedSpeechText += transcript;
+      } else {
+        interimText += transcript;
+      }
+    }
+    const spokenText = `${committedSpeechText}${interimText}`.trim();
+    const separator = initialText && spokenText ? " " : "";
+    quickMessage.value = `${initialText}${separator}${spokenText}`.trim();
+  };
+
+  recognition.onerror = (event: any) => {
+    quickVoiceListening.value = false;
+    if (event?.error === "not-allowed") {
+      ElMessage.warning("请允许浏览器使用麦克风");
+    } else if (!["aborted", "no-speech"].includes(event?.error)) {
+      ElMessage.warning("语音输入暂时不可用");
+    }
+  };
+
+  recognition.onend = () => {
+    quickVoiceListening.value = false;
+    quickSpeechRecognition = null;
+  };
+
+  try {
+    quickVoiceListening.value = true;
+    recognition.start();
+  } catch {
+    quickVoiceListening.value = false;
+    quickSpeechRecognition = null;
+  }
 };
 
 const handleNewChat = async (payload: { course: string }) => {
@@ -1046,6 +1209,7 @@ const handleNewChat = async (payload: { course: string }) => {
     setTimeout(() => {
       handleSendMessage(pendingMessage);
       quickMessage.value = "";
+      clearQuickAttachments();
     }, 100);
   }
 };
@@ -1091,6 +1255,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   streamCancel.value?.();
+  quickSpeechRecognition?.stop?.();
+  quickSpeechRecognition = null;
+  clearQuickAttachments();
   document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
@@ -1346,7 +1513,7 @@ onUnmounted(() => {
             </div>
 
             <div
-              class="w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
+              class="w-full max-w-5xl px-6 space-y-10 relative z-10 transform -translate-y-8"
             >
               <div class="text-center space-y-4">
                 <h1
@@ -1362,9 +1529,53 @@ onUnmounted(() => {
                 </p>
               </div>
 
-              <div
-                class="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
-              >
+              <div class="quick-chat-card">
+                <input
+                  ref="quickUploadInputRef"
+                  type="file"
+                  multiple
+                  class="quick-chat-file-input"
+                  @change="handleQuickAttachmentChange"
+                />
+                <div
+                  v-if="quickAttachments.length"
+                  class="quick-attachment-shelf"
+                >
+                  <div
+                    v-for="attachment in quickAttachments"
+                    :key="attachment.id"
+                    class="quick-attachment-card"
+                    :title="`${attachment.name} · ${formatQuickFileSize(
+                      attachment.size
+                    )} · ${getQuickAttachmentKind(attachment)}`"
+                  >
+                    <div class="quick-attachment-preview">
+                      <img
+                        v-if="attachment.previewUrl"
+                        :src="attachment.previewUrl"
+                        :alt="attachment.name"
+                      />
+                      <span v-else>{{ attachment.extension }}</span>
+                    </div>
+                    <div class="quick-attachment-info">
+                      <span class="quick-attachment-name">
+                        {{ attachment.name }}
+                      </span>
+                      <span class="quick-attachment-meta">
+                        {{ formatQuickFileSize(attachment.size) }} ·
+                        {{ getQuickAttachmentKind(attachment) }}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      class="quick-attachment-remove"
+                      title="删除附件"
+                      @click="removeQuickAttachment(attachment.id)"
+                    >
+                      <el-icon><Close /></el-icon>
+                    </button>
+                  </div>
+                </div>
                 <el-input
                   v-model="quickMessage"
                   type="textarea"
@@ -1377,29 +1588,37 @@ onUnmounted(() => {
                   "
                 />
 
-                <div
-                  class="flex items-center justify-between px-4 py-3 bg-gray-50/50 border-t border-gray-50"
-                >
-                  <div class="flex flex-wrap items-center gap-1.5">
+                <div class="quick-chat-toolbar">
+                  <div class="quick-chat-tools-left">
+                    <button
+                      type="button"
+                      class="quick-chat-icon-button quick-chat-upload-button"
+                      title="上传资料"
+                      @click="handleQuickUploadClick"
+                    >
+                      <span class="quick-chat-upload-plus" aria-hidden="true">
+                        +
+                      </span>
+                    </button>
+
                     <el-dropdown
                       trigger="click"
+                      popper-class="quick-chat-dropdown"
                       @command="c => (quickCourse = c)"
                     >
                       <span
-                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors"
-                        :class="
-                          quickCourse
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
-                        "
+                        class="quick-chat-chip quick-chat-chip--interactive"
+                        :class="{ 'is-selected': quickCourse }"
                       >
-                        <el-icon class="mr-1.5 text-[14px]"
-                          ><FolderOpened
-                        /></el-icon>
-                        {{ quickCourse || "选择课程" }}
-                        <el-icon class="ml-1 text-[12px]"
-                          ><ArrowDown
-                        /></el-icon>
+                        <el-icon class="quick-chat-chip__icon">
+                          <FolderOpened />
+                        </el-icon>
+                        <span class="quick-chat-chip__text">
+                          {{ quickCourse || "选择课程" }}
+                        </span>
+                        <el-icon class="quick-chat-chip__arrow">
+                          <ArrowDown />
+                        </el-icon>
                       </span>
                       <template #dropdown>
                         <el-dropdown-menu>
@@ -1414,25 +1633,30 @@ onUnmounted(() => {
                       </template>
                     </el-dropdown>
 
-                    <span
-                      class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 bg-gray-100"
-                    >
-                      <el-icon class="mr-1.5 text-[14px]"><Monitor /></el-icon>
-                      {{ mode }}
+                    <span class="quick-chat-chip quick-chat-chip--static">
+                      <el-icon class="quick-chat-chip__icon">
+                        <Monitor />
+                      </el-icon>
+                      <span class="quick-chat-chip__text">{{ mode }}</span>
                     </span>
 
                     <el-dropdown
                       trigger="click"
+                      popper-class="quick-chat-dropdown"
                       @command="a => (selectedAgentKey = a)"
                     >
                       <span
-                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                        class="quick-chat-chip quick-chat-chip--interactive"
                       >
-                        <el-icon class="mr-1.5 text-[14px]"><Cpu /></el-icon>
-                        {{ selectedAgentLabel || "选择助手" }}
-                        <el-icon class="ml-1 text-[12px]"
-                          ><ArrowDown
-                        /></el-icon>
+                        <el-icon class="quick-chat-chip__icon">
+                          <Cpu />
+                        </el-icon>
+                        <span class="quick-chat-chip__text">
+                          {{ selectedAgentLabel || "选择助手" }}
+                        </span>
+                        <el-icon class="quick-chat-chip__arrow">
+                          <ArrowDown />
+                        </el-icon>
                       </span>
                       <template #dropdown>
                         <el-dropdown-menu>
@@ -1448,20 +1672,46 @@ onUnmounted(() => {
                     </el-dropdown>
                   </div>
 
-                  <div class="flex items-center gap-3">
-                    <span
-                      class="text-[12px] text-gray-400 font-medium tracking-wide flex items-center pr-2 cursor-pointer hover:text-gray-600 transition-colors"
+                  <div class="quick-chat-tools-right">
+                    <el-dropdown
+                      trigger="click"
+                      popper-class="quick-chat-dropdown"
+                      @command="m => (selectedModelKey = m)"
                     >
-                      {{ selectedModelLabel || "选择模型" }}
-                      <el-icon class="ml-1"><ArrowDown /></el-icon>
-                    </span>
+                      <span class="quick-chat-model-trigger">
+                        <span>{{ selectedModelLabel || "选择模型" }}</span>
+                        <el-icon class="quick-chat-chip__arrow">
+                          <ArrowDown />
+                        </el-icon>
+                      </span>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item
+                            v-for="model in assistantBootstrap?.models || []"
+                            :key="model.key"
+                            :command="model.key"
+                          >
+                            {{ model.label }}
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+
                     <button
-                      class="w-10 h-10 flex items-center justify-center rounded-xl transition-all transform border"
-                      :class="
-                        quickCourse && quickMessage.trim()
-                          ? 'bg-primary border-primary text-white hover:bg-primary/90 cursor-pointer'
-                          : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
-                      "
+                      type="button"
+                      class="quick-chat-icon-button quick-chat-voice-button"
+                      :class="{ 'is-listening': quickVoiceListening }"
+                      :title="quickVoiceListening ? '停止语音输入' : '语音输入'"
+                      @click="handleQuickVoiceInput"
+                    >
+                      <el-icon><Microphone /></el-icon>
+                    </button>
+                    <button
+                      type="button"
+                      class="quick-chat-send-button"
+                      :class="{
+                        'is-ready': quickCourse && quickMessage.trim()
+                      }"
                       :disabled="!quickCourse || !quickMessage.trim()"
                       @click="
                         quickCourse
@@ -1469,13 +1719,14 @@ onUnmounted(() => {
                           : null
                       "
                     >
-                      <el-icon
-                        class="text-lg"
-                        :class="
-                          quickCourse && quickMessage.trim() ? '' : 'font-bold'
-                        "
-                        ><Top
-                      /></el-icon>
+                      <svg
+                        class="quick-chat-send-icon"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 19V5" />
+                        <path d="M5.5 11.5 12 5l6.5 6.5" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -1488,7 +1739,7 @@ onUnmounted(() => {
             v-else-if="activeRail === `agentpdf`"
             class="h-full w-full overflow-hidden"
           >
-            <div class="h-full bg-white overflow-hidden">
+            <div class="agent-pdf-shell h-full overflow-hidden">
               <AgentPdfWorkbench :service-url="pdfServiceUrl" />
             </div>
           </div>
@@ -1565,6 +1816,7 @@ onUnmounted(() => {
                   :course-id="selectedCourseId"
                   :target-student-id="selectedTargetStudentId"
                   :requires-target-student="isStaffMode"
+                  :enrolled-courses="myCourses"
                   @profile-loaded="handleProfileLoaded"
                 />
               </div>
@@ -1608,7 +1860,7 @@ onUnmounted(() => {
           </div>
 
           <div v-else-if="activeRail === `governance`" class="h-full w-full">
-            <div class="h-full bg-white overflow-hidden">
+            <div class="governance-shell h-full overflow-hidden">
               <AiGovernanceDashboard
                 :course-id="selectedCourseId"
                 :course-name="selectedCourseName"
@@ -1922,6 +2174,16 @@ onUnmounted(() => {
     "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline" !important;
 }
 
+.agent-pdf-shell {
+  background: transparent;
+  border-radius: 24px;
+}
+
+.governance-shell {
+  background: transparent;
+  border-radius: 24px;
+}
+
 /* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */
 .lottie-empty-state {
   :deep(svg) {
@@ -2054,6 +2316,416 @@ onUnmounted(() => {
     &::placeholder {
       color: #9ca3af;
     }
+  }
+}
+
+.quick-chat-card {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 28px;
+  box-shadow: 0 12px 38px rgba(82, 61, 110, 0.07);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+
+.quick-chat-card:focus-within {
+  border-color: rgba(94, 127, 248, 0.2);
+  box-shadow: 0 16px 44px rgba(82, 61, 110, 0.1);
+}
+
+.quick-chat-file-input {
+  display: none;
+}
+
+.quick-attachment-shelf {
+  display: flex;
+  gap: 12px;
+  padding: 18px 18px 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.quick-attachment-shelf::-webkit-scrollbar {
+  height: 4px;
+}
+
+.quick-attachment-shelf::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+}
+
+.quick-attachment-card {
+  position: relative;
+  display: flex;
+  flex: 0 0 156px;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 128px;
+  padding: 10px;
+  overflow: hidden;
+  background: rgba(243, 246, 251, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.88);
+  border-radius: 19px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quick-attachment-card:hover {
+  background: #fff;
+  border-color: rgba(203, 213, 225, 0.95);
+  box-shadow: 0 12px 28px rgba(48, 64, 93, 0.12);
+  transform: translateY(-1px);
+}
+
+.quick-attachment-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72px;
+  overflow: hidden;
+  color: #6b7280;
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  background: linear-gradient(135deg, #fff, #eef2f7);
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  border-radius: 15px;
+}
+
+.quick-attachment-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.quick-attachment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.quick-attachment-name,
+.quick-attachment-meta {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-attachment-name {
+  color: #475467;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quick-attachment-meta {
+  color: #98a2b3;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.quick-attachment-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #fff;
+  pointer-events: none;
+  background: rgba(15, 23, 42, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    background 0.18s ease;
+  transform: scale(0.86);
+}
+
+.quick-attachment-card:hover .quick-attachment-remove {
+  pointer-events: auto;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.quick-attachment-remove:hover {
+  background: rgba(220, 38, 38, 0.9);
+}
+
+.quick-chat-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 16px;
+  background: rgba(248, 250, 252, 0.78);
+  border-top: 1px solid rgba(241, 245, 249, 0.95);
+}
+
+.quick-chat-tools-left,
+.quick-chat-tools-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.quick-chat-tools-left {
+  flex-wrap: wrap;
+}
+
+.quick-chat-tools-right {
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.quick-chat-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 250px;
+  height: 38px;
+  padding: 0 14px;
+  color: #4b5565;
+  white-space: nowrap;
+  background: #f1f3f7;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  box-shadow: 0 0 0 rgba(56, 67, 95, 0);
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quick-chat-chip--interactive {
+  cursor: pointer;
+}
+
+.quick-chat-chip--interactive:hover {
+  color: #334155;
+  background: #eef1f6;
+  border-color: rgba(213, 219, 230, 0.95);
+  box-shadow: 0 8px 18px rgba(56, 67, 95, 0.08);
+  transform: translateY(-1px);
+}
+
+.quick-chat-chip--interactive.is-selected {
+  color: #4f69d9;
+  background: rgba(94, 127, 248, 0.12);
+}
+
+.quick-chat-chip--static {
+  cursor: default;
+}
+
+.quick-chat-chip__icon {
+  flex: 0 0 auto;
+  margin-right: 8px;
+  font-size: 15px;
+}
+
+.quick-chat-chip__text {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-overflow: ellipsis;
+}
+
+.quick-chat-chip__arrow {
+  flex: 0 0 auto;
+  margin-left: 7px;
+  font-size: 13px;
+  color: currentColor;
+  opacity: 0.72;
+}
+
+.quick-chat-model-trigger {
+  display: inline-flex;
+  align-items: center;
+  max-width: 240px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  color: #9099aa;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 14px;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.quick-chat-model-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-chat-model-trigger:hover {
+  color: #667085;
+  background: rgba(241, 243, 247, 0.86);
+}
+
+.quick-chat-icon-button,
+.quick-chat-send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 17px;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quick-chat-icon-button {
+  color: #667085;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.quick-chat-icon-button:hover {
+  color: #344054;
+  background: #f1f3f7;
+  border-color: rgba(213, 219, 230, 0.95);
+}
+
+.quick-chat-upload-button {
+  flex: 0 0 auto;
+  background: #fff;
+  border-color: rgba(223, 228, 236, 0.9);
+}
+
+.quick-chat-upload-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 31px;
+  font-weight: 300;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.quick-chat-voice-button.is-listening {
+  color: var(--el-color-primary);
+  background: rgba(94, 127, 248, 0.12);
+  box-shadow: 0 0 0 4px rgba(94, 127, 248, 0.12);
+}
+
+.quick-chat-send-button {
+  color: #98a2b3;
+  cursor: not-allowed;
+  background: #fff;
+  border: 1px solid #dfe4ec;
+}
+
+.quick-chat-send-button.is-ready {
+  color: #fff;
+  cursor: pointer;
+  background: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  box-shadow: 0 10px 22px rgba(94, 127, 248, 0.24);
+}
+
+.quick-chat-send-button.is-ready:hover {
+  box-shadow: 0 14px 28px rgba(94, 127, 248, 0.3);
+  transform: translateY(-1px);
+}
+
+.quick-chat-send-button:active,
+.quick-chat-icon-button:active,
+.quick-chat-chip--interactive:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.quick-chat-send-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.1;
+}
+
+:global(.quick-chat-dropdown.el-popper) {
+  overflow: visible !important;
+  background: #fff !important;
+  border: 1px solid rgba(216, 225, 240, 0.95) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 42px rgba(48, 64, 93, 0.14) !important;
+}
+
+:global(.quick-chat-dropdown .el-dropdown-menu) {
+  min-width: 220px !important;
+  padding: 8px !important;
+  overflow: hidden;
+  background: #fff !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+:global(.quick-chat-dropdown .el-dropdown-menu__item) {
+  height: 40px !important;
+  padding: 0 14px !important;
+  margin: 2px 0;
+  color: #4f5c6f !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 40px !important;
+  border-radius: 12px !important;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease;
+}
+
+:global(.quick-chat-dropdown .el-dropdown-menu__item:not(.is-disabled):hover),
+:global(.quick-chat-dropdown .el-dropdown-menu__item:not(.is-disabled):focus) {
+  color: var(--el-color-primary) !important;
+  background: rgba(94, 127, 248, 0.1) !important;
+}
+
+:global(.quick-chat-dropdown .el-popper__arrow::before) {
+  background: #fff !important;
+  border-color: rgba(216, 225, 240, 0.95) !important;
+  border-radius: 3px;
+}
+
+@media (max-width: 768px) {
+  .quick-chat-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-chat-tools-right {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .quick-chat-model-trigger {
+    max-width: 180px;
   }
 }
 
