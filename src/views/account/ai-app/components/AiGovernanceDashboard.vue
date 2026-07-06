@@ -555,7 +555,14 @@ watch(
       <div class="flex items-start justify-between gap-4 mb-5">
         <div class="min-w-0">
           <div class="flex items-center gap-3 mb-2">
-            <span class="governance-brand-mark">治</span>
+            <span class="governance-brand-mark" aria-hidden="true">
+              <span class="governance-brand-mark__grid">
+                <span />
+                <span />
+                <span />
+                <span />
+              </span>
+            </span>
             <div class="min-w-0">
               <h2 class="text-2xl font-bold text-gray-800 leading-tight">
                 治理看板
@@ -1318,13 +1325,40 @@ watch(
   justify-content: center;
   width: 40px;
   height: 40px;
-  color: #1f6feb;
-  font-size: 17px;
-  font-weight: 800;
-  background: linear-gradient(180deg, #eef7ff 0%, #e4f1ff 100%);
-  border: 1px solid rgb(111 168 255 / 34%);
-  border-radius: 14px;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 85%);
+  color: #2563b7;
+  background: #f2f7ff;
+  border: 1px solid rgb(111 168 255 / 28%);
+  border-radius: 12px;
+}
+
+.governance-brand-mark__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 8px);
+  grid-template-rows: repeat(2, 8px);
+  gap: 4px;
+}
+
+.governance-brand-mark__grid span {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 3px;
+}
+
+.governance-brand-mark__grid span:nth-child(1) {
+  opacity: 0.82;
+}
+
+.governance-brand-mark__grid span:nth-child(2) {
+  opacity: 0.46;
+}
+
+.governance-brand-mark__grid span:nth-child(3) {
+  opacity: 1;
+}
+
+.governance-brand-mark__grid span:nth-child(4) {
+  opacity: 0.62;
 }
 
 .a3-stat-panel {

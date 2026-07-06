@@ -32,7 +32,7 @@ import AiSidebar from "./components/AiSidebar.vue";
 import AiChatModule from "./components/AiChatModule.vue";
 import AiInspector from "./components/AiInspector.vue";
 import AgentPdfWorkbench from "./AgentPdfWorkbench.vue";
-import LottieAnimation from "@/components/LottieAnimation.vue";
+import AiAppEmptyState from "./components/AiAppEmptyState.vue";
 
 import AiResourceGeneration from "./components/AiResourceGeneration.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
@@ -41,10 +41,6 @@ import AiAssessment from "./components/AiAssessment.vue";
 import AiGovernanceDashboard from "./components/AiGovernanceDashboard.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 import FloatingDigitalHuman2D from "./components/FloatingDigitalHuman2D.vue";
-
-import emptyStateDevelopmentAnimation from "@/assets/aiapplottie/empty-state-development-animation.json";
-import onlineChartAnimation from "@/assets/aiapplottie/online-chart-animation.json";
-import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
 
 import { useUserStore } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
@@ -1258,18 +1254,13 @@ onUnmounted(() => {
 <template>
   <div
     class="ai-app-root h-[100dvh] w-full flex flex-col overflow-hidden"
-    :class="[
-      activeRail === 'chat'
-        ? 'bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)]'
-        : 'bg-transparent',
-      currentTheme
-    ]"
+    :class="[currentTheme, { 'is-chat': activeRail === 'chat' }]"
   >
     <div class="flex-1 min-h-0 flex overflow-hidden">
       <!-- 极简左侧边栏 (第一块) -->
       <aside
         v-if="activeRail === 'chat'"
-        class="ai-app-left-rail flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
+        class="ai-app-left-rail flex-shrink-0 z-20 flex flex-col transition-all duration-300 relative"
         :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
@@ -1298,7 +1289,7 @@ onUnmounted(() => {
 
         <!-- 收起 / 展开 把手 -->
         <button
-          class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
+          class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 transition-colors z-30"
           :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           @click="toggleSidebar"
         >
@@ -1376,21 +1367,17 @@ onUnmounted(() => {
         </div>
 
         <!-- 主体内容 (第三块) -->
-        <main class="flex-1 overflow-hidden relative">
+        <main class="flex-1 min-w-0 overflow-hidden relative">
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
           <div
             v-if="activeRail === `chat` && activeCourse"
-            class="h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
+            class="ai-chat-workbench h-full w-full min-w-0 flex items-stretch p-4 gap-4 overflow-hidden"
           >
             <!-- 对话流核心面板 -->
             <transition appear name="panel-slide">
               <div
-                class="flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
+                class="ai-chat-dialog-panel ai-workbench-panel flex-1 min-w-0 h-full overflow-hidden relative"
               >
-                <!-- 柔和的顶部遮罩渐变 -->
-                <div
-                  class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white/80 to-transparent pointer-events-none z-10"
-                />
                 <AiChatModule
                   :messages="messages"
                   :activeCourse="activeCourse.name"
@@ -1418,12 +1405,12 @@ onUnmounted(() => {
             <!-- 数字人面板：保留原右侧 VRM 数字人模块 -->
             <transition appear name="panel-reveal">
               <div
-                class="flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
-                :class="humanCollapsed ? 'w-16' : 'w-[420px]'"
+                class="ai-human-column h-full min-w-0 flex flex-col gap-4 transition-all duration-200 ease-out relative"
+                :class="{ 'is-collapsed': humanCollapsed }"
               >
                 <!-- 收起 / 展开把手：挂在外层，避免被圆角容器裁切 -->
                 <button
-                  class="absolute top-4 left-0 -translate-x-1/2 w-7 h-7 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-[140]"
+                  class="absolute top-4 left-0 -translate-x-1/2 w-7 h-7 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 transition-colors z-[140]"
                   :title="humanCollapsed ? '展开数字人' : '收起数字人'"
                   @click="toggleHuman"
                 >
@@ -1434,7 +1421,7 @@ onUnmounted(() => {
                 </button>
 
                 <div
-                  class="flex-1 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative"
+                  class="ai-workbench-panel flex-1 min-w-0 overflow-hidden relative"
                 >
                   <VirtualHumanPanel
                     v-show="!humanCollapsed"
@@ -1447,12 +1434,12 @@ onUnmounted(() => {
                     @click="toggleHuman"
                   >
                     <div
-                      class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:scale-125 transition-transform duration-500"
+                      class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-colors duration-200"
                     >
                       <el-icon :size="20"><Avatar /></el-icon>
                     </div>
                     <span
-                      class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover/btn:text-primary transition-colors"
+                      class="text-[11px] font-semibold tracking-normal text-gray-500 group-hover/btn:text-primary transition-colors"
                       style="writing-mode: vertical-rl"
                     >
                       专属助教
@@ -1463,11 +1450,11 @@ onUnmounted(() => {
                 <transition name="el-zoom-in-bottom">
                   <div
                     v-show="!humanCollapsed"
-                    class="flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
+                    class="ai-workbench-panel flex-none min-w-0 p-3 flex flex-col gap-2 overflow-hidden z-[100]"
                     style="min-height: 180px"
                   >
                     <div
-                      class="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center border-b border-gray-100 pb-1.5 mb-1"
+                      class="text-[12px] font-semibold text-gray-600 text-center border-b border-gray-100 pb-1.5 mb-1"
                     >
                       快速互动
                     </div>
@@ -1478,7 +1465,7 @@ onUnmounted(() => {
                         type="primary"
                         plain
                         size="default"
-                        class="!w-full !m-0 !text-[12px] !rounded-xl !border-blue-100 !bg-blue-50/50 hover:!bg-blue-500 hover:!text-white transition-all duration-300"
+                        class="!w-full !m-0 !text-[12px] !rounded-lg !border-blue-100 !bg-blue-50/50 hover:!bg-blue-100 hover:!text-primary transition-colors duration-200"
                         @click="handleQuickInteraction(msg)"
                       >
                         {{ msg }}
@@ -1495,29 +1482,14 @@ onUnmounted(() => {
             v-else-if="activeRail === `chat` && !activeCourse"
             class="h-full w-full p-4 flex items-center justify-center relative"
           >
-            <!-- 背景装饰 -->
-            <div class="absolute inset-0 overflow-hidden pointer-events-none">
-              <div
-                class="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60"
-              />
-              <div
-                class="absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60"
-              />
-            </div>
-
             <div
-              class="w-full max-w-5xl px-6 space-y-10 relative z-10 transform -translate-y-8"
+              class="w-full max-w-5xl px-6 space-y-8 relative z-10 transform -translate-y-8"
             >
               <div class="text-center space-y-4">
-                <h1
-                  class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
-                >
+                <h1 class="text-3xl sm:text-[38px] font-bold tracking-tight text-primary">
                   今天想学习什么？
                 </h1>
-                <p
-                  class="text-[15px] font-medium tracking-wide"
-                  style="color: rgba(140, 80, 159, 0.7)"
-                >
+                <p class="text-[15px] font-medium tracking-wide text-gray-500">
                   请先选择一门课程，然后随时寻求学习辅导
                 </p>
               </div>
@@ -1742,18 +1714,11 @@ onUnmounted(() => {
               v-if="isStaffMode && !selectedStudentId"
               class="h-full w-full flex items-center justify-center bg-transparent"
             >
-              <div
-                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
-              >
-                <LottieAnimation
-                  :animationData="emptyStateDevelopmentAnimation"
-                  :width="360"
-                  :height="360"
-                />
-                <h3 class="mt-4 text-lg font-black text-gray-600">
-                  尚未选择学生
-                </h3>
-              </div>
+              <AiAppEmptyState
+                title="请选择学生"
+                description="选择学生后可查看资源生成任务和学习资源。"
+                :icon="User"
+              />
             </div>
             <div v-else class="h-full bg-transparent overflow-hidden">
               <AiResourceGeneration
@@ -1769,18 +1734,11 @@ onUnmounted(() => {
               v-if="isStaffMode && !selectedStudentId"
               class="h-full w-full flex items-center justify-center bg-transparent"
             >
-              <div
-                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
-              >
-                <LottieAnimation
-                  :animationData="onlineChartAnimation"
-                  :width="360"
-                  :height="360"
-                />
-                <h3 class="mt-4 text-lg font-black text-gray-600">
-                  尚未选择学生
-                </h3>
-              </div>
+              <AiAppEmptyState
+                title="请选择学生"
+                description="选择学生后可查看个性化学习路径。"
+                :icon="Guide"
+              />
             </div>
             <div v-else class="h-full bg-transparent overflow-hidden">
               <AiLearningPath
@@ -1799,7 +1757,11 @@ onUnmounted(() => {
               v-if="isStaffMode && !selectedStudentId"
               class="h-full w-full flex items-center justify-center"
             >
-              <el-empty description="尚未选择学生" :image-size="120" />
+              <AiAppEmptyState
+                title="请选择学生"
+                description="选择学生后可查看画像、知识掌握和风险标签。"
+                :icon="User"
+              />
             </div>
             <div v-else class="h-full min-h-0 flex gap-4 overflow-hidden">
               <div
@@ -1830,18 +1792,11 @@ onUnmounted(() => {
               v-if="isStaffMode && !selectedStudentId"
               class="h-full w-full flex items-center justify-center bg-transparent"
             >
-              <div
-                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
-              >
-                <LottieAnimation
-                  :animationData="saasAnimation"
-                  :width="360"
-                  :height="360"
-                />
-                <h3 class="mt-4 text-lg font-black text-gray-600">
-                  尚未选择学生
-                </h3>
-              </div>
+              <AiAppEmptyState
+                title="请选择学生"
+                description="选择学生后可查看阶段评估、证据链和优化动作。"
+                :icon="DataAnalysis"
+              />
             </div>
             <div v-else class="h-full bg-transparent overflow-hidden">
               <AiAssessment
@@ -1899,12 +1854,7 @@ onUnmounted(() => {
                   >
                     <div class="flex items-start gap-4">
                       <div
-                        class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center transition-transform"
-                        :class="
-                          selectedTaskId === task.id
-                            ? 'text-primary scale-110'
-                            : 'text-primary group-hover:scale-110'
-                        "
+                        class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary"
                       >
                         <component :is="task.icon" class="w-6 h-6" />
                       </div>
@@ -1963,11 +1913,13 @@ onUnmounted(() => {
 
                   <div
                     v-if="visibleRoutineTasks.length === 0"
-                    class="text-center py-12 text-gray-400"
+                    class="py-12 flex justify-center"
                   >
-                    <el-empty
-                      description="暂无计划中的常规任务"
-                      :image-size="120"
+                    <AiAppEmptyState
+                      title="暂无常规任务"
+                      description="当前课程暂未配置周期性或触发式任务。"
+                      :icon="Clock"
+                      compact
                     />
                   </div>
                 </div>
@@ -2011,7 +1963,12 @@ onUnmounted(() => {
 
                 <!-- 时间轴区域 -->
                 <div class="flex-1 overflow-y-auto p-8 relative bg-gray-50/30">
-                  <el-empty description="暂无真实执行记录" :image-size="120" />
+                  <AiAppEmptyState
+                    title="暂无执行记录"
+                    description="任务执行后会在这里显示状态、时间和结果。"
+                    :icon="Document"
+                    compact
+                  />
                 </div>
               </div>
             </div>
@@ -2023,19 +1980,13 @@ onUnmounted(() => {
             class="h-full w-full flex items-center justify-center p-4"
           >
             <div
-              class="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] w-full max-w-2xl transform hover:scale-[1.01] transition-transform duration-500"
+              class="h-full w-full flex items-center justify-center"
             >
-              <el-icon :size="80" class="text-gray-200 mb-6 drop-shadow-sm"
-                ><Box
-              /></el-icon>
-              <h3 class="text-xl font-black text-gray-700 mb-2">
-                正在积极建设中
-              </h3>
-              <p class="text-sm text-gray-400">
-                目前「{{
-                  railItems.find(r => r.key === activeRail)?.label
-                }}」属于预期规划内，即将上线，敬请期待...
-              </p>
+              <AiAppEmptyState
+                title="模块建设中"
+                :description="`「${railItems.find(r => r.key === activeRail)?.label || '当前模块'}」暂未开放。`"
+                :icon="Box"
+              />
             </div>
           </div>
         </main>
@@ -2129,21 +2080,27 @@ onUnmounted(() => {
 <style scoped>
 .stack-anim-enter-active,
 .stack-anim-leave-active {
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.22s ease-out;
 }
 .stack-anim-enter-from {
   opacity: 0;
-  transform: translateY(-30px) scale(0.7);
+  transform: translateY(-16px) scale(0.96);
 }
 .stack-anim-leave-to {
   opacity: 0;
-  transform: translateY(-40px) scale(0.7);
+  transform: translateY(-16px) scale(0.96);
 }
 </style>
 
 <style scoped lang="scss">
 .ai-app-root {
-  --el-color-primary: #5e7ff8; // 强制保持平台蓝
+  --el-color-primary: #2f6fcb;
+  --ai-app-shell-bg: #f5f7fb;
+  --ai-app-panel-bg: #fff;
+  --ai-app-panel-border: #e3e9f2;
+  --ai-app-panel-shadow: 0 8px 24px rgb(15 23 42 / 5%);
   --ai-app-font:
     "Inter", "NotionInter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial,
@@ -2151,8 +2108,57 @@ onUnmounted(() => {
 
   font-family: var(--ai-app-font);
   font-synthesis-weight: none;
+  color: #1f2937;
+  background: var(--ai-app-shell-bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+.ai-workbench-panel {
+  background: var(--ai-app-panel-bg);
+  border: 1px solid var(--ai-app-panel-border);
+  border-radius: 24px;
+  box-shadow: var(--ai-app-panel-shadow);
+}
+
+.ai-app-left-rail {
+  background: #fff;
+  border: 1px solid var(--ai-app-panel-border);
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 4%);
+}
+
+.ai-chat-workbench {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 492px 0 12px;
+  overflow: clip;
+}
+
+.ai-chat-dialog-panel {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ai-human-column {
+  position: absolute;
+  top: 0;
+  right: 56px;
+  bottom: 0;
+  width: 420px;
+  min-width: 0;
+  max-width: none;
+}
+
+.ai-human-column.is-collapsed {
+  right: 28px;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
 }
 
 .ai-app-root :deep(*) {
@@ -2177,14 +2183,6 @@ onUnmounted(() => {
   border-radius: 24px;
 }
 
-/* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */
-.lottie-empty-state {
-  :deep(svg) {
-    mix-blend-mode: multiply;
-    background: transparent !important;
-  }
-}
-
 /* 全局交互 UI 增强 */
 :deep(.el-radio-button__inner) {
   border-radius: 12px !important;
@@ -2207,93 +2205,23 @@ onUnmounted(() => {
 
 /* 面板转场动画 */
 .panel-slide-enter-active {
-  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.22s ease-out;
 }
 .panel-slide-enter-from {
   opacity: 0;
-  transform: translateX(-30px) scale(0.98);
+  transform: translateX(-12px);
 }
 
 .panel-reveal-enter-active {
-  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.22s ease-out;
 }
 .panel-reveal-enter-from {
   opacity: 0;
-  transform: translateX(50px) rotate(1deg);
-}
-
-.gradient-text-animate {
-  background: linear-gradient(
-    -45deg,
-    rgb(140, 80, 159),
-    rgb(190, 120, 200),
-    rgb(140, 80, 159)
-  );
-  background-size: 200% auto;
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: gradientShift 6s ease-in-out infinite;
-}
-
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.placeholder-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background: white;
-  h2 {
-    margin-top: 20px;
-    font-weight: bold;
-  }
-  p {
-    color: #666;
-    margin-top: 10px;
-  }
-  .reopen-btn {
-    margin-top: 30px;
-    padding: 10px 24px;
-    border-radius: 20px;
-    border: 1px solid #ddd;
-    background: none;
-    cursor: pointer;
-  }
-}
-
-.pulse-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--el-color-primary);
-  letter-spacing: -0.5px;
-  &::before {
-    content: "";
-    display: block;
-    width: 24px;
-    height: 24px;
-    background: linear-gradient(135deg, var(--el-color-primary), #829eff);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(94, 127, 248, 0.3);
-    animation: simple-pulse 2s infinite;
-  }
-  &::after {
-    content: "IntellEdu";
-  }
+  transform: translateX(12px);
 }
 
 :deep(.quick-chat-input) {
@@ -2314,19 +2242,18 @@ onUnmounted(() => {
 
 .quick-chat-card {
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 28px;
-  box-shadow: 0 12px 38px rgba(82, 61, 110, 0.07);
+  background: #fff;
+  border: 1px solid var(--ai-app-panel-border);
+  border-radius: 24px;
+  box-shadow: var(--ai-app-panel-shadow);
   transition:
     border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.25s ease;
+    box-shadow 0.25s ease;
 }
 
 .quick-chat-card:focus-within {
-  border-color: rgba(94, 127, 248, 0.2);
-  box-shadow: 0 16px 44px rgba(82, 61, 110, 0.1);
+  border-color: rgb(47 111 203 / 38%);
+  box-shadow: 0 0 0 3px rgb(47 111 203 / 10%);
 }
 
 .quick-chat-file-input {
@@ -2706,7 +2633,39 @@ onUnmounted(() => {
   border-radius: 3px;
 }
 
+@media (max-width: 1440px) {
+  .ai-chat-workbench {
+    padding-right: 432px;
+  }
+
+  .ai-human-column {
+    right: 56px;
+    width: 360px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .ai-chat-workbench {
+    padding-right: 16px;
+  }
+
+  .ai-human-column {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .ai-chat-workbench {
+    padding: 10px 14px 10px 10px;
+  }
+}
+
 @media (max-width: 768px) {
+  .ai-chat-workbench {
+    gap: 10px;
+    padding: 10px;
+  }
+
   .quick-chat-toolbar {
     align-items: stretch;
     flex-direction: column;
@@ -2722,15 +2681,4 @@ onUnmounted(() => {
   }
 }
 
-@keyframes simple-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(94, 127, 248, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(94, 127, 248, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(94, 127, 248, 0);
-  }
-}
 </style>

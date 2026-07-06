@@ -70,7 +70,10 @@ export interface VideoAnalyzeModuleResult {
   summary?: { text: string };
   chapters?: ChapterItem[];
   qaItems?: QaItem[];
-  mindMap?: { url?: string; tree?: any };
+  mindMap?: any;
+  mindMapUrl?: string;
+  mindmapUrl?: string;
+  mind_map_url?: string;
   pptPages?: PptPage[];
   meeting?: {
     keywords: string[];

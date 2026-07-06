@@ -1,35 +1,36 @@
 ﻿<template>
-  <div class="ai-chat-module h-full flex flex-col bg-transparent">
+  <div class="ai-chat-module h-full min-w-0 overflow-hidden flex flex-col bg-transparent">
     <!-- 顶部精简导航 -->
     <div
-      class="flex items-center justify-between p-4 bg-white/50 backdrop-blur-md rounded-t-2xl border-b border-gray-100 z-10"
+      class="flex items-center justify-between p-4 bg-white rounded-t-2xl border-b border-gray-100 z-10"
     >
       <div class="flex items-center gap-2">
-        <el-tag size="small" effect="plain" round class="animate-pulse">{{
-          activeCourse
-        }}</el-tag>
+        <el-tag size="small" effect="plain" round>{{ activeCourse }}</el-tag>
       </div>
       <div class="ai-chat-actions flex items-center gap-3">
         <el-button
           :icon="RefreshRight"
           title="刷新"
-          class="ai-chat-action-button !rounded-lg transition-all duration-200 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.22)]"
+          class="ai-chat-action-button !rounded-lg transition-colors duration-200 hover:!border-primary/50"
         />
         <el-button
           :icon="More"
           title="更多"
-          class="ai-chat-action-button !rounded-lg transition-all duration-200 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.22)]"
+          class="ai-chat-action-button !rounded-lg transition-colors duration-200 hover:!border-primary/50"
         />
       </div>
     </div>
 
     <!-- 消息流：移除背景修饰文字，保持纯净 -->
-    <el-scrollbar ref="scrollbarRef" class="flex-1 px-4 py-6 scroll-smooth">
+    <el-scrollbar
+      ref="scrollbarRef"
+      class="flex-1 min-w-0 px-4 py-6 scroll-smooth"
+    >
       <transition-group
         appear
         name="chat-list"
         tag="div"
-        class="w-full space-y-5 pb-10"
+        class="w-full min-w-0 space-y-5 pb-10"
       >
         <div
           v-for="msg in visibleMessages"
@@ -106,7 +107,7 @@
                 v-for="(res, index) in msg.resources"
                 :key="res.title"
                 :style="{ transitionDelay: `${index * 100}ms` }"
-                class="flex flex-col gap-2 p-3 rounded-xl bg-gray-50/80 border border-gray-100 hover:border-primary/50 hover:bg-primary/5 cursor-pointer shadow-sm hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 group"
+                class="flex flex-col gap-2 p-3 rounded-xl bg-gray-50/80 border border-gray-100 hover:border-primary/40 hover:bg-white cursor-pointer shadow-sm transition-colors duration-200 group"
                 @click="emit('preview', res)"
               >
                 <div
@@ -130,35 +131,35 @@
                 <!-- 动画预览：栈操作可视化缩略图 -->
                 <div
                   v-else-if="res.type === 'animation'"
-                  class="h-24 w-full rounded-lg relative overflow-hidden flex items-end justify-center gap-1 px-3 py-2 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 group-hover:shadow-inner"
+                  class="h-24 w-full rounded-lg relative overflow-hidden flex items-end justify-center gap-1 px-3 py-2 bg-slate-100 border border-slate-200"
                 >
                   <div
-                    class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300"
+                    class="absolute inset-0 bg-white/20 transition-colors duration-200"
                   />
                   <div class="flex flex-col-reverse gap-1 z-10">
                     <div
-                      class="w-12 h-4 rounded bg-white/90 text-[10px] font-bold text-indigo-600 flex items-center justify-center shadow"
+                      class="w-12 h-4 rounded bg-white text-[10px] font-bold text-slate-700 flex items-center justify-center border border-slate-200"
                     >
                       A
                     </div>
                     <div
-                      class="w-12 h-4 rounded bg-white/80 text-[10px] font-bold text-purple-600 flex items-center justify-center shadow"
+                      class="w-12 h-4 rounded bg-white text-[10px] font-bold text-slate-700 flex items-center justify-center border border-slate-200"
                     >
                       B
                     </div>
                     <div
-                      class="w-12 h-4 rounded bg-white/70 text-[10px] font-bold text-pink-600 flex items-center justify-center shadow animate-bounce"
+                      class="w-12 h-4 rounded bg-white text-[10px] font-bold text-primary flex items-center justify-center border border-blue-200"
                     >
                       C
                     </div>
                   </div>
                   <div
-                    class="absolute top-1 left-2 text-[10px] font-bold text-white/90 z-10"
+                    class="absolute top-1 left-2 text-[10px] font-bold text-slate-500 z-10"
                   >
                     Stack · LIFO
                   </div>
                   <div
-                    class="absolute bottom-1 right-1 text-[10px] bg-black/40 text-white px-1.5 rounded z-10"
+                    class="absolute bottom-1 right-1 text-[10px] bg-white text-slate-500 border border-slate-200 px-1.5 rounded z-10"
                   >
                     点击预览
                   </div>
@@ -387,20 +388,16 @@
     </el-scrollbar>
 
     <!-- 输入区：悬浮极简设计，带常驻选择器 -->
-    <div class="p-4 bg-transparent z-10 w-full">
-      <div class="w-full relative group">
-        <!-- 发光的呼吸框 -->
+    <div class="p-4 bg-transparent z-10 w-full min-w-0">
+      <div class="w-full min-w-0 relative group">
         <div
-          class="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-[24px] blur opacity-0 group-focus-within:opacity-100 group-focus-within:animate-pulse transition duration-500"
-        />
-        <div
-          class="relative bg-white border border-gray-200 rounded-[24px] shadow-sm focus-within:shadow-lg focus-within:-translate-y-1 transition-all duration-300 overflow-hidden"
+          class="relative bg-white border border-gray-200 rounded-2xl shadow-sm focus-within:border-primary/40 focus-within:shadow-[0_0_0_3px_rgba(47,111,203,0.10)] transition-all duration-200 overflow-hidden"
         >
           <!-- 输入框 -->
           <div class="flex items-end gap-2 p-2">
             <el-button
               :icon="Plus"
-              class="!rounded-lg mb-1 hover:bg-gray-100 transition-all duration-200 hover:!border-primary/50 hover:!shadow-[0_0_10px_rgba(94,127,248,0.22)]"
+              class="!rounded-lg mb-1 hover:bg-gray-100 transition-colors duration-200 hover:!border-primary/50"
             />
             <el-input
               v-model="input"
@@ -415,7 +412,7 @@
               :icon="Promotion"
               :loading="loading"
               :disabled="loading || !input.trim()"
-              class="!rounded-lg mb-1 transform transition-all duration-300 hover:scale-110 hover:shadow-md hover:shadow-primary/40 active:scale-95 hover:!shadow-[0_0_12px_rgba(94,127,248,0.5)]"
+              class="!rounded-lg mb-1 transform transition-all duration-200 active:scale-95"
               :class="
                 input
                   ? 'scale-100 opacity-100 translate-x-0'
@@ -427,9 +424,9 @@
 
           <!-- 常驻工具栏：课程 / 模式 / 智能体 / 思考模式 / 模型 -->
           <div
-            class="flex items-center justify-between px-3 py-2 bg-gray-50/60 border-t border-gray-100"
+            class="flex min-w-0 flex-wrap items-center justify-between gap-2 px-3 py-2 bg-gray-50/60 border-t border-gray-100"
           >
-            <div class="chat-toolbar-left flex flex-wrap items-center">
+            <div class="chat-toolbar-left flex min-w-0 flex-wrap items-center">
               <el-dropdown
                 v-if="courses && courses.length"
                 trigger="click"
@@ -528,7 +525,7 @@
               @command="m => emit('update:selectedModel', m)"
             >
               <span
-                class="text-[11px] text-gray-400 font-medium tracking-wide flex items-center cursor-pointer hover:text-gray-600 transition-colors"
+                class="ai-chat-model-trigger text-[11px] text-gray-400 font-medium tracking-wide flex min-w-0 items-center cursor-pointer hover:text-gray-600 transition-colors"
               >
                 {{ selectedModel }}
                 <el-icon class="ml-1"><ArrowDown /></el-icon>
@@ -616,7 +613,7 @@ const expandedSafetyIds = ref<Set<string | number>>(new Set());
 const likedMessageIds = ref<Set<string | number>>(new Set());
 const thinkingStepIndex = ref(0);
 const thinkingTexts = ["正在思考", "正在个性化总结", "正在深度推理"];
-let thinkingTimer: ReturnType<typeof window.setInterval> | undefined;
+let thinkingTimer: number | undefined;
 const machineLabelMap: Record<string, string> = {
   platform_data: "平台数据",
   generated_resource: "生成资源",
@@ -930,14 +927,17 @@ onBeforeUnmount(() => {
 }
 
 .chat-toolbar-left {
+  flex: 1 1 auto;
   gap: 8px;
+  overflow: hidden;
 }
 
 .chat-toolbar-chip {
   display: inline-flex;
+  flex: 1 1 112px;
   align-items: center;
   justify-content: center;
-  min-width: 132px;
+  min-width: 0;
   max-width: 240px;
   height: 34px;
   padding: 0 14px;
@@ -951,7 +951,6 @@ onBeforeUnmount(() => {
   border: 1px solid transparent;
   border-radius: 17px;
   box-shadow: none;
-  flex-shrink: 0;
   transition:
     color 0.18s ease,
     background 0.18s ease,
@@ -960,20 +959,19 @@ onBeforeUnmount(() => {
 }
 
 .chat-toolbar-chip--active {
-  flex: 0 0 132px;
-  width: 132px;
+  flex: 1 1 126px;
   color: #2f80ed;
   background: #eef6ff;
 }
 
 .chat-toolbar-chip--static {
-  flex: 0 0 132px;
-  width: 132px;
+  flex: 1 1 112px;
   cursor: default;
 }
 
 .chat-toolbar-chip--interactive {
-  min-width: 168px;
+  flex: 1 1 132px;
+  min-width: 0;
   background: transparent;
 }
 
@@ -1000,6 +998,14 @@ onBeforeUnmount(() => {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.ai-chat-model-trigger {
+  flex: 0 1 190px;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 :global(.ai-chat-toolbar-dropdown.el-popper) {
@@ -1061,6 +1067,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  min-width: 0;
   width: 100%;
 }
 
@@ -1081,6 +1088,7 @@ onBeforeUnmount(() => {
 .message-stack {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   max-width: min(76%, 900px);
   gap: 10px;
 }
@@ -1092,6 +1100,7 @@ onBeforeUnmount(() => {
 
 .message-bubble {
   position: relative;
+  min-width: 0;
   max-width: 100%;
   padding: 16px 18px;
   overflow: hidden;
@@ -1143,6 +1152,9 @@ onBeforeUnmount(() => {
 .message-content {
   position: relative;
   z-index: 1;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
@@ -1514,7 +1526,7 @@ onBeforeUnmount(() => {
   height: 4px;
   background: #98a6bc;
   border-radius: 999px;
-  animation: dot-bounce 1.2s ease-in-out infinite;
+  animation: dot-fade 1.2s ease-in-out infinite;
 }
 
 .thinking-dots span:nth-child(2) {
@@ -1550,17 +1562,15 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes dot-bounce {
+@keyframes dot-fade {
   0%,
   80%,
   100% {
     opacity: 0.35;
-    transform: translateY(0);
   }
 
   40% {
     opacity: 1;
-    transform: translateY(-3px);
   }
 }
 
@@ -1575,23 +1585,27 @@ onBeforeUnmount(() => {
 /* 消息列表过渡动画 */
 .chat-list-enter-active,
 .chat-list-leave-active {
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.22s ease-out;
 }
 .chat-list-enter-from,
 .chat-list-leave-to {
   opacity: 0;
-  transform: translateY(20px) scale(0.95);
+  transform: translateY(10px);
 }
 
 /* 资源卡片交错出现动画 */
 .stagger-list-enter-active,
 .stagger-list-leave-active {
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.22s ease-out;
 }
 .stagger-list-enter-from,
 .stagger-list-leave-to {
   opacity: 0;
-  transform: translateY(15px) scale(0.9);
+  transform: translateY(10px);
 }
 
 ::-webkit-scrollbar {

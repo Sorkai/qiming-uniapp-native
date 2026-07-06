@@ -307,10 +307,13 @@ defineExpose({ speak, pauseRender, resumeRender });
 <style scoped>
 .virtual-human-panel {
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .virtual-human-panel__viewer {
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -318,6 +321,7 @@ defineExpose({ speak, pauseRender, resumeRender });
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  min-width: 0;
   gap: 8px;
   padding: 7px 12px;
   border-bottom: 1px solid #eef3fb;
@@ -328,7 +332,7 @@ defineExpose({ speak, pauseRender, resumeRender });
   display: flex;
   flex: 1 1 190px;
   align-items: center;
-  min-width: 190px;
+  min-width: 0;
   gap: 8px;
 }
 
@@ -341,7 +345,7 @@ defineExpose({ speak, pauseRender, resumeRender });
 
 .virtual-human-panel__voice-select {
   flex: 1;
-  min-width: 126px;
+  min-width: 0;
   max-width: 190px;
   height: 28px;
   padding: 0 24px 0 9px;

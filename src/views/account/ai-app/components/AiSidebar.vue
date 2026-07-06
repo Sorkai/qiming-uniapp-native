@@ -1,7 +1,5 @@
 ﻿<template>
-  <div
-    class="ai-sidebar h-full flex flex-col p-4 bg-gray-50/50 border-r border-gray-100 italic-safe"
-  >
+  <div class="ai-sidebar h-full flex flex-col p-4 bg-transparent italic-safe">
     <!-- Sessions: Grouped by Course -->
     <div
       class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 custom-scrollbar space-y-6"
@@ -49,12 +47,8 @@
                   <div
                     class="flex items-center justify-between gap-2 relative overflow-hidden"
                   >
-                    <div
-                      class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    />
-
                     <span
-                      class="text-[15px] text-gray-600 truncate group-hover:text-primary group-hover:font-medium transition-all duration-300 relative z-10"
+                      class="text-[15px] text-gray-600 truncate group-hover:text-primary group-hover:font-medium transition-colors duration-200 relative z-10"
                     >
                       {{ conv.title }}
                     </span>
@@ -103,16 +97,12 @@
 
     <!-- User Profile Area -->
     <div
-      class="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3 relative overflow-hidden group cursor-pointer rounded-xl p-2 hover:bg-white hover:shadow-sm transition-all duration-300"
+      class="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3 relative overflow-hidden group cursor-pointer rounded-xl p-2 hover:bg-white hover:shadow-sm transition-colors duration-200"
     >
-      <!-- 渐变悬浮背景 -->
-      <div
-        class="absolute inset-0 bg-gradient-to-r from-white to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-      />
       <img
         :src="avatarSrc"
         alt="user avatar"
-        class="w-8 h-8 rounded-full object-cover group-hover:scale-110 transition-transform duration-300 shadow-sm border border-white"
+        class="w-8 h-8 rounded-full object-cover shadow-sm border border-white"
         @error="handleAvatarError"
       />
       <div class="flex-1 min-w-0 relative z-10">
@@ -220,6 +210,8 @@ const emit = defineEmits(["update:activeRail", "new-chat", "select-chat"]);
 
 .ai-sidebar {
   position: relative;
+  min-width: 0;
+  overflow: visible;
 }
 
 .ai-sidebar__digital-human-reserve {
