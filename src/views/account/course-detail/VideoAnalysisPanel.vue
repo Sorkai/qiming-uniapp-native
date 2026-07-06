@@ -1015,6 +1015,9 @@ const createMindmapEdge = (
   sourceHandle: side === "left" ? "source-left" : "source-right",
   targetHandle: "target",
   type: "default",
+  pathOptions: {
+    curvature: 0.28
+  },
   selectable: false,
   class: "mindmap-flow-edge",
   style: {
