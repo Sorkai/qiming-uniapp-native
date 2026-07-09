@@ -560,7 +560,7 @@ watch(() => [props.courseId, props.targetStudentId], loadAssessment);
 <template>
   <div
     v-loading="loading"
-    class="h-full flex flex-col bg-transparent overflow-y-auto"
+    class="assessment-page h-full flex flex-col bg-transparent overflow-y-auto"
   >
     <div
       class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-[18px] border border-gray-100 bg-white px-6 py-5 shadow-sm"

@@ -394,10 +394,21 @@
           class="relative bg-white border border-gray-200 rounded-2xl shadow-sm focus-within:border-primary/40 focus-within:shadow-[0_0_0_3px_rgba(47,111,203,0.10)] transition-all duration-200 overflow-hidden"
         >
           <!-- 输入框 -->
+          <input
+            ref="attachmentInputRef"
+            type="file"
+            multiple
+            accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+            class="chat-attachment-input"
+            @change="handleAttachmentChange"
+          />
           <div class="flex items-end gap-2 p-2">
             <el-button
               :icon="Plus"
               class="!rounded-lg mb-1 hover:bg-gray-100 transition-colors duration-200 hover:!border-primary/50"
+              :disabled="loading"
+              title="上传 PDF、DOCX 或 TXT"
+              @click="handleAttachmentButtonClick"
             />
             <el-input
               v-model="input"
@@ -411,7 +422,12 @@
               type="primary"
               :icon="Promotion"
               :loading="loading"
-              :disabled="loading || !input.trim()"
+              :disabled="loading || !input.trim() || modelReady === false"
+              :title="
+                modelReady === false
+                  ? modelDisabledReason || '当前没有可用模型'
+                  : '发送'
+              "
               class="!rounded-lg mb-1 transform transition-all duration-200 active:scale-95"
               :class="
                 input
@@ -420,6 +436,34 @@
               "
               @click="handleSend"
             />
+          </div>
+          <div v-if="pendingAttachments.length" class="chat-attachment-shelf">
+            <div
+              v-for="attachment in pendingAttachments"
+              :key="attachment.id"
+              class="chat-attachment-pill"
+              :title="`${attachment.name} · ${formatAttachmentSize(
+                attachment.size
+              )}`"
+            >
+              <el-icon class="chat-attachment-pill__icon">
+                <Document />
+              </el-icon>
+              <span class="chat-attachment-pill__name">
+                {{ attachment.name }}
+              </span>
+              <span class="chat-attachment-pill__meta">
+                {{ attachment.extension }}
+              </span>
+              <button
+                type="button"
+                class="chat-attachment-pill__remove"
+                title="移除附件"
+                @click="removeAttachment(attachment.id)"
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           <!-- 常驻工具栏：课程 / 模式 / 智能体 / 思考模式 / 模型 -->
@@ -536,8 +580,21 @@
                     v-for="model in models || []"
                     :key="model.key"
                     :command="model.key"
+                    :disabled="!isModelSelectable(model)"
+                    :title="modelOptionTitle(model)"
                   >
-                    {{ model.label }}
+                    <span class="model-option">
+                      <span class="model-option__label">
+                        {{ model.label }}
+                      </span>
+                      <span
+                        v-if="model.status && model.status !== 'available'"
+                        class="model-option__status"
+                        :class="`is-${model.status}`"
+                      >
+                        {{ modelStatusText(model.status) }}
+                      </span>
+                    </span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -579,7 +636,19 @@ import {
   CopyDocument
 } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
+import { assistantModelReasonText } from "@/api/frontend/assistant";
 import ReviewFileIcon from "@/assets/review-file-svgrepo-com.svg?component";
+
+type AssistantOptionView = {
+  key: string;
+  label: string;
+  description?: string;
+  status?: string;
+  capabilities?: string[];
+  default_for?: string[];
+  limits?: Record<string, number>;
+  reason?: string;
+};
 
 const props = defineProps<{
   messages: any[];
@@ -587,12 +656,14 @@ const props = defineProps<{
   courses?: string[];
   mode?: string;
   userAvatar?: string;
-  agents?: { key: string; label: string; description?: string }[];
-  models?: { key: string; label: string; description?: string }[];
-  thinkingModes?: { key: string; label: string; description?: string }[];
+  agents?: AssistantOptionView[];
+  models?: AssistantOptionView[];
+  thinkingModes?: AssistantOptionView[];
   selectedAgent?: string;
   selectedModel?: string;
   thinkingMode?: string;
+  modelReady?: boolean;
+  modelDisabledReason?: string;
   loading?: boolean;
 }>();
 
@@ -607,6 +678,17 @@ const emit = defineEmits([
   "update:thinkingMode"
 ]);
 const input = ref("");
+const attachmentInputRef = ref<HTMLInputElement | null>(null);
+type PendingAttachment = {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  extension: string;
+};
+const pendingAttachments = ref<PendingAttachment[]>([]);
+const maxAttachmentSize = 20 * 1024 * 1024;
+const supportedAttachmentExtensions = new Set(["PDF", "DOCX", "TXT"]);
 
 const scrollbarRef = ref();
 const expandedSafetyIds = ref<Set<string | number>>(new Set());
@@ -642,6 +724,82 @@ const machineLabelMap: Record<string, string> = {
   pending: "等待中",
   failed: "失败",
   ready: "就绪"
+};
+
+const selectableModelStatuses = new Set(["available", "deprecated"]);
+const normalizedModelStatus = (model?: AssistantOptionView) =>
+  model?.status || "available";
+const isModelSelectable = (model?: AssistantOptionView) =>
+  selectableModelStatuses.has(normalizedModelStatus(model));
+const modelStatusText = (status?: string) => {
+  const map: Record<string, string> = {
+    available: "可用",
+    unavailable: "不可用",
+    degraded: "降级",
+    deprecated: "兼容"
+  };
+  return map[status || ""] || status || "";
+};
+const modelOptionTitle = (model: AssistantOptionView) => {
+  const reason = model.reason ? assistantModelReasonText(model.reason) : "";
+  return [model.description, reason].filter(Boolean).join(" · ");
+};
+
+const getAttachmentExtension = (file: File) =>
+  (file.name.split(".").pop()?.trim() || "").toUpperCase();
+const formatAttachmentSize = (size: number) => {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+};
+const isSupportedAttachment = (file: File) =>
+  supportedAttachmentExtensions.has(getAttachmentExtension(file));
+const handleAttachmentButtonClick = () => {
+  if (props.loading) return;
+  attachmentInputRef.value?.click();
+};
+const handleAttachmentChange = (event: Event) => {
+  const inputEl = event.target as HTMLInputElement;
+  const files = Array.from(inputEl.files || []);
+  if (!files.length) return;
+
+  const accepted: PendingAttachment[] = [];
+  const rejected: string[] = [];
+  files.forEach((file, index) => {
+    const extension = getAttachmentExtension(file);
+    if (!isSupportedAttachment(file)) {
+      rejected.push(`${file.name} 格式不支持`);
+      return;
+    }
+    if (file.size > maxAttachmentSize) {
+      rejected.push(`${file.name} 超过 20MB`);
+      return;
+    }
+    accepted.push({
+      id: `${file.name}-${file.size}-${file.lastModified}-${Date.now()}-${index}`,
+      file,
+      name: file.name,
+      size: file.size,
+      extension
+    });
+  });
+
+  if (accepted.length) {
+    pendingAttachments.value = [...pendingAttachments.value, ...accepted].slice(
+      0,
+      3
+    );
+    ElMessage.success(`已添加 ${accepted.length} 个文档附件`);
+  }
+  if (rejected.length) {
+    ElMessage.warning(rejected.slice(0, 2).join("；"));
+  }
+  inputEl.value = "";
+};
+const removeAttachment = (id: string) => {
+  pendingAttachments.value = pendingAttachments.value.filter(
+    item => item.id !== id
+  );
 };
 
 const wordLabelMap: Record<string, string> = {
@@ -855,8 +1013,16 @@ const handleEnter = (event: KeyboardEvent) => {
 const handleSend = () => {
   const text = input.value.trim();
   if (!text || props.loading) return;
-  emit("send", text);
+  if (props.modelReady === false) {
+    ElMessage.warning(props.modelDisabledReason || "当前没有可用模型");
+    return;
+  }
+  emit("send", {
+    text,
+    files: pendingAttachments.value.map(item => item.file)
+  });
   input.value = "";
+  pendingAttachments.value = [];
 
   nextTick(() => {
     if (scrollbarRef.value) {
@@ -1006,6 +1172,111 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.chat-attachment-input {
+  display: none;
+}
+
+.chat-attachment-shelf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 10px 10px;
+}
+
+.chat-attachment-pill {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: min(100%, 320px);
+  height: 32px;
+  padding: 0 7px 0 10px;
+  color: #4f5c6f;
+  background: #f6f8fb;
+  border: 1px solid #e3e9f2;
+  border-radius: 10px;
+}
+
+.chat-attachment-pill__icon {
+  flex: 0 0 auto;
+  margin-right: 6px;
+  color: #5b74a8;
+}
+
+.chat-attachment-pill__name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-attachment-pill__meta {
+  flex: 0 0 auto;
+  margin-left: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7b8797;
+}
+
+.chat-attachment-pill__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  color: #8c96a8;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+
+.chat-attachment-pill__remove:hover {
+  color: #b42318;
+  background: #fff1f0;
+}
+
+.model-option {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 260px;
+  gap: 8px;
+  line-height: 1;
+}
+
+.model-option__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-option__status {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #7a4c00;
+  background: #fff4d6;
+  border-radius: 999px;
+}
+
+.model-option__status.is-deprecated {
+  color: #5d6678;
+  background: #eef2f7;
+}
+
+.model-option__status.is-unavailable,
+.model-option__status.is-degraded {
+  color: #9f2f2f;
+  background: #ffe8e8;
 }
 
 :global(.ai-chat-toolbar-dropdown.el-popper) {

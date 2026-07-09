@@ -1,23 +1,39 @@
 <script setup lang="ts">
 import type { Component } from "vue";
+import LottieAnimation from "@/components/LottieAnimation.vue";
+import emptyAnimationData from "@/assets/eden.json";
 
-defineProps<{
+const props = withDefaults(defineProps<{
   title: string;
   description?: string;
   icon?: Component;
   compact?: boolean;
-}>();
+  useLottie?: boolean;
+}>(), {
+  useLottie: true
+});
 </script>
 
 <template>
-  <section class="ai-app-empty-state" :class="{ 'is-compact': compact }">
-    <div v-if="icon" class="ai-app-empty-state__icon" aria-hidden="true">
-      <el-icon :size="compact ? 20 : 28">
-        <component :is="icon" />
+  <section class="ai-app-empty-state" :class="{ 'is-compact': props.compact }">
+    <div v-if="props.useLottie" class="lottie-empty-state" aria-hidden="true">
+      <LottieAnimation
+        :animation-data="emptyAnimationData"
+        :width="props.compact ? 72 : 96"
+        :height="props.compact ? 72 : 96"
+      />
+    </div>
+    <div
+      v-else-if="props.icon"
+      class="ai-app-empty-state__icon"
+      aria-hidden="true"
+    >
+      <el-icon :size="props.compact ? 20 : 28">
+        <component :is="props.icon" />
       </el-icon>
     </div>
-    <h3>{{ title }}</h3>
-    <p v-if="description">{{ description }}</p>
+    <h3>{{ props.title }}</h3>
+    <p v-if="props.description">{{ props.description }}</p>
   </section>
 </template>
 
@@ -41,6 +57,21 @@ defineProps<{
 .ai-app-empty-state.is-compact {
   min-height: 160px;
   padding: 24px;
+}
+
+.lottie-empty-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 12px;
+}
+
+.ai-app-empty-state.is-compact .lottie-empty-state {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 8px;
 }
 
 .ai-app-empty-state__icon {

@@ -47,11 +47,13 @@ import { formatAvatar } from "@/utils/avatar";
 import { type DataInfo, userKey } from "@/utils/auth";
 import {
   assistantApiErrorMessage,
+  assistantModelReasonText,
   createAssistantConversation,
   getAssistantBootstrap,
   getAssistantConversation,
   getAssistantConversationGroups,
   streamAssistantChat,
+  uploadAssistantDocumentAttachment,
   type AssistantBootstrapCourse,
   type AssistantBootstrapResp,
   type AssistantBootstrapStudent,
@@ -107,6 +109,19 @@ type ChatMessageView = {
   profileEvent?: Record<string, any>;
   streaming?: boolean;
   error?: boolean;
+};
+
+type ChatSendPayload =
+  | string
+  | {
+      text: string;
+      files?: File[];
+    };
+
+const documentAttachmentContentTypes: Record<string, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: "text/plain"
 };
 
 const assistantBootstrap = ref<AssistantBootstrapResp | null>(null);
@@ -627,7 +642,44 @@ const handleAssistantStreamEvent = (
   }
 };
 
-const handleSendMessage = (text: string) => {
+const getDocumentAttachmentExtension = (file: File) =>
+  (file.name.split(".").pop()?.trim() || "").toLowerCase();
+
+const resolveDocumentAttachmentContentType = (file: File) => {
+  const extension = getDocumentAttachmentExtension(file);
+  return documentAttachmentContentTypes[extension] || file.type || "";
+};
+
+const uploadDocumentAttachmentsForMessage = async (files: File[]) => {
+  if (!files.length) return [];
+  const allowedFiles = files.slice(0, 3);
+  const unsupported = allowedFiles.find(
+    file => !documentAttachmentContentTypes[getDocumentAttachmentExtension(file)]
+  );
+  if (unsupported) {
+    throw new Error(`${unsupported.name} 暂不支持，请上传 PDF、DOCX 或 TXT`);
+  }
+  const oversize = allowedFiles.find(file => file.size > 20 * 1024 * 1024);
+  if (oversize) {
+    throw new Error(`${oversize.name} 超过 20MB`);
+  }
+
+  const uploaded = await Promise.all(
+    allowedFiles.map(file =>
+      uploadAssistantDocumentAttachment(file, {
+        scene: "assistant",
+        course_id: selectedCourseId.value,
+        conversation_id: activeConversationId.value || undefined,
+        content_type: resolveDocumentAttachmentContentType(file)
+      })
+    )
+  );
+  return uploaded.map(item => item.attachment_id).filter(Boolean);
+};
+
+const handleSendMessage = async (payload: ChatSendPayload) => {
+  const text = typeof payload === "string" ? payload : payload.text;
+  const files = typeof payload === "string" ? [] : payload.files || [];
   const trimmed = text.trim();
   if (!trimmed || isChatStreaming.value) return;
   if (featureFlags.value.chat_stream === false) {
@@ -640,6 +692,34 @@ const handleSendMessage = (text: string) => {
   }
   if (isStaffMode.value && !selectedTargetStudentId.value) {
     ElMessage.warning("教师/管理员模式下请先选择学生");
+    return;
+  }
+  if (!selectedModelReady.value) {
+    ElMessage.warning(
+      selectedModelDisabledReason.value || "当前没有可用模型"
+    );
+    return;
+  }
+
+  let attachmentIds: string[] = [];
+  let uploadMessage: ReturnType<typeof ElMessage> | undefined;
+  try {
+    if (files.length) {
+      uploadMessage = ElMessage({
+        message: "正在上传并解析文档附件...",
+        type: "info",
+        duration: 0,
+        showClose: true
+      });
+      attachmentIds = await uploadDocumentAttachmentsForMessage(files);
+      uploadMessage.close();
+      ElMessage.success("文档解析完成，已加入本轮问答");
+    }
+  } catch (error: any) {
+    uploadMessage?.close();
+    ElMessage.error(
+      assistantApiErrorMessage(error, error?.message || "文档附件上传失败")
+    );
     return;
   }
 
@@ -675,7 +755,7 @@ const handleSendMessage = (text: string) => {
       selected_model: selectedModelKey.value || undefined,
       thinking_mode: thinkingModeKey.value || undefined,
       message: trimmed,
-      attachment_ids: [],
+      attachment_ids: attachmentIds,
       enable_realtime_resource:
         selectedSkillKeys.value.includes("resource_hint"),
       preferred_explanation_mode: selectedSkillKeys.value.includes("visual")
@@ -781,12 +861,77 @@ const normalizeConversation = (
 
 const optionLabel = (options: AssistantOption[], key: string) =>
   options.find(item => item.key === key)?.label || key;
+const modelSelectableStatuses = new Set(["available", "deprecated"]);
+const normalizedModelStatus = (model?: AssistantOption) =>
+  model?.status || "available";
+const isAssistantModelSelectable = (model?: AssistantOption) =>
+  !!model && modelSelectableStatuses.has(normalizedModelStatus(model));
+const modelStatusText = (status?: string) => {
+  const map: Record<string, string> = {
+    available: "可用",
+    unavailable: "不可用",
+    degraded: "降级",
+    deprecated: "兼容"
+  };
+  return map[status || ""] || status || "";
+};
+const selectableModels = computed(() =>
+  (assistantBootstrap.value?.models || []).filter(isAssistantModelSelectable)
+);
+const selectedModelOption = computed(() =>
+  (assistantBootstrap.value?.models || []).find(
+    item => item.key === selectedModelKey.value
+  )
+);
+const selectedModelReady = computed(() =>
+  isAssistantModelSelectable(selectedModelOption.value)
+);
+const selectedModelDisabledReason = computed(() => {
+  const models = assistantBootstrap.value?.models || [];
+  if (!models.length) return "模型列表为空";
+  if (!selectableModels.value.length) return "当前没有可用模型";
+  const model = selectedModelOption.value;
+  if (!model) return "请选择可用模型";
+  if (isAssistantModelSelectable(model)) return "";
+  return model.reason
+    ? assistantModelReasonText(model.reason)
+    : "该模型当前不可用";
+});
+const selectDefaultModelKey = (models: AssistantOption[], current?: string) => {
+  const currentModel = models.find(model => model.key === current);
+  if (isAssistantModelSelectable(currentModel)) return currentModel?.key || "";
+  return (
+    models.find(
+      model =>
+        isAssistantModelSelectable(model) &&
+        model.default_for?.includes("a3_chat")
+    )?.key ||
+    models.find(isAssistantModelSelectable)?.key ||
+    ""
+  );
+};
+const handleModelSelect = (modelKey: string) => {
+  const model = (assistantBootstrap.value?.models || []).find(
+    item => item.key === modelKey
+  );
+  if (!isAssistantModelSelectable(model)) {
+    ElMessage.warning(
+      model?.reason
+        ? assistantModelReasonText(model.reason)
+        : "该模型当前不可用"
+    );
+    return;
+  }
+  selectedModelKey.value = modelKey;
+};
 
 const selectedAgentLabel = computed(() =>
   optionLabel(assistantBootstrap.value?.agents || [], selectedAgentKey.value)
 );
 const selectedModelLabel = computed(() =>
-  optionLabel(assistantBootstrap.value?.models || [], selectedModelKey.value)
+  selectedModelKey.value
+    ? optionLabel(assistantBootstrap.value?.models || [], selectedModelKey.value)
+    : "暂无可用模型"
 );
 const thinkingModeLabel = computed(() =>
   optionLabel(
@@ -827,7 +972,10 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
   activeCourse.value =
     manuallySelectedCourse || routeSelectedCourse || preservedCourse || null;
   selectedAgentKey.value = data.agents?.[0]?.key || "";
-  selectedModelKey.value = data.models?.[0]?.key || "";
+  selectedModelKey.value = selectDefaultModelKey(
+    data.models || [],
+    selectedModelKey.value
+  );
   thinkingModeKey.value = data.thinking_modes?.[0]?.key || "";
   selectedSkillKeys.value = (data.skills || [])
     .filter((skill: AssistantSkill) => skill.default_on)
@@ -1053,23 +1201,38 @@ const handleQuickAttachmentChange = (event: Event) => {
   if (!files.length) return;
 
   const createdAt = Date.now();
-  const nextAttachments = files.map((file, index) => ({
-    id: `${file.name}-${file.size}-${file.lastModified}-${createdAt}-${index}`,
-    file,
-    name: file.name,
-    size: file.size,
-    type: file.type || "",
-    extension: getQuickFileExtension(file),
-    previewUrl: file.type.startsWith("image/")
-      ? URL.createObjectURL(file)
-      : undefined
-  }));
-  quickAttachments.value = [...quickAttachments.value, ...nextAttachments];
-  ElMessage.success(
-    files.length > 1
-      ? `已选择 ${files.length} 个文件`
-      : `已选择 ${files[0].name}`
-  );
+  const nextAttachments: QuickAttachmentPreview[] = [];
+  const rejected: string[] = [];
+  files.forEach((file, index) => {
+    const extension = getQuickFileExtension(file).toLowerCase();
+    if (!documentAttachmentContentTypes[extension]) {
+      rejected.push(`${file.name} 格式不支持`);
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      rejected.push(`${file.name} 超过 20MB`);
+      return;
+    }
+    nextAttachments.push({
+      id: `${file.name}-${file.size}-${file.lastModified}-${createdAt}-${index}`,
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type || "",
+      extension: getQuickFileExtension(file),
+      previewUrl: undefined
+    });
+  });
+  if (nextAttachments.length) {
+    quickAttachments.value = [
+      ...quickAttachments.value,
+      ...nextAttachments
+    ].slice(0, 3);
+    ElMessage.success(`已选择 ${nextAttachments.length} 个文档附件`);
+  }
+  if (rejected.length) {
+    ElMessage.warning(rejected.slice(0, 2).join("；"));
+  }
   input.value = "";
 };
 
@@ -1151,6 +1314,12 @@ const handleNewChat = async (payload: { course: string }) => {
     ElMessage.warning("请先选择学生");
     return;
   }
+  if (!selectedModelReady.value) {
+    ElMessage.warning(
+      selectedModelDisabledReason.value || "当前没有可用模型"
+    );
+    return;
+  }
   resetChatGreeting();
   try {
     const { data } = await createAssistantConversation({
@@ -1192,11 +1361,12 @@ const handleNewChat = async (payload: { course: string }) => {
 
   const pendingMessage = quickMessage.value.trim();
   if (pendingMessage) {
+    const pendingFiles = quickAttachments.value.map(item => item.file);
     // 切换到聊天栏目，确保数字人状态与课程上下文同步。
     activeRail.value = "chat";
     // 微延时等待课程上下文切换完成。
     setTimeout(() => {
-      handleSendMessage(pendingMessage);
+      void handleSendMessage({ text: pendingMessage, files: pendingFiles });
       quickMessage.value = "";
       clearQuickAttachments();
     }, 100);
@@ -1253,7 +1423,7 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="ai-app-root h-[100dvh] w-full flex flex-col overflow-hidden"
+    class="ai-app-root h-[100dvh] flex flex-col overflow-hidden"
     :class="[currentTheme, { 'is-chat': activeRail === 'chat' }]"
   >
     <div class="flex-1 min-h-0 flex overflow-hidden">
@@ -1367,7 +1537,7 @@ onUnmounted(() => {
         </div>
 
         <!-- 主体内容 (第三块) -->
-        <main class="flex-1 min-w-0 overflow-hidden relative">
+        <main class="ai-app-content flex-1 min-w-0 overflow-hidden relative">
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
           <div
             v-if="activeRail === `chat` && activeCourse"
@@ -1390,13 +1560,15 @@ onUnmounted(() => {
                   :selectedAgent="selectedAgentLabel"
                   :selectedModel="selectedModelLabel"
                   :thinkingMode="thinkingModeLabel"
+                  :model-ready="selectedModelReady"
+                  :model-disabled-reason="selectedModelDisabledReason"
                   :loading="isChatStreaming"
                   @send="handleSendMessage"
                   @preview="handlePreview"
                   @regenerate="handleRegenerateMessage"
                   @switch-course="handleSwitchCourse"
                   @update:selectedAgent="selectedAgentKey = $event"
-                  @update:selectedModel="selectedModelKey = $event"
+                  @update:selectedModel="handleModelSelect"
                   @update:thinkingMode="thinkingModeKey = $event"
                 />
               </div>
@@ -1499,6 +1671,7 @@ onUnmounted(() => {
                   ref="quickUploadInputRef"
                   type="file"
                   multiple
+                  accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
                   class="quick-chat-file-input"
                   @change="handleQuickAttachmentChange"
                 />
@@ -1641,7 +1814,7 @@ onUnmounted(() => {
                     <el-dropdown
                       trigger="click"
                       popper-class="quick-chat-dropdown"
-                      @command="m => (selectedModelKey = m)"
+                      @command="handleModelSelect"
                     >
                       <span class="quick-chat-model-trigger">
                         <span>{{ selectedModelLabel || "选择模型" }}</span>
@@ -1655,8 +1828,29 @@ onUnmounted(() => {
                             v-for="model in assistantBootstrap?.models || []"
                             :key="model.key"
                             :command="model.key"
+                            :disabled="!isAssistantModelSelectable(model)"
+                            :title="
+                              [
+                                model.description,
+                                model.reason
+                                  ? assistantModelReasonText(model.reason)
+                                  : ''
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')
+                            "
                           >
-                            {{ model.label }}
+                            <span class="quick-model-option">
+                              <span>{{ model.label }}</span>
+                              <span
+                                v-if="
+                                  model.status && model.status !== 'available'
+                                "
+                                class="quick-model-option__status"
+                              >
+                                {{ modelStatusText(model.status) }}
+                              </span>
+                            </span>
                           </el-dropdown-item>
                         </el-dropdown-menu>
                       </template>
@@ -1675,9 +1869,17 @@ onUnmounted(() => {
                       type="button"
                       class="quick-chat-send-button"
                       :class="{
-                        'is-ready': quickCourse && quickMessage.trim()
+                        'is-ready':
+                          quickCourse && quickMessage.trim() && selectedModelReady
                       }"
-                      :disabled="!quickCourse || !quickMessage.trim()"
+                      :disabled="
+                        !quickCourse || !quickMessage.trim() || !selectedModelReady
+                      "
+                      :title="
+                        !selectedModelReady
+                          ? selectedModelDisabledReason || '当前没有可用模型'
+                          : '发送'
+                      "
                       @click="
                         quickCourse
                           ? handleNewChat({ course: quickCourse })
@@ -1702,17 +1904,20 @@ onUnmounted(() => {
           <!-- 【场景 B】 Agent PDF 工作台 -->
           <div
             v-else-if="activeRail === `agentpdf`"
-            class="h-full w-full overflow-hidden"
+            class="h-full w-full min-w-0 overflow-hidden"
           >
-            <div class="agent-pdf-shell h-full overflow-hidden">
+            <div class="agent-pdf-shell h-full w-full min-w-0 overflow-hidden">
               <AgentPdfWorkbench :service-url="pdfServiceUrl" />
             </div>
           </div>
 
-          <div v-else-if="activeRail === `generation`" class="h-full w-full">
+          <div
+            v-else-if="activeRail === `generation`"
+            class="h-full w-full min-w-0 overflow-hidden"
+          >
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center bg-transparent"
+              class="h-full w-full min-w-0 flex items-center justify-center bg-transparent"
             >
               <AiAppEmptyState
                 title="请选择学生"
@@ -1720,7 +1925,7 @@ onUnmounted(() => {
                 :icon="User"
               />
             </div>
-            <div v-else class="h-full bg-transparent overflow-hidden">
+            <div v-else class="h-full w-full min-w-0 bg-transparent overflow-hidden">
               <AiResourceGeneration
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -1729,10 +1934,13 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-else-if="activeRail === `path`" class="h-full w-full">
+          <div
+            v-else-if="activeRail === `path`"
+            class="h-full w-full min-w-0 overflow-hidden"
+          >
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center bg-transparent"
+              class="h-full w-full min-w-0 flex items-center justify-center bg-transparent"
             >
               <AiAppEmptyState
                 title="请选择学生"
@@ -1740,7 +1948,7 @@ onUnmounted(() => {
                 :icon="Guide"
               />
             </div>
-            <div v-else class="h-full bg-transparent overflow-hidden">
+            <div v-else class="h-full w-full min-w-0 bg-transparent overflow-hidden">
               <AiLearningPath
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -1751,11 +1959,11 @@ onUnmounted(() => {
 
           <div
             v-else-if="activeRail === `profile`"
-            class="h-full w-full bg-transparent"
+            class="h-full w-full min-w-0 overflow-hidden bg-transparent"
           >
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center"
+              class="h-full w-full min-w-0 flex items-center justify-center"
             >
               <AiAppEmptyState
                 title="请选择学生"
@@ -1763,9 +1971,9 @@ onUnmounted(() => {
                 :icon="User"
               />
             </div>
-            <div v-else class="h-full min-h-0 flex gap-4 overflow-hidden">
+            <div v-else class="h-full w-full min-w-0 min-h-0 flex gap-4 overflow-hidden">
               <div
-                class="flex-1 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                class="flex-1 min-w-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <AiLearningProfile
                   :course-id="selectedCourseId"
@@ -1787,10 +1995,13 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-else-if="activeRail === `assessment`" class="h-full w-full">
+          <div
+            v-else-if="activeRail === `assessment`"
+            class="h-full w-full min-w-0 overflow-hidden"
+          >
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center bg-transparent"
+              class="h-full w-full min-w-0 flex items-center justify-center bg-transparent"
             >
               <AiAppEmptyState
                 title="请选择学生"
@@ -1798,7 +2009,7 @@ onUnmounted(() => {
                 :icon="DataAnalysis"
               />
             </div>
-            <div v-else class="h-full bg-transparent overflow-hidden">
+            <div v-else class="h-full w-full min-w-0 bg-transparent overflow-hidden">
               <AiAssessment
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -1807,8 +2018,11 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-else-if="activeRail === `governance`" class="h-full w-full">
-            <div class="governance-shell h-full overflow-hidden">
+          <div
+            v-else-if="activeRail === `governance`"
+            class="h-full w-full min-w-0 overflow-hidden"
+          >
+            <div class="governance-shell h-full w-full min-w-0 overflow-hidden">
               <AiGovernanceDashboard
                 :course-id="selectedCourseId"
                 :course-name="selectedCourseName"
@@ -1822,15 +2036,15 @@ onUnmounted(() => {
           <!-- 【场景 C】 常规任务 (原自动化) -->
           <div
             v-else-if="activeRail === `automation`"
-            class="h-full w-full overflow-hidden flex justify-center bg-white"
+            class="h-full w-full min-w-0 overflow-hidden flex justify-center bg-white"
           >
             <div
-              class="flex w-full h-full gap-4 transition-all duration-500 ease-in-out p-6"
+              class="flex w-full min-w-0 h-full gap-4 transition-all duration-500 ease-in-out p-6"
               :class="selectedTaskId ? 'max-w-full' : 'max-w-5xl'"
             >
               <!-- 左侧：任务列表 -->
               <div
-                class="h-full bg-white p-2 overflow-y-auto transition-all duration-500"
+                class="h-full min-w-0 bg-white p-2 overflow-y-auto transition-all duration-500"
                 :class="selectedTaskId ? 'w-[45%]' : 'w-full'"
               >
                 <div class="mb-8">
@@ -1928,7 +2142,7 @@ onUnmounted(() => {
               <!-- 右侧：历史记录面板 -->
               <div
                 v-if="selectedTaskId"
-                class="flex-1 h-full bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-fade-in"
+                class="flex-1 min-w-0 h-full bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-fade-in"
               >
                 <!-- 头部 -->
                 <div
@@ -1977,10 +2191,10 @@ onUnmounted(() => {
           <!-- 【场景 D】 其他未开发项 -->
           <div
             v-else
-            class="h-full w-full flex items-center justify-center p-4"
+            class="h-full w-full min-w-0 flex items-center justify-center p-4"
           >
             <div
-              class="h-full w-full flex items-center justify-center"
+              class="h-full w-full min-w-0 flex items-center justify-center"
             >
               <AiAppEmptyState
                 title="模块建设中"
@@ -2111,7 +2325,23 @@ onUnmounted(() => {
   color: #1f2937;
   background: var(--ai-app-shell-bg);
   -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
   text-rendering: optimizeLegibility;
+}
+
+.ai-app-root *,
+.ai-app-root *::before,
+.ai-app-root *::after {
+  box-sizing: border-box;
+}
+
+.ai-app-content {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .ai-workbench-panel {
@@ -2500,6 +2730,32 @@ onUnmounted(() => {
 .quick-chat-model-trigger:hover {
   color: #667085;
   background: rgba(241, 243, 247, 0.86);
+}
+
+.quick-model-option {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  gap: 8px;
+}
+
+.quick-model-option > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-model-option__status {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  color: #7a4c00;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: #fff4d6;
+  border-radius: 999px;
 }
 
 .quick-chat-icon-button,

@@ -117,6 +117,8 @@ const resourceTypeOptions = computed(() =>
 
 const statusTextMap: Record<string, string> = {
   completed: "已完成",
+  completed_with_warnings: "带警告完成",
+  partial: "部分完成",
   ready: "可用",
   published: "已发布",
   approved: "已通过",
@@ -137,6 +139,24 @@ const statusTextMap: Record<string, string> = {
   running: "运行中",
   queued: "排队中",
   default: "默认"
+};
+
+const warningFlagTextMap: Record<string, string> = {
+  rag_empty: "知识库无证据",
+  llm_unavailable: "模型不可用",
+  llm_json_invalid: "JSON 解析失败",
+  json_repair_failed: "JSON 修复失败",
+  degraded: "降级生成",
+  not_configured: "能力未配置",
+  evidence_insufficient: "证据不足",
+  storage_degraded: "存储降级",
+  html_animation_processing: "动画处理中",
+  html_animation_failed: "动画失败",
+  pptx_processing: "PPT 处理中",
+  question_bank_processing: "题库处理中",
+  runtime_not_configured: "运行环境未配置",
+  safety_warning: "安全提醒",
+  safety_blocked: "安全阻断"
 };
 
 const resourceTypeTextMap: Record<string, string> = {
@@ -183,6 +203,8 @@ const textOf = (
 };
 
 const statusText = (status?: string) => textOf(statusTextMap, status);
+const warningFlagText = (flag?: string) =>
+  textOf(warningFlagTextMap, flag, "");
 const resourceTypeText = (type?: string) => textOf(resourceTypeTextMap, type);
 const formatText = (format?: string) => textOf(formatTextMap, format);
 const agentText = (name?: string) => textOf(agentNameMap, name, "调度节点");
@@ -195,7 +217,14 @@ const tagType = (status: string) => {
   if (["failed", "blocked", "rejected", "deleted"].includes(status))
     return "danger";
   if (
-    ["degraded", "processing", "pending", "changes_requested"].includes(status)
+    [
+      "completed_with_warnings",
+      "partial",
+      "degraded",
+      "processing",
+      "pending",
+      "changes_requested"
+    ].includes(status)
   )
     return "warning";
   return "warning";
@@ -203,6 +232,14 @@ const tagType = (status: string) => {
 
 const statusProgress = (task: AssistantResourceTaskItem) =>
   Math.min(100, Math.max(0, Math.round(Number(task.progress || 0))));
+const taskProgressStatus = (task: AssistantResourceTaskItem) => {
+  if (["failed", "blocked"].includes(task.status)) return "exception";
+  if (["completed_with_warnings", "partial"].includes(task.status)) {
+    return "warning";
+  }
+  if (task.status === "completed") return "success";
+  return undefined;
+};
 
 const qualityLabel = (score?: number) => {
   if (score === undefined || score === null) return "";
@@ -645,7 +682,7 @@ watch(
               <el-progress
                 class="resource-progress mt-4"
                 :percentage="statusProgress(task)"
-                :status="task.status === 'failed' ? 'exception' : undefined"
+                :status="taskProgressStatus(task)"
                 :stroke-width="12"
                 striped
                 striped-flow
@@ -654,6 +691,59 @@ watch(
               <p v-if="task.error_message" class="mt-2 text-xs text-red-500">
                 {{ task.error_message }}
               </p>
+              <p
+                v-else-if="task.health_summary"
+                class="mt-2 text-xs leading-5 text-gray-500"
+              >
+                {{ task.health_summary }}
+              </p>
+              <div
+                v-if="
+                  task.incomplete_resource_count || task.failed_resource_count
+                "
+                class="mt-2 flex flex-wrap gap-1.5"
+              >
+                <el-tag
+                  v-if="task.incomplete_resource_count"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                >
+                  {{ task.incomplete_resource_count }} 个不完整
+                </el-tag>
+                <el-tag
+                  v-if="task.failed_resource_count"
+                  size="small"
+                  type="danger"
+                  effect="plain"
+                >
+                  {{ task.failed_resource_count }} 个失败
+                </el-tag>
+              </div>
+              <div
+                v-if="task.warning_flags?.length"
+                class="mt-2 flex flex-wrap gap-1.5"
+              >
+                <el-tag
+                  v-for="flag in task.warning_flags.slice(0, 4)"
+                  :key="flag"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                  class="!rounded-md"
+                >
+                  {{ warningFlagText(flag) || flag }}
+                </el-tag>
+                <el-tag
+                  v-if="task.warning_flags.length > 4"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                  class="!rounded-md"
+                >
+                  +{{ task.warning_flags.length - 4 }}
+                </el-tag>
+              </div>
               <div class="mt-3 flex flex-wrap gap-1.5">
                 <el-tag
                   v-for="type in task.resource_types || []"
@@ -721,6 +811,20 @@ watch(
                         statusText(step.stage)
                       }}
                     </p>
+                    <div
+                      v-if="step.warning_flags?.length"
+                      class="mt-2 flex flex-wrap gap-1.5"
+                    >
+                      <el-tag
+                        v-for="flag in step.warning_flags"
+                        :key="flag"
+                        size="small"
+                        type="warning"
+                        effect="plain"
+                      >
+                        {{ warningFlagText(flag) || flag }}
+                      </el-tag>
+                    </div>
                   </div>
                 </div>
               </el-collapse-item>

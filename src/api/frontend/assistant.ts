@@ -1,5 +1,6 @@
 import { http } from "@/utils/http";
 import { getToken, formatToken } from "@/utils/auth";
+import COS from "cos-js-sdk-v5";
 
 export interface ApiResponse<T> {
   code: number;
@@ -42,10 +43,34 @@ const normalizeAssistantErrorText = (value: unknown): string | undefined => {
   return extractEmbeddedAssistantError(text) || text;
 };
 
+const assistantModelReasonTextMap: Record<string, string> = {
+  model_capability_service_unavailable:
+    "模型能力服务暂不可用，无法确认可用模型",
+  model_key_not_registered: "模型配置不存在，请重新拉取模型列表",
+  model_not_available_for_feature: "该模型不支持当前功能",
+  model_capability_unsupported: "该模型缺少当前功能所需能力",
+  model_context_limit_exceeded: "输入内容超过模型上下文限制",
+  model_not_configured: "模型凭据或 provider 未配置",
+  model_health_unavailable: "模型健康检查不可用",
+  deprecated_legacy_llm_config: "旧 LLM 配置兼容项，后续会迁移",
+  deprecated_legacy_multimodal_chat_config: "旧多模态配置兼容项，后续会迁移",
+  deprecated_legacy_html_animation_config: "旧 HTML 动画配置兼容项，后续会迁移",
+  deprecated_legacy_video_curation_config: "旧视频梳理配置兼容项，后续会迁移"
+};
+
+export const assistantModelReasonText = (reason?: string) => {
+  if (!reason) return "";
+  return assistantModelReasonTextMap[reason] || "模型当前不可用";
+};
+
 export const assistantApiErrorMessage = (error: unknown, fallback: string) => {
   const axiosError = error as any;
   const data = axiosError?.response?.data;
   const candidates = [
+    assistantModelReasonText(data?.reason),
+    assistantModelReasonText(data?.error?.code),
+    assistantModelReasonText(data?.data?.reason),
+    assistantModelReasonText(data?.data?.error?.code),
     data?.msg,
     data?.message,
     data?.error,
@@ -76,10 +101,67 @@ export interface AssistantBootstrapStudent {
   avatar?: string;
 }
 
+interface AssistantAttachmentStsCredentials {
+  tmp_secret_id?: string;
+  tmp_secret_key?: string;
+  security_token?: string;
+  session_token?: string;
+  tmpSecretId?: string;
+  tmpSecretKey?: string;
+  securityToken?: string;
+  sessionToken?: string;
+  region?: string;
+  bucket?: string;
+  upload_host?: string;
+  upload_url?: string;
+}
+
+export interface AssistantDocumentAttachmentStsInitReq {
+  scene?: string;
+  course_id?: number;
+  conversation_id?: string;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+}
+
+export interface AssistantDocumentAttachmentStsInitResp {
+  attachment_id: string;
+  upload_token: string;
+  object_key: string;
+  upload_url?: string;
+  credentials?: AssistantAttachmentStsCredentials;
+  expired_time?: number;
+}
+
+export interface AssistantDocumentAttachmentCompleteReq {
+  upload_token: string;
+  sha256?: string;
+}
+
+export interface AssistantChatAttachmentStatus {
+  attachment_id: string;
+  attachment_type?: string;
+  file_name?: string;
+  url?: string;
+  mime_type?: string;
+  file_size?: number;
+  status?: string;
+  parse_status?: "processing" | "ready" | "failed" | string;
+  parse_error?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AssistantOption {
   key: string;
   label: string;
   description?: string;
+  status?: "available" | "unavailable" | "degraded" | "deprecated" | string;
+  capabilities?: string[];
+  default_for?: string[];
+  limits?: Record<string, number>;
+  reason?: string;
 }
 
 export interface AssistantSkill extends AssistantOption {
@@ -144,12 +226,15 @@ export interface AssistantChatTraceStep {
   agent_key?: string;
   agent_label?: string;
   stage: string;
+  resource_type?: string;
+  call_id?: string;
   status: string;
   summary?: string;
   started_at?: string;
   finished_at?: string;
   duration_ms?: number;
   degraded_reason?: string;
+  warning_flags?: string[];
 }
 
 export interface AssistantChatResource {
@@ -456,6 +541,10 @@ export interface AssistantResourceTaskItem {
   stage?: string;
   progress: number;
   error_message?: string;
+  health_summary?: string;
+  warning_flags?: string[];
+  incomplete_resource_count?: number;
+  failed_resource_count?: number;
   course_id?: number;
   chapter_id?: number;
   target_student_id?: number;
@@ -1202,6 +1291,193 @@ export const getAssistantConversationMessages = (conversationId: string) =>
     "get",
     `/edu/frontend/v1/assistant/conversations/${encodeURIComponent(conversationId)}/messages`
   );
+
+const pickAssistantField = <T = string>(
+  source: Record<string, any> | undefined,
+  keys: string[]
+): T | undefined => {
+  if (!source) return undefined;
+  for (const key of keys) {
+    const value = source[key];
+    if (value !== undefined && value !== null && value !== "") {
+      return value as T;
+    }
+  }
+  return undefined;
+};
+
+const digestFileSha256 = async (file: File) => {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(byte => byte.toString(16).padStart(2, "0"))
+    .join("");
+};
+
+const createAssistantCosClient = (
+  credentials: AssistantAttachmentStsCredentials = {},
+  uploadUrl?: string
+) => {
+  const tmpSecretId = pickAssistantField(credentials, [
+    "tmp_secret_id",
+    "tmpSecretId",
+    "TmpSecretId"
+  ]);
+  const tmpSecretKey = pickAssistantField(credentials, [
+    "tmp_secret_key",
+    "tmpSecretKey",
+    "TmpSecretKey"
+  ]);
+  const securityToken = pickAssistantField(credentials, [
+    "security_token",
+    "session_token",
+    "securityToken",
+    "sessionToken",
+    "SessionToken",
+    "Token"
+  ]);
+  const bucket = pickAssistantField(credentials, ["bucket", "Bucket"]);
+  const region = pickAssistantField(credentials, ["region", "Region"]);
+
+  if (!tmpSecretId || !tmpSecretKey || !securityToken || !bucket || !region) {
+    throw new Error("文档附件上传凭证不完整");
+  }
+
+  let uploadDomain: string | undefined;
+  if (uploadUrl) {
+    try {
+      uploadDomain = new URL(uploadUrl).host;
+    } catch {
+      uploadDomain = undefined;
+    }
+  }
+
+  return {
+    cos: new COS({
+      SecretId: tmpSecretId,
+      SecretKey: tmpSecretKey,
+      SecurityToken: securityToken,
+      Protocol: "https:",
+      Domain: uploadDomain
+    }),
+    bucket,
+    region
+  };
+};
+
+const putAssistantDocumentObject = async (
+  file: File,
+  initData: AssistantDocumentAttachmentStsInitResp
+) => {
+  const { cos, bucket, region } = createAssistantCosClient(
+    initData.credentials,
+    initData.upload_url
+  );
+
+  await new Promise((resolve, reject) => {
+    cos.putObject(
+      {
+        Bucket: bucket,
+        Region: region,
+        Key: initData.object_key,
+        Body: file,
+        ContentType: file.type || "application/octet-stream"
+      },
+      (error, data) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(data);
+      }
+    );
+  });
+};
+
+const wait = (ms: number) =>
+  new Promise(resolve => {
+    window.setTimeout(resolve, ms);
+  });
+
+export const initAssistantDocumentAttachmentSts = (
+  data: AssistantDocumentAttachmentStsInitReq
+) =>
+  http.request<ApiResponse<AssistantDocumentAttachmentStsInitResp>>(
+    "post",
+    "/edu/frontend/v1/ai/chat/document-attachments/sts/init",
+    { data }
+  );
+
+export const completeAssistantDocumentAttachmentSts = (
+  data: AssistantDocumentAttachmentCompleteReq
+) =>
+  http.request<ApiResponse<AssistantChatAttachmentStatus>>(
+    "post",
+    "/edu/frontend/v1/ai/chat/document-attachments/sts/complete",
+    { data }
+  );
+
+export const getAssistantChatAttachmentStatus = (attachmentId: string) =>
+  http.request<ApiResponse<AssistantChatAttachmentStatus>>(
+    "get",
+    `/edu/frontend/v1/ai/chat/attachments/${encodeURIComponent(attachmentId)}/status`
+  );
+
+export const waitAssistantDocumentAttachmentReady = async (
+  attachmentId: string,
+  options: { intervalMs?: number; maxAttempts?: number } = {}
+) => {
+  const intervalMs = options.intervalMs ?? 1500;
+  const maxAttempts = options.maxAttempts ?? 24;
+  let latest: AssistantChatAttachmentStatus | undefined;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const { data } = await getAssistantChatAttachmentStatus(attachmentId);
+    latest = data;
+    if (data.parse_status === "ready") return data;
+    if (data.parse_status === "failed") {
+      throw new Error(data.parse_error || "文档解析失败");
+    }
+    await wait(intervalMs);
+  }
+
+  throw new Error(latest?.parse_error || "文档仍在解析中，请稍后重新发送");
+};
+
+export const uploadAssistantDocumentAttachment = async (
+  file: File,
+  options: {
+    scene?: string;
+    course_id?: number;
+    conversation_id?: string;
+    content_type?: string;
+  }
+) => {
+  const { data: initData } = await initAssistantDocumentAttachmentSts({
+    scene: options.scene || "assistant",
+    course_id: options.course_id,
+    conversation_id: options.conversation_id,
+    file_name: file.name,
+    content_type:
+      options.content_type || file.type || "application/octet-stream",
+    file_size: file.size
+  });
+
+  if (!initData.upload_token || !initData.object_key) {
+    throw new Error("文档附件初始化失败");
+  }
+
+  await putAssistantDocumentObject(file, initData);
+  const sha256 = await digestFileSha256(file);
+  const { data: completeData } = await completeAssistantDocumentAttachmentSts({
+    upload_token: initData.upload_token,
+    sha256
+  });
+
+  return waitAssistantDocumentAttachmentReady(
+    completeData.attachment_id || initData.attachment_id
+  );
+};
 
 export function streamAssistantChat(
   params: AssistantChatStreamReq,
