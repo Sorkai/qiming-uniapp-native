@@ -654,7 +654,8 @@ const uploadDocumentAttachmentsForMessage = async (files: File[]) => {
   if (!files.length) return [];
   const allowedFiles = files.slice(0, 3);
   const unsupported = allowedFiles.find(
-    file => !documentAttachmentContentTypes[getDocumentAttachmentExtension(file)]
+    file =>
+      !documentAttachmentContentTypes[getDocumentAttachmentExtension(file)]
   );
   if (unsupported) {
     throw new Error(`${unsupported.name} 暂不支持，请上传 PDF、DOCX 或 TXT`);
@@ -695,9 +696,7 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
     return;
   }
   if (!selectedModelReady.value) {
-    ElMessage.warning(
-      selectedModelDisabledReason.value || "当前没有可用模型"
-    );
+    ElMessage.warning(selectedModelDisabledReason.value || "当前没有可用模型");
     return;
   }
 
@@ -930,7 +929,10 @@ const selectedAgentLabel = computed(() =>
 );
 const selectedModelLabel = computed(() =>
   selectedModelKey.value
-    ? optionLabel(assistantBootstrap.value?.models || [], selectedModelKey.value)
+    ? optionLabel(
+        assistantBootstrap.value?.models || [],
+        selectedModelKey.value
+      )
     : "暂无可用模型"
 );
 const thinkingModeLabel = computed(() =>
@@ -1315,9 +1317,7 @@ const handleNewChat = async (payload: { course: string }) => {
     return;
   }
   if (!selectedModelReady.value) {
-    ElMessage.warning(
-      selectedModelDisabledReason.value || "当前没有可用模型"
-    );
+    ElMessage.warning(selectedModelDisabledReason.value || "当前没有可用模型");
     return;
   }
   resetChatGreeting();
@@ -1475,7 +1475,7 @@ onUnmounted(() => {
         <!-- 课程 / 学生上下文工具栏 -->
         <div
           v-if="courseScopedRails.includes(activeRail)"
-          class="flex-none flex items-center justify-end gap-3 bg-white mb-5 px-6 py-3 border border-gray-100 rounded-[18px] z-10 relative overflow-hidden"
+          class="flex-none flex items-center justify-end gap-3 bg-white mb-5 px-6 py-3 border border-gray-100 rounded-lg z-10 relative overflow-hidden"
         >
           <span class="text-xs text-gray-500 font-medium">课程:</span>
           <el-select
@@ -1658,7 +1658,9 @@ onUnmounted(() => {
               class="w-full max-w-5xl px-6 space-y-8 relative z-10 transform -translate-y-8"
             >
               <div class="text-center space-y-4">
-                <h1 class="text-3xl sm:text-[38px] font-bold tracking-tight text-primary">
+                <h1
+                  class="text-3xl sm:text-[38px] font-bold tracking-tight text-primary"
+                >
                   今天想学习什么？
                 </h1>
                 <p class="text-[15px] font-medium tracking-wide text-gray-500">
@@ -1870,10 +1872,14 @@ onUnmounted(() => {
                       class="quick-chat-send-button"
                       :class="{
                         'is-ready':
-                          quickCourse && quickMessage.trim() && selectedModelReady
+                          quickCourse &&
+                          quickMessage.trim() &&
+                          selectedModelReady
                       }"
                       :disabled="
-                        !quickCourse || !quickMessage.trim() || !selectedModelReady
+                        !quickCourse ||
+                        !quickMessage.trim() ||
+                        !selectedModelReady
                       "
                       :title="
                         !selectedModelReady
@@ -1925,7 +1931,10 @@ onUnmounted(() => {
                 :icon="User"
               />
             </div>
-            <div v-else class="h-full w-full min-w-0 bg-transparent overflow-hidden">
+            <div
+              v-else
+              class="h-full w-full min-w-0 bg-transparent overflow-hidden"
+            >
               <AiResourceGeneration
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -1948,7 +1957,10 @@ onUnmounted(() => {
                 :icon="Guide"
               />
             </div>
-            <div v-else class="h-full w-full min-w-0 bg-transparent overflow-hidden">
+            <div
+              v-else
+              class="h-full w-full min-w-0 bg-transparent overflow-hidden"
+            >
               <AiLearningPath
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -1971,7 +1983,10 @@ onUnmounted(() => {
                 :icon="User"
               />
             </div>
-            <div v-else class="h-full w-full min-w-0 min-h-0 flex gap-4 overflow-hidden">
+            <div
+              v-else
+              class="h-full w-full min-w-0 min-h-0 flex gap-4 overflow-hidden"
+            >
               <div
                 class="flex-1 min-w-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
@@ -2009,7 +2024,10 @@ onUnmounted(() => {
                 :icon="DataAnalysis"
               />
             </div>
-            <div v-else class="h-full w-full min-w-0 bg-transparent overflow-hidden">
+            <div
+              v-else
+              class="h-full w-full min-w-0 bg-transparent overflow-hidden"
+            >
               <AiAssessment
                 :course-id="selectedCourseId"
                 :target-student-id="selectedTargetStudentId"
@@ -2027,6 +2045,7 @@ onUnmounted(() => {
                 :course-id="selectedCourseId"
                 :course-name="selectedCourseName"
                 :is-staff-mode="isStaffMode"
+                :viewer-role="apiMode"
                 @select-student="handleGovernanceSelectStudent"
                 @navigate="handleGovernanceNavigate"
               />
@@ -2193,9 +2212,7 @@ onUnmounted(() => {
             v-else
             class="h-full w-full min-w-0 flex items-center justify-center p-4"
           >
-            <div
-              class="h-full w-full min-w-0 flex items-center justify-center"
-            >
+            <div class="h-full w-full min-w-0 flex items-center justify-center">
               <AiAppEmptyState
                 title="模块建设中"
                 :description="`「${railItems.find(r => r.key === activeRail)?.label || '当前模块'}」暂未开放。`"
@@ -2410,7 +2427,11 @@ onUnmounted(() => {
 
 .governance-shell {
   background: transparent;
-  border-radius: 24px;
+  border-radius: 8px;
+}
+
+:deep(.course-select .el-select__wrapper) {
+  border-radius: 8px;
 }
 
 /* 全局交互 UI 增强 */
@@ -2936,5 +2957,4 @@ onUnmounted(() => {
     max-width: 180px;
   }
 }
-
 </style>

@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { ChatLineRound, Refresh, Search, View } from "@element-plus/icons-vue";
+import { Refresh, Search, View } from "@element-plus/icons-vue";
 import {
   assistantApiErrorMessage,
-  getAssistantConversationTrace,
   getAssistantDashboardPaths,
   getAssistantDashboardResources,
   getAssistantDashboardRisks,
   getAssistantDashboardStudents,
   getAssistantTaskTrace,
-  type AssistantConversationTraceResp,
   type AssistantDashboardPathsResp,
   type AssistantDashboardResourcesResp,
   type AssistantDashboardRisksResp,
@@ -24,6 +22,7 @@ const props = defineProps<{
   courseId?: number;
   courseName?: string;
   isStaffMode?: boolean;
+  viewerRole?: "teacher" | "admin" | "student";
 }>();
 
 const emit = defineEmits<{
@@ -47,17 +46,10 @@ const pathsDashboard = ref<AssistantDashboardPathsResp | null>(null);
 
 const taskTraceLoading = ref(false);
 const selectedTaskTrace = ref<AssistantTaskTraceResp | null>(null);
-const conversationTraceLoading = ref(false);
-const conversationTraceId = ref("");
-const selectedConversationTrace = ref<AssistantConversationTraceResp | null>(
-  null
-);
 
 const isStaff = computed(() => props.isStaffMode !== false);
-const courseLabel = computed(
-  () =>
-    props.courseName || (props.courseId ? `课程 ${props.courseId}` : "默认课程")
-);
+const isAdmin = computed(() => props.viewerRole === "admin");
+const courseLabel = computed(() => props.courseName || "当前课程");
 
 const studentList = computed(() => studentsDashboard.value?.list || []);
 const recentTasks = computed(
@@ -171,34 +163,30 @@ const pathSummary = computed(() => {
 const dashboardStats = computed(() => [
   {
     key: "profile",
-    label: "画像就绪",
+    label: "已建学习档案",
     value: studentSummary.value?.profile_ready_count ?? 0,
     sub: `${studentSummary.value?.total_students ?? 0} 名学生`,
-    mark: "画像",
     tone: "blue"
   },
   {
     key: "resource",
-    label: "待审核资源",
+    label: "待处理资源",
     value: resourceSummary.value?.pending_review_count ?? 0,
-    sub: `${resourceSummary.value?.degraded_count ?? 0} 个降级`,
-    mark: "资源",
+    sub: `${resourceSummary.value?.degraded_count ?? 0} 项需留意`,
     tone: "blue"
   },
   {
     key: "risk",
-    label: "高风险学生",
+    label: "需关注学生",
     value: riskSummary.value?.high_risk_students ?? 0,
-    sub: `${riskSummary.value?.need_replan_students ?? 0} 人需重规划`,
-    mark: "风险",
+    sub: `${riskSummary.value?.need_replan_students ?? 0} 人建议调整计划`,
     tone: "orange"
   },
   {
     key: "path",
-    label: "路径完成率",
+    label: "平均学习进度",
     value: percentText(pathSummary.value?.average_completion_rate),
     sub: `${pathSummary.value?.overdue_node_count ?? 0} 个逾期节点`,
-    mark: "路径",
     tone: "green"
   }
 ]);
@@ -400,6 +388,100 @@ const statusTagType = (status?: string) => {
   return "info";
 };
 
+const statusTextMap: Record<string, string> = {
+  active: "进行中",
+  approved: "已通过",
+  blocked: "已拦截",
+  cancelled: "已取消",
+  changes_requested: "待调整",
+  completed: "已完成",
+  completed_with_warnings: "已完成，需关注",
+  degraded: "处理不完整",
+  draft: "待完善",
+  failed: "处理失败",
+  need_replan: "建议调整计划",
+  not_configured: "暂未配置",
+  partial: "部分完成",
+  pending: "待处理",
+  processing: "处理中",
+  profile_required: "待补充学习信息",
+  published: "已发布",
+  ready: "已建立",
+  rejected: "未通过",
+  reviewing: "审核中",
+  running: "处理中",
+  safe: "正常",
+  waiting_html_animation: "等待生成演示",
+  warning: "需关注",
+  waiting: "待处理"
+};
+
+const resourceTypeTextMap: Record<string, string> = {
+  coding_practice_case: "编程练习",
+  courseware_ppt: "教学课件",
+  exercise_set: "练习题组",
+  explanation_doc: "讲解资料",
+  extended_reading: "拓展阅读",
+  html_animation: "互动演示",
+  mind_map: "知识梳理"
+};
+
+const riskTextMap: Record<string, string> = {
+  high: "学习风险较高",
+  "risk-high": "学习风险较高",
+  risk_status: "学习状态待关注",
+  风险状态: "学习状态待关注",
+  low_completion: "学习进度偏慢",
+  low_progress: "学习进度偏慢",
+  low_predicted_score: "学习表现待提升",
+  negative_feedback: "学习反馈待跟进",
+  need_replan: "建议调整学习计划",
+  predicted_score_below_68: "学习表现待提升",
+  profile_required: "学习信息待补充",
+  rag_empty: "课程资料不足",
+  resource_completion_low: "资源完成度偏低",
+  wrong_questions_high: "错题较多"
+};
+
+const stageTextMap: Record<string, string> = {
+  answer_generating: "生成学习建议",
+  completed: "处理完成",
+  context_loading: "整理学习信息",
+  knowledge_retrieval: "查找课程资料",
+  llm_resources: "生成教学资源",
+  persisting: "保存处理结果",
+  postprocess_queued: "安排后续更新",
+  quality_review: "检查内容质量",
+  rag_search: "查找课程资料",
+  request_preparing: "准备处理",
+  request_safety_gate: "检查内容安全",
+  request_validating: "核对请求信息",
+  resource_generation: "生成教学资源",
+  safety_checking: "检查内容安全",
+  storage: "保存资源",
+  thinking_strategy: "制定处理策略"
+};
+
+function displayText(
+  map: Record<string, string>,
+  value?: string,
+  fallback = "处理中"
+) {
+  const key = String(value || "")
+    .trim()
+    .toLowerCase();
+  return map[key] || fallback;
+}
+
+const statusText = (status?: string) => displayText(statusTextMap, status);
+const profileStatusText = (status?: string) =>
+  displayText(statusTextMap, status, "待补充学习信息");
+const resourceTypeText = (type?: string) =>
+  displayText(resourceTypeTextMap, type, "学习资源");
+const stageText = (stage?: string) =>
+  displayText(stageTextMap, stage, "处理中");
+const riskText = (risk?: string) => displayText(riskTextMap, risk, "学习提醒");
+
 const progressValue = (value?: number) => {
   if (value === undefined || value === null) return 0;
   const normalized = value <= 1 ? value * 100 : value;
@@ -428,16 +510,48 @@ function formatDate(value?: string) {
   });
 }
 
-function riskFlagsText(flags?: string[]) {
-  return flags?.length ? flags.join("、") : "无";
-}
-
 function studentName(row: AssistantDashboardStudentItem) {
   return row.student_name || `学生 ${row.student_id}`;
 }
 
 function taskTypesText(row: AssistantResourceTaskItem) {
-  return row.resource_types?.length ? row.resource_types.join("、") : "未指定";
+  return row.resource_types?.length
+    ? row.resource_types.map(resourceTypeText).join("、")
+    : "学习资源";
+}
+
+function taskTitle(row: AssistantResourceTaskItem) {
+  return row.stage ? stageText(row.stage) : taskTypesText(row);
+}
+
+function durationText(duration?: number) {
+  const milliseconds = numberOrZero(duration);
+  if (!milliseconds) return "";
+  return milliseconds >= 1000
+    ? `耗时 ${(milliseconds / 1000).toFixed(milliseconds >= 10_000 ? 0 : 1)} 秒`
+    : `耗时 ${milliseconds} 毫秒`;
+}
+
+function recordDetail(status?: string) {
+  const normalizedStatus = String(status || "").toLowerCase();
+  if (["failed", "blocked", "rejected"].includes(normalizedStatus)) {
+    return "该步骤未完成，已记录为待跟进事项。";
+  }
+  if (
+    ["degraded", "warning", "partial", "completed_with_warnings"].includes(
+      normalizedStatus
+    )
+  ) {
+    return "主要处理已完成，仍有事项需要后续关注。";
+  }
+  if (
+    ["completed", "ready", "published", "approved", "safe"].includes(
+      normalizedStatus
+    )
+  ) {
+    return "该步骤已完成。";
+  }
+  return "正在处理该步骤。";
 }
 
 async function loadDashboard() {
@@ -505,41 +619,22 @@ function handleSelectStudent(
 
 async function loadTaskTrace(taskId: string) {
   if (!taskId) return;
-  activeTab.value = "trace";
+  activeTab.value = "records";
   taskTraceLoading.value = true;
   try {
     const { data } = await getAssistantTaskTrace(taskId);
     selectedTaskTrace.value = data;
   } catch (error: any) {
-    console.error("[AiGovernanceDashboard] 加载任务 Trace 失败:", error);
-    ElMessage.error(assistantApiErrorMessage(error, "任务 Trace 加载失败"));
+    console.error("[AiGovernanceDashboard] 加载任务处理记录失败:", error);
+    ElMessage.error(assistantApiErrorMessage(error, "处理记录加载失败"));
   } finally {
     taskTraceLoading.value = false;
   }
 }
 
-async function loadConversationTrace() {
-  const conversationId = conversationTraceId.value.trim();
-  if (!conversationId) {
-    ElMessage.warning("请先输入会话 ID");
-    return;
-  }
-
-  conversationTraceLoading.value = true;
-  try {
-    const { data } = await getAssistantConversationTrace(conversationId);
-    selectedConversationTrace.value = data;
-  } catch (error: any) {
-    console.error("[AiGovernanceDashboard] 加载会话 Trace 失败:", error);
-    ElMessage.error(assistantApiErrorMessage(error, "会话 Trace 加载失败"));
-  } finally {
-    conversationTraceLoading.value = false;
-  }
-}
-
 onMounted(loadDashboard);
 watch(
-  () => [props.courseId, props.isStaffMode],
+  () => [props.courseId, props.isStaffMode, props.viewerRole],
   () => {
     void loadDashboard();
   }
@@ -551,28 +646,26 @@ watch(
     v-loading="loading"
     class="governance-dashboard-frame h-full overflow-y-auto custom-scrollbar"
   >
-    <div class="a3-governance-page p-6">
-      <div class="flex items-start justify-between gap-4 mb-5">
-        <div class="min-w-0">
-          <div class="flex items-center gap-3 mb-2">
-            <span class="governance-brand-mark" aria-hidden="true">
-              <span class="governance-brand-mark__grid">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
+    <main class="a3-governance-page p-6">
+      <header class="governance-header">
+        <div class="min-w-0 flex items-center gap-3">
+          <span class="governance-brand-mark" aria-hidden="true">
+            <span class="governance-brand-mark__grid">
+              <span />
+              <span />
+              <span />
+              <span />
             </span>
-            <div class="min-w-0">
-              <h2 class="text-2xl font-bold text-gray-800 leading-tight">
-                治理看板
-              </h2>
+          </span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="governance-heading">课程学习概览</h2>
+              <el-tag type="info" effect="plain">{{ courseLabel }}</el-tag>
             </div>
-            <el-tag type="info" effect="plain" round>{{ courseLabel }}</el-tag>
           </div>
         </div>
-        <el-button :icon="Refresh" @click="loadDashboard">刷新</el-button>
-      </div>
+        <el-button :icon="Refresh" @click="loadDashboard">更新数据</el-button>
+      </header>
 
       <el-alert
         v-if="!isStaff"
@@ -580,63 +673,50 @@ watch(
         show-icon
         :closable="false"
         title="当前账号暂无治理看板权限"
-        description="该模块面向教师和管理员，用于查看班级级画像、资源治理、风险学生和 Trace 信息。"
+        description="该模块面向教师和管理员，用于查看学生学习情况、资源状态和学习计划。"
       />
 
       <template v-else>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
-          <section
+        <section class="governance-summary" aria-label="课程概览">
+          <div
             v-for="item in dashboardStats"
             :key="item.key"
-            class="a3-stat-panel rounded-2xl border border-gray-100 bg-gray-50/60 p-4"
+            class="governance-summary__item"
             :class="`tone-${item.tone}`"
           >
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-sm text-gray-500">{{ item.label }}</p>
-                <p class="mt-2 text-2xl font-bold text-gray-800">
-                  {{ item.value }}
-                </p>
-                <p class="mt-1 text-xs text-gray-400">{{ item.sub }}</p>
-              </div>
-              <span
-                class="min-w-10 h-10 px-3 rounded-xl flex items-center justify-center stat-icon"
-              >
-                {{ item.mark }}
-              </span>
-            </div>
-          </section>
-        </div>
+            <p>{{ item.label }}</p>
+            <strong>{{ item.value }}</strong>
+            <span>{{ item.sub }}</span>
+          </div>
+        </section>
 
-        <div
-          class="mb-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4"
-        >
+        <section class="governance-filter-bar">
           <div class="flex flex-col sm:flex-row gap-3">
             <el-input
               v-model="keyword"
               clearable
               :prefix-icon="Search"
-              placeholder="按学生姓名或画像摘要搜索"
+              placeholder="按学生姓名或学习情况搜索"
               class="governance-search"
               @keyup.enter="loadDashboard"
             />
             <el-select
               v-model="riskLevel"
               clearable
-              placeholder="风险筛选"
+              placeholder="关注事项筛选"
               class="governance-risk"
               @change="loadDashboard"
             >
-              <el-option label="高风险" value="high" />
-              <el-option label="需要重规划" value="need_replan" />
-              <el-option label="需要教师关注" value="attention" />
-              <el-option label="低完成度" value="low_progress" />
+              <el-option label="学习风险较高" value="high" />
+              <el-option label="建议调整学习计划" value="need_replan" />
+              <el-option label="需要跟进" value="attention" />
+              <el-option label="学习进度偏慢" value="low_progress" />
             </el-select>
             <el-date-picker
               v-model="profileUpdatedAfter"
               type="date"
               value-format="YYYY-MM-DD"
-              placeholder="画像更新后"
+              placeholder="最近更新日期"
               class="governance-date"
               @change="loadDashboard"
             />
@@ -651,22 +731,20 @@ watch(
               查询
             </el-button>
           </div>
-        </div>
+        </section>
 
         <el-tabs v-model="activeTab" class="a3-governance-tabs">
-          <el-tab-pane label="学生画像" name="students">
-            <section class="rounded-2xl border border-gray-100 bg-white p-4">
+          <el-tab-pane label="学生概览" name="students">
+            <section class="governance-section">
               <div class="flex items-center justify-between gap-4 mb-4">
                 <div>
-                  <h3 class="text-base font-semibold text-gray-800">
-                    学生画像队列
-                  </h3>
-                  <p class="text-xs text-gray-400 mt-1">
-                    查看画像就绪、风险标签和最新画像事件
+                  <h3 class="governance-section__title">学生学习概览</h3>
+                  <p class="governance-section__desc">
+                    查看学习进度、档案完善度与需要关注的事项
                   </p>
                 </div>
                 <el-tag type="info" effect="plain">
-                  {{ studentsDashboard?.total ?? 0 }} 条
+                  {{ studentsDashboard?.total ?? 0 }} 位学生
                 </el-tag>
               </div>
 
@@ -677,7 +755,7 @@ watch(
               >
                 <el-table-column label="学生" min-width="190">
                   <template #default="{ row }">
-                    <div class="flex items-center gap-3 min-w-0">
+                    <div class="governance-student-cell">
                       <el-avatar :size="34" :src="row.avatar">
                         {{ studentName(row).slice(0, 1) }}
                       </el-avatar>
@@ -686,7 +764,7 @@ watch(
                           {{ studentName(row) }}
                         </p>
                         <p class="text-xs text-gray-400 truncate">
-                          {{ row.summary || "暂无画像摘要" }}
+                          {{ row.summary || "暂无学习概览" }}
                         </p>
                       </div>
                     </div>
@@ -706,50 +784,72 @@ watch(
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="预测分" width="100">
+                <el-table-column label="学习表现" width="112">
                   <template #default="{ row }">
                     {{ row.predicted_score ?? "暂无" }}
                   </template>
                 </el-table-column>
-                <el-table-column label="画像状态" width="130">
+                <el-table-column label="学习档案" width="148">
                   <template #default="{ row }">
                     <el-tag
                       :type="statusTagType(row.profile_status)"
                       effect="plain"
                     >
-                      {{ row.profile_status || "unknown" }}
+                      {{ profileStatusText(row.profile_status) }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="风险标签" min-width="180">
+                <el-table-column label="关注事项" min-width="240">
                   <template #default="{ row }">
-                    <span class="text-sm text-gray-600">
-                      {{ riskFlagsText(row.risk_flags) }}
-                    </span>
+                    <div
+                      v-if="row.risk_flags?.length"
+                      class="governance-tag-list"
+                    >
+                      <el-tag
+                        v-for="flag in row.risk_flags.slice(0, 3)"
+                        :key="flag"
+                        size="small"
+                        type="warning"
+                        effect="plain"
+                      >
+                        {{ riskText(flag) }}
+                      </el-tag>
+                      <el-tag
+                        v-if="row.risk_flags.length > 3"
+                        size="small"
+                        type="info"
+                        effect="plain"
+                      >
+                        另有 {{ row.risk_flags.length - 3 }} 项
+                      </el-tag>
+                    </div>
+                    <span v-else class="text-sm text-gray-400"
+                      >暂无需关注事项</span
+                    >
                   </template>
                 </el-table-column>
-                <el-table-column label="更新时间" width="130">
+                <el-table-column label="最近更新" width="136">
                   <template #default="{ row }">
                     {{ formatDate(row.last_updated_at) }}
                   </template>
                 </el-table-column>
-                <el-table-column label="操作" width="210" fixed="right">
+                <el-table-column label="查看" width="238" fixed="right">
                   <template #default="{ row }">
                     <el-button
                       type="primary"
                       link
                       @click="handleSelectStudent(row, 'profile')"
                     >
-                      画像
+                      学习档案
                     </el-button>
                     <el-button link @click="handleSelectStudent(row, 'path')">
-                      路径
+                      学习计划
                     </el-button>
                     <el-button
                       link
                       @click="handleSelectStudent(row, 'assessment')"
                     >
-                      测评
+                      评估情况
                     </el-button>
                   </template>
                 </el-table-column>
@@ -757,21 +857,19 @@ watch(
             </section>
           </el-tab-pane>
 
-          <el-tab-pane label="资源治理" name="resources">
+          <el-tab-pane label="教学资源" name="resources">
             <div
               class="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-4"
             >
-              <section class="rounded-2xl border border-gray-100 bg-white p-4">
+              <section class="governance-section">
                 <div class="flex items-center justify-between gap-3 mb-4">
-                  <h3 class="text-base font-semibold text-gray-800">
-                    资源治理概览
-                  </h3>
+                  <h3 class="governance-section__title">资源处理情况</h3>
                   <el-button
                     type="primary"
                     link
                     @click="emit('navigate', 'generation')"
                   >
-                    进入资源治理
+                    查看教学资源
                   </el-button>
                 </div>
                 <div class="space-y-3">
@@ -780,17 +878,17 @@ watch(
                     <strong>{{ resourceSummary?.total_resources ?? 0 }}</strong>
                   </div>
                   <div class="governance-row">
-                    <span>待审核</span>
+                    <span>待处理</span>
                     <strong>{{
                       resourceSummary?.pending_review_count ?? 0
                     }}</strong>
                   </div>
                   <div class="governance-row">
-                    <span>被阻断</span>
+                    <span>暂不可用</span>
                     <strong>{{ resourceSummary?.blocked_count ?? 0 }}</strong>
                   </div>
                   <div class="governance-row">
-                    <span>平均质量</span>
+                    <span>内容质量</span>
                     <strong>
                       {{ qualityText(resourceSummary?.average_quality) }}
                     </strong>
@@ -798,8 +896,8 @@ watch(
                 </div>
 
                 <div class="mt-5">
-                  <p class="text-sm font-medium text-gray-700 mb-2">审核分布</p>
-                  <div class="flex flex-wrap gap-2">
+                  <p class="text-sm font-medium text-gray-700 mb-2">处理状态</p>
+                  <div class="governance-tag-list">
                     <el-tag
                       v-for="item in resourcesDashboard?.review_distribution ||
                       []"
@@ -807,52 +905,50 @@ watch(
                       effect="plain"
                       :type="statusTagType(item.key)"
                     >
-                      {{ item.label || item.key }} {{ item.count }}
+                      {{ statusText(item.key) }} {{ item.count }}
                     </el-tag>
                     <el-empty
                       v-if="!resourcesDashboard?.review_distribution?.length"
-                      description="暂无审核数据"
+                      description="暂无资源处理数据"
                       :image-size="80"
                     />
                   </div>
                 </div>
               </section>
 
-              <section class="rounded-2xl border border-gray-100 bg-white p-4">
+              <section class="governance-section">
                 <div class="flex items-center justify-between gap-4 mb-4">
                   <div>
-                    <h3 class="text-base font-semibold text-gray-800">
-                      最近资源任务
-                    </h3>
-                    <p class="text-xs text-gray-400 mt-1">
-                      用于检查生成状态、降级原因和执行链路
+                    <h3 class="governance-section__title">最近处理事项</h3>
+                    <p class="governance-section__desc">
+                      查看教学资源的处理进度与当前状态
                     </p>
                   </div>
                 </div>
 
                 <el-table :data="recentTasks" height="420">
-                  <el-table-column label="任务 ID" min-width="190">
+                  <el-table-column label="处理事项" min-width="180">
                     <template #default="{ row }">
-                      <span class="font-mono text-xs text-gray-600">
-                        {{ row.task_id }}
-                      </span>
+                      <span class="font-medium text-gray-700">{{
+                        taskTitle(row)
+                      }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="类型" min-width="150">
+                  <el-table-column label="资源类型" min-width="150">
                     <template #default="{ row }">
                       {{ taskTypesText(row) }}
                     </template>
                   </el-table-column>
-                  <el-table-column label="状态" width="110">
+                  <el-table-column label="处理状态" width="132">
                     <template #default="{ row }">
                       <el-tag :type="statusTagType(row.status)" effect="plain">
-                        {{ row.status }}
+                        {{ statusText(row.status) }}
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="阶段" min-width="120">
+                  <el-table-column label="当前步骤" min-width="130">
                     <template #default="{ row }">
-                      {{ row.stage || "暂无" }}
+                      {{ stageText(row.stage) }}
                     </template>
                   </el-table-column>
                   <el-table-column label="进度" width="130">
@@ -863,12 +959,17 @@ watch(
                       />
                     </template>
                   </el-table-column>
-                  <el-table-column label="更新时间" width="130">
+                  <el-table-column label="最后更新" width="136">
                     <template #default="{ row }">
                       {{ formatDate(row.updated_at || row.created_at) }}
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="100" fixed="right">
+                  <el-table-column
+                    v-if="isAdmin"
+                    label="记录"
+                    width="138"
+                    fixed="right"
+                  >
                     <template #default="{ row }">
                       <el-button
                         type="primary"
@@ -876,7 +977,7 @@ watch(
                         :icon="View"
                         @click="loadTaskTrace(row.task_id)"
                       >
-                        Trace
+                        查看处理记录
                       </el-button>
                     </template>
                   </el-table-column>
@@ -885,33 +986,31 @@ watch(
             </div>
           </el-tab-pane>
 
-          <el-tab-pane label="风险中心" name="risks">
+          <el-tab-pane label="需关注事项" name="risks">
             <div
               class="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-4"
             >
-              <section class="rounded-2xl border border-gray-100 bg-white p-4">
-                <h3 class="text-base font-semibold text-gray-800 mb-4">
-                  风险摘要
-                </h3>
+              <section class="governance-section">
+                <h3 class="governance-section__title mb-4">学习提醒</h3>
                 <div class="space-y-3">
                   <div class="governance-row">
-                    <span>高风险学生</span>
+                    <span>需优先跟进</span>
                     <strong>{{ riskSummary?.high_risk_students ?? 0 }}</strong>
                   </div>
                   <div class="governance-row">
-                    <span>低完成度</span>
+                    <span>学习进度偏慢</span>
                     <strong>
                       {{ riskSummary?.low_completion_students ?? 0 }}
                     </strong>
                   </div>
                   <div class="governance-row">
-                    <span>需要重规划</span>
+                    <span>建议调整计划</span>
                     <strong>{{
                       riskSummary?.need_replan_students ?? 0
                     }}</strong>
                   </div>
                   <div class="governance-row">
-                    <span>负反馈</span>
+                    <span>学习反馈待跟进</span>
                     <strong>
                       {{ riskSummary?.negative_feedback_students ?? 0 }}
                     </strong>
@@ -919,35 +1018,33 @@ watch(
                 </div>
 
                 <div class="mt-5">
-                  <p class="text-sm font-medium text-gray-700 mb-2">
-                    风险标签分布
-                  </p>
-                  <div class="flex flex-wrap gap-2">
+                  <p class="text-sm font-medium text-gray-700 mb-2">关注原因</p>
+                  <div class="governance-tag-list">
                     <el-tag
                       v-for="item in risksDashboard?.risk_flags || []"
                       :key="item.key"
                       type="warning"
                       effect="plain"
                     >
-                      {{ item.label || item.key }} {{ item.count }}
+                      {{ riskText(item.key) }} {{ item.count }}
                     </el-tag>
                     <el-empty
                       v-if="!risksDashboard?.risk_flags?.length"
-                      description="暂无风险标签"
+                      description="暂无需关注事项"
                       :image-size="80"
                     />
                   </div>
                 </div>
               </section>
 
-              <section class="rounded-2xl border border-gray-100 bg-white p-4">
-                <h3 class="text-base font-semibold text-gray-800 mb-4">
-                  需要关注的学生
-                </h3>
+              <section class="governance-section">
+                <h3 class="governance-section__title mb-4">需要跟进的学生</h3>
                 <el-table :data="attentionStudents" height="420">
                   <el-table-column label="学生" min-width="190">
                     <template #default="{ row }">
-                      <div class="flex items-center gap-3 min-w-0">
+                      <div
+                        class="governance-student-cell governance-student-cell--compact"
+                      >
                         <el-avatar :size="32" :src="row.avatar">
                           {{ studentName(row).slice(0, 1) }}
                         </el-avatar>
@@ -962,9 +1059,33 @@ watch(
                       </div>
                     </template>
                   </el-table-column>
-                  <el-table-column label="风险" min-width="180">
+                  <el-table-column label="关注原因" min-width="210">
                     <template #default="{ row }">
-                      {{ riskFlagsText(row.risk_flags) }}
+                      <div
+                        v-if="row.risk_flags?.length"
+                        class="governance-tag-list"
+                      >
+                        <el-tag
+                          v-for="flag in row.risk_flags.slice(0, 2)"
+                          :key="flag"
+                          size="small"
+                          type="warning"
+                          effect="plain"
+                        >
+                          {{ riskText(flag) }}
+                        </el-tag>
+                        <el-tag
+                          v-if="row.risk_flags.length > 2"
+                          size="small"
+                          type="info"
+                          effect="plain"
+                        >
+                          另有 {{ row.risk_flags.length - 2 }} 项
+                        </el-tag>
+                      </div>
+                      <span v-else class="text-sm text-gray-400"
+                        >暂无需关注事项</span
+                      >
                     </template>
                   </el-table-column>
                   <el-table-column label="进度" width="110">
@@ -972,27 +1093,27 @@ watch(
                       {{ percentText(row.progress) }}
                     </template>
                   </el-table-column>
-                  <el-table-column label="重规划" width="100">
+                  <el-table-column label="建议" width="122">
                     <template #default="{ row }">
                       <el-tag
                         :type="row.need_replan ? 'warning' : 'info'"
                         effect="plain"
                       >
-                        {{ row.need_replan ? "需要" : "暂无" }}
+                        {{ row.need_replan ? "调整学习计划" : "跟进学习情况" }}
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="150" fixed="right">
+                  <el-table-column label="查看" width="168" fixed="right">
                     <template #default="{ row }">
                       <el-button
                         type="primary"
                         link
                         @click="handleSelectStudent(row, 'assessment')"
                       >
-                        看测评
+                        评估情况
                       </el-button>
                       <el-button link @click="handleSelectStudent(row, 'path')">
-                        路径
+                        学习计划
                       </el-button>
                     </template>
                   </el-table-column>
@@ -1001,25 +1122,25 @@ watch(
             </div>
           </el-tab-pane>
 
-          <el-tab-pane label="路径进展" name="paths">
-            <section class="rounded-2xl border border-gray-100 bg-white p-4">
+          <el-tab-pane label="学习计划" name="paths">
+            <section class="governance-section">
               <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
                 <div class="governance-mini">
-                  <span>活跃路径</span>
+                  <span>正在执行计划</span>
                   <strong>{{ pathSummary?.active_path_students ?? 0 }}</strong>
                 </div>
                 <div class="governance-mini">
-                  <span>平均完成</span>
+                  <span>平均完成进度</span>
                   <strong>
                     {{ percentText(pathSummary?.average_completion_rate) }}
                   </strong>
                 </div>
                 <div class="governance-mini">
-                  <span>逾期节点</span>
+                  <span>逾期学习任务</span>
                   <strong>{{ pathSummary?.overdue_node_count ?? 0 }}</strong>
                 </div>
                 <div class="governance-mini">
-                  <span>需重规划</span>
+                  <span>建议调整计划</span>
                   <strong>{{ pathSummary?.need_replan_count ?? 0 }}</strong>
                 </div>
               </div>
@@ -1030,31 +1151,21 @@ watch(
                     {{ row.student_name || `学生 ${row.student_id}` }}
                   </template>
                 </el-table-column>
-                <el-table-column label="路径版本" width="110">
-                  <template #default="{ row }">
-                    v{{ row.path_version }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="摘要" min-width="220">
+                <el-table-column label="学习计划" min-width="220">
                   <template #default="{ row }">
                     <span class="line-clamp-2">
-                      {{ row.summary || row.path_id }}
+                      {{ row.summary || "已生成个人学习计划" }}
                     </span>
                   </template>
                 </el-table-column>
-                <el-table-column label="状态" width="120">
+                <el-table-column label="当前状态" width="132">
                   <template #default="{ row }">
                     <el-tag :type="statusTagType(row.status)" effect="plain">
-                      {{ row.status }}
+                      {{ statusText(row.status) }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="应用状态" width="120">
-                  <template #default="{ row }">
-                    {{ row.apply_status || "暂无" }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="完成度" width="150">
+                <el-table-column label="完成情况" width="150">
                   <template #default="{ row }">
                     <div class="space-y-1">
                       <span class="text-xs text-gray-500">
@@ -1068,12 +1179,12 @@ watch(
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="逾期" width="80">
+                <el-table-column label="逾期任务" width="100">
                   <template #default="{ row }">
                     {{ row.overdue_nodes }}
                   </template>
                 </el-table-column>
-                <el-table-column label="操作" width="100" fixed="right">
+                <el-table-column label="查看" width="100" fixed="right">
                   <template #default="{ row }">
                     <el-button
                       type="primary"
@@ -1093,229 +1204,215 @@ watch(
             </section>
           </el-tab-pane>
 
-          <el-tab-pane label="Trace" name="trace">
-            <div
-              class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px] gap-4"
+          <el-tab-pane v-if="isAdmin" label="处理记录" name="records">
+            <section
+              v-loading="taskTraceLoading"
+              class="governance-section trace-panel min-h-[430px]"
             >
-              <section
-                v-loading="taskTraceLoading"
-                class="trace-panel rounded-2xl border border-gray-100 bg-white p-4 min-h-[430px]"
-              >
-                <div class="flex items-center justify-between gap-4 mb-4">
-                  <div>
-                    <h3 class="text-base font-semibold text-gray-800">
-                      资源任务 Trace
-                    </h3>
-                  </div>
-                  <el-tag
-                    v-if="selectedTaskTrace?.task?.status"
-                    :type="statusTagType(selectedTaskTrace.task.status)"
-                    effect="plain"
-                  >
-                    {{ selectedTaskTrace.task.status }}
-                  </el-tag>
+              <div class="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <h3 class="governance-section__title">资源处理记录</h3>
+                  <p class="governance-section__desc">
+                    仅管理员可查看，用于了解资源处理是否顺利完成
+                  </p>
+                </div>
+                <el-tag
+                  v-if="selectedTaskTrace?.task?.status"
+                  :type="statusTagType(selectedTaskTrace.task.status)"
+                  effect="plain"
+                >
+                  {{ statusText(selectedTaskTrace.task.status) }}
+                </el-tag>
+              </div>
+
+              <template v-if="selectedTaskTrace">
+                <div class="governance-record-summary">
+                  <strong>{{ taskTitle(selectedTaskTrace.task) }}</strong>
+                  <span>{{ taskTypesText(selectedTaskTrace.task) }}</span>
                 </div>
 
-                <template v-if="selectedTaskTrace">
-                  <div class="rounded-xl bg-gray-50 p-3 mb-4">
-                    <p class="font-mono text-xs text-gray-600 break-all">
-                      {{ selectedTaskTrace.task.task_id }}
-                    </p>
-                    <p class="text-xs text-gray-400 mt-1">
-                      {{ selectedTaskTrace.task.stage || "暂无阶段" }}
-                    </p>
-                  </div>
-
-                  <el-timeline v-if="selectedTaskTrace.trace?.length">
-                    <el-timeline-item
-                      v-for="(step, index) in selectedTaskTrace.trace"
-                      :key="`${step.stage}-${index}`"
-                      :timestamp="
-                        formatDate(step.finished_at || step.started_at)
-                      "
-                      :type="statusTagType(step.status)"
-                    >
-                      <div class="space-y-1">
-                        <p class="text-sm font-medium text-gray-800">
-                          {{ step.agent_label || step.agent || step.agent_key }}
-                        </p>
-                        <p class="text-xs text-gray-500">
-                          {{ step.stage }}，{{ step.status }}
-                          <span v-if="step.duration_ms">
-                            ，{{ step.duration_ms }}ms
-                          </span>
-                        </p>
-                        <p v-if="step.summary" class="text-sm text-gray-600">
-                          {{ step.summary }}
-                        </p>
-                        <p
-                          v-if="step.degraded_reason"
-                          class="text-xs text-orange-500"
-                        >
-                          降级原因：{{ step.degraded_reason }}
-                        </p>
-                      </div>
-                    </el-timeline-item>
-                  </el-timeline>
-                  <el-empty
-                    v-else
-                    description="该任务暂无 Trace 步骤"
-                    :image-size="120"
-                  />
-
-                  <div v-if="selectedTaskTrace.logs?.length" class="mt-4">
-                    <p class="text-sm font-medium text-gray-700 mb-2">
-                      执行日志
-                    </p>
-                    <div class="space-y-2">
-                      <div
-                        v-for="(log, index) in selectedTaskTrace.logs"
-                        :key="`${log.stage}-${index}`"
-                        class="rounded-xl bg-gray-50 p-3"
-                      >
-                        <div class="flex items-center justify-between gap-3">
-                          <span class="text-sm font-medium text-gray-700">
-                            {{ log.stage }}
-                          </span>
-                          <el-tag
-                            size="small"
-                            :type="statusTagType(log.status)"
-                            effect="plain"
-                          >
-                            {{ log.status }}
-                          </el-tag>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">
-                          {{ log.message }}
-                        </p>
-                        <p class="text-xs text-gray-400 mt-1">
-                          {{ formatDate(log.occurred_at) }}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-                <el-empty
-                  v-else
-                  description="请先从资源任务中选择一个 Trace"
-                  :image-size="120"
-                />
-              </section>
-
-              <section
-                v-loading="conversationTraceLoading"
-                class="trace-panel rounded-2xl border border-gray-100 bg-white p-4 min-h-[430px]"
-              >
-                <h3 class="text-base font-semibold text-gray-800 mb-4">
-                  会话 Trace 查询
-                </h3>
-
-                <div class="flex gap-2 mb-4">
-                  <el-input
-                    v-model="conversationTraceId"
-                    clearable
-                    placeholder="conversation_id"
-                    @keyup.enter="loadConversationTrace"
+                <el-timeline v-if="selectedTaskTrace.trace?.length">
+                  <el-timeline-item
+                    v-for="(step, index) in selectedTaskTrace.trace"
+                    :key="`${step.stage}-${index}`"
+                    :timestamp="formatDate(step.finished_at || step.started_at)"
+                    :type="statusTagType(step.status)"
                   >
-                    <template #prefix>
-                      <el-icon><ChatLineRound /></el-icon>
-                    </template>
-                  </el-input>
-                  <el-button
-                    class="governance-query-button"
-                    @click="loadConversationTrace"
-                  >
-                    查询
-                  </el-button>
-                </div>
-
-                <template v-if="selectedConversationTrace">
-                  <div class="rounded-xl bg-gray-50 p-3 mb-4">
-                    <p class="text-sm font-medium text-gray-800">
-                      {{ selectedConversationTrace.title || "未命名会话" }}
-                    </p>
-                    <p class="font-mono text-xs text-gray-500 mt-1 break-all">
-                      {{ selectedConversationTrace.conversation_id }}
-                    </p>
-                  </div>
-
-                  <div class="space-y-3">
-                    <div class="governance-row">
-                      <span>安全状态</span>
-                      <el-tag
-                        :type="
-                          statusTagType(
-                            selectedConversationTrace.safety?.status
-                          )
-                        "
-                        effect="plain"
-                      >
-                        {{ selectedConversationTrace.safety?.status || "暂无" }}
-                      </el-tag>
-                    </div>
-                    <div class="governance-row">
-                      <span>来源引用</span>
-                      <strong>
-                        {{ selectedConversationTrace.source_refs?.length ?? 0 }}
-                      </strong>
-                    </div>
-                    <div class="governance-row">
-                      <span>资源链接</span>
-                      <strong>
-                        {{
-                          selectedConversationTrace.resource_links?.length ?? 0
-                        }}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <el-timeline
-                    v-if="selectedConversationTrace.trace?.length"
-                    class="mt-5"
-                  >
-                    <el-timeline-item
-                      v-for="(step, index) in selectedConversationTrace.trace"
-                      :key="`${step.stage}-${index}`"
-                      :timestamp="
-                        formatDate(step.finished_at || step.started_at)
-                      "
-                      :type="statusTagType(step.status)"
-                    >
+                    <div class="space-y-1">
                       <p class="text-sm font-medium text-gray-800">
-                        {{ step.agent_label || step.agent || step.agent_key }}
+                        {{ stageText(step.stage) }}
                       </p>
                       <p class="text-xs text-gray-500">
-                        {{ step.stage }}，{{ step.status }}
+                        {{ statusText(step.status) }}
+                        <span v-if="durationText(step.duration_ms)">
+                          ，{{ durationText(step.duration_ms) }}
+                        </span>
                       </p>
-                      <p v-if="step.summary" class="text-sm text-gray-600 mt-1">
-                        {{ step.summary }}
+                      <p class="text-sm text-gray-600">
+                        {{ recordDetail(step.status) }}
                       </p>
-                    </el-timeline-item>
-                  </el-timeline>
-                </template>
+                    </div>
+                  </el-timeline-item>
+                </el-timeline>
                 <el-empty
                   v-else
-                  description="暂无会话 Trace"
+                  description="该事项暂无处理记录"
                   :image-size="120"
                 />
-              </section>
-            </div>
+
+                <div v-if="selectedTaskTrace.logs?.length" class="mt-4">
+                  <p class="text-sm font-medium text-gray-700 mb-2">处理日志</p>
+                  <div class="space-y-2">
+                    <div
+                      v-for="(log, index) in selectedTaskTrace.logs"
+                      :key="`${log.stage}-${index}`"
+                      class="governance-log-entry"
+                    >
+                      <div class="flex items-center justify-between gap-3">
+                        <span class="text-sm font-medium text-gray-700">
+                          {{ stageText(log.stage) }}
+                        </span>
+                        <el-tag
+                          size="small"
+                          :type="statusTagType(log.status)"
+                          effect="plain"
+                        >
+                          {{ statusText(log.status) }}
+                        </el-tag>
+                      </div>
+                      <p class="text-sm text-gray-500 mt-1">
+                        {{ recordDetail(log.status) }}
+                      </p>
+                      <p class="text-xs text-gray-400 mt-1">
+                        {{ formatDate(log.occurred_at) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <el-empty
+                v-else
+                description="请先从教学资源中选择一项处理记录"
+                :image-size="120"
+              />
+            </section>
           </el-tab-pane>
         </el-tabs>
       </template>
-    </div>
+    </main>
   </div>
 </template>
 
 <style scoped>
 .governance-dashboard-frame {
-  background: #fff;
-  border-radius: 24px;
-  box-shadow: 0 16px 38px rgb(15 23 42 / 5%);
+  background: #f7f9fc;
+  border-radius: 8px;
 }
 
 .a3-governance-page {
   min-width: 0;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.governance-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #e4e9f1;
+}
+
+.governance-heading {
+  margin: 0;
+  color: #1e293b;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.governance-subheading,
+.governance-section__desc {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.governance-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 16px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e3e9f1;
+  border-radius: 8px;
+}
+
+.governance-summary__item {
+  min-width: 0;
+  padding: 16px 18px;
+  border-right: 1px solid #e8edf4;
+}
+
+.governance-summary__item:last-child {
+  border-right: 0;
+}
+
+.governance-summary__item p,
+.governance-summary__item span {
+  display: block;
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.governance-summary__item strong {
+  display: block;
+  margin: 5px 0 3px;
+  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.governance-summary__item.tone-orange strong {
+  color: #b45309;
+}
+
+.governance-summary__item.tone-green strong {
+  color: #047857;
+}
+
+.governance-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #fff;
+  border: 1px solid #e3e9f1;
+  border-radius: 8px;
+}
+
+.governance-section {
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e3e9f1;
+  border-radius: 8px;
+}
+
+.governance-section__title {
+  margin: 0;
+  color: #334155;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.45;
 }
 
 .governance-brand-mark {
@@ -1328,7 +1425,7 @@ watch(
   color: #2563b7;
   background: #f2f7ff;
   border: 1px solid rgb(111 168 255 / 28%);
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .governance-brand-mark__grid {
@@ -1361,64 +1458,38 @@ watch(
   opacity: 0.62;
 }
 
-.a3-stat-panel {
-  background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%);
-  border-color: rgb(218 229 244);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
-}
-
-.a3-stat-panel:hover {
-  border-color: rgb(111 168 255 / 42%);
-  box-shadow: 0 14px 28px rgb(43 91 155 / 8%);
-  transform: translateY(-1px);
-}
-
-.stat-icon {
-  color: #2f6fcb;
-  font-size: 12px;
-  font-weight: 800;
-  background: rgb(111 168 255 / 13%);
-  border: 1px solid rgb(111 168 255 / 18%);
-}
-
-.tone-violet .stat-icon {
-  color: #2f6fcb;
-  background: rgb(111 168 255 / 13%);
-}
-
-.tone-orange .stat-icon {
-  color: #b45309;
-  background: rgb(245 158 11 / 12%);
-  border-color: rgb(245 158 11 / 18%);
-}
-
-.tone-green .stat-icon {
-  color: #059669;
-  background: rgb(5 150 105 / 10%);
-  border-color: rgb(5 150 105 / 16%);
-}
-
 .governance-query-button {
   color: #fff;
-  background: #6fa8ff;
-  border-color: #6fa8ff;
-  box-shadow: 0 8px 18px rgb(111 168 255 / 22%);
+  background: #3b82f6;
+  border-color: #3b82f6;
+  box-shadow: none;
 }
 
 .governance-query-button:hover,
 .governance-query-button:focus {
   color: #fff;
-  background: #5b95f2;
-  border-color: #5b95f2;
+  background: #2563eb;
+  border-color: #2563eb;
 }
 
 .governance-query-button:active {
   color: #fff;
-  background: #4c82d8;
-  border-color: #4c82d8;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+:deep(.governance-dashboard-frame .el-input__wrapper),
+:deep(.governance-dashboard-frame .el-select__wrapper),
+:deep(.governance-dashboard-frame .el-button) {
+  border-radius: 8px;
+}
+
+:deep(.governance-dashboard-frame .el-date-editor.el-input__wrapper) {
+  border-radius: 8px;
+}
+
+:deep(.governance-dashboard-frame .el-tag) {
+  border-radius: 4px;
 }
 
 .trace-panel {
@@ -1427,10 +1498,6 @@ watch(
 
 .trace-panel h3 {
   line-height: 1.35;
-}
-
-.trace-panel :deep(.el-input__wrapper) {
-  min-height: 44px;
 }
 
 .governance-search {
@@ -1451,10 +1518,12 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px;
-  background: rgb(249 250 251 / 72%);
-  border: 1px solid rgb(243 244 246);
-  border-radius: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.governance-row:last-child {
+  border-bottom: 0;
 }
 
 .governance-row span,
@@ -1473,6 +1542,18 @@ watch(
 .governance-mini {
   flex-direction: column;
   align-items: flex-start;
+  padding: 0 14px;
+  border-right: 1px solid #e8edf4;
+  border-bottom: 0;
+}
+
+.governance-mini:first-child {
+  padding-left: 0;
+}
+
+.governance-mini:last-child {
+  padding-right: 0;
+  border-right: 0;
 }
 
 .governance-mini strong {
@@ -1485,6 +1566,77 @@ watch(
 
 :deep(.governance-table .el-table__cell) {
   vertical-align: middle;
+}
+
+:deep(.el-table) {
+  --el-table-border-color: #edf1f5;
+  --el-table-header-bg-color: #f8fafc;
+  --el-table-row-hover-bg-color: #f8fbff;
+}
+
+:deep(.el-table th.el-table__cell) {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 650;
+  text-align: center;
+}
+
+:deep(.el-table th.el-table__cell .cell) {
+  justify-content: center;
+  text-align: center;
+}
+
+:deep(.el-table .el-table__cell) {
+  padding: 11px 0;
+}
+
+.governance-student-cell {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.governance-student-cell--compact {
+  grid-template-columns: 32px minmax(0, 1fr);
+}
+
+.governance-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.governance-record-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  background: #f8fafc;
+  border: 1px solid #e6ecf3;
+  border-radius: 8px;
+}
+
+.governance-record-summary strong {
+  color: #334155;
+  font-size: 14px;
+}
+
+.governance-record-summary span {
+  color: #64748b;
+  font-size: 13px;
+  text-align: right;
+}
+
+.governance-log-entry {
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #edf1f5;
+  border-radius: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -1500,6 +1652,38 @@ watch(
 @media (max-width: 767px) {
   .a3-governance-page {
     padding: 16px;
+  }
+
+  .governance-header,
+  .governance-filter-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .governance-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .governance-summary__item:nth-child(2) {
+    border-right: 0;
+  }
+
+  .governance-summary__item:nth-child(-n + 2) {
+    border-bottom: 1px solid #e8edf4;
+  }
+
+  .governance-mini {
+    padding: 0;
+    border-right: 0;
+  }
+
+  .governance-record-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .governance-record-summary span {
+    text-align: left;
   }
 
   .governance-search,

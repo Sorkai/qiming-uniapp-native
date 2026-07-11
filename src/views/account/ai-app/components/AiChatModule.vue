@@ -87,6 +87,11 @@
                   <span />
                 </span>
               </div>
+              <div
+                v-else-if="msg.type === 'system'"
+                class="message-content markdown-content"
+                v-html="renderMarkdownContent(msg.content)"
+              />
               <div v-else class="message-content">
                 {{
                   formatMessageContent(msg.content) ||
@@ -615,6 +620,7 @@ import {
   ref,
   watch
 } from "vue";
+import MarkdownIt from "markdown-it";
 import assistantAvatar from "@/assets/ai-app/assistant-avatar.png";
 import {
   User,
@@ -638,6 +644,31 @@ import {
 import { ElMessage } from "element-plus";
 import { assistantModelReasonText } from "@/api/frontend/assistant";
 import ReviewFileIcon from "@/assets/review-file-svgrepo-com.svg?component";
+
+const markdownRenderer = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+  breaks: true
+});
+const defaultLinkOpenRenderer =
+  markdownRenderer.renderer.rules.link_open ||
+  ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
+markdownRenderer.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  const token = tokens[idx];
+  const href = token.attrGet("href") || "";
+  const normalizedHref = /^[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(href)
+    ? `https://${href}`
+    : href;
+  if (normalizedHref !== href) {
+    token.attrSet("href", normalizedHref);
+  }
+  if (/^https?:\/\//i.test(normalizedHref)) {
+    token.attrSet("target", "_blank");
+    token.attrSet("rel", "noopener noreferrer");
+  }
+  return defaultLinkOpenRenderer(tokens, idx, options, env, self);
+};
 
 type AssistantOptionView = {
   key: string;
@@ -869,6 +900,10 @@ const currentThinkingText = computed(
 );
 
 const formatMessageContent = (content: unknown) => String(content || "").trim();
+const renderMarkdownContent = (content: unknown) =>
+  markdownRenderer.render(
+    formatMessageContent(content) || "我把相关学习信息整理在下面。"
+  );
 
 const canShowAssistantActions = (msg: any) =>
   msg.type === "system" &&
@@ -1427,6 +1462,167 @@ onBeforeUnmount(() => {
   word-break: break-word;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+.markdown-content {
+  color: #253044;
+  line-height: 1.78;
+  white-space: normal;
+}
+
+.markdown-content :deep(*) {
+  max-width: 100%;
+}
+
+.markdown-content :deep(p) {
+  margin: 0 0 14px;
+}
+
+.markdown-content :deep(p:last-child),
+.markdown-content :deep(ul:last-child),
+.markdown-content :deep(ol:last-child),
+.markdown-content :deep(blockquote:last-child),
+.markdown-content :deep(pre:last-child),
+.markdown-content :deep(table:last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4) {
+  margin: 18px 0 10px;
+  color: #1f2a3d;
+  font-weight: 750;
+  line-height: 1.38;
+  text-wrap: pretty;
+}
+
+.markdown-content :deep(h1:first-child),
+.markdown-content :deep(h2:first-child),
+.markdown-content :deep(h3:first-child),
+.markdown-content :deep(h4:first-child) {
+  margin-top: 0;
+}
+
+.markdown-content :deep(h1) {
+  font-size: 20px;
+}
+
+.markdown-content :deep(h2) {
+  font-size: 18px;
+}
+
+.markdown-content :deep(h3) {
+  font-size: 16px;
+}
+
+.markdown-content :deep(h4) {
+  font-size: 15px;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  display: grid;
+  gap: 7px;
+  padding-left: 1.35em;
+  margin: 0 0 14px;
+}
+
+.markdown-content :deep(li) {
+  padding-left: 2px;
+}
+
+.markdown-content :deep(li > p) {
+  margin: 0;
+}
+
+.markdown-content :deep(strong) {
+  color: #1f2a3d;
+  font-weight: 750;
+}
+
+.markdown-content :deep(a) {
+  color: #2f6fcb;
+  font-weight: 650;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(47, 111, 203, 0.25);
+}
+
+.markdown-content :deep(a:hover) {
+  color: #1f5db4;
+  border-bottom-color: rgba(31, 93, 180, 0.55);
+}
+
+.markdown-content :deep(code) {
+  padding: 2px 5px;
+  color: #26405f;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.92em;
+  background: #f3f6fb;
+  border: 1px solid rgba(210, 219, 235, 0.88);
+  border-radius: 6px;
+}
+
+.markdown-content :deep(pre) {
+  max-width: 100%;
+  padding: 13px 14px;
+  margin: 12px 0 14px;
+  overflow-x: auto;
+  color: #24324a;
+  background: #f7f9fc;
+  border: 1px solid rgba(213, 222, 238, 0.92);
+  border-radius: 12px;
+}
+
+.markdown-content :deep(pre code) {
+  display: block;
+  min-width: max-content;
+  padding: 0;
+  color: inherit;
+  white-space: pre;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.markdown-content :deep(blockquote) {
+  margin: 12px 0 14px;
+  padding: 10px 13px;
+  color: #4d5d75;
+  background: #f7faff;
+  border: 1px solid rgba(190, 207, 238, 0.74);
+  border-radius: 12px;
+}
+
+.markdown-content :deep(table) {
+  display: block;
+  width: 100%;
+  margin: 12px 0 14px;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  padding: 8px 10px;
+  white-space: nowrap;
+  border: 1px solid #e1e7f0;
+}
+
+.markdown-content :deep(th) {
+  color: #253044;
+  font-weight: 750;
+  background: #f3f6fb;
+}
+
+.markdown-content :deep(hr) {
+  height: 1px;
+  margin: 18px 0;
+  background: #e3e9f2;
+  border: 0;
 }
 
 .assistant-resource-grid {
