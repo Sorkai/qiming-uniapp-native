@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
 import {
   Search,
@@ -15,6 +15,7 @@ import {
   assistantApiErrorMessage,
   createAssistantResourceTask,
   deleteAssistantResource,
+  getAssistantResourceTask,
   getAssistantTaskTrace,
   listAssistantResourceTaskLogs,
   listAssistantResourceTasks,
@@ -68,6 +69,8 @@ const governanceSubmitting = ref(false);
 const editMode = ref(false);
 const detailActivePanels = ref(["summary", "feedback"]);
 const taskActivePanels = ref<string[]>([]);
+let taskPollingTimer: number | undefined;
+let taskPollingInFlight = false;
 const editForm = ref({
   title: "",
   summary: "",
@@ -241,6 +244,18 @@ const taskProgressStatus = (task: AssistantResourceTaskItem) => {
   return undefined;
 };
 
+const taskTerminalStatuses = new Set([
+  "completed",
+  "completed_with_warnings",
+  "partial",
+  "failed",
+  "degraded",
+  "cancelled",
+  "blocked"
+]);
+const isTerminalTask = (status?: string) =>
+  taskTerminalStatuses.has(String(status || "").toLowerCase());
+
 const qualityLabel = (score?: number) => {
   if (score === undefined || score === null) return "";
   const normalized = score <= 1 ? score * 100 : score;
@@ -326,6 +341,7 @@ const loadResources = async () => {
       resourceResult.status === "fulfilled"
         ? resourceResult.value?.data?.list || []
         : [];
+    scheduleTaskPolling();
     if (
       taskResult.status === "rejected" ||
       resourceResult.status === "rejected"
@@ -368,6 +384,66 @@ const loadTaskLogs = async (taskId: string) => {
   }
 };
 
+const stopTaskPolling = () => {
+  if (taskPollingTimer) window.clearTimeout(taskPollingTimer);
+  taskPollingTimer = undefined;
+};
+
+const upsertTask = (task: AssistantResourceTaskItem) => {
+  const index = tasks.value.findIndex(item => item.task_id === task.task_id);
+  if (index >= 0) {
+    tasks.value[index] = { ...tasks.value[index], ...task };
+  } else {
+    tasks.value = [task, ...tasks.value];
+  }
+};
+
+const scheduleTaskPolling = () => {
+  stopTaskPolling();
+  if (!tasks.value.some(task => !isTerminalTask(task.status))) return;
+  const delay = document.hidden ? 10000 : 2000;
+  taskPollingTimer = window.setTimeout(() => {
+    taskPollingTimer = undefined;
+    void refreshPendingTasks();
+  }, delay);
+};
+
+const refreshPendingTasks = async () => {
+  if (taskPollingInFlight || !hasRequiredContext.value) return;
+  const pendingTasks = tasks.value.filter(task => !isTerminalTask(task.status));
+  if (!pendingTasks.length) {
+    stopTaskPolling();
+    return;
+  }
+
+  taskPollingInFlight = true;
+  let hasNewTerminalTask = false;
+  try {
+    const results = await Promise.allSettled(
+      pendingTasks.map(task => getAssistantResourceTask(task.task_id))
+    );
+    results.forEach((result, index) => {
+      if (result.status !== "fulfilled" || !result.value.data.task) return;
+      const previous = pendingTasks[index];
+      const latest = result.value.data.task;
+      upsertTask(latest);
+      if (!isTerminalTask(previous.status) && isTerminalTask(latest.status)) {
+        hasNewTerminalTask = true;
+      }
+      if (selectedTaskId.value === latest.task_id) {
+        void loadTaskLogs(latest.task_id);
+      }
+    });
+  } catch (error) {
+    console.warn("[AiResourceGeneration] 任务状态刷新失败:", error);
+  } finally {
+    taskPollingInFlight = false;
+  }
+
+  if (hasNewTerminalTask) void loadResources();
+  else scheduleTaskPolling();
+};
+
 const handleCreateTask = async () => {
   if (!ensureCourseContext()) return;
   creating.value = true;
@@ -388,7 +464,10 @@ const handleCreateTask = async () => {
     });
     ElMessage.success(data.message || "资源生成任务已创建");
     await loadResources();
-    if (data.task?.task_id) await loadTaskLogs(data.task.task_id);
+    if (data.task?.task_id) {
+      taskActivePanels.value = ["logs", "trace"];
+      await loadTaskLogs(data.task.task_id);
+    }
   } catch (error: any) {
     console.error("[AiResourceGeneration] 创建资源任务失败:", error);
     ElMessage.error(assistantApiErrorMessage(error, "创建资源任务失败"));
@@ -592,10 +671,14 @@ const handleDeleteResource = async () => {
   }
 };
 
-onMounted(loadResources);
+onMounted(() => {
+  void loadResources();
+});
+onBeforeUnmount(stopTaskPolling);
 watch(
   () => [props.courseId, props.targetStudentId],
   () => {
+    stopTaskPolling();
     resetResourceSelection();
     void loadResources();
   }

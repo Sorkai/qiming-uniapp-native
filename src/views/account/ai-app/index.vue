@@ -35,6 +35,7 @@ import AgentPdfWorkbench from "./AgentPdfWorkbench.vue";
 import AiAppEmptyState from "./components/AiAppEmptyState.vue";
 
 import AiResourceGeneration from "./components/AiResourceGeneration.vue";
+import AiStudentResourceLibrary from "./components/AiStudentResourceLibrary.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
@@ -52,6 +53,7 @@ import {
   getAssistantBootstrap,
   getAssistantConversation,
   getAssistantConversationGroups,
+  getAssistantResourceTask,
   streamAssistantChat,
   uploadAssistantDocumentAttachment,
   type AssistantBootstrapCourse,
@@ -62,6 +64,7 @@ import {
   type AssistantChatTraceStep,
   type AssistantConversationItem,
   type AssistantOption,
+  type AssistantResourceTaskItem,
   type AssistantSkill
 } from "@/api/frontend/assistant";
 
@@ -91,6 +94,17 @@ type ConversationView = AssistantConversationItem & {
   status?: string;
 };
 
+type StreamProgressItem = {
+  sequence?: number;
+  stage: string;
+  status: string;
+  summary: string;
+  elapsedMs?: number;
+};
+
+type ResourceTaskView = NonNullable<AssistantChatStreamEvent["resource_task"]> &
+  Partial<AssistantResourceTaskItem>;
+
 type ChatMessageView = {
   id: string | number;
   role: string;
@@ -101,12 +115,22 @@ type ChatMessageView = {
   sourceRefs?: AssistantChatStreamEvent["source_refs"];
   videoSegments?: AssistantChatStreamEvent["video_segments"];
   followups?: AssistantChatStreamEvent["followups"];
-  resourceTask?: AssistantChatStreamEvent["resource_task"];
+  resourceTask?: ResourceTaskView;
   safetyStatus?: string;
   safetySummary?: string;
   safetyFlags?: string[];
   metadata?: Record<string, any>;
   profileEvent?: Record<string, any>;
+  requestId?: string;
+  progressTimeline?: StreamProgressItem[];
+  elapsedMs?: number;
+  streamStatus?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  retryable?: boolean;
+  partial?: boolean;
+  stopped?: boolean;
+  reasoningSummary?: string;
   streaming?: boolean;
   error?: boolean;
 };
@@ -484,7 +508,38 @@ const profileDimensions = ref([
 const agentTrace = ref<AssistantChatTraceStep[]>([]);
 const generatedResources = ref<AssistantChatResource[]>([]);
 const streamCancel = ref<null | (() => void)>(null);
+const activeStreamMessageId = ref<string | number | null>(null);
+const activeStreamRunId = ref(0);
+const activeRequestId = ref("");
+const lastStreamSequence = ref(0);
+const resourceTaskTimers = new Map<string, number>();
+const resourceTaskPollingStartedAt = new Map<string, number>();
+const resourceTaskPollingInFlight = new Set<string>();
 const messages = ref<ChatMessageView[]>([]);
+
+const streamStageTextMap: Record<string, string> = {
+  request_started: "已开始处理请求",
+  request_validating: "正在校验请求",
+  request_preparing: "正在读取课程与会话上下文",
+  context_loading: "正在加载课程上下文",
+  knowledge_retrieval: "正在检索课程资料",
+  answer_generating: "正在生成回答",
+  safety_checking: "正在进行安全检查",
+  persisting: "正在保存回答",
+  postprocess_queued: "后台处理已入队",
+  profile_refresh: "画像与评估正在后台刷新",
+  stream: "连接状态"
+};
+
+const resourceTaskTerminalStatuses = new Set([
+  "completed",
+  "completed_with_warnings",
+  "partial",
+  "failed",
+  "degraded",
+  "cancelled",
+  "blocked"
+]);
 
 const agentItems = computed(() => {
   if (agentTrace.value.length) {
@@ -521,6 +576,14 @@ const inspectorResources = computed(() =>
 );
 
 const resetChatGreeting = () => {
+  streamCancel.value?.();
+  streamCancel.value = null;
+  activeStreamRunId.value += 1;
+  activeStreamMessageId.value = null;
+  activeRequestId.value = "";
+  lastStreamSequence.value = 0;
+  isChatStreaming.value = false;
+  digitalHumanStreamState.value = null;
   const courseName = selectedCourseName.value || "当前课程";
   messages.value = [
     {
@@ -542,10 +605,163 @@ const updateAssistantMessage = (
   if (target) Object.assign(target, patch);
 };
 
-const handleAssistantStreamEvent = (
-  event: AssistantChatStreamEvent,
+const streamProgressSummary = (event: AssistantChatStreamEvent) => {
+  const stage = event.stage || "request_started";
+  return event.summary || streamStageTextMap[stage] || "正在处理请求";
+};
+
+const appendStreamProgress = (
+  assistantMessageId: string | number,
+  event: AssistantChatStreamEvent
+) => {
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message) return;
+
+  const stage = event.stage || "request_started";
+  const next: StreamProgressItem = {
+    sequence: event.sequence,
+    stage,
+    status: event.status || "running",
+    summary: streamProgressSummary(event),
+    elapsedMs: event.elapsed_ms
+  };
+  const timeline = [...(message.progressTimeline || [])];
+  const previous = timeline[timeline.length - 1];
+  if (previous?.stage === next.stage) {
+    timeline[timeline.length - 1] = { ...previous, ...next };
+  } else {
+    timeline.push(next);
+  }
+
+  updateAssistantMessage(assistantMessageId, {
+    requestId: event.request_id || message.requestId,
+    progressTimeline: timeline.slice(-8),
+    elapsedMs: event.elapsed_ms ?? message.elapsedMs,
+    streamStatus: event.status || message.streamStatus
+  });
+};
+
+const clearResourceTaskPolling = (taskId: string) => {
+  const timer = resourceTaskTimers.get(taskId);
+  if (timer) window.clearTimeout(timer);
+  resourceTaskTimers.delete(taskId);
+  resourceTaskPollingStartedAt.delete(taskId);
+  resourceTaskPollingInFlight.delete(taskId);
+};
+
+const clearAllResourceTaskPolling = () => {
+  [...resourceTaskTimers.keys()].forEach(clearResourceTaskPolling);
+};
+
+const updateMessageResourceTask = (
+  assistantMessageId: string | number,
+  task: ResourceTaskView | AssistantResourceTaskItem
+) => {
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message || message.resourceTask?.task_id !== task.task_id) return;
+  updateAssistantMessage(assistantMessageId, {
+    resourceTask: { ...message.resourceTask, ...task }
+  });
+};
+
+const isTerminalResourceTask = (status?: string) =>
+  resourceTaskTerminalStatuses.has(String(status || "").toLowerCase());
+
+const pollResourceTask = async (
+  taskId: string,
   assistantMessageId: string | number
 ) => {
+  if (resourceTaskPollingInFlight.has(taskId)) return;
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message || message.resourceTask?.task_id !== taskId) {
+    clearResourceTaskPolling(taskId);
+    return;
+  }
+
+  resourceTaskPollingInFlight.add(taskId);
+  try {
+    const { data } = await getAssistantResourceTask(taskId);
+    if (data.task) {
+      updateMessageResourceTask(assistantMessageId, data.task);
+      if (isTerminalResourceTask(data.task.status)) {
+        clearResourceTaskPolling(taskId);
+        return;
+      }
+    }
+  } catch (error) {
+    console.warn("[AiApp] 资源任务状态刷新失败:", error);
+  } finally {
+    resourceTaskPollingInFlight.delete(taskId);
+  }
+
+  const startedAt = resourceTaskPollingStartedAt.get(taskId) || Date.now();
+  const elapsed = Date.now() - startedAt;
+  const delay = document.hidden ? 10000 : elapsed < 30000 ? 2000 : 5000;
+  resourceTaskTimers.set(
+    taskId,
+    window.setTimeout(() => {
+      resourceTaskTimers.delete(taskId);
+      void pollResourceTask(taskId, assistantMessageId);
+    }, delay)
+  );
+};
+
+const startResourceTaskPolling = (
+  task: ResourceTaskView,
+  assistantMessageId: string | number
+) => {
+  updateMessageResourceTask(assistantMessageId, task);
+  if (!task.task_id || isTerminalResourceTask(task.status)) {
+    if (task.task_id) clearResourceTaskPolling(task.task_id);
+    return;
+  }
+  if (!resourceTaskPollingStartedAt.has(task.task_id)) {
+    resourceTaskPollingStartedAt.set(task.task_id, Date.now());
+  }
+  if (!resourceTaskTimers.has(task.task_id)) {
+    void pollResourceTask(task.task_id, assistantMessageId);
+  }
+};
+
+const acceptStreamEvent = (
+  event: AssistantChatStreamEvent,
+  assistantMessageId: string | number,
+  streamRunId: number
+) => {
+  if (
+    streamRunId !== activeStreamRunId.value ||
+    activeStreamMessageId.value !== assistantMessageId
+  ) {
+    return false;
+  }
+  if (event.request_id) {
+    if (activeRequestId.value && activeRequestId.value !== event.request_id) {
+      return false;
+    }
+    activeRequestId.value = event.request_id;
+  }
+  if (typeof event.sequence === "number") {
+    if (event.sequence <= lastStreamSequence.value) return false;
+    lastStreamSequence.value = event.sequence;
+  }
+  return true;
+};
+
+const releaseActiveStream = (assistantMessageId: string | number) => {
+  if (activeStreamMessageId.value !== assistantMessageId) return;
+  streamCancel.value = null;
+  activeStreamMessageId.value = null;
+  activeRequestId.value = "";
+  lastStreamSequence.value = 0;
+  isChatStreaming.value = false;
+};
+
+const handleAssistantStreamEvent = (
+  event: AssistantChatStreamEvent,
+  assistantMessageId: string | number,
+  streamRunId: number
+) => {
+  if (!acceptStreamEvent(event, assistantMessageId, streamRunId)) return;
   const hasBackendHumanState = applyDigitalHumanDirective(event);
   const directiveText =
     event.digital_human?.speech_text ||
@@ -555,6 +771,9 @@ const handleAssistantStreamEvent = (
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
   }
+  if (event.request_id) {
+    updateAssistantMessage(assistantMessageId, { requestId: event.request_id });
+  }
 
   if (event.event === "digital_human.directive") {
     if (event.digital_human?.speak && directiveText) {
@@ -563,9 +782,50 @@ const handleAssistantStreamEvent = (
     return;
   }
 
+  if (
+    ["assistant.started", "assistant.progress", "postprocess.queued"].includes(
+      event.event
+    )
+  ) {
+    appendStreamProgress(assistantMessageId, event);
+    if (!hasBackendHumanState) digitalHumanStreamState.value = "thinking";
+    return;
+  }
+
+  if (event.event === "heartbeat") {
+    const message = messages.value.find(item => item.id === assistantMessageId);
+    if (message) {
+      updateAssistantMessage(assistantMessageId, {
+        elapsedMs: event.elapsed_ms ?? message.elapsedMs
+      });
+    }
+    return;
+  }
+
   if (event.event === "conversation.created") {
     if (!hasBackendHumanState) digitalHumanStreamState.value = "thinking";
     void loadConversationGroups();
+    return;
+  }
+
+  if (event.event === "resource.task.created" && event.resource_task) {
+    updateAssistantMessage(assistantMessageId, {
+      resourceTask: event.resource_task
+    });
+    startResourceTaskPolling(event.resource_task, assistantMessageId);
+    return;
+  }
+
+  if (
+    event.event === "assistant.reasoning_summary.delta" &&
+    featureFlags.value.reasoning_summary_stream
+  ) {
+    const target = messages.value.find(item => item.id === assistantMessageId);
+    if (target && event.delta) {
+      updateAssistantMessage(assistantMessageId, {
+        reasoningSummary: `${target.reasoningSummary || ""}${event.delta}`
+      });
+    }
     return;
   }
 
@@ -577,23 +837,32 @@ const handleAssistantStreamEvent = (
   }
 
   if (event.event === "assistant.completed") {
-    const content = event.content_text || "";
+    const currentMessage = messages.value.find(
+      item => item.id === assistantMessageId
+    );
+    const streamedContent = currentMessage?.content || "";
+    const content = event.content_text || streamedContent;
+    const resourceTask = event.resource_task || currentMessage?.resourceTask;
     updateAssistantMessage(assistantMessageId, {
-      content:
-        content ||
-        messages.value.find(item => item.id === assistantMessageId)?.content ||
-        "学习助手已完成回复。",
+      content: content || "学习助手已完成回复。",
       resources: event.resources || [],
       sourceRefs: event.source_refs || [],
       videoSegments: event.video_segments || [],
       followups: event.followups || [],
-      resourceTask: event.resource_task,
+      resourceTask,
       safetyStatus: event.safety_status,
       safetySummary: event.safety_summary,
       safetyFlags: event.safety_flags || event.sensitive_word_hits || [],
       profileEvent: event.profile_event,
-      streaming: false
+      streaming: false,
+      streamStatus: event.status || "completed",
+      elapsedMs: event.elapsed_ms ?? currentMessage?.elapsedMs,
+      partial: false,
+      error: false,
+      errorMessage: ""
     });
+    if (resourceTask)
+      startResourceTaskPolling(resourceTask, assistantMessageId);
     agentTrace.value = event.trace || [];
     generatedResources.value = event.resources || [];
     if (event.conversation_title) {
@@ -602,22 +871,9 @@ const handleAssistantStreamEvent = (
       );
       if (active) active.title = event.conversation_title;
     }
-    if (event.profile_event) {
-      if (event.profile_event.decision === "skip") {
-        ElMessage.info(event.profile_event.skip_reason || "本轮画像无需更新");
-      } else {
-        ElMessage.success("学习画像已同步更新");
-      }
-    }
-    const degradedTrace = (event.trace || []).find(step =>
-      ["degraded", "blocked"].includes(step.status)
-    );
-    if (degradedTrace?.degraded_reason) {
-      ElMessage.warning(degradedTrace.degraded_reason);
-    }
     if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
     speakDigitalHumans(directiveText || content || "");
-    isChatStreaming.value = false;
+    releaseActiveStream(assistantMessageId);
     window.setTimeout(() => {
       if (
         !isChatStreaming.value &&
@@ -631,14 +887,36 @@ const handleAssistantStreamEvent = (
   }
 
   if (event.event === "error") {
-    updateAssistantMessage(assistantMessageId, {
-      content: event.error_message || "学习助手响应失败，请稍后重试。",
-      streaming: false,
-      error: true
+    const currentMessage = messages.value.find(
+      item => item.id === assistantMessageId
+    );
+    const hasPartialContent = !!currentMessage?.content.trim();
+    const keepPartial = Boolean(event.partial && hasPartialContent);
+    appendStreamProgress(assistantMessageId, {
+      ...event,
+      status: event.status || (keepPartial ? "partial" : "failed"),
+      summary: event.error_message || event.summary
     });
-    isChatStreaming.value = false;
+    updateAssistantMessage(assistantMessageId, {
+      content: keepPartial
+        ? currentMessage?.content || ""
+        : event.error_message || "学习助手响应失败，请稍后重试。",
+      streaming: false,
+      error: !keepPartial,
+      partial: keepPartial,
+      retryable: Boolean(event.retryable),
+      streamStatus: event.status || (keepPartial ? "partial" : "failed"),
+      errorCode: event.error_code,
+      errorMessage: event.error_message || "学习助手响应失败，请稍后重试。",
+      elapsedMs: event.elapsed_ms ?? currentMessage?.elapsedMs
+    });
     digitalHumanStreamState.value = null;
-    ElMessage.error(event.error_message || "学习助手响应失败");
+    releaseActiveStream(assistantMessageId);
+    if (keepPartial) {
+      ElMessage.warning(event.error_message || "回答未完整生成");
+    } else {
+      ElMessage.error(event.error_message || "学习助手响应失败");
+    }
   }
 };
 
@@ -743,6 +1021,11 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
   digitalHumanStreamState.value = "thinking";
   agentTrace.value = [];
   streamCancel.value?.();
+  const streamRunId = activeStreamRunId.value + 1;
+  activeStreamRunId.value = streamRunId;
+  activeStreamMessageId.value = assistantMessageId;
+  activeRequestId.value = "";
+  lastStreamSequence.value = 0;
   streamCancel.value = streamAssistantChat(
     {
       conversation_id: activeConversationId.value || undefined,
@@ -762,8 +1045,38 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
         : undefined,
       metadata: { ui_entry: "ai_app_workbench" }
     },
-    event => handleAssistantStreamEvent(event, assistantMessageId)
+    event => handleAssistantStreamEvent(event, assistantMessageId, streamRunId)
   );
+};
+
+const handleStopStreaming = () => {
+  const assistantMessageId = activeStreamMessageId.value;
+  if (!assistantMessageId || !isChatStreaming.value) return;
+
+  const currentMessage = messages.value.find(
+    item => item.id === assistantMessageId
+  );
+  const hasPartialContent = !!currentMessage?.content.trim();
+  streamCancel.value?.();
+  appendStreamProgress(assistantMessageId, {
+    event: "assistant.progress",
+    stage: "answer_generating",
+    status: "cancelled",
+    summary: "已停止生成，已保留当前内容。",
+    partial: hasPartialContent,
+    finished: true
+  });
+  updateAssistantMessage(assistantMessageId, {
+    streaming: false,
+    stopped: true,
+    partial: hasPartialContent,
+    retryable: true,
+    streamStatus: "cancelled",
+    error: false,
+    errorMessage: "已停止生成，已保留当前内容。"
+  });
+  digitalHumanStreamState.value = null;
+  releaseActiveStream(assistantMessageId);
 };
 
 const handleRegenerateMessage = (assistantMessageId: string | number) => {
@@ -1414,6 +1727,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   streamCancel.value?.();
+  clearAllResourceTaskPolling();
   quickSpeechRecognition?.stop?.();
   quickSpeechRecognition = null;
   clearQuickAttachments();
@@ -1564,6 +1878,7 @@ onUnmounted(() => {
                   :model-disabled-reason="selectedModelDisabledReason"
                   :loading="isChatStreaming"
                   @send="handleSendMessage"
+                  @stop="handleStopStreaming"
                   @preview="handlePreview"
                   @regenerate="handleRegenerateMessage"
                   @switch-course="handleSwitchCourse"
@@ -1932,7 +2247,7 @@ onUnmounted(() => {
               />
             </div>
             <div
-              v-else
+              v-else-if="isStaffMode"
               class="h-full w-full min-w-0 bg-transparent overflow-hidden"
             >
               <AiResourceGeneration
@@ -1941,6 +2256,7 @@ onUnmounted(() => {
                 :requires-target-student="isStaffMode"
               />
             </div>
+            <AiStudentResourceLibrary v-else :course-id="selectedCourseId" />
           </div>
 
           <div

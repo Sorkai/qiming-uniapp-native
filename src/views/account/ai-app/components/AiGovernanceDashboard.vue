@@ -51,7 +51,9 @@ const isStaff = computed(() => props.isStaffMode !== false);
 const isAdmin = computed(() => props.viewerRole === "admin");
 const courseLabel = computed(() => props.courseName || "当前课程");
 
-const studentList = computed(() => studentsDashboard.value?.list || []);
+const studentList = computed(() =>
+  [...(studentsDashboard.value?.list || [])].sort(compareStudentsByContent)
+);
 const recentTasks = computed(
   () => resourcesDashboard.value?.recent_tasks || []
 );
@@ -514,6 +516,61 @@ function studentName(row: AssistantDashboardStudentItem) {
   return row.student_name || `学生 ${row.student_id}`;
 }
 
+function studentContentScore(row: AssistantDashboardStudentItem) {
+  const profileStatus = String(row.profile_status || "")
+    .trim()
+    .toLowerCase();
+  const hasProfile = Boolean(
+    profileStatus &&
+      ![
+        "profile_required",
+        "not_configured",
+        "pending",
+        "missing",
+        "empty"
+      ].includes(profileStatus)
+  );
+  const hasSummary = Boolean(
+    row.summary?.trim() && row.summary.trim() !== "暂无学习概览"
+  );
+  const hasScore = Number(row.predicted_score) > 0;
+  const hasProgress = progressValue(row.progress) > 0;
+  const riskCount = row.risk_flags?.filter(Boolean).length || 0;
+
+  return (
+    (hasProfile ? 8 : 0) +
+    (hasSummary ? 5 : 0) +
+    (riskCount ? 4 + Math.min(riskCount, 3) : 0) +
+    (row.need_teacher_attention ? 3 : 0) +
+    (row.need_replan ? 3 : 0) +
+    (hasScore ? 3 : 0) +
+    (hasProgress ? 2 : 0) +
+    (Number(row.study_minutes) > 0 ? 1 : 0) +
+    (row.dimension_scores?.length ? 2 : 0) +
+    (row.latest_event ? 1 : 0) +
+    (row.last_updated_at ? 1 : 0)
+  );
+}
+
+function updatedAtTime(row: AssistantDashboardStudentItem) {
+  const timestamp = new Date(row.last_updated_at || "").getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function compareStudentsByContent(
+  left: AssistantDashboardStudentItem,
+  right: AssistantDashboardStudentItem
+) {
+  const scoreDifference =
+    studentContentScore(right) - studentContentScore(left);
+  if (scoreDifference) return scoreDifference;
+
+  const updateDifference = updatedAtTime(right) - updatedAtTime(left);
+  if (updateDifference) return updateDifference;
+
+  return studentName(left).localeCompare(studentName(right), "zh-CN");
+}
+
 function taskTypesText(row: AssistantResourceTaskItem) {
   return row.resource_types?.length
     ? row.resource_types.map(resourceTypeText).join("、")
@@ -753,13 +810,13 @@ watch(
                 height="430"
                 class="governance-table"
               >
-                <el-table-column label="学生" min-width="190">
+                <el-table-column label="学生" min-width="190" align="center">
                   <template #default="{ row }">
                     <div class="governance-student-cell">
                       <el-avatar :size="34" :src="row.avatar">
                         {{ studentName(row).slice(0, 1) }}
                       </el-avatar>
-                      <div class="min-w-0">
+                      <div class="governance-student-meta min-w-0">
                         <p class="font-medium text-gray-800 truncate">
                           {{ studentName(row) }}
                         </p>
@@ -770,9 +827,9 @@ watch(
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="进度" width="140">
+                <el-table-column label="进度" width="140" align="center">
                   <template #default="{ row }">
-                    <div class="space-y-1">
+                    <div class="governance-progress-cell space-y-1">
                       <span class="text-xs text-gray-500">
                         {{ percentText(row.progress) }}
                       </span>
@@ -784,12 +841,12 @@ watch(
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="学习表现" width="112">
+                <el-table-column label="学习表现" width="112" align="center">
                   <template #default="{ row }">
                     {{ row.predicted_score ?? "暂无" }}
                   </template>
                 </el-table-column>
-                <el-table-column label="学习档案" width="148">
+                <el-table-column label="学习档案" width="148" align="center">
                   <template #default="{ row }">
                     <el-tag
                       :type="statusTagType(row.profile_status)"
@@ -799,7 +856,11 @@ watch(
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="关注事项" min-width="240">
+                <el-table-column
+                  label="关注事项"
+                  min-width="240"
+                  align="center"
+                >
                   <template #default="{ row }">
                     <div
                       v-if="row.risk_flags?.length"
@@ -828,29 +889,36 @@ watch(
                     >
                   </template>
                 </el-table-column>
-                <el-table-column label="最近更新" width="136">
+                <el-table-column label="最近更新" width="136" align="center">
                   <template #default="{ row }">
                     {{ formatDate(row.last_updated_at) }}
                   </template>
                 </el-table-column>
-                <el-table-column label="查看" width="238" fixed="right">
+                <el-table-column
+                  label="查看"
+                  width="238"
+                  fixed="right"
+                  align="center"
+                >
                   <template #default="{ row }">
-                    <el-button
-                      type="primary"
-                      link
-                      @click="handleSelectStudent(row, 'profile')"
-                    >
-                      学习档案
-                    </el-button>
-                    <el-button link @click="handleSelectStudent(row, 'path')">
-                      学习计划
-                    </el-button>
-                    <el-button
-                      link
-                      @click="handleSelectStudent(row, 'assessment')"
-                    >
-                      评估情况
-                    </el-button>
+                    <div class="governance-action-list">
+                      <el-button
+                        type="primary"
+                        link
+                        @click="handleSelectStudent(row, 'profile')"
+                      >
+                        学习档案
+                      </el-button>
+                      <el-button link @click="handleSelectStudent(row, 'path')">
+                        学习计划
+                      </el-button>
+                      <el-button
+                        link
+                        @click="handleSelectStudent(row, 'assessment')"
+                      >
+                        评估情况
+                      </el-button>
+                    </div>
                   </template>
                 </el-table-column>
               </el-table>
@@ -1592,14 +1660,19 @@ watch(
 
 .governance-student-cell {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
   gap: 12px;
   align-items: center;
+  width: 100%;
   min-width: 0;
 }
 
 .governance-student-cell--compact {
-  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+}
+
+.governance-student-meta {
+  text-align: center;
 }
 
 .governance-tag-list {
@@ -1607,6 +1680,25 @@ watch(
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  justify-content: center;
+}
+
+.governance-progress-cell {
+  width: min(116px, 100%);
+  margin: 0 auto;
+  text-align: left;
+}
+
+.governance-action-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  white-space: nowrap;
+}
+
+.governance-action-list :deep(.el-button + .el-button) {
+  margin-left: 0;
 }
 
 .governance-record-summary {

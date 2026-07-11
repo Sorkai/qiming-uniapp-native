@@ -71,14 +71,14 @@
                 <div class="thinking-copy">
                   <span class="thinking-eyebrow">AI 助教处理中</span>
                   <span
-                    :key="currentThinkingText"
+                    :key="getThinkingText(msg)"
                     class="thinking-typewriter"
                     :style="{
-                      '--thinking-chars': currentThinkingText.length,
-                      '--thinking-width': `${currentThinkingText.length}em`
+                      '--thinking-chars': getThinkingText(msg).length,
+                      '--thinking-width': `${getThinkingText(msg).length}em`
                     }"
                   >
-                    {{ currentThinkingText }}
+                    {{ getThinkingText(msg) }}
                   </span>
                 </div>
                 <span class="thinking-dots" aria-hidden="true">
@@ -99,6 +99,53 @@
                 }}
               </div>
             </div>
+
+            <section
+              v-if="msg.type === 'system' && hasStreamStatus(msg)"
+              class="stream-progress"
+              :class="{
+                'is-error': msg.error,
+                'is-partial': msg.partial || msg.stopped
+              }"
+              aria-live="polite"
+            >
+              <div class="stream-progress__header">
+                <span>处理进度</span>
+                <span v-if="msg.elapsedMs !== undefined">
+                  {{ formatElapsed(msg.elapsedMs) }}
+                </span>
+              </div>
+              <ol
+                v-if="msg.progressTimeline?.length"
+                class="stream-progress__timeline"
+              >
+                <li
+                  v-for="(step, index) in msg.progressTimeline"
+                  :key="`${step.sequence || index}-${step.stage}`"
+                  :class="`is-${progressTone(step.status)}`"
+                >
+                  <span class="stream-progress__marker" aria-hidden="true" />
+                  <div class="stream-progress__content">
+                    <div class="stream-progress__meta">
+                      <strong>{{ formatStreamStage(step.stage) }}</strong>
+                      <span>{{ formatStatusLabel(step.status) }}</span>
+                    </div>
+                    <p>{{ step.summary }}</p>
+                  </div>
+                </li>
+              </ol>
+              <p v-if="msg.errorMessage" class="stream-progress__notice">
+                {{ msg.errorMessage }}
+              </p>
+              <button
+                v-if="msg.retryable && !msg.streaming"
+                type="button"
+                class="stream-progress__retry"
+                @click="emit('regenerate', msg.id)"
+              >
+                重新生成
+              </button>
+            </section>
 
             <!-- 资源卡片：多种形态 -->
             <transition-group
@@ -346,7 +393,30 @@
                   实时资源任务：{{ formatStatusLabel(msg.resourceTask.status) }}
                 </div>
                 <p>{{ formatResourceTaskText(msg.resourceTask) }}</p>
+                <el-progress
+                  v-if="typeof msg.resourceTask.progress === 'number'"
+                  class="resource-task-progress"
+                  :percentage="
+                    Math.min(100, Math.max(0, msg.resourceTask.progress))
+                  "
+                  :status="resourceTaskProgressStatus(msg.resourceTask.status)"
+                  :stroke-width="8"
+                />
+                <p
+                  v-if="msg.resourceTask.error_message"
+                  class="task-error-copy"
+                >
+                  {{ msg.resourceTask.error_message }}
+                </p>
               </div>
+
+              <details
+                v-if="msg.reasoningSummary"
+                class="assistant-detail-panel reasoning-summary"
+              >
+                <summary>分析摘要</summary>
+                <p>{{ msg.reasoningSummary }}</p>
+              </details>
             </div>
 
             <div
@@ -424,10 +494,17 @@
               @keydown.enter="handleEnter"
             />
             <el-button
+              v-if="loading"
+              :icon="CircleClose"
+              title="停止生成"
+              class="!rounded-lg mb-1"
+              @click="emit('stop')"
+            />
+            <el-button
+              v-else
               type="primary"
               :icon="Promotion"
-              :loading="loading"
-              :disabled="loading || !input.trim() || modelReady === false"
+              :disabled="!input.trim() || modelReady === false"
               :title="
                 modelReady === false
                   ? modelDisabledReason || '当前没有可用模型'
@@ -639,7 +716,8 @@ import {
   Star,
   Refresh,
   MoreFilled,
-  CopyDocument
+  CopyDocument,
+  CircleClose
 } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { assistantModelReasonText } from "@/api/frontend/assistant";
@@ -704,6 +782,7 @@ const emit = defineEmits([
   "exit",
   "preview",
   "regenerate",
+  "stop",
   "update:selectedAgent",
   "update:selectedModel",
   "update:thinkingMode"
@@ -751,10 +830,24 @@ const machineLabelMap: Record<string, string> = {
   checked: "已检查",
   safe: "已通过",
   completed: "已完成",
+  completed_with_warnings: "带警告完成",
+  partial: "部分完成",
+  cancelled: "已停止",
   running: "进行中",
   pending: "等待中",
   failed: "失败",
-  ready: "就绪"
+  ready: "就绪",
+  request_started: "已开始处理",
+  request_validating: "请求校验",
+  request_preparing: "准备上下文",
+  context_loading: "加载上下文",
+  knowledge_retrieval: "检索资料",
+  answer_generating: "生成回答",
+  safety_checking: "安全检查",
+  persisting: "保存回答",
+  postprocess_queued: "后台处理已入队",
+  profile_refresh: "刷新画像与评估",
+  stream: "连接状态"
 };
 
 const selectableModelStatuses = new Set(["available", "deprecated"]);
@@ -886,7 +979,8 @@ const hasMessageContent = (msg: any) =>
   !!msg.resourceTask ||
   !!msg.safetyStatus ||
   !!msg.safetySummary ||
-  (Array.isArray(msg.safetyFlags) && msg.safetyFlags.length > 0);
+  (Array.isArray(msg.safetyFlags) && msg.safetyFlags.length > 0) ||
+  hasStreamStatus(msg);
 
 const shouldRenderMessage = (msg: any) =>
   hasMessageContent(msg) || isMessagePending(msg);
@@ -898,6 +992,49 @@ const visibleMessages = computed(() =>
 const currentThinkingText = computed(
   () => thinkingTexts[thinkingStepIndex.value % thinkingTexts.length]
 );
+
+const getThinkingText = (msg: any) => {
+  const timeline = Array.isArray(msg.progressTimeline)
+    ? msg.progressTimeline
+    : [];
+  return timeline[timeline.length - 1]?.summary || currentThinkingText.value;
+};
+
+const hasStreamStatus = (msg: any) =>
+  (Array.isArray(msg.progressTimeline) && msg.progressTimeline.length > 0) ||
+  !!msg.errorMessage ||
+  !!msg.stopped;
+
+const formatStreamStage = (stage?: string) => formatMachineLabel(stage);
+
+const formatElapsed = (value?: number) => {
+  const totalSeconds = Math.max(0, Math.round(Number(value || 0) / 1000));
+  if (totalSeconds < 60) return `${totalSeconds} 秒`;
+  return `${Math.floor(totalSeconds / 60)} 分 ${totalSeconds % 60} 秒`;
+};
+
+const progressTone = (status?: string) => {
+  if (["failed", "blocked"].includes(String(status || ""))) return "error";
+  if (
+    ["partial", "degraded", "cancelled", "completed_with_warnings"].includes(
+      String(status || "")
+    )
+  ) {
+    return "warning";
+  }
+  if (["completed", "ready", "safe"].includes(String(status || ""))) {
+    return "success";
+  }
+  return "running";
+};
+
+const resourceTaskProgressStatus = (status?: string) => {
+  const tone = progressTone(status);
+  if (tone === "error") return "exception";
+  if (tone === "warning") return "warning";
+  if (tone === "success") return "success";
+  return undefined;
+};
 
 const formatMessageContent = (content: unknown) => String(content || "").trim();
 const renderMarkdownContent = (content: unknown) =>
@@ -912,7 +1049,10 @@ const canShowAssistantActions = (msg: any) =>
   !msg.error;
 
 const hasAssistantDetails = (msg: any) =>
-  msg.sourceRefs?.length || msg.videoSegments?.length || msg.resourceTask;
+  msg.sourceRefs?.length ||
+  msg.videoSegments?.length ||
+  msg.resourceTask ||
+  msg.reasoningSummary;
 
 const isSafetyExpanded = (id: string | number) =>
   expandedSafetyIds.value.has(id);
@@ -1754,6 +1894,131 @@ onBeforeUnmount(() => {
   border-radius: 7px;
 }
 
+.stream-progress {
+  padding: 2px 0 2px 14px;
+  color: #56647b;
+  border-top: 1px solid rgba(222, 229, 241, 0.8);
+}
+
+.stream-progress.is-error {
+  color: #a94442;
+}
+
+.stream-progress.is-partial {
+  color: #8a6416;
+}
+
+.stream-progress__header,
+.stream-progress__meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stream-progress__header {
+  padding: 10px 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #738097;
+}
+
+.stream-progress__header span:last-child,
+.stream-progress__meta span {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8996aa;
+}
+
+.stream-progress__timeline {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.stream-progress__timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+
+.stream-progress__timeline li:not(:last-child)::after {
+  position: absolute;
+  top: 14px;
+  left: 5px;
+  width: 1px;
+  height: calc(100% + 8px);
+  content: "";
+  background: #dce4ef;
+}
+
+.stream-progress__marker {
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  background: #7595d6;
+  border: 2px solid #edf3fc;
+  border-radius: 50%;
+}
+
+.stream-progress__timeline .is-success .stream-progress__marker {
+  background: #4aa37c;
+}
+
+.stream-progress__timeline .is-warning .stream-progress__marker {
+  background: #d28b23;
+}
+
+.stream-progress__timeline .is-error .stream-progress__marker {
+  background: #d25757;
+}
+
+.stream-progress__content {
+  min-width: 0;
+}
+
+.stream-progress__meta strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  color: #43516a;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stream-progress__content p,
+.stream-progress__notice {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.stream-progress__notice {
+  padding-top: 8px;
+}
+
+.stream-progress__retry {
+  margin-top: 8px;
+  padding: 0;
+  color: #2f6fd6;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.stream-progress__retry:hover {
+  color: #1f55a8;
+  text-decoration: underline;
+}
+
 .assistant-detail-stack {
   display: grid;
   gap: 8px;
@@ -1773,6 +2038,21 @@ onBeforeUnmount(() => {
   background: rgba(244, 247, 255, 0.72);
   border: 1px solid rgba(129, 158, 245, 0.26);
   border-radius: 12px;
+}
+
+.resource-task-progress {
+  margin-top: 10px;
+}
+
+.task-error-copy {
+  color: #b54747;
+}
+
+.reasoning-summary summary {
+  cursor: pointer;
+  color: #52627c;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .assistant-detail-title {

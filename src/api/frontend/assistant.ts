@@ -298,12 +298,21 @@ export interface AssistantDigitalHumanDirective {
 
 export interface AssistantChatStreamEvent {
   event: string;
+  request_id?: string;
+  sequence?: number;
+  stage?: string;
+  status?: string;
+  summary?: string;
+  elapsed_ms?: number;
+  error_code?: string;
   conversation_id?: string;
   message_id?: string;
   delta?: string;
   content_text?: string;
   finish_reason?: string;
   error_message?: string;
+  retryable?: boolean;
+  partial?: boolean;
   created_at?: string;
   finished: boolean;
   usage?: {
@@ -1168,60 +1177,79 @@ function apiBaseURL() {
   return (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 }
 
-function parseSSEStream(
-  response: Response,
+function emitSSEBlock(
+  block: string,
   onEvent: (data: AssistantChatStreamEvent) => void
+): boolean {
+  let eventName = "";
+  const dataLines: string[] = [];
+
+  for (const line of block.split(/\r?\n/)) {
+    if (line.startsWith("event:")) {
+      eventName = line.slice(6).trim();
+    }
+    if (line.startsWith("data:")) {
+      dataLines.push(line.slice(5).trimStart());
+    }
+  }
+
+  const payload = dataLines.join("\n").trim();
+  if (!payload || payload === "[DONE]") return false;
+
+  try {
+    const event = JSON.parse(payload) as AssistantChatStreamEvent;
+    if (!event.event && eventName) event.event = eventName;
+    onEvent(event);
+    return event.event === "assistant.completed" || event.event === "error";
+  } catch (error) {
+    console.error("解析学习助手 SSE 消息失败:", error, payload);
+    return false;
+  }
+}
+
+async function parseSSEStream(
+  response: Response,
+  onEvent: (data: AssistantChatStreamEvent) => void,
+  isAborted: () => boolean
 ) {
   const reader = response.body?.getReader();
   if (!reader) throw new Error("无法获取响应流");
 
   const decoder = new TextDecoder();
   let buffer = "";
+  let receivedTerminal = false;
 
-  const pump = () => {
-    reader
-      .read()
-      .then(({ done, value }) => {
-        if (done) {
-          const rest = buffer.trim();
-          if (rest.startsWith("data: ")) {
-            emitSSELine(rest, onEvent);
-          }
-          return;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split(/\r?\n/);
-        buffer = lines.pop() || "";
-
-        lines.forEach(line => emitSSELine(line, onEvent));
-        pump();
-      })
-      .catch(error => {
-        console.error("学习助手流读取失败:", error);
-        onEvent({
-          event: "error",
-          error_message: "连接出错，请稍后重试",
-          finished: true
-        });
-      });
+  const flushBlocks = () => {
+    const blocks = buffer.split(/\r?\n\r?\n/);
+    buffer = blocks.pop() || "";
+    blocks.forEach(block => {
+      receivedTerminal = emitSSEBlock(block, onEvent) || receivedTerminal;
+    });
   };
 
-  pump();
-}
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    flushBlocks();
+  }
 
-function emitSSELine(
-  line: string,
-  onEvent: (data: AssistantChatStreamEvent) => void
-) {
-  if (!line.startsWith("data: ")) return;
-  const json = line.slice(6).trim();
-  if (!json || json === "[DONE]") return;
+  buffer += decoder.decode();
+  if (buffer.trim()) {
+    receivedTerminal = emitSSEBlock(buffer, onEvent) || receivedTerminal;
+  }
 
-  try {
-    onEvent(JSON.parse(json));
-  } catch (error) {
-    console.error("解析学习助手 SSE 消息失败:", error, line);
+  if (!receivedTerminal && !isAborted()) {
+    onEvent({
+      event: "error",
+      stage: "stream",
+      status: "partial",
+      error_code: "stream_ended_without_terminal",
+      error_message: "连接已提前结束，未收到最终结果。",
+      retryable: true,
+      partial: true,
+      finished: true
+    });
   }
 }
 
@@ -1485,13 +1513,17 @@ export function streamAssistantChat(
 ): () => void {
   const controller = new AbortController();
 
-  fetch(`${apiBaseURL()}/edu/frontend/v1/assistant/chat/stream`, {
-    method: "POST",
-    headers: buildAuthHeaders(),
-    body: JSON.stringify(params),
-    signal: controller.signal
-  })
-    .then(async response => {
+  void (async () => {
+    try {
+      const response = await fetch(
+        `${apiBaseURL()}/edu/frontend/v1/assistant/chat/stream`,
+        {
+          method: "POST",
+          headers: buildAuthHeaders(),
+          body: JSON.stringify(params),
+          signal: controller.signal
+        }
+      );
       if (!response.ok) {
         let message = `HTTP ${response.status}`;
         try {
@@ -1502,9 +1534,8 @@ export function streamAssistantChat(
         }
         throw new Error(message);
       }
-      parseSSEStream(response, onEvent);
-    })
-    .catch(error => {
+      await parseSSEStream(response, onEvent, () => controller.signal.aborted);
+    } catch (error: any) {
       if (error.name === "AbortError") return;
       console.error("学习助手流式请求失败:", error);
       onEvent({
@@ -1513,7 +1544,8 @@ export function streamAssistantChat(
         error_message: error.message || "学习助手响应失败",
         finished: true
       });
-    });
+    }
+  })();
 
   return () => controller.abort();
 }
