@@ -154,6 +154,9 @@
               <span v-if="ignoredFileCount"
                 >，已忽略 {{ ignoredFileCount }} 个系统文件</span
               >
+              <span v-if="skippedUnsupportedFileCount"
+                >，已过滤 {{ skippedUnsupportedFileCount }} 个非必要附件</span
+              >
             </p>
           </div>
           <div class="parsed-courses__actions">
@@ -428,10 +431,12 @@ import { createCourse, getCourseList } from "@/api/course";
 import type { CourseCreateParams } from "@/api/course";
 import { getCategoryList } from "@/api/category";
 import { uploadFileWithSts } from "@/utils/sts-upload";
+import type { StsUploadedFile } from "@/utils/sts-upload";
 import {
   createCourseCover,
   getResourceType,
   getVideoDuration,
+  isSupportedCourseAttachmentExtension,
   parseCoursePackages
 } from "../utils/course-package";
 import type {
@@ -487,6 +492,7 @@ interface BatchImportSession {
     title: string;
     importStatus: ImportStatus;
     importMessage: string;
+    uploadedAssets?: Record<string, StsUploadedFile>;
   }>;
 }
 
@@ -504,6 +510,7 @@ const dialogVisible = ref(false);
 const importRunning = ref(false);
 const importFinished = ref(false);
 const ignoredFileCount = ref(0);
+const skippedUnsupportedFileCount = ref(0);
 const courses = ref<ImportableCourse[]>([]);
 const categoryLoading = ref(false);
 const categoryOptions = ref<Array<{ categoryId: number; name: string }>>([]);
@@ -517,6 +524,9 @@ const recoverySession = ref<BatchImportSession | null>(null);
 const recoveryCourses = ref<RecoveryCourse[]>([]);
 const recoveryChecking = ref(false);
 const activeImportStartedAt = ref("");
+const uploadedAssetsByCourse = ref<
+  Record<string, Record<string, StsUploadedFile>>
+>({});
 const settings = reactive({
   categoryId: undefined as number | undefined,
   isRequired: 1,
@@ -628,6 +638,54 @@ function clearStoredImportSession() {
   window.localStorage.removeItem(batchImportSessionStorageKey);
 }
 
+function getCachedAssets(courseId: string) {
+  return uploadedAssetsByCourse.value[courseId] || {};
+}
+
+function cacheUploadedAsset(
+  courseId: string,
+  assetId: string,
+  uploaded: StsUploadedFile
+) {
+  uploadedAssetsByCourse.value[courseId] = {
+    ...getCachedAssets(courseId),
+    [assetId]: uploaded
+  };
+  persistImportSession();
+}
+
+function clearCachedAssets(courseId: string) {
+  if (!(courseId in uploadedAssetsByCourse.value)) return;
+
+  const { [courseId]: _, ...remaining } = uploadedAssetsByCourse.value;
+  uploadedAssetsByCourse.value = remaining;
+}
+
+function restoreCachedAssets(
+  session: BatchImportSession | null,
+  parsedCourses: ParsedCoursePackage[]
+) {
+  if (!session) {
+    uploadedAssetsByCourse.value = {};
+    return;
+  }
+
+  const parsedCourseIds = new Set(parsedCourses.map(course => course.id));
+  uploadedAssetsByCourse.value = session.courses.reduce(
+    (cache, course) => {
+      if (
+        parsedCourseIds.has(course.id) &&
+        course.uploadedAssets &&
+        Object.keys(course.uploadedAssets).length
+      ) {
+        cache[course.id] = course.uploadedAssets;
+      }
+      return cache;
+    },
+    {} as Record<string, Record<string, StsUploadedFile>>
+  );
+}
+
 function persistImportSession() {
   if (!activeImportStartedAt.value) return;
 
@@ -639,7 +697,8 @@ function persistImportSession() {
       id: course.id,
       title: course.title,
       importStatus: course.importStatus,
-      importMessage: course.importMessage
+      importMessage: course.importMessage,
+      uploadedAssets: getCachedAssets(course.id)
     }))
   };
 
@@ -825,12 +884,17 @@ function handleDirectorySelection(event: Event) {
   input.value = "";
   if (!files.length) return;
 
-  clearStoredImportSession();
+  const previousSession = readImportSession();
   recoverySession.value = null;
   recoveryCourses.value = [];
   activeImportStartedAt.value = "";
   const result = parseCoursePackages(files);
+  restoreCachedAssets(previousSession, result.courses);
+  if (!Object.keys(uploadedAssetsByCourse.value).length) {
+    clearStoredImportSession();
+  }
   ignoredFileCount.value = result.ignoredFileCount;
+  skippedUnsupportedFileCount.value = result.skippedUnsupportedFileCount;
   courses.value = result.courses.map(course => ({
     ...course,
     importStatus: "ready",
@@ -947,7 +1011,7 @@ function saveCourseEditor() {
   }
 }
 
-function getImportErrorMessage(error: unknown) {
+function getRawImportErrorMessage(error: unknown) {
   const response = (
     error as {
       response?: {
@@ -964,12 +1028,24 @@ function getImportErrorMessage(error: unknown) {
         ? error.message
         : "";
 
+  return (
+    message || (response?.status ? `服务返回 ${response.status}` : "未知错误")
+  );
+}
+
+function isStsCredentialError(error: unknown) {
+  return /access key id.*does not exist|expired.*token|security token|request has expired/i.test(
+    getRawImportErrorMessage(error)
+  );
+}
+
+function getImportErrorMessage(error: unknown) {
+  const message = getRawImportErrorMessage(error);
+
   if (/access denied/i.test(message)) {
     return "对象存储拒绝写入：STS 授权与上传方式不匹配，请重新发起上传";
   }
-  if (message) return message;
-  if (response?.status) return `服务返回 ${response.status}`;
-  return "未知错误";
+  return message;
 }
 
 function getAssetLabel(asset: UploadAsset) {
@@ -997,14 +1073,16 @@ async function buildImportJobs(
           resource: hour.video
         }))
       );
-      const attachmentAssets: UploadAsset[] = course.attachments.map(
-        resource => ({
+      const attachmentAssets: UploadAsset[] = course.attachments
+        .filter(resource =>
+          isSupportedCourseAttachmentExtension(resource.extension)
+        )
+        .map(resource => ({
           id: `attachment:${resource.relativePath}`,
           file: resource.file,
           kind: "attachment" as const,
           resource
-        })
-      );
+        }));
 
       return {
         course,
@@ -1041,11 +1119,23 @@ async function uploadCourse(
   job: CourseImportJob,
   progressByAsset: Map<string, number>
 ) {
-  const uploadedAssets = new Map<string, { fileId: number; url: string }>();
+  const uploadedAssets = new Map<string, StsUploadedFile>(
+    Object.entries(getCachedAssets(job.course.id))
+  );
   const courseUploadedBytes = new Map<string, number>();
   const courseBytes = job.assets.reduce(
     (total, asset) => total + asset.file.size,
     0
+  );
+  const cachedBytes = job.assets.reduce(
+    (total, asset) =>
+      uploadedAssets.has(asset.id) ? total + asset.file.size : total,
+    0
+  );
+  courseUploadedBytes.set(job.course.id, cachedBytes);
+  job.course.importProgress = Math.min(
+    99,
+    Math.round((cachedBytes / courseBytes) * 100)
   );
   const videoDurations = new Map<string, number>();
 
@@ -1060,29 +1150,57 @@ async function uploadCourse(
 
   const uploadAsset = async (asset: UploadAsset) => {
     const assetProgressId = `${job.course.id}:${asset.id}`;
-    try {
-      const result = await uploadFileWithSts(asset.file, {
-        multipartConcurrency: 2,
-        onProgress: loaded => {
-          const previous = progressByAsset.get(assetProgressId) || 0;
-          const delta = Math.max(loaded - previous, 0);
-          progressByAsset.set(assetProgressId, loaded);
-          recordUploadedBytes(delta);
+    if (uploadedAssets.has(asset.id)) return;
 
-          const courseUploaded =
-            (courseUploadedBytes.get(job.course.id) || 0) + delta;
-          courseUploadedBytes.set(job.course.id, courseUploaded);
-          job.course.importProgress = Math.min(
-            99,
-            Math.round((courseUploaded / courseBytes) * 100)
-          );
-        }
-      });
-      uploadedAssets.set(asset.id, result);
-    } catch (error) {
-      throw new Error(
-        `${getAssetLabel(asset)}上传失败：${getImportErrorMessage(error)}`
+    const resetAssetProgress = () => {
+      const previous = progressByAsset.get(assetProgressId) || 0;
+      if (!previous) return;
+
+      progressByAsset.set(assetProgressId, 0);
+      uploadedBytes.value = Math.max(0, uploadedBytes.value - previous);
+      const courseUploaded = Math.max(
+        0,
+        (courseUploadedBytes.get(job.course.id) || 0) - previous
       );
+      courseUploadedBytes.set(job.course.id, courseUploaded);
+      job.course.importProgress = Math.round(
+        (courseUploaded / courseBytes) * 100
+      );
+    };
+
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        const result = await uploadFileWithSts(asset.file, {
+          multipartConcurrency: 2,
+          onProgress: loaded => {
+            const previous = progressByAsset.get(assetProgressId) || 0;
+            const delta = Math.max(loaded - previous, 0);
+            progressByAsset.set(assetProgressId, loaded);
+            recordUploadedBytes(delta);
+
+            const courseUploaded =
+              (courseUploadedBytes.get(job.course.id) || 0) + delta;
+            courseUploadedBytes.set(job.course.id, courseUploaded);
+            job.course.importProgress = Math.min(
+              99,
+              Math.round((courseUploaded / courseBytes) * 100)
+            );
+          }
+        });
+        uploadedAssets.set(asset.id, result);
+        cacheUploadedAsset(job.course.id, asset.id, result);
+        return;
+      } catch (error) {
+        if (attempt === 0 && isStsCredentialError(error)) {
+          resetAssetProgress();
+          job.course.importMessage = "上传凭证已刷新，正在重试当前资源";
+          continue;
+        }
+
+        throw new Error(
+          `${getAssetLabel(asset)}上传失败：${getImportErrorMessage(error)}`
+        );
+      }
     }
   };
 
@@ -1183,7 +1301,14 @@ async function startImport() {
   resetUploadTelemetry();
   totalUploadBytes.value = jobs.reduce(
     (total, job) =>
-      total + job.assets.reduce((sum, asset) => sum + asset.file.size, 0),
+      total +
+      job.assets.reduce(
+        (sum, asset) =>
+          getCachedAssets(job.course.id)[asset.id]
+            ? sum
+            : sum + asset.file.size,
+        0
+      ),
     0
   );
   const progressByAsset = new Map<string, number>();
@@ -1200,6 +1325,7 @@ async function startImport() {
       job.course.importProgress = 100;
       job.course.importMessage = "课程、章节与资源已创建";
       importSuccessCount.value += 1;
+      clearCachedAssets(job.course.id);
       persistImportSession();
     } catch (error) {
       console.error(`批量导入课程失败：${job.course.title}`, error);
@@ -1211,8 +1337,13 @@ async function startImport() {
   }
 
   importRunning.value = false;
+  if (importFailureCount.value) {
+    persistImportSession();
+  } else {
+    uploadedAssetsByCourse.value = {};
+    clearStoredImportSession();
+  }
   activeImportStartedAt.value = "";
-  clearStoredImportSession();
   importFinished.value = true;
   emit("completed", {
     success: importSuccessCount.value,
@@ -1235,6 +1366,37 @@ function retryFailedCourses() {
       course.importStatus === "failed" &&
       !course.importMessage.startsWith("创建课程失败：")
     ) {
+      const unsupportedResources = course.attachments.filter(
+        resource => !isSupportedCourseAttachmentExtension(resource.extension)
+      );
+      if (unsupportedResources.length) {
+        const extensions = Array.from(
+          new Set(unsupportedResources.map(resource => resource.extension))
+        )
+          .sort()
+          .map(extension => `.${extension || "无扩展名"}`)
+          .join("、");
+        course.attachments = course.attachments.filter(resource =>
+          isSupportedCourseAttachmentExtension(resource.extension)
+        );
+        const skippedBytes = unsupportedResources.reduce(
+          (total, resource) => total + resource.file.size,
+          0
+        );
+        course.fileCount = Math.max(
+          0,
+          course.fileCount - unsupportedResources.length
+        );
+        course.totalBytes = Math.max(0, course.totalBytes - skippedBytes);
+        course.skippedUnsupportedFileCount =
+          (course.skippedUnsupportedFileCount || 0) +
+          unsupportedResources.length;
+        skippedUnsupportedFileCount.value += unsupportedResources.length;
+        course.warnings = [
+          ...course.warnings,
+          `已过滤 ${unsupportedResources.length} 个非必要附件（${extensions}）`
+        ];
+      }
       course.importStatus = "ready";
       course.importProgress = 0;
       course.importMessage = "";

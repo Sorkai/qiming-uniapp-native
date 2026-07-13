@@ -27,6 +27,7 @@ export interface ParsedCoursePackage {
   attachments: CoursePackageResource[];
   fileCount: number;
   totalBytes: number;
+  skippedUnsupportedFileCount: number;
   warnings: string[];
   isValid: boolean;
 }
@@ -34,6 +35,7 @@ export interface ParsedCoursePackage {
 export interface CoursePackageParseResult {
   courses: ParsedCoursePackage[];
   ignoredFileCount: number;
+  skippedUnsupportedFileCount: number;
 }
 
 interface FileEntry {
@@ -43,7 +45,12 @@ interface FileEntry {
 }
 
 const courseDirectoryLabel = "课程";
-const videoExtensions = new Set(["mp4", "webm", "ogg", "mov", "m4v"]);
+// Keep the import contract narrow: MP4 lectures and PDF courseware only.
+const videoExtensions = new Set(["mp4"]);
+const supportedAttachmentExtensions = new Set(["pdf"]);
+
+export const isSupportedCourseAttachmentExtension = (extension: string) =>
+  supportedAttachmentExtensions.has(extension.toLowerCase());
 
 const getRelativePath = (file: File) =>
   (file as File & { webkitRelativePath?: string }).webkitRelativePath ||
@@ -189,8 +196,22 @@ export function parseCoursePackages(
             comparePackageNames(left.video.file.name, right.video.file.name)
           )
         }));
-      const attachments = courseEntries
-        .filter(entry => !primaryVideos.has(entry.path))
+      const attachmentEntries = courseEntries.filter(
+        entry => !primaryVideos.has(entry.path)
+      );
+      const skippedUnsupportedEntries = attachmentEntries.filter(
+        entry =>
+          !isSupportedCourseAttachmentExtension(getExtension(entry.file.name))
+      );
+      const uploadEntries = courseEntries.filter(
+        entry =>
+          primaryVideos.has(entry.path) ||
+          isSupportedCourseAttachmentExtension(getExtension(entry.file.name))
+      );
+      const attachments = attachmentEntries
+        .filter(entry =>
+          isSupportedCourseAttachmentExtension(getExtension(entry.file.name))
+        )
         .map(createResource)
         .sort((left, right) =>
           left.relativePath.localeCompare(right.relativePath, "zh-CN", {
@@ -210,6 +231,21 @@ export function parseCoursePackages(
       if (attachments.length === 0) {
         warnings.push("未找到课件或字幕等附件资源");
       }
+      if (skippedUnsupportedEntries.length) {
+        const extensions = Array.from(
+          new Set(
+            skippedUnsupportedEntries.map(entry =>
+              getExtension(entry.file.name)
+            )
+          )
+        )
+          .sort()
+          .map(extension => `.${extension || "无扩展名"}`)
+          .join("、");
+        warnings.push(
+          `已过滤 ${skippedUnsupportedEntries.length} 个非必要附件（${extensions}）`
+        );
+      }
 
       return {
         id: rootKey,
@@ -221,11 +257,12 @@ export function parseCoursePackages(
           : "根据本地课程包自动导入。",
         chapters,
         attachments,
-        fileCount: courseEntries.length,
-        totalBytes: courseEntries.reduce(
+        fileCount: uploadEntries.length,
+        totalBytes: uploadEntries.reduce(
           (total, entry) => total + entry.file.size,
           0
         ),
+        skippedUnsupportedFileCount: skippedUnsupportedEntries.length,
         warnings,
         isValid: lessonCount > 0
       };
@@ -236,21 +273,18 @@ export function parseCoursePackages(
       })
     );
 
-  return { courses, ignoredFileCount: ignoredFiles.length };
+  return {
+    courses,
+    ignoredFileCount: ignoredFiles.length,
+    skippedUnsupportedFileCount: courses.reduce(
+      (total, course) => total + course.skippedUnsupportedFileCount,
+      0
+    )
+  };
 }
 
 export const getResourceType = (extension: string) => {
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension)) {
-    return "image";
-  }
-  if (
-    ["pdf", "txt", "srt", "doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(
-      extension
-    )
-  ) {
-    return "document";
-  }
-  return "other";
+  return extension === "pdf" ? "document" : "other";
 };
 
 export const getVideoDuration = (file: File) =>

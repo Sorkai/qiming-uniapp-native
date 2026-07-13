@@ -1610,7 +1610,7 @@ onUnmounted(() => {
         </el-select>
         <el-tooltip content="刷新课程资源" placement="bottom">
           <el-button
-            circle
+            class="resource-workbench__refresh-button"
             :icon="Refresh"
             :loading="resourceLoading"
             aria-label="刷新课程资源"
@@ -2316,6 +2316,13 @@ onUnmounted(() => {
 
 .resource-workbench__course-select :deep(.el-select) {
   width: min(270px, 34vw);
+}
+
+.resource-workbench__refresh-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 8px;
 }
 
 .resource-overview {
