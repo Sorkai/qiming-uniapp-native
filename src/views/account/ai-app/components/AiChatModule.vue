@@ -1,5 +1,7 @@
 ﻿<template>
-  <div class="ai-chat-module h-full min-w-0 overflow-hidden flex flex-col bg-transparent">
+  <div
+    class="ai-chat-module h-full min-w-0 overflow-hidden flex flex-col bg-transparent"
+  >
     <!-- 顶部精简导航 -->
     <div
       class="flex items-center justify-between p-4 bg-white rounded-t-2xl border-b border-gray-100 z-10"
@@ -25,6 +27,7 @@
     <el-scrollbar
       ref="scrollbarRef"
       class="flex-1 min-w-0 px-4 py-6 scroll-smooth"
+      @scroll="handleChatScroll"
     >
       <transition-group
         appear
@@ -68,8 +71,14 @@
                 class="thinking-status"
                 aria-label="智能助教正在思考"
               >
+                <AssistantProcessIcon
+                  :stage="getCurrentThinkingStage(msg)"
+                  tone="running"
+                  :size="38"
+                  class="thinking-process-icon"
+                />
                 <div class="thinking-copy">
-                  <span class="thinking-eyebrow">AI 助教处理中</span>
+                  <span class="thinking-eyebrow">学习助手正在处理</span>
                   <span
                     :key="getThinkingText(msg)"
                     class="thinking-typewriter"
@@ -110,7 +119,14 @@
               aria-live="polite"
             >
               <div class="stream-progress__header">
-                <span>处理进度</span>
+                <span class="stream-progress__heading">
+                  <AssistantProcessIcon
+                    kind="terminal"
+                    :tone="getMessageProgressTone(msg)"
+                    :size="26"
+                  />
+                  <span>思考与处理过程</span>
+                </span>
                 <span v-if="msg.elapsedMs !== undefined">
                   {{ formatElapsed(msg.elapsedMs) }}
                 </span>
@@ -124,7 +140,12 @@
                   :key="`${step.sequence || index}-${step.stage}`"
                   :class="`is-${progressTone(step.status)}`"
                 >
-                  <span class="stream-progress__marker" aria-hidden="true" />
+                  <AssistantProcessIcon
+                    :stage="step.stage"
+                    :tone="progressTone(step.status)"
+                    :size="30"
+                    class="stream-progress__icon"
+                  />
                   <div class="stream-progress__content">
                     <div class="stream-progress__meta">
                       <strong>{{ formatStreamStage(step.stage) }}</strong>
@@ -333,7 +354,12 @@
 
             <div v-if="hasAssistantDetails(msg)" class="assistant-detail-stack">
               <div v-if="msg.sourceRefs?.length" class="assistant-detail-panel">
-                <div class="assistant-detail-title">回答依据</div>
+                <div
+                  class="assistant-detail-title assistant-detail-title--icon"
+                >
+                  <AssistantProcessIcon kind="search" :size="28" />
+                  <span>回答依据</span>
+                </div>
                 <div class="source-ref-list">
                   <div
                     v-for="source in msg.sourceRefs"
@@ -341,6 +367,11 @@
                     class="source-ref-item"
                   >
                     <div class="source-ref-meta">
+                      <AssistantProcessIcon
+                        :stage="source.source_type"
+                        :size="24"
+                        bare
+                      />
                       <span class="source-ref-type">
                         {{ formatSourceType(source.source_type) }}
                       </span>
@@ -389,8 +420,19 @@
                 v-if="msg.resourceTask"
                 class="assistant-detail-panel is-task"
               >
-                <div class="assistant-detail-title">
-                  实时资源任务：{{ formatStatusLabel(msg.resourceTask.status) }}
+                <div
+                  class="assistant-detail-title assistant-detail-title--icon"
+                >
+                  <AssistantProcessIcon
+                    kind="tools"
+                    :tone="progressTone(msg.resourceTask.status)"
+                    :size="28"
+                  />
+                  <span>
+                    实时资源任务：{{
+                      formatStatusLabel(msg.resourceTask.status)
+                    }}
+                  </span>
                 </div>
                 <p>{{ formatResourceTaskText(msg.resourceTask) }}</p>
                 <el-progress
@@ -414,7 +456,15 @@
                 v-if="msg.reasoningSummary"
                 class="assistant-detail-panel reasoning-summary"
               >
-                <summary>分析摘要</summary>
+                <summary>
+                  <span class="reasoning-summary__label">
+                    <AssistantProcessIcon kind="pencil" :size="28" />
+                    <span>分析摘要</span>
+                  </span>
+                  <el-icon class="reasoning-summary__chevron">
+                    <ArrowDown />
+                  </el-icon>
+                </summary>
                 <p>{{ msg.reasoningSummary }}</p>
               </details>
             </div>
@@ -621,9 +671,12 @@
                 @command="t => emit('update:thinkingMode', t)"
               >
                 <span class="chat-toolbar-chip chat-toolbar-chip--interactive">
-                  <el-icon class="chat-toolbar-chip__icon">
-                    <MagicStick />
-                  </el-icon>
+                  <AssistantProcessIcon
+                    kind="terminal"
+                    :size="17"
+                    bare
+                    class="chat-toolbar-chip__icon"
+                  />
                   <span class="chat-toolbar-chip__text">
                     {{ thinkingMode }}
                   </span>
@@ -712,7 +765,6 @@ import {
   FolderOpened,
   Monitor,
   ArrowDown,
-  MagicStick,
   Star,
   Refresh,
   MoreFilled,
@@ -722,6 +774,7 @@ import {
 import { ElMessage } from "element-plus";
 import { assistantModelReasonText } from "@/api/frontend/assistant";
 import ReviewFileIcon from "@/assets/review-file-svgrepo-com.svg?component";
+import AssistantProcessIcon from "./AssistantProcessIcon.vue";
 
 const markdownRenderer = new MarkdownIt({
   html: false,
@@ -731,8 +784,15 @@ const markdownRenderer = new MarkdownIt({
 });
 const defaultLinkOpenRenderer =
   markdownRenderer.renderer.rules.link_open ||
-  ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
-markdownRenderer.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  ((tokens, idx, options, _env, self) =>
+    self.renderToken(tokens, idx, options));
+markdownRenderer.renderer.rules.link_open = (
+  tokens,
+  idx,
+  options,
+  env,
+  self
+) => {
   const token = tokens[idx];
   const href = token.attrGet("href") || "";
   const normalizedHref = /^[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(href)
@@ -800,7 +860,14 @@ const pendingAttachments = ref<PendingAttachment[]>([]);
 const maxAttachmentSize = 20 * 1024 * 1024;
 const supportedAttachmentExtensions = new Set(["PDF", "DOCX", "TXT"]);
 
-const scrollbarRef = ref();
+type ChatScrollbarInstance = {
+  wrapRef?: HTMLDivElement;
+  setScrollTop: (scrollTop: number) => void;
+};
+
+const scrollbarRef = ref<ChatScrollbarInstance | null>(null);
+const shouldFollowLatestMessages = ref(true);
+const autoFollowThreshold = 48;
 const expandedSafetyIds = ref<Set<string | number>>(new Set());
 const likedMessageIds = ref<Set<string | number>>(new Set());
 const thinkingStepIndex = ref(0);
@@ -1000,6 +1067,13 @@ const getThinkingText = (msg: any) => {
   return timeline[timeline.length - 1]?.summary || currentThinkingText.value;
 };
 
+const getCurrentThinkingStage = (msg: any) => {
+  const timeline = Array.isArray(msg.progressTimeline)
+    ? msg.progressTimeline
+    : [];
+  return timeline[timeline.length - 1]?.stage || "request_started";
+};
+
 const hasStreamStatus = (msg: any) =>
   (Array.isArray(msg.progressTimeline) && msg.progressTimeline.length > 0) ||
   !!msg.errorMessage ||
@@ -1025,6 +1099,13 @@ const progressTone = (status?: string) => {
   if (["completed", "ready", "safe"].includes(String(status || ""))) {
     return "success";
   }
+  return "running";
+};
+
+const getMessageProgressTone = (msg: any) => {
+  if (msg.error) return "error";
+  if (msg.partial || msg.stopped) return "warning";
+  if (!msg.streaming && msg.streamStatus === "completed") return "success";
   return "running";
 };
 
@@ -1185,6 +1266,29 @@ const handleEnter = (event: KeyboardEvent) => {
   handleSend();
 };
 
+const isNearLatestMessage = (scrollTop?: number) => {
+  const wrap = scrollbarRef.value?.wrapRef;
+  if (!wrap) return true;
+  const currentScrollTop = scrollTop ?? wrap.scrollTop;
+  return (
+    wrap.scrollHeight - currentScrollTop - wrap.clientHeight <=
+    autoFollowThreshold
+  );
+};
+
+const handleChatScroll = ({ scrollTop }: { scrollTop: number }) => {
+  shouldFollowLatestMessages.value = isNearLatestMessage(scrollTop);
+};
+
+const scrollToLatestMessage = () => {
+  void nextTick(() => {
+    const scrollbar = scrollbarRef.value;
+    const wrap = scrollbar?.wrapRef;
+    if (!shouldFollowLatestMessages.value || !scrollbar || !wrap) return;
+    scrollbar.setScrollTop(wrap.scrollHeight);
+  });
+};
+
 const handleSend = () => {
   const text = input.value.trim();
   if (!text || props.loading) return;
@@ -1192,33 +1296,22 @@ const handleSend = () => {
     ElMessage.warning(props.modelDisabledReason || "当前没有可用模型");
     return;
   }
+  shouldFollowLatestMessages.value = true;
   emit("send", {
     text,
     files: pendingAttachments.value.map(item => item.file)
   });
   input.value = "";
   pendingAttachments.value = [];
-
-  nextTick(() => {
-    if (scrollbarRef.value) {
-      // 添加滚动动画延迟，让消息先渲染完
-      setTimeout(() => {
-        scrollbarRef.value.setScrollTop(9999);
-      }, 100);
-    }
-  });
 };
 
 watch(
   () => props.messages,
-  () => {
-    nextTick(() => {
-      if (scrollbarRef.value) {
-        setTimeout(() => {
-          scrollbarRef.value.setScrollTop(9999);
-        }, 100);
-      }
-    });
+  (messages, previousMessages) => {
+    if (messages !== previousMessages) {
+      shouldFollowLatestMessages.value = true;
+    }
+    scrollToLatestMessage();
   },
   { deep: true }
 );
@@ -1232,6 +1325,7 @@ watch(
 );
 
 onMounted(() => {
+  scrollToLatestMessage();
   thinkingTimer = window.setInterval(() => {
     if (props.loading) {
       thinkingStepIndex.value =
@@ -1535,7 +1629,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  max-width: min(76%, 900px);
+  max-width: min(84%, 980px);
   gap: 10px;
 }
 
@@ -1895,7 +1989,7 @@ onBeforeUnmount(() => {
 }
 
 .stream-progress {
-  padding: 2px 0 2px 14px;
+  padding: 6px 0 2px;
   color: #56647b;
   border-top: 1px solid rgba(222, 229, 241, 0.8);
 }
@@ -1917,14 +2011,27 @@ onBeforeUnmount(() => {
 }
 
 .stream-progress__header {
-  padding: 10px 0 6px;
+  padding: 8px 0 10px;
   font-size: 12px;
   font-weight: 800;
   color: #738097;
 }
 
-.stream-progress__header span:last-child,
-.stream-progress__meta span {
+.stream-progress__heading {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.stream-progress__heading > span:last-child {
+  color: #4c5b72;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.stream-progress__header > span:last-child,
+.stream-progress__meta > span {
   flex: 0 0 auto;
   font-size: 12px;
   font-weight: 600;
@@ -1933,7 +2040,7 @@ onBeforeUnmount(() => {
 
 .stream-progress__timeline {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -1942,45 +2049,29 @@ onBeforeUnmount(() => {
 .stream-progress__timeline li {
   position: relative;
   display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
   min-width: 0;
 }
 
 .stream-progress__timeline li:not(:last-child)::after {
   position: absolute;
-  top: 14px;
-  left: 5px;
+  top: 30px;
+  left: 14px;
   width: 1px;
-  height: calc(100% + 8px);
+  height: calc(100% - 20px);
   content: "";
   background: #dce4ef;
 }
 
-.stream-progress__marker {
+.stream-progress__icon {
+  position: relative;
   z-index: 1;
-  width: 10px;
-  height: 10px;
-  margin-top: 4px;
-  background: #7595d6;
-  border: 2px solid #edf3fc;
-  border-radius: 50%;
-}
-
-.stream-progress__timeline .is-success .stream-progress__marker {
-  background: #4aa37c;
-}
-
-.stream-progress__timeline .is-warning .stream-progress__marker {
-  background: #d28b23;
-}
-
-.stream-progress__timeline .is-error .stream-progress__marker {
-  background: #d25757;
 }
 
 .stream-progress__content {
   min-width: 0;
+  padding: 3px 0 8px;
 }
 
 .stream-progress__meta strong {
@@ -2022,14 +2113,17 @@ onBeforeUnmount(() => {
 .assistant-detail-stack {
   display: grid;
   gap: 8px;
-  padding: 2px 0 2px 14px;
-  border-left: 2px solid rgba(126, 151, 213, 0.22);
+  padding: 2px 0;
 }
 
 .assistant-detail-panel {
   padding: 9px 0;
   color: #56647b;
   background: transparent;
+}
+
+.assistant-detail-panel + .assistant-detail-panel:not(.is-task) {
+  border-top: 1px solid rgba(222, 229, 241, 0.8);
 }
 
 .assistant-detail-panel.is-task {
@@ -2049,10 +2143,35 @@ onBeforeUnmount(() => {
 }
 
 .reasoning-summary summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  list-style: none;
   cursor: pointer;
   color: #52627c;
   font-size: 13px;
   font-weight: 700;
+}
+
+.reasoning-summary summary::-webkit-details-marker {
+  display: none;
+}
+
+.reasoning-summary__label {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+}
+
+.reasoning-summary__chevron {
+  flex: 0 0 auto;
+  color: #7f8da2;
+  transition: transform 0.18s ease-out;
+}
+
+.reasoning-summary[open] .reasoning-summary__chevron {
+  transform: rotate(180deg);
 }
 
 .assistant-detail-title {
@@ -2060,6 +2179,17 @@ onBeforeUnmount(() => {
   font-size: 12px;
   font-weight: 800;
   color: #738097;
+}
+
+.assistant-detail-title--icon {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 10px;
+  color: #4c5b72;
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .source-ref-list {
@@ -2234,11 +2364,17 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 14px;
   min-width: 230px;
+  max-width: 100%;
+}
+
+.thinking-process-icon {
+  animation: process-icon-pulse 1.8s ease-in-out infinite;
 }
 
 .thinking-copy {
   display: grid;
   gap: 2px;
+  min-width: 0;
 }
 
 .thinking-eyebrow {
@@ -2250,7 +2386,7 @@ onBeforeUnmount(() => {
 .thinking-typewriter {
   display: inline-block;
   width: var(--thinking-width);
-  max-width: max-content;
+  max-width: min(44vw, 420px);
   overflow: hidden;
   color: #26334d;
   font-size: 14px;
@@ -2321,11 +2457,84 @@ onBeforeUnmount(() => {
   }
 }
 
+@keyframes process-icon-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(47 104 178 / 0%);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgb(47 104 178 / 10%);
+  }
+}
+
+:global(html.dark) .stream-progress,
+:global(html.dark) .assistant-detail-panel {
+  color: var(--ai-app-text-regular, #cbd6e8);
+  border-color: var(--ai-app-border, rgb(148 163 184 / 24%));
+}
+
+:global(html.dark) .stream-progress__heading > span:last-child,
+:global(html.dark) .stream-progress__meta strong,
+:global(html.dark) .assistant-detail-title--icon,
+:global(html.dark) .reasoning-summary summary,
+:global(html.dark) .source-ref-meta strong,
+:global(html.dark) .thinking-typewriter {
+  color: var(--ai-app-text, #eef4ff);
+}
+
+:global(html.dark) .stream-progress__header > span:last-child,
+:global(html.dark) .stream-progress__meta > span,
+:global(html.dark) .thinking-eyebrow,
+:global(html.dark) .reasoning-summary__chevron {
+  color: var(--ai-app-text-muted, #92a0b8);
+}
+
+:global(html.dark) .stream-progress__timeline li:not(:last-child)::after {
+  background: var(--ai-app-border-strong, rgb(148 163 184 / 38%));
+}
+
+:global(html.dark) .assistant-detail-panel.is-task {
+  color: var(--ai-app-text-regular, #cbd6e8);
+  background: rgb(38 61 96 / 42%);
+  border-color: rgb(142 175 255 / 28%);
+}
+
 @media (max-width: 900px) {
   .assistant-resource-grid,
   .video-segment-grid,
   .followup-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .thinking-status {
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .thinking-typewriter {
+    max-width: 52vw;
+  }
+
+  .stream-progress__meta {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking-process-icon,
+  .thinking-typewriter,
+  .thinking-dots span,
+  .reasoning-summary__chevron {
+    animation: none;
+    transition: none;
+  }
+
+  .thinking-typewriter {
+    width: auto;
+    border-right: 0;
   }
 }
 

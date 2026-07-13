@@ -359,14 +359,20 @@
                 @error="onMindmapResourceError"
               />
               <iframe
-                v-else-if="!mindmapResourceLoadError"
+                v-else-if="!isMindmapJson && !mindmapResourceLoadError"
                 class="mindmap-resource-frame"
                 :src="mindmapResourceUrl"
                 title="思维导图"
                 @error="onMindmapResourceError"
               />
               <div v-else class="mindmap-resource-error">
-                <span>源文件暂时无法内嵌预览</span>
+                <span>
+                  {{
+                    isMindmapJson
+                      ? "思维导图数据暂时无法解析"
+                      : "源文件暂时无法内嵌预览"
+                  }}
+                </span>
                 <a
                   :href="mindmapResourceUrl"
                   target="_blank"
@@ -468,6 +474,10 @@ const { fitView, setCenter } = useVueFlow();
 const apiBaseURL = () =>
   (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
+const mindmapFileProxyPrefix = "/mindmap-file";
+const mindmapFileProxyTarget =
+  import.meta.env.VITE_MINDMAP_FILE_PROXY_TARGET || "";
+
 const isAbsoluteUrl = (url: string) => /^https?:\/\//i.test(url);
 
 const buildMindmapResourceUrl = (url: string) => {
@@ -490,6 +500,31 @@ const isSameOriginResource = (url: string) => {
   }
 };
 
+const isMindmapFileProxyUrl = (url: string) =>
+  url === mindmapFileProxyPrefix ||
+  url.startsWith(`${mindmapFileProxyPrefix}/`);
+
+const buildMindmapFetchUrl = (resourceUrl: string) => {
+  if (
+    !import.meta.env.DEV ||
+    !isAbsoluteUrl(resourceUrl) ||
+    !mindmapFileProxyTarget
+  ) {
+    return resourceUrl;
+  }
+
+  try {
+    const resource = new URL(resourceUrl);
+    const proxyTarget = new URL(mindmapFileProxyTarget);
+
+    if (resource.origin !== proxyTarget.origin) return resourceUrl;
+
+    return `${mindmapFileProxyPrefix}${resource.pathname}${resource.search}`;
+  } catch {
+    return resourceUrl;
+  }
+};
+
 const isMindmapUrlLike = (value: unknown) => {
   if (typeof value !== "string") return false;
   const text = value.trim();
@@ -502,7 +537,7 @@ const isMindmapUrlLike = (value: unknown) => {
 };
 
 const buildMindmapFetchOptions = (url: string): RequestInit => {
-  if (!isSameOriginResource(url)) {
+  if (!isSameOriginResource(url) || isMindmapFileProxyUrl(url)) {
     return {
       method: "GET",
       mode: "cors",
@@ -836,10 +871,9 @@ const fetchMindmapTreeFromUrl = async (url: string) => {
   const resourceUrl = buildMindmapResourceUrl(url);
   if (!resourceUrl) return null;
 
-  const response = await fetch(
-    resourceUrl,
-    buildMindmapFetchOptions(resourceUrl)
-  );
+  const fetchUrl = buildMindmapFetchUrl(resourceUrl);
+
+  const response = await fetch(fetchUrl, buildMindmapFetchOptions(fetchUrl));
 
   if (!response.ok) {
     throw new Error(`Mindmap resource request failed: ${response.status}`);
@@ -857,6 +891,10 @@ const mindmapResourceUrl = computed(() => {
 
 const isMindmapImage = computed(() =>
   /\.(png|jpe?g|webp|gif|svg)(\?|#|$)/i.test(mindmapResourceUrl.value)
+);
+
+const isMindmapJson = computed(() =>
+  /\.json(\?|#|$)/i.test(mindmapResourceUrl.value)
 );
 
 const hasMindmapContent = computed(

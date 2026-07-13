@@ -571,6 +571,7 @@ export interface AssistantResourceTaskLogItem {
 
 export interface AssistantResourceSummary {
   resource_id: string;
+  task_id?: string;
   resource_type: string;
   title: string;
   summary?: string;
@@ -1673,6 +1674,7 @@ export const getAssistantResourceTask = (taskId: string) =>
 export const listAssistantResources = (params?: {
   course_id?: number;
   target_student_id?: number;
+  task_id?: string;
   resource_type?: string;
 }) =>
   http.request<ApiResponse<AssistantListResourcesResp>>(

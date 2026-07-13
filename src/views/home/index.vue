@@ -690,14 +690,39 @@
           <img :src="logo" alt="启明智教" />
           <div>
             <strong>启明智教</strong>
-            <p>
-              长春工业大学计算机科学与工程学院 · 吉林省云创迅捷软件开发有限公司
-            </p>
+            <p>长春工业大学计算机科学与工程学院</p>
           </div>
         </div>
-        <p class="nx-foot__legal">
-          吉ICP备2025035820号-1 · 吉公网安备22017302000511号 · ©2024 Est.
-        </p>
+        <div class="nx-foot__legal" aria-label="备案信息">
+          <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noreferrer"
+            title="工信部ICP备案查询"
+          >
+            <img
+              class="nx-foot__icp-icon"
+              :src="icpBeianIcon"
+              alt=""
+              aria-hidden="true"
+            />
+            <span>吉ICP备2025035820号-1</span>
+          </a>
+          <a
+            href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511"
+            target="_blank"
+            rel="noreferrer"
+            title="公安联网备案查询"
+          >
+            <img
+              src="https://jsd.kai233.top/web/img/batb.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <span>吉公网安备22017302000511号</span>
+          </a>
+          <span class="nx-foot__legal-year">©{{ currentYear }} Est.</span>
+        </div>
       </div>
     </footer>
   </div>
@@ -719,6 +744,7 @@ import LoginDialog from "@/components/LoginDialog.vue";
 import { gsap } from "gsap";
 
 import logo from "@/assets/logo.png";
+import icpBeianIcon from "@/assets/beian/icp-beian.webp";
 import avatarVideo from "@/assets/生成数字人待机视频.mp4";
 import ScriptedDemo from "./ScriptedDemo.vue";
 import ScriptedMiniDemo from "./ScriptedMiniDemo.vue";
@@ -760,6 +786,7 @@ const isScrolled = computed(() => scrollY.value > 20);
 const showLoginDialog = ref(false);
 const activeShowcaseIndex = ref(0);
 const isHomeDragging = ref(false);
+const currentYear = new Date().getFullYear();
 let showcaseTimer: number | undefined;
 const rawIcon = (icon: any) => markRaw(icon);
 const homeDragState = {
@@ -2999,7 +3026,8 @@ onUnmounted(() => {
     font-size: 28px;
     font-weight: 700;
     line-height: 1.18;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
+    text-wrap: balance;
   }
 
   > p {
@@ -3245,10 +3273,56 @@ onUnmounted(() => {
 }
 
 .nx-foot__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  justify-content: flex-end;
   margin: 0;
   font-size: 12px;
   color: var(--nx-text-muted);
   text-align: right;
+
+  a,
+  > span {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    min-height: 22px;
+    color: inherit;
+    white-space: nowrap;
+  }
+
+  a {
+    text-decoration: none;
+    transition: color 180ms ease;
+
+    &:hover {
+      color: var(--nx-blue);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--nx-blue);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
+  }
+
+  img {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+  }
+}
+
+@media (width > 1024px) {
+  .nx-cta__inner {
+    max-width: 1100px;
+
+    h2 {
+      white-space: nowrap;
+    }
+  }
 }
 
 /* =========================================================
@@ -3382,6 +3456,7 @@ onUnmounted(() => {
     gap: 16px;
   }
   .nx-foot__legal {
+    justify-content: flex-start;
     text-align: left;
   }
 }

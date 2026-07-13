@@ -49,6 +49,7 @@ const contextWarning = computed(() => {
 const hasRequiredContext = computed(() => !contextWarning.value);
 
 const loading = ref(false);
+const resourceLoading = ref(false);
 const creating = ref(false);
 const searchQuery = ref("");
 const resourceType = ref("");
@@ -71,6 +72,7 @@ const detailActivePanels = ref(["summary", "feedback"]);
 const taskActivePanels = ref<string[]>([]);
 let taskPollingTimer: number | undefined;
 let taskPollingInFlight = false;
+let resourceRequestSequence = 0;
 const editForm = ref({
   title: "",
   summary: "",
@@ -89,6 +91,8 @@ const ensureCourseContext = () => {
 };
 
 const resetResourceSelection = () => {
+  resourceRequestSequence += 1;
+  resourceLoading.value = false;
   selectedTaskId.value = "";
   taskLogs.value = [];
   taskTrace.value = [];
@@ -98,9 +102,24 @@ const resetResourceSelection = () => {
   editMode.value = false;
 };
 
+const selectedTask = computed(() =>
+  tasks.value.find(task => task.task_id === selectedTaskId.value)
+);
+
+const selectedTaskLabel = computed(() =>
+  selectedTask.value ? taskTitle(selectedTask.value) : ""
+);
+
 const filteredResources = computed(() => {
   const keyword = searchQuery.value.trim().toLowerCase();
+  const hasTaskAssociations = resources.value.some(
+    resource => resource.task_id
+  );
   return resources.value.filter(resource => {
+    const matchesTask =
+      !selectedTaskId.value ||
+      !hasTaskAssociations ||
+      resource.task_id === selectedTaskId.value;
     const matchesKeyword =
       !keyword ||
       resource.title.toLowerCase().includes(keyword) ||
@@ -108,7 +127,7 @@ const filteredResources = computed(() => {
       resource.recommendation?.toLowerCase().includes(keyword);
     const matchesType =
       !resourceType.value || resource.resource_type === resourceType.value;
-    return matchesKeyword && matchesType;
+    return matchesTask && matchesKeyword && matchesType;
   });
 });
 
@@ -314,6 +333,12 @@ const reportResourceUsage = async (
   }
 };
 
+const resourceQuery = (taskId = selectedTaskId.value) => ({
+  course_id: props.courseId,
+  target_student_id: props.targetStudentId,
+  task_id: taskId || undefined
+});
+
 const loadResources = async () => {
   if (!hasRequiredContext.value) {
     tasks.value = [];
@@ -322,25 +347,29 @@ const loadResources = async () => {
     return;
   }
   loading.value = true;
+  const taskId = selectedTaskId.value;
+  const requestSequence = ++resourceRequestSequence;
   try {
     const [taskResult, resourceResult] = await Promise.allSettled([
       listAssistantResourceTasks({
         course_id: props.courseId,
         target_student_id: props.targetStudentId
       }),
-      listAssistantResources({
-        course_id: props.courseId,
-        target_student_id: props.targetStudentId
-      })
+      listAssistantResources(resourceQuery(taskId))
     ]);
     tasks.value =
       taskResult.status === "fulfilled"
         ? taskResult.value?.data?.list || []
         : [];
-    resources.value =
-      resourceResult.status === "fulfilled"
-        ? resourceResult.value?.data?.list || []
-        : [];
+    if (
+      requestSequence === resourceRequestSequence &&
+      taskId === selectedTaskId.value
+    ) {
+      resources.value =
+        resourceResult.status === "fulfilled"
+          ? resourceResult.value?.data?.list || []
+          : [];
+    }
     scheduleTaskPolling();
     if (
       taskResult.status === "rejected" ||
@@ -363,8 +392,7 @@ const loadResources = async () => {
   }
 };
 
-const loadTaskLogs = async (taskId: string) => {
-  selectedTaskId.value = taskId;
+const loadTaskActivity = async (taskId: string) => {
   try {
     const [logsResult, traceResult] = await Promise.allSettled([
       listAssistantResourceTaskLogs(taskId),
@@ -382,6 +410,43 @@ const loadTaskLogs = async (taskId: string) => {
     console.error("[AiResourceGeneration] 任务日志加载失败:", error);
     ElMessage.error(assistantApiErrorMessage(error, "任务日志加载失败"));
   }
+};
+
+const loadTaskResources = async (taskId: string) => {
+  const requestSequence = ++resourceRequestSequence;
+  resourceLoading.value = true;
+  try {
+    const { data } = await listAssistantResources(resourceQuery(taskId));
+    if (
+      requestSequence === resourceRequestSequence &&
+      selectedTaskId.value === taskId
+    ) {
+      resources.value = data.list || [];
+    }
+  } catch (error: any) {
+    if (
+      requestSequence === resourceRequestSequence &&
+      selectedTaskId.value === taskId
+    ) {
+      resources.value = [];
+      ElMessage.error(assistantApiErrorMessage(error, "任务资源加载失败"));
+    }
+  } finally {
+    if (requestSequence === resourceRequestSequence) {
+      resourceLoading.value = false;
+    }
+  }
+};
+
+const selectTask = async (taskId: string) => {
+  selectedTaskId.value = taskId;
+  taskLogs.value = [];
+  taskTrace.value = [];
+  resources.value = [];
+  resourceType.value = "";
+  taskActivePanels.value = ["logs", "trace"];
+
+  await Promise.all([loadTaskActivity(taskId), loadTaskResources(taskId)]);
 };
 
 const stopTaskPolling = () => {
@@ -431,7 +496,7 @@ const refreshPendingTasks = async () => {
         hasNewTerminalTask = true;
       }
       if (selectedTaskId.value === latest.task_id) {
-        void loadTaskLogs(latest.task_id);
+        void loadTaskActivity(latest.task_id);
       }
     });
   } catch (error) {
@@ -465,8 +530,7 @@ const handleCreateTask = async () => {
     ElMessage.success(data.message || "资源生成任务已创建");
     await loadResources();
     if (data.task?.task_id) {
-      taskActivePanels.value = ["logs", "trace"];
-      await loadTaskLogs(data.task.task_id);
+      await selectTask(data.task.task_id);
     }
   } catch (error: any) {
     console.error("[AiResourceGeneration] 创建资源任务失败:", error);
@@ -694,6 +758,9 @@ watch(
       <div class="resource-toolbar">
         <div class="resource-toolbar__title">
           <h2>资源生成工作台</h2>
+          <p v-if="selectedTaskLabel" class="resource-toolbar__scope">
+            当前展示：{{ selectedTaskLabel }} 的生成资源
+          </p>
         </div>
 
         <div class="resource-toolbar__controls">
@@ -748,7 +815,12 @@ watch(
               :key="task.task_id"
               class="task-card"
               :class="selectedTaskId === task.task_id ? 'is-active' : ''"
-              @click="loadTaskLogs(task.task_id)"
+              role="button"
+              tabindex="0"
+              :aria-pressed="selectedTaskId === task.task_id"
+              @click="selectTask(task.task_id)"
+              @keydown.enter.prevent="selectTask(task.task_id)"
+              @keydown.space.prevent="selectTask(task.task_id)"
             >
               <div class="flex items-center justify-between gap-2">
                 <span class="font-semibold text-base text-gray-800 truncate">
@@ -915,7 +987,11 @@ watch(
           </div>
         </div>
 
-        <div class="min-h-0 overflow-y-auto">
+        <div
+          v-loading="resourceLoading"
+          class="min-h-0 overflow-y-auto"
+          element-loading-text="正在加载任务资源"
+        >
           <div
             v-if="filteredResources.length"
             class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-max"
@@ -1026,7 +1102,12 @@ watch(
               </div>
             </article>
           </div>
-          <el-empty v-else description="暂无学习资源" />
+          <el-empty
+            v-else
+            :description="
+              selectedTaskId ? '该任务暂未生成可展示资源' : '暂无学习资源'
+            "
+          />
         </div>
       </div>
     </div>
@@ -1468,12 +1549,26 @@ watch(
   z-index: 1;
 }
 
+.resource-toolbar__title {
+  min-width: 0;
+}
+
 .resource-toolbar__title h2 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
   color: #2f3746;
+}
+
+.resource-toolbar__scope {
+  margin: 4px 0 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+  color: #64748b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .resource-toolbar__controls {
@@ -1565,6 +1660,11 @@ watch(
     background: #fff;
     border-color: #8fb3f4;
     box-shadow: 0 12px 26px rgba(77, 121, 190, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #5b8def;
+    outline-offset: 2px;
   }
 }
 

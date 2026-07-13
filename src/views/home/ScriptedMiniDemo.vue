@@ -98,60 +98,6 @@
           </svg>
         </section>
 
-        <section class="smd__pipeline">
-          <svg
-            class="smd__flow"
-            viewBox="0 0 640 80"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient
-                :id="riverGradientId"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="0%"
-              >
-                <stop
-                  offset="0%"
-                  :stop-color="demo.accent"
-                  stop-opacity="0.1"
-                />
-                <stop offset="45%" :stop-color="demo.accent" />
-                <stop offset="100%" stop-color="#10b981" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M24 44 C 138 10, 194 70, 304 38 S 486 10, 616 44"
-              class="smd__flowBase"
-            />
-            <path
-              d="M24 44 C 138 10, 194 70, 304 38 S 486 10, 616 44"
-              class="smd__flowLine"
-              :stroke="`url(#${riverGradientId})`"
-            />
-            <circle cx="320" cy="38" r="5" class="smd__packet" />
-          </svg>
-
-          <div class="smd__nodes">
-            <article
-              v-for="(step, i) in demo.steps"
-              :key="step.label"
-              :style="{ animationDelay: `${i * 0.1}s` }"
-            >
-              <span>
-                <Icon
-                  :icon="stepIcons[i % stepIcons.length]"
-                  aria-hidden="true"
-                />
-              </span>
-              <strong>{{ step.label }}</strong>
-              <small>{{ step.detail }}</small>
-            </article>
-          </div>
-        </section>
-
         <section class="smd__stack">
           <article
             v-for="item in demo.stack"
@@ -261,8 +207,6 @@ const fallbackScene: ScriptedMiniScene = {
 
 const barPalette = ["#2d9d78", "#d99a32"];
 const barHeights = [84, 66, 76];
-const riverGradientId = `smd-flow-${Math.random().toString(36).slice(2, 9)}`;
-
 const demo = computed<ScriptedMiniScene>(() => {
   const scene = props.scene ?? {};
   return {
@@ -285,13 +229,6 @@ const navIcons = [
   "lucide:scan-search",
   "lucide:list-checks",
   "lucide:send"
-];
-
-const stepIcons = [
-  "lucide:inbox",
-  "lucide:search-check",
-  "lucide:wand-sparkles",
-  "lucide:send-horizontal"
 ];
 
 const navItems = computed(() =>
@@ -525,7 +462,7 @@ const radarPoints = computed(() => {
 
 .smd__main {
   display: grid;
-  grid-template-rows: auto auto minmax(132px, 1fr) auto auto auto;
+  grid-template-rows: auto auto minmax(132px, 1fr) auto auto;
   gap: 12px;
   min-width: 0;
   min-height: 0;
@@ -704,102 +641,6 @@ const radarPoints = computed(() => {
   stroke-width: 2;
 }
 
-.smd__pipeline {
-  position: relative;
-  min-height: 112px;
-  padding: 10px 12px;
-  overflow: hidden;
-  background: rgb(255 255 255 / 78%);
-  border: 1px solid var(--smd-border);
-  border-radius: 8px;
-}
-
-.smd__flow {
-  position: absolute;
-  top: 0;
-  left: 10px;
-  width: calc(100% - 20px);
-  height: 74px;
-}
-
-.smd__flowBase,
-.smd__flowLine {
-  fill: none;
-  stroke-linecap: round;
-}
-
-.smd__flowBase {
-  stroke: rgb(0 0 0 / 8%);
-  stroke-width: 6;
-}
-
-.smd__flowLine {
-  stroke-width: 2.5;
-  stroke-dasharray: 18 16;
-}
-
-.smd__packet {
-  fill: #fff;
-  stroke: var(--smd-accent);
-  stroke-width: 2;
-}
-
-.smd__nodes {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  height: 100%;
-  padding-top: 42px;
-}
-
-.smd__nodes article {
-  min-width: 0;
-  padding: 10px;
-  background: #fff;
-  border: 1px solid color-mix(in srgb, var(--smd-accent) 24%, var(--smd-border));
-  border-radius: 8px;
-  opacity: 1;
-  transform: none;
-
-  span {
-    display: inline-grid;
-    width: 28px;
-    height: 28px;
-    margin-bottom: 7px;
-    place-items: center;
-    color: color-mix(in srgb, var(--smd-accent) 88%, #202124);
-    background: color-mix(in srgb, var(--smd-accent) 11%, #fff);
-    border: 1px solid color-mix(in srgb, var(--smd-accent) 24%, #fff);
-    border-radius: 7px;
-
-    svg {
-      width: 15px;
-      height: 15px;
-    }
-  }
-
-  strong,
-  small {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  strong {
-    font-size: 12px;
-    color: #202124;
-  }
-
-  small {
-    margin-top: 4px;
-    font-size: 10px;
-    color: var(--smd-muted);
-  }
-}
-
 .smd__stack {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -955,38 +796,6 @@ const radarPoints = computed(() => {
     min-height: 106px;
   }
 
-  .smd__nodes {
-    gap: 7px;
-    padding-top: 34px;
-  }
-
-  .smd__nodes article {
-    padding: 8px 6px;
-
-    span {
-      width: 24px;
-      height: 24px;
-      margin-bottom: 5px;
-
-      svg {
-        width: 13px;
-        height: 13px;
-      }
-    }
-
-    strong {
-      font-size: 10px;
-    }
-
-    small {
-      display: none;
-    }
-  }
-
-  .smd__pipeline {
-    min-height: 90px;
-  }
-
   .smd__stack {
     article {
       justify-content: center;
@@ -1053,10 +862,6 @@ const radarPoints = computed(() => {
   .smd__radar {
     display: none;
   }
-
-  .smd__nodes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1095,18 +900,6 @@ const radarPoints = computed(() => {
     opacity: 0;
     transform: scale(0.9);
     transform-origin: center;
-  }
-}
-
-@keyframes smd-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes smd-flow {
-  to {
-    stroke-dashoffset: -34;
   }
 }
 

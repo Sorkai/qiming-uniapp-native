@@ -118,6 +118,10 @@
             <el-icon><CourseIcon /></el-icon>
             <span>课程</span>
           </el-menu-item>
+          <el-menu-item index="student-resources">
+            <el-icon><Reading /></el-icon>
+            <span>教学资源</span>
+          </el-menu-item>
           <el-menu-item index="classroom">
             <el-icon><ClassroomIcon /></el-icon>
             <span>虚拟校园</span>
@@ -164,7 +168,12 @@
           </el-menu-item>
         </el-menu>
       </div>
-      <div class="account-main">
+      <div
+        class="account-main"
+        :class="{
+          'account-main--student-resources': activeMenu === 'student-resources'
+        }"
+      >
         <div v-if="activeMenu === 'profile'">
           <user-profile
             :current-theme="currentTheme"
@@ -194,6 +203,12 @@
         </div>
         <div v-else-if="activeMenu === 'exam-center'">
           <student-exam-center :current-theme="currentTheme" />
+        </div>
+        <div
+          v-else-if="activeMenu === 'student-resources'"
+          class="account-main__student-resources"
+        >
+          <StudentResourceWorkbench fixed-viewport />
         </div>
         <div v-else-if="activeMenu === 'classroom'">
           <Classroom3D />
@@ -629,6 +644,7 @@ import StudentLearningProfile from "./components/StudentLearningProfile.vue";
 import StudentLearningPathPlanner from "./components/StudentLearningPathPlanner.vue";
 import Classroom3D from "@/views/course/classroom/index.vue";
 import StudentExamCenter from "@/views/exam-paper/student-center/index.vue";
+import StudentResourceWorkbench from "@/views/course/student-resource/index.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
 // 导入新图标
@@ -1636,6 +1652,17 @@ onUnmounted(() => {
         width: 0;
       }
 
+      &.account-main--student-resources {
+        padding-bottom: 0;
+        overflow: hidden;
+      }
+
+      .account-main__student-resources {
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+      }
+
       .quick-access-section {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -2527,6 +2554,16 @@ onUnmounted(() => {
         margin-left: 0;
         padding-bottom: 56px;
         overflow: visible;
+
+        &.account-main--student-resources {
+          padding-bottom: 56px;
+          overflow: visible;
+        }
+
+        .account-main__student-resources {
+          height: auto;
+          overflow: visible;
+        }
 
         .quick-access-section {
           grid-template-columns: 1fr;
