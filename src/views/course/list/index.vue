@@ -48,14 +48,24 @@
           </el-form-item>
         </el-form>
 
-        <el-button
-          type="primary"
-          :icon="Plus"
-          class="create-course-btn"
-          @click="openCreateDialog"
-        >
-          创建课程
-        </el-button>
+        <div class="course-action-buttons">
+          <el-button
+            v-if="canBulkImportCourses"
+            :icon="FolderOpened"
+            class="bulk-import-btn"
+            @click="openBulkCourseUpload"
+          >
+            一键上传课程
+          </el-button>
+          <el-button
+            type="primary"
+            :icon="Plus"
+            class="create-course-btn"
+            @click="openCreateDialog"
+          >
+            创建课程
+          </el-button>
+        </div>
       </div>
     </el-card>
 
@@ -349,6 +359,12 @@
         </div>
       </template>
     </el-dialog>
+
+    <BulkCourseUploadDialog
+      v-if="canBulkImportCourses"
+      ref="bulkCourseUploadRef"
+      @completed="handleBulkCourseUploadCompleted"
+    />
 
     <!-- 课程分配弹窗 -->
     <el-dialog v-model="allocationDialogVisible" title="课程分配" width="60%">
@@ -727,7 +743,7 @@ import { ref, onMounted, reactive, computed } from "vue";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
-import { isAdmin } from "@/utils/auth";
+import { hasManageAccess, isAdmin } from "@/utils/auth";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getCourseList,
@@ -750,7 +766,8 @@ import type { CourseCreateParams, CourseUpdateParams } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
 import CourseCard from "./components/CourseCard.vue";
 import CourseStats from "./components/CourseStats.vue";
-import { Plus, Loading, Search } from "@element-plus/icons-vue";
+import BulkCourseUploadDialog from "./components/BulkCourseUploadDialog.vue";
+import { FolderOpened, Plus, Loading, Search } from "@element-plus/icons-vue";
 
 const appStore = useAppStoreHook();
 const isMobile = computed(() => appStore.getDevice === "mobile");
@@ -761,6 +778,7 @@ const paginationLayout = computed(() =>
 );
 const userStore = useUserStoreHook();
 const isAdminUser = computed(() => isAdmin());
+const canBulkImportCourses = computed(() => hasManageAccess());
 const currentUserId = computed(() => userStore.userId);
 const currentUserNames = computed(() =>
   [userStore.nickname, userStore.username]
@@ -782,6 +800,9 @@ const statsDateFilter = ref<{ startDate?: string; endDate?: string }>({});
 const courseFormRef = ref<{
   validate: () => Promise<boolean>;
   scrollToFirstError?: () => void;
+}>();
+const bulkCourseUploadRef = ref<{
+  openFolderPicker: () => void;
 }>();
 
 // 数据定义
@@ -1117,6 +1138,15 @@ const openCreateDialog = () => {
     attrList: []
   };
   courseFormDialogVisible.value = true;
+};
+
+const openBulkCourseUpload = () => {
+  bulkCourseUploadRef.value?.openFolderPicker();
+};
+
+const handleBulkCourseUploadCompleted = () => {
+  fetchCourseList();
+  fetchCourseStats();
 };
 
 // 查看课程详情
@@ -2229,6 +2259,13 @@ onMounted(async () => {
   font-size: 15px;
 }
 
+.course-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 @media screen and (max-width: 768px) {
   .main {
     padding: 12px;
@@ -2245,8 +2282,12 @@ onMounted(async () => {
     margin-bottom: 0;
   }
 
-  .create-course-btn {
+  .course-action-buttons {
     width: 100%;
+  }
+
+  .course-action-buttons .el-button {
+    flex: 1;
     margin-left: 0;
   }
 

@@ -41,12 +41,15 @@ import {
 import {
   assistantApiErrorMessage,
   createAssistantConversation,
+  getAssistantConversationMessages,
+  getAssistantConversationsByCourse,
   getAssistantResource,
   listAssistantResources,
   reportAssistantResourceUsage,
   streamAssistantChat,
   uploadAssistantDocumentAttachment,
   type AssistantChatStreamEvent,
+  type AssistantConversationMessageItem,
   type AssistantResourceSummary
 } from "@/api/frontend/assistant";
 
@@ -61,7 +64,7 @@ const props = withDefaults(
   { embedded: false, fixedViewport: false }
 );
 
-type ResourceSource = "assistant";
+type ResourceSource = "assistant" | "demo_import";
 type PreviewKind =
   | "html"
   | "markdown"
@@ -102,6 +105,13 @@ type StudentResource = {
   htmlAnimationError?: string;
   updatedAt?: string;
   qualityScore?: number;
+  sourceKind?: string;
+  variantCode?: string;
+  variantLabel?: string;
+  scopeLevel?: string;
+  resourceSetId?: string;
+  revisionId?: string;
+  previewPdfUrl?: string | null;
 };
 
 type TutorMessage = {
@@ -193,6 +203,7 @@ const selectedCourseId = ref<number | undefined>(
 );
 const courseDetail = ref<CourseDetailResult | null>(null);
 const assistantResources = ref<AssistantResourceSummary[]>([]);
+const demoResources = ref<AssistantResourceSummary[]>([]);
 const resourceSearch = ref("");
 const activeResourceKey = ref("");
 
@@ -215,6 +226,7 @@ const quoteAction = ref<{
   top: number;
 } | null>(null);
 const tutorConversationId = ref("");
+const tutorHistoryLoading = ref(false);
 const tutorStreaming = ref(false);
 const tutorAttachment = ref<File | null>(null);
 const tutorFileInput = ref<HTMLInputElement | null>(null);
@@ -225,6 +237,8 @@ let resourceRequestVersion = 0;
 let previewRequestVersion = 0;
 let resourceDetailRequestVersion = 0;
 
+const tutorConversationStoragePrefix = "student-resource-tutor-conversation";
+
 const routeCourseId = computed(() => {
   const value = route.query.courseId || route.query.course_id;
   const normalized = Array.isArray(value) ? value[0] : value;
@@ -233,12 +247,26 @@ const routeCourseId = computed(() => {
 });
 
 const courseResources = computed<StudentResource[]>(() => {
-  const personalizedResources = assistantResources.value.map(resource => ({
-    resourceKey: `assistant:${resource.resource_id}`,
-    source: "assistant" as const,
+  const allResources = [
+    ...assistantResources.value.map(resource => ({
+      resource,
+      source: "assistant" as const
+    })),
+    ...demoResources.value.map(resource => ({
+      resource,
+      source: "demo_import" as const
+    }))
+  ];
+  return allResources.map(({ resource, source }) => ({
+    resourceKey: `${source}:${resource.resource_id}`,
+    source,
     title: resource.title || "个性化学习资源",
     resourceType: resource.resource_type || "",
-    fileUrl: resource.preview_url || resource.download_url || undefined,
+    fileUrl:
+      resource.preview_pdf_url ||
+      resource.preview_url ||
+      resource.download_url ||
+      undefined,
     resourceId: resource.resource_id,
     previewUrl: resource.preview_url,
     downloadUrl: resource.download_url,
@@ -257,9 +285,15 @@ const courseResources = computed<StudentResource[]>(() => {
     htmlAnimationMessage: resource.html_animation_message,
     htmlAnimationError: resource.html_animation_error,
     updatedAt: resource.updated_at,
-    qualityScore: resource.quality_score
+    qualityScore: resource.quality_score,
+    sourceKind: resource.source_kind,
+    variantCode: resource.variant_code,
+    variantLabel: resource.variant_label,
+    scopeLevel: resource.scope_level,
+    resourceSetId: resource.resource_set_id,
+    revisionId: resource.revision_id,
+    previewPdfUrl: resource.preview_pdf_url
   }));
-  return personalizedResources;
 });
 
 const activeResource = computed(() =>
@@ -414,7 +448,7 @@ function resourceTypeLabel(resource: StudentResource) {
 }
 
 function resourceSourceLabel(resource: StudentResource) {
-  return resource.source === "assistant" ? "个性化推荐" : "教学资源";
+  return resource.source === "demo_import" ? "教师发布" : "个性化推荐";
 }
 
 function resourceIcon(resource: StudentResource) {
@@ -797,14 +831,26 @@ async function loadCourseResources(courseId?: number) {
   const requestId = ++resourceRequestVersion;
   courseDetail.value = null;
   assistantResources.value = [];
+  demoResources.value = [];
   resourceError.value = "";
   activeResourceKey.value = "";
   if (!courseId) return;
 
   resourceLoading.value = true;
   try {
-    const [assistantResult, courseResult] = await Promise.allSettled([
-      listAssistantResources({ course_id: courseId }),
+    const [assistantResult, demoResult, courseResult] = await Promise.allSettled([
+      listAssistantResources({
+        course_id: courseId,
+        source_kind: "generated",
+        page: 1,
+        page_size: 100
+      }),
+      listAssistantResources({
+        course_id: courseId,
+        source_kind: "demo_import",
+        page: 1,
+        page_size: 100
+      }),
       getCourseDetail({ courseId })
     ]);
     if (requestId !== resourceRequestVersion) return;
@@ -812,9 +858,16 @@ async function loadCourseResources(courseId?: number) {
       assistantResult.status === "fulfilled"
         ? assistantResult.value.data.list || []
         : [];
+    demoResources.value =
+      demoResult.status === "fulfilled" ? demoResult.value.data.list || [] : [];
     courseDetail.value =
       courseResult.status === "fulfilled" ? courseResult.value.data : null;
-    if (assistantResult.status === "rejected") throw assistantResult.reason;
+    if (
+      assistantResult.status === "rejected" &&
+      demoResult.status === "rejected"
+    ) {
+      throw assistantResult.reason;
+    }
   } catch (error) {
     if (requestId !== resourceRequestVersion) return;
     resourceError.value = "本课程的资源暂时无法加载，请稍后重试。";
@@ -842,12 +895,20 @@ async function loadResourceDetail(resource: StudentResource) {
   const requestId = ++resourceDetailRequestVersion;
   resourceDetailLoading.value = true;
   try {
-    const { data } = await getAssistantResource(resource.resourceId);
+    const { data } = await getAssistantResource(resource.resourceId, {
+      course_id: selectedCourseId.value
+    });
     const detail = data.resource;
     if (!detail || requestId !== resourceDetailRequestVersion) return;
-    assistantResources.value = assistantResources.value.map(item =>
-      item.resource_id === resource.resourceId ? { ...item, ...detail } : item
-    );
+    const mergeDetail = (items: AssistantResourceSummary[]) =>
+      items.map(item =>
+        item.resource_id === resource.resourceId ? { ...item, ...detail } : item
+      );
+    if (resource.source === "demo_import") {
+      demoResources.value = mergeDetail(demoResources.value);
+    } else {
+      assistantResources.value = mergeDetail(assistantResources.value);
+    }
   } catch (error) {
     // 列表摘要已经足够展示卡片，详情接口失败时保留当前资源继续学习。
     console.warn("[StudentResourceWorkbench] 资源详情加载失败:", error);
@@ -1049,6 +1110,150 @@ function removeTutorQuote(quoteId: string) {
   tutorQuotes.value = tutorQuotes.value.filter(item => item.id !== quoteId);
 }
 
+function tutorConversationStorageKey(courseId: number, resourceKey: string) {
+  return `${tutorConversationStoragePrefix}:${courseId}:${encodeURIComponent(resourceKey)}`;
+}
+
+function readStoredTutorConversationId(courseId: number, resourceKey: string) {
+  if (typeof window === "undefined") return "";
+  try {
+    return (
+      window.localStorage.getItem(
+        tutorConversationStorageKey(courseId, resourceKey)
+      ) || ""
+    );
+  } catch {
+    return "";
+  }
+}
+
+function rememberTutorConversationId(
+  courseId: number | undefined,
+  resourceKey: string,
+  conversationId: string
+) {
+  if (typeof window === "undefined" || !courseId || !conversationId) return;
+  try {
+    window.localStorage.setItem(
+      tutorConversationStorageKey(courseId, resourceKey),
+      conversationId
+    );
+  } catch {
+    // localStorage 受限时仍依赖服务端会话列表恢复。
+  }
+}
+
+function clearStoredTutorConversationId(courseId: number, resourceKey: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(
+      tutorConversationStorageKey(courseId, resourceKey)
+    );
+  } catch {
+    // 忽略浏览器存储权限错误。
+  }
+}
+
+function tutorIntroMessage(resource: StudentResource): TutorMessage {
+  return {
+    id: `intro-${resource.resourceKey}`,
+    role: "assistant",
+    content: `我会围绕《${resource.title}》进行辅导。可以让我解释概念、梳理结构，或出几道练习题。`
+  };
+}
+
+function isTutorConversationForResource(
+  conversation: { metadata?: Record<string, any> },
+  resource: StudentResource
+) {
+  const metadata = conversation.metadata || {};
+  return (
+    metadata.ui_entry === "student_multimodal_resources" &&
+    (metadata.resource_key === resource.resourceKey ||
+      (resource.resourceId &&
+        String(metadata.resource_id) === String(resource.resourceId)))
+  );
+}
+
+function mapTutorHistoryMessage(
+  message: AssistantConversationMessageItem,
+  index: number
+): TutorMessage | null {
+  const role = message.role.toLowerCase();
+  if (role !== "user" && role !== "student" && role !== "assistant") {
+    return null;
+  }
+  const content = message.content_text?.trim();
+  if (!content) return null;
+  return {
+    id: message.message_id || `history-${index}`,
+    role: role === "user" || role === "student" ? "student" : "assistant",
+    content
+  };
+}
+
+async function restoreTutorConversation(resource?: StudentResource) {
+  const courseId = selectedCourseId.value;
+  const sessionVersion = tutorSessionVersion;
+  if (!resource || !courseId) return;
+
+  tutorHistoryLoading.value = true;
+  try {
+    let conversationId = readStoredTutorConversationId(
+      courseId,
+      resource.resourceKey
+    );
+    let history:
+      | Awaited<ReturnType<typeof getAssistantConversationMessages>>
+      | undefined;
+
+    if (conversationId) {
+      try {
+        history = await getAssistantConversationMessages(conversationId);
+      } catch {
+        clearStoredTutorConversationId(courseId, resource.resourceKey);
+        conversationId = "";
+      }
+    }
+
+    if (!conversationId) {
+      const { data } = await getAssistantConversationsByCourse({
+        course_id: courseId
+      });
+      const matchingConversation = (data.list || []).find(item =>
+        isTutorConversationForResource(item, resource)
+      );
+      conversationId = matchingConversation?.conversation_id || "";
+      if (conversationId) {
+        history = await getAssistantConversationMessages(conversationId);
+      }
+    }
+
+    if (
+      !conversationId ||
+      !isTutorSessionCurrent(sessionVersion, resource.resourceKey)
+    ) {
+      return;
+    }
+
+    tutorConversationId.value = conversationId;
+    rememberTutorConversationId(courseId, resource.resourceKey, conversationId);
+    const messages = (history?.data.list || [])
+      .map(mapTutorHistoryMessage)
+      .filter((message): message is TutorMessage => Boolean(message));
+    if (messages.length) {
+      tutorMessages.value = [tutorIntroMessage(resource), ...messages];
+    }
+  } catch (error) {
+    // 历史读取失败不影响当前资料继续提问，首次发送时仍会创建/继续会话。
+    console.warn("[StudentResourceWorkbench] 学习辅导历史恢复失败:", error);
+  } finally {
+    if (isTutorSessionCurrent(sessionVersion, resource.resourceKey)) {
+      tutorHistoryLoading.value = false;
+    }
+  }
+}
+
 function buildTutorQuestion(question: string, quotes: TutorQuote[]) {
   if (!quotes.length) return question;
   const quoteContext = quotes
@@ -1077,6 +1282,7 @@ async function ensureTutorConversation(version: number, resourceKey: string) {
     title: `${selectedCourseName.value} · ${resource?.title || "学习资料"}`,
     metadata: {
       ui_entry: "student_multimodal_resources",
+      resource_key: resource?.resourceKey || "",
       resource_title: resource?.title || "",
       resource_type: resource?.resourceType || "",
       resource_id: resource?.resourceId || ""
@@ -1087,6 +1293,11 @@ async function ensureTutorConversation(version: number, resourceKey: string) {
     data.conversation?.conversation_id || data.conversation_id;
   if (!conversationId) throw new Error("后端未返回学习辅导会话");
   tutorConversationId.value = conversationId;
+  rememberTutorConversationId(
+    selectedCourseId.value,
+    resourceKey,
+    conversationId
+  );
   return conversationId;
 }
 
@@ -1201,7 +1412,8 @@ async function sendTutorQuestion(question = tutorQuestion.value) {
   const quotes = [...tutorQuotes.value];
   const text = buildTutorQuestion(questionText, quotes);
   const resource = activeResource.value;
-  if (!text || tutorStreaming.value || !resource) return;
+  if (!text || tutorStreaming.value || tutorHistoryLoading.value || !resource)
+    return;
   const sessionVersion = tutorSessionVersion;
   const resourceKey = resource.resourceKey;
 
@@ -1264,6 +1476,13 @@ async function sendTutorQuestion(question = tutorQuestion.value) {
         if (!isTutorSessionCurrent(sessionVersion, resourceKey)) return;
         if (event.conversation_id)
           tutorConversationId.value = event.conversation_id;
+        if (event.conversation_id) {
+          rememberTutorConversationId(
+            selectedCourseId.value,
+            resourceKey,
+            event.conversation_id
+          );
+        }
         if (event.event === "assistant.delta") {
           assistantMessage.content += event.delta || "";
         } else if (event.event === "assistant.completed") {
@@ -1302,18 +1521,12 @@ function resetTutorForResource(resource?: StudentResource) {
   tutorSessionVersion += 1;
   stopTutorStream();
   tutorConversationId.value = "";
+  tutorHistoryLoading.value = false;
   tutorQuestion.value = "";
   tutorQuotes.value = [];
   tutorAttachment.value = null;
-  tutorMessages.value = resource
-    ? [
-        {
-          id: `intro-${resource.resourceKey}`,
-          role: "assistant",
-          content: `我会围绕《${resource.title}》进行辅导。可以让我解释概念、梳理结构，或出几道练习题。`
-        }
-      ]
-    : [];
+  tutorMessages.value = resource ? [tutorIntroMessage(resource)] : [];
+  if (resource) void restoreTutorConversation(resource);
 }
 
 watch(
@@ -1554,6 +1767,14 @@ onUnmounted(() => {
               <el-tag v-if="resource.versionNo" size="small" effect="plain">
                 v{{ resource.versionNo }}
               </el-tag>
+              <el-tag
+                v-if="resource.variantLabel || resource.variantCode"
+                size="small"
+                type="primary"
+                effect="plain"
+              >
+                {{ resource.variantLabel || `${resource.variantCode} 版` }}
+              </el-tag>
             </div>
             <p
               v-if="
@@ -1604,6 +1825,14 @@ onUnmounted(() => {
               <p>
                 <span>{{ resourceSourceLabel(activeResource!) }}</span>
                 <span>{{ activePreviewLabel }}</span>
+                <span
+                  v-if="activeResource?.variantLabel || activeResource?.variantCode"
+                >
+                  {{
+                    activeResource?.variantLabel ||
+                    `${activeResource?.variantCode} 版`
+                  }}
+                </span>
                 <span v-if="activeResource?.chapterName">{{
                   activeResource.chapterName
                 }}</span>
@@ -1939,7 +2168,7 @@ onUnmounted(() => {
             resize="none"
             placeholder="针对当前资料提问"
             aria-label="针对当前资料提问"
-            :disabled="tutorStreaming"
+            :disabled="tutorStreaming || tutorHistoryLoading"
             @keydown.meta.enter.prevent="sendTutorQuestion()"
             @keydown.ctrl.enter.prevent="sendTutorQuestion()"
           />

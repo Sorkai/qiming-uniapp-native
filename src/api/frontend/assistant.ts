@@ -611,6 +611,19 @@ export interface AssistantResourceSummary {
   safety_summary?: string;
   citation_coverage?: number;
   citations?: AssistantResourceCitation[];
+  source_kind?: "generated" | "demo_import" | string;
+  mode?: "demo" | "mixed" | string;
+  verification_status?: string;
+  course_id?: number;
+  chapter_id?: number;
+  hour_id?: number;
+  scope_level?: "course" | "chapter" | "lesson" | string;
+  resource_set_id?: string;
+  revision_id?: string;
+  variant_code?: string;
+  variant_label?: string;
+  resolution_key?: string;
+  preview_pdf_url?: string | null;
 }
 
 export interface AssistantResourceCitation {
@@ -1674,8 +1687,13 @@ export const getAssistantResourceTask = (taskId: string) =>
 export const listAssistantResources = (params?: {
   course_id?: number;
   target_student_id?: number;
+  chapter_id?: number;
+  hour_id?: number;
   task_id?: string;
   resource_type?: string;
+  source_kind?: "generated" | "demo_import";
+  page?: number;
+  page_size?: number;
 }) =>
   http.request<ApiResponse<AssistantListResourcesResp>>(
     "get",
@@ -1683,10 +1701,25 @@ export const listAssistantResources = (params?: {
     { params }
   );
 
-export const getAssistantResource = (resourceId: string) =>
-  http.request<ApiResponse<{ status: string; message?: string; resource: AssistantResourceSummary }>>(
+export const getAssistantResource = (
+  resourceId: string,
+  params?: {
+    course_id?: number;
+    target_student_id?: number;
+    chapter_id?: number;
+    hour_id?: number;
+  }
+) =>
+  http.request<
+    ApiResponse<{
+      status: string;
+      message?: string;
+      resource: AssistantResourceSummary;
+    }>
+  >(
     "get",
-    `/edu/frontend/v1/assistant/resources/${encodeURIComponent(resourceId)}`
+    `/edu/frontend/v1/assistant/resources/${encodeURIComponent(resourceId)}`,
+    { params }
   );
 
 export const updateAssistantResource = (
@@ -1712,7 +1745,12 @@ export const updateAssistantResource = (
 export const reviewAssistantResource = (
   resourceId: string,
   data: {
-    review_status: "pending" | "approved" | "rejected" | "changes_requested" | string;
+    review_status:
+      | "pending"
+      | "approved"
+      | "rejected"
+      | "changes_requested"
+      | string;
     review_comment?: string;
   }
 ) =>
@@ -1947,7 +1985,9 @@ export const getAssistantDashboardStudents = (params?: {
     { params }
   );
 
-export const getAssistantDashboardResources = (params?: { course_id?: number }) =>
+export const getAssistantDashboardResources = (params?: {
+  course_id?: number;
+}) =>
   http.request<ApiResponse<AssistantDashboardResourcesResp>>(
     "get",
     "/edu/frontend/v1/assistant/dashboard/resources",

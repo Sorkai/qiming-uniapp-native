@@ -35,6 +35,7 @@ import AgentPdfWorkbench from "./AgentPdfWorkbench.vue";
 import AiAppEmptyState from "./components/AiAppEmptyState.vue";
 
 import AiResourceGeneration from "./components/AiResourceGeneration.vue";
+import AiDemoResourceManager from "./components/AiDemoResourceManager.vue";
 import AiStudentResourceLibrary from "./components/AiStudentResourceLibrary.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
@@ -247,6 +248,7 @@ const resolveRailFromPath = (path: string) => {
 
 // 会话数据集
 const activeRail = ref(resolveRailFromPath(route.path));
+const resourceWorkspaceMode = ref<"demo" | "generated">("demo");
 watch(
   () => route.path,
   newPath => {
@@ -2237,24 +2239,42 @@ onUnmounted(() => {
             class="h-full w-full min-w-0 overflow-hidden"
           >
             <div
-              v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full min-w-0 flex items-center justify-center bg-transparent"
-            >
-              <AiAppEmptyState
-                title="请选择学生"
-                description="选择学生后可查看资源生成任务和学习资源。"
-                :icon="User"
-              />
-            </div>
-            <div
-              v-else-if="isStaffMode"
+              v-if="isStaffMode"
               class="h-full w-full min-w-0 bg-transparent overflow-hidden"
             >
-              <AiResourceGeneration
-                :course-id="selectedCourseId"
-                :target-student-id="selectedTargetStudentId"
-                :requires-target-student="isStaffMode"
-              />
+              <el-tabs
+                v-model="resourceWorkspaceMode"
+                class="resource-workspace-tabs h-full flex flex-col"
+              >
+                <el-tab-pane label="演示导入资源" name="demo" class="h-full">
+                  <AiDemoResourceManager
+                    :course-id="selectedCourseId"
+                    :can-import="apiMode === 'admin'"
+                  />
+                </el-tab-pane>
+                <el-tab-pane
+                  label="AI 生成资源"
+                  name="generated"
+                  class="h-full"
+                >
+                  <div
+                    v-if="!selectedStudentId"
+                    class="h-full w-full min-w-0 flex items-center justify-center bg-transparent"
+                  >
+                    <AiAppEmptyState
+                      title="请选择学生"
+                      description="选择学生后可查看资源生成任务和学习资源。"
+                      :icon="User"
+                    />
+                  </div>
+                  <AiResourceGeneration
+                    v-else
+                    :course-id="selectedCourseId"
+                    :target-student-id="selectedTargetStudentId"
+                    :requires-target-student="isStaffMode"
+                  />
+                </el-tab-pane>
+              </el-tabs>
             </div>
             <AiStudentResourceLibrary v-else :course-id="selectedCourseId" />
           </div>
