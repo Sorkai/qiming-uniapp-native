@@ -18,14 +18,36 @@
     :show-close="!importRunning"
   >
     <div class="bulk-course-import">
-      <el-alert type="info" :closable="false" show-icon>
+      <el-alert
+        v-if="isRecoveringInterruptedImport"
+        type="warning"
+        :closable="false"
+        show-icon
+      >
+        <template #title>
+          检测到
+          {{ formatSessionTime(recoverySession?.updatedAt) }}
+          的上传被页面刷新或关闭中断。浏览器不会在后台继续上传，正在处理的课程需要先核对后再提交。
+        </template>
+      </el-alert>
+      <el-alert v-else type="info" :closable="false" show-icon>
         <template #title>
           已读取课程目录，将按“课程 / 章节 / 小节 /
           视频与资料”自动创建课程结构。
         </template>
       </el-alert>
 
-      <section class="import-settings" aria-label="导入设置">
+      <el-alert v-if="importRunning" type="warning" :closable="false" show-icon>
+        <template #title>
+          上传正在进行。请保持当前页面打开；刷新或关闭页面会终止未完成的资源上传。
+        </template>
+      </el-alert>
+
+      <section
+        v-if="!isRecoveringInterruptedImport"
+        class="import-settings"
+        aria-label="导入设置"
+      >
         <div class="section-heading">
           <h3>统一设置</h3>
           <p>导入课程将使用以下分类、属性和结束时间。</p>
@@ -70,7 +92,57 @@
         </el-form>
       </section>
 
-      <section v-if="courses.length" class="parsed-courses" aria-live="polite">
+      <section
+        v-if="isRecoveringInterruptedImport"
+        class="recovery-import"
+        aria-live="polite"
+      >
+        <div class="section-heading">
+          <div>
+            <h3>中断任务核对</h3>
+            <p>
+              上次共提交
+              {{ recoverySession?.courses.length || 0 }}
+              门课程。已创建课程会保留，刷新前正在处理的课程无法由浏览器自动续传。
+            </p>
+          </div>
+        </div>
+        <el-table :data="recoveryCourses" max-height="300">
+          <el-table-column prop="title" label="课程名称" min-width="220" />
+          <el-table-column label="刷新前状态" min-width="160">
+            <template #default="{ row }">
+              <el-tag
+                :type="getRecoverySourceType(row.importStatus)"
+                size="small"
+              >
+                {{ getRecoverySourceText(row.importStatus) }}
+              </el-tag>
+              <span v-if="row.message" class="status-message">{{
+                row.message
+              }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="课程列表核对" min-width="230">
+            <template #default="{ row }">
+              <el-tag
+                :type="getRecoveryLookupType(row.lookupStatus)"
+                size="small"
+              >
+                {{ getRecoveryLookupText(row.lookupStatus) }}
+              </el-tag>
+              <span v-if="row.lookupMessage" class="status-message">{{
+                row.lookupMessage
+              }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </section>
+
+      <section
+        v-else-if="courses.length"
+        class="parsed-courses"
+        aria-live="polite"
+      >
         <div class="parsed-courses__heading">
           <div>
             <h3>解析结果</h3>
@@ -238,22 +310,44 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button :disabled="importRunning" @click="dialogVisible = false"
-          >取消</el-button
-        >
-        <el-button
-          type="primary"
-          :icon="UploadFilled"
-          :loading="importRunning"
-          :disabled="!canImport"
-          @click="startImport"
-        >
-          {{
-            importRunning
-              ? "正在上传"
-              : `校验通过后上传 ${importableCourses.length} 门课程`
-          }}
-        </el-button>
+        <template v-if="isRecoveringInterruptedImport">
+          <el-button :disabled="recoveryChecking" @click="clearRecoverySession">
+            清除记录
+          </el-button>
+          <el-button :loading="recoveryChecking" @click="checkRecoveryCourses">
+            重新核对课程列表
+          </el-button>
+          <el-button type="primary" @click="openFolderPicker">
+            重新选择同一目录
+          </el-button>
+        </template>
+        <template v-else>
+          <el-button :disabled="importRunning" @click="dialogVisible = false"
+            >取消</el-button
+          >
+          <el-button
+            v-if="retryableFailureCount"
+            type="primary"
+            :icon="RefreshRight"
+            :disabled="importRunning"
+            @click="retryFailedCourses"
+          >
+            重新上传失败的 {{ retryableFailureCount }} 门课程
+          </el-button>
+          <el-button
+            type="primary"
+            :icon="UploadFilled"
+            :loading="importRunning"
+            :disabled="!canImport"
+            @click="startImport"
+          >
+            {{
+              importRunning
+                ? "正在上传"
+                : `校验通过后上传 ${pendingCourses.length} 门课程`
+            }}
+          </el-button>
+        </template>
       </div>
     </template>
   </el-dialog>
@@ -318,18 +412,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import {
   CircleCheck,
   Collection,
   Document,
   EditPen,
+  RefreshRight,
   UploadFilled,
   VideoCamera,
   WarningFilled
 } from "@element-plus/icons-vue";
-import { createCourse } from "@/api/course";
+import { createCourse, getCourseList } from "@/api/course";
 import type { CourseCreateParams } from "@/api/course";
 import { getCategoryList } from "@/api/category";
 import { uploadFileWithSts } from "@/utils/sts-upload";
@@ -346,6 +441,11 @@ import type {
 
 type ImportStatus = "ready" | "uploading" | "success" | "failed";
 type ValidationStatus = "pending" | "valid" | "invalid";
+type RecoveryLookupStatus = "pending" | "found" | "missing" | "unavailable";
+
+const batchImportSessionStorageKey = "course-batch-import-session-v1";
+const resourceUploadConcurrency = 5;
+const videoMetadataConcurrency = 4;
 
 interface ImportableCourse extends ParsedCoursePackage {
   importStatus: ImportStatus;
@@ -378,6 +478,23 @@ interface CourseImportJob {
   assets: UploadAsset[];
 }
 
+interface BatchImportSession {
+  version: 1;
+  startedAt: string;
+  updatedAt: string;
+  courses: Array<{
+    id: string;
+    title: string;
+    importStatus: ImportStatus;
+    importMessage: string;
+  }>;
+}
+
+type RecoveryCourse = BatchImportSession["courses"][number] & {
+  lookupStatus: RecoveryLookupStatus;
+  lookupMessage: string;
+};
+
 const emit = defineEmits<{
   completed: [result: { success: number; failed: number }];
 }>();
@@ -392,9 +509,14 @@ const categoryLoading = ref(false);
 const categoryOptions = ref<Array<{ categoryId: number; name: string }>>([]);
 const uploadedBytes = ref(0);
 const totalUploadBytes = ref(0);
+const uploadSpeedBytes = ref(0);
 const importFailureCount = ref(0);
 const importSuccessCount = ref(0);
 const editorVisible = ref(false);
+const recoverySession = ref<BatchImportSession | null>(null);
+const recoveryCourses = ref<RecoveryCourse[]>([]);
+const recoveryChecking = ref(false);
+const activeImportStartedAt = ref("");
 const settings = reactive({
   categoryId: undefined as number | undefined,
   isRequired: 1,
@@ -419,14 +541,28 @@ const attachmentCount = computed(() =>
 const importableCourses = computed(() =>
   courses.value.filter(course => course.isValid)
 );
+const pendingCourses = computed(() =>
+  importableCourses.value.filter(course => course.importStatus !== "success")
+);
+const retryableFailureCount = computed(
+  () =>
+    courses.value.filter(
+      course =>
+        course.importStatus === "failed" &&
+        !course.importMessage.startsWith("创建课程失败：")
+    ).length
+);
 const canImport = computed(
   () =>
     !importRunning.value &&
     !importFinished.value &&
     Boolean(settings.categoryId) &&
     Boolean(settings.endingTime) &&
-    importableCourses.value.length > 0 &&
-    importableCourses.value.every(course => course.validationStatus === "valid")
+    pendingCourses.value.length > 0 &&
+    pendingCourses.value.every(course => course.validationStatus === "valid")
+);
+const isRecoveringInterruptedImport = computed(
+  () => Boolean(recoverySession.value) && courses.value.length === 0
 );
 const overallProgress = computed(() => {
   if (!totalUploadBytes.value) return importFinished.value ? 100 : 0;
@@ -437,10 +573,185 @@ const overallProgress = computed(() => {
 });
 const progressLabel = computed(() => {
   if (importRunning.value) {
-    return `已上传 ${formatBytes(uploadedBytes.value)} / ${formatBytes(totalUploadBytes.value)}`;
+    return `已上传 ${formatBytes(uploadedBytes.value)} / ${formatBytes(totalUploadBytes.value)} · ${formatBytes(uploadSpeedBytes.value)}/s`;
   }
   return `已完成 ${importSuccessCount.value} 门，失败 ${importFailureCount.value} 门`;
 });
+
+let speedSampleLoaded = 0;
+let speedSampleTime = 0;
+
+function resetUploadTelemetry() {
+  uploadedBytes.value = 0;
+  uploadSpeedBytes.value = 0;
+  speedSampleLoaded = 0;
+  speedSampleTime = Date.now();
+}
+
+function recordUploadedBytes(delta: number) {
+  if (!delta) return;
+
+  uploadedBytes.value += delta;
+  const now = Date.now();
+  const elapsed = now - speedSampleTime;
+  if (elapsed < 500) return;
+
+  uploadSpeedBytes.value = Math.max(
+    0,
+    (uploadedBytes.value - speedSampleLoaded) / (elapsed / 1000)
+  );
+  speedSampleLoaded = uploadedBytes.value;
+  speedSampleTime = now;
+}
+
+function formatSessionTime(value?: string) {
+  if (!value) return "上次";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "上次";
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function readImportSession() {
+  try {
+    const raw = window.localStorage.getItem(batchImportSessionStorageKey);
+    if (!raw) return null;
+    const session = JSON.parse(raw) as BatchImportSession;
+    if (session?.version !== 1 || !Array.isArray(session.courses)) return null;
+    return session;
+  } catch (error) {
+    console.warn("读取批量上传任务记录失败:", error);
+    return null;
+  }
+}
+
+function clearStoredImportSession() {
+  window.localStorage.removeItem(batchImportSessionStorageKey);
+}
+
+function persistImportSession() {
+  if (!activeImportStartedAt.value) return;
+
+  const session: BatchImportSession = {
+    version: 1,
+    startedAt: activeImportStartedAt.value,
+    updatedAt: new Date().toISOString(),
+    courses: importableCourses.value.map(course => ({
+      id: course.id,
+      title: course.title,
+      importStatus: course.importStatus,
+      importMessage: course.importMessage
+    }))
+  };
+
+  try {
+    window.localStorage.setItem(
+      batchImportSessionStorageKey,
+      JSON.stringify(session)
+    );
+  } catch (error) {
+    console.warn("保存批量上传任务记录失败:", error);
+  }
+}
+
+function getRecoverySourceType(status: ImportStatus) {
+  if (status === "success") return "success";
+  if (status === "failed") return "danger";
+  if (status === "uploading") return "warning";
+  return "info";
+}
+
+function getRecoverySourceText(status: ImportStatus) {
+  if (status === "success") return "前端已确认创建";
+  if (status === "failed") return "上次上传失败";
+  if (status === "uploading") return "刷新前上传中";
+  return "等待上传";
+}
+
+function getRecoveryLookupType(status: RecoveryLookupStatus) {
+  if (status === "found") return "success";
+  if (status === "missing") return "warning";
+  if (status === "unavailable") return "danger";
+  return "info";
+}
+
+function getRecoveryLookupText(status: RecoveryLookupStatus) {
+  if (status === "found") return "发现同名课程";
+  if (status === "missing") return "未发现同名课程";
+  if (status === "unavailable") return "当前无法核对";
+  return "等待核对";
+}
+
+function populateRecoveryCourses(session: BatchImportSession) {
+  recoveryCourses.value = session.courses.map(course => ({
+    ...course,
+    lookupStatus: "pending",
+    lookupMessage: ""
+  }));
+}
+
+async function checkRecoveryCourses() {
+  if (!recoverySession.value || recoveryChecking.value) return;
+
+  recoveryChecking.value = true;
+  try {
+    recoveryCourses.value = await Promise.all(
+      recoverySession.value.courses.map(async course => {
+        try {
+          const response = await getCourseList({
+            pageNum: 1,
+            pageSize: 100,
+            courseName: course.title
+          });
+          const matchedCourses = (response?.data?.courseList || []).filter(
+            item => item.title === course.title
+          );
+
+          return {
+            ...course,
+            lookupStatus: matchedCourses.length ? "found" : "missing",
+            lookupMessage: matchedCourses.length
+              ? `课程列表中找到 ${matchedCourses.length} 门同名课程，请核对后再重新上传。`
+              : "可重新选择目录后继续上传。"
+          } as RecoveryCourse;
+        } catch (error) {
+          return {
+            ...course,
+            lookupStatus: "unavailable",
+            lookupMessage: getImportErrorMessage(error)
+          } as RecoveryCourse;
+        }
+      })
+    );
+  } finally {
+    recoveryChecking.value = false;
+  }
+}
+
+function clearRecoverySession() {
+  clearStoredImportSession();
+  recoverySession.value = null;
+  recoveryCourses.value = [];
+  dialogVisible.value = false;
+}
+
+function restoreInterruptedImport() {
+  const session = readImportSession();
+  if (!session?.courses.some(course => course.importStatus === "uploading")) {
+    return;
+  }
+
+  recoverySession.value = session;
+  populateRecoveryCourses(session);
+  dialogVisible.value = true;
+  void checkRecoveryCourses();
+}
+
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+  if (!importRunning.value) return;
+  persistImportSession();
+  event.preventDefault();
+  event.returnValue = "";
+}
 
 function getDefaultEndingTime() {
   const date = new Date();
@@ -514,6 +825,10 @@ function handleDirectorySelection(event: Event) {
   input.value = "";
   if (!files.length) return;
 
+  clearStoredImportSession();
+  recoverySession.value = null;
+  recoveryCourses.value = [];
+  activeImportStartedAt.value = "";
   const result = parseCoursePackages(files);
   ignoredFileCount.value = result.ignoredFileCount;
   courses.value = result.courses.map(course => ({
@@ -527,7 +842,7 @@ function handleDirectorySelection(event: Event) {
   importFinished.value = false;
   importFailureCount.value = 0;
   importSuccessCount.value = 0;
-  uploadedBytes.value = 0;
+  resetUploadTelemetry();
   totalUploadBytes.value = 0;
   dialogVisible.value = true;
   void loadCategories();
@@ -642,12 +957,18 @@ function getImportErrorMessage(error: unknown) {
     }
   )?.response;
   const serverMessage = response?.data?.msg || response?.data?.message;
+  const message =
+    typeof serverMessage === "string" && serverMessage.trim()
+      ? serverMessage.trim()
+      : error instanceof Error
+        ? error.message
+        : "";
 
-  if (typeof serverMessage === "string" && serverMessage.trim()) {
-    return serverMessage.trim();
+  if (/access denied/i.test(message)) {
+    return "对象存储拒绝写入：STS 授权与上传方式不匹配，请重新发起上传";
   }
+  if (message) return message;
   if (response?.status) return `服务返回 ${response.status}`;
-  if (error instanceof Error) return error.message;
   return "未知错误";
 }
 
@@ -659,9 +980,11 @@ function getAssetLabel(asset: UploadAsset) {
   return `附件“${asset.resource?.title || asset.file.name}”`;
 }
 
-async function buildImportJobs(): Promise<CourseImportJob[]> {
+async function buildImportJobs(
+  coursesToImport = pendingCourses.value
+): Promise<CourseImportJob[]> {
   return Promise.all(
-    importableCourses.value.map(async course => {
+    coursesToImport.map(async course => {
       const cover = await createCourseCover(
         course.title.trim(),
         course.provider
@@ -726,21 +1049,25 @@ async function uploadCourse(
   );
   const videoDurations = new Map<string, number>();
 
-  for (const chapter of job.course.chapters) {
-    for (const hour of chapter.hours) {
+  const courseHours = job.course.chapters.flatMap(chapter => chapter.hours);
+  await runWithConcurrency(
+    courseHours,
+    async hour => {
       videoDurations.set(hour.id, await getVideoDuration(hour.video.file));
-    }
-  }
+    },
+    videoMetadataConcurrency
+  );
 
   const uploadAsset = async (asset: UploadAsset) => {
     const assetProgressId = `${job.course.id}:${asset.id}`;
     try {
       const result = await uploadFileWithSts(asset.file, {
+        multipartConcurrency: 2,
         onProgress: loaded => {
           const previous = progressByAsset.get(assetProgressId) || 0;
           const delta = Math.max(loaded - previous, 0);
           progressByAsset.set(assetProgressId, loaded);
-          uploadedBytes.value += delta;
+          recordUploadedBytes(delta);
 
           const courseUploaded =
             (courseUploadedBytes.get(job.course.id) || 0) + delta;
@@ -766,7 +1093,8 @@ async function uploadCourse(
   await uploadAsset(coverAsset);
   await runWithConcurrency(
     job.assets.filter(asset => asset.kind !== "cover"),
-    uploadAsset
+    uploadAsset,
+    resourceUploadConcurrency
   );
 
   const cover = uploadedAssets.get("cover");
@@ -845,10 +1173,14 @@ async function startImport() {
   if (!jobs.length) return;
 
   importRunning.value = true;
+  activeImportStartedAt.value = new Date().toISOString();
+  persistImportSession();
   importFinished.value = false;
-  importSuccessCount.value = 0;
+  importSuccessCount.value = courses.value.filter(
+    course => course.importStatus === "success"
+  ).length;
   importFailureCount.value = 0;
-  uploadedBytes.value = 0;
+  resetUploadTelemetry();
   totalUploadBytes.value = jobs.reduce(
     (total, job) =>
       total + job.assets.reduce((sum, asset) => sum + asset.file.size, 0),
@@ -859,7 +1191,8 @@ async function startImport() {
   for (const job of jobs) {
     job.course.importStatus = "uploading";
     job.course.importProgress = 0;
-    job.course.importMessage = "";
+    job.course.importMessage = "正在上传课程封面和资源";
+    persistImportSession();
 
     try {
       await uploadCourse(job, progressByAsset);
@@ -867,16 +1200,19 @@ async function startImport() {
       job.course.importProgress = 100;
       job.course.importMessage = "课程、章节与资源已创建";
       importSuccessCount.value += 1;
+      persistImportSession();
     } catch (error) {
       console.error(`批量导入课程失败：${job.course.title}`, error);
       job.course.importStatus = "failed";
-      job.course.importMessage =
-        error instanceof Error ? error.message : "上传失败";
+      job.course.importMessage = getImportErrorMessage(error);
       importFailureCount.value += 1;
+      persistImportSession();
     }
   }
 
   importRunning.value = false;
+  activeImportStartedAt.value = "";
+  clearStoredImportSession();
   importFinished.value = true;
   emit("completed", {
     success: importSuccessCount.value,
@@ -890,6 +1226,34 @@ async function startImport() {
     ElMessage.success(`已成功上传 ${importSuccessCount.value} 门课程`);
   }
 }
+
+function retryFailedCourses() {
+  if (importRunning.value) return;
+
+  for (const course of courses.value) {
+    if (
+      course.importStatus === "failed" &&
+      !course.importMessage.startsWith("创建课程失败：")
+    ) {
+      course.importStatus = "ready";
+      course.importProgress = 0;
+      course.importMessage = "";
+    }
+  }
+
+  importFinished.value = false;
+  void startImport();
+}
+
+onMounted(() => {
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  restoreInterruptedImport();
+});
+
+onBeforeUnmount(() => {
+  if (importRunning.value) persistImportSession();
+  window.removeEventListener("beforeunload", handleBeforeUnload);
+});
 
 defineExpose({ openFolderPicker });
 </script>
@@ -947,6 +1311,11 @@ defineExpose({ openFolderPicker });
 .parsed-courses {
   display: grid;
   gap: 14px;
+}
+
+.recovery-import {
+  display: grid;
+  gap: 16px;
 }
 
 .parsed-courses__actions {

@@ -11,6 +11,8 @@ export interface StsUploadOptions {
   bizType?: string;
   courseId?: number;
   onProgress?: (loaded: number, total: number) => void;
+  multipartPartSize?: number;
+  multipartConcurrency?: number;
 }
 
 const pickField = (obj: any, keys: string[]) => {
@@ -26,17 +28,40 @@ const pickField = (obj: any, keys: string[]) => {
 };
 
 const callCos = <T>(
-  callback: (done: (error: unknown, data?: T) => void) => void
+  cos: COS,
+  method: string,
+  params: Record<string, unknown>
 ) =>
   new Promise<T>((resolve, reject) => {
-    callback((error, data) => {
+    (cos as any)[method](params, (error: unknown, data: T) => {
       if (error) {
         reject(error);
         return;
       }
-      resolve(data as T);
+
+      resolve(data);
     });
   });
+
+async function runWithConcurrency<T>(
+  items: T[],
+  worker: (item: T) => Promise<void>,
+  limit: number
+) {
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const item = items[nextIndex];
+        nextIndex += 1;
+        await worker(item);
+      }
+    }
+  );
+
+  await Promise.all(workers);
+}
 
 /**
  * Upload a file through the same STS protocol used by the course form.
@@ -147,106 +172,101 @@ export async function uploadFileWithSts(
   reportProgress(0);
 
   const multipartThreshold = 50 * 1024 * 1024;
-  if (rawFile.size > multipartThreshold) {
-    const partSize = 5 * 1024 * 1024;
-    const initMultipartData: any = await callCos(done =>
-      cos.multipartInit(
-        {
-          Bucket: bucket,
-          Region: region,
-          Key: objectKey,
-          ContentType: rawFile.type || "application/octet-stream"
-        },
-        done
-      )
-    );
-    const uploadId = pickField(initMultipartData, ["UploadId", "uploadId"]);
-    if (!uploadId) throw new Error("分片初始化失败：缺少 UploadId");
+  const multipartPartSize = options.multipartPartSize || 16 * 1024 * 1024;
 
-    const parts: Array<{ PartNumber: number; ETag: string }> = [];
-    let uploadedBytes = 0;
+  if (rawFile.size <= multipartThreshold) {
+    await callCos(cos, "putObject", {
+      Bucket: bucket,
+      Region: region,
+      Key: objectKey,
+      Body: rawFile,
+      ContentType: rawFile.type || "application/octet-stream",
+      onProgress: (progress: { loaded?: number }) =>
+        reportProgress(progress?.loaded || 0)
+    });
+  } else {
+    const multipartInitData: any = await callCos(cos, "multipartInit", {
+      Bucket: bucket,
+      Region: region,
+      Key: objectKey,
+      ContentType: rawFile.type || "application/octet-stream"
+    });
+    const uploadId = pickField(multipartInitData, ["UploadId", "uploadId"]);
+    if (!uploadId) {
+      throw new Error("分片初始化失败：缺少 UploadId");
+    }
+
+    const partCount = Math.ceil(rawFile.size / multipartPartSize);
+    const partProgress = new Map<number, number>();
+    const uploadedParts: Array<{ PartNumber: number; ETag: string }> = [];
+    const reportMultipartProgress = () => {
+      const uploaded = Array.from(partProgress.values()).reduce(
+        (total, value) => total + value,
+        0
+      );
+      reportProgress(uploaded);
+    };
 
     try {
-      for (
-        let partNumber = 1, start = 0;
-        start < rawFile.size;
-        partNumber += 1, start += partSize
-      ) {
-        const chunk = rawFile.slice(
-          start,
-          Math.min(start + partSize, rawFile.size)
-        );
-        const uploadPartData: any = await callCos(done =>
-          cos.multipartUpload(
-            {
-              Bucket: bucket,
-              Region: region,
-              Key: objectKey,
-              UploadId: uploadId,
-              PartNumber: partNumber,
-              Body: chunk,
-              ContentLength: chunk.size,
-              onProgress: progress => {
-                reportProgress(uploadedBytes + (progress?.loaded || 0));
-              }
-            } as any,
-            done
-          )
-        );
-        const etag = pickField(uploadPartData, ["ETag", "etag"]);
-        if (!etag) {
-          throw new Error(`分片上传失败：缺少 ETag(part ${partNumber})`);
-        }
-
-        uploadedBytes += chunk.size;
-        reportProgress(uploadedBytes);
-        parts.push({ PartNumber: partNumber, ETag: etag });
-      }
-
-      await callCos(done =>
-        cos.multipartComplete(
-          {
+      await runWithConcurrency(
+        Array.from({ length: partCount }, (_, index) => index + 1),
+        async partNumber => {
+          const start = (partNumber - 1) * multipartPartSize;
+          const chunk = rawFile.slice(
+            start,
+            Math.min(start + multipartPartSize, rawFile.size)
+          );
+          const uploadPartData: any = await callCos(cos, "multipartUpload", {
             Bucket: bucket,
             Region: region,
             Key: objectKey,
             UploadId: uploadId,
-            Parts: parts
-          },
-          done
-        )
+            PartNumber: partNumber,
+            Body: chunk,
+            ContentLength: chunk.size,
+            onProgress: (progress: { loaded?: number }) => {
+              partProgress.set(
+                partNumber,
+                Math.min(progress?.loaded || 0, chunk.size)
+              );
+              reportMultipartProgress();
+            }
+          });
+          const etag = pickField(uploadPartData, ["ETag", "etag"]);
+          if (!etag) {
+            throw new Error(`分片上传失败：缺少 ETag（第 ${partNumber} 片）`);
+          }
+
+          partProgress.set(partNumber, chunk.size);
+          reportMultipartProgress();
+          uploadedParts.push({ PartNumber: partNumber, ETag: etag });
+        },
+        options.multipartConcurrency || 2
       );
+
+      await callCos(cos, "multipartComplete", {
+        Bucket: bucket,
+        Region: region,
+        Key: objectKey,
+        UploadId: uploadId,
+        Parts: uploadedParts.sort(
+          (left, right) => left.PartNumber - right.PartNumber
+        )
+      });
     } catch (error) {
       try {
-        await callCos(done =>
-          cos.multipartAbort(
-            {
-              Bucket: bucket,
-              Region: region,
-              Key: objectKey,
-              UploadId: uploadId
-            },
-            done
-          )
-        );
-      } catch {
-        // The original upload error is more useful to the caller.
-      }
-      throw error;
-    }
-  } else {
-    await callCos(done =>
-      cos.putObject(
-        {
+        await callCos(cos, "multipartAbort", {
           Bucket: bucket,
           Region: region,
           Key: objectKey,
-          Body: rawFile,
-          ContentType: rawFile.type || "application/octet-stream",
-          onProgress: progress => reportProgress(progress?.loaded || 0)
-        } as any,
-        done
-      )
-    );
+          UploadId: uploadId
+        });
+      } catch {
+        // The next STS upload receives a new object key, so a failed cleanup is non-blocking.
+      }
+
+      throw error;
+    }
   }
 
   reportProgress(rawFile.size);
