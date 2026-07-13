@@ -10,6 +10,17 @@ export default [
     }
   },
   {
+    path: "/course/rebuild/:operationId",
+    name: "CourseRebuildProgress",
+    component: () => import("@/views/course/rebuild/index.vue"),
+    meta: {
+      title: "课程重建进度",
+      showLink: false,
+      activePath: "/course/list",
+      roles: ["admin"]
+    }
+  },
+  {
     path: "/course/category",
     name: "CourseCategory",
     component: () => import("@/views/course/category/index.vue"),
