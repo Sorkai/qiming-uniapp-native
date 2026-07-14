@@ -11,6 +11,7 @@ const PUBLIC_ASSET_WHITELIST = [
   "campus-2d-bg.svg",
   "icons",
   "wasm",
+  "demo-resources",
   "virtualpeopleanimation",
   "homepage",
   "publicbackgroundpreset"

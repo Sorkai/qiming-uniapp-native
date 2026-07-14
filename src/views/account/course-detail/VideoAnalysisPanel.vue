@@ -6,6 +6,33 @@
       <span>正在加载视频分析数据...</span>
     </div>
 
+    <!-- 请求错误状态 -->
+    <div v-else-if="taskError" class="panel-error">
+      <div class="error-icon">
+        <svg
+          viewBox="0 0 24 24"
+          width="42"
+          height="42"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <line x1="12" y1="7" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      </div>
+      <span>{{ taskError.message }}</span>
+      <button
+        v-if="taskError.retryable"
+        type="button"
+        class="retry-button"
+        @click="fetchAnalysis()"
+      >
+        重新加载
+      </button>
+    </div>
+
     <!-- 无任务状态 -->
     <div v-else-if="!taskData" class="panel-empty">
       <div class="empty-icon">
@@ -25,7 +52,7 @@
           <line x1="16" y1="17" x2="8" y2="17" />
         </svg>
       </div>
-      <span>暂无视频分析数据</span>
+      <span>{{ emptyMessage }}</span>
     </div>
 
     <!-- 处理中状态 -->
@@ -43,7 +70,7 @@
           :style="{ width: `${taskData.progress ?? 0}%` }"
         />
       </div>
-      <p class="processing-msg">{{ taskData.message || "正在分析中..." }}</p>
+      <p class="processing-msg">{{ taskData.message || statusMessage }}</p>
     </div>
 
     <!-- 分析结果展示 -->
@@ -418,8 +445,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, h, nextTick } from "vue";
-import { getToken, formatToken } from "@/utils/auth";
+import { ref, watch, computed, h, nextTick, onBeforeUnmount } from "vue";
+import { getToken, formatToken, hasManageAccess } from "@/utils/auth";
 import "@vue-flow/core/dist/style.css";
 import "@vue-flow/core/dist/theme-default.css";
 import {
@@ -435,14 +462,24 @@ import {
   getVideoAnalyzeModules,
   getVideoAnalyzeResult,
   type VideoAnalyzeTask,
-  type VideoAnalyzeModuleResult
+  type VideoAnalyzeModuleResult,
+  type VideoAnalyzeFullResult,
+  type ChapterItem,
+  type QaItem,
+  type PptPage
 } from "@/api/frontend/videoAnalysis";
+import {
+  getVideoAnalysisList,
+  type VideoAnalysisTask
+} from "@/api/videoAnalysis";
 
 const props = defineProps<{
   courseId: number;
   chapterId: number;
   currentTheme: string;
+  currentHourId?: number;
   currentHourTitle?: string;
+  currentHourFileUrl?: string;
 }>();
 
 defineEmits(["seek-video"]);
@@ -451,6 +488,16 @@ const loading = ref(false);
 const taskData = ref<VideoAnalyzeTask | null>(null);
 const moduleData = ref<VideoAnalyzeModuleResult | null>(null);
 const activeTab = ref("chapters");
+const emptyMessage = ref("本节暂无视频分析任务");
+
+interface TaskErrorState {
+  message: string;
+  retryable: boolean;
+}
+
+class VideoAnalysisScopeError extends Error {}
+
+const taskError = ref<TaskErrorState | null>(null);
 
 interface MindmapNodeData {
   id: string;
@@ -486,8 +533,14 @@ const buildMindmapResourceUrl = (url: string) => {
   if (isAbsoluteUrl(value)) return value;
   if (value.startsWith("//")) return `${window.location.protocol}${value}`;
   if (value.startsWith("/api/")) return value;
-  if (value.startsWith("/")) return `${apiBaseURL()}${value}`;
-  return `${apiBaseURL()}/${value.replace(/^\/+/, "")}`;
+
+  const objectKey = value.replace(/^\/+/, "");
+  if (mindmapFileProxyTarget) {
+    return import.meta.env.DEV
+      ? `${mindmapFileProxyPrefix}/${objectKey}`
+      : `${mindmapFileProxyTarget.replace(/\/$/, "")}/${objectKey}`;
+  }
+  return `${apiBaseURL()}/${objectKey}`;
 };
 
 const isSameOriginResource = (url: string) => {
@@ -908,14 +961,23 @@ const onMindmapResourceError = () => {
 const hydrateMindmapTree = async (
   requestId: number,
   requestCourseId: number,
-  requestChapterId: number
+  requestChapterId: number,
+  requestHourId: number
 ) => {
   const mindMap = moduleData.value?.mindMap;
   if (!mindMap || mindMap.tree || !mindMap.url) return;
 
   try {
     const tree = await fetchMindmapTreeFromUrl(mindMap.url);
-    if (isStaleRequest(requestId, requestCourseId, requestChapterId)) return;
+    if (
+      isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      )
+    )
+      return;
     if (tree && moduleData.value?.mindMap) {
       moduleData.value.mindMap = {
         ...moduleData.value.mindMap,
@@ -1186,9 +1248,20 @@ const buildMindmapFromData = async () => {
 const statusText = computed(() => {
   const s = taskData.value?.status;
   if (s === "processing") return "处理中";
+  if (s === "submitted") return "已提交";
   if (s === "pending") return "等待中";
   if (s === "failed") return "处理失败";
+  if (s === "cancelled") return "任务已取消";
   return s || "未知";
+});
+
+const statusMessage = computed(() => {
+  const status = taskData.value?.status;
+  if (status === "failed") return "本节视频分析失败";
+  if (status === "cancelled") return "本节视频分析任务已取消";
+  if (status === "submitted") return "任务已提交，等待开始分析";
+  if (status === "pending") return "任务正在排队";
+  return "正在分析中...";
 });
 
 // Tab 图标用 render function
@@ -1376,6 +1449,7 @@ const normalizeLessonText = (value: string) => {
   return String(value || "")
     .toLowerCase()
     .trim()
+    .replace(/^.*\//, "")
     .replace(/\.[a-z0-9]{2,6}$/i, "")
     .replace(/[\s_\-—–()（）\[\]【】《》:：'"`·]/g, "")
     .replace(/^第?\d+(\.\d+)?[章节课讲]?/, "");
@@ -1383,6 +1457,14 @@ const normalizeLessonText = (value: string) => {
 
 const extractLessonIndex = (value: string): string | null => {
   const raw = String(value || "").toLowerCase();
+
+  // 1.1.1 / 1-1-1 / 1_1_1
+  const triple = raw.match(
+    /(\d{1,3})\s*[._\-]\s*(\d{1,3})\s*[._\-]\s*(\d{1,3})/
+  );
+  if (triple) {
+    return `${Number(triple[1])}.${Number(triple[2])}.${Number(triple[3])}`;
+  }
 
   // 1.2 / 1-2 / 1_2
   const pair = raw.match(/(\d{1,2})\s*[._\-]\s*(\d{1,2})/);
@@ -1397,13 +1479,31 @@ const extractLessonIndex = (value: string): string | null => {
   return null;
 };
 
+const normalizeVideoPath = (value: string) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    return decodeURIComponent(new URL(raw).pathname).replace(/^\/+/, "");
+  } catch {
+    return raw.split(/[?#]/, 1)[0].replace(/^\/+/, "");
+  }
+};
+
 const isLikelySameLesson = (fileName: string, hourTitle: string) => {
   const fileIndex = extractLessonIndex(fileName);
   const hourIndex = extractLessonIndex(hourTitle);
 
-  // 如果两边都能提取出课时序号，则必须完全一致
+  // 优先匹配三级课时编号；旧文件名只有两级编号时兼容前两级。
   if (fileIndex && hourIndex) {
-    return fileIndex === hourIndex;
+    if (fileIndex === hourIndex) return true;
+    const fileParts = fileIndex.split(".");
+    const hourParts = hourIndex.split(".");
+    if (fileParts.length !== hourParts.length) {
+      return (
+        fileParts.slice(0, 2).join(".") === hourParts.slice(0, 2).join(".")
+      );
+    }
+    return false;
   }
 
   const fileNorm = normalizeLessonText(fileName);
@@ -1416,165 +1516,467 @@ const isLikelySameLesson = (fileName: string, hourTitle: string) => {
   );
 };
 
+const pickPreferredLessonTask = <
+  T extends { fileName: string; status: string }
+>(
+  tasks: T[]
+) => {
+  const currentPath = normalizeVideoPath(props.currentHourFileUrl || "");
+  const tasksWithPath = currentPath
+    ? tasks.filter(task => {
+        const candidate = normalizeVideoPath(
+          String((task as T & { filePath?: string }).filePath || "")
+        );
+        if (!candidate) return false;
+        return (
+          candidate === currentPath ||
+          candidate.endsWith(`/${currentPath}`) ||
+          currentPath.endsWith(`/${candidate}`)
+        );
+      })
+    : [];
+  const titleMatches = props.currentHourTitle
+    ? tasks.filter(task =>
+        isLikelySameLesson(task.fileName || "", props.currentHourTitle || "")
+      )
+    : tasks;
+  const matching = tasksWithPath.length ? tasksWithPath : titleMatches;
+  const statusOrder = [
+    "completed",
+    "processing",
+    "submitted",
+    "pending",
+    "failed",
+    "cancelled"
+  ];
+
+  for (const status of statusOrder) {
+    const task = matching.find(item => item.status === status);
+    if (task) return task;
+  }
+  return matching[0] || null;
+};
+
+const parseArrayValue = (value: unknown): unknown[] => {
+  const parsed = parseMaybeJson(value);
+  return Array.isArray(parsed) ? parsed : [];
+};
+
+const normalizeChapterItems = (value: unknown): ChapterItem[] =>
+  parseArrayValue(value)
+    .map(item => {
+      const source = item as Record<string, unknown>;
+      return {
+        title: String(source?.title || ""),
+        summary: String(source?.summary || ""),
+        startTime: Number(source?.startTime ?? source?.start_time ?? 0),
+        endTime: Number(source?.endTime ?? source?.end_time ?? 0)
+      };
+    })
+    .filter(item => item.title || item.summary);
+
+const normalizeQaItems = (value: unknown): QaItem[] =>
+  parseArrayValue(value)
+    .map(item => {
+      const source = item as Record<string, unknown>;
+      return {
+        question: String(source?.question || ""),
+        answer: String(source?.answer || "")
+      };
+    })
+    .filter(item => item.question || item.answer);
+
+const normalizePptPages = (value: unknown): PptPage[] =>
+  parseArrayValue(value)
+    .map(item => {
+      const source = item as Record<string, unknown>;
+      return {
+        pageIndex: Number(source?.pageIndex ?? source?.page_index ?? 0),
+        imageUrl: String(source?.imageUrl ?? source?.image_url ?? ""),
+        summary: String(source?.summary || ""),
+        startTime: Number(source?.startTime ?? source?.start_time ?? 0),
+        endTime: Number(source?.endTime ?? source?.end_time ?? 0)
+      };
+    })
+    .filter(item => item.imageUrl || item.summary);
+
+const mergeAnalysisResults = (
+  task: VideoAnalyzeTask,
+  moduleResult?: VideoAnalyzeModuleResult | null,
+  fullResult?: VideoAnalyzeFullResult | null
+): VideoAnalyzeModuleResult => {
+  const full = (fullResult || {}) as any;
+  const summaryText =
+    typeof full.summary === "string"
+      ? full.summary
+      : String(full.summary?.text || "");
+  const transcriptionText = String(
+    full.transcriptionText || full.transcription?.text || ""
+  );
+  const chapters = normalizeChapterItems(
+    full.chaptersJson || full.chapters || full.chapterList
+  );
+  const qaItems = normalizeQaItems(full.qaJson || full.qaItems || full.qaList);
+  const pptPages = normalizePptPages(full.pptJson || full.pptPages);
+  const normalizedMindMap = normalizeMindmapPayload(fullResult);
+
+  const merged: VideoAnalyzeModuleResult = {
+    ...(moduleResult || ({} as VideoAnalyzeModuleResult)),
+    taskId: moduleResult?.taskId || full.taskId || task.taskId,
+    status: moduleResult?.status || full.status || task.status,
+    courseId: Number(moduleResult?.courseId || full.courseId || task.courseId),
+    chapterId: Number(
+      moduleResult?.chapterId || full.chapterId || task.chapterId
+    ),
+    fileName: moduleResult?.fileName || full.fileName || task.fileName,
+    createdAt: moduleResult?.createdAt || full.createdAt || task.createdAt,
+    completedAt:
+      moduleResult?.completedAt || full.completedAt || task.completedAt,
+    schemaVersion: moduleResult?.schemaVersion || "videoAnalysis.v1",
+    modules: moduleResult?.modules?.length
+      ? moduleResult.modules
+      : allTabs.map(tab => tab.key),
+    moduleStatus: { ...(moduleResult?.moduleStatus || {}) }
+  };
+
+  if (!merged.summary?.text && summaryText) {
+    merged.summary = { text: summaryText };
+  }
+  if (!merged.transcription?.text && transcriptionText) {
+    merged.transcription = { text: transcriptionText };
+  }
+  if (!merged.chapters?.length && chapters.length) merged.chapters = chapters;
+  if (!merged.qaItems?.length && qaItems.length) merged.qaItems = qaItems;
+  if (!merged.pptPages?.length && pptPages.length) merged.pptPages = pptPages;
+
+  const moduleMindMap = normalizeMindmapPayload(moduleResult);
+  const mindMap = moduleMindMap || normalizedMindMap;
+  if (mindMap) {
+    merged.mindMap = {
+      ...merged.mindMap,
+      ...mindMap
+    };
+  }
+
+  return merged;
+};
+
 const requestSeq = ref(0);
+let requestController: AbortController | null = null;
+let taskPollTimer: ReturnType<typeof setTimeout> | null = null;
+
+const clearTaskPollTimer = () => {
+  if (!taskPollTimer) return;
+  clearTimeout(taskPollTimer);
+  taskPollTimer = null;
+};
 
 const isStaleRequest = (
   requestId: number,
   requestCourseId: number,
-  requestChapterId: number
+  requestChapterId: number,
+  requestHourId: number
 ) => {
   return (
     requestId !== requestSeq.value ||
     requestCourseId !== props.courseId ||
-    requestChapterId !== props.chapterId
+    requestChapterId !== props.chapterId ||
+    requestHourId !== Number(props.currentHourId || 0)
   );
 };
 
-const fetchAnalysis = async () => {
-  if (!props.courseId || !props.chapterId) return;
+const asFrontendTask = (task: VideoAnalysisTask): VideoAnalyzeTask => ({
+  taskId: task.taskId,
+  status: task.status,
+  progress: task.progress,
+  message: task.message,
+  courseId: Number(task.courseId),
+  chapterId: Number(task.chapterId),
+  filePath: task.filePath,
+  fileName: task.fileName,
+  createdAt: task.createdAt,
+  completedAt: task.completedAt
+});
 
+const loadCurrentLessonTask = async (
+  courseId: number,
+  chapterId: number,
+  hourId: number,
+  signal: AbortSignal
+): Promise<VideoAnalyzeTask | null> => {
+  // 管理端列表接口会返回本章全部视频任务；前端据此为当前课时选择唯一 taskId。
+  if (hasManageAccess()) {
+    try {
+      const listRes = await getVideoAnalysisList({ courseId, chapterId });
+      if (signal.aborted) return null;
+      const matched = pickPreferredLessonTask(listRes.data?.tasks || []);
+      if (matched) return asFrontendTask(matched);
+    } catch {
+      // 管理端列表不可用时继续使用前台任务接口。
+    }
+  }
+
+  if (signal.aborted) return null;
+
+  const taskRes = await getVideoAnalyzeTask(
+    {
+      courseId,
+      chapterId,
+      hourId
+    },
+    signal
+  );
+  const task = taskRes.data;
+  if (!task) return null;
+
+  const returnedCourseId = Number(task.courseId);
+  const returnedChapterId = Number(task.chapterId);
+  const returnedHourId = Number(task.hourId || 0);
+  if (returnedHourId <= 0) {
+    // 旧服务会忽略 hourId 并返回章内任一任务。仅在文件名/路径能确认
+    // 属于当前课时时展示，否则按本节无任务处理，避免把别节结果串过来。
+    const legacyMatchedTask = pickPreferredLessonTask([task]);
+    if (!legacyMatchedTask) {
+      emptyMessage.value = "本节视频分析结果暂不可用";
+      console.warn(
+        "[VideoAnalysisPanel] legacy task response does not match current hour",
+        {
+          requestedHourId: hourId,
+          currentHourTitle: props.currentHourTitle,
+          returnedFileName: task.fileName
+        }
+      );
+      return null;
+    }
+    return legacyMatchedTask;
+  }
+  if (
+    returnedCourseId !== courseId ||
+    returnedChapterId !== chapterId ||
+    returnedHourId !== hourId
+  ) {
+    throw new VideoAnalysisScopeError("返回的视频分析任务不属于当前课时");
+  }
+
+  return task;
+};
+
+const isCancelledRequest = (error: unknown) => {
+  const source = error as any;
+  return (
+    source?.code === "ERR_CANCELED" ||
+    source?.name === "CanceledError" ||
+    source?.isCancelRequest === true
+  );
+};
+
+const applyTaskRequestError = (error: unknown) => {
+  const source = error as any;
+  const status = Number(source?.response?.status || 0);
+  const payload = source?.response?.data as
+    | { code?: number; msg?: string }
+    | undefined;
+  const message = String(payload?.msg || "").trim();
+
+  if (error instanceof VideoAnalysisScopeError) {
+    taskError.value = {
+      message: error.message,
+      retryable: false
+    };
+    return;
+  }
+
+  if (status === 404) {
+    emptyMessage.value = message || "本节暂无视频分析任务";
+    return;
+  }
+
+  if (status === 403) {
+    taskError.value = {
+      message: message || "无权查看该课程的视频分析结果",
+      retryable: false
+    };
+    return;
+  }
+
+  if (status === 400 || status === 409) {
+    taskError.value = {
+      message: message || "当前课时与视频分析任务绑定异常",
+      retryable: false
+    };
+    return;
+  }
+
+  taskError.value = {
+    message: message || "视频分析加载失败，请稍后重试",
+    retryable: true
+  };
+};
+
+interface FetchAnalysisOptions {
+  background?: boolean;
+}
+
+const fetchAnalysis = async (options: FetchAnalysisOptions = {}) => {
+  clearTaskPollTimer();
   const requestCourseId = props.courseId;
   const requestChapterId = props.chapterId;
+  const requestHourId = Number(props.currentHourId || 0);
   const requestId = ++requestSeq.value;
+  const background = options.background === true && Boolean(taskData.value);
+  requestController?.abort();
+  requestController = null;
 
-  loading.value = true;
-  taskData.value = null;
-  moduleData.value = null;
+  loading.value = !background;
+  if (!background) {
+    taskData.value = null;
+    moduleData.value = null;
+  }
+  taskError.value = null;
+  emptyMessage.value = "本节暂无视频分析任务";
+
+  if (requestCourseId <= 0 || requestChapterId <= 0 || requestHourId <= 0) {
+    loading.value = false;
+    if (props.currentHourTitle && requestHourId <= 0) {
+      taskError.value = {
+        message: "当前视频课时缺少 hourId，无法查询视频分析",
+        retryable: false
+      };
+    }
+    return;
+  }
+
+  const controller = new AbortController();
+  requestController = controller;
 
   try {
-    // 1. 获取任务
-    const taskRes = await getVideoAnalyzeTask({
-      courseId: requestCourseId,
-      chapterId: requestChapterId
-    });
-
-    if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-      return;
-    }
-
-    if (!taskRes.data) {
-      taskData.value = null;
-      return;
-    }
+    const task = await loadCurrentLessonTask(
+      requestCourseId,
+      requestChapterId,
+      requestHourId,
+      controller.signal
+    );
 
     if (
-      taskRes.data.courseId &&
-      taskRes.data.chapterId &&
-      (taskRes.data.courseId !== requestCourseId ||
-        taskRes.data.chapterId !== requestChapterId)
-    ) {
-      console.warn("[VideoAnalysisPanel] task course/chapter mismatch", {
+      isStaleRequest(
+        requestId,
         requestCourseId,
         requestChapterId,
-        taskCourseId: taskRes.data.courseId,
-        taskChapterId: taskRes.data.chapterId,
-        taskId: taskRes.data.taskId
-      });
+        requestHourId
+      )
+    ) {
       return;
     }
 
-    // 仅做宽松一致性校验，不再因文件名格式差异直接拦截展示
+    if (!task) return;
+    taskData.value = task;
+
+    if (String(task.status).toLowerCase() !== "completed" || !task.taskId) {
+      if (["processing", "submitted", "pending"].includes(task.status)) {
+        taskPollTimer = setTimeout(() => {
+          void fetchAnalysis({ background: true });
+        }, 8000);
+      }
+      return;
+    }
+
+    const [moduleResult, fullResult] = await Promise.allSettled([
+      getVideoAnalyzeModules(
+        {
+          taskId: task.taskId,
+          modules: "summary,chapters,qa,transcription,meeting,mindmap,ppt"
+        },
+        controller.signal
+      ),
+      getVideoAnalyzeResult({ taskId: task.taskId }, controller.signal)
+    ]);
+
     if (
-      props.currentHourTitle &&
-      taskRes.data.fileName &&
-      !isLikelySameLesson(taskRes.data.fileName, props.currentHourTitle)
+      isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      )
     ) {
-      console.warn("[VideoAnalysisPanel] fileName/title mismatch", {
-        fileName: taskRes.data.fileName,
-        currentHourTitle: props.currentHourTitle
-      });
+      return;
+    }
+
+    const moduleDataResult =
+      moduleResult.status === "fulfilled" ? moduleResult.value.data : null;
+    const fullDataResult =
+      fullResult.status === "fulfilled" ? fullResult.value.data : null;
+
+    if (!moduleDataResult && !fullDataResult) {
+      throw (
+        (moduleResult.status === "rejected" && moduleResult.reason) ||
+        (fullResult.status === "rejected" && fullResult.reason) ||
+        new Error("视频分析结果为空")
+      );
+    }
+
+    moduleData.value = mergeAnalysisResults(
+      task,
+      moduleDataResult,
+      fullDataResult
+    );
+
+    await hydrateMindmapTree(
+      requestId,
+      requestCourseId,
+      requestChapterId,
+      requestHourId
+    );
+
+    if (
+      !isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      )
+    ) {
+      await nextTick();
+      await buildMindmapFromData();
+    }
+  } catch (error) {
+    if (
+      !isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      ) &&
+      !isCancelledRequest(error)
+    ) {
       taskData.value = null;
       moduleData.value = null;
-      return;
-    }
-
-    taskData.value = taskRes.data;
-
-    // 2. 如果任务已完成，获取模块化结果
-    if (taskRes.data.status === "completed" && taskRes.data.taskId) {
-      const moduleRes = await getVideoAnalyzeModules({
-        taskId: taskRes.data.taskId,
-        modules: "summary,chapters,qa,transcription,meeting,mindmap,ppt"
-      });
-
-      if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-        return;
-      }
-
-      if (moduleRes.data) {
-        if (
-          moduleRes.data.courseId &&
-          moduleRes.data.chapterId &&
-          (moduleRes.data.courseId !== requestCourseId ||
-            moduleRes.data.chapterId !== requestChapterId)
-        ) {
-          console.warn("[VideoAnalysisPanel] modules course/chapter mismatch", {
-            requestCourseId,
-            requestChapterId,
-            moduleCourseId: moduleRes.data.courseId,
-            moduleChapterId: moduleRes.data.chapterId,
-            taskId: taskRes.data.taskId
-          });
-          return;
-        }
-
-        // 兼容后端直接返回 mindMapUrl，或思维导图 JSON 直接作为模块字段返回。
-        const normalizedMindMap = normalizeMindmapPayload(moduleRes.data);
-        if (normalizedMindMap) {
-          moduleRes.data.mindMap = {
-            ...moduleRes.data.mindMap,
-            ...normalizedMindMap
-          };
-        }
-        moduleData.value = moduleRes.data;
-      }
-
-      // 如果模块化接口未返回思维导图，尝试从完整结果接口获取
-      if (!moduleData.value?.mindMap?.url && !moduleData.value?.mindMap?.tree) {
-        try {
-          const fullRes = await getVideoAnalyzeResult({
-            taskId: taskRes.data.taskId
-          });
-
-          if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-            return;
-          }
-
-          const normalizedMindMap = normalizeMindmapPayload(fullRes.data);
-          if (normalizedMindMap) {
-            if (!moduleData.value) {
-              moduleData.value = {} as VideoAnalyzeModuleResult;
-            }
-            moduleData.value.mindMap = {
-              ...moduleData.value.mindMap,
-              ...normalizedMindMap
-            };
-          }
-        } catch {
-          // 忽略回退请求失败
-        }
-      }
-
-      await hydrateMindmapTree(requestId, requestCourseId, requestChapterId);
-
-      if (!isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-        await nextTick();
-        buildMindmapFromData();
-      }
-    }
-  } catch {
-    if (!isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-      taskData.value = null;
+      applyTaskRequestError(error);
+      console.warn("[VideoAnalysisPanel] load lesson analysis failed", error);
     }
   } finally {
-    if (!isStaleRequest(requestId, requestCourseId, requestChapterId)) {
+    if (
+      !isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      )
+    ) {
       loading.value = false;
+      if (requestController === controller) requestController = null;
     }
   }
 };
 
 watch(
-  () => [props.courseId, props.chapterId, props.currentHourTitle],
+  () => [
+    props.courseId,
+    props.chapterId,
+    props.currentHourId,
+    props.currentHourTitle,
+    props.currentHourFileUrl
+  ],
   () => {
     activeTab.value = "chapters";
     fetchAnalysis();
@@ -1593,6 +1995,13 @@ watch(
 
 watch(mindmapResourceUrl, () => {
   mindmapResourceLoadError.value = false;
+});
+
+onBeforeUnmount(() => {
+  requestSeq.value += 1;
+  clearTaskPollTimer();
+  requestController?.abort();
+  requestController = null;
 });
 </script>
 
@@ -1673,6 +2082,46 @@ $radius-lg: 16px;
 
   .dark & {
     color: $gray-500;
+  }
+}
+
+/* 请求错误态 */
+.panel-error {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #dc2626;
+  font-size: 14px;
+  text-align: center;
+
+  .error-icon {
+    opacity: 0.72;
+  }
+
+  .retry-button {
+    padding: 6px 14px;
+    color: #fff;
+    font-size: 13px;
+    background: $primary;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background: #4f46e5;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary-light;
+      outline-offset: 2px;
+    }
+  }
+
+  .dark & {
+    color: #f87171;
   }
 }
 

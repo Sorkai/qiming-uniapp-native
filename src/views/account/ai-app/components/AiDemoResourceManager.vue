@@ -18,6 +18,7 @@ import {
   completeDemoResourceImport,
   createDemoResourceBindingDraft,
   createDemoResourceImport,
+  getDemoResourceParseAttempt,
   getDemoResourceUploadAccess,
   listDemoResourceDiffs,
   listDemoResourceParseAttempts,
@@ -29,6 +30,8 @@ import {
   resolveDemoResourceDiffs,
   selectDemoResourceParseAttempt,
   withdrawDemoResourcePublications,
+  type DemoResourceAppliedCatalogCourse,
+  type DemoResourceApplyResult,
   type DemoResourceBindingDraft,
   type DemoResourceBindingPreview,
   type DemoResourceDiffItem,
@@ -41,12 +44,18 @@ import {
 
 defineOptions({ name: "AiDemoResourceManager" });
 
+type SystemCourse = {
+  id: number;
+  name: string;
+};
+
 const props = withDefaults(
   defineProps<{
     courseId?: number;
     canImport?: boolean;
+    systemCourses?: SystemCourse[];
   }>(),
-  { canImport: false }
+  { canImport: false, systemCourses: () => [] }
 );
 
 type BindingMapping = {
@@ -68,6 +77,8 @@ const importInfo = ref<DemoResourceImport | null>(null);
 const parserType = ref<DemoResourceParser>("manifest_v1");
 const parserConfig = ref("{}");
 const parseAttempts = ref<DemoResourceParseAttempt[]>([]);
+const currentAttempt = ref<DemoResourceParseAttempt | null>(null);
+const pollingAttemptId = ref("");
 const selectedAttemptId = ref("");
 const parseReport = ref("");
 const diffs = ref<DemoResourceDiffItem[]>([]);
@@ -76,8 +87,21 @@ const diffResolutions = reactive<Record<string, DemoResourceDiffResolution>>(
 );
 const diffBusy = ref(false);
 const applyKey = ref("");
+const appliedCatalogCourses = ref<DemoResourceAppliedCatalogCourse[]>([]);
+const bindingTargetCourseIds = reactive<Record<string, number | undefined>>({});
+const batchBindingOutcomes = ref<
+  Array<{
+    catalogCourse: DemoResourceAppliedCatalogCourse;
+    courseId: number;
+    courseName: string;
+    draft?: DemoResourceBindingDraft;
+    error?: string;
+  }>
+>([]);
 const bindingBusy = ref(false);
 const binding = ref<DemoResourceBindingDraft | null>(null);
+const activeBindingCatalogCourseId = ref("");
+const activeBindingCourseId = ref<number | undefined>();
 const bindingPreview = ref<DemoResourceBindingPreview | null>(null);
 const bindingActive = ref(false);
 const mappingRows = ref<BindingMapping[]>([]);
@@ -86,6 +110,7 @@ const publicationIds = ref<string[]>([]);
 const publicationKey = ref("");
 const assignmentKey = ref("");
 const withdrawalKey = ref("");
+const notifiedAttemptFailures = new Set<string>();
 let parsePollTimer: number | undefined;
 
 const importForm = reactive({
@@ -93,7 +118,6 @@ const importForm = reactive({
   targetCatalogCourseId: ""
 });
 const bindingForm = reactive({
-  catalogCourseId: "",
   mode: "auto" as "auto" | "blank"
 });
 const publicationForm = reactive({
@@ -110,8 +134,25 @@ const assignmentForm = reactive({
 });
 const withdrawalForm = reactive({ publicationIds: "" });
 
+const systemCourses = computed(() =>
+  (props.systemCourses || []).filter(
+    course => Number.isFinite(Number(course.id)) && Number(course.id) > 0
+  )
+);
+const activeBindingCourse = computed(() =>
+  systemCourses.value.find(
+    course => course.id === Number(activeBindingCourseId.value)
+  )
+);
+const activeBindingCatalogCourse = computed(() =>
+  appliedCatalogCourses.value.find(
+    course => course.catalog_course_id === activeBindingCatalogCourseId.value
+  )
+);
 const hasCourseContext = computed(
-  () => Number.isFinite(Number(props.courseId)) && Number(props.courseId) > 0
+  () =>
+    Number.isFinite(Number(activeBindingCourseId.value)) &&
+    Number(activeBindingCourseId.value) > 0
 );
 const importId = computed(() => importInfo.value?.import_id || "");
 const parseReadyImportStatuses = new Set([
@@ -134,6 +175,35 @@ const selectedAttempt = computed(() =>
 );
 const hasPendingDiffs = computed(() =>
   diffs.value.some(item => item.resolution === "pending")
+);
+const unmappedCatalogCourses = computed(() =>
+  appliedCatalogCourses.value.filter(
+    course => !Number(bindingTargetCourseIds[course.catalog_course_id])
+  )
+);
+const hasDuplicateBindingTargets = computed(() => {
+  const targets = appliedCatalogCourses.value
+    .map(course => Number(bindingTargetCourseIds[course.catalog_course_id]))
+    .filter(courseId => courseId > 0);
+  return new Set(targets).size !== targets.length;
+});
+const catalogCoursesAwaitingBinding = computed(() => {
+  const completedCatalogCourseIds = new Set(
+    batchBindingOutcomes.value
+      .filter(outcome => outcome.draft)
+      .map(outcome => outcome.catalogCourse.catalog_course_id)
+  );
+  return appliedCatalogCourses.value.filter(
+    course => !completedCatalogCourseIds.has(course.catalog_course_id)
+  );
+});
+const canCreateBatchBindings = computed(
+  () =>
+    Boolean(catalogCoursesAwaitingBinding.value.length) &&
+    Boolean(systemCourses.value.length) &&
+    !unmappedCatalogCourses.value.length &&
+    !hasDuplicateBindingTargets.value &&
+    !bindingBusy.value
 );
 const canActivateBinding = computed(() => {
   const preview = bindingPreview.value;
@@ -180,6 +250,116 @@ function parseJson(value?: string) {
   }
 }
 
+const attemptStageLabels: Record<string, string> = {
+  queued: "等待处理",
+  downloading: "下载资源包",
+  extracting: "解压资源包",
+  parsing: "解析清单",
+  materializing: "整理资源",
+  persisting: "写入目录",
+  completed: "解析完成",
+  failed: "解析失败"
+};
+
+function attemptStageLabel(attempt?: DemoResourceParseAttempt | null) {
+  if (!attempt) return "尚未开始";
+  return attemptStageLabels[attempt.stage] || attempt.stage || "处理中";
+}
+
+function attemptIsTerminal(attempt?: DemoResourceParseAttempt | null) {
+  if (!attempt) return false;
+  if (typeof attempt.terminal === "boolean") return attempt.terminal;
+  return ["succeeded", "failed", "cancelled"].includes(
+    String(attempt.attempt_status || "").toLowerCase()
+  );
+}
+
+function formatBytes(value?: number) {
+  const bytes = Number(value || 0);
+  if (!bytes) return "0 B";
+  const units = ["B", "KiB", "MiB", "GiB"];
+  const index = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1
+  );
+  const scaled = bytes / 1024 ** index;
+  return `${scaled >= 10 || index === 0 ? scaled.toFixed(0) : scaled.toFixed(1)} ${units[index]}`;
+}
+
+function resetBindingState() {
+  binding.value = null;
+  activeBindingCatalogCourseId.value = "";
+  activeBindingCourseId.value = undefined;
+  bindingPreview.value = null;
+  bindingActive.value = false;
+  mappingRows.value = [];
+}
+
+function normalizeCourseTitle(value: string) {
+  return value
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[\s\-—_()（）【】\[\]、,，.。:：]/g, "");
+}
+
+function suggestBindingTargets() {
+  const availableCourseIds = new Set(
+    systemCourses.value.map(course => course.id)
+  );
+  for (const key of Object.keys(bindingTargetCourseIds)) {
+    if (!availableCourseIds.has(Number(bindingTargetCourseIds[key]))) {
+      delete bindingTargetCourseIds[key];
+    }
+  }
+  for (const catalogCourse of appliedCatalogCourses.value) {
+    const key = catalogCourse.catalog_course_id;
+    if (availableCourseIds.has(Number(bindingTargetCourseIds[key]))) continue;
+    const normalizedTitle = normalizeCourseTitle(catalogCourse.title);
+    const matchedCourse = systemCourses.value.find(
+      course => normalizeCourseTitle(course.name) === normalizedTitle
+    );
+    if (matchedCourse) bindingTargetCourseIds[key] = matchedCourse.id;
+  }
+}
+
+function resetBatchBindingState() {
+  batchBindingOutcomes.value = [];
+  for (const key of Object.keys(bindingTargetCourseIds)) {
+    delete bindingTargetCourseIds[key];
+  }
+  resetBindingState();
+}
+
+function setActiveBindingDraft(
+  catalogCourse: DemoResourceAppliedCatalogCourse,
+  courseId: number,
+  draft: DemoResourceBindingDraft
+) {
+  binding.value = draft;
+  activeBindingCatalogCourseId.value = catalogCourse.catalog_course_id;
+  activeBindingCourseId.value = courseId;
+  bindingPreview.value = null;
+  bindingActive.value = false;
+  mappingRows.value = (draft.suggestions || []).map(item => ({
+    source_node_id: item.source_node_id,
+    target_type: item.target_type as BindingMapping["target_type"],
+    target_id: item.target_id,
+    method: "auto",
+    status: "confirmed",
+    score: item.score
+  }));
+  if (!mappingRows.value.length) addMapping();
+}
+
+function openBindingDraft(outcome: {
+  catalogCourse: DemoResourceAppliedCatalogCourse;
+  courseId: number;
+  draft?: DemoResourceBindingDraft;
+}) {
+  if (!outcome.draft) return;
+  setActiveBindingDraft(outcome.catalogCourse, outcome.courseId, outcome.draft);
+}
+
 function validateZip(file?: File | null) {
   if (!file) return "请选择 ZIP 包";
   if (!/\.zip$/i.test(file.name)) return "仅支持 ZIP 格式的教学资源包";
@@ -214,64 +394,31 @@ async function sha256(file: File) {
   ).join("");
 }
 
-function uploadArchiveByUrl(url: string, file: File) {
-  return new Promise<void>((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open("PUT", url, true);
-    request.upload.onprogress = event => {
-      if (event.lengthComputable) {
-        importProgress.value = Math.round((event.loaded / event.total) * 100);
-      }
-    };
-    request.onerror = () =>
-      reject(new Error("对象存储上传失败，请检查网络或上传凭证"));
-    request.onload = () => {
-      if (request.status >= 200 && request.status < 300) {
-        importProgress.value = 100;
-        resolve();
-      } else {
-        reject(new Error(`对象存储上传失败（HTTP ${request.status}）`));
-      }
-    };
-    request.send(file);
-  });
-}
-
-function normalizeUploadDomain(value?: string) {
-  const raw = String(value || "").trim();
-  if (!raw) return undefined;
-
+function httpsUrl(value: string) {
   try {
-    return new URL(raw).host || undefined;
+    const url = new URL(value);
+    return url.protocol === "https:" ? url : null;
   } catch {
-    // The COS backend returns upload_host as a bare host without a scheme.
-    const host = raw.replace(/^\/\//, "").split("/")[0].trim();
-    if (!host || /\s/.test(host)) return undefined;
-    try {
-      return new URL(`https://${host}`).host || undefined;
-    } catch {
-      return undefined;
-    }
+    return null;
   }
 }
 
-function objectKeyFromUploadUrl(value?: string) {
-  if (!value) return "";
-  try {
-    return new URL(value).pathname.replace(/^\//, "");
-  } catch {
-    return "";
+function validateUploadAccess(access: DemoResourceUploadAccess) {
+  const uploadHost = httpsUrl(access.upload_host);
+  const uploadUrl = httpsUrl(access.upload_url);
+  if (
+    !access.object_key ||
+    !access.tmp_secret_id ||
+    !access.tmp_secret_key ||
+    !access.session_token ||
+    !access.bucket ||
+    !access.region ||
+    !uploadHost ||
+    !uploadUrl
+  ) {
+    throw new Error("服务端返回的对象存储上传凭证不完整");
   }
-}
-
-function hasStsCredentials(access: DemoResourceUploadAccess) {
-  return Boolean(
-    access.tmp_secret_id &&
-      access.tmp_secret_key &&
-      access.session_token &&
-      access.bucket &&
-      access.region
-  );
+  return { uploadHost, uploadUrl };
 }
 
 function callCos<T>(cos: COS, method: string, params: Record<string, unknown>) {
@@ -306,29 +453,13 @@ async function uploadArchiveBySts(
   access: DemoResourceUploadAccess,
   file: File
 ) {
-  const objectKey =
-    access.object_key ||
-    importInfo.value?.archive_object_key ||
-    objectKeyFromUploadUrl(access.upload_url);
-  if (
-    !objectKey ||
-    !access.tmp_secret_id ||
-    !access.tmp_secret_key ||
-    !access.session_token ||
-    !access.bucket ||
-    !access.region
-  ) {
-    throw new Error("上传凭证不完整，无法向对象存储直传");
-  }
-  const host =
-    normalizeUploadDomain(access.upload_host) ||
-    normalizeUploadDomain(access.upload_url);
+  const { uploadHost } = validateUploadAccess(access);
   const cos = new COS({
     SecretId: access.tmp_secret_id,
     SecretKey: access.tmp_secret_key,
     SecurityToken: access.session_token,
     Protocol: "https:",
-    Domain: host
+    Domain: uploadHost.host
   });
 
   const reportProgress = (loaded: number) => {
@@ -345,7 +476,7 @@ async function uploadArchiveBySts(
     await callCos(cos, "putObject", {
       Bucket: access.bucket,
       Region: access.region,
-      Key: objectKey,
+      Key: access.object_key,
       Body: file,
       ContentType: contentType,
       onProgress: (progress: { loaded?: number }) =>
@@ -360,7 +491,7 @@ async function uploadArchiveBySts(
   const initData: any = await callCos(cos, "multipartInit", {
     Bucket: access.bucket,
     Region: access.region,
-    Key: objectKey,
+    Key: access.object_key,
     ContentType: contentType
   });
   const uploadId = initData?.UploadId || initData?.uploadId;
@@ -390,7 +521,7 @@ async function uploadArchiveBySts(
         const partData: any = await callCos(cos, "multipartUpload", {
           Bucket: access.bucket,
           Region: access.region,
-          Key: objectKey,
+          Key: access.object_key,
           UploadId: uploadId,
           PartNumber: partNumber,
           Body: chunk,
@@ -417,7 +548,7 @@ async function uploadArchiveBySts(
     await callCos(cos, "multipartComplete", {
       Bucket: access.bucket,
       Region: access.region,
-      Key: objectKey,
+      Key: access.object_key,
       UploadId: uploadId,
       Parts: uploadedParts.sort(
         (left, right) => left.PartNumber - right.PartNumber
@@ -429,7 +560,7 @@ async function uploadArchiveBySts(
       await callCos(cos, "multipartAbort", {
         Bucket: access.bucket,
         Region: access.region,
-        Key: objectKey,
+        Key: access.object_key,
         UploadId: uploadId
       });
     } catch {
@@ -440,17 +571,8 @@ async function uploadArchiveBySts(
 }
 
 async function uploadArchive(access: DemoResourceUploadAccess, file: File) {
-  // The backend returns both an endpoint and STS credentials. The endpoint is
-  // not a signed PUT URL, so prefer the authenticated COS SDK path directly.
-  if (hasStsCredentials(access)) {
-    await uploadArchiveBySts(access, file);
-    return;
-  }
-  if (access.upload_url) {
-    await uploadArchiveByUrl(access.upload_url, file);
-    return;
-  }
-  throw new Error("上传凭证不完整，缺少 STS 凭证或上传地址");
+  validateUploadAccess(access);
+  await uploadArchiveBySts(access, file);
 }
 
 async function createAndUpload() {
@@ -483,6 +605,16 @@ async function createAndUpload() {
     });
     const created = payloadOf<DemoResourceImport>(createResult);
     if (!created.import_id) throw new Error("创建导入批次后未返回 import_id");
+    stopParsePolling();
+    parseAttempts.value = [];
+    currentAttempt.value = null;
+    selectedAttemptId.value = "";
+    parseReport.value = "";
+    diffs.value = [];
+    Object.keys(diffResolutions).forEach(key => delete diffResolutions[key]);
+    appliedCatalogCourses.value = [];
+    resetBatchBindingState();
+    applyKey.value = `import-${created.import_id}-apply-v1`;
     importInfo.value = created;
 
     const accessResult = await getDemoResourceUploadAccess(created.import_id);
@@ -509,28 +641,82 @@ async function createAndUpload() {
 function stopParsePolling() {
   if (parsePollTimer) window.clearTimeout(parsePollTimer);
   parsePollTimer = undefined;
+  pollingAttemptId.value = "";
 }
 
-function scheduleParsePolling() {
-  stopParsePolling();
-  const hasRunningAttempt = parseAttempts.value.some(attempt =>
-    ["queued", "running", "processing"].includes(
-      String(attempt.attempt_status || "").toLowerCase()
-    )
+function upsertParseAttempt(attempt: DemoResourceParseAttempt) {
+  const index = parseAttempts.value.findIndex(
+    item => item.attempt_id === attempt.attempt_id
   );
-  if (!hasRunningAttempt || !importId.value) return;
+  if (index >= 0) parseAttempts.value.splice(index, 1, attempt);
+  else parseAttempts.value.push(attempt);
+  parseAttempts.value.sort(
+    (left, right) => Number(left.attempt_no) - Number(right.attempt_no)
+  );
+}
+
+function scheduleParsePolling(attemptId: string) {
+  if (parsePollTimer) window.clearTimeout(parsePollTimer);
+  if (!attemptId || !importId.value) return;
+  pollingAttemptId.value = attemptId;
   parsePollTimer = window.setTimeout(() => {
-    void loadParseAttempts(true);
-  }, 2000);
+    void pollParseAttempt(attemptId, true);
+  }, 2500);
+}
+
+async function pollParseAttempt(attemptId: string, silent = false) {
+  const targetImportId = importId.value;
+  if (!targetImportId || !attemptId) return;
+  try {
+    const result = await getDemoResourceParseAttempt(targetImportId, attemptId);
+    if (targetImportId !== importId.value) return;
+    const attempt = payloadOf<{ item?: DemoResourceParseAttempt }>(result).item;
+    if (!attempt?.attempt_id) throw new Error("解析任务响应缺少 attempt_id");
+    currentAttempt.value = attempt;
+    upsertParseAttempt(attempt);
+
+    if (!attemptIsTerminal(attempt)) {
+      scheduleParsePolling(attempt.attempt_id);
+      return;
+    }
+
+    if (parsePollTimer) window.clearTimeout(parsePollTimer);
+    parsePollTimer = undefined;
+    if (pollingAttemptId.value === attempt.attempt_id) {
+      pollingAttemptId.value = "";
+    }
+    if (
+      attempt.attempt_status === "failed" &&
+      !notifiedAttemptFailures.has(attempt.attempt_id)
+    ) {
+      notifiedAttemptFailures.add(attempt.attempt_id);
+      ElMessage.error(attempt.error_message || "资源包解析失败");
+    }
+  } catch (error: any) {
+    if (!silent) ElMessage.error(errorText(error, "解析状态加载失败"));
+    if (targetImportId === importId.value) scheduleParsePolling(attemptId);
+  }
 }
 
 async function loadParseAttempts(silent = false) {
   if (!importId.value) return;
   try {
     const result = await listDemoResourceParseAttempts(importId.value);
-    parseAttempts.value =
+    const items =
       payloadOf<{ items?: DemoResourceParseAttempt[] }>(result).items || [];
-    scheduleParsePolling();
+    parseAttempts.value = items;
+    const latestAttempt = [...items].sort(
+      (left, right) => Number(right.attempt_no) - Number(left.attempt_no)
+    )[0];
+    currentAttempt.value = latestAttempt || null;
+    const runningAttempt = [...items]
+      .sort((left, right) => Number(right.attempt_no) - Number(left.attempt_no))
+      .find(item => !attemptIsTerminal(item));
+    if (runningAttempt) {
+      void pollParseAttempt(runningAttempt.attempt_id, true);
+    } else {
+      stopParsePolling();
+    }
   } catch (error: any) {
     if (!silent) ElMessage.error(errorText(error, "解析记录加载失败"));
   }
@@ -558,9 +744,14 @@ async function startParse() {
       parser_config_json: parserConfig.value || "{}"
     });
     const payload = payloadOf<{ attempt_id?: string }>(result);
-    selectedAttemptId.value = payload.attempt_id || "";
+    const attemptId = payload.attempt_id || "";
+    if (!attemptId) throw new Error("后端未返回解析任务 ID");
+    selectedAttemptId.value = "";
+    parseReport.value = "";
+    diffs.value = [];
+    Object.keys(diffResolutions).forEach(key => delete diffResolutions[key]);
     ElMessage.success("解析任务已提交");
-    await loadParseAttempts();
+    await pollParseAttempt(attemptId);
   } catch (error: any) {
     ElMessage.error(errorText(error, "资源包解析提交失败"));
   } finally {
@@ -569,7 +760,12 @@ async function startParse() {
 }
 
 async function selectAttempt(attempt: DemoResourceParseAttempt) {
-  if (!importId.value || attempt.attempt_status !== "succeeded") return;
+  if (
+    !importId.value ||
+    !attemptIsTerminal(attempt) ||
+    attempt.attempt_status !== "succeeded"
+  )
+    return;
   diffBusy.value = true;
   try {
     await selectDemoResourceParseAttempt(importId.value, attempt.attempt_id);
@@ -637,22 +833,28 @@ async function applyImport() {
     ElMessage.warning("请先确认全部导入差异");
     return;
   }
-  if (!applyKey.value)
-    applyKey.value = actionKey(`import-${importId.value}-apply`);
+  if (!applyKey.value) applyKey.value = `import-${importId.value}-apply-v1`;
   diffBusy.value = true;
   try {
     const result = await applyDemoResourceImport(importId.value, {
       idempotency_key: applyKey.value
     });
-    const applied = payloadOf<DemoResourceImport>(result);
+    const applied = payloadOf<DemoResourceApplyResult>(result);
     importInfo.value = {
       ...importInfo.value,
-      ...applied
+      import_status: "applied"
     } as DemoResourceImport;
-    bindingForm.catalogCourseId =
-      applied.catalog_course_id || bindingForm.catalogCourseId;
+    appliedCatalogCourses.value = applied.catalog_courses || [];
+    resetBatchBindingState();
+    suggestBindingTargets();
+    if (!appliedCatalogCourses.value.length) {
+      ElMessage.error("导入已应用，但服务端未返回演示目录课程列表");
+      return;
+    }
     activePane.value = "binding";
-    ElMessage.success("导入已应用，可继续绑定课程");
+    ElMessage.success(
+      `导入已应用，已返回 ${appliedCatalogCourses.value.length} 门目录课程`
+    );
   } catch (error: any) {
     ElMessage.error(errorText(error, "应用导入失败"));
   } finally {
@@ -671,41 +873,85 @@ function addMapping() {
   });
 }
 
-async function createBinding() {
-  if (!hasCourseContext.value) {
-    ElMessage.warning("请先选择系统课程");
+async function createBatchBindings() {
+  if (!systemCourses.value.length) {
+    ElMessage.warning("当前没有可绑定的平台课程");
     return;
   }
-  if (!bindingForm.catalogCourseId.trim()) {
-    ElMessage.warning("请输入演示目录课程 ID");
+  if (unmappedCatalogCourses.value.length) {
+    ElMessage.warning("请为每门目录课程选择一个平台课程");
+    return;
+  }
+  if (hasDuplicateBindingTargets.value) {
+    ElMessage.warning("同一平台课程不能重复绑定多门目录课程");
+    return;
+  }
+  if (!catalogCoursesAwaitingBinding.value.length) {
+    ElMessage.info("当前目录课程均已创建绑定草稿");
     return;
   }
   bindingBusy.value = true;
   try {
-    const result = await createDemoResourceBindingDraft(
-      Number(props.courseId),
-      {
-        catalog_course_id: bindingForm.catalogCourseId.trim(),
-        mode: bindingForm.mode
-      }
+    const outcomes = await Promise.all(
+      catalogCoursesAwaitingBinding.value.map(async catalogCourse => {
+        const courseId = Number(
+          bindingTargetCourseIds[catalogCourse.catalog_course_id]
+        );
+        const courseName =
+          systemCourses.value.find(course => course.id === courseId)?.name ||
+          `系统课程 ID ${courseId}`;
+        try {
+          const result = await createDemoResourceBindingDraft(courseId, {
+            catalog_course_id: catalogCourse.catalog_course_id,
+            mode: bindingForm.mode
+          });
+          const draft = payloadOf<DemoResourceBindingDraft>(result);
+          if (!draft.binding_revision_id) {
+            throw new Error("后端未返回绑定草稿 ID");
+          }
+          return { catalogCourse, courseId, courseName, draft };
+        } catch (error: any) {
+          return {
+            catalogCourse,
+            courseId,
+            courseName,
+            error: errorText(error, "创建绑定草稿失败")
+          };
+        }
+      })
     );
-    const draft = payloadOf<DemoResourceBindingDraft>(result);
-    if (!draft.binding_revision_id) throw new Error("后端未返回绑定草稿 ID");
-    binding.value = draft;
-    bindingPreview.value = null;
-    bindingActive.value = false;
-    mappingRows.value = (draft.suggestions || []).map(item => ({
-      source_node_id: item.source_node_id,
-      target_type: item.target_type as BindingMapping["target_type"],
-      target_id: item.target_id,
-      method: "auto",
-      status: "confirmed",
-      score: item.score
-    }));
-    if (!mappingRows.value.length) addMapping();
-    ElMessage.success("已创建课程绑定草稿");
-  } catch (error: any) {
-    ElMessage.error(errorText(error, "创建绑定草稿失败"));
+    const outcomesByCatalogCourseId = new Map(
+      batchBindingOutcomes.value.map(outcome => [
+        outcome.catalogCourse.catalog_course_id,
+        outcome
+      ])
+    );
+    outcomes.forEach(outcome => {
+      outcomesByCatalogCourseId.set(
+        outcome.catalogCourse.catalog_course_id,
+        outcome
+      );
+    });
+    batchBindingOutcomes.value = appliedCatalogCourses.value.flatMap(course => {
+      const outcome = outcomesByCatalogCourseId.get(course.catalog_course_id);
+      return outcome ? [outcome] : [];
+    });
+    const succeeded = outcomes.filter(item => item.draft);
+    const failed = outcomes.length - succeeded.length;
+    if (succeeded[0]?.draft) {
+      setActiveBindingDraft(
+        succeeded[0].catalogCourse,
+        succeeded[0].courseId,
+        succeeded[0].draft
+      );
+    }
+    if (failed) {
+      ElMessage.warning(
+        `已创建 ${succeeded.length} 个绑定草稿，${failed} 个失败`
+      );
+    } else {
+      ElMessage.success(`已创建 ${succeeded.length} 个绑定草稿`);
+    }
   } finally {
     bindingBusy.value = false;
   }
@@ -797,18 +1043,21 @@ async function publishRevision() {
   if (!publicationKey.value) publicationKey.value = actionKey("publication");
   publicationBusy.value = true;
   try {
-    const result = await publishDemoResourceRevisions(Number(props.courseId), {
-      idempotency_key: publicationKey.value,
-      items: [
-        {
-          revision_id: publicationForm.revisionId.trim(),
-          variant_codes: variants,
-          decision: "approved",
-          comment: publicationForm.comment.trim(),
-          audience_mode: publicationForm.audienceMode
-        }
-      ]
-    });
+    const result = await publishDemoResourceRevisions(
+      Number(activeBindingCourseId.value),
+      {
+        idempotency_key: publicationKey.value,
+        items: [
+          {
+            revision_id: publicationForm.revisionId.trim(),
+            variant_codes: variants,
+            decision: "approved",
+            comment: publicationForm.comment.trim(),
+            audience_mode: publicationForm.audienceMode
+          }
+        ]
+      }
+    );
     const payload = payloadOf<{ publication_ids?: string[] }>(result);
     publicationIds.value = Array.from(
       new Set([...publicationIds.value, ...(payload.publication_ids || [])])
@@ -835,7 +1084,7 @@ async function saveAssignments() {
   publicationBusy.value = true;
   try {
     const result = await replaceDemoResourceAssignments(
-      Number(props.courseId),
+      Number(activeBindingCourseId.value),
       {
         idempotency_key: assignmentKey.value,
         expected_assignment_version: Number(
@@ -873,10 +1122,13 @@ async function withdrawPublications() {
   if (!withdrawalKey.value) withdrawalKey.value = actionKey("withdrawal");
   publicationBusy.value = true;
   try {
-    await withdrawDemoResourcePublications(Number(props.courseId), {
-      idempotency_key: withdrawalKey.value,
-      publication_ids: ids
-    });
+    await withdrawDemoResourcePublications(
+      Number(activeBindingCourseId.value),
+      {
+        idempotency_key: withdrawalKey.value,
+        publication_ids: ids
+      }
+    );
     publicationIds.value = publicationIds.value.filter(id => !ids.includes(id));
     withdrawalForm.publicationIds = "";
     withdrawalKey.value = "";
@@ -890,13 +1142,18 @@ async function withdrawPublications() {
 
 watch(
   () => props.courseId,
-  () => {
-    binding.value = null;
-    bindingPreview.value = null;
-    bindingActive.value = false;
-    mappingRows.value = [];
-  }
+  courseId => {
+    if (binding.value) return;
+    const normalizedCourseId = Number(courseId);
+    activeBindingCourseId.value =
+      Number.isFinite(normalizedCourseId) && normalizedCourseId > 0
+        ? normalizedCourseId
+        : undefined;
+  },
+  { immediate: true }
 );
+
+watch(systemCourses, suggestBindingTargets, { deep: true });
 
 onBeforeUnmount(stopParsePolling);
 </script>
@@ -907,8 +1164,10 @@ onBeforeUnmount(stopParsePolling);
       <div>
         <h2>演示教学资源</h2>
         <p v-if="activePane === 'import'">导入范围：ZIP 内全部课程</p>
-        <p v-else-if="hasCourseContext">当前绑定目标课程 ID：{{ courseId }}</p>
-        <p v-else>请先从顶部选择绑定目标课程</p>
+        <p v-else-if="activeBindingCourse">
+          当前编辑：{{ activeBindingCourse.name }}
+        </p>
+        <p v-else>应用导入后可为每门目录课程配置对应的平台课程</p>
       </div>
       <el-button plain :icon="Refresh" @click="loadParseAttempts()">
         刷新状态
@@ -977,8 +1236,19 @@ onBeforeUnmount(stopParsePolling);
                 创建并上传
               </el-button>
             </div>
+            <div class="upload-template-link">
+              <el-link
+                href="/demo-resources/aiedu-demo-resource-upload-kit-v1.zip"
+                type="primary"
+                :underline="false"
+                download
+                >下载资源包制作模板</el-link
+              >
+              <span>含清单示例、校验规则和可直接参考的示例压缩包。</span>
+            </div>
             <el-progress
               v-if="importBusy || importProgress"
+              class="upload-progress"
               :percentage="importProgress"
               :stroke-width="8"
               :show-text="true"
@@ -1028,6 +1298,43 @@ onBeforeUnmount(stopParsePolling);
                 >开始解析</el-button
               >
             </div>
+            <div
+              v-if="currentAttempt && !attemptIsTerminal(currentAttempt)"
+              class="attempt-live-status"
+            >
+              <div class="attempt-live-status__meta">
+                <span>{{ attemptStageLabel(currentAttempt) }}</span>
+                <span>
+                  {{ currentAttempt.processed_files || 0 }} /
+                  {{ currentAttempt.total_files || 0 }} 个文件 ·
+                  {{ formatBytes(currentAttempt.processed_bytes) }} /
+                  {{ formatBytes(currentAttempt.total_bytes) }}
+                </span>
+              </div>
+              <el-progress
+                :percentage="
+                  Math.max(0, Math.min(100, currentAttempt.progress || 0))
+                "
+                :stroke-width="8"
+              />
+              <p v-if="currentAttempt.attempt_status === 'retrying'">
+                服务端正在自动恢复，第 {{ currentAttempt.retry_count || 0 }} /
+                {{ currentAttempt.max_attempts || 0 }} 次尝试
+              </p>
+            </div>
+            <el-alert
+              v-if="
+                currentAttempt &&
+                attemptIsTerminal(currentAttempt) &&
+                currentAttempt.attempt_status === 'failed'
+              "
+              class="attempt-error"
+              type="error"
+              :closable="false"
+              show-icon
+              :title="currentAttempt.error_message || '资源包解析失败'"
+              :description="currentAttempt.error_code || undefined"
+            />
             <el-table
               :data="parseAttempts"
               size="small"
@@ -1055,12 +1362,40 @@ onBeforeUnmount(stopParsePolling);
                   </el-tag>
                 </template>
               </el-table-column>
+              <el-table-column label="进度" min-width="230">
+                <template #default="{ row }">
+                  <div class="attempt-table-progress">
+                    <div>
+                      <span>{{ attemptStageLabel(row) }}</span>
+                      <span>{{ row.progress || 0 }}%</span>
+                    </div>
+                    <el-progress
+                      :percentage="
+                        Math.max(0, Math.min(100, row.progress || 0))
+                      "
+                      :show-text="false"
+                      :stroke-width="6"
+                    />
+                    <small>
+                      {{ row.processed_files || 0 }} /
+                      {{ row.total_files || 0 }}
+                      个文件
+                      <template v-if="row.retry_count">
+                        · 已重试 {{ row.retry_count }} 次
+                      </template>
+                    </small>
+                  </div>
+                </template>
+              </el-table-column>
               <el-table-column label="操作" width="112" fixed="right">
                 <template #default="{ row }">
                   <el-button
                     link
                     type="primary"
-                    :disabled="row.attempt_status !== 'succeeded'"
+                    :disabled="
+                      !attemptIsTerminal(row) ||
+                      row.attempt_status !== 'succeeded'
+                    "
                     @click="selectAttempt(row)"
                     >选择</el-button
                   >
@@ -1155,32 +1490,168 @@ onBeforeUnmount(stopParsePolling);
             <div class="workflow-section__header">
               <div>
                 <h3>创建绑定草稿</h3>
-                <p>将导入目录中的章、节映射到当前系统课程。</p>
+                <p>为每门目录课程选择对应的平台课程，然后批量创建绑定草稿。</p>
               </div>
               <el-tag v-if="bindingActive" type="success" effect="plain"
                 ><el-icon><CircleCheck /></el-icon>已生效</el-tag
               >
             </div>
-            <div class="binding-form">
-              <el-input
-                v-model="bindingForm.catalogCourseId"
-                placeholder="演示目录课程 ID，例如 DCC..."
-                :disabled="bindingBusy"
+            <el-alert
+              v-if="!appliedCatalogCourses.length"
+              type="info"
+              :closable="false"
+              show-icon
+              title="请先完成应用导入"
+              description="Apply 成功后，服务端会在这里返回并列出资源包中的目录课程。"
+            />
+            <template v-else>
+              <div class="catalog-course-summary">
+                本次导入包含
+                <strong>{{ appliedCatalogCourses.length }}</strong>
+                门目录课程。系统会按课程标题预匹配，你可以逐行调整。
+              </div>
+              <el-alert
+                v-if="!systemCourses.length"
+                type="warning"
+                :closable="false"
+                show-icon
+                title="未加载可绑定的平台课程"
+                description="请刷新页面或确认当前账号有课程管理权限后再创建绑定草稿。"
               />
-              <el-select v-model="bindingForm.mode" :disabled="bindingBusy">
-                <el-option label="自动建议" value="auto" />
-                <el-option label="空白映射" value="blank" />
-              </el-select>
-              <el-button
-                type="primary"
-                :loading="bindingBusy"
-                :disabled="!hasCourseContext"
-                @click="createBinding"
-                >创建草稿</el-button
+              <el-table
+                :data="appliedCatalogCourses"
+                row-key="catalog_course_id"
+                size="small"
+              >
+                <el-table-column
+                  prop="title"
+                  label="目录课程"
+                  min-width="180"
+                />
+                <el-table-column
+                  prop="external_key"
+                  label="资源包课程键"
+                  min-width="220"
+                  show-overflow-tooltip
+                />
+                <el-table-column label="绑定到平台课程" min-width="250">
+                  <template #default="{ row }">
+                    <el-select
+                      v-model="bindingTargetCourseIds[row.catalog_course_id]"
+                      filterable
+                      clearable
+                      placeholder="选择平台课程"
+                      :disabled="
+                        bindingBusy ||
+                        Boolean(
+                          batchBindingOutcomes.find(
+                            item =>
+                              item.catalogCourse.catalog_course_id ===
+                                row.catalog_course_id && item.draft
+                          )
+                        )
+                      "
+                    >
+                      <el-option
+                        v-for="course in systemCourses"
+                        :key="course.id"
+                        :label="`${course.name}（ID ${course.id}）`"
+                        :value="course.id"
+                      />
+                    </el-select>
+                  </template>
+                </el-table-column>
+                <el-table-column label="草稿状态" width="150">
+                  <template #default="{ row }">
+                    <template
+                      v-for="outcome in batchBindingOutcomes.filter(
+                        item =>
+                          item.catalogCourse.catalog_course_id ===
+                          row.catalog_course_id
+                      )"
+                      :key="outcome.catalogCourse.catalog_course_id"
+                    >
+                      <el-tag v-if="outcome.draft" type="success" effect="plain"
+                        >已创建</el-tag
+                      >
+                      <el-tooltip
+                        v-else-if="outcome.error"
+                        :content="outcome.error"
+                      >
+                        <el-tag type="danger" effect="plain">创建失败</el-tag>
+                      </el-tooltip>
+                    </template>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="100">
+                  <template #default="{ row }">
+                    <el-button
+                      v-for="outcome in batchBindingOutcomes.filter(
+                        item =>
+                          item.catalogCourse.catalog_course_id ===
+                            row.catalog_course_id && item.draft
+                      )"
+                      :key="outcome.catalogCourse.catalog_course_id"
+                      link
+                      type="primary"
+                      @click="openBindingDraft(outcome)"
+                      >编辑映射</el-button
+                    >
+                  </template>
+                </el-table-column>
+              </el-table>
+              <div
+                v-if="
+                  unmappedCatalogCourses.length || hasDuplicateBindingTargets
+                "
+                class="binding-validation"
+              >
+                <span v-if="unmappedCatalogCourses.length">
+                  还有
+                  {{ unmappedCatalogCourses.length }} 门目录课程未匹配平台课程。
+                </span>
+                <span v-if="hasDuplicateBindingTargets">
+                  同一平台课程不能重复绑定多门目录课程。
+                </span>
+              </div>
+              <div class="binding-form">
+                <el-select
+                  v-model="bindingForm.mode"
+                  :disabled="bindingBusy"
+                  aria-label="映射生成方式"
+                >
+                  <el-option label="自动生成章、节建议" value="auto" />
+                  <el-option label="创建空白映射" value="blank" />
+                </el-select>
+                <el-button
+                  type="primary"
+                  :loading="bindingBusy"
+                  :disabled="!canCreateBatchBindings"
+                  @click="createBatchBindings"
+                  >{{
+                    batchBindingOutcomes.length
+                      ? "创建剩余绑定草稿"
+                      : "批量创建绑定草稿"
+                  }}</el-button
+                >
+              </div>
+            </template>
+            <div
+              v-if="binding && activeBindingCourse"
+              class="binding-target-strip"
+            >
+              <span>当前编辑</span>
+              <strong>{{
+                activeBindingCatalogCourse?.title || "目录课程"
+              }}</strong>
+              <el-icon><Connection /></el-icon>
+              <strong
+                >{{ activeBindingCourse.name }}（ID
+                {{ activeBindingCourse.id }}）</strong
               >
             </div>
             <div v-if="binding" class="id-strip">
-              <span>绑定草稿</span
+              <span>当前绑定草稿</span
               ><code>{{ binding.binding_revision_id }}</code>
               <span>绑定版本</span
               ><code>{{
@@ -1481,7 +1952,9 @@ onBeforeUnmount(stopParsePolling);
 .assignment-form,
 .withdrawal-form,
 .id-strip,
-.publication-list {
+.publication-list,
+.attempt-live-status__meta,
+.binding-target-strip {
   display: flex;
   align-items: center;
 }
@@ -1631,7 +2104,6 @@ onBeforeUnmount(stopParsePolling);
 }
 
 .upload-form > :is(.el-input, .el-upload),
-.binding-form > .el-input,
 .publication-form > .el-input,
 .assignment-form > .el-input,
 .withdrawal-form > .el-input {
@@ -1646,6 +2118,125 @@ onBeforeUnmount(stopParsePolling);
 .parse-controls__config {
   min-width: 0;
   flex: 1 1 260px;
+}
+
+.upload-progress {
+  margin-top: 16px;
+}
+
+.upload-template-link {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  margin-top: 11px;
+  color: var(--demo-muted);
+  font-size: 0.75rem;
+}
+
+.attempt-live-status {
+  padding: 12px;
+  margin-top: 12px;
+  background: #f6f9fd;
+  border: 1px solid #dce6f2;
+  border-radius: 6px;
+}
+
+.attempt-live-status__meta {
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: #40556e;
+  font-size: 0.75rem;
+}
+
+.attempt-live-status__meta span:last-child {
+  color: var(--demo-muted);
+  text-align: right;
+}
+
+.attempt-live-status p {
+  margin-top: 7px;
+  color: #9a5b08;
+  font-size: 0.75rem;
+}
+
+.attempt-error {
+  margin-top: 12px;
+}
+
+.attempt-table-progress > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+  color: #40556e;
+  font-size: 0.75rem;
+}
+
+.attempt-table-progress small {
+  display: block;
+  margin-top: 4px;
+  color: var(--demo-muted);
+  font-size: 0.6875rem;
+}
+
+.catalog-course-summary {
+  margin-bottom: 10px;
+  color: #40556e;
+  font-size: 0.8125rem;
+}
+
+.catalog-course-summary strong {
+  color: var(--demo-ink);
+}
+
+.binding-validation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  margin-top: 10px;
+  color: #9a5b08;
+  font-size: 0.75rem;
+}
+
+.catalog-course-id {
+  color: #254b78;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+.demo-resource-manager
+  :deep(.el-table__body tr.is-selected-catalog-course > td.el-table__cell) {
+  background: #edf5ff;
+}
+
+.binding-target-strip {
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 9px 11px;
+  margin-top: 12px;
+  color: var(--demo-muted);
+  font-size: 0.75rem;
+  background: #f6f8fb;
+  border: 1px solid var(--demo-border);
+  border-radius: 6px;
+}
+
+.binding-target-strip strong {
+  color: var(--demo-ink);
+  font-weight: 600;
+}
+
+.binding-form {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.binding-form > .el-select {
+  width: 220px;
+  max-width: 100%;
 }
 
 .demo-resource-manager :deep(.el-table) {
@@ -1757,6 +2348,19 @@ onBeforeUnmount(stopParsePolling);
 
   .preview-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .attempt-live-status__meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .attempt-live-status__meta span:last-child {
+    text-align: left;
+  }
+
+  .binding-form {
+    justify-content: flex-start;
   }
 }
 </style>

@@ -114,6 +114,8 @@
                   :chapter-id="chapterId"
                   :current-theme="currentTheme"
                   :current-hour-title="currentHour?.title"
+                  :current-hour-id="currentHour?.hourId"
+                  :current-hour-file-url="currentVideoUrl"
                   @seek-video="handleSeekVideo"
                 />
               </el-scrollbar>

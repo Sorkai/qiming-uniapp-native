@@ -2528,6 +2528,7 @@ onUnmounted(() => {
                   <AiDemoResourceManager
                     v-model:active-pane="demoResourcePane"
                     :course-id="selectedCourseId"
+                    :system-courses="myCourses"
                     :can-import="apiMode === 'admin'"
                   />
                 </el-tab-pane>

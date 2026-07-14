@@ -8,6 +8,24 @@ export type DemoResourceParser =
   | "manual_mapping"
   | "auto_detect_preview";
 
+export type DemoResourceAttemptStatus =
+  | "queued"
+  | "running"
+  | "retrying"
+  | "succeeded"
+  | "failed"
+  | "cancelled";
+
+export type DemoResourceAttemptStage =
+  | "queued"
+  | "downloading"
+  | "extracting"
+  | "parsing"
+  | "materializing"
+  | "persisting"
+  | "completed"
+  | "failed";
+
 export interface DemoResourceImport {
   import_id: string;
   operation: DemoResourceOperation;
@@ -17,32 +35,55 @@ export interface DemoResourceImport {
   import_status?: string;
   selected_attempt_id?: string;
   version?: number;
-  catalog_course_id?: string;
   [key: string]: any;
 }
 
 export interface DemoResourceUploadAccess {
-  object_key?: string;
-  tmp_secret_id?: string;
-  tmp_secret_key?: string;
-  session_token?: string;
-  start_time?: number;
-  expired_time?: number;
-  region?: string;
-  bucket?: string;
-  upload_host?: string;
-  upload_url?: string;
+  object_key: string;
+  tmp_secret_id: string;
+  tmp_secret_key: string;
+  session_token: string;
+  start_time: number;
+  expired_time: number;
+  region: string;
+  bucket: string;
+  upload_host: string;
+  upload_url: string;
   [key: string]: any;
 }
 
 export interface DemoResourceParseAttempt {
   attempt_id: string;
-  attempt_no?: number;
+  attempt_no: number;
   parser_type: DemoResourceParser | string;
-  attempt_status: string;
-  canonical_hash?: string;
-  summary_json?: string;
-  report_json?: string;
+  attempt_status: DemoResourceAttemptStatus | string;
+  stage: DemoResourceAttemptStage | string;
+  progress: number;
+  processed_files: number;
+  total_files: number;
+  processed_bytes: number;
+  total_bytes: number;
+  retry_count: number;
+  max_attempts: number;
+  terminal: boolean;
+  error_code: string;
+  error_message: string;
+  started_at: string;
+  updated_at: string;
+  completed_at: string;
+  canonical_hash: string;
+  summary_json: string;
+  report_json: string;
+}
+
+export interface DemoResourceAppliedCatalogCourse {
+  catalog_course_id: string;
+  external_key: string;
+  title: string;
+}
+
+export interface DemoResourceApplyResult {
+  catalog_courses: DemoResourceAppliedCatalogCourse[];
 }
 
 export type DemoResourceDiffResolution =
@@ -146,6 +187,15 @@ export const listDemoResourceParseAttempts = (importId: string) =>
     `/edu/backend/v1/demo-resources/imports/${encodeURIComponent(importId)}/parse-attempts`
   );
 
+export const getDemoResourceParseAttempt = (
+  importId: string,
+  attemptId: string
+) =>
+  http.request<DemoResponse<{ item: DemoResourceParseAttempt }>>(
+    "get",
+    `/edu/backend/v1/demo-resources/imports/${encodeURIComponent(importId)}/parse-attempts/${encodeURIComponent(attemptId)}`
+  );
+
 export const selectDemoResourceParseAttempt = (
   importId: string,
   attemptId: string
@@ -181,7 +231,7 @@ export const applyDemoResourceImport = (
   importId: string,
   data: { idempotency_key: string }
 ) =>
-  http.request<DemoResponse<DemoResourceImport>>(
+  http.request<DemoResponse<DemoResourceApplyResult>>(
     "post",
     `/edu/backend/v1/demo-resources/imports/${encodeURIComponent(importId)}/apply`,
     { data }
