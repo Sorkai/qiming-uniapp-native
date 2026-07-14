@@ -106,19 +106,17 @@ http://localhost:8848
 
 关键变量：
 
-| 变量                       | 说明                | 示例                             |
-| -------------------------- | ------------------- | -------------------------------- |
-| `VITE_PORT`                | 本地开发端口        | `8848`                           |
-| `VITE_PUBLIC_PATH`         | 静态资源基础路径    | `/`                              |
-| `VITE_API_URL`             | 前端请求的 API 地址 | `/api`                           |
-| `VITE_PROXY_TARGET`        | 开发代理目标服务    | `https://aiedu-api.intelledu.cn` |
-| `VITE_ROUTER_HISTORY`      | 路由模式            | `"hash"`                         |
-| `VITE_ENABLE_TENANT`       | 是否启用多租户      | `true`                           |
-| `VITE_MOCK_SCOPE`          | Mock 范围           | `exam-paper-only`                |
-| `VITE_DOCMEE_API_KEY`      | AI PPT 能力所需密钥 | 按环境配置                       |
-| `VITE_DOCMEE_CONTAINER_ID` | AI PPT 容器 ID      | `aippt-container`                |
+| 变量                  | 说明                | 示例                             |
+| --------------------- | ------------------- | -------------------------------- |
+| `VITE_PORT`           | 本地开发端口        | `8848`                           |
+| `VITE_PUBLIC_PATH`    | 静态资源基础路径    | `/`                              |
+| `VITE_API_URL`        | 前端请求的 API 地址 | `/api`                           |
+| `VITE_PROXY_TARGET`   | 开发代理目标服务    | `https://aiedu-api.intelledu.cn` |
+| `VITE_ROUTER_HISTORY` | 路由模式            | `"hash"`                         |
+| `VITE_ENABLE_TENANT`  | 是否启用多租户      | `true`                           |
+| `VITE_MOCK_SCOPE`     | Mock 范围           | `exam-paper-only`                |
 
-敏感配置不应直接提交到公共仓库。需要对外发布时，请使用部署平台或运行时配置注入对应密钥。
+前端环境变量会在构建时进入静态产物，因此不得放置任何供应商 API Key、长期 token 或其他服务端凭据。AI PPT 页面只携带用户 JWT 调用 Go 后端 `/edu/v1/user/get/ppt/token`；供应商凭据由后端环境变量安全注入，浏览器不会读取或发送该 Key。
 
 ## 目录结构
 
