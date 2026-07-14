@@ -54,6 +54,7 @@ import {
   getAssistantBootstrap,
   getAssistantConversation,
   getAssistantConversationGroups,
+  getAssistantExplanationImage,
   getAssistantResourceTask,
   streamAssistantChat,
   uploadAssistantDocumentAttachment,
@@ -64,6 +65,7 @@ import {
   type AssistantChatStreamEvent,
   type AssistantChatTraceStep,
   type AssistantConversationItem,
+  type AssistantExplanationImage,
   type AssistantOption,
   type AssistantResourceTaskItem,
   type AssistantSkill
@@ -117,6 +119,7 @@ type ChatMessageView = {
   videoSegments?: AssistantChatStreamEvent["video_segments"];
   followups?: AssistantChatStreamEvent["followups"];
   resourceTask?: ResourceTaskView;
+  explanationImages?: AssistantExplanationImage[];
   safetyStatus?: string;
   safetySummary?: string;
   safetyFlags?: string[];
@@ -249,6 +252,7 @@ const resolveRailFromPath = (path: string) => {
 // 会话数据集
 const activeRail = ref(resolveRailFromPath(route.path));
 const resourceWorkspaceMode = ref<"demo" | "generated">("demo");
+const demoResourcePane = ref<"import" | "binding" | "publish">("import");
 watch(
   () => route.path,
   newPath => {
@@ -257,11 +261,110 @@ watch(
 );
 const activeCourse = ref<CourseView | null>(null);
 
-// 侧边栏收起状态
+// 课程与会话侧栏状态
+const sidebarWidthStorageKey = "ai-app-course-sidebar-width";
+const sidebarDefaultWidth = 260;
+const sidebarMinWidth = 220;
+const sidebarAbsoluteMaxWidth = 420;
+const getSidebarMaxWidth = () =>
+  typeof window === "undefined"
+    ? sidebarAbsoluteMaxWidth
+    : Math.max(
+        sidebarMinWidth,
+        Math.min(sidebarAbsoluteMaxWidth, Math.floor(window.innerWidth * 0.36))
+      );
+const sidebarMaxWidth = ref(getSidebarMaxWidth());
+const savedSidebarWidth = storageLocal().getItem<number>(
+  sidebarWidthStorageKey
+);
+const sidebarWidth = ref(
+  Math.min(
+    sidebarMaxWidth.value,
+    Math.max(
+      sidebarMinWidth,
+      typeof savedSidebarWidth === "number" &&
+        Number.isFinite(savedSidebarWidth)
+        ? savedSidebarWidth
+        : sidebarDefaultWidth
+    )
+  )
+);
 const sidebarCollapsed = ref(false);
+const sidebarResizing = ref(false);
 const humanCollapsed = ref(false);
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
+const sidebarRenderedWidth = computed(() =>
+  sidebarCollapsed.value ? 34 : sidebarWidth.value
+);
+
+let sidebarResizePointerId: number | null = null;
+let sidebarResizeStartX = 0;
+let sidebarResizeStartWidth = sidebarDefaultWidth;
+
+const clampSidebarWidth = (width: number) =>
+  Math.min(sidebarMaxWidth.value, Math.max(sidebarMinWidth, Math.round(width)));
+
+const persistSidebarWidth = () => {
+  storageLocal().setItem(sidebarWidthStorageKey, sidebarWidth.value);
+};
+
+const setSidebarWidth = (width: number, persist = false) => {
+  sidebarWidth.value = clampSidebarWidth(width);
+  if (persist) persistSidebarWidth();
+};
+
+const beginSidebarResize = (event: PointerEvent) => {
+  if (sidebarCollapsed.value || event.button !== 0) return;
+  event.preventDefault();
+  sidebarResizePointerId = event.pointerId;
+  sidebarResizeStartX = event.clientX;
+  sidebarResizeStartWidth = sidebarWidth.value;
+  sidebarResizing.value = true;
+  (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  document.documentElement.classList.add("ai-app-sidebar-resizing");
+};
+
+const updateSidebarResize = (event: PointerEvent) => {
+  if (!sidebarResizing.value || sidebarResizePointerId !== event.pointerId)
+    return;
+  setSidebarWidth(
+    sidebarResizeStartWidth + event.clientX - sidebarResizeStartX
+  );
+};
+
+const endSidebarResize = (event: PointerEvent) => {
+  if (sidebarResizePointerId !== event.pointerId) return;
+  const target = event.currentTarget as HTMLElement;
+  sidebarResizePointerId = null;
+  if (target.hasPointerCapture(event.pointerId)) {
+    target.releasePointerCapture(event.pointerId);
+  }
+  sidebarResizing.value = false;
+  document.documentElement.classList.remove("ai-app-sidebar-resizing");
+  persistSidebarWidth();
+};
+
+const resetSidebarWidth = () => {
+  setSidebarWidth(sidebarDefaultWidth, true);
+};
+
+const handleSidebarResizeKeydown = (event: KeyboardEvent) => {
+  const step = event.shiftKey ? 32 : 12;
+  let nextWidth: number | undefined;
+  if (event.key === "ArrowLeft") nextWidth = sidebarWidth.value - step;
+  if (event.key === "ArrowRight") nextWidth = sidebarWidth.value + step;
+  if (event.key === "Home") nextWidth = sidebarMinWidth;
+  if (event.key === "End") nextWidth = sidebarMaxWidth.value;
+  if (nextWidth === undefined) return;
+  event.preventDefault();
+  setSidebarWidth(nextWidth, true);
+};
+
+const syncSidebarWidthLimit = () => {
+  sidebarMaxWidth.value = getSidebarMaxWidth();
+  setSidebarWidth(sidebarWidth.value);
+};
 
 type DigitalHumanState = "standby" | "listening" | "thinking" | "saying";
 
@@ -392,6 +495,32 @@ const courseScopedRails = [
   "governance"
 ];
 const studentScopedRails = ["generation", "path", "profile", "assessment"];
+const isDemoResourceImportPane = computed(
+  () =>
+    activeRail.value === "generation" &&
+    isStaffMode.value &&
+    resourceWorkspaceMode.value === "demo" &&
+    demoResourcePane.value === "import"
+);
+const showCourseContext = computed(
+  () =>
+    courseScopedRails.includes(activeRail.value) &&
+    !isDemoResourceImportPane.value
+);
+const showStudentContext = computed(
+  () =>
+    isStaffMode.value &&
+    studentScopedRails.includes(activeRail.value) &&
+    !(
+      activeRail.value === "generation" &&
+      resourceWorkspaceMode.value === "demo"
+    )
+);
+const courseContextLabel = computed(() =>
+  activeRail.value === "generation" && resourceWorkspaceMode.value === "demo"
+    ? "绑定课程:"
+    : "课程:"
+);
 const isCourseSwitching = ref(false);
 const selectedCoursePickerId = computed({
   get: () => selectedCourseId.value,
@@ -517,6 +646,9 @@ const lastStreamSequence = ref(0);
 const resourceTaskTimers = new Map<string, number>();
 const resourceTaskPollingStartedAt = new Map<string, number>();
 const resourceTaskPollingInFlight = new Set<string>();
+const explanationImageTimers = new Map<string, number>();
+const explanationImagePollingStartedAt = new Map<string, number>();
+const explanationImagePollingInFlight = new Set<string>();
 const messages = ref<ChatMessageView[]>([]);
 
 const streamStageTextMap: Record<string, string> = {
@@ -580,6 +712,7 @@ const inspectorResources = computed(() =>
 const resetChatGreeting = () => {
   streamCancel.value?.();
   streamCancel.value = null;
+  clearAllExplanationImagePolling();
   activeStreamRunId.value += 1;
   activeStreamMessageId.value = null;
   activeRequestId.value = "";
@@ -653,6 +786,99 @@ const clearResourceTaskPolling = (taskId: string) => {
 
 const clearAllResourceTaskPolling = () => {
   [...resourceTaskTimers.keys()].forEach(clearResourceTaskPolling);
+};
+
+const explanationImageTerminalStatuses = new Set([
+  "succeeded",
+  "failed",
+  "blocked",
+  "unknown_outcome",
+  "cancelled"
+]);
+
+const clearExplanationImagePolling = (imageId: string) => {
+  const timer = explanationImageTimers.get(imageId);
+  if (timer) window.clearTimeout(timer);
+  explanationImageTimers.delete(imageId);
+  explanationImagePollingStartedAt.delete(imageId);
+  explanationImagePollingInFlight.delete(imageId);
+};
+
+const clearAllExplanationImagePolling = () => {
+  [...explanationImageTimers.keys()].forEach(clearExplanationImagePolling);
+};
+
+const updateMessageExplanationImage = (
+  assistantMessageId: string | number,
+  image: AssistantExplanationImage
+) => {
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message || !image.image_id) return;
+  const images = [...(message.explanationImages || [])];
+  const index = images.findIndex(item => item.image_id === image.image_id);
+  if (index === -1) images.push(image);
+  else images[index] = { ...images[index], ...image };
+  updateAssistantMessage(assistantMessageId, { explanationImages: images });
+};
+
+const pollExplanationImage = async (
+  imageId: string,
+  assistantMessageId: string | number
+) => {
+  if (explanationImagePollingInFlight.has(imageId)) return;
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (
+    !message ||
+    !message.explanationImages?.some(item => item.image_id === imageId)
+  ) {
+    clearExplanationImagePolling(imageId);
+    return;
+  }
+
+  explanationImagePollingInFlight.add(imageId);
+  try {
+    const response = await getAssistantExplanationImage(imageId);
+    const image = response.image;
+    if (image) {
+      updateMessageExplanationImage(assistantMessageId, image);
+      if (explanationImageTerminalStatuses.has(image.status)) {
+        clearExplanationImagePolling(imageId);
+        return;
+      }
+    }
+  } catch (error) {
+    console.warn("[AiApp] 讲解图片状态刷新失败:", error);
+  } finally {
+    explanationImagePollingInFlight.delete(imageId);
+  }
+
+  const startedAt = explanationImagePollingStartedAt.get(imageId) || Date.now();
+  const elapsed = Date.now() - startedAt;
+  const delay = document.hidden ? 10000 : elapsed < 30000 ? 2000 : 5000;
+  explanationImageTimers.set(
+    imageId,
+    window.setTimeout(() => {
+      explanationImageTimers.delete(imageId);
+      void pollExplanationImage(imageId, assistantMessageId);
+    }, delay)
+  );
+};
+
+const startExplanationImagePolling = (
+  image: AssistantExplanationImage,
+  assistantMessageId: string | number
+) => {
+  updateMessageExplanationImage(assistantMessageId, image);
+  if (!image.image_id || explanationImageTerminalStatuses.has(image.status)) {
+    if (image.image_id) clearExplanationImagePolling(image.image_id);
+    return;
+  }
+  if (!explanationImagePollingStartedAt.has(image.image_id)) {
+    explanationImagePollingStartedAt.set(image.image_id, Date.now());
+  }
+  if (!explanationImageTimers.has(image.image_id)) {
+    void pollExplanationImage(image.image_id, assistantMessageId);
+  }
 };
 
 const updateMessageResourceTask = (
@@ -818,6 +1044,11 @@ const handleAssistantStreamEvent = (
     return;
   }
 
+  if (event.event === "explanation_image.queued" && event.explanation_image) {
+    startExplanationImagePolling(event.explanation_image, assistantMessageId);
+    return;
+  }
+
   if (
     event.event === "assistant.reasoning_summary.delta" &&
     featureFlags.value.reasoning_summary_stream
@@ -852,9 +1083,10 @@ const handleAssistantStreamEvent = (
       videoSegments: event.video_segments || [],
       followups: event.followups || [],
       resourceTask,
+      explanationImages: currentMessage?.explanationImages,
       safetyStatus: event.safety_status,
       safetySummary: event.safety_summary,
-      safetyFlags: event.safety_flags || event.sensitive_word_hits || [],
+      safetyFlags: event.safety_flags || [],
       profileEvent: event.profile_event,
       streaming: false,
       streamStatus: event.status || "completed",
@@ -1044,6 +1276,9 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
         selectedSkillKeys.value.includes("resource_hint"),
       preferred_explanation_mode: selectedSkillKeys.value.includes("visual")
         ? "visual"
+        : undefined,
+      explanation_image_mode: featureFlags.value.explanation_image_generation
+        ? "auto_wide"
         : undefined,
       metadata: { ui_entry: "ai_app_workbench" }
     },
@@ -1362,8 +1597,16 @@ const loadConversationMessages = async (conversation: ConversationView) => {
       type: item.role === "user" ? "user" : "system",
       content: item.content_text || "",
       avatar: item.role === "user" ? currentUserAvatar.value : undefined,
-      metadata: item.metadata
+      metadata: item.metadata,
+      explanationImages:
+        item.explanation_images || item.metadata?.explanation_images || []
     }));
+    messages.value.forEach(message => {
+      if (message.type !== "system") return;
+      (message.explanationImages || []).forEach(image => {
+        startExplanationImagePolling(image, message.id);
+      });
+    });
     if (!messages.value.length) resetChatGreeting();
   } catch (error: any) {
     console.error("[AiApp] 学习助手会话消息加载失败:", error);
@@ -1722,6 +1965,8 @@ const handleVisibilityChange = () => {
 
 onMounted(() => {
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("resize", syncSidebarWidthLimit);
+  syncSidebarWidthLimit();
   setTimeout(() => {
     syncHumanRenderState();
   }, 0);
@@ -1730,10 +1975,13 @@ onMounted(() => {
 onUnmounted(() => {
   streamCancel.value?.();
   clearAllResourceTaskPolling();
+  clearAllExplanationImagePolling();
   quickSpeechRecognition?.stop?.();
   quickSpeechRecognition = null;
   clearQuickAttachments();
   document.removeEventListener("visibilitychange", handleVisibilityChange);
+  window.removeEventListener("resize", syncSidebarWidthLimit);
+  document.documentElement.classList.remove("ai-app-sidebar-resizing");
 });
 </script>
 
@@ -1746,8 +1994,14 @@ onUnmounted(() => {
       <!-- 极简左侧边栏 (第一块) -->
       <aside
         v-if="activeRail === 'chat'"
-        class="ai-app-left-rail flex-shrink-0 z-20 flex flex-col transition-all duration-300 relative"
-        :class="sidebarCollapsed ? 'w-[34px]' : 'w-[260px]'"
+        id="ai-app-course-sidebar"
+        class="ai-app-left-rail flex-shrink-0 z-20 flex flex-col relative"
+        :class="{
+          'is-collapsed': sidebarCollapsed,
+          'is-resizing': sidebarResizing
+        }"
+        :style="{ width: `${sidebarRenderedWidth}px` }"
+        aria-label="课程与会话侧栏"
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <AiSidebar
@@ -1773,6 +2027,30 @@ onUnmounted(() => {
           >
         </div>
 
+        <button
+          v-if="!sidebarCollapsed"
+          type="button"
+          class="ai-app-left-rail__resize-handle"
+          role="separator"
+          aria-label="调整课程侧栏宽度"
+          aria-controls="ai-app-course-sidebar"
+          aria-orientation="vertical"
+          :aria-valuemin="sidebarMinWidth"
+          :aria-valuemax="sidebarMaxWidth"
+          :aria-valuenow="sidebarWidth"
+          tabindex="0"
+          title="拖动调整宽度，双击恢复默认"
+          @pointerdown="beginSidebarResize"
+          @pointermove="updateSidebarResize"
+          @pointerup="endSidebarResize"
+          @pointercancel="endSidebarResize"
+          @lostpointercapture="endSidebarResize"
+          @dblclick="resetSidebarWidth"
+          @keydown="handleSidebarResizeKeydown"
+        >
+          <span aria-hidden="true" />
+        </button>
+
         <!-- 收起 / 展开 把手 -->
         <button
           class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 transition-colors z-30"
@@ -1790,10 +2068,12 @@ onUnmounted(() => {
       <div class="flex-1 flex flex-col min-w-0">
         <!-- 课程 / 学生上下文工具栏 -->
         <div
-          v-if="courseScopedRails.includes(activeRail)"
+          v-if="showCourseContext"
           class="flex-none flex items-center justify-end gap-3 bg-white mb-5 px-6 py-3 border border-gray-100 rounded-lg z-10 relative overflow-hidden"
         >
-          <span class="text-xs text-gray-500 font-medium">课程:</span>
+          <span class="text-xs text-gray-500 font-medium">{{
+            courseContextLabel
+          }}</span>
           <el-select
             v-model="selectedCoursePickerId"
             placeholder="请选择课程"
@@ -1822,9 +2102,7 @@ onUnmounted(() => {
               </div>
             </el-option>
           </el-select>
-          <template
-            v-if="isStaffMode && studentScopedRails.includes(activeRail)"
-          >
+          <template v-if="showStudentContext">
             <span class="text-xs text-gray-500 font-medium">分析对象:</span>
             <el-select
               v-model="selectedStudentId"
@@ -2248,6 +2526,7 @@ onUnmounted(() => {
               >
                 <el-tab-pane label="演示导入资源" name="demo" class="h-full">
                   <AiDemoResourceManager
+                    v-model:active-pane="demoResourcePane"
                     :course-id="selectedCourseId"
                     :can-import="apiMode === 'admin'"
                   />
@@ -2272,6 +2551,7 @@ onUnmounted(() => {
                     :course-id="selectedCourseId"
                     :target-student-id="selectedTargetStudentId"
                     :requires-target-student="isStaffMode"
+                    :resource-types="assistantBootstrap?.resource_types || []"
                   />
                 </el-tab-pane>
               </el-tabs>
@@ -2567,7 +2847,7 @@ onUnmounted(() => {
       :state="digitalHumanState"
       anchor="appLeftBottom"
       anchor-selector=".ai-app-root"
-      :left-zone-width="sidebarCollapsed ? 34 : 260"
+      :left-zone-width="sidebarRenderedWidth"
       :bottom-offset="104"
       storage-key="ai-app-floating-digital-human-2d-left-bottom"
     />
@@ -2664,10 +2944,11 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .ai-app-root {
   --el-color-primary: #2f6fcb;
-  --ai-app-shell-bg: #f5f7fb;
-  --ai-app-panel-bg: #fff;
-  --ai-app-panel-border: #e3e9f2;
-  --ai-app-panel-shadow: 0 8px 24px rgb(15 23 42 / 5%);
+  --ai-app-shell-bg: #f3f6fa;
+  --ai-app-panel-bg: rgb(255 255 255 / 84%);
+  --ai-app-panel-border: #d8e1ec;
+  --ai-app-panel-shadow:
+    0 12px 30px rgb(51 65 85 / 8%), inset 0 1px 0 rgb(255 255 255 / 88%);
   --ai-app-font:
     "Inter", "NotionInter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial,
@@ -2697,18 +2978,115 @@ onUnmounted(() => {
   max-width: 100%;
 }
 
+.resource-workspace-tabs {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 20px 20px;
+  overflow: hidden;
+}
+
+.resource-workspace-tabs :deep(.el-tabs__header),
+.resource-workspace-tabs :deep(.el-tabs__content),
+.resource-workspace-tabs :deep(.el-tab-pane) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.resource-workspace-tabs :deep(.el-tabs__content),
+.resource-workspace-tabs :deep(.el-tab-pane) {
+  overflow: hidden;
+}
+
 .ai-workbench-panel {
   background: var(--ai-app-panel-bg);
   border: 1px solid var(--ai-app-panel-border);
   border-radius: 24px;
   box-shadow: var(--ai-app-panel-shadow);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
 }
 
 .ai-app-left-rail {
-  background: #fff;
+  background: rgb(255 255 255 / 86%);
   border: 1px solid var(--ai-app-panel-border);
   border-radius: 24px;
-  box-shadow: 0 8px 24px rgb(15 23 42 / 4%);
+  box-shadow: 0 10px 26px rgb(51 65 85 / 7%);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  transition: width 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ai-app-left-rail.is-resizing {
+  transition: none;
+  will-change: width;
+}
+
+.ai-app-left-rail__resize-handle {
+  position: absolute;
+  top: 42px;
+  right: -6px;
+  bottom: 12px;
+  z-index: 25;
+  display: flex;
+  width: 12px;
+  padding: 0;
+  touch-action: none;
+  cursor: col-resize;
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+
+.ai-app-left-rail__resize-handle::before {
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  width: 1px;
+  content: "";
+  background: transparent;
+  transform: translateX(-50%);
+  transition: background-color 0.16s ease-out;
+}
+
+.ai-app-left-rail__resize-handle span {
+  width: 3px;
+  height: 40px;
+  margin: auto;
+  background: #aeb9c8;
+  border-radius: 3px;
+  opacity: 0.34;
+  transition:
+    opacity 0.16s ease-out,
+    background-color 0.16s ease-out;
+}
+
+.ai-app-left-rail__resize-handle:hover::before,
+.ai-app-left-rail__resize-handle:focus-visible::before,
+.ai-app-left-rail.is-resizing .ai-app-left-rail__resize-handle::before {
+  background: rgb(47 111 203 / 36%);
+}
+
+.ai-app-left-rail__resize-handle:hover span,
+.ai-app-left-rail__resize-handle:focus-visible span,
+.ai-app-left-rail.is-resizing .ai-app-left-rail__resize-handle span {
+  background: var(--el-color-primary);
+  opacity: 0.9;
+}
+
+:global(html.ai-app-sidebar-resizing),
+:global(html.ai-app-sidebar-resizing *) {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-app-left-rail,
+  .ai-app-left-rail__resize-handle::before,
+  .ai-app-left-rail__resize-handle span {
+    transition: none;
+  }
 }
 
 .ai-chat-workbench {
@@ -2753,7 +3131,8 @@ onUnmounted(() => {
 .ai-app-root :deep([class*=" el-icon-"]),
 .ai-app-root :deep(.iconify) {
   font-family:
-    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline" !important;
+    "iconfont", element-icons, "IconifyIconOnline", "IconifyIconOffline",
+    sans-serif !important;
 }
 
 .agent-pdf-shell {
@@ -3274,6 +3653,10 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .resource-workspace-tabs {
+    padding: 0 12px 12px;
+  }
+
   .ai-chat-workbench {
     gap: 10px;
     padding: 10px;

@@ -31,19 +31,21 @@
   padding: 10px 16px 6px;
   font-size: 14px;
   color: var(--el-text-color-primary);
-  background: rgb(255 255 255 / 10%);
-  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(255 255 255 / 58%);
+  border-bottom: 1px solid rgb(148 163 184 / 24%);
+  border-radius: 0 0 12px 12px;
 
   /* 与Navbar呼应的毛玻璃 */
-  box-shadow: 0 8px 10px -5px rgb(0 0 0 / 2%);
-  backdrop-filter: blur(40px);
-  backdrop-filter: blur(40px);
+  box-shadow: 0 4px 12px rgb(51 65 85 / 6%);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
 
   :global(html.dark) & {
-    background: rgb(255 255 255 / 3%) !important;
-    border-bottom: 1px solid rgb(255 255 255 / 5%);
-    backdrop-filter: blur(20px) !important;
-    backdrop-filter: blur(20px) !important;
+    background: rgb(14 22 35 / 62%) !important;
+    border-bottom: 1px solid rgb(148 163 184 / 16%);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+    backdrop-filter: blur(18px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
 
     .scroll-item {
       color: #cbd5e1;

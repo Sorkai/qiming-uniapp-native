@@ -58,7 +58,9 @@ type BindingMapping = {
   score?: number;
 };
 
-const activePane = ref("import");
+const activePane = defineModel<"import" | "binding" | "publish">("activePane", {
+  default: "import"
+});
 const selectedFile = ref<File | null>(null);
 const importBusy = ref(false);
 const importProgress = ref(0);
@@ -112,6 +114,21 @@ const hasCourseContext = computed(
   () => Number.isFinite(Number(props.courseId)) && Number(props.courseId) > 0
 );
 const importId = computed(() => importInfo.value?.import_id || "");
+const parseReadyImportStatuses = new Set([
+  "uploaded",
+  "parsed",
+  "diff_ready",
+  "failed"
+]);
+const canStartParse = computed(() =>
+  Boolean(
+    importId.value &&
+      parseReadyImportStatuses.has(
+        String(importInfo.value?.import_status || "").toLowerCase()
+      ) &&
+      !importBusy.value
+  )
+);
 const selectedAttempt = computed(() =>
   parseAttempts.value.find(item => item.attempt_id === selectedAttemptId.value)
 );
@@ -220,13 +237,79 @@ function uploadArchiveByUrl(url: string, file: File) {
   });
 }
 
-function uploadArchiveBySts(access: DemoResourceUploadAccess, file: File) {
+function normalizeUploadDomain(value?: string) {
+  const raw = String(value || "").trim();
+  if (!raw) return undefined;
+
+  try {
+    return new URL(raw).host || undefined;
+  } catch {
+    // The COS backend returns upload_host as a bare host without a scheme.
+    const host = raw.replace(/^\/\//, "").split("/")[0].trim();
+    if (!host || /\s/.test(host)) return undefined;
+    try {
+      return new URL(`https://${host}`).host || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+}
+
+function objectKeyFromUploadUrl(value?: string) {
+  if (!value) return "";
+  try {
+    return new URL(value).pathname.replace(/^\//, "");
+  } catch {
+    return "";
+  }
+}
+
+function hasStsCredentials(access: DemoResourceUploadAccess) {
+  return Boolean(
+    access.tmp_secret_id &&
+      access.tmp_secret_key &&
+      access.session_token &&
+      access.bucket &&
+      access.region
+  );
+}
+
+function callCos<T>(cos: COS, method: string, params: Record<string, unknown>) {
+  return new Promise<T>((resolve, reject) => {
+    (cos as any)[method](params, (error: unknown, data: T) => {
+      if (error) reject(error);
+      else resolve(data);
+    });
+  });
+}
+
+async function runWithConcurrency<T>(
+  items: T[],
+  worker: (item: T) => Promise<void>,
+  limit: number
+) {
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const item = items[nextIndex];
+        nextIndex += 1;
+        await worker(item);
+      }
+    }
+  );
+  await Promise.all(workers);
+}
+
+async function uploadArchiveBySts(
+  access: DemoResourceUploadAccess,
+  file: File
+) {
   const objectKey =
     access.object_key ||
     importInfo.value?.archive_object_key ||
-    (access.upload_url
-      ? new URL(access.upload_url).pathname.replace(/^\//, "")
-      : "");
+    objectKeyFromUploadUrl(access.upload_url);
   if (
     !objectKey ||
     !access.tmp_secret_id ||
@@ -235,11 +318,11 @@ function uploadArchiveBySts(access: DemoResourceUploadAccess, file: File) {
     !access.bucket ||
     !access.region
   ) {
-    return Promise.reject(new Error("上传凭证不完整，无法向对象存储直传"));
+    throw new Error("上传凭证不完整，无法向对象存储直传");
   }
-  const host = access.upload_host
-    ? new URL(access.upload_host).host
-    : undefined;
+  const host =
+    normalizeUploadDomain(access.upload_host) ||
+    normalizeUploadDomain(access.upload_url);
   const cos = new COS({
     SecretId: access.tmp_secret_id,
     SecretKey: access.tmp_secret_key,
@@ -247,41 +330,127 @@ function uploadArchiveBySts(access: DemoResourceUploadAccess, file: File) {
     Protocol: "https:",
     Domain: host
   });
-  return new Promise<void>((resolve, reject) => {
-    cos.putObject(
-      {
+
+  const reportProgress = (loaded: number) => {
+    importProgress.value = Math.round(
+      (Math.min(loaded, file.size) / Math.max(file.size, 1)) * 100
+    );
+  };
+  const contentType = file.type || "application/zip";
+  const multipartThreshold = 50 * 1024 * 1024;
+  const multipartPartSize = 16 * 1024 * 1024;
+
+  reportProgress(0);
+  if (file.size <= multipartThreshold) {
+    await callCos(cos, "putObject", {
+      Bucket: access.bucket,
+      Region: access.region,
+      Key: objectKey,
+      Body: file,
+      ContentType: contentType,
+      onProgress: (progress: { loaded?: number }) =>
+        reportProgress(progress.loaded || 0)
+    });
+    reportProgress(file.size);
+    return;
+  }
+
+  // Avoid uploadFile here: it first lists bucket-level multipart uploads,
+  // which may be denied even when object-scoped multipart writes are allowed.
+  const initData: any = await callCos(cos, "multipartInit", {
+    Bucket: access.bucket,
+    Region: access.region,
+    Key: objectKey,
+    ContentType: contentType
+  });
+  const uploadId = initData?.UploadId || initData?.uploadId;
+  if (!uploadId) throw new Error("分片初始化失败：缺少 UploadId");
+
+  const partCount = Math.ceil(file.size / multipartPartSize);
+  const partProgress = new Map<number, number>();
+  const uploadedParts: Array<{ PartNumber: number; ETag: string }> = [];
+  const reportMultipartProgress = () => {
+    reportProgress(
+      Array.from(partProgress.values()).reduce(
+        (total, loaded) => total + loaded,
+        0
+      )
+    );
+  };
+
+  try {
+    await runWithConcurrency(
+      Array.from({ length: partCount }, (_, index) => index + 1),
+      async partNumber => {
+        const start = (partNumber - 1) * multipartPartSize;
+        const chunk = file.slice(
+          start,
+          Math.min(start + multipartPartSize, file.size)
+        );
+        const partData: any = await callCos(cos, "multipartUpload", {
+          Bucket: access.bucket,
+          Region: access.region,
+          Key: objectKey,
+          UploadId: uploadId,
+          PartNumber: partNumber,
+          Body: chunk,
+          ContentLength: chunk.size,
+          onProgress: (progress: { loaded?: number }) => {
+            partProgress.set(
+              partNumber,
+              Math.min(progress.loaded || 0, chunk.size)
+            );
+            reportMultipartProgress();
+          }
+        });
+        const etag = partData?.ETag || partData?.etag;
+        if (!etag) {
+          throw new Error(`分片上传失败：第 ${partNumber} 片缺少 ETag`);
+        }
+        partProgress.set(partNumber, chunk.size);
+        reportMultipartProgress();
+        uploadedParts.push({ PartNumber: partNumber, ETag: etag });
+      },
+      2
+    );
+
+    await callCos(cos, "multipartComplete", {
+      Bucket: access.bucket,
+      Region: access.region,
+      Key: objectKey,
+      UploadId: uploadId,
+      Parts: uploadedParts.sort(
+        (left, right) => left.PartNumber - right.PartNumber
+      )
+    });
+    reportProgress(file.size);
+  } catch (error) {
+    try {
+      await callCos(cos, "multipartAbort", {
         Bucket: access.bucket,
         Region: access.region,
         Key: objectKey,
-        Body: file,
-        ContentType: file.type || "application/zip",
-        onProgress: progress => {
-          importProgress.value = Math.round(
-            ((progress.loaded || 0) / Math.max(file.size, 1)) * 100
-          );
-        }
-      } as any,
-      error => {
-        if (error) reject(error);
-        else {
-          importProgress.value = 100;
-          resolve();
-        }
-      }
-    );
-  });
+        UploadId: uploadId
+      });
+    } catch {
+      // Preserve the original upload error.
+    }
+    throw error;
+  }
 }
 
 async function uploadArchive(access: DemoResourceUploadAccess, file: File) {
-  if (access.upload_url) {
-    try {
-      await uploadArchiveByUrl(access.upload_url, file);
-      return;
-    } catch (urlError) {
-      if (!access.tmp_secret_id) throw urlError;
-    }
+  // The backend returns both an endpoint and STS credentials. The endpoint is
+  // not a signed PUT URL, so prefer the authenticated COS SDK path directly.
+  if (hasStsCredentials(access)) {
+    await uploadArchiveBySts(access, file);
+    return;
   }
-  await uploadArchiveBySts(access, file);
+  if (access.upload_url) {
+    await uploadArchiveByUrl(access.upload_url, file);
+    return;
+  }
+  throw new Error("上传凭证不完整，缺少 STS 凭证或上传地址");
 }
 
 async function createAndUpload() {
@@ -330,6 +499,7 @@ async function createAndUpload() {
     };
     ElMessage.success("资源包已上传并完成校验");
   } catch (error: any) {
+    importProgress.value = 0;
     ElMessage.error(errorText(error, "资源包上传失败"));
   } finally {
     importBusy.value = false;
@@ -369,6 +539,10 @@ async function loadParseAttempts(silent = false) {
 async function startParse() {
   if (!importId.value) {
     ElMessage.warning("请先完成资源包上传");
+    return;
+  }
+  if (!canStartParse.value) {
+    ElMessage.warning("请先完成资源包上传校验");
     return;
   }
   try {
@@ -732,8 +906,9 @@ onBeforeUnmount(stopParsePolling);
     <header class="demo-resource-manager__header">
       <div>
         <h2>演示教学资源</h2>
-        <p v-if="hasCourseContext">当前系统课程 ID：{{ courseId }}</p>
-        <p v-else>请先从顶部选择系统课程</p>
+        <p v-if="activePane === 'import'">导入范围：ZIP 内全部课程</p>
+        <p v-else-if="hasCourseContext">当前绑定目标课程 ID：{{ courseId }}</p>
+        <p v-else>请先从顶部选择绑定目标课程</p>
       </div>
       <el-button plain :icon="Refresh" @click="loadParseAttempts()">
         刷新状态
@@ -817,7 +992,7 @@ onBeforeUnmount(stopParsePolling);
 
           <section
             class="workflow-section"
-            :class="{ 'is-disabled': !importId }"
+            :class="{ 'is-disabled': !canStartParse }"
           >
             <div class="workflow-section__header">
               <div>
@@ -833,10 +1008,7 @@ onBeforeUnmount(stopParsePolling);
               >
             </div>
             <div class="parse-controls">
-              <el-select
-                v-model="parserType"
-                :disabled="!importId || importBusy"
-              >
+              <el-select v-model="parserType" :disabled="!canStartParse">
                 <el-option label="标准清单" value="manifest_v1" />
                 <el-option label="目录模板" value="directory_template_v1" />
                 <el-option label="手动映射" value="manual_mapping" />
@@ -846,12 +1018,12 @@ onBeforeUnmount(stopParsePolling);
                 v-model="parserConfig"
                 class="parse-controls__config"
                 placeholder="解析配置 JSON"
-                :disabled="!importId || importBusy"
+                :disabled="!canStartParse"
               />
               <el-button
                 type="primary"
                 :loading="importBusy"
-                :disabled="!importId"
+                :disabled="!canStartParse"
                 @click="startParse"
                 >开始解析</el-button
               >
@@ -1275,19 +1447,28 @@ onBeforeUnmount(stopParsePolling);
 
 <style scoped>
 .demo-resource-manager {
-  --demo-border: #dbe3ed;
-  --demo-surface: #fff;
-  --demo-muted: #607087;
-  --demo-ink: #1d2b3c;
-  --demo-primary: #2466bc;
+  --demo-border: var(--el-border-color, #dbe3ed);
+  --demo-surface: var(--el-bg-color, #fff);
+  --demo-card: #fbfcfe;
+  --demo-card-border: #d8e1ec;
+  --demo-muted: var(--el-text-color-secondary, #607087);
+  --demo-ink: var(--el-text-color-primary, #1d2b3c);
+  --demo-primary: var(--el-color-primary, #2466bc);
+  --demo-inline-space: 28px;
 
   display: flex;
+  width: 100%;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
   height: 100%;
   flex-direction: column;
   overflow: hidden;
   color: var(--demo-ink);
-  background: #f5f7fa;
+  background: transparent;
+  border: 1px solid var(--demo-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgb(51 65 85 / 7%);
 }
 
 .demo-resource-manager__header,
@@ -1310,9 +1491,19 @@ onBeforeUnmount(stopParsePolling);
   justify-content: space-between;
   gap: 16px;
   min-height: 70px;
-  padding: 14px 24px;
-  background: var(--demo-surface);
+  padding: 14px var(--demo-inline-space);
+  background: rgb(255 255 255 / 78%);
   border-bottom: 1px solid var(--demo-border);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.demo-resource-manager__header > div {
+  min-width: 0;
+}
+
+.demo-resource-manager__header > .el-button {
+  flex: 0 0 auto;
 }
 
 .demo-resource-manager__header h2,
@@ -1337,10 +1528,13 @@ onBeforeUnmount(stopParsePolling);
 
 .demo-resource-manager__tabs {
   display: flex;
+  width: 100%;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
   flex: 1;
   flex-direction: column;
-  padding: 0 24px;
+  padding: 0 var(--demo-inline-space);
 }
 
 .demo-resource-manager__tabs :deep(.el-tabs__header) {
@@ -1350,24 +1544,38 @@ onBeforeUnmount(stopParsePolling);
 
 .demo-resource-manager__tabs :deep(.el-tabs__content),
 .demo-resource-manager__tabs :deep(.el-tab-pane) {
+  width: 100%;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
   height: 100%;
+  overflow: hidden;
 }
 
 .demo-resource-manager__pane {
   display: grid;
+  width: 100%;
   gap: 14px;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
   height: 100%;
   padding: 18px 0 28px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .workflow-section {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 16px;
-  background: var(--demo-surface);
-  border: 1px solid var(--demo-border);
+  background: var(--demo-card);
+  border: 1px solid var(--demo-card-border);
   border-radius: 8px;
+  box-shadow:
+    0 7px 18px rgb(51 65 85 / 6%),
+    inset 0 1px 0 rgb(255 255 255 / 90%);
 }
 
 .workflow-section.is-disabled {
@@ -1379,9 +1587,21 @@ onBeforeUnmount(stopParsePolling);
 }
 
 .workflow-section__header {
+  min-width: 0;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 14px;
+}
+
+.workflow-section__header > div:first-child {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.workflow-section__header > :is(.el-button, .el-tag) {
+  flex: 0 0 auto;
+  max-width: 100%;
 }
 
 .workflow-section h3 {
@@ -1390,7 +1610,10 @@ onBeforeUnmount(stopParsePolling);
 }
 
 .workflow-section__actions {
-  flex: 0 0 auto;
+  min-width: 0;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -1400,6 +1623,9 @@ onBeforeUnmount(stopParsePolling);
 .publication-form,
 .assignment-form,
 .withdrawal-form {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   flex-wrap: wrap;
   gap: 10px;
 }
@@ -1418,7 +1644,19 @@ onBeforeUnmount(stopParsePolling);
 }
 
 .parse-controls__config {
+  min-width: 0;
   flex: 1 1 260px;
+}
+
+.demo-resource-manager :deep(.el-table) {
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.demo-resource-manager :deep(.el-table__inner-wrapper) {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .id-strip,
@@ -1505,11 +1743,11 @@ onBeforeUnmount(stopParsePolling);
 
 @media (max-width: 900px) {
   .demo-resource-manager__tabs {
-    padding: 0 14px;
+    padding-inline: 16px;
   }
 
   .demo-resource-manager__header {
-    padding-inline: 14px;
+    padding-inline: 16px;
   }
 
   .workflow-section__header {

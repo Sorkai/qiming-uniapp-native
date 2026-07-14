@@ -8,7 +8,22 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+const normalizeAssistantApiResponse = <T>(
+  payload: ApiResponse<T> | T
+): ApiResponse<T> => {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "code" in payload &&
+    "data" in payload
+  ) {
+    return payload as ApiResponse<T>;
+  }
+  return { code: 200, msg: "OK", data: payload as T };
+};
+
 const genericAxiosErrorPattern = /^Request failed with status code \d+$/;
+const htmlGatewayErrorPattern = /<\/?html|<!doctype|bad gateway|openresty/i;
 
 const extractEmbeddedAssistantError = (text: string): string | undefined => {
   const match = text.match(/returned status \d+:\s*(.+)$/);
@@ -39,7 +54,13 @@ const normalizeAssistantErrorText = (value: unknown): string | undefined => {
   }
   if (typeof value !== "string") return undefined;
   const text = value.trim();
-  if (!text || genericAxiosErrorPattern.test(text)) return undefined;
+  if (
+    !text ||
+    genericAxiosErrorPattern.test(text) ||
+    htmlGatewayErrorPattern.test(text)
+  ) {
+    return undefined;
+  }
   return extractEmbeddedAssistantError(text) || text;
 };
 
@@ -65,6 +86,10 @@ export const assistantModelReasonText = (reason?: string) => {
 
 export const assistantApiErrorMessage = (error: unknown, fallback: string) => {
   const axiosError = error as any;
+  const status = Number(axiosError?.response?.status);
+  if ([502, 503, 504].includes(status)) {
+    return "学习助手服务暂不可用，请稍后重试或联系管理员检查 API 服务。";
+  }
   const data = axiosError?.response?.data;
   const candidates = [
     assistantModelReasonText(data?.reason),
@@ -147,7 +172,7 @@ export interface AssistantChatAttachmentStatus {
   mime_type?: string;
   file_size?: number;
   status?: string;
-  parse_status?: "processing" | "ready" | "failed" | string;
+  parse_status?: "pending" | "processing" | "ready" | "failed" | string;
   parse_error?: string;
   created_at?: string;
   updated_at?: string;
@@ -162,6 +187,10 @@ export interface AssistantOption {
   default_for?: string[];
   limits?: Record<string, number>;
   reason?: string;
+  kind?: string;
+  strategy?: Record<string, string | number | boolean>;
+  output_formats?: string[];
+  incomplete_statuses?: string[];
 }
 
 export interface AssistantSkill extends AssistantOption {
@@ -179,6 +208,9 @@ export interface AssistantBootstrapResp {
   skills: AssistantSkill[];
   models: AssistantOption[];
   thinking_modes: AssistantOption[];
+  resource_types?: AssistantOption[];
+  schema_version?: string;
+  warnings?: string[];
   profile_summary?: {
     status: string;
     dimension_count: number;
@@ -217,6 +249,7 @@ export interface AssistantChatStreamReq {
   attachment_ids?: string[];
   enable_realtime_resource?: boolean;
   preferred_explanation_mode?: string;
+  explanation_image_mode?: "auto_wide" | string;
   current_path_node_id?: string;
   metadata?: Record<string, string>;
 }
@@ -235,6 +268,7 @@ export interface AssistantChatTraceStep {
   duration_ms?: number;
   degraded_reason?: string;
   warning_flags?: string[];
+  metadata?: Record<string, string | number | boolean>;
 }
 
 export interface AssistantChatResource {
@@ -252,6 +286,17 @@ export interface AssistantChatSourceRef {
   summary?: string;
   url?: string;
   confidence?: number;
+  document_chunks?: {
+    index: number;
+    page?: number;
+    text: string;
+  }[];
+  document_refs?: {
+    title: string;
+    page?: number;
+    snippet?: string;
+    attachment_id?: string;
+  }[];
 }
 
 export interface AssistantChatVideoSegment {
@@ -275,6 +320,39 @@ export interface AssistantChatResourceTask {
   status: string;
   stage?: string;
   summary?: string;
+  progress?: number;
+  error_message?: string;
+  health_summary?: string;
+  warning_flags?: string[];
+}
+
+export type AssistantExplanationImageStatus =
+  | "queued"
+  | "generating"
+  | "retrying"
+  | "succeeded"
+  | "failed"
+  | "blocked"
+  | "unknown_outcome"
+  | "cancelled"
+  | string;
+
+export interface AssistantExplanationImage {
+  image_id: string;
+  status: AssistantExplanationImageStatus;
+  alt_text?: string;
+  public_url?: string;
+  progress?: number;
+  retryable?: boolean;
+  error_code?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AssistantExplanationImageResp {
+  status: AssistantExplanationImageStatus;
+  message?: string;
+  image: AssistantExplanationImage;
 }
 
 export interface AssistantDigitalHumanDirective {
@@ -314,7 +392,7 @@ export interface AssistantChatStreamEvent {
   retryable?: boolean;
   partial?: boolean;
   created_at?: string;
-  finished: boolean;
+  finished?: boolean;
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -333,6 +411,7 @@ export interface AssistantChatStreamEvent {
   safety_summary?: string;
   safety_flags?: string[];
   sensitive_word_hits?: string[];
+  explanation_image?: AssistantExplanationImage;
 }
 
 export interface AssistantConversationItem {
@@ -404,6 +483,7 @@ export interface AssistantConversationMessageItem {
   content_text?: string;
   created_at: string;
   metadata?: Record<string, any>;
+  explanation_images?: AssistantExplanationImage[];
 }
 
 export interface AssistantProfileCurrentResp {
@@ -636,9 +716,82 @@ export interface AssistantResourceCitation {
 
 export interface AssistantCreateResourceTaskResp {
   accepted: boolean;
+  resolved?: boolean;
   status: string;
   message?: string;
   task?: AssistantResourceTaskItem;
+  resources?: AssistantChatResource[];
+}
+
+export interface AssistantResourceArtifactCheck {
+  check_type: string;
+  gate_level?: string;
+  verdict?: string;
+  code?: string;
+  summary?: string;
+  override_reason?: string;
+}
+
+export interface AssistantResourceArtifactFile {
+  file_id: string;
+  role?: string;
+  mime_type?: string;
+  size_bytes?: number;
+  sha256?: string;
+  access_scope?: string;
+  download_path?: string;
+}
+
+export interface AssistantResourceArtifact {
+  artifact_id: string;
+  task_id?: string;
+  resource_type?: string;
+  revision_no?: number;
+  status: string;
+  safety_status?: string;
+  hard_gate_status?: string;
+  visibility_scope?: "personal" | "course" | string;
+  published_resource_id?: string;
+  spec_json?: string;
+  manifest_json?: string;
+  checks?: AssistantResourceArtifactCheck[];
+  files?: AssistantResourceArtifactFile[];
+  message?: string;
+  [key: string]: any;
+}
+
+export interface AssistantResourceArtifactsResp {
+  status: string;
+  message?: string;
+  list: AssistantResourceArtifact[];
+}
+
+export interface AssistantResourceArtifactDetailResp {
+  status: string;
+  message?: string;
+  artifact: AssistantResourceArtifact;
+}
+
+export interface AssistantResourceArtifactFilesResp {
+  status: string;
+  message?: string;
+  list: AssistantResourceArtifactFile[];
+}
+
+export interface AssistantResourceArtifactMutationResp {
+  status: string;
+  message?: string;
+  artifact?: AssistantResourceArtifact;
+}
+
+export interface AssistantResourceArtifactPreviewAccessResp {
+  status: string;
+  message?: string;
+  access_token: string;
+  expires_at: string;
+  preview_path: string;
+  sandbox_policy?: string;
+  csp?: string;
 }
 
 export interface AssistantListResourceTasksResp {
@@ -1179,6 +1332,7 @@ function buildAuthHeaders(): Record<string, string> {
   const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    Accept: "text/event-stream",
     "X-Requested-With": "XMLHttpRequest"
   };
   if (token?.accessToken) {
@@ -1332,6 +1486,12 @@ export const getAssistantConversationMessages = (conversationId: string) =>
   http.request<ApiResponse<AssistantConversationMessagesResp>>(
     "get",
     `/edu/frontend/v1/assistant/conversations/${encodeURIComponent(conversationId)}/messages`
+  );
+
+export const getAssistantExplanationImage = (imageId: string) =>
+  http.request<AssistantExplanationImageResp>(
+    "get",
+    `/edu/frontend/v1/assistant/explanation-images/${encodeURIComponent(imageId)}`
   );
 
 const pickAssistantField = <T = string>(
@@ -1591,43 +1751,44 @@ export const listAssistantProfileHistory = (params?: {
   target_student_id?: number;
   limit?: number;
 }) =>
-  http.request<ApiResponse<AssistantProfileHistoryResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/profile/history",
-    { params }
-  );
+  http
+    .request<
+      ApiResponse<AssistantProfileHistoryResp> | AssistantProfileHistoryResp
+    >("get", "/edu/frontend/v1/assistant/profile/history", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const listAssistantProfileEvents = (params?: {
   course_id?: number;
   target_student_id?: number;
   limit?: number;
 }) =>
-  http.request<ApiResponse<AssistantProfileEventsResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/profile/events",
-    { params }
-  );
+  http
+    .request<
+      ApiResponse<AssistantProfileEventsResp> | AssistantProfileEventsResp
+    >("get", "/edu/frontend/v1/assistant/profile/events", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const listAssistantProfileStudents = (params?: {
   course_id?: number;
   limit?: number;
 }) =>
-  http.request<ApiResponse<AssistantProfileStudentsResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/profile/students",
-    { params }
-  );
+  http
+    .request<
+      ApiResponse<AssistantProfileStudentsResp> | AssistantProfileStudentsResp
+    >("get", "/edu/frontend/v1/assistant/profile/students", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const listAssistantProfileCorrections = (params?: {
   course_id?: number;
   target_student_id?: number;
   limit?: number;
 }) =>
-  http.request<ApiResponse<AssistantProfileCorrectionsResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/profile/corrections",
-    { params }
-  );
+  http
+    .request<
+      | ApiResponse<AssistantProfileCorrectionsResp>
+      | AssistantProfileCorrectionsResp
+    >("get", "/edu/frontend/v1/assistant/profile/corrections", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const createAssistantProfileCorrection = (data: {
   course_id?: number;
@@ -1636,11 +1797,12 @@ export const createAssistantProfileCorrection = (data: {
   after_json: string;
   reason?: string;
 }) =>
-  http.request<ApiResponse<AssistantProfileCorrectionCreateResp>>(
-    "post",
-    "/edu/frontend/v1/assistant/profile/corrections",
-    { data }
-  );
+  http
+    .request<
+      | ApiResponse<AssistantProfileCorrectionCreateResp>
+      | AssistantProfileCorrectionCreateResp
+    >("post", "/edu/frontend/v1/assistant/profile/corrections", { data })
+    .then(normalizeAssistantApiResponse);
 
 export const createAssistantResourceTask = (data: {
   course_id?: number;
@@ -1671,6 +1833,105 @@ export const listAssistantResourceTaskLogs = (taskId: string) =>
     "get",
     `/edu/frontend/v1/assistant/resources/tasks/${encodeURIComponent(taskId)}/logs`
   );
+
+const normalizeRawAssistantResponse = <T>(payload: T) =>
+  normalizeAssistantApiResponse<T>(payload);
+
+export const listAssistantResourceArtifacts = (taskId: string) =>
+  http
+    .request<AssistantResourceArtifactsResp>(
+      "get",
+      `/edu/frontend/v1/assistant/resources/tasks/${encodeURIComponent(taskId)}/artifacts`
+    )
+    .then(normalizeRawAssistantResponse);
+
+export const getAssistantResourceArtifact = (artifactId: string) =>
+  http
+    .request<AssistantResourceArtifactDetailResp>(
+      "get",
+      `/edu/frontend/v1/assistant/resources/artifacts/${encodeURIComponent(artifactId)}`
+    )
+    .then(normalizeRawAssistantResponse);
+
+export const listAssistantResourceArtifactFiles = (artifactId: string) =>
+  http
+    .request<AssistantResourceArtifactFilesResp>(
+      "get",
+      `/edu/frontend/v1/assistant/resources/artifacts/${encodeURIComponent(artifactId)}/files`
+    )
+    .then(normalizeRawAssistantResponse);
+
+export const retryAssistantResourceArtifact = (
+  artifactId: string,
+  data: { reason?: string } = {}
+) =>
+  http
+    .request<AssistantResourceArtifactMutationResp>(
+      "post",
+      `/edu/frontend/v1/assistant/resources/artifacts/${encodeURIComponent(artifactId)}/retry`,
+      { data }
+    )
+    .then(normalizeRawAssistantResponse);
+
+export const reviewAssistantResourceArtifact = (
+  artifactId: string,
+  data: { decision: "approved" | "rejected"; reason?: string }
+) =>
+  http
+    .request<AssistantResourceArtifactMutationResp>(
+      "post",
+      `/edu/frontend/v1/assistant/resources/artifacts/${encodeURIComponent(artifactId)}/review`,
+      { data }
+    )
+    .then(normalizeRawAssistantResponse);
+
+export const publishAssistantResourceArtifact = (artifactId: string) =>
+  http
+    .request<AssistantResourceArtifactMutationResp>(
+      "post",
+      `/edu/frontend/v1/assistant/resources/artifacts/${encodeURIComponent(artifactId)}/publish`,
+      { data: {} }
+    )
+    .then(normalizeRawAssistantResponse);
+
+export const updateAssistantResourceArtifactVisibility = (
+  artifactId: string,
+  visibility_scope: "personal" | "course"
+) =>
+  http
+    .request<AssistantResourceArtifactMutationResp>(
+      "post",
+      `/edu/frontend/v1/assistant/resources/artifacts/${encodeURIComponent(artifactId)}/visibility`,
+      { data: { visibility_scope } }
+    )
+    .then(normalizeRawAssistantResponse);
+
+export const getAssistantResourceArtifactPreviewAccess = (artifactId: string) =>
+  http
+    .request<AssistantResourceArtifactPreviewAccessResp>(
+      "get",
+      `/edu/frontend/v1/assistant/resources/artifacts/${encodeURIComponent(artifactId)}/preview-access`
+    )
+    .then(normalizeRawAssistantResponse);
+
+export const getAssistantResourceArtifactFileContent = async (
+  artifactId: string,
+  fileId: string
+) => {
+  const token = getToken();
+  const response = await fetch(
+    `${apiBaseURL()}/edu/frontend/v1/assistant/resources/artifacts/${encodeURIComponent(artifactId)}/files/${encodeURIComponent(fileId)}/content`,
+    {
+      headers: token?.accessToken
+        ? { Authorization: formatToken(token.accessToken) }
+        : undefined
+    }
+  );
+  if (!response.ok) {
+    throw new Error(`资源文件读取失败（HTTP ${response.status}）`);
+  }
+  return response.blob();
+};
 
 export const getAssistantResourceTask = (taskId: string) =>
   http.request<
@@ -1847,44 +2108,48 @@ export const listAssistantPathHistory = (params?: {
   course_id?: number;
   target_student_id?: number;
 }) =>
-  http.request<ApiResponse<AssistantListPathHistoryResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/path/history",
-    { params }
-  );
+  http
+    .request<
+      ApiResponse<AssistantListPathHistoryResp> | AssistantListPathHistoryResp
+    >("get", "/edu/frontend/v1/assistant/path/history", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const listAssistantPathActions = (params?: {
   course_id?: number;
   target_student_id?: number;
 }) =>
-  http.request<ApiResponse<AssistantListPathActionsResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/path/actions",
-    { params }
-  );
+  http
+    .request<
+      ApiResponse<AssistantListPathActionsResp> | AssistantListPathActionsResp
+    >("get", "/edu/frontend/v1/assistant/path/actions", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const applyAssistantPathAction = (actionId: string) =>
-  http.request<ApiResponse<AssistantApplyPathActionResp>>(
-    "post",
-    `/edu/frontend/v1/assistant/path/actions/${encodeURIComponent(actionId)}/apply`
-  );
+  http
+    .request<
+      ApiResponse<AssistantApplyPathActionResp> | AssistantApplyPathActionResp
+    >("post", `/edu/frontend/v1/assistant/path/actions/${encodeURIComponent(actionId)}/apply`)
+    .then(normalizeAssistantApiResponse);
 
 export const listAssistantPathPushTasks = (params?: {
   course_id?: number;
   target_student_id?: number;
   status?: string;
 }) =>
-  http.request<ApiResponse<AssistantListPathPushTasksResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/path/push-tasks",
-    { params }
-  );
+  http
+    .request<
+      | ApiResponse<AssistantListPathPushTasksResp>
+      | AssistantListPathPushTasksResp
+    >("get", "/edu/frontend/v1/assistant/path/push-tasks", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const completeAssistantPathPushTask = (pushId: string) =>
-  http.request<ApiResponse<AssistantCompletePathPushTaskResp>>(
-    "post",
-    `/edu/frontend/v1/assistant/path/push-tasks/${encodeURIComponent(pushId)}/complete`
-  );
+  http
+    .request<
+      | ApiResponse<AssistantCompletePathPushTaskResp>
+      | AssistantCompletePathPushTaskResp
+    >("post", `/edu/frontend/v1/assistant/path/push-tasks/${encodeURIComponent(pushId)}/complete`)
+    .then(normalizeAssistantApiResponse);
 
 export const getAssistantAssessmentCurrent = (params?: {
   course_id?: number;
@@ -1937,39 +2202,43 @@ export const listAssistantAssessmentHistory = (params?: {
   course_id?: number;
   target_student_id?: number;
 }) =>
-  http.request<ApiResponse<AssistantAssessmentHistoryResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/assessment/history",
-    { params }
-  );
+  http
+    .request<
+      | ApiResponse<AssistantAssessmentHistoryResp>
+      | AssistantAssessmentHistoryResp
+    >("get", "/edu/frontend/v1/assistant/assessment/history", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const listAssistantAssessmentActions = (params?: {
   course_id?: number;
   target_student_id?: number;
   status?: string;
 }) =>
-  http.request<ApiResponse<AssistantAssessmentActionsResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/assessment/actions",
-    { params }
-  );
+  http
+    .request<
+      | ApiResponse<AssistantAssessmentActionsResp>
+      | AssistantAssessmentActionsResp
+    >("get", "/edu/frontend/v1/assistant/assessment/actions", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const applyAssistantAssessmentAction = (actionId: string) =>
-  http.request<ApiResponse<AssistantApplyAssessmentActionResp>>(
-    "post",
-    `/edu/frontend/v1/assistant/assessment/actions/${encodeURIComponent(actionId)}/apply`
-  );
+  http
+    .request<
+      | ApiResponse<AssistantApplyAssessmentActionResp>
+      | AssistantApplyAssessmentActionResp
+    >("post", `/edu/frontend/v1/assistant/assessment/actions/${encodeURIComponent(actionId)}/apply`)
+    .then(normalizeAssistantApiResponse);
 
 export const listAssistantAssessmentJobs = (params?: {
   course_id?: number;
   target_student_id?: number;
   status?: string;
 }) =>
-  http.request<ApiResponse<AssistantAssessmentJobsResp>>(
-    "get",
-    "/edu/frontend/v1/assistant/assessment/jobs",
-    { params }
-  );
+  http
+    .request<
+      ApiResponse<AssistantAssessmentJobsResp> | AssistantAssessmentJobsResp
+    >("get", "/edu/frontend/v1/assistant/assessment/jobs", { params })
+    .then(normalizeAssistantApiResponse);
 
 export const getAssistantDashboardStudents = (params?: {
   course_id?: number;
@@ -2009,13 +2278,16 @@ export const getAssistantDashboardPaths = (params?: { course_id?: number }) =>
   );
 
 export const getAssistantTaskTrace = (taskId: string) =>
-  http.request<ApiResponse<AssistantTaskTraceResp>>(
-    "get",
-    `/edu/frontend/v1/assistant/tasks/${encodeURIComponent(taskId)}/trace`
-  );
+  http
+    .request<
+      ApiResponse<AssistantTaskTraceResp> | AssistantTaskTraceResp
+    >("get", `/edu/frontend/v1/assistant/tasks/${encodeURIComponent(taskId)}/trace`)
+    .then(normalizeAssistantApiResponse);
 
 export const getAssistantConversationTrace = (conversationId: string) =>
-  http.request<ApiResponse<AssistantConversationTraceResp>>(
-    "get",
-    `/edu/frontend/v1/assistant/conversations/${encodeURIComponent(conversationId)}/trace`
-  );
+  http
+    .request<
+      | ApiResponse<AssistantConversationTraceResp>
+      | AssistantConversationTraceResp
+    >("get", `/edu/frontend/v1/assistant/conversations/${encodeURIComponent(conversationId)}/trace`)
+    .then(normalizeAssistantApiResponse);

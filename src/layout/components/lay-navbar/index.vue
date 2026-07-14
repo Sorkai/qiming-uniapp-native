@@ -99,9 +99,7 @@ const {
 </script>
 
 <template>
-  <div
-    class="navbar bg-white/10 dark:bg-white/[0.03] backdrop-blur-[20px] dark:backdrop-blur-[20px] border-b border-white/20 dark:border-white/10 transition-all duration-700"
-  >
+  <div class="navbar transition-all duration-700">
     <div
       :class="[
         'flex items-center h-full min-w-0',
@@ -231,7 +229,13 @@ const {
   justify-content: space-between;
   width: 100%;
   height: 72px; // 增加到 72px 让视觉更通透
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 4%);
+  background: rgb(255 255 255 / 72%);
+  border-bottom: 1px solid rgb(148 163 184 / 28%);
+  box-shadow:
+    0 5px 16px rgb(51 65 85 / 7%),
+    inset 0 1px 0 rgb(255 255 255 / 82%);
+  backdrop-filter: blur(20px) saturate(135%);
+  -webkit-backdrop-filter: blur(20px) saturate(135%);
 
   .navbar-item {
     display: inline-flex;
@@ -272,7 +276,9 @@ const {
 /* 适配深色模式 */
 :global(html.dark) {
   .navbar {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 40%);
+    background: rgb(14 22 35 / 72%);
+    border-bottom-color: rgb(148 163 184 / 20%);
+    box-shadow: 0 5px 16px rgb(0 0 0 / 24%);
 
     .navbar-item:hover {
       color: #60a5fa;

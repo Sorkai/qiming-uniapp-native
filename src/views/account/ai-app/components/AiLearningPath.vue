@@ -81,6 +81,11 @@ const contextWarning = computed(() => {
   return "";
 });
 const hasRequiredContext = computed(() => !contextWarning.value);
+const visibleStatusMessage = computed(() =>
+  String(statusMessage.value || "")
+    .replace(/，?请调用\s*\/assistant\/path\/generate。?/g, "")
+    .trim()
+);
 
 const statusTextMap: Record<string, string> = {
   completed: "已完成",
@@ -538,7 +543,7 @@ watch(() => [props.courseId, props.targetStudentId], loadPath);
 
     <section v-else class="path-empty-panel">
       <el-empty
-        :description="statusMessage || '当前课程还没有学习路径'"
+        :description="visibleStatusMessage || '当前课程还没有学习路径'"
         :image-size="110"
       />
       <el-button

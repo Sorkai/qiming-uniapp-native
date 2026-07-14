@@ -12,7 +12,7 @@
             class="text-sm font-semibold text-gray-700 tracking-normal mb-2 px-3 flex items-center justify-between group/course cursor-pointer"
             @click="toggleCourse(course)"
           >
-            <div class="flex items-center gap-2">
+            <div class="flex min-w-0 flex-1 items-center gap-2">
               <el-icon
                 class="text-primary/70 transition-transform duration-300"
                 :class="{ '-rotate-90': collapsedCourses.includes(course) }"
@@ -20,7 +20,7 @@
                 <ArrowDown />
               </el-icon>
               <el-icon class="text-primary/70"><Reading /></el-icon>
-              <span class="truncate max-w-[120px]">{{ course }}</span>
+              <span class="min-w-0 flex-1 truncate">{{ course }}</span>
             </div>
             <div class="flex items-center gap-1">
               <el-tooltip content="新建该课程的辅导会话" placement="right">

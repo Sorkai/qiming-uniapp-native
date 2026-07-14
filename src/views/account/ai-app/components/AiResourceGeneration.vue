@@ -30,13 +30,15 @@ import {
   type AssistantResourceTaskLogItem,
   type AssistantResourceUsageEventType,
   type AssistantResourceVersionItem,
-  type AssistantChatTraceStep
+  type AssistantChatTraceStep,
+  type AssistantOption
 } from "@/api/frontend/assistant";
 
 const props = defineProps<{
   courseId?: number;
   targetStudentId?: number;
   requiresTargetStudent?: boolean;
+  resourceTypes?: AssistantOption[];
 }>();
 
 const contextWarning = computed(() => {
@@ -132,10 +134,31 @@ const filteredResources = computed(() => {
 });
 
 const resourceTypeOptions = computed(() =>
-  Array.from(new Set(resources.value.map(item => item.resource_type))).filter(
-    Boolean
-  )
+  Array.from(
+    new Set([
+      ...(props.resourceTypes || []).map(item => item.key),
+      ...resources.value.map(item => item.resource_type)
+    ])
+  ).filter(Boolean)
 );
+
+const generationResourceTypes = computed(() => {
+  const available = (props.resourceTypes || [])
+    .filter(item => !item.status || item.status === "available")
+    .map(item => item.key)
+    .filter(Boolean);
+  return available.length
+    ? available
+    : [
+        "explanation_doc",
+        "mind_map",
+        "courseware_ppt",
+        "exercise_set",
+        "extended_reading",
+        "html_animation",
+        "coding_practice_case"
+      ];
+});
 
 const statusTextMap: Record<string, string> = {
   completed: "已完成",
@@ -225,8 +248,7 @@ const textOf = (
 };
 
 const statusText = (status?: string) => textOf(statusTextMap, status);
-const warningFlagText = (flag?: string) =>
-  textOf(warningFlagTextMap, flag, "");
+const warningFlagText = (flag?: string) => textOf(warningFlagTextMap, flag, "");
 const resourceTypeText = (type?: string) => textOf(resourceTypeTextMap, type);
 const formatText = (format?: string) => textOf(formatTextMap, format);
 const agentText = (name?: string) => textOf(agentNameMap, name, "调度节点");
@@ -516,15 +538,7 @@ const handleCreateTask = async () => {
     const { data } = await createAssistantResourceTask({
       course_id: props.courseId,
       target_student_id: props.targetStudentId,
-      resource_types: [
-        "explanation_doc",
-        "mind_map",
-        "courseware_ppt",
-        "exercise_set",
-        "extended_reading",
-        "html_animation",
-        "coding_practice_case"
-      ],
+      resource_types: generationResourceTypes.value,
       prompt: "请围绕当前课程薄弱点生成一组个性化学习资源"
     });
     ElMessage.success(data.message || "资源生成任务已创建");
