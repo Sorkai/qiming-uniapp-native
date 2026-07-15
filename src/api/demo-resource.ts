@@ -136,9 +136,92 @@ export interface DemoResourceBindingBatchItem {
   course_binding_id: string;
   binding_revision_id: string;
   binding_version: number;
+  item_version?: number;
   warning_code: string;
+  review_summary?: DemoResourceBindingReviewSummary;
   error_code: string;
   error_message: string;
+}
+
+export interface DemoResourceBindingReviewSummary {
+  status:
+    | "needs_review"
+    | "rebase_required"
+    | "ready_to_activate"
+    | "active"
+    | string;
+  unmapped_resources: number;
+  invalid_recipients: number;
+  catalog_changed: boolean;
+  curriculum_changed: boolean;
+  binding_version_changed: boolean;
+  reason_codes: string[];
+  next_action:
+    | "edit_mappings"
+    | "cleanup_invalid_recipients"
+    | "rebase"
+    | "activate"
+    | "";
+  can_activate: boolean;
+}
+
+export interface DemoResourceBindingReviewContext {
+  status: string;
+  message: string;
+  draft: {
+    binding_revision_id: string;
+    course_binding_id: string;
+    binding_version: number;
+    edit_version: number;
+    revision_no: number;
+    catalog_hash: string;
+    curriculum_hash: string;
+  };
+  course: { course_id: number; title: string };
+  batch_item: { batch_id: string; batch_item_id: string; item_version: number };
+  preview: DemoResourceBindingPreview;
+  review_summary: DemoResourceBindingReviewSummary;
+  actions: {
+    can_edit: boolean;
+    can_cleanup_invalid_recipients: boolean;
+    can_rebase: boolean;
+    can_activate: boolean;
+  };
+  source_nodes: Array<{
+    source_node_id: string;
+    title: string;
+    number_path: string;
+    resource_count: number;
+    resolution_status: string;
+    mappings: Array<{
+      target_type: "course" | "chapter" | "hour";
+      target_id: number;
+      target_label: string;
+      method: string;
+      status: string;
+      score: number;
+    }>;
+    suggestions: Array<{
+      target_type: "course" | "chapter" | "hour";
+      target_id: number;
+      target_label: string;
+      score: number;
+    }>;
+  }>;
+  target_nodes: Array<{
+    target_type: "course" | "chapter" | "hour";
+    target_id: number;
+    label: string;
+    path: string;
+  }>;
+  invalid_recipient_total: number;
+  invalid_recipients: Array<{
+    student_id: number;
+    student_name: string;
+    resource_title: string;
+    variant_code: string;
+    reason: string;
+  }>;
 }
 
 export interface DemoResourceBindingBatch {
@@ -385,6 +468,61 @@ export const getDemoResourceBindingBatch = (batchId: string) =>
     `/edu/backend/v1/demo-resources/binding-batches/${encodeURIComponent(batchId)}`
   );
 
+export const getDemoResourceBindingReviewContext = (draftId: string) =>
+  http.request<DemoResponse<DemoResourceBindingReviewContext>>(
+    "get",
+    `/edu/backend/v1/demo-resources/binding-drafts/${encodeURIComponent(draftId)}/review-context`,
+    {
+      params: {
+        source_page: 1,
+        source_page_size: 100,
+        resolution_status: "all"
+      }
+    }
+  );
+
+export const patchDemoResourceBindingMappings = (
+  draftId: string,
+  data: {
+    idempotency_key: string;
+    expected_edit_version: number;
+    changes: Array<{
+      source_node_id: string;
+      operation: "replace" | "clear";
+      mappings: Array<{
+        source_node_id: string;
+        target_type: "course" | "chapter" | "hour";
+        target_id: number;
+        method: "manual";
+        status: "confirmed";
+        score: number;
+      }>;
+    }>;
+  }
+) =>
+  http.request<
+    DemoResponse<{
+      edit_version: number;
+      item_version: number;
+      review_summary: DemoResourceBindingReviewSummary;
+    }>
+  >(
+    "patch",
+    `/edu/backend/v1/demo-resources/binding-drafts/${encodeURIComponent(draftId)}/mappings`,
+    { data }
+  );
+
+export const rebaseDemoResourceBindingBatchItem = (
+  batchId: string,
+  itemId: string,
+  data: { idempotency_key: string; expected_item_version: number }
+) =>
+  http.request<DemoResponse<DemoResourceBindingBatch>>(
+    "post",
+    `/edu/backend/v1/demo-resources/binding-batches/${encodeURIComponent(batchId)}/items/${encodeURIComponent(itemId)}/rebase`,
+    { data }
+  );
+
 export const replaceDemoResourceBindingMappings = (
   draftId: string,
   data: {
@@ -414,6 +552,8 @@ export const activateDemoResourceBinding = (
   draftId: string,
   data: {
     expected_binding_version: number;
+    expected_edit_version?: number;
+    expected_batch_item_version?: number;
     expected_catalog_hash: string;
     expected_curriculum_hash: string;
   }
@@ -421,6 +561,20 @@ export const activateDemoResourceBinding = (
   http.request<DemoResponse<Record<string, never>>>(
     "post",
     `/edu/backend/v1/demo-resources/binding-drafts/${encodeURIComponent(draftId)}/activate`,
+    { data }
+  );
+
+export const cleanupDemoResourceInvalidRecipients = (
+  courseId: number,
+  data: {
+    idempotency_key: string;
+    expected_assignment_version: number;
+    mode: "all_invalid";
+  }
+) =>
+  http.request<DemoResponse<Record<string, unknown>>>(
+    "post",
+    `/edu/backend/v1/demo-resources/courses/${courseId}/invalid-recipients/cleanup`,
     { data }
   );
 

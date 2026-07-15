@@ -15,6 +15,7 @@ import {
 import {
   activateDemoResourceBinding,
   applyDemoResourceImport,
+  cleanupDemoResourceInvalidRecipients,
   completeDemoResourceImport,
   createDemoResourceBindingBatch,
   createDemoResourceImport,
@@ -22,15 +23,18 @@ import {
   getDemoResourceUploadAccess,
   getDemoResourceAssignments,
   getDemoResourceBindingBatch,
+  getDemoResourceBindingReviewContext,
   listDemoResourceDiffs,
   listDemoResourceParseAttempts,
   listDemoResourcePublishableResources,
   parseDemoResourceImport,
+  patchDemoResourceBindingMappings,
   previewDemoResourceBinding,
   publishDemoResourceRevisions,
   replaceDemoResourceAssignments,
   replaceDemoResourceBindingMappings,
   resolveDemoResourceDiffs,
+  rebaseDemoResourceBindingBatchItem,
   selectDemoResourceParseAttempt,
   type DemoResourceAppliedCatalogCourse,
   type DemoResourceAssignmentResponse,
@@ -38,6 +42,8 @@ import {
   type DemoResourceApplyResult,
   type DemoResourceAssignmentResource,
   type DemoResourceBindingBatch,
+  type DemoResourceBindingReviewContext,
+  type DemoResourceBindingReviewSummary,
   type DemoResourceBindingDraft,
   type DemoResourceBindingPreview,
   type DemoResourceCourseAssignmentsResponse,
@@ -111,6 +117,9 @@ const batchBindingOutcomes = ref<
     status?: string;
     error?: string;
     bindingRevisionId?: string;
+    batchItemId?: string;
+    itemVersion?: number;
+    reviewSummary?: DemoResourceBindingReviewSummary;
   }>
 >([]);
 const bindingBusy = ref(false);
@@ -123,6 +132,10 @@ const mappingRows = ref<BindingMapping[]>([]);
 const bindingReviewPreviews = reactive<
   Record<string, DemoResourceBindingPreview>
 >({});
+const bindingReviewOpen = ref(false);
+const bindingReviewBusy = ref(false);
+const bindingReviewContext = ref<DemoResourceBindingReviewContext | null>(null);
+const bindingReviewTargetKeys = reactive<Record<string, string>>({});
 const publicationBusy = ref(false);
 const publishableResources = ref<DemoResourcePublishableResource[]>([]);
 const selectedPublishVariants = reactive<Record<string, string[]>>({});
@@ -926,7 +939,10 @@ function syncBindingBatch(nextBatch: DemoResourceBindingBatch) {
         active: item.status === "active",
         status: item.status,
         error: item.error_message || item.error_code || undefined,
-        bindingRevisionId: item.binding_revision_id
+        bindingRevisionId: item.binding_revision_id,
+        batchItemId: item.batch_item_id,
+        itemVersion: item.item_version,
+        reviewSummary: item.review_summary
       }
     ];
   });
@@ -974,6 +990,173 @@ async function loadBindingReviewPreviews(batch: DemoResourceBindingBatch) {
       }
     })
   );
+}
+
+function reviewTargetKey(targetType: string, targetId: number) {
+  return `${targetType}:${targetId}`;
+}
+
+async function openBindingReview(outcome: { bindingRevisionId?: string }) {
+  if (!outcome.bindingRevisionId) return;
+  bindingReviewBusy.value = true;
+  try {
+    const context = payloadOf<DemoResourceBindingReviewContext>(
+      await getDemoResourceBindingReviewContext(outcome.bindingRevisionId)
+    );
+    bindingReviewContext.value = context;
+    for (const key of Object.keys(bindingReviewTargetKeys)) {
+      delete bindingReviewTargetKeys[key];
+    }
+    for (const source of context.source_nodes || []) {
+      const mapping = source.mappings?.[0] || source.suggestions?.[0];
+      if (mapping) {
+        bindingReviewTargetKeys[source.source_node_id] = reviewTargetKey(
+          mapping.target_type,
+          mapping.target_id
+        );
+      }
+    }
+    bindingReviewOpen.value = true;
+  } catch (error: any) {
+    ElMessage.error(issue226ErrorText(error, "映射工作台加载失败"));
+  } finally {
+    bindingReviewBusy.value = false;
+  }
+}
+
+async function refreshBindingReview() {
+  const draftId = bindingReviewContext.value?.draft.binding_revision_id;
+  if (draftId) await openBindingReview({ bindingRevisionId: draftId });
+  if (bindingBatch.value)
+    await loadBindingBatch(bindingBatch.value.batch_id, true);
+}
+
+async function saveBindingReviewMappings() {
+  const context = bindingReviewContext.value;
+  if (!context || !context.actions.can_edit) return;
+  const targets = new Map(
+    context.target_nodes.map(target => [
+      reviewTargetKey(target.target_type, target.target_id),
+      target
+    ])
+  );
+  const changes = context.source_nodes.flatMap(source => {
+    const target = targets.get(bindingReviewTargetKeys[source.source_node_id]);
+    return target
+      ? [
+          {
+            source_node_id: source.source_node_id,
+            operation: "replace" as const,
+            mappings: [
+              {
+                source_node_id: source.source_node_id,
+                target_type: target.target_type,
+                target_id: target.target_id,
+                method: "manual" as const,
+                status: "confirmed" as const,
+                score: 1
+              }
+            ]
+          }
+        ]
+      : [];
+  });
+  if (!changes.length) {
+    ElMessage.warning("请选择至少一个平台章节或课时");
+    return;
+  }
+  bindingReviewBusy.value = true;
+  try {
+    await patchDemoResourceBindingMappings(context.draft.binding_revision_id, {
+      idempotency_key: actionKey("binding-review-mapping"),
+      expected_edit_version: context.draft.edit_version,
+      changes
+    });
+    ElMessage.success("映射已保存，正在刷新校验结果");
+    await refreshBindingReview();
+  } catch (error: any) {
+    ElMessage.error(issue226ErrorText(error, "映射保存失败，请刷新后重试"));
+  } finally {
+    bindingReviewBusy.value = false;
+  }
+}
+
+async function rebaseBindingReview() {
+  const context = bindingReviewContext.value;
+  if (!context || !context.actions.can_rebase) return;
+  bindingReviewBusy.value = true;
+  try {
+    const batch = payloadOf<DemoResourceBindingBatch>(
+      await rebaseDemoResourceBindingBatchItem(
+        context.batch_item.batch_id,
+        context.batch_item.batch_item_id,
+        {
+          idempotency_key: actionKey("binding-rebase"),
+          expected_item_version: context.batch_item.item_version
+        }
+      )
+    );
+    syncBindingBatch(batch);
+    const item = batch.items.find(
+      value => value.batch_item_id === context.batch_item.batch_item_id
+    );
+    bindingReviewOpen.value = false;
+    if (item?.status === "needs_review") {
+      await openBindingReview({ bindingRevisionId: item.binding_revision_id });
+    }
+    ElMessage.success("已按最新课程结构重新校准绑定");
+  } catch (error: any) {
+    ElMessage.error(issue226ErrorText(error, "重新校准失败"));
+  } finally {
+    bindingReviewBusy.value = false;
+  }
+}
+
+async function cleanupBindingReviewRecipients() {
+  const context = bindingReviewContext.value;
+  if (!context || !context.actions.can_cleanup_invalid_recipients) return;
+  bindingReviewBusy.value = true;
+  try {
+    const assignments = payloadOf<DemoResourceCourseAssignmentsResponse>(
+      await getDemoResourceAssignments(context.course.course_id, {
+        page: 1,
+        page_size: 1
+      })
+    );
+    await cleanupDemoResourceInvalidRecipients(context.course.course_id, {
+      idempotency_key: actionKey("invalid-recipient-cleanup"),
+      expected_assignment_version: assignments.assignment_version,
+      mode: "all_invalid"
+    });
+    ElMessage.success("无效接收人已清理，正在刷新校验结果");
+    await refreshBindingReview();
+  } catch (error: any) {
+    ElMessage.error(issue226ErrorText(error, "无效接收人清理失败"));
+  } finally {
+    bindingReviewBusy.value = false;
+  }
+}
+
+async function activateBindingReview() {
+  const context = bindingReviewContext.value;
+  if (!context || !context.actions.can_activate) return;
+  bindingReviewBusy.value = true;
+  try {
+    await activateDemoResourceBinding(context.draft.binding_revision_id, {
+      expected_binding_version: context.draft.binding_version,
+      expected_edit_version: context.draft.edit_version,
+      expected_batch_item_version: context.batch_item.item_version,
+      expected_catalog_hash: context.draft.catalog_hash,
+      expected_curriculum_hash: context.draft.curriculum_hash
+    });
+    bindingReviewOpen.value = false;
+    if (bindingBatch.value) await loadBindingBatch(bindingBatch.value.batch_id);
+    ElMessage.success("课程绑定已生效");
+  } catch (error: any) {
+    ElMessage.error(issue226ErrorText(error, "激活失败，请刷新后重试"));
+  } finally {
+    bindingReviewBusy.value = false;
+  }
 }
 
 function stopBindingBatchPolling() {
@@ -1755,6 +1938,13 @@ onBeforeUnmount(() => {
                           >需补齐章节映射</el-tag
                         >
                       </el-tooltip>
+                      <el-button
+                        v-if="outcome.status === 'needs_review'"
+                        link
+                        type="primary"
+                        @click="openBindingReview(outcome)"
+                        >处理</el-button
+                      >
                       <el-tag
                         v-else-if="
                           outcome.status === 'pending' ||
@@ -2126,6 +2316,86 @@ onBeforeUnmount(() => {
         </div>
       </el-tab-pane>
     </el-tabs>
+    <el-drawer
+      v-model="bindingReviewOpen"
+      title="处理课程映射"
+      size="min(760px, 94vw)"
+      destroy-on-close
+    >
+      <template v-if="bindingReviewContext">
+        <el-alert
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="
+            bindingReviewContext.review_summary.reason_codes.join('、') ||
+            '请处理阻塞项'
+          "
+          :description="`未映射资源 ${bindingReviewContext.review_summary.unmapped_resources} 个；无效接收人 ${bindingReviewContext.review_summary.invalid_recipients} 个`"
+        />
+        <el-table
+          class="binding-review-table"
+          :data="bindingReviewContext.source_nodes"
+          size="small"
+        >
+          <el-table-column label="资源包节点" min-width="230">
+            <template #default="{ row }">
+              <strong>{{ row.title }}</strong>
+              <p>{{ row.number_path }} · {{ row.resource_count }} 个资源</p>
+            </template>
+          </el-table-column>
+          <el-table-column label="映射到平台课程结构" min-width="280">
+            <template #default="{ row }">
+              <el-select
+                v-model="bindingReviewTargetKeys[row.source_node_id]"
+                filterable
+                clearable
+                placeholder="选择课程、章节或课时"
+                :disabled="!bindingReviewContext?.actions.can_edit"
+              >
+                <el-option
+                  v-for="target in bindingReviewContext?.target_nodes || []"
+                  :key="reviewTargetKey(target.target_type, target.target_id)"
+                  :label="target.path || target.label"
+                  :value="reviewTargetKey(target.target_type, target.target_id)"
+                />
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="binding-review-actions">
+          <el-button :loading="bindingReviewBusy" @click="refreshBindingReview"
+            >刷新校验</el-button
+          >
+          <el-button
+            v-if="bindingReviewContext.actions.can_rebase"
+            :loading="bindingReviewBusy"
+            @click="rebaseBindingReview"
+            >重新校准</el-button
+          >
+          <el-button
+            v-if="bindingReviewContext.actions.can_cleanup_invalid_recipients"
+            :loading="bindingReviewBusy"
+            @click="cleanupBindingReviewRecipients"
+            >清理无效接收人</el-button
+          >
+          <el-button
+            v-if="bindingReviewContext.actions.can_edit"
+            type="primary"
+            :loading="bindingReviewBusy"
+            @click="saveBindingReviewMappings"
+            >保存映射</el-button
+          >
+          <el-button
+            v-if="bindingReviewContext.actions.can_activate"
+            type="success"
+            :loading="bindingReviewBusy"
+            @click="activateBindingReview"
+            >激活绑定</el-button
+          >
+        </div>
+      </template>
+    </el-drawer>
   </section>
 </template>
 
