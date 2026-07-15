@@ -80,6 +80,7 @@ export interface DemoResourceAppliedCatalogCourse {
   catalog_course_id: string;
   external_key: string;
   title: string;
+  action?: "created" | "updated" | "reused" | string;
 }
 
 export interface DemoResourceApplyResult {
@@ -120,6 +121,121 @@ export interface DemoResourceBindingDraft {
   [key: string]: any;
 }
 
+export type DemoResourceBindingBatchItemStatus =
+  | "pending"
+  | "processing"
+  | "active"
+  | "needs_review"
+  | "failed";
+
+export interface DemoResourceBindingBatchItem {
+  batch_item_id: string;
+  catalog_course_id: string;
+  course_id: number;
+  status: DemoResourceBindingBatchItemStatus | string;
+  course_binding_id: string;
+  binding_revision_id: string;
+  binding_version: number;
+  warning_code: string;
+  error_code: string;
+  error_message: string;
+}
+
+export interface DemoResourceBindingBatch {
+  status: "processing" | "completed" | string;
+  message: string;
+  batch_id: string;
+  item_count: number;
+  success_count: number;
+  review_count: number;
+  failure_count: number;
+  items: DemoResourceBindingBatchItem[];
+}
+
+export interface DemoResourcePublishableVariant {
+  code: string;
+  label: string;
+  content_format: string;
+  asset_kind: string;
+  ready_to_publish: boolean;
+  published: boolean;
+  publication_id: string;
+  audience_mode: "selected" | "all_enrolled" | string;
+  assignable: boolean;
+}
+
+export interface DemoResourcePublishableResource {
+  course_binding_id: string;
+  binding_revision_id: string;
+  catalog_course_id: string;
+  catalog_course_title: string;
+  resource_set_id: string;
+  revision_id: string;
+  revision_no: number;
+  title: string;
+  resource_type: string;
+  scope_level: string;
+  source_node_id: string;
+  source_node_title: string;
+  source_number_path: string;
+  revision_status: string;
+  latest_review_decision: string;
+  variants: DemoResourcePublishableVariant[];
+}
+
+export interface DemoResourcePublishableResourcesResponse {
+  status: "ready" | string;
+  message: string;
+  course: { course_id: number; title: string };
+  total: number;
+  items: DemoResourcePublishableResource[];
+}
+
+export interface DemoResourceItemResult {
+  item_index: number;
+  status: "succeeded" | "failed" | string;
+  resource_set_id: string;
+  student_id: number;
+  publication_ids: string[];
+  error_code: string;
+  error_message: string;
+}
+
+export interface DemoResourceAssignmentVariant {
+  code: string;
+  label: string;
+  audience_mode: "selected" | "all_enrolled" | string;
+  assignable: boolean;
+}
+
+export interface DemoResourceAssignmentResource {
+  course_binding_id: string;
+  resource_set_id: string;
+  title: string;
+  variants: DemoResourceAssignmentVariant[];
+}
+
+export interface DemoResourceAssignmentStudent {
+  student_id: number;
+  student_name: string;
+  avatar: string;
+  assignments: Array<{
+    resource_set_id: string;
+    visible_variant_codes: string[];
+  }>;
+}
+
+export interface DemoResourceCourseAssignmentsResponse {
+  status: "ready" | string;
+  message: string;
+  course: { course_id: number; title: string };
+  assignment_version: number;
+  resource_total: number;
+  resources: DemoResourceAssignmentResource[];
+  student_total: number;
+  students: DemoResourceAssignmentStudent[];
+}
+
 export interface DemoResourceBindingPreview {
   added_visible_resources?: number;
   removed_visible_resources?: number;
@@ -134,12 +250,14 @@ export interface DemoResourceBindingPreview {
 
 export interface DemoResourcePublicationResponse {
   publication_ids?: string[];
+  results?: DemoResourceItemResult[];
   [key: string]: any;
 }
 
 export interface DemoResourceAssignmentResponse {
   assignment_version?: number;
   recipient_count?: number;
+  results?: DemoResourceItemResult[];
   [key: string]: any;
 }
 
@@ -247,6 +365,26 @@ export const createDemoResourceBindingDraft = (
     { data }
   );
 
+export const createDemoResourceBindingBatch = (data: {
+  idempotency_key: string;
+  items: Array<{
+    catalog_course_id: string;
+    course_id: number;
+    mode: "auto";
+  }>;
+}) =>
+  http.request<DemoResponse<DemoResourceBindingBatch>>(
+    "post",
+    "/edu/backend/v1/demo-resources/binding-batches",
+    { data }
+  );
+
+export const getDemoResourceBindingBatch = (batchId: string) =>
+  http.request<DemoResponse<DemoResourceBindingBatch>>(
+    "get",
+    `/edu/backend/v1/demo-resources/binding-batches/${encodeURIComponent(batchId)}`
+  );
+
 export const replaceDemoResourceBindingMappings = (
   draftId: string,
   data: {
@@ -290,6 +428,7 @@ export const publishDemoResourceRevisions = (
   courseId: number,
   data: {
     idempotency_key: string;
+    failure_mode?: "atomic" | "continue";
     items: Array<{
       revision_id: string;
       variant_codes: string[];
@@ -303,6 +442,32 @@ export const publishDemoResourceRevisions = (
     "post",
     `/edu/backend/v1/demo-resources/courses/${courseId}/publications/batch`,
     { data }
+  );
+
+export const listDemoResourcePublishableResources = (
+  courseId: number,
+  params?: {
+    page?: number;
+    page_size?: number;
+    keyword?: string;
+    resource_type?: string;
+    revision_status?: string;
+  }
+) =>
+  http.request<DemoResponse<DemoResourcePublishableResourcesResponse>>(
+    "get",
+    `/edu/backend/v1/demo-resources/courses/${courseId}/publishable-resources`,
+    { params }
+  );
+
+export const getDemoResourceAssignments = (
+  courseId: number,
+  params?: { page?: number; page_size?: number; keyword?: string }
+) =>
+  http.request<DemoResponse<DemoResourceCourseAssignmentsResponse>>(
+    "get",
+    `/edu/backend/v1/demo-resources/courses/${courseId}/assignments`,
+    { params }
   );
 
 export const withdrawDemoResourcePublications = (
@@ -319,6 +484,7 @@ export const replaceDemoResourceAssignments = (
   courseId: number,
   data: {
     idempotency_key: string;
+    failure_mode?: "atomic" | "continue";
     expected_assignment_version: number;
     entries: Array<{
       resource_set_id: string;

@@ -16,12 +16,15 @@ import {
   activateDemoResourceBinding,
   applyDemoResourceImport,
   completeDemoResourceImport,
-  createDemoResourceBindingDraft,
+  createDemoResourceBindingBatch,
   createDemoResourceImport,
   getDemoResourceParseAttempt,
   getDemoResourceUploadAccess,
+  getDemoResourceAssignments,
+  getDemoResourceBindingBatch,
   listDemoResourceDiffs,
   listDemoResourceParseAttempts,
+  listDemoResourcePublishableResources,
   parseDemoResourceImport,
   previewDemoResourceBinding,
   publishDemoResourceRevisions,
@@ -29,16 +32,23 @@ import {
   replaceDemoResourceBindingMappings,
   resolveDemoResourceDiffs,
   selectDemoResourceParseAttempt,
-  withdrawDemoResourcePublications,
   type DemoResourceAppliedCatalogCourse,
+  type DemoResourceAssignmentResponse,
+  type DemoResourceAssignmentStudent,
   type DemoResourceApplyResult,
+  type DemoResourceAssignmentResource,
+  type DemoResourceBindingBatch,
   type DemoResourceBindingDraft,
   type DemoResourceBindingPreview,
+  type DemoResourceCourseAssignmentsResponse,
   type DemoResourceDiffItem,
   type DemoResourceDiffResolution,
   type DemoResourceImport,
   type DemoResourceParseAttempt,
   type DemoResourceParser,
+  type DemoResourcePublicationResponse,
+  type DemoResourcePublishableResource,
+  type DemoResourcePublishableResourcesResponse,
   type DemoResourceUploadAccess
 } from "@/api/demo-resource";
 
@@ -89,12 +99,16 @@ const diffBusy = ref(false);
 const applyKey = ref("");
 const appliedCatalogCourses = ref<DemoResourceAppliedCatalogCourse[]>([]);
 const bindingTargetCourseIds = reactive<Record<string, number | undefined>>({});
+const bindingBatch = ref<DemoResourceBindingBatch | null>(null);
+const bindingBatchKey = ref("");
 const batchBindingOutcomes = ref<
   Array<{
     catalogCourse: DemoResourceAppliedCatalogCourse;
     courseId: number;
     courseName: string;
     draft?: DemoResourceBindingDraft;
+    active?: boolean;
+    status?: string;
     error?: string;
   }>
 >([]);
@@ -106,33 +120,28 @@ const bindingPreview = ref<DemoResourceBindingPreview | null>(null);
 const bindingActive = ref(false);
 const mappingRows = ref<BindingMapping[]>([]);
 const publicationBusy = ref(false);
+const publishableResources = ref<DemoResourcePublishableResource[]>([]);
+const selectedPublishVariants = reactive<Record<string, string[]>>({});
+const assignmentResources = ref<DemoResourceAssignmentResource[]>([]);
+const assignmentStudents = ref<DemoResourceAssignmentStudent[]>([]);
+const assignmentVersion = ref(0);
+const selectedAssignmentResourceId = ref("");
+const assignmentDrafts = reactive<Record<number, string[]>>({});
 const publicationIds = ref<string[]>([]);
 const publicationKey = ref("");
 const assignmentKey = ref("");
-const withdrawalKey = ref("");
 const notifiedAttemptFailures = new Set<string>();
 let parsePollTimer: number | undefined;
+let bindingBatchPollTimer: number | undefined;
 
 const importForm = reactive({
   operation: "create" as "create" | "append" | "update",
   targetCatalogCourseId: ""
 });
-const bindingForm = reactive({
-  mode: "auto" as "auto" | "blank"
-});
 const publicationForm = reactive({
-  revisionId: "",
-  variantCodes: "",
   audienceMode: "all_enrolled" as "selected" | "all_enrolled",
   comment: ""
 });
-const assignmentForm = reactive({
-  resourceSetId: "",
-  studentIds: "",
-  variantCodes: "",
-  assignmentVersion: 0
-});
-const withdrawalForm = reactive({ publicationIds: "" });
 
 const systemCourses = computed(() =>
   (props.systemCourses || []).filter(
@@ -181,29 +190,27 @@ const unmappedCatalogCourses = computed(() =>
     course => !Number(bindingTargetCourseIds[course.catalog_course_id])
   )
 );
-const hasDuplicateBindingTargets = computed(() => {
-  const targets = appliedCatalogCourses.value
-    .map(course => Number(bindingTargetCourseIds[course.catalog_course_id]))
-    .filter(courseId => courseId > 0);
-  return new Set(targets).size !== targets.length;
-});
 const catalogCoursesAwaitingBinding = computed(() => {
-  const completedCatalogCourseIds = new Set(
+  const blockedCatalogCourseIds = new Set(
     batchBindingOutcomes.value
-      .filter(outcome => outcome.draft)
+      .filter(outcome => outcome.status && outcome.status !== "failed")
       .map(outcome => outcome.catalogCourse.catalog_course_id)
   );
   return appliedCatalogCourses.value.filter(
-    course => !completedCatalogCourseIds.has(course.catalog_course_id)
+    course => !blockedCatalogCourseIds.has(course.catalog_course_id)
   );
 });
 const canCreateBatchBindings = computed(
   () =>
     Boolean(catalogCoursesAwaitingBinding.value.length) &&
     Boolean(systemCourses.value.length) &&
-    !unmappedCatalogCourses.value.length &&
-    !hasDuplicateBindingTargets.value &&
-    !bindingBusy.value
+    !bindingBusy.value &&
+    bindingBatch.value?.status !== "processing"
+);
+const selectedAssignmentResource = computed(() =>
+  assignmentResources.value.find(
+    resource => resource.resource_set_id === selectedAssignmentResourceId.value
+  )
 );
 const canActivateBinding = computed(() => {
   const preview = bindingPreview.value;
@@ -234,11 +241,11 @@ function errorText(error: any, fallback: string) {
   );
 }
 
-function commaValues(value: string) {
-  return value
-    .split(/[，,\s]+/)
-    .map(item => item.trim())
-    .filter(Boolean);
+function issue226ErrorText(error: any, fallback: string) {
+  if (Number(error?.response?.status) === 404) {
+    return "服务端尚未部署 Issue #226 演示资源接口，请更新后端服务后重试";
+  }
+  return errorText(error, fallback);
 }
 
 function parseJson(value?: string) {
@@ -315,14 +322,19 @@ function suggestBindingTargets() {
     const key = catalogCourse.catalog_course_id;
     if (availableCourseIds.has(Number(bindingTargetCourseIds[key]))) continue;
     const normalizedTitle = normalizeCourseTitle(catalogCourse.title);
-    const matchedCourse = systemCourses.value.find(
+    const matchedCourses = systemCourses.value.filter(
       course => normalizeCourseTitle(course.name) === normalizedTitle
     );
-    if (matchedCourse) bindingTargetCourseIds[key] = matchedCourse.id;
+    if (matchedCourses.length === 1) {
+      bindingTargetCourseIds[key] = matchedCourses[0].id;
+    }
   }
 }
 
 function resetBatchBindingState() {
+  stopBindingBatchPolling();
+  bindingBatch.value = null;
+  bindingBatchKey.value = "";
   batchBindingOutcomes.value = [];
   for (const key of Object.keys(bindingTargetCourseIds)) {
     delete bindingTargetCourseIds[key];
@@ -355,9 +367,11 @@ function openBindingDraft(outcome: {
   catalogCourse: DemoResourceAppliedCatalogCourse;
   courseId: number;
   draft?: DemoResourceBindingDraft;
+  active?: boolean;
 }) {
   if (!outcome.draft) return;
   setActiveBindingDraft(outcome.catalogCourse, outcome.courseId, outcome.draft);
+  bindingActive.value = Boolean(outcome.active);
 }
 
 function validateZip(file?: File | null) {
@@ -873,85 +887,115 @@ function addMapping() {
   });
 }
 
-async function createBatchBindings() {
+function syncBindingBatch(nextBatch: DemoResourceBindingBatch) {
+  bindingBatch.value = nextBatch;
+  batchBindingOutcomes.value = nextBatch.items.flatMap(item => {
+    const catalogCourse = appliedCatalogCourses.value.find(
+      course => course.catalog_course_id === item.catalog_course_id
+    );
+    if (!catalogCourse) return [];
+    const courseName =
+      systemCourses.value.find(course => course.id === item.course_id)?.name ||
+      `系统课程 ID ${item.course_id}`;
+    return [
+      {
+        catalogCourse,
+        courseId: item.course_id,
+        courseName,
+        active: item.status === "active",
+        status: item.status,
+        error: item.error_message || item.error_code || undefined
+      }
+    ];
+  });
+  const firstActive = nextBatch.items.find(item => item.status === "active");
+  if (firstActive) {
+    activeBindingCourseId.value = firstActive.course_id;
+    activeBindingCatalogCourseId.value = firstActive.catalog_course_id;
+    bindingActive.value = true;
+    void loadPublishableResources();
+    void loadAssignments();
+  }
+}
+
+function stopBindingBatchPolling() {
+  if (bindingBatchPollTimer) window.clearTimeout(bindingBatchPollTimer);
+  bindingBatchPollTimer = undefined;
+}
+
+function scheduleBindingBatchPolling(batchId: string) {
+  stopBindingBatchPolling();
+  bindingBatchPollTimer = window.setTimeout(() => {
+    void loadBindingBatch(batchId, true);
+  }, 1500);
+}
+
+async function loadBindingBatch(batchId: string, silent = false) {
+  try {
+    const nextBatch = payloadOf<DemoResourceBindingBatch>(
+      await getDemoResourceBindingBatch(batchId)
+    );
+    syncBindingBatch(nextBatch);
+    if (nextBatch.status === "processing") {
+      scheduleBindingBatchPolling(batchId);
+    } else {
+      stopBindingBatchPolling();
+    }
+  } catch (error: any) {
+    if (!silent)
+      ElMessage.error(issue226ErrorText(error, "绑定批次状态加载失败"));
+  }
+}
+
+async function autoBindAllCourses() {
   if (!systemCourses.value.length) {
     ElMessage.warning("当前没有可绑定的平台课程");
     return;
   }
-  if (unmappedCatalogCourses.value.length) {
-    ElMessage.warning("请为每门目录课程选择一个平台课程");
-    return;
-  }
-  if (hasDuplicateBindingTargets.value) {
-    ElMessage.warning("同一平台课程不能重复绑定多门目录课程");
-    return;
-  }
-  if (!catalogCoursesAwaitingBinding.value.length) {
-    ElMessage.info("当前目录课程均已创建绑定草稿");
+  const items = catalogCoursesAwaitingBinding.value.flatMap(catalogCourse => {
+    const courseId = Number(
+      bindingTargetCourseIds[catalogCourse.catalog_course_id]
+    );
+    return courseId > 0
+      ? [
+          {
+            catalog_course_id: catalogCourse.catalog_course_id,
+            course_id: courseId,
+            mode: "auto" as const
+          }
+        ]
+      : [];
+  });
+  if (!items.length) {
+    ElMessage.warning("请至少确认一门目录课程的匹配关系");
     return;
   }
   bindingBusy.value = true;
   try {
-    const outcomes = await Promise.all(
-      catalogCoursesAwaitingBinding.value.map(async catalogCourse => {
-        const courseId = Number(
-          bindingTargetCourseIds[catalogCourse.catalog_course_id]
-        );
-        const courseName =
-          systemCourses.value.find(course => course.id === courseId)?.name ||
-          `系统课程 ID ${courseId}`;
-        try {
-          const result = await createDemoResourceBindingDraft(courseId, {
-            catalog_course_id: catalogCourse.catalog_course_id,
-            mode: bindingForm.mode
-          });
-          const draft = payloadOf<DemoResourceBindingDraft>(result);
-          if (!draft.binding_revision_id) {
-            throw new Error("后端未返回绑定草稿 ID");
-          }
-          return { catalogCourse, courseId, courseName, draft };
-        } catch (error: any) {
-          return {
-            catalogCourse,
-            courseId,
-            courseName,
-            error: errorText(error, "创建绑定草稿失败")
-          };
-        }
+    if (bindingBatch.value?.status === "completed") {
+      // Failed items are a new business operation after the user fixes a mapping.
+      bindingBatchKey.value = "";
+    }
+    if (!bindingBatchKey.value) {
+      bindingBatchKey.value = actionKey("demo-binding-batch");
+    }
+    const nextBatch = payloadOf<DemoResourceBindingBatch>(
+      await createDemoResourceBindingBatch({
+        idempotency_key: bindingBatchKey.value,
+        items
       })
     );
-    const outcomesByCatalogCourseId = new Map(
-      batchBindingOutcomes.value.map(outcome => [
-        outcome.catalogCourse.catalog_course_id,
-        outcome
-      ])
-    );
-    outcomes.forEach(outcome => {
-      outcomesByCatalogCourseId.set(
-        outcome.catalogCourse.catalog_course_id,
-        outcome
-      );
-    });
-    batchBindingOutcomes.value = appliedCatalogCourses.value.flatMap(course => {
-      const outcome = outcomesByCatalogCourseId.get(course.catalog_course_id);
-      return outcome ? [outcome] : [];
-    });
-    const succeeded = outcomes.filter(item => item.draft);
-    const failed = outcomes.length - succeeded.length;
-    if (succeeded[0]?.draft) {
-      setActiveBindingDraft(
-        succeeded[0].catalogCourse,
-        succeeded[0].courseId,
-        succeeded[0].draft
-      );
-    }
-    if (failed) {
-      ElMessage.warning(
-        `已创建 ${succeeded.length} 个绑定草稿，${failed} 个失败`
-      );
+    syncBindingBatch(nextBatch);
+    if (nextBatch.status === "processing") {
+      scheduleBindingBatchPolling(nextBatch.batch_id);
+      ElMessage.info("正在自动绑定课程，请等待批次完成");
     } else {
-      ElMessage.success(`已创建 ${succeeded.length} 个绑定草稿`);
+      ElMessage.success(
+        `绑定完成：${nextBatch.success_count} 门已生效，${nextBatch.review_count} 门需处理`
+      );
     }
+  } catch (error: any) {
+    ElMessage.error(issue226ErrorText(error, "批量绑定提交失败"));
   } finally {
     bindingBusy.value = false;
   }
@@ -1031,13 +1075,22 @@ async function publishRevision() {
     ElMessage.warning("请先选择系统课程");
     return;
   }
-  if (!bindingActive.value) {
-    ElMessage.warning("请先完成课程绑定并激活");
-    return;
-  }
-  const variants = commaValues(publicationForm.variantCodes);
-  if (!publicationForm.revisionId.trim() || !variants.length) {
-    ElMessage.warning("请填写资源修订 ID 和待发布版本");
+  const items = publishableResources.value.flatMap(resource => {
+    const variantCodes = selectedPublishVariants[resource.revision_id] || [];
+    return variantCodes.length
+      ? [
+          {
+            revision_id: resource.revision_id,
+            variant_codes: variantCodes,
+            decision: "approved" as const,
+            comment: publicationForm.comment.trim(),
+            audience_mode: publicationForm.audienceMode
+          }
+        ]
+      : [];
+  });
+  if (!items.length) {
+    ElMessage.warning("请至少选择一个可发布资源版本");
     return;
   }
   if (!publicationKey.value) publicationKey.value = actionKey("publication");
@@ -1047,23 +1100,17 @@ async function publishRevision() {
       Number(activeBindingCourseId.value),
       {
         idempotency_key: publicationKey.value,
-        items: [
-          {
-            revision_id: publicationForm.revisionId.trim(),
-            variant_codes: variants,
-            decision: "approved",
-            comment: publicationForm.comment.trim(),
-            audience_mode: publicationForm.audienceMode
-          }
-        ]
+        failure_mode: "continue",
+        items
       }
     );
-    const payload = payloadOf<{ publication_ids?: string[] }>(result);
+    const payload = payloadOf<DemoResourcePublicationResponse>(result);
     publicationIds.value = Array.from(
       new Set([...publicationIds.value, ...(payload.publication_ids || [])])
     );
     publicationKey.value = "";
-    ElMessage.success("资源已审核并发布");
+    await loadPublishableResources();
+    ElMessage.success("资源审核发布已提交");
   } catch (error: any) {
     ElMessage.error(errorText(error, "审核发布失败"));
   } finally {
@@ -1073,11 +1120,8 @@ async function publishRevision() {
 
 async function saveAssignments() {
   if (!hasCourseContext.value) return;
-  const studentIds = commaValues(assignmentForm.studentIds)
-    .map(value => Number(value))
-    .filter(value => Number.isInteger(value) && value > 0);
-  if (!assignmentForm.resourceSetId.trim() || !studentIds.length) {
-    ElMessage.warning("请填写逻辑资源 ID 和学生 ID");
+  if (!selectedAssignmentResource.value) {
+    ElMessage.warning("请选择要分配的资源");
     return;
   }
   if (!assignmentKey.value) assignmentKey.value = actionKey("assignment");
@@ -1087,23 +1131,21 @@ async function saveAssignments() {
       Number(activeBindingCourseId.value),
       {
         idempotency_key: assignmentKey.value,
-        expected_assignment_version: Number(
-          assignmentForm.assignmentVersion || 0
-        ),
-        entries: [
-          {
-            resource_set_id: assignmentForm.resourceSetId.trim(),
-            student_ids: studentIds,
-            visible_variant_codes: commaValues(assignmentForm.variantCodes)
-          }
-        ]
+        failure_mode: "continue",
+        expected_assignment_version: assignmentVersion.value,
+        entries: assignmentStudents.value.map(student => ({
+          resource_set_id: selectedAssignmentResource.value!.resource_set_id,
+          student_ids: [student.student_id],
+          visible_variant_codes: assignmentDrafts[student.student_id] || []
+        }))
       }
     );
-    const payload = payloadOf<{ assignment_version?: number }>(result);
+    const payload = payloadOf<DemoResourceAssignmentResponse>(result);
     if (payload.assignment_version !== undefined) {
-      assignmentForm.assignmentVersion = payload.assignment_version;
+      assignmentVersion.value = payload.assignment_version;
     }
     assignmentKey.value = "";
+    await loadAssignments();
     ElMessage.success("学生版本分配已保存");
   } catch (error: any) {
     ElMessage.error(errorText(error, "学生版本分配失败，请刷新分配版本后重试"));
@@ -1112,32 +1154,74 @@ async function saveAssignments() {
   }
 }
 
-async function withdrawPublications() {
+async function loadPublishableResources() {
   if (!hasCourseContext.value) return;
-  const ids = commaValues(withdrawalForm.publicationIds);
-  if (!ids.length) {
-    ElMessage.warning("请输入要撤回的发布 ID");
-    return;
-  }
-  if (!withdrawalKey.value) withdrawalKey.value = actionKey("withdrawal");
-  publicationBusy.value = true;
   try {
-    await withdrawDemoResourcePublications(
-      Number(activeBindingCourseId.value),
-      {
-        idempotency_key: withdrawalKey.value,
-        publication_ids: ids
-      }
+    const payload = payloadOf<DemoResourcePublishableResourcesResponse>(
+      await listDemoResourcePublishableResources(
+        Number(activeBindingCourseId.value),
+        { page: 1, page_size: 200 }
+      )
     );
-    publicationIds.value = publicationIds.value.filter(id => !ids.includes(id));
-    withdrawalForm.publicationIds = "";
-    withdrawalKey.value = "";
-    ElMessage.success("发布已撤回");
+    publishableResources.value = payload.items || [];
+    for (const resource of publishableResources.value) {
+      if (!selectedPublishVariants[resource.revision_id]) {
+        selectedPublishVariants[resource.revision_id] = [];
+      }
+    }
   } catch (error: any) {
-    ElMessage.error(errorText(error, "撤回发布失败"));
-  } finally {
-    publicationBusy.value = false;
+    ElMessage.error(issue226ErrorText(error, "可审核资源加载失败"));
   }
+}
+
+function syncAssignmentDrafts() {
+  for (const key of Object.keys(assignmentDrafts))
+    delete assignmentDrafts[Number(key)];
+  if (!selectedAssignmentResource.value) return;
+  for (const student of assignmentStudents.value) {
+    assignmentDrafts[student.student_id] = [
+      ...(student.assignments.find(
+        assignment =>
+          assignment.resource_set_id ===
+          selectedAssignmentResource.value?.resource_set_id
+      )?.visible_variant_codes || [])
+    ];
+  }
+}
+
+async function loadAssignments() {
+  if (!hasCourseContext.value) return;
+  try {
+    const payload = payloadOf<DemoResourceCourseAssignmentsResponse>(
+      await getDemoResourceAssignments(Number(activeBindingCourseId.value), {
+        page: 1,
+        page_size: 200
+      })
+    );
+    assignmentResources.value = payload.resources || [];
+    assignmentStudents.value = payload.students || [];
+    assignmentVersion.value = Number(payload.assignment_version || 0);
+    if (
+      !assignmentResources.value.some(
+        resource =>
+          resource.resource_set_id === selectedAssignmentResourceId.value
+      )
+    ) {
+      selectedAssignmentResourceId.value =
+        assignmentResources.value[0]?.resource_set_id || "";
+    }
+    syncAssignmentDrafts();
+  } catch (error: any) {
+    ElMessage.error(issue226ErrorText(error, "学生版本分配加载失败"));
+  }
+}
+
+async function loadReviewData() {
+  publishableResources.value = [];
+  assignmentResources.value = [];
+  assignmentStudents.value = [];
+  selectedAssignmentResourceId.value = "";
+  await Promise.all([loadPublishableResources(), loadAssignments()]);
 }
 
 watch(
@@ -1155,7 +1239,16 @@ watch(
 
 watch(systemCourses, suggestBindingTargets, { deep: true });
 
-onBeforeUnmount(stopParsePolling);
+watch(activePane, pane => {
+  if (pane === "publish") {
+    void loadReviewData();
+  }
+});
+
+onBeforeUnmount(() => {
+  stopParsePolling();
+  stopBindingBatchPolling();
+});
 </script>
 
 <template>
@@ -1490,7 +1583,9 @@ onBeforeUnmount(stopParsePolling);
             <div class="workflow-section__header">
               <div>
                 <h3>创建绑定草稿</h3>
-                <p>为每门目录课程选择对应的平台课程，然后批量创建绑定草稿。</p>
+                <p>
+                  系统按课程标题匹配后，会一次完成草稿、映射校验和绑定激活。
+                </p>
               </div>
               <el-tag v-if="bindingActive" type="success" effect="plain"
                 ><el-icon><CircleCheck /></el-icon>已生效</el-tag
@@ -1508,7 +1603,7 @@ onBeforeUnmount(stopParsePolling);
               <div class="catalog-course-summary">
                 本次导入包含
                 <strong>{{ appliedCatalogCourses.length }}</strong>
-                门目录课程。系统会按课程标题预匹配，你可以逐行调整。
+                门目录课程。只有无法自动匹配的课程才需要手动指定目标。
               </div>
               <el-alert
                 v-if="!systemCourses.length"
@@ -1536,21 +1631,25 @@ onBeforeUnmount(stopParsePolling);
                 />
                 <el-table-column label="绑定到平台课程" min-width="250">
                   <template #default="{ row }">
+                    <span
+                      v-if="bindingTargetCourseIds[row.catalog_course_id]"
+                      class="binding-match"
+                    >
+                      {{
+                        systemCourses.find(
+                          course =>
+                            course.id ===
+                            bindingTargetCourseIds[row.catalog_course_id]
+                        )?.name || "已匹配平台课程"
+                      }}
+                    </span>
                     <el-select
+                      v-else
                       v-model="bindingTargetCourseIds[row.catalog_course_id]"
                       filterable
                       clearable
                       placeholder="选择平台课程"
-                      :disabled="
-                        bindingBusy ||
-                        Boolean(
-                          batchBindingOutcomes.find(
-                            item =>
-                              item.catalogCourse.catalog_course_id ===
-                                row.catalog_course_id && item.draft
-                          )
-                        )
-                      "
+                      :disabled="bindingBusy"
                     >
                       <el-option
                         v-for="course in systemCourses"
@@ -1571,8 +1670,26 @@ onBeforeUnmount(stopParsePolling);
                       )"
                       :key="outcome.catalogCourse.catalog_course_id"
                     >
-                      <el-tag v-if="outcome.draft" type="success" effect="plain"
-                        >已创建</el-tag
+                      <el-tag
+                        v-if="outcome.active"
+                        type="success"
+                        effect="plain"
+                        >已绑定</el-tag
+                      >
+                      <el-tag
+                        v-else-if="outcome.status === 'needs_review'"
+                        type="warning"
+                        effect="plain"
+                        >需处理映射</el-tag
+                      >
+                      <el-tag
+                        v-else-if="
+                          outcome.status === 'pending' ||
+                          outcome.status === 'processing'
+                        "
+                        type="info"
+                        effect="plain"
+                        >处理中</el-tag
                       >
                       <el-tooltip
                         v-else-if="outcome.error"
@@ -1583,55 +1700,26 @@ onBeforeUnmount(stopParsePolling);
                     </template>
                   </template>
                 </el-table-column>
-                <el-table-column label="操作" width="100">
-                  <template #default="{ row }">
-                    <el-button
-                      v-for="outcome in batchBindingOutcomes.filter(
-                        item =>
-                          item.catalogCourse.catalog_course_id ===
-                            row.catalog_course_id && item.draft
-                      )"
-                      :key="outcome.catalogCourse.catalog_course_id"
-                      link
-                      type="primary"
-                      @click="openBindingDraft(outcome)"
-                      >编辑映射</el-button
-                    >
-                  </template>
-                </el-table-column>
               </el-table>
               <div
-                v-if="
-                  unmappedCatalogCourses.length || hasDuplicateBindingTargets
-                "
+                v-if="unmappedCatalogCourses.length"
                 class="binding-validation"
               >
                 <span v-if="unmappedCatalogCourses.length">
                   还有
                   {{ unmappedCatalogCourses.length }} 门目录课程未匹配平台课程。
                 </span>
-                <span v-if="hasDuplicateBindingTargets">
-                  同一平台课程不能重复绑定多门目录课程。
-                </span>
               </div>
               <div class="binding-form">
-                <el-select
-                  v-model="bindingForm.mode"
-                  :disabled="bindingBusy"
-                  aria-label="映射生成方式"
-                >
-                  <el-option label="自动生成章、节建议" value="auto" />
-                  <el-option label="创建空白映射" value="blank" />
-                </el-select>
                 <el-button
                   type="primary"
                   :loading="bindingBusy"
                   :disabled="!canCreateBatchBindings"
-                  @click="createBatchBindings"
+                  @click="autoBindAllCourses"
                   >{{
                     batchBindingOutcomes.length
-                      ? "创建剩余绑定草稿"
-                      : "批量创建绑定草稿"
+                      ? "自动处理剩余课程"
+                      : "自动完成全部绑定"
                   }}</el-button
                 >
               </div>
@@ -1821,24 +1909,77 @@ onBeforeUnmount(stopParsePolling);
             <div class="workflow-section__header">
               <div>
                 <h3>审核并发布版本</h3>
-                <p>发布前要求当前课程已有生效绑定。</p>
+                <p>选择资源及其版本后发布，无需填写内部资源 ID。</p>
+              </div>
+              <div class="workflow-section__actions">
+                <el-select
+                  v-model="activeBindingCourseId"
+                  filterable
+                  placeholder="选择已绑定课程"
+                  @change="loadReviewData"
+                >
+                  <el-option
+                    v-for="item in bindingBatch?.items.filter(
+                      item => item.status === 'active'
+                    ) || []"
+                    :key="item.course_id"
+                    :label="
+                      systemCourses.find(course => course.id === item.course_id)
+                        ?.name || `课程 ID ${item.course_id}`
+                    "
+                    :value="item.course_id"
+                  />
+                </el-select>
+                <el-button :icon="Refresh" @click="loadPublishableResources"
+                  >刷新资源</el-button
+                >
               </div>
             </div>
+            <el-table
+              :data="publishableResources"
+              size="small"
+              empty-text="该课程暂无已激活且可审核的演示资源"
+            >
+              <el-table-column prop="title" label="资源" min-width="180" />
+              <el-table-column
+                prop="source_node_title"
+                label="目录位置"
+                min-width="130"
+              />
+              <el-table-column prop="resource_type" label="类型" width="140" />
+              <el-table-column label="发布版本" min-width="260">
+                <template #default="{ row }">
+                  <el-checkbox-group
+                    v-model="selectedPublishVariants[row.revision_id]"
+                  >
+                    <el-tooltip
+                      v-for="variant in row.variants"
+                      :key="variant.code"
+                      :content="
+                        variant.ready_to_publish
+                          ? variant.published
+                            ? `已发布：${variant.audience_mode}`
+                            : '可发布'
+                          : '文件尚未验证'
+                      "
+                    >
+                      <el-checkbox
+                        :value="variant.code"
+                        :disabled="!variant.ready_to_publish"
+                        >{{ variant.label || variant.code }}</el-checkbox
+                      >
+                    </el-tooltip>
+                  </el-checkbox-group>
+                </template>
+              </el-table-column>
+            </el-table>
             <div class="publication-form">
-              <el-input
-                v-model="publicationForm.revisionId"
-                placeholder="资源修订 ID，例如 DRR..."
-              />
-              <el-input
-                v-model="publicationForm.variantCodes"
-                placeholder="版本，例如 A,B,C"
-              />
               <el-select v-model="publicationForm.audienceMode"
                 ><el-option
-                  label="全体已选课学生"
-                  value="all_enrolled" /><el-option
-                  label="指定学生"
-                  value="selected"
+                  label="发布后再分配学生版本"
+                  value="selected" /><el-option
+                  label="全体已选课学生可见"
+                  value="all_enrolled"
               /></el-select>
               <el-input
                 v-model="publicationForm.comment"
@@ -1853,8 +1994,7 @@ onBeforeUnmount(stopParsePolling);
               >
             </div>
             <div v-if="publicationIds.length" class="publication-list">
-              <span>本次会话发布：</span
-              ><code v-for="id in publicationIds" :key="id">{{ id }}</code>
+              本次会话已发布 {{ publicationIds.length }} 个资源版本。
             </div>
           </section>
 
@@ -1862,51 +2002,61 @@ onBeforeUnmount(stopParsePolling);
             <div class="workflow-section__header">
               <div>
                 <h3>学生版本分配</h3>
-                <p>空版本表示明确不给该学生分配该资源。</p>
+                <p>为不同学生勾选 A/B/C/D；清空某行表示不给该学生分配版本。</p>
+              </div>
+              <div class="workflow-section__actions">
+                <el-select
+                  v-model="selectedAssignmentResourceId"
+                  filterable
+                  placeholder="选择已发布资源"
+                  @change="syncAssignmentDrafts"
+                >
+                  <el-option
+                    v-for="resource in assignmentResources"
+                    :key="resource.resource_set_id"
+                    :label="resource.title"
+                    :value="resource.resource_set_id"
+                  />
+                </el-select>
+                <el-button :icon="Refresh" @click="loadAssignments"
+                  >刷新分配</el-button
+                >
               </div>
             </div>
+            <el-table
+              :data="assignmentStudents"
+              size="small"
+              empty-text="该课程暂无可分配学生或 selected 版本"
+            >
+              <el-table-column
+                prop="student_name"
+                label="学生"
+                min-width="180"
+              />
+              <el-table-column label="可见版本" min-width="260">
+                <template #default="{ row }">
+                  <el-checkbox-group v-model="assignmentDrafts[row.student_id]">
+                    <el-checkbox
+                      v-for="variant in selectedAssignmentResource?.variants ||
+                      []"
+                      :key="variant.code"
+                      :value="variant.code"
+                      :disabled="!variant.assignable"
+                      >{{ variant.label || variant.code }}</el-checkbox
+                    >
+                  </el-checkbox-group>
+                </template>
+              </el-table-column>
+            </el-table>
             <div class="assignment-form">
-              <el-input
-                v-model="assignmentForm.resourceSetId"
-                placeholder="逻辑资源 ID，例如 DRS..."
-              />
-              <el-input
-                v-model="assignmentForm.studentIds"
-                placeholder="学生 ID，多个用逗号分隔"
-              />
-              <el-input
-                v-model="assignmentForm.variantCodes"
-                placeholder="可见版本，例如 A 或 B,C；留空表示 0 个版本"
-              />
-              <el-input-number
-                v-model="assignmentForm.assignmentVersion"
-                :min="0"
-                controls-position="right"
-              />
               <el-button
                 type="primary"
                 :loading="publicationBusy"
+                :disabled="
+                  !selectedAssignmentResourceId || !assignmentStudents.length
+                "
                 @click="saveAssignments"
                 >保存分配</el-button
-              >
-            </div>
-          </section>
-
-          <section class="workflow-section workflow-section--compact">
-            <div class="workflow-section__header">
-              <div><h3>撤回发布</h3></div>
-            </div>
-            <div class="withdrawal-form">
-              <el-input
-                v-model="withdrawalForm.publicationIds"
-                placeholder="发布 ID，多个用逗号分隔"
-              />
-              <el-button
-                type="danger"
-                plain
-                :loading="publicationBusy"
-                @click="withdrawPublications"
-                >撤回</el-button
               >
             </div>
           </section>
@@ -1950,7 +2100,6 @@ onBeforeUnmount(stopParsePolling);
 .binding-form,
 .publication-form,
 .assignment-form,
-.withdrawal-form,
 .id-strip,
 .publication-list,
 .attempt-live-status__meta,
@@ -2055,10 +2204,6 @@ onBeforeUnmount(stopParsePolling);
   opacity: 0.62;
 }
 
-.workflow-section--compact {
-  padding-block: 14px;
-}
-
 .workflow-section__header {
   min-width: 0;
   flex-wrap: wrap;
@@ -2094,8 +2239,7 @@ onBeforeUnmount(stopParsePolling);
 .parse-controls,
 .binding-form,
 .publication-form,
-.assignment-form,
-.withdrawal-form {
+.assignment-form {
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -2105,8 +2249,7 @@ onBeforeUnmount(stopParsePolling);
 
 .upload-form > :is(.el-input, .el-upload),
 .publication-form > .el-input,
-.assignment-form > .el-input,
-.withdrawal-form > .el-input {
+.assignment-form > .el-input {
   flex: 1 1 220px;
   min-width: 0;
 }
@@ -2259,8 +2402,7 @@ onBeforeUnmount(stopParsePolling);
   font-size: 0.75rem;
 }
 
-.id-strip code,
-.publication-list code {
+.id-strip code {
   max-width: 260px;
   overflow: hidden;
   color: #254b78;
