@@ -1932,14 +1932,16 @@ const handleNewChat = async (payload: { course: string }) => {
 };
 
 const syncHumanRenderState = () => {
-  if (!virtualHumanRef.value) return;
   const shouldPause =
     document.hidden || activeRail.value !== "chat" || humanCollapsed.value;
-  if (shouldPause) {
-    virtualHumanRef.value.pauseRender?.();
-  } else {
-    virtualHumanRef.value.resumeRender?.();
-  }
+  const renderTargets = [virtualHumanRef.value, floatingHumanRef.value];
+  renderTargets.forEach(target => {
+    if (shouldPause) {
+      target?.pauseRender?.();
+    } else {
+      target?.resumeRender?.();
+    }
+  });
 };
 
 watch([activeRail, humanCollapsed], () => {
@@ -2191,7 +2193,7 @@ onUnmounted(() => {
                   class="ai-workbench-panel flex-1 min-w-0 overflow-hidden relative"
                 >
                   <VirtualHumanPanel
-                    v-show="!humanCollapsed"
+                    v-if="activeRail === 'chat' && !humanCollapsed"
                     ref="virtualHumanRef"
                   />
 

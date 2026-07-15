@@ -70,7 +70,6 @@ const dragState = ref<{
 } | null>(null);
 
 let speakingTimer: ReturnType<typeof setTimeout> | null = null;
-let preloadVideos: HTMLVideoElement[] = [];
 
 const currentState = computed<DigitalHumanState>(() =>
   localSpeaking.value ? "saying" : props.state
@@ -158,34 +157,6 @@ const restorePosition = () => {
   position.value = getDefaultPosition();
 };
 
-const preloadStateVideos = () => {
-  const run = () => {
-    preloadVideos = Object.values(stateAssets).map(src => {
-      const video = document.createElement("video");
-      video.src = src;
-      video.preload = "auto";
-      video.muted = true;
-      video.playsInline = true;
-      video.load();
-      return video;
-    });
-  };
-
-  const idle = (
-    window as Window & {
-      requestIdleCallback?: (
-        callback: IdleRequestCallback,
-        options?: IdleRequestOptions
-      ) => number;
-    }
-  ).requestIdleCallback;
-  if (typeof idle === "function") {
-    idle(run, { timeout: 1200 });
-  } else {
-    window.setTimeout(run, 300);
-  }
-};
-
 const playVideo = async () => {
   await nextTick();
   const video = videoRef.value;
@@ -245,7 +216,6 @@ const resumeRender = () => {
 function speak(text = "") {
   if (speakingTimer) clearTimeout(speakingTimer);
   localSpeaking.value = true;
-  isPaused.value = false;
   const duration = Math.min(Math.max(text.length * 80, 1600), 5200);
   speakingTimer = setTimeout(() => {
     localSpeaking.value = false;
@@ -274,15 +244,12 @@ watch(
 onMounted(() => {
   restorePosition();
   isReady.value = true;
-  preloadStateVideos();
   window.addEventListener("resize", handleResize);
   void playVideo();
 });
 
 onUnmounted(() => {
   if (speakingTimer) clearTimeout(speakingTimer);
-  preloadVideos.forEach(video => video.removeAttribute("src"));
-  preloadVideos = [];
   window.removeEventListener("resize", handleResize);
 });
 
@@ -309,7 +276,7 @@ defineExpose({ speak, pauseRender, resumeRender });
       autoplay
       loop
       playsinline
-      preload="auto"
+      preload="metadata"
     />
     <span class="floating-human-2d__dot" />
   </div>

@@ -1275,6 +1275,8 @@
       renderPaused: false,
     };
 
+    let renderLoopActive = false;
+
     const MAX_SEARCH_SUGGESTIONS = 8;
     const ROAM_KEY_SET = new Set(['w', 'a', 's', 'd', 'q', 'e']);
     const CAMERA_ROAM_SPEED = 1.7;
@@ -3424,11 +3426,10 @@
       }
     });
 
-    window.addEventListener('resize', resizeRenderer);
-
-    renderer.setAnimationLoop(() => {
+    function renderFrame() {
       clock.update();
-      const delta = clock.getDelta();
+      // Avoid a large animation step after a hidden tab resumes.
+      const delta = Math.min(clock.getDelta(), 0.1);
       controls.update();
       updateCameraRoaming(delta);
       state.mixer?.update(delta);
@@ -3439,11 +3440,19 @@
         state.debugPanelTimer = 0;
         updateDebugReadouts();
       }
-      if (state.renderPaused) {
-        return;
-      }
       renderer.render(scene, camera);
-    });
+    }
+
+    function syncRenderLoop() {
+      const shouldRender = !state.renderPaused && !document.hidden;
+      if (shouldRender === renderLoopActive) return;
+      renderLoopActive = shouldRender;
+      renderer.setAnimationLoop(shouldRender ? renderFrame : null);
+    }
+
+    window.addEventListener('resize', resizeRenderer);
+    document.addEventListener('visibilitychange', syncRenderLoop);
+    syncRenderLoop();
 
     init().catch((error) => {
       console.error(error);
