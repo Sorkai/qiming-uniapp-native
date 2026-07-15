@@ -1,13 +1,5 @@
 <script setup lang="ts">
-import {
-  computed,
-  defineComponent,
-  h,
-  nextTick,
-  onUnmounted,
-  ref,
-  watch
-} from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MarkdownIt from "markdown-it";
 import { ElMessage } from "element-plus";
@@ -20,12 +12,16 @@ import {
   ChatDotRound,
   Document,
   DocumentAdd,
+  Delete,
+  Download,
+  EditPen,
   FolderOpened,
   Headset,
-  Link,
   Loading,
   MagicStick,
+  Minus,
   Picture,
+  Plus,
   Promotion,
   Refresh,
   Search,
@@ -52,6 +48,16 @@ import {
   type AssistantConversationMessageItem,
   type AssistantResourceSummary
 } from "@/api/frontend/assistant";
+import {
+  PlatformMindMapPreview,
+  PlatformResourcePreviewPane,
+  decodePlatformTextBuffer,
+  downloadPlatformResource,
+  extractPlatformMindMapTree,
+  fetchPlatformResourceBuffer,
+  type PlatformMindMapNode,
+  type PlatformPreviewResource
+} from "@/components/PlatformResourcePreview";
 
 defineOptions({ name: "StudentResourceWorkbench" });
 
@@ -65,11 +71,26 @@ const props = withDefaults(
 );
 
 type ResourceSource = "assistant" | "demo_import";
+
+const RESOURCE_FETCH_PAGE_SIZE = 100;
+const RESOURCE_PAGE_SIZES = [9, 18, 27, 36];
+const resourceDateFormatter = new Intl.DateTimeFormat("zh-CN", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false
+});
 type PreviewKind =
   | "html"
   | "markdown"
+  | "text"
   | "mindmap"
   | "json"
+  | "docx"
+  | "pptx"
+  | "spreadsheet"
   | "video"
   | "audio"
   | "image"
@@ -103,8 +124,10 @@ type StudentResource = {
   htmlAnimationStatus?: string;
   htmlAnimationMessage?: string;
   htmlAnimationError?: string;
+  createdAt?: string;
   updatedAt?: string;
-  qualityScore?: number;
+  publishedAt?: string;
+  qualityScore?: number | null;
   sourceKind?: string;
   variantCode?: string;
   variantLabel?: string;
@@ -112,6 +135,12 @@ type StudentResource = {
   resourceSetId?: string;
   revisionId?: string;
   previewPdfUrl?: string | null;
+  exerciseItems?: Record<string, unknown>[];
+  language?: string;
+  starterCode?: string;
+  testCases?: Record<string, unknown>[];
+  rubric?: Record<string, unknown> | string;
+  runtimeStatus?: string;
 };
 
 type TutorMessage = {
@@ -127,11 +156,7 @@ type TutorQuote = {
   text: string;
 };
 
-type MindMapNode = {
-  id: string;
-  title: string;
-  children: MindMapNode[];
-};
+type MindMapNode = PlatformMindMapNode;
 
 const route = useRoute();
 const router = useRouter();
@@ -156,36 +181,10 @@ markdownRenderer.renderer.rules.link_open = (
   const token = tokens[index];
   const href = token.attrGet("href") || "";
   if (/^https?:\/\//i.test(href)) {
-    token.attrSet("target", "_blank");
     token.attrSet("rel", "noopener noreferrer");
   }
   return defaultLinkOpenRenderer(tokens, index, options, env, self);
 };
-
-const MindMapNodeView = defineComponent({
-  name: "MindMapNodeView",
-  props: {
-    node: {
-      type: Object as () => MindMapNode,
-      required: true
-    }
-  },
-  setup(props) {
-    return () =>
-      h("li", { class: "mind-map__branch" }, [
-        h("span", { class: "mind-map__node" }, props.node.title),
-        props.node.children.length
-          ? h(
-              "ul",
-              { class: "mind-map__children" },
-              props.node.children.map(child =>
-                h(MindMapNodeView, { key: child.id, node: child })
-              )
-            )
-          : null
-      ]);
-  }
-});
 
 const acceptedDocumentTypes: Record<string, string> = {
   pdf: "application/pdf",
@@ -204,7 +203,11 @@ const selectedCourseId = ref<number | undefined>(
 const courseDetail = ref<CourseDetailResult | null>(null);
 const assistantResources = ref<AssistantResourceSummary[]>([]);
 const demoResources = ref<AssistantResourceSummary[]>([]);
+const resourceTotal = ref(0);
+const resourceLoadNotice = ref("");
 const resourceSearch = ref("");
+const resourcePage = ref(1);
+const resourcePageSize = ref(RESOURCE_PAGE_SIZES[0]);
 const activeResourceKey = ref("");
 
 const previewLoading = ref(false);
@@ -213,7 +216,27 @@ const resourceDetailLoading = ref(false);
 const markdownHtml = ref("");
 const mindMap = ref<MindMapNode | null>(null);
 const mindMapImageUrl = ref("");
-const jsonPreview = ref("");
+const previewFontScale = ref(1);
+const highlighterActive = ref(false);
+const temporaryHighlightCount = ref(0);
+const resourceWorkbenchBodyRef = ref<HTMLElement | null>(null);
+
+const tutorPanelStorageKey = "student-resource-tutor-panel-width";
+const tutorPanelDefaultWidth = 360;
+const tutorPanelMinWidth = 300;
+const readTutorPanelWidth = () => {
+  if (typeof window === "undefined") return tutorPanelDefaultWidth;
+  const value = Number(window.localStorage.getItem(tutorPanelStorageKey));
+  return Number.isFinite(value) && value > 0 ? value : tutorPanelDefaultWidth;
+};
+const tutorPanelWidth = ref(readTutorPanelWidth());
+const tutorPanelResizing = ref(false);
+const tutorPanelGridStyle = computed(() => ({
+  "--resource-tutor-width": `${tutorPanelWidth.value}px`
+}));
+let tutorPanelResizePointerId: number | null = null;
+let tutorPanelResizeStartX = 0;
+let tutorPanelResizeStartWidth = tutorPanelDefaultWidth;
 
 const tutorQuestion = ref("");
 const tutorQuotes = ref<TutorQuote[]>([]);
@@ -284,7 +307,9 @@ const courseResources = computed<StudentResource[]>(() => {
     htmlAnimationStatus: resource.html_animation_status,
     htmlAnimationMessage: resource.html_animation_message,
     htmlAnimationError: resource.html_animation_error,
+    createdAt: resource.created_at,
     updatedAt: resource.updated_at,
+    publishedAt: resource.published_at,
     qualityScore: resource.quality_score,
     sourceKind: resource.source_kind,
     variantCode: resource.variant_code,
@@ -292,7 +317,13 @@ const courseResources = computed<StudentResource[]>(() => {
     scopeLevel: resource.scope_level,
     resourceSetId: resource.resource_set_id,
     revisionId: resource.revision_id,
-    previewPdfUrl: resource.preview_pdf_url
+    previewPdfUrl: resource.preview_pdf_url,
+    exerciseItems: resource.exercise_items,
+    language: resource.language,
+    starterCode: resource.starter_code,
+    testCases: resource.test_cases,
+    rubric: resource.rubric,
+    runtimeStatus: resource.runtime_status
   }));
 });
 
@@ -302,7 +333,7 @@ const activeResource = computed(() =>
   )
 );
 
-const visibleResources = computed(() => {
+const filteredResources = computed(() => {
   const keyword = resourceSearch.value.trim().toLowerCase();
   return [...courseResources.value]
     .filter(resource => {
@@ -318,13 +349,70 @@ const visibleResources = computed(() => {
         .filter(Boolean)
         .some(value => String(value).toLowerCase().includes(keyword));
     })
-    .sort((left, right) =>
-      String(right.updatedAt || "").localeCompare(String(left.updatedAt || ""))
-    );
+    .sort((left, right) => resourceTimeValue(right) - resourceTimeValue(left));
+});
+
+const paginatedResources = computed(() => {
+  const start = (resourcePage.value - 1) * resourcePageSize.value;
+  return filteredResources.value.slice(start, start + resourcePageSize.value);
 });
 
 const activePreviewKind = computed<PreviewKind>(() =>
   getPreviewKind(activeResource.value)
+);
+const activePlatformPreviewResource = computed<PlatformPreviewResource | null>(
+  () => {
+    const resource = activeResource.value;
+    if (!resource) return null;
+    const useStructuredSource = [
+      "markdown",
+      "text",
+      "mindmap",
+      "json"
+    ].includes(activePreviewKind.value);
+    const sourceUrl = useStructuredSource
+      ? resource.previewUrl || resource.downloadUrl || resource.fileUrl
+      : resource.fileUrl || resource.previewUrl || resource.downloadUrl;
+    return {
+      title: resource.title,
+      url: sourceUrl,
+      previewUrl: resource.previewUrl,
+      previewPdfUrl: useStructuredSource ? undefined : resource.previewPdfUrl,
+      downloadUrl: resource.downloadUrl || resource.fileUrl,
+      content: resource.contentBody,
+      contentFormat: resource.contentFormat,
+      resourceType: resource.resourceType,
+      description: resource.summary,
+      exerciseItems: resource.exerciseItems,
+      language: resource.language,
+      starterCode: resource.starterCode,
+      testCases: resource.testCases,
+      rubric: resource.rubric,
+      runtimeStatus: resource.runtimeStatus
+    };
+  }
+);
+const usesPlatformPreviewPane = computed(() =>
+  ["text", "json", "docx", "pptx", "spreadsheet", "file"].includes(
+    activePreviewKind.value
+  )
+);
+const activeResourceHasPreviewSource = computed(() => {
+  const resource = activeResource.value;
+  return Boolean(
+    resource?.fileUrl ||
+      resource?.contentBody ||
+      resource?.exerciseItems?.length ||
+      resource?.starterCode ||
+      resource?.testCases?.length ||
+      resource?.rubric
+  );
+});
+const supportsReadingTools = computed(() =>
+  ["markdown", "text", "json"].includes(activePreviewKind.value)
+);
+const previewFontPercent = computed(() =>
+  Math.round(previewFontScale.value * 100)
 );
 const activePreviewLabel = computed(() =>
   previewKindLabel(activePreviewKind.value)
@@ -393,18 +481,35 @@ function getPreviewKind(resource?: StudentResource): PreviewKind {
   const format = String(resource?.contentFormat || "").toLowerCase();
   const isMindMap = /(mind[_\s-]*map|思维导图)/.test(type);
   if (isMindMap || format === "mermaid") return "mindmap";
+  if (
+    /(coding[_\s-]*practice|exercise[_\s-]*set|programming|编程|练习题集)/.test(
+      type
+    )
+  ) {
+    return "json";
+  }
   if (format === "json") return "json";
   if (format === "html") return "html";
-  if (["markdown", "md", "text", "txt"].includes(format)) {
-    return "markdown";
+  if (["markdown", "md"].includes(format)) return "markdown";
+  if (["text", "txt", "plain"].includes(format)) return "text";
+  if (format === "docx") return "docx";
+  if (format === "pptx") return "pptx";
+  if (["xlsx", "xls", "csv", "spreadsheet"].includes(format)) {
+    return "spreadsheet";
   }
   if (extension === "json") return isMindMap ? "mindmap" : "json";
   if (["html", "htm"].includes(extension) || /\bhtml\b/.test(type)) {
     return "html";
   }
-  if (["md", "markdown", "txt"].includes(extension) || /markdown/.test(type)) {
+  if (["md", "markdown"].includes(extension) || /markdown/.test(type)) {
     return "markdown";
   }
+  if (["txt", "log", "yaml", "yml", "xml"].includes(extension)) {
+    return "text";
+  }
+  if (extension === "docx") return "docx";
+  if (extension === "pptx") return "pptx";
+  if (["xlsx", "xls", "csv"].includes(extension)) return "spreadsheet";
   if (/(video|mp4|mov|avi|mkv|webm)/.test(type)) return "video";
   if (/(audio|mp3|wav|aac|ogg)/.test(type)) return "audio";
   if (/(image|jpg|jpeg|png|webp|gif|svg)/.test(type)) return "image";
@@ -416,8 +521,12 @@ function previewKindLabel(kind: PreviewKind) {
   const labels: Record<PreviewKind, string> = {
     html: "HTML 交互资料",
     markdown: "Markdown 讲义",
+    text: "文本资料",
     mindmap: "思维导图",
     json: "JSON 结构化内容",
+    docx: "Word 文档",
+    pptx: "PowerPoint 演示文稿",
+    spreadsheet: "电子表格",
     video: "视频资料",
     audio: "音频资料",
     image: "图片资料",
@@ -468,6 +577,24 @@ function formatDuration(duration?: number) {
   const minutes = Math.round(seconds / 60);
   if (minutes < 60) return `${minutes} 分钟`;
   return `${Math.floor(minutes / 60)} 小时 ${minutes % 60 ? `${minutes % 60} 分钟` : ""}`;
+}
+
+function parseResourceTime(value?: string) {
+  if (!value) return 0;
+  const normalized = value.includes("T") ? value : value.replace(" ", "T");
+  const timestamp = Date.parse(normalized);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function resourceTimeValue(resource: StudentResource) {
+  return parseResourceTime(
+    resource.publishedAt || resource.updatedAt || resource.createdAt
+  );
+}
+
+function formatResourceTime(resource: StudentResource) {
+  const timestamp = resourceTimeValue(resource);
+  return timestamp ? resourceDateFormatter.format(timestamp) : "";
 }
 
 function resourceStatusLabel(status?: string) {
@@ -537,6 +664,13 @@ function resourceFormatLabel(resource: StudentResource) {
     mermaid: "Mermaid",
     mind_map: "思维导图",
     json: "JSON",
+    docx: "Word",
+    pptx: "PowerPoint",
+    xlsx: "Excel",
+    xls: "Excel",
+    csv: "CSV",
+    text: "文本",
+    txt: "文本",
     pdf: "PDF",
     video: "视频",
     audio: "音频",
@@ -555,7 +689,7 @@ function resourceStateMessage(resource: StudentResource) {
   );
 }
 
-function formatQuality(score?: number) {
+function formatQuality(score?: number | null) {
   if (score === undefined || score === null) return "";
   const normalized = score <= 1 ? score * 100 : score;
   return `${Math.round(normalized)}%`;
@@ -798,15 +932,6 @@ function parseMindMapContent(content: string) {
   }
 }
 
-function formatJsonPreview(content: string) {
-  const normalized = stripCodeFence(content);
-  try {
-    return JSON.stringify(JSON.parse(normalized), null, 2);
-  } catch {
-    return normalized;
-  }
-}
-
 async function loadCourses() {
   courseLoading.value = true;
   courseError.value = "";
@@ -827,47 +952,79 @@ async function loadCourses() {
   }
 }
 
+async function loadAllResources(courseId: number) {
+  const resources: AssistantResourceSummary[] = [];
+  let page = 1;
+  let total = 0;
+  let continuationError: unknown;
+
+  do {
+    let pageResources: AssistantResourceSummary[] = [];
+    let responseTotal = total;
+    try {
+      const { data } = await listAssistantResources({
+        course_id: courseId,
+        page,
+        page_size: RESOURCE_FETCH_PAGE_SIZE
+      });
+      pageResources = data.list || [];
+      responseTotal = Number(data.total) || 0;
+    } catch (error) {
+      if (!resources.length) throw error;
+      continuationError = error;
+      break;
+    }
+
+    resources.push(...pageResources);
+    total = Math.max(responseTotal, resources.length);
+    page += 1;
+
+    if (!pageResources.length) {
+      if (resources.length < total) {
+        continuationError = new Error("后续资源页返回为空");
+      }
+      break;
+    }
+  } while (resources.length < total);
+
+  return { resources, total, continuationError };
+}
+
 async function loadCourseResources(courseId?: number) {
   const requestId = ++resourceRequestVersion;
   courseDetail.value = null;
   assistantResources.value = [];
   demoResources.value = [];
+  resourceTotal.value = 0;
+  resourceLoadNotice.value = "";
   resourceError.value = "";
+  resourceSearch.value = "";
+  resourcePage.value = 1;
   activeResourceKey.value = "";
   if (!courseId) return;
 
   resourceLoading.value = true;
   try {
-    const [assistantResult, demoResult, courseResult] = await Promise.allSettled([
-      listAssistantResources({
-        course_id: courseId,
-        source_kind: "generated",
-        page: 1,
-        page_size: 100
-      }),
-      listAssistantResources({
-        course_id: courseId,
-        source_kind: "demo_import",
-        page: 1,
-        page_size: 100
-      }),
+    const [resourcesResult, courseResult] = await Promise.allSettled([
+      loadAllResources(courseId),
       getCourseDetail({ courseId })
     ]);
     if (requestId !== resourceRequestVersion) return;
-    assistantResources.value =
-      assistantResult.status === "fulfilled"
-        ? assistantResult.value.data.list || []
-        : [];
-    demoResources.value =
-      demoResult.status === "fulfilled" ? demoResult.value.data.list || [] : [];
+    if (resourcesResult.status === "rejected") throw resourcesResult.reason;
+
+    const loadedResources = resourcesResult.value.resources;
+    assistantResources.value = loadedResources.filter(
+      resource => resource.source_kind !== "demo_import"
+    );
+    demoResources.value = loadedResources.filter(
+      resource => resource.source_kind === "demo_import"
+    );
+    resourceTotal.value = resourcesResult.value.total;
+    if (resourcesResult.value.continuationError) {
+      resourceLoadNotice.value = `后续资源加载失败，当前已加载 ${loadedResources.length} / ${resourceTotal.value} 项。请点击刷新重试。`;
+    }
     courseDetail.value =
       courseResult.status === "fulfilled" ? courseResult.value.data : null;
-    if (
-      assistantResult.status === "rejected" &&
-      demoResult.status === "rejected"
-    ) {
-      throw assistantResult.reason;
-    }
   } catch (error) {
     if (requestId !== resourceRequestVersion) return;
     resourceError.value = "本课程的资源暂时无法加载，请稍后重试。";
@@ -932,7 +1089,11 @@ function updateCourseRoute(courseId?: number) {
 }
 
 function isTextPreview(kind: PreviewKind) {
-  return kind === "markdown" || kind === "mindmap" || kind === "json";
+  return kind === "markdown" || kind === "mindmap";
+}
+
+function structuredResourceUrl(resource: StudentResource) {
+  return resource.previewUrl || resource.downloadUrl || resource.fileUrl || "";
 }
 
 async function loadPreview(resource?: StudentResource) {
@@ -940,7 +1101,6 @@ async function loadPreview(resource?: StudentResource) {
   markdownHtml.value = "";
   mindMap.value = null;
   mindMapImageUrl.value = "";
-  jsonPreview.value = "";
   previewError.value = "";
   if (!resource || !isTextPreview(getPreviewKind(resource))) {
     previewLoading.value = false;
@@ -950,30 +1110,32 @@ async function loadPreview(resource?: StudentResource) {
   previewLoading.value = true;
   try {
     let content = resource.contentBody || "";
+    const previewUrl = structuredResourceUrl(resource);
     if (
       !content &&
       getPreviewKind(resource) === "mindmap" &&
-      /\.(svg|png|jpe?g|webp|gif)(?:[?#]|$)/i.test(resource.fileUrl || "")
+      /\.(svg|png|jpe?g|webp|gif)(?:[?#]|$)/i.test(previewUrl)
     ) {
-      mindMapImageUrl.value = resource.fileUrl || "";
+      mindMapImageUrl.value = previewUrl;
       return;
     }
     if (!content) {
-      if (!resource.fileUrl) throw new Error("资源暂无预览地址");
-      const response = await fetch(resource.fileUrl, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!previewUrl) throw new Error("资源暂无预览地址");
+      const { buffer, contentType } = await fetchPlatformResourceBuffer(
+        previewUrl,
+        {
+          maxBytes: 8 * 1024 * 1024,
+          accept: "application/json, text/plain, text/markdown, image/*, */*"
+        }
+      );
       if (
         getPreviewKind(resource) === "mindmap" &&
-        response.headers.get("content-type")?.startsWith("image/")
+        contentType.startsWith("image/")
       ) {
-        mindMapImageUrl.value = resource.fileUrl;
+        mindMapImageUrl.value = previewUrl;
         return;
       }
-      const contentLength = Number(response.headers.get("content-length") || 0);
-      if (contentLength > 2 * 1024 * 1024) {
-        throw new Error("资源体积超过内嵌预览上限");
-      }
-      content = await response.text();
+      content = decodePlatformTextBuffer(buffer, contentType);
     }
     if (requestId !== previewRequestVersion) return;
     if (content.length > 2 * 1024 * 1024) {
@@ -981,31 +1143,33 @@ async function loadPreview(resource?: StudentResource) {
     }
     if (getPreviewKind(resource) === "markdown") {
       markdownHtml.value = renderMarkdown(content);
-    } else if (getPreviewKind(resource) === "mindmap") {
-      mindMap.value = parseMindMapContent(content);
     } else {
-      jsonPreview.value = formatJsonPreview(content);
+      mindMap.value =
+        extractPlatformMindMapTree(content, {
+          fallbackTitle: resource.title,
+          allowObjectMap: true
+        }) || parseMindMapContent(content);
     }
   } catch (error) {
     if (requestId !== previewRequestVersion) return;
-    previewError.value = "暂时无法读取该文件内容，可在新窗口中打开查看。";
+    previewError.value = "暂时无法读取该文件内容，请重新加载或下载原文件。";
     console.error("[StudentResourceWorkbench] 资源内嵌预览失败:", error);
   } finally {
     if (requestId === previewRequestVersion) previewLoading.value = false;
   }
 }
 
-function openActiveResource() {
-  if (!activeResource.value?.fileUrl) {
-    ElMessage.warning("该资源暂未提供访问地址");
+async function downloadActiveResource() {
+  if (!activePlatformPreviewResource.value) {
+    ElMessage.warning("该资源暂未提供下载地址");
     return;
   }
-  const opened = window.open(
-    activeResource.value.fileUrl,
-    "_blank",
-    "noopener,noreferrer"
-  );
-  if (!opened) ElMessage.warning("浏览器阻止了新窗口，请允许后重试");
+  try {
+    await downloadPlatformResource(activePlatformPreviewResource.value);
+  } catch (error) {
+    console.warn("[StudentResourceWorkbench] 资源下载失败:", error);
+    ElMessage.error("文件下载失败，请检查资源权限或下载地址");
+  }
 }
 
 function getAttachmentExtension(file: File) {
@@ -1038,6 +1202,154 @@ function clearTutorAttachment() {
   tutorAttachment.value = null;
 }
 
+function clampTutorPanelWidth(width: number) {
+  const availableWidth =
+    resourceWorkbenchBodyRef.value?.clientWidth ||
+    (typeof window === "undefined" ? 1280 : window.innerWidth);
+  const maximum = Math.max(
+    tutorPanelMinWidth,
+    Math.min(640, availableWidth - 540)
+  );
+  return Math.min(maximum, Math.max(tutorPanelMinWidth, Math.round(width)));
+}
+
+function setTutorPanelWidth(width: number, persist = false) {
+  tutorPanelWidth.value = clampTutorPanelWidth(width);
+  if (persist && typeof window !== "undefined") {
+    window.localStorage.setItem(
+      tutorPanelStorageKey,
+      String(tutorPanelWidth.value)
+    );
+  }
+}
+
+function beginTutorPanelResize(event: PointerEvent) {
+  if (event.button !== 0 || window.innerWidth <= 1180) return;
+  event.preventDefault();
+  tutorPanelResizePointerId = event.pointerId;
+  tutorPanelResizeStartX = event.clientX;
+  tutorPanelResizeStartWidth = tutorPanelWidth.value;
+  tutorPanelResizing.value = true;
+  (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  document.documentElement.classList.add("student-resource-tutor-resizing");
+}
+
+function updateTutorPanelResize(event: PointerEvent) {
+  if (
+    !tutorPanelResizing.value ||
+    tutorPanelResizePointerId !== event.pointerId
+  ) {
+    return;
+  }
+  setTutorPanelWidth(
+    tutorPanelResizeStartWidth + tutorPanelResizeStartX - event.clientX
+  );
+}
+
+function endTutorPanelResize(event: PointerEvent) {
+  if (tutorPanelResizePointerId !== event.pointerId) return;
+  const target = event.currentTarget as HTMLElement;
+  if (target.hasPointerCapture(event.pointerId)) {
+    target.releasePointerCapture(event.pointerId);
+  }
+  tutorPanelResizePointerId = null;
+  tutorPanelResizing.value = false;
+  document.documentElement.classList.remove("student-resource-tutor-resizing");
+  setTutorPanelWidth(tutorPanelWidth.value, true);
+}
+
+function handleTutorPanelResizeKeydown(event: KeyboardEvent) {
+  const step = event.shiftKey ? 36 : 12;
+  let width: number | undefined;
+  if (event.key === "ArrowLeft") width = tutorPanelWidth.value + step;
+  if (event.key === "ArrowRight") width = tutorPanelWidth.value - step;
+  if (event.key === "Home") width = tutorPanelMinWidth;
+  if (event.key === "End") width = 640;
+  if (width === undefined) return;
+  event.preventDefault();
+  setTutorPanelWidth(width, true);
+}
+
+function resetTutorPanelWidth() {
+  setTutorPanelWidth(tutorPanelDefaultWidth, true);
+}
+
+function adjustPreviewFont(delta: number) {
+  previewFontScale.value = Math.min(
+    1.4,
+    Math.max(0.8, Number((previewFontScale.value + delta).toFixed(1)))
+  );
+}
+
+function resetPreviewFont() {
+  previewFontScale.value = 1;
+}
+
+function toggleHighlighter() {
+  highlighterActive.value = !highlighterActive.value;
+  hideQuoteAction();
+  window.getSelection()?.removeAllRanges();
+}
+
+function clearTemporaryHighlights() {
+  const root = markdownPreviewRef.value;
+  if (!root) return;
+  root.querySelectorAll("mark.temporary-highlight").forEach(mark => {
+    mark.replaceWith(document.createTextNode(mark.textContent || ""));
+  });
+  root.normalize();
+  temporaryHighlightCount.value = 0;
+}
+
+function applyTemporaryHighlight(selection: Selection, range: Range) {
+  const root = markdownPreviewRef.value?.querySelector(
+    ".markdown-preview__content"
+  );
+  if (!root) return;
+
+  const textNodes: Text[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      if (
+        !node.textContent?.trim() ||
+        parent?.closest("mark, pre, code, button, .quote-selection-action")
+      ) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      try {
+        return range.intersectsNode(node)
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_REJECT;
+      } catch {
+        return NodeFilter.FILTER_REJECT;
+      }
+    }
+  });
+  let currentNode = walker.nextNode();
+  while (currentNode) {
+    textNodes.push(currentNode as Text);
+    currentNode = walker.nextNode();
+  }
+
+  let highlighted = 0;
+  textNodes.reverse().forEach(node => {
+    const start = node === range.startContainer ? range.startOffset : 0;
+    const end =
+      node === range.endContainer ? range.endOffset : node.data.length;
+    if (start >= end) return;
+    const selectedNode = node.splitText(start);
+    selectedNode.splitText(end - start);
+    const mark = document.createElement("mark");
+    mark.className = "temporary-highlight";
+    selectedNode.parentNode?.replaceChild(mark, selectedNode);
+    mark.appendChild(selectedNode);
+    highlighted += 1;
+  });
+  selection.removeAllRanges();
+  if (highlighted) temporaryHighlightCount.value += highlighted;
+}
+
 function hideQuoteAction() {
   quoteAction.value = null;
 }
@@ -1057,6 +1369,12 @@ function captureTextSelection() {
       ? (container as Element)
       : container.parentElement;
   if (!element || !root.contains(element)) {
+    hideQuoteAction();
+    return;
+  }
+
+  if (highlighterActive.value) {
+    applyTemporaryHighlight(selection, range.cloneRange());
     hideQuoteAction();
     return;
   }
@@ -1554,10 +1872,24 @@ watch(
   (resource, previousResource) => {
     void loadPreview(resource);
     if (resource?.resourceKey !== previousResource?.resourceKey) {
+      highlighterActive.value = false;
+      temporaryHighlightCount.value = 0;
       resetTutorForResource(resource);
     }
   },
   { immediate: true }
+);
+
+watch([resourceSearch, resourcePageSize], () => {
+  resourcePage.value = 1;
+});
+
+watch(
+  () => filteredResources.value.length,
+  total => {
+    const lastPage = Math.max(1, Math.ceil(total / resourcePageSize.value));
+    if (resourcePage.value > lastPage) resourcePage.value = lastPage;
+  }
 );
 
 watch(routeCourseId, courseId => {
@@ -1567,8 +1899,21 @@ watch(routeCourseId, courseId => {
 
 void loadCourses();
 
+onMounted(() => {
+  setTutorPanelWidth(tutorPanelWidth.value);
+  window.addEventListener("resize", resetTutorPanelWidthLimit, {
+    passive: true
+  });
+});
+
+function resetTutorPanelWidthLimit() {
+  setTutorPanelWidth(tutorPanelWidth.value);
+}
+
 onUnmounted(() => {
   cancelTutorStream?.();
+  window.removeEventListener("resize", resetTutorPanelWidthLimit);
+  document.documentElement.classList.remove("student-resource-tutor-resizing");
 });
 </script>
 
@@ -1674,8 +2019,14 @@ onUnmounted(() => {
     <div v-else-if="!activeResource" class="resource-overview">
       <header class="resource-overview__header">
         <div class="resource-overview__summary">
-          <strong>{{ visibleResources.length }}</strong>
+          <strong>{{ resourceTotal || courseResources.length }}</strong>
           <span>项资源</span>
+          <span
+            v-if="resourceSearch.trim()"
+            class="resource-overview__filtered"
+          >
+            已筛选 {{ filteredResources.length }} 项
+          </span>
         </div>
       </header>
       <div class="resource-overview__toolbar">
@@ -1688,14 +2039,32 @@ onUnmounted(() => {
         />
         <span>点击资源卡片进入在线预览与文件辅导</span>
       </div>
-      <div v-if="!visibleResources.length" class="resource-overview__empty">
+      <el-alert
+        v-if="resourceLoadNotice"
+        class="resource-overview__load-alert"
+        type="warning"
+        show-icon
+        :closable="false"
+        :title="resourceLoadNotice"
+      />
+      <div v-if="!filteredResources.length" class="resource-overview__empty">
         <el-icon :size="28"><FolderOpened /></el-icon>
-        <h3>暂未收到个性化教学资源</h3>
-        <p>教师发布或学习助手生成资源后，会出现在这里。</p>
+        <h3>
+          {{
+            resourceSearch.trim() ? "未找到匹配资源" : "暂未收到个性化教学资源"
+          }}
+        </h3>
+        <p>
+          {{
+            resourceSearch.trim()
+              ? "请尝试更换关键词或清空搜索条件。"
+              : "教师发布或学习助手生成资源后，会出现在这里。"
+          }}
+        </p>
       </div>
       <div v-else class="resource-card-grid">
         <article
-          v-for="resource in visibleResources"
+          v-for="resource in paginatedResources"
           :key="resource.resourceKey"
           class="resource-card"
           tabindex="0"
@@ -1792,7 +2161,7 @@ onUnmounted(() => {
           </div>
           <div class="resource-card__footer">
             <span>{{
-              resource.updatedAt || resourceSourceLabel(resource)
+              formatResourceTime(resource) || resourceSourceLabel(resource)
             }}</span>
             <span class="resource-card__detail-link">
               查看详情 <el-icon><ArrowRight /></el-icon>
@@ -1800,9 +2169,30 @@ onUnmounted(() => {
           </div>
         </article>
       </div>
+      <nav
+        v-if="filteredResources.length > RESOURCE_PAGE_SIZES[0]"
+        class="resource-overview__pagination"
+        aria-label="教学资源分页"
+      >
+        <el-pagination
+          v-model:current-page="resourcePage"
+          v-model:page-size="resourcePageSize"
+          background
+          :page-sizes="RESOURCE_PAGE_SIZES"
+          :pager-count="5"
+          :total="filteredResources.length"
+          layout="total, sizes, prev, pager, next, jumper"
+        />
+      </nav>
     </div>
 
-    <div v-else class="resource-workbench__body">
+    <div
+      v-else
+      ref="resourceWorkbenchBodyRef"
+      class="resource-workbench__body"
+      :class="{ 'is-resizing': tutorPanelResizing }"
+      :style="tutorPanelGridStyle"
+    >
       <main class="resource-preview" aria-live="polite">
         <header class="resource-preview__header">
           <el-button
@@ -1826,7 +2216,9 @@ onUnmounted(() => {
                 <span>{{ resourceSourceLabel(activeResource!) }}</span>
                 <span>{{ activePreviewLabel }}</span>
                 <span
-                  v-if="activeResource?.variantLabel || activeResource?.variantCode"
+                  v-if="
+                    activeResource?.variantLabel || activeResource?.variantCode
+                  "
                 >
                   {{
                     activeResource?.variantLabel ||
@@ -1842,29 +2234,95 @@ onUnmounted(() => {
               </p>
             </div>
           </div>
-          <el-tooltip content="在新窗口中打开" placement="bottom">
-            <el-button
-              circle
-              :icon="Link"
-              aria-label="在新窗口中打开"
-              @click="openActiveResource"
-            />
-          </el-tooltip>
+          <div class="resource-preview__tools">
+            <template v-if="supportsReadingTools">
+              <el-tooltip content="减小字号" placement="bottom">
+                <el-button
+                  class="resource-preview__tool-button"
+                  :icon="Minus"
+                  aria-label="减小字号"
+                  :disabled="previewFontScale <= 0.8"
+                  @click="adjustPreviewFont(-0.1)"
+                />
+              </el-tooltip>
+              <el-tooltip content="恢复默认字号" placement="bottom">
+                <button
+                  type="button"
+                  class="resource-preview__font-reset"
+                  aria-label="恢复默认字号"
+                  @click="resetPreviewFont"
+                >
+                  {{ previewFontPercent }}%
+                </button>
+              </el-tooltip>
+              <el-tooltip content="增大字号" placement="bottom">
+                <el-button
+                  class="resource-preview__tool-button"
+                  :icon="Plus"
+                  aria-label="增大字号"
+                  :disabled="previewFontScale >= 1.4"
+                  @click="adjustPreviewFont(0.1)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-if="activePreviewKind === 'markdown'"
+                :content="
+                  highlighterActive
+                    ? '关闭荧光笔（当前拖选会标记）'
+                    : '开启一次性荧光笔'
+                "
+                placement="bottom"
+              >
+                <el-button
+                  class="resource-preview__tool-button"
+                  :class="{ 'is-active': highlighterActive }"
+                  :icon="EditPen"
+                  aria-label="一次性荧光笔"
+                  :aria-pressed="highlighterActive"
+                  @click="toggleHighlighter"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-if="temporaryHighlightCount"
+                content="清除本次标记"
+                placement="bottom"
+              >
+                <el-button
+                  class="resource-preview__tool-button"
+                  :icon="Delete"
+                  aria-label="清除本次标记"
+                  @click="clearTemporaryHighlights"
+                />
+              </el-tooltip>
+            </template>
+            <el-tooltip
+              v-if="activePlatformPreviewResource?.downloadUrl"
+              content="下载原文件"
+              placement="bottom"
+            >
+              <el-button
+                class="resource-preview__tool-button"
+                :icon="Download"
+                aria-label="下载原文件"
+                @click="downloadActiveResource"
+              />
+            </el-tooltip>
+          </div>
         </header>
 
         <div
           class="resource-preview__canvas"
           :class="{ 'is-reading': activePreviewKind === 'markdown' }"
+          :style="{
+            '--preview-font-scale': String(previewFontScale)
+          }"
         >
           <div v-if="resourceDetailLoading" class="preview-detail-loading">
             <el-icon class="is-loading"><Loading /></el-icon>
             正在准备资源详情
           </div>
           <div
-            v-if="
-              !activeResource ||
-              (!activeResource.fileUrl && !activeResource.contentBody)
-            "
+            v-if="!activeResource || !activeResourceHasPreviewSource"
             class="preview-feedback"
           >
             <el-icon :size="30"><Document /></el-icon>
@@ -1886,14 +2344,14 @@ onUnmounted(() => {
               "
               title="HTML 学习资料预览"
               class="preview-frame"
-              sandbox="allow-downloads allow-forms allow-popups allow-scripts"
+              sandbox="allow-downloads allow-forms allow-scripts"
             />
           </div>
 
           <div
             v-else-if="activePreviewKind === 'markdown'"
-            class="markdown-preview"
             ref="markdownPreviewRef"
+            class="markdown-preview"
             @mouseup="captureTextSelection"
             @keyup="captureTextSelection"
             @touchend="captureTextSelection"
@@ -1938,8 +2396,12 @@ onUnmounted(() => {
               <el-icon :size="26"><Document /></el-icon>
               <h3>讲义暂无法内嵌打开</h3>
               <p>{{ previewError }}</p>
-              <el-button type="primary" size="small" @click="openActiveResource"
-                >在新窗口中打开</el-button
+              <el-button
+                type="primary"
+                size="small"
+                :icon="Refresh"
+                @click="loadPreview(activeResource)"
+                >重新加载</el-button
               >
             </div>
             <article
@@ -1963,8 +2425,12 @@ onUnmounted(() => {
               <el-icon :size="26"><Connection /></el-icon>
               <h3>导图暂无法内嵌打开</h3>
               <p>{{ previewError }}</p>
-              <el-button type="primary" size="small" @click="openActiveResource"
-                >在新窗口中打开</el-button
+              <el-button
+                type="primary"
+                size="small"
+                :icon="Refresh"
+                @click="loadPreview(activeResource)"
+                >重新加载</el-button
               >
             </div>
             <div
@@ -1973,34 +2439,16 @@ onUnmounted(() => {
             >
               <img :src="mindMapImageUrl" :alt="activeResource.title" />
             </div>
-            <div v-else-if="mindMap" class="mind-map-preview__viewport">
-              <p class="mind-map-preview__hint">
-                从核心概念展开，点击右侧辅导可继续追问任一主题。
-              </p>
-              <ul class="mind-map">
-                <MindMapNodeView :node="mindMap" />
-              </ul>
-            </div>
+            <PlatformMindMapPreview v-else-if="mindMap" :tree="mindMap" />
           </div>
 
-          <div v-else-if="activePreviewKind === 'json'" class="json-preview">
-            <div v-if="previewLoading" class="preview-loading">
-              <el-icon class="is-loading"><Loading /></el-icon>
-              正在读取 JSON 资源
-            </div>
-            <div
-              v-else-if="previewError"
-              class="preview-feedback preview-feedback--compact"
-            >
-              <el-icon :size="26"><Document /></el-icon>
-              <h3>JSON 资源暂无法内嵌打开</h3>
-              <p>{{ previewError }}</p>
-              <el-button type="primary" size="small" @click="openActiveResource"
-                >在新窗口中打开</el-button
-              >
-            </div>
-            <pre v-else class="json-preview__content">{{ jsonPreview }}</pre>
-          </div>
+          <PlatformResourcePreviewPane
+            v-else-if="usesPlatformPreviewPane"
+            :resource="activePlatformPreviewResource"
+            :font-scale="previewFontScale"
+            embedded
+            class="resource-preview__shared-pane"
+          />
 
           <div v-else-if="activePreviewKind === 'video'" class="media-preview">
             <video :src="activeResource.fileUrl" controls preload="metadata" />
@@ -2029,13 +2477,35 @@ onUnmounted(() => {
           <div v-else class="preview-feedback">
             <el-icon :size="30"><Document /></el-icon>
             <h3>此文件暂不支持直接预览</h3>
-            <p>可在新窗口中打开该资料，学习助手仍会结合当前课程为你答疑。</p>
-            <el-button type="primary" @click="openActiveResource"
-              >打开资料</el-button
+            <p>可以下载原文件，学习助手仍会结合当前课程为你答疑。</p>
+            <el-button
+              type="primary"
+              :icon="Download"
+              @click="downloadActiveResource"
+              >下载文件</el-button
             >
           </div>
         </div>
       </main>
+
+      <div
+        class="resource-tutor-resizer"
+        role="separator"
+        aria-label="调整资料与辅导区宽度"
+        aria-orientation="vertical"
+        :aria-valuemin="tutorPanelMinWidth"
+        aria-valuemax="640"
+        :aria-valuenow="tutorPanelWidth"
+        tabindex="0"
+        @pointerdown="beginTutorPanelResize"
+        @pointermove="updateTutorPanelResize"
+        @pointerup="endTutorPanelResize"
+        @pointercancel="endTutorPanelResize"
+        @keydown="handleTutorPanelResizeKeydown"
+        @dblclick="resetTutorPanelWidth"
+      >
+        <span aria-hidden="true" />
+      </div>
 
       <aside class="resource-tutor" aria-label="当前资料辅导">
         <header class="resource-tutor__header">
@@ -2381,6 +2851,12 @@ onUnmounted(() => {
   font-weight: 750;
 }
 
+.resource-overview__filtered {
+  padding-left: 10px;
+  margin-left: 5px;
+  border-left: 1px solid var(--resource-border);
+}
+
 .resource-overview__toolbar {
   display: flex;
   align-items: center;
@@ -2399,11 +2875,32 @@ onUnmounted(() => {
   font-size: 0.75rem;
 }
 
+.resource-overview__load-alert {
+  margin: -4px 0 16px;
+}
+
 .resource-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   width: 100%;
+}
+
+.resource-overview__pagination {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--resource-border);
+}
+
+.resource-overview__pagination :deep(.el-pagination) {
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 10px;
+  height: auto;
+  white-space: normal;
 }
 
 .resource-card {
@@ -2601,7 +3098,9 @@ onUnmounted(() => {
   display: grid;
   flex: 1;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns:
+    minmax(0, 1fr) 8px
+    var(--resource-tutor-width, 360px);
   gap: 0;
   padding: 0;
   overflow: hidden;
@@ -2744,7 +3243,6 @@ onUnmounted(() => {
   flex-direction: column;
   overflow: hidden;
   background: var(--resource-surface);
-  border-right: 1px solid var(--resource-border);
   border-bottom-left-radius: 14px;
 }
 
@@ -2764,6 +3262,54 @@ onUnmounted(() => {
   justify-self: start;
   margin-left: -15px;
   white-space: nowrap;
+}
+
+.resource-preview__tools {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.resource-preview__tool-button,
+.resource-preview__font-reset {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #52677f;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d7e0ea;
+  border-radius: 4px;
+}
+
+.resource-preview__font-reset {
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.resource-preview__tool-button:hover,
+.resource-preview__font-reset:hover,
+.resource-preview__tool-button.is-active {
+  color: var(--resource-primary);
+  background: var(--resource-primary-soft);
+  border-color: #b9d0ec;
+}
+
+.resource-preview__tool-button.is-active {
+  color: #7b5a00;
+  background: #fff1a8;
+  border-color: #dfc968;
+}
+
+.resource-preview__font-reset:focus-visible {
+  outline: 2px solid #79a5df;
+  outline-offset: 2px;
 }
 
 .resource-preview__title {
@@ -2819,8 +3365,10 @@ onUnmounted(() => {
 
 .resource-preview__canvas.is-reading {
   align-items: flex-start;
+  padding: 0;
   overflow: auto;
   overscroll-behavior: contain;
+  background: var(--resource-surface);
 }
 
 .preview-detail-loading {
@@ -2844,6 +3392,7 @@ onUnmounted(() => {
 .preview-frame,
 .markdown-preview,
 .mind-map-preview,
+.resource-preview__shared-pane,
 .json-preview,
 .media-preview,
 .image-preview,
@@ -2856,6 +3405,7 @@ onUnmounted(() => {
 .preview-frame-wrap,
 .markdown-preview,
 .mind-map-preview,
+.resource-preview__shared-pane,
 .json-preview,
 .media-preview,
 .image-preview,
@@ -2863,6 +3413,11 @@ onUnmounted(() => {
   background: var(--resource-surface);
   border: 1px solid var(--resource-border);
   border-radius: 6px;
+}
+
+.resource-preview__shared-pane {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .preview-frame {
@@ -2930,15 +3485,15 @@ onUnmounted(() => {
 }
 
 .resource-preview__canvas.is-reading .markdown-preview {
-  flex: 0 0 auto;
-  width: min(100%, 960px);
-  height: auto;
-  min-height: 0;
-  margin: 0 auto 28px;
+  flex: 1 0 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
   background: var(--resource-surface);
   border: 0;
-  border-radius: 6px;
-  box-shadow: 0 8px 22px rgb(30 53 86 / 4%);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .json-preview__content {
@@ -2955,11 +3510,13 @@ onUnmounted(() => {
 }
 
 .markdown-preview__content {
-  max-width: 72ch;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
   padding: 46px clamp(30px, 5vw, 68px) 64px;
   margin: 0 auto;
   color: #2a3a50;
-  font-size: 1rem;
+  font-size: calc(1rem * var(--preview-font-scale, 1));
   line-height: 1.72;
 }
 
@@ -2978,13 +3535,13 @@ onUnmounted(() => {
 }
 
 .markdown-preview__content :deep(h1) {
-  font-size: 1.75rem;
+  font-size: 1.75em;
 }
 .markdown-preview__content :deep(h2) {
-  font-size: 1.375rem;
+  font-size: 1.375em;
 }
 .markdown-preview__content :deep(h3) {
-  font-size: 1.0625rem;
+  font-size: 1.0625em;
 }
 .markdown-preview__content :deep(h1:first-child) {
   margin-top: 0;
@@ -3028,6 +3585,64 @@ onUnmounted(() => {
 }
 .markdown-preview__content :deep(a) {
   color: #1559b7;
+}
+
+.markdown-preview__content :deep(mark.temporary-highlight) {
+  padding: 0 0.08em;
+  color: inherit;
+  background: #fff09b;
+  border-radius: 2px;
+  box-decoration-break: clone;
+}
+
+.resource-tutor-resizer {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  min-width: 8px;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  background: #f4f6f9;
+  border-right: 1px solid var(--resource-border);
+  border-left: 1px solid var(--resource-border);
+  touch-action: none;
+}
+
+.resource-tutor-resizer::before {
+  position: absolute;
+  inset: 0 -4px;
+  content: "";
+}
+
+.resource-tutor-resizer span {
+  display: block;
+  width: 2px;
+  height: 46px;
+  background: #aebdcd;
+  border-radius: 2px;
+  transition:
+    height 150ms ease-out,
+    background-color 150ms ease-out;
+}
+
+.resource-tutor-resizer:hover span,
+.resource-tutor-resizer:focus-visible span,
+.resource-workbench__body.is-resizing .resource-tutor-resizer span {
+  height: 72px;
+  background: var(--resource-primary);
+}
+
+.resource-tutor-resizer:focus-visible {
+  outline: 2px solid #79a5df;
+  outline-offset: -2px;
+}
+
+:global(html.student-resource-tutor-resizing),
+:global(html.student-resource-tutor-resizing *) {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 
 .mind-map-preview__viewport {
@@ -3662,6 +4277,18 @@ onUnmounted(() => {
   box-shadow: 0 8px 18px rgb(0 0 0 / 28%);
 }
 
+:global(.dark) .resource-preview__tool-button,
+:global(.dark) .resource-preview__font-reset {
+  color: #b8c6d8;
+  background: #1b283a;
+  border-color: #344860;
+}
+
+:global(.dark) .markdown-preview__content :deep(mark.temporary-highlight) {
+  color: #192235;
+  background: #e9d56c;
+}
+
 @media (max-width: 1180px) {
   .resource-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3670,6 +4297,9 @@ onUnmounted(() => {
   .resource-workbench__body {
     grid-template-columns: minmax(0, 1fr);
     overflow: auto;
+  }
+  .resource-tutor-resizer {
+    display: none;
   }
   .resource-preview {
     border-bottom-left-radius: 0;
@@ -3717,6 +4347,14 @@ onUnmounted(() => {
     gap: 14px;
     padding: 14px;
     overflow: visible;
+  }
+  .resource-preview__header {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 10px;
+  }
+  .resource-preview__tools {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
   }
   .resource-overview {
     padding: 18px 14px;
@@ -3799,7 +4437,7 @@ onUnmounted(() => {
   }
   .markdown-preview__content {
     padding: 22px 18px;
-    font-size: 0.9375rem;
+    font-size: calc(0.9375rem * var(--preview-font-scale, 1));
   }
   .resource-tutor__messages {
     max-height: 390px;

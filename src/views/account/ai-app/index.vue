@@ -43,6 +43,8 @@ import AiAssessment from "./components/AiAssessment.vue";
 import AiGovernanceDashboard from "./components/AiGovernanceDashboard.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 import FloatingDigitalHuman2D from "./components/FloatingDigitalHuman2D.vue";
+import { PlatformResourcePreviewDialog } from "@/components/PlatformResourcePreview";
+import type { PlatformPreviewResource } from "@/components/PlatformResourcePreview";
 
 import { useUserStore } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
@@ -55,6 +57,7 @@ import {
   getAssistantConversation,
   getAssistantConversationGroups,
   getAssistantExplanationImage,
+  getAssistantResource,
   getAssistantResourceTask,
   streamAssistantChat,
   uploadAssistantDocumentAttachment,
@@ -67,6 +70,7 @@ import {
   type AssistantConversationItem,
   type AssistantExplanationImage,
   type AssistantOption,
+  type AssistantResourceSummary,
   type AssistantResourceTaskItem,
   type AssistantSkill,
   type AssistantSpeechSession,
@@ -1570,6 +1574,9 @@ const handleStopSpeech = (assistantMessageId: string | number) => {
 
 // === 栈操作预览弹窗 ===
 const stackPreviewVisible = ref(false);
+const platformPreviewVisible = ref(false);
+const platformPreviewResource = ref<PlatformPreviewResource | null>(null);
+let platformPreviewRequestVersion = 0;
 const stackItems = ref<{ key: number; value: string }[]>([
   { key: 1, value: "A" },
   { key: 2, value: "B" },
@@ -1608,13 +1615,88 @@ function stackReset() {
   ];
   stackLog.value = ["重置：栈顶 -> C, B, A"];
 }
-function handlePreview(res: any) {
+function toPlatformPreviewResource(
+  resource: Partial<AssistantResourceSummary> & {
+    type?: string;
+    desc?: string;
+  }
+): PlatformPreviewResource {
+  return {
+    title: resource.title || "课程资料",
+    url:
+      resource.preview_pdf_url ||
+      resource.preview_url ||
+      resource.download_url ||
+      undefined,
+    previewUrl: resource.preview_url,
+    previewPdfUrl: resource.preview_pdf_url,
+    downloadUrl: resource.download_url || resource.preview_url,
+    content: resource.content_body,
+    contentFormat: resource.content_format,
+    resourceType: resource.resource_type || resource.type,
+    description: resource.summary || resource.description || resource.desc,
+    exerciseItems: resource.exercise_items,
+    language: resource.language,
+    starterCode: resource.starter_code,
+    testCases: resource.test_cases,
+    rubric: resource.rubric,
+    runtimeStatus: resource.runtime_status
+  };
+}
+
+function hasPlatformPreviewSource(resource: PlatformPreviewResource) {
+  return Boolean(
+    resource.url ||
+      resource.previewUrl ||
+      resource.previewPdfUrl ||
+      resource.downloadUrl ||
+      resource.content ||
+      resource.structuredData ||
+      resource.exerciseItems?.length ||
+      resource.starterCode ||
+      resource.testCases?.length ||
+      resource.rubric
+  );
+}
+
+async function handlePreview(res: AssistantChatResource) {
   if (res?.type === "animation") {
     stackPreviewVisible.value = true;
     return;
   }
-  if (res?.preview_url) {
-    window.open(res.preview_url, "_blank");
+
+  const requestVersion = ++platformPreviewRequestVersion;
+  const initialResource = toPlatformPreviewResource(res || {});
+  platformPreviewResource.value = initialResource;
+  if (hasPlatformPreviewSource(initialResource)) {
+    platformPreviewVisible.value = true;
+  }
+
+  if (!res?.resource_id) {
+    if (!hasPlatformPreviewSource(initialResource)) {
+      ElMessage.warning("该资源暂未提供可预览内容");
+    }
+    return;
+  }
+
+  try {
+    const { data } = await getAssistantResource(res.resource_id, {
+      course_id: selectedCourseId.value,
+      target_student_id: selectedTargetStudentId.value
+    });
+    if (requestVersion !== platformPreviewRequestVersion) return;
+    const detail = data.resource;
+    if (!detail) throw new Error(data.message || "资源详情为空");
+    platformPreviewResource.value = toPlatformPreviewResource({
+      ...res,
+      ...detail
+    });
+    platformPreviewVisible.value = true;
+  } catch (error) {
+    if (requestVersion !== platformPreviewRequestVersion) return;
+    if (!hasPlatformPreviewSource(initialResource)) {
+      ElMessage.error(assistantApiErrorMessage(error, "资源详情加载失败"));
+    }
   }
 }
 
@@ -3124,6 +3206,11 @@ onUnmounted(() => {
       :left-zone-width="sidebarRenderedWidth"
       :bottom-offset="104"
       storage-key="ai-app-floating-digital-human-2d-left-bottom"
+    />
+
+    <PlatformResourcePreviewDialog
+      v-model="platformPreviewVisible"
+      :resource="platformPreviewResource"
     />
 
     <!-- 栈操作可视化预览弹窗 -->

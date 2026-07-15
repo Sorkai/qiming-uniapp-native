@@ -848,6 +848,15 @@ export interface AssistantResourceTaskLogItem {
   occurred_at: string;
 }
 
+export interface AssistantResourceEffectiveTarget {
+  target_type: "course" | "chapter" | "hour" | string;
+  target_id: number;
+  target_source: "mapping" | "replace_override" | string;
+  mapping_method?: string;
+  mapping_confidence?: number | null;
+  knowledge_relevance?: number | null;
+}
+
 export interface AssistantResourceSummary {
   resource_id: string;
   task_id?: string;
@@ -863,10 +872,12 @@ export interface AssistantResourceSummary {
   object_key?: string;
   description?: string;
   knowledge_point_id?: string;
-  knowledge_relevance?: number;
+  knowledge_relevance?: number | null;
   review_status?: string;
   version_no?: number;
+  created_at?: string;
   updated_at?: string;
+  published_at?: string;
   content_format?: string;
   content_body?: string;
   html_animation_task_id?: string;
@@ -884,11 +895,11 @@ export interface AssistantResourceSummary {
   test_cases?: Record<string, any>[];
   rubric?: Record<string, any> | string;
   runtime_status?: string;
-  quality_score?: number;
+  quality_score?: number | null;
   safety_status?: string;
   safety_flags?: string[];
   safety_summary?: string;
-  citation_coverage?: number;
+  citation_coverage?: number | null;
   citations?: AssistantResourceCitation[];
   source_kind?: "generated" | "demo_import" | string;
   mode?: "demo" | "mixed" | string;
@@ -902,6 +913,9 @@ export interface AssistantResourceSummary {
   variant_code?: string;
   variant_label?: string;
   resolution_key?: string;
+  effective_targets?: AssistantResourceEffectiveTarget[];
+  applicable_context_count?: number;
+  visible_context_count?: number;
   preview_pdf_url?: string | null;
 }
 
@@ -1003,7 +1017,10 @@ export interface AssistantListResourceTasksResp {
 export interface AssistantListResourcesResp {
   status: string;
   message?: string;
+  mode?: "generated" | "demo" | "mixed" | string;
   total: number;
+  page?: number;
+  page_size?: number;
   list: AssistantResourceSummary[];
 }
 
