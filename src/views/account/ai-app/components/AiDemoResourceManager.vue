@@ -67,7 +67,6 @@ type SystemCourse = {
 
 const props = withDefaults(
   defineProps<{
-    courseId?: number;
     canImport?: boolean;
     systemCourses?: SystemCourse[];
   }>(),
@@ -170,6 +169,15 @@ const activeBindingCourse = computed(() =>
     course => course.id === Number(activeBindingCourseId.value)
   )
 );
+const reviewCourseOptions = computed(() => {
+  const activeCourseIds = new Set(
+    (bindingBatch.value?.items || [])
+      .filter(item => item.status === "active")
+      .map(item => Number(item.course_id))
+  );
+  if (!activeCourseIds.size) return systemCourses.value;
+  return systemCourses.value.filter(course => activeCourseIds.has(course.id));
+});
 const activeBindingCatalogCourse = computed(() =>
   appliedCatalogCourses.value.find(
     course => course.catalog_course_id === activeBindingCatalogCourseId.value
@@ -254,6 +262,18 @@ const canActivateBinding = computed(() => {
       !preview.unmapped_resources
   );
 });
+const canPublishRevision = computed(
+  () =>
+    hasCourseContext.value &&
+    publishableResources.value.some(resource => {
+      const selectedCodes = selectedPublishVariants[resource.revision_id] || [];
+      return selectedCodes.some(code =>
+        resource.variants.some(
+          variant => variant.code === code && variant.ready_to_publish
+        )
+      );
+    })
+);
 
 function payloadOf<T>(response: any): T {
   return (response?.data || response || {}) as T;
@@ -1409,7 +1429,12 @@ async function loadPublishableResources() {
     publishableResources.value = payload.items || [];
     for (const resource of publishableResources.value) {
       if (!selectedPublishVariants[resource.revision_id]) {
-        selectedPublishVariants[resource.revision_id] = [];
+        const defaultVariant = resource.variants.find(
+          variant => variant.code === "A" && variant.ready_to_publish
+        );
+        selectedPublishVariants[resource.revision_id] = defaultVariant
+          ? [defaultVariant.code]
+          : [];
       }
     }
   } catch (error: any) {
@@ -1466,19 +1491,6 @@ async function loadReviewData() {
   selectedAssignmentResourceId.value = "";
   await Promise.all([loadPublishableResources(), loadAssignments()]);
 }
-
-watch(
-  () => props.courseId,
-  courseId => {
-    if (binding.value) return;
-    const normalizedCourseId = Number(courseId);
-    activeBindingCourseId.value =
-      Number.isFinite(normalizedCourseId) && normalizedCourseId > 0
-        ? normalizedCourseId
-        : undefined;
-  },
-  { immediate: true }
-);
 
 watch(systemCourses, suggestBindingTargets, { deep: true });
 
@@ -2172,15 +2184,10 @@ onBeforeUnmount(() => {
                   @change="loadReviewData"
                 >
                   <el-option
-                    v-for="item in bindingBatch?.items.filter(
-                      item => item.status === 'active'
-                    ) || []"
-                    :key="item.course_id"
-                    :label="
-                      systemCourses.find(course => course.id === item.course_id)
-                        ?.name || `课程 ID ${item.course_id}`
-                    "
-                    :value="item.course_id"
+                    v-for="course in reviewCourseOptions"
+                    :key="course.id"
+                    :label="course.name"
+                    :value="course.id"
                   />
                 </el-select>
                 <el-button :icon="Refresh" @click="loadPublishableResources"
@@ -2241,7 +2248,7 @@ onBeforeUnmount(() => {
               <el-button
                 type="primary"
                 :loading="publicationBusy"
-                :disabled="!bindingActive"
+                :disabled="!canPublishRevision"
                 @click="publishRevision"
                 >审核并发布</el-button
               >

@@ -74,6 +74,7 @@ import {
 } from "@/api/frontend/assistant";
 import {
   SpeechPlaybackController,
+  type SpeechPlaybackDiagnostic,
   type SpeechPlaybackState
 } from "./speech-playback-controller";
 
@@ -168,6 +169,70 @@ const featureFlags = computed(
 );
 const selectedSpeechVoiceAlias = ref("");
 const speechTransportStatus = ref("语音能力检测中");
+const speechDiagnostic = ref<SpeechPlaybackDiagnostic>({});
+const speechDiagnosticText = computed(() => {
+  const diagnostic = speechDiagnostic.value;
+  const entries = [
+    ["pipeline_mode", diagnostic.pipelineMode],
+    ["text_tts_parallel", diagnostic.textTtsParallel],
+    ["command_protocol", diagnostic.commandProtocol],
+    ["timeline_clock", diagnostic.timelineClock],
+    ["recovery_enabled", diagnostic.recoveryEnabled],
+    ["durable_archive_enabled", diagnostic.durableArchiveEnabled],
+    ["phase", diagnostic.phase],
+    ["server_event", diagnostic.serverEvent],
+    ["client_event", diagnostic.clientEvent],
+    ["event_seq", diagnostic.eventSequence],
+    ["stream_id", diagnostic.streamId],
+    ["session_id", diagnostic.sessionId],
+    ["segment_seq", diagnostic.segmentSequence],
+    ["audio_seq", diagnostic.audioSequence],
+    ["played_sample", diagnostic.playedSample],
+    ["buffered_ms", diagnostic.bufferedMs],
+    ["peak_rms", diagnostic.peakRms],
+    ["audio_context_state", diagnostic.audioContextState],
+    ["websocket_close_code", diagnostic.websocketCloseCode],
+    ["websocket_close_reason", diagnostic.websocketCloseReason],
+    ["websocket_was_clean", diagnostic.websocketWasClean],
+    ["session_status", diagnostic.sessionStatus],
+    ["live_delivery_status", diagnostic.liveDeliveryStatus],
+    ["archive_status", diagnostic.archiveStatus],
+    ["poll_after_ms", diagnostic.pollAfterMs],
+    ["error_code", diagnostic.errorCode]
+  ].filter(([, value]) => value !== undefined && value !== "");
+  return entries.map(([key, value]) => `${key}=${String(value)}`).join("\n");
+});
+
+const copySpeechDiagnostics = async () => {
+  const text = speechDiagnosticText.value;
+  if (!text) {
+    ElMessage.warning("暂无语音诊断信息");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    ElMessage.success("语音诊断信息已复制");
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    copied
+      ? ElMessage.success("语音诊断信息已复制")
+      : ElMessage.error("复制失败，请打开浏览器控制台查看诊断信息");
+  }
+};
+
+const testSpeechOutput = async () => {
+  const started = await speechController.testAudioOutput();
+  started
+    ? ElMessage.info("正在播放测试音；听不到请检查标签页静音和系统输出设备")
+    : ElMessage.error("测试音启动失败，请检查浏览器音频权限");
+};
 
 const selectedAgentKey = ref("");
 const selectedModelKey = ref("");
@@ -535,6 +600,9 @@ const speechController = new SpeechPlaybackController({
   onStatus(_state, message) {
     if (message) speechTransportStatus.value = message;
   },
+  onDiagnostic(diagnostic) {
+    speechDiagnostic.value = diagnostic;
+  },
   onSession: updateMessageSpeech
 });
 
@@ -575,17 +643,16 @@ const courseScopedRails = [
   "governance"
 ];
 const studentScopedRails = ["generation", "path", "profile", "assessment"];
-const isDemoResourceImportPane = computed(
+const isDemoResourceWorkspace = computed(
   () =>
     activeRail.value === "generation" &&
     isStaffMode.value &&
-    resourceWorkspaceMode.value === "demo" &&
-    demoResourcePane.value === "import"
+    resourceWorkspaceMode.value === "demo"
 );
 const showCourseContext = computed(
   () =>
     courseScopedRails.includes(activeRail.value) &&
-    !isDemoResourceImportPane.value
+    !isDemoResourceWorkspace.value
 );
 const showStudentContext = computed(
   () =>
@@ -596,11 +663,7 @@ const showStudentContext = computed(
       resourceWorkspaceMode.value === "demo"
     )
 );
-const courseContextLabel = computed(() =>
-  activeRail.value === "generation" && resourceWorkspaceMode.value === "demo"
-    ? "绑定课程:"
-    : "课程:"
-);
+const courseContextLabel = computed(() => "课程:");
 const isCourseSwitching = ref(false);
 const selectedCoursePickerId = computed({
   get: () => selectedCourseId.value,
@@ -876,6 +939,16 @@ const explanationImageTerminalStatuses = new Set([
   "unknown_outcome",
   "cancelled"
 ]);
+const explanationImageStatusRank: Record<string, number> = {
+  queued: 1,
+  generating: 2,
+  retrying: 3,
+  succeeded: 4,
+  failed: 4,
+  blocked: 4,
+  unknown_outcome: 4,
+  cancelled: 4
+};
 
 const clearExplanationImagePolling = (imageId: string) => {
   const timer = explanationImageTimers.get(imageId);
@@ -886,7 +959,12 @@ const clearExplanationImagePolling = (imageId: string) => {
 };
 
 const clearAllExplanationImagePolling = () => {
-  [...explanationImageTimers.keys()].forEach(clearExplanationImagePolling);
+  const imageIds = new Set([
+    ...explanationImageTimers.keys(),
+    ...explanationImagePollingStartedAt.keys(),
+    ...explanationImagePollingInFlight
+  ]);
+  imageIds.forEach(clearExplanationImagePolling);
 };
 
 const updateMessageExplanationImage = (
@@ -898,7 +976,15 @@ const updateMessageExplanationImage = (
   const images = [...(message.explanationImages || [])];
   const index = images.findIndex(item => item.image_id === image.image_id);
   if (index === -1) images.push(image);
-  else images[index] = { ...images[index], ...image };
+  else {
+    const current = images[index];
+    const currentRank = explanationImageStatusRank[current.status] || 0;
+    const incomingRank = explanationImageStatusRank[image.status] || 0;
+    images[index] =
+      currentRank > incomingRank
+        ? { ...image, ...current }
+        : { ...current, ...image };
+  }
   updateAssistantMessage(assistantMessageId, { explanationImages: images });
 };
 
@@ -931,6 +1017,20 @@ const pollExplanationImage = async (
     console.warn("[AiApp] 讲解图片状态刷新失败:", error);
   } finally {
     explanationImagePollingInFlight.delete(imageId);
+  }
+
+  const currentMessage = messages.value.find(
+    item => item.id === assistantMessageId
+  );
+  const currentImage = currentMessage?.explanationImages?.find(
+    item => item.image_id === imageId
+  );
+  if (
+    !currentImage ||
+    explanationImageTerminalStatuses.has(currentImage.status)
+  ) {
+    clearExplanationImagePolling(imageId);
+    return;
   }
 
   const startedAt = explanationImagePollingStartedAt.get(imageId) || Date.now();
@@ -1182,6 +1282,9 @@ const handleAssistantStreamEvent = (
     });
     if (resourceTask)
       startResourceTaskPolling(resourceTask, assistantMessageId);
+    if (event.explanation_image) {
+      startExplanationImagePolling(event.explanation_image, assistantMessageId);
+    }
     agentTrace.value = event.trace || [];
     generatedResources.value = event.resources || [];
     if (event.conversation_title) {
@@ -1192,7 +1295,10 @@ const handleAssistantStreamEvent = (
     }
     if (event.speech) {
       speechController.trackSession(event.speech, assistantMessageId, true);
-    } else if (!currentMessage?.speech?.session_id) {
+    } else if (
+      !assistantBootstrap.value?.speech?.enabled &&
+      !currentMessage?.speech?.session_id
+    ) {
       localDigitalHumanSpeech(content || "学习助手已完成回复。");
     } else if (!hasBackendHumanState) {
       digitalHumanStreamState.value = null;
@@ -1365,6 +1471,12 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
   ) {
     return;
   }
+  const explanationImageMode =
+    featureFlags.value.explanation_image_generation &&
+    apiMode.value === "student" &&
+    attachmentIds.length === 0
+      ? "auto_wide"
+      : undefined;
   streamCancel.value = streamAssistantChat(
     {
       conversation_id: activeConversationId.value || undefined,
@@ -1382,9 +1494,7 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
       preferred_explanation_mode: selectedSkillKeys.value.includes("visual")
         ? "visual"
         : undefined,
-      explanation_image_mode: featureFlags.value.explanation_image_generation
-        ? "auto_wide"
-        : undefined,
+      explanation_image_mode: explanationImageMode,
       speech: speechRequest,
       metadata: { ui_entry: "ai_app_workbench" }
     },
@@ -1666,7 +1776,10 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
   speechController.configure(data.speech);
   speechTransportStatus.value = data.speech?.enabled
     ? data.speech.realtime?.enabled
-      ? "实时语音已就绪"
+      ? data.speech.realtime.pipeline_mode === "incremental_rules" &&
+        data.speech.realtime.text_tts_parallel
+        ? "真实时语音已就绪"
+        : "实时语音已就绪（终态模式）"
       : "完整录音模式"
     : "语音能力未开放";
 
@@ -2350,7 +2463,10 @@ onUnmounted(() => {
                     :voices="assistantBootstrap?.speech?.voices || []"
                     :voice-alias="selectedSpeechVoiceAlias"
                     :speech-status="speechTransportStatus"
+                    :speech-detail="speechDiagnosticText"
                     @update:voice-alias="selectedSpeechVoiceAlias = $event"
+                    @test-speech-output="testSpeechOutput"
+                    @copy-speech-diagnostics="copySpeechDiagnostics"
                   />
 
                   <div
@@ -2685,7 +2801,6 @@ onUnmounted(() => {
                 <el-tab-pane label="演示导入资源" name="demo" class="h-full">
                   <AiDemoResourceManager
                     v-model:active-pane="demoResourcePane"
-                    :course-id="selectedCourseId"
                     :system-courses="myCourses"
                     :can-import="apiMode === 'admin'"
                   />

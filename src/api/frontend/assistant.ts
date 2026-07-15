@@ -239,6 +239,7 @@ export interface AssistantBootstrapResp {
 
 export type SpeechTimelineRequest = "none" | "word" | "viseme";
 export type SpeechDelivery = "archive" | "realtime" | "auto";
+export type AssistantExplanationImageMode = "off" | "auto" | "auto_wide";
 
 export interface AssistantSpeechRequest {
   enabled: boolean;
@@ -268,6 +269,12 @@ export interface AssistantSpeechCapabilities {
     channels: number;
     frame_duration_ms: number;
     recommended_jitter_buffer_ms: number;
+    pipeline_mode?: "terminal" | "incremental_rules" | string;
+    text_tts_parallel?: boolean;
+    command_protocol?: string;
+    timeline_clock?: string;
+    recovery_enabled?: boolean;
+    durable_archive_enabled?: boolean;
     reason?: string;
   };
   archive?: {
@@ -318,6 +325,9 @@ export interface AssistantSpeechServerControl {
   session_id?: string;
   message_id?: string;
   status?: string;
+  phase?: string;
+  provider?: string;
+  dispatch?: string;
   error_code?: string;
   partial?: boolean;
   retryable?: boolean;
@@ -435,7 +445,7 @@ export interface AssistantChatStreamReq {
   attachment_ids?: string[];
   enable_realtime_resource?: boolean;
   preferred_explanation_mode?: string;
-  explanation_image_mode?: "auto_wide" | string;
+  explanation_image_mode?: AssistantExplanationImageMode;
   current_path_node_id?: string;
   metadata?: Record<string, string>;
   speech?: AssistantSpeechRequest;

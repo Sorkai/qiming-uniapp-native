@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { Refresh, FullScreen, Warning, Loading } from "@element-plus/icons-vue";
+import {
+  Refresh,
+  FullScreen,
+  Warning,
+  Loading,
+  CopyDocument,
+  Headset
+} from "@element-plus/icons-vue";
 
 const props = withDefaults(
   defineProps<{
@@ -8,16 +15,20 @@ const props = withDefaults(
     voices?: Array<{ alias: string; label: string }>;
     voiceAlias?: string;
     speechStatus?: string;
+    speechDetail?: string;
   }>(),
   {
     speechEnabled: false,
     voices: () => [],
     voiceAlias: "",
-    speechStatus: "语音未启用"
+    speechStatus: "语音未启用",
+    speechDetail: ""
   }
 );
 const emit = defineEmits<{
   (event: "update:voiceAlias", value: string): void;
+  (event: "copySpeechDiagnostics"): void;
+  (event: "testSpeechOutput"): void;
 }>();
 
 // 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
@@ -200,9 +211,38 @@ defineExpose({
       <span
         class="virtual-human-panel__speech-status"
         :class="{ 'is-disabled': !props.speechEnabled }"
+        :title="props.speechDetail || props.speechStatus"
       >
         {{ props.speechStatus }}
       </span>
+      <el-tooltip
+        v-if="props.speechDetail"
+        content="测试扬声器"
+        placement="top"
+      >
+        <el-button
+          :icon="Headset"
+          circle
+          size="small"
+          text
+          aria-label="测试扬声器"
+          @click="emit('testSpeechOutput')"
+        />
+      </el-tooltip>
+      <el-tooltip
+        v-if="props.speechDetail"
+        content="复制语音诊断信息"
+        placement="top"
+      >
+        <el-button
+          :icon="CopyDocument"
+          circle
+          size="small"
+          text
+          aria-label="复制语音诊断信息"
+          @click="emit('copySpeechDiagnostics')"
+        />
+      </el-tooltip>
     </div>
 
     <!-- 主区 -->
@@ -323,7 +363,7 @@ defineExpose({
 }
 
 .virtual-human-panel__speech-status {
-  flex: 0 1 auto;
+  flex: 1 1 120px;
   max-width: 160px;
   overflow: hidden;
   font-size: 12px;

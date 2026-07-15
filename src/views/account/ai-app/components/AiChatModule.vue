@@ -204,46 +204,11 @@
               v-if="msg.type === 'system' && msg.explanationImages?.length"
               class="explanation-image-list"
             >
-              <article
+              <ExplanationImageCard
                 v-for="image in msg.explanationImages"
                 :key="image.image_id"
-                class="explanation-image-card"
-                :class="`is-${image.status}`"
-              >
-                <img
-                  v-if="image.status === 'succeeded' && image.public_url"
-                  class="explanation-image-card__image"
-                  :src="image.public_url"
-                  :alt="image.alt_text || 'AI 讲解图片'"
-                />
-                <div v-else class="explanation-image-card__state">
-                  <AssistantProcessIcon
-                    kind="pencil"
-                    :tone="explanationImageTone(image.status)"
-                    :size="30"
-                  />
-                  <div>
-                    <strong>{{
-                      explanationImageStatusText(image.status)
-                    }}</strong>
-                    <p v-if="image.error_code">
-                      {{ formatMachineLabel(image.error_code) }}
-                    </p>
-                  </div>
-                </div>
-                <p
-                  v-if="image.status === 'succeeded' && image.alt_text"
-                  class="explanation-image-card__alt"
-                >
-                  {{ image.alt_text }}
-                </p>
-                <el-progress
-                  v-if="!explanationImageIsTerminal(image.status)"
-                  :percentage="image.progress ?? 10"
-                  :show-text="false"
-                  :stroke-width="4"
-                />
-              </article>
+                :image="image"
+              />
             </section>
 
             <!-- 资源卡片：多种形态 -->
@@ -853,6 +818,7 @@ import { ElMessage } from "element-plus";
 import { assistantModelReasonText } from "@/api/frontend/assistant";
 import ReviewFileIcon from "@/assets/review-file-svgrepo-com.svg?component";
 import AssistantProcessIcon from "./AssistantProcessIcon.vue";
+import ExplanationImageCard from "./ExplanationImageCard.vue";
 
 const markdownRenderer = new MarkdownIt({
   html: false,
@@ -1245,39 +1211,6 @@ const hasAssistantDetails = (msg: any) =>
   msg.videoSegments?.length ||
   msg.resourceTask ||
   msg.reasoningSummary;
-
-const explanationImageTerminalStatuses = new Set([
-  "succeeded",
-  "failed",
-  "blocked",
-  "unknown_outcome",
-  "cancelled"
-]);
-
-const explanationImageIsTerminal = (status?: string) =>
-  explanationImageTerminalStatuses.has(String(status || ""));
-
-const explanationImageStatusText = (status?: string) => {
-  const map: Record<string, string> = {
-    queued: "正在准备讲解图片",
-    generating: "正在生成讲解图片",
-    retrying: "正在重试讲解图片",
-    succeeded: "讲解图片已生成",
-    failed: "讲解图片生成失败",
-    blocked: "讲解图片未通过安全审核",
-    unknown_outcome: "讲解图片状态未知",
-    cancelled: "讲解图片已取消"
-  };
-  return map[status || ""] || "讲解图片处理中";
-};
-
-const explanationImageTone = (status?: string) => {
-  if (["failed", "blocked", "unknown_outcome"].includes(status || "")) {
-    return "error";
-  }
-  if (["succeeded"].includes(status || "")) return "success";
-  return "running";
-};
 
 const isSafetyExpanded = (id: string | number) =>
   expandedSafetyIds.value.has(id);
@@ -2014,67 +1947,6 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 10px;
   width: 100%;
-}
-
-.explanation-image-card {
-  overflow: hidden;
-  color: #52617a;
-  background: #f7f9fc;
-  border: 1px solid #e0e7f1;
-  border-radius: 14px;
-}
-
-.explanation-image-card__image {
-  display: block;
-  width: 100%;
-  max-height: 360px;
-  object-fit: contain;
-  background: #eef3f9;
-}
-
-.explanation-image-card__state {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  min-height: 76px;
-  padding: 14px 16px;
-}
-
-.explanation-image-card__state strong {
-  display: block;
-  font-size: 13px;
-  color: #43516a;
-}
-
-.explanation-image-card__state p,
-.explanation-image-card__alt {
-  margin: 4px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #8491a7;
-}
-
-.explanation-image-card__alt {
-  padding: 0 14px 12px;
-}
-
-.explanation-image-card :deep(.el-progress) {
-  padding: 0 14px 12px;
-}
-
-:global(html.dark) .explanation-image-card {
-  color: var(--ai-app-text-regular, #cbd6e8);
-  background: rgb(38 61 96 / 42%);
-  border-color: var(--ai-app-border, rgb(148 163 184 / 24%));
-}
-
-:global(html.dark) .explanation-image-card__state strong {
-  color: var(--ai-app-text, #eef4ff);
-}
-
-:global(html.dark) .explanation-image-card__state p,
-:global(html.dark) .explanation-image-card__alt {
-  color: var(--ai-app-text-muted, #92a0b8);
 }
 
 .assistant-action-row {

@@ -27,6 +27,35 @@ export type SpeechPlaybackState =
   | "failed"
   | "unavailable";
 
+export interface SpeechPlaybackDiagnostic {
+  pipelineMode?: string;
+  textTtsParallel?: boolean;
+  commandProtocol?: string;
+  timelineClock?: string;
+  recoveryEnabled?: boolean;
+  durableArchiveEnabled?: boolean;
+  streamId?: string;
+  sessionId?: string;
+  phase?: string;
+  serverEvent?: string;
+  clientEvent?: string;
+  eventSequence?: number;
+  segmentSequence?: number;
+  audioSequence?: number;
+  playedSample?: number;
+  bufferedMs?: number;
+  peakRms?: number;
+  audioContextState?: AudioContextState;
+  websocketCloseCode?: number;
+  websocketCloseReason?: string;
+  websocketWasClean?: boolean;
+  sessionStatus?: string;
+  liveDeliveryStatus?: string;
+  archiveStatus?: string;
+  pollAfterMs?: number;
+  errorCode?: string;
+}
+
 export interface SpeechRendererAdapter {
   setState(
     state: "idle" | "listening" | "thinking" | "speaking" | "error"
@@ -45,6 +74,7 @@ interface SpeechControllerCallbacks {
     session: AssistantSpeechSession,
     playbackState: SpeechPlaybackState
   ) => void;
+  onDiagnostic?: (diagnostic: SpeechPlaybackDiagnostic) => void;
 }
 
 interface PrepareSpeechContext {
@@ -144,9 +174,12 @@ export class SpeechPlaybackController {
   private lastAudioSequence = 0;
   private lastServerEventSequence = 0;
   private playedSample = 0;
+  private peakRms = 0;
   private lastProgressSentAt = 0;
   private liveStarted = false;
   private liveFailed = false;
+  private liveTerminalReceived = false;
+  private liveArchiveStatus = "";
   private timeline: AssistantSpeechTimeline | null = null;
   private currentViseme = "sil";
   private archiveAudio: HTMLAudioElement | null = null;
@@ -156,6 +189,7 @@ export class SpeechPlaybackController {
   private readonly polling = new Map<string, AbortController>();
   private readonly sessionClientIds = new Map<string, string | number>();
   private readonly sessionAutoplay = new Map<string, boolean>();
+  private diagnostic: SpeechPlaybackDiagnostic = {};
 
   constructor(callbacks: SpeechControllerCallbacks) {
     this.callbacks = callbacks;
@@ -163,6 +197,15 @@ export class SpeechPlaybackController {
 
   configure(capabilities?: AssistantSpeechCapabilities | null) {
     this.capabilities = capabilities || null;
+    const realtime = this.capabilities?.realtime;
+    this.updateDiagnostic({
+      pipelineMode: realtime?.pipeline_mode,
+      textTtsParallel: realtime?.text_tts_parallel,
+      commandProtocol: realtime?.command_protocol,
+      timelineClock: realtime?.timeline_clock,
+      recoveryEnabled: realtime?.recovery_enabled,
+      durableArchiveEnabled: realtime?.durable_archive_enabled
+    });
     if (!this.capabilities?.enabled) {
       this.callbacks.onStatus?.("disabled", "语音能力未开放");
     }
@@ -170,6 +213,23 @@ export class SpeechPlaybackController {
 
   private setStatus(state: SpeechPlaybackState, message?: string) {
     this.callbacks.onStatus?.(state, message);
+  }
+
+  private updateDiagnostic(patch: Partial<SpeechPlaybackDiagnostic>) {
+    this.diagnostic = { ...this.diagnostic, ...patch };
+    this.callbacks.onDiagnostic?.({ ...this.diagnostic });
+  }
+
+  private updateSessionDiagnostic(session: AssistantSpeechSession) {
+    this.updateDiagnostic({
+      streamId: session.stream_id || this.realtimeStreamId || undefined,
+      sessionId: session.session_id || this.realtimeSessionId || undefined,
+      sessionStatus: session.status,
+      liveDeliveryStatus: session.live_delivery_status,
+      archiveStatus: session.archive_status,
+      pollAfterMs: session.poll_after_ms,
+      errorCode: session.error_code
+    });
   }
 
   private chooseTimeline(): SpeechTimelineRequest {
@@ -262,12 +322,16 @@ export class SpeechPlaybackController {
     if (!this.audioContext || this.audioContext.state === "closed") {
       const AudioContextCtor = window.AudioContext;
       this.audioContext = new AudioContextCtor({ latencyHint: "interactive" });
+      this.audioContext.onstatechange = () => {
+        this.updateDiagnostic({ audioContextState: this.audioContext?.state });
+      };
       this.workletModuleLoaded = false;
       this.workletModulePromise = null;
     }
     if (this.audioContext.state === "suspended") {
       await this.audioContext.resume();
     }
+    this.updateDiagnostic({ audioContextState: this.audioContext.state });
     if (!this.workletModuleLoaded) {
       if (!this.workletModulePromise) {
         const workletUrl = new URL(
@@ -309,11 +373,48 @@ export class SpeechPlaybackController {
     this.realtimeSampleRate = sampleRate;
   }
 
+  async testAudioOutput() {
+    try {
+      await this.ensureAudioContext();
+      const context = this.audioContext!;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const now = context.currentTime;
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(660, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.05, now + 0.03);
+      gain.gain.setValueAtTime(0.05, now + 0.25);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.42);
+      oscillator.addEventListener(
+        "ended",
+        () => {
+          oscillator.disconnect();
+          gain.disconnect();
+        },
+        { once: true }
+      );
+      this.updateDiagnostic({
+        clientEvent: "audio.output_test",
+        audioContextState: context.state
+      });
+      return true;
+    } catch {
+      this.updateDiagnostic({ clientEvent: "audio.output_test_failed" });
+      return false;
+    }
+  }
+
   private connectRealtime(
     reservation: AssistantSpeechStreamReservationResponse
   ) {
     return new Promise<void>((resolve, reject) => {
       let settled = false;
+      let readyAccepted = false;
       let ticket = reservation.stream.ticket;
       const websocket = new WebSocket(reservation.stream.ws_url);
       websocket.binaryType = "arraybuffer";
@@ -323,10 +424,35 @@ export class SpeechPlaybackController {
       this.lastAudioSequence = 0;
       this.lastServerEventSequence = 0;
       this.playedSample = 0;
+      this.peakRms = 0;
       this.liveStarted = false;
       this.liveFailed = false;
+      this.liveTerminalReceived = false;
+      this.liveArchiveStatus = "";
       this.timeline = null;
       this.currentViseme = "sil";
+      this.updateDiagnostic({
+        streamId: reservation.stream.stream_id,
+        sessionId: undefined,
+        phase: "reserved",
+        serverEvent: undefined,
+        clientEvent: "reservation.created",
+        eventSequence: undefined,
+        segmentSequence: undefined,
+        audioSequence: undefined,
+        playedSample: undefined,
+        bufferedMs: undefined,
+        peakRms: undefined,
+        audioContextState: this.audioContext?.state,
+        websocketCloseCode: undefined,
+        websocketCloseReason: undefined,
+        websocketWasClean: undefined,
+        sessionStatus: "reserved",
+        liveDeliveryStatus: undefined,
+        archiveStatus: undefined,
+        pollAfterMs: undefined,
+        errorCode: undefined
+      });
 
       const timeout = window.setTimeout(() => {
         if (settled) return;
@@ -360,6 +486,7 @@ export class SpeechPlaybackController {
             .then(() => {
               if (control.event === "stream.ready" && !settled) {
                 settled = true;
+                readyAccepted = true;
                 window.clearTimeout(timeout);
                 resolve();
               }
@@ -379,6 +506,7 @@ export class SpeechPlaybackController {
 
       websocket.addEventListener("error", () => {
         this.liveFailed = true;
+        this.updateDiagnostic({ clientEvent: "websocket.error" });
         if (!settled) {
           settled = true;
           window.clearTimeout(timeout);
@@ -386,14 +514,37 @@ export class SpeechPlaybackController {
         }
       });
 
-      websocket.addEventListener("close", () => {
+      websocket.addEventListener("close", event => {
         window.clearTimeout(timeout);
+        if (!readyAccepted) {
+          if (!settled) {
+            settled = true;
+            reject(new Error("speech_websocket_closed"));
+          }
+          return;
+        }
+        if (this.websocket !== websocket) return;
+        this.websocket = null;
+        this.updateDiagnostic({
+          clientEvent: "websocket.closed",
+          websocketCloseCode: event.code,
+          websocketCloseReason: event.reason || undefined,
+          websocketWasClean: event.wasClean
+        });
         if (!settled) {
           settled = true;
           reject(new Error("speech_websocket_closed"));
           return;
         }
-        if (!this.liveStarted) this.liveFailed = true;
+        if (!this.liveTerminalReceived) {
+          this.liveFailed = true;
+          this.setStatus(
+            this.realtimeSessionId ? "finalizing" : "failed",
+            this.realtimeSessionId
+              ? "实时连接中断，正在等待完整录音"
+              : "实时连接中断，文字回答不受影响"
+          );
+        }
         this.workletNode?.port.postMessage({ type: "end" });
       });
     });
@@ -407,6 +558,16 @@ export class SpeechPlaybackController {
       return;
     }
     if (control.event_seq) this.lastServerEventSequence = control.event_seq;
+    this.updateDiagnostic({
+      streamId: control.stream_id || this.realtimeStreamId || undefined,
+      sessionId: control.session_id || this.realtimeSessionId || undefined,
+      phase: control.phase || this.diagnostic.phase,
+      serverEvent: control.event,
+      eventSequence: control.event_seq || undefined,
+      segmentSequence: control.segment_seq,
+      archiveStatus: control.archive_status || this.diagnostic.archiveStatus,
+      errorCode: control.error_code
+    });
 
     switch (control.event) {
       case "stream.ready": {
@@ -429,26 +590,53 @@ export class SpeechPlaybackController {
       }
       case "stream.bound":
         this.realtimeSessionId = control.session_id || "";
-        this.setStatus("connecting", "实时语音正在生成");
+        this.setStatus("connecting", "语音流已绑定，等待首段内容");
+        break;
+      case "provider.connected":
+        this.setStatus("connecting", "语音引擎已连接，等待首段音频");
+        break;
+      case "segment.committed":
+        this.setStatus("connecting", "首段内容已提交");
+        break;
+      case "segment.dispatched":
+        this.setStatus("connecting", "首段语音正在合成");
+        break;
+      case "audio.started":
+        this.setStatus("connecting", "首段音频正在缓冲");
         break;
       case "timeline.delta":
         if (control.timeline) this.mergeTimeline(control.timeline);
         break;
       case "stream.completed":
+        this.liveTerminalReceived = true;
         this.realtimeSessionId = control.session_id || this.realtimeSessionId;
+        this.liveArchiveStatus = control.archive_status || "";
         this.workletNode?.port.postMessage({ type: "end" });
-        this.setStatus("finalizing", "实时播报完成，正在归档");
+        this.setStatus(
+          control.archive_status === "failed" ? "streaming" : "finalizing",
+          control.archive_status === "failed"
+            ? "实时音频已完成，完整录音归档失败"
+            : "实时音频输入完成，等待播放结束"
+        );
         break;
       case "stream.cancelled":
+        this.liveTerminalReceived = true;
         this.workletNode?.port.postMessage({ type: "reset" });
         this.callbacks.renderer.reset();
         this.setStatus("cancelled", "语音已停止");
         break;
       case "stream.error":
+        this.liveTerminalReceived = true;
         this.liveFailed = true;
+        this.liveArchiveStatus = control.archive_status || "";
         this.workletNode?.port.postMessage({ type: "end" });
         this.callbacks.renderer.setState("error");
-        this.setStatus("finalizing", "实时播报中断，正在等待完整录音");
+        this.setStatus(
+          control.session_id ? "finalizing" : "failed",
+          control.session_id
+            ? "实时播报中断，正在恢复完整录音"
+            : "实时语音中断，文字回答不受影响"
+        );
         break;
       default:
         break;
@@ -456,11 +644,19 @@ export class SpeechPlaybackController {
   }
 
   private mergeTimeline(delta: AssistantSpeechTimeline) {
+    const dedupe = <T>(items: T[], keyOf: (item: T) => string) =>
+      Array.from(new Map(items.map(item => [keyOf(item), item])).values());
     this.timeline = {
       ...(this.timeline || delta),
       ...delta,
-      words: [...(this.timeline?.words || []), ...(delta.words || [])],
-      visemes: [...(this.timeline?.visemes || []), ...(delta.visemes || [])]
+      words: dedupe(
+        [...(this.timeline?.words || []), ...(delta.words || [])],
+        cue => `${cue.start_ms}:${cue.end_ms}:${cue.text}`
+      ),
+      visemes: dedupe(
+        [...(this.timeline?.visemes || []), ...(delta.visemes || [])],
+        cue => `${cue.start_ms}:${cue.end_ms}:${cue.id}`
+      )
     };
   }
 
@@ -472,6 +668,12 @@ export class SpeechPlaybackController {
         frame.sequence !== this.lastAudioSequence + 1;
       if (frame.sequence <= this.lastAudioSequence) return;
       this.lastAudioSequence = frame.sequence;
+      if (frame.sequence === 1 || sequenceGap || frame.discontinuity) {
+        this.updateDiagnostic({
+          clientEvent: sequenceGap ? "audio.sequence_gap" : "audio.frame",
+          audioSequence: frame.sequence
+        });
+      }
       if (sequenceGap || frame.discontinuity) {
         this.currentViseme = "sil";
         this.callbacks.renderer.applyViseme("sil", 0);
@@ -496,6 +698,7 @@ export class SpeechPlaybackController {
   private handleWorkletMessage(data: Record<string, any>) {
     if (data.type === "started") {
       this.liveStarted = true;
+      this.updateDiagnostic({ clientEvent: "playback.started" });
       this.callbacks.renderer.setState("speaking");
       this.setStatus("streaming", "正在实时播报");
       this.sendRealtimeControl({
@@ -509,15 +712,23 @@ export class SpeechPlaybackController {
     if (data.type === "stats") {
       this.playedSample = Math.max(0, Number(data.playedSample) || 0);
       const rms = clamp(Number(data.rms) || 0, 0, 1);
+      this.peakRms = Math.max(this.peakRms, rms);
       this.applyRealtimeRenderer(this.playedSample, rms);
       const now = Date.now();
       if (now - this.lastProgressSentAt >= 750) {
         this.lastProgressSentAt = now;
+        const bufferedMs = clamp(Number(data.bufferedMs) || 0, 0, 60000);
+        this.updateDiagnostic({
+          audioSequence: this.lastAudioSequence,
+          playedSample: this.playedSample,
+          bufferedMs,
+          peakRms: Number(this.peakRms.toFixed(6))
+        });
         this.sendRealtimeControl({
           event: "playback.progress",
           last_audio_seq: this.lastAudioSequence,
           played_sample: this.playedSample,
-          buffered_ms: clamp(Number(data.bufferedMs) || 0, 0, 60000),
+          buffered_ms: bufferedMs,
           client_time_ms: now
         });
       }
@@ -534,7 +745,31 @@ export class SpeechPlaybackController {
         client_time_ms: Date.now()
       });
       this.callbacks.renderer.reset();
-      this.setStatus("finalizing", "实时播报完成，正在归档");
+      this.updateDiagnostic({
+        clientEvent:
+          this.liveFailed && !this.liveTerminalReceived
+            ? "playback.interrupted"
+            : "playback.ended",
+        audioSequence: this.lastAudioSequence,
+        playedSample: Math.max(
+          0,
+          Number(data.playedSample) || this.playedSample
+        ),
+        bufferedMs: 0,
+        peakRms: Number(this.peakRms.toFixed(6))
+      });
+      this.setStatus(
+        this.liveFailed && !this.liveTerminalReceived
+          ? "finalizing"
+          : this.liveArchiveStatus === "failed"
+            ? "ready"
+            : "finalizing",
+        this.liveFailed && !this.liveTerminalReceived
+          ? "实时播报中断，正在等待完整录音"
+          : this.liveArchiveStatus === "failed"
+            ? "实时播报完成，完整录音不可用"
+            : "实时播报完成，正在生成完整录音"
+      );
     }
   }
 
@@ -579,6 +814,7 @@ export class SpeechPlaybackController {
     const session = event.speech;
     if (session?.session_id) {
       this.realtimeSessionId = session.session_id;
+      this.updateSessionDiagnostic(session);
       this.sessionClientIds.set(session.session_id, clientMessageId);
       this.callbacks.onSession?.(
         clientMessageId,
@@ -607,11 +843,21 @@ export class SpeechPlaybackController {
     }
     this.sessionClientIds.set(session.session_id, clientMessageId);
     this.sessionAutoplay.set(session.session_id, autoplay);
+    this.updateSessionDiagnostic(session);
     this.callbacks.onSession?.(
       clientMessageId,
       session,
       this.mapSessionState(session)
     );
+    if (session.archive_status === "failed") {
+      this.setStatus(
+        this.liveStarted ? "ready" : "failed",
+        this.liveStarted
+          ? "实时播报可用，完整录音归档失败"
+          : "语音生成失败，文字回答不受影响"
+      );
+      return;
+    }
     if (READY_STATUSES.has(session.status)) {
       void this.resolveReadySession(session);
       return;
@@ -645,6 +891,7 @@ export class SpeechPlaybackController {
           controller.signal
         );
         current = response.speech;
+        this.updateSessionDiagnostic(current);
         const clientMessageId = this.sessionClientIds.get(sessionId);
         if (clientMessageId !== undefined) {
           this.callbacks.onSession?.(
@@ -866,6 +1113,8 @@ export class SpeechPlaybackController {
     void this.stopLive("context_changed", false);
     this.liveStarted = false;
     this.liveFailed = false;
+    this.liveTerminalReceived = false;
+    this.liveArchiveStatus = "";
     this.callbacks.renderer.reset();
   }
 
@@ -886,8 +1135,32 @@ export class SpeechPlaybackController {
     this.realtimeSessionId = "";
     this.lastAudioSequence = 0;
     this.lastServerEventSequence = 0;
+    this.peakRms = 0;
+    this.liveTerminalReceived = false;
     this.timeline = null;
     this.currentViseme = "sil";
+    this.updateDiagnostic({
+      streamId: undefined,
+      sessionId: undefined,
+      phase: undefined,
+      serverEvent: undefined,
+      clientEvent: "stream.closed",
+      eventSequence: undefined,
+      segmentSequence: undefined,
+      audioSequence: undefined,
+      playedSample: undefined,
+      bufferedMs: undefined,
+      peakRms: undefined,
+      audioContextState: this.audioContext?.state,
+      websocketCloseCode: undefined,
+      websocketCloseReason: undefined,
+      websocketWasClean: undefined,
+      sessionStatus: undefined,
+      liveDeliveryStatus: undefined,
+      archiveStatus: undefined,
+      pollAfterMs: undefined,
+      errorCode: undefined
+    });
   }
 
   private mapSessionState(
