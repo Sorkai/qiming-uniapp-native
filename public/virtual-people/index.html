@@ -1041,10 +1041,72 @@
         }
       }
     }
+    function __setExternalSpeechState(nextState) {
+      const speaking = nextState === 'speaking';
+      if (speaking) {
+        stopSpeaking({ keepPanel: true });
+        applyMood('happy', 0.28);
+        state.isSpeaking = true;
+        state.speakingMotionTime = 0;
+        return;
+      }
+      if (nextState === 'error') {
+        state.isSpeaking = false;
+        resetMouth();
+        return;
+      }
+      state.isSpeaking = false;
+      resetMouth();
+      resetSpeechMotion();
+      applyMood('neutral');
+    }
+    function __applyExternalViseme(id, weight) {
+      const viseme = ['aa', 'ih', 'ou', 'ee', 'oh'].includes(id) ? id : null;
+      const value = Math.max(0, Math.min(1, Number(weight) || 0));
+      state.isSpeaking = Boolean(viseme && value > 0);
+      if (!viseme || id === 'sil') {
+        resetMouth();
+        return;
+      }
+      setMouthWeights({ [viseme]: value });
+    }
+    function __applyExternalAmplitude(value) {
+      const amplitude = Math.max(0, Math.min(1, Number(value) || 0));
+      state.isSpeaking = amplitude > 0.02;
+      setMouthWeights({ aa: amplitude * 0.72 });
+    }
+    function __playExternalMotion(key) {
+      const keywordMap = {
+        explain: ['explain', 'gesture', 'pointing'],
+        encourage: ['thumbs_up', 'clap', 'fist_pump', 'happy'],
+        think: ['think', 'looking', 'focus'],
+        point_to_resource: ['pointing_forward', 'pointing', 'gesture'],
+        pause: ['idle'],
+        idle: ['idle'],
+      };
+      const keywords = keywordMap[key] || [];
+      const index = state.filteredList.findIndex((motion) => {
+        const haystack = `${motion.name} ${motion.fileName}`.toLowerCase();
+        return keywords.some((keyword) => haystack.includes(keyword));
+      });
+      if (index >= 0) void playMotionByIndex(index);
+    }
     window.addEventListener('message', (event) => {
+      if (isEmbeddedAiApp && event.source !== window.parent) return;
+      if (event.origin !== window.location.origin) return;
       const data = event && event.data;
       if (!data || typeof data !== 'object') return;
-      if (data.type === 'speak' && typeof data.text === 'string') {
+      if (data.type === 'speechState') {
+        __setExternalSpeechState(data.state);
+      } else if (data.type === 'speechViseme') {
+        __applyExternalViseme(data.id, data.weight);
+      } else if (data.type === 'speechAmplitude') {
+        __applyExternalAmplitude(data.value);
+      } else if (data.type === 'speechMotion' && typeof data.key === 'string') {
+        __playExternalMotion(data.key);
+      } else if (data.type === 'speechReset') {
+        stopSpeaking();
+      } else if (data.type === 'speak' && typeof data.text === 'string') {
         if (!__trySpeak(data.text)) {
           __pendingSpeakQueue.push(data.text);
         }

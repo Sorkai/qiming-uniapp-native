@@ -110,6 +110,7 @@ const batchBindingOutcomes = ref<
     active?: boolean;
     status?: string;
     error?: string;
+    bindingRevisionId?: string;
   }>
 >([]);
 const bindingBusy = ref(false);
@@ -119,6 +120,9 @@ const activeBindingCourseId = ref<number | undefined>();
 const bindingPreview = ref<DemoResourceBindingPreview | null>(null);
 const bindingActive = ref(false);
 const mappingRows = ref<BindingMapping[]>([]);
+const bindingReviewPreviews = reactive<
+  Record<string, DemoResourceBindingPreview>
+>({});
 const publicationBusy = ref(false);
 const publishableResources = ref<DemoResourcePublishableResource[]>([]);
 const selectedPublishVariants = reactive<Record<string, string[]>>({});
@@ -207,6 +211,20 @@ const canCreateBatchBindings = computed(
     !bindingBusy.value &&
     bindingBatch.value?.status !== "processing"
 );
+const bindingReviewCount = computed(
+  () =>
+    batchBindingOutcomes.value.filter(
+      outcome => outcome.status === "needs_review"
+    ).length
+);
+const bindingButtonLabel = computed(() => {
+  if (bindingBatch.value?.status === "processing") return "正在自动绑定课程";
+  if (bindingReviewCount.value) {
+    return `${bindingReviewCount.value} 门课程待补齐章节映射`;
+  }
+  if (batchBindingOutcomes.value.length) return "重新处理失败课程";
+  return "自动完成全部绑定";
+});
 const selectedAssignmentResource = computed(() =>
   assignmentResources.value.find(
     resource => resource.resource_set_id === selectedAssignmentResourceId.value
@@ -336,6 +354,9 @@ function resetBatchBindingState() {
   bindingBatch.value = null;
   bindingBatchKey.value = "";
   batchBindingOutcomes.value = [];
+  for (const key of Object.keys(bindingReviewPreviews)) {
+    delete bindingReviewPreviews[key];
+  }
   for (const key of Object.keys(bindingTargetCourseIds)) {
     delete bindingTargetCourseIds[key];
   }
@@ -904,7 +925,8 @@ function syncBindingBatch(nextBatch: DemoResourceBindingBatch) {
         courseName,
         active: item.status === "active",
         status: item.status,
-        error: item.error_message || item.error_code || undefined
+        error: item.error_message || item.error_code || undefined,
+        bindingRevisionId: item.binding_revision_id
       }
     ];
   });
@@ -916,6 +938,42 @@ function syncBindingBatch(nextBatch: DemoResourceBindingBatch) {
     void loadPublishableResources();
     void loadAssignments();
   }
+}
+
+function bindingReviewReason(revisionId?: string) {
+  const preview = revisionId ? bindingReviewPreviews[revisionId] : undefined;
+  if (!preview) return "正在读取映射校验详情";
+  const reasons: string[] = [];
+  if (preview.unmapped_resources) {
+    reasons.push(`${preview.unmapped_resources} 个资源未映射到章节或课时`);
+  }
+  if (preview.invalid_recipients) {
+    reasons.push(`${preview.invalid_recipients} 名学生的选课状态无效`);
+  }
+  if (preview.catalog_changed) reasons.push("资源目录已变化");
+  if (preview.curriculum_changed) reasons.push("平台课程结构已变化");
+  return reasons.join("；") || "自动映射未通过校验";
+}
+
+async function loadBindingReviewPreviews(batch: DemoResourceBindingBatch) {
+  const reviewItems = batch.items.filter(
+    item =>
+      item.status === "needs_review" &&
+      item.binding_revision_id &&
+      !bindingReviewPreviews[item.binding_revision_id]
+  );
+  await Promise.all(
+    reviewItems.map(async item => {
+      try {
+        const preview = payloadOf<DemoResourceBindingPreview>(
+          await previewDemoResourceBinding(item.binding_revision_id)
+        );
+        bindingReviewPreviews[item.binding_revision_id] = preview;
+      } catch {
+        // Batch state is still valid when preview details are temporarily unavailable.
+      }
+    })
+  );
 }
 
 function stopBindingBatchPolling() {
@@ -936,6 +994,7 @@ async function loadBindingBatch(batchId: string, silent = false) {
       await getDemoResourceBindingBatch(batchId)
     );
     syncBindingBatch(nextBatch);
+    void loadBindingReviewPreviews(nextBatch);
     if (nextBatch.status === "processing") {
       scheduleBindingBatchPolling(batchId);
     } else {
@@ -986,6 +1045,7 @@ async function autoBindAllCourses() {
       })
     );
     syncBindingBatch(nextBatch);
+    void loadBindingReviewPreviews(nextBatch);
     if (nextBatch.status === "processing") {
       scheduleBindingBatchPolling(nextBatch.batch_id);
       ElMessage.info("正在自动绑定课程，请等待批次完成");
@@ -1606,6 +1666,15 @@ onBeforeUnmount(() => {
                 门目录课程。只有无法自动匹配的课程才需要手动指定目标。
               </div>
               <el-alert
+                v-if="bindingReviewCount"
+                class="binding-review-alert"
+                type="warning"
+                :closable="false"
+                show-icon
+                :title="`${bindingReviewCount} 门课程已找到对应平台课程，但章节、课时或资源映射尚未通过校验`"
+                description="这不是重新上传或重新选择课程。后端需要返回该绑定草稿的映射明细，才能在这里补齐映射并重新预览激活。"
+              />
+              <el-alert
                 v-if="!systemCourses.length"
                 type="warning"
                 :closable="false"
@@ -1660,7 +1729,7 @@ onBeforeUnmount(() => {
                     </el-select>
                   </template>
                 </el-table-column>
-                <el-table-column label="草稿状态" width="150">
+                <el-table-column label="绑定状态" width="170">
                   <template #default="{ row }">
                     <template
                       v-for="outcome in batchBindingOutcomes.filter(
@@ -1676,12 +1745,16 @@ onBeforeUnmount(() => {
                         effect="plain"
                         >已绑定</el-tag
                       >
-                      <el-tag
+                      <el-tooltip
                         v-else-if="outcome.status === 'needs_review'"
-                        type="warning"
-                        effect="plain"
-                        >需处理映射</el-tag
+                        :content="
+                          bindingReviewReason(outcome.bindingRevisionId)
+                        "
                       >
+                        <el-tag type="warning" effect="plain"
+                          >需补齐章节映射</el-tag
+                        >
+                      </el-tooltip>
                       <el-tag
                         v-else-if="
                           outcome.status === 'pending' ||
@@ -1716,11 +1789,7 @@ onBeforeUnmount(() => {
                   :loading="bindingBusy"
                   :disabled="!canCreateBatchBindings"
                   @click="autoBindAllCourses"
-                  >{{
-                    batchBindingOutcomes.length
-                      ? "自动处理剩余课程"
-                      : "自动完成全部绑定"
-                  }}</el-button
+                  >{{ bindingButtonLabel }}</el-button
                 >
               </div>
             </template>
@@ -1748,10 +1817,7 @@ onBeforeUnmount(() => {
             </div>
           </section>
 
-          <section
-            class="workflow-section"
-            :class="{ 'is-disabled': !binding }"
-          >
+          <section v-if="binding" class="workflow-section">
             <div class="workflow-section__header">
               <div>
                 <h3>节点映射</h3>
@@ -1828,10 +1894,7 @@ onBeforeUnmount(() => {
             </el-table>
           </section>
 
-          <section
-            class="workflow-section"
-            :class="{ 'is-disabled': !binding }"
-          >
+          <section v-if="binding" class="workflow-section">
             <div class="workflow-section__header">
               <div>
                 <h3>影响预览</h3>
@@ -2332,6 +2395,10 @@ onBeforeUnmount(() => {
 
 .catalog-course-summary strong {
   color: var(--demo-ink);
+}
+
+.binding-review-alert {
+  margin-bottom: 14px;
 }
 
 .binding-validation {

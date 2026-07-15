@@ -109,6 +109,38 @@
               </div>
             </div>
 
+            <div
+              v-if="msg.type === 'system' && hasSpeechControl(msg)"
+              class="speech-control"
+              :class="`is-${msg.speechPlaybackState || 'ready'}`"
+              aria-live="polite"
+            >
+              <span class="speech-control__status">
+                <span class="speech-control__dot" />
+                {{ speechStatusText(msg) }}
+              </span>
+              <button
+                v-if="canPlaySpeech(msg)"
+                type="button"
+                class="speech-control__button"
+                title="播放语音"
+                @click="emit('play-speech', msg.id)"
+              >
+                <el-icon><VideoPlay /></el-icon>
+                <span>播放</span>
+              </button>
+              <button
+                v-else-if="msg.speechPlaybackState === 'playing'"
+                type="button"
+                class="speech-control__button"
+                title="停止播放"
+                @click="emit('stop-speech', msg.id)"
+              >
+                <el-icon><CircleClose /></el-icon>
+                <span>停止</span>
+              </button>
+            </div>
+
             <section
               v-if="msg.type === 'system' && hasStreamStatus(msg)"
               class="stream-progress"
@@ -889,6 +921,8 @@ const emit = defineEmits([
   "preview",
   "regenerate",
   "stop",
+  "play-speech",
+  "stop-speech",
   "update:selectedAgent",
   "update:selectedModel",
   "update:thinkingMode"
@@ -961,6 +995,36 @@ const machineLabelMap: Record<string, string> = {
   postprocess_queued: "后台处理已入队",
   profile_refresh: "刷新画像与评估",
   stream: "连接状态"
+};
+
+const hasSpeechControl = (message: any) =>
+  Boolean(
+    message.speech?.session_id ||
+      (message.speechPlaybackState &&
+        message.speechPlaybackState !== "disabled")
+  );
+
+const canPlaySpeech = (message: any) =>
+  Boolean(
+    message.speech?.session_id &&
+      ["ready", "paused"].includes(message.speechPlaybackState || "")
+  );
+
+const speechStatusText = (message: any) => {
+  const state = message.speechPlaybackState || message.speech?.status || "";
+  const labels: Record<string, string> = {
+    preparing: "正在准备实时语音",
+    connecting: "语音正在生成",
+    streaming: "正在实时播报",
+    finalizing: "正在生成完整录音",
+    ready: "完整录音可播放",
+    playing: "正在播放完整录音",
+    paused: "语音已暂停",
+    cancelled: "语音已停止",
+    failed: "语音不可用或已失效",
+    unavailable: "本次回答仅提供文字"
+  };
+  return labels[state] || "语音状态更新中";
 };
 
 const selectableModelStatuses = new Set(["available", "deprecated"]);
@@ -2139,6 +2203,67 @@ onBeforeUnmount(() => {
   padding: 6px 0 2px;
   color: #56647b;
   border-top: 1px solid rgba(222, 229, 241, 0.8);
+}
+
+.speech-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 34px;
+  padding: 5px 8px 5px 10px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.speech-control__status,
+.speech-control__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.speech-control__status {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.speech-control__dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  background: #3b82f6;
+  border-radius: 50%;
+}
+
+.speech-control.is-playing .speech-control__dot,
+.speech-control.is-streaming .speech-control__dot {
+  background: #16a34a;
+}
+
+.speech-control.is-failed .speech-control__dot,
+.speech-control.is-unavailable .speech-control__dot {
+  background: #94a3b8;
+}
+
+.speech-control__button {
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 3px 8px;
+  color: #1d4ed8;
+  cursor: pointer;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+}
+
+.speech-control__button:hover {
+  background: #dbeafe;
 }
 
 .stream-progress.is-error {

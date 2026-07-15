@@ -1,5 +1,6 @@
 import { http } from "@/utils/http";
 import { getToken, formatToken } from "@/utils/auth";
+import { useUserStoreHook } from "@/store/modules/user";
 import COS from "cos-js-sdk-v5";
 
 export interface ApiResponse<T> {
@@ -232,7 +233,192 @@ export interface AssistantBootstrapResp {
     message_count: number;
   };
   feature_flags?: Record<string, boolean>;
+  speech?: AssistantSpeechCapabilities | null;
   message?: string;
+}
+
+export type SpeechTimelineRequest = "none" | "word" | "viseme";
+export type SpeechDelivery = "archive" | "realtime" | "auto";
+
+export interface AssistantSpeechRequest {
+  enabled: boolean;
+  delivery?: SpeechDelivery;
+  stream_id?: string;
+  voice_alias?: string;
+  timeline?: SpeechTimelineRequest;
+  motion_cues?: boolean;
+}
+
+export interface AssistantSpeechCapabilities {
+  contract_version: string;
+  enabled: boolean;
+  default_voice_alias?: string;
+  voices: Array<{ alias: string; label: string }>;
+  audio_formats: string[];
+  sample_rates_hz: number[];
+  timeline_kinds: string[];
+  motion_cues: boolean;
+  delivery_modes?: string[];
+  realtime?: {
+    enabled: boolean;
+    contract_version: string;
+    reservation_endpoint: string;
+    codec: string;
+    sample_rate_hz: number;
+    channels: number;
+    frame_duration_ms: number;
+    recommended_jitter_buffer_ms: number;
+    reason?: string;
+  };
+  archive?: {
+    enabled: boolean;
+    formats: string[];
+  };
+  reason?: string;
+}
+
+export interface AssistantSpeechStreamReservationRequest {
+  conversation_id?: string;
+  course_id?: number;
+  target_student_id?: number;
+  voice_alias?: string;
+  timeline?: SpeechTimelineRequest;
+  motion_cues?: boolean;
+  client: {
+    contract_version: "assistant_speech_stream.v1";
+    audio_formats: string[];
+    audio_worklet: true;
+    renderer?: string;
+  };
+}
+
+export interface AssistantSpeechStreamAudio {
+  codec: "pcm_s16le";
+  sample_rate_hz: number;
+  channels: number;
+  frame_duration_ms: number;
+}
+
+export interface AssistantSpeechStreamReservationResponse {
+  status: "reserved";
+  stream: {
+    stream_id: string;
+    ws_url: string;
+    ticket: string;
+    ticket_expires_at: string;
+    audio: AssistantSpeechStreamAudio;
+    recommended_jitter_buffer_ms: number;
+  };
+}
+
+export interface AssistantSpeechServerControl {
+  event: string;
+  event_seq: number;
+  stream_id?: string;
+  session_id?: string;
+  message_id?: string;
+  status?: string;
+  error_code?: string;
+  partial?: boolean;
+  retryable?: boolean;
+  audio?: AssistantSpeechStreamAudio;
+  jitter_buffer_ms?: number;
+  segment_seq?: number;
+  char_start?: number;
+  char_end?: number;
+  archive_status?: string;
+  timeline?: AssistantSpeechTimeline;
+}
+
+export interface AssistantSpeechAudio {
+  format: string;
+  content_type: string;
+  sample_rate_hz: number;
+  duration_ms: number;
+  size_bytes: number;
+  url: string;
+  url_expires_at: string;
+}
+
+export interface AssistantSpeechWordCue {
+  text: string;
+  start_ms: number;
+  end_ms: number;
+}
+
+export interface AssistantSpeechVisemeCue {
+  id: string;
+  start_ms: number;
+  end_ms: number;
+  weight: number;
+}
+
+export interface AssistantSpeechMotionCue {
+  key: string;
+  start_ms: number;
+  duration_ms: number;
+  target_ref?: string;
+}
+
+export interface AssistantSpeechTimeline {
+  version: string;
+  source: string;
+  status: string;
+  duration_ms: number;
+  words?: AssistantSpeechWordCue[] | null;
+  visemes?: AssistantSpeechVisemeCue[] | null;
+  degraded_reasons?: string[] | null;
+}
+
+export interface AssistantSpeechSession {
+  contract_version: string;
+  session_id?: string;
+  message_id?: string;
+  stream_id?: string;
+  delivery?: string;
+  status: string;
+  live_delivery_status?: string;
+  archive_status?: string;
+  poll_after_ms?: number;
+  voice_alias?: string;
+  timeline_requested?: string;
+  motion_cues_requested?: boolean;
+  retryable?: boolean;
+  error_code?: string;
+  audio?: AssistantSpeechAudio | null;
+  timeline?: AssistantSpeechTimeline | null;
+  motion_cues?: AssistantSpeechMotionCue[] | null;
+  created_at?: string;
+  updated_at?: string;
+  expires_at?: string;
+}
+
+export interface AssistantSpeechSessionResponse {
+  status: string;
+  message?: string;
+  speech: AssistantSpeechSession;
+}
+
+export interface AssistantSpeechSessionSummary {
+  session_id: string;
+  status: string;
+  voice_alias: string;
+  audio_format?: string;
+  duration_ms?: number;
+  timeline_status?: string;
+  timeline_version?: string;
+  timeline_source?: string;
+  retryable?: boolean;
+  error_code?: string;
+  created_at: string;
+  updated_at: string;
+  expires_at?: string;
+}
+
+export interface AssistantSpeechAPIError {
+  status: "error";
+  code: number | string;
+  message: string;
 }
 
 export interface AssistantChatStreamReq {
@@ -252,6 +438,7 @@ export interface AssistantChatStreamReq {
   explanation_image_mode?: "auto_wide" | string;
   current_path_node_id?: string;
   metadata?: Record<string, string>;
+  speech?: AssistantSpeechRequest;
 }
 
 export interface AssistantChatTraceStep {
@@ -412,6 +599,7 @@ export interface AssistantChatStreamEvent {
   safety_flags?: string[];
   sensitive_word_hits?: string[];
   explanation_image?: AssistantExplanationImage;
+  speech?: AssistantSpeechSession | null;
 }
 
 export interface AssistantConversationItem {
@@ -484,6 +672,7 @@ export interface AssistantConversationMessageItem {
   created_at: string;
   metadata?: Record<string, any>;
   explanation_images?: AssistantExplanationImage[];
+  speech?: AssistantSpeechSessionSummary | null;
 }
 
 export interface AssistantProfileCurrentResp {
@@ -1343,6 +1532,97 @@ function buildAuthHeaders(): Record<string, string> {
 
 function apiBaseURL() {
   return (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+}
+
+async function parseAssistantSpeechError(response: Response) {
+  let payload: Partial<AssistantSpeechAPIError> | undefined;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = undefined;
+  }
+  const error = new Error(
+    payload?.message || `语音服务请求失败 (HTTP ${response.status})`
+  ) as Error & {
+    status?: number;
+    code?: number | string;
+  };
+  error.status = response.status;
+  error.code = payload?.code;
+  return error;
+}
+
+async function requestAssistantSpeech<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = getToken();
+  const headers = new Headers(options.headers);
+  headers.set("Accept", "application/json");
+  headers.set("X-Requested-With", "XMLHttpRequest");
+  if (options.body !== undefined) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (token?.accessToken) {
+    headers.set("Authorization", formatToken(token.accessToken));
+  }
+
+  const response = await fetch(
+    /^https?:\/\//i.test(path) ? path : `${apiBaseURL()}${path}`,
+    {
+      ...options,
+      headers,
+      cache: "no-store"
+    }
+  );
+  if (response.status === 401) {
+    void useUserStoreHook().logOut();
+  }
+  if (!response.ok) throw await parseAssistantSpeechError(response);
+  return response.json() as Promise<T>;
+}
+
+export function createAssistantSpeechStreamReservation(
+  data: AssistantSpeechStreamReservationRequest,
+  signal?: AbortSignal,
+  endpoint = "/edu/frontend/v1/assistant/speech/stream-reservations"
+) {
+  return requestAssistantSpeech<AssistantSpeechStreamReservationResponse>(
+    endpoint,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+      signal
+    }
+  );
+}
+
+export function getAssistantSpeechSession(
+  sessionId: string,
+  includeTimeline = false,
+  signal?: AbortSignal
+) {
+  const query = new URLSearchParams({
+    include_timeline: String(includeTimeline)
+  });
+  return requestAssistantSpeech<AssistantSpeechSessionResponse>(
+    `/edu/frontend/v1/assistant/speech/sessions/${encodeURIComponent(sessionId)}?${query}`,
+    { signal }
+  );
+}
+
+export function cancelAssistantSpeechSession(
+  sessionId: string,
+  signal?: AbortSignal
+) {
+  return requestAssistantSpeech<AssistantSpeechSessionResponse>(
+    `/edu/frontend/v1/assistant/speech/sessions/${encodeURIComponent(sessionId)}/cancel`,
+    {
+      method: "POST",
+      body: "{}",
+      signal
+    }
+  );
 }
 
 function emitSSEBlock(

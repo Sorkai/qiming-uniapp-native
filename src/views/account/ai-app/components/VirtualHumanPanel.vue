@@ -1,22 +1,24 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import {
-  Refresh,
-  FullScreen,
-  Warning,
-  Loading,
-  VideoPlay,
-  Download
-} from "@element-plus/icons-vue";
+import { Refresh, FullScreen, Warning, Loading } from "@element-plus/icons-vue";
 
-type TtsEngine = "browser" | "auto" | "local";
-
-const TTS_ENGINE_STORAGE_KEY = "qiming.virtualPeople.tts.engine";
-const ttsEngineOptions: Array<{ label: string; value: TtsEngine }> = [
-  { label: "浏览器音色", value: "browser" },
-  { label: "优先本地女声", value: "auto" },
-  { label: "仅本地女声", value: "local" }
-];
+const props = withDefaults(
+  defineProps<{
+    speechEnabled?: boolean;
+    voices?: Array<{ alias: string; label: string }>;
+    voiceAlias?: string;
+    speechStatus?: string;
+  }>(),
+  {
+    speechEnabled: false,
+    voices: () => [],
+    voiceAlias: "",
+    speechStatus: "语音未启用"
+  }
+);
+const emit = defineEmits<{
+  (event: "update:voiceAlias", value: string): void;
+}>();
 
 // 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
 const humanBaseUrl = computed(() => {
@@ -30,51 +32,13 @@ const iframeRef = ref<HTMLIFrameElement | null>(null);
 const loading = ref(true);
 const errored = ref(false);
 const reloadKey = ref(0);
-const ttsEngine = ref<TtsEngine>(readStoredTtsEngine());
 let probeTimer: ReturnType<typeof setTimeout> | null = null;
-let iframeReady = false;
-const pendingSpeakQueue: string[] = [];
-
-function normalizeTtsEngine(value: unknown): TtsEngine {
-  return value === "auto" || value === "local" || value === "browser"
-    ? value
-    : "browser";
-}
-
-function readStoredTtsEngine(): TtsEngine {
-  try {
-    return normalizeTtsEngine(window.localStorage.getItem(TTS_ENGINE_STORAGE_KEY));
-  } catch (_err) {
-    return "browser";
-  }
-}
-
-function writeStoredTtsEngine(value: TtsEngine) {
-  try {
-    window.localStorage.setItem(TTS_ENGINE_STORAGE_KEY, value);
-  } catch (_err) {
-    // localStorage can be unavailable in restricted browser contexts.
-  }
-}
-
-function flushPendingSpeak() {
-  const iframe = iframeRef.value;
-  if (!iframe || !iframe.contentWindow) return;
-  while (pendingSpeakQueue.length) {
-    const text = pendingSpeakQueue.shift()!;
-    try {
-      iframe.contentWindow.postMessage({ type: "speak", text }, "*");
-    } catch (err) {
-      console.warn("[VirtualHumanPanel] flush speak failed", err);
-    }
-  }
-}
 
 function postControlMessage(payload: Record<string, unknown>) {
   const iframe = iframeRef.value;
   if (!iframe || !iframe.contentWindow) return;
   try {
-    iframe.contentWindow.postMessage(payload, "*");
+    iframe.contentWindow.postMessage(payload, window.location.origin);
   } catch (err) {
     console.warn("[VirtualHumanPanel] control postMessage failed", err);
   }
@@ -83,14 +47,12 @@ function postControlMessage(payload: Record<string, unknown>) {
 function handleLoad() {
   loading.value = false;
   errored.value = false;
-  iframeReady = true;
   if (probeTimer) {
     clearTimeout(probeTimer);
     probeTimer = null;
   }
   postControlMessage({ type: "resumeRender" });
-  syncTtsEngine();
-  flushPendingSpeak();
+  postControlMessage({ type: "speechReset" });
 }
 
 function handleError() {
@@ -101,7 +63,6 @@ function handleError() {
 function refresh() {
   loading.value = true;
   errored.value = false;
-  iframeReady = false;
   reloadKey.value++;
   schedulePing();
 }
@@ -110,31 +71,9 @@ function openFull() {
   window.open(humanBaseUrl.value, "_blank", "noopener");
 }
 
-function syncTtsEngine() {
-  postControlMessage({ type: "setTtsEngine", engine: ttsEngine.value });
-}
-
-function setTtsEngine(value: TtsEngine) {
-  ttsEngine.value = value;
-  writeStoredTtsEngine(value);
-  syncTtsEngine();
-}
-
-function handleTtsEngineChange(event: Event) {
+function handleVoiceChange(event: Event) {
   const value = (event.target as HTMLSelectElement | null)?.value;
-  setTtsEngine(normalizeTtsEngine(value));
-}
-
-function previewVoice() {
-  postControlMessage({
-    type: "previewTts",
-    text: "你好，我是启明数字人。现在使用中文女声为你朗读。"
-  });
-}
-
-function loadLocalVoice() {
-  setTtsEngine("local");
-  postControlMessage({ type: "reloadLocalTts" });
+  if (value) emit("update:voiceAlias", value);
 }
 
 function schedulePing() {
@@ -156,19 +95,35 @@ onUnmounted(() => {
   if (probeTimer) clearTimeout(probeTimer);
 });
 
-// 对外暴露：让父组件可以触发数字人朗读 (自动带口型)
-// 如果 iframe 尚未加载完成，先把文本排队，加载完后再统一发送
+function setSpeechState(state: string) {
+  postControlMessage({ type: "speechState", state });
+}
+
 function speak(text: string) {
-  const iframe = iframeRef.value;
-  if (!iframe || !iframe.contentWindow || !iframeReady) {
-    pendingSpeakQueue.push(text);
-    return;
-  }
-  try {
-    iframe.contentWindow.postMessage({ type: "speak", text }, "*");
-  } catch (err) {
-    console.warn("[VirtualHumanPanel] speak() postMessage failed", err);
-  }
+  const normalized = text.trim();
+  if (!normalized) return;
+  postControlMessage({ type: "speak", text: normalized });
+}
+
+function setAmplitude(value: number) {
+  postControlMessage({ type: "speechAmplitude", value });
+}
+
+function applyViseme(id: string, weight: number) {
+  postControlMessage({ type: "speechViseme", id, weight });
+}
+
+function triggerMotion(key: string, durationMs: number, targetRef?: string) {
+  postControlMessage({
+    type: "speechMotion",
+    key,
+    durationMs,
+    targetRef
+  });
+}
+
+function resetSpeech() {
+  postControlMessage({ type: "speechReset" });
 }
 
 function pauseRender() {
@@ -179,7 +134,16 @@ function resumeRender() {
   postControlMessage({ type: "resumeRender" });
 }
 
-defineExpose({ speak, pauseRender, resumeRender });
+defineExpose({
+  speak,
+  setSpeechState,
+  setAmplitude,
+  applyViseme,
+  triggerMotion,
+  resetSpeech,
+  pauseRender,
+  resumeRender
+});
 </script>
 
 <template>
@@ -214,41 +178,31 @@ defineExpose({ speak, pauseRender, resumeRender });
       </div>
     </div>
 
-    <div class="virtual-human-panel__voicebar" aria-label="朗读音色">
+    <div class="virtual-human-panel__voicebar" aria-label="实时语音设置">
       <label class="virtual-human-panel__voice-label">
-        <span>朗读音色</span>
+        <span>后端音色</span>
         <select
-          :value="ttsEngine"
+          :value="props.voiceAlias"
           class="virtual-human-panel__voice-select"
-          @change="handleTtsEngineChange"
+          :disabled="!props.speechEnabled || props.voices.length <= 1"
+          @change="handleVoiceChange"
         >
           <option
-            v-for="option in ttsEngineOptions"
-            :key="option.value"
-            :value="option.value"
+            v-for="option in props.voices"
+            :key="option.alias"
+            :value="option.alias"
           >
             {{ option.label }}
           </option>
+          <option v-if="!props.voices.length" value="">暂无可用音色</option>
         </select>
       </label>
-      <el-button
-        :icon="VideoPlay"
-        class="virtual-human-panel__voice-btn"
-        size="small"
-        text
-        @click="previewVoice"
+      <span
+        class="virtual-human-panel__speech-status"
+        :class="{ 'is-disabled': !props.speechEnabled }"
       >
-        试听
-      </el-button>
-      <el-button
-        :icon="Download"
-        class="virtual-human-panel__voice-btn"
-        size="small"
-        text
-        @click="loadLocalVoice"
-      >
-        加载本地
-      </el-button>
+        {{ props.speechStatus }}
+      </span>
     </div>
 
     <!-- 主区 -->
@@ -362,9 +316,24 @@ defineExpose({ speak, pauseRender, resumeRender });
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
 }
 
-.virtual-human-panel__voice-btn {
-  height: 28px;
-  padding: 0 8px;
+.virtual-human-panel__voice-select:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+  background: #f1f5f9;
+}
+
+.virtual-human-panel__speech-status {
+  flex: 0 1 auto;
+  max-width: 160px;
+  overflow: hidden;
+  font-size: 12px;
+  color: #166534;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.virtual-human-panel__speech-status.is-disabled {
+  color: #64748b;
 }
 
 .animate-spin {

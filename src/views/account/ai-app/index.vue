@@ -68,8 +68,14 @@ import {
   type AssistantExplanationImage,
   type AssistantOption,
   type AssistantResourceTaskItem,
-  type AssistantSkill
+  type AssistantSkill,
+  type AssistantSpeechSession,
+  type AssistantSpeechSessionSummary
 } from "@/api/frontend/assistant";
+import {
+  SpeechPlaybackController,
+  type SpeechPlaybackState
+} from "./speech-playback-controller";
 
 defineOptions({ name: "AiAppWorkbench" });
 
@@ -137,6 +143,8 @@ type ChatMessageView = {
   reasoningSummary?: string;
   streaming?: boolean;
   error?: boolean;
+  speech?: AssistantSpeechSession | AssistantSpeechSessionSummary | null;
+  speechPlaybackState?: SpeechPlaybackState;
 };
 
 type ChatSendPayload =
@@ -158,6 +166,8 @@ const isChatStreaming = ref(false);
 const featureFlags = computed(
   () => assistantBootstrap.value?.feature_flags || {}
 );
+const selectedSpeechVoiceAlias = ref("");
+const speechTransportStatus = ref("语音能力检测中");
 
 const selectedAgentKey = ref("");
 const selectedModelKey = ref("");
@@ -442,21 +452,91 @@ const applyDigitalHumanDirective = (event: AssistantChatStreamEvent) => {
 // 数字人引用：右侧 VRM 面板负责原有展示，小圆圈负责轻量状态检查。
 const virtualHumanRef = ref<{
   speak?: (text: string) => void;
+  setSpeechState?: (state: string) => void;
+  setAmplitude?: (value: number) => void;
+  applyViseme?: (id: string, weight: number) => void;
+  triggerMotion?: (key: string, durationMs: number, targetRef?: string) => void;
+  resetSpeech?: () => void;
   pauseRender?: () => void;
   resumeRender?: () => void;
 } | null>(null);
 const floatingHumanRef = ref<{
-  speak?: (text: string) => void;
+  setSpeechState?: (state: string) => void;
+  setAmplitude?: (value: number) => void;
+  applyViseme?: (id: string, weight: number) => void;
+  triggerMotion?: (key: string, durationMs: number, targetRef?: string) => void;
+  resetSpeech?: () => void;
   pauseRender?: () => void;
   resumeRender?: () => void;
 } | null>(null);
 
-const speakDigitalHumans = (text: string) => {
-  const speakText = text || "";
-  if (!speakText) return;
-  virtualHumanRef.value?.speak?.(speakText);
-  floatingHumanRef.value?.speak?.(speakText);
+const speechRenderTargets = () => [
+  virtualHumanRef.value,
+  floatingHumanRef.value
+];
+
+const localDigitalHumanSpeech = (content: string) => {
+  const text = content
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/[#*_>`~\[\]()/]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 900);
+  if (!text || !virtualHumanRef.value?.speak) return;
+
+  digitalHumanStreamState.value = "saying";
+  speechRenderTargets().forEach(target => target?.setSpeechState?.("speaking"));
+  virtualHumanRef.value.triggerMotion?.("explain", 4200);
+  virtualHumanRef.value.speak(text);
 };
+
+const updateMessageSpeech = (
+  clientMessageId: string | number,
+  speech: AssistantSpeechSession,
+  playbackState: SpeechPlaybackState
+) => {
+  const message = messages.value.find(item => item.id === clientMessageId);
+  if (!message) return;
+  message.speech = speech;
+  message.speechPlaybackState = playbackState;
+};
+
+const speechController = new SpeechPlaybackController({
+  renderer: {
+    setState(state) {
+      digitalHumanStreamState.value =
+        state === "speaking"
+          ? "saying"
+          : state === "thinking"
+            ? "thinking"
+            : state === "listening"
+              ? "listening"
+              : null;
+      speechRenderTargets().forEach(target => target?.setSpeechState?.(state));
+    },
+    setAmplitude(value) {
+      speechRenderTargets().forEach(target => target?.setAmplitude?.(value));
+    },
+    applyViseme(id, weight) {
+      speechRenderTargets().forEach(target =>
+        target?.applyViseme?.(id, weight)
+      );
+    },
+    triggerMotion(key, durationMs, targetRef) {
+      speechRenderTargets().forEach(target =>
+        target?.triggerMotion?.(key, durationMs, targetRef)
+      );
+    },
+    reset() {
+      digitalHumanStreamState.value = null;
+      speechRenderTargets().forEach(target => target?.resetSpeech?.());
+    }
+  },
+  onStatus(_state, message) {
+    if (message) speechTransportStatus.value = message;
+  },
+  onSession: updateMessageSpeech
+});
 
 const myCourses = ref<CourseView[]>([]);
 const myStudents = ref<StudentView[]>([]);
@@ -711,6 +791,7 @@ const inspectorResources = computed(() =>
 
 const resetChatGreeting = () => {
   streamCancel.value?.();
+  speechController.reset();
   streamCancel.value = null;
   clearAllExplanationImagePolling();
   activeStreamRunId.value += 1;
@@ -991,10 +1072,6 @@ const handleAssistantStreamEvent = (
 ) => {
   if (!acceptStreamEvent(event, assistantMessageId, streamRunId)) return;
   const hasBackendHumanState = applyDigitalHumanDirective(event);
-  const directiveText =
-    event.digital_human?.speech_text ||
-    event.digital_human?.highlight_text ||
-    "";
 
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
@@ -1003,10 +1080,18 @@ const handleAssistantStreamEvent = (
     updateAssistantMessage(assistantMessageId, { requestId: event.request_id });
   }
 
+  if (event.speech || event.event.startsWith("speech.")) {
+    speechController.handleChatEvent(event, assistantMessageId);
+  }
+
   if (event.event === "digital_human.directive") {
-    if (event.digital_human?.speak && directiveText) {
-      speakDigitalHumans(directiveText);
-    }
+    return;
+  }
+
+  if (
+    event.event === "speech.stream.bound" ||
+    event.event === "speech.stream.degraded"
+  ) {
     return;
   }
 
@@ -1105,17 +1190,14 @@ const handleAssistantStreamEvent = (
       );
       if (active) active.title = event.conversation_title;
     }
-    if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
-    speakDigitalHumans(directiveText || content || "");
+    if (event.speech) {
+      speechController.trackSession(event.speech, assistantMessageId, true);
+    } else if (!currentMessage?.speech?.session_id) {
+      localDigitalHumanSpeech(content || "学习助手已完成回复。");
+    } else if (!hasBackendHumanState) {
+      digitalHumanStreamState.value = null;
+    }
     releaseActiveStream(assistantMessageId);
-    window.setTimeout(() => {
-      if (
-        !isChatStreaming.value &&
-        digitalHumanStreamState.value === "saying"
-      ) {
-        digitalHumanStreamState.value = null;
-      }
-    }, 2400);
     void loadConversationGroups();
     return;
   }
@@ -1142,8 +1224,10 @@ const handleAssistantStreamEvent = (
       streamStatus: event.status || (keepPartial ? "partial" : "failed"),
       errorCode: event.error_code,
       errorMessage: event.error_message || "学习助手响应失败，请稍后重试。",
-      elapsedMs: event.elapsed_ms ?? currentMessage?.elapsedMs
+      elapsedMs: event.elapsed_ms ?? currentMessage?.elapsedMs,
+      speechPlaybackState: "failed"
     });
+    void speechController.stopPlayback(false);
     digitalHumanStreamState.value = null;
     releaseActiveStream(assistantMessageId);
     if (keepPartial) {
@@ -1211,6 +1295,7 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
     ElMessage.warning(selectedModelDisabledReason.value || "当前没有可用模型");
     return;
   }
+  speechController.primeRealtimeAudio();
 
   let attachmentIds: string[] = [];
   let uploadMessage: ReturnType<typeof ElMessage> | undefined;
@@ -1248,7 +1333,10 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
     role: "智能助教",
     type: "system",
     content: "",
-    streaming: true
+    streaming: true,
+    speechPlaybackState: assistantBootstrap.value?.speech?.enabled
+      ? "preparing"
+      : "disabled"
   });
 
   isChatStreaming.value = true;
@@ -1260,6 +1348,23 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
   activeStreamMessageId.value = assistantMessageId;
   activeRequestId.value = "";
   lastStreamSequence.value = 0;
+  const speechRequest = await speechController.prepareSpeech({
+    conversationId: activeConversationId.value || undefined,
+    courseId: selectedCourseId.value,
+    targetStudentId: selectedTargetStudentId.value,
+    voiceAlias: selectedSpeechVoiceAlias.value || undefined
+  });
+  if (!speechRequest) {
+    updateAssistantMessage(assistantMessageId, {
+      speechPlaybackState: "disabled"
+    });
+  }
+  if (
+    activeStreamMessageId.value !== assistantMessageId ||
+    streamRunId !== activeStreamRunId.value
+  ) {
+    return;
+  }
   streamCancel.value = streamAssistantChat(
     {
       conversation_id: activeConversationId.value || undefined,
@@ -1280,6 +1385,7 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
       explanation_image_mode: featureFlags.value.explanation_image_generation
         ? "auto_wide"
         : undefined,
+      speech: speechRequest,
       metadata: { ui_entry: "ai_app_workbench" }
     },
     event => handleAssistantStreamEvent(event, assistantMessageId, streamRunId)
@@ -1295,6 +1401,7 @@ const handleStopStreaming = () => {
   );
   const hasPartialContent = !!currentMessage?.content.trim();
   streamCancel.value?.();
+  void speechController.stopPlayback(true);
   appendStreamProgress(assistantMessageId, {
     event: "assistant.progress",
     stage: "answer_generating",
@@ -1333,6 +1440,22 @@ const handleRegenerateMessage = (assistantMessageId: string | number) => {
   }
 
   handleSendMessage(lastUserMessage.content);
+};
+
+const handlePlaySpeech = (assistantMessageId: string | number) => {
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message?.speech?.session_id) return;
+  void speechController.playSession(
+    { session_id: message.speech.session_id },
+    assistantMessageId
+  );
+};
+
+const handleStopSpeech = (assistantMessageId: string | number) => {
+  updateAssistantMessage(assistantMessageId, {
+    speechPlaybackState: "paused"
+  });
+  void speechController.stopPlayback(false);
 };
 
 // === 栈操作预览弹窗 ===
@@ -1532,6 +1655,20 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
   selectedSkillKeys.value = (data.skills || [])
     .filter((skill: AssistantSkill) => skill.default_on)
     .map(skill => skill.key);
+  selectedSpeechVoiceAlias.value =
+    (selectedSpeechVoiceAlias.value &&
+    data.speech?.voices?.some(
+      voice => voice.alias === selectedSpeechVoiceAlias.value
+    )
+      ? selectedSpeechVoiceAlias.value
+      : data.speech?.default_voice_alias || data.speech?.voices?.[0]?.alias) ||
+    "";
+  speechController.configure(data.speech);
+  speechTransportStatus.value = data.speech?.enabled
+    ? data.speech.realtime?.enabled
+      ? "实时语音已就绪"
+      : "完整录音模式"
+    : "语音能力未开放";
 
   if (activeCourse.value) {
     resetChatGreeting();
@@ -1599,7 +1736,16 @@ const loadConversationMessages = async (conversation: ConversationView) => {
       avatar: item.role === "user" ? currentUserAvatar.value : undefined,
       metadata: item.metadata,
       explanationImages:
-        item.explanation_images || item.metadata?.explanation_images || []
+        item.explanation_images || item.metadata?.explanation_images || [],
+      speech: item.speech || null,
+      speechPlaybackState: item.speech
+        ? item.speech.status === "ready" ||
+          item.speech.status === "ready_degraded"
+          ? "ready"
+          : item.speech.status === "expired"
+            ? "failed"
+            : "finalizing"
+        : "disabled"
     }));
     messages.value.forEach(message => {
       if (message.type !== "system") return;
@@ -1689,7 +1835,7 @@ const quickInteractionMessages = [
 ];
 
 const handleQuickInteraction = (text: string) => {
-  speakDigitalHumans(text);
+  void handleSendMessage(text);
 };
 
 const handleQuickUploadClick = () => {
@@ -1976,6 +2122,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   streamCancel.value?.();
+  speechController.dispose();
   clearAllResourceTaskPolling();
   clearAllExplanationImagePolling();
   quickSpeechRecognition?.stop?.();
@@ -2163,6 +2310,8 @@ onUnmounted(() => {
                   @stop="handleStopStreaming"
                   @preview="handlePreview"
                   @regenerate="handleRegenerateMessage"
+                  @play-speech="handlePlaySpeech"
+                  @stop-speech="handleStopSpeech"
                   @switch-course="handleSwitchCourse"
                   @update:selectedAgent="selectedAgentKey = $event"
                   @update:selectedModel="handleModelSelect"
@@ -2193,8 +2342,15 @@ onUnmounted(() => {
                   class="ai-workbench-panel flex-1 min-w-0 overflow-hidden relative"
                 >
                   <VirtualHumanPanel
-                    v-if="activeRail === 'chat' && !humanCollapsed"
+                    v-show="activeRail === 'chat' && !humanCollapsed"
                     ref="virtualHumanRef"
+                    :speech-enabled="
+                      Boolean(assistantBootstrap?.speech?.enabled)
+                    "
+                    :voices="assistantBootstrap?.speech?.voices || []"
+                    :voice-alias="selectedSpeechVoiceAlias"
+                    :speech-status="speechTransportStatus"
+                    @update:voice-alias="selectedSpeechVoiceAlias = $event"
                   />
 
                   <div
@@ -3098,7 +3254,7 @@ onUnmounted(() => {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  padding: 0 492px 0 12px;
+  padding: 0 436px 0 12px;
   overflow: clip;
 }
 
@@ -3111,7 +3267,7 @@ onUnmounted(() => {
 .ai-human-column {
   position: absolute;
   top: 0;
-  right: 56px;
+  right: 0;
   bottom: 0;
   width: 420px;
   min-width: 0;
@@ -3119,7 +3275,7 @@ onUnmounted(() => {
 }
 
 .ai-human-column.is-collapsed {
-  right: 28px;
+  right: 0;
   width: 64px;
   min-width: 64px;
   max-width: 64px;
@@ -3630,11 +3786,11 @@ onUnmounted(() => {
 
 @media (max-width: 1440px) {
   .ai-chat-workbench {
-    padding-right: 432px;
+    padding-right: 376px;
   }
 
   .ai-human-column {
-    right: 56px;
+    right: 0;
     width: 360px;
   }
 }

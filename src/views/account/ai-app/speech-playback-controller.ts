@@ -1,0 +1,929 @@
+import {
+  cancelAssistantSpeechSession,
+  createAssistantSpeechStreamReservation,
+  getAssistantSpeechSession,
+  type AssistantChatStreamEvent,
+  type AssistantSpeechCapabilities,
+  type AssistantSpeechMotionCue,
+  type AssistantSpeechRequest,
+  type AssistantSpeechServerControl,
+  type AssistantSpeechSession,
+  type AssistantSpeechStreamReservationResponse,
+  type AssistantSpeechTimeline,
+  type AssistantSpeechVisemeCue,
+  type SpeechTimelineRequest
+} from "@/api/frontend/assistant";
+
+export type SpeechPlaybackState =
+  | "disabled"
+  | "preparing"
+  | "connecting"
+  | "streaming"
+  | "finalizing"
+  | "ready"
+  | "playing"
+  | "paused"
+  | "cancelled"
+  | "failed"
+  | "unavailable";
+
+export interface SpeechRendererAdapter {
+  setState(
+    state: "idle" | "listening" | "thinking" | "speaking" | "error"
+  ): void;
+  setAmplitude(value: number): void;
+  applyViseme(id: string, weight: number): void;
+  triggerMotion(key: string, durationMs: number, targetRef?: string): void;
+  reset(): void;
+}
+
+interface SpeechControllerCallbacks {
+  renderer: SpeechRendererAdapter;
+  onStatus?: (state: SpeechPlaybackState, message?: string) => void;
+  onSession?: (
+    clientMessageId: string | number,
+    session: AssistantSpeechSession,
+    playbackState: SpeechPlaybackState
+  ) => void;
+}
+
+interface PrepareSpeechContext {
+  conversationId?: string;
+  courseId?: number;
+  targetStudentId?: number;
+  voiceAlias?: string;
+}
+
+interface ParsedA3AUFrame {
+  sequence: number;
+  startSample: number;
+  sampleCount: number;
+  discontinuity: boolean;
+  pcm: Int16Array;
+}
+
+const RUNNING_STATUSES = new Set([
+  "reserved",
+  "connecting",
+  "streaming",
+  "finalizing",
+  "queued",
+  "synthesizing",
+  "retrying",
+  "cancel_requested"
+]);
+const READY_STATUSES = new Set(["ready", "ready_degraded"]);
+const VALID_VISEMES = new Set(["sil", "aa", "ih", "ou", "ee", "oh"]);
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+const delay = (milliseconds: number, signal: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    const timer = window.setTimeout(resolve, milliseconds);
+    signal.addEventListener(
+      "abort",
+      () => {
+        window.clearTimeout(timer);
+        reject(new DOMException("Aborted", "AbortError"));
+      },
+      { once: true }
+    );
+  });
+
+export function parseA3AUFrame(buffer: ArrayBuffer): ParsedA3AUFrame {
+  if (buffer.byteLength < 24) throw new Error("a3au_header_truncated");
+  const view = new DataView(buffer);
+  const magic = String.fromCharCode(
+    view.getUint8(0),
+    view.getUint8(1),
+    view.getUint8(2),
+    view.getUint8(3)
+  );
+  if (magic !== "A3AU") throw new Error("a3au_magic_invalid");
+  if (view.getUint8(4) !== 1) throw new Error("a3au_version_unsupported");
+  if (view.getUint8(5) !== 1) throw new Error("a3au_codec_unsupported");
+  if (view.getUint8(6) !== 1) throw new Error("a3au_channels_unsupported");
+
+  const sequence = view.getUint32(8, false);
+  const startSample =
+    view.getUint32(12, false) * 0x100000000 + view.getUint32(16, false);
+  const sampleCount = view.getUint32(20, false);
+  if (
+    sequence === 0 ||
+    sampleCount === 0 ||
+    buffer.byteLength !== 24 + sampleCount * 2
+  ) {
+    throw new Error("a3au_length_invalid");
+  }
+
+  const pcm = new Int16Array(sampleCount);
+  for (let index = 0; index < sampleCount; index += 1) {
+    pcm[index] = view.getInt16(24 + index * 2, true);
+  }
+  return {
+    sequence,
+    startSample,
+    sampleCount,
+    discontinuity: (view.getUint8(7) & 1) !== 0,
+    pcm
+  };
+}
+
+export class SpeechPlaybackController {
+  private capabilities: AssistantSpeechCapabilities | null = null;
+  private readonly callbacks: SpeechControllerCallbacks;
+  private audioContext: AudioContext | null = null;
+  private workletNode: AudioWorkletNode | null = null;
+  private workletModuleLoaded = false;
+  private workletModulePromise: Promise<void> | null = null;
+  private websocket: WebSocket | null = null;
+  private realtimeStreamId = "";
+  private realtimeSessionId = "";
+  private realtimeSampleRate = 24000;
+  private lastAudioSequence = 0;
+  private lastServerEventSequence = 0;
+  private playedSample = 0;
+  private lastProgressSentAt = 0;
+  private liveStarted = false;
+  private liveFailed = false;
+  private timeline: AssistantSpeechTimeline | null = null;
+  private currentViseme = "sil";
+  private archiveAudio: HTMLAudioElement | null = null;
+  private archiveAnimationFrame = 0;
+  private archiveMotionIndex = -1;
+  private archiveSession: AssistantSpeechSession | null = null;
+  private readonly polling = new Map<string, AbortController>();
+  private readonly sessionClientIds = new Map<string, string | number>();
+  private readonly sessionAutoplay = new Map<string, boolean>();
+
+  constructor(callbacks: SpeechControllerCallbacks) {
+    this.callbacks = callbacks;
+  }
+
+  configure(capabilities?: AssistantSpeechCapabilities | null) {
+    this.capabilities = capabilities || null;
+    if (!this.capabilities?.enabled) {
+      this.callbacks.onStatus?.("disabled", "语音能力未开放");
+    }
+  }
+
+  private setStatus(state: SpeechPlaybackState, message?: string) {
+    this.callbacks.onStatus?.(state, message);
+  }
+
+  private chooseTimeline(): SpeechTimelineRequest {
+    const kinds = this.capabilities?.timeline_kinds || [];
+    if (kinds.includes("viseme")) return "viseme";
+    if (kinds.includes("word")) return "word";
+    return "none";
+  }
+
+  private supportsRealtime() {
+    return Boolean(
+      this.capabilities?.enabled &&
+        this.capabilities.delivery_modes?.includes("realtime") &&
+        this.capabilities.realtime?.enabled &&
+        window.AudioContext &&
+        "audioWorklet" in window.AudioContext.prototype &&
+        window.WebSocket
+    );
+  }
+
+  primeRealtimeAudio() {
+    if (!this.supportsRealtime()) return;
+    void this.ensureAudioContext().catch(() => {
+      // prepareSpeech will switch to archive if the browser still rejects audio.
+    });
+  }
+
+  async prepareSpeech(
+    context: PrepareSpeechContext
+  ): Promise<AssistantSpeechRequest | undefined> {
+    const capabilities = this.capabilities;
+    if (!capabilities?.enabled) return undefined;
+
+    const timeline = this.chooseTimeline();
+    const voiceAlias =
+      context.voiceAlias || capabilities.default_voice_alias || undefined;
+    const baseRequest: AssistantSpeechRequest = {
+      enabled: true,
+      voice_alias: voiceAlias,
+      timeline,
+      motion_cues: capabilities.motion_cues
+    };
+
+    await this.stopLive("next_answer", false);
+    if (this.supportsRealtime()) {
+      this.setStatus("preparing", "正在建立实时语音");
+      const controller = new AbortController();
+      try {
+        await this.ensureAudioContext();
+        const reservation = await createAssistantSpeechStreamReservation(
+          {
+            conversation_id: context.conversationId,
+            course_id: context.courseId,
+            target_student_id: context.targetStudentId,
+            voice_alias: voiceAlias,
+            timeline,
+            motion_cues: capabilities.motion_cues,
+            client: {
+              contract_version: "assistant_speech_stream.v1",
+              audio_formats: ["pcm_s16le"],
+              audio_worklet: true,
+              renderer: "threejs"
+            }
+          },
+          controller.signal,
+          capabilities.realtime!.reservation_endpoint
+        );
+        await this.connectRealtime(reservation);
+        return {
+          ...baseRequest,
+          delivery: "realtime",
+          stream_id: reservation.stream.stream_id
+        };
+      } catch {
+        await this.stopLive("realtime_prepare_failed", false);
+        this.setStatus("finalizing", "实时语音不可用，已切换完整录音");
+      }
+    }
+
+    // The deployed API exposes archive playback as its base speech contract.
+    // Realtime fields are optional extensions, so their absence must not
+    // disable an otherwise enabled speech session.
+    if (capabilities.archive?.enabled !== false) {
+      return { ...baseRequest, delivery: "archive" };
+    }
+    return undefined;
+  }
+
+  private async ensureAudioContext() {
+    if (!this.audioContext || this.audioContext.state === "closed") {
+      const AudioContextCtor = window.AudioContext;
+      this.audioContext = new AudioContextCtor({ latencyHint: "interactive" });
+      this.workletModuleLoaded = false;
+      this.workletModulePromise = null;
+    }
+    if (this.audioContext.state === "suspended") {
+      await this.audioContext.resume();
+    }
+    if (!this.workletModuleLoaded) {
+      if (!this.workletModulePromise) {
+        const workletUrl = new URL(
+          "./assistant-speech-player.worklet.js",
+          import.meta.url
+        );
+        this.workletModulePromise = this.audioContext.audioWorklet
+          .addModule(workletUrl.href)
+          .then(() => {
+            this.workletModuleLoaded = true;
+          })
+          .finally(() => {
+            this.workletModulePromise = null;
+          });
+      }
+      await this.workletModulePromise;
+    }
+  }
+
+  private async createWorklet(sampleRate: number, jitterBufferMs: number) {
+    await this.ensureAudioContext();
+    this.workletNode?.disconnect();
+    this.workletNode = new AudioWorkletNode(
+      this.audioContext!,
+      "assistant-speech-player",
+      {
+        numberOfInputs: 0,
+        numberOfOutputs: 1,
+        outputChannelCount: [1],
+        processorOptions: {
+          sourceSampleRate: sampleRate,
+          jitterBufferMs
+        }
+      }
+    );
+    this.workletNode.port.onmessage = event =>
+      this.handleWorkletMessage(event.data || {});
+    this.workletNode.connect(this.audioContext!.destination);
+    this.realtimeSampleRate = sampleRate;
+  }
+
+  private connectRealtime(
+    reservation: AssistantSpeechStreamReservationResponse
+  ) {
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
+      let ticket = reservation.stream.ticket;
+      const websocket = new WebSocket(reservation.stream.ws_url);
+      websocket.binaryType = "arraybuffer";
+      this.websocket = websocket;
+      this.realtimeStreamId = reservation.stream.stream_id;
+      this.realtimeSessionId = "";
+      this.lastAudioSequence = 0;
+      this.lastServerEventSequence = 0;
+      this.playedSample = 0;
+      this.liveStarted = false;
+      this.liveFailed = false;
+      this.timeline = null;
+      this.currentViseme = "sil";
+
+      const timeout = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(new Error("speech_stream_ready_timeout"));
+        websocket.close(1000, "ready_timeout");
+      }, 8000);
+
+      websocket.addEventListener("open", () => {
+        websocket.send(
+          JSON.stringify({
+            event: "client.hello",
+            ticket,
+            contract_version: "assistant_speech_stream.v1",
+            last_audio_seq: 0
+          })
+        );
+        ticket = "";
+        this.setStatus("connecting", "实时语音已连接");
+      });
+
+      websocket.addEventListener("message", event => {
+        if (typeof event.data === "string") {
+          let control: AssistantSpeechServerControl;
+          try {
+            control = JSON.parse(event.data) as AssistantSpeechServerControl;
+          } catch {
+            return;
+          }
+          void this.handleServerControl(control)
+            .then(() => {
+              if (control.event === "stream.ready" && !settled) {
+                settled = true;
+                window.clearTimeout(timeout);
+                resolve();
+              }
+            })
+            .catch(error => {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timeout);
+              websocket.close(1000, "player_setup_failed");
+              reject(error);
+            });
+          return;
+        }
+        if (event.data instanceof ArrayBuffer)
+          this.handleRealtimeAudio(event.data);
+      });
+
+      websocket.addEventListener("error", () => {
+        this.liveFailed = true;
+        if (!settled) {
+          settled = true;
+          window.clearTimeout(timeout);
+          reject(new Error("speech_websocket_failed"));
+        }
+      });
+
+      websocket.addEventListener("close", () => {
+        window.clearTimeout(timeout);
+        if (!settled) {
+          settled = true;
+          reject(new Error("speech_websocket_closed"));
+          return;
+        }
+        if (!this.liveStarted) this.liveFailed = true;
+        this.workletNode?.port.postMessage({ type: "end" });
+      });
+    });
+  }
+
+  private async handleServerControl(control: AssistantSpeechServerControl) {
+    if (
+      control.event_seq &&
+      control.event_seq <= this.lastServerEventSequence
+    ) {
+      return;
+    }
+    if (control.event_seq) this.lastServerEventSequence = control.event_seq;
+
+    switch (control.event) {
+      case "stream.ready": {
+        const audio = control.audio;
+        if (!audio || audio.codec !== "pcm_s16le" || audio.channels !== 1) {
+          throw new Error("speech_stream_audio_unsupported");
+        }
+        await this.createWorklet(
+          audio.sample_rate_hz,
+          control.jitter_buffer_ms ||
+            this.capabilities?.realtime.recommended_jitter_buffer_ms ||
+            120
+        );
+        this.sendRealtimeControl({
+          event: "client.ready",
+          buffered_ms: 0,
+          client_time_ms: Date.now()
+        });
+        break;
+      }
+      case "stream.bound":
+        this.realtimeSessionId = control.session_id || "";
+        this.setStatus("connecting", "实时语音正在生成");
+        break;
+      case "timeline.delta":
+        if (control.timeline) this.mergeTimeline(control.timeline);
+        break;
+      case "stream.completed":
+        this.realtimeSessionId = control.session_id || this.realtimeSessionId;
+        this.workletNode?.port.postMessage({ type: "end" });
+        this.setStatus("finalizing", "实时播报完成，正在归档");
+        break;
+      case "stream.cancelled":
+        this.workletNode?.port.postMessage({ type: "reset" });
+        this.callbacks.renderer.reset();
+        this.setStatus("cancelled", "语音已停止");
+        break;
+      case "stream.error":
+        this.liveFailed = true;
+        this.workletNode?.port.postMessage({ type: "end" });
+        this.callbacks.renderer.setState("error");
+        this.setStatus("finalizing", "实时播报中断，正在等待完整录音");
+        break;
+      default:
+        break;
+    }
+  }
+
+  private mergeTimeline(delta: AssistantSpeechTimeline) {
+    this.timeline = {
+      ...(this.timeline || delta),
+      ...delta,
+      words: [...(this.timeline?.words || []), ...(delta.words || [])],
+      visemes: [...(this.timeline?.visemes || []), ...(delta.visemes || [])]
+    };
+  }
+
+  private handleRealtimeAudio(buffer: ArrayBuffer) {
+    try {
+      const frame = parseA3AUFrame(buffer);
+      const sequenceGap =
+        this.lastAudioSequence > 0 &&
+        frame.sequence !== this.lastAudioSequence + 1;
+      if (frame.sequence <= this.lastAudioSequence) return;
+      this.lastAudioSequence = frame.sequence;
+      if (sequenceGap || frame.discontinuity) {
+        this.currentViseme = "sil";
+        this.callbacks.renderer.applyViseme("sil", 0);
+      }
+      const pcmBuffer = frame.pcm.buffer;
+      this.workletNode?.port.postMessage(
+        {
+          type: "append",
+          pcm: pcmBuffer,
+          startSample: frame.startSample,
+          discontinuity: sequenceGap || frame.discontinuity
+        },
+        [pcmBuffer]
+      );
+    } catch {
+      this.liveFailed = true;
+      this.workletNode?.port.postMessage({ type: "end" });
+      this.setStatus("finalizing", "实时音频校验失败，正在等待完整录音");
+    }
+  }
+
+  private handleWorkletMessage(data: Record<string, any>) {
+    if (data.type === "started") {
+      this.liveStarted = true;
+      this.callbacks.renderer.setState("speaking");
+      this.setStatus("streaming", "正在实时播报");
+      this.sendRealtimeControl({
+        event: "playback.started",
+        played_sample: Math.max(0, Number(data.playedSample) || 0),
+        buffered_ms: 0,
+        client_time_ms: Date.now()
+      });
+      return;
+    }
+    if (data.type === "stats") {
+      this.playedSample = Math.max(0, Number(data.playedSample) || 0);
+      const rms = clamp(Number(data.rms) || 0, 0, 1);
+      this.applyRealtimeRenderer(this.playedSample, rms);
+      const now = Date.now();
+      if (now - this.lastProgressSentAt >= 750) {
+        this.lastProgressSentAt = now;
+        this.sendRealtimeControl({
+          event: "playback.progress",
+          last_audio_seq: this.lastAudioSequence,
+          played_sample: this.playedSample,
+          buffered_ms: clamp(Number(data.bufferedMs) || 0, 0, 60000),
+          client_time_ms: now
+        });
+      }
+      return;
+    }
+    if (data.type === "ended") {
+      this.sendRealtimeControl({
+        event: "playback.ended",
+        last_audio_seq: this.lastAudioSequence,
+        played_sample: Math.max(
+          0,
+          Number(data.playedSample) || this.playedSample
+        ),
+        client_time_ms: Date.now()
+      });
+      this.callbacks.renderer.reset();
+      this.setStatus("finalizing", "实时播报完成，正在归档");
+    }
+  }
+
+  private applyRealtimeRenderer(playedSample: number, rms: number) {
+    const nowMs = (playedSample / this.realtimeSampleRate) * 1000;
+    const viseme = this.findActiveViseme(this.timeline?.visemes || [], nowMs);
+    if (viseme) {
+      const id = VALID_VISEMES.has(viseme.id) ? viseme.id : "sil";
+      if (id !== this.currentViseme || id === "sil") {
+        this.currentViseme = id;
+        this.callbacks.renderer.applyViseme(id, clamp(viseme.weight, 0, 1));
+      }
+      this.callbacks.renderer.setAmplitude(0);
+    } else {
+      this.currentViseme = "sil";
+      this.callbacks.renderer.setAmplitude(clamp(rms * 4, 0, 1));
+    }
+  }
+
+  private findActiveViseme(cues: AssistantSpeechVisemeCue[], nowMs: number) {
+    let low = 0;
+    let high = cues.length - 1;
+    while (low <= high) {
+      const middle = (low + high) >> 1;
+      const cue = cues[middle];
+      if (nowMs < cue.start_ms) high = middle - 1;
+      else if (nowMs >= cue.end_ms) low = middle + 1;
+      else return cue;
+    }
+    return undefined;
+  }
+
+  private sendRealtimeControl(payload: Record<string, unknown>) {
+    if (this.websocket?.readyState !== WebSocket.OPEN) return;
+    this.websocket.send(JSON.stringify(payload));
+  }
+
+  handleChatEvent(
+    event: AssistantChatStreamEvent,
+    clientMessageId: string | number
+  ) {
+    const session = event.speech;
+    if (session?.session_id) {
+      this.realtimeSessionId = session.session_id;
+      this.sessionClientIds.set(session.session_id, clientMessageId);
+      this.callbacks.onSession?.(
+        clientMessageId,
+        session,
+        this.mapSessionState(session)
+      );
+    }
+    if (event.event === "speech.stream.degraded") {
+      this.liveFailed = true;
+      this.setStatus("finalizing", "实时语音已降级，等待完整录音");
+    }
+  }
+
+  trackSession(
+    session: AssistantSpeechSession,
+    clientMessageId: string | number,
+    autoplay = true
+  ) {
+    if (!session.session_id || session.status === "unavailable") {
+      this.callbacks.onSession?.(
+        clientMessageId,
+        session,
+        session.status === "unavailable" ? "unavailable" : "failed"
+      );
+      return;
+    }
+    this.sessionClientIds.set(session.session_id, clientMessageId);
+    this.sessionAutoplay.set(session.session_id, autoplay);
+    this.callbacks.onSession?.(
+      clientMessageId,
+      session,
+      this.mapSessionState(session)
+    );
+    if (READY_STATUSES.has(session.status)) {
+      void this.resolveReadySession(session);
+      return;
+    }
+    if (!RUNNING_STATUSES.has(session.status)) return;
+    if (this.polling.has(session.session_id)) return;
+    const controller = new AbortController();
+    this.polling.set(session.session_id, controller);
+    void this.pollUntilReady(session, controller);
+  }
+
+  private async pollUntilReady(
+    initial: AssistantSpeechSession,
+    controller: AbortController
+  ) {
+    let current = initial;
+    const sessionId = initial.session_id!;
+    try {
+      while (RUNNING_STATUSES.has(current.status)) {
+        await delay(
+          clamp(
+            current.poll_after_ms || 1000,
+            250,
+            document.hidden ? 10000 : 5000
+          ),
+          controller.signal
+        );
+        const response = await getAssistantSpeechSession(
+          sessionId,
+          false,
+          controller.signal
+        );
+        current = response.speech;
+        const clientMessageId = this.sessionClientIds.get(sessionId);
+        if (clientMessageId !== undefined) {
+          this.callbacks.onSession?.(
+            clientMessageId,
+            current,
+            this.mapSessionState(current)
+          );
+        }
+      }
+      if (READY_STATUSES.has(current.status)) {
+        await this.resolveReadySession(current);
+      }
+    } catch (error: any) {
+      if (error?.name !== "AbortError") {
+        this.setStatus("failed", "语音归档状态获取失败");
+      }
+    } finally {
+      this.polling.delete(sessionId);
+    }
+  }
+
+  private async resolveReadySession(session: AssistantSpeechSession) {
+    if (!session.session_id) return;
+    let ready = session;
+    if (!ready.timeline || !ready.audio?.url) {
+      try {
+        ready = (await getAssistantSpeechSession(session.session_id, true))
+          .speech;
+      } catch {
+        this.setStatus("ready", "完整录音已就绪");
+        return;
+      }
+    }
+    const clientMessageId = this.sessionClientIds.get(session.session_id);
+    if (clientMessageId !== undefined) {
+      this.callbacks.onSession?.(clientMessageId, ready, "ready");
+    }
+    this.setStatus("ready", "完整录音已就绪");
+    const shouldAutoplay =
+      this.sessionAutoplay.get(session.session_id) &&
+      (ready.delivery !== "realtime" || this.liveFailed || !this.liveStarted);
+    if (shouldAutoplay && ready.audio?.url) {
+      await this.playArchive(ready, clientMessageId);
+    }
+  }
+
+  async playSession(
+    session: AssistantSpeechSession | { session_id: string },
+    clientMessageId: string | number
+  ) {
+    const sessionId = session.session_id;
+    if (!sessionId) return;
+    this.sessionClientIds.set(sessionId, clientMessageId);
+    try {
+      const ready = (await getAssistantSpeechSession(sessionId, true)).speech;
+      if (READY_STATUSES.has(ready.status) && ready.audio?.url) {
+        await this.playArchive(ready, clientMessageId);
+      } else if (RUNNING_STATUSES.has(ready.status)) {
+        this.trackSession(ready, clientMessageId, true);
+      } else {
+        this.callbacks.onSession?.(
+          clientMessageId,
+          ready,
+          this.mapSessionState(ready)
+        );
+      }
+    } catch {
+      this.setStatus("failed", "语音不可用或已失效");
+    }
+  }
+
+  private async playArchive(
+    session: AssistantSpeechSession,
+    clientMessageId?: string | number
+  ) {
+    const urlExpiresAt = session.audio?.url_expires_at
+      ? Date.parse(session.audio.url_expires_at)
+      : 0;
+    if (
+      session.session_id &&
+      urlExpiresAt > 0 &&
+      urlExpiresAt <= Date.now() + 20000
+    ) {
+      try {
+        session = (await getAssistantSpeechSession(session.session_id, true))
+          .speech;
+      } catch {
+        this.setStatus("failed", "语音播放地址刷新失败");
+        return;
+      }
+    }
+    if (!session.audio?.url) return;
+    await this.stopLive("archive_playback", false);
+    this.stopArchiveAudio();
+    this.archiveSession = session;
+    this.archiveMotionIndex = -1;
+    const audio = new Audio(session.audio.url);
+    audio.preload = "auto";
+    this.archiveAudio = audio;
+
+    const notify = (state: SpeechPlaybackState) => {
+      if (clientMessageId !== undefined) {
+        this.callbacks.onSession?.(clientMessageId, session, state);
+      }
+    };
+    audio.addEventListener("playing", () => {
+      this.callbacks.renderer.setState("speaking");
+      this.setStatus("playing", "正在播放完整录音");
+      notify("playing");
+      this.tickArchiveRenderer();
+    });
+    audio.addEventListener("pause", () => {
+      if (!audio.ended) notify("paused");
+    });
+    audio.addEventListener("ended", () => {
+      this.stopArchiveAnimation();
+      this.callbacks.renderer.reset();
+      this.setStatus("ready", "完整录音播放完成");
+      notify("ready");
+    });
+    audio.addEventListener("waiting", () => {
+      this.callbacks.renderer.setState("listening");
+    });
+    audio.addEventListener("error", () => {
+      this.stopArchiveAnimation();
+      this.callbacks.renderer.reset();
+      this.setStatus("failed", "完整录音播放失败");
+      notify("failed");
+    });
+
+    try {
+      await audio.play();
+    } catch {
+      this.setStatus("ready", "点击消息中的播放按钮收听完整录音");
+      notify("ready");
+    }
+  }
+
+  private tickArchiveRenderer = () => {
+    const audio = this.archiveAudio;
+    const session = this.archiveSession;
+    if (!audio || !session || audio.paused || audio.ended) return;
+    const nowMs = audio.currentTime * 1000;
+    const viseme = this.findActiveViseme(
+      session.timeline?.visemes || [],
+      nowMs
+    );
+    if (viseme) {
+      const id = VALID_VISEMES.has(viseme.id) ? viseme.id : "sil";
+      this.callbacks.renderer.applyViseme(id, clamp(viseme.weight, 0, 1));
+    } else {
+      this.callbacks.renderer.setAmplitude(0.35);
+    }
+    this.applyArchiveMotion(session.motion_cues || [], nowMs);
+    this.archiveAnimationFrame = requestAnimationFrame(
+      this.tickArchiveRenderer
+    );
+  };
+
+  private applyArchiveMotion(cues: AssistantSpeechMotionCue[], nowMs: number) {
+    const index = cues.findIndex(
+      cue => nowMs >= cue.start_ms && nowMs < cue.start_ms + cue.duration_ms
+    );
+    if (index < 0 || index === this.archiveMotionIndex) return;
+    this.archiveMotionIndex = index;
+    const cue = cues[index];
+    this.callbacks.renderer.triggerMotion(
+      cue.key,
+      cue.duration_ms,
+      cue.target_ref
+    );
+  }
+
+  private stopArchiveAnimation() {
+    if (this.archiveAnimationFrame)
+      cancelAnimationFrame(this.archiveAnimationFrame);
+    this.archiveAnimationFrame = 0;
+  }
+
+  private stopArchiveAudio() {
+    this.stopArchiveAnimation();
+    if (this.archiveAudio) {
+      this.archiveAudio.pause();
+      this.archiveAudio.removeAttribute("src");
+      this.archiveAudio.load();
+    }
+    this.archiveAudio = null;
+    this.archiveSession = null;
+  }
+
+  async stopPlayback(cancelServer = false) {
+    const sessionId = this.realtimeSessionId || this.archiveSession?.session_id;
+    this.stopArchiveAudio();
+    await this.stopLive(
+      cancelServer ? "user_cancelled" : "user_stopped",
+      cancelServer
+    );
+    this.callbacks.renderer.reset();
+    this.setStatus(cancelServer ? "cancelled" : "paused", "语音已停止");
+    if (cancelServer && sessionId) {
+      try {
+        const response = await cancelAssistantSpeechSession(sessionId);
+        const clientMessageId = this.sessionClientIds.get(sessionId);
+        if (clientMessageId !== undefined) {
+          this.trackSession(response.speech, clientMessageId, false);
+        }
+      } catch {
+        this.setStatus("failed", "停止语音请求失败");
+      }
+    }
+  }
+
+  reset() {
+    this.polling.forEach(controller => controller.abort());
+    this.polling.clear();
+    this.sessionClientIds.clear();
+    this.sessionAutoplay.clear();
+    this.stopArchiveAudio();
+    void this.stopLive("context_changed", false);
+    this.liveStarted = false;
+    this.liveFailed = false;
+    this.callbacks.renderer.reset();
+  }
+
+  private async stopLive(reason: string, cancelServer: boolean) {
+    if (this.websocket?.readyState === WebSocket.OPEN) {
+      this.sendRealtimeControl(
+        cancelServer
+          ? { event: "stream.cancel", reason }
+          : { event: "client.goodbye", reason }
+      );
+      this.websocket.close(1000, reason.slice(0, 120));
+    }
+    this.websocket = null;
+    this.workletNode?.port.postMessage({ type: "reset" });
+    this.workletNode?.disconnect();
+    this.workletNode = null;
+    this.realtimeStreamId = "";
+    this.realtimeSessionId = "";
+    this.lastAudioSequence = 0;
+    this.lastServerEventSequence = 0;
+    this.timeline = null;
+    this.currentViseme = "sil";
+  }
+
+  private mapSessionState(
+    session: AssistantSpeechSession
+  ): SpeechPlaybackState {
+    if (session.status === "unavailable") return "unavailable";
+    if (READY_STATUSES.has(session.status)) return "ready";
+    if (session.status === "cancelled") return "cancelled";
+    if (
+      ["failed", "partial", "unknown_outcome", "expired"].includes(
+        session.status
+      )
+    ) {
+      return "failed";
+    }
+    if (
+      ["reserved", "connecting", "queued", "synthesizing", "retrying"].includes(
+        session.status
+      )
+    ) {
+      return "connecting";
+    }
+    if (session.status === "streaming") return "streaming";
+    return "finalizing";
+  }
+
+  dispose() {
+    this.polling.forEach(controller => controller.abort());
+    this.polling.clear();
+    this.stopArchiveAudio();
+    void this.stopLive("page_unloaded", false);
+    this.callbacks.renderer.reset();
+    if (this.audioContext && this.audioContext.state !== "closed") {
+      void this.audioContext.close();
+    }
+    this.audioContext = null;
+    this.workletModulePromise = null;
+  }
+}
