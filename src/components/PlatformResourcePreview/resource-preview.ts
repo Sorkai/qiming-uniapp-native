@@ -35,6 +35,25 @@ export interface PlatformPreviewResource {
   structuredData?: unknown;
 }
 
+export interface AssistantPreviewResourceLike {
+  title?: string;
+  preview_url?: string;
+  preview_pdf_url?: string | null;
+  download_url?: string;
+  content_body?: string;
+  content_format?: string;
+  mime_type?: string;
+  resource_type?: string;
+  description?: string;
+  summary?: string;
+  exercise_items?: Record<string, unknown>[];
+  language?: string;
+  starter_code?: string;
+  test_cases?: Record<string, unknown>[];
+  rubric?: Record<string, unknown> | string;
+  runtime_status?: string;
+}
+
 export interface ResolvedPlatformPreviewSource {
   kind: PlatformPreviewKind;
   url: string;
@@ -44,6 +63,61 @@ export interface ResolvedPlatformPreviewSource {
 }
 
 const clean = (value?: string | null) => String(value || "").trim();
+
+export function mapAssistantResourcePreview(
+  resource: AssistantPreviewResourceLike
+): PlatformPreviewResource {
+  const descriptor = `${resource.resource_type || ""} ${
+    resource.content_format || ""
+  } ${resource.title || ""}`.toLowerCase();
+  const usesStructuredSource =
+    /(json|markdown|\bmd\b|text|mind[_\s-]*map|mermaid|coding[_\s-]*practice|exercise[_\s-]*set|编程|练习题集|思维导图)/.test(
+      descriptor
+    );
+  const previewPdfUrl = usesStructuredSource
+    ? undefined
+    : resource.preview_pdf_url;
+  return {
+    title: resource.title || "课程资料",
+    url:
+      previewPdfUrl ||
+      resource.preview_url ||
+      resource.download_url ||
+      undefined,
+    previewUrl: resource.preview_url,
+    previewPdfUrl,
+    downloadUrl: resource.download_url || resource.preview_url,
+    content: resource.content_body,
+    contentFormat: resource.content_format,
+    mimeType: resource.mime_type,
+    resourceType: resource.resource_type,
+    description: resource.summary || resource.description,
+    exerciseItems: resource.exercise_items,
+    language: resource.language,
+    starterCode: resource.starter_code,
+    testCases: resource.test_cases,
+    rubric: resource.rubric,
+    runtimeStatus: resource.runtime_status
+  };
+}
+
+export function hasPlatformResourcePreview(
+  resource?: PlatformPreviewResource | null
+) {
+  return Boolean(
+    resource &&
+      (resource.url ||
+        resource.previewUrl ||
+        resource.previewPdfUrl ||
+        resource.downloadUrl ||
+        resource.content ||
+        resource.structuredData ||
+        resource.exerciseItems?.length ||
+        resource.starterCode ||
+        resource.testCases?.length ||
+        resource.rubric)
+  );
+}
 
 export function getResourceUrlExtension(url?: string) {
   const source = clean(url).split(/[?#]/)[0];

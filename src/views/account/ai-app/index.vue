@@ -43,8 +43,12 @@ import AiAssessment from "./components/AiAssessment.vue";
 import AiGovernanceDashboard from "./components/AiGovernanceDashboard.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 import FloatingDigitalHuman2D from "./components/FloatingDigitalHuman2D.vue";
-import { PlatformResourcePreviewDialog } from "@/components/PlatformResourcePreview";
-import type { PlatformPreviewResource } from "@/components/PlatformResourcePreview";
+import {
+  PlatformResourcePreviewDialog,
+  hasPlatformResourcePreview,
+  mapAssistantResourcePreview,
+  type PlatformPreviewResource
+} from "@/components/PlatformResourcePreview";
 
 import { useUserStore } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
@@ -69,6 +73,7 @@ import {
   type AssistantChatTraceStep,
   type AssistantConversationItem,
   type AssistantExplanationImage,
+  type AssistantInteractionScope,
   type AssistantOption,
   type AssistantResourceSummary,
   type AssistantResourceTaskItem,
@@ -613,6 +618,7 @@ const speechController = new SpeechPlaybackController({
 const myCourses = ref<CourseView[]>([]);
 const myStudents = ref<StudentView[]>([]);
 const selectedStudentId = ref<number | undefined>();
+const interactionScope = ref<AssistantInteractionScope>("personal_learning");
 const conversations = ref<ConversationView[]>([]);
 const activeConversationId = ref("");
 const manuallySelectedCourseId = ref<number | undefined>();
@@ -637,9 +643,17 @@ const effectiveCourse = computed(
 const selectedCourseId = computed(() => effectiveCourse.value?.id);
 const selectedCourseName = computed(() => effectiveCourse.value?.name || "");
 const selectedTargetStudentId = computed(() =>
+  interactionScope.value === "student_analysis"
+    ? selectedStudentId.value
+    : undefined
+);
+// Student-scoped workspaces keep their existing data context. It is separate
+// from the chat subject, which must remain empty for course_general.
+const selectedStudentContextId = computed(() =>
   isStaffMode.value ? selectedStudentId.value : undefined
 );
 const courseScopedRails = [
+  "chat",
   "generation",
   "path",
   "profile",
@@ -647,6 +661,17 @@ const courseScopedRails = [
   "governance"
 ];
 const studentScopedRails = ["generation", "path", "profile", "assessment"];
+const ensureStudentContextForActiveRail = () => {
+  if (
+    !isStaffMode.value ||
+    !studentScopedRails.includes(activeRail.value) ||
+    selectedStudentId.value ||
+    !myStudents.value.length
+  ) {
+    return;
+  }
+  selectedStudentId.value = myStudents.value[0].id;
+};
 const isDemoResourceWorkspace = computed(
   () =>
     activeRail.value === "generation" &&
@@ -661,14 +686,56 @@ const showCourseContext = computed(
 const showStudentContext = computed(
   () =>
     isStaffMode.value &&
-    studentScopedRails.includes(activeRail.value) &&
+    (studentScopedRails.includes(activeRail.value) ||
+      (activeRail.value === "chat" &&
+        interactionScope.value === "student_analysis")) &&
     !(
       activeRail.value === "generation" &&
       resourceWorkspaceMode.value === "demo"
     )
 );
+const supportedInteractionScopes = computed<AssistantInteractionScope[]>(() => {
+  const supported =
+    assistantBootstrap.value?.supported_interaction_scopes || [];
+  if (supported.length) return supported;
+  return isStaffMode.value
+    ? ["course_general", "student_analysis"]
+    : ["personal_learning"];
+});
+const interactionScopeLabel = computed(() => {
+  const labels: Record<AssistantInteractionScope, string> = {
+    personal_learning: "个人学习",
+    course_general: "课程通用问答",
+    student_analysis: "学生学情分析"
+  };
+  return labels[interactionScope.value];
+});
+const currentConversation = computed(() =>
+  conversations.value.find(
+    conversation => conversation.conversation_id === activeConversationId.value
+  )
+);
+
+const buildAssistantIdentity = (courseId?: number) => {
+  const scope = interactionScope.value;
+  if (scope === "student_analysis") {
+    if (!selectedStudentId.value) {
+      throw new Error("请选择要分析的学生");
+    }
+    return {
+      ...(courseId ? { course_id: courseId } : {}),
+      interaction_scope: scope,
+      target_student_id: selectedStudentId.value
+    };
+  }
+  return {
+    ...(courseId ? { course_id: courseId } : {}),
+    interaction_scope: scope
+  };
+};
 const courseContextLabel = computed(() => "课程:");
 const isCourseSwitching = ref(false);
+const isInteractionScopeSwitching = ref(false);
 const selectedCoursePickerId = computed({
   get: () => selectedCourseId.value,
   set: courseId => {
@@ -704,6 +771,25 @@ async function handleCourseContextChange(courseId?: number) {
     isCourseSwitching.value = false;
   }
 }
+
+const handleInteractionScopeChange = async (
+  scope: AssistantInteractionScope
+) => {
+  if (!supportedInteractionScopes.value.includes(scope)) return;
+  if (scope === interactionScope.value) return;
+  isInteractionScopeSwitching.value = true;
+  try {
+    interactionScope.value = scope;
+    // A subject must always be explicitly chosen for a new analysis context.
+    selectedStudentId.value = undefined;
+    activeConversationId.value = "";
+    conversations.value = [];
+    resetChatGreeting();
+    await loadAssistantBootstrap();
+  } finally {
+    isInteractionScopeSwitching.value = false;
+  }
+};
 
 // 【请求还原】：保留原版所有的侧边功能项
 const railItems = ref([
@@ -868,14 +954,18 @@ const resetChatGreeting = () => {
   isChatStreaming.value = false;
   digitalHumanStreamState.value = null;
   const courseName = selectedCourseName.value || "当前课程";
+  const greeting =
+    interactionScope.value === "course_general"
+      ? `你好，${courseName} 的课程助手已就绪。你可以直接提出课程教学、知识结构或资料相关问题。`
+      : interactionScope.value === "student_analysis"
+        ? `已进入学生学情分析。请提出关于该学生学习情况的问题，我会以第三人称给出分析。`
+        : `你好，${courseName} 的学习助手已就绪。你可以直接提出学习问题，我会结合课程、画像和学习路径给出建议。`;
   messages.value = [
     {
       id: "assistant-greeting",
       role: "智能助教",
       type: "system",
-      content:
-        assistantBootstrap.value?.message ||
-        `你好，${courseName} 的学习助手已就绪。你可以直接提出学习问题，我会结合课程、画像和学习路径给出建议。`
+      content: assistantBootstrap.value?.message || greeting
     }
   ];
 };
@@ -1397,8 +1487,15 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
     ElMessage.warning("请先选择课程");
     return;
   }
-  if (isStaffMode.value && !selectedTargetStudentId.value) {
-    ElMessage.warning("教师/管理员模式下请先选择学生");
+  if (
+    interactionScope.value === "student_analysis" &&
+    !selectedTargetStudentId.value
+  ) {
+    ElMessage.warning("请选择要分析的学生");
+    return;
+  }
+  if (currentConversation.value?.legacy_read_only) {
+    ElMessage.warning("历史会话仅供查看，请新建会话后继续讨论");
     return;
   }
   if (!selectedModelReady.value) {
@@ -1462,6 +1559,7 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
     conversationId: activeConversationId.value || undefined,
     courseId: selectedCourseId.value,
     targetStudentId: selectedTargetStudentId.value,
+    interactionScope: interactionScope.value,
     voiceAlias: selectedSpeechVoiceAlias.value || undefined
   });
   if (!speechRequest) {
@@ -1481,11 +1579,14 @@ const handleSendMessage = async (payload: ChatSendPayload) => {
     attachmentIds.length === 0
       ? "auto_wide"
       : undefined;
+  const conversationId = activeConversationId.value || undefined;
+  const identity = conversationId
+    ? {}
+    : buildAssistantIdentity(selectedCourseId.value);
   streamCancel.value = streamAssistantChat(
     {
-      conversation_id: activeConversationId.value || undefined,
-      course_id: selectedCourseId.value,
-      target_student_id: selectedTargetStudentId.value,
+      conversation_id: conversationId,
+      ...identity,
       mode: apiMode.value,
       selected_agent: selectedAgentKey.value || undefined,
       skill_keys: selectedSkillKeys.value,
@@ -1621,42 +1722,15 @@ function toPlatformPreviewResource(
     desc?: string;
   }
 ): PlatformPreviewResource {
-  return {
-    title: resource.title || "课程资料",
-    url:
-      resource.preview_pdf_url ||
-      resource.preview_url ||
-      resource.download_url ||
-      undefined,
-    previewUrl: resource.preview_url,
-    previewPdfUrl: resource.preview_pdf_url,
-    downloadUrl: resource.download_url || resource.preview_url,
-    content: resource.content_body,
-    contentFormat: resource.content_format,
-    resourceType: resource.resource_type || resource.type,
-    description: resource.summary || resource.description || resource.desc,
-    exerciseItems: resource.exercise_items,
-    language: resource.language,
-    starterCode: resource.starter_code,
-    testCases: resource.test_cases,
-    rubric: resource.rubric,
-    runtimeStatus: resource.runtime_status
-  };
+  return mapAssistantResourcePreview({
+    ...resource,
+    resource_type: resource.resource_type || resource.type,
+    description: resource.description || resource.desc
+  });
 }
 
 function hasPlatformPreviewSource(resource: PlatformPreviewResource) {
-  return Boolean(
-    resource.url ||
-      resource.previewUrl ||
-      resource.previewPdfUrl ||
-      resource.downloadUrl ||
-      resource.content ||
-      resource.structuredData ||
-      resource.exerciseItems?.length ||
-      resource.starterCode ||
-      resource.testCases?.length ||
-      resource.rubric
-  );
+  return hasPlatformResourcePreview(resource);
 }
 
 async function handlePreview(res: AssistantChatResource) {
@@ -1808,6 +1882,12 @@ const thinkingModeLabel = computed(() =>
 );
 
 const applyBootstrap = (data: AssistantBootstrapResp) => {
+  const previousStudentId = selectedStudentId.value;
+  const resolvedScope =
+    data.interaction_scope ||
+    data.default_interaction_scope ||
+    (isStaffMode.value ? "course_general" : "personal_learning");
+  interactionScope.value = resolvedScope;
   assistantBootstrap.value = data;
   myCourses.value = (data.courses || []).map(course => ({
     ...course,
@@ -1823,7 +1903,12 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
       `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.student_id}`
   }));
 
-  selectedStudentId.value = data.selected_student_id || myStudents.value[0]?.id;
+  selectedStudentId.value =
+    resolvedScope === "student_analysis"
+      ? data.selected_student_id ||
+        myStudents.value.find(student => student.id === previousStudentId)?.id
+      : undefined;
+  ensureStudentContextForActiveRail();
   const previousCourseId = activeCourse.value?.id;
   const manuallySelectedCourse = manuallySelectedCourseId.value
     ? myCourses.value.find(
@@ -1876,10 +1961,14 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
 const loadAssistantBootstrap = async () => {
   isBootstrapping.value = true;
   try {
-    const { data } = await getAssistantBootstrap({
-      course_id: selectedCourseId.value,
-      target_student_id: selectedTargetStudentId.value
-    });
+    if (!assistantBootstrap.value) {
+      interactionScope.value = isStaffMode.value
+        ? "course_general"
+        : "personal_learning";
+    }
+    const { data } = await getAssistantBootstrap(
+      buildAssistantIdentity(selectedCourseId.value)
+    );
     applyBootstrap(data);
     await loadConversationGroups();
   } catch (error: any) {
@@ -1894,9 +1983,9 @@ const loadAssistantBootstrap = async () => {
 
 const loadConversationGroups = async () => {
   try {
-    const { data } = await getAssistantConversationGroups({
-      target_student_id: selectedTargetStudentId.value
-    });
+    const { data } = await getAssistantConversationGroups(
+      buildAssistantIdentity()
+    );
     conversations.value = (data.list || []).flatMap(group =>
       (group.conversations || []).map(item =>
         normalizeConversation(item, group.course_name)
@@ -1915,6 +2004,16 @@ const loadConversationMessages = async (conversation: ConversationView) => {
     );
     activeConversationId.value = conversation.conversation_id;
     const detailConversation = data.conversation || conversation;
+    const existingIndex = conversations.value.findIndex(
+      item => item.conversation_id === detailConversation.conversation_id
+    );
+    const normalizedConversation = normalizeConversation(
+      detailConversation,
+      conversation.course
+    );
+    if (existingIndex >= 0)
+      conversations.value[existingIndex] = normalizedConversation;
+    else conversations.value.unshift(normalizedConversation);
     if (detailConversation.metadata)
       conversation.metadata = detailConversation.metadata;
     const course =
@@ -2211,8 +2310,11 @@ const handleNewChat = async (payload: { course: string }) => {
     ElMessage.warning("请先选择课程");
     return;
   }
-  if (isStaffMode.value && !selectedTargetStudentId.value) {
-    ElMessage.warning("请先选择学生");
+  if (
+    interactionScope.value === "student_analysis" &&
+    !selectedTargetStudentId.value
+  ) {
+    ElMessage.warning("请选择要分析的学生");
     return;
   }
   if (!selectedModelReady.value) {
@@ -2221,10 +2323,17 @@ const handleNewChat = async (payload: { course: string }) => {
   }
   resetChatGreeting();
   try {
+    const identity = buildAssistantIdentity(courseId);
     const { data } = await createAssistantConversation({
-      course_id: courseId,
-      target_student_id: selectedTargetStudentId.value,
-      title: courseName ? `${courseName} 学习辅导` : "学习辅导",
+      ...identity,
+      title:
+        interactionScope.value === "course_general"
+          ? `${courseName} 课程通用问答`
+          : interactionScope.value === "student_analysis"
+            ? `${courseName} 学情分析`
+            : courseName
+              ? `${courseName} 学习辅导`
+              : "学习辅导",
       metadata: {
         ui_entry: "ai_app_sidebar",
         selected_agent: selectedAgentKey.value,
@@ -2243,7 +2352,12 @@ const handleNewChat = async (payload: { course: string }) => {
       title: data.title || (courseName ? `${courseName} 学习辅导` : "学习辅导"),
       message_count: 0,
       course_id: courseId,
-      target_student_id: selectedTargetStudentId.value
+      target_student_id: selectedTargetStudentId.value,
+      subject_student_id: selectedTargetStudentId.value,
+      interaction_scope: interactionScope.value,
+      visibility_scope: isStaffMode.value ? "staff_private" : "student_private",
+      identity_version: 2,
+      legacy_read_only: false
     };
     activeConversationId.value = conversation.conversation_id;
     conversations.value = [
@@ -2289,12 +2403,18 @@ watch([activeRail, humanCollapsed], () => {
   syncHumanRenderState();
 });
 
+watch(activeRail, () => {
+  ensureStudentContextForActiveRail();
+});
+
 watch(selectedStudentId, () => {
   if (
     isCourseSwitching.value ||
+    isInteractionScopeSwitching.value ||
     isBootstrapping.value ||
     !assistantBootstrap.value ||
-    !isStaffMode.value
+    !isStaffMode.value ||
+    interactionScope.value !== "student_analysis"
   )
     return;
   activeConversationId.value = "";
@@ -2446,6 +2566,27 @@ onUnmounted(() => {
               </div>
             </el-option>
           </el-select>
+          <template v-if="isStaffMode && activeRail === 'chat'">
+            <span class="text-xs text-gray-500 font-medium">问答范围:</span>
+            <el-select
+              :model-value="interactionScope"
+              :title="interactionScopeLabel"
+              size="small"
+              style="width: 180px"
+              class="interaction-scope-select"
+              :disabled="isBootstrapping || isChatStreaming"
+              @update:model-value="handleInteractionScopeChange"
+            >
+              <el-option
+                v-for="scope in supportedInteractionScopes"
+                :key="scope"
+                :label="
+                  scope === 'course_general' ? '课程通用问答' : '学生学情分析'
+                "
+                :value="scope"
+              />
+            </el-select>
+          </template>
           <template v-if="showStudentContext">
             <span class="text-xs text-gray-500 font-medium">分析对象:</span>
             <el-select
@@ -2905,7 +3046,7 @@ onUnmounted(() => {
                   <AiResourceGeneration
                     v-else
                     :course-id="selectedCourseId"
-                    :target-student-id="selectedTargetStudentId"
+                    :target-student-id="selectedStudentContextId"
                     :requires-target-student="isStaffMode"
                     :resource-types="assistantBootstrap?.resource_types || []"
                   />
@@ -2935,7 +3076,7 @@ onUnmounted(() => {
             >
               <AiLearningPath
                 :course-id="selectedCourseId"
-                :target-student-id="selectedTargetStudentId"
+                :target-student-id="selectedStudentContextId"
                 :requires-target-student="isStaffMode"
               />
             </div>
@@ -2964,7 +3105,7 @@ onUnmounted(() => {
               >
                 <AiLearningProfile
                   :course-id="selectedCourseId"
-                  :target-student-id="selectedTargetStudentId"
+                  :target-student-id="selectedStudentContextId"
                   :requires-target-student="isStaffMode"
                   :enrolled-courses="myCourses"
                   @profile-loaded="handleProfileLoaded"
@@ -3002,7 +3143,7 @@ onUnmounted(() => {
             >
               <AiAssessment
                 :course-id="selectedCourseId"
-                :target-student-id="selectedTargetStudentId"
+                :target-student-id="selectedStudentContextId"
                 :requires-target-student="isStaffMode"
               />
             </div>

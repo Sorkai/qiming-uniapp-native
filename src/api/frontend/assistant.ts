@@ -127,6 +127,20 @@ export interface AssistantBootstrapStudent {
   avatar?: string;
 }
 
+export type AssistantInteractionScope =
+  | "personal_learning"
+  | "course_general"
+  | "student_analysis";
+
+export type AssistantConversationScope =
+  | AssistantInteractionScope
+  | "legacy_unknown";
+
+export type AssistantVisibilityScope =
+  | "student_private"
+  | "staff_private"
+  | "legacy_inherited";
+
 interface AssistantAttachmentStsCredentials {
   tmp_secret_id?: string;
   tmp_secret_key?: string;
@@ -201,6 +215,9 @@ export interface AssistantSkill extends AssistantOption {
 export interface AssistantBootstrapResp {
   role: string;
   mode: string;
+  interaction_scope?: AssistantInteractionScope;
+  default_interaction_scope?: AssistantInteractionScope;
+  supported_interaction_scopes?: AssistantInteractionScope[];
   selected_course_id?: number;
   selected_student_id?: number;
   courses: AssistantBootstrapCourse[];
@@ -288,6 +305,7 @@ export interface AssistantSpeechStreamReservationRequest {
   conversation_id?: string;
   course_id?: number;
   target_student_id?: number;
+  interaction_scope?: AssistantInteractionScope;
   voice_alias?: string;
   timeline?: SpeechTimelineRequest;
   motion_cues?: boolean;
@@ -436,6 +454,7 @@ export interface AssistantChatStreamReq {
   course_id?: number;
   chapter_id?: number;
   target_student_id?: number;
+  interaction_scope?: AssistantInteractionScope;
   mode?: string;
   selected_agent?: string;
   skill_keys?: string[];
@@ -619,7 +638,13 @@ export interface AssistantConversationItem {
   last_message_at?: string;
   message_count: number;
   course_id?: number;
+  /** Compatibility field. New clients should read subject_student_id first. */
   target_student_id?: number;
+  subject_student_id?: number;
+  interaction_scope?: AssistantConversationScope;
+  visibility_scope?: AssistantVisibilityScope;
+  identity_version?: number;
+  legacy_read_only?: boolean;
   metadata?: Record<string, any>;
 }
 
@@ -632,6 +657,7 @@ export interface AssistantConversationGroup {
 export interface AssistantConversationGroupedResp {
   status: string;
   message?: string;
+  interaction_scope?: AssistantInteractionScope;
   list: AssistantConversationGroup[];
 }
 
@@ -646,6 +672,7 @@ export interface AssistantCoursesResp {
   status: string;
   message?: string;
   selected_course_id?: number;
+  interaction_scope?: AssistantInteractionScope;
   target_student_id?: number;
   selected_student_id?: number;
   latest_conversation_id?: string;
@@ -1731,6 +1758,7 @@ async function parseSSEStream(
 export const getAssistantBootstrap = (params?: {
   course_id?: number;
   target_student_id?: number;
+  interaction_scope?: AssistantInteractionScope;
 }) =>
   http.request<ApiResponse<AssistantBootstrapResp>>(
     "get",
@@ -1741,6 +1769,7 @@ export const getAssistantBootstrap = (params?: {
 export const getAssistantCourses = (params?: {
   course_id?: number;
   target_student_id?: number;
+  interaction_scope?: AssistantInteractionScope;
 }) =>
   http.request<ApiResponse<AssistantCoursesResp>>(
     "get",
@@ -1750,6 +1779,7 @@ export const getAssistantCourses = (params?: {
 
 export const getAssistantConversationGroups = (params?: {
   target_student_id?: number;
+  interaction_scope?: AssistantInteractionScope;
 }) =>
   http.request<ApiResponse<AssistantConversationGroupedResp>>(
     "get",
@@ -1760,6 +1790,7 @@ export const getAssistantConversationGroups = (params?: {
 export const getAssistantConversationsByCourse = (params: {
   course_id: number;
   target_student_id?: number;
+  interaction_scope?: AssistantInteractionScope;
 }) =>
   http.request<
     ApiResponse<{
@@ -1774,6 +1805,7 @@ export const createAssistantConversation = (data: {
   course_id: number;
   chapter_id?: number;
   target_student_id?: number;
+  interaction_scope?: AssistantInteractionScope;
   title?: string;
   metadata?: Record<string, string>;
 }) =>

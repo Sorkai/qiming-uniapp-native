@@ -49,8 +49,19 @@
                   >
                     <span
                       class="text-[15px] text-gray-600 truncate group-hover:text-primary group-hover:font-medium transition-colors duration-200 relative z-10"
+                      :title="
+                        conv.legacy_read_only
+                          ? '历史会话，仅供查看'
+                          : conv.title
+                      "
                     >
                       {{ conv.title }}
+                    </span>
+                    <span
+                      v-if="conv.legacy_read_only"
+                      class="text-[11px] text-amber-600 whitespace-nowrap"
+                    >
+                      只读
                     </span>
                   </div>
                 </div>
@@ -78,6 +89,9 @@
             <div class="flex items-center justify-between gap-2">
               <span
                 class="text-sm text-gray-500 truncate group-hover:text-gray-700"
+                :title="
+                  conv.legacy_read_only ? '历史会话，仅供查看' : conv.title
+                "
               >
                 {{ conv.title }}
               </span>

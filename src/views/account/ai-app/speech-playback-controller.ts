@@ -3,6 +3,7 @@ import {
   createAssistantSpeechStreamReservation,
   getAssistantSpeechSession,
   type AssistantChatStreamEvent,
+  type AssistantInteractionScope,
   type AssistantSpeechCapabilities,
   type AssistantSpeechMotionCue,
   type AssistantSpeechRequest,
@@ -81,6 +82,7 @@ interface PrepareSpeechContext {
   conversationId?: string;
   courseId?: number;
   targetStudentId?: number;
+  interactionScope?: AssistantInteractionScope;
   voiceAlias?: string;
 }
 
@@ -284,6 +286,7 @@ export class SpeechPlaybackController {
             conversation_id: context.conversationId,
             course_id: context.courseId,
             target_student_id: context.targetStudentId,
+            interaction_scope: context.interactionScope,
             voice_alias: voiceAlias,
             timeline,
             motion_cues: capabilities.motion_cues,

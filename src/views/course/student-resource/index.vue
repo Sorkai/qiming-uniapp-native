@@ -220,8 +220,10 @@ const previewFontScale = ref(1);
 const highlighterActive = ref(false);
 const temporaryHighlightCount = ref(0);
 const resourceWorkbenchBodyRef = ref<HTMLElement | null>(null);
+const tutorPanelRef = ref<HTMLElement | null>(null);
 
 const tutorPanelStorageKey = "student-resource-tutor-panel-width";
+const tutorFontStorageKey = "student-resource-tutor-font-percent";
 const tutorPanelDefaultWidth = 360;
 const tutorPanelMinWidth = 300;
 const readTutorPanelWidth = () => {
@@ -230,13 +232,54 @@ const readTutorPanelWidth = () => {
   return Number.isFinite(value) && value > 0 ? value : tutorPanelDefaultWidth;
 };
 const tutorPanelWidth = ref(readTutorPanelWidth());
+const readTutorFontPercent = () => {
+  if (typeof window === "undefined") return 100;
+  const value = Number(window.localStorage.getItem(tutorFontStorageKey));
+  return Number.isFinite(value) && value >= 90 && value <= 115 ? value : 100;
+};
+const tutorFontPercent = ref(readTutorFontPercent());
 const tutorPanelResizing = ref(false);
+const tutorPanelRenderedWidth = ref(tutorPanelDefaultWidth);
+const tutorAutoFontScale = computed(() => {
+  const widthProgress = Math.min(
+    1,
+    Math.max(0, (tutorPanelRenderedWidth.value - tutorPanelDefaultWidth) / 240)
+  );
+  return 1.08 + widthProgress * 0.12;
+});
+const tutorEffectiveFontScale = computed(() =>
+  Math.min(
+    1.28,
+    Math.max(0.92, tutorAutoFontScale.value * (tutorFontPercent.value / 100))
+  )
+);
+const tutorEffectiveFontPercent = computed(() =>
+  Math.round(tutorEffectiveFontScale.value * 100)
+);
 const tutorPanelGridStyle = computed(() => ({
-  "--resource-tutor-width": `${tutorPanelWidth.value}px`
+  "--resource-tutor-width": `${tutorPanelWidth.value}px`,
+  "--resource-tutor-font-scale": String(tutorEffectiveFontScale.value)
 }));
 let tutorPanelResizePointerId: number | null = null;
 let tutorPanelResizeStartX = 0;
 let tutorPanelResizeStartWidth = tutorPanelDefaultWidth;
+let tutorPanelResizeObserver: ResizeObserver | null = null;
+
+watch(
+  tutorPanelRef,
+  (element, previousElement) => {
+    if (previousElement) tutorPanelResizeObserver?.unobserve(previousElement);
+    if (!element || typeof ResizeObserver === "undefined") return;
+    tutorPanelRenderedWidth.value =
+      element.clientWidth || tutorPanelDefaultWidth;
+    tutorPanelResizeObserver ||= new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width;
+      if (width) tutorPanelRenderedWidth.value = width;
+    });
+    tutorPanelResizeObserver.observe(element);
+  },
+  { flush: "post" }
+);
 
 const tutorQuestion = ref("");
 const tutorQuotes = ref<TutorQuote[]>([]);
@@ -414,6 +457,9 @@ const supportsReadingTools = computed(() =>
 const previewFontPercent = computed(() =>
   Math.round(previewFontScale.value * 100)
 );
+const previewFontStyle = computed(() => ({
+  "--preview-font-size": `${16 * previewFontScale.value}px`
+}));
 const activePreviewLabel = computed(() =>
   previewKindLabel(activePreviewKind.value)
 );
@@ -1274,6 +1320,14 @@ function resetTutorPanelWidth() {
   setTutorPanelWidth(tutorPanelDefaultWidth, true);
 }
 
+function formatTutorFontTooltip(value: number) {
+  const effective = Math.min(
+    1.28,
+    Math.max(0.92, tutorAutoFontScale.value * (value / 100))
+  );
+  return `实际字号 ${Math.round(effective * 100)}%`;
+}
+
 function adjustPreviewFont(delta: number) {
   previewFontScale.value = Math.min(
     1.4,
@@ -1884,6 +1938,12 @@ watch([resourceSearch, resourcePageSize], () => {
   resourcePage.value = 1;
 });
 
+watch(tutorFontPercent, value => {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(tutorFontStorageKey, String(value));
+  }
+});
+
 watch(
   () => filteredResources.value.length,
   total => {
@@ -1912,6 +1972,7 @@ function resetTutorPanelWidthLimit() {
 
 onUnmounted(() => {
   cancelTutorStream?.();
+  tutorPanelResizeObserver?.disconnect();
   window.removeEventListener("resize", resetTutorPanelWidthLimit);
   document.documentElement.classList.remove("student-resource-tutor-resizing");
 });
@@ -2313,9 +2374,7 @@ onUnmounted(() => {
         <div
           class="resource-preview__canvas"
           :class="{ 'is-reading': activePreviewKind === 'markdown' }"
-          :style="{
-            '--preview-font-scale': String(previewFontScale)
-          }"
+          :style="previewFontStyle"
         >
           <div v-if="resourceDetailLoading" class="preview-detail-loading">
             <el-icon class="is-loading"><Loading /></el-icon>
@@ -2507,14 +2566,36 @@ onUnmounted(() => {
         <span aria-hidden="true" />
       </div>
 
-      <aside class="resource-tutor" aria-label="当前资料辅导">
+      <aside
+        ref="tutorPanelRef"
+        class="resource-tutor"
+        aria-label="当前资料辅导"
+      >
         <header class="resource-tutor__header">
-          <span class="resource-tutor__icon" aria-hidden="true"
-            ><el-icon><MagicStick /></el-icon
-          ></span>
-          <div>
-            <h2>当前资料辅导</h2>
-            <p>{{ activeResource?.title }}</p>
+          <div class="resource-tutor__heading">
+            <span class="resource-tutor__icon" aria-hidden="true"
+              ><el-icon><MagicStick /></el-icon
+            ></span>
+            <div>
+              <h2>当前资料辅导</h2>
+              <p>{{ activeResource?.title }}</p>
+            </div>
+          </div>
+          <div
+            class="resource-tutor__font-control"
+            :title="`当前实际字号 ${tutorEffectiveFontPercent}%`"
+          >
+            <span class="resource-tutor__font-label" aria-hidden="true"
+              >Aa</span
+            >
+            <el-slider
+              v-model="tutorFontPercent"
+              :min="90"
+              :max="115"
+              :step="5"
+              :format-tooltip="formatTutorFontTooltip"
+              aria-label="调整辅导区字号"
+            />
           </div>
         </header>
         <div class="resource-tutor__context">
@@ -3239,28 +3320,43 @@ onUnmounted(() => {
 }
 
 .resource-preview {
+  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background: var(--resource-surface);
-  border-bottom-left-radius: 14px;
+  border-radius: 0 0 14px 14px;
+  isolation: isolate;
 }
 
 .resource-preview__header {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  left: 16px;
+  z-index: 5;
   display: grid;
-  flex: 0 0 auto;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 16px;
-  min-height: 76px;
-  padding: 13px 24px;
-  background: var(--resource-surface);
-  border-bottom: 1px solid var(--resource-border);
+  column-gap: 12px;
+  min-height: 64px;
+  padding: 9px 12px;
+  background: rgb(255 255 255 / 82%);
+  border: 1px solid rgb(196 208 224 / 78%);
+  border-radius: 18px;
+  box-shadow:
+    0 18px 38px rgb(35 58 92 / 12%),
+    0 2px 8px rgb(35 58 92 / 7%);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
 }
 
 .resource-preview__back {
   justify-self: start;
-  margin-left: -15px;
+  min-height: 40px;
+  padding: 0 10px;
+  margin-left: 0;
+  border-radius: 10px;
   white-space: nowrap;
 }
 
@@ -3270,6 +3366,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
+  padding-left: 12px;
+  border-left: 1px solid rgb(198 210 226 / 72%);
 }
 
 .resource-preview__tool-button,
@@ -3283,9 +3381,16 @@ onUnmounted(() => {
   padding: 0;
   color: #52677f;
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #d7e0ea;
-  border-radius: 4px;
+  background: rgb(255 255 255 / 72%);
+  border: 1px solid #d2dce8;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(34 55 84 / 4%);
+  transition:
+    color 160ms ease-out,
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out,
+    transform 160ms ease-out;
 }
 
 .resource-preview__font-reset {
@@ -3299,6 +3404,8 @@ onUnmounted(() => {
   color: var(--resource-primary);
   background: var(--resource-primary-soft);
   border-color: #b9d0ec;
+  box-shadow: 0 5px 12px rgb(36 95 190 / 10%);
+  transform: translateY(-1px);
 }
 
 .resource-preview__tool-button.is-active {
@@ -3358,7 +3465,7 @@ onUnmounted(() => {
   display: flex;
   flex: 1;
   min-height: 0;
-  padding: 24px 28px 30px;
+  padding: 96px 28px 30px;
   overflow: hidden;
   background: var(--resource-bg);
 }
@@ -3513,10 +3620,10 @@ onUnmounted(() => {
   box-sizing: border-box;
   width: 100%;
   max-width: none;
-  padding: 46px clamp(30px, 5vw, 68px) 64px;
+  padding: 112px clamp(30px, 5vw, 68px) 64px;
   margin: 0 auto;
   color: #2a3a50;
-  font-size: calc(1rem * var(--preview-font-scale, 1));
+  font-size: var(--preview-font-size, 1rem);
   line-height: 1.72;
 }
 
@@ -3600,8 +3707,9 @@ onUnmounted(() => {
   z-index: 4;
   display: flex;
   min-width: 8px;
-  height: 100%;
+  height: calc(100% - 14px);
   align-items: center;
+  align-self: start;
   justify-content: center;
   cursor: col-resize;
   background: #f4f6f9;
@@ -3822,15 +3930,27 @@ onUnmounted(() => {
   flex-direction: column;
   overflow: hidden;
   border-left: 1px solid var(--resource-border);
-  border-bottom-right-radius: 14px;
+  border-radius: 0 0 14px 14px;
+  container-type: inline-size;
 }
 
 .resource-tutor__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  justify-content: normal;
   min-height: 76px;
   padding: 14px;
-  gap: 10px;
+  gap: 12px;
   background: #fbfcff;
   border-bottom: 1px solid var(--resource-border);
+}
+
+.resource-tutor__heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
 }
 
 .resource-tutor__icon {
@@ -3839,11 +3959,11 @@ onUnmounted(() => {
   font-size: 17px;
 }
 
-.resource-tutor__header div {
+.resource-tutor__heading > div {
   min-width: 0;
 }
 .resource-tutor__header h2 {
-  font-size: 1rem;
+  font-size: calc(1rem * var(--resource-tutor-font-scale, 1));
   font-weight: 720;
   line-height: 1.35;
 }
@@ -3851,10 +3971,57 @@ onUnmounted(() => {
   margin-top: 2px;
   overflow: hidden;
   color: var(--resource-muted);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--resource-tutor-font-scale, 1));
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.resource-tutor__font-control {
+  display: grid;
+  grid-template-columns: auto minmax(54px, 72px);
+  align-items: center;
+  gap: 7px;
+  width: 108px;
+  min-height: 34px;
+  padding: 4px 8px;
+  color: #46617f;
+  background: #f4f8fd;
+  border: 1px solid #d8e3f0;
+  border-radius: 10px;
+}
+
+.resource-tutor__font-label {
+  font-size: 0.6875rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.resource-tutor__font-control :deep(.el-slider) {
+  height: 24px;
+}
+
+.resource-tutor__font-control :deep(.el-slider__runway) {
+  height: 4px;
+  margin: 10px 0;
+  background: #dce6f2;
+}
+
+.resource-tutor__font-control :deep(.el-slider__bar) {
+  height: 4px;
+  background: var(--resource-primary);
+}
+
+.resource-tutor__font-control :deep(.el-slider__button-wrapper) {
+  top: -16px;
+  width: 36px;
+  height: 36px;
+}
+
+.resource-tutor__font-control :deep(.el-slider__button) {
+  width: 12px;
+  height: 12px;
+  border-width: 2px;
 }
 
 .resource-tutor__context {
@@ -3862,7 +4029,7 @@ onUnmounted(() => {
   gap: 8px;
   padding: 10px 14px;
   color: #47617f;
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--resource-tutor-font-scale, 1));
   line-height: 1.3;
   background: #f5f8fc;
   border-bottom: 1px solid var(--resource-border);
@@ -3908,7 +4075,7 @@ onUnmounted(() => {
 }
 .tutor-message__role {
   color: var(--resource-subtle);
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--resource-tutor-font-scale, 1));
   font-weight: 600;
 }
 .tutor-message--student .tutor-message__role {
@@ -3918,7 +4085,7 @@ onUnmounted(() => {
 .tutor-message__thinking {
   padding: 10px 11px;
   color: #293c58;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--resource-tutor-font-scale, 1));
   line-height: 1.62;
   background: #fff;
   border: 1px solid #dbe4ef;
@@ -3986,7 +4153,7 @@ onUnmounted(() => {
   min-height: 30px;
   padding: 4px 6px;
   color: #35608d;
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--resource-tutor-font-scale, 1));
   line-height: 1.3;
   cursor: pointer;
   background: #f4f8fd;
@@ -4017,7 +4184,7 @@ onUnmounted(() => {
   margin-bottom: 8px;
   padding: 6px 8px;
   color: #355573;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--resource-tutor-font-scale, 1));
   background: #f4f8fd;
   border: 1px solid #d6e2f0;
   border-radius: 5px;
@@ -4060,7 +4227,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 5px;
   color: #3e6288;
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--resource-tutor-font-scale, 1));
   font-weight: 650;
   line-height: 1.4;
 }
@@ -4081,7 +4248,7 @@ onUnmounted(() => {
   gap: 6px;
   padding: 6px;
   color: #486581;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--resource-tutor-font-scale, 1));
   line-height: 1.45;
   background: #fff;
   border: 1px solid #e1eaf3;
@@ -4154,6 +4321,7 @@ onUnmounted(() => {
 .resource-tutor__composer :deep(.el-textarea__inner) {
   min-height: 76px !important;
   padding: 10px 11px;
+  font-size: calc(0.875rem * var(--resource-tutor-font-scale, 1));
   line-height: 1.55;
 }
 .resource-tutor__actions :deep(.el-button + .el-button) {
@@ -4284,6 +4452,28 @@ onUnmounted(() => {
   border-color: #344860;
 }
 
+:global(.dark) .resource-preview__header {
+  background: rgb(23 34 53 / 82%);
+  border-color: rgb(78 101 132 / 76%);
+  box-shadow:
+    0 18px 40px rgb(0 0 0 / 28%),
+    0 2px 8px rgb(0 0 0 / 18%);
+}
+
+:global(.dark) .resource-preview__tools {
+  border-color: rgb(82 105 134 / 72%);
+}
+
+:global(.dark) .resource-tutor__font-control {
+  color: #b9cbe1;
+  background: #1b2b42;
+  border-color: #36506e;
+}
+
+:global(.dark) .resource-tutor__font-control :deep(.el-slider__runway) {
+  background: #344a64;
+}
+
 :global(.dark) .markdown-preview__content :deep(mark.temporary-highlight) {
   color: #192235;
   background: #e9d56c;
@@ -4302,14 +4492,14 @@ onUnmounted(() => {
     display: none;
   }
   .resource-preview {
-    border-bottom-left-radius: 0;
+    border-radius: 0;
   }
   .resource-tutor {
     grid-column: 1 / -1;
     min-height: 360px;
     border-top: 1px solid var(--resource-border);
     border-left: 0;
-    border-bottom-left-radius: 14px;
+    border-radius: 0 0 14px 14px;
   }
   .resource-tutor__messages {
     max-height: 340px;
@@ -4348,13 +4538,33 @@ onUnmounted(() => {
     padding: 14px;
     overflow: visible;
   }
+  .resource-preview {
+    border-radius: 14px;
+  }
+  .resource-tutor {
+    border-radius: 14px;
+  }
   .resource-preview__header {
+    top: 12px;
+    right: 12px;
+    left: 12px;
     grid-template-columns: auto minmax(0, 1fr);
     row-gap: 10px;
+    padding: 10px 12px;
   }
   .resource-preview__tools {
     grid-column: 1 / -1;
     justify-content: flex-end;
+    padding-top: 8px;
+    padding-left: 0;
+    border-top: 1px solid rgb(198 210 226 / 72%);
+    border-left: 0;
+  }
+  .resource-preview__canvas {
+    padding-top: 150px;
+  }
+  .markdown-preview__content {
+    padding-top: 150px;
   }
   .resource-overview {
     padding: 18px 14px;
@@ -4417,13 +4627,13 @@ onUnmounted(() => {
   }
   .resource-preview__canvas {
     min-height: 430px;
-    padding: 10px;
+    padding: 150px 10px 10px;
   }
   .resource-preview__header {
-    padding: 10px 12px;
+    border-radius: 16px;
   }
   .resource-preview__back {
-    margin-left: -8px;
+    margin-left: 0;
   }
   .resource-preview__title h2 {
     max-width: 30ch;
@@ -4436,8 +4646,8 @@ onUnmounted(() => {
     font-size: 0.8125rem;
   }
   .markdown-preview__content {
-    padding: 22px 18px;
-    font-size: calc(0.9375rem * var(--preview-font-scale, 1));
+    padding: 150px 18px 40px;
+    font-size: var(--preview-font-size, 1rem);
   }
   .resource-tutor__messages {
     max-height: 390px;
@@ -4446,8 +4656,23 @@ onUnmounted(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .resource-rail__item,
-  .resource-tutor__suggestions button {
+  .resource-tutor__suggestions button,
+  .resource-preview__tool-button,
+  .resource-preview__font-reset {
     transition: none;
+  }
+}
+
+@container (max-width: 340px) {
+  .resource-tutor__header {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .resource-tutor__font-control {
+    grid-template-columns: auto minmax(44px, 58px);
+    width: 88px;
+    padding-inline: 6px;
   }
 }
 

@@ -2,6 +2,7 @@
 import {
   computed,
   defineAsyncComponent,
+  nextTick,
   onBeforeUnmount,
   ref,
   shallowRef,
@@ -57,11 +58,6 @@ const emit = defineEmits<{
 
 const VueOfficeDocx = defineAsyncComponent(() =>
   import("@vue-office/docx/lib/v3/index.js").then(module =>
-    Promise.resolve(module.default as any)
-  )
-);
-const VueOfficePptx = defineAsyncComponent(() =>
-  import("@vue-office/pptx/lib/v3/index.js").then(module =>
     Promise.resolve(module.default as any)
   )
 );
@@ -121,6 +117,11 @@ markdownRenderer.renderer.rules.image = (tokens, index, options, env, self) => {
 };
 
 const resolved = computed(() => resolvePlatformPreviewSource(props.resource));
+const previewFontVariables = computed(() => ({
+  "--platform-preview-markdown-font-size": `${15 * props.fontScale}px`,
+  "--platform-preview-mono-font-size": `${13 * props.fontScale}px`,
+  "--platform-preview-structured-font-size": `${14 * props.fontScale}px`
+}));
 const loading = ref(false);
 const errorMessage = ref("");
 const markdownHtml = ref("");
@@ -128,7 +129,11 @@ const plainText = ref("");
 const mindMapTree = ref<PlatformMindMapNode | null>(null);
 const structuredJsonView = ref<StructuredPreviewView | null>(null);
 const officeBuffer = shallowRef<ArrayBuffer | null>(null);
+const officeHostRef = ref<HTMLElement | null>(null);
+const officePdfFallbackUrl = ref("");
+const officeRenderKey = ref(0);
 let previewAbortController: AbortController | null = null;
+let pptxViewer: import("@aiden0z/pptx-renderer").PptxViewer | null = null;
 
 const hasStructuredSource = computed(() =>
   Boolean(
@@ -152,7 +157,6 @@ const showsMindMap = computed(
 );
 const officeComponent = computed(() => {
   if (resolved.value.kind === "docx") return VueOfficeDocx;
-  if (resolved.value.kind === "pptx") return VueOfficePptx;
   return VueOfficeExcel;
 });
 const officeOptions = computed(() =>
@@ -161,12 +165,27 @@ const officeOptions = computed(() =>
     : {}
 );
 
+function clearOfficePdfFallback() {
+  if (officePdfFallbackUrl.value) {
+    URL.revokeObjectURL(officePdfFallbackUrl.value);
+    officePdfFallbackUrl.value = "";
+  }
+}
+
+function destroyPptxViewer() {
+  pptxViewer?.destroy();
+  pptxViewer = null;
+  if (officeHostRef.value) officeHostRef.value.innerHTML = "";
+}
+
 function resetContent() {
+  destroyPptxViewer();
   markdownHtml.value = "";
   plainText.value = "";
   mindMapTree.value = null;
   structuredJsonView.value = null;
   officeBuffer.value = null;
+  clearOfficePdfFallback();
   errorMessage.value = "";
 }
 
@@ -181,6 +200,9 @@ function normalizeError(error: unknown) {
   }
   if (/Failed to fetch|NetworkError|Load failed/i.test(message)) {
     return "文件地址未允许平台读取，请检查预览地址或对象存储跨域配置。";
+  }
+  if (/INVALID_OFFICE_FILE|PPTX_EMPTY_RENDER/.test(message)) {
+    return "演示文稿没有生成可显示的幻灯片，请重新生成预览或下载原文件查看。";
   }
   return "该文件暂时无法在平台内解析，请稍后重试。";
 }
@@ -239,9 +261,11 @@ function renderStructuredContent(content: string) {
 }
 
 async function loadTextPreview(signal: AbortSignal) {
+  const usesInlineStructuredFields =
+    resolved.value.kind === "json" && hasStructuredSource.value;
   const content =
     resolved.value.content ||
-    (resolved.value.url
+    (!usesInlineStructuredFields && resolved.value.url
       ? await fetchPlatformResourceText(resolved.value.url, {
           signal,
           maxBytes: 8 * 1024 * 1024
@@ -256,14 +280,88 @@ async function loadTextPreview(signal: AbortSignal) {
   completeLoading();
 }
 
-async function loadOfficePreview(signal: AbortSignal) {
-  const { buffer } = await fetchPlatformResourceBuffer(resolved.value.url, {
+async function renderPptxPreview(buffer: ArrayBuffer, signal: AbortSignal) {
+  officeBuffer.value = buffer;
+  officeRenderKey.value += 1;
+  await nextTick();
+  const host = officeHostRef.value;
+  if (!host || signal.aborted) return;
+
+  const { PptxViewer, RECOMMENDED_ZIP_LIMITS } = await import(
+    "@aiden0z/pptx-renderer"
+  );
+  if (signal.aborted) return;
+
+  destroyPptxViewer();
+  pptxViewer = await PptxViewer.open(buffer, host, {
+    fitMode: "contain",
+    renderMode: "list",
+    scrollContainer: host,
+    zipLimits: RECOMMENDED_ZIP_LIMITS,
+    lazyMedia: true,
+    lazySlides: true,
+    listOptions: {
+      windowed: true,
+      batchSize: 8,
+      initialSlides: 4,
+      overscanViewport: 1.5
+    },
     signal,
-    maxBytes: 64 * 1024 * 1024,
-    accept:
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, */*"
+    onSlideError: (index, error) => {
+      console.warn(
+        `[PlatformResourcePreview] slide ${index + 1} failed`,
+        error
+      );
+    }
   });
-  if (!signal.aborted) officeBuffer.value = buffer;
+
+  if (signal.aborted) {
+    destroyPptxViewer();
+    return;
+  }
+  if (!pptxViewer.slideCount) throw new Error("PPTX_EMPTY_RENDER");
+  completeLoading();
+}
+
+async function loadOfficePreview(signal: AbortSignal) {
+  const { buffer, contentType } = await fetchPlatformResourceBuffer(
+    resolved.value.url,
+    {
+      signal,
+      maxBytes: 64 * 1024 * 1024,
+      accept:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, */*"
+    }
+  );
+  if (signal.aborted) return;
+
+  const bytes = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 8));
+  const isPdf =
+    contentType.toLowerCase().includes("application/pdf") ||
+    String.fromCharCode(...bytes.slice(0, 4)) === "%PDF";
+  if (resolved.value.kind === "pptx" && isPdf) {
+    officePdfFallbackUrl.value = URL.createObjectURL(
+      new Blob([buffer], { type: "application/pdf" })
+    );
+    completeLoading();
+    return;
+  }
+
+  const isZip =
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    ((bytes[2] === 0x03 && bytes[3] === 0x04) ||
+      (bytes[2] === 0x05 && bytes[3] === 0x06) ||
+      (bytes[2] === 0x07 && bytes[3] === 0x08));
+  if (resolved.value.kind !== "spreadsheet" && !isZip) {
+    throw new Error("INVALID_OFFICE_FILE");
+  }
+
+  if (resolved.value.kind === "pptx") {
+    await renderPptxPreview(buffer, signal);
+    return;
+  }
+  officeBuffer.value = buffer;
 }
 
 async function loadPreview() {
@@ -324,6 +422,10 @@ function handleMediaError() {
   failPreview(new Error("MEDIA_LOAD_FAILED"));
 }
 
+function handleOfficeRendered() {
+  completeLoading();
+}
+
 watch(
   () => [
     props.resource?.title,
@@ -346,7 +448,11 @@ watch(
   { immediate: true }
 );
 
-onBeforeUnmount(() => previewAbortController?.abort());
+onBeforeUnmount(() => {
+  previewAbortController?.abort();
+  destroyPptxViewer();
+  clearOfficePdfFallback();
+});
 
 defineExpose({ reload: loadPreview, download: handleDownload });
 </script>
@@ -355,9 +461,7 @@ defineExpose({ reload: loadPreview, download: handleDownload });
   <section
     class="platform-resource-preview"
     :class="{ 'is-embedded': props.embedded }"
-    :style="{
-      '--platform-preview-font-scale': String(props.fontScale)
-    }"
+    :style="previewFontVariables"
     aria-live="polite"
   >
     <div v-if="loading" class="platform-resource-preview__loading">
@@ -422,18 +526,36 @@ defineExpose({ reload: loadPreview, download: handleDownload });
       />
 
       <div
+        v-else-if="resolved.kind === 'pptx' && officeBuffer"
+        ref="officeHostRef"
+        :key="`${resolved.url}:${officeRenderKey}`"
+        class="platform-resource-preview__office"
+        :class="`is-${resolved.kind}`"
+      />
+
+      <div
         v-else-if="isOfficePreviewKind(resolved.kind) && officeBuffer"
         class="platform-resource-preview__office"
         :class="`is-${resolved.kind}`"
       >
         <component
           :is="officeComponent"
+          :key="`${resolved.url}:${officeRenderKey}`"
           :src="officeBuffer"
           :options="officeOptions"
-          @rendered="completeLoading"
+          @rendered="handleOfficeRendered"
           @error="failPreview"
         />
       </div>
+
+      <iframe
+        v-else-if="officePdfFallbackUrl"
+        :key="officePdfFallbackUrl"
+        :src="officePdfFallbackUrl"
+        class="platform-resource-preview__frame"
+        title="PowerPoint PDF 预览"
+        @load="handleHtmlLoad"
+      />
 
       <iframe
         v-else-if="resolved.kind === 'pdf'"
@@ -558,7 +680,7 @@ defineExpose({ reload: loadPreview, download: handleDownload });
   padding: 46px clamp(28px, 5vw, 72px) 72px;
   margin: 0;
   color: #25344b;
-  font-size: calc(15px * var(--platform-preview-font-scale, 1));
+  font-size: var(--platform-preview-markdown-font-size, 15px);
   line-height: 1.8;
   background: #fff;
 }
@@ -661,7 +783,7 @@ defineExpose({ reload: loadPreview, download: handleDownload });
   overflow: visible;
   color: #25344b;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: calc(13px * var(--platform-preview-font-scale, 1));
+  font-size: var(--platform-preview-mono-font-size, 13px);
   line-height: 1.72;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -671,7 +793,7 @@ defineExpose({ reload: loadPreview, download: handleDownload });
 }
 
 .platform-resource-preview__structured {
-  font-size: calc(14px * var(--platform-preview-font-scale, 1));
+  font-size: var(--platform-preview-structured-font-size, 14px);
 }
 
 .platform-resource-preview__office {
@@ -688,13 +810,20 @@ defineExpose({ reload: loadPreview, download: handleDownload });
 
 .platform-resource-preview__office.is-pptx {
   min-height: 680px;
-  padding: 18px;
-  background: #252a31;
+  padding: 20px 0 36px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background: #eef2f7;
 }
 
-.platform-resource-preview__office.is-pptx :deep(.vue-office-pptx),
-.platform-resource-preview__office.is-pptx :deep(.vue-office-pptx-main) {
-  min-height: 640px;
+.platform-resource-preview__office.is-pptx :deep([data-slide-index]) {
+  border-radius: 4px;
+}
+
+.platform-resource-preview__office.is-pptx
+  :deep([data-slide-index] > [data-mounted="1"]) {
+  border: 1px solid rgb(30 45 61 / 10%);
+  border-radius: 4px;
 }
 
 .platform-resource-preview__office.is-spreadsheet {

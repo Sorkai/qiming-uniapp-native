@@ -47,6 +47,7 @@
     "url": "https://github.com/xiaoxian521"
   },
   "dependencies": {
+    "@aiden0z/pptx-renderer": "1.2.4",
     "@amap/amap-jsapi-loader": "^1.0.1",
     "@docmee/sdk-ui": "^1.2.20",
     "@howdyjs/mouse-menu": "^2.1.7",

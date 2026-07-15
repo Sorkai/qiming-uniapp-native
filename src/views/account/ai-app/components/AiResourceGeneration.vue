@@ -15,6 +15,7 @@ import {
   assistantApiErrorMessage,
   createAssistantResourceTask,
   deleteAssistantResource,
+  getAssistantResource,
   getAssistantResourceTask,
   getAssistantTaskTrace,
   listAssistantResourceTaskLogs,
@@ -33,6 +34,13 @@ import {
   type AssistantChatTraceStep,
   type AssistantOption
 } from "@/api/frontend/assistant";
+import {
+  PlatformResourcePreviewDialog,
+  downloadPlatformResource,
+  hasPlatformResourcePreview,
+  mapAssistantResourcePreview,
+  type PlatformPreviewResource
+} from "@/components/PlatformResourcePreview";
 
 const props = defineProps<{
   courseId?: number;
@@ -62,6 +70,9 @@ const taskLogs = ref<AssistantResourceTaskLogItem[]>([]);
 const taskTrace = ref<AssistantChatTraceStep[]>([]);
 const detailVisible = ref(false);
 const selectedResource = ref<AssistantResourceSummary | null>(null);
+const platformPreviewVisible = ref(false);
+const platformPreviewResource = ref<PlatformPreviewResource | null>(null);
+const previewPreparing = ref(false);
 const resourceVersions = ref<AssistantResourceVersionItem[]>([]);
 const resourceOpenedAt = ref(0);
 const resourceFeedbackScore = ref(5);
@@ -100,6 +111,8 @@ const resetResourceSelection = () => {
   taskTrace.value = [];
   detailVisible.value = false;
   selectedResource.value = null;
+  platformPreviewVisible.value = false;
+  platformPreviewResource.value = null;
   resourceVersions.value = [];
   editMode.value = false;
 };
@@ -305,6 +318,16 @@ const qualityLabel = (score?: number) => {
 
 const hasInlinePreview = (resource?: AssistantResourceSummary | null) =>
   !!resource?.content_body && !resource.preview_url;
+const selectedResourceCanPreview = computed(() =>
+  selectedResource.value
+    ? Boolean(
+        selectedResource.value.resource_id ||
+          hasPlatformResourcePreview(
+            mapAssistantResourcePreview(selectedResource.value)
+          )
+      )
+    : false
+);
 
 const incompleteStates = computed(() => {
   const resource = selectedResource.value;
@@ -594,17 +617,59 @@ const handleResourceDialogClosed = () => {
   resourceOpenedAt.value = 0;
 };
 
-const openUrl = (url?: string, resource?: AssistantResourceSummary) => {
-  if (!url) {
-    ElMessage.warning("当前资源暂无可访问链接");
+const downloadGeneratedResource = async (
+  resource: AssistantResourceSummary
+) => {
+  const previewResource = mapAssistantResourcePreview(resource);
+  if (!previewResource.downloadUrl) {
+    ElMessage.warning("当前资源暂无可下载文件");
     return;
   }
-  if (resource) {
+  try {
+    await downloadPlatformResource(previewResource);
     void reportResourceUsage(resource, "view", {
-      metadata: { target: url }
+      metadata: { action: "download", target: previewResource.downloadUrl }
     });
+  } catch (error) {
+    console.warn("[AiResourceGeneration] 资源下载失败:", error);
+    ElMessage.error("文件下载失败，请检查资源权限或下载地址");
   }
-  window.open(url, "_blank");
+};
+
+const openPlatformPreview = async (resource = selectedResource.value) => {
+  if (!resource) return;
+  previewPreparing.value = true;
+  let resolvedResource = resource;
+  try {
+    if (resource.resource_id) {
+      const { data } = await getAssistantResource(resource.resource_id, {
+        course_id: props.courseId,
+        target_student_id: props.targetStudentId
+      });
+      if (data.resource) {
+        resolvedResource = { ...resource, ...data.resource };
+        syncSelectedResource(resolvedResource);
+      }
+    }
+  } catch (error) {
+    console.warn("[AiResourceGeneration] 预览详情补全失败:", error);
+  } finally {
+    previewPreparing.value = false;
+  }
+
+  const previewResource = mapAssistantResourcePreview(resolvedResource);
+  if (!hasPlatformResourcePreview(previewResource)) {
+    ElMessage.warning("该资源暂未提供可预览内容");
+    return;
+  }
+  platformPreviewResource.value = previewResource;
+  platformPreviewVisible.value = true;
+  void reportResourceUsage(resolvedResource, "view", {
+    metadata: {
+      action: "platform_preview",
+      content_format: resolvedResource.content_format || ""
+    }
+  });
 };
 
 const loadResourceVersions = async (resourceId: string) => {
@@ -1108,7 +1173,7 @@ watch(
                     size="small"
                     plain
                     :icon="Download"
-                    @click="openUrl(res.download_url, res)"
+                    @click="downloadGeneratedResource(res)"
                   >
                     下载
                   </el-button>
@@ -1476,12 +1541,13 @@ watch(
           </div>
           <div class="flex items-center gap-2">
             <el-button
-              v-if="selectedResource?.preview_url"
+              v-if="selectedResourceCanPreview"
               type="primary"
               plain
-              @click="openUrl(selectedResource.preview_url, selectedResource)"
+              :loading="previewPreparing"
+              @click="openPlatformPreview()"
             >
-              打开预览
+              平台内预览
             </el-button>
             <el-button
               plain
@@ -1502,6 +1568,11 @@ watch(
         </div>
       </template>
     </el-dialog>
+
+    <PlatformResourcePreviewDialog
+      v-model="platformPreviewVisible"
+      :resource="platformPreviewResource"
+    />
   </div>
 </template>
 

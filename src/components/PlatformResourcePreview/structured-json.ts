@@ -137,7 +137,16 @@ const labelMap: Record<string, string> = {
   hints: "提示",
   test_cases: "测试样例",
   rubric: "评分标准",
-  runtime_status: "运行环境"
+  runtime_status: "运行环境",
+  course: "课程信息",
+  semester: "学期",
+  credits: "学分",
+  chapters: "章节",
+  chapter: "章节",
+  topic: "主题",
+  correctness: "正确性",
+  complexity: "复杂度",
+  readability: "代码可读性"
 };
 
 const technicalKeys = new Set([
@@ -759,7 +768,14 @@ function buildDocumentPreview(
       ) ||
       resource.description ||
       (invalid ? "该结构化内容格式不完整，暂时无法转换为可读视图。" : ""),
-    metadata: primary ? primitiveFields(primary).slice(0, 8) : [],
+    metadata: primary
+      ? primitiveFields(primary)
+          .filter(
+            item =>
+              !["标题", "名称", "说明", "摘要", "简介"].includes(item.label)
+          )
+          .slice(0, 8)
+      : [],
     sections: invalid ? [] : genericSections(payload),
     invalid
   };
