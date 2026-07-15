@@ -1066,8 +1066,10 @@
         ensureLocalTtsWorker({ force: true });
       } else if (data.type === 'pauseRender') {
         state.renderPaused = true;
+        syncRenderLoop();
       } else if (data.type === 'resumeRender') {
         state.renderPaused = false;
+        syncRenderLoop();
       }
     });
     const teacherPosX = document.getElementById('teacherPosX');

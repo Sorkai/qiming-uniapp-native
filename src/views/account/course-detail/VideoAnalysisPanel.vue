@@ -2009,6 +2009,8 @@ onBeforeUnmount(() => {
 $primary: #6366f1;
 $primary-light: #818cf8;
 $accent: #f43f5e;
+$ai-pink: #b94f62;
+$ai-pink-light: #e68a99;
 $success: #10b981;
 
 $gray-50: #f8fafc;
@@ -2315,14 +2317,14 @@ $radius-lg: 16px;
     transition: all 0.2s ease;
 
     &:hover {
-      color: $primary;
-      background: rgb(99 102 241 / 5%);
+      color: $ai-pink;
+      background: rgb(185 79 98 / 6%);
     }
 
     &.active {
-      color: $primary;
-      background: rgb(99 102 241 / 10%);
-      border-color: rgb(99 102 241 / 20%);
+      color: $ai-pink;
+      background: rgb(185 79 98 / 10%);
+      border-color: rgb(185 79 98 / 20%);
       font-weight: 600;
     }
 
@@ -2330,14 +2332,14 @@ $radius-lg: 16px;
       color: $gray-400;
 
       &:hover {
-        color: $primary-light;
-        background: rgb(99 102 241 / 10%);
+        color: $ai-pink-light;
+        background: rgb(230 138 153 / 12%);
       }
 
       &.active {
-        color: $primary-light;
-        background: rgb(99 102 241 / 15%);
-        border-color: rgb(99 102 241 / 25%);
+        color: $ai-pink-light;
+        background: rgb(230 138 153 / 16%);
+        border-color: rgb(230 138 153 / 24%);
       }
     }
   }
@@ -2369,8 +2371,9 @@ $radius-lg: 16px;
     padding: 4px 10px;
     font-size: 11px;
     font-weight: 600;
-    color: $accent;
-    background: rgb(244 63 94 / 10%);
+    color: $ai-pink;
+    background: rgb(240 228 227 / 74%);
+    border: 1px solid rgb(185 79 98 / 12%);
     border-radius: 20px;
   }
 
@@ -2392,13 +2395,16 @@ $radius-lg: 16px;
 .chapter-item {
   display: flex;
   gap: 16px;
-  padding: 14px 0;
+  padding: 14px 12px;
+  margin: 0 -12px;
   cursor: pointer;
+  overflow: hidden;
   border-bottom: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 12px;
   transition: background 0.15s;
 
   &:hover {
-    background: rgb(99 102 241 / 3%);
+    background: rgb(240 228 227 / 16%);
   }
 
   &:last-child {
@@ -2423,8 +2429,9 @@ $radius-lg: 16px;
     font-size: 12px;
     font-weight: 600;
     font-family: monospace;
-    color: $primary;
-    background: rgb(99 102 241 / 10%);
+    color: $ai-pink;
+    background: rgb(240 228 227 / 76%);
+    border: 1px solid rgb(185 79 98 / 10%);
     border-radius: 6px;
     white-space: nowrap;
   }
@@ -2570,13 +2577,14 @@ $radius-lg: 16px;
 .keyword-tag {
   padding: 4px 12px;
   font-size: 13px;
-  color: $primary;
-  background: rgb(99 102 241 / 10%);
+  color: $ai-pink;
+  background: rgb(240 228 227 / 76%);
+  border: 1px solid rgb(185 79 98 / 10%);
   border-radius: 14px;
 
   .dark & {
-    color: $primary-light;
-    background: rgb(99 102 241 / 15%);
+    color: $ai-pink-light;
+    background: rgb(230 138 153 / 16%);
   }
 }
 
@@ -2636,9 +2644,9 @@ $radius-lg: 16px;
     }
 
     &:hover {
-      color: $primary;
-      border-color: rgb(99 102 241 / 35%);
-      background: rgb(99 102 241 / 6%);
+      color: $ai-pink;
+      border-color: rgb(185 79 98 / 34%);
+      background: rgb(240 228 227 / 42%);
     }
 
     &:disabled {
@@ -2658,8 +2666,8 @@ $radius-lg: 16px;
       border-color: rgb(255 255 255 / 10%);
 
       &:hover {
-        color: $primary-light;
-        border-color: $primary-light;
+        color: $ai-pink-light;
+        border-color: $ai-pink-light;
       }
 
       &:disabled {
@@ -2843,13 +2851,16 @@ $radius-lg: 16px;
 .ppt-item {
   display: flex;
   gap: 14px;
-  padding: 12px 0;
+  padding: 12px;
+  margin: 0 -12px;
   cursor: pointer;
+  overflow: hidden;
   border-bottom: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 12px;
   transition: background 0.15s;
 
   &:hover {
-    background: rgb(99 102 241 / 3%);
+    background: rgb(240 228 227 / 16%);
   }
 
   &:last-child {
