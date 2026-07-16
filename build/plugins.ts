@@ -19,7 +19,8 @@ import { vitePluginFakeServer } from "vite-plugin-fake-server";
 export function getPluginsList(
   VITE_CDN: boolean,
   VITE_COMPRESSION: ViteCompression,
-  VITE_MOCK_SCOPE = "all"
+  VITE_MOCK_SCOPE = "all",
+  isAppMode = false
 ): PluginOption[] {
   const lifecycle = process.env.npm_lifecycle_event;
   const isDevServer = lifecycle === "dev" || lifecycle === "serve";
@@ -60,7 +61,7 @@ export function getPluginsList(
      */
     isDevServer ? removeNoMatch() : null,
     // mock支持
-    isEdgeOneWechatH5
+    isEdgeOneWechatH5 || isAppMode
       ? null
       : vitePluginFakeServer({
           logger: true,

@@ -308,10 +308,11 @@ function applyNativeWebViewRuntime() {
   const syncStatusBar = () => {
     try {
       const plusApi = (globalThis as any).plus;
-      const isDark =
+      const isDarkSurface =
+        readCurrentHashRouteInfo().path === "/home" ||
         root.classList.contains("dark") ||
         document.body?.classList.contains("dark");
-      plusApi?.navigator?.setStatusBarStyle?.(isDark ? "light" : "dark");
+      plusApi?.navigator?.setStatusBarStyle?.(isDarkSurface ? "light" : "dark");
       plusApi?.navigator?.setStatusBarBackground?.("rgba(0,0,0,0)");
     } catch {
       // The H5 preview and some WebView runtimes do not expose plus.navigator.
@@ -352,9 +353,7 @@ function applyNativeWebViewRuntime() {
   const syncMiniProgramDocumentTitle = () => {
     if (!isMiniProgram) return;
     const currentRoute = router.currentRoute.value;
-    const role = String(
-      getSingleQueryValue(currentRoute.query.demoRole) || ""
-    );
+    const role = String(getSingleQueryValue(currentRoute.query.demoRole) || "");
     document.title = resolveMiniProgramDocumentTitle(
       currentRoute.path,
       role,
@@ -494,6 +493,7 @@ function applyNativeWebViewRuntime() {
     }
     window.setTimeout(normalizeNativeRoleRoute, 40);
     window.setTimeout(syncMiniProgramDocumentTitle, 60);
+    window.setTimeout(syncStatusBar, 80);
   });
   window.setTimeout(normalizeNativeRoleRoute, 300);
   window.setTimeout(syncMiniProgramDocumentTitle, 320);
@@ -517,7 +517,9 @@ function applyNativeWebViewRuntime() {
       getSingleQueryValue(currentRoute.query.menu) || ""
     );
     const role = String(
-      getNativeUserRole() || getSingleQueryValue(currentRoute.query.demoRole) || ""
+      getNativeUserRole() ||
+        getSingleQueryValue(currentRoute.query.demoRole) ||
+        ""
     );
 
     const canUseBrowserHistory =

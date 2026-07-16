@@ -93,9 +93,7 @@ html.qiming-mini-program-webview.ua-mobile {
   --qiming-native-navbar-bg: transparent;
   --qiming-mini-topbar-height: 58px;
   --qiming-mini-toolbar-top: 8px;
-  --pure-mobile-content-bottom-gap: calc(
-    var(--pure-mobile-tab-height) + 18px
-  );
+  --pure-mobile-content-bottom-gap: calc(var(--pure-mobile-tab-height) + 18px);
 }
 
 html.qiming-mini-program-webview input,
@@ -765,9 +763,7 @@ html.qiming-mini-program-webview.ua-mobile .app-main {
   min-height: 100dvh;
 }
 
-html.qiming-mini-program-webview.ua-mobile
-  .main-container
-  > .el-scrollbar,
+html.qiming-mini-program-webview.ua-mobile .main-container > .el-scrollbar,
 html.qiming-mini-program-webview.ua-mobile
   .main-container
   > .el-scrollbar
@@ -807,7 +803,7 @@ html.qiming-mini-program-webview.ua-mobile
 }
 
 html.qiming-mini-program-webview.ua-mobile .analysis-panel {
-  padding: 14px !important;
+  padding: 12px !important;
 }
 
 html.qiming-mini-program-webview.ua-mobile .analysis-panel-header {
@@ -817,7 +813,7 @@ html.qiming-mini-program-webview.ua-mobile .analysis-panel-header {
 
 html.qiming-mini-program-webview.ua-mobile .analysis-panel .progress-chart,
 html.qiming-mini-program-webview.ua-mobile .analysis-panel .exam-chart {
-  height: clamp(160px, 22dvh, 188px) !important;
+  height: clamp(300px, 88vw, 360px) !important;
 }
 
 html.qiming-mini-program-webview.ua-mobile
@@ -833,9 +829,7 @@ html.qiming-mini-program-webview.ua-mobile
   padding-block: 12px !important;
 }
 
-html.qiming-mini-program-webview.ua-mobile
-  .analysis-section
-  .panel-empty {
+html.qiming-mini-program-webview.ua-mobile .analysis-section .panel-empty {
   height: 144px !important;
 }
 
@@ -992,6 +986,18 @@ html.qiming-native-webview.ua-mobile .layout-footer {
   display: none !important;
 }
 
+html.qiming-native-webview .nx-nav,
+html.qiming-native-webview.ua-mobile .nx-nav {
+  height: calc(60px + var(--pure-safe-area-top, 0));
+  padding-top: var(--pure-safe-area-top, 0);
+  box-sizing: border-box;
+}
+
+html.qiming-native-webview .nx-hero,
+html.qiming-native-webview.ua-mobile .nx-hero {
+  padding-top: calc(100px + var(--pure-safe-area-top, 0));
+}
+
 html.qiming-native-webview .account-container,
 html.qiming-native-webview.ua-mobile .account-container {
   min-height: 100dvh !important;
@@ -1058,9 +1064,7 @@ html.qiming-native-webview.ua-mobile .account-container .account-content {
   box-sizing: border-box !important;
 }
 
-html.qiming-mini-program-webview.ua-mobile
-  .account-container
-  .account-content {
+html.qiming-mini-program-webview.ua-mobile .account-container .account-content {
   padding-top: 8px !important;
 }
 
@@ -1514,9 +1518,7 @@ html.qiming-native-webview.ua-mobile .ai-chat-card {
     padding: 8px !important;
   }
 
-  html.qiming-native-webview
-    .ai-chat-module__composer
-    .el-textarea__inner {
+  html.qiming-native-webview .ai-chat-module__composer .el-textarea__inner {
     font-size: 16px !important;
     line-height: 1.45 !important;
   }

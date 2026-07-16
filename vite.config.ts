@@ -15,11 +15,14 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     VITE_PORT,
     VITE_COMPRESSION,
     VITE_PUBLIC_PATH,
+    VITE_API_URL,
     VITE_PROXY_TARGET,
     VITE_MINDMAP_FILE_PROXY_TARGET,
     VITE_MOCK_SCOPE
   } = wrapperEnv(loadEnv(mode, root));
   const isEdgeOneWechatH5 = process.env.QIMING_EDGEONE_WECHAT_H5 === "1";
+  const resolvedApiUrl =
+    mode === "app" && !VITE_API_URL ? VITE_PROXY_TARGET : VITE_API_URL;
   return {
     base: VITE_PUBLIC_PATH,
     root,
@@ -62,7 +65,12 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
         ]
       }
     },
-    plugins: getPluginsList(VITE_CDN, VITE_COMPRESSION, VITE_MOCK_SCOPE),
+    plugins: getPluginsList(
+      VITE_CDN,
+      VITE_COMPRESSION,
+      VITE_MOCK_SCOPE,
+      mode === "app"
+    ),
     // https://cn.vitejs.dev/config/dep-optimization-options.html#dep-optimization-options
     optimizeDeps: {
       include,
@@ -105,6 +113,7 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
       }
     },
     define: {
+      "import.meta.env.VITE_API_URL": JSON.stringify(resolvedApiUrl),
       __INTLIFY_PROD_DEVTOOLS__: false,
       __APP_INFO__: JSON.stringify(__APP_INFO__)
     }

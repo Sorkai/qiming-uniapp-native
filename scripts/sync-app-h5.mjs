@@ -406,6 +406,24 @@ html = html
   .replace(/\b(href|src)="\/(manifest\.webmanifest[^"]*)"/g, '$1="./$2"');
 html = injectHeadScript(html, "qiming-native-bridge.js");
 html = injectHeadScript(html, "qiming-native-compat.js");
+
+const platformConfigPath = join(targetDir, "platform-config.json");
+if (existsSync(platformConfigPath)) {
+  const platformConfig = JSON.parse(readFileSync(platformConfigPath, "utf8"));
+  const serializedPlatformConfig = JSON.stringify(platformConfig)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+  const inlineConfigTag = `  <script id="qiming-platform-config">window.__QIMING_PLATFORM_CONFIG__=${serializedPlatformConfig};</script>`;
+  html = html.replace(
+    /\s*<script\s+id=["']qiming-platform-config["'][^>]*>[\s\S]*?<\/script>/g,
+    ""
+  );
+  const nativeBridgeTag = '  <script src="./qiming-native-bridge.js"></script>';
+  html = html.includes(nativeBridgeTag)
+    ? html.replace(nativeBridgeTag, `${inlineConfigTag}\n${nativeBridgeTag}`)
+    : html.replace("</head>", `${inlineConfigTag}\n</head>`);
+}
 writeFileSync(htmlPath, html, "utf8");
 
 writeFileSync(
