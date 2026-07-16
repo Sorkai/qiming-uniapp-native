@@ -700,14 +700,14 @@ onMounted(() => {
 
 @media screen and (max-width: 768px) {
   .efficient-filter-panel {
-    gap: 12px;
-    padding: 12px;
-    border-radius: 16px;
+    gap: 12px !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
   }
 
   .efficient-chart-panel {
-    padding: 8px;
-    border-radius: 16px;
+    padding: 8px !important;
+    border-radius: 16px !important;
   }
 
   .chart-container {
