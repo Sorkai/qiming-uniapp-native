@@ -30,21 +30,37 @@ const roleMeta = {
   student: { roleType: 1, roles: ["student"], label: "学生" }
 };
 
+const allowedHttpFailures = [
+  {
+    status: 404,
+    pathname: "/edu/backend/v1/statistics/platform/overview",
+    routes: new Set(["admin-dashboard", "teacher-dashboard"]),
+    reason: "optional platform overview endpoint is not deployed"
+  }
+];
+
 const routes = [
   { role: "student", name: "student-account-home", entry: "/account?menu=home", expect: ["吴同学", "首页"] },
   { role: "student", name: "student-account-course", entry: "/account?menu=course", expect: ["课程"] },
+  { role: "student", name: "student-account-resources", entry: "/account?menu=student-resources", expect: ["个性化教学资源", "教学资源"] },
   { role: "student", name: "student-account-classroom", entry: "/account?menu=classroom", expect: ["虚拟校园"] },
   { role: "student", name: "student-account-profile", entry: "/account?menu=profile", expect: ["个人资料"] },
+  { role: "student", name: "student-learning-profile", entry: "/account?menu=learning-profile", expect: ["学习画像", "画像地形"] },
+  { role: "student", name: "student-learning-path", entry: "/account?menu=learning-path", expect: ["学习路径规划", "路径节点"] },
   { role: "student", name: "student-account-cloud-disk", entry: "/account?menu=cloud-disk", expect: ["学习云盘", "云盘"] },
   { role: "student", name: "student-account-notification", entry: "/account?menu=notification", expect: ["通知"] },
   { role: "student", name: "student-account-todo", entry: "/account?menu=todo", expect: ["待办"] },
   { role: "student", name: "student-account-virtual-lab", entry: "/account?menu=virtual-lab", expect: ["虚拟实验室"] },
   { role: "student", name: "student-account-competition", entry: "/account?menu=competition", expect: ["赛事"] },
   { role: "student", name: "student-account-exam-center", entry: "/account?menu=exam-center", expect: ["试卷", "考试"] },
-  { role: "student", name: "student-course-study", entry: "/course/1?section=course-learn", expect: ["章节", "课程学习"] },
-  { role: "student", name: "student-course-mastery", entry: "/course/1?section=mastery", expect: ["知识点"] },
-  { role: "student", name: "student-course-qa", entry: "/course/1?section=course-qa", expect: ["课程问答"] },
-  { role: "student", name: "student-course-work", entry: "/course/1?section=homework-exam", expect: ["作业", "考试"] },
+  { role: "student", name: "student-course-study", entry: "/course/1?section=course-learn", expect: ["章节", "课程学习"], requiresCourse: true },
+  { role: "student", name: "student-course-mastery", entry: "/course/1?section=mastery", expect: ["知识点"], requiresCourse: true },
+  { role: "student", name: "student-course-qa", entry: "/course/1?section=course-qa", expect: ["课程问答"], requiresCourse: true },
+  { role: "student", name: "student-course-work", entry: "/course/1?section=homework-exam", expect: ["作业", "考试"], requiresCourse: true },
+  { role: "student", name: "student-course-materials", entry: "/course/1?section=course-materials", expect: ["课程资料"], requiresCourse: true },
+  { role: "student", name: "student-course-animations", entry: "/course/1?section=html-animations", expect: ["HTML动画"], requiresCourse: true },
+  { role: "student", name: "student-course-grades", entry: "/course/1?section=grades", expect: ["课程成绩", "成绩"], requiresCourse: true },
+  { role: "student", name: "student-course-wrong-exercise", entry: "/course/1?section=homework-exam", readyExpect: ["作业考试", "随练"], action: { selector: ".homework-tabs .el-tabs__item", text: "随练" }, expect: ["多选模式", "暂无错题记录", "道错题"], requiresCourse: true },
   { role: "student", name: "student-ai-app", entry: "/account/ai-app?mode=student", expect: ["学生模式", "学习助手"] },
   { role: "student", name: "student-ai-chat", entry: "/ai-app/chat", expect: ["学生模式", "互动答疑"] },
   { role: "student", name: "student-ai-generation", entry: "/ai-app/generation", expect: ["教学资源"] },
@@ -62,6 +78,7 @@ const routes = [
   { role: "teacher", name: "teacher-cloud-disk", entry: "/cloud-disk", expect: ["教学云盘", "云盘"] },
   { role: "teacher", name: "teacher-todo", entry: "/todo", expect: ["待办"] },
   { role: "teacher", name: "teacher-ai-chat", entry: "/ai-app/chat", expect: ["教师模式", "互动答疑"] },
+  { role: "teacher", name: "teacher-ai-workspace", entry: "/ai-app/workspace", expect: ["教师模式", "互动答疑"] },
   { role: "teacher", name: "teacher-ai-generation", entry: "/ai-app/generation", expect: ["教学资源"] },
   { role: "teacher", name: "teacher-ai-agentpdf", entry: "/ai-app/agentpdf", expect: ["资料研读"] },
   { role: "teacher", name: "teacher-ai-path", entry: "/ai-app/path", expect: ["学习计划"] },
@@ -69,13 +86,22 @@ const routes = [
   { role: "teacher", name: "teacher-ai-assessment", entry: "/ai-app/assessment", expect: ["测验评估"] },
   { role: "teacher", name: "teacher-ai-governance", entry: "/ai-app/governance", expect: ["治理看板"] },
   { role: "teacher", name: "teacher-ai-automation", entry: "/ai-app/automation", expect: ["常规任务"] },
+  { role: "teacher", name: "teacher-discussion-moderation", entry: "/course/discussion/index", expect: ["内容审核", "筛选条件"] },
+  { role: "teacher", name: "teacher-discussion-reports", entry: "/course/discussion/reports", expect: ["举报处理", "筛选条件"] },
   { role: "admin", name: "admin-dashboard", entry: "/welcome/index", expect: ["管理员"] },
   { role: "admin", name: "admin-user-list", entry: "/user/list", expect: ["用户列表", "用户"] },
   { role: "admin", name: "admin-course-list", entry: "/course/list", expect: ["课程"] },
   { role: "admin", name: "admin-course-category", entry: "/course/category", expect: ["课程分类"] },
   { role: "admin", name: "admin-course-assessment", entry: "/course/assessment", expect: ["作业", "考试"] },
   { role: "admin", name: "admin-discussion-review", entry: "/course/discussion/review", expect: ["讨论", "筛选"] },
+  { role: "admin", name: "admin-discussion-moderation", entry: "/course/discussion/index", expect: ["内容审核", "筛选条件"] },
+  { role: "admin", name: "admin-discussion-reports", entry: "/course/discussion/reports", expect: ["举报处理", "筛选条件"] },
+  { role: "admin", name: "admin-sensitive-words", entry: "/course/discussion/sensitive-words", expect: ["敏感词管理", "筛选条件"] },
+  { role: "admin", name: "admin-user-reputation", entry: "/course/discussion/user-reputation", expect: ["用户信誉管理", "筛选条件"] },
+  { role: "admin", name: "admin-discussion-statistics", entry: "/course/discussion/statistics", expect: ["讨论统计", "待处理举报"] },
+  { role: "admin", name: "admin-video-analysis", entry: "/course/video-analysis", expect: ["视频分析"] },
   { role: "admin", name: "admin-ai-chat", entry: "/ai-app/chat", expect: ["管理员模式", "互动答疑"] },
+  { role: "admin", name: "admin-ai-workspace", entry: "/ai-app/workspace", expect: ["管理员模式", "互动答疑"] },
   { role: "admin", name: "admin-ai-generation", entry: "/ai-app/generation", expect: ["教学资源"] },
   { role: "admin", name: "admin-ai-governance", entry: "/ai-app/governance", expect: ["治理看板"] }
 ];
@@ -89,7 +115,9 @@ function parseArgs(argv) {
     role: "",
     waitMs: Number(process.env.QIMING_REAL_AUDIT_WAIT_MS || 9000),
     headed: false,
-    browser: process.env.QIMING_MINIPROGRAM_BROWSER || ""
+    browser: process.env.QIMING_MINIPROGRAM_BROWSER || "",
+    help: false,
+    list: false
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -120,6 +148,10 @@ function parseArgs(argv) {
     } else if (arg === "--browser" && next) {
       options.browser = next;
       i += 1;
+    } else if (arg === "--list") {
+      options.list = true;
+    } else if (arg === "-h" || arg === "--help") {
+      options.help = true;
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
@@ -130,7 +162,26 @@ function parseArgs(argv) {
   if (!Number.isFinite(options.waitMs) || options.waitMs < 0) {
     throw new Error(`Unsupported wait time: ${options.waitMs}`);
   }
+  if (options.role && !roleMeta[options.role]) {
+    throw new Error(`Unsupported role: ${options.role}`);
+  }
   return options;
+}
+
+function printUsage() {
+  console.log(`Usage: node scripts/wechat-real-session-audit.mjs [options]
+
+Options:
+  --role <student|teacher|admin>  Audit only one real account role
+  --route, --only <name>          Audit only one named route
+  --origin <url>                  H5 origin to audit
+  --api-origin <url>              API origin used for real login
+  --wait-ms <ms>                  Per-route readiness timeout
+  --browser <path>                Chrome, Edge, or Chromium executable
+  --headed                        Show the browser window
+  --out-dir <path>                Artifact output directory
+  --list                          List route names and exit
+  -h, --help                      Show this help and exit`);
 }
 
 function resolveBrowserPath(explicitPath = "") {
@@ -169,6 +220,9 @@ async function loginRole(role, apiOrigin) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(account)
   });
+  if (Number(login?.code) !== 200) {
+    throw new Error(`Login API rejected ${role}: ${login?.msg || login?.code}`);
+  }
   const token = login?.data?.accessToken;
   if (!token) throw new Error(`Login did not return token for ${role}`);
   const detail = await fetchJson(`${apiOrigin}/edu/v1/user/detail`, {
@@ -179,9 +233,20 @@ async function loginRole(role, apiOrigin) {
     },
     body: "{}"
   });
+  if (Number(detail?.code) !== 200) {
+    throw new Error(`User detail API rejected ${role}: ${detail?.msg || detail?.code}`);
+  }
   const userInfo = detail?.data?.userInfo || {};
   const meta = roleMeta[role];
-  const expires = Number(login.data.accessExpire || 0) * 1000;
+  const actualRoleType = Number(userInfo.roleType);
+  if (actualRoleType !== meta.roleType) {
+    throw new Error(`Real ${role} account returned roleType=${actualRoleType}; expected ${meta.roleType}`);
+  }
+  const expiresValue = Number(login.data.accessExpire || 0);
+  const expires = expiresValue > 100000000000 ? expiresValue : expiresValue * 1000;
+  if (!Number.isFinite(expires) || expires <= Date.now()) {
+    throw new Error(`Real ${role} account returned an expired access token`);
+  }
   return {
     role,
     token,
@@ -195,36 +260,32 @@ async function loginRole(role, apiOrigin) {
       nickname: userInfo.nickname || meta.label,
       roles: meta.roles,
       permissions: ["*:*:*"],
-      roleType: Number(userInfo.roleType || meta.roleType),
+      roleType: actualRoleType,
       userId: Number(userInfo.id || 0)
     }
   };
 }
 
-async function resolveRoleFixtures(role, apiOrigin, session) {
+async function resolveRoleFixtures(role, apiOrigin, session, requiresCourse) {
   const fixtures = {};
-  if (role !== "student") return fixtures;
+  if (role !== "student" || !requiresCourse) return fixtures;
 
-  try {
-    const courseList = await fetchJson(
-      `${apiOrigin}/edu/frontend/v1/course/list?pageNum=1&pageSize=20`,
-      {
-        headers: {
-          authorization: `Bearer ${session.token}`
-        }
+  const courseList = await fetchJson(
+    `${apiOrigin}/edu/frontend/v1/course/list?pageNum=1&pageSize=20`,
+    {
+      headers: {
+        authorization: `Bearer ${session.token}`
       }
-    );
-    const firstCourse = courseList?.data?.list?.find(item => item?.courseId);
-    if (firstCourse?.courseId) {
-      fixtures.courseId = Number(firstCourse.courseId);
     }
-  } catch (error) {
-    console.warn(
-      `[WARN] unable to resolve student course fixture: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
+  );
+  if (Number(courseList?.code) !== 200 && courseList?.code !== undefined) {
+    throw new Error(`Student course fixture API failed: ${courseList?.msg || courseList?.code}`);
   }
+  const firstCourse = courseList?.data?.list?.find(item => item?.courseId);
+  if (!firstCourse?.courseId) {
+    throw new Error("Real student account has no course fixture for deep-link audit");
+  }
+  fixtures.courseId = Number(firstCourse.courseId);
 
   return fixtures;
 }
@@ -292,6 +353,10 @@ class CdpClient {
 
   onMessage(listener) {
     this.listeners.push(listener);
+    return () => {
+      const index = this.listeners.indexOf(listener);
+      if (index >= 0) this.listeners.splice(index, 1);
+    };
   }
 
   send(method, params = {}) {
@@ -336,6 +401,16 @@ function buildUrl(origin, route, fixtures = {}) {
   return `${origin}/#${routePath}`;
 }
 
+async function resetSession(client, origin) {
+  await client.send("Page.navigate", { url: "about:blank" });
+  await wait(100);
+  await client.send("Network.clearBrowserCookies");
+  await client.send("Storage.clearDataForOrigin", {
+    origin,
+    storageTypes: "cookies,local_storage,indexeddb"
+  });
+}
+
 async function seedSession(client, origin, session) {
   await client.send("Page.navigate", { url: `${origin}/?seed=${Date.now()}` });
   await wait(500);
@@ -343,6 +418,8 @@ async function seedSession(client, origin, session) {
     awaitPromise: true,
     expression: `(() => {
       const userInfo = ${JSON.stringify(session.userInfo)};
+      localStorage.clear();
+      sessionStorage.clear();
       const cookieInfo = {
         accessToken: userInfo.accessToken,
         expires: userInfo.expires,
@@ -356,10 +433,9 @@ async function seedSession(client, origin, session) {
       localStorage.setItem('userRoleType', String(userInfo.roleType || ''));
       localStorage.setItem('qimingNativeWebView', '1');
       localStorage.setItem('qimingMiniProgramWebView', '1');
+      localStorage.setItem('qimingRealAuditRole', ${JSON.stringify(session.role)});
       sessionStorage.setItem('qimingNativeWebView', '1');
       sessionStorage.setItem('qimingMiniProgramWebView', '1');
-      localStorage.removeItem('account_active_menu');
-      sessionStorage.removeItem('qimingNativeLastRoute');
     })()`
   });
 }
@@ -373,6 +449,10 @@ const isVisibleElementSource = `function isVisibleElement(el) {
 
 const inspectExpression = `(() => {
   ${isVisibleElementSource}
+  let storedUserInfo = {};
+  try {
+    storedUserInfo = JSON.parse(localStorage.getItem('user-info') || '{}');
+  } catch {}
   const rectInfo = el => {
     if (!el) return null;
     const rect = el.getBoundingClientRect();
@@ -415,6 +495,11 @@ const inspectExpression = `(() => {
   const maxScrollWidth = Math.max(document.body.scrollWidth, document.documentElement.scrollWidth);
   return {
     href: location.href,
+    routePath: (() => {
+      const hash = location.hash.replace(/^#/, '');
+      const path = hash.split('?')[0] || location.pathname;
+      try { return decodeURIComponent(path); } catch { return path; }
+    })(),
     title: document.title,
     textLength: text.length,
     textSample: text.slice(0, 700),
@@ -427,6 +512,12 @@ const inspectExpression = `(() => {
     scrollHeight,
     viewportHeight,
     bottomGap: Math.max(0, Math.round(viewportHeight - (main?.getBoundingClientRect().bottom || 0))),
+    session: {
+      username: String(storedUserInfo.username || ''),
+      roleType: Number(storedUserInfo.roleType || 0),
+      roles: Array.isArray(storedUserInfo.roles) ? storedUserInfo.roles : [],
+      auditRole: localStorage.getItem('qimingRealAuditRole') || ''
+    },
     layout: {
       navbar: rectInfo(navbar),
       main: rectInfo(main),
@@ -440,7 +531,19 @@ const inspectExpression = `(() => {
   };
 })()`;
 
-function analyze(info, route, consoleErrors, networkIssues) {
+function allowedHttpFailure(issue, route) {
+  let pathname = "";
+  try {
+    pathname = new URL(issue.url).pathname;
+  } catch {
+    return null;
+  }
+  return allowedHttpFailures.find(item =>
+    item.status === issue.status && item.pathname === pathname && item.routes.has(route.name)
+  ) || null;
+}
+
+function analyze(info, route, consoleErrors, networkIssues, actionResult) {
   const failures = [];
   const warnings = [];
   if (info.blank || info.textLength < 20) failures.push("blank-page");
@@ -450,6 +553,22 @@ function analyze(info, route, consoleErrors, networkIssues) {
   if (route.expect?.length && !route.expect.some(item => info.textSample.includes(item))) {
     failures.push(`missing-expected:${route.expect.join("|")}`);
   }
+  if (info.routePath === "/error/403" || info.textSample.includes("抱歉，你无权访问该页面")) {
+    failures.push("forbidden-route-redirect");
+  }
+  if (info.routePath === "/login") failures.push("session-lost-to-login");
+  const expectedRole = roleMeta[route.role];
+  const sessionRoles = Array.isArray(info.session?.roles) ? info.session.roles : [];
+  if (
+    info.session?.auditRole !== route.role ||
+    info.session?.roleType !== expectedRole.roleType ||
+    sessionRoles.length !== 1 ||
+    sessionRoles[0] !== route.role ||
+    info.session?.username !== accounts[route.role].mobile
+  ) {
+    failures.push(`role-session-mismatch:${info.session?.auditRole || "none"}/${info.session?.roleType || 0}/${sessionRoles.join("+") || "none"}`);
+  }
+  if (actionResult && !actionResult.ok) failures.push(`route-action-failed:${actionResult.reason}`);
   const seriousConsole = consoleErrors.filter(
     item =>
       /uncaught|TypeError|ReferenceError|Cannot access|Unhandled error/i.test(
@@ -457,9 +576,24 @@ function analyze(info, route, consoleErrors, networkIssues) {
       ) && !/Access to XMLHttpRequest|Failed to load resource/i.test(item)
   );
   if (seriousConsole.length) failures.push(`console-errors:${seriousConsole.length}`);
-  const apiNetwork = networkIssues.filter(item => item.status >= 400);
+  const httpNetwork = networkIssues.filter(item => item.status >= 400);
+  const allowedNetwork = httpNetwork.filter(item => allowedHttpFailure(item, route));
+  const unexpectedNetwork = httpNetwork.filter(item => !allowedHttpFailure(item, route));
   const browserAbortNetwork = networkIssues.filter(item => item.errorText);
-  if (apiNetwork.length) warnings.push(`api-network:${apiNetwork.length}`);
+  if (unexpectedNetwork.length) {
+    const sample = unexpectedNetwork.slice(0, 3).map(item => {
+      try {
+        return `${item.status}:${new URL(item.url).pathname}`;
+      } catch {
+        return `${item.status}:${item.url}`;
+      }
+    }).join("|");
+    failures.push(`http-errors:${unexpectedNetwork.length}:${sample}`);
+  }
+  if (allowedNetwork.length) {
+    const reasons = [...new Set(allowedNetwork.map(item => allowedHttpFailure(item, route)?.reason).filter(Boolean))];
+    warnings.push(`allowed-http:${allowedNetwork.length}:${reasons.join("|")}`);
+  }
   if (browserAbortNetwork.length) {
     warnings.push(`browser-network:${browserAbortNetwork.length}`);
   }
@@ -467,6 +601,47 @@ function analyze(info, route, consoleErrors, networkIssues) {
     failures.push(`ai-left-rail-too-wide:${info.layout.aiLeftRail.width}`);
   }
   return { failures, warnings };
+}
+
+async function inspectPage(client) {
+  const evaluated = await client.send("Runtime.evaluate", {
+    returnByValue: true,
+    awaitPromise: true,
+    expression: inspectExpression
+  });
+  return evaluated.result?.value || {};
+}
+
+async function waitForExpectedPage(client, expected, waitMs) {
+  const startedAt = Date.now();
+  let info = {};
+  do {
+    await wait(500);
+    info = await inspectPage(client);
+    const expectedReady = !expected?.length || expected.some(item => String(info.textSample || "").includes(item));
+    if (!info.blank && info.textLength > 80 && info.loadingCount === 0 && expectedReady) break;
+  } while (Date.now() - startedAt < waitMs);
+  return info;
+}
+
+async function performRouteAction(client, action) {
+  if (!action) return null;
+  const evaluated = await client.send("Runtime.evaluate", {
+    returnByValue: true,
+    awaitPromise: true,
+    expression: `(() => {
+      ${isVisibleElementSource}
+      const selector = ${JSON.stringify(action.selector)};
+      const expectedText = ${JSON.stringify(action.text)};
+      const target = Array.from(document.querySelectorAll(selector)).find(el =>
+        isVisibleElement(el) && String(el.textContent || '').replace(/\\s+/g, ' ').trim().includes(expectedText)
+      );
+      if (!target) return { ok: false, reason: 'target-not-found', selector, expectedText };
+      target.click();
+      return { ok: true, selector, expectedText, clickedText: String(target.textContent || '').replace(/\\s+/g, ' ').trim() };
+    })()`
+  });
+  return evaluated.result?.value || { ok: false, reason: "no-action-result" };
 }
 
 async function captureBottom(client) {
@@ -491,21 +666,28 @@ async function captureBottom(client) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
+  const selectedRoutes = routes.filter(route => {
+    if (options.route && route.name !== options.route) return false;
+    if (options.role && route.role !== options.role) return false;
+    return true;
+  });
+  if (options.help) {
+    printUsage();
+    return;
+  }
+  if (options.list) {
+    selectedRoutes.forEach(route => console.log(`${route.role.padEnd(7, " ")} ${route.name} ${route.entry}`));
+    return;
+  }
+  if (!selectedRoutes.length) {
+    throw new Error("No matching routes for audit.");
+  }
   const browserPath = resolveBrowserPath(options.browser);
   if (!browserPath) throw new Error("Chrome/Edge not found.");
   const outDir =
     options.outDir ||
     join(artifactsDir, `real-session-audit-${new Date().toISOString().replace(/[:.]/g, "-")}`);
   mkdirSync(outDir, { recursive: true });
-
-  const selectedRoutes = routes.filter(route => {
-    if (options.route && route.name !== options.route) return false;
-    if (options.role && route.role !== options.role) return false;
-    return true;
-  });
-  if (!selectedRoutes.length) {
-    throw new Error("No matching routes for audit.");
-  }
 
   const sessions = {};
   const fixtures = {};
@@ -514,7 +696,8 @@ async function main() {
     fixtures[role] = await resolveRoleFixtures(
       role,
       options.apiOrigin,
-      sessions[role]
+      sessions[role],
+      selectedRoutes.some(route => route.role === role && route.requiresCourse)
     );
   }
 
@@ -560,8 +743,14 @@ async function main() {
     });
 
     for (const route of selectedRoutes) {
+      await resetSession(client, options.origin);
+      await seedSession(client, options.origin, sessions[route.role]);
+      await client.send("Network.disable");
+      await client.send("Network.enable");
+
       const consoleErrors = [];
       const networkIssues = [];
+      const requestUrls = new Map();
       const onMessage = message => {
         if (message.method === "Runtime.consoleAPICalled") {
           const text = (message.params.args || [])
@@ -599,33 +788,26 @@ async function main() {
             });
           }
         }
+        if (message.method === "Network.requestWillBeSent") {
+          requestUrls.set(message.params.requestId, message.params.request.url);
+        }
         if (message.method === "Network.loadingFailed") {
           networkIssues.push({
             status: 0,
             errorText: message.params.errorText,
-            url: message.params.requestId
+            url: requestUrls.get(message.params.requestId) || message.params.requestId
           });
         }
       };
-      client.onMessage(onMessage);
+      const unsubscribe = client.onMessage(onMessage);
 
-      await seedSession(client, options.origin, sessions[route.role]);
       const url = buildUrl(options.origin, route, fixtures[route.role]);
       await client.send("Page.navigate", { url });
 
-      const startedAt = Date.now();
-      let info = {};
-      while (Date.now() - startedAt < options.waitMs) {
-        await wait(500);
-        const evaluated = await client.send("Runtime.evaluate", {
-          returnByValue: true,
-          awaitPromise: true,
-          expression: inspectExpression
-        });
-        info = evaluated.result?.value || {};
-        const expectedReady =
-          !route.expect?.length || route.expect.some(item => String(info.textSample || "").includes(item));
-        if (!info.blank && info.textLength > 80 && info.loadingCount === 0 && expectedReady) break;
+      let info = await waitForExpectedPage(client, route.readyExpect || route.expect, options.waitMs);
+      const actionResult = await performRouteAction(client, route.action);
+      if (actionResult?.ok) {
+        info = await waitForExpectedPage(client, route.expect, options.waitMs);
       }
       await wait(600);
       const firstShot = await client.send("Page.captureScreenshot", {
@@ -653,7 +835,8 @@ async function main() {
         info,
         route,
         consoleErrors,
-        networkIssues
+        networkIssues,
+        actionResult
       );
       const result = {
         label: route.name,
@@ -666,6 +849,7 @@ async function main() {
         bottomScreenshotPath,
         info,
         bottomInfo,
+        actionResult,
         consoleErrors: consoleErrors.slice(0, 20),
         networkIssues: networkIssues.slice(0, 30)
       };
@@ -673,6 +857,7 @@ async function main() {
       console.log(
         `[${result.ok ? "OK" : "FAIL"}] ${route.name.padEnd(32, " ")} text=${String(info.textLength || 0).padStart(4)} broken=${info.brokenImages?.length || 0} overflowX=${info.overflowX ?? "?"} ${failures.join(",") || screenshotPath}${warnings.length ? ` warnings=${warnings.join(",")}` : ""}`
       );
+      unsubscribe();
     }
   } finally {
     client?.close();

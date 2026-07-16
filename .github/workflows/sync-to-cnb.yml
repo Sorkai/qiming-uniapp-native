@@ -26,6 +26,7 @@ concurrency:
 jobs:
   sync-to-cnb:
     name: Sync ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.ref_name }}
+    if: ${{ github.repository == 'Sorkai/qiming-uniapp-native' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source branch

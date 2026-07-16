@@ -95,8 +95,8 @@ function assertOutput() {
   assertFile("homepage/bannerphoto.png");
 
   assertDistContains(
-    "面向真实教学过程的智能教育平台",
-    "dist does not contain the latest branded /home page copy"
+    "IntellEdu",
+    "dist does not contain the IntellEdu product brand"
   );
   assertDistContains(
     "aiedu-api.intelledu.cn",

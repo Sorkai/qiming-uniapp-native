@@ -124,9 +124,12 @@ function verifyBuilds() {
   const checks = [
     ["pnpm", ["typecheck"]],
     ["pnpm", ["build:app-h5"]],
+    ["pnpm", ["sync:app-h5"]],
     ["pnpm", ["--dir", "native-app", "type-check"]],
+    ["pnpm", ["--dir", "native-app", "build:app"]],
     ["pnpm", ["mini:build"]],
-    ["pnpm", ["mini:smoke"]]
+    ["pnpm", ["mini:smoke"]],
+    ["pnpm", ["--ignore-workspace", "edgeone:build"]]
   ];
 
   for (const [command, args] of checks) {

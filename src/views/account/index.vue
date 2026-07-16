@@ -680,7 +680,10 @@ const menuKeys = [
   "ai-app",
   "virtual-lab",
   "competition",
-  "exam-center"
+  "exam-center",
+  "student-resources",
+  "learning-profile",
+  "learning-path"
 ];
 
 const readRouteMenu = () => {
