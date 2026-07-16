@@ -374,6 +374,8 @@ const sidebarWidthStorageKey = "ai-app-course-sidebar-width";
 const sidebarDefaultWidth = 260;
 const sidebarMinWidth = 220;
 const sidebarAbsoluteMaxWidth = 420;
+const isCompactAiViewport = () =>
+  typeof window !== "undefined" && window.innerWidth <= 768;
 const getSidebarMaxWidth = () =>
   typeof window === "undefined"
     ? sidebarAbsoluteMaxWidth
@@ -397,9 +399,10 @@ const sidebarWidth = ref(
     )
   )
 );
-const sidebarCollapsed = ref(false);
+const sidebarCollapsed = ref(isCompactAiViewport());
 const sidebarResizing = ref(false);
 const humanCollapsed = ref(false);
+let sidebarWasCompact = isCompactAiViewport();
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
 const sidebarRenderedWidth = computed(() =>
@@ -470,6 +473,9 @@ const handleSidebarResizeKeydown = (event: KeyboardEvent) => {
 };
 
 const syncSidebarWidthLimit = () => {
+  const compact = isCompactAiViewport();
+  if (compact && !sidebarWasCompact) sidebarCollapsed.value = true;
+  sidebarWasCompact = compact;
   sidebarMaxWidth.value = getSidebarMaxWidth();
   setSidebarWidth(sidebarWidth.value);
 };
@@ -3497,6 +3503,7 @@ onUnmounted(() => {
   width: auto;
   min-width: 0;
   max-width: 100%;
+  position: relative;
   text-rendering: optimizeLegibility;
 }
 
@@ -4187,13 +4194,32 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .ai-app-left-rail {
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 8px;
+    width: min(82vw, 300px) !important;
+    max-width: calc(100vw - 24px);
+    border-radius: 16px;
+  }
+
+  .ai-app-left-rail.is-collapsed {
+    width: 34px !important;
+    border-radius: 12px;
+  }
+
+  .ai-app-left-rail__resize-handle {
+    display: none;
+  }
+
   .resource-workspace-tabs {
     padding: 0 12px 12px;
   }
 
-  .ai-chat-workbench {
+  .ai-app-root.is-chat .ai-chat-workbench {
     gap: 10px;
-    padding: 10px;
+    padding: 10px 10px 10px 48px;
   }
 
   .quick-chat-toolbar {
