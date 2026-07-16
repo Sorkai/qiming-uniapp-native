@@ -452,17 +452,6 @@ const fetchList = async () => {
 };
 
 const fetchAnalyzedHistory = async () => {
-  if (
-    document.documentElement.classList.contains(
-      "qiming-mini-program-webview"
-    ) ||
-    document.documentElement.dataset.qimingMiniProgram === "true" ||
-    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
-    sessionStorage.getItem("qimingMiniProgramWebView") === "1"
-  ) {
-    analysisHistoryMap.value = {};
-    return;
-  }
   try {
     const { data } = await getWrongExerciseHistory({
       course_id: courseId.value,

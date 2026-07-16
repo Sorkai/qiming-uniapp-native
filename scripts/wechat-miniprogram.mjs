@@ -21,6 +21,11 @@ const nativeProject = join(root, "native-app");
 const buildDir = join(nativeProject, "dist", "build", "mp-weixin");
 const projectConfigPath = join(buildDir, "project.config.json");
 const artifactsDir = join(root, "artifacts", "wechat-miniprogram");
+const wrongExerciseViewPath = join(
+  root,
+  "src/views/account/wrong-exercise.vue"
+);
+const wrongExerciseApiPath = join(root, "src/api/frontend/wrong-exercise.ts");
 const defaultWebviewOrigin = "https://aiedu-mp.intelledu.cn";
 const defaultLaunchEntry = "/home";
 const defaultLaunchRole = "";
@@ -606,6 +611,27 @@ function collectChecks(options) {
     "pages/index/index.wxml",
     "pages/index/index.wxss"
   ];
+
+  const wrongExerciseViewSource = existsSync(wrongExerciseViewPath)
+    ? readFileSync(wrongExerciseViewPath, "utf8")
+    : "";
+  const wrongExerciseApiSource = existsSync(wrongExerciseApiPath)
+    ? readFileSync(wrongExerciseApiPath, "utf8")
+    : "";
+  const historyLoader = wrongExerciseViewSource.match(
+    /const fetchAnalyzedHistory = async \(\) => \{([\s\S]*?)\n\};\n\nconst handlePageChange/
+  )?.[1];
+  add(
+    historyLoader?.includes("getWrongExerciseHistory(") &&
+      !/qiming(?:MiniProgram|-mini-program)/i.test(historyLoader) &&
+      wrongExerciseApiSource.includes(
+        "/edu/frontend/v1/ai/wrong-exercise/history"
+      )
+      ? "OK"
+      : "FAIL",
+    "cross-client wrong-exercise history",
+    "shared request required for Web, Android, and WeChat"
+  );
 
   if (!existsSync(buildDir)) {
     add("FAIL", "mp-weixin build output", `missing: ${buildDir}`);
