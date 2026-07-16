@@ -297,6 +297,7 @@ const tutorStreaming = ref(false);
 const tutorAttachment = ref<File | null>(null);
 const tutorFileInput = ref<HTMLInputElement | null>(null);
 const uploadedResourceAttachments = new Map<string, string>();
+const loadedResourceTextCache = new Map<string, string>();
 let cancelTutorStream: (() => void) | undefined;
 let tutorSessionVersion = 0;
 let resourceRequestVersion = 0;
@@ -1038,6 +1039,7 @@ async function loadAllResources(courseId: number) {
 
 async function loadCourseResources(courseId?: number) {
   const requestId = ++resourceRequestVersion;
+  loadedResourceTextCache.clear();
   courseDetail.value = null;
   assistantResources.value = [];
   demoResources.value = [];
@@ -1187,6 +1189,7 @@ async function loadPreview(resource?: StudentResource) {
     if (content.length > 2 * 1024 * 1024) {
       throw new Error("资源体积超过内嵌预览上限");
     }
+    loadedResourceTextCache.set(resource.resourceKey, content);
     if (getPreviewKind(resource) === "markdown") {
       markdownHtml.value = renderMarkdown(content);
     } else {
@@ -1692,26 +1695,33 @@ async function uploadCurrentResourceIfPossible(
   const safeTitle =
     resource.title.replace(/[\\/:*?"<>|]/g, "_").trim() || "学习资源";
   let file: File;
-  if (resource.contentBody) {
-    file = new File([resource.contentBody], `${safeTitle}.txt`, {
+  const loadedText =
+    resource.contentBody || loadedResourceTextCache.get(resource.resourceKey);
+  if (loadedText) {
+    file = new File([loadedText], `${safeTitle}.txt`, {
       type: "text/plain"
     });
   } else {
     const uploadUrl = resourceUploadUrl(resource);
     if (!uploadUrl) return "";
-    const response = await fetch(uploadUrl, { cache: "no-store" });
-    if (!response.ok) throw new Error("当前资料读取失败");
-    const blob = await response.blob();
+    const { buffer, contentType } = await fetchPlatformResourceBuffer(
+      uploadUrl,
+      {
+        maxBytes: 20 * 1024 * 1024
+      }
+    );
     const extension = getUrlExtension(uploadUrl);
     if (acceptedDocumentTypes[extension]) {
       const fileName = resource.title.toLowerCase().endsWith(`.${extension}`)
         ? resource.title
         : `${safeTitle}.${extension}`;
-      file = new File([blob], fileName, {
-        type: acceptedDocumentTypes[extension] || blob.type
+      file = new File([buffer], fileName, {
+        type: acceptedDocumentTypes[extension] || contentType
       });
     } else {
-      file = new File([await blob.text()], `${safeTitle}.txt`, {
+      const content = decodePlatformTextBuffer(buffer, contentType);
+      loadedResourceTextCache.set(resource.resourceKey, content);
+      file = new File([content], `${safeTitle}.txt`, {
         type: "text/plain"
       });
     }

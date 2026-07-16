@@ -1960,12 +1960,14 @@ const wait = (ms: number) =>
     window.setTimeout(resolve, ms);
   });
 
+const assistantChatAttachmentsPath = "/edu/frontend/v1/ai/chat/attachments";
+
 export const initAssistantDocumentAttachmentSts = (
   data: AssistantDocumentAttachmentStsInitReq
 ) =>
   http.request<ApiResponse<AssistantDocumentAttachmentStsInitResp>>(
     "post",
-    "/edu/frontend/v1/ai/chat/document-attachments/sts/init",
+    `${assistantChatAttachmentsPath}/sts/init`,
     { data }
   );
 
@@ -1974,14 +1976,14 @@ export const completeAssistantDocumentAttachmentSts = (
 ) =>
   http.request<ApiResponse<AssistantChatAttachmentStatus>>(
     "post",
-    "/edu/frontend/v1/ai/chat/document-attachments/sts/complete",
+    `${assistantChatAttachmentsPath}/sts/complete`,
     { data }
   );
 
 export const getAssistantChatAttachmentStatus = (attachmentId: string) =>
   http.request<ApiResponse<AssistantChatAttachmentStatus>>(
     "get",
-    `/edu/frontend/v1/ai/chat/attachments/${encodeURIComponent(attachmentId)}/status`
+    `${assistantChatAttachmentsPath}/${encodeURIComponent(attachmentId)}/status`
   );
 
 export const waitAssistantDocumentAttachmentReady = async (
