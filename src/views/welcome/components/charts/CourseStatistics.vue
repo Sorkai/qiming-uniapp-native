@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch, computed, nextTick } from "vue";
-import { useDark, useECharts } from "@pureadmin/utils";
+import { useDark, useECharts, useResizeObserver } from "@pureadmin/utils";
 import { message } from "@/utils/message";
 import ClipboardIcon from "@/assets/new-release/clipboard-note-document-report-paper-list-data-svgrepo-com.svg?component";
 import { utils, writeFile } from "xlsx";
@@ -56,12 +56,23 @@ const examChartRef = ref();
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
-const { setOptions: setProgressOptions } = useECharts(progressChartRef, {
-  theme
-});
+const { setOptions: setProgressOptions, resize: resizeProgressChart } =
+  useECharts(progressChartRef, {
+    theme
+  });
 
-const { setOptions: setExamOptions } = useECharts(examChartRef, {
-  theme
+const { setOptions: setExamOptions, resize: resizeExamChart } = useECharts(
+  examChartRef,
+  {
+    theme
+  }
+);
+
+useResizeObserver(progressChartRef, () => resizeProgressChart(), {
+  time: 80
+});
+useResizeObserver(examChartRef, () => resizeExamChart(), {
+  time: 80
 });
 
 const handleExport = () => {
@@ -1190,8 +1201,9 @@ onMounted(async () => {
 
 @media screen and (max-width: 768px) {
   .analysis-toolbar {
-    padding: 18px;
-    gap: 16px;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 16px;
   }
 
   .analysis-toolbar-main,
@@ -1223,13 +1235,13 @@ onMounted(async () => {
   }
 
   .analysis-panel-grid {
-    gap: 16px;
+    gap: 12px;
     margin-top: 0;
   }
 
   .analysis-panel {
-    padding: 18px;
-    border-radius: 24px;
+    padding: 12px;
+    border-radius: 16px;
   }
 
   .analysis-panel-header {
@@ -1250,7 +1262,7 @@ onMounted(async () => {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-    padding: 12px;
+    padding: 8px;
   }
 
   .analysis-exam-select {
