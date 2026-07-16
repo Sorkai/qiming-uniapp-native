@@ -1228,7 +1228,7 @@ const fetchCourseStats = async () => {
       // 课程总数、累计课时、完成率 受日期筛选影响
       courseStats.totalCourses = res.data.totalCourses ?? 0;
       courseStats.totalHours = res.data.totalHours ?? 0;
-      const rate = res.data.completionRate ?? 0;
+      const rate = res.data.avgCompletionRate ?? res.data.completionRate ?? 0;
       courseStats.completionRate = `${rate}%`;
       // 在学人数固定为近7天，不受日期筛选影响
       courseStats.totalStudents = res.data.activeStudents ?? 0;

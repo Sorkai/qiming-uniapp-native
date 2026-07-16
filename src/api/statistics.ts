@@ -100,16 +100,6 @@ interface EfficientIndexResult {
   }>;
 }
 
-export interface PlatformStatsResult {
-  stats: Array<{
-    title: string;
-    value: string | number;
-    unit: string;
-    trend: number;
-    icon: string;
-  }>;
-}
-
 interface ApiResponse<T = any> {
   code: number;
   msg: string;
@@ -174,15 +164,5 @@ export const getEfficientIndex = () => {
   return http.request<ApiResponse<EfficientIndexResult>>(
     "get",
     "/edu/backend/v1/statistics/efficient/index"
-  );
-};
-
-/**
- * 获取平台概览数据统计（顶部四个卡片）
- */
-export const getPlatformStats = () => {
-  return http.request<ApiResponse<PlatformStatsResult>>(
-    "get",
-    "/edu/backend/v1/statistics/platform/overview"
   );
 };

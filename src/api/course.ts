@@ -462,16 +462,22 @@ export const generateTeacherPlan = (data: {
  */
 export interface CourseStatsResult {
   totalCourses: number; // 日期范围内有学习记录的课程数，未传日期则统计教师所有课程
-  totalHours: number; // 范围内有学习记录课程的课时总和（单位：分钟）
+  totalStudents?: number; // 课程关联学生总数
+  totalHours: number; // 范围内有学习记录课程的课时总和
+  totalHoursUnit?: string;
   activeStudents: number; // 近7天有学习记录的去重学生数（固定，与日期筛选无关）
-  completionRate: number; // 加权完成率：完成记录数/总学习记录数×100
+  completedStudents?: number;
+  inProgressStudents?: number;
+  avgCompletionRate?: number; // 加权完成率：完成记录数/总学习记录数×100
+  completionRate?: number; // 兼容旧响应字段
+  lastUpdatedAt?: string;
 }
 
 /**
  * 获取课程统计数据
  * @param params 日期范围参数
  * - startDate/endDate 过滤学习记录时间
- * - totalCourses/totalHours/completionRate 受日期筛选影响
+ * - totalCourses/totalHours/avgCompletionRate 受日期筛选影响
  * - activeStudents 固定为近7天数据，不受日期筛选影响
  */
 export const getCourseStats = (params?: {

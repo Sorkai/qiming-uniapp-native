@@ -24,11 +24,11 @@ import { uploadFile, getUserDetail, getStudentStats } from "@/api/user";
 import { formatAvatar } from "@/utils/avatar";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getFrontendCourseList } from "@/api/frontend/course";
+import { getCourseStats } from "@/api/course";
 import {
   getCourseUsersProgress,
   getWeekUsage,
   getEfficientIndex,
-  getPlatformStats,
   getTeacherUsage
 } from "@/api/statistics";
 
@@ -101,8 +101,8 @@ const teacherStats = reactive<TeacherStats>({
 // 管理员统计定义
 export interface AdminStats {
   totalActivity: number;
-  platformEfficiency: number;
-  totalResources: number;
+  avgCompletionRate: number;
+  totalCourses: number;
   joinDate: string;
   teacherActivity: Array<{
     name: string;
@@ -113,8 +113,8 @@ export interface AdminStats {
 
 const adminStats = reactive<AdminStats>({
   totalActivity: 0,
-  platformEfficiency: 0,
-  totalResources: 0,
+  avgCompletionRate: 0,
+  totalCourses: 0,
   joinDate: "",
   teacherActivity: []
 });
@@ -212,6 +212,8 @@ const fetchTeacherStats = async () => {
 // 获取管理员统计数据
 const fetchAdminStats = async () => {
   try {
+    let totalStudents = 0;
+    let inProgressStudents = 0;
     const weekRes = await getWeekUsage();
     if (weekRes.code === 200 && weekRes.data) {
       adminStats.totalActivity =
@@ -219,13 +221,14 @@ const fetchAdminStats = async () => {
         (weekRes.data.teacherTotalNum || 0);
     }
 
-    const platRes = await getPlatformStats();
-    if (platRes.code === 200 && platRes.data) {
-      const stats = platRes.data.stats || [];
-      const resourceStat = stats.find(
-        s => s.title.includes("资源") || s.title.includes("课")
+    const courseRes = await getCourseStats();
+    if (courseRes.code === 200 && courseRes.data) {
+      adminStats.totalCourses = Number(courseRes.data.totalCourses || 0);
+      adminStats.avgCompletionRate = Number(
+        courseRes.data.avgCompletionRate ?? courseRes.data.completionRate ?? 0
       );
-      adminStats.totalResources = resourceStat ? Number(resourceStat.value) : 0;
+      totalStudents = Number(courseRes.data.totalStudents || 0);
+      inProgressStudents = Number(courseRes.data.inProgressStudents || 0);
     }
 
     // 获取教师相关数据
@@ -242,12 +245,11 @@ const fetchAdminStats = async () => {
       adminStats.teacherActivity = [
         { name: "教师周活跃总次", value: totalUsage, unit: "次" },
         { name: "日均教研频率", value: avgUsage, unit: "次/日" },
-        { name: "入驻教师总数", value: 42, unit: "人" }, // 模拟数据
-        { name: "教学资源覆盖率", value: 88, unit: "%" }
+        { name: "关联学生总数", value: totalStudents, unit: "人" },
+        { name: "学习中学生", value: inProgressStudents, unit: "人" }
       ];
     }
 
-    adminStats.platformEfficiency = 94;
     adminStats.joinDate = profileForm.createdAt;
   } catch (e) {
     console.error("获取管理员统计失败", e);
@@ -820,15 +822,15 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-label">全站效率</div>
+                  <div class="stat-label">平均完成率</div>
                   <div class="stat-value highlight">
-                    {{ adminStats.platformEfficiency || 0 }}%
+                    {{ adminStats.avgCompletionRate || 0 }}%
                   </div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-label">资源总量</div>
+                  <div class="stat-label">课程总数</div>
                   <div class="stat-value">
-                    {{ adminStats.totalResources || 0 }}
+                    {{ adminStats.totalCourses || 0 }}
                   </div>
                 </div>
                 <div class="stat-item">
