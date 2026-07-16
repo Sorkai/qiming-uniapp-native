@@ -50,7 +50,7 @@ jobs:
 
       - name: Install uni-app dependencies
         run: |
-          pnpm --dir native-app install --frozen-lockfile
+          pnpm --dir native-app --ignore-workspace install --frozen-lockfile
 
       - name: Lint and verify formatting
         run: |
