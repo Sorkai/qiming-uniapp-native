@@ -11,7 +11,7 @@
       <div class="layout-inner-content" :class="currentTheme">
         <!-- 课程学习 (视频、目录、AI助教) -->
         <CourseStudy
-          v-if="courseId"
+          v-if="courseId && activeMenu === 'course-learn'"
           ref="courseStudyRef"
           :visible="activeMenu === 'course-learn'"
           :current-theme="currentTheme"
@@ -44,6 +44,7 @@
 
         <!-- 知识点掌握 -->
         <MasteryPage
+          v-if="activeMenu === 'mastery'"
           :visible="activeMenu === 'mastery'"
           :current-theme="currentTheme"
           :study-effect-data="studyEffectData"
@@ -57,6 +58,7 @@
 
         <!-- 课程问答 -->
         <CourseQA
+          v-if="activeMenu === 'course-qa'"
           ref="courseQARef"
           :visible="activeMenu === 'course-qa'"
           :current-theme="currentTheme"
@@ -74,7 +76,7 @@
 
         <!-- 作业考试 -->
         <HomeworkExam
-          v-if="courseId"
+          v-if="courseId && activeMenu === 'homework-exam'"
           :visible="activeMenu === 'homework-exam'"
           :current-theme="currentTheme"
           :course-id="courseId"
@@ -90,6 +92,7 @@
 
         <!-- 课程资料 -->
         <CourseMaterials
+          v-if="activeMenu === 'course-materials'"
           :visible="activeMenu === 'course-materials'"
           :current-theme="currentTheme"
           :course-attr-list="courseAttrList"
@@ -103,6 +106,7 @@
 
         <!-- HTML 动画 -->
         <HtmlAnimations
+          v-if="activeMenu === 'html-animations'"
           :visible="activeMenu === 'html-animations'"
           :current-theme="currentTheme"
           :loading="htmlAnimationLoading"
@@ -117,6 +121,7 @@
 
         <!-- 课程成绩 -->
         <CourseGrades
+          v-if="activeMenu === 'grades'"
           :visible="activeMenu === 'grades'"
           :current-theme="currentTheme"
           :course-scores="courseScores"
