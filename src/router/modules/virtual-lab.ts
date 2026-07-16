@@ -7,6 +7,7 @@ export default {
   meta: {
     icon: "ri:flask-line",
     title: $t("menus.virtualLab"),
-    rank: 12
+    rank: 12,
+    roles: ["admin", "teacher"]
   }
 } satisfies RouteConfigsTable;

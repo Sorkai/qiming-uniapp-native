@@ -7,13 +7,19 @@
   >
     <div class="mb__chrome">
       <div class="mb__lights">
-        <span style="background:#ff5f57" />
-        <span style="background:#febc2e" />
-        <span style="background:#28c840" />
+        <span style="background: #ff5f57" />
+        <span style="background: #febc2e" />
+        <span style="background: #28c840" />
       </div>
       <div class="mb__url">
         <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true">
-          <path d="M12 1 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          <path
+            d="M12 1 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linejoin="round"
+          />
         </svg>
         <span>{{ active.url }}</span>
       </div>
@@ -31,11 +37,7 @@
 
     <div ref="viewportEl" class="mb__viewport">
       <Transition name="mb-fade" mode="out-in">
-        <div
-          v-if="liveMode && liveUrl"
-          :key="liveUrl"
-          class="mb__iframe-wrap"
-        >
+        <div v-if="liveMode && liveUrl" :key="liveUrl" class="mb__iframe-wrap">
           <!-- 增加 @load 处理 -->
           <iframe
             :src="liveUrl"
@@ -68,12 +70,7 @@
         />
       </Transition>
 
-      <button
-        v-if="liveMode"
-        type="button"
-        class="mb__exit"
-        @click="exitLive"
-      >
+      <button v-if="liveMode" type="button" class="mb__exit" @click="exitLive">
         退出演示
       </button>
       <button
@@ -177,17 +174,17 @@ const go = (i: number) => {
 const enterLive = async () => {
   const slide = active.value;
   if (!slide?.iframeRoute || loadingLive.value) return;
-  
+
   loadingLive.value = true;
   iframeLoaded.value = false;
   paused.value = true;
-  
+
   try {
     await ensureDemoSession(slide.role || "teacher");
     // 添加时间戳防止缓存，并确保 iframe 重新触发加载
     const url = buildIframeUrl(slide.iframeRoute);
-    liveUrl.value = url.includes("?") 
-      ? `${url}&t=${Date.now()}` 
+    liveUrl.value = url.includes("?")
+      ? `${url}&t=${Date.now()}`
       : `${url}?t=${Date.now()}`;
     liveMode.value = true;
   } catch (err) {
@@ -212,9 +209,12 @@ const exitLive = () => {
 };
 
 watch(() => props.slides.length, start, { immediate: true });
-watch(() => active.value?.src, () => {
-  if (liveMode.value) exitLive();
-});
+watch(
+  () => active.value?.src,
+  () => {
+    if (liveMode.value) exitLive();
+  }
+);
 watch(liveMode, async v => {
   if (v) {
     await nextTick();
@@ -327,7 +327,9 @@ onUnmounted(() => {
     background: rgb(0 0 0 / 12%);
     border: 0;
     border-radius: 2px;
-    transition: background 0.25s, width 0.25s;
+    transition:
+      background 0.25s,
+      width 0.25s;
 
     &.is-active {
       width: 22px;
@@ -421,7 +423,9 @@ onUnmounted(() => {
 }
 
 @keyframes mb-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .mb__cta {
@@ -442,7 +446,10 @@ onUnmounted(() => {
   box-shadow: 0 12px 28px -10px rgb(37 99 235 / 60%);
   opacity: 0;
   transform: translateY(6px);
-  transition: opacity 0.25s, transform 0.25s, box-shadow 0.25s;
+  transition:
+    opacity 0.25s,
+    transform 0.25s,
+    box-shadow 0.25s;
   pointer-events: none;
 }
 
@@ -488,7 +495,9 @@ onUnmounted(() => {
 
 .mb-fade-enter-active,
 .mb-fade-leave-active {
-  transition: opacity 0.45s ease, transform 0.45s ease;
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
 }
 
 .mb-fade-enter-from {

@@ -19,6 +19,7 @@ const PUBLIC_ASSET_WHITELIST = [
   "icons",
   "wasm",
   "demo-resources",
+  "demos",
   "virtualpeopleanimation",
   "homepage",
   "publicbackgroundpreset"

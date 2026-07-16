@@ -272,11 +272,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 .header-date {
   font-family:
-    "SF Pro Display",
-    "PingFang SC",
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
+    "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -301,11 +297,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 
 .header-time {
   font-family:
-    "SF Mono",
-    "SFMono-Regular",
-    "JetBrains Mono",
-    "Menlo",
-    monospace;
+    "SF Mono", "SFMono-Regular", "JetBrains Mono", "Menlo", monospace;
   font-size: 12px;
   font-weight: 700;
   color: rgb(151 180 247 / 92%);

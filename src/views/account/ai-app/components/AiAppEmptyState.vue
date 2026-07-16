@@ -3,15 +3,18 @@ import type { Component } from "vue";
 import LottieAnimation from "@/components/LottieAnimation.vue";
 import emptyAnimationData from "@/assets/eden.json";
 
-const props = withDefaults(defineProps<{
-  title: string;
-  description?: string;
-  icon?: Component;
-  compact?: boolean;
-  useLottie?: boolean;
-}>(), {
-  useLottie: true
-});
+const props = withDefaults(
+  defineProps<{
+    title: string;
+    description?: string;
+    icon?: Component;
+    compact?: boolean;
+    useLottie?: boolean;
+  }>(),
+  {
+    useLottie: true
+  }
+);
 </script>
 
 <template>

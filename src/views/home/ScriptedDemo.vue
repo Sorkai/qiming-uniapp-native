@@ -57,7 +57,7 @@
             <span ref="crumbActiveEl">{{ activeLabel }}</span>
             <div class="sd__tbActions">
               <span class="sd__tbBadge">
-                <i class="sd__tbDot"></i>
+                <i class="sd__tbDot" />
                 课程数据已同步
               </span>
               <button class="sd__tbBtn">导出报告</button>
@@ -77,9 +77,9 @@
                 </p>
                 <div class="sd__sceneMeta">
                   <span>授课对象：信工 22 级 3 班 (45人)</span>
-                  <span class="divider"></span>
+                  <span class="divider" />
                   <span>预计总时长：45 分钟</span>
-                  <span class="divider"></span>
+                  <span class="divider" />
                   <span>关联知识图谱节点：22 个</span>
                 </div>
               </div>
@@ -87,7 +87,7 @@
 
             <div ref="cardsEl" class="sd__cards">
               <!-- Timeline line running behind cards -->
-              <div class="sd__timelineTrack"></div>
+              <div class="sd__timelineTrack" />
               <article
                 v-for="(c, i) in prepCards"
                 :key="c.title"
@@ -95,10 +95,7 @@
                 class="sd__card sd__card--node"
                 :data-i="i"
               >
-                <div
-                  class="sd__timelineDot"
-                  :style="{ background: c.tagFg }"
-                ></div>
+                <div class="sd__timelineDot" :style="{ background: c.tagFg }" />
                 <div class="sd__cardTop">
                   <span
                     class="sd__cardTag"
@@ -268,7 +265,7 @@
                 </p>
               </div>
               <div class="sd__liveOverlay">
-                <div class="sd__livePulse"></div>
+                <div class="sd__livePulse" />
                 <div class="sd__liveStats">
                   <div v-for="m in classMetrics" :key="m.label" class="stat">
                     <span class="val">{{ m.value }}</span
@@ -427,8 +424,8 @@
                 <div
                   v-for="q in examQuestions"
                   :key="q.id"
-                  class="sd__examQ"
                   ref="examQRefs"
+                  class="sd__examQ"
                   :data-id="q.id"
                 >
                   <span
@@ -453,10 +450,10 @@
                     <span>预计 40 分钟</span>
                   </div>
                 </div>
-                <div class="sd__paperBody" ref="paperBodyEl">
+                <div ref="paperBodyEl" class="sd__paperBody">
                   <div
-                    class="sd__paperPlaceholder"
                     v-if="!paperQuestions.length"
+                    class="sd__paperPlaceholder"
                   >
                     选择题目后生成试卷预览
                   </div>
@@ -489,7 +486,7 @@
             </div>
             <div class="sd__vlab">
               <div class="sd__vlabSys">
-                <div class="sd__linuxKernel" ref="vlabKernel">
+                <div ref="vlabKernel" class="sd__linuxKernel">
                   <div class="sd__osLabel">
                     Linux-LTS v6.1 · Pedagogical Trace
                   </div>
@@ -497,8 +494,8 @@
                     <div
                       v-for="i in 3"
                       :key="i"
-                      class="sd__procItem"
                       ref="vlabProcs"
+                      class="sd__procItem"
                     >
                       <span class="sd__procId">0{{ i }}</span>
                       Proc_{{ i === 1 ? "INIT" : i === 2 ? "KWORKER" : "VLAB" }}
@@ -508,12 +505,12 @@
                     <span v-for="i in 5" :key="i" />
                   </div>
                 </div>
-                <div class="sd__hardware" ref="vlabHardware">
+                <div ref="vlabHardware" class="sd__hardware">
                   <div
                     v-for="i in 4"
                     :key="i"
-                    class="sd__cpuCore"
                     ref="vlabCpus"
+                    class="sd__cpuCore"
                   >
                     <span class="sd__cpuLabel">Core {{ i }}</span>
                     <div class="sd__cpuLoad"><i /></div>
@@ -525,7 +522,7 @@
                   <span class="sd__consoleDot" />
                   Kernel Pedagogical Console
                 </div>
-                <div class="sd__consoleLines" ref="vlabConsoleEl">
+                <div ref="vlabConsoleEl" class="sd__consoleLines">
                   <p v-for="(line, i) in consoleLines" :key="i">{{ line }}</p>
                 </div>
               </div>
@@ -1238,8 +1235,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-@use "sass:math";
-
 $bg: #f7f7f5;
 $border: #e8e8e5;
 $text: #202124;
@@ -2553,11 +2548,29 @@ $faint: #777b80;
       border-radius: 1px;
       animation: sd-wave 1s ease-in-out infinite;
 
-      @for $i from 1 through 5 {
-        &:nth-child(#{$i}) {
-          height: 30% + math.random(60);
-          animation-delay: $i * 0.1s;
-        }
+      &:nth-child(1) {
+        height: 42%;
+        animation-delay: 0.1s;
+      }
+
+      &:nth-child(2) {
+        height: 76%;
+        animation-delay: 0.2s;
+      }
+
+      &:nth-child(3) {
+        height: 58%;
+        animation-delay: 0.3s;
+      }
+
+      &:nth-child(4) {
+        height: 84%;
+        animation-delay: 0.4s;
+      }
+
+      &:nth-child(5) {
+        height: 50%;
+        animation-delay: 0.5s;
       }
     }
   }

@@ -6,7 +6,8 @@ export default [
     meta: {
       icon: "ri:list-check",
       title: "课程列表",
-      rank: 3
+      rank: 3,
+      roles: ["admin", "teacher"]
     }
   },
   {
@@ -27,7 +28,8 @@ export default [
     meta: {
       icon: "ri:node-tree",
       title: "课程分类",
-      rank: 4
+      rank: 4,
+      roles: ["admin", "teacher"]
     }
   },
   {
@@ -37,7 +39,8 @@ export default [
     meta: {
       icon: "ri:edit-box-line",
       title: "作业与考试",
-      rank: 5
+      rank: 5,
+      roles: ["admin", "teacher"]
     }
   },
   {
@@ -47,7 +50,8 @@ export default [
     meta: {
       icon: "ri:calendar-todo-fill",
       title: "教案管理",
-      rank: 6
+      rank: 6,
+      roles: ["admin", "teacher"]
     }
   },
   {
@@ -57,7 +61,8 @@ export default [
     meta: {
       icon: "ri:magic-line",
       title: "AI动画",
-      rank: 7
+      rank: 7,
+      roles: ["admin", "teacher"]
     }
   },
   {

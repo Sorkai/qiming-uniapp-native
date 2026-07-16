@@ -146,6 +146,8 @@ const fetchUserDetail = async () => {
         roles = ["admin"];
       } else if (userInfo.roleType === 2) {
         roles = ["teacher"];
+      } else if (userInfo.roleType === 1) {
+        roles = ["student"];
       } else {
         roles = ["student"];
       }

@@ -176,7 +176,9 @@ const fetchData = async () => {
       pageSize: pagination.pageSize
     });
     const userIds = Array.from(
-      new Set((responseData.list || []).map((item: PendingItem) => item.authorId))
+      new Set(
+        (responseData.list || []).map((item: PendingItem) => item.authorId)
+      )
     );
     let avatarMap = new Map<number, string>();
     if (userIds.length > 0) {

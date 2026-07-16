@@ -708,7 +708,8 @@ const previewUrl = ref("");
 
 const isTaskProcessing = (task: HtmlAnimationTask) =>
   ["pending", "submitted", "processing"].includes(task.status);
-const isTaskCompleted = (task: HtmlAnimationTask) => task.status === "completed";
+const isTaskCompleted = (task: HtmlAnimationTask) =>
+  task.status === "completed";
 const isTaskFailed = (task: HtmlAnimationTask) => task.status === "failed";
 
 const updateCompactLayout = () => {
@@ -734,7 +735,9 @@ const latestCompletedVersion = computed(() => {
 });
 
 const latestSuccessTime = computed(() => {
-  const completed = tasks.value.filter(t => isTaskCompleted(t) && t.completedAt);
+  const completed = tasks.value.filter(
+    t => isTaskCompleted(t) && t.completedAt
+  );
   if (!completed.length) return "";
   // 最新完成时间
   return completed.sort((a, b) =>

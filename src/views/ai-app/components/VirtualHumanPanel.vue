@@ -43,7 +43,9 @@ function normalizeTtsEngine(value: unknown): TtsEngine {
 
 function readStoredTtsEngine(): TtsEngine {
   try {
-    return normalizeTtsEngine(window.localStorage.getItem(TTS_ENGINE_STORAGE_KEY));
+    return normalizeTtsEngine(
+      window.localStorage.getItem(TTS_ENGINE_STORAGE_KEY)
+    );
   } catch (_err) {
     return "browser";
   }
