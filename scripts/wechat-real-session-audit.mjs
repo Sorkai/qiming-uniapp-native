@@ -33,9 +33,13 @@ const roleMeta = {
 const allowedHttpFailures = [
   {
     status: 404,
-    pathname: "/edu/backend/v1/statistics/platform/overview",
-    routes: new Set(["admin-dashboard", "teacher-dashboard"]),
-    reason: "optional platform overview endpoint is not deployed"
+    pathname: "/edu/v1/html-animation/display",
+    routes: new Set(["student-course-animations"]),
+    reason: "HTML animation display version is not configured",
+    matches: issue =>
+      Number(issue.responseJson?.code) === 404 &&
+      typeof issue.responseJson?.message === "string" &&
+      issue.responseJson.message.includes("尚未配置展示版本")
   }
 ];
 
@@ -566,7 +570,10 @@ function allowedHttpFailure(issue, route) {
     return null;
   }
   return allowedHttpFailures.find(item =>
-    item.status === issue.status && item.pathname === pathname && item.routes.has(route.name)
+    item.status === issue.status &&
+    item.pathname === pathname &&
+    item.routes.has(route.name) &&
+    (!item.matches || item.matches(issue))
   ) || null;
 }
 
@@ -809,6 +816,7 @@ async function main() {
       const consoleErrors = [];
       const networkIssues = [];
       const requestUrls = new Map();
+      const responseIssues = new Map();
       const onMessage = message => {
         if (message.method === "Runtime.consoleAPICalled") {
           const text = (message.params.args || [])
@@ -840,10 +848,18 @@ async function main() {
         if (message.method === "Network.responseReceived") {
           const response = message.params.response;
           if (response.status >= 400) {
-            networkIssues.push({
+            const issue = {
               status: response.status,
               url: response.url.slice(0, 220)
-            });
+            };
+            networkIssues.push(issue);
+            if (response.status === 404) {
+              try {
+                if (new URL(response.url).pathname === "/edu/v1/html-animation/display") {
+                  responseIssues.set(message.params.requestId, issue);
+                }
+              } catch {}
+            }
           }
         }
         if (message.method === "Network.requestWillBeSent") {
@@ -888,6 +904,21 @@ async function main() {
       });
       const bottomScreenshotPath = join(outDir, `${route.name}-bottom.png`);
       writeFileSync(bottomScreenshotPath, Buffer.from(bottomShot.data, "base64"));
+
+      await Promise.allSettled(
+        [...responseIssues].map(async ([requestId, issue]) => {
+          const result = await client.send("Network.getResponseBody", {
+            requestId
+          });
+          const responseBody = result.base64Encoded
+            ? Buffer.from(result.body, "base64").toString("utf8")
+            : result.body;
+          issue.responseBody = String(responseBody || "").slice(0, 1000);
+          try {
+            issue.responseJson = JSON.parse(responseBody);
+          } catch {}
+        })
+      );
 
       const { failures, warnings } = analyze(
         info,
