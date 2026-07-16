@@ -1201,9 +1201,9 @@ onMounted(async () => {
 
 @media screen and (max-width: 768px) {
   .analysis-toolbar {
-    gap: 12px;
-    padding: 12px;
-    border-radius: 16px;
+    gap: 12px !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
   }
 
   .analysis-toolbar-main,
@@ -1235,20 +1235,21 @@ onMounted(async () => {
   }
 
   .analysis-panel-grid {
-    gap: 12px;
+    gap: 12px !important;
     margin-top: 0;
   }
 
   .analysis-panel {
-    padding: 12px;
-    border-radius: 16px;
+    padding: 12px !important;
+    border-radius: 16px !important;
   }
 
   .analysis-panel-header {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
-    padding: 0;
+    padding: 0 !important;
+    margin-bottom: 12px !important;
   }
 
   .analysis-section-title {
@@ -1262,7 +1263,7 @@ onMounted(async () => {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-    padding: 8px;
+    padding: 8px !important;
   }
 
   .analysis-exam-select {

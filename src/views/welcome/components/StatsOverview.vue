@@ -151,9 +151,9 @@ onMounted(async () => {
 
 @media screen and (max-width: 768px) {
   .stat-card {
-    padding: 16px;
-    margin-bottom: 10px;
-    border-radius: 16px;
+    padding: 16px !important;
+    margin-bottom: 10px !important;
+    border-radius: 16px !important;
   }
 }
 </style>
