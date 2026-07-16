@@ -64,7 +64,7 @@ const routes = [
   { role: "student", name: "student-course-materials", entry: "/course/1?section=course-materials", expect: ["课程资料"], requiresCourse: true, courseState: { section: "course-materials", menu: "course-materials", contentKey: "materials" } },
   { role: "student", name: "student-course-animations", entry: "/course/1?section=html-animations", expect: ["HTML动画"], requiresCourse: true, courseState: { section: "html-animations", menu: "html-animations", contentKey: "animations" } },
   { role: "student", name: "student-course-grades", entry: "/course/1?section=grades", expect: ["课时成绩"], requiresCourse: true, courseState: { section: "grades", menu: "grades", contentKey: "grades", contentText: "课时成绩" } },
-  { role: "student", name: "student-course-wrong-exercise", entry: "/course/1?section=homework-exam", readyExpect: [], action: { selector: ".homework-tabs .el-tabs__item", text: "随练" }, expect: ["多选模式", "暂无错题记录", "道错题"], requiresCourse: true, courseState: { section: "homework-exam", menu: "homework-exam", contentKey: "work" }, afterActionState: { activeTab: "随练", contentKey: "work", contentText: "多选模式" } },
+  { role: "student", name: "student-course-wrong-exercise", entry: "/course/1?section=homework-exam", readyExpect: [], action: { selector: ".homework-tabs .el-tabs__item", text: "随练" }, expect: ["多选模式", "暂无错题记录", "道错题"], requiresCourse: true, courseState: { section: "homework-exam", menu: "homework-exam", contentKey: "work" }, afterActionState: { activeTab: "随练", contentKey: "work", contentText: "多选模式" }, requiredRequestPath: "/edu/frontend/v1/ai/wrong-exercise/history", postActionWaitMs: 2000 },
   { role: "student", name: "student-ai-app", entry: "/account/ai-app?mode=student", expect: ["学生模式", "学习助手"] },
   { role: "student", name: "student-ai-chat", entry: "/ai-app/chat", expect: ["学生模式", "互动答疑"] },
   { role: "student", name: "student-ai-generation", entry: "/ai-app/generation", expect: ["教学资源"] },
@@ -602,7 +602,7 @@ function courseStateFailures(info, state, prefix = "course") {
   return failures;
 }
 
-function analyze(info, route, consoleErrors, networkIssues, actionResult) {
+function analyze(info, route, consoleErrors, networkIssues, actionResult, requestedUrls) {
   const failures = [];
   const warnings = [];
   if (info.blank || info.textLength < 20) failures.push("blank-page");
@@ -632,6 +632,18 @@ function analyze(info, route, consoleErrors, networkIssues, actionResult) {
     failures.push(`role-session-mismatch:${info.session?.auditRole || "none"}/${info.session?.roleType || 0}/${sessionRoles.join("+") || "none"}`);
   }
   if (actionResult && !actionResult.ok) failures.push(`route-action-failed:${actionResult.reason}`);
+  if (route.requiredRequestPath) {
+    const requiredRequestObserved = requestedUrls.some(url => {
+      try {
+        return new URL(url).pathname === route.requiredRequestPath;
+      } catch {
+        return false;
+      }
+    });
+    if (!requiredRequestObserved) {
+      failures.push(`required-request-missing:${route.requiredRequestPath}`);
+    }
+  }
   const seriousConsole = consoleErrors.filter(
     item =>
       /uncaught|TypeError|ReferenceError|Cannot access|Unhandled error/i.test(
@@ -883,7 +895,7 @@ async function main() {
       if (actionResult?.ok) {
         info = await waitForExpectedPage(client, route.expect, options.waitMs, route, true);
       }
-      await wait(600);
+      await wait(route.postActionWaitMs || 600);
       const firstShot = await client.send("Page.captureScreenshot", {
         format: "png",
         fromSurface: true
@@ -925,7 +937,8 @@ async function main() {
         route,
         consoleErrors,
         networkIssues,
-        actionResult
+        actionResult,
+        [...requestUrls.values()]
       );
       const result = {
         label: route.name,
