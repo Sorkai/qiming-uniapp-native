@@ -37,15 +37,15 @@ const transitions = computed(() => {
 });
 
 const hideTabs = computed(() => {
-  return $storage?.configure.hideTabs;
+  return $storage?.configure?.hideTabs;
 });
 
 const hideFooter = computed(() => {
-  return $storage?.configure.hideFooter || route.meta?.hideFooter === true;
+  return $storage?.configure?.hideFooter || route.meta?.hideFooter === true;
 });
 
 const stretch = computed(() => {
-  return $storage?.configure.stretch;
+  return $storage?.configure?.stretch;
 });
 
 const isMobile = computed(() => appStore.getDevice === "mobile");
