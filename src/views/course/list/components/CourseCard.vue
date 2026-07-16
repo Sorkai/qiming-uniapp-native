@@ -96,6 +96,17 @@
             >学习情况</el-button
           >
         </div>
+        <div v-if="canRebuild" class="button-row mt-2">
+          <el-button
+            size="default"
+            type="danger"
+            plain
+            class="action-btn"
+            :loading="isRebuilding"
+            @click="$emit('rebuild', course)"
+            >重建课程</el-button
+          >
+        </div>
       </div>
     </div>
   </el-card>
@@ -115,10 +126,14 @@ withDefaults(
     course: any;
     isSelected?: boolean;
     canDelete?: boolean;
+    canRebuild?: boolean;
+    isRebuilding?: boolean;
   }>(),
   {
     isSelected: false,
-    canDelete: false
+    canDelete: false,
+    canRebuild: false,
+    isRebuilding: false
   }
 );
 
@@ -129,7 +144,8 @@ defineEmits([
   "view-attrs",
   "allocation",
   "study-status",
-  "toggle-select"
+  "toggle-select",
+  "rebuild"
 ]);
 </script>
 

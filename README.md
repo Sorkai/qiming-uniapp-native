@@ -82,7 +82,7 @@ organization, or commercial environment without the project owner's prior writte
 
 - **共享业务层:** 仓库根目录的 Vue/Vite/UniApp 业务源码、公共组件、接口、
   主题和路由是三端角色（学生端、教师端、管理端）共同依赖的产品层。
-- **Android 原生线:** `native-app/` 承载 HBuilderX/App-Plus Android 容器、
+- **Android App-Plus 混合线:** `native-app/` 承载 HBuilderX/App-Plus Android 容器、
   Android 打包配置、Android 设备调试和 Android 专属原生能力。
 - **iOS 原生线:** `ios-native/` 承载 Xcode/UIKit/WKWebView iOS Simulator
   验证壳；iOS 打包与 HBuilderX iOS 能力在 `native-app/` 的 iOS 配置中衔接。
@@ -104,11 +104,42 @@ organization, or commercial environment without the project owner's prior writte
 - **验证节奏:** 每个小问题单独提交；端专属改动至少跑对应端模拟器/真机或自动化
   截图脚本，共享层改动需要补充双端风险说明和必要的双端验证。
 
+## 三角色业务源与双远端同步
+
+学生端、教师端、管理端的业务源固定为
+`Sorkai/vue-pure-admin-max` 的 `agent` 分支。移动仓库保留 Android/App-Plus、
+微信小程序、iOS 容器与平台适配，不再手工复制业务页面。
+
+本地移动仓库使用三个 remote：
+
+```bash
+git remote add web-upstream ssh://git@ssh.github.com:443/Sorkai/vue-pure-admin-max.git
+git remote add farrran git@github.com:Farrran69311/qiming-uniapp-native.git
+```
+
+其中 `origin` 指向 `Sorkai/qiming-uniapp-native`，`farrran` 指向
+`Farrran69311/qiming-uniapp-native`。日常同步命令：
+
+```bash
+pnpm sync:web:check
+pnpm sync:web
+pnpm sync:web:push
+```
+
+`sync:web` 会拉取 `web-upstream/agent`、执行增量合并，并默认验证类型检查、
+Android App-Plus H5/容器资源和微信小程序产物。发生冲突、工作树不干净或目标远端
+无法快进时会停止，不会强制覆盖。需要把同一验收提交发布为两个仓库的
+`main` 与 `wechat-miniprogram` 时，显式执行：
+
+```bash
+node scripts/sync-web-upstream.mjs --push --publish-branches main,wechat-miniprogram
+```
+
 ## 技术栈与依赖
 
 - **前端框架:** UniApp (Vue 3 语法 / 组合式 API)
 - **构建与编译:** Vite / HBuilderX / Xcode command line tools
-- **网络通信:** 封装 `uni.request`，支持 RESTful API 与长链接 WebSocket 交互
+- **网络通信:** 共享 H5 业务层使用 Axios/Fetch/WebSocket，平台容器使用 UniApp API
 - **核心关联后端:** 业务逻辑层 Go-Zero；模型服务层 Python FastAPI
 - **前端技术:** Element Plus, Tailwind CSS, Sass, Three.js, ECharts, LogicFlow/Vue-Flow, WangEditor/Vditor 等
 
@@ -119,7 +150,7 @@ organization, or commercial environment without the project owner's prior writte
 - 安装 [Node.js](https://nodejs.org/)（推荐使用仓库 `.nvmrc` 中的版本）
 - 安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 开发者工具
 - 微信小程序开发需安装微信开发者工具，并在“设置 -> 安全设置”中开启服务端口
-- 准备 Android Studio 模拟器或真实 Android 物理测试设备（需开启“开发者模式”和“USB 调试”）
+- 准备真实 Android 物理测试设备或 Android 模拟器（需开启“开发者模式”和“USB 调试”）；当前仓库不是 Gradle/Kotlin 工程，初期不要求安装完整 Android Studio
 - iOS 开发需在 macOS 上安装 Xcode；Simulator 包可使用 Xcode 命令行工具验证，真机/TestFlight 还需要 Apple Distribution 证书和 `cn.intelledu.qiming` provisioning profile
 
 ### 2. 克隆项目代码

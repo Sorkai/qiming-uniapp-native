@@ -16,6 +16,7 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     VITE_COMPRESSION,
     VITE_PUBLIC_PATH,
     VITE_PROXY_TARGET,
+    VITE_MINDMAP_FILE_PROXY_TARGET,
     VITE_MOCK_SCOPE
   } = wrapperEnv(loadEnv(mode, root));
   const isEdgeOneWechatH5 = process.env.QIMING_EDGEONE_WECHAT_H5 === "1";
@@ -38,6 +39,13 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
           changeOrigin: true,
           secure: false,
           rewrite: path => path.replace(/^\/api/, "")
+        },
+        // 思维导图 JSON 存储在 COS；本地通过同源代理读取，避免 Firefox CORS 差异。
+        "/mindmap-file": {
+          target: VITE_MINDMAP_FILE_PROXY_TARGET,
+          changeOrigin: true,
+          secure: false,
+          rewrite: path => path.replace(/^\/mindmap-file/, "")
         }
       },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布

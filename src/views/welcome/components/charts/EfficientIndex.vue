@@ -3,6 +3,7 @@ import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import { useAppStoreHook } from "@/store/modules/app";
 import { getEfficientIndex } from "@/api/statistics";
+import { getCourseList } from "@/api/course";
 import {
   ElTooltip,
   ElCheckbox,
@@ -35,16 +36,129 @@ const { setOptions } = useECharts(chartRef, {
   theme
 });
 
+type ActiveCourseIndex = {
+  ready: boolean;
+  ids: Set<number>;
+  names: Set<string>;
+};
+
+const normalizeCourseName = (value: unknown) => String(value ?? "").trim();
+
+const normalizeCourseId = (value: unknown) => {
+  const courseId = Number(value);
+  return Number.isFinite(courseId) && courseId > 0 ? courseId : null;
+};
+
+const readEfficientCourseId = (item: any) =>
+  normalizeCourseId(item?.courseId ?? item?.id);
+
+const readEfficientCourseName = (item: any) =>
+  normalizeCourseName(item?.courseName ?? item?.title ?? item?.name);
+
+const normalizeDuration = (value: unknown) => {
+  const duration = Number(value);
+  return Number.isFinite(duration) ? duration : 0;
+};
+
+const fetchActiveCourseIndex = async (): Promise<ActiveCourseIndex> => {
+  const pageSize = 1000;
+  const firstPage = await getCourseList({ pageNum: 1, pageSize });
+
+  if (firstPage?.code !== 200 || !firstPage?.data) {
+    throw new Error("获取课程列表失败");
+  }
+
+  const firstList = firstPage?.data?.courseList || [];
+  const total = firstPage?.data?.total || firstList.length;
+  const pageCount = Math.ceil(total / pageSize);
+  let courseList = [...firstList];
+
+  if (pageCount > 1) {
+    const restPages = await Promise.allSettled(
+      Array.from({ length: pageCount - 1 }, (_, index) =>
+        getCourseList({ pageNum: index + 2, pageSize })
+      )
+    );
+
+    restPages.forEach(result => {
+      if (result.status === "fulfilled") {
+        courseList = courseList.concat(result.value?.data?.courseList || []);
+      }
+    });
+  }
+
+  return {
+    ready: true,
+    ids: new Set(
+      courseList
+        .map(course => normalizeCourseId(course.courseId))
+        .filter((courseId): courseId is number => courseId !== null)
+    ),
+    names: new Set(
+      courseList
+        .map(course => normalizeCourseName(course.title))
+        .filter(Boolean)
+    )
+  };
+};
+
+const normalizeEfficientList = (
+  list: any[],
+  activeCourses: ActiveCourseIndex
+) =>
+  list
+    .map(item => ({
+      ...item,
+      courseId: readEfficientCourseId(item) ?? item?.courseId,
+      courseName: readEfficientCourseName(item),
+      planTime: normalizeDuration(item?.planTime),
+      correctPlanTime: normalizeDuration(item?.correctPlanTime),
+      planWorkTime: normalizeDuration(item?.planWorkTime),
+      correctPlanWorkTime: normalizeDuration(item?.correctPlanWorkTime)
+    }))
+    .filter(item => {
+      if (!item.courseName) return false;
+      if (!activeCourses.ready) return true;
+
+      const courseId = readEfficientCourseId(item);
+      if (courseId !== null && activeCourses.ids.size > 0) {
+        return activeCourses.ids.has(courseId);
+      }
+
+      return activeCourses.names.has(item.courseName);
+    });
+
 // 获取教学效率指数数据
 const fetchData = async () => {
   loading.value = true;
   try {
-    const response = await getEfficientIndex();
+    const [efficientResponse, activeCourseResponse] = await Promise.allSettled([
+      getEfficientIndex(),
+      fetchActiveCourseIndex()
+    ]);
+
+    if (efficientResponse.status !== "fulfilled") {
+      throw efficientResponse.reason;
+    }
+
+    const response = efficientResponse.value;
+    const activeCourses =
+      activeCourseResponse.status === "fulfilled"
+        ? activeCourseResponse.value
+        : {
+            ready: false,
+            ids: new Set<number>(),
+            names: new Set<string>()
+          };
 
     if (response?.data?.efficientIndexList) {
-      efficientData.value = response.data.efficientIndexList;
+      efficientData.value = normalizeEfficientList(
+        response.data.efficientIndexList,
+        activeCourses
+      );
       // 默认选中所有课程
       selectedCourses.value = efficientData.value.map((_, index) => index);
+      currentPage.value = 1;
     }
 
     renderChart();
@@ -301,10 +415,14 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div class="flex flex-col gap-6">
+        <el-empty
+          v-if="!efficientData.length"
+          description="暂无可展示的课程效率指标"
+          class="py-16"
+        />
+        <div v-else class="flex flex-col gap-6">
           <!-- 筛选控制区域 -->
           <div
-            v-if="efficientData.length"
             class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
           >
             <div class="flex items-center gap-4 shrink-0">

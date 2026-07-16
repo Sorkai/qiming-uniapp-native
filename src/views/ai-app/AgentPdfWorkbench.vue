@@ -316,9 +316,6 @@ onMounted(() => {
           <h2>翻译任务</h2>
           <p>上传 PDF 或粘贴链接，然后按标准后端协议发起翻译。</p>
         </div>
-        <span class="status-pill" :class="{ ready: configLoaded }">
-          {{ configLoaded ? "配置已就绪" : "等待配置" }}
-        </span>
       </div>
 
       <div class="form-stack">
@@ -556,6 +553,19 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .agent-pdf-workbench {
+  --panel-bg: #fff;
+  --panel-soft: #f7f9fc;
+  --border: rgb(148 163 184 / 24%);
+  --text: #111827;
+  --text-muted: #374151;
+  --text-subtle: #667085;
+  --accent: #5e7ff8;
+  --accent-strong: #4f6eea;
+  --accent-soft: rgb(94 127 248 / 18%);
+  --accent-softer: rgb(94 127 248 / 10%);
+  --accent-line: rgb(94 127 248 / 38%);
+  --shadow: 0 18px 42px rgb(15 23 42 / 6%);
+
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -640,28 +650,6 @@ onMounted(() => {
     margin: 6px 0 0;
     font-size: 14px;
     color: var(--text-subtle);
-  }
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-}
-
-.status-pill {
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: rgb(148 163 184 / 14%);
-  color: var(--text-subtle);
-  font-size: 12px;
-  font-weight: 800;
-
-  &.ready {
-    background: var(--accent-softer);
-    color: var(--accent-strong);
   }
 }
 

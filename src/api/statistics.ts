@@ -88,6 +88,7 @@ interface CourseUsersExamInfoResult {
 
 interface EfficientIndexResult {
   efficientIndexList: Array<{
+    courseId?: number | string; // 课程ID（后端可选返回，用于过滤已删除课程）
     courseName: string; // 课程名称
     planTime: number; // 备课耗时(分钟)
     correctPlanTime: number; // 备课修正耗时(分钟)

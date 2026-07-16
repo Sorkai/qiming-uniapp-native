@@ -13,6 +13,7 @@ import { useVxeTable } from "@/plugins/vxeTable";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { injectResponsiveStorage } from "@/utils/responsive";
 import { registerPwa } from "@/utils/pwa";
+import { initClarity } from "@/utils/clarity";
 import { userKey, type DataInfo } from "@/utils/auth";
 
 import Table from "@pureadmin/table";
@@ -644,6 +645,7 @@ getPlatformConfig(app).then(async config => {
   setupStore(app);
   useAppStoreHook().refreshUA();
   registerPwa();
+  initClarity();
   app.use(router);
   await router.isReady();
   injectResponsiveStorage(app, config);

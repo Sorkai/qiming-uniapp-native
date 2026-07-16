@@ -109,7 +109,10 @@
             class="assessment-tabs flex-1 flex flex-col"
           >
             <el-tab-pane label="课程作业" name="homework">
-              <homework-management :course-id="selectedCourseId" />
+              <homework-management
+                :course-id="selectedCourseId"
+                :course-end-time="currentCourse?.endTime"
+              />
             </el-tab-pane>
             <el-tab-pane label="课程考试" name="exam">
               <exam-management :course-id="selectedCourseId" />

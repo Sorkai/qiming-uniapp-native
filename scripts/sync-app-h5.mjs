@@ -8,7 +8,7 @@ import {
   statSync,
   writeFileSync
 } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const distDir = join(root, "dist");
@@ -20,8 +20,14 @@ if (!existsSync(distDir) || !statSync(distDir).isDirectory()) {
 }
 
 const resolvedTarget = resolve(targetDir);
-const allowedPrefix = resolve(root, "native-app", "src", "hybrid") + "\\";
-if (!resolvedTarget.startsWith(allowedPrefix)) {
+const allowedRoot = resolve(root, "native-app", "src", "hybrid");
+const targetRelativePath = relative(allowedRoot, resolvedTarget);
+if (
+  targetRelativePath === "" ||
+  targetRelativePath === ".." ||
+  targetRelativePath.startsWith(`..${sep}`) ||
+  isAbsolute(targetRelativePath)
+) {
   throw new Error(
     `Refusing to sync outside native-app/src/hybrid: ${resolvedTarget}`
   );

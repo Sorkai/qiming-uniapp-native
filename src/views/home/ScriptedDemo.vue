@@ -1,7 +1,7 @@
 <template>
-  <section class="sd" aria-label="启明智教 · 智能工作流演示">
+  <section class="sd" aria-label="启明智教课程工作台演示">
     <header class="sd__head">
-      <p class="sd__eyebrow">智能工作流演示</p>
+      <p class="sd__eyebrow">课程工作台演示</p>
     </header>
 
     <div ref="rootEl" class="sd__stage" :class="{ 'is-paused': paused }">
@@ -22,7 +22,7 @@
         </div>
         <div class="sd__chip">
           <i class="sd__chipDot" />
-          实时演示
+          演示中
         </div>
       </div>
 
@@ -30,7 +30,7 @@
         <!-- 侧边栏 -->
         <aside class="sd__side">
           <div class="sd__sideHead">
-            <span class="sd__brandSquare">启</span>
+            <img class="sd__brandSquare" :src="logo" alt="" />
             <span>启明智教</span>
           </div>
           <p class="sd__sideGroup">工作区</p>
@@ -58,7 +58,7 @@
             <div class="sd__tbActions">
               <span class="sd__tbBadge">
                 <i class="sd__tbDot"></i>
-                教学服务已连接
+                课程数据已同步
               </span>
               <button class="sd__tbBtn">导出报告</button>
             </div>
@@ -73,7 +73,7 @@
                   <i v-if="showCaret" class="sd__caret" />
                 </h3>
                 <p class="sd__sceneLede">
-                  AI 已经按本节课的目标，把章节、资源、互动环节自动排好了。
+                  已按本节课目标整理章节、资源、课堂活动和课后练习。
                 </p>
                 <div class="sd__sceneMeta">
                   <span>授课对象：信工 22 级 3 班 (45人)</span>
@@ -148,9 +148,9 @@
           >
             <div class="sd__sceneHead">
               <div class="sd__sceneHeadMain">
-                <h3 class="sd__sceneTitle">学情看板 · 多维能力评估</h3>
+                <h3 class="sd__sceneTitle">班级学情概览</h3>
                 <p class="sd__sceneLede">
-                  融合学生历史行为（LTSM）与题目难度特征，立体刻画学习者能力。
+                  汇总课程进度、练习和测评结果，查看班级与个人的掌握变化。
                 </p>
               </div>
               <div class="sd__kpiGrid">
@@ -188,8 +188,7 @@
                   <span
                     class="sd__barFill"
                     :style="{
-                      background: `linear-gradient(to top, ${b.color}15, ${b.color}E6)`,
-                      boxShadow: `0 4px 12px ${b.color}33`,
+                      background: b.color,
                       borderTop: `2px solid ${b.color}`
                     }"
                   />
@@ -211,10 +210,14 @@
                     x2="100%"
                     y2="100%"
                   >
-                    <stop offset="0%" stop-color="#4A90E2" stop-opacity="0.5" />
+                    <stop
+                      offset="0%"
+                      stop-color="#4a90e2"
+                      stop-opacity="0.34"
+                    />
                     <stop
                       offset="100%"
-                      stop-color="#7B61FF"
+                      stop-color="#7c65c1"
                       stop-opacity="0.1"
                     />
                   </linearGradient>
@@ -242,12 +245,9 @@
                     ref="radarShapeEl"
                     :points="radarShape"
                     fill="url(#radarGrad)"
-                    stroke="#4A90E2"
-                    stroke-width="2"
+                    stroke="#4a90e2"
+                    stroke-width="1.6"
                     stroke-linejoin="round"
-                    style="
-                      filter: drop-shadow(0 4px 10px rgba(74, 144, 226, 0.3));
-                    "
                   />
                 </g>
               </svg>
@@ -262,8 +262,10 @@
           >
             <div class="sd__sceneHead">
               <div class="sd__sceneHeadMain">
-                <h3 class="sd__sceneTitle">课堂中控 · 知识拓扑图</h3>
-                <p class="sd__sceneLede">知识点、反馈、资源与评价同步点亮。</p>
+                <h3 class="sd__sceneTitle">课堂反馈与知识点</h3>
+                <p class="sd__sceneLede">
+                  提问、作答和知识点掌握情况随课堂进度同步更新。
+                </p>
               </div>
               <div class="sd__liveOverlay">
                 <div class="sd__livePulse"></div>
@@ -327,9 +329,9 @@
                         x2="100%"
                         y2="0%"
                       >
-                        <stop offset="0%" stop-color="#111827" />
-                        <stop offset="45%" stop-color="#10B981" />
-                        <stop offset="100%" stop-color="#4A90E2" />
+                        <stop offset="0%" stop-color="#5f6368" />
+                        <stop offset="45%" stop-color="#2d9d78" />
+                        <stop offset="100%" stop-color="#4a90e2" />
                       </linearGradient>
                     </defs>
                     <path
@@ -410,18 +412,17 @@
           >
             <div class="sd__sceneHead">
               <div class="sd__sceneHeadMain">
-                <h3 class="sd__sceneTitle">思维链错题诊断与自适应组卷</h3>
+                <h3 class="sd__sceneTitle">错题诊断与组卷建议</h3>
                 <p class="sd__sceneLede">
-                  SAHR
-                  语义自适应检索，跨越题海自动匹配最优评估组合，动态规划试题难度。
+                  根据本次作答定位薄弱知识点，并给出题目范围与难度建议。
                 </p>
               </div>
             </div>
             <div class="sd__exam">
               <div class="sd__examBank">
                 <div class="sd__labelBar">
-                  <p class="sd__label">错因挖掘池</p>
-                  <span class="sd__filter">AI Pool</span>
+                  <p class="sd__label">待选题目</p>
+                  <span class="sd__filter">课程题库</span>
                 </div>
                 <div
                   v-for="q in examQuestions"
@@ -440,18 +441,16 @@
                   >
                   <div class="sd__examQText">
                     <strong>{{ q.title }}</strong>
-                    <div class="sd__examQMeta">
-                      DI: 0.{{ 80 + q.id * 3 }} | W: {{ 15 + q.id * 5 }}
-                    </div>
+                    <div class="sd__examQMeta">已关联本节课知识点</div>
                   </div>
                 </div>
               </div>
               <div class="sd__examPaper">
                 <div class="sd__paperBar">
-                  <span>高斯网络评估体系 · A 套流转</span>
+                  <span>课程测评 A 卷</span>
                   <div class="sd__paperStats">
-                    <span>信度 0.88</span>
-                    <span>预计耗时 40'</span>
+                    <span>3 道题</span>
+                    <span>预计 40 分钟</span>
                   </div>
                 </div>
                 <div class="sd__paperBody" ref="paperBodyEl">
@@ -459,7 +458,7 @@
                     class="sd__paperPlaceholder"
                     v-if="!paperQuestions.length"
                   >
-                    等待算法汇聚组卷策略...
+                    选择题目后生成试卷预览
                   </div>
                   <div
                     v-for="q in paperQuestions"
@@ -483,9 +482,9 @@
             data-scene="vlab"
           >
             <div class="sd__sceneHead">
-              <h3 class="sd__sceneTitle">虚拟仿真实验室 · 实时内核轨迹</h3>
+              <h3 class="sd__sceneTitle">虚拟仿真实验：进程调度</h3>
               <p class="sd__sceneLede">
-                突破硬件限制，在浏览器中直观追踪 CPU 调度与系统调用流动。
+                在浏览器中观察 CPU 调度、进程状态与系统调用的变化。
               </p>
             </div>
             <div class="sd__vlab">
@@ -537,7 +536,7 @@
         <!-- 右侧浮动卡 -->
         <Transition name="sd-pop">
           <div v-if="showInsight" ref="insightChipEl" class="sd__insight">
-            <span class="sd__insightTag">AI 洞察</span>
+            <span class="sd__insightTag">操作提示</span>
             <strong>{{ insightTitle }}</strong>
             <p>{{ insightDesc }}</p>
           </div>
@@ -563,6 +562,7 @@
 
 <script setup lang="ts">
 import { gsap } from "gsap";
+import logo from "@/assets/logo.png";
 import {
   computed,
   nextTick,
@@ -606,39 +606,39 @@ type NavKey = (typeof navItems)[number]["key"];
 const prepCards = [
   {
     tag: "导入",
-    tagBg: "rgba(255,181,71,0.18)",
-    tagFg: "#9a6500",
+    tagBg: "rgba(217,154,50,0.12)",
+    tagFg: "#9a681e",
     meta: "10:00 · 5min",
-    title: "情境引入：Linux 内核与教学流转换",
-    desc: "用智慧物流案例切入，引出本节核心逻辑。",
+    title: "情境引入：从日常任务理解进程调度",
+    desc: "用物流调度案例切入本节核心概念。",
     progress: 100
   },
   {
     tag: "深度讲解",
-    tagBg: "rgba(74,144,226,0.18)",
-    tagFg: "#164e63",
+    tagBg: "rgba(74,144,226,0.11)",
+    tagFg: "#2f6fae",
     meta: "10:05 · 18min",
-    title: "多维学情聚类与归因算法",
-    desc: "动态演示如何捕捉学生认知盲区的流动方向。",
+    title: "核心讲解：调度队列与切换条件",
+    desc: "结合图示讲清进程状态与切换条件。",
     progress: 82
   },
   {
     tag: "实时互动",
-    tagBg: "rgba(16,185,129,0.18)",
-    tagFg: "#065f46",
+    tagBg: "rgba(45,157,120,0.11)",
+    tagFg: "#21795d",
     meta: "10:23 · 12min",
-    title: "课堂随练 · 高阶思辨讨论",
-    desc: "AI 根据历史轨迹自动调整讨论深度。",
+    title: "课堂随练：判断调度结果",
+    desc: "根据本节作答情况调整后续讲解。",
     progress: 55
   }
 ];
 
 const bars = [
-  { label: "理解力", value: 86, color: "#10B981" },
-  { label: "活跃度", value: 72, color: "#3B82F6" },
-  { label: "专注度", value: 58, color: "#8B5CF6" },
-  { label: "准确率", value: 45, color: "#F43F5E" },
-  { label: "完成率", value: 92, color: "#06B6D4" }
+  { label: "预习", value: 86, color: "#2d9d78" },
+  { label: "作业", value: 72, color: "#4a90e2" },
+  { label: "随堂练习", value: 58, color: "#7c65c1" },
+  { label: "测评", value: 45, color: "#e16b5b" },
+  { label: "完成", value: 92, color: "#36a6a1" }
 ];
 
 const radarValues = [0.88, 0.72, 0.58, 0.82, 0.65, 0.92];
@@ -670,9 +670,9 @@ const classMetrics = [
 ];
 
 const teacherSignals = [
-  { label: "掌握", value: 76, color: "#10B981" },
-  { label: "追问", value: 48, color: "#4A90E2" },
-  { label: "风险", value: 22, color: "#F43F5E" }
+  { label: "掌握", value: 76, color: "#2d9d78" },
+  { label: "追问", value: 48, color: "#4a90e2" },
+  { label: "需复习", value: 22, color: "#e16b5b" }
 ];
 
 const classStack = ["AWSP", "MCP", "IRT"];
@@ -732,29 +732,29 @@ const coreTiles = [
     code: "01",
     title: "知识拓扑",
     value: "22 节点",
-    color: "#111827",
-    bg: "linear-gradient(135deg, #ffffff, #f5f5f4)"
+    color: "#202124",
+    bg: "#f7f7f5"
   },
   {
     code: "02",
     title: "错因聚类",
     value: "6 簇",
-    color: "#F43F5E",
-    bg: "linear-gradient(135deg, #fff7ed, #fff1f2)"
+    color: "#e16b5b",
+    bg: "#fbefed"
   },
   {
     code: "03",
     title: "资源编排",
     value: "12 条",
-    color: "#4A90E2",
-    bg: "linear-gradient(135deg, #eff6ff, #ecfeff)"
+    color: "#4a90e2",
+    bg: "#edf4fb"
   },
   {
     code: "04",
     title: "评价闭环",
     value: "实时",
-    color: "#10B981",
-    bg: "linear-gradient(135deg, #ecfdf5, #f7fee7)"
+    color: "#2d9d78",
+    bg: "#eaf6f2"
   }
 ];
 
@@ -821,11 +821,12 @@ const consoleHistory = [
 ];
 
 /* ------------ 响应式状态 ------------ */
+const FULL_TITLE = "嵌入式 Linux 第 4 章教学方案";
 const activeNav = ref<NavKey>("prep");
 const activeLabel = computed(
   () => navItems.find(n => n.key === activeNav.value)?.label ?? ""
 );
-const typedTitle = ref("");
+const typedTitle = ref(FULL_TITLE);
 const showCaret = ref(false);
 const showInsight = ref(false);
 const insight = reactive({ title: "", desc: "" });
@@ -867,8 +868,6 @@ const crumbActiveEl = ref<HTMLElement | null>(null);
 let tl: gsap.core.Timeline | null = null;
 let io: IntersectionObserver | null = null;
 
-const FULL_TITLE = "嵌入式 Linux · 第 4 章 教学方案";
-
 const moveCursorToNav = (key: NavKey) => {
   const el = navRefs.value.find(n => n?.dataset.key === key);
   const root = rootEl.value;
@@ -885,7 +884,7 @@ const buildTimeline = () => {
   tl?.kill();
 
   // 初始隐藏需要进场的元素
-  gsap.set(prepCardRefs.value, { y: 16, opacity: 0 });
+  gsap.set(prepCardRefs.value, { y: 0, opacity: 1 });
   gsap.set(barRefs.value, { transformOrigin: "bottom center" });
   barRefs.value.forEach(b => {
     const fill = b.querySelector(".sd__barFill") as HTMLElement | null;
@@ -907,7 +906,7 @@ const buildTimeline = () => {
   gsap.set(cursorEl.value, { x: startX, y: startY, opacity: 1 });
   gsap.set(rippleEl.value, { scale: 0, opacity: 0 });
 
-  const t = gsap.timeline({ repeat: -1, repeatDelay: 1.2 });
+  const t = gsap.timeline({ repeat: -1, repeatDelay: 1.8 });
   tl = t;
   // 在开发期暴露时间轴便于排查；生产环境无副作用
   if (typeof window !== "undefined") (window as any).__sdTl = t;
@@ -915,32 +914,29 @@ const buildTimeline = () => {
   // ============= 幕 1：AI 备课 =============
   const prepPos = moveCursorToNav("prep");
   if (prepPos) {
-    t.to(cursorEl.value, { ...prepPos, duration: 0.9, ease: "power2.inOut" });
+    t.to(cursorEl.value, { ...prepPos, duration: 0.62, ease: "power3.inOut" });
     t.add(() => clickNav("prep"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
   t.add(() => activateScene("prep"), "+=0.05");
-  // 打字机：标题
-  t.add(() => typeOut(FULL_TITLE), "+=0.1");
-  t.to({}, { duration: FULL_TITLE.length * 0.04 + 0.3 });
-  // 卡片错层进入
+  t.set(prepCardRefs.value, { y: 12, opacity: 0 });
   t.to(prepCardRefs.value, {
     y: 0,
     opacity: 1,
-    duration: 0.55,
-    stagger: 0.12,
+    duration: 0.45,
+    stagger: 0.09,
     ease: "power3.out"
   });
   // 洞察弹出
   t.add(() =>
-    showInsightChip("已生成教学方案", "本节包含 1 个引入 · 1 段讲解 · 1 组练习")
+    showInsightChip("教学方案已整理", "包含情境引入、核心讲解和随堂练习")
   );
-  t.to({}, { duration: 1.6 });
+  t.to({}, { duration: 2.2 });
 
   // ============= 幕 2：学情 =============
   const insightPos = moveCursorToNav("insight");
@@ -948,14 +944,14 @@ const buildTimeline = () => {
   if (insightPos) {
     t.to(cursorEl.value, {
       ...insightPos,
-      duration: 0.85,
-      ease: "power2.inOut"
+      duration: 0.58,
+      ease: "power3.inOut"
     });
     t.add(() => clickNav("insight"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
@@ -968,7 +964,7 @@ const buildTimeline = () => {
     if (fill)
       t.to(
         fill,
-        { scaleY: target, duration: 0.6, ease: "power2.out" },
+        { scaleY: target, duration: 0.46, ease: "power3.out" },
         `>-${i === 0 ? 0 : 0.5}`
       );
   });
@@ -976,16 +972,13 @@ const buildTimeline = () => {
   if (radarShapeEl.value)
     t.to(
       radarShapeEl.value,
-      { scale: 1, duration: 0.7, ease: "back.out(1.4)" },
+      { scale: 1, duration: 0.52, ease: "power3.out" },
       "<0.2"
     );
   t.add(() =>
-    showInsightChip(
-      "学习效率 +18%",
-      "AI 标出 3 个薄弱知识点：调度 · 同步 · 信号"
-    )
+    showInsightChip("需要重点讲解 3 个知识点", "进程调度、线程同步和信号处理")
   );
-  t.to({}, { duration: 1.6 });
+  t.to({}, { duration: 2.2 });
 
   // ============= 幕 3：课堂 =============
   const classPos = moveCursorToNav("class");
@@ -993,14 +986,14 @@ const buildTimeline = () => {
   if (classPos) {
     t.to(cursorEl.value, {
       ...classPos,
-      duration: 0.85,
-      ease: "power2.inOut"
+      duration: 0.58,
+      ease: "power3.inOut"
     });
     t.add(() => clickNav("class"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
@@ -1010,7 +1003,7 @@ const buildTimeline = () => {
   // 连线绘制
   t.to(
     lineRefs.value,
-    { strokeDashoffset: 0, duration: 0.7, stagger: 0.12, ease: "power2.out" },
+    { strokeDashoffset: 0, duration: 0.5, stagger: 0.07, ease: "power3.out" },
     "<-0.2"
   );
   // 学生头像弹入
@@ -1019,16 +1012,14 @@ const buildTimeline = () => {
     {
       scale: 1,
       opacity: 1,
-      duration: 0.45,
-      stagger: 0.12,
-      ease: "back.out(1.6)"
+      duration: 0.36,
+      stagger: 0.07,
+      ease: "power3.out"
     },
     "<0.1"
   );
-  t.add(() =>
-    showInsightChip("4 名学生已响应", "课堂互动率 100% · AI 实时收集回答")
-  );
-  t.to({}, { duration: 1.8 });
+  t.add(() => showInsightChip("4 名学生已响应", "回答已归入本节课的课堂记录"));
+  t.to({}, { duration: 2.2 });
 
   // ============= 幕 4：智能组卷 =============
   const examPos = moveCursorToNav("exam");
@@ -1036,29 +1027,29 @@ const buildTimeline = () => {
   if (examPos) {
     t.to(cursorEl.value, {
       ...examPos,
-      duration: 0.85,
+      duration: 0.58,
       opacity: 1,
-      ease: "power2.inOut"
+      ease: "power3.inOut"
     });
     t.add(() => clickNav("exam"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
   t.add(() => activateScene("exam"), "+=0.05");
   // 模拟从左侧拖拽/飞入题目
   examQRefs.value.forEach((q, i) => {
-    t.to(q, { x: 10, backgroundColor: "#f0f9ff", duration: 0.3 }, ">-0.1");
+    t.to(q, { x: 6, backgroundColor: "#f4f7fb", duration: 0.24 }, ">-0.1");
     t.add(() => {
       paperQuestions.value.push(examQuestions[i]);
       nextTick(() => {
         const item = paperBodyEl.value?.querySelector(
           ".sd__paperItem:last-child"
         );
-        if (item) gsap.from(item, { x: -20, opacity: 0, duration: 0.4 });
+        if (item) gsap.from(item, { x: -10, opacity: 0, duration: 0.28 });
       });
     }, "+=0.1");
     t.to(q, { x: 0, backgroundColor: "#fff", duration: 0.2, delay: 0.1 });
@@ -1068,12 +1059,9 @@ const buildTimeline = () => {
     duration: 0.4
   });
   t.add(() =>
-    showInsightChip(
-      "AI 自动调权完成",
-      "已根据知识点权重平衡了 A 卷难度，预测区分度 0.82"
-    )
+    showInsightChip("组卷建议已更新", "已根据知识点范围调整 A 卷的题型与难度")
   );
-  t.to({}, { duration: 1.6 });
+  t.to({}, { duration: 2.2 });
 
   // ============= 幕 5：虚拟实验 =============
   const vlabPos = moveCursorToNav("vlab");
@@ -1081,15 +1069,15 @@ const buildTimeline = () => {
   if (vlabPos) {
     t.to(cursorEl.value, {
       ...vlabPos,
-      duration: 0.85,
+      duration: 0.58,
       opacity: 1,
-      ease: "power2.inOut"
+      ease: "power3.inOut"
     });
     t.add(() => clickNav("vlab"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
@@ -1097,7 +1085,7 @@ const buildTimeline = () => {
   // 模拟内核调度动画
   t.to(vlabProcs.value, {
     y: -4,
-    repeat: 3,
+    repeat: 1,
     yoyo: true,
     duration: 0.2,
     stagger: 0.1
@@ -1105,7 +1093,7 @@ const buildTimeline = () => {
   t.to(
     vlabCpus.value.map(c => c.querySelector(".sd__cpuLoad i")),
     {
-      width: () => 40 + Math.random() * 50 + "%",
+      scaleX: () => 0.4 + Math.random() * 0.5,
       stagger: 0.1,
       duration: 0.4
     }
@@ -1119,14 +1107,12 @@ const buildTimeline = () => {
   consoleHistory.forEach(line => {
     t.add(() => consoleLines.value.push(line), "+=0.3");
   });
-  t.add(() =>
-    showInsightChip("实时内核观测", "映射内存地址：0x7ffc... 教学负载平衡中")
-  );
-  t.to({}, { duration: 2 });
+  t.add(() => showInsightChip("实验状态已更新", "进程调度与 CPU 负载同步显示"));
+  t.to({}, { duration: 2.4 });
 
   // ============= 收尾：回到右上 =============
   t.add(() => hideInsightChip());
-  t.to(cursorEl.value, { x: startX, y: startY, opacity: 1, duration: 0.6 });
+  t.to(cursorEl.value, { x: startX, y: startY, opacity: 1, duration: 0.5 });
   t.add(() => activateScene("prep"));
   t.to({}, { duration: 0.4 });
 };
@@ -1161,9 +1147,9 @@ const activateScene = (key: NavKey) => {
     el.classList.toggle("sd__scene--hidden", k !== key);
   });
   if (key === "prep") {
-    typedTitle.value = "";
+    typedTitle.value = FULL_TITLE;
     showCaret.value = false;
-    gsap.set(prepCardRefs.value, { y: 16, opacity: 0 });
+    gsap.set(prepCardRefs.value, { y: 0, opacity: 1 });
   } else if (key === "insight") {
     barRefs.value.forEach(b => {
       const fill = b.querySelector(".sd__barFill") as HTMLElement | null;
@@ -1182,24 +1168,11 @@ const activateScene = (key: NavKey) => {
   } else if (key === "vlab") {
     consoleLines.value = [];
     gsap.set(vlabCpus.value, { backgroundColor: "rgb(0 0 0 / 6%)" });
+    gsap.set(
+      vlabCpus.value.map(c => c.querySelector(".sd__cpuLoad i")),
+      { scaleX: 0.45 }
+    );
   }
-};
-
-let typeTimer: number | null = null;
-const typeOut = (text: string) => {
-  if (typeTimer) window.clearInterval(typeTimer);
-  typedTitle.value = "";
-  showCaret.value = true;
-  let i = 0;
-  typeTimer = window.setInterval(() => {
-    i++;
-    typedTitle.value = text.slice(0, i);
-    if (i >= text.length) {
-      if (typeTimer) window.clearInterval(typeTimer);
-      typeTimer = null;
-      window.setTimeout(() => (showCaret.value = false), 600);
-    }
-  }, 38);
 };
 
 const showInsightChip = (title: string, desc: string) => {
@@ -1261,18 +1234,17 @@ onBeforeUnmount(() => {
   tl?.kill();
   io?.disconnect();
   window.removeEventListener("resize", onResize);
-  if (typeTimer) window.clearInterval(typeTimer);
 });
 </script>
 
 <style lang="scss" scoped>
 @use "sass:math";
 
-$bg: #fafaf9;
-$border: #e8e5df;
-$text: #191918;
-$muted: #5f5e5b;
-$faint: #91908d;
+$bg: #f7f7f5;
+$border: #e8e8e5;
+$text: #202124;
+$muted: #5f6368;
+$faint: #777b80;
 
 .sd {
   position: relative;
@@ -1300,29 +1272,18 @@ $faint: #91908d;
     overflow: hidden;
     background: #fff;
     border: 1px solid $border;
-    border-radius: 16px;
+    border-radius: 10px;
     box-shadow:
       0 1px 2px rgb(0 0 0 / 4%),
-      0 32px 80px rgb(0 0 0 / 10%),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.4);
-    aspect-ratio: 16 / 12;
+      0 22px 56px rgb(16 24 61 / 9%);
+    aspect-ratio: 16 / 10;
     cursor: default;
 
     &::before {
       content: "";
       position: absolute;
       inset: 0;
-      background:
-        radial-gradient(
-          circle at 0% 0%,
-          rgba(123, 97, 255, 0.03) 0%,
-          transparent 50%
-        ),
-        radial-gradient(
-          circle at 100% 100%,
-          rgba(74, 144, 226, 0.03) 0%,
-          transparent 50%
-        );
+      background: transparent;
       pointer-events: none;
     }
   }
@@ -1384,18 +1345,17 @@ $faint: #91908d;
     padding: 4px 10px;
     font-size: 11.5px;
     font-weight: 600;
-    color: #047857;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.28);
+    color: #315f8c;
+    background: rgb(53 111 168 / 9%);
+    border: 1px solid rgb(53 111 168 / 20%);
     border-radius: 999px;
   }
 
   &__chipDot {
     width: 6px;
     height: 6px;
-    background: #10b981;
+    background: #527ca5;
     border-radius: 50%;
-    animation: sd-pulse 1.6s ease-out infinite;
   }
 
   &__body {
@@ -1426,14 +1386,9 @@ $faint: #91908d;
   }
 
   &__brandSquare {
-    display: grid;
-    place-items: center;
     width: 22px;
     height: 22px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(135deg, #111, #444);
+    object-fit: contain;
     border-radius: 5px;
   }
 
@@ -1525,19 +1480,18 @@ $faint: #91908d;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    color: #047857;
-    background: rgba(16, 185, 129, 0.12);
+    color: #315f8c;
+    background: rgb(53 111 168 / 9%);
     padding: 4px 8px;
     border-radius: 999px;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgb(53 111 168 / 20%);
   }
 
   &__tbDot {
     width: 4px;
     height: 4px;
-    background: #10b981;
+    background: #527ca5;
     border-radius: 50%;
-    animation: sd-pulse 2s infinite;
   }
 
   &__tbBtn {
@@ -1572,10 +1526,11 @@ $faint: #91908d;
   &__sceneTitle {
     margin: 0 0 10px;
     font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: 0;
     color: $text;
     min-height: 32px;
+    text-wrap: balance;
   }
 
   &__caret {
@@ -1853,7 +1808,6 @@ $faint: #91908d;
       height: 100%;
       background: linear-gradient(90deg, #111, #5f5e5b);
       border-radius: 2px;
-      transition: width 0.6s ease;
     }
   }
 
@@ -1864,12 +1818,7 @@ $faint: #91908d;
     gap: 40px;
     align-items: center;
     height: calc(100% - 100px);
-    background-image: radial-gradient(
-      circle at 2px 2px,
-      rgba(0, 0, 0, 0.03) 1px,
-      transparent 0
-    );
-    background-size: 24px 24px;
+    background: #fbfbfa;
     padding: 20px;
     border-radius: 12px;
   }
@@ -2057,7 +2006,11 @@ $faint: #91908d;
     position: relative;
     overflow: hidden;
     background:
-      radial-gradient(circle at 2px 2px, rgba(0, 0, 0, 0.055) 1px, transparent 0),
+      radial-gradient(
+        circle at 2px 2px,
+        rgba(0, 0, 0, 0.055) 1px,
+        transparent 0
+      ),
       #fff;
     background-size: 22px 22px;
   }
@@ -2533,7 +2486,10 @@ $faint: #91908d;
     border-radius: 6px;
     font-size: 11px;
     color: #aaa;
-    transition: all 0.3s;
+    transition:
+      color 0.3s,
+      background-color 0.3s,
+      border-color 0.3s;
   }
 
   &__hardware {
@@ -2575,10 +2531,11 @@ $faint: #91908d;
 
     i {
       display: block;
+      width: 100%;
       height: 100%;
-      width: 0%;
       background: #7b61ff;
-      transition: width 0.3s;
+      transform: scaleX(0);
+      transform-origin: left center;
     }
   }
 
@@ -2696,7 +2653,7 @@ $faint: #91908d;
     left: 0;
     z-index: 10;
     pointer-events: none;
-    filter: drop-shadow(0 4px 8px rgb(0 0 0 / 18%));
+    filter: drop-shadow(0 3px 6px rgb(16 24 61 / 16%));
     will-change: transform;
   }
 
@@ -2704,10 +2661,10 @@ $faint: #91908d;
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 26px;
-    height: 26px;
-    background: rgba(0, 0, 0, 0.14);
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    width: 22px;
+    height: 22px;
+    background: rgb(53 111 168 / 10%);
+    border: 1px solid rgb(53 111 168 / 32%);
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(0);
     pointer-events: none;
@@ -2726,17 +2683,19 @@ $faint: #91908d;
 
 .sd-pop-enter-active,
 .sd-pop-leave-active {
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sd-pop-enter-from {
   opacity: 0;
-  transform: translateY(24px) scale(0.9);
+  transform: translateY(8px) scale(0.98);
 }
 
 .sd-pop-leave-to {
   opacity: 0;
-  transform: translateY(-12px) scale(0.95);
+  transform: translateY(-4px) scale(0.99);
 }
 
 @keyframes sd-pulse {
@@ -2890,6 +2849,14 @@ $faint: #91908d;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sd *,
+  .sd *::before,
+  .sd *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
   .sd__cursor,
   .sd__caret {
     display: none;

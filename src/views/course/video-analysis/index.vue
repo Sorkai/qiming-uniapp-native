@@ -521,6 +521,9 @@
               暂无问答数据
             </div>
           </el-tab-pane>
+          <el-tab-pane label="思维导图" name="mindmap">
+            <MindMapPreview :source="taskDetail.mindMapUrl" />
+          </el-tab-pane>
         </el-tabs>
       </div>
     </el-dialog>
@@ -550,6 +553,7 @@ import { getCourseList, getCourseHoursList } from "@/api/course";
 import { useAppStoreHook } from "@/store/modules/app";
 import LottieAnimation from "@/components/LottieAnimation.vue";
 import EdenAnim from "@/assets/eden.json";
+import MindMapPreview from "./MindMapPreview.vue";
 
 defineOptions({ name: "VideoAnalysis" });
 

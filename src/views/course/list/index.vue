@@ -48,14 +48,24 @@
           </el-form-item>
         </el-form>
 
-        <el-button
-          type="primary"
-          :icon="Plus"
-          class="create-course-btn"
-          @click="openCreateDialog"
-        >
-          创建课程
-        </el-button>
+        <div class="course-action-buttons">
+          <el-button
+            v-if="canBulkImportCourses"
+            :icon="FolderOpened"
+            class="bulk-import-btn"
+            @click="openBulkCourseUpload"
+          >
+            一键上传课程
+          </el-button>
+          <el-button
+            type="primary"
+            :icon="Plus"
+            class="create-course-btn"
+            @click="openCreateDialog"
+          >
+            创建课程
+          </el-button>
+        </div>
       </div>
     </el-card>
 
@@ -75,6 +85,8 @@
               :course="course"
               :is-selected="selectedCourseIds.includes(course.courseId)"
               :can-delete="canDeleteCourse(course)"
+              :can-rebuild="isAdminUser && !isCourseRebuildAdmissionDisabled"
+              :is-rebuilding="rebuildStartingCourseId === course.courseId"
               @toggle-select="toggleCourseSelection"
               @edit="editCourse"
               @delete="confirmDelete"
@@ -82,6 +94,7 @@
               @view-attrs="viewAttrs"
               @allocation="showAllocationDialog"
               @study-status="showStudyStatusDialog"
+              @rebuild="confirmCourseRebuild"
             />
           </el-col>
         </el-row>
@@ -349,6 +362,12 @@
         </div>
       </template>
     </el-dialog>
+
+    <BulkCourseUploadDialog
+      v-if="canBulkImportCourses"
+      ref="bulkCourseUploadRef"
+      @completed="handleBulkCourseUploadCompleted"
+    />
 
     <!-- 课程分配弹窗 -->
     <el-dialog v-model="allocationDialogVisible" title="课程分配" width="60%">
@@ -724,10 +743,11 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, reactive, computed } from "vue";
+import { useRouter } from "vue-router";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
-import { isAdmin } from "@/utils/auth";
+import { hasManageAccess, isAdmin } from "@/utils/auth";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getCourseList,
@@ -744,15 +764,22 @@ import {
   deleteChapter,
   deleteHour,
   createCourseChapter,
-  getCourseStats
+  getCourseStats,
+  startCourseRebuild
 } from "@/api/course";
-import type { CourseCreateParams, CourseUpdateParams } from "@/api/course";
+import type {
+  CourseCreateParams,
+  CourseRebuildErrorResponse,
+  CourseUpdateParams
+} from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
 import CourseCard from "./components/CourseCard.vue";
 import CourseStats from "./components/CourseStats.vue";
-import { Plus, Loading, Search } from "@element-plus/icons-vue";
+import BulkCourseUploadDialog from "./components/BulkCourseUploadDialog.vue";
+import { FolderOpened, Plus, Loading, Search } from "@element-plus/icons-vue";
 
 const appStore = useAppStoreHook();
+const router = useRouter();
 const isMobile = computed(() => appStore.getDevice === "mobile");
 const paginationLayout = computed(() =>
   isMobile.value
@@ -761,6 +788,7 @@ const paginationLayout = computed(() =>
 );
 const userStore = useUserStoreHook();
 const isAdminUser = computed(() => isAdmin());
+const canBulkImportCourses = computed(() => hasManageAccess());
 const currentUserId = computed(() => userStore.userId);
 const currentUserNames = computed(() =>
   [userStore.nickname, userStore.username]
@@ -783,6 +811,9 @@ const courseFormRef = ref<{
   validate: () => Promise<boolean>;
   scrollToFirstError?: () => void;
 }>();
+const bulkCourseUploadRef = ref<{
+  openFolderPicker: () => void;
+}>();
 
 // 数据定义
 const courseList = ref([]);
@@ -796,6 +827,125 @@ const searchForm = ref({
 
 // 选择的课程ID列表
 const selectedCourseIds = ref<number[]>([]);
+const rebuildStartingCourseId = ref<number | null>(null);
+const isCourseRebuildAdmissionDisabled = ref(false);
+
+const getRebuildError = (error: unknown): CourseRebuildErrorResponse | null => {
+  const responseData = (error as any)?.response?.data;
+  return responseData && typeof responseData.code === "string"
+    ? (responseData as CourseRebuildErrorResponse)
+    : null;
+};
+
+const createRebuildRequestId = () => {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, character => {
+    const random = (Math.random() * 16) | 0;
+    const value = character === "x" ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
+};
+
+const submitCourseRebuild = async (courseId: number, requestId: string) => {
+  try {
+    return await startCourseRebuild({ sourceCourseId: courseId, requestId });
+  } catch (error) {
+    if (getRebuildError(error)) throw error;
+
+    try {
+      await ElMessageBox.confirm(
+        "当前无法确认服务器是否已经受理该请求。重试会复用本次请求 ID，不会创建第二个重建操作。",
+        "重试课程重建",
+        {
+          confirmButtonText: "重试同一请求",
+          cancelButtonText: "暂不重试",
+          type: "warning",
+          closeOnClickModal: false
+        }
+      );
+    } catch {
+      return null;
+    }
+
+    return startCourseRebuild({ sourceCourseId: courseId, requestId });
+  }
+};
+
+const confirmCourseRebuild = async (course: any) => {
+  if (!isAdminUser.value) {
+    ElMessage.warning("只有管理员可以重建课程");
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `重建「${course.title}」后，源课程（ID：${course.courseId}）及其学习、作业、考试、讨论和 AI 历史数据将被删除。新课程会获得新的 ID。`,
+      "确认重建课程",
+      {
+        confirmButtonText: "确认重建",
+        cancelButtonText: "取消",
+        type: "error",
+        closeOnClickModal: false,
+        closeOnPressEscape: false
+      }
+    );
+  } catch {
+    return;
+  }
+
+  rebuildStartingCourseId.value = course.courseId;
+  const requestId = createRebuildRequestId();
+  try {
+    const operation = await submitCourseRebuild(course.courseId, requestId);
+
+    if (!operation) return;
+
+    if (!operation.operationId) {
+      throw new Error("课程重建接口未返回 operationId");
+    }
+
+    sessionStorage.setItem(
+      `course-rebuild-started-at:${operation.operationId}`,
+      String(Date.now())
+    );
+    ElMessage.success("课程重建已受理，正在打开进度页");
+    await router.push({
+      name: "CourseRebuildProgress",
+      params: { operationId: operation.operationId }
+    });
+  } catch (error) {
+    const apiError = getRebuildError(error);
+    if (
+      apiError?.code === "course_rebuild_in_progress" &&
+      apiError.operationId
+    ) {
+      ElMessage.warning("该课程已有进行中的重建任务，已打开原进度页");
+      await router.push({
+        name: "CourseRebuildProgress",
+        params: { operationId: apiError.operationId }
+      });
+      return;
+    }
+
+    if (apiError?.code === "course_rebuild_admission_disabled") {
+      isCourseRebuildAdmissionDisabled.value = true;
+      ElMessage.error("当前环境未开放课程重建，请联系运维");
+      return;
+    }
+
+    if (apiError?.code === "course_rebuild_idempotency_conflict") {
+      ElMessage.error("本次重建请求发生幂等冲突，请重新确认后再发起");
+      return;
+    }
+
+    ElMessage.error(apiError?.message || "课程重建发起失败，请稍后重试");
+  } finally {
+    rebuildStartingCourseId.value = null;
+  }
+};
 
 const canDeleteCourse = (course: any) => {
   if (!course) return false;
@@ -1117,6 +1267,15 @@ const openCreateDialog = () => {
     attrList: []
   };
   courseFormDialogVisible.value = true;
+};
+
+const openBulkCourseUpload = () => {
+  bulkCourseUploadRef.value?.openFolderPicker();
+};
+
+const handleBulkCourseUploadCompleted = () => {
+  fetchCourseList();
+  fetchCourseStats();
 };
 
 // 查看课程详情
@@ -2229,6 +2388,13 @@ onMounted(async () => {
   font-size: 15px;
 }
 
+.course-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 @media screen and (max-width: 768px) {
   .main {
     padding: 12px;
@@ -2245,8 +2411,12 @@ onMounted(async () => {
     margin-bottom: 0;
   }
 
-  .create-course-btn {
+  .course-action-buttons {
     width: 100%;
+  }
+
+  .course-action-buttons .el-button {
+    flex: 1;
     margin-left: 0;
   }
 

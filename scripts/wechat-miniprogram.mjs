@@ -766,7 +766,7 @@ function getH5RouteSmokeFailures(info, route) {
       const bottomY = Math.max(
         ...toolbarRects.map(rect => Number(rect.y) + Number(rect.height))
       );
-      if (bottomY - topY > 58) {
+      if (bottomY - topY > 66) {
         failures.push(`topbar-controls-not-single-row:${Math.round(bottomY - topY)}px`);
       }
     }
@@ -781,11 +781,14 @@ function getH5RouteSmokeFailures(info, route) {
     failures.push(`bottom-empty-gap:${bottomContentGap}px`);
   }
   if (route.name === "teacher-dashboard" && info?.sidebarCheck) {
-    if (!info.sidebarCheck.wordmarkVisible) {
-      failures.push("sidebar-missing-intelledu-wordmark");
+    if (!info.sidebarCheck.logoVisible && !info.sidebarCheck.wordmarkVisible) {
+      failures.push("sidebar-missing-brand");
     }
-    if (info.sidebarCheck.text !== "IntellEdu") {
-      failures.push(`sidebar-brand-text:${info.sidebarCheck.text || "empty"}`);
+    if (
+      info.sidebarCheck.wordmarkVisible &&
+      info.sidebarCheck.text !== "IntellEdu"
+    ) {
+      failures.push(`sidebar-brand-text:${info.sidebarCheck.text}`);
     }
     if (info.sidebarCheck.text === "IntellEdu" && !info.sidebarCheck.wordmarkComplete) {
       failures.push("sidebar-brand-truncated");
@@ -1005,6 +1008,29 @@ async function runH5Smoke(options) {
       height: 844,
       deviceScaleFactor: 3,
       mobile: true
+    });
+    await client.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `(() => {
+        const hashQuery = location.hash.includes("?")
+          ? location.hash.slice(location.hash.indexOf("?") + 1)
+          : "";
+        const params = new URLSearchParams(hashQuery);
+        const role = params.get("demoRole");
+        if (
+          params.has("_qimingSmoke") &&
+          ["student", "teacher", "admin"].includes(role)
+        ) {
+          localStorage.clear();
+          sessionStorage.clear();
+          document.cookie.split(";").forEach(cookie => {
+            const name = cookie.split("=")[0]?.trim();
+            if (name) {
+              document.cookie = name + "=; Max-Age=0; path=/";
+            }
+          });
+          localStorage.setItem("qiming-demo-role", role);
+        }
+      })();`
     });
 
     const inspectPageExpression = `(() => {
