@@ -488,7 +488,8 @@ function handlePptxWheel(event: WheelEvent) {
   const host = officeHostRef.value;
   if (!host || host.scrollHeight <= host.clientHeight) return;
 
-  const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : host.clientHeight;
+  const unit =
+    event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : host.clientHeight;
   const delta =
     event.deltaMode === WheelEvent.DOM_DELTA_PIXEL
       ? event.deltaY
@@ -545,10 +546,7 @@ defineExpose({ reload: loadPreview, download: handleDownload });
 <template>
   <section
     class="platform-resource-preview"
-    :class="[
-      `is-${resolved.kind}`,
-      { 'is-embedded': props.embedded }
-    ]"
+    :class="[`is-${resolved.kind}`, { 'is-embedded': props.embedded }]"
     :style="previewFontVariables"
     aria-live="polite"
   >

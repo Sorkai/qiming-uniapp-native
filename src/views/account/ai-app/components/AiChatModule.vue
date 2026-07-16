@@ -26,8 +26,10 @@
     <!-- 消息流：移除背景修饰文字，保持纯净 -->
     <el-scrollbar
       ref="scrollbarRef"
-      class="flex-1 min-w-0 px-4 py-6 scroll-smooth"
+      class="flex-1 min-h-0 min-w-0 px-4 py-6 scroll-smooth"
       @scroll="handleChatScroll"
+      @wheel.passive="pauseStreamingAnswerFollow"
+      @touchstart.passive="pauseStreamingAnswerFollow"
     >
       <transition-group
         appear
@@ -56,48 +58,132 @@
               msg.type === 'user' ? 'is-user' : 'is-system'
             ]"
           >
+            <section
+              v-if="msg.type === 'system' && shouldShowProcessPanel(msg)"
+              class="stream-progress"
+              :class="{
+                'is-error': msg.error,
+                'is-partial': msg.partial || msg.stopped,
+                'is-expanded': isProcessExpanded(msg)
+              }"
+              aria-live="polite"
+            >
+              <button
+                type="button"
+                class="stream-progress__header"
+                :aria-expanded="isProcessExpanded(msg)"
+                :aria-controls="getProcessPanelId(msg.id)"
+                @click="toggleProcessPanel(msg)"
+              >
+                <span class="stream-progress__heading">
+                  <AssistantProcessIcon
+                    kind="terminal"
+                    :tone="getMessageProgressTone(msg)"
+                    :size="26"
+                  />
+                  <span>思考及处理过程</span>
+                </span>
+                <span class="stream-progress__header-meta">
+                  <span v-if="msg.elapsedMs !== undefined">
+                    {{ formatElapsed(msg.elapsedMs) }}
+                  </span>
+                  <el-icon class="stream-progress__chevron">
+                    <ArrowDown />
+                  </el-icon>
+                </span>
+              </button>
+
+              <transition name="process-collapse">
+                <div
+                  v-if="isProcessExpanded(msg)"
+                  :id="getProcessPanelId(msg.id)"
+                  class="stream-progress__body"
+                >
+                  <div
+                    v-if="
+                      !msg.progressTimeline?.length && isMessagePending(msg)
+                    "
+                    class="stream-progress__pending"
+                  >
+                    <div class="thinking-status" aria-label="智能助教正在思考">
+                      <AssistantProcessIcon
+                        :stage="getCurrentThinkingStage(msg)"
+                        tone="running"
+                        :size="38"
+                        class="thinking-process-icon"
+                      />
+                      <div class="thinking-copy">
+                        <span class="thinking-eyebrow">学习助手正在处理</span>
+                        <span
+                          :key="getThinkingText(msg)"
+                          class="thinking-typewriter"
+                          :style="{
+                            '--thinking-chars': getThinkingText(msg).length,
+                            '--thinking-width': `${getThinkingText(msg).length}em`
+                          }"
+                        >
+                          {{ getThinkingText(msg) }}
+                        </span>
+                      </div>
+                      <span class="thinking-dots" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
+                    </div>
+                  </div>
+                  <ol
+                    v-if="msg.progressTimeline?.length"
+                    class="stream-progress__timeline"
+                  >
+                    <li
+                      v-for="(step, index) in msg.progressTimeline"
+                      :key="`${step.sequence || index}-${step.stage}`"
+                      :class="`is-${progressTone(step.status)}`"
+                    >
+                      <AssistantProcessIcon
+                        :stage="step.stage"
+                        :tone="progressTone(step.status)"
+                        :size="30"
+                        class="stream-progress__icon"
+                      />
+                      <div class="stream-progress__content">
+                        <div class="stream-progress__meta">
+                          <strong>{{ formatStreamStage(step.stage) }}</strong>
+                          <span>{{ formatStatusLabel(step.status) }}</span>
+                        </div>
+                        <p>{{ step.summary }}</p>
+                      </div>
+                    </li>
+                  </ol>
+                  <p v-if="msg.errorMessage" class="stream-progress__notice">
+                    {{ msg.errorMessage }}
+                  </p>
+                  <button
+                    v-if="msg.retryable && !msg.streaming"
+                    type="button"
+                    class="stream-progress__retry"
+                    @click="emit('regenerate', msg.id)"
+                  >
+                    重新生成
+                  </button>
+                </div>
+              </transition>
+            </section>
+
             <!-- 消息气泡 -->
             <div
+              v-if="!isMessagePending(msg)"
+              :ref="element => setAssistantAnswerRef(msg, element)"
               :class="[
                 'message-bubble',
                 msg.type === 'user'
                   ? 'message-bubble-user'
-                  : 'message-bubble-system',
-                isMessagePending(msg) ? 'is-pending' : ''
+                  : 'message-bubble-system'
               ]"
             >
               <div
-                v-if="isMessagePending(msg)"
-                class="thinking-status"
-                aria-label="智能助教正在思考"
-              >
-                <AssistantProcessIcon
-                  :stage="getCurrentThinkingStage(msg)"
-                  tone="running"
-                  :size="38"
-                  class="thinking-process-icon"
-                />
-                <div class="thinking-copy">
-                  <span class="thinking-eyebrow">学习助手正在处理</span>
-                  <span
-                    :key="getThinkingText(msg)"
-                    class="thinking-typewriter"
-                    :style="{
-                      '--thinking-chars': getThinkingText(msg).length,
-                      '--thinking-width': `${getThinkingText(msg).length}em`
-                    }"
-                  >
-                    {{ getThinkingText(msg) }}
-                  </span>
-                </div>
-                <span class="thinking-dots" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-              </div>
-              <div
-                v-else-if="msg.type === 'system'"
+                v-if="msg.type === 'system'"
                 class="message-content markdown-content"
                 v-html="renderMarkdownContent(msg.content)"
               />
@@ -140,65 +226,6 @@
                 <span>停止</span>
               </button>
             </div>
-
-            <section
-              v-if="msg.type === 'system' && hasStreamStatus(msg)"
-              class="stream-progress"
-              :class="{
-                'is-error': msg.error,
-                'is-partial': msg.partial || msg.stopped
-              }"
-              aria-live="polite"
-            >
-              <div class="stream-progress__header">
-                <span class="stream-progress__heading">
-                  <AssistantProcessIcon
-                    kind="terminal"
-                    :tone="getMessageProgressTone(msg)"
-                    :size="26"
-                  />
-                  <span>思考与处理过程</span>
-                </span>
-                <span v-if="msg.elapsedMs !== undefined">
-                  {{ formatElapsed(msg.elapsedMs) }}
-                </span>
-              </div>
-              <ol
-                v-if="msg.progressTimeline?.length"
-                class="stream-progress__timeline"
-              >
-                <li
-                  v-for="(step, index) in msg.progressTimeline"
-                  :key="`${step.sequence || index}-${step.stage}`"
-                  :class="`is-${progressTone(step.status)}`"
-                >
-                  <AssistantProcessIcon
-                    :stage="step.stage"
-                    :tone="progressTone(step.status)"
-                    :size="30"
-                    class="stream-progress__icon"
-                  />
-                  <div class="stream-progress__content">
-                    <div class="stream-progress__meta">
-                      <strong>{{ formatStreamStage(step.stage) }}</strong>
-                      <span>{{ formatStatusLabel(step.status) }}</span>
-                    </div>
-                    <p>{{ step.summary }}</p>
-                  </div>
-                </li>
-              </ol>
-              <p v-if="msg.errorMessage" class="stream-progress__notice">
-                {{ msg.errorMessage }}
-              </p>
-              <button
-                v-if="msg.retryable && !msg.streaming"
-                type="button"
-                class="stream-progress__retry"
-                @click="emit('regenerate', msg.id)"
-              >
-                重新生成
-              </button>
-            </section>
 
             <section
               v-if="msg.type === 'system' && msg.explanationImages?.length"
@@ -553,6 +580,12 @@
           />
         </div>
       </transition-group>
+      <div
+        v-if="answerAnchorSpacerHeight > 0"
+        class="assistant-answer-anchor-space"
+        :style="{ height: `${answerAnchorSpacerHeight}px` }"
+        aria-hidden="true"
+      />
     </el-scrollbar>
 
     <!-- 输入区：悬浮极简设计，带常驻选择器 -->
@@ -911,13 +944,27 @@ type ChatScrollbarInstance = {
   setScrollTop: (scrollTop: number) => void;
 };
 
+type MessageId = string | number;
+
 const scrollbarRef = ref<ChatScrollbarInstance | null>(null);
 const shouldFollowLatestMessages = ref(true);
 const autoFollowThreshold = 48;
+const processExpandedById = ref<Record<string, boolean>>({});
+const answerAnchorSpacerHeight = ref(0);
 const expandedSafetyIds = ref<Set<string | number>>(new Set());
 const likedMessageIds = ref<Set<string | number>>(new Set());
 const thinkingStepIndex = ref(0);
 const thinkingTexts = ["正在思考", "正在个性化总结", "正在深度推理"];
+const assistantAnswerElements = new Map<string, HTMLElement>();
+const pendingAssistantMessageIds = new Set<string>();
+const streamingBodyStartedIds = new Set<string>();
+const messageContentLengths = new Map<string, number>();
+let answerAnchorMessageId = "";
+let streamingAnswerFollowEnabled = true;
+let streamingAnswerFollowReadyAt = 0;
+let answerAnchorTimer: number | undefined;
+let streamingAnswerFollowFrame: number | undefined;
+let viewportResizeObserver: ResizeObserver | undefined;
 let thinkingTimer: number | undefined;
 const machineLabelMap: Record<string, string> = {
   platform_data: "平台数据",
@@ -1110,8 +1157,23 @@ const getMessageAvatar = (msg: any) => {
 
 const getMessageAvatarSize = (msg: any) => (msg.type === "system" ? 40 : 28);
 
+const messageKey = (id: MessageId) => String(id);
+
+const hasAssistantTextContent = (msg: any) =>
+  msg.type === "system" && !!String(msg.content || "").trim();
+
 const isMessagePending = (msg: any) =>
   msg.type === "system" && msg.streaming && !String(msg.content || "").trim();
+
+const setAssistantAnswerRef = (msg: any, element: unknown) => {
+  if (msg.type !== "system") return;
+  const key = messageKey(msg.id);
+  if (element instanceof HTMLElement) {
+    assistantAnswerElements.set(key, element);
+  } else {
+    assistantAnswerElements.delete(key);
+  }
+};
 
 const hasMessageContent = (msg: any) =>
   !!String(msg.content || "").trim() ||
@@ -1155,6 +1217,46 @@ const hasStreamStatus = (msg: any) =>
   (Array.isArray(msg.progressTimeline) && msg.progressTimeline.length > 0) ||
   !!msg.errorMessage ||
   !!msg.stopped;
+
+const shouldShowProcessPanel = (msg: any) =>
+  !!msg.streaming ||
+  hasStreamStatus(msg) ||
+  streamingBodyStartedIds.has(messageKey(msg.id));
+
+const getProcessPanelId = (id: MessageId) =>
+  `assistant-process-${messageKey(id).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+
+const hasExplicitProcessState = (id: MessageId) =>
+  Object.prototype.hasOwnProperty.call(
+    processExpandedById.value,
+    messageKey(id)
+  );
+
+const isProcessExpanded = (msg: any) => {
+  const key = messageKey(msg.id);
+  if (hasExplicitProcessState(msg.id)) {
+    return processExpandedById.value[key];
+  }
+  return (
+    isMessagePending(msg) ||
+    (!hasAssistantTextContent(msg) && (msg.error || msg.stopped))
+  );
+};
+
+const setProcessExpanded = (id: MessageId, expanded: boolean) => {
+  processExpandedById.value = {
+    ...processExpandedById.value,
+    [messageKey(id)]: expanded
+  };
+};
+
+const toggleProcessPanel = (msg: any) => {
+  const expanded = !isProcessExpanded(msg);
+  setProcessExpanded(msg.id, expanded);
+  if (!expanded && answerAnchorMessageId === messageKey(msg.id)) {
+    scheduleAssistantAnswerAnchor(msg.id);
+  }
+};
 
 const formatStreamStage = (stage?: string) => formatMachineLabel(stage);
 
@@ -1357,6 +1459,131 @@ const handleChatScroll = ({ scrollTop }: { scrollTop: number }) => {
   shouldFollowLatestMessages.value = isNearLatestMessage(scrollTop);
 };
 
+const prefersReducedMotion = () =>
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+
+const getScrollBehavior = (): ScrollBehavior =>
+  prefersReducedMotion() ? "auto" : "smooth";
+
+const syncAnswerAnchorSpacer = (id: MessageId) => {
+  const key = messageKey(id);
+  if (answerAnchorMessageId !== key) return;
+  const wrap = scrollbarRef.value?.wrapRef;
+  if (!wrap) return;
+  const answer = assistantAnswerElements.get(key);
+  const answerHeight = answer?.offsetHeight || 48;
+  const viewportHeight = Math.min(wrap.clientHeight, window.innerHeight);
+  answerAnchorSpacerHeight.value = Math.max(
+    24,
+    viewportHeight - answerHeight - 24
+  );
+};
+
+const clearAnswerAnchor = () => {
+  if (answerAnchorTimer) window.clearTimeout(answerAnchorTimer);
+  if (streamingAnswerFollowFrame) {
+    window.cancelAnimationFrame(streamingAnswerFollowFrame);
+  }
+  answerAnchorTimer = undefined;
+  streamingAnswerFollowFrame = undefined;
+  answerAnchorMessageId = "";
+  answerAnchorSpacerHeight.value = 0;
+  streamingAnswerFollowEnabled = true;
+  streamingAnswerFollowReadyAt = 0;
+};
+
+const scrollAssistantAnswerToTop = (id: MessageId) => {
+  const key = messageKey(id);
+  if (answerAnchorMessageId !== key) return;
+  const wrap = scrollbarRef.value?.wrapRef;
+  const answer = assistantAnswerElements.get(key);
+  if (!wrap || !answer) return;
+
+  const wrapRect = wrap.getBoundingClientRect();
+  const answerRect = answer.getBoundingClientRect();
+  const targetTop = Math.max(
+    0,
+    wrap.scrollTop + answerRect.top - wrapRect.top - 12
+  );
+  wrap.scrollTo({ top: targetTop, behavior: getScrollBehavior() });
+};
+
+const followStreamingAnswer = (id: MessageId) => {
+  const key = messageKey(id);
+  if (
+    answerAnchorMessageId !== key ||
+    !streamingAnswerFollowEnabled ||
+    Date.now() < streamingAnswerFollowReadyAt
+  ) {
+    return;
+  }
+
+  void nextTick(() => {
+    if (answerAnchorMessageId !== key || !streamingAnswerFollowEnabled) {
+      return;
+    }
+    syncAnswerAnchorSpacer(id);
+    if (streamingAnswerFollowFrame) {
+      window.cancelAnimationFrame(streamingAnswerFollowFrame);
+    }
+    streamingAnswerFollowFrame = window.requestAnimationFrame(() => {
+      const wrap = scrollbarRef.value?.wrapRef;
+      const answer = assistantAnswerElements.get(key);
+      if (!wrap || !answer || answerAnchorMessageId !== key) return;
+
+      const wrapRect = wrap.getBoundingClientRect();
+      const answerRect = answer.getBoundingClientRect();
+      const overflow = answerRect.bottom - (wrapRect.bottom - 36);
+      if (overflow <= 0) return;
+
+      const maxStep = Math.max(
+        32,
+        Math.min(wrap.clientHeight, window.innerHeight) * 0.18
+      );
+      const targetTop = Math.min(
+        wrap.scrollHeight - wrap.clientHeight,
+        wrap.scrollTop + Math.min(overflow, maxStep)
+      );
+      wrap.scrollTo({ top: targetTop, behavior: getScrollBehavior() });
+    });
+  });
+};
+
+const scheduleAssistantAnswerAnchor = (id: MessageId) => {
+  if (answerAnchorTimer) window.clearTimeout(answerAnchorTimer);
+  const collapseDelay = prefersReducedMotion() ? 0 : 280;
+  streamingAnswerFollowReadyAt = Date.now() + collapseDelay + 360;
+  answerAnchorTimer = window.setTimeout(() => {
+    void nextTick(() => {
+      syncAnswerAnchorSpacer(id);
+      scrollAssistantAnswerToTop(id);
+      answerAnchorTimer = window.setTimeout(
+        () => followStreamingAnswer(id),
+        prefersReducedMotion() ? 0 : 320
+      );
+    });
+  }, collapseDelay);
+};
+
+const beginStreamingAnswer = (msg: any) => {
+  const key = messageKey(msg.id);
+  setProcessExpanded(msg.id, false);
+  answerAnchorMessageId = key;
+  streamingAnswerFollowEnabled = true;
+  shouldFollowLatestMessages.value = true;
+
+  const wrap = scrollbarRef.value?.wrapRef;
+  const viewportHeight = Math.min(wrap?.clientHeight || 0, window.innerHeight);
+  answerAnchorSpacerHeight.value = Math.max(24, viewportHeight - 72);
+  void nextTick(() => syncAnswerAnchorSpacer(msg.id));
+  scheduleAssistantAnswerAnchor(msg.id);
+};
+
+const pauseStreamingAnswerFollow = () => {
+  if (!answerAnchorMessageId) return;
+  streamingAnswerFollowEnabled = false;
+};
+
 const scrollToLatestMessage = () => {
   void nextTick(() => {
     const scrollbar = scrollbarRef.value;
@@ -1386,11 +1613,83 @@ watch(
   () => props.messages,
   (messages, previousMessages) => {
     if (messages !== previousMessages) {
+      pendingAssistantMessageIds.clear();
+      streamingBodyStartedIds.clear();
+      messageContentLengths.clear();
+      processExpandedById.value = {};
+      clearAnswerAnchor();
       shouldFollowLatestMessages.value = true;
     }
-    scrollToLatestMessage();
+
+    const activeMessageIds = new Set(
+      messages.map(message => messageKey(message.id))
+    );
+    let startedAnswer: any;
+    let updatedAnswer: any;
+
+    messages.forEach(msg => {
+      const key = messageKey(msg.id);
+      const contentLength = String(msg.content || "").trim().length;
+      const previousLength = messageContentLengths.get(key);
+
+      if (msg.type === "system" && msg.streaming && contentLength === 0) {
+        if (!pendingAssistantMessageIds.has(key)) {
+          if (answerAnchorMessageId && answerAnchorMessageId !== key) {
+            clearAnswerAnchor();
+          }
+          shouldFollowLatestMessages.value = true;
+          pendingAssistantMessageIds.add(key);
+        }
+      }
+
+      const answerJustStarted =
+        msg.type === "system" &&
+        contentLength > 0 &&
+        !streamingBodyStartedIds.has(key) &&
+        (pendingAssistantMessageIds.has(key) || msg.streaming);
+
+      if (answerJustStarted) {
+        pendingAssistantMessageIds.delete(key);
+        streamingBodyStartedIds.add(key);
+        startedAnswer = msg;
+      }
+
+      if (
+        streamingBodyStartedIds.has(key) &&
+        previousLength !== undefined &&
+        contentLength !== previousLength
+      ) {
+        updatedAnswer = msg;
+      }
+
+      messageContentLengths.set(key, contentLength);
+    });
+
+    [...pendingAssistantMessageIds].forEach(key => {
+      if (!activeMessageIds.has(key)) pendingAssistantMessageIds.delete(key);
+    });
+    [...streamingBodyStartedIds].forEach(key => {
+      if (!activeMessageIds.has(key)) streamingBodyStartedIds.delete(key);
+    });
+    [...messageContentLengths.keys()].forEach(key => {
+      if (!activeMessageIds.has(key)) messageContentLengths.delete(key);
+    });
+
+    if (startedAnswer) {
+      beginStreamingAnswer(startedAnswer);
+      return;
+    }
+    if (
+      updatedAnswer &&
+      answerAnchorMessageId === messageKey(updatedAnswer.id)
+    ) {
+      void nextTick(() => syncAnswerAnchorSpacer(updatedAnswer.id));
+      followStreamingAnswer(updatedAnswer.id);
+      return;
+    }
+    if (!answerAnchorMessageId) scrollToLatestMessage();
   },
-  { deep: true }
+  { deep: true, flush: "post" }
 );
 
 watch(
@@ -1403,6 +1702,15 @@ watch(
 
 onMounted(() => {
   scrollToLatestMessage();
+  void nextTick(() => {
+    const wrap = scrollbarRef.value?.wrapRef;
+    if (!wrap || typeof ResizeObserver === "undefined") return;
+    viewportResizeObserver = new ResizeObserver(() => {
+      if (!answerAnchorMessageId) return;
+      syncAnswerAnchorSpacer(answerAnchorMessageId);
+    });
+    viewportResizeObserver.observe(wrap);
+  });
   thinkingTimer = window.setInterval(() => {
     if (props.loading) {
       thinkingStepIndex.value =
@@ -1413,6 +1721,11 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (thinkingTimer) window.clearInterval(thinkingTimer);
+  if (answerAnchorTimer) window.clearTimeout(answerAnchorTimer);
+  if (streamingAnswerFollowFrame) {
+    window.cancelAnimationFrame(streamingAnswerFollowFrame);
+  }
+  viewportResizeObserver?.disconnect();
 });
 </script>
 
@@ -2072,9 +2385,15 @@ onBeforeUnmount(() => {
 }
 
 .stream-progress {
-  padding: 6px 0 2px;
+  width: 100%;
   color: #56647b;
-  border-top: 1px solid rgba(222, 229, 241, 0.8);
+  border-bottom: 1px solid rgba(222, 229, 241, 0.8);
+}
+
+.assistant-answer-anchor-space {
+  width: 1px;
+  min-height: 0;
+  pointer-events: none;
 }
 
 .speech-control {
@@ -2146,7 +2465,6 @@ onBeforeUnmount(() => {
   color: #8a6416;
 }
 
-.stream-progress__header,
 .stream-progress__meta {
   display: flex;
   gap: 10px;
@@ -2155,10 +2473,34 @@ onBeforeUnmount(() => {
 }
 
 .stream-progress__header {
-  padding: 8px 0 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 42px;
+  padding: 7px 2px;
   font-size: 12px;
   font-weight: 800;
   color: #738097;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  transition:
+    color 0.18s ease-out,
+    background 0.18s ease-out;
+}
+
+.stream-progress__header:hover {
+  color: #52627c;
+  background: rgba(244, 247, 252, 0.72);
+}
+
+.stream-progress__header:focus-visible {
+  outline: 2px solid rgba(47, 111, 214, 0.72);
+  outline-offset: 2px;
 }
 
 .stream-progress__heading {
@@ -2174,12 +2516,54 @@ onBeforeUnmount(() => {
   font-weight: 750;
 }
 
-.stream-progress__header > span:last-child,
+.stream-progress__header-meta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.stream-progress__header-meta > span,
 .stream-progress__meta > span {
   flex: 0 0 auto;
   font-size: 12px;
   font-weight: 600;
   color: #8996aa;
+}
+
+.stream-progress__chevron {
+  color: #8996aa;
+  transition: transform 0.2s ease-out;
+}
+
+.stream-progress.is-expanded .stream-progress__chevron {
+  transform: rotate(180deg);
+}
+
+.stream-progress__body {
+  padding: 1px 2px 12px;
+  overflow: hidden;
+}
+
+.stream-progress__pending {
+  padding: 4px 0 8px;
+}
+
+.process-collapse-enter-active,
+.process-collapse-leave-active {
+  max-height: 960px;
+  overflow: hidden;
+  transition:
+    max-height 0.22s ease-out,
+    opacity 0.18s ease-out,
+    transform 0.22s ease-out;
+}
+
+.process-collapse-enter-from,
+.process-collapse-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 .stream-progress__timeline {
@@ -2627,11 +3011,16 @@ onBeforeUnmount(() => {
   color: var(--ai-app-text, #eef4ff);
 }
 
-:global(html.dark) .stream-progress__header > span:last-child,
+:global(html.dark) .stream-progress__header-meta > span,
 :global(html.dark) .stream-progress__meta > span,
 :global(html.dark) .thinking-eyebrow,
-:global(html.dark) .reasoning-summary__chevron {
+:global(html.dark) .reasoning-summary__chevron,
+:global(html.dark) .stream-progress__chevron {
   color: var(--ai-app-text-muted, #92a0b8);
+}
+
+:global(html.dark) .stream-progress__header:hover {
+  background: rgb(31 47 72 / 42%);
 }
 
 :global(html.dark) .stream-progress__timeline li:not(:last-child)::after {
@@ -2671,7 +3060,10 @@ onBeforeUnmount(() => {
   .thinking-process-icon,
   .thinking-typewriter,
   .thinking-dots span,
-  .reasoning-summary__chevron {
+  .reasoning-summary__chevron,
+  .stream-progress__chevron,
+  .process-collapse-enter-active,
+  .process-collapse-leave-active {
     animation: none;
     transition: none;
   }
