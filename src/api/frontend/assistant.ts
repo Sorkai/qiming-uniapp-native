@@ -2016,10 +2016,14 @@ export const uploadAssistantDocumentAttachment = async (
     content_type?: string;
   }
 ) => {
+  const attachmentScene =
+    options.scene === "assistant" ? "general" : options.scene || "general";
   const { data: initData } = await initAssistantDocumentAttachmentSts({
-    scene: options.scene || "assistant",
+    scene: attachmentScene,
     course_id: options.course_id,
-    conversation_id: options.conversation_id,
+    // Assistant conversations use a different ownership domain from /ai/chat attachments.
+    conversation_id:
+      options.scene === "assistant" ? undefined : options.conversation_id,
     file_name: file.name,
     content_type:
       options.content_type || file.type || "application/octet-stream",
