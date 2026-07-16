@@ -33,3 +33,7 @@ qiming-virtual-people/outputs
 
 # Local Sherpa TTS model data exceeds GitHub's 100MB blob limit.
 public/virtual-people/tts/sherpa-baker/sherpa-onnx-wasm-main-tts.data
+
+# Local generated documents and intermediate artifacts
+/output/
+/tmp/
