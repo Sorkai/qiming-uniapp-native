@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { type IconifyIcon } from "@iconify/vue";
 import { useDark } from "../utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
-import { getPlatformStats } from "@/api/statistics";
+import { getCourseStats, type CourseStatsResult } from "@/api/course";
 
 const { isDark } = useDark();
 const loading = ref(true);
@@ -12,7 +11,6 @@ interface StatItem {
   title: string;
   value: string | number;
   unit: string;
-  trend: number;
   icon: string;
   color: string;
   bgColor: string;
@@ -27,20 +25,55 @@ const darkBgColors = [
   "rgba(232, 104, 74, 0.15)"
 ];
 
-const stats = ref<StatItem[]>([]);
+const toNumber = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const buildStats = (data?: CourseStatsResult): StatItem[] => {
+  const completionRate = data?.avgCompletionRate ?? data?.completionRate ?? 0;
+  const values = [
+    {
+      title: "课程总数",
+      value: toNumber(data?.totalCourses),
+      unit: "门",
+      icon: "ep:collection"
+    },
+    {
+      title: "累计课时",
+      value: toNumber(data?.totalHours),
+      unit: data?.totalHoursUnit || "分钟",
+      icon: "ep:timer"
+    },
+    {
+      title: "活跃学生",
+      value: toNumber(data?.activeStudents),
+      unit: "人",
+      icon: "ep:user"
+    },
+    {
+      title: "平均完成率",
+      value: toNumber(completionRate),
+      unit: "%",
+      icon: "ep:finished"
+    }
+  ];
+
+  return values.map((item, index) => ({
+    ...item,
+    color: colors[index % colors.length],
+    bgColor: bgColors[index % bgColors.length]
+  }));
+};
+
+const stats = ref<StatItem[]>(buildStats());
 
 onMounted(async () => {
   try {
-    const { data } = await getPlatformStats();
-    if (data && data.stats) {
-      stats.value = data.stats.map((item, index) => ({
-        ...item,
-        color: colors[index % colors.length],
-        bgColor: bgColors[index % bgColors.length]
-      }));
-    }
+    const { data } = await getCourseStats();
+    if (data) stats.value = buildStats(data);
   } catch (error) {
-    console.error("Failed to fetch platform stats:", error);
+    console.error("Failed to fetch course overview:", error);
   } finally {
     loading.value = false;
   }
@@ -77,19 +110,6 @@ onMounted(async () => {
             }"
           >
             <IconifyIconOnline :icon="item.icon" />
-          </div>
-          <div
-            class="trend-tag px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 backdrop-blur-md"
-            :class="
-              item.trend >= 0
-                ? 'bg-green-50/80 dark:bg-green-500/10 text-green-600'
-                : 'bg-red-50/80 dark:bg-red-500/10 text-red-600'
-            "
-          >
-            {{ item.trend >= 0 ? "+" : "" }}{{ item.trend }}%
-            <IconifyIconOnline
-              :icon="item.trend >= 0 ? 'ep:caret-top' : 'ep:caret-bottom'"
-            />
           </div>
         </div>
 
