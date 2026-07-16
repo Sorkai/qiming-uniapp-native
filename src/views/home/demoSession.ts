@@ -68,7 +68,7 @@ function writeDemoSession(
       avatar: data.avatar || FALLBACK_AVATAR,
       username: data.mobile,
       nickname: data.nickname,
-      roles: [role, "admin", "teacher", "student"],
+      roles: [role],
       permissions: ["*:*:*"],
       roleType: data.roleType,
       userId: data.userId
