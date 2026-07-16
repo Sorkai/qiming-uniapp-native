@@ -187,6 +187,24 @@ import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 
 const router = useRouter();
 const route = useRoute();
+const courseMenuKeys = [
+  "course-learn",
+  "mastery",
+  "course-qa",
+  "homework-exam",
+  "course-materials",
+  "html-animations",
+  "grades"
+];
+
+const readRouteSection = () => {
+  const value = Array.isArray(route.query.section)
+    ? route.query.section[0]
+    : route.query.section;
+  return typeof value === "string" && courseMenuKeys.includes(value)
+    ? value
+    : "";
+};
 
 // 基础状态
 const baseCourseId = ref<number | null>(null);
@@ -197,9 +215,11 @@ const currentTheme = ref(
   (storageLocal().getItem("course_theme") as string) || "light"
 );
 const activeMenu = ref(
-  (storageLocal().getItem(
-    `course_detail_active_menu_${route.params.id}`
-  ) as string) || "course-learn"
+  readRouteSection() ||
+    (storageLocal().getItem(
+      `course_detail_active_menu_${route.params.id}`
+    ) as string) ||
+    "course-learn"
 );
 
 // 监听菜单变化并持久化
@@ -240,11 +260,11 @@ watch(
       baseCourseId.value = id;
       courseScores.value = null;
 
-      // 恢复新课程的菜单状态
+      // URL 直达的 section 优先级最高，其次才恢复新课程的菜单状态
       const savedMenu = storageLocal().getItem(
         `course_detail_active_menu_${id}`
       ) as string;
-      activeMenu.value = savedMenu || "course-learn";
+      activeMenu.value = readRouteSection() || savedMenu || "course-learn";
 
       // 恢复新课程的课时状态
       const savedNode = storageLocal().getItem(
@@ -272,6 +292,16 @@ watch(
       nextTick(() => {
         scheduleMobileTopOffsetUpdate();
       });
+    }
+  }
+);
+
+watch(
+  () => route.query.section,
+  () => {
+    const routeSection = readRouteSection();
+    if (routeSection && routeSection !== activeMenu.value) {
+      activeMenu.value = routeSection;
     }
   }
 );
