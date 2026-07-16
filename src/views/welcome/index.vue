@@ -203,7 +203,7 @@ watchEffect(() => {
                 <el-tag size="small" effect="plain">实时更新</el-tag>
               </div>
             </template>
-            <div class="h-[450px]">
+            <div class="h-[350px]">
               <TeacherStudentUsage />
             </div>
           </el-card>
@@ -226,7 +226,7 @@ watchEffect(() => {
                 </span>
               </div>
             </template>
-            <div class="h-[450px]">
+            <div class="h-[350px]">
               <WeekUsage />
             </div>
           </el-card>
@@ -252,7 +252,7 @@ watchEffect(() => {
               </span>
             </div>
           </template>
-          <div class="min-h-[600px]">
+          <div class="min-h-0 md:min-h-[600px]">
             <EfficientIndex />
           </div>
         </el-card>
@@ -269,7 +269,7 @@ watchEffect(() => {
               </span>
             </div>
           </template>
-          <div class="min-h-[600px]">
+          <div class="min-h-0 md:min-h-[600px]">
             <CourseStatistics />
           </div>
         </el-card>
@@ -368,6 +368,31 @@ watchEffect(() => {
 .analysis-chart-card {
   :deep(.el-card__body) {
     padding-top: 16px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .welcome-container {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .chart-card {
+    border-radius: 16px;
+
+    &:hover {
+      box-shadow: none;
+      transform: none;
+    }
+
+    :deep(.el-card__header) {
+      padding: 16px 12px 12px;
+    }
+
+    :deep(.el-card__body) {
+      min-width: 0;
+      padding: 10px 8px 16px;
+    }
   }
 }
 

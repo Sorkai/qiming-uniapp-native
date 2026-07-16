@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from "vue";
-import { useDark, useECharts } from "@pureadmin/utils";
+import { useDark, useECharts, useResizeObserver } from "@pureadmin/utils";
 import { getTeacherUsage, getStudentUsage } from "@/api/statistics";
 
 defineOptions({
@@ -15,8 +15,12 @@ const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
 const chartRef = ref();
-const { setOptions } = useECharts(chartRef, {
+const { setOptions, resize } = useECharts(chartRef, {
   theme
+});
+
+useResizeObserver(chartRef, () => resize(), {
+  time: 80
 });
 
 // 获取教师和学生使用情况数据

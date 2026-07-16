@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from "vue";
-import { useDark, useECharts } from "@pureadmin/utils";
+import { useDark, useECharts, useResizeObserver } from "@pureadmin/utils";
 import { useAppStoreHook } from "@/store/modules/app";
 import { getEfficientIndex } from "@/api/statistics";
 import { getCourseList } from "@/api/course";
@@ -32,8 +32,12 @@ const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
 const chartRef = ref();
-const { setOptions } = useECharts(chartRef, {
+const { setOptions, resize } = useECharts(chartRef, {
   theme
+});
+
+useResizeObserver(chartRef, () => resize(), {
+  time: 80
 });
 
 type ActiveCourseIndex = {
@@ -423,7 +427,7 @@ onMounted(() => {
         <div v-else class="flex flex-col gap-6">
           <!-- 筛选控制区域 -->
           <div
-            class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
+            class="efficient-filter-panel flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
           >
             <div class="flex items-center gap-4 shrink-0">
               <div
@@ -470,7 +474,7 @@ onMounted(() => {
 
           <!-- 图表主体 -->
           <div
-            class="relative bg-white/50 dark:bg-[var(--el-bg-color-overlay)] p-8 rounded-3xl border border-blue-100/50 dark:border-blue-500/10 shadow-sm"
+            class="efficient-chart-panel relative bg-white/50 dark:bg-[var(--el-bg-color-overlay)] p-8 rounded-3xl border border-blue-100/50 dark:border-blue-500/10 shadow-sm"
           >
             <div
               ref="chartRef"
@@ -695,6 +699,21 @@ onMounted(() => {
 }
 
 @media screen and (max-width: 768px) {
+  .efficient-filter-panel {
+    gap: 12px;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .efficient-chart-panel {
+    padding: 8px;
+    border-radius: 16px;
+  }
+
+  .chart-container {
+    height: 360px !important;
+  }
+
   :deep(.efficient-pagination) {
     flex-wrap: wrap;
     gap: 4px;
