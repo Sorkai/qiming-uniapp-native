@@ -112,6 +112,7 @@
         <!-- 随练标签页：嵌入新版随练组件 -->
         <el-tab-pane label="随练" name="practice">
           <WrongExercise
+            v-if="visible && homeworkExamTab === 'practice'"
             :embedded="true"
             :course-id="courseId"
             :current-theme="currentTheme"
