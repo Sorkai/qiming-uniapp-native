@@ -52,9 +52,7 @@ export function useTags() {
   const isScrolling = ref(false);
 
   /** 显示模式，默认灵动模式 */
-  const showModel = ref(
-    getConfigure()?.showModel || "smart"
-  );
+  const showModel = ref(getConfigure()?.showModel || "smart");
   /** 是否隐藏标签页，默认显示 */
   const showTags = ref(getConfigure()?.hideTabs ?? false);
   const multiTags: any = computed(() => {

@@ -9,7 +9,9 @@ export function useLayout() {
 
   const getDefaultLayout = () => ({
     layout:
-      $config?.Layout === "double" ? "vertical" : ($config?.Layout ?? "vertical"),
+      $config?.Layout === "double"
+        ? "vertical"
+        : ($config?.Layout ?? "vertical"),
     theme: $config?.Theme ?? "light",
     darkMode: $config?.DarkMode ?? false,
     sidebarStatus: $config?.SidebarStatus ?? true,

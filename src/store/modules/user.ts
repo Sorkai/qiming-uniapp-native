@@ -101,9 +101,7 @@ export const useUserStore = defineStore("pure-user", {
         const normalizeLoginToken = (loginData: any) => {
           const expiresValue = Number(loginData?.accessExpire);
           const expiresTime =
-            expiresValue > 100000000000
-              ? expiresValue
-              : expiresValue * 1000;
+            expiresValue > 100000000000 ? expiresValue : expiresValue * 1000;
           return {
             accessToken: loginData?.accessToken,
             refreshToken: loginData?.refreshToken || loginData?.accessToken,

@@ -122,6 +122,7 @@ function isAncestor(ancestor, descendant) {
 
 function verifyBuilds() {
   const checks = [
+    ["pnpm", ["lint"]],
     ["pnpm", ["typecheck"]],
     ["pnpm", ["build:app-h5"]],
     ["pnpm", ["sync:app-h5"]],

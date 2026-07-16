@@ -666,7 +666,8 @@ const route = useRoute();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
 const isMiniProgramDemoRoute = computed(
-  () => route.query.qimingMiniProgram === "1" || route.query.qimingNative === "1"
+  () =>
+    route.query.qimingMiniProgram === "1" || route.query.qimingNative === "1"
 );
 
 const menuKeys = [
@@ -868,10 +869,13 @@ const coursesData = ref({
 const fetchCourseList = async () => {
   try {
     loading.value = true;
-    const { code, data, msg } = await getFrontendCourseList({
-      pageNum: 1,
-      pageSize: 100 // 获取足够多的课程数据
-    }, { timeout: isMiniProgramDemoRoute.value ? 8000 : 0 });
+    const { code, data, msg } = await getFrontendCourseList(
+      {
+        pageNum: 1,
+        pageSize: 100 // 获取足够多的课程数据
+      },
+      { timeout: isMiniProgramDemoRoute.value ? 8000 : 0 }
+    );
 
     if (code === 200 && data) {
       return data.list || [];
@@ -934,11 +938,14 @@ const loadCoursePageData = async () => {
   coursesData.value.loading = true;
   try {
     // 分页获取课程列表
-    const { code, data, msg } = await getFrontendCourseList({
-      pageNum: currentPage.value,
-      pageSize: pageSize.value,
-      status: courseFilter.value === "all" ? undefined : courseFilter.value
-    }, { timeout: isMiniProgramDemoRoute.value ? 8000 : 0 });
+    const { code, data, msg } = await getFrontendCourseList(
+      {
+        pageNum: currentPage.value,
+        pageSize: pageSize.value,
+        status: courseFilter.value === "all" ? undefined : courseFilter.value
+      },
+      { timeout: isMiniProgramDemoRoute.value ? 8000 : 0 }
+    );
 
     if (code === 200 && data) {
       coursesData.value.list = data.list || [];

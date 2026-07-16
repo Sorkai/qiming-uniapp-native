@@ -42,7 +42,9 @@ const STATIC_ASSET_MAPPINGS = [
 
 const LEGACY_FONT_ALIASES = [
   {
-    source: resolve("src/components/ReFlowChart/src/assets/iconfont/iconfont.eot"),
+    source: resolve(
+      "src/components/ReFlowChart/src/assets/iconfont/iconfont.eot"
+    ),
     targets: ["static/fonts/iconfont.45255860.eot"]
   },
   {

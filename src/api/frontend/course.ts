@@ -173,11 +173,14 @@ export const getCourseScore = (params: { courseId: number }) => {
 /**
  * 获取前台课程列表
  */
-export const getFrontendCourseList = (params: {
-  pageNum: number;
-  pageSize?: number;
-  status?: string;
-}, options: { timeout?: number } = {}) => {
+export const getFrontendCourseList = (
+  params: {
+    pageNum: number;
+    pageSize?: number;
+    status?: string;
+  },
+  options: { timeout?: number } = {}
+) => {
   const config = {
     params,
     ...(options.timeout !== undefined ? { timeout: options.timeout } : {})

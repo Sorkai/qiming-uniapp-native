@@ -158,7 +158,9 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   const isNativeDemoRoute = String(to.query?.qimingNative || "") === "1";
   const externalLink = isUrl(to?.name as string);
   const isMiniProgramWebView =
-    document.documentElement.classList.contains("qiming-mini-program-webview") ||
+    document.documentElement.classList.contains(
+      "qiming-mini-program-webview"
+    ) ||
     String(to.query?.qimingMiniProgram || "") === "1" ||
     localStorage.getItem("qimingMiniProgramWebView") === "1" ||
     sessionStorage.getItem("qimingMiniProgramWebView") === "1";
