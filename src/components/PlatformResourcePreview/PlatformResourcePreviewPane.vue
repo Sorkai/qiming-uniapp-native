@@ -23,9 +23,11 @@ import "@vue-office/excel/lib/v3/index.css";
 import PlatformMindMapPreview from "./PlatformMindMapPreview.vue";
 import PlatformStructuredJsonPreview from "./PlatformStructuredJsonPreview.vue";
 import {
+  decodePlatformTextBuffer,
   downloadPlatformResource,
   fetchPlatformResourceBuffer,
   fetchPlatformResourceText,
+  getResourceUrlExtension,
   isOfficePreviewKind,
   resolvePlatformPreviewSource,
   type PlatformPreviewResource
@@ -127,6 +129,7 @@ const errorMessage = ref("");
 const markdownHtml = ref("");
 const plainText = ref("");
 const mindMapTree = ref<PlatformMindMapNode | null>(null);
+const mindMapImageUrl = ref("");
 const structuredJsonView = ref<StructuredPreviewView | null>(null);
 const officeBuffer = shallowRef<ArrayBuffer | null>(null);
 const officeHostRef = ref<HTMLElement | null>(null);
@@ -134,6 +137,7 @@ const officePdfFallbackUrl = ref("");
 const officeRenderKey = ref(0);
 let previewAbortController: AbortController | null = null;
 let pptxViewer: import("@aiden0z/pptx-renderer").PptxViewer | null = null;
+let mindMapImageObjectUrl = "";
 
 const hasStructuredSource = computed(() =>
   Boolean(
@@ -172,6 +176,14 @@ function clearOfficePdfFallback() {
   }
 }
 
+function clearMindMapImage() {
+  if (mindMapImageObjectUrl) {
+    URL.revokeObjectURL(mindMapImageObjectUrl);
+    mindMapImageObjectUrl = "";
+  }
+  mindMapImageUrl.value = "";
+}
+
 function destroyPptxViewer() {
   pptxViewer?.destroy();
   pptxViewer = null;
@@ -183,6 +195,7 @@ function resetContent() {
   markdownHtml.value = "";
   plainText.value = "";
   mindMapTree.value = null;
+  clearMindMapImage();
   structuredJsonView.value = null;
   officeBuffer.value = null;
   clearOfficePdfFallback();
@@ -260,17 +273,65 @@ function renderStructuredContent(content: string) {
   }
 }
 
+function imageMimeTypeFromExtension(extension: string) {
+  const types: Record<string, string> = {
+    svg: "image/svg+xml",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif"
+  };
+  return types[extension] || "";
+}
+
 async function loadTextPreview(signal: AbortSignal) {
   const usesInlineStructuredFields =
     resolved.value.kind === "json" && hasStructuredSource.value;
-  const content =
+  const inlineStructuredData = props.resource?.structuredData;
+  let content =
     resolved.value.content ||
-    (!usesInlineStructuredFields && resolved.value.url
-      ? await fetchPlatformResourceText(resolved.value.url, {
-          signal,
-          maxBytes: 8 * 1024 * 1024
-        })
+    (inlineStructuredData !== undefined
+      ? JSON.stringify(inlineStructuredData)
       : "");
+
+  if (
+    !content &&
+    !usesInlineStructuredFields &&
+    resolved.value.kind === "mindmap" &&
+    resolved.value.url
+  ) {
+    const { buffer, contentType } = await fetchPlatformResourceBuffer(
+      resolved.value.url,
+      {
+        signal,
+        maxBytes: 16 * 1024 * 1024,
+        accept: "application/json, text/plain, text/markdown, image/*, */*"
+      }
+    );
+    if (signal.aborted) return;
+
+    const extension = getResourceUrlExtension(resolved.value.url);
+    const fallbackImageType = imageMimeTypeFromExtension(extension);
+    const responseType = contentType.split(";")[0].trim().toLowerCase();
+    if (responseType.startsWith("image/") || fallbackImageType) {
+      mindMapImageObjectUrl = URL.createObjectURL(
+        new Blob([buffer], {
+          type: responseType.startsWith("image/")
+            ? responseType
+            : fallbackImageType
+        })
+      );
+      mindMapImageUrl.value = mindMapImageObjectUrl;
+      return;
+    }
+    content = decodePlatformTextBuffer(buffer, contentType);
+  } else if (!content && !usesInlineStructuredFields && resolved.value.url) {
+    content = await fetchPlatformResourceText(resolved.value.url, {
+      signal,
+      maxBytes: 8 * 1024 * 1024
+    });
+  }
   if (signal.aborted) return;
 
   if (resolved.value.kind === "markdown") renderMarkdown(content);
@@ -422,6 +483,29 @@ function handleMediaError() {
   failPreview(new Error("MEDIA_LOAD_FAILED"));
 }
 
+function handlePptxWheel(event: WheelEvent) {
+  if (event.ctrlKey || event.metaKey || resolved.value.kind !== "pptx") return;
+  const host = officeHostRef.value;
+  if (!host || host.scrollHeight <= host.clientHeight) return;
+
+  const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : host.clientHeight;
+  const delta =
+    event.deltaMode === WheelEvent.DOM_DELTA_PIXEL
+      ? event.deltaY
+      : event.deltaY * unit;
+  if (!delta) return;
+
+  const nextScrollTop = Math.max(
+    0,
+    Math.min(host.scrollTop + delta, host.scrollHeight - host.clientHeight)
+  );
+  if (nextScrollTop === host.scrollTop) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  host.scrollTop = nextScrollTop;
+}
+
 function handleOfficeRendered() {
   completeLoading();
 }
@@ -451,6 +535,7 @@ watch(
 onBeforeUnmount(() => {
   previewAbortController?.abort();
   destroyPptxViewer();
+  clearMindMapImage();
   clearOfficePdfFallback();
 });
 
@@ -460,7 +545,10 @@ defineExpose({ reload: loadPreview, download: handleDownload });
 <template>
   <section
     class="platform-resource-preview"
-    :class="{ 'is-embedded': props.embedded }"
+    :class="[
+      `is-${resolved.kind}`,
+      { 'is-embedded': props.embedded }
+    ]"
     :style="previewFontVariables"
     aria-live="polite"
   >
@@ -519,6 +607,18 @@ defineExpose({ reload: loadPreview, download: handleDownload });
         :tree="mindMapTree"
       />
 
+      <div
+        v-else-if="resolved.kind === 'mindmap' && mindMapImageUrl"
+        class="platform-resource-preview__image is-mind-map"
+      >
+        <img
+          :src="mindMapImageUrl"
+          :alt="resolved.title"
+          @load="completeLoading"
+          @error="handleMediaError"
+        />
+      </div>
+
       <PlatformStructuredJsonPreview
         v-else-if="resolved.kind === 'json' && structuredJsonView"
         :view="structuredJsonView"
@@ -531,6 +631,7 @@ defineExpose({ reload: loadPreview, download: handleDownload });
         :key="`${resolved.url}:${officeRenderKey}`"
         class="platform-resource-preview__office"
         :class="`is-${resolved.kind}`"
+        @wheel.capture="handlePptxWheel"
       />
 
       <div
@@ -648,6 +749,10 @@ defineExpose({ reload: loadPreview, download: handleDownload });
 
 .platform-resource-preview.is-embedded {
   min-height: 100%;
+}
+
+.platform-resource-preview.is-pptx {
+  overflow: hidden;
 }
 
 .platform-resource-preview__loading {
@@ -809,8 +914,11 @@ defineExpose({ reload: loadPreview, download: handleDownload });
 }
 
 .platform-resource-preview__office.is-pptx {
-  min-height: 680px;
+  height: 100%;
+  min-height: 0;
   padding: 20px 0 36px;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   background: #eef2f7;

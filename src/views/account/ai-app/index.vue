@@ -206,6 +206,13 @@ const speechDiagnosticText = computed(() => {
     ["session_status", diagnostic.sessionStatus],
     ["live_delivery_status", diagnostic.liveDeliveryStatus],
     ["archive_status", diagnostic.archiveStatus],
+    ["terminal_event", diagnostic.terminalEvent],
+    ["archive_disposition", diagnostic.archiveDisposition],
+    ["last_audio_seq", diagnostic.lastAudioSequence],
+    ["audio_sample_count", diagnostic.audioSampleCount],
+    ["relayed_sample_count", diagnostic.relayedSampleCount],
+    ["last_played_sample", diagnostic.lastPlayedSample],
+    ["archive_resume_ms", diagnostic.archiveResumeMs],
     ["poll_after_ms", diagnostic.pollAfterMs],
     ["error_code", diagnostic.errorCode]
   ].filter(([, value]) => value !== undefined && value !== "");
@@ -2036,9 +2043,15 @@ const loadConversationMessages = async (conversation: ConversationView) => {
         ? item.speech.status === "ready" ||
           item.speech.status === "ready_degraded"
           ? "ready"
-          : item.speech.status === "expired"
+          : ["expired", "failed", "partial", "unknown_outcome"].includes(
+                item.speech.status
+              )
             ? "failed"
-            : "finalizing"
+            : item.speech.status === "cancelled"
+              ? "cancelled"
+              : item.speech.status === "unavailable"
+                ? "unavailable"
+                : "finalizing"
         : "disabled"
     }));
     messages.value.forEach(message => {

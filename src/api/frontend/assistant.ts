@@ -355,6 +355,13 @@ export interface AssistantSpeechServerControl {
   char_start?: number;
   char_end?: number;
   archive_status?: string;
+  terminal_event?: string;
+  archive_disposition?: string;
+  last_audio_seq?: number;
+  audio_sample_count?: number;
+  relayed_sample_count?: number;
+  last_played_sample?: number;
+  archive_resume_ms?: number;
   timeline?: AssistantSpeechTimeline;
 }
 
@@ -407,6 +414,13 @@ export interface AssistantSpeechSession {
   status: string;
   live_delivery_status?: string;
   archive_status?: string;
+  terminal_event?: string;
+  archive_disposition?: string;
+  last_audio_seq?: number;
+  audio_sample_count?: number;
+  relayed_sample_count?: number;
+  last_played_sample?: number;
+  archive_resume_ms?: number;
   poll_after_ms?: number;
   voice_alias?: string;
   timeline_requested?: string;
@@ -436,6 +450,10 @@ export interface AssistantSpeechSessionSummary {
   timeline_status?: string;
   timeline_version?: string;
   timeline_source?: string;
+  live_delivery_status?: string;
+  archive_status?: string;
+  terminal_event?: string;
+  archive_resume_ms?: number;
   retryable?: boolean;
   error_code?: string;
   created_at: string;
@@ -907,6 +925,8 @@ export interface AssistantResourceSummary {
   published_at?: string;
   content_format?: string;
   content_body?: string;
+  mime_type?: string;
+  structured_data?: unknown;
   html_animation_task_id?: string;
   html_animation_status?: string;
   html_animation_message?: string;

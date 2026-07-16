@@ -53,6 +53,13 @@ export interface SpeechPlaybackDiagnostic {
   sessionStatus?: string;
   liveDeliveryStatus?: string;
   archiveStatus?: string;
+  terminalEvent?: string;
+  archiveDisposition?: string;
+  lastAudioSequence?: number;
+  audioSampleCount?: number;
+  relayedSampleCount?: number;
+  lastPlayedSample?: number;
+  archiveResumeMs?: number;
   pollAfterMs?: number;
   errorCode?: string;
 }
@@ -176,6 +183,7 @@ export class SpeechPlaybackController {
   private lastAudioSequence = 0;
   private lastServerEventSequence = 0;
   private playedSample = 0;
+  private bufferedMs = 0;
   private peakRms = 0;
   private lastProgressSentAt = 0;
   private liveStarted = false;
@@ -192,9 +200,13 @@ export class SpeechPlaybackController {
   private readonly sessionClientIds = new Map<string, string | number>();
   private readonly sessionAutoplay = new Map<string, boolean>();
   private diagnostic: SpeechPlaybackDiagnostic = {};
+  private readonly handleVisibilityChange = () => {
+    if (document.hidden) this.sendPlaybackProgress(true);
+  };
 
   constructor(callbacks: SpeechControllerCallbacks) {
     this.callbacks = callbacks;
+    document.addEventListener("visibilitychange", this.handleVisibilityChange);
   }
 
   configure(capabilities?: AssistantSpeechCapabilities | null) {
@@ -229,6 +241,13 @@ export class SpeechPlaybackController {
       sessionStatus: session.status,
       liveDeliveryStatus: session.live_delivery_status,
       archiveStatus: session.archive_status,
+      terminalEvent: session.terminal_event,
+      archiveDisposition: session.archive_disposition,
+      lastAudioSequence: session.last_audio_seq,
+      audioSampleCount: session.audio_sample_count,
+      relayedSampleCount: session.relayed_sample_count,
+      lastPlayedSample: session.last_played_sample,
+      archiveResumeMs: session.archive_resume_ms,
       pollAfterMs: session.poll_after_ms,
       errorCode: session.error_code
     });
@@ -427,6 +446,7 @@ export class SpeechPlaybackController {
       this.lastAudioSequence = 0;
       this.lastServerEventSequence = 0;
       this.playedSample = 0;
+      this.bufferedMs = 0;
       this.peakRms = 0;
       this.liveStarted = false;
       this.liveFailed = false;
@@ -453,6 +473,13 @@ export class SpeechPlaybackController {
         sessionStatus: "reserved",
         liveDeliveryStatus: undefined,
         archiveStatus: undefined,
+        terminalEvent: undefined,
+        archiveDisposition: undefined,
+        lastAudioSequence: undefined,
+        audioSampleCount: undefined,
+        relayedSampleCount: undefined,
+        lastPlayedSample: undefined,
+        archiveResumeMs: undefined,
         pollAfterMs: undefined,
         errorCode: undefined
       });
@@ -547,6 +574,7 @@ export class SpeechPlaybackController {
               ? "实时连接中断，正在等待完整录音"
               : "实时连接中断，文字回答不受影响"
           );
+          void this.refreshSession(this.realtimeSessionId);
         }
         this.workletNode?.port.postMessage({ type: "end" });
       });
@@ -569,6 +597,13 @@ export class SpeechPlaybackController {
       eventSequence: control.event_seq || undefined,
       segmentSequence: control.segment_seq,
       archiveStatus: control.archive_status || this.diagnostic.archiveStatus,
+      terminalEvent: control.terminal_event,
+      archiveDisposition: control.archive_disposition,
+      lastAudioSequence: control.last_audio_seq,
+      audioSampleCount: control.audio_sample_count,
+      relayedSampleCount: control.relayed_sample_count,
+      lastPlayedSample: control.last_played_sample,
+      archiveResumeMs: control.archive_resume_ms,
       errorCode: control.error_code
     });
 
@@ -621,12 +656,14 @@ export class SpeechPlaybackController {
             ? "实时音频已完成，完整录音归档失败"
             : "实时音频输入完成，等待播放结束"
         );
+        void this.refreshSession(this.realtimeSessionId);
         break;
       case "stream.cancelled":
         this.liveTerminalReceived = true;
         this.workletNode?.port.postMessage({ type: "reset" });
         this.callbacks.renderer.reset();
         this.setStatus("cancelled", "语音已停止");
+        void this.refreshSession(control.session_id || this.realtimeSessionId);
         break;
       case "stream.error":
         this.liveTerminalReceived = true;
@@ -640,6 +677,7 @@ export class SpeechPlaybackController {
             ? "实时播报中断，正在恢复完整录音"
             : "实时语音中断，文字回答不受影响"
         );
+        void this.refreshSession(control.session_id || this.realtimeSessionId);
         break;
       default:
         break;
@@ -664,6 +702,7 @@ export class SpeechPlaybackController {
   }
 
   private handleRealtimeAudio(buffer: ArrayBuffer) {
+    if (this.liveTerminalReceived) return;
     try {
       const frame = parseA3AUFrame(buffer);
       const sequenceGap =
@@ -710,41 +749,38 @@ export class SpeechPlaybackController {
         buffered_ms: 0,
         client_time_ms: Date.now()
       });
+      this.sendPlaybackProgress(true);
       return;
     }
     if (data.type === "stats") {
       this.playedSample = Math.max(0, Number(data.playedSample) || 0);
+      this.bufferedMs = clamp(Number(data.bufferedMs) || 0, 0, 60000);
       const rms = clamp(Number(data.rms) || 0, 0, 1);
       this.peakRms = Math.max(this.peakRms, rms);
       this.applyRealtimeRenderer(this.playedSample, rms);
       const now = Date.now();
       if (now - this.lastProgressSentAt >= 750) {
         this.lastProgressSentAt = now;
-        const bufferedMs = clamp(Number(data.bufferedMs) || 0, 0, 60000);
         this.updateDiagnostic({
           audioSequence: this.lastAudioSequence,
           playedSample: this.playedSample,
-          bufferedMs,
+          bufferedMs: this.bufferedMs,
           peakRms: Number(this.peakRms.toFixed(6))
         });
-        this.sendRealtimeControl({
-          event: "playback.progress",
-          last_audio_seq: this.lastAudioSequence,
-          played_sample: this.playedSample,
-          buffered_ms: bufferedMs,
-          client_time_ms: now
-        });
+        this.sendPlaybackProgress();
       }
       return;
     }
     if (data.type === "ended") {
+      this.playedSample = Math.max(
+        0,
+        Number(data.playedSample) || this.playedSample
+      );
+      this.bufferedMs = 0;
       this.sendRealtimeControl({
         event: "playback.ended",
         last_audio_seq: this.lastAudioSequence,
-        played_sample: Math.max(
-          0,
-          Number(data.playedSample) || this.playedSample
-        ),
+        played_sample: this.playedSample,
         client_time_ms: Date.now()
       });
       this.callbacks.renderer.reset();
@@ -754,10 +790,7 @@ export class SpeechPlaybackController {
             ? "playback.interrupted"
             : "playback.ended",
         audioSequence: this.lastAudioSequence,
-        playedSample: Math.max(
-          0,
-          Number(data.playedSample) || this.playedSample
-        ),
+        playedSample: this.playedSample,
         bufferedMs: 0,
         peakRms: Number(this.peakRms.toFixed(6))
       });
@@ -808,6 +841,17 @@ export class SpeechPlaybackController {
   private sendRealtimeControl(payload: Record<string, unknown>) {
     if (this.websocket?.readyState !== WebSocket.OPEN) return;
     this.websocket.send(JSON.stringify(payload));
+  }
+
+  private sendPlaybackProgress(force = false) {
+    if (!force && this.websocket?.readyState !== WebSocket.OPEN) return;
+    this.sendRealtimeControl({
+      event: "playback.progress",
+      last_audio_seq: this.lastAudioSequence,
+      played_sample: this.playedSample,
+      buffered_ms: this.bufferedMs,
+      client_time_ms: Date.now()
+    });
   }
 
   handleChatEvent(
@@ -870,6 +914,22 @@ export class SpeechPlaybackController {
     const controller = new AbortController();
     this.polling.set(session.session_id, controller);
     void this.pollUntilReady(session, controller);
+  }
+
+  private async refreshSession(sessionId?: string) {
+    if (!sessionId) return;
+    try {
+      const session = (await getAssistantSpeechSession(sessionId, false))
+        .speech;
+      this.updateSessionDiagnostic(session);
+      const clientMessageId = this.sessionClientIds.get(sessionId);
+      if (clientMessageId !== undefined) {
+        this.trackSession(session, clientMessageId, true);
+      }
+    } catch {
+      // The stream terminal event is authoritative for live playback. Session
+      // polling can resume when its SSE projection arrives.
+    }
   }
 
   private async pollUntilReady(
@@ -937,7 +997,11 @@ export class SpeechPlaybackController {
       this.sessionAutoplay.get(session.session_id) &&
       (ready.delivery !== "realtime" || this.liveFailed || !this.liveStarted);
     if (shouldAutoplay && ready.audio?.url) {
-      await this.playArchive(ready, clientMessageId);
+      await this.playArchive(
+        ready,
+        clientMessageId,
+        this.shouldResumeArchive(ready)
+      );
     }
   }
 
@@ -968,7 +1032,8 @@ export class SpeechPlaybackController {
 
   private async playArchive(
     session: AssistantSpeechSession,
-    clientMessageId?: string | number
+    clientMessageId?: string | number,
+    resumeFromLive = false
   ) {
     const urlExpiresAt = session.audio?.url_expires_at
       ? Date.parse(session.audio.url_expires_at)
@@ -993,6 +1058,9 @@ export class SpeechPlaybackController {
     this.archiveMotionIndex = -1;
     const audio = new Audio(session.audio.url);
     audio.preload = "auto";
+    if (resumeFromLive && this.shouldResumeArchive(session)) {
+      audio.currentTime = session.archive_resume_ms! / 1000;
+    }
     this.archiveAudio = audio;
 
     const notify = (state: SpeechPlaybackState) => {
@@ -1031,6 +1099,16 @@ export class SpeechPlaybackController {
       this.setStatus("ready", "点击消息中的播放按钮收听完整录音");
       notify("ready");
     }
+  }
+
+  private shouldResumeArchive(session: AssistantSpeechSession) {
+    return Boolean(
+      session.delivery === "realtime" &&
+        session.archive_disposition !== "discard" &&
+        session.archive_resume_ms &&
+        session.archive_resume_ms > 0 &&
+        (this.liveFailed || !this.liveStarted)
+    );
   }
 
   private tickArchiveRenderer = () => {
@@ -1139,6 +1217,7 @@ export class SpeechPlaybackController {
     this.lastAudioSequence = 0;
     this.lastServerEventSequence = 0;
     this.peakRms = 0;
+    this.bufferedMs = 0;
     this.liveTerminalReceived = false;
     this.timeline = null;
     this.currentViseme = "sil";
@@ -1161,6 +1240,13 @@ export class SpeechPlaybackController {
       sessionStatus: undefined,
       liveDeliveryStatus: undefined,
       archiveStatus: undefined,
+      terminalEvent: undefined,
+      archiveDisposition: undefined,
+      lastAudioSequence: undefined,
+      audioSampleCount: undefined,
+      relayedSampleCount: undefined,
+      lastPlayedSample: undefined,
+      archiveResumeMs: undefined,
       pollAfterMs: undefined,
       errorCode: undefined
     });
@@ -1191,6 +1277,10 @@ export class SpeechPlaybackController {
   }
 
   dispose() {
+    document.removeEventListener(
+      "visibilitychange",
+      this.handleVisibilityChange
+    );
     this.polling.forEach(controller => controller.abort());
     this.polling.clear();
     this.stopArchiveAudio();

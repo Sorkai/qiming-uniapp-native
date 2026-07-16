@@ -52,6 +52,7 @@ export interface AssistantPreviewResourceLike {
   test_cases?: Record<string, unknown>[];
   rubric?: Record<string, unknown> | string;
   runtime_status?: string;
+  structured_data?: unknown;
 }
 
 export interface ResolvedPlatformPreviewSource {
@@ -63,6 +64,31 @@ export interface ResolvedPlatformPreviewSource {
 }
 
 const clean = (value?: string | null) => String(value || "").trim();
+const platformFileProxyPrefix = "/mindmap-file";
+const platformFileProxyTarget = clean(
+  import.meta.env.VITE_MINDMAP_FILE_PROXY_TARGET
+).replace(/\/$/, "");
+
+export function normalizePlatformResourceFetchUrl(url: string) {
+  const source = clean(url);
+  if (
+    !source ||
+    !import.meta.env.DEV ||
+    !platformFileProxyTarget ||
+    !/^https?:\/\//i.test(source)
+  ) {
+    return source;
+  }
+
+  try {
+    const resource = new URL(source);
+    const fileTarget = new URL(platformFileProxyTarget);
+    if (resource.origin !== fileTarget.origin) return source;
+    return `${platformFileProxyPrefix}${resource.pathname}${resource.search}`;
+  } catch {
+    return source;
+  }
+}
 
 export function mapAssistantResourcePreview(
   resource: AssistantPreviewResourceLike
@@ -97,7 +123,8 @@ export function mapAssistantResourcePreview(
     starterCode: resource.starter_code,
     testCases: resource.test_cases,
     rubric: resource.rubric,
-    runtimeStatus: resource.runtime_status
+    runtimeStatus: resource.runtime_status,
+    structuredData: resource.structured_data
   };
 }
 
@@ -339,10 +366,11 @@ export async function fetchPlatformResourceBuffer(
     accept?: string;
   }
 ) {
+  const requestUrl = normalizePlatformResourceFetchUrl(url);
   const response = await fetch(
-    url,
+    requestUrl,
     buildPlatformResourceRequestInit(
-      url,
+      requestUrl,
       options?.signal,
       options?.accept || "*/*"
     )
@@ -458,10 +486,11 @@ export async function downloadPlatformResource(
   const resolved = resolvePlatformPreviewSource(resource);
   const url = resolved.downloadUrl || resolved.url;
   if (!url) throw new Error("RESOURCE_URL_MISSING");
+  const requestUrl = normalizePlatformResourceFetchUrl(url);
 
   const response = await fetch(
-    url,
-    buildPlatformResourceRequestInit(url, undefined, "*/*")
+    requestUrl,
+    buildPlatformResourceRequestInit(requestUrl, undefined, "*/*")
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
