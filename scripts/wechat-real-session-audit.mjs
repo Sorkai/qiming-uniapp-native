@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
@@ -53,14 +53,14 @@ const routes = [
   { role: "student", name: "student-account-virtual-lab", entry: "/account?menu=virtual-lab", expect: ["虚拟实验室"] },
   { role: "student", name: "student-account-competition", entry: "/account?menu=competition", expect: ["赛事"] },
   { role: "student", name: "student-account-exam-center", entry: "/account?menu=exam-center", expect: ["试卷", "考试"] },
-  { role: "student", name: "student-course-study", entry: "/course/1?section=course-learn", expect: ["章节", "课程学习"], requiresCourse: true },
-  { role: "student", name: "student-course-mastery", entry: "/course/1?section=mastery", expect: ["知识点"], requiresCourse: true },
-  { role: "student", name: "student-course-qa", entry: "/course/1?section=course-qa", expect: ["课程问答"], requiresCourse: true },
-  { role: "student", name: "student-course-work", entry: "/course/1?section=homework-exam", expect: ["作业", "考试"], requiresCourse: true },
-  { role: "student", name: "student-course-materials", entry: "/course/1?section=course-materials", expect: ["课程资料"], requiresCourse: true },
-  { role: "student", name: "student-course-animations", entry: "/course/1?section=html-animations", expect: ["HTML动画"], requiresCourse: true },
-  { role: "student", name: "student-course-grades", entry: "/course/1?section=grades", expect: ["课程成绩", "成绩"], requiresCourse: true },
-  { role: "student", name: "student-course-wrong-exercise", entry: "/course/1?section=homework-exam", readyExpect: ["作业考试", "随练"], action: { selector: ".homework-tabs .el-tabs__item", text: "随练" }, expect: ["多选模式", "暂无错题记录", "道错题"], requiresCourse: true },
+  { role: "student", name: "student-course-study", entry: "/course/1?section=course-learn", expect: ["AI 视频分析"], requiresCourse: true, courseState: { section: "course-learn", menu: "course-learn", contentKey: "study", contentText: "AI 视频分析" } },
+  { role: "student", name: "student-course-mastery", entry: "/course/1?section=mastery", expect: ["基础知识点"], requiresCourse: true, courseState: { section: "mastery", menu: "mastery", contentKey: "mastery", contentText: "基础知识点" } },
+  { role: "student", name: "student-course-qa", entry: "/course/1?section=course-qa", expect: ["课程问答"], requiresCourse: true, courseState: { section: "course-qa", menu: "course-qa", contentKey: "qa" } },
+  { role: "student", name: "student-course-work", entry: "/course/1?section=homework-exam", expect: [], requiresCourse: true, courseState: { section: "homework-exam", menu: "homework-exam", contentKey: "work", activeTab: "作业" } },
+  { role: "student", name: "student-course-materials", entry: "/course/1?section=course-materials", expect: ["课程资料"], requiresCourse: true, courseState: { section: "course-materials", menu: "course-materials", contentKey: "materials" } },
+  { role: "student", name: "student-course-animations", entry: "/course/1?section=html-animations", expect: ["HTML动画"], requiresCourse: true, courseState: { section: "html-animations", menu: "html-animations", contentKey: "animations" } },
+  { role: "student", name: "student-course-grades", entry: "/course/1?section=grades", expect: ["课时成绩"], requiresCourse: true, courseState: { section: "grades", menu: "grades", contentKey: "grades", contentText: "课时成绩" } },
+  { role: "student", name: "student-course-wrong-exercise", entry: "/course/1?section=homework-exam", readyExpect: [], action: { selector: ".homework-tabs .el-tabs__item", text: "随练" }, expect: ["多选模式", "暂无错题记录", "道错题"], requiresCourse: true, courseState: { section: "homework-exam", menu: "homework-exam", contentKey: "work" }, afterActionState: { activeTab: "随练", contentKey: "work", contentText: "多选模式" } },
   { role: "student", name: "student-ai-app", entry: "/account/ai-app?mode=student", expect: ["学生模式", "学习助手"] },
   { role: "student", name: "student-ai-chat", entry: "/ai-app/chat", expect: ["学生模式", "互动答疑"] },
   { role: "student", name: "student-ai-generation", entry: "/ai-app/generation", expect: ["教学资源"] },
@@ -493,6 +493,27 @@ const inspectExpression = `(() => {
   const viewportHeight = document.documentElement.clientHeight;
   const viewportWidth = document.documentElement.clientWidth;
   const maxScrollWidth = Math.max(document.body.scrollWidth, document.documentElement.scrollWidth);
+  const courseContentSelectors = [
+    ['study', '.course-study-root'],
+    ['mastery', '.mastery-page-content'],
+    ['qa', '.message-board-wrapper'],
+    ['work', '.homework-exam-wrapper'],
+    ['materials', '.course-materials-wrapper .material-item, .course-materials-wrapper .empty-wrapper'],
+    ['animations', '.course-materials-wrapper .animation-card, .course-materials-wrapper .materials-list.empty-state'],
+    ['grades', '.course-grades-wrapper']
+  ];
+  const visibleCourseContents = courseContentSelectors.flatMap(([key, selector]) =>
+    Array.from(document.querySelectorAll(selector))
+      .filter(isVisibleElement)
+      .map(el => ({
+        key,
+        selector,
+        text: String(el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 1200)
+      }))
+  );
+  const activeCourseMenu = document.querySelector('#layout-sidebar [data-menu].active');
+  const activeCourseTab = Array.from(document.querySelectorAll('.homework-tabs .el-tabs__item.is-active')).find(isVisibleElement);
+  const hashQuery = location.hash.includes('?') ? location.hash.slice(location.hash.indexOf('?') + 1) : '';
   return {
     href: location.href,
     routePath: (() => {
@@ -517,6 +538,12 @@ const inspectExpression = `(() => {
       roleType: Number(storedUserInfo.roleType || 0),
       roles: Array.isArray(storedUserInfo.roles) ? storedUserInfo.roles : [],
       auditRole: localStorage.getItem('qimingRealAuditRole') || ''
+    },
+    course: {
+      section: new URLSearchParams(hashQuery).get('section') || '',
+      activeMenu: activeCourseMenu?.getAttribute('data-menu') || '',
+      activeTab: String(activeCourseTab?.textContent || '').replace(/\s+/g, ' ').trim(),
+      visibleContents: visibleCourseContents
     },
     layout: {
       navbar: rectInfo(navbar),
@@ -543,6 +570,31 @@ function allowedHttpFailure(issue, route) {
   ) || null;
 }
 
+function courseStateFailures(info, state, prefix = "course") {
+  if (!state) return [];
+  const failures = [];
+  const course = info.course || {};
+  if (state.section && course.section !== state.section) {
+    failures.push(`${prefix}-section-mismatch:${course.section || "none"}!=${state.section}`);
+  }
+  if (state.menu && course.activeMenu !== state.menu) {
+    failures.push(`${prefix}-menu-mismatch:${course.activeMenu || "none"}!=${state.menu}`);
+  }
+  if (state.activeTab && course.activeTab !== state.activeTab) {
+    failures.push(`${prefix}-tab-mismatch:${course.activeTab || "none"}!=${state.activeTab}`);
+  }
+  if (state.contentKey) {
+    const contentVisible = (course.visibleContents || []).some(item =>
+      item.key === state.contentKey &&
+      (!state.contentText || String(item.text || "").includes(state.contentText))
+    );
+    if (!contentVisible) {
+      failures.push(`${prefix}-content-not-visible:${state.contentKey}:${state.contentText || "any"}`);
+    }
+  }
+  return failures;
+}
+
 function analyze(info, route, consoleErrors, networkIssues, actionResult) {
   const failures = [];
   const warnings = [];
@@ -552,6 +604,10 @@ function analyze(info, route, consoleErrors, networkIssues, actionResult) {
   if (info.brokenImages?.length) failures.push(`broken-images:${info.brokenImages.length}`);
   if (route.expect?.length && !route.expect.some(item => info.textSample.includes(item))) {
     failures.push(`missing-expected:${route.expect.join("|")}`);
+  }
+  failures.push(...courseStateFailures(info, route.courseState));
+  if (route.afterActionState && actionResult?.ok) {
+    failures.push(...courseStateFailures(info, route.afterActionState, "after-action"));
   }
   if (info.routePath === "/error/403" || info.textSample.includes("抱歉，你无权访问该页面")) {
     failures.push("forbidden-route-redirect");
@@ -612,14 +668,16 @@ async function inspectPage(client) {
   return evaluated.result?.value || {};
 }
 
-async function waitForExpectedPage(client, expected, waitMs) {
+async function waitForExpectedPage(client, expected, waitMs, route, includeAfterAction = false) {
   const startedAt = Date.now();
   let info = {};
   do {
     await wait(500);
     info = await inspectPage(client);
     const expectedReady = !expected?.length || expected.some(item => String(info.textSample || "").includes(item));
-    if (!info.blank && info.textLength > 80 && info.loadingCount === 0 && expectedReady) break;
+    const courseReady = courseStateFailures(info, route?.courseState).length === 0;
+    const afterActionReady = !includeAfterAction || courseStateFailures(info, route?.afterActionState).length === 0;
+    if (!info.blank && info.textLength > 80 && info.loadingCount === 0 && expectedReady && courseReady && afterActionReady) break;
   } while (Date.now() - startedAt < waitMs);
   return info;
 }
@@ -702,7 +760,7 @@ async function main() {
   }
 
   const debugPort = await getFreePort();
-  const profileDir = join(tmpdir(), `qiming-real-audit-${Date.now()}`);
+  const profileDir = mkdtempSync(join(tmpdir(), "qiming-real-audit-"));
   const browserArgs = [
     "--remote-debugging-address=127.0.0.1",
     `--remote-debugging-port=${debugPort}`,
@@ -804,10 +862,10 @@ async function main() {
       const url = buildUrl(options.origin, route, fixtures[route.role]);
       await client.send("Page.navigate", { url });
 
-      let info = await waitForExpectedPage(client, route.readyExpect || route.expect, options.waitMs);
+      let info = await waitForExpectedPage(client, route.readyExpect || route.expect, options.waitMs, route);
       const actionResult = await performRouteAction(client, route.action);
       if (actionResult?.ok) {
-        info = await waitForExpectedPage(client, route.expect, options.waitMs);
+        info = await waitForExpectedPage(client, route.expect, options.waitMs, route, true);
       }
       await wait(600);
       const firstShot = await client.send("Page.captureScreenshot", {
