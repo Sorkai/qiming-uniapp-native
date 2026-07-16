@@ -1961,13 +1961,15 @@ const wait = (ms: number) =>
   });
 
 const assistantChatAttachmentsPath = "/edu/frontend/v1/ai/chat/attachments";
+const assistantChatDocumentAttachmentsPath =
+  "/edu/frontend/v1/ai/chat/document-attachments";
 
 export const initAssistantDocumentAttachmentSts = (
   data: AssistantDocumentAttachmentStsInitReq
 ) =>
   http.request<ApiResponse<AssistantDocumentAttachmentStsInitResp>>(
     "post",
-    `${assistantChatAttachmentsPath}/sts/init`,
+    `${assistantChatDocumentAttachmentsPath}/sts/init`,
     { data }
   );
 
@@ -1976,7 +1978,7 @@ export const completeAssistantDocumentAttachmentSts = (
 ) =>
   http.request<ApiResponse<AssistantChatAttachmentStatus>>(
     "post",
-    `${assistantChatAttachmentsPath}/sts/complete`,
+    `${assistantChatDocumentAttachmentsPath}/sts/complete`,
     { data }
   );
 
@@ -2016,10 +2018,8 @@ export const uploadAssistantDocumentAttachment = async (
     content_type?: string;
   }
 ) => {
-  const attachmentScene =
-    options.scene === "assistant" ? "general" : options.scene || "general";
   const { data: initData } = await initAssistantDocumentAttachmentSts({
-    scene: attachmentScene,
+    scene: options.scene || "assistant",
     course_id: options.course_id,
     // Assistant conversations use a different ownership domain from /ai/chat attachments.
     conversation_id:
