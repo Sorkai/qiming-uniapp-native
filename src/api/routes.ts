@@ -5,7 +5,7 @@ type Result = {
   data: Array<any>;
 };
 
-function isMiniProgramWebViewRuntime() {
+function usesBundledStaticRoutes() {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return false;
   }
@@ -19,6 +19,8 @@ function isMiniProgramWebViewRuntime() {
 
   try {
     return (
+      window.location.protocol === "file:" ||
+      root.classList.contains("qiming-native-webview") ||
       root.classList.contains("qiming-mini-program-webview") ||
       root.dataset.qimingMiniProgram === "true" ||
       searchParams.get("qimingMiniProgram") === "1" ||
@@ -28,6 +30,8 @@ function isMiniProgramWebViewRuntime() {
     );
   } catch {
     return (
+      window.location.protocol === "file:" ||
+      root.classList.contains("qiming-native-webview") ||
       root.classList.contains("qiming-mini-program-webview") ||
       root.dataset.qimingMiniProgram === "true" ||
       searchParams.get("qimingMiniProgram") === "1" ||
@@ -37,7 +41,7 @@ function isMiniProgramWebViewRuntime() {
 }
 
 export const getAsyncRoutes = () => {
-  if (isMiniProgramWebViewRuntime()) {
+  if (usesBundledStaticRoutes()) {
     return Promise.resolve<Result>({
       success: true,
       data: []
