@@ -2135,7 +2135,7 @@ const loadPaperDetail = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener("keydown", handleKeydown);
   document.addEventListener("keydown", handleKeydownForAssistant);
   startAutoSave();
@@ -2144,9 +2144,14 @@ onMounted(() => {
   // 检查是否有模板参数
   const templateId = route.query.template as string;
   if (templateId) {
-    loadTemplate(templateId);
+    await loadTemplate(templateId);
   } else if (isEditMode.value) {
-    loadPaperDetail();
+    await loadPaperDetail();
+  }
+
+  if (route.name === "ExamPaperPublish" || route.query.publish === "1") {
+    await nextTick();
+    publishPaperHandler();
   }
 });
 

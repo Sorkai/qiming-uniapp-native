@@ -62,7 +62,7 @@ async function doLogin(role: Role) {
       avatar: u.avatar || "",
       username: u.mobile,
       nickname: u.nickname,
-      roles: [role, "admin", "teacher", "student"],
+      roles: [role],
       permissions: ["*:*:*"],
       roleType: u.roleType,
       userId: u.id

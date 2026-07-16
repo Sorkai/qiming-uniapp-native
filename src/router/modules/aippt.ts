@@ -8,6 +8,7 @@ export default {
     title: $t("menus.aiPPT"),
     rank: 12,
     icon: "ri:presentation-fill",
-    hideFooter: true
+    hideFooter: true,
+    roles: ["admin", "teacher"]
   }
 };

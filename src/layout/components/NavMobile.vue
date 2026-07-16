@@ -48,22 +48,22 @@ const defaultMobileNavItems = computed<MobileNavItem[]>(() => [
   {
     title: "首页",
     icon: "ep:home-filled",
-    path: "/welcome"
+    path: "/account?menu=home"
   },
   {
     title: "课程",
     icon: "ep:reading",
-    path: "/course/list"
+    path: "/account?menu=course"
   },
   {
     title: "AI助手",
     icon: "ep:chat-dot-round",
-    path: "/chatai/index"
+    path: "/account/ai-app?mode=student"
   },
   {
     title: "我的",
     icon: "ep:user",
-    path: profilePath.value
+    path: isAdminOrTeacher.value ? profilePath.value : "/account?menu=profile"
   }
 ]);
 
@@ -75,10 +75,16 @@ const visibleNavItems = computed(() =>
   navItems.value.filter(item => router.resolve(item.path).matched.length > 0)
 );
 
-const activePath = computed(() => route.path);
-
-const isActive = (path: string) =>
-  activePath.value === path || activePath.value.startsWith(`${path}/`);
+const isActive = (path: string) => {
+  const target = router.resolve(path);
+  if (route.path !== target.path) return false;
+  return Object.entries(target.query).every(([key, value]) => {
+    const current = route.query[key];
+    return Array.isArray(current)
+      ? current.includes(String(value))
+      : current === value;
+  });
+};
 
 const handleJump = (path: string) => {
   if (route.path === path) return;

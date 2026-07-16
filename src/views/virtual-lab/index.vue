@@ -373,7 +373,8 @@ const currentAnimationData = ref<HtmlAnimationListResult | null>(null);
 const taskList = ref<HtmlAnimationTask[]>([]);
 const isTaskProcessing = (task: HtmlAnimationTask) =>
   ["pending", "submitted", "processing"].includes(task.status);
-const isTaskCompleted = (task: HtmlAnimationTask) => task.status === "completed";
+const isTaskCompleted = (task: HtmlAnimationTask) =>
+  task.status === "completed";
 const isTaskFailed = (task: HtmlAnimationTask) => task.status === "failed";
 
 const stats = computed(() => {
@@ -1066,15 +1067,13 @@ onMounted(() => {
     aspect-ratio: 16 / 9;
     overflow: hidden;
     background:
-      linear-gradient(135deg, rgb(151 180 247 / 16%), transparent 42%),
-      #f8fafc;
+      linear-gradient(135deg, rgb(151 180 247 / 16%), transparent 42%), #f8fafc;
     border: 1px solid rgb(226 232 240 / 86%);
     border-radius: 16px;
 
     html.dark & {
       background:
-        linear-gradient(135deg, rgb(96 165 250 / 18%), transparent 42%),
-        #0f172a;
+        linear-gradient(135deg, rgb(96 165 250 / 18%), transparent 42%), #0f172a;
       border-color: rgb(71 85 105 / 52%);
     }
   }

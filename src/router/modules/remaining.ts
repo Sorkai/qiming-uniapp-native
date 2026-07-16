@@ -56,7 +56,8 @@ export default [
     meta: {
       title: $t("buttons.pureAccountSettings"),
       showLink: false,
-      rank: 104
+      rank: 104,
+      roles: ["admin", "teacher", "student"]
     }
   },
   {
@@ -66,7 +67,8 @@ export default [
     meta: {
       title: "账号管理",
       showLink: false,
-      rank: 105
+      rank: 105,
+      roles: ["admin", "teacher", "student"]
     }
   },
   {
@@ -76,7 +78,8 @@ export default [
     meta: {
       title: "AI App",
       showLink: false,
-      rank: 105.5
+      rank: 105.5,
+      roles: ["admin", "teacher", "student"]
     }
   },
   {
@@ -98,7 +101,8 @@ export default [
     meta: {
       title: "课程学习",
       showLink: false,
-      rank: 106
+      rank: 106,
+      roles: ["student"]
     }
   },
   {
@@ -108,7 +112,8 @@ export default [
     meta: {
       title: "作业详情",
       showLink: false,
-      rank: 107
+      rank: 107,
+      roles: ["student"]
     }
   },
   {
@@ -118,7 +123,19 @@ export default [
     meta: {
       title: "考试详情",
       showLink: false,
-      rank: 108
+      rank: 108,
+      roles: ["student"]
+    }
+  },
+  {
+    path: "/account/wrong-exercise",
+    name: "WrongExercise",
+    component: () => import("@/views/account/wrong-exercise.vue"),
+    meta: {
+      title: "错题本",
+      showLink: false,
+      rank: 108.5,
+      roles: ["student"]
     }
   },
   // 学生答卷页面（全屏，无布局）
@@ -129,7 +146,8 @@ export default [
     meta: {
       title: "参加考试",
       showLink: false,
-      rank: 109
+      rank: 109,
+      roles: ["student"]
     }
   },
   {
@@ -139,7 +157,8 @@ export default [
     meta: {
       title: "考试结果",
       showLink: false,
-      rank: 110
+      rank: 110,
+      roles: ["student"]
     }
   }
   // 嵌入到课程详情中的随练页面已不再需要独立路由
